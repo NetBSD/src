@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2019 Free Software Foundation, Inc.
+   Copyright 2018-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,4 +46,6 @@ int main()
 {
   derived().func_d();
   foo().func_f();
+
+  return 0;
 }

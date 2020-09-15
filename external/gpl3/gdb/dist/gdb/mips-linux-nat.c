@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -783,8 +783,9 @@ mips_linux_nat_target::close ()
   linux_nat_trad_target::close ();
 }
 
+void _initialize_mips_linux_nat ();
 void
-_initialize_mips_linux_nat (void)
+_initialize_mips_linux_nat ()
 {
   add_setshow_boolean_cmd ("show-debug-regs", class_maintenance,
 			   &show_debug_regs, _("\

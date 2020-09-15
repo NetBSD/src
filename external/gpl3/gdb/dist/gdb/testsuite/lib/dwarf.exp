@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,12 +114,12 @@ proc build_executable_from_fission_assembler { testname executable sources optio
 # static void func (void) {}
 #
 
-proc function_range { func src } {
+proc function_range { func src {options {debug}} } {
     global decimal gdb_prompt
 
     set exe [standard_temp_file func_addr[pid].x]
 
-    gdb_compile $src $exe executable {debug}
+    gdb_compile $src $exe executable $options
 
     gdb_exit
     gdb_start
@@ -164,6 +164,22 @@ proc function_range { func src } {
     return [list "${func}_label - $func_label_offset" $func_length]
 }
 
+# Extract the start, length, and end for function called NAME and
+# create suitable variables in the callers scope.
+proc get_func_info { name {options {debug}} } {
+    global srcdir subdir srcfile
+
+    upvar 1 "${name}_start" func_start
+    upvar 1 "${name}_len" func_len
+    upvar 1 "${name}_end" func_end
+
+    lassign [function_range ${name} \
+		 [list ${srcdir}/${subdir}/$srcfile] \
+		 ${options}]  \
+	func_start func_len
+    set func_end "$func_start + $func_len"
+}
+
 # A DWARF assembler.
 #
 # All the variables in this namespace are private to the
@@ -203,11 +219,11 @@ proc function_range { func src } {
 # which will be substituted by one or more standard or macro attributes.
 # supported macro attributes are:
 #
-#  - MACRO_AT_range { FUNC FILE }
+#  - MACRO_AT_range { FUNC }
 #  It is substituted by DW_AT_low_pc and DW_AT_high_pc with the start and
-#  end address of function FUNC in file FILE.
+#  end address of function FUNC in file $srcdir/$subdir/$srcfile.
 #
-#  - MACRO_AT_func { FUNC FILE }
+#  - MACRO_AT_func { FUNC }
 #  It is substituted by DW_AT_name with FUNC and MACRO_AT_range.
 #
 # If FORM is given, it should name a DW_FORM_ constant.
@@ -527,6 +543,12 @@ namespace eval Dwarf {
 	    DW_FORM_indirect -
 	    DW_FORM_exprloc -
 
+	    DW_FORM_strx -
+	    DW_FORM_strx1 -
+	    DW_FORM_strx2 -
+	    DW_FORM_strx3 -
+	    DW_FORM_strx4 -
+
 	    DW_FORM_GNU_addr_index -
 	    DW_FORM_GNU_str_index -
 	    DW_FORM_GNU_ref_alt -
@@ -561,10 +583,8 @@ namespace eval Dwarf {
 	    }
 
 	    % {
-		# Label reference, an offset from .debug_info.  Assuming
-		# .Lcu1_begin is on .debug_info.
-		set cu1_label [_compute_label "cu1_begin"]
-		set new_value "[string range $value 1 end] - $cu1_label"
+		# Label reference, an offset from .debug_info.
+		set new_value "[string range $value 1 end]"
 
 		return DW_FORM_ref_addr
 	    }
@@ -601,12 +621,13 @@ namespace eval Dwarf {
     # Handle macro attribute MACRO_AT_range.
 
     proc _handle_macro_at_range { attr_value } {
-	if {[llength $attr_value] != 2} {
-	    error "usage: MACRO_AT_range { func file }"
+	if {[llength $attr_value] != 1} {
+	    error "usage: MACRO_AT_range { func }"
 	}
 
 	set func [lindex $attr_value 0]
-	set src [lindex $attr_value 1]
+	global srcdir subdir srcfile
+	set src ${srcdir}/${subdir}/${srcfile}
 	set result [function_range $func $src]
 
 	_handle_attribute DW_AT_low_pc [lindex $result 0] \
@@ -618,7 +639,7 @@ namespace eval Dwarf {
     # Handle macro attribute MACRO_AT_func.
 
     proc _handle_macro_at_func { attr_value } {
-	if {[llength $attr_value] != 2} {
+	if {[llength $attr_value] != 1} {
 	    error "usage: MACRO_AT_func { func file }"
 	}
 	_handle_attribute DW_AT_name [lindex $attr_value 0] DW_FORM_string
@@ -800,15 +821,6 @@ namespace eval Dwarf {
     # to 'new_label', but this is not required.
     proc define_label {name} {
 	_emit "${name}:"
-    }
-
-    # Declare a global label.  This is typically used to refer to
-    # labels defined in other files, for example a function defined in
-    # a .c file.
-    proc extern {args} {
-	foreach name $args {
-	    _op .global $name
-	}
     }
 
     # A higher-level interface to label handling.
@@ -1006,7 +1018,7 @@ namespace eval Dwarf {
     #                default = 0 (32-bit)
     # version n    - DWARF version number to emit
     #                default = 4
-    # addr_size n  - the size of addresses, 32, 64, or default
+    # addr_size n  - the size of addresses in bytes: 4, 8, or default
     #                default = default
     # fission 0|1  - boolean indicating if generating Fission debug info
     #                default = 0
@@ -1097,7 +1109,7 @@ namespace eval Dwarf {
     #                default = 0 (32-bit)
     # version n    - DWARF version number to emit
     #                default = 4
-    # addr_size n  - the size of addresses, 32, 64, or default
+    # addr_size n  - the size of addresses in bytes: 4, 8, or default
     #                default = default
     # fission 0|1  - boolean indicating if generating Fission debug info
     #                default = 0
@@ -1278,7 +1290,7 @@ namespace eval Dwarf {
     #                default = 0 (32-bit)
     # version n    - DWARF version number to emit
     #                default = 4
-    # addr_size n  - the size of addresses, 32, 64, or default
+    # addr_size n  - the size of addresses in bytes: 4, 8, or default
     #                default = default
     #
     # LABEL is the label of the current unit (which is probably
@@ -1305,12 +1317,16 @@ namespace eval Dwarf {
 	set is_64 0
 	set _unit_version 4
 	set _unit_addr_size default
+	set _line_saw_program 0
+	set _line_saw_file 0
+	set _default_is_stmt 1
 
 	foreach { name value } $options {
 	    switch -exact -- $name {
 		is_64 { set is_64 $value }
 		version { set _unit_version $value }
 		addr_size { set _unit_addr_size $value }
+		default_is_stmt { set _default_is_stmt $value }
 		default { error "unknown option $name" }
 	    }
 	}
@@ -1357,7 +1373,7 @@ namespace eval Dwarf {
 	define_label $header_len_label
 
 	_op .byte 1 "minimum_instruction_length"
-	_op .byte 1 "default_is_stmt"
+	_op .byte $_default_is_stmt "default_is_stmt"
 	_op .byte 1 "line_base"
 	_op .byte 1 "line_range"
 	_op .byte 10 "opcode_base"
@@ -1399,6 +1415,9 @@ namespace eval Dwarf {
 	proc program {statements} {
 	    variable _line_saw_program
 	    variable _line_header_end_label
+	    variable _line
+
+	    set _line 1
 
 	    if "! $_line_saw_program" {
 		# Terminate the file list.
@@ -1423,13 +1442,35 @@ namespace eval Dwarf {
 	    }
 
 	    proc DW_LNE_end_sequence {} {
+		variable _line
 		_op .byte 0
 		_op .uleb128 1
 		_op .byte 1
+		set _line 1
+	    }
+
+	    proc DW_LNE_user { len opcode } {
+		set DW_LNE_lo_usr 0x80
+		set DW_LNE_hi_usr 0xff
+		if { $DW_LNE_lo_usr <= $opcode
+		     && $opcode <= $DW_LNE_hi_usr } {
+		    _op .byte 0
+		    _op .uleb128 $len
+		    _op .byte $opcode
+		    for {set i 1} {$i < $len} {incr i} {
+			_op .byte 0
+		    }
+		} else {
+		    error "unknown vendor specific extended opcode: $opcode"
+		}
 	    }
 
 	    proc DW_LNS_copy {} {
 		_op .byte 1
+	    }
+
+	    proc DW_LNS_negate_stmt {} {
+		_op .byte 6
 	    }
 
 	    proc DW_LNS_advance_pc {offset} {
@@ -1438,8 +1479,30 @@ namespace eval Dwarf {
 	    }
 
 	    proc DW_LNS_advance_line {offset} {
+		variable _line
 		_op .byte 3
 		_op .sleb128 ${offset}
+		set _line [expr $_line + $offset]
+	    }
+
+	    # A pseudo line number program instruction, that can be used instead
+	    # of DW_LNS_advance_line.  Rather than writing:
+	    #   {DW_LNS_advance_line [expr $line1 - 1]}
+	    #   {DW_LNS_advance_line [expr $line2 - $line1]}
+	    #   {DW_LNS_advance_line [expr $line3 - $line2]}
+	    # we can just write:
+	    #   {line $line1}
+	    #   {line $line2}
+	    #   {line $line3}
+	    proc line {line} {
+		variable _line
+		set offset [expr $line - $_line]
+		DW_LNS_advance_line $offset
+	    }
+
+	    proc DW_LNS_set_file {num} {
+		_op .byte 4
+		_op .sleb128 ${num}
 	    }
 
 	    foreach statement $statements {

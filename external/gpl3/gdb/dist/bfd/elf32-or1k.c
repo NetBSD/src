@@ -1,5 +1,5 @@
 /* Or1k-specific support for 32-bit ELF.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    PIC parts added by Stefan Kristiansson, stefan.kristiansson@saunalahti.fi,
@@ -873,20 +873,24 @@ static const struct or1k_reloc_map or1k_reloc_map[] =
   { BFD_RELOC_OR1K_PLTA26,	R_OR1K_PLTA26 },
 };
 
+/* tls_type is a mask used to track how each symbol is accessed,
+   it may be accessed via multiple types of TLS access methods.
+   We track this for sizing (allocating got + relocation section space) and
+   for how to process relocations.  */
 #define TLS_UNKNOWN    0
 #define TLS_NONE       1
 #define TLS_GD	       2
-#define TLS_LD	       3
-#define TLS_IE	       4
-#define TLS_LE	       5
+#define TLS_LD	       4
+#define TLS_IE	       8
+#define TLS_LE	      16
+
+/* The size of the TLS thread control block, used to offset LE access.  */
+#define TCB_SIZE      16
 
 /* ELF linker hash entry.  */
 struct elf_or1k_link_hash_entry
 {
   struct elf_link_hash_entry root;
-
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
 
   /* Track type of TLS access.  */
   unsigned char tls_type;
@@ -912,16 +916,14 @@ struct elf_or1k_link_hash_table
 {
   struct elf_link_hash_table root;
 
-  /* Small local sym to section mapping cache.  */
-  struct sym_cache sym_sec;
-
   bfd_boolean saw_plta;
 };
 
 /* Get the ELF linker hash table from a link_info structure.  */
 #define or1k_elf_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-   == OR1K_ELF_DATA ? ((struct elf_or1k_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == OR1K_ELF_DATA)		\
+   ? (struct elf_or1k_link_hash_table *) (p)->hash : NULL)
 
 static bfd_boolean
 elf_or1k_mkobject (bfd *abfd)
@@ -957,7 +959,6 @@ or1k_elf_link_hash_newfunc (struct bfd_hash_entry *entry,
       struct elf_or1k_link_hash_entry *eh;
 
       eh = (struct elf_or1k_link_hash_entry *) ret;
-      eh->dyn_relocs = NULL;
       eh->tls_type = TLS_UNKNOWN;
     }
 
@@ -970,7 +971,7 @@ static struct bfd_link_hash_table *
 or1k_elf_link_hash_table_create (bfd *abfd)
 {
   struct elf_or1k_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf_or1k_link_hash_table);
+  size_t amt = sizeof (struct elf_or1k_link_hash_table);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1043,19 +1044,49 @@ or1k_info_to_howto_rela (bfd * abfd,
   return TRUE;
 }
 
-
 /* Return the relocation value for @tpoff relocations..  */
 static bfd_vma
-tpoff (struct bfd_link_info *info, bfd_vma address)
+tpoff (struct bfd_link_info *info, bfd_vma address, bfd_boolean dynamic)
 {
+  struct elf_link_hash_table *htab = elf_hash_table (info);
+  bfd_vma base;
+
   /* If tls_sec is NULL, we should have signalled an error already.  */
-  if (elf_hash_table (info)->tls_sec == NULL)
+  if (htab->tls_sec == NULL)
     return 0;
 
-  /* The thread pointer on or1k stores the address after the TCB where
-     the data is, just compute the difference. No need to compensate
-     for the size of TCB.  */
-  return (address - elf_hash_table (info)->tls_sec->vma);
+  if (dynamic)
+    return address - htab->tls_sec->vma;
+  else
+    {
+      /* On or1k, the tp points to just after the tcb, if we have an alignment
+	 greater than the tcb size we need to offset by the alignment difference.  */
+      base = align_power ((bfd_vma) TCB_SIZE, htab->tls_sec->alignment_power)
+	     - TCB_SIZE;
+
+      /* The thread pointer on or1k stores the address after the TCB where
+	 the data is, just compute the difference. No need to compensate
+	 for the size of TCB.  */
+      return address - htab->tls_sec->vma + base;
+    }
+}
+
+/* If we have both IE and GD accesses to a symbol the IE relocations should be
+   offset by 8 bytes because the got contains both GD and IE entries.  */
+static bfd_vma
+or1k_initial_exec_offset (reloc_howto_type *howto, unsigned char tls_type_mask)
+{
+   switch (howto->type)
+     {
+     case R_OR1K_TLS_IE_HI16:
+     case R_OR1K_TLS_IE_LO16:
+     case R_OR1K_TLS_IE_PG21:
+     case R_OR1K_TLS_IE_LO13:
+     case R_OR1K_TLS_IE_AHI16:
+       return (tls_type_mask & TLS_GD) != 0 ? 8 : 0;
+     default:
+       return 0;
+     }
 }
 
 /* Like _bfd_final_link_relocate, but handles non-contiguous fields.  */
@@ -1226,7 +1257,6 @@ or1k_elf_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
   struct elf_or1k_link_hash_table *htab = or1k_elf_hash_table (info);
-  bfd *dynobj;
   asection *sreloc;
   bfd_vma *local_got_offsets;
   asection *sgot, *splt;
@@ -1236,7 +1266,6 @@ or1k_elf_relocate_section (bfd *output_bfd,
   if (htab == NULL)
     return FALSE;
 
-  dynobj = htab->root.dynobj;
   local_got_offsets = elf_local_got_offsets (input_bfd);
 
   sreloc = elf_section_data (input_section)->sreloc;
@@ -1254,7 +1283,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
       got_sym_value = (hgot->root.u.def.value
 		       + hgot->root.u.def.section->output_section->vma
 		       + hgot->root.u.def.section->output_offset);
-    got_base = sgot->output_section->vma + sgot->output_offset;
+      got_base = sgot->output_section->vma + sgot->output_offset;
     }
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -1303,7 +1332,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -1416,16 +1445,16 @@ or1k_elf_relocate_section (bfd *output_bfd,
 
 		      /* We need to generate a R_OR1K_RELATIVE reloc
 			 for the dynamic linker.  */
-			srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
+		      srelgot = htab->root.srelgot;
 		      BFD_ASSERT (srelgot != NULL);
 
 		      outrel.r_offset = got_base + off;
 		      outrel.r_info = ELF32_R_INFO (0, R_OR1K_RELATIVE);
 		      outrel.r_addend = relocation;
 		      loc = srelgot->contents;
-			loc += (srelgot->reloc_count
-				* sizeof (Elf32_External_Rela));
-		      bfd_elf32_swap_reloca_out (output_bfd, &outrel,loc);
+		      loc += (srelgot->reloc_count
+			      * sizeof (Elf32_External_Rela));
+		      bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
 		      ++srelgot->reloc_count;
 		    }
 		  local_got_offsets[r_symndx] |= 1;
@@ -1591,54 +1620,80 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	  {
 	    bfd_vma gotoff;
 	    Elf_Internal_Rela rela;
+	    asection *srelgot;
 	    bfd_byte *loc;
-	    int dynamic;
+	    bfd_boolean dynamic;
+	    int indx = 0;
+	    unsigned char tls_type;
 
-	    sreloc = bfd_get_section_by_name (dynobj, ".rela.got");
+	    srelgot = htab->root.srelgot;
 
 	    /* Mark as TLS related GOT entry by setting
-	       bit 2 as well as bit 1.  */
+	       bit 2 to indcate TLS and bit 1 to indicate GOT.  */
 	    if (h != NULL)
 	      {
 		gotoff = h->got.offset;
+		tls_type = ((struct elf_or1k_link_hash_entry *) h)->tls_type;
 		h->got.offset |= 3;
 	      }
 	    else
 	      {
+		unsigned char *local_tls_type;
+
 		gotoff = local_got_offsets[r_symndx];
+		local_tls_type = (unsigned char *) elf_or1k_local_tls_type (input_bfd);
+		tls_type = local_tls_type == NULL ? TLS_NONE
+						  : local_tls_type[r_symndx];
 		local_got_offsets[r_symndx] |= 3;
 	      }
 
 	    /* Only process the relocation once.  */
-	    if (gotoff & 1)
+	    if ((gotoff & 1) != 0)
 	      {
-		relocation = sgot->output_offset + (gotoff  & ~3);
+		gotoff += or1k_initial_exec_offset (howto, tls_type);
+
+		/* The PG21 and LO13 relocs are pc-relative, while the
+		   rest are GOT relative.  */
+		relocation = got_base + (gotoff & ~3);
+		if (!(r_type == R_OR1K_TLS_GD_PG21
+		    || r_type == R_OR1K_TLS_GD_LO13
+		    || r_type == R_OR1K_TLS_IE_PG21
+		    || r_type == R_OR1K_TLS_IE_LO13))
+		  relocation -= got_sym_value;
 		break;
 	      }
 
 	    BFD_ASSERT (elf_hash_table (info)->hgot == NULL
 			|| elf_hash_table (info)->hgot->root.u.def.value == 0);
 
-	    /* Dynamic entries will require relocations. if we do not need
+	    if (h != NULL)
+	      {
+		bfd_boolean dyn = htab->root.dynamic_sections_created;
+		bfd_boolean pic = bfd_link_pic (info);
+
+		if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, pic, h)
+		    && (!pic || !SYMBOL_REFERENCES_LOCAL (info, h)))
+		  indx = h->dynindx;
+	      }
+
+	    /* Dynamic entries will require relocations.  If we do not need
 	       them we will just use the default R_OR1K_NONE and
 	       not set anything.  */
-	    dynamic = bfd_link_pic (info)
-	      || (sec && (sec->flags & SEC_ALLOC) != 0
-		  && h != NULL
-		  && (h->root.type == bfd_link_hash_defweak || !h->def_regular));
+	    dynamic = (bfd_link_pic (info) || indx != 0)
+		       && (h == NULL
+			   || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+			   || h->root.type != bfd_link_hash_undefweak);
 
 	    /* Shared GD.  */
-	    if (dynamic
-		&& (howto->type == R_OR1K_TLS_GD_HI16
-		    || howto->type == R_OR1K_TLS_GD_LO16
-		    || howto->type == R_OR1K_TLS_GD_PG21
-		    || howto->type == R_OR1K_TLS_GD_LO13))
+	    if (dynamic && ((tls_type & TLS_GD) != 0))
 	      {
 		int i;
 
 		/* Add DTPMOD and DTPOFF GOT and rela entries.  */
 		for (i = 0; i < 2; ++i)
 		  {
+		    BFD_ASSERT (srelgot->contents != NULL);
+
 		    rela.r_offset = got_base + gotoff + i*4;
 		    if (h != NULL && h->dynindx != -1)
 		      {
@@ -1650,30 +1705,33 @@ or1k_elf_relocate_section (bfd *output_bfd,
 		      {
 			rela.r_info = ELF32_R_INFO (0,
 			    (i == 0 ? R_OR1K_TLS_DTPMOD : R_OR1K_TLS_DTPOFF));
-			rela.r_addend = tpoff (info, relocation);
+			rela.r_addend =
+			    (i == 0 ? 0 : tpoff (info, relocation, dynamic));
 		      }
 
-		    loc = sreloc->contents;
-		    loc += sreloc->reloc_count++ *
-		      sizeof (Elf32_External_Rela);
+		    loc = srelgot->contents;
+		    loc += (srelgot->reloc_count++
+			    * sizeof (Elf32_External_Rela));
 
 		    bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
 		    bfd_put_32 (output_bfd, 0, sgot->contents + gotoff + i*4);
 		  }
 	      }
 	    /* Static GD.  */
-	    else if (howto->type == R_OR1K_TLS_GD_HI16
-		     || howto->type == R_OR1K_TLS_GD_LO16
-		     || howto->type == R_OR1K_TLS_GD_PG21
-		     || howto->type == R_OR1K_TLS_GD_LO13)
+	    else if ((tls_type & TLS_GD) != 0)
 	      {
 		bfd_put_32 (output_bfd, 1, sgot->contents + gotoff);
-		bfd_put_32 (output_bfd, tpoff (info, relocation),
+		bfd_put_32 (output_bfd, tpoff (info, relocation, dynamic),
 		    sgot->contents + gotoff + 4);
 	      }
+
+	    gotoff += or1k_initial_exec_offset (howto, tls_type);
+
 	    /* Shared IE.  */
-	    else if (dynamic)
+	    if (dynamic && ((tls_type & TLS_IE) != 0))
 	      {
+		BFD_ASSERT (srelgot->contents != NULL);
+
 		/* Add TPOFF GOT and rela entries.  */
 		rela.r_offset = got_base + gotoff;
 		if (h != NULL && h->dynindx != -1)
@@ -1684,21 +1742,19 @@ or1k_elf_relocate_section (bfd *output_bfd,
 		else
 		  {
 		    rela.r_info = ELF32_R_INFO (0, R_OR1K_TLS_TPOFF);
-		    rela.r_addend = tpoff (info, relocation);
+		    rela.r_addend = tpoff (info, relocation, dynamic);
 		  }
 
-		loc = sreloc->contents;
-		loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rela);
+		loc = srelgot->contents;
+		loc += srelgot->reloc_count++ * sizeof (Elf32_External_Rela);
 
 		bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
 		bfd_put_32 (output_bfd, 0, sgot->contents + gotoff);
 	      }
 	    /* Static IE.  */
-	    else
-	      {
-		bfd_put_32 (output_bfd, tpoff (info, relocation),
-			    sgot->contents + gotoff);
-	      }
+	    else if ((tls_type & TLS_IE) != 0)
+	      bfd_put_32 (output_bfd, tpoff (info, relocation, dynamic),
+			  sgot->contents + gotoff);
 
 	    /* The PG21 and LO13 relocs are pc-relative, while the
 	       rest are GOT relative.  */
@@ -1716,7 +1772,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	case R_OR1K_TLS_LE_AHI16:
 	case R_OR1K_TLS_LE_SLO16:
 	  /* Relocation is offset from TP.  */
-	  relocation = tpoff (info, relocation);
+	  relocation = tpoff (info, relocation, 0);
 	  break;
 
 	case R_OR1K_TLS_DTPMOD:
@@ -1822,15 +1878,6 @@ or1k_elf_check_relocs (bfd *abfd,
   if (bfd_link_relocatable (info))
     return TRUE;
 
-  /* Don't do anything special with non-loaded, non-alloced sections.
-     In particular, any relocs in such sections should not affect GOT
-     and PLT reference counting (ie. we don't allow them to create GOT
-     or PLT entries), there's no possibility or desire to optimize TLS
-     relocs, and there's not much point in propagating relocs to shared
-     libs that the dynamic linker won't relocate.  */
-  if ((sec->flags & SEC_ALLOC) == 0)
-    return TRUE;
-
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
 
@@ -1895,7 +1942,7 @@ or1k_elf_check_relocs (bfd *abfd,
 
       /* Record TLS type.  */
       if (h != NULL)
-	  ((struct elf_or1k_link_hash_entry *) h)->tls_type = tls_type;
+	  ((struct elf_or1k_link_hash_entry *) h)->tls_type |= tls_type;
       else
 	{
 	  unsigned char *local_tls_type;
@@ -1912,7 +1959,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		return FALSE;
 	      elf_or1k_local_tls_type (abfd) = local_tls_type;
 	    }
-	  local_tls_type[r_symndx] = tls_type;
+	  local_tls_type[r_symndx] |= tls_type;
 	}
 
       switch (r_type)
@@ -1927,9 +1974,7 @@ or1k_elf_check_relocs (bfd *abfd,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_OR1K_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -2049,7 +2094,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		    && (h->root.type == bfd_link_hash_defweak
 			|| !h->def_regular)))
 	      {
-		struct elf_dyn_relocs *p;
+		struct elf_dyn_relocs *sec_relocs;
 		struct elf_dyn_relocs **head;
 
 		/* When creating a shared object, we must copy these
@@ -2066,8 +2111,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		      return FALSE;
 
 		    if (strncmp (name, ".rela", 5) != 0
-			|| strcmp (bfd_get_section_name (abfd, sec),
-				   name + 5) != 0)
+			|| strcmp (bfd_section_name (sec), name + 5) != 0)
 		      {
 			_bfd_error_handler
 			  /* xgettext:c-format */
@@ -2094,7 +2138,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		/* If this is a global symbol, we count the number of
 		   relocations we need for this symbol.  */
 		if (h != NULL)
-		  head = &((struct elf_or1k_link_hash_entry *) h)->dyn_relocs;
+		  head = &h->dyn_relocs;
 		else
 		  {
 		    /* Track dynamic relocs needed for local syms too.
@@ -2105,7 +2149,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		    Elf_Internal_Sym *isym;
 		    void *vpp;
 
-		    isym = bfd_sym_from_r_symndx (&htab->sym_sec,
+		    isym = bfd_sym_from_r_symndx (&htab->root.sym_cache,
 						  abfd, r_symndx);
 		    if (isym == NULL)
 		      return FALSE;
@@ -2118,24 +2162,26 @@ or1k_elf_check_relocs (bfd *abfd,
 		    head = (struct elf_dyn_relocs **) vpp;
 		  }
 
-		p = *head;
-		if (p == NULL || p->sec != sec)
+		sec_relocs = *head;
+		/* Allocate this sections dynamic reolcations structure if this
+		   is a new section.  */
+		if (sec_relocs == NULL || sec_relocs->sec != sec)
 		  {
-		    bfd_size_type amt = sizeof *p;
-		    p = ((struct elf_dyn_relocs *)
-			 bfd_alloc (htab->root.dynobj, amt));
-		    if (p == NULL)
+		    size_t amt = sizeof *sec_relocs;
+		    sec_relocs = ((struct elf_dyn_relocs *)
+				  bfd_alloc (htab->root.dynobj, amt));
+		    if (sec_relocs == NULL)
 		      return FALSE;
-		    p->next = *head;
-		    *head = p;
-		    p->sec = sec;
-		    p->count = 0;
-		    p->pc_count = 0;
+		    sec_relocs->next = *head;
+		    *head = sec_relocs;
+		    sec_relocs->sec = sec;
+		    sec_relocs->count = 0;
+		    sec_relocs->pc_count = 0;
 		  }
 
-		p->count += 1;
+		sec_relocs->count += 1;
 		if (r_type == R_OR1K_INSN_REL_26)
-		  p->pc_count += 1;
+		  sec_relocs->pc_count += 1;
 	      }
 	  }
 	  break;
@@ -2379,8 +2425,11 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
       or1k_write_plt_entry (output_bfd, splt->contents + h->plt.offset,
 			    plt0, plt1, plt2, OR1K_JR(12));
 
-      /* Fill in the entry in the global offset table.  */
-      bfd_put_32 (output_bfd, plt_addr, sgot->contents + got_offset);
+      /* Fill in the entry in the global offset table.  We initialize it to
+	 point to the top of the plt.  This is done to lazy lookup the actual
+	 symbol as the first plt entry will be setup by libc to call the
+	 runtime dynamic linker.  */
+      bfd_put_32 (output_bfd, plt_base_addr, sgot->contents + got_offset);
 
       /* Fill in the entry in the .rela.plt section.  */
       rela.r_offset = got_addr;
@@ -2402,14 +2451,14 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
       && (h->got.offset & 2) == 0) /* Homemade TLS check.  */
     {
       asection *sgot;
-      asection *srela;
+      asection *srelgot;
       Elf_Internal_Rela rela;
 
       /* This symbol has an entry in the global offset table.  Set it
 	 up.  */
       sgot = htab->root.sgot;
-      srela = htab->root.srelgot;
-      BFD_ASSERT (sgot != NULL && srela != NULL);
+      srelgot = htab->root.srelgot;
+      BFD_ASSERT (sgot != NULL && srelgot != NULL);
 
       rela.r_offset = (sgot->output_section->vma
 		       + sgot->output_offset
@@ -2435,10 +2484,10 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
 	  rela.r_addend = 0;
 	}
 
-      loc = srela->contents;
-      loc += srela->reloc_count * sizeof (Elf32_External_Rela);
+      loc = srelgot->contents;
+      loc += srelgot->reloc_count * sizeof (Elf32_External_Rela);
       bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
-      ++srela->reloc_count;
+      ++srelgot->reloc_count;
     }
 
   if (h->needs_copy)
@@ -2485,24 +2534,6 @@ or1k_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
     case R_OR1K_COPY:	   return reloc_class_copy;
     default:		   return reloc_class_normal;
     }
-}
-
-/* Find dynamic relocs for H that apply to read-only sections.  */
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-  struct elf_or1k_link_hash_entry *eh = (struct elf_or1k_link_hash_entry *) h;
-
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2591,7 +2622,7 @@ or1k_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* If we don't find any dynamic relocs in read-only sections, then
      we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
-  if (!readonly_dynrelocs (h))
+  if (!_bfd_elf_readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -2634,6 +2665,56 @@ or1k_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
+/* Caclulate an update the sizes required for a symbol in the GOT and
+   RELA relocation section based on the TLS_TYPE and whether or not the symbol
+   is DYNAMIC.
+
+   Symbols with TLS_GD access require 8 bytes in the GOT and, if dynamic,
+   require two relocation entries.  Symbols with TLS_IE access require 4 bytes
+   in the GOT and, if dynamic, require one relocation entry.  Symbols may have
+   both TLS_GD and TLS_IE access to be accounted for.
+
+   Other symbols require 4 bytes in the GOT table and, if dynamic, require one
+   relocation entry.  */
+
+static void
+or1k_set_got_and_rela_sizes (const unsigned char tls_type,
+			     const bfd_boolean dynamic,
+			     bfd_vma *got_size,
+			     bfd_vma *rela_size)
+{
+  bfd_boolean is_tls_entry = FALSE;
+
+  /* TLS GD requires two GOT entries and two relocs.  */
+  if ((tls_type & TLS_GD) != 0)
+    {
+      *got_size += 8;
+      is_tls_entry = TRUE;
+    }
+
+  if ((tls_type & TLS_IE) != 0)
+    {
+      *got_size += 4;
+      is_tls_entry = TRUE;
+    }
+
+  if (is_tls_entry == FALSE)
+    *got_size += 4;
+
+  if (dynamic)
+    {
+      if ((tls_type & TLS_GD) != 0)
+	*rela_size += 2 * sizeof (Elf32_External_Rela);
+
+      if ((tls_type & TLS_IE) != 0)
+	*rela_size += sizeof (Elf32_External_Rela);
+
+      if (is_tls_entry == FALSE)
+	*rela_size += sizeof (Elf32_External_Rela);
+    }
+}
+
+
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 
@@ -2642,8 +2723,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 {
   struct bfd_link_info *info;
   struct elf_or1k_link_hash_table *htab;
-  struct elf_or1k_link_hash_entry *eh;
-  struct elf_dyn_relocs *p;
+  struct elf_dyn_relocs *sec_relocs;
 
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
@@ -2652,8 +2732,6 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
   htab = or1k_elf_hash_table (info);
   if (htab == NULL)
     return FALSE;
-
-  eh = (struct elf_or1k_link_hash_entry *) h;
 
   if (htab->root.dynamic_sections_created
       && h->plt.refcount > 0)
@@ -2669,14 +2747,14 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
 	{
-	  asection *s = htab->root.splt;
+	  asection *splt = htab->root.splt;
 
 	  /* If this is the first .plt entry, make room for the special
 	     first entry.  */
-	  if (s->size == 0)
-	    s->size = PLT_ENTRY_SIZE;
+	  if (splt->size == 0)
+	    splt->size = PLT_ENTRY_SIZE;
 
-	  h->plt.offset = s->size;
+	  h->plt.offset = splt->size;
 
 	  /* If this symbol is not defined in a regular file, and we are
 	     not generating a shared library, then set the symbol to this
@@ -2686,12 +2764,12 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	  if (! bfd_link_pic (info)
 	      && !h->def_regular)
 	    {
-	      h->root.u.def.section = s;
+	      h->root.u.def.section = splt;
 	      h->root.u.def.value = h->plt.offset;
 	    }
 
 	  /* Make room for this entry.  */
-	  s->size += PLT_ENTRY_SIZE;
+	  splt->size += PLT_ENTRY_SIZE;
 
 	  /* We also need to make an entry in the .got.plt section, which
 	     will be placed in the .got section by the linker script.  */
@@ -2714,7 +2792,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 
   if (h->got.refcount > 0)
     {
-      asection *s;
+      asection *sgot;
       bfd_boolean dyn;
       unsigned char tls_type;
 
@@ -2727,30 +2805,21 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	    return FALSE;
 	}
 
-      s = htab->root.sgot;
+      sgot = htab->root.sgot;
 
-      h->got.offset = s->size;
+      h->got.offset = sgot->size;
 
       tls_type = ((struct elf_or1k_link_hash_entry *) h)->tls_type;
 
-      /* TLS GD requires two GOT and two relocs.  */
-      if (tls_type == TLS_GD)
-	s->size += 8;
-      else
-	s->size += 4;
       dyn = htab->root.dynamic_sections_created;
-      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h))
-	{
-	  if (tls_type == TLS_GD)
-	    htab->root.srelgot->size += 2 * sizeof (Elf32_External_Rela);
-	  else
-	    htab->root.srelgot->size += sizeof (Elf32_External_Rela);
-	}
+      dyn = WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h);
+      or1k_set_got_and_rela_sizes (tls_type, dyn,
+				   &sgot->size, &htab->root.srelgot->size);
     }
   else
     h->got.offset = (bfd_vma) -1;
 
-  if (eh->dyn_relocs == NULL)
+  if (h->dyn_relocs == NULL)
     return TRUE;
 
   /* In the shared -Bsymbolic case, discard space allocated for
@@ -2765,24 +2834,24 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL;)
+	  for (pp = &h->dyn_relocs; (sec_relocs = *pp) != NULL;)
 	    {
-	      p->count -= p->pc_count;
-	      p->pc_count = 0;
-	      if (p->count == 0)
-		*pp = p->next;
+	      sec_relocs->count -= sec_relocs->pc_count;
+	      sec_relocs->pc_count = 0;
+	      if (sec_relocs->count == 0)
+		*pp = sec_relocs->next;
 	      else
-		pp = &p->next;
+		pp = &sec_relocs->next;
 	    }
 	}
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -2822,45 +2891,20 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (sec_relocs = h->dyn_relocs;
+       sec_relocs != NULL;
+       sec_relocs = sec_relocs->next)
     {
-      asection *sreloc = elf_section_data (p->sec)->sreloc;
-      sreloc->size += p->count * sizeof (Elf32_External_Rela);
+      asection *sreloc = elf_section_data (sec_relocs->sec)->sreloc;
+      sreloc->size += sec_relocs->count * sizeof (Elf32_External_Rela);
     }
 
-  return TRUE;
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
   return TRUE;
 }
 
@@ -2911,26 +2955,28 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       for (s = ibfd->sections; s != NULL; s = s->next)
 	{
-	  struct elf_dyn_relocs *p;
+	  struct elf_dyn_relocs *sec_relocs;
 
-	  for (p = ((struct elf_dyn_relocs *)
-		    elf_section_data (s)->local_dynrel);
-	       p != NULL;
-	       p = p->next)
+	  for (sec_relocs = ((struct elf_dyn_relocs *)
+			     elf_section_data (s)->local_dynrel);
+	       sec_relocs != NULL;
+	       sec_relocs = sec_relocs->next)
 	    {
-	      if (! bfd_is_abs_section (p->sec)
-		  && bfd_is_abs_section (p->sec->output_section))
+	      if (! bfd_is_abs_section (sec_relocs->sec)
+		  && bfd_is_abs_section (sec_relocs->sec->output_section))
 		{
 		  /* Input section has been discarded, either because
 		     it is a copy of a linkonce section or due to
 		     linker script /DISCARD/, so we'll be discarding
 		     the relocs too.  */
 		}
-	      else if (p->count != 0)
+	      else if (sec_relocs->count != 0)
 		{
-		  srel = elf_section_data (p->sec)->sreloc;
-		  srel->size += p->count * sizeof (Elf32_External_Rela);
-		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
+		  srel = elf_section_data (sec_relocs->sec)->sreloc;
+		  srel->size += sec_relocs->count
+				* sizeof (Elf32_External_Rela);
+		  if ((sec_relocs->sec->output_section->flags & SEC_READONLY)
+		      != 0)
 		    info->flags |= DF_TEXTREL;
 		}
 	    }
@@ -2950,20 +2996,13 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	{
 	  if (*local_got > 0)
 	    {
-	      *local_got = s->size;
+	      unsigned char tls_type = (local_tls_type == NULL)
+					? TLS_UNKNOWN
+					: *local_tls_type;
 
-	      /* TLS GD requires two GOT and two relocs.  */
-	      if (local_tls_type != NULL && *local_tls_type == TLS_GD)
-		s->size += 8;
-	      else
-		s->size += 4;
-	      if (bfd_link_pic (info))
-		{
-		  if (local_tls_type != NULL && *local_tls_type == TLS_GD)
-		    srel->size += 2 * sizeof (Elf32_External_Rela);
-		  else
-		    srel->size += sizeof (Elf32_External_Rela);
-		}
+	      *local_got = s->size;
+	      or1k_set_got_and_rela_sizes (tls_type, bfd_link_pic (info),
+					   &s->size, &srel->size);
 	    }
 	  else
 
@@ -2995,7 +3034,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0 && s != htab->root.srelplt)
 	    relocs = TRUE;
@@ -3037,54 +3076,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	return FALSE;
     }
 
-  if (htab->root.dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in or1k_elf_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-     if (bfd_link_executable (info))
-       {
-	 if (! add_dynamic_entry (DT_DEBUG, 0))
-	   return FALSE;
-       }
-
-     if (htab->root.splt->size != 0)
-       {
-	 if (! add_dynamic_entry (DT_PLTGOT, 0)
-	     || ! add_dynamic_entry (DT_PLTRELSZ, 0)
-	     || ! add_dynamic_entry (DT_PLTREL, DT_RELA)
-	     || ! add_dynamic_entry (DT_JMPREL, 0))
-	   return FALSE;
-	}
-
-     if (relocs)
-       {
-	 if (! add_dynamic_entry (DT_RELA, 0)
-	     || ! add_dynamic_entry (DT_RELASZ, 0)
-	     || ! add_dynamic_entry (DT_RELAENT,
-				     sizeof (Elf32_External_Rela)))
-	   return FALSE;
-
-	 /* If any dynamic relocs apply to a read-only section,
-	    then we need a DT_TEXTREL entry.  */
-	 if ((info->flags & DF_TEXTREL) == 0)
-	   elf_link_hash_traverse (&htab->root, maybe_set_textrel, info);
-
-	 if ((info->flags & DF_TEXTREL) != 0)
-	   {
-	     if (! add_dynamic_entry (DT_TEXTREL, 0))
-	       return FALSE;
-	   }
-       }
-    }
-
-#undef add_dynamic_entry
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Copy the extra info we tack onto an elf_link_hash_entry.  */
@@ -3099,37 +3091,6 @@ or1k_elf_copy_indirect_symbol (struct bfd_link_info *info,
 
   edir = (struct elf_or1k_link_hash_entry *) dir;
   eind = (struct elf_or1k_link_hash_entry *) ind;
-
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL;)
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
 
   if (ind->root.type == bfd_link_hash_indirect)
     {
@@ -3158,9 +3119,8 @@ or1k_elf_object_p (bfd *abfd)
 
 /* Store the machine number in the flags field.  */
 
-static void
-or1k_elf_final_write_processing (bfd *abfd,
-				 bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+or1k_elf_final_write_processing (bfd *abfd)
 {
   switch (bfd_get_mach (abfd))
     {
@@ -3171,6 +3131,7 @@ or1k_elf_final_write_processing (bfd *abfd,
       elf_elfheader (abfd)->e_flags |= EF_OR1K_NODELAY;
       break;
     }
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 static bfd_boolean

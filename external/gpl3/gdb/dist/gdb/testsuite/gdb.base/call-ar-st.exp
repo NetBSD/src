@@ -1,4 +1,4 @@
-#   Copyright 1998-2019 Free Software Foundation, Inc.
+#   Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -363,8 +363,7 @@ if {!$skip_float_test && \
 
 #call compute_with_small_structs(20)
 gdb_test "print compute_with_small_structs(20)" \
-    "\[0-9\]+ = void" \
-    "print compute_with_small_structs(20)"
+    "\[0-9\]+ = void"
 
 
 #call print_ten_doubles(123.456, 123.456, -0.12, -1.23, 343434.8, 89.098, 

@@ -1,6 +1,6 @@
 /* JIT declarations for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,9 @@
 
 #ifndef JIT_H
 #define JIT_H
+
+struct objfile;
+struct minimal_symbol;
 
 /* When the JIT breakpoint fires, the inferior wants us to take one of
    these actions.  These values are used by the inferior, so the
@@ -64,6 +67,41 @@ struct jit_descriptor
   CORE_ADDR first_entry;
 };
 
+/* An objfile that defines the required symbols of the JIT interface has an
+   instance of this type attached to it.  */
+
+struct jiter_objfile_data
+{
+  ~jiter_objfile_data ();
+
+  /* Symbol for __jit_debug_register_code.  */
+  minimal_symbol *register_code = nullptr;
+
+  /* Symbol for __jit_debug_descriptor.  */
+  minimal_symbol *descriptor = nullptr;
+
+  /* This is the relocated address of the __jit_debug_register_code function
+     provided by this objfile.  This is used to detect relocations changes
+     requiring the breakpoint to be re-created.  */
+  CORE_ADDR cached_code_address = 0;
+
+  /* This is the JIT event breakpoint, or nullptr if it has been deleted.  */
+  breakpoint *jit_breakpoint = nullptr;
+};
+
+/* An objfile that is the product of JIT compilation and was registered
+   using the JIT interface has an instance of this type attached to it.  */
+
+struct jited_objfile_data
+{
+  jited_objfile_data (CORE_ADDR addr)
+    : addr (addr)
+  {}
+
+  /* Address of struct jit_code_entry for this objfile.  */
+  CORE_ADDR addr;
+};
+
 /* Looks for the descriptor and registration symbols and breakpoints
    the registration function.  If it finds both, it registers all the
    already JITed code.  If it has already found the symbols, then it
@@ -76,8 +114,9 @@ extern void jit_inferior_created_hook (void);
 extern void jit_breakpoint_re_set (void);
 
 /* This function is called by handle_inferior_event when it decides
-   that the JIT event breakpoint has fired.  */
+   that the JIT event breakpoint has fired.  JITER is the objfile
+   whose JIT event breakpoint has been hit.  */
 
-extern void jit_event_handler (struct gdbarch *gdbarch);
+extern void jit_event_handler (gdbarch *gdbarch, objfile *jiter);
 
 #endif /* JIT_H */

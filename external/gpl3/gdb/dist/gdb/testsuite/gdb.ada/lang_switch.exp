@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile lang_switch
 set cfile "foo"
@@ -41,6 +43,9 @@ gdb_test "bt" \
 # Now, make sure that the language doesn't get automatically switched
 # if the current language is not "auto".
 gdb_test "set lang c"
+# This gives different output with -fgnat-encodings=minimal and
+# -fgnat-encodings=all, but since we don't care so much about the
+# precise details here, we just accept anything.
 gdb_test "bt" \
-         ".*#1.*lang_switch\\.ada_procedure\\s*\\(msg=(@$hex: +)?{.*\\).*" \
+         ".*#1.*lang_switch\\.ada_procedure\\s*\\(msg=(@$hex: +)?.*\\).*" \
          "backtrace with lang set to C"

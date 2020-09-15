@@ -1,5 +1,5 @@
 /* Basic C++ demangling support for GDB.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,16 +19,16 @@
 #ifndef GDB_DEMANGLE_H
 #define GDB_DEMANGLE_H
 
-/* Nonzero means that encoded C++/ObjC names should be printed out in their
+/* True means that encoded C++/ObjC names should be printed out in their
    C++/ObjC form rather than raw.  */
-extern int demangle;
+extern bool demangle;
 
-/* Nonzero means that encoded C++/ObjC names should be printed out in their
+/* True means that encoded C++/ObjC names should be printed out in their
    C++/ObjC form even in assembler language displays.  If this is set, but
-   DEMANGLE is zero, names are printed raw, i.e. DEMANGLE controls.  */
-extern int asm_demangle;
+   DEMANGLE is false, names are printed raw, i.e. DEMANGLE controls.  */
+extern bool asm_demangle;
 
 /* Check if a character is one of the commonly used C++ marker characters.  */
-extern int is_cplus_marker (int);
+extern bool is_cplus_marker (int);
 
 #endif /* GDB_DEMANGLE_H */

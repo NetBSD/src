@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,16 +68,6 @@ switch -glob -- [istarget] {
 	set architecture "sparc:v9"
 	set regdir "sparc/"
         set core-regs {sparc64-cpu.xml sparc64-fpu.xml sparc64-cp0.xml}
-    }
-    "spu*-*-*" {
-	# This may be either the spu-linux-nat target, or the Cell/B.E.
-	# multi-architecture debugger in SPU standalone executable mode.
-	# We do not support XML register sets on SPU in either case.
-	# However, the multi-arch debugger will accept XML registers sets
-	# (on the PowerPC side), hence the test below would fail.
-	# Simply return unconditionally here.
-	unsupported "register tests"
-	return 0
     }
     "tic6x-*-*" {
 	set core-regs {tic6x-core.xml}
@@ -155,7 +145,7 @@ proc load_description { file errmsg xml_file } {
     close $ofd
 
     if {[is_remote host]} {
-	set regs_file [remote_download host "$subdir/$xml_file" $xml_file]
+	set regs_file [remote_download host "$regs_file" $xml_file]
     }
 
     # Anchor the test output, so that error messages are detected.
@@ -175,7 +165,7 @@ if {![is_remote host]} {
 }
 
 load_description "extra-regs.xml" "" "test-extra-regs.xml"
-gdb_test "ptype \$extrareg" "type = (int|long|long long)"
+gdb_test "ptype \$extrareg" "type = (int32_t|int|long|long long)"
 gdb_test "ptype \$uintreg" "type = uint32_t"
 gdb_test "ptype \$vecreg" "type = int8_t __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
 gdb_test "ptype \$unionreg" \
@@ -194,6 +184,8 @@ gdb_test "ptype \$mixed_flags" \
 gdb_test "maintenance print reggroups" \
     " Group\[ \t\]+Type\[ \t\]+\r\n.* general\[ \t\]+user\[ \t\]+\r\n.* foo\[ \t\]+user\[ \t\]+"
 
-load_description "core-only.xml" "" "test-regs.xml"
-# The extra register from the previous description should be gone.
-gdb_test "ptype \$extrareg" "type = void"
+with_test_prefix "core-only.xml" {
+    load_description "core-only.xml" "" "test-regs.xml"
+    # The extra register from the previous description should be gone.
+    gdb_test "ptype \$extrareg" "type = void"
+}

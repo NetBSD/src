@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2019 Free Software Foundation, Inc.
+Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -32,6 +32,21 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "libiberty.h"
 
 /* -- opc.c */
+
+/* Special check to ensure that instruction exists for given machine.  */
+
+int
+or1k_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn)
+{
+  int machs = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_MACH);
+
+  /* No mach attribute?  Assume it's supported for all machs.  */
+  if (machs == 0)
+    return 1;
+
+  return ((machs & cd->machs) != 0);
+}
+
 /* -- */
 /* The hash functions are recorded here to help keep assembler code out of
    the disassembler and vice versa.  */
@@ -148,32 +163,40 @@ static const CGEN_IFMT ifmt_lf_add_s ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_add_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xfc0007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R1) }, { F (F_R1) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
+static const CGEN_IFMT ifmt_lf_add_d32 ATTRIBUTE_UNUSED = {
+  32, 32, 0xfc0000ff, { { F (F_OPCODE) }, { F (F_RDD32) }, { F (F_RAD32) }, { F (F_RBD32) }, { F (F_OP_7_8) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_lf_itof_s ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
+static const CGEN_IFMT ifmt_lf_itof_d32 ATTRIBUTE_UNUSED = {
+  32, 32, 0xfc00f9ff, { { F (F_OPCODE) }, { F (F_R3) }, { F (F_RDD32) }, { F (F_RAD32) }, { F (F_RESV_8_1) }, { F (F_OP_7_8) }, { 0 } }
+};
+
 static const CGEN_IFMT ifmt_lf_ftoi_s ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_ftoi_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R1) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
+static const CGEN_IFMT ifmt_lf_ftoi_d32 ATTRIBUTE_UNUSED = {
+  32, 32, 0xfc00f9ff, { { F (F_OPCODE) }, { F (F_R3) }, { F (F_RDD32) }, { F (F_RAD32) }, { F (F_RESV_8_1) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_eq_s ATTRIBUTE_UNUSED = {
+static const CGEN_IFMT ifmt_lf_sfeq_s ATTRIBUTE_UNUSED = {
   32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_lf_sfeq_d32 ATTRIBUTE_UNUSED = {
+  32, 32, 0xffe004ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_RESV_10_1) }, { F (F_RAD32) }, { F (F_RBD32) }, { F (F_OP_7_8) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_lf_cust1_s ATTRIBUTE_UNUSED = {
   32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_cust1_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_R1) }, { F (F_R1) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
+static const CGEN_IFMT ifmt_lf_cust1_d32 ATTRIBUTE_UNUSED = {
+  32, 32, 0xffe004ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_RESV_10_1) }, { F (F_RAD32) }, { F (F_RBD32) }, { F (F_OP_7_8) }, { 0 } }
 };
 
 #undef F
@@ -785,11 +808,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000000 }
   },
-/* lf.add.d $rDDF,$rADF,$rBDF */
+/* lf.add.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000010 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000010 }
   },
 /* lf.sub.s $rDSF,$rASF,$rBSF */
   {
@@ -797,11 +820,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000001 }
   },
-/* lf.sub.d $rDDF,$rADF,$rBDF */
+/* lf.sub.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000011 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000011 }
   },
 /* lf.mul.s $rDSF,$rASF,$rBSF */
   {
@@ -809,11 +832,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000002 }
   },
-/* lf.mul.d $rDDF,$rADF,$rBDF */
+/* lf.mul.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000012 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000012 }
   },
 /* lf.div.s $rDSF,$rASF,$rBSF */
   {
@@ -821,11 +844,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000003 }
   },
-/* lf.div.d $rDDF,$rADF,$rBDF */
+/* lf.div.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000013 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000013 }
   },
 /* lf.rem.s $rDSF,$rASF,$rBSF */
   {
@@ -833,11 +856,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000006 }
   },
-/* lf.rem.d $rDDF,$rADF,$rBDF */
+/* lf.rem.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000016 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000016 }
   },
 /* lf.itof.s $rDSF,$rA */
   {
@@ -845,11 +868,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RA), 0 } },
     & ifmt_lf_itof_s, { 0xc8000004 }
   },
-/* lf.itof.d $rDSF,$rA */
+/* lf.itof.d $rDD32F,$rADI */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDSF), ',', OP (RA), 0 } },
-    & ifmt_lf_itof_s, { 0xc8000014 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RADI), 0 } },
+    & ifmt_lf_itof_d32, { 0xc8000014 }
   },
 /* lf.ftoi.s $rD,$rASF */
   {
@@ -857,83 +880,167 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RASF), 0 } },
     & ifmt_lf_ftoi_s, { 0xc8000005 }
   },
-/* lf.ftoi.d $rD,$rADF */
+/* lf.ftoi.d $rDDI,$rAD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RD), ',', OP (RADF), 0 } },
-    & ifmt_lf_ftoi_d, { 0xc8000015 }
+    { { MNEM, ' ', OP (RDDI), ',', OP (RAD32F), 0 } },
+    & ifmt_lf_ftoi_d32, { 0xc8000015 }
   },
 /* lf.sfeq.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc8000008 }
+    & ifmt_lf_sfeq_s, { 0xc8000008 }
   },
-/* lf.sfeq.d $rASF,$rBSF */
+/* lf.sfeq.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc8000018 }
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc8000018 }
   },
 /* lf.sfne.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc8000009 }
+    & ifmt_lf_sfeq_s, { 0xc8000009 }
   },
-/* lf.sfne.d $rASF,$rBSF */
+/* lf.sfne.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc8000019 }
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc8000019 }
   },
 /* lf.sfge.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800000b }
+    & ifmt_lf_sfeq_s, { 0xc800000b }
   },
-/* lf.sfge.d $rASF,$rBSF */
+/* lf.sfge.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800001b }
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800001b }
   },
 /* lf.sfgt.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800000a }
+    & ifmt_lf_sfeq_s, { 0xc800000a }
   },
-/* lf.sfgt.d $rASF,$rBSF */
+/* lf.sfgt.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800001a }
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800001a }
   },
 /* lf.sflt.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800000c }
+    & ifmt_lf_sfeq_s, { 0xc800000c }
   },
-/* lf.sflt.d $rASF,$rBSF */
+/* lf.sflt.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800001c }
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800001c }
   },
 /* lf.sfle.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800000d }
+    & ifmt_lf_sfeq_s, { 0xc800000d }
   },
-/* lf.sfle.d $rASF,$rBSF */
+/* lf.sfle.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800001d }
+  },
+/* lf.sfueq.s $rASF,$rBSF */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
-    & ifmt_lf_eq_s, { 0xc800001d }
+    & ifmt_lf_sfeq_s, { 0xc8000028 }
+  },
+/* lf.sfueq.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc8000038 }
+  },
+/* lf.sfune.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc8000029 }
+  },
+/* lf.sfune.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc8000039 }
+  },
+/* lf.sfugt.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc800002a }
+  },
+/* lf.sfugt.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800003a }
+  },
+/* lf.sfuge.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc800002b }
+  },
+/* lf.sfuge.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800003b }
+  },
+/* lf.sfult.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc800002c }
+  },
+/* lf.sfult.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800003c }
+  },
+/* lf.sfule.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc800002d }
+  },
+/* lf.sfule.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800003d }
+  },
+/* lf.sfun.s $rASF,$rBSF */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
+    & ifmt_lf_sfeq_s, { 0xc800002e }
+  },
+/* lf.sfun.d $rAD32F,$rBD32F */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_sfeq_d32, { 0xc800003e }
   },
 /* lf.madd.s $rDSF,$rASF,$rBSF */
   {
@@ -941,11 +1048,11 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000007 }
   },
-/* lf.madd.d $rDDF,$rADF,$rBDF */
+/* lf.madd.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000017 }
+    { { MNEM, ' ', OP (RDD32F), ',', OP (RAD32F), ',', OP (RBD32F), 0 } },
+    & ifmt_lf_add_d32, { 0xc8000017 }
   },
 /* lf.cust1.s $rASF,$rBSF */
   {
@@ -957,7 +1064,7 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
   {
     { 0, 0, 0, 0 },
     { { MNEM, 0 } },
-    & ifmt_lf_cust1_d, { 0xc80000e0 }
+    & ifmt_lf_cust1_d32, { 0xc80000e0 }
   },
 };
 

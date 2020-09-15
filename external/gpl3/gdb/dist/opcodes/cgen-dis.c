@@ -1,5 +1,5 @@
 /* CGEN generic disassembler support code.
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "symcat.h"
 #include "opcode/cgen.h"
+#include "disassemble.h"
 
 static CGEN_INSN_LIST *  hash_insn_array        (CGEN_CPU_DESC, const CGEN_INSN *, int, int, CGEN_INSN_LIST **, CGEN_INSN_LIST *);
 static CGEN_INSN_LIST *  hash_insn_list         (CGEN_CPU_DESC, const CGEN_INSN_LIST *, CGEN_INSN_LIST **, CGEN_INSN_LIST *);
@@ -110,9 +111,10 @@ hash_insn_array (CGEN_CPU_DESC cd,
   for (i = count - 1; i >= 0; --i, ++hentbuf)
     {
       unsigned int hash;
-      char buf [4];
+      char buf [8];
       unsigned long value;
       const CGEN_INSN *insn = &insns[i];
+      size_t size;
 
       if (! (* cd->dis_hash_p) (insn))
 	continue;
@@ -121,10 +123,9 @@ hash_insn_array (CGEN_CPU_DESC cd,
 	 to hash on, so set both up.  */
 
       value = CGEN_INSN_BASE_VALUE (insn);
-      bfd_put_bits ((bfd_vma) value,
-		    buf,
-		    CGEN_INSN_MASK_BITSIZE (insn),
-		    big_p);
+      size = CGEN_INSN_MASK_BITSIZE (insn);
+      OPCODES_ASSERT (size <= sizeof (buf) * 8);
+      bfd_put_bits ((bfd_vma) value, buf, size, big_p);
       hash = (* cd->dis_hash) (buf, value);
       add_insn_to_hash_chain (hentbuf, insn, htable, hash);
     }

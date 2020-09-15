@@ -1,6 +1,6 @@
 /* GDB/Scheme support for math operations on values.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -65,7 +65,7 @@ enum valscm_binary_opcode
 
 /* If TYPE is a reference, return the target; otherwise return TYPE.  */
 #define STRIP_REFERENCE(TYPE) \
-  ((TYPE_CODE (TYPE) == TYPE_CODE_REF) ? (TYPE_TARGET_TYPE (TYPE)) : (TYPE))
+  ((TYPE->code () == TYPE_CODE_REF) ? (TYPE_TARGET_TYPE (TYPE)) : (TYPE))
 
 /* Helper for vlscm_unop.  Contains all the code that may throw a GDB
    exception.  */
@@ -168,10 +168,10 @@ vlscm_binop_gdbthrow (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	rtype = check_typedef (rtype);
 	rtype = STRIP_REFERENCE (rtype);
 
-	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	if (ltype->code () == TYPE_CODE_PTR
 	    && is_integral_type (rtype))
 	  res_val = value_ptradd (arg1, value_as_long (arg2));
-	else if (TYPE_CODE (rtype) == TYPE_CODE_PTR
+	else if (rtype->code () == TYPE_CODE_PTR
 		 && is_integral_type (ltype))
 	  res_val = value_ptradd (arg2, value_as_long (arg1));
 	else
@@ -188,15 +188,15 @@ vlscm_binop_gdbthrow (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	rtype = check_typedef (rtype);
 	rtype = STRIP_REFERENCE (rtype);
 
-	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-	    && TYPE_CODE (rtype) == TYPE_CODE_PTR)
+	if (ltype->code () == TYPE_CODE_PTR
+	    && rtype->code () == TYPE_CODE_PTR)
 	  {
 	    /* A ptrdiff_t for the target would be preferable here.  */
 	    res_val
 	      = value_from_longest (builtin_type (gdbarch)->builtin_long,
 				    value_ptrdiff (arg1, arg2));
 	  }
-	else if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	else if (ltype->code () == TYPE_CODE_PTR
 		 && is_integral_type (rtype))
 	  res_val = value_ptradd (arg1, - value_as_long (arg2));
 	else
@@ -525,7 +525,7 @@ vlscm_convert_typed_number (const char *func_name, int obj_arg_pos, SCM obj,
 			    struct gdbarch *gdbarch, SCM *except_scmp)
 {
   if (is_integral_type (type)
-      || TYPE_CODE (type) == TYPE_CODE_PTR)
+      || type->code () == TYPE_CODE_PTR)
     {
       if (TYPE_UNSIGNED (type))
 	{
@@ -558,14 +558,8 @@ vlscm_convert_typed_number (const char *func_name, int obj_arg_pos, SCM obj,
 	  return value_from_longest (type, gdbscm_scm_to_longest (obj));
 	}
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    {
-      struct value *value = allocate_value (type);
-      target_float_from_host_double (value_contents_raw (value),
-				     value_type (value),
-				     scm_to_double (obj));
-      return value;
-    }
+  else if (type->code () == TYPE_CODE_FLT)
+    return value_from_host_double (type, scm_to_double (obj));
   else
     {
       *except_scmp = gdbscm_make_type_error (func_name, obj_arg_pos, obj,
@@ -584,7 +578,7 @@ vlscm_integer_fits_p (SCM obj, struct type *type)
       ULONGEST max;
 
       /* If scm_is_unsigned_integer can't work with this type, just punt.  */
-      if (TYPE_LENGTH (type) > sizeof (scm_t_uintmax))
+      if (TYPE_LENGTH (type) > sizeof (uintmax_t))
 	return 0;
       get_unsigned_type_max (type, &max);
       return scm_is_unsigned_integer (obj, 0, max);
@@ -594,7 +588,7 @@ vlscm_integer_fits_p (SCM obj, struct type *type)
       LONGEST min, max;
 
       /* If scm_is_signed_integer can't work with this type, just punt.  */
-      if (TYPE_LENGTH (type) > sizeof (scm_t_intmax))
+      if (TYPE_LENGTH (type) > sizeof (intmax_t))
 	return 0;
       get_signed_type_minmax (type, &min, &max);
       return scm_is_signed_integer (obj, min, max);
@@ -645,13 +639,7 @@ vlscm_convert_number (const char *func_name, int obj_arg_pos, SCM obj,
 				   gdbscm_scm_to_ulongest (obj));
     }
   else if (scm_is_real (obj))
-    {
-      struct value *value = allocate_value (bt->builtin_double);
-      target_float_from_host_double (value_contents_raw (value),
-				     value_type (value),
-				     scm_to_double (obj));
-      return value;
-    }
+    return value_from_host_double (bt->builtin_double, scm_to_double (obj));
 
   *except_scmp = gdbscm_make_out_of_range_error (func_name, obj_arg_pos, obj,
 			_("value not a number representable on the target"));
@@ -735,7 +723,7 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 
   *except_scmp = SCM_BOOL_F;
 
-  TRY
+  try
     {
       if (vlscm_is_value (obj))
 	{
@@ -836,11 +824,10 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 	  value = NULL;
 	}
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
-      except_scm = gdbscm_scm_from_gdb_exception (except);
+      except_scm = gdbscm_scm_from_gdb_exception (unpack (except));
     }
-  END_CATCH
 
   if (gdbscm_is_true (except_scm))
     {

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2019 Free Software Foundation, Inc.
+   Copyright 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,8 +18,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <errno.h>
+
+#ifndef PTRACE_ATTACH
+#define PTRACE_ATTACH PT_ATTACH
+#endif
 
 int
 main (void)
@@ -33,7 +38,9 @@ main (void)
       exit (1);
     case 0:
       errno = 0;
-      ptrace (PTRACE_ATTACH, getppid (), NULL, NULL);
+      /* The 4th argument to ptrace () is 0 on purpose, as it is compatible
+	 between kernels that accept void* (like Linux) and int (NetBSD).  */
+      ptrace (PTRACE_ATTACH, getppid (), NULL, 0);
       if (errno != 0)
 	perror ("PTRACE_ATTACH");
       break;

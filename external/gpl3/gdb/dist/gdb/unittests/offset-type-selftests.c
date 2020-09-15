@@ -1,6 +1,6 @@
 /* Self tests for offset types for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,10 +18,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
-#include "common/offset-type.h"
-#include "common/underlying.h"
-#include "common/valid-expr.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/offset-type.h"
+#include "gdbsupport/underlying.h"
+#include "gdbsupport/valid-expr.h"
 
 namespace selftests {
 namespace offset_type {
@@ -171,6 +171,7 @@ run_tests ()
 } /* namespace offset_type */
 } /* namespace selftests */
 
+void _initialize_offset_type_selftests ();
 void
 _initialize_offset_type_selftests ()
 {

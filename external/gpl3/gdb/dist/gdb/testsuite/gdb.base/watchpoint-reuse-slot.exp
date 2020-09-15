@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,14 +66,14 @@ proc stepi {} {
     set srcline "  for (i = 0; i < 100000; i++); /* stepi line */"
     set test "stepi advanced"
     gdb_test_multiple "stepi" $test {
-	-re "($hex).*[string_to_regexp $srcline]\r\n$gdb_prompt $" {
-	    set addr $expect_out(1,string)
+	-re -wrap "[string_to_regexp $srcline]" {
+	    set addr [get_valueof "/x" "\$pc" "0"]
 	    if {$addr != $cur_addr} {
 		pass $test
 	    } else {
 		fail $test
 	    }
-	    set cur_addr addr
+	    set cur_addr $addr
 	}
     }
 }

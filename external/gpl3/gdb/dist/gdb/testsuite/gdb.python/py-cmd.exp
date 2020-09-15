@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 Free Software Foundation, Inc.
+# Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ if ![runto_main] then {
 
 # Test a simple command.
 
-gdb_py_test_multiple "input simple command" \
+gdb_test_multiline "input simple command" \
   "python" "" \
   "class test_cmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -48,7 +48,7 @@ gdb_test "test_cmd ugh" "test_cmd output, arg = ugh" "call simple command"
 
 # Test a prefix command, and a subcommand within it.
 
-gdb_py_test_multiple "input prefix command" \
+gdb_test_multiline "input prefix command" \
   "python" "" \
   "class prefix_cmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -60,7 +60,7 @@ gdb_py_test_multiple "input prefix command" \
 
 gdb_test "prefix_cmd ugh" "prefix_cmd output, arg = ugh" "call prefix command"
 
-gdb_py_test_multiple "input subcommand" \
+gdb_test_multiline "input subcommand" \
   "python" "" \
   "class subcmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -74,7 +74,7 @@ gdb_test "prefix_cmd subcmd ugh" "subcmd output, arg = ugh" "call subcmd"
 
 # Test prefix command using keyword arguments.
 
-gdb_py_test_multiple "input prefix command, keyword arguments" \
+gdb_test_multiline "input prefix command, keyword arguments" \
   "python" "" \
   "class prefix_cmd2 (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -86,7 +86,7 @@ gdb_py_test_multiple "input prefix command, keyword arguments" \
 
 gdb_test "prefix_cmd2 argh" "prefix_cmd2 output, arg = argh" "call prefix command, keyword arguments"
 
-gdb_py_test_multiple "input subcommand under prefix_cmd2" \
+gdb_test_multiline "input subcommand under prefix_cmd2" \
   "python" "" \
   "class subcmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -100,7 +100,7 @@ gdb_test "prefix_cmd2 subcmd ugh" "subcmd output, arg = ugh" "call subcmd under 
 
 # Test a subcommand in an existing GDB prefix.
 
-gdb_py_test_multiple "input new subcommand" \
+gdb_test_multiline "input new subcommand" \
   "python" "" \
   "class newsubcmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -114,7 +114,7 @@ gdb_test "info newsubcmd ugh" "newsubcmd output, arg = ugh" "call newsubcmd"
 
 # Test a command that throws gdb.GdbError.
 
-gdb_py_test_multiple "input command to throw error" \
+gdb_test_multiline "input command to throw error" \
   "python" "" \
   "class test_error_cmd (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -145,7 +145,7 @@ gdb_test "python print (gdb.string_to_argv ('1\\ 2 3'))" \
     "string_to_argv ('1\\ 2 3')"
 
 # Test user-defined python commands.
-gdb_py_test_multiple "input simple user-defined command" \
+gdb_test_multiline "input simple user-defined command" \
   "python" "" \
   "class test_help (gdb.Command):" "" \
   "  \"\"\"Docstring\"\"\"" "" \
@@ -159,14 +159,14 @@ gdb_py_test_multiple "input simple user-defined command" \
 gdb_test "test_help ugh" "test_cmd output, arg = ugh" "call simple user-defined command"
 
 # Make sure the command shows up in `help user-defined`.
-gdb_test "help user-defined" "User-defined commands.\[\r\n\]+The commands in this class are those defined by the user.\[\r\n\]+Use the \"define\" command to define a command.\[\r\n\]+\[\r\n\]+List of commands:\[\r\n\]+\[\r\n\]+test_help -- Docstring\[\r\n\]+\[\r\n\]+Type \"help\" followed by command name for full documentation.\[\r\n\]+Type \"apropos word\" to search for commands related to \"word\".\[\r\n\]+Command name abbreviations are allowed if unambiguous.\[\r\n\]+" "see user-defined command in `help user-defined`"
+test_user_defined_class_help {"test_help -- Docstring[\r\n]"}
 
 # Make sure the command does not show up in `show user`.
 gdb_test "show user test_help" "Not a user command\." \
     "don't show user-defined python command in `show user command`"
 
 # Test expression completion on fields
-gdb_py_test_multiple "expression completion command" \
+gdb_test_multiline "expression completion command" \
   "python" "" \
   "class expr_test (gdb.Command):" "" \
   "  def __init__ (self):" "" \
@@ -266,7 +266,7 @@ if { [readline_is_used] } {
 # Test that interrupting pagination throws a gdb quit.
 gdb_test_no_output "set height 10"
 
-gdb_py_test_multiple "input multi-line-output command" \
+gdb_test_multiline "input multi-line-output command" \
   "python" "" \
   "class test_mline (gdb.Command):" "" \
   "  \"\"\"Docstring\"\"\"" "" \

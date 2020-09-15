@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2019 Free Software Foundation, Inc.
+   Copyright 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@
 	.section	.debug_loc
 loclist:
 	/* Reset the location list base address first.  */
-	.4byte		-1, 0
+	PTRBYTE		-1, 0
 
 	PTRBYTE		func_start, func_end
 	.2byte		2f-1f

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
    like gdb to behave in a user friendly, and helpful way when presented
    with such dwarf.  */
 
-/* There are 4 test cases in this assembler file.  In each case funcion
+/* There are 4 test cases in this assembler file.  In each case function
    main calls each test function in turn, each test case then calls the
    breakpt function.
 
@@ -153,14 +153,14 @@ breakpt:
         sub    $0x8,%rsp
         add    $0x8, %rsp
         retq
-.Ltext5:
+.Ltext5a:
         .size   breakpt, .-breakpt
 
         /* int_param_single_reg_loc */
 .globl int_param_single_reg_loc
         .type   int_param_single_reg_loc, @function
 int_param_single_reg_loc:
-.Ltext5:
+.Ltext5b:
         sub    $0x8,%rsp
 .Ltext6:
         nop
@@ -248,7 +248,7 @@ int_param_two_reg_pieces:
 .LASFDE0:
 	.long	.Lframe0                /* CIE reference */
 	.quad	.Ltext4                 /* start */
-	.quad	.Ltext5-.Ltext4         /* length */
+	.quad	.Ltext5a-.Ltext4        /* length */
         /* Instructions */
         .byte   0x7                     /* DW_CFA_undefined */
         .uleb128 0x2                    /* reg# */
@@ -264,11 +264,11 @@ int_param_two_reg_pieces:
 	.long	.LEFDE2-.LASFDE2        /* length */
 .LASFDE2:
 	.long	.Lframe0                /* CIE reference */
-	.quad	.Ltext5                 /* start */
-	.quad	.Ltext7-.Ltext5         /* length */
+	.quad	.Ltext5b                /* start */
+	.quad	.Ltext7-.Ltext5b        /* length */
         /* Instructions */
  	.byte	0x4
-	.long	.Ltext6-.Ltext5
+	.long	.Ltext6-.Ltext5b
 	.byte	0xe
 	.uleb128 0x10
 	.align 8
@@ -357,7 +357,7 @@ int_param_two_reg_pieces:
 	.string	"breakpt"               /* DW_AT_name */
 	.byte	0x1                     /* DW_AT_prototyped */
 	.quad	.Ltext4                 /* DW_AT_low_pc */
-	.quad	.Ltext5                 /* DW_AT_high_pc */
+	.quad	.Ltext5a                /* DW_AT_high_pc */
 
 .LDI2:
 	.uleb128 0x5                    /* DW_TAG_base_type */
@@ -401,7 +401,7 @@ int_param_two_reg_pieces:
 	.byte	0x1                     /* DW_AT_external */
 	.string	"int_param_single_reg_loc"                 /* DW_AT_name */
 	.byte	0x1                     /* DW_AT_prototyped */
-	.quad	.Ltext5                 /* DW_AT_low_pc */
+	.quad	.Ltext5b                /* DW_AT_low_pc */
 	.quad	.Ltext7                 /* DW_AT_high_pc */
 	.long	.LDI11 - .Ldebug_info0  /* DW_AT_sibling */
 

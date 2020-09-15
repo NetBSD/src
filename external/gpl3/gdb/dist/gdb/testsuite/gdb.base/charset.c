@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2001-2019 Free Software Foundation, Inc.
+   Copyright 2001-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Jim Blandy.
 
@@ -77,12 +77,21 @@ short short_array[3];
 int int_array[3];
 long long_array[3];
 
+/* These are unsigned char so we can pass down characters >127 without
+   explicit casts or warnings.  */
+
 void
 init_string (char string[],
-             char x,
-             char alert, char backspace, char form_feed,
-             char line_feed, char carriage_return, char horizontal_tab,
-             char vertical_tab, char cent, char misc_ctrl)
+	     unsigned char x,
+	     unsigned char alert,
+	     unsigned char backspace,
+	     unsigned char form_feed,
+	     unsigned char line_feed,
+	     unsigned char carriage_return,
+	     unsigned char horizontal_tab,
+	     unsigned char vertical_tab,
+	     unsigned char cent,
+	     unsigned char misc_ctrl)
 {
   int i;
 

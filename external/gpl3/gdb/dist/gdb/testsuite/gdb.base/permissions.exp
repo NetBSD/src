@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,43 +34,48 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-gdb_test "show may-write-registers" \
-    "Permission to write into registers is on."
+with_test_prefix "observer mode off" {
 
-gdb_test "show may-write-memory" \
-    "Permission to write into target memory is on."
+    gdb_test "show may-write-registers" \
+	"Permission to write into registers is on."
 
-gdb_test "show may-insert-breakpoints" \
-    "Permission to insert breakpoints in the target is on."
+    gdb_test "show may-write-memory" \
+	"Permission to write into target memory is on."
 
-gdb_test "show may-insert-tracepoints" \
-    "Permission to insert tracepoints in the target is on."
+    gdb_test "show may-insert-breakpoints" \
+	"Permission to insert breakpoints in the target is on."
 
-gdb_test "show may-insert-fast-tracepoints" \
-    "Permission to insert fast tracepoints in the target is on."
+    gdb_test "show may-insert-tracepoints" \
+	"Permission to insert tracepoints in the target is on."
 
-gdb_test "show may-interrupt" \
-    "Permission to interrupt or signal the target is on."
+    gdb_test "show may-insert-fast-tracepoints" \
+	"Permission to insert fast tracepoints in the target is on."
+
+    gdb_test "show may-interrupt" \
+	"Permission to interrupt or signal the target is on."
+}
 
 gdb_test "set observer on" "Observer mode is now on." "enable observer mode"
 
-gdb_test "show may-write-memory" \
-    "Permission to write into target memory is off."
+with_test_prefix "observer mode on" {
+    gdb_test "show may-write-memory" \
+	"Permission to write into target memory is off."
 
-gdb_test "show may-write-registers" \
-    "Permission to write into registers is off."
+    gdb_test "show may-write-registers" \
+	"Permission to write into registers is off."
 
-gdb_test "show may-insert-breakpoints" \
-    "Permission to insert breakpoints in the target is off."
+    gdb_test "show may-insert-breakpoints" \
+	"Permission to insert breakpoints in the target is off."
 
-gdb_test "show may-insert-tracepoints" \
-    "Permission to insert tracepoints in the target is off."
+    gdb_test "show may-insert-tracepoints" \
+	"Permission to insert tracepoints in the target is off."
 
-gdb_test "show may-insert-fast-tracepoints" \
-    "Permission to insert fast tracepoints in the target is on."
+    gdb_test "show may-insert-fast-tracepoints" \
+	"Permission to insert fast tracepoints in the target is on."
 
-gdb_test "show may-interrupt" \
-    "Permission to interrupt or signal the target is off."
+    gdb_test "show may-interrupt" \
+	"Permission to interrupt or signal the target is off."
+}
 
 gdb_test "set observer off" "Observer mode is now off." "disable observer mode"
 
@@ -87,14 +92,14 @@ if ![runto_main] then {
 
 gdb_test "print x = 45" "$decimal = 45" "set a global"
 
-gdb_test "print x" "$decimal = 45"
+gdb_test "print x" "$decimal = 45" "validate setting a global"
 
 gdb_test "set may-write-memory off"
 
 gdb_test "print x = 92" "Writing to memory is not allowed.*" \
-    "try to set a global"
+    "set a global, 2nd time"
 
-gdb_test "print x" "$decimal = 45"
+gdb_test "print x" "$decimal = 45" "validate setting a global, 2nd time"
 
 # FIXME Add tests for other flags when a testsuite-able target becomes
 # available.

@@ -1,5 +1,5 @@
 # Extended prompt.
-# Copyright (C) 2011-2019 Free Software Foundation, Inc.
+# Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ The currently defined substitutions are:
         self.hook_set = False
 
     def get_show_string (self, pvalue):
-        if self.value is not '':
+        if self.value:
            return "The extended prompt is: " + self.value
         else:
            return "The extended prompt is not set."
@@ -57,7 +57,7 @@ The currently defined substitutions are:
         return ""
 
     def before_prompt_hook(self, current):
-        if self.value is not '':
+        if self.value:
             return gdb.prompt.substitute_prompt(self.value)
         else:
             return None

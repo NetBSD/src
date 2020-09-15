@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 1999-2019 Free Software Foundation, Inc.
+   Copyright 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ int known_types()
 
 int main() {
 
-   /* Pack Byte, Half, Word and Giant arrays with byte-orderd values.
+   /* Pack Byte, Half, Word and Giant arrays with byte-ordered values.
       That way "(gdb) x" gives the same output on different
       architectures.  */
    pack (b, 1, 2);

@@ -1,3 +1,38 @@
+2020-09-08  David Faust  <david.faust@oracle.com>
+
+	* sim/bpf/alu.s: Correct div and mod tests.
+	* sim/bpf/alu32.s: Likewise.
+
+2020-08-04  David Faust  <david.faust@oracle.com>
+	    Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* configure: Regenerate.
+	* sim/bpf/allinsn.exp: New file.
+	* sim/bpf/alu.s: Likewise.
+	* sim/bpf/alu32.s: Likewise.
+	* sim/bpf/endbe.s: Likewise.
+	* sim/bpf/endle.s: Likewise.
+	* sim/bpf/jmp.s: Likewise.
+	* sim/bpf/jmp32.s: Likewise.
+	* sim/bpf/ldabs.s: Likewise.
+	* sim/bpf/mem.s: Likewise.
+	* sim/bpf/mov.s: Likewise.
+	* sim/bpf/testutils.inc: Likewise.
+	* sim/bpf/xadd.s: Likewise.
+
+2020-07-29  Simon Marchi  <simon.marchi@efficios.com>
+
+	* configure: Re-generate.
+
+2019-12-19  Tom Tromey  <tromey@adacore.com>
+
+	PR build/24572:
+	* Makefile.in (install-strip): New target.
+
+2019-09-23  Dimitar Dimitrov  <dimitar@dinux.eu>
+
+	* configure: Regenerate.
+
 2017-12-12  Stafford Horne  <shorne@gmail.com>
 	    Peter Gavin  <pgavin@gmail.com>
 

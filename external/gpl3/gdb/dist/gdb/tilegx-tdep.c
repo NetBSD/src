@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "trad-frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -40,7 +40,7 @@
 #include "tilegx-tdep.h"
 #include "opcode/tilegx.h"
 #include <algorithm>
-#include "common/byte-vector.h"
+#include "gdbsupport/byte-vector.h"
 
 struct tilegx_frame_cache
 {
@@ -188,9 +188,9 @@ tilegx_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int num)
 static int
 tilegx_type_is_scalar (struct type *t)
 {
-  return (TYPE_CODE(t) != TYPE_CODE_STRUCT
-	  && TYPE_CODE(t) != TYPE_CODE_UNION
-	  && TYPE_CODE(t) != TYPE_CODE_ARRAY);
+  return (t->code () != TYPE_CODE_STRUCT
+	  && t->code () != TYPE_CODE_UNION
+	  && t->code () != TYPE_CODE_ARRAY);
 }
 
 /* Returns non-zero if the given struct type will be returned using
@@ -930,29 +930,6 @@ static const struct frame_base tilegx_frame_base = {
   tilegx_frame_base_address
 };
 
-static CORE_ADDR
-tilegx_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, TILEGX_SP_REGNUM);
-}
-
-static CORE_ADDR
-tilegx_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, TILEGX_PC_REGNUM);
-}
-
-static struct frame_id
-tilegx_unwind_dummy_id (struct gdbarch *gdbarch,
-			struct frame_info *this_frame)
-{
-  CORE_ADDR sp;
-
-  sp = get_frame_register_unsigned (this_frame, TILEGX_SP_REGNUM);
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
-
-
 /* We cannot read/write the "special" registers.  */
 
 static int
@@ -1027,9 +1004,6 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
   /* Frame Info.  */
-  set_gdbarch_unwind_sp (gdbarch, tilegx_unwind_sp);
-  set_gdbarch_unwind_pc (gdbarch, tilegx_unwind_pc);
-  set_gdbarch_dummy_id (gdbarch, tilegx_unwind_dummy_id);
   set_gdbarch_frame_align (gdbarch, tilegx_frame_align);
   frame_base_set_default (gdbarch, &tilegx_frame_base);
 
@@ -1058,8 +1032,9 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_tilegx_tdep ();
 void
-_initialize_tilegx_tdep (void)
+_initialize_tilegx_tdep ()
 {
   register_gdbarch_init (bfd_arch_tilegx, tilegx_gdbarch_init);
 }

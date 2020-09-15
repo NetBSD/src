@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,9 @@ py_get_event_thread (ptid_t ptid)
 {
   if (non_stop)
     {
-      thread_info *thread = find_thread_ptid (ptid);
+      thread_info *thread
+	= find_thread_ptid (current_inferior ()->process_target (),
+			    ptid);
       if (thread != nullptr)
 	return thread_to_thread_object (thread);
       PyErr_SetString (PyExc_RuntimeError, "Could not find event thread");

@@ -1,6 +1,6 @@
 /* build-id-related functions.
 
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "bfd.h"
 #include "gdb_bfd.h"
 #include "build-id.h"
-#include "common/gdb_vecs.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "filenames.h"
@@ -32,7 +32,8 @@
 const struct bfd_build_id *
 build_id_bfd_get (bfd *abfd)
 {
-  if (!bfd_check_format (abfd, bfd_object))
+  if (!bfd_check_format (abfd, bfd_object)
+      && !bfd_check_format (abfd, bfd_core))
     return NULL;
 
   if (abfd->build_id != NULL)
@@ -93,7 +94,7 @@ build_id_to_debug_bfd_1 (const std::string &link, size_t build_id_len,
     }
 
   /* We expect to be silent on the non-existing files.  */
-  gdb_bfd_ref_ptr debug_bfd = gdb_bfd_open (filename.get (), gnutarget, -1);
+  gdb_bfd_ref_ptr debug_bfd = gdb_bfd_open (filename.get (), gnutarget);
 
   if (debug_bfd == NULL)
     {
@@ -117,10 +118,13 @@ build_id_to_debug_bfd_1 (const std::string &link, size_t build_id_len,
   return debug_bfd;
 }
 
-/* See build-id.h.  */
+/* Common code for finding BFDs of a given build-id.  This function
+   works with both debuginfo files (SUFFIX == ".debug") and executable
+   files (SUFFIX == "").  */
 
-gdb_bfd_ref_ptr
-build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
+static gdb_bfd_ref_ptr
+build_id_to_bfd_suffix (size_t build_id_len, const bfd_byte *build_id,
+			const char *suffix)
 {
   /* Keep backward compatibility so that DEBUG_FILE_DIRECTORY being "" will
      cause "/.build-id/..." lookups.  */
@@ -149,7 +153,7 @@ build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
       while (size-- > 0)
 	string_appendf (link, "%02x", (unsigned) *data++);
 
-      link += ".debug";
+      link += suffix;
 
       gdb_bfd_ref_ptr debug_bfd
 	= build_id_to_debug_bfd_1 (link, build_id_len, build_id);
@@ -173,6 +177,22 @@ build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
     }
 
   return {};
+}
+
+/* See build-id.h.  */
+
+gdb_bfd_ref_ptr
+build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
+{
+  return build_id_to_bfd_suffix (build_id_len, build_id, ".debug");
+}
+
+/* See build-id.h.  */
+
+gdb_bfd_ref_ptr
+build_id_to_exec_bfd (size_t build_id_len, const bfd_byte *build_id)
+{
+  return build_id_to_bfd_suffix (build_id_len, build_id, "");
 }
 
 /* See build-id.h.  */

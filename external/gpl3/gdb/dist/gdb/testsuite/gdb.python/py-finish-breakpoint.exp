@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2019 Free Software Foundation, Inc.
+# Copyright (C) 2011-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,13 +45,6 @@ if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
 clean_restart ${testfile}
 
 if { [skip_python_tests] } { continue }
-
-if { $gdb_py_is_py24 == 1 } {
-    # Python 2.4, 2.5 do not support the "ValueError as e" syntax used in
-    # the py-finish-breakpoint.py script.
-	untested "missing support on Python 2.4 and 2.5"
-    return 0
-}
 
 #
 # Test FinishBreakpoint in normal conditions
@@ -262,5 +255,5 @@ if ![runto "test_exec_exit"] then {
 }     
 
 gdb_test "python SimpleFinishBreakpoint(gdb.newest_frame())" "SimpleFinishBreakpoint init" "set FinishBP after the exec"
-gdb_test "catch exec" "Catchpoint.*\(exec\).*" "catch exec"
+gdb_test "catch exec" "Catchpoint.*\(exec\).*"
 gdb_test "continue" "SimpleFinishBreakpoint out of scope.*" "catch out of scope after exec"

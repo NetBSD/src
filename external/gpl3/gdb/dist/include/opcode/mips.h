@@ -1,5 +1,5 @@
 /* mips.h.  Mips opcode list for GDB, the GNU debugger.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 
@@ -56,8 +56,8 @@ extern "C" {
    code field in BREAK is 20 bits; yet MIPS assemblers and debuggers
    only use ten bits).  An optional two-operand form of break/sdbbp
    allows the lower ten bits to be set too, and MIPS32 and later
-   architectures allow 20 bits to be set with a signal operand
-   (using CODE20).
+   architectures allow 20 bits to be set with a single operand for
+   the sdbbp instruction (using CODE20).
 
    The syscall instruction uses CODE20.
 
@@ -1308,6 +1308,9 @@ static const unsigned int mips_isa_table[] = {
 #define ASE_LOONGSON_EXT	0x00800000
 /* Loongson EXTensions R2 (EXT2) instructions.  */
 #define ASE_LOONGSON_EXT2	0x01000000
+/* The Enhanced VA Scheme (EVA) extension has instructions which are
+   only valid for the R6 ISA.  */
+#define ASE_EVA_R6		0x02000000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -1628,7 +1631,10 @@ enum
   M_LI_SS,
   M_LL_AB,
   M_LLD_AB,
+  M_LLDP_AB,
   M_LLE_AB,
+  M_LLWP_AB,
+  M_LLWPE_AB,
   M_LQ_AB,
   M_LW_AB,
   M_LWE_AB,
@@ -1679,7 +1685,10 @@ enum
   M_SAAD_AB,
   M_SC_AB,
   M_SCD_AB,
+  M_SCDP_AB,
   M_SCE_AB,
+  M_SCWP_AB,
+  M_SCWPE_AB,
   M_SD_AB,
   M_SDC1_AB,
   M_SDC2_AB,

@@ -1,4 +1,4 @@
-# Copyright 1999-2019 Free Software Foundation, Inc.
+# Copyright 1999-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ gdb_test "up" ".*main.*" "up from marker1 1"
 
 gdb_test "print rrt" " = \\(short( int)? &&\\) @$hex: -1" "print value of rrt" 
 
-gdb_test "ptype rrt" "type = short( int)? &&" "ptype rrt"
+gdb_test "ptype rrt" "type = short( int)? &&"
 
 gdb_test "print *rrpt" ".$decimal = -1" "print value of *rrpt"
 
@@ -52,11 +52,11 @@ gdb_test "print *rrpt" ".$decimal = -1" "print value of *rrpt"
 
 gdb_test "x /hd rrpt" "$hex:\[ \t\]*-1" "examine value at rrpt"
 
-gdb_test "ptype rrpt" "type = short( int)? \\*&&" "ptype rrpt"
+gdb_test "ptype rrpt" "type = short( int)? \\*&&"
 
 gdb_test "print rrat\[0\]" ".$decimal = 0" "print value of rrat\[0\]"
 
-gdb_test "ptype rrat" "type = short( int)? \\\(&&\\\)\\\[4\\\]" "ptype rrat"
+gdb_test "ptype rrat" "type = short( int)? \\\(&&\\\)\\\[4\\\]"
 
 gdb_test "print rrat\[1\]" ".$decimal = 1" "print value of rrat\[1\]"
 gdb_test "print rrat\[2\]" ".$decimal = 2" "print value of rrat\[2\]"
@@ -74,17 +74,17 @@ gdb_test "ptype rrC" "type = char &&"
 
 gdb_test "ptype rrUC" "type = unsigned char &&"
 
-gdb_test "ptype rrS" "type = short( int)? &&" "ptype rrS"
+gdb_test "ptype rrS" "type = short( int)? &&"
 
-gdb_test "ptype rrUS" "type = unsigned short( int)? &&" "ptype rrUS"
+gdb_test "ptype rrUS" "type = unsigned short( int)? &&"
 
 gdb_test "ptype rrI" "type = int &&"
 
 gdb_test "ptype rrUI" "type = unsigned int &&"
 
-gdb_test "ptype rrL" "type = long( int)? &&" "ptype rrL"
+gdb_test "ptype rrL" "type = long( int)? &&"
 
-gdb_test "ptype rrUL" "type = unsigned long( int)? &&" "ptype rrUL"
+gdb_test "ptype rrUL" "type = unsigned long( int)? &&"
 
 gdb_test "ptype rrF" "type = float &&"
 

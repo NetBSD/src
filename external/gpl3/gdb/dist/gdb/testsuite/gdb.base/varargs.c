@@ -79,6 +79,8 @@ main (void)
 {
   gdb_unbuffer_output ();
   test ();
+
+  return 0;
 }
 
 /* Integer varargs, 1 declared arg */

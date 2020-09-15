@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Free Software Foundation, Inc.
+# Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,28 +43,36 @@ proc _test_exit_status {expect_status cmdline_opts} {
     }
 }
 
-proc test_exit_status {expect_status cmdline_opts} {
-    with_test_prefix $cmdline_opts {
+proc test_exit_status {expect_status cmdline_opts prefix} {
+    if { $prefix == "" } {
+	set prefix $cmdline_opts
+    }
+
+    with_test_prefix $prefix {
 	_test_exit_status $expect_status $cmdline_opts
     }
 }
 
 # gdb -batch with nothing to do should exit 0.
-test_exit_status 0 "-batch"
+test_exit_status 0 "-batch" ""
 
 # Bad command-line options should cause exit 1.
-test_exit_status 1 "-batch -jslkflsdjlkfjlksdjf"
+test_exit_status 1 "-batch -jslkflsdjlkfjlksdjf" ""
 
 # gdb -batch with good commands should exit 0.
-test_exit_status 0 "-batch -ex \"info source\""
-test_exit_status 0 "-batch -x $good_commands"
+test_exit_status 0 "-batch -ex \"info source\"" ""
+test_exit_status 0 "-batch -x $good_commands" "-batch -x good-commands"
 
 # gdb -batch with bad commands should exit 1.
-test_exit_status 1 "-batch -ex \"set not-a-thing 4\""
-test_exit_status 1 "-batch -x $bad_commands"
+test_exit_status 1 "-batch -ex \"set not-a-thing 4\"" ""
+test_exit_status 1 "-batch -x $bad_commands" "-batch -x bad-commands"
 
 # Success or failure of the last thing determines the exit code.
-test_exit_status 0 "-batch -ex \"set not-a-thing 4\" -x $good_commands"
-test_exit_status 0 "-batch -x $bad_commands -ex \"info source\""
-test_exit_status 1 "-batch -x $good_commands -x $bad_commands"
-test_exit_status 1 "-batch -x $good_commands -ex \"set not-a-thing 4\""
+test_exit_status 0 "-batch -ex \"set not-a-thing 4\" -x $good_commands" \
+    "-batch -ex \"set not-a-thing 4\" -x good-commands"
+test_exit_status 0 "-batch -x $bad_commands -ex \"info source\"" \
+    "-batch -x bad-commands -ex \"info source\""
+test_exit_status 1 "-batch -x $good_commands -x $bad_commands" \
+    "-batch -x good-commands -x bad-commands"
+test_exit_status 1 "-batch -x $good_commands -ex \"set not-a-thing 4\"" \
+    "-batch -x good-commands -ex \"set not-a-thing 4\""

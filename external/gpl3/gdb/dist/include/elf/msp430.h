@@ -1,5 +1,5 @@
 /* MSP430 ELF support for BFD.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -58,6 +58,47 @@
 #define OFBA_MSPABI_Tag_ISA		4
 #define OFBA_MSPABI_Tag_Code_Model	6
 #define OFBA_MSPABI_Tag_Data_Model	8
+#define OFBA_MSPABI_Tag_enum_size	10	/* Unused by GNU.  */
+
+/* GNU Object attribute tags.  */
+enum
+{
+  /* 0-3 are generic.  */
+
+  /* Define a GNU attribute for keeping track of whether the compiler has
+     generated code assuming that the upper region could be in use.
+     Added by the assembler based on the -mdata-region option.
+     This tag is ignored unless the large memory model is in use.  */
+  Tag_GNU_MSP430_Data_Region = 4,
+};
+
+/* Object attribute values.  */
+enum
+{
+  /* Values defined for OFBA_MSPABI_Tag_ISA.  */
+  OFBA_MSPABI_Val_ISA_NONE = 0,
+  OFBA_MSPABI_Val_ISA_MSP430 = 1,
+  OFBA_MSPABI_Val_ISA_MSP430X = 2,
+
+  /* Values defined for OFBA_MSPABI_Tag_Code_Model.  */
+  OFBA_MSPABI_Val_Code_Model_NONE = 0,
+  OFBA_MSPABI_Val_Code_Model_SMALL = 1,
+  OFBA_MSPABI_Val_Code_Model_LARGE = 2,
+
+  /* Values defined for OFBA_MSPABI_Tag_Data_Model.  */
+  OFBA_MSPABI_Val_Data_Model_NONE = 0,
+  OFBA_MSPABI_Val_Data_Model_SMALL = 1,
+  OFBA_MSPABI_Val_Data_Model_LARGE = 2,
+  OFBA_MSPABI_Val_Data_Model_RESTRICTED = 3,	/* Unused by GNU.  */
+
+  /* Values defined for Tag_GNU_MSP430_Data_Region.  */
+  Val_GNU_MSP430_Data_Region_NONE = 0,
+  /* The default data region.  Assumes all data is below address 0x10000.  */
+  Val_GNU_MSP430_Data_Region_Lower = 1,
+  /* Set if -mdata-region={none,upper,either}.  Assumes
+     data could be placed at or above address 0x10000.  */
+  Val_GNU_MSP430_Data_Region_Any = 2,
+};
 
 /* Relocations.  */
 START_RELOC_NUMBERS (elf_msp430_reloc_type)
@@ -72,6 +113,8 @@ START_RELOC_NUMBERS (elf_msp430_reloc_type)
      RELOC_NUMBER (R_MSP430_RL_PCREL,		8)
      RELOC_NUMBER (R_MSP430_8,			9)
      RELOC_NUMBER (R_MSP430_SYM_DIFF,		10)
+     RELOC_NUMBER (R_MSP430_GNU_SET_ULEB128, 11) /* GNU only.  */
+     RELOC_NUMBER (R_MSP430_GNU_SUB_ULEB128, 12) /* GNU only.  */
 END_RELOC_NUMBERS (R_MSP430_max)
 
 START_RELOC_NUMBERS (elf_msp430x_reloc_type)
@@ -96,6 +139,8 @@ START_RELOC_NUMBERS (elf_msp430x_reloc_type)
      RELOC_NUMBER (R_MSP430X_10_PCREL, 19)	/* Red Hat invention.  Used for Jump instructions.  */
      RELOC_NUMBER (R_MSP430X_2X_PCREL, 20)	/* Red Hat invention.  Used for relaxing jumps.  */
      RELOC_NUMBER (R_MSP430X_SYM_DIFF, 21)	/* Red Hat invention.  Used for relaxing debug info.  */
+     RELOC_NUMBER (R_MSP430X_GNU_SET_ULEB128, 22) /* GNU only.  */
+     RELOC_NUMBER (R_MSP430X_GNU_SUB_ULEB128, 23) /* GNU only.  */
 END_RELOC_NUMBERS (R_MSP430x_max)
 
 #endif /* _ELF_MSP430_H */

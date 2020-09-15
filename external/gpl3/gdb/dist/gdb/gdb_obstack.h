@@ -1,6 +1,6 @@
 /* Obstack wrapper for GDB.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,7 +89,32 @@ extern char *obconcat (struct obstack *obstackp, ...) ATTRIBUTE_SENTINEL;
 /* Duplicate STRING, returning an equivalent string that's allocated on the
    obstack OBSTACKP.  */
 
-extern char *obstack_strdup (struct obstack *obstackp, const char *string);
+static inline char *
+obstack_strdup (struct obstack *obstackp, const char *string)
+{
+  return (char *) obstack_copy0 (obstackp, string, strlen (string));
+}
+
+/* Duplicate STRING, returning an equivalent string that's allocated on the
+   obstack OBSTACKP.  */
+
+static inline char *
+obstack_strdup (struct obstack *obstackp, const std::string &string)
+{
+  return (char *) obstack_copy0 (obstackp, string.c_str (),
+				 string.size ());
+}
+
+/* Duplicate the first N characters of STRING, returning a
+   \0-terminated string that's allocated on the obstack OBSTACKP.
+   Note that exactly N characters are copied, even if STRING is
+   shorter.  */
+
+static inline char *
+obstack_strndup (struct obstack *obstackp, const char *string, size_t n)
+{
+  return (char *) obstack_copy0 (obstackp, string, n);
+}
 
 /* An obstack that frees itself on scope exit.  */
 struct auto_obstack : obstack
@@ -99,6 +124,8 @@ struct auto_obstack : obstack
 
   ~auto_obstack ()
   { obstack_free (this, NULL); }
+
+  DISABLE_COPY_AND_ASSIGN (auto_obstack);
 
   /* Free all memory in the obstack but leave it valid for further
      allocation.  */

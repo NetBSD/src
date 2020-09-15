@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,3 +141,39 @@ gdb_test "info line frame2" \
     "Line 21 of .* starts at address .* and ends at .*"
 gdb_test "info line frame3" \
     "Line 31 of .* starts at address .* and ends at .*"
+
+# Ensure that the line table correctly tracks the end of sequence markers.
+set end_seq_count 0
+set prev -1
+set seq_count 0
+gdb_test_multiple "maint info line-table gdb.dwarf2/dw2-ranges-base.c" \
+    "count END markers in line table" {
+	-re "^$decimal\[ \t\]+$decimal\[ \t\]+$hex\(\[ \t\]+Y\)? *\r\n" {
+	    if { $prev != -1 } {
+		gdb_assert "$prev == 1" \
+		    "prev of normal entry at $seq_count is end marker"
+	    }
+	    set prev 0
+	    incr seq_count
+	    exp_continue
+	}
+	-re "^$decimal\[ \t\]+END\[ \t\]+$hex\(\[ \t\]+Y\)? *\r\n" {
+	    if { $prev != -1 } {
+		gdb_assert "$prev == 0" \
+		    "prev of end marker at $seq_count is normal entry"
+	    }
+	    set prev 1
+	    incr seq_count
+	    incr end_seq_count
+	    exp_continue
+	}
+	-re "^$gdb_prompt $" {
+	    gdb_assert [expr $end_seq_count == 3] $gdb_test_name
+	}
+	-re ".*linetable: \\(\\(struct linetable \\*\\) 0x0\\):\r\nNo line table.\r\n" {
+	    exp_continue
+	}
+	-re ".*linetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS\[ \t\]+IS-STMT *\r\n" {
+	    exp_continue
+	}
+    }

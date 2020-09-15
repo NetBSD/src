@@ -1,4 +1,4 @@
-# Copyright 2000-2019 Free Software Foundation, Inc.
+# Copyright 2000-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,10 +41,13 @@
 #
 
 #
-# gdb_target_cmd
-# Send gdb the "target" command
+# gdb_target_cmd_ext
+# Send gdb the "target" command.  Returns 0 on success, 1 on failure, 2 on
+# unsupported.
+# If specified, then ADDITIONAL_TEXT must match the text that comes after
+# the connection message in order for the procedure to succeed.
 #
-proc gdb_target_cmd { targetname serialport } {
+proc gdb_target_cmd_ext { targetname serialport {additional_text ""} } {
     global gdb_prompt
 
     set serialport_re [string_to_regexp $serialport]
@@ -61,23 +64,27 @@ proc gdb_target_cmd { targetname serialport } {
 	    -re "Couldn't establish connection to remote.*$gdb_prompt $" {
 		verbose "Connection failed"
 	    }
-	    -re "Remote MIPS debugging.*$gdb_prompt" {
+	    -re "Non-stop mode requested, but remote does not support non-stop.*$gdb_prompt $" {
+		verbose "remote does not support non-stop"
+		return 1
+	    }
+	    -re "Remote MIPS debugging.*$additional_text.*$gdb_prompt" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
-	    -re "Remote debugging using .*$serialport_re.*$gdb_prompt $" {
+	    -re "Remote debugging using .*$serialport_re.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
-	    -re "Remote debugging using stdio.*$gdb_prompt $" {
+	    -re "Remote debugging using stdio.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
-	    -re "Remote target $targetname connected to.*$gdb_prompt $" {
+	    -re "Remote target $targetname connected to.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
-	    -re "Connected to.*$gdb_prompt $" { 
+	    -re "Connected to.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
@@ -95,6 +102,9 @@ proc gdb_target_cmd { targetname serialport } {
 		# Leave it there for the test to diagnose.
 		return 1
 	    }
+	    -re ": Network is unreachable.\r\n.*$gdb_prompt $" {
+		return 2
+	    }
 	    timeout {
 		send_gdb ""
 		break
@@ -104,6 +114,12 @@ proc gdb_target_cmd { targetname serialport } {
     return 1
 }
 
+# Like gdb_target_cmd_ext, but returns 0 on success, 1 on failure.
+
+proc gdb_target_cmd { args } {
+    set res [eval gdb_target_cmd_ext $args]
+    return [expr $res == 0 ? 0 : 1]
+}
 
 global portnum
 set portnum "2345"
@@ -122,13 +138,15 @@ proc find_gdbserver { } {
     return [target_info gdb_server_prog]
   }
 
-  set gdbserver "${GDB}server"
-  if { [file isdirectory $gdbserver] } {
-    append gdbserver "/gdbserver"
-  }
+  set toplevel [file join [file dirname $GDB] .. gdbserver]
+  foreach gdbserver [list "${GDB}server" $toplevel] {
+      if { [file isdirectory $gdbserver] } {
+	  append gdbserver "/gdbserver"
+      }
 
-  if { [file executable $gdbserver] } {
-    return $gdbserver
+      if { [file executable $gdbserver] } {
+	  return $gdbserver
+      }
   }
 
   return ""
@@ -281,10 +299,34 @@ proc gdbserver_start { options arguments } {
 	# If gdbserver_reconnect will be called $gdbserver_reconnect_p must be
 	# set to true already during gdbserver_start.
 	global gdbserver_reconnect_p
+	global srcdir
+	global subdir
 	if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
 	    # GDB client could accidentally connect to a stale server.
-	    # append gdbserver_command " --debug --once"
 	    append gdbserver_command " --once"
+	}
+
+	# Enable debug if set.
+	if [gdbserver_debug_enabled] {
+	    global gdbserverdebug
+	    set enabled 0
+	    foreach entry [split $gdbserverdebug ,] {
+	      switch -- $entry {
+		"debug" {
+		  append gdbserver_command " --debug"
+		  set enabled 1
+		}
+		"remote" {
+		  append gdbserver_command " --remote-debug"
+		  set enabled 1
+		}
+	      }
+	    }
+	    # Ensure debugfile is only added if something has been enabled
+	    if { $enabled } {
+	      set debugfile [standard_output_file gdbserver.debug]
+	      append gdbserver_command " --debug-file=$debugfile"
+	    }
 	}
 
 	if { $options != "" } {
@@ -303,6 +345,8 @@ proc gdbserver_start { options arguments } {
 	    append gdbserver_command " $arguments"
 	}
 
+	gdbserver_write_cmd_file $gdbserver_command
+
 	global server_spawn_id
 	set server_spawn_id [remote_spawn target $gdbserver_command]
 
@@ -317,7 +361,7 @@ proc gdbserver_start { options arguments } {
 	    -timeout 120
 	    -notransfer
 	    -re "Listening on" { }
-	    -re "Can't bind address: Address already in use\\.\r\n" {
+	    -re "Can't (bind address|listen on socket): Address already in use\\.\r\n" {
 		verbose -log "Port $portnum is already in use."
 		if ![target_info exists gdb,socketport] {
 		    # Bump the port number to avoid the conflict.
@@ -387,21 +431,11 @@ if { [info procs gdbserver_orig_gdb_exit] == "" } {
     rename mi_gdb_exit gdbserver_orig_mi_gdb_exit
 }
 
-proc gdbserver_gdb_exit { is_mi } {
+# Cleanup gdbserver $server_spawn_id
+
+proc gdbserver_exit { is_mi } {
     global gdb_spawn_id server_spawn_id
     global gdb_prompt
-    global gdbserver_reconnect_p
-
-    # Leave GDBserver running if we're exiting GDB in order to
-    # reconnect to the same instance of GDBserver again.
-    if {[info exists gdbserver_reconnect_p] && $gdbserver_reconnect_p} {
-	if { $is_mi } {
-	    gdbserver_orig_mi_gdb_exit
-	} else {
-	    gdbserver_orig_gdb_exit
-	}
-	return
-    }
 
     if {[info exists gdb_spawn_id] && [info exists server_spawn_id]} {
 	# GDB may be terminated in an expected way or an unexpected way,
@@ -425,10 +459,34 @@ proc gdbserver_gdb_exit { is_mi } {
 		    wait -i $expect_out(spawn_id)
 		    unset server_spawn_id
 		}
+               timeout {
+                   warning "Timed out waiting for EOF in server after $monitor_exit"
+               }
 	    }
 	}
     }
     close_gdbserver
+}
+
+# Local version of gdb_exit that also cleans up gdbserver $server_spawn_id.
+
+proc gdbserver_gdb_exit { is_mi } {
+    global gdb_spawn_id server_spawn_id
+    global gdb_prompt
+    global gdbserver_reconnect_p
+
+    # Leave GDBserver running if we're exiting GDB in order to
+    # reconnect to the same instance of GDBserver again.
+    if {[info exists gdbserver_reconnect_p] && $gdbserver_reconnect_p} {
+	if { $is_mi } {
+	    gdbserver_orig_mi_gdb_exit
+	} else {
+	    gdbserver_orig_gdb_exit
+	}
+	return
+    }
+
+    gdbserver_exit $is_mi
 
     if { $is_mi } {
 	gdbserver_orig_mi_gdb_exit
@@ -456,7 +514,7 @@ proc gdbserver_run { child_args } {
     # Kill anything running before we try to start gdbserver, in case
     # we are sharing a serial connection.
     global gdb_prompt
-    send_gdb "kill\n"
+    send_gdb "kill\n" optional
     gdb_expect 120 {
 	-re "Kill the program being debugged. .y or n. $" {
 	    send_gdb "y\n"
@@ -558,4 +616,64 @@ proc mi_gdbserver_start_multi { } {
     set gdbserver_gdbport [lindex $res 1]
 
     return [mi_gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+}
+
+# Check if debugging is enabled for gdbserver.
+
+proc gdbserver_debug_enabled { } {
+    global gdbserverdebug
+
+    # If not already read, get the debug setting from environment or board setting.
+    if ![info exists gdbserverdebug] {
+	global env
+	if [info exists env(GDBSERVER_DEBUG)] {
+	    set gdbserverdebug $env(GDBSERVER_DEBUG)
+	} elseif [target_info exists gdbserver,debug] {
+	    set gdbserverdebug [target_info gdbserver,debug]
+	} else {
+	    return 0
+	}
+    }
+
+    # Expand the all option
+    if { $gdbserverdebug == "all" } {
+      set gdbserverdebug "debug,remote,replay"
+    }
+
+    # Ensure it is not empty.
+    return [expr { $gdbserverdebug != "" }]
+}
+
+# Write the command line used to invocate gdbserver to the cmd file.
+
+proc gdbserver_write_cmd_file { cmdline } {
+    set logfile [standard_output_file_with_gdb_instance gdbserver.cmd]
+    set cmd_file [open $logfile w]
+    puts $cmd_file $cmdline
+    catch "close $cmd_file"
+}
+
+# Override gdb_debug_init so that we can set replay logging in GDB if required.
+# Backup the original function so we can call it afterwards
+
+rename gdb_debug_init _gdb_debug_init
+
+proc gdb_debug_init { } {
+    global gdbserverdebug
+    global gdb_prompt
+
+    if [gdbserver_debug_enabled] {
+      foreach entry [split $gdbserverdebug ,] {
+	if { $entry == "replay" } {
+	  set replayfile [standard_output_file_with_gdb_instance gdbserver.replay]
+          send_gdb "set remotelogfile $replayfile\n" optional
+	  gdb_expect 10 {
+	    -re "$gdb_prompt $" {}
+	  }
+	}
+      }
+    }
+
+    # Now call the standard debug init function
+    _gdb_debug_init
 }

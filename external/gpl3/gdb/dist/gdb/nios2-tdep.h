@@ -1,5 +1,5 @@
 /* Target-dependent header for the Nios II architecture, for GDB.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of GDB.
@@ -73,6 +73,9 @@ struct gdbarch_tdep
      the expected next PC.  */
   CORE_ADDR (*syscall_next_pc) (struct frame_info *frame,
 				const struct nios2_opcode *op);
+
+  /* Returns true if PC points to a kernel helper function.  */
+  bool (*is_kernel_helper) (CORE_ADDR pc);
 
   /* Offset to PC value in jump buffer.
      If this is negative, longjmp support will be disabled.  */

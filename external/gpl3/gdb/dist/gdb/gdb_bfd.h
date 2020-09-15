@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,9 @@
 #define GDB_BFD_H
 
 #include "registry.h"
-#include "common/gdb_ref_ptr.h"
+#include "gdbsupport/byte-vector.h"
+#include "gdbsupport/gdb_ref_ptr.h"
+#include "gdbsupport/next-iterator.h"
 
 DECLARE_REGISTRY (bfd);
 
@@ -77,9 +79,12 @@ typedef gdb::ref_ptr<struct bfd, gdb_bfd_ref_policy> gdb_bfd_ref_ptr;
    If the BFD was not accessed using target fileio operations then the
    filename associated with the BFD and accessible with
    bfd_get_filename will not be exactly NAME but rather NAME with
-   TARGET_SYSROOT_PREFIX stripped.  */
+   TARGET_SYSROOT_PREFIX stripped.  If WARN_IF_SLOW is true, print a
+   warning message if the file is being accessed over a link that may
+   be slow.  */
 
-gdb_bfd_ref_ptr gdb_bfd_open (const char *name, const char *target, int fd);
+gdb_bfd_ref_ptr gdb_bfd_open (const char *name, const char *target,
+			      int fd = -1, bool warn_if_slow = true);
 
 /* Mark the CHILD BFD as being a member of PARENT.  Also, increment
    the reference count of CHILD.  Calling this function ensures that
@@ -106,7 +111,7 @@ void gdb_bfd_record_inclusion (bfd *includer, bfd *includee);
 
 /* Try to read or map the contents of the section SECT.  If successful, the
    section data is returned and *SIZE is set to the size of the section data;
-   this may not be the same as the size according to bfd_get_section_size if the
+   this may not be the same as the size according to bfd_section_size if the
    section was compressed.  The returned section data is associated with the BFD
    and will be destroyed when the BFD is destroyed.  There is no other way to
    free it; for temporary uses of section data, see bfd_malloc_and_get_section.
@@ -161,11 +166,6 @@ gdb_bfd_ref_ptr gdb_bfd_openr_iovec (const char *filename, const char *target,
 
 gdb_bfd_ref_ptr gdb_bfd_openr_next_archived_file (bfd *archive, bfd *previous);
 
-/* A wrapper for bfd_fdopenr that initializes the gdb-specific
-   reference count.  */
-
-gdb_bfd_ref_ptr gdb_bfd_fdopenr (const char *filename, const char *target,
-				 int fd);
 
 
 
@@ -185,5 +185,30 @@ int gdb_bfd_count_sections (bfd *abfd);
    otherwise.  */
 
 int gdb_bfd_requires_relocations (bfd *abfd);
+
+/* Alternative to bfd_get_full_section_contents that returns the section
+   contents in *CONTENTS, instead of an allocated buffer.
+
+   Return true on success, false otherwise.  */
+
+bool gdb_bfd_get_full_section_contents (bfd *abfd, asection *section,
+					gdb::byte_vector *contents);
+
+/* Range adapter for a BFD's sections.
+
+   To be used as:
+
+     for (asection *sect : gdb_bfd_all_sections (bfd))
+       ... use SECT ...
+ */
+
+using gdb_bfd_section_iterator = next_iterator<asection>;
+using gdb_bfd_section_range = next_adapter<asection, gdb_bfd_section_iterator>;
+
+static inline
+gdb_bfd_section_range gdb_bfd_sections (bfd *abfd)
+{
+  return gdb_bfd_section_range (abfd->sections);
+}
 
 #endif /* GDB_BFD_H */

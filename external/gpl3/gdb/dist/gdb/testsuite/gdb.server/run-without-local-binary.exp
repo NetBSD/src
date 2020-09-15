@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ save_vars { GDBFLAGS } {
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
-    gdb_test "disconnect" ".*" "disconnect"
+    gdb_test "disconnect" ".*"
 
     # Let's start gdbserver in extended-remote mode now.  We cannot
     # use gdbserver_start_extended here because it starts gdbserver,

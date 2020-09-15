@@ -40,9 +40,29 @@
 #undef  CGEN_DIS_HASH
 #define CGEN_DIS_HASH(buffer, value) (((unsigned char *) (buffer))[0] >> 2)
 
+/* Check applicability of instructions against machines.  */
+#define CGEN_VALIDATE_INSN_SUPPORTED
+
+extern int or1k_cgen_insn_supported (CGEN_CPU_DESC, const CGEN_INSN *);
+
 /* -- */
 
 /* -- opc.c */
+
+/* Special check to ensure that instruction exists for given machine.  */
+
+int
+or1k_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn)
+{
+  int machs = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_MACH);
+
+  /* No mach attribute?  Assume it's supported for all machs.  */
+  if (machs == 0)
+    return 1;
+
+  return ((machs & cd->machs) != 0);
+}
+
 /* -- */
 
 /* -- asm.c */
@@ -413,6 +433,78 @@ parse_uimm16_split (CGEN_CPU_DESC cd, const char **strp, int opindex,
   if (errmsg == NULL)
     *valuep &= 0xffff;
   return errmsg;
+}
+
+/* Parse register pairs with syntax rA,rB to a flag + rA value.  */
+
+static const char *
+parse_regpair (CGEN_CPU_DESC cd, const char **strp,
+	       int opindex ATTRIBUTE_UNUSED, unsigned long *valuep)
+{
+  long reg1_index;
+  long reg2_index;
+  const char *errmsg;
+
+  /* The first part should just be a register.  */
+  errmsg = cgen_parse_keyword (cd, strp, &or1k_cgen_opval_h_gpr,
+			       &reg1_index);
+
+  /* If that worked skip the comma separator.  */
+  if (errmsg == NULL)
+    {
+      if (**strp == ',')
+	++*strp;
+      else
+	errmsg = "Unexpected character, expected ','";
+    }
+
+  /* If that worked the next part is just another register.  */
+  if (errmsg == NULL)
+    errmsg = cgen_parse_keyword (cd, strp, &or1k_cgen_opval_h_gpr,
+				 &reg2_index);
+
+  /* Validate the register pair is valid and create the output value.  */
+  if (errmsg == NULL)
+    {
+      int regoffset = reg2_index - reg1_index;
+
+      if (regoffset == 1 || regoffset == 2)
+	{
+	  unsigned short offsetmask;
+	  unsigned short value;
+
+	  offsetmask = ((regoffset == 2 ? 1 : 0) << 5);
+	  value = offsetmask | reg1_index;
+
+	  *valuep = value;
+	}
+      else
+	errmsg = "Invalid register pair, offset not 1 or 2.";
+    }
+
+  return errmsg;
+}
+
+/* -- */
+
+/* -- dis.c */
+
+static void
+print_regpair (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+	       void * dis_info,
+	       long value,
+	       unsigned int attrs ATTRIBUTE_UNUSED,
+	       bfd_vma pc ATTRIBUTE_UNUSED,
+	       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = dis_info;
+  char reg1_index;
+  char reg2_index;
+
+  reg1_index = value & 0x1f;
+  reg2_index = reg1_index + ((value & (1 << 5)) ? 2 : 1);
+
+  (*info->fprintf_func) (info->stream, "r%d,r%d", reg1_index, reg2_index);
 }
 
 /* -- */

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Xtensa processors.
 
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "linux-tdep.h"
 #include "solib-svr4.h"
 #include "symtab.h"
+#include "gdbarch.h"
 
 /* This enum represents the signals' numbers on the Xtensa
    architecture.  It just contains the signal definitions which are
@@ -124,8 +125,9 @@ xtensa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
                                              svr4_fetch_objfile_link_map);
 }
 
+void _initialize_xtensa_linux_tdep ();
 void
-_initialize_xtensa_linux_tdep (void)
+_initialize_xtensa_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_xtensa, bfd_mach_xtensa, GDB_OSABI_LINUX,
 			  xtensa_linux_init_abi);

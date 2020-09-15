@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -263,11 +263,11 @@ sim_analyze_program (SIM_DESC sd, const char *prog_name, bfd *prog_bfd)
   STATE_START_ADDR (sd) = bfd_get_start_address (prog_bfd);
 
   for (s = prog_bfd->sections; s; s = s->next)
-    if (strcmp (bfd_get_section_name (prog_bfd, s), ".text") == 0)
+    if (strcmp (bfd_section_name (s), ".text") == 0)
       {
 	STATE_TEXT_SECTION (sd) = s;
-	STATE_TEXT_START (sd) = bfd_get_section_vma (prog_bfd, s);
-	STATE_TEXT_END (sd) = STATE_TEXT_START (sd) + bfd_section_size (prog_bfd, s);
+	STATE_TEXT_START (sd) = bfd_section_vma (s);
+	STATE_TEXT_END (sd) = STATE_TEXT_START (sd) + bfd_section_size (s);
 	break;
       }
 
@@ -355,8 +355,8 @@ map_to_str (unsigned map)
     case io_map: return "io";
     default:
       {
-	static char str[10];
-	sprintf (str, "(%ld)", (long) map);
+	static char str[16];
+	snprintf (str, sizeof(str), "(%ld)", (long) map);
 	return str;
       }
     }
@@ -385,8 +385,8 @@ access_to_str (unsigned access)
     case access_read_write_exec_io: return "read_write_exec_io";
     default:
       {
-	static char str[10];
-	sprintf (str, "(%ld)", (long) access);
+	static char str[16];
+	snprintf (str, sizeof(str), "(%ld)", (long) access);
 	return str;
       }
     }

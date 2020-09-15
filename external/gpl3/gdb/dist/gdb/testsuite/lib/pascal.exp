@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,10 +33,10 @@ set pascal_init_done 0
  
 proc pascal_init {} {
     global pascal_init_done
-    global pascal_compiler_is_gpc
-    global pascal_compiler_is_fpc
-    global gpc_compiler
-    global fpc_compiler
+    gdb_persistent_global pascal_compiler_is_gpc
+    gdb_persistent_global pascal_compiler_is_fpc
+    gdb_persistent_global gpc_compiler
+    gdb_persistent_global fpc_compiler
     global env
  
     if { $pascal_init_done == 1 } {
@@ -152,6 +152,8 @@ proc gdb_compile_pascal {source destfile type options} {
     if { $pascal_init_done == 0 } { 
 	pascal_init
     }
+
+    file delete $destfile
 
     if { $pascal_compiler_is_fpc == 1 } {
         set result [fpc_compile $source $destfile $type $options]

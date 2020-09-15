@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -118,9 +118,6 @@ extern void sparc64_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 /* Register offsets for Solaris 2.  */
 extern const struct sparc_gregmap sparc64_sol2_gregmap;
 extern const struct sparc_fpregmap sparc64_sol2_fpregmap;
-
-extern void sparc64_sol2_init_abi (struct gdbarch_info info,
-				   struct gdbarch *gdbarch);
 
 /* Variables exported from sparc64-fbsd-tdep.c.  */
 

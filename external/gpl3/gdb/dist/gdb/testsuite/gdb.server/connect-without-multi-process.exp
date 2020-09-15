@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 # Check that we can connect to GDBserver with the multiprocess
-# extensions disabled, and run to main.
+# extensions disabled, run to main, and finish the process.
 
 load_lib gdbserver-support.exp
 
@@ -52,6 +52,11 @@ proc do_test {multiprocess} {
 	"target $gdbserver_protocol"
 
     gdb_test "continue" "main .*" "continue to main"
+
+    # The W/X packets do not include the PID of the exiting process
+    # without the multi-process extensions.  Check that we handle
+    # process exit correctly in that case.
+    gdb_continue_to_end
 }
 
 foreach multiprocess { "off" "auto" } {

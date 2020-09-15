@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,18 @@ if { [build_executable "failed to build" $testfile $srcfile { debug }] == -1 } {
     return -1
 }
 
+# See if we have target board readnow.exp or similar.
+if { [lsearch -exact $GDBFLAGS -readnow] != -1 \
+	 || [lsearch -exact $GDBFLAGS --readnow] != -1 } {
+    untested "--readnever not allowed in combination with --readnow"
+    return -1
+}
+
 save_vars { GDBFLAGS } {
     append GDBFLAGS " --readnever"
-    clean_restart ${binfile}
+    if { [clean_restart ${binfile}] == -1 } {
+       return -1
+    }
 }
 
 if ![runto_main] then {

@@ -1,6 +1,6 @@
 /* Handle Darwin shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -73,20 +73,14 @@ struct gdb_dyld_all_image_infos
 struct darwin_info
 {
   /* Address of structure dyld_all_image_infos in inferior.  */
-  CORE_ADDR all_image_addr;
+  CORE_ADDR all_image_addr = 0;
 
   /* Gdb copy of dyld_all_info_infos.  */
-  struct gdb_dyld_all_image_infos all_image;
+  struct gdb_dyld_all_image_infos all_image {};
 };
 
 /* Per-program-space data key.  */
-static const struct program_space_data *solib_darwin_pspace_data;
-
-static void
-darwin_pspace_data_cleanup (struct program_space *pspace, void *arg)
-{
-  xfree (arg);
-}
+static program_space_key<darwin_info> solib_darwin_pspace_data;
 
 /* Get the current darwin data.  If none is found yet, add it now.  This
    function always returns a valid object.  */
@@ -96,15 +90,11 @@ get_darwin_info (void)
 {
   struct darwin_info *info;
 
-  info = (struct darwin_info *) program_space_data (current_program_space,
-						    solib_darwin_pspace_data);
+  info = solib_darwin_pspace_data.get (current_program_space);
   if (info != NULL)
     return info;
 
-  info = XCNEW (struct darwin_info);
-  set_program_space_data (current_program_space,
-			  solib_darwin_pspace_data, info);
-  return info;
+  return solib_darwin_pspace_data.emplace (current_program_space);
 }
 
 /* Return non-zero if the version in dyld_all_image is known.  */
@@ -233,7 +223,7 @@ static struct so_list *
 darwin_current_sos (void)
 {
   struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  enum bfd_endian byte_order = type_byte_order (ptr_type);
   int ptr_len = TYPE_LENGTH (ptr_type);
   unsigned int image_info_size;
   struct so_list *head = NULL;
@@ -261,8 +251,6 @@ darwin_current_sos (void)
       CORE_ADDR path_addr;
       struct mach_o_header_external hdr;
       unsigned long hdr_val;
-      gdb::unique_xmalloc_ptr<char> file_path;
-      int errcode;
 
       /* Read image info from inferior.  */
       if (target_read_memory (iinfo, buf, image_info_size))
@@ -285,9 +273,9 @@ darwin_current_sos (void)
       if (hdr_val == BFD_MACH_O_MH_EXECUTE)
         continue;
 
-      target_read_string (path_addr, &file_path,
-			  SO_NAME_MAX_PATH_SIZE - 1, &errcode);
-      if (errcode)
+      gdb::unique_xmalloc_ptr<char> file_path
+	= target_read_string (path_addr, SO_NAME_MAX_PATH_SIZE - 1);
+      if (file_path == nullptr)
 	break;
 
       /* Create and fill the new so_list element.  */
@@ -446,7 +434,7 @@ darwin_get_dyld_bfd ()
     return NULL;
 
   /* Create a bfd for the interpreter.  */
-  gdb_bfd_ref_ptr dyld_bfd (gdb_bfd_open (interp_name, gnutarget, -1));
+  gdb_bfd_ref_ptr dyld_bfd (gdb_bfd_open (interp_name, gnutarget));
   if (dyld_bfd != NULL)
     {
       gdb_bfd_ref_ptr sub
@@ -648,14 +636,6 @@ darwin_relocate_section_addresses (struct so_list *so,
     so->addr_low = sec->addr;
 }
 
-static struct block_symbol
-darwin_lookup_lib_symbol (struct objfile *objfile,
-			  const char *name,
-			  const domain_enum domain)
-{
-  return (struct block_symbol) {NULL, NULL};
-}
-
 static gdb_bfd_ref_ptr
 darwin_bfd_open (const char *pathname)
 {
@@ -680,21 +660,17 @@ darwin_bfd_open (const char *pathname)
   /* The current filename for fat-binary BFDs is a name generated
      by BFD, usually a string containing the name of the architecture.
      Reset its value to the actual filename.  */
-  xfree (bfd_get_filename (res.get ()));
-  res->filename = xstrdup (pathname);
+  bfd_set_filename (res.get (), pathname);
 
   return res;
 }
 
 struct target_so_ops darwin_so_ops;
 
+void _initialize_darwin_solib ();
 void
-_initialize_darwin_solib (void)
+_initialize_darwin_solib ()
 {
-  solib_darwin_pspace_data
-    = register_program_space_data_with_cleanup (NULL,
-						darwin_pspace_data_cleanup);
-
   darwin_so_ops.relocate_section_addresses = darwin_relocate_section_addresses;
   darwin_so_ops.free_so = darwin_free_so;
   darwin_so_ops.clear_solib = darwin_clear_solib;
@@ -702,6 +678,5 @@ _initialize_darwin_solib (void)
   darwin_so_ops.current_sos = darwin_current_sos;
   darwin_so_ops.open_symbol_file_object = open_symbol_file_object;
   darwin_so_ops.in_dynsym_resolve_code = darwin_in_dynsym_resolve_code;
-  darwin_so_ops.lookup_lib_global_symbol = darwin_lookup_lib_symbol;
   darwin_so_ops.bfd_open = darwin_bfd_open;
 }

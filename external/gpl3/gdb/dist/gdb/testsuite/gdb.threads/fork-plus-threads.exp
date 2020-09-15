@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,6 +87,14 @@ proc do_test { detach_on_fork } {
 	    set saw_thread_stopped 1
 	    exp_continue
 	}
+	-re "Thread \[^\r\n\]+ exited" {
+	    # Avoid timeout with check-read1
+	    exp_continue
+	}
+	-re "New Thread \[^\r\n\]+" {
+	    # Avoid timeout with check-read1
+	    exp_continue
+	}
 	-re "Inferior 1 \(\[^\r\n\]+\) exited normally" {
 	    pass $test
 	}
@@ -101,7 +109,7 @@ proc do_test { detach_on_fork } {
 	"no threads left"
 
     gdb_test "info inferiors" \
-	"Num\[ \t\]+Description\[ \t\]+Executable\[ \t\]+\r\n\\* 1 \[^\r\n\]+" \
+	"Num\[ \t\]+Description\[ \t\]+Connection\[ \t\]+Executable\[ \t\]+\r\n\\* 1 \[^\r\n\]+" \
 	"only inferior 1 left"
 }
 

@@ -1,4 +1,4 @@
-# Copyright 1999-2019 Free Software Foundation, Inc.
+# Copyright 1999-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -174,9 +174,16 @@ proc test_watchpoint_all {mi_mode type} {
     test_watchpoint_triggering
 }
 
+if [gdb_debug_enabled] {
+  # gdb debug doesn't work for separate-mi-tty.
+  set modes {"main"}
+} else {
+  set modes {"main" "separate"}
+}
+
 # Run the tests twice, once using software watchpoints, and another
 # with hardware watchpoints.
-foreach_with_prefix mi-mode {"main" "separate"} {
+foreach_with_prefix mi-mode $modes {
     foreach_with_prefix wp-type {"sw" "hw"} {
 	test_watchpoint_all ${mi-mode} ${wp-type}
     }

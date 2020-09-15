@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2019 Free Software Foundation, Inc.
+   Copyright 2015-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -209,7 +209,7 @@ die29:
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x7	# DW_AT_decl_line
 			# DW_AT_prototyped
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 	.quad	.LFB1	# DW_AT_low_pc
 	.quad	.LFE1-.LFB1	# DW_AT_high_pc
 	.uleb128 0x1	# DW_AT_frame_base
@@ -219,7 +219,7 @@ die29:
 	.ascii "q\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x7	# DW_AT_decl_line
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 	.uleb128 0x1	# DW_AT_location
 	.byte	0x55	# DW_OP_reg5
 	.byte	0	# end of children of DIE 0x40
@@ -244,7 +244,7 @@ die72:
 	.ascii "q\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0xb	# DW_AT_decl_line
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 	.uleb128 0x4	# DW_AT_location
 	.byte	0xf3	# DW_OP_GNU_entry_value
 	.uleb128 0x1
@@ -253,11 +253,11 @@ die72:
 	.uleb128 0x7	# (DIE () DW_TAG_GNU_call_site)
 	.quad	.Lfirsttailcall	# DW_AT_low_pc
 			# DW_AT_GNU_tail_call
-	.long	die72	# DW_AT_abstract_origin
+	.long	die72 - .Ldebug_info0	# DW_AT_abstract_origin
 	.uleb128 0x7	# (DIE (0x9b) DW_TAG_GNU_call_site)
 	.quad	.LVL2	# DW_AT_low_pc
 			# DW_AT_GNU_tail_call
-	.long	die29	# DW_AT_abstract_origin
+	.long	die29 - .Ldebug_info0	# DW_AT_abstract_origin
 	.byte	0	# end of children of DIE 0x72
 	.uleb128 0x8	# (DIE (0xa9) DW_TAG_subprogram)
 			# DW_AT_external
@@ -265,7 +265,7 @@ die72:
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x14	# DW_AT_decl_line
 			# DW_AT_prototyped
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 	.quad	.LFB3	# DW_AT_low_pc
 	.quad	.LFE3-.LFB3	# DW_AT_high_pc
 	.uleb128 0x1	# DW_AT_frame_base
@@ -275,17 +275,17 @@ die72:
 	.long	.LASF1	# DW_AT_name: "argc"
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x14	# DW_AT_decl_line
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 	.long	.LLST0	# DW_AT_location
 	.uleb128 0x9	# (DIE (0xd9) DW_TAG_formal_parameter)
 	.long	.LASF2	# DW_AT_name: "argv"
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x14	# DW_AT_decl_line
-	.long	diefe	# DW_AT_type
+	.long	diefe - .Ldebug_info0	# DW_AT_type
 	.long	.LLST1	# DW_AT_location
 	.uleb128 0xa	# (DIE (0xe8) DW_TAG_GNU_call_site)
 	.quad	.LVL4	# DW_AT_low_pc
-	.long	die72	# DW_AT_abstract_origin
+	.long	die72 - .Ldebug_info0	# DW_AT_abstract_origin
 	.uleb128 0xb	# (DIE (0xf5) DW_TAG_GNU_call_site_parameter)
 	.uleb128 0x1	# DW_AT_location
 	.byte	0x55	# DW_OP_reg5
@@ -298,11 +298,11 @@ die72:
 diefe:
 	.uleb128 0xc	# (DIE (0xfe) DW_TAG_pointer_type)
 	.byte	0x8	# DW_AT_byte_size
-	.long	die104	# DW_AT_type
+	.long	die104 - .Ldebug_info0	# DW_AT_type
 die104:
 	.uleb128 0xc	# (DIE (0x104) DW_TAG_pointer_type)
 	.byte	0x8	# DW_AT_byte_size
-	.long	die10a	# DW_AT_type
+	.long	die10a - .Ldebug_info0	# DW_AT_type
 die10a:
 	.uleb128 0xd	# (DIE (0x10a) DW_TAG_base_type)
 	.byte	0x1	# DW_AT_byte_size
@@ -312,7 +312,7 @@ die10a:
 	.ascii "i\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (amd64-tailcall-self.c)
 	.byte	0x5	# DW_AT_decl_line
-	.long	die6b	# DW_AT_type
+	.long	die6b - .Ldebug_info0	# DW_AT_type
 			# DW_AT_external
 	.uleb128 0x9	# DW_AT_location
 	.byte	0x3	# DW_OP_addr

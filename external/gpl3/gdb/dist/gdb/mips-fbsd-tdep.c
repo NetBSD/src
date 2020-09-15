@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/mips.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -462,6 +462,20 @@ static const struct tramp_frame mips64_fbsd_sigframe =
 
 /* Shared library support.  */
 
+/* FreeBSD/mips can use an alternate routine in the runtime linker to
+   resolve functions.  */
+
+static CORE_ADDR
+mips_fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  struct bound_minimal_symbol msym
+    = lookup_bound_minimal_symbol ("_mips_rtld_bind");
+  if (msym.minsym != nullptr && BMSYMBOL_VALUE_ADDRESS (msym) == pc)
+    return frame_unwind_caller_pc (get_current_frame ());
+
+  return fbsd_skip_solib_resolver (gdbarch, pc);
+}
+
 /* FreeBSD/mips uses a slightly different `struct link_map' than the
    other FreeBSD platforms as it includes an additional `l_off'
    member.  */
@@ -546,6 +560,8 @@ mips_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, mips_fbsd_iterate_over_regset_sections);
 
+  set_gdbarch_skip_solib_resolver (gdbarch, mips_fbsd_skip_solib_resolver);
+
   /* FreeBSD/mips has SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, (gdbarch_ptr_bit (gdbarch) == 32 ?
@@ -553,8 +569,9 @@ mips_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 	       mips_fbsd_lp64_fetch_link_map_offsets));
 }
 
+void _initialize_mips_fbsd_tdep ();
 void
-_initialize_mips_fbsd_tdep (void)
+_initialize_mips_fbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_FREEBSD,
 			  mips_fbsd_init_abi);

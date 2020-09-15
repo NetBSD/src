@@ -1,4 +1,4 @@
-# Copyright 1988-2019 Free Software Foundation, Inc.
+# Copyright 1988-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -500,8 +500,7 @@ gdb_test "ptype nested_su.inner_union_instance" "type = union inner_union \{.*\[
 # correctly printed (at nesting level 1 and 2).
 
 gdb_test "ptype the_highest" \
-         "type = struct highest \{.*\[\r\n\] *int a;.*\[\r\n\] *struct \{.*\[\r\n\] *int b;.*\[\r\n\] *struct \{\.\.\.\} anonymous_level_2;.*\[\r\n\] *\} anonymous_level_1;.*\[\r\n\]}.*" \
-         "ptype the_highest" 
+         "type = struct highest \{.*\[\r\n\] *int a;.*\[\r\n\] *struct \{.*\[\r\n\] *int b;.*\[\r\n\] *struct \{\.\.\.\} anonymous_level_2;.*\[\r\n\] *\} anonymous_level_1;.*\[\r\n\]}.*"
 
 # Print the type descrption for one of the fields of variable the_highest.
 # The purpose is to verify that the type of a field that was printed above
@@ -612,5 +611,5 @@ if [runto_main] then {
   set timeout $prev_timeout
 
   # Test ptype of user register
-  gdb_test "ptype \$pc" "void \\(\\*\\)\\(\\)" "ptype \$pc"
+  gdb_test "ptype \$pc" "void \\(\\*\\)\\(\\)"
 }

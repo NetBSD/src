@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 
 struct infcall_suspend_state;
 struct frame_unwind;
+class thread_info;
 
 /* Push the information needed to identify, and unwind from, a dummy
    frame onto the dummy frame stack.  */

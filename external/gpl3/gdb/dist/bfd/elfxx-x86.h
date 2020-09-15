@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,6 +24,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "hashtab.h"
+#include "elf-linker-x86.h"
 
 #define PLT_CIE_LENGTH		20
 #define PLT_FDE_LENGTH		36
@@ -118,19 +119,23 @@
    Copy dynamic function pointer relocations.  Don't generate dynamic
    relocations against resolved undefined weak symbols in PIE, except
    when PC32_RELOC is TRUE.  Undefined weak symbol is bound locally
-   when PIC is false.  */
-#define GENERATE_DYNAMIC_RELOCATION_P(INFO, EH, R_TYPE, \
+   when PIC is false.  Don't generate dynamic relocations against
+   non-preemptible absolute symbol.  */
+#define GENERATE_DYNAMIC_RELOCATION_P(INFO, EH, R_TYPE, SEC, \
 				      NEED_COPY_RELOC_IN_PIE, \
 				      RESOLVED_TO_ZERO, PC32_RELOC) \
   ((bfd_link_pic (INFO) \
+    && !(bfd_is_abs_section (SEC) \
+	 && ((EH) == NULL \
+	     || SYMBOL_REFERENCES_LOCAL (INFO, &(EH)->elf))) \
     && !(NEED_COPY_RELOC_IN_PIE) \
     && ((EH) == NULL \
 	|| ((ELF_ST_VISIBILITY ((EH)->elf.other) == STV_DEFAULT \
 	     && (!(RESOLVED_TO_ZERO) || PC32_RELOC)) \
 	    || (EH)->elf.root.type != bfd_link_hash_undefweak)) \
-    && ((!X86_PCREL_TYPE_P (R_TYPE) \
-	 && !X86_SIZE_TYPE_P (R_TYPE)) \
-	 || ! SYMBOL_CALLS_LOCAL ((INFO), &(EH)->elf))) \
+    && ((!X86_PCREL_TYPE_P (R_TYPE) && !X86_SIZE_TYPE_P (R_TYPE)) \
+	|| ! SYMBOL_CALLS_LOCAL ((INFO), \
+				 (struct elf_link_hash_entry *) (EH)))) \
    || (ELIMINATE_COPY_RELOCS \
        && !bfd_link_pic (INFO) \
        && (EH) != NULL \
@@ -166,19 +171,28 @@
   ((H)->def_regular \
    || (H)->root.linker_def \
    || (H)->root.ldscript_def \
+   || ((struct elf_x86_link_hash_entry *) (H))->linker_def \
    || ELF_COMMON_DEF_P (H))
+
+/* Return TRUE if the symbol described by a linker hash entry H is
+   going to be absolute.  Similar to bfd_is_abs_symbol, but excluding
+   all linker-script defined symbols.  */
+#define ABS_SYMBOL_P(H) \
+  (bfd_is_abs_symbol (&(H)->root) && !(H)->root.ldscript_def)
 
 /* TRUE if relative relocation should be generated.  GOT reference to
    global symbol in PIC will lead to dynamic symbol.  It becomes a
    problem when "time" or "times" is defined as a variable in an
    executable, clashing with functions of the same name in libc.  If a
    symbol isn't undefined weak symbol, don't make it dynamic in PIC and
-   generate relative relocation.  */
+   generate relative relocation.   Don't generate relative relocation
+   against non-preemptible absolute symbol.  */
 #define GENERATE_RELATIVE_RELOC_P(INFO, H) \
   ((H)->dynindx == -1 \
    && !(H)->forced_local \
    && (H)->root.type != bfd_link_hash_undefweak \
-   && bfd_link_pic (INFO))
+   && bfd_link_pic (INFO) \
+   && !ABS_SYMBOL_P (H))
 
 /* TRUE if this is a pointer reference to a local IFUNC.  */
 #define POINTER_LOCAL_IFUNC_P(INFO, H) \
@@ -235,9 +249,6 @@
 struct elf_x86_link_hash_entry
 {
   struct elf_link_hash_entry elf;
-
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
 
   unsigned char tls_type;
 
@@ -412,6 +423,7 @@ struct elf_x86_plt_layout
 #define GOT_TLS_IE_NEG	6
 #define GOT_TLS_IE_BOTH 7
 #define GOT_TLS_GDESC	8
+#define GOT_ABS		9
 #define GOT_TLS_GD_BOTH_P(type)	\
   ((type) == (GOT_TLS_GD | GOT_TLS_GDESC))
 #define GOT_TLS_GD_P(type) \
@@ -423,14 +435,6 @@ struct elf_x86_plt_layout
 
 #define elf_x86_hash_entry(ent) \
   ((struct elf_x86_link_hash_entry *)(ent))
-
-enum elf_x86_target_os
-{
-  is_normal,
-  is_solaris,
-  is_vxworks,
-  is_nacl
-};
 
 /* x86 ELF linker hash table.  */
 
@@ -464,9 +468,6 @@ struct elf_x86_link_hash_table
   /* The amount of space used by the jump slots in the GOT.  */
   bfd_vma sgotplt_jump_table_size;
 
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
-
   /* _TLS_MODULE_BASE_ symbol.  */
   struct bfd_link_hash_entry *tls_module_base;
 
@@ -474,18 +475,10 @@ struct elf_x86_link_hash_table
   htab_t loc_hash_table;
   void * loc_hash_memory;
 
-  /* The offset into sgot of the GOT entry used by the PLT entry
-     above.  */
-  bfd_vma tlsdesc_got;
-
   /* The index of the next R_X86_64_JUMP_SLOT entry in .rela.plt.  */
   bfd_vma next_jump_slot_index;
   /* The index of the next R_X86_64_IRELATIVE entry in .rela.plt.  */
   bfd_vma next_irelative_index;
-
-  /* TRUE if there are dynamic relocs against IFUNC symbols that apply
-     to read-only sections.  */
-  bfd_boolean readonly_dynrelocs_against_ifunc;
 
   /* The (unloaded but important) .rel.plt.unloaded section on VxWorks.
      This is used for i386 only.  */
@@ -494,12 +487,6 @@ struct elf_x86_link_hash_table
   /* The index of the next unused R_386_TLS_DESC slot in .rel.plt.  This
      is only used for i386.  */
   bfd_vma next_tls_desc_index;
-
-  /* The offset into splt of the PLT entry for the TLS descriptor
-     resolver.  Special values are 0, if not necessary (or not found
-     to be necessary yet), and -1 if needed but not determined
-     yet.  This is only used for x86-64.  */
-  bfd_vma tlsdesc_plt;
 
    /* Value used to fill the unused bytes of the first PLT entry.  This
       is only used for i386.  */
@@ -519,30 +506,16 @@ struct elf_x86_link_hash_table
   bfd_vma (*r_info) (bfd_vma, bfd_vma);
   bfd_vma (*r_sym) (bfd_vma);
   bfd_boolean (*is_reloc_section) (const char *);
-  enum elf_target_id target_id;
-  enum elf_x86_target_os target_os;
   unsigned int sizeof_reloc;
-  unsigned int dt_reloc;
-  unsigned int dt_reloc_sz;
-  unsigned int dt_reloc_ent;
   unsigned int got_entry_size;
   unsigned int pointer_r_type;
   int dynamic_interpreter_size;
   const char *dynamic_interpreter;
   const char *tls_get_addr;
+
+  /* Options passed from the linker.  */
+  struct elf_linker_x86_params *params;
 };
-
-/* Architecture-specific backend data for x86.  */
-
-struct elf_x86_backend_data
-{
-  /* Target system.  */
-  enum elf_x86_target_os target_os;
-};
-
-#define get_elf_x86_backend_data(abfd) \
-  ((const struct elf_x86_backend_data *) \
-   get_elf_backend_data (abfd)->arch_data)
 
 struct elf_x86_init_table
 {
@@ -596,6 +569,9 @@ struct elf_x86_plt
   long count;
 };
 
+/* Set if a relocation is converted from a GOTPCREL relocation.  */
+#define R_X86_64_converted_reloc_bit (1 << 7)
+
 #define elf_x86_tdata(abfd) \
   ((struct elf_x86_obj_tdata *) (abfd)->tdata.any)
 
@@ -611,7 +587,7 @@ struct elf_x86_plt
 #define is_x86_elf(bfd, htab)				\
   (bfd_get_flavour (bfd) == bfd_target_elf_flavour	\
    && elf_tdata (bfd) != NULL				\
-   && elf_object_id (bfd) == (htab)->target_id)
+   && elf_object_id (bfd) == (htab)->elf.hash_table_id)
 
 extern bfd_boolean _bfd_x86_elf_mkobject
   (bfd *);
@@ -646,6 +622,11 @@ extern int _bfd_x86_elf_compare_relocs
 
 extern bfd_boolean _bfd_x86_elf_link_check_relocs
   (bfd *, struct bfd_link_info *);
+
+extern bfd_boolean _bfd_elf_x86_valid_reloc_p
+  (asection *, struct bfd_link_info *, struct elf_x86_link_hash_table *,
+   const Elf_Internal_Rela *, struct elf_link_hash_entry *,
+   Elf_Internal_Sym *, Elf_Internal_Shdr *, bfd_boolean *);
 
 extern bfd_boolean _bfd_x86_elf_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
@@ -691,7 +672,7 @@ extern enum elf_property_kind _bfd_x86_elf_parse_gnu_properties
   (bfd *, unsigned int, bfd_byte *, unsigned int);
 
 extern bfd_boolean _bfd_x86_elf_merge_gnu_properties
-  (struct bfd_link_info *, bfd *, elf_property *, elf_property *);
+  (struct bfd_link_info *, bfd *, bfd *, elf_property *, elf_property *);
 
 extern void _bfd_x86_elf_link_fixup_gnu_properties
   (struct bfd_link_info *, elf_property_list **);

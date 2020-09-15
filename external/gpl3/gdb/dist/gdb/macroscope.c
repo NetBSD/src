@@ -1,5 +1,5 @@
 /* Functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -140,20 +140,21 @@ default_macro_scope (void)
    location given by BATON, which must be a pointer to a `struct
    macro_scope' structure.  */
 struct macro_definition *
-standard_macro_lookup (const char *name, void *baton)
+standard_macro_lookup (const char *name, const macro_scope &ms)
 {
-  struct macro_scope *ms = (struct macro_scope *) baton;
-  struct macro_definition *result;
-
   /* Give user-defined macros priority over all others.  */
-  result = macro_lookup_definition (macro_main (macro_user_macros), -1, name);
-  if (! result)
-    result = macro_lookup_definition (ms->file, ms->line, name);
+  macro_definition *result
+    = macro_lookup_definition (macro_main (macro_user_macros), -1, name);
+
+  if (result == nullptr)
+    result = macro_lookup_definition (ms.file, ms.line, name);
+
   return result;
 }
 
+void _initialize_macroscope ();
 void
-_initialize_macroscope (void)
+_initialize_macroscope ()
 {
   macro_user_macros = new_macro_table (NULL, NULL, NULL);
   macro_set_main (macro_user_macros, "<user-defined>");

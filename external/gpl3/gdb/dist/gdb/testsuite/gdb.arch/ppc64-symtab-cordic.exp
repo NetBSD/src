@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,10 +47,10 @@ gdb_load ${kofile}
 
 set test "show architecture"
 gdb_test_multiple $test $test {
-    -re "\r\nThe target architecture is set automatically \\(currently powerpc:common64\\)\r\n$gdb_prompt $" {
+    -re "\r\nThe target architecture is set to \"auto\" \\(currently \"powerpc:common64\"\\)\r\n$gdb_prompt $" {
 	pass $test
     }
-    -re "\r\nThe target architecture is set automatically \\(currently .*\\)\r\n$gdb_prompt $" {
+    -re "\r\nThe target architecture is set to \"auto\" \\(currently \".*\"\\)\r\n$gdb_prompt $" {
 	untested "powerpc:common64 is not supported"
     }
 }

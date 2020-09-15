@@ -1,6 +1,6 @@
 /* Filename-seen cache for the GNU debugger, GDB.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define FILENAME_SEEN_CACHE_H
 
 #include "defs.h"
-#include "common/function-view.h"
+#include "gdbsupport/function-view.h"
 
 /* Cache to watch for file names already seen.  */
 

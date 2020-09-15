@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving an external simulator
-#   Copyright 1999-2019 Free Software Foundation, Inc.
+#   Copyright 1999-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 proc sid_start {} {
-    global verbose
-
     set port [lindex [split [target_info netport] ":"] 1]
 
     # Set a default endianness

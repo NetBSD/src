@@ -1,6 +1,6 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -33,6 +33,8 @@
 #include "command.h"
 #include "block.h"
 #include "dictionary.h"
+#include "cli/cli-style.h"
+#include "gdbarch.h"
 
 static void f77_get_dynamic_length_of_aggregate (struct type *);
 
@@ -41,19 +43,19 @@ int f77_array_offset_tbl[MAX_FORTRAN_DIMS + 1][2];
 /* Array which holds offsets to be applied to get a row's elements
    for a given array.  Array also holds the size of each subarray.  */
 
-int
+LONGEST
 f77_get_lowerbound (struct type *type)
 {
-  if (TYPE_ARRAY_LOWER_BOUND_IS_UNDEFINED (type))
+  if (type->bounds ()->low.kind () == PROP_UNDEFINED)
     error (_("Lower bound may not be '*' in F77"));
 
-  return TYPE_ARRAY_LOWER_BOUND_VALUE (type);
+  return type->bounds ()->low.const_val ();
 }
 
-int
+LONGEST
 f77_get_upperbound (struct type *type)
 {
-  if (TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (type))
+  if (type->bounds ()->high.kind () == PROP_UNDEFINED)
     {
       /* We have an assumed size array on our hands.  Assume that
 	 upper_bound == lower_bound so that we show at least 1 element.
@@ -63,7 +65,7 @@ f77_get_upperbound (struct type *type)
       return f77_get_lowerbound (type);
     }
 
-  return TYPE_ARRAY_UPPER_BOUND_VALUE (type);
+  return type->bounds ()->high.const_val ();
 }
 
 /* Obtain F77 adjustable array dimensions.  */
@@ -83,8 +85,8 @@ f77_get_dynamic_length_of_aggregate (struct type *type)
      This function also works for strings which behave very 
      similarly to arrays.  */
 
-  if (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_ARRAY
-      || TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_STRING)
+  if (TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_ARRAY
+      || TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_STRING)
     f77_get_dynamic_length_of_aggregate (TYPE_TARGET_TYPE (type));
 
   /* Recursion ends here, start setting up lengths.  */
@@ -110,16 +112,21 @@ f77_print_array_1 (int nss, int ndimensions, struct type *type,
 		   const struct value_print_options *options,
 		   int *elts)
 {
-  struct type *range_type = TYPE_INDEX_TYPE (check_typedef (type));
+  struct type *range_type = check_typedef (type)->index_type ();
   CORE_ADDR addr = address + embedded_offset;
   LONGEST lowerbound, upperbound;
-  int i;
+  LONGEST i;
 
   get_discrete_bounds (range_type, &lowerbound, &upperbound);
 
   if (nss != ndimensions)
     {
-      size_t dim_size = TYPE_LENGTH (TYPE_TARGET_TYPE (type));
+      struct gdbarch *gdbarch = get_type_arch (type);
+      size_t dim_size = type_length_units (TYPE_TARGET_TYPE (type));
+      int unit_size = gdbarch_addressable_memory_unit_size (gdbarch);
+      size_t byte_stride = type->bit_stride () / (unit_size * 8);
+      if (byte_stride == 0)
+	byte_stride = dim_size;
       size_t offs = 0;
 
       for (i = lowerbound;
@@ -136,7 +143,7 @@ f77_print_array_1 (int nss, int ndimensions, struct type *type,
 			     value_embedded_offset (subarray),
 			     value_address (subarray),
 			     stream, recurse, subarray, options, elts);
-	  offs += dim_size;
+	  offs += byte_stride;
 	  fprintf_filtered (stream, ") ");
 	}
       if (*elts >= options->print_max && i < upperbound)
@@ -149,10 +156,7 @@ f77_print_array_1 (int nss, int ndimensions, struct type *type,
 	{
 	  struct value *elt = value_subscript ((struct value *)val, i);
 
-	  val_print (value_type (elt),
-		     value_embedded_offset (elt),
-		     value_address (elt), stream, recurse,
-		     elt, options, current_language);
+	  common_val_print (elt, stream, recurse, options, current_language);
 
 	  if (i != upperbound)
 	    fprintf_filtered (stream, ", ");
@@ -199,43 +203,40 @@ static const struct generic_val_print_decorations f_decorations =
   ")",
   ".TRUE.",
   ".FALSE.",
-  "VOID",
+  "void",
   "{",
   "}"
 };
 
-/* See val_print for a description of the various parameters of this
-   function; they are identical.  */
+/* See f-lang.h.  */
 
 void
-f_val_print (struct type *type, int embedded_offset,
-	     CORE_ADDR address, struct ui_file *stream, int recurse,
-	     struct value *original_value,
-	     const struct value_print_options *options)
+f_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
+		      const struct value_print_options *options)
 {
+  struct type *type = check_typedef (value_type (val));
   struct gdbarch *gdbarch = get_type_arch (type);
   int printed_field = 0; /* Number of fields printed.  */
   struct type *elttype;
   CORE_ADDR addr;
   int index;
-  const gdb_byte *valaddr =value_contents_for_printing (original_value);
+  const gdb_byte *valaddr = value_contents_for_printing (val);
+  const CORE_ADDR address = value_address (val);
 
-  type = check_typedef (type);
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRING:
       f77_get_dynamic_length_of_aggregate (type);
       LA_PRINT_STRING (stream, builtin_type (gdbarch)->builtin_char,
-		       valaddr + embedded_offset,
-		       TYPE_LENGTH (type), NULL, 0, options);
+		       valaddr, TYPE_LENGTH (type), NULL, 0, options);
       break;
 
     case TYPE_CODE_ARRAY:
-      if (TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_CHAR)
+      if (TYPE_TARGET_TYPE (type)->code () != TYPE_CODE_CHAR)
 	{
 	  fprintf_filtered (stream, "(");
-	  f77_print_array (type, valaddr, embedded_offset,
-			   address, stream, recurse, original_value, options);
+	  f77_print_array (type, valaddr, 0,
+			   address, stream, recurse, val, options);
 	  fprintf_filtered (stream, ")");
 	}
       else
@@ -243,8 +244,7 @@ f_val_print (struct type *type, int embedded_offset,
 	  struct type *ch_type = TYPE_TARGET_TYPE (type);
 
 	  f77_get_dynamic_length_of_aggregate (type);
-	  LA_PRINT_STRING (stream, ch_type,
-			   valaddr + embedded_offset,
+	  LA_PRINT_STRING (stream, ch_type, valaddr,
 			   TYPE_LENGTH (type) / TYPE_LENGTH (ch_type),
 			   NULL, 0, options);
 	}
@@ -253,18 +253,17 @@ f_val_print (struct type *type, int embedded_offset,
     case TYPE_CODE_PTR:
       if (options->format && options->format != 's')
 	{
-	  val_print_scalar_formatted (type, embedded_offset,
-				      original_value, options, 0, stream);
+	  value_print_scalar_formatted (val, options, 0, stream);
 	  break;
 	}
       else
 	{
 	  int want_space = 0;
 
-	  addr = unpack_pointer (type, valaddr + embedded_offset);
+	  addr = unpack_pointer (type, valaddr);
 	  elttype = check_typedef (TYPE_TARGET_TYPE (type));
 
-	  if (TYPE_CODE (elttype) == TYPE_CODE_FUNC)
+	  if (elttype->code () == TYPE_CODE_FUNC)
 	    {
 	      /* Try to print what function it points to.  */
 	      print_function_pointer_address (options, gdbarch, addr, stream);
@@ -283,7 +282,7 @@ f_val_print (struct type *type, int embedded_offset,
 	  /* For a pointer to char or unsigned char, also print the string
 	     pointed to, unless pointer is null.  */
 	  if (TYPE_LENGTH (elttype) == 1
-	      && TYPE_CODE (elttype) == TYPE_CODE_INT
+	      && elttype->code () == TYPE_CODE_INT
 	      && (options->format == 0 || options->format == 's')
 	      && addr != 0)
 	    {
@@ -303,12 +302,10 @@ f_val_print (struct type *type, int embedded_offset,
 
 	  opts.format = (options->format ? options->format
 			 : options->output_format);
-	  val_print_scalar_formatted (type, embedded_offset,
-				      original_value, &opts, 0, stream);
+	  value_print_scalar_formatted (val, &opts, 0, stream);
 	}
       else
-	val_print_scalar_formatted (type, embedded_offset,
-				    original_value, options, 0, stream);
+	value_print_scalar_formatted (val, options, 0, stream);
       break;
 
     case TYPE_CODE_STRUCT:
@@ -316,15 +313,14 @@ f_val_print (struct type *type, int embedded_offset,
       /* Starting from the Fortran 90 standard, Fortran supports derived
          types.  */
       fprintf_filtered (stream, "( ");
-      for (index = 0; index < TYPE_NFIELDS (type); index++)
+      for (index = 0; index < type->num_fields (); index++)
         {
-	  struct value *field = value_field
-	    ((struct value *)original_value, index);
+	  struct value *field = value_field (val, index);
 
-	  struct type *field_type = check_typedef (TYPE_FIELD_TYPE (type, index));
+	  struct type *field_type = check_typedef (type->field (index).type ());
 
 
-	  if (TYPE_CODE (field_type) != TYPE_CODE_FUNC)
+	  if (field_type->code () != TYPE_CODE_FUNC)
 	    {
 	      const char *field_name;
 
@@ -334,20 +330,40 @@ f_val_print (struct type *type, int embedded_offset,
 	      field_name = TYPE_FIELD_NAME (type, index);
 	      if (field_name != NULL)
 		{
-		  fputs_filtered (field_name, stream);
+		  fputs_styled (field_name, variable_name_style.style (),
+				stream);
 		  fputs_filtered (" = ", stream);
 		}
 
-	      val_print (value_type (field),
-			 value_embedded_offset (field),
-			 value_address (field), stream, recurse + 1,
-			 field, options, current_language);
+	      common_val_print (field, stream, recurse + 1,
+				options, current_language);
 
 	      ++printed_field;
 	    }
 	 }
       fprintf_filtered (stream, " )");
       break;     
+
+    case TYPE_CODE_BOOL:
+      if (options->format || options->output_format)
+	{
+	  struct value_print_options opts = *options;
+	  opts.format = (options->format ? options->format
+			 : options->output_format);
+	  value_print_scalar_formatted (val, &opts, 0, stream);
+	}
+      else
+	{
+	  LONGEST longval = value_as_long (val);
+	  /* The Fortran standard doesn't specify how logical types are
+	     represented.  Different compilers use different non zero
+	     values to represent logical true.  */
+	  if (longval == 0)
+	    fputs_filtered (f_decorations.false_name, stream);
+	  else
+	    fputs_filtered (f_decorations.true_name, stream);
+	}
+      break;
 
     case TYPE_CODE_REF:
     case TYPE_CODE_FUNC:
@@ -358,15 +374,11 @@ f_val_print (struct type *type, int embedded_offset,
     case TYPE_CODE_RANGE:
     case TYPE_CODE_UNDEF:
     case TYPE_CODE_COMPLEX:
-    case TYPE_CODE_BOOL:
     case TYPE_CODE_CHAR:
     default:
-      generic_val_print (type, embedded_offset, address,
-			 stream, recurse, original_value, options,
-			 &f_decorations);
+      generic_value_print (val, stream, recurse, options, &f_decorations);
       break;
     }
-  gdb_flush (stream);
 }
 
 static void
@@ -387,17 +399,17 @@ info_common_command_for_block (const struct block *block, const char *comname,
 
 	gdb_assert (SYMBOL_CLASS (sym) == LOC_COMMON_BLOCK);
 
-	if (comname && (!SYMBOL_LINKAGE_NAME (sym)
-	                || strcmp (comname, SYMBOL_LINKAGE_NAME (sym)) != 0))
+	if (comname && (!sym->linkage_name ()
+	                || strcmp (comname, sym->linkage_name ()) != 0))
 	  continue;
 
 	if (*any_printed)
 	  putchar_filtered ('\n');
 	else
 	  *any_printed = 1;
-	if (SYMBOL_PRINT_NAME (sym))
+	if (sym->print_name ())
 	  printf_filtered (_("Contents of F77 COMMON block '%s':\n"),
-			   SYMBOL_PRINT_NAME (sym));
+			   sym->print_name ());
 	else
 	  printf_filtered (_("Contents of blank COMMON block:\n"));
 	
@@ -406,19 +418,20 @@ info_common_command_for_block (const struct block *block, const char *comname,
 	    struct value *val = NULL;
 
 	    printf_filtered ("%s = ",
-			     SYMBOL_PRINT_NAME (common->contents[index]));
+			     common->contents[index]->print_name ());
 
-	    TRY
+	    try
 	      {
 		val = value_of_variable (common->contents[index], block);
 		value_print (val, gdb_stdout, &opts);
 	      }
 
-	    CATCH (except, RETURN_MASK_ERROR)
+	    catch (const gdb_exception_error &except)
 	      {
-		printf_filtered ("<error reading variable: %s>", except.message);
+		fprintf_styled (gdb_stdout, metadata_style.style (),
+				"<error reading variable: %s>",
+				except.what ());
 	      }
-	    END_CATCH
 
 	    putchar_filtered ('\n');
 	  }
@@ -472,8 +485,9 @@ info_common_command (const char *comname, int from_tty)
     }
 }
 
+void _initialize_f_valprint ();
 void
-_initialize_f_valprint (void)
+_initialize_f_valprint ()
 {
   add_info ("common", info_common_command,
 	    _("Print out the values contained in a Fortran COMMON block."));

@@ -1,6 +1,6 @@
 /* Wrapper for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

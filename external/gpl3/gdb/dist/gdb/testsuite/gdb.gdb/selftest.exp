@@ -1,4 +1,4 @@
-# Copyright 1988-2019 Free Software Foundation, Inc.
+# Copyright 1988-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -110,9 +110,26 @@ proc test_with_self { } {
     }
     
     set description "send SIGINT signal to child process"
-    gdb_test "signal SIGINT" \
-	"Continuing with signal SIGINT.*" \
-	"$description"
+    gdb_test_multiple "signal SIGINT" "$description" {
+	-re "^signal SIGINT\r\nContinuing with signal SIGINT.\r\nQuit\r\n.* $" {
+	    pass "$description"
+	}
+    }
+
+    set description "send ^C to child process again"
+    send_gdb "\003"
+    gdb_expect {
+	-re "(Thread .*|Program) received signal SIGINT.*$gdb_prompt $" {
+	    pass "$description"
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "$description"
+	}
+	timeout {
+	    fail "$description (timeout)"
+	}
+    }
+
 
     # Switch back to the GDB thread if Guile support is linked in.
     # "signal SIGINT" could also switch the current thread.

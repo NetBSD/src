@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,6 +44,13 @@ extern int build_section_table (struct bfd *, struct target_section **,
 
 extern void clear_section_table (struct target_section_table *table);
 
+/* The current inferior is a child vforked and its program space is
+   shared with its parent.  This pushes the exec target on the
+   current/child inferior's target stack if there are sections in the
+   program space's section table.  */
+
+extern void exec_on_vfork ();
+
 /* Read from mappable read-only sections of BFD executable files.
    Return TARGET_XFER_OK, if read is successful.  Return
    TARGET_XFER_EOF if read is done.  Return TARGET_XFER_E_IO
@@ -58,8 +65,13 @@ extern enum target_xfer_status
    Request to transfer up to LEN 8-bit bytes of the target sections
    defined by SECTIONS and SECTIONS_END.  The OFFSET specifies the
    starting address.
-   If SECTION_NAME is not NULL, only access sections with that same
-   name.
+
+   The MATCH_CB predicate is optional; when provided it will be called
+   for each section under consideration.  When MATCH_CB evaluates as
+   true, the section remains under consideration; a false result
+   removes it from consideration for performing the memory transfers
+   noted above.  See memory_xfer_partial_1() in target.c for an
+   example.
 
    Return the number of bytes actually transfered, or zero when no
    data is available for the requested range.
@@ -76,7 +88,9 @@ extern enum target_xfer_status
 				     ULONGEST, ULONGEST, ULONGEST *,
 				     struct target_section *,
 				     struct target_section *,
-				     const char *);
+				     gdb::function_view<bool
+				       (const struct target_section *)> match_cb
+				         = nullptr);
 
 /* Read from mappable read-only sections of BFD executable files.
    Similar to exec_read_partial_read_only, but return

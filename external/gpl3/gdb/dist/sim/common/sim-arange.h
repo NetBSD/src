@@ -1,5 +1,5 @@
 /* Address ranges.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -51,36 +51,24 @@ typedef struct _addr_range {
 } ADDR_RANGE;
 
 /* Add address range START,END to AR.  */
-extern void sim_addr_range_add (ADDR_RANGE * /*ar*/,
-				address_word /*start*/,
-				address_word /*end*/);
+INLINE_SIM_ARANGE (void) sim_addr_range_add (ADDR_RANGE * /*ar*/,
+					     address_word /*start*/,
+					     address_word /*end*/);
 
 /* Delete address range START,END from AR.  */
-extern void sim_addr_range_delete (ADDR_RANGE * /*ar*/,
-				   address_word /*start*/,
-				   address_word /*end*/);
-
-/* TODO: This should get moved into sim-inline.h.  */
-#ifdef HAVE_INLINE
-#ifdef SIM_ARANGE_C
-#define SIM_ARANGE_INLINE INLINE
-#else
-#define SIM_ARANGE_INLINE EXTERN_INLINE
-#endif
-#else
-#define SIM_ARANGE_INLINE extern
-#endif
+INLINE_SIM_ARANGE (void) sim_addr_range_delete (ADDR_RANGE * /*ar*/,
+						address_word /*start*/,
+						address_word /*end*/);
 
 /* Return non-zero if ADDR is in range AR, traversing the entire tree.
    If no range is specified, that is defined to mean "everything".  */
-SIM_ARANGE_INLINE int
-sim_addr_range_hit_p (ADDR_RANGE * /*ar*/, address_word /*addr*/);
+INLINE_SIM_ARANGE (int) sim_addr_range_hit_p (ADDR_RANGE * /*ar*/,
+					      address_word /*addr*/);
 #define ADDR_RANGE_HIT_P(ar, addr) \
   ((ar)->range_tree == NULL || sim_addr_range_hit_p ((ar), (addr)))
 
-#ifdef HAVE_INLINE
+#if H_REVEALS_MODULE_P (SIM_ARANGE_INLINE)
 #include "sim-arange.c"
 #endif
-#define SIM_ARANGE_C_INCLUDED
 
 #endif /* SIM_ARANGE_H */

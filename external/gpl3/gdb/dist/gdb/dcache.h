@@ -1,7 +1,7 @@
 /* Declarations for caching.  Typically used by remote back ends for
    caching remote memory.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,15 @@ DCACHE *dcache_init (void);
 
 /* Free a DCACHE.  */
 void dcache_free (DCACHE *);
+
+/* A deletion adapter that calls dcache_free.  */
+struct dcache_deleter
+{
+  void operator() (DCACHE *d) const
+  {
+    dcache_free (d);
+  }
+};
 
 enum target_xfer_status
   dcache_read_memory_partial (struct target_ops *ops, DCACHE *dcache,

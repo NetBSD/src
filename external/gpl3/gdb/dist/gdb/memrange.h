@@ -1,6 +1,6 @@
 /* The memory range data structure, and associated utilities.
 
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,6 @@
 
 #ifndef MEMRANGE_H
 #define MEMRANGE_H
-
-#include "common/vec.h"
 
 /* Defines a [START, START + LENGTH) memory range.  */
 

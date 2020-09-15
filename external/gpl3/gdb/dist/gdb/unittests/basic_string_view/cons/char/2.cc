@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -21,8 +21,8 @@
 
 namespace cons_2 {
 
-void
-test03()
+static void
+test03 ()
 {
   const char* with_nulls = "This contains \0 a zero byte.";
 
@@ -35,8 +35,8 @@ test03()
   VERIFY( s2.size() == 28 );
 }
 
-int
-main()
+static int
+main ()
 { 
   test03();
 

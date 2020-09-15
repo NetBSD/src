@@ -1,1 +1,1 @@
-m4_define([BFD_VERSION], [2.32.51])
+m4_define([BFD_VERSION], [2.35.50])

@@ -1,5 +1,5 @@
 /* .eh_frame section optimization.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1049,13 +1049,10 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
     (_("error in %pB(%pA); no .eh_frame_hdr table will be created"),
      abfd, sec);
   hdr_info->u.dwarf.table = FALSE;
-  if (sec_info)
-    free (sec_info);
+  free (sec_info);
  success:
-  if (ehbuf)
-    free (ehbuf);
-  if (local_cies)
-    free (local_cies);
+  free (ehbuf);
+  free (local_cies);
 #undef REQUIRE
 }
 
@@ -1109,7 +1106,7 @@ add_eh_frame_hdr_terminator (asection *sec,
   if (!sec->rawsize)
     sec->rawsize = sec->size;
 
-  bfd_set_section_size (sec->owner, sec, sec->size + 8);
+  bfd_set_section_size (sec, sec->size + 8);
 }
 
 /* Finish a pass over all .eh_frame_entry sections.  */
@@ -1532,19 +1529,23 @@ _bfd_elf_discard_section_eh_frame
 		   don't create the binary search table,
 		   since it is affected by runtime relocations.  */
 		hdr_info->u.dwarf.table = FALSE;
-		if (num_warnings_issued < 10)
+		/* Only warn if --eh-frame-hdr was specified.  */
+		if (info->eh_frame_hdr_type != 0)
 		  {
-		    _bfd_error_handler
-		      /* xgettext:c-format */
-		      (_("FDE encoding in %pB(%pA) prevents .eh_frame_hdr"
-			 " table being created"), abfd, sec);
-		    num_warnings_issued ++;
-		  }
-		else if (num_warnings_issued == 10)
-		  {
-		    _bfd_error_handler
-		      (_("further warnings about FDE encoding preventing .eh_frame_hdr generation dropped"));
-		    num_warnings_issued ++;
+		    if (num_warnings_issued < 10)
+		      {
+			_bfd_error_handler
+			  /* xgettext:c-format */
+			  (_("FDE encoding in %pB(%pA) prevents .eh_frame_hdr"
+			     " table being created"), abfd, sec);
+			num_warnings_issued ++;
+		      }
+		    else if (num_warnings_issued == 10)
+		      {
+			_bfd_error_handler
+			  (_("further warnings about FDE encoding preventing .eh_frame_hdr generation dropped"));
+			num_warnings_issued ++;
+		      }
 		  }
 	      }
 	    ent->removed = 0;
@@ -1554,11 +1555,8 @@ _bfd_elf_discard_section_eh_frame
 	  }
       }
 
-  if (sec_info->cies)
-    {
-      free (sec_info->cies);
-      sec_info->cies = NULL;
-    }
+  free (sec_info->cies);
+  sec_info->cies = NULL;
 
   /* It may be that some .eh_frame input section has greater alignment
      than other .eh_frame sections.  In that case we run the risk of
@@ -1682,7 +1680,7 @@ _bfd_elf_eh_frame_entry_present (struct bfd_link_info *info)
     {
       for (o = abfd->sections; o; o = o->next)
 	{
-	  const char *name = bfd_get_section_name (abfd, o);
+	  const char *name = bfd_section_name (o);
 
 	  if (strcmp (name, ".eh_frame_entry")
 	      && !bfd_is_abs_section (o->output_section))
@@ -1993,7 +1991,7 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 	      || ent->u.cie.per_encoding_relative)
 	    {
 	      char *aug;
-	      unsigned int action, extra_string, extra_data;
+	      unsigned int version, action, extra_string, extra_data;
 	      unsigned int per_width, per_encoding;
 
 	      /* Need to find 'R' or 'L' augmentation's argument and modify
@@ -2004,13 +2002,17 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 	      extra_string = extra_augmentation_string_bytes (ent);
 	      extra_data = extra_augmentation_data_bytes (ent);
 
-	      /* Skip length, id and version.  */
-	      buf += 9;
+	      /* Skip length, id.  */
+	      buf += 8;
+	      version = *buf++;
 	      aug = (char *) buf;
 	      buf += strlen (aug) + 1;
 	      skip_leb128 (&buf, end);
 	      skip_leb128 (&buf, end);
-	      skip_leb128 (&buf, end);
+	      if (version == 1)
+		skip_bytes (&buf, end, 1);
+	      else
+		skip_leb128 (&buf, end);
 	      if (*aug == 'z')
 		{
 		  /* The uleb128 will always be a single byte for the kind
@@ -2141,6 +2143,7 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 			/* Fall thru */
 		      case bfd_arch_frv:
 		      case bfd_arch_i386:
+		      case bfd_arch_nios2:
 			BFD_ASSERT (htab->hgot != NULL
 				    && ((htab->hgot->root.type
 					 == bfd_link_hash_defined)
@@ -2502,8 +2505,7 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
     retval = FALSE;
   free (contents);
 
-  if (hdr_info->u.dwarf.array != NULL)
-    free (hdr_info->u.dwarf.array);
+  free (hdr_info->u.dwarf.array);
   return retval;
 }
 

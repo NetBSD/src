@@ -1,6 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -73,7 +73,7 @@ cli_ui_out::do_table_header (int width, ui_align alignment,
     return;
 
   do_field_string (0, width, alignment, 0, col_hdr.c_str (),
-		   ui_out_style_kind::DEFAULT);
+		   ui_file_style ());
 }
 
 /* Mark beginning of a list */
@@ -93,16 +93,27 @@ cli_ui_out::do_end (ui_out_type type)
 /* output an int field */
 
 void
-cli_ui_out::do_field_int (int fldno, int width, ui_align alignment,
-			  const char *fldname, int value)
+cli_ui_out::do_field_signed (int fldno, int width, ui_align alignment,
+			     const char *fldname, LONGEST value)
 {
   if (m_suppress_output)
     return;
 
-  std::string str = string_printf ("%d", value);
+  do_field_string (fldno, width, alignment, fldname, plongest (value),
+		   ui_file_style ());
+}
 
-  do_field_string (fldno, width, alignment, fldname, str.c_str (),
-		   ui_out_style_kind::DEFAULT);
+/* output an unsigned field */
+
+void
+cli_ui_out::do_field_unsigned (int fldno, int width, ui_align alignment,
+			       const char *fldname, ULONGEST value)
+{
+  if (m_suppress_output)
+    return;
+
+  do_field_string (fldno, width, alignment, fldname, pulongest (value),
+		   ui_file_style ());
 }
 
 /* used to omit a field */
@@ -115,7 +126,7 @@ cli_ui_out::do_field_skip (int fldno, int width, ui_align alignment,
     return;
 
   do_field_string (fldno, width, alignment, fldname, "",
-		   ui_out_style_kind::DEFAULT);
+		   ui_file_style ());
 }
 
 /* other specific cli_field_* end up here so alignment and field
@@ -124,7 +135,7 @@ cli_ui_out::do_field_skip (int fldno, int width, ui_align alignment,
 void
 cli_ui_out::do_field_string (int fldno, int width, ui_align align,
 			     const char *fldname, const char *string,
-			     ui_out_style_kind style)
+			     const ui_file_style &style)
 {
   int before = 0;
   int after = 0;
@@ -160,29 +171,10 @@ cli_ui_out::do_field_string (int fldno, int width, ui_align align,
 
   if (string)
     {
-      ui_file_style fstyle;
-      switch (style)
-	{
-	case ui_out_style_kind::DEFAULT:
-	  /* Nothing.  */
-	  break;
-	case ui_out_style_kind::FILE:
-	  /* Nothing.  */
-	  fstyle = file_name_style.style ();
-	  break;
-	case ui_out_style_kind::FUNCTION:
-	  fstyle = function_name_style.style ();
-	  break;
-	case ui_out_style_kind::VARIABLE:
-	  fstyle = variable_name_style.style ();
-	  break;
-	case ui_out_style_kind::ADDRESS:
-	  fstyle = address_style.style ();
-	  break;
-	default:
-	  gdb_assert_not_reached ("missing case");
-	}
-      fputs_styled (string, fstyle, m_streams.back ());
+      if (test_flags (unfiltered_output))
+	fputs_styled_unfiltered (string, style, m_streams.back ());
+      else
+	fputs_styled (string, style, m_streams.back ());
     }
 
   if (after)
@@ -196,16 +188,15 @@ cli_ui_out::do_field_string (int fldno, int width, ui_align align,
 
 void
 cli_ui_out::do_field_fmt (int fldno, int width, ui_align align,
-			  const char *fldname, const char *format,
-			  va_list args)
+			  const char *fldname, const ui_file_style &style,
+			  const char *format, va_list args)
 {
   if (m_suppress_output)
     return;
 
   std::string str = string_vprintf (format, args);
 
-  do_field_string (fldno, width, align, fldname, str.c_str (),
-		   ui_out_style_kind::DEFAULT);
+  do_field_string (fldno, width, align, fldname, str.c_str (), style);
 }
 
 void
@@ -214,7 +205,10 @@ cli_ui_out::do_spaces (int numspaces)
   if (m_suppress_output)
     return;
 
-  print_spaces_filtered (numspaces, m_streams.back ());
+  if (test_flags (unfiltered_output))
+    print_spaces (numspaces, m_streams.back ());
+  else
+    print_spaces_filtered (numspaces, m_streams.back ());
 }
 
 void
@@ -223,16 +217,24 @@ cli_ui_out::do_text (const char *string)
   if (m_suppress_output)
     return;
 
-  fputs_filtered (string, m_streams.back ());
+  if (test_flags (unfiltered_output))
+    fputs_unfiltered (string, m_streams.back ());
+  else
+    fputs_filtered (string, m_streams.back ());
 }
 
 void
-cli_ui_out::do_message (const char *format, va_list args)
+cli_ui_out::do_message (const ui_file_style &style,
+			const char *format, va_list args)
 {
   if (m_suppress_output)
     return;
 
-  vfprintf_unfiltered (m_streams.back (), format, args);
+  /* Use the "no_gdbfmt" variant here to avoid recursion.
+     vfprintf_styled calls into cli_ui_out::message to handle the
+     gdb-specific printf formats.  */
+  vfprintf_styled_no_gdbfmt (m_streams.back (), style,
+			     !test_flags (unfiltered_output), format, args);
 }
 
 void
@@ -268,7 +270,10 @@ cli_ui_out::do_redirect (ui_file *outstream)
 void
 cli_ui_out::field_separator ()
 {
-  fputc_filtered (' ', m_streams.back ());
+  if (test_flags (unfiltered_output))
+    fputc_unfiltered (' ', m_streams.back ());
+  else
+    fputc_filtered (' ', m_streams.back ());
 }
 
 /* Constructor for cli_ui_out.  */
@@ -303,6 +308,12 @@ cli_ui_out::set_stream (struct ui_file *stream)
   m_streams.back () = stream;
 
   return old;
+}
+
+bool
+cli_ui_out::can_emit_style_escape () const
+{
+  return m_streams.back ()->can_emit_style_escape ();
 }
 
 /* CLI interface to display tab-completion matches.  */

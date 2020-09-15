@@ -1,4 +1,4 @@
-#   Copyright 1997-2019 Free Software Foundation, Inc.
+#   Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -425,8 +425,7 @@ proc do_syscall_tests {} {
     # For the build tree that is handled by INTERNAL_GDBFLAGS.
 
     # Verify that the 'catch syscall' help is available
-    set thistest "help catch syscall"
-    gdb_test "help catch syscall" "Catch system calls.*" $thistest
+    gdb_test "help catch syscall" "Catch system calls.*"
 
     # Try to set a catchpoint to a nonsense syscall
     set thistest "catch syscall to a nonsense syscall is prohibited"
@@ -594,16 +593,14 @@ proc test_catch_syscall_multi_arch {} {
 	gdb_start
 
 	gdb_test "set architecture $arch1" \
-	    "The target architecture is assumed to be $arch1" \
-	    "set arch to $arch1"
+	    "The target architecture is set to \"$arch1\"\\."
 
 	gdb_test "catch syscall $syscall_number" \
 	    "Catchpoint $decimal \\(syscall .${syscall1_name}. \\\[${syscall_number}\\\]\\)" \
 	    "insert catch syscall on syscall $syscall_number -- $syscall1_name on $arch1"
 
 	gdb_test "set architecture $arch2" \
-	    "The target architecture is assumed to be $arch2" \
-	    "set arch to $arch2"
+	    "The target architecture is set to \"$arch2\"\\."
 
 	gdb_test "catch syscall $syscall_number" \
 	    "Catchpoint $decimal \\(syscall .${syscall2_name}. \\\[${syscall_number}\\\]\\)" \

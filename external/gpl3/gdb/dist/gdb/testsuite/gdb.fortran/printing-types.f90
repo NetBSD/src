@@ -1,4 +1,4 @@
-! Copyright 2017-2019 Free Software Foundation, Inc.
+! Copyright 2017-2020 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -18,10 +18,12 @@ program prog
   integer(2) :: twoBytes
   character  :: chValue
   logical(1) :: logValue
+  real(kind=16) :: rVal
 
   oneByte  = 1
   twoBytes = 2
   chValue  = 'a'
   logValue = .true.
+  rVal = 2000
   write(*,*) s
 end

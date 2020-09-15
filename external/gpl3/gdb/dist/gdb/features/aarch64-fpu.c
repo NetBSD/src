@@ -1,7 +1,7 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: aarch64-fpu.xml */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 static int
 create_feature_aarch64_fpu (struct target_desc *result, long regnum)
@@ -27,6 +27,9 @@ create_feature_aarch64_fpu (struct target_desc *result, long regnum)
 
   element_type = tdesc_named_type (feature, "int32");
   tdesc_create_vector (feature, "v4i", element_type, 4);
+
+  element_type = tdesc_named_type (feature, "ieee_half");
+  tdesc_create_vector (feature, "v8f", element_type, 8);
 
   element_type = tdesc_named_type (feature, "uint16");
   tdesc_create_vector (feature, "v8u", element_type, 8);
@@ -65,6 +68,8 @@ create_feature_aarch64_fpu (struct target_desc *result, long regnum)
   tdesc_add_field (type_with_fields, "s", field_type);
 
   type_with_fields = tdesc_create_union (feature, "vnh");
+  field_type = tdesc_named_type (feature, "v8f");
+  tdesc_add_field (type_with_fields, "f", field_type);
   field_type = tdesc_named_type (feature, "v8u");
   tdesc_add_field (type_with_fields, "u", field_type);
   field_type = tdesc_named_type (feature, "v8i");

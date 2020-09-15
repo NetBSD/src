@@ -542,7 +542,7 @@ handle_exception (int exceptionVector)
 
 /* qCRC support */
 
-/* Table used by the crc32 function to calcuate the checksum. */
+/* Table used by the crc32 function to calculate the checksum.  */
 static unsigned long crc32_table[256] = { 0, 0 };
 
 static unsigned long

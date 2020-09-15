@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "fbsd-nat.h"
 #include "i386-tdep.h"
 #include "x86-nat.h"
-#include "common/x86-xstate.h"
+#include "gdbsupport/x86-xstate.h"
 #include "x86-bsd-nat.h"
 #include "i386-bsd-nat.h"
 
@@ -160,7 +160,7 @@ i386_fbsd_nat_target::read_description ()
   if (x86bsd_xsave_len == 0)
     xcr0 = X86_XSTATE_SSE_MASK;
 
-  return i386_target_description (xcr0);
+  return i386_target_description (xcr0, true);
 }
 #endif
 
@@ -174,8 +174,9 @@ i386_fbsd_nat_target::supports_stopped_by_hw_breakpoint ()
 }
 #endif
 
+void _initialize_i386fbsd_nat ();
 void
-_initialize_i386fbsd_nat (void)
+_initialize_i386fbsd_nat ()
 {
   add_inf_child_target (&the_i386_fbsd_nat_target);
 

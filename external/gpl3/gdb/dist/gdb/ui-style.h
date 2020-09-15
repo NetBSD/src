@@ -1,5 +1,5 @@
 /* Styling for ui_file
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -126,8 +126,14 @@ struct ui_file_style
   private:
 
     bool m_simple;
-    int m_value;
-    uint8_t m_red, m_green, m_blue;
+    union
+    {
+      int m_value;
+      struct
+      {
+	uint8_t m_red, m_green, m_blue;
+      };
+    };
   };
 
   /* Intensity settings that are available.  */
@@ -223,6 +229,12 @@ struct ui_file_style
      BUF.  */
   bool parse (const char *buf, size_t *n_read);
 
+  /* We need this because we can't pass a reference via va_args.  */
+  const ui_file_style *ptr () const
+  {
+    return this;
+  }
+
 private:
 
   color m_foreground = NONE;
@@ -233,8 +245,8 @@ private:
 
 /* Skip an ANSI escape sequence in BUF.  BUF must begin with an ESC
    character.  Return true if an escape sequence was successfully
-   skipped; false otherwise.  In either case, N_READ is updated to
-   reflect the number of chars read from BUF.  */
+   skipped; false otherwise.  If an escape sequence was skipped,
+   N_READ is updated to reflect the number of chars read from BUF.  */
 
 extern bool skip_ansi_escape (const char *buf, int *n_read);
 

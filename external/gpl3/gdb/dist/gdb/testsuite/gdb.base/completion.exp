@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -310,7 +310,7 @@ gdb_test_multiple "" "$test" {
     -re "^info $" {
 	send_gdb "\n"
 	gdb_test_multiple "" "$test" {
-	    -re "\"info\" must be followed by the name of an info command\\.\r\nList of info subcommands.*$gdb_prompt $" {
+	    -re "List of info subcommands.*$gdb_prompt $" {
 		pass "$test"
 	    }
 	}
@@ -323,7 +323,7 @@ gdb_test_multiple "" "$test" {
     -re "^info \\\x07$" {
 	send_gdb "\n"
 	gdb_test_multiple "" "$test" {
-	    -re "\"info\" must be followed by the name of an info command\\.\r\nList of info subcommands:\r\n\r\n.*$gdb_prompt $" {
+	    -re "List of info subcommands:\r\n\r\n.*$gdb_prompt $" {
 		pass "$test"
 	    }
 	}
@@ -339,7 +339,7 @@ gdb_test_multiple "" "$test" {
 	    -re "address.*types.*$gdb_prompt " {
 		send_gdb "\n"
 		gdb_test_multiple "" "$test" {
-		    -re "\"info\".*unambiguous\\..*$gdb_prompt $" {
+		    -re "allowed if unambiguous\\..*$gdb_prompt $" {
 			pass "$test"
 		    }
 		}
@@ -665,7 +665,7 @@ gdb_test "complete whatis &values\[0\]->z" \
 # strategy on Tuesdays to get the cursor in the right place, that's
 # not something the testsuite should care about.
 #
-# So, we avoid long lines.  We `cd' to ${objdir} first, and then do
+# So, we avoid long lines.  We `cd' to ${srcdir} first, and then do
 # the completion relative to the current directory.
 
 # ${srcdir} may be a relative path.  We want to make sure we end up

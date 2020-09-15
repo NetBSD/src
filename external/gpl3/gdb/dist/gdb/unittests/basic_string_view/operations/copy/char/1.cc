@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -21,8 +21,8 @@
 
 namespace operations_copy_1 {
 
-void
-test01()
+static void
+test01 ()
 {
   typedef gdb::string_view::size_type csize_type;
 
@@ -35,8 +35,8 @@ test01()
   VERIFY( '9' == buffer[0] );
 }
 
-int
-main()
+static int
+main ()
 { 
   test01();
 

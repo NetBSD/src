@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2019 Free Software Foundation, Inc.
+   Copyright 2017-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ main ()
       break;
 
     default:
+      /* In parent process.  */
       while (1)
 	{
 	  marker ();
@@ -50,12 +51,18 @@ main ()
 	}
     }
 
+  /* In child process.  */
+
+  /* Alarms are not inherited by child processes. Set the alarm again to stop
+     the test case running forever.  */
+  alarm (60);
+
   /* Detach from controlling terminal.  */
   if (setsid () == (pid_t) -1)
     return 1;
 
-  for (;;)
-    ;
+  while (1)
+    usleep (1000);
 
   return 0;
 }

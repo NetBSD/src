@@ -1,4 +1,4 @@
-! Copyright 2010-2019 Free Software Foundation, Inc.
+! Copyright 2010-2020 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -21,10 +21,12 @@ program test
   logical (kind=2) :: l2
   logical (kind=4) :: l4
   logical (kind=8) :: l8
+  character :: c
   l = .TRUE.
   l1 = .TRUE.
   l2 = .TRUE.
   l4 = .TRUE.
   l8 = .TRUE.
   l = .FALSE.					! stop-here
+  c = 'a'
 end

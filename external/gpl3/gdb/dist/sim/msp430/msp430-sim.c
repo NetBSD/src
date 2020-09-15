@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Based on sim/bfin/bfin-sim.c which was contributed by Analog Devices, Inc.
 
@@ -138,7 +138,7 @@ sim_open (SIM_OPEN_KIND kind,
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x2, 1) == 0)
     sim_do_commandf (sd, "memory-region 0,0x20"); /* Needed by the GDB testsuite.  */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x500, 1) == 0)
-    sim_do_commandf (sd, "memory-region 0x500,0xfa00");  /* RAM and/or ROM */
+    sim_do_commandf (sd, "memory-region 0x500,0xfac0");  /* RAM and/or ROM */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0xfffe, 1) == 0)
     sim_do_commandf (sd, "memory-region 0xffc0,0x40"); /* VECTORS.  */
   if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x10000, 1) == 0)
@@ -566,8 +566,13 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 	      switch (HWMULT (sd, hwmult_type))
 		{
 		case UNSIGN_32:
-		  HWMULT (sd, hwmult_result) = HWMULT (sd, hwmult_op1) * HWMULT (sd, hwmult_op2);
-		  HWMULT (sd, hwmult_signed_result) = (signed) HWMULT (sd, hwmult_result);
+		  a = HWMULT (sd, hwmult_op1);
+		  b = HWMULT (sd, hwmult_op2);
+		  /* For unsigned 32-bit multiplication of 16-bit operands, an
+		     explicit cast is required to prevent any implicit
+		     sign-extension.  */
+		  HWMULT (sd, hwmult_result) = (unsigned32) a * (unsigned32) b;
+		  HWMULT (sd, hwmult_signed_result) = a * b;
 		  HWMULT (sd, hwmult_accumulator) = HWMULT (sd, hwmult_signed_accumulator) = 0;
 		  break;
 
@@ -575,13 +580,16 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 		  a = sign_ext (HWMULT (sd, hwmult_op1), 16);
 		  b = sign_ext (HWMULT (sd, hwmult_op2), 16);
 		  HWMULT (sd, hwmult_signed_result) = a * b;
-		  HWMULT (sd, hwmult_result) = (unsigned) HWMULT (sd, hwmult_signed_result);
+		  HWMULT (sd, hwmult_result) = (unsigned32) a * (unsigned32) b;
 		  HWMULT (sd, hwmult_accumulator) = HWMULT (sd, hwmult_signed_accumulator) = 0;
 		  break;
 
 		case UNSIGN_MAC_32:
-		  HWMULT (sd, hwmult_accumulator) += HWMULT (sd, hwmult_op1) * HWMULT (sd, hwmult_op2);
-		  HWMULT (sd, hwmult_signed_accumulator) += HWMULT (sd, hwmult_op1) * HWMULT (sd, hwmult_op2);
+		  a = HWMULT (sd, hwmult_op1);
+		  b = HWMULT (sd, hwmult_op2);
+		  HWMULT (sd, hwmult_accumulator)
+		    += (unsigned32) a * (unsigned32) b;
+		  HWMULT (sd, hwmult_signed_accumulator) += a * b;
 		  HWMULT (sd, hwmult_result) = HWMULT (sd, hwmult_accumulator);
 		  HWMULT (sd, hwmult_signed_result) = HWMULT (sd, hwmult_signed_accumulator);
 		  break;
@@ -589,7 +597,8 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 		case SIGN_MAC_32:
 		  a = sign_ext (HWMULT (sd, hwmult_op1), 16);
 		  b = sign_ext (HWMULT (sd, hwmult_op2), 16);
-		  HWMULT (sd, hwmult_accumulator) += a * b;
+		  HWMULT (sd, hwmult_accumulator)
+		    += (unsigned32) a * (unsigned32) b;
 		  HWMULT (sd, hwmult_signed_accumulator) += a * b;
 		  HWMULT (sd, hwmult_result) = HWMULT (sd, hwmult_accumulator);
 		  HWMULT (sd, hwmult_signed_result) = HWMULT (sd, hwmult_signed_accumulator);
@@ -648,10 +657,13 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 	      switch (HWMULT (sd, hw32mult_type))
 		{
 		case UNSIGN_64:
-		  HWMULT (sd, hw32mult_result) = HWMULT (sd, hw32mult_op1) * HWMULT (sd, hw32mult_op2);
+		  HWMULT (sd, hw32mult_result)
+		    = (unsigned64) HWMULT (sd, hw32mult_op1)
+		    * (unsigned64) HWMULT (sd, hw32mult_op2);
 		  break;
 		case SIGN_64:
-		  HWMULT (sd, hw32mult_result) = sign_ext (HWMULT (sd, hw32mult_op1), 32)
+		  HWMULT (sd, hw32mult_result)
+		    = sign_ext (HWMULT (sd, hw32mult_op1), 32)
 		    * sign_ext (HWMULT (sd, hw32mult_op2), 32);
 		  break;
 		}
@@ -1292,8 +1304,10 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = SRC;
 	  carry_to_use = u1 & 1;
 	  uresult = u1 >> 1;
-	  if (SR & MSP430_FLAG_C)
-	  uresult |= (1 << (opcode->size - 1));
+	  /* If the ZC bit of the opcode is set, it means we are synthesizing
+	     RRUX, so the carry bit must be ignored.  */
+	  if (opcode->zc == 0 && (SR & MSP430_FLAG_C))
+	    uresult |= (1 << (opcode->size - 1));
 	  TRACE_ALU (MSP430_CPU (sd), "RRC: %#x >>= %#x",
 		     u1, uresult);
 	  DEST (uresult);

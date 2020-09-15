@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test relies on checking gdb debug output. Do not run if gdb debug is
+# enabled as any debug will be redirected to the log.
+if [gdb_debug_enabled] {
+    untested "debug is enabled"
+    return 0
+}
 
 standard_testfile
 
@@ -46,7 +53,7 @@ proc do_test { pass } {
     set test "run a bit #$pass"
     set abort 1
     gdb_test_multiple "step" $test {
-	-re "infrun: stepping inside range" {
+	-re {\[infrun\] process_event_stop_test: stepping inside range} {
 	    # Suppress pass $test
 	    verbose -log "$pf_prefix $test: ran"
 	    set abort 0
@@ -71,7 +78,7 @@ proc do_test { pass } {
 	    verbose -log "$pf_prefix $test: got eof"
 	    set abort 0
 	}
-	-re "infrun: stepping inside range" {
+	-re "infrun: process_event_stop_test: stepping inside range" {
 	    incr stepping
 	    exp_continue
 	}

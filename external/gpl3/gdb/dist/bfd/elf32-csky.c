@@ -1,5 +1,5 @@
 /* 32-bit ELF support for C-SKY.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,6 +28,7 @@
 #include "opcode/csky.h"
 #include <assert.h>
 #include "libiberty.h"
+#include "elf32-csky.h"
 
 /* Data structures used for merging different arch variants.
    V1 (510/610) and V2 (8xx) processors are incompatible, but
@@ -55,14 +56,15 @@ typedef struct csky_arch_for_merge
 static struct csky_arch_for_merge csky_archs[] =
 {
   /* 510 and 610 merge to 610 without warning.  */
-  { "510",  CSKY_ARCH_510,  CSKY_V1,  0, 0},
-  { "610",  CSKY_ARCH_610,  CSKY_V1,  1, 0},
+  { "ck510",  CSKY_ARCH_510,  CSKY_V1,  0, 0},
+  { "ck610",  CSKY_ARCH_610,  CSKY_V1,  1, 0},
   /* 801, 802, 803, 807, 810 merge to largest one.  */
-  { "801",  CSKY_ARCH_801,  CSKY_V2,  0, 1},
-  { "802",  CSKY_ARCH_802,  CSKY_V2,  1, 1},
-  { "803",  CSKY_ARCH_803,  CSKY_V2,  2, 1},
-  { "807",  CSKY_ARCH_807,  CSKY_V2,  3, 1},
-  { "810",  CSKY_ARCH_810,  CSKY_V2,  4, 1},
+  { "ck801",  CSKY_ARCH_801,  CSKY_V2,  0, 1},
+  { "ck802",  CSKY_ARCH_802,  CSKY_V2,  1, 1},
+  { "ck803",  CSKY_ARCH_803,  CSKY_V2,  2, 1},
+  { "ck807",  CSKY_ARCH_807,  CSKY_V2,  3, 1},
+  { "ck810",  CSKY_ARCH_810,  CSKY_V2,  4, 1},
+  { "ck860",  CSKY_ARCH_860,  CSKY_V2,  5, 1},
   { NULL, 0, 0, 0, 0}
 };
 
@@ -1162,8 +1164,6 @@ struct csky_elf_link_hash_entry
   int plt_refcount;
   /* For sub jsri2bsr relocs count.  */
   int jsri2bsr_refcount;
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
 
 #define GOT_UNKNOWN     0
 #define GOT_NORMAL      1
@@ -1185,11 +1185,10 @@ struct csky_elf_link_hash_entry
     (info)))
 
 /* Get the C-SKY ELF linker hash table from a link_info structure.  */
-#define csky_elf_hash_table(info) \
-  ((elf_hash_table_id  ((struct elf_link_hash_table *) ((info)->hash))	\
-    == CSKY_ELF_DATA)							\
-   ? ((struct csky_elf_link_hash_table *) ((info)->hash))		\
-   : NULL)
+#define csky_elf_hash_table(p) \
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == CSKY_ELF_DATA)		\
+   ? (struct csky_elf_link_hash_table *) (p)->hash : NULL)
 
 #define csky_elf_hash_entry(ent)  ((struct csky_elf_link_hash_entry*)(ent))
 
@@ -1208,9 +1207,6 @@ struct map_stub
 struct csky_elf_link_hash_table
 {
   struct elf_link_hash_table elf;
-
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
 
   /* Data for R_CKCORE_TLS_LDM32 relocations.  */
   union
@@ -1428,7 +1424,6 @@ csky_elf_link_hash_newfunc (struct bfd_hash_entry * entry,
       struct csky_elf_link_hash_entry *eh;
 
       eh = (struct csky_elf_link_hash_entry *) ret;
-      eh->dyn_relocs = NULL;
       eh->plt_refcount = 0;
       eh->jsri2bsr_refcount = 0;
       eh->tls_type = GOT_NORMAL;
@@ -1499,7 +1494,7 @@ static struct bfd_link_hash_table *
 csky_elf_link_hash_table_create (bfd *abfd)
 {
   struct csky_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct csky_elf_link_hash_table);
+  size_t amt = sizeof (struct csky_elf_link_hash_table);
 
   ret = (struct csky_elf_link_hash_table*) bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1803,7 +1798,7 @@ csky_allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
     h->got.offset = (bfd_vma) -1;
 
   eh = (struct csky_elf_link_hash_entry *) h;
-  if (eh->dyn_relocs == NULL)
+  if (h->dyn_relocs == NULL)
     return TRUE;
 
   /* In the shared -Bsymbolic case, discard space allocated for
@@ -1818,7 +1813,7 @@ csky_allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -1831,17 +1826,17 @@ csky_allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 
       if (eh->jsri2bsr_refcount
 	  && h->root.type == bfd_link_hash_defined
-	  && eh->dyn_relocs != NULL)
-	eh->dyn_relocs->count -= eh->jsri2bsr_refcount;
+	  && h->dyn_relocs != NULL)
+	h->dyn_relocs->count -= eh->jsri2bsr_refcount;
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
 	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -1880,60 +1875,18 @@ csky_allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
       keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *srelgot = htab->elf.srelgot;
       srelgot->size += p->count * sizeof (Elf32_External_Rela);
     }
 
-  return TRUE;
-}
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-
-  for (p = csky_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
   return TRUE;
 }
 
@@ -2092,7 +2045,7 @@ csky_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if (htab->elf.hplt != NULL)
 	    strip_section = FALSE;
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rel") )
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rel") )
 	{
 	  if (s->size != 0 )
 	    relocs = TRUE;
@@ -2137,48 +2090,8 @@ csky_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     }
 
   if (htab->elf.dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in csky_elf_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (bfd_link_executable (info) && !add_dynamic_entry (DT_DEBUG, 0))
-	return FALSE;
-
-      if (htab->elf.sgot->size != 0 || htab->elf.splt->size)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (relocs)
-	{
-	  if (!add_dynamic_entry (DT_RELA, 0)
-	      || !add_dynamic_entry (DT_RELASZ, 0)
-	      || !add_dynamic_entry (DT_RELAENT,
-				     sizeof (Elf32_External_Rela)))
-	    return FALSE;
-
-	  /* If any dynamic relocs apply to a read-only section,
-	     then we need a DT_TEXTREL entry.  */
-	  if ((info->flags & DF_TEXTREL) == 0)
-	    elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
-
-	  if ((info->flags & DF_TEXTREL) != 0
-	      && !add_dynamic_entry (DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+    htab->elf.dt_pltgot_required = htab->elf.sgot->size != 0;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various
@@ -2464,35 +2377,6 @@ csky_elf_copy_indirect_symbol (struct bfd_link_info *info,
   edir = (struct csky_elf_link_hash_entry *) dir;
   eind = (struct csky_elf_link_hash_entry *) ind;
 
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
   if (ind->root.type == bfd_link_hash_indirect
       && dir->got.refcount <= 0)
     {
@@ -2590,7 +2474,7 @@ csky_elf_check_relocs (bfd * abfd,
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  /* A local symbol.  */
-	  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+	  isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
 					abfd, r_symndx);
 	  if (isym == NULL)
 	    return FALSE;
@@ -2686,7 +2570,7 @@ csky_elf_check_relocs (bfd * abfd,
 		      || (ELF32_R_TYPE (rel->r_info)
 			  == R_CKCORE_PCREL_JSR_IMM11BY2))
 		    eh->jsri2bsr_refcount += 1;
-		  head = &eh->dyn_relocs;
+		  head = &h->dyn_relocs;
 		}
 	      else
 		{
@@ -2697,7 +2581,7 @@ csky_elf_check_relocs (bfd * abfd,
 		  asection *s;
 		  Elf_Internal_Sym *loc_isym;
 
-		  loc_isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+		  loc_isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
 						    abfd, r_symndx);
 		  if (loc_isym == NULL)
 		    return FALSE;
@@ -2711,7 +2595,7 @@ csky_elf_check_relocs (bfd * abfd,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->elf.dynobj, amt));
 		  if (p == NULL)
@@ -2873,9 +2757,7 @@ csky_elf_check_relocs (bfd * abfd,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_CKCORE_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 	}
@@ -2921,6 +2803,199 @@ csky_find_arch_with_eflag (const unsigned long arch_eflag)
   return csky_arch;
 }
 
+static csky_arch_for_merge *
+csky_find_arch_with_name (const char *name)
+{
+  csky_arch_for_merge *csky_arch = NULL;
+  const char *msg;
+
+  if (name == NULL)
+    return NULL;
+
+  for (csky_arch = csky_archs; csky_arch->name != NULL; csky_arch++)
+    {
+      if (strncmp (csky_arch->name, name, strlen (csky_arch->name)) == 0)
+	break;
+    }
+  if (csky_arch == NULL)
+    {
+      msg = _("warning: unrecognised arch name '%#x'");
+      (*_bfd_error_handler) (msg, name);
+      bfd_set_error (bfd_error_wrong_format);
+    }
+  return csky_arch;
+}
+
+static bfd_boolean
+elf32_csky_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
+{
+  bfd *obfd = info->output_bfd;
+  obj_attribute *in_attr;
+  obj_attribute *out_attr;
+  obj_attribute tattr;
+  csky_arch_for_merge *old_arch = NULL;
+  csky_arch_for_merge *new_arch = NULL;
+  int i;
+  bfd_boolean result = TRUE;
+  const char *msg = NULL;
+
+  const char *sec_name = get_elf_backend_data (ibfd)->obj_attrs_section;
+
+  /* Skip the linker stubs file.  This preserves previous behavior
+     of accepting unknown attributes in the first input file - but
+     is that a bug?  */
+  if (ibfd->flags & BFD_LINKER_CREATED)
+    return TRUE;
+
+  /* Skip any input that hasn't attribute section.
+     This enables to link object files without attribute section with
+     any others.  */
+  if (bfd_get_section_by_name (ibfd, sec_name) == NULL)
+    {
+      return TRUE;
+    }
+
+  if (!elf_known_obj_attributes_proc (obfd)[0].i)
+    {
+      /* This is the first object.  Copy the attributes.  */
+      out_attr = elf_known_obj_attributes_proc (obfd);
+
+      /* If Tag_CSKY_CPU_NAME is already set, save it.  */
+      memcpy (&tattr, &out_attr[Tag_CSKY_ARCH_NAME], sizeof (tattr));
+
+      _bfd_elf_copy_obj_attributes (ibfd, obfd);
+
+      out_attr = elf_known_obj_attributes_proc (obfd);
+
+      /* Restore Tag_CSKY_CPU_NAME.  */
+      memcpy (&out_attr[Tag_CSKY_ARCH_NAME], &tattr, sizeof (tattr));
+
+      /* Use the Tag_null value to indicate the attributes have been
+	 initialized.  */
+      out_attr[0].i = 1;
+    }
+
+  in_attr = elf_known_obj_attributes_proc (ibfd);
+  out_attr = elf_known_obj_attributes_proc (obfd);
+
+  for (i = LEAST_KNOWN_OBJ_ATTRIBUTE; i < NUM_KNOWN_OBJ_ATTRIBUTES; i++)
+    {
+      /* Merge this attribute with existing attributes.  */
+      switch (i)
+        {
+	case Tag_CSKY_CPU_NAME:
+	case Tag_CSKY_ARCH_NAME:
+	  /* Do arch merge.  */
+	  new_arch = csky_find_arch_with_name (in_attr[Tag_CSKY_ARCH_NAME].s);
+	  old_arch = csky_find_arch_with_name (out_attr[Tag_CSKY_ARCH_NAME].s);
+
+	  if (new_arch != NULL && old_arch != NULL)
+	    {
+	      if (new_arch->class != old_arch->class)
+		{
+		  msg = _("%pB: machine flag conflict with target");
+		  (*_bfd_error_handler) (msg, ibfd);
+		  bfd_set_error (bfd_error_wrong_format);
+		  return FALSE;
+		}
+	      else if (new_arch->class_level != old_arch->class_level)
+		{
+		  csky_arch_for_merge *newest_arch =
+		    ((new_arch->class_level > old_arch->class_level) ?
+		  new_arch : old_arch);
+
+		  if (new_arch->do_warning || old_arch->do_warning)
+		    {
+		      msg = _("warning: file %pB's arch flag %s conflict "
+			      "with target %s,set target arch flag to %s");
+		      (*_bfd_error_handler) (msg, ibfd,  new_arch->name,
+					     old_arch->name,
+					     (newest_arch->name));
+		      bfd_set_error (bfd_error_wrong_format);
+                    }
+
+		  if (out_attr[Tag_CSKY_ARCH_NAME].s != NULL)
+		    bfd_release (obfd, out_attr[Tag_CSKY_ARCH_NAME].s);
+
+		  out_attr[Tag_CSKY_ARCH_NAME].s =
+		    _bfd_elf_attr_strdup (obfd, newest_arch->name);
+		}
+	    }
+
+	  break;
+
+	case Tag_CSKY_ISA_FLAGS:
+	case Tag_CSKY_ISA_EXT_FLAGS:
+	  /* Do ISA merge.  */
+	  break;
+
+	case Tag_CSKY_VDSP_VERSION:
+	  if (out_attr[i].i == 0)
+	    out_attr[i].i = in_attr[i].i;
+	  else if (out_attr[i].i != in_attr[i].i)
+	    {
+	      _bfd_error_handler
+		(_("Error: %pB and %pB has different VDSP version"), ibfd, obfd);
+	      result = FALSE;
+	    }
+	  break;
+
+	case Tag_CSKY_FPU_VERSION:
+	  if (out_attr[i].i <= in_attr[i].i
+	      && out_attr[i].i == 0)
+	    out_attr[i].i = in_attr[i].i;
+	  break;
+
+	case Tag_CSKY_DSP_VERSION:
+	  if (out_attr[i].i == 0)
+	    out_attr[i].i = in_attr[i].i;
+	  else if (out_attr[i].i != in_attr[i].i)
+	    {
+	      _bfd_error_handler
+		(_("Error: %pB and %pB has different DSP version"), ibfd, obfd);
+	      result = FALSE;
+	    }
+	  break;
+
+	case Tag_CSKY_FPU_ABI:
+	  if (out_attr[i].i != in_attr[i].i
+	      && (out_attr[i].i == 0
+		  || (out_attr[i].i == VAL_CSKY_FPU_ABI_SOFT
+		      && in_attr[i].i == VAL_CSKY_FPU_ABI_SOFTFP)))
+	    {
+	      out_attr[i].i = in_attr[i].i;
+	    }
+	  else if (out_attr[i].i == VAL_CSKY_FPU_ABI_HARD
+		   && (out_attr[i].i != in_attr[i].i
+		       && in_attr[i].i != 0))
+	    {
+	      _bfd_error_handler
+	       (_("Error: %pB and %pB has different FPU ABI"), ibfd, obfd);
+	       result = FALSE;
+	    }
+	  break;
+
+	default:
+	  result =
+	    result && _bfd_elf_merge_unknown_attribute_low (ibfd, obfd, i);
+	  break;
+	}
+
+      /* If out_attr was copied from in_attr then it won't have a type yet.  */
+      if (in_attr[i].type && !out_attr[i].type)
+	out_attr[i].type = in_attr[i].type;
+    }
+
+  /* Merge Tag_compatibility attributes and any common GNU ones.  */
+  if (!_bfd_elf_merge_object_attributes (ibfd, info))
+    return FALSE;
+
+  /* Check for any attributes not known on CSKY.  */
+  result &= _bfd_elf_merge_unknown_attribute_list (ibfd, obfd);
+
+  return result;
+}
+
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
@@ -2932,6 +3007,9 @@ csky_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword new_flags;
   csky_arch_for_merge *old_arch = NULL;
   csky_arch_for_merge *new_arch = NULL;
+  flagword newest_flag = 0;
+  const char *sec_name;
+  obj_attribute *out_attr;
 
   /* Check if we have the same endianness.  */
   if (! _bfd_generic_verify_endian_match (ibfd, info))
@@ -2941,76 +3019,79 @@ csky_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
 
-  new_flags = elf_elfheader (ibfd)->e_flags;
-  old_flags = elf_elfheader (obfd)->e_flags;
+  /* Merge ".csky.attribute" section.  */
+  if (!elf32_csky_merge_attributes (ibfd, info))
+    return FALSE;
 
   if (! elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
       elf_flags_init (obfd) = TRUE;
-      elf_elfheader (obfd)->e_flags = new_flags;
     }
-  else if (new_flags == old_flags)
-    /* Do nothing.  */
-    ;
-  else if (new_flags == 0 || old_flags == 0)
-    /* When one flag is 0, assign the other one's flag.  */
-      elf_elfheader (obfd)->e_flags = new_flags | old_flags;
-  else
-    {
-      flagword newest_flag = 0;
 
-      if ((new_flags & CSKY_ARCH_MASK) != 0
-	  && (old_flags & CSKY_ARCH_MASK) != 0)
+  /* Try to merge e_flag.  */
+  new_flags = elf_elfheader (ibfd)->e_flags;
+  old_flags = elf_elfheader (obfd)->e_flags;
+  out_attr = elf_known_obj_attributes_proc (obfd);
+
+  /* the flags like"e , f ,g ..." , we take collection.  */
+  newest_flag = (old_flags & (~CSKY_ARCH_MASK))
+   | (new_flags & (~CSKY_ARCH_MASK));
+
+  sec_name = get_elf_backend_data (ibfd)->obj_attrs_section;
+  if (bfd_get_section_by_name (ibfd, sec_name) == NULL)
+    {
+      /* Input BFDs have no ".csky.attribute" section.  */
+      new_arch = csky_find_arch_with_eflag (new_flags & CSKY_ARCH_MASK);
+      old_arch = csky_find_arch_with_name (out_attr[Tag_CSKY_ARCH_NAME].s);
+
+      if (new_arch != NULL && old_arch != NULL)
 	{
-	  new_arch = csky_find_arch_with_eflag (new_flags & CSKY_ARCH_MASK);
-	  old_arch = csky_find_arch_with_eflag (old_flags & CSKY_ARCH_MASK);
-	  /* Collect flags like e, f, g.  */
-	  newest_flag = (old_flags & (~CSKY_ARCH_MASK))
-			 | (new_flags & (~CSKY_ARCH_MASK));
-	  if (new_arch != NULL && old_arch != NULL)
+	  if (new_arch->class != old_arch->class)
 	    {
-	      if (new_arch->class != old_arch->class)
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%pB: machine flag conflict with target"), ibfd);
+	      bfd_set_error (bfd_error_wrong_format);
+	      return FALSE;
+	    }
+	  else if (new_arch->class_level != old_arch->class_level)
+	    {
+	      csky_arch_for_merge *newest_arch =
+		(new_arch->class_level > old_arch->class_level
+		 ? new_arch : old_arch);
+
+	      if (new_arch->do_warning || old_arch->do_warning)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%pB: machine flag conflict with target"), ibfd);
+		    (_("warning: file %pB's arch flag %s conflicts with "
+		       "target ck%s, using %s"),
+		     ibfd, new_arch->name, old_arch->name,
+		     newest_arch->name);
 		  bfd_set_error (bfd_error_wrong_format);
-		  return FALSE;
 		}
-	      else if (new_arch->class_level != old_arch->class_level)
-		{
-		  csky_arch_for_merge *newest_arch
-		    = (new_arch->class_level > old_arch->class_level
-		       ? new_arch : old_arch);
-		  if (new_arch->do_warning || old_arch->do_warning)
-		    {
-		      _bfd_error_handler
-			/* xgettext:c-format */
-			(_("warning: file %pB's arch flag ck%s conflicts with "
-			   "target ck%s, using ck%s"),
-			 ibfd, new_arch->name, old_arch->name,
-			 newest_arch->name);
-		       bfd_set_error (bfd_error_wrong_format);
-		    }
 
-		  newest_flag |= newest_arch->arch_eflag;
-		}
-	      else
-		newest_flag |= ((new_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK))
-				| (old_flags
-				   & (CSKY_ARCH_MASK | CSKY_ABI_MASK)));
+	      if (out_attr[Tag_CSKY_ARCH_NAME].s != NULL)
+		bfd_release (obfd, out_attr[Tag_CSKY_ARCH_NAME].s);
+
+	      out_attr[Tag_CSKY_ARCH_NAME].s =
+		_bfd_elf_attr_strdup (obfd, newest_arch->name);
 	    }
 	  else
 	    newest_flag |= ((new_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK))
 			    | (old_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK)));
 	}
       else
-	newest_flag |= ((new_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK))
-			| (old_flags & (CSKY_ARCH_MASK | CSKY_ABI_MASK)));
-
-      elf_elfheader (obfd)->e_flags = newest_flag;
+	{
+	  if (new_arch && new_arch->name != NULL)
+	    out_attr[Tag_CSKY_ARCH_NAME].s =
+	  _bfd_elf_attr_strdup (obfd, new_arch->name);
+	}
     }
+
+  elf_elfheader (obfd)->e_flags = newest_flag;
+
   return TRUE;
 }
 
@@ -3098,9 +3179,9 @@ group_sections (struct csky_elf_link_hash_table *htab,
 	continue;
 
       /* Reverse the list: we must avoid placing stubs at the
-         beginning of the section because the beginning of the text
-         section may be required for an interrupt vector in bare metal
-         code.  */
+	 beginning of the section because the beginning of the text
+	 section may be required for an interrupt vector in bare metal
+	 code.  */
 #define NEXT_SEC PREV_SEC
       head = NULL;
       while (tail != NULL)
@@ -3414,7 +3495,7 @@ elf32_csky_size_stubs (bfd *output_bfd,
 		  if (r_type >= (unsigned int) R_CKCORE_MAX)
 		    {
 		      bfd_set_error (bfd_error_bad_value);
-error_ret_free_internal:
+		    error_ret_free_internal:
 		      if (elf_section_data (section)->relocs == NULL)
 			free (internal_relocs);
 		      goto error_ret_free_local;
@@ -3593,7 +3674,7 @@ error_ret_free_internal:
     }
 
   return TRUE;
-error_ret_free_local:
+ error_ret_free_local:
   return FALSE;
 }
 
@@ -3621,6 +3702,14 @@ csky_build_one_stub (struct bfd_hash_entry *gen_entry,
   /* Massage our args to the form they really have.  */
   stub_entry = (struct elf32_csky_stub_hash_entry *)gen_entry;
   info = (struct bfd_link_info *) in_arg;
+
+  /* Fail if the target section could not be assigned to an output
+     section.  The user should fix his linker script.  */
+  if (stub_entry->target_section->output_section == NULL
+      && info->non_contiguous_regions)
+    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+			      "Retry without --enable-non-contiguous-regions.\n"),
+			    stub_entry->target_section);
 
   globals = csky_elf_hash_table (info);
   if (globals == NULL)
@@ -3771,7 +3860,7 @@ elf32_csky_setup_section_lists (bfd *output_bfd,
   unsigned int top_id, top_index;
   asection *section;
   asection **input_list, **list;
-  bfd_size_type amt;
+  size_t amt;
   struct csky_elf_link_hash_table *htab = csky_elf_hash_table (info);
 
   if (!htab)
@@ -3829,7 +3918,7 @@ elf32_csky_setup_section_lists (bfd *output_bfd,
 static bfd_reloc_status_type
 csky_relocate_contents (reloc_howto_type *howto,
 			bfd *input_bfd,
-			long relocation,
+			bfd_vma relocation,
 			bfd_byte *location)
 {
   int size;
@@ -3845,8 +3934,8 @@ csky_relocate_contents (reloc_howto_type *howto,
 
   /* FIXME: these macros should be defined at file head or head file head.  */
 #define CSKY_INSN_ADDI_TO_SUBI        0x04000000
-#define CSKY_INSN_MOV_RTB             0xc41d4820   // mov32 rx, r29, 0
-#define CSKY_INSN_MOV_RDB             0xc41c4820   // mov32 rx, r28, 0
+#define CSKY_INSN_MOV_RTB             0xc41d4820   /* mov32 rx, r29, 0 */
+#define CSKY_INSN_MOV_RDB             0xc41c4820   /* mov32 rx, r28, 0 */
 #define CSKY_INSN_GET_ADDI_RZ(x)      (((x) & 0x03e00000) >> 21)
 #define CSKY_INSN_SET_MOV_RZ(x)       ((x) & 0x0000001f)
 #define CSKY_INSN_JSRI_TO_LRW         0xea9a0000
@@ -3872,7 +3961,7 @@ csky_relocate_contents (reloc_howto_type *howto,
 
 	  if (R_CKCORE_DOFFSET_LO16 == howto->type)
 	    {
-	      if ((signed) relocation < 0)
+	      if ((bfd_signed_vma) relocation < 0)
 		{
 		  x |= CSKY_INSN_ADDI_TO_SUBI;
 		  relocation = -relocation;
@@ -3883,7 +3972,7 @@ csky_relocate_contents (reloc_howto_type *howto,
 	    }
 	  else if (R_CKCORE_TOFFSET_LO16 == howto->type)
 	    {
-	      if ((signed) relocation < 0)
+	      if ((bfd_signed_vma) relocation < 0)
 		{
 		  x |= CSKY_INSN_ADDI_TO_SUBI;
 		  relocation = -relocation;
@@ -3904,13 +3993,13 @@ csky_relocate_contents (reloc_howto_type *howto,
   flag = bfd_reloc_ok;
   if (howto->complain_on_overflow != complain_overflow_dont)
     {
-      int addrmask;
-      int fieldmask;
-      int signmask;
-      int ss;
-      int a;
-      int b;
-      int sum;
+      bfd_vma addrmask;
+      bfd_vma fieldmask;
+      bfd_vma signmask;
+      bfd_vma ss;
+      bfd_vma a;
+      bfd_vma b;
+      bfd_vma sum;
       /* Get the values to be added together.  For signed and unsigned
 	 relocations, we assume that all values should be truncated to
 	 the size of an address.  For bitfields, all the bits matter.
@@ -3996,7 +4085,7 @@ csky_relocate_contents (reloc_howto_type *howto,
 
     }
   /* Put RELOCATION in the right bits.  */
-  relocation >>= (bfd_vma) rightshift;
+  relocation >>= rightshift;
 
   if ((howto->type == R_CKCORE_DOFFSET_LO16
        || howto->type == R_CKCORE_TOFFSET_LO16)
@@ -4023,7 +4112,7 @@ csky_relocate_contents (reloc_howto_type *howto,
 	  csky_put_insn_32 (input_bfd, CSKY_INSN_JSR_R26, location + 4);
 	}
 
-      relocation <<= (bfd_vma) bitpos;
+      relocation <<= bitpos;
       /* Add RELOCATION to the right bits of X.  */
       x = ((x & ~howto->dst_mask)
 	   | (((x & howto->src_mask) + relocation) & howto->dst_mask));
@@ -4509,7 +4598,7 @@ csky_elf_relocate_section (bfd *                  output_bfd,
 			{
 			  h->got.offset |= 1;
 			  if (GENERATE_RELATIVE_RELOC_P (info, h))
-                            relative_reloc = TRUE;
+			    relative_reloc = TRUE;
 			}
 		    }
 		  bfd_put_32 (output_bfd, relocation,
@@ -5072,7 +5161,7 @@ csky_elf_relocate_section (bfd *                  output_bfd,
 		  if (name == NULL)
 		    break;
 		  if (*name == '\0')
-		    name = bfd_section_name (input_bfd, sec);
+		    name = bfd_section_name (sec);
 		}
 	      (*info->callbacks->reloc_overflow)
 		(info,
@@ -5146,6 +5235,47 @@ csky_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   return TRUE;
 }
 
+/* Determine whether an object attribute tag takes an integer, a
+   string or both.  */
+
+static int
+elf32_csky_obj_attrs_arg_type (int tag)
+{
+  switch (tag)
+    {
+    case Tag_compatibility:
+      return ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL;
+    case Tag_CSKY_ARCH_NAME:
+    case Tag_CSKY_CPU_NAME:
+    case Tag_CSKY_FPU_NUMBER_MODULE:
+      return ATTR_TYPE_FLAG_STR_VAL;
+    case Tag_CSKY_ISA_FLAGS:
+    case Tag_CSKY_ISA_EXT_FLAGS:
+    case Tag_CSKY_DSP_VERSION:
+    case Tag_CSKY_VDSP_VERSION:
+    case Tag_CSKY_FPU_VERSION:
+    case Tag_CSKY_FPU_ABI:
+    case Tag_CSKY_FPU_ROUNDING:
+    case Tag_CSKY_FPU_HARDFP:
+    case Tag_CSKY_FPU_Exception:
+    case Tag_CSKY_FPU_DENORMAL:
+      return ATTR_TYPE_FLAG_INT_VAL;
+    default:
+      break;
+    }
+
+  return (tag & 1) != 0 ? ATTR_TYPE_FLAG_STR_VAL : ATTR_TYPE_FLAG_INT_VAL;
+}
+
+/* Attribute numbers >=64 (mod 128) can be safely ignored.  */
+
+static bfd_boolean
+elf32_csky_obj_attrs_handle_unknown (bfd *abfd ATTRIBUTE_UNUSED,
+				     int tag ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
 /* End of external entry points for sizing and building linker stubs.  */
 
 /* CPU-related basic API.  */
@@ -5198,5 +5328,16 @@ csky_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 /* C-SKY coredump support.  */
 #define elf_backend_grok_prstatus             csky_elf_grok_prstatus
 #define elf_backend_grok_psinfo               csky_elf_grok_psinfo
+
+/* Attribute sections.  */
+#undef  elf_backend_obj_attrs_vendor
+#define elf_backend_obj_attrs_vendor          "csky"
+#undef  elf_backend_obj_attrs_section
+#define elf_backend_obj_attrs_section         ".csky.attributes"
+#undef  elf_backend_obj_attrs_arg_type
+#define elf_backend_obj_attrs_arg_type        elf32_csky_obj_attrs_arg_type
+#undef  elf_backend_obj_attrs_section_type
+#define elf_backend_obj_attrs_section_type    SHT_CSKY_ATTRIBUTES
+#define elf_backend_obj_attrs_handle_unknown  elf32_csky_obj_attrs_handle_unknown
 
 #include "elf32-target.h"

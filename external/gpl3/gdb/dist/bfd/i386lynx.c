@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -399,7 +399,7 @@ NAME(lynx,slurp_reloc_table) (bfd *abfd,
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
 
-doit:
+ doit:
   if (bfd_seek (abfd, asect->rel_filepos, SEEK_SET) != 0)
     return FALSE;
   each_size = obj_reloc_entry_size (abfd);
@@ -411,16 +411,9 @@ doit:
   if (!reloc_cache && count != 0)
     return FALSE;
 
-  relocs = bfd_alloc (abfd, reloc_size);
+  relocs = _bfd_alloc_and_read (abfd, reloc_size, reloc_size);
   if (!relocs && reloc_size != 0)
     {
-      free (reloc_cache);
-      return FALSE;
-    }
-
-  if (bfd_bread (relocs, reloc_size, abfd) != reloc_size)
-    {
-      bfd_release (abfd, relocs);
       free (reloc_cache);
       return FALSE;
     }

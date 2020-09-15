@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -113,6 +113,9 @@ public:
   /* Returns true if processing a star wildcard (e.g., "1.*")
      range.  */
   bool in_star_range () const;
+
+  /* Returns true if processing a thread range (e.g., 1.2-3).  */
+  bool in_thread_range () const;
 
   /* Returns true if parsing has completed.  */
   bool finished () const;

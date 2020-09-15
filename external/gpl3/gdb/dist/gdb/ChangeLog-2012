@@ -835,8 +835,6 @@
 	rather than sort() method.
 	Adjust syntax for Python 3 compatibility.
 	* python/lib/gdb/command/type_printers.py: Ditto.
-	* doc/gdb.texinfo (Inferior.read_memory): Mention that the return
-	value is a memoryview object if Python 3.
 
 2012-12-12  Tom Tromey  <tromey@redhat.com>
 
@@ -8703,7 +8701,7 @@
 	(GNULIB): New variable.
 	(GNULIB_STDINT_H): Adjust.
 	(AC_OUTPUT): Don't output gnulib/Makefile.
-	* gdb/defs.h: Include build-gnulib/config.h.
+	* defs.h: Include build-gnulib/config.h.
 	* aclocal.m4: Regenerate.
 	* config.in: Regenerate.
 	* configure: Regenerate.
@@ -13186,8 +13184,8 @@
 
 2012-01-02  Joel Brobecker  <brobecker@adacore.com>
 
-	* gdb/common/gdb_thread_db.h, gdb/dbxread.c, gdb/environ.c,
-	gdb/gcore.h, gdb/rs6000-tdep.h, gdb/s390-nat.c, gdb/tic6x-tdep.c:
+	* common/gdb_thread_db.h, dbxread.c, environ.c,
+	gcore.h, rs6000-tdep.h, s390-nat.c, tic6x-tdep.c:
 	Reformat the copyright header.
 
 2012-01-02  Jan Kratochvil  <jan.kratochvil@redhat.com>

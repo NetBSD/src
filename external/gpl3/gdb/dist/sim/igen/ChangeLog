@@ -1,3 +1,17 @@
+2020-07-03  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	PR sim/26194
+	* lf.h (lf_get_file_type): Declare.
+	* lf.c (lf_get_file_type): Define.
+	* gen-idecode.c (print_idecode_issue_function_header): Use
+	lf_get_file_type() to issue an extern variable declaration in
+	case of header files.
+
+2019-12-19  Tom Tromey  <tromey@adacore.com>
+
+	PR build/24572:
+	* Makefile.in (install-strip): New target.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.

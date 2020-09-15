@@ -1,6 +1,6 @@
 /* Machine-independent support for Solaris /proc (process file system)
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -29,8 +29,6 @@
    initialized, which is not true of the other translation tables.  */
 
 #include "defs.h"
-
-#define _STRUCTURED_PROC 1
 
 #include <sys/types.h>
 #include <sys/procfs.h>
@@ -762,8 +760,9 @@ proc_prettyprint_actionset (struct sigaction *actions, int verbose)
 {
 }
 
+void _initialize_proc_events ();
 void
-_initialize_proc_events (void)
+_initialize_proc_events ()
 {
   init_syscall_table ();
 }

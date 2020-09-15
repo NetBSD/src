@@ -72,6 +72,9 @@ int int4dim[1][2][3][2] = {{{{0,1},{2,3},{4,5}},{{6,7},{8,9},{10,11}}}};
 
 char *teststring = (char*)"teststring contents";
 
+typedef char *charptr;
+charptr teststring2 = "more contents";
+
 /* Test printing of a struct containing character arrays. */
 
 struct some_arrays {
@@ -96,9 +99,36 @@ enum some_volatile_enum { enumvolval1, enumvolval2 };
    name.  See PR11827.  */
 volatile enum some_volatile_enum some_volatile_enum = enumvolval1;
 
-enum flag_enum { ONE = 1, TWO = 2 };
+/* An enum considered as a "flag enum".  */
+enum flag_enum
+{
+  FE_NONE       = 0x00,
+  FE_ONE        = 0x01,
+  FE_TWO        = 0x02,
+  FE_TWO_LEGACY = 0x02,
+};
 
-enum flag_enum three = ONE | TWO;
+enum flag_enum three = FE_ONE | FE_TWO;
+
+/* Another enum considered as a "flag enum", but with no enumerator with value
+   0.  */
+enum flag_enum_without_zero
+{
+  FEWZ_ONE = 0x01,
+  FEWZ_TWO = 0x02,
+};
+
+enum flag_enum_without_zero flag_enum_without_zero = 0;
+
+/* Not a flag enum, an enumerator value has multiple bits sets.  */
+enum not_flag_enum
+{
+  NFE_ONE = 0x01,
+  NFE_TWO = 0x02,
+  NFE_F0  = 0xf0,
+};
+
+enum not_flag_enum three_not_flag = NFE_ONE | NFE_TWO;
 
 /* A structure with an embedded array at an offset > 0.  The array has
    all elements with the same repeating value, which must not be the

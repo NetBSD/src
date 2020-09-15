@@ -8556,7 +8556,7 @@
 
 2016-03-29  Don Breazeal  <donb@codesourcery.com>
 
-	* gdb/value.c (value_actual_type): Fix formatting issue.
+	* value.c (value_actual_type): Fix formatting issue.
 
 2016-03-23  Yao Qi  <yao.qi@linaro.org>
 
@@ -9336,7 +9336,7 @@
 
 	* amd64-tdep.c (amd64_ax_pseudo_register_collect): New function.
 	(amd64_init_abi): Fill ax_pseudo_register_collect hook.
-	* gdb/i386-tdep.c (i386_pseudo_register_read_into_value): Remove
+	* i386-tdep.c (i386_pseudo_register_read_into_value): Remove
 	misleading comment.
 	(i386_pseudo_register_write): Ditto.
 	(i386_ax_pseudo_register_collect): New function.

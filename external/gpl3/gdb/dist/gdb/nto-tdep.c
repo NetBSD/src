@@ -1,6 +1,6 @@
 /* nto-tdep.c - general QNX Neutrino target functionality.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -32,7 +32,7 @@
 #include "gdbcore.h"
 #include "objfiles.h"
 #include "source.h"
-#include "common/pathstuff.h"
+#include "gdbsupport/pathstuff.h"
 
 #define QNX_NOTE_NAME	"QNX"
 #define QNX_INFO_SECT_NAME "QNX_info"
@@ -51,7 +51,8 @@ static char default_nto_target[] = "";
 
 struct nto_target_ops current_nto_target;
 
-static const struct inferior_data *nto_inferior_data_reg;
+static const struct inferior_key<struct nto_inferior_data>
+  nto_inferior_data_reg;
 
 static char *
 nto_target (void)
@@ -318,8 +319,8 @@ nto_sniff_abi_note_section (bfd *abfd, asection *sect, void *obj)
   const char *name;
   const unsigned sizeof_Elf_Nhdr = 12;
 
-  sectname = bfd_get_section_name (abfd, sect);
-  sectsize = bfd_section_size (abfd, sect);
+  sectname = bfd_section_name (sect);
+  sectsize = bfd_section_size (sect);
 
   if (sectsize > 128)
     sectsize = 128;
@@ -498,25 +499,6 @@ nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
   return len_read;
 }
 
-/* Allocate new nto_inferior_data object.  */
-
-static struct nto_inferior_data *
-nto_new_inferior_data (void)
-{
-  struct nto_inferior_data *const inf_data
-    = XCNEW (struct nto_inferior_data);
-
-  return inf_data;
-}
-
-/* Free inferior data.  */
-
-static void
-nto_inferior_data_cleanup (struct inferior *const inf, void *const dat)
-{
-  xfree (dat);
-}
-
 /* Return nto_inferior_data for the given INFERIOR.  If not yet created,
    construct it.  */
 
@@ -528,20 +510,9 @@ nto_inferior_data (struct inferior *const inferior)
 
   gdb_assert (inf != NULL);
 
-  inf_data
-    = (struct nto_inferior_data *) inferior_data (inf, nto_inferior_data_reg);
+  inf_data = nto_inferior_data_reg.get (inf);
   if (inf_data == NULL)
-    {
-      set_inferior_data (inf, nto_inferior_data_reg,
-			 (inf_data = nto_new_inferior_data ()));
-    }
+    inf_data = nto_inferior_data_reg.emplace (inf);
 
   return inf_data;
-}
-
-void
-_initialize_nto_tdep (void)
-{
-  nto_inferior_data_reg
-    = register_inferior_data_with_cleanup (NULL, nto_inferior_data_cleanup);
 }

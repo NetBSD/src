@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2019 Free Software Foundation, Inc.
+   Copyright 2009-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ bar()
     exit(1);
 }
 
-int commonfun() { bar(); } /* from hello */
+int commonfun() { bar(); return 0; } /* from hello */
 
 int
 hello(int x)
@@ -48,7 +48,7 @@ main()
 {
   int tmpx;
 
-  alarm (30);
+  alarm (240);
 
   bar();
   tmpx = hello(glob);

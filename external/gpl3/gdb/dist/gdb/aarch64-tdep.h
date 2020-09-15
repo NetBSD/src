@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -23,6 +23,7 @@
 #define AARCH64_TDEP_H
 
 #include "arch/aarch64.h"
+#include "infrun.h"
 
 /* Forward declarations.  */
 struct gdbarch;
@@ -31,6 +32,9 @@ struct regset;
 /* AArch64 Dwarf register numbering.  */
 #define AARCH64_DWARF_X0   0
 #define AARCH64_DWARF_SP  31
+#define AARCH64_DWARF_PAUTH_RA_STATE  34
+#define AARCH64_DWARF_PAUTH_DMASK  35
+#define AARCH64_DWARF_PAUTH_CMASK  36
 #define AARCH64_DWARF_V0  64
 #define AARCH64_DWARF_SVE_VG   46
 #define AARCH64_DWARF_SVE_FFR  47
@@ -53,7 +57,7 @@ struct regset;
 
 /* The maximum number of modified instructions generated for one
    single-stepped instruction.  */
-#define DISPLACED_MODIFIED_INSNS 1
+#define AARCH64_DISPLACED_MODIFIED_INSNS 1
 
 /* Target-dependent structure in gdbarch.  */
 struct gdbarch_tdep
@@ -87,14 +91,23 @@ struct gdbarch_tdep
   {
     return vq != 0;
   }
+
+  int pauth_reg_base;
+  int pauth_ra_state_regnum;
+
+  /* Returns true if the target supports pauth.  */
+  bool has_pauth () const
+  {
+    return pauth_reg_base != -1;
+  }
 };
 
-const target_desc *aarch64_read_description (uint64_t vq);
+const target_desc *aarch64_read_description (uint64_t vq, bool pauth_p);
 
 extern int aarch64_process_record (struct gdbarch *gdbarch,
                                struct regcache *regcache, CORE_ADDR addr);
 
-struct displaced_step_closure *
+displaced_step_closure_up
   aarch64_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				    CORE_ADDR from, CORE_ADDR to,
 				    struct regcache *regs);

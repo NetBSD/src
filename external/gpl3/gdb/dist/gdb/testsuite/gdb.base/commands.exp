@@ -1,4 +1,4 @@
-#   Copyright 1988-2019 Free Software Foundation, Inc.
+#   Copyright 1988-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -195,7 +195,7 @@ proc_with_prefix if_while_breakpoint_command_test {} {
     # currently support it.  Bash value variable to be what we want.
     gdb_test "p value=5" " = 5" "set value to 5"
     delete_breakpoints
-    gdb_test "break factorial" "Breakpoint.*at.*" "break factorial"
+    gdb_test "break factorial" "Breakpoint.*at.*"
 
     gdb_test_multiple "commands" "commands" {
 	-re "End with" {

@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@ static const gdb_byte arm_wince_le_breakpoint[] = { 0x10, 0x00, 0x00, 0xe6 };
 static const gdb_byte arm_wince_thumb_le_breakpoint[] = { 0xfe, 0xdf };
 
 /* Description of the longjmp buffer.  */
-#define ARM_WINCE_JB_ELEMENT_SIZE	INT_REGISTER_SIZE
+#define ARM_WINCE_JB_ELEMENT_SIZE	ARM_INT_REGISTER_SIZE
 #define ARM_WINCE_JB_PC			10
 
 static CORE_ADDR
@@ -66,7 +66,7 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   if (indsym.minsym == NULL)
     return 0;
 
-  symname = MSYMBOL_LINKAGE_NAME (indsym.minsym);
+  symname = indsym.minsym->linkage_name ();
   if (symname == NULL || !startswith (symname, "__imp_"))
     return 0;
 
@@ -104,8 +104,8 @@ arm_wince_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       struct bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       if (s.minsym != NULL
-	  && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
-	  && strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__gccmain") == 0)
+	  && s.minsym->linkage_name () != NULL
+	  && strcmp (s.minsym->linkage_name (), "__gccmain") == 0)
 	pc += 4;
     }
 
@@ -154,8 +154,9 @@ arm_wince_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
+void _initialize_arm_wince_tdep ();
 void
-_initialize_arm_wince_tdep (void)
+_initialize_arm_wince_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_arm, bfd_target_coff_flavour,
                                   arm_wince_osabi_sniffer);

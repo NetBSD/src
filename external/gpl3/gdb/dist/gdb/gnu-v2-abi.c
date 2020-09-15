@@ -1,6 +1,6 @@
 /* Abstraction of GNU v2 abi.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
@@ -132,8 +132,8 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
 
   /* With older versions of g++, the vtbl field pointed to an array
      of structures.  Nowadays it points directly to the structure.  */
-  if (TYPE_CODE (value_type (vtbl)) == TYPE_CODE_PTR
-      && TYPE_CODE (TYPE_TARGET_TYPE (value_type (vtbl))) == TYPE_CODE_ARRAY)
+  if (value_type (vtbl)->code () == TYPE_CODE_PTR
+      && TYPE_TARGET_TYPE (value_type (vtbl))->code () == TYPE_CODE_ARRAY)
     {
       /* Handle the case where the vtbl field points to an
          array of structures.  */
@@ -155,7 +155,7 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
 
   entry_type = check_typedef (value_type (entry));
 
-  if (TYPE_CODE (entry_type) == TYPE_CODE_STRUCT)
+  if (entry_type->code () == TYPE_CODE_STRUCT)
     {
       /* Move the `this' pointer according to the virtual function table.  */
       set_value_offset (arg1, value_offset (arg1)
@@ -169,7 +169,7 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
 
       vfn = value_field (entry, 2);
     }
-  else if (TYPE_CODE (entry_type) == TYPE_CODE_PTR)
+  else if (entry_type->code () == TYPE_CODE_PTR)
     vfn = entry;
   else
     error (_("I'm confused:  virtual function table has bad type"));
@@ -206,7 +206,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   known_type = value_type (v);
   known_type = check_typedef (known_type);
   /* RTTI works only or class objects.  */
-  if (TYPE_CODE (known_type) != TYPE_CODE_STRUCT)
+  if (known_type->code () != TYPE_CODE_STRUCT)
     return NULL;
 
   /* Plan on this changing in the future as i get around to setting
@@ -243,7 +243,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   /* Try to find a symbol that is the vtable.  */
   minsym=lookup_minimal_symbol_by_pc(vtbl);
   if (minsym.minsym==NULL
-      || (linkage_name=MSYMBOL_LINKAGE_NAME (minsym.minsym))==NULL
+      || (linkage_name=minsym.minsym->linkage_name ())==NULL
       || !is_vtable_name (linkage_name))
     return NULL;
 
@@ -312,9 +312,9 @@ vb_match (struct type *type, int index, struct type *basetype)
 
   /* It's a virtual baseclass pointer, now we just need to find out whether
      it is for this baseclass.  */
-  fieldtype = TYPE_FIELD_TYPE (type, index);
+  fieldtype = type->field (index).type ();
   if (fieldtype == NULL
-      || TYPE_CODE (fieldtype) != TYPE_CODE_PTR)
+      || fieldtype->code () != TYPE_CODE_PTR)
     /* "Can't happen".  */
     return 0;
 
@@ -325,10 +325,10 @@ vb_match (struct type *type, int index, struct type *basetype)
   if (TYPE_TARGET_TYPE (fieldtype) == basetype)
     return 1;
 
-  if (TYPE_NAME (basetype) != NULL
-      && TYPE_NAME (TYPE_TARGET_TYPE (fieldtype)) != NULL
-      && strcmp (TYPE_NAME (basetype),
-		 TYPE_NAME (TYPE_TARGET_TYPE (fieldtype))) == 0)
+  if (basetype->name () != NULL
+      && TYPE_TARGET_TYPE (fieldtype)->name () != NULL
+      && strcmp (basetype->name (),
+		 TYPE_TARGET_TYPE (fieldtype)->name ()) == 0)
     return 1;
   return 0;
 }
@@ -348,7 +348,7 @@ gnuv2_baseclass_offset (struct type *type, int index,
   if (BASETYPE_VIA_VIRTUAL (type, index))
     {
       /* Must hunt for the pointer to this virtual baseclass.  */
-      int i, len = TYPE_NFIELDS (type);
+      int i, len = type->num_fields ();
       int n_baseclasses = TYPE_N_BASECLASSES (type);
 
       /* First look for the virtual baseclass pointer
@@ -362,7 +362,7 @@ gnuv2_baseclass_offset (struct type *type, int index,
 	      int field_length;
 	      CORE_ADDR addr;
 
-	      field_type = check_typedef (TYPE_FIELD_TYPE (type, i));
+	      field_type = check_typedef (type->field (i).type ());
 	      field_offset = TYPE_FIELD_BITPOS (type, i) / 8;
 	      field_length = TYPE_LENGTH (field_type);
 
@@ -413,8 +413,9 @@ init_gnuv2_ops (void)
   gnu_v2_abi_ops.baseclass_offset = gnuv2_baseclass_offset;
 }
 
+void _initialize_gnu_v2_abi ();
 void
-_initialize_gnu_v2_abi (void)
+_initialize_gnu_v2_abi ()
 {
   init_gnuv2_ops ();
   register_cp_abi (&gnu_v2_abi_ops);

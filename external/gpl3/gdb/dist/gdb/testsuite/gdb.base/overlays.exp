@@ -1,4 +1,4 @@
-# Copyright 1997-2019 Free Software Foundation, Inc.
+# Copyright 1997-2020 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,6 @@ set data_overlays 1
 
 if [istarget "m32r-*-*"] then {
     set linker_script "${srcdir}/${subdir}/m32r.ld"
-} elseif [istarget "spu-*-*"] then {
-    set linker_script "${srcdir}/${subdir}/spu.ld"
-    set data_overlays 0
 } else {
     verbose "Skipping overlay test -- not implemented for this target."
     return 

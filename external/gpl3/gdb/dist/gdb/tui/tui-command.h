@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -22,7 +22,55 @@
 #ifndef TUI_TUI_COMMAND_H
 #define TUI_TUI_COMMAND_H
 
-extern unsigned int tui_dispatch_ctrl_char (unsigned int);
+#include "tui/tui-data.h"
+
+/* The TUI command window.  */
+struct tui_cmd_window : public tui_win_info
+{
+  tui_cmd_window () = default;
+
+  DISABLE_COPY_AND_ASSIGN (tui_cmd_window);
+
+  int max_height () const override;
+
+  void refresh_window () override
+  {
+  }
+
+  const char *name () const override
+  {
+    return CMD_NAME;
+  }
+
+  bool can_scroll () const override
+  {
+    return false;
+  }
+
+  bool can_box () const override
+  {
+    return false;
+  }
+
+  void resize (int height, int width, int origin_x, int origin_y) override;
+
+  void make_visible (bool visible) override
+  {
+    /* The command window can't be made invisible.  */
+  }
+
+  int start_line = 0;
+
+protected:
+
+  void do_scroll_vertical (int num_to_scroll) override
+  {
+  }
+
+  void do_scroll_horizontal (int num_to_scroll) override
+  {
+  }
+};
 
 /* Refresh the command window.  */
 extern void tui_refresh_cmd_win (void);

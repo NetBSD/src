@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,19 +26,9 @@ standard_testfile dw2-bad-mips-linkage-name.c dw2-bad-mips-linkage-name.S
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
-    global srcdir subdir srcfile
-
-    set f_result [function_range f ${srcdir}/${subdir}/${srcfile}]
-    set f_start [lindex $f_result 0]
-    set f_length [lindex $f_result 1]
-
-    set g_result [function_range g ${srcdir}/${subdir}/${srcfile}]
-    set g_start [lindex $g_result 0]
-    set g_length [lindex $g_result 1]
-
     cu {} {
 	DW_TAG_compile_unit {
-                {DW_AT_language @DW_LANG_C}
+                {DW_AT_language @DW_LANG_C_plus_plus}
                 {DW_AT_name     dw2-bad-mips-linkage-name.c}
                 {DW_AT_comp_dir /tmp}
 
@@ -51,16 +41,12 @@ Dwarf::assemble $asm_file {
 		{DW_AT_name      bool}
 	    }
             DW_TAG_subprogram {
-                {name f}
-                {low_pc $f_start addr}
-                {high_pc "$f_start + $f_length" addr}
+                {MACRO_AT_func {f}}
                 {type :$b_l}
 		{DW_AT_MIPS_linkage_name _Z1fv}
 	    }
             DW_TAG_subprogram {
-                {name g}
-                {low_pc $g_start addr}
-                {high_pc "$g_start + $g_length" addr}
+                {MACRO_AT_func {g}}
                 {type :$b_l}
 		{DW_AT_MIPS_linkage_name 42 DW_FORM_data1}
 	    }
@@ -78,5 +64,5 @@ if { [prepare_for_testing "failed to prepare" ${testfile} \
 # much matter what we test here, so long as we do something to make
 # sure that the DWARF is read.
 
-gdb_test "ptype f" " = bool \\(\\)"
-gdb_test "ptype g" " = bool \\(\\)"
+gdb_test "ptype f" " = bool \\(void\\)"
+gdb_test "ptype g" " = bool \\(void\\)"

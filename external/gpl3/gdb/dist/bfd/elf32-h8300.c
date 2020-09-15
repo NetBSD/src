@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/300 ELF binaries.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/h8.h"
+#include "cpu-h8300.h"
 
 static reloc_howto_type *elf32_h8_reloc_type_lookup
   (bfd *abfd, bfd_reloc_code_real_type code);
@@ -31,7 +32,6 @@ static bfd_boolean elf32_h8_info_to_howto
 static bfd_boolean elf32_h8_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
 static unsigned long elf32_h8_mach (flagword);
-static void elf32_h8_final_write_processing (bfd *, bfd_boolean);
 static bfd_boolean elf32_h8_object_p (bfd *);
 static bfd_boolean elf32_h8_merge_private_bfd_data
   (bfd *, struct bfd_link_info *);
@@ -503,7 +503,7 @@ elf32_h8_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -584,9 +584,8 @@ elf32_h8_mach (flagword flags)
    file.  We use this opportunity to encode the BFD machine type
    into the flags field in the object file.  */
 
-static void
-elf32_h8_final_write_processing (bfd *abfd,
-				 bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf32_h8_final_write_processing (bfd *abfd)
 {
   unsigned long val;
 
@@ -624,6 +623,7 @@ elf32_h8_final_write_processing (bfd *abfd,
 
   elf_elfheader (abfd)->e_flags &= ~ (EF_H8_MACH);
   elf_elfheader (abfd)->e_flags |= val;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 /* Return nonzero if ABFD represents a valid H8 ELF object file; also
@@ -1465,21 +1465,17 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
   return FALSE;
 }
@@ -1682,10 +1678,8 @@ elf32_h8_get_relocated_section_contents (bfd *output_bfd,
 				       isymbuf, sections))
 	goto error_return;
 
-      if (sections != NULL)
-	free (sections);
-      if (isymbuf != NULL
-	  && symtab_hdr->contents != (unsigned char *) isymbuf)
+      free (sections);
+      if (symtab_hdr->contents != (unsigned char *) isymbuf)
 	free (isymbuf);
       if (elf_section_data (input_section)->relocs != internal_relocs)
 	free (internal_relocs);
@@ -1694,13 +1688,10 @@ elf32_h8_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (sections != NULL)
-    free (sections);
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  free (sections);
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (input_section)->relocs != internal_relocs)
+  if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
   return NULL;
 }

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -215,3 +215,5 @@ gdb_test "frame apply level 4-2 p 1" "inverted range" "inverted range"
 gdb_test "frame apply level 0-3" \
     "Please specify a command to apply on the selected frames" \
     "missing command"
+gdb_test "faas" "Please specify a command to apply on all frames" \
+    "missing command for faas"

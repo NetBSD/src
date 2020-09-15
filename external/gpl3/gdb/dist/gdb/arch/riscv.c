@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "riscv.h"
 #include <stdlib.h>
 #include <unordered_map>
@@ -25,37 +25,17 @@
 #include "../features/riscv/32bit-fpu.c"
 #include "../features/riscv/64bit-fpu.c"
 
-/* Wrapper used by std::unordered_map to generate hash for feature set.  */
-struct riscv_gdbarch_features_hasher
-{
-  std::size_t
-  operator() (const riscv_gdbarch_features &features) const noexcept
-  {
-    return features.hash ();
-  }
-};
-
-/* Cache of previously seen target descriptions, indexed by the feature set
-   that created them.  */
-static std::unordered_map<riscv_gdbarch_features,
-                          target_desc *,
-                          riscv_gdbarch_features_hasher> riscv_tdesc_cache;
+#ifndef GDBSERVER
+#define STATIC_IN_GDB static
+#else
+#define STATIC_IN_GDB
+#endif
 
 /* See arch/riscv.h.  */
 
-const target_desc *
-riscv_create_target_description (struct riscv_gdbarch_features features)
+STATIC_IN_GDB target_desc *
+riscv_create_target_description (const struct riscv_gdbarch_features features)
 {
-  /* Have we seen this feature set before?  If we have return the same
-     target description.  GDB expects that if two target descriptions are
-     the same (in content terms) then they will actually be the same
-     instance.  This is important when trying to lookup gdbarch objects as
-     GDBARCH_LIST_LOOKUP_BY_INFO performs a pointer comparison on target
-     descriptions to find candidate gdbarch objects.  */
-  const auto it = riscv_tdesc_cache.find (features);
-  if (it != riscv_tdesc_cache.end ())
-    return it->second;
-
   /* Now we should create a new target description.  */
   target_desc *tdesc = allocate_target_description ();
 
@@ -93,8 +73,46 @@ riscv_create_target_description (struct riscv_gdbarch_features features)
   else if (features.flen == 8)
     regnum = create_feature_riscv_64bit_fpu (tdesc, regnum);
 
-  /* Add to the cache.  */
-  riscv_tdesc_cache.emplace (features, tdesc);
+  return tdesc;
+}
+
+#ifndef GDBSERVER
+
+/* Wrapper used by std::unordered_map to generate hash for feature set.  */
+struct riscv_gdbarch_features_hasher
+{
+  std::size_t
+  operator() (const riscv_gdbarch_features &features) const noexcept
+  {
+    return features.hash ();
+  }
+};
+
+/* Cache of previously seen target descriptions, indexed by the feature set
+   that created them.  */
+static std::unordered_map<riscv_gdbarch_features,
+			  const target_desc_up,
+			  riscv_gdbarch_features_hasher> riscv_tdesc_cache;
+
+/* See arch/riscv.h.  */
+
+const target_desc *
+riscv_lookup_target_description (const struct riscv_gdbarch_features features)
+{
+  /* Lookup in the cache.  If we find it then return the pointer out of
+     the target_desc_up (which is a unique_ptr).  This is safe as the
+     riscv_tdesc_cache will exist until GDB exits.  */
+  const auto it = riscv_tdesc_cache.find (features);
+  if (it != riscv_tdesc_cache.end ())
+    return it->second.get ();
+
+  target_desc *tdesc = riscv_create_target_description (features);
+
+  /* Add to the cache.  Work around a problem with g++ 4.8 (PR96537):
+     Call the target_desc_up constructor explictly instead of implicitly.  */
+  riscv_tdesc_cache.emplace (features, target_desc_up (tdesc));
 
   return tdesc;
 }
+
+#endif /* !GDBSERVER */

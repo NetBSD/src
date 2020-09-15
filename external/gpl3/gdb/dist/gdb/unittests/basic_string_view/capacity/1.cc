@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -131,8 +131,8 @@ namespace selftests {
 namespace string_view {
 namespace capacity_1 {
 
-void
-test01()
+static void
+test01 ()
 {
   gdb::basic_string_view<A<B>> str02;
   typedef gdb::basic_string_view< A<B> >::size_type size_type_o;
@@ -161,7 +161,7 @@ test01()
   VERIFY( sz03 >= sz04 );
 }
 
-int
+static int
 main()
 {
   test01();

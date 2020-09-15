@@ -1,4 +1,4 @@
-/* Copyright 2004-2019 Free Software Foundation, Inc.
+/* Copyright 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,4 +34,6 @@ main ()
 {
   int v0 = 0;
   func1 ();
+
+  return 0;
 }

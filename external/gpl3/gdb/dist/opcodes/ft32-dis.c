@@ -1,5 +1,5 @@
 /* Disassemble ft32 instructions.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of the GNU opcodes library.
@@ -81,7 +81,7 @@ ft32_opcode(bfd_vma addr ATTRIBUTE_UNUSED,
               switch (lobit)
               {
               case  FT32_FLD_CBCRCV:
-                // imm is {CB, CV}
+                /* imm is {CB, CV}  */
                 imm = ((iword >> FT32_FLD_CB_BIT) & ((1 << FT32_FLD_CB_SIZ) - 1)) << 4;
                 imm |= ((iword >> FT32_FLD_CV_BIT) & ((1 << FT32_FLD_CV_SIZ) - 1));
                 switch (imm)

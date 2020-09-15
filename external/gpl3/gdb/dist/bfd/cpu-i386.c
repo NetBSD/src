@@ -1,5 +1,5 @@
 /* BFD support for the Intel 386 architecture.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -117,186 +117,49 @@ bfd_arch_i386_long_nop_fill (bfd_size_type count,
   return bfd_arch_i386_fill (count, code, TRUE);
 }
 
-/* Fill the buffer with zero, or one-byte nop instructions if CODE is TRUE.  */
+#define N(BITS, MACH, NAME, PRINT, DEF, FILL, NEXT)	\
+  { BITS, /* Bits in a word.  */		\
+    BITS, /* Bits in an address.  */		\
+    8,    /* Bits in a byte. */			\
+    bfd_arch_i386,				\
+    MACH, /* Machine number.  */		\
+    NAME,					\
+    PRINT,					\
+    3,   /* Section alignment power.  */	\
+    DEF, /* Default architecture version ?  */	\
+    bfd_i386_compatible,			\
+    bfd_default_scan,				\
+    FILL,					\
+    NEXT,					\
+    0 /* Maximum instruction length.  */	\
+  }
 
-static void *
-bfd_arch_i386_onebyte_nop_fill (bfd_size_type count,
-				bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
-				bfd_boolean code)
-{
-  void *fill = bfd_malloc (count);
-  if (fill != NULL)
-    memset (fill, code ? 0x90 : 0, count);
-  return fill;
-}
-
-
-static const bfd_arch_info_type bfd_x64_32_nacl_arch =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x64_32_nacl,
-  "i386",
-  "i386:x64-32:nacl",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_onebyte_nop_fill,
-  NULL
-};
-
-static const bfd_arch_info_type bfd_x86_64_nacl_arch =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x86_64_nacl,
-  "i386",
-  "i386:x86-64:nacl",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_onebyte_nop_fill,
-  &bfd_x64_32_nacl_arch
-};
-
-const bfd_arch_info_type bfd_i386_nacl_arch =
-{
-  32,	/* 32 bits in a word */
-  32,	/* 32 bits in an address */
-  8,	/* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_i386_i386_nacl,
-  "i386",
-  "i386:nacl",
-  3,
-  TRUE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_onebyte_nop_fill,
-  &bfd_x86_64_nacl_arch
-};
 
 static const bfd_arch_info_type bfd_x64_32_arch_intel_syntax =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x64_32_intel_syntax,
-  "i386:intel",
-  "i386:x64-32:intel",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_long_nop_fill,
-  &bfd_i386_nacl_arch
-};
+  N (64, bfd_mach_x64_32_intel_syntax, "i386:intel", "i386:x64-32:intel",
+     FALSE, bfd_arch_i386_long_nop_fill, NULL);
 
 static const bfd_arch_info_type bfd_x86_64_arch_intel_syntax =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x86_64_intel_syntax,
-  "i386:intel",
-  "i386:x86-64:intel",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_long_nop_fill,
-  &bfd_x64_32_arch_intel_syntax,
-};
+  N (64, bfd_mach_x86_64_intel_syntax, "i386:intel", "i386:x86-64:intel",
+     FALSE, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch_intel_syntax);
 
 static const bfd_arch_info_type bfd_i386_arch_intel_syntax =
-{
-  32,	/* 32 bits in a word */
-  32,	/* 32 bits in an address */
-  8,	/* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_i386_i386_intel_syntax,
-  "i386:intel",
-  "i386:intel",
-  3,
-  TRUE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_short_nop_fill,
-  &bfd_x86_64_arch_intel_syntax
-};
+  N (32, bfd_mach_i386_i386_intel_syntax, "i386:intel", "i386:intel",
+     TRUE, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch_intel_syntax);
+
 
 static const bfd_arch_info_type i8086_arch =
-{
-  32,	/* 32 bits in a word */
-  32,	/* 32 bits in an address (well, not really) */
-  8,	/* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_i386_i8086,
-  "i8086",
-  "i8086",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_short_nop_fill,
-  &bfd_i386_arch_intel_syntax
-};
+  N (32, bfd_mach_i386_i8086, "i8086", "i8086",
+     FALSE, bfd_arch_i386_short_nop_fill, &bfd_i386_arch_intel_syntax);
 
 static const bfd_arch_info_type bfd_x64_32_arch =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x64_32,
-  "i386",
-  "i386:x64-32",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_long_nop_fill,
-  &i8086_arch
-};
+  N (64, bfd_mach_x64_32, "i386", "i386:x64-32",
+     FALSE, bfd_arch_i386_long_nop_fill, &i8086_arch);
 
 static const bfd_arch_info_type bfd_x86_64_arch =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_x86_64,
-  "i386",
-  "i386:x86-64",
-  3,
-  FALSE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_long_nop_fill,
-  &bfd_x64_32_arch
-};
+  N (64, bfd_mach_x86_64, "i386", "i386:x86-64",
+     FALSE, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch);
 
 const bfd_arch_info_type bfd_i386_arch =
-{
-  32,	/* 32 bits in a word */
-  32,	/* 32 bits in an address */
-  8,	/* 8 bits in a byte */
-  bfd_arch_i386,
-  bfd_mach_i386_i386,
-  "i386",
-  "i386",
-  3,
-  TRUE,
-  bfd_i386_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_short_nop_fill,
-  &bfd_x86_64_arch
-};
+  N (32, bfd_mach_i386_i386, "i386", "i386",
+     TRUE, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch);

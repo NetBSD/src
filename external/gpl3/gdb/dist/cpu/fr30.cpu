@@ -193,15 +193,15 @@
 (df  f-disp8     "8 bit signed offset"   ()  4  8 INT #f #f)
 (df  f-disp9     "9 bit signed offset"   ()  4  8 INT
     ((value pc) (sra WI value (const 1)))
-    ((value pc) (sll WI value (const 1)))
+    ((value pc) (mul WI value (const 2)))
 )
 (df  f-disp10    "10 bit signed offset"  ()  4  8 INT
      ((value pc) (sra WI value (const 2)))
-     ((value pc) (sll WI value (const 2)))
+     ((value pc) (mul WI value (const 4)))
 )
 (df  f-s10       "10 bit signed offset"  ()  8  8 INT
      ((value pc) (sra WI value (const 2)))
-     ((value pc) (sll WI value (const 2)))
+     ((value pc) (mul WI value (const 4)))
 )
 (df  f-u10       "10 bit unsigned offset" ()  8  8 UINT
      ((value pc) (srl UWI value (const 2)))
@@ -209,7 +209,7 @@
 )
 (df  f-rel9 "9 pc relative signed offset" (PCREL-ADDR) 8 8 INT
      ((value pc) (sra WI (sub WI value (add WI pc (const 2))) (const 1)))
-     ((value pc) (add WI (sll WI value (const 1)) (add WI pc (const 2))))
+     ((value pc) (add WI (mul WI value (const 2)) (add WI pc (const 2))))
 )
 (dnf f-dir8      "8  bit direct address"  ()  8  8)
 (df  f-dir9      "9  bit direct address"  ()  8  8 UINT
@@ -222,7 +222,7 @@
 )
 (df  f-rel12     "12 bit pc relative signed offset" (PCREL-ADDR) 5 11 INT
      ((value pc) (sra WI (sub WI value (add WI pc (const 2))) (const 1)))
-     ((value pc) (add WI (sll WI value (const 1)) (add WI pc (const 2))))
+     ((value pc) (add WI (mul WI value (const 2)) (add WI pc (const 2))))
 )
 
 (dnf f-reglist_hi_st  "8 bit register mask for stm" () 8 8)

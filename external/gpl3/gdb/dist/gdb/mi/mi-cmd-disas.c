@@ -1,5 +1,5 @@
 /* MI Command Set - disassemble commands.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -36,7 +36,7 @@
 
    FILENAME: The name of the file where we want disassemble from.
    LINE: The line around which we want to disassemble. It will
-   disassemble the function that contins that line.
+   disassemble the function that contains that line.
    HOW_MANY: Number of disassembly lines to display. With source, it
    is the number of disassembly lines only, not counting the source
    lines.  

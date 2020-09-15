@@ -1,6 +1,6 @@
 /* Macros for general registry objects.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef REGISTRY_H
 #define REGISTRY_H
+
+#include <type_traits>
 
 /* The macros here implement a template type and functions for
    associating some user data with a container object.
@@ -243,11 +245,65 @@ typedef void (*registry_ ## TAG ## _callback) (struct TAG *, void *);	\
 extern const struct TAG ## _data *register_ ## TAG ## _data (void);	\
 extern const struct TAG ## _data *register_ ## TAG ## _data_with_cleanup \
  (registry_ ## TAG ## _callback save, registry_ ## TAG ## _callback free); \
-extern void clear_ ## TAG ## _data (struct TAG *);		\
-extern void set_ ## TAG ## _data (struct TAG *,			\
-				  const struct TAG ## _data *data, \
-				  void *value);			\
-extern void *TAG ## _data (struct TAG *,			\
-			   const struct TAG ## _data *data);
+extern void clear_ ## TAG ## _data (struct TAG *);			\
+extern void set_ ## TAG ## _data (struct TAG *,				\
+				  const struct TAG ## _data *data,	\
+				  void *value);				\
+extern void *TAG ## _data (struct TAG *,				\
+			   const struct TAG ## _data *data);		\
+									\
+template<typename DATA, typename Deleter = std::default_delete<DATA>>	\
+class TAG ## _key							\
+{									\
+public:									\
+									\
+  TAG ## _key ()							\
+    : m_key (register_ ## TAG ## _data_with_cleanup (nullptr,		\
+						     cleanup))		\
+  {									\
+  }									\
+									\
+  DATA *get (struct TAG *obj) const					\
+  {									\
+    return (DATA *) TAG ## _data (obj, m_key);				\
+  }									\
+									\
+  void set (struct TAG *obj, DATA *data) const				\
+  {									\
+    set_ ## TAG ## _data (obj, m_key, data);				\
+  }									\
+									\
+  template<typename Dummy = DATA *, typename... Args>			\
+  typename std::enable_if<std::is_same<Deleter,				\
+				       std::default_delete<DATA>>::value, \
+			  Dummy>::type					\
+  emplace (struct TAG *obj, Args &&...args) const			\
+  {									\
+    DATA *result = new DATA (std::forward<Args> (args)...);		\
+    set (obj, result);							\
+    return result;							\
+  }									\
+									\
+  void clear (struct TAG *obj) const					\
+  {									\
+    DATA *datum = get (obj);						\
+    if (datum != nullptr)						\
+      {									\
+	cleanup (obj, datum);						\
+	set (obj, nullptr);						\
+      }									\
+  }									\
+									\
+private:								\
+									\
+  static void cleanup (struct TAG *obj, void *arg)			\
+  {									\
+    DATA *datum = (DATA *) arg;						\
+    Deleter d;								\
+    d (datum);								\
+  }									\
+									\
+  const struct TAG ## _data *m_key;					\
+};
 
 #endif /* REGISTRY_H */

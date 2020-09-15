@@ -1,6 +1,6 @@
 /* Definitions for inline frame support.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 struct frame_info;
 struct frame_unwind;
 struct bpstats;
+struct process_stratum_target;
 
 /* The inline frame unwinder.  */
 
@@ -39,10 +40,15 @@ extern const struct frame_unwind inline_frame_unwind;
 void skip_inline_frames (thread_info *thread, struct bpstats *stop_chain);
 
 /* Forget about any hidden inlined functions in PTID, which is new or
-   about to be resumed.  If PTID is minus_one_ptid, forget about all
-   hidden inlined functions.  */
+   about to be resumed.  PTID may be minus_one_ptid (all processes of
+   TARGET) or a PID (all threads in this process of TARGET).  */
 
-void clear_inline_frame_state (ptid_t ptid);
+void clear_inline_frame_state (process_stratum_target *target, ptid_t ptid);
+
+/* Forget about any hidden inlined functions in THREAD, which is new
+   or about to be resumed.  */
+
+void clear_inline_frame_state (thread_info *thread);
 
 /* Step into an inlined function by unhiding it.  */
 

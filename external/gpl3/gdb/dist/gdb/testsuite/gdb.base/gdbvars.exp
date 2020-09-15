@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2019 Free Software Foundation, Inc.
+# Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,6 +51,21 @@ proc test_convenience_variables {} {
 
     gdb_test "print \$bar"		" = void" \
 	"Print contents of uninitialized convenience variable"
+
+
+    gdb_test "print \$str = \"some string\"" \
+	" = \"some string\"" \
+	"Set convenience variable to string value"
+    gdb_test "print \$str = \"some other string\"" \
+	" = \"some other string\"" \
+	"Change convenience variable to different string value"
+
+    gdb_test "print \$arr = {1, 2, 3}" \
+	" = \\{1, 2, 3\\}" \
+	"Set convenience variable to array value"
+    gdb_test "print \$arr = {0, 1, 2, 3}" \
+	" = \\{0, 1, 2, 3\\}" \
+	"Set convenience variable to different array value"
 }
 
 proc test_convenience_functions {} {

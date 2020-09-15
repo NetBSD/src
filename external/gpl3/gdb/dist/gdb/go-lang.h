@@ -1,6 +1,6 @@
 /* Go language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,12 +80,10 @@ extern void go_print_type (struct type *type, const char *varstring,
 			   struct ui_file *stream, int show, int level,
 			   const struct type_print_options *flags);
 
-/* Defined in go-valprint.c.  */
+/* Implement la_value_print_inner for Go.  */
 
-extern void go_val_print (struct type *type,
-			  int embedded_offset, CORE_ADDR address,
-			  struct ui_file *stream, int recurse,
-			  struct value *val,
-			  const struct value_print_options *options);
+extern void go_value_print_inner (struct value *value,
+				  struct ui_file *stream, int recurse,
+				  const struct value_print_options *options);
 
 #endif /* !defined (GO_LANG_H) */

@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "record.h"
 #include "observable.h"
 #include "inferior.h"
-#include "common/common-utils.h"
+#include "gdbsupport/common-utils.h"
 #include "cli/cli-utils.h"
 #include "disasm.h"
 
@@ -99,25 +99,25 @@ record_start (const char *method, const char *format, int from_tty)
   if (method == NULL)
     {
       if (format == NULL)
-	execute_command_to_string ("record", from_tty);
+	execute_command_to_string ("record", from_tty, false);
       else
 	error (_("Invalid format."));
     }
   else if (strcmp (method, "full") == 0)
     {
       if (format == NULL)
-	execute_command_to_string ("record full", from_tty);
+	execute_command_to_string ("record full", from_tty, false);
       else
 	error (_("Invalid format."));
     }
   else if (strcmp (method, "btrace") == 0)
     {
       if (format == NULL)
-	execute_command_to_string ("record btrace", from_tty);
+	execute_command_to_string ("record btrace", from_tty, false);
       else if (strcmp (format, "bts") == 0)
-	execute_command_to_string ("record btrace bts", from_tty);
+	execute_command_to_string ("record btrace bts", from_tty, false);
       else if (strcmp (format, "pt") == 0)
-	execute_command_to_string ("record btrace pt", from_tty);
+	execute_command_to_string ("record btrace pt", from_tty, false);
       else
 	error (_("Invalid format."));
     }
@@ -130,7 +130,7 @@ record_start (const char *method, const char *format, int from_tty)
 void
 record_stop (int from_tty)
 {
-  execute_command_to_string ("record stop", from_tty);
+  execute_command_to_string ("record stop", from_tty, false);
 }
 
 /* See record.h.  */
@@ -314,23 +314,6 @@ cmd_record_stop (const char *args, int from_tty)
   gdb::observers::record_changed.notify (current_inferior (), 0, NULL, NULL);
 }
 
-/* The "set record" command.  */
-
-static void
-set_record_command (const char *args, int from_tty)
-{
-  printf_unfiltered (_("\"set record\" must be followed "
-		       "by an appropriate subcommand.\n"));
-  help_list (set_record_cmdlist, "set record ", all_commands, gdb_stdout);
-}
-
-/* The "show record" command.  */
-
-static void
-show_record_command (const char *args, int from_tty)
-{
-  cmd_show_list (show_record_cmdlist, from_tty, "");
-}
 
 /* The "info record" command.  */
 
@@ -772,8 +755,9 @@ set_record_call_history_size (const char *args, int from_tty,
 			 &record_call_history_size);
 }
 
+void _initialize_record ();
 void
-_initialize_record (void)
+_initialize_record ()
 {
   struct cmd_list_element *c;
 
@@ -807,16 +791,16 @@ A size of \"unlimited\" means unlimited lines.  The default is 10."),
   set_cmd_completer (c, filename_completer);
 
   add_com_alias ("rec", "record", class_obscure, 1);
-  add_prefix_cmd ("record", class_support, set_record_command,
-		  _("Set record options"), &set_record_cmdlist,
-		  "set record ", 0, &setlist);
+  add_basic_prefix_cmd ("record", class_support,
+			_("Set record options."), &set_record_cmdlist,
+			"set record ", 0, &setlist);
   add_alias_cmd ("rec", "record", class_obscure, 1, &setlist);
-  add_prefix_cmd ("record", class_support, show_record_command,
-		  _("Show record options"), &show_record_cmdlist,
-		  "show record ", 0, &showlist);
+  add_show_prefix_cmd ("record", class_support,
+		       _("Show record options."), &show_record_cmdlist,
+		       "show record ", 0, &showlist);
   add_alias_cmd ("rec", "record", class_obscure, 1, &showlist);
   add_prefix_cmd ("record", class_support, info_record_command,
-		  _("Info record options"), &info_record_cmdlist,
+		  _("Info record options."), &info_record_cmdlist,
 		  "info record ", 0, &infolist);
   add_alias_cmd ("rec", "record", class_obscure, 1, &infolist);
 

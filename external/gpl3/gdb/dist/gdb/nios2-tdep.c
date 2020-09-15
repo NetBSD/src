@@ -1,5 +1,5 @@
 /* Target-machine dependent code for Nios II, for GDB.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Peter Brookes (pbrookes@altera.com)
    and Andrew Draper (adraper@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -24,7 +24,7 @@
 #include "frame-unwind.h"
 #include "frame-base.h"
 #include "trad-frame.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "symtab.h"
 #include "inferior.h"
 #include "gdbtypes.h"
@@ -52,19 +52,21 @@
 
 /* Control debugging information emitted in this file.  */
 
-static int nios2_debug = 0;
+static bool nios2_debug = false;
 
 /* The following structures are used in the cache for prologue
    analysis; see the reg_value and reg_saved tables in
    struct nios2_unwind_cache, respectively.  */
 
-/* struct reg_value is used to record that a register has the same value
-   as reg at the given offset from the start of a function.  */
+/* struct reg_value is used to record that a register has reg's initial
+   value at the start of a function plus the given constant offset.
+   If reg == 0, then the value is just the offset.
+   If reg < 0, then the value is unknown.  */
 
 struct reg_value
 {
   int reg;
-  unsigned int offset;
+  int offset;
 };
 
 /* struct reg_saved is used to record that a register value has been saved at
@@ -1795,16 +1797,6 @@ nios2_return_value (struct gdbarch *gdbarch, struct value *function,
   return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-/* Implement the dummy_id gdbarch method.  */
-
-static struct frame_id
-nios2_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  return frame_id_build
-    (get_frame_register_unsigned (this_frame, NIOS2_SP_REGNUM),
-     get_frame_pc (this_frame));
-}
-
 /* Implement the push_dummy_call gdbarch method.  */
 
 static CORE_ADDR
@@ -1894,14 +1886,6 @@ nios2_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 
   frame_unwind_register (next_frame, NIOS2_PC_REGNUM, buf);
   return extract_typed_address (buf, builtin_type (gdbarch)->builtin_func_ptr);
-}
-
-/* Implement the unwind_sp gdbarch method.  */
-
-static CORE_ADDR
-nios2_unwind_sp (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  return frame_unwind_register_unsigned (this_frame, NIOS2_SP_REGNUM);
 }
 
 /* Use prologue analysis to fill in the register cache
@@ -2169,13 +2153,32 @@ nios2_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 	}
     }
 
-  else if (nios2_match_jmpi (insn, op, mach, &uimm)
-	   || nios2_match_calli (insn, op, mach, &uimm))
+  else if (nios2_match_jmpi (insn, op, mach, &uimm))
     pc = (pc & 0xf0000000) | uimm;
+  else if (nios2_match_calli (insn, op, mach, &uimm))
+    {
+      CORE_ADDR callto = (pc & 0xf0000000) | uimm;
+      if (tdep->is_kernel_helper != NULL
+	  && tdep->is_kernel_helper (callto))
+	/* Step over call to kernel helper, which we cannot debug
+	   from user space.  */
+	pc += op->size;
+      else
+	pc = callto;
+    }
 
-  else if (nios2_match_jmpr (insn, op, mach, &ra)
-	   || nios2_match_callr (insn, op, mach, &ra))
+  else if (nios2_match_jmpr (insn, op, mach, &ra))
     pc = regcache_raw_get_unsigned (regcache, ra);
+  else if (nios2_match_callr (insn, op, mach, &ra))
+    {
+      CORE_ADDR callto = regcache_raw_get_unsigned (regcache, ra);
+      if (tdep->is_kernel_helper != NULL
+	  && tdep->is_kernel_helper (callto))
+	/* Step over call to kernel helper.  */
+	pc += op->size;
+      else
+	pc = callto;
+    }
 
   else if (nios2_match_ldwm (insn, op, mach, &uimm, &ra, &imm, &wb, &id, &ret)
 	   && ret)
@@ -2233,16 +2236,35 @@ nios2_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 static ULONGEST
 nios2_type_align (struct gdbarch *gdbarch, struct type *type)
 {
-  type = check_typedef (type);
-  return std::min<ULONGEST> (4, TYPE_LENGTH (type));
+  switch (type->code ())
+    {
+    case TYPE_CODE_PTR:
+    case TYPE_CODE_FUNC:
+    case TYPE_CODE_FLAGS:
+    case TYPE_CODE_INT:
+    case TYPE_CODE_RANGE:
+    case TYPE_CODE_FLT:
+    case TYPE_CODE_ENUM:
+    case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
+    case TYPE_CODE_CHAR:
+    case TYPE_CODE_BOOL:
+    case TYPE_CODE_DECFLOAT:
+    case TYPE_CODE_METHODPTR:
+    case TYPE_CODE_MEMBERPTR:
+      type = check_typedef (type);
+      return std::min<ULONGEST> (4, TYPE_LENGTH (type));
+    default:
+      return 0;
+    }
 }
 
 /* Implement the gcc_target_options gdbarch method.  */
-static char *
+static std::string
 nios2_gcc_target_options (struct gdbarch *gdbarch)
 {
   /* GCC doesn't know "-m32".  */
-  return NULL;
+  return {};
 }
 
 /* Initialize the Nios II gdbarch.  */
@@ -2337,9 +2359,7 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, nios2_breakpoint_kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, nios2_sw_breakpoint_from_kind);
 
-  set_gdbarch_dummy_id (gdbarch, nios2_dummy_id);
   set_gdbarch_unwind_pc (gdbarch, nios2_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, nios2_unwind_sp);
 
   /* The dwarf2 unwinder will normally produce the best results if
      the debug information is available, so register it first.  */
@@ -2370,8 +2390,9 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_nios2_tdep ();
 void
-_initialize_nios2_tdep (void)
+_initialize_nios2_tdep ()
 {
   gdbarch_register (bfd_arch_nios2, nios2_gdbarch_init, NULL);
   initialize_tdesc_nios2 ();

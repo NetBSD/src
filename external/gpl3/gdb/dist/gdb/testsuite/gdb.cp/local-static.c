@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -145,7 +145,9 @@ free_inline_func (void)
 int
 main ()
 {
-  for (int i = 0; i < 1000; i++)
+  int i;
+
+  for (i = 0; i < 1000; i++)
     {
       free_func ();
       free_inline_func ();

@@ -1,6 +1,6 @@
 /* Support for complaint handling during symbol reading in GDB.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,8 +74,9 @@ complaints_show_value (struct ui_file *file, int from_tty,
 		    value);
 }
 
+void _initialize_complaints ();
 void
-_initialize_complaints (void)
+_initialize_complaints ()
 {
   add_setshow_zinteger_cmd ("complaints", class_support, 
 			    &stop_whining, _("\

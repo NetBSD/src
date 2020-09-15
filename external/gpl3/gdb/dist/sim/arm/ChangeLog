@@ -1,3 +1,29 @@
+2020-08-13  Luis Machado  <luis.machado@linaro.org>
+
+	PR sim/26365
+
+	* wrapper.c (sim_target_parse_command_line): Free discarded argv
+	entries.
+	(sim_open): Use a duplicate of argv instead of the original argv.
+
+2020-01-17  Christian Biesinger  <cbiesinger@google.com>
+
+	* iwmmxt.c: Fix spelling error (seperate).
+
+2019-12-06  Luis Machado  <luis.machado@linaro.org>
+
+	* armemu.c (isize): Move this declaration ...
+	* arminit.c (isize): ... here.
+	* maverick.h: New file.
+	* wrapper.c: Include "maverick.h".
+	(<struct maverick_regs>, <union maverick_acc_regs>): Remove and update
+	comment.
+	(sim_create_inferior): Cast variables to proper type.
+	* maverick.c: Include "maverick.h".
+	(<struct maverick_regs>, <union maverick_acc_regs>): Move
+	declarations to maverick.h and update comment.
+	(DSPsc, DSPacc, DSPregs): Adjust comment.
+
 2018-01-02  Nick Clifton  <nickc@redhat.com>
 
 	PR 22663

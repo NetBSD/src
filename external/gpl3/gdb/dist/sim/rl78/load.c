@@ -1,6 +1,6 @@
 /* load.c --- loading object files into the RL78 simulator.
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -56,7 +56,7 @@ find_section_name_by_offset (bfd *abfd, file_ptr filepos)
 
   for (s = abfd->sections; s; s = s->next)
     if (s->filepos == filepos)
-      return bfd_get_section_name (abfd, s);
+      return bfd_section_name (s);
 
   return "(unknown)";
 }

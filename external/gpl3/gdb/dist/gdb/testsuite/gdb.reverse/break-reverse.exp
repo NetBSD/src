@@ -1,4 +1,4 @@
-#   Copyright 2008-2019 Free Software Foundation, Inc.
+#   Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,9 +50,12 @@ gdb_test "break $end_location" \
     "Breakpoint $decimal at .* line $end_location\." \
     "set breakpoint at end of main"
 
-gdb_continue_to_breakpoint "foo" ".*$srcfile:$foo_location.*"
-gdb_continue_to_breakpoint "bar" ".*$srcfile:$bar_location.*"
-gdb_continue_to_breakpoint "end" ".*$srcfile:$end_location.*"
+gdb_continue_to_breakpoint "foo forward, the first time" \
+    ".*$srcfile:$foo_location.*"
+gdb_continue_to_breakpoint "bar forward, the first time" \
+    ".*$srcfile:$bar_location.*"
+gdb_continue_to_breakpoint "end forward, the first time" \
+    ".*$srcfile:$end_location.*"
 
 gdb_test_no_output "set exec-direction reverse" "set reverse"
 
@@ -70,8 +73,10 @@ gdb_test_multiple "continue" "main backward" {
 
 gdb_test_no_output "set exec-direction forward" "set forward"
 
-gdb_continue_to_breakpoint "foo" ".*$srcfile:$foo_location.*"
-gdb_continue_to_breakpoint "bar" ".*$srcfile:$bar_location.*"
+gdb_continue_to_breakpoint "foo forward again" \
+    ".*$srcfile:$foo_location.*"
+gdb_continue_to_breakpoint "bar forward again" \
+    ".*$srcfile:$bar_location.*"
 
 gdb_test_multiple "continue" "end of record log" {
     -re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $" {

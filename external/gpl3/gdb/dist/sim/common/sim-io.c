@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -32,6 +32,8 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include <stdlib.h>
 
 /* Define the rate at which the simulator should poll the host
    for a quit. */

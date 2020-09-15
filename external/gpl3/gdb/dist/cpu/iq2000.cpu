@@ -207,7 +207,7 @@
 (df  f-offset "pc offset field"                (PCREL-ADDR) 15 16 INT
      ; Actually, this is relative to the address of the delay slot.
      ((value pc) (sra SI (sub SI value pc) 2))
-     ((value pc) (add SI (sll SI value 2) (add pc 4))))
+     ((value pc) (add SI (mul SI value 4) (add pc 4))))
 
 ; Instruction fields that scarcely appear in instructions.
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 #include "sparc64-tdep.h"
 #include "fbsd-tdep.h"
 #include "solib-svr4.h"
+#include "gdbarch.h"
 
 /* From <machine/reg.h>.  */
 const struct sparc_gregmap sparc64fbsd_gregmap =
@@ -241,8 +242,9 @@ sparc64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
 }
 
+void _initialize_sparc64fbsd_tdep ();
 void
-_initialize_sparc64fbsd_tdep (void)
+_initialize_sparc64fbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_FREEBSD, sparc64fbsd_init_abi);

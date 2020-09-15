@@ -1,6 +1,6 @@
 /* Public partial symbol table definitions.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,13 +22,10 @@
 
 #include "gdb_obstack.h"
 #include "symfile.h"
-#include "common/next-iterator.h"
+#include "gdbsupport/next-iterator.h"
+#include "bcache.h"
 
 struct partial_symbol;
-
-/* A bcache for partial symbols.  */
-
-struct psymbol_bcache;
 
 /* An instance of this class manages the partial symbol tables and
    partial symbols for a given objfile.
@@ -39,7 +36,9 @@ struct psymbol_bcache;
    other memory managed by this class), or on the per-BFD object.  The
    only link from the psymtab storage object back to the objfile (or
    objfile_obstack) that is made by the core psymtab code is the
-   compunit_symtab member in the psymtab.
+   compunit_symtab member in the standard_psymtab -- and a given
+   symbol reader can avoid this by implementing its own subclasses of
+   partial_symtab.
 
    However, it is up to each symbol reader to maintain this invariant
    in other ways, if it wants to reuse psymtabs across multiple
@@ -86,11 +85,10 @@ public:
     return OBSTACK_CALLOC (obstack (), number, struct partial_symtab *);
   }
 
-  /* Allocate a new psymtab on the psymtab obstack.  The new psymtab
-     will be linked in to the "psymtabs" list, but otherwise all other
-     fields will be zero.  */
+  /* Install a psymtab on the psymtab list.  This transfers ownership
+     of PST to this object.  */
 
-  struct partial_symtab *allocate_psymtab ();
+  void install_psymtab (partial_symtab *pst);
 
   typedef next_adapter<struct partial_symtab> partial_symtab_range;
 
@@ -112,14 +110,18 @@ public:
   /* Map addresses to the entries of PSYMTABS.  It would be more efficient to
      have a map per the whole process but ADDRMAP cannot selectively remove
      its items during FREE_OBJFILE.  This mapping is already present even for
-     PARTIAL_SYMTABs which still have no corresponding full SYMTABs read.  */
+     PARTIAL_SYMTABs which still have no corresponding full SYMTABs read.
+
+     The DWARF parser reuses this addrmap to store things other than
+     psymtabs in the cases where debug information is being read from, for
+     example, the .debug-names section.  */
 
   struct addrmap *psymtabs_addrmap = nullptr;
 
   /* A byte cache where we can stash arbitrary "chunks" of bytes that
      will not change.  */
 
-  struct psymbol_bcache *psymbol_cache;
+  gdb::bcache psymbol_cache;
 
   /* Vectors of all partial symbols read in from file.  The actual data
      is stored in the objfile_obstack.  */
@@ -127,11 +129,13 @@ public:
   std::vector<partial_symbol *> global_psymbols;
   std::vector<partial_symbol *> static_psymbols;
 
+  /* Stack of vectors of partial symbols, using during psymtab
+     initialization.  */
+
+  std::vector<std::vector<partial_symbol *>*> current_global_psymbols;
+  std::vector<std::vector<partial_symbol *>*> current_static_psymbols;
+
 private:
-
-  /* List of freed partial symtabs, available for re-use.  */
-
-  struct partial_symtab *free_psymtabs = nullptr;
 
   /* The obstack where allocations are made.  This is lazily allocated
      so that we don't waste memory when there are no psymtabs.  */
@@ -140,21 +144,17 @@ private:
 };
 
 
-extern struct psymbol_bcache *psymbol_bcache_init (void);
-extern void psymbol_bcache_free (struct psymbol_bcache *);
-extern struct bcache *psymbol_bcache_get_bcache (struct psymbol_bcache *);
-
 extern const struct quick_symbol_functions psym_functions;
 
 extern const struct quick_symbol_functions dwarf2_gdb_index_functions;
 extern const struct quick_symbol_functions dwarf2_debug_names_functions;
 
 /* Ensure that the partial symbols for OBJFILE have been loaded.  If
-   VERBOSE is non-zero, then this will print a message when symbols
+   VERBOSE is true, then this will print a message when symbols
    are loaded.  This function returns a range adapter suitable for
    iterating over the psymtabs of OBJFILE.  */
 
 extern psymtab_storage::partial_symtab_range require_partial_symbols
-    (struct objfile *objfile, int verbose);
+    (struct objfile *objfile, bool verbose);
 
 #endif /* PSYMTAB_H */

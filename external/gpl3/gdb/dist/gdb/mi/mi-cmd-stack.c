@@ -1,5 +1,5 @@
 /* MI Command Set - stack commands.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -34,12 +34,13 @@
 #include "extension.h"
 #include <ctype.h>
 #include "mi-parse.h"
-#include "common/gdb_optional.h"
+#include "gdbsupport/gdb_optional.h"
 #include "safe-ctype.h"
 
 enum what_to_list { locals, arguments, all };
 
-static void list_args_or_locals (enum what_to_list what,
+static void list_args_or_locals (const frame_print_options &fp_opts,
+				 enum what_to_list what,
 				 enum print_values values,
 				 struct frame_info *fi,
 				 int skip_unavailable);
@@ -175,7 +176,8 @@ mi_cmd_stack_list_frames (const char *command, char **argv, int argc)
 	  QUIT;
 	  /* Print the location and the address always, even for level 0.
 	     If args is 0, don't print the arguments.  */
-	  print_frame_info (fi, 1, LOC_AND_ADDRESS, 0 /* args */, 0);
+	  print_frame_info (user_frame_print_options,
+			    fi, 1, LOC_AND_ADDRESS, 0 /* args */, 0);
 	}
     }
 }
@@ -202,7 +204,7 @@ mi_cmd_stack_info_depth (const char *command, char **argv, int argc)
        i++, fi = get_prev_frame (fi))
     QUIT;
 
-  current_uiout->field_int ("depth", i);
+  current_uiout->field_signed ("depth", i);
 }
 
 /* Print a list of the locals for the current frame.  With argument of
@@ -275,7 +277,8 @@ mi_cmd_stack_list_locals (const char *command, char **argv, int argc)
       if "--no-frame-filters" has been specified from the command.  */
    if (! frame_filters || raw_arg  || result == EXT_LANG_BT_NO_FILTERS)
      {
-       list_args_or_locals (locals, print_value, frame,
+       list_args_or_locals (user_frame_print_options,
+			    locals, print_value, frame,
 			    skip_unavailable);
      }
 }
@@ -388,8 +391,9 @@ mi_cmd_stack_list_args (const char *command, char **argv, int argc)
 	{
 	  QUIT;
 	  ui_out_emit_tuple tuple_emitter (uiout, "frame");
-	  uiout->field_int ("level", i);
-	  list_args_or_locals (arguments, print_values, fi, skip_unavailable);
+	  uiout->field_signed ("level", i);
+	  list_args_or_locals (user_frame_print_options,
+			       arguments, print_values, fi, skip_unavailable);
 	}
     }
 }
@@ -465,7 +469,8 @@ mi_cmd_stack_list_variables (const char *command, char **argv, int argc)
       if "--no-frame-filters" has been specified from the command.  */
    if (! frame_filters || raw_arg  || result == EXT_LANG_BT_NO_FILTERS)
      {
-       list_args_or_locals (all, print_value, frame,
+       list_args_or_locals (user_frame_print_options,
+			    all, print_value, frame,
 			    skip_unavailable);
      }
 }
@@ -510,13 +515,13 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 
   string_file stb;
 
-  stb.puts (SYMBOL_PRINT_NAME (arg->sym));
+  stb.puts (arg->sym->print_name ());
   if (arg->entry_kind == print_entry_values_only)
     stb.puts ("@entry");
   uiout->field_stream ("name", stb);
 
   if (what == all && SYMBOL_IS_ARGUMENT (arg->sym))
-    uiout->field_int ("arg", 1);
+    uiout->field_signed ("arg", 1);
 
   if (values == PRINT_SIMPLE_VALUES)
     {
@@ -527,29 +532,25 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 
   if (arg->val || arg->error)
     {
-      const char *error_message = NULL;
-
       if (arg->error)
-	error_message = arg->error;
+	stb.printf (_("<error reading variable: %s>"), arg->error.get ());
       else
 	{
-	  TRY
+	  try
 	    {
 	      struct value_print_options opts;
 
 	      get_no_prettyformat_print_options (&opts);
 	      opts.deref_ref = 1;
 	      common_val_print (arg->val, &stb, 0, &opts,
-				language_def (SYMBOL_LANGUAGE (arg->sym)));
+				language_def (arg->sym->language ()));
 	    }
-	  CATCH (except, RETURN_MASK_ERROR)
+	  catch (const gdb_exception_error &except)
 	    {
-	      error_message = except.message;
+	      stb.printf (_("<error reading variable: %s>"),
+			  except.what ());
 	    }
-	  END_CATCH
 	}
-      if (error_message != NULL)
-	stb.printf (_("<error reading variable: %s>"), error_message);
       uiout->field_stream ("value", stb);
     }
 }
@@ -561,7 +562,8 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
    are available.  */
 
 static void
-list_args_or_locals (enum what_to_list what, enum print_values values,
+list_args_or_locals (const frame_print_options &fp_opts,
+		     enum what_to_list what, enum print_values values,
 		     struct frame_info *fi, int skip_unavailable)
 {
   const struct block *block;
@@ -632,17 +634,14 @@ list_args_or_locals (enum what_to_list what, enum print_values values,
 	      struct frame_arg arg, entryarg;
 
 	      if (SYMBOL_IS_ARGUMENT (sym))
-		sym2 = lookup_symbol (SYMBOL_LINKAGE_NAME (sym),
-				      block, VAR_DOMAIN,
-				      NULL).symbol;
+		sym2 = lookup_symbol_search_name (sym->search_name (),
+						  block, VAR_DOMAIN).symbol;
 	      else
 		sym2 = sym;
 	      gdb_assert (sym2 != NULL);
 
-	      memset (&arg, 0, sizeof (arg));
 	      arg.sym = sym2;
 	      arg.entry_kind = print_entry_values_no;
-	      memset (&entryarg, 0, sizeof (entryarg));
 	      entryarg.sym = sym2;
 	      entryarg.entry_kind = print_entry_values_no;
 
@@ -650,13 +649,13 @@ list_args_or_locals (enum what_to_list what, enum print_values values,
 		{
 		case PRINT_SIMPLE_VALUES:
 		  type = check_typedef (sym2->type);
-		  if (TYPE_CODE (type) != TYPE_CODE_ARRAY
-		      && TYPE_CODE (type) != TYPE_CODE_STRUCT
-		      && TYPE_CODE (type) != TYPE_CODE_UNION)
+		  if (type->code () != TYPE_CODE_ARRAY
+		      && type->code () != TYPE_CODE_STRUCT
+		      && type->code () != TYPE_CODE_UNION)
 		    {
 		case PRINT_ALL_VALUES:
 		  if (SYMBOL_IS_ARGUMENT (sym))
-		    read_frame_arg (sym2, fi, &arg, &entryarg);
+		    read_frame_arg (fp_opts, sym2, fi, &arg, &entryarg);
 		  else
 		    read_frame_local (sym2, fi, &arg);
 		    }
@@ -667,8 +666,6 @@ list_args_or_locals (enum what_to_list what, enum print_values values,
 		list_arg_or_local (&arg, what, values, skip_unavailable);
 	      if (entryarg.entry_kind != print_entry_values_no)
 		list_arg_or_local (&entryarg, what, values, skip_unavailable);
-	      xfree (arg.error);
-	      xfree (entryarg.error);
 	    }
 	}
 
@@ -768,5 +765,6 @@ mi_cmd_stack_info_frame (const char *command, char **argv, int argc)
   if (argc > 0)
     error (_("-stack-info-frame: No arguments allowed"));
 
-  print_frame_info (get_selected_frame (NULL), 1, LOC_AND_ADDRESS, 0, 1);
+  print_frame_info (user_frame_print_options,
+		    get_selected_frame (NULL), 1, LOC_AND_ADDRESS, 0, 1);
 }

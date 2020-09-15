@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ proc switch_to_inferior { num message } {
 }
 
 proc add_inferior { expected_num message } {
-    gdb_test "add-inferior" "Added inferior ${expected_num}" "${message}"
+    gdb_test "add-inferior" "Added inferior ${expected_num}( on connection .*)?" "${message}"
 }
 
 proc test_remove_inferiors { } {
@@ -49,8 +49,9 @@ proc test_remove_inferiors { } {
     # Load binfile and start the inferior.
     set binfile_re [string_to_regexp ${binfile}]
     gdb_test "file ${binfile}" \
-	     "Reading symbols from ${binfile_re}..." \
-	     "load binary"
+	[multi_line "Reading symbols from ${binfile_re}\.\.\.(" \
+	     "Expanding full symbols from ${binfile_re}\.\.\.)?" ] \
+	"load binary"
 
     if {![runto_main]} {
 	fail "couldn't run to main."

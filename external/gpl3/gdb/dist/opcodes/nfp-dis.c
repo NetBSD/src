@@ -1,5 +1,5 @@
 /* Print NFP instructions for objdump.
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of the GNU opcodes library.
@@ -2958,7 +2958,7 @@ print_insn_nfp (bfd_vma addr, struct disassemble_info *dinfo)
 
   err = _print_instrs (addr, dinfo, &opts);
 
-end:
+ end:
   if (err != 8)
     dinfo->fprintf_func (dinfo->stream, "\t # ERROR");
   if (err == _NFP_ERR_CONT)

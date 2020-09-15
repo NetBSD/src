@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -930,6 +930,8 @@ print_idecode_issue_function_header (lf *file,
 					"INLINE_IDECODE", "\n");
       break;
     case is_function_variable:
+      if (lf_get_file_type (file) == lf_is_h)
+	lf_printf (file, "extern ");
       print_semantic_function_type (file);
       lf_printf (file, " (*");
       break;

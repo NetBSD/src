@@ -1,5 +1,5 @@
 /* ELF attributes support (based on ARM EABI attributes).
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -436,11 +436,14 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
   bfd_byte *p_end;
   bfd_vma len;
   const char *std_sec;
+  ufile_ptr filesize;
 
   /* PR 17512: file: 2844a11d.  */
   if (hdr->sh_size == 0)
     return;
-  if (hdr->sh_size > bfd_get_file_size (abfd))
+
+  filesize = bfd_get_file_size (abfd);
+  if (filesize != 0 && hdr->sh_size > filesize)
     {
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: error: attribute section '%pA' too big: %#llx"),

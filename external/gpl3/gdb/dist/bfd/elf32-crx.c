@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -506,25 +506,18 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
      as signed or unsigned.  */
   check = Rvalue >> howto->rightshift;
 
-  /* Assumes two's complement.  This expression avoids
-     overflow if howto->bitsize is the number of bits in
-     bfd_vma.  */
-  reloc_bits = (((1 << (howto->bitsize - 1)) - 1) << 1) | 1;
+  reloc_bits = ((bfd_vma) 1 << (howto->bitsize - 1) << 1) - 1;
 
-  if (((bfd_vma) check & ~reloc_bits) != 0
-      && (((bfd_vma) check & ~reloc_bits)
-	  != (-(bfd_vma) 1 & ~reloc_bits)))
+  if ((check & ~reloc_bits) != 0
+      && (check & ~reloc_bits) != ((bfd_vma) -1 & ~reloc_bits))
     {
       /* The above right shift is incorrect for a signed
 	 value.  See if turning on the upper bits fixes the
 	 overflow.  */
       if (howto->rightshift && (bfd_signed_vma) Rvalue < 0)
 	{
-	  check |= ((bfd_vma) - 1
-		    & ~((bfd_vma) - 1
-			>> howto->rightshift));
-	  if (((bfd_vma) check & ~reloc_bits)
-	      != (-(bfd_vma) 1 & ~reloc_bits))
+	  check |= (bfd_vma) -1 & ~((bfd_vma) -1 >> howto->rightshift);
+	  if ((check & ~reloc_bits) != ((bfd_vma) -1 & ~reloc_bits))
 	    return bfd_reloc_overflow;
 	}
       else
@@ -532,7 +525,7 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
     }
 
   /* Drop unwanted bits from the value we are relocating to.  */
-  Rvalue >>= (bfd_vma) howto->rightshift;
+  Rvalue >>= howto->rightshift;
 
   /* Apply dst_mask to select only relocatable part of the insn.  */
   Rvalue &= howto->dst_mask;
@@ -805,10 +798,8 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
 				     isymbuf, sections))
 	goto error_return;
 
-      if (sections != NULL)
-	free (sections);
-      if (isymbuf != NULL
-	  && symtab_hdr->contents != (unsigned char *) isymbuf)
+      free (sections);
+      if (symtab_hdr->contents != (unsigned char *) isymbuf)
 	free (isymbuf);
       if (elf_section_data (input_section)->relocs != internal_relocs)
 	free (internal_relocs);
@@ -817,13 +808,10 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (sections != NULL)
-    free (sections);
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  free (sections);
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (input_section)->relocs != internal_relocs)
+  if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
   return NULL;
 }
@@ -905,7 +893,7 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -1289,21 +1277,17 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return FALSE;

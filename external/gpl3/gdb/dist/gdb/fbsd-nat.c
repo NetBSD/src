@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,14 +18,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/byte-vector.h"
+#include "gdbsupport/byte-vector.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "regset.h"
+#include "gdbarch.h"
 #include "gdbcmd.h"
 #include "gdbthread.h"
-#include "common/gdb_wait.h"
+#include "gdbsupport/gdb_wait.h"
 #include "inf-ptrace.h"
 #include <sys/types.h>
 #include <sys/procfs.h>
@@ -37,7 +38,7 @@
 #include <libutil.h>
 #endif
 #if !defined(HAVE_KINFO_GETVMMAP)
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 #endif
 
 #include "elf-bfd.h"
@@ -85,12 +86,12 @@ fbsd_nat_target::pid_to_exec_file (int pid)
 
 #ifdef HAVE_KINFO_GETVMMAP
 /* Iterate over all the memory regions in the current inferior,
-   calling FUNC for each memory region.  OBFD is passed as the last
+   calling FUNC for each memory region.  DATA is passed as the last
    argument to FUNC.  */
 
 int
 fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
-				      void *obfd)
+				      void *data)
 {
   pid_t pid = inferior_ptid.pid ();
   struct kinfo_vmentry *kve;
@@ -132,7 +133,7 @@ fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 	 Pass MODIFIED as true, we do not know the real modification state.  */
       func (kve->kve_start, size, kve->kve_protection & KVME_PROT_READ,
 	    kve->kve_protection & KVME_PROT_WRITE,
-	    kve->kve_protection & KVME_PROT_EXEC, 1, obfd);
+	    kve->kve_protection & KVME_PROT_EXEC, 1, data);
     }
   return 0;
 }
@@ -159,12 +160,12 @@ fbsd_read_mapping (FILE *mapfile, unsigned long *start, unsigned long *end,
 }
 
 /* Iterate over all the memory regions in the current inferior,
-   calling FUNC for each memory region.  OBFD is passed as the last
+   calling FUNC for each memory region.  DATA is passed as the last
    argument to FUNC.  */
 
 int
 fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
-				      void *obfd)
+				      void *data)
 {
   pid_t pid = inferior_ptid.pid ();
   unsigned long start, end, size;
@@ -201,7 +202,7 @@ fbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 
       /* Invoke the callback function to create the corefile segment.
 	 Pass MODIFIED as true, we do not know the real modification state.  */
-      func (start, size, read, write, exec, 1, obfd);
+      func (start, size, read, write, exec, 1, data);
     }
 
   return 0;
@@ -831,8 +832,8 @@ fbsd_nat_target::xfer_partial (enum target_object object,
 }
 
 #ifdef PT_LWPINFO
-static int debug_fbsd_lwp;
-static int debug_fbsd_nat;
+static bool debug_fbsd_lwp;
+static bool debug_fbsd_nat;
 
 static void
 show_fbsd_lwp_debug (struct ui_file *file, int from_tty,
@@ -897,10 +898,9 @@ fbsd_nat_target::thread_alive (ptid_t ptid)
   return true;
 }
 
-/* Convert PTID to a string.  Returns the string in a static
-   buffer.  */
+/* Convert PTID to a string.  */
 
-const char *
+std::string
 fbsd_nat_target::pid_to_str (ptid_t ptid)
 {
   lwpid_t lwp;
@@ -908,11 +908,9 @@ fbsd_nat_target::pid_to_str (ptid_t ptid)
   lwp = ptid.lwp ();
   if (lwp != 0)
     {
-      static char buf[64];
       int pid = ptid.pid ();
 
-      xsnprintf (buf, sizeof buf, "LWP %d of process %d", lwp, pid);
-      return buf;
+      return string_printf ("LWP %d of process %d", lwp, pid);
     }
 
   return normal_pid_to_str (ptid);
@@ -993,11 +991,11 @@ fbsd_enable_proc_events (pid_t pid)
    called to discover new threads each time the thread list is updated.  */
 
 static void
-fbsd_add_threads (pid_t pid)
+fbsd_add_threads (fbsd_nat_target *target, pid_t pid)
 {
   int i, nlwps;
 
-  gdb_assert (!in_thread_list (ptid_t (pid)));
+  gdb_assert (!in_thread_list (target, ptid_t (pid)));
   nlwps = ptrace (PT_GETNUMLWPS, pid, NULL, 0);
   if (nlwps == -1)
     perror_with_name (("ptrace"));
@@ -1012,7 +1010,7 @@ fbsd_add_threads (pid_t pid)
     {
       ptid_t ptid = ptid_t (pid, lwps[i], 0);
 
-      if (!in_thread_list (ptid))
+      if (!in_thread_list (target, ptid))
 	{
 #ifdef PT_LWP_EVENTS
 	  struct ptrace_lwpinfo pl;
@@ -1028,7 +1026,7 @@ fbsd_add_threads (pid_t pid)
 	    fprintf_unfiltered (gdb_stdlog,
 				"FLWP: adding thread for LWP %u\n",
 				lwps[i]);
-	  add_thread (ptid);
+	  add_thread (target, ptid);
 	}
     }
 }
@@ -1045,7 +1043,7 @@ fbsd_nat_target::update_thread_list ()
 #else
   prune_threads ();
 
-  fbsd_add_threads (inferior_ptid.pid ());
+  fbsd_add_threads (this, inferior_ptid.pid ());
 #endif
 }
 
@@ -1176,7 +1174,7 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
   if (ptid.lwp_p ())
     {
       /* If ptid is a specific LWP, suspend all other LWPs in the process.  */
-      inferior *inf = find_inferior_ptid (ptid);
+      inferior *inf = find_inferior_ptid (this, ptid);
 
       for (thread_info *tp : inf->non_exited_threads ())
         {
@@ -1195,7 +1193,7 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
     {
       /* If ptid is a wildcard, resume all matching threads (they won't run
 	 until the process is continued however).  */
-      for (thread_info *tp : all_non_exited_threads (ptid))
+      for (thread_info *tp : all_non_exited_threads (this, ptid))
 	if (ptrace (PT_RESUME, tp->ptid.lwp (), NULL, 0) == -1)
 	  perror_with_name (("ptrace"));
       ptid = inferior_ptid;
@@ -1241,7 +1239,8 @@ fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
    core, return true.  */
 
 static bool
-fbsd_handle_debug_trap (ptid_t ptid, const struct ptrace_lwpinfo &pl)
+fbsd_handle_debug_trap (fbsd_nat_target *target, ptid_t ptid,
+			const struct ptrace_lwpinfo &pl)
 {
 
   /* Ignore traps without valid siginfo or for signals other than
@@ -1268,7 +1267,7 @@ fbsd_handle_debug_trap (ptid_t ptid, const struct ptrace_lwpinfo &pl)
   if (pl.pl_siginfo.si_code == TRAP_BRKPT)
     {
       /* Fixup PC for the software breakpoint.  */
-      struct regcache *regcache = get_thread_regcache (ptid);
+      struct regcache *regcache = get_thread_regcache (target, ptid);
       struct gdbarch *gdbarch = regcache->arch ();
       int decr_pc = gdbarch_decr_pc_after_break (gdbarch);
 
@@ -1342,7 +1341,7 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		 threads might be skipped during post_attach that
 		 have not yet reported their PL_FLAG_EXITED event.
 		 Ignore EXITED events for an unknown LWP.  */
-	      thread_info *thr = find_thread_ptid (wptid);
+	      thread_info *thr = find_thread_ptid (this, wptid);
 	      if (thr != nullptr)
 		{
 		  if (debug_fbsd_lwp)
@@ -1350,8 +1349,8 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 					"FLWP: deleting thread for LWP %u\n",
 					pl.pl_lwpid);
 		  if (print_thread_events)
-		    printf_unfiltered (_("[%s exited]\n"), target_pid_to_str
-				       (wptid));
+		    printf_unfiltered (_("[%s exited]\n"),
+				       target_pid_to_str (wptid).c_str ());
 		  delete_thread (thr);
 		}
 	      if (ptrace (PT_CONTINUE, pid, (caddr_t) 1, 0) == -1)
@@ -1366,13 +1365,13 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	     PL_FLAG_BORN in case the first stop reported after
 	     attaching to an existing process is a PL_FLAG_BORN
 	     event.  */
-	  if (in_thread_list (ptid_t (pid)))
+	  if (in_thread_list (this, ptid_t (pid)))
 	    {
 	      if (debug_fbsd_lwp)
 		fprintf_unfiltered (gdb_stdlog,
 				    "FLWP: using LWP %u for first thread\n",
 				    pl.pl_lwpid);
-	      thread_change_ptid (ptid_t (pid), wptid);
+	      thread_change_ptid (this, ptid_t (pid), wptid);
 	    }
 
 #ifdef PT_LWP_EVENTS
@@ -1382,13 +1381,13 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		 threads might be added by fbsd_add_threads that have
 		 not yet reported their PL_FLAG_BORN event.  Ignore
 		 BORN events for an already-known LWP.  */
-	      if (!in_thread_list (wptid))
+	      if (!in_thread_list (this, wptid))
 		{
 		  if (debug_fbsd_lwp)
 		    fprintf_unfiltered (gdb_stdlog,
 					"FLWP: adding thread for LWP %u\n",
 					pl.pl_lwpid);
-		  add_thread (wptid);
+		  add_thread (this, wptid);
 		}
 	      ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
 	      return wptid;
@@ -1476,7 +1475,7 @@ fbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 #endif
 
 #ifdef USE_SIGTRAP_SIGINFO
-	  if (fbsd_handle_debug_trap (wptid, pl))
+	  if (fbsd_handle_debug_trap (this, wptid, pl))
 	    return wptid;
 #endif
 
@@ -1549,8 +1548,8 @@ fbsd_nat_target::supports_stopped_by_sw_breakpoint ()
 /* Target hook for follow_fork.  On entry and at return inferior_ptid is
    the ptid of the followed inferior.  */
 
-int
-fbsd_nat_target::follow_fork (int follow_child, int detach_fork)
+bool
+fbsd_nat_target::follow_fork (bool follow_child, bool detach_fork)
 {
   if (!follow_child && detach_fork)
     {
@@ -1593,7 +1592,7 @@ fbsd_nat_target::follow_fork (int follow_child, int detach_fork)
 #endif
     }
 
-  return 0;
+  return false;
 }
 
 int
@@ -1635,7 +1634,7 @@ void
 fbsd_nat_target::post_attach (int pid)
 {
   fbsd_enable_proc_events (pid);
-  fbsd_add_threads (pid);
+  fbsd_add_threads (this, pid);
 }
 
 #ifdef PL_FLAG_EXEC
@@ -1670,8 +1669,15 @@ fbsd_nat_target::set_syscall_catchpoint (int pid, bool needed,
 #endif
 #endif
 
+bool
+fbsd_nat_target::supports_multi_process ()
+{
+  return true;
+}
+
+void _initialize_fbsd_nat ();
 void
-_initialize_fbsd_nat (void)
+_initialize_fbsd_nat ()
 {
 #ifdef PT_LWPINFO
   add_setshow_boolean_cmd ("fbsd-lwp", class_maintenance,

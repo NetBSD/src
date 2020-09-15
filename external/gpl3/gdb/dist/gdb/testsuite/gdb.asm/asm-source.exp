@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,11 +127,6 @@ switch -glob -- [istarget] {
         set asm-arch sparc64
         set asm-flags "-xarch=v9 -I${srcdir}/${subdir} $obj_include"
 	set debug-flags "-gdwarf-2"
-    }
-    "spu*-*-*" {
-       set asm-arch spu
-       set asm-flags "-I${srcdir}/${subdir} $obj_include --no-warn"
-       set debug-flags "-gdwarf-2"
     }
     "xstormy16-*-*" {
         set asm-arch xstormy16
@@ -426,8 +421,7 @@ gdb_test_multiple "info sources" "info sources" {
 
 # Try 'info line'
 gdb_test "info line" \
-	"Line $line_call_foo3_again of.*asmsrc2.s.*starts at.*<\\.?foo2+.*> and ends at.*<\\.?foo2+.*>." \
-	"info line"
+	"Line $line_call_foo3_again of.*asmsrc2.s.*starts at.*<\\.?foo2+.*> and ends at.*<\\.?foo2+.*>."
 
 # Try 'nexting' over next call to foo3
 gdb_test "next" "$line_foo2_leave\[ \t\]+gdbasm_leave" "next over foo3"

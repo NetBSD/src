@@ -1,5 +1,5 @@
 /* Freescale S12Z-specific support for 32-bit ELF
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -27,6 +27,9 @@
 
 #include "elf/s12z.h"
 
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
+
 /* Relocation functions.  */
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
@@ -43,7 +46,8 @@ opru18_reloc (bfd *abfd, arelent *reloc_entry, struct bfd_symbol *symbol,
      is shifted one place to the left of where it would normally be.  See
      Appendix A.4 of the S12Z reference manual.  */
 
-  bfd_size_type octets = reloc_entry->address * bfd_octets_per_byte (abfd);
+  bfd_size_type octets = (reloc_entry->address
+			  * OCTETS_PER_BYTE (abfd, input_section));
   bfd_vma result = bfd_get_24 (abfd, (unsigned char *) data + octets);
   bfd_vma val = bfd_asymbol_value (symbol);
 
@@ -317,7 +321,5 @@ s12z_elf_set_mach_from_flags (bfd *abfd)
 #define elf_info_to_howto			NULL
 #define elf_info_to_howto_rel			s12z_info_to_howto_rel
 #define elf_backend_object_p			s12z_elf_set_mach_from_flags
-#define elf_backend_final_write_processing	NULL
-#define elf_backend_can_gc_sections		1
 
 #include "elf32-target.h"

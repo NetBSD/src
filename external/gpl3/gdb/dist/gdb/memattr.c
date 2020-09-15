@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,10 +25,10 @@
 #include "target-dcache.h"
 #include "value.h"
 #include "language.h"
-#include "common/vec.h"
 #include "breakpoint.h"
 #include "cli/cli-utils.h"
 #include <algorithm>
+#include "gdbarch.h"
 
 static std::vector<mem_region> user_mem_region_list, target_mem_region_list;
 static std::vector<mem_region> *mem_region_list = &target_mem_region_list;
@@ -52,7 +52,7 @@ static bool target_mem_regions_valid;
 /* If this flag is set, gdb will assume that memory ranges not
    specified by the memory map have type MEM_NONE, and will
    emit errors on all accesses to that memory.  */
-static int inaccessible_by_default = 1;
+static bool inaccessible_by_default = true;
 
 static void
 show_inaccessible_by_default (struct ui_file *file, int from_tty,
@@ -133,7 +133,7 @@ create_user_mem_region (CORE_ADDR lo, CORE_ADDR hi,
   int ix = std::distance (user_mem_region_list.begin (), it);
 
   /* Check for an overlapping memory region.  We only need to check
-     in the vicinity - at most one before and one after the
+     in the vincinity - at most one before and one after the
      insertion point.  */
   for (int i = ix - 1; i < ix + 1; i++)
     {
@@ -459,8 +459,6 @@ info_mem_command (const char *args, int from_tty)
 #endif
 
       printf_filtered ("\n");
-
-      gdb_flush (gdb_stdout);
     }
 }
 
@@ -588,20 +586,16 @@ delete_mem_command (const char *args, int from_tty)
   dont_repeat ();
 }
 
-static void
-dummy_cmd (const char *args, int from_tty)
-{
-}
-
 static struct cmd_list_element *mem_set_cmdlist;
 static struct cmd_list_element *mem_show_cmdlist;
 
+void _initialize_mem ();
 void
-_initialize_mem (void)
+_initialize_mem ()
 {
   add_com ("mem", class_vars, mem_command, _("\
-Define attributes for memory region or reset memory region handling to\n\
-target-based.\n\
+Define attributes for memory region or reset memory region handling to "
+"target-based.\n\
 Usage: mem auto\n\
        mem LOW HIGH [MODE WIDTH CACHE],\n\
 where MODE  may be rw (read/write), ro (read-only) or wo (write-only),\n\
@@ -627,16 +621,16 @@ Usage: delete mem [ID]...\n\
 Do \"info mem\" to see current list of IDs."), &deletelist);
 
   add_info ("mem", info_mem_command,
-	    _("Memory region attributes"));
+	    _("Memory region attributes."));
 
-  add_prefix_cmd ("mem", class_vars, dummy_cmd, _("\
-Memory regions settings"),
-		  &mem_set_cmdlist, "set mem ",
-		  0/* allow-unknown */, &setlist);
-  add_prefix_cmd ("mem", class_vars, dummy_cmd, _("\
-Memory regions settings"),
-		  &mem_show_cmdlist, "show mem  ",
-		  0/* allow-unknown */, &showlist);
+  add_basic_prefix_cmd ("mem", class_vars, _("\
+Memory regions settings."),
+			&mem_set_cmdlist, "set mem ",
+			0/* allow-unknown */, &setlist);
+  add_show_prefix_cmd ("mem", class_vars, _("\
+Memory regions settings."),
+		       &mem_show_cmdlist, "show mem  ",
+		       0/* allow-unknown */, &showlist);
 
   add_setshow_boolean_cmd ("inaccessible-by-default", no_class,
 				  &inaccessible_by_default, _("\

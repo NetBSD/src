@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
 
 #include "defs.h"
 #include "gdb_regex.h"
-#include "common/def-vector.h"
+#include "gdbsupport/def-vector.h"
 
 compiled_regex::compiled_regex (const char *regex, int cflags,
 				const char *message)

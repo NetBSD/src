@@ -3,10 +3,10 @@
 
 #include "ovlymgr.h"
 
-extern int foo PARAMS((int));
-extern int bar PARAMS((int));
-extern int baz PARAMS((int));
-extern int grbx PARAMS((int));
+extern int foo (int);
+extern int bar (int);
+extern int baz (int);
+extern int grbx (int);
 
 int main ()
 {

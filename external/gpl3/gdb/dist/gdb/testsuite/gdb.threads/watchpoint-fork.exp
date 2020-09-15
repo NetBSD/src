@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,11 @@
 
 set testfile watchpoint-fork
 
+# Set DEBUG to 0 or 1 in sources
+set debug 0
+
 proc test {type symbol} {
+    global debug
     with_test_prefix "$type" {
 	global testfile subdir srcdir gdb_prompt
 
@@ -30,7 +34,8 @@ proc test {type symbol} {
 	    set srcfile_main ${testfile}-st.c
 	    if {[build_executable $testfile.exp $executable \
 		     [list $srcfile_main ${testfile}-${type}.c] \
-		     [list debug additional_flags=-D$symbol]] == -1} {
+		     [list debug additional_flags=-D$symbol \
+			  additional_flags=-DDEBUG=$debug]] == -1} {
 		return -1
 	    }
 
@@ -39,6 +44,12 @@ proc test {type symbol} {
 	    if [target_info exists gdb,no_hardware_watchpoints] {
 		# The software watchpoint functionality is in GDB an unrelated test.
 		gdb_test_no_output "set can-use-hw-watchpoints 0"
+		# Software watchpoints can be quite slow on remote targets
+		# on this test because it ends up single-stepping through
+		# code to initialize dynamic libraries, etc.
+		set factor 20
+	    } else {
+		set factor 1
 	    }
 
 	    gdb_test "show detach-on-fork" "Whether gdb will detach the child of a fork is on\\."
@@ -63,19 +74,21 @@ proc test {type symbol} {
 
 	    gdb_breakpoint "mark_exit"
 
-	    gdb_test "continue" \
-		"reakpoint \[0-9\]+, marker.*" "hardware breakpoints work"
-	    gdb_test "continue" \
-		"atchpoint \[0-9\]+: var.*Old value = 0.*New value = 1.*forkoff *\\(1\\).*" "watchpoints work"
-	    gdb_test "continue" \
-		"reakpoint \[0-9\]+, marker.*" "breakpoint after the first fork"
-	    gdb_test "continue" \
-		"atchpoint \[0-9\]+: var.*Old value = 1.*New value = 2.*forkoff *\\(2\\).*" "watchpoint after the first fork"
-	    gdb_test "continue" \
-		"reakpoint \[0-9\]+, marker.*" "breakpoint after the second fork"
-	    gdb_test "continue" \
-		"atchpoint \[0-9\]+: var.*Old value = 2.*New value = 3.*mark_exit \\(\\);" "watchpoint after the second fork"
-	    gdb_test "continue" "Continuing\\..*\r\n(Thread .* hit )?Breakpoint \[0-9\]+, mark_exit .*" "finish"
+	    with_timeout_factor $factor {
+		gdb_test "continue" \
+		    "reakpoint \[0-9\]+, marker.*" "hardware breakpoints work"
+		gdb_test "continue" \
+		    "atchpoint \[0-9\]+: var.*Old value = 0.*New value = 1.*forkoff *\\(1\\).*" "watchpoints work"
+		gdb_test "continue" \
+		    "reakpoint \[0-9\]+, marker.*" "breakpoint after the first fork"
+		gdb_test "continue" \
+		    "atchpoint \[0-9\]+: var.*Old value = 1.*New value = 2.*forkoff *\\(2\\).*" "watchpoint after the first fork"
+		gdb_test "continue" \
+		    "reakpoint \[0-9\]+, marker.*" "breakpoint after the second fork"
+		gdb_test "continue" \
+		    "atchpoint \[0-9\]+: var.*Old value = 2.*New value = 3.*mark_exit \\(\\);" "watchpoint after the second fork"
+		gdb_test "continue" "Continuing\\..*\r\n(Thread .* hit )?Breakpoint \[0-9\]+, mark_exit .*" "finish"
+	    }
 	}
 
 	# threads
@@ -88,7 +101,11 @@ proc test {type symbol} {
 	with_test_prefix "multithreaded" {
 	    set executable ${testfile}-${type}-mt
 	    set srcfile_main ${srcdir}/${subdir}/${testfile}-mt.c
-	    if { [gdb_compile_pthreads "${srcfile_main} ${srcfile_type}" [standard_output_file ${executable}] executable [list debug "additional_flags=-D$symbol -DTHREAD"]] != "" } {
+	    if { [gdb_compile_pthreads "${srcfile_main} ${srcfile_type}" \
+		      [standard_output_file ${executable}] executable \
+		      [list debug "additional_flags=-D$symbol" \
+			   "additional_flags=-DDEBUG=$debug" \
+			   "-DTHREAD"]] != "" } {
 		untested "failed to compile"
 		return
 	    }

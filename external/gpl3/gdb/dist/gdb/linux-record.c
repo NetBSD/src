@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "record.h"
 #include "record-full.h"
 #include "linux-record.h"
+#include "gdbarch.h"
 
 /* These macros are the values of the first argument of system call
    "sys_ptrace".  The values of these macros were obtained from Linux

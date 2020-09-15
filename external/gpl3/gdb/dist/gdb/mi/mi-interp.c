@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,9 +18,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+
+#include "mi-interp.h"
+
 #include "interps.h"
 #include "event-top.h"
-#include "event-loop.h"
+#include "gdbsupport/event-loop.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "ui-out.h"
@@ -38,6 +41,7 @@
 #include "cli-out.h"
 #include "thread-fsm.h"
 #include "cli/cli-interp.h"
+#include "gdbsupport/scope-exit.h"
 
 /* These are the interpreter setup, etc. functions for the MI
    interpreter.  */
@@ -87,8 +91,6 @@ static void mi_memory_changed (struct inferior *inf, CORE_ADDR memaddr,
 			       ssize_t len, const bfd_byte *myaddr);
 static void mi_on_sync_execution_done (void);
 
-static int report_initial_inferior (struct inferior *inf, void *closure);
-
 /* Display the MI prompt.  */
 
 static void
@@ -114,7 +116,6 @@ void
 mi_interp::init (bool top_level)
 {
   mi_interp *mi = this;
-  int mi_version;
 
   /* Store the current output channel, so that we can create a console
      channel that encapsulates and prefixes all gdb_output-type bits
@@ -128,31 +129,33 @@ mi_interp::init (bool top_level)
   mi->log = mi->err;
   mi->targ = new mi_console_file (mi->raw_stdout, "@", '"');
   mi->event_channel = new mi_console_file (mi->raw_stdout, "=", 0);
-
-  /* INTERP_MI selects the most recent released version.  "mi2" was
-     released as part of GDB 6.0.  */
-  if (strcmp (name (), INTERP_MI) == 0)
-    mi_version = 2;
-  else if (strcmp (name (), INTERP_MI1) == 0)
-    mi_version = 1;
-  else if (strcmp (name (), INTERP_MI2) == 0)
-    mi_version = 2;
-  else if (strcmp (name (), INTERP_MI3) == 0)
-    mi_version = 3;
-  else
-    gdb_assert_not_reached ("unhandled MI version");
-
-  mi->mi_uiout = mi_out_new (mi_version);
+  mi->mi_uiout = mi_out_new (name ());
+  gdb_assert (mi->mi_uiout != nullptr);
   mi->cli_uiout = cli_out_new (mi->out);
 
   if (top_level)
     {
-      /* The initial inferior is created before this function is
-	 called, so we need to report it explicitly.  Use iteration in
-	 case future version of GDB creates more than one inferior
-	 up-front.  */
-      iterate_over_inferiors (report_initial_inferior, mi);
-    }
+      /* The initial inferior is created before this function is called, so we
+	 need to report it explicitly when initializing the top-level MI
+	 interpreter.
+
+	 This is also called when additional MI interpreters are added (using
+	 the new-ui command), when multiple inferiors possibly exist, so we need
+	 to use iteration to report all the inferiors.  mi_inferior_added can't
+	 be used, because it would print the event on all the other MI UIs.  */
+
+      for (inferior *inf : all_inferiors ())
+	{
+	  target_terminal::scoped_restore_terminal_state term_state;
+	  target_terminal::ours_for_output ();
+
+	  fprintf_unfiltered (mi->event_channel,
+			      "thread-group-added,id=\"i%d\"",
+			      inf->num);
+
+	  gdb_flush (mi->event_channel);
+	}
+  }
 }
 
 void
@@ -194,7 +197,7 @@ gdb_exception
 mi_interp::exec (const char *command)
 {
   mi_execute_command_wrapper (command);
-  return exception_none;
+  return gdb_exception ();
 }
 
 void
@@ -225,22 +228,18 @@ mi_cmd_interpreter_exec (const char *command, char **argv, int argc)
 
   /* Now run the code.  */
 
-  std::string mi_error_message;
+  SCOPE_EXIT
+    {
+      mi_remove_notify_hooks ();
+    };
+
   for (i = 1; i < argc; i++)
     {
       struct gdb_exception e = interp_exec (interp_to_use, argv[i]);
 
       if (e.reason < 0)
-	{
-	  mi_error_message = e.message;
-	  break;
-	}
+	error ("%s", e.what ());
     }
-
-  mi_remove_notify_hooks ();
-
-  if (!mi_error_message.empty ())
-    error ("%s", mi_error_message.c_str ());
 }
 
 /* This inserts a number of hooks that are meant to produce
@@ -639,25 +638,30 @@ mi_on_normal_stop_1 (struct bpstats *bs, int print_frame)
 	  reason = tp->thread_fsm->async_reply_reason ();
 	  mi_uiout->field_string ("reason", async_reason_lookup (reason));
 	}
-      print_stop_event (mi_uiout);
 
       console_interp = interp_lookup (current_ui, INTERP_CONSOLE);
-      if (should_print_stop_to_console (console_interp, tp))
+      /* We only want to print the displays once, and we want it to
+	 look just how it would on the console, so we use this to
+	 decide whether the MI stop should include them.  */
+      bool console_print = should_print_stop_to_console (console_interp, tp);
+      print_stop_event (mi_uiout, !console_print);
+
+      if (console_print)
 	print_stop_event (mi->cli_uiout);
 
-      mi_uiout->field_int ("thread-id", tp->global_num);
+      mi_uiout->field_signed ("thread-id", tp->global_num);
       if (non_stop)
 	{
 	  ui_out_emit_list list_emitter (mi_uiout, "stopped-threads");
 
-	  mi_uiout->field_int (NULL, tp->global_num);
+	  mi_uiout->field_signed (NULL, tp->global_num);
 	}
       else
 	mi_uiout->field_string ("stopped-threads", "all");
 
       core = target_core_of_thread (tp->ptid);
       if (core != -1)
-	mi_uiout->field_int ("core", core);
+	mi_uiout->field_signed ("core", core);
     }
   
   fputs_unfiltered ("*stopped", mi->raw_stdout);
@@ -835,18 +839,17 @@ mi_print_breakpoint_for_event (struct mi_interp *mi, breakpoint *bp)
      ui_out_redirect.  */
   mi_uiout->redirect (mi->event_channel);
 
-  TRY
+  try
     {
       scoped_restore restore_uiout
 	= make_scoped_restore (&current_uiout, mi_uiout);
 
       print_breakpoint (bp);
     }
-  CATCH (ex, RETURN_MASK_ALL)
+  catch (const gdb_exception &ex)
     {
       exception_print (gdb_stderr, ex);
     }
-  END_CATCH
 
   mi_uiout->redirect (NULL);
 }
@@ -971,7 +974,8 @@ multiple_inferiors_p ()
 }
 
 static void
-mi_on_resume_1 (struct mi_interp *mi, ptid_t ptid)
+mi_on_resume_1 (struct mi_interp *mi,
+		process_stratum_target *targ, ptid_t ptid)
 {
   /* To cater for older frontends, emit ^running, but do it only once
      per each command.  We do it here, since at this point we know
@@ -994,7 +998,7 @@ mi_on_resume_1 (struct mi_interp *mi, ptid_t ptid)
       && !multiple_inferiors_p ())
     fprintf_unfiltered (mi->raw_stdout, "*running,thread-id=\"all\"\n");
   else
-    for (thread_info *tp : all_non_exited_threads (ptid))
+    for (thread_info *tp : all_non_exited_threads (targ, ptid))
       mi_output_running (tp);
 
   if (!running_result_record_printed && mi_proceeded)
@@ -1014,10 +1018,11 @@ mi_on_resume (ptid_t ptid)
 {
   struct thread_info *tp = NULL;
 
+  process_stratum_target *target = current_inferior ()->process_target ();
   if (ptid == minus_one_ptid || ptid.is_pid ())
     tp = inferior_thread ();
   else
-    tp = find_thread_ptid (ptid);
+    tp = find_thread_ptid (target, ptid);
 
   /* Suppress output while calling an inferior function.  */
   if (tp->control.in_infcall)
@@ -1033,7 +1038,7 @@ mi_on_resume (ptid_t ptid)
       target_terminal::scoped_restore_terminal_state term_state;
       target_terminal::ours_for_output ();
 
-      mi_on_resume_1 (mi, ptid);
+      mi_on_resume_1 (mi, target, ptid);
     }
 }
 
@@ -1047,7 +1052,7 @@ mi_output_solib_attribs (ui_out *uiout, struct so_list *solib)
   uiout->field_string ("id", solib->so_original_name);
   uiout->field_string ("target-name", solib->so_original_name);
   uiout->field_string ("host-name", solib->so_name);
-  uiout->field_int ("symbols-loaded", solib->symbols_loaded);
+  uiout->field_signed ("symbols-loaded", solib->symbols_loaded);
   if (!gdbarch_has_global_solist (target_gdbarch ()))
       uiout->field_fmt ("thread-group", "i%d", current_inferior ()->num);
 
@@ -1185,15 +1190,14 @@ mi_memory_changed (struct inferior *inferior, CORE_ADDR memaddr,
 
       mi_uiout->field_fmt ("thread-group", "i%d", inferior->num);
       mi_uiout->field_core_addr ("addr", target_gdbarch (), memaddr);
-      mi_uiout->field_fmt ("len", "%s", hex_string (len));
+      mi_uiout->field_string ("len", hex_string (len));
 
       /* Append 'type=code' into notification if MEMADDR falls in the range of
 	 sections contain code.  */
       sec = find_pc_section (memaddr);
       if (sec != NULL && sec->objfile != NULL)
 	{
-	  flagword flags = bfd_get_section_flags (sec->objfile->obfd,
-						  sec->the_bfd_section);
+	  flagword flags = bfd_section_flags (sec->the_bfd_section);
 
 	  if (flags & SEC_CODE)
 	    mi_uiout->field_string ("type", "code");
@@ -1262,26 +1266,6 @@ mi_user_selected_context_changed (user_selected_what selection)
     }
 }
 
-static int
-report_initial_inferior (struct inferior *inf, void *closure)
-{
-  /* This function is called from mi_interpreter_init, and since
-     mi_inferior_added assumes that inferior is fully initialized
-     and top_level_interpreter_data is set, we cannot call
-     it here.  */
-  struct mi_interp *mi = (struct mi_interp *) closure;
-
-  target_terminal::scoped_restore_terminal_state term_state;
-  target_terminal::ours_for_output ();
-
-  fprintf_unfiltered (mi->event_channel,
-		      "thread-group-added,id=\"i%d\"",
-		      inf->num);
-  gdb_flush (mi->event_channel);
-
-  return 0;
-}
-
 ui_out *
 mi_interp::interp_ui_out ()
 {
@@ -1292,25 +1276,43 @@ mi_interp::interp_ui_out ()
    the consoles to use the supplied ui-file(s).  */
 
 void
-mi_interp::set_logging (ui_file_up logfile, bool logging_redirect)
+mi_interp::set_logging (ui_file_up logfile, bool logging_redirect,
+			bool debug_redirect)
 {
   struct mi_interp *mi = this;
 
   if (logfile != NULL)
     {
       mi->saved_raw_stdout = mi->raw_stdout;
-      mi->raw_stdout = make_logging_output (mi->raw_stdout,
-					    std::move (logfile),
-					    logging_redirect);
 
+      /* If something is being redirected, then grab logfile.  */
+      ui_file *logfile_p = nullptr;
+      if (logging_redirect || debug_redirect)
+	{
+	  logfile_p = logfile.get ();
+	  mi->saved_raw_file_to_delete = logfile_p;
+	}
+
+      /* If something is not being redirected, then a tee containing both the
+	 logfile and stdout.  */
+      ui_file *tee = nullptr;
+      if (!logging_redirect || !debug_redirect)
+	{
+	  tee = new tee_file (mi->raw_stdout, std::move (logfile));
+	  mi->saved_raw_file_to_delete = tee;
+	}
+
+      mi->raw_stdout = logging_redirect ? logfile_p : tee;
+      mi->raw_stdlog = debug_redirect ? logfile_p : tee;
     }
   else
     {
-      delete mi->raw_stdout;
+      delete mi->saved_raw_file_to_delete;
       mi->raw_stdout = mi->saved_raw_stdout;
-      mi->saved_raw_stdout = NULL;
+      mi->saved_raw_stdout = nullptr;
+      mi->saved_raw_file_to_delete = nullptr;
     }
-  
+
   mi->out->set_raw (mi->raw_stdout);
   mi->err->set_raw (mi->raw_stdout);
   mi->log->set_raw (mi->raw_stdout);
@@ -1326,8 +1328,9 @@ mi_interp_factory (const char *name)
   return new mi_interp (name);
 }
 
+void _initialize_mi_interp ();
 void
-_initialize_mi_interp (void)
+_initialize_mi_interp ()
 {
   /* The various interpreter levels.  */
   interp_factory_register (INTERP_MI1, mi_interp_factory);

@@ -63,4 +63,6 @@ int main()
      Derived. Base is constructed separately by
      DeeplyDerived's ctor.  */
   DeeplyDerived dd(15);
+
+  return 0;
 }

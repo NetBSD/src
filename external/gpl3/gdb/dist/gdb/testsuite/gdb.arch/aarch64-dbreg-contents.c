@@ -9,13 +9,17 @@
   freely.  */
 
 #define _GNU_SOURCE 1
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/ptrace.h>
+#include <asm/ptrace.h>
 #include <assert.h>
 #include <sys/wait.h>
 #include <stddef.h>
 #include <errno.h>
 #include <sys/uio.h>
 #include <elf.h>
+#include <error.h>
 
 static pid_t child;
 

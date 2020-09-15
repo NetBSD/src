@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "arch-utils.h"
 #include "dis-asm.h"
 #include "dwarf2.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -214,7 +214,7 @@ sparc_integral_or_pointer_p (const struct type *type)
 {
   int len = TYPE_LENGTH (type);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_INT:
     case TYPE_CODE_BOOL:
@@ -242,7 +242,7 @@ sparc_integral_or_pointer_p (const struct type *type)
 static int
 sparc_floating_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_FLT:
       {
@@ -261,7 +261,7 @@ sparc_floating_p (const struct type *type)
 static int
 sparc_complex_floating_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_COMPLEX:
       {
@@ -284,7 +284,7 @@ sparc_complex_floating_p (const struct type *type)
 static int
 sparc_structure_or_union_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -303,7 +303,7 @@ sparc_structure_or_union_p (const struct type *type)
 static bool
 sparc_structure_return_p (const struct type *type)
 {
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+  if (type->code () == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
     {
       /* Float vectors are always returned by memory.  */
       if (sparc_floating_p (check_typedef (TYPE_TARGET_TYPE (type))))
@@ -331,7 +331,7 @@ sparc_structure_return_p (const struct type *type)
 static bool
 sparc_arg_by_memory_p (const struct type *type)
 {
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+  if (type->code () == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
     {
       /* Float vectors are always passed by memory.  */
       if (sparc_floating_p (check_typedef (TYPE_TARGET_TYPE (type))))
@@ -1114,13 +1114,6 @@ sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
   return pc;
 }
 
-static CORE_ADDR
-sparc_unwind_pc (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  return frame_unwind_register_unsigned (this_frame, tdep->pc_regnum);
-}
-
 /* Return PC of first real instruction of the function starting at
    START_PC.  */
 
@@ -1235,7 +1228,7 @@ static int
 sparc32_struct_return_from_sym (struct symbol *sym)
 {
   struct type *type = check_typedef (SYMBOL_TYPE (sym));
-  enum type_code code = TYPE_CODE (type);
+  enum type_code code = type->code ();
 
   if (code == TYPE_CODE_FUNC || code == TYPE_CODE_METHOD)
     {
@@ -1409,7 +1402,7 @@ sparc32_extract_return_value (struct type *type, struct regcache *regcache,
   gdb_assert (!sparc_structure_return_p (type));
 
   if (sparc_floating_p (type) || sparc_complex_floating_p (type)
-      || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+      || type->code () == TYPE_CODE_ARRAY)
     {
       /* Floating return values.  */
       regcache->cooked_read (SPARC_F0_REGNUM, buf);
@@ -1694,7 +1687,7 @@ sparc_analyze_control_transfer (struct regcache *regcache,
       if (fused_p)
 	{
 	  /* Fused compare-and-branch instructions are non-delayed,
-	     and do not have an annuling capability.  So we need to
+	     and do not have an annulling capability.  So we need to
 	     always set a breakpoint on both the NPC and the branch
 	     target address.  */
 	  gdb_assert (offset != 0);
@@ -1881,8 +1874,6 @@ sparc32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_write_pc (gdbarch, sparc_write_pc);
 
   set_gdbarch_dummy_id (gdbarch, sparc_dummy_id);
-
-  set_gdbarch_unwind_pc (gdbarch, sparc_unwind_pc);
 
   frame_base_set_default (gdbarch, &sparc32_frame_base);
 
@@ -2267,8 +2258,9 @@ const struct sparc_fpregmap sparc32_bsd_fpregmap =
   32 * 4,			/* %fsr */
 };
 
+void _initialize_sparc_tdep ();
 void
-_initialize_sparc_tdep (void)
+_initialize_sparc_tdep ()
 {
   register_gdbarch_init (bfd_arch_sparc, sparc32_gdbarch_init);
 }

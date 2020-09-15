@@ -1,6 +1,6 @@
 /* Everything about signal catchpoints, for GDB.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "valprint.h"
 #include "cli/cli-utils.h"
 #include "completer.h"
+#include "cli/cli-style.h"
 
 #include <string>
 
@@ -180,12 +181,11 @@ static enum print_stop_action
 signal_catchpoint_print_it (bpstat bs)
 {
   struct breakpoint *b = bs->breakpoint_at;
-  ptid_t ptid;
   struct target_waitstatus last;
   const char *signal_name;
   struct ui_out *uiout = current_uiout;
 
-  get_last_target_status (&ptid, &last);
+  get_last_target_status (nullptr, nullptr, &last);
 
   signal_name = signal_to_name_or_int (last.value.sig);
 
@@ -241,7 +241,8 @@ signal_catchpoint_print_one (struct breakpoint *b,
     }
   else
     uiout->field_string ("what",
-			 c->catch_all ? "<any signal>" : "<standard signals>");
+			 c->catch_all ? "<any signal>" : "<standard signals>",
+			 metadata_style.style ());
   uiout->text ("\" ");
 
   if (uiout->is_mi_like_p ())
@@ -423,8 +424,9 @@ initialize_signal_catchpoint_ops (void)
   ops->explains_signal = signal_catchpoint_explains_signal;
 }
 
+void _initialize_break_catch_sig ();
 void
-_initialize_break_catch_sig (void)
+_initialize_break_catch_sig ()
 {
   initialize_signal_catchpoint_ops ();
 

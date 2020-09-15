@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -28,6 +28,10 @@
 
 #include "sim-inline.h"
 #include "sim-main.h"
+
+#if C_REVEALS_MODULE_P (SIM_ARANGE_INLINE)
+#include "sim-arange.c"
+#endif
 
 
 #if C_REVEALS_MODULE_P (SIM_BITS_INLINE)
@@ -63,7 +67,6 @@
 #if C_REVEALS_MODULE_P (SIM_MAIN_INLINE)
 #include "sim-main.c"
 #endif
-
 
 #if C_REVEALS_MODULE_P (ENGINE_INLINE)
 /* #include "engine.c" - handled by generator */

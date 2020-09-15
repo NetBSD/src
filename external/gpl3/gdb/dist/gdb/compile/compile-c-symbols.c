@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 #include "value.h"
 #include "exceptions.h"
 #include "gdbtypes.h"
-#include "dwarf2loc.h"
+#include "dwarf2/loc.h"
 
 
 
@@ -40,7 +40,7 @@ gdb::unique_xmalloc_ptr<char>
 c_symbol_substitution_name (struct symbol *sym)
 {
   return gdb::unique_xmalloc_ptr<char>
-    (concat ("__", SYMBOL_NATURAL_NAME (sym), "_ptr", (char *) NULL));
+    (concat ("__", sym->natural_name (), "_ptr", (char *) NULL));
 }
 
 /* Convert a given symbol, SYM, to the compiler's representation.
@@ -70,7 +70,7 @@ convert_one_symbol (compile_c_instance *context,
   if (SYMBOL_DOMAIN (sym.symbol) == STRUCT_DOMAIN)
     {
       /* Binding a tag, so we don't need to build a decl.  */
-      context->plugin ().tagbind (SYMBOL_NATURAL_NAME (sym.symbol),
+      context->plugin ().tagbind (sym.symbol->natural_name (),
 				  sym_type, filename, line);
     }
   else
@@ -99,34 +99,34 @@ convert_one_symbol (compile_c_instance *context,
 	  break;
 
 	case LOC_CONST:
-	  if (TYPE_CODE (SYMBOL_TYPE (sym.symbol)) == TYPE_CODE_ENUM)
+	  if (SYMBOL_TYPE (sym.symbol)->code () == TYPE_CODE_ENUM)
 	    {
 	      /* Already handled by convert_enum.  */
 	      return;
 	    }
 	  context->plugin ().build_constant
-	    (sym_type, SYMBOL_NATURAL_NAME (sym.symbol),
+	    (sym_type, sym.symbol->natural_name (),
 	     SYMBOL_VALUE (sym.symbol),
 	     filename, line);
 	  return;
 
 	case LOC_CONST_BYTES:
 	  error (_("Unsupported LOC_CONST_BYTES for symbol \"%s\"."),
-		 SYMBOL_PRINT_NAME (sym.symbol));
+		 sym.symbol->print_name ());
 
 	case LOC_UNDEF:
 	  internal_error (__FILE__, __LINE__, _("LOC_UNDEF found for \"%s\"."),
-			  SYMBOL_PRINT_NAME (sym.symbol));
+			  sym.symbol->print_name ());
 
 	case LOC_COMMON_BLOCK:
 	  error (_("Fortran common block is unsupported for compilation "
 		   "evaluaton of symbol \"%s\"."),
-		 SYMBOL_PRINT_NAME (sym.symbol));
+		 sym.symbol->print_name ());
 
 	case LOC_OPTIMIZED_OUT:
 	  error (_("Symbol \"%s\" cannot be used for compilation evaluation "
 		   "as it is optimized out."),
-		 SYMBOL_PRINT_NAME (sym.symbol));
+		 sym.symbol->print_name ());
 
 	case LOC_COMPUTED:
 	  if (is_local)
@@ -135,7 +135,7 @@ convert_one_symbol (compile_c_instance *context,
 	  warning (_("Symbol \"%s\" is thread-local and currently can only "
 		     "be referenced from the current thread in "
 		     "compiled code."),
-		   SYMBOL_PRINT_NAME (sym.symbol));
+		   sym.symbol->print_name ());
 	  /* FALLTHROUGH */
 	case LOC_UNRESOLVED:
 	  /* 'symbol_name' cannot be used here as that one is used only for
@@ -152,14 +152,14 @@ convert_one_symbol (compile_c_instance *context,
 		if (frame == NULL)
 		  error (_("Symbol \"%s\" cannot be used because "
 			   "there is no selected frame"),
-			 SYMBOL_PRINT_NAME (sym.symbol));
+			 sym.symbol->print_name ());
 	      }
 
 	    val = read_var_value (sym.symbol, sym.block, frame);
 	    if (VALUE_LVAL (val) != lval_memory)
 	      error (_("Symbol \"%s\" cannot be used for compilation "
 		       "evaluation as its address has not been found."),
-		     SYMBOL_PRINT_NAME (sym.symbol));
+		     sym.symbol->print_name ());
 
 	    kind = GCC_C_SYMBOL_VARIABLE;
 	    addr = value_address (val);
@@ -193,7 +193,7 @@ convert_one_symbol (compile_c_instance *context,
 	  || symbol_name == NULL)
 	{
 	  decl = context->plugin ().build_decl
-	    (SYMBOL_NATURAL_NAME (sym.symbol),
+	    (sym.symbol->natural_name (),
 	     kind,
 	     sym_type,
 	     symbol_name.get (), addr,
@@ -308,7 +308,7 @@ convert_symbol_bmsym (compile_c_instance *context,
     }
 
   sym_type = context->convert_type (type);
-  decl = context->plugin ().build_decl (MSYMBOL_NATURAL_NAME (msym),
+  decl = context->plugin ().build_decl (msym->natural_name (),
 					kind, sym_type, NULL, addr,
 					NULL, 0);
   context->plugin ().bind (decl, 1 /* is_global */);
@@ -344,7 +344,7 @@ gcc_convert_symbol (void *datum,
 
   /* We can't allow exceptions to escape out of this callback.  Safest
      is to simply emit a gcc error.  */
-  TRY
+  try
     {
       struct block_symbol sym;
 
@@ -367,11 +367,10 @@ gcc_convert_symbol (void *datum,
 	}
     }
 
-  CATCH (e, RETURN_MASK_ALL)
+  catch (const gdb_exception &e)
     {
-      context->plugin ().error (e.message);
+      context->plugin ().error (e.what ());
     }
-  END_CATCH
 
   if (compile_debug && !found)
     fprintf_unfiltered (gdb_stdlog,
@@ -393,7 +392,7 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 
   /* We can't allow exceptions to escape out of this callback.  Safest
      is to simply emit a gcc error.  */
-  TRY
+  try
     {
       struct symbol *sym;
 
@@ -430,11 +429,10 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 	}
     }
 
-  CATCH (e, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &e)
     {
-      context->plugin ().error (e.message);
+      context->plugin ().error (e.what ());
     }
-  END_CATCH
 
   if (compile_debug && !found)
     fprintf_unfiltered (gdb_stdlog,
@@ -452,7 +450,7 @@ hash_symname (const void *a)
 {
   const struct symbol *sym = (const struct symbol *) a;
 
-  return htab_hash_string (SYMBOL_NATURAL_NAME (sym));
+  return htab_hash_string (sym->natural_name ());
 }
 
 /* A comparison function for hash tables that just looks at symbol
@@ -464,7 +462,7 @@ eq_symname (const void *a, const void *b)
   const struct symbol *syma = (const struct symbol *) a;
   const struct symbol *symb = (const struct symbol *) b;
 
-  return strcmp (SYMBOL_NATURAL_NAME (syma), SYMBOL_NATURAL_NAME (symb)) == 0;
+  return strcmp (syma->natural_name (), symb->natural_name ()) == 0;
 }
 
 /* If a symbol with the same name as SYM is already in HASHTAB, return
@@ -499,14 +497,14 @@ generate_vla_size (compile_instance *compiler,
   if (TYPE_IS_REFERENCE (type))
     type = check_typedef (TYPE_TARGET_TYPE (type));
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_RANGE:
       {
-	if (TYPE_HIGH_BOUND_KIND (type) == PROP_LOCEXPR
-	    || TYPE_HIGH_BOUND_KIND (type) == PROP_LOCLIST)
+	if (type->bounds ()->high.kind () == PROP_LOCEXPR
+	    || type->bounds ()->high.kind () == PROP_LOCLIST)
 	  {
-	    const struct dynamic_prop *prop = &TYPE_RANGE_DATA (type)->high;
+	    const struct dynamic_prop *prop = &type->bounds ()->high;
 	    std::string name = c_get_range_decl_name (prop);
 
 	    dwarf2_compile_property_to_c (stream, name.c_str (),
@@ -518,7 +516,7 @@ generate_vla_size (compile_instance *compiler,
 
     case TYPE_CODE_ARRAY:
       generate_vla_size (compiler, stream, gdbarch, registers_used, pc,
-			 TYPE_INDEX_TYPE (type), sym);
+			 type->index_type (), sym);
       generate_vla_size (compiler, stream, gdbarch, registers_used, pc,
 			 TYPE_TARGET_TYPE (type), sym);
       break;
@@ -528,10 +526,10 @@ generate_vla_size (compile_instance *compiler,
       {
 	int i;
 
-	for (i = 0; i < TYPE_NFIELDS (type); ++i)
-	  if (!field_is_static (&TYPE_FIELD (type, i)))
+	for (i = 0; i < type->num_fields (); ++i)
+	  if (!field_is_static (&type->field (i)))
 	    generate_vla_size (compiler, stream, gdbarch, registers_used, pc,
-			       TYPE_FIELD_TYPE (type, i), sym);
+			       type->field (i).type (), sym);
       }
       break;
     }
@@ -548,7 +546,7 @@ generate_c_for_for_one_variable (compile_instance *compiler,
 				 struct symbol *sym)
 {
 
-  TRY
+  try
     {
       if (is_dynamic_type (SYMBOL_TYPE (sym)))
 	{
@@ -600,11 +598,10 @@ generate_c_for_for_one_variable (compile_instance *compiler,
 	}
     }
 
-  CATCH (e, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &e)
     {
-      compiler->insert_symbol_error (sym, e.message);
+      compiler->insert_symbol_error (sym, e.what ());
     }
-  END_CATCH
 }
 
 /* See compile-c.h.  */

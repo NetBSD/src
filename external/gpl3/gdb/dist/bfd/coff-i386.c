@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -31,15 +31,14 @@
 #include "coff/pe.h"
 #endif
 
-#ifdef COFF_GO32_EXE
-#include "coff/go32exe.h"
-#endif
-
 #ifndef bfd_pe_print_pdata
 #define bfd_pe_print_pdata	NULL
 #endif
 
 #include "libcoff.h"
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 static reloc_howto_type *coff_i386_rtype_to_howto
   (bfd *, asection *, struct internal_reloc *,
@@ -67,7 +66,7 @@ coff_i386_reloc (bfd *abfd,
 		 arelent *reloc_entry,
 		 asymbol *symbol,
 		 void * data,
-		 asection *input_section ATTRIBUTE_UNUSED,
+		 asection *input_section,
 		 bfd *output_bfd,
 		 char **error_message ATTRIBUTE_UNUSED)
 {
@@ -142,11 +141,11 @@ coff_i386_reloc (bfd *abfd,
   if (diff != 0)
     {
       reloc_howto_type *howto = reloc_entry->howto;
-      unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+      bfd_size_type octets = (reloc_entry->address
+			      * OCTETS_PER_BYTE (abfd, input_section));
+      unsigned char *addr = (unsigned char *) data + octets;
 
-      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
-				       reloc_entry->address
-				       * bfd_octets_per_byte (abfd)))
+      if (!bfd_reloc_offset_in_range (howto, abfd, input_section, octets))
 	return bfd_reloc_outofrange;
 
       switch (howto->size)
@@ -660,23 +659,21 @@ const bfd_target
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
+#ifndef COFF_CHECK_FORMAT
+#define COFF_CHECK_FORMAT coff_object_p
+#endif
+#ifndef COFF_WRITE_CONTENTS
+#define COFF_WRITE_CONTENTS coff_write_object_contents
+#endif
+
 /* Note that we allow an object file to be treated as a core file as well.  */
-    
-#ifdef COFF_CHECK_FORMAT
+
   {				/* bfd_check_format */
     _bfd_dummy_target,
     COFF_CHECK_FORMAT,
     bfd_generic_archive_p,
     COFF_CHECK_FORMAT
   },
-#else
-  {
-    _bfd_dummy_target,
-    coff_object_p,
-    bfd_generic_archive_p,
-    coff_object_p
-  },
-#endif
   {				/* bfd_set_format */
     _bfd_bool_bfd_false_error,
     coff_mkobject,
@@ -685,7 +682,7 @@ const bfd_target
   },
   {				/* bfd_write_contents */
     _bfd_bool_bfd_false_error,
-    coff_write_object_contents,
+    COFF_WRITE_CONTENTS,
     _bfd_write_archive_contents,
     _bfd_bool_bfd_false_error
   },
@@ -704,3 +701,75 @@ const bfd_target
 
   COFF_SWAP_TABLE
 };
+
+#ifdef COFF_WITH_PE_BIGOBJ
+const bfd_target
+  TARGET_SYM_BIG =
+{
+  TARGET_NAME_BIG,
+  bfd_target_coff_flavour,
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
+
+  (HAS_RELOC | EXEC_P |		/* object flags */
+   HAS_LINENO | HAS_DEBUG |
+   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS ),
+
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
+#ifdef COFF_WITH_PE
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
+#endif
+   | SEC_CODE | SEC_DATA | SEC_EXCLUDE ),
+
+#ifdef TARGET_UNDERSCORE
+  TARGET_UNDERSCORE,		/* leading underscore */
+#else
+  0,				/* leading underscore */
+#endif
+  '/',				/* ar_pad_char */
+  15,				/* ar_max_namelen */
+  0,				/* match priority.  */
+
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
+
+/* Note that we allow an object file to be treated as a core file as well.  */
+
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    COFF_CHECK_FORMAT,
+    bfd_generic_archive_p,
+    COFF_CHECK_FORMAT
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    COFF_WRITE_CONTENTS,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
+
+  BFD_JUMP_TABLE_GENERIC (coff),
+  BFD_JUMP_TABLE_COPY (coff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
+  BFD_JUMP_TABLE_SYMBOLS (coff),
+  BFD_JUMP_TABLE_RELOCS (coff),
+  BFD_JUMP_TABLE_WRITE (coff),
+  BFD_JUMP_TABLE_LINK (coff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+
+  NULL,
+
+  &bigobj_swap_table
+};
+#endif

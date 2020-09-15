@@ -1,4 +1,4 @@
-/* Copyright 2013-2019 Free Software Foundation, Inc.
+/* Copyright 2013-2020 Free Software Foundation, Inc.
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <assert.h>
 
 #include "sym-file-loader.h"
 
@@ -112,6 +113,8 @@ load (uint8_t *addr, Elf_External_Phdr *phdr, struct segment *tail_seg)
   mapped_addr = (uint8_t *) mmap ((void *) GETADDR (phdr, p_vaddr),
 				  GET (phdr, p_memsz), perm,
 				  MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+  assert (mapped_addr != MAP_FAILED);
+
   mapped_size = GET (phdr, p_memsz);
 
   from = (void *) (addr + GET (phdr, p_offset));
@@ -255,7 +258,7 @@ load_shlib (const char *file)
     }
 
   addr = (uint8_t *) mmap (NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (addr == (uint8_t *) -1)
+  if (addr == MAP_FAILED)
     {
       perror ("mmap failed.");
       return NULL;

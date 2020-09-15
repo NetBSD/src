@@ -1,5 +1,5 @@
 /* MI Option Parser.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -58,7 +58,7 @@ extern int mi_getopt_allow_unknown (const char *prefix, int argc,
 
 /* mi_valid_noargs determines if ARGC/ARGV are a valid set of
    parameters to satisfy an MI function that is not supposed to
-   recieve any arguments.
+   receive any arguments.
    
    An MI function that should not receive arguments can still be 
    passed parameters after the special option '--' such as below.

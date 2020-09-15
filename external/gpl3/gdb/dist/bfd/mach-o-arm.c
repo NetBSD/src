@@ -1,5 +1,5 @@
 /* ARM Mach-O support for BFD.
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,13 +38,13 @@
 #define bfd_mach_o_tgt_seg_table NULL
 #define bfd_mach_o_section_type_valid_for_tgt NULL
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_arm_object_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0, 0, BFD_MACH_O_CPU_TYPE_ARM);
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_arm_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,
@@ -156,7 +156,10 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
   bfd_mach_o_reloc_info reloc;
 
   if (!bfd_mach_o_pre_canonicalize_one_reloc (abfd, raw, &reloc, res, syms))
+    {
+fprintf (stderr, "ARm 1\n");
     return FALSE;
+    }
 
   if (reloc.r_scattered)
     {
@@ -165,7 +168,11 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	case BFD_MACH_O_ARM_RELOC_PAIR:
 	  /* PR 21813: Check for a corrupt PAIR reloc at the start.  */
 	  if (res == res_base)
+	    {
+	      _bfd_error_handler (_("\
+malformed mach-o ARM reloc pair: reloc is first reloc"));
 	    return FALSE;
+	    }
 	  if (reloc.r_length == 2)
 	    {
 	      res->howto = &arm_howto_table[7];
@@ -178,6 +185,8 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	      res->address = res[-1].address;
 	      return TRUE;
 	    }
+	  _bfd_error_handler (_("\
+malformed mach-o ARM reloc pair: invalid length: %d"), reloc.r_length);
 	  return FALSE;
 
 	case BFD_MACH_O_ARM_RELOC_SECTDIFF:
@@ -191,6 +200,8 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	      res->howto = &arm_howto_table[8];
 	      return TRUE;
 	    }
+	  _bfd_error_handler (_("\
+malformed mach-o ARM sectdiff reloc: invalid length: %d"), reloc.r_length);
 	  return FALSE;
 
 	case BFD_MACH_O_ARM_RELOC_LOCAL_SECTDIFF:
@@ -204,6 +215,9 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	      res->howto = &arm_howto_table[9];
 	      return TRUE;
 	    }
+	  _bfd_error_handler (_("\
+malformed mach-o ARM local sectdiff reloc: invalid length: %d"),
+			      reloc.r_length);
 	  return FALSE;
 
 	case BFD_MACH_O_ARM_RELOC_HALF_SECTDIFF:
@@ -216,6 +230,9 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	      res->howto = &arm_howto_table[14];
 	      return TRUE;
 	    }
+	  _bfd_error_handler (_("\
+malformed mach-o ARM half sectdiff reloc: invalid length: %d"),
+			      reloc.r_length);
 	  return FALSE;
 
 	default:
@@ -245,6 +262,9 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	      res->howto = &arm_howto_table[3];
 	      return TRUE;
 	    default:
+	      _bfd_error_handler (_("\
+malformed mach-o ARM vanilla reloc: invalid length: %d (pcrel: %d)"),
+				  reloc.r_length, reloc.r_pcrel);
 	      return FALSE;
 	    }
 	  break;
@@ -306,6 +326,8 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
 	}
     }
 
+  _bfd_error_handler (_("\
+malformed mach-o ARM reloc: unknown reloc type: %d"), reloc.r_length);
   return FALSE;
 }
 

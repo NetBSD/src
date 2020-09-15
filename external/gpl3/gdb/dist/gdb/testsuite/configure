@@ -638,6 +638,7 @@ LDFLAGS
 CFLAGS
 CC
 RPATH_ENVVAR
+enable_libctf
 subdirs
 target_noncanonical
 target_os
@@ -694,6 +695,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_gdbtk
+enable_libctf
 enable_shared
 '
       ac_precious_vars='build_alias
@@ -1323,6 +1325,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-gtk            enable gdbtk graphical user interface (GUI)
+  --enable-libctf         Handle .ctf type-info sections [default=yes]
   --enable-shared         build shared libraries deault=yes
 
 Some influential environment variables:
@@ -2188,6 +2191,21 @@ if test $enable_gdbtk = yes; then
 subdirs="$subdirs gdb.gdbtk"
 
 fi
+
+ # Check whether --enable-libctf was given.
+if test "${enable_libctf+set}" = set; then :
+  enableval=$enable_libctf;
+      case "$enableval" in
+       yes|no) ;;
+       *) as_fn_error $? "Argument to enable/disable libctf must be yes or no" "$LINENO" 5 ;;
+      esac
+
+else
+  enable_libctf=yes
+fi
+
+
+
 
 # Enable shared libraries.
 # Check whether --enable-shared was given.

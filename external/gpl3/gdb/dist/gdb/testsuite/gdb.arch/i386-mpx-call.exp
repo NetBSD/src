@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2019 Free Software Foundation, Inc.
+# Copyright (C) 2017-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
 }
 
 standard_testfile
+
+if { ![supports_mpx_check_pointer_bounds] } {
+    return -1
+}
 
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat"
 

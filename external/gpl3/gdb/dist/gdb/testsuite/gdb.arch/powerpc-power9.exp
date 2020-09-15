@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -409,11 +409,9 @@ func_check "stwat   r23,0,0"
 func_check "stwat   r23,r13,28"
 func_check "urfid"
 func_check "rmieg   r30"
-func_check "ldmx    r10,0,r15"
-func_check "ldmx    r10,r3,r15"
 func_check "stop"
-func_check "wait    "
-func_check "wait    "
+func_check "wait"
+func_check "wait"
 func_check "darn    r3,0"
 func_check "darn    r3,1"
 func_check "darn    r3,2"

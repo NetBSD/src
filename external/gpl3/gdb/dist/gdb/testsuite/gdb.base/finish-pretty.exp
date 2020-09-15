@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ proc finish_pretty { } {
     gdb_test_no_output "set print pretty" \
 	"pretty printing switched on"
     gdb_test "finish" \
-	{.*Value returned is \$1 = \{\r\n  a = 1, \r\n  b = 2\r\n\}} \
+	{.*Value returned is \$1 = \{\r\n  a = 1,\r\n  b = 2\r\n\}} \
 	"finish foo prettyprinted function result"
 }
 

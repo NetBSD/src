@@ -1,6 +1,6 @@
 /* This is part of GDB, the GNU debugger.
 
-   Copyright 2011-2019 Free Software Foundation, Inc.
+   Copyright 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,11 @@ read (int fd, void *buf, size_t count)
   static ssize_t (*read2) (int fd, void *buf, size_t count) = NULL;
   if (read2 == NULL)
     {
-      unsetenv ("LD_PRELOAD");
+      /* Use setenv (v, "", 1) rather than unsetenv (v) to work around
+         https://core.tcl-lang.org/tcl/tktview?name=67fd4f973a "incorrect
+	 results of 'info exists' when unset env var in one interp and check
+	 for existence from another interp".  */
+      setenv ("LD_PRELOAD", "", 1);
       read2 = dlsym (RTLD_NEXT, "read");
     }
   if (count > 1 && isatty (fd) >= 1)

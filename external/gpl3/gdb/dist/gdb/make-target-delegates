@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright (C) 2013-2019 Free Software Foundation, Inc.
+# Copyright (C) 2013-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -43,11 +43,9 @@ $POINTER_PART = qr,\s*(\*)?\s*,;
 $CP_SYMBOL = qr,[a-zA-Z_][a-zA-Z0-9_<>:]*,;
 # Match the return type when it is "ordinary".
 $SIMPLE_RETURN_PART = qr,((struct|class|enum|union)\s+)?${CP_SYMBOL}+,;
-# Match the return type when it is a VEC.
-$VEC_RETURN_PART = qr,VEC\s*\([^\)]+\),;
 
 # Match a return type.
-$RETURN_PART = qr,((const|volatile)\s+)?(${SIMPLE_RETURN_PART}|${VEC_RETURN_PART})${POINTER_PART},;
+$RETURN_PART = qr,((const|volatile)\s+)?(${SIMPLE_RETURN_PART})${POINTER_PART},;
 
 # Match "virtual".
 $VIRTUAL_PART = qr,virtual\s,;

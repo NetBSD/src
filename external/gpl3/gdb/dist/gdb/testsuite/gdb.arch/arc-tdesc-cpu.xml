@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2017-2019 Free Software Foundation, Inc.
+<!-- Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -9,7 +9,7 @@
 <target>
   <architecture>arc:HS</architecture>
 
-  <feature name="org.gnu.gdb.arc.core.v2">
+  <feature name="org.gnu.gdb.arc.core">
     <reg name="r0"  bitsize="32"/>
     <reg name="r1"  bitsize="32"/>
     <reg name="r2"  bitsize="32"/>
@@ -46,7 +46,7 @@
     <reg name="pcl" bitsize="32"/>
   </feature>
 
-  <feature name="org.gnu.gdb.arc.aux-minimal">
+  <feature name="org.gnu.gdb.arc.aux">
     <reg name="pc"       bitsize="32"/>
     <reg name="status32" bitsize="32"/>
   </feature>

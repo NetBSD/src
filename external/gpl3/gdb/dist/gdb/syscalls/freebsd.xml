@@ -1,6 +1,6 @@
 <?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
 <!-- vi:set ro: -->
-<!-- Copyright (C) 2009-2019 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -390,7 +390,7 @@
   <syscall name="truncate" number="479"/>
   <syscall name="ftruncate" number="480"/>
   <syscall name="thr_kill2" number="481"/>
-  <syscall name="shm_open" number="482"/>
+  <syscall name="freebsd12_shm_open" number="482" alias="shm_open"/>
   <syscall name="shm_unlink" number="483"/>
   <syscall name="cpuset" number="484"/>
   <syscall name="cpuset_setid" number="485"/>
@@ -417,7 +417,7 @@
   <syscall name="jail_get" number="506"/>
   <syscall name="jail_set" number="507"/>
   <syscall name="jail_remove" number="508"/>
-  <syscall name="closefrom" number="509"/>
+  <syscall name="freebsd12_closefrom" number="509" alias="closefrom"/>
   <syscall name="__semctl" number="510"/>
   <syscall name="msgctl" number="511"/>
   <syscall name="shmctl" number="512"/>
@@ -471,4 +471,17 @@
   <syscall name="cpuset_getdomain" number="561"/>
   <syscall name="cpuset_setdomain" number="562"/>
   <syscall name="getrandom" number="563"/>
+  <syscall name="getfhat" number="564"/>
+  <syscall name="fhlink" number="565"/>
+  <syscall name="fhlinkat" number="566"/>
+  <syscall name="fhreadlink" number="567"/>
+  <syscall name="funlinkat" number="568"/>
+  <syscall name="copy_file_range" number="569"/>
+  <syscall name="__sysctlbyname" number="570"/>
+  <syscall name="shm_open2" number="571"/>
+  <syscall name="shm_rename" number="572"/>
+  <syscall name="sigfastblock" number="573"/>
+  <syscall name="__realpathat" number="574"/>
+  <syscall name="close_range" number="575"/>
+  <syscall name="rpctls_syscall" number="576"/>
 </syscalls_info>

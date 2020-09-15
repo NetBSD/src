@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2019 Free Software Foundation, Inc.
+# Copyright (C) 2011-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ clean_restart $executable
 set arch ""
 set test "show architecture"
 gdb_test_multiple $test $test {
-    -re "The target architecture is set automatically \\(currently (.*)\\)\r\n$gdb_prompt $" {
+    -re "The target architecture is set to \"auto\" \\(currently \"(.*)\"\\)\\.\r\n$gdb_prompt $" {
 	set arch $expect_out(1,string)
 	pass $test
     }
@@ -61,7 +61,7 @@ set testpid [spawn_id_get_pid $test_spawn_id]
 gdb_start
 file delete -- $binfile
 gdb_test "attach $testpid" "Attaching to process $testpid\r\n.*" "attach"
-gdb_test "set architecture $arch" "The target architecture is assumed to be $arch"
+gdb_test "set architecture $arch" "The target architecture is set to \"$arch\"\\."
 gdb_test "info shared" "From\[ \t\]+To\[ \t\]+Syms Read\[ \t\]+Shared Object Library\r\n0x.*"
 
 kill_wait_spawned_process $test_spawn_id

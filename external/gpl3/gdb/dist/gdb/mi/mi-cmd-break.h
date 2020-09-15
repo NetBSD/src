@@ -1,5 +1,5 @@
 /* MI Command Set - breakpoint and watchpoint commands.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    Contributed by Intel Corporation.
 
@@ -21,7 +21,7 @@
 #ifndef MI_MI_CMD_BREAK_H
 #define MI_MI_CMD_BREAK_H
 
-#include "common/scoped_restore.h"
+#include "gdbsupport/scoped_restore.h"
 
 /* Setup the reporting of the insertion of a new breakpoint or
    catchpoint.  */

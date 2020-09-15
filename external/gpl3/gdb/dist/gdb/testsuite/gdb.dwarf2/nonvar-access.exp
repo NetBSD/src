@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,10 +95,8 @@ Dwarf::assemble $asm_file {
 	    }
 
 	    DW_TAG_subprogram {
-		{name main}
+		{MACRO_AT_func {main}}
 		{DW_AT_external 1 flag}
-		{low_pc [gdb_target_symbol main] DW_FORM_addr}
-		{high_pc [gdb_target_symbol main]+0x10000 DW_FORM_addr}
 	    } {
 		# Simple variable without location.
 		DW_TAG_variable {

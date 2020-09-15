@@ -1,4 +1,4 @@
-#   Copyright 2008-2019 Free Software Foundation, Inc.
+#   Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ if [supports_process_record] {
     # Activate process record/replay
     gdb_test_no_output "record" "turn on process record"
 }
+
+set is_stmt [is_stmt_addresses $srcfile]
 
 set end_location  [gdb_get_line_number "end of main"  ]
 gdb_test "break $end_location" \
@@ -79,13 +81,24 @@ gdb_test "break \*$foo2_addr" "Breakpoint $decimal at $foo2_addr: file .*" \
 
 set testmsg "stopped at bp, 2nd instr"
 gdb_test_multiple "step" $testmsg {
-    -re "Breakpoint $decimal, ($hex) in foo.*$gdb_prompt $" {
+    -re -wrap "Breakpoint $decimal, ($hex) in foo.*" {
 	set stop_addr $expect_out(1,string)
 	if [eval expr "$foo2_addr == $stop_addr"] then {
 	    pass "stopped at bp, 2nd instr"
 	} else {
 	    fail "stopped at bp, 2nd instr (wrong address)"
 	}
+    }
+    -re -wrap "Breakpoint $decimal, foo.*" {
+       set stop_addr [get_valueof "/x" "\$pc" "" "value of pc"]
+       set stop_addr_is_stmt [hex_in_list $stop_addr $is_stmt]
+       if { ! $stop_addr_is_stmt } {
+           fail "stopped at bp, 2nd instr (missing hex prefix)"
+       } elseif [eval expr "$foo2_addr == $stop_addr"] then {
+           pass "stopped at bp, 2nd instr"
+       } else {
+           fail "stopped at bp, 2nd instr (wrong address)"
+       }
     }
 }
 

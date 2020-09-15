@@ -18,9 +18,9 @@ namespace A
     }
 
     int first(){
-      _a;
-      ab;
-      C::abc;
+      (void) _a;
+      (void) ab;
+      (void) C::abc;
       return C::second();
     }
   }
@@ -30,8 +30,8 @@ namespace A
 int
 main()
 {
-  A::_a;
-  A::B::ab;
-  A::B::C::abc;
+  (void) A::_a;
+  (void) A::B::ab;
+  (void) A::B::C::abc;
   return A::B::first();
 }

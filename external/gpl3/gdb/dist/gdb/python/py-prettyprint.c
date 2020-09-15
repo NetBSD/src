@@ -1,6 +1,6 @@
 /* Python pretty-printing
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "extension-priv.h"
 #include "python.h"
 #include "python-internal.h"
+#include "cli/cli-style.h"
 
 /* Return type of print_string_repr.  */
 
@@ -190,7 +191,7 @@ pretty_print_one_value (PyObject *printer, struct value **out_value)
   gdbpy_ref<> result;
 
   *out_value = NULL;
-  TRY
+  try
     {
       if (!PyObject_HasAttr (printer, gdbpy_to_string_cst))
 	result = gdbpy_ref<>::new_reference (Py_None);
@@ -212,10 +213,9 @@ pretty_print_one_value (PyObject *printer, struct value **out_value)
 	    }
 	}
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
     }
-  END_CATCH
 
   return result;
 }
@@ -260,10 +260,11 @@ print_stack_unless_memory_error (struct ui_file *stream)
       gdb::unique_xmalloc_ptr<char> msg = fetched_error.to_string ();
 
       if (msg == NULL || *msg == '\0')
-	fprintf_filtered (stream, _("<error reading variable>"));
+	fprintf_styled (stream, metadata_style.style (),
+			_("<error reading variable>"));
       else
-	fprintf_filtered (stream, _("<error reading variable: %s>"),
-			  msg.get ());
+	fprintf_styled (stream, metadata_style.style (),
+			_("<error reading variable: %s>"), msg.get ());
     }
   else
     gdbpy_print_stack ();
@@ -312,13 +313,8 @@ print_string_repr (PyObject *printer, const char *hint,
 	      long length;
 	      struct type *type;
 
-#ifdef IS_PY3K
 	      output = PyBytes_AS_STRING (string.get ());
 	      length = PyBytes_GET_SIZE (string.get ());
-#else
-	      output = PyString_AsString (string.get ());
-	      length = PyString_Size (string.get ());
-#endif
 	      type = builtin_type (gdbarch)->builtin_char;
 
 	      if (hint && !strcmp (hint, "string"))
@@ -349,88 +345,6 @@ print_string_repr (PyObject *printer, const char *hint,
 
   return result;
 }
-
-#ifndef IS_PY3K
-
-/* Create a dummy PyFrameObject, needed to work around
-   a Python-2.4 bug with generators.  */
-class dummy_python_frame
-{
- public:
-
-  dummy_python_frame ();
-
-  ~dummy_python_frame ()
-  {
-    if (m_valid)
-      m_tstate->frame = m_saved_frame;
-  }
-
-  bool failed () const
-  {
-    return !m_valid;
-  }
-
- private:
-
-  bool m_valid;
-  PyFrameObject *m_saved_frame;
-  gdbpy_ref<> m_frame;
-  PyThreadState *m_tstate;
-};
-
-dummy_python_frame::dummy_python_frame ()
-: m_valid (false),
-  m_saved_frame (NULL),
-  m_tstate (NULL)
-{
-  PyCodeObject *code;
-  PyFrameObject *frame;
-
-  gdbpy_ref<> empty_string (PyString_FromString (""));
-  if (empty_string == NULL)
-    return;
-
-  gdbpy_ref<> null_tuple (PyTuple_New (0));
-  if (null_tuple == NULL)
-    return;
-
-  code = PyCode_New (0,			  /* argcount */
-		     0,			  /* locals */
-		     0,			  /* stacksize */
-		     0,			  /* flags */
-		     empty_string.get (), /* code */
-		     null_tuple.get (),	  /* consts */
-		     null_tuple.get (),	  /* names */
-		     null_tuple.get (),	  /* varnames */
-#if PYTHON_API_VERSION >= 1010
-		     null_tuple.get (),	  /* freevars */
-		     null_tuple.get (),	  /* cellvars */
-#endif
-		     empty_string.get (), /* filename */
-		     empty_string.get (), /* name */
-		     1,			  /* firstlineno */
-		     empty_string.get ()  /* lnotab */
-		     );
-  if (code == NULL)
-    return;
-  gdbpy_ref<> code_holder ((PyObject *) code);
-
-  gdbpy_ref<> globals (PyDict_New ());
-  if (globals == NULL)
-    return;
-
-  m_tstate = PyThreadState_GET ();
-  frame = PyFrame_New (m_tstate, code, globals.get (), NULL);
-  if (frame == NULL)
-    return;
-
-  m_frame.reset ((PyObject *) frame);
-  m_tstate->frame = frame;
-  m_saved_frame = frame->f_back;
-  m_valid = true;
-}
-#endif
 
 /* Helper for gdbpy_apply_val_pretty_printer that formats children of the
    printer, if any exist.  If is_py_none is true, then nothing has
@@ -479,18 +393,6 @@ print_children (PyObject *printer, const char *hint,
       else
 	pretty = options->prettyformat_structs;
     }
-
-  /* Manufacture a dummy Python frame to work around Python 2.4 bug,
-     where it insists on having a non-NULL tstate->frame when
-     a generator is called.  */
-#ifndef IS_PY3K
-  dummy_python_frame frame;
-  if (frame.failed ())
-    {
-      gdbpy_print_stack ();
-      return;
-    }
-#endif
 
   done_flag = 0;
   for (i = 0; i < options->print_max; ++i)
@@ -617,7 +519,17 @@ print_children (PyObject *printer, const char *hint,
 	      error (_("Error while executing Python code."));
 	    }
 	  else
-	    common_val_print (value, stream, recurse + 1, options, language);
+	    {
+	      /* When printing the key of a map we allow one additional
+		 level of depth.  This means the key will print before the
+		 value does.  */
+	      struct value_print_options opt = *options;
+	      if (is_map && i % 2 == 0
+		  && opt.max_depth != -1
+		  && opt.max_depth < INT_MAX)
+		++opt.max_depth;
+	      common_val_print (value, stream, recurse + 1, &opt, language);
+	    }
 	}
 
       if (is_map && i % 2 == 0)
@@ -646,22 +558,20 @@ print_children (PyObject *printer, const char *hint,
 
 enum ext_lang_rc
 gdbpy_apply_val_pretty_printer (const struct extension_language_defn *extlang,
-				struct type *type,
-				LONGEST embedded_offset, CORE_ADDR address,
+				struct value *value,
 				struct ui_file *stream, int recurse,
-				struct value *val,
 				const struct value_print_options *options,
 				const struct language_defn *language)
 {
+  struct type *type = value_type (value);
   struct gdbarch *gdbarch = get_type_arch (type);
-  struct value *value;
   enum string_repr_result print_result;
 
-  if (value_lazy (val))
-    value_fetch_lazy (val);
+  if (value_lazy (value))
+    value_fetch_lazy (value);
 
   /* No pretty-printer support for unavailable values.  */
-  if (!value_bytes_available (val, embedded_offset, TYPE_LENGTH (type)))
+  if (!value_bytes_available (value, 0, TYPE_LENGTH (type)))
     return EXT_LANG_RC_NOP;
 
   if (!gdb_python_initialized)
@@ -669,10 +579,7 @@ gdbpy_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 
   gdbpy_enter enter_py (gdbarch, language);
 
-  /* Instantiate the printer.  */
-  value = value_from_component (val, type, embedded_offset);
-
-  gdbpy_ref<> val_obj (value_to_value_object (value));
+  gdbpy_ref<> val_obj (value_to_value_object_no_release (value));
   if (val_obj == NULL)
     {
       print_stack_unless_memory_error (stream);
@@ -689,6 +596,9 @@ gdbpy_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 
   if (printer == Py_None)
     return EXT_LANG_RC_NOP;
+
+  if (val_print_check_max_depth (stream, recurse, options, language))
+    return EXT_LANG_RC_OK;
 
   /* If we are printing a map, we want some special formatting.  */
   gdb::unique_xmalloc_ptr<char> hint (gdbpy_get_display_hint (printer.get ()));
@@ -736,15 +646,14 @@ apply_varobj_pretty_printer (PyObject *printer_obj,
 gdbpy_ref<>
 gdbpy_get_varobj_pretty_printer (struct value *value)
 {
-  TRY
+  try
     {
       value = value_copy (value);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
       GDB_PY_HANDLE_EXCEPTION (except);
     }
-  END_CATCH
 
   gdbpy_ref<> val_obj (value_to_value_object (value));
   if (val_obj == NULL)

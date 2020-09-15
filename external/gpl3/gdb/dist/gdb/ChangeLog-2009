@@ -786,7 +786,7 @@
 2009-11-17  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Fix wrong debug output with `set debug infrun 1'.
-	* gdb/infrun.c (handle_inferior_event <debug_infrun>): New variable
+	* infrun.c (handle_inferior_event <debug_infrun>): New variable
 	old_chain.  Temporarily switch INFERIOR_PTID.
 	* target.h (target_stopped_by_watchpoint): Extend the comment.
 	(target_stopped_data_address): New comment.
@@ -2672,10 +2672,6 @@
 	PR python/10666:
 	* python/py-function.c (fnpy_init): Use xstrdup.
 
-2009-09-21  Jie Zhang  <jie.zhang@analog.com>
-
-	* doc/gdb.texinfo: Escape "{" and "}".
-
 2009-09-21  Phil Muldoon <pmuldoon@redhat.com>
 
 	PR python/10633
@@ -3207,7 +3203,7 @@
 
 2009-09-08  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
-	* gdb/Makefile.in (check//%): Parse 'config.status --version'
+	* Makefile.in (check//%): Parse 'config.status --version'
 	output to recreate the configuration from the testsuite directory,
 	rather than running 'config.status --recheck' from a different
 	build directory.  Let configure do the recursion rather than
@@ -10853,8 +10849,8 @@
 
 	Fix completer problem for filename completion on the first try.
 
-	* gdb/completer.h (gdb_completion_word_break_characters): New function.
-	* gdb/completer.c: Include gdb_assert.h.
+	* completer.h (gdb_completion_word_break_characters): New function.
+	* completer.c: Include gdb_assert.h.
 	(complete_line_internal_reason): New enum.
 	(complete_line_internal): Change last argument type to
 	complete_line_internal_reason.
@@ -12995,7 +12991,7 @@
 
 2009-01-20  Kazu Hirata  <kazu@codesourcery.com>
 
-	* gdb/procfs.c (info_mappings_callback): Cast map->pr_size to
+	* procfs.c (info_mappings_callback): Cast map->pr_size to
 	unsigned long.
 
 2009-01-20  Daniel Jacobowitz  <dan@codesourcery.com>

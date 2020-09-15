@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,40 +15,49 @@
 
 load_lib "ada.exp"
 
-standard_ada_testfile bar
+if { [skip_ada_tests] } { return -1 }
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
-  return -1
-}
+standard_ada_testfile bar
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 set float "\\-?((\[0-9\]+(\\.\[0-9\]+)?(e\[-+\]\[0-9\]+)?)|(nan\\($hex\\)))"
 
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+foreach_with_prefix scenario {none all minimal} {
+    set flags {debug}
+    if {$scenario != "none"} {
+	lappend flags additional_flags=-fgnat-encodings=$scenario
+    }
 
-if ![mi_run_to_main] then {
-   fail "cannot run to main, testcase aborted"
-   return 0
+    if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $flags] != "" } {
+	return -1
+    }
+
+    gdb_exit
+    if [mi_gdb_start] {
+	continue
+    }
+
+    mi_delete_breakpoints
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+
+    if ![mi_run_to_main] then {
+	fail "cannot run to main, testcase aborted"
+	return 0
+    }
+
+    set bp_location [gdb_get_line_number "STOP" ${testdir}/bar.adb]
+    mi_continue_to_line \
+	"bar.adb:$bp_location" \
+	"stop at start of main Ada procedure"
+
+    mi_gdb_test "-var-create var1 * Ut" \
+	"\\^done,name=\"var1\",numchild=\"2\",.*" \
+	"Create var1 varobj"
+
+    mi_gdb_test "-var-list-children 1 var1" \
+	"\\^done,numchild=\"2\",children=\\\[child={name=\"var1.b\",exp=\"b\",numchild=\"0\",value=\"3\",type=\"integer\",thread-id=\"$decimal\"},child={name=\"var1.c\",exp=\"c\",numchild=\"0\",value=\"$float\",type=\"float\",thread-id=\"$decimal\"}\\\],has_more=\"0\"" \
+	"list var1's children"
 }
-
-set bp_location [gdb_get_line_number "STOP" ${testdir}/bar.adb]
-mi_continue_to_line \
-    "bar.adb:$bp_location" \
-    "stop at start of main Ada procedure"
-
-mi_gdb_test "-var-create var1 * Ut" \
-    "\\^done,name=\"var1\",numchild=\"2\",.*" \
-    "Create var1 varobj"
-
-mi_gdb_test "-var-list-children 1 var1" \
-    "\\^done,numchild=\"2\",children=\\\[child={name=\"var1.b\",exp=\"b\",numchild=\"0\",value=\"3\",type=\"integer\",thread-id=\"$decimal\"},child={name=\"var1.c\",exp=\"c\",numchild=\"0\",value=\"$float\",type=\"float\",thread-id=\"$decimal\"}\\\],has_more=\"0\"" \
-    "list var1's children"

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2018-2019 Free Software Foundation, Inc.
+# Copyright (C) 2018-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -29,14 +29,14 @@
 
 if [ $# -ne 1 ]; then
    echo "Error: Path to syscall.h missing. Aborting."
-   echo "Usage: update-gnulib.sh <path-to-syscall.h>"
+   echo "Usage: update-freebsd.sh <path-to-syscall.h>"
    exit 1
 fi
 
 cat > freebsd.xml.tmp <<EOF
 <?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
 <!-- vi:set ro: -->
-<!-- Copyright (C) 2009-2018 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -69,7 +69,7 @@ awk '
 }
 /\/\* [0-9]* is freebsd[0-9]* [a-z_]* \*\// {
     printf "  <syscall name=\"%s_%s\" number=\"%s\" alias=\"%s\"/>\n", $4, $5, $2, $5
-}' $1 >> freebsd.xml.tmp
+}' "$1" >> freebsd.xml.tmp
 
 cat >> freebsd.xml.tmp <<EOF
 </syscalls_info>

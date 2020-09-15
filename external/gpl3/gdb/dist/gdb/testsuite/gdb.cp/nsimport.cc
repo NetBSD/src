@@ -13,8 +13,8 @@ namespace{
 
 int main()
 {
-  x;
-  xx;
-  xxx;
+  (void) x;
+  (void) xx;
+  (void) xxx;
   return 0;
 }

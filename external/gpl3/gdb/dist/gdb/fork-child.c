@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -25,17 +25,17 @@
 #include "terminal.h"
 #include "gdbthread.h"
 #include "top.h"
-#include "common/job-control.h"
-#include "common/filestuff.h"
+#include "gdbsupport/job-control.h"
+#include "gdbsupport/filestuff.h"
 #include "nat/fork-inferior.h"
-#include "common/common-inferior.h"
+#include "gdbsupport/common-inferior.h"
 
 /* The exec-wrapper, if any, that will be used when starting the
    inferior.  */
 
 static char *exec_wrapper = NULL;
 
-/* See common/common-inferior.h.  */
+/* See gdbsupport/common-inferior.h.  */
 
 const char *
 get_exec_wrapper ()
@@ -61,8 +61,6 @@ static struct ui *saved_ui = NULL;
 void
 prefork_hook (const char *args)
 {
-  const char *inferior_io_terminal = get_inferior_io_terminal ();
-
   gdb_assert (saved_ui == NULL);
   /* Retain a copy of our UI, since the child will replace this value
      and if we're vforked, we have to restore it.  */
@@ -70,7 +68,7 @@ prefork_hook (const char *args)
 
   /* Tell the terminal handling subsystem what tty we plan to run on;
      it will just record the information for later.  */
-  new_tty_prefork (inferior_io_terminal);
+  new_tty_prefork (current_inferior ()->tty ());
 }
 
 /* See nat/fork-inferior.h.  */
@@ -81,9 +79,6 @@ postfork_hook (pid_t pid)
   inferior *inf = current_inferior ();
 
   inferior_appeared (inf, pid);
-
-  /* Needed for wait_for_inferior stuff.  */
-  inferior_ptid = ptid_t (pid);
 
   gdb_assert (saved_ui != NULL);
   current_ui = saved_ui;
@@ -128,10 +123,13 @@ postfork_child_hook ()
 ptid_t
 gdb_startup_inferior (pid_t pid, int num_traps)
 {
-  ptid_t ptid = startup_inferior (pid, num_traps, NULL, NULL);
+  inferior *inf = current_inferior ();
+  process_stratum_target *proc_target = inf->process_target ();
+
+  ptid_t ptid = startup_inferior (proc_target, pid, num_traps, NULL, NULL);
 
   /* Mark all threads non-executing.  */
-  set_executing (ptid, 0);
+  set_executing (proc_target, ptid, false);
 
   return ptid;
 }
@@ -154,8 +152,9 @@ show_startup_with_shell (struct ui_file *file, int from_tty,
 		    value);
 }
 
+void _initialize_fork_child ();
 void
-_initialize_fork_child (void)
+_initialize_fork_child ()
 {
   add_setshow_filename_cmd ("exec-wrapper", class_run, &exec_wrapper, _("\
 Set a wrapper for running programs.\n\

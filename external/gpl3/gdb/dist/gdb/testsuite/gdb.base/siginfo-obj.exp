@@ -1,4 +1,4 @@
-# Copyright 2004-2019 Free Software Foundation, Inc.
+# Copyright 2004-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ if ![runto_main] then {
 }
 
 # Run to the signal.
-gdb_test "continue" ".*Program received signal SIGSEGV.*" "continue to signal"
+gdb_test "continue" ".*Program received signal SIGSEGV.*" \
+	 "continue to signal, 1st"
 
 # Try to generate a core file, for a later test.
 set gcorefile [standard_output_file $testfile.gcore]
@@ -86,13 +87,14 @@ gdb_test_multiple "p \$_siginfo" "$test" {
 
 set bp_location [gdb_get_line_number "set breakpoint here"]
 
-gdb_test "break $bp_location"
-gdb_test "continue" ".* handler .*" "continue to handler"
-
-gdb_test "p ssi_addr" " = \\(void \\*\\) $ssi_addr"
-gdb_test "p ssi_errno" " = $ssi_errno"
-gdb_test "p ssi_code" " = $ssi_code"
-gdb_test "p ssi_signo" " = $ssi_signo"
+with_test_prefix "validate siginfo fields" {
+    gdb_test "break $bp_location"
+    gdb_test "continue" ".* handler .*" "continue to handler"
+    gdb_test "p ssi_addr" " = \\(void \\*\\) $ssi_addr"
+    gdb_test "p ssi_errno" " = $ssi_errno"
+    gdb_test "p ssi_code" " = $ssi_code"
+    gdb_test "p ssi_signo" " = $ssi_signo"
+}
 
 # Again, but this time, patch si_addr and check that the inferior sees
 # the changed value.
@@ -104,7 +106,8 @@ if ![runto_main] then {
 }
 
 # Run to the signal.
-gdb_test "continue" ".*Program received signal SIGSEGV.*" "continue to signal"
+gdb_test "continue" ".*Program received signal SIGSEGV.*" \
+	 "continue to signal, 2nd"
 
 set test "set si_addr"
 gdb_test "p \$_siginfo._sifields._sigfault.si_addr = 0x666" " = \\(void \\*\\) 0x666"
@@ -112,13 +115,14 @@ gdb_test "p \$_siginfo.si_errno = 666" " = 666"
 gdb_test "p \$_siginfo.si_code = 999" " = 999"
 gdb_test "p \$_siginfo.si_signo = 11" " = 11"
 
-gdb_test "break $bp_location"
-gdb_test "continue" ".* handler .*" "continue to handler"
-
-gdb_test "p ssi_addr" " = \\(void \\*\\) 0x666"
-gdb_test "p ssi_errno" " = 666"
-gdb_test "p ssi_code" " = 999"
-gdb_test "p ssi_signo" " = 11"
+with_test_prefix "validate modified siginfo fields" {
+    gdb_test "break $bp_location"
+    gdb_test "continue" ".* handler .*" "continue to handler"
+    gdb_test "p ssi_addr" " = \\(void \\*\\) 0x666"
+    gdb_test "p ssi_errno" " = 666"
+    gdb_test "p ssi_code" " = 999"
+    gdb_test "p ssi_signo" " = 11"
+}
 
 # Test siginfo preservation in core files.
 if {$gcore_created} {

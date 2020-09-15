@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2019 Free Software Foundation, Inc.
+   Copyright 2017-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ struct abc
   {}
 
   /* Typedef defined in-struct.  */
-  typedef int my_int_type;
+  typedef short my_int_type;
 
   my_int_type field9;
 };

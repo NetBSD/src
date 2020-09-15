@@ -15,7 +15,7 @@ namespace C
     int
     second()
     {
-      ab;
+      (void) ab;
       return 0;
     }
   }

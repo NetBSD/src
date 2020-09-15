@@ -1,6 +1,6 @@
 /* Simulator pseudo baseclass.
 
-   Copyright 1997-2019 Free Software Foundation, Inc.
+   Copyright 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -82,6 +82,7 @@ typedef struct _sim_cpu sim_cpu;
 
 #include "sim-module.h"
 
+#include "sim-arange.h"
 #include "sim-trace.h"
 #include "sim-core.h"
 #include "sim-events.h"
@@ -92,6 +93,7 @@ typedef struct _sim_cpu sim_cpu;
 #include "sim-watch.h"
 #include "sim-memopt.h"
 #include "sim-cpu.h"
+#include "sim-assert.h"
 
 
 /* We require all sims to dynamically allocate cpus.  See comment up top about

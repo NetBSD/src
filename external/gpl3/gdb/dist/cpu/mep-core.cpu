@@ -430,15 +430,15 @@
 
 (df f-8s8a2 "pc-rel addr (8 bits)"    (all-mep-core-isas PCREL-ADDR)  8  7 INT
     ((value pc) (sra SI (sub SI value    pc) 1))
-    ((value pc) (add SI (sll SI value 1) pc)))
+    ((value pc) (add SI (mul SI value 2) pc)))
 
 (df f-12s4a2 "pc-rel addr (12 bits)"  (all-mep-core-isas PCREL-ADDR)  4 11 INT
     ((value pc) (sra SI (sub SI value    pc) 1))
-    ((value pc) (add SI (sll SI value 1) pc)))
+    ((value pc) (add SI (mul SI value 2) pc)))
 
 (df f-17s16a2 "pc-rel addr (17 bits)" (all-mep-core-isas PCREL-ADDR) 16 16 INT
     ((value pc) (sra SI (sub SI value    pc) 1))
-    ((value pc) (add SI (sll SI value 1) pc)))
+    ((value pc) (add SI (mul SI value 2) pc)))
 
 (df f-24s5a2n-hi "24s5a2n hi 16s16" (all-mep-core-isas PCREL-ADDR) 16 16  INT #f #f)
 (df f-24s5a2n-lo "24s5a2n lo 7s5a2" (all-mep-core-isas PCREL-ADDR)  5  7 UINT #f #f)
@@ -456,7 +456,7 @@
 		    (set (ifield f-24s5a2n-hi)
 			 (sra INT (ifield f-24s5a2n) 8))))
   (extract (set (ifield f-24s5a2n)
-		(add SI (or (sll (ifield f-24s5a2n-hi) 8)
+		(add SI (or (mul (ifield f-24s5a2n-hi) 256)
 			    (sll (ifield f-24s5a2n-lo) 1))
 		     pc)))
   )
@@ -486,7 +486,7 @@
 (df f-7u9     "tp-rel b (7 bits)"      (all-mep-core-isas)  9  7 UINT #f #f)
 (df f-7u9a2   "tp-rel h (7 bits)"      (all-mep-core-isas)  9  6 UINT
     ((value pc) (srl SI value 1))
-    ((value pc) (sll SI value 1)))
+    ((value pc) (mul SI value 2)))
 (df f-7u9a4   "tp/sp-rel w (7 bits)"   (all-mep-core-isas)  9  5 UINT
     ((value pc) (srl SI value 2))
     ((value pc) (sll SI value 2)))

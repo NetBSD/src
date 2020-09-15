@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/arm.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,7 +41,7 @@ static arm_fbsd_nat_target the_arm_fbsd_nat_target;
 /* Determine if PT_GETREGS fetches REGNUM.  */
 
 static bool
-getregs_supplies (struct gdbarch *gdbarch, int regnum)
+getregs_supplies (int regnum)
 {
   return ((regnum >= ARM_A1_REGNUM && regnum <= ARM_PC_REGNUM)
 	  || regnum == ARM_PS_REGNUM);
@@ -51,7 +51,7 @@ getregs_supplies (struct gdbarch *gdbarch, int regnum)
 /* Determine if PT_GETVFPREGS fetches REGNUM.  */
 
 static bool
-getvfpregs_supplies (struct gdbarch *gdbarch, int regnum)
+getvfpregs_supplies (int regnum)
 {
   return ((regnum >= ARM_D0_REGNUM && regnum <= ARM_D31_REGNUM)
 	  || regnum == ARM_FPSCR_REGNUM);
@@ -66,8 +66,7 @@ arm_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   pid_t pid = get_ptrace_pid (regcache->ptid ());
 
-  struct gdbarch *gdbarch = regcache->arch ();
-  if (regnum == -1 || getregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getregs_supplies (regnum))
     {
       struct reg regs;
 
@@ -79,7 +78,7 @@ arm_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
     }
 
 #ifdef PT_GETVFPREGS
-  if (regnum == -1 || getvfpregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getvfpregs_supplies (regnum))
     {
       struct vfpreg vfpregs;
 
@@ -100,8 +99,7 @@ arm_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   pid_t pid = get_ptrace_pid (regcache->ptid ());
 
-  struct gdbarch *gdbarch = regcache->arch ();
-  if (regnum == -1 || getregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getregs_supplies (regnum))
     {
       struct reg regs;
 
@@ -116,7 +114,7 @@ arm_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
     }
 
 #ifdef PT_GETVFPREGS
-  if (regnum == -1 || getvfpregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getvfpregs_supplies (regnum))
     {
       struct vfpreg vfpregs;
 
@@ -145,8 +143,9 @@ arm_fbsd_nat_target::read_description ()
   return desc;
 }
 
+void _initialize_arm_fbsd_nat ();
 void
-_initialize_arm_fbsd_nat (void)
+_initialize_arm_fbsd_nat ()
 {
   add_inf_child_target (&the_arm_fbsd_nat_target);
 }

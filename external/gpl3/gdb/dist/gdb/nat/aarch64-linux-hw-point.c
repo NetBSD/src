@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,9 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
-#include "common/break-common.h"
-#include "common/common-regcache.h"
+#include "gdbsupport/common-defs.h"
+#include "gdbsupport/break-common.h"
+#include "gdbsupport/common-regcache.h"
 #include "nat/linux-nat.h"
 #include "aarch64-linux-hw-point.h"
 
@@ -278,27 +278,17 @@ aarch64_align_watchpoint (CORE_ADDR addr, int len, CORE_ADDR *aligned_addr_p,
     *next_addr_orig_p = align_down (*next_addr_orig_p + alignment, alignment);
 }
 
-struct aarch64_dr_update_callback_param
-{
-  int is_watchpoint;
-  unsigned int idx;
-};
-
-/* Callback for iterate_over_lwps.  Records the
+/* Helper for aarch64_notify_debug_reg_change.  Records the
    information about the change of one hardware breakpoint/watchpoint
    setting for the thread LWP.
-   The information is passed in via PTR.
    N.B.  The actual updating of hardware debug registers is not
    carried out until the moment the thread is resumed.  */
 
 static int
-debug_reg_change_callback (struct lwp_info *lwp, void *ptr)
+debug_reg_change_callback (struct lwp_info *lwp, int is_watchpoint,
+			   unsigned int idx)
 {
-  struct aarch64_dr_update_callback_param *param_p
-    = (struct aarch64_dr_update_callback_param *) ptr;
   int tid = ptid_of_lwp (lwp).lwp ();
-  int idx = param_p->idx;
-  int is_watchpoint = param_p->is_watchpoint;
   struct arch_lwp_info *info = lwp_arch_private_info (lwp);
   dr_changed_t *dr_changed_ptr;
   dr_changed_t dr_changed;
@@ -356,13 +346,14 @@ static void
 aarch64_notify_debug_reg_change (const struct aarch64_debug_reg_state *state,
 				 int is_watchpoint, unsigned int idx)
 {
-  struct aarch64_dr_update_callback_param param;
   ptid_t pid_ptid = ptid_t (current_lwp_ptid ().pid ());
 
-  param.is_watchpoint = is_watchpoint;
-  param.idx = idx;
-
-  iterate_over_lwps (pid_ptid, debug_reg_change_callback, (void *) &param);
+  iterate_over_lwps (pid_ptid, [=] (struct lwp_info *info)
+			       {
+				 return debug_reg_change_callback (info,
+								   is_watchpoint,
+								   idx);
+			       });
 }
 
 /* Reconfigure STATE to be compatible with Linux kernels with the PR

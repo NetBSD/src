@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 Free Software Foundation, Inc.
+# Copyright (C) 2009-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -181,17 +181,31 @@ class StructMainTypePrettyPrinter:
         fields.append(self.struct_field_location_img(f))
         return label + "\n" + "  {" + ",\n   ".join(fields) + "}"
 
+    def bound_img(self, bound_name):
+        """Return an image of the given main_type's bound."""
+        b = self.val['flds_bnds']['bounds'].dereference()[bound_name]
+        bnd_kind = str(b['kind'])
+        if bnd_kind == 'PROP_CONST':
+            return str(b['data']['const_val'])
+        elif bnd_kind == 'PROP_UNDEFINED':
+            return '(undefined)'
+        else:
+            info = [bnd_kind]
+            if bound_name == 'high' and b['flag_upper_bound_is_count']:
+                info.append('upper_bound_is_count')
+            return '{} ({})'.format(str(b['data']['baton']), ','.join(info))
+
     def bounds_img(self):
         """Return an image of the main_type bounds.
         """
         b = self.val['flds_bnds']['bounds'].dereference()
-        low = str(b['low'])
-        if b['low_undefined'] != 0:
-            low += " (undefined)"
-        high = str(b['high'])
-        if b['high_undefined'] != 0:
-            high += " (undefined)"
-        return "flds_bnds.bounds = {%s, %s}" % (low, high)
+        low = self.bound_img('low')
+        high = self.bound_img('high')
+
+        img = "flds_bnds.bounds = {%s, %s}" % (low, high)
+        if b['flag_bound_evaluated']:
+            img += ' [evaluated]'
+        return img
 
     def type_specific_img(self):
         """Return a string image of the main_type type_specific union.

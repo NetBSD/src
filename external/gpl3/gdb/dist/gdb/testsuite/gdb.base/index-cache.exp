@@ -1,4 +1,4 @@
-#   Copyright 2018-2019 Free Software Foundation, Inc.
+#   Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,19 @@
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
+	  {debug additional_flags=-Wl,--build-id}] } {
     return
 }
+
+# The index cache won't be used in certain circumstances, for which we must
+# account in this test:
+#
+#  - the binary already has an index section
+#  - we use the -readnow switch
+set has_index_section [exec_has_index_section $binfile]
+set uses_readnow [expr [string first "-readnow" $GDBFLAGS] != -1]
+set expecting_index_cache_use [expr !$has_index_section && !$uses_readnow]
 
 # List the files in DIR on the host (where GDB-under-test runs).
 # Return a list of two elements:
@@ -48,7 +58,7 @@ proc ls_host { dir } {
 	}
     }
 
-    return "0 $filtered"
+    return [list 0 $filtered]
 }
 
 # Execute "show index-cache stats" and verify the output against expected
@@ -109,23 +119,28 @@ proc_with_prefix test_basic_stuff { } {
 
 # Test loading a binary with the cache disabled.  No file should be created.
 
-proc_with_prefix test_cache_disabled { cache_dir } {
-    lassign [ls_host $cache_dir] ret files_before
+proc_with_prefix test_cache_disabled { cache_dir test_prefix } {
+    with_test_prefix $test_prefix {
+	lassign [ls_host $cache_dir] ret files_before
 
-    run_test_with_flags $cache_dir off {
-	lassign [ls_host $cache_dir] ret files_after
+	run_test_with_flags $cache_dir off {
+	    lassign [ls_host $cache_dir] ret files_after
 
-	set nfiles_created [expr [llength $files_after] - [llength $files_before]]
-	gdb_assert "$nfiles_created == 0" "no files were created"
+	    set nfiles_created [expr [llength $files_after] - [llength $files_before]]
+	    gdb_assert "$nfiles_created == 0" "no files were created"
 
-	check_cache_stats 0 0
+	    check_cache_stats 0 0
+	}
     }
 }
 
-# Test with the cache enabled, we expect to have exactly one file created.
+# Test a cache miss.  We expect to have at least one file in the cache if the
+# index cache is going to be used (see expecting_index_cache_use) and a cache
+# miss in the stats.  If the cache is not going to be used, we expect to have
+# no files and no cache hits nor misses.
 
 proc_with_prefix test_cache_enabled_miss { cache_dir } {
-    global testfile
+    global testfile expecting_index_cache_use
 
     lassign [ls_host $cache_dir] ret files_before
 
@@ -133,7 +148,11 @@ proc_with_prefix test_cache_enabled_miss { cache_dir } {
 
 	lassign [ls_host $cache_dir] ret files_after
 	set nfiles_created [expr [llength $files_after] - [llength $files_before]]
-	gdb_assert "$nfiles_created > 0" "at least one file was created"
+	if { $expecting_index_cache_use } {
+	    gdb_assert "$nfiles_created > 0" "at least one file was created"
+	} else {
+	    gdb_assert "$nfiles_created == 0" "no file was created"
+	}
 
 	set build_id [get_build_id  [standard_output_file ${testfile}]]
 	if { $build_id == "" } {
@@ -143,19 +162,31 @@ proc_with_prefix test_cache_enabled_miss { cache_dir } {
 
 	set expected_created_file [list "${build_id}.gdb-index"]
 	set found_idx [lsearch -exact $files_after $expected_created_file]
-	gdb_assert "$found_idx >= 0" "expected file is there"
+	if { $expecting_index_cache_use } {
+	    gdb_assert "$found_idx >= 0" "expected file is there"
+	} else {
+	    gdb_assert "$found_idx == -1" "no index cache file generated"
+	}
 
 	remote_exec host rm "-f $cache_dir/$expected_created_file"
 
-	check_cache_stats 0 1
+	if { $expecting_index_cache_use } {
+	    check_cache_stats 0 1
+	} else {
+	    check_cache_stats 0 0
+	}
     }
 }
 
 
-# Test with the cache enabled, this time we should have one file (the
-# same), but one cache read hit.
+# Test a cache hit.  We should have at least one file in the cache if the index
+# cache is going to be used (see expecting_index_cache_use) and a cache hit in
+# the stats.  If the cache is not going to be used, we expect to have no files
+# and no cache hits nor misses.
 
 proc_with_prefix test_cache_enabled_hit { cache_dir } {
+    global expecting_index_cache_use
+
     # Just to populate the cache.
     run_test_with_flags $cache_dir on {}
 
@@ -166,7 +197,11 @@ proc_with_prefix test_cache_enabled_hit { cache_dir } {
 	set nfiles_created [expr [llength $files_after] - [llength $files_before]]
 	gdb_assert "$nfiles_created == 0" "no files were created"
 
-	check_cache_stats 1 0
+	if { $expecting_index_cache_use } {
+	    check_cache_stats 1 0
+	} else {
+	    check_cache_stats 0 0
+	}
     }
 }
 
@@ -184,10 +219,10 @@ if { $ret != 0 } {
 # The ouput of mktemp contains an end of line, remove it.
 set cache_dir [string trimright $cache_dir \r\n]
 
-test_cache_disabled $cache_dir
+test_cache_disabled $cache_dir "before populate"
 test_cache_enabled_miss $cache_dir
 test_cache_enabled_hit $cache_dir
 
 # Test again with the cache disabled, now that it is populated.
-test_cache_disabled $cache_dir
+test_cache_disabled $cache_dir "after populate"
 

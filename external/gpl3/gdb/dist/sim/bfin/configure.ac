@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(Makefile.in)
 sinclude(../common/acinclude.m4)
+m4_include([../../config/pkg.m4])
 
 SIM_AC_COMMON
 

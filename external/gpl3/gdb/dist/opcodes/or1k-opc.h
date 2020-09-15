@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2019 Free Software Foundation, Inc.
+Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -37,6 +37,11 @@ extern "C" {
 #undef  CGEN_DIS_HASH
 #define CGEN_DIS_HASH(buffer, value) (((unsigned char *) (buffer))[0] >> 2)
 
+/* Check applicability of instructions against machines.  */
+#define CGEN_VALIDATE_INSN_SUPPORTED
+
+extern int or1k_cgen_insn_supported (CGEN_CPU_DESC, const CGEN_INSN *);
+
 /* -- */
 /* Enum declaration for or1k instruction types.  */
 typedef enum cgen_insn_type {
@@ -65,21 +70,24 @@ typedef enum cgen_insn_type {
  , OR1K_INSN_L_MACU, OR1K_INSN_L_MSB, OR1K_INSN_L_MSBU, OR1K_INSN_L_CUST1
  , OR1K_INSN_L_CUST2, OR1K_INSN_L_CUST3, OR1K_INSN_L_CUST4, OR1K_INSN_L_CUST5
  , OR1K_INSN_L_CUST6, OR1K_INSN_L_CUST7, OR1K_INSN_L_CUST8, OR1K_INSN_LF_ADD_S
- , OR1K_INSN_LF_ADD_D, OR1K_INSN_LF_SUB_S, OR1K_INSN_LF_SUB_D, OR1K_INSN_LF_MUL_S
- , OR1K_INSN_LF_MUL_D, OR1K_INSN_LF_DIV_S, OR1K_INSN_LF_DIV_D, OR1K_INSN_LF_REM_S
- , OR1K_INSN_LF_REM_D, OR1K_INSN_LF_ITOF_S, OR1K_INSN_LF_ITOF_D, OR1K_INSN_LF_FTOI_S
- , OR1K_INSN_LF_FTOI_D, OR1K_INSN_LF_EQ_S, OR1K_INSN_LF_EQ_D, OR1K_INSN_LF_NE_S
- , OR1K_INSN_LF_NE_D, OR1K_INSN_LF_GE_S, OR1K_INSN_LF_GE_D, OR1K_INSN_LF_GT_S
- , OR1K_INSN_LF_GT_D, OR1K_INSN_LF_LT_S, OR1K_INSN_LF_LT_D, OR1K_INSN_LF_LE_S
- , OR1K_INSN_LF_LE_D, OR1K_INSN_LF_MADD_S, OR1K_INSN_LF_MADD_D, OR1K_INSN_LF_CUST1_S
- , OR1K_INSN_LF_CUST1_D
+ , OR1K_INSN_LF_ADD_D32, OR1K_INSN_LF_SUB_S, OR1K_INSN_LF_SUB_D32, OR1K_INSN_LF_MUL_S
+ , OR1K_INSN_LF_MUL_D32, OR1K_INSN_LF_DIV_S, OR1K_INSN_LF_DIV_D32, OR1K_INSN_LF_REM_S
+ , OR1K_INSN_LF_REM_D32, OR1K_INSN_LF_ITOF_S, OR1K_INSN_LF_ITOF_D32, OR1K_INSN_LF_FTOI_S
+ , OR1K_INSN_LF_FTOI_D32, OR1K_INSN_LF_SFEQ_S, OR1K_INSN_LF_SFEQ_D32, OR1K_INSN_LF_SFNE_S
+ , OR1K_INSN_LF_SFNE_D32, OR1K_INSN_LF_SFGE_S, OR1K_INSN_LF_SFGE_D32, OR1K_INSN_LF_SFGT_S
+ , OR1K_INSN_LF_SFGT_D32, OR1K_INSN_LF_SFLT_S, OR1K_INSN_LF_SFLT_D32, OR1K_INSN_LF_SFLE_S
+ , OR1K_INSN_LF_SFLE_D32, OR1K_INSN_LF_SFUEQ_S, OR1K_INSN_LF_SFUEQ_D32, OR1K_INSN_LF_SFUNE_S
+ , OR1K_INSN_LF_SFUNE_D32, OR1K_INSN_LF_SFUGT_S, OR1K_INSN_LF_SFUGT_D32, OR1K_INSN_LF_SFUGE_S
+ , OR1K_INSN_LF_SFUGE_D32, OR1K_INSN_LF_SFULT_S, OR1K_INSN_LF_SFULT_D32, OR1K_INSN_LF_SFULE_S
+ , OR1K_INSN_LF_SFULE_D32, OR1K_INSN_LF_SFUN_S, OR1K_INSN_LF_SFUN_D32, OR1K_INSN_LF_MADD_S
+ , OR1K_INSN_LF_MADD_D32, OR1K_INSN_LF_CUST1_S, OR1K_INSN_LF_CUST1_D32
 } CGEN_INSN_TYPE;
 
 /* Index of `invalid' insn place holder.  */
 #define CGEN_INSN_INVALID OR1K_INSN_INVALID
 
 /* Total number of insns in table.  */
-#define MAX_INSNS ((int) OR1K_INSN_LF_CUST1_D + 1)
+#define MAX_INSNS ((int) OR1K_INSN_LF_CUST1_D32 + 1)
 
 /* This struct records data prior to insertion or after extraction.  */
 struct cgen_fields
@@ -113,6 +121,7 @@ struct cgen_fields
   long f_resv_10_7;
   long f_resv_10_3;
   long f_resv_10_1;
+  long f_resv_8_1;
   long f_resv_7_4;
   long f_resv_5_2;
   long f_imm16_25_5;
@@ -124,6 +133,12 @@ struct cgen_fields
   long f_uimm6;
   long f_uimm16_split;
   long f_simm16_split;
+  long f_rdoff_10_1;
+  long f_raoff_9_1;
+  long f_rboff_8_1;
+  long f_rdd32;
+  long f_rad32;
+  long f_rbd32;
 };
 
 #define CGEN_INIT_PARSE(od) \
