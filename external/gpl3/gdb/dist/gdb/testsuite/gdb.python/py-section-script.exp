@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,21 +77,34 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-gdb_test_no_output "set auto-load safe-path ${remote_python_file}:${binfile}" \
+# Get the name of the binfile on the host; on a remote host this means
+# stripping off any directory prefix.
+if [is_remote host] {
+    set remote_binfile [file tail ${binfile}]
+} else {
+    set remote_binfile ${binfile}
+}
+
+if [ishost *-*-mingw*] {
+    set remote_pathsep ";"
+} else {
+    set remote_pathsep ":"
+}
+gdb_test_no_output "set auto-load safe-path ${remote_python_file}${remote_pathsep}${remote_binfile}" \
     "set auto-load safe-path"
 gdb_load ${binfile}
 
 # Verify gdb loaded each script and they appear once in the list.
 set test_name "verify scripts loaded"
 gdb_test_multiple "info auto-load python-scripts" "$test_name" {
+    -re "Yes.*${testfile}.py.*Yes.*inlined-script.*$gdb_prompt $" {
+	pass "$test_name"
+    }
     -re "${testfile}.py.*${testfile}.py.*$gdb_prompt $" {
 	fail "$test_name"
     }
     -re "inlined-script.*inlined-script.*$gdb_prompt $" {
 	fail "$test_name"
-    }
-    -re "Yes.*${testfile}.py.*Yes.*inlined-script.*$gdb_prompt $" {
-	pass "$test_name"
     }
 }
 

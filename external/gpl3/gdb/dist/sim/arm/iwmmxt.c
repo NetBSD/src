@@ -1,5 +1,5 @@
 /*  iwmmxt.c -- Intel(r) Wireless MMX(tm) technology co-processor interface.
-    Copyright (C) 2002-2019 Free Software Foundation, Inc.
+    Copyright (C) 2002-2020 Free Software Foundation, Inc.
     Contributed by matthew green (mrg@redhat.com).
 
     This program is free software; you can redistribute it and/or modify
@@ -3539,7 +3539,7 @@ WXOR (ARMword instr)
   return ARMul_DONE;
 }
 
-/* This switch table is moved to a seperate function in order
+/* This switch table is moved to a separate function in order
    to work around a compiler bug in the host compiler...  */
 
 static int

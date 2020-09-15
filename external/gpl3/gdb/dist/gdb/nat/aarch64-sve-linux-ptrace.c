@@ -1,6 +1,6 @@
 /* Common target dependent for AArch64 systems.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,15 +19,13 @@
 
 #include <sys/utsname.h>
 #include <sys/uio.h>
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "elf/external.h"
 #include "elf/common.h"
 #include "aarch64-sve-linux-ptrace.h"
 #include "arch/aarch64.h"
-#include "common/common-regcache.h"
-#include "common/byte-vector.h"
-
-static bool vq_change_warned = false;
+#include "gdbsupport/common-regcache.h"
+#include "gdbsupport/byte-vector.h"
 
 /* See nat/aarch64-sve-linux-ptrace.h.  */
 
@@ -59,6 +57,63 @@ aarch64_sve_get_vq (int tid)
     }
 
   return vq;
+}
+
+/* See nat/aarch64-sve-linux-ptrace.h.  */
+
+bool
+aarch64_sve_set_vq (int tid, uint64_t vq)
+{
+  struct iovec iovec;
+  struct user_sve_header header;
+
+  iovec.iov_len = sizeof (header);
+  iovec.iov_base = &header;
+
+  if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_SVE, &iovec) < 0)
+    {
+      /* SVE is not supported.  */
+      return false;
+    }
+
+  header.vl = sve_vl_from_vq (vq);
+
+  if (ptrace (PTRACE_SETREGSET, tid, NT_ARM_SVE, &iovec) < 0)
+    {
+      /* Vector length change failed.  */
+      return false;
+    }
+
+  return true;
+}
+
+/* See nat/aarch64-sve-linux-ptrace.h.  */
+
+bool
+aarch64_sve_set_vq (int tid, struct reg_buffer_common *reg_buf)
+{
+  uint64_t reg_vg = 0;
+
+  /* The VG register may not be valid if we've not collected any value yet.
+     This can happen, for example,  if we're restoring the regcache after an
+     inferior function call, and the VG register comes after the Z
+     registers.  */
+  if (reg_buf->get_register_status (AARCH64_SVE_VG_REGNUM) != REG_VALID)
+  {
+    /* If vg is not available yet, fetch it from ptrace.  The VG value from
+       ptrace is likely the correct one.  */
+    uint64_t vq = aarch64_sve_get_vq (tid);
+
+    /* If something went wrong, just bail out.  */
+    if (vq == 0)
+      return false;
+
+    reg_vg = sve_vg_from_vq (vq);
+  }
+  else
+    reg_buf->raw_collect (AARCH64_SVE_VG_REGNUM, &reg_vg);
+
+  return aarch64_sve_set_vq (tid, sve_vq_from_vg (reg_vg));
 }
 
 /* See nat/aarch64-sve-linux-ptrace.h.  */
@@ -95,37 +150,18 @@ aarch64_sve_regs_copy_to_reg_buf (struct reg_buffer_common *reg_buf,
 {
   char *base = (char *) buf;
   struct user_sve_header *header = (struct user_sve_header *) buf;
-  uint64_t vq, vg_reg_buf = 0;
 
-  vq = sve_vq_from_vl (header->vl);
+  uint64_t vq = sve_vq_from_vl (header->vl);
+  uint64_t vg = sve_vg_from_vl (header->vl);
 
   /* Sanity check the data in the header.  */
   if (!sve_vl_valid (header->vl)
       || SVE_PT_SIZE (vq, header->flags) != header->size)
     error (_("Invalid SVE header from kernel."));
 
-  if (REG_VALID == reg_buf->get_register_status (AARCH64_SVE_VG_REGNUM))
-    reg_buf->raw_collect (AARCH64_SVE_VG_REGNUM, &vg_reg_buf);
-
-  if (vg_reg_buf == 0)
-    {
-      /* VG has not been set.  */
-      vg_reg_buf = sve_vg_from_vl (header->vl);
-      reg_buf->raw_supply (AARCH64_SVE_VG_REGNUM, &vg_reg_buf);
-    }
-  else if (vg_reg_buf != sve_vg_from_vl (header->vl) && !vq_change_warned)
-    {
-      /* Vector length on the running process has changed.  GDB currently does
-	 not support this and will result in GDB showing incorrect partially
-	 incorrect data for the vector registers.  Warn once and continue.  We
-	 do not expect many programs to exhibit this behaviour.  To fix this
-	 we need to spot the change earlier and generate a new target
-	 descriptor.  */
-      warning (_("SVE Vector length has changed (%ld to %d). "
-		 "Vector registers may show incorrect data."),
-	       vg_reg_buf, sve_vg_from_vl (header->vl));
-      vq_change_warned = true;
-    }
+  /* Update VG.  Note, the registers in the regcache will already be of the
+     correct length.  */
+  reg_buf->raw_supply (AARCH64_SVE_VG_REGNUM, &vg);
 
   if (HAS_SVE_STATE (*header))
     {
@@ -187,29 +223,12 @@ aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,
 {
   struct user_sve_header *header = (struct user_sve_header *) buf;
   char *base = (char *) buf;
-  uint64_t vq, vg_reg_buf = 0;
-
-  vq = sve_vq_from_vl (header->vl);
+  uint64_t vq = sve_vq_from_vl (header->vl);
 
   /* Sanity check the data in the header.  */
   if (!sve_vl_valid (header->vl)
       || SVE_PT_SIZE (vq, header->flags) != header->size)
     error (_("Invalid SVE header from kernel."));
-
-  if (REG_VALID == reg_buf->get_register_status (AARCH64_SVE_VG_REGNUM))
-    reg_buf->raw_collect (AARCH64_SVE_VG_REGNUM, &vg_reg_buf);
-
-  if (vg_reg_buf != 0 && vg_reg_buf != sve_vg_from_vl (header->vl))
-    {
-      /* Vector length on the running process has changed.  GDB currently does
-	 not support this and will result in GDB writing invalid data back to
-	 the vector registers.  Error and exit.  We do not expect many programs
-	 to exhibit this behaviour.  To fix this we need to spot the change
-	 earlier and generate a new target descriptor.  */
-      error (_("SVE Vector length has changed (%ld to %d). "
-	       "Cannot write back registers."),
-	     vg_reg_buf, sve_vg_from_vl (header->vl));
-    }
 
   if (!HAS_SVE_STATE (*header))
     {

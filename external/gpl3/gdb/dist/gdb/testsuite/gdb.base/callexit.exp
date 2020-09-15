@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,13 @@ if { ![runto_main] } {
     fail "can't run to main"
     return 0
 }
+
+# Verify set may-call-functions behaviour.
+gdb_test_no_output "set may-call-functions off"
+gdb_test "call callexit()" \
+    "Cannot call functions in the program: may-call-functions is off." \
+    "inferior function call refused in off state"
+gdb_test_no_output "set may-call-functions on"
 
 # Call function (causing the program to exit), and see if gdb handles
 # it properly.

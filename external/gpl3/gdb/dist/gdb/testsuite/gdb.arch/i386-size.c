@@ -1,6 +1,6 @@
 /* Symbol size test program.
 
-   Copyright 2006-2019 Free Software Foundation, Inc.
+   Copyright 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

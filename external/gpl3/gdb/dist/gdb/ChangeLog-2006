@@ -2080,8 +2080,6 @@
 
 	* remote-file.io.c (remote_fileio_func_system): Treat zero length
 	string as NULL.  Adjust for NULL pointer argument.
-	* doc/gdb.texinfo (system): Document behaviour with zero length
-	string.
 
 2006-06-12  Daniel Jacobowitz  <dan@codesourcery.com>
 
@@ -2356,7 +2354,7 @@
 	(print_unpacked_pointer): New function.
 	(print_variable_at_address): New function.
 	(m2_val_print): Replaced.
-	* gdb/MAINTAINERS (Write After Approval): Added
+	* MAINTAINERS (Write After Approval): Added
 	Gaius Mulley  <gaius@glam.ac.uk>
 
 2006-05-12  Mark Kettenis  <kettenis@gnu.org>
@@ -3027,7 +3025,6 @@
 	* configure.tgt (i[34567]86-*-netware*): Do not set build_nlm.
 	* configure.ac: Remove AC_CONFIG_SUBDIRS of nlm.
 	* configure: Regenerate.
-	* doc/gdb.texinfo: Remove gdbserve.nlm documentation.
 	* nlm: Remove directory.
 
 2006-03-29  Daniel Jacobowitz  <dan@codesourcery.com>
@@ -3413,15 +3410,15 @@
 
 2006-02-24  Charles Wilson  <cygwin@cwilson.fastmail.fm>
 
-	* gdb/defs.h: unconditionally include <fcntl.h>, and
+	* defs.h: unconditionally include <fcntl.h>, and
 	ensure that O_BINARY is defined.
-	* gdb/solib.c(solib_open): ensure solib files are opened in
+	* solib.c(solib_open): ensure solib files are opened in
 	binary mode.
-	* gdb/corelow.c: Remove O_BINARY macro definition.
-	* gdb/exec.c: Remove O_BINARY macro definition
-	* gdb/remote-rdp.c: Remove O_BINARY macro definition
-	* gdb/source.c: Remove O_BINARY macro definition
-	* gdb/symfile.c: Remove O_BINARY macro definition
+	* corelow.c: Remove O_BINARY macro definition.
+	* exec.c: Remove O_BINARY macro definition
+	* remote-rdp.c: Remove O_BINARY macro definition
+	* source.c: Remove O_BINARY macro definition
+	* symfile.c: Remove O_BINARY macro definition
 
 2006-02-24  Randolph Chung  <tausq@debian.org>
 

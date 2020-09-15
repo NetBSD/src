@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -447,8 +447,7 @@ set see4 0
 set see5 0
 
 gdb_test "delete mem 2-4" \
-    "No memory region number 2.*No memory region number 4." \
-    "delete mem 2-4"
+    "No memory region number 2.*No memory region number 4."
 gdb_test_multiple "info mem" "mem 2-4 were deleted" {
     -re ${info_mem_header_pattern} {
 	# Discard the header.

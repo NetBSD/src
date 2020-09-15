@@ -1,6 +1,6 @@
 /* Scheme interface to blocks.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -157,7 +157,7 @@ bkscm_print_block_smob (SCM self, SCM port, scm_print_state *pstate)
     gdbscm_printf (port, " static");
 
   if (BLOCK_FUNCTION (b) != NULL)
-    gdbscm_printf (port, " %s", SYMBOL_PRINT_NAME (BLOCK_FUNCTION (b)));
+    gdbscm_printf (port, " %s", BLOCK_FUNCTION (b)->print_name ());
 
   gdbscm_printf (port, " %s-%s",
 		 hex_string (BLOCK_START (b)), hex_string (BLOCK_END (b)));
@@ -680,19 +680,20 @@ gdbscm_lookup_block (SCM pc_scm)
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, NULL, "U", pc_scm, &pc);
 
-  TRY
+  gdbscm_gdb_exception exc {};
+  try
     {
       cust = find_pc_compunit_symtab (pc);
 
       if (cust != NULL && COMPUNIT_OBJFILE (cust) != NULL)
 	block = block_for_pc (pc);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+      exc = unpack (except);
     }
-  END_CATCH
 
+  GDBSCM_HANDLE_GDB_EXCEPTION (exc);
   if (cust == NULL || COMPUNIT_OBJFILE (cust) == NULL)
     {
       gdbscm_out_of_range_error (FUNC_NAME, SCM_ARG1, pc_scm,

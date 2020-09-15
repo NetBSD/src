@@ -1,6 +1,6 @@
 /* YACC parser for C++ names, for GDB.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Parts of the lexer are based on c-exp.y from GDB.
 
@@ -2129,7 +2129,6 @@ main (int argc, char **argv)
   if (argv[arg] == NULL)
     while (fgets (buf, 65536, stdin) != NULL)
       {
-	int len;
 	buf[strlen (buf) - 1] = 0;
 	/* Use DMGL_VERBOSE to get expanded standard substitutions.  */
 	c = trim_chars (buf, &extra_chars);

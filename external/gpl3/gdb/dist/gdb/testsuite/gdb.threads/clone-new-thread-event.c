@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2019 Free Software Foundation, Inc.
+   Copyright 2009-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ tkill (int lwpid, int signo)
 }
 
 static pid_t
-gettid (void)
+local_gettid (void)
 {
   return syscall (__NR_gettid);
 }
@@ -51,7 +51,7 @@ gettid (void)
 static int
 fn (void *unused)
 {
-  tkill (gettid (), SIGUSR1);
+  tkill (local_gettid (), SIGUSR1);
   return 0;
 }
 

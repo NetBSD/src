@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,6 +40,12 @@ enum bfd_link_discard
   discard_none,		/* Don't discard any locals.  */
   discard_l,		/* Discard local temporary symbols.  */
   discard_all		/* Discard all locals.  */
+};
+
+enum notice_asneeded_action {
+  notice_as_needed,
+  notice_not_needed,
+  notice_needed
 };
 
 /* Whether to generate ELF common symbols with the STT_COMMON type
@@ -264,9 +270,20 @@ enum report_method
      allowed to set the value.  */
   RM_NOT_YET_SET = 0,
   RM_IGNORE,
-  RM_GENERATE_WARNING,
-  RM_GENERATE_ERROR
+  RM_DIAGNOSE,
 };
+
+/* How to handle DT_TEXTREL.  */
+
+enum textrel_check_method
+{
+  textrel_check_none,
+  textrel_check_warning,
+  textrel_check_error
+};
+
+#define bfd_link_textrel_check(info) \
+  (info->textrel_check != textrel_check_none)
 
 typedef enum {with_flags, without_flags} flag_type;
 
@@ -344,6 +361,9 @@ struct bfd_link_info
   /* TRUE if the LTO plugin is active.  */
   unsigned int lto_plugin_active: 1;
 
+  /* TRUE if all LTO IR symbols have been read.  */
+  unsigned int lto_all_symbols_read : 1;
+
   /* TRUE if global symbols in discarded sections should be stripped.  */
   unsigned int strip_discarded: 1;
 
@@ -352,6 +372,10 @@ struct bfd_link_info
 
   /* TRUE if section groups should be resolved.  */
   unsigned int resolve_section_groups: 1;
+
+  /* Set if output file is big-endian, or if that is unknown, from
+     the command line or first input file endianness.  */
+  unsigned int big_endian : 1;
 
   /* Which symbols to strip.  */
   ENUM_BITFIELD (bfd_link_strip) strip : 2;
@@ -363,7 +387,7 @@ struct bfd_link_info
   ENUM_BITFIELD (bfd_link_elf_stt_common) elf_stt_common : 2;
 
   /* Criteria for skipping symbols when determining
-     whether to include an object from an archive. */
+     whether to include an object from an archive.  */
   ENUM_BITFIELD (bfd_link_common_skip_ar_symbols) common_skip_ar_symbols : 2;
 
   /* What to do with unresolved symbols in an object file.
@@ -376,6 +400,9 @@ struct bfd_link_info
   /* What to do with unresolved symbols in a shared library.
      The same defaults apply.  */
   ENUM_BITFIELD (report_method) unresolved_syms_in_shared_libs : 2;
+
+  /* TRUE if unresolved symbols are to be warned, rather than errored.  */
+  unsigned int warn_unresolved_syms: 1;
 
   /* TRUE if shared objects should be linked directly, not shared.  */
   unsigned int static_link: 1;
@@ -398,11 +425,8 @@ struct bfd_link_info
      should be created.  1 for DWARF2 tables, 2 for compact tables.  */
   unsigned int eh_frame_hdr_type: 2;
 
-  /* TRUE if we should warn when adding a DT_TEXTREL to a shared object.  */
-  unsigned int warn_shared_textrel: 1;
-
-  /* TRUE if we should error when adding a DT_TEXTREL.  */
-  unsigned int error_textrel: 1;
+  /* What to do with DT_TEXTREL in output.  */
+  ENUM_BITFIELD (textrel_check_method) textrel_check: 2;
 
   /* TRUE if .hash section should be created.  */
   unsigned int emit_hash: 1;
@@ -482,26 +506,8 @@ struct bfd_link_info
      been opened.  */
   unsigned int check_relocs_after_open_input: 1;
 
-  /* TRUE if BND prefix in PLT entries is always generated.  */
-  unsigned int bndplt: 1;
-
-  /* TRUE if IBT-enabled PLT entries should be generated.  */
-  unsigned int ibtplt: 1;
-
-  /* TRUE if GNU_PROPERTY_X86_FEATURE_1_IBT should be generated.  */
-  unsigned int ibt: 1;
-
-  /* TRUE if GNU_PROPERTY_X86_FEATURE_1_SHSTK should be generated.  */
-  unsigned int shstk: 1;
-
   /* TRUE if generation of .interp/PT_INTERP should be suppressed.  */
   unsigned int nointerp: 1;
-
-  /* TRUE if we shouldn't check relocation overflow.  */
-  unsigned int no_reloc_overflow_check: 1;
-
-  /* TRUE if generate a 1-byte NOP as suffix for x86 call instruction.  */
-  unsigned int call_nop_as_suffix : 1;
 
   /* TRUE if common symbols should be treated as undefined.  */
   unsigned int inhibit_common_definition : 1;
@@ -509,8 +515,16 @@ struct bfd_link_info
   /* TRUE if "-Map map" is passed to linker.  */
   unsigned int has_map_file : 1;
 
-  /* The 1-byte NOP for x86 call instruction.  */
-  char call_nop_byte;
+  /* TRUE if "--enable-non-contiguous-regions" is passed to the
+     linker.  */
+  unsigned int non_contiguous_regions : 1;
+
+  /* TRUE if "--enable-non-contiguous-regions-warnings" is passed to
+     the linker.  */
+  unsigned int non_contiguous_regions_warnings : 1;
+
+  /* TRUE if all symbol names should be unique.  */
+  unsigned int unique_symbol : 1;
 
   /* Char that may appear as the first char of a symbol, but should be
      skipped (like symbol_leading_char) when looking up symbols in
@@ -534,10 +548,10 @@ struct bfd_link_info
      Normally these optimizations are disabled by default but some targets
      prefer to enable them by default.  So this field is a tri-state variable.
      The values are:
-     
+
      zero: Enable the optimizations (either from --relax being specified on
        the command line or the backend's before_allocation emulation function.
-       
+
      positive: The user has requested that these optimizations be disabled.
        (Via the --no-relax command line option).
 
@@ -641,6 +655,9 @@ struct bfd_link_info
   /* May be used to set DT_FLAGS_1 for ELF. */
   bfd_vma flags_1;
 
+  /* May be used to set ELF visibility for __start_* / __stop_.  */
+  unsigned int start_stop_visibility;
+
   /* Start and end of RELRO region.  */
   bfd_vma relro_start, relro_end;
 
@@ -650,6 +667,11 @@ struct bfd_link_info
   /* The version information.  */
   struct bfd_elf_version_tree *version_info;
 };
+
+/* Some forward-definitions used by some callbacks.  */
+
+struct elf_strtab_hash;
+struct elf_sym_strtab;
 
 /* This structures holds a set of callback functions.  These are called
    by the BFD linker routines.  */
@@ -772,6 +794,16 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, bfd * abfd,
      asection * current_section, asection * previous_section,
      bfd_boolean new_segment);
+  /* This callback provides a chance for callers of the BFD to examine the
+     ELF string table and symbol table once they are complete and indexes and
+     offsets assigned.  */
+  void (*examine_strtab)
+    (struct elf_sym_strtab *syms, bfd_size_type symcount,
+     struct elf_strtab_hash *symstrtab);
+  /* This callback should emit the CTF section into a non-loadable section in
+     the output BFD named .ctf or a name beginning with ".ctf.".  */
+  void (*emit_ctf)
+    (void);
 };
 
 /* The linker builds link_order structures which tell the code how to
@@ -797,9 +829,9 @@ struct bfd_link_order
   struct bfd_link_order *next;
   /* Type of link_order.  */
   enum bfd_link_order_type type;
-  /* Offset within output section.  */
+  /* Offset within output section in bytes.  */
   bfd_vma offset;
-  /* Size within output section.  */
+  /* Size within output section in octets.  */
   bfd_size_type size;
   /* Type specific information.  */
   union
@@ -872,6 +904,20 @@ struct bfd_link_order_reloc
 
 /* Allocate a new link_order for a section.  */
 extern struct bfd_link_order *bfd_new_link_order (bfd *, asection *);
+
+struct bfd_section_already_linked;
+
+extern bfd_boolean bfd_section_already_linked_table_init (void);
+extern void bfd_section_already_linked_table_free (void);
+extern bfd_boolean _bfd_handle_already_linked
+  (struct bfd_section *, struct bfd_section_already_linked *,
+   struct bfd_link_info *);
+
+extern struct bfd_section *_bfd_nearby_section
+  (bfd *, struct bfd_section *, bfd_vma);
+
+extern void _bfd_fix_excluded_sec_syms
+  (bfd *, struct bfd_link_info *);
 
 /* These structures are used to describe version information for the
    ELF linker.  These structures could be manipulated entirely inside

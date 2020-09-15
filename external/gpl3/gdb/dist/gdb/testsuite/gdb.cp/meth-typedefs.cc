@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2019 Free Software Foundation, Inc.
+   Copyright 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,6 +35,13 @@ typedef void (*fptr1) (my_other_type);
 typedef void (*fptr2) (fptr1, my_other_type_2);
 typedef void (*fptr3) (fptr2, my_other_type);
 typedef void (*fptr4) (anon_enum a, anon_struct const& b, anon_union const*** c);
+
+// For c++/24367 testing
+typedef struct incomplete_struct incomplete_struct;
+typedef struct _incomplete_struct another_incomplete_struct;
+int test_incomplete (incomplete_struct *p) { return 0; } // test_incomplete(incomplete_struct*)
+int test_incomplete (another_incomplete_struct *p) { return 1; } // test_incomplete(another_incomplete_struct*)
+int test_incomplete (int *p) { return -1; } // test_incomplete(int*)
 
 namespace A
 {
@@ -147,5 +154,11 @@ main (void)
 
   fptr4 f4;
 
+  // Tests for c++/24367
+  int *i = nullptr;
+  incomplete_struct *is = nullptr;
+  another_incomplete_struct *ais = nullptr;
+  int result = (test_incomplete (i) + test_incomplete (is)
+		+ test_incomplete (ais));
   return 0;
 }

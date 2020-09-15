@@ -162,7 +162,7 @@
 
 2017-12-17  Stafford Horne  <shorne@gmail.com>
 
-	* gdb/or1k-tdep.c (show_or1k_debug): Fix function parameter alignment.
+	* or1k-tdep.c (show_or1k_debug): Fix function parameter alignment.
 	(or1k_analyse_inst): Likewise.
 	(or1k_single_step_through_delay): Likewise.
 	(or1k_frame_cache): Fix parameter alignment and use paddress()
@@ -5354,12 +5354,12 @@
 	type to std::vector.
 	* tracepoint.c (traceframe_available_memory): Change parameter
 	type to std::vector, adjust.
-	* gdb/mi/mi-main.c (mi_cmd_trace_frame_collected): Adjust to
+	* mi/mi-main.c (mi_cmd_trace_frame_collected): Adjust to
 	std::vector change.
-	* gdb/Makefile.in (SUBDIR_UNITTESTS_SRCS): Add
+	* Makefile.in (SUBDIR_UNITTESTS_SRCS): Add
 	unittests/memrange-selftests.c.
 	(SUBDIR_UNITTESTS_OBS): Add memrange-selftests.o.
-	* gdb/unittests/memrange-selftests.c: New file.
+	* unittests/memrange-selftests.c: New file.
 
 2017-10-16  Pedro Alves  <palves@redhat.com>
 
@@ -15712,8 +15712,8 @@
 2017-03-21  Ivo Raisr  <ivo.raisr@oracle.com>
 
 	PR tdep/20928
-	* gdb/sparc-tdep.h (gdbarch_tdep) <sparc64_ccr_type>: New field.
-	* gdb/sparc64-tdep.c (sparc64_ccr_type): New function.
+	* sparc-tdep.h (gdbarch_tdep) <sparc64_ccr_type>: New field.
+	* sparc64-tdep.c (sparc64_ccr_type): New function.
 	(sparc64_fsr_type): Fix %fsr decoding.
 
 2017-03-21  Tim Wiederhake  <tim.wiederhake@intel.com>
@@ -15798,8 +15798,6 @@
 
 	PR gdb/14441
 	* NEWS: Mention support for rvalue references in GDB and python.
-	* doc/gdb.texinfo (C Plus Plus Expressions): Mention that GDB
-	supports both lvalue and rvalue references.
 
 2017-03-20  Artemiy Volkov  <artemiyv@acm.org>
 
@@ -15874,8 +15872,6 @@
 2017-03-20  Artemiy Volkov  <artemiyv@acm.org>
 
 	PR gdb/14441
-	* doc/python.texi (Types in Python): Add TYPE_CODE_RVALUE_REF to
-	table of constants.
 	* python/lib/gdb/command/explore.py: Support exploring values
 	of rvalue reference types.
 	* python/lib/gdb/types.py: Implement get_basic_type() for
@@ -16338,7 +16334,6 @@
 2017-02-28  Peter Bergner  <bergner@vnet.ibm.com>
 
 	* NEWS: Mention new set/show disassembler-options commands.
-	* doc/gdb.texinfo: Document new set/show disassembler-options commands.
 	* disasm.c: Include "arch-utils.h", "gdbcmd.h" and "safe-ctype.h".
 	(prospective_options): New static variable.
 	(gdb_disassembler::gdb_disassembler): Initialize
@@ -17624,7 +17619,7 @@
 
 2017-01-27  Kees Cook  <keescook@google.com>
 
-	* gdb/arm-linux-nat.c (arm_linux_fetch_inferior_registers): Call
+	* arm-linux-nat.c (arm_linux_fetch_inferior_registers): Call
 	fetch_fpregs if target has fpa registers.
 	(arm_linux_store_inferior_registers): Call store_fpregs if target
 	has fpa registers.

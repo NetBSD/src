@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,14 +19,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "linux-btrace.h"
-#include "common/common-regcache.h"
-#include "common/gdb_wait.h"
+#include "gdbsupport/common-regcache.h"
+#include "gdbsupport/gdb_wait.h"
 #include "x86-cpuid.h"
-#include "common/filestuff.h"
-#include "common/scoped_fd.h"
-#include "common/scoped_mmap.h"
+#include "gdbsupport/filestuff.h"
+#include "gdbsupport/scoped_fd.h"
+#include "gdbsupport/scoped_mmap.h"
 
 #include <inttypes.h>
 
@@ -90,6 +90,9 @@ btrace_this_cpu (void)
 		cpu.model += (cpuid >> 12) & 0xf0;
 	    }
 	}
+      else if (ebx == signature_AMD_ebx && ecx == signature_AMD_ecx
+	       && edx == signature_AMD_edx)
+	cpu.vendor = CV_AMD;
     }
 
   return cpu;
@@ -271,11 +274,11 @@ perf_event_sample_ok (const struct perf_event_sample *sample)
    In case the buffer overflows during sampling, one sample may have its lower
    part at the end and its upper part at the beginning of the buffer.  */
 
-static VEC (btrace_block_s) *
+static std::vector<btrace_block> *
 perf_event_read_bts (struct btrace_target_info* tinfo, const uint8_t *begin,
 		     const uint8_t *end, const uint8_t *start, size_t size)
 {
-  VEC (btrace_block_s) *btrace = NULL;
+  std::vector<btrace_block> *btrace = new std::vector<btrace_block>;
   struct perf_event_sample sample;
   size_t read = 0;
   struct btrace_block block = { 0, 0 };
@@ -343,7 +346,7 @@ perf_event_read_bts (struct btrace_target_info* tinfo, const uint8_t *begin,
       /* We found a valid sample, so we can complete the current block.  */
       block.begin = psample->bts.to;
 
-      VEC_safe_push (btrace_block_s, btrace, &block);
+      btrace->push_back (block);
 
       /* Start the next block.  */
       block.end = psample->bts.from;
@@ -354,7 +357,7 @@ perf_event_read_bts (struct btrace_target_info* tinfo, const uint8_t *begin,
      reading delta trace, we can fill in the start address later on.
      Otherwise we will prune it.  */
   block.begin = 0;
-  VEC_safe_push (btrace_block_s, btrace, &block);
+  btrace->push_back (block);
 
   return btrace;
 }
@@ -406,6 +409,9 @@ cpu_supports_bts (void)
 
     case CV_INTEL:
       return intel_supports_bts (&cpu);
+
+    case CV_AMD:
+      return 0;
     }
 }
 
@@ -544,12 +550,10 @@ linux_enable_bts (ptid_t ptid, const struct btrace_config_bts *conf)
 
   bts->bts.size = size;
   bts->bts.data_head = &header->data_head;
-  bts->bts.mem = (const uint8_t *) data.get () + data_offset;
+  bts->bts.mem = (const uint8_t *) data.release () + data_offset;
   bts->bts.last_head = 0ull;
   bts->header = header;
   bts->file = fd.release ();
-
-  data.release ();
 
   tinfo->conf.bts.size = (unsigned int) size;
   return tinfo.release ();
@@ -667,10 +671,9 @@ linux_enable_pt (ptid_t ptid, const struct btrace_config_pt *conf)
   pt->pt.size = aux.size ();
   pt->pt.mem = (const uint8_t *) aux.release ();
   pt->pt.data_head = &header->aux_head;
-  pt->header = header;
+  pt->header = (struct perf_event_mmap_page *) data.release ();
+  gdb_assert (pt->header == header);
   pt->file = fd.release ();
-
-  data.release ();
 
   tinfo->conf.pt.size = (unsigned int) pt->pt.size;
   return tinfo.release ();
@@ -788,7 +791,8 @@ linux_read_bts (struct btrace_data_bts *btrace,
       data_head = *pevent->data_head;
 
       /* Delete any leftover trace from the previous iteration.  */
-      VEC_free (btrace_block_s, btrace->blocks);
+      delete btrace->blocks;
+      btrace->blocks = nullptr;
 
       if (type == BTRACE_READ_DELTA)
 	{
@@ -846,9 +850,8 @@ linux_read_bts (struct btrace_data_bts *btrace,
   /* Prune the incomplete last block (i.e. the first one of inferior execution)
      if we're not doing a delta read.  There is no way of filling in its zeroed
      BEGIN element.  */
-  if (!VEC_empty (btrace_block_s, btrace->blocks)
-      && type != BTRACE_READ_DELTA)
-    VEC_pop (btrace_block_s, btrace->blocks);
+  if (!btrace->blocks->empty () && type != BTRACE_READ_DELTA)
+    btrace->blocks->pop_back ();
 
   return BTRACE_ERR_NONE;
 }
@@ -892,7 +895,7 @@ linux_read_pt (struct btrace_data_pt *btrace,
       return BTRACE_ERR_NONE;
     }
 
-  internal_error (__FILE__, __LINE__, _("Unkown btrace read type."));
+  internal_error (__FILE__, __LINE__, _("Unknown btrace read type."));
 }
 
 /* See linux-btrace.h.  */

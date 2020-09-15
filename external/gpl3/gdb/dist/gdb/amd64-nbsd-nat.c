@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,8 +56,9 @@ static int amd64nbsd32_r_reg_offset[] =
 
 static amd64_bsd_nat_target<nbsd_nat_target> the_amd64_nbsd_nat_target;
 
+void _initialize_amd64nbsd_nat ();
 void
-_initialize_amd64nbsd_nat (void)
+_initialize_amd64nbsd_nat ()
 {
   amd64_native_gregset32_reg_offset = amd64nbsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64nbsd32_r_reg_offset);

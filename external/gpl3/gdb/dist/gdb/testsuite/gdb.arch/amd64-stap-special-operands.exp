@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@ if { ![istarget "x86_64-*-*"] || ![is_lp64_target] } {
 }
 
 proc test_probe { probe_name } {
-    if { ![runto "-pstap $probe_name"] } {
-	fail "run to probe $probe_name"
-	return
-    }
+    with_test_prefix "probe: ${probe_name}" {
+	if { ![runto "-pstap $probe_name"] } {
+	    fail "run to probe $probe_name"
+	    return
+	}
 
-    gdb_test "print \$_probe_argc" " = 1"
-    gdb_test "print \$_probe_arg0" " = 10"
+	gdb_test "print \$_probe_argc" " = 1"
+	gdb_test "print \$_probe_arg0" " = 10"
+    }
 }
 
 standard_testfile amd64-stap-triplet.S

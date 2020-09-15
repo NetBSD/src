@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,8 +114,7 @@ for { set i 0 } { $i < $NR_THREADS } { incr i } {
     # in the background for a specific thread.
     if {$i < $hwatch_count} {
       gdb_test "watch watched_data\[$i\]" \
-	"Hardware watchpoint .*" \
-	"watch watched_data\[$i\]"
+	"Hardware watchpoint .*"
     } else {
       verbose -log "Not setting watchpoint for watched_data\[$i\]\n"
     }

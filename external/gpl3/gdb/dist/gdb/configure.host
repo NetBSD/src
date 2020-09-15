@@ -20,7 +20,7 @@ case $host in
  vax-*-netbsdelf*)
     ;;
  *-*-irix* | \
- *-*-solaris2.[01] | *-*-solaris2.[2-9]* | \
+ *-*-solaris2.[01] | *-*-solaris2.[2-9]* | *-*-solaris2.10* | \
  alpha*-*-osf* | \
  alpha*-*-freebsd* | \
  alpha*-*-kfreebsd*-gnu | \
@@ -140,13 +140,7 @@ powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 powerpc-*-openbsd*)	gdb_host=obsd ;;
 
-powerpc64*-*-linux*)	gdb_host=ppc64-linux
-                        # Support 'pseudo-native' debugging on the Cell BE
-                        if test "${target_cpu}" = "spu"; then
-				gdb_host=spu-linux
-				gdb_native=yes
-                        fi
-			;;
+powerpc64*-*-linux*)	gdb_host=ppc64-linux ;;
 powerpc*-*-linux*)	gdb_host=linux ;;
 
 riscv*-*-freebsd*)	gdb_host=fbsd ;;

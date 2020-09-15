@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -831,7 +831,7 @@ mmix_elf_new_section_hook (bfd *abfd, asection *sec)
   if (!sec->used_by_bfd)
     {
       struct _mmix_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+      size_t amt = sizeof (*sdata);
 
       sdata = bfd_zalloc (abfd, amt);
       if (sdata == NULL)
@@ -1315,7 +1315,7 @@ mmix_elf_reloc (bfd *abfd,
   else
     relocation = symbol->value;
 
-  reloc_target_output_section = bfd_get_output_section (symbol);
+  reloc_target_output_section = bfd_asymbol_section (symbol)->output_section;
 
   /* Here the variable relocation holds the final address of the symbol we
      are relocating against, plus any addend.  */
@@ -1414,7 +1414,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 						  symtab_hdr->sh_link,
 						  sym->st_name);
 	  if (name == NULL)
-	    name = bfd_section_name (input_bfd, sec);
+	    name = bfd_section_name (sec);
 	}
       else
 	{
@@ -1606,9 +1606,9 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 	return bfd_reloc_undefined;
 
       /* Check that we're not relocating against a register symbol.  */
-      if (strcmp (bfd_get_section_name (symsec->owner, symsec),
+      if (strcmp (bfd_section_name (symsec),
 		  MMIX_REG_CONTENTS_SECTION_NAME) == 0
-	  || strcmp (bfd_get_section_name (symsec->owner, symsec),
+	  || strcmp (bfd_section_name (symsec),
 		     MMIX_REG_SECTION_NAME) == 0)
 	{
 	  /* Note: This is separated out into two messages in order
@@ -1641,7 +1641,7 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
       if (symsec == NULL)
 	return bfd_reloc_undefined;
 
-      if (strcmp (bfd_get_section_name (symsec->owner, symsec),
+      if (strcmp (bfd_section_name (symsec),
 		  MMIX_REG_CONTENTS_SECTION_NAME) == 0)
 	{
 	  if ((srel & 7) != 0 || srel < 32*8 || srel > 255*8)
@@ -1652,7 +1652,7 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 	    }
 	  srel /= 8;
 	}
-      else if (strcmp (bfd_get_section_name (symsec->owner, symsec),
+      else if (strcmp (bfd_section_name (symsec),
 		       MMIX_REG_SECTION_NAME) == 0)
 	{
 	  if (srel < 0 || srel > 255)
@@ -1704,9 +1704,9 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 	   accidentally handling it.  */
 	if (!bfd_is_abs_section (symsec)
 	    && !bfd_is_und_section (symsec)
-	    && strcmp (bfd_get_section_name (symsec->owner, symsec),
+	    && strcmp (bfd_section_name (symsec),
 		       MMIX_REG_CONTENTS_SECTION_NAME) != 0
-	    && strcmp (bfd_get_section_name (symsec->owner, symsec),
+	    && strcmp (bfd_section_name (symsec),
 		       MMIX_REG_SECTION_NAME) != 0)
 	{
 	  _bfd_error_handler
@@ -1722,10 +1722,8 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 	first_global = 255;
       else
 	{
-	  first_global
-	    = bfd_get_section_vma (input_section->output_section->owner,
-				   regsec) / 8;
-	  if (strcmp (bfd_get_section_name (symsec->owner, symsec),
+	  first_global = bfd_section_vma (regsec) / 8;
+	  if (strcmp (bfd_section_name (symsec),
 		      MMIX_REG_CONTENTS_SECTION_NAME) == 0)
 	    {
 	      if ((srel & 7) != 0 || srel < 32*8 || srel > 255*8)
@@ -1876,9 +1874,7 @@ mmix_elf_check_common_relocs  (bfd *abfd,
 		 those flags, as that is what currently happens for usual
 		 GREG allocations, and that works.  */
 	      if (allocated_gregs_section == NULL
-		  || !bfd_set_section_alignment (bpo_greg_owner,
-						 allocated_gregs_section,
-						 3))
+		  || !bfd_set_section_alignment (allocated_gregs_section, 3))
 		return FALSE;
 
 	      gregdata = (struct bpo_greg_section_info *)
@@ -2004,9 +2000,7 @@ mmix_elf_check_relocs (bfd *abfd,
 	/* This relocation describes which C++ vtable entries are actually
 	   used.  Record for later use during GC.  */
 	case R_MMIX_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 	}
@@ -2125,7 +2119,7 @@ mmix_elf_section_from_bfd_section (bfd *       abfd ATTRIBUTE_UNUSED,
 				   asection *  sec,
 				   int *       retval)
 {
-  if (strcmp (bfd_get_section_name (abfd, sec), MMIX_REG_SECTION_NAME) == 0)
+  if (strcmp (bfd_section_name (sec), MMIX_REG_SECTION_NAME) == 0)
     *retval = SHN_REGISTER;
   else
     return FALSE;
@@ -2224,7 +2218,7 @@ mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
   if (reg_section != NULL)
     {
       /* FIXME: Pass error state gracefully.  */
-      if (bfd_get_section_flags (abfd, reg_section) & SEC_HAS_CONTENTS)
+      if (bfd_section_flags (reg_section) & SEC_HAS_CONTENTS)
 	_bfd_abort (__FILE__, __LINE__, _("register section has contents\n"));
 
       /* Really remove the section, if it hasn't already been done.  */
@@ -2332,7 +2326,7 @@ _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
   /* Set the zeroth-order estimate for the GREGs size.  */
   gregs_size = n_gregs * 8;
 
-  if (!bfd_set_section_size (bpo_greg_owner, bpo_gregs_section, gregs_size))
+  if (!bfd_set_section_size (bpo_gregs_section, gregs_size))
     return FALSE;
 
   /* Allocate and set up the GREG arrays.  They're filled in at relaxation
@@ -2544,6 +2538,7 @@ mmix_elf_relax_section (bfd *abfd,
      spot a missing actual initialization.  */
   size_t bpono = (size_t) -1;
   size_t pjsno = 0;
+  size_t pjsno_undefs = 0;
   Elf_Internal_Sym *isymbuf = NULL;
   bfd_size_type size = sec->rawsize ? sec->rawsize : sec->size;
 
@@ -2709,6 +2704,11 @@ mmix_elf_relax_section (bfd *abfd,
 		  gregdata->n_remaining_bpo_relocs_this_relaxation_round--;
 		  bpono++;
 		}
+
+	      /* Similarly, keep accounting consistent for PUSHJ
+		 referring to an undefined symbol.  */
+	      if (ELF64_R_TYPE (irel->r_info) == R_MMIX_PUSHJ_STUBBABLE)
+		pjsno_undefs++;
 	      continue;
 	    }
 	}
@@ -2848,10 +2848,10 @@ mmix_elf_relax_section (bfd *abfd,
 	}
     }
 
-  BFD_ASSERT(pjsno == mmix_elf_section_data (sec)->pjs.n_pushj_relocs);
+  BFD_ASSERT(pjsno + pjsno_undefs
+	     == mmix_elf_section_data (sec)->pjs.n_pushj_relocs);
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   if (sec->size < size + mmix_elf_section_data (sec)->pjs.stubs_size_sum)
@@ -2866,10 +2866,9 @@ mmix_elf_relax_section (bfd *abfd,
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL && (unsigned char *) isymbuf != symtab_hdr->contents)
+  if ((unsigned char *) isymbuf != symtab_hdr->contents)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
   return FALSE;
 }

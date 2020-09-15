@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile foo
 
@@ -69,7 +71,7 @@ mi_gdb_load ${binfile}
 # catchpoint that uses both conditions and exception name.
 
 mi_gdb_test "-catch-exception -c \"i = 2\" -e constraint_error" \
-            "\\^done,bkptno=\"$decimal\",bkpt={.*disp=\"keep\",enabled=\"y\",addr=\"$hex\",what=\"`constraint_error' Ada exception\",.*,cond=\"i = 2\",.*}" \
+            "\\^done,bkptno=\"$decimal\",bkpt={.*disp=\"keep\",enabled=\"y\",what=\"`constraint_error' Ada exception\",.*,cond=\"i = 2\",.*}" \
             "catch C_E if i = 2"
 
 # It is important that we start the program's execution after having

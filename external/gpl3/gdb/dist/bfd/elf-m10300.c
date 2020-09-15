@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -128,8 +128,9 @@ struct elf_mn10300_obj_tdata
 /* Get the MN10300 ELF linker hash table from a link_info structure.  */
 
 #define elf32_mn10300_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == MN10300_ELF_DATA ? ((struct elf32_mn10300_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == MN10300_ELF_DATA)	\
+   ? (struct elf32_mn10300_link_hash_table *) (p)->hash : NULL)
 
 #define elf32_mn10300_link_hash_traverse(table, func, info)		\
   (elf_link_hash_traverse						\
@@ -725,7 +726,7 @@ _bfd_mn10300_elf_create_got_section (bfd * abfd,
   s = bfd_make_section_anyway_with_flags (abfd, ".plt", pltflags);
   htab->splt = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
+      || !bfd_set_section_alignment (s, bed->plt_alignment))
     return FALSE;
 
   /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
@@ -742,7 +743,7 @@ _bfd_mn10300_elf_create_got_section (bfd * abfd,
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   htab->sgot = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, ptralign))
+      || !bfd_set_section_alignment (s, ptralign))
     return FALSE;
 
   if (bed->want_got_plt)
@@ -750,7 +751,7 @@ _bfd_mn10300_elf_create_got_section (bfd * abfd,
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       htab->sgotplt = s;
       if (s == NULL
-	  || ! bfd_set_section_alignment (abfd, s, ptralign))
+	  || !bfd_set_section_alignment (s, ptralign))
 	return FALSE;
     }
 
@@ -1136,9 +1137,7 @@ mn10300_elf_check_relocs (bfd *abfd,
 	/* This relocation describes which C++ vtable entries are actually
 	   used.  Record for later use during GC.  */
 	case R_MN10300_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    goto fail;
 	  break;
 
@@ -1374,7 +1373,7 @@ mn10300_elf_check_relocs (bfd *abfd,
 
   result = TRUE;
  fail:
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
 
   return result;
@@ -2068,12 +2067,12 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && !SYMBOL_REFERENCES_LOCAL (info, hh))
 		  || (r_type == R_MN10300_32
+		      && !SYMBOL_REFERENCES_LOCAL (info, hh)
 		      /* _32 relocs in executables force _COPY relocs,
 			 such that the address of the symbol ends up
 			 being local.  */
-		      && !bfd_link_executable (info)
-		      && !SYMBOL_REFERENCES_LOCAL (info, hh)
-		      && ((input_section->flags & SEC_ALLOC) != 0
+		      && (((input_section->flags & SEC_ALLOC) != 0
+			   && !bfd_link_executable (info))
 			  /* DWARF will emit R_MN10300_32 relocations
 			     in its sections against symbols defined
 			     externally in shared libraries.  We can't
@@ -2127,7 +2126,7 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -2419,17 +2418,19 @@ mn10300_elf_relax_delete_bytes (bfd *abfd,
 	 are deleting.  */
       for (; irel < irelend; irel++)
 	{
-	  int alignment = 1 << irel->r_addend;
-
 	  if (ELF32_R_TYPE (irel->r_info) == (int) R_MN10300_ALIGN
 	      && irel->r_offset > addr
-	      && irel->r_offset < toaddr
-	      && (count < alignment
-		  || alignment % count != 0))
+	      && irel->r_offset < toaddr)
 	    {
-	      irelalign = irel;
-	      toaddr = irel->r_offset;
-	      break;
+	      int alignment = 1 << irel->r_addend;
+
+	      if (count < alignment
+		  || alignment % count != 0)
+		{
+		  irelalign = irel;
+		  toaddr = irel->r_offset;
+		  break;
+		}
 	    }
 	}
     }
@@ -2745,7 +2746,7 @@ mn10300_elf_relax_section (bfd *abfd,
 			  /* A local symbol.  */
 			  Elf_Internal_Sym *isym;
 			  struct elf_link_hash_table *elftab;
-			  bfd_size_type amt;
+			  size_t amt;
 
 			  isym = isymbuf + r_index;
 			  if (isym->st_shndx == SHN_UNDEF)
@@ -2846,7 +2847,7 @@ mn10300_elf_relax_section (bfd *abfd,
 			  && ELF_ST_TYPE (isym->st_info) == STT_FUNC)
 			{
 			  struct elf_link_hash_table *elftab;
-			  bfd_size_type amt;
+			  size_t amt;
 			  struct elf_link_hash_entry **lhashes = hashes;
 
 			  /* Skip a local symbol if it aliases a
@@ -2914,8 +2915,7 @@ mn10300_elf_relax_section (bfd *abfd,
 		}
 
 	      /* Cache or free any memory we allocated for the relocs.  */
-	      if (internal_relocs != NULL
-		  && elf_section_data (section)->relocs != internal_relocs)
+	      if (elf_section_data (section)->relocs != internal_relocs)
 		free (internal_relocs);
 	      internal_relocs = NULL;
 
@@ -3071,7 +3071,7 @@ mn10300_elf_relax_section (bfd *abfd,
 		  const char *sym_name;
 		  char *new_name;
 		  struct elf_link_hash_table *elftab;
-		  bfd_size_type amt;
+		  size_t amt;
 
 		  if (isym->st_shndx != sec_shndx)
 		    continue;
@@ -3224,8 +3224,7 @@ mn10300_elf_relax_section (bfd *abfd,
 		}
 
 	      /* Cache or free any memory we allocated for the relocs.  */
-	      if (internal_relocs != NULL
-		  && elf_section_data (section)->relocs != internal_relocs)
+	      if (elf_section_data (section)->relocs != internal_relocs)
 		free (internal_relocs);
 	      internal_relocs = NULL;
 
@@ -3935,7 +3934,7 @@ mn10300_elf_relax_section (bfd *abfd,
 	  /* See if the value will fit in 24 bits.
 	     We allow any 16bit match here.  We prune those we can't
 	     handle below.  */
-	  if ((long) value < 0x7fffff && (long) value > -0x800000)
+	  if (value + 0x800000 < 0x1000000 && irel->r_offset >= 3)
 	    {
 	      unsigned char code;
 
@@ -4006,7 +4005,7 @@ mn10300_elf_relax_section (bfd *abfd,
 	  /* See if the value will fit in 16 bits.
 	     We allow any 16bit match here.  We prune those we can't
 	     handle below.  */
-	  if ((long) value < 0x7fff && (long) value > -0x8000)
+	  if (value + 0x8000 < 0x10000 && irel->r_offset >= 2)
 	    {
 	      unsigned char code;
 
@@ -4393,21 +4392,17 @@ mn10300_elf_relax_section (bfd *abfd,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (section)->this_hdr.contents != contents)
+  if (elf_section_data (section)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (section)->relocs != internal_relocs)
+  if (elf_section_data (section)->relocs != internal_relocs)
     free (internal_relocs);
 
   return FALSE;
@@ -4496,9 +4491,8 @@ mn10300_elf_get_relocated_section_contents (bfd *output_bfd,
 					  isymbuf, sections))
 	goto error_return;
 
-      if (sections != NULL)
-	free (sections);
-      if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+      free (sections);
+      if (symtab_hdr->contents != (unsigned char *) isymbuf)
 	free (isymbuf);
       if (internal_relocs != elf_section_data (input_section)->relocs)
 	free (internal_relocs);
@@ -4507,12 +4501,10 @@ mn10300_elf_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (sections != NULL)
-    free (sections);
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+  free (sections);
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && internal_relocs != elf_section_data (input_section)->relocs)
+  if (internal_relocs != elf_section_data (input_section)->relocs)
     free (internal_relocs);
   return NULL;
 }
@@ -4604,7 +4596,7 @@ static struct bfd_link_hash_table *
 elf32_mn10300_link_hash_table_create (bfd *abfd)
 {
   struct elf32_mn10300_link_hash_table *ret;
-  bfd_size_type amt = sizeof (* ret);
+  size_t amt = sizeof (* ret);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
@@ -4669,9 +4661,8 @@ elf_mn10300_mach (flagword flags)
    file.  This gets the MN10300 architecture right based on the machine
    number.  */
 
-static void
-_bfd_mn10300_elf_final_write_processing (bfd *abfd,
-					 bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+_bfd_mn10300_elf_final_write_processing (bfd *abfd)
 {
   unsigned long val;
 
@@ -4693,6 +4684,7 @@ _bfd_mn10300_elf_final_write_processing (bfd *abfd,
 
   elf_elfheader (abfd)->e_flags &= ~ (EF_MN10300_MACH);
   elf_elfheader (abfd)->e_flags |= val;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 static bfd_boolean
@@ -4823,7 +4815,7 @@ _bfd_mn10300_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 					  flags | SEC_READONLY);
   htab->root.srelplt = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, ptralign))
+      || !bfd_set_section_alignment (s, ptralign))
     return FALSE;
 
   if (! _bfd_mn10300_elf_create_got_section (abfd, info))
@@ -4860,7 +4852,7 @@ _bfd_mn10300_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 						   ? ".rela.bss" : ".rel.bss"),
 						  flags | SEC_READONLY);
 	  if (s == NULL
-	      || ! bfd_set_section_alignment (abfd, s, ptralign))
+	      || !bfd_set_section_alignment (s, ptralign))
 	    return FALSE;
 	}
     }
@@ -5023,9 +5015,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
   struct elf32_mn10300_link_hash_table *htab = elf32_mn10300_hash_table (info);
   bfd * dynobj;
   asection * s;
-  bfd_boolean plt;
   bfd_boolean relocs;
-  bfd_boolean reltext;
 
   dynobj = htab->root.dynobj;
   BFD_ASSERT (dynobj != NULL);
@@ -5063,9 +5053,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
-  plt = FALSE;
   relocs = FALSE;
-  reltext = FALSE;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       const char * name;
@@ -5075,40 +5063,21 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (streq (name, ".plt"))
 	{
 	  /* Remember whether there is a PLT.  */
-	  plt = s->size != 0;
+	  ;
 	}
       else if (CONST_STRNEQ (name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
-	      asection * target;
-
 	      /* Remember whether there are any reloc sections other
 		 than .rela.plt.  */
 	      if (! streq (name, ".rela.plt"))
-		{
-		  const char * outname;
-
-		  relocs = TRUE;
-
-		  /* If this relocation section applies to a read only
-		     section, then we probably need a DT_TEXTREL
-		     entry.  The entries in the .rela.plt section
-		     really apply to the .got section, which we
-		     created ourselves and so know is not readonly.  */
-		  outname = bfd_get_section_name (output_bfd,
-						  s->output_section);
-		  target = bfd_get_section_by_name (output_bfd, outname + 5);
-		  if (target != NULL
-		      && (target->flags & SEC_READONLY) != 0
-		      && (target->flags & SEC_ALLOC) != 0)
-		    reltext = TRUE;
-		}
+		relocs = TRUE;
 
 	      /* We use the reloc_count field as a counter if we need
 		 to copy relocs into the output file.  */
@@ -5148,45 +5117,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
 	return FALSE;
     }
 
-  if (elf_hash_table (info)->dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in _bfd_mn10300_elf_finish_dynamic_sections,
-	 but we must add the entries now so that we get the correct
-	 size for the .dynamic section.  The DT_DEBUG entry is filled
-	 in by the dynamic linker and used by the debugger.  */
-      if (! bfd_link_pic (info))
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (plt)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_PLTGOT, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_PLTRELSZ, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_PLTREL, DT_RELA)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (relocs)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_RELA, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_RELASZ, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_RELAENT,
-					      sizeof (Elf32_External_Rela)))
-	    return FALSE;
-	}
-
-      if (reltext)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various

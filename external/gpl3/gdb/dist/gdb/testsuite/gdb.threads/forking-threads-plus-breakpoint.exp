@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,7 +142,7 @@ proc do_test { cond_bp_target detach_on_fork displaced } {
 	"no threads left"
 
     gdb_test "info inferiors" \
-	"Num\[ \t\]+Description\[ \t\]+Executable\[ \t\]+\r\n\\* 1 \[^\r\n\]+" \
+	"Num\[ \t\]+Description\[ \t\]+Connection\[ \t\]+Executable\[ \t\]+\r\n\\* 1 \[^\r\n\]+" \
 	"only inferior 1 left"
 }
 

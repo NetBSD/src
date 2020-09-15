@@ -391,16 +391,16 @@ htab_sum_binary(bfd *abfd,
 		PTR data)
 {
   htab_binary_sizes *sizes = (htab_binary_sizes*)data;
-  unsigned_word size = bfd_get_section_size (sec);
-  unsigned_word vma = bfd_get_section_vma (abfd, sec);
-  unsigned_word ra = bfd_get_section_lma (abfd, sec);
+  unsigned_word size = bfd_section_size (sec);
+  unsigned_word vma = bfd_section_vma (sec);
+  unsigned_word ra = bfd_section_lma (sec);
 
   /* skip the section if no memory to allocate */
-  if (! (bfd_get_section_flags(abfd, sec) & SEC_ALLOC))
+  if (! (bfd_section_flags (sec) & SEC_ALLOC))
     return;
 
-  if ((bfd_get_section_flags (abfd, sec) & SEC_CODE)
-      || (bfd_get_section_flags (abfd, sec) & SEC_READONLY)) {
+  if ((bfd_section_flags (sec) & SEC_CODE)
+      || (bfd_section_flags (sec) & SEC_READONLY)) {
     if (sizes->text_bound < vma + size)
       sizes->text_bound = ALIGN_PAGE(vma + size);
     if (sizes->text_base > vma)
@@ -408,8 +408,8 @@ htab_sum_binary(bfd *abfd,
     if (sizes->text_ra > ra)
       sizes->text_ra = FLOOR_PAGE(ra);
   }
-  else if ((bfd_get_section_flags (abfd, sec) & SEC_DATA)
-	   || (bfd_get_section_flags (abfd, sec) & SEC_ALLOC)) {
+  else if ((bfd_section_flags (sec) & SEC_DATA)
+	   || (bfd_section_flags (sec) & SEC_ALLOC)) {
     if (sizes->data_bound < vma + size)
       sizes->data_bound = ALIGN_PAGE(vma + size);
     if (sizes->data_base > vma)
@@ -432,41 +432,41 @@ htab_dma_binary(bfd *abfd,
   device *me = sizes->me;
 
   /* skip the section if no memory to allocate */
-  if (! (bfd_get_section_flags(abfd, sec) & SEC_ALLOC))
+  if (! (bfd_section_flags (sec) & SEC_ALLOC))
     return;
 
   /* check/ignore any sections of size zero */
-  section_size = bfd_get_section_size (sec);
+  section_size = bfd_section_size (sec);
   if (section_size == 0)
     return;
 
   /* if nothing to load, ignore this one */
-  if (! (bfd_get_section_flags(abfd, sec) & SEC_LOAD))
+  if (! (bfd_section_flags (sec) & SEC_LOAD))
     return;
 
   /* find where it is to go */
-  section_vma = bfd_get_section_vma(abfd, sec);
+  section_vma = bfd_section_vma (sec);
   section_ra = 0;
-  if ((bfd_get_section_flags (abfd, sec) & SEC_CODE)
-      || (bfd_get_section_flags (abfd, sec) & SEC_READONLY))
+  if ((bfd_section_flags (sec) & SEC_CODE)
+      || (bfd_section_flags (sec) & SEC_READONLY))
     section_ra = (section_vma - sizes->text_base + sizes->text_ra);
-  else if ((bfd_get_section_flags (abfd, sec) & SEC_DATA))
+  else if ((bfd_section_flags (sec) & SEC_DATA))
     section_ra = (section_vma - sizes->data_base + sizes->data_ra);
   else 
     return; /* just ignore it */
 
   DTRACE(htab,
 	 ("load - name=%-7s vma=0x%.8lx size=%6ld ra=0x%.8lx flags=%3lx(%s%s%s%s%s )\n",
-	  bfd_get_section_name(abfd, sec),
+	  bfd_section_name (sec),
 	  (long)section_vma,
 	  (long)section_size,
 	  (long)section_ra,
-	  (long)bfd_get_section_flags(abfd, sec),
-	  bfd_get_section_flags(abfd, sec) & SEC_LOAD ? " LOAD" : "",
-	  bfd_get_section_flags(abfd, sec) & SEC_CODE ? " CODE" : "",
-	  bfd_get_section_flags(abfd, sec) & SEC_DATA ? " DATA" : "",
-	  bfd_get_section_flags(abfd, sec) & SEC_ALLOC ? " ALLOC" : "",
-	  bfd_get_section_flags(abfd, sec) & SEC_READONLY ? " READONLY" : ""
+	  (long)bfd_section_flags (sec),
+	  bfd_section_flags (sec) & SEC_LOAD ? " LOAD" : "",
+	  bfd_section_flags (sec) & SEC_CODE ? " CODE" : "",
+	  bfd_section_flags (sec) & SEC_DATA ? " DATA" : "",
+	  bfd_section_flags (sec) & SEC_ALLOC ? " ALLOC" : "",
+	  bfd_section_flags (sec) & SEC_READONLY ? " READONLY" : ""
 	  ));
 
   /* dma in the sections data */

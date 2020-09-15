@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Free Software Foundation, Inc.
+# Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -272,6 +272,13 @@ proc test_terminal_settings_preserved_after_sigterm { } {
     global GDB INTERNAL_GDBFLAGS GDBFLAGS
     global gdb_prompt
     global shell_prompt_re
+
+    # On Windows, GDB's "shell" command spawns cmd.exe, which does not
+    # understand PPID.  So we're out of luck even if the test harness
+    # uses a remote_exec shell with a working "kill" command.
+    if [ishost *-*-mingw*] {
+	return
+    }
 
     if ![spawn_shell] {
 	return

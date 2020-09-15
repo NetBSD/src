@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,16 @@ if {[skip_ifunc_tests]} {
 
 standard_testfile
 
+get_compiler_info
+set flags ""
+if [test_compiler_info gcc*] {
+    set flags additional_flags=-Wno-attribute-alias
+}
+
 with_test_prefix "nodebug" {
 
-    if { [prepare_for_testing "failed to prepare" "$testfile-nodebug" $srcfile {}] } {
+    if { [prepare_for_testing "failed to prepare" "$testfile-nodebug" \
+	      $srcfile $flags] } {
 	return -1
     }
 
@@ -51,7 +58,8 @@ with_test_prefix "nodebug" {
 
 with_test_prefix "debug" {
 
-    if { [prepare_for_testing "failed to prepare" "$testfile-debug" $srcfile] } {
+    if { [prepare_for_testing "failed to prepare" "$testfile-debug" \
+	      $srcfile "debug $flags"] } {
 	return -1
     }
 

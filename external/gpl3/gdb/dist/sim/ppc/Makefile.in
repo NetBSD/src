@@ -884,5 +884,10 @@ install: installdirs
 	n=`echo run | sed '$(program_transform_name)'`; \
 	$(INSTALL_PROGRAM) run$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
 
+install-strip: installdirs
+	n=`echo run | sed '$(program_transform_name)'`; \
+	$(INSTALL_PROGRAM) run$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
+	$(STRIP) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
+
 installdirs:
 	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(bindir)

@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile foo
 
@@ -32,7 +34,7 @@ set sp "\[ \t\]*"
 
 set info_break_header "Num${sp}Type${sp}Disp${sp}Enb${sp}Address${sp}What"
 set catch_exception_info \
-  "$any_nb${sp}breakpoint${sp}keep${sp}y${sp}$any_addr${sp}all Ada exceptions"
+  "$any_nb${sp}catchpoint${sp}keep${sp}y${sp}all Ada exceptions"
 
 ####################################
 # 1. Try catching all exceptions.  #
@@ -62,7 +64,7 @@ gdb_test "info break" \
          "info break, catch all Ada exceptions"
 
 set catchpoint_msg \
-  "Catchpoint $any_nb, CONSTRAINT_ERROR (\\\(foo\\.adb:$decimal explicit raise\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
+  "Catchpoint $any_nb, CONSTRAINT_ERROR (\\\(ignore C_E\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
          "Continuing\.$eol$catchpoint_msg$eol.*SPOT1" \
          "continuing to first exception"
@@ -105,11 +107,11 @@ gdb_test "catch exception unhandled" \
          "insert catchpoint on unhandled exceptions"
 
 set catch_exception_entry \
-  "$any_nb${sp}breakpoint${sp}keep${sp}y${sp}$any_addr${sp}\`Program_Error' Ada exception"
+  "$any_nb${sp}catchpoint${sp}keep${sp}y${sp}\`Program_Error' Ada exception"
 set catch_assert_entry \
-  "$any_nb${sp}breakpoint${sp}keep${sp}y${sp}$any_addr${sp}failed Ada assertions"
+  "$any_nb${sp}catchpoint${sp}keep${sp}y${sp}failed Ada assertions"
 set catch_unhandled_entry \
-  "$any_nb${sp}breakpoint${sp}keep${sp}y${sp}$any_addr${sp}unhandled Ada exceptions"
+  "$any_nb${sp}catchpoint${sp}keep${sp}y${sp}unhandled Ada exceptions"
 
 gdb_test "info break" \
          "$info_break_header$eol.*$catch_exception_entry$eol$catch_assert_entry$eol$catch_unhandled_entry" \
@@ -162,9 +164,10 @@ gdb_test "continue" \
          "Continuing\.$eol$temp_catchpoint_msg$eol.*SPOT1" \
          "continuing to temporary catchpoint"
 
-gdb_test "continue" \
-         "Continuing\..*$inferior_exited_re.*" \
-         "continuing to program completion"
-
+with_test_prefix "temporary catchpoint" {
+    gdb_test "continue" \
+	"Continuing\..*$inferior_exited_re.*" \
+	"continuing to program completion"
+}
 
 

@@ -1,6 +1,6 @@
 /* Modula 2 language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,10 +35,10 @@ extern void m2_print_typedef (struct type *, struct symbol *,
 extern int m2_is_long_set (struct type *type);
 extern int m2_is_unbounded_array (struct type *type);
 
-extern void m2_val_print (struct type *, int, CORE_ADDR,
-			  struct ui_file *, int,
-			  struct value *,
-			  const struct value_print_options *);
+/* Implement la_value_print_inner for Modula-2.  */
+
+extern void m2_value_print_inner (struct value *, struct ui_file *, int,
+				  const struct value_print_options *);
 
 extern int get_long_set_bounds (struct type *type, LONGEST *low,
 				LONGEST *high);

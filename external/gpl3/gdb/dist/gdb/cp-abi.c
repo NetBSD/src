@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -73,22 +73,21 @@ baseclass_offset (struct type *type, int index, const gdb_byte *valaddr,
 
   gdb_assert (current_cp_abi.baseclass_offset != NULL);
 
-  TRY
+  try
     {
       res = (*current_cp_abi.baseclass_offset) (type, index, valaddr,
 						embedded_offset,
 						address, val);
     }
-  CATCH (ex, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &ex)
     {
       if (ex.error != NOT_AVAILABLE_ERROR)
-	throw_exception (ex);
+	throw;
 
       throw_error (NOT_AVAILABLE_ERROR,
 		   _("Cannot determine virtual baseclass offset "
 		     "of incomplete object"));
     }
-  END_CATCH
 
   return res;
 }
@@ -110,17 +109,17 @@ value_rtti_type (struct value *v, int *full,
 {
   struct type *ret = NULL;
 
-  if ((current_cp_abi.rtti_type) == NULL)
+  if ((current_cp_abi.rtti_type) == NULL
+      || !HAVE_CPLUS_STRUCT (check_typedef (value_type (v))))
     return NULL;
-  TRY
+  try
     {
       ret = (*current_cp_abi.rtti_type) (v, full, top, using_enc);
     }
-  CATCH (e, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &e)
     {
       return NULL;
     }
-  END_CATCH
 
   return ret;
 }
@@ -221,11 +220,13 @@ cplus_typename_from_type_info (struct value *value)
   return (*current_cp_abi.get_typename_from_type_info) (value);
 }
 
-int
+/* See cp-abi.h.  */
+
+struct language_pass_by_ref_info
 cp_pass_by_reference (struct type *type)
 {
   if ((current_cp_abi.pass_by_reference) == NULL)
-    return 0;
+    return {};
   return (*current_cp_abi.pass_by_reference) (type);
 }
 
@@ -272,10 +273,8 @@ set_cp_abi_as_auto_default (const char *short_name)
 		    _("Cannot find C++ ABI \"%s\" to set it as auto default."),
 		    short_name);
 
-  if (auto_cp_abi.longname != NULL)
-    xfree ((char *) auto_cp_abi.longname);
-  if (auto_cp_abi.doc != NULL)
-    xfree ((char *) auto_cp_abi.doc);
+  xfree ((char *) auto_cp_abi.longname);
+  xfree ((char *) auto_cp_abi.doc);
 
   auto_cp_abi = *abi;
 
@@ -390,8 +389,9 @@ show_cp_abi_cmd (const char *args, int from_tty)
   uiout->text (").\n");
 }
 
+void _initialize_cp_abi ();
 void
-_initialize_cp_abi (void)
+_initialize_cp_abi ()
 {
   struct cmd_list_element *c;
 

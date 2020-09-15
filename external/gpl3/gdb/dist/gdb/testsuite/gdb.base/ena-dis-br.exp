@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2019 Free Software Foundation, Inc.
+# Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ proc break_at { breakpoint where } {
     gdb_test_multiple "$test" "$test" {
 	-re "Breakpoint (\[0-9\]*) at .*$where.*$gdb_prompt $" {
 	    set bp $expect_out(1,string)
-	    pass "$test"
+	    pass $gdb_test_name
 	}
     }
     return $bp
@@ -60,7 +60,7 @@ gdb_test_no_output "enable $bp" "enable break marker1"
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+y.*" \
-    "info break marker1"
+    "info break marker1 before hitting breakpoint"
 
 # See the comments in condbreak.exp for "run until breakpoint at
 # marker1" for an explanation of the xfail below.
@@ -84,7 +84,7 @@ gdb_test_no_output "enable once $bp" "enable once break marker2"
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+dis\[ \t\]+y.*" \
-    "info auto-disabled break marker2"
+    "info auto-disabled break marker2 before hitting breakpoint"
 
 # See the comments in condbreak.exp for "run until breakpoint at
 # marker1" for an explanation of the xfail below.
@@ -100,11 +100,16 @@ gdb_test_multiple "continue" "$test" {
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+dis\[ \t\]+n.*" \
-    "info auto-disabled break marker2"
+    "info auto-disabled break marker2 after hitting breakpoint"
 
 # Verify that we don't stop at a disabled breakpoint.
 gdb_continue_to_end "no stop"
-rerun_to_main
+
+set count 1
+with_test_prefix "run $count" {
+    rerun_to_main
+    incr count
+}
 gdb_continue_to_end "no stop at auto-disabled break marker2"
 
 # Verify that we can set a breakpoint to be self-deleting after the
@@ -149,7 +154,9 @@ if ![runto_main] then {
 
 set bp [break_at $bp_location7 "line $bp_location7"]
 
-set bp2 [break_at marker1 " line $bp_location15"]
+with_test_prefix "enable count" {
+  set bp2 [break_at marker1 " line $bp_location15"]
+}
 
 gdb_test "enable count" \
     "Argument required \\(hit count\\)\\." \
@@ -181,7 +188,9 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at "marker1" " line $bp_location15.*"]
+with_test_prefix "ignore count" {
+    set bp [break_at "marker1" " line $bp_location15.*"]
+}
 
 # Verify that an ignore of a non-existent breakpoint is gracefully
 # handled.
@@ -209,14 +218,18 @@ gdb_test "ignore $bp 0" \
 
 gdb_test "ignore $bp 1" \
     "Will ignore next crossing of breakpoint \[0-9\]*.*" \
-    "ignore break marker1"
+    "ignore break marker1 1"
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+y.*ignore next 1 hits.*" \
     "info ignored break marker1"
 
 gdb_continue_to_end "no stop at ignored break marker1"
-rerun_to_main
+
+with_test_prefix "run $count" {
+    rerun_to_main
+    incr count
+}
 
 # See the comments in condbreak.exp for "run until breakpoint at marker1" 
 # for an explanation of the xfail below.
@@ -236,7 +249,9 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at marker1 " line $bp_location15.*"]
+with_test_prefix "ignore count and auto-delete" {
+    set bp [break_at marker1 " line $bp_location15.*"]
+}
 
 gdb_test "ignore $bp 1" \
     "Will ignore next crossing of breakpoint \[0-9\]*.*" \
@@ -246,10 +261,14 @@ gdb_test_no_output "enable del $bp" "enable del break marker1"
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+del\[ \t\]+y.*ignore next 1 hits.*" \
-    "info break marker1"
+    "info break marker1 after hitting breakpoint"
 
 gdb_continue_to_end "no stop at ignored & auto-deleted break marker1"
-rerun_to_main
+
+with_test_prefix "run $count" {
+    rerun_to_main
+    incr count
+}
 
 gdb_test "continue" \
     ".*marker1 .*:$bp_location15.*" \
@@ -262,16 +281,21 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at marker1 " line $bp_location15"]
+with_test_prefix "disabled breakpoint ignore count" {
+    set bp [break_at marker1 " line $bp_location15"]
+}
 
 gdb_test "ignore $bp 10" \
     "Will ignore next 10 crossings of breakpoint \[0-9\]*.*" \
-    "ignore break marker1"
+    "ignore break marker1 10"
 
 gdb_test_no_output "disable $bp" "disable break marker1"
 
 gdb_continue_to_end "no stop at ignored & disabled break marker1"
-rerun_to_main
+
+with_test_prefix "run $count" {
+    rerun_to_main
+}
 
 gdb_test "info break $bp" \
     "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+n.*ignore next 10 hits.*" \
@@ -315,9 +339,18 @@ set b2 0
 set b3 0
 set b4 0
 set b1 [break_at main ""]
-set b2 [break_at main ""]
-set b3 [break_at main ""]
-set b4 [break_at main ""]
+
+with_test_prefix "2nd breakpoint" {
+    set b2 [break_at main ""]
+}
+
+with_test_prefix "3rd breakpoint" {
+    set b3 [break_at main ""]
+}
+
+with_test_prefix "4th breakpoint" {
+    set b4 [break_at main ""]
+}
 
 # Perform tests for disable/enable commands on multiple
 # locations and breakpoints.

@@ -934,8 +934,6 @@
 	* Makefile.in (SUBDIR_PYTHON_OBS): Add py-infevents.o.
 	(SUBDIR_PYTHON_SRCS): Add py-infevents.c.
 	(py-infevents.o): New rule.
-	* doc/observer.texi (inferior_call_pre, inferior_call_post)
-	(memory_changed, register_changed): New observers.
 	* infcall.c (call_function_by_hand): Notify observer before and
 	after inferior call.
 	* python/py-event.h (inferior_call_kind): New enum.
@@ -1210,7 +1208,7 @@
 2014-11-24  Samuel Thibault  <samuel.thibault@ens-lyon.org>
 
 	Pushed by Joel Brobecker  <brobecker@adacore.com>
-	* gdb/gnu-nat.c (inf_validate_procinfo): Multiply the number of
+	* gnu-nat.c (inf_validate_procinfo): Multiply the number of
 	elements pi_len by the size of the elements before calling
 	vm_deallocate.
 	(inf_validate_task_sc): Likewise, and properly deallocate the
@@ -2640,7 +2638,7 @@
 
 2014-10-15  Andreas Arnez  <arnez@linux.vnet.ibm.com>
 
-	* gdb/infrun.c (process_event_stop_test): Apply
+	* infrun.c (process_event_stop_test): Apply
 	gdbarch_addr_bits_remove to longjmp resume address.
 
 2014-10-15  Pedro Alves  <palves@redhat.com>
@@ -6241,7 +6239,6 @@
 	microblaze-with-stack-protect microblaze and microblaze-expedite.
 	* regformats/microblaze-with-stack-protect.dat: New file.
 	* regformats/microblaze.dat: New file.
-	* doc/gdb.texinfo (MicroBlaze Features): Added.
 
 2014-07-18  Tom Tromey  <tromey@redhat.com>
 
@@ -6947,7 +6944,7 @@
 	* nat/mips-linux-watch.h: Likewise.
 	* Makefile.in (HFILES_NO_SRCDIR): Reflect new locations.
 	(object file files): Reordered.
-	* gdb/copyright.py (EXCLUDE_LIST): Reflect new location
+	* copyright.py (EXCLUDE_LIST): Reflect new location
 	of glibc_thread_db.h.
 
 2014-06-20  Gary Benson  <gbenson@redhat.com>

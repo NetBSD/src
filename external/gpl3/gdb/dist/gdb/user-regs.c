@@ -1,6 +1,6 @@
 /* User visible, per-frame registers, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -41,7 +41,10 @@
 struct user_reg
 {
   const char *name;
-  struct value *(*read) (struct frame_info * frame, const void *baton);
+  /* Avoid the "read" symbol name as it conflicts with a preprocessor symbol
+     in the NetBSD header for Stack Smashing Protection, that wraps the read(2)
+     syscall.  */
+  struct value *(*xread) (struct frame_info * frame, const void *baton);
   const void *baton;
   struct user_reg *next;
 };
@@ -60,7 +63,7 @@ struct gdb_user_regs
 
 static void
 append_user_reg (struct gdb_user_regs *regs, const char *name,
-		 user_reg_read_ftype *read, const void *baton,
+		 user_reg_read_ftype *xread, const void *baton,
 		 struct user_reg *reg)
 {
   /* The caller is responsible for allocating memory needed to store
@@ -68,7 +71,7 @@ append_user_reg (struct gdb_user_regs *regs, const char *name,
      register list stored in the common heap or a specific obstack.  */
   gdb_assert (reg != NULL);
   reg->name = name;
-  reg->read = read;
+  reg->xread = xread;
   reg->baton = baton;
   reg->next = NULL;
   (*regs->last) = reg;
@@ -82,10 +85,10 @@ static struct gdb_user_regs builtin_user_regs = {
 };
 
 void
-user_reg_add_builtin (const char *name, user_reg_read_ftype *read,
+user_reg_add_builtin (const char *name, user_reg_read_ftype *xread,
 		      const void *baton)
 {
-  append_user_reg (&builtin_user_regs, name, read, baton,
+  append_user_reg (&builtin_user_regs, name, xread, baton,
 		   XNEW (struct user_reg));
 }
 
@@ -95,34 +98,26 @@ user_reg_add_builtin (const char *name, user_reg_read_ftype *read,
 static struct gdbarch_data *user_regs_data;
 
 static void *
-user_regs_init (struct gdbarch *gdbarch)
+user_regs_init (struct obstack *obstack)
 {
   struct user_reg *reg;
-  struct gdb_user_regs *regs 
-    = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct gdb_user_regs);
+  struct gdb_user_regs *regs = OBSTACK_ZALLOC (obstack, struct gdb_user_regs);
 
   regs->last = &regs->first;
   for (reg = builtin_user_regs.first; reg != NULL; reg = reg->next)
-    append_user_reg (regs, reg->name, reg->read, reg->baton,
-		     GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
+    append_user_reg (regs, reg->name, reg->xread, reg->baton,
+		     OBSTACK_ZALLOC (obstack, struct user_reg));
   return regs;
 }
 
 void
 user_reg_add (struct gdbarch *gdbarch, const char *name,
-	      user_reg_read_ftype *read, const void *baton)
+	      user_reg_read_ftype *xread, const void *baton)
 {
   struct gdb_user_regs *regs
     = (struct gdb_user_regs *) gdbarch_data (gdbarch, user_regs_data);
-
-  if (regs == NULL)
-    {
-      /* ULGH, called during architecture initialization.  Patch
-         things up.  */
-      regs = (struct gdb_user_regs *) user_regs_init (gdbarch);
-      deprecated_set_gdbarch_data (gdbarch, user_regs_data, regs);
-    }
-  append_user_reg (regs, name, read, baton,
+  gdb_assert (regs != NULL);
+  append_user_reg (regs, name, xread, baton,
 		   GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
 }
 
@@ -214,7 +209,7 @@ value_of_user_reg (int regnum, struct frame_info *frame)
   struct user_reg *reg = usernum_to_user_reg (gdbarch, regnum - maxregs);
 
   gdb_assert (reg != NULL);
-  return reg->read (frame, reg->baton);
+  return reg->xread (frame, reg->baton);
 }
 
 static void
@@ -233,13 +228,14 @@ maintenance_print_user_registers (const char *args, int from_tty)
     fprintf_unfiltered (gdb_stdout, " %-11s %3d\n", reg->name, regnum);
 }
 
+void _initialize_user_regs ();
 void
-_initialize_user_regs (void)
+_initialize_user_regs ()
 {
-  user_regs_data = gdbarch_data_register_post_init (user_regs_init);
+  user_regs_data = gdbarch_data_register_pre_init (user_regs_init);
 
   add_cmd ("user-registers", class_maintenance,
 	   maintenance_print_user_registers,
-	   _("List the names of the current user registers.\n"),
+	   _("List the names of the current user registers."),
 	   &maintenanceprintlist);
 }

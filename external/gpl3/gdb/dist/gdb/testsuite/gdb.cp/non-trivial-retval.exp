@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ if {![runto_main]} {
 gdb_breakpoint [gdb_get_line_number "Break here"]
 gdb_continue_to_breakpoint "Break here"
 
-gdb_test "p f1 (i1, i2)" ".* = {a = 123}" "p f1 (i1, i2)"
-gdb_test "p f2 (i1, i2)" ".* = {b = 123}" "p f2 (i1, i2)"
-gdb_test "p f22 (i1, i2)" ".* = {b1 = 123}" "p f22 (i1, i2)"
-gdb_test "p f3 (i1, i2)" ".* = {.* c = 123}" "p f3 (i1, i2)"
-gdb_test "p f4 (i1, i2)" ".* = {.* e = 123}" "p f4 (i1, i2)"
+gdb_test "p f1 (i1, i2)" ".* = {a = 123}"
+gdb_test "p f2 (i1, i2)" ".* = {b = 123}"
+gdb_test "p f22 (i1, i2)" ".* = {b1 = 123}"
+gdb_test "p f3 (i1, i2)" ".* = {.* c = 123}"
+gdb_test "p f4 (i1, i2)" ".* = {.* e = 123}"

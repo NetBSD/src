@@ -1,5 +1,5 @@
 /* This testcase is part of GDB, the GNU debugger.
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,21 +14,49 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifdef SHLIB_NAME
+# include <dlfcn.h>
+#endif
+
+#include <assert.h>
+#include <stddef.h>
+
+#include "print-file-var.h"
+
+START_EXTERN_C
+
 extern int get_version_1 (void);
 extern int get_version_2 (void);
+
+END_EXTERN_C
+
+#if VERSION_ID_MAIN
+ATTRIBUTE_VISIBILITY int this_version_id = 55;
+#endif
 
 int
 main (void)
 {
+#if VERSION_ID_MAIN
+  int vm = this_version_id;
+#endif
   int v1 = get_version_1 ();
-  int v2 = get_version_2 ();
+  int v2;
 
-  if (v1 != 104)
-    return 1;
-  /* The value returned by get_version_2 depends on the target system.  */
-  if (v2 != 104 && v2 != 203)
-    return 2;
+#ifdef SHLIB_NAME
+  {
+    void *handle = dlopen (SHLIB_NAME, RTLD_LAZY);
+    int (*getver2) (void);
+
+    assert (handle != NULL);
+
+    getver2 = (int (*)(void)) dlsym (handle, "get_version_2");
+
+    v2 = getver2 ();
+  }
+#else
+  v2 = get_version_2 ();
+#endif
 
   return 0; /* STOP */
 }
-

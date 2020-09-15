@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Python.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,20 +66,13 @@ python_string_to_unicode (PyObject *obj)
 static gdb::unique_xmalloc_ptr<char>
 unicode_to_encoded_string (PyObject *unicode_str, const char *charset)
 {
-  gdb::unique_xmalloc_ptr<char> result;
-
   /* Translate string to named charset.  */
   gdbpy_ref<> string (PyUnicode_AsEncodedString (unicode_str, charset, NULL));
   if (string == NULL)
     return NULL;
 
-#ifdef IS_PY3K
-  result.reset (xstrdup (PyBytes_AsString (string.get ())));
-#else
-  result.reset (xstrdup (PyString_AsString (string.get ())));
-#endif
-
-  return result;
+  return gdb::unique_xmalloc_ptr<char>
+    (xstrdup (PyBytes_AsString (string.get ())));
 }
 
 /* Returns a PyObject with the contents of the given unicode string
@@ -236,7 +229,7 @@ gdbpy_err_fetch::type_to_string () const
    This sets the Python error indicator.  */
 
 void
-gdbpy_convert_exception (struct gdb_exception exception)
+gdbpy_convert_exception (const struct gdb_exception &exception)
 {
   PyObject *exc_class;
 
@@ -247,7 +240,7 @@ gdbpy_convert_exception (struct gdb_exception exception)
   else
     exc_class = gdbpy_gdb_error;
 
-  PyErr_Format (exc_class, "%s", exception.message);
+  PyErr_Format (exc_class, "%s", exception.what ());
 }
 
 /* Converts OBJ to a CORE_ADDR value.
@@ -261,15 +254,14 @@ get_addr_from_python (PyObject *obj, CORE_ADDR *addr)
   if (gdbpy_is_value_object (obj))
     {
 
-      TRY
+      try
 	{
 	  *addr = value_as_address (value_object_to_value (obj));
 	}
-      CATCH (except, RETURN_MASK_ALL)
+      catch (const gdb_exception &except)
 	{
 	  GDB_PY_SET_HANDLE_EXCEPTION (except);
 	}
-      END_CATCH
     }
   else
     {
@@ -382,8 +374,7 @@ gdb_pymodule_addobject (PyObject *module, const char *name, PyObject *object)
   int result;
 
   Py_INCREF (object);
-  /* Python 2.4 did not have a 'const' here.  */
-  result = PyModule_AddObject (module, (char *) name, object);
+  result = PyModule_AddObject (module, name, object);
   if (result < 0)
     Py_DECREF (object);
   return result;

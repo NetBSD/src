@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,7 +57,7 @@
 /* Verify parameters of target_read_memory_bfd and target_read_memory are
    compatible.  */
 
-gdb_static_assert (sizeof (CORE_ADDR) == sizeof (bfd_vma));
+gdb_static_assert (sizeof (CORE_ADDR) >= sizeof (bfd_vma));
 gdb_static_assert (sizeof (gdb_byte) == sizeof (bfd_byte));
 gdb_static_assert (sizeof (ssize_t) <= sizeof (bfd_size_type));
 
@@ -78,11 +78,10 @@ target_read_memory_bfd (bfd_vma memaddr, bfd_byte *myaddr, bfd_size_type len)
    and read its in-core symbols out of inferior memory.  SIZE, if
    non-zero, is the known size of the object.  TEMPL is a bfd
    representing the target's format.  NAME is the name to use for this
-   symbol file in messages; it can be NULL or a malloc-allocated string
-   which will be attached to the BFD.  */
+   symbol file in messages; it can be NULL.  */
 static struct objfile *
 symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
-			     size_t size, char *name, int from_tty)
+			     size_t size, const char *name, int from_tty)
 {
   struct objfile *objf;
   struct bfd *nbfd;
@@ -101,11 +100,9 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
   /* Manage the new reference for the duration of this function.  */
   gdb_bfd_ref_ptr nbfd_holder = gdb_bfd_ref_ptr::new_reference (nbfd);
 
-  xfree (bfd_get_filename (nbfd));
   if (name == NULL)
-    nbfd->filename = xstrdup ("shared object read from target memory");
-  else
-    nbfd->filename = name;
+    name = "shared object read from target memory";
+  bfd_set_filename (nbfd, name);
 
   if (!bfd_check_format (nbfd, bfd_object))
     error (_("Got object file from memory but can't read symbols: %s."),
@@ -113,9 +110,9 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
 
   section_addr_info sai;
   for (sec = nbfd->sections; sec != NULL; sec = sec->next)
-    if ((bfd_get_section_flags (nbfd, sec) & (SEC_ALLOC|SEC_LOAD)) != 0)
-      sai.emplace_back (bfd_get_section_vma (nbfd, sec) + loadbase,
-			bfd_get_section_name (nbfd, sec),
+    if ((bfd_section_flags (sec) & (SEC_ALLOC|SEC_LOAD)) != 0)
+      sai.emplace_back (bfd_section_vma (sec) + loadbase,
+			bfd_section_name (sec),
 			sec->index);
 
   if (from_tty)
@@ -185,9 +182,10 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 	  return;
 	}
 
-      char *name = xstrprintf ("system-supplied DSO at %s",
-			       paddress (target_gdbarch (), vsyscall_range.start));
-      TRY
+      std::string name = string_printf ("system-supplied DSO at %s",
+					paddress (target_gdbarch (),
+						  vsyscall_range.start));
+      try
 	{
 	  /* Pass zero for FROM_TTY, because the action of loading the
 	     vsyscall DSO was not triggered by the user, even if the
@@ -195,19 +193,19 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 	  symbol_file_add_from_memory (bfd,
 				       vsyscall_range.start,
 				       vsyscall_range.length,
-				       name,
+				       name.c_str (),
 				       0 /* from_tty */);
 	}
-      CATCH (ex, RETURN_MASK_ALL)
+      catch (const gdb_exception &ex)
 	{
 	  exception_print (gdb_stderr, ex);
 	}
-      END_CATCH
     }
 }
 
+void _initialize_symfile_mem ();
 void
-_initialize_symfile_mem (void)
+_initialize_symfile_mem ()
 {
   add_cmd ("add-symbol-file-from-memory", class_files,
            add_symbol_file_from_memory_command,

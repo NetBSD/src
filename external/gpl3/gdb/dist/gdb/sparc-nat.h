@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,8 +75,8 @@ struct sparc_target : public BaseTarget
       return sparc_xfer_wcookie (object, annex, readbuf, writebuf,
 				 offset, len, xfered_len);
 
-    return BaseTarget (object, annex, readbuf, writebuf,
-		       offset, len, xfered_len);
+    return BaseTarget::xfer_partial (object, annex, readbuf, writebuf,
+				     offset, len, xfered_len);
   }
 };
 

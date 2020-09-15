@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,7 @@
 #include "observable.h"
 #include "gdbthread.h"
 #include "infcall.h"
+#include "gdbarch.h"
 
 struct dummy_frame_id
 {
@@ -125,11 +126,9 @@ remove_dummy_frame (struct dummy_frame **dummy_ptr)
 /* Delete any breakpoint B which is a momentary breakpoint for return from
    inferior call matching DUMMY_VOIDP.  */
 
-static int
-pop_dummy_frame_bpt (struct breakpoint *b, void *dummy_voidp)
+static bool
+pop_dummy_frame_bpt (struct breakpoint *b, struct dummy_frame *dummy)
 {
-  struct dummy_frame *dummy = (struct dummy_frame *) dummy_voidp;
-
   if (b->thread == dummy->id.thread->global_num
       && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id.id))
     {
@@ -139,11 +138,11 @@ pop_dummy_frame_bpt (struct breakpoint *b, void *dummy_voidp)
       delete_breakpoint (b);
 
       /* Stop the traversal.  */
-      return 1;
+      return true;
     }
 
   /* Continue the traversal.  */
-  return 0;
+  return false;
 }
 
 /* Pop *DUMMY_PTR, restoring program state to that before the
@@ -167,7 +166,10 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
 
   restore_infcall_suspend_state (dummy->caller_state);
 
-  iterate_over_breakpoints (pop_dummy_frame_bpt, dummy);
+  iterate_over_breakpoints ([dummy] (breakpoint* bp)
+    {
+      return pop_dummy_frame_bpt (bp, dummy);
+    });
 
   /* restore_infcall_control_state frees inf_state,
      all that remains is to pop *dummy_ptr.  */
@@ -409,7 +411,7 @@ fprint_dummy_frames (struct ui_file *file)
       fprintf_unfiltered (file, " id=");
       fprint_frame_id (file, s->id.id);
       fprintf_unfiltered (file, ", ptid=%s",
-			  target_pid_to_str (s->id.thread->ptid));
+			  target_pid_to_str (s->id.thread->ptid).c_str ());
       fprintf_unfiltered (file, "\n");
     }
 }
@@ -429,8 +431,9 @@ maintenance_print_dummy_frames (const char *args, int from_tty)
     }
 }
 
+void _initialize_dummy_frame ();
 void
-_initialize_dummy_frame (void)
+_initialize_dummy_frame ()
 {
   add_cmd ("dummy-frames", class_maintenance, maintenance_print_dummy_frames,
 	   _("Print the contents of the internal dummy-frame stack."),

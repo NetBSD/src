@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,27 +51,27 @@ if {$endianness == "little"} {
     set reg_value1 "0x202122232425262728292a2b2c2d2e2f"
 }
 
-gdb_test "info registers q0" \
+gdb_test "p/x \$q0" \
     "q0.*{u = $reg_value0, s = $reg_value0.*" \
     "check register q0 value"
 
-gdb_test "info registers q1" \
+gdb_test "p/x \$q1" \
     "q1.*{u = $reg_value1, s = $reg_value1.*" \
     "check register q1 value"
 
-gdb_test "info registers v0" \
+gdb_test "p/x \$v0" \
     "v0.*$reg_value0}}}" \
     "check register v0 value"
 
-gdb_test "info registers v1" \
+gdb_test "p/x \$v1" \
     "v1.*$reg_value1}}}" \
     "check register v1 value"
 
-gdb_test "info registers fpsr" \
+gdb_test "p/x \$fpsr" \
     "fpsr.*0x\[0-9a-fA-F\].*" \
     "check register fpsr value"
 
-gdb_test "info registers fpcr" \
+gdb_test "p/x \$fpcr" \
     "fpcr.*0x\[0-9a-fA-F\].*" \
     "check register fpcr value"
 

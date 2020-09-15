@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2019 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,10 +19,10 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-/* This is a BFD backend which may be used to write binary objects.
-   It may only be used for output, not input.  The intention is that
-   this may be used as an output format for objcopy in order to
-   generate raw binary data.
+/* This is a BFD backend which may be used to read or write binary
+   objects.  Historically, it was used as an output format for objcopy
+   in order to generate raw binary data, but is now used for other
+   purposes as well.
 
    This is very simple.  The only complication is that the real data
    will start at some address X, and in some cases we will not want to
@@ -53,7 +53,7 @@ binary_mkobject (bfd *abfd ATTRIBUTE_UNUSED)
    was not defaulted.  That is, it must be explicitly specified as
    being binary.  */
 
-static const bfd_target *
+static bfd_cleanup
 binary_object_p (bfd *abfd)
 {
   struct stat statbuf;
@@ -86,7 +86,7 @@ binary_object_p (bfd *abfd)
 
   abfd->tdata.any = (void *) sec;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 #define binary_close_and_cleanup     _bfd_generic_close_and_cleanup
@@ -97,12 +97,12 @@ binary_object_p (bfd *abfd)
 
 static bfd_boolean
 binary_get_section_contents (bfd *abfd,
-			     asection *section ATTRIBUTE_UNUSED,
+			     asection *section,
 			     void * location,
 			     file_ptr offset,
 			     bfd_size_type count)
 {
-  if (bfd_seek (abfd, offset, SEEK_SET) != 0
+  if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
       || bfd_bread (location, count, abfd) != count)
     return FALSE;
   return TRUE;
@@ -151,7 +151,7 @@ binary_canonicalize_symtab (bfd *abfd, asymbol **alocation)
   asection *sec = (asection *) abfd->tdata.any;
   asymbol *syms;
   unsigned int i;
-  bfd_size_type amt = BIN_SYMS * sizeof (asymbol);
+  size_t amt = BIN_SYMS * sizeof (asymbol);
 
   syms = (asymbol *) bfd_alloc (abfd, amt);
   if (syms == NULL)
@@ -230,7 +230,6 @@ binary_set_section_contents (bfd *abfd,
 
   if (! abfd->output_has_begun)
     {
-      unsigned int opb;
       bfd_boolean found_low;
       bfd_vma low;
       asection *s;
@@ -251,9 +250,10 @@ binary_set_section_contents (bfd *abfd,
 	    found_low = TRUE;
 	  }
 
-      opb = bfd_octets_per_byte (abfd);
       for (s = abfd->sections; s != NULL; s = s->next)
 	{
+	  unsigned int opb = bfd_octets_per_byte (abfd, s);
+
 	  s->filepos = (s->lma - low) * opb;
 
 	  /* Skip following warning check for sections that will not
@@ -307,6 +307,7 @@ binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define binary_bfd_lookup_section_flags		   bfd_generic_lookup_section_flags
 #define binary_bfd_merge_sections		   bfd_generic_merge_sections
 #define binary_bfd_is_group_section		   bfd_generic_is_group_section
+#define binary_bfd_group_name			   bfd_generic_group_name
 #define binary_bfd_discard_group		   bfd_generic_discard_group
 #define binary_section_already_linked		  _bfd_generic_section_already_linked
 #define binary_bfd_define_common_symbol		   bfd_generic_define_common_symbol

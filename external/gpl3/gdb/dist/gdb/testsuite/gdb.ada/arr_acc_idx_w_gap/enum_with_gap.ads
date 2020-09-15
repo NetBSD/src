@@ -1,4 +1,4 @@
---  Copyright 2018-2019 Free Software Foundation, Inc.
+--  Copyright 2018-2020 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -34,14 +34,16 @@ package Enum_With_Gap is
      );
    for Enum_With_Gaps'size use 16;
 
+   type Enum_Subrange is new Enum_With_Gaps range Lit1 .. Lit3;
+
    type MyWord is range 0 .. 16#FFFF# ;
    for MyWord'Size use 16;
 
    type AR is array (Enum_With_Gaps range <>) of MyWord;
    type AR_Access is access AR;
-   
+
    type String_Access is access String;
-   
+
    procedure Do_Nothing (E : AR_Access);
    procedure Do_Nothing (E : String_Access);
 

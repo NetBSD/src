@@ -1,4 +1,4 @@
-# Copyright 2003-2019 Free Software Foundation, Inc.
+# Copyright 2003-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@ proc test_help {} {
         "C\\+\\+ maintenance commands.\r\n\r\n"
     }
 
-    set multiple_help_body "List of maintenance cplus subcommands:\r\n\r\nmaintenance cplus first_component -- ${first_component_help}\r\nmaintenance cplus namespace -- ${namespace_help}\r\n\r\nType \"help maintenance cplus\" followed by maintenance cplus subcommand name for full documentation.\r\nCommand name abbreviations are allowed if unambiguous."
+    set multiple_help_body "List of maintenance cplus subcommands:.*Command name abbreviations are allowed if unambiguous."
 
-    gdb_test "maint cp" "\"maintenance cplus\" must be followed by the name of a command.\r\n.*"
+    gdb_test "maint cp" $multiple_help_body
 
     gdb_test "help maint cp first_component" "${first_component_help}."
     gdb_test "help maint cp namespace" "${namespace_help}."

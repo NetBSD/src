@@ -1,5 +1,5 @@
 /* Interface to functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -56,12 +56,9 @@ gdb::unique_xmalloc_ptr<struct macro_scope> user_macro_scope (void);
    the user macro scope.  */
 gdb::unique_xmalloc_ptr<struct macro_scope> default_macro_scope (void);
 
-
 /* Look up the definition of the macro named NAME in scope at the source
-   location given by BATON, which must be a pointer to a `struct
-   macro_scope' structure.  This function is suitable for use as
-   a macro_lookup_ftype function.  */
-struct macro_definition *standard_macro_lookup (const char *name, void *baton);
-
+   location given by MS.  */
+macro_definition *standard_macro_lookup (const char *name,
+					 const macro_scope &ms);
 
 #endif /* MACROSCOPE_H */

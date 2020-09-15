@@ -1,6 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* We define this to get types like register_t.  */
+#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -113,8 +115,9 @@ mips_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
     }
 }
 
+void _initialize_mipsnbsd_nat ();
 void
-_initialize_mipsnbsd_nat (void)
+_initialize_mipsnbsd_nat ()
 {
   add_inf_child_target (&the_mips_nbsd_nat_target);
 }

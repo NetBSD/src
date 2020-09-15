@@ -149,11 +149,11 @@
 
 (df f-simm8	  "branch displacement"   (PCREL-ADDR RELOC) 15 8 INT
     ((value pc) (sra SI (sub SI value pc) 1))
-    ((value pc) (add SI (sll SI value 1) pc)))
+    ((value pc) (add SI (mul SI value 2) pc)))
 
 (df f-simm24     "branch displacement"	  (PCREL-ADDR RELOC) 31 24 INT
     ((value pc) (sra SI (sub SI value pc) 1))
-    ((value pc) (add SI (sll SI value 1) pc)))
+    ((value pc) (add SI (mul SI value 2) pc)))
 
 (df f-sdisp3     "signed immediate 3 bit"      ()     9 3  INT #f #f)
 
@@ -228,10 +228,11 @@
 		(set (ifield f-disp3)  (and SI (ifield f-sdisp11) 7)))
       (sequence ()			;decode
 		(set (ifield f-sdisp11)
-		     (sra SI (sll SI (or SI (sll (ifield f-disp8) 3)
-					 (ifield f-disp3))
-				  21)
-			  21)))
+		     (sub SI (xor (and (or (sll (ifield f-disp8) 3)
+					   (ifield f-disp3))
+				       #x7ff)
+				  #x400)
+			  #x400)))
       )
 
 (dnmf f-imm16 "Short immediate for move/add/sub" () UINT (f-imm8 f-imm-27-8)

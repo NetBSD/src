@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -237,7 +237,7 @@ if {$skip_struct_object} {
 	" = \\{0, 0, 7, 0, 0\\}"
 
     gdb_test_no_output "compile code struct_object.complexfield = 7 + 5i"
-    gdb_test "print struct_object.complexfield" " = 7 \\+ 5 \\* I"
+    gdb_test "print struct_object.complexfield" " = 7 \\+ 5i"
 
     gdb_test_no_output "compile code struct_object.boolfield = 1"
     gdb_test "print struct_object.boolfield" " = true"
@@ -325,7 +325,7 @@ gdb_test_no_output "set debug compile off"
 gdb_test "show debug compile" "Compile debugging is .*"
 gdb_test "show compile-args" \
     "Compile command command-line arguments are .*"
-gdb_test "compile code -z" "Unknown argument.*"
+gdb_test "compile code -z" "Unrecognized option at: -z"
 
 gdb_test "set lang rust" \
     "Warning: the current language does not match this frame."
@@ -340,12 +340,17 @@ gdb_test "compile file" \
     "You must provide a filename for this command.*" \
     "Test compile file without a filename"
 gdb_test "compile file -r" \
-    "You must provide a filename with the raw option set.*" \
+    "You must provide a filename for this command.*" \
     "Test compile file and raw option without a filename"
 gdb_test "compile file -z" \
-    "Unknown argument.*" \
-    "test compile file with unknown argument"
-
+    "Unrecognized option at: -z" \
+    "test compile file with unknown option"
+gdb_test "compile file -z --" \
+    "Unrecognized option at: -z --" \
+    "test compile file with unknown option plus --"
+gdb_test "compile file -raw -- -raw" \
+    "/-raw: No such file or directory.*" \
+    "test compile file \"-raw\" file"
 
 # LOC_CONST tests.
 

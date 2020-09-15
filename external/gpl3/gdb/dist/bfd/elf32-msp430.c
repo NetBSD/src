@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002-2019 Free Software Foundation, Inc.
+    Copyright (C) 2002-2020 Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
     This file is part of BFD, the Binary File Descriptor library.
@@ -26,6 +26,11 @@
 #include "elf-bfd.h"
 #include "elf/msp430.h"
 
+static bfd_boolean debug_relocs = 0;
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
+
 static bfd_reloc_status_type
 rl78_sym_diff_handler (bfd * abfd,
 		       arelent * reloc,
@@ -36,7 +41,7 @@ rl78_sym_diff_handler (bfd * abfd,
 		       char ** error_message ATTRIBUTE_UNUSED)
 {
   bfd_size_type octets;
-  octets = reloc->address * bfd_octets_per_byte (abfd);
+  octets = reloc->address * OCTETS_PER_BYTE (abfd, input_sec);
 
   /* Catch the case where bfd_install_relocation would return
      bfd_reloc_outofrange because the SYM_DIFF reloc is being used in a very
@@ -49,6 +54,20 @@ rl78_sym_diff_handler (bfd * abfd,
       > bfd_get_section_limit_octets (abfd, input_sec))
     return bfd_reloc_ok;
   return bfd_reloc_continue;
+}
+
+/* Special handler for relocations which don't have to be relocated.
+   This function just simply returns bfd_reloc_ok.  */
+static bfd_reloc_status_type
+msp430_elf_ignore_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc_entry,
+			asymbol *symbol ATTRIBUTE_UNUSED,
+			void *data ATTRIBUTE_UNUSED, asection *input_section,
+			bfd *output_bfd, char **error_message ATTRIBUTE_UNUSED)
+{
+  if (output_bfd != NULL)
+    reloc_entry->address += input_section->output_offset;
+
+  return bfd_reloc_ok;
 }
 
 static reloc_howto_type elf_msp430_howto_table[] =
@@ -215,7 +234,40 @@ static reloc_howto_type elf_msp430_howto_table[] =
 	 FALSE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE)			/* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
+
+  /* The length of unsigned-leb128 is variable, just assume the
+     size is one byte here.  */
+  HOWTO (R_MSP430_GNU_SET_ULEB128,	/* type */
+	 0,				/* rightshift */
+	 0,				/* size */
+	 0,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 msp430_elf_ignore_reloc,	/* special handler.  */
+	 "R_MSP430_GNU_SET_ULEB128",	/* name */
+	 FALSE,				/* partial_inplace */
+	 0,				/* src_mask */
+	 0,				/* dst_mask */
+	 FALSE),			/* pcrel_offset */
+
+  /* The length of unsigned-leb128 is variable, just assume the
+     size is one byte here.  */
+  HOWTO (R_MSP430_GNU_SUB_ULEB128,	/* type */
+	 0,				/* rightshift */
+	 0,				/* size */
+	 0,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 msp430_elf_ignore_reloc,	/* special handler.  */
+	 "R_MSP430_GNU_SUB_ULEB128",	/* name */
+	 FALSE,				/* partial_inplace */
+	 0,				/* src_mask */
+	 0,				/* dst_mask */
+	 FALSE),			/* pcrel_offset */
+
 };
 
 static reloc_howto_type elf_msp430x_howto_table[] =
@@ -518,7 +570,40 @@ static reloc_howto_type elf_msp430x_howto_table[] =
 	 FALSE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE)			/* pcrel_offset */
+	 FALSE),		/* pcrel_offset */
+
+  /* The length of unsigned-leb128 is variable, just assume the
+     size is one byte here.  */
+  HOWTO (R_MSP430X_GNU_SET_ULEB128,	/* type */
+	 0,				/* rightshift */
+	 0,				/* size */
+	 0,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 msp430_elf_ignore_reloc,	/* special handler.  */
+	 "R_MSP430X_GNU_SET_ULEB128",	/* name */
+	 FALSE,				/* partial_inplace */
+	 0,				/* src_mask */
+	 0,				/* dst_mask */
+	 FALSE),			/* pcrel_offset */
+
+  /* The length of unsigned-leb128 is variable, just assume the
+     size is one byte here.  */
+  HOWTO (R_MSP430X_GNU_SUB_ULEB128,	/* type */
+	 0,				/* rightshift */
+	 0,				/* size */
+	 0,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 msp430_elf_ignore_reloc,	/* special handler.  */
+	 "R_MSP430X_GNU_SUB_ULEB128",	/* name */
+	 FALSE,				/* partial_inplace */
+	 0,				/* src_mask */
+	 0,				/* dst_mask */
+	 FALSE),			/* pcrel_offset */
+
 };
 
 /* Map BFD reloc types to MSP430 ELF reloc types.  */
@@ -542,7 +627,9 @@ static const struct msp430_reloc_map msp430_reloc_map[] =
   {BFD_RELOC_MSP430_2X_PCREL,	   R_MSP430_2X_PCREL},
   {BFD_RELOC_MSP430_RL_PCREL,	   R_MSP430_RL_PCREL},
   {BFD_RELOC_8,			   R_MSP430_8},
-  {BFD_RELOC_MSP430_SYM_DIFF,	   R_MSP430_SYM_DIFF}
+  {BFD_RELOC_MSP430_SYM_DIFF,	   R_MSP430_SYM_DIFF},
+  {BFD_RELOC_MSP430_SET_ULEB128,   R_MSP430_GNU_SET_ULEB128 },
+  {BFD_RELOC_MSP430_SUB_ULEB128,   R_MSP430_GNU_SUB_ULEB128 }
 };
 
 static const struct msp430_reloc_map msp430x_reloc_map[] =
@@ -568,7 +655,9 @@ static const struct msp430_reloc_map msp430x_reloc_map[] =
   {BFD_RELOC_MSP430_10_PCREL,	      R_MSP430X_10_PCREL},
   {BFD_RELOC_MSP430_2X_PCREL,	      R_MSP430X_2X_PCREL},
   {BFD_RELOC_MSP430_RL_PCREL,	      R_MSP430X_PCR16},
-  {BFD_RELOC_MSP430_SYM_DIFF,	      R_MSP430X_SYM_DIFF}
+  {BFD_RELOC_MSP430_SYM_DIFF,	      R_MSP430X_SYM_DIFF},
+  {BFD_RELOC_MSP430_SET_ULEB128,      R_MSP430X_GNU_SET_ULEB128 },
+  {BFD_RELOC_MSP430_SUB_ULEB128,      R_MSP430X_GNU_SUB_ULEB128 }
 };
 
 static inline bfd_boolean
@@ -739,6 +828,10 @@ msp430_final_link_relocate (reloc_howto_type *	   howto,
       BFD_ASSERT (! is_rel_reloc || rel->r_addend == 0);
     }
 
+  if (debug_relocs)
+    printf ("writing relocation (%p) at 0x%lx type: %d\n", rel,
+	    (long) (input_section->output_section->vma + input_section->output_offset
+		    + rel->r_offset), howto->type);
   if (sym_diff_section != NULL)
     {
       BFD_ASSERT (sym_diff_section == input_section);
@@ -746,6 +839,9 @@ msp430_final_link_relocate (reloc_howto_type *	   howto,
      if (uses_msp430x_relocs (input_bfd))
        switch (howto->type)
 	 {
+	 case R_MSP430X_GNU_SET_ULEB128:
+	   relocation += (!is_rel_reloc ? rel->r_addend : 0);
+	   /* Fall through.  */
 	 case R_MSP430_ABS32:
 	  /* If we are computing a 32-bit value for the location lists
 	     and the result is 0 then we add one to the value.  A zero
@@ -771,6 +867,9 @@ msp430_final_link_relocate (reloc_howto_type *	   howto,
      else
        switch (howto->type)
 	 {
+	 case R_MSP430_GNU_SET_ULEB128:
+	   relocation += (!is_rel_reloc ? rel->r_addend : 0);
+	   /* Fall through.  */
 	 case R_MSP430_32:
 	 case R_MSP430_16:
 	 case R_MSP430_16_BYTE:
@@ -785,16 +884,63 @@ msp430_final_link_relocate (reloc_howto_type *	   howto,
       sym_diff_section = NULL;
     }
 
-  if (uses_msp430x_relocs (input_bfd))
+  if ((uses_msp430x_relocs (input_bfd)
+       && howto->type == R_MSP430X_GNU_SET_ULEB128)
+      || (!uses_msp430x_relocs (input_bfd)
+	  && howto->type == R_MSP430_GNU_SET_ULEB128))
+    {
+      unsigned int len, new_len = 0;
+      bfd_byte *endp, *p;
+      unsigned int val = relocation;
+
+      _bfd_read_unsigned_leb128 (input_bfd, contents + rel->r_offset, &len);
+
+      /* Clean the contents value to zero.  Do not reduce the length.  */
+      p = contents + rel->r_offset;
+      endp = (p + len) - 1;
+      memset (p, 0x80, len - 1);
+      *(endp) = 0;
+
+      /* Get the length of the new uleb128 value.  */
+      do
+	{
+	  new_len++;
+	  val >>= 7;
+	} while (val);
+
+      if (new_len > len)
+	{
+	  _bfd_error_handler
+	    (_("error: final size of uleb128 value at offset 0x%lx in %pA "
+	       "from %pB exceeds available space"),
+	     (long) rel->r_offset, input_section, input_bfd);
+	}
+      else
+	{
+	  /* If the number of bytes required to store the new value has
+	     decreased, "right align" the new value within the available space,
+	     so the MSB side is padded with uleb128 zeros (0x80).  */
+	  p = _bfd_write_unsigned_leb128 (p + (len - new_len), endp,
+					  relocation);
+	  /* We checked there is enough space for the new value above, so this
+	     should never be NULL.  */
+	  BFD_ASSERT (p);
+	}
+
+      return bfd_reloc_ok;
+    }
+  else if (uses_msp430x_relocs (input_bfd))
     switch (howto->type)
       {
       case R_MSP430X_SYM_DIFF:
+      case R_MSP430X_GNU_SUB_ULEB128:
 	/* Cache the input section and value.
 	   The offset is unreliable, since relaxation may
 	   have reduced the following reloc's offset.  */
 	BFD_ASSERT (! is_rel_reloc);
 	sym_diff_section = input_section;
-	sym_diff_value = relocation;
+	sym_diff_value = relocation + (howto->type == R_MSP430X_GNU_SUB_ULEB128
+				       ? rel->r_addend : 0);
 	return bfd_reloc_ok;
 
       case R_MSP430_ABS16:
@@ -1245,11 +1391,13 @@ msp430_final_link_relocate (reloc_howto_type *	   howto,
       break;
 
     case R_MSP430_SYM_DIFF:
+    case R_MSP430_GNU_SUB_ULEB128:
       /* Cache the input section and value.
 	 The offset is unreliable, since relaxation may
 	 have reduced the following reloc's offset.  */
       sym_diff_section = input_section;
-      sym_diff_value = relocation;
+      sym_diff_value = relocation + (howto->type == R_MSP430_GNU_SUB_ULEB128
+				     ? rel->r_addend : 0);
       return bfd_reloc_ok;
 
       default:
@@ -1314,7 +1462,7 @@ elf32_msp430_relocate_section (bfd * output_bfd ATTRIBUTE_UNUSED,
 
 	  name = bfd_elf_string_from_elf_section
 	      (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL || * name == 0) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL || *name == 0 ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -1385,9 +1533,8 @@ elf32_msp430_relocate_section (bfd * output_bfd ATTRIBUTE_UNUSED,
    file.  This gets the MSP430 architecture right based on the machine
    number.  */
 
-static void
-bfd_elf_msp430_final_write_processing (bfd * abfd,
-				       bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+bfd_elf_msp430_final_write_processing (bfd *abfd)
 {
   unsigned long val;
 
@@ -1422,6 +1569,7 @@ bfd_elf_msp430_final_write_processing (bfd * abfd,
   elf_elfheader (abfd)->e_machine = EM_MSP430;
   elf_elfheader (abfd)->e_flags &= ~EF_MSP430_MACH;
   elf_elfheader (abfd)->e_flags |= val;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 /* Set the right machine number.  */
@@ -1660,6 +1808,9 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
   contents = elf_section_data (sec)->this_hdr.contents;
 
   toaddr = sec->size;
+  if (debug_relocs)
+    printf ("      deleting %d bytes between 0x%lx to 0x%lx\n",
+	    count, (long) addr, (long) toaddr);
 
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
@@ -1691,7 +1842,7 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
 
       name = bfd_elf_string_from_elf_section
 	(abfd, symtab_hdr->sh_link, isym->st_name);
-      name = (name == NULL || * name == 0) ? bfd_section_name (abfd, sec) : name;
+      name = name == NULL || *name == 0 ? bfd_section_name (sec) : name;
 
       if (isym->st_shndx != sec_shndx)
 	continue;
@@ -1707,10 +1858,15 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
 		  && (CONST_STRNEQ (name, ".Letext")
 		      || CONST_STRNEQ (name, ".LFE")))))
 	{
+	  if (debug_relocs)
+	    printf ("      adjusting value of local symbol %s from 0x%lx ",
+		    name, (long) isym->st_value);
 	  if (isym->st_value < addr + count)
 	    isym->st_value = addr;
 	  else
 	    isym->st_value -= count;
+	  if (debug_relocs)
+	    printf ("to 0x%lx\n", (long) isym->st_value);
 	}
       /* Adjust the function symbol's size as well.  */
       else if (ELF_ST_TYPE (isym->st_info) == STT_FUNC
@@ -1751,11 +1907,11 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
   return TRUE;
 }
 
-/* Insert two words into a section whilst relaxing.  */
+/* Insert one or two words into a section whilst relaxing.  */
 
 static bfd_byte *
-msp430_elf_relax_add_two_words (bfd * abfd, asection * sec, bfd_vma addr,
-				int word1, int word2)
+msp430_elf_relax_add_words (bfd * abfd, asection * sec, bfd_vma addr,
+			    int num_words, int word1, int word2)
 {
   Elf_Internal_Shdr *symtab_hdr;
   unsigned int sec_shndx;
@@ -1769,20 +1925,25 @@ msp430_elf_relax_add_two_words (bfd * abfd, asection * sec, bfd_vma addr,
   unsigned int symcount;
   bfd_vma sec_end;
   asection *p;
+  if (debug_relocs)
+    printf ("      adding %d words at 0x%lx\n", num_words,
+	    (long) (sec->output_section->vma + sec->output_offset + addr));
 
   contents = elf_section_data (sec)->this_hdr.contents;
   sec_end = sec->size;
+  int num_bytes = num_words * 2;
 
   /* Make space for the new words.  */
-  contents = bfd_realloc (contents, sec_end + 4);
-  memmove (contents + addr + 4, contents + addr, sec_end - addr);
+  contents = bfd_realloc (contents, sec_end + num_bytes);
+  memmove (contents + addr + num_bytes, contents + addr, sec_end - addr);
 
   /* Insert the new words.  */
   bfd_put_16 (abfd, word1, contents + addr);
-  bfd_put_16 (abfd, word2, contents + addr + 2);
+  if (num_words == 2)
+    bfd_put_16 (abfd, word2, contents + addr + 2);
 
   /* Update the section information.  */
-  sec->size += 4;
+  sec->size += num_bytes;
   elf_section_data (sec)->this_hdr.contents = contents;
 
   /* Adjust all the relocs.  */
@@ -1791,12 +1952,12 @@ msp430_elf_relax_add_two_words (bfd * abfd, asection * sec, bfd_vma addr,
 
   for (; irel < irelend; irel++)
     if ((irel->r_offset >= addr && irel->r_offset < sec_end))
-      irel->r_offset += 4;
+      irel->r_offset += num_bytes;
 
   /* Adjust the local symbols defined in this section.  */
   sec_shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
   for (p = abfd->sections; p != NULL; p = p->next)
-    msp430_elf_relax_adjust_locals (abfd, p, addr, -4,
+    msp430_elf_relax_adjust_locals (abfd, p, addr, -num_bytes,
 				    sec_shndx, sec_end);
 
   /* Adjust the global symbols affected by the move.  */
@@ -1805,7 +1966,14 @@ msp430_elf_relax_add_two_words (bfd * abfd, asection * sec, bfd_vma addr,
   for (isymend = isym + symtab_hdr->sh_info; isym < isymend; isym++)
     if (isym->st_shndx == sec_shndx
 	&& isym->st_value >= addr && isym->st_value < sec_end)
-      isym->st_value += 4;
+      {
+	if (debug_relocs)
+	  printf ("      adjusting value of local symbol %s from 0x%lx to "
+		  "0x%lx\n", bfd_elf_string_from_elf_section
+		  (abfd, symtab_hdr->sh_link, isym->st_name),
+		  (long) isym->st_value, (long)(isym->st_value + num_bytes));
+	isym->st_value += num_bytes;
+      }
 
   /* Now adjust the global symbols defined in this section.  */
   symcount = (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
@@ -1821,7 +1989,7 @@ msp430_elf_relax_add_two_words (bfd * abfd, asection * sec, bfd_vma addr,
 	  && sym_hash->root.u.def.section == sec
 	  && sym_hash->root.u.def.value >= addr
 	  && sym_hash->root.u.def.value < sec_end)
-	sym_hash->root.u.def.value += 4;
+	sym_hash->root.u.def.value += num_bytes;
     }
 
   return contents;
@@ -1850,6 +2018,10 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
     || sec->reloc_count == 0 || (sec->flags & SEC_CODE) == 0)
     return TRUE;
 
+  if (debug_relocs)
+    printf ("Relaxing %s (%p), output_offset: 0x%lx sec size: 0x%lx\n",
+	    sec->name, sec, (long) sec->output_offset, (long) sec->size);
+
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
 
   /* Get a copy of the native relocations.  */
@@ -1861,6 +2033,8 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
   /* Walk through them looking for relaxing opportunities.  */
   irelend = internal_relocs + sec->reloc_count;
 
+  if (debug_relocs)
+    printf ("  trying code size growing relocs\n");
   /* Do code size growing relocs first.  */
   for (irel = internal_relocs; irel < irelend; irel++)
     {
@@ -1917,6 +2091,15 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	    sym_sec = bfd_section_from_elf_index (abfd, isym->st_shndx);
 	  symval = (isym->st_value
 		    + sym_sec->output_section->vma + sym_sec->output_offset);
+
+	  if (debug_relocs)
+	    printf ("    processing reloc at 0x%lx for local sym: %s "
+		    "st_value: 0x%lx adj value: 0x%lx\n",
+		    (long) (sec->output_offset + sec->output_section->vma
+			    + irel->r_offset),
+		    bfd_elf_string_from_elf_section (abfd, symtab_hdr->sh_link,
+						     isym->st_name),
+		    (long) isym->st_value, (long) symval);
 	}
       else
 	{
@@ -1938,6 +2121,13 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	  symval = (h->root.u.def.value
 		    + h->root.u.def.section->output_section->vma
 		    + h->root.u.def.section->output_offset);
+	  if (debug_relocs)
+	    printf ("    processing reloc at 0x%lx for global sym: %s "
+		    "st_value: 0x%lx adj value: 0x%lx\n",
+		    (long) (sec->output_offset + sec->output_section->vma
+		    + irel->r_offset),
+	      h->root.root.string, (long) h->root.u.def.value,
+	      (long) symval);
 	}
 
       /* For simplicity of coding, we are going to modify the section
@@ -1957,6 +2147,7 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
       value -= (sec->output_section->vma + sec->output_offset);
       value -= irel->r_offset;
       value -= 2;
+
       /* Scale.  */
       value >>= 1;
 
@@ -1968,8 +2159,12 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
       opcode = bfd_get_16 (abfd, contents + irel->r_offset);
 
       /* Compute the new opcode.  We are going to convert:
+	 JMP label
+	   into:
+	 BR[A] label
+	   or
 	 J<cond> label
-	 into:
+	   into:
 	 J<inv-cond> 1f
 	 BR[A] #label
 	 1:			*/
@@ -1989,8 +2184,14 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	     1: br label
 	     2:		       */
 	  continue;
+	case 0x3c00:
+	  if (uses_msp430x_relocs (abfd))
+	    opcode = 0x0080;	/* JMP -> BRA  */
+	  else
+	    opcode = 0x4030;	/* JMP -> BR  */
+	  break;
 	default:
-	  /* Not a conditional branch instruction.  */
+	  /* Unhandled branch instruction.  */
 	  /* fprintf (stderr, "unrecog: %x\n", opcode); */
 	  continue;
 	}
@@ -2006,27 +2207,58 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
       /* Insert the new branch instruction.  */
       if (uses_msp430x_relocs (abfd))
 	{
-	  /* Insert an absolute branch (aka MOVA) instruction.  */
-	  contents = msp430_elf_relax_add_two_words
-	    (abfd, sec, irel->r_offset + 2, 0x0080, 0x0000);
+	  if (debug_relocs)
+	    printf ("      R_MSP430X_10_PCREL -> R_MSP430X_ABS20_ADR_SRC "
+		    "(growing with new opcode 0x%x)\n", opcode);
 
-	  /* Update the relocation to point to the inserted branch
-	     instruction.  Note - we are changing a PC-relative reloc
-	     into an absolute reloc, but this is OK because we have
-	     arranged with the assembler to have the reloc's value be
-	     a (local) symbol, not a section+offset value.  */
-	  irel->r_offset += 2;
+	  /* Insert an absolute branch (aka MOVA) instruction.
+	     Note that bits 19:16 of the address are stored in the first word
+	     of the insn, so this is where r_offset will point to.  */
+	  if (opcode == 0x0080)
+	    {
+	      /* If we're inserting a BRA because we are converting from a JMP,
+		 then only add one word for destination address; the BRA opcode
+		 has already been written.  */
+	      contents = msp430_elf_relax_add_words
+		(abfd, sec, irel->r_offset + 2, 1, 0x0000, 0);
+	    }
+	  else
+	    {
+	      contents = msp430_elf_relax_add_words
+		(abfd, sec, irel->r_offset + 2, 2, 0x0080, 0x0000);
+	      /* Update the relocation to point to the inserted branch
+		 instruction.  Note - we are changing a PC-relative reloc
+		 into an absolute reloc, but this is OK because we have
+		 arranged with the assembler to have the reloc's value be
+		 a (local) symbol, not a section+offset value.  */
+	      irel->r_offset += 2;
+	    }
+
 	  irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 				       R_MSP430X_ABS20_ADR_SRC);
 	}
       else
 	{
-	  contents = msp430_elf_relax_add_two_words
-	    (abfd, sec, irel->r_offset + 2, 0x4030, 0x0000);
-
-	  /* See comment above about converting a 10-bit PC-rel
-	     relocation into a 16-bit absolute relocation.  */
-	  irel->r_offset += 4;
+	  if (debug_relocs)
+	    printf ("      R_MSP430_10_PCREL -> R_MSP430_16 "
+		    "(growing with new opcode 0x%x)\n", opcode);
+	  if (opcode == 0x4030)
+	    {
+	      /* If we're inserting a BR because we are converting from a JMP,
+		 then only add one word for destination address; the BR opcode
+		 has already been written.  */
+	      contents = msp430_elf_relax_add_words
+		(abfd, sec, irel->r_offset + 2, 1, 0x0000, 0);
+	      irel->r_offset += 2;
+	    }
+	  else
+	    {
+	      contents = msp430_elf_relax_add_words
+		(abfd, sec, irel->r_offset + 2, 2, 0x4030, 0x0000);
+	      /* See comment above about converting a 10-bit PC-rel
+		 relocation into a 16-bit absolute relocation.  */
+	      irel->r_offset += 4;
+	    }
 	  irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 				       R_MSP430_16);
 	}
@@ -2035,6 +2267,9 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	 conditional branches need to be fixed.  */
       *again = TRUE;
     }
+
+    if (debug_relocs)
+      printf ("  trying code size shrinking relocs\n");
 
     for (irel = internal_relocs; irel < irelend; irel++)
       {
@@ -2080,6 +2315,15 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	      sym_sec = bfd_section_from_elf_index (abfd, isym->st_shndx);
 	    symval = (isym->st_value
 		      + sym_sec->output_section->vma + sym_sec->output_offset);
+
+	    if (debug_relocs)
+	      printf ("    processing reloc at 0x%lx for local sym: %s "
+		      "st_value: 0x%lx adj value: 0x%lx\n",
+		      (long) (sec->output_offset + sec->output_section->vma
+			      + irel->r_offset),
+		      bfd_elf_string_from_elf_section
+		      (abfd, symtab_hdr->sh_link, isym->st_name),
+		      (long) isym->st_value, (long) symval);
 	  }
 	else
 	  {
@@ -2101,6 +2345,13 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	    symval = (h->root.u.def.value
 		      + h->root.u.def.section->output_section->vma
 		      + h->root.u.def.section->output_offset);
+	    if (debug_relocs)
+	      printf ("    processing reloc at 0x%lx for global sym: %s "
+		      "st_value: 0x%lx adj value: 0x%lx\n", (long)
+		      (sec->output_offset + sec->output_section->vma
+		       + irel->r_offset),
+		      h->root.root.string, (long) h->root.u.def.value,
+		      (long) symval);
 	  }
 
 	/* For simplicity of coding, we are going to modify the section
@@ -2184,6 +2435,8 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 		elf_section_data (sec)->this_hdr.contents = contents;
 		symtab_hdr->contents = (unsigned char *) isymbuf;
 
+		if (debug_relocs)
+		  printf ("      R_MSP430_RL_PCREL -> ");
 		/* Fix the relocation's type.  */
 		if (uses_msp430x_relocs (abfd))
 		  {
@@ -2197,11 +2450,21 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 		else
 		  {
 		    if (rx->labels == 3)	/* Handle special cases.  */
-		      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
-						   R_MSP430_2X_PCREL);
+		      {
+			irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
+						     R_MSP430_2X_PCREL);
+			if (debug_relocs)
+			  printf ("R_MSP430_2X_PCREL (shrinking with new opcode"
+				  " 0x%x)\n", rx->t0);
+		      }
 		    else
-		      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
-						   R_MSP430_10_PCREL);
+		      {
+			irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
+						     R_MSP430_10_PCREL);
+			if (debug_relocs)
+			  printf ("R_MSP430_10_PCREL (shrinking with new opcode"
+				  " 0x%x)\n", rx->t0);
+		      }
 		  }
 
 		/* Fix the opcode right way.  */
@@ -2244,11 +2507,11 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	       able to relax.  */
 	    if ((long) value < 1016 && (long) value > -1016)
 	      {
-		int code2;
+		int code1, code2, opcode;
 
 		/* Get the opcode.  */
 		code2 = bfd_get_16 (abfd, contents + irel->r_offset - 2);
-		if (code2 != 0x4030)
+		if (code2 != 0x4030) /* BR -> JMP */
 		  continue;
 		/* FIXME: check r4 and r3 ? */
 		/* FIXME: Handle 0x4010 as well ?  */
@@ -2263,21 +2526,75 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 		  {
 		    irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 						 R_MSP430X_10_PCREL);
+		    if (debug_relocs)
+		      printf ("      R_MSP430X_16 -> R_MSP430X_10_PCREL ");
 		  }
 		else
 		  {
 		    irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 						 R_MSP430_10_PCREL);
+		    if (debug_relocs)
+		      printf ("      R_MSP430_16 -> R_MSP430_10_PCREL ");
 		  }
+		/* If we're trying to shrink a BR[A] after previously having
+		   grown a JMP for this reloc, then we have a sequence like
+		   this:
+		     J<cond> 1f
+		     BR[A]
+		     1:
+		   The opcode for J<cond> has the target hard-coded as 2 words
+		   ahead of the insn, instead of using a reloc.
+		   This means we cannot rely on any of the helper functions to
+		   update this hard-coded jump destination if we remove the
+		   BR[A] insn, so we must explicitly update it here.
+		   This does mean that we can remove the entire branch
+		   instruction, and invert the conditional jump, saving us 4
+		   bytes rather than only 2 if we detected this in the normal
+		   way.  */
+		code1 = bfd_get_16 (abfd, contents + irel->r_offset - 4);
+		switch (code1)
+		  {
+		    case 0x3802: opcode = 0x3401; break; /* Jl  +2 -> Jge +1 */
+		    case 0x3402: opcode = 0x3801; break; /* Jge +2 -> Jl  +1 */
+		    case 0x2c02: opcode = 0x2801; break; /* Jhs +2 -> Jlo +1 */
+		    case 0x2802: opcode = 0x2c01; break; /* Jlo +2 -> Jhs +1 */
+		    case 0x2402: opcode = 0x2001; break; /* Jeq +2 -> Jne +1 */
+		    case 0x2002: opcode = 0x2401; break; /* jne +2 -> Jeq +1 */
+		    case 0x3002: /* jn +2   */
+		      /* FIXME: There is no direct inverse of the Jn insn.  */
+		      continue;
+		    default:
+		      /* The previous opcode does not have a hard-coded jump
+			 that we added when previously relaxing, so relax the
+			 current branch as normal.  */
+		      opcode = 0x3c00;
+		      break;
+		    }
+		if (debug_relocs)
+		  printf ("(shrinking with new opcode 0x%x)\n", opcode);
 
-		/* Fix the opcode right way.  */
-		bfd_put_16 (abfd, 0x3c00, contents + irel->r_offset - 2);
-		irel->r_offset -= 2;
+		if (opcode != 0x3c00)
+		  {
+		    /* Invert the opcode of the conditional jump.  */
+		    bfd_put_16 (abfd, opcode, contents + irel->r_offset - 4);
+		    irel->r_offset -= 4;
 
-		/* Delete bytes.  */
-		if (!msp430_elf_relax_delete_bytes (abfd, sec,
-						    irel->r_offset + 2, 2))
-		  goto error_return;
+		    /* Delete 4 bytes - the full BR insn.  */
+		    if (!msp430_elf_relax_delete_bytes (abfd, sec,
+							irel->r_offset + 2, 4))
+		      goto error_return;
+		  }
+		else
+		  {
+		    /* Fix the opcode right way.  */
+		    bfd_put_16 (abfd, opcode, contents + irel->r_offset - 2);
+		    irel->r_offset -= 2;
+
+		    /* Delete bytes.  */
+		    if (!msp430_elf_relax_delete_bytes (abfd, sec,
+							irel->r_offset + 2, 2))
+		      goto error_return;
+		  }
 
 		/* That will change things, so, we should relax again.
 		   Note that this is not required, and it may be slow.  */
@@ -2309,20 +2626,17 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return TRUE;
 
-error_return:
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+ error_return:
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return FALSE;
@@ -2408,15 +2722,15 @@ data_model (int model)
     }
 }
 
-/* Merge MSPABI object attributes from IBFD into OBFD.
+/* Merge MSPABI and GNU object attributes from IBFD into OBFD.
    Raise an error if there are conflicting attributes.  */
 
 static bfd_boolean
-elf32_msp430_merge_mspabi_attributes (bfd *ibfd, struct bfd_link_info *info)
+elf32_msp430_merge_msp430_attributes (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
-  obj_attribute *in_attr;
-  obj_attribute *out_attr;
+  obj_attribute *in_msp_attr, *in_gnu_attr;
+  obj_attribute *out_msp_attr, *out_gnu_attr;
   bfd_boolean result = TRUE;
   static bfd * first_input_bfd = NULL;
 
@@ -2435,45 +2749,48 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, struct bfd_link_info *info)
     {
       _bfd_elf_copy_obj_attributes (ibfd, obfd);
 
-      out_attr = elf_known_obj_attributes_proc (obfd);
+      out_msp_attr = elf_known_obj_attributes_proc (obfd);
 
       /* Use the Tag_null value to indicate that
 	 the attributes have been initialized.  */
-      out_attr[0].i = 1;
+      out_msp_attr[0].i = 1;
 
       first_input_bfd = ibfd;
       return TRUE;
     }
 
-  in_attr = elf_known_obj_attributes_proc (ibfd);
-  out_attr = elf_known_obj_attributes_proc (obfd);
+  in_msp_attr = elf_known_obj_attributes_proc (ibfd);
+  out_msp_attr = elf_known_obj_attributes_proc (obfd);
+  in_gnu_attr = elf_known_obj_attributes (ibfd) [OBJ_ATTR_GNU];
+  out_gnu_attr = elf_known_obj_attributes (obfd) [OBJ_ATTR_GNU];
 
   /* The ISAs must be the same.  */
-  if (in_attr[OFBA_MSPABI_Tag_ISA].i != out_attr[OFBA_MSPABI_Tag_ISA].i)
+  if (in_msp_attr[OFBA_MSPABI_Tag_ISA].i != out_msp_attr[OFBA_MSPABI_Tag_ISA].i)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("error: %pB uses %s instructions but %pB uses %s"),
-	 ibfd, isa_type (in_attr[OFBA_MSPABI_Tag_ISA].i),
-	 first_input_bfd, isa_type (out_attr[OFBA_MSPABI_Tag_ISA].i));
+	 ibfd, isa_type (in_msp_attr[OFBA_MSPABI_Tag_ISA].i),
+	 first_input_bfd, isa_type (out_msp_attr[OFBA_MSPABI_Tag_ISA].i));
       result = FALSE;
     }
 
   /* The code models must be the same.  */
-  if (in_attr[OFBA_MSPABI_Tag_Code_Model].i !=
-      out_attr[OFBA_MSPABI_Tag_Code_Model].i)
+  if (in_msp_attr[OFBA_MSPABI_Tag_Code_Model].i
+      != out_msp_attr[OFBA_MSPABI_Tag_Code_Model].i)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("error: %pB uses the %s code model whereas %pB uses the %s code model"),
-	 ibfd, code_model (in_attr[OFBA_MSPABI_Tag_Code_Model].i),
-	 first_input_bfd, code_model (out_attr[OFBA_MSPABI_Tag_Code_Model].i));
+	 ibfd, code_model (in_msp_attr[OFBA_MSPABI_Tag_Code_Model].i),
+	 first_input_bfd,
+	 code_model (out_msp_attr[OFBA_MSPABI_Tag_Code_Model].i));
       result = FALSE;
     }
 
   /* The large code model is only supported by the MSP430X.  */
-  if (in_attr[OFBA_MSPABI_Tag_Code_Model].i == 2
-      && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
+  if (in_msp_attr[OFBA_MSPABI_Tag_Code_Model].i == 2
+      && out_msp_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
@@ -2483,39 +2800,67 @@ elf32_msp430_merge_mspabi_attributes (bfd *ibfd, struct bfd_link_info *info)
     }
 
   /* The data models must be the same.  */
-  if (in_attr[OFBA_MSPABI_Tag_Data_Model].i !=
-      out_attr[OFBA_MSPABI_Tag_Data_Model].i)
+  if (in_msp_attr[OFBA_MSPABI_Tag_Data_Model].i
+      != out_msp_attr[OFBA_MSPABI_Tag_Data_Model].i)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("error: %pB uses the %s data model whereas %pB uses the %s data model"),
-	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
-	 first_input_bfd, data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 ibfd, data_model (in_msp_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 first_input_bfd,
+	 data_model (out_msp_attr[OFBA_MSPABI_Tag_Data_Model].i));
       result = FALSE;
     }
 
   /* The small code model requires the use of the small data model.  */
-  if (in_attr[OFBA_MSPABI_Tag_Code_Model].i == 1
-      && out_attr[OFBA_MSPABI_Tag_Data_Model].i != 1)
+  if (in_msp_attr[OFBA_MSPABI_Tag_Code_Model].i == 1
+      && out_msp_attr[OFBA_MSPABI_Tag_Data_Model].i != 1)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("error: %pB uses the small code model but %pB uses the %s data model"),
 	 ibfd, first_input_bfd,
-	 data_model (out_attr[OFBA_MSPABI_Tag_Data_Model].i));
+	 data_model (out_msp_attr[OFBA_MSPABI_Tag_Data_Model].i));
       result = FALSE;
     }
 
   /* The large data models are only supported by the MSP430X.  */
-  if (in_attr[OFBA_MSPABI_Tag_Data_Model].i > 1
-      && out_attr[OFBA_MSPABI_Tag_ISA].i != 2)
+  if (in_msp_attr[OFBA_MSPABI_Tag_Data_Model].i > 1
+      && out_msp_attr[OFBA_MSPABI_Tag_ISA].i != 2)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("error: %pB uses the %s data model but %pB only uses MSP430 instructions"),
-	 ibfd, data_model (in_attr[OFBA_MSPABI_Tag_Data_Model].i),
+	 ibfd, data_model (in_msp_attr[OFBA_MSPABI_Tag_Data_Model].i),
 	 first_input_bfd);
       result = FALSE;
+    }
+
+  /* Just ignore the data region unless the large memory model is in use.
+     We have already checked that ibfd and obfd use the same memory model.  */
+  if ((in_msp_attr[OFBA_MSPABI_Tag_Code_Model].i
+       == OFBA_MSPABI_Val_Code_Model_LARGE)
+      && (in_msp_attr[OFBA_MSPABI_Tag_Data_Model].i
+	  == OFBA_MSPABI_Val_Data_Model_LARGE))
+    {
+      /* We cannot allow "lower region only" to be linked with any other
+	 values (i.e. ANY or NONE).
+	 Before this attribute existed, "ANY" region was the default.  */
+      bfd_boolean ibfd_lower_region_used
+	= (in_gnu_attr[Tag_GNU_MSP430_Data_Region].i
+	   == Val_GNU_MSP430_Data_Region_Lower);
+      bfd_boolean obfd_lower_region_used
+	= (out_gnu_attr[Tag_GNU_MSP430_Data_Region].i
+	   == Val_GNU_MSP430_Data_Region_Lower);
+      if (ibfd_lower_region_used != obfd_lower_region_used)
+	{
+	  _bfd_error_handler
+	    (_("error: %pB can use the upper region for data, "
+	       "but %pB assumes data is exclusively in lower memory"),
+	     ibfd_lower_region_used ? obfd : ibfd,
+	     ibfd_lower_region_used ? ibfd : obfd);
+	  result = FALSE;
+	}
     }
 
   return result;
@@ -2536,7 +2881,7 @@ elf32_msp430_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 			       max (bfd_get_mach (ibfd), bfd_get_mach (obfd)));
 #undef max
 
-  return elf32_msp430_merge_mspabi_attributes (ibfd, info);
+  return elf32_msp430_merge_msp430_attributes (ibfd, info);
 }
 
 static bfd_boolean

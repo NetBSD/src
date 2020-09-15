@@ -1,6 +1,6 @@
 /* Self tests of the copy_bitwise routine for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
+#include "gdbsupport/selftest.h"
 #include "utils.h"
 
 namespace selftests {
@@ -152,6 +152,7 @@ copy_bitwise_tests (void)
 
 } /* namespace selftests */
 
+void _initialize_copy_bitwise_utils_selftests ();
 void
 _initialize_copy_bitwise_utils_selftests ()
 {

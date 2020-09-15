@@ -1,6 +1,6 @@
 /* Native-dependent code for Solaris x86.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -178,10 +178,22 @@ fill_fpregset (const struct regcache *regcache,
    format and GDB's register array layout.  */
 static int regmap[] =
 {
-  EAX, ECX, EDX, EBX,
-  UESP, EBP, ESI, EDI,
-  EIP, EFL, CS, SS,
-  DS, ES, FS, GS
+  11	/* EAX */,
+  10	/* ECX */,
+  9	/* EDX */,
+  8	/* EBX */,
+  17	/* UESP */,
+  6	/* EBP */,
+  5	/* ESI */,
+  4	/* EDI */,
+  14	/* EIP */,
+  16	/* EFL */,
+  15	/* CS */,
+  18	/* SS */,
+  3	/* DS */,
+  2	/* ES */,
+  1	/* FS */,
+  0	/* GS */
 };
 
 /* Fill GDB's register array with the general-purpose register values
@@ -241,8 +253,9 @@ fill_fpregset (const struct regcache *regcache,
 
 #endif
 
+void _initialize_amd64_sol2_nat ();
 void
-_initialize_amd64_sol2_nat (void)
+_initialize_amd64_sol2_nat ()
 {
 #if PR_MODEL_NATIVE == PR_MODEL_LP64
   amd64_native_gregset32_reg_offset = amd64_sol2_gregset32_reg_offset;

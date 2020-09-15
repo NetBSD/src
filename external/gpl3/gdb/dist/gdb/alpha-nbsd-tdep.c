@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -258,6 +258,8 @@ alphanbsd_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   /* NetBSD/alpha does not provide single step support via ptrace(2); we
      must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
@@ -278,8 +280,9 @@ alphanbsd_init_abi (struct gdbarch_info info,
 }
 
 
+void _initialize_alphanbsd_tdep ();
 void
-_initialize_alphanbsd_tdep (void)
+_initialize_alphanbsd_tdep ()
 {
   /* Even though NetBSD/alpha used ELF since day one, it used the
      traditional a.out-style core dump format before NetBSD 1.6, but

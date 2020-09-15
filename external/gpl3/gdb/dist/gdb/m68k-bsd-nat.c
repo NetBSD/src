@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* We define this to get types like register_t.  */
+#define _KERNTYPES
 #include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
@@ -28,8 +30,9 @@
 
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
+#include "nbsd-nat.h"
 
-struct m68k_bsd_nat_target final : public inf_ptrace_target
+struct m68k_bsd_nat_target final : public nbsd_nat_target
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -54,7 +57,7 @@ m68kbsd_fpregset_supplies_p (int regnum)
 static void
 m68kbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const char *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   int regnum;
 
   for (regnum = M68K_D0_REGNUM; regnum <= M68K_PC_REGNUM; regnum++)
@@ -67,7 +70,7 @@ static void
 m68kbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const char *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
   int regnum;
 
   for (regnum = M68K_FP0_REGNUM; regnum <= M68K_FPI_REGNUM; regnum++)
@@ -82,7 +85,7 @@ static void
 m68kbsd_collect_gregset (const struct regcache *regcache,
 			 void *gregs, int regnum)
 {
-  char *regs = gregs;
+  gdb_byte *regs = (gdb_byte *) gregs;
   int i;
 
   for (i = M68K_D0_REGNUM; i <= M68K_PC_REGNUM; i++)
@@ -118,12 +121,13 @@ void
 m68k_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || m68kbsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       m68kbsd_supply_gregset (regcache, &regs);
@@ -133,7 +137,7 @@ m68k_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       m68kbsd_supply_fpregset (regcache, &fpregs);
@@ -147,17 +151,18 @@ void
 m68k_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || m68kbsd_gregset_supplies_p (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       m68kbsd_collect_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
         perror_with_name (_("Couldn't write registers"));
     }
 
@@ -165,12 +170,12 @@ m68k_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       m68kbsd_collect_fpregset (regcache, &fpregs, regnum);
 
-      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
@@ -215,14 +220,15 @@ m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   tmp = pcb->pcb_ps & 0xffff;
   regcache->raw_supply (M68K_PS_REGNUM, &tmp);
 
-  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (char *) &tmp, sizeof tmp);
+  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (gdb_byte *) &tmp, sizeof tmp);
   regcache->raw_supply (M68K_PC_REGNUM, &tmp);
 
   return 1;
 }
 
+void _initialize_m68kbsd_nat ();
 void
-_initialize_m68kbsd_nat (void)
+_initialize_m68kbsd_nat ()
 {
   add_inf_child_target (&the_m68k_bsd_nat_target);
 

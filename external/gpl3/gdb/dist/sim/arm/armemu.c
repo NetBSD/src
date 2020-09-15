@@ -1140,10 +1140,6 @@ handle_VFP_move (ARMul_State * state, ARMword instr)
 
 /* EMULATION of ARM6.  */
 
-/* The PC pipeline value depends on whether ARM
-   or Thumb instructions are being executed.  */
-ARMword isize;
-
 ARMword
 #ifdef MODE32
 ARMul_Emulate32 (ARMul_State * state)

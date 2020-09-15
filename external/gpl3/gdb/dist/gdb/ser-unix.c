@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,12 +26,13 @@
 #include <sys/types.h>
 #include "terminal.h"
 #include <sys/socket.h>
-#include "common/gdb_sys_time.h"
+#include "gdbsupport/gdb_sys_time.h"
 
-#include "gdb_select.h"
+#include "gdbsupport/gdb_select.h"
 #include "gdbcmd.h"
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 #include <termios.h>
+#include "inflow.h"
 
 struct hardwire_ttystate
   {
@@ -40,7 +41,7 @@ struct hardwire_ttystate
 
 #ifdef CRTSCTS
 /* Boolean to explicitly enable or disable h/w flow control.  */
-static int serial_hwflow;
+static bool serial_hwflow;
 static void
 show_serial_hwflow (struct ui_file *file, int from_tty,
 		    struct cmd_list_element *c, const char *value)
@@ -164,6 +165,9 @@ hardwire_print_tty_state (struct serial *scb,
 static int
 hardwire_drain_output (struct serial *scb)
 {
+  /* Ignore SIGTTOU which may occur during the drain.  */
+  scoped_ignore_sigttou ignore_sigttou;
+
   return tcdrain (scb->fd);
 }
 
@@ -494,8 +498,9 @@ static const struct serial_ops hardwire_ops =
   ser_unix_write_prim
 };
 
+void _initialize_ser_hardwire ();
 void
-_initialize_ser_hardwire (void)
+_initialize_ser_hardwire ()
 {
   serial_add_interface (&hardwire_ops);
 

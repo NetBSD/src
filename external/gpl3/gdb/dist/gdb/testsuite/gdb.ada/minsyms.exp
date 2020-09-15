@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile foo_qb07_057
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable ""] != "" } {
@@ -27,6 +29,8 @@ if ![runto "_ada_foo_qb07_057" ] then {
   perror "Couldn't run ${testfile}"
   return
 }
+
+gdb_test_no_output "set language ada"
 
 gdb_test "print some_minsym" \
          "'some_minsym' has unknown type; cast it to its declared type"

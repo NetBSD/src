@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,4 +29,4 @@ extern struct ppc_reg_offsets ppcnbsd_reg_offsets;
 extern const struct regset ppcnbsd_gregset;
 extern const struct regset ppcnbsd_fpregset;
 
-#endif /* ppc-nbsd-tdep.h */
+#endif /* PPC_NBSD_TDEP_H */

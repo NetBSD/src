@@ -262,12 +262,7 @@ emul_add_tree_options(device *tree,
   if (tree_find_property(tree, "/options/little-endian?"))
     little_endian = tree_find_boolean_property(tree, "/options/little-endian?");
   else {
-#ifdef bfd_little_endian	/* new bfd */
     little_endian = (image != NULL && bfd_little_endian(image));
-#else
-    little_endian = (image != NULL &&
-		     !image->xvec->byteorder_big_p);
-#endif
     tree_parse(tree, "/options/little-endian? %s",
 	       little_endian ? "true" : "false");
   }

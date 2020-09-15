@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 #include "sparc-tdep.h"
 #include "solib-svr4.h"
 #include "bsd-uthread.h"
+#include "gdbarch.h"
 
 /* Signal trampolines.  */
 
@@ -245,8 +246,9 @@ sparc32obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_collect_uthread (gdbarch, sparc32obsd_collect_uthread);
 }
 
+void _initialize_sparc32obsd_tdep ();
 void
-_initialize_sparc32obsd_tdep (void)
+_initialize_sparc32obsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sparc, 0, GDB_OSABI_OPENBSD,
 			  sparc32obsd_init_abi);

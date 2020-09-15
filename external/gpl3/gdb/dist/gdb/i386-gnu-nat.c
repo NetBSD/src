@@ -1,6 +1,6 @@
 /* Low level interface to i386 running the GNU Hurd.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -117,7 +117,7 @@ i386_gnu_nat_target::fetch_registers (struct regcache *regcache, int regno)
   thread = inf_tid_to_thread (gnu_current_inf, ptid.lwp ());
   if (!thread)
     error (_("Can't fetch registers from thread %s: No such thread"),
-	   target_pid_to_str (ptid));
+	   target_pid_to_str (ptid).c_str ());
 
   if (regno < I386_NUM_GREGS || regno == -1)
     {
@@ -208,7 +208,7 @@ i386_gnu_nat_target::store_registers (struct regcache *regcache, int regno)
   thread = inf_tid_to_thread (gnu_current_inf, ptid.lwp ());
   if (!thread)
     error (_("Couldn't store registers into thread %s: No such thread"),
-	   target_pid_to_str (ptid));
+	   target_pid_to_str (ptid).c_str ());
 
   if (regno < I386_NUM_GREGS || regno == -1)
     {
@@ -425,8 +425,9 @@ i386_gnu_dr_get_control (void)
 }
 #endif /* i386_DEBUG_STATE */
 
+void _initialize_i386gnu_nat ();
 void
-_initialize_i386gnu_nat (void)
+_initialize_i386gnu_nat ()
 {
 #ifdef i386_DEBUG_STATE
   x86_dr_low.set_control = i386_gnu_dr_set_control;
@@ -437,6 +438,8 @@ _initialize_i386gnu_nat (void)
   x86_dr_low.get_control = i386_gnu_dr_get_control;
   x86_set_debug_register_length (4);
 #endif /* i386_DEBUG_STATE */
+
+  gnu_target = &the_i386_gnu_nat_target;
 
   /* Register the target.  */
   add_inf_child_target (&the_i386_gnu_nat_target);

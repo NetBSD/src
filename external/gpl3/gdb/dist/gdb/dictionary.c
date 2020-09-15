@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -28,6 +28,7 @@
 #include "dictionary.h"
 #include "safe-ctype.h"
 #include <unordered_map>
+#include "language.h"
 
 /* This file implements dictionaries, which are tables that associate
    symbols to names.  They are represented by an opaque type 'struct
@@ -464,7 +465,7 @@ dict_add_pending (struct dictionary *dict,
 /* Initialize ITERATOR to point at the first symbol in DICT, and
    return that first symbol, or NULL if DICT is empty.  */
 
-struct symbol *
+static struct symbol *
 dict_iterator_first (const struct dictionary *dict,
 		     struct dict_iterator *iterator)
 {
@@ -474,14 +475,14 @@ dict_iterator_first (const struct dictionary *dict,
 /* Advance ITERATOR, and return the next symbol, or NULL if there are
    no more symbols.  */
 
-struct symbol *
+static struct symbol *
 dict_iterator_next (struct dict_iterator *iterator)
 {
   return (DICT_VECTOR (DICT_ITERATOR_DICT (iterator)))
     ->iterator_next (iterator);
 }
 
-struct symbol *
+static struct symbol *
 dict_iter_match_first (const struct dictionary *dict,
 		       const lookup_name_info &name,
 		       struct dict_iterator *iterator)
@@ -489,7 +490,7 @@ dict_iter_match_first (const struct dictionary *dict,
   return (DICT_VECTOR (dict))->iter_match_first (dict, name, iterator);
 }
 
-struct symbol *
+static struct symbol *
 dict_iter_match_next (const lookup_name_info &name,
 		      struct dict_iterator *iterator)
 {
@@ -506,16 +507,6 @@ dict_size (const struct dictionary *dict)
 /* Now come functions (well, one function, currently) that are
    implemented generically by means of the vtable.  Typically, they're
    rarely used.  */
-
-/* Test to see if DICT is empty.  */
-
-static int
-dict_empty (struct dictionary *dict)
-{
-  struct dict_iterator iter;
-
-  return (dict_iterator_first (dict, &iter) == NULL);
-}
 
 
 /* The functions implementing the dictionary interface.  */
@@ -593,7 +584,7 @@ iter_match_first_hashed (const struct dictionary *dict,
   unsigned int hash_index = (name.search_name_hash (lang->la_language)
 			     % DICT_HASHED_NBUCKETS (dict));
   symbol_name_matcher_ftype *matches_name
-    = get_symbol_name_matcher (lang, name);
+    = lang->get_symbol_name_matcher (name);
   struct symbol *sym;
 
   DICT_ITERATOR_DICT (iterator) = dict;
@@ -607,7 +598,7 @@ iter_match_first_hashed (const struct dictionary *dict,
        sym = sym->hash_next)
     {
       /* Warning: the order of arguments to compare matters!  */
-      if (matches_name (SYMBOL_SEARCH_NAME (sym), name, NULL))
+      if (matches_name (sym->search_name (), name, NULL))
 	break;
     }
 
@@ -621,14 +612,14 @@ iter_match_next_hashed (const lookup_name_info &name,
 {
   const language_defn *lang = DICT_LANGUAGE (DICT_ITERATOR_DICT (iterator));
   symbol_name_matcher_ftype *matches_name
-    = get_symbol_name_matcher (lang, name);
+    = lang->get_symbol_name_matcher (name);
   struct symbol *next;
 
   for (next = DICT_ITERATOR_CURRENT (iterator)->hash_next;
        next != NULL;
        next = next->hash_next)
     {
-      if (matches_name (SYMBOL_SEARCH_NAME (next), name, NULL))
+      if (matches_name (next->search_name (), name, NULL))
 	break;
     }
 
@@ -649,9 +640,9 @@ insert_symbol_hashed (struct dictionary *dict,
 
   /* We don't want to insert a symbol into a dictionary of a different
      language.  The two may not use the same hashing algorithm.  */
-  gdb_assert (SYMBOL_LANGUAGE (sym) == DICT_LANGUAGE (dict)->la_language);
+  gdb_assert (sym->language () == DICT_LANGUAGE (dict)->la_language);
 
-  hash = search_name_hash (SYMBOL_LANGUAGE (sym), SYMBOL_SEARCH_NAME (sym));
+  hash = search_name_hash (sym->language (), sym->search_name ());
   hash_index = hash % DICT_HASHED_NBUCKETS (dict);
   sym->hash_next = buckets[hash_index];
   buckets[hash_index] = sym;
@@ -728,7 +719,7 @@ expand_hashtable (struct dictionary *dict)
 /* See dictionary.h.  */
 
 unsigned int
-default_search_name_hash (const char *string0)
+language_defn::search_name_hash (const char *string0) const
 {
   /* The Ada-encoded version of a name P1.P2...Pn has either the form
      P1__P2__...Pn<suffix> or _ada_P1__P2__...Pn<suffix> (where the Pi
@@ -837,7 +828,7 @@ iter_match_next_linear (const lookup_name_info &name,
   const struct dictionary *dict = DICT_ITERATOR_DICT (iterator);
   const language_defn *lang = DICT_LANGUAGE (dict);
   symbol_name_matcher_ftype *matches_name
-    = get_symbol_name_matcher (lang, name);
+    = lang->get_symbol_name_matcher (name);
 
   int i, nsyms = DICT_LINEAR_NSYMS (dict);
   struct symbol *sym, *retval = NULL;
@@ -846,7 +837,7 @@ iter_match_next_linear (const lookup_name_info &name,
     {
       sym = DICT_LINEAR_SYM (dict, i);
 
-      if (matches_name (SYMBOL_SEARCH_NAME (sym), name, NULL))
+      if (matches_name (sym->search_name (), name, NULL))
 	{
 	  retval = sym;
 	  break;
@@ -932,12 +923,12 @@ collate_pending_symbols_by_language (const struct pending *symbol_list)
 {
   std::unordered_map<enum language, std::vector<symbol *>> nsyms;
 
-  for (const struct pending *list_counter = symbol_list;
+  for (const pending *list_counter = symbol_list;
        list_counter != nullptr; list_counter = list_counter->next)
     {
       for (int i = list_counter->nsyms - 1; i >= 0; --i)
 	{
-	  enum language language = SYMBOL_LANGUAGE (list_counter->symbol[i]);
+	  enum language language = list_counter->symbol[i]->language ();
 	  nsyms[language].push_back (list_counter->symbol[i]);
 	}
     }
@@ -1125,13 +1116,13 @@ void
 mdict_add_symbol (struct multidictionary *mdict, struct symbol *sym)
 {
   struct dictionary *dict
-    = find_language_dictionary (mdict, SYMBOL_LANGUAGE (sym));
+    = find_language_dictionary (mdict, sym->language ());
 
   if (dict == nullptr)
     {
       /* SYM is of a new language that we haven't previously seen.
 	 Create a new dictionary for it.  */
-      dict = create_new_language_dictionary (mdict, SYMBOL_LANGUAGE (sym));
+      dict = create_new_language_dictionary (mdict, sym->language ());
     }
 
   dict_add_symbol (dict, sym);
@@ -1281,18 +1272,4 @@ mdict_size (const struct multidictionary *mdict)
     size += dict_size (mdict->dictionaries[idx]);
 
   return size;
-}
-
-/* See dictionary.h.  */
-
-bool
-mdict_empty (const struct multidictionary *mdict)
-{
-  for (unsigned short idx = 0; idx < mdict->n_allocated_dictionaries; ++idx)
-    {
-      if (!dict_empty (mdict->dictionaries[idx]))
-	return false;
-    }
-
-  return true;
 }

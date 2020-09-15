@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,10 +63,10 @@ static void
 ada_varobj_decode_var (struct value **value_ptr, struct type **type_ptr)
 {
   if (*value_ptr)
-    {
-      *value_ptr = ada_get_decoded_value (*value_ptr);
-      *type_ptr = ada_check_typedef (value_type (*value_ptr));
-    }
+    *value_ptr = ada_get_decoded_value (*value_ptr);
+
+  if (*value_ptr != nullptr)
+    *type_ptr = ada_check_typedef (value_type (*value_ptr));
   else
     *type_ptr = ada_get_decoded_type (*type_ptr);
 }
@@ -105,7 +105,7 @@ ada_varobj_struct_elt (struct value *parent_value,
       type = value_type (value);
     }
   else
-    type = TYPE_FIELD_TYPE (parent_type, fieldno);
+    type = parent_type->field (fieldno).type ();
 
   if (child_value)
     *child_value = value;
@@ -132,11 +132,11 @@ ada_varobj_ind (struct value *parent_value,
 	 ada_get_decoded_value would have transformed our parent_type
 	 into a simple array pointer type.  */
       gdb_assert (parent_value == NULL);
-      gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_TYPEDEF);
+      gdb_assert (parent_type->code () == TYPE_CODE_TYPEDEF);
 
       /* Decode parent_type by the equivalent pointer to (decoded)
 	 array.  */
-      while (TYPE_CODE (parent_type) == TYPE_CODE_TYPEDEF)
+      while (parent_type->code () == TYPE_CODE_TYPEDEF)
 	parent_type = TYPE_TARGET_TYPE (parent_type);
       parent_type = ada_coerce_to_simple_array_type (parent_type);
       parent_type = lookup_pointer_type (parent_type);
@@ -178,7 +178,7 @@ ada_varobj_simple_array_elt (struct value *parent_value,
   if (parent_value)
     {
       struct value *index_value =
-	value_from_longest (TYPE_INDEX_TYPE (parent_type), elt_index);
+	value_from_longest (parent_type->index_type (), elt_index);
 
       value = ada_value_subscript (parent_value, 1, &index_value);
       type = value_type (value);
@@ -206,9 +206,11 @@ ada_varobj_adjust_for_child_access (struct value **value,
       one child (the struct), their children are the components of
       the struct/union type.  We handle this situation by dereferencing
       the (value, type) couple.  */
-  if (TYPE_CODE (*type) == TYPE_CODE_PTR
-      && (TYPE_CODE (TYPE_TARGET_TYPE (*type)) == TYPE_CODE_STRUCT
-          || TYPE_CODE (TYPE_TARGET_TYPE (*type)) == TYPE_CODE_UNION)
+  if ((*type)->code () == TYPE_CODE_PTR
+      && (TYPE_TARGET_TYPE (*type)->code () == TYPE_CODE_STRUCT
+          || TYPE_TARGET_TYPE (*type)->code () == TYPE_CODE_UNION)
+      && *value != nullptr
+      && value_as_address (*value) != 0
       && !ada_is_array_descriptor_type (TYPE_TARGET_TYPE (*type))
       && !ada_is_constrained_packed_array_type (TYPE_TARGET_TYPE (*type)))
     ada_varobj_ind (*value, *type, value, type);
@@ -234,7 +236,7 @@ ada_varobj_get_array_number_of_children (struct value *parent_value,
   LONGEST lo, hi;
 
   if (parent_value == NULL
-      && is_dynamic_type (TYPE_INDEX_TYPE (parent_type)))
+      && is_dynamic_type (parent_type->index_type ()))
     {
       /* This happens when listing the children of an object
 	 which does not exist in memory (Eg: when requesting
@@ -270,10 +272,10 @@ ada_varobj_get_struct_number_of_children (struct value *parent_value,
   int n_children = 0;
   int i;
 
-  gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
-	      || TYPE_CODE (parent_type) == TYPE_CODE_UNION);
+  gdb_assert (parent_type->code () == TYPE_CODE_STRUCT
+	      || parent_type->code () == TYPE_CODE_UNION);
 
-  for (i = 0; i < TYPE_NFIELDS (parent_type); i++)
+  for (i = 0; i < parent_type->num_fields (); i++)
     {
       if (ada_is_ignored_field (parent_type, i))
 	continue;
@@ -329,8 +331,12 @@ ada_varobj_get_ptr_number_of_children (struct value *parent_value,
 
   /* Pointer to functions and to void do not have a child, since
      you cannot print what they point to.  */
-  if (TYPE_CODE (child_type) == TYPE_CODE_FUNC
-      || TYPE_CODE (child_type) == TYPE_CODE_VOID)
+  if (child_type->code () == TYPE_CODE_FUNC
+      || child_type->code () == TYPE_CODE_VOID)
+    return 0;
+
+  /* Only show children for non-null pointers.  */
+  if (parent_value == nullptr || value_as_address (parent_value) == 0)
     return 0;
 
   /* All other types have 1 child.  */
@@ -353,16 +359,16 @@ ada_varobj_get_number_of_children (struct value *parent_value,
   if (ada_is_access_to_unconstrained_array (parent_type))
     return 1;
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY)
+  if (parent_type->code () == TYPE_CODE_ARRAY)
     return ada_varobj_get_array_number_of_children (parent_value,
 						    parent_type);
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (parent_type) == TYPE_CODE_UNION)
+  if (parent_type->code () == TYPE_CODE_STRUCT
+      || parent_type->code () == TYPE_CODE_UNION)
     return ada_varobj_get_struct_number_of_children (parent_value,
 						     parent_type);
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_PTR)
+  if (parent_type->code () == TYPE_CODE_PTR)
     return ada_varobj_get_ptr_number_of_children (parent_value,
 						  parent_type);
 
@@ -418,10 +424,10 @@ ada_varobj_describe_struct_child (struct value *parent_value,
   int fieldno;
   int childno = 0;
 
-  gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
-	      || TYPE_CODE (parent_type) == TYPE_CODE_UNION);
+  gdb_assert (parent_type->code () == TYPE_CODE_STRUCT
+	      || parent_type->code () == TYPE_CODE_UNION);
 
-  for (fieldno = 0; fieldno < TYPE_NFIELDS (parent_type); fieldno++)
+  for (fieldno = 0; fieldno < parent_type->num_fields (); fieldno++)
     {
       if (ada_is_ignored_field (parent_type, fieldno))
 	continue;
@@ -587,9 +593,9 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
   struct type *index_type;
   int real_index;
 
-  gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY);
+  gdb_assert (parent_type->code () == TYPE_CODE_ARRAY);
 
-  index_type = TYPE_INDEX_TYPE (parent_type);
+  index_type = parent_type->index_type ();
   real_index = child_index + ada_discrete_type_low_bound (index_type);
 
   if (child_name)
@@ -624,17 +630,21 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 	 of the array index type when such type qualification is
 	 needed.  */
       const char *index_type_name = NULL;
+      std::string decoded;
 
       /* If the index type is a range type, find the base type.  */
-      while (TYPE_CODE (index_type) == TYPE_CODE_RANGE)
+      while (index_type->code () == TYPE_CODE_RANGE)
 	index_type = TYPE_TARGET_TYPE (index_type);
 
-      if (TYPE_CODE (index_type) == TYPE_CODE_ENUM
-	  || TYPE_CODE (index_type) == TYPE_CODE_BOOL)
+      if (index_type->code () == TYPE_CODE_ENUM
+	  || index_type->code () == TYPE_CODE_BOOL)
 	{
 	  index_type_name = ada_type_name (index_type);
 	  if (index_type_name)
-	    index_type_name = ada_decode (index_type_name);
+	    {
+	      decoded = ada_decode (index_type_name);
+	      index_type_name = decoded.c_str ();
+	    }
 	}
 
       if (index_type_name != NULL)
@@ -689,7 +699,7 @@ ada_varobj_describe_child (struct value *parent_value,
       return;
     }
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY)
+  if (parent_type->code () == TYPE_CODE_ARRAY)
     {
       ada_varobj_describe_simple_array_child
 	(parent_value, parent_type, parent_name, parent_path_expr,
@@ -698,8 +708,8 @@ ada_varobj_describe_child (struct value *parent_value,
       return;
     }
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (parent_type) == TYPE_CODE_UNION)
+  if (parent_type->code () == TYPE_CODE_STRUCT
+      || parent_type->code () == TYPE_CODE_UNION)
     {
       ada_varobj_describe_struct_child (parent_value, parent_type,
 					parent_name, parent_path_expr,
@@ -709,7 +719,7 @@ ada_varobj_describe_child (struct value *parent_value,
       return;
     }
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_PTR)
+  if (parent_type->code () == TYPE_CODE_PTR)
     {
       ada_varobj_describe_ptr_child (parent_value, parent_type,
 				     parent_name, parent_path_expr,
@@ -852,7 +862,7 @@ ada_varobj_get_value_of_variable (struct value *value,
 {
   ada_varobj_decode_var (&value, &type);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -935,7 +945,7 @@ ada_value_is_changeable_p (const struct varobj *var)
   struct type *type = (var->value != nullptr
 		       ? value_type (var->value.get ()) : var->type);
 
-  if (TYPE_CODE (type) == TYPE_CODE_REF)
+  if (type->code () == TYPE_CODE_REF)
     type = TYPE_TARGET_TYPE (type);
 
   if (ada_is_access_to_unconstrained_array (type))

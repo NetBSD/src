@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,11 +25,26 @@
 /* See "include/elf/common.h" for the definition of valid AT_* values.  */
 
 /* The default implementation of to_auxv_parse, used by the target
-   stack.  */
+   stack.
 
+   Read one auxv entry from *READPTR, not reading locations >= ENDPTR.
+   Return 0 if *READPTR is already at the end of the buffer.
+   Return -1 if there is insufficient buffer for a whole entry.
+   Return 1 if an entry was read into *TYPEP and *VALP.  */
 extern int default_auxv_parse (struct target_ops *ops, gdb_byte **readptr,
 			       gdb_byte *endptr, CORE_ADDR *typep,
 			       CORE_ADDR *valp);
+
+/* The SVR4 psABI implementation of to_auxv_parse, that uses an int to
+   store the type rather than long as assumed by the default parser.
+
+   Read one auxv entry from *READPTR, not reading locations >= ENDPTR.
+   Return 0 if *READPTR is already at the end of the buffer.
+   Return -1 if there is insufficient buffer for a whole entry.
+   Return 1 if an entry was read into *TYPEP and *VALP.  */
+extern int svr4_auxv_parse (struct gdbarch *gdbarch, gdb_byte **readptr,
+			    gdb_byte *endptr, CORE_ADDR *typep,
+			    CORE_ADDR *valp);
 
 /* Read one auxv entry from *READPTR, not reading locations >= ENDPTR.
    Return 0 if *READPTR is already at the end of the buffer.

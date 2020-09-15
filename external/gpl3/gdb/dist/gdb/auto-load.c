@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,11 +36,12 @@
 #include "completer.h"
 #include "fnmatch.h"
 #include "top.h"
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 #include "extension.h"
 #include "gdb/section-scripts.h"
 #include <algorithm>
-#include "common/pathstuff.h"
+#include "gdbsupport/pathstuff.h"
+#include "cli/cli-style.h"
 
 /* The section to look in for auto-loaded scripts (in file formats that
    support sections).
@@ -61,7 +62,7 @@ static void maybe_print_script_not_found_warning
    const char *section_name, unsigned offset);
 
 /* Value of the 'set debug auto-load' configuration variable.  */
-static int debug_auto_load = 0;
+static bool debug_auto_load = false;
 
 /* "show" command for the debug_auto_load configuration variable.  */
 
@@ -79,7 +80,7 @@ show_debug_auto_load (struct ui_file *file, int from_tty,
    set auto-load gdb-scripts on|off
    This is true if we should auto-load associated scripts when an objfile
    is opened, false otherwise.  */
-static int auto_load_gdb_scripts = 1;
+static bool auto_load_gdb_scripts = true;
 
 /* "show" command for the auto_load_gdb_scripts configuration variable.  */
 
@@ -110,16 +111,16 @@ auto_load_gdb_scripts_enabled (const struct extension_language_defn *extlang)
    This flag exists to facilitate deferring auto-loading during start-up
    until after ./.gdbinit has been read; it may augment the search directories
    used to find the scripts.  */
-int global_auto_load = 1;
+bool global_auto_load = true;
 
 /* Auto-load .gdbinit file from the current directory?  */
-int auto_load_local_gdbinit = 1;
+bool auto_load_local_gdbinit = true;
 
 /* Absolute pathname to the current directory .gdbinit, if it exists.  */
 char *auto_load_local_gdbinit_pathname = NULL;
 
-/* Boolean value if AUTO_LOAD_LOCAL_GDBINIT_PATHNAME has been loaded.  */
-int auto_load_local_gdbinit_loaded = 0;
+/* if AUTO_LOAD_LOCAL_GDBINIT_PATHNAME has been loaded.  */
+bool auto_load_local_gdbinit_loaded = false;
 
 /* "show" command for the auto_load_local_gdbinit configuration variable.  */
 
@@ -178,7 +179,7 @@ static std::vector<gdb::unique_xmalloc_ptr<char>>
 auto_load_expand_dir_vars (const char *string)
 {
   char *s = xstrdup (string);
-  substitute_path_component (&s, "$datadir", gdb_datadir);
+  substitute_path_component (&s, "$datadir", gdb_datadir.c_str ());
   substitute_path_component (&s, "$debugdir", debug_file_directory);
 
   if (debug_auto_load && strcmp (s, string) != 0)
@@ -490,9 +491,10 @@ file_is_auto_load_safe (const char *filename, const char *debug_fmt, ...)
   if (filename_is_in_auto_load_safe_path_vec (filename, &filename_real))
     return 1;
 
-  warning (_("File \"%s\" auto-loading has been declined by your "
+  warning (_("File \"%ps\" auto-loading has been declined by your "
 	     "`auto-load safe-path' set to \"%s\"."),
-	   filename_real.get (), auto_load_safe_path);
+	   styled_string (file_name_style.style (), filename_real.get ()),
+	   auto_load_safe_path);
 
   if (!advice_printed)
     {
@@ -500,7 +502,7 @@ file_is_auto_load_safe (const char *filename, const char *debug_fmt, ...)
 
       if (homedir == NULL)
 	homedir = "$HOME";
-      std::string homeinit = string_printf ("%s/%s", homedir, gdbinit);
+      std::string homeinit = string_printf ("%s/%s", homedir, GDBINIT);
 
       printf_filtered (_("\
 To enable execution of this file add\n\
@@ -527,18 +529,21 @@ For more information about this security protection see the\n\
 
 struct auto_load_pspace_info
 {
+  auto_load_pspace_info () = default;
+  ~auto_load_pspace_info ();
+
   /* For each program space we keep track of loaded scripts, both when
      specified as file names and as scripts to be executed directly.  */
-  struct htab *loaded_script_files;
-  struct htab *loaded_script_texts;
+  struct htab *loaded_script_files = nullptr;
+  struct htab *loaded_script_texts = nullptr;
 
   /* Non-zero if we've issued the warning about an auto-load script not being
      supported.  We only want to issue this warning once.  */
-  int unsupported_script_warning_printed;
+  bool unsupported_script_warning_printed = false;
 
   /* Non-zero if we've issued the warning about an auto-load script not being
      found.  We only want to issue this warning once.  */
-  int script_not_found_warning_printed;
+  bool script_not_found_warning_printed = false;
 };
 
 /* Objects of this type are stored in the loaded_script hash table.  */
@@ -559,18 +564,15 @@ struct loaded_script
 };
 
 /* Per-program-space data key.  */
-static const struct program_space_data *auto_load_pspace_data;
+static const struct program_space_key<struct auto_load_pspace_info>
+  auto_load_pspace_data;
 
-static void
-auto_load_pspace_data_cleanup (struct program_space *pspace, void *arg)
+auto_load_pspace_info::~auto_load_pspace_info ()
 {
-  struct auto_load_pspace_info *info = (struct auto_load_pspace_info *) arg;
-
-  if (info->loaded_script_files)
-    htab_delete (info->loaded_script_files);
-  if (info->loaded_script_texts)
-    htab_delete (info->loaded_script_texts);
-  xfree (info);
+  if (loaded_script_files)
+    htab_delete (loaded_script_files);
+  if (loaded_script_texts)
+    htab_delete (loaded_script_texts);
 }
 
 /* Get the current autoload data.  If none is found yet, add it now.  This
@@ -581,13 +583,9 @@ get_auto_load_pspace_data (struct program_space *pspace)
 {
   struct auto_load_pspace_info *info;
 
-  info = ((struct auto_load_pspace_info *)
-	  program_space_data (pspace, auto_load_pspace_data));
+  info = auto_load_pspace_data.get (pspace);
   if (info == NULL)
-    {
-      info = XCNEW (struct auto_load_pspace_info);
-      set_program_space_data (pspace, auto_load_pspace_data, info);
-    }
+    info = auto_load_pspace_data.emplace (pspace);
 
   return info;
 }
@@ -632,8 +630,8 @@ init_loaded_scripts_info (struct auto_load_pspace_info *pspace_info)
 						  eq_loaded_script_entry,
 						  xfree);
 
-  pspace_info->unsupported_script_warning_printed = FALSE;
-  pspace_info->script_not_found_warning_printed = FALSE;
+  pspace_info->unsupported_script_warning_printed = false;
+  pspace_info->script_not_found_warning_printed = false;
 }
 
 /* Wrapper on get_auto_load_pspace_data to also allocate the hash table
@@ -747,17 +745,9 @@ clear_section_scripts (void)
   struct program_space *pspace = current_program_space;
   struct auto_load_pspace_info *info;
 
-  info = ((struct auto_load_pspace_info *)
-	  program_space_data (pspace, auto_load_pspace_data));
+  info = auto_load_pspace_data.get (pspace);
   if (info != NULL && info->loaded_script_files != NULL)
-    {
-      htab_delete (info->loaded_script_files);
-      htab_delete (info->loaded_script_texts);
-      info->loaded_script_files = NULL;
-      info->loaded_script_texts = NULL;
-      info->unsupported_script_warning_printed = FALSE;
-      info->script_not_found_warning_printed = FALSE;
-    }
+    auto_load_pspace_data.clear (pspace);
 }
 
 /* Look for the auto-load script in LANGUAGE associated with OBJFILE where
@@ -793,6 +783,13 @@ auto_load_objfile_script_1 (struct objfile *objfile, const char *realname,
 	fprintf_unfiltered (gdb_stdlog, _("auto-load: Searching 'set auto-load "
 					  "scripts-directory' path \"%s\".\n"),
 			    auto_load_dir);
+
+      /* Convert Windows file name from c:/dir/file to /c/dir/file.  */
+      if (HAS_DRIVE_SPEC (debugfile))
+	{
+	  debugfile_holder = STRIP_DRIVE_SPEC (debugfile);
+	  filename = std::string("\\") + debugfile[0] + debugfile_holder;
+	}
 
       for (const gdb::unique_xmalloc_ptr<char> &dir : vec)
 	{
@@ -1001,8 +998,10 @@ execute_script_contents (struct auto_load_pspace_info *pspace_info,
       /* We don't throw an error, the program is still debuggable.  */
       warning (_("\
 Missing/bad script name in entry at offset %u in section %s\n\
-of file %s."),
-	       offset, section_name, objfile_name (objfile));
+of file %ps."),
+	       offset, section_name,
+	       styled_string (file_name_style.style (),
+			      objfile_name (objfile)));
       return;
     }
   script_text = newline + 1;
@@ -1128,19 +1127,21 @@ auto_load_section_scripts (struct objfile *objfile, const char *section_name)
 
   scripts_sect = bfd_get_section_by_name (abfd, section_name);
   if (scripts_sect == NULL
-      || (bfd_get_section_flags (abfd, scripts_sect) & SEC_HAS_CONTENTS) == 0)
+      || (bfd_section_flags (scripts_sect) & SEC_HAS_CONTENTS) == 0)
     return;
 
   if (!bfd_get_full_section_contents (abfd, scripts_sect, &data))
-    warning (_("Couldn't read %s section of %s"),
-	     section_name, bfd_get_filename (abfd));
+    warning (_("Couldn't read %s section of %ps"),
+	     section_name,
+	     styled_string (file_name_style.style (),
+			    bfd_get_filename (abfd)));
   else
     {
       gdb::unique_xmalloc_ptr<bfd_byte> data_holder (data);
 
       char *p = (char *) data;
       source_section_scripts (objfile, section_name, p,
-			      p + bfd_get_section_size (scripts_sect));
+			      p + bfd_section_size (scripts_sect));
     }
 }
 
@@ -1361,11 +1362,13 @@ info_auto_load_local_gdbinit (const char *args, int from_tty)
   if (auto_load_local_gdbinit_pathname == NULL)
     printf_filtered (_("Local .gdbinit file was not found.\n"));
   else if (auto_load_local_gdbinit_loaded)
-    printf_filtered (_("Local .gdbinit file \"%s\" has been loaded.\n"),
-		     auto_load_local_gdbinit_pathname);
+    printf_filtered (_("Local .gdbinit file \"%ps\" has been loaded.\n"),
+		     styled_string (file_name_style.style (),
+				    auto_load_local_gdbinit_pathname));
   else
-    printf_filtered (_("Local .gdbinit file \"%s\" has not been loaded.\n"),
-		     auto_load_local_gdbinit_pathname);
+    printf_filtered (_("Local .gdbinit file \"%ps\" has not been loaded.\n"),
+		     styled_string (file_name_style.style (),
+				    auto_load_local_gdbinit_pathname));
 }
 
 /* Print an "unsupported script" warning if it has not already been printed.
@@ -1382,11 +1385,13 @@ maybe_print_unsupported_script_warning
     {
       warning (_("\
 Unsupported auto-load script at offset %u in section %s\n\
-of file %s.\n\
+of file %ps.\n\
 Use `info auto-load %s-scripts [REGEXP]' to list them."),
-	       offset, section_name, objfile_name (objfile),
+	       offset, section_name,
+	       styled_string (file_name_style.style (),
+			      objfile_name (objfile)),
 	       ext_lang_name (language));
-      pspace_info->unsupported_script_warning_printed = 1;
+      pspace_info->unsupported_script_warning_printed = true;
     }
 }
 
@@ -1404,11 +1409,13 @@ maybe_print_script_not_found_warning
     {
       warning (_("\
 Missing auto-load script at offset %u in section %s\n\
-of file %s.\n\
+of file %ps.\n\
 Use `info auto-load %s-scripts [REGEXP]' to list them."),
-	       offset, section_name, objfile_name (objfile),
+	       offset, section_name,
+	       styled_string (file_name_style.style (),
+			      objfile_name (objfile)),
 	       ext_lang_name (language));
-      pspace_info->script_not_found_warning_printed = 1;
+      pspace_info->script_not_found_warning_printed = true;
     }
 }
 
@@ -1460,15 +1467,6 @@ automatic loading of Python scripts."),
   return &retval;
 }
 
-/* Command "show auto-load" displays summary of all the current
-   "show auto-load " settings.  */
-
-static void
-show_auto_load_cmd (const char *args, int from_tty)
-{
-  cmd_show_list (*auto_load_show_cmdlist_get (), from_tty, "");
-}
-
 /* Initialize "show auto-load " commands prefix and return it.  */
 
 struct cmd_list_element **
@@ -1477,12 +1475,12 @@ auto_load_show_cmdlist_get (void)
   static struct cmd_list_element *retval;
 
   if (retval == NULL)
-    add_prefix_cmd ("auto-load", class_maintenance, show_auto_load_cmd, _("\
+    add_show_prefix_cmd ("auto-load", class_maintenance, _("\
 Show auto-loading specific settings.\n\
 Show configuration of various auto-load-specific variables such as\n\
 automatic loading of Python scripts."),
-		    &retval, "show auto-load ",
-		    0/*allow-unknown*/, &showlist);
+			 &retval, "show auto-load ",
+			 0/*allow-unknown*/, &showlist);
 
   return &retval;
 }
@@ -1530,17 +1528,14 @@ found and/or loaded."),
   return &retval;
 }
 
+void _initialize_auto_load ();
 void
-_initialize_auto_load (void)
+_initialize_auto_load ()
 {
   struct cmd_list_element *cmd;
   char *scripts_directory_help, *gdb_name_help, *python_name_help;
   char *guile_name_help;
   const char *suffix;
-
-  auto_load_pspace_data
-    = register_program_space_data_with_cleanup (NULL,
-						auto_load_pspace_data_cleanup);
 
   gdb::observers::new_objfile.attach (auto_load_new_objfile);
 
@@ -1551,7 +1546,7 @@ Show whether auto-loading of canned sequences of commands scripts is enabled."),
 			   _("\
 If enabled, canned sequences of commands are loaded when the debugger reads\n\
 an executable or shared library.\n\
-This options has security implications for untrusted inferiors."),
+This option has security implications for untrusted inferiors."),
 			   NULL, show_auto_load_gdb_scripts,
 			   auto_load_set_cmdlist_get (),
 			   auto_load_show_cmdlist_get ());
@@ -1569,7 +1564,7 @@ Show whether auto-loading .gdbinit script in current directory is enabled."),
 If enabled, canned sequences of commands are loaded when debugger starts\n\
 from .gdbinit file in current directory.  Such files are deprecated,\n\
 use a script associated with inferior executable file instead.\n\
-This options has security implications for untrusted inferiors."),
+This option has security implications for untrusted inferiors."),
 			   NULL, show_auto_load_local_gdbinit,
 			   auto_load_set_cmdlist_get (),
 			   auto_load_show_cmdlist_get ());
@@ -1647,7 +1642,7 @@ Setting this parameter to '/' (without the quotes) allows any file\n\
 for the 'set auto-load ...' options.  Each path entry can be also shell\n\
 wildcard pattern; '*' does not match directory separator.\n\
 This option is ignored for the kinds of files having 'set auto-load ... off'.\n\
-This options has security implications for untrusted inferiors."),
+This option has security implications for untrusted inferiors."),
 				     set_auto_load_safe_path,
 				     show_auto_load_safe_path,
 				     auto_load_set_cmdlist_get (),

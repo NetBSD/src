@@ -1,4 +1,4 @@
-/* Copyright 2007-2019 Free Software Foundation, Inc.
+/* Copyright 2007-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,4 +40,5 @@ int main(void)
 
   f1 (s1, e1, i1);
 
+  return 0;
 }

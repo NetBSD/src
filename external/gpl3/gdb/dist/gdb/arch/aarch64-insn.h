@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -19,7 +19,7 @@
 #ifndef ARCH_AARCH64_INSN_H
 #define ARCH_AARCH64_INSN_H
 
-extern int aarch64_debug;
+extern bool aarch64_debug;
 
 /* List of opcodes that we need for building the jump pad and relocating
    an instruction.  */

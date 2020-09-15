@@ -1,4 +1,4 @@
-/* Copyright 1992-2015 Free Software Foundation, Inc.
+/* Copyright 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,61 +15,140 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Simple little program that just generates a core dump from inside some
-   nested function calls.  Keep this as self contained as possible, I.E.
-   use no environment resources other than possibly abort(). */
+/*  This test has two large memory areas buf_rw and buf_ro. 
 
-#ifndef __STDC__
-#define	const	/**/
-#endif
+    buf_rw is written to by the program while buf_ro is initialized at
+    compile / load time.  Thus, when a core file is created, buf_rw's
+    memory should reside in the core file, but buf_ro probably won't be.
+    Instead, the contents of buf_ro are available from the executable.
 
-#ifndef HAVE_ABORT
-#define HAVE_ABORT 1
-#endif
+    Now, for the wrinkle:  We create a one page read-only mapping over
+    both of these areas.  This will create a one page "hole" of all
+    zeros in each area.
 
-#if HAVE_ABORT
-#define ABORT abort()
+    Will GDB be able to correctly read memory from each of the four
+    (or six, if you count the regions on the other side of each hole)
+    memory regions?  */
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <inttypes.h>
+
+/* These are globals so that we can find them easily when debugging
+   the core file.  */
+long pagesize;
+uintptr_t addr;
+char *mbuf_ro;
+char *mbuf_rw;
+
+/* 256 KiB buffer.  */
+char buf_rw[256 * 1024];
+
+#define C5_16 \
+  0xc5, 0xc5, 0xc5, 0xc5, \
+  0xc5, 0xc5, 0xc5, 0xc5, \
+  0xc5, 0xc5, 0xc5, 0xc5, \
+  0xc5, 0xc5, 0xc5, 0xc5
+
+#define C5_256 \
+  C5_16, C5_16, C5_16, C5_16, \
+  C5_16, C5_16, C5_16, C5_16, \
+  C5_16, C5_16, C5_16, C5_16, \
+  C5_16, C5_16, C5_16, C5_16
+
+#define C5_1k \
+  C5_256, C5_256, C5_256, C5_256
+
+#define C5_8k \
+  C5_1k, C5_1k, C5_1k, C5_1k, \
+  C5_1k, C5_1k, C5_1k, C5_1k
+
+#define C5_64k \
+  C5_8k, C5_8k, C5_8k, C5_8k, \
+  C5_8k, C5_8k, C5_8k, C5_8k
+
+#define C5_256k \
+  C5_64k, C5_64k, C5_64k, C5_64k
+
+/* 256 KiB worth of data.  For this test case, we can't allocate a
+   buffer and then fill it; we want GDB to have to read this data
+   from the executable; it should NOT find it in the core file.  */
+
+const char buf_ro[] = { C5_256k };
+
+int
+main (int argc, char **argv)
+{
+  int i, bitcount;
+
+#ifdef _SC_PAGESIZE
+  pagesize = sysconf (_SC_PAGESIZE);
 #else
-#define ABORT {char *invalid = 0; *invalid = 0xFF;}
+  pagesize = 8192;
 #endif
 
-/* Don't make these automatic vars or we will have to walk back up the
-   stack to access them. */
+  /* Verify that pagesize is a power of 2.  */
+  bitcount = 0;
+  for (i = 0; i < 4 * sizeof (pagesize); i++)
+    if (pagesize & (1 << i))
+      bitcount++;
 
-char *buf1;
-char *buf2;
+  if (bitcount != 1)
+    {
+      fprintf (stderr, "pagesize is not a power of 2.\n");
+      exit (1);
+    }
 
-int coremaker_data = 1;	/* In Data section */
-int coremaker_bss;	/* In BSS section */
+  /* Compute an address that should be within buf_ro.  Complain if not.  */
+  addr = ((uintptr_t) buf_ro + pagesize) & ~(pagesize - 1);
 
-const int coremaker_ro = 201;	/* In Read-Only Data section */
+  if (addr <= (uintptr_t) buf_ro
+      || addr >= (uintptr_t) buf_ro + sizeof (buf_ro))
+    {
+      fprintf (stderr, "Unable to compute a suitable address within buf_ro.\n");
+      exit (1);
+    }
 
-void
-func2 (int x)
-{
-  int coremaker_local[5];
-  int i;
-  static int y;
+  mbuf_ro = mmap ((void *) addr, pagesize, PROT_READ,
+               MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
 
-  /* Make sure that coremaker_local doesn't get optimized away. */
-  for (i = 0; i < 5; i++)
-    coremaker_local[i] = i;
-  coremaker_bss = 0;
-  for (i = 0; i < 5; i++)
-    coremaker_bss += coremaker_local[i];
-  coremaker_data = coremaker_ro + 1;
-  y = 10 * x;
-  ABORT;
-}
+  if (mbuf_ro == MAP_FAILED)
+    {
+      fprintf (stderr, "mmap #1 failed: %s.\n", strerror (errno));
+      exit (1);
+    }
 
-void
-func1 (int x)
-{
-  func2 (x * 2);
-}
+  /* Write (and fill) the R/W region.  */
+  for (i = 0; i < sizeof (buf_rw); i++)
+    buf_rw[i] = 0x6b;
 
-int main ()
-{
-  func1 (10);
-  return 0;
+  /* Compute an mmap address within buf_rw.  Complain if it's somewhere
+     else.  */
+  addr = ((uintptr_t) buf_rw + pagesize) & ~(pagesize - 1);
+
+  if (addr <= (uintptr_t) buf_rw
+      || addr >= (uintptr_t) buf_rw + sizeof (buf_rw))
+    {
+      fprintf (stderr, "Unable to compute a suitable address within buf_rw.\n");
+      exit (1);
+    }
+
+  mbuf_rw = mmap ((void *) addr, pagesize, PROT_READ,
+               MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
+
+  if (mbuf_rw == MAP_FAILED)
+    {
+      fprintf (stderr, "mmap #2 failed: %s.\n", strerror (errno));
+      exit (1);
+    }
+
+  /* With correct ulimit, etc. this should cause a core dump.  */
+  abort ();
 }

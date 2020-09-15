@@ -1,6 +1,6 @@
 /* gdb commands implemented in Python
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -98,10 +98,7 @@ cmdpy_destroyer (struct cmd_list_element *self, void *context)
   gdbpy_ref<cmdpy_object> cmd ((cmdpy_object *) context);
   cmd->command = NULL;
 
-  /* We allocated the name, doc string, and perhaps the prefix
-     name.  */
-  xfree ((char *) self->name);
-  xfree ((char *) self->doc);
+  /* We may have allocated the prefix name.  */
   xfree ((char *) self->prefixname);
 }
 
@@ -375,10 +372,7 @@ gdbpy_parse_command_name (const char *name,
   lastchar = i;
 
   /* Find first character of the final word.  */
-  for (; i > 0 && (isalnum (name[i - 1])
-		   || name[i - 1] == '-'
-		   || name[i - 1] == '_');
-       --i)
+  for (; i > 0 && valid_cmd_char_p (name[i - 1]); --i)
     ;
   result = (char *) xmalloc (lastchar - i + 2);
   memcpy (result, &name[i], lastchar - i + 1);
@@ -396,7 +390,7 @@ gdbpy_parse_command_name (const char *name,
   std::string prefix_text (name, i + 1);
 
   prefix_text2 = prefix_text.c_str ();
-  elt = lookup_cmd_1 (&prefix_text2, *start_list, NULL, 1);
+  elt = lookup_cmd_1 (&prefix_text2, *start_list, NULL, NULL, 1);
   if (elt == NULL || elt == CMD_LIST_AMBIGUOUS)
     {
       PyErr_Format (PyExc_RuntimeError, _("Could not find command prefix %s."),
@@ -471,7 +465,8 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
       && cmdtype != class_files && cmdtype != class_support
       && cmdtype != class_info && cmdtype != class_breakpoint
       && cmdtype != class_trace && cmdtype != class_obscure
-      && cmdtype != class_maintenance && cmdtype != class_user)
+      && cmdtype != class_maintenance && cmdtype != class_user
+      && cmdtype != class_tui)
     {
       PyErr_Format (PyExc_RuntimeError, _("Invalid command class argument."));
       return -1;
@@ -541,7 +536,7 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
 
   gdbpy_ref<> self_ref = gdbpy_ref<>::new_reference (self);
 
-  TRY
+  try
     {
       struct cmd_list_element *cmd;
 
@@ -563,6 +558,8 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
       /* There appears to be no API to set this.  */
       cmd->func = cmdpy_function;
       cmd->destroyer = cmdpy_destroyer;
+      cmd->doc_allocated = 1;
+      cmd->name_allocated = 1;
 
       obj->command = cmd;
       set_cmd_context (cmd, self_ref.release ());
@@ -572,7 +569,7 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
 	set_cmd_completer_handle_brkchars (cmd,
 					   cmdpy_completer_handle_brkchars);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
       xfree (cmd_name);
       xfree (docstring);
@@ -580,7 +577,6 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
       gdbpy_convert_exception (except);
       return -1;
     }
-  END_CATCH
 
   return 0;
 }
@@ -598,8 +594,7 @@ gdbpy_initialize_commands (void)
   if (PyType_Ready (&cmdpy_object_type) < 0)
     return -1;
 
-  /* Note: alias and user are special; pseudo appears to be unused,
-     and there is no reason to expose tui, I think.  */
+  /* Note: alias and user are special.  */
   if (PyModule_AddIntConstant (gdb_module, "COMMAND_NONE", no_class) < 0
       || PyModule_AddIntConstant (gdb_module, "COMMAND_RUNNING", class_run) < 0
       || PyModule_AddIntConstant (gdb_module, "COMMAND_DATA", class_vars) < 0
@@ -616,7 +611,8 @@ gdbpy_initialize_commands (void)
 				  class_obscure) < 0
       || PyModule_AddIntConstant (gdb_module, "COMMAND_MAINTENANCE",
 				  class_maintenance) < 0
-      || PyModule_AddIntConstant (gdb_module, "COMMAND_USER", class_user) < 0)
+      || PyModule_AddIntConstant (gdb_module, "COMMAND_USER", class_user) < 0
+      || PyModule_AddIntConstant (gdb_module, "COMMAND_TUI", class_tui) < 0)
     return -1;
 
   for (i = 0; i < N_COMPLETERS; ++i)

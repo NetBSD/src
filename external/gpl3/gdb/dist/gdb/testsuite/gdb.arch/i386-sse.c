@@ -1,6 +1,6 @@
 /* Test program for SSE registers.
 
-   Copyright 2004-2019 Free Software Foundation, Inc.
+   Copyright 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,7 +51,7 @@ v4sf_t data[] =
 int
 have_sse (void)
 {
-  int edx;
+  unsigned int edx;
 
   if (!x86_cpuid (1, NULL, NULL, NULL, &edx))
     return 0;

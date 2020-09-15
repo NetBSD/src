@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,10 @@
 # locations.
 
 standard_testfile list-ambiguous0.c list-ambiguous1.c
+
+# Set EDITOR to true to prevent that GDB's edit command starts an actual
+# editor.
+setenv EDITOR true
 
 if {[prepare_for_testing "failed to prepare" $testfile [list $srcfile $srcfile2] \
 	 {debug}]} {
