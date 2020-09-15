@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.296 2020/09/14 15:09:57 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.297 2020/09/15 10:05:36 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.296 2020/09/14 15:09:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.297 2020/09/15 10:05:36 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -145,7 +145,7 @@ static union l3addr *arp_llinfo_holdsrc(struct llentry *, union l3addr *);
 static void arp_llinfo_output(struct ifnet *, const union l3addr *,
     const union l3addr *, const uint8_t *, const union l3addr *);
 static void arp_llinfo_missed(struct ifnet *, const union l3addr *,
-    struct mbuf *);
+    int16_t, struct mbuf *);
 static void arp_free(struct llentry *, int);
 
 static struct nd_domain arp_nd_domain = {
@@ -153,6 +153,8 @@ static struct nd_domain arp_nd_domain = {
 	.nd_delay = 5,		/* delay first probe time 5 second */
 	.nd_mmaxtries = 3,	/* maximum broadcast query */
 	.nd_umaxtries = 3,	/* maximum unicast query */
+	.nd_retransmultiple = BACKOFF_MULTIPLE,
+	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
 	.nd_nud_enabled = arp_nud_enabled,
@@ -1374,7 +1376,7 @@ arp_llinfo_output(struct ifnet *ifp, __unused const union l3addr *daddr,
 
 static void
 arp_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr,
-    struct mbuf *m)
+    __unused int16_t type, struct mbuf *m)
 {
 	struct in_addr mdaddr = zeroin_addr;
 	struct sockaddr_in dsin, tsin;

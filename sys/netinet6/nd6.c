@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.273 2020/09/14 15:09:57 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.274 2020/09/15 10:05:36 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.273 2020/09/14 15:09:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.274 2020/09/15 10:05:36 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -111,7 +111,7 @@ static union l3addr *nd6_llinfo_holdsrc(struct llentry *, union l3addr *);
 static void nd6_llinfo_output(struct ifnet *, const union l3addr *,
     const union l3addr *, const uint8_t *, const union l3addr *);
 static void nd6_llinfo_missed(struct ifnet *, const union l3addr *,
-    struct mbuf *);
+    int16_t, struct mbuf *);
 static void nd6_timer(void *);
 static void nd6_timer_work(struct work *, void *);
 static struct nd_opt_hdr *nd6_option(union nd_opts *);
@@ -126,6 +126,8 @@ struct nd_domain nd6_nd_domain = {
 	.nd_delay = 5,		/* delay first probe time 5 second */
 	.nd_mmaxtries = 3,	/* maximum unicast query */
 	.nd_umaxtries = 3,	/* maximum multicast query */
+	.nd_retransmultiple = BACKOFF_MULTIPLE,
+	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
 	.nd_nud_enabled = nd6_nud_enabled,
@@ -411,15 +413,25 @@ nd6_llinfo_retrans(struct ifnet *ifp)
 }
 
 static void
-nd6_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr, struct mbuf *m)
+nd6_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr,
+    int16_t type, struct mbuf *m)
 {
 	struct in6_addr mdaddr6 = zeroin6_addr;
 	struct sockaddr_in6 dsin6, tsin6;
 	struct sockaddr *sa;
 
-	if (m != NULL)
-		icmp6_error2(m, ICMP6_DST_UNREACH,
-		    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+	if (m != NULL) {
+		if (type == ND_LLINFO_PROBE) {
+			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+
+			/* XXX pullup? */
+			if (sizeof(*ip6) < m->m_len)
+				mdaddr6 = ip6->ip6_src;
+			m_freem(m);
+		} else
+			icmp6_error2(m, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+	}
 	if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
 		sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
 		sa = sin6tosa(&dsin6);

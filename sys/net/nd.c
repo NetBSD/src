@@ -1,4 +1,4 @@
-/* $NetBSD: */
+/*	$NetBSD: nd.c,v 1.3 2020/09/15 10:05:36 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.2 2020/09/14 15:09:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.3 2020/09/15 10:05:36 roy Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -56,7 +56,8 @@ nd_timer(void *arg)
 	struct ifnet *ifp = NULL;
 	struct psref psref;
 	struct mbuf *m = NULL;
-	bool send_ns = false, missed = false;
+	bool send_ns = false;
+	uint16_t missed = 0;
 	union l3addr taddr, *daddrp = NULL;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
@@ -84,10 +85,9 @@ nd_timer(void *arg)
 		break;
 
 	case ND_LLINFO_INCOMPLETE:
-		if (ln->ln_asked++ < nd->nd_mmaxtries) {
-			send_ns = true;
+		send_ns = true;
+		if (ln->ln_asked++ < nd->nd_mmaxtries)
 			break;
-		}
 
 		if (ln->ln_hold) {
 			struct mbuf *m0, *mnxt;
@@ -107,12 +107,8 @@ nd_timer(void *arg)
 			ln->ln_hold = NULL;
 		}
 
-		missed = true;
+		missed = ND_LLINFO_INCOMPLETE;
 		ln->ln_state = ND_LLINFO_WAITDELETE;
-		if (ln->ln_asked == nd->nd_mmaxtries)
-			nd_set_timer(ln, ND_TIMER_RETRANS);
-		else
-			send_ns = true;
 		break;
 
 	case ND_LLINFO_REACHABLE:
@@ -144,15 +140,39 @@ nd_timer(void *arg)
 		break;
 
 	case ND_LLINFO_PROBE:
-		if (ln->ln_asked < nd->nd_umaxtries) {
-			ln->ln_asked++;
-			send_ns = true;
+		send_ns = true;
+		if (ln->ln_asked++ < nd->nd_umaxtries) {
 			daddrp = &taddr;
 		} else {
-			LLE_REMREF(ln);
-			nd->nd_free(ln, 0);
-			ln = NULL;
+			ln->ln_state = ND_LLINFO_UNREACHABLE;
+			ln->ln_asked = 1;
+			missed = ND_LLINFO_PROBE;
+			/* nd_missed() consumers can use missed to know if
+			 * they need to send ICMP UNREACHABLE or not. */
 		}
+		break;
+	case ND_LLINFO_UNREACHABLE:
+		/*
+		 * RFC 7048 Section 3 says in the UNREACHABLE state
+		 * packets continue to be sent to the link-layer address and
+		 * then backoff exponentially.
+		 * We adjust this slightly and move to the INCOMPLETE state
+		 * after nd_mmaxtries probes and then start backing off.
+		 *
+		 * This results in simpler code whilst providing a more robust
+		 * model which doubles the time to failure over what we did
+		 * before. We don't want to be back to the old ARP model where
+		 * no unreachability errors are returned because very
+		 * few applications would look at unreachability hints provided
+		 * such as ND_LLINFO_UNREACHABLE or RTM_MISS.
+		 */
+		send_ns = true;
+		if (ln->ln_asked++ < nd->nd_mmaxtries)
+			break;
+
+		missed = ND_LLINFO_UNREACHABLE;
+		ln->ln_state = ND_LLINFO_WAITDELETE;
+		ln->la_flags &= ~LLE_VALID;
 		break;
 	}
 
@@ -160,7 +180,10 @@ nd_timer(void *arg)
 		uint8_t lladdr[255], *lladdrp;
 		union l3addr src, *psrc;
 
-		nd_set_timer(ln, ND_TIMER_RETRANS);
+		if (ln->ln_state == ND_LLINFO_WAITDELETE)
+			nd_set_timer(ln, ND_TIMER_RETRANS_BACKOFF);
+		else
+			nd_set_timer(ln, ND_TIMER_RETRANS);
 		if (ln->ln_state > ND_LLINFO_INCOMPLETE &&
 		    ln->la_flags & LLE_VALID)
 		{
@@ -181,7 +204,7 @@ out:
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	if (missed)
-		nd->nd_missed(ifp, &taddr, m);
+		nd->nd_missed(ifp, &taddr, missed, m);
 	if (ifp != NULL)
 		if_release(ifp, &psref);
 }
@@ -241,6 +264,22 @@ nd_set_timer(struct llentry *ln, int type)
 	case ND_TIMER_RETRANS:
 		xtick = nd->nd_retrans(ifp) * hz / 1000;
 		break;
+	case ND_TIMER_RETRANS_BACKOFF:
+	{
+		unsigned int retrans = nd->nd_retrans(ifp);
+		unsigned int attempts = ln->ln_asked - nd->nd_mmaxtries;
+
+		xtick = retrans;
+		while (attempts-- != 0) {
+			xtick *= nd->nd_retransmultiple;
+			if (xtick > nd->nd_maxretrans || xtick < retrans) {
+				xtick = nd->nd_maxretrans;
+				break;
+			}
+		}
+		xtick = xtick * hz / 1000;
+		break;
+	}
 	case ND_TIMER_REACHABLE:
 		xtick = nd->nd_reachable(ifp) * hz / 1000;
 		break;
