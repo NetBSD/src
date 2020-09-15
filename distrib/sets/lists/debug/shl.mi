@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.262 2020/09/13 02:37:31 kamil Exp $
+# $NetBSD: shl.mi,v 1.263 2020/09/15 06:22:33 mrg Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -316,7 +316,7 @@
 ./usr/libdata/debug/usr/lib/libterminfo.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,arch64,cxx,gcc=9
+./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,arch64,cxx,gcc=9,!machine=sparc64
 ./usr/libdata/debug/usr/lib/libtspi.so.3.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libubsan.so.1.0.debug		comp-sys-debug	obsolete,gcc=5
 ./usr/libdata/debug/usr/lib/libubsan.so.2.0.debug		comp-sys-debug	debug,compatfile,obsolete

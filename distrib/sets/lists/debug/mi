@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.335 2020/09/13 03:43:16 kamil Exp $
+# $NetBSD: mi,v 1.336 2020/09/15 06:22:33 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -261,7 +261,7 @@
 ./usr/lib/libterminfo_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libtpm_unseal_g.a			comp-c-debuglib		debuglib,compatfile,tpm
 ./usr/lib/libtre_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=9
+./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=9,!machine=sparc64
 ./usr/lib/libtspi_g.a				comp-c-debuglib		debuglib,compatfile,tpm
 ./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
