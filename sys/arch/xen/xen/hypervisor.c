@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.88 2020/09/09 16:46:06 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.89 2020/09/15 10:58:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.88 2020/09/09 16:46:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.89 2020/09/15 10:58:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,7 +676,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "xendevbus", &hac.hac_xenbus, hypervisor_print);
 #endif
 #if NXENCONS > 0
-	if (xencons_interface != 0) {
+	if (xencons_interface != 0 || vm_guest != VM_GUEST_XENPVHVM) {
 		memset(&hac, 0, sizeof(hac));
 		hac.hac_xencons.xa_device = "xencons";
 		config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
