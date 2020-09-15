@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.45 2019/12/11 10:28:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.46 2020/09/15 08:39:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -99,6 +99,7 @@
 #define	WM_F_WA_I210_CLSEM	0x08000000 /* I21[01] Semaphore workaround */
 #define	WM_F_SFP		0x10000000 /* SFP */
 #define	WM_F_MAS		0x20000000 /* Media Auto Sense */
+#define	WM_F_CRC_STRIP		0x40000000 /* CRC strip */
 
 #define WM_FLAGS "\20" \
 	"\1" "HAS_MII"	"\2" "LOCK_EECD" "\3" "_B02"	"\4" "_B03"	\
@@ -108,7 +109,7 @@
 	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
 	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
 	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\34" "CLSEMWA" \
-	"\35" "SFP"	"\36" "MAS"
+	"\35" "SFP"	"\36" "MAS"	"\37" "CRC_STRIP"
 
 /*
  * Variations of Intel gigabit Ethernet controller:
