@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2354 2020/09/14 00:40:02 rin Exp $
+#	$NetBSD: mi,v 1.2355 2020/09/15 06:22:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3947,8 +3947,8 @@
 ./usr/lib/libtpm_unseal_p.a			comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libtre.a				comp-c-lib		compatfile
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=9
-./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=9
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=9,!machine=sparc64
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=9,!machine=sparc64
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc
