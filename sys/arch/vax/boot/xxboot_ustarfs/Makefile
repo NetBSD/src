@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/12/11 12:19:34 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2020/09/15 05:08:07 mrg Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -36,5 +36,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.out
 	${OBJCOPY} -O binary ${PROG}.out ${PROG}
+
+COPTS.bootxx.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=array-bounds :}
 
 .include <bsd.prog.mk>
