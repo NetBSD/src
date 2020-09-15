@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@
 #include "gdb_regex.h"
 
 #include "varobj.h"
-#include "common/vec.h"
 #include "gdbthread.h"
 #include "inferior.h"
 #include "varobj-iter.h"
 #include "parser-defs.h"
+#include "gdbarch.h"
 
 #if HAVE_PYTHON
 #include "python/python.h"
@@ -39,7 +39,7 @@
 typedef int PyObject;
 #endif
 
-/* Non-zero if we want to see trace of varobj level stuff.  */
+/* See varobj.h.  */
 
 unsigned int varobjdebug = 0;
 static void
@@ -309,20 +309,20 @@ varobj_create (const char *objname,
 	}
 
       p = expression;
-      innermost_block.reset (INNERMOST_BLOCK_FOR_SYMBOLS
-			     | INNERMOST_BLOCK_FOR_REGISTERS);
+
+      innermost_block_tracker tracker (INNERMOST_BLOCK_FOR_SYMBOLS
+				       | INNERMOST_BLOCK_FOR_REGISTERS);
       /* Wrap the call to parse expression, so we can 
          return a sensible error.  */
-      TRY
+      try
 	{
-	  var->root->exp = parse_exp_1 (&p, pc, block, 0);
+	  var->root->exp = parse_exp_1 (&p, pc, block, 0, &tracker);
 	}
 
-      CATCH (except, RETURN_MASK_ERROR)
+      catch (const gdb_exception_error &except)
 	{
 	  return NULL;
 	}
-      END_CATCH
 
       /* Don't allow variables to be created for types.  */
       if (var->root->exp->elts[0].opcode == OP_TYPE
@@ -336,7 +336,7 @@ varobj_create (const char *objname,
 
       var->format = variable_default_display (var.get ());
       var->root->valid_block =
-	var->root->floating ? NULL : innermost_block.block ();
+	var->root->floating ? NULL : tracker.block ();
       var->name = expression;
       /* For a root var, the name and the expr are the same.  */
       var->path_expr = expression;
@@ -363,11 +363,11 @@ varobj_create (const char *objname,
       /* We definitely need to catch errors here.
          If evaluate_expression succeeds we got the value we wanted.
          But if it fails, we still go on with a call to evaluate_type().  */
-      TRY
+      try
 	{
 	  value = evaluate_expression (var->root->exp.get ());
 	}
-      CATCH (except, RETURN_MASK_ERROR)
+      catch (const gdb_exception_error &except)
 	{
 	  /* Error getting the value.  Try to at least get the
 	     right type.  */
@@ -375,7 +375,6 @@ varobj_create (const char *objname,
 
 	  var->type = value_type (type_only_value);
 	}
-      END_CATCH
 
       if (value != NULL)
 	{
@@ -598,10 +597,9 @@ varobj_get_frozen (const struct varobj *var)
   return var->frozen;
 }
 
-/* A helper function that restricts a range to what is actually
-   available in a VEC.  This follows the usual rules for the meaning
-   of FROM and TO -- if either is negative, the entire range is
-   used.  */
+/* A helper function that updates the contents of FROM and TO based on the
+   size of the vector CHILDREN.  If the contents of either FROM or TO are
+   negative the entire range is used.  */
 
 void
 varobj_restrict_range (const std::vector<varobj *> &children,
@@ -760,7 +758,7 @@ update_dynamic_varobj_children (struct varobj *var,
 	  /* Release vitem->value so its lifetime is not bound to the
 	     execution of a command.  */
 	  if (item != NULL && item->value != NULL)
-	    release_value (item->value).release ();
+	    item->value = release_value (item->value).release ();
 	}
 
       if (item == NULL)
@@ -1033,17 +1031,16 @@ varobj_set_value (struct varobj *var, const char *expression)
 
   input_radix = 10;		/* ALWAYS reset to decimal temporarily.  */
   expression_up exp = parse_exp_1 (&s, 0, 0, 0);
-  TRY
+  try
     {
       value = evaluate_expression (exp.get ());
     }
 
-  CATCH (except, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &except)
     {
       /* We cannot proceed without a valid expression.  */
       return false;
     }
-  END_CATCH
 
   /* All types that are editable must also be changeable.  */
   gdb_assert (varobj_value_is_changeable_p (var));
@@ -1062,16 +1059,15 @@ varobj_set_value (struct varobj *var, const char *expression)
 
   /* The new value may be lazy.  value_assign, or
      rather value_contents, will take care of this.  */
-  TRY
+  try
     {
       val = value_assign (var->value.get (), value);
     }
 
-  CATCH (except, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &except)
     {
       return false;
     }
-  END_CATCH
 
   /* If the value has changed, record it, so that next -var-update can
      report this change.  If a variable had a value of '1', we've set it
@@ -1127,7 +1123,7 @@ install_default_visualizer (struct varobj *var)
 	}
 
       if (pretty_printer == Py_None)
-	pretty_printer.release ();
+	pretty_printer.reset (nullptr);
   
       install_visualizer (var->dynamic, NULL, pretty_printer.release ());
     }
@@ -1275,7 +1271,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
   if (value)
     value = coerce_ref (value);
 
-  if (var->type && TYPE_CODE (var->type) == TYPE_CODE_UNION)
+  if (var->type && var->type->code () == TYPE_CODE_UNION)
     /* For unions, we need to fetch the value implicitly because
        of implementation of union member fetch.  When gdb
        creates a value for a field and the value of the enclosing
@@ -1303,26 +1299,25 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
 	{
 	  /* For variables that are frozen, or are children of frozen
 	     variables, we don't do fetch on initial assignment.
-	     For non-initial assignemnt we do the fetch, since it means we're
+	     For non-initial assignment we do the fetch, since it means we're
 	     explicitly asked to compare the new value with the old one.  */
 	  intentionally_not_fetched = true;
 	}
       else
 	{
 
-	  TRY
+	  try
 	    {
 	      value_fetch_lazy (value);
 	    }
 
-	  CATCH (except, RETURN_MASK_ERROR)
+	  catch (const gdb_exception_error &except)
 	    {
 	      /* Set the value to NULL, so that for the next -var-update,
 		 we don't try to compare the new value with this value,
 		 that we couldn't even read.  */
 	      value = NULL;
 	    }
-	  END_CATCH
 	}
     }
 
@@ -1836,7 +1831,7 @@ install_variable (struct varobj *var)
   return true;			/* OK */
 }
 
-/* Unistall the object VAR.  */
+/* Uninstall the object VAR.  */
 static void
 uninstall_variable (struct varobj *var)
 {
@@ -2003,7 +1998,7 @@ varobj::~varobj ()
    value were accessible.
 
    This differs from VAR->type in that VAR->type is always
-   the true type of the expession in the source language.
+   the true type of the expression in the source language.
    The return value of this function is the type we're
    actually storing in varobj, and using for displaying
    the values and for comparing previous and new values.
@@ -2138,14 +2133,13 @@ value_of_root_1 (struct varobj **var_handle)
 
       /* We need to catch errors here, because if evaluate
          expression fails we want to just return NULL.  */
-      TRY
+      try
 	{
 	  new_val = evaluate_expression (var->root->exp.get ());
 	}
-      CATCH (except, RETURN_MASK_ERROR)
+      catch (const gdb_exception_error &except)
 	{
 	}
-      END_CATCH
     }
 
   return new_val;
@@ -2404,7 +2398,7 @@ varobj_editable_p (const struct varobj *var)
 
   type = varobj_get_value_type (var);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -2451,7 +2445,7 @@ varobj_default_value_is_changeable_p (const struct varobj *var)
 
   type = varobj_get_value_type (var);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -2526,8 +2520,9 @@ varobj_invalidate (void)
   all_root_varobjs (varobj_invalidate_iter, NULL);
 }
 
+void _initialize_varobj ();
 void
-_initialize_varobj (void)
+_initialize_varobj ()
 {
   varobj_table = XCNEWVEC (struct vlist *, VAROBJ_TABLE_SIZE);
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for Alpha BSD's.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* We define this to get types like register_t.  */
+#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -24,21 +26,13 @@
 #include "alpha-tdep.h"
 #include "alpha-bsd-tdep.h"
 #include "inf-ptrace.h"
+#include "nbsd-nat.h"
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
-#ifdef HAVE_SYS_PROCFS_H
-#include <sys/procfs.h>
-#endif
-
-#ifdef __NetBSD__
-#include "nbsd-nat.h"
 struct alpha_bsd_nat_target final : public nbsd_nat_target
-#else
-struct alpha_bsd_nat_target final : public inf_ptrace_target
-#endif
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -46,7 +40,6 @@ struct alpha_bsd_nat_target final : public inf_ptrace_target
 
 static alpha_bsd_nat_target the_alpha_bsd_nat_target;
 
-
 /* Determine if PT_GETREGS fetches this register.  */
 
 static int
@@ -62,15 +55,14 @@ getregs_supplies (int regno)
 void
 alpha_bsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regno == -1 || getregs_supplies (regno))
     {
       struct reg gregs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &gregs, lwp) == -1) 
+      if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       alphabsd_supply_reg (regcache, (char *) &gregs, regno);
@@ -83,7 +75,8 @@ alpha_bsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
+      if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_supply_fpreg (regcache, (char *) &fpregs, regno);
@@ -96,20 +89,19 @@ alpha_bsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 void
 alpha_bsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regno == -1 || getregs_supplies (regno))
     {
       struct reg gregs;
-      if (ptrace (PT_GETREGS, pid,
+      if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
                   (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       alphabsd_fill_reg (regcache, (char *) &gregs, regno);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &gregs, lwp) == -1) 
+      if (ptrace (PT_SETREGS, regcache->ptid ().pid (),
+                  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -121,13 +113,14 @@ alpha_bsd_nat_target::store_registers (struct regcache *regcache, int regno)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
+      if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
-      if (ptrace (PT_SETFPREGS, pid,
-		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1) 
+      if (ptrace (PT_SETFPREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
@@ -164,8 +157,9 @@ alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 }
 
 
+void _initialize_alphabsd_nat ();
 void
-_initialize_alphabsd_nat (void)
+_initialize_alphabsd_nat ()
 {
   add_inf_child_target (&the_alpha_bsd_nat_target);
 
