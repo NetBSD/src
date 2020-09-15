@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.14 2020/09/15 05:21:46 mrg Exp $
+$NetBSD: README.gcc9,v 1.15 2020/09/15 08:44:02 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -51,16 +51,16 @@ i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	N/A	y
 m68000		y	y	y	y		y		y	?	n
 m68k		y	y	y	y		y		y	y[11]	n
-mipseb		y	y	y	y		y[3]		n	n	n
-mipsel		y	y	y	y		y[3]		y	n	n
-mips64eb	y	y	y	y		y[3]		y	y	n
-mips64el	y	y	y	y		y[3]		n	n	n
-powerpc		y	y	y	y		y[3]		y	y	n
-powerpc64	y	y	y	y		y		?	N/A	n
-sh3eb		y	n	y	y		y		?	?	?
+mipseb		y	y	y	y		y		n	n	n
+mipsel		y	y	y	y		y		y	n	n
+mips64eb	y	y	y	y		y		y	y	n
+mips64el	y	y	y	y		y		n	n	n
+powerpc		y	y	y	y		y		y	y	n
+powerpc64	y	y	y	y		y		N/A	N/A	n
+sh3eb		y	y	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y	n
 sparc		y	y	y	y		y		y	y	n
-sparc64		y	y	y	y		y		n	n	?
+sparc64		y	y	y	y		y		y	n	?
 vax		y	y	y	y		y		y	y	n
 x86_64		y	y	y	y		y		y	y	y
 riscv32		y	N/A	y	y		y		N/A	N/A	y	
@@ -70,8 +70,7 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[3]: consult cpu/platform table for full data
-[8]: prep and bebox floppies overflow; need to find if they are size limited
+[1]: kernels and boot programs, etc., don't build
 [10]: tests in lib/libc/sys are skipped; see port-alpha/55652
 [11]: at least there's no regression in kernel and lib/libc/{gen,sys}
 
@@ -91,7 +90,7 @@ earmv7:		 		 	 	y		y
 earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		r		y	y	y		y		r		y		y		y		r 	y
+m68k:		y		y	y	y		y		y		y		y		y		y 	y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		y		y		y		y		y		y
@@ -104,11 +103,11 @@ mips64eb:	 		y
 mips64el:	y		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	y		n[8]	y	y		y		y		y		n[8]		y		y
+powerpc:	y		y	y	y		y		y		y		y		y		y
 
 		evbppc		macppc		ofppc
-powerpc64:	y		?		?
+powerpc64:	y		n[1]		n[1]
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		 		-		 		 		r
-sh3el:		r		-		-		y
+sh3eb:		 		y		 		 		y
+sh3el:		y		y		y		y
