@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.57 2020/06/12 21:08:02 roy Exp $	*/
+/*	$NetBSD: ndp.c,v 1.58 2020/09/15 10:11:35 roy Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -571,28 +571,29 @@ again:;
 				(void)printf(" %-9.9s", "expired");
 
 			switch (nbi->state) {
-			case ND6_LLINFO_NOSTATE:
+			case ND_LLINFO_NOSTATE:
 				 (void)printf(" N");
 				 break;
-#ifdef ND6_LLINFO_WAITDELETE
-			case ND6_LLINFO_WAITDELETE:
+			case ND_LLINFO_WAITDELETE:
 				 (void)printf(" W");
 				 break;
-#endif
-			case ND6_LLINFO_INCOMPLETE:
+			case ND_LLINFO_INCOMPLETE:
 				 (void)printf(" I");
 				 break;
-			case ND6_LLINFO_REACHABLE:
+			case ND_LLINFO_REACHABLE:
 				 (void)printf(" R");
 				 break;
-			case ND6_LLINFO_STALE:
+			case ND_LLINFO_STALE:
 				 (void)printf(" S");
 				 break;
-			case ND6_LLINFO_DELAY:
+			case ND_LLINFO_DELAY:
 				 (void)printf(" D");
 				 break;
-			case ND6_LLINFO_PROBE:
+			case ND_LLINFO_PROBE:
 				 (void)printf(" P");
+				 break;
+			case ND_LLINFO_UNREACHABLE:
+				 (void)printf(" U");
 				 break;
 			default:
 				 (void)printf(" ?");
