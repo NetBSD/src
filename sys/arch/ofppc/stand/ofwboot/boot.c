@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2016/06/11 06:35:38 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.25 2020/09/15 08:14:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -292,8 +292,8 @@ main(void)
 	esym = (void *)marks[MARK_END];
 
 	printf(" start=0x%x\n", entry);
-	__syncicache((void *) entry, (u_int) ssym - (u_int) entry);
-	chain((boot_entry_t) entry, bootline, ssym, esym);
+	__syncicache((void *)(uintptr_t)entry, (uintptr_t) ssym - entry);
+	chain((boot_entry_t)(uintptr_t)entry, bootline, ssym, esym);
 
 	OF_exit();
 }
