@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.9 2020/09/05 17:49:26 jakllsch Exp $	*/
+/*	$NetBSD: start.S,v 1.10 2020/09/15 09:23:15 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.9 2020/09/05 17:49:26 jakllsch Exp $")
+RCSID("$NetBSD: start.S,v 1.10 2020/09/15 09:23:15 ryo Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
@@ -59,19 +59,18 @@ start:
 #endif
 	msr	sctlr_el2, x8
 	isb
-	b	2f
 
 1:
 	mrs	x8, sctlr_el1
 #ifdef __AARCH64EB__
-	orr	x8, x8, #SCTLR_EE	/* set: Big Endian */
+	orr	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* set: Big Endian */
 #else
-	bic	x8, x8, #SCTLR_EE	/* clear: Little Endian */
+	bic	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* clear: Little Endian */
 #endif
 	msr	sctlr_el1, x8
 	isb
 
-2:
+
 	adr	x9, start
 	ldr	x10, =start
 
