@@ -1,6 +1,6 @@
 /* Read a symbol table in MIPS' format (Third-Eye).
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin (af@cs.cmu.edu) at CMU.  Major work
    by Per Bothner, John Gilmore and Ian Lance Taylor at Cygnus Support.
@@ -43,7 +43,6 @@
 
 static void
 read_alphacoff_dynamic_symtab (minimal_symbol_reader &,
-			       struct section_offsets *,
 			       struct objfile *objfile);
 
 /* Initialize anything that needs initializing when a completely new
@@ -76,7 +75,7 @@ mipscoff_symfile_read (struct objfile *objfile, symfile_add_flags symfile_flags)
      process it and define symbols accordingly.  */
 
   if (!((*ecoff_backend (abfd)->debug_swap.read_debug_info)
-	(abfd, (asection *) NULL, &ecoff_data (abfd)->debug_info)))
+	(abfd, NULL, &ecoff_data (abfd)->debug_info)))
     error (_("Error reading symbol table: %s"), bfd_errmsg (bfd_get_error ()));
 
   mdebug_build_psymtabs (reader, objfile, &ecoff_backend (abfd)->debug_swap,
@@ -84,7 +83,7 @@ mipscoff_symfile_read (struct objfile *objfile, symfile_add_flags symfile_flags)
 
   /* Add alpha coff dynamic symbols.  */
 
-  read_alphacoff_dynamic_symtab (reader, objfile->section_offsets, objfile);
+  read_alphacoff_dynamic_symtab (reader, objfile);
 
   /* Install any minimal symbols that have been collected as the current
      minimal symbols for this objfile.  */
@@ -174,7 +173,6 @@ alphacoff_locate_sections (bfd *ignore_abfd, asection *sectp, void *sip)
 
 static void
 read_alphacoff_dynamic_symtab (minimal_symbol_reader &reader,
-			       struct section_offsets *section_offsets,
 			       struct objfile *objfile)
 {
   bfd *abfd = objfile->obfd;
@@ -200,10 +198,10 @@ read_alphacoff_dynamic_symtab (minimal_symbol_reader &reader,
       || si.dyninfo_sect == NULL || si.got_sect == NULL)
     return;
 
-  gdb::byte_vector sym_sec (bfd_get_section_size (si.sym_sect));
-  gdb::byte_vector str_sec (bfd_get_section_size (si.str_sect));
-  gdb::byte_vector dyninfo_sec (bfd_get_section_size (si.dyninfo_sect));
-  gdb::byte_vector got_sec (bfd_get_section_size (si.got_sect));
+  gdb::byte_vector sym_sec (bfd_section_size (si.sym_sect));
+  gdb::byte_vector str_sec (bfd_section_size (si.str_sect));
+  gdb::byte_vector dyninfo_sec (bfd_section_size (si.dyninfo_sect));
+  gdb::byte_vector got_sec (bfd_section_size (si.got_sect));
 
   if (!bfd_get_section_contents (abfd, si.sym_sect, sym_sec.data (),
 				 (file_ptr) 0, sym_sec.size ()))
@@ -381,8 +379,9 @@ static const struct sym_fns ecoff_sym_fns =
   &psym_functions
 };
 
+void _initialize_mipsread ();
 void
-_initialize_mipsread (void)
+_initialize_mipsread ()
 {
   add_symtab_fns (bfd_target_ecoff_flavour, &ecoff_sym_fns);
 }

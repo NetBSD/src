@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2019 Free Software Foundation, Inc.
+# Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -374,7 +374,7 @@ proc get_in_proc_agent {} {
     if [target_info exists in_proc_agent] {
 	return [target_info in_proc_agent]
     } else {
-	return $objdir/../gdbserver/libinproctrace.so
+	return $objdir/../../gdbserver/libinproctrace.so
     }
 }
 

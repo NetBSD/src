@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2019 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,6 +92,8 @@
 # define YYDEBUG 1  /* Default to yydebug support */
 #endif
 
-#define YYFPRINTF parser_fprintf
+#ifndef TEST_CPNAMES
+# define YYFPRINTF parser_fprintf
+#endif
 
 #endif /* YY_REMAP_H */

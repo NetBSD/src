@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,17 +44,17 @@ Dwarf::assemble $asm_file {
 	    {name "<artificial>"}
 	} {
 	    D72f8: subprogram {
-		{abstract_origin :$D272519}
+		{abstract_origin %$D272519}
 		{low_pc 0xb9e20 addr}
 		{high_pc 0x1f5 data4}
 	    } {
 		D736e: inlined_subroutine {
-		    {abstract_origin :$D26b227}
+		    {abstract_origin %$D26b227}
 		    {low_pc 0xb9efc addr}
 		    {high_pc 0xc data4}
 		} {
 		    formal_parameter {
-			{abstract_origin :$D274c42}
+			{abstract_origin %$D274c42}
 		    }
 		}
 	    }

@@ -1,6 +1,6 @@
 /* nto-tdep.h - QNX Neutrino target header.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -152,10 +152,10 @@ get_nto_thread_info (thread_info *thread)
 struct nto_inferior_data
 {
   /* Last stopped flags result from wait function */
-  unsigned int stopped_flags;
+  unsigned int stopped_flags = 0;
 
   /* Last known stopped PC */
-  CORE_ADDR stopped_pc;
+  CORE_ADDR stopped_pc = 0;
 };
 
 /* Generic functions in nto-tdep.c.  */

@@ -1,5 +1,5 @@
 /* IEEE floating point support routines, for GDB, the GNU Debugger.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -389,7 +389,24 @@ const struct floatformat floatformat_ibm_long_double_little =
   floatformat_ibm_long_double_is_valid,
   &floatformat_ieee_double_little
 };
-
+
+const struct floatformat floatformat_bfloat16_big =
+{
+  floatformat_big, 16, 0, 1, 8, 127, 255, 9, 7,
+  floatformat_intbit_no,
+  "floatformat_bfloat16_big",
+  floatformat_always_valid,
+  NULL
+};
+
+const struct floatformat floatformat_bfloat16_little =
+{
+  floatformat_little, 16, 0, 1, 8, 127, 255, 9, 7,
+  floatformat_intbit_no,
+  "floatformat_bfloat16_little",
+  floatformat_always_valid,
+  NULL
+};
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -489,7 +506,7 @@ floatformat_to_double (const struct floatformat *fmt,
       int nan = mant_bits_set (fmt, ufrom);
 
       /* On certain systems (such as GNU/Linux), the use of the
-	 INFINITY macro below may generate a warning that can not be
+	 INFINITY macro below may generate a warning that cannot be
 	 silenced due to a bug in GCC (PR preprocessor/11931).  The
 	 preprocessor fails to recognise the __extension__ keyword in
 	 conjunction with the GNU/C99 extension for hexadecimal

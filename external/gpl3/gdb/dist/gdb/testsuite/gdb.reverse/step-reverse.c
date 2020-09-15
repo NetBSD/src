@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2019 Free Software Foundation, Inc.
+   Copyright 2008-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 int myglob = 0;
 
 int callee() {		/* ENTER CALLEE */
-  myglob++; return 0;	/* ARRIVED IN CALLEE */
+  return myglob++;	/* ARRIVED IN CALLEE */
 }			/* RETURN FROM CALLEE */
 
 /* A structure which, we hope, will need to be passed using memcpy.  */

@@ -1,6 +1,6 @@
 /* Unit tests for the rsp-low.c file.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
-#include "common/rsp-low.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/rsp-low.h"
 
 namespace selftests {
 namespace rsp_low {
@@ -34,7 +34,7 @@ static void test_hex2bin_byte_vector ()
   bv = hex2bin ("");
   SELF_CHECK (bv.size () == 0);
 
-  /* Test a well-formated hex string.  */
+  /* Test a well-formatted hex string.  */
   bv = hex2bin ("abcd01");
   SELF_CHECK (bv.size () == 3);
   SELF_CHECK (bv[0] == 0xab);
@@ -61,6 +61,7 @@ static void test_hex2str ()
 } /* namespace rsp_low */
 } /* namespace selftests */
 
+void _initialize_rsp_low_selftests ();
 void
 _initialize_rsp_low_selftests ()
 {

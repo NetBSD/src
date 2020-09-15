@@ -1,5 +1,5 @@
 /* Generic simulator stop_reason.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "sim-main.h"
 #include "sim-assert.h"
+
+#include <stdlib.h>
 
 /* Generic implementation of sim_stop_reason */
 

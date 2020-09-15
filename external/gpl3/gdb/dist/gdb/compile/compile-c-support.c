@@ -1,6 +1,6 @@
 /* C/C++ language support for compilation.
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,13 +22,14 @@
 #include "compile-c.h"
 #include "compile-cplus.h"
 #include "compile.h"
-#include "gdb-dlfcn.h"
 #include "c-lang.h"
 #include "macrotab.h"
 #include "macroscope.h"
 #include "regcache.h"
-#include "common/function-view.h"
-#include "common/preprocessor.h"
+#include "gdbsupport/function-view.h"
+#include "gdbsupport/gdb-dlfcn.h"
+#include "gdbsupport/preprocessor.h"
+#include "gdbarch.h"
 
 /* See compile-internal.h.  */
 
@@ -241,7 +242,7 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 	       maximally-aligned array of the correct size.  */
 
 	    fputs_unfiltered ("  ", stream);
-	    switch (TYPE_CODE (regtype))
+	    switch (regtype->code ())
 	      {
 	      case TYPE_CODE_PTR:
 		fprintf_filtered (stream, "__gdb_uintptr %s",
@@ -270,11 +271,11 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 
 	      default:
 		fprintf_unfiltered (stream,
-				    "  unsigned char %s[%d]"
+				    "  unsigned char %s[%s]"
 				    " __attribute__((__aligned__("
 				    "__BIGGEST_ALIGNMENT__)))",
 				    regname.c_str (),
-				    TYPE_LENGTH (regtype));
+				    pulongest (TYPE_LENGTH (regtype)));
 	      }
 	    fputs_unfiltered (";\n", stream);
 	  }
@@ -659,7 +660,7 @@ typedef compile_program<compile_cplus_instance,
 			cplus_add_code_header, c_add_code_footer,
 			cplus_add_input> cplus_compile_program;
 
-/* The la_compute_program method for C.  */
+/* The compute_program method for C.  */
 
 std::string
 c_compute_program (compile_instance *inst,
@@ -674,7 +675,7 @@ c_compute_program (compile_instance *inst,
   return program.compute (input, expr_block, expr_pc);
 }
 
-/* The la_compute_program method for C++.  */
+/* The compute_program method for C++.  */
 
 std::string
 cplus_compute_program (compile_instance *inst,

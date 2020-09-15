@@ -1,7 +1,7 @@
 /* Target-dependent code for Lattice Mico32 processor, for GDB.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,7 +35,7 @@
 #include "regcache.h"
 #include "trad-frame.h"
 #include "reggroups.h"
-#include "../opcodes/lm32-desc.h"
+#include "opcodes/lm32-desc.h"
 #include <algorithm>
 
 /* Macros to extract fields from an instruction.  */
@@ -81,7 +81,7 @@ lm32_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
     return ((regnum >= SIM_LM32_R0_REGNUM) && (regnum <= SIM_LM32_RA_REGNUM))
       || (regnum == SIM_LM32_PC_REGNUM);
   else if (group == system_reggroup)
-    return ((regnum >= SIM_LM32_EA_REGNUM) && (regnum <= SIM_LM32_BA_REGNUM))
+    return ((regnum >= SIM_LM32_BA_REGNUM) && (regnum <= SIM_LM32_EA_REGNUM))
       || ((regnum >= SIM_LM32_EID_REGNUM) && (regnum <= SIM_LM32_IP_REGNUM));
   return default_register_reggroup_p (gdbarch, regnum, group);
 }
@@ -258,7 +258,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       ULONGEST val;
 
       /* Promote small integer types to int.  */
-      switch (TYPE_CODE (arg_type))
+      switch (arg_type->code ())
 	{
 	case TYPE_CODE_INT:
 	case TYPE_CODE_BOOL:
@@ -309,15 +309,15 @@ lm32_extract_return_value (struct type *type, struct regcache *regcache,
   ULONGEST l;
   CORE_ADDR return_buffer;
 
-  if (TYPE_CODE (type) != TYPE_CODE_STRUCT
-      && TYPE_CODE (type) != TYPE_CODE_UNION
-      && TYPE_CODE (type) != TYPE_CODE_ARRAY && TYPE_LENGTH (type) <= 4)
+  if (type->code () != TYPE_CODE_STRUCT
+      && type->code () != TYPE_CODE_UNION
+      && type->code () != TYPE_CODE_ARRAY && TYPE_LENGTH (type) <= 4)
     {
       /* Return value is returned in a single register.  */
       regcache_cooked_read_unsigned (regcache, SIM_LM32_R1_REGNUM, &l);
       store_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order, l);
     }
-  else if ((TYPE_CODE (type) == TYPE_CODE_INT) && (TYPE_LENGTH (type) == 8))
+  else if ((type->code () == TYPE_CODE_INT) && (TYPE_LENGTH (type) == 8))
     {
       /* 64-bit values are returned in a register pair.  */
       regcache_cooked_read_unsigned (regcache, SIM_LM32_R1_REGNUM, &l);
@@ -368,7 +368,7 @@ lm32_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *valtype, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  enum type_code code = TYPE_CODE (valtype);
+  enum type_code code = valtype->code ();
 
   if (code == TYPE_CODE_STRUCT
       || code == TYPE_CODE_UNION
@@ -381,26 +381,6 @@ lm32_return_value (struct gdbarch *gdbarch, struct value *function,
     lm32_store_return_value (valtype, regcache, writebuf);
 
   return RETURN_VALUE_REGISTER_CONVENTION;
-}
-
-static CORE_ADDR
-lm32_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, SIM_LM32_PC_REGNUM);
-}
-
-static CORE_ADDR
-lm32_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, SIM_LM32_SP_REGNUM);
-}
-
-static struct frame_id
-lm32_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, SIM_LM32_SP_REGNUM);
-
-  return frame_id_build (sp, get_frame_pc (this_frame));
 }
 
 /* Put here the code to store, into fi->saved_regs, the addresses of
@@ -552,9 +532,6 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Frame unwinding.  */
   set_gdbarch_frame_align (gdbarch, lm32_frame_align);
   frame_base_set_default (gdbarch, &lm32_frame_base);
-  set_gdbarch_unwind_pc (gdbarch, lm32_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, lm32_unwind_sp);
-  set_gdbarch_dummy_id (gdbarch, lm32_dummy_id);
   frame_unwind_append_unwinder (gdbarch, &lm32_frame_unwind);
 
   /* Breakpoints.  */
@@ -572,8 +549,9 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_lm32_tdep ();
 void
-_initialize_lm32_tdep (void)
+_initialize_lm32_tdep ()
 {
   register_gdbarch_init (bfd_arch_lm32, lm32_gdbarch_init);
 }

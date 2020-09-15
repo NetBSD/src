@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,25 @@ extern void init_w32_command_list (void);
 
 extern void windows_xfer_shared_library (const char* so_name,
 					 CORE_ADDR load_addr,
+					 CORE_ADDR *text_offset_cached,
 					 struct gdbarch *gdbarch,
 					 struct obstack *obstack);
 
+/* To be called from the various GDB_OSABI_WINDOWS handlers for the
+   various Windows architectures and machine types.  */
+
 extern void windows_init_abi (struct gdbarch_info info,
 			      struct gdbarch *gdbarch);
+
+/* To be called from the various GDB_OSABI_CYGWIN handlers for the
+   various Windows architectures and machine types.  */
+
+extern void cygwin_init_abi (struct gdbarch_info info,
+			     struct gdbarch *gdbarch);
+
+/* Return true if the Portable Executable behind ABFD uses the Cygwin dll
+   (cygwin1.dll).  */
+
+extern bool is_linked_with_cygwin_dll (bfd *abfd);
+
 #endif

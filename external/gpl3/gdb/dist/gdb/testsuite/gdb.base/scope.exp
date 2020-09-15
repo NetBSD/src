@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ proc test_at_main {} {
 
     # Print scope0.c::filelocal, which is 1
 
-    if [gdb_test "print filelocal" "\\\$$decimal = 1" "print filelocal" ] { 
+    if [gdb_test "print filelocal" "\\\$$decimal = 1"] { 
       gdb_suppress_tests
     }
 
@@ -61,7 +61,7 @@ proc test_at_main {} {
 
     # Print scope0.c::filelocal_bss, which is 101
 
-    if [gdb_test "print filelocal_bss" "\\\$$decimal = 101" "print filelocal_bss" ] { 
+    if [gdb_test "print filelocal_bss" "\\\$$decimal = 101"] { 
       gdb_suppress_tests
     }
 
@@ -112,7 +112,7 @@ proc test_at_main {} {
 
     # Print scope1.c::foo::funclocal, which is 3
 
-    if [gdb_test "print foo::funclocal" "\\\$$decimal = 3" "print foo::funclocal" ] { 
+    if [gdb_test "print foo::funclocal" "\\\$$decimal = 3"] { 
       gdb_suppress_tests
     }
 
@@ -125,7 +125,7 @@ proc test_at_main {} {
 
     # Print scope1.c::foo::funclocal_ro, which is 203
 
-    if [gdb_test "print foo::funclocal_ro" "\\\$$decimal = 203" "print foo::funclocal_ro" ] { 
+    if [gdb_test "print foo::funclocal_ro" "\\\$$decimal = 203"] { 
       gdb_suppress_tests
     }
 
@@ -138,7 +138,7 @@ proc test_at_main {} {
 
     # Print scope1.c::bar::funclocal, which is 4
 
-    if [gdb_test "print bar::funclocal" "\\\$$decimal = 4" "print bar::funclocal" ] { 
+    if [gdb_test "print bar::funclocal" "\\\$$decimal = 4"] { 
       gdb_suppress_tests
     }
 

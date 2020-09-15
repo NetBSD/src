@@ -1,4 +1,4 @@
-#   Copyright 2009-2019 Free Software Foundation, Inc.
+#   Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ proc test_one_sig_reverse {prevsig} {
 	-re "Program received signal SIG$prevsig.*$gdb_prompt " {
 	    pass "reverse to signal event, $prevsig"
 
-	    set nested_testmsg "reverse signal delivered"
+	    set nested_testmsg "reverse signal $prevsig delivered"
 	    gdb_test_multiple "frame" $nested_testmsg {
 		-re ".*handle_$prevsig.*$gdb_prompt " {
 		    fail "$nested_testmsg (wrong location)"
@@ -258,13 +258,17 @@ foreach sig $signals {
     }
 }
 
-gdb_test_multiple "continue" "continue" {
-    -re "Breakpoint .* end of main .*$gdb_prompt $" {
-	pass "run to end of main"
+gdb_test_multiple "continue" "run to end of main" {
+    -wrap -re "Breakpoint .* end of main .*" {
+	pass $gdb_test_name
     }
-    -re "Breakpoint .* handle_.*$gdb_prompt $" {
+    -wrap -re "Breakpoint .* handle_.*" {
 	send_gdb "continue\n"
 	exp_continue
+    }
+    -wrap -re "Process record does not support instruction 0xfae64 at.*" {
+	kfail "gdb/25038" $gdb_test_name
+	return -1
     }
 }
 
@@ -289,8 +293,10 @@ set sig_supported 1
 set thissig "ABRT"
 
 # test signal handling
-foreach sig [lrange $signals 1 end] {
-    test_one_sig $sig
+with_test_prefix "sig-test-1" {
+    foreach sig [lrange $signals 1 end] {
+	test_one_sig $sig
+    }
 }
 
 # The last signal (SIGTERM) gets handled slightly differently because
@@ -313,6 +319,8 @@ foreach sig [lreverse $signals] {
 set sig_supported 1
 set thissig "ABRT"
 
-foreach sig [lrange $signals 1 end] {
-    test_one_sig $sig
+with_test_prefix "sig-test-2" {
+    foreach sig [lrange $signals 1 end] {
+	test_one_sig $sig
+    }
 }

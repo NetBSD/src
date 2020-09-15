@@ -1,6 +1,6 @@
 /* GDB-specific functions for operating on agent expressions.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +46,7 @@
 #include "valprint.h"
 #include "c-lang.h"
 
-#include "common/format.h"
+#include "gdbsupport/format.h"
 
 /* To make sense of this file, you should read doc/agentexpr.texi.
    Then look at the types and enums in ax-gdb.h.  For the code itself,
@@ -316,9 +316,9 @@ gen_trace_static_fields (struct agent_expr *ax,
 
   type = check_typedef (type);
 
-  for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
+  for (i = type->num_fields () - 1; i >= nbases; i--)
     {
-      if (field_is_static (&TYPE_FIELD (type, i)))
+      if (field_is_static (&type->field (i)))
 	{
 	  gen_static_field (ax, &value, type, i);
 	  if (value.optimized_out)
@@ -362,7 +362,7 @@ gen_traced_pop (struct agent_expr *ax, struct axs_value *value)
 {
   int string_trace = 0;
   if (ax->trace_string
-      && TYPE_CODE (value->type) == TYPE_CODE_PTR
+      && value->type->code () == TYPE_CODE_PTR
       && c_textual_element_type (check_typedef (TYPE_TARGET_TYPE (value->type)),
 				 's'))
     string_trace = 1;
@@ -429,8 +429,8 @@ gen_traced_pop (struct agent_expr *ax, struct axs_value *value)
 
   /* To trace C++ classes with static fields stored elsewhere.  */
   if (ax->tracing
-      && (TYPE_CODE (value->type) == TYPE_CODE_STRUCT
-	  || TYPE_CODE (value->type) == TYPE_CODE_UNION))
+      && (value->type->code () == TYPE_CODE_STRUCT
+	  || value->type->code () == TYPE_CODE_UNION))
     gen_trace_static_fields (ax, value->type);
 }
 
@@ -474,10 +474,10 @@ gen_fetch (struct agent_expr *ax, struct type *type)
       ax_trace_quick (ax, TYPE_LENGTH (type));
     }
 
-  if (TYPE_CODE (type) == TYPE_CODE_RANGE)
+  if (type->code () == TYPE_CODE_RANGE)
     type = TYPE_TARGET_TYPE (type);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
@@ -520,7 +520,7 @@ gen_fetch (struct agent_expr *ax, struct type *type)
 	 type.  Error out and give callers a chance to handle the failure
 	 gracefully.  */
       error (_("gen_fetch: Unsupported type code `%s'."),
-	     TYPE_NAME (type));
+	     type->name ());
     }
 }
 
@@ -675,7 +675,7 @@ gen_var_ref (struct agent_expr *ax, struct axs_value *value, struct symbol *var)
 
     case LOC_TYPEDEF:
       error (_("Cannot compute value of typedef `%s'."),
-	     SYMBOL_PRINT_NAME (var));
+	     var->print_name ());
       break;
 
     case LOC_BLOCK:
@@ -705,10 +705,10 @@ gen_var_ref (struct agent_expr *ax, struct axs_value *value, struct symbol *var)
     case LOC_UNRESOLVED:
       {
 	struct bound_minimal_symbol msym
-	  = lookup_minimal_symbol (SYMBOL_LINKAGE_NAME (var), NULL, NULL);
+	  = lookup_minimal_symbol (var->linkage_name (), NULL, NULL);
 
 	if (!msym.minsym)
-	  error (_("Couldn't resolve symbol `%s'."), SYMBOL_PRINT_NAME (var));
+	  error (_("Couldn't resolve symbol `%s'."), var->print_name ());
 
 	/* Push the address of the variable.  */
 	ax_const_l (ax, BMSYMBOL_VALUE_ADDRESS (msym));
@@ -727,7 +727,7 @@ gen_var_ref (struct agent_expr *ax, struct axs_value *value, struct symbol *var)
 
     default:
       error (_("Cannot find value of botched symbol `%s'."),
-	     SYMBOL_PRINT_NAME (var));
+	     var->print_name ());
       break;
     }
 }
@@ -775,10 +775,10 @@ require_rvalue (struct agent_expr *ax, struct axs_value *value)
   /* Only deal with scalars, structs and such may be too large
      to fit in a stack entry.  */
   value->type = check_typedef (value->type);
-  if (TYPE_CODE (value->type) == TYPE_CODE_ARRAY
-      || TYPE_CODE (value->type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (value->type) == TYPE_CODE_UNION
-      || TYPE_CODE (value->type) == TYPE_CODE_FUNC)
+  if (value->type->code () == TYPE_CODE_ARRAY
+      || value->type->code () == TYPE_CODE_STRUCT
+      || value->type->code () == TYPE_CODE_UNION
+      || value->type->code () == TYPE_CODE_FUNC)
     error (_("Value not scalar: cannot be an rvalue."));
 
   switch (value->kind)
@@ -831,7 +831,7 @@ gen_usual_unary (struct agent_expr *ax, struct axs_value *value)
      the stack.  Should we tweak the type?  */
 
   /* Some types require special handling.  */
-  switch (TYPE_CODE (value->type))
+  switch (value->type->code ())
     {
       /* Functions get converted to a pointer to the function.  */
     case TYPE_CODE_FUNC:
@@ -943,8 +943,8 @@ gen_usual_arithmetic (struct agent_expr *ax, struct axs_value *value1,
 		      struct axs_value *value2)
 {
   /* Do the usual binary conversions.  */
-  if (TYPE_CODE (value1->type) == TYPE_CODE_INT
-      && TYPE_CODE (value2->type) == TYPE_CODE_INT)
+  if (value1->type->code () == TYPE_CODE_INT
+      && value2->type->code () == TYPE_CODE_INT)
     {
       /* The ANSI integral promotions seem to work this way: Order the
          integer types by size, and then by signedness: an n-bit
@@ -1003,7 +1003,7 @@ gen_cast (struct agent_expr *ax, struct axs_value *value, struct type *type)
   /* Dereference typedefs.  */
   type = check_typedef (type);
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
@@ -1070,7 +1070,7 @@ gen_ptradd (struct agent_expr *ax, struct axs_value *value,
 	    struct axs_value *value1, struct axs_value *value2)
 {
   gdb_assert (pointer_type (value1->type));
-  gdb_assert (TYPE_CODE (value2->type) == TYPE_CODE_INT);
+  gdb_assert (value2->type->code () == TYPE_CODE_INT);
 
   gen_scale (ax, aop_mul, value1->type);
   ax_simple (ax, aop_add);
@@ -1086,7 +1086,7 @@ gen_ptrsub (struct agent_expr *ax, struct axs_value *value,
 	    struct axs_value *value1, struct axs_value *value2)
 {
   gdb_assert (pointer_type (value1->type));
-  gdb_assert (TYPE_CODE (value2->type) == TYPE_CODE_INT);
+  gdb_assert (value2->type->code () == TYPE_CODE_INT);
 
   gen_scale (ax, aop_mul, value1->type);
   ax_simple (ax, aop_sub);
@@ -1158,8 +1158,8 @@ gen_binop (struct agent_expr *ax, struct axs_value *value,
 	   int may_carry, const char *name)
 {
   /* We only handle INT op INT.  */
-  if ((TYPE_CODE (value1->type) != TYPE_CODE_INT)
-      || (TYPE_CODE (value2->type) != TYPE_CODE_INT))
+  if ((value1->type->code () != TYPE_CODE_INT)
+      || (value2->type->code () != TYPE_CODE_INT))
     error (_("Invalid combination of types in %s."), name);
 
   ax_simple (ax,
@@ -1175,8 +1175,8 @@ static void
 gen_logical_not (struct agent_expr *ax, struct axs_value *value,
 		 struct type *result_type)
 {
-  if (TYPE_CODE (value->type) != TYPE_CODE_INT
-      && TYPE_CODE (value->type) != TYPE_CODE_PTR)
+  if (value->type->code () != TYPE_CODE_INT
+      && value->type->code () != TYPE_CODE_PTR)
     error (_("Invalid type of operand to `!'."));
 
   ax_simple (ax, aop_log_not);
@@ -1187,7 +1187,7 @@ gen_logical_not (struct agent_expr *ax, struct axs_value *value,
 static void
 gen_complement (struct agent_expr *ax, struct axs_value *value)
 {
-  if (TYPE_CODE (value->type) != TYPE_CODE_INT)
+  if (value->type->code () != TYPE_CODE_INT)
     error (_("Invalid type of operand to `~'."));
 
   ax_simple (ax, aop_bit_not);
@@ -1214,9 +1214,9 @@ gen_deref (struct axs_value *value)
      T" to "T", and mark the value as an lvalue in memory.  Leave it
      to the consumer to actually dereference it.  */
   value->type = check_typedef (TYPE_TARGET_TYPE (value->type));
-  if (TYPE_CODE (value->type) == TYPE_CODE_VOID)
+  if (value->type->code () == TYPE_CODE_VOID)
     error (_("Attempt to dereference a generic pointer."));
-  value->kind = ((TYPE_CODE (value->type) == TYPE_CODE_FUNC)
+  value->kind = ((value->type->code () == TYPE_CODE_FUNC)
 		 ? axs_rvalue : axs_lvalue_memory);
 }
 
@@ -1228,7 +1228,7 @@ gen_address_of (struct axs_value *value)
   /* Special case for taking the address of a function.  The ANSI
      standard describes this as a special case, too, so this
      arrangement is not without motivation.  */
-  if (TYPE_CODE (value->type) == TYPE_CODE_FUNC)
+  if (value->type->code () == TYPE_CODE_FUNC)
     /* The value's already an rvalue on the stack, so we just need to
        change the type.  */
     value->type = lookup_pointer_type (value->type);
@@ -1417,7 +1417,7 @@ gen_primitive_field (struct agent_expr *ax, struct axs_value *value,
 {
   /* Is this a bitfield?  */
   if (TYPE_FIELD_PACKED (type, fieldno))
-    gen_bitfield_ref (ax, value, TYPE_FIELD_TYPE (type, fieldno),
+    gen_bitfield_ref (ax, value, type->field (fieldno).type (),
 		      (offset * TARGET_CHAR_BIT
 		       + TYPE_FIELD_BITPOS (type, fieldno)),
 		      (offset * TARGET_CHAR_BIT
@@ -1428,7 +1428,7 @@ gen_primitive_field (struct agent_expr *ax, struct axs_value *value,
       gen_offset (ax, offset
 		  + TYPE_FIELD_BITPOS (type, fieldno) / TARGET_CHAR_BIT);
       value->kind = axs_lvalue_memory;
-      value->type = TYPE_FIELD_TYPE (type, fieldno);
+      value->type = type->field (fieldno).type ();
     }
 }
 
@@ -1444,7 +1444,7 @@ gen_struct_ref_recursive (struct agent_expr *ax, struct axs_value *value,
 
   type = check_typedef (type);
 
-  for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
+  for (i = type->num_fields () - 1; i >= nbases; i--)
     {
       const char *this_name = TYPE_FIELD_NAME (type, i);
 
@@ -1456,7 +1456,7 @@ gen_struct_ref_recursive (struct agent_expr *ax, struct axs_value *value,
 		 "this") will have been generated already, which will
 		 be unnecessary but not harmful if the static field is
 		 being handled as a global.  */
-	      if (field_is_static (&TYPE_FIELD (type, i)))
+	      if (field_is_static (&type->field (i)))
 		{
 		  gen_static_field (ax, value, type, i);
 		  if (value->optimized_out)
@@ -1518,8 +1518,8 @@ gen_struct_ref (struct agent_expr *ax, struct axs_value *value,
   type = check_typedef (value->type);
 
   /* This must yield a structure or a union.  */
-  if (TYPE_CODE (type) != TYPE_CODE_STRUCT
-      && TYPE_CODE (type) != TYPE_CODE_UNION)
+  if (type->code () != TYPE_CODE_STRUCT
+      && type->code () != TYPE_CODE_UNION)
     error (_("The left operand of `%s' is not a %s."),
 	   operator_name, operand_name);
 
@@ -1533,7 +1533,7 @@ gen_struct_ref (struct agent_expr *ax, struct axs_value *value,
   
   if (!found)
     error (_("Couldn't find member named `%s' in struct/union/class `%s'"),
-	   field, TYPE_NAME (type));
+	   field, type->name ());
 }
 
 static int
@@ -1551,7 +1551,7 @@ gen_static_field (struct agent_expr *ax, struct axs_value *value,
     {
       ax_const_l (ax, TYPE_FIELD_STATIC_PHYSADDR (type, fieldno));
       value->kind = axs_lvalue_memory;
-      value->type = TYPE_FIELD_TYPE (type, fieldno);
+      value->type = type->field (fieldno).type ();
       value->optimized_out = 0;
     }
   else
@@ -1583,18 +1583,18 @@ gen_struct_elt_for_reference (struct agent_expr *ax, struct axs_value *value,
   struct type *t = type;
   int i;
 
-  if (TYPE_CODE (t) != TYPE_CODE_STRUCT
-      && TYPE_CODE (t) != TYPE_CODE_UNION)
+  if (t->code () != TYPE_CODE_STRUCT
+      && t->code () != TYPE_CODE_UNION)
     internal_error (__FILE__, __LINE__,
 		    _("non-aggregate type to gen_struct_elt_for_reference"));
 
-  for (i = TYPE_NFIELDS (t) - 1; i >= TYPE_N_BASECLASSES (t); i--)
+  for (i = t->num_fields () - 1; i >= TYPE_N_BASECLASSES (t); i--)
     {
       const char *t_field_name = TYPE_FIELD_NAME (t, i);
 
       if (t_field_name && strcmp (t_field_name, fieldname) == 0)
 	{
-	  if (field_is_static (&TYPE_FIELD (t, i)))
+	  if (field_is_static (&t->field (i)))
 	    {
 	      gen_static_field (ax, value, t, i);
 	      if (value->optimized_out)
@@ -1629,7 +1629,7 @@ gen_namespace_elt (struct agent_expr *ax, struct axs_value *value,
 
   if (!found)
     error (_("No symbol \"%s\" in namespace \"%s\"."), 
-	   name, TYPE_NAME (curtype));
+	   name, curtype->name ());
 
   return found;
 }
@@ -1644,7 +1644,7 @@ static int
 gen_maybe_namespace_elt (struct agent_expr *ax, struct axs_value *value,
 			 const struct type *curtype, char *name)
 {
-  const char *namespace_name = TYPE_NAME (curtype);
+  const char *namespace_name = curtype->name ();
   struct block_symbol sym;
 
   sym = cp_lookup_symbol_namespace (namespace_name, name,
@@ -1658,7 +1658,7 @@ gen_maybe_namespace_elt (struct agent_expr *ax, struct axs_value *value,
 
   if (value->optimized_out)
     error (_("`%s' has been optimized out, cannot use"),
-	   SYMBOL_PRINT_NAME (sym.symbol));
+	   sym.symbol->print_name ());
 
   return 1;
 }
@@ -1668,7 +1668,7 @@ static int
 gen_aggregate_elt_ref (struct agent_expr *ax, struct axs_value *value,
 		       struct type *type, char *field)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -1716,7 +1716,7 @@ gen_repeat (struct expression *exp, union exp_element **pc,
     if (!v)
       error (_("Right operand of `@' must be a "
 	       "constant, in agent expressions."));
-    if (TYPE_CODE (value_type (v)) != TYPE_CODE_INT)
+    if (value_type (v)->code () != TYPE_CODE_INT)
       error (_("Right operand of `@' must be an integer."));
     length = value_as_long (v);
     if (length <= 0)
@@ -1784,11 +1784,11 @@ gen_expr_for_cast (struct expression *exp, union exp_element **pc,
 
 	  if (value->optimized_out)
 	    error (_("`%s' has been optimized out, cannot use"),
-		   SYMBOL_PRINT_NAME ((*pc)[2].symbol));
+		   (*pc)[2].symbol->print_name ());
 	}
       else
 	gen_msym_var_ref (ax, value, (*pc)[2].msymbol, (*pc)[1].objfile);
-      if (TYPE_CODE (value->type) == TYPE_CODE_ERROR)
+      if (value->type->code () == TYPE_CODE_ERROR)
 	value->type = to_type;
       (*pc) += 4;
     }
@@ -1911,7 +1911,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
       gen_expr (exp, pc, ax, &value3);
       gen_usual_unary (ax, &value3);
       ax_label (ax, end, ax->len);
-      /* This is arbitary - what if B and C are incompatible types? */
+      /* This is arbitrary - what if B and C are incompatible types? */
       value->type = value2.type;
       value->kind = value2.kind;
       break;
@@ -2008,10 +2008,10 @@ gen_expr (struct expression *exp, union exp_element **pc,
 
       if (value->optimized_out)
 	error (_("`%s' has been optimized out, cannot use"),
-	       SYMBOL_PRINT_NAME ((*pc)[2].symbol));
+	       (*pc)[2].symbol->print_name ());
 
-      if (TYPE_CODE (value->type) == TYPE_CODE_ERROR)
-	error_unknown_type (SYMBOL_PRINT_NAME ((*pc)[2].symbol));
+      if (value->type->code () == TYPE_CODE_ERROR)
+	error_unknown_type ((*pc)[2].symbol->print_name ());
 
       (*pc) += 4;
       break;
@@ -2019,8 +2019,8 @@ gen_expr (struct expression *exp, union exp_element **pc,
     case OP_VAR_MSYM_VALUE:
       gen_msym_var_ref (ax, value, (*pc)[2].msymbol, (*pc)[1].objfile);
 
-      if (TYPE_CODE (value->type) == TYPE_CODE_ERROR)
-	error_unknown_type (MSYMBOL_PRINT_NAME ((*pc)[2].msymbol));
+      if (value->type->code () == TYPE_CODE_ERROR)
+	error_unknown_type ((*pc)[2].msymbol->linkage_name ());
 
       (*pc) += 4;
       break;
@@ -2230,7 +2230,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 
 	b = block_for_pc (ax->scope);
 	func = block_linkage_function (b);
-	lang = language_def (SYMBOL_LANGUAGE (func));
+	lang = language_def (func->language ());
 
 	sym = lookup_language_this (lang, b).symbol;
 	if (!sym)
@@ -2240,7 +2240,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 
 	if (value->optimized_out)
 	  error (_("`%s' has been optimized out, cannot use"),
-		 SYMBOL_PRINT_NAME (sym));
+		 sym->print_name ());
 
 	(*pc) += 2;
       }
@@ -2289,7 +2289,7 @@ gen_expr_binop_rest (struct expression *exp,
   switch (op)
     {
     case BINOP_ADD:
-      if (TYPE_CODE (value1->type) == TYPE_CODE_INT
+      if (value1->type->code () == TYPE_CODE_INT
 	  && pointer_type (value2->type))
 	{
 	  /* Swap the values and proceed normally.  */
@@ -2297,7 +2297,7 @@ gen_expr_binop_rest (struct expression *exp,
 	  gen_ptradd (ax, value, value2, value1);
 	}
       else if (pointer_type (value1->type)
-	       && TYPE_CODE (value2->type) == TYPE_CODE_INT)
+	       && value2->type->code () == TYPE_CODE_INT)
 	gen_ptradd (ax, value, value1, value2);
       else
 	gen_binop (ax, value, value1, value2,
@@ -2305,7 +2305,7 @@ gen_expr_binop_rest (struct expression *exp,
       break;
     case BINOP_SUB:
       if (pointer_type (value1->type)
-	  && TYPE_CODE (value2->type) == TYPE_CODE_INT)
+	  && value2->type->code () == TYPE_CODE_INT)
 	gen_ptrsub (ax,value, value1, value2);
       else if (pointer_type (value1->type)
 	       && pointer_type (value2->type))
@@ -2351,12 +2351,12 @@ gen_expr_binop_rest (struct expression *exp,
 	       an array or pointer type (like a plain int variable for
 	       example), then report this as an error.  */
 	    type = check_typedef (value1->type);
-	    if (TYPE_CODE (type) != TYPE_CODE_ARRAY
-		&& TYPE_CODE (type) != TYPE_CODE_PTR)
+	    if (type->code () != TYPE_CODE_ARRAY
+		&& type->code () != TYPE_CODE_PTR)
 	      {
-		if (TYPE_NAME (type))
+		if (type->name ())
 		  error (_("cannot subscript something of type `%s'"),
-			 TYPE_NAME (type));
+			 type->name ());
 		else
 		  error (_("cannot subscript requested type"));
 	      }
@@ -2634,12 +2634,10 @@ agent_command_1 (const char *exp, int eval)
     {
       struct linespec_result canonical;
 
-      exp = skip_spaces (exp);
-
       event_location_up location
 	= new_linespec_location (&exp, symbol_name_match_type::WILD);
       decode_line_full (location.get (), DECODE_LINE_FUNFIRSTLINE, NULL,
-			(struct symtab *) NULL, 0, &canonical,
+			NULL, 0, &canonical,
 			NULL, NULL);
       exp = skip_spaces (exp);
       if (exp[0] == ',')
@@ -2745,8 +2743,9 @@ maint_agent_printf_command (const char *cmdrest, int from_tty)
 
 /* Initialization code.  */
 
+void _initialize_ax_gdb ();
 void
-_initialize_ax_gdb (void)
+_initialize_ax_gdb ()
 {
   add_cmd ("agent", class_maintenance, agent_command,
 	   _("\

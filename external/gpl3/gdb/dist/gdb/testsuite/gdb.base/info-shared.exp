@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,3 +144,29 @@ check_info_shared "info sharedlibrary #7" 0 1
 # Run to the last stop and check that both libraries are gone.
 gdb_continue_to_breakpoint "library unload #2" "\\.?stop .*"
 check_info_shared "info sharedlibrary #8" 0 0
+
+with_test_prefix styled {
+    save_vars { env(TERM) } {
+	# We need an ANSI-capable terminal to get the output.
+	setenv TERM ansi
+
+	clean_restart $testfile
+
+	gdb_test_no_output "set style enabled off"
+	if {![runto_main]} {
+	    return 0
+	}
+	gdb_breakpoint "stop"
+	gdb_continue_to_breakpoint "library load #1" "\\.?stop .*"
+
+	# Simple test for "info sharedlibrary" styling.  Look for styled
+	# addresses and file name.
+	set addr [style $hex address]
+	# Use a non-greedy match here to avoid accidentally picking up
+	# other escape sequences.
+	set sofile [style ".*?" file]
+	gdb_test_no_output "set style enabled on"
+	gdb_test "info sharedlibrary" \
+	    "$addr\[ \t\]+$addr.*$sofile\r\n.*"
+    }
+}

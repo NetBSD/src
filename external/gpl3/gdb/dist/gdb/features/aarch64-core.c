@@ -1,7 +1,7 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: aarch64-core.xml */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 static int
 create_feature_aarch64_core (struct target_desc *result, long regnum)
@@ -12,16 +12,19 @@ create_feature_aarch64_core (struct target_desc *result, long regnum)
   tdesc_type_with_fields *type_with_fields;
   type_with_fields = tdesc_create_flags (feature, "cpsr_flags", 4);
   tdesc_add_flag (type_with_fields, 0, "SP");
-  tdesc_add_flag (type_with_fields, 1, "");
   tdesc_add_bitfield (type_with_fields, "EL", 2, 3);
   tdesc_add_flag (type_with_fields, 4, "nRW");
-  tdesc_add_flag (type_with_fields, 5, "");
   tdesc_add_flag (type_with_fields, 6, "F");
   tdesc_add_flag (type_with_fields, 7, "I");
   tdesc_add_flag (type_with_fields, 8, "A");
   tdesc_add_flag (type_with_fields, 9, "D");
+  tdesc_add_flag (type_with_fields, 12, "SSBS");
   tdesc_add_flag (type_with_fields, 20, "IL");
   tdesc_add_flag (type_with_fields, 21, "SS");
+  tdesc_add_flag (type_with_fields, 22, "PAN");
+  tdesc_add_flag (type_with_fields, 23, "UAO");
+  tdesc_add_flag (type_with_fields, 24, "DIT");
+  tdesc_add_flag (type_with_fields, 25, "TCO");
   tdesc_add_flag (type_with_fields, 28, "V");
   tdesc_add_flag (type_with_fields, 29, "C");
   tdesc_add_flag (type_with_fields, 30, "Z");

@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2019 Free Software Foundation, Inc.
+# Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ gdb_test_multiple "python print (23)" "verify python support" {
 	  "source source2.py when python disabled"
 
       # Verify multi-line python commands cause an error.
-      gdb_py_test_multiple "multi-line python command" \
+      gdb_test_multiline "multi-line python command" \
 	  "python" "" \
 	  "print (23)" "" \
 	  "end" "not supported.*"
@@ -56,7 +56,7 @@ gdb_test_multiple "python print (23)" "verify python support" {
     -re "$gdb_prompt $"	{}
 }
 
-gdb_py_test_multiple "multi-line python command" \
+gdb_test_multiline "multi-line python command" \
   "python" "" \
   "print (23)" "" \
   "end" "23"
@@ -77,7 +77,7 @@ with_test_prefix "python interactive help" {
     }
 }
 
-gdb_py_test_multiple "show python command" \
+gdb_test_multiline "show python command" \
   "define zzq" "Type commands for definition of .* just \"end\"\\.*" \
   "python" "" \
   "print (23)" "" \
@@ -85,7 +85,7 @@ gdb_py_test_multiple "show python command" \
   "end" "" \
   "show user zzq" "User command \"zzq\":.*  python.*print \\(23\\).*  end"
 
-gdb_py_test_multiple "indented multi-line python command" \
+gdb_test_multiline "indented multi-line python command" \
   "python" "" \
   "def foo ():" "" \
   "  print ('hello, world!')" "" \
@@ -94,7 +94,7 @@ gdb_py_test_multiple "indented multi-line python command" \
 
 gdb_test "source $remote_source2_py" "yes" "source source2.py"
 
-gdb_test "source -s source2.py" "yes" "source -s source2.py"
+gdb_test "source -s source2.py" "yes"
 
 set remote_source2_symlink_notpy \
     [gdb_remote_download host ${srcdir}/${subdir}/source2.py \
@@ -124,7 +124,7 @@ gdb_test "python gdb.execute('echo 2\\necho 3\\\\n\\n')" "23" \
 gdb_test " " "23" "gdb.execute does not affect repeat history"
 
 # Test post_event.
-gdb_py_test_multiple "post event insertion" \
+gdb_test_multiline "post event insertion" \
   "python" "" \
   "someVal = 0" "" \
   "class Foo(object):" "" \
@@ -187,14 +187,14 @@ gdb_test_no_output "set height 0"
 
 gdb_test_no_output "python a = gdb.execute('help', to_string=True)" "collect help from uiout"
 
-gdb_test "python print (a)" ".*aliases -- Aliases of other commands.*" "verify help to uiout"
+gdb_test "python print (a)" ".*aliases -- User-defined aliases of other commands.*" "verify help to uiout"
 
 # Test PR 12212, using InfThread.selected_thread() when no inferior is
 # loaded.
 gdb_py_test_silent_cmd "python nothread = gdb.selected_thread()" "Attempt to aquire thread with no inferior" 1
 gdb_test "python print (nothread == None)" "True" "ensure that no threads are returned"
 
-gdb_py_test_multiple "register atexit function" \
+gdb_test_multiline "register atexit function" \
     "python" "" \
     "import atexit" "" \
     "def printit(arg):" "" \
@@ -229,31 +229,39 @@ runto $lineno
 gdb_test "python gdb.decode_line(\"main.c:43\")" \
     "gdb.error: No source file named main.c.*" "test decode_line no source named main"
 
-gdb_py_test_silent_cmd "python symtab = gdb.decode_line()" "test decode_line current location" 1
-gdb_test "python print (len(symtab))" "2" "test decode_line current location"
-gdb_test "python print (symtab\[0\])" "None" "test decode_line expression parse"
-gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line current location"
+with_test_prefix "test decode_line current location" {
+    gdb_py_test_silent_cmd "python symtab = gdb.decode_line()" "decode current line" 1
+    gdb_test "python print (len(symtab))" "2" "length of result"
+    gdb_test "python print (symtab\[0\])" "None" "no unparsed text"
+    gdb_test "python print (len(symtab\[1\]))" "1" "length of result locations"
+}
+
+# Test that decode_line with an empty string argument does not crash.
+gdb_py_test_silent_cmd "python symtab2 = gdb.decode_line('')" \
+    "test decode_line with empty string" 1
 
 if { [is_remote host] } {
     set python_c [string_to_regexp "python.c"]
 } else {
     set python_c [string_to_regexp "gdb.python/python.c"]
 }
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "test decode_line current location filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "$lineno" "test decode_line current location line number"
+with_test_prefix "test decode_line" {
+    gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "current location filename"
+    gdb_test "python print (symtab\[1\]\[0\].line)" "$lineno" "current location line number"
 
-gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"python.c:26 if foo\")" "test decode_line python.c:26" 1
-gdb_test "python print (len(symtab))" "2" "test decode_line python.c:26 length"
-gdb_test "python print (symtab\[0\])" "if foo" "test decode_line expression parse"
-gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line python.c:26 length"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "test decode_line python.c:26 filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "26" "test decode_line python.c:26 line number"
+    gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"python.c:26 if foo\")" "python.c:26 decode" 1
+    gdb_test "python print (len(symtab))" "2" "python.c:26 length 2"
+    gdb_test "python print (symtab\[0\])" "if foo" "expression parse"
+    gdb_test "python print (len(symtab\[1\]))" "1" "python.c:26 length 1"
+    gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "python.c:26 filename"
+    gdb_test "python print (symtab\[1\]\[0\].line)" "26" "python.c:26 line number"
 
-gdb_test "python gdb.decode_line(\"randomfunc\")" \
-    "gdb.error: Function \"randomfunc\" not defined.*" "test decode_line randomfunc"
-gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"func1\")" "test decode_line func1()" 1
-gdb_test "python print (len(symtab))" "2" "test decode_line func1 length"
-gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line func1 length"
+    gdb_test "python gdb.decode_line(\"randomfunc\")" \
+	"gdb.error: Function \"randomfunc\" not defined.*" "randomfunc"
+    gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"func1\")" "func1()" 1
+    gdb_test "python print (len(symtab))" "2" "func1 length 2"
+    gdb_test "python print (len(symtab\[1\]))" "1" "func1 length 1"
+}
 
 if { [is_remote host] } {
     set python_1_c [string_to_regexp "python-1.c"]
@@ -280,20 +288,25 @@ gdb_py_test_silent_cmd {python symtab = gdb.decode_line ("func1,func2")} \
     "test decode_line func1,func2" 1
 gdb_test {python print (symtab[0])} ",func2" "stop at comma in linespec"
 
-gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"*0\")" "Test decode_line *0" 1
-gdb_test "python print (len(symtab))" "2" "test decode_line *0 result length"
-gdb_test "python print (symtab\[0\])" "None" "test decode_line *0 unparsed"
-gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line *0 locations length"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" "None" "test decode_line *0 filename"
-gdb_test "python print (symtab\[1\]\[0\].pc)" "0" "test decode_line *0 pc"
+with_test_prefix "test decode_line" {
+    gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"*0\")" "*0" 1
+    gdb_test "python print (len(symtab))" "2" "*0 result length"
+    gdb_test "python print (symtab\[0\])" "None" "*0 unparsed"
+    gdb_test "python print (len(symtab\[1\]))" "1" "*0 locations length"
+    gdb_test "python print (symtab\[1\]\[0\].symtab)" "None" "*0 filename"
+    gdb_test "python print (symtab\[1\]\[0\].pc)" "0" "*0 pc"
+}
 
 # gdb.write
-gdb_test "python print (sys.stderr)" ".*gdb.GdbOutputErrorFile (instance|object) at.*" "test stderr location"
-gdb_test "python print (sys.stdout)" ".*gdb.GdbOutputFile (instance|object) at.*" "test stdout location"
+gdb_test "python print (sys.stderr)" ".*gdb._GdbOutputErrorFile (instance|object) at.*" "test stderr location"
+gdb_test "python print (sys.stdout)" ".*gdb._GdbOutputFile (instance|object) at.*" "test stdout location"
 gdb_test "python gdb.write(\"Foo\\n\")" "Foo" "test default write"
 gdb_test "python gdb.write(\"Error stream\\n\", stream=gdb.STDERR)" "Error stream" "test stderr write"
 gdb_test "python gdb.write(\"Normal stream\\n\", stream=gdb.STDOUT)" "Normal stream" "test stdout write"
-gdb_test "python gdb.write(\"Log stream\\n\", stream=gdb.STDLOG)" "Log stream" "test stdlog write"
+
+if ![gdb_debug_enabled] {
+  gdb_test "python gdb.write(\"Log stream\\n\", stream=gdb.STDLOG)" "Log stream" "test stdlog write"
+}
 
 # Turn on full stack printing for subsequent tests.
 gdb_py_test_silent_cmd "set python print-stack full" \
@@ -301,7 +314,7 @@ gdb_py_test_silent_cmd "set python print-stack full" \
 
 # Test prompt substituion
 
-gdb_py_test_multiple "prompt substitution" \
+gdb_test_multiline "prompt substitution" \
   "python" "" \
   "someCounter = 0" "" \
   "def prompt(current):" "" \
@@ -312,7 +325,7 @@ gdb_py_test_multiple "prompt substitution" \
   "   return \"py prompt \" + str (someCounter) + \" \"" "" \
   "end" ""
 
-gdb_py_test_multiple "prompt substitution readline" \
+gdb_test_multiline "prompt substitution readline" \
   "python" "" \
   "pCounter = 0" "" \
   "def program_prompt(current):" "" \
@@ -327,39 +340,39 @@ set newprompt "py prompt 1"
 set newprompt2 "py prompt 2"
 set testfake "testfake"
 
-gdb_test_multiple "python gdb.prompt_hook = prompt" "set the hook" {
+gdb_test_multiple "python gdb.prompt_hook = prompt" "set the hook = prompt" {
     -re "\[\r\n\]$newprompt $" {
-	pass "set hook"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "set prompt testfake " "set testfake prompt in GDB" {
     -re "\[\r\n\]$testfake $" {
-	pass "set prompt testfake"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "show prompt" "show testfake prompt" {
     -re "Gdb's prompt is \"$testfake \"..* $" {
-	pass "show prompt shows guarded prompt"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "set prompt blah " "set blah in GDB" {
     -re "\[\r\n\]$newprompt2 $" {
-	pass "set prompt blah overriden"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "python gdb.prompt_hook = None" "delete hook" {
     -re "\[\r\n\]$newprompt2 $" {
-	pass "delete old hook"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "set prompt $gdb_prompt " "set default prompt" {
     -re "\[\r\n\]$gdb_prompt $" {
-	pass "set default prompt"
+	pass $gdb_test_name
     }
 }
 
@@ -370,25 +383,25 @@ gdb_test_multiple "pwd" "pwd" {
     }
 }
 
-gdb_test_multiple "python gdb.prompt_hook = program_prompt" "set the hook" {
+gdb_test_multiple "python gdb.prompt_hook = program_prompt" "set the programming hook" {
     -re "\[\r\n\]$gdb_prompt $" {
-	pass "set programming hook"
+	pass $gdb_test_name
     }
 }
 
-gdb_test_multiple "python" "test we ignore substituion for seconday prompts" {
+gdb_test_multiple "python" "test we ignore substitution for seconday prompts" {
     -re "\r\n>$" {
-	pass "readline secondary are not substituted"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "end" "end programming" {
     -re "\[\r\n\]$gdb_prompt $" {
-	pass "end programming"
+	pass $gdb_test_name
     }
 }
 
-gdb_py_test_multiple "prompt substitution readline" \
+gdb_test_multiline "prompt substitution readline import" \
   "python" "" \
   "import gdb.command.prompt" "" \
   "end" ""
@@ -396,21 +409,21 @@ gdb_py_test_multiple "prompt substitution readline" \
 gdb_test_multiple "set extended-prompt one two three " \
     "set basic extended prompt" {
     -re "\[\r\n\]one two three $" {
-	pass "set basic extended prompt"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "set extended-prompt \\w " \
     "set extended prompt working directory" {
     -re "\[\r\n\][string_to_regexp $working_dir] $" {
-	pass "set extended prompt working directory"
+	pass $gdb_test_name
     }
 }
 
 gdb_test_multiple "set extended-prompt some param \\p{python print-stack} " \
     "set extended prompt parameter" {
     -re "\[\r\n\]some param full $" {
-	pass "set extended prompt parameter"
+	pass $gdb_test_name
     }
 }
 
@@ -442,33 +455,33 @@ gdb_test "show python print-stack" \
 gdb_py_test_silent_cmd "set python print-stack message" \
     "Test print-stack set setting to message" 1
 
-gdb_py_test_multiple "prompt substitution readline" \
+gdb_test_multiline "prompt substitution readline error_prompt" \
   "python" "" \
   "pCounter = 0" "" \
   "def error_prompt(current):" "" \
   "   raise RuntimeError(\"Python exception called\")" "" \
   "end" ""
 
-gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook" {
-    -re "Python Exception (exceptions.RuntimeError|<(type 'exceptions.|class ')RuntimeError'>) Python exception called.*" {
-	pass "set hook"
+gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook error_prompt" {
+    -re "Python Exception (exceptions.RuntimeError|<(type 'exceptions.|class ')RuntimeError'>) Python exception called.*$gdb_prompt $" {
+	pass $gdb_test_name
     }
 }
 
 gdb_py_test_silent_cmd "python gdb.prompt_hook = None" \
-    "set the hook to default" 1
+    "set the hook to default 1" 1
 
 gdb_py_test_silent_cmd "set python print-stack full" \
     "set print-stack full for prompt error test" 1
 
-gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook" {
-    -re "Traceback.*File.*line.*RuntimeError.*Python exception called.*" {
-	pass "set hook"
+gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook error_prompt traceback" {
+    -re "Traceback.*File.*line.*RuntimeError.*Python exception called.*$gdb_prompt $" {
+	pass $gdb_test_name
     }
 }
 
 gdb_py_test_silent_cmd "python gdb.prompt_hook = None" \
-    "set the hook to default" 1
+    "set the hook to default 2" 1
 
 # Start with a fresh gdb.
 clean_restart ${testfile}

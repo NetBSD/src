@@ -1,6 +1,6 @@
 /* Definitions for expressions stored in reversed prefix form, for GDB.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,25 @@
 #if !defined (EXPRESSION_H)
 #define EXPRESSION_H 1
 
+#include "gdbtypes.h"
 
-#include "symtab.h"		/* Needed for "struct block" type.  */
+/* While parsing expressions we need to track the innermost lexical block
+   that we encounter.  In some situations we need to track the innermost
+   block just for symbols, and in other situations we want to track the
+   innermost block for symbols and registers.  These flags are used by the
+   innermost block tracker to control which blocks we consider for the
+   innermost block.  These flags can be combined together as needed.  */
 
+enum innermost_block_tracker_type
+{
+  /* Track the innermost block for symbols within an expression.  */
+  INNERMOST_BLOCK_FOR_SYMBOLS = (1 << 0),
+
+  /* Track the innermost block for registers within an expression.  */
+  INNERMOST_BLOCK_FOR_REGISTERS = (1 << 1)
+};
+DEF_ENUM_FLAGS_TYPE (enum innermost_block_tracker_type,
+		     innermost_block_tracker_types);
 
 /* Definitions for saved C expressions.  */
 
@@ -52,6 +68,7 @@ enum exp_opcode : uint8_t
 
 /* Language specific operators.  */
 #include "ada-operator.def"
+#include "fortran-operator.def"
 
 #undef OP
 
@@ -96,7 +113,9 @@ typedef gdb::unique_xmalloc_ptr<expression> expression_up;
 
 /* From parse.c */
 
-extern expression_up parse_expression (const char *);
+class innermost_block_tracker;
+extern expression_up parse_expression (const char *,
+				       innermost_block_tracker * = nullptr);
 
 extern expression_up parse_expression_with_language (const char *string,
 						     enum language lang);
@@ -104,12 +123,10 @@ extern expression_up parse_expression_with_language (const char *string,
 extern struct type *parse_expression_for_completion
     (const char *, gdb::unique_xmalloc_ptr<char> *, enum type_code *);
 
+class innermost_block_tracker;
 extern expression_up parse_exp_1 (const char **, CORE_ADDR pc,
-				  const struct block *, int);
-
-/* For use by parsers; set if we want to parse an expression and
-   attempt completion.  */
-extern int parse_completion;
+				  const struct block *, int,
+				  innermost_block_tracker * = nullptr);
 
 /* From eval.c */
 

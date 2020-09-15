@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2019 Free Software Foundation, Inc.
+   Copyright 2018-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -75,4 +75,6 @@ main (int argc, char **argv, char **envp)
   (void) info_fun2bis ('b');
   (void) info_fun2xxx ('c', 1, 2);
   (void) info_fun2yyy ('d', 3, 4);
+
+  return 0;
 }

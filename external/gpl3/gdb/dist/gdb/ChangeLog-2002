@@ -11,10 +11,6 @@
 	* objc-exp.y (parse_number): Cast sscanf arguments to proper type.
 	(yylex): Initialize c to avoid uninitialized warning.
 
-2002-12-29  Kazu Hirata  <kazu@cs.umass.edu>
-
-	* doc/fdl.texi: Revert the last change.
-
 2002-12-29  Mark Kettenis  <kettenis@gnu.org>
 
 	* tracepoint.c (ISATTY): Removed.
@@ -1725,7 +1721,7 @@
 
 2002-11-18  Adam Fedor  <fedor@gnu.org>
 
-	* gdb/parser-defs.h: (struct objc_class_str): New structure
+	* parser-defs.h: (struct objc_class_str): New structure
 	for parsing ObjC classes.
 
 2002-11-18  Andrew Cagney  <ac131313@redhat.com>
@@ -3622,14 +3618,12 @@ Wed Nov 13 19:51:05 2002  Andrew Cagney  <cagney@redhat.com>
 	(charset.o): Move.
 	* c-lang.c: #include "gdb_string.h"
 
-2002-09-20  Fernando Nasser  <fnasser@redhat.com>
+2002-09-20  George Helffrich  <george@gly.bris.ac.uk>
 
-	From 2002-07-02  George Helffrich <george@gly.bris.ac.uk>
 	* cli/cli-cmds.c (list_command): New function.  Implements the new
 	cli edit command.
 	(_init_cli_cmds): Add new command definition.
 	* gdb.1: Document edit command.
-	* doc/gdb.texinfo: Document edit command.
 
 2002-09-20  Fernando Nasser  <fnasser@redhat.com>
 
@@ -3910,7 +3904,7 @@ Wed Nov 13 19:51:05 2002  Andrew Cagney  <cagney@redhat.com>
 
 2002-09-17  Theodore A. Roth  <troth@verinet.com>
 
-	* gdb/avr-tdep.c(avr_scan_prologue): Fix bad call to 
+	* avr-tdep.c(avr_scan_prologue): Fix bad call to 
 	generic_read_register_dummy() (PR gdb/703).
 	(avr_push_return_address): #if 0 out unused vars.
 	(avr_gdbarch_init): Enable use of avr_push_return_address().
@@ -4227,7 +4221,7 @@ Fri Sep 13 07:42:09 2002  Andrew Cagney  <cagney@redhat.com>
 
 2002-09-03  Theodore A. Roth  <troth@verinet.com>
 
-	* gdb/avr-tdep.c (avr_gdbarch_init): Use
+	* avr-tdep.c (avr_gdbarch_init): Use
 	generic_unwind_get_saved_register.
 
 2002-09-03  David Carlton  <carlton@math.stanford.edu>
@@ -4418,10 +4412,7 @@ Fri Sep 13 07:42:09 2002  Andrew Cagney  <cagney@redhat.com>
 
 	* cli/cli-script.c (copy_command_lines): New function.
 	* defs.h (copy_command_lines): Export.
-	* testsuite/gdb.base/commands.exp: New tests for commands
-	attached to a temporary breakpoint, and for commands that
-	delete the breakpoint they are attached to.
-	
+
 2002-08-26  Michael Snyder  <msnyder@redhat.com>
 
 	* breakpoint.c (bpstat_stop_status): Instead of copying the 
@@ -9057,7 +9048,6 @@ Fri Aug  2 15:53:50 2002  Andrew Cagney  <cagney@redhat.com>
 	(osabi.o): New dependency list.
 	* osabi.c: New file.
 	* osabi.h: New file.
-	* doc/gdbint.texinfo: Document new generic OS ABI framework.
 
 	* Makefile.in (alpha_tdep_h): Define and use instead of
 	alpha-tdep.h.
@@ -12392,14 +12382,12 @@ Wed Apr 24 14:22:21 2002  Andrew Cagney  <cagney@redhat.com>
 	* MAINTAINERS: Change Past Maintainer addresses to ``foo at bar
 	dot com'' form.  Remove references to cygnus.com and sourceware.
 
-2002-02-23  Andrew Cagney  <ac131313@redhat.com>
+2002-02-23  Paul Eggert  <eggert@twinsun.com>
 
-	From 2002-02-19 Paul Eggert <eggert@twinsun.com>:
 	* Makefile.in (VER): Change "head -1" to "sed q", since POSIX
 	1003.1-2001 no longer allows "head -1".
-	* gdb/Makefile.in (version.c): Likewise.
-	* gdb/doc/Makefile.in (GDBvn.texi): Likewise.
-	* gdb/CONTRIBUTE: Change "diff -c3" to "diff -c", which is
+	* Makefile.in (version.c): Likewise.
+	* CONTRIBUTE: Change "diff -c3" to "diff -c", which is
 	equivalent.  POSIX 1003.1-2001 no longer allows "diff -c3".
 
 2002-02-23  Andrew Cagney  <ac131313@redhat.com>
@@ -13365,8 +13353,6 @@ Wed Apr 24 14:22:21 2002  Andrew Cagney  <cagney@redhat.com>
 	* arch-utils.c (default_print_float_info): New function.
 	* arch-utils.h (default_print_float_info): Prototype it.
 	* infcmd.c (float_info): Call PRINT_FLOAT_INFO.
-	* doc/gdbint.texinfo (FLOAT_INFO): Mark as deprecated.
-	(PRINT_FLOAT_INFO): Document it.
 
 	* arm-tdep.c (arm_print_float_info): Renamed from arm_float_info.
 	* config/arm/tm-arm.h (FLOAT_INFO): Delete.

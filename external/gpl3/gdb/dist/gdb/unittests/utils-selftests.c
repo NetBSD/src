@@ -1,6 +1,6 @@
 /* Unit tests for the utils.c file.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "utils.h"
-#include "common/selftest.h"
+#include "gdbsupport/selftest.h"
 
 namespace selftests {
 namespace utils {
@@ -51,6 +51,7 @@ test_substitute_path_component ()
 }
 }
 
+void _initialize_utils_selftests ();
 void
 _initialize_utils_selftests ()
 {

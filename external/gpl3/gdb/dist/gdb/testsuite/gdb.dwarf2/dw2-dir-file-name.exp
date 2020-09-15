@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,13 @@ load_lib dwarf.exp
 # This test can only be run on targets which support DWARF-2 and use gas.
 if {![dwarf2_support]} {
     return 0  
+}
+
+# This test has hard-wired assumptions that host and build filenames are
+# the same, and assumes POSIX pathname syntax.
+if { [is_remote host] || [ishost *-*-mingw*] } {
+    unsupported "dw2-dir-file-name.exp can only run on local host"
+    return 0
 }
 
 # Find length of addresses in bytes.
@@ -325,6 +332,12 @@ lappend opts "additional_flags=-DLDIR=\"ldir\""
 lappend opts "additional_flags=-DFDIR=\"fdir\""
 # CU's DW_AT_name and .debug_line's filename.
 lappend opts "additional_flags=-DFILE=\"${srctmpfile}\""
+
+# Clang's integrated assembler doesn't support .ascii directives
+# with multiple string literals.
+if { [test_compiler_info clang*] } {
+    lappend opts "additional_flags=-fno-integrated-as"
+}
 
 if { [gdb_compile "${asmsrcfile} ${srcdir}/${subdir}/$srcfile" "${binfile}" executable $opts] != "" } {
     untested "failed to compile"

@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -21,15 +21,15 @@
 
 namespace cons_3 {
 
-void
-test05()
+static void
+test05 ()
 {
   char const * s = 0;
   gdb::string_view zero_length_built_with_NULL(s, 0);
 }
 
-int
-main()
+static int
+main ()
 { 
   test05();
 

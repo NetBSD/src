@@ -1,4 +1,4 @@
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile foo
 
@@ -82,4 +84,10 @@ gdb_test "info tasks" \
 # Now, resume the execution and make sure that GDB does not stop when
 # task 4 hits the breakpoint. Continuing thus results in our program
 # running to completion.
-gdb_continue_to_end "" continue 1
+set bp_location [gdb_get_line_number "STOP_HERE_2" ${testdir}/foo.adb]
+gdb_breakpoint foo.adb:$bp_location
+gdb_continue_to_breakpoint second ".*foo.adb:$bp_location.*null; -- STOP_HERE_2"
+
+# A regression test for a crash caused by trying to find the thread
+# for a terminated task.
+gdb_test "interpreter-exec mi \"-ada-task-info\"" ".*"

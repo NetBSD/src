@@ -1,0 +1,3 @@
+#...
+Disassembly of section .lower.bss:
+#pass

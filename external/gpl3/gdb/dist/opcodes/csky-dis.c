@@ -1,5 +1,5 @@
 /* C-SKY disassembler.
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -23,6 +23,7 @@
 #include "config.h"
 #include <stdio.h>
 #include "bfd_stdint.h"
+#include <elf/csky.h>
 #include "disassemble.h"
 #include "elf-bfd.h"
 #include "opcode/csky.h"
@@ -32,6 +33,7 @@
 
 #define CSKY_INST_TYPE unsigned long
 #define HAS_SUB_OPERAND (unsigned int)0xffffffff
+#define CSKY_DEFAULT_ISA 0xffffffff
 
 enum sym_type
 {
@@ -47,6 +49,7 @@ struct csky_dis_info
   disassemble_info *info;
   /* Opcode information.  */
   struct csky_opcode_info const *opinfo;
+  BFD_HOST_U_64_BIT isa;
   /* The value of operand to show.  */
   int value;
   /* Whether to look up/print a symbol name.  */
@@ -134,17 +137,15 @@ csky_get_mask (struct csky_opcode_info const *pinfo)
 static unsigned int
 csky_chars_to_number (unsigned char * buf, int n)
 {
-  if (n == 0)
-    abort ();
   int i;
-  int val = 0;
+  unsigned int val = 0;
 
   if (dis_info.info->endian == BFD_ENDIAN_BIG)
-    while (n--)
-      val |= buf[n] << (n*8);
-  else
     for (i = 0; i < n; i++)
-      val |= buf[i] << (i*8);
+      val = val << 8 | buf[i];
+  else
+    for (i = n - 1; i >= 0; i--)
+      val = val << 8 | buf[i];
   return val;
 }
 
@@ -161,6 +162,13 @@ csky_find_inst_info (struct csky_opcode_info const **pinfo,
   p = g_opcodeP;
   while (p->mnemonic)
     {
+	if (!(p->isa_flag16 & dis_info.isa)
+	      && !(p->isa_flag32 & dis_info.isa))
+	{
+	  p++;
+	  continue;
+	}
+
       /* Get the opcode mask.  */
       for (i = 0; i < OP_TABLE_NUM; i++)
 	if (length == 2)
@@ -228,9 +236,28 @@ csky_symbol_is_valid (asymbol *sym,
 disassembler_ftype
 csky_get_disassembler (bfd *abfd)
 {
-  if (abfd != NULL)
-    mach_flag = elf_elfheader (abfd)->e_flags;
-  return print_insn_csky;
+  obj_attribute *attr;
+  const char *sec_name = NULL;
+  if (!abfd)
+    return NULL;
+
+  mach_flag = elf_elfheader (abfd)->e_flags;
+
+  sec_name = get_elf_backend_data (abfd)->obj_attrs_section;
+  /* Skip any input that hasn't attribute section.
+     This enables to link object files without attribute section with
+     any others.  */
+  if (bfd_get_section_by_name (abfd, sec_name) != NULL)
+    {
+      attr = elf_known_obj_attributes_proc (abfd);
+      dis_info.isa = attr[Tag_CSKY_ISA_EXT_FLAGS].i;
+      dis_info.isa <<= 32;
+      dis_info.isa |= attr[Tag_CSKY_ISA_FLAGS].i;
+    }
+  else
+    dis_info.isa = CSKY_DEFAULT_ISA;
+
+   return print_insn_csky;
 }
 
 static int
@@ -315,6 +342,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
       strcat (str, buf);
       break;
     case OPRND_TYPE_VREG:
+      dis_info.value = value;
       sprintf (buf, "vr%d", (int)value);
       strcat (str, buf);
       break;
@@ -595,6 +623,64 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	strcat (str, buf);
 	break;
       }
+    case OPRND_TYPE_HFLOAT_FMOVI:
+    case OPRND_TYPE_SFLOAT_FMOVI:
+      {
+	int imm4;
+	int imm8;
+	imm4 = ((inst >> 16) & 0xf);
+	imm4 = (138 - imm4) << 23;
+
+	imm8 = ((inst >> 8) & 0x3);
+	imm8 |= (((inst >> 20) & 0x3f) << 2);
+	imm8 <<= 15;
+
+	value = ((inst >> 5) & 1) << 31;
+	value |= imm4 | imm8;
+
+	imm4 = 138 - (imm4 >> 23);
+	imm8 >>= 15;
+	if ((inst >> 5) & 1)
+	  {
+	    imm8 = 0 - imm8;
+	  }
+
+	float f = 0;
+	memcpy (&f, &value, sizeof (float));
+	sprintf (buf, "%f\t// imm9:%4d, imm4:%2d", f, imm8, imm4);
+	strcat (str, buf);
+
+	break;
+      }
+
+    case OPRND_TYPE_DFLOAT_FMOVI:
+      {
+	uint64_t imm4;
+	uint64_t imm8;
+	uint64_t dvalue;
+	imm4 = ((inst >> 16) & 0xf);
+	imm4 = (1034 - imm4) << 52;
+
+	imm8 = ((inst >> 8) & 0x3);
+	imm8 |= (((inst >> 20) & 0x3f) << 2);
+	imm8 <<= 44;
+
+	dvalue = (((uint64_t)inst >> 5) & 1) << 63;
+	dvalue |= imm4 | imm8;
+
+	imm4 = 1034 - (imm4 >> 52);
+	imm8 >>= 44;
+	if (inst >> 5)
+	  {
+	    imm8 = 0 - imm8;
+	  }
+	double d = 0;
+	memcpy (&d, &dvalue, sizeof (double));
+	sprintf (buf, "%lf\t// imm9:%4ld, imm4:%2ld", d, (long) imm8, (long) imm4);
+	strcat (str, buf);
+
+	break;
+      }
     case OPRND_TYPE_LABEL_WITH_BRACKET:
       sprintf (buf, "[0x%x]", (unsigned int)value);
       strcat (str, buf);
@@ -625,8 +711,20 @@ csky_output_operand (char *str, struct operand const *oprnd,
     case OPRND_TYPE_FREGLIST_DASH:
       if (IS_CSKY_V2 (mach_flag))
 	{
-	  int vrx = value & 0xf;
-	  int vry = vrx + (value >> 4);
+	  int vrx = 0;
+	  int vry = 0;
+	  if (dis_info.isa & CSKY_ISA_FLOAT_7E60
+	      && (strstr (str, "fstm") != NULL
+		  || strstr (str, "fldm") != NULL))
+	    {
+	      vrx = value & 0x1f;
+	      vry = vrx + (value >> 5);
+	    }
+	  else
+	    {
+	      vrx = value & 0xf;
+	      vry = vrx + (value >> 4);
+	    }
 	  sprintf (buf, "fr%d-fr%d", vrx, vry);
 	  strcat (str, buf);
 	}
@@ -916,7 +1014,7 @@ print_insn_csky (bfd_vma memaddr, struct disassemble_info *info)
   CSKY_INST_TYPE inst = 0;
   int status;
   char str[256];
-  long given;
+  unsigned long given;
   int is_data = FALSE;
   void (*printer) (bfd_vma, struct disassemble_info *, long);
   unsigned int  size = 4;
@@ -930,10 +1028,16 @@ print_insn_csky (bfd_vma memaddr, struct disassemble_info *info)
   if (mach_flag != INIT_MACH_FLAG && mach_flag != BINARY_MACH_FLAG)
     info->mach = mach_flag;
   else if (mach_flag == INIT_MACH_FLAG)
-    mach_flag = info->mach;
+    {
+      mach_flag = info->mach;
+      dis_info.isa = CSKY_DEFAULT_ISA;
+    }
 
   if (mach_flag == BINARY_MACH_FLAG && info->endian == BFD_ENDIAN_UNKNOWN)
-    info->endian = BFD_ENDIAN_LITTLE;
+    {
+      info->endian = BFD_ENDIAN_LITTLE;
+      dis_info.isa = CSKY_DEFAULT_ISA;
+    }
 
   /* First check the full symtab for a mapping symbol, even if there
      are no usable non-mapping symbols for this address.  */

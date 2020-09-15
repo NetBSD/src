@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -35,7 +35,8 @@ if {[skip_cplus_tests]} { continue }
 # Tests for c++/12266 et al
 standard_testfile .cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {c++ debug}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
+	 {c++ debug additional_flags=-std=c++11}]} {
     return -1
 }
 
@@ -137,6 +138,11 @@ foreach t $typedefs(_BAR_) {
     add methods "test" "$t&" {_BAR_&}
 }
 
+# Tests for c++/24367
+foreach t {int incomplete_struct another_incomplete_struct} {
+    add methods "test_incomplete" "${t}*" [string_to_regexp "${t}*"]
+}
+
 gdb_test_no_output "set listsize 1" ""
 
 # Finally, for each method in the list METHODS, check whether
@@ -175,8 +181,7 @@ foreach f [list "$func" "'$func'"] {
 	     "file: \".*$srcfile\", line number: $line2, symbol: \"B::$func_re\"" \
 	     "$line2${any}B::test${any}" \
 	     "file: \".*$srcfile\", line number: $line3, symbol: \"$func_re\"" \
-	     "$line3${any}// test${any}"] \
-	"list $f"
+	     "$line3${any}// test${any}"]
 
     delete_breakpoints
     gdb_test "break $f" "\\(3 locations\\)"

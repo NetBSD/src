@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,12 +22,13 @@
 #define PROGSPACE_H
 
 #include "target.h"
-#include "common/vec.h"
 #include "gdb_bfd.h"
-#include "common/gdb_vecs.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "registry.h"
-#include "common/next-iterator.h"
-#include "common/safe-iterator.h"
+#include "gdbsupport/next-iterator.h"
+#include "gdbsupport/safe-iterator.h"
+#include <list>
+#include <vector>
 
 struct target_ops;
 struct bfd;
@@ -37,6 +38,80 @@ struct exec;
 struct address_space;
 struct program_space_data;
 struct address_space_data;
+struct so_list;
+
+typedef std::list<std::shared_ptr<objfile>> objfile_list;
+
+/* An iterator that wraps an iterator over std::shared_ptr<objfile>,
+   and dereferences the returned object.  This is useful for iterating
+   over a list of shared pointers and returning raw pointers -- which
+   helped avoid touching a lot of code when changing how objfiles are
+   managed.  */
+
+class unwrapping_objfile_iterator
+{
+public:
+
+  typedef unwrapping_objfile_iterator self_type;
+  typedef typename ::objfile *value_type;
+  typedef typename ::objfile &reference;
+  typedef typename ::objfile **pointer;
+  typedef typename objfile_list::iterator::iterator_category iterator_category;
+  typedef typename objfile_list::iterator::difference_type difference_type;
+
+  unwrapping_objfile_iterator (const objfile_list::iterator &iter)
+    : m_iter (iter)
+  {
+  }
+
+  objfile *operator* () const
+  {
+    return m_iter->get ();
+  }
+
+  unwrapping_objfile_iterator operator++ ()
+  {
+    ++m_iter;
+    return *this;
+  }
+
+  bool operator!= (const unwrapping_objfile_iterator &other) const
+  {
+    return m_iter != other.m_iter;
+  }
+
+private:
+
+  /* The underlying iterator.  */
+  objfile_list::iterator m_iter;
+};
+
+
+/* A range that returns unwrapping_objfile_iterators.  */
+
+struct unwrapping_objfile_range
+{
+  typedef unwrapping_objfile_iterator iterator;
+
+  unwrapping_objfile_range (objfile_list &ol)
+    : m_list (ol)
+  {
+  }
+
+  iterator begin () const
+  {
+    return iterator (m_list.begin ());
+  }
+
+  iterator end () const
+  {
+    return iterator (m_list.end ());
+  }
+
+private:
+
+  objfile_list &m_list;
+};
 
 /* A program space represents a symbolic view of an address space.
    Roughly speaking, it holds all the data associated with a
@@ -136,23 +211,29 @@ struct address_space_data;
 
 struct program_space
 {
-  program_space (address_space *aspace_);
+  /* Constructs a new empty program space, binds it to ASPACE, and
+     adds it to the program space list.  */
+  explicit program_space (address_space *aspace);
+
+  /* Releases a program space, and all its contents (shared libraries,
+     objfiles, and any other references to the program space in other
+     modules).  It is an internal error to call this when the program
+     space is the current program space, since there should always be
+     a program space.  */
   ~program_space ();
 
-  typedef next_adapter<struct objfile> objfiles_range;
+  typedef unwrapping_objfile_range objfiles_range;
 
-  /* Return an iterarable object that can be used to iterate over all
+  /* Return an iterable object that can be used to iterate over all
      objfiles.  The basic use is in a foreach, like:
 
      for (objfile *objf : pspace->objfiles ()) { ... }  */
   objfiles_range objfiles ()
   {
-    return objfiles_range (objfiles_head);
+    return unwrapping_objfile_range (objfiles_list);
   }
 
-  typedef next_adapter<struct objfile,
-		       basic_safe_iterator<next_iterator<objfile>>>
-    objfiles_safe_range;
+  typedef basic_safe_range<objfiles_range> objfiles_safe_range;
 
   /* An iterable object that can be used to iterate over all objfiles.
      The basic use is in a foreach, like:
@@ -163,11 +244,34 @@ struct program_space
      deleted during iteration.  */
   objfiles_safe_range objfiles_safe ()
   {
-    return objfiles_safe_range (objfiles_head);
+    return objfiles_safe_range (objfiles_list);
   }
 
-  /* Pointer to next in linked list.  */
-  struct program_space *next = NULL;
+  /* Add OBJFILE to the list of objfiles, putting it just before
+     BEFORE.  If BEFORE is nullptr, it will go at the end of the
+     list.  */
+  void add_objfile (std::shared_ptr<objfile> &&objfile,
+		    struct objfile *before);
+
+  /* Remove OBJFILE from the list of objfiles.  */
+  void remove_objfile (struct objfile *objfile);
+
+  /* Return true if there is more than one object file loaded; false
+     otherwise.  */
+  bool multi_objfile_p () const
+  {
+    return objfiles_list.size () > 1;
+  }
+
+  /* Free all the objfiles associated with this program space.  */
+  void free_all_objfiles ();
+
+  /* Return a range adapter for iterating over all the solibs in this
+     program space.  Use it like:
+
+     for (so_list *so : pspace->solibs ()) { ... }  */
+  next_adapter<struct so_list> solibs () const;
+
 
   /* Unique ID number.  */
   int num = 0;
@@ -216,9 +320,8 @@ struct program_space
      (e.g. the argument to the "symbol-file" or "file" command).  */
   struct objfile *symfile_object_file = NULL;
 
-  /* All known objfiles are kept in a linked list.  This points to
-     the head of this list.  */
-  struct objfile *objfiles_head = NULL;
+  /* All known objfiles are kept in a linked list.  */
+  std::list<std::shared_ptr<objfile>> objfiles_list;
 
   /* The set of target sections matching the sections mapped into
      this program space.  Managed by both exec_ops and solib.c.  */
@@ -259,29 +362,15 @@ struct address_space
 
 #define symfile_objfile current_program_space->symfile_object_file
 
-/* All known objfiles are kept in a linked list.  This points to the
-   root of this list.  */
-#define object_files current_program_space->objfiles_head
-
 /* The set of target sections matching the sections mapped into the
    current program space.  */
 #define current_target_sections (&current_program_space->target_sections)
 
 /* The list of all program spaces.  There's always at least one.  */
-extern struct program_space *program_spaces;
+extern std::vector<struct program_space *>program_spaces;
 
 /* The current program space.  This is always non-null.  */
 extern struct program_space *current_program_space;
-
-#define ALL_PSPACES(pspace) \
-  for ((pspace) = program_spaces; (pspace) != NULL; (pspace) = (pspace)->next)
-
-/* Remove a program space from the program spaces list and release it.  It is
-   an error to call this function while PSPACE is the current program space. */
-extern void delete_program_space (struct program_space *pspace);
-
-/* Returns the number of program spaces listed.  */
-extern int number_of_program_spaces (void);
 
 /* Returns true iff there's no inferior bound to PSPACE.  */
 extern int program_space_empty_p (struct program_space *pspace);

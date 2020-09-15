@@ -1,6 +1,6 @@
 /* Frame unwinder for ia64 frames using the libunwind library.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Written by Jeff Johnston, contributed by Red Hat Inc.
 
@@ -36,7 +36,7 @@
 #include "ia64-libunwind-tdep.h"
 
 #include "complaints.h"
-#include "common/preprocessor.h"
+#include "gdbsupport/preprocessor.h"
 
 /* IA-64 is the only target that currently uses ia64-libunwind-tdep.
    Note how UNW_TARGET, UNW_OBJ, etc. are compile time constants below.
@@ -133,10 +133,10 @@ libunwind_descr (struct gdbarch *gdbarch)
 }
 
 static void *
-libunwind_descr_init (struct gdbarch *gdbarch)
+libunwind_descr_init (struct obstack *obstack)
 {
   struct libunwind_descr *descr
-    = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct libunwind_descr);
+    = OBSTACK_ZALLOC (obstack, struct libunwind_descr);
 
   return descr;
 }
@@ -151,14 +151,7 @@ libunwind_frame_set_descr (struct gdbarch *gdbarch,
 
   arch_descr = ((struct libunwind_descr *)
 		gdbarch_data (gdbarch, libunwind_descr_handle));
-
-  if (arch_descr == NULL)
-    {
-      /* First time here.  Must initialize data area.  */
-      arch_descr = (struct libunwind_descr *) libunwind_descr_init (gdbarch);
-      deprecated_set_gdbarch_data (gdbarch,
-				   libunwind_descr_handle, arch_descr);
-    }
+  gdb_assert (arch_descr != NULL);
 
   /* Copy new descriptor info into arch descriptor.  */
   arch_descr->gdb2uw = descr->gdb2uw;
@@ -197,7 +190,7 @@ libunwind_frame_cache (struct frame_info *this_frame, void **this_cache)
        The best we can do, in that case, is use the frame PC as the function
        address.  We don't need to give up since we still have the unwind
        record to help us perform the unwinding.  There is also another
-       compelling to continue, because abandonning now means stopping
+       compelling to continue, because abandoning now means stopping
        the backtrace, which can never be helpful for the user.  */
     cache->func_addr = get_frame_pc (this_frame);
 
@@ -591,11 +584,12 @@ libunwind_is_initialized (void)
   return libunwind_initialized;
 }
 
+void _initialize_libunwind_frame ();
 void
-_initialize_libunwind_frame (void)
+_initialize_libunwind_frame ()
 {
   libunwind_descr_handle
-    = gdbarch_data_register_post_init (libunwind_descr_init);
+    = gdbarch_data_register_pre_init (libunwind_descr_init);
 
   libunwind_initialized = libunwind_load ();
 }

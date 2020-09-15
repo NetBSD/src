@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C54X architecture
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.
@@ -117,7 +117,7 @@ tic54x_get_insn (disassemble_info *info, bfd_vma addr,
           bfd_byte opbuf[2];
           bfd_vma addr2 = addr + 1 + has_lkaddr (memdata, tm);
           int status = (*info->read_memory_func) (addr2, opbuf, 2, info);
-          // FIXME handle errors
+          /* FIXME handle errors.  */
           if (status == 0)
             {
               unsigned short data2 = bfd_getl16 (opbuf);
@@ -394,8 +394,7 @@ print_instruction (disassemble_info *info,
             break;
           }
         case OP_k5:
-          sprintf (operand[i], "#%d",
-                   (int) (((signed char) opcode & 0x1F) << 3) >> 3);
+          sprintf (operand[i], "#%d", ((opcode & 0x1F) ^ 0x10) - 0x10);
           info->fprintf_func (info->stream, "%s%s", comma, operand[i]);
           break;
         case OP_k8u:

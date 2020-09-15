@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2019 Free Software Foundation, Inc.
+   Copyright 2018-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ static int minsym_var;
 static int minsym_fun (void)
 {
    minsym_var++;
+   return 0;
 }
 
 int

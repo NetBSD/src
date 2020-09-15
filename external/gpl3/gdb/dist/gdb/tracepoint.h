@@ -1,5 +1,5 @@
 /* Data structures associated with tracepoints in GDB.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 
 #include "breakpoint.h"
 #include "memrange.h"
-#include "common/gdb_vecs.h"
+#include "gdbsupport/gdb_vecs.h"
 
 #include <vector>
 #include <string>

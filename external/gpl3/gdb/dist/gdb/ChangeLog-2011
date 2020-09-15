@@ -2157,9 +2157,9 @@
 	symbol's symtab, use new argument OBJFILE.
 	* cp-support.h (cp_scan_for_anonymous_namespaces): Changed function
 	arguments by adding OBJFILE.
-	* gdb/dwarf2read.c (new_symbol_full): Change call to
+	* dwarf2read.c (new_symbol_full): Change call to
 	cp_scan_for_anonymous_namespaces to match new signature.
-	* gdb/stabsread.c (define_symbol): Change call to
+	* stabsread.c (define_symbol): Change call to
 	cp_scan_for_anonymous_namespaces to match new signature.
 
 2011-10-20  Phil Muldoon  <pmuldoon@redhat.com>
@@ -6464,7 +6464,7 @@
 
 2011-05-26  Yao Qi  <yao@codesourcery.com>
 
-	* gdb/gdb_thread_db.h: Remove HAVE_UINTPTR_T.
+	* gdb_thread_db.h: Remove HAVE_UINTPTR_T.
 
 2011-05-26  Tristan Gingold  <gingold@adacore.com>
 
@@ -9448,7 +9448,7 @@
 	(cleanup_block_load_pc, copy_block_xfer): Likewise.
 	* arm-linux-tdep.c (arm_linux_copy_svc): Callers update.
 	(arm_catch_kernel_helper_return): Likewise.
-	* gdb/arm-tdep.h : Update function declarations.
+	* arm-tdep.h : Update function declarations.
 
 2011-03-07  Michael Snyder  <msnyder@vmware.com>
 
@@ -9670,7 +9670,7 @@
 
 2011-03-03  Yao Qi  <yao@codesourcery.com>
 
-	* gdb/arm-tdep.c (shifted_reg_val): Replace magic number 15 with
+	* arm-tdep.c (shifted_reg_val): Replace magic number 15 with
 	ARM_PC_REGNUM.
 	(thumb_get_next_pc_raw, arm_get_next_pc_raw): Likewise.
 	(displaced_write_reg, displaced_read_reg): Likewise.
@@ -10303,12 +10303,12 @@
 
 2011-02-18  Yao Qi  <yao@codesourcery.com>
 
-	* gdb/arm-tdep.c (arm_displaced_step_copy_insn): Move code to ...
+	* arm-tdep.c (arm_displaced_step_copy_insn): Move code to ...
 	(arm_process_displaced_insn): .. here. Remove parameter INSN.
 	(thumb_process_displaced_insn): New.
-	* gdb/arm-linux-tdep.c (arm_linux_displaced_step_copy_insn): Update
+	* arm-linux-tdep.c (arm_linux_displaced_step_copy_insn): Update
 	call to arm_process_displaced_insn.
-	* gdb/arm-tdep.h : Update declaration of arm_process_displaced_insn.
+	* arm-tdep.h : Update declaration of arm_process_displaced_insn.
 
 2011-02-17  Tom Tromey  <tromey@redhat.com>
 
@@ -11267,8 +11267,8 @@
 2011-01-25  Mathieu Lacage  <mathieu.lacage@inria.fr>
 
 	PR/symtab 11766:
-	* gdb/objfiles.h (struct objfile) <addr_low>: New field.
-	* gdb/solib.c (solib_read_symbols): Check for addr_low in
+	* objfiles.h (struct objfile) <addr_low>: New field.
+	* solib.c (solib_read_symbols): Check for addr_low in
 	equality test for objfile, initialize addr_low if needed.
 
 2011-01-25  Pedro Alves  <pedro@codesourcery.com>

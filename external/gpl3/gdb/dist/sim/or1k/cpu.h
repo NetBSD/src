@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2019 Free Software Foundation, Inc.
+Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -67,21 +67,41 @@ SET_H_SPR ((((index)) + (ORSI (SLLSI (SPR_GROUP_SYS, 11), SPR_INDEX_SYS_GPR0))),
   SI h_atomic_address;
 #define GET_H_ATOMIC_ADDRESS() CPU (h_atomic_address)
 #define SET_H_ATOMIC_ADDRESS(x) (CPU (h_atomic_address) = (x))
+  /* 1-bit offset flag */
+  BI h_roff1;
+#define GET_H_ROFF1() CPU (h_roff1)
+#define SET_H_ROFF1(x) (CPU (h_roff1) = (x))
   } hardware;
 #define CPU_CGEN_HW(cpu) (& (cpu)->cpu_data.hardware)
 } OR1K32BF_CPU_DATA;
 
 /* Virtual regs.  */
 
+#define GET_H_SPR(index) or1k32bf_h_spr_get_raw (current_cpu, index)
+#define SET_H_SPR(index, x) \
+do { \
+or1k32bf_h_spr_set_raw (current_cpu, (index), (x));\
+;} while (0)
 #define GET_H_FSR(index) SUBWORDSISF (TRUNCSISI (GET_H_GPR (index)))
 #define SET_H_FSR(index, x) \
 do { \
 SET_H_GPR ((index), ZEXTSISI (SUBWORDSFSI ((x))));\
 ;} while (0)
-#define GET_H_SPR(index) or1k32bf_h_spr_get_raw (current_cpu, index)
-#define SET_H_SPR(index, x) \
+#define GET_H_FD32R(index) JOINSIDF (GET_H_GPR (((index) & (31))), GET_H_GPR (((((index) & (31))) + (((((((INT) (index) >> (5))) == (1))) ? (2) : (1))))))
+#define SET_H_FD32R(index, x) \
 do { \
-or1k32bf_h_spr_set_raw (current_cpu, (index), (x));\
+{\
+SET_H_GPR ((((index)) & (31)), SUBWORDDFSI ((x), 0));\
+SET_H_GPR ((((((index)) & (31))) + (((((((INT) ((index)) >> (5))) == (1))) ? (2) : (1)))), SUBWORDDFSI ((x), 1));\
+}\
+;} while (0)
+#define GET_H_I64R(index) JOINSIDI (GET_H_GPR (((index) & (31))), GET_H_GPR (((((index) & (31))) + (((((((INT) (index) >> (5))) == (1))) ? (2) : (1))))))
+#define SET_H_I64R(index, x) \
+do { \
+{\
+SET_H_GPR ((((index)) & (31)), SUBWORDDISI ((x), 0));\
+SET_H_GPR ((((((index)) & (31))) + (((((((INT) ((index)) >> (5))) == (1))) ? (2) : (1)))), SUBWORDDISI ((x), 1));\
+}\
 ;} while (0)
 #define GET_H_SYS_VR() GET_H_SPR (ORSI (SLLSI (SPR_GROUP_SYS, 11), SPR_INDEX_SYS_VR))
 #define SET_H_SYS_VR(x) \
@@ -3227,12 +3247,16 @@ or1k32bf_h_spr_field_set_raw (current_cpu, ORSI (SLLSI (SPR_GROUP_SYS, 11), SPR_
 /* Cover fns for register access.  */
 USI or1k32bf_h_pc_get (SIM_CPU *);
 void or1k32bf_h_pc_set (SIM_CPU *, USI);
-SF or1k32bf_h_fsr_get (SIM_CPU *, UINT);
-void or1k32bf_h_fsr_set (SIM_CPU *, UINT, SF);
 USI or1k32bf_h_spr_get (SIM_CPU *, UINT);
 void or1k32bf_h_spr_set (SIM_CPU *, UINT, USI);
 USI or1k32bf_h_gpr_get (SIM_CPU *, UINT);
 void or1k32bf_h_gpr_set (SIM_CPU *, UINT, USI);
+SF or1k32bf_h_fsr_get (SIM_CPU *, UINT);
+void or1k32bf_h_fsr_set (SIM_CPU *, UINT, SF);
+DF or1k32bf_h_fd32r_get (SIM_CPU *, UINT);
+void or1k32bf_h_fd32r_set (SIM_CPU *, UINT, DF);
+DI or1k32bf_h_i64r_get (SIM_CPU *, UINT);
+void or1k32bf_h_i64r_set (SIM_CPU *, UINT, DI);
 USI or1k32bf_h_sys_vr_get (SIM_CPU *);
 void or1k32bf_h_sys_vr_set (SIM_CPU *, USI);
 USI or1k32bf_h_sys_upr_get (SIM_CPU *);
@@ -4493,6 +4517,8 @@ BI or1k32bf_h_atomic_reserve_get (SIM_CPU *);
 void or1k32bf_h_atomic_reserve_set (SIM_CPU *, BI);
 SI or1k32bf_h_atomic_address_get (SIM_CPU *);
 void or1k32bf_h_atomic_address_set (SIM_CPU *, SI);
+BI or1k32bf_h_roff1_get (SIM_CPU *);
+void or1k32bf_h_roff1_set (SIM_CPU *, BI);
 
 /* These must be hand-written.  */
 extern CPUREG_FETCH_FN or1k32bf_fetch_register;
@@ -4519,6 +4545,11 @@ union sem_fields {
     IADDR i_disp21;
     UINT f_r1;
   } sfmt_l_adrp;
+  struct { /*  */
+    SI f_rad32;
+    SI f_rbd32;
+    SI f_rdd32;
+  } sfmt_lf_add_d32;
   struct { /*  */
     UINT f_r1;
     UINT f_r2;
@@ -4978,6 +5009,33 @@ struct scache {
   f_resv_10_3 = EXTRACT_LSB0_UINT (insn, 32, 10, 3); \
   f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
 
+#define EXTRACT_IFMT_LF_ADD_D32_VARS \
+  UINT f_opcode; \
+  UINT f_r1; \
+  UINT f_rdoff_10_1; \
+  SI f_rdd32; \
+  UINT f_r2; \
+  UINT f_raoff_9_1; \
+  SI f_rad32; \
+  UINT f_r3; \
+  UINT f_rboff_8_1; \
+  SI f_rbd32; \
+  UINT f_op_7_8; \
+  unsigned int length;
+#define EXTRACT_IFMT_LF_ADD_D32_CODE \
+  length = 4; \
+  f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
+  f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
+  f_rdoff_10_1 = EXTRACT_LSB0_UINT (insn, 32, 10, 1); \
+  f_rdd32 = ((f_r1) | (((f_rdoff_10_1) << (5))));\
+  f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
+  f_raoff_9_1 = EXTRACT_LSB0_UINT (insn, 32, 9, 1); \
+  f_rad32 = ((f_r2) | (((f_raoff_9_1) << (5))));\
+  f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
+  f_rboff_8_1 = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
+  f_rbd32 = ((f_r3) | (((f_rboff_8_1) << (5))));\
+  f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
+
 #define EXTRACT_IFMT_LF_ITOF_S_VARS \
   UINT f_opcode; \
   UINT f_r1; \
@@ -4993,6 +5051,31 @@ struct scache {
   f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
   f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
   f_resv_10_3 = EXTRACT_LSB0_UINT (insn, 32, 10, 3); \
+  f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
+
+#define EXTRACT_IFMT_LF_ITOF_D32_VARS \
+  UINT f_opcode; \
+  UINT f_r3; \
+  UINT f_r1; \
+  UINT f_rdoff_10_1; \
+  SI f_rdd32; \
+  UINT f_r2; \
+  UINT f_raoff_9_1; \
+  SI f_rad32; \
+  UINT f_resv_8_1; \
+  UINT f_op_7_8; \
+  unsigned int length;
+#define EXTRACT_IFMT_LF_ITOF_D32_CODE \
+  length = 4; \
+  f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
+  f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
+  f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
+  f_rdoff_10_1 = EXTRACT_LSB0_UINT (insn, 32, 10, 1); \
+  f_rdd32 = ((f_r1) | (((f_rdoff_10_1) << (5))));\
+  f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
+  f_raoff_9_1 = EXTRACT_LSB0_UINT (insn, 32, 9, 1); \
+  f_rad32 = ((f_r2) | (((f_raoff_9_1) << (5))));\
+  f_resv_8_1 = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
   f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
 
 #define EXTRACT_IFMT_LF_FTOI_S_VARS \
@@ -5012,7 +5095,32 @@ struct scache {
   f_resv_10_3 = EXTRACT_LSB0_UINT (insn, 32, 10, 3); \
   f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
 
-#define EXTRACT_IFMT_LF_EQ_S_VARS \
+#define EXTRACT_IFMT_LF_FTOI_D32_VARS \
+  UINT f_opcode; \
+  UINT f_r3; \
+  UINT f_r1; \
+  UINT f_rdoff_10_1; \
+  SI f_rdd32; \
+  UINT f_r2; \
+  UINT f_raoff_9_1; \
+  SI f_rad32; \
+  UINT f_resv_8_1; \
+  UINT f_op_7_8; \
+  unsigned int length;
+#define EXTRACT_IFMT_LF_FTOI_D32_CODE \
+  length = 4; \
+  f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
+  f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
+  f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
+  f_rdoff_10_1 = EXTRACT_LSB0_UINT (insn, 32, 10, 1); \
+  f_rdd32 = ((f_r1) | (((f_rdoff_10_1) << (5))));\
+  f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
+  f_raoff_9_1 = EXTRACT_LSB0_UINT (insn, 32, 9, 1); \
+  f_rad32 = ((f_r2) | (((f_raoff_9_1) << (5))));\
+  f_resv_8_1 = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
+  f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
+
+#define EXTRACT_IFMT_LF_SFEQ_S_VARS \
   UINT f_opcode; \
   UINT f_r1; \
   UINT f_r2; \
@@ -5020,13 +5128,38 @@ struct scache {
   UINT f_resv_10_3; \
   UINT f_op_7_8; \
   unsigned int length;
-#define EXTRACT_IFMT_LF_EQ_S_CODE \
+#define EXTRACT_IFMT_LF_SFEQ_S_CODE \
   length = 4; \
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
   f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
   f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
   f_resv_10_3 = EXTRACT_LSB0_UINT (insn, 32, 10, 3); \
+  f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
+
+#define EXTRACT_IFMT_LF_SFEQ_D32_VARS \
+  UINT f_opcode; \
+  UINT f_r1; \
+  UINT f_resv_10_1; \
+  UINT f_r2; \
+  UINT f_raoff_9_1; \
+  SI f_rad32; \
+  UINT f_r3; \
+  UINT f_rboff_8_1; \
+  SI f_rbd32; \
+  UINT f_op_7_8; \
+  unsigned int length;
+#define EXTRACT_IFMT_LF_SFEQ_D32_CODE \
+  length = 4; \
+  f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
+  f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
+  f_resv_10_1 = EXTRACT_LSB0_UINT (insn, 32, 10, 1); \
+  f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
+  f_raoff_9_1 = EXTRACT_LSB0_UINT (insn, 32, 9, 1); \
+  f_rad32 = ((f_r2) | (((f_raoff_9_1) << (5))));\
+  f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
+  f_rboff_8_1 = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
+  f_rbd32 = ((f_r3) | (((f_rboff_8_1) << (5))));\
   f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
 
 #define EXTRACT_IFMT_LF_CUST1_S_VARS \
@@ -5044,6 +5177,31 @@ struct scache {
   f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
   f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
   f_resv_10_3 = EXTRACT_LSB0_UINT (insn, 32, 10, 3); \
+  f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
+
+#define EXTRACT_IFMT_LF_CUST1_D32_VARS \
+  UINT f_opcode; \
+  UINT f_resv_25_5; \
+  UINT f_resv_10_1; \
+  UINT f_r2; \
+  UINT f_raoff_9_1; \
+  SI f_rad32; \
+  UINT f_r3; \
+  UINT f_rboff_8_1; \
+  SI f_rbd32; \
+  UINT f_op_7_8; \
+  unsigned int length;
+#define EXTRACT_IFMT_LF_CUST1_D32_CODE \
+  length = 4; \
+  f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
+  f_resv_25_5 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
+  f_resv_10_1 = EXTRACT_LSB0_UINT (insn, 32, 10, 1); \
+  f_r2 = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
+  f_raoff_9_1 = EXTRACT_LSB0_UINT (insn, 32, 9, 1); \
+  f_rad32 = ((f_r2) | (((f_raoff_9_1) << (5))));\
+  f_r3 = EXTRACT_LSB0_UINT (insn, 32, 15, 5); \
+  f_rboff_8_1 = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
+  f_rbd32 = ((f_r3) | (((f_rboff_8_1) << (5))));\
   f_op_7_8 = EXTRACT_LSB0_UINT (insn, 32, 7, 8); \
 
 /* Collection of various things for the trace handler to use.  */

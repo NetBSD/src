@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion for GDB.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -19,9 +19,9 @@
 
 #include "defs.h"
 #include "gdb_obstack.h"
-#include "bcache.h"
 #include "macrotab.h"
 #include "macroexp.h"
+#include "macroscope.h"
 #include "c-lang.h"
 
 
@@ -128,15 +128,14 @@ struct macro_buffer
       xfree (text);
   }
 
-  /* Release the text of the buffer to the caller, which is now
-     responsible for freeing it.  */
-  char *release ()
+  /* Release the text of the buffer to the caller.  */
+  gdb::unique_xmalloc_ptr<char> release ()
   {
     gdb_assert (! shared);
     gdb_assert (size);
     char *result = text;
     text = NULL;
-    return result;
+    return gdb::unique_xmalloc_ptr<char> (result);
   }
 
   /* Resize the buffer to be at least N bytes long.  Raise an error if
@@ -699,7 +698,7 @@ stringify (struct macro_buffer *dest, const char *arg, int len)
 
 /* See macroexp.h.  */
 
-char *
+gdb::unique_xmalloc_ptr<char>
 macro_stringify (const char *str)
 {
   int len = strlen (str);
@@ -878,9 +877,7 @@ gather_arguments (const char *name, struct macro_buffer *src, int nargs,
 static void scan (struct macro_buffer *dest,
                   struct macro_buffer *src,
                   struct macro_name_list *no_loop,
-                  macro_lookup_ftype *lookup_func,
-                  void *lookup_baton);
-
+		  const macro_scope &scope);
 
 /* A helper function for substitute_args.
    
@@ -960,8 +957,7 @@ substitute_args (struct macro_buffer *dest,
 		 int is_varargs, const struct macro_buffer *va_arg_name,
 		 const std::vector<struct macro_buffer> &argv,
                  struct macro_name_list *no_loop,
-                 macro_lookup_ftype *lookup_func,
-                 void *lookup_baton)
+		 const macro_scope &scope)
 {
   /* The token we are currently considering.  */
   struct macro_buffer tok;
@@ -1195,7 +1191,7 @@ substitute_args (struct macro_buffer *dest,
 		 referring to the argument's text, not the argument
 		 itself.  */
 	      struct macro_buffer arg_src (argv[arg].text, argv[arg].len);
-	      scan (dest, &arg_src, no_loop, lookup_func, lookup_baton);
+	      scan (dest, &arg_src, no_loop, scope);
 	      substituted = 1;
 	    }
 
@@ -1225,8 +1221,7 @@ expand (const char *id,
         struct macro_buffer *dest,
         struct macro_buffer *src,
         struct macro_name_list *no_loop,
-        macro_lookup_ftype *lookup_func,
-        void *lookup_baton)
+	const macro_scope &scope)
 {
   struct macro_name_list new_no_loop;
 
@@ -1244,7 +1239,7 @@ expand (const char *id,
       struct macro_buffer replacement_list (def->replacement,
 					    strlen (def->replacement));
 
-      scan (dest, &replacement_list, &new_no_loop, lookup_func, lookup_baton);
+      scan (dest, &replacement_list, &new_no_loop, scope);
       return 1;
     }
   else if (def->kind == macro_function_like)
@@ -1311,7 +1306,7 @@ expand (const char *id,
          expand an argument until we see how it's being used.  */
       struct macro_buffer substituted (0);
       substitute_args (&substituted, def, is_varargs, &va_arg_name,
-		       argv, no_loop, lookup_func, lookup_baton);
+		       argv, no_loop, scope);
 
       /* Now `substituted' is the macro's replacement list, with all
          argument values substituted into it properly.  Re-scan it for
@@ -1324,7 +1319,7 @@ expand (const char *id,
          `substituted's original text buffer after scanning it so we
          can free it.  */
       struct macro_buffer substituted_src (substituted.text, substituted.len);
-      scan (dest, &substituted_src, &new_no_loop, lookup_func, lookup_baton);
+      scan (dest, &substituted_src, &new_no_loop, scope);
 
       return 1;
     }
@@ -1334,7 +1329,7 @@ expand (const char *id,
 
 
 /* If the single token in SRC_FIRST followed by the tokens in SRC_REST
-   constitute a macro invokation not forbidden in NO_LOOP, append its
+   constitute a macro invocation not forbidden in NO_LOOP, append its
    expansion to DEST and return non-zero.  Otherwise, return zero, and
    leave DEST unchanged.
 
@@ -1345,8 +1340,7 @@ maybe_expand (struct macro_buffer *dest,
               struct macro_buffer *src_first,
               struct macro_buffer *src_rest,
               struct macro_name_list *no_loop,
-              macro_lookup_ftype *lookup_func,
-              void *lookup_baton)
+	      const macro_scope &scope)
 {
   gdb_assert (src_first->shared);
   gdb_assert (src_rest->shared);
@@ -1364,11 +1358,9 @@ maybe_expand (struct macro_buffer *dest,
       if (! currently_rescanning (no_loop, id.c_str ()))
         {
           /* Does this identifier have a macro definition in scope?  */
-          struct macro_definition *def = lookup_func (id.c_str (),
-						      lookup_baton);
+          macro_definition *def = standard_macro_lookup (id.c_str (), scope);
 
-          if (def && expand (id.c_str (), def, dest, src_rest, no_loop,
-                             lookup_func, lookup_baton))
+          if (def && expand (id.c_str (), def, dest, src_rest, no_loop, scope))
 	    return 1;
         }
     }
@@ -1386,8 +1378,7 @@ static void
 scan (struct macro_buffer *dest,
       struct macro_buffer *src,
       struct macro_name_list *no_loop,
-      macro_lookup_ftype *lookup_func,
-      void *lookup_baton)
+      const macro_scope &scope)
 {
   gdb_assert (src->shared);
   gdb_assert (! dest->shared);
@@ -1409,7 +1400,7 @@ scan (struct macro_buffer *dest,
           dest->last_token = dest->len;
         }
 
-      if (! maybe_expand (dest, &tok, src, no_loop, lookup_func, lookup_baton))
+      if (! maybe_expand (dest, &tok, src, no_loop, scope))
         /* We didn't end up expanding tok as a macro reference, so
            simply append it to dest.  */
         append_tokens_without_splicing (dest, &tok);
@@ -1426,36 +1417,29 @@ scan (struct macro_buffer *dest,
 
 
 gdb::unique_xmalloc_ptr<char>
-macro_expand (const char *source,
-              macro_lookup_ftype *lookup_func,
-              void *lookup_func_baton)
+macro_expand (const char *source, const macro_scope &scope)
 {
   struct macro_buffer src (source, strlen (source));
 
   struct macro_buffer dest (0);
   dest.last_token = 0;
 
-  scan (&dest, &src, 0, lookup_func, lookup_func_baton);
+  scan (&dest, &src, 0, scope);
 
   dest.appendc ('\0');
 
-  return gdb::unique_xmalloc_ptr<char> (dest.release ());
+  return dest.release ();
 }
 
 
 gdb::unique_xmalloc_ptr<char>
-macro_expand_once (const char *source,
-                   macro_lookup_ftype *lookup_func,
-                   void *lookup_func_baton)
+macro_expand_once (const char *source, const macro_scope &scope)
 {
   error (_("Expand-once not implemented yet."));
 }
 
-
-char *
-macro_expand_next (const char **lexptr,
-                   macro_lookup_ftype *lookup_func,
-                   void *lookup_baton)
+gdb::unique_xmalloc_ptr<char>
+macro_expand_next (const char **lexptr, const macro_scope &scope)
 {
   struct macro_buffer tok;
 
@@ -1468,10 +1452,10 @@ macro_expand_next (const char **lexptr,
 
   /* Get the text's first preprocessing token.  */
   if (! get_token (&tok, &src))
-    return 0;
+    return nullptr;
 
   /* If it's a macro invocation, expand it.  */
-  if (maybe_expand (&dest, &tok, &src, 0, lookup_func, lookup_baton))
+  if (maybe_expand (&dest, &tok, &src, 0, scope))
     {
       /* It was a macro invocation!  Package up the expansion as a
          null-terminated string and return it.  Set *lexptr to the
@@ -1483,6 +1467,6 @@ macro_expand_next (const char **lexptr,
   else
     {
       /* It wasn't a macro invocation.  */
-      return 0;
+      return nullptr;
     }
 }

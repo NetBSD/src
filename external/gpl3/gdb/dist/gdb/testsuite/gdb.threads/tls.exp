@@ -1,5 +1,5 @@
 # tls.exp -- Expect script to test thread-local storage
-# Copyright (C) 1992-2019 Free Software Foundation, Inc.
+# Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -153,8 +153,14 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
 
 clean_restart ${binfile}
 
-gdb_test "print a_thread_local" \
-    "Cannot read .a_thread_local. without registers"
+gdb_test_multiple "print a_thread_local" "" {
+    -re -wrap "Cannot find thread-local variables on this target" {
+	kfail "gdb/25807" $gdb_test_name
+    }
+    -re -wrap "Cannot read .a_thread_local. without registers" {
+	pass $gdb_test_name
+    }
+}
 
 if ![runto_main] then {
    fail "can't run to main"
@@ -290,10 +296,9 @@ gdb_expect {
 runto spin
 
 gdb_test "info address a_global" \
-	".*a_global.*static storage at address.*" "info address a_global"
+	".*a_global.*static storage at address.*"
 
-gdb_test "info address me" ".*me.*is a (complex DWARF expression:|variable).*" \
-    "info address me"
+gdb_test "info address me" ".*me.*is a (complex DWARF expression:|variable).*"
 
 
 # Test LOC_UNRESOLVED references resolving for `extern' TLS variables.

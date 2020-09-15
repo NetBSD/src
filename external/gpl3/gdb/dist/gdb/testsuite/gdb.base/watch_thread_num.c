@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Copyright 1992, 1993, 1994, 1995, 1999, 2002, 2003, 2007, 2008, 2009
    Free Software Foundation, Inc.
@@ -29,6 +29,8 @@ void *thread_function (void *arg); /* Pointer to function executed by each threa
 
 static pthread_barrier_t threads_started_barrier;
 
+static pthread_barrier_t threads_started_barrier2;
+
 #define NUM 15
 
 static int num_threads = NUM;
@@ -43,6 +45,8 @@ int main () {
 
     pthread_barrier_init (&threads_started_barrier, NULL, NUM + 1);
 
+    pthread_barrier_init (&threads_started_barrier2, NULL, 2);
+
     for (i = 0; i < NUM; i++)
       {
         res = pthread_create (&threads[i],
@@ -53,7 +57,11 @@ int main () {
 
     pthread_barrier_wait (&threads_started_barrier);
 
-    sleep (180); /* all threads started */
+    pthread_barrier_wait (&threads_started_barrier2);  /* all threads started */
+
+    pthread_join (threads[0], NULL);
+
+    sleep (180);  /* first child thread exited */
 
     exit (EXIT_SUCCESS);
 }
@@ -68,13 +76,18 @@ void *thread_function (void *arg) {
 
     pthread_barrier_wait (&threads_started_barrier);
 
-    /* Don't run forever.  Run just short of it :)  */
-    while (shared_var > 0)
+    if (my_number > 0)
       {
-        shared_var++;
-	usleep (1); /* Loop increment.  */
-	loop ();
+	/* Don't run forever.  Run just short of it :)  */
+	while (shared_var > 0)
+	  {
+	    shared_var++;
+	    usleep (1); /* Loop increment.  */
+	    loop ();
+	  }
       }
+    else
+      pthread_barrier_wait (&threads_started_barrier2);
 
     pthread_exit (NULL);
 }

@@ -1,6 +1,6 @@
 /* Generic serial interface routines
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -247,6 +247,7 @@ serial_open_ops_1 (const struct serial_ops *ops, const char *open_name)
       return NULL;
     }
 
+  scb->name = open_name != NULL ? xstrdup (open_name) : NULL;
   scb->next = scb_base;
   scb_base = scb;
 
@@ -291,6 +292,7 @@ serial_fdopen_ops (const int fd, const struct serial_ops *ops)
 
   scb = new_serial (ops);
 
+  scb->name = NULL;
   scb->next = scb_base;
   scb_base = scb;
 
@@ -329,6 +331,8 @@ do_serial_close (struct serial *scb, int really_close)
 
   if (really_close)
     scb->ops->close (scb);
+
+  xfree (scb->name);
 
   /* For serial_is_open.  */
   scb->bufp = NULL;
@@ -619,20 +623,6 @@ serial_pipe (struct serial *scbs[2])
 static struct cmd_list_element *serial_set_cmdlist;
 static struct cmd_list_element *serial_show_cmdlist;
 
-static void
-serial_set_cmd (const char *args, int from_tty)
-{
-  printf_unfiltered ("\"set serial\" must be followed "
-		     "by the name of a command.\n");
-  help_list (serial_set_cmdlist, "set serial ", all_commands, gdb_stdout);
-}
-
-static void
-serial_show_cmd (const char *args, int from_tty)
-{
-  cmd_show_list (serial_show_cmdlist, from_tty, "");
-}
-
 /* Baud rate specified for talking to serial target systems.  Default
    is left as -1, so targets can choose their own defaults.  */
 /* FIXME: This means that "show serial baud" and gr_files_info can
@@ -672,8 +662,9 @@ set_parity (const char *ignore_args, int from_tty, struct cmd_list_element *c)
     serial_parity = GDBPARITY_NONE;
 }
 
+void _initialize_serial ();
 void
-_initialize_serial (void)
+_initialize_serial ()
 {
 #if 0
   add_com ("connect", class_obscure, connect_command, _("\
@@ -681,17 +672,17 @@ Connect the terminal directly up to the command monitor.\n\
 Use <CR>~. or <CR>~^D to break out."));
 #endif /* 0 */
 
-  add_prefix_cmd ("serial", class_maintenance, serial_set_cmd, _("\
+  add_basic_prefix_cmd ("serial", class_maintenance, _("\
 Set default serial/parallel port configuration."),
-		  &serial_set_cmdlist, "set serial ",
-		  0/*allow-unknown*/,
-		  &setlist);
+			&serial_set_cmdlist, "set serial ",
+			0/*allow-unknown*/,
+			&setlist);
 
-  add_prefix_cmd ("serial", class_maintenance, serial_show_cmd, _("\
+  add_show_prefix_cmd ("serial", class_maintenance, _("\
 Show default serial/parallel port configuration."),
-		  &serial_show_cmdlist, "show serial ",
-		  0/*allow-unknown*/,
-		  &showlist);
+		       &serial_show_cmdlist, "show serial ",
+		       0/*allow-unknown*/,
+		       &showlist);
 
   /* If target is open when baud changes, it doesn't take effect until
      the next open (I think, not sure).  */
@@ -706,8 +697,8 @@ using remote targets."),
 
   add_setshow_enum_cmd ("parity", no_class, parity_enums,
                         &parity, _("\
-Set parity for remote serial I/O"), _("\
-Show parity for remote serial I/O"), NULL,
+Set parity for remote serial I/O."), _("\
+Show parity for remote serial I/O."), NULL,
                         set_parity,
                         NULL, /* FIXME: i18n: */
                         &serial_set_cmdlist, &serial_show_cmdlist);
@@ -723,8 +714,8 @@ by gdbserver."),
 
   add_setshow_enum_cmd ("remotelogbase", no_class, logbase_enums,
 			&serial_logbase, _("\
-Set numerical base for remote session logging"), _("\
-Show numerical base for remote session logging"), NULL,
+Set numerical base for remote session logging."), _("\
+Show numerical base for remote session logging."), NULL,
 			NULL,
 			NULL, /* FIXME: i18n: */
 			&setlist, &showlist);

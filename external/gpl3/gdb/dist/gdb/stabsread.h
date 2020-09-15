@@ -1,5 +1,5 @@
 /* Include file for stabs debugging format support functions.
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define STABSREAD_H
 
 struct objfile;
+struct legacy_psymtab;
 enum language;
 
 /* Definitions, prototypes, etc for stabs debugging format support
@@ -167,30 +168,18 @@ extern void end_stabs (void);
 
 extern void finish_global_stabs (struct objfile *objfile);
 
-/* COFF files can have multiple .stab sections, if they are linked
-   using --split-by-reloc.  This linked list is used to pass the
-   information into the functions in dbxread.c.  */
-struct stab_section_list
-  {
-    /* Next in list.  */
-    struct stab_section_list *next;
-
-    /* Stab section.  */
-    asection *section;
-  };
-
 /* Functions exported by dbxread.c.  These are not in stabsread.c because
    they are only used by some stabs readers.  */
 
-extern struct partial_symtab *dbx_end_psymtab
-  (struct objfile *objfile, struct partial_symtab *pst,
+extern legacy_psymtab *dbx_end_psymtab
+  (struct objfile *objfile, legacy_psymtab *pst,
    const char **include_list, int num_includes,
    int capping_symbol_offset, CORE_ADDR capping_text,
-   struct partial_symtab **dependency_list, int number_dependencies,
+   legacy_psymtab **dependency_list, int number_dependencies,
    int textlow_not_set);
 
 extern void process_one_symbol (int, int, CORE_ADDR, const char *,
-				const struct section_offsets *,
+				const section_offsets &,
 				struct objfile *, enum language);
 
 extern void elfstab_build_psymtabs (struct objfile *objfile,
@@ -201,7 +190,7 @@ extern void elfstab_build_psymtabs (struct objfile *objfile,
 extern void coffstab_build_psymtabs
   (struct objfile *objfile,
    CORE_ADDR textaddr, unsigned int textsize,
-   struct stab_section_list *stabs,
+   const std::vector<asection *> &stabs,
    file_ptr stabstroffset, unsigned int stabstrsize);
 
 extern void stabsect_build_psymtabs (struct objfile *objfile, char *stab_name,

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2019 Free Software Foundation, Inc.
+   Copyright 2010-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ void* thread3 (void* d)
 void* thread2 (void* d)
 {
   /* Do not quit thread3 asynchronously wrt thread2 stop - wait first on
-     thread3_id to stop.  It would complicate testcase receiption of the
+     thread3_id to stop.  It would complicate testcase reception of the
      events.  */
 
   pthread_create (&thread3_id, NULL, thread3, NULL); pthread_join (thread3_id, NULL);

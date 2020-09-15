@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -452,6 +452,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 /* ABI related flags section.  */
 #define SHT_MIPS_ABIFLAGS	0x7000002a
 
+/* GNU style symbol hash table with xlat.  */
+#define SHT_MIPS_XHASH		0x7000002b
+
 /* A section of type SHT_MIPS_LIBLIST contains an array of the
    following structure.  The sh_link field is the section index of the
    string table.  The sh_info field is the number of entries in the
@@ -557,11 +560,11 @@ typedef union
 typedef struct
 {
   /* Mask of general purpose registers used.  */
-  unsigned long ri_gprmask;
+  uint32_t ri_gprmask;
   /* Mask of co-processor registers used.  */
-  unsigned long ri_cprmask[4];
+  uint32_t ri_cprmask[4];
   /* GP register value for this object file.  */
-  long ri_gp_value;
+  uint32_t ri_gp_value;
 } Elf32_RegInfo;
 
 /* The external version of the Elf_RegInfo structure.  */
@@ -759,6 +762,9 @@ extern void bfd_mips_elf32_swap_reginfo_out
 
 /* Relative offset of run time loader map, used for debugging.  */
 #define DT_MIPS_RLD_MAP_REL    0x70000035
+
+/* Address of .MIPS.xhash section.  */
+#define DT_MIPS_XHASH	       0x70000036
 
 /* Flags which may appear in a DT_MIPS_FLAGS entry.  */
 
@@ -1002,9 +1008,9 @@ typedef struct
   /* Size of option descriptor, including header.  */
   unsigned char size;
   /* Section index of affected section, or 0 for global option.  */
-  unsigned short section;
+  uint16_t section;
   /* Information specific to this kind of option.  */
-  unsigned long info;
+  uint32_t info;
 } Elf_Internal_Options;
 
 /* MIPS ELF option header swapping routines.  */
@@ -1068,13 +1074,13 @@ typedef struct
 typedef struct
 {
   /* Mask of general purpose registers used.  */
-  unsigned long ri_gprmask;
+  uint32_t ri_gprmask;
   /* Padding.  */
-  unsigned long ri_pad;
+  uint32_t ri_pad;
   /* Mask of co-processor registers used.  */
-  unsigned long ri_cprmask[4];
+  uint32_t ri_cprmask[4];
   /* GP register value for this object file.  */
-  bfd_vma ri_gp_value;
+  uint64_t ri_gp_value;
 } Elf64_Internal_RegInfo;
 
 /* ABI Flags structure version 0.  */

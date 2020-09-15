@@ -1,5 +1,5 @@
 /* Interface to prologue value handling for GDB.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -121,7 +121,7 @@ enum prologue_value_kind
    understand and maintain.  In the approach used here:
 
    - It's easier to see that the analyzer is correct: you just see
-     whether the analyzer properly (albiet conservatively) simulates
+     whether the analyzer properly (albeit conservatively) simulates
      the effect of each instruction.
 
    - It's easier to extend the analyzer: you can add support for new

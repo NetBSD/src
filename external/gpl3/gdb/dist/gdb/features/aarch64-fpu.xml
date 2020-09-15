@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2019 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2020 Free Software Foundation, Inc.
      Contributed by ARM Ltd.
 
      Copying and distribution of this file, with or without modification,
@@ -14,6 +14,7 @@
   <vector id="v4f" type="ieee_single" count="4"/>
   <vector id="v4u" type="uint32" count="4"/>
   <vector id="v4i" type="int32" count="4"/>
+  <vector id="v8f" type="ieee_half" count="8"/>
   <vector id="v8u" type="uint16" count="8"/>
   <vector id="v8i" type="int16" count="8"/>
   <vector id="v16u" type="uint8" count="16"/>
@@ -31,6 +32,7 @@
     <field name="s" type="v4i"/>
   </union>
   <union id="vnh">
+    <field name="f" type="v8f"/>
     <field name="u" type="v8u"/>
     <field name="s" type="v8i"/>
   </union>

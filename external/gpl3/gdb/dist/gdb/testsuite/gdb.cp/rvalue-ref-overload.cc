@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1998-2019 Free Software Foundation, Inc.
+   Copyright 1998-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ public:
 
   int overload1arg (foo_lval_ref);
   int overload1arg (foo_rval_ref);
+  int overloadConst (const foo &);
+  int overloadConst (const foo &&);
 };
 
 void
@@ -60,6 +62,12 @@ f (int &&x)
   return 3;
 }
 
+static int
+g (int &&x)
+{
+  return x;
+}
+
 int
 main ()
 {
@@ -70,6 +78,17 @@ main ()
 
   // result = 1 + 2 + 3 + 3 = 9
   int result = f (i) + f (ci) + f (0) + f (std::move (i));
+
+  /* Overload resolution below requires both a CV-conversion
+     and reference conversion.  */
+  int test_const // = 3
+    = foo_rr_instance1.overloadConst (arg);
+
+  /* The statement below is illegal: cannot bind rvalue reference of
+     type 'int&&' to lvalue of type 'int'.
+
+     result = g (i); */
+  result = g (5); // this is OK
 
   marker1 (); // marker1-returns-here
   return result;
@@ -84,3 +103,5 @@ foo::~foo ()                       {}
 
 int foo::overload1arg (foo_lval_ref arg)           { return 1; }
 int foo::overload1arg (foo_rval_ref arg)           { return 2; }
+int foo::overloadConst (const foo &arg)            { return 3; }
+int foo::overloadConst (const foo &&arg)           { return 4; }

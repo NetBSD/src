@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ set executable ${testfile}
 # Create the DWARF.
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
-    global srcdir subdir srcfile
-
     cu { version 3 addr_size 4 } {
 	compile_unit {
 	    {producer "GNU C 4.4.3"}
@@ -53,7 +51,7 @@ Dwarf::assemble $asm_file {
 	    }
 
 	    subprogram {
-		{MACRO_AT_func { main ${srcdir}/${subdir}/${srcfile} }}
+		{MACRO_AT_func { main }}
 		{type :$int_label}
 		{external 1 flag}
 	    } {
