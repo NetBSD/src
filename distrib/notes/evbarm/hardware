@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.23 2020/07/26 11:00:28 jmcneill Exp $
+.\"	$NetBSD: hardware,v 1.24 2020/09/15 07:15:21 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,6 +46,11 @@ Xilinx Zynq (e.g. Zedboard, Parallella...)
 .It
 NVIDIA Tegra K1
 .El
+.Pp
+For a full list of supported devicetree-based boards, see the
+contents of the
+.Pa dtb.tgz
+set.
 .Ss2 64-bit SoCs supported by GENERIC64 kernels
 .Pp
 Devices conforming to the Arm "ServerReady" (SBBR and SBSA) specifications,
@@ -66,3 +71,8 @@ Rockchip RK3328, RK3328 (e.g. Pinebook Pro, RockPro64, Firefly...)
 .It
 NVIDIA Tegra X1
 .El
+.Pp
+For a full list of supported devicetree-based boards, see the
+contents of the
+.Pa dtb.tar.xz
+set.

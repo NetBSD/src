@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.13 2020/08/07 00:43:48 snj Exp $
+.\"	$NetBSD: contents,v 1.14 2020/09/15 07:15:21 nia Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,8 +74,6 @@ do not need board-specific kernels.
 A gzipped Armv6 kernel which supports the Raspberry Pi 1 only.
 .			It Pa netbsd-RPI2.gz
 A gzipped Armv6 kernel which supports the Raspberry Pi 2 only.
-.			It Pa *.dtb.gz
-Gzipped board-specific device trees.
 .		tag) \" binary/kernel/
 .
 .		It Pa sets/
@@ -154,6 +152,9 @@ all base system utilities.
 It is useful when reporting issues with binaries or during
 development.
 This set is huge, if the target disk is small, do not install it.
+.
+.It Sy dtb
+Devicetree hardware descriptions for specific boards.
 .
 .It Sy etc
 This distribution set contains the system
