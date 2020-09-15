@@ -1,6 +1,6 @@
 /* Native debugging support for procfs targets.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,11 +24,5 @@
    'live' procinfo.  */
 
 extern ptid_t procfs_first_available (void);
-
-#if (defined (__i386__) || defined (__x86_64__)) && defined (sun)
-struct ssd;
-
-extern struct ssd *procfs_find_LDT_entry (ptid_t);
-#endif
 
 #endif /* PROCFS_H */

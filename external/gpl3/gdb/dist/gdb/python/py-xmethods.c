@@ -1,6 +1,6 @@
 /* Support for debug methods in Python.
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -425,7 +425,7 @@ python_xmethod_worker::do_get_result_type (value *obj,
 
   obj_type = check_typedef (value_type (obj));
   this_type = check_typedef (type_object_to_type (m_this_type));
-  if (TYPE_CODE (obj_type) == TYPE_CODE_PTR)
+  if (obj_type->code () == TYPE_CODE_PTR)
     {
       struct type *this_ptr = lookup_pointer_type (this_type);
 
@@ -435,7 +435,7 @@ python_xmethod_worker::do_get_result_type (value *obj,
   else if (TYPE_IS_REFERENCE (obj_type))
     {
       struct type *this_ref
-        = lookup_reference_type (this_type, TYPE_CODE (obj_type));
+        = lookup_reference_type (this_type, obj_type->code ());
 
       if (!types_equal (obj_type, this_ref))
 	obj = value_cast (this_ref, obj);
@@ -510,7 +510,7 @@ python_xmethod_worker::invoke (struct value *obj,
 
   obj_type = check_typedef (value_type (obj));
   this_type = check_typedef (type_object_to_type (m_this_type));
-  if (TYPE_CODE (obj_type) == TYPE_CODE_PTR)
+  if (obj_type->code () == TYPE_CODE_PTR)
     {
       struct type *this_ptr = lookup_pointer_type (this_type);
 
@@ -520,7 +520,7 @@ python_xmethod_worker::invoke (struct value *obj,
   else if (TYPE_IS_REFERENCE (obj_type))
     {
       struct type *this_ref
-	= lookup_reference_type (this_type, TYPE_CODE (obj_type));
+	= lookup_reference_type (this_type, obj_type->code ());
 
       if (!types_equal (obj_type, this_ref))
 	obj = value_cast (this_ref, obj);
@@ -580,7 +580,7 @@ python_xmethod_worker::invoke (struct value *obj,
     }
   else
     {
-      res = allocate_value (lookup_typename (python_language, python_gdbarch,
+      res = allocate_value (lookup_typename (python_language,
 					     "void", NULL, 0));
     }
 

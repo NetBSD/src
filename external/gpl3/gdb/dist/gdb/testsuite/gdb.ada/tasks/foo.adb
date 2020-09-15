@@ -1,4 +1,4 @@
---  Copyright 2009-2019 Free Software Foundation, Inc.
+--  Copyright 2009-2020 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -65,4 +65,7 @@ begin
    for J in Task_List'Range loop
       Task_List (J).Finalize;
    end loop;
+
+   null; -- STOP_HERE_2
+
 end Foo;

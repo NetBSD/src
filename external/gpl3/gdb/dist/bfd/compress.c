@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -155,8 +155,7 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec,
 	      return 0;
 	    }
 	  free (uncompressed_buffer);
-	  bfd_set_section_alignment (abfd, sec,
-				     orig_uncompressed_alignment_pow);
+	  bfd_set_section_alignment (sec, orig_uncompressed_alignment_pow);
 
 	  sec->contents = buffer;
 	  sec->compress_status = COMPRESS_SECTION_DONE;
@@ -250,6 +249,29 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
     case COMPRESS_SECTION_NONE:
       if (p == NULL)
 	{
+	  ufile_ptr filesize = bfd_get_file_size (abfd);
+	  if (filesize > 0
+	      && filesize < sz
+	      /* PR 24753: Linker created sections can be larger than
+		 the file size, eg if they are being used to hold stubs.  */
+	      && (bfd_section_flags (sec) & SEC_LINKER_CREATED) == 0
+	      /* PR 24753: Sections which have no content should also be
+		 excluded as they contain no size on disk.  */
+	      && (bfd_section_flags (sec) & SEC_HAS_CONTENTS) != 0
+	      /* The MMO file format supports its own special compression
+		 technique, but it uses COMPRESS_SECTION_NONE when loading
+		 a section's contents.  */
+	      && bfd_get_flavour (abfd) != bfd_target_mmo_flavour)
+	    {
+	      /* PR 24708: Avoid attempts to allocate a ridiculous amount
+		 of memory.  */
+	      bfd_set_error (bfd_error_no_memory);
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("error: %pB(%pA) section size (%#" PRIx64 " bytes) is larger than file size (%#" PRIx64 " bytes)"),
+		 abfd, sec, (uint64_t) sz, (uint64_t) filesize);
+	      return FALSE;
+	    }
 	  p = (bfd_byte *) bfd_malloc (sz);
 	  if (p == NULL)
 	    {
@@ -532,7 +554,7 @@ bfd_init_section_decompress_status (bfd *abfd, sec_ptr sec)
 
   sec->compressed_size = sec->size;
   sec->size = uncompressed_size;
-  bfd_set_section_alignment (abfd, sec, uncompressed_alignment_power);
+  bfd_set_section_alignment (sec, uncompressed_alignment_power);
   sec->compress_status = DECOMPRESS_SECTION_SIZED;
 
   return TRUE;

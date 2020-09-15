@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format - legacy APIs
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

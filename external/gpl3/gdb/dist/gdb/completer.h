@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #if !defined (COMPLETER_H)
 #define COMPLETER_H 1
 
-#include "common/gdb_vecs.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "command.h"
 
 /* Types of functions in struct match_list_displayer.  */
@@ -242,7 +242,7 @@ struct completion_result
   DISABLE_COPY_AND_ASSIGN (completion_result);
 
   /* Move a result.  */
-  completion_result (completion_result &&rhs);
+  completion_result (completion_result &&rhs) noexcept;
 
   /* Release ownership of the match list array.  */
   char **release_match_list ();
@@ -326,6 +326,10 @@ public:
      LIST.  */
   void add_completions (completion_list &&list);
 
+  /* Remove completion matching NAME from the completion list, does nothing
+     if NAME is not already in the completion list.  */
+  void remove_completion (const char *name);
+
   /* Set the quote char to be appended after a unique completion is
      added to the input line.  Set to '\0' to clear.  See
      m_quote_char's description.  */
@@ -357,7 +361,7 @@ public:
   { m_custom_word_point = point; }
 
   /* Advance the custom word point by LEN.  */
-  void advance_custom_word_point_by (size_t len);
+  void advance_custom_word_point_by (int len);
 
   /* Whether to tell readline to skip appending a whitespace after the
      completion.  See m_suppress_append_ws.  */
@@ -389,7 +393,7 @@ public:
 
   /* True if we have any completion match recorded.  */
   bool have_completions () const
-  { return !m_entries_vec.empty (); }
+  { return htab_elements (m_entries_hash) > 0; }
 
   /* Discard the current completion match list and the current
      LCD.  */
@@ -403,6 +407,9 @@ public:
 
 private:
 
+  /* The type that we place into the m_entries_hash hash table.  */
+  class completion_hash_entry;
+
   /* Add the completion NAME to the list of generated completions if
      it is not there already.  If false is returned, too many
      completions were found.  */
@@ -410,18 +417,15 @@ private:
 			     completion_match_for_lcd *match_for_lcd,
 			     const char *text, const char *word);
 
-  /* Given a new match, recompute the lowest common denominator (LCD)
-     to hand over to readline.  Normally readline computes this itself
-     based on the whole set of completion matches.  However, some
-     completers want to override readline, in order to be able to
-     provide a LCD that is not really a prefix of the matches, but the
-     lowest common denominator of some relevant substring of each
-     match.  E.g., "b push_ba" completes to
-     "std::vector<..>::push_back", "std::string::push_back", etc., and
-     in this case we want the lowest common denominator to be
-     "push_back" instead of "std::".  */
-  void recompute_lowest_common_denominator
-    (gdb::unique_xmalloc_ptr<char> &&new_match);
+  /* Ensure that the lowest common denominator held in the member variable
+     M_LOWEST_COMMON_DENOMINATOR is valid.  This method must be called if
+     there is any chance that new completions have been added to the
+     tracker before the lowest common denominator is read.  */
+  void recompute_lowest_common_denominator ();
+
+  /* Callback used from recompute_lowest_common_denominator, called for
+     every entry in m_entries_hash.  */
+  void recompute_lcd_visitor (completion_hash_entry *entry);
 
   /* Completion match outputs returned by the symbol name matching
      routines (see symbol_name_matcher_ftype).  These results are only
@@ -430,16 +434,13 @@ private:
      symbol name matching routines.  */
   completion_match_result m_completion_match_result;
 
-  /* The completion matches found so far, in a vector.  */
-  completion_list m_entries_vec;
-
   /* The completion matches found so far, in a hash table, for
      duplicate elimination as entries are added.  Otherwise the user
      is left scratching his/her head: readline and complete_command
      will remove duplicates, and if removal of duplicates there brings
      the total under max_completions the user may think gdb quit
      searching too early.  */
-  htab_t m_entries_hash;
+  htab_t m_entries_hash = NULL;
 
   /* If non-zero, then this is the quote char that needs to be
      appended after completion (iff we have a unique completion).  We
@@ -483,6 +484,16 @@ private:
      "function()", instead of showing all the possible
      completions.  */
   bool m_lowest_common_denominator_unique = false;
+
+  /* True if the value in M_LOWEST_COMMON_DENOMINATOR is correct.  This is
+     set to true each time RECOMPUTE_LOWEST_COMMON_DENOMINATOR is called,
+     and reset to false whenever a new completion is added.  */
+  bool m_lowest_common_denominator_valid = false;
+
+  /* To avoid calls to xrealloc in RECOMPUTE_LOWEST_COMMON_DENOMINATOR, we
+     track the maximum possible size of the lowest common denominator,
+     which we know as each completion is added.  */
+  size_t m_lowest_common_denominator_max_length = 0;
 };
 
 /* Return a string to hand off to readline as a completion match
@@ -510,6 +521,13 @@ extern void complete_line (completion_tracker &tracker,
 			   const char *line_buffer,
 			   int point);
 
+/* Complete LINE and return completion results.  For completion purposes,
+   cursor position is assumed to be at the end of LINE.  WORD is set to
+   the end of word to complete.  QUOTE_CHAR is set to the opening quote
+   character if we found an unclosed quoted substring, '\0' otherwise.  */
+extern completion_result
+  complete (const char *line, char const **word, int *quote_char);
+
 /* Find the bounds of the word in TEXT for completion purposes, and
    return a pointer to the end of the word.  Calls the completion
    machinery for a handle_brkchars phase (using TRACKER) to figure out
@@ -525,8 +543,13 @@ extern const char *completion_find_completion_word (completion_tracker &tracker,
    completion word point for TEXT, emulating the algorithm readline
    uses to find the word point, using the current language's word
    break characters.  */
-
 const char *advance_to_expression_complete_word_point
+  (completion_tracker &tracker, const char *text);
+
+/* Assuming TEXT is an filename, find the completion word point for
+   TEXT, emulating the algorithm readline uses to find the word
+   point.  */
+extern const char *advance_to_filename_complete_word_point
   (completion_tracker &tracker, const char *text);
 
 extern char **gdb_rl_attempted_completion_function (const char *text,
@@ -598,6 +621,18 @@ extern completion_list complete_source_filenames (const char *text);
    field names.  */
 extern void complete_expression (completion_tracker &tracker,
 				 const char *text, const char *word);
+
+/* Called by custom word point completers that want to recurse into
+   the completion machinery to complete a command.  Used to complete
+   COMMAND in "thread apply all COMMAND", for example.  Note that
+   unlike command_completer, this fully recurses into the proper
+   completer for COMMAND, so that e.g.,
+
+     (gdb) thread apply all print -[TAB]
+
+   does the right thing and show the print options.  */
+extern void complete_nested_command_line (completion_tracker &tracker,
+					  const char *text);
 
 extern const char *skip_quoted_chars (const char *, const char *,
 				      const char *);

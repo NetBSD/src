@@ -1,6 +1,6 @@
 /* Test program for byte registers.
 
-   Copyright 2010-2019 Free Software Foundation, Inc.
+   Copyright 2010-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -118,7 +118,7 @@ main (int argc, char **argv)
 	    a temp to build %0.  */
 	 "r" (r8), "r" (r9), "r" (r10), "r" (r11),
 	 "r" (r12), "r" (r13), "r" (r14), "r" (r15));
-  puts ("Bye!"); /* forth breakpoint here */
+  puts ("Bye!"); /* fourth breakpoint here */
 
   return 0;
 }

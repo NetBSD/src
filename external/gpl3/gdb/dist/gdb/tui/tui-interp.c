@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +22,10 @@
 #include "interps.h"
 #include "top.h"
 #include "event-top.h"
-#include "event-loop.h"
+#include "gdbsupport/event-loop.h"
 #include "ui-out.h"
 #include "cli-out.h"
 #include "tui/tui-data.h"
-#include "readline/readline.h"
 #include "tui/tui-win.h"
 #include "tui/tui.h"
 #include "tui/tui-io.h"
@@ -34,10 +33,11 @@
 #include "observable.h"
 #include "gdbthread.h"
 #include "inferior.h"
+#include "main.h"
 
-/* Set to 1 when the TUI mode must be activated when we first start
+/* Set to true when the TUI mode must be activated when we first start
    gdb.  */
-static int tui_start_enabled = 0;
+static bool tui_start_enabled = false;
 
 class tui_interp final : public cli_interp_base
 {
@@ -241,12 +241,10 @@ tui_interp::init (bool top_level)
   /* Install exit handler to leave the screen in a good shape.  */
   atexit (tui_exit);
 
-  tui_initialize_static_data ();
-
   tui_initialize_io ();
   tui_initialize_win ();
-  if (ui_file_isatty (gdb_stdout))
-    tui_initialize_readline ();
+  if (gdb_stdout->isatty ())
+    tui_ensure_readline_initialized ();
 }
 
 void
@@ -308,13 +306,14 @@ tui_interp_factory (const char *name)
   return new tui_interp (name);
 }
 
+void _initialize_tui_interp ();
 void
-_initialize_tui_interp (void)
+_initialize_tui_interp ()
 {
   interp_factory_register (INTERP_TUI, tui_interp_factory);
 
   if (interpreter_p && strcmp (interpreter_p, INTERP_TUI) == 0)
-    tui_start_enabled = 1;
+    tui_start_enabled = true;
 
   if (interpreter_p && strcmp (interpreter_p, INTERP_CONSOLE) == 0)
     {

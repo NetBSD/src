@@ -1,6 +1,6 @@
 /* Target-dependent code for X86-based targets.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "defs.h"
 #include "x86-tdep.h"
+#include "symtab.h"
 
 
 /* Check whether NAME is included in NAMES[LO] (inclusive) to NAMES[HI]
@@ -46,7 +47,7 @@ x86_in_indirect_branch_thunk (CORE_ADDR pc, const char **register_names,
   if (bmfun.minsym == nullptr)
     return false;
 
-  const char *name = MSYMBOL_LINKAGE_NAME (bmfun.minsym);
+  const char *name = bmfun.minsym->linkage_name ();
   if (name == nullptr)
     return false;
 

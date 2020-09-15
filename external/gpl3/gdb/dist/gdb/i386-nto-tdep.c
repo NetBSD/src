@@ -1,6 +1,6 @@
 /* Target-dependent code for QNX Neutrino x86.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -367,8 +367,9 @@ i386nto_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_wchar_signed (gdbarch, 0);
 }
 
+void _initialize_i386nto_tdep ();
 void
-_initialize_i386nto_tdep (void)
+_initialize_i386nto_tdep ()
 {
   init_i386nto_ops ();
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_QNXNTO,

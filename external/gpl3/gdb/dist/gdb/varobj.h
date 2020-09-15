@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "common/vec.h"
 #include "value.h"
 
 /* Enumeration for the format types */
@@ -235,6 +234,11 @@ extern const struct lang_varobj_ops cplus_varobj_ops;
 extern const struct lang_varobj_ops ada_varobj_ops;
 
 #define default_varobj_ops c_varobj_ops
+
+/* Non-zero if we want to see trace of varobj level stuff.  */
+
+extern unsigned int varobjdebug;
+
 /* API functions */
 
 extern struct varobj *varobj_create (const char *objname,
@@ -282,7 +286,7 @@ extern int varobj_get_num_children (struct varobj *var);
    indicating the range of children to return.  If either *FROM or *TO
    is less than zero on entry, then all children will be returned.  On
    return, *FROM and *TO will be updated to indicate the real range
-   that was returned.  The resulting VEC will contain at least the
+   that was returned.  The resulting vector will contain at least the
    children from *FROM to just before *TO; it might contain more
    children, depending on whether any more were available.  */
 extern const std::vector<varobj *> &

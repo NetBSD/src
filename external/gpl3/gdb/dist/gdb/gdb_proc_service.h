@@ -1,5 +1,5 @@
 /* <proc_service.h> replacement for systems that don't have it.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #ifndef GDB_PROC_SERVICE_H
 #define GDB_PROC_SERVICE_H
 
-#include "common/gdb_proc_service.h"
+#include "gdbsupport/gdb_proc_service.h"
 
 struct thread_info;
 

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2019 Free Software Foundation, Inc.
+# Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,8 +41,8 @@ gdb_test "step" ".*${decimal}.*y = 2;.*" "step 1"
 
 # With count
 #
-gdb_test "next 2" ".*${decimal}.*w = w.*2;.*" "next 2"
-gdb_test "step 3" ".*${decimal}.*z = z.*5;.*" "step 3"
+gdb_test "next 2" ".*${decimal}.*w = w.*2;.*"
+gdb_test "step 3" ".*${decimal}.*z = z.*5;.*"
 gdb_test "next" ".*${decimal}.*callee.*OVER.*" "next 3"
 
 # Step over call

@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,6 +23,7 @@
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
+#include "ecoff-bfd.h"
 #include "objalloc.h"
 #include "aout/stab_gnu.h"
 #include "coff/internal.h"
@@ -466,7 +467,7 @@ bfd_ecoff_debug_init (bfd *output_bfd ATTRIBUTE_UNUSED,
 		      struct bfd_link_info *info)
 {
   struct accumulate *ainfo;
-  bfd_size_type amt = sizeof (struct accumulate);
+  size_t amt = sizeof (struct accumulate);
 
   ainfo = (struct accumulate *) bfd_malloc (amt);
   if (!ainfo)
@@ -1111,7 +1112,7 @@ bfd_ecoff_debug_accumulate_other (void * handle,
   fdr.issBase = output_symhdr->issMax;
   fdr.cbSs = 0;
   fdr.rss = ecoff_add_string (ainfo, info, output_debug, &fdr,
-			      input_bfd->filename);
+			      bfd_get_filename (input_bfd));
   if (fdr.rss == -1)
     return FALSE;
   fdr.isymBase = output_symhdr->isymMax;
@@ -1463,12 +1464,10 @@ ecoff_write_symhdr (bfd *abfd,
       != swap->external_hdr_size)
     goto error_return;
 
-  if (buff != NULL)
-    free (buff);
+  free (buff);
   return TRUE;
  error_return:
-  if (buff != NULL)
-    free (buff);
+  free (buff);
   return FALSE;
 }
 
@@ -1490,10 +1489,12 @@ bfd_ecoff_write_debug (bfd *abfd,
     return FALSE;
 
 #define WRITE(ptr, count, size, offset) \
-  BFD_ASSERT (symhdr->offset == 0 \
-	      || (bfd_vma) bfd_tell (abfd) == symhdr->offset); \
-  if (bfd_bwrite (debug->ptr, (bfd_size_type) size * symhdr->count, abfd)\
-      != size * symhdr->count) \
+  BFD_ASSERT (symhdr->offset == 0				\
+	      || (bfd_vma) bfd_tell (abfd) == symhdr->offset);	\
+  if (symhdr->count != 0					\
+      && bfd_bwrite (debug->ptr,				\
+		     (bfd_size_type) size * symhdr->count,	\
+		     abfd) != size * symhdr->count)		\
     return FALSE;
 
   WRITE (line, cbLine, sizeof (unsigned char), cbLineOffset);
@@ -1651,7 +1652,7 @@ bfd_ecoff_write_accumulated_debug (void * handle,
   /* The external strings and symbol are not converted over to using
      shuffles.  FIXME: They probably should be.  */
   amt = debug->symbolic_header.issExtMax;
-  if (bfd_bwrite (debug->ssext, amt, abfd) != amt)
+  if (amt != 0 && bfd_bwrite (debug->ssext, amt, abfd) != amt)
     goto error_return;
   if ((debug->symbolic_header.issExtMax & (swap->debug_align - 1)) != 0)
     {
@@ -1681,16 +1682,14 @@ bfd_ecoff_write_accumulated_debug (void * handle,
 		  == (bfd_vma) bfd_tell (abfd)));
 
   amt = debug->symbolic_header.iextMax * swap->external_ext_size;
-  if (bfd_bwrite (debug->external_ext, amt, abfd) != amt)
+  if (amt != 0 && bfd_bwrite (debug->external_ext, amt, abfd) != amt)
     goto error_return;
 
-  if (space != NULL)
-    free (space);
+  free (space);
   return TRUE;
 
  error_return:
-  if (space != NULL)
-    free (space);
+  free (space);
   return FALSE;
 }
 
@@ -2319,12 +2318,11 @@ lookup_line (bfd *abfd,
 
       if (len != 0)
 	{
-	  if (line_info->find_buffer != NULL)
-	    free (line_info->find_buffer);
+	  free (line_info->find_buffer);
 	  buffer = (char *) bfd_malloc ((bfd_size_type) len);
+	  line_info->find_buffer = buffer;
 	  if (buffer == NULL)
 	    return FALSE;
-	  line_info->find_buffer = buffer;
 	}
 
       if (function_name != NULL)

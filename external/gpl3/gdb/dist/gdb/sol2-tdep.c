@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,43 @@
 
 #include "sol2-tdep.h"
 
-CORE_ADDR
+/* The Solaris signal trampolines reside in libc.  For normal signals,
+   the function `sigacthandler' is used.  This signal trampoline will
+   call the signal handler using the System V calling convention,
+   where the third argument is a pointer to an instance of
+   `ucontext_t', which has a member `uc_mcontext' that contains the
+   saved registers.  Incidentally, the kernel passes the `ucontext_t'
+   pointer as the third argument of the signal trampoline too, and
+   `sigacthandler' simply passes it on.  However, if you link your
+   program with "-L/usr/ucblib -R/usr/ucblib -lucb", the function
+   `ucbsigvechandler' will be used, which invokes the using the BSD
+   convention, where the third argument is a pointer to an instance of
+   `struct sigcontext'.  It is the `ucbsigvechandler' function that
+   converts the `ucontext_t' to a `sigcontext', and back.  Unless the
+   signal handler modifies the `struct sigcontext' we can safely
+   ignore this.  */
+
+static int
+sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name)
+{
+  return (name && (strcmp (name, "sigacthandler") == 0
+		   || strcmp (name, "ucbsigvechandler") == 0
+		   || strcmp (name, "__sighndlr") == 0));
+}
+
+/* Return whether THIS_FRAME corresponds to a Solaris sigtramp routine.  */
+
+int
+sol2_sigtramp_p (struct frame_info *this_frame)
+{
+  CORE_ADDR pc = get_frame_pc (this_frame);
+  const char *name;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  return sol2_pc_in_sigtramp (pc, name);
+}
+
+static CORE_ADDR
 sol2_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   struct bound_minimal_symbol msym;
@@ -37,36 +73,45 @@ sol2_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
   return 0;
 }
 
-/* This is how we want PTIDs from Solaris core files to be
-   printed.  */
+/* This is how we want PTIDs from Solaris core files to be printed.  */
 
-const char *
+static std::string
 sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 {
-  static char buf[80];
   struct inferior *inf;
   int pid;
 
-  /* Check whether we're printing an LWP (gdb thread) or a
-     process.  */
+  /* Check whether we're printing an LWP (gdb thread) or a process.  */
   pid = ptid.lwp ();
   if (pid != 0)
     {
       /* A thread.  */
-      xsnprintf (buf, sizeof buf, "LWP %ld", ptid.lwp ());
-      return buf;
+      return string_printf ("LWP %ld", ptid.lwp ());
     }
 
   /* GDB didn't use to put a NT_PSTATUS note in Solaris cores.  If
-     that's missing, then we're dealing with a fake PID corelow.c made
-     up.  */
-  inf = find_inferior_ptid (ptid);
+     that's missing, then we're dealing with a fake PID corelow.c made up.  */
+  inf = find_inferior_ptid (current_inferior ()->process_target (), ptid);
   if (inf == NULL || inf->fake_pid_p)
-    {
-      xsnprintf (buf, sizeof buf, "<core>");
-      return buf;
-    }
+    return "<core>";
 
   /* Not fake; print as usual.  */
   return normal_pid_to_str (ptid);
+}
+
+/* To be called from GDB_OSABI_SOLARIS handlers.  */
+
+void
+sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop, SunPRO)
+     compiler puts out 0 instead of the address in N_SO stabs.  Starting with
+     SunPRO 3.0, the compiler does this for N_FUN stabs too.  */
+  set_gdbarch_sofun_address_maybe_missing (gdbarch, 1);
+
+  /* Solaris uses SVR4-style shared libraries.  */
+  set_gdbarch_skip_solib_resolver (gdbarch, sol2_skip_solib_resolver);
+
+  /* How to print LWP PTIDs from core files.  */
+  set_gdbarch_core_pid_to_str (gdbarch, sol2_core_pid_to_str);
 }

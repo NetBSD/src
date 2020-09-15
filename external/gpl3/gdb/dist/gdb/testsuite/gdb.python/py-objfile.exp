@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2019 Free Software Foundation, Inc.
+# Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ gdb_test "python print (objfile.username)" "${testfile}" \
   "Get objfile user name"
 
 gdb_test "python print (objfile)" \
-    "<gdb.Objfile filename=[string_to_regexp ${binfile}]>"
+    "<gdb.Objfile filename=.*${testfile}.*>"
 
 gdb_test_no_output "python dir(objfile)"
 
@@ -54,6 +54,20 @@ gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").filename)" \
     "${testfile}" "print lookup_objfile filename"
 gdb_test "python print (gdb.lookup_objfile (\"junk\"))" \
     "Objfile not found\\.\r\n${python_error_text}"
+
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_global_symbol (\"global_var\").name)" \
+    "global_var" "lookup_global_symbol finds a valid symbol"
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_global_symbol (\"static_var\") is None)" \
+    "True" "lookup_global_symbol does not find static symbol"
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_global_symbol (\"stdout\"))" \
+    "None" "lookup_global_symbol doesn't find symbol in other objfile"
+
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_static_symbol (\"static_var\").name)" \
+    "static_var" "lookup_static_symbol finds a valid symbol"
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_static_symbol (\"global_var\") is None)" \
+    "True" "lookup_static_symbol does not find global symbol"
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").lookup_static_symbol (\"nonexistent\"))" \
+    "None" "lookup_static_symbol can handle nonexistent symbol"
 
 set binfile_build_id [get_build_id $binfile]
 if [string compare $binfile_build_id ""] {
@@ -144,13 +158,16 @@ if { [get_python_valueof "sep_objfile.build_id" "None"] != "None" } {
 
 # An objfile that was a symlink to a differently named file is still
 # findable with its original name.
-set symlink_binary [standard_output_file "symlink-binary"]
-remote_exec host "rm -f ${symlink_binary}"
-remote_exec host "ln -sf ${testfile} ${symlink_binary}"
-if [remote_file host exists "${symlink_binary}"] {
-    clean_restart "${symlink_binary}"
-    gdb_test "python print (gdb.lookup_objfile (\"${symlink_binary}\").filename)" \
-	"${testfile}" "gdb.lookup_objfile of symlinked binary"
+# On Windows we don't have proper symlinks, so skip this.
+if ![ishost *-*-mingw*] {
+    set symlink_binary [standard_output_file "symlink-binary"]
+    remote_exec host "rm -f ${symlink_binary}"
+    remote_exec host "ln -sf ${testfile} ${symlink_binary}"
+    if [remote_file host exists "${symlink_binary}"] {
+	clean_restart "${symlink_binary}"
+	gdb_test "python print (gdb.lookup_objfile (\"${symlink_binary}\").filename)" \
+	    "${testfile}" "gdb.lookup_objfile of symlinked binary"
+    }
 }
 
 # Test printing an Objfile object that is no longer valid.

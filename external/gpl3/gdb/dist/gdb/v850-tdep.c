@@ -1,6 +1,6 @@
 /* Target-dependent code for the NEC V850 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "frame-base.h"
 #include "trad-frame.h"
 #include "frame-unwind.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "gdbtypes.h"
 #include "inferior.h"
 #include "gdbcore.h"
@@ -498,9 +498,9 @@ v850_register_type (struct gdbarch *gdbarch, int regnum)
 static int
 v850_type_is_scalar (struct type *t)
 {
-  return (TYPE_CODE (t) != TYPE_CODE_STRUCT
-	  && TYPE_CODE (t) != TYPE_CODE_UNION
-	  && TYPE_CODE (t) != TYPE_CODE_ARRAY);
+  return (t->code () != TYPE_CODE_STRUCT
+	  && t->code () != TYPE_CODE_UNION
+	  && t->code () != TYPE_CODE_ARRAY);
 }
 
 /* Should call_function allocate stack space for a struct return?  */
@@ -530,15 +530,15 @@ v850_use_struct_convention (struct gdbarch *gdbarch, struct type *type)
   /* The value is a structure or union with a single element and that
      element is either a single basic type or an array of a single basic
      type whose size is greater than or equal to 4 -> returned in register.  */
-  if ((TYPE_CODE (type) == TYPE_CODE_STRUCT
-       || TYPE_CODE (type) == TYPE_CODE_UNION)
-       && TYPE_NFIELDS (type) == 1)
+  if ((type->code () == TYPE_CODE_STRUCT
+       || type->code () == TYPE_CODE_UNION)
+       && type->num_fields () == 1)
     {
-      fld_type = TYPE_FIELD_TYPE (type, 0);
+      fld_type = type->field (0).type ();
       if (v850_type_is_scalar (fld_type) && TYPE_LENGTH (fld_type) >= 4)
 	return 0;
 
-      if (TYPE_CODE (fld_type) == TYPE_CODE_ARRAY)
+      if (fld_type->code () == TYPE_CODE_ARRAY)
         {
 	  tgt_type = TYPE_TARGET_TYPE (fld_type);
 	  if (v850_type_is_scalar (tgt_type) && TYPE_LENGTH (tgt_type) >= 4)
@@ -549,14 +549,14 @@ v850_use_struct_convention (struct gdbarch *gdbarch, struct type *type)
   /* The value is a structure whose first element is an integer or a float,
      and which contains no arrays of more than two elements -> returned in
      register.  */
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      && v850_type_is_scalar (TYPE_FIELD_TYPE (type, 0))
-      && TYPE_LENGTH (TYPE_FIELD_TYPE (type, 0)) == 4)
+  if (type->code () == TYPE_CODE_STRUCT
+      && v850_type_is_scalar (type->field (0).type ())
+      && TYPE_LENGTH (type->field (0).type ()) == 4)
     {
-      for (i = 1; i < TYPE_NFIELDS (type); ++i)
+      for (i = 1; i < type->num_fields (); ++i)
         {
-	  fld_type = TYPE_FIELD_TYPE (type, 0);
-	  if (TYPE_CODE (fld_type) == TYPE_CODE_ARRAY)
+	  fld_type = type->field (0).type ();
+	  if (fld_type->code () == TYPE_CODE_ARRAY)
 	    {
 	      tgt_type = TYPE_TARGET_TYPE (fld_type);
 	      if (TYPE_LENGTH (tgt_type) > 0
@@ -570,11 +570,11 @@ v850_use_struct_convention (struct gdbarch *gdbarch, struct type *type)
   /* The value is a union which contains at least one field which
      would be returned in registers according to these rules ->
      returned in register.  */
-  if (TYPE_CODE (type) == TYPE_CODE_UNION)
+  if (type->code () == TYPE_CODE_UNION)
     {
-      for (i = 0; i < TYPE_NFIELDS (type); ++i)
+      for (i = 0; i < type->num_fields (); ++i)
         {
-	  fld_type = TYPE_FIELD_TYPE (type, 0);
+	  fld_type = type->field (0).type ();
 	  if (!v850_use_struct_convention (gdbarch, fld_type))
 	    return 0;
 	}
@@ -981,9 +981,9 @@ v850_eight_byte_align_p (struct type *type)
     {
       int i;
 
-      for (i = 0; i < TYPE_NFIELDS (type); i++)
+      for (i = 0; i < type->num_fields (); i++)
 	{
-	  if (v850_eight_byte_align_p (TYPE_FIELD_TYPE (type, i)))
+	  if (v850_eight_byte_align_p (type->field (i).type ()))
 	    return 1;
 	}
     }
@@ -1327,28 +1327,6 @@ static const struct frame_unwind v850_frame_unwind = {
 };
 
 static CORE_ADDR
-v850_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame,
-					 gdbarch_sp_regnum (gdbarch));
-} 
-
-static CORE_ADDR
-v850_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame,
-					 gdbarch_pc_regnum (gdbarch));
-}
-
-static struct frame_id
-v850_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame,
-					      gdbarch_sp_regnum (gdbarch));
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
-  
-static CORE_ADDR
 v850_frame_base_address (struct frame_info *this_frame, void **this_cache)
 {
   struct v850_frame_cache *cache = v850_frame_cache (this_frame, this_cache);
@@ -1464,9 +1442,6 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, v850_skip_prologue);
 
   set_gdbarch_frame_align (gdbarch, v850_frame_align);
-  set_gdbarch_unwind_sp (gdbarch, v850_unwind_sp);
-  set_gdbarch_unwind_pc (gdbarch, v850_unwind_pc);
-  set_gdbarch_dummy_id (gdbarch, v850_dummy_id);
   frame_base_set_default (gdbarch, &v850_frame_base);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
@@ -1478,8 +1453,9 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_v850_tdep ();
 void
-_initialize_v850_tdep (void)
+_initialize_v850_tdep ()
 {
   register_gdbarch_init (bfd_arch_v850, v850_gdbarch_init);
   register_gdbarch_init (bfd_arch_v850_rh850, v850_gdbarch_init);

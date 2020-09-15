@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -125,7 +125,9 @@ proc coretest {inf1_how inf2_how} {
 
     clean_restart $binfile
 
-    set inf1_spawn_id [create_inferior 1 $inf1_how]
+    with_test_prefix "inf1" {
+	set inf1_spawn_id [create_inferior 1 $inf1_how]
+    }
 
     set num 2
     gdb_test "add-inferior" "Added inferior $num.*" \
@@ -134,7 +136,9 @@ proc coretest {inf1_how inf2_how} {
 	"switch to inferior $num"
     gdb_file_cmd ${binfile}
 
-    set inf2_spawn_id [create_inferior 2 $inf2_how]
+    with_test_prefix "inf2" {
+	set inf2_spawn_id [create_inferior 2 $inf2_how]
+    }
 
     gdb_test_no_output "set schedule-multiple on"
 
@@ -212,14 +216,16 @@ proc coretest {inf1_how inf2_how} {
 
     send_gdb "\003"
     if {$expect_ttou} {
-	gdb_test "" "Quit" "stop with control-c"
+	gdb_test "" "Quit" "stop with control-c (Quit)"
     } else {
-	gdb_test "" "received signal SIGINT.*" "stop with control-c"
+	gdb_test "" "received signal SIGINT.*" "stop with control-c (SIGINT)"
     }
 
     # Useful for debugging in case the Ctrl-C above fails.
-    gdb_test "info inferiors"
-    gdb_test "info threads"
+    with_test_prefix "final" {
+	gdb_test "info inferiors"
+	gdb_test "info threads"
+    }
 }
 
 set how_modes {"run" "attach" "tty"}

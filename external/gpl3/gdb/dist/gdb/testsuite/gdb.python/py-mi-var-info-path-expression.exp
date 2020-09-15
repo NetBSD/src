@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Free Software Foundation, Inc.
+# Copyright (C) 2018-2020 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -32,7 +32,11 @@ if {[gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable {debug}] != "" }
     return -1
 }
 
-mi_gdb_test "source ${srcdir}/${subdir}/${testfile}.py" \
+# Skip all tests if Python scripting is not enabled.
+if { [mi_skip_python_tests] } { continue }
+
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+mi_gdb_test "source ${pyfile}" \
   ".*\\^done" \
   "load python file"
 

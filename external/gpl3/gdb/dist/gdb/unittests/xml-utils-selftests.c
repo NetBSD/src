@@ -1,6 +1,6 @@
 /* Unit tests for the xml-utils.c file.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/xml-utils.h"
-#include "common/selftest.h"
+#include "gdbsupport/xml-utils.h"
+#include "gdbsupport/selftest.h"
 
 namespace selftests {
 namespace xml_utils {
@@ -48,6 +48,7 @@ static void test_xml_escape_text_append ()
 }
 }
 
+void _initialize_xml_utils ();
 void
 _initialize_xml_utils ()
 {

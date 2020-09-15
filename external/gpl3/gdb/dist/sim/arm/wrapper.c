@@ -1,5 +1,5 @@
 /* run front end support for arm
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    This file is part of ARM SIM.
 
@@ -37,6 +37,7 @@
 #include "gdb/signals.h"
 #include "libiberty.h"
 #include "iwmmxt.h"
+#include "maverick.h"
 
 /* TODO: This should get pulled from the SIM_DESC.  */
 host_callback *sim_callback;
@@ -100,38 +101,6 @@ print_insn (ARMword instr)
   size = disassemble_fn (0, & info);
   fprintf (stderr, " %*s\n", size, opbuf);
 }
-
-/* Cirrus DSP registers.
-
-   We need to define these registers outside of maverick.c because
-   maverick.c might not be linked in unless --target=arm9e-* in which
-   case wrapper.c will not compile because it tries to access Cirrus
-   registers.  This should all go away once we get the Cirrus and ARM
-   Coprocessor to coexist in armcopro.c-- aldyh.  */
-
-struct maverick_regs
-{
-  union
-  {
-    int i;
-    float f;
-  } upper;
-
-  union
-  {
-    int i;
-    float f;
-  } lower;
-};
-
-union maverick_acc_regs
-{
-  long double ld;		/* Acc registers are 72-bits.  */
-};
-
-struct maverick_regs     DSPregs[16];
-union maverick_acc_regs  DSPacc[4];
-ARMword DSPsc;
 
 static void
 init (void)
@@ -236,7 +205,7 @@ sim_create_inferior (SIM_DESC sd ATTRIBUTE_UNUSED,
 {
   int argvlen = 0;
   int mach;
-  char **arg;
+  char * const *arg;
 
   init ();
 
@@ -703,7 +672,10 @@ sim_target_parse_command_line (int argc, char ** argv)
 	{
 	  /* Remove this option from the argv array.  */
 	  for (arg = i; arg < argc; arg ++)
-	    argv[arg] = argv[arg + 1];
+	    {
+	      free (argv[arg]);
+	      argv[arg] = argv[arg + 1];
+	    }
 	  argc --;
 	  i --;
 	  trace_funcs = 1;
@@ -714,7 +686,10 @@ sim_target_parse_command_line (int argc, char ** argv)
 	{
 	  /* Remove this option from the argv array.  */
 	  for (arg = i; arg < argc; arg ++)
-	    argv[arg] = argv[arg + 1];
+	    {
+	      free (argv[arg]);
+	      argv[arg] = argv[arg + 1];
+	    }
 	  argc --;
 	  i --;
 	  disas = 1;
@@ -728,7 +703,10 @@ sim_target_parse_command_line (int argc, char ** argv)
 	{
 	  /* Remove this option from the argv array.  */
 	  for (arg = i; arg < argc; arg ++)
-	    argv[arg] = argv[arg + 1];
+	    {
+	      free (argv[arg]);
+	      argv[arg] = argv[arg + 1];
+	    }
 	  argc --;
 
 	  ptr = argv[i];
@@ -764,7 +742,10 @@ sim_target_parse_command_line (int argc, char ** argv)
 
       /* Remove this option from the argv array.  */
       for (arg = i; arg < argc; arg ++)
-	argv[arg] = argv[arg + 1];
+	{
+	  free (argv[arg]);
+	  argv[arg] = argv[arg + 1];
+	}
       argc --;
       i --;
     }
@@ -805,6 +786,7 @@ sim_open (SIM_OPEN_KIND kind,
 	  char * const *argv)
 {
   int i;
+  char **argv_copy;
   SIM_DESC sd = sim_state_alloc (kind, cb);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
@@ -867,21 +849,24 @@ sim_open (SIM_OPEN_KIND kind,
 
   sim_callback = cb;
 
-  sim_target_parse_arg_array (argv);
+  /* Copy over the argv contents so we can modify them.  */
+  argv_copy = dupargv (argv);
 
-  if (argv[1] != NULL)
+  sim_target_parse_arg_array (argv_copy);
+
+  if (argv_copy[1] != NULL)
     {
       int i;
 
       /* Scan for memory-size switches.  */
-      for (i = 0; (argv[i] != NULL) && (argv[i][0] != 0); i++)
-	if (argv[i][0] == '-' && argv[i][1] == 'm')
+      for (i = 0; (argv_copy[i] != NULL) && (argv_copy[i][0] != 0); i++)
+	if (argv_copy[i][0] == '-' && argv_copy[i][1] == 'm')
 	  {
-	    if (argv[i][2] != '\0')
-	      mem_size = atoi (&argv[i][2]);
-	    else if (argv[i + 1] != NULL)
+	    if (argv_copy[i][2] != '\0')
+	      mem_size = atoi (&argv_copy[i][2]);
+	    else if (argv_copy[i + 1] != NULL)
 	      {
-		mem_size = atoi (argv[i + 1]);
+		mem_size = atoi (argv_copy[i + 1]);
 		i++;
 	      }
 	    else
@@ -892,6 +877,8 @@ sim_open (SIM_OPEN_KIND kind,
 	      }
 	  }
     }
+
+  freeargv (argv_copy);
 
   return sd;
 }

@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -649,13 +649,6 @@ m32r_frame_unwind_cache (struct frame_info *this_frame,
 }
 
 static CORE_ADDR
-m32r_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, M32R_SP_REGNUM);
-}
-
-
-static CORE_ADDR
 m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
 		      struct value **args, CORE_ADDR sp,
@@ -697,7 +690,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   for (argnum = 0, stack_offset = 0; argnum < nargs; argnum++)
     {
       type = value_type (args[argnum]);
-      typecode = TYPE_CODE (type);
+      typecode = type->code ();
       len = TYPE_LENGTH (type);
 
       memset (valbuf, 0, sizeof (valbuf));
@@ -798,14 +791,6 @@ m32r_return_value (struct gdbarch *gdbarch, struct value *function,
     }
 }
 
-
-
-static CORE_ADDR
-m32r_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, M32R_PC_REGNUM);
-}
-
 /* Given a GDB frame, determine the address of the calling function's
    frame.  This will be used to create a new GDB frame struct.  */
 
@@ -872,18 +857,6 @@ static const struct frame_base m32r_frame_base = {
   m32r_frame_base_address
 };
 
-/* Assuming THIS_FRAME is a dummy, return the frame ID of that dummy
-   frame.  The frame ID's base needs to match the TOS value saved by
-   save_dummy_frame_tos(), and the PC match the dummy frame's breakpoint.  */
-
-static struct frame_id
-m32r_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, M32R_SP_REGNUM);
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
-
-
 static gdbarch_init_ftype m32r_gdbarch_init;
 
 static struct gdbarch *
@@ -903,8 +876,6 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_wchar_bit (gdbarch, 16);
   set_gdbarch_wchar_signed (gdbarch, 0);
-
-  set_gdbarch_unwind_sp (gdbarch, m32r_unwind_sp);
 
   set_gdbarch_num_regs (gdbarch, M32R_NUM_REGS);
   set_gdbarch_pc_regnum (gdbarch, M32R_PC_REGNUM);
@@ -928,14 +899,6 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   frame_base_set_default (gdbarch, &m32r_frame_base);
 
-  /* Methods for saving / extracting a dummy frame's ID.  The ID's
-     stack address must match the SP value returned by
-     PUSH_DUMMY_CALL, and saved by generic_save_dummy_frame_tos.  */
-  set_gdbarch_dummy_id (gdbarch, m32r_dummy_id);
-
-  /* Return the unwound PC value.  */
-  set_gdbarch_unwind_pc (gdbarch, m32r_unwind_pc);
-
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
 
@@ -948,8 +911,9 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_m32r_tdep ();
 void
-_initialize_m32r_tdep (void)
+_initialize_m32r_tdep ()
 {
   register_gdbarch_init (bfd_arch_m32r, m32r_gdbarch_init);
 }

@@ -1,5 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -655,7 +655,7 @@ dos_get_tty_state (struct serial *scb)
       /* We've never heard about this port.  We should fail this call,
 	 unless they are asking about one of the 3 standard handles,
 	 in which case we pretend the handle was open by us if it is
-	 connected to a terminal device.  This is beacuse Unix
+	 connected to a terminal device.  This is because Unix
 	 terminals use the serial interface, so GDB expects the
 	 standard handles to go through here.  */
       if (scb->fd >= 3 || !isatty (scb->fd))
@@ -915,8 +915,9 @@ info_serial_command (const char *arg, int from_tty)
 #endif
 }
 
+void _initialize_ser_dos ();
 void
-_initialize_ser_dos (void)
+_initialize_ser_dos ()
 {
   serial_add_interface (&dos_ops);
 

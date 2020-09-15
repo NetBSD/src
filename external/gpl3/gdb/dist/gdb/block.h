@@ -1,6 +1,6 @@
 /* Code dealing with blocks for GDB.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -107,7 +107,7 @@ struct block
      case of C) is the STATIC_BLOCK.  The superblock of the
      STATIC_BLOCK is the GLOBAL_BLOCK.  */
 
-  struct block *superblock;
+  const struct block *superblock;
 
   /* This is used to store the symbols in the block.  */
 
@@ -219,7 +219,15 @@ extern struct symbol *block_containing_function (const struct block *);
 
 extern int block_inlined_p (const struct block *block);
 
-extern int contained_in (const struct block *, const struct block *);
+/* Return true if block A is lexically nested within block B, or if a
+   and b have the same pc range.  Return false otherwise.  If
+   ALLOW_NESTED is true, then block A is considered to be in block B
+   if A is in a nested function in B's function.  If ALLOW_NESTED is
+   false (the default), then blocks in nested functions are not
+   considered to be contained.  */
+
+extern bool contained_in (const struct block *a, const struct block *b,
+			  bool allow_nested = false);
 
 extern const struct blockvector *blockvector_for_pc (CORE_ADDR,
 					       const struct block **);
@@ -317,7 +325,7 @@ extern struct symbol *block_iterator_first (const struct block *block,
 extern struct symbol *block_iterator_next (struct block_iterator *iterator);
 
 /* Initialize ITERATOR to point at the first symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME matches NAME, and return that first symbol, or
+   search_name () matches NAME, and return that first symbol, or
    NULL if there are no such symbols.  */
 
 extern struct symbol *block_iter_match_first (const struct block *block,
@@ -325,7 +333,7 @@ extern struct symbol *block_iter_match_first (const struct block *block,
 					      struct block_iterator *iterator);
 
 /* Advance ITERATOR to point at the next symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME matches NAME, or NULL if there are no more such
+   search_name () matches NAME, or NULL if there are no more such
    symbols.  Don't call this if you've previously received NULL from
    block_iterator_match_first or block_iterator_match_next on this
    iteration.  And don't call it unless ITERATOR was created by a
@@ -333,6 +341,16 @@ extern struct symbol *block_iter_match_first (const struct block *block,
 
 extern struct symbol *block_iter_match_next
   (const lookup_name_info &name, struct block_iterator *iterator);
+
+/* Return true if symbol A is the best match possible for DOMAIN.  */
+
+extern bool best_symbol (struct symbol *a, const domain_enum domain);
+
+/* Return symbol B if it is a better match than symbol A for DOMAIN.
+   Otherwise return A.  */
+
+extern struct symbol *better_symbol (struct symbol *a, struct symbol *b,
+				     const domain_enum domain);
 
 /* Search BLOCK for symbol NAME in DOMAIN.  */
 

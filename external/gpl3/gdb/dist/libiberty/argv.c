@@ -1,5 +1,5 @@
 /* Create and destroy argument vectors (argv's)
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Written by Fred Fish @ Cygnus Support
 
 This file is part of the libiberty library.
@@ -326,6 +326,14 @@ writeargv (char * const *argv, FILE *f)
             }
           arg++;
         }
+
+      /* Write out a pair of quotes for an empty argument.  */
+      if (arg == *argv)
+	if (EOF == fputs ("\"\"", f))
+	  {
+	    status = 1;
+	    goto done;
+	  }
 
       if (EOF == fputc ('\n', f))
         {

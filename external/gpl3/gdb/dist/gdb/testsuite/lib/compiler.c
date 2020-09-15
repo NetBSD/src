@@ -1,6 +1,6 @@
 /* This test file is part of GDB, the GNU debugger.
 
-   Copyright 1995-2019 Free Software Foundation, Inc.
+   Copyright 1995-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ set compiler_info [join {gcc __GNUC__ __GNUC_MINOR__ "unknown"} -]
 
 #if defined (__xlc__)
 /* IBM'x xlc compiler. NOTE:  __xlc__ expands to a double quoted string of four
-   numbers seperated by '.'s: currently "7.0.0.0" */
+   numbers separated by '.'s: currently "7.0.0.0" */
 set need_a_set [regsub -all {\.} [join {xlc __xlc__} -] - compiler_info]
 #endif
 

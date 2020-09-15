@@ -1,7 +1,7 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: 64bit-sse.xml */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 static int
 create_feature_i386_64bit_sse (struct target_desc *result, long regnum)
@@ -10,6 +10,9 @@ create_feature_i386_64bit_sse (struct target_desc *result, long regnum)
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.sse");
   tdesc_type *element_type;
+  element_type = tdesc_named_type (feature, "bfloat16");
+  tdesc_create_vector (feature, "v8bf16", element_type, 8);
+
   element_type = tdesc_named_type (feature, "ieee_single");
   tdesc_create_vector (feature, "v4f", element_type, 4);
 
@@ -31,6 +34,8 @@ create_feature_i386_64bit_sse (struct target_desc *result, long regnum)
   tdesc_type_with_fields *type_with_fields;
   type_with_fields = tdesc_create_union (feature, "vec128");
   tdesc_type *field_type;
+  field_type = tdesc_named_type (feature, "v8bf16");
+  tdesc_add_field (type_with_fields, "v8_bfloat16", field_type);
   field_type = tdesc_named_type (feature, "v4f");
   tdesc_add_field (type_with_fields, "v4_float", field_type);
   field_type = tdesc_named_type (feature, "v2d");

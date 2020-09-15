@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 Free Software Foundation, Inc.
+# Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,11 +45,11 @@ gdb_test "ptype c" " = i32"
 gdb_test "print sizeof(c)" " = 4"
 
 gdb_test "print c = 87" " = \\(\\)"
-gdb_test "print c" " = 87"
+gdb_test "print c" " = 87" "print after assignment"
 gdb_test "print c += 3" " = \\(\\)"
-gdb_test "print c" " = 90"
+gdb_test "print c" " = 90" "print after plus assignment"
 gdb_test "print c -= 90" " = \\(\\)"
-gdb_test "print c" " = 0"
+gdb_test "print c" " = 0" "print after minus assignment"
 gdb_test "print *&c" " = 0"
 gdb_test "print *(&c as &i32)" " = 0"
 gdb_test "print *(&c as *const i32)" " = 0"
@@ -200,7 +200,16 @@ gdb_test "print e2.notexist" \
 gdb_test "print e2.0" \
     "Variant simple::MoreComplicated::Four is not a tuple variant"
 
-gdb_test "print k" " = simple::SpaceSaver::Nothing"
+set pass_pattern " = simple::SpaceSaver::Nothing"
+set xfail_pattern " = simple::SpaceSaver::Thebox\\($decimal, 0x0\\)"
+gdb_test_multiple "print k" "" {
+    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	xfail $gdb_test_name
+    }
+}
 gdb_test "print l" " = simple::SpaceSaver::Thebox\\(9, $hex\\)"
 gdb_test "print *l.1" " = 1729"
 
@@ -228,24 +237,67 @@ gdb_test "print ..=5" " = .*::ops::RangeToInclusive.* \\{end: 5\\}"
 gdb_test "print 5.." " = .*::ops::RangeFrom.* \\{start: 5\\}"
 gdb_test "print .." " = .*::ops::RangeFull"
 
-gdb_test "print str_some" \
+set pass_pattern \
     " = core::option::Option<\[a-z\]+::string::String>::Some\\(\[a-z\]+::string::String .*"
-gdb_test "print str_none" " = core::option::Option<\[a-z\]+::string::String>::None"
+set xfail_pattern \
+    "( = <error reading variable>|That operation is not available on .*)"
+gdb_test_multiple "print str_some" "" {
+    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	xfail $gdb_test_name
+    }
+}
+
+set pass_pattern " = core::option::Option<\[a-z\]+::string::String>::None"
+gdb_test_multiple "print str_none" "" {
+    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	xfail $gdb_test_name
+    }
+}
+
 gdb_test "print int_some" " = core::option::Option<u8>::Some\\(1\\)"
 gdb_test "print int_none" " = core::option::Option<u8>::None"
 gdb_test "print box_some" " = core::option::Option<\[a-z:\]*Box<u8>>::Some\\(.*\\)"
 gdb_test "print box_none" " = core::option::Option<\[a-z:\]*Box<u8>>::None"
-gdb_test "print custom_some" \
+
+set pass_pattern \
     " = simple::NonZeroOptimized::Value\\(\[a-z\]+::string::String .*"
-gdb_test "print custom_none" " = simple::NonZeroOptimized::Empty"
+gdb_test_multiple "print custom_some" "" {
+    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	xfail $gdb_test_name
+    }
+}
+
+set pass_pattern " = simple::NonZeroOptimized::Empty"
+gdb_test_multiple "print custom_none" "" {
+    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	xfail $gdb_test_name
+    }
+}
+
+gdb_test "print st" \
+    " = simple::StringAtOffset {field1: \"hello\", field2: 1, field3: \"world\"}"
 
 proc test_one_slice {svar length base range} {
-    global hex
+    with_test_prefix $range {
+	global hex
 
-    set result " = &\\\[.*\\\] \\{data_ptr: $hex, length: $length\\}"
+	set result " = &\\\[.*\\\] \\{data_ptr: $hex, length: $length\\}"
 
-    gdb_test "print $svar" $result
-    gdb_test "print &${base}\[${range}\]" $result
+	gdb_test "print $svar" $result
+	gdb_test "print &${base}\[${range}\]" $result
+    }
 }
 
 test_one_slice slice 1 w 2..3
@@ -286,17 +338,6 @@ gdb_test "print parametrized.next.val" \
 gdb_test "print parametrized" \
     " = simple::ParametrizedStruct<i32> \\{next: simple::ParametrizedEnum<\[a-z:\]*Box<simple::ParametrizedStruct<i32>>>::Val\\{val: $hex\\}, value: 0\\}"
 
-gdb_test "print u" " = simple::Union {f1: -1, f2: 255}"
-
-gdb_test_sequence "ptype/o Union" "" {
-    "/\\* offset    |  size \\*/  type = union simple::Union {"
-    "/\\*                 1 \\*/    f1: i8,"
-    "/\\*                 1 \\*/    f2: u8,"
-    ""
-    "                           /\\* total size \\(bytes\\):    1 \\*/"
-    "                         }"
-}
-
 gdb_test_sequence "ptype/o SimpleLayout" "" {
     "/\\* offset    |  size \\*/  type = struct simple::SimpleLayout {"
     "/\\*    0      |     2 \\*/    f1: u16,"
@@ -305,6 +346,8 @@ gdb_test_sequence "ptype/o SimpleLayout" "" {
     "                           /\\* total size \\(bytes\\):    4 \\*/"
     "                         }"
 }
+
+gdb_test "print nonzero_offset" " = simple::EnumWithNonzeroOffset {a: core::option::Option<u8>::Some\\(1\\), b: core::option::Option<u8>::None}"
 
 # PR rust/23626 - this used to crash.  Note that the results are
 # fairly lax because most existing versions of Rust (those before the
@@ -324,3 +367,13 @@ if {[skip_python_tests]} {
 }
 
 gdb_test "python print(gdb.lookup_type('simple::HiBob'))" "simple::HiBob"
+
+gdb_test_no_output "python e = gdb.parse_and_eval('e')" \
+    "get value of e for python"
+gdb_test "python print(len(e.type.fields()))" "2"
+gdb_test "python print(e.type.fields()\[0\].artificial)" "True"
+gdb_test "python print(e.type.fields()\[1\].name)" "Two"
+
+gdb_test "python print(e.type.dynamic)" "False"
+gdb_test "python print(gdb.lookup_type('simple::MoreComplicated').dynamic)" \
+    "True"

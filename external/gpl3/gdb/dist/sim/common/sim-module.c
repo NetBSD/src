@@ -1,6 +1,6 @@
 /* Module support.
 
-   Copyright 1996-2019 Free Software Foundation, Inc.
+   Copyright 1996-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -35,6 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include "libiberty.h"
+
+#include <stdlib.h>
 
 /* List of all modules.  */
 static MODULE_INSTALL_FN * const modules[] = {

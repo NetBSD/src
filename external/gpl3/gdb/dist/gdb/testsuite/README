@@ -13,14 +13,14 @@ There are two ways to run the testsuite and pass additional parameters
 to DejaGnu.  The first is to do `make check' in the main build
 directory and specifying the makefile variable `RUNTESTFLAGS':
 
-	 make check RUNTESTFLAGS='TRANSCRIPT=y gdb.base/a2-run.exp'
+	 make check RUNTESTFLAGS='GDB=/usr/bin/gdb gdb.base/a2-run.exp'
 
 The second is to cd to the testsuite directory and invoke the DejaGnu
 `runtest' command directly.
 
 	cd testsuite
 	make site.exp
-	runtest TRANSCRIPT=y
+	runtest GDB=/usr/bin/gdb
 
 (The `site.exp' file contains a handful of useful variables like host
 and target triplets, and pathnames.)
@@ -95,6 +95,27 @@ example:
 
 The script will output its analysis report to the standard output.
 
+Re-running Tests Outside The Testsuite
+**************************************
+
+When running a test, the arguments used to run GDB are saved to gdb.cmd and
+all commands sent to GDB are saved to gdb.in.  As well as being a reference
+of the commands run, they can be used to manually re-run a test by using
+the gdb.in file as a batch file to a GDB launched with the arguments in the
+gdb.cmd file, for example:
+	$(cat outputs/gdb.base/store/gdb.cmd) -x outputs/gdb.base/store/gdb.in
+
+Tests that run GDB multiple times will append .1, .2, .3 etc to the end
+of each .cmd and .in file.
+
+When gdbserver is launched as part of a test, a gdbserver.cmd will be created.
+To re-run these tests, run the contents of gdbserver.cmd in a separate
+terminal before running gdb, for example:
+	$(cat outputs/gdb.base/store/gdbserver.cmd)
+Alternatively, if the test is run with GDBSERVER_DEBUG="replay", then this
+will create a gdbserver.replay file which can be used with the gdbreplay tool,
+instead of launching gdbserver.
+
 Running the Performance Tests
 *****************************
 
@@ -123,25 +144,6 @@ Testsuite Parameters
 
 The following parameters are DejaGNU variables that you can set to
 affect the testsuite run globally.
-
-TRANSCRIPT
-
-You may find it useful to have a transcript of the commands that the
-testsuite sends to GDB, for instance if GDB crashes during the run,
-and you want to reconstruct the sequence of commands.
-
-If the DejaGNU variable TRANSCRIPT is set (to any value), each
-invocation of GDB during the test run will get a transcript file
-written into the DejaGNU output directory.  The file will have the
-name transcript.<n>, where <n> is an integer.  The first line of the
-file shows the invocation command with all the options passed to it,
-while subsequent lines are the GDB commands.  A `make check' might
-look like this:
-
-      make check RUNTESTFLAGS=TRANSCRIPT=y
-
-The transcript may not be complete, as for instance tests of command
-completion may show only partial command lines.
 
 GDB
 
@@ -195,7 +197,7 @@ a .gdbinit.  For example:
 
 GDB_PARALLEL
 
-To use parallel testing mode without using the the Makefile, set
+To use parallel testing mode without using the Makefile, set
 GDB_PARALLEL on the runtest command line to "yes".  Before starting
 the tests, you must ensure that the directories cache, outputs, and
 temp in the test suite build directory are either empty or have been
@@ -293,6 +295,28 @@ can do:
 
 	make check TS=1 TS_FORMAT='[%b %H:%S]'
 
+GDB_DEBUG
+
+When set gdb debug is sent to the file gdb.debug in the test output
+directory.  It should be set to a comma separated list of gdb debug
+components.
+For example, to turn on debugging for infrun and target, you can do:
+
+	make check GDB_DEBUG="infrun,target"
+
+GDBSERVER_DEBUG
+
+When set gdbserver debug is sent to the a file in the test output directory.
+It should be set to a comma separated list of the following options:
+	debug  - write gdbserver debug to gdbserver.debug.
+	remote - write gdbserver remote debug to gdbserver.debug.
+	replay - write a replay log to the file gdbserver.replay for use
+		 with gdbreplay.
+Alternatively, it can be set to "all" to turn on all the above
+For example, to turn on gdbserver debugging, you can do:
+
+	make check GDBSERVER_DEBUG="debug,replay"
+
 Race detection
 **************
 
@@ -327,6 +351,13 @@ Examples:
 
 	make -j10 check-read1 TESTS="*/paginate-*.exp"
 	make -j10 check READ1="1"
+
+Note: While the intention is to detect races and make otherwise passing tests
+fail, it can also have the effect of making otherwise failing tests pass.
+This happens f.i. if the test is trying to match a gdb prompt using an end of
+input marker "${gdb_prompt} $" and there is output after the gdb prompt.  This
+may either pass or fail in normal operation, but using check-read1 will ensure
+that it passes.
 
 Testsuite Configuration
 ***********************
@@ -482,10 +513,32 @@ gdb,no_thread_names
 
   The target doesn't support thread names.
 
+gdb,pie_flag
+
+  The flag required to force the compiler to produce position-independent
+  executables.
+
+gdb,pie_ldflag
+
+  The flag required to force the linker to produce position-independent
+  executables.
+
 gdb,nopie_flag
 
   The flag required to force the compiler to produce non-position-independent
   executables.
+
+gdb,debug
+
+  When set gdb debug is sent to the file gdb.debug in the test output
+  directory.  It should be set to a comma separated list of gdb debug
+  components. For example, to turn on debugging for infrun and target, set to
+  "infrun,target".
+
+gdbserver,debug
+
+  When set gdbserver debug is sent to the file gdbserver.debug in the test
+  output directory.  For valid values see the entry for GDBSERVER_DEBUG.
 
 Testsuite Organization
 **********************

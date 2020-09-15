@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,11 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "aarch64-insn.h"
 
 /* Toggle this file's internal debugging dump.  */
-int aarch64_debug = 0;
+bool aarch64_debug = false;
 
 /* Extract a signed value from a bit field within an instruction
    encoding.
@@ -47,7 +47,7 @@ extract_signed_bitfield (uint32_t insn, unsigned width, unsigned offset)
    INSN is the instruction opcode.
 
    MASK specifies the bits within the opcode that are to be tested
-   agsinst for a match with PATTERN.  */
+   against for a match with PATTERN.  */
 
 static int
 decode_masked_match (uint32_t insn, uint32_t mask, uint32_t pattern)

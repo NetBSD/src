@@ -1,5 +1,5 @@
 # Useful gdb string convenience functions.
-# Copyright (C) 2012-2019 Free Software Foundation, Inc.
+# Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import re
 
 
 class _MemEq(gdb.Function):
-  """$_memeq - compare bytes of memory
+  """$_memeq - compare bytes of memory.
 
 Usage: $_memeq (A, B, LEN)
 
@@ -44,7 +44,7 @@ Returns:
 
 
 class _StrLen(gdb.Function):
-  """$_strlen - compute string length
+  """$_strlen - compute string length.
 
 Usage: $_strlen (A)
 
@@ -59,7 +59,7 @@ Returns:
 
 
 class _StrEq(gdb.Function):
-  """$_streq - check string equality
+  """$_streq - check string equality.
 
 Usage: $_streq (A, B)
 
@@ -77,7 +77,7 @@ Example (amd64-linux):
 
 
 class _RegEx(gdb.Function):
-  """$_regex - check if a string matches a regular expression
+  """$_regex - check if a string matches a regular expression.
 
 Usage: $_regex (STRING, REGEX)
 

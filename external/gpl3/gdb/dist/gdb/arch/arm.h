@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 #ifndef ARCH_ARM_H
 #define ARCH_ARM_H
 
+#include "gdbsupport/tdesc.h"
+
 /* Register numbers of various important registers.  */
 
 enum gdb_regnum {
@@ -29,6 +31,7 @@ enum gdb_regnum {
   ARM_SP_REGNUM = 13,		/* Contains address of top of stack */
   ARM_LR_REGNUM = 14,		/* address to return to from a function call */
   ARM_PC_REGNUM = 15,		/* Contains program counter */
+  /* F0..F7 are the fp registers for the (obsolete) FPA architecture.  */
   ARM_F0_REGNUM = 16,		/* first floating point register */
   ARM_F3_REGNUM = 19,		/* last floating point argument register */
   ARM_F7_REGNUM = 23, 		/* last floating point register */
@@ -66,6 +69,23 @@ enum arm_breakpoint_kinds
    ARM_BP_KIND_ARM = 4,
 };
 
+/* Supported Arm FP hardware types.  */
+enum arm_fp_type {
+   ARM_FP_TYPE_NONE = 0,
+   ARM_FP_TYPE_VFPV2,
+   ARM_FP_TYPE_VFPV3,
+   ARM_FP_TYPE_IWMMXT,
+   ARM_FP_TYPE_INVALID
+};
+
+/* Supported M-profile Arm types.  */
+enum arm_m_profile_type {
+   ARM_M_TYPE_M_PROFILE,
+   ARM_M_TYPE_VFP_D16,
+   ARM_M_TYPE_WITH_FPA,
+   ARM_M_TYPE_INVALID
+};
+
 /* Instruction condition field values.  */
 #define INST_EQ		0x0
 #define INST_NE		0x1
@@ -93,8 +113,27 @@ enum arm_breakpoint_kinds
 
 #define XPSR_T		0x01000000
 
-/* Size of integer registers.  */
-#define INT_REGISTER_SIZE		4
+/* Size of registers.  */
+
+#define ARM_INT_REGISTER_SIZE		4
+/* IEEE extended doubles are 80 bits.  DWORD aligned they use 96 bits.  */
+#define ARM_FP_REGISTER_SIZE		12
+#define ARM_VFP_REGISTER_SIZE		8
+#define IWMMXT_VEC_REGISTER_SIZE	8
+
+/* Size of register sets.  */
+
+/* r0-r12,sp,lr,pc,cpsr.  */
+#define ARM_CORE_REGS_SIZE (17 * ARM_INT_REGISTER_SIZE)
+/* f0-f8,fps.  */
+#define ARM_FP_REGS_SIZE (8 * ARM_FP_REGISTER_SIZE + ARM_INT_REGISTER_SIZE)
+/* d0-d15,fpscr.  */
+#define ARM_VFP2_REGS_SIZE (16 * ARM_VFP_REGISTER_SIZE + ARM_INT_REGISTER_SIZE)
+/* d0-d31,fpscr.  */
+#define ARM_VFP3_REGS_SIZE (32 * ARM_VFP_REGISTER_SIZE + ARM_INT_REGISTER_SIZE)
+/* wR0-wR15,fpscr.  */
+#define IWMMXT_REGS_SIZE (16 * IWMMXT_VEC_REGISTER_SIZE \
+			  + 6 * ARM_INT_REGISTER_SIZE)
 
 /* Addresses for calling Thumb functions have the bit 0 set.
    Here are some macros to test, set, or clear bit 0 of addresses.  */
@@ -121,9 +160,6 @@ int thumb_insn_size (unsigned short inst1);
 /* Returns true if the condition evaluates to true.  */
 int condition_true (unsigned long cond, unsigned long status_reg);
 
-/* Return number of 1-bits in VAL.  */
-int bitcount (unsigned long val);
-
 /* Return 1 if THIS_INSTR might change control flow, 0 otherwise.  */
 int arm_instruction_changes_pc (uint32_t this_instr);
 
@@ -145,5 +181,13 @@ unsigned long shifted_reg_val (struct regcache *regcache,
 			       int carry,
 			       unsigned long pc_val,
 			       unsigned long status_reg);
+
+/* Create an Arm target description with the given FP hardware type.  */
+
+target_desc *arm_create_target_description (arm_fp_type fp_type);
+
+/* Create an Arm M-profile target description with the given hardware type.  */
+
+target_desc *arm_create_mprofile_target_description (arm_m_profile_type m_type);
 
 #endif /* ARCH_ARM_H */

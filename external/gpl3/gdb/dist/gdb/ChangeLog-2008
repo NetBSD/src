@@ -5663,7 +5663,7 @@
 2008-07-13  Vladimir Prus  <vladimir@codesourcery.com>
 
 	Allow all CLI command even if target is executing.
-	* gdb/top.c (execute_command_1): Don't check if the inferiour
+	* top.c (execute_command_1): Don't check if the inferiour
 	is running.
 
 2008-07-13  Vladimir Prus  <vladimir@codesourcery.com>
@@ -6881,7 +6881,7 @@
 2008-06-06  Paul Pluzhnikov  <ppluzhnikov@google.com>
 
 	PR gdb/1147
-	* gdb/valopts.c (find_overload_match): Handle references
+	* valopts.c (find_overload_match): Handle references
 	to pointers.
 
 2008-06-06  Paul N. Hilfinger  <hilfinger@adacore.com>
@@ -9874,7 +9874,6 @@
 2008-03-14  Vladimir Prus  <vladimir@codesourcery.com>
 
 	Implement MI notification for new threads.
-	* doc/observer.texi (new_thread): Document.
 	* observer.sh: Forward declare struct thread_info.
 	* thread.c (add_thread): Notify observer.
 
@@ -10739,9 +10738,9 @@
 2008-01-30  Vladimir Prus  <vladimir@codesourcery.com>
 
 	Use vector for varobj_list_children interface.
-	* gdb/varobj.c (varobj_list_children): Return vector
+	* varobj.c (varobj_list_children): Return vector
 	of varobjs.
-	* gdb/varobj.h (varobj_list_children): Adjust
+	* varobj.h (varobj_list_children): Adjust
 	prototype.
 	(varobj_p): Declare.  Declare vector thereof.
 	* mi/mi-cmd-var.c (mi_cmd_var_list_children): Adjust

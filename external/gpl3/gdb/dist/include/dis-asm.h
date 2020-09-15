@@ -1,6 +1,6 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -78,11 +78,6 @@ typedef struct disassemble_info
   enum bfd_endian endian;
   /* Endianness of code, for mixed-endian situations such as ARM BE8.  */
   enum bfd_endian endian_code;
-  /* An arch/mach-specific bitmask of selected instruction subsets, mainly
-     for processors with run-time-switchable instruction sets.  The default,
-     zero, means that there is no constraint.  CGEN-based opcodes ports
-     may use ISA_foo masks.  */
-  void *insn_sets;
 
   /* Some targets need information about the current section to accurately
      display insns.  If this is NULL, the target disassembler function
@@ -110,12 +105,14 @@ typedef struct disassemble_info
   unsigned long flags;
   /* Set if the disassembler has determined that there are one or more
      relocations associated with the instruction being disassembled.  */
-#define INSN_HAS_RELOC	 (1 << 31)
+#define INSN_HAS_RELOC	 (1u << 31)
   /* Set if the user has requested the disassembly of data as well as code.  */
-#define DISASSEMBLE_DATA (1 << 30)
+#define DISASSEMBLE_DATA (1u << 30)
   /* Set if the user has specifically set the machine type encoded in the
      mach field of this structure.  */
-#define USER_SPECIFIED_MACHINE_TYPE (1 << 29)
+#define USER_SPECIFIED_MACHINE_TYPE (1u << 29)
+  /* Set if the user has requested wide output.  */
+#define WIDE_OUTPUT (1u << 28)
 
   /* Use internally by the target specific disassembly code.  */
   void *private_data;
@@ -221,6 +218,12 @@ typedef struct disassemble_info
      file being disassembled.  */
   bfd_vma stop_vma;
 
+  /* The end range of the current range being disassembled.  This is required
+     in order to notify the disassembler when it's currently handling a
+     different range than it was before.  This prevent unsafe optimizations when
+     disassembling such as the way mapping symbols are found on AArch64.  */
+  bfd_vma stop_offset;
+
 } disassemble_info;
 
 /* This struct is used to pass information about valid disassembler
@@ -322,7 +325,10 @@ extern disassembler_ftype disassembler (enum bfd_architecture arc,
 
 /* Amend the disassemble_info structure as necessary for the target architecture.
    Should only be called after initialising the info->arch field.  */
-extern void disassemble_init_for_target (struct disassemble_info * dinfo);
+extern void disassemble_init_for_target (struct disassemble_info *);
+
+/* Tidy any memory allocated by targets, such as info->private_data.  */
+extern void disassemble_free_target (struct disassemble_info *);
 
 /* Document any target specific options available from the disassembler.  */
 extern void disassembler_usage (FILE *);
@@ -386,9 +392,6 @@ extern void init_disassemble_info (struct disassemble_info *dinfo, void *stream,
 /* For compatibility with existing code.  */
 #define INIT_DISASSEMBLE_INFO(INFO, STREAM, FPRINTF_FUNC) \
   init_disassemble_info (&(INFO), (STREAM), (fprintf_ftype) (FPRINTF_FUNC))
-#define INIT_DISASSEMBLE_INFO_NO_ARCH(INFO, STREAM, FPRINTF_FUNC) \
-  init_disassemble_info (&(INFO), (STREAM), (fprintf_ftype) (FPRINTF_FUNC))
-
 
 #ifdef __cplusplus
 }

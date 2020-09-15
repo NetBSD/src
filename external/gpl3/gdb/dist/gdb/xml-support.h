@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,9 @@
 #define XML_SUPPORT_H
 
 #include "gdb_obstack.h"
-#include "common/vec.h"
-#include "common/xml-utils.h"
-#include "common/byte-vector.h"
+#include "gdbsupport/xml-utils.h"
+#include "gdbsupport/byte-vector.h"
+#include "gdbsupport/gdb_optional.h"
 
 struct gdb_xml_parser;
 struct gdb_xml_element;
@@ -43,11 +43,6 @@ const char *fetch_xml_builtin (const char *filename);
 LONGEST xml_builtin_xfer_partial (const char *filename,
 				  gdb_byte *readbuf, const gdb_byte *writebuf,
 				  ULONGEST offset, LONGEST len);
-
-/* The text of compiled-in XML documents, from xml-builtin.c
-   (generated).  */
-
-extern const char *xml_builtin[][2];
 
 /* Support for XInclude.  */
 

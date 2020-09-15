@@ -103,8 +103,6 @@ int main()
   i += k.i + m.w + a1.x + a2.x + a3.x + x.z + l.z + n.r + j.j;
 
   marker1();
-  
+
+  return 0;
 }
-
-
-  

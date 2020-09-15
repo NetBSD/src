@@ -1,5 +1,5 @@
 # Test macro scoping.
-# Copyright 2002-2019 Free Software Foundation, Inc.
+# Copyright 2002-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -449,8 +449,7 @@ gdb_test "break $l2  if foo != MACRO_TO_EXPAND" \
 gdb_test "continue" "foo = 0;.*" "continue to macsp_expr"
 
 gdb_test "print address.addr" \
-  " = 0" \
-  "print address.addr"
+  " = 0"
 
 gdb_test "print MACRO_TO_EXPAND" \
     "No symbol \"MACRO_TO_EXPAND\" in current context\." \
@@ -752,8 +751,7 @@ gdb_test_no_output "macro define si_addr fields.fault.si_addr" \
   "define si_addr macro"
 
 gdb_test "macro expand siginfo.si_addr" \
-  "expands to: siginfo.fields.fault.si_addr" \
-  "macro expand siginfo.si_addr"
+  "expands to: siginfo.fields.fault.si_addr"
 
 gdb_test "print __FILE__" " = \".*macscp1.c\""
 gdb_test "print __LINE__" \

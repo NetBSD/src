@@ -1,8 +1,9 @@
 ; OpenRISC 1000 architecture.  -*- Scheme -*-
-; Copyright 2000-2014 Free Software Foundation, Inc.
+; Copyright 2000-2019 Free Software Foundation, Inc.
 ; Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 ; Modified by Julius Baxter, juliusbaxter@gmail.com
 ; Modified by Peter Gavin, pgavin@gmail.com
+; Modified by Andrey Bacherov, avbacherov@opencores.org
 ;
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@
   (comment "OpenRISC 1000")
   (default-alignment aligned)
   (insn-lsb0? #t)
-  (machs or32 or32nd or64 or64nd)
+  (machs or32 or32nd)
   (isas openrisc)
 )
 
@@ -42,12 +43,10 @@
   (base-insn-bitsize 32)
   )
 
-(define-pmacro OR32-MACHS    or32,or32nd)
-(define-pmacro OR64-MACHS    or64,or64nd)
-(define-pmacro ORBIS-MACHS   or32,or32nd,or64,or64nd)
-(define-pmacro ORFPX-MACHS   or32,or32nd,or64,or64nd)
-(define-pmacro ORFPX32-MACHS or32,or32nd,or64,or64nd)
-(define-pmacro ORFPX64-MACHS or64,or64nd)
+(define-pmacro OR32-MACHS       or32,or32nd)
+(define-pmacro ORBIS-MACHS      or32,or32nd)
+(define-pmacro ORFPX32-MACHS    or32,or32nd)
+(define-pmacro ORFPX64A32-MACHS or32,or32nd) ; float64 for 32-bit machs
 
 (define-attr
   (for model)
@@ -76,7 +75,7 @@
 
       (define-mach
         (name or32nd)
-        (comment "Generic OpenRISC 1000 32-bit CPU")
+        (comment "Generic OpenRISC 1000 32-bit CPU with no branch delay slot")
         (cpu or1k32bf)
         (bfd-name "or1knd")
         )
@@ -91,37 +90,10 @@
 
       ; OpenRISC 1200 - 32-bit or1k CPU implementation
       (define-model
-        (name or1200nd) (comment "OpenRISC 1200 model")
+        (name or1200nd) (comment "OpenRISC 1200 model with no branch delay slot")
         (attrs NO-DELAY-SLOT)
         (mach or32nd)
         (unit u-exec "Execution Unit" () 1 1 () () () ())
-        )
-      )
-    )
-
-(if (keep-mach? (or64 or64nd))
-    (begin
-      (define-cpu
-        (name or1k64bf)
-        (comment "OpenRISC 1000 64-bit CPU family")
-        (insn-endian big)
-        (data-endian big)
-        (word-bitsize 64)
-        (file-transform "64")
-        )
-
-      (define-mach
-        (name or64)
-        (comment "Generic OpenRISC 1000 64-bit CPU")
-        (cpu or1k64bf)
-        (bfd-name "or1k64")
-        )
-
-      (define-mach
-        (name or64nd)
-        (comment "Generic OpenRISC 1000 ND 64-bit CPU")
-        (cpu or1k64bf)
-        (bfd-name "or1k64nd")
         )
       )
     )

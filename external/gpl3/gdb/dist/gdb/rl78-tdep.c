@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -32,7 +32,7 @@
 #include "frame-base.h"
 #include "value.h"
 #include "gdbcore.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "reggroups.h"
 
 #include "elf/rl78.h"
@@ -1048,8 +1048,8 @@ rl78_pointer_to_address (struct gdbarch *gdbarch,
     = extract_unsigned_integer (buf, TYPE_LENGTH (type), byte_order);
 
   /* Is it a code address?  */
-  if (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_FUNC
-      || TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_METHOD
+  if (TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_FUNC
+      || TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_METHOD
       || TYPE_CODE_SPACE (TYPE_TARGET_TYPE (type))
       || TYPE_LENGTH (type) == 4)
     return rl78_make_instruction_address (addr);
@@ -1082,14 +1082,6 @@ rl78_unwind_pc (struct gdbarch *arch, struct frame_info *next_frame)
   return rl78_addr_bits_remove
            (arch, frame_unwind_register_unsigned (next_frame,
 	                                          RL78_PC_REGNUM));
-}
-
-/* Implement the "unwind_sp" gdbarch method.  */
-
-static CORE_ADDR
-rl78_unwind_sp (struct gdbarch *arch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, RL78_SP_REGNUM);
 }
 
 /* Given a frame described by THIS_FRAME, decode the prologue of its
@@ -1470,7 +1462,6 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_skip_prologue (gdbarch, rl78_skip_prologue);
   set_gdbarch_unwind_pc (gdbarch, rl78_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, rl78_unwind_sp);
   set_gdbarch_frame_align (gdbarch, rl78_frame_align);
 
   dwarf2_append_unwinders (gdbarch);
@@ -1489,8 +1480,9 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register the above initialization routine.  */
 
+void _initialize_rl78_tdep ();
 void
-_initialize_rl78_tdep (void)
+_initialize_rl78_tdep ()
 {
   register_gdbarch_init (bfd_arch_rl78, rl78_gdbarch_init);
 }

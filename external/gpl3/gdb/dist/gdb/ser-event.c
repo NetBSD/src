@@ -1,5 +1,5 @@
 /* Serial interface for a selectable event.
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "defs.h"
 #include "ser-event.h"
 #include "serial.h"
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 
 /* On POSIX hosts, a serial_event is basically an abstraction for the
    classical self-pipe trick.
