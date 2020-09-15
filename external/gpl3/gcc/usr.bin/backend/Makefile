@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2020/09/06 10:50:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.63 2020/09/15 05:19:34 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -581,6 +581,7 @@ COPTS.tree-ssa-loop-ivopts.c+=-O0
 COPTS.tree-ssa-loop-manip.c+=-O0
 COPTS.tree-ssa-loop-niter.c+=-O0
 COPTS.tree-ssa-math-opts.c+=-O0
+COPTS.tree-ssa-phiopt.c+= -O0
 COPTS.tree-ssa-pre.c+=-O0
 COPTS.tree-ssa-reassoc.c+=-O0
 COPTS.tree-ssa-strlen.c+=-O0
@@ -599,6 +600,7 @@ COPTS.varasm.c+=-O0
 COPTS.vr-values.c+=-O0
 COPTS.web.c+=-O0
 COPTS.wide-int.cc+=-O0
+COPTS.wide-int-range.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif

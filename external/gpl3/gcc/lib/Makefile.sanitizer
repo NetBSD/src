@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.15 2020/09/12 15:01:38 kamil Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.16 2020/09/15 05:19:34 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -103,6 +103,7 @@ COPTS.sanitizer_printf.cc += -O1
 COPTS.sanitizer_procmaps_common.cc += -O1
 COPTS.sanitizer_stackdepot.cc += -O1
 COPTS.sanitizer_symbolizer_libcdep.cc += -O1
+COPTS.sanitizer_symbolizer_report.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
 .endif
