@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.72 2020/09/15 09:23:15 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.73 2020/09/15 09:28:20 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.72 2020/09/15 09:23:15 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.73 2020/09/15 09:28:20 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -390,9 +390,9 @@ ENTRY_NP(cpu_mpstart)
 1:
 	mrs	x8, sctlr_el1
 #ifdef __AARCH64EB__
-	orr	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* set: Big Endian */
+	orr	x8, x8, #(SCTLR_EE | SCTLR_E0E)	/* set: Big Endian */
 #else
-	bic	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* clear: Little Endian */
+	bic	x8, x8, #(SCTLR_EE | SCTLR_E0E)	/* clear: Little Endian */
 #endif
 	msr	sctlr_el1, x8
 	isb
