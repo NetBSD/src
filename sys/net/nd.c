@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.3 2020/09/15 10:05:36 roy Exp $	*/
+/*	$NetBSD: nd.c,v 1.4 2020/09/15 23:40:03 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.3 2020/09/15 10:05:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.4 2020/09/15 23:40:03 roy Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -57,7 +57,7 @@ nd_timer(void *arg)
 	struct psref psref;
 	struct mbuf *m = NULL;
 	bool send_ns = false;
-	uint16_t missed = 0;
+	int16_t missed = ND_LLINFO_NOSTATE;
 	union l3addr taddr, *daddrp = NULL;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
@@ -203,7 +203,7 @@ out:
 		LLE_FREE_LOCKED(ln);
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
-	if (missed)
+	if (missed != ND_LLINFO_NOSTATE)
 		nd->nd_missed(ifp, &taddr, missed, m);
 	if (ifp != NULL)
 		if_release(ifp, &psref);
