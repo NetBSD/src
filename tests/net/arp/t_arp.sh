@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.42 2020/09/13 14:36:32 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.43 2020/09/15 11:19:10 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -477,7 +477,7 @@ test_proxy_arp()
 		opts="pub proxy"
 	fi
 	# Always proxy only since migrating to lltable/llentry
-	title='permanent published \(proxy only\)'
+	title='published \(proxy only\)'
 
 	#
 	# Test#1: First setup an endpoint then create proxy arp entry
