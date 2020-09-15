@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.14 2020/01/17 17:06:33 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.15 2020/09/15 10:33:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.14 2020/01/17 17:06:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.15 2020/09/15 10:33:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -114,7 +114,7 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	    &acpi_fdt_power_funcs);
 
 	if (!acpi_probe())
-		aprint_error_dev(self, "failed to probe ACPI\n");
+		panic("ACPI subsystem failed to initialize");
 
 	memset(&aa, 0, sizeof(aa));
 #if NPCI > 0
