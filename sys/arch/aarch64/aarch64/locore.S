@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.71 2020/08/16 10:08:42 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.72 2020/09/15 09:23:15 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.71 2020/08/16 10:08:42 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.72 2020/09/15 09:23:15 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -373,6 +373,30 @@ printcpu:
 #endif /* DEBUG_LOCORE */
 
 ENTRY_NP(cpu_mpstart)
+
+	mrs	x8, CurrentEL
+	lsr	x8, x8, #2
+	cmp	x8, #0x2
+	b.lo	1f
+
+	mrs	x8, sctlr_el2
+#ifdef __AARCH64EB__
+	orr	x8, x8, #SCTLR_EE	/* set: Big Endian */
+#else
+	bic	x8, x8, #SCTLR_EE	/* clear: Little Endian */
+#endif
+	msr	sctlr_el2, x8
+	isb
+1:
+	mrs	x8, sctlr_el1
+#ifdef __AARCH64EB__
+	orr	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* set: Big Endian */
+#else
+	bic	x8, x8, #(SCTLR_EE | SCTLR_EOE)	/* clear: Little Endian */
+#endif
+	msr	sctlr_el1, x8
+	isb
+
 	mrs	x3, mpidr_el1
 	ldr	x0, =(MPIDR_AFF0 | MPIDR_AFF1 | MPIDR_AFF2 | MPIDR_AFF3)
 	and	x3, x3, x0
@@ -925,12 +949,6 @@ mmu_enable:
 	ldr	x1, sctlr_set
 	orr	x0, x0, x1
 
-	ldr	x1, sctlr_ee
-#ifdef __AARCH64EB__
-	orr	x0, x0, x1	/* set: BigEndian */
-#else
-	bic	x0, x0, x1	/* clear: LittleEndian */
-#endif
 	msr	sctlr_el1, x0	/* enabling MMU! */
 	isb
 
@@ -985,8 +1003,6 @@ tcr_setting:
 #endif
 
 
-sctlr_ee:
-	.quad (SCTLR_EE | SCTLR_EOE)	/* Endianness of Exception and EL0 */
 sctlr_set:
 	.quad ( \
 	    SCTLR_LSMAOE |  /* Load/Store Multiple Atomicity and Ordering */ \

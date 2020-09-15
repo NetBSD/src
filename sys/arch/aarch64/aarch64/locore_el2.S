@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.5 2020/09/05 17:49:26 jakllsch Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.6 2020/09/15 09:23:15 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.5 2020/09/05 17:49:26 jakllsch Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.6 2020/09/15 09:23:15 ryo Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -75,9 +75,9 @@ in_el2:
 
 	/* Set the bits that need to be 1 in SCTLR_EL1. */
 	ldr	x2, .Lsctlr_res1
-#ifdef __AARCH64EB__
-	orr	x2, x2, #SCTLR_EE
-#endif
+	mrs	x1, sctlr_el1
+	and	x1, x1, #(SCTLR_EE | SCTLR_EOE)	/* keep SCTLR_EL1.{EE,E0E} */
+	orr	x2, x2, x1
 	msr	sctlr_el1, x2
 
 	/* Don't trap to EL2 on FP instructions. */
