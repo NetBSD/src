@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.57 2020/09/04 15:50:09 thorpej Exp $ */
+/* $NetBSD: types.h,v 1.58 2020/09/16 04:07:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -78,6 +78,7 @@ typedef __register_t	register_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_CPU_DATA_FIRST
+/* #define __HAVE_FAST_SOFTINTS -- not yet */
 #define	__HAVE_CPU_UAREA_ROUTINES
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE___LWP_GETPRIVATE_FAST
