@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.84 2020/09/05 18:01:42 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.85 2020/09/16 04:07:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.84 2020/09/05 18:01:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.85 2020/09/16 04:07:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,6 +450,124 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	return (rv);
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
+
+#define	SOFTINT_CLOCK_MASK	__BIT(SOFTINT_CLOCK)
+#define	SOFTINT_BIO_MASK	__BIT(SOFTINT_BIO)
+#define	SOFTINT_NET_MASK	__BIT(SOFTINT_NET)
+#define	SOFTINT_SERIAL_MASK	__BIT(SOFTINT_SERIAL)
+
+#define	ALPHA_IPL1_SOFTINTS	(SOFTINT_CLOCK_MASK | SOFTINT_BIO_MASK)
+#define	ALPHA_IPL2_SOFTINTS	(SOFTINT_NET_MASK | SOFTINT_SERIAL_MASK)
+
+#define	ALPHA_ALL_SOFTINTS	(ALPHA_IPL1_SOFTINTS | ALPHA_IPL2_SOFTINTS)
+
+#define	SOFTINT_TO_IPL(si)						\
+	(ALPHA_PSL_IPL_SOFT_LO + ((ALPHA_IPL2_SOFTINTS >> (si)) & 1))
+
+#define	SOFTINTS_ELIGIBLE(ipl)						\
+	((ALPHA_ALL_SOFTINTS << ((ipl) << 1)) & ALPHA_ALL_SOFTINTS)
+
+/* Validate some assumptions the code makes. */
+__CTASSERT(SOFTINT_TO_IPL(SOFTINT_CLOCK) == ALPHA_PSL_IPL_SOFT_LO);
+__CTASSERT(SOFTINT_TO_IPL(SOFTINT_BIO) == ALPHA_PSL_IPL_SOFT_LO);
+__CTASSERT(SOFTINT_TO_IPL(SOFTINT_NET) == ALPHA_PSL_IPL_SOFT_HI);
+__CTASSERT(SOFTINT_TO_IPL(SOFTINT_SERIAL) == ALPHA_PSL_IPL_SOFT_HI);
+
+__CTASSERT(IPL_SOFTCLOCK == ALPHA_PSL_IPL_SOFT_LO);
+__CTASSERT(IPL_SOFTBIO == ALPHA_PSL_IPL_SOFT_LO);
+__CTASSERT(IPL_SOFTNET == ALPHA_PSL_IPL_SOFT_HI);
+__CTASSERT(IPL_SOFTSERIAL == ALPHA_PSL_IPL_SOFT_HI);
+
+__CTASSERT(SOFTINT_CLOCK_MASK & 0x3);
+__CTASSERT(SOFTINT_BIO_MASK & 0x3);
+__CTASSERT(SOFTINT_NET_MASK & 0xc);
+__CTASSERT(SOFTINT_SERIAL_MASK & 0xc);
+__CTASSERT(SOFTINT_COUNT == 4);
+
+__CTASSERT((ALPHA_ALL_SOFTINTS & ~0xfUL) == 0);
+__CTASSERT(SOFTINTS_ELIGIBLE(IPL_NONE) == ALPHA_ALL_SOFTINTS);
+__CTASSERT(SOFTINTS_ELIGIBLE(IPL_SOFTCLOCK) == ALPHA_IPL2_SOFTINTS);
+__CTASSERT(SOFTINTS_ELIGIBLE(IPL_SOFTBIO) == ALPHA_IPL2_SOFTINTS);
+__CTASSERT(SOFTINTS_ELIGIBLE(IPL_SOFTNET) == 0);
+__CTASSERT(SOFTINTS_ELIGIBLE(IPL_SOFTSERIAL) == 0);
+
+/*
+ * softint_trigger:
+ *
+ *	Trigger a soft interrupt.
+ */
+void
+softint_trigger(uintptr_t const machdep)
+{
+	/* No need for an atomic; called at splhigh(). */
+	KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) == ALPHA_PSL_IPL_HIGH);
+	curcpu()->ci_ssir |= machdep;
+}
+
+/*
+ * softint_init_md:
+ *
+ *	Machine-dependent initialization for a fast soft interrupt thread.
+ */
+void
+softint_init_md(lwp_t * const l, u_int const level, uintptr_t * const machdep)
+{
+	lwp_t ** lp = &l->l_cpu->ci_silwps[level];
+	KASSERT(*lp == NULL || *lp == l);
+	*lp = l;
+
+	const uintptr_t si_bit = __BIT(level);
+	KASSERT(si_bit & ALPHA_ALL_SOFTINTS);
+	*machdep = si_bit;
+}
+
+/*
+ * Helper macro.
+ *
+ * Dispatch a softint and then restart the loop so that higher
+ * priority softints are always done first.
+ */
+#define	DOSOFTINT(level)						\
+	if (ssir & SOFTINT_##level##_MASK) {				\
+		ci->ci_ssir &= ~SOFTINT_##level##_MASK;			\
+		alpha_softint_switchto(l, IPL_SOFT##level,		\
+		    ci->ci_silwps[SOFTINT_##level]);			\
+		KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) ==	\
+		    ALPHA_PSL_IPL_HIGH);				\
+		continue;						\
+	}								\
+
+/*
+ * alpha_softint_dispatch:
+ *
+ *	Process pending soft interrupts that are eligible to run
+ *	at the specified new IPL.  Must be called at splhigh().
+ */
+void
+alpha_softint_dispatch(int const ipl)
+{
+	struct lwp * const l = curlwp;
+	struct cpu_info * const ci = l->l_cpu;
+	unsigned long ssir;
+	const unsigned long eligible = SOFTINTS_ELIGIBLE(ipl);
+
+	KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) == ALPHA_PSL_IPL_HIGH);
+
+	for (;;) {
+		ssir = ci->ci_ssir & eligible;
+		if (ssir == 0)
+			break;
+
+		DOSOFTINT(SERIAL);
+		DOSOFTINT(NET);
+		DOSOFTINT(BIO);
+		DOSOFTINT(CLOCK);
+	}
+}
+
+#endif /* __HAVE_FAST_SOFTINTS */
+
 /*
  * spllower:
  *
@@ -457,40 +575,17 @@ badaddr_read(void *addr, size_t size, void *rptr)
  *	interrupts.
  */
 void
-spllower(int ipl)
+spllower(int const ipl)
 {
-
-	if (ipl == ALPHA_PSL_IPL_0 && curcpu()->ci_ssir) {
-		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT_LO);
-		softintr_dispatch();
-	}
-	(void) alpha_pal_swpipl(ipl);
-}
-
-/*
- * softintr_dispatch:
- *
- *	Process pending software interrupts.
- */
-void
-softintr_dispatch(void)
-{
-
-	/* XXX Nothing until alpha gets __HAVE_FAST_SOFTINTS */
-}
 
 #ifdef __HAVE_FAST_SOFTINTS
-/*
- * softint_trigger:
- *
- *	Trigger a soft interrupt.
- */
-void
-softint_trigger(uintptr_t machdep)
-{
-	atomic_or_ulong(&curcpu()->ci_ssir, 1 << (x))
+	if (ipl < ALPHA_PSL_IPL_SOFT_HI && curcpu()->ci_ssir) {
+		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
+		alpha_softint_dispatch(ipl);
+	}
+#endif /* __HAVE_FAST_SOFTINTS */
+	(void) alpha_pal_swpipl(ipl);
 }
-#endif
 
 /*
  * cpu_intr_p:

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.95 2020/09/05 18:01:42 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.96 2020/09/16 04:07:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
 #include <sys/cctr.h>
+#include <sys/intr.h>
 #include <machine/frame.h>
 
 /*
@@ -109,6 +110,8 @@ struct cpu_info {
 
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	volatile u_long ci_ssir;	/* simulated software interrupt reg */
+					/* LWPs for soft intr dispatch */
+	struct lwp *ci_silwps[SOFTINT_COUNT];
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 
 	struct pmap *ci_pmap;		/* currently-activated pmap */
