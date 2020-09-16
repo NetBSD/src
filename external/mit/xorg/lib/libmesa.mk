@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.11 2020/02/23 02:03:19 joerg Exp $
+#	$NetBSD: libmesa.mk,v 1.12 2020/09/16 18:19:23 nia Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -526,7 +526,6 @@ CPPFLAGS+=	\
 	-DHAVE_LIBDRM -DGLX_USE_DRM \
 	-DGLX_INDIRECT_RENDERING \
 	-DGLX_DIRECT_RENDERING \
-	-DGLX_USE_TLS \
 	-DHAVE_X11_PLATFORM \
 	-DHAVE_DRM_PLATFORM \
 	-DENABLE_SHADER_CACHE \

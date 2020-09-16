@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/02/23 02:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2020/09/16 18:19:24 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,6 @@ CPPFLAGS+=	\
 	-DGLX_USE_DRM \
 	-DGLX_INDIRECT_RENDERING \
 	-DGLX_DIRECT_RENDERING \
-	-DGLX_USE_TLS \
 	-DHAVE_X11_PLATFORM \
 	-DHAVE_DRM_PLATFORM \
 	-DENABLE_SHADER_CACHE \
