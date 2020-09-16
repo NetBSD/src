@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2738 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2739 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -281,3 +281,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	iavf(4): Add driver for Intel Ethernet Adaptive Virtual Function
 		[yamaguchi 20200908]
 	gcc(1): Install TSan for 64bit CPUs. [kamil 20200913]
+	network: IPv6 Neighor Detection is now address agnostic
+		and is used by ARP. RFC 7048 is included. [roy 20200916]
