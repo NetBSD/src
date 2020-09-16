@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.19 2019/12/11 07:33:55 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.20 2020/09/16 15:04:01 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
@@ -136,6 +136,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define	BM_PORT_GEN_CFG		BME1000_REG(BM_PORT_CTRL_PAGE, 17)
 
+#define	I82579_DFT_CTRL		BME1000_REG(BM_PORT_CTRL_PAGE, 20)
+
 #define	CV_SMB_CTRL		BME1000_REG(BM_PORT_CTRL_PAGE, 23)
 #define	CV_SMB_CTRL_FORCE_SMBUS	__BIT(0)
 
@@ -180,7 +182,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HV_MUX_DATA_CTRL_FORCE_SPEED	(1 << 2)
 #define HV_MUX_DATA_CTRL_GEN_TO_MAC	(1 << 10)
 
-#define I219_UNKNOWN1		BME1000_REG(776, 20)
+#define I82579_UNKNOWN1		BME1000_REG(776, 20)
+#define I82579_TX_PTR_GAP	0x1f
 
 #define I218_ULP_CONFIG1	BME1000_REG(779, 16)
 #define I218_ULP_CONFIG1_START		__BIT(0)
