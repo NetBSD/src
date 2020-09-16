@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.688 2020/09/16 15:04:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.689 2020/09/16 15:04:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.688 2020/09/16 15:04:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.689 2020/09/16 15:04:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4873,7 +4873,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
-		sc->sc_pba = PBA_26K;
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 1500 ?
+		    PBA_12K : PBA_26K;
 		break;
 	default:
 		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
