@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.46 2020/08/02 06:58:16 maxv Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.47 2020/09/16 18:24:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.46 2020/08/02 06:58:16 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.47 2020/09/16 18:24:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -205,15 +205,15 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
  *               0xffff_ffff_ffe0_0000  End of KVA
  *                                      = VM_MAX_KERNEL_ADDRESS
  *
- *               0xffff_ffc0_0???_????  End of kernel
+ *               0xffff_c000_0???_????  End of kernel
  *                                      = _end[]
- *               0xffff_ffc0_00??_????  Start of kernel
+ *               0xffff_c000_00??_????  Start of kernel
  *                                      = __kernel_text[]
  *
- *               0xffff_ffc0_0000_0000  Kernel base address & start of KVA
+ *               0xffff_c000_0000_0000  Kernel base address & start of KVA
  *                                      = VM_MIN_KERNEL_ADDRESS
  *
- *               0xffff_ffbf_ffff_ffff  End of direct mapped
+ *               0xffff_bfff_ffff_ffff  End of direct mapped
  *               0xffff_0000_0000_0000  Start of direct mapped
  *                                      = AARCH64_KSEG_START
  *                                      = AARCH64_KMEMORY_BASE
