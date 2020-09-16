@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.132 2020/09/05 18:01:42 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.133 2020/09/16 04:07:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.132 2020/09/05 18:01:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.133 2020/09/16 04:07:32 thorpej Exp $");
 
 #include "assym.h"
 
@@ -243,19 +243,28 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	LDGP(pv)
 
-	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
-	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
-	bne	t0, 5f				/* != 0: can't do AST or SIR */
+	ldq	s1, (FRAME_PS * 8)(sp)		/* s1 = new PSL */
+	and	s1, ALPHA_PSL_IPL_MASK, s3	/* s3 = new ipl */
+
+	/* --- BEGIN inline spllower() --- */
+
+	cmpult	s3, ALPHA_PSL_IPL_SOFT_HI, t1	/* new IPL < SOFT_HI? */
+	beq	t1, 5f				/* no, can't do AST or SI */
+	/* yes */
 
 	/* GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
 	mov	v0, s0				/* s0 = curlwp */
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* see if a soft interrupt is pending. */
 2:	ldq	t1, L_CPU(s0)			/* t1 = curlwp->l_cpu */
 	ldq	t1, CPU_INFO_SSIR(t1)		/* soft int pending? */
 	bne	t1, 6f				/* yes */
 	/* no */
+#endif /* __HAVE_FAST_SOFTINTS */
+
+	/* --- END inline spllower() --- */
 
 	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
 	beq	t0, 5f				/* no: just return */
@@ -282,16 +291,19 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	.set at
 	/* NOTREACHED */
 
-	/* We've got a SIR */
-6:	ldiq	a0, ALPHA_PSL_IPL_SOFT_LO
+#ifdef __HAVE_FAST_SOFTINTS
+	/* We've got a softint */
+6:	ldiq	a0, ALPHA_PSL_IPL_HIGH
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
-	CALL(softintr_dispatch)
+	mov	s3, a0				/* pass new ipl */
+	CALL(alpha_softint_dispatch)
 
-	/* SIR handled; restore IPL and check again */
+	/* SI handled; restore IPL and check again */
 	mov	s2, a0
 	call_pal PAL_OSF1_swpipl
 	br	2b
+#endif /* __HAVE_FAST_SOFTINTS */
 
 	/* We've got an AST */
 7:	stl	zero, L_MD_ASTPENDING(s0)	/* no AST pending */
@@ -643,13 +655,117 @@ LEAF(savectx, 1)
 
 /**************************************************************************/
 
+#ifdef __HAVE_FAST_SOFTINTS
+/*
+ * void alpha_softint_switchto(struct lwp *current, int ipl, struct lwp *next)
+ * Switch away from the current LWP to the specified softint LWP, and
+ * dispatch to softint processing.
+ * Aguments:
+ *	a0	'struct lwp *' of the LWP to switch from
+ *	a1	IPL that the softint will run at
+ *	a2	'struct lwp *' of the LWP to switch to
+ *
+ * N.B. We have arranged that a0 and a1 are already set up correctly
+ * for the call to softint_dispatch().
+ */
+NESTED_NOPROFILE(alpha_softint_switchto, 3, 16, ra, IM_RA, 0)
+	LDGP(pv)
+
+	ldq	a3, L_PCB(a0)			/* a3 = from->l_pcb */
+
+	lda	sp, -16(sp)			/* set up stack frame */
+	stq	ra, (16-8)(sp)			/* save ra */
+
+	/*
+	 * Step 1: Save the current LWP's context.  We don't
+	 * save the return address directly; instead, we arrange
+	 * for it to bounce through a trampoline that fixes up
+	 * the state in case the softint LWP blocks.
+	 */
+	stq	sp, PCB_HWPCB_KSP(a3)		/* store sp */
+	stq	s0, PCB_CONTEXT+(0 * 8)(a3)	/* store s0 - s6 */
+	stq	s1, PCB_CONTEXT+(1 * 8)(a3)
+	stq	s2, PCB_CONTEXT+(2 * 8)(a3)
+	stq	s3, PCB_CONTEXT+(3 * 8)(a3)
+	stq	s4, PCB_CONTEXT+(4 * 8)(a3)
+	stq	s5, PCB_CONTEXT+(5 * 8)(a3)
+	stq	s6, PCB_CONTEXT+(6 * 8)(a3)
+
+	/* Set the trampoline address in saved context. */
+	lda	v0, alpha_softint_return
+	stq	v0, PCB_CONTEXT+(7 * 8)(a3)	/* store ra */
+
+	/*
+	 * Step 2: Switch to the softint LWP's stack.
+	 * We always start at the top of the stack (i.e.
+	 * just below the trapframe).
+	 *
+	 * N.B. There is no need to restore any other registers
+	 * from the softint LWP's context; we are starting from
+	 * the root of the call graph.
+	 */
+	ldq	sp, L_MD_TF(a2)
+
+	/*
+	 * Step 3: Update curlwp.
+	 *
+	 * N.B. We save off the from-LWP argument that will be passed
+	 * to softint_dispatch() in s0, which we'll need to restore
+	 * before returning.  If we bounce through the trampoline, the
+	 * context switch will restore it for us.
+	 */
+	mov	a0, s0			/* s0 = from LWP */
+	SET_CURLWP(a2)			/* clobbers a0, v0, t0, t8..t11 */
+
+	/*
+	 * Step 4: Call softint_dispatch().
+	 *
+	 * N.B. a1 already has the IPL argument.
+	 */
+	mov	s0, a0			/* a0 = from LWP */
+	CALL(softint_dispatch)
+
+	/*
+	 * Step 5: Restore everything and return.
+	 */
+	ldq	a3, L_PCB(s0)			/* a3 = from->l_pcb */
+	SET_CURLWP(s0)			/* clobbers a0, v0, t0, t8..t11 */
+	ldq	sp, PCB_HWPCB_KSP(a3)		/* restore sp */
+	ldq	s0, PCB_CONTEXT+(0 * 8)(a3)	/* restore s0 */
+	ldq	ra, (16-8)(sp)			/* restore ra */
+	lda	sp, 16(sp)			/* pop stack frame */
+	RET
+	END(alpha_softint_switchto)
+
+LEAF_NOPROFILE(alpha_softint_return, 0)
+	/*
+	 * Step 1: Re-adjust the mutex count after mi_switch().
+	 */
+	GET_CURLWP
+	ldq	v0, L_CPU(v0)
+	ldl	t0, CPU_INFO_MTX_COUNT(v0)
+	addl	t0, 1, t0
+	stl	t0, CPU_INFO_MTX_COUNT(v0)
+
+	/*
+	 * Step 2: Pop alpha_softint_switchto()'s stack frame
+	 * and return.
+	 */
+	ldq	ra, (16-8)(sp)			/* restore ra */
+	lda	sp, 16(sp)			/* pop stack frame */
+	RET
+	END(alpha_softint_return)
+#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
- * struct lwp *cpu_switchto(struct lwp *current, struct lwp *next)
+ * struct lwp *cpu_switchto(struct lwp *current, struct lwp *next,
+ *                          bool returning)
  * Switch to the specified next LWP
  * Arguments:
  *	a0	'struct lwp *' of the LWP to switch from
  *	a1	'struct lwp *' of the LWP to switch to
+ *	a2	non-zero if we're returning to an interrupted LWP
+ *		from a soft interrupt
  */
 LEAF(cpu_switchto, 0)
 	LDGP(pv)
@@ -657,25 +773,37 @@ LEAF(cpu_switchto, 0)
 	/*
 	 * do an inline savectx(), to save old context
 	 */
-	ldq	a2, L_PCB(a0)
+	ldq	a3, L_PCB(a0)
 	/* NOTE: ksp is stored by the swpctx */
-	stq	s0, PCB_CONTEXT+(0 * 8)(a2)	/* store s0 - s6 */
-	stq	s1, PCB_CONTEXT+(1 * 8)(a2)
-	stq	s2, PCB_CONTEXT+(2 * 8)(a2)
-	stq	s3, PCB_CONTEXT+(3 * 8)(a2)
-	stq	s4, PCB_CONTEXT+(4 * 8)(a2)
-	stq	s5, PCB_CONTEXT+(5 * 8)(a2)
-	stq	s6, PCB_CONTEXT+(6 * 8)(a2)
-	stq	ra, PCB_CONTEXT+(7 * 8)(a2)	/* store ra */
+	stq	s0, PCB_CONTEXT+(0 * 8)(a3)	/* store s0 - s6 */
+	stq	s1, PCB_CONTEXT+(1 * 8)(a3)
+	stq	s2, PCB_CONTEXT+(2 * 8)(a3)
+	stq	s3, PCB_CONTEXT+(3 * 8)(a3)
+	stq	s4, PCB_CONTEXT+(4 * 8)(a3)
+	stq	s5, PCB_CONTEXT+(5 * 8)(a3)
+	stq	s6, PCB_CONTEXT+(6 * 8)(a3)
+	stq	ra, PCB_CONTEXT+(7 * 8)(a3)	/* store ra */
 
 	mov	a0, s4				/* save old curlwp */
 	mov	a1, s2				/* save new lwp */
 
+#ifdef __HAVE_FAST_SOFTINTS
+	/*
+	 * Check to see if we're doing a light-weight switch back to
+	 * an interrupted LWP (referred to as the "pinned" LWP) from
+	 * a softint LWP.  In this case we have been running on the
+	 * pinned LWP's context -- swpctx was not used to get here --
+	 * so we won't be using swpctx to go back, either.
+	 */
+	bne	a2, 3f			/* yes, go handle it */
+	/* no, normal context switch */
+#endif /* __HAVE_FAST_SOFTINTS */
+
 	/* Switch to the new PCB. */
 	ldq	a0, L_MD_PCBPADDR(s2)
-	call_pal PAL_OSF1_swpctx	/* clobbers a0, t0, t8-t11, a0 */
+	call_pal PAL_OSF1_swpctx	/* clobbers a0, t0, t8-t11, v0 */
 
-	SET_CURLWP(s2)			/* curlwp = l */
+1:	SET_CURLWP(s2)			/* curlwp = l */
 
 	/*
 	 * Now running on the new PCB.
@@ -687,15 +815,15 @@ LEAF(cpu_switchto, 0)
 	 */
 	ldq	a0, L_PROC(s2)			/* first ras_lookup() arg */
 	ldq	t0, P_RASLIST(a0)		/* any RAS entries? */
-	beq	t0, 1f				/* no, skip */
+	beq	t0, 2f				/* no, skip */
 	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
 	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
 	CALL(ras_lookup)			/* ras_lookup(p, PC) */
 	addq	v0, 1, t0			/* -1 means "not in ras" */
-	beq	t0, 1f
+	beq	t0, 2f
 	stq	v0, (FRAME_PC*8)(s1)
 
-1:
+2:
 	mov	s4, v0				/* return the old lwp */
 	/*
 	 * Restore registers and return.
@@ -711,6 +839,23 @@ LEAF(cpu_switchto, 0)
 	ldq	s0, PCB_CONTEXT+(0 * 8)(s0)		/* restore s0 */
 
 	RET
+
+#ifdef __HAVE_FAST_SOFTINTS
+3:	/*
+	 * Registers right now:
+	 *
+	 *	a0	old LWP
+	 *	a1	new LWP
+	 *	a3	old PCB
+	 *
+	 * What we need to do here is swap the stack, since we won't
+	 * be getting that from swpctx.
+	 */
+	ldq	a2, L_PCB(a1)			/* a2 = new PCB */
+	stq	sp, PCB_HWPCB_KSP(a3)		/* save old SP */
+	ldq	sp, PCB_HWPCB_KSP(a2)		/* restore new SP */
+	br	1b				/* finish up */
+#endif /* __HAVE_FAST_SOFTINTS */
 	END(cpu_switchto)
 
 /*

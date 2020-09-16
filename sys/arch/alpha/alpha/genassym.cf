@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.25 2020/09/05 18:01:42 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.26 2020/09/16 04:07:32 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -130,6 +130,7 @@ define	ALPHA_PSL_USERMODE	ALPHA_PSL_USERMODE
 define	ALPHA_PSL_IPL_MASK	ALPHA_PSL_IPL_MASK
 define	ALPHA_PSL_IPL_0		ALPHA_PSL_IPL_0
 define	ALPHA_PSL_IPL_SOFT_LO	ALPHA_PSL_IPL_SOFT_LO
+define	ALPHA_PSL_IPL_SOFT_HI	ALPHA_PSL_IPL_SOFT_HI
 define	ALPHA_PSL_IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 # pte bits
@@ -189,4 +190,5 @@ define	SYS_exit		SYS_exit
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLE_LWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_SSIR		offsetof(struct cpu_info, ci_ssir)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
