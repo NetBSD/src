@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.33 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.33.10.1 2020/09/16 13:31:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.33 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.33.10.1 2020/09/16 13:31:20 martin Exp $");
 
 #include "bio.h"
 
@@ -151,7 +151,7 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
 	chan->chan_nluns = 8;
-	chan->chan_ntargets = mpt->mpt_max_devices;
+	chan->chan_ntargets = mpt->mpt_max_devices ? mpt->mpt_max_devices : 256;
 	chan->chan_id = mpt->mpt_ini_id;
 
 	/*
