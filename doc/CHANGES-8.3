@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.35 2020/09/13 12:17:25 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.36 2020/09/16 13:32:11 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1050,4 +1050,9 @@ sys/netinet/tcp_input.c				1.420
 
 	PR/kern 55567: fix the data-only fast path.
 	[kardel, ticket #1604]
+
+sys/dev/ic/mpt_netbsd.c				1.37
+
+	mpt(4) may eroneously report a limit of zero devices.
+	[mlelstv, ticket #1605]
 
