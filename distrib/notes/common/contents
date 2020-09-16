@@ -1,6 +1,6 @@
-.\"	$NetBSD: contents,v 1.182 2020/08/07 00:43:48 snj Exp $
+.\"	$NetBSD: contents,v 1.183 2020/09/16 09:58:37 nia Exp $
 .\"
-.\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -562,34 +562,6 @@ These sets contain a
 \*V
 kernel, named
 .Pa /netbsd .
-You
-.Em must
-install the kernel that matches your hardware.
-.\}
-.el \{\
-.ie \n[evbarm] \{\
-.It Sy kern-INTEGRATOR
-(see below)
-.It Sy kern-IQ80310
-(see below)
-.It Sy kern-IQ80321
-(see below)
-.It Sy kern-MV2120
-(see below)
-.It Sy kern-SHEEVAPLUG
-(see below)
-.It Sy kern-TEAMASA_NPWR
-.Pp
-These sets contain a
-.Nx*M
-\*V
-kernel, named
-.Pa /netbsd .
-Some of these sets also contain a binary format kernel named
-.Pa /netbsd.bin
-and an S-record format kernel named
-.Pa /netbsd.srec
-that your firmware may need to boot.
 You
 .Em must
 install the kernel that matches your hardware.
