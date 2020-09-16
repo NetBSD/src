@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.47 2020/09/16 18:24:57 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.48 2020/09/16 18:26:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.47 2020/09/16 18:24:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.48 2020/09/16 18:26:15 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -216,7 +216,6 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
  *               0xffff_bfff_ffff_ffff  End of direct mapped
  *               0xffff_0000_0000_0000  Start of direct mapped
  *                                      = AARCH64_KSEG_START
- *                                      = AARCH64_KMEMORY_BASE
  *
  * Hole:         0xfffe_ffff_ffff_ffff
  *               0x0001_0000_0000_0000
