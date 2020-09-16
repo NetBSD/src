@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.687 2020/09/15 08:39:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.688 2020/09/16 15:04:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.687 2020/09/15 08:39:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.688 2020/09/16 15:04:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1016,6 +1016,8 @@ static int	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
 static int	wm_hv_phy_workarounds_ich8lan(struct wm_softc *);
 static void	wm_copy_rx_addrs_to_phy_ich8lan(struct wm_softc *);
+static void	wm_copy_rx_addrs_to_phy_ich8lan_locked(struct wm_softc *);
+static int	wm_lv_jumbo_workaround_ich8lan(struct wm_softc *, bool);
 static int	wm_lv_phy_workarounds_ich8lan(struct wm_softc *);
 static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
@@ -3802,7 +3804,7 @@ wm_set_filter(struct wm_softc *sc)
 	struct ether_multistep step;
 	bus_addr_t mta_reg;
 	uint32_t hash, reg, bit;
-	int i, size, ralmax;
+	int i, size, ralmax, rv;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -3928,6 +3930,17 @@ wm_set_filter(struct wm_softc *sc)
 	sc->sc_rctl |= RCTL_MPE;
 
  setit:
+	if (sc->sc_type >= WM_T_PCH2) {
+		if (((ec->ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
+		    && (ifp->if_mtu > ETHERMTU))
+			rv = wm_lv_jumbo_workaround_ich8lan(sc, true);
+		else
+			rv = wm_lv_jumbo_workaround_ich8lan(sc, false);
+		if (rv != 0)
+			device_printf(sc->sc_dev,
+			    "Failed to do workaround for jumbo frame.\n");
+	}
+
 	CSR_WRITE(sc, WMREG_RCTL, sc->sc_rctl);
 }
 
@@ -9312,7 +9325,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 					return;
 
 				rv = sc->phy.readreg_locked(dev, 2,
-				    I219_UNKNOWN1, &data);
+				    I82579_UNKNOWN1, &data);
 				if (rv) {
 					sc->phy.release(sc);
 					return;
@@ -9323,7 +9336,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 					data &= ~(0x3ff << 2);
 					data |= (0x18 << 2);
 					rv = sc->phy.writereg_locked(dev,
-					    2, I219_UNKNOWN1, data);
+					    2, I82579_UNKNOWN1, data);
 				}
 				sc->phy.release(sc);
 				if (rv)
@@ -9334,7 +9347,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 					return;
 
 				rv = sc->phy.writereg_locked(dev, 2,
-				    I219_UNKNOWN1, 0xc023);
+				    I82579_UNKNOWN1, 0xc023);
 				sc->phy.release(sc);
 				if (rv)
 					return;
@@ -15882,18 +15895,31 @@ release:
 static void
 wm_copy_rx_addrs_to_phy_ich8lan(struct wm_softc *sc)
 {
-	device_t dev = sc->sc_dev;
-	uint32_t mac_reg;
-	uint16_t i, wuce;
-	int count;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	if (sc->phy.acquire(sc) != 0)
 		return;
+
+	wm_copy_rx_addrs_to_phy_ich8lan_locked(sc);
+
+	sc->phy.release(sc);
+}
+
+static void
+wm_copy_rx_addrs_to_phy_ich8lan_locked(struct wm_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	uint32_t mac_reg;
+	uint16_t i, wuce;
+	int count;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(dev), __func__));
+
 	if (wm_enable_phy_wakeup_reg_access_bm(dev, &wuce) != 0)
-		goto release;
+		return;
 
 	/* Copy both RAL/H (rar_entry_count) and SHRAL/H to PHY */
 	count = wm_rar_count(sc);
@@ -15913,9 +15939,182 @@ wm_copy_rx_addrs_to_phy_ich8lan(struct wm_softc *sc)
 	}
 
 	wm_disable_phy_wakeup_reg_access_bm(dev, &wuce);
+}
 
-release:
+/*
+ *  wm_lv_jumbo_workaround_ich8lan - required for jumbo frame operation
+ *  with 82579 PHY
+ *  @enable: flag to enable/disable workaround when enabling/disabling jumbos
+ */
+static int
+wm_lv_jumbo_workaround_ich8lan(struct wm_softc *sc, bool enable)
+{
+	device_t dev = sc->sc_dev;
+	int rar_count;
+	int rv;
+	uint32_t mac_reg;
+	uint16_t dft_ctrl, data;
+	uint16_t i;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(dev), __func__));
+
+	if (sc->sc_type < WM_T_PCH2)
+		return 0;
+
+	/* Acquire PHY semaphore */
+	rv = sc->phy.acquire(sc);
+	if (rv != 0)
+		return rv;
+
+	/* Disable Rx path while enabling/disabling workaround */
+	sc->phy.readreg_locked(dev, 2, I82579_DFT_CTRL, &dft_ctrl);
+	if (rv != 0)
+		goto out;
+	rv = sc->phy.writereg_locked(dev, 2, I82579_DFT_CTRL,
+	    dft_ctrl | (1 << 14));
+	if (rv != 0)
+		goto out;
+
+	if (enable) {
+		/* Write Rx addresses (rar_entry_count for RAL/H, and
+		 * SHRAL/H) and initial CRC values to the MAC
+		 */
+		rar_count = wm_rar_count(sc);
+		for (i = 0; i < rar_count; i++) {
+			uint8_t mac_addr[ETHER_ADDR_LEN] = {0};
+			uint32_t addr_high, addr_low;
+
+			addr_high = CSR_READ(sc, WMREG_CORDOVA_RAH(i));
+			if (!(addr_high & RAL_AV))
+				continue;
+			addr_low = CSR_READ(sc, WMREG_CORDOVA_RAL(i));
+			mac_addr[0] = (addr_low & 0xFF);
+			mac_addr[1] = ((addr_low >> 8) & 0xFF);
+			mac_addr[2] = ((addr_low >> 16) & 0xFF);
+			mac_addr[3] = ((addr_low >> 24) & 0xFF);
+			mac_addr[4] = (addr_high & 0xFF);
+			mac_addr[5] = ((addr_high >> 8) & 0xFF);
+
+			CSR_WRITE(sc, WMREG_PCH_RAICC(i),
+			    ~ether_crc32_le(mac_addr, ETHER_ADDR_LEN));
+		}
+
+		/* Write Rx addresses to the PHY */
+		wm_copy_rx_addrs_to_phy_ich8lan_locked(sc);
+	}
+
+	/*
+	 * If enable ==
+	 *	true: Enable jumbo frame workaround in the MAC.
+	 *	false: Write MAC register values back to h/w defaults.
+	 */
+	mac_reg = CSR_READ(sc, WMREG_FFLT_DBG);
+	if (enable) {
+		mac_reg &= ~(1 << 14);
+		mac_reg |= (7 << 15);
+	} else
+		mac_reg &= ~(0xf << 14);
+	CSR_WRITE(sc, WMREG_FFLT_DBG, mac_reg);
+
+	mac_reg = CSR_READ(sc, WMREG_RCTL);
+	if (enable) {
+		mac_reg |= RCTL_SECRC;
+		sc->sc_rctl |= RCTL_SECRC;
+		sc->sc_flags |= WM_F_CRC_STRIP;
+	} else {
+		mac_reg &= ~RCTL_SECRC;
+		sc->sc_rctl &= ~RCTL_SECRC;
+		sc->sc_flags &= ~WM_F_CRC_STRIP;
+	}
+	CSR_WRITE(sc, WMREG_RCTL, mac_reg);
+
+	rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_CTRL, &data);
+	if (rv != 0)
+		goto out;
+	if (enable)
+		data |= 1 << 0;
+	else
+		data &= ~(1 << 0);
+	rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_CTRL, data);
+	if (rv != 0)
+		goto out;
+
+	rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_HD_CTRL, &data);
+	if (rv != 0)
+		goto out;
+	/*
+	 * XXX FreeBSD and Linux do the same thing that they set the same value
+	 * on both the enable case and the disable case. Is it correct?
+	 */
+	data &= ~(0xf << 8);
+	data |= (0xb << 8);
+	rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_HD_CTRL, data);
+	if (rv != 0)
+		goto out;
+
+	/*
+	 * If enable ==
+	 *	true: Enable jumbo frame workaround in the PHY.
+	 *	false: Write PHY register values back to h/w defaults.
+	 */
+	rv = sc->phy.readreg_locked(dev, 2, BME1000_REG(769, 23), &data);
+	if (rv != 0)
+		goto out;
+	data &= ~(0x7F << 5);
+	if (enable)
+		data |= (0x37 << 5);
+	rv = sc->phy.writereg_locked(dev, 2, BME1000_REG(769, 23), data);
+	if (rv != 0)
+		goto out;
+
+	rv = sc->phy.readreg_locked(dev, 2, BME1000_REG(769, 16), &data);
+	if (rv != 0)
+		goto out;
+	if (enable)
+		data &= ~(1 << 13);
+	else
+		data |= (1 << 13);
+	rv = sc->phy.writereg_locked(dev, 2, BME1000_REG(769, 16), data);
+	if (rv != 0)
+		goto out;
+
+	rv = sc->phy.readreg_locked(dev, 2, I82579_UNKNOWN1, &data);
+	if (rv != 0)
+		goto out;
+	data &= ~(0x3FF << 2);
+	if (enable)
+		data |= (I82579_TX_PTR_GAP << 2);
+	else
+		data |= (0x8 << 2);
+	rv = sc->phy.writereg_locked(dev, 2, I82579_UNKNOWN1, data);
+	if (rv != 0)
+		goto out;
+
+	rv = sc->phy.writereg_locked(dev, 2, BME1000_REG(776, 23),
+	    enable ? 0xf100 : 0x7e00);
+	if (rv != 0)
+		goto out;
+
+	rv = sc->phy.readreg_locked(dev, 2, HV_PM_CTRL, &data);
+	if (rv != 0)
+		goto out;
+	if (enable)
+		data |= 1 << 10;
+	else
+		data &= ~(1 << 10);
+	rv = sc->phy.writereg_locked(dev, 2, HV_PM_CTRL, data);
+	if (rv != 0)
+		goto out;
+
+	/* Re-enable Rx path after enabling/disabling workaround */
+	rv = sc->phy.writereg_locked(dev, 2, I82579_DFT_CTRL,
+	    dft_ctrl & ~(1 << 14));
+
+out:
 	sc->phy.release(sc);
+
+	return rv;
 }
 
 /*
