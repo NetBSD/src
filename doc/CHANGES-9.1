@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.111 2020/09/13 15:52:02 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.112 2020/09/16 13:30:42 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4979,4 +4979,9 @@ crypto/external/bsd/openssl/dist/crypto/engine/eng_devcrypto.c 1.8
 	PR 54740: restore fix, which acciently got lost during the
 	openssl 1.1.1e merge.
 	[tsutsui, ticket #1084]
+
+sys/dev/ic/mpt_netbsd.c				1.37
+
+	mpt(4) may eroneously report a limit of zero devices.
+	[mlelstv, ticket #1085]
 
