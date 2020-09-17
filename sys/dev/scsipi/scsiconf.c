@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.288 2020/07/11 14:31:46 kim Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.289 2020/09/17 01:19:41 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.288 2020/07/11 14:31:46 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.289 2020/09/17 01:19:41 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 
 	/*
 	 * Some HBAs provide an abstracted view of the bus; give them an
-	 * oppertunity to re-scan it before we do.
+	 * opportunity to re-scan it before we do.
 	 */
 	scsipi_adapter_ioctl(chan, SCBUSIOLLSCAN, NULL, 0, curproc);
 
@@ -809,10 +809,10 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	int locs[SCSIBUSCF_NLOCS];
 
 	/*
-	 * Assume no more luns to search after this one.
+	 * Assume no more LUNs to search after this one.
 	 * If we successfully get Inquiry data and after
 	 * merging quirks we find we can probe for more
-	 * luns, we will.
+	 * LUNs, we will.
 	 */
 	docontinue = 0;
 
@@ -893,7 +893,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		break;
 	}
 
-	/* Let the adapter driver handle the device separatley if it wants. */
+	/* Let the adapter driver handle the device separately if it wants. */
 	if (chan->chan_adapter->adapt_accesschk != NULL &&
 	    (*chan->chan_adapter->adapt_accesschk)(periph, &sa.sa_inqbuf))
 		goto bad;
