@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.186 2020/04/13 00:27:17 chs Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.187 2020/09/17 01:19:41 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.186 2020/04/13 00:27:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.187 2020/09/17 01:19:41 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -871,7 +871,7 @@ scsipi_print_cdb(struct scsipi_generic *cmd)
  *	Look at the returned sense and act on the error, determining
  *	the unix error number to pass back.  (0 = report no error)
  *
- *	NOTE: If we return ERESTART, we are expected to haved
+ *	NOTE: If we return ERESTART, we are expected to have
  *	thawed the device!
  *
  *	THIS IS THE DEFAULT ERROR HANDLER FOR SCSI DEVICES.
@@ -1208,7 +1208,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * If we request more data than the device can provide, it SHOULD just
 	 * return a short response.  However, some devices error with an
 	 * ILLEGAL REQUEST sense code, and yet others have even more special
-	 * failture modes (such as the GL641USB flash adapter, which goes loony
+	 * failure modes (such as the GL641USB flash adapter, which goes loony
 	 * and sends corrupted CRCs).  To work around this, and to bring our
 	 * behavior more in line with other OSes, we do a shorter inquiry,
 	 * covering all the SCSI-2 information, first, and then request more
@@ -1395,7 +1395,7 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
 /*
  * scsipi_get_opcodeinfo:
  *
- * query the device for supported commends and their timeout
+ * query the device for supported commands and their timeout
  * building a timeout lookup table if timeout information is available.
  */
 void
@@ -1514,7 +1514,7 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 
 /*
  * scsipi_update_timeouts:
- * 	Overide timeout value if device/config provided
+ * 	Override timeout value if device/config provided
  *      timeouts are available.
  */
 static void
@@ -1665,9 +1665,9 @@ scsipi_done(struct scsipi_xfer *xs)
 		/*
 		 * If it's a polling job, just return, to unwind the
 		 * call graph.  We don't need to restart the queue,
-		 * because pollings jobs are treated specially, and
+		 * because polling jobs are treated specially, and
 		 * are really only used during crash dumps anyway
-		 * (XXX or during boot-time autconfiguration of
+		 * (XXX or during boot-time autoconfiguration of
 		 * ATAPI devices).
 		 */
 		if (xs->xs_control & XS_CTL_POLL) {
@@ -1995,7 +1995,7 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 		xs->error = XS_RESET;
 		return;
 	case EIO:
-		 /* request sense coudn't be performed */
+		 /* request sense couldn't be performed */
 		/*
 		 * XXX this isn't quite right but we don't have anything
 		 * better for now
@@ -2266,7 +2266,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		}
 	}
 
-	/* If the adaptor wants us to poll, poll. */
+	/* If the adapter wants us to poll, poll. */
 	if (chan->chan_adapter->adapt_flags & SCSIPI_ADAPT_POLL_ONLY)
 		xs->xs_control |= XS_CTL_POLL;
 
@@ -2338,7 +2338,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		goto restarted;
 
 	/*
-	 * If it was meant to run async and we cleared aync ourselve,
+	 * If it was meant to run async and we cleared async ourselves,
 	 * don't return an error here. It has already been handled
 	 */
 	if (oasync)
