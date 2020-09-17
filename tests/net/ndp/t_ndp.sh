@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.38 2020/03/15 21:15:25 roy Exp $
+#	$NetBSD: t_ndp.sh,v 1.39 2020/09/17 11:56:35 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -464,9 +464,8 @@ ndp_rtm_body()
 	rump.route -n monitor -c 1 > $file &
 	pid=$!
 	sleep 1
-	# nd6_mmaxtries = 3, second between each try
 	atf_check -s exit:1 -o ignore -e ignore \
-		rump.ping6 -n -X 3 -c 3 $IP6DST_FAIL1
+		rump.ping6 -n -X 1 -c 1 $IP6DST_FAIL1
 	wait $pid
 	$DEBUG && cat $file
 
