@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/09/17 16:36:38 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/09/17 16:45:35 christos Exp $
 
 NOCTF=
 #HOSTPROG_CXX=   1
@@ -16,6 +16,7 @@ GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 SRCS=		${G_OBJECTS:.o=.c}
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS+=	-I${.CURDIR} \
+		-I. \
 		-I${DIST} \
 		-I${DIST}/libctf \
 		-I${DIST}/gnulib/import \
@@ -33,6 +34,14 @@ CPPFLAGS+=	-I${.CURDIR} \
 		${GCPPFLAGS:M-D*}
 
 CWARNFLAGS.clang+=	-Wno-switch
+
+CLEANDIRFILES+= ctf-error.h
+
+${G_OBJECTS}: ctf-error.h
+
+ctf-error.h: ${DIST}/libctf/mkerrors.sed ${DIST}/include/ctf-api.h
+	${TOOL_SED} -nf ${DIST}/libctf/mkerrors.sed < ${DIST}/include/ctf-api.h > $@
+
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
