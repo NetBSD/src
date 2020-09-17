@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.41 2020/05/25 07:52:16 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.42 2020/09/17 17:09:59 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.41 2020/05/25 07:52:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.42 2020/09/17 17:09:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ virtio_set_status(struct virtio_softc *sc, int status)
  *	virtio_reset(sc);	     // this will stop the device activity
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
- *	virtio_reinit_begin(sc);     // dequeue prohibitted
+ *	virtio_reinit_start(sc);     // dequeue prohibitted
  *	newfeatures = virtio_negotiate_features(sc, requestedfeatures);
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
