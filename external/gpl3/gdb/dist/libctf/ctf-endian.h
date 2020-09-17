@@ -24,14 +24,22 @@
 #include <stdint.h>
 #include "swap.h"
 
-#if !defined (HAVE_ENDIAN_H) || !defined (htole64)
-#ifndef WORDS_BIGENDIAN
-# define htole64(x) (x)
-# define le64toh(x) (x)
-#else
-# define htole64(x) bswap_64 ((x))
-# define le64toh(x) bswap_64 ((x))
-#endif /* WORDS_BIGENDIAN */
+#if !defined (HAVE_ENDIAN_H)
+# ifndef WORDS_BIGENDIAN
+#  ifndef htole64
+#   define htole64(x) (x)
+#  endif
+#  ifndef le64toh
+#   define le64toh(x) (x)
+#  endif
+# else
+#  ifndef htole64
+#   define htole64(x) bswap_64 ((x))
+#  endif
+#  ifndef le64toh
+#   define le64toh(x) bswap_64 ((x))
+#  endif
+# endif /* WORDS_BIGENDIAN */
 #endif /* !defined(HAVE_ENDIAN_H) */
 
 #endif /* !defined(_CTF_ENDIAN_H) */
