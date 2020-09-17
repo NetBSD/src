@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.133 2020/09/16 04:07:32 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.134 2020/09/17 00:48:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.133 2020/09/16 04:07:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.134 2020/09/17 00:48:56 thorpej Exp $");
 
 #include "assym.h"
 
@@ -256,13 +256,11 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	GET_CURLWP
 	mov	v0, s0				/* s0 = curlwp */
 
-#ifdef __HAVE_FAST_SOFTINTS
 	/* see if a soft interrupt is pending. */
 2:	ldq	t1, L_CPU(s0)			/* t1 = curlwp->l_cpu */
 	ldq	t1, CPU_INFO_SSIR(t1)		/* soft int pending? */
 	bne	t1, 6f				/* yes */
 	/* no */
-#endif /* __HAVE_FAST_SOFTINTS */
 
 	/* --- END inline spllower() --- */
 
@@ -291,7 +289,6 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	.set at
 	/* NOTREACHED */
 
-#ifdef __HAVE_FAST_SOFTINTS
 	/* We've got a softint */
 6:	ldiq	a0, ALPHA_PSL_IPL_HIGH
 	call_pal PAL_OSF1_swpipl
@@ -303,7 +300,6 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	mov	s2, a0
 	call_pal PAL_OSF1_swpipl
 	br	2b
-#endif /* __HAVE_FAST_SOFTINTS */
 
 	/* We've got an AST */
 7:	stl	zero, L_MD_ASTPENDING(s0)	/* no AST pending */
@@ -655,7 +651,6 @@ LEAF(savectx, 1)
 
 /**************************************************************************/
 
-#ifdef __HAVE_FAST_SOFTINTS
 /*
  * void alpha_softint_switchto(struct lwp *current, int ipl, struct lwp *next)
  * Switch away from the current LWP to the specified softint LWP, and
@@ -755,7 +750,6 @@ LEAF_NOPROFILE(alpha_softint_return, 0)
 	lda	sp, 16(sp)			/* pop stack frame */
 	RET
 	END(alpha_softint_return)
-#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * struct lwp *cpu_switchto(struct lwp *current, struct lwp *next,
@@ -787,7 +781,6 @@ LEAF(cpu_switchto, 0)
 	mov	a0, s4				/* save old curlwp */
 	mov	a1, s2				/* save new lwp */
 
-#ifdef __HAVE_FAST_SOFTINTS
 	/*
 	 * Check to see if we're doing a light-weight switch back to
 	 * an interrupted LWP (referred to as the "pinned" LWP) from
@@ -797,7 +790,6 @@ LEAF(cpu_switchto, 0)
 	 */
 	bne	a2, 3f			/* yes, go handle it */
 	/* no, normal context switch */
-#endif /* __HAVE_FAST_SOFTINTS */
 
 	/* Switch to the new PCB. */
 	ldq	a0, L_MD_PCBPADDR(s2)
@@ -840,7 +832,6 @@ LEAF(cpu_switchto, 0)
 
 	RET
 
-#ifdef __HAVE_FAST_SOFTINTS
 3:	/*
 	 * Registers right now:
 	 *
@@ -855,7 +846,6 @@ LEAF(cpu_switchto, 0)
 	stq	sp, PCB_HWPCB_KSP(a3)		/* save old SP */
 	ldq	sp, PCB_HWPCB_KSP(a2)		/* restore new SP */
 	br	1b				/* finish up */
-#endif /* __HAVE_FAST_SOFTINTS */
 	END(cpu_switchto)
 
 /*

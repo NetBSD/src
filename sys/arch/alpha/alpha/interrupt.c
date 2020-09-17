@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.85 2020/09/16 04:07:32 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.86 2020/09/17 00:48:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.85 2020/09/16 04:07:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.86 2020/09/17 00:48:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,9 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	return (rv);
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
+/*
+ * Fast soft interrupt support.
+ */
 
 #define	SOFTINT_CLOCK_MASK	__BIT(SOFTINT_CLOCK)
 #define	SOFTINT_BIO_MASK	__BIT(SOFTINT_BIO)
@@ -467,6 +469,8 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 #define	SOFTINTS_ELIGIBLE(ipl)						\
 	((ALPHA_ALL_SOFTINTS << ((ipl) << 1)) & ALPHA_ALL_SOFTINTS)
+
+#ifdef __HAVE_FAST_SOFTINTS
 
 /* Validate some assumptions the code makes. */
 __CTASSERT(SOFTINT_TO_IPL(SOFTINT_CLOCK) == ALPHA_PSL_IPL_SOFT_LO);
@@ -522,6 +526,17 @@ softint_init_md(lwp_t * const l, u_int const level, uintptr_t * const machdep)
 	*machdep = si_bit;
 }
 
+#else /* ! __HAVE_FAST_SOFTINTS */
+
+/* Temporary stub for alpha_softint_switchto(). */
+void
+softint_dispatch(struct lwp * const pinned __unused, int const s __unused)
+{
+	panic("softint_dispatch");
+}
+
+#endif /* __HAVE_FAST_SOFTINTS */
+
 /*
  * Helper macro.
  *
@@ -547,6 +562,7 @@ softint_init_md(lwp_t * const l, u_int const level, uintptr_t * const machdep)
 void
 alpha_softint_dispatch(int const ipl)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	struct lwp * const l = curlwp;
 	struct cpu_info * const ci = l->l_cpu;
 	unsigned long ssir;
@@ -564,9 +580,11 @@ alpha_softint_dispatch(int const ipl)
 		DOSOFTINT(BIO);
 		DOSOFTINT(CLOCK);
 	}
+#else
+	panic("alpha_softint_dispatch");
+#endif /* __HAVE_FAST_SOFTINTS */
 }
 
-#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * spllower:
@@ -578,12 +596,10 @@ void
 spllower(int const ipl)
 {
 
-#ifdef __HAVE_FAST_SOFTINTS
 	if (ipl < ALPHA_PSL_IPL_SOFT_HI && curcpu()->ci_ssir) {
 		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
 		alpha_softint_dispatch(ipl);
 	}
-#endif /* __HAVE_FAST_SOFTINTS */
 	(void) alpha_pal_swpipl(ipl);
 }
 

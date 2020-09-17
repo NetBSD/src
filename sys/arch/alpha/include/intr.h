@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.76 2020/09/16 04:07:32 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.77 2020/09/17 00:48:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -155,11 +155,9 @@ _splraise(int s)
 
 #include <sys/spl.h>
 
-#ifdef __HAVE_FAST_SOFTINTS
 /* Fast soft interrupt dispatch. */
 void	alpha_softint_dispatch(int);
 void	alpha_softint_switchto(struct lwp *, int, struct lwp *);
-#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
