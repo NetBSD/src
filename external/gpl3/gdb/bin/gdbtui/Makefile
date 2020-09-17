@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/12/13 21:52:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2020/09/17 20:26:22 christos Exp $
 NOCTF=
 .include "../Makefile.inc"
 
@@ -9,14 +9,19 @@ PROG=		gdbtui
 
 SRCS=		tui-main.c
 CPPFLAGS+=	-I${.CURDIR} \
-		-I${GDBARCHDIR} \
+		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib \
 		-I${DIST}/gdb \
-		-I${DIST}/gdb/common \
+		-I${DIST}/gdbsupport \
 		-I${DIST}/gdb/config \
-		-I${DIST}/gdb/gnulib/import \
+		-I${DIST}/gnulib/import \
 		-I${DIST}/include/opcode \
+		-I${DIST}/readline \
+		-I${DIST}/libdecnumber \
 		-I${DIST} \
 		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
@@ -31,11 +36,14 @@ HOST_CC:=		${HOST_CXX}
 CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
-LIBOPCODESDIR!=   cd ${.CURDIR}/../../lib/libopcodes   && ${PRINTOBJDIR}
-LIBBFDDIR!=       cd ${.CURDIR}/../../lib/libbfd       && ${PRINTOBJDIR}
-LIBIBERTYDIR!=    cd ${.CURDIR}/../../lib/libiberty    && ${PRINTOBJDIR}
-LIBGDBDIR!=	  cd ${.CURDIR}/../../lib/libgdb       && ${PRINTOBJDIR}
-LIBDECNUMBERDIR!= cd ${.CURDIR}/../../lib/libdecnumber && ${PRINTOBJDIR}
+LIBCTFDIR!=	     cd ${.CURDIR}/../../lib/libctf	   && ${PRINTOBJDIR}
+LIBGNULIBDIR!=	     cd ${.CURDIR}/../../lib/libgnulib	   && ${PRINTOBJDIR}
+LIBGDBSUPPORTDIR!=   cd ${.CURDIR}/../../lib/libgdbsupport && ${PRINTOBJDIR}
+LIBOPCODESDIR!=	     cd ${.CURDIR}/../../lib/libopcodes	   && ${PRINTOBJDIR}
+LIBBFDDIR!=	     cd ${.CURDIR}/../../lib/libbfd	   && ${PRINTOBJDIR}
+LIBIBERTYDIR!=	     cd ${.CURDIR}/../../lib/libiberty	   && ${PRINTOBJDIR}
+LIBGDBDIR!=	     cd ${.CURDIR}/../../lib/libgdb	   && ${PRINTOBJDIR}
+LIBDECNUMBERDIR!=    cd ${.CURDIR}/../../lib/libdecnumber  && ${PRINTOBJDIR}
 
 .if ${USE_LIBEDIT} == yes
 LIBEDIT=-ledit
@@ -63,6 +71,9 @@ DPADD+=		${SIMOBJ}/libsim.a
 LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 	-L${LIBBFDDIR} -lbfd \
 	-L${LIBDECNUMBERDIR} -ldecnumber \
+	-L${LIBGDBSUPPORTDIR} -lgdbsupport \
+	-L${LIBCTFDIR} -lctf \
+	-L${LIBGNULIBDIR} -lgnulib \
 	${LIBRL} \
 	-lterminfo \
 	-L${LIBIBERTYDIR} -liberty
