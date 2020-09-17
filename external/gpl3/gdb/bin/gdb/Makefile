@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2020/09/17 02:17:51 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2020/09/17 16:38:10 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -42,11 +42,14 @@ stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
 
-LIBOPCODESDIR!=   cd ${.CURDIR}/../../lib/libopcodes   && ${PRINTOBJDIR}
-LIBBFDDIR!=       cd ${.CURDIR}/../../lib/libbfd       && ${PRINTOBJDIR}
-LIBIBERTYDIR!=    cd ${.CURDIR}/../../lib/libiberty    && ${PRINTOBJDIR}
-LIBGDBDIR!=	  cd ${.CURDIR}/../../lib/libgdb       && ${PRINTOBJDIR}
-LIBDECNUMBERDIR!= cd ${.CURDIR}/../../lib/libdecnumber && ${PRINTOBJDIR}
+LIBCTFDIR!=	     cd ${.CURDIR}/../../lib/libctf	   && ${PRINTOBJDIR}
+LIBGNULIBDIR!=	     cd ${.CURDIR}/../../lib/libgnulib	   && ${PRINTOBJDIR}
+LIBGDBSUPPORTDIR!=   cd ${.CURDIR}/../../lib/libgdbsupport && ${PRINTOBJDIR}
+LIBOPCODESDIR!=	     cd ${.CURDIR}/../../lib/libopcodes	   && ${PRINTOBJDIR}
+LIBBFDDIR!=	     cd ${.CURDIR}/../../lib/libbfd	   && ${PRINTOBJDIR}
+LIBIBERTYDIR!=	     cd ${.CURDIR}/../../lib/libiberty	   && ${PRINTOBJDIR}
+LIBGDBDIR!=	     cd ${.CURDIR}/../../lib/libgdb	   && ${PRINTOBJDIR}
+LIBDECNUMBERDIR!=    cd ${.CURDIR}/../../lib/libdecnumber  && ${PRINTOBJDIR}
 
 .if ${USE_LIBEDIT} == yes
 LIBRL=-ledit
@@ -75,6 +78,9 @@ DPADD+=		${SIMOBJ}/libsim.a
 LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 	-L${LIBBFDDIR} -lbfd \
 	-L${LIBDECNUMBERDIR} -ldecnumber \
+	-L${LIBGDBSUPPORTDIR} -lgdbsupport \
+	-L${LIBCTFDIR} -lctf \
+	-L${LIBGNULIBDIR} -lgnulib \
 	${LIBRL} \
 	-lterminfo \
 	-L${LIBIBERTYDIR} -liberty
@@ -82,6 +88,9 @@ LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBBFDDIR}/libbfd.a \
 	${LIBDECNUMBERDIR}/libdecnumber.a \
+	${LIBGDBSUPPORTDIR}/libgdbsupport.a \
+	${LIBCTFDIR}/libctf.a \
+	${LIBGNULIBDIR}/libgnulib.a \
 	${LIBRLDP} \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
