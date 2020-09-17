@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.5 2020/09/10 03:20:08 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.5 2020/09/10 03:20:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.5 2020/09/10 03:20:08 yamaguchi Exp $"
 #include <sys/queue.h>
 #include <sys/syslog.h>
 #include <sys/workqueue.h>
+#include <sys/xcall.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -626,6 +627,13 @@ static struct iavf_module_params iavf_params = {
 #define iavf_allqueues(_sc)	((1 << ((_sc)->sc_nqueue_pairs)) - 1)
 
 static inline void
+iavf_intr_barrier(void)
+{
+
+	/* make all interrupt handler finished */
+	xc_barrier(0);
+}
+static inline void
 iavf_intr_enable(struct iavf_softc *sc)
 {
 
@@ -965,37 +973,39 @@ iavf_detach(device_t self, int flags)
 		return 0;
 
 	iavf_stop(ifp, 1);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-	ifmedia_fini(&sc->sc_media);
-	if_percpuq_destroy(sc->sc_ipq);
-
-	iavf_intr_disable(sc);
-
-	mutex_enter(&sc->sc_adminq_lock);
-	mutex_exit(&sc->sc_adminq_lock);
 
 	/*
 	 * set a dummy function to halt callout safely
 	 * even if a workqueue entry calls callout_schedule()
 	 */
 	callout_setfunc(&sc->sc_tick, iavf_tick_halt, sc);
-
 	iavf_work_wait(sc->sc_workq, &sc->sc_reset_task);
-	iavf_work_wait(sc->sc_workq, &sc->sc_arq_refill);
 	iavf_work_wait(sc->sc_workq, &sc->sc_wdto_task);
-	iavf_workq_destroy(sc->sc_workq);
-	sc->sc_workq = NULL;
 
 	callout_halt(&sc->sc_tick, NULL);
 	callout_destroy(&sc->sc_tick);
 
+	/* detach the I/F before stop adminq due to callbacks */
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
+	if_percpuq_destroy(sc->sc_ipq);
+
+	iavf_intr_disable(sc);
+	iavf_intr_barrier();
+	iavf_work_wait(sc->sc_workq, &sc->sc_arq_refill);
+
+	mutex_enter(&sc->sc_adminq_lock);
 	iavf_cleanup_admin_queue(sc);
+	mutex_exit(&sc->sc_adminq_lock);
 	iavf_aqb_clean(&sc->sc_atq_idle, sc->sc_dmat);
 	iavf_aqb_clean(&sc->sc_arq_idle, sc->sc_dmat);
 	iavf_dmamem_free(sc->sc_dmat, &sc->sc_arq);
 	iavf_dmamem_free(sc->sc_dmat, &sc->sc_atq);
 	cv_destroy(&sc->sc_adminq_cv);
+
+	iavf_workq_destroy(sc->sc_workq);
+	sc->sc_workq = NULL;
 
 	iavf_queue_pairs_free(sc);
 	iavf_teardown_interrupts(sc);
