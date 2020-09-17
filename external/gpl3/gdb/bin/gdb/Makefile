@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/12/13 21:52:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2020/09/17 02:17:51 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -12,11 +12,14 @@ PROG=		gdb
 SRCS=		gdb.c
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
+		-I${GDBARCHDIR}/gnulib/import \
 		-I${DIST}/gdb \
-		-I${DIST}/gdb/common \
+		-I${DIST}/gdbsupport \
 		-I${DIST}/gdb/config \
-		-I${DIST}/gdb/gnulib/import \
+		-I${DIST}/gnulib/import \
 		-I${DIST}/include/opcode \
+		-I${DIST}/readline \
+		-I${DIST}/libdecnumber \
 		-I${DIST} \
 		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \

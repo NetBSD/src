@@ -2,7 +2,7 @@
 /* Generated from: NetBSD: mknative-gdb,v 1.8 2019/05/29 01:56:06 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-/* generated for  x86_64--netbsd-gcc (NetBSD nb1 20190930) 8.3.0 */
+/* generated for  x86_64--netbsd-gcc (NetBSD ) 9.3.0 */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1

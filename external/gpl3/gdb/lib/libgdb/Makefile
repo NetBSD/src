@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2020/09/07 00:24:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2020/09/17 02:17:52 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -17,13 +17,15 @@ SRCS=		${G_LIBGDB_OBS:.o=.c}
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
-		-I${DIST}/gdb \
-		-I${DIST}/gdb/config \
-		-I${DIST}/gdb/common \
-		-I${DIST}/gdb/gnulib/import \
-		-I${DIST}/include/opcode \
-		-I${DIST}/libdecnumber \
+		-I${GDBARCHDIR}/gnulib/import \
 		-I${DIST} \
+		-I${DIST}/gdb \
+		-I${DIST}/gdbsupport \
+		-I${DIST}/gdb/config \
+		-I${DIST}/gnulib/import \
+		-I${DIST}/include/opcode \
+		-I${DIST}/readline \
+		-I${DIST}/libdecnumber \
 		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
@@ -48,6 +50,7 @@ CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 .PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
     ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
     ${DIST}/gdb/nat ${DIST}/gdb/guile ${DIST}/gdb/compile ${DIST}/gdb/doc \
+    ${DIST}/gdb/dwarf2 ${DIST}/gdb/unittests \
     ${GDBARCHDIR}
 
 #
