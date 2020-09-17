@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.9 2020/09/17 02:14:48 christos Exp $
+#	$NetBSD: mknative-gdb.old,v 1.1 2020/09/17 02:14:48 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -71,12 +71,12 @@ get_gdb_libreadline () {
 	mkdir -p $_TOP/$_READLINE/arch/$_MACHINE_SUBDIR
 
 	{
-		getvars readline/readline/Makefile \
+		getvars readline/Makefile \
 			CCFLAGS OBJECTS
 	} | write_mk $_READLINE/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_READLINE/arch/$_MACHINE_SUBDIR/config.h \
-		<$_TMPDIR/readline/readline/config.h
+		<$_TMPDIR/readline/config.h
 }
 
 ##### gdb/lib/libdecnumber #####
@@ -91,7 +91,7 @@ get_gdb_libdecnumber () {
 	write_mk $_DECNUMBER/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_DECNUMBER/arch/$_MACHINE_SUBDIR/config.h \
-		<$_TMPDIR/readline/readline/config.h
+		<$_TMPDIR/readline/config.h
 
 	write_c $_DECNUMBER/arch/$_MACHINE_SUBDIR/gstdint.h \
 		< $_TMPDIR/libdecnumber/gstdint.h
@@ -101,8 +101,7 @@ get_gdb_libdecnumber () {
 
 get_gdb_libgdb () {
 	local _GDBP=$_GDB/lib/libgdb
-	mkdir -p $_TOP/$_GDBP/arch/$_MACHINE_SUBDIR/gnulib/import
-	mkdir -p $_TOP/$_GDBP/arch/$_MACHINE_SUBDIR/gdbsupport/import
+	mkdir -p $_TOP/$_GDBP/arch/$_MACHINE_SUBDIR/build-gnulib
 
 	{
 		getvars gdb/Makefile \
@@ -110,7 +109,6 @@ get_gdb_libgdb () {
 	} | sed -e s@arch/@@g -e s@cli/@@g -e s@common/agent@common-agent@ \
 		-e s@common/@@g -e s@compile/@@g -e s@guile/@@g -e s@mi/@@g \
 		-e s@nat/@@g -e s@python/@@g -e s@target/@@g \
-		-e s@dwarf2/@@g -e s@unittests/@@g \
 		-e s@tui/@@g | write_mk $_GDBP/arch/$_MACHINE_SUBDIR/defs.mk
 
 #	getvars gdb/gdbserver/Makefile \
@@ -118,35 +116,17 @@ get_gdb_libgdb () {
 #		| write_mk $_GDB/bin/gdb/arch/$_MACHINE_SUBDIR/gdbserver.mk
 
 	for i in config.h version.c init.c \
-	    xml-builtin.c jit-reader.h
+	    xml-builtin.c build-gnulib/config.h jit-reader.h
 	do
 	    write_c $_GDBP/arch/$_MACHINE_SUBDIR/$i \
 		< $_TMPDIR/gdb/$i
 	done
-	
-	for i in gnulib/config.h gdbsupport/config.h \
-	    gnulib/import/alloca.h gnulib/import/ctype.h \
-	    gnulib/import/dirent.h gnulib/import/fcntl.h \
-	    gnulib/import/fnmatch.h gnulib/import/glob.h \
-	    gnulib/import/inttypes.h gnulib/import/limits.h \
-	    gnulib/import/locale.h gnulib/import/math.h \
-	    gnulib/import/signal.h gnulib/import/stdint.h \
-	    gnulib/import/stdio.h gnulib/import/stdlib.h \
-	    gnulib/import/string.h gnulib/import/time.h \
-	    gnulib/import/unistd.h gnulib/import/wchar.h \
-	    gnulib/import/wctype.h
-	do
-	    write_c $_GDBP/arch/$_MACHINE_SUBDIR/$i \
-		< $_TMPDIR/$i
-	done
 
 	for f in nm tm xm; do
-		if [ ! -f $_TMPDIR/gdb/$f.h ]; then 
-			continue
+		if [ -f $_TMPDIR/gdb/$f.h ]; then 
+			ls -l $_TMPDIR/gdb/$f.h | sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' \
+				| write_c $_GDBP/arch/$_MACHINE_SUBDIR/$f.h
 		fi
-		ls -l $_TMPDIR/gdb/$f.h | \
-			sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' | \
-			write_c $_GDBP/arch/$_MACHINE_SUBDIR/$f.h
 	done
 
 	local _LIBSIM=$_GDB/lib/libsim
