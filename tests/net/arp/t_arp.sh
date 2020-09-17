@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.43 2020/09/15 11:19:10 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.44 2020/09/17 11:51:01 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -717,9 +717,8 @@ arp_rtm_body()
 	rump.route -n monitor -c 1 > $file &
 	pid=$!
 	sleep 1
-	# arp_maxtries = 5, second between each try
 	atf_check -s exit:2 -o ignore -e ignore \
-		rump.ping -n -w 10 -c 10 $IP4DST_FAIL1
+		rump.ping -n -w 1 -c 1 $IP4DST_FAIL1
 	wait $pid
 	$DEBUG && cat $file
 
