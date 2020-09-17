@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.104 2020/04/05 21:03:08 christos Exp $
+# $NetBSD: rc.subr,v 1.105 2020/09/17 20:29:03 otis Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -322,7 +322,7 @@ kill_pids()
 {
 	local signal=$1
 	shift
-	local list="$@"
+	local list="$*"
 	local j=
 	local nlist=
 	for j in $list; do
@@ -343,14 +343,15 @@ wait_for_pids()
 {
 	local ntries=0
 	local prefix=
-	local list="$@"
+	local nlist=
+	local list="$*"
 
 	if [ -z "$list" ]; then
 		return
 	fi
 
 	while true; do
-		local nlist=$(kill_pids 0 $list)
+		nlist=$(kill_pids 0 $list)
 		if [ -z "$nlist" ]; then
 			break
 		fi
