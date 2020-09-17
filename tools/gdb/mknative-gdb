@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.9 2020/09/17 02:14:48 christos Exp $
+#	$NetBSD: mknative-gdb,v 1.10 2020/09/17 16:05:34 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -85,8 +85,7 @@ get_gdb_libdecnumber () {
 	local _DECNUMBER=$_GDB/lib/libdecnumber
 	mkdir -p $_TOP/$_DECNUMBER/arch/$_MACHINE_SUBDIR
 
-	getvars libdecnumber/Makefile \
-		libdecnumber_a_OBJS |
+	getvars libdecnumber/Makefile libdecnumber_a_OBJS |
 	sed -e s/libdecnumber_a_// |
 	write_mk $_DECNUMBER/arch/$_MACHINE_SUBDIR/defs.mk
 
@@ -97,7 +96,60 @@ get_gdb_libdecnumber () {
 		< $_TMPDIR/libdecnumber/gstdint.h
 }
 
-##### gdb/lib/libgdb #####
+##### gdb/lib/libgdbsupport #####
+
+get_gdb_libgdbsupport () {
+	local _GDBSUPPORT=$_GDB/lib/libgdbsupport
+	mkdir -p $_TOP/$_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport
+
+	getvars gdbsupport/Makefile libgdbsupport_a_OBJECTS |
+	sed -e s/libgdbsupport_a_// |
+	write_mk $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport/config.h \
+		<$_TMPDIR/gdbsupport/config.h
+}
+
+get_gdb_libctf () {
+	local _CTF=$_GDB/lib/libctf
+	mkdir -p $_TOP/$_CTF/arch/$_MACHINE_SUBDIR
+
+	getvars libctf/Makefile libctf_la_OBJECTS |
+	sed -e s/libctf_la_// -e 's/\.lo/.o/g' -e s/libctf_la-//g |
+	write_mk $_CTF/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_CTF/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/libctf/config.h
+}
+
+##### gdb/lib/libgnulib #####
+
+get_gdb_libgnulib () {
+	local _GNULIB=$_GDB/lib/libgnulib
+	mkdir -p $_TOP/$_GNULIB/arch/$_MACHINE_SUBDIR/import
+
+	(getvars gnulib/Makefile gl_LIBOBJS |
+	sed -e s/gl_LIB// &&
+	getvars gnulib/import/Makefile libgnu_a_OBJECTS |
+	sed -e s/libgnu_a_// -e s@glthread/@@g -e s@malloc/@@g) |
+	write_mk $_GNULIB/arch/$_MACHINE_SUBDIR/defs.mk
+
+	for i in config.h \
+	    import/alloca.h import/ctype.h \
+	    import/dirent.h import/fcntl.h \
+	    import/fnmatch.h import/glob.h \
+	    import/inttypes.h import/limits.h \
+	    import/locale.h import/math.h \
+	    import/signal.h import/stdint.h \
+	    import/stdio.h import/stdlib.h \
+	    import/string.h import/time.h \
+	    import/unistd.h import/wchar.h \
+	    import/wctype.h
+	do
+	    write_c $_GNULIB/arch/$_MACHINE_SUBDIR/$i \
+		< $_TMPDIR/gnulib/$i
+	done
+}
 
 get_gdb_libgdb () {
 	local _GDBP=$_GDB/lib/libgdb
@@ -124,21 +176,6 @@ get_gdb_libgdb () {
 		< $_TMPDIR/gdb/$i
 	done
 	
-	for i in gnulib/config.h gdbsupport/config.h \
-	    gnulib/import/alloca.h gnulib/import/ctype.h \
-	    gnulib/import/dirent.h gnulib/import/fcntl.h \
-	    gnulib/import/fnmatch.h gnulib/import/glob.h \
-	    gnulib/import/inttypes.h gnulib/import/limits.h \
-	    gnulib/import/locale.h gnulib/import/math.h \
-	    gnulib/import/signal.h gnulib/import/stdint.h \
-	    gnulib/import/stdio.h gnulib/import/stdlib.h \
-	    gnulib/import/string.h gnulib/import/time.h \
-	    gnulib/import/unistd.h gnulib/import/wchar.h \
-	    gnulib/import/wctype.h
-	do
-	    write_c $_GDBP/arch/$_MACHINE_SUBDIR/$i \
-		< $_TMPDIR/$i
-	done
 
 	for f in nm tm xm; do
 		if [ ! -f $_TMPDIR/gdb/$f.h ]; then 
@@ -182,6 +219,9 @@ get_gdb_libgdb () {
 case $1 in
 all|gdb)	# everything (uses "canadian cross" temp environment)
 	get_gdb_libgdb
+	get_gdb_libgdbsupport
+	get_gdb_libctf
+	get_gdb_libgnulib
 	get_gdb_libbfd
 	get_gdb_libopcodes
 	get_gdb_libiberty
