@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.208 2020/08/10 06:46:27 rin Exp $
+# $NetBSD: HACKS,v 1.209 2020/09/18 14:09:47 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -40,10 +40,18 @@ kcah
 hack	static linking with libpthread
 mdate	7 May 2019
 who	maya
-file	lib/libpthread/Makefile 1.92 -> 1.94
+file	src/lib/libpthread/Makefile 1.92 -> 1.94
 descr
 	To avoid some libc thread stub functions being picked up
 	in static builds, link pthread as one section.
+kcah
+
+hack	disable optimization for gcc-9.3 in src/lib/libc/gdtoa/strtod.c
+mdate	18 Sep 2020
+who	christos
+file    src/lib/libc/gdtoa/strtod.c 1.15 -> 1.16
+descr
+	See PR/55668, the program there causes infinite loop
 kcah
 
 hack	gcc-5.3 optimizes memset+malloc -> calloc inside calloc
