@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.39 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.40 2020/09/18 00:07:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,11 @@ extern int bootdev_debug;
 extern int alpha_fp_sync_complete;
 extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 
-void	XentArith(uint64_t, uint64_t, uint64_t);		/* MAGIC */
+void	XentArith(uint64_t, uint64_t, uint64_t);	/* MAGIC */
 void	XentIF(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	XentInt(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	XentMM(uint64_t, uint64_t, uint64_t);		/* MAGIC */
-void	XentRestart(void);					/* MAGIC */
+void	XentRestart(void);				/* MAGIC */
 void	XentSys(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	XentUna(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	alpha_init(u_long, u_long, u_long, u_long, u_long);
@@ -86,7 +86,8 @@ int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
 uint64_t console_restart(struct trapframe *);
 void	do_sir(void);
-void	exception_return(void);					/* MAGIC */
+void	exception_return(void);				/* MAGIC */
+void	alpha_kthread_backstop(void);			/* MAGIC */
 void	frametoreg(const struct trapframe *, struct reg *);
 void	init_bootstrap_console(void);
 void	init_prom_interface(unsigned long, struct rpb *);

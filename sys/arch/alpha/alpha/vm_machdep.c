@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.116 2020/08/29 20:06:59 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.117 2020/09/18 00:06:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2020/08/29 20:06:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.117 2020/09/18 00:06:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,20 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 	(void) l;
+}
+
+/*
+ * This is a backstop used to ensure that kernel threads never do
+ * something silly like attempt to return to userspace.  We achieve
+ * this by putting this at the root of their call graph instead of
+ * exception_return().
+ */
+void
+alpha_kthread_backstop(void)
+{
+	struct lwp * const l = curlwp;
+
+	panic("kthread lwp %p (%s) hit the backstop", l, l->l_name);
 }
 
 /*
@@ -130,6 +144,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	{
 		struct trapframe *l2tf;
+		uint64_t call_root;
 
 		/*
 		 * Pick a stack pointer, leaving room for a trapframe;
@@ -148,12 +163,24 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		l2tf->tf_regs[FRAME_A4] = 1;		/* is child */
 
+		/*
+		 * Normal LWPs have their return address set to
+		 * exception_return() so that they'll pop into
+		 * user space.  But kernel threads don't have
+		 * a user space, so we put a backtop in place
+		 * just in case they try.
+		 */
+		if (__predict_true(l2->l_proc != &proc0))
+			call_root = (uint64_t)exception_return;
+		else
+			call_root = (uint64_t)alpha_kthread_backstop;
+
 		pcb2->pcb_hw.apcb_ksp =
 		    (uint64_t)l2->l_md.md_tf;
 		pcb2->pcb_context[0] =
 		    (uint64_t)func;			/* s0: pc */
 		pcb2->pcb_context[1] =
-		    (uint64_t)exception_return;		/* s1: ra */
+		    call_root;				/* s1: ra */
 		pcb2->pcb_context[2] =
 		    (uint64_t)arg;			/* s2: arg */
 		pcb2->pcb_context[3] =
