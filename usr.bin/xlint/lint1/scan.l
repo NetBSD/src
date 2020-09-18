@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.91 2019/11/09 19:54:09 christos Exp $ */
+/* $NetBSD: scan.l,v 1.92 2020/09/18 14:19:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.91 2019/11/09 19:54:09 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.92 2020/09/18 14:19:08 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -265,6 +265,7 @@ static	struct	kwtab {
 	{ "noinline",	T_AT_NOINLINE,	0,	0,	0,	  0,0,1,1,5 },
 	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0,0,1,1,5 },
 	{ "nothrow",	T_AT_NOTHROW,	0,	0,	0,	  0,0,1,1,5 },
+	{ "optimize",	T_AT_OPTIMIZE,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_PACKED,	0,	0,	0,	  0,0,0,0,2 },
 	{ "pcs",	T_AT_PCS,	0,	0,	0,	  0,0,0,0,5 },
