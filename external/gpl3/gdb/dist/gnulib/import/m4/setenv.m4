@@ -39,6 +39,8 @@ AC_DEFUN([gl_FUNC_SETENV],
          *-gnu* | gnu*) gl_cv_func_setenv_works="guessing yes" ;;
                         # Guess yes on musl systems.
          *-musl*)       gl_cv_func_setenv_works="guessing yes" ;;
+                        # Guess yes on bsd systems.
+         *bsd*)         gl_cv_func_setenv_works="guessing yes" ;;
                         # If we don't know, obey --enable-cross-guesses.
          *)             gl_cv_func_setenv_works="$gl_cross_guess_normal" ;;
        esac
@@ -131,6 +133,8 @@ int unsetenv (const char *name);
       [case "$host_os" in
                  # Guess yes on glibc systems.
          *-gnu*) gl_cv_func_unsetenv_works="guessing yes" ;;
+                 # Guess yes on bsd systems.
+         *bsd*)  gl_cv_func_unsetenv_works="guessing yes" ;;
                  # If we don't know, obey --enable-cross-guesses.
          *)      gl_cv_func_unsetenv_works="$gl_cross_guess_normal" ;;
        esac
