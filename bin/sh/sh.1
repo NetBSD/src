@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.227 2020/08/25 19:42:02 kre Exp $
+.\"	$NetBSD: sh.1,v 1.228 2020/09/18 06:48:28 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd August 20, 2020
+.Dd September 18, 2020
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -2591,6 +2591,35 @@ same time it is exported (or unexported, etc) by writing
 .Pp
 .Dl export [-nx] name=value
 .Pp
+Note that in such a usage, the
+.Dq name=value
+argument often needs to be quoted,
+more often than is required of an assignment statement,
+as, like with any other command, the command name and
+arguments are all subject to the various expansions,
+including filename expansion and field splitting,
+before the
+.Ic export
+command is invoked.
+With the default value for
+.Dv IFS :
+.Bd -unfilled -compact -offset indent
+X='a b c'
+export Y=$X
+.Ed
+the command invoked would be
+.Dl "export Y=a b c"
+exporting
+.Dv Y ,
+with the value
+.Dq a
+and also exporting the variables named
+.Dq b
+and
+.Dq c ,
+which is probably not as intended.
+.Ed
+.Pp
 With no arguments the export command lists the names of all
 set exported variables,
 or if
@@ -3060,12 +3089,15 @@ Note that any variable references on the command line will have
 been expanded before
 .Ic local
 is executed, so expressions like
-.Pp
-.Dl "local -N X=${X}"
+.Bd -unfilled -offset indent
+local -N X="${X}"
+.Ed
 .Pp
 are well defined, first $X is expanded, and then the command run is
-.Pp
-.Dl "local -N X=old-value-of-X"
+.Dl "local -N X='old-value-of-X'"
+See the description of the
+.Ic export
+built-in command for notes on why quoting the value is required.
 .Pp
 After arranging to preserve the old value and attributes, of
 .Dv X
@@ -3268,6 +3300,10 @@ The shell allows the value of a variable
 to be set at the same time it is marked read only by writing
 .Pp
 .Dl readonly name=value
+.Pp
+where the value often needs to be quoted, as explained for the
+.Ic export
+command.
 .Pp
 With no arguments the
 .Ic readonly
