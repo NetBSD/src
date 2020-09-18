@@ -47,6 +47,8 @@ AC_DEFUN([gl_FUNC_STAT],
               linux-* | linux) gl_cv_func_stat_file_slash="guessing yes" ;;
                                # Guess yes on glibc systems.
               *-gnu* | gnu*)   gl_cv_func_stat_file_slash="guessing yes" ;;
+                               # Guess yes on bsd systems.
+              *bsd*)           gl_cv_func_stat_file_slash="guessing yes" ;;
                                # If we don't know, obey --enable-cross-guesses.
               *)               gl_cv_func_stat_file_slash="$gl_cross_guess_normal" ;;
             esac

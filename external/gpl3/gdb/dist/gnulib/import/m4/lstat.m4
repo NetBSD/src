@@ -59,6 +59,9 @@ AC_DEFUN([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK],
           *-gnu* | gnu*)
             # Guess yes on glibc systems.
             gl_cv_func_lstat_dereferences_slashed_symlink="guessing yes" ;;
+          *bsd*)
+            # Guess yes on bsd systems.
+            gl_cv_func_lstat_dereferences_slashed_symlink="guessing yes" ;;
           mingw*)
             # Guess no on native Windows.
             gl_cv_func_lstat_dereferences_slashed_symlink="guessing no" ;;

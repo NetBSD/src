@@ -38,6 +38,8 @@ AC_DEFUN([gl_FUNC_READLINK],
             linux-* | linux) gl_cv_func_readlink_works="guessing yes" ;;
                              # Guess yes on glibc systems.
             *-gnu* | gnu*)   gl_cv_func_readlink_works="guessing yes" ;;
+                             # Guess yes on bsd systems.
+            *bsd*)           gl_cv_func_readlink_works="guessing yes" ;;
                              # If we don't know, obey --enable-cross-guesses.
             *)               gl_cv_func_readlink_works="$gl_cross_guess_normal" ;;
           esac
