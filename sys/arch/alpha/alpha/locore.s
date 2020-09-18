@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.134 2020/09/17 00:48:56 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.135 2020/09/18 00:11:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.134 2020/09/17 00:48:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.135 2020/09/18 00:11:31 thorpej Exp $");
 
 #include "assym.h"
 
@@ -159,8 +159,17 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 
 	/*
 	 * All ready to go!  Call main()!
+	 *
+	 * We're going to play a little trick there, though.  We are
+	 * going to fake our return address as the kthread backstop.
+	 * Hitting the backstop will trigger a panic, and we want lwp0
+	 * to work like other kthreads in that regard.  We will still
+	 * leep the "main returned" backstop here in case something
+	 * goes horribly wrong.
 	 */
-	CALL(main)
+	lda	ra, alpha_kthread_backstop
+	jsr	s0, main
+	ldgp	gp, 0(s0)
 
 	/* This should never happen. */
 	PANIC("main() returned",Lmain_returned_pmsg)
@@ -669,7 +678,7 @@ NESTED_NOPROFILE(alpha_softint_switchto, 3, 16, ra, IM_RA, 0)
 	ldq	a3, L_PCB(a0)			/* a3 = from->l_pcb */
 
 	lda	sp, -16(sp)			/* set up stack frame */
-	stq	ra, (16-8)(sp)			/* save ra */
+	stq	ra, 0(sp)			/* save ra */
 
 	/*
 	 * Step 1: Save the current LWP's context.  We don't
@@ -727,7 +736,7 @@ NESTED_NOPROFILE(alpha_softint_switchto, 3, 16, ra, IM_RA, 0)
 	SET_CURLWP(s0)			/* clobbers a0, v0, t0, t8..t11 */
 	ldq	sp, PCB_HWPCB_KSP(a3)		/* restore sp */
 	ldq	s0, PCB_CONTEXT+(0 * 8)(a3)	/* restore s0 */
-	ldq	ra, (16-8)(sp)			/* restore ra */
+	ldq	ra, 0(sp)			/* restore ra */
 	lda	sp, 16(sp)			/* pop stack frame */
 	RET
 	END(alpha_softint_switchto)
@@ -746,7 +755,7 @@ LEAF_NOPROFILE(alpha_softint_return, 0)
 	 * Step 2: Pop alpha_softint_switchto()'s stack frame
 	 * and return.
 	 */
-	ldq	ra, (16-8)(sp)			/* restore ra */
+	ldq	ra, 0(sp)			/* restore ra */
 	lda	sp, 16(sp)			/* pop stack frame */
 	RET
 	END(alpha_softint_return)
@@ -851,20 +860,22 @@ LEAF(cpu_switchto, 0)
 /*
  * lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_lwp_fork().
+ * Arrange for a function to be invoked neatly, after a cpu_lwp_fork(),
+ * which has set up our pcb_context for us.  But we actually *get here*
+ * via cpu_switchto(), which returns the LWP we switched away from in v0.
  *
  * Invokes the function specified by the s0 register with the return
  * address specified by the s1 register and with one argument specified
  * by the s2 register.
  */
 LEAF_NOPROFILE(lwp_trampoline, 0)
-	mov	v0, a0
-	mov	s3, a1
-	CALL(lwp_startup)
-	mov	s0, pv
-	mov	s1, ra
-	mov	s2, a0
-	jmp	zero, (pv)
+	mov	v0, a0		/* a0 = prev_lwp (from cpu_switchto()) */
+	mov	s3, a1		/* a1 = new_lwp (that's us!) */
+	CALL(lwp_startup)	/* lwp_startup(prev_lwp, new_lwp); */
+	mov	s0, pv		/* pv = func */
+	mov	s1, ra		/* ra = (probably exception_return()) */
+	mov	s2, a0		/* a0 = arg */
+	jmp	zero, (pv)	/* func(arg) */
 	END(lwp_trampoline)
 
 /**************************************************************************/
