@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.15 2019/08/01 02:27:43 riastradh Exp $ */
+/* $NetBSD: strtod.c,v 1.16 2020/09/18 14:06:45 christos Exp $ */
 
 /****************************************************************
 
@@ -90,16 +90,16 @@ sulp
 	}
 #endif /*}*/
 
+#if __GNUC_PREREQ__(9, 3)
+__attribute__((__optimize__("O0")))
+#endif
 static double
 _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 {
 #ifdef Avoid_Underflow
 	int scale;
 #endif
-#ifdef INFNAN_CHECK
-	int decpt;
-#endif
-	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
+	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, decpt, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj;
@@ -133,10 +133,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #endif /*}}*/
 #endif /*}*/
 
-#ifdef INFNAN_CHECK
-	decpt = 0;
-#endif
-	sign = nz0 = nz = 0;
+	sign = nz0 = nz = decpt = 0;
 	dval(&rv) = 0.;
 	for(s = s00;;s++) switch(*s) {
 		case '-':
@@ -203,7 +200,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 	for(nd = nf = 0; (c = *s) >= '0' && c <= '9'; nd++, s++)
 		if (nd < 9)
 			y = 10*y + c - '0';
-		else if (nd < 16)
+		else if (nd < DBL_DIG + 2)
 			z = 10*z + c - '0';
 	nd0 = nd;
 #ifdef USE_LOCALE
@@ -217,9 +214,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 	if (c == '.') {
 		c = *++s;
 #endif
-#ifdef INFNAN_CHECK
 		decpt = 1;
-#endif
 		if (!nd) {
 			for(; c == '0'; c = *++s)
 				nz++;
@@ -239,11 +234,11 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 				for(i = 1; i < nz; i++)
 					if (nd++ < 9)
 						y *= 10;
-					else if (nd <= DBL_DIG + 1)
+					else if (nd <= DBL_DIG + 2)
 						z *= 10;
 				if (nd++ < 9)
 					y = 10*y + c;
-				else if (nd <= DBL_DIG + 1)
+				else if (nd <= DBL_DIG + 2)
 					z = 10*z + c;
 				nz = 0;
 				}
@@ -344,7 +339,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 
 	if (!nd0)
 		nd0 = nd;
-	k = nd < DBL_DIG + 1 ? nd : DBL_DIG + 1;
+	k = nd < DBL_DIG + 2 ? nd : DBL_DIG + 2;
 	dval(&rv) = y;
 	if (k > 9) {
 #ifdef SET_INEXACT
@@ -555,6 +550,10 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 				if (!dval(&rv)) {
  undfl:
 					dval(&rv) = 0.;
+#ifdef Honor_FLT_ROUNDS
+					if (Rounding == 2)
+						word1(&rv) = 1;
+#endif
 					goto range_err;
 					}
 #ifndef Avoid_Underflow
@@ -977,7 +976,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #ifdef Avoid_Underflow
 			if (scale && y <= 2*P*Exp_msk1) {
 				if (aadj <= 0x7fffffff) {
-					if ((z = aadj) == 0)
+					if ((z = aadj) <= 0)
 						z = 1;
 					aadj = z;
 					dval(&aadj1) = dsign ? aadj : -aadj;
