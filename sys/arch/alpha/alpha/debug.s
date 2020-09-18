@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.12 2009/08/20 21:34:03 skrll Exp $ */
+/* $NetBSD: debug.s,v 1.13 2020/09/18 00:04:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.12 2009/08/20 21:34:03 skrll Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.13 2020/09/18 00:04:58 thorpej Exp $")
 
 #include "opt_multiprocessor.h"
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 /*
@@ -64,17 +65,30 @@ BSS(debug_stack_bottom, DEBUG_STACK_SIZE)
  *		a3	kernel trap entry point
  *		a4	frame pointer
  */
-NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
+NESTED_NOPROFILE(alpha_debug, 5, 64, ra,
+    IM_RA|IM_S0|IM_S1|IM_S2|IM_S3|IM_S4|IM_S5, 0)
 	br	pv, 1f
 1:	LDGP(pv)
 	lda	t0, FRAME_SIZE*8(a4)	/* what would sp have been? */
 	stq	t0, FRAME_SP*8(a4)	/* belatedly save sp for ddb view */
-	lda	sp, -32(sp)		/* set up stack frame */
-	stq	ra, (32-8)(sp)		/* save ra */
-	stq	s0, (32-16)(sp)		/* save s0 */
+	lda	sp, -64(sp)		/* set up stack frame */
+	stq	s0, (0*8)(sp)		/* save s0 ... */
+	stq	s1, (1*8)(sp)
+	stq	s2, (2*8)(sp)
+	stq	s3, (3*8)(sp)
+	stq	s4, (4*8)(sp)
+	stq	s5, (5*8)(sp)		/* ... through s5 */
+	stq	ra, (6*8)(sp)		/* save ra */
 
 	/* Remember our current stack pointer. */
-	mov	sp, s0
+	mov	sp, s5
+
+	/* Save off our arguments. */
+	mov	a0, s0
+	mov	a1, s1
+	mov	a2, s2
+	mov	a3, s3
+	mov	a4, s4
 
 #if defined(MULTIPROCESSOR)
 	/* Pause all other CPUs. */
@@ -95,19 +109,24 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 
 2:	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
 
-3:	/* Dispatch to the debugger - arguments are already in place. */
+3:	/* Dispatch to the debugger. */
 #if defined(KGDB)
-	mov	a3, a0			/* a0 == entry (trap type) */
-	mov	a4, a1			/* a1 == frame pointer */
+	mov	s3, a0			/* a0 == entry (trap type) */
+	mov	s4, a1			/* a1 == frame pointer */
 	CALL(kgdb_trap)
 	br	9f
 #endif
 #if defined(DDB)
+	mov	s0, a1			/* same arguments as the call */
+	mov	s1, a1			/* to alpha_debug() */
+	mov	s2, a2			/* (these may have been clobbered */
+	mov	s3, a3			/* when pausing other CPUs.) */
+	mov	s4, a4
 	CALL(ddb_trap)
 	br	9f
 #endif
 9:	/* Debugger return value in v0; switch back to our previous stack. */
-	mov	s0, sp
+	mov	s5, sp
 
 #if defined(MULTIPROCESSOR)
 	mov	v0, s0
@@ -119,8 +138,13 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	mov	s0, v0
 #endif
 
-	ldq	ra, (32-8)(sp)		/* restore ra */
-	ldq	s0, (32-16)(sp)		/* restore s0 */
-	lda	sp, 32(sp)		/* pop stack frame */
+	ldq	s0, (0*8)(sp)		/* restore s0 ... */
+	ldq	s1, (1*8)(sp)
+	ldq	s2, (2*8)(sp)
+	ldq	s3, (3*8)(sp)
+	ldq	s4, (4*8)(sp)
+	ldq	s5, (5*8)(sp)		/* ... through s5 */
+	ldq	ra, (6*8)(sp)		/* restore ra */
+	lda	sp, 64(sp)		/* pop stack frame */
 	RET
 	END(alpha_debug)
