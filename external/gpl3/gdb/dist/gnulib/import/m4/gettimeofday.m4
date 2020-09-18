@@ -109,6 +109,8 @@ AC_DEFUN([gl_FUNC_GETTIMEOFDAY_CLOBBER],
         *-musl*)       gl_cv_func_gettimeofday_clobber="guessing no" ;;
                        # Guess no on native Windows.
         mingw*)        gl_cv_func_gettimeofday_clobber="guessing no" ;;
+		       # Guess no on bsd.
+        *bsd*)         gl_cv_func_gettimeofday_clobber="guessing no" ;;
                        # If we don't know, obey --enable-cross-guesses.
         *)             gl_cv_func_gettimeofday_clobber="$gl_cross_guess_inverted" ;;
       esac

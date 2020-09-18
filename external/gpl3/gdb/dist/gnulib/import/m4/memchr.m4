@@ -92,6 +92,8 @@ AC_DEFUN_ONCE([gl_FUNC_MEMCHR],
          [case "$host_os" in
                              # Guess no on Android.
             linux*-android*) gl_cv_func_memchr_works="guessing no" ;;
+			     # Guess yes on bsd.
+	    *bsd*)	     gl_cv_func_memchr_works="guessing yes" ;;
                              # Guess yes on native Windows.
             mingw*)          gl_cv_func_memchr_works="guessing yes" ;;
                              # If we don't know, obey --enable-cross-guesses.
