@@ -37,6 +37,8 @@ AC_DEFUN([gl_FUNC_RMDIR],
           linux-* | linux) gl_cv_func_rmdir_works="guessing yes" ;;
                            # Guess yes on glibc systems.
           *-gnu* | gnu*)   gl_cv_func_rmdir_works="guessing yes" ;;
+                           # Guess yes on bsd systems.
+          *bsd*)           gl_cv_func_rmdir_works="guessing yes" ;;
                            # Guess no on native Windows.
           mingw*)          gl_cv_func_rmdir_works="guessing no" ;;
                            # If we don't know, obey --enable-cross-guesses.

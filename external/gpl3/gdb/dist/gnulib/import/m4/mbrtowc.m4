@@ -172,6 +172,8 @@ changequote(,)dnl
       case "$host_os" in
                      # Guess no on AIX and OSF/1.
         aix* | osf*) gl_cv_func_mbrtowc_incomplete_state="guessing no" ;;
+                     # Guess no on bsd.
+        *bsd*)	     gl_cv_func_mbrtowc_incomplete_state="guessing no" ;;
                      # Guess yes otherwise.
         *)           gl_cv_func_mbrtowc_incomplete_state="guessing yes" ;;
       esac
@@ -754,6 +756,7 @@ changequote(,)dnl
       case "$host_os" in
                               # Guess no on AIX and glibc systems.
         aix* | *-gnu* | gnu*) gl_cv_func_mbrtowc_empty_input="guessing no" ;;
+        *bsd*)		      gl_cv_func_mbrtowc_empty_input="guessing no" ;;
                               # Guess yes on native Windows.
         mingw*)               gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
         *)                    gl_cv_func_mbrtowc_empty_input="guessing yes" ;;

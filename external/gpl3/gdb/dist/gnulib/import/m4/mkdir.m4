@@ -27,6 +27,8 @@ AC_DEFUN([gl_FUNC_MKDIR],
          linux-* | linux) gl_cv_func_mkdir_trailing_slash_works="guessing yes" ;;
                           # Guess yes on glibc systems.
          *-gnu* | gnu*)   gl_cv_func_mkdir_trailing_slash_works="guessing yes" ;;
+                          # Guess yes on bsd systems.
+         *bsd*)		  gl_cv_func_mkdir_trailing_slash_works="guessing yes" ;;
                           # Guess yes on MSVC, no on mingw.
          mingw*)          AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
@@ -64,6 +66,8 @@ AC_DEFUN([gl_FUNC_MKDIR],
          *-gnu* | gnu*) gl_cv_func_mkdir_trailing_dot_works="guessing yes" ;;
                         # Guess yes on musl systems.
          *-musl*)       gl_cv_func_mkdir_trailing_dot_works="guessing yes" ;;
+                        # Guess no on bsd Windows.
+         *bsd*)         gl_cv_func_mkdir_trailing_dot_works="guessing yes" ;;
                         # Guess no on native Windows.
          mingw*)        gl_cv_func_mkdir_trailing_dot_works="guessing no" ;;
                         # If we don't know, obey --enable-cross-guesses.

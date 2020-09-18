@@ -49,6 +49,8 @@ DIR *fdopendir (int);
             *-gnu*)  gl_cv_func_fdopendir_works="guessing yes" ;;
                      # Guess yes on musl systems.
             *-musl*) gl_cv_func_fdopendir_works="guessing yes" ;;
+                     # Guess yes on bsd.
+            *bsd*)   gl_cv_func_fdopendir_works="guessing yes" ;;
                      # If we don't know, obey --enable-cross-guesses.
             *)       gl_cv_func_fdopendir_works="$gl_cross_guess_normal" ;;
           esac
