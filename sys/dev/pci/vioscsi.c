@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.22 2020/07/12 06:40:11 kim Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.23 2020/09/18 14:55:28 jakllsch Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.22 2020/07/12 06:40:11 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.23 2020/09/18 14:55:28 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,13 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_nluns = MIN(max_lun, 1024);		/* cap reasonably */
 	chan->chan_id = max_target;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
+	/*
+	 * XXX Remove this when scsipi is REPORT LUNS-aware.
+	 * scsipi(4) insists that LUNs must be contiguous starting from 0.
+	 * This is not true on Linode (circa 2020) and Proxmox 6 hosts
+	 * with more than one disk exported to guest.
+	 */
+	chan->chan_defquirks = PQUIRK_FORCELUNS;
 
 	config_found(self, &sc->sc_channel, scsiprint);
 	return;
