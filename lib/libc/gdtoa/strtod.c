@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.16 2020/09/18 14:06:45 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.17 2020/09/18 14:19:34 christos Exp $ */
 
 /****************************************************************
 
@@ -743,7 +743,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 				/* dval(&adj) = Rounding ? ceil(&adj) : floor(&adj); */
 				y = adj.d;
 				if (y != adj.d) {
-					if (!((Rounding>>1) ^ dsign))
+					if (!(((unsigned int)Rounding>>1) ^ (unsigned int)dsign))
 						y++;
 					dval(&adj) = y;
 					}
@@ -976,7 +976,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #ifdef Avoid_Underflow
 			if (scale && y <= 2*P*Exp_msk1) {
 				if (aadj <= 0x7fffffff) {
-					if ((z = aadj) <= 0)
+					if ((z = aadj) == 0)
 						z = 1;
 					aadj = z;
 					dval(&aadj1) = dsign ? aadj : -aadj;
