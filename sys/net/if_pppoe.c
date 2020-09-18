@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.149 2020/02/10 22:38:10 mlelstv Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.150 2020/09/18 09:48:56 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.149 2020/02/10 22:38:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.150 2020/09/18 09:48:56 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -350,6 +350,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_timeout, pppoe_timeout, sc);
 
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
 #ifdef PPPOE_MPSAFE
@@ -913,9 +914,8 @@ breakbreak:;
 				    "error=%d\n", sc->sc_sppp.pp_if.if_xname,
 				    err);
 		}
-		callout_reset(&sc->sc_timeout,
-		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
-		    pppoe_timeout, sc);
+		callout_schedule(&sc->sc_timeout,
+		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried));
 
 		PPPOE_UNLOCK(sc);
 		break;
@@ -1461,8 +1461,7 @@ pppoe_timeout(void *arg)
 				    "error=%d\n",
 				    sc->sc_sppp.pp_if.if_xname, err);
 		}
-		callout_reset(&sc->sc_timeout, retry_wait,
-		    pppoe_timeout, sc);
+		callout_schedule(&sc->sc_timeout,retry_wait);
 		RELEASE_SPLNET();
 		break;
 
@@ -1480,9 +1479,8 @@ pppoe_timeout(void *arg)
 					    ", error=%d\n",
 					    sc->sc_sppp.pp_if.if_xname, err);
 			}
-			callout_reset(&sc->sc_timeout,
-			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried),
-			    pppoe_timeout, sc);
+			callout_schedule(&sc->sc_timeout,
+			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried));
 			RELEASE_SPLNET();
 			PPPOE_UNLOCK(sc);
 			return;
@@ -1494,9 +1492,8 @@ pppoe_timeout(void *arg)
 				    "error=%d\n", sc->sc_sppp.pp_if.if_xname,
 				    err);
 		}
-		callout_reset(&sc->sc_timeout,
-		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
-		    pppoe_timeout, sc);
+		callout_schedule(&sc->sc_timeout,
+		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried));
 		RELEASE_SPLNET();
 		break;
 	case PPPOE_STATE_CLOSING:
@@ -1534,7 +1531,7 @@ pppoe_connect(struct pppoe_softc *sc)
 	if (err != 0 && sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 		printf("%s: failed to send PADI, error=%d\n",
 		    sc->sc_sppp.pp_if.if_xname, err);
-	callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
+	callout_schedule(&sc->sc_timeout, PPPOE_DISC_TIMEOUT);
 	RELEASE_SPLNET();
 	return err;
 }
@@ -1820,7 +1817,7 @@ pppoe_tls(struct sppp *sp)
 	} else {
 		wtime = PPPOE_RECON_IMMEDIATE;
 	}
-	callout_reset(&sc->sc_timeout, wtime, pppoe_timeout, sc);
+	callout_schedule(&sc->sc_timeout, wtime);
 
 	PPPOE_UNLOCK(sc);
 }
@@ -1843,7 +1840,7 @@ pppoe_tlf(struct sppp *sp)
 	 */
 	sc->sc_state = PPPOE_STATE_CLOSING;
 
-	callout_reset(&sc->sc_timeout, hz/50, pppoe_timeout, sc);
+	callout_schedule(&sc->sc_timeout, hz/50);
 
 	PPPOE_UNLOCK(sc);
 }
