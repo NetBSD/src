@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.44 2020/09/17 11:51:01 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.45 2020/09/18 16:33:49 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -491,6 +491,8 @@ test_proxy_arp()
 	export RUMP_SERVER=$SOCKSRC
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
+	# Remove ARP entry as it may hang around in WAITDELETE a few seconds
+	atf_check -s ignore rump.arp -d $IP4DST_PROXYARP1
 
 	# Flushing
 	extract_new_packets bus1 > ./out
@@ -525,6 +527,8 @@ test_proxy_arp()
 	export RUMP_SERVER=$SOCKSRC
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
+	# Remove ARP entry as it may hang around in WAITDELETE a few seconds
+	atf_check -s ignore rump.arp -d $IP4DST_PROXYARP2
 
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
