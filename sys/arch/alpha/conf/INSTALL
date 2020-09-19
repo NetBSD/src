@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.115 2020/09/05 01:28:18 thorpej Exp $
+# $NetBSD: INSTALL,v 1.116 2020/09/19 03:27:42 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -9,6 +9,8 @@ include 	"arch/alpha/conf/std.alpha"
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
 maxusers 8
+
+no options 	MULTIPROCESSOR		# disable MP to save space
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
