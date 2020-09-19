@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.112 2020/09/16 13:30:42 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.113 2020/09/19 12:32:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4984,4 +4984,15 @@ sys/dev/ic/mpt_netbsd.c				1.37
 
 	mpt(4) may eroneously report a limit of zero devices.
 	[mlelstv, ticket #1085]
+
+sys/dev/hid/hidkbdmap.c				1.11
+
+	PR 55608: for jp keymap map also scan code 49 to right bracket
+	to handle ARCHISS keyboard model.
+	[nonaka, ticket #1086]
+
+external/mit/xorg/lib/libX11/Makefile.libx11	1.20,1.21
+
+	Fix libXcursor version for dynamic loading.
+	[nia, ticket #1087]
 
