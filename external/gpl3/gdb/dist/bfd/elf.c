@@ -10893,7 +10893,7 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
 #ifdef NT_NETBSDCORE_AUXV
     case NT_NETBSDCORE_AUXV:
       /* NetBSD-specific Elf Auxiliary Vector data. */
-      return elfcore_make_auxv_note_section (abfd, note, 4);
+      return elfcore_make_auxv_note_section (abfd, note, 0);
 #endif
 #ifdef NT_NETBSDCORE_LWPSTATUS
     case NT_NETBSDCORE_LWPSTATUS:
@@ -11022,20 +11022,6 @@ elfcore_grok_openbsd_note (bfd *abfd, Elf_Internal_Note *note)
 
   if (note->type == NT_OPENBSD_AUXV)
     return elfcore_make_auxv_note_section (abfd, note, 0);
-
-  if (note->type == NT_OPENBSD_WCOOKIE)
-    {
-      asection *sect = bfd_make_section_anyway_with_flags (abfd, ".wcookie",
-							   SEC_HAS_CONTENTS);
-
-      if (sect == NULL)
-	return FALSE;
-      sect->size = note->descsz;
-      sect->filepos = note->descpos;
-      sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;
-
-      return TRUE;
-    }
 
   return TRUE;
 }
