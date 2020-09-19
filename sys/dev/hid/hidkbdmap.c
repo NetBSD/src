@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.1.10.2 2020/07/13 14:22:47 martin Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.1.10.3 2020/09/19 12:16:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.1.10.2 2020/07/13 14:22:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.1.10.3 2020/09/19 12:16:14 martin Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -171,7 +171,8 @@ Static const keysym_t hidkbd_keydesc_jp[] = {
     KC(46),			KS_asciicircum,		KS_asciitilde,
     KC(47),			KS_at,			KS_grave,
     KC(48),			KS_bracketleft,		KS_braceleft,
-    KC(50),			KS_bracketright,	KS_braceright,
+    KC(49), /* ARCHISS */	KS_bracketright,	KS_braceright,
+    KC(50), /* other model */	KS_bracketright,	KS_braceright,
     KC(51),			KS_semicolon,		KS_plus,
     KC(52),			KS_colon,		KS_asterisk,
     KC(53), 			KS_Zenkaku_Hankaku, /* replace grave/tilde */
