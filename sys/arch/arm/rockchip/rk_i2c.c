@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.7 2019/12/22 23:23:29 thorpej Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.8 2020/09/19 18:19:09 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.7 2019/12/22 23:23:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.8 2020/09/19 18:19:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -251,6 +251,10 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *cmd,
 	txdata.data8[0] = addr << 1;
 	memcpy(&txdata.data8[1], cmd, cmdlen);
 	memcpy(&txdata.data8[1 + cmdlen], buf, buflen);
+#if _BYTE_ORDER == _BIG_ENDIAN
+	for (int i = 0; i < howmany(len + 1, 4); i++)
+		LE32TOH(txdata.data32[i]);
+#endif
 	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh, RKI2C_TXDATA(0),
 	    txdata.data32, howmany(len + 1, 4));
 	WR4(sc, RKI2C_MTXCNT, __SHIFTIN(len + 1, RKI2C_MTXCNT_MTXCNT));
@@ -310,6 +314,11 @@ rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
 #else
 	for (n = 0; n < roundup(buflen, 4); n += 4)
 		rxdata[n/4] = RD4(sc, RKI2C_RXDATA(n/4));
+#endif
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+	for (int i = 0; i < howmany(buflen, 4); i++)
+		HTOLE32(rxdata[i]);
 #endif
 
 	memcpy(buf, rxdata, buflen);
