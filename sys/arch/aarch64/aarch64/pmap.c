@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2020/09/14 10:06:35 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2020/09/19 13:33:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2020/09/14 10:06:35 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2020/09/19 13:33:08 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -598,7 +598,7 @@ pmap_reference(struct pmap *pm)
 	atomic_inc_uint(&pm->pm_refcnt);
 }
 
-paddr_t
+static paddr_t
 pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 {
 	paddr_t pa;
