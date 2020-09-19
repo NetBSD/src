@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.311 2020/08/22 07:24:40 nia Exp $
+$NetBSD: acronyms.comp,v 1.312 2020/09/19 01:43:20 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -226,6 +226,7 @@ CD	compact disc
 CDDA	compact disc digital audio
 CDL	compiler description language
 CDMA	code division multiple access
+CDN	content delivery network
 CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
@@ -307,6 +308,7 @@ CRL	carrier recovery loop
 CRLF	carriage return line feed
 CSU	C start up
 CRT	cathode ray tube
+CRTP	curiously recurring template pattern
 CRUD	create, read, update, and delete
 CS	cable select
 CS	chip select
@@ -610,6 +612,7 @@ FTA	fault tree analysis
 FTL	flash translation layer
 FTP	File Transfer Protocol
 FTPS	File Transfer Protocol Secure
+FTTH	fiber to the home
 FUS	fast user switching
 FWH	firmware hub
 FWS	folding white space
