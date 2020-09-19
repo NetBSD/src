@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.15 2018/12/08 17:46:09 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.16 2020/09/19 16:54:34 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.15 2018/12/08 17:46:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.16 2020/09/19 16:54:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,16 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 	com_init_regs(&sc->sc_regs, ja->ja_iot, ioh, ja->ja_ioaddr);
 
 	sc->sc_frequency = COM_FREQ;
+
+	/*
+	 * According to comments in Linux drivers/tty/serial/8250/8250.h,
+	 * the driver has to set OUT1 and OUT2 lines for "some ALPHA"
+	 * otherwise "the machine locks up with endless interrupts."
+	 * Note OUT2 (MCR_IENABLE) is set in MI com_attach_subr()
+	 * so we have to set OUT1 (MCR_DSR) in the MD attachment.
+	 * See also PR/36628.
+	 */
+	SET(sc->sc_mcr, MCR_DRS);
 
 	com_attach_subr(sc);
 
