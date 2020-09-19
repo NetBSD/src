@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.36 2020/09/16 13:32:11 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.37 2020/09/19 12:36:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1055,4 +1055,11 @@ sys/dev/ic/mpt_netbsd.c				1.37
 
 	mpt(4) may eroneously report a limit of zero devices.
 	[mlelstv, ticket #1605]
+
+sys/dev/hid/hidkbdmap.c				1.11 (patch)
+	(applied to sys/dev/usb/ukbdmap.c)
+
+	PR 55608: for jp keymap map also scan code 49 to right bracket
+	to handle ARCHISS keyboard model.
+	[nonaka, ticket #1606]
 
