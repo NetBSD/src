@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.13 2020/09/16 18:26:15 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.14 2020/09/19 16:31:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -149,6 +149,9 @@
  */
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
 #define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
+
+#define VM_KERNEL_VM_BASE	VM_MIN_KERNEL_ADDRESS
+#define VM_KERNEL_VM_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_VM_BASE)
 
 /*
  * Reserved space for EFI runtime services
