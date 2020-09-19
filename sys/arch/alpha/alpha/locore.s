@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.135 2020/09/18 00:11:31 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.136 2020/09/19 01:32:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.135 2020/09/18 00:11:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.136 2020/09/19 01:32:16 thorpej Exp $");
 
 #include "assym.h"
 
@@ -265,9 +265,21 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	GET_CURLWP
 	mov	v0, s0				/* s0 = curlwp */
 
-	/* see if a soft interrupt is pending. */
-2:	ldq	t1, L_CPU(s0)			/* t1 = curlwp->l_cpu */
-	ldq	t1, CPU_INFO_SSIR(t1)		/* soft int pending? */
+2:	/*
+	 * Check to see if a soft interrupt is pending.  We need to only
+	 * check for soft ints eligible to run at the new IPL.  We generate
+	 * the mask of elible soft ints to run by masking the ssir with:
+	 *
+	 *	(ALPHA_ALL_SOFTINTS << ((ipl) << 1))
+	 *
+	 * See alpha_softint_dispatch().
+	 */
+	ldq	t1, L_CPU(s0)			/* t1 = curlwp->l_cpu */
+	ldiq	t2, ALPHA_ALL_SOFTINTS		/* t2 = ALPHA_ALL_SOFTINTS */
+	ldq	t1, CPU_INFO_SSIR(t1)		/* t1 = t1->ci_ssir */
+	sll	s3, 1, t3			/* t3 = ipl << 1 */
+	sll	t2, t3, t2			/* t2 <<= t3 */
+	and	t1, t2, t1			/* t1 &= t2 */
 	bne	t1, 6f				/* yes */
 	/* no */
 
@@ -743,7 +755,14 @@ NESTED_NOPROFILE(alpha_softint_switchto, 3, 16, ra, IM_RA, 0)
 
 LEAF_NOPROFILE(alpha_softint_return, 0)
 	/*
-	 * Step 1: Re-adjust the mutex count after mi_switch().
+	 * Step 1: Go to IPL_HIGH, which is what the alpha_softint_dispatch()
+	 * expects.  We will have arrived here at IPL_SCHED.
+	 */
+	ldiq	a0, ALPHA_PSL_IPL_HIGH
+	call_pal PAL_OSF1_swpipl
+
+	/*
+	 * Step 2: Re-adjust the mutex count after mi_switch().
 	 */
 	GET_CURLWP
 	ldq	v0, L_CPU(v0)
@@ -752,7 +771,7 @@ LEAF_NOPROFILE(alpha_softint_return, 0)
 	stl	t0, CPU_INFO_MTX_COUNT(v0)
 
 	/*
-	 * Step 2: Pop alpha_softint_switchto()'s stack frame
+	 * Step 3: Pop alpha_softint_switchto()'s stack frame
 	 * and return.
 	 */
 	ldq	ra, 0(sp)			/* restore ra */
