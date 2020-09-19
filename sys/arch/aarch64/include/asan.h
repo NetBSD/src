@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.11 2020/09/10 14:10:46 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.12 2020/09/19 13:33:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -68,12 +68,29 @@ __md_palloc(void)
 {
 	paddr_t pa;
 
-	if (__predict_false(__md_early))
+	if (__predict_false(__md_early)) {
 		pa = (paddr_t)pmapboot_pagealloc();
-	else
-		pa = pmap_alloc_pdp(pmap_kernel(), NULL, 0, false);
+		return pa;
+	}
 
-	/* The page is zeroed. */
+	vaddr_t va;
+	if (!uvm.page_init_done) {
+		va = uvm_pageboot_alloc(PAGE_SIZE);
+		pa = AARCH64_KVA_TO_PA(va);
+	} else {
+		struct vm_page *pg;
+retry:
+		pg = uvm_pagealloc(NULL, 0, NULL, 0);
+		if (pg == NULL) {
+			uvm_wait(__func__);
+			goto retry;
+		}
+
+		pa = VM_PAGE_TO_PHYS(pg);
+		va = AARCH64_PA_TO_KVA(pa);
+	}
+
+	__builtin_memset((void *)va, 0, PAGE_SIZE);
 	return pa;
 }
 
