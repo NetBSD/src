@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.26 2020/09/16 04:07:32 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.27 2020/09/19 01:24:31 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -132,6 +132,9 @@ define	ALPHA_PSL_IPL_0		ALPHA_PSL_IPL_0
 define	ALPHA_PSL_IPL_SOFT_LO	ALPHA_PSL_IPL_SOFT_LO
 define	ALPHA_PSL_IPL_SOFT_HI	ALPHA_PSL_IPL_SOFT_HI
 define	ALPHA_PSL_IPL_HIGH	ALPHA_PSL_IPL_HIGH
+
+# soft interrrupt definitions
+define	ALPHA_ALL_SOFTINTS	ALPHA_ALL_SOFTINTS
 
 # pte bits
 define	ALPHA_PTE_VALID		ALPHA_PTE_VALID

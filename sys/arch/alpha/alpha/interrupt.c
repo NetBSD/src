@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.86 2020/09/17 00:48:56 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.87 2020/09/19 01:24:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.86 2020/09/17 00:48:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.87 2020/09/19 01:24:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,16 +453,6 @@ badaddr_read(void *addr, size_t size, void *rptr)
 /*
  * Fast soft interrupt support.
  */
-
-#define	SOFTINT_CLOCK_MASK	__BIT(SOFTINT_CLOCK)
-#define	SOFTINT_BIO_MASK	__BIT(SOFTINT_BIO)
-#define	SOFTINT_NET_MASK	__BIT(SOFTINT_NET)
-#define	SOFTINT_SERIAL_MASK	__BIT(SOFTINT_SERIAL)
-
-#define	ALPHA_IPL1_SOFTINTS	(SOFTINT_CLOCK_MASK | SOFTINT_BIO_MASK)
-#define	ALPHA_IPL2_SOFTINTS	(SOFTINT_NET_MASK | SOFTINT_SERIAL_MASK)
-
-#define	ALPHA_ALL_SOFTINTS	(ALPHA_IPL1_SOFTINTS | ALPHA_IPL2_SOFTINTS)
 
 #define	SOFTINT_TO_IPL(si)						\
 	(ALPHA_PSL_IPL_SOFT_LO + ((ALPHA_IPL2_SOFTINTS >> (si)) & 1))
