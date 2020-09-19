@@ -1,8 +1,10 @@
-# $NetBSD: RAMDISK,v 1.17 2009/02/06 18:50:26 jym Exp $
+# $NetBSD: RAMDISK,v 1.18 2020/09/19 03:27:42 thorpej Exp $
 #
 # Generic Alpha kernel with built-in RAM disk image.
 
 include	"arch/alpha/conf/GENERIC"
+
+no options 	MULTIPROCESSOR		# disable MP to save space
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
