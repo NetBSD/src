@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.54 2020/09/20 17:59:42 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.54 2020/09/20 17:59:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,7 +236,6 @@ struct kse_softc {
 	int sc_flowflags;		/* 802.3x PAUSE flow control */
 
 	callout_t  sc_tick_ch;		/* MII tick callout */
-	callout_t  sc_stat_ch;		/* statistics counter callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -261,6 +260,7 @@ struct kse_softc {
 	uint32_t sc_chip;
 
 #ifdef KSE_EVENT_COUNTERS
+	callout_t  sc_stat_ch;		/* statistics counter callout */
 	struct ksext {
 		char evcntname[3][8];
 		struct evcnt pev[3][34];
@@ -869,8 +869,9 @@ kse_stop(struct ifnet *ifp, int disable)
 
 	if (sc->sc_chip == 0x8841)
 		callout_stop(&sc->sc_tick_ch);
+#ifdef KSE_EVENT_COUNTERS
 	callout_stop(&sc->sc_stat_ch);
-
+#endif
 	sc->sc_txc &= ~TXC_TEN;
 	sc->sc_rxc &= ~RXC_REN;
 	CSR_WRITE_4(sc, MDTXC, sc->sc_txc);
