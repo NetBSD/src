@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.246 2020/08/15 01:27:22 tnn Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.247 2020/09/20 10:30:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.246 2020/08/15 01:27:22 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.247 2020/09/20 10:30:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -447,14 +447,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 
 	*kvm_startp = round_page(virtual_space_start);
 	*kvm_endp = trunc_page(virtual_space_end);
-#ifdef DEBUG
-	/*
-	 * steal kva for uvm_pagezerocheck().
-	 */
-	uvm_zerocheckkva = *kvm_startp;
-	*kvm_startp += PAGE_SIZE;
-	mutex_init(&uvm_zerochecklock, MUTEX_DEFAULT, IPL_VM);
-#endif /* DEBUG */
 
 	/*
 	 * init various thresholds.
@@ -1426,42 +1418,6 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 
 	return error;
 }
-
-#ifdef DEBUG
-/*
- * check if page is zero-filled
- */
-void
-uvm_pagezerocheck(struct vm_page *pg)
-{
-	int *p, *ep;
-
-	KASSERT(uvm_zerocheckkva != 0);
-
-	/*
-	 * XXX assuming pmap_kenter_pa and pmap_kremove never call
-	 * uvm page allocator.
-	 *
-	 * it might be better to have "CPU-local temporary map" pmap interface.
-	 */
-	mutex_spin_enter(&uvm_zerochecklock);
-	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
-	p = (int *)uvm_zerocheckkva;
-	ep = (int *)((char *)p + PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	while (p < ep) {
-		if (*p != 0)
-			panic("zero page isn't zero-filled");
-		p++;
-	}
-	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
-	mutex_spin_exit(&uvm_zerochecklock);
-	/*
-	 * pmap_update() is not necessary here because no one except us
-	 * uses this VA.
-	 */
-}
-#endif /* DEBUG */
 
 /*
  * uvm_pagefree: free page
