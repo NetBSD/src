@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.34 2020/06/11 02:39:30 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.35 2020/09/20 11:25:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.34 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.35 2020/09/20 11:25:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ struct fdt_node {
 	int		n_phandle;
 	const char	*n_name;
 	struct fdt_attach_args n_faa;
+
+	int		n_cfpass;
 	cfdata_t	n_cf;
 
 	u_int		n_order;
@@ -78,7 +80,7 @@ static int	fdt_rescan(device_t, const char *, const int *);
 static void	fdt_childdet(device_t, device_t);
 
 static int	fdt_scan_submatch(device_t, cfdata_t, const int *, void *);
-static cfdata_t	fdt_scan_best(struct fdt_softc *, struct fdt_node *);
+static void	fdt_scan_best(struct fdt_softc *, struct fdt_node *);
 static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
@@ -161,7 +163,7 @@ fdt_rescan(device_t self, const char *ifattr, const int *locs)
 	int pass;
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes)
-		node->n_cf = fdt_scan_best(sc, node);
+		fdt_scan_best(sc, node);
 
 	pass = 0;
 	fdt_need_rescan = false;
@@ -170,8 +172,8 @@ fdt_rescan(device_t self, const char *ifattr, const int *locs)
 		if (fdt_need_rescan == true) {
 			pass = 0;
 			TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-				if (node->n_dev == NULL)
-					node->n_cf = fdt_scan_best(sc, node);
+				if (node->n_cfpass == -1)
+					fdt_scan_best(sc, node);
 			}
 			fdt_need_rescan = false;
 		} else {
@@ -298,11 +300,13 @@ fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
 	struct fdt_node *node;
 
 	/* Add the node to our device list */
-	node = kmem_alloc(sizeof(*node), KM_SLEEP);
+	node = kmem_zalloc(sizeof(*node), KM_SLEEP);
 	node->n_bus = bus;
 	node->n_dev = NULL;
 	node->n_phandle = child;
 	node->n_name = fdtbus_get_string(child, "name");
+	node->n_cfpass = -1;
+	node->n_cf = NULL;
 	node->n_order = order;
 	node->n_faa = *faa;
 	node->n_faa.faa_phandle = child;
@@ -323,15 +327,16 @@ fdt_scan_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	return config_stdsubmatch(parent, cf, locs, aux);
 }
 
-static cfdata_t
+static void
 fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
 {
 	struct fdt_attach_args faa;
 	cfdata_t cf, best_cf;
-	int match, best_match;
+	int match, best_match, best_pass;
 
 	best_cf = NULL;
 	best_match = 0;
+	best_pass = FDTCF_PASS_DEFAULT;
 
 	for (int pass = 0; pass <= FDTCF_PASS_DEFAULT; pass++) {
 		const int locs[FDTCF_NLOCS] = {
@@ -345,10 +350,12 @@ fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
 		if (match > best_match) {
 			best_match = match;
 			best_cf = cf;
+			best_pass = pass;
 		}
 	}
 
-	return best_cf;
+	node->n_cf = best_cf;
+	node->n_cfpass = best_pass;
 }
 
 static void
@@ -360,54 +367,38 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		[FDTCF_PASS] = pass
 	};
 	bool quiet = pass != FDTCF_PASS_DEFAULT;
-	prop_dictionary_t dict;
-	char buf[FDT_MAX_PATH];
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-		if (node->n_dev != NULL)
+		if (node->n_cfpass != pass || node->n_dev != NULL)
 			continue;
 
 		fdt_init_attach_args(&sc->sc_faa, node, quiet, &faa);
 
-		if (quiet) {
+		if (quiet && node->n_cf == NULL) {
 			/*
 			 * No match for this device, skip it.
 			 */
-			if (node->n_cf == NULL)
-				continue;
+			continue;
+		}
 
-			/*
-			 * Make sure we don't attach before a better match in a later pass.
-			 */
-			cfdata_t cf_pass =
-			    config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
-			if (node->n_cf != cf_pass)
-				continue;
+		/*
+		 * Attach the device.
+		 */
+		fdt_pre_attach(node);
 
-			/*
-			 * Attach the device.
-			 */
-			fdt_pre_attach(node);
-			node->n_dev = config_attach_loc(node->n_bus, cf_pass, locs,
+		if (quiet) {
+			node->n_dev = config_attach_loc(node->n_bus, node->n_cf, locs,
 			    &faa, fdtbus_print);
-			if (node->n_dev != NULL)
-				fdt_post_attach(node);
 		} else {
 			/*
 			 * Default pass.
 			 */
-			fdt_pre_attach(node);
 			node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
 			    &faa, fdtbus_print, fdt_scan_submatch);
-			if (node->n_dev != NULL)
-				fdt_post_attach(node);
 		}
 
-		if (node->n_dev) {
-			dict = device_properties(node->n_dev);
-			if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
-				prop_dictionary_set_string(dict, "fdt-path", buf);
-		}
+		if (node->n_dev != NULL)
+			fdt_post_attach(node);
 	}
 }
 
@@ -433,7 +424,13 @@ fdt_pre_attach(struct fdt_node *node)
 static void
 fdt_post_attach(struct fdt_node *node)
 {
+	char buf[FDT_MAX_PATH];
+	prop_dictionary_t dict;
 	int error;
+
+	dict = device_properties(node->n_dev);
+	if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
+		prop_dictionary_set_string(dict, "fdt-path", buf);
 
 	if (node->n_pinctrl_init) {
 		aprint_debug_dev(node->n_bus, "set default config for %s\n", node->n_name);
