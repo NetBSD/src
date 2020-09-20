@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.281 2020/05/17 08:38:37 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.282 2020/09/20 09:08:01 gson Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.281 2020/05/17 08:38:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.282 2020/09/20 09:08:01 gson Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3218,7 +3218,7 @@ ehci_close_pipe(struct usbd_pipe *pipe, ehci_soft_qh_t *head)
 }
 
 /*
- * Arrrange for the hardware to tells us that it is not still
+ * Arrange for the hardware to tells us that it is not still
  * processing the TDs by setting the QH halted bit and wait for the ehci
  * door bell
  */
