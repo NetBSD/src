@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.56 2020/09/20 23:48:09 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.56 2020/09/20 23:48:09 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $")
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/malloc.h>
+#include <sys/rndsource.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -71,36 +72,38 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $")
 #define CSR_WRITE_2(sc, off, val) \
 	    bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
-#define MDTXC	0x000	/* DMA transmit control */
-#define MDRXC	0x004	/* DMA receive control */
-#define MDTSC	0x008	/* DMA transmit start */
-#define MDRSC	0x00c	/* DMA receive start */
-#define TDLB	0x010	/* transmit descriptor list base */
-#define RDLB	0x014	/* receive descriptor list base */
-#define MTR0	0x020	/* multicast table 31:0 */
-#define MTR1	0x024	/* multicast table 63:32 */
-#define INTEN	0x028	/* interrupt enable */
-#define INTST	0x02c	/* interrupt status */
-#define MAAL0	0x080	/* additional MAC address 0 low */
-#define MAAH0	0x084	/* additional MAC address 0 high */
-#define MARL	0x200	/* MAC address low */
-#define MARM	0x202	/* MAC address middle */
-#define MARH	0x204	/* MAC address high */
-#define GRR	0x216	/* global reset */
-#define SIDER	0x400	/* switch ID and function enable */
-#define SGCR3	0x406	/* switch function control 3 */
-#define  CR3_USEHDX	(1U<<6)	/* use half-duplex 8842 host port */
-#define  CR3_USEFC	(1U<<5) /* use flowcontrol 8842 host port */
-#define IACR	0x4a0	/* indirect access control */
-#define IADR1	0x4a2	/* indirect access data 66:63 */
-#define IADR2	0x4a4	/* indirect access data 47:32 */
-#define IADR3	0x4a6	/* indirect access data 63:48 */
-#define IADR4	0x4a8	/* indirect access data 15:0 */
-#define IADR5	0x4aa	/* indirect access data 31:16 */
-#define P1CR4	0x512	/* port 1 control 4 */
-#define P1SR	0x514	/* port 1 status */
-#define P2CR4	0x532	/* port 2 control 4 */
-#define P2SR	0x534	/* port 2 status */
+#define MDTXC		0x000		/* DMA transmit control */
+#define MDRXC		0x004		/* DMA receive control */
+#define MDTSC		0x008		/* trigger DMA transmit (SC) */
+#define MDRSC		0x00c		/* trigger DMA receive (SC) */
+#define TDLB		0x010		/* transmit descriptor list base */
+#define RDLB		0x014		/* receive descriptor list base */
+#define MTR0		0x020		/* multicast table 31:0 */
+#define MTR1		0x024		/* multicast table 63:32 */
+#define INTEN		0x028		/* interrupt enable */
+#define INTST		0x02c		/* interrupt status */
+#define MAAL0		0x080		/* additional MAC address 0 low */
+#define MAAH0		0x084		/* additional MAC address 0 high */
+#define MARL		0x200		/* MAC address low */
+#define MARM		0x202		/* MAC address middle */
+#define MARH		0x204		/* MAC address high */
+#define GRR		0x216		/* global reset */
+#define SIDER		0x400		/* switch ID and function enable */
+#define SGCR3		0x406		/* switch function control 3 */
+#define  CR3_USEHDX	(1U<<6)		/* use half-duplex 8842 host port */
+#define  CR3_USEFC	(1U<<5) 	/* use flowcontrol 8842 host port */
+#define IACR		0x4a0		/* indirect access control */
+#define IADR1		0x4a2		/* indirect access data 66:63 */
+#define IADR2		0x4a4		/* indirect access data 47:32 */
+#define IADR3		0x4a6		/* indirect access data 63:48 */
+#define IADR4		0x4a8		/* indirect access data 15:0 */
+#define IADR5		0x4aa		/* indirect access data 31:16 */
+#define  IADR_LATCH	(1U<<30)	/* latch completed indication */
+#define  IADR_OVF	(1U<<31)	/* overflow detected */
+#define P1CR4		0x512		/* port 1 control 4 */
+#define P1SR		0x514		/* port 1 status */
+#define P2CR4		0x532		/* port 2 control 4 */
+#define P2SR		0x534		/* port 2 status */
 #define  PxCR_STARTNEG	(1U<<9)		/* restart auto negotiation */
 #define  PxCR_AUTOEN	(1U<<7)		/* auto negotiation enable */
 #define  PxCR_SPD100	(1U<<6)		/* force speed 100 */
@@ -112,9 +115,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $")
 #define  PxSR_LINKUP	(1U<<5)		/* link is good */
 #define  PxSR_RXFLOW	(1U<<12)	/* receive flow control active */
 #define  PxSR_TXFLOW	(1U<<11)	/* transmit flow control active */
-#define P1VIDCR	0x504	/* port 1 vtag */
-#define P2VIDCR	0x524	/* port 2 vtag */
-#define P3VIDCR	0x544	/* 8842 host vtag */
+#define P1VIDCR		0x504		/* port 1 vtag */
+#define P2VIDCR		0x524		/* port 2 vtag */
+#define P3VIDCR		0x544		/* 8842 host vtag */
+#define EVCNTBR		0x1c00		/* 3 sets of 34 event counters */
 
 #define TXC_BS_MSK	0x3f000000	/* burst size */
 #define TXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
@@ -146,6 +150,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $")
 #define INT_DMRS	(1U<<29)	/* frame was received */
 #define INT_DMRBUS	(1U<<27)	/* Rx descriptor pool is full */
 #define INT_DMxPSS	(3U<<25)	/* 26:25 DMA Tx/Rx have stopped */
+
+struct tdes {
+	uint32_t t0, t1, t2, t3;
+};
+
+struct rdes {
+	uint32_t r0, r1, r2, r3;
+};
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
 
@@ -191,14 +203,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.55 2020/09/20 20:15:11 nisimura Exp $")
 #define KSE_NRXDESC		64
 #define KSE_NRXDESC_MASK	(KSE_NRXDESC - 1)
 #define KSE_NEXTRX(x)		(((x) + 1) & KSE_NRXDESC_MASK)
-
-struct tdes {
-	uint32_t t0, t1, t2, t3;
-};
-
-struct rdes {
-	uint32_t r0, r1, r2, r3;
-};
 
 struct kse_control_data {
 	struct tdes kcd_txdescs[KSE_NTXDESC];
@@ -259,8 +263,9 @@ struct kse_softc {
 	uint32_t sc_inten;
 	uint32_t sc_chip;
 
+	krndsource_t rnd_source;	/* random source */
+
 #ifdef KSE_EVENT_COUNTERS
-	callout_t  sc_stat_ch;		/* statistics counter callout */
 	struct ksext {
 		char evcntname[3][8];
 		struct evcnt pev[3][34];
@@ -505,7 +510,6 @@ kse_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = kse_mii_statchg;
 
 	/* Initialize ifmedia structures. */
-	sc->sc_flowflags = 0;
 	if (sc->sc_chip == 0x8841) {
 		/* use port 1 builtin PHY as index 1 device */
 		sc->sc_ethercom.ec_mii = mii;
@@ -558,6 +562,8 @@ kse_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
+	sc->sc_flowflags = 0;
+
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
@@ -565,83 +571,56 @@ kse_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
 
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
+
 #ifdef KSE_EVENT_COUNTERS
+	const char *events[34] = {
+		"RxLoPriotyByte",
+		"RxHiPriotyByte",
+		"RxUndersizePkt",
+		"RxFragments",
+		"RxOversize",
+		"RxJabbers",
+		"RxSymbolError",
+		"RxCRCError",
+		"RxAlignmentError",
+		"RxControl8808Pkts",
+		"RxPausePkts",
+		"RxBroadcast",
+		"RxMulticast",
+		"RxUnicast",
+		"Rx64Octets",
+		"Rx65To127Octets",
+		"Rx128To255Octets",
+		"Rx255To511Octets",
+		"Rx512To1023Octets",
+		"Rx1024To1522Octets",
+		"TxLoPriotyByte",
+		"TxHiPriotyByte",
+		"TxLateCollision",
+		"TxPausePkts",
+		"TxBroadcastPkts",
+		"TxMulticastPkts",
+		"TxUnicastPkts",
+		"TxDeferred",
+		"TxTotalCollision",
+		"TxExcessiveCollision",
+		"TxSingleCollision",
+		"TxMultipleCollision",
+		"TxDropPkts",
+		"RxDropPkts",
+	};
+	struct ksext *ee = &sc->sc_ext;
 	int p = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (i = 0; i < p; i++) {
-		struct ksext *ee = &sc->sc_ext;
 		snprintf(ee->evcntname[i], sizeof(ee->evcntname[i]),
 		    "%s.%d", device_xname(sc->sc_dev), i+1);
-		evcnt_attach_dynamic(&ee->pev[i][0], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxLoPriotyByte");
-		evcnt_attach_dynamic(&ee->pev[i][1], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxHiPriotyByte");
-		evcnt_attach_dynamic(&ee->pev[i][2], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxUndersizePkt");
-		evcnt_attach_dynamic(&ee->pev[i][3], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxFragments");
-		evcnt_attach_dynamic(&ee->pev[i][4], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxOversize");
-		evcnt_attach_dynamic(&ee->pev[i][5], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxJabbers");
-		evcnt_attach_dynamic(&ee->pev[i][6], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxSymbolError");
-		evcnt_attach_dynamic(&ee->pev[i][7], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxCRCError");
-		evcnt_attach_dynamic(&ee->pev[i][8], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxAlignmentError");
-		evcnt_attach_dynamic(&ee->pev[i][9], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxControl8808Pkts");
-		evcnt_attach_dynamic(&ee->pev[i][10], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxPausePkts");
-		evcnt_attach_dynamic(&ee->pev[i][11], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxBroadcast");
-		evcnt_attach_dynamic(&ee->pev[i][12], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxMulticast");
-		evcnt_attach_dynamic(&ee->pev[i][13], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxUnicast");
-		evcnt_attach_dynamic(&ee->pev[i][14], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx64Octets");
-		evcnt_attach_dynamic(&ee->pev[i][15], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx65To127Octets");
-		evcnt_attach_dynamic(&ee->pev[i][16], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx128To255Octets");
-		evcnt_attach_dynamic(&ee->pev[i][17], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx255To511Octets");
-		evcnt_attach_dynamic(&ee->pev[i][18], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx512To1023Octets");
-		evcnt_attach_dynamic(&ee->pev[i][19], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "Rx1024To1522Octets");
-		evcnt_attach_dynamic(&ee->pev[i][20], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxLoPriotyByte");
-		evcnt_attach_dynamic(&ee->pev[i][21], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxHiPriotyByte");
-		evcnt_attach_dynamic(&ee->pev[i][22], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxLateCollision");
-		evcnt_attach_dynamic(&ee->pev[i][23], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxPausePkts");
-		evcnt_attach_dynamic(&ee->pev[i][24], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxBroadcastPkts");
-		evcnt_attach_dynamic(&ee->pev[i][25], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxMulticastPkts");
-		evcnt_attach_dynamic(&ee->pev[i][26], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxUnicastPkts");
-		evcnt_attach_dynamic(&ee->pev[i][27], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxDeferred");
-		evcnt_attach_dynamic(&ee->pev[i][28], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxTotalCollision");
-		evcnt_attach_dynamic(&ee->pev[i][29], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxExcessiveCollision");
-		evcnt_attach_dynamic(&ee->pev[i][30], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxSingleCollision");
-		evcnt_attach_dynamic(&ee->pev[i][31], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxMultipleCollision");
-		evcnt_attach_dynamic(&ee->pev[i][32], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "TxDropPkts");
-		evcnt_attach_dynamic(&ee->pev[i][33], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxDropPkts");
+		for (int ev = 0; ev < 34; ev++) {
+			evcnt_attach_dynamic(&ee->pev[i][ev], EVCNT_TYPE_MISC,
+			    NULL, ee->evcntname[i], events[ev]);
+		}
 	}
-	callout_init(&sc->sc_stat_ch, 0);
-	callout_setfunc(&sc->sc_stat_ch, stat_tick, sc);
 #endif
 	return;
 
@@ -813,10 +792,11 @@ kse_init(struct ifnet *ifp)
 	sc->sc_rxc |= (kse_burstsize << RXC_BS_SFT);
 
 	if (sc->sc_chip == 0x8842) {
+		/* make PAUSE flow control to run */
 		sc->sc_txc |= TXC_FCE;
 		sc->sc_rxc |= RXC_FCE;
-		CSR_WRITE_2(sc, SGCR3,
-		    CSR_READ_2(sc, SGCR3) | CR3_USEFC);
+		i = CSR_READ_2(sc, SGCR3);
+		CSR_WRITE_2(sc, SGCR3, i | CR3_USEFC);
 	}
 
 	/* accept multicast frame or run promisc mode */
@@ -841,14 +821,11 @@ kse_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (sc->sc_chip == 0x8841) {
-		/* start one second timer */
-		callout_schedule(&sc->sc_tick_ch, hz);
-	}
+	/* start one second timer */
+	callout_schedule(&sc->sc_tick_ch, hz);
+
 #ifdef KSE_EVENT_COUNTERS
-	/* start statistics gather 1 minute timer. should be tunable */
 	zerostats(sc);
-	callout_schedule(&sc->sc_stat_ch, hz * 60);
 #endif
 
  out:
@@ -867,11 +844,8 @@ kse_stop(struct ifnet *ifp, int disable)
 	struct kse_txsoft *txs;
 	int i;
 
-	if (sc->sc_chip == 0x8841)
-		callout_stop(&sc->sc_tick_ch);
-#ifdef KSE_EVENT_COUNTERS
-	callout_stop(&sc->sc_stat_ch);
-#endif
+	callout_stop(&sc->sc_tick_ch);
+
 	sc->sc_txc &= ~TXC_TEN;
 	sc->sc_rxc &= ~RXC_REN;
 	CSR_WRITE_4(sc, MDTXC, sc->sc_txc);
@@ -1391,8 +1365,8 @@ kse_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	mii_pollstat(mii);
 	ifmr->ifm_status = mii->mii_media_status;
-	ifmr->ifm_active = (mii->mii_media_active & ~IFM_ETH_FMASK) |
-	    sc->sc_flowflags;
+	ifmr->ifm_active = sc->sc_flowflags |
+	    (mii->mii_media_active & ~IFM_ETH_FMASK);
 }
 
 static void
@@ -1418,10 +1392,14 @@ phy_tick(void *arg)
 	struct mii_data *mii = &sc->sc_mii;
 	int s;
 
-	s = splnet();
-	mii_tick(mii);
-	splx(s);
-
+	if (sc->sc_chip == 0x8841) {
+		s = splnet();
+		mii_tick(mii);
+		splx(s);
+	}
+#ifdef KSE_EVENT_COUNTERS
+	stat_tick(arg);
+#endif
 	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
@@ -1518,17 +1496,19 @@ stat_tick(void *arg)
 {
 	struct kse_softc *sc = arg;
 	struct ksext *ee = &sc->sc_ext;
-	int nport, p, i, val;
+	int nport, p, i, reg, val;
 
 	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (p = 0; p < nport; p++) {
+		/* read 34 ev counters by indirect read via IACR */
 		for (i = 0; i < 32; i++) {
-			val = 0x1c00 | (p * 0x20 + i);
-			CSR_WRITE_2(sc, IACR, val);
+			reg = EVCNTBR + p * 0x20 + i;
+			CSR_WRITE_2(sc, IACR, reg);
+			/* 30-bit counter value are halved in IADR5 & IADR4 */
 			do {
 				val = CSR_READ_2(sc, IADR5) << 16;
-			} while ((val & (1U << 30)) == 0);
-			if (val & (1U << 31)) {
+			} while ((val & IADR_LATCH) == 0);
+			if (val & IADR_OVF) {
 				(void)CSR_READ_2(sc, IADR4);
 				val = 0x3fffffff; /* has made overflow */
 			}
@@ -1536,34 +1516,40 @@ stat_tick(void *arg)
 				val &= 0x3fff0000;		/* 29:16 */
 				val |= CSR_READ_2(sc, IADR4);	/* 15:0 */
 			}
-			ee->pev[p][i].ev_count += val; /* i (0-31) */
+			ee->pev[p][i].ev_count += val; /* ev0 thru 31 */
 		}
-		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p);
-		ee->pev[p][32].ev_count = CSR_READ_2(sc, IADR4); /* 32 */
-		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p * 3 + 1);
-		ee->pev[p][33].ev_count = CSR_READ_2(sc, IADR4); /* 33 */
+		/* ev32 and ev33 are 16-bit counter */
+		CSR_WRITE_2(sc, IACR, EVCNTBR + 0x100 + p);
+		ee->pev[p][32].ev_count += CSR_READ_2(sc, IADR4); /* ev32 */
+		CSR_WRITE_2(sc, IACR, EVCNTBR + 0x100 + p * 3 + 1);
+		ee->pev[p][33].ev_count += CSR_READ_2(sc, IADR4); /* ev33 */
 	}
-	callout_schedule(&sc->sc_stat_ch, hz * 60);
 }
 
 static void
 zerostats(struct kse_softc *sc)
 {
 	struct ksext *ee = &sc->sc_ext;
-	int nport, p, i, val;
+	int nport, p, i, reg, val;
 
 	/* Make sure all the HW counters get zero */
 	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (p = 0; p < nport; p++) {
-		for (i = 0; i < 31; i++) {
-			val = 0x1c00 | (p * 0x20 + i);
-			CSR_WRITE_2(sc, IACR, val);
+		for (i = 0; i < 32; i++) {
+			reg = EVCNTBR + p * 0x20 + i;
+			CSR_WRITE_2(sc, IACR, reg);
 			do {
 				val = CSR_READ_2(sc, IADR5) << 16;
-			} while ((val & (1U << 30)) == 0);
+			} while ((val & IADR_LATCH) == 0);
 			(void)CSR_READ_2(sc, IADR4);
 			ee->pev[p][i].ev_count = 0;
 		}
+		CSR_WRITE_2(sc, IACR, EVCNTBR + 0x100 + p);
+		(void)CSR_READ_2(sc, IADR4);
+		CSR_WRITE_2(sc, IACR, EVCNTBR + 0x100 + p * 3 + 1);
+		(void)CSR_READ_2(sc, IADR4);
+		ee->pev[p][32].ev_count = 0;
+		ee->pev[p][33].ev_count = 0;
 	}
 }
 #endif
