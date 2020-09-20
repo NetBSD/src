@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.113 2020/09/19 12:32:59 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.114 2020/09/20 10:17:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4995,4 +4995,14 @@ external/mit/xorg/lib/libX11/Makefile.libx11	1.20,1.21
 
 	Fix libXcursor version for dynamic loading.
 	[nia, ticket #1087]
+
+sys/dev/pci/virtio_pci.c			1.12
+
+	Fix PCI virtio crash on shutdown.
+	[jakllsch, ticket #1089]
+
+sys/dev/pci/virtio_pci.c			1.13
+
+	Fix virtio interrupts after MSI-X vector exhaustion.
+	[jakllsch, ticket #1090]
 
