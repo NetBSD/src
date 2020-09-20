@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.37 2020/09/19 12:36:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.38 2020/09/20 10:23:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1062,4 +1062,10 @@ sys/dev/hid/hidkbdmap.c				1.11 (patch)
 	PR 55608: for jp keymap map also scan code 49 to right bracket
 	to handle ARCHISS keyboard model.
 	[nonaka, ticket #1606]
+
+sys/dev/pci/virtio_pci.c			1.12
+	(applied to sys/dev/pci/virtio.c)
+
+	Fix PCI virtio crash on shutdown.
+	[jakllsch, ticket #1608]
 
