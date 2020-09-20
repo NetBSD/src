@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.28.2.1 2018/02/19 18:19:15 snj Exp $	*/
+/*	$NetBSD: virtio.c,v 1.28.2.2 2020/09/20 10:14:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28.2.1 2018/02/19 18:19:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28.2.2 2020/09/20 10:14:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ virtio_setup_interrupts(struct virtio_softc *sc)
 	}
 
 	if (pci_intr_type(pc, sc->sc_ihp[0]) == PCI_INTR_TYPE_MSIX) {
-		sc->sc_ihs = kmem_alloc(sizeof(*sc->sc_ihs) * 2,
+		sc->sc_ihs = kmem_zalloc(sizeof(*sc->sc_ihs) * 2,
 		    KM_SLEEP);
 
 		error = virtio_setup_msix_interrupts(sc, &sc->sc_pa);
@@ -326,7 +326,7 @@ virtio_setup_interrupts(struct virtio_softc *sc)
 		sc->sc_ihs_num = 2;
 		sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
 	} else if (pci_intr_type(pc, sc->sc_ihp[0]) == PCI_INTR_TYPE_INTX) {
-		sc->sc_ihs = kmem_alloc(sizeof(*sc->sc_ihs) * 1,
+		sc->sc_ihs = kmem_zalloc(sizeof(*sc->sc_ihs) * 1,
 		    KM_SLEEP);
 
 		error = virtio_setup_intx_interrupt(sc, &sc->sc_pa);
