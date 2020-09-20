@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.53 2020/04/01 04:00:14 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.54 2020/09/20 17:59:42 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.53 2020/04/01 04:00:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.54 2020/09/20 17:59:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -258,10 +258,7 @@ struct kse_softc {
 	uint32_t sc_t1csum;
 	int sc_mcsum;
 	uint32_t sc_inten;
-
 	uint32_t sc_chip;
-	uint8_t sc_altmac[16][ETHER_ADDR_LEN];
-	uint16_t sc_vlan[16];
 
 #ifdef KSE_EVENT_COUNTERS
 	struct ksext {
@@ -406,7 +403,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	/* Map and establish our interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "unable to map interrupt\n");
-		return;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, kse_intr, sc,
@@ -416,7 +413,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -502,13 +499,6 @@ kse_attach(device_t parent, device_t self, void *aux)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	callout_init(&sc->sc_tick_ch, 0);
-	callout_init(&sc->sc_stat_ch, 0);
-	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
-#ifdef KSE_EVENT_COUNTERS
-	callout_setfunc(&sc->sc_stat_ch, stat_tick, sc);
-#endif
-
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = kse_mii_readreg;
 	mii->mii_writereg = kse_mii_writereg;
@@ -548,7 +538,6 @@ kse_attach(device_t parent, device_t self, void *aux)
 	}
 	ifm->ifm_media = ifm->ifm_cur->ifm_media; /* as if user has requested */
 
-
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -572,6 +561,9 @@ kse_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
+
+	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
 
 #ifdef KSE_EVENT_COUNTERS
 	int p = (sc->sc_chip == 0x8842) ? 3 : 1;
@@ -648,6 +640,8 @@ kse_attach(device_t parent, device_t self, void *aux)
 		evcnt_attach_dynamic(&ee->pev[i][33], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxDropPkts");
 	}
+	callout_init(&sc->sc_stat_ch, 0);
+	callout_setfunc(&sc->sc_stat_ch, stat_tick, sc);
 #endif
 	return;
 
@@ -672,14 +666,9 @@ kse_attach(device_t parent, device_t self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
  fail_0:
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(pc, sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-	if (sc->sc_memsize) {
-		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_memsize);
-		sc->sc_memsize = 0;
-	}
+	pci_intr_disestablish(pc, sc->sc_ih);
+ fail:
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_memsize);
 	return;
 }
 
@@ -712,11 +701,10 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifmedia_ioctl(ifp, ifr, ifm, cmd);
 		break;
 	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+		error = ether_ioctl(ifp, cmd, data);
+		if (error != ENETRESET)
 			break;
-
 		error = 0;
-
 		if (cmd == SIOCSIFCAP)
 			error = (*ifp->if_init)(ifp);
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
@@ -732,6 +720,7 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	splx(s);
+
 	return error;
 }
 
