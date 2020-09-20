@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.226 2020/05/23 23:42:43 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.227 2020/09/20 12:51:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.226 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.227 2020/09/20 12:51:57 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -38,36 +38,35 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.226 2020/05/23 23:42:43 ad Exp $")
 #include "opt_gprof.h"
 #include "pty.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/sysctl.h>
-#include <sys/cpu.h>
-#include <sys/errno.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/unistd.h>
-#include <sys/disklabel.h>
+#include <sys/types.h>
+
+#include <dev/cons.h>
+#include <sys/conf.h>
 #include <sys/cprng.h>
-#include <sys/vnode_impl.h>	/* For vfs_drainvnodes(). */
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/errno.h>
+#include <sys/exec.h>
+#include <sys/filedesc.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/ktrace.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <dev/cons.h>
-#include <sys/socketvar.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
-#include <sys/tty.h>
-#include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
-#include <sys/exec.h>
-#include <sys/conf.h>
-#include <sys/device.h>
+#include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/kauth.h>
-#include <sys/ktrace.h>
-
-#include <sys/cpu.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/unistd.h>
+#include <sys/vnode_impl.h>     /* For vfs_drainvnodes(). */
 
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
