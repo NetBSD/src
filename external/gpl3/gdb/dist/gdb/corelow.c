@@ -841,6 +841,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 	if (xfer_status == TARGET_XFER_OK)
 	  return TARGET_XFER_OK;
 
+#ifndef __NetBSD__
 	/* Finally, attempt to access data in core file sections with
 	   no contents.  These will typically read as all zero.  */
 	auto no_contents_cb = [&] (const struct target_section *s)
@@ -853,7 +854,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 			 m_core_section_table.sections,
 			 m_core_section_table.sections_end,
 			 no_contents_cb);
-
+#endif
 	return xfer_status;
       }
     case TARGET_OBJECT_AUXV:
