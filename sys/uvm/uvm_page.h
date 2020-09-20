@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.105 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.106 2020/09/20 10:30:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -404,6 +404,7 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 
 #ifdef __HAVE_VM_PAGE_MD
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
+#define	VM_MD_TO_PAGE(md)	(container_of((md), struct vm_page, mdpage))
 #endif
 
 /*
@@ -469,10 +470,6 @@ uvm_page_set_bucket(struct vm_page *pg, unsigned b)
 	pg->phys_addr &= ~UVM_PHYSADDR_BUCKET;
 	pg->phys_addr |= __SHIFTIN(b, UVM_PHYSADDR_BUCKET);
 }
-
-#ifdef DEBUG
-void uvm_pagezerocheck(struct vm_page *);
-#endif /* DEBUG */
 
 #endif /* _KERNEL */
 
