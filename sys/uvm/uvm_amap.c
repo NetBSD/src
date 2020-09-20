@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.123 2020/08/18 10:40:20 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.124 2020/09/20 23:03:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.123 2020/08/18 10:40:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.124 2020/09/20 23:03:01 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1593,7 +1593,7 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 	 * so that the ppref values match the current amap refcount.
 	 */
 
-	if (amap->am_ppref == NULL && !all && len != amap->am_nslot) {
+	if (amap->am_ppref == NULL) {
 		amap_pp_establish(amap, offset);
 	}
 #endif
