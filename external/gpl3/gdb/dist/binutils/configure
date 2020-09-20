@@ -12621,7 +12621,8 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
 
 else
-  GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144"
+ :
+#  GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144"
 fi
 rm -f conftest*
 
@@ -12666,7 +12667,8 @@ if (eval "$ac_cpp_for_build conftest.$ac_ext") 2>&5 |
   $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
 
 else
-  GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144"
+ :
+#  GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144"
 fi
 rm -f conftest*
 
