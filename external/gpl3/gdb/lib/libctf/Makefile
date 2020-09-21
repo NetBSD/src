@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/09/17 16:45:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2020/09/21 06:48:48 mrg Exp $
 
 NOCTF=
 #HOSTPROG_CXX=   1
@@ -37,7 +37,7 @@ CWARNFLAGS.clang+=	-Wno-switch
 
 CLEANDIRFILES+= ctf-error.h
 
-${G_OBJECTS}: ctf-error.h
+${G_OBJECTS} ${G_OBJECTS:.o=.d}: ctf-error.h
 
 ctf-error.h: ${DIST}/libctf/mkerrors.sed ${DIST}/include/ctf-api.h
 	${TOOL_SED} -nf ${DIST}/libctf/mkerrors.sed < ${DIST}/include/ctf-api.h > $@
