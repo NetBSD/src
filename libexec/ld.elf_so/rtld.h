@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.140 2020/04/19 01:06:15 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.141 2020/09/21 16:08:57 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -226,7 +226,7 @@ typedef struct Struct_Obj_Entry {
 			sysv_hash:1,	/* SysV Hash available */
 			gnu_hash:1;	/* GNU Hash available */
 
-	struct link_map linkmap;	/* for GDB */
+	struct link_map linkmap;	/* for the debugger */
 
 	/* These items are computed by map_object() or by digest_phdr(). */
 	const char     *interp;	/* Pathname of the interpreter, if any */

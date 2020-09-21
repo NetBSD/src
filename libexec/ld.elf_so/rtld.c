@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.205 2020/04/19 01:06:15 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.206 2020/09/21 16:08:57 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.205 2020/04/19 01:06:15 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.206 2020/09/21 16:08:57 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,7 +81,7 @@ Elf_Addr        _rtld(Elf_Addr *, Elf_Addr);
  */
 static char    *error_message;	/* Message for dlopen(), or NULL */
 
-struct r_debug  _rtld_debug;	/* for GDB; */
+struct r_debug  _rtld_debug;	/* The SVR4 interface for the debugger */
 bool            _rtld_trust;	/* False for setuid and setgid programs */
 Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
@@ -394,8 +394,10 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	_rtld_objtail = &_rtld_objlist;
 	_rtld_objcount = 0;
 
+	_rtld_debug.r_version = R_DEBUG_VERSION;
 	_rtld_debug.r_brk = _rtld_debug_state;
 	_rtld_debug.r_state = RT_CONSISTENT;
+	_rtld_debug.r_ldbase = &_rtld_objself.linkmap;
 
 	ehdr = (Elf_Ehdr *)mapbase;
 	_rtld_objself.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
@@ -676,8 +678,8 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	/*
 	 * Get the actual dynamic linker pathname from the executable if
 	 * possible.  (It should always be possible.)  That ensures that
-	 * gdb will find the right dynamic linker even if a non-standard
-	 * one is being used.
+	 * the debugger will find the right dynamic linker even if a
+	 * non-standard one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
 	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
@@ -774,7 +776,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	if (real___mainprog_obj)
 		*real___mainprog_obj = _rtld_objmain;
 
-	_rtld_debug_state();	/* say hello to gdb! */
+	_rtld_debug_state();	/* say hello to the debugger! */
 
 	_rtld_exclusive_enter(&mask);
 
