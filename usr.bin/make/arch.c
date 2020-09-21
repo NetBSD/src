@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.115 2020/09/13 18:27:39 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.116 2020/09/21 03:12:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.115 2020/09/13 18:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.116 2020/09/21 03:12:25 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -362,62 +362,47 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
 	    Lst members = Lst_Init();
-	    Buffer nameBuf;
-
-	    Buf_Init(&nameBuf, 0);
 	    Dir_Expand(memName, dirSearchPath, members);
+
 	    while (!Lst_IsEmpty(members)) {
 		char *member = Lst_Dequeue(members);
-
-		Buf_Empty(&nameBuf);
-		Buf_AddStr(&nameBuf, libName);
-		Buf_AddStr(&nameBuf, "(");
-		Buf_AddStr(&nameBuf, member);
-		Buf_AddStr(&nameBuf, ")");
+		char *fullname = str_concat4(libName, "(", member, ")");
 		free(member);
 
-		gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
-		if (gn == NULL) {
-		    Buf_Destroy(&nameBuf, TRUE);
+		gn = Targ_FindNode(fullname, TARG_CREATE);
+		free(fullname);
+
+		if (gn == NULL)
 		    return FALSE;
-		} else {
-		    /*
-		     * We've found the node, but have to make sure the rest of
-		     * the world knows it's an archive member, without having
-		     * to constantly check for parentheses, so we type the
-		     * thing with the OP_ARCHV bit before we place it on the
-		     * end of the provided list.
-		     */
-		    gn->type |= OP_ARCHV;
-		    Lst_Append(nodeLst, gn);
-		}
-	    }
-	    Lst_Free(members);
-	    Buf_Destroy(&nameBuf, TRUE);
-	} else {
-	    Buffer nameBuf;
 
-	    Buf_Init(&nameBuf, 0);
-	    Buf_AddStr(&nameBuf, libName);
-	    Buf_AddStr(&nameBuf, "(");
-	    Buf_AddStr(&nameBuf, memName);
-	    Buf_AddStr(&nameBuf, ")");
-
-	    gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
-	    Buf_Destroy(&nameBuf, TRUE);
-	    if (gn == NULL) {
-		return FALSE;
-	    } else {
 		/*
-		 * We've found the node, but have to make sure the rest of the
-		 * world knows it's an archive member, without having to
-		 * constantly check for parentheses, so we type the thing with
-		 * the OP_ARCHV bit before we place it on the end of the
-		 * provided list.
+		 * We've found the node, but have to make sure the rest of
+		 * the world knows it's an archive member, without having
+		 * to constantly check for parentheses, so we type the
+		 * thing with the OP_ARCHV bit before we place it on the
+		 * end of the provided list.
 		 */
 		gn->type |= OP_ARCHV;
 		Lst_Append(nodeLst, gn);
 	    }
+	    Lst_Free(members);
+	} else {
+	    char *fullname = str_concat4(libName, "(", memName, ")");
+	    gn = Targ_FindNode(fullname, TARG_CREATE);
+	    free(fullname);
+
+	    if (gn == NULL)
+		return FALSE;
+
+	    /*
+	     * We've found the node, but have to make sure the rest of the
+	     * world knows it's an archive member, without having to
+	     * constantly check for parentheses, so we type the thing with
+	     * the OP_ARCHV bit before we place it on the end of the
+	     * provided list.
+	     */
+	    gn->type |= OP_ARCHV;
+	    Lst_Append(nodeLst, gn);
 	}
 	if (doSubst) {
 	    free(memName);
