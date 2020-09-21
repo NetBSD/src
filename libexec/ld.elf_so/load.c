@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.48 2017/01/10 21:08:48 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.49 2020/09/21 16:08:57 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.48 2017/01/10 21:08:48 christos Exp $");
+__RCSID("$NetBSD: load.c,v 1.49 2020/09/21 16:08:57 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ _rtld_load_object(const char *filepath, int flags)
 		_rtld_objcount++;
 		_rtld_objloads++;
 #ifdef RTLD_LOADER
-		_rtld_linkmap_add(obj);	/* for GDB */
+		_rtld_linkmap_add(obj);	/* for the debugger */
 #endif
 		dbg(("  %p .. %p: %s", obj->mapbase,
 		    obj->mapbase + obj->mapsize - 1, obj->path));
