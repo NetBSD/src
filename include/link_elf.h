@@ -1,10 +1,12 @@
-/*	$NetBSD: link_elf.h,v 1.11 2020/09/21 02:20:27 kamil Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.12 2020/09/21 16:08:57 kamil Exp $	*/
 
 #ifndef _LINK_ELF_H_
 #define	_LINK_ELF_H_
 
 #include <sys/types.h>
 #include <sys/exec_elf.h>
+
+#define R_DEBUG_VERSION	1 /* SVR4 Protocol version */
 
 typedef struct link_map {
 	caddr_t		 l_addr;	/* Base Address of library */
@@ -43,6 +45,7 @@ struct r_debug {
 		RT_ADD,			/* adding a shared library */
 		RT_DELETE		/* removing a shared library */
 	} r_state;
+	void *r_ldbase;			/* base address of RTLD */
 };
 
 struct dl_phdr_info
