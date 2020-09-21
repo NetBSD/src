@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.522 2020/09/14 21:55:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.523 2020/09/21 05:28:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.522 2020/09/14 21:55:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.523 2020/09/21 05:28:26 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3368,7 +3368,7 @@ ValidShortVarname(char varname, const char *start)
     case '}':
     case ':':
     case '$':
-	break;
+	break;			/* and continue below */
     default:
         return TRUE;
     }
@@ -3683,7 +3683,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	free(v);
     }
     *out_val = nstr;
-    return VPE_OK;		/* TODO: may also be errors */
+    return VPE_UNKNOWN;
 }
 
 /* Substitute for all variables in the given string in the given context.
