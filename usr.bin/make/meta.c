@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.114 2020/09/12 14:41:00 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.115 2020/09/21 17:44:25 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1124,7 +1124,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	int lastpid = 0;
 	int pid;
 	int x;
-	LstNode ln;
+	StringListNode *cmdNode;
 	struct make_stat mst;
 
 	if (!buf) {
@@ -1148,7 +1148,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
 
-	ln = Lst_First(gn->commands);
+	cmdNode = Lst_First(gn->commands);
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
 	    lineno++;
 	    if (buf[x - 1] == '\n')
@@ -1315,19 +1315,20 @@ meta_oodate(GNode *gn, Boolean oodate)
 		case 'D':		/* unlink */
 		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
 			/* remove any missingFiles entries that match p */
-			ln = Lst_Find(missingFiles, path_match, p);
-			if (ln != NULL) {
-			    LstNode nln;
-			    char *tp;
+			StringListNode *missingNode =
+				Lst_Find(missingFiles, path_match, p);
+			if (missingNode != NULL) {
+			    StringListNode *nln;
 
 			    do {
+				char *tp;
 				nln = Lst_FindFrom(missingFiles,
-						   LstNode_Next(ln),
+						   LstNode_Next(missingNode),
 						   path_match, p);
-				tp = LstNode_Datum(ln);
-				Lst_Remove(missingFiles, ln);
+				tp = LstNode_Datum(missingNode);
+				Lst_Remove(missingFiles, missingNode);
 				free(tp);
-			    } while ((ln = nln) != NULL);
+			    } while ((missingNode = nln) != NULL);
 			}
 		    }
 		    if (buf[0] == 'M') {
@@ -1498,12 +1499,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 		 * Compare the current command with the one in the
 		 * meta data file.
 		 */
-		if (ln == NULL) {
+		if (cmdNode == NULL) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: there were more build commands in the meta data file than there are now...\n", fname, lineno);
 		    oodate = TRUE;
 		} else {
-		    char *cmd = LstNode_Datum(ln);
+		    char *cmd = LstNode_Datum(cmdNode);
 		    Boolean hasOODATE = FALSE;
 
 		    if (strstr(cmd, "$?"))
@@ -1555,14 +1556,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    oodate = TRUE;
 		    }
 		    free(cmd);
-		    ln = LstNode_Next(ln);
+		    cmdNode = LstNode_Next(cmdNode);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
 		/*
 		 * Check if there are extra commands now
 		 * that weren't in the meta data file.
 		 */
-		if (!oodate && ln != NULL) {
+		if (!oodate && cmdNode != NULL) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: there are extra build commands now that weren't in the meta data file\n", fname, lineno);
 		    oodate = TRUE;
