@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.62 2017/08/24 01:01:09 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.63 2020/09/21 15:31:54 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.62 2017/08/24 01:01:09 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.63 2020/09/21 15:31:54 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -424,7 +424,7 @@ literal:
 			continue;
 
 		case 'V':	/* The ISO 8601:1988 week number as decimal */
-			bp = conv_num(bp, &i, 0, 53);
+			bp = conv_num(bp, &i, 1, 53);
 			continue;
 
 		case 'Y':	/* The year. */
