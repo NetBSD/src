@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.28 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.29 2020/09/21 18:41:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.28 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.29 2020/09/21 18:41:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,10 @@ uvm_io(struct vm_map *map, struct uio *uio, int flags)
 	error = 0;
 
 	flags |= UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | UVM_EXTRACT_FIXPROT;
+
+	/* XXX cannot use QREF with without AMAP_REFALL, and REFALL is unsafe */
+	flags &= ~UVM_EXTRACT_QREF;
+
 	/*
 	 * step 1: main loop...  while we've got data to move
 	 */
