@@ -1,4 +1,4 @@
-/*	$NetBSD: link_elf.h,v 1.10 2010/10/16 10:27:06 skrll Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.11 2020/09/21 02:20:27 kamil Exp $	*/
 
 #ifndef _LINK_ELF_H_
 #define	_LINK_ELF_H_
@@ -18,13 +18,27 @@ typedef struct link_map {
 } Link_map;
 
 /*
- * This only exists for GDB.
+ * Debug rendezvous struct. Pointer to this is set up in the
+ * target code pointed by the DT_DEBUG tag. If it is
+ * defined.
  */
 struct r_debug {
-	int r_version;			/* not used */
+	int r_version;			/* protocol version */
 	struct link_map *r_map;		/* list of loaded images */
+
+	/*
+	 * This is the address of a function internal to the run-time linker,
+	 * that will always be called when the linker begins to map in a
+	 * library or unmap it, and again when the mapping change is complete.
+	 * The debugger can set a breakpoint at this address if it wants to
+	 * notice shared object mapping changes.
+	 */
 	void (*r_brk)(void);		/* pointer to break point */
 	enum {
+		/*
+		 * This state value describes the mapping change taking place
+		 * when the `r_brk' address is called.
+		 */
 		RT_CONSISTENT,		/* things are stable */
 		RT_ADD,			/* adding a shared library */
 		RT_DELETE		/* removing a shared library */
