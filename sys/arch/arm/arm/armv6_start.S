@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.27 2020/08/28 13:36:52 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.28 2020/09/21 21:26:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -660,6 +660,7 @@ armv7_init:
 
 #define ARMV7_SCTLR_SET	( 	\
     CPU_CONTROL_UNAL_ENABLE |	\
+    CPU_CONTROL_SWP_ENABLE |	\
     0)
 
 	mrc	p15, 0, r0, c1, c0, 0
