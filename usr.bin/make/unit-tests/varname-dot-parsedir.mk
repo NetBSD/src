@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-parsedir.mk,v 1.4 2020/09/12 11:55:28 rillig Exp $
+# $NetBSD: varname-dot-parsedir.mk,v 1.5 2020/09/21 03:45:29 rillig Exp $
 #
 # Tests for the special .PARSEDIR variable, which contains the directory part
 # of the file that is currently parsed.
@@ -28,9 +28,10 @@
 .info At this point, .PARSEDIR is undefined.
 
 # There is absolutely no point in faking the location of the file that is
-# being parsed.  Technically, it's possible though.
+# being parsed.  Technically, it's possible though, but only if the file
+# being parsed is a relative pathname.  See PrintLocation for details.
 .PARSEDIR = /fake-absolute-path
-.info The location can be faked.
+.info The location can be faked in some cases.
 
 # After including another file, .PARSEDIR is reset.
 .include "/dev/null"
