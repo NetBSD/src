@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.57 2019/09/22 16:41:19 ryo Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.58 2020/09/21 06:57:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -176,6 +176,7 @@ struct rtk_softc {
 	device_t		sc_dev;
 	struct ethercom		ethercom;	/* interface info */
 	struct mii_data		mii;
+	uint32_t		sc_hwrev;
 	struct callout		rtk_tick_ch;	/* tick callout */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
 	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
