@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.3 2020/08/31 18:57:41 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.4 2020/09/21 04:20:35 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -156,6 +156,10 @@ testcase USER_CPPFLAGS="-DNDEBUG"
 #testcase USE_COVERAGE="yes" USER_CFLAGS="-O0 -ggdb"
 
 testcase USE_FORT="yes"
+
+# Ensure that the tests can be specified either as relative filenames or
+# as absolute filenames.
+testcase USE_ABSOLUTE_TESTNAMES="yes"
 
 # This test is the result of reading through the GCC "Warning Options"
 # documentation, noting down everything that sounded interesting.
