@@ -1,5 +1,5 @@
 .\" $OpenBSD: rum.4,v 1.17 2006/10/22 08:29:01 damien Exp $
-.\" $NetBSD: rum.4,v 1.10 2017/05/23 13:55:32 wiz Exp $
+.\" $NetBSD: rum.4,v 1.11 2020/09/21 17:52:31 nia Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 5, 2017
+.Dd September 21, 2020
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -72,16 +72,16 @@ capture packets from networks which it wouldn't normally have access to,
 or to scan for access points.
 .El
 .Pp
+The
 .Nm
-supports software WEP.
-Wired Equivalent Privacy (WEP) is the de facto encryption standard
-for wireless networks.
-It can be typically configured in one of three modes:
-no encryption; 40-bit encryption; or 104-bit encryption.
-Unfortunately, due to serious weaknesses in WEP protocol
-it is strongly recommended that it not be used as the
-sole mechanism to secure wireless communication.
-WEP is not enabled by default.
+driver can be configured to use
+Wired Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the de facto encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
 .Sh CONFIGURATION
 The
 .Nm
