@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.144 2020/09/21 03:45:29 rillig Exp $
+# $NetBSD: Makefile,v 1.145 2020/09/21 04:20:35 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -418,7 +418,11 @@ unexport-env.rawout: export.mk
 UNIT_TESTS:=	${.PARSEDIR}
 .PATH: ${UNIT_TESTS}
 
+.if ${USE_ABSOLUTE_TESTNAMES:Uno} == yes
+OUTFILES=	${TESTS:@test@${.CURDIR:tA}/${test}.out@}
+.else
 OUTFILES=	${TESTS:=.out}
+.endif
 
 all: ${OUTFILES}
 
@@ -447,10 +451,10 @@ LANG=		C
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
 	cd ${.OBJDIR}; \
-	env -i PATH="$$PATH" ${ENV.${.TARGET:R}} \
+	env -i PATH="$$PATH" ${ENV.${.PREFIX:T}} \
 	  ${TEST_MAKE} \
 	    -r -C ${.CURDIR} -f ${.IMPSRC} \
-	    ${FLAGS.${.TARGET:R}:U-k} \
+	    ${FLAGS.${.PREFIX:T}:U-k} \
 	    > ${.TARGET}.tmp 2>&1 \
 	&& status=$$? || status=$$?; \
 	echo $$status > ${.TARGET:R}.status
@@ -468,9 +472,9 @@ _SED_CMDS+=	-e 's,${.CURDIR:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 
 .rawout.out:
-	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.TARGET:R}} \
+	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.PREFIX:T}} \
 	  < ${.IMPSRC} > ${.TARGET}.tmp1
-	@${POSTPROC.${.TARGET:R}:Ucat} < ${.TARGET}.tmp1 > ${.TARGET}.tmp2
+	@${POSTPROC.${.PREFIX:T}:Ucat} < ${.TARGET}.tmp1 > ${.TARGET}.tmp2
 	@rm ${.TARGET}.tmp1
 	@echo "exit status `cat ${.TARGET:R}.status`" >> ${.TARGET}.tmp2
 	@mv ${.TARGET}.tmp2 ${.TARGET}
