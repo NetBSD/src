@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.142 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.143 2020/09/21 17:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -272,6 +272,11 @@ typedef enum {
     INTERNAL	= 0x4000	/* Internal use only */
 } GNodeFlags;
 
+typedef struct List StringList;
+typedef struct ListNode StringListNode;
+typedef struct List GNodeList;
+typedef struct ListNode GNodeListNode;
+
 /* A graph node represents a target that can possibly be made, including its
  * relation to other targets and a lot of other details. */
 typedef struct GNode {
@@ -299,25 +304,25 @@ typedef struct GNode {
     /* The GNodes for which this node is an implied source. May be empty.
      * For example, when there is an inference rule for .c.o, the node for
      * file.c has the node for file.o in this list. */
-    Lst implicitParents;
+    GNodeList *implicitParents;
 
     /* Other nodes of the same name for the :: operator. */
-    Lst cohorts;
+    GNodeList *cohorts;
 
     /* The nodes that depend on this one, or in other words, the nodes for
      * which this is a source. */
-    Lst parents;
+    GNodeList *parents;
     /* The nodes on which this one depends. */
-    Lst children;
+    GNodeList *children;
 
     /* .ORDER nodes we need made. The nodes that must be made (if they're
      * made) before this node can be made, but that do not enter into the
      * datedness of this node. */
-    Lst order_pred;
+    GNodeList *order_pred;
     /* .ORDER nodes who need us. The nodes that must be made (if they're made
      * at all) after this node is made, but that do not depend on this node,
      * in the normal sense. */
-    Lst order_succ;
+    GNodeList *order_succ;
 
     /* #n for this cohort */
     char cohort_num[8];
@@ -335,7 +340,7 @@ typedef struct GNode {
     Hash_Table context;
 
     /* The commands to be given to a shell to create this target. */
-    Lst commands;
+    StringList *commands;
 
     /* Suffix for the node (determined by Suff_FindDeps and opaque to everyone
      * but the Suff module) */

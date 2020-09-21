@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.145 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.146 2020/09/21 17:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.145 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.146 2020/09/21 17:44:25 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
@@ -197,7 +197,7 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
     int	    	  status;   	/* Description of child's death */
     pid_t	  cpid;	    	/* Child actually found */
     pid_t	  retstat;    	/* Result of wait */
-    LstNode 	  cmdNode;  	/* Node where current command is located */
+    StringListNode *cmdNode;  	/* Node where current command is located */
     const char  ** volatile av;	/* Argument vector for thing to exec */
     char	** volatile mav;/* Copy of the argument vector for freeing */
     Boolean 	  useShell;    	/* TRUE if command should be executed

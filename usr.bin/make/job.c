@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.232 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.233 2020/09/21 17:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.232 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.233 2020/09/21 17:44:25 rillig Exp $");
 
 # define STATIC static
 
@@ -697,7 +697,7 @@ JobPrintCommand(void *cmdp, void *jobp)
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
-	    LstNode dotsNode = Lst_FindDatum(job->node->commands, cmd);
+	    StringListNode *dotsNode = Lst_FindDatum(job->node->commands, cmd);
 	    job->tailCmds = dotsNode != NULL ? LstNode_Next(dotsNode) : NULL;
 	    return 1;
 	}

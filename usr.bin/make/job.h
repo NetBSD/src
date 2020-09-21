@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.47 2020/08/29 12:20:17 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.48 2020/09/21 17:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@ struct pollfd;
 typedef struct Job {
     int       	pid;	    /* The child's process ID */
     GNode    	*node;      /* The target the child is making */
-    LstNode 	tailCmds;   /* The node of the first command to be
+    StringListNode *tailCmds; /* The node of the first command to be
 			     * saved when the job has been run */
     FILE 	*cmdFILE;   /* When creating the shell script, this is
 			     * where the commands go */
