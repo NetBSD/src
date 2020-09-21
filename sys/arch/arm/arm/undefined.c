@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.66 2019/10/01 18:00:07 chs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.67 2020/09/21 10:35:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.66 2019/10/01 18:00:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.67 2020/09/21 10:35:12 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -136,7 +136,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *tf, int code)
 	 * Don't overwrite sp, pc, etc.
 	 */
 	const u_int regno = (insn >> 12) & 15;
-	if (regno > 12)
+	if (regno == 13 || regno == 15)
 		return 1;
 
 	/*
