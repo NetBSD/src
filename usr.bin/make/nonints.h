@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.122 2020/09/13 20:38:47 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.123 2020/09/21 05:28:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -218,47 +218,45 @@ typedef enum {
     /* Both parsing and evaluation succeeded. */
     VPE_OK		= 0x0000,
 
-    /* Parsing failed.
-     * An error message has already been printed. */
-    VPE_PARSE_MSG	= 0x0001,
+    /* See if a message has already been printed for this error. */
+    VPE_ANY_MSG		= 0x0001,
 
     /* Parsing failed.
      * No error message has been printed yet.
-     *
-     * This should never happen since it is impossible to say where
-     * the parsing error occurred. */
+     * Deprecated, migrate to VPE_PARSE_MSG instead. */
     VPE_PARSE_SILENT	= 0x0002,
 
-    /* Parsing succeeded.
-     * During evaluation, VARE_UNDEFERR was set and there was an undefined
-     * variable.
+    /* Parsing failed.
      * An error message has already been printed. */
-    VPE_UNDEF_MSG	= 0x0010,
+    VPE_PARSE_MSG	= VPE_PARSE_SILENT | VPE_ANY_MSG,
 
     /* Parsing succeeded.
      * During evaluation, VARE_UNDEFERR was set and there was an undefined
      * variable.
      * No error message has been printed yet.
-     *
-     * This should never happen since it is impossible to say which of
-     * the variables was undefined. */
-    VPE_UNDEF_SILENT	= 0x0020,
+     * Deprecated, migrate to VPE_UNDEF_MSG instead. */
+    VPE_UNDEF_SILENT	= 0x0004,
 
     /* Parsing succeeded.
-     * Evaluation failed.
+     * During evaluation, VARE_UNDEFERR was set and there was an undefined
+     * variable.
      * An error message has already been printed. */
-    VPE_EVAL_MSG	= 0x0100,
+    VPE_UNDEF_MSG	= VPE_UNDEF_SILENT | VPE_ANY_MSG,
 
     /* Parsing succeeded.
      * Evaluation failed.
      * No error message has been printed yet.
-     *
-     * This should never happen since it is impossible to say where
-     * exactly the evaluation error occurred. */
-    VPE_EVAL_SILENT	= 0x0200,
+     * Deprecated, migrate to VPE_EVAL_MSG instead. */
+    VPE_EVAL_SILENT	= 0x0006,
 
-    /* See if a message has already been printed for this error. */
-    VPE_ANY_MSG		= VPE_PARSE_MSG | VPE_UNDEF_MSG | VPE_EVAL_MSG
+    /* Parsing succeeded.
+     * Evaluation failed.
+     * An error message has already been printed. */
+    VPE_EVAL_MSG	= VPE_EVAL_SILENT | VPE_ANY_MSG,
+
+    /* The exact error handling status is not known yet.
+     * Deprecated, migrate to VPE_OK or any VPE_*_MSG instead. */
+    VPE_UNKNOWN		= 0x0008
 } VarParseErrors;
 
 void Var_Delete(const char *, GNode *);
