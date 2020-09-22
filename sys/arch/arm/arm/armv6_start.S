@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.28 2020/09/21 21:26:43 mrg Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.29 2020/09/22 00:55:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -572,6 +572,13 @@ generic_vstartv6:
 #define CPU_CONTROL_XP_ENABLE_SET	0
 #endif
 
+/* SWP is only usable on uni-processor ARMv7 systems. */
+#ifdef MULTIPROCESSOR
+#define CPU_CONTROL_XP_SWP_ENABLE 0 
+#else
+#define CPU_CONTROL_XP_SWP_ENABLE CPU_CONTROL_SWP_ENABLE  
+#endif
+
 // bits to set in the Control Register
 //
 #define CPU_CONTROL_SET			( 	\
@@ -660,7 +667,7 @@ armv7_init:
 
 #define ARMV7_SCTLR_SET	( 	\
     CPU_CONTROL_UNAL_ENABLE |	\
-    CPU_CONTROL_SWP_ENABLE |	\
+    CPU_CONTROL_XP_SWP_ENABLE | \
     0)
 
 	mrc	p15, 0, r0, c1, c0, 0
