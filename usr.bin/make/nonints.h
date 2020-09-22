@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.124 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.125 2020/09/22 06:06:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -216,48 +216,48 @@ typedef enum {
 typedef enum {
 
     /* Both parsing and evaluation succeeded. */
-    VPE_OK		= 0x0000,
+    VPR_OK		= 0x0000,
 
     /* See if a message has already been printed for this error. */
-    VPE_ANY_MSG		= 0x0001,
+    VPR_ANY_MSG		= 0x0001,
 
     /* Parsing failed.
      * No error message has been printed yet.
-     * Deprecated, migrate to VPE_PARSE_MSG instead. */
-    VPE_PARSE_SILENT	= 0x0002,
+     * Deprecated, migrate to VPR_PARSE_MSG instead. */
+    VPR_PARSE_SILENT	= 0x0002,
 
     /* Parsing failed.
      * An error message has already been printed. */
-    VPE_PARSE_MSG	= VPE_PARSE_SILENT | VPE_ANY_MSG,
+    VPR_PARSE_MSG	= VPR_PARSE_SILENT | VPR_ANY_MSG,
 
     /* Parsing succeeded.
      * During evaluation, VARE_UNDEFERR was set and there was an undefined
      * variable.
      * No error message has been printed yet.
-     * Deprecated, migrate to VPE_UNDEF_MSG instead. */
-    VPE_UNDEF_SILENT	= 0x0004,
+     * Deprecated, migrate to VPR_UNDEF_MSG instead. */
+    VPR_UNDEF_SILENT	= 0x0004,
 
     /* Parsing succeeded.
      * During evaluation, VARE_UNDEFERR was set and there was an undefined
      * variable.
      * An error message has already been printed. */
-    VPE_UNDEF_MSG	= VPE_UNDEF_SILENT | VPE_ANY_MSG,
+    VPR_UNDEF_MSG	= VPR_UNDEF_SILENT | VPR_ANY_MSG,
 
     /* Parsing succeeded.
      * Evaluation failed.
      * No error message has been printed yet.
-     * Deprecated, migrate to VPE_EVAL_MSG instead. */
-    VPE_EVAL_SILENT	= 0x0006,
+     * Deprecated, migrate to VPR_EVAL_MSG instead. */
+    VPR_EVAL_SILENT	= 0x0006,
 
     /* Parsing succeeded.
      * Evaluation failed.
      * An error message has already been printed. */
-    VPE_EVAL_MSG	= VPE_EVAL_SILENT | VPE_ANY_MSG,
+    VPR_EVAL_MSG	= VPR_EVAL_SILENT | VPR_ANY_MSG,
 
     /* The exact error handling status is not known yet.
-     * Deprecated, migrate to VPE_OK or any VPE_*_MSG instead. */
-    VPE_UNKNOWN		= 0x0008
-} VarParseErrors;
+     * Deprecated, migrate to VPR_OK or any VPE_*_MSG instead. */
+    VPR_UNKNOWN		= 0x0008
+} VarParseResult;
 
 void Var_Delete(const char *, GNode *);
 void Var_Set(const char *, const char *, GNode *);
@@ -265,7 +265,7 @@ void Var_Set_with_flags(const char *, const char *, GNode *, VarSet_Flags);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 const char *Var_Value(const char *, GNode *, char **);
-VarParseErrors Var_Parse(const char **, GNode *, VarEvalFlags,
+VarParseResult Var_Parse(const char **, GNode *, VarEvalFlags,
 			 const char **, void **);
 char *Var_Subst(const char *, GNode *, VarEvalFlags);
 void Var_Init(void);

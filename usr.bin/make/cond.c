@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.147 2020/09/14 23:09:34 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.148 2020/09/22 06:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.147 2020/09/14 23:09:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.148 2020/09/22 06:06:18 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -417,7 +417,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
     Boolean qt;
     const char *start;
     VarEvalFlags eflags;
-    VarParseErrors errors;
+    VarParseResult parseResult;
 
     Buf_Init(&buf, 0);
     str = NULL;
@@ -461,10 +461,10 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		     (doEval ? VARE_WANTRES : 0);
 	    nested_p = par->p;
 	    atStart = nested_p == start;
-	    errors = Var_Parse(&nested_p, VAR_CMD, eflags, &str, freeIt);
+	    parseResult = Var_Parse(&nested_p, VAR_CMD, eflags, &str, freeIt);
 	    /* TODO: handle errors */
 	    if (str == var_Error) {
-	        if (errors & VPE_ANY_MSG)
+	        if (parseResult & VPR_ANY_MSG)
 	            par->printedError = TRUE;
 		if (*freeIt) {
 		    free(*freeIt);
