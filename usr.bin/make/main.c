@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.338 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.339 2020/09/22 05:12:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.338 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.339 2020/09/22 05:12:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -136,7 +136,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #define	DEFMAXLOCAL DEFMAXJOBS
 #endif
 
-GNodeList *		create;		/* Targets to be made */
+StringList *		create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
