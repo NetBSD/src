@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.16 2020/05/12 17:04:00 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.17 2020/09/22 16:18:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,12 +57,28 @@ write_all_parts(struct install_partition_desc *install)
 	bool found, res;
 
 	/* pessimistic assumption: all partitions on different devices */
-	allparts = calloc(install->num, sizeof(*allparts));
+	allparts = calloc(install->num + install->num_write_back,
+	    sizeof(*allparts));
 	if (allparts == NULL)
 		return false;
 
 	/* collect all different partition sets */
 	num_parts = 0;
+	for (i = 0; i < install->num_write_back; i++) {
+		parts = install->write_back[i];
+		if (parts == NULL)
+			continue;
+		found = false;
+		for (j = 0; j < num_parts; j++) {
+			if (allparts[j] == parts) {
+				found = true;
+				break;
+			}
+		}
+		if (found)
+			continue;
+		allparts[num_parts++] = parts;
+	}
 	for (i = 0; i < install->num; i++) {
 		parts = install->infos[i].parts;
 		if (parts == NULL)

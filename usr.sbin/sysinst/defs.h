@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.62 2020/05/18 21:19:36 jmcneill Exp $	*/
+/*	$NetBSD: defs.h,v 1.63 2020/09/22 16:18:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -322,9 +322,15 @@ struct part_usage_info {
  * A list of partition suggestions, bundled for editing
  */
 struct partition_usage_set {
-	struct disk_partitions *parts;
-	size_t num;
+	struct disk_partitions *parts;	/* main partition table */
+	size_t num;			/* number of infos */
 	struct part_usage_info *infos;	/* 0 .. num-1 */
+	struct disk_partitions **write_back;
+					/* partition tables from which we
+					 * did delete some partitions and
+					 * that need updating, even if
+					 * no active partition remains. */
+	size_t num_write_back;		/* number of write_back */
 	daddr_t cur_free_space;		/* estimate of free sectors */
 	menu_ent *menu_opts;		/* 0 .. num+N */
 	int menu;			/* the menu to edit this */
@@ -360,6 +366,12 @@ struct single_part_fs_edit {
 struct install_partition_desc {
 	size_t num;				/* how many entries in infos */
 	struct part_usage_info *infos;		/* individual partitions */
+	struct disk_partitions **write_back;	/* partition tables from 
+						 * which we did delete some
+						 * partitions and that need
+						 * updating, even if no
+						 * active partition remains. */
+	size_t num_write_back;			/* number of write_back */
 	bool cur_system;			/* target is the life system */
 };
 

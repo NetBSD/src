@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.42 2020/05/12 06:23:07 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.43 2020/09/22 16:18:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1774,6 +1774,8 @@ make_bsd_partitions(struct install_partition_desc *install)
 		/* update install infos */
 		install->num = wanted.num;
 		install->infos = wanted.infos;
+		install->write_back = wanted.write_back;
+		install->num_write_back = wanted.num_write_back;
 		/* and check them */
 		if (check_partitions(install))
 			break;
@@ -1781,6 +1783,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 
 	/* we moved infos from wanted to install target */
 	wanted.infos = NULL;
+	wanted.write_back = NULL;
 	free_usage_set(&wanted);
 
 	/* Everything looks OK. */

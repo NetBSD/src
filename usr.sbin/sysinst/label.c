@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.23 2020/09/22 12:21:11 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.24 2020/09/22 16:18:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.23 2020/09/22 12:21:11 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.24 2020/09/22 16:18:54 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -710,6 +710,29 @@ static void update_edit_ptn_menu(menudesc *m, void *arg);
 static void draw_edit_ptn_line(menudesc *m, int opt, void *arg);
 static int edit_ptn_custom_type(menudesc *m, void *arg);
 
+static void
+remember_deleted(struct partition_usage_set *pset,
+    struct disk_partitions *parts)
+{
+	size_t i, num;
+	struct disk_partitions **tab;
+
+	/* do we have parts on record already? */
+	for (i = 0; i < pset->num_write_back; i++)
+		if (pset->write_back[i] == parts)
+			return;
+	/*
+	 * Need to record this partition table for write back
+	 */
+	num = pset->num_write_back + 1;
+	tab = realloc(pset->write_back, num*sizeof(*pset->write_back));
+	if (!tab)
+		return;
+	tab[pset->num_write_back] = parts;
+	pset->write_back = tab;
+	pset->num_write_back = num;
+}
+
 int
 edit_ptn(menudesc *menu, void *arg)
 {
@@ -884,6 +907,8 @@ edit_ptn(menudesc *menu, void *arg)
 			err_msg_win(err);
 			return 0;
 		}
+		remember_deleted(pset,
+		    pset->infos[edit.index].parts);
 		memmove(pset->infos+edit.index,
 		    pset->infos+edit.index+1,
 		    sizeof(*pset->infos)*(pset->num-edit.index));
