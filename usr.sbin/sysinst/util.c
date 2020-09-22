@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.45 2020/05/18 21:19:36 jmcneill Exp $	*/
+/*	$NetBSD: util.c,v 1.46 2020/09/22 16:18:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2181,6 +2181,7 @@ void
 free_usage_set(struct partition_usage_set *wanted)
 {
 	/* XXX - free parts? free clone src? */
+	free(wanted->write_back);
 	free(wanted->menu_opts);
 	free(wanted->infos);
 }
@@ -2202,6 +2203,7 @@ free_install_desc(struct install_partition_desc *install)
 				install->infos[j].clone_src = NULL; 
 	}
 #endif
+	free(install->write_back);
 	free(install->infos);
 }
 
