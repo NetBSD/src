@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.206 2020/09/21 16:08:57 kamil Exp $	 */
+/*	$NetBSD: rtld.c,v 1.207 2020/09/22 00:41:27 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.206 2020/09/21 16:08:57 kamil Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.207 2020/09/22 00:41:27 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -397,7 +397,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	_rtld_debug.r_version = R_DEBUG_VERSION;
 	_rtld_debug.r_brk = _rtld_debug_state;
 	_rtld_debug.r_state = RT_CONSISTENT;
-	_rtld_debug.r_ldbase = &_rtld_objself.linkmap;
+	_rtld_debug.r_ldbase = _rtld_objself.relocbase;
 
 	ehdr = (Elf_Ehdr *)mapbase;
 	_rtld_objself.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
