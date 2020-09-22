@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.134 2019/07/11 17:30:44 maxv Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.134.2.1 2020/09/22 18:39:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.134 2019/07/11 17:30:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.134.2.1 2020/09/22 18:39:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -317,6 +317,7 @@ sonewconn(struct socket *head, bool soready)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
+	so->so_egid = head->so_egid;
 	so->so_cpid = head->so_cpid;
 
 	/*
