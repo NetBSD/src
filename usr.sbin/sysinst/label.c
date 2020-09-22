@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.21 2020/08/14 08:46:54 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.22 2020/09/22 11:44:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.21 2020/08/14 08:46:54 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.22 2020/09/22 11:44:44 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -835,6 +835,7 @@ edit_ptn(menudesc *menu, void *arg)
 	if (edit.rv == 0) {	/* OK, set new data */
 		edit.info.last_mounted = edit.wanted->mount;
 		if (is_new_part) {
+			edit.wanted->parts = pset->parts;
 			edit.wanted->cur_part_id = pset->parts->pscheme->
 			    add_partition(pset->parts, &edit.info, &err);
 			if (edit.wanted->cur_part_id == NO_PART)
