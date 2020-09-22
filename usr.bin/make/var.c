@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.529 2020/09/22 17:42:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.530 2020/09/22 17:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.529 2020/09/22 17:42:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.530 2020/09/22 17:51:06 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1709,7 +1709,7 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * st->endc.
  *
  * If parsing fails because of a missing delimiter (as in the :S, :C or :@
- * modifiers), set st->missing_delim and return AMR_CLEANUP.
+ * modifiers), return AMR_CLEANUP.
  *
  * If parsing fails because the modifier is unknown, return AMR_UNKNOWN to
  * try the SysV modifier ${VAR:from=to} as fallback.  This should only be
@@ -1775,8 +1775,6 @@ typedef struct {
 				 * before applying the modifier, never NULL */
     char *newVal;		/* The new value of the expression,
 				 * after applying the modifier, never NULL */
-    char missing_delim;		/* For error reporting */
-
     char sep;			/* Word separator in expansions
 				 * (see the :ts modifier) */
     Boolean oneBigWord;		/* TRUE if some modifiers that otherwise split
@@ -1797,8 +1795,7 @@ typedef enum {
     AMR_OK,			/* Continue parsing */
     AMR_UNKNOWN,		/* Not a match, try other modifiers as well */
     AMR_BAD,			/* Error out with "Bad modifier" message */
-    AMR_CLEANUP			/* Error out, with "Unfinished modifier"
-				 * if st->missing_delim is set. */
+    AMR_CLEANUP			/* Error out without error message */
 } ApplyModifierResult;
 
 /*-
@@ -1924,6 +1921,7 @@ ParseModifierPart(
 
     if (*p != delim) {
 	*pp = p;
+	Error("Unfinished modifier for %s ('%c' missing)", st->v->name, delim);
 	return NULL;
     }
 
@@ -1969,10 +1967,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
     delim = '@';
     args.tvar = ParseModifierPart(pp, delim, eflags, st,
 				  NULL, NULL, NULL);
-    if (args.tvar == NULL) {
-	st->missing_delim = delim;
+    if (args.tvar == NULL)
 	return AMR_CLEANUP;
-    }
     if (DEBUG(LINT) && strchr(args.tvar, '$') != NULL) {
 	Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
@@ -1983,10 +1979,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 
     args.str = ParseModifierPart(pp, delim, eflags, st,
 				 NULL, NULL, NULL);
-    if (args.str == NULL) {
-	st->missing_delim = delim;
+    if (args.str == NULL)
 	return AMR_CLEANUP;
-    }
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     prev_sep = st->sep;
@@ -2151,10 +2145,8 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     delim = '!';
     cmd = ParseModifierPart(pp, delim, st->eflags, st,
 			    NULL, NULL, NULL);
-    if (cmd == NULL) {
-	st->missing_delim = delim;
+    if (cmd == NULL)
 	return AMR_CLEANUP;
-    }
 
     errfmt = NULL;
     if (st->eflags & VARE_WANTRES)
@@ -2317,18 +2309,14 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 
     lhs = ParseModifierPart(pp, delim, st->eflags, st,
 			    &args.lhsLen, &args.pflags, NULL);
-    if (lhs == NULL) {
-	st->missing_delim = delim;
+    if (lhs == NULL)
 	return AMR_CLEANUP;
-    }
     args.lhs = lhs;
 
     rhs = ParseModifierPart(pp, delim, st->eflags, st,
 			    &args.rhsLen, NULL, &args);
-    if (rhs == NULL) {
-	st->missing_delim = delim;
+    if (rhs == NULL)
 	return AMR_CLEANUP;
-    }
     args.rhs = rhs;
 
     oneBigWord = st->oneBigWord;
@@ -2377,16 +2365,13 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 
     re = ParseModifierPart(pp, delim, st->eflags, st,
 			   NULL, NULL, NULL);
-    if (re == NULL) {
-	st->missing_delim = delim;
+    if (re == NULL)
 	return AMR_CLEANUP;
-    }
 
     args.replace = ParseModifierPart(pp, delim, st->eflags, st,
 				     NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
-	st->missing_delim = delim;
 	return AMR_CLEANUP;
     }
 
@@ -2566,10 +2551,8 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
     delim = ']';		/* look for closing ']' */
     estr = ParseModifierPart(pp, delim, st->eflags, st,
 			     NULL, NULL, NULL);
-    if (estr == NULL) {
-	st->missing_delim = delim;
+    if (estr == NULL)
 	return AMR_CLEANUP;
-    }
 
     /* now *pp points just after the closing ']' */
     if (**pp != ':' && **pp != st->endc)
@@ -2736,18 +2719,14 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
     delim = ':';
     then_expr = ParseModifierPart(pp, delim, then_eflags, st,
 				  NULL, NULL, NULL);
-    if (then_expr == NULL) {
-	st->missing_delim = delim;
+    if (then_expr == NULL)
 	return AMR_CLEANUP;
-    }
 
     delim = st->endc;		/* BRCLOSE or PRCLOSE */
     else_expr = ParseModifierPart(pp, delim, else_eflags, st,
 				  NULL, NULL, NULL);
-    if (else_expr == NULL) {
-	st->missing_delim = delim;
+    if (else_expr == NULL)
 	return AMR_CLEANUP;
-    }
 
     (*pp)--;
     if (cond_rc == COND_INVALID) {
@@ -2843,10 +2822,8 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	free(st->v->name);
 	st->v->name = sv_name;
     }
-    if (val == NULL) {
-	st->missing_delim = delim;
+    if (val == NULL)
 	return AMR_CLEANUP;
-    }
 
     (*pp)--;
 
@@ -2953,17 +2930,13 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
     delim = '=';
     *pp = mod;
     lhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
-    if (lhs == NULL) {
-	st->missing_delim = delim;
+    if (lhs == NULL)
 	return AMR_CLEANUP;
-    }
 
     delim = st->endc;
     rhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
-    if (rhs == NULL) {
-	st->missing_delim = delim;
+    if (rhs == NULL)
 	return AMR_CLEANUP;
-    }
 
     /*
      * SYSV modifications happen through the whole
@@ -2999,7 +2972,6 @@ ApplyModifiers(
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags, val,
 	var_Error,		/* .newVal */
-	'\0',			/* .missing_delim */
 	' ',			/* .sep */
 	FALSE,			/* .oneBigWord */
 	*exprFlags		/* .exprFlags */
@@ -3267,9 +3239,6 @@ bad_modifier:
 
 cleanup:
     *pp = p;
-    if (st.missing_delim != '\0')
-	Error("Unfinished modifier for %s ('%c' missing)",
-	      st.v->name, st.missing_delim);
     free(*freePtr);
     *freePtr = NULL;
     *exprFlags = st.exprFlags;
