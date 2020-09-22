@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus_intr.s,v 1.4 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_eb64plus_intr.s,v 1.5 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,19 +44,22 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus_intr.s,v 1.4 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus_intr.s,v 1.5 2020/09/22 15:24:02 thorpej Exp $");
+
+/*
+ * void eb64plus_intr_enable(pci_chipset_tag_t pc, int irq);
+ * void eb64plus_intr_disable(pci_chipset_tag_t pc, int irq);
+ */
 
 	.text
-LEAF(eb64plus_intr_enable,1)
-	mov	a0, a1
+LEAF(eb64plus_intr_enable,2)
 	ldiq	a0, 0x34
 	call_pal PAL_cserve
 	RET
 	END(eb64plus_intr_enable)
 
 	.text
-LEAF(eb64plus_intr_disable,1)
-	mov	a0, a1
+LEAF(eb64plus_intr_disable,2)
 	ldiq	a0, 0x35
 	call_pal PAL_cserve
 	RET
