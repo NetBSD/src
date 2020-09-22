@@ -13,7 +13,7 @@ Var_Parse: ${.SHELL} != ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
 ParseReadLine (24): 'all:'
 ParseReadLine (25): '	@echo ${.SHELL:M*}'
 Var_Parse: ${.SHELL:M*} with VARE_WANTRES
-Applying ${.SHELL:M...} to "(details omitted)" (VARE_WANTRES, VAR_READONLY)
+Applying ${.SHELL:M...} to "(details omitted)" (VARE_WANTRES, VAR_READONLY, none)
 Pattern[.SHELL] for [(details omitted)] is [*]
-Result of ${.SHELL:M*} is "(details omitted)" (VARE_WANTRES, VAR_READONLY)
+Result of ${.SHELL:M*} is "(details omitted)" (VARE_WANTRES, VAR_READONLY, none)
 exit status 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.10 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.11 2020/09/22 06:13:38 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -108,6 +108,17 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	enum { typnam ## _ ## ToStringSize = sizeof joined }
 
 /* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 2 flags. */
+#define ENUM_FLAGS_RTTI_2(typnam, v1, v2) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
+		ENUM__SPEC_1(v1), \
+		ENUM__SPEC_1(v2)), \
+	    ENUM__JOIN_2( \
+		ENUM__JOIN_STR_1(v1), \
+		ENUM__JOIN_STR_1(v2)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
  * for an enum with 3 flags. */
 #define ENUM_FLAGS_RTTI_3(typnam, v1, v2, v3) \
 	ENUM__FLAGS_RTTI(typnam, \
@@ -117,6 +128,17 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	    ENUM__JOIN_2( \
 		ENUM__JOIN_STR_2(v1, v2), \
 		ENUM__JOIN_STR_1(v3)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 6 flags. */
+#define ENUM_FLAGS_RTTI_6(typnam, v1, v2, v3, v4, v5, v6) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
+		ENUM__SPEC_4(v1, v2, v3, v4), \
+		ENUM__SPEC_2(v5, v6)), \
+	    ENUM__JOIN_2( \
+		ENUM__JOIN_STR_4(v1, v2, v3, v4), \
+		ENUM__JOIN_STR_2(v5, v6)))
 
 /* Declare the necessary data structures for calling Enum_FlagsToString
  * for an enum with 8 flags. */
