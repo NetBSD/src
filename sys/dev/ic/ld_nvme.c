@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.23 2019/10/01 10:59:49 mlelstv Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.24 2020/09/22 11:53:10 kardel Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.23 2019/10/01 10:59:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.24 2020/09/22 11:53:10 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	struct nvme_attach_args *naa = aux;
 	struct nvme_namespace *ns;
 	struct nvm_namespace_format *f;
-	int error;
 
 	ld->sc_dv = self;
 	sc->sc_nvme = nsc;
@@ -95,28 +94,11 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	error = nvme_ns_identify(sc->sc_nvme, sc->sc_nsid);
-	if (error) {
-		aprint_error_dev(self, "couldn't identify namespace\n");
-		return;
-	}
-
 	ns = nvme_ns_get(sc->sc_nvme, sc->sc_nsid);
 	KASSERT(ns);
-	f = &ns->ident->lbaf[NVME_ID_NS_FLBAS(ns->ident->flbas)];
 
-	/*
-	 * NVME1.0e 6.11 Identify command
-	 *
-	 * LBADS values smaller than 9 are not supported, a value
-	 * of zero means that the format is not used.
-	 */
-	if (f->lbads < 9) {
-		if (f->lbads > 0)
-			aprint_error_dev(self,
-			    "unsupported logical data size %u\n", f->lbads);
-		return;
-	}
+	f = &ns->ident->lbaf[NVME_ID_NS_FLBAS(ns->ident->flbas)];
+	KASSERT(f->lbads >= 9); /* only valid LBS data sizes allowed here */
 
 	ld->sc_secsize = 1 << f->lbads;
 	ld->sc_secperunit = ns->ident->nsze;
