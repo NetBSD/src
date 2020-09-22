@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.284 2020/08/28 06:23:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.285 2020/09/22 14:14:17 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -206,6 +206,31 @@ struct if_data {
 #define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
 #define	LINK_STATE_DOWN		1	/* link is down */
 #define	LINK_STATE_UP		2	/* link is up */
+
+/*
+ * Status bit descriptions for the various interface types.
+ */
+struct if_status_description {
+	unsigned char	ifs_type;
+	unsigned char	ifs_state;
+	const char	*ifs_string;
+};
+
+#define LINK_STATE_DESC_MATCH(_ifs, _t, _s)				\
+	(((_ifs)->ifs_type == (_t) || (_ifs)->ifs_type == 0) &&		\
+	    (_ifs)->ifs_state == (_s))
+
+#define LINK_STATE_DESCRIPTIONS {					\
+	{ IFT_ETHER, LINK_STATE_DOWN, "no carrier" },			\
+	{ IFT_IEEE80211, LINK_STATE_DOWN, "no network" },		\
+	{ IFT_PPP, LINK_STATE_DOWN, "no carrier" },			\
+	{ IFT_CARP, LINK_STATE_DOWN, "backup" },			\
+	{ IFT_CARP, LINK_STATE_UP, "master" },				\
+	{ 0, LINK_STATE_UP, "active" },					\
+	{ 0, LINK_STATE_UNKNOWN, "unknown" },				\
+	{ 0, LINK_STATE_DOWN, "down" },					\
+	{ 0, 0, NULL }							\
+}
 
 /*
  * Structure defining a queue for a network interface.
