@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.3 2020/09/14 18:49:24 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.4 2020/09/22 18:54:51 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -99,6 +99,30 @@ EXPANSION${plus}=	value
 .  for i in inner
 .    info ${i}
 .  endfor
+.endfor
+
+# From https://gnats.netbsd.org/29985.
+#
+# Until 2008-12-21, the .for loop was expanded by replacing the variable
+# value literally in the body.  This could lead to situations where the
+# characters from the variable value were interpreted as markup rather than
+# plain text.
+#
+# Until 2012-06-03, the .for loop had split the words at whitespace, without
+# taking quotes into account.  This made it possible to have variable values
+# like "a:\ a:\file.txt" that ended in a single backslash.  Since then, the
+# variable values have been replaced with expressions of the form ${:U...},
+# which are not interpreted as code anymore.
+#
+# As of 2020-09-22, a comment in for.c says that it may be possible to
+# produce an "unwanted substitution", but there is no demonstration code yet.
+#
+# The above changes prevent a backslash at the end of a word from being
+# interpreted as part of the code.  Because of this, the trailingBackslash
+# hack in Var_Subst is no longer needed and as of 2020-09-22, has been
+# removed.
+.for path in a:\ a:\file.txt
+.  info ${path}
 .endfor
 
 all:
