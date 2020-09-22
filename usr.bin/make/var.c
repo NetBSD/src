@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.530 2020/09/22 17:51:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.531 2020/09/22 18:07:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.530 2020/09/22 17:51:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.531 2020/09/22 18:07:58 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1809,7 +1809,7 @@ typedef enum {
  * after the delimiter.  The delimiter is not included in the returned
  * value though.
  */
-static char *
+static VarParseResult
 ParseModifierPart(
     const char **pp,		/* The parsing position, updated upon return */
     int delim,			/* Parsing stops at this delimiter */
@@ -1817,6 +1817,7 @@ ParseModifierPart(
 				 * if VARE_WANTRES is not set, the text is
 				 * only parsed */
     ApplyModifiersState *st,
+    char **out_part,
     size_t *out_length,		/* Optionally stores the length of the returned
 				 * string, just to save another strlen call. */
     VarPatternFlags *out_pflags,/* For the first part of the :S modifier,
@@ -1828,7 +1829,6 @@ ParseModifierPart(
 ) {
     Buffer buf;
     const char *p;
-    char *rstr;
 
     Buf_Init(&buf, 0);
 
@@ -1922,16 +1922,17 @@ ParseModifierPart(
     if (*p != delim) {
 	*pp = p;
 	Error("Unfinished modifier for %s ('%c' missing)", st->v->name, delim);
-	return NULL;
+	*out_part = NULL;
+	return VPR_PARSE_MSG;
     }
 
     *pp = ++p;
     if (out_length != NULL)
 	*out_length = Buf_Size(&buf);
 
-    rstr = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG("Modifier part: \"%s\"\n", rstr);
-    return rstr;
+    *out_part = Buf_Destroy(&buf, FALSE);
+    VAR_DEBUG("Modifier part: \"%s\"\n", *out_part);
+    return VPR_OK;
 }
 
 /* Test whether mod starts with modname, followed by a delimiter. */
@@ -1960,14 +1961,15 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
     char delim;
     char prev_sep;
     VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
+    VarParseResult res;
 
     args.ctx = st->ctxt;
 
     (*pp)++;			/* Skip the first '@' */
     delim = '@';
-    args.tvar = ParseModifierPart(pp, delim, eflags, st,
-				  NULL, NULL, NULL);
-    if (args.tvar == NULL)
+    res = ParseModifierPart(pp, delim, eflags, st,
+			    &args.tvar, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
     if (DEBUG(LINT) && strchr(args.tvar, '$') != NULL) {
 	Parse_Error(PARSE_FATAL,
@@ -1977,9 +1979,9 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	return AMR_CLEANUP;
     }
 
-    args.str = ParseModifierPart(pp, delim, eflags, st,
-				 NULL, NULL, NULL);
-    if (args.str == NULL)
+    res = ParseModifierPart(pp, delim, eflags, st,
+			    &args.str, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
@@ -2140,12 +2142,13 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     char delim;
     char *cmd;
     const char *errfmt;
+    VarParseResult res;
 
     (*pp)++;
     delim = '!';
-    cmd = ParseModifierPart(pp, delim, st->eflags, st,
-			    NULL, NULL, NULL);
-    if (cmd == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			    &cmd, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     errfmt = NULL;
@@ -2285,6 +2288,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
     ModifyWord_SubstArgs args;
     char *lhs, *rhs;
     Boolean oneBigWord;
+    VarParseResult res;
 
     char delim = (*pp)[1];
     if (delim == '\0') {
@@ -2307,15 +2311,15 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 	(*pp)++;
     }
 
-    lhs = ParseModifierPart(pp, delim, st->eflags, st,
-			    &args.lhsLen, &args.pflags, NULL);
-    if (lhs == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			    &lhs, &args.lhsLen, &args.pflags, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
     args.lhs = lhs;
 
-    rhs = ParseModifierPart(pp, delim, st->eflags, st,
-			    &args.rhsLen, NULL, &args);
-    if (rhs == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			    &rhs, &args.rhsLen, NULL, &args);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
     args.rhs = rhs;
 
@@ -2353,6 +2357,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
     ModifyWord_SubstRegexArgs args;
     Boolean oneBigWord;
     int error;
+    VarParseResult res;
 
     char delim = (*pp)[1];
     if (delim == '\0') {
@@ -2363,13 +2368,13 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 
     *pp += 2;
 
-    re = ParseModifierPart(pp, delim, st->eflags, st,
-			   NULL, NULL, NULL);
-    if (re == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			   &re, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
-    args.replace = ParseModifierPart(pp, delim, st->eflags, st,
-				     NULL, NULL, NULL);
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			    &args.replace, NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
 	return AMR_CLEANUP;
@@ -2546,12 +2551,13 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
     char *estr;
     char *ep;
     int first, last;
+    VarParseResult res;
 
     (*pp)++;			/* skip the '[' */
     delim = ']';		/* look for closing ']' */
-    estr = ParseModifierPart(pp, delim, st->eflags, st,
-			     NULL, NULL, NULL);
-    if (estr == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st,
+			    &estr, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     /* now *pp points just after the closing ']' */
@@ -2701,6 +2707,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 {
     char delim;
     char *then_expr, *else_expr;
+    VarParseResult res;
 
     Boolean value = FALSE;
     VarEvalFlags then_eflags = st->eflags & ~(unsigned)VARE_WANTRES;
@@ -2717,15 +2724,15 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 
     (*pp)++;			/* skip past the '?' */
     delim = ':';
-    then_expr = ParseModifierPart(pp, delim, then_eflags, st,
-				  NULL, NULL, NULL);
-    if (then_expr == NULL)
+    res = ParseModifierPart(pp, delim, then_eflags, st,
+			    &then_expr, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     delim = st->endc;		/* BRCLOSE or PRCLOSE */
-    else_expr = ParseModifierPart(pp, delim, else_eflags, st,
-				  NULL, NULL, NULL);
-    if (else_expr == NULL)
+    res = ParseModifierPart(pp, delim, else_eflags, st,
+			    &else_expr, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     (*pp)--;
@@ -2774,6 +2781,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
     char *sv_name;
     char delim;
     char *val;
+    VarParseResult res;
 
     const char *mod = *pp;
     const char *op = mod + 1;
@@ -2816,13 +2824,13 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
     }
 
     delim = st->startc == '(' ? ')' : '}';
-    val = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
+    res = ParseModifierPart(pp, delim, st->eflags, st, &val, NULL, NULL, NULL);
     if (st->exprFlags & VEF_UNDEF) {
 	/* restore original name */
 	free(st->v->name);
 	st->v->name = sv_name;
     }
-    if (val == NULL)
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     (*pp)--;
@@ -2902,6 +2910,7 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 {
     char delim;
     char *lhs, *rhs;
+    VarParseResult res;
 
     const char *mod = *pp;
     Boolean eqFound = FALSE;
@@ -2929,13 +2938,13 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 
     delim = '=';
     *pp = mod;
-    lhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
-    if (lhs == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st, &lhs, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     delim = st->endc;
-    rhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
-    if (rhs == NULL)
+    res = ParseModifierPart(pp, delim, st->eflags, st, &rhs, NULL, NULL, NULL);
+    if (res != VPR_OK)
 	return AMR_CLEANUP;
 
     /*
