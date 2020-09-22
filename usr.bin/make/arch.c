@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.117 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.118 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.117 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.118 2020/09/22 20:19:46 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -247,7 +247,8 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 
     *cp++ = '\0';
     if (subLibName) {
-	libName = Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES);
+	(void)Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES, &libName);
+	/* TODO: handle errors */
     }
 
 
@@ -327,7 +328,9 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	    char    *sacrifice;
 	    char    *oldMemName = memName;
 
-	    memName = Var_Subst(memName, ctxt, VARE_UNDEFERR | VARE_WANTRES);
+	    (void)Var_Subst(memName, ctxt, VARE_UNDEFERR | VARE_WANTRES,
+			    &memName);
+	    /* TODO: handle errors */
 
 	    /*
 	     * Now form an archive spec and recurse to deal with nested

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.532 2020/09/22 19:08:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.533 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.532 2020/09/22 19:08:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.533 2020/09/22 20:19:46 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -437,8 +437,11 @@ Var_Delete(const char *name, GNode *ctxt)
     char *name_freeIt = NULL;
     Hash_Entry *he;
 
-    if (strchr(name, '$') != NULL)
-	name = name_freeIt = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
+    if (strchr(name, '$') != NULL) {
+	(void)Var_Subst(name, VAR_GLOBAL, VARE_WANTRES, &name_freeIt);
+	/* TODO: handle errors */
+	name = name_freeIt;
+    }
     he = Hash_FindEntry(&ctxt->context, name);
     VAR_DEBUG("%s:delete %s%s\n",
 	      ctxt->name, name, he != NULL ? "" : " (not found)");
@@ -520,7 +523,8 @@ Var_Export1(const char *name, VarExportFlags flags)
 	}
 
 	expr = str_concat3("${", name, "}");
-	val = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+	(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &val);
+	/* TODO: handle errors */
 	setenv(name, val, 1);
 	free(val);
 	free(expr);
@@ -573,7 +577,8 @@ Var_ExportVars(void)
 	return;
     }
 
-    val = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES);
+    (void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES, &val);
+    /* TODO: handle errors */
     if (*val) {
 	Words words = Str_Words(val, FALSE);
 	size_t i;
@@ -614,7 +619,8 @@ Var_Export(const char *str, Boolean isExport)
 	flags |= VAR_EXPORT_PARENT;
     }
 
-    val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
+    (void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &val);
+    /* TODO: handle errors */
     if (val[0] != '\0') {
 	Words words = Str_Words(val, FALSE);
 
@@ -685,8 +691,10 @@ Var_UnExport(const char *str)
 
     if (varnames == NULL) {
 	/* Using .MAKE.EXPORTED */
-	varnames = varnames_freeIt = Var_Subst("${" MAKE_EXPORTED ":O:u}",
-					       VAR_GLOBAL, VARE_WANTRES);
+	(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES,
+			&varnames_freeIt);
+	/* TODO: handle errors */
+	varnames = varnames_freeIt;
     }
 
     {
@@ -716,7 +724,9 @@ Var_UnExport(const char *str)
 	     */
 	    if (varnames == str) {
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
-		char *cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+		char *cp;
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
+		/* TODO: handle errors */
 		Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
 		free(cp);
 		free(expr);
@@ -746,8 +756,11 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * here will override anything in a lower context, so there's not much
      * point in searching them all just to save a bit of memory...
      */
-    if (strchr(name, '$') != NULL)
-	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
+    if (strchr(name, '$') != NULL) {
+	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+	/* TODO: handle errors */
+	name = name_freeIt;
+    }
 
     if (name[0] == '\0') {
 	VAR_DEBUG("Var_Set(\"%s\", \"%s\", ...) "
@@ -889,7 +902,9 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 
     if (strchr(name, '$') != NULL) {
 	const char *unexpanded_name = name;
-	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
+	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+	/* TODO: handle errors */
+	name = name_freeIt;
 	if (name[0] == '\0') {
 	    VAR_DEBUG("Var_Append(\"%s\", \"%s\", ...) "
 		      "name expands to empty string - ignored\n",
@@ -940,8 +955,11 @@ Var_Exists(const char *name, GNode *ctxt)
     char *name_freeIt = NULL;
     Var *v;
 
-    if (strchr(name, '$') != NULL)
-	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
+    if (strchr(name, '$') != NULL) {
+	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+	/* TODO: handle errors */
+	name = name_freeIt;
+    }
 
     v = VarFind(name, ctxt, FIND_CMD | FIND_GLOBAL | FIND_ENV);
     free(name_freeIt);
@@ -1199,7 +1217,8 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
     /* Append rhs to the buffer, substituting the first '%' with the
      * match, but only if the lhs had a '%' as well. */
 
-    rhs_expanded = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
+    (void)Var_Subst(args->rhs, args->ctx, VARE_WANTRES, &rhs_expanded);
+    /* TODO: handle errors */
 
     rhs = rhs_expanded;
     percent = strchr(rhs, '%');
@@ -1413,7 +1432,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 
     args = data;
     Var_Set_with_flags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
-    s = Var_Subst(args->str, args->ctx, args->eflags);
+    (void)Var_Subst(args->str, args->ctx, args->eflags, &s);
+    /* TODO: handle errors */
 
     VAR_DEBUG("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
 	      "to \"%s\"\n",
@@ -2268,7 +2288,8 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
     if (needSubst) {
 	/* pattern contains embedded '$', so use Var_Subst to expand it. */
 	char *old_pattern = pattern;
-	pattern = Var_Subst(pattern, st->ctxt, st->eflags);
+	(void)Var_Subst(pattern, st->ctxt, st->eflags, &pattern);
+	/* TODO: handle errors */
 	free(old_pattern);
     }
 
@@ -3622,7 +3643,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
         VarEvalFlags nested_eflags = eflags;
         if (DEBUG(LINT))
             nested_eflags &= ~(unsigned)VARE_UNDEFERR;
-	nstr = Var_Subst(nstr, ctxt, nested_eflags);
+	(void)Var_Subst(nstr, ctxt, nested_eflags, &nstr);
+	/* TODO: handle errors */
 	*freePtr = nstr;
     }
 
@@ -3705,8 +3727,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
  * Results:
  *	The resulting string.
  */
-char *
-Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
+VarParseResult
+Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 {
     Buffer buf;			/* Buffer for forming things */
 
@@ -3783,7 +3805,8 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	}
     }
 
-    return Buf_DestroyCompact(&buf);
+    *out_res = Buf_DestroyCompact(&buf);
+    return VPR_OK;
 }
 
 /* Initialize the module. */

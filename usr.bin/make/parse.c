@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.322 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.323 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.322 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.323 2020/09/22 20:19:46 rillig Exp $");
 
 /* types and constants */
 
@@ -771,7 +771,8 @@ ParseMessage(char *line)
     while (ch_isspace(*line))
 	line++;
 
-    line = Var_Subst(line, VAR_CMD, VARE_WANTRES);
+    (void)Var_Subst(line, VAR_CMD, VARE_WANTRES, &line);
+    /* TODO: handle errors */
     Parse_Error(mtype, "%s", line);
     free(line);
 
@@ -1924,7 +1925,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    /* sanity check now */
 	    char *cp2;
 
-	    cp2 = Var_Subst(cp, ctxt, VARE_ASSIGN);
+	    (void)Var_Subst(cp, ctxt, VARE_ASSIGN, &cp2);
+	    /* TODO: handle errors */
 	    free(cp2);
 	}
     }
@@ -1954,7 +1956,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	if (!Var_Exists(line, ctxt))
 	    Var_Set(line, "", ctxt);
 
-	cp = Var_Subst(cp, ctxt, VARE_WANTRES|VARE_ASSIGN);
+	(void)Var_Subst(cp, ctxt, VARE_WANTRES|VARE_ASSIGN, &cp);
+	/* TODO: handle errors */
 	oldVars = oldOldVars;
 	freeCp = TRUE;
 
@@ -1969,7 +1972,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done.
 	     */
-	    cp = Var_Subst(cp, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES);
+	    (void)Var_Subst(cp, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &cp);
+	    /* TODO: handle errors */
 	    freeCp = TRUE;
 	}
 
@@ -2266,7 +2270,8 @@ ParseDoInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst(file, VAR_CMD, VARE_WANTRES);
+    (void)Var_Subst(file, VAR_CMD, VARE_WANTRES, &file);
+    /* TODO: handle errors */
 
     Parse_include_file(file, endc == '>', *line == 'd', silent);
     free(file);
@@ -2492,7 +2497,8 @@ ParseTraditionalInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    all_files = Var_Subst(file, VAR_CMD, VARE_WANTRES);
+    (void)Var_Subst(file, VAR_CMD, VARE_WANTRES, &all_files);
+    /* TODO: handle errors */
 
     if (*file == '\0') {
 	Parse_Error(PARSE_FATAL,
@@ -2547,7 +2553,9 @@ ParseGmakeExport(char *line)
     /*
      * Expand the value before putting it in the environment.
      */
-    value = Var_Subst(value, VAR_CMD, VARE_WANTRES);
+    (void)Var_Subst(value, VAR_CMD, VARE_WANTRES, &value);
+    /* TODO: handle errors */
+
     setenv(variable, value, 1);
     free(value);
 }
@@ -3100,7 +3108,8 @@ Parse_File(const char *name, int fd)
 		VarEvalFlags eflags = DEBUG(LINT)
 				      ? VARE_WANTRES
 				      : VARE_UNDEFERR|VARE_WANTRES;
-		line = Var_Subst(line, VAR_CMD, eflags);
+		(void)Var_Subst(line, VAR_CMD, eflags, &line);
+		/* TODO: handle errors */
 	    }
 
 	    /*
