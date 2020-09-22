@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.194.2.1 2020/09/22 18:39:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.2.1 2020/09/22 18:39:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -898,6 +898,8 @@ unp_stat(struct socket *so, struct stat *ub)
 		unp->unp_ino = unp_ino++;
 	ub->st_atimespec = ub->st_mtimespec = ub->st_ctimespec = unp->unp_ctime;
 	ub->st_ino = unp->unp_ino;
+	ub->st_uid = so->so_uidinfo->ui_uid;
+	ub->st_gid = so->so_egid;
 	return (0);
 }
 

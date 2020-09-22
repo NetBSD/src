@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.281.2.2 2020/02/25 19:10:51 martin Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.281.2.3 2020/09/22 18:39:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.281.2.2 2020/02/25 19:10:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.281.2.3 2020/09/22 18:39:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -526,6 +526,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 #endif
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
+	so->so_egid = kauth_cred_getegid(l->l_cred);
 	so->so_cpid = l->l_proc->p_pid;
 
 	/*
