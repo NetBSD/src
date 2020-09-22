@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.524 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.525 2020/09/22 05:55:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.524 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.525 2020/09/22 05:55:49 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1913,6 +1913,13 @@ typedef struct {
 				 * word, possibly containing spaces. */
 } ApplyModifiersState;
 
+static void
+ApplyModifiersState_Keep(ApplyModifiersState *st)
+{
+    if (st->v->flags & VAR_JUNK)
+        st->v->flags |= VAR_KEEP;
+}
+
 typedef enum {
     AMR_OK,			/* Continue parsing */
     AMR_UNKNOWN,		/* Not a match, try other modifiers as well */
@@ -2031,8 +2038,8 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     }
     *pp = p;
 
-    if (st->v->flags & VAR_JUNK)
-	st->v->flags |= VAR_KEEP;
+    ApplyModifiersState_Keep(st);
+
     if (eflags & VARE_WANTRES) {
 	st->newVal = Buf_Destroy(&buf, FALSE);
     } else {
@@ -2105,8 +2112,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
     GNode *gn;
     char *path;
 
-    if (st->v->flags & VAR_JUNK)
-	st->v->flags |= VAR_KEEP;
+    ApplyModifiersState_Keep(st);
 
     gn = Targ_FindNode(st->v->name, TARG_NOCREATE);
     if (gn == NULL || gn->type & OP_NOPATH) {
@@ -2152,8 +2158,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     if (errfmt != NULL)
 	Error(errfmt, st->val);	/* XXX: why still return AMR_OK? */
 
-    if (st->v->flags & VAR_JUNK)
-	st->v->flags |= VAR_KEEP;
+    ApplyModifiersState_Keep(st);
     return AMR_OK;
 }
 
@@ -2749,8 +2754,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	st->newVal = else_expr;
 	free(then_expr);
     }
-    if (st->v->flags & VAR_JUNK)
-	st->v->flags |= VAR_KEEP;
+    ApplyModifiersState_Keep(st);
     return AMR_OK;
 }
 
@@ -3085,8 +3089,7 @@ ApplyModifiers(
 	    res = ApplyModifier_Defined(&p, &st);
 	    break;
 	case 'L':
-	    if (st.v->flags & VAR_JUNK)
-		st.v->flags |= VAR_KEEP;
+	    ApplyModifiersState_Keep(&st);
 	    st.newVal = bmake_strdup(st.v->name);
 	    p++;
 	    res = AMR_OK;
