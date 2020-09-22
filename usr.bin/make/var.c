@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.525 2020/09/22 05:55:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.526 2020/09/22 06:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.525 2020/09/22 05:55:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.526 2020/09/22 06:06:18 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3433,7 +3433,7 @@ ValidShortVarname(char varname, const char *start)
  *-----------------------------------------------------------------------
  */
 /* coverity[+alloc : arg-*4] */
-VarParseErrors
+VarParseResult
 Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	  const char **out_val, void **freePtr)
 {
@@ -3478,7 +3478,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (!ValidShortVarname(startc, start)) {
 	    (*pp)++;
 	    *out_val = var_Error;
-	    return VPE_PARSE_MSG;
+	    return VPR_PARSE_MSG;
 	}
 
 	name[0] = startc;
@@ -3490,9 +3490,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    *out_val = ShortVarValue(startc, ctxt, eflags);
 	    if (DEBUG(LINT) && *out_val == var_Error) {
 		Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", name);
-		return VPE_UNDEF_MSG;
+		return VPR_UNDEF_MSG;
 	    }
-	    return eflags & VARE_UNDEFERR ? VPE_UNDEF_SILENT : VPE_OK;
+	    return eflags & VARE_UNDEFERR ? VPR_UNDEF_SILENT : VPR_OK;
 	} else {
 	    haveModifier = FALSE;
 	    p = start + 1;
@@ -3515,7 +3515,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    *pp = p;
 	    free(varname);
 	    *out_val = var_Error;
-	    return VPE_PARSE_MSG;
+	    return VPR_PARSE_MSG;
 	}
 
 	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
@@ -3557,7 +3557,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		    *freePtr = pstr;
 		    free(varname);
 		    *out_val = pstr;
-		    return VPE_OK;
+		    return VPR_OK;
 		}
 
 		if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
@@ -3567,18 +3567,18 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 				varname);
 		    free(varname);
 		    *out_val = var_Error;
-		    return VPE_UNDEF_MSG;
+		    return VPR_UNDEF_MSG;
 		}
 
 		if (eflags & VARE_UNDEFERR) {
 		    free(varname);
 		    *out_val = var_Error;
-		    return VPE_UNDEF_SILENT;
+		    return VPR_UNDEF_SILENT;
 		}
 
 		free(varname);
 		*out_val = varNoError;
-		return VPE_OK;
+		return VPR_OK;
 	    }
 
 	    /* The variable expression is based on an undefined variable.
@@ -3686,7 +3686,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	free(v);
     }
     *out_val = nstr;
-    return VPE_UNKNOWN;
+    return VPR_UNKNOWN;
 }
 
 /* Substitute for all variables in the given string in the given context.
