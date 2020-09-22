@@ -1,4 +1,33 @@
-/* $NetBSD: pci_machdep.c,v 1.24 2019/08/09 08:04:16 rin Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2019/08/09 08:04:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,4 +157,282 @@ device_pci_register(device_t dev, void *aux)
 		dict = device_properties(dev);
 		prop_dictionary_set_bool(dict, "is_console", true);
 	}
+}
+
+int
+alpha_pci_generic_intr_map(const struct pci_attach_args * const pa,
+    pci_intr_handle_t * const ihp)
+{
+	pcitag_t const bustag = pa->pa_intrtag;
+	int const buspin = pa->pa_intrpin;
+	int const line = pa->pa_intrline;
+	pci_chipset_tag_t const pc = pa->pa_pc;
+	int bus, device, function;
+
+	if (buspin == 0) {
+		/* No IRQ used. */
+		return 1;
+	}
+	if (buspin < 0 || buspin > 4) {
+		printf("%s: bad interrupt pin %d\n", __func__, buspin);
+		return 1;
+	}
+
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
+
+	/*
+	 * The console firmware places the interrupt mapping in the "line"
+	 * value.  A valaue of (char)-1 indicates there is no mapping.
+	 */
+	if (line == 0xff) {
+		printf("%s: no mapping for %d/%d/%d\n", __func__,
+		    bus, device, function);
+		return 1;
+	}
+
+	if (line < 0 || line >= pc->pc_nirq) {
+		printf("%s: bad line %d for %d/%d/%d\n", __func__,
+		    line, bus, device, function);
+		return 1;
+	}
+
+	alpha_pci_intr_handle_init(ihp, line, 0);
+	return 0;
+}
+
+const char *
+alpha_pci_generic_intr_string(pci_chipset_tag_t const pc,
+    pci_intr_handle_t const ih, char * const buf, size_t const len)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+
+	KASSERT(irq < pc->pc_nirq);
+
+	snprintf(buf, len, "%s %u", pc->pc_intr_desc, irq);
+	return buf;
+}
+
+const struct evcnt *
+alpha_pci_generic_intr_evcnt(pci_chipset_tag_t const pc,
+    pci_intr_handle_t const ih)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+
+	KASSERT(irq < pc->pc_nirq);
+
+	return alpha_shared_intr_evcnt(pc->pc_shared_intrs, irq);
+}
+
+void *
+alpha_pci_generic_intr_establish(pci_chipset_tag_t const pc,
+    pci_intr_handle_t const ih, int const level,
+    int (*func)(void *), void *arg)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+	const u_int flags = alpha_pci_intr_handle_get_flags(&ih);
+	void *cookie;
+
+	KASSERT(irq < pc->pc_nirq);
+
+	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs,
+	    irq, IST_LEVEL, level, flags, func, arg, pc->pc_intr_desc);
+
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
+		    alpha_pci_generic_iointr, pc);
+		pc->pc_intr_enable(pc, irq);
+	}
+	return cookie;
+}
+
+void
+alpha_pci_generic_intr_disestablish(pci_chipset_tag_t const pc,
+    void * const cookie)
+{
+	struct alpha_shared_intrhand * const ih = cookie;
+	const u_int irq = ih->ih_num;
+	int s;
+
+	s = splhigh();
+
+	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
+	    pc->pc_intr_desc);
+	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
+		pc->pc_intr_disable(pc, irq);
+		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
+		    irq, IST_NONE);
+		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
+	}
+
+	splx(s);
+}
+
+void
+alpha_pci_generic_iointr(void * const arg, unsigned long const vec)
+{
+	pci_chipset_tag_t const pc = arg;
+	const u_int irq = SCB_VECTOIDX(vec - pc->pc_vecbase);
+
+	if (!alpha_shared_intr_dispatch(pc->pc_shared_intrs, irq)) {
+		alpha_shared_intr_stray(pc->pc_shared_intrs, irq,
+		    pc->pc_intr_desc);
+		if (ALPHA_SHARED_INTR_DISABLE(pc->pc_shared_intrs, irq)) {
+			pc->pc_intr_disable(pc, irq);
+		}
+	} else {
+		alpha_shared_intr_reset_strays(pc->pc_shared_intrs, irq);
+	}
+}
+
+#define	ALPHA_PCI_INTR_HANDLE_IRQ	__BITS(0,31)
+#define	ALPHA_PCI_INTR_HANDLE_FLAGS	__BITS(32,63)
+
+void
+alpha_pci_intr_handle_init(pci_intr_handle_t * const ihp, u_int const irq,
+    u_int const flags)
+{
+	ihp->value = __SHIFTIN(irq, ALPHA_PCI_INTR_HANDLE_IRQ) |
+	    __SHIFTIN(flags, ALPHA_PCI_INTR_HANDLE_FLAGS);
+}
+
+void
+alpha_pci_intr_handle_set_irq(pci_intr_handle_t * const ihp, u_int const irq)
+{
+	ihp->value = (ihp->value & ALPHA_PCI_INTR_HANDLE_FLAGS) |
+	    __SHIFTIN(irq, ALPHA_PCI_INTR_HANDLE_IRQ);
+}
+
+u_int
+alpha_pci_intr_handle_get_irq(const pci_intr_handle_t * const ihp)
+{
+	return __SHIFTOUT(ihp->value, ALPHA_PCI_INTR_HANDLE_IRQ);
+}
+
+void
+alpha_pci_intr_handle_set_flags(pci_intr_handle_t * const ihp,
+    u_int const flags)
+{
+	ihp->value = (ihp->value & ALPHA_PCI_INTR_HANDLE_IRQ) |
+	    __SHIFTIN(flags, ALPHA_PCI_INTR_HANDLE_FLAGS);
+}
+
+u_int
+alpha_pci_intr_handle_get_flags(const pci_intr_handle_t * const ihp)
+{
+	return __SHIFTOUT(ihp->value, ALPHA_PCI_INTR_HANDLE_FLAGS);
+}
+
+/*
+ * MI PCI back-end entry points.
+ */
+
+void
+pci_attach_hook(device_t const parent, device_t const self,
+    struct pcibus_attach_args * const pba)
+{
+	pci_chipset_tag_t const pc = pba->pba_pc;
+
+	KASSERT(pc->pc_attach_hook != NULL);
+	pc->pc_attach_hook(parent, self, pba);
+}
+
+int
+pci_bus_maxdevs(pci_chipset_tag_t const pc, int const busno)
+{
+	KASSERT(pc->pc_bus_maxdevs != NULL);
+	return pc->pc_bus_maxdevs(pc->pc_conf_v, busno);
+}
+
+pcitag_t
+pci_make_tag(pci_chipset_tag_t const pc, int const bus, int const dev,
+    int const func)
+{
+	KASSERT(pc->pc_make_tag != NULL);
+	return pc->pc_make_tag(pc->pc_conf_v, bus, dev, func);
+}
+
+void
+pci_decompose_tag(pci_chipset_tag_t const pc, pcitag_t const tag,
+    int * const busp, int * const devp, int * const funcp)
+{
+	KASSERT(pc->pc_decompose_tag != NULL);
+	pc->pc_decompose_tag(pc->pc_conf_v, tag, busp, devp, funcp);
+}
+
+pcireg_t
+pci_conf_read(pci_chipset_tag_t const pc, pcitag_t const tag, int const reg)
+{
+	KASSERT(pc->pc_conf_read != NULL);
+	return pc->pc_conf_read(pc->pc_conf_v, tag, reg);
+}
+
+void
+pci_conf_write(pci_chipset_tag_t const pc, pcitag_t const tag, int const reg,
+    pcireg_t const val)
+{
+	KASSERT(pc->pc_conf_write != NULL);
+	pc->pc_conf_write(pc->pc_conf_v, tag, reg, val);
+}
+
+int
+pci_intr_map(const struct pci_attach_args * const pa,
+    pci_intr_handle_t * const ihp)
+{
+	pci_chipset_tag_t const pc = pa->pa_pc;
+
+	KASSERT(pc->pc_intr_map != NULL);
+	return pc->pc_intr_map(pa, ihp);
+}
+
+const char *
+pci_intr_string(pci_chipset_tag_t const pc, pci_intr_handle_t const ih,
+    char * const buf, size_t const len)
+{
+	KASSERT(pc->pc_intr_string != NULL);
+	return pc->pc_intr_string(pc, ih, buf, len);
+}
+
+const struct evcnt *
+pci_intr_evcnt(pci_chipset_tag_t const pc, pci_intr_handle_t const ih)
+{
+	KASSERT(pc->pc_intr_evcnt != NULL);
+	return pc->pc_intr_evcnt(pc, ih);
+}
+
+void *
+pci_intr_establish(pci_chipset_tag_t const pc, pci_intr_handle_t const ih,
+    int const ipl, int (*func)(void *), void *arg)
+{
+	KASSERT(pc->pc_intr_establish != NULL);
+	return pc->pc_intr_establish(pc, ih, ipl, func, arg);
+}
+
+void
+pci_intr_disestablish(pci_chipset_tag_t const pc, void * const cookie)
+{
+	KASSERT(pc->pc_intr_disestablish != NULL);
+	pc->pc_intr_disestablish(pc, cookie);
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t const pc __unused,
+    pci_intr_handle_t * const ihp, int const attr, uint64_t const data)
+{
+	u_int flags = alpha_pci_intr_handle_get_flags(ihp);
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		if (data)
+			flags |= ALPHA_INTR_MPSAFE;
+		else
+			flags &= ~ALPHA_INTR_MPSAFE;
+		break;
+	
+	default:
+		return ENODEV;
+	}
+
+	alpha_pci_intr_handle_set_flags(ihp, flags);
+	return 0;
 }

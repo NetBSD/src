@@ -1,7 +1,7 @@
-/* $NetBSD: sio_pic.c,v 1.43 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: sio_pic.c,v 1.44 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.43 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.44 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.43 2014/03/21 16:39:29 christos Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
 
 #include <dev/pci/cy82c693reg.h>
 #include <dev/pci/cy82c693var.h>
@@ -433,20 +436,20 @@ sio_intr_evcnt(void *v, int irq)
 }
 
 void *
-sio_intr_establish(void *v, int irq, int type, int level, int (*fn)(void *), void *arg)
+sio_intr_establish(void *v, int irq, int type, int level, int flags,
+    int (*fn)(void *), void *arg)
 {
 	void *cookie;
 
 	if (irq > ICU_LEN || type == IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
 
-	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level, fn,
-	    arg, "isa irq");
+	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level,
+	    flags, fn, arg, "isa irq");
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(sio_intr, irq)) {
-		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL,
-		    level);
+		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
 		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
 	}
@@ -501,6 +504,79 @@ sio_intr_disestablish(void *v, void *cookie)
 	}
 
 	splx(s);
+}
+
+const char *
+sio_pci_intr_string(pci_chipset_tag_t const pc, pci_intr_handle_t const ih,
+    char * const buf, size_t const len)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+
+	return sio_intr_string(NULL /*XXX*/, irq, buf, len);
+}
+
+const struct evcnt *
+sio_pci_intr_evcnt(pci_chipset_tag_t const pc, pci_intr_handle_t const ih)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+
+	return sio_intr_evcnt(NULL /*XXX*/, irq);
+}
+
+void *
+sio_pci_intr_establish(pci_chipset_tag_t const pc, pci_intr_handle_t ih,
+    int const level, int (*func)(void *), void *arg)
+{
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+	const u_int flags = alpha_pci_intr_handle_get_flags(&ih);
+
+	return sio_intr_establish(NULL /*XXX*/, irq, IST_LEVEL, level, flags,
+	    func, arg);
+}
+
+void
+sio_pci_intr_disestablish(pci_chipset_tag_t const pc, void *cookie)
+{
+	sio_intr_disestablish(NULL /*XXX*/, cookie);
+}
+
+void *
+sio_pciide_compat_intr_establish(device_t const dev,
+    const struct pci_attach_args * const pa,
+    int const chan, int (*func)(void *), void *arg)
+{
+	pci_chipset_tag_t const pc = pa->pa_pc;
+	void *cookie;
+	int bus, irq;
+	char buf[64];
+	int flags = 0;	/* XXX How to pass MPSAFE? */
+
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+
+	/*
+	 * If this isn't PCI bus #0, all bets are off.
+	 */
+	if (bus != 0)
+		return NULL;
+	
+	irq = PCIIDE_COMPAT_IRQ(chan);
+	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
+	    flags, func, arg);
+	if (cookie == NULL)
+		return NULL;
+
+	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
+	    PCIIDE_CHANNEL_NAME(chan),
+	    sio_intr_string(NULL /*XXX*/, irq, buf, sizeof(buf)));
+
+	return cookie;
+}
+
+void *
+sio_isa_intr_establish(void *v, int irq, int type, int level,
+    int (*fn)(void *), void *arg)
+{
+	return sio_intr_establish(v, irq, type, level, 0, fn, arg);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.15 2015/04/13 21:18:40 riastradh Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.15 2015/04/13 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ fdc_sableio_attach(device_t parent, device_t self, void *aux)
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
 	char buf[PCI_INTRSTR_LEN];
+	pci_intr_handle_t ih;
 
 	aprint_normal("\n");
 
@@ -110,10 +111,11 @@ fdc_sableio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0],
-	    buf, sizeof(buf));
-	fdc->sc_ih = pci_intr_establish(sa->sa_pc, sa->sa_sableirq[0],
-	    IPL_BIO, fdcintr, fdc);
+	alpha_pci_intr_handle_init(&ih, sa->sa_sableirq[0], 0);
+
+	intrstr = pci_intr_string(sa->sa_pc, ih, buf, sizeof(buf));
+	fdc->sc_ih = pci_intr_establish(sa->sa_pc, ih, IPL_BIO,
+	    fdcintr, fdc);
 	if (fdc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)

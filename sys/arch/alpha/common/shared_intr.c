@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.22 2019/11/10 21:16:22 chs Exp $ */
+/* $NetBSD: shared_intr.c,v 1.23 2020/09/22 15:24:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.22 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.23 2020/09/22 15:24:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,7 +109,14 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 		 *  -1: This interrupt might have been for me, but I can't say
 		 *      for sure.
 		 */
-		rv = (*ih->ih_fn)(ih->ih_arg);
+
+		if (!ih->ih_mpsafe) {
+			KERNEL_LOCK(1, NULL);
+			rv = (*ih->ih_fn)(ih->ih_arg);
+			KERNEL_UNLOCK_ONE(NULL);
+		} else {
+			rv = (*ih->ih_fn)(ih->ih_arg);
+		}
 
 		handled = handled || (rv != 0);
 		ih = ih->ih_q.tqe_next;
@@ -120,7 +127,8 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 
 void *
 alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
-    int type, int level, int (*fn)(void *), void *arg, const char *basename)
+    int type, int level, int flags,
+    int (*fn)(void *), void *arg, const char *basename)
 {
 	struct alpha_shared_intrhand *ih;
 
@@ -166,6 +174,7 @@ alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_num = num;
+	ih->ih_mpsafe = (flags & ALPHA_INTR_MPSAFE) != 0;
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);

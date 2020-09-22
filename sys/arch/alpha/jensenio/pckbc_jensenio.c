@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.12 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.12 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ pckbc_jensenio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	jsc->sc_ic[slot].ic_sc = sc;
 
 	scb_set(jsc->sc_ic[slot].ic_vector, pckbc_jensenio_intr,
-	    &jsc->sc_ic[slot], IPL_VM);
+	    &jsc->sc_ic[slot]);
 	aprint_normal_dev(sc->sc_dv, "%s slot interrupting at vector 0x%lx\n",
 	    pckbc_slot_names[slot], jsc->sc_ic[slot].ic_vector);
 
@@ -159,6 +159,8 @@ pckbc_jensenio_intr(void *arg, u_long vec)
 {
 	struct pckbc_jensenio_intrcookie *ic = arg;
 
+	KERNEL_LOCK(1, NULL);
 	ic->ic_ev.ev_count++;
 	(void) pckbcintr(ic->ic_sc);
+	KERNEL_UNLOCK_ONE(NULL);
 }
