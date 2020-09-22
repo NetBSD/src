@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.526 2020/09/22 06:06:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.527 2020/09/22 06:13:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.526 2020/09/22 06:06:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.527 2020/09/22 06:13:38 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -199,12 +199,6 @@ typedef enum {
      * These variables are not registered in any GNode, therefore they must
      * be freed as soon as they are not used anymore. */
     VAR_FROM_ENV = 0x02,
-    /* The variable is a junk variable that should be destroyed when done with
-     * it.  Used by Var_Parse for undefined, modified variables. */
-    VAR_JUNK = 0x04,
-    /* Variable is VAR_JUNK, but we found a use for it in some modifier and
-     * the value is therefore valid. */
-    VAR_KEEP = 0x08,
     /* The variable is exported to the environment, to be used by child
      * processes. */
     VAR_EXPORTED = 0x10,
@@ -218,8 +212,8 @@ typedef enum {
     VAR_READONLY = 0x80
 } VarFlags;
 
-ENUM_FLAGS_RTTI_8(VarFlags,
-		  VAR_IN_USE, VAR_FROM_ENV, VAR_JUNK, VAR_KEEP,
+ENUM_FLAGS_RTTI_6(VarFlags,
+		  VAR_IN_USE, VAR_FROM_ENV,
 		  VAR_EXPORTED, VAR_REEXPORT, VAR_FROM_CMD, VAR_READONLY);
 
 typedef struct Var {
@@ -1892,6 +1886,19 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * Some modifiers need to free some memory.
  */
 
+typedef enum VarExprFlags {
+    /* The variable expression is based on an undefined variable. */
+    VEF_UNDEF = 0x01,
+    /* The variable expression started as an undefined expression, but one
+     * of the modifiers (such as :D or :U) has turned the expression from
+     * undefined to defined. */
+    VEF_DEF = 0x02
+} VarExprFlags;
+
+ENUM_FLAGS_RTTI_2(VarExprFlags,
+		  VEF_UNDEF, VEF_DEF);
+
+
 typedef struct {
     const char startc;		/* '\0' or '{' or '(' */
     const char endc;		/* '\0' or '}' or ')' */
@@ -1911,13 +1918,14 @@ typedef struct {
 				 * the variable value into words, like :S and
 				 * :C, treat the variable value as a single big
 				 * word, possibly containing spaces. */
+    VarExprFlags exprFlags;
 } ApplyModifiersState;
 
 static void
-ApplyModifiersState_Keep(ApplyModifiersState *st)
+ApplyModifiersState_Define(ApplyModifiersState *st)
 {
-    if (st->v->flags & VAR_JUNK)
-        st->v->flags |= VAR_KEEP;
+    if (st->exprFlags & VEF_UNDEF)
+        st->exprFlags |= VEF_DEF;
 }
 
 typedef enum {
@@ -2001,7 +2009,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
     VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
     if (st->eflags & VARE_WANTRES) {
-	if ((**pp == 'D') == !(st->v->flags & VAR_JUNK))
+	if ((**pp == 'D') == !(st->exprFlags & VEF_UNDEF))
 	    eflags |= VARE_WANTRES;
     }
 
@@ -2038,7 +2046,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     }
     *pp = p;
 
-    ApplyModifiersState_Keep(st);
+    ApplyModifiersState_Define(st);
 
     if (eflags & VARE_WANTRES) {
 	st->newVal = Buf_Destroy(&buf, FALSE);
@@ -2112,7 +2120,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
     GNode *gn;
     char *path;
 
-    ApplyModifiersState_Keep(st);
+    ApplyModifiersState_Define(st);
 
     gn = Targ_FindNode(st->v->name, TARG_NOCREATE);
     if (gn == NULL || gn->type & OP_NOPATH) {
@@ -2158,7 +2166,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     if (errfmt != NULL)
 	Error(errfmt, st->val);	/* XXX: why still return AMR_OK? */
 
-    ApplyModifiersState_Keep(st);
+    ApplyModifiersState_Define(st);
     return AMR_OK;
 }
 
@@ -2754,7 +2762,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	st->newVal = else_expr;
 	free(then_expr);
     }
-    ApplyModifiersState_Keep(st);
+    ApplyModifiersState_Define(st);
     return AMR_OK;
 }
 
@@ -2802,7 +2810,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 
     v_ctxt = st->ctxt;		/* context where v belongs */
     sv_name = NULL;
-    if (st->v->flags & VAR_JUNK) {
+    if (st->exprFlags & VEF_UNDEF) {
 	/*
 	 * We need to bmake_strdup() it in case ParseModifierPart() recurses.
 	 */
@@ -2829,7 +2837,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 
     delim = st->startc == '(' ? ')' : '}';
     val = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
-    if (st->v->flags & VAR_JUNK) {
+    if (st->exprFlags & VEF_UNDEF) {
 	/* restore original name */
 	free(st->v->name);
 	st->v->name = sv_name;
@@ -2857,7 +2865,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	    break;
 	}
 	case '?':
-	    if (!(st->v->flags & VAR_JUNK))
+	    if (!(st->exprFlags & VEF_UNDEF))
 		break;
 	    /* FALLTHROUGH */
 	default:
@@ -2981,7 +2989,8 @@ ApplyModifiers(
     char *val,			/* the current value of the variable */
     char const startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char const endc,		/* ')' or '}', or '\0' for indirect modifiers */
-    Var * const v,		/* the variable may have its flags changed */
+    Var * const v,
+    VarExprFlags *exprFlags,
     GNode * const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
     void ** const freePtr	/* free this after using the return value */
@@ -2991,7 +3000,8 @@ ApplyModifiers(
 	var_Error,		/* .newVal */
 	'\0',			/* .missing_delim */
 	' ',			/* .sep */
-	FALSE			/* .oneBigWord */
+	FALSE,			/* .oneBigWord */
+	*exprFlags		/* .exprFlags */
     };
     const char *p;
     const char *mod;
@@ -3035,7 +3045,7 @@ ApplyModifiers(
 	    if (rval[0] != '\0') {
 		const char *rval_pp = rval;
 		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
-					ctxt, eflags, freePtr);
+					exprFlags, ctxt, eflags, freePtr);
 		if (st.val == var_Error
 		    || (st.val == varNoError && !(st.eflags & VARE_UNDEFERR))
 		    || *rval_pp != '\0') {
@@ -3061,17 +3071,21 @@ ApplyModifiers(
 	if (DEBUG(VAR)) {
 	    char eflags_str[VarEvalFlags_ToStringSize];
 	    char vflags_str[VarFlags_ToStringSize];
+	    char exprflags_str[VarExprFlags_ToStringSize];
 	    Boolean is_single_char = mod[0] != '\0' &&
-		(mod[1] == endc || mod[1] == ':');
+				     (mod[1] == endc || mod[1] == ':');
 
 	    /* At this point, only the first character of the modifier can
 	     * be used since the end of the modifier is not yet known. */
-	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" (%s, %s)\n",
+	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
 		      st.v->name, mod[0], is_single_char ? "" : "...", st.val,
 		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
 					 st.eflags, VarEvalFlags_ToStringSpecs),
 		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
-					 st.v->flags, VarFlags_ToStringSpecs));
+					 st.v->flags, VarFlags_ToStringSpecs),
+		      Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+					 st.exprFlags,
+					 VarExprFlags_ToStringSpecs));
 	}
 
 	switch (*mod) {
@@ -3089,7 +3103,7 @@ ApplyModifiers(
 	    res = ApplyModifier_Defined(&p, &st);
 	    break;
 	case 'L':
-	    ApplyModifiersState_Keep(&st);
+	    ApplyModifiersState_Define(&st);
 	    st.newVal = bmake_strdup(st.v->name);
 	    p++;
 	    res = AMR_OK;
@@ -3206,15 +3220,19 @@ ApplyModifiers(
 	if (DEBUG(VAR)) {
 	    char eflags_str[VarEvalFlags_ToStringSize];
 	    char vflags_str[VarFlags_ToStringSize];
+	    char exprflags_str[VarExprFlags_ToStringSize];
 	    const char *quot = st.newVal == var_Error ? "" : "\"";
 	    const char *newVal = st.newVal == var_Error ? "error" : st.newVal;
 
-	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
+	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
 		      st.v->name, (int)(p - mod), mod, quot, newVal, quot,
 		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
 					 st.eflags, VarEvalFlags_ToStringSpecs),
 		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
-					 st.v->flags, VarFlags_ToStringSpecs));
+					 st.v->flags, VarFlags_ToStringSpecs),
+		      Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+					 st.exprFlags,
+					 VarExprFlags_ToStringSpecs));
 	}
 
 	if (st.newVal != st.val) {
@@ -3239,6 +3257,7 @@ ApplyModifiers(
 out:
     *pp = p;
     assert(st.val != NULL);	/* Use var_Error or varNoError instead. */
+    *exprFlags = st.exprFlags;
     return st.val;
 
 bad_modifier:
@@ -3252,6 +3271,7 @@ cleanup:
 	      st.v->name, st.missing_delim);
     free(*freePtr);
     *freePtr = NULL;
+    *exprFlags = st.exprFlags;
     return var_Error;
 }
 
@@ -3452,6 +3472,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     Var *v;
     char *nstr;
     char eflags_str[VarEvalFlags_ToStringSize];
+    VarExprFlags exprFlags = 0;
 
     VAR_DEBUG("%s: %s with %s\n", __func__, start,
 	      Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
@@ -3595,7 +3616,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    v = bmake_malloc(sizeof(Var));
 	    v->name = varname;
 	    Buf_Init(&v->val, 1);
-	    v->flags = VAR_JUNK;
+	    v->flags = 0;
+	    exprFlags = VEF_UNDEF;
 	} else
 	    free(varname);
     }
@@ -3634,7 +3656,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (extramodifiers != NULL) {
 	    const char *em = extramodifiers;
 	    nstr = ApplyModifiers(&em, nstr, '(', ')',
-				  v, ctxt, eflags, &extraFree);
+				  v, &exprFlags, ctxt, eflags, &extraFree);
 	}
 
 	if (haveModifier) {
@@ -3642,7 +3664,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    p++;
 
 	    nstr = ApplyModifiers(&p, nstr, startc, endc,
-				  v, ctxt, eflags, freePtr);
+				  v, &exprFlags, ctxt, eflags, freePtr);
 	    free(extraFree);
 	} else {
 	    *freePtr = extraFree;
@@ -3662,13 +3684,13 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    *freePtr = nstr;
 	(void)VarFreeEnv(v, !keepValue);
 
-    } else if (v->flags & VAR_JUNK) {
+    } else if (exprFlags & VEF_UNDEF) {
 	/*
 	 * Perform any freeing needed and set *freePtr to NULL so the caller
 	 * doesn't try to free a static pointer.
 	 * If VAR_KEEP is also set then we want to keep str(?) as is.
 	 */
-	if (!(v->flags & VAR_KEEP)) {
+	if (!(exprFlags & VEF_DEF)) {
 	    if (*freePtr != NULL) {
 		free(*freePtr);
 		*freePtr = NULL;
