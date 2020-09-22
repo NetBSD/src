@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_sableio.c,v 1.10 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: lpt_sableio.c,v 1.11 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.10 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.11 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ lpt_sableio_attach(device_t parent, device_t self, void *aux)
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
 	char buf[PCI_INTRSTR_LEN];
+	pci_intr_handle_t ih;
 
 	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_iot;
@@ -106,10 +107,10 @@ lpt_sableio_attach(device_t parent, device_t self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0],
-	    buf, sizeof(buf));
-	ssc->sc_ih = pci_intr_establish(sa->sa_pc, sa->sa_sableirq[0],
-	    IPL_TTY, lptintr, sc);
+	alpha_pci_intr_handle_init(&ih, sa->sa_sableirq[0], 0);
+
+	intrstr = pci_intr_string(sa->sa_pc, ih, buf, sizeof(buf));
+	ssc->sc_ih = pci_intr_establish(sa->sa_pc, ih, IPL_TTY, lptintr, sc);
 	if (ssc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)

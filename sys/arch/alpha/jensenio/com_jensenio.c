@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.16 2020/09/19 16:54:34 tsutsui Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.17 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.16 2020/09/19 16:54:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.17 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	scb_set(ja->ja_irq[0], com_jensenio_intr, jsc, IPL_VM);
+	scb_set(ja->ja_irq[0], com_jensenio_intr, jsc);
 	aprint_normal_dev(self, "interrupting at vector 0x%x\n",
 	    ja->ja_irq[0]);
 
@@ -136,6 +136,8 @@ com_jensenio_intr(void *arg, u_long vec)
 {
 	struct com_jensenio_softc *jsc = arg;
 
+	KERNEL_LOCK(1, NULL);
 	jsc->sc_ev_intr.ev_count++;
 	(void) comintr(&jsc->sc_com);
+	KERNEL_UNLOCK_ONE(NULL);
 }

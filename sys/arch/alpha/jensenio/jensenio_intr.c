@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.11 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.12 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.11 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.12 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,12 +215,11 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	}
 
 	cookie = alpha_shared_intr_establish(jensenio_eisa_intr, irq,
-	    type, level, fn, arg, "eisa irq");
+	    type, level, 0, fn, arg, "eisa irq");
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(jensenio_eisa_intr, irq)) {
-		scb_set(0x800 + SCB_IDXTOVEC(irq), jensenio_iointr, NULL,
-		    level);
+		scb_set(0x800 + SCB_IDXTOVEC(irq), jensenio_iointr, NULL);
 		jensenio_setlevel(irq,
 		    alpha_shared_intr_get_sharetype(jensenio_eisa_intr,
 						    irq) == IST_LEVEL);

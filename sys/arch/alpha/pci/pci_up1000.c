@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.15 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.15 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,16 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.15 2014/03/21 16:39:29 christos Exp
 
 #include "sio.h"
 
-int     api_up1000_intr_map(const struct pci_attach_args *,
-	    pci_intr_handle_t *);
-const char *api_up1000_intr_string(void *, pci_intr_handle_t, char *, size_t);
-const struct evcnt *api_up1000_intr_evcnt(void *, pci_intr_handle_t);
-void    *api_up1000_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *);
-void    api_up1000_intr_disestablish(void *, void *);
-
-void	*api_up1000_pciide_compat_intr_establish(void *, device_t,
-	    const struct pci_attach_args *, int, int (*)(void *), void *);
+static int	api_up1000_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 
 void
 pci_up1000_pickintr(struct irongate_config *icp)
@@ -79,13 +71,13 @@ pci_up1000_pickintr(struct irongate_config *icp)
 
 	pc->pc_intr_v = icp;
 	pc->pc_intr_map = api_up1000_intr_map;
-	pc->pc_intr_string = api_up1000_intr_string;
-	pc->pc_intr_evcnt = api_up1000_intr_evcnt;
-	pc->pc_intr_establish = api_up1000_intr_establish;
-	pc->pc_intr_disestablish = api_up1000_intr_disestablish;
+	pc->pc_intr_string = sio_pci_intr_string;
+	pc->pc_intr_evcnt = sio_pci_intr_evcnt;
+	pc->pc_intr_establish = sio_pci_intr_establish;
+	pc->pc_intr_disestablish = sio_pci_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish =
-	    api_up1000_pciide_compat_intr_establish;
+	    sio_pciide_compat_intr_establish;
 
 	sio_intr_setup(pc, iot);
 #else
@@ -93,7 +85,7 @@ pci_up1000_pickintr(struct irongate_config *icp)
 #endif
 }
 
-int
+static int
 api_up1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -106,9 +98,8 @@ api_up1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* No IRQ used. */
 		return 1;
 	}
-	if (buspin > 4) {
-		printf("api_up1000_intr_map: bad interrupt pin %d\n",
-		    buspin);
+	if (buspin < 0 || buspin > 4) {
+		printf("%s: bad interrupt pin %d\n", __func__, buspin);
 		return 1;
 	}
 
@@ -119,94 +110,20 @@ api_up1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * A value of (char)-1 indicates there is no mapping.
 	 */
 	if (line == 0xff) {
-		printf("api_up1000_intr_map: no mapping for %d/%d/%d\n",
+		printf("%s: no mapping for %d/%d/%d\n", __func__,
 		    bus, device, function);
 		return (1);
 	}
 
-	/* XXX Check for 0? */
-	if (line > 15) {
-		printf("api_up1000_intr_map: ISA IRQ too large (%d)\n",
-		    line);
+	if (line < 0 || line > 15) {
+		printf("%s: bad ISA IRQ (%d)\n", __func__, line);
 		return (1);
 	}
 	if (line == 2) {
-		printf("api_up1000_intr_map: changed IRQ 2 to IRQ 9\n");
+		printf("%s: changed IRQ 2 to IRQ 9\n", __func__);
 		line = 9;
 	}
 
-	*ihp = line;
+	alpha_pci_intr_handle_init(ihp, line, 0);
 	return (0);
-}
-
-const char *
-api_up1000_intr_string(void *icv, pci_intr_handle_t ih, char *buf, size_t len)
-{
-#if 0
-	struct irongate_config *icp = icv;
-#endif
-
-	return sio_intr_string(NULL /*XXX*/, ih, buf, len);
-}
-
-const struct evcnt *
-api_up1000_intr_evcnt(void *icv, pci_intr_handle_t ih)
-{
-#if 0
-	struct irongate_config *icp = icv;
-#endif
-
-	return sio_intr_evcnt(NULL /*XXX*/, ih);
-}
-
-void *
-api_up1000_intr_establish(void *icv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg)
-{
-#if 0
-	struct irongate_config *icp = icv;
-#endif
-
-	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
-	    arg);
-}
-
-void
-api_up1000_intr_disestablish(void *icv, void *cookie)
-{
-#if 0
-	struct irongate_config *icp = icv;
-#endif
-
-	sio_intr_disestablish(NULL /*XXX*/, cookie);
-}
-
-void *
-api_up1000_pciide_compat_intr_establish(void *icv, device_t dev,
-    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
-{
-	pci_chipset_tag_t pc = pa->pa_pc;
-	void *cookie = NULL;
-	int bus, irq;
-	char buf[64];
-
-	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
-
-	/*
-	 * If this isn't PCI bus #0, all bets are off.
-	 */
-	if (bus != 0)
-		return (NULL);
-
-	irq = PCIIDE_COMPAT_IRQ(chan);
-#if NSIO
-	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
-	    func, arg);
-	if (cookie == NULL)
-		return (NULL);
-	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
-	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq, buf,
-	    sizeof(buf)));
-#endif
-	return (cookie);
 }
