@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.23 2020/08/07 00:43:47 snj Exp $
+.\"	$NetBSD: contents,v 1.24 2020/09/22 02:53:52 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,12 +61,6 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
-.
-.			It Pa netbsd-GENERIC.MP.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release.  This
-kernel supports SMP on systems with more than one CPU.
 .
 .		tag) \" binary/kernel/
 .
