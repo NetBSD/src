@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.320 2020/09/14 21:23:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.321 2020/09/22 02:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.320 2020/09/14 21:23:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.321 2020/09/22 02:26:22 rillig Exp $");
 
 /* types and constants */
 
@@ -1988,9 +1988,9 @@ Parse_DoVar(char *line, GNode *ctxt)
 	Main_ExportMAKEFLAGS(FALSE);	/* re-export MAKEFLAGS */
     else if (strcmp(line, ".CURDIR") == 0) {
 	/*
-	 * Somone is being (too?) clever...
+	 * Someone is being (too?) clever...
 	 * Let's pretend they know what they are doing and
-	 * re-initialize the 'cur' Path.
+	 * re-initialize the 'cur' CachedDir.
 	 */
 	Dir_InitCur(cp);
 	Dir_SetPATH();
