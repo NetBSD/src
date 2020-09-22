@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.527 2020/09/22 06:13:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.528 2020/09/22 06:23:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.527 2020/09/22 06:13:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.528 2020/09/22 06:23:33 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1880,8 +1880,8 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  *
  * Housekeeping
  *
- * Some modifiers such as :D and :U turn undefined variables into useful
- * variables (VAR_JUNK, VAR_KEEP).
+ * Some modifiers such as :D and :U turn undefined expressions into defined
+ * expressions (see VEF_UNDEF, VEF_DEF).
  *
  * Some modifiers need to free some memory.
  */
@@ -3604,15 +3604,15 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 
 	    /* The variable expression is based on an undefined variable.
 	     * Nevertheless it needs a Var, for modifiers that access the
-	     * variable name, such as :L or :?, and for modifiers that access
-	     * the variable flags (VAR_JUNK, VAR_KEEP).
+	     * variable name, such as :L or :?.
 	     *
 	     * Most modifiers leave this expression in the "undefined" state
-	     * (VAR_JUNK), only a few modifiers like :D, :U, :L, :P turn this
-	     * undefined expression into a defined expression (VAR_KEEP).
+	     * (VEF_UNDEF), only a few modifiers like :D, :U, :L, :P turn this
+	     * undefined expression into a defined expression (VEF_DEF).
 	     *
 	     * At the end, after applying all modifiers, if the expression
-	     * is still !VAR_KEEP, Var_Parse will return var_Error. */
+	     * is still undefined, Var_Parse will return an empty string
+	     * instead of the actually computed value. */
 	    v = bmake_malloc(sizeof(Var));
 	    v->name = varname;
 	    Buf_Init(&v->val, 1);
@@ -3685,11 +3685,6 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	(void)VarFreeEnv(v, !keepValue);
 
     } else if (exprFlags & VEF_UNDEF) {
-	/*
-	 * Perform any freeing needed and set *freePtr to NULL so the caller
-	 * doesn't try to free a static pointer.
-	 * If VAR_KEEP is also set then we want to keep str(?) as is.
-	 */
 	if (!(exprFlags & VEF_DEF)) {
 	    if (*freePtr != NULL) {
 		free(*freePtr);
@@ -3699,6 +3694,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		nstr = bmake_strsedup(start, p);
 		*freePtr = nstr;
 	    } else {
+		/* The expression is still undefined, therefore discard the
+		 * actual value and return an empty string instead. */
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
 	    }
 	}
