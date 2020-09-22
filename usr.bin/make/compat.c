@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.147 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.148 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.147 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.148 2020/09/22 20:19:46 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
@@ -209,7 +209,8 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
     doIt = FALSE;
 
     cmdNode = Lst_FindDatum(gn->commands, cmd);
-    cmdStart = Var_Subst(cmd, gn, VARE_WANTRES);
+    (void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
+    /* TODO: handle errors */
 
     /*
      * brk_string will return an argv with a NULL in av[0], thus causing

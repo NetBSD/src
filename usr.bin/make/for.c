@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.84 2020/09/14 20:43:44 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.85 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.84 2020/09/14 20:43:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.85 2020/09/22 20:19:46 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -190,7 +190,9 @@ For_Eval(const char *line)
      * we will be substituting into ${...} or $(...).
      */
     {
-	char *items = Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES);
+	char *items;
+	(void)Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES, &items);
+	/* TODO: handle errors */
 	words = Str_Words(items, FALSE);
 	free(items);
     }

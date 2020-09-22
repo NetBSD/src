@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.157 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.158 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.157 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.158 2020/09/22 20:19:46 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -1272,7 +1272,8 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
     }
 
     SUFF_DEBUG1("Expanding \"%s\"...", cgn->name);
-    cp = Var_Subst(cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES);
+    (void)Var_Subst(cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES, &cp);
+    /* TODO: handle errors */
 
     {
 	GNodeList *members = Lst_Init();

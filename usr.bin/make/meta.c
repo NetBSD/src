@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.116 2020/09/22 04:05:41 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.117 2020/09/22 20:19:46 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -330,7 +330,8 @@ is_submake(void *cmdp, void *gnp)
     }
     cp = strchr(cmd, '$');
     if ((cp)) {
-	mp = Var_Subst(cmd, gn, VARE_WANTRES);
+	(void)Var_Subst(cmd, gn, VARE_WANTRES, &mp);
+	/* TODO: handle errors */
 	cmd = mp;
     }
     cp2 = strstr(cmd, p_make);
@@ -372,7 +373,9 @@ printCMD(void *cmdp, void *mfpp)
     char *cmd_freeIt = NULL;
 
     if (strchr(cmd, '$')) {
-	cmd = cmd_freeIt = Var_Subst(cmd, mfp->gn, VARE_WANTRES);
+	(void)Var_Subst(cmd, mfp->gn, VARE_WANTRES, &cmd_freeIt);
+	/* TODO: handle errors */
+	cmd = cmd_freeIt;
     }
     fprintf(mfp->fp, "CMD %s\n", cmd);
     free(cmd_freeIt);
@@ -485,7 +488,8 @@ meta_create(BuildMon *pbm, GNode *gn)
 	char *mp;
 
 	/* Describe the target we are building */
-	mp = Var_Subst("${" MAKE_META_PREFIX "}", gn, VARE_WANTRES);
+	(void)Var_Subst("${" MAKE_META_PREFIX "}", gn, VARE_WANTRES, &mp);
+	/* TODO: handle errors */
 	if (*mp)
 	    fprintf(stdout, "%s\n", mp);
 	free(mp);
@@ -627,8 +631,9 @@ meta_mode_init(const char *make_mode)
      * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
      */
     metaBailiwick = Lst_Init();
-    metaBailiwickStr = Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
-	VAR_GLOBAL, VARE_WANTRES);
+    (void)Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
+		    VAR_GLOBAL, VARE_WANTRES, &metaBailiwickStr);
+    /* TODO: handle errors */
     str2Lst_Append(metaBailiwick, metaBailiwickStr, NULL);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
@@ -636,8 +641,9 @@ meta_mode_init(const char *make_mode)
     metaIgnorePaths = Lst_Init();
     Var_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
-    metaIgnorePathsStr = Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
-				   VAR_GLOBAL, VARE_WANTRES);
+    (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
+		    VAR_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
+    /* TODO: handle errors */
     str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr, NULL);
 
     /*
@@ -814,8 +820,9 @@ meta_job_output(Job *job, char *cp, const char *nl)
 	    if (!meta_prefix) {
 		char *cp2;
 
-		meta_prefix = Var_Subst("${" MAKE_META_PREFIX "}",
-					VAR_GLOBAL, VARE_WANTRES);
+		(void)Var_Subst("${" MAKE_META_PREFIX "}",
+				VAR_GLOBAL, VARE_WANTRES, &meta_prefix);
+		/* TODO: handle errors */
 		if ((cp2 = strchr(meta_prefix, '$')))
 		    meta_prefix_len = cp2 - meta_prefix;
 		else
@@ -998,7 +1005,8 @@ meta_ignore(GNode *gn, const char *p)
 
 	Var_Set(".p.", p, gn);
 	expr = "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}";
-	pm = Var_Subst(expr, gn, VARE_WANTRES);
+	(void)Var_Subst(expr, gn, VARE_WANTRES, &pm);
+	/* TODO: handle errors */
 	if (*pm) {
 #ifdef DEBUG_META_MODE
 	    if (DEBUG(META))
@@ -1018,7 +1026,8 @@ meta_ignore(GNode *gn, const char *p)
 	snprintf(fname, sizeof(fname),
 		 "${%s:L:${%s:ts:}}",
 		 p, MAKE_META_IGNORE_FILTER);
-	fm = Var_Subst(fname, gn, VARE_WANTRES);
+	(void)Var_Subst(fname, gn, VARE_WANTRES, &fm);
+	/* TODO: handle errors */
 	if (*fm == '\0') {
 #ifdef DEBUG_META_MODE
 	    if (DEBUG(META))
@@ -1519,7 +1528,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (DEBUG(META))
 			    fprintf(debug_file, "%s: %d: cannot compare command using .OODATE\n", fname, lineno);
 		    }
-		    cmd = Var_Subst(cmd, gn, VARE_WANTRES|VARE_UNDEFERR);
+		    (void)Var_Subst(cmd, gn, VARE_WANTRES|VARE_UNDEFERR, &cmd);
+		    /* TODO: handle errors */
 
 		    if ((cp = strchr(cmd, '\n'))) {
 			int n;
