@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.4 2020/09/22 18:54:51 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.5 2020/09/22 19:08:48 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -121,7 +121,7 @@ EXPANSION${plus}=	value
 # interpreted as part of the code.  Because of this, the trailingBackslash
 # hack in Var_Subst is no longer needed and as of 2020-09-22, has been
 # removed.
-.for path in a:\ a:\file.txt
+.for path in a:\ a:\file.txt d:\\ d:\\file.txt
 .  info ${path}
 .endfor
 

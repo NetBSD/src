@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.531 2020/09/22 18:07:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.532 2020/09/22 19:08:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.531 2020/09/22 18:07:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.532 2020/09/22 19:08:47 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3709,7 +3709,6 @@ char *
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 {
     Buffer buf;			/* Buffer for forming things */
-    Boolean trailingBackslash;
 
     /* Set true if an error has already been reported,
      * to prevent a plethora of messages when recursing */
@@ -3717,12 +3716,8 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 
     Buf_Init(&buf, 0);
     errorReported = FALSE;
-    trailingBackslash = FALSE;	/* variable ends in \ */
 
     while (*str) {
-	if (*str == '\n' && trailingBackslash)
-	    Buf_AddByte(&buf, ' ');
-
 	if (*str == '$' && str[1] == '$') {
 	    /*
 	     * A dollar sign may be escaped with another dollar sign.
@@ -3782,7 +3777,6 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 
 		val_len = strlen(val);
 		Buf_AddBytes(&buf, val, val_len);
-		trailingBackslash = val_len > 0 && val[val_len - 1] == '\\';
 	    }
 	    free(freeIt);
 	    freeIt = NULL;
