@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.205 2020/07/05 01:09:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.206 2020/09/22 21:37:47 nia Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -60,7 +60,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
-	getdomainname.3 getdiskbyname.3 getentropy.3 getfsent.3 \
+	getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getlastlogx.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
 	getprogname.3 getpwent.3 getttyent.3 getusershell.3 glob.3 \
