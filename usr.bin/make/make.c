@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.136 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.137 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,10 +107,10 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.136 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.137 2020/09/22 04:05:41 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
-static Lst     	toBeMade;	/* The current fringe of the graph. These
+static GNodeList *toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by
 				 * MakeOODate. It is added to by
 				 * Make_Update and subtracted from by
@@ -395,8 +395,8 @@ Make_OODate(GNode *gn)
 static int
 MakeAddChild(void *gnp, void *lp)
 {
-    GNode          *gn = (GNode *)gnp;
-    Lst            l = (Lst) lp;
+    GNode *gn = gnp;
+    GNodeList *l = lp;
 
     if ((gn->flags & REMAKE) == 0 && !(gn->type & (OP_USE|OP_USEBEFORE))) {
 	if (DEBUG(MAKE))
@@ -452,7 +452,7 @@ MakeFindChild(void *gnp, void *pgnp)
 void
 Make_HandleUse(GNode *cgn, GNode *pgn)
 {
-    LstNode	ln; 	/* An element in the children list */
+    GNodeListNode *ln; 	/* An element in the children list */
 
 #ifdef DEBUG_SRC
     if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
@@ -529,7 +529,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 {
     GNode	*cgn = (GNode *)cgnp;
     GNode	*pgn = (GNode *)pgnp;
-    LstNode	ln; 	/* An element in the children list */
+    GNodeListNode *ln;
     int		unmarked;
 
     unmarked = ((cgn->type & OP_MARK) == 0);
@@ -682,10 +682,10 @@ Make_Update(GNode *cgn)
 {
     GNode 	*pgn;	/* the parent node */
     const char	*cname;	/* the child's name */
-    LstNode	ln; 	/* Element in parents and implicitParents lists */
+    GNodeListNode *ln;
     time_t	mtime = -1;
     char	*p1;
-    Lst		parents;
+    GNodeList *parents;
     GNode	*centurion;
 
     /* It is save to re-examine any nodes again */
@@ -1278,10 +1278,9 @@ MakePrintStatus(void *gnp, void *v_errors)
  *-----------------------------------------------------------------------
  */
 void
-Make_ExpandUse(Lst targs)
+Make_ExpandUse(GNodeList *targs)
 {
-    GNode  *gn;		/* a temporary pointer */
-    Lst    examine; 	/* List of targets to examine */
+    GNodeList *examine;		/* List of targets to examine */
 
     examine = Lst_Copy(targs, NULL);
 
@@ -1294,7 +1293,7 @@ Make_ExpandUse(Lst targs)
      * and go on about our business.
      */
     while (!Lst_IsEmpty(examine)) {
-	gn = Lst_Dequeue(examine);
+	GNode *gn = Lst_Dequeue(examine);
 
 	if (gn->flags & REMAKE)
 	    /* We've looked at this one already */
@@ -1396,13 +1395,13 @@ add_wait_dep(void *v_cn, void *v_wn)
 }
 
 static void
-Make_ProcessWait(Lst targs)
+Make_ProcessWait(GNodeList *targs)
 {
-    GNode  *pgn;	/* 'parent' node we are examining */
-    GNode  *cgn;	/* Each child in turn */
-    LstNode owln;	/* Previous .WAIT node */
-    Lst    examine; 	/* List of targets to examine */
-    LstNode ln;
+    GNode  *pgn;		/* 'parent' node we are examining */
+    GNode  *cgn;		/* Each child in turn */
+    GNodeListNode *owln;	/* Previous .WAIT node */
+    GNodeList *examine; 	/* List of targets to examine */
+    GNodeListNode *ln;
 
     /*
      * We need all the nodes to have a common parent in order for the
@@ -1480,7 +1479,7 @@ Make_ProcessWait(Lst targs)
  *-----------------------------------------------------------------------
  */
 Boolean
-Make_Run(Lst targs)
+Make_Run(GNodeList *targs)
 {
     int	    	    errors; 	/* Number of errors the Job module reports */
 

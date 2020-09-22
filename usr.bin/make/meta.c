@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.115 2020/09/21 17:44:25 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.116 2020/09/22 04:05:41 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -51,9 +51,9 @@
 #endif
 
 static BuildMon Mybm;			/* for compat */
-static Lst metaBailiwick;		/* our scope of control */
+static StringList *metaBailiwick;	/* our scope of control */
 static char *metaBailiwickStr;		/* string storage for the list */
-static Lst metaIgnorePaths;		/* paths we deliberately ignore */
+static StringList *metaIgnorePaths;	/* paths we deliberately ignore */
 static char *metaIgnorePathsStr;	/* string storage for the list */
 
 #ifndef MAKE_META_IGNORE_PATHS
@@ -1082,7 +1082,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     static size_t tmplen = 0;
     FILE *fp;
     Boolean needOODATE = FALSE;
-    Lst missingFiles;
+    StringList *missingFiles;
     char *pa[4];			/* >= possible uses */
     int i;
     int have_filemon = FALSE;

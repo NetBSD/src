@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.116 2020/09/21 03:12:25 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.117 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.116 2020/09/21 03:12:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.117 2020/09/22 04:05:41 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -144,7 +144,10 @@ MAKE_RCSID("$NetBSD: arch.c,v 1.116 2020/09/21 03:12:25 rillig Exp $");
 #define MAKE_MACHINE_ARCH TARGET_MACHINE_ARCH
 #endif
 
-static Lst	  archives;   /* Lst of archives we've already examined */
+typedef struct List ArchList;
+typedef struct ListNode ArchListNode;
+
+static ArchList *archives;	/* The archives we've already examined */
 
 typedef struct Arch {
     char	  *name;      /* Name of archive */
@@ -203,7 +206,7 @@ ArchFree(void *ap)
  *-----------------------------------------------------------------------
  */
 Boolean
-Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
+Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 {
     char	    *cp;	    /* Pointer into line */
     GNode	    *gn;     	    /* New node */
@@ -361,7 +364,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     */
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
-	    Lst members = Lst_Init();
+	    StringList *members = Lst_Init();
 	    Dir_Expand(memName, dirSearchPath, members);
 
 	    while (!Lst_IsEmpty(members)) {
@@ -466,7 +469,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     FILE *	  arch;	      /* Stream to archive */
     size_t	  size;       /* Size of archive member */
     char	  magic[SARMAG];
-    LstNode	  ln;	      /* Lst member containing archive descriptor */
+    ArchListNode *ln;
     Arch	  *ar;	      /* Archive descriptor */
     Hash_Entry	  *he;	      /* Entry containing member's description */
     struct ar_hdr arh;        /* archive-member header for reading archive */
@@ -1019,7 +1022,7 @@ Arch_MTime(GNode *gn)
 time_t
 Arch_MemMTime(GNode *gn)
 {
-    LstNode 	  ln;
+    GNodeListNode *ln;
     GNode   	  *pgn;
 
     Lst_Open(gn->parents);
@@ -1073,7 +1076,7 @@ Arch_MemMTime(GNode *gn)
  *	path		Search path
  */
 void
-Arch_FindLib(GNode *gn, Lst path)
+Arch_FindLib(GNode *gn, SearchPath *path)
 {
     char	    *libName;   /* file name for archive */
     size_t	     sz = strlen(gn->name) + 6 - 2;

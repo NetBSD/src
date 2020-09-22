@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.337 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.338 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.337 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.338 2020/09/22 04:05:41 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -136,18 +136,18 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #define	DEFMAXLOCAL DEFMAXJOBS
 #endif
 
-Lst			create;		/* Targets to be made */
+GNodeList *		create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 
 static Boolean		noBuiltins;	/* -r flag */
-static Lst		makefiles;	/* ordered list of makefiles to read */
+static StringList *	makefiles;	/* ordered list of makefiles to read */
 static int		printVars;	/* -[vV] argument */
 #define COMPAT_VARS 1
 #define EXPAND_VARS 2
-static Lst		variables;	/* list of variables to print
+static StringList *	variables;	/* list of variables to print
 					 * (for -v and -V) */
 int			maxJobs;	/* -j argument */
 static int		maxJobTokens;	/* -j argument */
@@ -188,7 +188,7 @@ FILE *debug_file;
 
 Boolean forceJobs = FALSE;
 
-extern Lst parseIncPath;
+extern SearchPath *parseIncPath;
 
 /*
  * For compatibility with the POSIX version of MAKEFLAGS that includes
@@ -789,7 +789,7 @@ ReadMakefileFailed(const void *fname, const void *unused)
 }
 
 int
-str2Lst_Append(Lst lp, char *str, const char *sep)
+str2Lst_Append(StringList *lp, char *str, const char *sep)
 {
     char *cp;
     int n;
@@ -849,7 +849,7 @@ MakeMode(const char *mode)
 static void
 doPrintVars(void)
 {
-	LstNode ln;
+	StringListNode *ln;
 	Boolean expandVars;
 
 	if (printVars == EXPAND_VARS)
@@ -885,7 +885,7 @@ doPrintVars(void)
 static Boolean
 runTargets(void)
 {
-	Lst targs;	/* target nodes to create -- passed to Make_Init */
+	GNodeList *targs; /* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate; 	/* FALSE if all targets up to date */
 
 	/*
@@ -953,7 +953,7 @@ main(int argc, char **argv)
 	const char *machine = getenv("MACHINE");
 	const char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
-	Lst sysMkPath;			/* Path of sys.mk */
+	StringList *sysMkPath;		/* Path of sys.mk */
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
 	static char defsyspath[] = _PATH_DEFSYSPATH;
@@ -1266,7 +1266,7 @@ main(int argc, char **argv)
 	 * will fill the thing in with the default or .MAIN target.
 	 */
 	if (!Lst_IsEmpty(create)) {
-		LstNode ln;
+		StringListNode *ln;
 
 		for (ln = Lst_First(create); ln != NULL; ln = LstNode_Next(ln)) {
 			char *name = LstNode_Datum(ln);
@@ -1312,7 +1312,7 @@ main(int argc, char **argv)
 	 * if no makefiles were given on the command line.
 	 */
 	if (!noBuiltins) {
-		LstNode ln;
+		StringListNode *ln;
 
 		sysMkPath = Lst_Init();
 		Dir_Expand(_PATH_DEFSYSMK,
@@ -1328,7 +1328,7 @@ main(int argc, char **argv)
 	}
 
 	if (!Lst_IsEmpty(makefiles)) {
-		LstNode ln;
+		StringListNode *ln;
 
 		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
