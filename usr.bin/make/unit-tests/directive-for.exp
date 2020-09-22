@@ -1,2 +1,3 @@
 make: "directive-for.mk" line 100: outer
+make: "directive-for.mk" line 125: a:\ a:\file.txt
 exit status 0
