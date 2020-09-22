@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.146 2020/09/21 17:44:25 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.147 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.146 2020/09/21 17:44:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.147 2020/09/22 04:05:41 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
@@ -660,7 +660,7 @@ cohorts:
  *	targs		The target nodes to re-create
  */
 void
-Compat_Run(Lst targs)
+Compat_Run(GNodeList *targs)
 {
     GNode   	  *gn = NULL;/* Current root target */
     int	    	  errors;   /* Number of targets not remade due to errors */

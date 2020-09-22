@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.523 2020/09/21 05:28:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.524 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.523 2020/09/21 05:28:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.524 2020/09/22 04:05:41 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -2114,7 +2114,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
     } else if (gn->path) {
 	path = bmake_strdup(gn->path);
     } else {
-	Lst searchPath = Suff_FindPath(gn);
+	SearchPath *searchPath = Suff_FindPath(gn);
 	path = Dir_FindFile(st->v->name, searchPath);
     }
     if (path == NULL)
