@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.88 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.89 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,11 +122,11 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.88 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.89 2020/09/22 04:05:41 rillig Exp $");
 
-static Lst        allTargets;	/* the list of all targets found so far */
+static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
-static Lst	  allGNs;	/* List of all the GNodes */
+static GNodeList *allGNs;	/* List of all the GNodes */
 #endif
 static Hash_Table targets;	/* a hash table of same */
 
@@ -161,7 +161,7 @@ Targ_Stats(void)
 }
 
 /* Return the list of all targets. */
-Lst
+GNodeList *
 Targ_List(void)
 {
     return allTargets;
@@ -296,26 +296,19 @@ Targ_FindNode(const char *name, int flags)
  *	A complete list of graph nodes corresponding to all instances of all
  *	the names in names.
  */
-Lst
-Targ_FindList(Lst names, int flags)
+GNodeList *
+Targ_FindList(StringList *names, int flags)
 {
-    Lst            nodes;	/* result list */
-    LstNode	   ln;		/* name list element */
-    GNode	   *gn;		/* node in tLn */
-    char    	   *name;
+    GNodeList *nodes;
+    StringListNode *ln;
 
     nodes = Lst_Init();
 
     Lst_Open(names);
     while ((ln = Lst_Next(names)) != NULL) {
-	name = LstNode_Datum(ln);
-	gn = Targ_FindNode(name, flags);
+    	char *name = LstNode_Datum(ln);
+    	GNode *gn = Targ_FindNode(name, flags);
 	if (gn != NULL) {
-	    /*
-	     * Note: Lst_Append must come before the Lst_Concat so the nodes
-	     * are added to the list in the order in which they were
-	     * encountered in the makefile.
-	     */
 	    Lst_Append(nodes, gn);
 	} else if (flags == TARG_NOCREATE) {
 	    Error("\"%s\" -- target unknown.", name);
@@ -359,9 +352,9 @@ Targ_SetMain(GNode *gn)
 }
 
 static void
-PrintNodeNames(Lst gnodes)
+PrintNodeNames(GNodeList *gnodes)
 {
-    LstNode node;
+    GNodeListNode *node;
 
     for (node = Lst_First(gnodes); node != NULL; node = LstNode_Next(node)) {
 	GNode *gn = LstNode_Datum(node);
@@ -370,7 +363,7 @@ PrintNodeNames(Lst gnodes)
 }
 
 static void
-PrintNodeNamesLine(const char *label, Lst gnodes)
+PrintNodeNamesLine(const char *label, GNodeList *gnodes)
 {
     if (Lst_IsEmpty(gnodes))
 	return;
@@ -529,7 +522,7 @@ Targ_PrintNode(GNode *gn, int pass)
 }
 
 void
-Targ_PrintNodes(Lst gnodes, int pass)
+Targ_PrintNodes(GNodeList *gnodes, int pass)
 {
     Lst_ForEach(gnodes, PrintNode, &pass);
 }
@@ -582,7 +575,7 @@ Targ_PrintGraph(int pass)
 void
 Targ_Propagate(void)
 {
-    LstNode pn, cn;
+    GNodeListNode *pn, *cn;
 
     for (pn = Lst_First(allTargets); pn != NULL; pn = LstNode_Next(pn)) {
 	GNode *pgn = LstNode_Datum(pn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.143 2020/09/21 17:44:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.144 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -274,8 +274,11 @@ typedef enum {
 
 typedef struct List StringList;
 typedef struct ListNode StringListNode;
+
 typedef struct List GNodeList;
 typedef struct ListNode GNodeListNode;
+
+typedef struct List /* of CachedDir */ SearchPath;
 
 /* A graph node represents a target that can possibly be made, including its
  * relation to other targets and a lot of other details. */
@@ -412,10 +415,10 @@ typedef enum {
 /*
  * Global Variables
  */
-extern Lst  	create;	    	/* The list of target names specified on the
+extern StringList *create;    	/* The list of target names specified on the
 				 * command line. used to resolve #if
 				 * make(...) statements */
-extern Lst     	dirSearchPath; 	/* The list of directories to search when
+extern SearchPath *dirSearchPath; 	/* The list of directories to search when
 				 * looking for targets */
 
 extern Boolean	compatMake;	/* True if we are make compatible */
@@ -463,8 +466,8 @@ extern time_t 	now;	    	/* The time at the start of this whole
 
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
-extern Lst	sysIncPath;	/* The system include path. */
-extern Lst	defIncPath;	/* The default include path. */
+extern SearchPath *sysIncPath;	/* The system include path. */
+extern SearchPath *defIncPath;	/* The default include path. */
 
 extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
@@ -532,18 +535,18 @@ extern int debug;
 
 int Make_TimeStamp(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
-void Make_ExpandUse(Lst);
+void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
 void Make_DoAllVar(GNode *);
-Boolean Make_Run(Lst);
+Boolean Make_Run(GNodeList *);
 int dieQuietly(GNode *, int);
 void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(Boolean);
 Boolean Main_SetObjdir(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 int mkTempFile(const char *, char **);
-int str2Lst_Append(Lst, char *, const char *);
+int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 
 #ifdef __GNUC__

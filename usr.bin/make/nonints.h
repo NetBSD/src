@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.123 2020/09/21 05:28:26 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.124 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -73,12 +73,12 @@
  */
 
 /* arch.c */
-Boolean Arch_ParseArchive(char **, Lst, GNode *);
+Boolean Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
 void Arch_TouchLib(GNode *);
 time_t Arch_MTime(GNode *);
 time_t Arch_MemMTime(GNode *);
-void Arch_FindLib(GNode *, Lst);
+void Arch_FindLib(GNode *, SearchPath *);
 Boolean Arch_LibOODate(GNode *);
 void Arch_Init(void);
 void Arch_End(void);
@@ -86,7 +86,7 @@ Boolean Arch_IsLib(GNode *);
 
 /* compat.c */
 int Compat_RunCommand(char *, GNode *);
-void Compat_Run(Lst);
+void Compat_Run(GNodeList *);
 int Compat_Make(GNode *, GNode *);
 
 /* cond.c */
@@ -128,7 +128,7 @@ void Parse_File(const char *, int);
 void Parse_Init(void);
 void Parse_End(void);
 void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *);
-Lst Parse_MainName(void);
+GNodeList *Parse_MainName(void);
 
 /* str.c */
 typedef struct {
@@ -156,12 +156,12 @@ Boolean Suff_IsTransform(char *);
 GNode *Suff_AddTransform(char *);
 void Suff_EndTransform(GNode *);
 void Suff_AddSuffix(const char *, GNode **);
-Lst Suff_GetPath(char *);
+SearchPath *Suff_GetPath(char *);
 void Suff_DoPaths(void);
 void Suff_AddInclude(char *);
 void Suff_AddLib(const char *);
 void Suff_FindDeps(GNode *);
-Lst Suff_FindPath(GNode *);
+SearchPath *Suff_FindPath(GNode *);
 void Suff_SetNull(char *);
 void Suff_Init(void);
 void Suff_End(void);
@@ -171,17 +171,17 @@ void Suff_PrintAll(void);
 void Targ_Init(void);
 void Targ_End(void);
 void Targ_Stats(void);
-Lst Targ_List(void);
+GNodeList *Targ_List(void);
 GNode *Targ_NewGN(const char *);
 GNode *Targ_FindNode(const char *, int);
-Lst Targ_FindList(Lst, int);
+GNodeList *Targ_FindList(StringList *, int);
 Boolean Targ_Ignore(GNode *);
 Boolean Targ_Silent(GNode *);
 Boolean Targ_Precious(GNode *);
 void Targ_SetMain(GNode *);
 void Targ_PrintCmds(GNode *);
 void Targ_PrintNode(GNode *, int);
-void Targ_PrintNodes(Lst, int);
+void Targ_PrintNodes(GNodeList *, int);
 char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);
