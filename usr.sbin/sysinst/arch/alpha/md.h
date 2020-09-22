@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:03 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2020/09/22 02:53:52 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,6 @@
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
 /*
  * Machine-specific command to write a new label to a disk.

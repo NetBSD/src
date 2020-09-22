@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.183 2020/09/16 09:58:37 nia Exp $
+.\"	$NetBSD: contents,v 1.184 2020/09/22 02:53:52 snj Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ The installation kernel.
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
 .\} \" !atari/mac68k/sgimips/evbppc/sandpoint
-.if \n[alpha]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[vax] \{\
+.if \n[macppc]:\n[sparc]:\n[sparc64]:\n[vax] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
