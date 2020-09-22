@@ -1,4 +1,4 @@
-/*	$NetBSD: link_elf.h,v 1.12 2020/09/21 16:08:57 kamil Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.13 2020/09/22 01:52:16 kamil Exp $	*/
 
 #ifndef _LINK_ELF_H_
 #define	_LINK_ELF_H_
@@ -15,7 +15,7 @@ typedef struct link_map {
 #endif
 	const char	*l_name;	/* Absolute Path to Library */
 	void		*l_ld;		/* Pointer to .dynamic in memory */
-	struct link_map	*l_next;	/* linked list of of mapped libs */
+	struct link_map	*l_next;	/* linked list of mapped libs */
 	struct link_map *l_prev;
 } Link_map;
 
