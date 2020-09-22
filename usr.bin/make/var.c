@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.528 2020/09/22 06:23:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.529 2020/09/22 17:42:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.528 2020/09/22 06:23:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.529 2020/09/22 17:42:57 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1585,141 +1585,6 @@ VarUniq(const char *str)
 }
 
 
-/*-
- * Parse a part of a modifier such as the "from" and "to" in :S/from/to/
- * or the "var" or "replacement" in :@var@replacement+${var}@, up to and
- * including the next unescaped delimiter.  The delimiter, as well as the
- * backslash or the dollar, can be escaped with a backslash.
- *
- * Return the parsed (and possibly expanded) string, or NULL if no delimiter
- * was found.  On successful return, the parsing position pp points right
- * after the delimiter.  The delimiter is not included in the returned
- * value though.
- */
-static char *
-ParseModifierPart(
-    const char **pp,		/* The parsing position, updated upon return */
-    int delim,			/* Parsing stops at this delimiter */
-    VarEvalFlags eflags,	/* Flags for evaluating nested variables;
-				 * if VARE_WANTRES is not set, the text is
-				 * only parsed */
-    GNode *ctxt,		/* For looking up nested variables */
-    size_t *out_length,		/* Optionally stores the length of the returned
-				 * string, just to save another strlen call. */
-    VarPatternFlags *out_pflags,/* For the first part of the :S modifier,
-				 * sets the VARP_ANCHOR_END flag if the last
-				 * character of the pattern is a $. */
-    ModifyWord_SubstArgs *subst	/* For the second part of the :S modifier,
-				 * allow ampersands to be escaped and replace
-				 * unescaped ampersands with subst->lhs. */
-) {
-    Buffer buf;
-    const char *p;
-    char *rstr;
-
-    Buf_Init(&buf, 0);
-
-    /*
-     * Skim through until the matching delimiter is found;
-     * pick up variable substitutions on the way. Also allow
-     * backslashes to quote the delimiter, $, and \, but don't
-     * touch other backslashes.
-     */
-    p = *pp;
-    while (*p != '\0' && *p != delim) {
-	const char *varstart;
-
-	Boolean is_escaped = p[0] == '\\' && (
-	    p[1] == delim || p[1] == '\\' || p[1] == '$' ||
-	    (p[1] == '&' && subst != NULL));
-	if (is_escaped) {
-	    Buf_AddByte(&buf, p[1]);
-	    p += 2;
-	    continue;
-	}
-
-	if (*p != '$') {	/* Unescaped, simple text */
-	    if (subst != NULL && *p == '&')
-		Buf_AddBytes(&buf, subst->lhs, subst->lhsLen);
-	    else
-		Buf_AddByte(&buf, *p);
-	    p++;
-	    continue;
-	}
-
-	if (p[1] == delim) {	/* Unescaped $ at end of pattern */
-	    if (out_pflags != NULL)
-		*out_pflags |= VARP_ANCHOR_END;
-	    else
-		Buf_AddByte(&buf, *p);
-	    p++;
-	    continue;
-	}
-
-	if (eflags & VARE_WANTRES) {	/* Nested variable, evaluated */
-	    const char *nested_p = p;
-	    const char *nested_val;
-	    void *nested_val_freeIt;
-	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
-
-	    (void)Var_Parse(&nested_p, ctxt, nested_eflags,
-			    &nested_val, &nested_val_freeIt);
-	    /* TODO: handle errors */
-	    Buf_AddStr(&buf, nested_val);
-	    free(nested_val_freeIt);
-	    p += nested_p - p;
-	    continue;
-	}
-
-	/* XXX: This whole block is very similar to Var_Parse without
-	 * VARE_WANTRES.  There may be subtle edge cases though that are
-	 * not yet covered in the unit tests and that are parsed differently,
-	 * depending on whether they are evaluated or not.
-	 *
-	 * This subtle difference is not documented in the manual page,
-	 * neither is the difference between parsing :D and :M documented.
-	 * No code should ever depend on these details, but who knows. */
-
-	varstart = p;		/* Nested variable, only parsed */
-	if (p[1] == '(' || p[1] == '{') {
-	    /*
-	     * Find the end of this variable reference
-	     * and suck it in without further ado.
-	     * It will be interpreted later.
-	     */
-	    int have = p[1];
-	    int want = have == '(' ? ')' : '}';
-	    int depth = 1;
-
-	    for (p += 2; *p != '\0' && depth > 0; p++) {
-		if (p[-1] != '\\') {
-		    if (*p == have)
-			depth++;
-		    if (*p == want)
-			depth--;
-		}
-	    }
-	    Buf_AddBytesBetween(&buf, varstart, p);
-	} else {
-	    Buf_AddByte(&buf, *varstart);
-	    p++;
-	}
-    }
-
-    if (*p != delim) {
-	*pp = p;
-	return NULL;
-    }
-
-    *pp = ++p;
-    if (out_length != NULL)
-	*out_length = Buf_Size(&buf);
-
-    rstr = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG("Modifier part: \"%s\"\n", rstr);
-    return rstr;
-}
-
 /* Quote shell meta-characters and space characters in the string.
  * If quoteDollar is set, also quote and double any '$' characters. */
 static char *
@@ -1936,6 +1801,141 @@ typedef enum {
 				 * if st->missing_delim is set. */
 } ApplyModifierResult;
 
+/*-
+ * Parse a part of a modifier such as the "from" and "to" in :S/from/to/
+ * or the "var" or "replacement" in :@var@replacement+${var}@, up to and
+ * including the next unescaped delimiter.  The delimiter, as well as the
+ * backslash or the dollar, can be escaped with a backslash.
+ *
+ * Return the parsed (and possibly expanded) string, or NULL if no delimiter
+ * was found.  On successful return, the parsing position pp points right
+ * after the delimiter.  The delimiter is not included in the returned
+ * value though.
+ */
+static char *
+ParseModifierPart(
+    const char **pp,		/* The parsing position, updated upon return */
+    int delim,			/* Parsing stops at this delimiter */
+    VarEvalFlags eflags,	/* Flags for evaluating nested variables;
+				 * if VARE_WANTRES is not set, the text is
+				 * only parsed */
+    ApplyModifiersState *st,
+    size_t *out_length,		/* Optionally stores the length of the returned
+				 * string, just to save another strlen call. */
+    VarPatternFlags *out_pflags,/* For the first part of the :S modifier,
+				 * sets the VARP_ANCHOR_END flag if the last
+				 * character of the pattern is a $. */
+    ModifyWord_SubstArgs *subst	/* For the second part of the :S modifier,
+				 * allow ampersands to be escaped and replace
+				 * unescaped ampersands with subst->lhs. */
+) {
+    Buffer buf;
+    const char *p;
+    char *rstr;
+
+    Buf_Init(&buf, 0);
+
+    /*
+     * Skim through until the matching delimiter is found;
+     * pick up variable substitutions on the way. Also allow
+     * backslashes to quote the delimiter, $, and \, but don't
+     * touch other backslashes.
+     */
+    p = *pp;
+    while (*p != '\0' && *p != delim) {
+	const char *varstart;
+
+	Boolean is_escaped = p[0] == '\\' && (
+	    p[1] == delim || p[1] == '\\' || p[1] == '$' ||
+	    (p[1] == '&' && subst != NULL));
+	if (is_escaped) {
+	    Buf_AddByte(&buf, p[1]);
+	    p += 2;
+	    continue;
+	}
+
+	if (*p != '$') {	/* Unescaped, simple text */
+	    if (subst != NULL && *p == '&')
+		Buf_AddBytes(&buf, subst->lhs, subst->lhsLen);
+	    else
+		Buf_AddByte(&buf, *p);
+	    p++;
+	    continue;
+	}
+
+	if (p[1] == delim) {	/* Unescaped $ at end of pattern */
+	    if (out_pflags != NULL)
+		*out_pflags |= VARP_ANCHOR_END;
+	    else
+		Buf_AddByte(&buf, *p);
+	    p++;
+	    continue;
+	}
+
+	if (eflags & VARE_WANTRES) {	/* Nested variable, evaluated */
+	    const char *nested_p = p;
+	    const char *nested_val;
+	    void *nested_val_freeIt;
+	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
+
+	    (void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
+			    &nested_val, &nested_val_freeIt);
+	    /* TODO: handle errors */
+	    Buf_AddStr(&buf, nested_val);
+	    free(nested_val_freeIt);
+	    p += nested_p - p;
+	    continue;
+	}
+
+	/* XXX: This whole block is very similar to Var_Parse without
+	 * VARE_WANTRES.  There may be subtle edge cases though that are
+	 * not yet covered in the unit tests and that are parsed differently,
+	 * depending on whether they are evaluated or not.
+	 *
+	 * This subtle difference is not documented in the manual page,
+	 * neither is the difference between parsing :D and :M documented.
+	 * No code should ever depend on these details, but who knows. */
+
+	varstart = p;		/* Nested variable, only parsed */
+	if (p[1] == '(' || p[1] == '{') {
+	    /*
+	     * Find the end of this variable reference
+	     * and suck it in without further ado.
+	     * It will be interpreted later.
+	     */
+	    int have = p[1];
+	    int want = have == '(' ? ')' : '}';
+	    int depth = 1;
+
+	    for (p += 2; *p != '\0' && depth > 0; p++) {
+		if (p[-1] != '\\') {
+		    if (*p == have)
+			depth++;
+		    if (*p == want)
+			depth--;
+		}
+	    }
+	    Buf_AddBytesBetween(&buf, varstart, p);
+	} else {
+	    Buf_AddByte(&buf, *varstart);
+	    p++;
+	}
+    }
+
+    if (*p != delim) {
+	*pp = p;
+	return NULL;
+    }
+
+    *pp = ++p;
+    if (out_length != NULL)
+	*out_length = Buf_Size(&buf);
+
+    rstr = Buf_Destroy(&buf, FALSE);
+    VAR_DEBUG("Modifier part: \"%s\"\n", rstr);
+    return rstr;
+}
+
 /* Test whether mod starts with modname, followed by a delimiter. */
 static Boolean
 ModMatch(const char *mod, const char *modname, char endc)
@@ -1967,8 +1967,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 
     (*pp)++;			/* Skip the first '@' */
     delim = '@';
-    args.tvar = ParseModifierPart(pp, delim, eflags,
-				  st->ctxt, NULL, NULL, NULL);
+    args.tvar = ParseModifierPart(pp, delim, eflags, st,
+				  NULL, NULL, NULL);
     if (args.tvar == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
@@ -1981,8 +1981,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	return AMR_CLEANUP;
     }
 
-    args.str = ParseModifierPart(pp, delim, eflags,
-				 st->ctxt, NULL, NULL, NULL);
+    args.str = ParseModifierPart(pp, delim, eflags, st,
+				 NULL, NULL, NULL);
     if (args.str == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
@@ -2149,7 +2149,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 
     (*pp)++;
     delim = '!';
-    cmd = ParseModifierPart(pp, delim, st->eflags, st->ctxt,
+    cmd = ParseModifierPart(pp, delim, st->eflags, st,
 			    NULL, NULL, NULL);
     if (cmd == NULL) {
 	st->missing_delim = delim;
@@ -2315,7 +2315,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 	(*pp)++;
     }
 
-    lhs = ParseModifierPart(pp, delim, st->eflags, st->ctxt,
+    lhs = ParseModifierPart(pp, delim, st->eflags, st,
 			    &args.lhsLen, &args.pflags, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
@@ -2323,7 +2323,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
     }
     args.lhs = lhs;
 
-    rhs = ParseModifierPart(pp, delim, st->eflags, st->ctxt,
+    rhs = ParseModifierPart(pp, delim, st->eflags, st,
 			    &args.rhsLen, NULL, &args);
     if (rhs == NULL) {
 	st->missing_delim = delim;
@@ -2375,13 +2375,14 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 
     *pp += 2;
 
-    re = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
+    re = ParseModifierPart(pp, delim, st->eflags, st,
+			   NULL, NULL, NULL);
     if (re == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
     }
 
-    args.replace = ParseModifierPart(pp, delim, st->eflags, st->ctxt,
+    args.replace = ParseModifierPart(pp, delim, st->eflags, st,
 				     NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
@@ -2563,7 +2564,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 
     (*pp)++;			/* skip the '[' */
     delim = ']';		/* look for closing ']' */
-    estr = ParseModifierPart(pp, delim, st->eflags, st->ctxt,
+    estr = ParseModifierPart(pp, delim, st->eflags, st,
 			     NULL, NULL, NULL);
     if (estr == NULL) {
 	st->missing_delim = delim;
@@ -2733,7 +2734,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 
     (*pp)++;			/* skip past the '?' */
     delim = ':';
-    then_expr = ParseModifierPart(pp, delim, then_eflags, st->ctxt,
+    then_expr = ParseModifierPart(pp, delim, then_eflags, st,
 				  NULL, NULL, NULL);
     if (then_expr == NULL) {
 	st->missing_delim = delim;
@@ -2741,7 +2742,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
     }
 
     delim = st->endc;		/* BRCLOSE or PRCLOSE */
-    else_expr = ParseModifierPart(pp, delim, else_eflags, st->ctxt,
+    else_expr = ParseModifierPart(pp, delim, else_eflags, st,
 				  NULL, NULL, NULL);
     if (else_expr == NULL) {
 	st->missing_delim = delim;
@@ -2836,7 +2837,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
     }
 
     delim = st->startc == '(' ? ')' : '}';
-    val = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
+    val = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
     if (st->exprFlags & VEF_UNDEF) {
 	/* restore original name */
 	free(st->v->name);
@@ -2951,14 +2952,14 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 
     delim = '=';
     *pp = mod;
-    lhs = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
+    lhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
     }
 
     delim = st->endc;
-    rhs = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
+    rhs = ParseModifierPart(pp, delim, st->eflags, st, NULL, NULL, NULL);
     if (rhs == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
