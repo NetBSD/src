@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.233 2020/09/21 17:44:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.234 2020/09/22 20:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.233 2020/09/21 17:44:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.234 2020/09/22 20:19:46 rillig Exp $");
 
 # define STATIC static
 
@@ -712,7 +712,9 @@ JobPrintCommand(void *cmdp, void *jobp)
 
     numCommands += 1;
 
-    cmdStart = cmd = Var_Subst(cmd, job->node, VARE_WANTRES);
+    Var_Subst(cmd, job->node, VARE_WANTRES, &cmd);
+    /* TODO: handle errors */
+    cmdStart = cmd;
 
     cmdTemplate = "%s\n";
 
@@ -902,8 +904,10 @@ JobPrintCommand(void *cmdp, void *jobp)
 static int
 JobSaveCommand(void *cmd, void *gn)
 {
-    cmd = Var_Subst((char *)cmd, (GNode *)gn, VARE_WANTRES);
-    Lst_Append(postCommands->commands, cmd);
+    char *expanded_cmd;
+    (void)Var_Subst(cmd, (GNode *)gn, VARE_WANTRES, &expanded_cmd);
+    /* TODO: handle errors */
+    Lst_Append(postCommands->commands, expanded_cmd);
     return 0;
 }
 
@@ -2209,8 +2213,9 @@ Job_SetPrefix(void)
 	Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL);
     }
 
-    targPrefix = Var_Subst("${" MAKE_JOB_PREFIX "}",
-			   VAR_GLOBAL, VARE_WANTRES);
+    (void)Var_Subst("${" MAKE_JOB_PREFIX "}",
+		    VAR_GLOBAL, VARE_WANTRES, &targPrefix);
+    /* TODO: handle errors */
 }
 
 /* Initialize the process module. */
