@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2019/05/14 19:07:07 christos Exp $
+# $NetBSD: Makefile,v 1.11 2020/09/22 01:09:32 kamil Exp $
 #
 
 NOMAN=		# defined
@@ -17,6 +17,9 @@ SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
+TESTS_C+=	t_rtld_r_debug
+
+COPTS.t_rtld_r_debug.c += ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
