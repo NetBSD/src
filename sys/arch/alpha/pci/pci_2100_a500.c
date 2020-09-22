@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.12 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.12 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,25 +60,24 @@ static bus_space_handle_t pic_elcr_ioh;
 
 static const int pic_slave_to_master[4] = { 1, 3, 4, 5 };
 
-int	dec_2100_a500_pic_intr_map(const struct pci_attach_args *,
-	    pci_intr_handle_t *);
+static int	dec_2100_a500_pic_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 
-int	dec_2100_a500_icic_intr_map(const struct pci_attach_args *,
-	    pci_intr_handle_t *);
+static int	dec_2100_a500_icic_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 
-const char *dec_2100_a500_intr_string(void *, pci_intr_handle_t, char *, size_t);
-const struct evcnt *dec_2100_a500_intr_evcnt(void *, pci_intr_handle_t);
-void	*dec_2100_a500_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*)(void *), void *);
-void	dec_2100_a500_intr_disestablish(void *, void *);
+static void	*dec_2100_a500_intr_establish(pci_chipset_tag_t,
+		    pci_intr_handle_t, int, int (*)(void *), void *);
+static void	dec_2100_a500_intr_disestablish(pci_chipset_tag_t, void *);
 
-int	dec_2100_a500_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
-const char *dec_2100_a500_eisa_intr_string(void *, int, char *, size_t);
-const struct evcnt *dec_2100_a500_eisa_intr_evcnt(void *, int);
-void	*dec_2100_a500_eisa_intr_establish(void *, int, int, int,
-	    int (*)(void *), void *);
-void	dec_2100_a500_eisa_intr_disestablish(void *, void *);
-int	dec_2100_a500_eisa_intr_alloc(void *, int, int, int *);
+static int	dec_2100_a500_eisa_intr_map(void *, u_int,
+		    eisa_intr_handle_t *);
+static const char *dec_2100_a500_eisa_intr_string(void *, int, char *, size_t);
+static const struct evcnt *dec_2100_a500_eisa_intr_evcnt(void *, int);
+static void	*dec_2100_a500_eisa_intr_establish(void *, int, int, int,
+		    int (*)(void *), void *);
+static void	dec_2100_a500_eisa_intr_disestablish(void *, void *);
+static int	dec_2100_a500_eisa_intr_alloc(void *, int, int, int *);
 
 #define	PCI_STRAY_MAX	5
 
@@ -89,17 +88,19 @@ int	dec_2100_a500_eisa_intr_alloc(void *, int, int, int *);
 #define	SABLE_MAX_IRQ		64
 #define	SABLE_8259_MAX_IRQ	32
 
-void	dec_2100_a500_iointr(void *, u_long);
+static void	dec_2100_a500_iointr(void *, u_long);
 
-void	dec_2100_a500_pic_enable_intr(struct ttwoga_config *, int, int);
-void	dec_2100_a500_pic_init_intr(struct ttwoga_config *);
-void	dec_2100_a500_pic_setlevel(struct ttwoga_config *, int, int);
-void	dec_2100_a500_pic_eoi(struct ttwoga_config *, int);
+static void	dec_2100_a500_pic_enable_intr(struct ttwoga_config *,
+		    int, int);
+static void	dec_2100_a500_pic_init_intr(struct ttwoga_config *);
+static void	dec_2100_a500_pic_setlevel(struct ttwoga_config *, int, int);
+static void	dec_2100_a500_pic_eoi(struct ttwoga_config *, int);
 
-void	dec_2100_a500_icic_enable_intr(struct ttwoga_config *, int, int);
-void	dec_2100_a500_icic_init_intr(struct ttwoga_config *);
-void	dec_2100_a500_icic_setlevel(struct ttwoga_config *, int, int);
-void	dec_2100_a500_icic_eoi(struct ttwoga_config *, int);
+static void	dec_2100_a500_icic_enable_intr(struct ttwoga_config *,
+		    int, int);
+static void	dec_2100_a500_icic_init_intr(struct ttwoga_config *);
+static void	dec_2100_a500_icic_setlevel(struct ttwoga_config *, int, int);
+static void	dec_2100_a500_icic_eoi(struct ttwoga_config *, int);
 
 #define	T2_IRQ_EISA_START	7
 #define	T2_IRQ_EISA_COUNT	16
@@ -108,7 +109,7 @@ void	dec_2100_a500_icic_eoi(struct ttwoga_config *, int);
 	((irq) >= T2_IRQ_EISA_START &&					\
 	 (irq) < (T2_IRQ_EISA_START + T2_IRQ_EISA_COUNT))
 
-const int dec_2100_a500_intr_deftype[SABLE_MAX_IRQ] = {
+static const int dec_2100_a500_intr_deftype[SABLE_MAX_IRQ] = {
 	IST_LEVEL,		/* PCI slot 0 A */
 	IST_LEVEL,		/* on-board SCSI */
 	IST_LEVEL,		/* on-board Ethernet */
@@ -190,8 +191,8 @@ pci_2100_a500_pickintr(struct ttwoga_config *tcp)
 	pic_iot = &tcp->tc_iot;
 
 	pc->pc_intr_v = tcp;
-	pc->pc_intr_string = dec_2100_a500_intr_string;
-	pc->pc_intr_evcnt = dec_2100_a500_intr_evcnt;
+	pc->pc_intr_string = alpha_pci_generic_intr_string;
+	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
 	pc->pc_intr_establish = dec_2100_a500_intr_establish;
 	pc->pc_intr_disestablish = dec_2100_a500_intr_disestablish;
 
@@ -199,25 +200,29 @@ pci_2100_a500_pickintr(struct ttwoga_config *tcp)
 	pc->pc_pciide_compat_intr_establish = NULL;
 
 #define PCI_2100_IRQ_STR	8
-	tcp->tc_intrtab = alpha_shared_intr_alloc(SABLE_MAX_IRQ,
+	pc->pc_shared_intrs = alpha_shared_intr_alloc(SABLE_MAX_IRQ,
 	    PCI_2100_IRQ_STR);
+
+	pc->pc_intr_desc = "T2 irq";
+
+	/* 64 16-byte vectors per hose. */
+	pc->pc_vecbase = 0x800 + ((64 * 16) * tcp->tc_hose);
+	pc->pc_nirq = SABLE_MAX_IRQ;
+
 	for (i = 0; i < SABLE_MAX_IRQ; i++) {
-		alpha_shared_intr_set_dfltsharetype(tcp->tc_intrtab,
+		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    i, tcp->tc_hose == 0 ?
 		    dec_2100_a500_intr_deftype[i] : IST_LEVEL);
-		alpha_shared_intr_set_maxstrays(tcp->tc_intrtab,
+		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs,
 		    i, PCI_STRAY_MAX);
 
-		cp = alpha_shared_intr_string(tcp->tc_intrtab, i);
+		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
 		snprintf(cp, PCI_2100_IRQ_STR, "irq %d", T2_IRQ_IS_EISA(i) ?
 		    i - T2_IRQ_EISA_START : i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    tcp->tc_intrtab, i), EVCNT_TYPE_INTR, NULL,
+		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
 		    T2_IRQ_IS_EISA(i) ? "eisa" : "T2", cp);
 	}
-
-	/* 64 16-byte vectors per hose. */
-	tcp->tc_vecbase = 0x800 + ((64 * 16) * tcp->tc_hose);
 
 	/*
 	 * T2 uses a custom layout of cascaded 8259 PICs for interrupt
@@ -268,7 +273,7 @@ pci_2100_a500_isa_pickintr(pci_chipset_tag_t pc, isa_chipset_tag_t ic)
  * PCI interrupt support.
  *****************************************************************************/
 
-int
+static int
 dec_2100_a500_pic_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
@@ -346,7 +351,7 @@ dec_2100_a500_pic_intr_map(const struct pci_attach_args *pa,
 		return (1);
 	}
 
-	if (buspin > 4) {
+	if (buspin < 0 || buspin > 4) {
 		printf("dec_2100_a500_pic_intr_map: bad interrupt pin %d\n",
 		    buspin);
 		return (1);
@@ -365,11 +370,11 @@ dec_2100_a500_pic_intr_map(const struct pci_attach_args *pa,
 		    "device %d pin %d\n", device, buspin);
 		return (1);
 	}
-	*ihp = irq;
+	alpha_pci_intr_handle_init(ihp, irq, 0);
 	return (0);
 }
 
-int
+static int
 dec_2100_a500_icic_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
@@ -411,72 +416,52 @@ dec_2100_a500_icic_intr_map(const struct pci_attach_args *pa,
 		return (1);
 	}
 
-	*ihp = irq;
+	alpha_pci_intr_handle_init(ihp, irq, 0);
 	return (0);
 }
 
-const char *
-dec_2100_a500_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
-{
-	if (ih >= SABLE_MAX_IRQ)
-		panic("%s: bogus T2 IRQ 0x%lx", __func__, ih);
-
-	snprintf(buf, len, "T2 irq %ld", ih);
-	return buf;
-}
-
-const struct evcnt *
-dec_2100_a500_intr_evcnt(void *v, pci_intr_handle_t ih)
-{
-	struct ttwoga_config *tcp = v;
-
-	if (ih >= SABLE_MAX_IRQ)
-		panic("%s: bogus T2 IRQ 0x%lx", __func__, ih);
-
-	return (alpha_shared_intr_evcnt(tcp->tc_intrtab, ih));
-}
-
-void *
-dec_2100_a500_intr_establish(void *v, pci_intr_handle_t ih, int level,
+static void *
+dec_2100_a500_intr_establish(pci_chipset_tag_t const pc,
+    pci_intr_handle_t const ih, int const level,
     int (*func)(void *), void *arg)
 {
-	struct ttwoga_config *tcp = v;
+	struct ttwoga_config *tcp = pc->pc_intr_v;
 	void *cookie;
+	const u_int irq = alpha_pci_intr_handle_get_irq(&ih);
+	const u_int flags = alpha_pci_intr_handle_get_flags(&ih);
 
-	if (ih >= SABLE_MAX_IRQ)
-		panic("dec_2100_a500_intr_establish: bogus IRQ 0x%lx",
-		    ih);
+	KASSERT(irq < SABLE_MAX_IRQ);
 
-	cookie = alpha_shared_intr_establish(tcp->tc_intrtab, ih,
-	    dec_2100_a500_intr_deftype[ih], level, func, arg, "T2 irq");
+	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs, irq,
+	    dec_2100_a500_intr_deftype[irq], level, flags, func, arg, "T2 irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(tcp->tc_intrtab, ih)) {
-		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(ih),
-		    dec_2100_a500_iointr, tcp, level);
-		(*tcp->tc_enable_intr)(tcp, ih, 1);
+	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
+		    dec_2100_a500_iointr, tcp);
+		(*tcp->tc_enable_intr)(tcp, irq, 1);
 	}
 
 	return (cookie);
 }
 
-void
-dec_2100_a500_intr_disestablish(void *v, void *cookie)
+static void
+dec_2100_a500_intr_disestablish(pci_chipset_tag_t const pc, void * const cookie)
 {
-	struct ttwoga_config *tcp = v;
+	struct ttwoga_config *tcp = pc->pc_intr_v;
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
 
 	s = splhigh();
 
-	alpha_shared_intr_disestablish(tcp->tc_intrtab, cookie,
+	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
 	    "T2 irq");
-	if (alpha_shared_intr_isactive(tcp->tc_intrtab, irq) == 0) {
+	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
-		alpha_shared_intr_set_dfltsharetype(tcp->tc_intrtab,
+		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    irq, dec_2100_a500_intr_deftype[irq]);
-		scb_free(tcp->tc_vecbase + SCB_IDXTOVEC(irq));
+		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
@@ -486,7 +471,7 @@ dec_2100_a500_intr_disestablish(void *v, void *cookie)
  * EISA interrupt support.
  *****************************************************************************/
 
-int
+static int
 dec_2100_a500_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
 
@@ -516,7 +501,7 @@ dec_2100_a500_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 	return (0);
 }
 
-const char *
+static const char *
 dec_2100_a500_eisa_intr_string(void *v, int eirq, char *buf, size_t len)
 {
 	if (eirq > 15 || eirq == 13)
@@ -527,23 +512,25 @@ dec_2100_a500_eisa_intr_string(void *v, int eirq, char *buf, size_t len)
 	return buf;
 }
 
-const struct evcnt *
+static const struct evcnt *
 dec_2100_a500_eisa_intr_evcnt(void *v, int eirq)
 {
 	struct ttwoga_config *tcp = v;
+	pci_chipset_tag_t const pc = &tcp->tc_pc;
 
 	if (eirq > 15 || eirq == 13)
 		panic("%s: bogus EISA IRQ 0x%x", __func__, eirq);
 
-	return (alpha_shared_intr_evcnt(tcp->tc_intrtab,
+	return (alpha_shared_intr_evcnt(pc->pc_shared_intrs,
 	    eirq + T2_IRQ_EISA_START));
 }
 
-void *
+static void *
 dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
     int (*fn)(void *), void *arg)
 {
 	struct ttwoga_config *tcp = v;
+	pci_chipset_tag_t const pc = &tcp->tc_pc;
 	void *cookie;
 	int irq;
 
@@ -567,15 +554,15 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 		return (NULL);
 	}
 
-	cookie = alpha_shared_intr_establish(tcp->tc_intrtab, irq,
-	    type, level, fn, arg, "T2 irq");
+	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs, irq,
+	    type, level, 0, fn, arg, "T2 irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(tcp->tc_intrtab, irq)) {
-		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(irq),
-		    dec_2100_a500_iointr, tcp, level);
+	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
+		    dec_2100_a500_iointr, tcp);
 		(*tcp->tc_setlevel)(tcp, eirq,
-		    alpha_shared_intr_get_sharetype(tcp->tc_intrtab,
+		    alpha_shared_intr_get_sharetype(pc->pc_shared_intrs,
 						    irq) == IST_LEVEL);
 		(*tcp->tc_enable_intr)(tcp, irq, 1);
 	}
@@ -583,30 +570,31 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 	return (cookie);
 }
 
-void
+static void
 dec_2100_a500_eisa_intr_disestablish(void *v, void *cookie)
 {
 	struct ttwoga_config *tcp = v;
+	pci_chipset_tag_t const pc = &tcp->tc_pc;
 	struct alpha_shared_intrhand *ih = cookie;
 	int s, irq = ih->ih_num;
 
 	s = splhigh();
 
 	/* Remove it from the link. */
-	alpha_shared_intr_disestablish(tcp->tc_intrtab, cookie,
+	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
 	    "T2 irq");
 
-	if (alpha_shared_intr_isactive(tcp->tc_intrtab, irq) == 0) {
+	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
-		alpha_shared_intr_set_dfltsharetype(tcp->tc_intrtab,
+		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    irq, dec_2100_a500_intr_deftype[irq]);
-		scb_free(tcp->tc_vecbase + SCB_IDXTOVEC(irq));
+		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
 }
 
-int
+static int
 dec_2100_a500_eisa_intr_alloc(void *v, int mask, int type, int *eirqp)
 {
 
@@ -638,25 +626,26 @@ do {									\
 	alpha_mb();							\
 } while (0)
 
-void
+static void
 dec_2100_a500_iointr(void *arg, u_long vec)
 {
 	struct ttwoga_config *tcp = arg;
+	pci_chipset_tag_t const pc = &tcp->tc_pc;
 	int irq, rv;
 
-	irq = SCB_VECTOIDX(vec - tcp->tc_vecbase);
+	irq = SCB_VECTOIDX(vec - pc->pc_vecbase);
 
-	rv = alpha_shared_intr_dispatch(tcp->tc_intrtab, irq);
+	rv = alpha_shared_intr_dispatch(pc->pc_shared_intrs, irq);
 	(*tcp->tc_eoi)(tcp, irq);
 	if (rv == 0) {
-		alpha_shared_intr_stray(tcp->tc_intrtab, irq, "T2 irq");
-		if (ALPHA_SHARED_INTR_DISABLE(tcp->tc_intrtab, irq))
+		alpha_shared_intr_stray(pc->pc_shared_intrs, irq, "T2 irq");
+		if (ALPHA_SHARED_INTR_DISABLE(pc->pc_shared_intrs, irq))
 			(*tcp->tc_enable_intr)(tcp, irq, 0);
 	} else
-		alpha_shared_intr_reset_strays(tcp->tc_intrtab, irq);
+		alpha_shared_intr_reset_strays(pc->pc_shared_intrs, irq);
 }
 
-void
+static void
 dec_2100_a500_pic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 {
 	int pic;
@@ -673,7 +662,7 @@ dec_2100_a500_pic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 	bus_space_write_1(pic_iot, pic_slave_ioh[pic], 1, mask);
 }
 
-void
+static void
 dec_2100_a500_icic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 {
 	uint64_t bit, mask;
@@ -690,7 +679,7 @@ dec_2100_a500_icic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 	ICIC_WRITE(tcp, mask);
 }
 
-void
+static void
 dec_2100_a500_pic_init_intr(struct ttwoga_config *tcp)
 {
 	static const int picaddr[4] = {
@@ -723,7 +712,7 @@ dec_2100_a500_pic_init_intr(struct ttwoga_config *tcp)
 		    "registers");
 }
 
-void
+static void
 dec_2100_a500_icic_init_intr(struct ttwoga_config *tcp)
 {
 
@@ -731,7 +720,7 @@ dec_2100_a500_icic_init_intr(struct ttwoga_config *tcp)
 	ICIC_WRITE(tcp, 0xffffffffffffffffUL);
 }
 
-void
+static void
 dec_2100_a500_pic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 {
 	int elcr;
@@ -777,7 +766,7 @@ dec_2100_a500_pic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 	bus_space_write_1(pic_iot, pic_elcr_ioh, elcr, mask);
 }
 
-void
+static void
 dec_2100_a500_icic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 {
 	uint64_t bit, mask;
@@ -810,7 +799,7 @@ dec_2100_a500_icic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 	}
 }
 
-void
+static void
 dec_2100_a500_pic_eoi(struct ttwoga_config *tcp, int irq)
 {
 	int pic;
@@ -830,7 +819,7 @@ dec_2100_a500_pic_eoi(struct ttwoga_config *tcp, int irq)
 	    0xe0 | pic_slave_to_master[pic]);
 }
 
-void
+static void
 dec_2100_a500_icic_eoi(struct ttwoga_config *tcp, int irq)
 {
 

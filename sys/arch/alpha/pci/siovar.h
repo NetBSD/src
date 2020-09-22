@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.12 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: siovar.h,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,19 @@ void	sio_iointr(void *framep, unsigned long vec);
 
 const char *sio_intr_string(void *, int, char *, size_t);
 const struct evcnt *sio_intr_evcnt(void *, int);
-void	*sio_intr_establish(void *, int, int, int, int (*)(void *),
+void	*sio_intr_establish(void *, int, int, int, int, int (*)(void *),
 	    void *);
 void	sio_intr_disestablish(void *, void *);
 int	sio_intr_alloc(void *, int, int, int *);
+
+const char *sio_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+	    char *, size_t);
+const struct evcnt *sio_pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
+void	*sio_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *);
+void	sio_pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+void	*sio_pciide_compat_intr_establish(device_t,
+	    const struct pci_attach_args *, int, int (*)(void *), void *);
+
+void	*sio_isa_intr_establish(void *, int, int, int, int (*)(void *), void *);

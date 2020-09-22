@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.88 2020/09/19 03:02:07 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.89 2020/09/22 15:24:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.88 2020/09/19 03:02:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.89 2020/09/22 15:24:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.88 2020/09/19 03:02:07 thorpej Exp $
 #include <machine/cpuconf.h>
 #include <machine/alpha.h>
 
-struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
-static bool scb_mpsafe[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
+struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)]
+							__read_mostly;
 
 void	netintr(void);
 
@@ -114,7 +114,7 @@ scb_stray(void *arg, u_long vec)
 }
 
 void
-scb_set(u_long vec, void (*func)(void *, u_long), void *arg, int level)
+scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
 {
 	u_long idx;
 	int s;
@@ -132,7 +132,6 @@ scb_set(u_long vec, void (*func)(void *, u_long), void *arg, int level)
 
 	scb_iovectab[idx].scb_func = func;
 	scb_iovectab[idx].scb_arg = arg;
-	scb_mpsafe[idx] = (level != IPL_VM);
 
 	splx(s);
 }
@@ -257,23 +256,17 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
 	    {
-		struct scbvec *scb;
-		int idx = SCB_VECTOIDX(a1 - SCB_IOVECBASE);
-		bool mpsafe = scb_mpsafe[idx];
+		const int idx = SCB_VECTOIDX(a1 - SCB_IOVECBASE);
 
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
 		atomic_inc_ulong(&sc->sc_evcnt_device.ev_count);
 		atomic_inc_ulong(&ci->ci_intrdepth);
 
-		if (!mpsafe) {
-			KERNEL_LOCK(1, NULL);
-		}
 		ci->ci_data.cpu_nintr++;
-		scb = &scb_iovectab[idx];
+
+		struct scbvec * const scb = &scb_iovectab[idx];
 		(*scb->scb_func)(scb->scb_arg, a1);
-		if (!mpsafe)
-			KERNEL_UNLOCK_ONE(NULL);
 
 		atomic_dec_ulong(&ci->ci_intrdepth);
 		break;

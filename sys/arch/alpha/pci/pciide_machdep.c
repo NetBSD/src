@@ -1,4 +1,4 @@
-/* $NetBSD: pciide_machdep.c,v 1.5 2011/04/04 20:37:45 dyoung Exp $ */
+/* $NetBSD: pciide_machdep.c,v 1.6 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.5 2011/04/04 20:37:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ pciide_machdep_compat_intr_establish(device_t dev,
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 
-	return (alpha_pciide_compat_intr_establish(pc, dev, pa, chan,
-	    func, arg));
+	if (pc->pc_pciide_compat_intr_establish == NULL)
+		return NULL;
+	
+	return pc->pc_pciide_compat_intr_establish(dev, pa, chan, func, arg);
 }

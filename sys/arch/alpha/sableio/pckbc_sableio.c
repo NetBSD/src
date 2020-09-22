@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.12 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.12 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,10 +136,13 @@ pckbc_sableio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	struct pckbc_sableio_softc *ssc = (void *) sc;
 	const char *intrstr;
 	char buf[PCI_INTRSTR_LEN];
+	pci_intr_handle_t ih;
 
-	intrstr = pci_intr_string(ssc->sc_pc, ssc->sc_irq[slot], buf,
+	alpha_pci_intr_handle_init(&ih, ssc->sc_irq[slot], 0);
+
+	intrstr = pci_intr_string(ssc->sc_pc, ih, buf,
 	    sizeof(buf));
-	ssc->sc_ih[slot] = pci_intr_establish(ssc->sc_pc, ssc->sc_irq[slot],
+	ssc->sc_ih[slot] = pci_intr_establish(ssc->sc_pc, ih,
 	    IPL_TTY, pckbcintr, sc);
 	if (ssc->sc_ih[slot] == NULL) {
 		aprint_error_dev(sc->sc_dv,

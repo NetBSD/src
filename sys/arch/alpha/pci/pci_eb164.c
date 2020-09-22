@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.45 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.46 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.45 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.46 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,28 +88,19 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.45 2014/03/21 16:39:29 christos Exp 
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_eb164_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *dec_eb164_intr_string(void *, pci_intr_handle_t, char *, size_t);
-const struct evcnt *dec_eb164_intr_evcnt(void *, pci_intr_handle_t);
-void	*dec_eb164_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *);
-void	dec_eb164_intr_disestablish(void *, void *);
-
-void	*dec_eb164_pciide_compat_intr_establish(void *, device_t,
-	    const struct pci_attach_args *, int, int (*)(void *), void *);
+static int	dec_eb164_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 
 #define	EB164_SIO_IRQ	4
 #define	EB164_MAX_IRQ	24
 #define	PCI_STRAY_MAX	5
 
-struct alpha_shared_intr *eb164_pci_intr;
+static bus_space_tag_t eb164_intrgate_iot;
+static bus_space_handle_t eb164_intrgate_ioh;
 
-bus_space_tag_t eb164_intrgate_iot;
-bus_space_handle_t eb164_intrgate_ioh;
-
-void	eb164_iointr(void *arg, unsigned long vec);
-extern void	eb164_intr_enable(int irq);	/* pci_eb164_intr.S */
-extern void	eb164_intr_disable(int irq);	/* pci_eb164_intr.S */
+/* See pci_eb164_intr.s */
+extern void	eb164_intr_enable(pci_chipset_tag_t, int irq);
+extern void	eb164_intr_disable(pci_chipset_tag_t, int irq);
 
 void
 pci_eb164_pickintr(struct cia_config *ccp)
@@ -121,51 +112,58 @@ pci_eb164_pickintr(struct cia_config *ccp)
 
 	pc->pc_intr_v = ccp;
 	pc->pc_intr_map = dec_eb164_intr_map;
-	pc->pc_intr_string = dec_eb164_intr_string;
-	pc->pc_intr_evcnt = dec_eb164_intr_evcnt;
-	pc->pc_intr_establish = dec_eb164_intr_establish;
-	pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
+	pc->pc_intr_string = alpha_pci_generic_intr_string;
+	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
+	pc->pc_intr_establish = alpha_pci_generic_intr_establish;
+	pc->pc_intr_disestablish = alpha_pci_generic_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish =
-	    dec_eb164_pciide_compat_intr_establish;
+	    sio_pciide_compat_intr_establish;
 
 	eb164_intrgate_iot = iot;
 	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
 	    &eb164_intrgate_ioh) != 0)
 		panic("pci_eb164_pickintr: couldn't map interrupt PLD");
 	for (i = 0; i < EB164_MAX_IRQ; i++)
-		eb164_intr_disable(i);	
+		eb164_intr_disable(pc, i);	
 
 #define PCI_EB164_IRQ_STR	8
-	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ,
+	pc->pc_shared_intrs = alpha_shared_intr_alloc(EB164_MAX_IRQ,
 	    PCI_EB164_IRQ_STR);
+	pc->pc_intr_desc = "eb164 irq";
+	pc->pc_vecbase = 0x900;
+	pc->pc_nirq = EB164_MAX_IRQ;
+
+	pc->pc_intr_enable = eb164_intr_enable;
+	pc->pc_intr_disable = eb164_intr_disable;
+
 	for (i = 0; i < EB164_MAX_IRQ; i++) {
 		/*
 		 * Systems with a Pyxis seem to have problems with
 		 * stray interrupts, so just ignore them.  Sigh,
 		 * I hate buggy hardware.
 		 */
-		alpha_shared_intr_set_maxstrays(eb164_pci_intr, i,
+		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
 			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
 
-		cp = alpha_shared_intr_string(eb164_pci_intr, i);
+		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
 		snprintf(cp, PCI_EB164_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    eb164_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
 		    "eb164", cp);
 	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
-	eb164_intr_enable(EB164_SIO_IRQ);
+	eb164_intr_enable(pc, EB164_SIO_IRQ);
 #endif
 }
 
-int
+static int
 dec_eb164_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 	uint64_t variation;
@@ -174,7 +172,7 @@ dec_eb164_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* No IRQ used. */
 		return 1;
 	}
-	if (buspin > 4) {
+	if (buspin < 0 || buspin > 4) {
 		printf("dec_eb164_intr_map: bad interrupt pin %d\n", buspin);
 		return 1;
 	}
@@ -215,147 +213,14 @@ dec_eb164_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		}
 	}
 
-	/*
-	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
-	 */
-	if (line == 0xff) {
-		printf("dec_eb164_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
-	}
-
-	if (line > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_map: eb164 irq too large (%d)",
-		    line);
-
-	*ihp = line;
-	return (0);
-}
-
-const char *
-dec_eb164_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
-{
-#if 0
-	struct cia_config *ccp = ccv;
-#endif
-
-	if (ih > EB164_MAX_IRQ)
-	        panic("%s: bogus eb164 IRQ 0x%lx", __func__, ih);
-	snprintf(buf, len, "eb164 irq %ld", ih);
-	return buf;
-}
-
-const struct evcnt *
-dec_eb164_intr_evcnt(void *ccv, pci_intr_handle_t ih)
-{
-#if 0
-	struct cia_config *ccp = ccv;
-#endif
-
-	if (ih > EB164_MAX_IRQ)
-		panic("%s: bogus eb164 IRQ 0x%lx", __func__, ih);
-	return (alpha_shared_intr_evcnt(eb164_pci_intr, ih));
-}
-
-void *
-dec_eb164_intr_establish(void *ccv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
-{
-#if 0
-	struct cia_config *ccp = ccv;
-#endif
-	void *cookie;
-
-	if (ih > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%lx", ih);
-
-	cookie = alpha_shared_intr_establish(eb164_pci_intr, ih, IST_LEVEL,
-	    level, func, arg, "eb164 irq");
-
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(eb164_pci_intr, ih)) {
-		scb_set(0x900 + SCB_IDXTOVEC(ih), eb164_iointr, NULL,
-		   level);
-		eb164_intr_enable(ih);
-	}
-	return (cookie);
-}
-
-void
-dec_eb164_intr_disestablish(void *ccv, void *cookie)
-{
-#if 0
-	struct cia_config *ccp = ccv;
-#endif
-	struct alpha_shared_intrhand *ih = cookie;
-	unsigned int irq = ih->ih_num;
-	int s;
-
-	s = splhigh();
-
-	alpha_shared_intr_disestablish(eb164_pci_intr, cookie,
-	    "eb164 irq");
-	if (alpha_shared_intr_isactive(eb164_pci_intr, irq) == 0) {
-		eb164_intr_disable(irq);
-		alpha_shared_intr_set_dfltsharetype(eb164_pci_intr, irq,
-		    IST_NONE);
-		scb_free(0x900 + SCB_IDXTOVEC(irq));
-	}
-
-	splx(s);
-}
-
-void *
-dec_eb164_pciide_compat_intr_establish(void *v, device_t dev,
-    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
-{
-	pci_chipset_tag_t pc = pa->pa_pc;
-	void *cookie = NULL;
-	int bus, irq;
-	char buf[64];
-
-	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
-
-	/*
-	 * If this isn't PCI bus #0, all bets are off.
-	 */
-	if (bus != 0)
-		return (NULL);
-
-	irq = PCIIDE_COMPAT_IRQ(chan);
-#if NSIO
-	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
-	    func, arg);
-	if (cookie == NULL)
-		return (NULL);
-	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
-	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq,
-		buf, sizeof(buf)));
-#endif
-	return (cookie);
-}
-
-void
-eb164_iointr(void *arg, unsigned long vec)
-{
-	int irq;
-
-	irq = SCB_VECTOIDX(vec - 0x900);
-
-	if (!alpha_shared_intr_dispatch(eb164_pci_intr, irq)) {
-		alpha_shared_intr_stray(eb164_pci_intr, irq,
-		    "eb164 irq");
-		if (ALPHA_SHARED_INTR_DISABLE(eb164_pci_intr, irq))
-			eb164_intr_disable(irq);
-	} else
-		alpha_shared_intr_reset_strays(eb164_pci_intr, irq);
+	return alpha_pci_generic_intr_map(pa, ihp);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb164_intr.S. */
 uint8_t eb164_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
-eb164_intr_enable(int irq)
+eb164_intr_enable(pci_chipset_tag_t pc __unused, int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
@@ -369,7 +234,7 @@ eb164_intr_enable(int irq)
 }
 
 void
-eb164_intr_disable(int irq)
+eb164_intr_disable(pci_chipset_tag_t pc __unused, int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.34 2020/09/05 16:29:08 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.35 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.34 2020/09/05 16:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.35 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,8 @@ tc_3000_500_iointr(void *arg, unsigned long vec)
 	uint32_t ir;
 	int ifound;
 
+	KERNEL_LOCK(1, NULL);
+
 #ifdef DIAGNOSTIC
 	int s;
 	if (vec != 0x800)
@@ -271,6 +273,8 @@ tc_3000_500_iointr(void *arg, unsigned long vec)
 #undef PRINTINTR
 #endif
 	} while (ifound);
+
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 #if NWSDISPLAY > 0

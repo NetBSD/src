@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.52 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: sio.c,v 1.53 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.52 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.53 2020/09/22 15:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ sio_bridge_callback(device_t self)
 			ec.ec_intr_map = sio_eisa_intr_map;
 			ec.ec_intr_string = sio_intr_string;
 			ec.ec_intr_evcnt = sio_intr_evcnt;
-			ec.ec_intr_establish = sio_intr_establish;
+			ec.ec_intr_establish = sio_isa_intr_establish;
 			ec.ec_intr_disestablish = sio_intr_disestablish;
 		}
 
@@ -274,7 +274,7 @@ sio_bridge_callback(device_t self)
 #endif
 	default:
 		sc->sc_ic->ic_intr_evcnt = sio_intr_evcnt;
-		sc->sc_ic->ic_intr_establish = sio_intr_establish;
+		sc->sc_ic->ic_intr_establish = sio_isa_intr_establish;
 		sc->sc_ic->ic_intr_disestablish = sio_intr_disestablish;
 		sc->sc_ic->ic_intr_alloc = sio_intr_alloc;
 	}

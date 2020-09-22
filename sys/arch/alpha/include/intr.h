@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.78 2020/09/19 01:24:31 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.79 2020/09/22 15:24:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -195,6 +195,8 @@ void	alpha_multicast_ipi(unsigned long, unsigned long);
  * Alpha shared-interrupt-line common code.
  */
 
+#define	ALPHA_INTR_MPSAFE		0x01
+
 struct alpha_shared_intrhand {
 	TAILQ_ENTRY(alpha_shared_intrhand)
 		ih_q;
@@ -203,6 +205,7 @@ struct alpha_shared_intrhand {
 	void	*ih_arg;
 	int	ih_level;
 	unsigned int ih_num;
+	int	ih_mpsafe;
 };
 
 struct alpha_shared_intr {
@@ -225,7 +228,7 @@ struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
 void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
-	    unsigned int, int, int, int (*)(void *), void *, const char *);
+	    unsigned int, int, int, int, int (*)(void *), void *, const char *);
 void	alpha_shared_intr_disestablish(struct alpha_shared_intr *,
 	    void *, const char *);
 int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
@@ -254,7 +257,7 @@ struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
 extern struct scbvec scb_iovectab[];
 
 void	scb_init(void);
-void	scb_set(u_long, void (*)(void *, u_long), void *, int);
+void	scb_set(u_long, void (*)(void *, u_long), void *);
 u_long	scb_alloc(void (*)(void *, u_long), void *);
 void	scb_free(u_long);
 

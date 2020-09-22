@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164_intr.s,v 1.6 2002/01/23 21:33:19 ross Exp $ */
+/* $NetBSD: pci_eb164_intr.s,v 1.7 2020/09/22 15:24:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -45,19 +45,22 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164_intr.s,v 1.6 2002/01/23 21:33:19 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164_intr.s,v 1.7 2020/09/22 15:24:02 thorpej Exp $");
+
+/*
+ * void eb164_intr_enable(pci_chipset_tag_t, int irq);
+ * void eb164_intr_disenable(pci_chipset_tag_t, int irq);
+ */
 
 	.text
-LEAF(eb164_intr_enable,1)
-	mov	a0, a1
+LEAF(eb164_intr_enable,2)
 	ldiq	a0, 0x34
 	call_pal PAL_cserve
 	RET
 	END(eb164_intr_enable)
 
 	.text
-LEAF(eb164_intr_disable,1)
-	mov	a0, a1
+LEAF(eb164_intr_disable,2)
 	ldiq	a0, 0x35
 	call_pal PAL_cserve
 	RET
