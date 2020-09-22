@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.114 2020/09/20 10:17:44 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.115 2020/09/22 18:43:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5005,4 +5005,16 @@ sys/dev/pci/virtio_pci.c			1.13
 
 	Fix virtio interrupts after MSI-X vector exhaustion.
 	[jakllsch, ticket #1090]
+
+sys/kern/uipc_socket.c				1.291
+sys/kern/uipc_socket2.c				1.138
+sys/kern/uipc_usrreq.c				1.199
+
+	Add socket info for user and group for unix sockets in fstat.
+	[christos, ticket #1091]
+
+sys/arch/arm/arm/undefined.c			1.67
+
+	Allow an undefined instruction to use lr (r14) as Rt.
+	[skrll, ticket #1092]
 
