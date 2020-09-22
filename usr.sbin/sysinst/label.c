@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.22 2020/09/22 11:44:44 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.23 2020/09/22 12:21:11 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.22 2020/09/22 11:44:44 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.23 2020/09/22 12:21:11 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -892,6 +892,8 @@ edit_ptn(menudesc *menu, void *arg)
 		    sizeof(*menu->opts)*(menu->numopts-edit.index));
 		menu->numopts--;
 		menu->cursel = 0;
+		if (pset->parts->num_part == 0)
+			menu->cursel = 1;	/* skip sentinel line */
 
 		/* things have changed, re-sort */
 		pset->num--;
