@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.337 2020/09/15 07:00:04 mrg Exp $
+# $NetBSD: mi,v 1.338 2020/09/22 01:09:32 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2359,6 +2359,7 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-false.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_rtld_r_debug.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_ifunc.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
