@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.321 2020/09/22 02:26:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.322 2020/09/22 04:05:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.321 2020/09/22 02:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.322 2020/09/22 04:05:41 rillig Exp $");
 
 /* types and constants */
 
@@ -217,11 +217,11 @@ static GNode *mainNode;
 /* During parsing, the targets from the previous dependency line.
  *
  * See unit-tests/deptgt.mk, keyword "parse.c:targets". */
-static Lst targets;
+static GNodeList *targets;
 
 #ifdef CLEANUP
 /* command lines for targets */
-static Lst targCmds;
+static StringList *targCmds;
 #endif
 
 /*
@@ -288,9 +288,9 @@ static IFile *curFile;
 static Stack /* of *IFile */ includes;
 
 /* include paths (lists of directories) */
-Lst parseIncPath;	/* dirs for "..." includes */
-Lst sysIncPath;		/* dirs for <...> includes */
-Lst defIncPath;		/* default for sysIncPath */
+SearchPath *parseIncPath;	/* dirs for "..." includes */
+SearchPath *sysIncPath;		/* dirs for <...> includes */
+SearchPath *defIncPath;		/* default for sysIncPath */
 
 /* parser tables */
 
@@ -1081,7 +1081,7 @@ ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 static int
 ParseAddDir(void *path, void *name)
 {
-    (void)Dir_AddDir((Lst) path, (char *)name);
+    (void)Dir_AddDir(path, name);
     return 0;
 }
 
@@ -1101,7 +1101,7 @@ ParseAddDir(void *path, void *name)
 static int
 ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
 {
-    Dir_ClearPath((Lst) path);
+    Dir_ClearPath(path);
     return 0;
 }
 
@@ -1196,15 +1196,16 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
 static void
 ParseDoDependency(char *line)
 {
+    typedef List SearchPathList;
+
     char  	   *cp;		/* our current position */
     int             op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
-    Lst    	    paths;   	/* List of search paths to alter when parsing
+    SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
     int	    	    tOp;    	/* operator from special target */
-    Lst	    	    sources;	/* list of archive source names after
-				 * expansion */
-    Lst 	    curTargs;	/* list of target names to be found and added
+    GNodeList *sources;		/* archive sources after expansion */
+    StringList *curTargs;	/* target names to be found and added
 				 * to the targets list */
     char	   *lstart = line;
 
@@ -1375,7 +1376,7 @@ ParseDoDependency(char *line)
 		 * Call on the suffix module to give us a path to
 		 * modify.
 		 */
-		Lst 	path;
+		SearchPath *path;
 
 		specType = ExPath;
 		path = Suff_GetPath(&line[5]);
@@ -1405,7 +1406,7 @@ ParseDoDependency(char *line)
 		 * use Dir_Destroy in the destruction of the path as the
 		 * Dir module could have added a directory to the path...
 		 */
-		Lst	    emptyPath = Lst_Init();
+		SearchPath *emptyPath = Lst_Init();
 
 		Dir_Expand(line, emptyPath, curTargs);
 
@@ -2169,7 +2170,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	     * If we have a suffix specific path we should use that.
 	     */
 	    char *suff;
-	    Lst	suffPath = NULL;
+	    SearchPath *suffPath = NULL;
 
 	    if ((suff = strrchr(file, '.'))) {
 		suffPath = Suff_GetPath(suff);
@@ -3189,10 +3190,10 @@ Parse_End(void)
  *
  *-----------------------------------------------------------------------
  */
-Lst
+GNodeList *
 Parse_MainName(void)
 {
-    Lst           mainList;	/* result list */
+    GNodeList *mainList;
 
     mainList = Lst_Init();
 
