@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.67 2020/05/12 17:26:43 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.68 2020/09/22 15:16:49 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1120,7 +1120,7 @@ make_filesystems(struct install_partition_desc *install)
 
 	for (i = 0; i < install->num; i++) {
 		/*
-		 * Newfs all file systems mareked as needing this.
+		 * Newfs all file systems marked as needing this.
 		 * Mount the ones that have a mountpoint in the target.
 		 */
 		ptn = &install->infos[i];
