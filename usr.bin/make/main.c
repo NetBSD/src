@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.339 2020/09/22 05:12:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.340 2020/09/22 19:51:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.339 2020/09/22 05:12:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.340 2020/09/22 19:51:19 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -867,13 +867,9 @@ doPrintVars(void)
 		if (strchr(var, '$')) {
 			value = p1 = Var_Subst(var, VAR_GLOBAL, VARE_WANTRES);
 		} else if (expandVars) {
-			char tmp[128];
-			int len = snprintf(tmp, sizeof(tmp), "${%s}", var);
-
-			if (len >= (int)sizeof(tmp))
-				Fatal("%s: variable name too big: %s",
-				    progname, var);
-			value = p1 = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
+			char *expr = str_concat3("${", var, "}");
+			value = p1 = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+			free(expr);
 		} else {
 			value = Var_Value(var, VAR_GLOBAL, &p1);
 		}
