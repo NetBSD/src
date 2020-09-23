@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.147 2020/09/23 03:33:55 rillig Exp $
+# $NetBSD: Makefile,v 1.148 2020/09/23 07:54:08 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -397,9 +397,6 @@ SED_CMDS.varname-dot-shell+=	-e 's,"/[^"]*","(details omitted)",'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 
 # Some tests need an additional round of postprocessing.
-POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
-POSTPROC.counter-append= ${POSTPROC.counter}
-
 POSTPROC.deptgt-suffixes= \
 			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
