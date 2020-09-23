@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.244 2020/09/23 02:09:18 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.245 2020/09/23 10:48:12 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.244 2020/09/23 02:09:18 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.245 2020/09/23 10:48:12 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1224,10 +1224,10 @@ carrier(prop_dictionary_t env)
 
 		if (direct_ioctl(env, SIOCGIFDATA, &ifdr) == -1)
 			return EXIT_FAILURE;
-		if (ifdr.ifdr_data.ifi_link_state == LINK_STATE_UP)
-			return EXIT_SUCCESS;
-		else
+		if (ifdr.ifdr_data.ifi_link_state == LINK_STATE_DOWN)
 			return EXIT_FAILURE;
+		else
+			return EXIT_SUCCESS;
 	}
 	if ((ifmr.ifm_status & IFM_AVALID) == 0) {
 		/*
