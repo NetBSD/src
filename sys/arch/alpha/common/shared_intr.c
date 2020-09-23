@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.23 2020/09/22 15:24:01 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.24 2020/09/23 18:46:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.23 2020/09/22 15:24:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.24 2020/09/23 18:46:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,19 +110,26 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 		 *      for sure.
 		 */
 
-		if (!ih->ih_mpsafe) {
-			KERNEL_LOCK(1, NULL);
-			rv = (*ih->ih_fn)(ih->ih_arg);
-			KERNEL_UNLOCK_ONE(NULL);
-		} else {
-			rv = (*ih->ih_fn)(ih->ih_arg);
-		}
+		rv = (*ih->ih_fn)(ih->ih_arg);
 
 		handled = handled || (rv != 0);
 		ih = ih->ih_q.tqe_next;
 	}
 
 	return (handled);
+}
+
+static int
+alpha_shared_intr_wrapper(void * const arg)
+{
+	struct alpha_shared_intrhand * const ih = arg;
+	int rv;
+
+	KERNEL_LOCK(1, NULL);
+	rv = (*ih->ih_real_fn)(ih->ih_real_arg);
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return rv;
 }
 
 void *
@@ -170,11 +177,19 @@ alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
 	}
 
 	ih->ih_intrhead = intr;
-	ih->ih_fn = fn;
-	ih->ih_arg = arg;
+	ih->ih_fn = ih->ih_real_fn = fn;
+	ih->ih_arg = ih->ih_real_arg = arg;
 	ih->ih_level = level;
 	ih->ih_num = num;
-	ih->ih_mpsafe = (flags & ALPHA_INTR_MPSAFE) != 0;
+
+	/*
+	 * Non-MPSAFE interrupts get a wrapper that takes the
+	 * KERNEL_LOCK.
+	 */
+	if ((flags & ALPHA_INTR_MPSAFE) == 0) {
+		ih->ih_fn = alpha_shared_intr_wrapper;
+		ih->ih_arg = ih;
+	}
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);

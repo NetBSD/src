@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.79 2020/09/22 15:24:01 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.80 2020/09/23 18:47:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -203,9 +203,10 @@ struct alpha_shared_intrhand {
 	struct alpha_shared_intr *ih_intrhead;
 	int	(*ih_fn)(void *);
 	void	*ih_arg;
+	int	(*ih_real_fn)(void *);
+	void	*ih_real_arg;
 	int	ih_level;
 	unsigned int ih_num;
-	int	ih_mpsafe;
 };
 
 struct alpha_shared_intr {
