@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.7 2020/09/23 07:50:58 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.8 2020/09/23 08:11:28 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -130,6 +130,19 @@ ${:U }=	space
 # ensure that the parser in ParseEmptyArg has the correct position, both
 # before and after the call to Var_ParsePP.
 .if empty(W${:UOR}D)
+.  error
+.endif
+
+# There may be spaces at the outside of the parentheses.
+# Spaces inside the parentheses are interpreted as part of the variable name.
+.if ! empty ( WORD )
+.  error
+.endif
+
+${:U WORD }=	variable name with spaces
+
+# Now there is a variable named " WORD ", and it is not empty.
+.if empty ( WORD )
 .  error
 .endif
 
