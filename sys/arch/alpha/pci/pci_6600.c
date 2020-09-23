@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.26 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.27 2020/09/23 18:48:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.26 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.27 2020/09/23 18:48:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.26 2020/09/22 15:24:02 thorpej Exp $"
 #endif
 
 #define	PCI_NIRQ		64
+#define	PCI_SIO_IRQ		55
 #define	PCI_STRAY_MAX		5
 
 /*
@@ -93,6 +94,9 @@ static void	 *dec_6600_pciide_compat_intr_establish(device_t,
 
 static void	dec_6600_intr_enable(pci_chipset_tag_t, int irq);
 static void	dec_6600_intr_disable(pci_chipset_tag_t, int irq);
+
+/* Software copy of enabled interrupt bits. */
+static uint64_t	dec_6600_intr_enables __read_mostly;
 
 void
 pci_6600_pickintr(struct tsp_config *pcp)
@@ -142,7 +146,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 		}
 #if NSIO
 		sio_intr_setup(pc, iot);
-		dec_6600_intr_enable(pc, 55);	/* irq line for sio */
+		dec_6600_intr_enable(pc, PCI_SIO_IRQ);	/* irq line for sio */
 #endif
 	} else {
 		pc->pc_shared_intrs = sioprimary->pc_pc.pc_shared_intrs;
@@ -264,16 +268,18 @@ dec_6600_intr_disestablish(pci_chipset_tag_t const pc, void * const cookie)
 static void
 dec_6600_intr_enable(pci_chipset_tag_t const pc __unused, int const irq)
 {
+	dec_6600_intr_enables |= 1UL << irq;
 	alpha_mb();
-	STQP(TS_C_DIM0) |= 1UL << irq;
+	STQP(TS_C_DIM0) = dec_6600_intr_enables;
 	alpha_mb();
 }
 
 static void
 dec_6600_intr_disable(pci_chipset_tag_t const pc __unused, int const irq)
 {
+	dec_6600_intr_enables &= ~(1UL << irq);
 	alpha_mb();
-	STQP(TS_C_DIM0) &= ~(1UL << irq);
+	STQP(TS_C_DIM0) = dec_6600_intr_enables;
 	alpha_mb();
 }
 
