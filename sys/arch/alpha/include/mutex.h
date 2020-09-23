@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2019/11/29 22:55:33 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7 2020/09/23 00:51:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2;
 };
 
 #else	/* __MUTEX_PRIVATE */
@@ -48,14 +47,17 @@ struct kmutex {
 			volatile uint8_t	mtxs_flags;
 			ipl_cookie_t		mtxs_ipl;
 			volatile uint16_t	mtxs_unused;
+			__cpu_simple_lock_t	mtxs_lock;
 		} s;
 	} u;
-	__cpu_simple_lock_t	mtx_lock;
 };
+
+__CTASSERT(sizeof(struct kmutex) == sizeof(uintptr_t));
 
 #define	mtx_owner 			u.mtxa_owner
 #define	mtx_flags 			u.s.mtxs_flags
 #define	mtx_ipl 			u.s.mtxs_ipl
+#define	mtx_lock 			u.s.mtxs_lock
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
