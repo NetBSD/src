@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.115 2020/09/22 18:43:22 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.116 2020/09/23 08:48:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5017,4 +5017,14 @@ sys/arch/arm/arm/undefined.c			1.67
 
 	Allow an undefined instruction to use lr (r14) as Rt.
 	[skrll, ticket #1092]
+
+sys/dev/mii/inbmphyreg.h			1.20
+sys/dev/pci/if_wm.c				1.686-1.689
+sys/dev/pci/if_wmreg.h				1.120
+sys/dev/pci/if_wmvar.h				1.46
+
+	wm(4):
+	- Add a workaround for jumbo frame on PCH2 and newer.
+	- Fix typo in comment.
+	[msaitoh, ticket #1093]
 
