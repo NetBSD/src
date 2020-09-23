@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.17 2020/09/23 23:38:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.17 2020/09/23 23:38:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,41 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $")
 #include <dev/fdt/fdtvar.h>
 
 #define NOT_MP_SAFE	(0)
+
+/*
+ * AVE has two different, rather obscure, descriptor formats. 32-bit
+ * paddr descriptor layout occupies 8 bytes while 64-bit paddr descriptor
+ * does 12 bytes. AVE is a derivative of Synopsys DesignWare Core
+ * EMAC.
+ */
+struct tdes {
+	uint32_t t0, t1, t2;
+};
+
+struct rdes {
+	uint32_t r0, r1, r2;
+};
+
+struct tdes32 { uint32_t t0, t1; };
+struct rdes32 { uint32_t r0, r1; };
+
+#define T0_OWN		(1U<<31)	/* desc is ready to Tx */
+#define T0_IOC		(1U<<29)	/* post interrupt on Tx completes */
+#define T0_NOCSUM	(1U<<28)	/* inhibit checksum operation */
+#define T0_DONEOK	(1U<<27)	/* status - Tx completed ok */
+#define T0_FS		(1U<<26)	/* first segment of frame */
+#define T0_LS		(1U<<25)	/* last segment of frame */
+#define T0_OWC		(1U<<21)	/* status - out of win. late coll. */
+#define T0_ECOL		(1U<<20)	/* status - excess collision */
+#define T0_TBS_MASK	0xffff		/* T0 segment length 15:0 */
+/* T1 segment address 31:0 */
+/* T2 segment address 63:32 */
+#define R0_OWN		(1U<<31)	/* desc is empty */
+#define R0_CSUM		(1U<<21)	/* receive checksum done */
+#define R0_CERR		(1U<<20)	/* csum found negative */
+#define R0_FL_MASK	0x07ff		/* R0 frame length 10:0 */
+/* R1 frame address 31:0 */
+/* R2 frame address 63:32 */
 
 #define AVEID		0x000		/* hardware ID */
 #define AVEHWVER	0x004		/* hardware version */
@@ -107,17 +142,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $")
 #define  DESCC_RD0	(1U<<3)		/* activate Rx0 descriptor to run */
 #define DESCC_RSTP	(1U<<2)		/* pause Rx descriptor */
 #define  DESCC_TD	(1U<<0)		/* activate Tx descriptor to run */
-					/* 31:16 status report to read */
+/* 31:16 status report to read */
 #define AVETXDES	0x304		/* Tx descriptor control */
-					/* 27:16 Tx descriptor byte count
-					 * 11:0 start address offset */
+/* 27:16 Tx descriptor byte count, 11:0 start address offset */
 #define AVERXDES0	0x308		/* Rx0 descriptor control */
-					/* 30:16 Rx descriptor byte count
-					 * 14:0 start address offset */
+/* 30:16 Rx descriptor byte count, 14:0 start address offset */
 #define AVEITIRQC	0x34c		/* interval IRQ control */
 #define  ITIRQC_R0E	(1U<<27)	/* enable Rx0 interval timer */
-#define  INTMVAL	(20<<16)	/* INTM value */
-					/* 15:0 interval timer count */
+#define  INTMVAL	(20<<16)	/* 15:0 interval timer count */
 
 #define AVEAFB		0x0800		/* address filter base */
 #define AVEAFMSKB	0x0d00		/* byte mask base */
@@ -128,47 +160,21 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $")
 #define AVEAFRING	0x0f00		/* entry ring number selector */
 #define AVEAFEN		0x0ffc		/* entry enable bit vector */
 
-#define AVETDB		0x1000	/* 64bit Tx descriptor store, upto 256 */
-#define AVERDB		0x1c00	/* 64bit Rx descriptor store, upto 2048 */
-#define AVE32TDB	0x1000	/* 32bit Tx store base, upto 256 */
-#define AVE32RDB	0x1800	/* 32bit Rx store base, upto 2048 */
+/* AVE has internal cache coherent memory tol hold descriptor arrays. */
+#define AVETDB		0x1000		/* 64-bit Tx desc store, upto 256 */
+#define AVERDB		0x1c00		/* 64-bit Rx desc store, upto 2048 */
+#define AVE32TDB	0x1000		/* 32-bit Tx store base, upto 256 */
+#define AVE32RDB	0x1800		/* 32-bit Rx store base, upto 2048 */
 
 #define AVERMIIC	0x8028		/* RMII control */
 #define  RMIIC_RST	(1U<<16)	/* reset operation */
 #define AVELINKSEL	0x8034		/* RMII speed selection */
 #define  LINKSEL_SPD100	(1U<<0)		/* use 100Mbps */
 
-/*
- * descriptor size is 12 bytes when 64bit paddr design, 8 bytes otherwise.
- */
-struct tdes {
-	uint32_t t0, t1, t2;
-};
-
-struct rdes {
-	uint32_t r0, r1, r2;
-};
-
-struct tdes32 { uint32_t t0, t1; };
-struct rdes32 { uint32_t r0, r1; };
-
-#define T0_OWN		(1U<<31)	/* desc is ready to Tx */
-#define T0_IOC		(1U<<29)	/* post interrupt on Tx completes */
-#define T0_NOCSUM	(1U<<28)	/* inhibit checksum operation */
-#define T0_DONEOK	(1U<<27)	/* status - Tx completed ok */
-#define T0_FS		(1U<<26)	/* first segment of frame */
-#define T0_LS		(1U<<25)	/* last segment of frame */
-#define T0_OWC		(1U<<21)	/* status - out of win. late coll. */
-#define T0_ECOL		(1U<<20)	/* status - excess collision */
-#define T0_TBS_MASK	0xffff		/* T0 segment length 15:0 */
-/* T1 segment address 31:0 */
-/* T2 segment address 63:32 */
-#define R0_OWN		(1U<<31)	/* desc is empty */
-#define R0_CSUM		(1U<<21)	/* receive checksum done */
-#define R0_CERR		(1U<<20)	/* csum found negative */
-#define R0_FL_MASK	0x07ff		/* R0 frame length 10:0 */
-/* R1 frame address 31:0 */
-/* R2 frame address 63:32 */
+#define CSR_READ(sc, off) \
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
+#define CSR_WRITE(sc, off, val) \
+	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
 #define MD_NTXSEGS		16		/* fixed */
 #define MD_TXQUEUELEN		(MD_NTXDESC / MD_NTXSEGS)
@@ -260,11 +266,6 @@ static int ave_intr(void *);
 static void txreap(struct ave_softc *);
 static void rxintr(struct ave_softc *);
 static int add_rxbuf(struct ave_softc *, int);
-
-#define CSR_READ(sc, off) \
-	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
-#define CSR_WRITE(sc, off, val) \
-	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
 struct desops {
 	void (*make_tdes)(void *, int, int, int);
@@ -405,7 +406,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	DELAY(40);
 	CSR_WRITE(sc, AVEGIMR, 0);
 
-	/* Read the Ethernet MAC address from the EEPROM. */
+	/* Ethernet MAC address is auto-loaded from EEPROM. */
 	csr = CSR_READ(sc, AVEMACL);
 	enaddr[0] = csr;
 	enaddr[1] = csr >> 8;
