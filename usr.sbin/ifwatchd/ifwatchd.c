@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.43 2018/03/07 10:06:41 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.44 2020/09/23 02:32:04 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.43 2018/03/07 10:06:41 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.44 2020/09/23 02:32:04 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -536,6 +536,40 @@ find_interface(int idx)
 	return NULL;
 }
 
+static bool
+has_carrier(int s, const char *ifname)
+{
+	struct ifmediareq ifmr = { .ifm_status = 0 };
+
+	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
+	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+		struct ifdatareq ifdr = { .ifdr_data.ifi_link_state = 0 };
+
+		strlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
+		if (ioctl(s, SIOCGIFDATA, &ifdr) == -1) {
+			/* Should not be possible. */
+			return false;
+		}
+		if (ifdr.ifdr_data.ifi_link_state == LINK_STATE_UP)
+			return true;
+		else
+			return false;
+	}
+
+	if (!(ifmr.ifm_status & IFM_AVALID)) {
+		/*
+		 * Interface doesn't report media-valid status.
+		 * assume ok.
+		 */
+		return true;
+	}
+
+	if (ifmr.ifm_status & IFM_ACTIVE)
+		return true;
+	else
+		return false;
+}
+
 static void
 run_initial_ups(void)
 {
@@ -568,18 +602,11 @@ run_initial_ups(void)
 		if (ifa == NULL)
 			continue;
 		if (ifa->sa_family == AF_LINK) {
-			struct ifmediareq ifmr;
-
-			memset(&ifmr, 0, sizeof(ifmr));
-			strncpy(ifmr.ifm_name, ifd->ifname,
-			    sizeof(ifmr.ifm_name));
-			if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1
-			    && (ifmr.ifm_status & IFM_AVALID)
-			    && (ifmr.ifm_status & IFM_ACTIVE)) {
+			if (has_carrier(s, ifd->ifname) == 0) {
 				invoke_script(ifd->ifname, CARRIER, NULL, NULL);
 				ifd->last_carrier_status =
 				    LINK_STATE_UP;
-			    }
+			}
 			continue;
 		}
 		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
