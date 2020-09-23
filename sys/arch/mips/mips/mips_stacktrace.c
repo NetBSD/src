@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.4 2020/08/17 21:50:14 mrg Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.5 2020/09/23 09:52:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.4 2020/08/17 21:50:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.5 2020/09/23 09:52:02 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -322,60 +322,66 @@ loop:
 	}
 
 #ifdef DDB
-	/*
-	 * Check the kernel symbol table to see the beginning of
-	 * the current subroutine.
-	 */
-	diff = 0;
-	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-	if (sym != DB_SYM_NULL && diff == 0) {
-		/* check func(foo) __attribute__((__noreturn__)) case */
-		if (!kdbpeek(pc - 2 * sizeof(unsigned), &instr))
-			return;
-		i.word = instr;
-		if (i.JType.op == OP_JAL) {
-			sym = db_search_symbol(pc - sizeof(int),
-			    DB_STGY_ANY, &diff);
-			if (sym != DB_SYM_NULL && diff != 0)
-				diff += sizeof(int);
+	if (ksyms_available()) {
+		/*
+		 * Check the kernel symbol table to see the beginning of
+		 * the current subroutine.
+		 */
+		diff = 0;
+		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+		if (sym != DB_SYM_NULL && diff == 0) {
+			/* check func(foo) __attribute__((__noreturn__)) case */
+			if (!kdbpeek(pc - 2 * sizeof(unsigned), &instr))
+				return;
+			i.word = instr;
+			if (i.JType.op == OP_JAL) {
+				sym = db_search_symbol(pc - sizeof(int),
+				    DB_STGY_ANY, &diff);
+				if (sym != DB_SYM_NULL && diff != 0)
+					diff += sizeof(int);
+			}
 		}
-	}
-	if (sym == DB_SYM_NULL) {
-		ra = 0;
-		goto done;
-	}
-	va = pc - diff;
-#else
-	/*
-	 * Find the beginning of the current subroutine by scanning backwards
-	 * from the current PC for the end of the previous subroutine.
-	 *
-	 * XXX This won't work well because nowadays gcc is so aggressive
-	 *     as to reorder instruction blocks for branch-predict.
-	 *     (i.e. 'jr ra' wouldn't indicate the end of subroutine)
-	 */
-	va = pc;
-	do {
-		va -= sizeof(int);
-		if (va <= (vaddr_t)verylocore)
-			goto finish;
-		if (!kdbpeek(va, &instr))
-			return;
-		if (instr == MIPS_ERET)
-			goto mips3_eret;
-	} while (instr != MIPS_JR_RA && instr != MIPS_JR_K0);
-	/* skip back over branch & delay slot */
-	va += sizeof(int);
-mips3_eret:
-	va += sizeof(int);
-	/* skip over nulls which might separate .o files */
-	instr = 0;
-	while (instr == 0) {
-		if (!kdbpeek(va, &instr))
-			return;
+		if (sym == DB_SYM_NULL) {
+			ra = 0;
+			goto done;
+		}
+		va = pc - diff;
+	} else {
+#endif /* DDB */
+		/*
+		 * Find the beginning of the current subroutine by
+		 * scanning backwards from the current PC for the end
+		 * of the previous subroutine.
+		 *
+		 * XXX This won't work well because nowadays gcc is so
+		 *     aggressive as to reorder instruction blocks for
+		 *     branch-predict. (i.e. 'jr ra' wouldn't indicate
+		 *     the end of subroutine)
+		 */
+		va = pc;
+		do {
+			va -= sizeof(int);
+			if (va <= (vaddr_t)verylocore)
+				goto finish;
+			if (!kdbpeek(va, &instr))
+				return;
+			if (instr == MIPS_ERET)
+				goto mips3_eret;
+		} while (instr != MIPS_JR_RA && instr != MIPS_JR_K0);
+		/* skip back over branch & delay slot */
 		va += sizeof(int);
+mips3_eret:
+		va += sizeof(int);
+		/* skip over nulls which might separate .o files */
+		instr = 0;
+		while (instr == 0) {
+			if (!kdbpeek(va, &instr))
+				return;
+			va += sizeof(int);
+		}
+#ifdef DDB
 	}
-#endif
+#endif /* DDB */
 	subr = va;
 
 	/* scan forwards to find stack size and any saved registers */
