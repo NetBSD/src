@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.15 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.16 2020/09/23 12:05:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.15 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.16 2020/09/23 12:05:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -203,6 +203,9 @@ cpu_topology_dump(void)
 	int i;
 
 	CTASSERT(__arraycount(names) >= __arraycount(ci->ci_sibling));
+	if (ncpu == 1) {
+		return;
+	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (cpu_topology_haveslow)
