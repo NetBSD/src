@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.88 2020/01/05 21:12:34 pgoyette Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.89 2020/09/23 09:52:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.88 2020/01/05 21:12:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.89 2020/09/23 09:52:02 simonb Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -244,6 +244,16 @@ ksyms_init(void)
 		mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 		ksyms_initted = true;
 	}
+}
+
+/*
+ * Are any symbols available?
+ */
+bool
+ksyms_available(void)
+{
+
+	return ksyms_loaded;
 }
 
 /*
