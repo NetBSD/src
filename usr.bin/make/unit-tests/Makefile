@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.146 2020/09/23 03:06:38 rillig Exp $
+# $NetBSD: Makefile,v 1.147 2020/09/23 03:33:55 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -71,6 +71,7 @@ TESTS+=		cond-undef-lint
 TESTS+=		cond1
 TESTS+=		cond2
 TESTS+=		counter
+TESTS+=		counter-append
 TESTS+=		dep
 TESTS+=		dep-colon
 TESTS+=		dep-double-colon
@@ -359,7 +360,6 @@ ENV.varmisc+=		FROM_ENV_AFTER=env
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
 # settings FLAGS.test=-dv here, since that is closer to the test code.
-FLAGS.counter=		-dv
 FLAGS.directive-ifmake=	first second
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
@@ -398,6 +398,8 @@ SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
+POSTPROC.counter-append= ${POSTPROC.counter}
+
 POSTPROC.deptgt-suffixes= \
 			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
