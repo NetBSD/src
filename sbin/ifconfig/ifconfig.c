@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.243 2020/09/22 14:14:17 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.244 2020/09/23 02:09:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.243 2020/09/22 14:14:17 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.244 2020/09/23 02:09:18 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1213,16 +1213,21 @@ setifmtu(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 carrier(prop_dictionary_t env)
 {
-	struct ifmediareq ifmr;
-
-	memset(&ifmr, 0, sizeof(ifmr));
+	struct ifmediareq ifmr = { .ifm_status = 0 };
 
 	if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA;
-		 * assume ok.
+		 * check link state.
 		 */
-		return EXIT_SUCCESS;
+		struct ifdatareq ifdr = { .ifdr_data.ifi_link_state = 0 };
+
+		if (direct_ioctl(env, SIOCGIFDATA, &ifdr) == -1)
+			return EXIT_FAILURE;
+		if (ifdr.ifdr_data.ifi_link_state == LINK_STATE_UP)
+			return EXIT_SUCCESS;
+		else
+			return EXIT_FAILURE;
 	}
 	if ((ifmr.ifm_status & IFM_AVALID) == 0) {
 		/*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.119 2019/07/08 03:04:15 msaitoh Exp $
+.\"	$NetBSD: ifconfig.8,v 1.120 2020/09/23 02:09:18 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd July 8, 2019
+.Dd September 23, 2020
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -757,12 +757,17 @@ not appear to be connected to a network,
 .Nm
 will exit with status of 1
 .Pq false ;
-otherwise, it will exit with a
-zero
+otherwise, it will exit with a zero
 .Pq true
 exit status.
-Not all interface drivers support media
-status reporting.
+For interface drivers that do not support media status reporting.
+then if the link state is not reported to be up,
+.Nm
+will exit with a status of 1
+.Pq false ;
+otherwise, it will exit with a zero
+.Pq true
+exit status.
 .Pp
 If the
 .Fl m
