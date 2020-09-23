@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.89 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.90 2020/09/23 03:06:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.89 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.90 2020/09/23 03:06:38 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -281,6 +281,19 @@ Targ_FindNode(const char *name, int flags)
     if (doing_depend)
 	gn->flags |= FROM_DEPEND;
     return gn;
+}
+
+/* Return the .END node, which contains the commands to be executed when
+ * everything else is done. */
+GNode *Targ_GetEndNode(void)
+{
+    /* Save the node locally to avoid having to search for it all the time. */
+    static GNode *endNode = NULL;
+    if (endNode == NULL) {
+	endNode = Targ_FindNode(".END", TARG_CREATE);
+	endNode->type = OP_SPECIAL;
+    }
+    return endNode;
 }
 
 /* Make a complete list of GNodes from the given list of names.

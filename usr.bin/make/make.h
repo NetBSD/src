@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.144 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.145 2020/09/23 03:06:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -251,7 +251,9 @@ typedef enum {
     /* Target has all the commands it should. Used when parsing to catch
      * multiple commands for a target. */
     OP_HAS_COMMANDS	= 1 << 27,
-    /* Saving commands on .END (Compat) */
+    /* The special command "..." has been seen. All further commands from
+     * this node will be saved on the .END node instead, to be executed at
+     * the very end. */
     OP_SAVE_CMDS	= 1 << 26,
     /* Already processed by Suff_FindDeps */
     OP_DEPS_FOUND	= 1 << 25,

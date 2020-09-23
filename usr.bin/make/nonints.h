@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.126 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.127 2020/09/23 03:06:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -174,6 +174,7 @@ void Targ_Stats(void);
 GNodeList *Targ_List(void);
 GNode *Targ_NewGN(const char *);
 GNode *Targ_FindNode(const char *, int);
+GNode *Targ_GetEndNode(void);
 GNodeList *Targ_FindList(StringList *, int);
 Boolean Targ_Ignore(GNode *);
 Boolean Targ_Silent(GNode *);

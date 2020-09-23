@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.234 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.235 2020/09/23 03:06:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.234 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.235 2020/09/23 03:06:38 rillig Exp $");
 
 # define STATIC static
 
@@ -165,14 +165,6 @@ int jobTokensRunning = 0;
  */
 #define FILENO(a) ((unsigned) fileno(a))
 
-/*
- * post-make command processing. The node postCommands is really just the
- * .END target but we keep it around to avoid having to search for it
- * all the time.
- */
-static GNode   	  *postCommands = NULL;
-				    /* node containing commands to execute when
-				     * everything else is done */
 static int     	  numCommands; 	    /* The number of commands actually printed
 				     * for a target. Should this number be
 				     * 0, no shell will be executed. */
@@ -907,7 +899,7 @@ JobSaveCommand(void *cmd, void *gn)
     char *expanded_cmd;
     (void)Var_Subst(cmd, (GNode *)gn, VARE_WANTRES, &expanded_cmd);
     /* TODO: handle errors */
-    Lst_Append(postCommands->commands, expanded_cmd);
+    Lst_Append(Targ_GetEndNode()->commands, expanded_cmd);
     return 0;
 }
 
@@ -2301,7 +2293,9 @@ Job_Init(void)
 #undef ADDSIG
 
     (void)Job_RunTarget(".BEGIN", NULL);
-    postCommands = Targ_FindNode(".END", TARG_CREATE);
+    /* Create the .END node now, even though no code in the unit tests
+     * depends on it.  See also Targ_GetEndNode in Compat_Run. */
+    (void)Targ_GetEndNode();
 }
 
 static void JobSigReset(void)
@@ -2601,29 +2595,20 @@ JobInterrupt(int runINTERRUPT, int signo)
     exit(signo);
 }
 
-/*
- *-----------------------------------------------------------------------
- * Job_Finish --
- *	Do final processing such as the running of the commands
- *	attached to the .END target.
+/* Do the final processing, i.e. run the commands attached to the .END target.
  *
  * Results:
  *	Number of errors reported.
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
  */
 int
 Job_Finish(void)
 {
-    if (postCommands != NULL &&
-	(!Lst_IsEmpty(postCommands->commands) ||
-	 !Lst_IsEmpty(postCommands->children))) {
+    GNode *endNode = Targ_GetEndNode();
+    if (!Lst_IsEmpty(endNode->commands) || !Lst_IsEmpty(endNode->children)) {
 	if (errors) {
 	    Error("Errors reported so .END ignored");
 	} else {
-	    JobRun(postCommands);
+	    JobRun(endNode);
 	}
     }
     return errors;
