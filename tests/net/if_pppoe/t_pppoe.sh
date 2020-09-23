@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.19 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.20 2020/09/23 05:56:55 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -183,7 +183,7 @@ run_test()
 	atf_check -s exit:0 -o match:'PADI sent' -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
-	# test for recoonecting
+	# test for reconnecting
 	atf_check -s exit:0 -x "env RUMP_SERVER=$SERVER rump.ifconfig pppoe0 up"
 	export RUMP_SERVER=$CLIENT
 	wait_for_session_established
@@ -325,7 +325,7 @@ run_test6()
 	atf_check -s exit:0 -o not-match:"$session_id" -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
-	# test for recoonecting
+	# test for reconnecting
 	export RUMP_SERVER=$SERVER
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	wait_for_session_established
