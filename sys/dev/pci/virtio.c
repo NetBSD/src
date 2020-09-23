@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.28.2.2 2020/09/20 10:14:20 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.28.2.3 2020/09/23 14:31:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28.2.2 2020/09/20 10:14:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28.2.3 2020/09/23 14:31:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,10 +280,13 @@ virtio_setup_interrupts(struct virtio_softc *sc)
 {
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = sc->sc_pa.pa_pc;
+	pcitag_t tag = sc->sc_pa.pa_tag;
 	int error;
 	int nmsix;
+	int off;
 	int counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t max_type;
+	pcireg_t ctl;
 
 	nmsix = pci_msix_count(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag);
 	aprint_debug_dev(self, "pci_msix_count=%d\n", nmsix);
@@ -338,6 +341,13 @@ virtio_setup_interrupts(struct virtio_softc *sc)
 
 		sc->sc_ihs_num = 1;
 		sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+
+		error = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
+		if (error != 0) {
+			ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
+			ctl &= ~PCI_MSIX_CTL_ENABLE;
+			pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
+		}
 	}
 
 	KASSERT(sc->sc_soft_ih == NULL);
