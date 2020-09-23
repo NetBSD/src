@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.7 2014/02/21 12:23:30 jdc Exp $ */
+/* $NetBSD: tsreg.h,v 1.8 2020/09/23 00:46:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -124,6 +124,12 @@
 
 #define TS_C_TTR	0x101##a000##0580UL
 #define TS_C_TDR	0x101##a000##05c0UL
+#define TS_C_DIM2	0x101##a000##0600UL
+#define TS_C_DIM3	0x101##a000##0640UL
+#define TS_C_DIR2	0x101##a000##0680UL
+#define TS_C_DIR3	0x101##a000##06c0UL
+#define TS_C_IIC2	0x101##a000##0700UL
+#define TS_C_IIC3	0x101##a000##0740UL
 
 /*
  * Dchip CSR Map
