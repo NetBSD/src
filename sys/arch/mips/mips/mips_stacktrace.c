@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.5 2020/09/23 09:52:02 simonb Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.6 2020/09/23 09:56:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.5 2020/09/23 09:52:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.6 2020/09/23 09:56:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.5 2020/09/23 09:52:02 simonb E
 
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
+#include <mips/regnum.h>
 #include <mips/stacktrace.h>
 
 #if defined(_KMEMUSER) && !defined(DDB)
@@ -228,13 +229,13 @@ kdbrpeek(vaddr_t addr, size_t n)
 	} else {
 		if (sizeof(mips_reg_t) == 8 && n == 8)
 #if _KERNEL
-			db_read_bytes((db_addr_t)addr, sizeof(int64_t), (char *)&rc);
-		else
-			db_read_bytes((db_addr_t)addr, sizeof(int32_t), (char *)&rc);
-#else
 			rc = *(int64_t *)addr;
  		else
 			rc = *(int32_t *)addr;
+#else
+			db_read_bytes((db_addr_t)addr, sizeof(int64_t), (char *)&rc);
+		else
+			db_read_bytes((db_addr_t)addr, sizeof(int32_t), (char *)&rc);
 #endif
 	}
 	return rc;
