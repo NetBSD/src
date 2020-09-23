@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.235 2020/09/23 03:06:38 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.236 2020/09/23 07:30:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.235 2020/09/23 03:06:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.236 2020/09/23 07:30:12 rillig Exp $");
 
 # define STATIC static
 
@@ -320,7 +320,6 @@ static void JobChildSig(int);
 static void JobContinueSig(int);
 static Job *JobFindPid(int, int, Boolean);
 static int JobPrintCommand(void *, void *);
-static int JobSaveCommand(void *, void *);
 static void JobClose(Job *);
 static void JobExec(Job *, char **);
 static void JobMakeArgv(Job *, char **);
@@ -879,28 +878,22 @@ JobPrintCommand(void *cmdp, void *jobp)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobSaveCommand --
- *	Save a command to be executed when everything else is done.
- *	Callback function for JobFinish...
- *
- * Results:
- *	Always returns 0
- *
- * Side Effects:
- *	The command is tacked onto the end of postCommands' commands list.
- *
- *-----------------------------------------------------------------------
- */
-static int
-JobSaveCommand(void *cmd, void *gn)
+/* Save the delayed commands, to be executed when everything else is done. */
+static void
+JobSaveCommands(Job *job)
 {
-    char *expanded_cmd;
-    (void)Var_Subst(cmd, (GNode *)gn, VARE_WANTRES, &expanded_cmd);
-    /* TODO: handle errors */
-    Lst_Append(Targ_GetEndNode()->commands, expanded_cmd);
-    return 0;
+    StringListNode *node;
+
+    for (node = job->tailCmds; node != NULL; node = LstNode_Next(node)) {
+	char *cmd = LstNode_Datum(node);
+	char *expanded_cmd;
+	/* XXX: This Var_Subst is only intended to expand the dynamic
+	 * variables such as .TARGET, .IMPSRC.  It is not intended to
+	 * expand the other variables as well; see deptgt-end.mk. */
+	(void)Var_Subst(cmd, job->node, VARE_WANTRES, &expanded_cmd);
+	/* TODO: handle errors */
+	Lst_Append(Targ_GetEndNode()->commands, expanded_cmd);
+    }
 }
 
 
@@ -1082,14 +1075,9 @@ JobFinish(Job *job, int status)
 	/*
 	 * As long as we aren't aborting and the job didn't return a non-zero
 	 * status that we shouldn't ignore, we call Make_Update to update
-	 * the parents. In addition, any saved commands for the node are placed
-	 * on the .END target.
+	 * the parents.
 	 */
-	if (job->tailCmds != NULL) {
-	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
-			     JobSaveCommand,
-			     job->node);
-	}
+	JobSaveCommands(job);
 	job->node->made = MADE;
 	if (!(job->flags & JOB_SPECIAL))
 	    return_job_token = TRUE;
@@ -1685,11 +1673,7 @@ JobStart(GNode *gn, int flags)
 	 * the commands for the job were no good.
 	 */
 	if (cmdsOK && aborting == 0) {
-	    if (job->tailCmds != NULL) {
-		Lst_ForEachFrom(job->node->commands, job->tailCmds,
-				 JobSaveCommand,
-				 job->node);
-	    }
+	    JobSaveCommands(job);
 	    job->node->made = MADE;
 	    Make_Update(job->node);
 	}
