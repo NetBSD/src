@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.156 2020/02/23 11:17:03 mrg Exp $
+# $NetBSD: mi,v 1.157 2020/09/23 15:30:36 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1262,6 +1262,7 @@
 ./usr/X11R7/lib/xorg/protocol.txt			xbase-x11-lib	xorg
 ./usr/X11R7/libexec					base-x11-root	xorg
 ./usr/X11R7/libexec/chooser				xbase-chooser-bin	xorg
+./usr/X11R7/libexec/ctwm_app_menu			xbase-ctwm-bin	xorg
 ./usr/X11R7/man						base-x11-root	xorg
 ./usr/X11R7/man/cat1					base-x11-root	xorg
 ./usr/X11R7/man/cat1/appres.0				xbase-appres-catman	.cat,xorg
