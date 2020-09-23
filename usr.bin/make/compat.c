@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.148 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.149 2020/09/23 03:06:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,10 +99,9 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.148 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.149 2020/09/23 03:06:38 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
-static GNode	    *ENDNode;
 static void CompatInterrupt(int);
 static pid_t compatChild;
 static int compatSigno;
@@ -226,10 +225,12 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
     cmd = cmdStart;
     LstNode_Set(cmdNode, cmdStart);
 
-    if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
-	assert(ENDNode != NULL);
-	Lst_Append(ENDNode->commands, cmdStart);
-	return 0;
+    if (gn->type & OP_SAVE_CMDS) {
+	GNode *endNode = Targ_GetEndNode();
+	if (gn != endNode) {
+	    Lst_Append(endNode->commands, cmdStart);
+	    return 0;
+	}
     }
     if (strcmp(cmdStart, "...") == 0) {
 	gn->type |= OP_SAVE_CMDS;
@@ -682,8 +683,10 @@ Compat_Run(GNodeList *targs)
 	bmake_signal(SIGQUIT, CompatInterrupt);
     }
 
-    ENDNode = Targ_FindNode(".END", TARG_CREATE);
-    ENDNode->type = OP_SPECIAL;
+    /* Create the .END node now, to keep the (debug) output of the
+     * counter.mk test the same as before 2020-09-23.  This implementation
+     * detail probably doesn't matter though. */
+    (void)Targ_GetEndNode();
     /*
      * If the user has defined a .BEGIN target, execute the commands attached
      * to it.
@@ -732,7 +735,9 @@ Compat_Run(GNodeList *targs)
      * If the user has defined a .END target, run its commands.
      */
     if (errors == 0) {
-	Compat_Make(ENDNode, ENDNode);
+        GNode *endNode = Targ_GetEndNode();
+	Compat_Make(endNode, endNode);
+	/* XXX: Did you mean endNode->made instead of gn->made? */
 	if (gn->made == ERROR) {
 	    PrintOnError(gn, "\nStop.");
 	    exit(1);

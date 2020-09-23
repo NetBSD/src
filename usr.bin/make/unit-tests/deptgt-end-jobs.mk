@@ -1,7 +1,15 @@
-# $NetBSD: deptgt-end.mk,v 1.5 2020/09/23 03:06:38 rillig Exp $
+# $NetBSD: deptgt-end-jobs.mk,v 1.1 2020/09/23 03:06:38 rillig Exp $
 #
 # Tests for the special target .END in dependency declarations,
 # which is run after making the desired targets.
+#
+# This test is very similar to deptgt-end.mk, except for the -j option.
+# This option enables parallel mode, in which the code from job.c partially
+# replaces the code from compat.c.
+#
+# Before 2020-08-22, this test crashed with a null pointer dereference.
+# Before 2020-09-23, this test crashed with an assertion failure.
+.MAKEFLAGS: -j 8
 
 VAR=	Should not be expanded.
 
