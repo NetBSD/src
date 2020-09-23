@@ -12,7 +12,7 @@ Var_Parse: ${COUNTER:[#]} with VARE_WANTRES|VARE_ASSIGN
 Applying ${COUNTER:[...} to " a" (VARE_WANTRES|VARE_ASSIGN, none, none)
 Modifier part: "#"
 Result of ${COUNTER:[#]} is "1" (VARE_WANTRES|VARE_ASSIGN, none, none)
-Global:A = ${COUNTER::+=a}1
+Global:A = 1
 Global:B = 
 Var_Parse: ${NEXT} with VARE_WANTRES|VARE_ASSIGN
 Var_Parse: ${COUNTER::+=a}${COUNTER:[#]} with VARE_WANTRES|VARE_ASSIGN
@@ -24,7 +24,7 @@ Var_Parse: ${COUNTER:[#]} with VARE_WANTRES|VARE_ASSIGN
 Applying ${COUNTER:[...} to " a a" (VARE_WANTRES|VARE_ASSIGN, none, none)
 Modifier part: "#"
 Result of ${COUNTER:[#]} is "2" (VARE_WANTRES|VARE_ASSIGN, none, none)
-Global:B = ${COUNTER::+=a}2
+Global:B = 2
 Global:C = 
 Var_Parse: ${NEXT} with VARE_WANTRES|VARE_ASSIGN
 Var_Parse: ${COUNTER::+=a}${COUNTER:[#]} with VARE_WANTRES|VARE_ASSIGN
@@ -36,45 +36,30 @@ Var_Parse: ${COUNTER:[#]} with VARE_WANTRES|VARE_ASSIGN
 Applying ${COUNTER:[...} to " a a a" (VARE_WANTRES|VARE_ASSIGN, none, none)
 Modifier part: "#"
 Result of ${COUNTER:[#]} is "3" (VARE_WANTRES|VARE_ASSIGN, none, none)
-Global:C = ${COUNTER::+=a}3
+Global:C = 3
 Global:RELEVANT = no
 Global:RELEVANT = yes (run-time part)
 Result of ${RELEVANT::=yes (run-time part)} is "" (VARE_WANTRES, none, none)
 Var_Parse: ${A:Q} B=${B:Q} C=${C:Q} COUNTER=${COUNTER:[#]:Q} with VARE_WANTRES
-Var_Parse: ${COUNTER::+=a}1 with VARE_WANTRES
-Applying ${COUNTER::...} to " a a a" (VARE_WANTRES, none, none)
-Modifier part: "a"
-Global:COUNTER =  a a a a
-Result of ${COUNTER::+=a} is "" (VARE_WANTRES, none, none)
 Applying ${A:Q} to "1" (VARE_WANTRES, none, none)
 QuoteMeta: [1]
 Result of ${A:Q} is "1" (VARE_WANTRES, none, none)
 Var_Parse: ${B:Q} C=${C:Q} COUNTER=${COUNTER:[#]:Q} with VARE_WANTRES
-Var_Parse: ${COUNTER::+=a}2 with VARE_WANTRES
-Applying ${COUNTER::...} to " a a a a" (VARE_WANTRES, none, none)
-Modifier part: "a"
-Global:COUNTER =  a a a a a
-Result of ${COUNTER::+=a} is "" (VARE_WANTRES, none, none)
 Applying ${B:Q} to "2" (VARE_WANTRES, none, none)
 QuoteMeta: [2]
 Result of ${B:Q} is "2" (VARE_WANTRES, none, none)
 Var_Parse: ${C:Q} COUNTER=${COUNTER:[#]:Q} with VARE_WANTRES
-Var_Parse: ${COUNTER::+=a}3 with VARE_WANTRES
-Applying ${COUNTER::...} to " a a a a a" (VARE_WANTRES, none, none)
-Modifier part: "a"
-Global:COUNTER =  a a a a a a
-Result of ${COUNTER::+=a} is "" (VARE_WANTRES, none, none)
 Applying ${C:Q} to "3" (VARE_WANTRES, none, none)
 QuoteMeta: [3]
 Result of ${C:Q} is "3" (VARE_WANTRES, none, none)
 Var_Parse: ${COUNTER:[#]:Q} with VARE_WANTRES
-Applying ${COUNTER:[...} to " a a a a a a" (VARE_WANTRES, none, none)
+Applying ${COUNTER:[...} to " a a a" (VARE_WANTRES, none, none)
 Modifier part: "#"
-Result of ${COUNTER:[#]} is "6" (VARE_WANTRES, none, none)
-Applying ${COUNTER:Q} to "6" (VARE_WANTRES, none, none)
-QuoteMeta: [6]
-Result of ${COUNTER:Q} is "6" (VARE_WANTRES, none, none)
-A=1 B=2 C=3 COUNTER=6
+Result of ${COUNTER:[#]} is "3" (VARE_WANTRES, none, none)
+Applying ${COUNTER:Q} to "3" (VARE_WANTRES, none, none)
+QuoteMeta: [3]
+Result of ${COUNTER:Q} is "3" (VARE_WANTRES, none, none)
+A=1 B=2 C=3 COUNTER=3
 Var_Parse: ${RELEVANT::=no} with VARE_WANTRES
 Applying ${RELEVANT::...} to "yes (run-time part)" (VARE_WANTRES, none, none)
 Modifier part: "no"

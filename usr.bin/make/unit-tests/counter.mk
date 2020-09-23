@@ -1,16 +1,10 @@
-# $NetBSD: counter.mk,v 1.2 2020/09/23 03:33:55 rillig Exp $
+# $NetBSD: counter.mk,v 1.3 2020/09/23 07:50:58 rillig Exp $
 #
-# Demonstrates that it is not easily possible to let make count
-# the number of times a variable is actually accessed, using the
-# ::= variable modifier.
+# Demonstrates how to let make count the number of times a variable
+# is actually accessed, using the ::= variable modifier.
 #
-# As of 2020-08-02, the counter ends up at having 4 words, even
-# though the NEXT variable is only accessed 3 times.  This is
-# surprising.
-#
-# A hint to this surprising behavior is that the variables don't
-# get fully expanded.  For example, A does not simply contain the
-# value "1" but an additional unexpanded ${COUNTER:...} before it.
+# This works since 2020-09-23.  Before that, the counter ended up at having
+# 4 words, even though the NEXT variable was only accessed 3 times.
 
 .MAKEFLAGS: -dv
 
