@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.115.2.2 2020/07/10 10:45:56 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.115.2.3 2020/09/23 08:46:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1379,7 +1379,10 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_FEXTNVM11	0x5bbc	/* Future Extended NVM 11 */
 #define FEXTNVM11_DIS_MULRFIX	__BIT(13)	/* Disable MULR fix */
 
+#define WMREG_FFLT_DBG	0x05F04 /* Debug Register */
+
 #define WMREG_CRC_OFFSET 0x5f50
+#define WMREG_PCH_RAICC(x)	(WMREG_CRC_OFFSET + (x) * 4)
 
 #define WMREG_EEC	0x12010
 #define EEC_FLASH_DETECTED (1U << 19)	/* FLASH */
