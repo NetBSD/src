@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.13 2020/09/17 17:33:50 jakllsch Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.14 2020/09/23 13:45:14 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.13 2020/09/17 17:33:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.14 2020/09/23 13:45:14 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,7 +734,7 @@ retry:
 		psc->sc_ihs_num = 1;
 		psc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
 
-	        error = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
+		error = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
 		if (error != 0) {
 			ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
 			ctl &= ~PCI_MSIX_CTL_ENABLE;
