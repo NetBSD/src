@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.14 2020/09/19 16:31:40 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.15 2020/09/23 05:02:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -131,14 +131,14 @@
 
 /*
  * kernel virtual space layout:
- *   0xffff000000000000-   64T KSEG(direct mapping)
- *   0xffff400000000000-   32T (KASAN SHADOW MAP)
- *   0xffff600000000000-   32T (not used)
- *   0xffff800000000000-    1G EFI_RUNTIME
- *   0xffff800040000000-   64T (not used)
- *   0xffffc00000000000-   64T KERNEL VM Space (including kernel text/data/bss)
- *   0xfffffffff0000000-  254M KERNEL_IO for pmap_devmap
- *   0xffffffffffe00000-    2M RESERVED
+ *   0xffff_0000_0000_0000  -   64T  KSEG(direct mapping)
+ *   0xffff_4000_0000_0000  -   32T  (KASAN SHADOW MAP)
+ *   0xffff_6000_0000_0000  -   32T  (not used)
+ *   0xffff_8000_0000_0000  -    1G  EFI_RUNTIME
+ *   0xffff_8000_4000_0000  -   64T  (not used)
+ *   0xffff_c000_0000_0000  -   64T  KERNEL VM Space (including text/data/bss)
+ *   0xffff_ffff_f000_0000  -  254M  KERNEL_IO for pmap_devmap
+ *   0xffff_ffff_ffe0_0000  -    2M  RESERVED
  */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffc00000000000L)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffe00000L)
