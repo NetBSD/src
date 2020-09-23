@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2019/06/02 23:28:32 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2020/09/23 23:21:29 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -87,6 +87,12 @@ CONFIGURE_ARGS_SIM=
 CONFIGURE_ARGS_SIM+= --disable-sim
 .endif
 
+CONFIGURE_ARGS_GDBSERVER=
+.if \
+    ${MACHINE_CPU} == "x86_64"
+CONFIGURE_ARGS_GDBSERVER+= --enable-gdbserver
+.endif
+
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
 	MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
@@ -101,6 +107,7 @@ native-gdb: .native/.configure_done
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
 			${CONFIGURE_ARGS_SIM} \
+			${CONFIGURE_ARGS_GDBSERVER} \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM})

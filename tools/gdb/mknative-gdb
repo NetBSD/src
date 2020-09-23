@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.12 2020/09/17 16:54:31 christos Exp $
+#	$NetBSD: mknative-gdb,v 1.13 2020/09/23 23:21:29 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -151,6 +151,8 @@ get_gdb_libgnulib () {
 	done
 }
 
+##### gdb/lib/libgdb #####
+
 get_gdb_libgdb () {
 	local _GDBP=$_GDB/lib/libgdb
 
@@ -212,6 +214,16 @@ get_gdb_libgdb () {
 	esac
 }
 
+# gdb/bin/gdbserver`
+
+get_gdb_bingdbserver () {
+	local _CTF=$_GDB/bin/gdbserver
+	mkdir -p $_TOP/$_CTF/arch/$_MACHINE_SUBDIR
+
+	write_c $_CTF/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/gdbserver/config.h
+}
+
 ##### main #####
 
 case $1 in
@@ -225,6 +237,7 @@ all|gdb)	# everything (uses "canadian cross" temp environment)
 	get_gdb_libiberty
 	get_gdb_libreadline
 	get_gdb_libdecnumber
+	get_gdb_bingdbserver
 	exit 0
 	;;
 
