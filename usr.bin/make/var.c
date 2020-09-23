@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.535 2020/09/23 04:27:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.536 2020/09/23 07:50:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.535 2020/09/23 04:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.536 2020/09/23 07:50:58 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -140,21 +140,21 @@ ENUM_FLAGS_RTTI_3(VarEvalFlags,
  */
 char **savedEnv = NULL;
 
-/*
- * This is a harmless return value for Var_Parse that can be used by Var_Subst
- * to determine if there was an error in parsing -- easier than returning
- * a flag, as things outside this module don't give a hoot.
- */
+/* Special return value for Var_Parse, indicating a parse error.  It may be
+ * caused by an undefined variable, a syntax error in a modifier or
+ * something entirely different. */
 char var_Error[] = "";
 
-/*
- * Similar to var_Error, but returned when the 'VARE_UNDEFERR' flag for
- * Var_Parse is not set.
- *
- * Why not just use a constant? Well, GCC likes to condense identical string
- * instances...
- */
-static char varNoError[] = "";
+/* Special return value for Var_Parse, indicating an undefined variable in
+ * a case where VARE_UNDEFERR is not set.  This undefined variable is
+ * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
+ * be deferred until it is defined in an actual target. */
+static char varUndefined[] = "";
+
+/* Special return value for Var_Parse, just to avoid allocating empty strings.
+ * In contrast to var_Error and varUndefined, this is not an error marker but
+ * just an ordinary successful return value. */
+static char emptyString[] = "";
 
 /*
  * Traditionally we consume $$ during := like any other expansion.
@@ -2171,7 +2171,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     if (st->eflags & VARE_WANTRES)
 	st->newVal = Cmd_Exec(cmd, &errfmt);
     else
-	st->newVal = varNoError;
+	st->newVal = emptyString;
     free(cmd);
 
     if (errfmt != NULL)
@@ -2872,9 +2872,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	}
     }
     free(val);
-    st->newVal = varNoError;	/* XXX: varNoError is kind of an error,
-				 * the intention here is to just return
-				 * an empty string. */
+    st->newVal = emptyString;
     return AMR_OK;
 }
 
@@ -3040,7 +3038,7 @@ ApplyModifiers(
 		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
 					exprFlags, ctxt, eflags, freePtr);
 		if (st.val == var_Error
-		    || (st.val == varNoError && !(st.eflags & VARE_UNDEFERR))
+		    || (st.val == varUndefined && !(st.eflags & VARE_UNDEFERR))
 		    || *rval_pp != '\0') {
 		    free(freeIt);
 		    goto out;	/* error already reported */
@@ -3181,7 +3179,7 @@ ApplyModifiers(
 		    if (errfmt)
 			Error(errfmt, st.val);
 		} else
-		    st.newVal = varNoError;
+		    st.newVal = emptyString;
 		p += 2;
 		res = AMR_OK;
 	    } else
@@ -3234,7 +3232,8 @@ ApplyModifiers(
 		*freePtr = NULL;
 	    }
 	    st.val = st.newVal;
-	    if (st.val != var_Error && st.val != varNoError) {
+	    if (st.val != var_Error && st.val != varUndefined &&
+		st.val != emptyString) {
 		*freePtr = st.val;
 	    }
 	}
@@ -3249,7 +3248,7 @@ ApplyModifiers(
     }
 out:
     *pp = p;
-    assert(st.val != NULL);	/* Use var_Error or varNoError instead. */
+    assert(st.val != NULL);	/* Use var_Error or varUndefined instead. */
     *exprFlags = st.exprFlags;
     return st.val;
 
@@ -3327,7 +3326,7 @@ ShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
 	    return "$(.ARCHIVE)";
 	}
     }
-    return eflags & VARE_UNDEFERR ? var_Error : varNoError;
+    return eflags & VARE_UNDEFERR ? var_Error : varUndefined;
 }
 
 /* Parse a variable name, until the end character or a colon, whichever
@@ -3420,20 +3419,21 @@ ValidShortVarname(char varname, const char *start)
  *
  * Results:
  *	Returns the value of the variable expression, never NULL.
- *	var_Error if there was a parse error and VARE_UNDEFERR was set.
- *	varNoError if there was a parse error and VARE_UNDEFERR was not set.
+ *	Returns var_Error if there was a parse error and VARE_UNDEFERR was
+ *	set.
+ *	Returns varUndefined if there was an undefined variable and
+ *	VARE_UNDEFERR was not set.
  *
- *	Parsing should continue at str + *lengthPtr.
- *	TODO: Document the value of *lengthPtr on parse errors.  It might be
- *	0, or +1, or the index of the parse error, or the guessed end of the
+ *	Parsing should continue at *pp.
+ *	TODO: Document the value of *pp on parse errors.  It might be advanced
+ *	by 0, or +1, or the index of the parse error, or the guessed end of the
  *	variable expression.
  *
  *	If var_Error is returned, a diagnostic may or may not have been
  *	printed. XXX: This is inconsistent.
  *
- *	If varNoError is returned, a diagnostic may or may not have been
- *	printed. XXX: This is inconsistent, and as of 2020-09-08, returning
- *	varNoError is even used to return a regular, non-error empty string.
+ *	If varUndefined is returned, a diagnostic may or may not have been
+ *	printed. XXX: This is inconsistent.
  *
  *	After using the returned value, *freePtr must be freed, preferably
  *	using bmake_free since it is NULL in most cases.
@@ -3588,7 +3588,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		}
 
 		free(varname);
-		*out_val = varNoError;
+		*out_val = varUndefined;
 		return VPR_OK;
 	    }
 
@@ -3686,8 +3686,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		*freePtr = nstr;
 	    } else {
 		/* The expression is still undefined, therefore discard the
-		 * actual value and return an empty string instead. */
-		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
+		 * actual value and return an error marker instead. */
+		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varUndefined;
 	    }
 	}
 	if (nstr != Buf_GetAll(&v->val, NULL))
@@ -3757,7 +3757,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	    (void)Var_Parse(&nested_str, ctxt, eflags, &val, &freeIt);
 	    /* TODO: handle errors */
 
-	    if (val == var_Error || val == varNoError) {
+	    if (val == var_Error || val == varUndefined) {
 		/*
 		 * If performing old-time variable substitution, skip over
 		 * the variable and continue with the substitution. Otherwise,

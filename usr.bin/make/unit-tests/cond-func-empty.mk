@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.6 2020/09/04 21:08:44 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.7 2020/09/23 07:50:58 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -116,7 +116,7 @@ ${:U }=	space
 .endif
 
 # The expression ${} for a variable with the empty name always evaluates
-# to an empty string (see Var_Parse, varNoError).
+# to an empty string (see Var_Parse, varUndefined).
 .if !empty()
 .  error
 .endif
