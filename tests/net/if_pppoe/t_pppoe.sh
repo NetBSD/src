@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.20 2020/09/23 05:56:55 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.21 2020/09/23 06:18:20 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -224,7 +224,8 @@ run_test()
 	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
 				    'myauthname=$AUTHNAME' \
 				    'myauthsecret=invalidsecret' \
-				    'hisauthproto=none'"
+				    'hisauthproto=none' \
+				    'max-auth-failure=1'"
 	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	wait_for_session_established dontfail
@@ -374,7 +375,8 @@ run_test6()
 	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
 				    'myauthname=$AUTHNAME' \
 				    'myauthsecret=invalidsecret' \
-				    'hisauthproto=none'"
+				    'hisauthproto=none' \
+				    'max-auth-failure=1'"
 	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	wait_for_session_established dontfail
