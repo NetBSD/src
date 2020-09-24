@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.236 2020/09/23 07:30:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.237 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.236 2020/09/23 07:30:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.237 2020/09/24 07:11:29 rillig Exp $");
 
 # define STATIC static
 
@@ -648,7 +648,7 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	made and return non-zero to signal that the end of the commands
  *	was reached. These commands are later attached to the postCommands
  *	node and executed by Job_End when all things are done.
- *	This function is called from JobStart via Lst_ForEach.
+ *	This function is called from JobStart via Lst_ForEachUntil.
  *
  * Input:
  *	cmdp		command string to print
@@ -1605,7 +1605,7 @@ JobStart(GNode *gn, int flags)
 	 * We can do all the commands at once. hooray for sanity
 	 */
 	numCommands = 0;
-	Lst_ForEach(gn->commands, JobPrintCommand, job);
+	Lst_ForEachUntil(gn->commands, JobPrintCommand, job);
 
 	/*
 	 * If we didn't print out any commands to the shell script,
@@ -1632,7 +1632,7 @@ JobStart(GNode *gn, int flags)
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_ForEach(gn->commands, JobPrintCommand, job);
+	    Lst_ForEachUntil(gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.

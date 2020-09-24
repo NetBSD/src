@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.341 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.342 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.341 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.342 2020/09/24 07:11:29 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -2015,7 +2015,7 @@ PrintOnError(GNode *gn, const char *s)
 	 */
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
-	Lst_ForEach(gn->commands, addErrorCMD, gn);
+	Lst_ForEachUntil(gn->commands, addErrorCMD, gn);
     }
     expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
     (void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);

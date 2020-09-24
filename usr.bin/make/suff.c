@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.158 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.159 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.158 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.159 2020/09/24 07:11:29 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -608,7 +608,7 @@ Suff_AddTransform(char *line)
 
 /* Handle the finish of a transformation definition, removing the
  * transformation from the graph if it has neither commands nor sources.
- * This is a callback procedure for the Parse module via Lst_ForEach.
+ * This is a callback procedure for the Parse module via Lst_ForEachUntil.
  *
  * If the node has no commands or children, the children and parents lists
  * of the affected suffixes are altered.
@@ -661,7 +661,7 @@ Suff_EndTransform(GNode *gn)
     }
 }
 
-/* Called from Suff_AddSuffix via Lst_ForEach to search through the list of
+/* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
  * existing transformation rules and rebuild the transformation graph when
  * it has been destroyed by Suff_ClearSuffixes. If the given rule is a
  * transformation involving this suffix and another, existing suffix, the
@@ -675,7 +675,7 @@ Suff_EndTransform(GNode *gn)
  *	sp		Suffix to rebuild
  *
  * Results:
- *	0, so that Lst_ForEach continues
+ *	0, so that Lst_ForEachUntil continues
  */
 static int
 SuffRebuildGraph(void *transformp, void *sp)
@@ -734,7 +734,7 @@ SuffRebuildGraph(void *transformp, void *sp)
     return 0;
 }
 
-/* Called from Suff_AddSuffix via Lst_ForEach to search through the list of
+/* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
  * existing targets and find if any of the existing targets can be turned
  * into a transformation rule.
  *
@@ -818,12 +818,12 @@ Suff_AddSuffix(const char *name, GNode **gnp)
 	gs.gnp = gnp;
 	gs.s  = s;
 	gs.r  = FALSE;
-	Lst_ForEach(Targ_List(), SuffScanTargets, &gs);
+	Lst_ForEachUntil(Targ_List(), SuffScanTargets, &gs);
 	/*
 	 * Look for any existing transformations from or to this suffix.
 	 * XXX: Only do this after a Suff_ClearSuffixes?
 	 */
-	Lst_ForEach(transforms, SuffRebuildGraph, s);
+	Lst_ForEachUntil(transforms, SuffRebuildGraph, s);
     }
 }
 
@@ -952,7 +952,7 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
  *	lsp		list and parent for the new Src
  *
  * Results:
- *	0, so that Lst_ForEach continues
+ *	0, so that Lst_ForEachUntil continues
  */
 static int
 SuffAddSrc(void *sp, void *lsp)
@@ -984,7 +984,7 @@ SuffAddSrc(void *sp, void *lsp)
 	s2->cp = Lst_Init();
 	Lst_Append(targ->cp, s2);
 	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
-	Lst_ForEach(ls->l, PrintAddr, NULL);
+	Lst_ForEachUntil(ls->l, PrintAddr, NULL);
 	fprintf(debug_file, "\n");
 #endif
     }
@@ -1002,7 +1002,7 @@ SuffAddSrc(void *sp, void *lsp)
     s2->cp = Lst_Init();
     Lst_Append(targ->cp, s2);
     fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
-    Lst_ForEach(ls->l, PrintAddr, NULL);
+    Lst_ForEachUntil(ls->l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
 
@@ -1023,7 +1023,7 @@ SuffAddLevel(SrcList *l, Src *targ)
     ls.s = targ;
     ls.l = l;
 
-    Lst_ForEach(targ->suff->children, SuffAddSrc, &ls);
+    Lst_ForEachUntil(targ->suff->children, SuffAddSrc, &ls);
 }
 
 /* Free the first Src in the list that doesn't have a reference count.
@@ -1038,7 +1038,7 @@ SuffRemoveSrc(SrcList *l)
 
 #ifdef DEBUG_SRC
     fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
-    Lst_ForEach(l, PrintAddr, NULL);
+    Lst_ForEachUntil(l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
 
@@ -1068,7 +1068,7 @@ SuffRemoveSrc(SrcList *l)
 #ifdef DEBUG_SRC
 	else {
 	    fprintf(debug_file, "keep: [l=%p] p=%p %d: ", l, s, s->children);
-	    Lst_ForEach(s->cp, PrintAddr, NULL);
+	    Lst_ForEachUntil(s->cp, PrintAddr, NULL);
 	    fprintf(debug_file, "\n");
 	}
 #endif
@@ -2225,10 +2225,10 @@ SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
     }
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tTo: ");
-    Lst_ForEach(s->parents, SuffPrintName, NULL);
+    Lst_ForEachUntil(s->parents, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tFrom: ");
-    Lst_ForEach(s->children, SuffPrintName, NULL);
+    Lst_ForEachUntil(s->children, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
@@ -2253,8 +2253,8 @@ void
 Suff_PrintAll(void)
 {
     fprintf(debug_file, "#*** Suffixes:\n");
-    Lst_ForEach(sufflist, SuffPrintSuff, NULL);
+    Lst_ForEachUntil(sufflist, SuffPrintSuff, NULL);
 
     fprintf(debug_file, "#*** Transformations:\n");
-    Lst_ForEach(transforms, SuffPrintTrans, NULL);
+    Lst_ForEachUntil(transforms, SuffPrintTrans, NULL);
 }
