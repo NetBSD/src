@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.17 2020/05/14 08:34:18 msaitoh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.18 2020/09/24 05:09:46 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.17 2020/05/14 08:34:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.18 2020/09/24 05:09:46 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -2564,8 +2564,8 @@ aq_get_mac_addr(struct aq_softc *sc)
 		return ENXIO;
 	}
 
-	mac_addr[0] = bswap32(mac_addr[0]);
-	mac_addr[1] = bswap32(mac_addr[1]);
+	mac_addr[0] = htobe32(mac_addr[0]);
+	mac_addr[1] = htobe32(mac_addr[1]);
 
 	memcpy(sc->sc_enaddr.ether_addr_octet,
 	    (uint8_t *)mac_addr, ETHER_ADDR_LEN);
