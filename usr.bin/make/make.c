@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.141 2020/09/24 07:32:03 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.142 2020/09/24 07:34:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.141 2020/09/24 07:32:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.142 2020/09/24 07:34:35 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -119,7 +119,6 @@ static GNodeList *toBeMade;	/* The current fringe of the graph. These
 static int MakeAddChild(void *, void *);
 static int MakeFindChild(void *, void *);
 static int MakeUnmark(void *, void *);
-static int MakeAddAllSrc(void *, void *);
 static int MakeTimeStamp(void *, void *);
 static int MakeHandleUse(void *, void *);
 static Boolean MakeStartJobs(void);
@@ -871,21 +870,18 @@ MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
  *	pgnp		The parent to whose ALLSRC variable it should
  *			be added
  *
- * Results:
- *	Always returns 0
- *
  * Side Effects:
  *	The ALLSRC variable for the given node is extended.
  *-----------------------------------------------------------------------
  */
-static int
+static void
 MakeAddAllSrc(void *cgnp, void *pgnp)
 {
     GNode	*cgn = (GNode *)cgnp;
     GNode	*pgn = (GNode *)pgnp;
 
     if (cgn->type & OP_MARK)
-	return 0;
+	return;
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
@@ -931,7 +927,6 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 	}
 	bmake_free(p1);
     }
-    return 0;
 }
 
 /*-
@@ -963,7 +958,7 @@ Make_DoAllVar(GNode *gn)
 	return;
 
     Lst_ForEachUntil(gn->children, MakeUnmark, gn);
-    Lst_ForEachUntil(gn->children, MakeAddAllSrc, gn);
+    Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
     if (!Var_Exists (OODATE, gn)) {
 	Var_Set(OODATE, "", gn);
@@ -1043,7 +1038,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 	Lst_ForEachUntil(cn->cohorts, MakeBuildChild, toBeMade_next);
 
     /*
-     * If this node is a .WAIT node with unmade chlidren
+     * If this node is a .WAIT node with unmade children
      * then don't add the next sibling.
      */
     return cn->type & OP_WAIT && cn->unmade > 0;
