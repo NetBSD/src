@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.67 2020/09/24 07:11:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.68 2020/09/24 07:23:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.67 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.68 2020/09/24 07:23:26 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */
@@ -415,42 +415,21 @@ Lst_FindDatum(List *list, const void *datum)
     return NULL;
 }
 
-static int Lst_ForEachFrom(List *, ListNode *, LstActionUntilProc, void *);
-
 /* Apply the given function to each element of the given list. The function
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
 Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 {
-    if (LstIsEmpty(list))
-	return 0;		/* XXX: Document what this value means. */
-    return Lst_ForEachFrom(list, Lst_First(list), proc, procData);
-}
+    ListNode *tln = list->first;
+    int result = 0;
 
-/* Apply the given function to each element of the given list, starting from
- * the given node. The function should return 0 if traversal should continue,
- * and non-zero if it should abort. */
-int
-Lst_ForEachFrom(List *list, ListNode *node,
-		 LstActionUntilProc proc, void *procData)
-{
-    ListNode *tln = node;
-    ListNode *next;
-    Boolean done;
-    int result;
-
-    assert(list != NULL);
-    assert(node != NULL);
-    assert(proc != NULL);
-
-    do {
+    while (tln != NULL) {
 	/*
 	 * Take care of having the current element deleted out from under
 	 * us.
 	 */
-
-	next = tln->next;
+    	ListNode *next = tln->next;
 
 	/*
 	 * We're done with the traversal if
@@ -458,7 +437,7 @@ Lst_ForEachFrom(List *list, ListNode *node,
 	 *  - nothing's been added after the current node (check this
 	 *    after proc() has been called).
 	 */
-	done = next == NULL;
+	Boolean done = next == NULL;
 
 	tln->useCount++;
 	result = (*proc)(tln->datum, procData);
@@ -478,7 +457,9 @@ Lst_ForEachFrom(List *list, ListNode *node,
 	    free((char *)tln);
 	}
 	tln = next;
-    } while (!result && !LstIsEmpty(list) && !done);
+	if (result || LstIsEmpty(list) || done)
+	    break;
+    }
 
     return result;
 }
