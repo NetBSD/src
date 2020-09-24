@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.109 2020/08/23 10:23:38 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.110 2020/09/24 02:12:01 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -115,6 +115,11 @@
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
+
+#include <mips/asm.h>
+RCSID("$NetBSD: mipsX_subr.S,v 1.110 2020/09/24 02:12:01 mrg Exp $")
+
+#include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,7 +130,6 @@
 #include <sys/cdefs.h>
 #include <sys/endian.h>
 
-#include <mips/asm.h>
 #include <mips/cpuregs.h>
 #if defined(MIPS3)
 #include <mips/cache_r4k.h>
@@ -906,7 +910,7 @@ MIPSX(kern_return):
 	.set	at
 END(MIPSX(kern_gen_exception))
 
-#ifdef DDB
+#if NWDOG > 0 || defined(DDB)
 /*
  * mipsN_kern_nonmaskable_intr
  *
@@ -1044,7 +1048,7 @@ NESTED_NOPROFILE(MIPSX(kern_nonmaskable_intr), KERNFRAME_SIZ, ra)
 	 nop
 	.set	at
 END(MIPSX(kern_nonmaskable_intr))
-#endif /* DDB */
+#endif /* NWDOG > 0 || DDB */
 
 /*
  * mipsN_kern_intr
