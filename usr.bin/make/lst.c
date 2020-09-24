@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.65 2020/09/22 04:05:41 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.66 2020/09/24 06:45:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.65 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.66 2020/09/24 06:45:59 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */
@@ -414,6 +414,8 @@ Lst_FindDatum(List *list, const void *datum)
 
     return NULL;
 }
+
+static int Lst_ForEachFrom(List *, ListNode *, LstActionProc, void *);
 
 /* Apply the given function to each element of the given list. The function
  * should return 0 if traversal should continue and non-zero if it should

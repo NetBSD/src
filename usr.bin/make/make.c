@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.138 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.139 2020/09/24 06:45:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.138 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.139 2020/09/24 06:45:59 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -1372,27 +1372,23 @@ link_parent(void *cnp, void *pnp)
     return 0;
 }
 
-static int
-add_wait_dep(void *v_cn, void *v_wn)
+/* Make the .WAIT node depend on the previous children */
+static void
+add_wait_dependency(GNodeListNode *owln, GNode *wn)
 {
-    GNode *cn = v_cn;
-    GNode *wn = v_wn;
+    GNodeListNode *cln;
+    GNode *cn;
 
-    if (cn == wn)
-	return 1;
+    for (cln = owln; (cn = LstNode_Datum(cln)) != wn; cln = LstNode_Next(cln)) {
+	if (DEBUG(MAKE))
+	    fprintf(debug_file, ".WAIT: add dependency %s%s -> %s\n",
+		    cn->name, cn->cohort_num, wn->name);
 
-    if (cn == NULL || wn == NULL) {
-	printf("bad wait dep %p %p\n", cn, wn);
-	exit(4);
+	/* XXX: This pattern should be factored out, it repeats often */
+	Lst_Append(wn->children, cn);
+	wn->unmade++;
+	Lst_Append(cn->parents, wn);
     }
-    if (DEBUG(MAKE))
-	 fprintf(debug_file, ".WAIT: add dependency %s%s -> %s\n",
-		cn->name, cn->cohort_num, wn->name);
-
-    Lst_Append(wn->children, cn);
-    wn->unmade++;
-    Lst_Append(cn->parents, wn);
-    return 0;
 }
 
 static void
@@ -1442,8 +1438,7 @@ Make_ProcessWait(GNodeList *targs)
 	for (; (ln = Lst_Next(pgn->children)) != NULL; ) {
 	    cgn = LstNode_Datum(ln);
 	    if (cgn->type & OP_WAIT) {
-		/* Make the .WAIT node depend on the previous children */
-		Lst_ForEachFrom(pgn->children, owln, add_wait_dep, cgn);
+		add_wait_dependency(owln, cgn);
 		owln = ln;
 	    } else {
 		Lst_Append(examine, cgn);
