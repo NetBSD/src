@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2020/09/23 23:21:29 christos Exp $
+#	$NetBSD: Makefile,v 1.40 2020/09/24 14:53:17 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -117,7 +117,10 @@ native-gdb: .native/.configure_done
 		(cd ${.OBJDIR}/.native/bfd && \
 			${MKENV_BUILD_MAKE} bfd.h bfdver.h) && \
 		(cd ${.OBJDIR}/.native/gdb && \
-			${MKENV_BUILD_MAKE} init.c version.c)
+			${MKENV_BUILD_MAKE} init.c version.c) && \
+		(if [ -d ${.OBJDIR}/.native/gdbserver ]; then \
+			cd ${.OBJDIR}/.native/gdbserver && \
+			${MKENV_BUILD_MAKE} version-generated.cc; fi)
 	@touch $@
 
 clean: clean.native
