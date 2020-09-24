@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2357 2020/09/22 23:12:06 nia Exp $
+#	$NetBSD: mi,v 1.2358 2020/09/24 14:14:18 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7408,6 +7408,7 @@
 ./usr/share/man/cat3/getdiskrawname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdomainname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdtablesize.0		comp-c-catman		.cat
+./usr/share/man/cat3/getentropy.0		comp-c-catman		obsolete
 ./usr/share/man/cat3/getenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getenv_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getfsent.0			comp-c-catman		.cat
@@ -15658,6 +15659,7 @@
 ./usr/share/man/html3/getdiskrawname.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdomainname.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdtablesize.html	comp-c-htmlman		html
+./usr/share/man/html3/getentropy.html		comp-c-htmlman		obsolete
 ./usr/share/man/html3/getenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/getenv_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/getfsent.html		comp-c-htmlman		html
@@ -23845,6 +23847,7 @@
 ./usr/share/man/man3/getdiskrawname.3		comp-c-man		.man
 ./usr/share/man/man3/getdomainname.3		comp-c-man		.man
 ./usr/share/man/man3/getdtablesize.3		comp-c-man		.man
+./usr/share/man/man3/getentropy.3		comp-c-man		obsolete
 ./usr/share/man/man3/getenv.3			comp-c-man		.man
 ./usr/share/man/man3/getenv_r.3			comp-c-man		.man
 ./usr/share/man/man3/getfsent.3			comp-c-man		.man
