@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.110 2020/09/24 02:12:01 mrg Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.111 2020/09/24 08:14:08 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,9 +117,8 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.110 2020/09/24 02:12:01 mrg Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.111 2020/09/24 08:14:08 mrg Exp $")
 
-#include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -137,6 +136,12 @@ RCSID("$NetBSD: mipsX_subr.S,v 1.110 2020/09/24 02:12:01 mrg Exp $")
 #include <mips/trap.h>
 
 #include "assym.h"
+
+#if defined(MIPS64_OCTEON) || defined(MIPS64_XLR) || defined(MIPS64_XLS)
+#include "cpunode.h"			/* for NWDOG */
+#else
+#define NWDOG 0
+#endif
 
 #if defined(MIPS1) || defined(MIPS2)
 #error use locore_mips1.S
