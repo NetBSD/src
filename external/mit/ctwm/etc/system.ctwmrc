@@ -1,0 +1,383 @@
+#
+# $NetBSD: system.ctwmrc,v 1.1 2020/09/24 05:43:30 nia Exp $
+#
+# ctwmrc by nia
+#
+# An attempt to strike a usability balance that makes keys and buttons
+# do the thing users of various operating systems expect them to do.
+#
+# Most things should be possible to accomplish with only the keyboard.
+#
+# Also, mostly inoffensive colours (avoiding potentially inaccessible
+# combinations like red-green).
+#
+
+# don't use the default buttons or key bindings, we define our own
+NoDefaults
+
+ShowWorkSpaceManager
+ShowIconManager
+
+# 3D icon managers do not seemingly honor IconManagerHighlight,
+# which makes them slightly less useful
+#UseThreeDIconManagers
+#UseThreeDWMap
+UseThreeDBorders
+#UseThreeDMenus
+UseThreeDTitles
+
+ThreeDBorderWidth         3
+
+# TODO: we can use syscmd() in combination with xdpyinfo to detect
+# HiDPI screens and set appropiate fonts.
+#
+# need some good scaled bitmap fonts imported - terminus or spleen
+# would be good candidates
+MenuFont         "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
+TitleFont        "-misc-fixed-bold-r-*-*-18-*-*-*-*-*-*-*"
+IconManagerFont  "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
+IconFont         "-misc-fixed-bold-r-*-*-18-*-*-*-*-*-*-*"
+ResizeFont       "-misc-fixed-medium-r-*-*-18-*-*-*-*-*-*-*"
+WorkSpaceFont    "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
+
+RestartPreviousState
+
+DecorateTransients
+
+# hide window contents while altering windows for performance
+NoOpaqueMove
+NoOpaqueResize
+
+SloppyFocus
+
+AutoOccupy
+AutoRelativeResize
+
+CenterFeedbackWindow
+
+NoGrabServer
+
+RaiseOnClick
+
+DontMoveOff
+MoveOffResistance	  150
+
+ConstrainedMoveTime       0
+
+IgnoreLockModifier
+
+# Not actually that random.
+# Means that windows do not have to be placed by hand with a mouse,
+# which helps if you are using a keyboard only.
+RandomPlacement          "on"
+
+MoveDelta                 3
+ClearShadowContrast       50
+DarkShadowContrast        50
+MovePackResistance        100
+
+RaiseWhenAutoUnSqueeze
+ShortAllWindowsMenus
+
+#BeNiceToColorMap
+
+NoStackMode
+
+StayUpMenus
+WarpToDefaultMenuEntry
+MenuShadowDepth      1
+
+NoTitleFocus
+
+# warp through all windows in the current workspace
+WindowRing
+WarpRingOnScreen
+
+NoTitleHighlight
+
+TitleButtonShadowDepth    1
+TitleShadowDepth          1
+TitleButtonBorderWidth    0
+TitlePadding              0
+TitleJustification        "left"
+ButtonIndent              0
+FramePadding		  0
+
+LeftTitleButton           ":xpm:dot"      = f.menu "titleops"
+RightTitleButton          ":xpm:resize"   = f.resize
+RightTitleButton          ":xpm:cross"    = f.delete
+
+BorderWidth               4
+BorderShadowDepth         2
+BorderResizeCursors
+
+MaxIconTitleWidth         120
+NoIconManagerFocus
+IconManagerShadowDepth    1
+IconManagerGeometry       "200x-1-1+0" 1
+IconifyByUnmapping
+
+ReallyMoveInWorkspaceManager
+MapWindowCurrentWorkSpace {  "black" "firebrick" }
+DontToggleWorkSpaceManagerState
+DontWarpCursorInWMap
+NoShowOccupyAll	
+ReverseCurrentWorkspace	
+StartInMapState
+WMgrHorizButtonIndent     0
+WMgrVertButtonIndent      0
+WorkSpaceManagerGeometry  "70x270-4-4" 1
+
+WorkSpaces 
+{
+    "1"    { "lavender" "black" "darkslateblue" "white" }
+    "2"    { "lavender" "black" "darkslateblue" "white" }
+    "3"    { "lavender" "black" "darkslateblue" "white" }
+    "4"    { "lavender" "black" "darkslateblue" "white" }
+    "5"    { "lavender" "black" "darkslateblue" "white" }
+}
+
+Color
+{
+  BorderColor           "steelblue"
+
+  BorderTileBackground  "lavender"
+  BorderTileForeground  "lavender"
+
+  DefaultBackground     "grey70"
+  DefaultForeground     "black"
+
+  TitleBackground       "lavender"
+  TitleForeground       "black" 
+
+  MenuBackground        "lavender"
+  MenuForeground        "black"
+  MenuTitleBackground   "darkorange"
+  MenuTitleForeground   "black"
+  MenuShadowColor 	"gray15"
+
+  IconBackground        "black"
+  IconForeground        "white"
+  IconBorderColor       "gray45"
+
+  IconManagerBackground "lavender"
+  IconManagerForeground "black"
+  IconManagerHighlight  "firebrick"
+
+  MapWindowBackground   "lavender"
+  MapWindowForeground   "black"	
+}
+
+Monochrome
+{
+    BorderColor 		"black"
+
+    BorderTileForeground 	"black"
+    BorderTileBackground 	"white"
+
+    TitleForeground 		"black"
+    TitleBackground 		"white"
+
+    MenuForeground 		"black"
+    MenuBackground 		"white"
+    MenuTitleForeground 	"black"
+    MenuTitleBackground 	"white"
+
+    MapWindowForeground 	"white"
+    MapWindowBackground 	"white"
+}
+
+menu "NetBSD"
+{
+    "NetBSD"			f.title
+    ""				f.separator
+    " Terminal"			!"uxterm &"
+    " Calculator"		!"xcalc &"
+    " Clock"			!"xclock -digital &"
+    " XEyes"			!"xeyes &"
+    ""				f.separator
+    " Applications"		f.menu "appmenu"
+    ""				f.separator
+    " Restart CTWM"		f.twmrc
+    " Quit"			f.quit
+}
+
+syscmd(/usr/X11R7/libexec/ctwm_app_menu)
+
+menu "titleops"
+{
+    "Window"       f.title
+    ""             f.separator
+    " Iconify"     f.iconify
+    " Resize"      f.resize
+    " Move"        f.move
+    ""             f.separator
+    " Occupy ..."  f.occupy
+    " Occupy All"  f.occupyall
+    ""             f.separator
+    " Raise"       f.raise
+    " Lower"       f.lower
+    ""             f.separator
+    " Zoom"        f.fullzoom
+    " Zoom-V"      f.zoom
+    " Zoom-H"      f.horizoom
+    ""             f.separator
+    " Kill"        f.destroy
+    " Close"       f.delete
+}
+
+IconManagerDontShow
+{
+} 
+
+OccupyAll 
+{
+   "XClock"
+   "xsm"
+   "xconsole"
+   "XVidCap"
+}
+
+AlwaysOnTop
+{
+   "XVidCap"
+}
+
+NoTitle 
+{
+   "TWM Icon Manager"
+   "WorkSpaceManager"
+}
+
+WindowRingExclude
+{
+   "TWM Icon Manager"
+   "WorkSpaceManager"
+   "XClock"
+   "xsm"
+   "xconsole"
+}
+
+StartIconified 
+{ 
+}
+
+NoBorder
+{
+   "TWM Icon Manager"
+}
+
+Function "raise-move"          { f.raise f.deltastop f.forcemove }
+Function "raise-and-resize"    { f.raise f.deltastop f.resize }
+
+# These are basically essential for basic functionality.
+
+Button1 =	: title		: f.function "raise-move"
+Button2 =	: title		: f.function "raise-and-resize"
+Button3 =	: title | frame	: f.menu "titleops"
+
+Button1 =	: frame		: f.function "raise-and-resize"
+
+Button1 =	: icon | iconmgr	: f.iconify
+Button2 =	: icon			: f.move
+Button3 =	: icon | iconmgr	: f.raiselower
+
+Button1 =	: root		: f.menu "NetBSD"
+Button2 =	: root		: f.menu "TwmAllWindows"
+Button3 =	: root		: f.menu "NetBSD"
+
+#
+# Mod1 is the "Alt/Meta" key.
+# Mod4 is the "OS" key.
+#
+
+Button1 = mod1	: window	: f.forcemove
+Button1 = mod4	: window	: f.forcemove
+Button3 = mod1	: window 	: f.resize
+Button3 = mod4	: window 	: f.resize
+
+"Up"     = mod4           : all : f.upworkspace
+"Down"   = mod4           : all : f.downworkspace
+"Left"   = mod4           : all : f.prevworkspace
+"Right"  = mod4           : all : f.nextworkspace
+
+"Up"     = mod1 | control : all : f.upworkspace
+"Down"   = mod1 | control : all : f.downworkspace
+"Left"   = mod1 | control : all : f.prevworkspace
+"Right"  = mod1 | control : all : f.nextworkspace
+
+"1"      = mod1 | control : all : f.gotoworkspace "1"
+"2"      = mod1 | control : all : f.gotoworkspace "2"
+"3"      = mod1 | control : all : f.gotoworkspace "3"
+"4"      = mod1 | control : all : f.gotoworkspace "4"
+"5"      = mod1 | control : all : f.gotoworkspace "5"
+"6"      = mod1 | control : all : f.gotoworkspace "6"
+"7"      = mod1 | control : all : f.gotoworkspace "7"
+"8"      = mod1 | control : all : f.gotoworkspace "8"
+"9"      = mod1 | control : all : f.gotoworkspace "9"
+
+"1"      = mod4 : all : f.gotoworkspace "1"
+"2"      = mod4 : all : f.gotoworkspace "2"
+"3"      = mod4 : all : f.gotoworkspace "3"
+"4"      = mod4 : all : f.gotoworkspace "4"
+"5"      = mod4 : all : f.gotoworkspace "5"
+"6"      = mod4 : all : f.gotoworkspace "6"
+"7"      = mod4 : all : f.gotoworkspace "7"
+"8"      = mod4 : all : f.gotoworkspace "8"
+"9"      = mod4 : all : f.gotoworkspace "9"
+
+"XF86AudioRaiseVolume" = : all : !"mixerctl -w outputs.master+=5"
+"XF86AudioLowerVolume" = : all : !"mixerctl -w outputs.master-=5"
+"XF86AudioMute"        = : all : !"mixerctl -w outputs.master=0"
+
+#
+# "Windows" style keyboard shortcuts
+#
+
+"Tab"    = mod1           : all : f.warpring "next"
+"Tab"    = mod1 | s       : all : f.warpring "prev"
+"Tab"    = mod4           : all : f.warpring "next"
+"Tab"    = mod4 | s       : all : f.warpring "prev"
+"space"  = mod1           : window : f.menu "titleops"
+"F4"     = mod1           : window : f.delete
+
+#
+# "Mac" style keyboard shortcuts
+#
+
+"w"      = mod4           : window : f.delete
+"m"      = mod4           : window : f.iconify
+
+#
+# "evilwm" style keyboard shortcuts
+#
+
+# it is useful to be able to spawn a terminal without clicking.
+"Return" = mod1 | c : all : !"uxterm &"
+"Return" = mod4 | s : all : !"uxterm &"
+
+"slash"  = mod1 | c : all : f.menu "TwmAllWindows"
+"slash"  = mod4 : all     : f.menu "TwmAllWindows"
+"p"      = mod1 | c : all : f.menu "NetBSD"
+"p"      = mod4 : all     : f.menu "NetBSD"
+
+# vi-style directions
+"j"      = mod1 | control : window : f.jumpdown "10"
+"k"      = mod1 | control : window : f.jumpup "10"
+"h"      = mod1 | control : window : f.jumpleft "10"
+"l"      = mod1 | control : window : f.jumpright "10"
+
+"j"      = mod4 : window : f.jumpdown "10"
+"k"      = mod4 : window : f.jumpup "10"
+"h"      = mod4 : window : f.jumpleft "10"
+"l"      = mod4 : window : f.jumpright "10"
+
+"j"      = mod4 | s : window : f.changesize "bottom +10"
+"k"      = mod4 | s : window : f.changesize "bottom -10"
+"h"      = mod4 | s : window : f.changesize "right -10"
+"l"      = mod4 | s : window : f.changesize "right +10"
+
+"j"      = mod1 | c | s : window : f.changesize "bottom +10"
+"k"      = mod1 | c | s : window : f.changesize "bottom -10"
+"h"      = mod1 | c | s : window : f.changesize "right -10"
+"l"      = mod1 | c | s : window : f.changesize "right +10"
