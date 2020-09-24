@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/09/24 03:06:01 kamil Exp $
+#	$NetBSD: Makefile,v 1.3 2020/09/24 14:53:35 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -9,7 +9,7 @@ PROG=		gdbserver
 
 SERVER_SRCS+=	ax.cc debug.cc dll.cc hostio.cc hostio-errno.cc inferiors.cc mem-break.cc notif.cc
 SERVER_SRCS+=	regcache.cc remote-utils.cc server.cc symbol.cc target.cc
-SERVER_SRCS+=	tdesc.cc tracepoint.cc utils.cc waitstatus.c # version.c
+SERVER_SRCS+=	tdesc.cc tracepoint.cc utils.cc waitstatus.c version.cc
 
 NETBSD_SRCS=		netbsd-low.cc fork-child.cc fork-inferior.c netbsd-nat.c
 ARCH_SRCS=		netbsd-${MACHINE}-low.cc ${MACHINE}.c
@@ -57,4 +57,5 @@ CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector -pthread
 
 .PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch ${DIST}/gdb/target \
+	${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 	${DIST}/../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH}
