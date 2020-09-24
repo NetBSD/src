@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.144 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.145 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.144 2020/09/22 04:05:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.145 2020/09/24 07:11:29 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -759,7 +759,7 @@ DirExpandInt(const char *word, SearchPath *path, StringList *expansions)
 }
 
 /* Print a word in the list of expansions.
- * Callback for Dir_Expand when DEBUG(DIR), via Lst_ForEach. */
+ * Callback for Dir_Expand when DEBUG(DIR), via Lst_ForEachUntil. */
 static int
 DirPrintWord(void *word, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -879,7 +879,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, NULL);
+	Lst_ForEachUntil(expansions, DirPrintWord, NULL);
 	fprintf(debug_file, "\n");
     }
 }
@@ -1489,7 +1489,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
  * Dir_AddDir --
  *	Add the given name to the end of the given path. The order of
  *	the arguments is backwards so ParseDoDependency can do a
- *	Lst_ForEach of its list of paths...
+ *	Lst_ForEachUntil of its list of paths...
  *
  * Input:
  *	path		the path to which the directory should be
@@ -1763,5 +1763,5 @@ DirPrintDir(void *p, void *dummy MAKE_ATTR_UNUSED)
 void
 Dir_PrintPath(SearchPath *path)
 {
-    Lst_ForEach(path, DirPrintDir, NULL);
+    Lst_ForEachUntil(path, DirPrintDir, NULL);
 }

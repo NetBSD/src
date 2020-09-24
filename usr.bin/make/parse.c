@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.323 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.324 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.323 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.324 2020/09/24 07:11:29 rillig Exp $");
 
 /* types and constants */
 
@@ -826,7 +826,7 @@ ParseLinkSrc(void *pgnp, void *data)
  *---------------------------------------------------------------------
  * ParseDoOp  --
  *	Apply the parsed operator to the given target node. Used in a
- *	Lst_ForEach call by ParseDoDependency once all targets have
+ *	Lst_ForEachUntil call by ParseDoDependency once all targets have
  *	been found and their operator parsed. If the previous and new
  *	operators are incompatible, a major error is taken.
  *
@@ -937,7 +937,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
 		if (targets != NULL)
-		    Lst_ForEach(targets, ParseDoOp, &op);
+		    Lst_ForEachUntil(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -957,7 +957,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 		if (targets != NULL) {
 		    struct ParseLinkSrcArgs args = { gn, specType };
-		    Lst_ForEach(targets, ParseLinkSrc, &args);
+		    Lst_ForEachUntil(targets, ParseLinkSrc, &args);
 		}
 		return;
 	    }
@@ -1028,7 +1028,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	} else {
 	    if (targets != NULL) {
 	        struct ParseLinkSrcArgs args = { gn, specType };
-		Lst_ForEach(targets, ParseLinkSrc, &args);
+		Lst_ForEachUntil(targets, ParseLinkSrc, &args);
 	    }
 	}
 	break;
@@ -1069,7 +1069,7 @@ ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 /*-
  *-----------------------------------------------------------------------
  * ParseAddDir --
- *	Front-end for Dir_AddDir to make sure Lst_ForEach keeps going
+ *	Front-end for Dir_AddDir to make sure Lst_ForEachUntil keeps going
  *
  * Results:
  *	=== 0
@@ -1089,7 +1089,7 @@ ParseAddDir(void *path, void *name)
 /*-
  *-----------------------------------------------------------------------
  * ParseClearPath --
- *	Front-end for Dir_ClearPath to make sure Lst_ForEach keeps going
+ *	Front-end for Dir_ClearPath to make sure Lst_ForEachUntil keeps going
  *
  * Results:
  *	=== 0
@@ -1526,7 +1526,7 @@ ParseDoDependency(char *line)
      * used isn't consistent across all references.
      */
     if (targets != NULL)
-	Lst_ForEach(targets, ParseDoOp, &op);
+	Lst_ForEachUntil(targets, ParseDoOp, &op);
 
     /*
      * Onward to the sources.
@@ -1564,7 +1564,7 @@ ParseDoDependency(char *line)
 		break;
 	    case ExPath:
 		if (paths != NULL)
-		    Lst_ForEach(paths, ParseClearPath, NULL);
+		    Lst_ForEachUntil(paths, ParseClearPath, NULL);
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
@@ -1640,7 +1640,7 @@ ParseDoDependency(char *line)
 		    break;
 		case ExPath:
 		    if (paths != NULL)
-			Lst_ForEach(paths, ParseAddDir, line);
+			Lst_ForEachUntil(paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude(line);
@@ -1728,7 +1728,7 @@ ParseDoDependency(char *line)
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_ForEach(targets, ParseFindMain, NULL);
+	Lst_ForEachUntil(targets, ParseFindMain, NULL);
     }
 
 out:
@@ -2045,7 +2045,7 @@ ParseMaybeSubMake(const char *cmd)
 
 /*-
  * ParseAddCmd  --
- *	Lst_ForEach function to add a command line to all targets
+ *	Lst_ForEachUntil function to add a command line to all targets
  *
  * Input:
  *	gnp		the node to which the command is to be added
@@ -2879,7 +2879,7 @@ ParseFinishLine(void)
 {
     if (inLine) {
 	if (targets != NULL) {
-	    Lst_ForEach(targets, SuffEndTransform, NULL);
+	    Lst_ForEachUntil(targets, SuffEndTransform, NULL);
 	    Lst_Destroy(targets, ParseHasCommands);
 	}
 	targets = NULL;
@@ -2979,7 +2979,7 @@ Parse_File(const char *name, int fd)
 		     */
 		    if (targets) {
 			cp = bmake_strdup(cp);
-			Lst_ForEach(targets, ParseAddCmd, cp);
+			Lst_ForEachUntil(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
 			Lst_Append(targCmds, cp);
 #endif
