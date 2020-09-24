@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.69 2020/09/24 07:32:03 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.70 2020/09/24 08:23:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,37 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.69 2020/09/24 07:32:03 rillig Exp $");
-
-struct ListNode {
-    struct ListNode *prev;	/* previous element in list */
-    struct ListNode *next;	/* next in list */
-    uint8_t useCount;		/* Count of functions using the node.
-				 * node may not be deleted until count
-				 * goes to 0 */
-    Boolean deleted;		/* List node should be removed when done */
-    union {
-	void *datum;		/* datum associated with this element */
-	const GNode *gnode;	/* alias, just for debugging */
-	const char *str;	/* alias, just for debugging */
-    };
-};
-
-typedef enum {
-    Head, Middle, Tail, Unknown
-} Where;
-
-struct List {
-    ListNode *first;		/* first node in list */
-    ListNode *last;		/* last node in list */
-
-    /* fields for sequential access */
-    Boolean isOpen;		/* true if list has been Lst_Open'ed */
-    Where lastAccess;		/* Where in the list the last access was */
-    ListNode *curr;		/* current node, if open. NULL if
-				 * *just* opened */
-    ListNode *prev;		/* Previous node, if open. Used by Lst_Remove */
-};
+MAKE_RCSID("$NetBSD: lst.c,v 1.70 2020/09/24 08:23:29 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -76,8 +46,8 @@ static ListNode *
 LstNodeNew(void *datum)
 {
     ListNode *node = bmake_malloc(sizeof *node);
-    node->useCount = 0;
-    node->deleted = FALSE;
+    node->priv_useCount = 0;
+    node->priv_deleted = FALSE;
     node->datum = datum;
     return node;
 }
@@ -96,8 +66,8 @@ Lst_Init(void)
 
     list->first = NULL;
     list->last = NULL;
-    list->isOpen = FALSE;
-    list->lastAccess = Unknown;
+    list->priv_isOpen = FALSE;
+    list->priv_lastAccess = Unknown;
 
     return list;
 }
@@ -269,10 +239,10 @@ Lst_Remove(List *list, ListNode *node)
      * previous one was non-existent (prev == NULL), we set the
      * end to be Unknown, since it is.
      */
-    if (list->isOpen && list->curr == node) {
-	list->curr = list->prev;
-	if (list->curr == NULL) {
-	    list->lastAccess = Unknown;
+    if (list->priv_isOpen && list->priv_curr == node) {
+	list->priv_curr = list->priv_prev;
+	if (list->priv_curr == NULL) {
+	    list->priv_lastAccess = Unknown;
 	}
     }
 
@@ -280,10 +250,10 @@ Lst_Remove(List *list, ListNode *node)
      * note that the datum is unmolested. The caller must free it as
      * necessary and as expected.
      */
-    if (node->useCount == 0) {
+    if (node->priv_useCount == 0) {
 	free(node);
     } else {
-	node->deleted = TRUE;
+	node->priv_deleted = TRUE;
     }
 }
 
@@ -308,65 +278,8 @@ LstNode_SetNull(ListNode *node)
 
 
 /*
- * Node-specific functions
- */
-
-/* Return the first node from the given list, or NULL if the list is empty. */
-ListNode *
-Lst_First(List *list)
-{
-    assert(list != NULL);
-
-    return list->first;
-}
-
-/* Return the last node from the given list, or NULL if the list is empty. */
-ListNode *
-Lst_Last(List *list)
-{
-    assert(list != NULL);
-
-    return list->last;
-}
-
-/* Return the successor to the given node on its list, or NULL. */
-ListNode *
-LstNode_Next(ListNode *node)
-{
-    assert(node != NULL);
-
-    return node->next;
-}
-
-/* Return the predecessor to the given node on its list, or NULL. */
-ListNode *
-LstNode_Prev(ListNode *node)
-{
-    assert(node != NULL);
-    return node->prev;
-}
-
-/* Return the datum stored in the given node. */
-void *
-LstNode_Datum(ListNode *node)
-{
-    assert(node != NULL);
-    return node->datum;
-}
-
-
-/*
  * Functions for entire lists
  */
-
-/* Return TRUE if the given list is empty. */
-Boolean
-Lst_IsEmpty(List *list)
-{
-    assert(list != NULL);
-
-    return LstIsEmpty(list);
-}
 
 /* Return the first node from the list for which the match function returns
  * TRUE, or NULL if none of the nodes matched. */
@@ -447,9 +360,9 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	 */
 	Boolean done = next == NULL;
 
-	tln->useCount++;
+	tln->priv_useCount++;
 	result = (*proc)(tln->datum, procData);
-	tln->useCount--;
+	tln->priv_useCount--;
 
 	/*
 	 * Now check whether a node has been added.
@@ -461,7 +374,7 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	    done = 0;
 	}
 
-	if (tln->deleted) {
+	if (tln->priv_deleted) {
 	    free((char *)tln);
 	}
 	tln = next;
@@ -526,11 +439,11 @@ void
 Lst_Open(List *list)
 {
     assert(list != NULL);
-    assert(!list->isOpen);
+    assert(!list->priv_isOpen);
 
-    list->isOpen = TRUE;
-    list->lastAccess = LstIsEmpty(list) ? Head : Unknown;
-    list->curr = NULL;
+    list->priv_isOpen = TRUE;
+    list->priv_lastAccess = LstIsEmpty(list) ? Head : Unknown;
+    list->priv_curr = NULL;
 }
 
 /* Return the next node for the given list, or NULL if the end has been
@@ -541,37 +454,37 @@ Lst_Next(List *list)
     ListNode *node;
 
     assert(list != NULL);
-    assert(list->isOpen);
+    assert(list->priv_isOpen);
 
-    list->prev = list->curr;
+    list->priv_prev = list->priv_curr;
 
-    if (list->curr == NULL) {
-	if (list->lastAccess == Unknown) {
+    if (list->priv_curr == NULL) {
+	if (list->priv_lastAccess == Unknown) {
 	    /*
 	     * If we're just starting out, lastAccess will be Unknown.
 	     * Then we want to start this thing off in the right
 	     * direction -- at the start with lastAccess being Middle.
 	     */
-	    list->curr = node = list->first;
-	    list->lastAccess = Middle;
+	    list->priv_curr = node = list->first;
+	    list->priv_lastAccess = Middle;
 	} else {
 	    node = NULL;
-	    list->lastAccess = Tail;
+	    list->priv_lastAccess = Tail;
 	}
     } else {
-	node = list->curr->next;
-	list->curr = node;
+	node = list->priv_curr->next;
+	list->priv_curr = node;
 
 	if (node == list->first || node == NULL) {
 	    /*
 	     * If back at the front, then we've hit the end...
 	     */
-	    list->lastAccess = Tail;
+	    list->priv_lastAccess = Tail;
 	} else {
 	    /*
 	     * Reset to Middle if gone past first.
 	     */
-	    list->lastAccess = Middle;
+	    list->priv_lastAccess = Middle;
 	}
     }
 
@@ -583,10 +496,10 @@ void
 Lst_Close(List *list)
 {
     assert(list != NULL);
-    assert(list->isOpen);
+    assert(list->priv_isOpen);
 
-    list->isOpen = FALSE;
-    list->lastAccess = Unknown;
+    list->priv_isOpen = FALSE;
+    list->priv_lastAccess = Unknown;
 }
 
 
