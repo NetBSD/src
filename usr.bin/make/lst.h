@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.65 2020/09/24 07:32:03 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.66 2020/09/24 08:23:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,6 +86,36 @@ typedef	struct List	List;
 /* A single node in the doubly-linked list. */
 typedef	struct ListNode	ListNode;
 
+struct ListNode {
+    ListNode *prev;		/* previous element in list */
+    ListNode *next;		/* next in list */
+    uint8_t priv_useCount;	/* Count of functions using the node.
+				 * node may not be deleted until count
+				 * goes to 0 */
+    Boolean priv_deleted;	/* List node should be removed when done */
+    union {
+	void *datum;		/* datum associated with this element */
+	const struct GNode *priv_gnode; /* alias, just for debugging */
+	const char *priv_str;	/* alias, just for debugging */
+    };
+};
+
+typedef enum {
+    Head, Middle, Tail, Unknown
+} ListForEachUntilWhere;
+
+struct List {
+    ListNode *first;		/* first node in list */
+    ListNode *last;		/* last node in list */
+
+    /* fields for sequential access */
+    Boolean priv_isOpen;	/* true if list has been Lst_Open'ed */
+    ListForEachUntilWhere priv_lastAccess;
+    ListNode *priv_curr;	/* current node, if open. NULL if
+				 * *just* opened */
+    ListNode *priv_prev;	/* Previous node, if open. Used by Lst_Remove */
+};
+
 /* Copy a node, usually by allocating a copy of the given object.
  * For reference-counted objects, the original object may need to be
  * modified, therefore the parameter is not const. */
@@ -112,11 +142,14 @@ void Lst_Destroy(List *, LstFreeProc);
 
 /* Get information about a list */
 
-Boolean Lst_IsEmpty(List *);
-/* Return the first node of the list, or NULL. */
-ListNode *Lst_First(List *);
-/* Return the last node of the list, or NULL. */
-ListNode *Lst_Last(List *);
+static inline MAKE_ATTR_UNUSED Boolean
+Lst_IsEmpty(List *list) { return list->first == NULL; }
+/* Return the first node of the list, or NULL if the list is empty. */
+static inline MAKE_ATTR_UNUSED ListNode *
+Lst_First(List *list) { return list->first; }
+/* Return the last node of the list, or NULL if the list is empty. */
+static inline MAKE_ATTR_UNUSED ListNode *
+Lst_Last(List *list) { return list->last; }
 /* Find the first node for which the function returns TRUE, or NULL. */
 ListNode *Lst_Find(List *, LstFindProc, const void *);
 /* Find the first node for which the function returns TRUE, or NULL.
@@ -142,11 +175,14 @@ void Lst_MoveAll(List *, List *);
 /* Node-specific functions */
 
 /* Return the successor of the node, or NULL. */
-ListNode *LstNode_Next(ListNode *);
+static inline MAKE_ATTR_UNUSED ListNode *
+LstNode_Next(ListNode *node) { return node->next; }
 /* Return the predecessor of the node, or NULL. */
-ListNode *LstNode_Prev(ListNode *);
+static inline MAKE_ATTR_UNUSED ListNode *
+LstNode_Prev(ListNode *node) { return node->prev; }
 /* Return the datum of the node. Usually not NULL. */
-void *LstNode_Datum(ListNode *);
+static inline MAKE_ATTR_UNUSED void *
+LstNode_Datum(ListNode *node) { return node->datum; }
 /* Replace the value of the node. */
 void LstNode_Set(ListNode *, void *);
 /* Set the value of the node to NULL. Having NULL in a list is unusual. */
