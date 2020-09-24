@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.142 2020/09/24 07:34:35 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.143 2020/09/24 07:37:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.142 2020/09/24 07:34:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.143 2020/09/24 07:37:42 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -118,8 +118,6 @@ static GNodeList *toBeMade;	/* The current fringe of the graph. These
 
 static int MakeAddChild(void *, void *);
 static int MakeFindChild(void *, void *);
-static int MakeUnmark(void *, void *);
-static int MakeTimeStamp(void *, void *);
 static int MakeHandleUse(void *, void *);
 static Boolean MakeStartJobs(void);
 static int MakePrintStatus(void *, void *);
@@ -184,21 +182,17 @@ GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
  *	pgn		the current parent
  *	cgn		the child we've just examined
  *
- * Results:
- *	Always returns 0.
- *
  * Side Effects:
  *	The cmgn of the parent node will be changed if the mtime
  *	field of the child is greater than it.
  *-----------------------------------------------------------------------
  */
-int
+void
 Make_TimeStamp(GNode *pgn, GNode *cgn)
 {
     if (pgn->cmgn == NULL || cgn->mtime > pgn->cmgn->mtime) {
 	pgn->cmgn = cgn;
     }
-    return 0;
 }
 
 /*
@@ -207,10 +201,10 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
  *	cgn		the child we've just examined
  *
  */
-static int
+static void
 MakeTimeStamp(void *pgn, void *cgn)
 {
-    return Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
+    Make_TimeStamp(pgn, cgn);
 }
 
 /*-
@@ -368,7 +362,7 @@ Make_OODate(GNode *gn)
      * thinking they're out-of-date.
      */
     if (!oodate) {
-	Lst_ForEachUntil(gn->parents, MakeTimeStamp, gn);
+	Lst_ForEach(gn->parents, MakeTimeStamp, gn);
     }
 
     return oodate;
@@ -841,13 +835,12 @@ Make_Update(GNode *cgn)
     }
 }
 
-static int
+static void
 MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
 {
     GNode	*cgn = (GNode *)cgnp;
 
     cgn->type &= ~OP_MARK;
-    return 0;
 }
 
 /*-
@@ -957,7 +950,7 @@ Make_DoAllVar(GNode *gn)
     if (gn->flags & DONE_ALLSRC)
 	return;
 
-    Lst_ForEachUntil(gn->children, MakeUnmark, gn);
+    Lst_ForEach(gn->children, MakeUnmark, gn);
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
     if (!Var_Exists (OODATE, gn)) {
@@ -1322,7 +1315,7 @@ Make_ExpandUse(GNodeList *targs)
 
 	(void)Dir_MTime(gn, 0);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
-	Lst_ForEachUntil(gn->children, MakeUnmark, gn);
+	Lst_ForEach(gn->children, MakeUnmark, gn);
 	Lst_ForEachUntil(gn->children, MakeHandleUse, gn);
 
 	if ((gn->type & OP_MADE) == 0)

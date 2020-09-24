@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.145 2020/09/23 03:06:38 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.146 2020/09/24 07:37:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -535,7 +535,7 @@ extern int debug;
 
 #include "nonints.h"
 
-int Make_TimeStamp(GNode *, GNode *);
+void Make_TimeStamp(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
 void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);
