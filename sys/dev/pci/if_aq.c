@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.18 2020/09/24 05:09:46 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.19 2020/09/24 05:13:03 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.18 2020/09/24 05:09:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.19 2020/09/24 05:13:03 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -653,7 +653,7 @@ typedef struct aq_mailbox_header {
 	uint32_t version;
 	uint32_t transaction_id;
 	int32_t error;
-} __packed aq_mailbox_header_t;
+} __packed __aligned(4) aq_mailbox_header_t;
 
 typedef struct aq_hw_stats_s {
 	uint32_t uprc;
@@ -674,12 +674,12 @@ typedef struct aq_hw_stats_s {
 	uint32_t prc;
 	uint32_t dpc;	/* not exists in fw2x_msm_statistics */
 	uint32_t cprc;	/* not exists in fw2x_msm_statistics */
-} __packed aq_hw_stats_s_t;
+} __packed __aligned(4) aq_hw_stats_s_t;
 
 typedef struct fw1x_mailbox {
 	aq_mailbox_header_t header;
 	aq_hw_stats_s_t msm;
-} __packed fw1x_mailbox_t;
+} __packed __aligned(4) fw1x_mailbox_t;
 
 typedef struct fw2x_msm_statistics {
 	uint32_t uprc;
@@ -698,16 +698,16 @@ typedef struct fw2x_msm_statistics {
 	uint32_t ubtc;
 	uint32_t ptc;
 	uint32_t prc;
-} __packed fw2x_msm_statistics_t;
+} __packed __aligned(4) fw2x_msm_statistics_t;
 
 typedef struct fw2x_phy_cable_diag_data {
 	uint32_t lane_data[4];
-} __packed fw2x_phy_cable_diag_data_t;
+} __packed __aligned(4) fw2x_phy_cable_diag_data_t;
 
 typedef struct fw2x_capabilities {
 	uint32_t caps_lo;
 	uint32_t caps_hi;
-} __packed fw2x_capabilities_t;
+} __packed __aligned(4) fw2x_capabilities_t;
 
 typedef struct fw2x_mailbox {		/* struct fwHostInterface */
 	aq_mailbox_header_t header;
@@ -726,7 +726,7 @@ typedef struct fw2x_mailbox {		/* struct fwHostInterface */
 	fw2x_capabilities_t caps;
 
 	/* ... */
-} __packed fw2x_mailbox_t;
+} __packed __aligned(4) fw2x_mailbox_t;
 
 typedef enum aq_link_speed {
 	AQ_LINK_NONE	= 0,
@@ -768,7 +768,7 @@ enum aq_media_type {
 struct aq_rx_desc_read {
 	uint64_t buf_addr;
 	uint64_t hdr_addr;
-} __packed;
+} __packed __aligned(8);
 
 struct aq_rx_desc_wb {
 	uint32_t type;
@@ -814,12 +814,12 @@ struct aq_rx_desc_wb {
 	uint16_t pkt_len;
 	uint16_t next_desc_ptr;
 	uint16_t vlan;
-} __packed;
+} __packed __aligned(4);
 
 typedef union aq_rx_desc {
 	struct aq_rx_desc_read read;
 	struct aq_rx_desc_wb wb;
-} __packed aq_rx_desc_t;
+} __packed __aligned(8) aq_rx_desc_t;
 
 typedef struct aq_tx_desc {
 	uint64_t buf_addr;
@@ -844,7 +844,7 @@ typedef struct aq_tx_desc {
 #define AQ_TXDESC_CTL2_LEN		__BITS(31,14)
 #define AQ_TXDESC_CTL2_CTX_EN		__BIT(13)
 #define AQ_TXDESC_CTL2_CTX_IDX		__BIT(12)
-} __packed aq_tx_desc_t;
+} __packed __aligned(8) aq_tx_desc_t;
 
 struct aq_txring {
 	struct aq_softc *txr_sc;
