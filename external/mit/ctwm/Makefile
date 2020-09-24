@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2020/09/24 05:43:30 nia Exp $
+#	$NetBSD: Makefile,v 1.4 2020/09/24 06:52:48 nia Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
 .include <bsd.own.mk>
 
-SUBDIR=		bin etc libexec
+SUBDIR=		bin libexec
 
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=  cleandir
