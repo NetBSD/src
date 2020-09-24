@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.145 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.146 2020/09/24 07:49:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.145 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.146 2020/09/24 07:49:58 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -251,8 +251,6 @@ static Hash_Table mtimes;
 static Hash_Table lmtimes;	/* same as mtimes but for lstat */
 
 static void DirExpandInt(const char *, SearchPath *, StringList *);
-static int DirPrintWord(void *, void *);
-static int DirPrintDir(void *, void *);
 static char *DirLookup(CachedDir *, const char *, const char *, Boolean);
 static char *DirLookupSubdir(CachedDir *, const char *);
 static char *DirFindDot(Boolean, const char *, const char *);
@@ -758,14 +756,15 @@ DirExpandInt(const char *word, SearchPath *path, StringList *expansions)
     Lst_Close(path);
 }
 
-/* Print a word in the list of expansions.
- * Callback for Dir_Expand when DEBUG(DIR), via Lst_ForEachUntil. */
-static int
-DirPrintWord(void *word, void *dummy MAKE_ATTR_UNUSED)
+static void
+DirPrintExpansions(StringList *words)
 {
-    fprintf(debug_file, "%s ", (char *)word);
-
-    return 0;
+    StringListNode *node;
+    for (node = Lst_First(words); node != NULL; node = LstNode_Next(node)) {
+	const char *word = LstNode_Datum(node);
+	fprintf(debug_file, "%s ", word);
+    }
+    fprintf(debug_file, "\n");
 }
 
 /*-
@@ -878,10 +877,8 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	    DirExpandInt(word, path, expansions);
 	}
     }
-    if (DEBUG(DIR)) {
-	Lst_ForEachUntil(expansions, DirPrintWord, NULL);
-	fprintf(debug_file, "\n");
-    }
+    if (DEBUG(DIR))
+	DirPrintExpansions(expansions);
 }
 
 /*-
@@ -1752,16 +1749,12 @@ Dir_PrintDirectories(void)
     Lst_Close(openDirectories);
 }
 
-static int
-DirPrintDir(void *p, void *dummy MAKE_ATTR_UNUSED)
-{
-    const CachedDir *dir = p;
-    fprintf(debug_file, "%s ", dir->name);
-    return 0;
-}
-
 void
 Dir_PrintPath(SearchPath *path)
 {
-    Lst_ForEachUntil(path, DirPrintDir, NULL);
+    SearchPathNode *node;
+    for (node = Lst_First(path); node != NULL; node = LstNode_Next(node)) {
+	const CachedDir *dir = LstNode_Datum(node);
+	fprintf(debug_file, "%s ", dir->name);
+    }
 }
