@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/09/23 23:36:59 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/09/24 03:06:01 kamil Exp $
 
 NOCTF=
 NOMAN=
@@ -7,7 +7,10 @@ NOMAN=
 
 PROG=		gdbserver
 
-SERVER_SRCS=		server.cc
+SERVER_SRCS+=	ax.cc debug.cc dll.cc hostio.cc hostio-errno.cc inferiors.cc mem-break.cc notif.cc
+SERVER_SRCS+=	regcache.cc remote-utils.cc server.cc symbol.cc target.cc
+SERVER_SRCS+=	tdesc.cc tracepoint.cc utils.cc waitstatus.c # version.c
+
 NETBSD_SRCS=		netbsd-low.cc fork-child.cc fork-inferior.c netbsd-nat.c
 ARCH_SRCS=		netbsd-${MACHINE}-low.cc ${MACHINE}.c
 SRCS=		${SERVER_SRCS} ${NETBSD_SRCS} ${ARCH_SRCS}
@@ -30,25 +33,20 @@ CPPFLAGS+=	-I${.CURDIR} \
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
 
-LIBGDB!=	     cd ${.CURDIR}/../../lib/libgdb	   && ${PRINTOBJDIR}
 LIBBFD!=	     cd ${.CURDIR}/../../lib/libbfd	   && ${PRINTOBJDIR}
 LIBGNULIBDIR!=	     cd ${.CURDIR}/../../lib/libgnulib	   && ${PRINTOBJDIR}
 LIBGDBSUPPORTDIR!=   cd ${.CURDIR}/../../lib/libgdbsupport && ${PRINTOBJDIR}
 LIBIBERTYDIR!=	     cd ${.CURDIR}/../../lib/libiberty	   && ${PRINTOBJDIR}
 
-LDADD+= -L${LIBGDB} -lgdb \
-	-L${LIBGDBSUPPORTDIR} -lgdbsupport \
+LDADD+= -L${LIBGDBSUPPORTDIR} -lgdbsupport \
 	-L${LIBGNULIBDIR} -lgnulib \
-	-L${LIBBFD} -lbfd \
 	-L${LIBIBERTYDIR} -liberty \
-	-lintl -lz
+	-lintl
 
-DPADD+=	${LIBGDB}/libgdb.a \
-	${LIBGDBSUPPORTDIR}/libgdbsupport.a \
+DPADD+=	${LIBGDBSUPPORTDIR}/libgdbsupport.a \
 	${LIBGNULIBDIR}/libgnulib.a \
-	${LIBBFD}/libbfd.a \
 	${LIBIBERTYDIR}/libiberty.a \
-	${LIBINTL} ${LIBZ}
+	${LIBINTL}
 
 .include <bsd.prog.mk>
 
@@ -58,4 +56,5 @@ HOST_CC:=		${HOST_CXX}
 CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector -pthread
 
-.PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch
+.PATH: ${DIST}/gdbserver ${DIST}/gdb/nat ${DIST}/gdb/arch ${DIST}/gdb/target \
+	${DIST}/../lib/libgdbsupport/arch/${GDB_MACHINE_ARCH}
