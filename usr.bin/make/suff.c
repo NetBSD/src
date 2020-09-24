@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.159 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.160 2020/09/24 08:02:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.159 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.160 2020/09/24 08:02:32 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -219,24 +219,8 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 				 * single-suffix transformation rules */
 
 
-static void SuffUnRef(void *, void *);
-static void SuffFree(void *);
-static void SuffInsert(SuffList *, Suff *);
-static void SuffRemove(SuffList *, Suff *);
-static Boolean SuffParseTransform(char *, Suff **, Suff **);
-static int SuffRebuildGraph(void *, void *);
-static int SuffScanTargets(void *, void *);
-static int SuffAddSrc(void *, void *);
-static void SuffAddLevel(SrcList *, Src *);
-static void SuffExpandChildren(GNodeListNode *, GNode *);
-static void SuffExpandWildcards(GNodeListNode *, GNode *);
-static Boolean SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
 static void SuffFindDeps(GNode *, SrcList *);
-static void SuffFindArchiveDeps(GNode *, SrcList *);
-static void SuffFindNormalDeps(GNode *, SrcList *);
-static int SuffPrintName(void *, void *);
-static int SuffPrintSuff(void *, void *);
-static int SuffPrintTrans(void *, void *);
+static void SuffExpandWildcards(GNodeListNode *, GNode *);
 
 	/*************** Lst Predicates ****************/
 /*-
