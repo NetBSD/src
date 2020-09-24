@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.68 2020/09/24 07:23:26 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.69 2020/09/24 07:32:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.68 2020/09/24 07:23:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.69 2020/09/24 07:32:03 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */
@@ -413,6 +413,14 @@ Lst_FindDatum(List *list, const void *datum)
     }
 
     return NULL;
+}
+
+void
+Lst_ForEach(List *list, LstActionProc proc, void *procData)
+{
+    ListNode *node;
+    for (node = list->first; node != NULL; node = node->next)
+        proc(node->datum, procData);
 }
 
 /* Apply the given function to each element of the given list. The function
