@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.140 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.141 2020/09/24 07:32:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.140 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.141 2020/09/24 07:32:03 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -842,6 +842,15 @@ Make_Update(GNode *cgn)
     }
 }
 
+static int
+MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
+{
+    GNode	*cgn = (GNode *)cgnp;
+
+    cgn->type &= ~OP_MARK;
+    return 0;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * MakeAddAllSrc --
@@ -857,28 +866,17 @@ Make_Update(GNode *cgn)
  *	variable if it was actually made (since .JOIN nodes don't have
  *	modification times, the comparison is rather unfair...)..
  *
+ * Input:
+ *	cgnp		The child to add
+ *	pgnp		The parent to whose ALLSRC variable it should
+ *			be added
+ *
  * Results:
  *	Always returns 0
  *
  * Side Effects:
  *	The ALLSRC variable for the given node is extended.
  *-----------------------------------------------------------------------
- */
-static int
-MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
-{
-    GNode	*cgn = (GNode *)cgnp;
-
-    cgn->type &= ~OP_MARK;
-    return 0;
-}
-
-/*
- * Input:
- *	cgnp		The child to add
- *	pgnp		The parent to whose ALLSRC variable it should
- *			be added
- *
  */
 static int
 MakeAddAllSrc(void *cgnp, void *pgnp)
