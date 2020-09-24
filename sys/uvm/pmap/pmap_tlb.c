@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.40 2020/08/22 14:51:44 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.41 2020/09/24 06:45:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.40 2020/08/22 14:51:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.41 2020/09/24 06:45:58 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -757,8 +757,8 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 		    (flags & PMAP_TLB_INSERT) != 0);
 		pmap_tlb_asid_check();
 		UVMHIST_LOG(maphist,
-		     "   %jd <-- tlb_update_addr(%#jx, %#jx, %#jx, ...)",
-		     rv, va, pai->pai_asid, pte_value(pte));
+		    "   %jd <-- tlb_update_addr(%#jx, %#jx, %#jx, ...)",
+		    rv, va, pai->pai_asid, pte_value(pte));
 		KASSERTMSG((flags & PMAP_TLB_INSERT) == 0 || rv == 1,
 		    "pmap %p (asid %u) va %#"PRIxVADDR" pte %#"PRIxPTE" rv %d",
 		    pm, pai->pai_asid, va, pte_value(pte), rv);
