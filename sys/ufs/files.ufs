@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.48 2020/05/16 18:31:53 christos Exp $
+#	$NetBSD: files.ufs,v 1.49 2020/09/24 17:20:53 riastradh Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -68,7 +68,7 @@ file	ufs/lfs/lfs_alloc.c		lfs
 file	ufs/lfs/lfs_balloc.c		lfs
 file	ufs/lfs/lfs_bio.c		lfs
 file	ufs/lfs/lfs_cksum.c		lfs
-file	ufs/lfs/lfs_debug.c		lfs
+file	ufs/lfs/lfs_debug.c		lfs & debug
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
 file	ufs/lfs/lfs_pages.c		lfs
