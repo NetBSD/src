@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.6 2020/09/23 09:56:33 mrg Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.7 2020/09/24 03:17:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.6 2020/09/23 09:56:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.7 2020/09/24 03:17:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -291,10 +291,6 @@ stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
 		[_R_A0] = a0, [_R_A1] = a1, [_R_A2] = a2, [_R_A3] = a3,
 		[_R_RA] = ra,
 	};
-#ifdef DDB
-	db_expr_t diff;
-	db_sym_t sym;
-#endif
 
 /* Jump here when done with a frame, to start a new one */
 loop:
@@ -322,8 +318,11 @@ loop:
 		goto done;
 	}
 
-#ifdef DDB
+#if defined(DDB) && defined(_KERNEL)
 	if (ksyms_available()) {
+		db_expr_t diff;
+		db_sym_t sym;
+
 		/*
 		 * Check the kernel symbol table to see the beginning of
 		 * the current subroutine.
@@ -348,7 +347,7 @@ loop:
 		}
 		va = pc - diff;
 	} else {
-#endif /* DDB */
+#endif /* DDB && _KERNEL */
 		/*
 		 * Find the beginning of the current subroutine by
 		 * scanning backwards from the current PC for the end
@@ -362,8 +361,10 @@ loop:
 		va = pc;
 		do {
 			va -= sizeof(int);
+#ifdef _KERNEL /* XXX crash */
 			if (va <= (vaddr_t)verylocore)
 				goto finish;
+#endif
 			if (!kdbpeek(va, &instr))
 				return;
 			if (instr == MIPS_ERET)
@@ -380,9 +381,9 @@ mips3_eret:
 				return;
 			va += sizeof(int);
 		}
-#ifdef DDB
+#if defined(DDB) && defined(_KERNEL)
 	}
-#endif /* DDB */
+#endif /* DDB && _KERNEL */
 	subr = va;
 
 	/* scan forwards to find stack size and any saved registers */
