@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.149 2020/09/23 03:06:38 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.150 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.149 2020/09/23 03:06:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.150 2020/09/24 07:11:29 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -512,7 +512,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEach(gn->children, CompatMake, gn);
+	Lst_ForEachUntil(gn->children, CompatMake, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
@@ -582,7 +582,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 		    meta_job_start(NULL, gn);
 		}
 #endif
-		Lst_ForEach(gn->commands, CompatRunCommand, gn);
+		Lst_ForEachUntil(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch(gn, (gn->type & OP_SILENT) != 0);
@@ -652,7 +652,7 @@ Compat_Make(GNode *gn, GNode *pgn)
     }
 
 cohorts:
-    Lst_ForEach(gn->cohorts, CompatMake, pgn);
+    Lst_ForEachUntil(gn->cohorts, CompatMake, pgn);
     return 0;
 }
 
