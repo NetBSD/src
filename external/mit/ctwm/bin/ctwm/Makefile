@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/09/24 05:43:29 nia Exp $
+#	$NetBSD: Makefile,v 1.7 2020/09/24 06:52:48 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -44,7 +44,9 @@ FILES=			3D_Expand15.xpm 3D_Iconify15.xpm 3D_Lightning15.xpm \
 			xedit.xpm xftp.xpm xgopher.xpm xgrab.xpm xhpcalc.xpm \
 			xirc.xpm xmail.xpm xman.xpm xmosaic.xpm xnomail.xpm \
 			xrn-compose.xpm xrn.goodnews.xpm xrn.nonews.xpm xrn.xpm \
-			xterm.xpm
+			xterm.xpm system.ctwmrc
+
+FILESDIR_system.ctwmrc = ${CTWMCONFIGDIR}
 
 LDADD+=	-lXpm  -lXmu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXPM} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
