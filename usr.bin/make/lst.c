@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.66 2020/09/24 06:45:59 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.67 2020/09/24 07:11:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.66 2020/09/24 06:45:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.67 2020/09/24 07:11:29 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */
@@ -415,13 +415,13 @@ Lst_FindDatum(List *list, const void *datum)
     return NULL;
 }
 
-static int Lst_ForEachFrom(List *, ListNode *, LstActionProc, void *);
+static int Lst_ForEachFrom(List *, ListNode *, LstActionUntilProc, void *);
 
 /* Apply the given function to each element of the given list. The function
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
-Lst_ForEach(List *list, LstActionProc proc, void *procData)
+Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 {
     if (LstIsEmpty(list))
 	return 0;		/* XXX: Document what this value means. */
@@ -433,7 +433,7 @@ Lst_ForEach(List *list, LstActionProc proc, void *procData)
  * and non-zero if it should abort. */
 int
 Lst_ForEachFrom(List *list, ListNode *node,
-		 LstActionProc proc, void *procData)
+		 LstActionUntilProc proc, void *procData)
 {
     ListNode *tln = node;
     ListNode *next;

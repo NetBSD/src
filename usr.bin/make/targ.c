@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.91 2020/09/24 06:45:59 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.92 2020/09/24 07:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.91 2020/09/24 06:45:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.92 2020/09/24 07:11:29 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -395,7 +395,7 @@ TargPrintCmd(void *cmd, void *dummy MAKE_ATTR_UNUSED)
 void
 Targ_PrintCmds(GNode *gn)
 {
-    Lst_ForEach(gn->commands, TargPrintCmd, NULL);
+    Lst_ForEachUntil(gn->commands, TargPrintCmd, NULL);
 }
 
 /* Format a modification time in some reasonable way and return it.
@@ -521,7 +521,7 @@ PrintNode(void *gnp, void *passp)
 	Targ_PrintCmds(gn);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach(gn->cohorts, PrintNode, passp);
+	    Lst_ForEachUntil(gn->cohorts, PrintNode, passp);
 	}
     }
     return 0;
@@ -537,7 +537,7 @@ Targ_PrintNode(GNode *gn, int pass)
 void
 Targ_PrintNodes(GNodeList *gnodes, int pass)
 {
-    Lst_ForEach(gnodes, PrintNode, &pass);
+    Lst_ForEachUntil(gnodes, PrintNode, &pass);
 }
 
 /* Print only those targets that are just a source.
@@ -566,10 +566,10 @@ void
 Targ_PrintGraph(int pass)
 {
     fprintf(debug_file, "#*** Input graph:\n");
-    Lst_ForEach(allTargets, PrintNode, &pass);
+    Lst_ForEachUntil(allTargets, PrintNode, &pass);
     fprintf(debug_file, "\n\n");
     fprintf(debug_file, "#\n#   Files that are only sources:\n");
-    Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
+    Lst_ForEachUntil(allTargets, TargPrintOnlySrc, NULL);
     fprintf(debug_file, "#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
     fprintf(debug_file, "#*** Command-line Variables:\n");
