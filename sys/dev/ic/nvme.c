@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.50 2020/09/22 11:53:10 kardel Exp $	*/
+/*	$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.50 2020/09/22 11:53:10 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1624,8 +1624,8 @@ nvme_set_number_of_queues(struct nvme_softc *sc, u_int nq, u_int *ncqa,
 
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_SET_FEATURES;
-	htolem32(&pt.cmd.cdw10, NVM_FEATURE_NUMBER_OF_QUEUES);
-	htolem32(&pt.cmd.cdw11, ((nq - 1) << 16) | (nq - 1));
+	pt.cmd.cdw10 = NVM_FEATURE_NUMBER_OF_QUEUES;
+	pt.cmd.cdw11 = ((nq - 1) << 16) | (nq - 1);
 
 	memset(&state, 0, sizeof(state));
 	state.pt = &pt;
