@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.148 2020/09/23 07:54:08 rillig Exp $
+# $NetBSD: Makefile,v 1.149 2020/09/25 05:56:59 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -347,6 +347,7 @@ TESTS+=		varname-makeflags
 TESTS+=		varname-pwd
 TESTS+=		varname-vpath
 TESTS+=		varparse-dynamic
+TESTS+=		varparse-undef-partial
 TESTS+=		varquote
 TESTS+=		varshell
 
