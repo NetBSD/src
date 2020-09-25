@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.149 2020/09/25 15:40:06 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.150 2020/09/25 15:54:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.149 2020/09/25 15:40:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.150 2020/09/25 15:54:50 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -138,7 +138,7 @@ typedef enum {
     TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
 
-typedef struct {
+typedef struct CondParser {
     const struct If *if_info;	/* Info for current statement */
     const char *p;		/* The remaining condition to parse */
     Token curr;			/* Single push-back token used in parsing */
