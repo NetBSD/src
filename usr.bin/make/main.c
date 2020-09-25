@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.343 2020/09/25 19:24:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.344 2020/09/25 19:40:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.343 2020/09/25 19:24:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.344 2020/09/25 19:40:23 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -223,12 +223,51 @@ explode(const char *flags)
 }
 
 static void
+parse_debug_option_F(const char *modules)
+{
+    const char *mode;
+    size_t len;
+    char *fname;
+
+    if (debug_file != stdout && debug_file != stderr)
+	fclose(debug_file);
+
+    if (*modules == '+') {
+	modules++;
+	mode = "a";
+    } else
+	mode = "w";
+
+    if (strcmp(modules, "stdout") == 0) {
+	debug_file = stdout;
+	return;
+    }
+    if (strcmp(modules, "stderr") == 0) {
+	debug_file = stderr;
+	return;
+    }
+
+    len = strlen(modules);
+    fname = bmake_malloc(len + 20);
+    memcpy(fname, modules, len + 1);
+
+    /* Let the filename be modified by the pid */
+    if (strcmp(fname + len - 3, ".%d") == 0)
+	snprintf(fname + len - 2, 20, "%d", getpid());
+
+    debug_file = fopen(fname, mode);
+    if (!debug_file) {
+	fprintf(stderr, "Cannot open debug file %s\n",
+		fname);
+	usage();
+    }
+    free(fname);
+}
+
+static void
 parse_debug_options(const char *argvalue)
 {
 	const char *modules;
-	const char *mode;
-	char *fname;
-	int len;
 
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
@@ -307,34 +346,7 @@ parse_debug_options(const char *argvalue)
 			debug |= DEBUG_SHELL;
 			break;
 		case 'F':
-			if (debug_file != stdout && debug_file != stderr)
-				fclose(debug_file);
-			if (*++modules == '+') {
-				modules++;
-				mode = "a";
-			} else
-				mode = "w";
-			if (strcmp(modules, "stdout") == 0) {
-				debug_file = stdout;
-				goto debug_setbuf;
-			}
-			if (strcmp(modules, "stderr") == 0) {
-				debug_file = stderr;
-				goto debug_setbuf;
-			}
-			len = strlen(modules);
-			fname = bmake_malloc(len + 20);
-			memcpy(fname, modules, len + 1);
-			/* Let the filename be modified by the pid */
-			if (strcmp(fname + len - 3, ".%d") == 0)
-				snprintf(fname + len - 2, 20, "%d", getpid());
-			debug_file = fopen(fname, mode);
-			if (!debug_file) {
-				fprintf(stderr, "Cannot open debug file %s\n",
-				    fname);
-				usage();
-			}
-			free(fname);
+			parse_debug_option_F(modules + 1);
 			goto debug_setbuf;
 		default:
 			(void)fprintf(stderr,
