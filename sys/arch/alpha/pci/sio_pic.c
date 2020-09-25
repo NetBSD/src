@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.44 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.45 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,12 +59,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.44 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.45 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 
 #include <machine/intr.h>
@@ -444,29 +445,38 @@ sio_intr_establish(void *v, int irq, int type, int level, int flags,
 	if (irq > ICU_LEN || type == IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
 
-	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level,
+	cookie = alpha_shared_intr_alloc_intrhand(sio_intr, irq, type, level,
 	    flags, fn, arg, "isa irq");
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(sio_intr, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(sio_intr, cookie, "isa irq")) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(sio_intr, irq)) {
 		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
 		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
 	}
 
-	return (cookie);
+	mutex_exit(&cpu_lock);
+
+	return cookie;
 }
 
 void
 sio_intr_disestablish(void *v, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
-	int s, ist, irq = ih->ih_num;
+	int ist, irq = ih->ih_num;
 
-	s = splhigh();
-
-	/* Remove it from the link. */
-	alpha_shared_intr_disestablish(sio_intr, cookie, "isa irq");
+	mutex_enter(&cpu_lock);
 
 	/*
 	 * Decide if we should disable the interrupt.  We must ensure
@@ -475,7 +485,7 @@ sio_intr_disestablish(void *v, void *cookie)
 	 *	- An initially-enabled interrupt is never disabled.
 	 *	- An initially-LT interrupt is never untyped.
 	 */
-	if (alpha_shared_intr_isactive(sio_intr, irq) == 0) {
+	if (alpha_shared_intr_firstactive(sio_intr, irq)) {
 		/*
 		 * IRQs 0, 1, 8, and 13 must always be edge-triggered
 		 * (see setup).
@@ -503,7 +513,12 @@ sio_intr_disestablish(void *v, void *cookie)
 		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
-	splx(s);
+	/* Remove it from the link. */
+	alpha_shared_intr_unlink(sio_intr, cookie, "isa irq");
+
+	mutex_exit(&cpu_lock);
+
+	alpha_shared_intr_free_intrhand(cookie);
 }
 
 const char *
