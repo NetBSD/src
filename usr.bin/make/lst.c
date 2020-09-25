@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.70 2020/09/24 08:23:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.71 2020/09/25 04:18:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -32,11 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#include <stdint.h>
-
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.70 2020/09/24 08:23:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.71 2020/09/25 04:18:11 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
