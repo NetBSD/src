@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.151 2020/09/25 20:11:06 rillig Exp $
+# $NetBSD: Makefile,v 1.152 2020/09/25 23:24:49 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -74,6 +74,7 @@ TESTS+=		counter
 TESTS+=		counter-append
 TESTS+=		dep
 TESTS+=		dep-colon
+TESTS+=		dep-colon-bug-cross-file
 TESTS+=		dep-double-colon
 TESTS+=		dep-exclam
 TESTS+=		dep-none
