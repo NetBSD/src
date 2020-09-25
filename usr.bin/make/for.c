@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.85 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.86 2020/09/25 15:54:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.85 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.86 2020/09/25 15:54:50 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -73,7 +73,7 @@ static int forLevel = 0;	/* Nesting level */
 /*
  * State of a for loop.
  */
-typedef struct {
+typedef struct For {
     Buffer buf;			/* Body of loop */
     strlist_t vars;		/* Iteration variables */
     strlist_t items;		/* Substitution items */

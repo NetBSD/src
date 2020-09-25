@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.160 2020/09/24 08:02:32 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.161 2020/09/25 15:54:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.160 2020/09/24 08:02:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.161 2020/09/25 15:54:51 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -203,12 +203,13 @@ typedef struct _Src {
  * A structure for passing more than one argument to the Lst-library-invoked
  * function...
  */
-typedef struct {
+typedef struct LstSrc {
     SrcList *l;
     Src *s;
 } LstSrc;
 
-typedef struct {
+/* XXX: Name doesn't match content */
+typedef struct GNodeSuff {
     GNode	  **gnp;
     Suff	   *s;
     Boolean	    r;
@@ -250,10 +251,10 @@ SuffStrIsPrefix(const char *pref, const char *str)
     return *pref ? NULL : str;
 }
 
-typedef struct {
+struct SuffSuffGetSuffixArgs {
     char	*ename;		/* The end of the name */
     int		 len;		/* Length of the name */
-} SuffSuffGetSuffixArgs;
+};
 
 /* See if suff is a suffix of str. str->ename should point to THE END
  * of the string to check. (THE END == the null byte)
@@ -267,7 +268,7 @@ typedef struct {
  *	it is.
  */
 static char *
-SuffSuffGetSuffix(const Suff *s, const SuffSuffGetSuffixArgs *str)
+SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
 {
     char  *p1;	    	/* Pointer into suffix name */
     char  *p2;	    	/* Pointer into string being examined */
@@ -668,7 +669,7 @@ SuffRebuildGraph(void *transformp, void *sp)
     Suff    	*s = (Suff *)sp;
     char 	*cp;
     Suff  	*s2;
-    SuffSuffGetSuffixArgs sd;
+    struct SuffSuffGetSuffixArgs sd;
 
     /*
      * First see if it is a transformation from this suffix.
@@ -1443,7 +1444,7 @@ Suff_FindPath(GNode* gn)
     Suff *suff = gn->suffix;
 
     if (suff == NULL) {
-	SuffSuffGetSuffixArgs sd;   /* Search string data */
+	struct SuffSuffGetSuffixArgs sd;   /* Search string data */
 	SuffListNode *ln;
 	sd.len = strlen(gn->name);
 	sd.ename = gn->name + sd.len;
@@ -1649,7 +1650,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	 * through the entire list, we just look at suffixes to which the
 	 * member's suffix may be transformed...
 	 */
-	SuffSuffGetSuffixArgs sd;	/* Search string data */
+	struct SuffSuffGetSuffixArgs sd;	/* Search string data */
 
 	/*
 	 * Use first matching suffix...
@@ -1715,7 +1716,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     Src 	*src;	    /* General Src pointer */
     char    	*pref;	    /* Prefix to use */
     Src	    	*targ;	    /* General Src target pointer */
-    SuffSuffGetSuffixArgs sd; /* Search string data */
+    struct SuffSuffGetSuffixArgs sd; /* Search string data */
 
 
     sd.len = strlen(gn->name);

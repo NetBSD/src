@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.540 2020/09/25 14:10:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.541 2020/09/25 15:54:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.540 2020/09/25 14:10:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.541 2020/09/25 15:54:51 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1004,7 +1004,7 @@ Var_Value(const char *name, GNode *ctxt, char **freeIt)
 
 
 /* SepBuf is a string being built from "words", interleaved with separators. */
-typedef struct {
+typedef struct SepBuf {
     Buffer buf;
     Boolean needSep;
     char sep;			/* usually ' ', but see the :ts modifier */
@@ -1191,17 +1191,17 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
     return w;
 }
 
-typedef struct {
+struct ModifyWord_SYSVSubstArgs {
     GNode *ctx;
     const char *lhs;
     const char *rhs;
-} ModifyWord_SYSVSubstArgs;
+};
 
 /* Callback for ModifyWords to implement the :%.from=%.to modifier. */
 static void
 ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 {
-    const ModifyWord_SYSVSubstArgs *args = data;
+    const struct ModifyWord_SYSVSubstArgs *args = data;
     char *rhs_expanded;
     const char *rhs;
     const char *percent;
@@ -1239,14 +1239,14 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 #endif
 
 
-typedef struct {
+struct ModifyWord_SubstArgs {
     const char	*lhs;
     size_t	lhsLen;
     const char	*rhs;
     size_t	rhsLen;
     VarPatternFlags pflags;
     Boolean	matched;
-} ModifyWord_SubstArgs;
+};
 
 /* Callback for ModifyWords to implement the :S,from,to, modifier.
  * Perform a string substitution on the given word. */
@@ -1254,7 +1254,7 @@ static void
 ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 {
     size_t wordLen = strlen(word);
-    ModifyWord_SubstArgs *args = data;
+    struct ModifyWord_SubstArgs *args = data;
     const char *match;
 
     if ((args->pflags & VARP_SUB_ONE) && args->matched)
@@ -1324,20 +1324,20 @@ VarREError(int reerr, regex_t *pat, const char *str)
     free(errbuf);
 }
 
-typedef struct {
+struct ModifyWord_SubstRegexArgs {
     regex_t	   re;
     size_t	   nsub;
     char 	  *replace;
     VarPatternFlags pflags;
     Boolean	   matched;
-} ModifyWord_SubstRegexArgs;
+};
 
 /* Callback for ModifyWords to implement the :C/from/to/ modifier.
  * Perform a regex substitution on the given word. */
 static void
 ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 {
-    ModifyWord_SubstRegexArgs *args = data;
+    struct ModifyWord_SubstRegexArgs *args = data;
     int xrv;
     const char *wp = word;
     char *rp;
@@ -1413,18 +1413,18 @@ tryagain:
 #endif
 
 
-typedef struct {
+struct ModifyWord_LoopArgs {
     GNode	*ctx;
     char	*tvar;		/* name of temporary variable */
     char	*str;		/* string to expand */
     VarEvalFlags eflags;
-} ModifyWord_LoopArgs;
+};
 
 /* Callback for ModifyWords to implement the :@var@...@ modifier of ODE make. */
 static void
 ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 {
-    const ModifyWord_LoopArgs *args;
+    const struct ModifyWord_LoopArgs *args;
     char *s;
 
     if (word[0] == '\0')
@@ -1784,7 +1784,7 @@ ENUM_FLAGS_RTTI_2(VarExprFlags,
 		  VEF_UNDEF, VEF_DEF);
 
 
-typedef struct {
+typedef struct ApplyModifiersState {
     const char startc;		/* '\0' or '{' or '(' */
     const char endc;		/* '\0' or '}' or ')' */
     Var * const v;
@@ -1843,7 +1843,8 @@ ParseModifierPart(
     VarPatternFlags *out_pflags,/* For the first part of the :S modifier,
 				 * sets the VARP_ANCHOR_END flag if the last
 				 * character of the pattern is a $. */
-    ModifyWord_SubstArgs *subst	/* For the second part of the :S modifier,
+    struct ModifyWord_SubstArgs *subst
+				/* For the second part of the :S modifier,
 				 * allow ampersands to be escaped and replace
 				 * unescaped ampersands with subst->lhs. */
 ) {
@@ -1977,7 +1978,7 @@ ModMatchEq(const char *mod, const char *modname, char endc)
 static ApplyModifierResult
 ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 {
-    ModifyWord_LoopArgs args;
+    struct ModifyWord_LoopArgs args;
     char prev_sep;
     VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
     VarParseResult res;
@@ -2302,7 +2303,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 {
-    ModifyWord_SubstArgs args;
+    struct ModifyWord_SubstArgs args;
     char *lhs, *rhs;
     Boolean oneBigWord;
     VarParseResult res;
@@ -2371,7 +2372,7 @@ static ApplyModifierResult
 ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 {
     char *re;
-    ModifyWord_SubstRegexArgs args;
+    struct ModifyWord_SubstRegexArgs args;
     Boolean oneBigWord;
     int error;
     VarParseResult res;
@@ -2964,7 +2965,7 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
     if (lhs[0] == '\0' && st->val[0] == '\0') {
 	st->newVal = st->val;	/* special case */
     } else {
-	ModifyWord_SYSVSubstArgs args = {st->ctxt, lhs, rhs};
+	struct ModifyWord_SYSVSubstArgs args = {st->ctxt, lhs, rhs};
 	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 				 ModifyWord_SYSVSubst, &args);
     }

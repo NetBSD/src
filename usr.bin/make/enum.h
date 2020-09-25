@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.11 2020/09/22 06:13:38 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.12 2020/09/25 15:54:50 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -34,7 +34,7 @@
 
 #include <stddef.h>
 
-typedef struct {
+typedef struct EnumToStringSpec {
 	int es_value;
 	const char *es_name;
 } EnumToStringSpec;

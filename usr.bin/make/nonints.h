@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.127 2020/09/23 03:06:38 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.128 2020/09/25 15:54:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@ void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *)
 GNodeList *Parse_MainName(void);
 
 /* str.c */
-typedef struct {
+typedef struct Words {
     char **words;
     size_t len;
     void *freeIt;

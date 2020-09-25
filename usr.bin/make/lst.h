@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.67 2020/09/25 04:18:11 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.68 2020/09/25 15:54:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -218,7 +218,7 @@ void *Lst_Dequeue(List *);
 
 /* A stack is a very simple collection of items that only allows access to the
  * top-most item. */
-typedef struct {
+typedef struct Stack {
     void **items;
     size_t len;
     size_t cap;
