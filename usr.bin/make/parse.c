@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.329 2020/09/25 23:35:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.330 2020/09/25 23:39:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.329 2020/09/25 23:35:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.330 2020/09/25 23:39:51 rillig Exp $");
 
 /* types and constants */
 
@@ -231,9 +231,6 @@ static StringList *targCmds;
 static GNode	*predecessor;
 
 /* parser state */
-
-/* true if currently in a dependency line or its commands */
-static Boolean inLine;
 
 /* number of fatal errors */
 static int fatals = 0;
@@ -2849,14 +2846,11 @@ SuffEndTransform(void *target, void *unused MAKE_ATTR_UNUSED)
 static void
 FinishDependencyGroup(void)
 {
-    if (inLine) {
-	if (targets != NULL) {
-	    Lst_ForEachUntil(targets, SuffEndTransform, NULL);
-	    Lst_Destroy(targets, ParseHasCommands);
-	}
-	targets = NULL;
-	inLine = FALSE;
+    if (targets != NULL) {
+	Lst_ForEachUntil(targets, SuffEndTransform, NULL);
+	Lst_Destroy(targets, ParseHasCommands);
     }
+    targets = NULL;
 }
 
 /* Add the command to each target from the current dependency spec. */
@@ -2869,10 +2863,10 @@ ParseLine_ShellCommand(char *cp)
     if (*cp == '\0')
 	return;			/* skip empty commands */
 
-    if (!inLine)
+    if (targets == NULL) {
 	Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", cp);
-    if (targets == NULL)
 	return;
+    }
 
     {
 	char *cmd = bmake_strdup(cp);
@@ -2904,7 +2898,7 @@ Parse_File(const char *name, int fd)
 
     lf = loadfile(name, fd);
 
-    inLine = FALSE;
+    assert(targets == NULL);
     fatals = 0;
 
     if (name == NULL)
@@ -3012,7 +3006,7 @@ Parse_File(const char *name, int fd)
 		    cp++;
 		}
 		if (*cp == '\0') {
-		    if (inLine) {
+		    if (targets == NULL) {
 			Parse_Error(PARSE_WARNING,
 				     "Shell command needs a leading tab");
 			goto shellCommand;
@@ -3094,14 +3088,10 @@ Parse_File(const char *name, int fd)
 		/* TODO: handle errors */
 	    }
 
-	    /*
-	     * Need a list for the target nodes
-	     */
+	    /* Need a fresh list for the target nodes */
 	    if (targets != NULL)
 		Lst_Free(targets);
-
 	    targets = Lst_Init();
-	    inLine = TRUE;
 
 	    ParseDoDependency(line);
 	    free(line);
