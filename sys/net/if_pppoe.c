@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.151 2020/09/18 09:53:50 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.152 2020/09/25 06:12:33 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.151 2020/09/18 09:53:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.152 2020/09/25 06:12:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1248,6 +1248,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				free(sc->sc_concentrator_name, M_DEVBUF);
 			sc->sc_concentrator_name = b;
 			PPPOE_UNLOCK(sc);
+		} else {
+			if (sc->sc_concentrator_name)
+				free(sc->sc_concentrator_name, M_DEVBUF);
+			sc->sc_concentrator_name = NULL;
 		}
 		if (parms->service_name != NULL) {
 			size_t s;
@@ -1271,6 +1275,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				free(sc->sc_service_name, M_DEVBUF);
 			sc->sc_service_name = b;
 			PPPOE_UNLOCK(sc);
+		} else {
+			if (sc->sc_service_name)
+				free(sc->sc_service_name, M_DEVBUF);
+			sc->sc_service_name = NULL;
 		}
 		return 0;
 	}
