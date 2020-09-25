@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.324 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.325 2020/09/25 20:48:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.324 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.325 2020/09/25 20:48:23 rillig Exp $");
 
 /* types and constants */
 
@@ -1923,11 +1923,11 @@ Parse_DoVar(char *line, GNode *ctxt)
     if (DEBUG(LINT)) {
 	if (type != VAR_SUBST && strchr(cp, '$') != NULL) {
 	    /* sanity check now */
-	    char *cp2;
+	    char *expandedValue;
 
-	    (void)Var_Subst(cp, ctxt, VARE_ASSIGN, &cp2);
+	    (void)Var_Subst(cp, ctxt, VARE_ASSIGN, &expandedValue);
 	    /* TODO: handle errors */
-	    free(cp2);
+	    free(expandedValue);
 	}
     }
 
@@ -2925,21 +2925,23 @@ Parse_File(const char *name, int fd)
 		 * On the other hand they can be suffix rules (.c.o: ...)
 		 * or just dependencies for filenames that start '.'.
 		 */
-		for (cp = line + 1; ch_isspace(*cp); cp++) {
+		for (cp = line + 1; ch_isspace(*cp); cp++)
 		    continue;
-		}
 		if (IsInclude(cp, FALSE)) {
 		    ParseDoInclude(cp);
 		    continue;
 		}
 		if (strncmp(cp, "undef", 5) == 0) {
-		    char *cp2;
+		    const char *varname;
 		    for (cp += 5; ch_isspace(*cp); cp++)
 			continue;
-		    for (cp2 = cp; !ch_isspace(*cp2) && *cp2 != '\0'; cp2++)
+		    varname = cp;
+		    for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
 			continue;
-		    *cp2 = '\0';
-		    Var_Delete(cp, VAR_GLOBAL);
+		    *cp = '\0';
+		    Var_Delete(varname, VAR_GLOBAL);
+		    /* TODO: undefine all variables, not only the first */
+		    /* TODO: use Str_Words, like everywhere else */
 		    continue;
 		} else if (strncmp(cp, "export", 6) == 0) {
 		    for (cp += 6; ch_isspace(*cp); cp++)
