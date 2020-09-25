@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.929 2020/09/25 18:18:25 rillig Exp $
+# $NetBSD: mi,v 1.930 2020/09/25 23:24:49 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4614,6 +4614,8 @@
 ./usr/tests/usr.bin/make/unit-tests/counter-append.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/counter.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/counter.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dep-colon-bug-cross-file.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dep-colon-bug-cross-file.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-colon.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-colon.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-double-colon.exp			tests-usr.bin-tests	compattestfile,atf
