@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.536 2020/09/23 07:50:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.537 2020/09/25 05:04:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.536 2020/09/23 07:50:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.537 2020/09/25 05:04:51 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3720,6 +3720,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 VarParseResult
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 {
+    const char *p = str;
     Buffer buf;			/* Buffer for forming things */
 
     /* Set true if an error has already been reported,
@@ -3729,8 +3730,8 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
     Buf_Init(&buf, 0);
     errorReported = FALSE;
 
-    while (*str) {
-	if (*str == '$' && str[1] == '$') {
+    while (*p != '\0') {
+	if (p[0] == '$' && p[1] == '$') {
 	    /*
 	     * A dollar sign may be escaped with another dollar sign.
 	     * In such a case, we skip over the escape character and store the
@@ -3739,22 +3740,22 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	    if (save_dollars && (eflags & VARE_ASSIGN))
 		Buf_AddByte(&buf, '$');
 	    Buf_AddByte(&buf, '$');
-	    str += 2;
-	} else if (*str != '$') {
+	    p += 2;
+	} else if (*p != '$') {
 	    /*
 	     * Skip as many characters as possible -- either to the end of
 	     * the string or to the next dollar sign (variable expression).
 	     */
-	    const char *cp;
+	    const char *plainStart = p;
 
-	    for (cp = str++; *str != '$' && *str != '\0'; str++)
+	    for (p++; *p != '$' && *p != '\0'; p++)
 		continue;
-	    Buf_AddBytesBetween(&buf, cp, str);
+	    Buf_AddBytesBetween(&buf, plainStart, p);
 	} else {
-	    const char *nested_str = str;
+	    const char *nested_p = p;
 	    void *freeIt;
 	    const char *val;
-	    (void)Var_Parse(&nested_str, ctxt, eflags, &val, &freeIt);
+	    (void)Var_Parse(&nested_p, ctxt, eflags, &val, &freeIt);
 	    /* TODO: handle errors */
 
 	    if (val == var_Error || val == varUndefined) {
@@ -3765,7 +3766,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		 * the string...
 		 */
 		if (oldVars) {
-		    str = nested_str;
+		    p = nested_p;
 		} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
 		    /*
 		     * If variable is undefined, complain and skip the
@@ -3774,16 +3775,16 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		     */
 		    if (!errorReported) {
 			Parse_Error(PARSE_FATAL, "Undefined variable \"%.*s\"",
-				    (int)(size_t)(nested_str - str), str);
+				    (int)(size_t)(nested_p - p), p);
 		    }
-		    str = nested_str;
+		    p = nested_p;
 		    errorReported = TRUE;
 		} else {
-		    Buf_AddByte(&buf, *str);
-		    str++;
+		    Buf_AddByte(&buf, *p);
+		    p++;
 		}
 	    } else {
-		str = nested_str;
+		p = nested_p;
 		Buf_AddStr(&buf, val);
 	    }
 	    free(freeIt);
