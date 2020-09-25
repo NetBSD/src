@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.152 2020/09/25 06:12:33 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.153 2020/09/25 06:22:33 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.152 2020/09/25 06:12:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.153 2020/09/25 06:22:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1192,6 +1192,52 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 }
 
 static int
+pppoe_parm_cpyinstr(struct pppoe_softc *sc,
+    char **dst, const void *src, size_t len)
+{
+	int error = 0;
+	char *next = NULL;
+	size_t bufsiz, cpysiz, strsiz;
+
+	bufsiz = len + 1;
+
+	if (src == NULL)
+		goto out;
+
+	bufsiz = len + 1;
+	next = malloc(bufsiz, M_DEVBUF, M_WAITOK);
+	if (next == NULL)
+		return ENOMEM;
+
+	error = copyinstr(src, next, bufsiz, &cpysiz);
+	if (error != 0)
+		goto fail;
+	if (cpysiz != bufsiz) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	strsiz = strnlen(next, bufsiz);
+	if (strsiz == bufsiz) {
+		error = EINVAL;
+		goto fail;
+	}
+
+out:
+	PPPOE_LOCK(sc, RW_WRITER);
+	if (*dst != NULL)
+		free(*dst, M_DEVBUF);
+	*dst = next;
+	next = NULL;
+	PPPOE_UNLOCK(sc);
+fail:
+	if (next != NULL)
+		free(next, M_DEVBUF);
+
+	return error;
+}
+
+static int
 pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX */
@@ -1226,60 +1272,16 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			sc->sc_eth_if = eth_if;
 			PPPOE_UNLOCK(sc);
 		}
-		if (parms->ac_name != NULL) {
-			size_t s;
-			char *b = malloc(parms->ac_name_len + 1, M_DEVBUF,
-			    M_WAITOK);
-			if (b == NULL)
-				return ENOMEM;
-			error = copyinstr(parms->ac_name, b,
-			    parms->ac_name_len+1, &s);
-			if (error != 0) {
-				free(b, M_DEVBUF);
-				return error;
-			}
-			if (s != parms->ac_name_len+1) {
-				free(b, M_DEVBUF);
-				return EINVAL;
-			}
 
-			PPPOE_LOCK(sc, RW_WRITER);
-			if (sc->sc_concentrator_name)
-				free(sc->sc_concentrator_name, M_DEVBUF);
-			sc->sc_concentrator_name = b;
-			PPPOE_UNLOCK(sc);
-		} else {
-			if (sc->sc_concentrator_name)
-				free(sc->sc_concentrator_name, M_DEVBUF);
-			sc->sc_concentrator_name = NULL;
-		}
-		if (parms->service_name != NULL) {
-			size_t s;
-			char *b = malloc(parms->service_name_len + 1, M_DEVBUF,
-			    M_WAITOK);
-			if (b == NULL)
-				return ENOMEM;
-			error = copyinstr(parms->service_name, b,
-			    parms->service_name_len+1, &s);
-			if (error != 0) {
-				free(b, M_DEVBUF);
-				return error;
-			}
-			if (s != parms->service_name_len+1) {
-				free(b, M_DEVBUF);
-				return EINVAL;
-			}
+		error = pppoe_parm_cpyinstr(sc, &sc->sc_concentrator_name,
+		    parms->ac_name, parms->ac_name_len);
+		if (error != 0)
+			return error;
 
-			PPPOE_LOCK(sc, RW_WRITER);
-			if (sc->sc_service_name)
-				free(sc->sc_service_name, M_DEVBUF);
-			sc->sc_service_name = b;
-			PPPOE_UNLOCK(sc);
-		} else {
-			if (sc->sc_service_name)
-				free(sc->sc_service_name, M_DEVBUF);
-			sc->sc_service_name = NULL;
-		}
+		error = pppoe_parm_cpyinstr(sc, &sc->sc_service_name,
+		    parms->service_name, parms->service_name_len);
+		if (error != 0)
+			return error;
 		return 0;
 	}
 	break;
