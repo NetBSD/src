@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.150 2020/09/25 18:18:25 rillig Exp $
+# $NetBSD: Makefile,v 1.151 2020/09/25 20:11:06 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -362,6 +362,7 @@ ENV.varmisc+=		FROM_ENV_AFTER=env
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
 # settings FLAGS.test=-dv here, since that is closer to the test code.
+FLAGS.cond-func-make=	via-cmdline
 FLAGS.directive-ifmake=	first second
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
