@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.120 2020/09/25 14:41:35 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.121 2020/09/25 14:49:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.120 2020/09/25 14:41:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.121 2020/09/25 14:49:51 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -437,14 +437,6 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     return TRUE;
 }
 
-/* See if the given archive is the one we are looking for.
- * Called via Lst_Find. */
-static Boolean
-ArchFindArchive(const void *ar, const void *desiredName)
-{
-    return strcmp(((const Arch *)ar)->name, desiredName) == 0;
-}
-
 /*-
  *-----------------------------------------------------------------------
  * ArchStatMember --
@@ -490,7 +482,12 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = base + 1;
     }
 
-    ln = Lst_Find(archives, ArchFindArchive, archive);
+    for (ln = archives->first; ln != NULL; ln = ln->next) {
+	const Arch *archPtr = ln->datum;
+	if (strcmp(archPtr->name, archive) == 0)
+	    break;
+    }
+
     if (ln != NULL) {
 	ar = LstNode_Datum(ln);
 
