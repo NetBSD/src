@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.148 2020/09/22 06:06:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.149 2020/09/25 15:40:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.148 2020/09/22 06:06:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.149 2020/09/25 15:40:06 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -194,8 +194,8 @@ CondParser_SkipWhitespace(CondParser *par)
 /* Parse the argument of a built-in function.
  *
  * Arguments:
- *	*linePtr initially points at the '(', upon successful return points
- *	right after the ')'.
+ *	*pp initially points at the '(',
+ *	upon successful return it points right after the ')'.
  *
  *	*out_arg receives the argument as string.
  *
@@ -204,20 +204,17 @@ CondParser_SkipWhitespace(CondParser *par)
  *
  * Return the length of the argument. */
 static int
-ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
+ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	     char **out_arg) {
-    const char *cp;
-    Buffer buf;
+    const char *p = *pp;
+    Buffer argBuf;
     int paren_depth;
-    char ch;
     size_t argLen;
 
-    cp = *linePtr;
     if (func != NULL)
-	/* Skip opening '(' - verified by caller */
-	cp++;
+	p++;			/* Skip opening '(' - verified by caller */
 
-    if (*cp == '\0') {
+    if (*p == '\0') {
 	/*
 	 * No arguments whatsoever. Because 'make' and 'defined' aren't really
 	 * "reserved words", we don't print a message. I think this is better
@@ -228,24 +225,20 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
 	return 0;
     }
 
-    while (*cp == ' ' || *cp == '\t') {
-	cp++;
+    while (*p == ' ' || *p == '\t') {
+	p++;
     }
 
-    /*
-     * Create a buffer for the argument and start it out at 16 characters
-     * long. Why 16? Why not?
-     */
-    Buf_Init(&buf, 16);
+    Buf_Init(&argBuf, 16);
 
     paren_depth = 0;
     for (;;) {
-	ch = *cp;
+	char ch = *p;
 	if (ch == 0 || ch == ' ' || ch == '\t')
 	    break;
 	if ((ch == '&' || ch == '|') && paren_depth == 0)
 	    break;
-	if (*cp == '$') {
+	if (*p == '$') {
 	    /*
 	     * Parse the variable spec and install it as part of the argument
 	     * if it's valid. We tell Var_Parse to complain on an undefined
@@ -255,9 +248,9 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
 	    void *freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
 	    const char *cp2;
-	    (void)Var_Parse(&cp, VAR_CMD, eflags, &cp2, &freeIt);
+	    (void)Var_Parse(&p, VAR_CMD, eflags, &cp2, &freeIt);
 	    /* TODO: handle errors */
-	    Buf_AddStr(&buf, cp2);
+	    Buf_AddStr(&argBuf, cp2);
 	    free(freeIt);
 	    continue;
 	}
@@ -265,25 +258,25 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
 	    paren_depth++;
 	else if (ch == ')' && --paren_depth < 0)
 	    break;
-	Buf_AddByte(&buf, *cp);
-	cp++;
+	Buf_AddByte(&argBuf, *p);
+	p++;
     }
 
-    *out_arg = Buf_GetAll(&buf, &argLen);
-    Buf_Destroy(&buf, FALSE);
+    *out_arg = Buf_GetAll(&argBuf, &argLen);
+    Buf_Destroy(&argBuf, FALSE);
 
-    while (*cp == ' ' || *cp == '\t') {
-	cp++;
+    while (*p == ' ' || *p == '\t') {
+	p++;
     }
 
-    if (func != NULL && *cp++ != ')') {
+    if (func != NULL && *p++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		    func);
 	/* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	return 0;
     }
 
-    *linePtr = cp;
+    *pp = p;
     return argLen;
 }
 
