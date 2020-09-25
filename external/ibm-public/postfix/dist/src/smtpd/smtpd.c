@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.17 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.18 2020/09/25 12:52:12 christos Exp $	*/
 
 /*++
 /* NAME
@@ -5795,6 +5795,8 @@ static void smtpd_proto(SMTPD_STATE *state)
 		   || strcmp(state->reason, REASON_LOST_CONNECTION)) {
 	    msg_info("%s after %s from %s",
 		     state->reason, state->where, state->namaddr);
+	    if (strcmp(state->where, SMTPD_CMD_AUTH) == 0)
+		pfilter_notify(1, vstream_fileno(state->client));
 	}
     }
 
