@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.325 2020/09/25 20:48:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.326 2020/09/25 20:57:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.325 2020/09/25 20:48:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.326 2020/09/25 20:57:22 rillig Exp $");
 
 /* types and constants */
 
@@ -2887,6 +2887,29 @@ ParseFinishLine(void)
     }
 }
 
+static void
+ParseLine_ShellCommand(char *cp)
+{
+    for (; ch_isspace(*cp); cp++)
+	continue;
+
+    if (*cp != '\0') {
+	if (!inLine)
+	    Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", cp);
+	/*
+	 * So long as it's not a blank line and we're actually
+	 * in a dependency spec, add the command to the list of
+	 * commands of all targets in the dependency spec
+	 */
+	if (targets) {
+	    cp = bmake_strdup(cp);
+	    Lst_ForEachUntil(targets, ParseAddCmd, cp);
+#ifdef CLEANUP
+	    Lst_Append(targCmds, cp);
+#endif
+	}
+    }
+}
 
 /* Parse a top-level makefile into its component parts, incorporating them
  * into the global dependency graph.
@@ -2966,27 +2989,7 @@ Parse_File(const char *name, int fd)
 		 */
 		cp = line + 1;
 	      shellCommand:
-		for (; ch_isspace(*cp); cp++) {
-		    continue;
-		}
-		if (*cp) {
-		    if (!inLine)
-			Parse_Error(PARSE_FATAL,
-				     "Unassociated shell command \"%s\"",
-				     cp);
-		    /*
-		     * So long as it's not a blank line and we're actually
-		     * in a dependency spec, add the command to the list of
-		     * commands of all targets in the dependency spec
-		     */
-		    if (targets) {
-			cp = bmake_strdup(cp);
-			Lst_ForEachUntil(targets, ParseAddCmd, cp);
-#ifdef CLEANUP
-			Lst_Append(targCmds, cp);
-#endif
-		    }
-		}
+	        ParseLine_ShellCommand(cp);
 		continue;
 	    }
 
