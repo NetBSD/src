@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.26 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2020/09/22 15:24:02 thorpej Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
@@ -234,15 +235,29 @@ alpha_pci_generic_intr_establish(pci_chipset_tag_t const pc,
 
 	KASSERT(irq < pc->pc_nirq);
 
-	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs,
+	cookie = alpha_shared_intr_alloc_intrhand(pc->pc_shared_intrs,
 	    irq, IST_LEVEL, level, flags, func, arg, pc->pc_intr_desc);
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(pc->pc_shared_intrs, cookie,
+				     pc->pc_intr_desc)) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
 		    alpha_pci_generic_iointr, pc);
 		pc->pc_intr_enable(pc, irq);
 	}
+
+	mutex_exit(&cpu_lock);
+
 	return cookie;
 }
 
@@ -252,20 +267,21 @@ alpha_pci_generic_intr_disestablish(pci_chipset_tag_t const pc,
 {
 	struct alpha_shared_intrhand * const ih = cookie;
 	const u_int irq = ih->ih_num;
-	int s;
 
-	s = splhigh();
+	mutex_enter(&cpu_lock);
 
-	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
-	    pc->pc_intr_desc);
-	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		pc->pc_intr_disable(pc, irq);
 		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    irq, IST_NONE);
 		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
-	splx(s);
+	alpha_shared_intr_unlink(pc->pc_shared_intrs, cookie, pc->pc_intr_desc);
+
+	mutex_exit(&cpu_lock);
+
+	alpha_shared_intr_free_intrhand(cookie);
 }
 
 void

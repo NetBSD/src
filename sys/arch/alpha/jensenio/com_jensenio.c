@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.17 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.18 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.17 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.18 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.17 2020/09/22 15:24:02 thorpej Ex
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/intr.h>
 #include <sys/bus.h>
@@ -63,8 +64,7 @@ struct com_jensenio_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
 
 	/* Jensen-specific goo. */
-	char	sc_vecstr[8];
-	struct evcnt sc_ev_intr;
+	struct jensenio_scb_intrhand sc_jih;
 };
 
 int	com_jensenio_match(device_t, cfdata_t , void *);
@@ -72,8 +72,6 @@ void	com_jensenio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(com_jensenio, sizeof(struct com_jensenio_softc),
     com_jensenio_match, com_jensenio_attach, NULL, NULL);
-
-void	com_jensenio_intr(void *, u_long);
 
 int
 com_jensenio_match(device_t parent, cfdata_t match, void *aux)
@@ -118,26 +116,13 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	scb_set(ja->ja_irq[0], com_jensenio_intr, jsc);
+	jensenio_intr_establish(&jsc->sc_jih, ja->ja_irq[0],
+	    0, comintr, sc);
+
 	aprint_normal_dev(self, "interrupting at vector 0x%x\n",
 	    ja->ja_irq[0]);
-
-	snprintf(jsc->sc_vecstr, sizeof(jsc->sc_vecstr), "0x%x", ja->ja_irq[0]);
-	evcnt_attach_dynamic(&jsc->sc_ev_intr, EVCNT_TYPE_INTR,
-	    NULL, "vector", jsc->sc_vecstr);
 
 	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
 		aprint_error_dev(self, "could not establish shutdown hook");
 	}
-}
-
-void
-com_jensenio_intr(void *arg, u_long vec)
-{
-	struct com_jensenio_softc *jsc = arg;
-
-	KERNEL_LOCK(1, NULL);
-	jsc->sc_ev_intr.ev_count++;
-	(void) comintr(&jsc->sc_com);
-	KERNEL_UNLOCK_ONE(NULL);
 }

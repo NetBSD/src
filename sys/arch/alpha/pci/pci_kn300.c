@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.37 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.38 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.37 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.38 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.37 2020/09/22 15:24:02 thorpej Exp $
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
@@ -213,18 +214,31 @@ dec_kn300_intr_establish(
 	const u_int irq = ihv & 0x3ff;
 	const u_int flags = alpha_pci_intr_handle_get_flags(&ih);
 
-	cookie = alpha_shared_intr_establish(kn300_pci_intr, irq, IST_LEVEL,
-	    level, flags, func, arg, "kn300 irq");
+	cookie = alpha_shared_intr_alloc_intrhand(kn300_pci_intr, irq,
+	    IST_LEVEL, level, flags, func, arg, "kn300 irq");
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(kn300_pci_intr, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(kn300_pci_intr, cookie, "kn300 irq")) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(kn300_pci_intr, irq)) {
 		scb_set(MCPCIA_VEC_PCI + SCB_IDXTOVEC(irq), kn300_iointr, NULL);
 		alpha_shared_intr_set_private(kn300_pci_intr, irq, ccp);
 		savirqs[irq] = (ihv >> 11) & 0x1f;
-		kn300_enable_intr(ccp, savirqs[irq]);
 		alpha_mb();
+		kn300_enable_intr(ccp, savirqs[irq]);
 	}
-	return (cookie);
+
+	mutex_exit(&cpu_lock);
+
+	return cookie;
 }
 
 static void

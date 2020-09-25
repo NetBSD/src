@@ -1,4 +1,4 @@
-/* $NetBSD: jenseniovar.h,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: jenseniovar.h,v 1.5 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _ALPHA_JENSENIO_JENSENIOVAR_H_
 #define _ALPHA_JENSENIO_JENSENIOVAR_H_
+
+#include <sys/evcnt.h>
 
 /*
  * Arguments used to attach devices to the Jensen I/O bus.
@@ -74,10 +76,25 @@ struct jensenio_config {
 	int	jc_mallocsafe;
 };
 
+/*
+ * Interrupt handle for Jensen I/O interrupts that hook into
+ * the SCB directly.
+ */
+struct jensenio_scb_intrhand {
+	int		(*jih_func)(void *);
+	void		*jih_arg;
+	unsigned long	jih_vec;
+	char		jih_vecstr[8];
+	struct evcnt	jih_evcnt;
+};
+
 void	jensenio_init(struct jensenio_config *, int);
 void	jensenio_bus_io_init(bus_space_tag_t, void *);
 void	jensenio_bus_intio_init(bus_space_tag_t, void *);
 void	jensenio_bus_mem_init(bus_space_tag_t, void *);
 void	jensenio_intr_init(struct jensenio_config *);
 void	jensenio_dma_init(struct jensenio_config *);
+
+void	jensenio_intr_establish(struct jensenio_scb_intrhand *,
+	    unsigned long, int, int (*)(void *), void *);
 #endif /* _ALPHA_JENSENIO_JENSENIOVAR_H_ */
