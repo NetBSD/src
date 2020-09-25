@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.166 2020/09/25 18:58:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.167 2020/09/25 19:50:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.166 2020/09/25 18:58:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.167 2020/09/25 19:50:04 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -464,11 +464,11 @@ Suff_ClearSuffixes(void)
  *	TRUE if the string is a valid transformation, FALSE otherwise.
  */
 static Boolean
-SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
+SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 {
     SuffListNode *srcLn;	/* element in suffix list of trans source*/
     Suff *src;			/* Source of transformation */
-    char *str2;			/* Extra pointer (maybe target suffix) */
+    const char *str2;		/* Extra pointer (maybe target suffix) */
     SuffListNode *singleLn;	/* element in suffix list of any suffix
 				 * that exactly matches str */
     Suff *single = NULL;	/* Source of possible transformation to
@@ -529,7 +529,7 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 /* Return TRUE if the given string is a transformation rule, that is, a
  * concatenation of two known suffixes. */
 Boolean
-Suff_IsTransform(char *str)
+Suff_IsTransform(const char *str)
 {
     Suff    	  *src, *targ;
 
@@ -549,7 +549,7 @@ Suff_IsTransform(char *str)
  *	The node created for the transformation in the transforms list
  */
 GNode *
-Suff_AddTransform(char *line)
+Suff_AddTransform(const char *line)
 {
     GNode         *gn;		/* GNode of transformation rule */
     Suff          *s,		/* source suffix */
@@ -803,7 +803,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
 
 /* Return the search path for the given suffix, or NULL. */
 SearchPath *
-Suff_GetPath(char *sname)
+Suff_GetPath(const char *sname)
 {
     Suff *s = FindSuffByName(sname);
     return s != NULL ? s->searchPath : NULL;
@@ -871,7 +871,7 @@ Suff_DoPaths(void)
  *	sname		Name of the suffix to mark
  */
 void
-Suff_AddInclude(char *sname)
+Suff_AddInclude(const char *sname)
 {
     Suff *suff = FindSuffByName(sname);
     if (suff != NULL)
@@ -2095,7 +2095,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
  *	name		Name of null suffix
  */
 void
-Suff_SetNull(char *name)
+Suff_SetNull(const char *name)
 {
     Suff *s = FindSuffByName(name);
     if (s == NULL) {
