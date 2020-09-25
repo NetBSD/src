@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.342 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.343 2020/09/25 19:24:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.342 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.343 2020/09/25 19:24:56 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -931,6 +931,27 @@ runTargets(void)
 	return outOfDate;
 }
 
+/*
+ * Set up the .TARGETS variable to contain the list of targets to be
+ * created. If none specified, make the variable empty -- the parser
+ * will fill the thing in with the default or .MAIN target.
+ */
+static void
+InitVarTargets(void)
+{
+	StringListNode *ln;
+
+	if (Lst_IsEmpty(create)) {
+		Var_Set(".TARGETS", "", VAR_GLOBAL);
+		return;
+	}
+
+	for (ln = create->first; ln != NULL; ln = ln->next) {
+		char *name = ln->datum;
+		Var_Append(".TARGETS", name, VAR_GLOBAL);
+	}
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1265,21 +1286,7 @@ main(int argc, char **argv)
 
 	Trace_Log(MAKESTART, NULL);
 
-	/*
-	 * Set up the .TARGETS variable to contain the list of targets to be
-	 * created. If none specified, make the variable empty -- the parser
-	 * will fill the thing in with the default or .MAIN target.
-	 */
-	if (!Lst_IsEmpty(create)) {
-		StringListNode *ln;
-
-		for (ln = Lst_First(create); ln != NULL; ln = LstNode_Next(ln)) {
-			char *name = LstNode_Datum(ln);
-			Var_Append(".TARGETS", name, VAR_GLOBAL);
-		}
-	} else
-		Var_Set(".TARGETS", "", VAR_GLOBAL);
-
+	InitVarTargets();
 
 	/*
 	 * If no user-supplied system path was given (through the -m option)
