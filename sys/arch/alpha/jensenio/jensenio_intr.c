@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.12 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.13 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.12 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.13 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.12 2020/09/22 15:24:02 thorpej E
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
@@ -158,6 +159,58 @@ jensenio_intr_init(struct jensenio_config *jcp)
 	ic->ic_intr_evcnt = jensenio_eisa_intr_evcnt;
 }
 
+static void
+jensenio_intr_dispatch(void *arg, unsigned long vec)
+{
+	struct jensenio_scb_intrhand *jih = arg;
+
+	jih->jih_evcnt.ev_count++;
+	(void) jih->jih_func(jih->jih_arg);
+}
+
+static void
+jensenio_intr_dispatch_wrapped(void *arg, unsigned long vec)
+{
+	KERNEL_LOCK(1, NULL);
+	jensenio_intr_dispatch(arg, vec);
+	KERNEL_UNLOCK_ONE(NULL);
+}
+
+void
+jensenio_intr_establish(struct jensenio_scb_intrhand *jih,
+    unsigned long vec, int flags, int (*func)(void *), void *arg)
+{
+	void (*scb_func)(void *, unsigned long);
+
+	/*
+	 * Jensen systems are all uniprocessors, but we still do all
+	 * of the KERNEL_LOCK handling as a formality to keep assertions
+	 * valid in MI code.
+	 */
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+	KASSERT(ncpu == 1);
+	if (flags & ALPHA_INTR_MPSAFE)
+		scb_func = jensenio_intr_dispatch;
+	else
+		scb_func = jensenio_intr_dispatch_wrapped;
+
+	jih->jih_func = func;
+	jih->jih_arg = arg;
+	jih->jih_vec = vec;
+
+	snprintf(jih->jih_vecstr, sizeof(jih->jih_vecstr), "0x%lx",
+	    jih->jih_vec);
+	evcnt_attach_dynamic(&jih->jih_evcnt, EVCNT_TYPE_INTR,
+	    NULL, "vector", jih->jih_vecstr);
+
+	mutex_enter(&cpu_lock);
+
+	scb_set(vec, scb_func, jih);
+	curcpu()->ci_nintrhand++;
+
+	mutex_exit(&cpu_lock);
+}
+
 int
 jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
@@ -211,14 +264,24 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	if (jensenio_intr_deftype[irq] == IST_UNUSABLE) {
 		printf("jensenio_eisa_intr_establish: IRQ %d not usable\n",
 		    irq);
-		return (NULL);
+		return NULL;
 	}
 
-	cookie = alpha_shared_intr_establish(jensenio_eisa_intr, irq,
+	cookie = alpha_shared_intr_alloc_intrhand(jensenio_eisa_intr, irq,
 	    type, level, 0, fn, arg, "eisa irq");
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(jensenio_eisa_intr, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(jensenio_eisa_intr, cookie, "eisa irq")) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(jensenio_eisa_intr, irq)) {
 		scb_set(0x800 + SCB_IDXTOVEC(irq), jensenio_iointr, NULL);
 		jensenio_setlevel(irq,
 		    alpha_shared_intr_get_sharetype(jensenio_eisa_intr,
@@ -226,29 +289,31 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 		jensenio_enable_intr(irq, 1);
 	}
 
-	return (cookie);
+	mutex_exit(&cpu_lock);
+
+	return cookie;
 }
 
 void
 jensenio_eisa_intr_disestablish(void *v, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
-	int s, irq = ih->ih_num;
+	int irq = ih->ih_num;
 
-	s = splhigh();
+	mutex_enter(&cpu_lock);
 
-	/* Remove it from the link. */
-	alpha_shared_intr_disestablish(jensenio_eisa_intr, cookie,
-	    "eisa irq");
-
-	if (alpha_shared_intr_isactive(jensenio_eisa_intr, irq) == 0) {
+	if (alpha_shared_intr_firstactive(jensenio_eisa_intr, irq)) {
 		jensenio_enable_intr(irq, 0);
 		alpha_shared_intr_set_dfltsharetype(jensenio_eisa_intr,
 		    irq, jensenio_intr_deftype[irq]);
 		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
-	splx(s);
+	alpha_shared_intr_unlink(jensenio_eisa_intr, cookie, "eisa irq");
+
+	mutex_exit(&cpu_lock);
+
+	alpha_shared_intr_free_intrhand(cookie);
 }
 
 int

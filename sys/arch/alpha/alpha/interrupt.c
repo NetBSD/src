@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.89 2020/09/22 15:24:01 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.90 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.89 2020/09/22 15:24:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.90 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.89 2020/09/22 15:24:01 thorpej Exp $
 #include <machine/cpuconf.h>
 #include <machine/alpha.h>
 
+/* Protected by cpu_lock */
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)]
 							__read_mostly;
-
-void	netintr(void);
 
 void	scb_stray(void *, u_long);
 
@@ -117,9 +116,8 @@ void
 scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
 {
 	u_long idx;
-	int s;
 
-	s = splhigh();
+	KASSERT(mutex_owned(&cpu_lock));
 
 	if (vec < SCB_IOVECBASE || vec >= SCB_SIZE ||
 	    (vec & (SCB_VECSIZE - 1)) != 0)
@@ -130,19 +128,18 @@ scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
 	if (scb_iovectab[idx].scb_func != scb_stray)
 		panic("scb_set: vector 0x%lx already occupied", vec);
 
-	scb_iovectab[idx].scb_func = func;
 	scb_iovectab[idx].scb_arg = arg;
-
-	splx(s);
+	alpha_mb();
+	scb_iovectab[idx].scb_func = func;
+	alpha_mb();
 }
 
 u_long
 scb_alloc(void (*func)(void *, u_long), void *arg)
 {
 	u_long vec, idx;
-	int s;
 
-	s = splhigh();
+	KASSERT(mutex_owned(&cpu_lock));
 
 	/*
 	 * Allocate "downwards", to avoid bumping into
@@ -153,14 +150,13 @@ scb_alloc(void (*func)(void *, u_long), void *arg)
 	     vec >= SCB_IOVECBASE; vec -= SCB_VECSIZE) {
 		idx = SCB_VECTOIDX(vec - SCB_IOVECBASE);
 		if (scb_iovectab[idx].scb_func == scb_stray) {
-			scb_iovectab[idx].scb_func = func;
 			scb_iovectab[idx].scb_arg = arg;
-			splx(s);
+			alpha_mb();
+			scb_iovectab[idx].scb_func = func;
+			alpha_mb();
 			return (vec);
 		}
 	}
-
-	splx(s);
 
 	return (SCB_ALLOC_FAILED);
 }
@@ -169,9 +165,8 @@ void
 scb_free(u_long vec)
 {
 	u_long idx;
-	int s;
 
-	s = splhigh();
+	KASSERT(mutex_owned(&cpu_lock));
 
 	if (vec < SCB_IOVECBASE || vec >= SCB_SIZE ||
 	    (vec & (SCB_VECSIZE - 1)) != 0)
@@ -183,9 +178,9 @@ scb_free(u_long vec)
 		panic("scb_free: vector 0x%lx is empty", vec);
 
 	scb_iovectab[idx].scb_func = scb_stray;
+	alpha_mb();
 	scb_iovectab[idx].scb_arg = (void *) vec;
-
-	splx(s);
+	alpha_mb();
 }
 
 void
@@ -578,6 +573,28 @@ cpu_intr_p(void)
 {
 
 	return curcpu()->ci_intrdepth != 0;
+}
+
+/*
+ * cpu_intr_redistribute:
+ *
+ *	Redistribute interrupts amongst CPUs eligible to handle them.
+ */
+void
+cpu_intr_redistribute(void)
+{
+	/* XXX Nothing, yet. */
+}
+
+/*
+ * cpu_intr_count:
+ *
+ *	Return the number of device interrupts this CPU handles.
+ */
+unsigned int
+cpu_intr_count(struct cpu_info * const ci)
+{
+	return ci->ci_nintrhand;
 }
 
 /*

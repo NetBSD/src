@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.38 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: dwlpx.c,v 1.39 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,12 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.38 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.39 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 
@@ -251,7 +252,9 @@ dwlpx_init(struct dwlpx_softc *sc)
 	 * Do this even for all HPCs- even for the nonexistent
 	 * one on hose zero of a KFTIA.
 	 */
+	mutex_enter(&cpu_lock);
 	vec = scb_alloc(dwlpx_errintr, sc);
+	mutex_exit(&cpu_lock);
 	if (vec == SCB_ALLOC_FAILED)
 		panic("%s: unable to allocate error vector",
 		    device_xname(sc->dwlpx_dev));
