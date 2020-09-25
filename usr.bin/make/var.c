@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.539 2020/09/25 14:07:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.540 2020/09/25 14:10:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.539 2020/09/25 14:07:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.540 2020/09/25 14:10:09 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1920,7 +1920,7 @@ ParseModifierPart(
 	     * and suck it in without further ado.
 	     * It will be interpreted later.
 	     */
-	    int have = p[1];
+	    char have = p[1];
 	    int want = have == '(' ? ')' : '}';
 	    int depth = 1;
 
