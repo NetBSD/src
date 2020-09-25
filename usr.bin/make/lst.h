@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.66 2020/09/24 08:23:29 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.67 2020/09/25 04:18:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,6 +79,7 @@
 #define MAKE_LST_H
 
 #include <sys/param.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* A doubly-linked list of pointers. */
