@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.143 2020/09/24 07:37:42 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.144 2020/09/25 14:00:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.143 2020/09/24 07:37:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.144 2020/09/25 14:00:17 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -836,11 +836,14 @@ Make_Update(GNode *cgn)
 }
 
 static void
-MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
+UnmarkChildren(GNode *gn)
 {
-    GNode	*cgn = (GNode *)cgnp;
+    GNodeListNode *ln;
 
-    cgn->type &= ~OP_MARK;
+    for (ln = gn->children->first; ln != NULL; ln = ln->next) {
+	GNode *child = ln->datum;
+	child->type &= ~OP_MARK;
+    }
 }
 
 /*-
@@ -950,7 +953,7 @@ Make_DoAllVar(GNode *gn)
     if (gn->flags & DONE_ALLSRC)
 	return;
 
-    Lst_ForEach(gn->children, MakeUnmark, gn);
+    UnmarkChildren(gn);
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
     if (!Var_Exists (OODATE, gn)) {
@@ -1145,9 +1148,6 @@ MakeStartJobs(void)
  *
  * Input:
  *	gnp		Node to examine
- *	cyclep		True if gn->unmade being non-zero implies a
- *			cycle in the graph, not an error in an
- *			inferior.
  *
  * Results:
  *	Always returns 0.
@@ -1315,7 +1315,7 @@ Make_ExpandUse(GNodeList *targs)
 
 	(void)Dir_MTime(gn, 0);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
-	Lst_ForEach(gn->children, MakeUnmark, gn);
+	UnmarkChildren(gn);
 	Lst_ForEachUntil(gn->children, MakeHandleUse, gn);
 
 	if ((gn->type & OP_MADE) == 0)
