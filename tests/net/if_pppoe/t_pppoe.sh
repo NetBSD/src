@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.21 2020/09/23 06:18:20 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.22 2020/09/25 06:07:31 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -62,6 +62,35 @@ pppoe_create_destroy_cleanup()
 	cleanup
 }
 
+setup_ifaces()
+{
+
+	rump_server_add_iface $SERVER shmif0 $BUS
+	rump_server_add_iface $CLIENT shmif0 $BUS
+	rump_server_add_iface $SERVER pppoe0
+	rump_server_add_iface $CLIENT pppoe0
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	    inet $SERVER_IP $CLIENT_IP down
+	atf_check -s exit:0 rump.ifconfig pppoe0 link0
+
+	$DEBUG && rump.ifconfig
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+
+	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	    inet 0.0.0.0 0.0.0.1 down
+
+	$DEBUG && rump.ifconfig
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
+	unset RUMP_SERVER
+}
+
 setup()
 {
 	inet=true
@@ -73,30 +102,13 @@ setup()
 	rump_server_start $SERVER netinet6 pppoe
 	rump_server_start $CLIENT netinet6 pppoe
 
-	rump_server_add_iface $SERVER shmif0 $BUS
-	rump_server_add_iface $CLIENT shmif0 $BUS
+	setup_ifaces
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig shmif0 up
-
-	rump_server_add_iface $SERVER pppoe0
-	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
-	    inet $SERVER_IP $CLIENT_IP down
-	atf_check -s exit:0 rump.ifconfig pppoe0 link0
-
-	$DEBUG && rump.ifconfig
-	$DEBUG && $HIJACKING pppoectl -d pppoe0
-
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig shmif0 up
-
-	rump_server_add_iface $CLIENT pppoe0
-	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
-	    inet 0.0.0.0 0.0.0.1 down
-
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	unset RUMP_SERVER
 }
@@ -426,10 +438,290 @@ pppoe6_chap_cleanup()
 	cleanup
 }
 
+atf_test_case pppoe_params cleanup
+
+dump_bus()
+{
+
+	shmif_dumpbus -p - ${BUS} | tcpdump -n -e -r -
+}
+
+setup_auth_conf()
+{
+	local auth=chap
+
+	export RUMP_SERVER=$SERVER
+	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
+				    'hisauthname=$AUTHNAME' \
+				    'hisauthsecret=$SECRET' \
+				    'myauthproto=none' \
+				    $server_optparam"
+
+	atf_check -s exit:0 rump.ifconfig pppoe0 link0
+	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
+	unset RUMP_SERVER
+
+	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
+				    'myauthname=$AUTHNAME' \
+				    'myauthsecret=$SECRET' \
+				    'hisauthproto=none'"
+
+	export RUMP_SERVER=$CLIENT
+	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	    inet 0.0.0.0 0.0.0.1 down
+	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
+	$DEBUG && rump.ifconfig
+	unset RUMP_SERVER
+}
+
+pppoe_params_head()
+{
+	atf_set "descr" "Set and clear access concentrator name and service name"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pppoe_params_body()
+{
+	local dumpcmd
+
+	dumpcmd="shmif_dumpbus -p - ${BUS}"
+	dumpcmd="${dumpcmd} | tcpdump -n -e -r -"
+
+	rump_server_start $SERVER netinet6 pppoe
+	rump_server_start $CLIENT netinet6 pppoe
+
+	setup_ifaces
+	setup_auth_conf
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o not-match:'AC-Name' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# set Remote access concentrator name (AC-NAME, -a option)
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[AC-Name "ACNAME-TEST0"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# change AC-NAME
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST1 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[AC-Name "ACNAME-TEST1"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# clear AC-NAME
+	rump_server_destroy_ifaces
+	rm ${BUS} 2> /dev/null
+	setup_ifaces
+	setup_auth_conf
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -a ACNAME-TEST2 -e shmif0 pppoe0"
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -a \"\" -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o match:'\[AC-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# set Service Name (Service-Name, -s option)
+	rump_server_destroy_ifaces
+	rm ${BUS} 2> /dev/null
+	setup_ifaces
+	setup_auth_conf
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST0"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST0"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o not-match:'AC-Name' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# change Service-Name
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST1 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST1"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST1"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+
+	# clear Service-Name
+	rump_server_destroy_ifaces
+	rm ${BUS} 2> /dev/null
+	setup_ifaces
+	setup_auth_conf
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -s SNAME-TEST2 -e shmif0 pppoe0"
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -s \"\" -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o not-match:'AC-Name' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# set AC-NAME and Service-Name
+	rump_server_destroy_ifaces
+	rm ${BUS} 2> /dev/null
+	setup_ifaces
+	setup_auth_conf
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x \
+	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST3 -s SNAME-TEST3 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 \
+	    -o match:'\[Service-Name "SNAME-TEST3"\] \[AC-Name "ACNAME-TEST3"\]' \
+	    -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST3"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+
+	# change AC-NAME
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x \
+	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST4 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 \
+	    -o match:'\[Service-Name "SNAME-TEST3"\] \[AC-Name "ACNAME-TEST4"\]' \
+	    -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST3"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+
+	# change Service-Name
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x \
+	    "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST4 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
+	$DEBUG && dump_bus
+	atf_check -s exit:0 \
+	    -o match:'\[Service-Name "SNAME-TEST4"\] \[AC-Name "ACNAME-TEST4"\]' \
+	    -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST3"\]' -e ignore \
+	    -x "${dumpcmd} | grep PADR"
+}
+
+pppoe_params_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
 atf_init_test_cases()
 {
 
 	atf_add_test_case pppoe_create_destroy
+	atf_add_test_case pppoe_params
 	atf_add_test_case pppoe_pap
 	atf_add_test_case pppoe_chap
 	atf_add_test_case pppoe6_pap
