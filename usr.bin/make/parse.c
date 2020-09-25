@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.326 2020/09/25 20:57:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.327 2020/09/25 21:13:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.326 2020/09/25 20:57:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.327 2020/09/25 21:13:44 rillig Exp $");
 
 /* types and constants */
 
@@ -2043,30 +2043,16 @@ ParseMaybeSubMake(const char *cmd)
     return FALSE;
 }
 
-/*-
- * ParseAddCmd  --
- *	Lst_ForEachUntil function to add a command line to all targets
+/* Append the command to the target node.
  *
- * Input:
- *	gnp		the node to which the command is to be added
- *	cmd		the command to add
- *
- * Results:
- *	Always 0
- *
- * Side Effects:
- *	A new element is added to the commands list of the node,
- *	and the node can be marked as a submake node if the command is
- *	determined to be that.
- */
-static int
-ParseAddCmd(void *gnp, void *cmd)
+ * The node may be marked as a submake node if the command is determined to
+ * be that. */
+static void
+ParseAddCmd(GNode *gn, char *cmd)
 {
-    GNode *gn = (GNode *)gnp;
-
     /* Add to last (ie current) cohort for :: targets */
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
-	gn = LstNode_Datum(Lst_Last(gn->cohorts));
+    if ((gn->type & OP_DOUBLEDEP) && gn->cohorts->last != NULL)
+	gn = gn->cohorts->last->datum;
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
@@ -2075,7 +2061,7 @@ ParseAddCmd(void *gnp, void *cmd)
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
-#ifdef notyet
+#if 0
 	/* XXX: We cannot do this until we fix the tree */
 	Lst_Append(gn->commands, cmd);
 	Parse_Error(PARSE_WARNING,
@@ -2091,7 +2077,6 @@ ParseAddCmd(void *gnp, void *cmd)
 			    gn->name);
 #endif
     }
-    return 0;
 }
 
 /* Callback procedure for Parse_File when destroying the list of targets on
@@ -2887,27 +2872,32 @@ ParseFinishLine(void)
     }
 }
 
+/* Add the command to each target from the current dependency spec. */
 static void
 ParseLine_ShellCommand(char *cp)
 {
     for (; ch_isspace(*cp); cp++)
 	continue;
 
-    if (*cp != '\0') {
-	if (!inLine)
-	    Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", cp);
-	/*
-	 * So long as it's not a blank line and we're actually
-	 * in a dependency spec, add the command to the list of
-	 * commands of all targets in the dependency spec
-	 */
-	if (targets) {
-	    cp = bmake_strdup(cp);
-	    Lst_ForEachUntil(targets, ParseAddCmd, cp);
-#ifdef CLEANUP
-	    Lst_Append(targCmds, cp);
-#endif
+    if (*cp == '\0')
+	return;			/* skip empty commands */
+
+    if (!inLine)
+	Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", cp);
+    if (targets == NULL)
+	return;
+
+    {
+	char *cmd = bmake_strdup(cp);
+	GNodeListNode *ln;
+
+	for (ln = targets->first; ln != NULL; ln = ln->next) {
+	    GNode *gn = ln->datum;
+	    ParseAddCmd(gn, cmd);
 	}
+#ifdef CLEANUP
+	Lst_Append(targCmds, cmd);
+#endif
     }
 }
 
