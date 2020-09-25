@@ -1,4 +1,4 @@
-# $NetBSD: dep-colon-bug-cross-file.mk,v 1.2 2020/09/25 23:30:16 rillig Exp $
+# $NetBSD: dep-colon-bug-cross-file.mk,v 1.3 2020/09/25 23:42:43 rillig Exp $
 #
 # Until 2020-09-25, the very last dependency group of a top-level makefile
 # was not finished properly.  This made it possible to add further commands
@@ -11,8 +11,8 @@
 #
 # After the file has been parsed completely, it is parsed again in pass 2.
 # In this pass, another command is added to the "current dependency group",
-# which is still the one from pass 1, which means it is possible to even
-# cross file boundaries.
+# which was still the one from pass 1, which means it was possible to later
+# add commands to an existing target, even across file boundaries.
 #
 # Oops, even worse.  Running this test in a make from 2020-09-25 or earlier
 # on NetBSD 8.0 x86_64 with MALLOC_OPTIONS=JA produces this or a similar
@@ -22,7 +22,7 @@
 #
 # The 'Z' means access to already freed memory; see jemalloc(3).  The cause
 # for this is that in MainParseArgs, the command line arguments were not
-# properly copied before storing them with global variables.
+# properly copied before storing them in global variables.
 
 PASS?=	1
 
