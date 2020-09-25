@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.328 2020/09/25 23:30:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.329 2020/09/25 23:35:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.328 2020/09/25 23:30:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.329 2020/09/25 23:35:25 rillig Exp $");
 
 /* types and constants */
 
@@ -2846,21 +2846,8 @@ SuffEndTransform(void *target, void *unused MAKE_ATTR_UNUSED)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseFinishLine --
- *	Handle the end of a dependency group.
- *
- * Results:
- *	Nothing.
- *
- * Side Effects:
- *	inLine set FALSE. 'targets' list destroyed.
- *
- *-----------------------------------------------------------------------
- */
 static void
-ParseFinishLine(void)
+FinishDependencyGroup(void)
 {
     if (inLine) {
 	if (targets != NULL) {
@@ -3003,7 +2990,7 @@ Parse_File(const char *name, int fd)
 	    }
 #endif
 	    if (Parse_IsVar(line)) {
-		ParseFinishLine();
+		FinishDependencyGroup();
 		Parse_DoVar(line, VAR_GLOBAL);
 		continue;
 	    }
@@ -3033,7 +3020,7 @@ Parse_File(const char *name, int fd)
 		}
 	    }
 #endif
-	    ParseFinishLine();
+	    FinishDependencyGroup();
 
 	    /*
 	     * For some reason - probably to make the parser impossible -
@@ -3129,7 +3116,7 @@ Parse_File(const char *name, int fd)
 	 */
     } while (ParseEOF() == CONTINUE);
 
-    ParseFinishLine();
+    FinishDependencyGroup();
 
     if (fatals) {
 	(void)fflush(stdout);
