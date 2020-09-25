@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.329 2020/04/13 08:05:02 maxv Exp $	*/
+/*	$NetBSD: sd.c,v 1.330 2020/09/25 13:08:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.329 2020/04/13 08:05:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.330 2020/09/25 13:08:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -444,7 +444,7 @@ sd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 
 	/*
 	 * Start the pack spinning if necessary. Always allow the
-	 * raw parition to be opened, for raw IOCTLs. Data transfers
+	 * raw partition to be opened, for raw IOCTLs. Data transfers
 	 * will check for SDEV_MEDIA_LOADED.
 	 */
 	if (error == EIO) {
@@ -588,7 +588,7 @@ sd_lastclose(device_t self)
 }
 
 /*
- * close the device.. only called if we are the LAST occurence of an open
+ * close the device.. only called if we are the LAST occurrence of an open
  * device.  Convenient now but usually a pain.
  */
 static int
@@ -642,7 +642,7 @@ sdstrategy(struct buf *bp)
 /*
  * Issue single I/O command
  *
- * Called from dk_start and implicitely from dk_strategy
+ * Called from dk_start and implicitly from dk_strategy
  */
 static int
 sd_diskstart(device_t dev, struct buf *bp)
@@ -871,7 +871,7 @@ sdminphys(struct buf *bp)
 	 *
 	 * XXX Note that the SCSI-I spec says that 256-block transfers
 	 * are allowed in a 6-byte read/write, and are specified
-	 * by settng the "length" to 0.  However, we're conservative
+	 * by setting the "length" to 0.  However, we're conservative
 	 * here, allowing only 255-block transfers in case an
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
