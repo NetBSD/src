@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.344 2020/09/25 19:40:23 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.345 2020/09/25 23:18:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.344 2020/09/25 19:40:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.345 2020/09/25 23:18:59 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -389,20 +389,13 @@ is_relpath(const char *path)
 	return FALSE;
 }
 
-/*-
- * MainParseArgs --
- *	Parse a given argument vector. Called from main() and from
- *	Main_ParseArgLine() when the .MAKEFLAGS target is used.
+/* Parse the given arguments.  Called from main() and from
+ * Main_ParseArgLine() when the .MAKEFLAGS target is used.
  *
- *	XXX: Deal with command line overriding .MAKEFLAGS in makefile
+ * The arguments must be treated as read-only and will be freed after the
+ * call.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	Various global and local flags will be set depending on the flags
- *	given
- */
+ * XXX: Deal with command line overriding .MAKEFLAGS in makefile */
 static void
 MainParseArgs(int argc, char **argv)
 {
@@ -543,7 +536,7 @@ rearg:
 		case 'v':
 			if (argvalue == NULL) goto noarg;
 			printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
-			Lst_Append(variables, argvalue);
+			Lst_Append(variables, bmake_strdup(argvalue));
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -571,7 +564,7 @@ rearg:
 			break;
 		case 'f':
 			if (argvalue == NULL) goto noarg;
-			Lst_Append(makefiles, argvalue);
+			Lst_Append(makefiles, bmake_strdup(argvalue));
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
