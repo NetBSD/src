@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.161 2020/09/25 15:54:51 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.162 2020/09/25 16:27:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.161 2020/09/25 15:54:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.162 2020/09/25 16:27:15 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -294,11 +294,17 @@ SuffSuffIsSuffix(const void *s, const void *sd)
     return SuffSuffGetSuffix(s, sd) != NULL;
 }
 
-/* See if the suffix has the desired name. */
-static Boolean
-SuffSuffHasName(const void *s, const void *desiredName)
+static SuffListNode *
+FindSuffByName(const char *name)
 {
-    return strcmp(((const Suff *)s)->name, desiredName) == 0;
+    SuffListNode *ln;
+
+    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+        const Suff *suff = ln->datum;
+        if (strcmp(suff->name, name) == 0)
+            return ln;
+    }
+    return NULL;
 }
 
 /* See if the suffix name is a prefix of the string. Care must be taken when
@@ -511,7 +517,7 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 	    single = src;
 	    singleLn = srcLn;
 	} else {
-	    targLn = Lst_Find(sufflist, SuffSuffHasName, str2);
+	    targLn = FindSuffByName(str2);
 	    if (targLn != NULL) {
 		*out_src = src;
 		*out_targ = LstNode_Datum(targLn);
@@ -676,7 +682,7 @@ SuffRebuildGraph(void *transformp, void *sp)
      */
     cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
     if (cp != NULL) {
-	SuffListNode *ln = Lst_Find(sufflist, SuffSuffHasName, cp);
+	SuffListNode *ln = FindSuffByName(cp);
 	if (ln != NULL) {
 	    /*
 	     * Found target. Link in and return, since it can't be anything
@@ -702,7 +708,7 @@ SuffRebuildGraph(void *transformp, void *sp)
 	 * Null-terminate the source suffix in order to find it.
 	 */
 	cp[1] = '\0';
-	ln = Lst_Find(sufflist, SuffSuffHasName, transform->name);
+	ln = FindSuffByName(transform->name);
 	/*
 	 * Replace the start of the target suffix
 	 */
@@ -789,7 +795,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
     SuffListNode *ln;
     GNodeSuff	  gs;
 
-    ln = Lst_Find(sufflist, SuffSuffHasName, name);
+    ln = FindSuffByName(name);
     if (ln == NULL) {
 	s = SuffNew(name);
 
@@ -819,7 +825,7 @@ Suff_GetPath(char *sname)
     SuffListNode *ln;
     Suff *s;
 
-    ln = Lst_Find(sufflist, SuffSuffHasName, sname);
+    ln = FindSuffByName(sname);
     if (ln == NULL) {
 	return NULL;
     } else {
@@ -892,7 +898,7 @@ Suff_DoPaths(void)
 void
 Suff_AddInclude(char *sname)
 {
-    SuffListNode *ln = Lst_Find(sufflist, SuffSuffHasName, sname);
+    SuffListNode *ln = FindSuffByName(sname);
     if (ln != NULL) {
     	Suff *s = LstNode_Datum(ln);
 	s->flags |= SUFF_INCLUDE;
@@ -910,7 +916,7 @@ Suff_AddInclude(char *sname)
 void
 Suff_AddLib(const char *sname)
 {
-    SuffListNode *ln = Lst_Find(sufflist, SuffSuffHasName, sname);
+    SuffListNode *ln = FindSuffByName(sname);
     if (ln != NULL) {
 	Suff *s = LstNode_Datum(ln);
 	s->flags |= SUFF_LIBRARY;
@@ -1177,7 +1183,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
 	 * The node matches the prefix ok, see if it has a known
 	 * suffix.
 	 */
-	suffln = Lst_Find(sufflist, SuffSuffHasName, &cp[prefLen]);
+	suffln = FindSuffByName(cp + prefLen);
 	if (suffln == NULL)
 	    continue;
 	/*
@@ -2097,7 +2103,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	SuffListNode *ln;
 	Suff	*s;
 
-	ln = Lst_Find(sufflist, SuffSuffHasName, LIBSUFF);
+	ln = FindSuffByName(LIBSUFF);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
 	if (ln != NULL) {
@@ -2133,7 +2139,7 @@ Suff_SetNull(char *name)
     Suff    *s;
     SuffListNode *ln;
 
-    ln = Lst_Find(sufflist, SuffSuffHasName, name);
+    ln = FindSuffByName(name);
     if (ln != NULL) {
 	s = LstNode_Datum(ln);
 	if (suffNull != NULL) {
