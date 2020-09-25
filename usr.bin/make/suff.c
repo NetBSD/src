@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.162 2020/09/25 16:27:15 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.163 2020/09/25 16:28:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.162 2020/09/25 16:27:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.163 2020/09/25 16:28:29 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -186,11 +186,11 @@ typedef struct Suff {
 /*
  * Structure used in the search for implied sources.
  */
-typedef struct _Src {
+typedef struct Src {
     char            *file;	/* The file to look for */
     char    	    *pref;  	/* Prefix from which file was formed */
     Suff            *suff;	/* The suffix on the file */
-    struct _Src     *parent;	/* The Src for which this is a source */
+    struct Src     *parent;	/* The Src for which this is a source */
     GNode           *node;	/* The node describing the file */
     int	    	    children;	/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
