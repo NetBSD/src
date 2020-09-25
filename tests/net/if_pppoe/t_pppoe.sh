@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.22 2020/09/25 06:07:31 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.23 2020/09/25 06:15:30 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -556,7 +556,7 @@ pppoe_params_body()
 	atf_check -s exit:0 rump.ifconfig pppoe0 down
 	wait_for_disconnected
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -a ACNAME-TEST2 -e shmif0 pppoe0"
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -a \"\" -e shmif0 pppoe0"
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_session_established
@@ -567,6 +567,19 @@ pppoe_params_body()
 	    -x "${dumpcmd} | grep PADI"
 	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
 	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o not-match:'AC-Name' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
+
+	# store 0 length string in AC-NAME
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -a \"\" -e shmif0 pppoe0"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	unset RUMP_SERVER
+
 	atf_check -s exit:0 -o match:'\[AC-Name\]' -e ignore \
 	    -x "${dumpcmd} | grep PADI"
 
@@ -629,7 +642,7 @@ pppoe_params_body()
 	atf_check -s exit:0 rump.ifconfig pppoe0 down
 	wait_for_disconnected
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -s SNAME-TEST2 -e shmif0 pppoe0"
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -s \"\" -e shmif0 pppoe0"
+	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_session_established
@@ -685,10 +698,10 @@ pppoe_params_body()
 
 	$DEBUG && dump_bus
 	atf_check -s exit:0 \
-	    -o match:'\[Service-Name "SNAME-TEST3"\] \[AC-Name "ACNAME-TEST4"\]' \
+	    -o match:'\[Service-Name\] \[AC-Name "ACNAME-TEST4"\]' \
 	    -e ignore \
 	    -x "${dumpcmd} | grep PADI"
-	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST3"\]' -e ignore \
+	atf_check -s exit:0 -o match:'\[Service-Name\]' -e ignore \
 	    -x "${dumpcmd} | grep PADR"
 
 	# change Service-Name
@@ -696,7 +709,9 @@ pppoe_params_body()
 	atf_check -s exit:0 rump.ifconfig pppoe0 down
 	wait_for_disconnected
 	atf_check -s exit:0 -x \
-	    "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST4 pppoe0"
+	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST5 -s SNAME-TEST5 pppoe0"
+	atf_check -s exit:0 -x \
+	    "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST6 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_session_established
@@ -704,11 +719,13 @@ pppoe_params_body()
 
 	$DEBUG && dump_bus
 	atf_check -s exit:0 \
-	    -o match:'\[Service-Name "SNAME-TEST4"\] \[AC-Name "ACNAME-TEST4"\]' \
+	    -o match:'\[Service-Name "SNAME-TEST6"\]' \
 	    -e ignore \
 	    -x "${dumpcmd} | grep PADI"
-	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST3"\]' -e ignore \
+	atf_check -s exit:0 -o match:'\[Service-Name "SNAME-TEST6"\]' -e ignore \
 	    -x "${dumpcmd} | grep PADR"
+	atf_check -s exit:0 -o not-match:'\[AC-Name "ACNAME-TEST5\]"' -e ignore \
+	    -x "${dumpcmd} | grep PADI"
 }
 
 pppoe_params_cleanup()
