@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.165 2020/09/25 17:55:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.166 2020/09/25 18:58:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.165 2020/09/25 17:55:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.166 2020/09/25 18:58:12 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -294,15 +294,15 @@ SuffSuffIsSuffix(const void *s, const void *sd)
     return SuffSuffGetSuffix(s, sd) != NULL;
 }
 
-static SuffListNode *
+static Suff *
 FindSuffByName(const char *name)
 {
     SuffListNode *ln;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-        const Suff *suff = ln->datum;
+        Suff *suff = ln->datum;
         if (strcmp(suff->name, name) == 0)
-            return ln;
+            return suff;
     }
     return NULL;
 }
@@ -468,7 +468,6 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 {
     SuffListNode *srcLn;	/* element in suffix list of trans source*/
     Suff *src;			/* Source of transformation */
-    SuffListNode *targLn;	/* element in suffix list of trans target*/
     char *str2;			/* Extra pointer (maybe target suffix) */
     SuffListNode *singleLn;	/* element in suffix list of any suffix
 				 * that exactly matches str */
@@ -517,10 +516,10 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 	    single = src;
 	    singleLn = srcLn;
 	} else {
-	    targLn = FindSuffByName(str2);
-	    if (targLn != NULL) {
+	    Suff *targ = FindSuffByName(str2);
+	    if (targ != NULL) {
 		*out_src = src;
-		*out_targ = LstNode_Datum(targLn);
+		*out_targ = targ;
 		return TRUE;
 	    }
 	}
@@ -670,7 +669,6 @@ SuffRebuildGraph(void *transformp, void *sp)
     GNode   	*transform = (GNode *)transformp;
     Suff    	*s = (Suff *)sp;
     char 	*cp;
-    Suff  	*s2;
     struct SuffSuffGetSuffixArgs sd;
 
     /*
@@ -678,13 +676,9 @@ SuffRebuildGraph(void *transformp, void *sp)
      */
     cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
     if (cp != NULL) {
-	SuffListNode *ln = FindSuffByName(cp);
-	if (ln != NULL) {
-	    /*
-	     * Found target. Link in and return, since it can't be anything
-	     * else.
-	     */
-	    s2 = LstNode_Datum(ln);
+	Suff *s2 = FindSuffByName(cp);
+	if (s2 != NULL) {
+	    /* Link in and return, since it can't be anything else. */
 	    SuffInsert(s2->children, s);
 	    SuffInsert(s->parents, s2);
 	    return;
@@ -698,22 +692,16 @@ SuffRebuildGraph(void *transformp, void *sp)
     sd.name_end = transform->name + sd.name_len;
     cp = SuffSuffGetSuffix(s, &sd);
     if (cp != NULL) {
-	SuffListNode *ln;
+	Suff *s2;
 
-	/*
-	 * Null-terminate the source suffix in order to find it.
-	 */
+	/* Null-terminate the source suffix in order to find it. */
+	/* XXX: don't modify strings, not even temporarily */
 	cp[1] = '\0';
-	ln = FindSuffByName(transform->name);
-	/*
-	 * Replace the start of the target suffix
-	 */
-	cp[1] = s->name[0];
-	if (ln != NULL) {
-	    /*
-	     * Found it -- establish the proper relationship
-	     */
-	    s2 = LstNode_Datum(ln);
+	s2 = FindSuffByName(transform->name);
+	cp[1] = s->name[0];		/* restore */
+
+	if (s2 != NULL) {
+	    /* establish the proper relationship */
 	    SuffInsert(s->children, s2);
 	    SuffInsert(s2->parents, s);
 	}
@@ -786,47 +774,39 @@ SuffScanTargets(void *targetp, void *gsp)
 void
 Suff_AddSuffix(const char *name, GNode **gnp)
 {
-    Suff          *s;	    /* new suffix descriptor */
-    SuffListNode *ln;
-    GNodeSuff	  gs;
+    GNodeSuff gs;
 
-    ln = FindSuffByName(name);
-    if (ln == NULL) {
-	s = SuffNew(name);
+    Suff *s = FindSuffByName(name);
+    if (s != NULL)
+	return;
 
-	Lst_Append(sufflist, s);
-	/*
-	 * We also look at our existing targets list to see if adding
-	 * this suffix will make one of our current targets mutate into
-	 * a suffix rule. This is ugly, but other makes treat all targets
-	 * that start with a . as suffix rules.
-	 */
-	gs.gnp = gnp;
-	gs.s  = s;
-	gs.r  = FALSE;
-	Lst_ForEachUntil(Targ_List(), SuffScanTargets, &gs);
-	/*
-	 * Look for any existing transformations from or to this suffix.
-	 * XXX: Only do this after a Suff_ClearSuffixes?
-	 */
-	Lst_ForEach(transforms, SuffRebuildGraph, s);
-    }
+    s = SuffNew(name);
+    Lst_Append(sufflist, s);
+
+    /*
+     * We also look at our existing targets list to see if adding
+     * this suffix will make one of our current targets mutate into
+     * a suffix rule. This is ugly, but other makes treat all targets
+     * that start with a . as suffix rules.
+     */
+    gs.gnp = gnp;
+    gs.s  = s;
+    gs.r  = FALSE;
+    Lst_ForEachUntil(Targ_List(), SuffScanTargets, &gs);
+
+    /*
+     * Look for any existing transformations from or to this suffix.
+     * XXX: Only do this after a Suff_ClearSuffixes?
+     */
+    Lst_ForEach(transforms, SuffRebuildGraph, s);
 }
 
 /* Return the search path for the given suffix, or NULL. */
 SearchPath *
 Suff_GetPath(char *sname)
 {
-    SuffListNode *ln;
-    Suff *s;
-
-    ln = FindSuffByName(sname);
-    if (ln == NULL) {
-	return NULL;
-    } else {
-	s = LstNode_Datum(ln);
-	return s->searchPath;
-    }
+    Suff *s = FindSuffByName(sname);
+    return s != NULL ? s->searchPath : NULL;
 }
 
 /* Extend the search paths for all suffixes to include the default search
@@ -893,11 +873,9 @@ Suff_DoPaths(void)
 void
 Suff_AddInclude(char *sname)
 {
-    SuffListNode *ln = FindSuffByName(sname);
-    if (ln != NULL) {
-    	Suff *s = LstNode_Datum(ln);
-	s->flags |= SUFF_INCLUDE;
-    }
+    Suff *suff = FindSuffByName(sname);
+    if (suff != NULL)
+	suff->flags |= SUFF_INCLUDE;
 }
 
 /* Add the given suffix as a type of file which is a library.
@@ -911,11 +889,9 @@ Suff_AddInclude(char *sname)
 void
 Suff_AddLib(const char *sname)
 {
-    SuffListNode *ln = FindSuffByName(sname);
-    if (ln != NULL) {
-	Suff *s = LstNode_Datum(ln);
-	s->flags |= SUFF_LIBRARY;
-    }
+    Suff *suff = FindSuffByName(sname);
+    if (suff != NULL)
+	suff->flags |= SUFF_LIBRARY;
 }
 
 	  /********** Implicit Source Search Functions *********/
@@ -1128,7 +1104,6 @@ static Src *
 SuffFindCmds(Src *targ, SrcList *slst)
 {
     GNodeListNode *gln;
-    SuffListNode *suffln;
 
     GNode		*t, 	/* Target GNode */
 			*s; 	/* Source GNode */
@@ -1172,16 +1147,16 @@ SuffFindCmds(Src *targ, SrcList *slst)
 	 * The node matches the prefix ok, see if it has a known
 	 * suffix.
 	 */
-	suffln = FindSuffByName(cp + prefLen);
-	if (suffln == NULL)
+	suff = FindSuffByName(cp + prefLen);
+	if (suff == NULL)
 	    continue;
+
 	/*
 	 * It even has a known suffix, see if there's a transformation
 	 * defined between the node's suffix and the target's suffix.
 	 *
 	 * XXX: Handle multi-stage transformations here, too.
 	 */
-	suff = LstNode_Datum(suffln);
 
 	/* XXX: Can targ->suff be NULL here? */
 	if (targ->suff != NULL &&
@@ -2089,14 +2064,11 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	 * set the TARGET variable to the node's name in order to give it a
 	 * value).
 	 */
-	SuffListNode *ln;
-	Suff	*s;
-
-	ln = FindSuffByName(LIBSUFF);
+	Suff *s = FindSuffByName(LIBSUFF);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
-	if (ln != NULL) {
-	    gn->suffix = s = LstNode_Datum(ln);
+	if (s != NULL) {
+	    gn->suffix = s;
 	    gn->suffix->refCount++;
 	    Arch_FindLib(gn, s->searchPath);
 	} else {
@@ -2125,24 +2097,21 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 void
 Suff_SetNull(char *name)
 {
-    Suff    *s;
-    SuffListNode *ln;
-
-    ln = FindSuffByName(name);
-    if (ln != NULL) {
-	s = LstNode_Datum(ln);
-	if (suffNull != NULL) {
-	    suffNull->flags &= ~SUFF_NULL;
-	}
-	s->flags |= SUFF_NULL;
-	/*
-	 * XXX: Here's where the transformation mangling would take place
-	 */
-	suffNull = s;
-    } else {
+    Suff *s = FindSuffByName(name);
+    if (s == NULL) {
 	Parse_Error(PARSE_WARNING, "Desired null suffix %s not defined.",
-		     name);
+		    name);
+	return;
     }
+
+    if (suffNull != NULL) {
+	suffNull->flags &= ~SUFF_NULL;
+    }
+    s->flags |= SUFF_NULL;
+    /*
+     * XXX: Here's where the transformation mangling would take place
+     */
+    suffNull = s;
 }
 
 /* Initialize the suffixes module. */
