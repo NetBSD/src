@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.14 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.14 2020/09/25 03:40:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.13 2020/09/22 15:24:02 thorpej E
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
@@ -432,17 +433,29 @@ dec_2100_a500_intr_establish(pci_chipset_tag_t const pc,
 
 	KASSERT(irq < SABLE_MAX_IRQ);
 
-	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs, irq,
+	cookie = alpha_shared_intr_alloc_intrhand(pc->pc_shared_intrs, irq,
 	    dec_2100_a500_intr_deftype[irq], level, flags, func, arg, "T2 irq");
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(pc->pc_shared_intrs, cookie, "T2 irq")) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
 		    dec_2100_a500_iointr, tcp);
 		(*tcp->tc_enable_intr)(tcp, irq, 1);
 	}
 
-	return (cookie);
+	mutex_exit(&cpu_lock);
+
+	return cookie;
 }
 
 static void
@@ -451,20 +464,21 @@ dec_2100_a500_intr_disestablish(pci_chipset_tag_t const pc, void * const cookie)
 	struct ttwoga_config *tcp = pc->pc_intr_v;
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
-	int s;
 
-	s = splhigh();
+	mutex_enter(&cpu_lock);
 
-	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
-	    "T2 irq");
-	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
 		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    irq, dec_2100_a500_intr_deftype[irq]);
 		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
-	splx(s);
+	alpha_shared_intr_unlink(pc->pc_shared_intrs, cookie, "T2 irq");
+
+	mutex_exit(&cpu_lock);
+
+	alpha_shared_intr_free_intrhand(cookie);
 }
 
 /*****************************************************************************
@@ -554,11 +568,21 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 		return (NULL);
 	}
 
-	cookie = alpha_shared_intr_establish(pc->pc_shared_intrs, irq,
+	cookie = alpha_shared_intr_alloc_intrhand(pc->pc_shared_intrs, irq,
 	    type, level, 0, fn, arg, "T2 irq");
 
-	if (cookie != NULL &&
-	    alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+	if (cookie == NULL)
+		return NULL;
+
+	mutex_enter(&cpu_lock);
+
+	if (! alpha_shared_intr_link(pc->pc_shared_intrs, cookie, "T2 irq")) {
+		mutex_exit(&cpu_lock);
+		alpha_shared_intr_free_intrhand(cookie);
+		return NULL;
+	}
+
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
 		    dec_2100_a500_iointr, tcp);
 		(*tcp->tc_setlevel)(tcp, eirq,
@@ -567,7 +591,9 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 		(*tcp->tc_enable_intr)(tcp, irq, 1);
 	}
 
-	return (cookie);
+	mutex_exit(&cpu_lock);
+
+	return cookie;
 }
 
 static void
@@ -576,22 +602,23 @@ dec_2100_a500_eisa_intr_disestablish(void *v, void *cookie)
 	struct ttwoga_config *tcp = v;
 	pci_chipset_tag_t const pc = &tcp->tc_pc;
 	struct alpha_shared_intrhand *ih = cookie;
-	int s, irq = ih->ih_num;
+	int irq = ih->ih_num;
 
-	s = splhigh();
+	mutex_enter(&cpu_lock);
 
-	/* Remove it from the link. */
-	alpha_shared_intr_disestablish(pc->pc_shared_intrs, cookie,
-	    "T2 irq");
-
-	if (alpha_shared_intr_isactive(pc->pc_shared_intrs, irq) == 0) {
+	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
 		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
 		    irq, dec_2100_a500_intr_deftype[irq]);
 		scb_free(pc->pc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
-	splx(s);
+	/* Remove it from the link. */
+	alpha_shared_intr_unlink(pc->pc_shared_intrs, cookie, "T2 irq");
+
+	mutex_exit(&cpu_lock);
+
+	alpha_shared_intr_free_intrhand(cookie);
 }
 
 static int

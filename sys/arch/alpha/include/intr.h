@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.80 2020/09/23 18:47:21 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.81 2020/09/25 03:40:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ struct alpha_shared_intrhand {
 	int	(*ih_real_fn)(void *);
 	void	*ih_real_arg;
 	int	ih_level;
+	int	ih_type;
 	unsigned int ih_num;
 };
 
@@ -215,6 +216,7 @@ struct alpha_shared_intr {
 	struct evcnt intr_evcnt;
 	char	*intr_string;
 	void	*intr_private;
+	struct cpu_info *intr_cpu;
 	int	intr_sharetype;
 	int	intr_dfltsharetype;
 	int	intr_nstrays;
@@ -228,10 +230,15 @@ struct alpha_shared_intr {
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
-void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
-	    unsigned int, int, int, int, int (*)(void *), void *, const char *);
-void	alpha_shared_intr_disestablish(struct alpha_shared_intr *,
-	    void *, const char *);
+struct alpha_shared_intrhand *
+	alpha_shared_intr_alloc_intrhand(struct alpha_shared_intr *,
+	    unsigned int, int, int, int, int (*)(void *), void *,
+	    const char *);
+void	alpha_shared_intr_free_intrhand(struct alpha_shared_intrhand *);
+bool	alpha_shared_intr_link(struct alpha_shared_intr *,
+	    struct alpha_shared_intrhand *, const char *);
+void	alpha_shared_intr_unlink(struct alpha_shared_intr *,
+	    struct alpha_shared_intrhand *, const char *);
 int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
 	    unsigned int);
 int	alpha_shared_intr_isactive(struct alpha_shared_intr *,
@@ -249,6 +256,11 @@ void	alpha_shared_intr_stray(struct alpha_shared_intr *, unsigned int,
 void	alpha_shared_intr_set_private(struct alpha_shared_intr *,
 	    unsigned int, void *);
 void	*alpha_shared_intr_get_private(struct alpha_shared_intr *,
+	    unsigned int);
+void	alpha_shared_intr_set_cpu(struct alpha_shared_intr *,
+	    unsigned int, struct cpu_info *ci);
+struct cpu_info	*
+	alpha_shared_intr_get_cpu(struct alpha_shared_intr *,
 	    unsigned int);
 char	*alpha_shared_intr_string(struct alpha_shared_intr *,
 	    unsigned int);
