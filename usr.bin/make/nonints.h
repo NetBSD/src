@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.128 2020/09/25 15:54:50 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.129 2020/09/25 19:50:04 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -152,17 +152,17 @@ Boolean Str_Match(const char *, const char *);
 
 /* suff.c */
 void Suff_ClearSuffixes(void);
-Boolean Suff_IsTransform(char *);
-GNode *Suff_AddTransform(char *);
+Boolean Suff_IsTransform(const char *);
+GNode *Suff_AddTransform(const char *);
 void Suff_EndTransform(GNode *);
 void Suff_AddSuffix(const char *, GNode **);
-SearchPath *Suff_GetPath(char *);
+SearchPath *Suff_GetPath(const char *);
 void Suff_DoPaths(void);
-void Suff_AddInclude(char *);
+void Suff_AddInclude(const char *);
 void Suff_AddLib(const char *);
 void Suff_FindDeps(GNode *);
 SearchPath *Suff_FindPath(GNode *);
-void Suff_SetNull(char *);
+void Suff_SetNull(const char *);
 void Suff_Init(void);
 void Suff_End(void);
 void Suff_PrintAll(void);
