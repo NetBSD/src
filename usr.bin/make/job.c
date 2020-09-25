@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.237 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.238 2020/09/25 06:20:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.237 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.238 2020/09/25 06:20:44 rillig Exp $");
 
 # define STATIC static
 
@@ -1907,13 +1907,16 @@ end_loop:
 static void
 JobRun(GNode *targ)
 {
-#ifdef notyet
+#if 0
     /*
-     * Unfortunately it is too complicated to run .BEGIN, .END,
-     * and .INTERRUPT job in the parallel job module. This has
-     * the nice side effect that it avoids a lot of other problems.
+     * Unfortunately it is too complicated to run .BEGIN, .END, and
+     * .INTERRUPT job in the parallel job module.  As of 2020-09-25,
+     * unit-tests/deptgt-end-jobs.mk hangs in an endless loop.
+     *
+     * Running these jobs in compat mode also guarantees that these
+     * jobs do not overlap with other unrelated jobs.
      */
-    Lst lst = Lst_Init();
+    List *lst = Lst_Init();
     Lst_Append(lst, targ);
     (void)Make_Run(lst);
     Lst_Destroy(lst, NULL);
