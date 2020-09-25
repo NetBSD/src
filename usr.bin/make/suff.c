@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.163 2020/09/25 16:28:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.164 2020/09/25 17:14:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.163 2020/09/25 16:28:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.164 2020/09/25 17:14:32 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -172,7 +172,7 @@ typedef List SuffListList;
  */
 typedef struct Suff {
     char         *name;	    	/* The suffix itself, such as ".c" */
-    int		 nameLen;	/* Length of the name, to avoid strlen calls */
+    size_t	 nameLen;	/* Length of the name, to avoid strlen calls */
     SuffFlags	 flags;      	/* Type of suffix */
     SearchPath	 *searchPath;	/* The path along which files of this suffix
 				 * may be found */
@@ -252,8 +252,8 @@ SuffStrIsPrefix(const char *pref, const char *str)
 }
 
 struct SuffSuffGetSuffixArgs {
-    char	*ename;		/* The end of the name */
-    int		 len;		/* Length of the name */
+    size_t name_len;
+    char *name_end;
 };
 
 /* See if suff is a suffix of str. str->ename should point to THE END
@@ -273,11 +273,11 @@ SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
     char  *p1;	    	/* Pointer into suffix name */
     char  *p2;	    	/* Pointer into string being examined */
 
-    if (str->len < s->nameLen)
+    if (str->name_len < s->nameLen)
 	return NULL;		/* this string is shorter than the suffix */
 
     p1 = s->name + s->nameLen;
-    p2 = str->ename;
+    p2 = str->name_end;
 
     while (p1 >= s->name && *p1 == *p2) {
 	p1--;
@@ -698,8 +698,8 @@ SuffRebuildGraph(void *transformp, void *sp)
     /*
      * Not from, maybe to?
      */
-    sd.len = strlen(transform->name);
-    sd.ename = transform->name + sd.len;
+    sd.name_len = strlen(transform->name);
+    sd.name_end = transform->name + sd.name_len;
     cp = SuffSuffGetSuffix(s, &sd);
     if (cp != NULL) {
 	SuffListNode *ln;
@@ -1143,7 +1143,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
 
     GNode		*t, 	/* Target GNode */
 			*s; 	/* Source GNode */
-    int	    	  	prefLen;/* The length of the defined prefix */
+    size_t		prefLen;/* The length of the defined prefix */
     Suff    	  	*suff;	/* Suffix on matching beastie */
     Src	    	  	*ret;	/* Return value */
     char    	  	*cp;
@@ -1452,8 +1452,8 @@ Suff_FindPath(GNode* gn)
     if (suff == NULL) {
 	struct SuffSuffGetSuffixArgs sd;   /* Search string data */
 	SuffListNode *ln;
-	sd.len = strlen(gn->name);
-	sd.ename = gn->name + sd.len;
+	sd.name_len = strlen(gn->name);
+	sd.name_end = gn->name + sd.name_len;
 	ln = Lst_Find(sufflist, SuffSuffIsSuffix, &sd);
 
 	SUFF_DEBUG1("Wildcard expanding \"%s\"...", gn->name);
@@ -1661,8 +1661,8 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	/*
 	 * Use first matching suffix...
 	 */
-	sd.len = eoarch - gn->name;
-	sd.ename = eoarch;
+	sd.name_len = eoarch - gn->name;
+	sd.name_end = eoarch;
 	ln = Lst_Find(ms->parents, SuffSuffIsSuffix, &sd);
 
 	if (ln != NULL) {
@@ -1725,8 +1725,8 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     struct SuffSuffGetSuffixArgs sd; /* Search string data */
 
 
-    sd.len = strlen(gn->name);
-    sd.ename = eoname = gn->name + sd.len;
+    sd.name_len = strlen(gn->name);
+    sd.name_end = eoname = gn->name + sd.name_len;
 
     sopref = gn->name;
 
@@ -1903,7 +1903,7 @@ sfnd_abort:
 		     * Suffix known for the thing -- trim the suffix off
 		     * the path to form the proper .PREFIX variable.
 		     */
-		    int     savep = strlen(gn->path) - targ->suff->nameLen;
+		    size_t savep = strlen(gn->path) - targ->suff->nameLen;
 		    char    savec;
 
 		    if (gn->suffix)
