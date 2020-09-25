@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.327 2020/09/25 21:13:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.328 2020/09/25 23:30:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.327 2020/09/25 21:13:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.328 2020/09/25 23:30:16 rillig Exp $");
 
 /* types and constants */
 
@@ -3128,6 +3128,8 @@ Parse_File(const char *name, int fd)
 	 * Reached EOF, but it may be just EOF of an include file...
 	 */
     } while (ParseEOF() == CONTINUE);
+
+    ParseFinishLine();
 
     if (fatals) {
 	(void)fflush(stdout);

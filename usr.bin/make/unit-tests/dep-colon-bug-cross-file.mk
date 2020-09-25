@@ -1,4 +1,4 @@
-# $NetBSD: dep-colon-bug-cross-file.mk,v 1.1 2020/09/25 23:24:49 rillig Exp $
+# $NetBSD: dep-colon-bug-cross-file.mk,v 1.2 2020/09/25 23:30:16 rillig Exp $
 #
 # Until 2020-09-25, the very last dependency group of a top-level makefile
 # was not finished properly.  This made it possible to add further commands
@@ -13,8 +13,6 @@
 # In this pass, another command is added to the "current dependency group",
 # which is still the one from pass 1, which means it is possible to even
 # cross file boundaries.
-#
-# TODO: Finish the file properly in Parse_File.
 #
 # Oops, even worse.  Running this test in a make from 2020-09-25 or earlier
 # on NetBSD 8.0 x86_64 with MALLOC_OPTIONS=JA produces this or a similar
