@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.119 2020/09/25 06:49:13 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.120 2020/09/25 14:41:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.119 2020/09/25 06:49:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.120 2020/09/25 14:41:35 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -714,17 +714,9 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	}
 	eptr = ar->fnametab + size;
 	for (entry = 0, ptr = ar->fnametab; ptr < eptr; ptr++)
-	    switch (*ptr) {
-	    case '/':
+	    if (*ptr == '/') {
 		entry++;
 		*ptr = '\0';
-		break;
-
-	    case '\n':
-		break;
-
-	    default:
-		break;
 	    }
 	if (DEBUG(ARCH)) {
 	    fprintf(debug_file, "Found svr4 archive name table with %lu entries\n",
