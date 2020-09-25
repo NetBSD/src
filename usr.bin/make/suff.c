@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.164 2020/09/25 17:14:32 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.165 2020/09/25 17:55:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.164 2020/09/25 17:14:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.165 2020/09/25 17:55:19 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -599,7 +599,6 @@ Suff_AddTransform(char *line)
 
 /* Handle the finish of a transformation definition, removing the
  * transformation from the graph if it has neither commands nor sources.
- * This is a callback procedure for the Parse module via Lst_ForEachUntil.
  *
  * If the node has no commands or children, the children and parents lists
  * of the affected suffixes are altered.
@@ -664,11 +663,8 @@ Suff_EndTransform(GNode *gn)
  * Input:
  *	transformp	Transformation to test
  *	sp		Suffix to rebuild
- *
- * Results:
- *	0, so that Lst_ForEachUntil continues
  */
-static int
+static void
 SuffRebuildGraph(void *transformp, void *sp)
 {
     GNode   	*transform = (GNode *)transformp;
@@ -691,7 +687,7 @@ SuffRebuildGraph(void *transformp, void *sp)
 	    s2 = LstNode_Datum(ln);
 	    SuffInsert(s2->children, s);
 	    SuffInsert(s->parents, s2);
-	    return 0;
+	    return;
 	}
     }
 
@@ -722,7 +718,6 @@ SuffRebuildGraph(void *transformp, void *sp)
 	    SuffInsert(s2->parents, s);
 	}
     }
-    return 0;
 }
 
 /* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
@@ -814,7 +809,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
 	 * Look for any existing transformations from or to this suffix.
 	 * XXX: Only do this after a Suff_ClearSuffixes?
 	 */
-	Lst_ForEachUntil(transforms, SuffRebuildGraph, s);
+	Lst_ForEach(transforms, SuffRebuildGraph, s);
     }
 }
 
@@ -926,11 +921,10 @@ Suff_AddLib(const char *sname)
 	  /********** Implicit Source Search Functions *********/
 
 #ifdef DEBUG_SRC
-static int
+static void
 PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
 {
     printf("%lx ", (unsigned long) a);
-    return 0;
 }
 #endif
 
@@ -941,11 +935,8 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
  * Input:
  *	sp		suffix for which to create a Src structure
  *	lsp		list and parent for the new Src
- *
- * Results:
- *	0, so that Lst_ForEachUntil continues
  */
-static int
+static void
 SuffAddSrc(void *sp, void *lsp)
 {
     Suff	*s = (Suff *)sp;
@@ -975,7 +966,7 @@ SuffAddSrc(void *sp, void *lsp)
 	s2->cp = Lst_Init();
 	Lst_Append(targ->cp, s2);
 	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
-	Lst_ForEachUntil(ls->l, PrintAddr, NULL);
+	Lst_ForEach(ls->l, PrintAddr, NULL);
 	fprintf(debug_file, "\n");
 #endif
     }
@@ -993,11 +984,9 @@ SuffAddSrc(void *sp, void *lsp)
     s2->cp = Lst_Init();
     Lst_Append(targ->cp, s2);
     fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
-    Lst_ForEachUntil(ls->l, PrintAddr, NULL);
+    Lst_ForEach(ls->l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
-
-    return 0;
 }
 
 /* Add all the children of targ as Src structures to the given list.
@@ -1014,7 +1003,7 @@ SuffAddLevel(SrcList *l, Src *targ)
     ls.s = targ;
     ls.l = l;
 
-    Lst_ForEachUntil(targ->suff->children, SuffAddSrc, &ls);
+    Lst_ForEach(targ->suff->children, SuffAddSrc, &ls);
 }
 
 /* Free the first Src in the list that doesn't have a reference count.
@@ -1029,7 +1018,7 @@ SuffRemoveSrc(SrcList *l)
 
 #ifdef DEBUG_SRC
     fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
-    Lst_ForEachUntil(l, PrintAddr, NULL);
+    Lst_ForEach(l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
 
@@ -1059,7 +1048,7 @@ SuffRemoveSrc(SrcList *l)
 #ifdef DEBUG_SRC
 	else {
 	    fprintf(debug_file, "keep: [l=%p] p=%p %d: ", l, s, s->children);
-	    Lst_ForEachUntil(s->cp, PrintAddr, NULL);
+	    Lst_ForEach(s->cp, PrintAddr, NULL);
 	    fprintf(debug_file, "\n");
 	}
 #endif
@@ -2193,14 +2182,13 @@ Suff_End(void)
 
 /********************* DEBUGGING FUNCTIONS **********************/
 
-static int SuffPrintName(void *s, void *dummy MAKE_ATTR_UNUSED)
+static void
+SuffPrintName(void *s, void *dummy MAKE_ATTR_UNUSED)
 {
-
     fprintf(debug_file, "%s ", ((Suff *)s)->name);
-    return 0;
 }
 
-static int
+static void
 SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
 {
     Suff    *s = (Suff *)sp;
@@ -2216,18 +2204,17 @@ SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
     }
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tTo: ");
-    Lst_ForEachUntil(s->parents, SuffPrintName, NULL);
+    Lst_ForEach(s->parents, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tFrom: ");
-    Lst_ForEachUntil(s->children, SuffPrintName, NULL);
+    Lst_ForEach(s->children, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
     fputc('\n', debug_file);
-    return 0;
 }
 
-static int
+static void
 SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   *t = (GNode *)tp;
@@ -2237,15 +2224,14 @@ SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
     fputc('\n', debug_file);
     Targ_PrintCmds(t);
     fputc('\n', debug_file);
-    return 0;
 }
 
 void
 Suff_PrintAll(void)
 {
     fprintf(debug_file, "#*** Suffixes:\n");
-    Lst_ForEachUntil(sufflist, SuffPrintSuff, NULL);
+    Lst_ForEach(sufflist, SuffPrintSuff, NULL);
 
     fprintf(debug_file, "#*** Transformations:\n");
-    Lst_ForEachUntil(transforms, SuffPrintTrans, NULL);
+    Lst_ForEach(transforms, SuffPrintTrans, NULL);
 }
