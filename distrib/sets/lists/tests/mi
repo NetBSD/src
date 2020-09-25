@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.927 2020/09/23 03:33:54 rillig Exp $
+# $NetBSD: mi,v 1.928 2020/09/25 05:56:59 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5172,6 +5172,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varname.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varparse-dynamic.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varparse-dynamic.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varparse-undef-partial.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varparse-undef-partial.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varquote.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varquote.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.exp				tests-usr.bin-tests	compattestfile,atf
