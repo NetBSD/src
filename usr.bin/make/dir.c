@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.146 2020/09/24 07:49:58 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.147 2020/09/25 06:49:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.146 2020/09/24 07:49:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.147 2020/09/25 06:49:13 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -747,21 +747,18 @@ static void
 DirExpandInt(const char *word, SearchPath *path, StringList *expansions)
 {
     SearchPathNode *ln;
-
-    Lst_Open(path);
-    while ((ln = Lst_Next(path)) != NULL) {
-	CachedDir *dir = LstNode_Datum(ln);
+    for (ln = path->first; ln != NULL; ln = ln->next) {
+	CachedDir *dir = ln->datum;
 	DirMatchFiles(word, dir, expansions);
     }
-    Lst_Close(path);
 }
 
 static void
 DirPrintExpansions(StringList *words)
 {
-    StringListNode *node;
-    for (node = Lst_First(words); node != NULL; node = LstNode_Next(node)) {
-	const char *word = LstNode_Datum(node);
+    StringListNode *ln;
+    for (ln = words->first; ln != NULL; ln = ln->next) {
+	const char *word = ln->datum;
 	fprintf(debug_file, "%s ", word);
     }
     fprintf(debug_file, "\n");
@@ -1611,14 +1608,12 @@ Dir_MakeFlags(const char *flag, SearchPath *path)
     Buf_Init(&buf, 0);
 
     if (path != NULL) {
-	Lst_Open(path);
-	while ((ln = Lst_Next(path)) != NULL) {
-	    CachedDir *dir = LstNode_Datum(ln);
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+	    CachedDir *dir = ln->datum;
 	    Buf_AddStr(&buf, " ");
 	    Buf_AddStr(&buf, flag);
 	    Buf_AddStr(&buf, dir->name);
 	}
-	Lst_Close(path);
     }
 
     return Buf_Destroy(&buf, FALSE);
@@ -1740,13 +1735,11 @@ Dir_PrintDirectories(void)
 	    percentage(hits, hits + bigmisses + nearmisses));
     fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
 
-    Lst_Open(openDirectories);
-    while ((ln = Lst_Next(openDirectories)) != NULL) {
-	CachedDir *dir = LstNode_Datum(ln);
+    for (ln = openDirectories->first; ln != NULL; ln = ln->next) {
+	CachedDir *dir = ln->datum;
 	fprintf(debug_file, "# %-20s %10d\t%4d\n", dir->name, dir->refCount,
 		dir->hits);
     }
-    Lst_Close(openDirectories);
 }
 
 void

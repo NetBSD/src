@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.118 2020/09/22 20:19:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.119 2020/09/25 06:49:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.118 2020/09/22 20:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.119 2020/09/25 06:49:13 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -1026,11 +1026,9 @@ time_t
 Arch_MemMTime(GNode *gn)
 {
     GNodeListNode *ln;
-    GNode   	  *pgn;
 
-    Lst_Open(gn->parents);
-    while ((ln = Lst_Next(gn->parents)) != NULL) {
-	pgn = LstNode_Datum(ln);
+    for (ln = gn->parents->first; ln != NULL; ln = ln->next) {
+	GNode *pgn = ln->datum;
 
 	if (pgn->type & OP_ARCHV) {
 	    /*
@@ -1057,8 +1055,6 @@ Arch_MemMTime(GNode *gn)
 	    break;
 	}
     }
-
-    Lst_Close(gn->parents);
 
     return gn->mtime;
 }
