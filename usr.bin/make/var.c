@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.537 2020/09/25 05:04:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.538 2020/09/25 06:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.537 2020/09/25 05:04:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.538 2020/09/25 06:06:15 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3780,6 +3780,10 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		    p = nested_p;
 		    errorReported = TRUE;
 		} else {
+		    /* Copy the initial '$' of the undefined expression,
+		     * thereby deferring expansion of the expression, but
+		     * expand nested expressions if already possible.
+		     * See unit-tests/varparse-undef-partial.mk. */
 		    Buf_AddByte(&buf, *p);
 		    p++;
 		}
