@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.90 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.91 2020/09/26 21:07:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.90 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.91 2020/09/26 21:07:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,6 +575,8 @@ cpu_intr_p(void)
 	return curcpu()->ci_intrdepth != 0;
 }
 
+void	(*alpha_intr_redistribute)(void);
+
 /*
  * cpu_intr_redistribute:
  *
@@ -583,7 +585,8 @@ cpu_intr_p(void)
 void
 cpu_intr_redistribute(void)
 {
-	/* XXX Nothing, yet. */
+	if (alpha_intr_redistribute != NULL)
+		(*alpha_intr_redistribute)();
 }
 
 /*
