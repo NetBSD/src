@@ -1,6 +1,6 @@
 /* mpc_div -- Divide two complex numbers.
 
-Copyright (C) 2002, 2003, 2004, 2005, 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2002, 2003, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -229,6 +229,7 @@ mpc_div_imag (mpc_ptr rop, mpc_srcptr z, mpc_srcptr w, mpc_rnd_t rnd)
    return MPC_INEX(inex_re, inex_im);
 }
 
+#define MPFR_EXP(x)       ((x)->_mpfr_exp)
 
 int
 mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
@@ -243,6 +244,7 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
    mpfr_rnd_t rnd_re = MPC_RND_RE (rnd), rnd_im = MPC_RND_IM (rnd);
    int saved_underflow, saved_overflow;
    int tmpsgn;
+   mpfr_exp_t saved_emin, saved_emax;
 
    /* According to the C standard G.3, there are three types of numbers:   */
    /* finite (both parts are usual real numbers; contains 0), infinite     */
@@ -253,9 +255,10 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
    /* all other divisions that are not finite/finite return nan+i*nan.     */
    /* Division by 0 could be handled by the following case of division by  */
    /* a real; we handle it separately instead.                             */
-   if (mpc_zero_p (c))
+   if (mpc_zero_p (c)) /* both Re(c) and Im(c) are zero */
       return mpc_div_zero (a, b, c, rnd);
-   else if (mpc_inf_p (b) && mpc_fin_p (c))
+   else if (mpc_inf_p (b) && mpc_fin_p (c)) /* either Re(b) or Im(b) is infinite
+                                               and both Re(c) and Im(c) are ordinary */
          return mpc_div_inf_fin (a, b, c);
    else if (mpc_fin_p (b) && mpc_inf_p (c))
          return mpc_div_fin_inf (a, b, c);
@@ -272,6 +275,13 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
 
    mpc_init2 (res, 2);
    mpfr_init (q);
+
+   /* we perform the division in the largest possible exponent range,
+      to avoid underflow/overflow in intermediate computations */
+   saved_emin = mpfr_get_emin ();
+   saved_emax = mpfr_get_emax ();
+   mpfr_set_emin (mpfr_get_emin_min ());
+   mpfr_set_emax (mpfr_get_emax_max ());
 
    /* create the conjugate of c in c_conj without allocating new memory */
    mpc_realref (c_conj)[0] = mpc_realref (c)[0];
@@ -312,7 +322,13 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
             hopefully, the side-effects of mpc_mul do indeed raise the
             mpfr exceptions */
       if (overflow_prod) {
+        /* FIXME: in case overflow_norm is also true, the code below is wrong,
+           since the after division by the norm, we might end up with finite
+           real and/or imaginary parts. A workaround would be to scale the
+           inputs (in case the exponents are within the same range). */
          int isinf = 0;
+         /* determine if the real part of res is the maximum or the minimum
+            representable number */
          tmpsgn = mpfr_sgn (mpc_realref(res));
          if (tmpsgn > 0)
            {
@@ -331,6 +347,7 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
              mpfr_set_inf (mpc_realref(res), tmpsgn);
              overflow_re = 1;
            }
+         /* same for the imaginary part */
          tmpsgn = mpfr_sgn (mpc_imagref(res));
          isinf = 0;
          if (tmpsgn > 0)
@@ -444,6 +461,12 @@ mpc_div (mpc_ptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
      mpfr_set_underflow ();
    if (saved_overflow)
      mpfr_set_overflow ();
+
+   /* restore the exponent range, and check the range of results */
+   mpfr_set_emin (saved_emin);
+   mpfr_set_emax (saved_emax);
+   inexact_re = mpfr_check_range (mpc_realref (a), inexact_re, rnd_re);
+   inexact_im = mpfr_check_range (mpc_imagref (a), inexact_im, rnd_im);
 
    return MPC_INEX (inexact_re, inexact_im);
 }

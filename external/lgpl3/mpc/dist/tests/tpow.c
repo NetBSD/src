@@ -52,6 +52,39 @@ reuse_bug (void)
      }
 }
 
+/* at precision 53, mpc_pow gave (inf,-inf), and
+   at precision 73, it gave (inf,inf) */
+static void
+bug20200208 (void)
+{
+  mpc_t x, y, z, zr;
+  mpfr_prec_t prec1 = 53, prec2 = 73;
+
+  mpc_init2 (x, prec1);
+  mpc_init2 (y, prec1);
+  mpc_init2 (z, prec1);
+  mpc_init2 (zr, prec2);
+  mpfr_set_d (mpc_realref (x), 2.0851332234623992e-197, MPFR_RNDN);
+  mpfr_set_d (mpc_imagref (x), -5.6221457829327427e-17, MPFR_RNDN);
+  mpfr_set_d (mpc_realref (y), -2.1866902464899554e+138, MPFR_RNDN);
+  mpfr_set_d (mpc_imagref (y), 2.5932544562430328e-234, MPFR_RNDN);
+  mpc_pow (z, x, y, MPC_RNDNN);
+  mpc_pow (zr, x, y, MPC_RNDNN);
+  if (mpc_cmp (z, zr))
+    {
+      printf ("Inconsistent power with different precisions:\n");
+      mpfr_printf ("prec %lu: (%Re,%Re)\n",
+                   prec1, mpc_realref (z), mpc_imagref (z));
+      mpfr_printf ("prec %lu: (%Re,%Re)\n",
+                   prec2, mpc_realref (zr), mpc_imagref (zr));
+      exit (1);
+    }
+  mpc_clear (x);
+  mpc_clear (y);
+  mpc_clear (z);
+  mpc_clear (zr);
+}
+
 #define MPC_FUNCTION_CALL                                               \
   P[0].mpc_inex = mpc_pow (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd)
 #define MPC_FUNCTION_CALL_REUSE_OP1                                     \
@@ -66,6 +99,8 @@ int
 main (void)
 {
   test_start ();
+
+  bug20200208 ();
 
   reuse_bug ();
 

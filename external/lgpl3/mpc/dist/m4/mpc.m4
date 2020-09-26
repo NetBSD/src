@@ -1,6 +1,6 @@
 # mpc.m4
 #
-# Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014 INRIA
+# Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014, 2018 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -91,10 +91,6 @@ AC_DEFUN([MPC_C_CHECK_WARNINGCFLAGS], [
   AC_REQUIRE([AC_PROG_GREP])
   if echo $VERSION | grep -c dev >/dev/null 2>&1 ; then
     if test "x$GCC" = "xyes" -a "x$compiler" != "xicc"; then
-      # enable -Werror for myself (Andreas Enge)
-      if test "x$USER" = "xenge"; then
-         MPC_C_CHECK_FLAG(-Werror)
-      fi
       MPC_C_CHECK_FLAG(-g)
       MPC_C_CHECK_FLAG(-std=c99)
       MPC_C_CHECK_FLAG(-Wno-long-long)
