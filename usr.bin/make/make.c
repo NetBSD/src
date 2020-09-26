@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.144 2020/09/25 14:00:17 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.145 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.144 2020/09/25 14:00:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.145 2020/09/26 16:00:12 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -483,7 +483,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	/* TODO: handle errors */
 	if (gn->uname && strcmp(gn->name, gn->uname) != 0) {
 	    /* See if we have a target for this node. */
-	    GNode *tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
+	    GNode *tgn = Targ_FindNode(gn->name);
 	    if (tgn != NULL)
 		gn = tgn;
 	}

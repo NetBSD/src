@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.122 2020/09/26 14:48:31 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.123 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.122 2020/09/26 14:48:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.123 2020/09/26 16:00:12 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -345,15 +345,10 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 		 * Just create an ARCHV node for the thing and let
 		 * SuffExpandChildren handle it...
 		 */
-		gn = Targ_FindNode(buf, TARG_CREATE);
+		gn = Targ_GetNode(buf);
+		gn->type |= OP_ARCHV;
+		Lst_Append(nodeLst, gn);
 
-		if (gn == NULL) {
-		    free(buf);
-		    return FALSE;
-		} else {
-		    gn->type |= OP_ARCHV;
-		    Lst_Append(nodeLst, gn);
-		}
 	    } else if (!Arch_ParseArchive(&sacrifice, nodeLst, ctxt)) {
 		/*
 		 * Error in nested call -- free buffer and return FALSE
@@ -375,11 +370,8 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 		char *fullname = str_concat4(libName, "(", member, ")");
 		free(member);
 
-		gn = Targ_FindNode(fullname, TARG_CREATE);
+		gn = Targ_GetNode(fullname);
 		free(fullname);
-
-		if (gn == NULL)
-		    return FALSE;
 
 		/*
 		 * We've found the node, but have to make sure the rest of
@@ -394,11 +386,8 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	    Lst_Free(members);
 	} else {
 	    char *fullname = str_concat4(libName, "(", memName, ")");
-	    gn = Targ_FindNode(fullname, TARG_CREATE);
+	    gn = Targ_GetNode(fullname);
 	    free(fullname);
-
-	    if (gn == NULL)
-		return FALSE;
 
 	    /*
 	     * We've found the node, but have to make sure the rest of the
