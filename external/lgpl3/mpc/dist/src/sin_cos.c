@@ -1,6 +1,6 @@
 /* mpc_sin_cos -- combined sine and cosine of a complex number.
 
-Copyright (C) 2010, 2011, 2012 INRIA
+Copyright (C) 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -343,6 +343,12 @@ mpc_sin_cos (mpc_ptr rop_sin, mpc_ptr rop_cos, mpc_srcptr op,
       mpfr_prec_t prec;
       int ok;
       int inex_re, inex_im, inex_sin, inex_cos, loop = 0;
+      mpfr_exp_t saved_emin, saved_emax;
+
+      saved_emin = mpfr_get_emin ();
+      saved_emax = mpfr_get_emax ();
+      mpfr_set_emin (mpfr_get_emin_min ());
+      mpfr_set_emax (mpfr_get_emax_max ());
 
       prec = 2;
       if (rop_sin != NULL)
@@ -376,7 +382,6 @@ mpc_sin_cos (mpc_ptr rop_sin, mpc_ptr rop_cos, mpc_srcptr op,
 
       do {
          loop ++;
-         ok = 1;
          prec += (loop <= 2) ? mpc_ceil_log2 (prec) + 5 : prec / 2;
 
          mpfr_set_prec (s, prec);
@@ -388,6 +393,8 @@ mpc_sin_cos (mpc_ptr rop_sin, mpc_ptr rop_cos, mpc_srcptr op,
 
          mpfr_sin_cos (s, c, mpc_realref(op), MPFR_RNDN);
          mpfr_sinh_cosh (sh, ch, mpc_imagref(op), MPFR_RNDN);
+
+         ok = 1;
 
          if (rop_sin != NULL) {
             /* real part of sine */
@@ -457,6 +464,30 @@ mpc_sin_cos (mpc_ptr rop_sin, mpc_ptr rop_cos, mpc_srcptr op,
       mpfr_clear (ch);
       mpfr_clear (sch);
       mpfr_clear (csh);
+
+      /* restore the exponent range, and check the range of results */
+      mpfr_set_emin (saved_emin);
+      mpfr_set_emax (saved_emax);
+      if (rop_sin != NULL)
+        {
+          inex_re = mpfr_check_range (mpc_realref (rop_sin),
+                                      MPC_INEX_RE (inex_sin),
+                                      MPC_RND_RE (rnd_sin));
+          inex_im = mpfr_check_range (mpc_imagref (rop_sin),
+                                      MPC_INEX_IM (inex_sin),
+                                      MPC_RND_IM (rnd_sin));
+          inex_sin = MPC_INEX (inex_re, inex_im);
+        }
+      if (rop_cos != NULL)
+        {
+          inex_re = mpfr_check_range (mpc_realref (rop_cos),
+                                      MPC_INEX_RE (inex_cos),
+                                      MPC_RND_RE (rnd_cos));
+          inex_im = mpfr_check_range (mpc_imagref (rop_cos),
+                                      MPC_INEX_IM (inex_cos),
+                                      MPC_RND_IM (rnd_cos));
+          inex_cos = MPC_INEX (inex_re, inex_im);
+        }
 
       return (MPC_INEX12 (inex_sin, inex_cos));
    }

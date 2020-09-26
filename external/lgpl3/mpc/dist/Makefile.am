@@ -1,6 +1,6 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 ##
-## Copyright (C) 2008, 2010, 2011, 2012, 2013, 2014 INRIA
+## Copyright (C) 2008, 2010, 2011, 2012, 2013, 2014, 2020 INRIA
 ##
 ## This file is part of GNU MPC.
 ##
@@ -31,4 +31,7 @@ EXTRA_DIST = doc/fdl-1.3.texi src/mpc-log.h Makefile.vc
 
 bench :
 	cd tools/bench && $(MAKE) $(AM_MAKEFLAGS) bench
+
+mpcheck :
+	cd tools/mpcheck && $(MAKE) $(AM_MAKEFLAGS) mpcheck
 

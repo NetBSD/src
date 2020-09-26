@@ -1,6 +1,6 @@
 /* mpc_sqrt -- Take the square root of a complex number.
 
-Copyright (C) 2002, 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2002, 2008, 2009, 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -48,6 +48,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
      /* we need to know the sign of Im(b) when it is +/-0 */
   const mpfr_rnd_t r = im_sgn ? MPFR_RNDD : MPFR_RNDU;
      /* rounding mode used when computing t */
+  mpfr_exp_t saved_emin, saved_emax;
 
   /* special values */
   if (!mpc_fin_p (b)) {
@@ -202,6 +203,11 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       }
    }
 
+  saved_emin = mpfr_get_emin ();
+  saved_emax = mpfr_get_emax ();
+  mpfr_set_emin (mpfr_get_emin_min ());
+  mpfr_set_emax (mpfr_get_emax_max ());
+
   do
     {
       loops ++;
@@ -210,8 +216,11 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       mpfr_set_prec (t, prec);
       /* let b = x + iy */
       /* w = sqrt ((|x| + sqrt (x^2 + y^2)) / 2), rounded down */
-      /* total error bounded by 3 ulps */
-      inex_w = mpc_abs (w, b, MPFR_RNDD);
+      /* final error on w bounded by 10 ulps, see algorithms.tex */
+      inex_w = mpfr_sqr (w, mpc_realref (b), MPFR_RNDD);
+      inex_w |= mpfr_sqr (t, mpc_imagref (b), MPFR_RNDD);
+      inex_w |= mpfr_add (w, w, t, MPFR_RNDD);
+      inex_w |= mpfr_sqrt (w, w, MPFR_RNDD);
       if (re_cmp < 0)
         inex_w |= mpfr_sub (w, w, mpc_realref (b), MPFR_RNDD);
       else
@@ -222,7 +231,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       repr_w = mpfr_min_prec (w) <= prec_w;
       if (!repr_w)
          /* use the usual trick for obtaining the ternary value */
-         ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDU,
+         ok_w = mpfr_can_round (w, prec - 4, MPFR_RNDD, MPFR_RNDU,
                                 prec_w + (rnd_w == MPFR_RNDN));
       else {
             /* w is representable in the target precision and thus cannot be
@@ -230,16 +239,16 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          if (rnd_w == MPFR_RNDN)
             /* If w can be rounded to nearest, then actually no rounding
                occurs, and the ternary value is known from inex_w. */
-            ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDN, prec_w);
+            ok_w = mpfr_can_round (w, prec - 4, MPFR_RNDD, MPFR_RNDN, prec_w);
          else
             /* If w can be rounded down, then any direct rounding and the
                ternary flag can be determined from inex_w. */
-            ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDD, prec_w);
+            ok_w = mpfr_can_round (w, prec - 4, MPFR_RNDD, MPFR_RNDD, prec_w);
       }
 
       if (!inex_w || ok_w) {
          /* t = y / 2w, rounded away */
-         /* total error bounded by 7 ulps */
+         /* total error bounded by 16 ulps, see algorithms.tex */
          inex_t = mpfr_div (t, mpc_imagref (b), w, r);
          if (!inex_t && inex_w)
             /* The division was exact, but w was not. */
@@ -249,13 +258,13 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          if (!repr_t)
              /* As for w; since t was rounded away, we check whether rounding to 0
                 is possible. */
-            ok_t = mpfr_can_round (t, prec - 3, r, MPFR_RNDZ,
+            ok_t = mpfr_can_round (t, prec - 4, r, MPFR_RNDZ,
                                    prec_t + (rnd_t == MPFR_RNDN));
          else {
             if (rnd_t == MPFR_RNDN)
-               ok_t = mpfr_can_round (t, prec - 3, r, MPFR_RNDN, prec_t);
+               ok_t = mpfr_can_round (t, prec - 4, r, MPFR_RNDN, prec_t);
             else
-               ok_t = mpfr_can_round (t, prec - 3, r, r, prec_t);
+               ok_t = mpfr_can_round (t, prec - 4, r, r, prec_t);
          }
       }
     }
@@ -359,6 +368,12 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
 
   mpfr_clear (w);
   mpfr_clear (t);
+
+  /* restore the exponent range, and check the range of results */
+  mpfr_set_emin (saved_emin);
+  mpfr_set_emax (saved_emax);
+  inex_re = mpfr_check_range (mpc_realref (a), inex_re, MPC_RND_RE (rnd));
+  inex_im = mpfr_check_range (mpc_imagref (a), inex_im, MPC_RND_IM (rnd));
 
   return MPC_INEX (inex_re, inex_im);
 }

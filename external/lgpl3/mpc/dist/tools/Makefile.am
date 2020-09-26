@@ -1,6 +1,7 @@
 ## tools/Makefile.am -- Process this file with automake to produce Makefile.in
 ##
 ## Copyright (C) 2014 CNRS
+## Copyright (C) 2020 INRIA
 ##
 ## This file is part of GNU MPC.
 ##
@@ -17,5 +18,5 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with this program. If not, see http://www.gnu.org/licenses/ .
 
-SUBDIRS = bench
+SUBDIRS = bench mpcheck
 

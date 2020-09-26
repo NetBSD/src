@@ -1,10 +1,10 @@
-This is mpc.info, produced by makeinfo version 6.5 from mpc.texi.
+This is mpc.info, produced by makeinfo version 6.7 from mpc.texi.
 
 This manual is for GNU MPC, a library for multiple precision complex
-arithmetic, version 1.1.0 of January 2018.
+arithmetic, version 1.2.0 of August 2020.
 
    Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2016 INRIA
+2011, 2012, 2013, 2016, 2018, 2020 INRIA
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -23,7 +23,7 @@ GNU MPC
 *******
 
 This manual documents how to install and use the GNU Multiple Precision
-Complex Library, version 1.1.0
+Complex Library, version 1.2.0
 
 * Menu:
 
@@ -85,7 +85,7 @@ File: mpc.info,  Node: Installing GNU MPC,  Next: Reporting Bugs,  Prev: Introdu
 ********************
 
 To build GNU MPC, you first have to install GNU MP (version 5.0.0 or
-higher) and GNU MPFR (version 3.0.0 or higher) on your computer.  You
+higher) and GNU MPFR (version 4.1.0 or higher) on your computer.  You
 need a C compiler; GCC version 4.4 or higher is recommended, since GNU
 MPC may trigger a bug in previous versions, see the thread at
 <http://lists.gforge.inria.fr/pipermail/mpc-discuss/2011-February/000823.html>.
@@ -94,9 +94,9 @@ Unix utility programs.
 
    Here are the steps needed to install the library on Unix systems:
 
-  1. 'tar xzf mpc-1.1.0.tar.gz'
+  1. 'tar xzf mpc-1.2.0.tar.gz'
 
-  2. 'cd mpc-1.1.0'
+  2. 'cd mpc-1.2.0'
 
   3. './configure'
 
@@ -791,6 +791,11 @@ marginal overhead due to the GNU MPC layer.
      Set ROP to -OP rounded according to RND.  Just changes the sign if
      ROP and OP are the same variable.
 
+ -- Function: int mpc_sum (mpc_t ROP, mpc_ptr* OP, unsigned long N,
+          mpc_rnd_t RND)
+     Set ROP to the sum of the elements in the array OP of length N,
+     rounded according to RND.
+
  -- Function: int mpc_mul (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
           RND)
  -- Function: int mpc_mul_ui (mpc_t ROP, mpc_t OP1, unsigned long int
@@ -816,6 +821,11 @@ marginal overhead due to the GNU MPC layer.
           mpc_rnd_t RND)
      Set ROP to OP1*OP2+OP3, rounded according to RND, with only one
      final rounding.
+
+ -- Function: int mpc_dot (mpc_t ROP, mpc_ptr* OP1, mpc_ptr* OP2,
+          unsigned long N, mpc_rnd_t RND)
+     Set ROP to the dot product of the elements in the arrays OP1 and
+     OP2, both of length N, rounded according to RND.
 
  -- Function: int mpc_div (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
           RND)
@@ -899,14 +909,14 @@ File: mpc.info,  Node: Power Functions and Logarithm,  Next: Trigonometric Funct
      Set ROP to the natural and base-10 logarithm of OP respectively,
      rounded according to RND with the precision of ROP.  The principal
      branch is chosen, with the branch cut on the negative real axis, so
-     that the imaginary part of the result lies in ]-\pi , \pi] and
-     ]-\pi/log(10) , \pi/log(10)] respectively.
+     that the imaginary part of the result lies in ]-Pi , Pi] and
+     ]-Pi/log(10) , Pi/log(10)] respectively.
 
  -- Function: int mpc_rootofunity (mpc_t ROP, unsigned long int N,
           unsigned long int K, mpc_rnd_t RND)
      Set ROP to the standard primitive N-th root of unity raised to the
-     power K, that is, \exp (2 \pi i k / n), rounded according to RND
-     with the precision of ROP.
+     power K, that is, exp (2 Pi i k / n), rounded according to RND with
+     the precision of ROP.
 
 
 File: mpc.info,  Node: Trigonometric Functions,  Next: Miscellaneous Complex Functions,  Prev: Power Functions and Logarithm,  Up: Complex Functions
@@ -955,7 +965,7 @@ File: mpc.info,  Node: Trigonometric Functions,  Next: Miscellaneous Complex Fun
  -- Function: int mpc_atanh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
      Set ROP to the inverse hyperbolic sine, inverse hyperbolic cosine,
      inverse hyperbolic tangent of OP, rounded according to RND with the
-     precision of ROP.  The branch cut of MPC_ACOSH is (-\infty, 1).
+     precision of ROP.  The branch cut of MPC_ACOSH is (-Inf, 1)
 
 
 File: mpc.info,  Node: Miscellaneous Complex Functions,  Next: Advanced Functions,  Prev: Trigonometric Functions,  Up: Complex Functions
@@ -1043,10 +1053,10 @@ File: mpc.info,  Node: References,  Next: Concept Index,  Prev: Complex Function
 References
 **********
 
-   * Torbjo"rn Granlund et al.  'gmp' - GNU multiprecision library.
+   * Torbjörn Granlund et al.  'gmp' - GNU multiprecision library.
      Version 4.2.4, <http://gmplib.org/>.
 
-   * Guillaume Hanrot, Vincent Lefe`vre, Patrick Pe'lissier, Paul
+   * Guillaume Hanrot, Vincent Lefèvre, Patrick Pélissier, Paul
      Zimmermann et al.  'mpfr' - A library for multiple-precision
      floating-point computations with exact rounding.  Version 2.4.1,
      <http://www.mpfr.org>.
@@ -1112,7 +1122,7 @@ Function Index
 
 * _Complex:                              Converting Complex Numbers.
                                                               (line   9)
-* mpc_abs:                               Basic Arithmetic.    (line  81)
+* mpc_abs:                               Basic Arithmetic.    (line  91)
 * mpc_acos:                              Trigonometric Functions.
                                                               (line  37)
 * mpc_acosh:                             Trigonometric Functions.
@@ -1136,22 +1146,23 @@ Function Index
 * mpc_cmp_abs:                           Complex Comparison.  (line  23)
 * mpc_cmp_si:                            Complex Comparison.  (line   9)
 * mpc_cmp_si_si:                         Complex Comparison.  (line   7)
-* mpc_conj:                              Basic Arithmetic.    (line  76)
+* mpc_conj:                              Basic Arithmetic.    (line  86)
 * mpc_cos:                               Trigonometric Functions.
                                                               (line  10)
 * mpc_cosh:                              Trigonometric Functions.
                                                               (line  28)
-* mpc_div:                               Basic Arithmetic.    (line  64)
-* mpc_div_2si:                           Basic Arithmetic.    (line  99)
-* mpc_div_2ui:                           Basic Arithmetic.    (line  97)
-* mpc_div_fr:                            Basic Arithmetic.    (line  68)
-* mpc_div_ui:                            Basic Arithmetic.    (line  66)
+* mpc_div:                               Basic Arithmetic.    (line  74)
+* mpc_div_2si:                           Basic Arithmetic.    (line 109)
+* mpc_div_2ui:                           Basic Arithmetic.    (line 107)
+* mpc_div_fr:                            Basic Arithmetic.    (line  78)
+* mpc_div_ui:                            Basic Arithmetic.    (line  76)
+* mpc_dot:                               Basic Arithmetic.    (line  69)
 * mpc_exp:                               Power Functions and Logarithm.
                                                               (line  32)
-* mpc_fma:                               Basic Arithmetic.    (line  59)
+* mpc_fma:                               Basic Arithmetic.    (line  64)
 * mpc_free_str:                          String and Stream Input and Output.
                                                               (line  66)
-* mpc_fr_div:                            Basic Arithmetic.    (line  72)
+* mpc_fr_div:                            Basic Arithmetic.    (line  82)
 * mpc_fr_sub:                            Basic Arithmetic.    (line  23)
 * mpc_get_ldc:                           Converting Complex Numbers.
                                                               (line  10)
@@ -1177,15 +1188,15 @@ Function Index
                                                               (line  36)
 * mpc_log10:                             Power Functions and Logarithm.
                                                               (line  37)
-* mpc_mul:                               Basic Arithmetic.    (line  38)
-* mpc_mul_2si:                           Basic Arithmetic.    (line  91)
-* mpc_mul_2ui:                           Basic Arithmetic.    (line  89)
-* mpc_mul_fr:                            Basic Arithmetic.    (line  44)
-* mpc_mul_i:                             Basic Arithmetic.    (line  50)
-* mpc_mul_si:                            Basic Arithmetic.    (line  42)
-* mpc_mul_ui:                            Basic Arithmetic.    (line  40)
+* mpc_mul:                               Basic Arithmetic.    (line  43)
+* mpc_mul_2si:                           Basic Arithmetic.    (line 101)
+* mpc_mul_2ui:                           Basic Arithmetic.    (line  99)
+* mpc_mul_fr:                            Basic Arithmetic.    (line  49)
+* mpc_mul_i:                             Basic Arithmetic.    (line  55)
+* mpc_mul_si:                            Basic Arithmetic.    (line  47)
+* mpc_mul_ui:                            Basic Arithmetic.    (line  45)
 * mpc_neg:                               Basic Arithmetic.    (line  34)
-* mpc_norm:                              Basic Arithmetic.    (line  85)
+* mpc_norm:                              Basic Arithmetic.    (line  95)
 * mpc_out_str:                           String and Stream Input and Output.
                                                               (line 109)
 * mpc_pow:                               Power Functions and Logarithm.
@@ -1270,7 +1281,7 @@ Function Index
                                                               (line  24)
 * mpc_sin_cos:                           Trigonometric Functions.
                                                               (line  14)
-* mpc_sqr:                               Basic Arithmetic.    (line  56)
+* mpc_sqr:                               Basic Arithmetic.    (line  61)
 * mpc_sqrt:                              Power Functions and Logarithm.
                                                               (line   6)
 * mpc_strtoc:                            String and Stream Input and Output.
@@ -1278,6 +1289,7 @@ Function Index
 * mpc_sub:                               Basic Arithmetic.    (line  19)
 * mpc_sub_fr:                            Basic Arithmetic.    (line  21)
 * mpc_sub_ui:                            Basic Arithmetic.    (line  25)
+* mpc_sum:                               Basic Arithmetic.    (line  38)
 * mpc_swap:                              Assigning Complex Numbers.
                                                               (line  82)
 * mpc_t:                                 GNU MPC Basics.      (line  15)
@@ -1285,7 +1297,7 @@ Function Index
                                                               (line  20)
 * mpc_tanh:                              Trigonometric Functions.
                                                               (line  32)
-* mpc_ui_div:                            Basic Arithmetic.    (line  70)
+* mpc_ui_div:                            Basic Arithmetic.    (line  80)
 * mpc_ui_sub:                            Basic Arithmetic.    (line  27)
 * mpc_ui_ui_sub:                         Basic Arithmetic.    (line  29)
 * mpc_urandom:                           Miscellaneous Complex Functions.
@@ -1789,29 +1801,34 @@ their use in free software.
 
 
 Tag Table:
-Node: Top747
-Node: Copying1454
-Node: Introduction to GNU MPC2226
-Node: Installing GNU MPC2945
-Node: Reporting Bugs8030
-Node: GNU MPC Basics9374
-Ref: return-value13051
-Node: Complex Functions14502
-Node: Initializing Complex Numbers15662
-Node: Assigning Complex Numbers18049
-Node: Converting Complex Numbers22449
-Node: String and Stream Input and Output23074
-Node: Complex Comparison29630
-Node: Projection & Decomposing31143
-Node: Basic Arithmetic32520
-Node: Power Functions and Logarithm37093
-Node: Trigonometric Functions39448
-Node: Miscellaneous Complex Functions41673
-Node: Advanced Functions43849
-Node: Internals44922
-Node: References45373
-Node: Concept Index46276
-Node: Function Index48590
-Node: GNU Free Documentation License62592
+Node: Top758
+Node: Copying1465
+Node: Introduction to GNU MPC2237
+Node: Installing GNU MPC2956
+Node: Reporting Bugs8041
+Node: GNU MPC Basics9385
+Ref: return-value13062
+Node: Complex Functions14513
+Node: Initializing Complex Numbers15673
+Node: Assigning Complex Numbers18060
+Node: Converting Complex Numbers22460
+Node: String and Stream Input and Output23085
+Node: Complex Comparison29641
+Node: Projection & Decomposing31154
+Node: Basic Arithmetic32531
+Node: Power Functions and Logarithm37531
+Node: Trigonometric Functions39880
+Node: Miscellaneous Complex Functions42101
+Node: Advanced Functions44277
+Node: Internals45350
+Node: References45801
+Node: Concept Index46704
+Node: Function Index49018
+Node: GNU Free Documentation License63166
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

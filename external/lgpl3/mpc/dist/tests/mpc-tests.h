@@ -1,6 +1,6 @@
 /* mpc-tests.h -- Tests helper functions.
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -104,7 +104,7 @@ extern gmp_randstate_t  rands;
 
 extern void test_start (void);
 extern void test_end   (void);
-extern void test_default_random (mpc_ptr, mp_exp_t, mp_exp_t,
+extern void test_default_random (mpc_ptr, mpfr_exp_t, mpfr_exp_t,
                                  unsigned int, unsigned int);
 
 void test_random_si   (long int *n, unsigned long emax,

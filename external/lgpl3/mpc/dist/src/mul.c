@@ -5,7 +5,7 @@ Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2016 INRIA
 This file is part of GNU MPC.
 
 GNU MPC is free software; you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the
+        he terms of the GNU Lesser General Public License as published by the
 Free Software Foundation; either version 3 of the License, or (at your
 option) any later version.
 
@@ -366,7 +366,7 @@ mpc_mul_naive (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
 {
    /* computes z=x*y by the schoolbook method, where x and y are assumed
       to be finite and without zero parts                                */
-   int overlap, inex;
+   int overlap, inex_re, inex_im;
    mpc_t rop;
 
    MPC_ASSERT (   mpfr_regular_p (mpc_realref (x)) && mpfr_regular_p (mpc_imagref (x))
@@ -378,22 +378,22 @@ mpc_mul_naive (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       rop [0] = z [0];
 
 #if HAVE_MPFR_FMMA
-   inex = MPC_INEX (mpfr_fmms (mpc_realref (rop), mpc_realref (x), mpc_realref (y), mpc_imagref (x),
-                               mpc_imagref (y), MPC_RND_RE (rnd)),
-                    mpfr_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y), mpc_imagref (x),
-                               mpc_realref (y), MPC_RND_IM (rnd)));
+   inex_re = mpfr_fmms (mpc_realref (rop), mpc_realref (x), mpc_realref (y),
+                        mpc_imagref (x), mpc_imagref (y), MPC_RND_RE (rnd));
+   inex_im = mpfr_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y),
+                        mpc_imagref (x), mpc_realref (y), MPC_RND_IM (rnd));
 #else
-   inex = MPC_INEX (mpc_fmma (mpc_realref (rop), mpc_realref (x), mpc_realref (y), mpc_imagref (x),
-                               mpc_imagref (y), -1, MPC_RND_RE (rnd)),
-                    mpc_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y), mpc_imagref (x),
-                               mpc_realref (y), +1, MPC_RND_IM (rnd)));
+   inex_re = mpc_fmma (mpc_realref (rop), mpc_realref (x), mpc_realref (y),
+                       mpc_imagref (x), mpc_imagref (y), -1, MPC_RND_RE (rnd));
+   inex_im = mpc_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y),
+                       mpc_imagref (x), mpc_realref (y), +1, MPC_RND_IM (rnd));
 #endif
 
    mpc_set (z, rop, MPC_RNDNN);
    if (overlap)
       mpc_clear (rop);
 
-   return inex;
+   return MPC_INEX (inex_re, inex_im);
 }
 
 
@@ -541,22 +541,22 @@ mpc_mul_karatsuba (mpc_ptr rop, mpc_srcptr op1, mpc_srcptr op2, mpc_rnd_t rnd)
          inexact |= mpfr_mul (u, u, x, MPFR_RNDA);
             /* (a+b)*(c-d) */
 
-	 /* if all computations are exact up to here, it may be that
-	    the real part is exact, thus we need if possible to
-	    compute v - w exactly */
-	 if (inexact == 0)
-	   {
-	     mpfr_prec_t prec_x;
+         /* if all computations are exact up to here, it may be that
+            the real part is exact, thus we need if possible to
+            compute v - w exactly */
+         if (inexact == 0)
+           {
+             mpfr_prec_t prec_x;
              /* v and w are different from 0, so mpfr_get_exp is safe to use */
              prec_x = SAFE_ABS (mpfr_exp_t, mpfr_get_exp (v) - mpfr_get_exp (w))
                       + MPC_MAX (prec_v, prec_w) + 1;
                       /* +1 is necessary for a potential carry */
-	     /* ensure we do not use a too large precision */
-	     if (prec_x > prec_u)
+             /* ensure we do not use a too large precision */
+             if (prec_x > prec_u)
                prec_x = prec_u;
-	     if (prec_x > prec)
-	       mpfr_prec_round (x, prec_x, MPFR_RNDN);
-	   }
+             if (prec_x > prec)
+               mpfr_prec_round (x, prec_x, MPFR_RNDN);
+           }
 
          rnd_u = (sign_u > 0) ? MPFR_RNDU : MPFR_RNDD;
          inexact |= mpfr_sub (x, v, w, rnd_u); /* ad - bc */

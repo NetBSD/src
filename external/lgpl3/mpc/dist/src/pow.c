@@ -1,6 +1,6 @@
 /* mpc_pow -- Raise a complex number to the power of another complex number.
 
-Copyright (C) 2009-2015 INRIA
+Copyright (C) 2009, 2010, 2011, 2012, 2014, 2015, 2016, 2018, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -182,6 +182,7 @@ mpc_pow_exact (mpc_ptr z, mpc_srcptr x, mpfr_srcptr y, mpc_rnd_t rnd,
   int x_imag = mpfr_zero_p (mpc_realref(x));
   int z_is_y = 0;
   mpfr_t copy_of_y;
+  int inex_im;
 
   if (mpc_realref (z) == y || mpc_imagref (z) == y)
     {
@@ -403,7 +404,8 @@ mpc_pow_exact (mpc_ptr z, mpc_srcptr x, mpfr_srcptr y, mpc_rnd_t rnd,
     }
 
   ret = mpfr_set_z (mpc_realref(z), a, MPC_RND_RE(rnd));
-  ret = MPC_INEX(ret, mpfr_set_z (mpc_imagref(z), b, MPC_RND_IM(rnd)));
+  inex_im = mpfr_set_z (mpc_imagref(z), b, MPC_RND_IM(rnd));
+  ret = MPC_INEX(ret, inex_im);
   mpfr_mul_2si (mpc_realref(z), mpc_realref(z), ed, MPC_RND_RE(rnd));
   mpfr_mul_2si (mpc_imagref(z), mpc_imagref(z), ed, MPC_RND_IM(rnd));
 
@@ -483,6 +485,8 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
   mpc_t t, u;
   mpfr_prec_t p, pr, pi, maxprec;
   int saved_underflow, saved_overflow;
+  int inex_re, inex_im;
+  mpfr_exp_t saved_emin, saved_emax;
 
   /* save the underflow or overflow flags from MPFR */
   saved_underflow = mpfr_underflow_p ();
@@ -590,7 +594,8 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
           s2 = mpfr_signbit (mpc_imagref (x));
 
           ret = mpfr_pow (mpc_realref(z), mpc_realref(x), mpc_realref(y), MPC_RND_RE(rnd));
-          ret = MPC_INEX(ret, mpfr_set_ui (mpc_imagref(z), 0, MPC_RND_IM(rnd)));
+          inex_im = mpfr_set_ui (mpc_imagref(z), 0, MPC_RND_IM(rnd));
+          ret = MPC_INEX(ret, inex_im);
 
           /* the sign of the zero imaginary part is known in some cases
              (see algorithm.tex). In such cases we have (x +s*0i)^(y+/-0i)
@@ -641,6 +646,11 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
             z_real = 1;
         }
 
+  saved_emin = mpfr_get_emin ();
+  saved_emax = mpfr_get_emax ();
+  mpfr_set_emin (mpfr_get_emin_min ());
+  mpfr_set_emax (mpfr_get_emax_max ());
+
   pr = mpfr_get_prec (mpc_realref(z));
   pi = mpfr_get_prec (mpc_imagref(z));
   p = (pr > pi) ? pr : pi;
@@ -670,11 +680,13 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       if (mpfr_get_exp (mpc_imagref(t)) > (mpfr_exp_t) q)
         q = mpfr_get_exp (mpc_imagref(t));
 
-      /* if q >= p, we get an error of order 1 on the imaginary part of t,
-         which is not enough to get the correct sign of exp(t) */
-      if (q >= p)
+      /* the signs of the real/imaginary parts of exp(t) are determined by the
+         quadrant of exp(i*imag(t)), which depends on imag(t) mod (2pi).
+         We ensure that p >= q + 64 to get enough precision, but this might
+         be not enough in corner cases (FIXME). */
+      if (p < q + 64)
         {
-          p = p + 64;
+          p = q + 64;
           goto try_again;
         }
 
@@ -682,7 +694,6 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       mpfr_clear_underflow ();
       ret_exp = mpc_exp (u, t, MPC_RNDNN);
       if (mpfr_underflow_p () || mpfr_overflow_p ()) {
-         int inex_re, inex_im;
          /* under- and overflow flags are set by mpc_exp */
          mpc_set (z, u, MPC_RNDNN);
          ret = ret_exp;
@@ -691,7 +702,12 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
          if (mpfr_inf_p (mpc_realref (z)))
            inex_re = mpc_fix_inf (mpc_realref (z), MPC_RND_RE(rnd));
          if (mpfr_inf_p (mpc_imagref (z)))
-           inex_im = mpc_fix_inf (mpc_imagref (z), MPC_RND_IM(rnd));
+           {
+             if (z_real)
+               inex_im = mpfr_set_ui (mpc_imagref (z), 0, MPC_RND_IM(rnd));
+             else
+               inex_im = mpc_fix_inf (mpc_imagref (z), MPC_RND_IM(rnd));
+           }
          ret = MPC_INEX(inex_re,inex_im);
          goto exact;
       }
@@ -790,7 +806,8 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
         }
       else
         {
-          ret = MPC_INEX (ret, mpfr_set_ui (mpc_imagref (z), 0, MPC_RND_IM (rnd)));
+          inex_im = mpfr_set_ui (mpc_imagref (z), 0, MPC_RND_IM (rnd));
+          ret = MPC_INEX (ret, inex_im);
           /* warning: mpfr_set_ui does not set Im(z) to -0 if Im(rnd) = RNDD */
           if (MPC_RND_IM (rnd) == MPFR_RNDD || sign_zi)
             mpc_conj (z, z, MPC_RNDNN);
@@ -816,7 +833,10 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
           ret = MPC_INEX(0, ret);
         }
       else
-        ret = MPC_INEX(mpfr_set_ui (mpc_realref(z), 0, MPC_RND_RE(rnd)), ret);
+        {
+          inex_re = mpfr_set_ui (mpc_realref(z), 0, MPC_RND_RE(rnd));
+          ret = MPC_INEX(inex_re, ret);
+        }
     }
   else
     ret = mpc_set (z, u, rnd);
@@ -829,6 +849,15 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
     mpfr_set_underflow ();
   if (saved_overflow)
     mpfr_set_overflow ();
+
+  /* restore the exponent range, and check the range of results */
+  mpfr_set_emin (saved_emin);
+  mpfr_set_emax (saved_emax);
+  inex_re = mpfr_check_range (mpc_realref (z), MPC_INEX_RE(ret),
+                              MPC_RND_RE (rnd));
+  inex_im = mpfr_check_range (mpc_imagref (z), MPC_INEX_IM(ret),
+                              MPC_RND_IM (rnd));
+  ret = MPC_INEX(inex_re, inex_im);
 
  end:
   return ret;

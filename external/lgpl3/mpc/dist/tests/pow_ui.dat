@@ -85,8 +85,8 @@
 0 0 53    1 53    0    53   +1 53   +0  +2 N N
 0 0 53    1 53    0    53   +1 53   -0  +2 N N
 
-# overflow
-? ? 53 +inf 53 +inf    53 1e100000000  53 1e100000000   1000000000 N N
+# overflow: (a+a*I)^n is real for n divisible by 4
+? 0 53 +inf 53    0    53 1e100000000  53 1e100000000   1000000000 N N
 # underflow
 ? ? 53    0 53    0    53 1e-100000000 53 1e-100000000  1000000000 N N
 # cannot round after one loop

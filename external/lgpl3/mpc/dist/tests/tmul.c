@@ -1,6 +1,6 @@
 /* tmul -- test file for mpc_mul.
 
-Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011, 2012, 2013 INRIA
+Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -130,6 +130,34 @@ check_regular (void)
   mpc_clear (y);
 }
 
+static void
+bug20200206 (void)
+{
+  mpfr_exp_t emin = mpfr_get_emin ();
+  mpc_t x, y, z;
+
+  mpfr_set_emin (-1073);
+  mpc_init2 (x, 53);
+  mpc_init2 (y, 53);
+  mpc_init2 (z, 53);
+  mpfr_set_d (mpc_realref (x), -6.0344722345057644e-272, MPFR_RNDN);
+  mpfr_set_d (mpc_imagref (x), -4.8536770224196353e-204, MPFR_RNDN);
+  mpfr_set_d (mpc_realref (y), 1.3834775731431992e-246, MPFR_RNDN);
+  mpfr_set_d (mpc_imagref (y), 2.9246270396940562e-124, MPFR_RNDN);
+  mpc_mul (z, x, y, MPC_RNDNN);
+  if (mpfr_regular_p (mpc_realref (z)) &&
+      mpfr_get_exp (mpc_realref (z)) < -1073)
+    {
+      printf ("Error, mpc_mul returns an out-of-range exponent:\n");
+      mpfr_dump (mpc_realref (z));
+      printf ("Bug most probably in MPFR, please upgrade to MPFR 4.1.0 or later\n");
+      exit (1);
+    }
+  mpc_clear (x);
+  mpc_clear (y);
+  mpc_clear (z);
+  mpfr_set_emin (emin);
+}
 
 #ifdef TIMING
 static void
@@ -199,6 +227,7 @@ main (void)
   timemul ();
 #endif
 
+  bug20200206 ();
   check_regular ();
 
   data_check_template ("mul.dsc", "mul.dat");

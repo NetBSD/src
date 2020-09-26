@@ -1,6 +1,6 @@
 /* mpc_acos -- arccosine of a complex number.
 
-Copyright (C) 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2009, 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -31,6 +31,7 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
   mpfr_exp_t e1, e2;
   mpfr_rnd_t rnd_im;
   mpc_rnd_t rnd1;
+  mpfr_exp_t saved_emin, saved_emax;
 
   inex_re = 0;
   inex_im = 0;
@@ -170,6 +171,11 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       return MPC_INEX (inex_re, inex_im);
     }
 
+  saved_emin = mpfr_get_emin ();
+  saved_emax = mpfr_get_emax ();
+  mpfr_set_emin (mpfr_get_emin_min ());
+  mpfr_set_emax (mpfr_get_emax_max ());
+
   /* regular complex argument: acos(z) = Pi/2 - asin(z) */
   p_re = mpfr_get_prec (mpc_realref(rop));
   p_im = mpfr_get_prec (mpc_imagref(rop));
@@ -224,6 +230,12 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
   inex_re = MPC_INEX_RE(inex);
   mpc_clear (z1);
   mpfr_clear (pi_over_2);
+
+  /* restore the exponent range, and check the range of results */
+  mpfr_set_emin (saved_emin);
+  mpfr_set_emax (saved_emax);
+  inex_re = mpfr_check_range (mpc_realref (rop), inex_re, MPC_RND_RE (rnd));
+  inex_im = mpfr_check_range (mpc_imagref (rop), inex_im, MPC_RND_IM (rnd));
 
   return MPC_INEX(inex_re, inex_im);
 }
