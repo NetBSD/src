@@ -1,6 +1,6 @@
 /* mpc_exp -- exponential of a complex number.
 
-Copyright (C) 2002, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2002, 2009, 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -28,6 +28,7 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
   int ok = 0;
   int inex_re, inex_im;
   int saved_underflow, saved_overflow;
+  mpfr_exp_t saved_emin, saved_emax;
 
   /* special values */
   if (mpfr_nan_p (mpc_realref (op)) || mpfr_nan_p (mpc_imagref (op)))
@@ -58,7 +59,6 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       return MPC_INEX(0, 0); /* NaN is exact */
     }
 
-
   if (mpfr_zero_p (mpc_imagref(op)))
     /* special case when the input is real
        exp(x-i*0) = exp(x) -i*0, even if x is NaN
@@ -76,7 +76,6 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       inex_im = mpfr_sin (mpc_imagref (rop), mpc_imagref (op), MPC_RND_IM(rnd));
       return MPC_INEX(inex_re, inex_im);
     }
-
 
   if (mpfr_inf_p (mpc_realref (op)))
     /* real part is an infinity,
@@ -130,6 +129,10 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       return MPC_INEX(0, 0); /* NaN is exact */
     }
 
+  saved_emin = mpfr_get_emin ();
+  saved_emax = mpfr_get_emax ();
+  mpfr_set_emin (mpfr_get_emin_min ());
+  mpfr_set_emax (mpfr_get_emax_max ());
 
   /* from now on, both parts of op are regular numbers */
 
@@ -150,7 +153,7 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
 
   do
     {
-      prec += mpc_ceil_log2 (prec) + 5;
+      prec += prec / 2 + mpc_ceil_log2 (prec) + 5;
 
       mpfr_set_prec (x, prec);
       mpfr_set_prec (y, prec);
@@ -198,6 +201,12 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
     mpfr_set_underflow ();
   if (saved_overflow)
     mpfr_set_overflow ();
+
+  /* restore the exponent range, and check the range of results */
+  mpfr_set_emin (saved_emin);
+  mpfr_set_emax (saved_emax);
+  inex_re = mpfr_check_range (mpc_realref (rop), inex_re, MPC_RND_RE (rnd));
+  inex_im = mpfr_check_range (mpc_imagref (rop), inex_im, MPC_RND_IM (rnd));
 
   return MPC_INEX(inex_re, inex_im);
 }
