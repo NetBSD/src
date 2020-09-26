@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.286 2020/09/26 11:57:05 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.287 2020/09/26 18:35:12 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -419,6 +419,7 @@ typedef struct ifnet {
 	uint16_t	if_link_queue;	/* q: masked link state change queue */
 					/* q: is link state work scheduled? */
 	bool		if_link_scheduled;
+	void		(*if_link_state_changed)(struct ifnet *, int);
 	struct pslist_entry
 			if_pslist_entry;/* i: */
 	struct psref_target
