@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.45 2020/08/17 04:15:34 mrg Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.46 2020/09/26 04:11:48 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2020/08/17 04:15:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.46 2020/09/26 04:11:48 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2020/08/17 04:15:34 mrg Exp $");
 #include <machine/db_machdep.h>
 #include <machine/locore.h>
 
-#include <ddb/db_access.h>
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
