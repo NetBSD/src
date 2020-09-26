@@ -1,6 +1,6 @@
 /* mpfr_sqrt -- square root of a floating-point number
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -33,17 +33,17 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static void
 mpfr_sqrt2_approx (mpfr_limb_ptr rp, mpfr_limb_srcptr np)
 {
-  mp_limb_t x, r1, r0, h, l, t;
+  mp_limb_t x, r1, r0, h, l;
 
   __gmpfr_sqrt_limb (r1, h, l, x, np[1]);
 
-  /* now r1 = floor(sqrt(n1)) and h:l = n1^2 - r1^2 with h:l <= 2*r1,
-     thus h <= 1 */
+  /* now r1 = floor(sqrt(2^64*n1)) and h:l = 2^64*n1 - r1^2 with h:l <= 2*r1,
+     thus h <= 1, and x is an approximation of 2^96/sqrt(np[1])-2^64 */
 
   l += np[0];
   h += (l < np[0]);
 
-  /* now h <= 2 */
+  /* now 2^64*n1 + n0 - r1^2 = 2^64*h + l with h <= 2 */
 
   /* divide by 2 */
   l = (h << 63) | (l >> 1);
@@ -53,7 +53,7 @@ mpfr_sqrt2_approx (mpfr_limb_ptr rp, mpfr_limb_srcptr np)
 
   /* now add (2^64+x) * (h*2^64+l) / 2^64 to [r1*2^64, 0] */
 
-  umul_ppmm (r0, t, x, l); /* x * l */
+  umul_hi (r0, x, l); /* x * l */
   r0 += l;
   r1 += h + (r0 < l); /* now we have added 2^64 * (h*2^64+l) */
   if (h)
@@ -68,7 +68,7 @@ mpfr_sqrt2_approx (mpfr_limb_ptr rp, mpfr_limb_srcptr np)
   rp[1] = r1;
 }
 
-/* Special code for prec(r), prec(u) < GMP_NUMB_BITS. We cannot have
+/* Special code for prec(r) = prec(u) < GMP_NUMB_BITS. We cannot have
    prec(u) = GMP_NUMB_BITS here, since when the exponent of u is odd,
    we need to shift u by one bit to the right without losing any bit.
    Assumes GMP_NUMB_BITS = 64. */
@@ -102,9 +102,21 @@ mpfr_sqrt1 (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
   /* the exact square root is in [r0, r0 + 7] */
   if (MPFR_UNLIKELY(((r0 + 7) & (mask >> 1)) <= 7))
     {
-      /* first ensure r0 has its most significant bit set */
-      if (MPFR_UNLIKELY(r0 < MPFR_LIMB_HIGHBIT))
-        r0 = MPFR_LIMB_HIGHBIT;
+      /* We should ensure r0 has its most significant bit set.
+         Since r0 <= sqrt(2^64*u0) <= r0 + 7, as soon as sqrt(2^64*u0)>=2^63+7,
+         which happens for u0>=2^62+8, then r0 >= 2^63.
+         It thus remains to check that for 2^62 <= u0 <= 2^62+7,
+         __gmpfr_sqrt_limb_approx (r0, u0) gives r0 >= 2^63, which is indeed
+         the case:
+         u0=4611686018427387904 r0=9223372036854775808
+         u0=4611686018427387905 r0=9223372036854775808
+         u0=4611686018427387906 r0=9223372036854775809
+         u0=4611686018427387907 r0=9223372036854775810
+         u0=4611686018427387908 r0=9223372036854775811
+         u0=4611686018427387909 r0=9223372036854775812
+         u0=4611686018427387910 r0=9223372036854775813
+         u0=4611686018427387911 r0=9223372036854775814 */
+      MPFR_ASSERTD(r0 >= MPFR_LIMB_HIGHBIT);
       umul_ppmm (rb, sb, r0, r0);
       sub_ddmmss (rb, sb, u0, 0, rb, sb);
       /* for the exact square root, we should have 0 <= rb:sb <= 2*r0 */
@@ -140,14 +152,24 @@ mpfr_sqrt1 (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       if (rnd_mode == MPFR_RNDN)
         {
-          if ((exp_r == __gmpfr_emin - 1) && (rp[0] == ~mask) && rb)
-            goto rounding; /* no underflow */
-          if (exp_r < __gmpfr_emin - 1 || (rp[0] == MPFR_LIMB_HIGHBIT && sb == 0))
+          /* If (1-2^(-p-1))*2^(emin-1) <= sqrt(u) < 2^(emin-1),
+             then sqrt(u) would be rounded to 2^(emin-1) with unbounded
+             exponent range, and there would be no underflow.
+             But this case cannot happen if u has precision p.
+             Indeed, we would have:
+             (1-2^(-p-1))^2*2^(2*emin-2) <= u < 2^(2*emin-2), i.e.,
+             (1-2^(-p)+2^(-2p-2))*2^(2*emin-2) <= u < 2^(2*emin-2),
+             and there is no p-bit number in that interval. */
+          /* If the result is <= 0.5^2^(emin-1), we should round to 0. */
+          if (exp_r < __gmpfr_emin - 1 ||
+              (rp[0] == MPFR_LIMB_HIGHBIT && sb == 0))
             rnd_mode = MPFR_RNDZ;
         }
       else if (MPFR_IS_LIKE_RNDA(rnd_mode, 0))
         {
-          if ((exp_r == __gmpfr_emin - 1) && (rp[0] == ~mask) && (rb | sb))
+          if (exp_r == __gmpfr_emin - 1 &&
+              rp[0] == ~mask &&
+              (rb | sb) != 0)
             goto rounding; /* no underflow */
         }
       return mpfr_underflow (r, rnd_mode, 1);
@@ -195,7 +217,7 @@ mpfr_sqrt1 (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     }
 }
 
-/* Special code for prec(r) = GMP_NUMB_BITS and prec(u) <= GMP_NUMB_BITS. */
+/* Special code for prec(r) = prec(u) = GMP_NUMB_BITS. */
 static int
 mpfr_sqrt1n (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
 {
@@ -226,9 +248,8 @@ mpfr_sqrt1n (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
 
   /* the exact square root is in [r0, r0 + 7] */
 
-  /* first ensure r0 has its most significant bit set */
-  if (MPFR_UNLIKELY(r0 < MPFR_LIMB_HIGHBIT))
-    r0 = MPFR_LIMB_HIGHBIT;
+  /* As shown in mpfr_sqrt1 above, r0 has its most significant bit set */
+  MPFR_ASSERTD(r0 >= MPFR_LIMB_HIGHBIT);
 
   umul_ppmm (rb, sb, r0, r0);
   sub_ddmmss (rb, sb, u0, low, rb, sb);
@@ -269,12 +290,15 @@ mpfr_sqrt1n (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
         {
           /* the case rp[0] = 111...111 and rb = 1 cannot happen, since it
              would imply u0 >= (2^64-1/2)^2/2^64 thus u0 >= 2^64 */
-          if (exp_r < __gmpfr_emin - 1 || (rp[0] == MPFR_LIMB_HIGHBIT && sb == 0))
+          if (exp_r < __gmpfr_emin - 1 ||
+              (rp[0] == MPFR_LIMB_HIGHBIT && sb == 0))
             rnd_mode = MPFR_RNDZ;
         }
       else if (MPFR_IS_LIKE_RNDA(rnd_mode, 0))
         {
-          if ((exp_r == __gmpfr_emin - 1) && (rp[0] == ~MPFR_LIMB_ZERO) && (rb | sb))
+          if (exp_r == __gmpfr_emin - 1 &&
+              rp[0] == MPFR_LIMB_MAX &&
+              (rb | sb) != 0)
             goto rounding; /* no underflow */
         }
       return mpfr_underflow (r, rnd_mode, 1);
@@ -322,8 +346,7 @@ mpfr_sqrt1n (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     }
 }
 
-/* Special code for GMP_NUMB_BITS < prec(r) < 2*GMP_NUMB_BITS,
-   and GMP_NUMB_BITS < prec(u) <= 2*GMP_NUMB_BITS.
+/* Special code for GMP_NUMB_BITS < prec(r) = prec(u) < 2*GMP_NUMB_BITS.
    Assumes GMP_NUMB_BITS=64. */
 static int
 mpfr_sqrt2 (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
@@ -415,9 +438,6 @@ mpfr_sqrt2 (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       if (rnd_mode == MPFR_RNDN)
         {
-          if (exp_r == __gmpfr_emin - 1 && (rp[1] == MPFR_LIMB_MAX &&
-                                            rp[0] == ~mask) && rb)
-            goto rounding; /* no underflow */
           if (exp_r < __gmpfr_emin - 1 || (rp[1] == MPFR_LIMB_HIGHBIT &&
                                            rp[0] == MPFR_LIMB_ZERO && sb == 0))
             rnd_mode = MPFR_RNDZ;
@@ -618,7 +638,8 @@ mpfr_sqrt (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
 
   expr = (MPFR_GET_EXP(u) + odd_exp) / 2;  /* exact */
 
-  if (rnd_mode == MPFR_RNDZ || rnd_mode == MPFR_RNDD || sticky == MPFR_LIMB_ZERO)
+  if (rnd_mode == MPFR_RNDZ || rnd_mode == MPFR_RNDD ||
+      sticky == MPFR_LIMB_ZERO)
     {
       inexact = (sticky == MPFR_LIMB_ZERO) ? 0 : -1;
       goto truncate;

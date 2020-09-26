@@ -1,6 +1,6 @@
 /* mpfr_get_ui -- convert a floating-point number to an unsigned long.
 
-Copyright 2003-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -56,14 +56,24 @@ mpfr_get_ui (mpfr_srcptr f, mpfr_rnd_t rnd)
   MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   /* warning: if x=0, taking its exponent is illegal */
-  if (MPFR_IS_ZERO(x))
-    s = 0;
-  else
+  if (MPFR_NOTZERO (x))
     {
-      /* now the result is in the most significant limb of x */
-      exp = MPFR_GET_EXP (x); /* since |x| >= 1, exp >= 1 */
-      n = MPFR_LIMB_SIZE(x);
-      s = MPFR_MANT(x)[n - 1] >> (GMP_NUMB_BITS - exp);
+      exp = MPFR_GET_EXP (x);
+      MPFR_ASSERTD (exp >= 1); /* since |x| >= 1 */
+      n = MPFR_LIMB_SIZE (x);
+#ifdef MPFR_LONG_WITHIN_LIMB
+      MPFR_ASSERTD (exp <= GMP_NUMB_BITS);
+#else
+      while (exp > GMP_NUMB_BITS)
+        {
+          MPFR_ASSERTD (n > 0);
+          s += (unsigned long) MPFR_MANT(x)[n - 1] << (exp - GMP_NUMB_BITS);
+          n--;
+          exp -= GMP_NUMB_BITS;
+        }
+#endif
+      MPFR_ASSERTD (n > 0);
+      s += MPFR_MANT(x)[n - 1] >> (GMP_NUMB_BITS - exp);
     }
 
   mpfr_clear (x);

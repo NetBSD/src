@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2016-2018 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 # This script is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -11,14 +11,14 @@
 # PARTICULAR PURPOSE.
 
 # ck-clz_tab can be run from the tools directory
-dir=$(pwd)
-[ -d src ] || [ "$(basename "$dir")" != tools ] || cd ..
+dir=`pwd`
+[ -d src ] || [ "`basename \"$dir\"`" != tools ] || cd ..
 
-size1=$(sed -n 's/^extern .* __clz_tab\[\([0-9]\+\)\].*/\1/p' \
-        src/mpfr-longlong.h)
+size1=`sed -n 's/^extern .* __clz_tab\[\([0-9]\+\)\].*/\1/p' \
+        src/mpfr-longlong.h`
 
-size2=$(sed -n 's/^.* __clz_tab\[\([0-9]\+\)\].*/\1/p' \
-        src/mp_clz_tab.c)
+size2=`sed -n 's/^.* __clz_tab\[\([0-9]\+\)\].*/\1/p' \
+        src/mp_clz_tab.c`
 
 if [ -n "$size1" ] && [ -n "$size2" ] && [ "$size1" != "$size2" ]; then
   cat >&2 <<EOF

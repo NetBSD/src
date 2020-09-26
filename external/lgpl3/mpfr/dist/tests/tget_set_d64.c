@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_decimal64 and mpfr_set_decimal64.
 
-Copyright 2006-2018 Free Software Foundation, Inc.
+Copyright 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,9 +17,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+/* Needed due to the test on MPFR_WANT_DECIMAL_FLOATS */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -75,7 +76,7 @@ print_decimal64 (_Decimal64 d)
       mpfr_out_str (stdout, 10, 0, x, MPFR_RNDN);           \
       printf (" approx.\n    = ");                          \
       mpfr_dump (x);                                        \
-      err = 1;                                              \
+      exit (1);                                             \
     }                                                       \
  while (0)
 
@@ -84,7 +85,6 @@ check_misc (void)
 {
   mpfr_t  x, y;
   _Decimal64 d;
-  int err = 0;
 
   mpfr_init2 (x, 123);
   mpfr_init2 (y, 123);
@@ -180,6 +180,47 @@ check_misc (void)
   if (! mpfr_equal_p (x, y))
     PRINT_ERR_MISC ("1E-398");
 
+  /* exercise case e < -1323, i.e., x < 0.5*2^(-1323) */
+  mpfr_set_ui_2exp (x, 1, -1324, MPFR_RNDN);
+  mpfr_nextbelow (x);
+  d = mpfr_get_decimal64 (x, MPFR_RNDZ);
+  /* d should equal +0 */
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_zero_p (x) && mpfr_signbit (x) == 0);
+  /* check RNDA */
+  mpfr_set_ui_2exp (x, 1, -1324, MPFR_RNDN);
+  mpfr_nextbelow (x);
+  d = mpfr_get_decimal64 (x, MPFR_RNDA);
+  /* d should equal 1E-398 */
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  mpfr_set_str (y, "1E-398", 10, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (x, y));
+  /* check negative number */
+  mpfr_set_ui_2exp (x, 1, -1324, MPFR_RNDN);
+  mpfr_nextbelow (x);
+  mpfr_neg (x, x, MPFR_RNDN);
+  d = mpfr_get_decimal64 (x, MPFR_RNDZ);
+  /* d should equal -0 */
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_zero_p (x) && mpfr_signbit (x) == 1);
+
+  /* exercise case e10 < -397 */
+  mpfr_set_ui_2exp (x, 1, -1323, MPFR_RNDN);
+  d = mpfr_get_decimal64 (x, MPFR_RNDZ);
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_zero_p (x) && mpfr_signbit (x) == 0);
+  mpfr_set_ui_2exp (x, 1, -1323, MPFR_RNDN);
+  d = mpfr_get_decimal64 (x, MPFR_RNDU);
+  mpfr_set_str (y, "1E-398", 10, MPFR_RNDN);
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (x, y));
+  mpfr_set_ui_2exp (x, 1, -1323, MPFR_RNDN);
+  /* 2^(-1323) = 5.46154776930125e-399 thus should be rounded to 1E-398 */
+  d = mpfr_get_decimal64 (x, MPFR_RNDN);
+  mpfr_set_str (y, "1E-398", 10, MPFR_RNDN);
+  mpfr_set_decimal64 (x, d, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (x, y));
+
   /* subnormal number with exponent change when we round back
      from 16 digits to 1 digit */
   mpfr_set_str (x, "9.9E-398", 10, MPFR_RNDN);
@@ -206,7 +247,7 @@ check_misc (void)
       printf ("Error in check_misc for DEC64_MAX.\n");
       printf ("  mpfr_get_decimal64() returned: ");
       print_decimal64 (d);
-      err = 1;
+      exit (1);
     }
 
   mpfr_set_str (x, "-9.999999999999999E384", 10, MPFR_RNDZ);
@@ -224,7 +265,7 @@ check_misc (void)
       printf ("Error in check_misc for -DEC64_MAX.\n");
       printf ("  mpfr_get_decimal64() returned: ");
       print_decimal64 (d);
-      err = 1;
+      exit (1);
     }
 
   mpfr_set_prec (x, 53);
@@ -239,9 +280,6 @@ check_misc (void)
 
   mpfr_clear (x);
   mpfr_clear (y);
-
-  if (err)
-    exit (1);
 }
 
 static void
@@ -260,10 +298,10 @@ check_random (void)
       /* the normal decimal64 range contains [2^(-1272), 2^1278] */
       mpfr_mul_2si (x, x, (i % 2550) - 1272, MPFR_RNDN);
       if (mpfr_get_exp (x) <= -1272)
-        mpfr_mul_2exp (x, x, -1271 - mpfr_get_exp (x), MPFR_RNDN);
+        mpfr_mul_2ui (x, x, -1271 - mpfr_get_exp (x), MPFR_RNDN);
       d = mpfr_get_decimal64 (x, MPFR_RNDN);
       mpfr_set_decimal64 (y, d, MPFR_RNDN);
-      if (mpfr_cmp (x, y) != 0)
+      if (! mpfr_equal_p (x, y))
         {
           printf ("Error:\n");
           printf ("x="); mpfr_dump (x);
@@ -381,19 +419,172 @@ check_tiny (void)
   mpfr_clear (x);
 }
 
-int
-main (void)
+static void
+powers_of_10 (void)
 {
+  mpfr_t x1, x2;
+  _Decimal64 d[2];
+  int i, rnd;
+  unsigned int neg;
+
+  mpfr_inits2 (200, x1, x2, (mpfr_ptr) 0);
+  for (i = 0, d[0] = 1, d[1] = 1; i < 150; i++, d[0] *= 10, d[1] /= 10)
+    for (neg = 0; neg <= 3; neg++)
+      RND_LOOP_NO_RNDF (rnd)
+        {
+          int inex1, inex2;
+          mpfr_flags_t flags1, flags2;
+          mpfr_rnd_t rx1;
+          _Decimal64 dd;
+
+          inex1 = mpfr_set_si (x1, (neg >> 1) ? -i : i, MPFR_RNDN);
+          MPFR_ASSERTN (inex1 == 0);
+
+          rx1 = (neg & 1) ?
+            MPFR_INVERT_RND ((mpfr_rnd_t) rnd) : (mpfr_rnd_t) rnd;
+          mpfr_clear_flags ();
+          inex1 = mpfr_exp10 (x1, x1, rx1);
+          flags1 = __gmpfr_flags;
+
+          dd = d[neg >> 1];
+
+          if (neg & 1)
+            {
+              MPFR_SET_NEG (x1);
+              inex1 = -inex1;
+              dd = -dd;
+            }
+
+          mpfr_clear_flags ();
+          inex2 = mpfr_set_decimal64 (x2, dd, (mpfr_rnd_t) rnd);
+          flags2 = __gmpfr_flags;
+
+          if (!(mpfr_equal_p (x1, x2) &&
+                SAME_SIGN (inex1, inex2) &&
+                flags1 == flags2))
+            {
+              printf ("Error in powers_of_10 for i=%d, neg=%d, %s\n",
+                      i, neg, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+              printf ("Expected ");
+              mpfr_dump (x1);
+              printf ("with inex = %d and flags =", inex1);
+              flags_out (flags1);
+              printf ("Got      ");
+              mpfr_dump (x2);
+              printf ("with inex = %d and flags =", inex2);
+              flags_out (flags2);
+              exit (1);
+            }
+        }
+  mpfr_clears (x1, x2, (mpfr_ptr) 0);
+}
+
+static void
+noncanonical (void)
+{
+  /* The code below assumes BID. It also needs _MPFR_IEEE_FLOATS
+     due to the use of union mpfr_ieee_double_extract. */
+#if _MPFR_IEEE_FLOATS && defined(DECIMAL_BID_FORMAT)
+  /* The volatile below avoids _Decimal64 constant propagation, which is
+     buggy for non-canonical encoding in various GCC versions on the x86 and
+     x86_64 targets: failure with gcc (Debian 20190719-1) 10.0.0 20190718
+     (experimental) [trunk revision 273586]; the MPFR test was not failing
+     with previous GCC versions, but GCC versions 5 to 9 are also affected
+     on the simple testcase at:
+     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91226
+  */
+  volatile _Decimal64 d = 9999999999999999.0dd;
+  union mpfr_ieee_double_extract x;
+  union ieee_double_decimal64 y;
+
+  MPFR_ASSERTN (sizeof (x) == 8);
+  MPFR_ASSERTN (sizeof (y) == 8);
+  /* test for non-canonical encoding */
+  y.d64 = d;
+  memcpy (&x, &y, 8);
+  /* if BID, we have sig=0, exp=1735, manh=231154, manl=1874919423 */
+  if (x.s.sig == 0 && x.s.exp == 1735 && x.s.manh == 231154 &&
+      x.s.manl == 1874919423)
+    {
+      mpfr_t z;
+      mpfr_init2 (z, 54); /* 54 bits ensure z is exact, since 10^16 < 2^54 */
+      x.s.manl += 1; /* then the significand equals 10^16 */
+      memcpy (&y, &x, 8);
+      mpfr_set_decimal64 (z, y.d64, MPFR_RNDN);
+      if (MPFR_NOTZERO (z) || MPFR_IS_NEG (z))
+        {
+          int i;
+          printf ("Error in noncanonical on");
+          for (i = 0; i < 8; i++)
+            printf (" %02X", ((unsigned char *)&y)[i]);
+          printf ("\nExpected +0, got:\n");
+          mpfr_dump (z);
+          exit (1);
+        }
+      mpfr_clear (z);
+    }
+  else
+    printf ("Warning! Unexpected value of x in noncanonical.\n");
+#endif
+}
+
+/* generate random sequences of 8 bytes and interpret them as _Decimal64 */
+static void
+check_random_bytes (void)
+{
+  union {
+    _Decimal64 d;
+    unsigned char c[8];
+  } x;
+  int i;
+  mpfr_t y;
+  _Decimal64 e;
+
+  mpfr_init2 (y, 55); /* 55 = 1 + ceil(16*log(10)/log(2)), thus ensures
+                         that if a decimal64 number is converted to a 55-bit
+                         value and back, we should get the same value */
+  for (i = 0; i < 100000; i++)
+    {
+      int j;
+      for (j = 0; j < 8; j++)
+        x.c[j] = randlimb () & 255;
+      mpfr_set_decimal64 (y, x.d, MPFR_RNDN);
+      e = mpfr_get_decimal64 (y, MPFR_RNDN);
+      if (!mpfr_nan_p (y))
+        if (x.d != e)
+          {
+            printf ("check_random_bytes failed\n");
+            printf ("x.d="); print_decimal64 (x.d);
+            printf ("y="); mpfr_dump (y);
+            printf ("e  ="); print_decimal64 (e);
+            exit (1);
+          }
+    }
+  mpfr_clear (y);
+}
+
+int
+main (int argc, char *argv[])
+{
+  int verbose = argc > 1;
+
   tests_start_mpfr ();
   mpfr_test_init ();
 
-#ifdef MPFR_DEBUG
-#ifdef DPD_FORMAT
-  printf ("Using DPD format\n");
-#else
-  printf ("Using BID format\n");
+  if (verbose)
+    {
+#ifdef DECIMAL_DPD_FORMAT
+      printf ("Using DPD encoding\n");
 #endif
+#ifdef DECIMAL_BID_FORMAT
+      printf ("Using BID encoding\n");
 #endif
+    }
+
+#if !defined(MPFR_ERRDIVZERO)
+  check_random_bytes ();
+#endif
+  noncanonical ();
   check_misc ();
   check_random ();
   check_native ();
@@ -401,6 +592,7 @@ main (void)
   check_overflow ();
 #endif
   check_tiny ();
+  powers_of_10 ();
 
   tests_end_mpfr ();
   return 0;

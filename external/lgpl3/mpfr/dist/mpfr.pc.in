@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: mpfr
-URL: http://www.mpfr.org/
+URL: https://www.mpfr.org/
 Description: C library for multiple-precision floating-point computations
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lmpfr -lgmp

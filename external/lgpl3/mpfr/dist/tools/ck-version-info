@@ -3,7 +3,7 @@
 # Note: this script must not be used to build MPFR due to the
 # dependency on perl, but this is OK for "make dist".
 
-# Copyright 2010-2018 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 # This script is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -48,8 +48,23 @@ while (<MF>)
 /^libmpfr_la_LDFLAGS\s+=.*\s-version-info\s+(\d+:\d+:\d+)\s/
   or die "$0: missing correct libmpfr_la_LDFLAGS line";
 close MF or die "$!\n$0: can't close Makefile.am file\n";
-$suf eq '-dev' || $vinfo eq $1
-  or die "$0: bad -version-info value ($1 instead of $vinfo)\n";
+
+if (defined $vinfo)
+  {
+    # Check that the -version-info value in the libmpfr_la_LDFLAGS line
+    # corresponds to the expected value from the comment ($vinfo).
+    $vinfo eq $1
+      or die "$0: bad -version-info value ($1 instead of $vinfo)\n";
+  }
+else
+  {
+    # If this is a release or a release candidate, make sure that $vinfo
+    # is defined. For intermediate versions, this value may not be known
+    # yet (for instance, the ABI may be broken some time later), so that
+    # defining $vinfo is not required.
+    $suf =~ /^(-rc.*)?$/
+      and die "$0: missing comment with -version-info value for MPFR $mv.x";
+  }
 
 open CONFIGURE, '<', 'configure.ac'
   or die "$!\n$0: can't open configure.ac file\n";

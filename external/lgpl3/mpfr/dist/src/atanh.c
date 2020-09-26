@@ -1,6 +1,6 @@
 /* mpfr_atanh -- Inverse Hyperbolic Tangente
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -44,9 +44,9 @@ mpfr_atanh_small (mpfr_ptr y, mpfr_srcptr x)
   mpfr_init2 (t, p);
   mpfr_init2 (u, p);
   mpfr_init2 (x2, p);
-  mpfr_set (t, x, MPFR_RNDF); /* t = x * (1 + theta) */
-  mpfr_set (y, t, MPFR_RNDF); /* exact */
-  mpfr_mul (x2, x, x, MPFR_RNDF); /* x2 = x^2 * (1 + theta) */
+  mpfr_set (t, x, MPFR_RNDF);  /* t = x * (1 + theta) */
+  mpfr_set (y, t, MPFR_RNDF);  /* exact */
+  mpfr_sqr (x2, x, MPFR_RNDF); /* x2 = x^2 * (1 + theta) */
   for (i = 3; ; i += 2)
     {
       mpfr_mul (t, t, x2, MPFR_RNDF);    /* t = x^i * (1 + theta)^i */

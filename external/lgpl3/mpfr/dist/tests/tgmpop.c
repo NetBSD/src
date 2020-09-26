@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_[q,z], mpfr_sub_[q,z], mpfr_div_[q,z],
    mpfr_mul_[q,z], mpfr_cmp_[f,q,z]
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -68,7 +68,7 @@ special (void)
   mpz_set_str (mpq_denref (q), "5721", 10);
   mpfr_set_str_binary (x, "11111111101001011011100101100011011110010011100010000100001E-44");
   mpfr_add_q (y, x, q, MPFR_RNDN);
-  CHECK_FOR ("cancelation in add_q", mpfr_cmp_ui_2exp (y, 256783, -64) == 0);
+  CHECK_FOR ("cancellation in add_q", mpfr_cmp_ui_2exp (y, 256783, -64) == 0);
 
   mpfr_set_prec (x, 19);
   mpfr_set_str_binary (x, "0.1011110101110011100E0");
@@ -78,7 +78,7 @@ special (void)
   mpfr_add_q (y, x, q, MPFR_RNDD);
   mpfr_set_prec (x, 29);
   mpfr_set_str_binary (x, "11111111101001110011010001001E-14");
-  CHECK_FOR ("cancelation in add_q", mpfr_cmp (x,y) == 0);
+  CHECK_FOR ("cancellation in add_q", mpfr_cmp (x,y) == 0);
 
   /* Inf */
   mpfr_set_inf (x, 1);
@@ -268,10 +268,10 @@ test_cmp_z (mpfr_prec_t pmin, mpfr_prec_t pmax, int nmax)
       exit (1);
     }
 
-  for(p=pmin ; p < pmax ; p++)
+  for (p = pmin ; p < pmax ; p++)
     {
       mpfr_set_prec (x, p);
-      for ( n = 0; n < nmax ; n++)
+      for (n = 0 ; n < nmax ; n++)
         {
           mpfr_urandomb (x, RANDS);
           mpz_urandomb  (y, RANDS, 1024);
@@ -307,20 +307,43 @@ test_cmp_q (mpfr_prec_t pmin, mpfr_prec_t pmax, int nmax)
   mpfr_init2 (z, MPFR_PREC_MIN);
   mpq_init (y);
 
-  /* check the erange flag when x is NaN */
+  /* Check the flags when x is NaN: the erange flags must be set, and
+     only this one. */
   mpfr_set_nan (x);
   mpq_set_ui (y, 17, 1);
-  mpfr_clear_erangeflag ();
+  mpfr_clear_flags ();
   res1 = mpfr_cmp_q (x, y);
-  if (res1 != 0 || mpfr_erangeflag_p () == 0)
+  if (res1 != 0 || __gmpfr_flags != MPFR_FLAGS_ERANGE)
     {
       printf ("Error for mpfr_cmp_q (NaN, 17)\n");
       printf ("Return value: expected 0, got %d\n", res1);
-      printf ("Erange flag: expected set, got %d\n", mpfr_erangeflag_p ());
+      printf ("Expected flags:");
+      flags_out (MPFR_FLAGS_ERANGE);
+      printf ("Got flags:     ");
+      flags_out (__gmpfr_flags);
       exit (1);
     }
 
-  for(p=pmin ; p < pmax ; p++)
+  /* Check the flags when y is NaN: the erange flags must be set, and
+     only this one. */
+  mpfr_set_ui (x, 42, MPFR_RNDN);
+  /* A NaN rational is represented by 0/0 (MPFR extension). */
+  mpz_set_ui (mpq_numref (y), 0);
+  mpz_set_ui (mpq_denref (y), 0);
+  mpfr_clear_flags ();
+  res1 = mpfr_cmp_q (x, y);
+  if (res1 != 0 || __gmpfr_flags != MPFR_FLAGS_ERANGE)
+    {
+      printf ("Error for mpfr_cmp_q (42, NaN)\n");
+      printf ("Return value: expected 0, got %d\n", res1);
+      printf ("Expected flags:");
+      flags_out (MPFR_FLAGS_ERANGE);
+      printf ("Got flags:     ");
+      flags_out (__gmpfr_flags);
+      exit (1);
+    }
+
+  for (p = pmin ; p < pmax ; p++)
     {
       mpfr_set_prec (x, p);
       for (n = 0 ; n < nmax ; n++)
@@ -341,6 +364,55 @@ test_cmp_q (mpfr_prec_t pmin, mpfr_prec_t pmax, int nmax)
             }
         }
     }
+
+  /* check for y = 1/0 */
+  mpz_set_ui (mpq_numref (y), 1);
+  mpz_set_ui (mpq_denref (y), 0);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) < 0);
+  mpfr_set_inf (x, -1);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) < 0);
+  mpfr_set_inf (x, +1);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  mpfr_set_nan (x);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+
+  /* check for y = -1/0 */
+  mpz_set_si (mpq_numref (y), -1);
+  mpz_set_ui (mpq_denref (y), 0);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) > 0);
+  mpfr_set_inf (x, -1);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  mpfr_set_inf (x, +1);
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) > 0);
+  mpfr_set_nan (x);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+
+  /* check for y = 0/0 */
+  mpz_set_ui (mpq_numref (y), 0);
+  mpz_set_ui (mpq_denref (y), 0);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+  mpfr_set_inf (x, -1);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+  mpfr_set_inf (x, +1);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+  mpfr_set_nan (x);
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN(mpfr_cmp_q (x, y) == 0);
+  MPFR_ASSERTN(mpfr_erangeflag_p ());
+
   mpq_clear (y);
   mpfr_clear (x);
   mpfr_clear (z);
@@ -372,11 +444,11 @@ test_cmp_f (mpfr_prec_t pmin, mpfr_prec_t pmax, int nmax)
       exit (1);
     }
 
-  for(p=pmin ; p < pmax ; p+=3)
+  for (p = pmin ; p < pmax ; p += 3)
     {
       mpfr_set_prec (x, p);
       mpf_set_prec (y, p);
-      for ( n = 0; n < nmax ; n++)
+      for (n = 0 ; n < nmax ; n++)
         {
           mpfr_urandomb (x, RANDS);
           mpf_urandomb  (y, RANDS, p);
@@ -796,7 +868,7 @@ test_specialq (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N,
       mpfr_inits2 (prec, fra, frb, frq, (mpfr_ptr) 0);
       mpq_init (q1); mpq_init(q2); mpq_init (qr);
 
-      for( n = 0 ; n < N ; n++)
+      for (n = 0 ; n < N ; n++)
         {
           mpq_set_ui(q1, randlimb(), randlimb() );
           mpq_set_ui(q2, randlimb(), randlimb() );
@@ -1216,11 +1288,50 @@ coverage_mpfr_mul_q_20110218 (void)
   mpfr_clear (cmp);
 }
 
+static void
+coverage (void)
+{
+  mpfr_exp_t emax, emin;
+  mpz_t z;
+  mpfr_t x;
+  int cmp;
+
+  mpz_init (z);
+  mpfr_init2 (x, 5);
+
+  /* coverage for mpfr_cmp_z in case of overflow */
+  emax = mpfr_get_emax ();
+  mpfr_set_emax (63);
+  mpz_set_str (z, "9223372036854775808", 10); /* 2^63 */
+  mpfr_set_ui_2exp (x, 1, mpfr_get_emax (), MPFR_RNDZ);
+  /* x = (1-2^(-p))*2^emax */
+  mpfr_clear_flags ();
+  cmp = mpfr_cmp_z (x, z);
+  MPFR_ASSERTN(cmp < 0);
+  MPFR_ASSERTN(!mpfr_overflow_p ());
+  mpfr_set_emax (emax);
+
+  /* coverage for mpfr_cmp_z in case of underflow */
+  mpz_set_str (z, "18446744073709551615", 10); /* 2^64-1 */
+  emin = mpfr_get_emin ();
+  mpfr_set_emin (65); /* xmin = 2^64 */
+  mpfr_set_ui_2exp (x, 1, 64, MPFR_RNDN);
+  mpfr_clear_flags ();
+  cmp = mpfr_cmp_z (x, z);
+  MPFR_ASSERTN(cmp > 0);
+  MPFR_ASSERTN(!mpfr_underflow_p ());
+  mpfr_set_emin (emin);
+
+  mpfr_clear (x);
+  mpz_clear (z);
+}
+
 int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
+  coverage ();
   special ();
 
   test_specialz (mpfr_add_z, mpz_add, "add");

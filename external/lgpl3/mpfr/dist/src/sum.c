@@ -1,6 +1,6 @@
 /* Sum -- efficiently sum a list of floating-point numbers
 
-Copyright 2014-2018 Free Software Foundation, Inc.
+Copyright 2014-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -67,7 +67,7 @@ VL: This is very different:
     arbitrary precision            fixed precision
      correct rounding        just reproducible rounding
     integer operations        floating-point operations
-        sequencial             parallel (& sequential)
+        sequential             parallel (& sequential)
 */
 
 #ifdef MPFR_COV_CHECK
@@ -967,6 +967,16 @@ sum_aux (mpfr_ptr sum, const mpfr_ptr *x, unsigned long n, mpfr_rnd_t rnd,
 
                 wi = tq / GMP_NUMB_BITS;
                 td = tq % GMP_NUMB_BITS;
+
+                /* Note: The "else" (td == 0) branch below can be executed
+                   only if tq >= GMP_NUMB_BITS, which is possible only when
+                   logn is large enough. Indeed, if tq > logn + some constant,
+                   this means that the TMD did not occur.
+                   TODO: Find an upper bound on tq, and add a corresponding
+                   MPFR_ASSERTD assertion / hint. On some platforms, this
+                   branch might be dead code, and such information would
+                   allow the compiler to remove it.
+                   It seems that this branch is never tested (r12754). */
 
                 if (td != 0)
                   {

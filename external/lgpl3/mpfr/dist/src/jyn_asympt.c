@@ -1,6 +1,6 @@
 /* mpfr_jn_asympt, mpfr_yn_asympt -- shared code for mpfr_jn and mpfr_yn
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef MPFR_JN
@@ -49,7 +49,20 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
   mpfr_exp_t err2, err;
   MPFR_ZIV_DECL (loop);
 
-  mpfr_init (c);
+  mpfr_init2 (c, 64);
+
+  /* The terms of the asymptotic expansion grow like mu^(2k)/(8z)^(2k), where
+     mu = 4n^2, thus we need mu < 8|z| so that it converges,
+     i.e., n^2/2 < |z| */
+  MPFR_ASSERTD (n >= 0);
+  mpfr_set_ui (c, n, MPFR_RNDU);
+  mpfr_mul_ui (c, c, n, MPFR_RNDU);
+  mpfr_div_2ui (c, c, 1, MPFR_RNDU);
+  if (mpfr_cmpabs (c, z) >= 0)
+    {
+      mpfr_clear (c);
+      return 0; /* asymptotic expansion failed */
+    }
 
   w = MPFR_PREC(res) + MPFR_INT_CEIL_LOG2(MPFR_PREC(res)) + 4;
 
@@ -92,6 +105,7 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       for (k = 1, stop = 0; stop < 4; k++)
         {
           /* compute next term: t(k)/t(k-1) = (2n+2k-1)(2n-2k+1)/(8kz) */
+          MPFR_LOG_MSG (("loop (k,stop) = (%ld,%d)\n", k, stop));
           mpfr_mul_si (t, t, 2 * (n + k) - 1, MPFR_RNDN); /* err <= err_k + 1 */
           mpfr_mul_si (t, t, 2 * (n - k) + 1, MPFR_RNDN); /* err <= err_k + 2 */
           mpfr_div_ui (t, t, k, MPFR_RNDN);               /* err <= err_k + 3 */
@@ -127,7 +141,7 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
               /* check if the next term is smaller than ulp(Q): if EXP(err_u)
                  <= EXP(Q), since the current term is bounded by
                  err_u * 2^(-w), it is bounded by ulp(Q) */
-              if (MPFR_EXP(err_u) <= MPFR_EXP(Q))
+              if (MPFR_GET_EXP (err_u) <= MPFR_GET_EXP (Q))
                 stop ++;
               else
                 stop = 0;
@@ -140,7 +154,7 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
               else
                 mpfr_sub (P, P, t, MPFR_RNDN);
               /* check if the next term is smaller than ulp(P) */
-              if (MPFR_EXP(err_u) <= MPFR_EXP(P))
+              if (MPFR_GET_EXP (err_u) <= MPFR_GET_EXP (P))
                 stop ++;
               else
                 stop = 0;
@@ -176,9 +190,9 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
           mpfr_mul (c, c, P, MPFR_RNDN); /* P * (sin - cos) */
           mpfr_mul (s, s, Q, MPFR_RNDN); /* Q * (sin + cos) */
 #endif
-          err = MPFR_EXP(c);
-          if (MPFR_EXP(s) > err)
-            err = MPFR_EXP(s);
+          err = MPFR_GET_EXP (c);
+          if (MPFR_GET_EXP (s) > err)
+            err = MPFR_EXP (s);
 #ifdef MPFR_JN
           mpfr_sub (s, s, c, MPFR_RNDN);
 #else
@@ -195,9 +209,9 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
           mpfr_mul (c, c, Q, MPFR_RNDN); /* Q * (sin - cos) */
           mpfr_mul (s, s, P, MPFR_RNDN); /* P * (sin + cos) */
 #endif
-          err = MPFR_EXP(c);
-          if (MPFR_EXP(s) > err)
-            err = MPFR_EXP(s);
+          err = MPFR_GET_EXP (c);
+          if (MPFR_GET_EXP (s) > err)
+            err = MPFR_EXP (s);
 #ifdef MPFR_JN
           mpfr_add (s, s, c, MPFR_RNDN);
 #else
@@ -206,15 +220,16 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
         }
       if ((n & 2) != 0)
         mpfr_neg (s, s, MPFR_RNDN);
-      if (MPFR_EXP(s) > err)
-        err = MPFR_EXP(s);
+      if (MPFR_GET_EXP (s) > err)
+        err = MPFR_EXP (s);
       /* the absolute error on s is bounded by P*err(s/c) + Q*err(s/c)
          + err(P)*(s/c) + err(Q)*(s/c) + 3 * 2^(err - w - 1)
          <= (|P|+|Q|) * 2^(1-w) + err_s * 2^(1-w) + 2^err * 2^(1-w),
          since |c|, |old_s| <= 2. */
-      err2 = (MPFR_EXP(P) >= MPFR_EXP(Q)) ? MPFR_EXP(P) + 2 : MPFR_EXP(Q) + 2;
+      err2 = (MPFR_GET_EXP (P) >= MPFR_GET_EXP (Q))
+        ? MPFR_EXP (P) + 2 : MPFR_EXP (Q) + 2;
       /* (|P| + |Q|) * 2^(1 - w) <= 2^(err2 - w) */
-      err = MPFR_EXP(err_s) >= err ? MPFR_EXP(err_s) + 2 : err + 2;
+      err = MPFR_GET_EXP (err_s) >= err ? MPFR_EXP (err_s) + 2 : err + 2;
       /* err_s * 2^(1-w) + 2^old_err * 2^(1-w) <= 2^err * 2^(-w) */
       err2 = (err >= err2) ? err + 1 : err2 + 1;
       /* now the absolute error on s is bounded by 2^(err2 - w) */
@@ -229,13 +244,14 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       mpfr_abs (err_t, err_t, MPFR_RNDU);
       mpfr_mul_ui (err_t, err_t, 3, MPFR_RNDU);
       /* 3*2^(-w)*|old_c|*|s| [see below] is bounded by err_t * 2^(-w) */
-      err2 += MPFR_EXP(c);
+      err2 += MPFR_GET_EXP (c);
       /* |old_c| * 2^(err2 - w) [see below] is bounded by 2^(err2-w) */
       mpfr_mul (c, c, s, MPFR_RNDN);    /* the absolute error on c is bounded by
                                           1/2 ulp(c) + 3*2^(-w)*|old_c|*|s|
                                           + |old_c| * 2^(err2 - w) */
       /* compute err_t * 2^(-w) + 1/2 ulp(c) = (err_t + 2^EXP(c)) * 2^(-w) */
-      err = (MPFR_EXP(err_t) > MPFR_EXP(c)) ? MPFR_EXP(err_t) + 1 : MPFR_EXP(c) + 1;
+      err = (MPFR_GET_EXP (err_t) > MPFR_GET_EXP (c)) ?
+        MPFR_EXP (err_t) + 1 : MPFR_EXP (c) + 1;
       /* err_t * 2^(-w) + 1/2 ulp(c) <= 2^(err - w) */
       /* now err_t * 2^(-w) bounds 1/2 ulp(c) + 3*2^(-w)*|old_c|*|s| */
       err = (err >= err2) ? err + 1 : err2 + 1;
@@ -250,7 +266,7 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       mpfr_clear (err_s);
       mpfr_clear (err_u);
 
-      err -= MPFR_EXP(c);
+      err -= MPFR_GET_EXP (c);
       if (MPFR_LIKELY (MPFR_CAN_ROUND (c, w - err, MPFR_PREC(res), r)))
         break;
       if (diverge != 0)

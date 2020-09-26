@@ -1,6 +1,6 @@
 /* mpfr_add1 -- internal function to perform a "real" addition
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -41,7 +41,7 @@ mpfr_add1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 
   if (MPFR_UNLIKELY (MPFR_IS_UBF (b)))
     {
-      exp = mpfr_ubf_zexp2exp (MPFR_ZEXP (b));
+      exp = MPFR_UBF_GET_EXP (b);
       if (exp > __gmpfr_emax)
         return mpfr_overflow (a, rnd_mode, MPFR_SIGN (b));;
     }
@@ -81,7 +81,7 @@ mpfr_add1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
     }
 
   MPFR_SET_SAME_SIGN(a, b);
-  MPFR_UPDATE2_RND_MODE(rnd_mode, MPFR_SIGN(b));
+  MPFR_UPDATE2_RND_MODE (rnd_mode, MPFR_SIGN (b));
   /* now rnd_mode is either MPFR_RNDN, MPFR_RNDZ, MPFR_RNDA or MPFR_RNDF. */
   if (MPFR_UNLIKELY (MPFR_IS_UBF (c)))
     {
@@ -189,7 +189,7 @@ mpfr_add1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 
               mask = MPFR_LIMB_MASK (sh);
               bb = ap[0] & mask;
-              ap[0] &= (~mask) << 1;
+              ap[0] &= MPFR_LIMB_LSHIFT (~mask, 1);
               if (bb == 0)
                 fb = 0;
               else if (bb == mask)
@@ -379,7 +379,7 @@ mpfr_add1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
                   if (fb)
                     goto rounding;
                   rb ^= 1;
-                  if (rb == 0 && mpn_add_1(ap, ap, an, MPFR_LIMB_ONE << sh))
+                  if (rb == 0 && mpn_add_1 (ap, ap, an, MPFR_LIMB_ONE << sh))
                     {
                       if (MPFR_UNLIKELY(exp == __gmpfr_emax))
                         {
@@ -404,7 +404,7 @@ mpfr_add1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 
           if (fb || ck < 0)
             goto rounding;
-          if (difs && cprev << (GMP_NUMB_BITS - difs))
+          if (difs && MPFR_LIMB_LSHIFT(cprev, GMP_NUMB_BITS - difs) != 0)
             {
               fb = 1;
               goto rounding;

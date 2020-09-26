@@ -1,6 +1,6 @@
 /* mpfr_fmma, mpfr_fmms -- Compute a*b +/- c*d
 
-Copyright 2014-2018 Free Software Foundation, Inc.
+Copyright 2014-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,11 +17,12 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
 
+/* compute a*b+c*d if neg=0 (fmma), a*b-c*d otherwise (fmms) */
 static int
 mpfr_fmma_aux (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
                mpfr_srcptr d, mpfr_rnd_t rnd, int neg)
@@ -52,19 +53,19 @@ mpfr_fmma_aux (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
 
   mpfr_ubf_mul_exact (u, a, b);
   mpfr_ubf_mul_exact (v, c, d);
-  if (neg)
-    MPFR_CHANGE_SIGN (v);
   if (prec_z == MPFR_PREC(a) && prec_z == MPFR_PREC(b) &&
       prec_z == MPFR_PREC(c) && prec_z == MPFR_PREC(d) &&
       un == MPFR_PREC2LIMBS(2 * prec_z))
     {
       MPFR_TMP_INIT (zp, zz, 2 * prec_z, un);
       MPFR_PREC(u) = MPFR_PREC(v) = 2 * prec_z;
-      inex = mpfr_add (zz, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd);
+      inex = (neg == 0) ? mpfr_add (zz, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd)
+        : mpfr_sub (zz, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd);
       inex = mpfr_set_1_2 (z, zz, rnd, inex);
     }
   else
-    inex = mpfr_add (z, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd);
+    inex = (neg == 0) ? mpfr_add (z, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd)
+      : mpfr_sub (z, (mpfr_srcptr) u, (mpfr_srcptr) v, rnd);
 
   MPFR_UBF_CLEAR_EXP (u);
   MPFR_UBF_CLEAR_EXP (v);

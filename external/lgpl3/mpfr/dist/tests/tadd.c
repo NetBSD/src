@@ -1,6 +1,6 @@
 /* Test file for mpfr_add and mpfr_sub.
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define N 30000
@@ -149,7 +149,7 @@ check64 (void)
   mpfr_set_str_binary (t, "-1.1e-2");
   mpfr_set_prec (u, 2);
   test_add (u, x, t, MPFR_RNDN);
-  if (MPFR_MANT(u)[0] << 2)
+  if ((mp_limb_t) (MPFR_MANT(u)[0] << 2))
     {
       printf ("result not normalized for prec=2\n");
       mpfr_dump (u);
@@ -375,18 +375,18 @@ check_case_1b (void)
           mpfr_set_prec (b, prec_b);
           /* b = 1 - 2^(-prec_a) + 2^(-prec_b) */
           mpfr_set_ui (b, 1, MPFR_RNDN);
-          mpfr_div_2exp (b, b, dif, MPFR_RNDN);
+          mpfr_div_2ui (b, b, dif, MPFR_RNDN);
           mpfr_sub_ui (b, b, 1, MPFR_RNDN);
-          mpfr_div_2exp (b, b, prec_a, MPFR_RNDN);
+          mpfr_div_2ui (b, b, prec_a, MPFR_RNDN);
           mpfr_add_ui (b, b, 1, MPFR_RNDN);
           for (prec_c = dif; prec_c <= 64; prec_c++)
             {
               /* c = 2^(-prec_a) - 2^(-prec_b) */
               mpfr_set_prec (c, prec_c);
               mpfr_set_si (c, -1, MPFR_RNDN);
-              mpfr_div_2exp (c, c, dif, MPFR_RNDN);
+              mpfr_div_2ui (c, c, dif, MPFR_RNDN);
               mpfr_add_ui (c, c, 1, MPFR_RNDN);
-              mpfr_div_2exp (c, c, prec_a, MPFR_RNDN);
+              mpfr_div_2ui (c, c, prec_a, MPFR_RNDN);
               test_add (a, b, c, MPFR_RNDN);
               if (mpfr_cmp_ui (a, 1) != 0)
                 {
@@ -776,6 +776,8 @@ check_1111 (void)
                   (int) tb, (int) tc, (int) diff,
                   mpfr_print_rnd_mode (rnd_mode));
           printf ("sb = %d, sc = %d\n", sb, sc);
+          printf ("b = "); mpfr_dump (b);
+          printf ("c = "); mpfr_dump (c);
           printf ("a = "); mpfr_dump (a);
           printf ("s = "); mpfr_dump (s);
           printf ("inex_a = %d, inex_s = %d\n", inex_a, inex_s);
@@ -1083,6 +1085,14 @@ tests (void)
           "1e0",128,
           "100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e0",256,
           MPFR_RNDN);
+  check2b("0.10000000000000000011101111111110110110001100010110100011010000110101101101010010000110110011100110001101110010111011011110010101e1",128,
+          "0.11110011001100100001111011100010010100011011011111111110101001101001101011100101011110101111111100010010100010100111110110011001e-63",128,
+          "0.10000000000000000011101111111110110110001100010110100011010001000100111010000100001110100001101111011111100000111011011000111100e1",128,
+          MPFR_RNDN);
+  check2b("0.101000111001110100111100000010110010011101001011101001001101101000010100010000011100110110110011011000001110110101100111010110011101000111010011110001010001110110110011111011011100101011111100e-2",192,
+          "0.101101100000111110011110000110001000110110010010110000111101110010111010100110000000000110010100010001000001011011101010111010101011010110011011011110110111001000111001101000010101111010010010e-130",192,
+          "0.101000111001110100111100000010110010011101001011101001001101101000010100010000011100110110110011011000001110110101100111010110101000011111100011011000110011011001000001100000001000111011011001e-2",192,
+          MPFR_RNDN);
 
   /* Checking double precision (53 bits) */
   check53("-8.22183238641455905806e-19", "7.42227178769761587878e-19",MPFR_RNDD,
@@ -1259,7 +1269,7 @@ test_rndf_exact (mp_size_t pmax)
           for (eb = 0; eb <= pmax + 3; eb ++)
             {
               mpfr_urandomb (b, RANDS);
-              mpfr_mul_2exp (b, b, eb, MPFR_RNDN);
+              mpfr_mul_2ui (b, b, eb, MPFR_RNDN);
               for (pc = MPFR_PREC_MIN; pc <= pmax; pc++)
                 {
                   if ((pc + 2) % GMP_NUMB_BITS > 4)

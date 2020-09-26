@@ -1,6 +1,6 @@
 /* mpfr_div_ui -- divide a floating-point number by a machine integer
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -33,11 +33,14 @@ MPFR_HOT_FUNCTION_ATTR int
 mpfr_div_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u,
              mpfr_rnd_t rnd_mode)
 {
+  int inexact;
+
+#ifdef MPFR_LONG_WITHIN_LIMB
+
   int sh;
   mp_size_t i, xn, yn, dif;
   mp_limb_t *xp, *yp, *tmp, c, d;
   mpfr_exp_t exp;
-  int inexact;
   mp_limb_t rb; /* round bit */
   mp_limb_t sb; /* sticky bit */
   MPFR_TMP_DECL(marker);
@@ -113,7 +116,6 @@ mpfr_div_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u,
      from p[0] to p[n-1]. Let B = 2^GMP_NUMB_BITS.
      One has: 0 <= {p, n} < B^n. */
 
-  MPFR_STAT_STATIC_ASSERT (MPFR_LIMB_MAX >= ULONG_MAX);
   if (dif >= 0)
     {
       c = mpn_divrem_1 (tmp, dif, xp, xn, u); /* used all the dividend */
@@ -246,7 +248,7 @@ mpfr_div_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u,
     {
       int nexttoinf;
 
-      MPFR_UPDATE2_RND_MODE(rnd_mode, MPFR_SIGN (y));
+      MPFR_UPDATE2_RND_MODE (rnd_mode, MPFR_SIGN (y));
       switch (rnd_mode)
         {
         case MPFR_RNDZ:
@@ -297,6 +299,18 @@ mpfr_div_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u,
 
   /* Set the exponent. Warning! One may still have an underflow. */
   MPFR_EXP (y) = exp;
+#else /* MPFR_LONG_WITHIN_LIMB */
+  mpfr_t uu;
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  MPFR_SAVE_EXPO_MARK (expo);
+  mpfr_init2 (uu, sizeof (unsigned long) * CHAR_BIT);
+  mpfr_set_ui (uu, u, MPFR_RNDZ);
+  inexact = mpfr_div (y, x, uu, rnd_mode);
+  mpfr_clear (uu);
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+  MPFR_SAVE_EXPO_FREE (expo);
+#endif
 
   return mpfr_check_range (y, inexact, rnd_mode);
 }

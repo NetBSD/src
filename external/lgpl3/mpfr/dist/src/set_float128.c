@@ -1,7 +1,7 @@
-/* mpfr_set_float128 -- convert a machine __float128 number to
+/* mpfr_set_float128 -- convert a machine _Float128 number to
                         a multiple precision floating-point number
 
-Copyright 2012-2018 Free Software Foundation, Inc.
+Copyright 2012-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,26 +18,31 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <float.h> /* for DBL_MAX */
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
 #ifdef MPFR_WANT_FLOAT128
 
-/* The q suffix is a GNU C extension, but so is __float128. */
-#define MPFR_FLOAT128_MAX 0x1.ffffffffffffffffffffffffffffp+16383q
+#if MPFR_WANT_FLOAT128 == 1
+/* _Float128 type from ISO/IEC TS 18661 */
+# define MPFR_FLOAT128_MAX 0x1.ffffffffffffffffffffffffffffp+16383f128
+#elif MPFR_WANT_FLOAT128 == 2
+/* __float128 type (GNU C extension) */
+# define MPFR_FLOAT128_MAX 0x1.ffffffffffffffffffffffffffffp+16383q
+#else
+# error "Unsupported value for MPFR_WANT_FLOAT128"
+#endif
 
 int
-mpfr_set_float128 (mpfr_ptr r, __float128 d, mpfr_rnd_t rnd_mode)
+mpfr_set_float128 (mpfr_ptr r, _Float128 d, mpfr_rnd_t rnd_mode)
 {
   mpfr_t t;
   mp_limb_t *tp;
   int inexact, shift_exp, neg, e, i;
-  __float128 p[14], q[14];
+  _Float128 p[14], q[14];
   MPFR_SAVE_EXPO_DECL (expo);
 
   /* Check for NaN */
@@ -61,7 +66,7 @@ mpfr_set_float128 (mpfr_ptr r, __float128 d, mpfr_rnd_t rnd_mode)
       return 0;
     }
   /* Check for ZERO */
-  else if (MPFR_UNLIKELY (d == (__float128) 0.0))
+  else if (MPFR_UNLIKELY (d == (_Float128) 0.0))
     return mpfr_set_d (r, (double) d, rnd_mode);
 
   shift_exp = 0; /* invariant: remainder to deal with is d*2^shift_exp */
@@ -124,7 +129,7 @@ mpfr_set_float128 (mpfr_ptr r, __float128 d, mpfr_rnd_t rnd_mode)
 
   for (i = MPFR_LAST_LIMB (t); i >= 0; i--)
     {
-      d *= 2 * (__float128) MPFR_LIMB_HIGHBIT;
+      d *= 2 * (_Float128) MPFR_LIMB_HIGHBIT;
       tp[i] = (mp_limb_t) d;
       d -= tp[i];
     }

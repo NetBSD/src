@@ -1,6 +1,6 @@
 /* Test file for mpfr_check.
 
-Copyright 2003-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -69,7 +69,7 @@ main (void)
           max--;
         }
       if (max == 0)
-        PRINT_ERROR ("can't reach overflow");
+        PRINT_ERROR ("for overflow");
       mpfr_set_ui (a, 2137, MPFR_RNDN);
       /* Corrupt a and check for it */
       MPFR_SIGN (a) = 2;

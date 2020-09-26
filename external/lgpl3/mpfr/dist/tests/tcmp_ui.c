@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp_ui and mpfr_cmp_si.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef TCMP_UI_CHECK_NAN
@@ -110,6 +110,15 @@ check_macros (void)
     }
   if (c != 1)
     {
+      /* Failure in r13626 on x86_64 with the clang-9 1:9-1 Debian package,
+         with any optimization level: c = 2 instead of 1
+         Bug report: https://bugs.llvm.org/show_bug.cgi?id=43557 */
+      /* [2020-06-17]
+         If one adds tcc support for macros using __builtin_constant_p
+         in mpfr.h by testing __TINYC__, one also gets a failure.
+         Bug report: https://savannah.nongnu.org/bugs/?58606
+         "__builtin_constant_p is buggy on argument with side effect and
+         constant value" */
       printf ("Error 3 on mpfr_cmp_ui(x,17) in check_macros\n"
               "(c = %d instead of 1)\n", c);
       exit (1);
@@ -326,7 +335,7 @@ main (void)
 
   /* corner case */
   mpfr_set_ui (x, 1, MPFR_RNDZ);
-  mpfr_mul_2exp (x, x, GMP_NUMB_BITS - 1, MPFR_RNDZ);
+  mpfr_mul_2ui (x, x, GMP_NUMB_BITS - 1, MPFR_RNDZ);
   /* now EXP(x)=GMP_NUMB_BITS */
   MPFR_ASSERTN(mpfr_cmp_si (x, 1) > 0);
 

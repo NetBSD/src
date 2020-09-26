@@ -1,6 +1,6 @@
 /* MPFR internal header related to Static Assertions
 
-Copyright 2012-2018 Free Software Foundation, Inc.
+Copyright 2012-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifndef __MPFR_STATIC_ASSERT_H__
@@ -27,10 +27,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* How to use:
    ===========
-   MPFR_DECL_STATIC_ASSERT:
-   + to check a condition at compile time within the declaration section.
    MPFR_STAT_STATIC_ASSERT:
    + to check a condition at compile time within the statement section.
+
+   Note: In case one would need a static assertion in an expression,
+   a sizeof(...) instead of a typedef could be used. For instance,
+   see https://stackoverflow.com/questions/9229601/what-is-in-c-code
+   (about BUILD_BUG_ON_ZERO in the Linux kernel).
 */
 
 #ifdef MPFR_USE_STATIC_ASSERT
@@ -38,17 +41,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* C11 version */
 # if defined (__STDC_VERSION__)
 #  if (__STDC_VERSION__ >= 201112L)
-#   define MPFR_DECL_STATIC_ASSERT(c) _Static_assert((c), #c )
 #   define MPFR_STAT_STATIC_ASSERT(c) _Static_assert((c), #c )
 #  endif
 # endif
 
 /* Default version which should be compatible with nearly all compilers */
-# if !defined(MPFR_DECL_STATIC_ASSERT)
+# if !defined(MPFR_STAT_STATIC_ASSERT)
 #  if __MPFR_GNUC(4,8)
 /* Get rid of annoying warnings "typedef '...' locally defined but not used"
    (new in GCC 4.8). Thanks to Jonathan Wakely for this solution:
-   https://gcc.gnu.org/ml/gcc-help/2013-07/msg00142.html */
+   https://gcc.gnu.org/legacy-ml/gcc-help/2013-07/msg00142.html */
 #   define MPFR_TYPEDEF_UNUSED __attribute__ ((unused))
 #  else
 #   define MPFR_TYPEDEF_UNUSED
@@ -59,15 +61,11 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  typedef enum { MPFR_ASSERT_CAT(MPFR_STATIC_ASSERT_CONST_,__LINE__) = !(c) } \
  MPFR_ASSERT_CAT(MPFR_ASSERT_,__LINE__)[!!(c) ? 1 : -1]                      \
    MPFR_TYPEDEF_UNUSED; } while (0)
-#  define MPFR_DECL_STATIC_ASSERT(c)                                         \
- typedef enum { MPFR_ASSERT_CAT(MPFR_STATIC_ASSERT_CONST_,__LINE__) = !(c) } \
- MPFR_ASSERT_CAT(MPFR_ASSERT_,__LINE__)[!!(c) ? 1 : -1];
 # endif
 
 #else
 
 /* No support: default to classic assertions */
-# define MPFR_DECL_STATIC_ASSERT(c) /* Nothing */
 # define MPFR_STAT_STATIC_ASSERT(c) MPFR_ASSERTN(c)
 
 #endif

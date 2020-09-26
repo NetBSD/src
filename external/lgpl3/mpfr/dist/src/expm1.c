@@ -1,6 +1,6 @@
 /* mpfr_expm1 -- Compute exp(x)-1
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -84,19 +84,22 @@ mpfr_expm1 (mpfr_ptr y, mpfr_srcptr x , mpfr_rnd_t rnd_mode)
     {
       mp_limb_t t_limb[(64 - 1) / GMP_NUMB_BITS + 1];
       mpfr_t t;
-      mpfr_exp_t err;
+      mpfr_eexp_t err;
 
       MPFR_TMP_INIT1(t_limb, t, 64);
+      /* since x < 0, to get an upper bound on x/log(2), we need to divide
+         by an upper bound on log(2) */
       mpfr_div (t, x, __gmpfr_const_log2_RNDU, MPFR_RNDU); /* > x / ln(2) */
-      err = mpfr_cmp_si (t, MPFR_EMIN_MIN >= -LONG_MAX ?
-                         MPFR_EMIN_MIN : -LONG_MAX) <= 0 ?
-        - (MPFR_EMIN_MIN >= -LONG_MAX ? MPFR_EMIN_MIN : -LONG_MAX) :
-        - mpfr_get_si (t, MPFR_RNDU);
+      err = mpfr_get_exp_t (t, MPFR_RNDU);
+      MPFR_ASSERTD (err < 0);
+      err = err < - MPFR_EXP_MAX ? MPFR_EXP_MAX : - err;
+      /* err = -max(ceil(t),-MPFR_EXP_MAX). */
+      MPFR_LOG_MSG (("err=%" MPFR_EXP_FSPEC "d\n", err));
       /* exp(x) = 2^(x/ln(2))
-               <= 2^max(MPFR_EMIN_MIN,-LONG_MAX,ceil(x/ln(2)+epsilon))
+               <= 2^max(-MPFR_EXP_MAX,ceil(x/ln(2)+epsilon))
          with epsilon > 0 */
-      MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, __gmpfr_mone, err, 0, 0,
-                                        rnd_mode, expo, {});
+      MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, __gmpfr_mone, (mpfr_exp_t) err,
+                                        0, 0, rnd_mode, expo, {});
     }
 
   /* General case */
@@ -129,26 +132,20 @@ mpfr_expm1 (mpfr_ptr y, mpfr_srcptr x , mpfr_rnd_t rnd_mode)
 
         /* exp(x) may overflow and underflow */
         MPFR_BLOCK (flags, mpfr_exp (t, x, MPFR_RNDN));
-        if (MPFR_OVERFLOW (flags))
+
+        if (MPFR_OVERFLOW (flags)) /* overflow case */
           {
             inexact = mpfr_overflow (y, rnd_mode, MPFR_SIGN_POS);
             MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, MPFR_FLAGS_OVERFLOW);
             break;
           }
-        else if (MPFR_UNDERFLOW (flags))
-          {
-            inexact = mpfr_set_si (y, -1, rnd_mode);
-            MPFR_ASSERTD (inexact == 0);
-            inexact = -1;
-            if (MPFR_IS_LIKE_RNDZ (rnd_mode, 1))
-              {
-                inexact = 1;
-                mpfr_nexttozero (y);
-              }
-            break;
-          }
 
-        exp_te = MPFR_GET_EXP (t);         /* FIXME: exp(x) may overflow! */
+        /* To get an underflow in exp(x), we need exp(x) < 0.5*2^MPFR_EMIN_MIN
+           thus x/log(2) < MPFR_EMIN_MIN-1. But in that case the above
+           MPFR_SMALL_INPUT_AFTER_SAVE_EXPO() will return the result. */
+        MPFR_ASSERTD(!MPFR_UNDERFLOW (flags));
+
+        exp_te = MPFR_GET_EXP (t);
         mpfr_sub_ui (t, t, 1, MPFR_RNDN);   /* exp(x)-1 */
 
         /* error estimate */
