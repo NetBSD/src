@@ -1,6 +1,6 @@
 /* Test file for mpfr_asin.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -98,7 +98,7 @@ special (void)
       mpfr_set_ui (x, 1, MPFR_RNDN); /* exact */
       mpfr_asin (y, x, (mpfr_rnd_t) r);
       mpfr_const_pi (x, (mpfr_rnd_t) r);
-      mpfr_div_2exp (x, x, 1, MPFR_RNDN); /* exact */
+      mpfr_div_2ui (x, x, 1, MPFR_RNDN); /* exact */
       if (mpfr_cmp (x, y))
         {
           printf ("Error: asin(1) != Pi/2 for rnd=%s\n",
@@ -114,7 +114,7 @@ special (void)
       mpfr_asin (y, x, (mpfr_rnd_t) r);
       mpfr_const_pi (x, MPFR_INVERT_RND((mpfr_rnd_t) r));
       mpfr_neg (x, x, MPFR_RNDN); /* exact */
-      mpfr_div_2exp (x, x, 1, MPFR_RNDN); /* exact */
+      mpfr_div_2ui (x, x, 1, MPFR_RNDN); /* exact */
       if (mpfr_cmp (x, y))
         {
           printf ("Error: asin(-1) != -Pi/2 for rnd=%s\n",
