@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.146 2020/09/24 07:37:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.147 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -365,18 +365,6 @@ typedef struct GNode {
 #define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
 
 #define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
-
-/*
- * The TARG_ constants are used when calling the Targ_FindNode and
- * Targ_FindList functions in targ.c. They simply tell the functions what to
- * do if the desired node(s) is (are) not found. If the TARG_CREATE constant
- * is given, a new, empty node will be created for the target, placed in the
- * table of all targets and its address returned. If TARG_NOCREATE is given,
- * a NULL pointer will be returned.
- */
-#define TARG_NOCREATE	0x00	  /* don't create it */
-#define TARG_CREATE	0x01	  /* create node if not found */
-#define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
 
 /*
  * Error levels for parsing. PARSE_FATAL means the process cannot continue

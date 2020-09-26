@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.542 2020/09/26 14:48:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.543 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.542 2020/09/26 14:48:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.543 2020/09/26 16:00:12 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -2131,7 +2131,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 
     ApplyModifiersState_Define(st);
 
-    gn = Targ_FindNode(st->v->name, TARG_NOCREATE);
+    gn = Targ_FindNode(st->v->name);
     if (gn == NULL || gn->type & OP_NOPATH) {
 	path = NULL;
     } else if (gn->path) {

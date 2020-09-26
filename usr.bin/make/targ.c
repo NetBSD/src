@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.94 2020/09/26 14:59:21 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.95 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -90,10 +90,7 @@
  *	    	  	    	flags are right (TARG_CREATE)
  *
  *	Targ_FindList	    	Given a list of names, find nodes for all
- *	    	  	    	of them. If a name doesn't exist and the
- *	    	  	    	TARG_NOCREATE flag was given, an error message
- *	    	  	    	is printed. Else, if a name doesn't exist,
- *	    	  	    	its node is created.
+ *	    	  	    	of them, creating them as necessary.
  *
  *	Targ_Ignore	    	Return TRUE if errors should be ignored when
  *	    	  	    	creating the given target.
@@ -122,7 +119,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.94 2020/09/26 14:59:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.95 2020/09/26 16:00:12 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -239,6 +236,9 @@ TargFreeGN(void *gnp)
 }
 #endif
 
+#define TARG_NOCREATE	0x00	  /* don't create it */
+#define TARG_CREATE	0x01	  /* create node if not found */
+#define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
 
 /* Find a node in the list using the given name for matching.
  * If the node is created, it is added to the .ALLTARGETS list.
@@ -252,8 +252,8 @@ TargFreeGN(void *gnp)
  *	flags was TARG_NOCREATE or the newly created and initialized node
  *	if it was TARG_CREATE
  */
-GNode *
-Targ_FindNode(const char *name, int flags)
+static GNode *
+Targ_FindNodeImpl(const char *name, int flags)
 {
     GNode *gn;			/* node in that element */
     Hash_Entry *he;		/* New or used hash entry for node */
@@ -278,6 +278,30 @@ Targ_FindNode(const char *name, int flags)
     return gn;
 }
 
+/* Get the existing global node, or return NULL. */
+GNode *
+Targ_FindNode(const char *name)
+{
+    return Targ_FindNodeImpl(name, TARG_NOCREATE);
+}
+
+/* Get the existing global node, or create it. */
+GNode *
+Targ_GetNode(const char *name)
+{
+    return Targ_FindNodeImpl(name, TARG_CREATE);
+}
+
+/* Create a node, register it in .ALLTARGETS but don't store it in the
+ * table of global nodes.  This means it cannot be found by name.
+ *
+ * This is used for internal nodes, such as cohorts or .WAIT nodes. */
+GNode *
+Targ_NewInternalNode(const char *name)
+{
+    return Targ_FindNodeImpl(name, TARG_NOHASH);
+}
+
 /* Return the .END node, which contains the commands to be executed when
  * everything else is done. */
 GNode *Targ_GetEndNode(void)
@@ -285,7 +309,7 @@ GNode *Targ_GetEndNode(void)
     /* Save the node locally to avoid having to search for it all the time. */
     static GNode *endNode = NULL;
     if (endNode == NULL) {
-	endNode = Targ_FindNode(".END", TARG_CREATE);
+	endNode = Targ_GetNode(".END");
 	endNode->type = OP_SPECIAL;
     }
     return endNode;
@@ -305,7 +329,7 @@ GNode *Targ_GetEndNode(void)
  *	the names in names.
  */
 GNodeList *
-Targ_FindList(StringList *names, int flags)
+Targ_FindList(StringList *names)
 {
     GNodeList *nodes;
     StringListNode *ln;
@@ -315,12 +339,8 @@ Targ_FindList(StringList *names, int flags)
     Lst_Open(names);
     while ((ln = Lst_Next(names)) != NULL) {
     	char *name = LstNode_Datum(ln);
-    	GNode *gn = Targ_FindNode(name, flags);
-	if (gn != NULL) {
-	    Lst_Append(nodes, gn);
-	} else if (flags == TARG_NOCREATE) {
-	    Error("\"%s\" -- target unknown.", name);
-	}
+    	GNode *gn = Targ_GetNode(name);
+	Lst_Append(nodes, gn);
     }
     Lst_Close(names);
     return nodes;
