@@ -1,4 +1,4 @@
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -15,7 +15,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 Table of contents:
@@ -37,20 +37,8 @@ Table of contents:
 2. Compiler/library detection
 ##############################################################################
 
-- if we want to distinguish GMP and MPIR, we can check at configure time
-  the following symbols which are only defined in MPIR:
-
-  #define __MPIR_VERSION 0
-  #define __MPIR_VERSION_MINOR 9
-  #define __MPIR_VERSION_PATCHLEVEL 0
-
-  There is also a library symbol mpir_version, which should match VERSION, set
-  by configure, for example 0.9.0.
-
 - update ICC detection.
   * Use only __INTEL_COMPILER instead of the obsolete macro __ICC?
-  * Possibly enable some features with ICC. For instance, removing
-    "&& !defined(__ICC)" from src/mpfr.h works with ICC 15.0.0 20140723.
 
 ##############################################################################
 3. Changes in existing functions
@@ -59,7 +47,7 @@ Table of contents:
 - export mpfr_overflow and mpfr_underflow as public functions
 
 - many functions currently taking into account the precision of the *input*
-  variable to set the initial working precison (acosh, asinh, cosh, ...).
+  variable to set the initial working precision (acosh, asinh, cosh, ...).
   This is nonsense since the "average" working precision should only depend
   on the precision of the *output* variable (and maybe on the *value* of
   the input in case of cancellation).
@@ -117,6 +105,8 @@ Table of contents:
 4. New functions to implement
 ##############################################################################
 
+- a function to compute the hash of a floating-point number
+  (suggested by Patrick Pelissier)
 - implement new functions from the C++17 standard:
   http://en.cppreference.com/w/cpp/numeric/special_math
   assoc_laguerre, assoc_legendre, comp_ellint_1, comp_ellint_2, comp_ellint_3,
@@ -127,15 +117,6 @@ Table of contents:
   See also https://isocpp.org/files/papers/P0226R1.pdf and §29.9.5 in the
   C++17 draft:
   https://github.com/cplusplus/draft/blob/master/source/numerics.tex
-- implement mpfr_get_decimal128 and mpfr_set_decimal128
-- implement mpfr_log_ui to compute log(n) for an unsigned long n.
-  We can write for argument reduction n = 2^k * n/2^k, where
-  2/3 <= n/2^k < 4/3, i.e., k = floor(log2(3n))-1, thus
-  log(n) = k*log(2) + log(n/2^k), and we can use binary splitting on the
-  Taylor expansion of log(1+x) to compute log(n/2^k), where at most
-  p*log(2)/log(3) terms are needed for precision p.
-  Other idea (from Fredrik Johansson): compute log(m) + log(n/m) where
-  m=2^a*3^b*5^c*7^d and m is close to n.
 - implement mpfr_q_sub, mpfr_z_div, mpfr_q_div?
 - implement mpfr_pow_q and variants with two integers (native or mpz)
   instead of a rational? See IEEE P1788.
@@ -188,7 +169,7 @@ Table of contents:
   + arcu (5.3.10.15): arctan2(y,x) u / (2 pi);
   + rad_to_cycle, cycle_to_rad, cycle_to_cycle (5.3.11.{1..3}).
 - From GSL, missing special functions (if useful in MPFR):
-  (cf http://www.gnu.org/software/gsl/manual/gsl-ref.html#Special-Functions)
+  (cf https://www.gnu.org/software/gsl/manual/gsl-ref.html#Special-Functions)
   + The Airy functions Ai(x) and Bi(x) defined by the integral representations:
    * Ai(x) = (1/\pi) \int_0^\infty \cos((1/3) t^3 + xt) dt
    * Bi(x) = (1/\pi) \int_0^\infty (e^(-(1/3) t^3) + \sin((1/3) t^3 + xt)) dt
@@ -294,6 +275,80 @@ Table of contents:
 - asec, acsc, acot, asech, acsch and acoth (mail from Björn Terelius on mpfr
   list, 18 June 2009)
 
+- function to reduce the precision of a variable, with a ternary value in
+  input, i.e. taking care of double rounding. Two possible forms: like
+  mpfr_set (i.e. with input and output) or like mpfr_prec_round (i.e. with
+  a single variable). mpfr_subnormalize and mpfr_round_nearest_away_end
+  could use it.
+
+- UBF functions for +, -, *, fmma, /, sqrt.
+  Support UBF in mpfr_check_range or add mpfr_ubf_check_range?
+  Make this available in the API, e.g. for MPC.
+
+- mpfr_cmp_uj and mpfr_cmp_sj. They would be useful to test MPFR with
+  _MPFR_EXP_FORMAT=4.
+
+- base conversion with the round-trip property using a minimal precision,
+  such as the to_chars functions from the C++ standard:
+
+    The functions [...] ensure that the string representation consists
+    of the smallest number of characters such that there is at least
+    one digit before the radix point (if present) and parsing the
+    representation using the corresponding from_chars function
+    recovers value exactly. [Note: This guarantee applies only if
+    to_chars and from_chars are executed on the same implementation.
+    — end note] If there are several such representations, the
+    representation with the smallest difference from the
+    floating-point argument value is chosen, resolving any remaining
+    ties using rounding according to round_to_nearest.
+
+  Text from: https://www.zsh.org/mla/workers/2019/msg01138.html
+
+- Serialization / Deserialization. Suggested by Frédéric Pétrot:
+  https://sympa.inria.fr/sympa/arc/mpfr/2020-02/msg00006.html
+  like mpfr_fpif_{import,export}, but with memory instead of file.
+
+  Idea of implementation to reuse most of the code and change very little:
+
+  Instead of passing a FILE *fh, pass a struct ext_data *h, and instead of
+  using fread and fwrite, use
+    h->read (h, buffer, size)
+    h->write (h, buffer, size)
+  respectively.
+
+  The struct ext_data structure could contain the following fields:
+    * read: pointer to a wrapper function for the read method.
+    * write: pointer to a wrapper function for the write method.
+    * FILE *fh: to be used for operations with files.
+    * unsigned char *arena: to be used for operations with memory.
+
+  The wrapper functions for the read method could be:
+
+  static int
+  read_from_file (struct ext_data *h, unsigned char *buffer, size_t size)
+  {
+    return fread (buffer, size, 1, h->fh) != 1;
+  }
+
+  static int
+  read_from_memory (struct ext_data *h, unsigned char *buffer, size_t size)
+  {
+    if (h->arena == NULL)
+      return 1;
+    memcpy (buffer, h->arena, size);
+    h->arena += size;
+    return 0;
+  }
+
+  So I expect very few changes in the existing code:
+    * Write a few wrapper functions.
+    * Rename mpfr_fpif_export to mpfr_fpif_export_aux and
+      mpfr_fpif_import to mpfr_fpif_import_aux.
+    * In the existing functions, replace FILE *fh, and fread/fwrite
+      calls as mentioned above.
+    * Add new mpfr_fpif_export, mpfr_fpif_import, mpfr_fpif_export_mem,
+      mpfr_fpif_import_mem.
+
 ##############################################################################
 5. Efficiency
 ##############################################################################
@@ -306,9 +361,6 @@ Table of contents:
   using recursive instead of iterative binary splitting:
   https://github.com/fredrik-johansson/arb/blob/master/elefun/exp_sum_bs_powtab.c
 - improve mpfr_grandom using the algorithm in http://arxiv.org/abs/1303.6257
-- use the src/x86_64/corei5/mparam.h file once GMP recognizes correctly the
-  Core i5 processors (note that gcc -mtune=native gives __tune_corei7__
-  and not __tune_corei5__ on those processors)
 - implement a mpfr_sqrthigh algorithm based on Mulders' algorithm, with a
   basecase variant
 - use mpn_div_q to speed up mpfr_div. However mpn_div_q, which is new in
@@ -450,17 +502,6 @@ Table of contents:
   option (but this does not affect the C library, which may or may not
   accept signaling NaNs).
 
-- check again coverage: on 2007-07-27, Patrick Pelissier reports that the
-  following files are not tested at 100%: add1.c, atan.c, atan2.c,
-  cache.c, cmp2.c, const_catalan.c, const_euler.c, const_log2.c, cos.c,
-  gen_inverse.h, div_ui.c, eint.c, exp3.c, exp_2.c, expm1.c, fma.c, fms.c,
-  lngamma.c, gamma.c, get_d.c, get_f.c, get_ld.c, get_str.c, get_z.c,
-  inp_str.c, jn.c, jyn_asympt.c, lngamma.c, mpfr-gmp.c, mul.c, mul_ui.c,
-  mulders.c, out_str.c, pow.c, print_raw.c, rint.c, root.c, round_near_x.c,
-  round_raw_generic.c, set_d.c, set_ld.c, set_q.c, set_uj.c, set_z.c, sin.c,
-  sin_cos.c, sinh.c, sqr.c, stack_interface.c, sub1.c, sub1sp.c, subnormal.c,
-  uceil_exp2.c, uceil_log2.c, ui_pow_ui.c, urandomb.c, yn.c, zeta.c, zeta_ui.c.
-
 - check the constants mpfr_set_emin (-16382-63) and mpfr_set_emax (16383) in
   get_ld.c and the other constants, and provide a testcase for large and
   small numbers.
@@ -493,24 +534,6 @@ Table of contents:
     this information.
   * In debug mode, MPFR would check that the result is exact
     (i.e. that the ternary value is 0).
-
-- new "rounding mode" MPFR_RNDF (faithful rounding)?
-  This is not really a rounding mode since it is non-deterministic. The
-  goal is to avoid the Table Maker's Dilemma in internal computations.
-  The definition of faithful rounding of a real number x is: return either
-  RNDD(x) or RNDU(x). This means that if x is exactly representable, one
-  returns x exactly. In MPFR, the ternary value should be unspecified for
-  efficiency reasons.
-  Note: One typically implements faithful rounding by computing an
-  approximation to the result with some adequately chosen error bound,
-  then by rounding this approximation to nearest.
-  Concerning the choice of the error bound, if the result x is equal to
-  1 + t, where t is a very small positive number, then the error bound
-  needs to be at most ulp(x)/4 + t. Since t can be arbitrarily small,
-  the error bound needs to be at most ulp(x)/4. And this error bound
-  is sufficient in all cases. Note that with the even rounding rule or
-  rounding away from zero, it is not needed to relax the condition when
-  x is exactly representable.
 
 - add tests of the ternary value for constants
 
@@ -630,15 +653,6 @@ Table of contents:
   that is, with a large error during the computation of the secondary term
   (when the TMD occurs).
 
-- add internal or public variants of some basic functions (+, -, *) with
-  mpz_t as the exponent for correctly rounded polynomials (like fmma),
-  in order to avoid internal overflow and underflow in extreme cases?
-  Alternatively, for fmma, modify add*.c and sub*.c code to define
-  mpfr_add_raw, which takes arrays of limbs and their precision, and the
-  positive exponent delta (as mpfr_uexp_t to be always representable).
-  The exponent delta should be sufficient for now since it can be bounded
-  by MPFR_PREC_MAX+1 if need be.
-
 - use the keyword "static" in array indices of parameter declarations with
   C99 compilers (6.7.5.3p7) when the pointer is expected not to be null?
   For instance, if mpfr.h is changed to have:
@@ -674,6 +688,12 @@ Table of contents:
   constants) because we do not have the control of memory allocation for
   mpz_init.
 
+- use GCC's nonnull attribute (available since GCC 4.0) where applicable.
+
+- avoid the use of MPFR_MANT(x) as an lvalue; use other (more high level)
+  internal macros if possible, such as MPFR_TMP_INIT1, MPFR_TMP_INIT and
+  MPFR_ALIAS.
+
 
 ##############################################################################
 7. Portability
@@ -689,4 +709,17 @@ Table of contents:
 
 - use https://gcc.gnu.org/viewcvs/gcc/trunk/config/stdint.m4 for mpfr-gmp.h
 
-- with MinGW, build with -D__USE_MINGW_ANSI_STDIO by default?
+- By default, GNU Automake adds -I options to local directories, with
+  the side effect that these directories have the precedence to search
+  for system headers (#include <...>). This may make the build fail if
+  a C implementation includes a file that has the same name as one used
+  in such a directory.
+  For instance, if one adds an empty file "src/bits/types.h", then the
+  MPFR build fails under Linux because /usr/include/stdio.h has
+    #include <bits/types.h>
+  Possible workaround:
+    * disable the default -I options with nostdinc as documented in
+      the Automake manual;
+    * have a rule that copies the needed files ("mpfr.h" or they should
+      be prefixed with "mpfr-") to $(top_builddir)/include;
+    * use "-I$(top_builddir)/include".

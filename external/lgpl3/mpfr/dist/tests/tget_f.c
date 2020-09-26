@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_f.
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_MPF_INTERNALS
@@ -58,7 +58,7 @@ prec_test (void)
               int inex;
               mpf_div_2exp (x2, x2, 1);
               mpf_add (x1, x1, x2);
-              mpfr_div_2exp (y2, y2, 1, MPFR_RNDN);
+              mpfr_div_2ui (y2, y2, 1, MPFR_RNDN);
               inex = mpfr_add (y1, y1, y2, MPFR_RNDN);
               MPFR_ASSERTN (inex == 0);
               mpfr_set_f (y3, x1, MPFR_RNDN);
@@ -329,7 +329,7 @@ main (void)
     {
       /* test with 2^(-e) */
       mpfr_set_ui (y, 1, MPFR_RNDN);
-      mpfr_div_2exp (y, y, e, MPFR_RNDN);
+      mpfr_div_2ui (y, y, e, MPFR_RNDN);
       inex = mpfr_get_f (x, y, MPFR_RNDN);
       mpf_mul_2exp (x, x, e);
       if (inex != 0 || mpf_cmp_ui (x, 1) != 0)
@@ -345,7 +345,7 @@ main (void)
 
       /* test with 2^(e) */
       mpfr_set_ui (y, 1, MPFR_RNDN);
-      mpfr_mul_2exp (y, y, e, MPFR_RNDN);
+      mpfr_mul_2ui (y, y, e, MPFR_RNDN);
       inex = mpfr_get_f (x, y, MPFR_RNDN);
       mpf_div_2exp (x, x, e);
       if (inex != 0 || mpf_cmp_ui (x, 1) != 0)

@@ -1,6 +1,6 @@
 /* Test file for mpfr_ai.
 
-Copyright 2010-2018 Free Software Foundation, Inc.
+Copyright 2010-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -133,11 +133,105 @@ bug20180107 (void)
   mpfr_clear (z);
 }
 
+/* exercise mpfr_ai near m*2^e, for precision p */
+static void
+test_near_m2e (long m, mpfr_exp_t e, mpfr_prec_t pmax)
+{
+  mpfr_t x, xx, y, yy;
+  mpfr_prec_t p;
+  int inex;
+
+  mpfr_clear_flags ();
+
+  /* first determine the smallest precision for which m*2^e is exact */
+  for (p = MPFR_PREC_MIN; p <= pmax; p++)
+    {
+      mpfr_init2 (x, p);
+      inex = mpfr_set_si_2exp (x, m, e, MPFR_RNDN);
+      mpfr_clear (x);
+      if (inex == 0)
+        break;
+    }
+
+  mpfr_init2 (x, p);
+  inex = mpfr_set_si_2exp (x, m, e, MPFR_RNDN);
+  MPFR_ASSERTN(inex == 0);
+
+  for (; p <= pmax; p++)
+    {
+      mpfr_init2 (y, p);
+      mpfr_init2 (xx, p);
+      mpfr_init2 (yy, p);
+      mpfr_prec_round (x, p, MPFR_RNDN);
+      mpfr_ai (y, x, MPFR_RNDN);
+      while (1)
+        {
+          mpfr_set (xx, x, MPFR_RNDN);
+          mpfr_nextbelow (xx);
+          mpfr_ai (yy, xx, MPFR_RNDN);
+          if (mpfr_cmpabs (yy, y) >= 0)
+            break;
+          else
+            {
+              mpfr_set (x, xx, MPFR_RNDN);
+              mpfr_set (y, yy, MPFR_RNDN);
+            }
+        }
+      while (1)
+        {
+          mpfr_set (xx, x, MPFR_RNDN);
+          mpfr_nextabove (xx);
+          mpfr_ai (yy, xx, MPFR_RNDN);
+          if (mpfr_cmpabs (yy, y) >= 0)
+            break;
+          else
+            {
+              mpfr_set (x, xx, MPFR_RNDN);
+              mpfr_set (y, yy, MPFR_RNDN);
+            }
+        }
+      mpfr_clear (y);
+      mpfr_clear (xx);
+      mpfr_clear (yy);
+    }
+
+  mpfr_clear (x);
+
+  /* Since some tests don't really check that the result is not NaN... */
+  MPFR_ASSERTN (! mpfr_nanflag_p ());
+}
+
+/* example provided by Sylvain Chevillard, which exercises the case
+   wprec < err + 1, and thus correct_bits = 0, in src/ai.c */
+static void
+coverage (void)
+{
+  mpfr_t x, y;
+  int inex;
+
+  mpfr_init2 (x, 800);
+  mpfr_init2 (y, 20);
+  mpfr_set_str (x, "-2.3381074104597670384891972524467354406385401456723878524838544372136680027002836477821640417313293202847600938532659527752254668583598667448688987168197275409731526749911127480659996456283534915503672", 10, MPFR_RNDN);
+  inex = mpfr_ai (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(inex < 0);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (y, 593131, -682) == 0);
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
 int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
+  coverage ();
+  test_near_m2e (-5, -1, 100); /* exercise near -2.5 */
+  test_near_m2e (-4, 0, 100); /* exercise near -4 */
+  test_near_m2e (-11, -1, 100); /* exercise near -5.5 */
+  test_near_m2e (-27, -2, 100); /* exercise near -6.75 */
+  test_near_m2e (-31, -2, 100); /* exercise near -7.75 */
+  test_near_m2e (-15, -1, 100); /* exercise near -7.5 */
   bug20180107 ();
   check_large ();
   check_zero ();

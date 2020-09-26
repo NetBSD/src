@@ -1,6 +1,6 @@
 /* Test file for mpfr_fma.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -47,7 +47,7 @@ test_exact (void)
                 mpfr_add (r1, r1, c, (mpfr_rnd_t) rnd))
               {
                 if (rnd == MPFR_RNDF)
-                  break;
+                  continue;
                 printf ("test_exact internal error for (%d,%d,%d,%d,%s)\n",
                         i, j, k, rnd, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
                 exit (1);
@@ -196,6 +196,238 @@ test_overflow2 (void)
 }
 
 static void
+test_overflow3 (void)
+{
+  mpfr_t x, y, z, r;
+  int inex;
+  mpfr_prec_t p = 8;
+  mpfr_flags_t ex_flags = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT, flags;
+  int i, j, k;
+  unsigned int neg;
+
+  mpfr_inits2 (p, x, y, z, (mpfr_ptr) 0);
+  for (i = 0; i < 2; i++)
+    {
+      mpfr_init2 (r, 2 * p + i);
+      mpfr_set_ui_2exp (x, 1, mpfr_get_emax () - 1, MPFR_RNDN);
+      mpfr_set_ui (y, 2, MPFR_RNDN);       /* y = 2 */
+      for (j = 1; j <= 2; j++)
+        for (k = 0; k <= 1; k++)
+          {
+            mpfr_set_si_2exp (z, -1, mpfr_get_emax () - mpfr_get_prec (r) - j,
+                              MPFR_RNDN);
+            if (k)
+              mpfr_nextabove (z);
+            for (neg = 0; neg <= 3; neg++)
+              {
+                mpfr_clear_flags ();
+                /* (The following applies for neg = 0 or 2, all the signs
+                   need to be reversed for neg = 1 or 3.)
+                   We have x*y = 2^emax and
+                   z = - 2^(emax-2p-i-j) * (1-k*2^(-p)), thus
+                   x*y+z = 2^emax - 2^(emax-2p-i-j) + k*2^(emax-3p-i-j)
+                   should overflow. Indeed it is >= the midpoint of
+                   2^emax - 2^(emax-2p-i) and 2^emax, the midpoint
+                   being obtained for j = 1 and k = 0. */
+                inex = mpfr_fma (r, x, y, z, MPFR_RNDN);
+                flags = __gmpfr_flags;
+                if (! mpfr_inf_p (r) || flags != ex_flags ||
+                    ((neg & 1) == 0 ?
+                     (inex <= 0 || MPFR_IS_NEG (r)) :
+                     (inex >= 0 || MPFR_IS_POS (r))))
+                  {
+                    printf ("Error in test_overflow3 for "
+                            "i=%d j=%d k=%d neg=%u\n", i, j, k, neg);
+                    printf ("Expected %c@Inf@\n  with inex %c 0 and flags:",
+                            (neg & 1) == 0 ? '+' : '-',
+                            (neg & 1) == 0 ? '>' : '<');
+                    flags_out (ex_flags);
+                    printf ("Got      ");
+                    mpfr_dump (r);
+                    printf ("  with inex = %d and flags:", inex);
+                    flags_out (flags);
+                    exit (1);
+                  }
+                if (neg == 0 || neg == 2)
+                  mpfr_neg (x, x, MPFR_RNDN);
+                if (neg == 1 || neg == 3)
+                  mpfr_neg (y, y, MPFR_RNDN);
+                mpfr_neg (z, z, MPFR_RNDN);
+              }  /* neg */
+          }  /* k */
+      mpfr_clear (r);
+    }  /* i */
+  mpfr_clears (x, y, z, (mpfr_ptr) 0);
+}
+
+static void
+test_overflow4 (void)
+{
+  mpfr_t x, y, z, r1, r2;
+  mpfr_exp_t emax, e;
+  mpfr_prec_t px;
+  mpfr_flags_t flags1, flags2;
+  int inex1, inex2;
+  int ei, i, j;
+  int below;
+  unsigned int neg;
+
+  emax = mpfr_get_emax ();
+
+  mpfr_init2 (y, MPFR_PREC_MIN);
+  mpfr_set_ui (y, 2, MPFR_RNDN);  /* y = 2 */
+
+  mpfr_init2 (z, 8);
+
+  for (px = 17; px < 256; px *= 2)
+    {
+      mpfr_init2 (x, px);
+      mpfr_inits2 (px - 8, r1, r2, (mpfr_ptr) 0);
+      for (ei = 0; ei <= 1; ei++)
+        {
+          e = ei ? emax : 0;
+          mpfr_set_ui_2exp (x, 1, e - 1, MPFR_RNDN);
+          mpfr_nextabove (x);  /* x = 2^(e - 1) + 2^(e - px) */
+          /* x*y = 2^e + 2^(e - px + 1), which internally overflows
+             when e = emax. */
+          for (i = -4; i <= 4; i++)
+            for (j = 2; j <= 3; j++)
+              {
+                mpfr_set_si_2exp (z, -j, e - px + i, MPFR_RNDN);
+                /* If |z| <= 2^(e - px + 1), then x*y + z >= 2^e and
+                   RZ(x*y + z) = 2^e with an unbounded exponent range.
+                   If |z| > 2^(e - px + 1), then RZ(x*y + z) is the
+                   predecessor of 2^e (since |z| < ulp(r)/2); this
+                   occurs when i > 0 and when i = 0 and j > 2 */
+                mpfr_set_ui_2exp (r1, 1, e - 1, MPFR_RNDN);
+                below = i > 0 || (i == 0 && j > 2);
+                if (below)
+                  mpfr_nextbelow (r1);
+                mpfr_clear_flags ();
+                inex1 = mpfr_mul_2ui (r1, r1, 1, MPFR_RNDZ);
+                if (below || e < emax)
+                  {
+                    inex1 = i == 0 && j == 2 ? 0 : -1;
+                    flags1 = inex1 ? MPFR_FLAGS_INEXACT : 0;
+                  }
+                else
+                  {
+                    MPFR_ASSERTN (inex1 < 0);
+                    flags1 = MPFR_FLAGS_INEXACT | MPFR_FLAGS_OVERFLOW;
+                    MPFR_ASSERTN (flags1 == __gmpfr_flags);
+                  }
+                for (neg = 0; neg <= 3; neg++)
+                  {
+                    mpfr_clear_flags ();
+                    inex2 = mpfr_fma (r2, x, y, z, MPFR_RNDZ);
+                    flags2 = __gmpfr_flags;
+                    if (! (mpfr_equal_p (r1, r2) &&
+                           SAME_SIGN (inex1, inex2) &&
+                           flags1 == flags2))
+                      {
+                        printf ("Error in test_overflow4 for "
+                                "px=%d ei=%d i=%d j=%d neg=%u\n",
+                                (int) px, ei, i, j, neg);
+                        printf ("Expected ");
+                        mpfr_dump (r1);
+                        printf ("with inex = %d and flags:", inex1);
+                        flags_out (flags1);
+                        printf ("Got      ");
+                        mpfr_dump (r2);
+                        printf ("with inex = %d and flags:", inex2);
+                        flags_out (flags2);
+                        exit (1);
+                      }
+                    if (neg == 0 || neg == 2)
+                      mpfr_neg (x, x, MPFR_RNDN);
+                    if (neg == 1 || neg == 3)
+                      mpfr_neg (y, y, MPFR_RNDN);
+                    mpfr_neg (z, z, MPFR_RNDN);
+                    mpfr_neg (r1, r1, MPFR_RNDN);
+                    inex1 = - inex1;
+                  }
+              }
+        }
+      mpfr_clears (x, r1, r2, (mpfr_ptr) 0);
+    }
+
+  mpfr_clears (y, z, (mpfr_ptr) 0);
+}
+
+static void
+test_overflow5 (void)
+{
+  mpfr_t x, y, z, r1, r2;
+  mpfr_exp_t emax;
+  int inex1, inex2;
+  int i, rnd;
+  unsigned int neg, negr;
+
+  emax = mpfr_get_emax ();
+
+  mpfr_init2 (x, 123);
+  mpfr_init2 (y, 45);
+  mpfr_init2 (z, 67);
+  mpfr_inits2 (89, r1, r2, (mpfr_ptr) 0);
+
+  mpfr_set_ui_2exp (x, 1, emax - 1, MPFR_RNDN);
+
+  for (i = 3; i <= 17; i++)
+    {
+      mpfr_set_ui (y, i, MPFR_RNDN);
+      mpfr_set_ui_2exp (z, 1, emax - 1, MPFR_RNDN);
+      for (neg = 0; neg < 8; neg++)
+        {
+          mpfr_setsign (x, x, neg & 1, MPFR_RNDN);
+          mpfr_setsign (y, y, neg & 2, MPFR_RNDN);
+          mpfr_setsign (z, z, neg & 4, MPFR_RNDN);
+
+          /* |x*y + z| = (i +/- 1) * 2^(emax - 1) >= 2^emax (overflow)
+             and x*y + z has the same sign as x*y. */
+          negr = (neg ^ (neg >> 1)) & 1;
+
+          RND_LOOP (rnd)
+            {
+              mpfr_set_inf (r1, 1);
+              if (MPFR_IS_LIKE_RNDZ ((mpfr_rnd_t) rnd, negr))
+                {
+                  mpfr_nextbelow (r1);
+                  inex1 = -1;
+                }
+              else
+                inex1 = 1;
+
+              if (negr)
+                {
+                  mpfr_neg (r1, r1, MPFR_RNDN);
+                  inex1 = - inex1;
+                }
+
+              mpfr_clear_flags ();
+              inex2 = mpfr_fma (r2, x, y, z, (mpfr_rnd_t) rnd);
+              MPFR_ASSERTN (__gmpfr_flags ==
+                            (MPFR_FLAGS_INEXACT | MPFR_FLAGS_OVERFLOW));
+
+              if (! (mpfr_equal_p (r1, r2) && SAME_SIGN (inex1, inex2)))
+                {
+                  printf ("Error in test_overflow5 for i=%d neg=%u %s\n",
+                          i, neg, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                  printf ("Expected ");
+                  mpfr_dump (r1);
+                  printf ("with inex = %d\n", inex1);
+                  printf ("Got      ");
+                  mpfr_dump (r2);
+                  printf ("with inex = %d\n", inex2);
+                  exit (1);
+                }
+            }  /* rnd */
+        }  /* neg */
+    }  /* i */
+
+  mpfr_clears (x, y, z, r1, r2, (mpfr_ptr) 0);
+}
+
+static void
 test_underflow1 (void)
 {
   mpfr_t x, y, z, r;
@@ -281,59 +513,128 @@ test_underflow1 (void)
 static void
 test_underflow2 (void)
 {
-  mpfr_t x, y, z, r;
-  int b, i, inex, same, err = 0;
+  mpfr_t x, y, z, r1, r2;
+  int e, b, i, prec = 32, pz, inex;
+  unsigned int neg;
 
-  mpfr_inits2 (32, x, y, z, r, (mpfr_ptr) 0);
+  mpfr_init2 (x, MPFR_PREC_MIN);
+  mpfr_inits2 (prec, y, z, r1, r2, (mpfr_ptr) 0);
 
-  mpfr_set_si_2exp (z, 1, mpfr_get_emin (), MPFR_RNDN);   /* z = 2^emin */
-  mpfr_set_si_2exp (x, 1, mpfr_get_emin (), MPFR_RNDN);   /* x = 2^emin */
+  mpfr_set_si_2exp (x, 1, mpfr_get_emin () - 1, MPFR_RNDN);
+  /* x = 2^(emin-1) */
 
-  for (b = 0; b <= 1; b++)
+  for (e = -1; e <= prec + 2; e++)
     {
-      for (i = 15; i <= 17; i++)
+      mpfr_set (z, x, MPFR_RNDN);
+      /* z = x = 2^(emin+e) */
+      for (b = 0; b <= 1; b++)
         {
-          mpfr_set_si_2exp (y, i, -4 - MPFR_PREC (z), MPFR_RNDN);
-          /*  z = 1.000...00b
-           * xy =            01111
-           *   or            10000
-           *   or            10001
-           */
-          mpfr_clear_flags ();
-          inex = mpfr_fma (r, x, y, z, MPFR_RNDN);
-#define STRTU2 "Error in test_underflow2 (b = %d, i = %d)\n  "
-          if (__gmpfr_flags != MPFR_FLAGS_INEXACT)
+          for (pz = prec - 4 * (b == 0); pz <= prec + 4; pz++)
             {
-              printf (STRTU2 "flags = %u instead of %u\n", b, i,
-                      (unsigned int) __gmpfr_flags,
-                      (unsigned int) MPFR_FLAGS_INEXACT);
-              err = 1;
-            }
-          same = i == 15 || (i == 16 && b == 0);
-          if (same ? (inex >= 0) : (inex <= 0))
-            {
-              printf (STRTU2 "incorrect ternary value (%d instead of %c 0)\n",
-                      b, i, inex, same ? '<' : '>');
-              err = 1;
-            }
-          mpfr_set (y, z, MPFR_RNDN);
-          if (!same)
-            mpfr_nextabove (y);
-          if (! mpfr_equal_p (r, y))
-            {
-              printf (STRTU2 "expected ", b, i);
-              mpfr_dump (y);
-              printf ("  got      ");
-              mpfr_dump (r);
-              err = 1;
-            }
-        }
-      mpfr_nextabove (z);
-    }
+              inex = mpfr_prec_round (z, pz, MPFR_RNDZ);
+              MPFR_ASSERTN (inex == 0);
+              for (i = 15; i <= 17; i++)
+                {
+                  mpfr_flags_t flags1, flags2;
+                  int inex1, inex2;
 
-  if (err)
-    exit (1);
-  mpfr_clears (x, y, z, r, (mpfr_ptr) 0);
+                  mpfr_set_si_2exp (y, i, -4 - prec, MPFR_RNDN);
+
+                  /*      <--- r --->
+                   *  z = 1.000...00b   with b = 0 or 1
+                   * xy =            01111  (i = 15)
+                   *   or            10000  (i = 16)
+                   *   or            10001  (i = 17)
+                   *
+                   * x, y, and z will be modified to test the different sign
+                   * combinations. In the case b = 0 (i.e. |z| is a power of
+                   * 2) and x*y has a different sign from z, then y will be
+                   * divided by 2, so that i = 16 corresponds to a midpoint.
+                   */
+
+                  for (neg = 0; neg < 8; neg++)
+                    {
+                      int xyneg, prev_binade;
+
+                      mpfr_setsign (x, x, neg & 1, MPFR_RNDN);
+                      mpfr_setsign (y, y, neg & 2, MPFR_RNDN);
+                      mpfr_setsign (z, z, neg & 4, MPFR_RNDN);
+
+                      xyneg = (neg ^ (neg >> 1)) & 1;  /* true iff x*y < 0 */
+
+                      /* If a change of binade occurs by adding x*y to z
+                         exactly, then take into account the fact that the
+                         midpoint has a different exponent. */
+                      prev_binade = b == 0 && (xyneg ^ MPFR_IS_NEG (z));
+                      if (prev_binade)
+                        mpfr_div_2ui (y, y, 1, MPFR_RNDN);
+
+                      mpfr_set (r1, z, MPFR_RNDN);
+                      flags1 = MPFR_FLAGS_INEXACT;
+
+                      if (e == -1 && i == 17 && b == 0 &&
+                          (xyneg ^ (neg >> 2)) != 0)
+                        {
+                          /* Special underflow case. */
+                          flags1 |= MPFR_FLAGS_UNDERFLOW;
+                          inex1 = xyneg ? 1 : -1;
+                        }
+                      else if (i == 15 || (i == 16 && b == 0))
+                        {
+                          /* round toward z */
+                          inex1 = xyneg ? 1 : -1;
+                        }
+                      else if (xyneg)
+                        {
+                          /* round away from z, with x*y < 0 */
+                          mpfr_nextbelow (r1);
+                          inex1 = -1;
+                        }
+                      else
+                        {
+                          /* round away from z, with x*y > 0 */
+                          mpfr_nextabove (r1);
+                          inex1 = 1;
+                        }
+
+                      mpfr_clear_flags ();
+                      inex2 = mpfr_fma (r2, x, y, z, MPFR_RNDN);
+                      flags2 = __gmpfr_flags;
+
+                      if (! (mpfr_equal_p (r1, r2) &&
+                             SAME_SIGN (inex1, inex2) &&
+                             flags1 == flags2))
+                        {
+                          printf ("Error in test_underflow2 for "
+                                  "e=%d b=%d pz=%d i=%d neg=%u\n",
+                                  e, b, pz, i, neg);
+                          printf ("Expected ");
+                          mpfr_dump (r1);
+                          printf ("with inex = %d and flags:", inex1);
+                          flags_out (flags1);
+                          printf ("Got      ");
+                          mpfr_dump (r2);
+                          printf ("with inex = %d and flags:", inex2);
+                          flags_out (flags2);
+                          exit (1);
+                        }
+
+                      /* Restore y. */
+                      if (prev_binade)
+                        mpfr_mul_2ui (y, y, 1, MPFR_RNDN);
+                    }  /* neg */
+                }  /* i */
+            }  /* pz */
+
+          inex = mpfr_prec_round (z, prec, MPFR_RNDZ);
+          MPFR_ASSERTN (inex == 0);
+          MPFR_SET_POS (z);
+          mpfr_nextabove (z);
+        }  /* b */
+      mpfr_mul_2ui (x, x, 1, MPFR_RNDN);
+    }  /* e */
+
+  mpfr_clears (x, y, z, r1, r2, (mpfr_ptr) 0);
 }
 
 static void
@@ -363,7 +664,7 @@ test_underflow3 (int n)
              Note: The purpose of the s * 2^(emin-7) term is to yield
              double rounding when scaling for k = 4, s != 0, MPFR_RNDN. */
 
-          RND_LOOP (rnd)
+          RND_LOOP_NO_RNDF (rnd)
             {
               mpfr_clear_flags ();
               inex1 = mpfr_set_si_2exp (t1, sign * (8*k+s-64), e-6,
@@ -395,6 +696,185 @@ test_underflow3 (int n)
         }
 
   mpfr_clears (x, y, z, t1, t2, (mpfr_ptr) 0);
+}
+
+/* Test s = x*y + z with PREC(z) > PREC(s) + 1, x*y underflows, where
+   z + x*y and z + sign(x*y) * 2^(emin-1) do not give the same result.
+     x = 2^emin
+     y = 2^(-8)
+     z = 2^emin * (2^PREC(s) + k - 2^(-1))
+   with k = 3 for MPFR_RNDN and k = 2 for the directed rounding modes.
+   Also test the opposite versions with neg != 0.
+*/
+static void
+test_underflow4 (void)
+{
+  mpfr_t x, y, z, s1, s2;
+  mpfr_prec_t ps = 32;
+  int inex, rnd;
+
+  mpfr_inits2 (MPFR_PREC_MIN, x, y, (mpfr_ptr) 0);
+  mpfr_inits2 (ps, s1, s2, (mpfr_ptr) 0);
+  mpfr_init2 (z, ps + 2);
+
+  inex = mpfr_set_si_2exp (x, 1, mpfr_get_emin (), MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0);
+  inex = mpfr_set_si_2exp (y, 1, -8, MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0);
+
+  RND_LOOP_NO_RNDF (rnd)
+    {
+      mpfr_flags_t flags1, flags2;
+      int inex1, inex2;
+      unsigned int neg;
+
+      inex = mpfr_set_si_2exp (z, 1 << 1, ps, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+      inex = mpfr_sub_ui (z, z, 1, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+      inex = mpfr_div_2ui (z, z, 1, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+      inex = mpfr_add_ui (z, z, rnd == MPFR_RNDN ? 3 : 2, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+      inex = mpfr_mul (z, z, x, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+
+      for (neg = 0; neg <= 3; neg++)
+        {
+          inex1 = mpfr_set (s1, z, (mpfr_rnd_t) rnd);
+          flags1 = MPFR_FLAGS_INEXACT;
+
+          mpfr_clear_flags ();
+          inex2 = mpfr_fma (s2, x, y, z, (mpfr_rnd_t) rnd);
+          flags2 = __gmpfr_flags;
+
+          if (! (mpfr_equal_p (s1, s2) &&
+                 SAME_SIGN (inex1, inex2) &&
+                 flags1 == flags2))
+            {
+              printf ("Error in test_underflow4 for neg=%u %s\n",
+                      neg, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+              printf ("Expected ");
+              mpfr_dump (s1);
+              printf ("  with inex ~ %d, flags =", inex1);
+              flags_out (flags1);
+              printf ("Got      ");
+              mpfr_dump (s2);
+              printf ("  with inex ~ %d, flags =", inex2);
+              flags_out (flags2);
+              exit (1);
+            }
+
+          if (neg == 0 || neg == 2)
+            mpfr_neg (x, x, MPFR_RNDN);
+          if (neg == 1 || neg == 3)
+            mpfr_neg (y, y, MPFR_RNDN);
+          mpfr_neg (z, z, MPFR_RNDN);
+        }
+    }
+
+  mpfr_clears (x, y, z, s1, s2, (mpfr_ptr) 0);
+}
+
+/* Test s = x*y + z on:
+     x = +/- 2^emin
+     y = +/- 2^(-3)
+     z = +/- 2^(emin + PREC(s)) and MPFR numbers close to this value.
+   with PREC(z) from PREC(s) - 2 to PREC(s) + 8.
+*/
+static void
+test_underflow5 (void)
+{
+  mpfr_t w, x, y, z, s1, s2, t;
+  mpfr_exp_t emin;
+  mpfr_prec_t ps = 32;
+  int inex, i, j, rnd;
+  unsigned int neg;
+
+  mpfr_inits2 (MPFR_PREC_MIN, w, x, y, (mpfr_ptr) 0);
+  mpfr_inits2 (ps, s1, s2, (mpfr_ptr) 0);
+  mpfr_init2 (t, ps + 9);
+
+  emin = mpfr_get_emin ();
+
+  inex = mpfr_set_si_2exp (w, 1, emin, MPFR_RNDN);  /* w = 2^emin */
+  MPFR_ASSERTN (inex == 0);
+  inex = mpfr_set_si (x, 1, MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0);
+  inex = mpfr_set_si_2exp (y, 1, -3, MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0);
+
+  for (i = -2; i <= 8; i++)
+    {
+      mpfr_init2 (z, ps + i);
+      inex = mpfr_set_si_2exp (z, 1, ps, MPFR_RNDN);
+      MPFR_ASSERTN (inex == 0);
+
+      for (j = 1; j <= 32; j++)
+        mpfr_nextbelow (z);
+
+      for (j = -32; j <= 32; j++)
+        {
+          for (neg = 0; neg < 8; neg++)
+            {
+              mpfr_setsign (x, x, neg & 1, MPFR_RNDN);
+              mpfr_setsign (y, y, neg & 2, MPFR_RNDN);
+              mpfr_setsign (z, z, neg & 4, MPFR_RNDN);
+
+              inex = mpfr_fma (t, x, y, z, MPFR_RNDN);
+              MPFR_ASSERTN (inex == 0);
+
+              inex = mpfr_mul (x, x, w, MPFR_RNDN);
+              MPFR_ASSERTN (inex == 0);
+              inex = mpfr_mul (z, z, w, MPFR_RNDN);
+              MPFR_ASSERTN (inex == 0);
+
+              RND_LOOP_NO_RNDF (rnd)
+                {
+                  mpfr_flags_t flags1, flags2;
+                  int inex1, inex2;
+
+                  mpfr_clear_flags ();
+                  inex1 = mpfr_mul (s1, w, t, (mpfr_rnd_t) rnd);
+                  flags1 = __gmpfr_flags;
+
+                  mpfr_clear_flags ();
+                  inex2 = mpfr_fma (s2, x, y, z, (mpfr_rnd_t) rnd);
+                  flags2 = __gmpfr_flags;
+
+                  if (! (mpfr_equal_p (s1, s2) &&
+                         SAME_SIGN (inex1, inex2) &&
+                         flags1 == flags2))
+                    {
+                      printf ("Error in test_underflow5 on "
+                              "i=%d j=%d neg=%u %s\n", i, j, neg,
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                      printf ("Expected ");
+                      mpfr_dump (s1);
+                      printf ("  with inex ~ %d, flags =", inex1);
+                      flags_out (flags1);
+                      printf ("Got      ");
+                      mpfr_dump (s2);
+                      printf ("  with inex ~ %d, flags =", inex2);
+                      flags_out (flags2);
+                      exit (1);
+                    }
+                }  /* rnd */
+
+              inex = mpfr_div (x, x, w, MPFR_RNDN);
+              MPFR_ASSERTN (inex == 0);
+              inex = mpfr_div (z, z, w, MPFR_RNDN);
+              MPFR_ASSERTN (inex == 0);
+            }  /* neg */
+
+          MPFR_SET_POS (z);  /* restore the value before the loop on neg */
+          mpfr_nextabove (z);
+        }  /* j */
+
+      mpfr_clear (z);
+    }  /* i */
+
+  mpfr_clears (w, x, y, s1, s2, t, (mpfr_ptr) 0);
 }
 
 static void
@@ -528,13 +1008,61 @@ bug20171219 (void)
   mpfr_clear (u);
 }
 
+/* coverage test for mpfr_set_1_2, case prec < GMP_NUMB_BITS,
+   inex > 0, rb <> 0, sb = 0 */
+static void
+coverage (void)
+{
+  mpfr_t x, y, z, s;
+  int inex;
+  mpfr_exp_t emax;
+
+  mpfr_inits2 (GMP_NUMB_BITS - 1, x, y, z, s, (mpfr_ptr) 0);
+
+  /* set x to 2^(GMP_NUMB_BITS/2) + 1, y to 2^(GMP_NUMB_BITS/2) - 1 */
+  MPFR_ASSERTN((GMP_NUMB_BITS % 2) == 0);
+  mpfr_set_ui_2exp (x, 1, GMP_NUMB_BITS / 2, MPFR_RNDN);
+  mpfr_sub_ui (y, x, 1, MPFR_RNDN);
+  mpfr_add_ui (x, x, 1, MPFR_RNDN);
+  /* we have x*y = 2^GMP_NUMB_BITS - 1, thus has exponent GMP_NUMB_BITS */
+  /* set z to 2^(1-GMP_NUMB_BITS), with exponent 2-GMP_NUMB_BITS */
+  mpfr_set_ui_2exp (z, 1, 1 - GMP_NUMB_BITS, MPFR_RNDN);
+  inex = mpfr_fms (s, x, y, z, MPFR_RNDN);
+  /* s should be 2^GMP_NUMB_BITS-2 */
+  MPFR_ASSERTN(inex < 0);
+  inex = mpfr_add_ui (s, s, 2, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (s, 1, GMP_NUMB_BITS) == 0);
+
+  /* same example, but with overflow */
+  emax = mpfr_get_emax ();
+  mpfr_set_emax (GMP_NUMB_BITS + 1);
+  mpfr_set_ui_2exp (z, 1, mpfr_get_emax () - 1, MPFR_RNDZ);
+  mpfr_clear_flags ();
+  inex = mpfr_fma (s, x, y, z, MPFR_RNDN);
+  /* x*y = 2^GMP_NUMB_BITS - 1, z = 2^GMP_NUMB_BITS, thus
+     x*y+z = 2^(GMP_NUMB_BITS+1) - 1 should round to 2^(GMP_NUMB_BITS+1),
+     thus give an overflow */
+  MPFR_ASSERTN(inex > 0);
+  MPFR_ASSERTN(mpfr_inf_p (s) && mpfr_sgn (s) > 0);
+  MPFR_ASSERTN(mpfr_overflow_p ());
+  mpfr_set_emax (emax);
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+  mpfr_clear (s);
+}
+
 int
 main (int argc, char *argv[])
 {
   mpfr_t x, y, z, s;
   mpfr_exp_t emin, emax;
+  int i;
 
   tests_start_mpfr ();
+
+  coverage ();
 
   emin = mpfr_get_emin ();
   emax = mpfr_get_emax ();
@@ -823,21 +1351,39 @@ main (int argc, char *argv[])
 
   test_exact ();
 
-  test_overflow1 ();
-  test_overflow2 ();
-  test_underflow1 ();
-  test_underflow2 ();
-  test_underflow3 (1);
+  for (i = 0; i <= 2; i++)
+    {
+      if (i == 0)
+        {
+          /* corresponds to the generic code + mpfr_check_range */
+          set_emin (-1024);
+          set_emax (1024);
+        }
+      else if (i == 1)
+        {
+          set_emin (MPFR_EMIN_MIN);
+          set_emax (MPFR_EMAX_MAX);
+        }
+      else
+        {
+          MPFR_ASSERTN (i == 2);
+          if (emin == MPFR_EMIN_MIN && emax == MPFR_EMAX_MAX)
+            break;
+          set_emin (emin);
+          set_emax (emax);
+        }
 
-  set_emin (MPFR_EMIN_MIN);
-  set_emax (MPFR_EMAX_MAX);
-  test_overflow1 ();
-  test_overflow2 ();
-  test_underflow1 ();
-  test_underflow2 ();
-  test_underflow3 (2);
-  set_emin (emin);
-  set_emax (emax);
+      test_overflow1 ();
+      test_overflow2 ();
+      test_overflow3 ();
+      test_overflow4 ();
+      test_overflow5 ();
+      test_underflow1 ();
+      test_underflow2 ();
+      test_underflow3 (i);
+      test_underflow4 ();
+      test_underflow5 ();
+    }
 
   tests_end_mpfr ();
   return 0;

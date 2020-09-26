@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_si, mpfr_set_ui, mpfr_get_si and mpfr_get_ui.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -88,6 +88,135 @@ test_2exp (void)
     PRINT_ERROR ("mpfr_set_si_2exp (neg) and overflow (overflow flag not set)");
 
   mpfr_clear (x);
+}
+
+#define REXP 1024
+
+static void
+test_2exp_extreme_aux (void)
+{
+  mpfr_t x1, x2, y;
+  mpfr_exp_t e, ep[1 + 8 * 5], eb[] =
+    { MPFR_EMIN_MIN, -REXP, REXP, MPFR_EMAX_MAX, MPFR_EXP_MAX };
+  mpfr_flags_t flags1, flags2;
+  int i, j, rnd, inex1, inex2;
+  char s;
+
+  ep[0] = MPFR_EXP_MIN;
+  for (i = 0; i < numberof(eb); i++)
+    for (j = 0; j < 8; j++)
+      ep[1 + 8 * i + j] = eb[i] - j;
+
+  mpfr_inits2 (3, x1, x2, (mpfr_ptr) 0);
+  mpfr_init2 (y, 32);
+
+  for (i = 0; i < numberof(ep); i++)
+    for (j = -31; j <= 31; j++)
+      RND_LOOP_NO_RNDF (rnd)
+        {
+          int sign = j < 0 ? -1 : 1;
+
+          /* Compute the expected value, inex and flags */
+          inex1 = mpfr_set_si (y, j, MPFR_RNDN);
+          MPFR_ASSERTN (inex1 == 0);
+          inex1 = mpfr_set (x1, y, (mpfr_rnd_t) rnd);
+          /* x1 is the rounded value and inex1 the ternary value,
+             assuming that the exponent argument is 0 (this is the
+             rounded significand of the final result, assuming an
+             unbounded exponent range). The multiplication by a
+             power of 2 is exact, unless underflow/overflow occurs.
+             The tests on the exponent below avoid integer overflows
+             (ep[i] may take extreme values). */
+          e = mpfr_get_exp (x1);
+          mpfr_clear_flags ();
+          if (j != 0 && ep[i] < __gmpfr_emin - e)  /* underflow */
+            {
+              mpfr_rnd_t r =
+                (rnd == MPFR_RNDN &&
+                 (ep[i] < __gmpfr_emin - mpfr_get_exp (y) - 1 ||
+                  IS_POW2 (sign * j))) ?
+                MPFR_RNDZ : (mpfr_rnd_t) rnd;
+              inex1 = mpfr_underflow (x1, r, sign);
+              flags1 = __gmpfr_flags;
+            }
+          else if (j != 0 && ep[i] > __gmpfr_emax - e)  /* overflow */
+            {
+              inex1 = mpfr_overflow (x1, (mpfr_rnd_t) rnd, sign);
+              flags1 = __gmpfr_flags;
+            }
+          else
+            {
+              if (j != 0)
+                mpfr_set_exp (x1, ep[i] + e);
+              flags1 = inex1 != 0 ? MPFR_FLAGS_INEXACT : 0;
+            }
+
+          /* Test mpfr_set_si_2exp */
+          mpfr_clear_flags ();
+          inex2 = mpfr_set_si_2exp (x2, j, ep[i], (mpfr_rnd_t) rnd);
+          flags2 = __gmpfr_flags;
+
+          if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                 mpfr_equal_p (x1, x2)))
+            {
+              s = 's';
+              goto err_extreme;
+            }
+
+          if (j < 0)
+            continue;
+
+          /* Test mpfr_set_ui_2exp */
+          mpfr_clear_flags ();
+          inex2 = mpfr_set_ui_2exp (x2, j, ep[i], (mpfr_rnd_t) rnd);
+          flags2 = __gmpfr_flags;
+
+          if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                 mpfr_equal_p (x1, x2)))
+            {
+              s = 'u';
+            err_extreme:
+              printf ("Error in extreme mpfr_set_%ci_2exp for i=%d j=%d %s\n",
+                      s, i, j, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+              printf ("emin=%" MPFR_EXP_FSPEC "d "
+                      "emax=%" MPFR_EXP_FSPEC "d\n",
+                      (mpfr_eexp_t) __gmpfr_emin,
+                      (mpfr_eexp_t) __gmpfr_emax);
+              printf ("ep[%d] = %" MPFR_EXP_FSPEC "d\n",
+                      i, (mpfr_eexp_t) ep[i]);
+              printf ("Expected ");
+              mpfr_dump (x1);
+              printf ("with inex = %d and flags =", inex1);
+              flags_out (flags1);
+              printf ("Got      ");
+              mpfr_dump (x2);
+              printf ("with inex = %d and flags =", inex2);
+              flags_out (flags2);
+              exit (1);
+            }
+        }
+
+  mpfr_clears (x1, x2, y, (mpfr_ptr) 0);
+}
+
+static void
+test_2exp_extreme (void)
+{
+  mpfr_exp_t emin, emax;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
+  test_2exp_extreme_aux ();
+
+  set_emin (-REXP);
+  set_emax (REXP);
+  test_2exp_extreme_aux ();
+
+  set_emin (emin);
+  set_emax (emax);
 }
 
 static void
@@ -639,6 +768,7 @@ main (int argc, char *argv[])
   mpfr_clear (x);
 
   test_2exp ();
+  test_2exp_extreme ();
   test_macros ();
   test_macros_keyword ();
   test_get_ui_smallneg ();

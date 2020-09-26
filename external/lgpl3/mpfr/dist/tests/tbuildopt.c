@@ -1,7 +1,7 @@
 /* tbuildopt.c -- test file for mpfr_buildopt_tls_p and
    mpfr_buildopt_decimal_p.
 
-Copyright 2009-2018 Free Software Foundation, Inc.
+Copyright 2009-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -60,6 +60,24 @@ check_decimal_p (void)
 }
 
 static void
+check_float128_p (void)
+{
+#ifdef MPFR_WANT_FLOAT128
+  if (!mpfr_buildopt_float128_p())
+    {
+      printf ("Error: mpfr_buildopt_float128_p should return true\n");
+      exit (1);
+    }
+#else
+  if (mpfr_buildopt_float128_p())
+    {
+      printf ("Error: mpfr_buildopt_float128_p should return false\n");
+      exit (1);
+    }
+#endif
+}
+
+static void
 check_gmpinternals_p (void)
 {
 #if defined(MPFR_HAVE_GMP_IMPL) || defined(WANT_GMP_INTERNALS)
@@ -77,6 +95,24 @@ check_gmpinternals_p (void)
 #endif
 }
 
+static void
+check_sharedcache_p (void)
+{
+#if defined(MPFR_WANT_SHARED_CACHE)
+  if (!mpfr_buildopt_sharedcache_p ())
+    {
+      printf ("Error: mpfr_buildopt_sharedcache_p should return true\n");
+      exit (1);
+    }
+#else
+  if (mpfr_buildopt_sharedcache_p ())
+    {
+      printf ("Error: mpfr_buildopt_sharedcache_p should return false\n");
+      exit (1);
+    }
+#endif
+}
+
 int
 main (void)
 {
@@ -84,7 +120,13 @@ main (void)
 
   check_tls_p();
   check_decimal_p();
+  check_float128_p();
   check_gmpinternals_p();
+  check_sharedcache_p ();
+  {
+    const char *s = mpfr_buildopt_tune_case ();
+    (void) strlen (s);
+  }
 
   tests_end_mpfr ();
   return 0;

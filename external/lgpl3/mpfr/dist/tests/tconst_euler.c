@@ -1,6 +1,6 @@
 /* Test file for mpfr_const_euler.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -32,6 +32,22 @@ my_const_euler (mpfr_ptr x, mpfr_srcptr y, mpfr_rnd_t r)
 #define RAND_FUNCTION(x) mpfr_set_ui ((x), 0, MPFR_RNDN)
 #define TEST_FUNCTION my_const_euler
 #include "tgeneric.c"
+
+static void
+exercise_Ziv (void)
+{
+  mpfr_t x, y;
+  int inex;
+
+  mpfr_init2 (x, 177);
+  mpfr_init2 (y, 177);
+  inex = mpfr_const_euler (x, MPFR_RNDN);
+  mpfr_set_str_binary (y, "0.10010011110001000110011111100011011111011011000011000111101001001101000110111110001111111000000100000001010100101100101101010110101000011100111011001100001110101111011001011101");
+  MPFR_ASSERTN(mpfr_equal_p (x, y));
+  MPFR_ASSERTN(inex > 0);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
 
 int
 main (int argc, char *argv[])
@@ -53,6 +69,8 @@ main (int argc, char *argv[])
       mpfr_clear (gamma);
       return 0;
     }
+
+  exercise_Ziv ();
 
   mpfr_init (y);
   mpfr_init (z);

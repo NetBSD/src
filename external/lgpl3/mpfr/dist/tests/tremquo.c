@@ -1,6 +1,6 @@
 /* tremquo -- test file for mpfr_remquo, mpfr_remainder and mpfr_fmodquo.
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -320,7 +320,7 @@ main (int argc, char *argv[])
   mpfr_set_prec (x, 65);
   mpfr_set_prec (y, 65);
   mpfr_const_pi (x, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 63, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 63, MPFR_RNDN);
   mpfr_const_log2 (y, MPFR_RNDN);
   mpfr_set_prec (r, 10);
   mpfr_remquo (r, q, x, y, MPFR_RNDN);

@@ -1,6 +1,6 @@
 /* Test file for mpfr_agm.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -354,7 +354,6 @@ main (int argc, char* argv[])
   tests_start_mpfr ();
 
   check_special ();
-
   check_large ();
   check_eq ();
   check4 ("2.0", "1.0", MPFR_RNDN, "1.456791031046906869", -1);

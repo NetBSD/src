@@ -1,6 +1,6 @@
 /* mpfr_cache -- cache interface for multiple-precision constants in MPFR.
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -56,8 +56,8 @@ mpfr_clear_cache (mpfr_cache_t cache)
 int
 mpfr_cache (mpfr_ptr dest, mpfr_cache_t cache, mpfr_rnd_t rnd)
 {
-  mpfr_prec_t prec = MPFR_PREC (dest);
-  mpfr_prec_t pold;
+  mpfr_prec_t dprec = MPFR_PREC (dest);
+  mpfr_prec_t cprec;  /* precision of the cache */
   int inexact, sign;
   MPFR_SAVE_EXPO_DECL (expo);
 
@@ -69,33 +69,37 @@ mpfr_cache (mpfr_ptr dest, mpfr_cache_t cache, mpfr_rnd_t rnd)
   /* Get the cache in read-only mode */
   MPFR_LOCK_READ(cache->lock);
   /* Read the precision within the cache */
-  pold = MPFR_PREC (cache->x);
-  if (MPFR_UNLIKELY (prec > pold))
+  cprec = MPFR_PREC (cache->x);
+  if (MPFR_UNLIKELY (dprec > cprec))
     {
       /* Free the cache in read-only mode */
       /* And get the cache in read-write mode */
       MPFR_LOCK_READ2WRITE(cache->lock);
 
-      /* Retest the precision once we get the lock.
-         If there is no lock, there is no harm in this code */
-      pold = MPFR_PREC (cache->x);
-      if (MPFR_LIKELY (prec > pold))
+      /* Retest the precision once we get the lock (since it might have
+         changed). If there is no lock, there is no harm in this code. */
+      cprec = MPFR_PREC (cache->x);
+      if (MPFR_LIKELY (dprec > cprec))
         {
-          /* No previous result in the cache or the precision of the previous
-             result is not sufficient. We increase the cache size by at least
-             10% to avoid invalidating the cache many times if one performs
-             several computations with small increase of precision. */
-          if (MPFR_UNLIKELY (pold == 0))  /* No previous result. */
-            mpfr_init2 (cache->x, prec);  /* as pold = prec below */
+          /* No previous result in the cache or the precision of the
+             previous result is not sufficient. */
+          if (MPFR_UNLIKELY (cprec == 0))  /* No previous result. */
+            {
+              cprec = dprec;
+              mpfr_init2 (cache->x, cprec);
+            }
           else
-            pold += pold / 10;
+            {
+              /* We increase the cache size by at least 10% to avoid
+                 invalidating the cache many times if one performs
+                 several computations with small increase of precision. */
+              cprec += cprec / 10;
+              if (cprec < dprec)
+                cprec = dprec;
+              /* no need to keep the previous value */
+              mpfr_set_prec (cache->x, cprec);
+            }
 
-          /* Update the cache. */
-          if (pold < prec)
-            pold = prec;
-
-          /* no need to keep the previous value */
-          mpfr_set_prec (cache->x, pold);
           cache->inexact = (*cache->func) (cache->x, MPFR_RNDN);
         }
 
@@ -104,9 +108,9 @@ mpfr_cache (mpfr_ptr dest, mpfr_cache_t cache, mpfr_rnd_t rnd)
       MPFR_LOCK_WRITE2READ(cache->lock);
     }
 
-  /* now pold >= prec is the precision of cache->x */
-  MPFR_ASSERTD (pold >= prec);
-  MPFR_ASSERTD (MPFR_PREC (cache->x) == pold);
+  /* now cprec >= dprec is the precision of cache->x */
+  MPFR_ASSERTD (cprec >= dprec);
+  MPFR_ASSERTD (MPFR_PREC (cache->x) == cprec);
 
   /* First, check if the cache has the exact value (unlikely).
      Else the exact value is between (assuming x=cache->x > 0):
@@ -120,9 +124,11 @@ mpfr_cache (mpfr_ptr dest, mpfr_cache_t cache, mpfr_rnd_t rnd)
   MPFR_EXP (dest) = MPFR_GET_EXP (cache->x);
   MPFR_SET_SIGN (dest, sign);
 
-  /* round cache->x from precision pold down to precision prec */
+  /* round cache->x from precision cprec down to precision dprec;
+     since we are in extended exponent range, for the values considered
+     here, an overflow is not possible (and wouldn't make much sense). */
   MPFR_RNDRAW_GEN (inexact, dest,
-                   MPFR_MANT (cache->x), pold, rnd, sign,
+                   MPFR_MANT (cache->x), cprec, rnd, sign,
                    if (MPFR_UNLIKELY (cache->inexact == 0))
                      {
                        if ((_sp[0] & _ulp) == 0)
@@ -140,11 +146,11 @@ mpfr_cache (mpfr_ptr dest, mpfr_cache_t cache, mpfr_rnd_t rnd)
                        inexact = -sign;
                        goto trunc_doit;
                      },
-                   if (MPFR_UNLIKELY (++MPFR_EXP (dest) > __gmpfr_emax))
-                     mpfr_overflow (dest, rnd, sign);
+                   MPFR_EXP (dest) ++;
+                   MPFR_ASSERTD (MPFR_EXP (dest) <= __gmpfr_emax);
                   );
 
-  /* Rather a likely, this is a 100% succes rate for
+  /* Rather a likely, this is a 100% success rate for
      all constants of MPFR */
   if (MPFR_LIKELY (cache->inexact != 0))
     {

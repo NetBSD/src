@@ -1,4 +1,4 @@
-Copyright 2000-2018 Free Software Foundation, Inc.
+Copyright 2000-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -15,22 +15,52 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 ##############################################################################
 
-Changes from version 4.0.0 to version 4.0.1:
-- Improved MPFR manual.
+Changes from versions 4.0.* to version 4.1.0:
+- The "épinards à la crème" release.
+- Binary compatible with MPFR 4.0.*, though some minor changes in the
+  behavior of the formatted output functions may be visible, regarded
+  as underspecified behavior or bug fixes (see below).
+- New --enable-formally-proven-code configure option, to use (when available)
+  formally proven code.
 - Improved __GMP_CC and __GMP_CFLAGS retrieval (in particular for MS Windows).
-- Fixed a build failure on some platforms when --with-gmp-build is used.
-- Bug fixes (see ChangeLog file), in particular in mpfr_div_ui, which
-  could yield an incorrectly rounded result to nearest when using
-  different precisions; this bug had been present since the introduction
-  of mpfr_div_ui, and in MPFR 4.0.0, it was affecting mpfr_div too.
+- Option -pedantic is now always removed from __GMP_CFLAGS (see INSTALL).
+- Changed __float128 to the type _Float128 specified in ISO/IEC TS 18661.
+  __float128 is used as a fallback if _Float128 is not supported.
+- New function mpfr_get_str_ndigits about conversion to a string of digits.
+- New function mpfr_dot for the dot product (incomplete, experimental).
+- New functions mpfr_get_decimal128 and mpfr_set_decimal128 (available only
+  when MPFR has been built with decimal float support).
+- New function mpfr_cmpabs_ui.
+- New function mpfr_total_order_p for the IEEE 754 totalOrder predicate.
+- The mpfr_out_str function now accepts bases from -2 to -36, in order to
+  follow mpfr_get_str and GMP's mpf_out_str functions (these cases gave an
+  assertion failure, as with other invalid bases).
+- Shared caches: cleanup; really detect lock failures (abort in this case).
+- The behavior of the formatted output functions (mpfr_printf, etc.) with
+  an empty precision field has improved: trailing zeros are kept in a way
+  similar to the formatted output functions from C.
+- Improved mpfr_add and mpfr_sub when all operands have a precision equal to
+  twice the number of bits per word, e.g., 128 bits on a 64-bit platform.
+- Optimized the tuning parameters for various architectures.
+- Improved test coverage to 98.6% of code for x86_64.
+- Bug fixes.
+- MPFR manual: corrected/completed the mpfr_get_str description in order to
+  follow the historical behavior and GMP's mpf_get_str function.
 - New: optional "make check-exported-symbols", mainly for the MPFR developers
   and binary distributions, to check that MPFR does not define symbols with a
   GMP reserved prefix (experimental).
+- Mini-gmp support: replaced --enable-mini-gmp configure option by
+  --with-mini-gmp (still experimental, read doc/mini-gmp).
+- A GCC bug on Sparc (present at least in old GCC 4.5.3 and 5.5.0 versions),
+  which made several tests fail when TLS was enabled, is now avoided in the
+  tests. The MPFR library itself was not affected and normal code using the
+  MPFR library should not be affected either. Users and distributions that
+  disabled TLS just because of the test failures can safely re-enable it.
 
 Changes from versions 3.1.* to version 4.0.0:
 - The "dinde aux marrons" release.
@@ -127,7 +157,7 @@ Changes from versions 3.1.* to version 4.0.0:
 - Bug fixes. In particular: a speed improvement when the --enable-assert
   or --enable-assert=full configure option is used with GCC; mpfr_get_str
   now sets the NaN flag on NaN input and the inexact flag when the conversion
-  is inexact. For a full list, see http://www.mpfr.org/mpfr-3.1.6/#fixed
+  is inexact. For a full list, see https://www.mpfr.org/mpfr-3.1.6/#fixed
   and the same section for any previous 3.1.x version (follow the links
   in the "Changes..." sections).
 - Microsoft Windows: Added support for thread-safe DLL (shared library).
@@ -419,4 +449,4 @@ Changes from version 0.4 to version 1.0:
   which is called mp_rnd_t.
 
 You'll find other news concerning the GNU MPFR library on the web
-page <http://www.mpfr.org/>.
+page <https://www.mpfr.org/>.

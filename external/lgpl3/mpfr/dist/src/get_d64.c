@@ -1,11 +1,11 @@
 /* mpfr_get_decimal64 -- convert a multiple precision floating-point number
                          to an IEEE 754-2008 decimal64 float
 
-See https://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
+See https://gcc.gnu.org/legacy-ml/gcc/2006-06/msg00691.html,
 https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
 and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2018 Free Software Foundation, Inc.
+Copyright 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,7 +22,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -31,8 +31,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #ifdef MPFR_WANT_DECIMAL_FLOATS
 
-#if _MPFR_IEEE_FLOATS
-#else
+#if ! _MPFR_IEEE_FLOATS
 #include "ieee_floats.h"
 #endif
 
@@ -40,7 +39,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # define DEC64_MAX 9.999999999999999E384dd
 #endif
 
-#ifdef DPD_FORMAT
+#ifdef DECIMAL_DPD_FORMAT
 static const int T[1000] = {
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32,
   33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
@@ -111,6 +110,9 @@ static const int T[1000] = {
 #endif
 
 /* construct a decimal64 NaN */
+/* FIXME: In the _MPFR_IEEE_FLOATS case, possible issue due to the fact
+   that not all bitfields are initialized. Moreover, is there an advantage
+   of this code compared to the generic one? */
 static _Decimal64
 get_decimal64_nan (void)
 {
@@ -127,6 +129,9 @@ get_decimal64_nan (void)
 }
 
 /* construct the decimal64 Inf with given sign */
+/* FIXME: In the _MPFR_IEEE_FLOATS case, possible issue due to the fact
+   that not all bitfields are initialized. Moreover, is there an advantage
+   of this code compared to the generic one? */
 static _Decimal64
 get_decimal64_inf (int negative)
 {
@@ -147,14 +152,12 @@ get_decimal64_inf (int negative)
 static _Decimal64
 get_decimal64_zero (int negative)
 {
-  union ieee_double_decimal64 y;
-
-  /* zero has the same representation in binary64 and decimal64 */
-  y.d = negative ? DBL_NEG_ZERO : 0.0;
-  return y.d64;
+  return negative ? -0.0dd : 0.0dd;
 }
 
-/* construct the decimal64 smallest non-zero with given sign */
+/* construct the decimal64 smallest non-zero with given sign:
+   it is 10^emin * 10^(1-p). Since emax = 384, emin = 1-emax = -383,
+   and p = 16, we get 10^(-398) */
 static _Decimal64
 get_decimal64_min (int negative)
 {
@@ -175,18 +178,21 @@ get_decimal64_max (int negative)
    (b1) -383 <= e <= 384 with m integer multiple of 10^(-15), |m| < 10
    (b2) or -398 <= e <= 369 with m integer, |m| < 10^16.
    Assumes s is neither NaN nor +Inf nor -Inf.
+   s = [-][0-9]+E[-][0-9]+
 */
-#if _MPFR_IEEE_FLOATS
+
+#if _MPFR_IEEE_FLOATS && !defined(DECIMAL_GENERIC_CODE)
+
 static _Decimal64
 string_to_Decimal64 (char *s)
 {
-  long int exp = 0;
+  long int exp;
   char m[17];
   long n = 0; /* mantissa length */
   char *endptr[1];
   union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
-#ifdef DPD_FORMAT
+#ifdef DECIMAL_DPD_FORMAT
   unsigned int G, d1, d2, d3, d4, d5;
 #endif
 
@@ -202,19 +208,15 @@ string_to_Decimal64 (char *s)
   while (ISDIGIT (*s))
     m[n++] = *s++;
   exp = n;
-  if (*s == '.')
-    {
-      s ++;
-      while (ISDIGIT (*s))
-        m[n++] = *s++;
-    }
+
+  /* as constructed in mpfr_get_decimal64, s cannot have any '.' separator */
+
   /* we have exp digits before decimal point, and a total of n digits */
   exp -= n; /* we will consider an integer mantissa */
   MPFR_ASSERTN(n <= 16);
-  if (*s == 'E' || *s == 'e')
-    exp += strtol (s + 1, endptr, 10);
-  else
-    *endptr = s;
+  /* s always have an exponent separator 'E' */
+  MPFR_ASSERTN(*s == 'E');
+  exp += strtol (s + 1, endptr, 10);
   MPFR_ASSERTN(**endptr == '\0');
   MPFR_ASSERTN(-398 <= exp && exp <= (long) (385 - n));
   while (n < 16)
@@ -246,7 +248,7 @@ string_to_Decimal64 (char *s)
     }
 
   /* now convert to DPD or BID */
-#ifdef DPD_FORMAT
+#ifdef DECIMAL_DPD_FORMAT
 #define CH(d) (d - '0')
   if (m[0] >= '8')
     G = (3 << 11) | ((exp & 768) << 1) | ((CH(m[0]) & 1) << 8);
@@ -263,21 +265,38 @@ string_to_Decimal64 (char *s)
   x.s.manh = ((G & 3) << 18) | (d1 << 8) | (d2 >> 2);
   x.s.manl = (d2 & 3) << 30;
   x.s.manl |= (d3 << 20) | (d4 << 10) | d5;
-#else /* BID format */
+#else /* BID */
   {
-    mp_size_t rn;
-    mp_limb_t rp[2];
+    unsigned int rp[2]; /* rp[0] and rp[1]  should contain at least 32 bits */
+#define NLIMBS (64 / GMP_NUMB_BITS)
+    mp_limb_t sp[NLIMBS];
+    mp_size_t sn;
     int case_i = strcmp (m, "9007199254740992") < 0;
 
     for (n = 0; n < 16; n++)
       m[n] -= '0';
-    rn = mpn_set_str (rp, (unsigned char *) m, 16, 10);
-    if (rn == 1)
-      rp[1] = 0;
-#if GMP_NUMB_BITS > 32
-    rp[1] = rp[1] << (GMP_NUMB_BITS - 32);
-    rp[1] |= rp[0] >> 32;
-    rp[0] &= 4294967295UL;
+    sn = mpn_set_str (sp, (unsigned char *) m, 16, 10);
+    while (sn < NLIMBS)
+      sp[sn++] = 0;
+    /* now convert {sp, sn} to {rp, 2} */
+#if GMP_NUMB_BITS >= 64
+    MPFR_ASSERTD(sn <= 1);
+    rp[0] = sp[0] & 4294967295UL;
+    rp[1] = sp[0] >> 32;
+#elif GMP_NUMB_BITS == 32
+    MPFR_ASSERTD(sn <= 2);
+    rp[0] = sp[0];
+    rp[1] = sp[1];
+#elif GMP_NUMB_BITS == 16
+    rp[0] = sp[0] | ((unsigned int) sp[1] << 16);
+    rp[1] = sp[2] | ((unsigned int) sp[3] << 16);
+#elif GMP_NUMB_BITS == 8
+    rp[0] = sp[0] | ((unsigned int) sp[1] << 8)
+      | ((unsigned int) sp[2] << 16) | ((unsigned int) sp[3] << 24);
+    rp[1] = sp[4] | ((unsigned int) sp[5] << 8)
+      | ((unsigned int) sp[6] << 16) | ((unsigned int) sp[7] << 24);
+#else
+#error "GMP_NUMB_BITS should be 8, 16, 32, or >= 64"
 #endif
     if (case_i)
       {  /* s < 2^53: case i) */
@@ -293,12 +312,13 @@ string_to_Decimal64 (char *s)
         x.s.manh = (rp[1] ^ 2097152) | ((exp & 1) << 19);
       }
   }
-#endif /* DPD_FORMAT */
+#endif /* DPD or BID */
   y.d = x.d;
   return y.d64;
 }
-#else
-/* portable version */
+
+#else  /* portable version */
+
 static _Decimal64
 string_to_Decimal64 (char *s)
 {
@@ -306,11 +326,8 @@ string_to_Decimal64 (char *s)
   char m[17];
   long n = 0; /* mantissa length */
   char *endptr[1];
-  _Decimal64 x = 0.0;
+  _Decimal64 x = 0;
   int sign = 0;
-#ifdef DPD_FORMAT
-  unsigned int G, d1, d2, d3, d4, d5;
-#endif
 
   /* read sign */
   if (*s == '-')
@@ -321,20 +338,14 @@ string_to_Decimal64 (char *s)
   /* read mantissa */
   while (ISDIGIT (*s))
     m[n++] = *s++;
-  exp = n;
-  if (*s == '.')
-    {
-      s ++;
-      while (ISDIGIT (*s))
-        m[n++] = *s++;
-    }
-  /* we have exp digits before decimal point, and a total of n digits */
-  exp -= n; /* we will consider an integer mantissa */
+
+  /* as constructed in mpfr_get_decimal64, s cannot have any '.' separator */
+
+  /* we will consider an integer mantissa m*10^exp */
   MPFR_ASSERTN(n <= 16);
-  if (*s == 'E' || *s == 'e')
-    exp += strtol (s + 1, endptr, 10);
-  else
-    *endptr = s;
+  /* s always has an exponent separator 'E' */
+  MPFR_ASSERTN(*s == 'E');
+  exp = strtol (s + 1, endptr, 10);
   MPFR_ASSERTN(**endptr == '\0');
   MPFR_ASSERTN(-398 <= exp && exp <= (long) (385 - n));
   while (n < 16)
@@ -489,7 +500,8 @@ string_to_Decimal64 (char *s)
 
   return x;
 }
-#endif
+
+#endif  /* definition of string_to_Decimal64 (DPD, BID, or portable) */
 
 _Decimal64
 mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
@@ -515,34 +527,32 @@ mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   e = MPFR_GET_EXP (src);
   negative = MPFR_IS_NEG (src);
 
-  if (MPFR_UNLIKELY(rnd_mode == MPFR_RNDA))
-    rnd_mode = negative ? MPFR_RNDD : MPFR_RNDU;
+  MPFR_UPDATE2_RND_MODE (rnd_mode, MPFR_SIGN (src));
+
+  /* now rnd_mode is RNDN, RNDF, RNDA or RNDZ */
 
   /* the smallest decimal64 number is 10^(-398),
      with 2^(-1323) < 10^(-398) < 2^(-1322) */
   if (MPFR_UNLIKELY (e < -1323)) /* src <= 2^(-1324) < 1/2*10^(-398) */
     {
-      if (rnd_mode == MPFR_RNDZ || rnd_mode == MPFR_RNDN
-          || (rnd_mode == MPFR_RNDD && negative == 0)
-          || (rnd_mode == MPFR_RNDU && negative != 0))
+      if (rnd_mode != MPFR_RNDA)
         return get_decimal64_zero (negative);
-      else /* return the smallest non-zero number */
+      else /* RNDA: return the smallest non-zero number */
         return get_decimal64_min (negative);
     }
-  /* the largest decimal64 number is just below 10^(385) < 2^1279 */
+  /* the largest decimal64 number is just below 10^385 < 2^1279 */
   else if (MPFR_UNLIKELY (e > 1279)) /* then src >= 2^1279 */
     {
-      if (rnd_mode == MPFR_RNDZ
-          || (rnd_mode == MPFR_RNDU && negative != 0)
-          || (rnd_mode == MPFR_RNDD && negative == 0))
+      if (rnd_mode == MPFR_RNDZ)
         return get_decimal64_max (negative);
-      else
+      else /* RNDN, RNDA, RNDF: round away */
         return get_decimal64_inf (negative);
     }
   else
     {
-      /* we need to store the sign (1), the mantissa (16), and the terminating
-         character, thus we need at least 18 characters in s */
+      /* we need to store the sign (1 character), the significand (at most 16
+         characters), the exponent part (at most 5 characters for "E-398"),
+         and the terminating character, thus we need at least 23 characters */
       char s[23];
       mpfr_get_str (s, &e, 10, 16, src, rnd_mode);
       /* the smallest normal number is 1.000...000E-383,
@@ -562,11 +572,9 @@ mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
                     get_decimal64_zero (negative) :
                     get_decimal64_min (negative);
                 }
-              if (rnd_mode == MPFR_RNDZ || rnd_mode == MPFR_RNDN
-                  || (rnd_mode == MPFR_RNDD && negative == 0)
-                  || (rnd_mode == MPFR_RNDU && negative != 0))
+              if (rnd_mode == MPFR_RNDZ || rnd_mode == MPFR_RNDN)
                 return get_decimal64_zero (negative);
-              else /* return the smallest non-zero number */
+              else /* RNDA or RNDF: return the smallest non-zero number */
                 return get_decimal64_min (negative);
             }
           else
@@ -587,11 +595,9 @@ mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
          which corresponds to s=[0.]9999...999 and e=385 */
       else if (e > 385)
         {
-          if (rnd_mode == MPFR_RNDZ
-              || (rnd_mode == MPFR_RNDU && negative != 0)
-              || (rnd_mode == MPFR_RNDD && negative == 0))
+          if (rnd_mode == MPFR_RNDZ)
             return get_decimal64_max (negative);
-          else
+          else /* RNDN, RNDA, RNDF: round away */
             return get_decimal64_inf (negative);
         }
       else /* -382 <= e <= 385 */

@@ -1,6 +1,6 @@
 /* mpfr_get_flt -- convert a mpfr_t to a machine single precision float
 
-Copyright 2009-2018 Free Software Foundation, Inc.
+Copyright 2009-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h>     /* for FLT_MIN */
@@ -86,7 +86,6 @@ mpfr_get_flt (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   else /* -148 <= e <= 127 */
     {
       int nbits;
-      mp_size_t np, i;
       mp_limb_t tp[MPFR_LIMBS_PER_FLT];
       int carry;
       double dd;
@@ -95,11 +94,9 @@ mpfr_get_flt (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
       if (MPFR_UNLIKELY (e < -125))
         /*In the subnormal case, compute the exact number of significant bits*/
         {
-          nbits += (125 + e);
-          MPFR_ASSERTD (nbits >= 1);
+          nbits += 125 + e;
+          MPFR_ASSERTD (1 <= nbits && nbits < 24);
         }
-      np = MPFR_PREC2LIMBS (nbits);
-      MPFR_ASSERTD(np <= MPFR_LIMBS_PER_FLT);
       carry = mpfr_round_raw_4 (tp, MPFR_MANT(src), MPFR_PREC(src), negative,
                                 nbits, rnd_mode);
       /* we perform the reconstruction using the 'double' type here,
@@ -108,6 +105,12 @@ mpfr_get_flt (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
         dd = 1.0;
       else
         {
+#if MPFR_LIMBS_PER_FLT == 1
+          dd = (double) tp[0] / MP_BASE_AS_DOUBLE;
+#else
+          mp_size_t np, i;
+          np = MPFR_PREC2LIMBS (nbits);
+          MPFR_ASSERTD(np <= MPFR_LIMBS_PER_FLT);
           /* The following computations are exact thanks to the previous
              mpfr_round_raw. */
           dd = (double) tp[0] / MP_BASE_AS_DOUBLE;
@@ -115,12 +118,13 @@ mpfr_get_flt (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
             dd = (dd + tp[i]) / MP_BASE_AS_DOUBLE;
           /* dd is the mantissa (between 1/2 and 1) of the argument rounded
              to 24 bits */
+#endif
         }
       dd = mpfr_scale2 (dd, e);
       if (negative)
         dd = -dd;
 
-      /* convert (exacly) to float */
+      /* convert (exactly) to float */
       d = (float) dd;
     }
 

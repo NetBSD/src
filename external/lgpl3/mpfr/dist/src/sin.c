@@ -1,6 +1,6 @@
 /* mpfr_sin -- sine of a floating-point number
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -82,7 +82,9 @@ mpfr_sin (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       goto end;
     }
 
-  m = precy + MPFR_INT_CEIL_LOG2 (precy) + 7;
+  /* for x large, since argument reduction is expensive, we want to avoid
+     any failure in Ziv's strategy, thus we take into account expx too */
+  m = precy + MPFR_INT_CEIL_LOG2 (MAX(precy,expx)) + 8;
 
   /* since we compute sin(x) as sqrt(1-cos(x)^2), and for x small we have
      cos(x)^2 ~ 1 - x^2, when subtracting cos(x)^2 from 1 we will lose
@@ -149,7 +151,7 @@ mpfr_sin (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       /* now that the argument is reduced, precision m is enough */
       mpfr_set_prec (c, m);
       mpfr_cos (c, xx, MPFR_RNDA);    /* c = cos(x) rounded away */
-      mpfr_mul (c, c, c, MPFR_RNDU);  /* away */
+      mpfr_sqr (c, c, MPFR_RNDU);     /* away */
       mpfr_ui_sub (c, 1, c, MPFR_RNDZ);
       mpfr_sqrt (c, c, MPFR_RNDZ);
       if (MPFR_IS_NEG_SIGN(sign))

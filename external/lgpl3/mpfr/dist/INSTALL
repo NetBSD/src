@@ -1,4 +1,4 @@
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -15,7 +15,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 
@@ -28,8 +28,8 @@ reporting a bug, in particular Section "In case of problem" below. Some
 problems are due to bad configuration on the user side (not specific to
 MPFR).
 
-0. You first need to install GMP. See <http://www.gnu.org/software/gmp/>.
-   MPFR requires GMP version 4.1 or later.
+0. You first need to install GMP. See <https://gmplib.org/>.
+   MPFR requires GMP version 5.0.0 or later.
 
 1. Extract the files from the archive.
 
@@ -37,17 +37,17 @@ MPFR).
    not been done yet and if patches are available. You can check
    on the release page:
 
-     http://www.mpfr.org/mpfr-4.0.1/
+     https://www.mpfr.org/mpfr-4.1.0/
 
    which may have additional information. The patches can be applied
    with commands like:
 
-     wget http://www.mpfr.org/mpfr-4.0.1/allpatches
+     wget https://www.mpfr.org/mpfr-4.1.0/allpatches
      patch -N -Z -p1 < allpatches
 
    or
 
-     curl http://www.mpfr.org/mpfr-4.0.1/allpatches | patch -N -Z -p1
+     curl https://www.mpfr.org/mpfr-4.1.0/allpatches | patch -N -Z -p1
 
    (Those instructions are for the GNU patch command, for example
    /usr/bin/gpatch on Solaris.)
@@ -207,7 +207,7 @@ specific architecture.
 --enable-assert         build MPFR with assertions.
 
 --enable-thread-safe    build MPFR as thread safe, using compiler-level
-                        Thread Local Storage (TLS). Note: TLS support is
+                        Thread-Local Storage (TLS). Note: TLS support is
                         roughly tested by configure. If configure detects
                         that TLS does not work (because of the compiler,
                         linker or system libraries), it will output an
@@ -224,6 +224,27 @@ specific architecture.
                         buggy (MPFR tests may fail). In such a case,
                         this option is useful.
 
+--enable-decimal-float  build conversion functions from/to decimal floats.
+                        Note that detection by the configure script is
+                        limited in case of cross-compilation.
+                        Accepted arguments:
+                   yes  Decimal support is requested and the configure
+                        script fails if it detects that decimals do not
+                        work.
+                        The encoding (BID or DPD) will automatically be
+                        detected at configure time or at compile time if
+                        possible (if not, generic code will be used).
+                    no  Decimal support is explicitly disabled.
+                  auto  Decimal support is enabled if the configure script
+                        detects that it works. This is the default when
+                        --{enable,disable}-decimal-float is not given.
+                   bid  Decimal support is requested and the encoding is
+                        assumed to be BID (some check may be done).
+                   dpd  Decimal support is requested and the encoding is
+                        assumed to be DPD (some check may be done).
+               generic  Decimal support is requested and the generic code
+                        is used (mainly for developers).
+
 --enable-gmp-internals  allows the MPFR build to use GMP's undocumented
                         functions (not from the public API). Note that
                         library versioning is not guaranteed to work if
@@ -234,17 +255,20 @@ specific architecture.
                         may be useful in cross-compilation). If you use
                         this option, you need to have Libtool 2.4+ on
                         the target system. See Libtool 2.4+'s NEWS file.
-                        Technical information can be found at [1].
 
-[1] http://permalink.gmane.org/gmane.comp.gnu.libtool.patches/10111
-
-Note: By default, the configure script tries to set CC/CFLAGS to GMP's
-ones (this feature needs GMP 4.3.0 or later, or the --with-gmp-build
-option). However this is not guaranteed to work as the configure script
-does some compiler tests earlier, and the change may be too late. Also,
-the values obtained from GMP may be incorrect if GMP has been built
-on a different machine. In such a case, the user may need to specify
-CC/CFLAGS as explained below.
+Note: By default, the configure script tries to set CC / CFLAGS to GMP's
+ones from gmp.h (__GMP_CC / __GMP_CFLAGS) in order to ensure that MPFR is
+built with the same ABI as GMP. The reason is that when GMP is built, it
+may set CC / CFLAGS to select an ABI that is not the default one in order
+to have a better performance. The -pedantic option in GMP's CFLAGS, when
+present (which is the case by default), is removed, because the MPFR
+build system uses some C extensions (when this script detects that they
+are supported) and -pedantic yields too many useless warnings. However,
+this setting from GMP is not guaranteed to work as the configure script
+does some compiler tests earlier, and a conflict may arise. Also, the
+values obtained from GMP may be incorrect for the MPFR build if GMP has
+been built on a different machine; in such a case, the user may need to
+specify CC / CFLAGS, as explained below.
 
 Moreover, even without --with-gmp-build and --enable-gmp-internals,
 MPFR might use some GMP internals by mistake. This would be a bug,
@@ -361,9 +385,9 @@ First, look for any warning message in the configure output.
 Several documents may help you to solve the problem:
   * this INSTALL file, in particular information given below;
   * the FAQ (either the FAQ.html file distributed with MPFR, or the
-    on-line version <http://www.mpfr.org/faq.html>, which may be more
+    on-line version <https://www.mpfr.org/faq.html>, which may be more
     up-to-date);
-  * the MPFR web page for this version <http://www.mpfr.org/mpfr-4.0.1/>,
+  * the MPFR web page for this version <https://www.mpfr.org/mpfr-4.1.0/>,
     which lists bugs found in this version and provides some patches.
 
 If the "configure" fails, please check that the C compiler and its
@@ -431,8 +455,8 @@ is to make sure that the dynamic linker configuration is consistent
 with GCC's behavior, for instance by having /usr/local/lib in
 /etc/ld.so.conf or in some file from /etc/ld.so.conf.d (as Debian
 did: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=395177). See
-also https://gcc.gnu.org/ml/gcc-help/2010-01/msg00171.html for more
-information. Alternatively you can use:
+also https://gcc.gnu.org/legacy-ml/gcc-help/2010-01/msg00171.html for
+more information. Alternatively you can use:
   * environment variables. This may sometimes be necessary. If DIR
     is the installation directory of GMP, add DIR/include to your
     CPATH or C_INCLUDE_PATH (for compilers other than GCC, please
@@ -593,32 +617,58 @@ a. Using MinGW
 
 3 - To avoid using the Microsoft runtime (which might not be conform to ISO C),
     you can use the MinGW runtime package (which is an integral part of MinGW).
-    For example, with MinGW versions 3.15 and later you can get an
-    ISO-compliant printf() if you compile your application with either
-    '-ansi', '-posix' or '-D__USE_MINGW_ANSI_STDIO'. In order to have the
-    MPFR formatted output functions based on ISO-compliant printf(), you
-    need to compile GMP (not MPFR) with CC="gcc -D__USE_MINGW_ANSI_STDIO"
-    (since the standard printf modifiers %e, %Ld and %td are passed to GMP).
-    Not doing so may result in failures of some of the printf-related tests.
-    For instance, the following error on some Windows machine has been
-    reported:
 
-      https://sympa.inria.fr/sympa/arc/mpfr/2016-02/msg00053.html
+    With old MinGW versions, you can get an ISO-compliant printf()
+    if you compile your application with either '-ansi', '-posix' or
+    '-D__USE_MINGW_ANSI_STDIO'. But note that this latter option,
+    which was useful in the past (see below) should no longer be used.
+
+    The following applies to old MinGW versions, and may be discouraged
+    with recent MinGW versions.
+
+    In order to have the MPFR formatted output functions based on an
+    ISO-compliant printf(), you need to compile GMP (not MPFR) with
+    CC="gcc -D__USE_MINGW_ANSI_STDIO" (since the standard printf modifiers
+    %e, %Ld and %td are passed to GMP).
+
+    To avoid failures of some of the printf-related tests, MPFR needs to
+    be compiled with the same __USE_MINGW_ANSI_STDIO as with GMP, i.e.
+    this macro should be defined for both or undefined for both; this
+    should be the case by default, unless CC or CFLAGS has been redefined.
+    For instance, if __USE_MINGW_ANSI_STDIO is defined in GMP but not in
+    MPFR, the following error may occur:
 
       Error in mpfr_vsprintf (s, "%e", ...);
       expected: "-1.250000e+000"
       got:      "-1.250000e+00"
       FAIL tsprintf.exe (exit status: 1)
 
-    The cause is that here the C functions vsnprintf and vsprintf used
-    internally in GMP do not produce the same output:
+    and in the opposite case:
+
+      Error in mpfr_vsprintf (s, "%e", ...);
+      expected: "-1.250000e+00"
+      got:      "-1.250000e+000"
+      FAIL tsprintf.exe (exit status: 1)
+
+    Note with old GMP versions: Other issues could arise due to the fact
+    that the C functions vsnprintf and vsprintf both used internally in
+    old GMP versions do not produce the same output:
 
       https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00045.html
       https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00051.html
       https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00053.html
 
-    Building MPFR with -D__USE_MINGW_ANSI_STDIO is currently useless except
-    for some error messages in the test suite.
+    If __USE_MINGW_ANSI_STDIO has not been defined when building GMP,
+    then the length modifiers j, L and t are not supported with the GMP
+    formatted output functions, and as a consequence, also with MPFR.
+    This is automatically detected by the configure script, except when
+    cross-compiling (e.g. under Linux), in which case some macros need
+    to be defined explicitly, e.g. with
+
+      "CPPFLAGS=-DNPRINTF_J -DNPRINTF_L -DNPRINTF_T"
+
+    in order to avoid potential issues with the MPFR library and failures
+    in the test suite (the corresponding tests are disabled explicitly).
 
 b. Using Cygwin
 ===============
@@ -640,13 +690,30 @@ Static and dynamic MPFR libraries for the 32- and 64-bit versions of
 Windows can be built with Microsoft Visual Studio 2015 using the
 Microsoft Visual C++ compiler, see:
 
-  https://www.visualstudio.com/
+  https://visualstudio.microsoft.com/
 
 The Intel C++ compiler provided as a part of Intel Parallel Studio XE
 can also be used:
 
-  https://software.intel.com/en-us/intel-parallel-studio-xe
+  https://software.intel.com/en-us/parallel-studio-xe
 
 The relevant build projects are available here:
 
   https://github.com/BrianGladman
+
+d. Using the CompCert compiler
+==============================
+
+[this was tested with CompCert 3.7 and MPFR revision 13851 on x86_64-linux]
+
+CompCert (http://compcert.inria.fr/) is a formally verified compiler.
+To compile MPFR with CompCert:
+
+$ ./configure CC=ccomp CFLAGS="-fbitfields -flongdouble -fstruct-passing" --disable-shared
+
+You also need to unset LD_LIBRARY_PATH, and/or you might need to change
+wl="" into wl="-Wl," in the libtool file.
+
+All tests (make check) should pass (tget_set_d64, tget_set_d128 and
+tset_float128 are skipped, since CompCert does not support _Decimal64,
+_Decimal128 nor _Float128).

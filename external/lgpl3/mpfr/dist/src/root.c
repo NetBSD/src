@@ -1,6 +1,6 @@
 /* mpfr_root -- kth root.
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -161,7 +161,7 @@ mpfr_rootn_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
   sh = tmp - n;
   if (sh > 0) /* we have to flush to 0 the last sh bits from m */
     {
-      inexact = inexact || ((mpfr_exp_t) mpz_scan1 (m, 0) < sh);
+      inexact = inexact || (mpz_scan1 (m, 0) < sh);
       mpz_fdiv_q_2exp (m, m, sh);
       e += k * sh;
     }

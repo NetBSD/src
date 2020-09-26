@@ -1,6 +1,6 @@
 /* mpfr_get_si -- convert a floating-point number to a signed long.
 
-Copyright 2003-2018 Free Software Foundation, Inc.
+Copyright 2003-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -57,19 +57,31 @@ mpfr_get_si (mpfr_srcptr f, mpfr_rnd_t rnd)
   MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   /* warning: if x=0, taking its exponent is illegal */
-  if (MPFR_UNLIKELY (MPFR_IS_ZERO(x)))
+  if (MPFR_IS_ZERO (x))
     s = 0;
   else
     {
-      mp_limb_t a;
+      unsigned long u = 0;
       mp_size_t n;
       mpfr_exp_t exp;
 
-      /* now the result is in the most significant limb of x */
-      exp = MPFR_GET_EXP (x); /* since |x| >= 1, exp >= 1 */
-      n = MPFR_LIMB_SIZE(x);
-      a = MPFR_MANT(x)[n - 1] >> (GMP_NUMB_BITS - exp);
-      s = MPFR_IS_POS (f) ? a : a <= LONG_MAX ? - (long) a : LONG_MIN;
+      exp = MPFR_GET_EXP (x);
+      MPFR_ASSERTD (exp >= 1); /* since |x| >= 1 */
+      n = MPFR_LIMB_SIZE (x);
+#ifdef MPFR_LONG_WITHIN_LIMB
+      MPFR_ASSERTD (exp <= GMP_NUMB_BITS);
+#else
+      while (exp > GMP_NUMB_BITS)
+        {
+          MPFR_ASSERTD (n > 0);
+          u += (unsigned long) MPFR_MANT(x)[n - 1] << (exp - GMP_NUMB_BITS);
+          n--;
+          exp -= GMP_NUMB_BITS;
+        }
+#endif
+      MPFR_ASSERTD (n > 0);
+      u += MPFR_MANT(x)[n - 1] >> (GMP_NUMB_BITS - exp);
+      s = MPFR_IS_POS (f) ? u : u <= LONG_MAX ? - (long) u : LONG_MIN;
     }
 
   mpfr_clear (x);

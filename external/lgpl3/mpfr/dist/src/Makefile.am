@@ -1,4 +1,4 @@
-# Copyright 2000-2018 Free Software Foundation, Inc.
+# Copyright 2000-2020 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -9,17 +9,23 @@
 # PARTICULAR PURPOSE.
 
 
-EXTRA_DIST = round_raw_generic.c jyn_asympt.c x86/core2/mparam.h        \
-	x86/mparam.h x86_64/core2/mparam.h x86_64/pentium4/mparam.h  	\
-	ia64/mparam.h arm/mparam.h powerpc64/mparam.h sparc64/mparam.h	\
-	generic/mparam.h amd/athlon/mparam.h amd/k8/mparam.h 		\
-	amd/amdfam10/mparam.h powerpc32/mparam.h hppa/mparam.h          \
-	mips/mparam.h generic/coverage/mparam.h
+# Since we do not require GNU "make", let's select the POSIX behavior to
+# uniformize the behavior a bit more with various "make" implementations
+# and ease maintenance. This target should be removed only if one day,
+# we need to require GNU "make".
+.POSIX:
+
+EXTRA_DIST = round_raw_generic.c jyn_asympt.c				\
+	add1sp1_extracted.c mul_1_extracted.c sub1sp1_extracted.c	\
+	amd/mparam.h arm/mparam.h					\
+	generic/coverage/mparam.h generic/mparam.h			\
+	mips/mparam.h powerpc64/mparam.h sparc64/mparam.h		\
+	x86/mparam.h x86_64/core2/mparam.h x86_64/mparam.h
 
 include_HEADERS = mpfr.h mpf2mpfr.h
+nodist_include_HEADERS =
 
-BUILT_SOURCES = mparam.h
-
+BUILT_SOURCES = get_patches.c mparam.h
 
 lib_LTLIBRARIES = libmpfr.la
 
@@ -27,8 +33,8 @@ libmpfr_la_SOURCES = mpfr.h mpf2mpfr.h mpfr-cvers.h mpfr-gmp.h          \
 mpfr-impl.h mpfr-intmax.h mpfr-longlong.h mpfr-sassert.h mpfr-thread.h 	\
 exceptions.c extract.c uceil_exp2.c					\
 uceil_log2.c ufloor_log2.c add.c add1.c add_ui.c agm.c clear.c cmp.c	\
-cmp_abs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c		\
-div_2ui.c div.c div_ui.c dump.c eq.c exp10.c exp2.c exp3.c exp.c	\
+cmpabs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c		\
+div_2ui.c div.c div_ui.c dot.c dump.c eq.c exp10.c exp2.c exp3.c exp.c	\
 frac.c frexp.c get_d.c get_exp.c get_str.c init.c inp_str.c isinteger.c	\
 isinf.c isnan.c isnum.c const_log2.c log.c modf.c mul_2exp.c mul_2si.c	\
 mul_2ui.c mul.c mul_ui.c neg.c next.c out_str.c printf.c vasprintf.c	\
@@ -53,14 +59,17 @@ int_ceil_log2.c isqrt.c strtofr.c pow_z.c logging.c mulders.c get_f.c	\
 round_p.c erfc.c atan2.c subnormal.c const_catalan.c root.c		\
 gen_inverse.h sec.c csc.c cot.c eint.c sech.c csch.c coth.c		\
 round_near_x.c constant.c abort_prec_max.c stack_interface.c lngamma.c	\
-zeta_ui.c set_d64.c get_d64.c jn.c yn.c rem1.c get_patches.c add_d.c	\
+zeta_ui.c set_d64.c get_d64.c jn.c yn.c rem1.c add_d.c			\
 sub_d.c d_sub.c mul_d.c div_d.c d_div.c li2.c rec_sqrt.c min_prec.c	\
 buildopt.c digamma.c bernoulli.c isregular.c set_flt.c get_flt.c	\
 scale2.c set_z_exp.c ai.c gammaonethird.c ieee_floats.h			\
 grandom.c fpif.c set_float128.c get_float128.c rndna.c nrandom.c        \
 random_deviate.h random_deviate.c erandom.c mpfr-mini-gmp.c             \
 mpfr-mini-gmp.h fmma.c log_ui.c gamma_inc.c ubf.c invert_limb.h 	\
-invsqrt_limb.h beta.c odd_p.c get_q.c pool.c
+invsqrt_limb.h beta.c odd_p.c get_q.c pool.c total_order.c set_d128.c   \
+get_d128.c nbits_ulong.c cmpabs_ui.c
+
+nodist_libmpfr_la_SOURCES = $(BUILT_SOURCES)
 
 libmpfr_la_LIBADD = @LIBOBJS@
 
@@ -73,6 +82,10 @@ libmpfr_la_LIBADD = @LIBOBJS@
 # 3. Interfaces removed or changed (BAD, breaks upward compatibility):
 #    ==> Increment CURRENT, set AGE and REVISION to 0.
 #
+# For each new MPFR major-minor version, add a new line below with the
+# corresponding -version-info CURRENT and AGE. This will be checked by
+# the tools/ck-version-info script.
+#
 #         MPFR     -version-info
 #        2.1.x      -
 #        2.2.x    1:x:0
@@ -81,22 +94,32 @@ libmpfr_la_LIBADD = @LIBOBJS@
 #        3.0.x    4:x:0
 #        3.1.x    5:x:1
 #        4.0.x    6:x:0
-libmpfr_la_LDFLAGS = $(MPFR_LDFLAGS) $(LIBMPFR_LDFLAGS) -version-info 6:1:0
+#        4.1.x    7:x:1
+libmpfr_la_LDFLAGS = $(MPFR_LDFLAGS) $(LIBMPFR_LDFLAGS) -version-info 7:0:1
 
-# Important note: If for some reason, srcdir is read-only at build time
-# (and you use objdir != srcdir), then you need to rebuild get_patches.c
-# (with "make get_patches.c") just after patching the MPFR source. This
-# should not be a problem in practice, in particular because "make dist"
-# automatically rebuilds get_patches.c before generating the archives.
-$(srcdir)/get_patches.c: $(top_srcdir)/PATCHES $(top_srcdir)/tools/get_patches.sh
-	(cd $(top_srcdir) && ./tools/get_patches.sh) > $@ || rm -f $@
+GET_PATCHES_SH = $(top_srcdir)/tools/get_patches.sh
+PATCHES = $(top_srcdir)/PATCHES
+get_patches.c: $(GET_PATCHES_SH) $(PATCHES)
+	$(GET_PATCHES_SH) $(PATCHES) > $@ || { rm -f $@; exit 1; }
 
-# Do not add get_patches.c to CLEANFILES so that this file doesn't
-# need to be (re)built as long as no patches are applied. Anyway the
-# update of this file should be regarded as part of the patch process,
-# and "make clean" shouldn't remove it, just like it doesn't remove
-# what has been changed by "patch".
-#CLEANFILES = get_patches.c
+if MINI_GMP
+
+# The mini-gmp.{c,h} files are external files, not part of MPFR, thus they
+# must not be put in the tarballs by "make dist". Hence the use of nodist_
+# on the corresponding sources (this is needed even when --with-mini-gmp
+# has not been used).
+nodist_include_HEADERS += mini-gmp.h
+
+# The noinst_ below seems OK as libminigmp should be included in libmpfr,
+# and this is confirmed by ldd (replacing noinst_ by lib_ does not seem to
+# do this and makes linking of the test programs fail).
+noinst_LTLIBRARIES = libminigmp.la
+nodist_libminigmp_la_SOURCES = mini-gmp.h mini-gmp.c
+libmpfr_la_LIBADD += libminigmp.la
+
+DISTCLEANFILES = $(nodist_libminigmp_la_SOURCES)
+
+endif
 
 # For check-gmp-symbols
 GMPC = $(top_builddir)/src/gmp.c
@@ -134,18 +157,18 @@ check-gmp-symbols: $(LTLIBRARIES)
 # For instance, with r11968, and
 #   ./configure --with-gmp-build=... CC=tcc
 # the symbol __gmpn_clz_tab is defined, which is wrong.
-# Note: the "grep -v '@plt$$'" below is for tcc.
+# Note: the "$(GREP) -v '@plt$$'" below is for tcc.
 check-exported-symbols: $(LTLIBRARIES)
 	if [ -f "$(LIBMPFRSO)" ]; then \
 	  gsymbols=`$(NM) -gP "$(LIBMPFRSO)" | perl -ne \
 	    '/^(__gmp[a-z]?_[_0-9A-Za-z]*) +[A-TV-Z]/ and print " $$1"' | \
-	    grep -v '@plt$$'`; \
+	    { $(GREP) -v '@plt$$' || true ; }`; \
 	  if [ -n "$$gsymbols" ]; then \
 	    echo "MPFR defines symbols with a GMP reserved prefix:$$gsymbols"; \
 	    exit 1; \
 	  fi; \
 	fi
 
-CLEANFILES = $(GMPC) $(GMPI)
+CLEANFILES = get_patches.c $(GMPC) $(GMPI)
 
 .PHONY: check-gmp-symbols check-exported-symbols

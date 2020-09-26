@@ -1,6 +1,6 @@
 /* bernoulli -- internal function to compute Bernoulli numbers.
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -39,7 +39,7 @@ is_prime (unsigned long p)
    using Von Staudt–Clausen theorem, which says that the denominator of B[n]
    divides the product of all primes p such that p-1 divides n.
    Since B[n] = zeta(n) * 2*n!/(2pi)^n, we compute an approximation of
-   d * zeta(n) * 2*n!/(2pi)^n and round it to the nearest integer. */
+   (2n+1)! * zeta(n) * 2*n!/(2pi)^n and round it to the nearest integer. */
 static void
 mpfr_bernoulli_internal (mpz_t *b, unsigned long n)
 {
@@ -86,8 +86,9 @@ mpfr_bernoulli_internal (mpz_t *b, unsigned long n)
       mpfr_mul_ui (z, z, n, MPFR_RNDU);
       p = mpfr_get_ui (z, MPFR_RNDU); /* (n/e/2/pi)^n <= 2^p */
       mpfr_clear (z);
-      /* the +14 term ensures no rounding failure up to n=10000 */
-      prec += p + mpz_sizeinbase (den, 2) + 14;
+      MPFR_INC_PREC (prec, p + mpz_sizeinbase (den, 2));
+      /* the +2 term ensures no rounding failure up to n=10000 */
+      MPFR_INC_PREC (prec, __gmpfr_ceil_log2 (prec) + 2);
     }
 
  try_again:
@@ -139,13 +140,13 @@ mpfr_bernoulli_internal (mpz_t *b, unsigned long n)
      Since z <= 2^prec * zeta(n) * 2*den*n!,
      ulp(z) <= 2*zeta(n) * 2*den*n!, thus
      (2^prec * zeta(n)-(p+1)) * 2*den*n! < z <= 2^prec * zeta(n) * 2*den*n! */
-  mpfr_div_2exp (z, z, prec, MPFR_RNDZ);
+  mpfr_div_2ui (z, z, prec, MPFR_RNDZ);
   /* now (zeta(n) - (p+1)/2^prec) * 2*den*n! < z <= zeta(n) * 2*den*n! */
   /* divide by (2pi)^n */
   mpfr_init2 (y, prec);
   mpfr_const_pi (y, MPFR_RNDU);
   /* pi <= y <= pi * (1 + 2^(1-prec)) */
-  mpfr_mul_2exp (y, y, 1, MPFR_RNDU);
+  mpfr_mul_2ui (y, y, 1, MPFR_RNDU);
   /* 2pi <= y <= 2pi * (1 + 2^(1-prec)) */
   mpfr_pow_ui (y, y, n, MPFR_RNDU);
   /* (2pi)^n <= y <= (2pi)^n * (1 + 2^(1-prec))^(n+1) */
@@ -184,7 +185,6 @@ mpfr_bernoulli_internal (mpz_t *b, unsigned long n)
   mpz_mul_ui (t, t, n + 1);
   mpz_divexact (t, t, den); /* t was still n! */
   mpz_mul (num, num, t);
-  mpz_set_ui (den, 1);
 
   mpfr_clear (y);
   mpfr_clear (z);
@@ -194,7 +194,7 @@ mpfr_bernoulli_internal (mpz_t *b, unsigned long n)
 
   if (!ok)
     {
-      prec += prec / 10;
+      MPFR_INC_PREC (prec, prec / 10);
       goto try_again;
     }
 

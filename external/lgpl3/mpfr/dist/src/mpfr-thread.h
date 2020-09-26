@@ -1,6 +1,6 @@
 /* MPFR internal header related to thread-local variables.
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifndef __MPFR_THREAD_H__
@@ -53,45 +53,32 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /*                           ISO C11 version                              */
 /**************************************************************************/
 /**************************************************************************/
+
 #if defined (MPFR_HAVE_C11_LOCK)
-/* NOTE: This version has not been completly tested */
-#include <thread.h>
+/* NOTE: This version has not been completely tested */
+
+#define MPFR_THREAD_LOCK_METHOD "C11"
+
+#include <threads.h>
 
 #define MPFR_LOCK_DECL(_lock)                   \
   mtx_t _lock;
 
-#define MPFR_LOCK_INIT(_lock) do {                                      \
-    int error_code = mtx_init(&(_lock), mtx_plain);                     \
-    MPFR_ASSERTD( error_code == thrd_success);                          \
+#define MPFR_LOCK_C(E)                          \
+  do {                                          \
+    if ((E) != thrd_success)                    \
+      abort ();                                 \
   } while (0)
 
-#define MPFR_LOCK_CLEAR(_lock) do {                     \
-    mtx_destroy(&(_lock));                              \
-  } while (0)
+#define MPFR_LOCK_INIT(_lock)    MPFR_LOCK_C(mtx_init(&(_lock), mtx_plain))
+#define MPFR_LOCK_CLEAR(_lock)   do { mtx_destroy(&(_lock)); } while (0)
+#define MPFR_LOCK_READ(_lock)    MPFR_LOCK_C(mtx_lock(&(_lock)))
+#define MPFR_UNLOCK_READ(_lock)  MPFR_LOCK_C(mtx_unlock(&(_lock)))
+#define MPFR_LOCK_WRITE(_lock)   MPFR_LOCK_C(mtx_lock(&(_lock)))
+#define MPFR_UNLOCK_WRITE(_lock) MPFR_LOCK_C(mtx_unlock(&(_lock)))
 
-#define MPFR_LOCK_READ(_lock)   do {                            \
-    int error_code = mtx_lock(&(_lock));                        \
-    MPFR_ASSERTD(error_code == thrd_success);                   \
-  } while (0)
-
-#define MPFR_UNLOCK_READ(_lock) do {                            \
-    int error_code = mtx_unlock(&(_lock));                      \
-    MPFR_ASSERTD(error_code == thrd_success);                   \
-  } while (0)
-
-#define MPFR_LOCK_WRITE(_lock)  do {                            \
-    int error_code = mtx_lock(&(_lock));                        \
-    MPFR_ASSERTD(error_code == thrd_success);                   \
-  } while (0)
-
-#define MPFR_UNLOCK_WRITE(_lock)        do {                    \
-    int error_code = mtx_unlock(&(_lock));                      \
-    MPFR_ASSERTD(error_code == thrd_success);                   \
-  } while (0)
-
-#define MPFR_LOCK_READ2WRITE(_lock)
-
-#define MPFR_LOCK_WRITE2READ(_lock)
+#define MPFR_LOCK_READ2WRITE(_lock) do {} while (0)
+#define MPFR_LOCK_WRITE2READ(_lock) do {} while (0)
 
 #define MPFR_ONCE_DECL(_once)                   \
   once_flag _once;
@@ -110,40 +97,32 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /*                           POSIX   version                              */
 /**************************************************************************/
 /**************************************************************************/
-#elif defined (HAVE_PTHREAD)
-# include <pthread.h>
 
-#define MPFR_LOCK_DECL(_lock)                                           \
+#elif defined (HAVE_PTHREAD)
+
+#define MPFR_THREAD_LOCK_METHOD "pthread"
+
+#include <pthread.h>
+
+#define MPFR_LOCK_DECL(_lock)                   \
   pthread_rwlock_t _lock;
 
-#define MPFR_LOCK_INIT(_lock) do {                                      \
-    int error_code = pthread_rwlock_init(&(_lock), NULL);               \
-    MPFR_ASSERTD( error_code == 0);                                     \
+#define MPFR_LOCK_C(E)                          \
+  do {                                          \
+    if ((E) != 0)                               \
+      abort ();                                 \
   } while (0)
+
+#define MPFR_LOCK_INIT(_lock) MPFR_LOCK_C(pthread_rwlock_init(&(_lock), NULL))
 
 #define MPFR_LOCK_CLEAR(_lock) do {                     \
     pthread_rwlock_destroy(&(_lock));                   \
   } while (0)
 
-#define MPFR_LOCK_READ(_lock)   do {                            \
-    int error_code = pthread_rwlock_rdlock(&(_lock));           \
-    MPFR_ASSERTD(error_code == 0);                              \
-  } while (0)
-
-#define MPFR_UNLOCK_READ(_lock) do {                            \
-    int error_code = pthread_rwlock_unlock(&(_lock));           \
-    MPFR_ASSERTD(error_code == 0);                              \
-  } while (0)
-
-#define MPFR_LOCK_WRITE(_lock)  do {                            \
-    int error_code = pthread_rwlock_wrlock(&(_lock));           \
-    MPFR_ASSERTD(error_code == 0);                              \
-  } while (0)
-
-#define MPFR_UNLOCK_WRITE(_lock)        do {                    \
-    int error_code = pthread_rwlock_unlock(&(_lock));           \
-    MPFR_ASSERTD(error_code == 0);                              \
-  } while (0)
+#define MPFR_LOCK_READ(_lock)    MPFR_LOCK_C(pthread_rwlock_rdlock(&(_lock)))
+#define MPFR_UNLOCK_READ(_lock)  MPFR_LOCK_C(pthread_rwlock_unlock(&(_lock)))
+#define MPFR_LOCK_WRITE(_lock)   MPFR_LOCK_C(pthread_rwlock_wrlock(&(_lock)))
+#define MPFR_UNLOCK_WRITE(_lock) MPFR_LOCK_C(pthread_rwlock_unlock(&(_lock)))
 
 #define MPFR_LOCK_READ2WRITE(_lock) do {                        \
     MPFR_UNLOCK_READ(_lock);                                    \
@@ -160,10 +139,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #define MPFR_ONCE_INIT_VALUE PTHREAD_ONCE_INIT
 
-#define MPFR_ONCE_CALL(_once, _func) do {               \
-    int error_code = pthread_once (&(_once), (_func));  \
-    MPFR_ASSERTD (error_code == 0);                     \
-  } while (0)
+#define MPFR_ONCE_CALL(_once, _func) \
+  MPFR_LOCK_C(pthread_once (&(_once), (_func)))
 
 #define MPFR_NEED_DEFERRED_INIT 1
 

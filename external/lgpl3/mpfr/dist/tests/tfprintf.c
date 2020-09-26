@@ -1,6 +1,6 @@
 /* tfprintf.c -- test file for mpfr_fprintf and mpfr_vfprintf
 
-Copyright 2008-2018 Free Software Foundation, Inc.
+Copyright 2008-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,10 +17,17 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-/* Include config.h before using ANY configure macros if needed. */
+/* FIXME: The output is not tested (thus coverage data are meaningless).
+   For instance, slightly changing the code of mpfr_fprintf does not
+   trigger any failure in the test suite.
+   Knowing the implementation, we may need only some minimal checks:
+   all the formatted output functions are based on mpfr_vasnprintf_aux
+   and full checks are done via tsprintf. */
+
+/* Needed due to the tests on HAVE_STDARG and MPFR_USE_MINI_GMP */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -31,7 +38,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <float.h>
 #include <stddef.h>
 
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-test.h"
 
 #define QUOTE(X) NAME(X)
@@ -188,7 +195,7 @@ check_mixed (FILE *fout)
                   lo, &ulo);
   check_length (2, ulo, 36, lu);
   check_vfprintf (fout, "a. %hi, b. %*f, c. %Re%hn", ush, 3, f, mpfr, &ush);
-  check_length (3, ush, 29, hu);
+  check_length (3, ush, 46, hu);
   check_vfprintf (fout, "a. %hi, b. %f, c. %#.2Rf%n", sh, d, mpfr, &i);
   check_length (4, i, 29, d);
   check_vfprintf (fout, "a. %R*A, b. %Fe, c. %i%zn", rnd, mpfr, mpf, sz,
@@ -206,9 +213,11 @@ check_mixed (FILE *fout)
   if (p != 20)
     {
       mpfr_fprintf (stderr, "Error in test 8, got '%% a. %RNg, b. %Qx, c. %td'\n", mpfr, mpq, saved_p);
-      /* under MinGW, -D__USE_MINGW_ANSI_STDIO is required to support %td
-         see https://gcc.gnu.org/ml/gcc/2013-03/msg00103.html */
-      fprintf (stderr, "Under MinGW, compiling GMP with -D__USE_MINGW_ANSI_STDIO might be required\n");
+#if defined(__MINGW32__) || defined(__MINGW64__)
+      fprintf (stderr,
+               "Your MinGW may be too old, in which case compiling GMP\n"
+               "with -D__USE_MINGW_ANSI_STDIO might be required.\n");
+#endif
     }
   check_length (8, (long) p, 20, ld); /* no format specifier "%td" in C89 */
 #endif
@@ -226,12 +235,12 @@ check_mixed (FILE *fout)
 #if (__GNU_MP_VERSION * 10 + __GNU_MP_VERSION_MINOR) >= 42
   /* The 'M' specifier was added in gmp 4.2.0 */
   check_vfprintf (fout, "a. %Mx b. %Re%Mn", limb[0], mpfr, &limb[0]);
-  if (limb[0] != 14 + GMP_NUMB_BITS / 4 ||
+  if (limb[0] != 29 + GMP_NUMB_BITS / 4 ||
       limb[1] != MPFR_LIMB_MAX ||
       limb[2] != MPFR_LIMB_MAX)
     {
       printf ("Error in test #11: mpfr_vfprintf did not print %d characters"
-              " as expected\n", 14 + (int) GMP_NUMB_BITS / 4);
+              " as expected\n", 29 + (int) GMP_NUMB_BITS / 4);
       exit (1);
     }
 
@@ -240,12 +249,12 @@ check_mixed (FILE *fout)
      and check it doesn't go through */
   check_vfprintf (fout, "a. %Re .b %Nx%Nn", mpfr, limb, limb_size, limb,
                   limb_size - 1);
-  if (limb[0] != 14 + 3 * GMP_NUMB_BITS / 4 ||
+  if (limb[0] != 29 + 3 * GMP_NUMB_BITS / 4 ||
       limb[1] != MPFR_LIMB_ZERO ||
       limb[2] != MPFR_LIMB_MAX)
     {
       printf ("Error in test #12: mpfr_vfprintf did not print %d characters"
-              " as expected\n", 14 + (int) GMP_NUMB_BITS / 4);
+              " as expected\n", 29 + (int) GMP_NUMB_BITS / 4);
       exit (1);
     }
 #endif
@@ -256,7 +265,7 @@ check_mixed (FILE *fout)
     unsigned long long ullo = 1;
 
     check_vfprintf (fout, "a. %Re, b. %llx%Qn", mpfr, ullo, &mpq);
-    check_length_with_cmp (21, mpq, 16, mpq_cmp_ui (mpq, 16, 1), Qu);
+    check_length_with_cmp (21, mpq, 31, mpq_cmp_ui (mpq, 31, 1), Qu);
     check_vfprintf (fout, "a. %lli, b. %Rf%Fn", llo, mpfr, &mpf);
     check_length_with_cmp (22, mpf, 19, mpf_cmp_ui (mpf, 19), Fg);
   }

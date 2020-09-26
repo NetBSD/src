@@ -1,6 +1,6 @@
 /* mpfr_li2 -- Dilogarithm.
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -40,8 +40,8 @@ li2_series (mpfr_t sum, mpfr_srcptr z, mpfr_rnd_t rnd_mode)
   MPFR_ZIV_DECL (loop);
 
   /* The series converges for |z| < 2 pi, but in mpfr_li2 the argument is
-     reduced so that 0 < z <= log(2). Here is additionnal check that z is
-     (nearly) correct */
+     reduced so that 0 < z <= log(2). Here is an additional check that z
+     is (nearly) correct. */
   MPFR_ASSERTD (MPFR_IS_STRICTPOS (z));
   MPFR_ASSERTD (mpfr_cmp_ui_2exp (z, 89, -7) <= 0); /* z <= 0.6953125 */
 

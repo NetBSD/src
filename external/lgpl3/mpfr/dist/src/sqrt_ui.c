@@ -1,6 +1,6 @@
 /* mpfr_sqrt_ui -- square root of a machine integer
 
-Copyright 2000-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2000-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -29,9 +29,10 @@ mpfr_sqrt_ui (mpfr_ptr r, unsigned long u, mpfr_rnd_t rnd_mode)
   if (u)
     {
       mpfr_t uu;
+      int inex;
+#ifdef MPFR_LONG_WITHIN_LIMB
       mp_limb_t up[1];
       int cnt;
-      int inex;
       MPFR_SAVE_EXPO_DECL (expo);
 
       MPFR_TMP_INIT1 (up, uu, GMP_NUMB_BITS);
@@ -41,9 +42,19 @@ mpfr_sqrt_ui (mpfr_ptr r, unsigned long u, mpfr_rnd_t rnd_mode)
 
       MPFR_SAVE_EXPO_MARK (expo);
       MPFR_SET_EXP (uu, GMP_NUMB_BITS - cnt);
-      inex = mpfr_sqrt(r, uu, rnd_mode);
+      inex = mpfr_sqrt (r, uu, rnd_mode);
+#else
+      MPFR_SAVE_EXPO_DECL (expo);
+
+      mpfr_init2 (uu, sizeof (unsigned long) * CHAR_BIT);
+      /* Warning: u might be outside the current exponent range! */
+      MPFR_SAVE_EXPO_MARK (expo);
+      mpfr_set_ui (uu, u, MPFR_RNDZ);
+      inex = mpfr_sqrt (r, uu, rnd_mode);
+      mpfr_clear (uu);
+#endif /* MPFR_LONG_WITHIN_LIMB */
       MPFR_SAVE_EXPO_FREE (expo);
-      return mpfr_check_range(r, inex, rnd_mode);
+      return mpfr_check_range (r, inex, rnd_mode);
     }
   else /* sqrt(0) = 0 */
     {

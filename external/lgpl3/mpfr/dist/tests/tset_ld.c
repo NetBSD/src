@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_ld and mpfr_get_ld.
 
-Copyright 2002-2018 Free Software Foundation, Inc.
+Copyright 2002-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,13 +17,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h>
-#ifdef WITH_FPU_CONTROL
-#include <fpu_control.h>
-#endif
 
 #include "mpfr-test.h"
 
@@ -38,8 +35,8 @@ check_gcc33_bug (void)
   printf
     ("Detected optimization bug of gcc 3.3 on Alpha concerning long double\n"
      "comparisons; set_ld tests might fail (set_ld won't work correctly).\n"
-     "See https://gcc.gnu.org/ml/gcc-bugs/2003-10/msg00853.html for more\n"
-     "information.\n");
+     "See https://gcc.gnu.org/legacy-ml/gcc-bugs/2003-10/msg00853.html for\n"
+     "more information.\n");
 }
 
 static int
@@ -84,7 +81,7 @@ print_binary (long double d, int flag)
       d = -d;
     }
   /* now d >= 0 */
-  /* Use 2 differents tests for Inf, to avoid potential bugs
+  /* Use 2 different tests for Inf, to avoid potential bugs
      in implementations. */
   if (Isnan_ld (d - d) || (d > 1 && d * 0.5 == d))
     {
@@ -213,7 +210,7 @@ check_set_get (long double d)
           printf ("  x = ");
           mpfr_dump (x);
           printf ("  MPFR_LDBL_MANT_DIG=%u\n", MPFR_LDBL_MANT_DIG);
-          printf ("  prec=%lu\n", prec);
+          printf ("  prec=%ld\n", (long) prec);
           print_binary (d, 2);
           exit (1);
         }
@@ -364,9 +361,9 @@ check_subnormal (void)
       if (e != d)
         {
           printf ("Error for mpfr_get_ld o mpfr_set_ld\n");
-          printf ("d=%Le\n", d);
+          printf ("d=%.30Le\n", d);
           printf ("x="); mpfr_dump (x);
-          printf ("e=%Le\n", e);
+          printf ("e=%.30Le\n", e);
           exit (1);
         }
       d *= 0.5;
@@ -481,15 +478,36 @@ bug_20160907 (void)
       ld = mpfr_get_ld (mp, MPFR_RNDU);
       mpfr_set_ld (mp, ld, MPFR_RNDU);
       /* mp is 2^e rounded up, thus should be >= 2^e */
-      MPFR_ASSERTN(mpfr_cmp_ui_2exp (mp, 1, e) >= 0);
+      if (mpfr_cmp_ui_2exp (mp, 1, e) < 0)
+        {
+          if (tests_run_within_valgrind () && MPFR_IS_ZERO (mp))
+            {
+              /* Since this is not a bug in MPFR and it is just caused by
+                 Valgrind, let's output a message and skip the remaining
+                 part of the test without an error. Note that the message
+                 will be not be visible via "make check".
+                 Note that the other tests do not fail probably because
+                 long double has the same behavior as double (which is
+                 allowed by the C standard), but here this is a test that
+                 is specific to x86 extended precision. */
+              printf
+                ("Error in bug_20160907 due to a bug in Valgrind.\n"
+                 "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=890215\n"
+                 "https://bugs.kde.org/show_bug.cgi?id=421262\n");
+              break;
+            }
+          printf ("Error, expected value >= 2^(%ld)\n", e);
+          printf ("got "); mpfr_dump (mp);
+          exit (1);
+        }
 
       mpfr_set_ui_2exp (mp, 1, e, MPFR_RNDN);
       ld = mpfr_get_ld (mp, MPFR_RNDD);
       mpfr_set_ld (mp, ld, MPFR_RNDD);
       /* mp is 2^e rounded down, thus should be <= 2^e */
-      if (mpfr_cmp_ui_2exp (mp, 3, e) > 0)
+      if (mpfr_cmp_ui_2exp (mp, 1, e) > 0)
         {
-          printf ("Error, expected value <= 2^%ld\n", e);
+          printf ("Error, expected value <= 2^(%ld)\n", e);
           printf ("got "); mpfr_dump (mp);
           exit (1);
         }

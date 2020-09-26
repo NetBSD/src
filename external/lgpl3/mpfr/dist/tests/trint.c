@@ -1,7 +1,7 @@
 /* Test file for mpfr_rint, mpfr_trunc, mpfr_floor, mpfr_ceil, mpfr_round,
    mpfr_rint_trunc, mpfr_rint_floor, mpfr_rint_ceil, mpfr_rint_round.
 
-Copyright 2002-2018 Free Software Foundation, Inc.
+Copyright 2002-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -60,7 +60,7 @@ special (void)
   /* coverage test */
   mpfr_set_prec (x, 2);
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, mp_bits_per_limb, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, mp_bits_per_limb, MPFR_RNDN);
   mpfr_rint (y, x, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_cmp (y, x) == 0);
 
@@ -308,7 +308,7 @@ basic_tests (void)
 #if __MPFR_STDC (199901L)
 
 static void
-test_fct (double (*f)(double), int (*g)(), char *s, mpfr_rnd_t r)
+test_fct (double (*f)(double), int (*g)(), const char *s, mpfr_rnd_t r)
 {
   double d, y;
   mpfr_t dd, yy;
@@ -337,12 +337,12 @@ test_fct (double (*f)(double), int (*g)(), char *s, mpfr_rnd_t r)
   mpfr_clear (yy);
 }
 
-#define TEST_FCT(F) test_fct (&F, &mpfr_##F, #F, r)
+#define TEST_FCT(F) test_fct (&F, &mpfr_##F, #F, (mpfr_rnd_t) r)
 
 static void
 test_against_libc (void)
 {
-  mpfr_rnd_t r = MPFR_RNDN;
+  int r = MPFR_RNDN;
 
   (void) r;  /* avoid a warning by using r */
 #if HAVE_ROUND
@@ -359,8 +359,8 @@ test_against_libc (void)
 #endif
 #if HAVE_NEARBYINT
   for (r = 0; r < MPFR_RND_MAX ; r++)
-    if (mpfr_set_machine_rnd_mode (r) == 0)
-      test_fct (&nearbyint, &mpfr_rint, "rint", r);
+    if (mpfr_set_machine_rnd_mode ((mpfr_rnd_t) r) == 0)
+      test_fct (&nearbyint, &mpfr_rint, "rint", (mpfr_rnd_t) r);
 #endif
 }
 
@@ -595,7 +595,7 @@ main (int argc, char *argv[])
                     if (mpfr_sub (u, v, x, MPFR_RNDN))
                       err ("subtraction 2 should be exact", s, x, y, p,
                            (mpfr_rnd_t) r, trint, inexact);
-                    cmp = mpfr_cmp_abs (t, u);
+                    cmp = mpfr_cmpabs (t, u);
                     if (cmp > 0)
                       err ("faithful rounding, but not the nearest integer",
                            s, x, y, p, (mpfr_rnd_t) r, trint, inexact);

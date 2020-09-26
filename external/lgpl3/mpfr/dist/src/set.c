@@ -1,6 +1,6 @@
 /* mpfr_set -- copy of a floating-point number
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -80,15 +80,20 @@ mpfr_abs (mpfr_ptr a, mpfr_srcptr b, mpfr_rnd_t rnd_mode)
   return mpfr_set4 (a, b, rnd_mode, MPFR_SIGN_POS);
 }
 
-/* Round (u, inex) into s with rounding mode rnd, where inex is the ternary
-   value associated to u with the *same* rounding mode.
+/* Round (u, inex) into s with rounding mode rnd_mode, where inex is
+   the ternary value associated with u, which has been obtained using
+   the *same* rounding mode rnd_mode.
    Assumes PREC(u) = 2*PREC(s).
-   The main algorithm is the following:
-   rnd=RNDZ: inex2 = mpfr_set (s, u, rnd_mode); return inex2 | inex;
-             (a negative value, if any, is preserved in inex2 | inex)
-   rnd=RNDA: idem
-   rnd=RNDN: inex2 = mpfr_set (s, u, rnd_mode);
-             if (inex2) return inex2; else return inex; */
+   The generic algorithm is the following:
+   1. inex2 = mpfr_set (s, u, rnd_mode);
+   2. if (inex2 != 0) return inex2; else return inex;
+      except in the double-rounding case: in MPFR_RNDN, when u is in the
+      middle of two consecutive PREC(s)-bit numbers, if inex and inex2
+      are both > 0 (resp. both < 0), we correct s to nextbelow(s) (resp.
+      nextabove(s)), and return the opposite of inex.
+   Note: this function can be called with rnd_mode == MPFR_RNDF, in
+   which case, the rounding direction and the returned ternary value
+   are unspecified. */
 int
 mpfr_set_1_2 (mpfr_ptr s, mpfr_srcptr u, mpfr_rnd_t rnd_mode, int inex)
 {
@@ -106,9 +111,9 @@ mpfr_set_1_2 (mpfr_ptr s, mpfr_srcptr u, mpfr_rnd_t rnd_mode, int inex)
       return inex;
     }
 
-  MPFR_ASSERTD(MPFR_PREC(u) == 2 * MPFR_PREC(s));
+  MPFR_ASSERTD(MPFR_PREC(u) == 2 * p);
 
-  if (MPFR_PREC(s) < GMP_NUMB_BITS)
+  if (p < GMP_NUMB_BITS)
     {
       mask = MPFR_LIMB_MASK(sh);
 
@@ -194,6 +199,19 @@ mpfr_set_1_2 (mpfr_ptr s, mpfr_srcptr u, mpfr_rnd_t rnd_mode, int inex)
 
   /* general case PREC(s) >= GMP_NUMB_BITS */
   inex2 = mpfr_set (s, u, rnd_mode);
-  return (rnd_mode != MPFR_RNDN) ? inex | inex2
-    : (inex2) ? inex2 : inex;
+  /* Check the double-rounding case, i.e. with u = middle of two
+     consecutive PREC(s)-bit numbers, which is equivalent to u being
+     exactly representable on PREC(s) + 1 bits but not on PREC(s) bits.
+     Moreover, since PREC(u) = 2*PREC(s), u and s cannot be identical
+     (as pointers), thus u was not changed. */
+  if (rnd_mode == MPFR_RNDN && inex * inex2 > 0 &&
+      mpfr_min_prec (u) == p + 1)
+    {
+      if (inex > 0)
+        mpfr_nextbelow (s);
+      else
+        mpfr_nextabove (s);
+      return -inex;
+    }
+  return inex2 != 0 ? inex2 : inex;
 }

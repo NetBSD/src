@@ -3,7 +3,7 @@
    distribution and round it to the precision of rop1, rop2 according
    to the given rounding mode.
 
-Copyright 2011-2018 Free Software Foundation, Inc.
+Copyright 2011-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,7 +20,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 
@@ -40,13 +40,9 @@ mpfr_grandom (mpfr_ptr rop1, mpfr_ptr rop2, gmp_randstate_t rstate,
   inex2 = inex1 = 0;
 
   if (rop2 == NULL) /* only one output requested. */
-    {
-      tprec0 = MPFR_PREC (rop1);
-    }
+    tprec0 = MPFR_PREC (rop1);
   else
-    {
-      tprec0 = MAX (MPFR_PREC (rop1), MPFR_PREC (rop2));
-    }
+    tprec0 = MAX (MPFR_PREC (rop1), MPFR_PREC (rop2));
 
   tprec0 += 11;
 
@@ -87,21 +83,29 @@ mpfr_grandom (mpfr_ptr rop1, mpfr_ptr rop2, gmp_randstate_t rstate,
           mpz_mul (b, yp, yp);
           mpz_add (s, a, b);
         }
-      while (mpz_sizeinbase (s, 2) > tprec * 2); /* x^2 + y^2 <= 2^{2tprec} */
+      while (mpz_sizeinbase (s, 2) > tprec * 2);
+
+      /* now s = x^2 + y^2 < 2^{2tprec} */
 
       for (;;)
         {
-          /* FIXME: compute s as s += 2x + 2y + 2 */
-          mpz_add_ui (a, xp, 1);
-          mpz_add_ui (b, yp, 1);
-          mpz_mul (a, a, a);
-          mpz_mul (b, b, b);
-          mpz_add (s, a, b);
-          if ((mpz_sizeinbase (s, 2) <= 2 * tprec) ||
-              ((mpz_sizeinbase (s, 2) == 2 * tprec + 1) &&
-               (mpz_scan1 (s, 0) == 2 * tprec)))
+          /* we compute (xp+1)^2 + (yp+1)^2 as s + 2xp + 2yp + 2 */
+          mpz_addmul_ui (s, xp, 2);
+          mpz_addmul_ui (s, yp, 2);
+          mpz_add_ui (s, s, 2);
+          /* The case s = 2^(2*tprec) is not possible:
+           (a) if xp and yp have different parities, s is odd
+           (b) if xp and yp are even, (xp+1)^2 and (yp+1)^2 are 1 mod 4,
+               thus s = 2 mod 4 (and tprec >= 1);
+           (c) if xp and yp are odd, if we note x = xp+1, y = yp+1 and
+               p = tprec, we would have x^2 + y^2 = 2^(2p) with x and y even
+               0 < x, y <= 2^p, thus if x' = x/2, y' = y/2 and p'=p-1,
+               we would have x'^2 + y'^2 = 2^(2p') with
+               0 < x', y' <= 2^p', and we conclude by induction. */
+          if (mpz_sizeinbase (s, 2) <= 2 * tprec)
             goto yeepee;
-          /* Extend by 32 bits */
+          /* Extend by 32 bits: for tprec=12, the probability we get here
+             is 8191/13180825, i.e., about 0.000621 */
           mpz_mul_2exp (xp, xp, 32);
           mpz_mul_2exp (yp, yp, 32);
           mpz_urandomb (x, rstate, 32);

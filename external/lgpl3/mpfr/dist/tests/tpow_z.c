@@ -1,6 +1,6 @@
 /* Test file for mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,11 +17,8 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <float.h>
-#include <math.h>
 
 #include "mpfr-test.h"
 
@@ -169,7 +166,7 @@ check_integer (mpfr_prec_t begin, mpfr_prec_t end, unsigned long max)
               res1 = mpfr_pow_si (y1, x, n, rnd);
               /* printf ("Check pow_z\n"); */
               res2 = mpfr_pow_z  (y2, x, z, rnd);
-              if (mpfr_cmp (y1, y2) != 0)
+              if (! mpfr_equal_p (y1, y2))
                 {
                   printf ("Error for p = %lu, z = %lu, rnd = %s and x = ",
                           (unsigned long) p, n, mpfr_print_rnd_mode (rnd));
@@ -178,9 +175,10 @@ check_integer (mpfr_prec_t begin, mpfr_prec_t end, unsigned long max)
                   printf ("Ypowz  = "); mpfr_dump (y2);
                   exit (1);
                 }
-              if (res1 != res2)
+              /* The ternary value is unspecified with MPFR_RNDF. */
+              if (rnd != MPFR_RNDF && ! SAME_SIGN (res1, res2))
                 {
-                  printf ("Wrong inexact flags for p = %lu, z = %lu, rnd = %s"
+                  printf ("Wrong ternary value for p = %lu, z = %lu, rnd = %s"
                           " and x = ", (unsigned long) p, n,
                           mpfr_print_rnd_mode (rnd));
                   mpfr_dump (x);
@@ -209,7 +207,7 @@ check_regression (void)
   mpfr_set_str_binary (x, "0.10000010010000111101001110100101101010011110011100001111000001001101000110011001001001001011001011010110110110101000111011E1");
   res1 = mpfr_pow_z (y, x, z, MPFR_RNDU);
   res2 = mpfr_pow_ui (x, x, 2026876995UL, MPFR_RNDU);
-  if (mpfr_cmp (x, y) || res1 != res2)
+  if (! mpfr_equal_p (x, y) || ! SAME_SIGN (res1, res2))
     {
       printf ("Regression (1) tested failed (%d=?%d)\n",res1, res2);
       printf ("pow_ui: "); mpfr_dump (x);

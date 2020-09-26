@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_str.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -76,9 +76,9 @@ check_small (void)
 
   mpfr_set_prec (x, 64);
   mpfr_set_si (x, -1, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 63, MPFR_RNDN); /* x = -2^(-63) */
+  mpfr_div_2ui (x, x, 63, MPFR_RNDN); /* x = -2^(-63) */
   mpfr_add_ui (x, x, 1, MPFR_RNDN); /* x = 1 - 2^(-63) */
-  mpfr_mul_2exp (x, x, 32, MPFR_RNDN); /* x = 2^32 - 2^(-31) */
+  mpfr_mul_2ui (x, x, 32, MPFR_RNDN); /* x = 2^32 - 2^(-31) */
   s = mpfr_get_str (NULL, &e, 3, 21, x, MPFR_RNDU);
   if (strcmp (s, "102002022201221111211") || (e != 21))
     {
@@ -991,7 +991,7 @@ check_large (void)
 
   mpfr_init2 (x, 3322);
   mpfr_set_str (x, xm, 10, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 4343, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 4343, MPFR_RNDN);
   s = mpfr_get_str (NULL, &e, 10, 1000, x, MPFR_RNDN);
   if (s[999] != '1') /* s must be 5.04383...689071e-309 */
     {
@@ -1001,7 +1001,7 @@ check_large (void)
     }
   mpfr_free_str (s);
 
-  mpfr_mul_2exp (x, x, 4343, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 4343, MPFR_RNDN);
   s = mpfr_get_str (NULL, &e, 10, 2, x, MPFR_RNDN);
   if (strcmp (s, "12") || (e != 1000))
     {
@@ -1267,6 +1267,177 @@ check_negative_base (void)
 
 #define ITER 1000
 
+static void
+coverage (void)
+{
+  mpfr_t x;
+  char s[42];
+  mpfr_exp_t e;
+  int b = 3;
+  size_t m = 40;
+
+  mpfr_init2 (x, 128);
+
+  /* exercise corner case in mpfr_get_str_aux: exact case (e < 0), where r
+     rounds to a power of 2, and f is a multiple of GMP_NUMB_BITS */
+  mpfr_set_ui_2exp (x, 1, 64, MPFR_RNDU);
+  mpfr_nextbelow (x);
+  /* x = 2^64 - 2^(-64) */
+  mpfr_get_str (s, &e, b, m, x, MPFR_RNDU);
+  /* s is the base-3 string for 6148914691236517206 (in base 10) */
+  MPFR_ASSERTN(strcmp (s, "1111222002212212010121102012021021021200") == 0);
+  MPFR_ASSERTN(e == 41);
+
+  /* exercise corner case in mpfr_get_str: input is m=0, then it is changed
+     to m=1 */
+  mpfr_set_prec (x, 1);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_get_str (s, &e, 2, 0, x, MPFR_RNDN);
+  MPFR_ASSERTN(strcmp (s, "1") == 0);
+  MPFR_ASSERTN(e == 1);
+  mpfr_get_str (s, &e, 2, 1, x, MPFR_RNDN);
+  MPFR_ASSERTN(strcmp (s, "1") == 0);
+  MPFR_ASSERTN(e == 1);
+
+  /* exercise corner case in mpfr_get_str: case m < g, exact <> 0,
+     nx > 2 * n, and low nx-2n limbs from xp not identically zero */
+  mpfr_set_prec (x, 129);
+  mpfr_set_str_binary (x, "0.100100111110110111100010100011011111101010110000011001000111111101100110101110110000110011E8");
+  mpfr_nextabove (x);
+  mpfr_get_str (s, &e, 10, 2, x, MPFR_RNDZ);
+  MPFR_ASSERTN(strcmp (s, "14") == 0);
+  MPFR_ASSERTN(e == 3);
+
+  mpfr_clear (x);
+}
+
+/* test of mpfr_get_str_ndigits */
+static void
+test_ndigits (void)
+{
+  mpfr_prec_t p;
+
+  /* for b=2, we have 1 + ceil((p-1)*log(2)/log(b)) = p */
+  for (p = MPFR_PREC_MIN; p <= 1024; p++)
+    MPFR_ASSERTN(mpfr_get_str_ndigits (2, p) == p);
+
+  /* for b=4, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/2)
+     = 1 + floor(p/2) */
+  for (p = MPFR_PREC_MIN; p <= 1024; p++)
+    MPFR_ASSERTN(mpfr_get_str_ndigits (4, p) == 1 + (p / 2));
+
+  /* for b=8, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/3)
+     = 1 + floor((p+1)/3) */
+  for (p = MPFR_PREC_MIN; p <= 1024; p++)
+    MPFR_ASSERTN(mpfr_get_str_ndigits (8, p) == 1 + ((p + 1) / 3));
+
+  /* for b=16, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/4)
+     = 1 + floor((p+2)/4) */
+  for (p = MPFR_PREC_MIN; p <= 1024; p++)
+    MPFR_ASSERTN(mpfr_get_str_ndigits (16, p) == 1 + ((p + 2) / 4));
+
+  /* for b=32, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/5)
+     = 1 + floor((p+3)/5) */
+  for (p = MPFR_PREC_MIN; p <= 1024; p++)
+    MPFR_ASSERTN(mpfr_get_str_ndigits (32, p) == 1 + ((p + 3) / 5));
+
+  /* error < 1e-3 */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (57, 35) == 8);
+
+  /* error < 1e-4 */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (31, 649) == 133);
+
+  /* error < 1e-5 */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (43, 5041) == 931);
+
+  /* error < 1e-6 */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (41, 17771) == 3319);
+
+  /* 20th convergent of log(2)/log(3) */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 630138897) == 397573381);
+
+#if MPFR_PREC_BITS >= 64
+  /* 21st convergent of log(2)/log(3) */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 9809721694) == 6189245292);
+
+  /* 22nd convergent of log(2)/log(3) */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 10439860591) == 6586818672);
+
+  /* 23rd convergent of log(2)/log(3) */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 103768467013) == 65470613322);
+
+  /* 24th convergent of log(2)/log(3) */
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 217976794617) == 137528045314);
+
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 1193652440098) == 753110839882);
+
+  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 683381996816440) == 431166034846569);
+
+  MPFR_ASSERTN(mpfr_get_str_ndigits (7, 186564318007) == 66455550933);
+#endif
+}
+
+/* check corner cases: radix-b number near from b^e converted to mpfr_t
+   and then back to radix b */
+static void
+check_corner (void)
+{
+  int b;             /* external radix */
+  mpfr_exp_t e;      /* external exponent */
+  mpfr_prec_t oprec; /* external precision */
+  mpfr_prec_t iprec; /* internal precision */
+#define MAX_OPREC 100
+  char *s, *t;
+  int i, ret;
+  mpfr_exp_t f;
+
+  for (b = 2; b <= 62; b++)
+    for (e = -100; e <= 100; e++)
+      for (iprec = MPFR_PREC_MIN; iprec <= 100; iprec ++)
+        {
+          mpfr_t x, y;
+          oprec = mpfr_get_str_ndigits (b, iprec);
+          s = (char *) tests_allocate (oprec + 6);
+            /* oprec characters for the significand, 1 for the '@' sign,
+               at most 4 for the exponent (-100), and 1 for the terminating
+               '\0'. */
+          t = (char *) tests_allocate (oprec + 6);
+          mpfr_init2 (x, iprec);
+          mpfr_init2 (y, iprec);
+          /* set s to 1000...000Ee */
+          s[0] = '1';
+          for (i = 1; i < oprec; i++)
+            s[i] = '0';
+          s[oprec] = '@';
+          ret = sprintf (s + oprec + 1, "%ld", (long) e);
+          MPFR_ASSERTN(ret <= 4);
+          /* sprintf prints the terminating null byte */
+          ret = mpfr_set_str (x, s, b, MPFR_RNDN);
+          MPFR_ASSERTN(ret == 0);
+          mpfr_get_str (t, &f, b, 0, x, MPFR_RNDN);
+          MPFR_ASSERTN(strlen (t) == oprec);
+          t[oprec] = '@';
+          ret = sprintf (t + oprec + 1, "%ld", (long) (f - oprec));
+          MPFR_ASSERTN(ret <= 4);
+          ret = mpfr_set_str (y, t, b, MPFR_RNDN);
+          MPFR_ASSERTN(ret == 0);
+          if (!mpfr_equal_p (x, y))
+            {
+              printf ("mpfr_set_str o mpfr_get_str <> Id for b=%d\n", b);
+              printf ("x="); mpfr_dump (x);
+              t[oprec] = '\0';
+              printf ("mpfr_get_str converted to 0.%s@%ld\n", t, (long) f);
+              printf ("mpfr_set_str converted to:\n");
+              printf ("y="); mpfr_dump (y);
+              exit (1);
+            }
+          mpfr_clear (x);
+          mpfr_clear (y);
+          tests_free (s, oprec + 6);
+          tests_free (t, oprec + 6);
+        }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1281,6 +1452,9 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
+  check_corner ();
+  test_ndigits ();
+  coverage ();
   check_small ();
 
   check_special (2, 2);

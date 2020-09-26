@@ -1,6 +1,6 @@
 /* Test file for the beta function
 
-Copyright 2017-2018 Free Software Foundation, Inc.
+Copyright 2017-2020 Free Software Foundation, Inc.
 Contributed by ChemicalDevelopment.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -31,11 +31,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
     mpfr_out_str (stdout, 2, 0, z, MPFR_RNDN);                          \
     printf("\n w  =");                                                  \
     mpfr_out_str (stdout, 2, 0, w, MPFR_RNDN);                          \
-    printf("\n ex.=");                                                  \
+    printf("\n expected ");                                             \
     mpfr_out_str (stdout, 2, 0, expected, MPFR_RNDN);                   \
-    printf("\n ac.=");                                                  \
+    printf("\n got ");                                                  \
     mpfr_out_str (stdout, 2, 0, r, MPFR_RNDN);                          \
     printf("\n\n");                                                     \
+    exit (1);                                                           \
   } while (0)
 
 #define TEST(p, r, z, w, expected) TESTRND(p, r, z, w, expected, MPFR_RNDN)

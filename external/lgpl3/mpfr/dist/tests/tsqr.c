@@ -1,6 +1,6 @@
 /* Test file for mpfr_sqr.
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -188,6 +188,156 @@ check_mpn_sqr (void)
 #endif
 }
 
+static void
+coverage (mpfr_prec_t pmax)
+{
+  mpfr_prec_t p;
+
+  for (p = MPFR_PREC_MIN; p <= pmax; p++)
+    {
+      mpfr_t a, b, c;
+      int inex;
+      mpfr_exp_t emin;
+
+      mpfr_init2 (a, p);
+      mpfr_init2 (b, p);
+      mpfr_init2 (c, p);
+
+      /* exercise carry in most significant bits of a, with overflow */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emax (), MPFR_RNDZ);
+      mpfr_sqrt (b, b, MPFR_RNDU);
+      mpfr_div_2ui (c, b, 1, MPFR_RNDN);
+      mpfr_sqr (c, c, MPFR_RNDN);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDN);
+      /* if EXP(c) > emax-2, there is overflow */
+      if (mpfr_get_exp (c) > mpfr_get_emax () - 2)
+        {
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+          MPFR_ASSERTN(mpfr_overflow_p ());
+        }
+      else /* no overflow */
+        {
+          /* 2^p-1 is a square only for p=1 */
+          MPFR_ASSERTN((p == 1 && inex == 0) || (p > 1 && inex < 0));
+          MPFR_ASSERTN(!mpfr_overflow_p ());
+          mpfr_set_ui_2exp (c, 1, mpfr_get_emax (), MPFR_RNDZ);
+          MPFR_ASSERTN(mpfr_equal_p (a, c));
+        }
+
+      /* same as above, with RNDU */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emax (), MPFR_RNDZ);
+      mpfr_sqrt (b, b, MPFR_RNDU);
+      mpfr_div_2ui (c, b, 1, MPFR_RNDN);
+      mpfr_sqr (c, c, MPFR_RNDU);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDU);
+      /* if EXP(c) > emax-2, there is overflow */
+      if (mpfr_get_exp (c) > mpfr_get_emax () - 2)
+        {
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+          MPFR_ASSERTN(mpfr_overflow_p ());
+        }
+      else /* no overflow */
+        {
+          /* 2^p-1 is a square only for p=1 */
+          MPFR_ASSERTN((p == 1 && inex == 0) || (p > 1 && inex < 0));
+          MPFR_ASSERTN(!mpfr_overflow_p ());
+          mpfr_set_ui_2exp (c, 1, mpfr_get_emax (), MPFR_RNDZ);
+          MPFR_ASSERTN(mpfr_equal_p (a, c));
+        }
+
+      /* exercise trivial overflow */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emax (), MPFR_RNDZ);
+      mpfr_sqrt (b, b, MPFR_RNDU);
+      mpfr_mul_2ui (b, b, 1, MPFR_RNDN);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDN);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+      MPFR_ASSERTN(mpfr_overflow_p ());
+
+      /* exercise trivial underflow */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emin () - 1, MPFR_RNDZ);
+      mpfr_sqrt (b, b, MPFR_RNDU);
+      mpfr_div_2ui (b, b, 1, MPFR_RNDN);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDN);
+      MPFR_ASSERTN(inex < 0);
+      MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+      MPFR_ASSERTN(mpfr_underflow_p ());
+
+      /* exercise square between 0.5*2^emin and its predecessor (emin even) */
+      emin = mpfr_get_emin ();
+      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emin () - 1, MPFR_RNDN);
+      inex = mpfr_sqrt (b, b, MPFR_RNDZ);
+      MPFR_ASSERTN(inex != 0); /* sqrt(2) is not exact */
+      mpfr_mul_2ui (c, b, 1, MPFR_RNDN);
+      mpfr_sqr (c, c, MPFR_RNDN);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDN);
+      if (mpfr_get_exp (c) < mpfr_get_emin () + 2) /* underflow */
+        {
+          /* if c > 0.5*2^(emin+1), we should round to 0.5*2^emin */
+          if (mpfr_cmp_ui_2exp (c, 1, mpfr_get_emin ()) > 0)
+            {
+              MPFR_ASSERTN(inex > 0);
+              MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+              MPFR_ASSERTN(mpfr_underflow_p ());
+            }
+          else /* we should round to 0 */
+            {
+              MPFR_ASSERTN(inex < 0);
+              MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+              MPFR_ASSERTN(mpfr_underflow_p ());
+            }
+        }
+      else
+        {
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+          MPFR_ASSERTN(!mpfr_underflow_p ());
+        }
+      mpfr_set_emin (emin);
+
+      /* exercise exact square root 2^(emin-2) for emin even */
+      emin = mpfr_get_emin ();
+      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      mpfr_set_ui_2exp (b, 1, (mpfr_get_emin () - 2) / 2, MPFR_RNDN);
+      inex = mpfr_sqr (a, b, MPFR_RNDN);
+      MPFR_ASSERTN(inex < 0);
+      MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+      MPFR_ASSERTN(mpfr_underflow_p ());
+      mpfr_set_emin (emin);
+
+      /* same as above, for RNDU */
+      emin = mpfr_get_emin ();
+      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emin () - 1, MPFR_RNDN);
+      inex = mpfr_sqrt (b, b, MPFR_RNDZ);
+      MPFR_ASSERTN(inex != 0); /* sqrt(2) is not exact */
+      mpfr_mul_2ui (c, b, 1, MPFR_RNDN);
+      mpfr_sqr (c, c, MPFR_RNDU);
+      mpfr_clear_flags ();
+      inex = mpfr_sqr (a, b, MPFR_RNDU);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+      /* we have underflow if c < 2^(emin+1) */
+      if (mpfr_cmp_ui_2exp (c, 1, mpfr_get_emin () + 1) < 0)
+        MPFR_ASSERTN(mpfr_underflow_p ());
+      else
+        MPFR_ASSERTN(!mpfr_underflow_p ());
+      mpfr_set_emin (emin);
+
+      mpfr_clear (a);
+      mpfr_clear (b);
+      mpfr_clear (c);
+    }
+}
+
 int
 main (void)
 {
@@ -195,6 +345,7 @@ main (void)
 
   tests_start_mpfr ();
 
+  coverage (1024);
   check_mpn_sqr ();
   check_special ();
   test_underflow ();

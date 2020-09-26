@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_d
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h>
@@ -26,7 +26,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "ieee_floats.h"
 
 static int
-check_denorms (void)
+check_subnorm (void)
 {
   mpfr_rnd_t rnd_mode;
   mpfr_t x;
@@ -41,7 +41,7 @@ check_denorms (void)
       d = (double) k * DBL_MIN; /* k * 2^(-1022) */
       f = 1.0;
       mpfr_set_si (x, k, MPFR_RNDN);
-      mpfr_div_2exp (x, x, 1022, MPFR_RNDN); /* k * 2^(-1022) */
+      mpfr_div_2ui (x, x, 1022, MPFR_RNDN); /* k * 2^(-1022) */
       for (n = 0; n <= 58; n++)
         {
           d2 = d * f;
@@ -54,7 +54,7 @@ check_denorms (void)
               fail = 1;
             }
           f *= 0.5;
-          mpfr_div_2exp (x, x, 1, MPFR_RNDN);
+          mpfr_div_2ui (x, x, 1, MPFR_RNDN);
         }
     }
 
@@ -277,7 +277,7 @@ main (void)
   printf ("DBL_MAX_EXP  = %ld\n", (long) DBL_MAX_EXP);
 #endif
 
-  if (check_denorms ())
+  if (check_subnorm ())
     exit (1);
 
   check_inf_nan ();

@@ -1,7 +1,7 @@
 /* mpfr_j0, mpfr_j1, mpfr_jn -- Bessel functions of 1st kind, integer order.
    http://www.opengroup.org/onlinepubs/009695399/functions/j0.html
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -245,7 +245,7 @@ mpfr_jn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       MPFR_GROUP_REPREC_3 (g, prec, y, s, t);
       MPFR_BLOCK (flags, {
       mpfr_pow_ui (t, z, absn, MPFR_RNDN); /* z^|n| */
-      mpfr_mul (y, z, z, MPFR_RNDN);       /* z^2 */
+      mpfr_sqr (y, z, MPFR_RNDN);          /* z^2 */
       MPFR_CLEAR_ERANGEFLAG ();
       zz = mpfr_get_ui (y, MPFR_RNDU);
       /* FIXME: The error analysis is incorrect in case of range error. */
@@ -315,7 +315,7 @@ mpfr_jn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
          most probably there is a cancellation in the series, thus we add
          err - k0 bits to prec */
       if (err > k0)
-        prec = MPFR_ADD_PREC (prec, err - k0);
+        MPFR_INC_PREC (prec, err - k0);
       MPFR_ZIV_NEXT (loop, prec);
     }
   MPFR_ZIV_FREE (loop);

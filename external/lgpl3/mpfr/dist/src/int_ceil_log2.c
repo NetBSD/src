@@ -1,6 +1,6 @@
 /* __gmpfr_int_ceil_log2 -- Integer ceil of log2(x)
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H /* for count_leading_zeros */
@@ -29,6 +29,7 @@ __gmpfr_int_ceil_log2 (unsigned long n)
   if (MPFR_UNLIKELY (n == 1))
     return 0;
   else
+#ifdef MPFR_LONG_WITHIN_LIMB
     {
       int b;
       mp_limb_t limb;
@@ -37,6 +38,11 @@ __gmpfr_int_ceil_log2 (unsigned long n)
       limb = n - 1;
       MPFR_ASSERTN (limb == n - 1);
       count_leading_zeros (b, limb);
-      return GMP_NUMB_BITS - b;
+      b = GMP_NUMB_BITS - b;
+      MPFR_ASSERTD (b >= 0);
+      return b;
     }
+#else
+  return mpfr_nbits_ulong (n - 1);
+#endif
 }

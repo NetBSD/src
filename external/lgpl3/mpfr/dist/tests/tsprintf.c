@@ -1,7 +1,7 @@
 /* tsprintf.c -- test file for mpfr_sprintf, mpfr_vsprintf, mpfr_snprintf,
    and mpfr_vsnprintf
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,10 +18,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-/* Include config.h before using ANY configure macros if needed. */
+/* Needed due to the tests on HAVE_STDARG and MPFR_USE_MINI_GMP */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -30,6 +30,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <stdarg.h>
 
 #include <float.h>
+#include <errno.h>
 
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
@@ -224,14 +225,30 @@ static int
 decimal (void)
 {
   mpfr_prec_t p = 128;
-  mpfr_t x;
-  mpfr_t z;
+  mpfr_t x, y, z;
+
   mpfr_init (z);
   mpfr_init2 (x, p);
 
   /* specifier 'P' for precision */
   check_vsprintf ("128", "%Pu", p);
   check_vsprintf ("00128", "%.5Pu", p);
+  check_vsprintf ("  128", "%5Pu", p);
+  check_vsprintf ("000128", "%06Pu", p);
+  check_vsprintf ("128    :", "%-7Pu:", p);
+  check_vsprintf ("000128:", "%-2.6Pd:", p);
+  check_vsprintf ("  000128:", "%8.6Pd:", p);
+  check_vsprintf ("000128  :", "%-8.6Pd:", p);
+  check_vsprintf ("+128:", "%+Pd:", p);
+  check_vsprintf (" 128:", "% Pd:", p);
+  check_vsprintf ("80:", "% Px:", p);
+  check_vsprintf ("0x80:", "% #Px:", p);
+  check_vsprintf ("0x80:", "%0#+ -Px:", p);
+  check_vsprintf ("0200:", "%0#+ -Po:", p);
+  check_vsprintf ("+0000128 :", "%0+ *.*Pd:", -9, 7, p);
+  check_vsprintf ("+12345   :", "%0+ -*.*Pd:", -9, -3, (mpfr_prec_t) 12345);
+  /* Do not add a test like "%05.1Pd" as MS Windows is buggy: when
+     a precision is given, the '0' flag must be ignored. */
 
   /* special numbers */
   mpfr_set_inf (x, 1);
@@ -283,29 +300,38 @@ decimal (void)
 
   /* positive numbers */
   mpfr_set_str (x, "18993474.61279296875", 10, MPFR_RNDN);
+  mpfr_init2 (y, 59);
+  mpfr_set (y, x, MPFR_RNDN);
   mpfr_set_ui (z, 0, MPFR_RNDD);
 
   /* simplest case right justified */
-  check_sprintf ("      1.899347461279296875e+07", "%30Re", x);
+  check_sprintf ("1.899347461279296875000000000000000000000e+07", "%30Re", x);
+  check_sprintf ("      1.899347461279296875e+07", "%30Re", y);
   check_sprintf ("                         2e+07", "%30.0Re", x);
   check_sprintf ("               18993474.612793", "%30Rf", x);
   check_sprintf ("              18993474.6127930", "%30.7Rf", x);
   check_sprintf ("                   1.89935e+07", "%30Rg", x);
   check_sprintf ("                         2e+07", "%30.0Rg", x);
   check_sprintf ("          18993474.61279296875", "%30.19Rg", x);
+  check_sprintf ("        0.0000000000000000e+00", "%30Re", z);
+  check_sprintf ("                      0.000000", "%30Rf", z);
+  check_sprintf ("                             0", "%30Rg", z);
+  check_sprintf ("                       0.00000", "%#30Rg", z);
   check_sprintf ("                         0e+00", "%30.0Re", z);
   check_sprintf ("                             0", "%30.0Rf", z);
   check_sprintf ("                        0.0000", "%30.4Rf", z);
   check_sprintf ("                             0", "%30.0Rg", z);
   check_sprintf ("                             0", "%30.4Rg", z);
   /* sign or space, pad with leading zeros */
-  check_sprintf (" 000001.899347461279296875E+07", "% 030RE", x);
+  check_sprintf (" 1.899347461279296875000000000000000000000E+07", "% 030RE", x);
+  check_sprintf (" 000001.899347461279296875E+07", "% 030RE", y);
   check_sprintf (" 0000000000000000001.89935E+07", "% 030RG", x);
   check_sprintf (" 0000000000000000000000002E+07", "% 030.0RE", x);
   check_sprintf (" 0000000000000000000000000E+00", "% 030.0RE", z);
   check_sprintf (" 00000000000000000000000000000", "% 030.0RF", z);
   /* sign + or -, left justified */
-  check_sprintf ("+1.899347461279296875e+07     ", "%+-30Re", x);
+  check_sprintf ("+1.899347461279296875000000000000000000000e+07", "%+-30Re", x);
+  check_sprintf ("+1.899347461279296875e+07     ", "%+-30Re", y);
   check_sprintf ("+2e+07                        ", "%+-30.0Re", x);
   check_sprintf ("+0e+00                        ", "%+-30.0Re", z);
   check_sprintf ("+0                            ", "%+-30.0Rf", z);
@@ -325,7 +351,8 @@ decimal (void)
   check_sprintf ("+0000.0E+00", "%0+#11.1RZE", z);
   check_sprintf ("+00000000.0", "%0+#11.1RZF", z);
   /* pad with leading zero */
-  check_sprintf ("0000001.899347461279296875e+07", "%030RDe", x);
+  check_sprintf ("1.899347461279296875000000000000000000000e+07", "%030RDe", x);
+  check_sprintf ("0000001.899347461279296875e+07", "%030RDe", y);
   check_sprintf ("00000000000000000000000001e+07", "%030.0RDe", x);
   /* sign or space, decimal point, left justified */
   check_sprintf (" 1.8E+07   ", "%- #11.1RDE", x);
@@ -346,8 +373,12 @@ decimal (void)
 
   /* neighborhood of 1 */
   mpfr_set_str (x, "0.99993896484375", 10, MPFR_RNDN);
-  check_sprintf ("9.9993896484375E-01 ", "%-20RE", x);
-  check_sprintf ("9.9993896484375E-01 ", "%-20.RE", x);
+  mpfr_set_prec (y, 43);
+  mpfr_set (y, x, MPFR_RNDN);
+  check_sprintf ("9.999389648437500000000000000000000000000E-01", "%-20RE", x);
+  check_sprintf ("9.999389648437500000000000000000000000000E-01", "%-20.RE", x);
+  check_sprintf ("9.9993896484375E-01 ", "%-20RE", y);
+  check_sprintf ("9.9993896484375E-01 ", "%-20.RE", y);
   check_sprintf ("1E+00               ", "%-20.0RE", x);
   check_sprintf ("1.0E+00             ", "%-20.1RE", x);
   check_sprintf ("1.00E+00            ", "%-20.2RE", x);
@@ -380,9 +411,9 @@ decimal (void)
   check_sprintf ("1.00                ", "%-#20.3RG", x);
   check_sprintf ("0.9999              ", "%-#20.4RG", x);
 
-  /* multiple of 10 */
+  /* powers of 10 */
   mpfr_set_str (x, "1e17", 10, MPFR_RNDN);
-  check_sprintf ("1e+17", "%Re", x);
+  check_sprintf ("1.000000000000000000000000000000000000000e+17", "%Re", x);
   check_sprintf ("1.000e+17", "%.3Re", x);
   check_sprintf ("100000000000000000", "%.0Rf", x);
   check_sprintf ("100000000000000000.0", "%.1Rf", x);
@@ -390,7 +421,7 @@ decimal (void)
   check_sprintf ("100000000000000000.0", "%'.1Rf", x);
 
   mpfr_ui_div (x, 1, x, MPFR_RNDN); /* x=1e-17 */
-  check_sprintf ("1e-17", "%Re", x);
+  check_sprintf ("1.000000000000000000000000000000000000000e-17", "%Re", x);
   check_sprintf ("0.000000", "%Rf", x);
   check_sprintf ("1e-17", "%Rg", x);
   check_sprintf ("0.0", "%.1RDf", x);
@@ -402,7 +433,7 @@ decimal (void)
   check_sprintf ("1", "%.0RUf", x);
   check_sprintf ("1", "%.0RYf", x);
 
-  /* multiple of 10 with 'g' style */
+  /* powers of 10 with 'g' style */
   mpfr_set_str (x, "10", 10, MPFR_RNDN);
   check_sprintf ("10", "%Rg", x);
   check_sprintf ("1e+01", "%.0Rg", x);
@@ -419,6 +450,12 @@ decimal (void)
   check_sprintf ("1e+03", "%.0Rg", x);
   check_sprintf ("1e+03", "%.3Rg", x);
   check_sprintf ("1000", "%.4Rg", x);
+  check_sprintf ("1e+03", "%.3Rg", x);
+  check_sprintf ("1000", "%.4Rg", x);
+  check_sprintf ("    1e+03", "%9.3Rg", x);
+  check_sprintf ("     1000", "%9.4Rg", x);
+  check_sprintf ("00001e+03", "%09.3Rg", x);
+  check_sprintf ("000001000", "%09.4Rg", x);
 
   mpfr_ui_div (x, 1, x, MPFR_RNDN);
   check_sprintf ("0.001", "%Rg", x);
@@ -430,6 +467,10 @@ decimal (void)
   check_sprintf ("1e+05", "%.0Rg", x);
   check_sprintf ("1e+05", "%.5Rg", x);
   check_sprintf ("100000", "%.6Rg", x);
+  check_sprintf ("            1e+05", "%17.5Rg", x);
+  check_sprintf ("           100000", "%17.6Rg", x);
+  check_sprintf ("0000000000001e+05", "%017.5Rg", x);
+  check_sprintf ("00000000000100000", "%017.6Rg", x);
 
   mpfr_ui_div (x, 1, x, MPFR_RNDN);
   check_sprintf ("1e-05", "%Rg", x);
@@ -568,7 +609,7 @@ decimal (void)
   /* regression in MPFR 3.1.0 (bug introduced in r7761, fixed in r7931) */
   check_sprintf ("-10", "%.2Rg", x);
 
-  mpfr_clears (x, z, (mpfr_ptr) 0);
+  mpfr_clears (x, y, z, (mpfr_ptr) 0);
   return 0;
 }
 
@@ -614,6 +655,8 @@ hexadecimal (void)
   check_sprintf ("   0xf.edcba987654321p+24", "%25RNa", x);
   check_sprintf ("                  0x1p+28", "%25.0Ra", x);
   check_sprintf ("                   0x0p+0", "%25.0Ra", z);
+  check_sprintf ("                   0x0p+0", "%25Ra", z);
+  check_sprintf ("                  0x0.p+0", "%#25Ra", z);
   /* sign or space, pad with leading zeros */
   check_sprintf (" 0X00F.EDCBA987654321P+24", "% 025RA", x);
   check_sprintf (" 0X000000000000000001P+28", "% 025.0RA", x);
@@ -739,6 +782,7 @@ binary (void)
   /* simplest case: right justified */
   check_sprintf ("    1.1100101011001101p+9", "%25Rb", x);
   check_sprintf ("                     0p+0", "%25Rb", z);
+  check_sprintf ("                    0.p+0", "%#25Rb", z);
   /* sign or space, pad with leading zeros */
   check_sprintf (" 0001.1100101011001101p+9", "% 025Rb", x);
   check_sprintf (" 000000000000000000000p+0", "% 025Rb", z);
@@ -822,9 +866,9 @@ mixed (void)
   rnd = MPFR_RNDD;
 
   check_vsprintf ("121%", "%i%%", i);
-  check_vsprintf ("121% -1.2345678875E+07", "%i%% %RNE", i, x);
+  check_vsprintf ("121% -1.2345678875000000E+07", "%i%% %RNE", i, x);
   check_vsprintf ("121, -12345679", "%i, %.0Rf", i, x);
-  check_vsprintf ("10610209857723, -1.2345678875e+07", "%Zi, %R*e", mpz, rnd,
+  check_vsprintf ("10610209857723, -1.2345678875000000e+07", "%Zi, %R*e", mpz, rnd,
                   x);
   check_vsprintf ("-12345678.9, 121", "%.1Rf, %i", x, i);
   check_vsprintf ("-12345678, 1e240/45b352", "%.0R*f, %Qx", MPFR_RNDZ, x, mpq);
@@ -852,10 +896,17 @@ mixed (void)
 
 #ifdef PRINTF_L
   /* under MinGW, -D__USE_MINGW_ANSI_STDIO is required to support %Lf
-     see https://gcc.gnu.org/ml/gcc/2013-03/msg00103.html */
-  check_vsprintf ("00000010610209857723, -1.2345678875e+07, 0.032258",
+     see https://gcc.gnu.org/legacy-ml/gcc/2013-03/msg00103.html */
+  check_vsprintf ("00000010610209857723, -1.2345678875000000e+07, 0.032258",
                   "%.*Zi, %R*e, %Lf", 20, mpz, rnd, x, d);
 #endif
+
+  /* check invalid spec.spec */
+  check_vsprintf ("%,", "%,");
+  check_vsprintf ("%3*Rg", "%3*Rg");
+
+  /* check empty format */
+  check_vsprintf ("%", "%");
 
   mpf_clear (mpf);
   mpq_clear (mpq);
@@ -864,35 +915,48 @@ mixed (void)
   return 0;
 }
 
-#if MPFR_LCONV_DPTS
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE) && MPFR_LCONV_DPTS
 
 /* Check with locale "da_DK". On most platforms, decimal point is ','
    and thousands separator is '.'; the test is not performed if this
    is not the case or if the locale doesn't exist. */
-static int
+static void
 locale_da_DK (void)
 {
   mpfr_prec_t p = 128;
-  mpfr_t x;
+  mpfr_t x, y;
 
   if (setlocale (LC_ALL, "da_DK") == 0 ||
       localeconv()->decimal_point[0] != ',' ||
       localeconv()->thousands_sep[0] != '.')
-    return 0;
+    {
+      setlocale (LC_ALL, "C");
+
+      if (getenv ("MPFR_CHECK_LOCALES") == NULL)
+        return;
+
+      fprintf (stderr,
+               "Cannot test the da_DK locale (not found or inconsistent).\n");
+      exit (1);
+    }
 
   mpfr_init2 (x, p);
 
   /* positive numbers */
   mpfr_set_str (x, "18993474.61279296875", 10, MPFR_RNDN);
+  mpfr_init2 (y, 59);
+  mpfr_set (y, x, MPFR_RNDN);
 
   /* simplest case right justified with thousands separator */
-  check_sprintf ("      1,899347461279296875e+07", "%'30Re", x);
+  check_sprintf ("1,899347461279296875000000000000000000000e+07", "%'30Re", x);
+  check_sprintf ("      1,899347461279296875e+07", "%'30Re", y);
   check_sprintf ("                   1,89935e+07", "%'30Rg", x);
   check_sprintf ("        18.993.474,61279296875", "%'30.19Rg", x);
   check_sprintf ("             18.993.474,612793", "%'30Rf", x);
 
   /* sign or space, pad, thousands separator with leading zeros */
-  check_sprintf (" 000001,899347461279296875E+07", "%' 030RE", x);
+  check_sprintf (" 1,899347461279296875000000000000000000000E+07", "%' 030RE", x);
+  check_sprintf (" 000001,899347461279296875E+07", "%' 030RE", y);
   check_sprintf (" 0000000000000000001,89935E+07", "%' 030RG", x);
   check_sprintf (" 000000018.993.474,61279296875", "%' 030.19RG", x);
   check_sprintf (" 00000000000018.993.474,612793", "%' 030RF", x);
@@ -917,10 +981,12 @@ locale_da_DK (void)
   check_sprintf ("100" S2 "0000", "%'.4Rf", x);
 
   mpfr_clear (x);
-  return 0;
+  mpfr_clear (y);
+
+  setlocale (LC_ALL, "C");
 }
 
-#endif  /* MPFR_LCONV_DPTS */
+#endif  /* ... && MPFR_LCONV_DPTS */
 
 /* check concordance between mpfr_asprintf result with a regular mpfr float
    and with a regular double float */
@@ -981,7 +1047,7 @@ random_double (void)
         {
           y = DBL_RAND ();
         }
-#ifdef HAVE_DENORMS
+#ifdef HAVE_SUBNORM_DBL
       while (0);
 #else
       while (ABS(y) < DBL_MIN);
@@ -1363,6 +1429,9 @@ bug21056 (void)
    in ISO C, but this conflicts with POSIX:
      https://sourceware.org/bugzilla/show_bug.cgi?id=14771#c2
      http://austingroupbugs.net/view.php?id=761
+     http://austingroupbugs.net/view.php?id=1219
+     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87096
+   Fixed in r11429.
 */
 static void
 snprintf_size (void)
@@ -1425,6 +1494,183 @@ percent_n (void)
     exit (1);
 }
 
+struct clo
+{
+  const char *fmt;
+  int width, r, e;
+};
+
+static void
+check_length_overflow (void)
+{
+  mpfr_t x;
+  int i, r, e;
+  struct clo t[] = {
+    { "%Rg", 0, 1, 0 },
+    { "%*Rg", 1, 1, 0 },
+    { "%*Rg", -1, 1, 0 },
+    { "%5Rg", 0, 5, 0 },
+    { "%*Rg", 5, 5, 0 },
+    { "%*Rg", -5, 5, 0 },
+#if INT_MAX == 2147483647
+    { "%2147483647Rg", 0, 2147483647, 0 },
+    { "%2147483647Rg ", 0, -1, 1 },
+    { "%2147483648Rg", 0, -1, 1 },
+    { "%18446744073709551616Rg", 0, -1, 1 },
+    { "%*Rg", 2147483647, 2147483647, 0 },
+    { "%*Rg", -2147483647, 2147483647, 0 },
+# if INT_MIN < -INT_MAX
+    { "%*Rg", INT_MIN, -1, 1 },
+# endif
+#endif
+  };
+
+  mpfr_init2 (x, MPFR_PREC_MIN);
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+
+  for (i = 0; i < numberof (t); i++)
+    {
+      errno = 0;
+      r = t[i].width == 0 ?
+        mpfr_snprintf (NULL, 0, t[i].fmt, x) :
+        mpfr_snprintf (NULL, 0, t[i].fmt, t[i].width, x);
+      e = errno;
+      if ((t[i].r < 0 ? r >= 0 : r != t[i].r)
+#ifdef EOVERFLOW
+          || (t[i].e && e != EOVERFLOW)
+#endif
+          )
+        {
+          printf ("Error in check_length_overflow for i=%d (%s %d)\n",
+                  i, t[i].fmt, t[i].width);
+          printf ("Expected r=%d, got r=%d\n", t[i].r, r);
+#ifdef EOVERFLOW
+          if (t[i].e && e != EOVERFLOW)
+            printf ("Expected errno=EOVERFLOW=%d, got errno=%d\n",
+                    EOVERFLOW, e);
+#endif
+          exit (1);
+        }
+    }
+
+  mpfr_clear (x);
+}
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+
+/* The following tests should be equivalent to those from test_locale()
+   in tprintf.c (remove the \n at the end of the test strings). */
+
+static void
+test_locale (void)
+{
+  const char * const tab_locale[] = {
+    "en_US",
+    "en_US.iso88591",
+    "en_US.iso885915",
+    "en_US.utf8"
+  };
+  int i;
+  mpfr_t x;
+  char v[] = "99999999999999999999999.5";
+
+  for (i = 0; i < numberof(tab_locale); i++)
+    {
+      char *s;
+
+      s = setlocale (LC_ALL, tab_locale[i]);
+
+      if (s != NULL && MPFR_THOUSANDS_SEPARATOR == ',')
+        break;
+    }
+
+  if (i == numberof(tab_locale))
+    {
+      if (getenv ("MPFR_CHECK_LOCALES") == NULL)
+        return;
+
+      fprintf (stderr, "Cannot find a locale with ',' thousands separator.\n"
+               "Please install one of the en_US based locales.\n");
+      exit (1);
+    }
+
+  mpfr_init2 (x, 113);
+  mpfr_set_ui (x, 10000, MPFR_RNDN);
+
+  check_sprintf ("(1) 10000=10,000 ", "(1) 10000=%'Rg ", x);
+  check_sprintf ("(2) 10000=10,000.000000 ", "(2) 10000=%'Rf ", x);
+
+  mpfr_set_ui (x, 1000, MPFR_RNDN);
+  check_sprintf ("(3) 1000=1,000.000000 ", "(3) 1000=%'Rf ", x);
+
+  for (i = 1; i <= sizeof (v) - 3; i++)
+    {
+      char buf[64];
+      int j;
+
+      strcpy (buf, "(4) 10^i=1");
+      for (j = i; j > 0; j--)
+        strcat (buf, ",0" + (j % 3 != 0));
+      strcat (buf, " ");
+      mpfr_set_str (x, v + sizeof (v) - 3 - i, 10, MPFR_RNDN);
+      check_sprintf (buf, "(4) 10^i=%'.0Rf ", x);
+    }
+
+#define N0 20
+
+  for (i = 1; i <= N0; i++)
+    {
+      char s[N0+4], buf[64];
+      int j;
+
+      s[0] = '1';
+      for (j = 1; j <= i; j++)
+        s[j] = '0';
+      s[i+1] = '\0';
+
+      strcpy (buf, "(5) 10^i=1");
+      for (j = i; j > 0; j--)
+        strcat (buf, ",0" + (j % 3 != 0));
+      strcat (buf, " ");
+
+      mpfr_set_str (x, s, 10, MPFR_RNDN);
+
+      check_sprintf (buf, "(5) 10^i=%'.0RNf ", x);
+      check_sprintf (buf, "(5) 10^i=%'.0RZf ", x);
+      check_sprintf (buf, "(5) 10^i=%'.0RUf ", x);
+      check_sprintf (buf, "(5) 10^i=%'.0RDf ", x);
+      check_sprintf (buf, "(5) 10^i=%'.0RYf ", x);
+
+      strcat (s + (i + 1), ".5");
+      check_sprintf (buf, "(5) 10^i=%'.0Rf ", x);
+    }
+
+  mpfr_set_str (x, "1000", 10, MPFR_RNDN);
+  check_sprintf ("00000001e+03", "%'012.3Rg", x);
+  check_sprintf ("00000001,000", "%'012.4Rg", x);
+  check_sprintf ("000000001,000", "%'013.4Rg", x);
+
+#ifdef PRINTF_GROUPFLAG
+  check_vsprintf ("+01,234,567  :", "%0+ -'13.10Pd:", (mpfr_prec_t) 1234567);
+#endif
+
+  mpfr_clear (x);
+}
+
+#else
+
+static void
+test_locale (void)
+{
+  if (getenv ("MPFR_CHECK_LOCALES") != NULL)
+    {
+      fprintf (stderr, "Cannot test locales.\n");
+      exit (1);
+    }
+}
+
+#endif
+
 int
 main (int argc, char **argv)
 {
@@ -1446,12 +1692,14 @@ main (int argc, char **argv)
       binary ();
       decimal ();
 
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-#if MPFR_LCONV_DPTS
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE) && MPFR_LCONV_DPTS
       locale_da_DK ();
-  /* Avoid a warning by doing the setlocale outside of this #if */
-#endif
-      setlocale (LC_ALL, "C");
+#else
+      if (getenv ("MPFR_CHECK_LOCALES") != NULL)
+        {
+          fprintf (stderr, "Cannot test locales.\n");
+          exit (1);
+        }
 #endif
     }
 
@@ -1462,6 +1710,8 @@ main (int argc, char **argv)
   snprintf_size ();
   percent_n ();
   mixed ();
+  check_length_overflow ();
+  test_locale ();
 
   if (getenv ("MPFR_CHECK_LIBC_PRINTF"))
     {

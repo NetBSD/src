@@ -1,6 +1,6 @@
 /* mpfr_get_str -- output a floating-point number to a string
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,11 +17,11 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-impl.h"
 
 static int mpfr_get_str_aux (char *const, mpfr_exp_t *const, mp_limb_t *const,
@@ -253,6 +253,8 @@ mpfr_get_str_aux (char *const str, mpfr_exp_t *const exp, mp_limb_t *const r,
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_2_0__tab[] = { 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_2_0__tab[] = { 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -268,6 +270,8 @@ const mp_limb_t mpfr_l2b_2_0__tab[] = { 0x80000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_2_1__tab[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_2_1__tab[] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -283,6 +287,8 @@ const mp_limb_t mpfr_l2b_2_1__tab[] = { 0x80000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_3_0__tab[] = { 0x0e, 0xe0, 0xca };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_3_0__tab[] = { 0x0e00, 0xcae0 };
 #elif GMP_NUMB_BITS == 32
@@ -298,6 +304,8 @@ const mp_limb_t mpfr_l2b_3_0__tab[] = { 0xcae00e00000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_3_1__tab[] = { 0x48, 0x04, 0x4e, 0xe9, 0xa9, 0xa9, 0xc1, 0x9c, 0x84, 0xa1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_3_1__tab[] = { 0x0448, 0xe94e, 0xa9a9, 0x9cc1, 0xa184 };
 #elif GMP_NUMB_BITS == 32
@@ -313,6 +321,8 @@ const mp_limb_t mpfr_l2b_3_1__tab[] = { 0xa1849cc1a9a9e94e0448000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_4_0__tab[] = { 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_4_0__tab[] = { 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -328,6 +338,8 @@ const mp_limb_t mpfr_l2b_4_0__tab[] = { 0x80000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_4_1__tab[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_4_1__tab[] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -343,6 +355,8 @@ const mp_limb_t mpfr_l2b_4_1__tab[] = { 0x80000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_5_0__tab[] = { 0x7a, 0x9a, 0x94 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_5_0__tab[] = { 0x7a00, 0x949a };
 #elif GMP_NUMB_BITS == 32
@@ -358,6 +372,8 @@ const mp_limb_t mpfr_l2b_5_0__tab[] = { 0x949a7a00000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_5_1__tab[] = { 0xb8, 0x67, 0x28, 0x97, 0x7b, 0x28, 0x48, 0xa3, 0x81, 0xdc };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_5_1__tab[] = { 0x67b8, 0x9728, 0x287b, 0xa348, 0xdc81 };
 #elif GMP_NUMB_BITS == 32
@@ -373,6 +389,8 @@ const mp_limb_t mpfr_l2b_5_1__tab[] = { 0xdc81a348287b972867b8000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_6_0__tab[] = { 0x08, 0x70, 0xa5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_6_0__tab[] = { 0x0800, 0xa570 };
 #elif GMP_NUMB_BITS == 32
@@ -388,6 +406,8 @@ const mp_limb_t mpfr_l2b_6_0__tab[] = { 0xa5700800000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_6_1__tab[] = { 0x10, 0xff, 0xe9, 0xf9, 0x54, 0xe0, 0x36, 0x92, 0x11, 0xc6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_6_1__tab[] = { 0xff10, 0xf9e9, 0xe054, 0x9236, 0xc611 };
 #elif GMP_NUMB_BITS == 32
@@ -403,6 +423,8 @@ const mp_limb_t mpfr_l2b_6_1__tab[] = { 0xc6119236e054f9e9ff10000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_7_0__tab[] = { 0xb4, 0xab, 0xb3 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_7_0__tab[] = { 0xb400, 0xb3ab };
 #elif GMP_NUMB_BITS == 32
@@ -418,6 +440,8 @@ const mp_limb_t mpfr_l2b_7_0__tab[] = { 0xb3abb400000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_7_1__tab[] = { 0xb8, 0x37, 0x11, 0xa7, 0x4d, 0x75, 0xd6, 0xc9, 0x60, 0xb6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_7_1__tab[] = { 0x37b8, 0xa711, 0x754d, 0xc9d6, 0xb660 };
 #elif GMP_NUMB_BITS == 32
@@ -433,6 +457,8 @@ const mp_limb_t mpfr_l2b_7_1__tab[] = { 0xb660c9d6754da71137b8000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_8_0__tab[] = { 0x00, 0x00, 0xc0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_8_0__tab[] = { 0x0000, 0xc000 };
 #elif GMP_NUMB_BITS == 32
@@ -448,6 +474,8 @@ const mp_limb_t mpfr_l2b_8_0__tab[] = { 0xc0000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_8_1__tab[] = { 0xb0, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_8_1__tab[] = { 0xaab0, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa };
 #elif GMP_NUMB_BITS == 32
@@ -463,6 +491,8 @@ const mp_limb_t mpfr_l2b_8_1__tab[] = { 0xaaaaaaaaaaaaaaaaaab0000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_9_0__tab[] = { 0x0e, 0xe0, 0xca };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_9_0__tab[] = { 0x0e00, 0xcae0 };
 #elif GMP_NUMB_BITS == 32
@@ -478,6 +508,8 @@ const mp_limb_t mpfr_l2b_9_0__tab[] = { 0xcae00e00000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_9_1__tab[] = { 0x48, 0x04, 0x4e, 0xe9, 0xa9, 0xa9, 0xc1, 0x9c, 0x84, 0xa1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_9_1__tab[] = { 0x0448, 0xe94e, 0xa9a9, 0x9cc1, 0xa184 };
 #elif GMP_NUMB_BITS == 32
@@ -493,6 +525,8 @@ const mp_limb_t mpfr_l2b_9_1__tab[] = { 0xa1849cc1a9a9e94e0448000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_10_0__tab[] = { 0x7a, 0x9a, 0xd4 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_10_0__tab[] = { 0x7a00, 0xd49a };
 #elif GMP_NUMB_BITS == 32
@@ -508,6 +542,8 @@ const mp_limb_t mpfr_l2b_10_0__tab[] = { 0xd49a7a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_10_1__tab[] = { 0x90, 0x8f, 0x98, 0xf7, 0xcf, 0xfb, 0x84, 0x9a, 0x20, 0x9a };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_10_1__tab[] = { 0x8f90, 0xf798, 0xfbcf, 0x9a84, 0x9a20 };
 #elif GMP_NUMB_BITS == 32
@@ -523,6 +559,8 @@ const mp_limb_t mpfr_l2b_10_1__tab[] = { 0x9a209a84fbcff7988f9000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_11_0__tab[] = { 0x54, 0x67, 0xdd };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_11_0__tab[] = { 0x5400, 0xdd67 };
 #elif GMP_NUMB_BITS == 32
@@ -538,6 +576,8 @@ const mp_limb_t mpfr_l2b_11_0__tab[] = { 0xdd67540000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_11_1__tab[] = { 0x70, 0xe1, 0x10, 0x9d, 0x22, 0xeb, 0x0e, 0x4e, 0x00, 0x94 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_11_1__tab[] = { 0xe170, 0x9d10, 0xeb22, 0x4e0e, 0x9400 };
 #elif GMP_NUMB_BITS == 32
@@ -553,6 +593,8 @@ const mp_limb_t mpfr_l2b_11_1__tab[] = { 0x94004e0eeb229d10e17000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_12_0__tab[] = { 0x08, 0x70, 0xe5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_12_0__tab[] = { 0x0800, 0xe570 };
 #elif GMP_NUMB_BITS == 32
@@ -568,6 +610,8 @@ const mp_limb_t mpfr_l2b_12_0__tab[] = { 0xe570080000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_12_1__tab[] = { 0x28, 0xfe, 0x24, 0x1c, 0x03, 0x0b, 0x1a, 0x9c, 0xd1, 0x8e };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_12_1__tab[] = { 0xfe28, 0x1c24, 0x0b03, 0x9c1a, 0x8ed1 };
 #elif GMP_NUMB_BITS == 32
@@ -583,6 +627,8 @@ const mp_limb_t mpfr_l2b_12_1__tab[] = { 0x8ed19c1a0b031c24fe2800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_13_0__tab[] = { 0x02, 0xd4, 0xec };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_13_0__tab[] = { 0x0200, 0xecd4 };
 #elif GMP_NUMB_BITS == 32
@@ -598,6 +644,8 @@ const mp_limb_t mpfr_l2b_13_0__tab[] = { 0xecd4020000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_13_1__tab[] = { 0xf8, 0x57, 0xb4, 0xf7, 0x20, 0xcb, 0xc6, 0xa7, 0x5c, 0x8a };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_13_1__tab[] = { 0x57f8, 0xf7b4, 0xcb20, 0xa7c6, 0x8a5c };
 #elif GMP_NUMB_BITS == 32
@@ -613,6 +661,8 @@ const mp_limb_t mpfr_l2b_13_1__tab[] = { 0x8a5ca7c6cb20f7b457f800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_14_0__tab[] = { 0xb4, 0xab, 0xf3 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_14_0__tab[] = { 0xb400, 0xf3ab };
 #elif GMP_NUMB_BITS == 32
@@ -628,6 +678,8 @@ const mp_limb_t mpfr_l2b_14_0__tab[] = { 0xf3abb40000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_14_1__tab[] = { 0xa8, 0x85, 0xab, 0x5c, 0xb5, 0x96, 0xf6, 0xff, 0x79, 0x86 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_14_1__tab[] = { 0x85a8, 0x5cab, 0x96b5, 0xfff6, 0x8679 };
 #elif GMP_NUMB_BITS == 32
@@ -643,6 +695,8 @@ const mp_limb_t mpfr_l2b_14_1__tab[] = { 0x8679fff696b55cab85a800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_15_0__tab[] = { 0x80, 0x0a, 0xfa };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_15_0__tab[] = { 0x8000, 0xfa0a };
 #elif GMP_NUMB_BITS == 32
@@ -658,6 +712,8 @@ const mp_limb_t mpfr_l2b_15_0__tab[] = { 0xfa0a800000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_15_1__tab[] = { 0x80, 0x6f, 0xaa, 0xa6, 0xf0, 0x69, 0x23, 0xee, 0x0c, 0x83 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_15_1__tab[] = { 0x6f80, 0xa6aa, 0x69f0, 0xee23, 0x830c };
 #elif GMP_NUMB_BITS == 32
@@ -673,6 +729,8 @@ const mp_limb_t mpfr_l2b_15_1__tab[] = { 0x830cee2369f0a6aa6f8000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_16_0__tab[] = { 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_16_0__tab[] = { 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -688,6 +746,8 @@ const mp_limb_t mpfr_l2b_16_0__tab[] = { 0x8000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_16_1__tab[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_16_1__tab[] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x8000 };
 #elif GMP_NUMB_BITS == 32
@@ -703,6 +763,8 @@ const mp_limb_t mpfr_l2b_16_1__tab[] = { 0x8000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_17_0__tab[] = { 0x80, 0xcc, 0x82 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_17_0__tab[] = { 0x8000, 0x82cc };
 #elif GMP_NUMB_BITS == 32
@@ -718,6 +780,8 @@ const mp_limb_t mpfr_l2b_17_0__tab[] = { 0x82cc800000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_17_1__tab[] = { 0x20, 0x87, 0x9b, 0x25, 0xc4, 0x62, 0xf5, 0xab, 0x85, 0xfa };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_17_1__tab[] = { 0x8720, 0x259b, 0x62c4, 0xabf5, 0xfa85 };
 #elif GMP_NUMB_BITS == 32
@@ -733,6 +797,8 @@ const mp_limb_t mpfr_l2b_17_1__tab[] = { 0xfa85abf562c4259b872000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_18_0__tab[] = { 0x08, 0x70, 0x85 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_18_0__tab[] = { 0x0800, 0x8570 };
 #elif GMP_NUMB_BITS == 32
@@ -748,6 +814,8 @@ const mp_limb_t mpfr_l2b_18_0__tab[] = { 0x8570080000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_18_1__tab[] = { 0x98, 0x36, 0x78, 0x13, 0x37, 0x55, 0x34, 0x66, 0x91, 0xf5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_18_1__tab[] = { 0x3698, 0x1378, 0x5537, 0x6634, 0xf591 };
 #elif GMP_NUMB_BITS == 32
@@ -763,6 +831,8 @@ const mp_limb_t mpfr_l2b_18_1__tab[] = { 0xf591663455371378369800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_19_0__tab[] = { 0x06, 0xef, 0x87 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_19_0__tab[] = { 0x0600, 0x87ef };
 #elif GMP_NUMB_BITS == 32
@@ -778,6 +848,8 @@ const mp_limb_t mpfr_l2b_19_0__tab[] = { 0x87ef060000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_19_1__tab[] = { 0xb8, 0x0d, 0x8c, 0x55, 0xed, 0x62, 0xc0, 0x08, 0x0f, 0xf1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_19_1__tab[] = { 0x0db8, 0x558c, 0x62ed, 0x08c0, 0xf10f };
 #elif GMP_NUMB_BITS == 32
@@ -793,6 +865,8 @@ const mp_limb_t mpfr_l2b_19_1__tab[] = { 0xf10f08c062ed558c0db800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_20_0__tab[] = { 0x3e, 0x4d, 0x8a };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_20_0__tab[] = { 0x3e00, 0x8a4d };
 #elif GMP_NUMB_BITS == 32
@@ -808,6 +882,8 @@ const mp_limb_t mpfr_l2b_20_0__tab[] = { 0x8a4d3e0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_20_1__tab[] = { 0x40, 0x0b, 0x1c, 0xa7, 0xc1, 0x1c, 0x0a, 0x69, 0xee, 0xec };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_20_1__tab[] = { 0x0b40, 0xa71c, 0x1cc1, 0x690a, 0xecee };
 #elif GMP_NUMB_BITS == 32
@@ -823,6 +899,8 @@ const mp_limb_t mpfr_l2b_20_1__tab[] = { 0xecee690a1cc1a71c0b4000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_21_0__tab[] = { 0xde, 0x8d, 0x8c };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_21_0__tab[] = { 0xde00, 0x8c8d };
 #elif GMP_NUMB_BITS == 32
@@ -838,6 +916,8 @@ const mp_limb_t mpfr_l2b_21_0__tab[] = { 0x8c8dde0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_21_1__tab[] = { 0x08, 0x41, 0x26, 0x6b, 0xd0, 0xb3, 0xc1, 0x63, 0x22, 0xe9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_21_1__tab[] = { 0x4108, 0x6b26, 0xb3d0, 0x63c1, 0xe922 };
 #elif GMP_NUMB_BITS == 32
@@ -853,6 +933,8 @@ const mp_limb_t mpfr_l2b_21_1__tab[] = { 0xe92263c1b3d06b26410800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_22_0__tab[] = { 0xaa, 0xb3, 0x8e };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_22_0__tab[] = { 0xaa00, 0x8eb3 };
 #elif GMP_NUMB_BITS == 32
@@ -868,6 +950,8 @@ const mp_limb_t mpfr_l2b_22_0__tab[] = { 0x8eb3aa0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_22_1__tab[] = { 0xe8, 0xdb, 0x61, 0xf0, 0xb9, 0x60, 0x4d, 0x2c, 0xa0, 0xe5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_22_1__tab[] = { 0xdbe8, 0xf061, 0x60b9, 0x2c4d, 0xe5a0 };
 #elif GMP_NUMB_BITS == 32
@@ -883,6 +967,8 @@ const mp_limb_t mpfr_l2b_22_1__tab[] = { 0xe5a02c4d60b9f061dbe800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_23_0__tab[] = { 0x06, 0xc1, 0x90 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_23_0__tab[] = { 0x0600, 0x90c1 };
 #elif GMP_NUMB_BITS == 32
@@ -898,6 +984,8 @@ const mp_limb_t mpfr_l2b_23_0__tab[] = { 0x90c1060000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_23_1__tab[] = { 0xe0, 0xc3, 0x6a, 0x58, 0xb9, 0x46, 0xdd, 0xca, 0x5e, 0xe2 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_23_1__tab[] = { 0xc3e0, 0x586a, 0x46b9, 0xcadd, 0xe25e };
 #elif GMP_NUMB_BITS == 32
@@ -913,6 +1001,8 @@ const mp_limb_t mpfr_l2b_23_1__tab[] = { 0xe25ecadd46b9586ac3e000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_24_0__tab[] = { 0x04, 0xb8, 0x92 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_24_0__tab[] = { 0x0400, 0x92b8 };
 #elif GMP_NUMB_BITS == 32
@@ -928,6 +1018,8 @@ const mp_limb_t mpfr_l2b_24_0__tab[] = { 0x92b8040000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_24_1__tab[] = { 0x68, 0x36, 0x63, 0x72, 0xc6, 0xc7, 0x44, 0xbb, 0x56, 0xdf };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_24_1__tab[] = { 0x3668, 0x7263, 0xc7c6, 0xbb44, 0xdf56 };
 #elif GMP_NUMB_BITS == 32
@@ -943,6 +1035,8 @@ const mp_limb_t mpfr_l2b_24_1__tab[] = { 0xdf56bb44c7c67263366800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_25_0__tab[] = { 0x7a, 0x9a, 0x94 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_25_0__tab[] = { 0x7a00, 0x949a };
 #elif GMP_NUMB_BITS == 32
@@ -958,6 +1052,8 @@ const mp_limb_t mpfr_l2b_25_0__tab[] = { 0x949a7a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_25_1__tab[] = { 0xb8, 0x67, 0x28, 0x97, 0x7b, 0x28, 0x48, 0xa3, 0x81, 0xdc };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_25_1__tab[] = { 0x67b8, 0x9728, 0x287b, 0xa348, 0xdc81 };
 #elif GMP_NUMB_BITS == 32
@@ -973,6 +1069,8 @@ const mp_limb_t mpfr_l2b_25_1__tab[] = { 0xdc81a348287b972867b800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_26_0__tab[] = { 0x02, 0x6a, 0x96 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_26_0__tab[] = { 0x0200, 0x966a };
 #elif GMP_NUMB_BITS == 32
@@ -988,6 +1086,8 @@ const mp_limb_t mpfr_l2b_26_0__tab[] = { 0x966a020000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_26_1__tab[] = { 0x58, 0x64, 0xa4, 0x78, 0x83, 0x75, 0xf9, 0x19, 0xda, 0xd9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_26_1__tab[] = { 0x6458, 0x78a4, 0x7583, 0x19f9, 0xd9da };
 #elif GMP_NUMB_BITS == 32
@@ -1003,6 +1103,8 @@ const mp_limb_t mpfr_l2b_26_1__tab[] = { 0xd9da19f9758378a4645800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_27_0__tab[] = { 0x0a, 0x28, 0x98 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_27_0__tab[] = { 0x0a00, 0x9828 };
 #elif GMP_NUMB_BITS == 32
@@ -1018,6 +1120,8 @@ const mp_limb_t mpfr_l2b_27_0__tab[] = { 0x98280a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_27_1__tab[] = { 0x08, 0x5b, 0xbd, 0xe1, 0x37, 0xe2, 0xac, 0x7b, 0x5b, 0xd7 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_27_1__tab[] = { 0x5b08, 0xe1bd, 0xe237, 0x7bac, 0xd75b };
 #elif GMP_NUMB_BITS == 32
@@ -1033,6 +1137,8 @@ const mp_limb_t mpfr_l2b_27_1__tab[] = { 0xd75b7bace237e1bd5b0800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_28_0__tab[] = { 0xda, 0xd5, 0x99 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_28_0__tab[] = { 0xda00, 0x99d5 };
 #elif GMP_NUMB_BITS == 32
@@ -1048,6 +1154,8 @@ const mp_limb_t mpfr_l2b_28_0__tab[] = { 0x99d5da0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_28_1__tab[] = { 0xb8, 0xde, 0xb8, 0xe8, 0xdf, 0x71, 0x58, 0xc7, 0x01, 0xd5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_28_1__tab[] = { 0xdeb8, 0xe8b8, 0x71df, 0xc758, 0xd501 };
 #elif GMP_NUMB_BITS == 32
@@ -1063,6 +1171,8 @@ const mp_limb_t mpfr_l2b_28_1__tab[] = { 0xd501c75871dfe8b8deb800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_29_0__tab[] = { 0x96, 0x74, 0x9b };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_29_0__tab[] = { 0x9600, 0x9b74 };
 #elif GMP_NUMB_BITS == 32
@@ -1078,6 +1188,8 @@ const mp_limb_t mpfr_l2b_29_0__tab[] = { 0x9b74960000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_29_1__tab[] = { 0xc8, 0xcc, 0xb3, 0x62, 0x6c, 0x9c, 0x15, 0x83, 0xc9, 0xd2 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_29_1__tab[] = { 0xccc8, 0x62b3, 0x9c6c, 0x8315, 0xd2c9 };
 #elif GMP_NUMB_BITS == 32
@@ -1093,6 +1205,8 @@ const mp_limb_t mpfr_l2b_29_1__tab[] = { 0xd2c983159c6c62b3ccc800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_30_0__tab[] = { 0x40, 0x05, 0x9d };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_30_0__tab[] = { 0x4000, 0x9d05 };
 #elif GMP_NUMB_BITS == 32
@@ -1108,6 +1222,8 @@ const mp_limb_t mpfr_l2b_30_0__tab[] = { 0x9d05400000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_30_1__tab[] = { 0x88, 0x35, 0x32, 0x17, 0xad, 0x5c, 0x19, 0xa6, 0xaf, 0xd0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_30_1__tab[] = { 0x3588, 0x1732, 0x5cad, 0xa619, 0xd0af };
 #elif GMP_NUMB_BITS == 32
@@ -1123,6 +1239,8 @@ const mp_limb_t mpfr_l2b_30_1__tab[] = { 0xd0afa6195cad1732358800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_31_0__tab[] = { 0xc8, 0x88, 0x9e };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_31_0__tab[] = { 0xc800, 0x9e88 };
 #elif GMP_NUMB_BITS == 32
@@ -1138,6 +1256,8 @@ const mp_limb_t mpfr_l2b_31_0__tab[] = { 0x9e88c80000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_31_1__tab[] = { 0x78, 0xd5, 0xca, 0xf7, 0xee, 0x63, 0xe6, 0x86, 0xb1, 0xce };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_31_1__tab[] = { 0xd578, 0xf7ca, 0x63ee, 0x86e6, 0xceb1 };
 #elif GMP_NUMB_BITS == 32
@@ -1153,6 +1273,8 @@ const mp_limb_t mpfr_l2b_31_1__tab[] = { 0xceb186e663eef7cad57800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_32_0__tab[] = { 0x00, 0x00, 0xa0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_32_0__tab[] = { 0x0000, 0xa000 };
 #elif GMP_NUMB_BITS == 32
@@ -1168,6 +1290,8 @@ const mp_limb_t mpfr_l2b_32_0__tab[] = { 0xa000000000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_32_1__tab[] = { 0xd0, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_32_1__tab[] = { 0xccd0, 0xcccc, 0xcccc, 0xcccc, 0xcccc };
 #elif GMP_NUMB_BITS == 32
@@ -1183,6 +1307,8 @@ const mp_limb_t mpfr_l2b_32_1__tab[] = { 0xccccccccccccccccccd000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_33_0__tab[] = { 0xae, 0x6b, 0xa1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_33_0__tab[] = { 0xae00, 0xa16b };
 #elif GMP_NUMB_BITS == 32
@@ -1198,6 +1324,8 @@ const mp_limb_t mpfr_l2b_33_0__tab[] = { 0xa16bae0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_33_1__tab[] = { 0x88, 0x08, 0x87, 0xa1, 0x04, 0x53, 0x04, 0x64, 0xff, 0xca };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_33_1__tab[] = { 0x0888, 0xa187, 0x5304, 0x6404, 0xcaff };
 #elif GMP_NUMB_BITS == 32
@@ -1213,6 +1341,8 @@ const mp_limb_t mpfr_l2b_33_1__tab[] = { 0xcaff64045304a187088800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_34_0__tab[] = { 0x80, 0xcc, 0xa2 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_34_0__tab[] = { 0x8000, 0xa2cc };
 #elif GMP_NUMB_BITS == 32
@@ -1228,6 +1358,8 @@ const mp_limb_t mpfr_l2b_34_0__tab[] = { 0xa2cc800000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_34_1__tab[] = { 0x50, 0xfb, 0xca, 0x17, 0x79, 0x5a, 0xd8, 0x73, 0x47, 0xc9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_34_1__tab[] = { 0xfb50, 0x17ca, 0x5a79, 0x73d8, 0xc947 };
 #elif GMP_NUMB_BITS == 32
@@ -1243,6 +1375,8 @@ const mp_limb_t mpfr_l2b_34_1__tab[] = { 0xc94773d85a7917cafb5000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_35_0__tab[] = { 0x18, 0x23, 0xa4 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_35_0__tab[] = { 0x1800, 0xa423 };
 #elif GMP_NUMB_BITS == 32
@@ -1258,6 +1392,8 @@ const mp_limb_t mpfr_l2b_35_0__tab[] = { 0xa423180000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_35_1__tab[] = { 0x60, 0x69, 0xc2, 0x18, 0x37, 0x60, 0x7c, 0x56, 0xa3, 0xc7 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_35_1__tab[] = { 0x6960, 0x18c2, 0x6037, 0x567c, 0xc7a3 };
 #elif GMP_NUMB_BITS == 32
@@ -1273,6 +1409,8 @@ const mp_limb_t mpfr_l2b_35_1__tab[] = { 0xc7a3567c603718c2696000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_36_0__tab[] = { 0x08, 0x70, 0xa5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_36_0__tab[] = { 0x0800, 0xa570 };
 #elif GMP_NUMB_BITS == 32
@@ -1288,6 +1426,8 @@ const mp_limb_t mpfr_l2b_36_0__tab[] = { 0xa570080000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_36_1__tab[] = { 0x10, 0xff, 0xe9, 0xf9, 0x54, 0xe0, 0x36, 0x92, 0x11, 0xc6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_36_1__tab[] = { 0xff10, 0xf9e9, 0xe054, 0x9236, 0xc611 };
 #elif GMP_NUMB_BITS == 32
@@ -1303,6 +1443,8 @@ const mp_limb_t mpfr_l2b_36_1__tab[] = { 0xc6119236e054f9e9ff1000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_37_0__tab[] = { 0xd8, 0xb3, 0xa6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_37_0__tab[] = { 0xd800, 0xa6b3 };
 #elif GMP_NUMB_BITS == 32
@@ -1318,6 +1460,8 @@ const mp_limb_t mpfr_l2b_37_0__tab[] = { 0xa6b3d80000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_37_1__tab[] = { 0x18, 0x16, 0x36, 0x6b, 0xd7, 0x70, 0xa2, 0xd3, 0x90, 0xc4 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_37_1__tab[] = { 0x1618, 0x6b36, 0x70d7, 0xd3a2, 0xc490 };
 #elif GMP_NUMB_BITS == 32
@@ -1333,6 +1477,8 @@ const mp_limb_t mpfr_l2b_37_1__tab[] = { 0xc490d3a270d76b36161800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_38_0__tab[] = { 0x06, 0xef, 0xa7 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_38_0__tab[] = { 0x0600, 0xa7ef };
 #elif GMP_NUMB_BITS == 32
@@ -1348,6 +1494,8 @@ const mp_limb_t mpfr_l2b_38_0__tab[] = { 0xa7ef060000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_38_1__tab[] = { 0xe0, 0xa3, 0x05, 0x95, 0x82, 0x51, 0xd2, 0xe8, 0x1f, 0xc3 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_38_1__tab[] = { 0xa3e0, 0x9505, 0x5182, 0xe8d2, 0xc31f };
 #elif GMP_NUMB_BITS == 32
@@ -1363,6 +1511,8 @@ const mp_limb_t mpfr_l2b_38_1__tab[] = { 0xc31fe8d251829505a3e000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_39_0__tab[] = { 0x04, 0x22, 0xa9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_39_0__tab[] = { 0x0400, 0xa922 };
 #elif GMP_NUMB_BITS == 32
@@ -1378,6 +1528,8 @@ const mp_limb_t mpfr_l2b_39_0__tab[] = { 0xa922040000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_39_1__tab[] = { 0xf8, 0xfc, 0xb5, 0xf1, 0xca, 0x10, 0x32, 0xbd, 0xbd, 0xc1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_39_1__tab[] = { 0xfcf8, 0xf1b5, 0x10ca, 0xbd32, 0xc1bd };
 #elif GMP_NUMB_BITS == 32
@@ -1393,6 +1545,8 @@ const mp_limb_t mpfr_l2b_39_1__tab[] = { 0xc1bdbd3210caf1b5fcf800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_40_0__tab[] = { 0x3e, 0x4d, 0xaa };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_40_0__tab[] = { 0x3e00, 0xaa4d };
 #elif GMP_NUMB_BITS == 32
@@ -1408,6 +1562,8 @@ const mp_limb_t mpfr_l2b_40_0__tab[] = { 0xaa4d3e0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_40_1__tab[] = { 0xe8, 0xdc, 0x48, 0x49, 0xf7, 0xef, 0xff, 0x55, 0x69, 0xc0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_40_1__tab[] = { 0xdce8, 0x4948, 0xeff7, 0x55ff, 0xc069 };
 #elif GMP_NUMB_BITS == 32
@@ -1423,6 +1579,8 @@ const mp_limb_t mpfr_l2b_40_1__tab[] = { 0xc06955ffeff74948dce800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_41_0__tab[] = { 0x12, 0x71, 0xab };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_41_0__tab[] = { 0x1200, 0xab71 };
 #elif GMP_NUMB_BITS == 32
@@ -1438,6 +1596,8 @@ const mp_limb_t mpfr_l2b_41_0__tab[] = { 0xab71120000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_41_1__tab[] = { 0x28, 0xdc, 0xef, 0x7c, 0x95, 0xf6, 0x47, 0xcf, 0x21, 0xbf };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_41_1__tab[] = { 0xdc28, 0x7cef, 0xf695, 0xcf47, 0xbf21 };
 #elif GMP_NUMB_BITS == 32
@@ -1453,6 +1613,8 @@ const mp_limb_t mpfr_l2b_41_1__tab[] = { 0xbf21cf47f6957cefdc2800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_42_0__tab[] = { 0xde, 0x8d, 0xac };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_42_0__tab[] = { 0xde00, 0xac8d };
 #elif GMP_NUMB_BITS == 32
@@ -1468,6 +1630,8 @@ const mp_limb_t mpfr_l2b_42_0__tab[] = { 0xac8dde0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_42_1__tab[] = { 0x10, 0xba, 0x25, 0x71, 0x9b, 0x93, 0x4a, 0x59, 0xe6, 0xbd };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_42_1__tab[] = { 0xba10, 0x7125, 0x939b, 0x594a, 0xbde6 };
 #elif GMP_NUMB_BITS == 32
@@ -1483,6 +1647,8 @@ const mp_limb_t mpfr_l2b_42_1__tab[] = { 0xbde6594a939b7125ba1000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_43_0__tab[] = { 0xf6, 0xa3, 0xad };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_43_0__tab[] = { 0xf600, 0xada3 };
 #elif GMP_NUMB_BITS == 32
@@ -1498,6 +1664,8 @@ const mp_limb_t mpfr_l2b_43_0__tab[] = { 0xada3f60000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_43_1__tab[] = { 0x60, 0x95, 0xb5, 0x2a, 0x18, 0x91, 0x3d, 0x36, 0xb6, 0xbc };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_43_1__tab[] = { 0x9560, 0x2ab5, 0x9118, 0x363d, 0xbcb6 };
 #elif GMP_NUMB_BITS == 32
@@ -1513,6 +1681,8 @@ const mp_limb_t mpfr_l2b_43_1__tab[] = { 0xbcb6363d91182ab5956000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_44_0__tab[] = { 0xaa, 0xb3, 0xae };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_44_0__tab[] = { 0xaa00, 0xaeb3 };
 #elif GMP_NUMB_BITS == 32
@@ -1528,6 +1698,8 @@ const mp_limb_t mpfr_l2b_44_0__tab[] = { 0xaeb3aa0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_44_1__tab[] = { 0x90, 0x15, 0x90, 0x4e, 0x3d, 0x3a, 0x59, 0xb8, 0x90, 0xbb };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_44_1__tab[] = { 0x1590, 0x4e90, 0x3a3d, 0xb859, 0xbb90 };
 #elif GMP_NUMB_BITS == 32
@@ -1543,6 +1715,8 @@ const mp_limb_t mpfr_l2b_44_1__tab[] = { 0xbb90b8593a3d4e90159000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_45_0__tab[] = { 0x44, 0xbd, 0xaf };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_45_0__tab[] = { 0x4400, 0xafbd };
 #elif GMP_NUMB_BITS == 32
@@ -1558,6 +1732,8 @@ const mp_limb_t mpfr_l2b_45_0__tab[] = { 0xafbd440000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_45_1__tab[] = { 0x78, 0x1e, 0xf5, 0x76, 0x10, 0x10, 0x26, 0x40, 0x75, 0xba };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_45_1__tab[] = { 0x1e78, 0x76f5, 0x1010, 0x4026, 0xba75 };
 #elif GMP_NUMB_BITS == 32
@@ -1573,6 +1749,8 @@ const mp_limb_t mpfr_l2b_45_1__tab[] = { 0xba754026101076f51e7800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_46_0__tab[] = { 0x06, 0xc1, 0xb0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_46_0__tab[] = { 0x0600, 0xb0c1 };
 #elif GMP_NUMB_BITS == 32
@@ -1588,6 +1766,8 @@ const mp_limb_t mpfr_l2b_46_0__tab[] = { 0xb0c1060000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_46_1__tab[] = { 0x70, 0xb6, 0x12, 0x05, 0xaa, 0x69, 0x01, 0x3b, 0x63, 0xb9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_46_1__tab[] = { 0xb670, 0x0512, 0x69aa, 0x3b01, 0xb963 };
 #elif GMP_NUMB_BITS == 32
@@ -1603,6 +1783,8 @@ const mp_limb_t mpfr_l2b_46_1__tab[] = { 0xb9633b0169aa0512b67000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_47_0__tab[] = { 0x32, 0xbf, 0xb1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_47_0__tab[] = { 0x3200, 0xb1bf };
 #elif GMP_NUMB_BITS == 32
@@ -1618,6 +1800,8 @@ const mp_limb_t mpfr_l2b_47_0__tab[] = { 0xb1bf320000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_47_1__tab[] = { 0x18, 0x51, 0x33, 0x41, 0xe4, 0xfb, 0xd0, 0x21, 0x5a, 0xb8 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_47_1__tab[] = { 0x5118, 0x4133, 0xfbe4, 0x21d0, 0xb85a };
 #elif GMP_NUMB_BITS == 32
@@ -1633,6 +1817,8 @@ const mp_limb_t mpfr_l2b_47_1__tab[] = { 0xb85a21d0fbe44133511800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_48_0__tab[] = { 0x04, 0xb8, 0xb2 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_48_0__tab[] = { 0x0400, 0xb2b8 };
 #elif GMP_NUMB_BITS == 32
@@ -1648,6 +1834,8 @@ const mp_limb_t mpfr_l2b_48_0__tab[] = { 0xb2b8040000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_48_1__tab[] = { 0x90, 0x04, 0x3d, 0x66, 0x0d, 0x96, 0xde, 0x77, 0x59, 0xb7 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_48_1__tab[] = { 0x0490, 0x663d, 0x960d, 0x77de, 0xb759 };
 #elif GMP_NUMB_BITS == 32
@@ -1663,6 +1851,8 @@ const mp_limb_t mpfr_l2b_48_1__tab[] = { 0xb75977de960d663d049000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_49_0__tab[] = { 0xb4, 0xab, 0xb3 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_49_0__tab[] = { 0xb400, 0xb3ab };
 #elif GMP_NUMB_BITS == 32
@@ -1678,6 +1868,8 @@ const mp_limb_t mpfr_l2b_49_0__tab[] = { 0xb3abb40000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_49_1__tab[] = { 0xb8, 0x37, 0x11, 0xa7, 0x4d, 0x75, 0xd6, 0xc9, 0x60, 0xb6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_49_1__tab[] = { 0x37b8, 0xa711, 0x754d, 0xc9d6, 0xb660 };
 #elif GMP_NUMB_BITS == 32
@@ -1693,6 +1885,8 @@ const mp_limb_t mpfr_l2b_49_1__tab[] = { 0xb660c9d6754da71137b800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_50_0__tab[] = { 0x7a, 0x9a, 0xb4 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_50_0__tab[] = { 0x7a00, 0xb49a };
 #elif GMP_NUMB_BITS == 32
@@ -1708,6 +1902,8 @@ const mp_limb_t mpfr_l2b_50_0__tab[] = { 0xb49a7a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_50_1__tab[] = { 0xf0, 0x27, 0x32, 0xe5, 0x44, 0x73, 0xe3, 0xac, 0x6f, 0xb5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_50_1__tab[] = { 0x27f0, 0xe532, 0x7344, 0xace3, 0xb56f };
 #elif GMP_NUMB_BITS == 32
@@ -1723,6 +1919,8 @@ const mp_limb_t mpfr_l2b_50_1__tab[] = { 0xb56face37344e53227f000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_51_0__tab[] = { 0x84, 0x84, 0xb5 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_51_0__tab[] = { 0x8400, 0xb584 };
 #elif GMP_NUMB_BITS == 32
@@ -1738,6 +1936,8 @@ const mp_limb_t mpfr_l2b_51_0__tab[] = { 0xb584840000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_51_1__tab[] = { 0x00, 0x40, 0xa9, 0xe9, 0x8a, 0x0f, 0xe5, 0xbd, 0x85, 0xb4 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_51_1__tab[] = { 0x4000, 0xe9a9, 0x0f8a, 0xbde5, 0xb485 };
 #elif GMP_NUMB_BITS == 32
@@ -1753,6 +1953,8 @@ const mp_limb_t mpfr_l2b_51_1__tab[] = { 0xb485bde50f8ae9a9400000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_52_0__tab[] = { 0x02, 0x6a, 0xb6 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_52_0__tab[] = { 0x0200, 0xb66a };
 #elif GMP_NUMB_BITS == 32
@@ -1768,6 +1970,8 @@ const mp_limb_t mpfr_l2b_52_0__tab[] = { 0xb66a020000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_52_1__tab[] = { 0x08, 0x46, 0xb3, 0xfc, 0xcf, 0xee, 0xbb, 0xa0, 0xa2, 0xb3 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_52_1__tab[] = { 0x4608, 0xfcb3, 0xeecf, 0xa0bb, 0xb3a2 };
 #elif GMP_NUMB_BITS == 32
@@ -1783,6 +1987,8 @@ const mp_limb_t mpfr_l2b_52_1__tab[] = { 0xb3a2a0bbeecffcb3460800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_53_0__tab[] = { 0x20, 0x4b, 0xb7 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_53_0__tab[] = { 0x2000, 0xb74b };
 #elif GMP_NUMB_BITS == 32
@@ -1798,6 +2004,8 @@ const mp_limb_t mpfr_l2b_53_0__tab[] = { 0xb74b200000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_53_1__tab[] = { 0x60, 0xa3, 0xcb, 0x8c, 0x5f, 0xeb, 0xa9, 0xff, 0xc5, 0xb2 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_53_1__tab[] = { 0xa360, 0x8ccb, 0xeb5f, 0xffa9, 0xb2c5 };
 #elif GMP_NUMB_BITS == 32
@@ -1813,6 +2021,8 @@ const mp_limb_t mpfr_l2b_53_1__tab[] = { 0xb2c5ffa9eb5f8ccba36000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_54_0__tab[] = { 0x0a, 0x28, 0xb8 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_54_0__tab[] = { 0x0a00, 0xb828 };
 #elif GMP_NUMB_BITS == 32
@@ -1828,6 +2038,8 @@ const mp_limb_t mpfr_l2b_54_0__tab[] = { 0xb8280a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_54_1__tab[] = { 0x68, 0xf3, 0x40, 0xe9, 0x86, 0x3e, 0xc3, 0x8a, 0xef, 0xb1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_54_1__tab[] = { 0xf368, 0xe940, 0x3e86, 0x8ac3, 0xb1ef };
 #elif GMP_NUMB_BITS == 32
@@ -1843,6 +2055,8 @@ const mp_limb_t mpfr_l2b_54_1__tab[] = { 0xb1ef8ac33e86e940f36800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_55_0__tab[] = { 0xe8, 0x00, 0xb9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_55_0__tab[] = { 0xe800, 0xb900 };
 #elif GMP_NUMB_BITS == 32
@@ -1858,6 +2072,8 @@ const mp_limb_t mpfr_l2b_55_0__tab[] = { 0xb900e80000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_55_1__tab[] = { 0x40, 0x7a, 0x8e, 0xd1, 0xb5, 0xa4, 0x6e, 0xf7, 0x1e, 0xb1 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_55_1__tab[] = { 0x7a40, 0xd18e, 0xa4b5, 0xf76e, 0xb11e };
 #elif GMP_NUMB_BITS == 32
@@ -1873,6 +2089,8 @@ const mp_limb_t mpfr_l2b_55_1__tab[] = { 0xb11ef76ea4b5d18e7a4000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_56_0__tab[] = { 0xda, 0xd5, 0xb9 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_56_0__tab[] = { 0xda00, 0xb9d5 };
 #elif GMP_NUMB_BITS == 32
@@ -1888,6 +2106,8 @@ const mp_limb_t mpfr_l2b_56_0__tab[] = { 0xb9d5da0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_56_1__tab[] = { 0x18, 0xe8, 0x7b, 0x4c, 0x2c, 0xaa, 0xf2, 0xff, 0x53, 0xb0 };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_56_1__tab[] = { 0xe818, 0x4c7b, 0xaa2c, 0xfff2, 0xb053 };
 #elif GMP_NUMB_BITS == 32
@@ -1903,6 +2123,8 @@ const mp_limb_t mpfr_l2b_56_1__tab[] = { 0xb053fff2aa2c4c7be81800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_57_0__tab[] = { 0x0a, 0xa7, 0xba };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_57_0__tab[] = { 0x0a00, 0xbaa7 };
 #elif GMP_NUMB_BITS == 32
@@ -1918,6 +2140,8 @@ const mp_limb_t mpfr_l2b_57_0__tab[] = { 0xbaa70a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_57_1__tab[] = { 0xb0, 0xef, 0x4f, 0x81, 0x2f, 0x8e, 0x0e, 0x63, 0x8e, 0xaf };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_57_1__tab[] = { 0xefb0, 0x814f, 0x8e2f, 0x630e, 0xaf8e };
 #elif GMP_NUMB_BITS == 32
@@ -1933,6 +2157,8 @@ const mp_limb_t mpfr_l2b_57_1__tab[] = { 0xaf8e630e8e2f814fefb000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_58_0__tab[] = { 0x96, 0x74, 0xbb };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_58_0__tab[] = { 0x9600, 0xbb74 };
 #elif GMP_NUMB_BITS == 32
@@ -1948,6 +2174,8 @@ const mp_limb_t mpfr_l2b_58_0__tab[] = { 0xbb74960000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_58_1__tab[] = { 0x18, 0x5d, 0xa1, 0x41, 0x14, 0x61, 0x9d, 0xe3, 0xcd, 0xae };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_58_1__tab[] = { 0x5d18, 0x41a1, 0x6114, 0xe39d, 0xaecd };
 #elif GMP_NUMB_BITS == 32
@@ -1963,6 +2191,8 @@ const mp_limb_t mpfr_l2b_58_1__tab[] = { 0xaecde39d611441a15d1800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_59_0__tab[] = { 0x9e, 0x3e, 0xbc };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_59_0__tab[] = { 0x9e00, 0xbc3e };
 #elif GMP_NUMB_BITS == 32
@@ -1978,6 +2208,8 @@ const mp_limb_t mpfr_l2b_59_0__tab[] = { 0xbc3e9e0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_59_1__tab[] = { 0x00, 0xd0, 0xdf, 0x97, 0x97, 0x2f, 0x42, 0x48, 0x12, 0xae };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_59_1__tab[] = { 0xd000, 0x97df, 0x2f97, 0x4842, 0xae12 };
 #elif GMP_NUMB_BITS == 32
@@ -1993,6 +2225,8 @@ const mp_limb_t mpfr_l2b_59_1__tab[] = { 0xae1248422f9797dfd00000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_60_0__tab[] = { 0x40, 0x05, 0xbd };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_60_0__tab[] = { 0x4000, 0xbd05 };
 #elif GMP_NUMB_BITS == 32
@@ -2008,6 +2242,8 @@ const mp_limb_t mpfr_l2b_60_0__tab[] = { 0xbd05400000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_60_1__tab[] = { 0x58, 0xfe, 0x6d, 0x20, 0x55, 0x35, 0x1c, 0x5b, 0x5b, 0xad };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_60_1__tab[] = { 0xfe58, 0x206d, 0x3555, 0x5b1c, 0xad5b };
 #elif GMP_NUMB_BITS == 32
@@ -2023,6 +2259,8 @@ const mp_limb_t mpfr_l2b_60_1__tab[] = { 0xad5b5b1c3555206dfe5800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_61_0__tab[] = { 0x9a, 0xc8, 0xbd };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_61_0__tab[] = { 0x9a00, 0xbdc8 };
 #elif GMP_NUMB_BITS == 32
@@ -2038,6 +2276,8 @@ const mp_limb_t mpfr_l2b_61_0__tab[] = { 0xbdc89a0000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_61_1__tab[] = { 0xf8, 0x4d, 0x57, 0x77, 0xcb, 0x31, 0x82, 0xe9, 0xa8, 0xac };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_61_1__tab[] = { 0x4df8, 0x7757, 0x31cb, 0xe982, 0xaca8 };
 #elif GMP_NUMB_BITS == 32
@@ -2053,6 +2293,8 @@ const mp_limb_t mpfr_l2b_61_1__tab[] = { 0xaca8e98231cb77574df800000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_62_0__tab[] = { 0xc8, 0x88, 0xbe };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_62_0__tab[] = { 0xc800, 0xbe88 };
 #elif GMP_NUMB_BITS == 32
@@ -2068,6 +2310,8 @@ const mp_limb_t mpfr_l2b_62_0__tab[] = { 0xbe88c80000000000000000000000000000000
 #endif
 
 #if 0
+#elif GMP_NUMB_BITS == 8
+const mp_limb_t mpfr_l2b_62_1__tab[] = { 0xf8, 0x74, 0x05, 0xf9, 0x31, 0x18, 0xc4, 0xc3, 0xfa, 0xab };
 #elif GMP_NUMB_BITS == 16
 const mp_limb_t mpfr_l2b_62_1__tab[] = { 0x74f8, 0xf905, 0x1831, 0xc3c4, 0xabfa };
 #elif GMP_NUMB_BITS == 32
@@ -2229,10 +2473,83 @@ mpfr_ceil_mul (mpfr_exp_t e, int beta, int i)
   return r;
 }
 
+/* take at least 1 + ceil(p*log(2)/log(b)) digits, where p is the
+   number of bits of the mantissa, to ensure back conversion from
+   the output gives the same floating-point.
+
+   Warning: if b = 2^k, this may be too large. The worst case is when
+   the first base-b digit contains only one bit, so we take
+   1 + ceil((p-1)/k) instead.
+*/
+size_t
+mpfr_get_str_ndigits (int b, mpfr_prec_t p)
+{
+  MPFR_ASSERTN (2 <= b && b <= 62);
+
+  /* deal first with power of two bases, since even for those, mpfr_ceil_mul
+     might return a value too large by 1 */
+  if (IS_POW2(b)) /* 1 + ceil((p-1)/k) = 2 + floor((p-2)/k) */
+    {
+      int k;
+
+      count_leading_zeros (k, (mp_limb_t) b);
+      k = GMP_NUMB_BITS - k - 1; /* now b = 2^k */
+      return 1 + (p + k - 2) / k;
+    }
+
+  /* the value returned by mpfr_ceil_mul is guaranteed to be
+     1 + ceil(p*log(2)/log(b)) for p < 186564318007 (it returns one more
+     for p=186564318007 and b=7 or 49) */
+  MPFR_STAT_STATIC_ASSERT (MPFR_PREC_BITS >= 64 || MPFR_PREC_BITS <= 32);
+#if MPFR_PREC_BITS >= 64
+  /* 64-bit numbers are supported by the C implementation, so that we can
+     use the large constant below. If MPFR_PREC_BITS <= 32, the condition
+     is always satisfied, so that we do not need any test. */
+  if (MPFR_LIKELY (p < 186564318007))
+#endif
+    return 1 + mpfr_ceil_mul (IS_POW2(b) ? p - 1 : p, b, 1);
+
+  /* Now p is large and b is not a power of two. The code below works for any
+     value of p and b, as long as b is not a power of two. Indeed, in such a
+     case, p*log(2)/log(b) cannot be exactly an integer, and thus Ziv's loop
+     will terminate. */
+  {
+    mpfr_prec_t w = 77; /* mpfr_ceil_mul used a 77-bit upper approximation of
+                           log(2)/log(b) */
+    mpfr_t d, u;
+    size_t ret = 0;
+    while (ret == 0)
+      {
+        w = 2 * w;
+        mpfr_init2 (d, w); /* lower approximation */
+        mpfr_init2 (u, w); /* upper approximation */
+        mpfr_set_ui (d, b, MPFR_RNDU);
+        mpfr_set_ui (u, b, MPFR_RNDD);
+        mpfr_log2 (d, d, MPFR_RNDU);
+        mpfr_log2 (u, u, MPFR_RNDD);
+        /* The code below requires that the precision fit in an unsigned long,
+           which we currently guarantee (see _MPFR_PREC_FORMAT). */
+        MPFR_STAT_STATIC_ASSERT (MPFR_PREC_MAX <= ULONG_MAX);
+        /* u <= log(b)/log(2) <= d (***) */
+        mpfr_ui_div (d, p, d, MPFR_RNDD);
+        mpfr_ui_div (u, p, u, MPFR_RNDU);
+        /* d <= p*log(2)/log(b) <= u */
+        mpfr_ceil (d, d);
+        mpfr_ceil (u, u);
+        if (mpfr_cmp (d, u) == 0)
+          ret = mpfr_get_ui (d, MPFR_RNDU);
+        mpfr_clear (d);
+        mpfr_clear (u);
+      }
+    return 1 + ret;
+  }
+}
+
 /* prints the mantissa of x in the string s, and writes the corresponding
    exponent in e.
    x is rounded with direction rnd, m is the number of digits of the mantissa,
    |b| is the given base (2 <= b <= 62 or -36 <= b <= -2).
+   This follows GMP's mpf_get_str specification.
 
    Return value:
    if s=NULL, allocates a string to store the mantissa, with
@@ -2242,7 +2559,7 @@ mpfr_ceil_mul (mpfr_exp_t e, int beta, int i)
    Important: when you call this function with s=NULL, don't forget to free
    the memory space allocated, with mpfr_free_str.
 */
-char*
+char *
 mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
               mpfr_rnd_t rnd)
 {
@@ -2313,27 +2630,12 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
   MPFR_SAVE_EXPO_MARK (expo);  /* needed for mpfr_ceil_mul (at least) */
 
   if (m == 0)
-    {
-
-      /* take at least 1 + ceil(n*log(2)/log(b)) digits, where n is the
-         number of bits of the mantissa, to ensure back conversion from
-         the output gives the same floating-point.
-
-         Warning: if b = 2^k, this may be too large. The worst case is when
-         the first base-b digit contains only one bit, so we get
-         1 + ceil((n-1)/k) = 2 + floor((n-2)/k) instead.
-      */
-      m = 1 +
-        mpfr_ceil_mul (IS_POW2(b) ? MPFR_PREC(x) - 1 : MPFR_PREC(x), b, 1);
-      if (m < 2)
-        m = 2;
-    }
+    m = mpfr_get_str_ndigits (b, MPFR_PREC(x));
 
   MPFR_LOG_MSG (("m=%zu\n", m));
 
-  /* The code below for non-power-of-two bases works for m=1;
-     this is important for the internal use of mpfr_get_str. */
-  MPFR_ASSERTN (m >= 2 || (!IS_POW2(b) && m >= 1));
+  /* The code below works for m=1, both for power-of-two and non-power-of-two
+     bases; this is important for the internal use of mpfr_get_str. */
 
   /* x is a floating-point number */
 
@@ -2363,7 +2665,7 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
       int inexp;
 
       count_leading_zeros (pow2, (mp_limb_t) b);
-      pow2 = GMP_NUMB_BITS - pow2 - 1; /* base = 2^pow2 */
+      pow2 = GMP_NUMB_BITS - pow2 - 1; /* b = 2^pow2 */
 
       /* set MPFR_EXP(x) = f*pow2 + r, 1 <= r <= pow2 */
       f = (MPFR_GET_EXP (x) - 1) / pow2;
@@ -2376,6 +2678,8 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
 
       /* the first digit will contain only r bits */
       prec = (m - 1) * pow2 + r; /* total number of bits */
+      /* if m=1 then 1 <= prec <= pow2, and since prec=1 is now valid in MPFR,
+         the power-of-two code also works for m=1 */
       n = MPFR_PREC2LIMBS (prec);
 
       MPFR_TMP_MARK (marker);
@@ -2430,6 +2734,7 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
 
   g = mpfr_ceil_mul (MPFR_GET_EXP (x) - 1, b, 1);
   exact = 1;
+  /* prec is the radix-2 precision necessary to get m digits in radix b */
   prec = mpfr_ceil_mul (m, b, 0) + 1;
   exp = ((mpfr_exp_t) m < g) ? g - (mpfr_exp_t) m : (mpfr_exp_t) m - g;
   prec += MPFR_INT_CEIL_LOG2 (prec); /* number of guard bits */
@@ -2473,7 +2778,7 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
           x1 = (nx >= n) ? xp + nx - n : xp;
           nx1 = (nx >= n) ? n : nx; /* nx1 = min(n, nx) */
 
-          /* test si exact */
+          /* test if exact */
           if (nx > n)
             exact = (exact &&
                      ((mpn_scan1 (xp, 0) >= (nx - n) * GMP_NUMB_BITS)));
@@ -2499,7 +2804,7 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
           else
             MPN_COPY (a, result + nx1, n);
         }
-      else
+      else /* m < g: divide by b^exp */
         {
           mp_limb_t *x1;
 
@@ -2508,15 +2813,23 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
           exact = (err == -1);
 
           /* allocate memory for x1, result and reste */
-          x1 = MPFR_TMP_LIMBS_ALLOC (2 * n);
           result = MPFR_TMP_LIMBS_ALLOC (n + 1);
           reste = MPFR_TMP_LIMBS_ALLOC (n);
 
-          /* initialize x1 = x */
-          MPN_COPY2 (x1, 2 * n, xp, nx);
-          if ((exact) && (nx > 2 * n) &&
-              (mpn_scan1 (xp, 0) < (nx - 2 * n) * GMP_NUMB_BITS))
-            exact = 0;
+          if (2 * n <= nx)
+            {
+              x1 = xp + nx - 2 * n;
+              /* we ignored the low nx - 2 * n limbs from x */
+              if (exact && mpn_scan1 (xp, 0) < (nx - 2 * n) * GMP_NUMB_BITS)
+                exact = 0;
+            }
+          else
+            {
+              /* copy the nx most significant limbs of x into those of x1 */
+              x1 = MPFR_TMP_LIMBS_ALLOC (2 * n);
+              MPN_ZERO (x1, 2 * n - nx);
+              MPN_COPY (x1 + 2 * n - nx, xp, nx);
+            }
 
           /* result = x / a */
           mpn_tdiv_qr (result, reste, 0, x1, 2 * n, a, n);

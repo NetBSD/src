@@ -1,6 +1,6 @@
 /* mpfr_const_euler -- Euler's constant
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by Fredrik Johansson.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /* The approximation error bound uses Theorem 1 and Remark 2 in
@@ -192,7 +192,7 @@ mpfr_const_euler_internal (mpfr_t x, mpfr_rnd_t rnd)
   MPFR_ZIV_DECL (loop);
 
   prec = mpfr_get_prec (x);
-  wp = prec + 24;
+  wp = prec + MPFR_INT_CEIL_LOG2 (prec) + 5;
 
   mpfr_init2 (y, wp);
   mpfr_const_euler_bs_init (sum);
@@ -251,9 +251,9 @@ mpfr_const_euler_internal (mpfr_t x, mpfr_rnd_t rnd)
       mpfr_set_ui (y, n, MPFR_RNDZ); /* exact */
       mpfr_log (y, y, MPFR_RNDZ); /* error < 2^-wp */
 
-      mpfr_mul_2exp (y, y, wp, MPFR_RNDZ);
+      mpfr_mul_2ui (y, y, wp, MPFR_RNDZ);
       mpfr_z_sub (y, v, y, MPFR_RNDZ);
-      mpfr_div_2exp (y, y, wp, MPFR_RNDZ);
+      mpfr_div_2ui (y, y, wp, MPFR_RNDZ);
       /* rounding error from the last subtraction < 2^-wp */
       /* so y = gamma with error < 5*2^-wp */
 

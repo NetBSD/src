@@ -1,6 +1,6 @@
 /* Tune various threshold of MPFR
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <stdlib.h>
@@ -31,9 +31,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "speed.h"
 
 /* Undefine static assertion system */
-#undef MPFR_DECL_STATIC_ASSERT
 #undef MPFR_STAT_STATIC_ASSERT
-#define MPFR_DECL_STATIC_ASSERT(a) MPFR_ASSERTN(a)
 #define MPFR_STAT_STATIC_ASSERT(a) MPFR_ASSERTN(a)
 
 int verbose;
@@ -478,20 +476,21 @@ tune_simple_func (mpfr_prec_t *threshold,
                   mpfr_prec_t pstart)
 {
   double measure[THRESHOLD_FINAL_WINDOW+1];
-  double d;
+  double d = -1.0;
   mpfr_prec_t pstep;
   int i, numpos, numneg, try;
   mpfr_prec_t pmin, pmax, p;
 
   /* first look for a lower bound within 10% */
   pmin = p = pstart;
-  d = domeasure (threshold, func, pmin);
+  for (i = 0; i < 10 && d < 0.0; i++)
+    d = domeasure (threshold, func, pmin);
   if (d < 0.0)
     {
       if (verbose)
-        printf ("Oops: even for %lu, algo 2 seems to be faster!\n",
+        printf ("Oops: even for precision %lu, algo 2 seems to be faster!\n",
                 (unsigned long) pmin);
-      *threshold = MPFR_PREC_MIN;
+      *threshold = pmin;
       return;
     }
   if (d >= 1.00)
@@ -848,7 +847,8 @@ tune_sqr_mulders_upto (mp_size_t n)
   return kbest;
 }
 
-/* Tune mpfr_divhigh_n for size n */
+/* Tune mpfr_divhigh_n for size n.
+   Ensure divhigh_ktab[n] < n for n > 0. */
 static mp_size_t
 tune_div_mulders_upto (mp_size_t n)
 {
@@ -857,8 +857,12 @@ tune_div_mulders_upto (mp_size_t n)
   double t, tbest;
   MPFR_TMP_DECL (marker);
 
-  if (n == 0)
-    return 0;
+  /* we require n > 2 in mpfr_divhigh */
+  if (n <= 2)
+    {
+      divhigh_ktab[n] = 0;
+      return 0;
+    }
 
   MPFR_TMP_MARK (marker);
   s.align_xp = s.align_yp = s.align_wp = s.align_wp2 = 64;
@@ -868,27 +872,15 @@ tune_div_mulders_upto (mp_size_t n)
   mpn_random (s.xp, n);
   mpn_random (s.yp, n);
 
-  /* Check k == n, i.e., mpn_divrem */
-  divhigh_ktab[n] = n;
-  kbest = n;
-  tbest = mpfr_speed_measure (speed_mpfr_divhigh, &s, "mpfr_divhigh");
-
   /* Check k == 0, i.e., mpfr_divhigh_n_basecase */
-#if defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_SBPI1_DIVAPPR_Q)
-  if (n > 2) /* mpn_sbpi1_divappr_q requires dn > 2 */
-#endif
-    {
-      divhigh_ktab[n] = 0;
-      t = mpfr_speed_measure (speed_mpfr_divhigh, &s, "mpfr_divhigh");
-      if (t * TOLERANCE < tbest)
-        kbest = 0, tbest = t;
-    }
+  kbest = 0;
+  tbest = mpfr_speed_measure (speed_mpfr_divhigh, &s, "mpfr_divhigh");
 
   /* Check Mulders */
   step = 1 + n / (2 * MAX_STEPS);
-  /* we should have (n+3)/2 <= k < n, which translates into
-     (n+4)/2 <= k < n in C */
-  for (k = (n + 4) / 2 ; k < n ; k += step)
+  /* we should have (n+3)/2 <= k < n-1, which translates into
+     (n+4)/2 <= k < n-1 in C */
+  for (k = (n + 4) / 2 ; k < n - 1; k += step)
     {
       divhigh_ktab[n] = k;
       t = mpfr_speed_measure (speed_mpfr_divhigh, &s, "mpfr_divhigh");
@@ -896,6 +888,7 @@ tune_div_mulders_upto (mp_size_t n)
         kbest = k, tbest = t;
     }
 
+  MPFR_ASSERTN(kbest < n);
   divhigh_ktab[n] = kbest;
 
   MPFR_TMP_FREE (marker);

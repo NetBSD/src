@@ -1,6 +1,6 @@
 /* Test file for mpfr_subnormalize.
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -204,11 +204,77 @@ check3 (void)
   set_emin (emin);
 }
 
+/* check mpfr_subnormize with RNDNA (experimental) */
+static void
+check_rndna (void)
+{
+  mpfr_t x, y;
+  int inex;
+  mpfr_exp_t emin = mpfr_get_emin ();
+
+  mpfr_init2 (x, 11);
+  mpfr_init2 (y, 9);
+
+  mpfr_set_str_binary (x, "0.1111111010E-14");
+  inex = mpfr_set (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(inex == 0);
+  mpfr_set_emin (-21);
+  inex = mpfr_subnormalize (y, inex, MPFR_RNDNA);
+  /* mpfr_subnormalize rounds to precision EXP(y)-emin+1 = 8,
+     thus should round to 0.111111110E-14 */
+  mpfr_set_str_binary (x, "0.111111110E-14");
+  MPFR_ASSERTN(mpfr_cmp (y, x) == 0);
+  MPFR_ASSERTN(inex > 0);
+
+  /* now consider x slightly larger: we should get the same result */
+  mpfr_set_str_binary (x, "0.1111111011E-14");
+  inex = mpfr_set (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(inex > 0);
+  inex = mpfr_subnormalize (y, inex, MPFR_RNDNA);
+  mpfr_set_str_binary (x, "0.111111110E-14");
+  MPFR_ASSERTN(mpfr_cmp (y, x) == 0);
+  MPFR_ASSERTN(inex > 0);
+
+  /* now consider x slightly smaller: we should get a different result */
+  mpfr_set_str_binary (x, "0.11111110001E-14");
+  inex = mpfr_set (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(inex < 0);
+  inex = mpfr_subnormalize (y, inex, MPFR_RNDNA);
+  mpfr_set_str_binary (x, "0.111111100E-14");
+  MPFR_ASSERTN(mpfr_cmp (y, x) == 0);
+  MPFR_ASSERTN(inex < 0);
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_set_emin (emin);
+}
+
+/* exercise a corner case of mpfr_subnormalize:
+   y = 1xxx...xxx0|100000| with old_inexact = -1 */
+static void
+coverage (void)
+{
+  mpfr_t y;
+  int inex;
+
+  mpfr_init2 (y, 42);
+  mpfr_set_ui_2exp (y, 131073, mpfr_get_emin () - 2, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_get_exp (y) == mpfr_get_emin () + 16);
+  /* mpfr_subnormalize rounds y to precision EXP(y) - emin + 1, thus 17 */
+  inex = mpfr_subnormalize (y, -1, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (y, 65537, mpfr_get_emin () - 1) == 0);
+  MPFR_ASSERTN(inex > 0);
+
+  mpfr_clear (y);
+}
+
 int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
+  coverage ();
+  check_rndna ();
   check1 ();
   check2 ();
   check3 ();

@@ -1,6 +1,6 @@
 /* tjn -- test file for the Bessel function of first kind
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,10 +17,30 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
+
+/* mpfr_jn doesn't terminate. Bug reported by Alex Coplan on 2020-07-03.
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96044
+ * Note: This test is enabled only with MPFR_CHECK_EXPENSIVE. But do not
+ * use that with --enable-assert=full, as it may take more than 1 hour!
+ */
+static void
+bug20200703 (void)
+{
+  mpfr_t x, y;
+
+  mpfr_init (x);
+  mpfr_init (y);
+  mpfr_set_si (x, 73333, MPFR_RNDN);
+  mpfr_jn (y, 73333, x, MPFR_RNDN);
+  mpfr_set_si (x, 733333, MPFR_RNDN);
+  mpfr_jn (y, 733333, x, MPFR_RNDN);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
 
 int
 main (int argc, char *argv[])
@@ -40,6 +60,9 @@ main (int argc, char *argv[])
     }
 
   tests_start_mpfr ();
+
+  if (getenv ("MPFR_CHECK_EXPENSIVE") != NULL)
+    bug20200703 ();
 
   mpfr_init (x);
   mpfr_init (y);

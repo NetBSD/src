@@ -1,6 +1,6 @@
 dnl  MPFR specific autoconf macros
 
-dnl  Copyright 2000, 2002-2018 Free Software Foundation, Inc.
+dnl  Copyright 2000, 2002-2020 Free Software Foundation, Inc.
 dnl  Contributed by the AriC and Caramba projects, INRIA.
 dnl
 dnl  This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ dnl  License for more details.
 dnl
 dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-dnl  http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+dnl  https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 dnl  51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 dnl  autoconf 2.60 is necessary because of the use of AC_PROG_SED.
@@ -27,8 +27,7 @@ dnl  If you change the required version, please update README.dev too!
 AC_PREREQ(2.60)
 
 dnl ------------------------------------------------------------
-dnl You must put in MPFR_CONFIGS everything which configure MPFR
-dnl except:
+dnl You must put in MPFR_CONFIGS everything that configures MPFR except:
 dnl   - Everything dealing with CC and CFLAGS in particular the ABI
 dnl     but the IEEE-754 specific flags must be set here.
 dnl   - Tests that depend on gmp.h (see MPFR_CHECK_DBL2INT_BUG as an example:
@@ -43,6 +42,66 @@ AC_REQUIRE([MPFR_CHECK_LIBM])
 AC_REQUIRE([MPFR_CHECK_LIBQUADMATH])
 AC_REQUIRE([AC_HEADER_TIME])
 AC_REQUIRE([AC_CANONICAL_HOST])
+
+dnl Features for the MPFR shared cache. This needs to be done
+dnl quite early since this may change CC, CFLAGS and LIBS, which
+dnl may affect the other tests.
+
+if test "$enable_shared_cache" = yes; then
+
+dnl Prefer ISO C11 threads (as in mpfr-thread.h).
+  MPFR_CHECK_C11_THREAD()
+
+  if test "$mpfr_c11_thread_ok" != yes; then
+dnl Check for POSIX threads. Since the AX_PTHREAD macro is not standard
+dnl (it is provided by autoconf-archive), we need to detect whether it
+dnl is left unexpanded, otherwise the configure script won't fail and
+dnl "make distcheck" won't give any error, yielding buggy tarballs!
+dnl The \b is necessary to avoid an error with recent ax_pthread.m4
+dnl (such as with Debian's autoconf-archive 20160320-1), which contains
+dnl AX_PTHREAD_ZOS_MISSING, etc. It is not documented, but see:
+dnl   https://lists.gnu.org/archive/html/autoconf/2015-03/msg00011.html
+dnl
+dnl Note: each time a change is done in m4_pattern_forbid, autogen.sh
+dnl should be tested with and without ax_pthread.m4 availability (in
+dnl the latter case, there should be an error).
+    m4_pattern_forbid([AX_PTHREAD\b])
+    AX_PTHREAD([])
+    if test "$ax_pthread_ok" = yes; then
+      CC="$PTHREAD_CC"
+      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+      LIBS="$LIBS $PTHREAD_LIBS"
+dnl Do a compilation test, as this is currently not done by AX_PTHREAD.
+dnl Moreover, MPFR needs pthread_rwlock_t, which is conditionally defined
+dnl in glibc's bits/pthreadtypes.h (via <pthread.h>), not sure why...
+      AC_MSG_CHECKING([for pthread_rwlock_t])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <pthread.h>
+]], [[
+pthread_rwlock_t lock; (void) lock;
+]])],
+        [AC_MSG_RESULT([yes])
+         mpfr_pthread_ok=yes],
+        [AC_MSG_RESULT([no])
+         mpfr_pthread_ok=no])
+    else
+      mpfr_pthread_ok=no
+    fi
+  fi
+
+  AC_MSG_CHECKING(if shared cache can be supported)
+  if test "$mpfr_c11_thread_ok" = yes; then
+    AC_MSG_RESULT([yes, with ISO C11 threads])
+  elif test "$mpfr_pthread_ok" = yes; then
+    AC_MSG_RESULT([yes, with pthread])
+  else
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([shared cache needs C11 threads or pthread support])
+  fi
+
+fi
+
+dnl End of features for the MPFR shared cache.
 
 AC_CHECK_HEADER([limits.h],, AC_MSG_ERROR([limits.h not found]))
 AC_CHECK_HEADER([float.h],,  AC_MSG_ERROR([float.h not found]))
@@ -69,6 +128,9 @@ AC_CHECK_MEMBERS([struct lconv.decimal_point, struct lconv.thousands_sep],,,
 dnl Check how to get `alloca'
 AC_FUNC_ALLOCA
 
+dnl Define uintptr_t if not available.
+AC_TYPE_UINTPTR_T
+
 dnl va_copy macro
 AC_MSG_CHECKING([how to copy va_list])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
@@ -87,22 +149,21 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 ]])], [AC_DEFINE([HAVE___VA_COPY]) AC_MSG_RESULT([__va_copy])],
    [AC_MSG_RESULT([memcpy])])])
 
-dnl FIXME: The functions memmove, memset and strtol are really needed by
-dnl MPFR, but if they are implemented as macros, this is also OK (in our
-dnl case).  So, we do not return an error, but their tests are currently
-dnl useless.
-dnl Moreover, for memmove and memset, when gcc -Werror is used, these
-dnl functions are considered to be missing because of a "conflicting
-dnl types for built-in function" error. Possible workarounds if the
-dnl results of this test are used (thus one doesn't want an error):
-dnl   * If "$GCC" is set, disable built-ins by adding -fno-builtin
-dnl     to $CFLAGS for this test (this would yield a failure if such
-dnl     functions are defined only as built-ins, but does this occur
-dnl     in practice?).
-dnl   * Enable -Werror only for the main compilation (and possibly
-dnl     some particular tests) via a new configure option.
-dnl gettimeofday is not defined for MinGW
-AC_CHECK_FUNCS([memmove memset setlocale strtol gettimeofday signal])
+dnl Options like -Werror can yield a failure as AC_CHECK_FUNCS uses some
+dnl fixed prototype for function detection, generally incompatible with
+dnl the standard one. For instance, with GCC, if the function is defined
+dnl as a builtin, one can get a "conflicting types for built-in function"
+dnl error [-Werror=builtin-declaration-mismatch], even though the header
+dnl is not included; when these functions were tested, this occurred with
+dnl memmove and memset. Even though no failures are known with the tested
+dnl functions at this time, let's remove options starting with "-Werror"
+dnl since failures may still be possible.
+dnl
+dnl The gettimeofday function is not defined with MinGW.
+saved_CFLAGS="$CFLAGS"
+CFLAGS=`[echo " $CFLAGS" | $SED 's/ -Werror[^ ]*//g']`
+AC_CHECK_FUNCS([setlocale gettimeofday signal])
+CFLAGS="$saved_CFLAGS"
 
 dnl We cannot use AC_CHECK_FUNCS on sigaction, because while this
 dnl function may be provided by the C library, its prototype and
@@ -130,7 +191,7 @@ AC_CHECK_TYPES([intmax_t])
 if test "$ac_cv_type_intmax_t" = yes; then
   AC_CACHE_CHECK([for working INTMAX_MAX], mpfr_cv_have_intmax_max, [
     saved_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -I$srcdir/src"
+    CPPFLAGS="$CPPFLAGS -I$srcdir/src -DMPFR_NEED_INTMAX_H"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
         [[#include "mpfr-intmax.h"]],
         [[intmax_t x = INTMAX_MAX; (void) x;]]
@@ -140,34 +201,6 @@ if test "$ac_cv_type_intmax_t" = yes; then
   ])
   if test "$mpfr_cv_have_intmax_max" = "yes"; then
     AC_DEFINE(MPFR_HAVE_INTMAX_MAX,1,[Define if you have a working INTMAX_MAX.])
-  fi
-  AC_CACHE_CHECK([for working printf length modifier for intmax_t],
-                 mpfr_cv_printf_maxlm, [
-    saved_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -I$srcdir/src"
-    for modifier in j ll l
-    do
-      AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-#include <stdio.h>
-#include <string.h>
-#include "mpfr-intmax.h"
-]],[[
-  char s[64];
-  sprintf (s, "%${modifier}d %${modifier}u",
-           (intmax_t) -17, (uintmax_t) 42);
-  return strcmp (s, "-17 42") != 0;
-]])],
-       mpfr_cv_printf_maxlm=${modifier}; break,
-       mpfr_cv_printf_maxlm=none,
-dnl We assume that j is working when cross-compiling.
-       mpfr_cv_printf_maxlm=j; break
-      )
-    done
-    CPPFLAGS="$saved_CPPFLAGS"
-  ])
-  if test "$mpfr_cv_printf_maxlm" != "none"; then
-    AC_DEFINE_UNQUOTED([MPFR_PRINTF_MAXLM],["$mpfr_cv_printf_maxlm"],
-      [Define to a working printf length modifier for intmax_t])
   fi
 fi
 
@@ -205,24 +238,6 @@ fi
 
 dnl Check for attribute constructor and destructor
 MPFR_CHECK_CONSTRUCTOR_ATTR()
-
-dnl Check for POSIX Thread. Since the AX_PTHREAD macro is not standard
-dnl (it is provided by autoconf-archive), we need to detect whether it
-dnl is left unexpanded, otherwise the configure script won't fail and
-dnl "make distcheck" won't give any error, yielding buggy tarballs!
-dnl The \b is necessary to avoid an error with recent ax_pthread.m4
-dnl (such as with Debian's autoconf-archive 20160320-1), which contains
-dnl AX_PTHREAD_ZOS_MISSING, etc. It is not documented, but see:
-dnl   https://lists.gnu.org/archive/html/autoconf/2015-03/msg00011.html
-dnl
-dnl Note: each time a change is done in m4_pattern_forbid, autogen.sh
-dnl should be tested with and without ax_pthread.m4 availability (in
-dnl the latter case, there should be an error).
-m4_pattern_forbid([AX_PTHREAD\b])
-AX_PTHREAD([])
-
-dnl Check for ISO C11 Thread
-MPFR_CHECK_C11_THREAD()
 
 dnl Check for fesetround
 AC_CACHE_CHECK([for fesetround], mpfr_cv_have_fesetround, [
@@ -281,11 +296,17 @@ static double get_max (void) { static volatile double d = DBL_MAX; return d; }
   fi
 fi
 
-dnl Check if subnormal (denormalized) numbers are supported
+dnl Check if subnormal numbers are supported.
 dnl for the binary64 format, the smallest normal number is 2^(-1022)
 dnl for the binary32 format, the smallest normal number is 2^(-126)
+dnl Note: One could double-check with the value of the macros
+dnl DBL_HAS_SUBNORM and FLT_HAS_SUBNORM, when defined (C2x), but
+dnl neither tests would be reliable on implementations with partial
+dnl subnormal support. Anyway, this check is useful only for the
+dnl tests. Thus in doubt, assume that subnormals are not supported,
+dnl in order to disable the corresponding tests (which could fail).
 AC_CACHE_CHECK([for subnormal double-precision numbers],
-mpfr_cv_have_denorms, [
+mpfr_cv_have_subnorm_dbl, [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 int main (void) {
@@ -294,15 +315,16 @@ int main (void) {
   return 2.0 * (double) (x / 2.0) != x;
 }
 ]])],
-   [mpfr_cv_have_denorms="yes"],
-   [mpfr_cv_have_denorms="no"],
-   [mpfr_cv_have_denorms="cannot test, assume no"])
+   [mpfr_cv_have_subnorm_dbl="yes"],
+   [mpfr_cv_have_subnorm_dbl="no"],
+   [mpfr_cv_have_subnorm_dbl="cannot test, assume no"])
 ])
-if test "$mpfr_cv_have_denorms" = "yes"; then
-  AC_DEFINE(HAVE_DENORMS,1,[Define if subnormal (denormalized) doubles work.])
+if test "$mpfr_cv_have_subnorm_dbl" = "yes"; then
+  AC_DEFINE(HAVE_SUBNORM_DBL, 1,
+   [Define if the double type fully supports subnormals.])
 fi
 AC_CACHE_CHECK([for subnormal single-precision numbers],
-mpfr_cv_have_denorms_flt, [
+mpfr_cv_have_subnorm_flt, [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 int main (void) {
@@ -311,13 +333,13 @@ int main (void) {
   return 2.0 * (float) (x / 2.0) != x;
 }
 ]])],
-   [mpfr_cv_have_denorms_flt="yes"],
-   [mpfr_cv_have_denorms_flt="no"],
-   [mpfr_cv_have_denorms_flt="cannot test, assume no"])
+   [mpfr_cv_have_subnorm_flt="yes"],
+   [mpfr_cv_have_subnorm_flt="no"],
+   [mpfr_cv_have_subnorm_flt="cannot test, assume no"])
 ])
-if test "$mpfr_cv_have_denorms_flt" = "yes"; then
-  AC_DEFINE(HAVE_DENORMS_FLT,1,
-  [Define if subnormal (denormalized) floats work.])
+if test "$mpfr_cv_have_subnorm_flt" = "yes"; then
+  AC_DEFINE(HAVE_SUBNORM_FLT, 1,
+   [Define if the float type fully supports subnormals.])
 fi
 
 dnl Check if signed zeros are supported. Note: the test will fail
@@ -396,12 +418,14 @@ if test "$mpfr_cv_nanisnan" = "yes"; then
   AC_MSG_WARN([platform and/or document the behavior.])
 fi
 
-dnl Check if the chars '0' to '9' are consecutive values
+dnl Check if the chars '0' to '9', 'a' to 'z', and 'A' to 'Z' are
+dnl consecutive values.
+dnl The const is necessary with GCC's "-Wwrite-strings -Werror".
 AC_MSG_CHECKING([if charset has consecutive values])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-char *number = "0123456789";
-char *lower  = "abcdefghijklmnopqrstuvwxyz";
-char *upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char *number = "0123456789";
+const char *lower  = "abcdefghijklmnopqrstuvwxyz";
+const char *upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 ]],[[
  int i;
  unsigned char *p;
@@ -501,16 +525,61 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 
 LIBS="$saved_LIBS"
 
-dnl Now try to check the long double format
-MPFR_C_LONG_DOUBLE_FORMAT
+dnl Try to determine the format of double
+MPFR_C_REALFP_FORMAT(double,)
+case $mpfr_cv_c_double_format in
+  "IEEE double, big endian"*)
+    AC_DEFINE(HAVE_DOUBLE_IEEE_BIG_ENDIAN, 1)
+    ;;
+  "IEEE double, little endian"*)
+    AC_DEFINE(HAVE_DOUBLE_IEEE_LITTLE_ENDIAN, 1)
+    ;;
+  unknown*)
+    ;;
+  *)
+    AC_MSG_WARN([format of `double' unsupported or not recognized: $mpfr_cv_c_double_format])
+    ;;
+esac
 
-if test "$enable_logging" = yes; then
-  if test "$enable_thread_safe" = yes; then
-    AC_MSG_ERROR([enable either `Logging' or `thread-safe', not both])
-  else
-    enable_thread_safe=no
-  fi
-fi
+dnl Now try to determine the format of long double
+MPFR_C_REALFP_FORMAT(long double,L)
+case $mpfr_cv_c_long_double_format in
+  "IEEE double, big endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IS_DOUBLE, 1)
+    ;;
+  "IEEE double, little endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IS_DOUBLE, 1)
+    ;;
+  "IEEE extended, little endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IEEE_EXT_LITTLE, 1)
+    ;;
+  "IEEE extended, big endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IEEE_EXT_BIG, 1)
+    ;;
+  "IEEE quad, big endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IEEE_QUAD_BIG, 1)
+    ;;
+  "IEEE quad, little endian"*)
+    AC_DEFINE(HAVE_LDOUBLE_IEEE_QUAD_LITTLE, 1)
+    ;;
+  "possibly double-double, big endian"*)
+    AC_MSG_WARN([This format is known on GCC/PowerPC platforms,])
+    AC_MSG_WARN([but due to GCC PR26374, we can't test further.])
+    AC_MSG_WARN([You can safely ignore this warning, though.])
+    AC_DEFINE(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE, 1)
+    ;;
+  "possibly double-double, little endian"*)
+    AC_MSG_WARN([This format is known on GCC/PowerPC platforms,])
+    AC_MSG_WARN([but due to GCC PR26374, we can't test further.])
+    AC_MSG_WARN([You can safely ignore this warning, though.])
+    AC_DEFINE(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE, 1)
+    ;;
+  unknown*)
+    ;;
+  *)
+    AC_MSG_WARN([format of `long double' unsupported or not recognized: $mpfr_cv_c_long_double_format])
+    ;;
+esac
 
 dnl Check if thread-local variables are supported.
 dnl At least two problems can occur in practice:
@@ -579,11 +648,23 @@ then
  fi
 fi
 
+if test "$enable_decimal_float" != no; then
+
 dnl Check if decimal floats are available.
 dnl For the different cases, we try to use values that will not be returned
 dnl by build tools. For instance, 1 must not be used as it can be returned
-dnl by ld in case of link failure.
-if test "$enable_decimal_float" != no; then
+dnl by gcc or by ld in case of link failure.
+dnl Note: We currently reread the 64-bit data memory as a double and compare
+dnl it with constants. However, if there is any issue with double, such as
+dnl the use of an extended precision, this may fail. Possible solutions:
+dnl   1. Use the hex format for the double constants (this format should be
+dnl      supported if _Decimal64 is).
+dnl   2. Use more precision in the double constants (more decimal digits),
+dnl      just in case.
+dnl   3. Use uint64_t (or unsigned long long, though this type might not be
+dnl      on 64 bits) instead of or in addition to the test on double.
+dnl   4. Use an array of 8 unsigned char's instead of or in addition to the
+dnl      test on double, considering the 2 practical cases of endianness.
   AC_MSG_CHECKING(if compiler knows _Decimal64)
   AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM([[_Decimal64 x;]])],
@@ -603,48 +684,148 @@ return y.d == 0.14894469406741037E-123 ? 80 :
       [d64_exit_status=$?
        case "$d64_exit_status" in
          80) AC_MSG_RESULT(DPD)
-             AC_DEFINE([DPD_FORMAT],1,[DPD format])
-             AC_DEFINE([MPFR_WANT_DECIMAL_FLOATS],1,
-                       [Build decimal float functions]) ;;
+             if test "$enable_decimal_float" = bid; then
+               AC_MSG_ERROR([encoding mismatch (BID requested).])
+             fi
+             if test "$enable_decimal_float" != generic; then
+               enable_decimal_float=dpd
+             fi ;;
          81) AC_MSG_RESULT(BID)
-             AC_DEFINE([MPFR_WANT_DECIMAL_FLOATS],1,
-                       [Build decimal float functions]) ;;
+             if test "$enable_decimal_float" = dpd; then
+               AC_MSG_ERROR([encoding mismatch (DPD requested).])
+             fi
+             if test "$enable_decimal_float" != generic; then
+               enable_decimal_float=bid
+             fi ;;
          82) AC_MSG_RESULT(neither DPD nor BID)
-             if test "$enable_decimal_float" = yes; then
-               AC_MSG_ERROR([unsupported decimal float format.
-Please build MPFR without --enable-decimal-float.])
-             fi ;;
-         *) AC_MSG_RESULT(unknown (exit status $d64_exit_status))
-             if test "$enable_decimal_float" = yes; then
-               AC_MSG_ERROR([internal or link error.
-Please build MPFR without --enable-decimal-float.])
-             fi ;;
+             if test "$enable_decimal_float" = dpd; then
+               AC_MSG_ERROR([encoding mismatch (DPD requested).])
+             fi
+             if test "$enable_decimal_float" = bid; then
+               AC_MSG_ERROR([encoding mismatch (BID requested).])
+             fi
+             enable_decimal_float=generic
+  AC_MSG_WARN([The _Decimal64 encoding is non-standard or there was an])
+  AC_MSG_WARN([issue with its detection.  The generic code will be used.])
+  AC_MSG_WARN([Please do not forget to test with `make check'.])
+  AC_MSG_WARN([In case of failure of a decimal test, you should rebuild])
+  AC_MSG_WARN([MPFR without --enable-decimal-float.]) ;;
+         *)  AC_MSG_RESULT(error (exit status $d64_exit_status))
+             case "$enable_decimal_float" in
+               yes|bid|dpd|generic) AC_MSG_FAILURE([internal or link error.
+Please build MPFR without --enable-decimal-float.]) ;;
+               *) enable_decimal_float=no ;;
+             esac ;;
        esac],
-      [AC_MSG_RESULT(assuming DPD)
-       AC_DEFINE([DPD_FORMAT],1,[])
-       AC_DEFINE([MPFR_WANT_DECIMAL_FLOATS],1,
-                 [Build decimal float functions])])
-              ],
+      [AC_MSG_RESULT(cannot test)
+       dnl Since the _Decimal64 type exists, we assume that it is correctly
+       dnl supported. The detection of the encoding may still be done at
+       dnl compile time. We do not add a configure test for it so that this
+       dnl can be done on platforms where configure cannot be used.
+       enable_decimal_float=compile-time])
+    ],
     [AC_MSG_RESULT(no)
-     if test "$enable_decimal_float" = yes; then
-       AC_MSG_ERROR([compiler doesn't know _Decimal64 (ISO/IEC TR 24732).
-Please use another compiler or build MPFR without --enable-decimal-float.])
-     fi])
-fi
+     case "$enable_decimal_float" in
+       yes|bid|dpd|generic)
+         AC_MSG_FAILURE([compiler doesn't know _Decimal64 (ISO/IEC TR 24732).
+Please use another compiler or build MPFR without --enable-decimal-float.]) ;;
+       *) enable_decimal_float=no ;;
+     esac])
+  if test "$enable_decimal_float" != no; then
+    AC_DEFINE([MPFR_WANT_DECIMAL_FLOATS],1,
+              [Build decimal float functions])
+    case "$enable_decimal_float" in
+      dpd) AC_DEFINE([DECIMAL_DPD_FORMAT],1,[]) ;;
+      bid) AC_DEFINE([DECIMAL_BID_FORMAT],1,[]) ;;
+      generic) AC_DEFINE([DECIMAL_GENERIC_CODE],1,[]) ;;
+      compile-time) ;;
+      *) AC_MSG_ERROR(internal error) ;;
+    esac
+  fi
 
-dnl Check if __float128 is available. We also require the compiler
-dnl to support C99 constants (this prevents the __float128 support
-dnl with GCC's -std=c90, but who cares?).
+dnl Check the bit-field ordering for _Decimal128.
+dnl Little endian: sig=0 comb=49400 t0=0 t1=0 t2=0 t3=10
+dnl Big endian: sig=0 comb=8 t0=0 t1=0 t2=0 t3=570933248
+dnl Note: If the compilation fails, the compiler should exit with
+dnl an exit status less than 80.
+  AC_MSG_CHECKING(bit-field ordering for _Decimal128)
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+  ]], [[
+    union ieee_decimal128
+    {
+      struct
+      {
+        unsigned int t3:32;
+        unsigned int t2:32;
+        unsigned int t1:32;
+        unsigned int t0:14;
+        unsigned int comb:17;
+        unsigned int sig:1;
+      } s;
+      _Decimal128 d128;
+    } x;
+
+    x.d128 = 1.0dl;
+    if (x.s.sig == 0 && x.s.comb == 49400 &&
+        x.s.t0 == 0 && x.s.t1 == 0 && x.s.t2 == 0 && x.s.t3 == 10)
+       return 80; /* little endian */
+    else if (x.s.sig == 0 && x.s.comb == 8 &&
+             x.s.t0 == 0 && x.s.t1 == 0 && x.s.t2 == 0 && x.s.t3 == 570933248)
+       return 81; /* big endian */
+    else
+       return 82; /* unknown encoding */
+  ]])], [AC_MSG_RESULT(internal error)],
+        [d128_exit_status=$?
+         case "$d128_exit_status" in
+           80) AC_MSG_RESULT(little endian)
+               AC_DEFINE([HAVE_DECIMAL128_IEEE_LITTLE_ENDIAN],1) ;;
+           81) AC_MSG_RESULT(big endian)
+               AC_DEFINE([HAVE_DECIMAL128_IEEE_BIG_ENDIAN],1) ;;
+           *)  AC_MSG_RESULT(unavailable or unknown) ;;
+         esac],
+        [AC_MSG_RESULT(cannot test)])
+  
+fi
+# End of decimal float checks
+
+dnl Check if _Float128 or __float128 is available. We also require the
+dnl compiler to support hex constants with the f128 or q suffix (this
+dnl prevents the _Float128 support with GCC's -std=c90, but who cares?).
+dnl Note: We use AC_LINK_IFELSE instead of AC_COMPILE_IFELSE since an
+dnl error may occur only at link time, such as under NetBSD:
+dnl   https://mail-index.netbsd.org/pkgsrc-users/2018/02/02/msg026220.html
+dnl   https://mail-index.netbsd.org/pkgsrc-users/2018/02/05/msg026238.html
+dnl By using volatile and making the exit code depend on the value of
+dnl this variable, we also make sure that optimization doesn't make
+dnl the "undefined reference" error disappear.
 if test "$enable_float128" != no; then
-   AC_MSG_CHECKING(if compiler knows __float128 with C99 constants)
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__float128 x = 0x1.fp+16383q;]])],
+   AC_MSG_CHECKING(if _Float128 with hex constants is supported)
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[
+volatile _Float128 x = 0x1.fp+16383f128;
+return x == 0;
+]])],
       [AC_MSG_RESULT(yes)
        AC_DEFINE([MPFR_WANT_FLOAT128],1,[Build float128 functions])],
       [AC_MSG_RESULT(no)
-       if test "$enable_float128" = yes; then
-          AC_MSG_ERROR([compiler doesn't know __float128 with C99 constants
+       AC_MSG_CHECKING(if __float128 can be used as a fallback)
+dnl Use the q suffix in this case.
+       AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _Float128 __float128
+]], [[
+volatile _Float128 x = 0x1.fp+16383q;
+return x == 0;
+]])],
+          [AC_MSG_RESULT(yes)
+           AC_DEFINE([MPFR_WANT_FLOAT128],2,
+                     [Build float128 functions with float128 fallback])
+           AC_DEFINE([_Float128],[__float128],[__float128 fallback])],
+          [AC_MSG_RESULT(no)
+           if test "$enable_float128" = yes; then
+              AC_MSG_ERROR(
+[compiler doesn't know _Float128 or __float128 with hex constants.
 Please use another compiler or build MPFR without --enable-float128.])
        fi])
+      ])
 fi
 
 dnl Check if Static Assertions are supported.
@@ -656,10 +837,8 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include "mpfr-sassert.h"
 
 /* Test if Static Assertions work */
-MPFR_DECL_STATIC_ASSERT(sizeof(char) <= sizeof(int));
 
 int main (void) {
-  MPFR_DECL_STATIC_ASSERT(sizeof(int) <= sizeof(long));
   int x;
   (void) (x = 1);  /* cast to void: avoid a warning, at least with GCC */
   /* Test of the macro after a declaraction and a statement. */
@@ -671,8 +850,6 @@ int main (void) {
       AC_DEFINE([MPFR_USE_STATIC_ASSERT],1,[Build MPFR with Static Assertions])
      ],
      [AC_MSG_RESULT(no)
-     ],
-     [AC_MSG_RESULT([cannot test, assume no])
      ])
 CPPFLAGS="$saved_CPPFLAGS"
 
@@ -680,9 +857,25 @@ if test "$enable_lto" = "yes" ; then
    MPFR_LTO
 fi
 
-dnl Check if the shared cache was requested and its requirements are ok.
-if test "$mpfr_want_shared_cache" = yes ;then
-   MPFR_CHECK_SHARED_CACHE()
+dnl Logging support needs nested functions and the 'cleanup' attribute.
+dnl This is checked at the end because the change of CC and/or CFLAGS that
+dnl could occur before may have an influence on this test. The tested code
+dnl is very similar to what is used in MPFR (mpfr-impl.h).
+if test "$enable_logging" = yes; then
+AC_MSG_CHECKING(for nested functions and 'cleanup' attribute)
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+int main (void) {
+  auto void f_cleanup (int *p);
+  void f_cleanup (int *p) { int v = *p; (void) v; }
+  int v __attribute__ ((cleanup (f_cleanup)));
+  v = 0;
+  return 0;
+}
+  ]])],
+     [AC_MSG_RESULT(yes)],
+     [AC_MSG_RESULT(no)
+      AC_MSG_ERROR([logging support needs nested functions and the 'cleanup' attribute])
+     ])
 fi
 
 ])
@@ -716,17 +909,17 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
   if (GMP_NAIL_BITS != 0)
     {
       fprintf (stderr, "GMP_NAIL_BITS != 0\n");
-      return 1;
+      return 81;
     }
   if (GMP_NUMB_BITS != mp_bits_per_limb)
     {
       fprintf (stderr, "GMP_NUMB_BITS != mp_bits_per_limb\n");
-      return 2;
+      return 82;
     }
   if (GMP_NUMB_BITS != sizeof(mp_limb_t) * CHAR_BIT)
     {
       fprintf (stderr, "GMP_NUMB_BITS != sizeof(mp_limb_t) * CHAR_BIT\n");
-      return 3;
+      return 83;
     }
   return 0;
 ]])], [mpfr_cv_check_gmp="yes"],
@@ -736,7 +929,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 case $mpfr_cv_check_gmp in
 no*)
   AC_MSG_ERROR([bad GMP library or header - ABI problem?
-See 'config.log' for details.])
+See 'config.log' for details.]) ;;
 esac
 ])
 
@@ -745,9 +938,6 @@ dnl MPFR_CHECK_DBL2INT_BUG
 dnl ----------------------
 dnl Check for double-to-integer conversion bug
 dnl https://gforge.inria.fr/tracker/index.php?func=detail&aid=14435
-dnl For the exit status, the lowest values (including some values after 128)
-dnl are reserved for various system errors. So, let's use the largest values
-dnl below 255 for errors in the test itself.
 dnl The following problem has been seen under Solaris in config.log,
 dnl i.e. the failure to link with libgmp wasn't detected in the first
 dnl test:
@@ -770,6 +960,7 @@ AC_DEFUN([MPFR_CHECK_DBL2INT_BUG], [
 AC_REQUIRE([MPFR_CONFIGS])dnl
 AC_CACHE_CHECK([for double-to-integer conversion bug], mpfr_cv_dbl_int_bug, [
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <stdio.h>
 #include <gmp.h>
 ]], [[
   double d;
@@ -786,7 +977,11 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
         break;
       u = u >> 1;
     }
-  return (i == 0 && u == 1UL) ? 0 : 254 - i;
+  if (i == 0 && u == 1UL)
+    return 0;
+  fprintf (stderr, "Failure: i = %d, (unsigned long) u = %lu\n",
+           i, (unsigned long) u);
+  return 1;
 ]])], [mpfr_cv_dbl_int_bug="no"],
       [mpfr_cv_dbl_int_bug="yes or failed to exec (exit status is $?)"],
       [mpfr_cv_dbl_int_bug="cannot test, assume not present"])
@@ -794,34 +989,80 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 case $mpfr_cv_dbl_int_bug in
 yes*)
   AC_MSG_ERROR([double-to-integer conversion is incorrect.
-You need to use another compiler (or lower the optimization level).])
+You need to use another compiler (or lower the optimization level).]) ;;
 esac
 ])
 
 dnl MPFR_CHECK_MP_LIMB_T_VS_LONG
 dnl ----------------------------
-dnl Check that a long can fit in a mp_limb_t.
-dnl If so, it set the define MPFR_LONG_WITHIN_LIMB
+dnl Check whether a long fits in mp_limb_t.
+dnl If static assertions are not supported, one gets "no" even though a long
+dnl fits in mp_limb_t. Therefore, code without MPFR_LONG_WITHIN_LIMB defined
+dnl needs to be portable.
+dnl According to the GMP developers, a limb is always as large as a long,
+dnl except when __GMP_SHORT_LIMB is defined. It is currently never defined:
+dnl https://gmplib.org/list-archives/gmp-discuss/2018-February/006190.html
+dnl but it is not clear whether this could change in the future.
 AC_DEFUN([MPFR_CHECK_MP_LIMB_T_VS_LONG], [
 AC_REQUIRE([MPFR_CONFIGS])
 AC_CACHE_CHECK([for long to fit in mp_limb_t], mpfr_cv_long_within_limb, [
 saved_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS -I$srcdir/src"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+dnl AC_LINK_IFELSE is safer than AC_COMPILE_IFELSE, as it will detect
+dnl undefined function-like macros (which otherwise may be regarded
+dnl as valid function calls with AC_COMPILE_IFELSE since prototypes
+dnl are not required by the C standard).
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <gmp.h>
+/* Make sure that a static assertion is used (not MPFR_ASSERTN). */
+#undef MPFR_USE_STATIC_ASSERT
+#define MPFR_USE_STATIC_ASSERT 1
 #include "mpfr-sassert.h"
 ]], [[
   MPFR_STAT_STATIC_ASSERT ((mp_limb_t) -1 >= (unsigned long) -1);
   return 0;
 ]])], [mpfr_cv_long_within_limb="yes"],
-      [mpfr_cv_long_within_limb="no"],
-      [mpfr_cv_long_within_limb="cannot test, assume not present"])
+      [mpfr_cv_long_within_limb="no"])
 ])
 case $mpfr_cv_long_within_limb in
 yes*)
-      AC_DEFINE([MPFR_LONG_WITHIN_LIMB],1,[long can be stored in mp_limb_t])
+      AC_DEFINE([MPFR_LONG_WITHIN_LIMB],1,[long can be stored in mp_limb_t]) ;;
 esac
 CPPFLAGS="$saved_CPPFLAGS"
+])
+
+dnl MPFR_CHECK_MP_LIMB_T_VS_INTMAX
+dnl ------------------------------
+dnl Check that an intmax_t can fit in a mp_limb_t.
+AC_DEFUN([MPFR_CHECK_MP_LIMB_T_VS_INTMAX], [
+AC_REQUIRE([MPFR_CONFIGS])
+if test "$ac_cv_type_intmax_t" = yes; then
+AC_CACHE_CHECK([for intmax_t to fit in mp_limb_t], mpfr_cv_intmax_within_limb, [
+saved_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -I$srcdir/src -DMPFR_NEED_INTMAX_H"
+dnl AC_LINK_IFELSE is safer than AC_COMPILE_IFELSE, as it will detect
+dnl undefined function-like macros (which otherwise may be regarded
+dnl as valid function calls with AC_COMPILE_IFELSE since prototypes
+dnl are not required by the C standard).
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <gmp.h>
+/* Make sure that a static assertion is used (not MPFR_ASSERTN). */
+#undef MPFR_USE_STATIC_ASSERT
+#define MPFR_USE_STATIC_ASSERT 1
+#include "mpfr-sassert.h"
+#include "mpfr-intmax.h"
+]], [[
+  MPFR_STAT_STATIC_ASSERT ((mp_limb_t) -1 >= (uintmax_t) -1);
+  return 0;
+]])], [mpfr_cv_intmax_within_limb="yes"],
+      [mpfr_cv_intmax_within_limb="no"])
+])
+case $mpfr_cv_intmax_within_limb in
+yes*)
+      AC_DEFINE([MPFR_INTMAX_WITHIN_LIMB],1,[intmax_t can be stored in mp_limb_t]) ;;
+esac
+CPPFLAGS="$saved_CPPFLAGS"
+fi
 ])
 
 dnl MPFR_PARSE_DIRECTORY
@@ -864,66 +1105,76 @@ AC_DEFUN([MPFR_PARSE_DIRECTORY],
 ])
 
 
-dnl  MPFR_C_LONG_DOUBLE_FORMAT
-dnl  -------------------------
-dnl  Determine the format of a long double.
+dnl MPFR_C_REALFP_FORMAT
+dnl --------------------
+dnl Determine the format of a real floating type (first argument),
+dnl actually either double or long double. The second argument is
+dnl the printf length modifier.
 dnl
-dnl  The object file is grepped, so as to work when cross compiling.  A
-dnl  start and end sequence is included to avoid false matches, and
-dnl  allowance is made for the desired data crossing an "od -b" line
-dnl  boundary.  The test number is a small integer so it should appear
-dnl  exactly, no rounding or truncation etc.
+dnl The object file is grepped, so as to work when cross-compiling.
+dnl Start and end sequences are included to avoid false matches, and
+dnl allowance is made for the desired data crossing an "od -b" line
+dnl boundary.  The test number is a small integer so it should appear
+dnl exactly, without rounding or truncation, etc.
 dnl
-dnl  "od -b" is supported even by Unix V7, and the awk script used doesn't
-dnl  have functions or anything, so even an "old" awk should suffice.
+dnl "od -b" is supported even by Unix V7, and the awk script used doesn't
+dnl have functions or anything, so even an "old" awk should suffice.
 dnl
-dnl  The 10-byte IEEE extended format is generally padded to either 12 or 16
-dnl  bytes for alignment purposes.  The SVR4 i386 ABI is 12 bytes, or i386
-dnl  gcc -m128bit-long-double selects 16 bytes.  IA-64 is 16 bytes in LP64
-dnl  mode, or 12 bytes in ILP32 mode.  The first 10 bytes is the relevant
-dnl  part in all cases (big and little endian).
+dnl Concerning long double: The 10-byte IEEE extended format is generally
+dnl padded with null bytes to either 12 or 16 bytes for alignment purposes.
+dnl The SVR4 i386 ABI is 12 bytes, or i386 gcc -m128bit-long-double selects
+dnl 16 bytes. IA-64 is 16 bytes in LP64 mode, or 12 bytes in ILP32 mode.
+dnl The relevant part in all cases (big and little endian) consists of the
+dnl first 10 bytes.
 dnl
-dnl  Enhancements:
-dnl
-dnl  Could match more formats, but no need to worry until there's code
-dnl  wanting to use them.
-dnl
-dnl  Don't want to duplicate the double matching from GMP_C_DOUBLE_FORMAT,
-dnl  perhaps we should merge with that macro, to match data formats
-dnl  irrespective of the C type in question.  Or perhaps just let the code
-dnl  use DOUBLE macros when sizeof(double)==sizeof(long double).
+dnl We compile and link (with "-o conftest$EXEEXT") instead of just
+dnl compiling (with "-c"), so that this test works with GCC's and
+dnl clang's LTO (-flto). If we just compile with LTO, the generated
+dnl object file does not contain the structure as is. This new test
+dnl is inspired by the one used by GMP for the double type:
+dnl   https://gmplib.org/repo/gmp/rev/33eb0998a052
+dnl   https://gmplib.org/repo/gmp/rev/cbc6dbf95a10
+dnl "$EXEEXT" had to be added, otherwise the test was failing on
+dnl MS-Windows (see Autoconf manual).
 
-AC_DEFUN([MPFR_C_LONG_DOUBLE_FORMAT],
+AC_DEFUN([MPFR_C_REALFP_FORMAT],
 [AC_REQUIRE([AC_PROG_CC])
 AC_REQUIRE([AC_PROG_AWK])
 AC_REQUIRE([AC_OBJEXT])
-AC_CHECK_TYPES([long double])
-AC_CACHE_CHECK([format of `long double' floating point],
-                mpfr_cv_c_long_double_format,
-[mpfr_cv_c_long_double_format=unknown
-if test "$ac_cv_type_long_double" != yes; then
-  mpfr_cv_c_long_double_format="not available"
-else
-  cat >conftest.c <<\EOF
+AS_VAR_PUSHDEF([my_Type_var], [mpfr_cv_c_$1_format])dnl
+AC_CACHE_CHECK([format of floating-point type `$1'],
+                my_Type_var,
+[my_Type_var=unknown
+ cat >conftest.c <<\EOF
 [
+#include <stdio.h>
 /* "before" is 16 bytes to ensure there's no padding between it and "x".
-   We're not expecting any "long double" bigger than 16 bytes or with
+   We're not expecting any type bigger than 16 bytes or with
    alignment requirements stricter than 16 bytes.  */
-struct {
+typedef struct {
   char         before[16];
-  long double  x;
+  $1           x;
   char         after[8];
-} foo = {
+} foo_t;
+
+foo_t foo = {
   { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
     '\001', '\043', '\105', '\147', '\211', '\253', '\315', '\357' },
   -123456789.0,
   { '\376', '\334', '\272', '\230', '\166', '\124', '\062', '\020' }
 };
+
+int main (void) {
+  int i;
+  for (i = 0; i < 8; i++)
+    printf ("%d %$2f\n", foo.before[i] + foo.after[i], foo.x);
+  return 0;
+}
 ]
 EOF
-  mpfr_compile="$CC $CFLAGS $CPPFLAGS -c conftest.c >&AS_MESSAGE_LOG_FD 2>&1"
-  if AC_TRY_EVAL(mpfr_compile); then
-    cat >conftest.awk <<\EOF
+ mpfr_compile="$CC $CFLAGS $CPPFLAGS $LDFLAGS conftest.c -o conftest$EXEEXT >&AS_MESSAGE_LOG_FD 2>&1"
+ if AC_TRY_EVAL(mpfr_compile); then
+   cat >conftest.awk <<\EOF
 [
 BEGIN {
   found = 0
@@ -1033,7 +1284,7 @@ BEGIN {
               got[11] == "031" && \
               got[10] == "300")
             {
-              print "IEEE extended, little endian"
+              print "IEEE extended, little endian (12 bytes)"
               found = 1
               exit
             }
@@ -1052,7 +1303,7 @@ BEGIN {
               got[08] == "000")
             {
               # format found on m68k
-              print "IEEE extended, big endian"
+              print "IEEE extended, big endian (12 bytes)"
               found = 1
               exit
             }
@@ -1096,7 +1347,7 @@ BEGIN {
               got[15] == "031" && \
               got[14] == "300")
             {
-              print "IEEE extended, little endian"
+              print "IEEE extended, little endian (16 bytes)"
               found = 1
               exit
             }
@@ -1201,68 +1452,18 @@ END {
 }
 ]
 EOF
-    mpfr_cv_c_long_double_format=`od -b conftest.$OBJEXT | $AWK -f conftest.awk`
-    case $mpfr_cv_c_long_double_format in
-    unknown*)
-      echo "cannot match anything, conftest.$OBJEXT contains" >&AS_MESSAGE_LOG_FD
-      od -b conftest.$OBJEXT >&AS_MESSAGE_LOG_FD
-      ;;
-    esac
-  else
-    AC_MSG_WARN([oops, cannot compile test program])
-  fi
-fi
-rm -f conftest*
-])
-
-AH_VERBATIM([HAVE_LDOUBLE],
-[/* Define one of the following to 1 for the format of a `long double'.
-   If your format is not among these choices, or you don't know what it is,
-   then leave all undefined.
-   IEEE_EXT is the 10-byte IEEE extended precision format.
-   IEEE_QUAD is the 16-byte IEEE quadruple precision format.
-   LITTLE or BIG is the endianness.  */
-#undef HAVE_LDOUBLE_IEEE_EXT_LITTLE
-#undef HAVE_LDOUBLE_IEEE_QUAD_BIG])
-
-case $mpfr_cv_c_long_double_format in
-  "IEEE double, big endian")
-    AC_DEFINE(HAVE_LDOUBLE_IS_DOUBLE, 1)
-    ;;
-  "IEEE double, little endian")
-    AC_DEFINE(HAVE_LDOUBLE_IS_DOUBLE, 1)
-    ;;
-  "IEEE extended, little endian")
-    AC_DEFINE(HAVE_LDOUBLE_IEEE_EXT_LITTLE, 1)
-    ;;
-  "IEEE extended, big endian")
-    AC_DEFINE(HAVE_LDOUBLE_IEEE_EXT_BIG, 1)
-    ;;
-  "IEEE quad, big endian")
-    AC_DEFINE(HAVE_LDOUBLE_IEEE_QUAD_BIG, 1)
-    ;;
-  "IEEE quad, little endian")
-    AC_DEFINE(HAVE_LDOUBLE_IEEE_QUAD_LITTLE, 1)
-    ;;
-  "possibly double-double, big endian")
-    AC_MSG_WARN([This format is known on GCC/PowerPC platforms,])
-    AC_MSG_WARN([but due to GCC PR26374, we can't test further.])
-    AC_MSG_WARN([You can safely ignore this warning, though.])
-    AC_DEFINE(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE, 1)
-    ;;
-  "possibly double-double, little endian")
-    AC_MSG_WARN([This format is known on GCC/PowerPC platforms,])
-    AC_MSG_WARN([but due to GCC PR26374, we can't test further.])
-    AC_MSG_WARN([You can safely ignore this warning, though.])
-    AC_DEFINE(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE, 1)
-    ;;
-  unknown* | "not available")
-    ;;
-  *)
-    AC_MSG_WARN([unrecognized long double FP format: $mpfr_cv_c_long_double_format])
-    ;;
-esac
-])
+   my_Type_var=`od -b conftest$EXEEXT | $AWK -f conftest.awk`
+   case $my_Type_var in
+   unknown*)
+     echo "cannot match anything, conftest$EXEEXT contains" >&AS_MESSAGE_LOG_FD
+     od -b conftest$EXEEXT >&AS_MESSAGE_LOG_FD
+     ;;
+   esac
+ else
+   AC_MSG_WARN([oops, cannot compile test program])
+ fi
+ rm -f conftest*
+])])
 
 dnl  MPFR_CHECK_LIBM
 dnl  ---------------
@@ -1349,7 +1550,7 @@ fi
 dnl  MPFR_FUNC_GMP_PRINTF_SPEC
 dnl  ------------------------------------
 dnl  MPFR_FUNC_GMP_PRINTF_SPEC(spec, type, [includes], [if-true], [if-false])
-dnl  Check if gmp_sprintf supports the conversion specification 'spec'
+dnl  Check if sprintf and gmp_sprintf support the conversion specifier 'spec'
 dnl  with type 'type'.
 dnl  Expand 'if-true' if printf supports 'spec', 'if-false' otherwise.
 
@@ -1364,8 +1565,19 @@ $3
   char s[256];
   $2 a = 17;
 
-  if (gmp_sprintf (s, "(%0.0$1)(%d)", a, 42) == -1) return 1;
-  return (strcmp (s, "(17)(42)") != 0);
+  /* Contrary to the gmp_sprintf test, do not use the 0 flag with the
+     precision, as -Werror=format yields an error, even though this
+     flag is allowed by the ISO C standard (it is just ignored).
+     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70813 */
+  if (sprintf (s, "(%.0$1)(%d)", a, 42) != 8 ||
+      strcmp (s, "(17)(42)") != 0)
+    return 1;
+
+  if (gmp_sprintf (s, "(%0.0$1)(%d)", a, 42) == -1 ||
+      strcmp (s, "(17)(42)") != 0)
+    return 1;
+
+  return 0;
 ]])],
   [AC_MSG_RESULT(yes)
   $4],
@@ -1392,24 +1604,24 @@ if test "$ac_cv_type_intmax_t" = yes; then
 # include <stdint.h>
 #endif
          ],,
-         [AC_DEFINE([NPRINTF_J], 1, [gmp_printf cannot read intmax_t])])
+         [AC_DEFINE([NPRINTF_J], 1, [printf/gmp_printf cannot read intmax_t])])
 fi
 
 MPFR_FUNC_GMP_PRINTF_SPEC([hhd], [char], [
 #include <gmp.h>
          ],,
-         [AC_DEFINE([NPRINTF_HH], 1, [gmp_printf cannot use `hh' length modifier])])
+         [AC_DEFINE([NPRINTF_HH], 1, [printf/gmp_printf cannot use `hh' length modifier])])
 
 MPFR_FUNC_GMP_PRINTF_SPEC([lld], [long long int], [
 #include <gmp.h>
          ],,
-         [AC_DEFINE([NPRINTF_LL], 1, [gmp_printf cannot read long long int])])
+         [AC_DEFINE([NPRINTF_LL], 1, [printf/gmp_printf cannot read long long int])])
 
 MPFR_FUNC_GMP_PRINTF_SPEC([Lf], [long double], [
 #include <gmp.h>
          ],
-         [AC_DEFINE([PRINTF_L], 1, [gmp_printf can read long double])],
-         [AC_DEFINE([NPRINTF_L], 1, [gmp_printf cannot read long double])])
+         [AC_DEFINE([PRINTF_L], 1, [printf/gmp_printf can read long double])],
+         [AC_DEFINE([NPRINTF_L], 1, [printf/gmp_printf cannot read long double])])
 
 MPFR_FUNC_GMP_PRINTF_SPEC([td], [ptrdiff_t], [
 #if defined (__cplusplus)
@@ -1419,8 +1631,33 @@ MPFR_FUNC_GMP_PRINTF_SPEC([td], [ptrdiff_t], [
 #endif
 #include <gmp.h>
     ],
-    [AC_DEFINE([PRINTF_T], 1, [gmp_printf can read ptrdiff_t])],
-    [AC_DEFINE([NPRINTF_T], 1, [gmp_printf cannot read ptrdiff_t])])
+    [AC_DEFINE([PRINTF_T], 1, [printf/gmp_printf can read ptrdiff_t])],
+    [AC_DEFINE([NPRINTF_T], 1, [printf/gmp_printf cannot read ptrdiff_t])])
+])
+
+dnl MPFR_CHECK_PRINTF_GROUPFLAG
+dnl ---------------------------
+dnl Check the support of the group flag for native integers, which is
+dnl a Single UNIX Specification extension.
+dnl This will be used to enable some tests, as the implementation of
+dnl the P length modifier for mpfr_*printf relies on this support.
+
+AC_DEFUN([MPFR_CHECK_PRINTF_GROUPFLAG], [
+AC_MSG_CHECKING(if gmp_printf supports the ' group flag)
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <string.h>
+#include <gmp.h>
+]], [[
+  char s[256];
+
+  if (gmp_sprintf (s, "%'d", 17) == -1) return 1;
+  return (strcmp (s, "17") != 0);
+]])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE([PRINTF_GROUPFLAG], 1, [Define if gmp_printf supports the ' group flag])],
+  [AC_MSG_RESULT(no)],
+  [AC_MSG_RESULT(cannot test, assume no)])
+])
 ])
 
 dnl MPFR_LTO
@@ -1480,32 +1717,6 @@ mpfr_compile_and_link()
 rm -f conftest*
 ])
 
-dnl MPFR_CHECK_SHARED_CACHE
-dnl ----------------------
-dnl Check if the conditions for the shared cache are met:
-dnl  * either pthread / C11 are available.
-dnl  * either constructor or once.
-AC_DEFUN([MPFR_CHECK_SHARED_CACHE], [
-  AC_MSG_CHECKING(if shared cache is supported)
-  if test "$enable_logging" = yes ; then
-    AC_MSG_RESULT(no)
-    AC_MSG_ERROR([shared cache does not work with logging support.])
-dnl because logging support disables threading support
-  elif test "$enable_thread_safe" != yes ; then
-    AC_MSG_RESULT(no)
-    AC_MSG_ERROR([shared cache needs thread attribute.])
-  elif test "$ax_pthread_ok" != yes && "$mpfr_c11_thread_ok" != yes ; then
-    AC_MSG_RESULT(no)
-    AC_MSG_ERROR([shared cache needs pthread/C11 library.])
-  else
-    AC_MSG_RESULT(yes)
-    if test "$ax_pthread_ok" = yes ; then
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-        LIBS="$LIBS $PTHREAD_LIBS"
-    fi
-  fi
-])
-
 dnl MPFR_CHECK_CONSTRUCTOR_ATTR
 dnl ---------------------------
 dnl Check for constructor/destructor attributes to function.
@@ -1547,7 +1758,7 @@ AC_DEFUN([MPFR_CHECK_C11_THREAD], [
 AC_MSG_CHECKING([for ISO C11 thread support])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <assert.h>
-#include <thread.h>
+#include <threads.h>
  mtx_t lock;
  once_flag once = ONCE_FLAG_INIT;
  thrd_t thd_idx;

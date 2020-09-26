@@ -2,7 +2,7 @@
  mpfr_fits_sint_p, mpfr_fits_slong_p, mpfr_fits_sshort_p,
  mpfr_fits_uint_p, mpfr_fits_ulong_p, mpfr_fits_ushort_p
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,14 +19,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-test.h"
 
 #define FTEST_AUX(N,NOT,FCT)                                    \
@@ -165,9 +161,9 @@ main (void)
 
         /* Check large values (no fit) */
         mpfr_set_ui (x, ULONG_MAX, MPFR_RNDN);
-        mpfr_mul_2exp (x, x, 1, MPFR_RNDN);
+        mpfr_mul_2ui (x, x, 1, MPFR_RNDN);
         CHECK_ALL (8, !!);
-        mpfr_mul_2exp (x, x, 40, MPFR_RNDN);
+        mpfr_mul_2ui (x, x, 40, MPFR_RNDN);
         CHECK_ALL (9, !!);
 
         /* Check a non-integer number just below a power of two. */
@@ -246,9 +242,9 @@ main (void)
       CHECK_MAX (10, !);
 
       /* Check the limits of the types (except 0 for uintmax_t) */
-      CHECK_LIM (20, MPFR_UINTMAX_MAX, mpfr_set_uj, mpfr_fits_uintmax_p);
-      CHECK_LIM (30, MPFR_INTMAX_MAX, mpfr_set_sj, mpfr_fits_intmax_p);
-      CHECK_LIM (35, MPFR_INTMAX_MIN, mpfr_set_sj, mpfr_fits_intmax_p);
+      CHECK_LIM (20, UINTMAX_MAX, mpfr_set_uj, mpfr_fits_uintmax_p);
+      CHECK_LIM (30, INTMAX_MAX, mpfr_set_sj, mpfr_fits_intmax_p);
+      CHECK_LIM (35, INTMAX_MIN, mpfr_set_sj, mpfr_fits_intmax_p);
 
       /* Check negative op */
       for (i = 1; i <= 4; i++)

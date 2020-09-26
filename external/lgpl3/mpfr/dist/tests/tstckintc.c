@@ -1,6 +1,6 @@
 /* Test file for mpfr_custom_*
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -31,6 +31,22 @@ long *org = (long *) Buffer;
 mpfr_prec_t p = PREC_TESTED;
 
 #define ALIGNED(s) (((s) + sizeof (long) - 1) / sizeof (long) * sizeof (long))
+
+/* This code ensures alignment to "long". However, this might not be
+   sufficient on some platforms. GCC's -Wcast-align=strict option can
+   be useful, but this needs successive casts to help GCC, e.g.
+
+   newx = (mpfr_ptr) (long *) (void *) old_stack;
+
+   successively casts old_stack (of type char *) to
+   - void *: avoid a false positive for the following cast to long *
+     (as the code takes care of alignment to "long");
+   - long *: this corresponds to the alignment checked by MPFR; coming
+     from void *, it will not trigger a warning (even if incorrect);
+   - mpfr_ptr: -Wcast-align=strict will emit a warning if mpfr_ptr has
+     an alignment requirement stronger than long *. In such a case,
+     the code will have to be fixed.
+*/
 
 static void *
 new_st (size_t s)
@@ -94,12 +110,14 @@ return_mpfr (mpfr_ptr x, char *old_stack)
   void *mantissa       = mpfr_custom_get_significand (x);
   size_t size_mantissa = mpfr_custom_get_size (mpfr_get_prec (x));
   mpfr_ptr newx;
+  long *newx2;
 
   memmove (old_stack, x, sizeof (mpfr_t));
   memmove (old_stack + ALIGNED (sizeof (mpfr_t)), mantissa, size_mantissa);
-  newx = (mpfr_ptr) old_stack;
-  mpfr_custom_move (newx, old_stack + ALIGNED (sizeof (mpfr_t)));
-  stack = old_stack + ALIGNED (sizeof (mpfr_t)) + ALIGNED (size_mantissa);
+  newx = (mpfr_ptr) (long *) (void *) old_stack;
+  newx2 = (long *) (void *) (old_stack + ALIGNED (sizeof (mpfr_t)));
+  mpfr_custom_move (newx, newx2);
+  stack = (char *) newx2 + ALIGNED (size_mantissa);
   return newx;
 }
 
@@ -113,7 +131,7 @@ return_mpfr_func (mpfr_ptr x, char *old_stack)
 
   memmove (old_stack, x, sizeof (mpfr_t));
   memmove (old_stack + ALIGNED (sizeof (mpfr_t)), mantissa, size_mantissa);
-  newx = (mpfr_ptr) old_stack;
+  newx = (mpfr_ptr) (long *) (void *) old_stack;
   (mpfr_custom_move) (newx, old_stack + ALIGNED (sizeof (mpfr_t)));
   stack = old_stack + ALIGNED (sizeof (mpfr_t)) + ALIGNED (size_mantissa);
   return newx;
@@ -127,7 +145,7 @@ test1 (void)
   mpfr_ptr x, y;
 
   reset_stack ();
-  org = (long *) stack;
+  org = (long *) (void *) stack;
 
   x = new_mpfr (p);
   y = new_mpfr (p);
@@ -277,7 +295,7 @@ test2 (void)
   long *a, *b, *c;
 
   reset_stack ();
-  org = (long *) stack;
+  org = (long *) (void *) stack;
 
   a = dummy_set_si (42);
   b = dummy_set_si (17);

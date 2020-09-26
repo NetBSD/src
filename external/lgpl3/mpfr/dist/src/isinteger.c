@@ -1,6 +1,6 @@
 /* mpfr_integer_p -- test if a mpfr variable is integer.
 
-Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 
@@ -50,7 +50,7 @@ mpfr_integer_p (mpfr_srcptr x)
 
   xp = MPFR_MANT(x);
   MPFR_ASSERTN(xn >= 0);
-  if (xp[xn] << (expo % GMP_NUMB_BITS) != 0)
+  if (MPFR_LIMB_LSHIFT(xp[xn], expo % GMP_NUMB_BITS) != 0)
     return 0;
   while (--xn >= 0)
     if (xp[xn] != 0)

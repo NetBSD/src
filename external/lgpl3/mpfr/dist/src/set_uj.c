@@ -1,6 +1,6 @@
 /* mpfr_set_uj -- set a MPFR number from a huge machine unsigned integer
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,15 +17,11 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #define MPFR_NEED_LONGLONG_H
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-impl.h"
 
 #ifdef _MPFR_H_HAVE_INTMAX_T
@@ -41,7 +37,7 @@ mpfr_set_uj (mpfr_t x, uintmax_t j, mpfr_rnd_t rnd)
 int
 mpfr_set_uj_2exp (mpfr_t x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
 {
-  int cnt;
+  int cnt, inex;
   mp_size_t i, k;
   mp_limb_t limb;
   mp_limb_t yp[uintmaxpml];
@@ -56,6 +52,10 @@ mpfr_set_uj_2exp (mpfr_t x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
       MPFR_SET_ZERO(x);
       MPFR_RET(0);
     }
+
+  /* early overflow detection to avoid a possible integer overflow below */
+  if (MPFR_UNLIKELY(e >= __gmpfr_emax))
+    return mpfr_overflow (x, rnd, MPFR_SIGN_POS);
 
   MPFR_ASSERTN (sizeof(uintmax_t) % sizeof(mp_limb_t) == 0);
 
@@ -107,7 +107,9 @@ mpfr_set_uj_2exp (mpfr_t x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
   e += k * GMP_NUMB_BITS - cnt;    /* Update Expo */
   MPFR_ASSERTD (MPFR_LIMB_MSB(yp[numberof (yp) - 1]) != 0);
 
-  /* Check expo underflow / overflow (can't use mpfr_check_range) */
+  MPFR_RNDRAW (inex, x, yp, uintmax_bit_size, rnd, MPFR_SIGN_POS, e++);
+
+  /* Check expo underflow / overflow */
   if (MPFR_UNLIKELY(e < __gmpfr_emin))
     {
       /* The following test is necessary because in the rounding to the
@@ -116,16 +118,18 @@ mpfr_set_uj_2exp (mpfr_t x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
        *   _ |x| < 2^(emin-2), or
        *   _ |x| = 2^(emin-2) and the absolute value of the exact
        *     result is <= 2^(emin-2). */
-      if (rnd == MPFR_RNDN && (e+1 < __gmpfr_emin || mpfr_powerof2_raw(y)))
+      if (rnd == MPFR_RNDN &&
+          (e + 1 < __gmpfr_emin ||
+           (mpfr_powerof2_raw (x) && inex >= 0)))
         rnd = MPFR_RNDZ;
       return mpfr_underflow (x, rnd, MPFR_SIGN_POS);
     }
   if (MPFR_UNLIKELY(e > __gmpfr_emax))
     return mpfr_overflow (x, rnd, MPFR_SIGN_POS);
-  MPFR_SET_EXP (y, e);
 
-  /* Final: set x to y (rounding if necessary) */
-  return mpfr_set (x, y, rnd);
+  MPFR_SET_SIGN (x, MPFR_SIGN_POS);
+  MPFR_SET_EXP (x, e);
+  MPFR_RET (inex);
 }
 
 #endif

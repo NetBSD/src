@@ -1,7 +1,7 @@
 /* Example illustrating how to use mpfr_can_round. */
 
 /*
-Copyright 2016-2018 Free Software Foundation, Inc.
+Copyright 2016-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
@@ -60,5 +60,6 @@ main (void)
     }
   mpfr_clear (x);
   mpfr_clear (y);
+  mpfr_free_cache ();
   return 0;
 }

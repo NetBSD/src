@@ -1,6 +1,6 @@
 /* Test file for mpfr_erf and mpfr_erfc.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,10 +17,8 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <math.h>
 
 #include "mpfr-test.h"
 
@@ -638,6 +636,20 @@ reduced_expo_range (void)
   mpfr_set_emax (emax);
 }
 
+/* Similar to a bug reported by Naoki Shibata:
+   https://sympa.inria.fr/sympa/arc/mpfr/2018-07/msg00028.html
+*/
+static void
+bug20180723 (void)
+{
+  mpfr_t x;
+
+  mpfr_init2 (x, 256);
+  mpfr_set_ui (x, 28, MPFR_RNDN);
+  mpfr_erfc (x, x, MPFR_RNDN);
+  mpfr_clear (x);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -648,9 +660,10 @@ main (int argc, char *argv[])
   large_arg ();
   test_erfc ();
   reduced_expo_range ();
+  bug20180723 ();
 
-  test_generic_erf (MPFR_PREC_MIN, 100, 15);
-  test_generic_erfc (MPFR_PREC_MIN, 100, 15);
+  test_generic_erf (MPFR_PREC_MIN, 300, 150);
+  test_generic_erfc (MPFR_PREC_MIN, 300, 150);
 
   data_check ("data/erf",  mpfr_erf,  "mpfr_erf");
   data_check ("data/erfc", mpfr_erfc, "mpfr_erfc");

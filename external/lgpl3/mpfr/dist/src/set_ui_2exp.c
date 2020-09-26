@@ -1,7 +1,7 @@
 /* mpfr_set_ui_2exp -- set a MPFR number from a machine unsigned integer with
    a shift
 
-Copyright 2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -36,12 +36,21 @@ mpfr_set_ui_2exp (mpfr_ptr x, unsigned long i, mpfr_exp_t e, mpfr_rnd_t rnd_mode
     }
   else
     {
+#ifdef MPFR_LONG_WITHIN_LIMB
       mp_size_t xn;
       int cnt, nbits;
       mp_limb_t *xp;
       int inex = 0;
 
-      /* FIXME: support int limbs (e.g. 16-bit limbs on 16-bit proc) */
+      /* Early underflow/overflow checking is necessary to avoid
+         integer overflow or errors due to special exponent values. */
+      if (MPFR_UNLIKELY (e < __gmpfr_emin - (mpfr_exp_t)
+                         (sizeof (unsigned long) * CHAR_BIT + 1)))
+        return mpfr_underflow (x, rnd_mode == MPFR_RNDN ?
+                               MPFR_RNDZ : rnd_mode, i < 0 ? -1 : 1);
+      if (MPFR_UNLIKELY (e >= __gmpfr_emax))
+        return mpfr_overflow (x, rnd_mode, i < 0 ? -1 : 1);
+
       MPFR_ASSERTD (i == (mp_limb_t) i);
 
       /* Position of the highest limb */
@@ -68,5 +77,15 @@ mpfr_set_ui_2exp (mpfr_ptr x, unsigned long i, mpfr_exp_t e, mpfr_rnd_t rnd_mode
 
       MPFR_EXP (x) = e;
       return mpfr_check_range (x, inex, rnd_mode);
+#else
+      /* if a long does not fit into a limb, we use mpfr_set_z_2exp */
+      mpz_t z;
+      int inex;
+
+      mpz_init_set_ui (z, i);
+      inex = mpfr_set_z_2exp (x, z, e, rnd_mode);
+      mpz_clear (z);
+      return inex;
+#endif
     }
 }

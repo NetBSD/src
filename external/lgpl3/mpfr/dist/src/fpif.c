@@ -1,7 +1,7 @@
 /* mpfr_fpif -- Binary export & import of MPFR numbers
    (floating-point interchange format)
 
-Copyright 2012-2018 Free Software Foundation, Inc.
+Copyright 2012-2020 Free Software Foundation, Inc.
 Contributed by Olivier Demengeon.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -46,7 +46,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
       where s is the sign bit and E = [eeeeeee] such that:
         * If 0 <= E <= 94, then the exponent e is E-47 (-47 <= e <= 47).
         * If 95 <= E <= 110, the exponent is stored in the next E-94 bytes
-          (1 to 16 bytes) in sign + absolute value representation.
+          (1 to 16 bytes) in sign + absolute value representation,
+          where the absolute value is increased by 47 (e <= -47 or 47 <= e).
         * If 111 <= E <= 118, the exponent size S is stored in the next
           E-110 bytes (1 to 8), then the exponent itself is stored in the
           next S bytes. [Not implemented yet]
@@ -90,11 +91,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
         {                                                               \
           (buffer) = (unsigned char *) mpfr_reallocate_func             \
             ((buffer), *(buffer_size), (wanted_size));                  \
-          if ((buffer) == NULL)                                         \
-            {                                                           \
-              *(buffer_size) = 0;                                       \
-              return NULL;                                              \
-            }                                                           \
+          MPFR_ASSERTN((buffer) != 0);                                  \
         }                                                               \
       *(buffer_size) = (wanted_size);                                   \
     }                                                                   \
@@ -248,13 +245,23 @@ mpfr_fpif_read_precision_from_file (FILE *fh)
   if (fread (buffer, precision_size, 1, fh) != 1)
     return 0;
 
+  /* Justification of the #if below. */
+  MPFR_ASSERTD (precision_size <= MPFR_MAX_PRECSIZE + 1);
+
+#if (MPFR_MAX_PRECSIZE + 1) * CHAR_BIT > MPFR_PREC_BITS
   while (precision_size > sizeof(mpfr_prec_t))
     {
       if (buffer[precision_size-1] != 0)
         return 0;  /* the read precision doesn't fit in a mpfr_prec_t */
       precision_size--;
     }
+#endif
 
+  /* To detect bugs affecting particular platforms (thus MPFR_ASSERTN)... */
+  MPFR_ASSERTN (precision_size <= sizeof(mpfr_prec_t));
+
+  /* Since mpfr_prec_t is signed, one also needs to check that the
+     most significant bit of the corresponding unsigned value is 0. */
   if (precision_size == sizeof(mpfr_prec_t) &&
       buffer[precision_size-1] >= 0x80)
     return 0;  /* the read precision doesn't fit in a mpfr_prec_t */
@@ -356,7 +363,7 @@ mpfr_fpif_store_exponent (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
 
 /*
  * x : OUT : MPFR number extracted from the binary buffer
- * fh : IN : file handler
+ * fh : IN : file handler (should not be NULL)
  * return 0 if successful
  */
 /* TODO
@@ -373,8 +380,7 @@ mpfr_fpif_read_exponent_from_file (mpfr_t x, FILE * fh)
   int sign;
   unsigned char buffer[sizeof(mpfr_exp_t)];
 
-  if (fh == NULL)
-    return 1;
+  MPFR_ASSERTD(fh != NULL);
 
   if (fread (buffer, 1, 1, fh) != 1)
     return 1;
@@ -481,30 +487,21 @@ mpfr_fpif_store_limbs (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
 /*
  * x : OUT : MPFR number extracted from the binary buffer, should have the same
  *           precision than the number in the binary format
- * buffer : IN : limb of the MPFR number x in a binary format,
- * buffer_size : IN/OUT : size of the buffer => size used in the buffer
- * return 0 if successful
+ * buffer : IN : limb of the MPFR number x in a binary format
+ * nb_byte : IN : size of the buffer (in bytes)
+ * Assume buffer is not NULL.
  */
-static int
-mpfr_fpif_read_limbs (mpfr_t x, unsigned char *buffer, size_t *buffer_size)
+static void
+mpfr_fpif_read_limbs (mpfr_t x, unsigned char *buffer, size_t nb_byte)
 {
-  mpfr_prec_t precision;
-  size_t nb_byte;
   size_t mp_bytes_per_limb;
   size_t nb_partial_byte;
   size_t i, j;
 
-  precision = mpfr_get_prec (x);
-  nb_byte = (precision + 7) >> 3;
+  MPFR_ASSERTD (buffer != NULL);
+
   mp_bytes_per_limb = mp_bits_per_limb >> 3;
   nb_partial_byte = nb_byte % mp_bytes_per_limb;
-
-  if ((buffer == NULL) || (*buffer_size < nb_byte))
-    {
-      *buffer_size = 0;
-      return 1;
-    }
-  *buffer_size = nb_byte;
 
   if (nb_partial_byte > 0)
     {
@@ -516,13 +513,11 @@ mpfr_fpif_read_limbs (mpfr_t x, unsigned char *buffer, size_t *buffer_size)
        i += mp_bytes_per_limb, j++)
     getLittleEndianData ((unsigned char*) (MPFR_MANT(x) + j), buffer + i,
                          sizeof(mp_limb_t), sizeof(mp_limb_t));
-
-  return 0;
 }
 
 /* External Function */
 /*
- * fh : IN : file hander
+ * fh : IN : file handler
  * x : IN : MPFR number to put in the file
  * return 0 if successful
  */
@@ -539,8 +534,7 @@ mpfr_fpif_export (FILE *fh, mpfr_t x)
 
   buf_size = MAX_VARIABLE_STORAGE(sizeof(mpfr_exp_t), mpfr_get_prec (x));
   buf = (unsigned char*) mpfr_allocate_func (buf_size);
-  if (buf == NULL)
-    return -1;
+  MPFR_ASSERTN(buf != NULL);
 
   used_size = buf_size;
   buf = mpfr_fpif_store_precision (buf, &used_size, mpfr_get_prec (x));
@@ -553,11 +547,8 @@ mpfr_fpif_export (FILE *fh, mpfr_t x)
     }
   used_size = buf_size;
   bufResult = mpfr_fpif_store_exponent (buf, &used_size, x);
-  if (bufResult == NULL)
-    {
-      mpfr_free_func (buf, buf_size);
-      return -1;
-    }
+  /* bufResult cannot be NULL: if reallocation failed in
+     mpfr_fpif_store_exponent, an assertion failed */
   buf = bufResult;
   used_size > buf_size ? buf_size = used_size : 0;
   status = fwrite (buf, used_size, 1, fh);
@@ -587,7 +578,7 @@ mpfr_fpif_export (FILE *fh, mpfr_t x)
 /*
  * x : IN/OUT : MPFR number extracted from the file, its precision is reset to
  *              be able to hold the number
- * fh : IN : file hander
+ * fh : IN : file handler
  * Return 0 if the import was successful.
  */
 int
@@ -601,6 +592,7 @@ mpfr_fpif_import (mpfr_t x, FILE *fh)
   precision = mpfr_fpif_read_precision_from_file (fh);
   if (precision == 0) /* precision = 0 means an error */
     return -1;
+  MPFR_ASSERTD(fh != NULL); /* checked by mpfr_fpif_read_precision_from_file */
   if (precision > MPFR_PREC_MAX)
     return -1;
   MPFR_STAT_STATIC_ASSERT (MPFR_PREC_MIN == 1);  /* as specified */
@@ -626,11 +618,7 @@ mpfr_fpif_import (mpfr_t x, FILE *fh)
       MPFR_STAT_STATIC_ASSERT ((MPFR_PREC_MAX + 7) >> 3 <= (size_t) -1);
       used_size = (precision + 7) >> 3; /* ceil(precision/8) */
       buffer = (unsigned char*) mpfr_allocate_func (used_size);
-      if (buffer == NULL)
-        {
-          mpfr_set_nan (x);
-          return -1;
-        }
+      MPFR_ASSERTN(buffer != NULL);
       status = fread (buffer, used_size, 1, fh);
       if (status != 1)
         {
@@ -638,13 +626,8 @@ mpfr_fpif_import (mpfr_t x, FILE *fh)
           mpfr_set_nan (x);
           return -1;
         }
-      status = mpfr_fpif_read_limbs (x, buffer, &used_size);
+      mpfr_fpif_read_limbs (x, buffer, used_size);
       mpfr_free_func (buffer, used_size);
-      if (status != 0)
-        {
-          mpfr_set_nan (x);
-          return -1;
-        }
     }
 
   return 0;

@@ -1,6 +1,6 @@
 /* Test file for features related to exceptions.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -152,13 +152,13 @@ check_flags (void)
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
   (mpfr_clear_overflow)();
-  mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1024, MPFR_RNDN);
   if (!(mpfr_overflow_p)())
     PRINT_ERROR ("ERROR: No overflow detected!\n");
 
   (mpfr_clear_underflow)();
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 1025, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 1025, MPFR_RNDN);
   if (!(mpfr_underflow_p)())
     PRINT_ERROR ("ERROR: No underflow detected!\n");
 
@@ -176,7 +176,7 @@ check_flags (void)
 
   (mpfr_clear_erangeflag) ();
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1024, MPFR_RNDN);
   mpfr_get_ui (x, MPFR_RNDN);
   if (!(mpfr_erangeflag_p)())
     PRINT_ERROR ("ERROR: No erange flag!\n");
@@ -473,7 +473,7 @@ main (int argc, char *argv[])
     }
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1024, MPFR_RNDN);
   mpfr_set_double_range ();
   mpfr_check_range (x, 0, MPFR_RNDN);
   if (!mpfr_inf_p (x) || (mpfr_sgn(x) <= 0))
@@ -484,7 +484,7 @@ main (int argc, char *argv[])
 
   set_emax (1025);
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1024, MPFR_RNDN);
   mpfr_set_double_range ();
   mpfr_check_range (x, 0, MPFR_RNDD);
   if (!mpfr_number_p (x))
@@ -494,7 +494,7 @@ main (int argc, char *argv[])
     }
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 1023, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1023, MPFR_RNDN);
   mpfr_add (x, x, x, MPFR_RNDN);
   if (!mpfr_inf_p (x) || (mpfr_sgn(x) <= 0))
     {
@@ -505,7 +505,7 @@ main (int argc, char *argv[])
     }
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_mul_2exp (x, x, 1023, MPFR_RNDN);
+  mpfr_mul_2ui (x, x, 1023, MPFR_RNDN);
   mpfr_add (x, x, x, MPFR_RNDD);
   if (!mpfr_number_p (x))
     {
@@ -515,7 +515,7 @@ main (int argc, char *argv[])
     }
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 1022, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 1022, MPFR_RNDN);
   mpfr_set_str_binary (y, "1.1e-1022"); /* y = 3/2*x */
   mpfr_sub (y, y, x, MPFR_RNDZ);
   if (mpfr_cmp_ui (y, 0))
@@ -528,7 +528,7 @@ main (int argc, char *argv[])
 
   set_emin (-1026);
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 1025, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 1025, MPFR_RNDN);
   mpfr_set_double_range ();
   mpfr_check_range (x, 0, MPFR_RNDN);
   if (!MPFR_IS_ZERO (x) )

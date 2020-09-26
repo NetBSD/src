@@ -1,6 +1,6 @@
 /* Various Thresholds of MPFR, not exported.  -*- mode: C -*-
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU MPFR Library.
 
@@ -16,7 +16,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /* mparam tuned for coverage test */
@@ -89,7 +89,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  784,784,784,784,783,784,784,784,784,784,784,784,784,784,784,784, \
  784,784,784,784,784,784,784,784,784,784,784,784,784,784,784,783, \
  736,784,784,784,784,784,783,784,784,831,784,832,832,832,832,832 \
-  
+
 #define MPFR_SQRHIGH_TAB  \
  -1,0,0,0,-1,-1,-1,-1,-1,7,7,7,8,9,10,11, \
  11,11,11,11,12,13,13,15,15,15,15,15,17,17,19,19, \
@@ -155,7 +155,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  696,696,695,696,696,696,696,696,695,695,696,695,696,695,696,695, \
  696,695,696,695,696,695,696,695,696,696,696,696,696,695,696,696, \
  695,696,696,696,696,696,696,696,696,696,696,696,696,696,696,696 \
-  
+
 #define MPFR_DIVHIGH_TAB  \
  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*0-15*/ \
  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*16-31*/ \

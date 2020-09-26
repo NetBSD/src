@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_z_2exp.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,16 +17,38 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
 
+/* generate a random exponent in [__gmpfr_emin, __gmpfr_emax-1] */
 static mpfr_exp_t
 randexp (void)
 {
-  return (mpfr_exp_t) (randlimb () % (__gmpfr_emax - __gmpfr_emin))
-    + __gmpfr_emin;
+  mpfr_uexp_t e;
+
+  if (MPFR_EXP_MAX <= MPFR_LIMB_MAX >> 1)
+    {
+      /* mpfr_uexp_t fits in a limb: we can generate the whole range
+         [emin, emax] directly. */
+      e = randlimb ();
+    }
+  else
+    {
+      mpfr_uexp_t emax = (mpfr_uexp_t) -1;
+
+      e = 0;
+      while (emax != 0)
+        {
+          /* Since mp_limb_t < mpfr_uexp_t, the shift counts are valid.
+             Use GMP_NUMB_BITS - 1 instead of GMP_NUMB_BITS to avoid a
+             bug in GCC. */
+          e = (e << (GMP_NUMB_BITS - 1)) + (randlimb () >> 1);
+          emax >>= GMP_NUMB_BITS - 1;
+        }
+    }
+  return (mpfr_exp_t) (e % (__gmpfr_emax - __gmpfr_emin)) + __gmpfr_emin;
 }
 
 static void
@@ -58,6 +80,14 @@ check0 (void)
           exit (1);
         }
     }
+
+  /* coverage test for huge exponent */
+  mpz_setbit (y, GMP_NUMB_BITS);
+  mpfr_clear_flags ();
+  inexact = mpfr_set_z_2exp (x, y, mpfr_get_emax_max(), MPFR_RNDN);
+  MPFR_ASSERTN(inexact > 0);
+  MPFR_ASSERTN(mpfr_inf_p (x) && mpfr_sgn (x) > 0);
+  MPFR_ASSERTN(mpfr_overflow_p ());
   mpfr_clear(x);
   mpz_clear(y);
 }

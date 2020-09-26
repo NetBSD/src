@@ -1,9 +1,9 @@
 /* This is the example given and commented on the MPFR web site:
- *   http://www.mpfr.org/sample.html
+ *   https://www.mpfr.org/sample.html
  */
 
 /*
-Copyright 1999-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,7 +20,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
@@ -52,5 +52,6 @@ int main (void)
   mpfr_clear (s);
   mpfr_clear (t);
   mpfr_clear (u);
+  mpfr_free_cache ();
   return 0;
 }

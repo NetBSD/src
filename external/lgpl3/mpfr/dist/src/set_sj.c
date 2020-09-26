@@ -1,6 +1,6 @@
 /* mpfr_set_sj -- set a MPFR number from a huge machine signed integer
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,14 +17,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-impl.h"
 
 #ifdef _MPFR_H_HAVE_INTMAX_T
@@ -38,7 +34,7 @@ mpfr_set_sj (mpfr_t x, intmax_t j, mpfr_rnd_t rnd)
 int
 mpfr_set_sj_2exp (mpfr_t x, intmax_t j, intmax_t e, mpfr_rnd_t rnd)
 {
-  if (j>=0)
+  if (j >= 0)
     return mpfr_set_uj_2exp (x, j, e, rnd);
   else
     {
