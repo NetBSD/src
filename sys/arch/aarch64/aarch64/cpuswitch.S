@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.26 2020/09/26 06:08:41 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.27 2020/09/26 06:09:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.26 2020/09/26 06:08:41 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.27 2020/09/26 06:09:33 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -298,7 +298,7 @@ ENTRY_NP(lwp_trampoline)
 	/*
 	 * When the x27 function returns, it will jump to el0_trap_exit.
 	 */
-	adr	x30, el0_trap_exit	/* tail call via lr */
+	adr	lr, el0_trap_exit	/* tail call via lr */
 	mov	x0, x28			/* mov arg into place */
 	mov	x16, x27		/* use x16 as jump register, for BTI */
 	br	x16			/* call function with arg */
