@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.32 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.33 2020/09/26 14:48:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.32 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.33 2020/09/26 14:48:31 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're
@@ -186,6 +186,13 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	if (chainlen > t->maxchain)
 		t->maxchain = chainlen;
 	return e;
+}
+
+void *
+Hash_FindValue(Hash_Table *t, const char *key)
+{
+    Hash_Entry *he = Hash_FindEntry(t, key);
+    return he != NULL ? he->value : NULL;
 }
 
 /* Searches the hash table for an entry corresponding to the key.
