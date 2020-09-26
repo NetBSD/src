@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.39 2020/09/12 15:25:41 jmcneill Exp $
+# $NetBSD: mkvars.mk,v 1.40 2020/09/26 17:49:49 jmcneill Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -10,6 +10,7 @@ MKEXTRAVARS= \
 	HAVE_XORG_SERVER_VER \
 	HAVE_XORG_GLAMOR \
 	HAVE_MESA_VER \
+	HAVE_NVMM \
 	HAVE_BINUTILS \
 	HAVE_LIBGCC_EH \
 	HAVE_OPENSSL \

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.89 2020/09/08 10:05:47 yamaguchi Exp $
+# $NetBSD: md.amd64,v 1.90 2020/09/26 17:49:50 jmcneill Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -184,8 +184,6 @@
 ./@MODULEDIR@/mt2131/mt2131.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/nvme				base-obsolete		obsolete
 ./@MODULEDIR@/nvme/nvme.kmod			base-obsolete		obsolete
-./@MODULEDIR@/nvmm				modules-base-kernel	kmod
-./@MODULEDIR@/nvmm/nvmm.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/nxt2k				modules-base-kernel	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/odcm				modules-base-kernel	kmod
