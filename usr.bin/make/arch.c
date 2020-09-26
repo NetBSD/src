@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.121 2020/09/25 14:49:51 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.122 2020/09/26 14:48:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.121 2020/09/25 14:49:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.122 2020/09/26 14:48:31 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -466,7 +466,6 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     char	  magic[SARMAG];
     ArchListNode *ln;
     Arch	  *ar;	      /* Archive descriptor */
-    Hash_Entry	  *he;	      /* Entry containing member's description */
     struct ar_hdr arh;        /* archive-member header for reading archive */
     char	  memName[MAXPATHLEN+1];
 			    /* Current member name while hashing. */
@@ -489,13 +488,14 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     }
 
     if (ln != NULL) {
+	struct ar_hdr *hdr;
+
 	ar = LstNode_Datum(ln);
+	hdr = Hash_FindValue(&ar->members, member);
+	if (hdr != NULL)
+	    return hdr;
 
-	he = Hash_FindEntry(&ar->members, member);
-
-	if (he != NULL) {
-	    return (struct ar_hdr *)Hash_GetValue(he);
-	} else {
+	{
 	    /* Try truncated name */
 	    char copy[AR_MAX_NAME_LEN+1];
 	    size_t len = strlen(member);
@@ -504,9 +504,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 		len = AR_MAX_NAME_LEN;
 		snprintf(copy, sizeof copy, "%s", member);
 	    }
-	    if ((he = Hash_FindEntry(&ar->members, copy)) != NULL)
-		return (struct ar_hdr *)Hash_GetValue(he);
-	    return NULL;
+	    hdr = Hash_FindValue(&ar->members, copy);
+	    return hdr;
 	}
     }
 
@@ -628,9 +627,12 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	    }
 #endif
 
-	    he = Hash_CreateEntry(&ar->members, memName, NULL);
-	    Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
-	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
+	    {
+	        Hash_Entry *he;
+		he = Hash_CreateEntry(&ar->members, memName, NULL);
+		Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
+		memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
+	    }
 	}
 	if (fseek(arch, ((long)size + 1) & ~1, SEEK_CUR) != 0)
 	    goto badarch;
@@ -644,13 +646,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * Now that the archive has been read and cached, we can look into
      * the hash table to find the desired member's header.
      */
-    he = Hash_FindEntry(&ar->members, member);
-
-    if (he != NULL) {
-	return (struct ar_hdr *)Hash_GetValue(he);
-    } else {
-	return NULL;
-    }
+    return Hash_FindValue(&ar->members, member);
 
 badarch:
     fclose(arch);
