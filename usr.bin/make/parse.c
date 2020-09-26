@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.331 2020/09/26 00:03:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.332 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.331 2020/09/26 00:03:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.332 2020/09/26 16:00:12 rillig Exp $");
 
 /* types and constants */
 
@@ -871,7 +871,7 @@ ParseDoOp(void *gnp, void *opp)
 	 */
 	gn->type |= op & ~OP_OPMASK;
 
-	cohort = Targ_FindNode(gn->name, TARG_NOHASH);
+	cohort = Targ_NewInternalNode(gn->name);
 	if (doing_depend)
 	    ParseMark(cohort);
 	/*
@@ -946,7 +946,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 		 * We give each .WAIT node a unique name (mainly for diag).
 		 */
 		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
-		gn = Targ_FindNode(wait_src, TARG_NOHASH);
+		gn = Targ_NewInternalNode(wait_src);
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
@@ -982,7 +982,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	 * Create proper predecessor/successor links between the previous
 	 * source and the current one.
 	 */
-	gn = Targ_FindNode(src, TARG_CREATE);
+	gn = Targ_GetNode(src);
 	if (doing_depend)
 	    ParseMark(gn);
 	if (predecessor != NULL) {
@@ -1015,7 +1015,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	 */
 
 	/* Find/create the 'src' node and attach to all targets */
-	gn = Targ_FindNode(src, TARG_CREATE);
+	gn = Targ_GetNode(src);
 	if (doing_depend)
 	    ParseMark(gn);
 	if (tOp) {
@@ -1309,7 +1309,7 @@ ParseDoDependency(char *line)
 		case Stale:
 		case dotError:
 		case Interrupt: {
-		    GNode *gn = Targ_FindNode(line, TARG_CREATE);
+		    GNode *gn = Targ_GetNode(line);
 		    if (doing_depend)
 			ParseMark(gn);
 		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
@@ -1393,7 +1393,7 @@ ParseDoDependency(char *line)
 		char *targName = Lst_Dequeue(curTargs);
 		GNode *gn = Suff_IsTransform(targName)
 			    ? Suff_AddTransform(targName)
-			    : Targ_FindNode(targName, TARG_CREATE);
+			    : Targ_GetNode(targName);
 		if (doing_depend)
 		    ParseMark(gn);
 

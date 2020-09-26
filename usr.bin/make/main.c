@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.345 2020/09/25 23:18:59 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.346 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.345 2020/09/25 23:18:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.346 2020/09/26 16:00:12 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -907,7 +907,7 @@ runTargets(void)
 	if (Lst_IsEmpty(create))
 		targs = Parse_MainName();
 	else
-		targs = Targ_FindList(create, TARG_CREATE);
+		targs = Targ_FindList(create);
 
 	if (!compatMake) {
 		/*
@@ -2039,7 +2039,7 @@ PrintOnError(GNode *gn, const char *s)
     /*
      * Finally, see if there is a .ERROR target, and run it if so.
      */
-    en = Targ_FindNode(".ERROR", TARG_NOCREATE);
+    en = Targ_FindNode(".ERROR");
     if (en) {
 	en->type |= OP_SPECIAL;
 	Compat_Make(en, en);

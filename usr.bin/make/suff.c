@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.167 2020/09/25 19:50:04 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.168 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.167 2020/09/25 19:50:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.168 2020/09/26 16:00:12 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -1061,7 +1061,7 @@ SuffFindThem(SrcList *srcs, SrcList *slst)
 	 * A file is considered to exist if either a node exists in the
 	 * graph for it or the file actually exists.
 	 */
-	if (Targ_FindNode(s->file, TARG_NOCREATE) != NULL) {
+	if (Targ_FindNode(s->file) != NULL) {
 #ifdef DEBUG_SRC
 	    fprintf(debug_file, "remove %p from %p\n", s, srcs);
 #endif
@@ -1263,7 +1263,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 		     * add it, skip any further spaces.
 		     */
 		    *cp++ = '\0';
-		    gn = Targ_FindNode(start, TARG_CREATE);
+		    gn = Targ_GetNode(start);
 		    Lst_Append(members, gn);
 		    while (*cp == ' ' || *cp == '\t') {
 			cp++;
@@ -1310,7 +1310,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 		/*
 		 * Stuff left over -- add it to the list too
 		 */
-		gn = Targ_FindNode(start, TARG_CREATE);
+		gn = Targ_GetNode(start);
 		Lst_Append(members, gn);
 	    }
 	    /*
@@ -1376,7 +1376,7 @@ SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 	char *cp = Lst_Dequeue(explist);
 
 	SUFF_DEBUG1("%s...", cp);
-	gn = Targ_FindNode(cp, TARG_CREATE);
+	gn = Targ_GetNode(cp);
 
 	/* Add gn to the parents child list before the original child */
 	Lst_InsertBefore(pgn->children, cln, gn);
@@ -1562,7 +1562,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * use for the archive without having to do a quadratic search over the
      * suffix list, backtracking for each one...
      */
-    mem = Targ_FindNode(name, TARG_CREATE);
+    mem = Targ_GetNode(name);
     SuffFindDeps(mem, slst);
 
     /*
@@ -1957,7 +1957,7 @@ sfnd_abort:
      * Etc.
      */
     if (bottom->node == NULL) {
-	bottom->node = Targ_FindNode(bottom->file, TARG_CREATE);
+	bottom->node = Targ_GetNode(bottom->file);
     }
 
     for (src = bottom; src->parent != NULL; src = src->parent) {
@@ -1969,7 +1969,7 @@ sfnd_abort:
 	src->node->suffix->refCount++;
 
 	if (targ->node == NULL) {
-	    targ->node = Targ_FindNode(targ->file, TARG_CREATE);
+	    targ->node = Targ_GetNode(targ->file);
 	}
 
 	SuffApplyTransform(targ->node, src->node,

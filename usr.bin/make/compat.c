@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.150 2020/09/24 07:11:29 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.151 2020/09/26 16:00:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.150 2020/09/24 07:11:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.151 2020/09/26 16:00:12 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -145,7 +145,7 @@ CompatInterrupt(int signo)
 	 * Run .INTERRUPT only if hit with interrupt signal
 	 */
 	if (signo == SIGINT) {
-	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
+	    gn = Targ_FindNode(".INTERRUPT");
 	    if (gn != NULL) {
 		Compat_Make(gn, gn);
 	    }
@@ -692,7 +692,7 @@ Compat_Run(GNodeList *targs)
      * to it.
      */
     if (!queryFlag) {
-	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
+	gn = Targ_FindNode(".BEGIN");
 	if (gn != NULL) {
 	    Compat_Make(gn, gn);
 	    if (gn->made == ERROR) {
