@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.130 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.131 2020/09/26 16:41:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -87,7 +87,7 @@ Boolean Arch_IsLib(GNode *);
 /* compat.c */
 int Compat_RunCommand(char *, GNode *);
 void Compat_Run(GNodeList *);
-int Compat_Make(GNode *, GNode *);
+void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
 CondEvalResult Cond_EvalCondition(const char *, Boolean *);
