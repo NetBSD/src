@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 
-/^config.status: linking/ {
+/^config.status(:[0-9]*:|:) linking/ {
 	# $3 = src
 	# $5 = dst
 

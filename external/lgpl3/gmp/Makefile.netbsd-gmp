@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.netbsd-gmp,v 1.5 2017/08/22 09:57:18 mrg Exp $
+# $NetBSD: Makefile.netbsd-gmp,v 1.6 2020/09/26 20:58:48 mrg Exp $
 
 # hack makefile to help build gmp ./configure
 
@@ -25,6 +25,7 @@ all:
 
 copy-files:
 	cd build && cp gmp.h gmp-mparam.h config.h config.m4 ${ARCHDIR}
+	awk -f ${NETBSDSRCDIR}/external/lgpl3/gmp/build-gmp-Makefile.inc.awk < build/config.log > ${ARCHDIR}/srcs.mk
 	sed -i -e 's/define.*CONFIG_TOP_SRCDIR.*//' ${ARCHDIR}/config.m4
 	sed -i -e 's/__GMP_CC.*/__GMP_CC "gcc"/' ${ARCHDIR}/gmp.h
 	sed -i -e 's/GMP_MPARAM_H_SUGGEST[ 	]"\/.*dist\/mpn/GMP_MPARAM_H_SUGGEST ".\/mpn/' ${ARCHDIR}/config.h
