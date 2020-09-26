@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.348 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.349 2020/09/26 17:39:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.348 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.349 2020/09/26 17:39:45 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -1969,7 +1969,7 @@ cached_realpath(const char *pathname, char *resolved)
 
 
 static int
-addErrorCMD(void *cmdp, void *unused)
+addErrorCMD(void *cmdp, void *gnp)
 {
     if (cmdp == NULL)
 	return 1;			/* stop */
