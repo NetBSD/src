@@ -1,6 +1,6 @@
 /* mpc.h -- Include file for mpc.
 
-Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2016, 2017 INRIA
+Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2016, 2017, 2018, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -26,9 +26,9 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 /* Define MPC version number */
 #define MPC_VERSION_MAJOR 1
-#define MPC_VERSION_MINOR 1
+#define MPC_VERSION_MINOR 2
 #define MPC_VERSION_PATCHLEVEL 0
-#define MPC_VERSION_STRING "1.1.0"
+#define MPC_VERSION_STRING "1.2.0"
 
 /* Macros dealing with MPC VERSION */
 #define MPC_VERSION_NUM(a,b,c) (((a) << 16L) | ((b) << 8) | (c))
@@ -42,7 +42,9 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 /* Return values */
 
-/* Transform negative to 2, positive to 1, leave 0 unchanged */
+/* Transform negative to 2, positive to 1, leave 0 unchanged.
+   Warning: since inex is evaluated two times, we should avoid
+   MPC_INEX(mpc_mul (...), mpc_mul (...)) */
 #define MPC_INEX_POS(inex) (((inex) < 0) ? 2 : ((inex) == 0) ? 0 : 1)
 /* Transform 2 to negative, 1 to positive, leave 0 unchanged */
 #define MPC_INEX_NEG(inex) (((inex) == 2) ? -1 : ((inex) == 0) ? 0 : 1)
@@ -152,6 +154,8 @@ __MPC_DECLSPEC int  mpc_div_2si   (mpc_ptr, mpc_srcptr, long int, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_mul_2si   (mpc_ptr, mpc_srcptr, long int, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_conj      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_neg       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_sum (mpc_ptr, const mpc_ptr *, unsigned long, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_dot (mpc_ptr, const mpc_ptr *, const mpc_ptr *, unsigned long, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_norm      (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
 __MPC_DECLSPEC int  mpc_abs       (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
 __MPC_DECLSPEC int  mpc_sqrt      (mpc_ptr, mpc_srcptr, mpc_rnd_t);

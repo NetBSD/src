@@ -1,3 +1,10 @@
+Changes in version 1.2.0:
+  - Minimally required library version: MPFR 4.1.0
+  - New functions: mpc_sum, mpc_dot
+  - Several functions are more robust with a reduced exponent range
+    (for example corresponding to IEEE 754 binary formats)
+  - New tool mpcheck.
+
 Changes in version 1.1.0:
   - Minimally required library versions: GMP 5.0.0 and MPFR 3.0.0
   - Fixed issues with MPFR 4.0.0

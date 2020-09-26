@@ -1,6 +1,6 @@
 /* mpc-impl.h -- Internal include file for mpc.
 
-Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -61,9 +61,9 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
    mpfr_copysign (x, y, z, rnd))
    /* work around spurious signs in nan */
 #define MPFR_ADD_ONE_ULP(x) \
-  (mpfr_sgn (x) > 0 ? mpfr_nextabove (x) : mpfr_nextbelow (x))
+  (MPFR_SIGN (x) > 0 ? mpfr_nextabove (x) : mpfr_nextbelow (x))
 #define MPFR_SUB_ONE_ULP(x) \
-  (mpfr_sgn (x) > 0 ? mpfr_nextbelow (x) : mpfr_nextabove (x))
+  (MPFR_SIGN (x) > 0 ? mpfr_nextbelow (x) : mpfr_nextabove (x))
    /* drop unused rounding mode from macros */
 #define MPFR_SWAP(a,b) do { mpfr_srcptr tmp; tmp = a; a = b; b = tmp; } while (0)
 

@@ -1,7 +1,7 @@
 /* mpc_get_dc, mpc_get_ldc -- Transform mpc number into C complex number
    mpc_get_str -- Convert a complex number into a string.
 
-Copyright (C) 2009, 2010, 2011 INRIA
+Copyright (C) 2009, 2010, 2011, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -53,12 +53,12 @@ mpc_get_ldc (mpc_srcptr op, mpc_rnd_t rnd) {
    of the locale is used. */
 
 /* mpfr_prec_t can be either int or long int */
-#if (__GMP_MP_SIZE_T_INT == 1)
+#if (_MPFR_EXP_FORMAT == 2)
 #define MPC_EXP_FORMAT_SPEC "i"
-#elif (__GMP_MP_SIZE_T_INT == 0)
+#elif (_MPFR_EXP_FORMAT == 3)
 #define MPC_EXP_FORMAT_SPEC "li"
 #else
-#error "mpfr_exp_t size not supported"
+#error "value of _MPFR_EXP_FORMAT not supported"
 #endif
 
 static char *
@@ -76,13 +76,13 @@ pretty_zero (mpfr_srcptr zero)
 }
 
 static char *
-prettify (const char *str, const mp_exp_t expo, int base, int special)
+prettify (const char *str, const mpfr_exp_t expo, int base, int special)
 {
   size_t sz;
   char *pretty;
   char *p;
   const char *s;
-  mp_exp_t x;
+  mpfr_exp_t x;
   int sign;
 
   sz = strlen (str) + 1; /* + terminal '\0' */
@@ -101,10 +101,10 @@ prettify (const char *str, const mp_exp_t expo, int base, int special)
   sign = (str[0] == '-' || str[0] == '+');
 
   x = expo - 1; /* expo is the exponent value with decimal point BEFORE
-                   the first digit, we wants decimal point AFTER the first
+                   the first digit, we want decimal point AFTER the first
                    digit */
   if (base == 16)
-    x <<= 2; /* the output exponent is a binary exponent */
+    x *= 4; /* the output exponent is a binary exponent */
 
   ++sz; /* + decimal point */
 
@@ -112,14 +112,14 @@ prettify (const char *str, const mp_exp_t expo, int base, int special)
     {
       /* augment sz with the size needed for an exponent written in base
          ten */
-      mp_exp_t xx;
+      mpfr_exp_t xx;
 
       sz += 3; /* + exponent char + sign + 1 digit */
 
       if (x < 0)
         {
           /* avoid overflow when changing sign (assuming that, for the
-             mp_exp_t type, (max value) is greater than (- min value / 10)) */
+             mpfr_exp_t type, (max value) is greater than (- min value / 10)) */
           if (x < -10)
             {
               xx = - (x / 10);
@@ -189,7 +189,7 @@ prettify (const char *str, const mp_exp_t expo, int base, int special)
 static char *
 get_pretty_str (const int base, const size_t n, mpfr_srcptr x, mpfr_rnd_t rnd)
 {
-  mp_exp_t expo;
+  mpfr_exp_t expo;
   char *ugly;
   char *pretty;
 
