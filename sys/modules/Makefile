@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.245 2020/09/08 10:05:47 yamaguchi Exp $
+#	$NetBSD: Makefile,v 1.246 2020/09/26 17:49:50 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -225,7 +225,7 @@ SUBDIR+=	tprof_x86
 SUBDIR+=	vmt
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${HAVE_NVMM:Uno} == "yes"
 SUBDIR+=	nvmm
 .endif
 

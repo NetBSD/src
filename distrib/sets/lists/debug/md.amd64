@@ -1,8 +1,7 @@
-# $NetBSD: md.amd64,v 1.111 2020/09/12 15:25:42 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.112 2020/09/26 17:49:50 jmcneill Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
-./usr/lib/libnvmm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
@@ -11,11 +10,9 @@
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-compat-shlib	compat,pic,debug,pam
 ./usr/libdata/debug/usr/lib/i386/libproc.so.1.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
 ./usr/libdata/debug/usr/lib/i386/librtld_db.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
-./usr/libdata/debug/usr/lib/libnvmm.so.0.1.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
-./usr/libdata/debug/usr/sbin/nvmmctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete
@@ -23,6 +20,6 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/lib/libi386/t_user_ldt.debug	tests-lib-debug	debug,atf,compat
-./usr/libdata/debug/usr/tests/lib/libnvmm/h_io_assist.debug	tests-lib-debug	debug,atf
-./usr/libdata/debug/usr/tests/lib/libnvmm/h_mem_assist.debug	tests-lib-debug	debug,atf
+./usr/libdata/debug/usr/tests/lib/libnvmm/h_io_assist.debug	tests-lib-debug	debug,atf,nvmm
+./usr/libdata/debug/usr/tests/lib/libnvmm/h_mem_assist.debug	tests-lib-debug	debug,atf,nvmm
 ./usr/libdata/debug/usr/tests/modules/t_x86_pte.debug	tests-sys-debug		debug,atf,rump

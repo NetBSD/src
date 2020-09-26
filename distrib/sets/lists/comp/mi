@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2358 2020/09/24 14:14:18 pgoyette Exp $
+#	$NetBSD: mi,v 1.2359 2020/09/26 17:49:49 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -649,6 +649,9 @@
 ./usr/include/dev/mii/tlphyvar.h		comp-obsolete		obsolete
 ./usr/include/dev/mii/tqphyreg.h		comp-obsolete		obsolete
 ./usr/include/dev/mulaw.h			comp-obsolete		obsolete
+./usr/include/dev/nvmm				comp-c-include		nvmm
+./usr/include/dev/nvmm/nvmm.h			comp-c-include		nvmm
+./usr/include/dev/nvmm/nvmm_ioctl.h		comp-c-include		nvmm
 ./usr/include/dev/ofisa/ofisavar.h		comp-obsolete		obsolete
 ./usr/include/dev/ofw/ofw_pci.h			comp-obsolete		obsolete
 ./usr/include/dev/ofw/openfirm.h		comp-obsolete		obsolete
@@ -2662,6 +2665,7 @@
 ./usr/include/ntfs/ntfs_vfsops.h		comp-obsolete		obsolete
 ./usr/include/ntfs/ntfsmount.h			comp-c-include
 ./usr/include/null.h				comp-obsolete		obsolete
+./usr/include/nvmm.h				comp-c-include		nvmm
 ./usr/include/objc/NXConstStr.h			comp-c-include		gcc
 ./usr/include/objc/Object.h			comp-c-include		gcc
 ./usr/include/objc/Protocol.h			comp-c-include		gcc
@@ -3655,6 +3659,9 @@
 ./usr/lib/libns_p.a				comp-bind-proflib	compatfile,profile
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
+./usr/lib/libnvmm.a				comp-c-lib		nvmm
+./usr/lib/libnvmm_p.a				comp-c-proflib		nvmm,profile
+./usr/lib/libnvmm_pic.a				comp-c-piclib		nvmm,pic,picinstall
 ./usr/lib/libnvpair.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libnvpair_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libobjc.a				comp-objc-lib		compatfile,gcc
@@ -4071,6 +4078,7 @@
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
 ./usr/libdata/lint/llib-lns.ln			comp-bind-lintlib		lint
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
+./usr/libdata/lint/llib-lnvmm.ln		comp-c-lintlib		nvmm,lint
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint,rump
@@ -8522,6 +8530,7 @@
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libnetpgpverify.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libnpf.0			comp-npf-catman		npf,.cat
+./usr/share/man/cat3/libnvmm.0			comp-c-catman		nvmm,.cat
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
@@ -16752,6 +16761,7 @@
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		html
 ./usr/share/man/html3/libnetpgpverify.html	comp-c-htmlman		html
 ./usr/share/man/html3/libnpf.html		comp-npf-htmlman	npf,html
+./usr/share/man/html3/libnvmm.html		comp-c-htmlman		nvmm,html
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
@@ -24962,6 +24972,7 @@
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		.man
 ./usr/share/man/man3/libnetpgpverify.3		comp-c-man		.man
 ./usr/share/man/man3/libnpf.3			comp-npf-man		npf,.man
+./usr/share/man/man3/libnvmm.3			comp-c-man		nvmm,.man
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man

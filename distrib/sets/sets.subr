@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.192 2020/09/12 15:25:41 jmcneill Exp $
+#	$NetBSD: sets.subr,v 1.193 2020/09/26 17:49:49 jmcneill Exp $
 #
 
 #
@@ -20,8 +20,9 @@
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
-#	HAVE_SSP
+#	HAVE_NVMM
 #	HAVE_OPENSSL
+#	HAVE_SSP
 #	HAVE_UEFI
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
@@ -191,7 +192,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.192 2020/09/12 15:25:41 jmcneill Exp $
+# 	# $NetBSD: sets.subr,v 1.193 2020/09/26 17:49:49 jmcneill Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -226,6 +227,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
 #	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
+#	nvmm			${HAVE_NVMM} != no
 #	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
 #	uefi			${HAVE_UEFI} != no
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
@@ -339,6 +341,9 @@ list_set_files()
 			}
 			if ("mesa_ver" in wanted) {
 				wanted["mesa_ver=" "'"${HAVE_MESA_VER}"'"] = 1
+			}
+			if ("nvmm" in wanted) {
+				wanted["nvmm=" "'"${HAVE_NVMM}"'"] = 1
 			}
 			if ("openssl" in wanted) {
 				wanted["openssl=" "'"${HAVE_OPENSSL}"'"] = 1

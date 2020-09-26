@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.338 2020/09/22 01:09:32 kamil Exp $
+# $NetBSD: mi,v 1.339 2020/09/26 17:49:50 jmcneill Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -115,6 +115,7 @@
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libns_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libnvmm_g.a				comp-c-debuglib		debuglib,nvmm
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
 ./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
@@ -1205,6 +1206,7 @@
 ./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/nvmmctl.debug	comp-sysutil-debug	debug,nvmm
 ./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug

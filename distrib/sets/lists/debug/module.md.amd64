@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.2 2020/09/08 14:57:32 martin Exp $
+# $NetBSD: module.md.amd64,v 1.3 2020/09/26 17:49:50 jmcneill Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -173,8 +173,6 @@
 ./usr/libdata/debug/@MODULEDIR@/lm_wbsio/lm_wbsio.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/mt2131				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/mt2131/mt2131.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/nvmm				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/nvmm/nvmm.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/nxt2k				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/nxt2k/nxt2k.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm				modules-base-kernel	kmod,debug
