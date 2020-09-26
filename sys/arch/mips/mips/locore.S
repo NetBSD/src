@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.225 2020/07/31 20:04:18 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.226 2020/09/26 08:21:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,16 +63,14 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.225 2020/07/31 20:04:18 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.226 2020/09/26 08:21:10 simonb Exp $")
 
 #include "assym.h"
 
 	.set	noreorder
 
-	.globl	start
-	.globl	_C_LABEL(kernel_text)		# libkvm refers this
-start:
-_C_LABEL(kernel_text):
+EXPORT(start)
+EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/* First disable the interrupts only, for safety */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
