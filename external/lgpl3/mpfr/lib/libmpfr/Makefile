@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2020/05/15 14:44:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2020/09/26 07:50:41 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -9,6 +9,8 @@ LIBISPRIVATE?= yes
 INCS=         mpf2mpfr.h mpfr.h
 INCSDIR=      /usr/include
 .endif
+
+MPFRDIST=	${.CURDIR}/../../dist
 
 # XXX get_d.c triggers lint div zero errors (which is valid?)
 MKLINT=no
@@ -43,7 +45,8 @@ SRCS=	\
 	clears.c \
 	cmp.c \
 	cmp2.c \
-	cmp_abs.c \
+	cmpabs.c \
+	cmpabs_ui.c \
 	cmp_d.c \
 	cmp_ld.c \
 	cmp_si.c \
@@ -71,6 +74,7 @@ SRCS=	\
 	div_2ui.c \
 	div_d.c \
 	div_ui.c \
+	dot.c \
 	dump.c \
 	eint.c \
 	eq.c \
@@ -104,6 +108,7 @@ SRCS=	\
 	gamma_inc.c \
 	gammaonethird.c \
 	get_d.c \
+	get_d128.c \
 	get_d64.c \
 	get_exp.c \
 	get_f.c \
@@ -156,6 +161,7 @@ SRCS=	\
 	mul_d.c \
 	mul_ui.c \
 	mulders.c \
+	nbits_ulong.c \
 	neg.c \
 	next.c \
 	nrandom.c \
@@ -185,6 +191,7 @@ SRCS=	\
 	sech.c \
 	set.c \
 	set_d.c \
+	set_d128.c \
 	set_d64.c \
 	set_dfl_prec.c \
 	set_exp.c \
@@ -234,6 +241,7 @@ SRCS=	\
 	swap.c \
 	tan.c \
 	tanh.c \
+	total_order.c \
 	ubf.c \
 	uceil_exp2.c \
 	uceil_log2.c \
@@ -280,7 +288,7 @@ CPPFLAGS+=	-I. \
 # Find <gmp.h>
 .include "../../../gmp/Makefile.arch"
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
-CPPFLAGS+=	-I${.CURDIR}/../../dist/src
+CPPFLAGS+=	-I${MPFRDIST}/src
 
 # IEEE FP support.  No VAX here.
 .if ${MACHINE_ARCH} == "x86_64" || \
@@ -321,6 +329,14 @@ mparam.h: mparam_h.in
 
 ${SRCS}: mparam.h
 CLEANFILES+= mparam.h
+
+GET_PATCHES_SH=	${MPFRDIST}/tools/get_patches.sh
+PATCHES=	${MPFRDIST}/PATCHES
+
+get_patches.c: ${GET_PATCHES_SH} ${PATCHES}
+	${GET_PATCHES_SH} ${PATCHES} > $@.tmp && mv $@.tmp $@
+
+CLEANFILES+= get_patches.c.tmp get_patches.c
 
 .PATH: ${.CURDIR}/../../dist/src
 
