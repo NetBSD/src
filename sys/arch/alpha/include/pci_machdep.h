@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.20 2020/09/26 02:46:27 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.21 2020/09/26 21:07:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -131,6 +131,8 @@ void	*alpha_pci_generic_intr_establish(pci_chipset_tag_t,
 	    pci_intr_handle_t, int, int (*)(void *), void *);
 void	alpha_pci_generic_intr_disestablish(pci_chipset_tag_t, void *);
 void	alpha_pci_generic_iointr(void *, unsigned long);
+
+void	alpha_pci_generic_intr_redistribute(pci_chipset_tag_t);
 
 void	alpha_pci_intr_handle_init(pci_intr_handle_t *, u_int, u_int);
 void	alpha_pci_intr_handle_set_irq(pci_intr_handle_t *, u_int);

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.81 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.82 2020/09/26 21:07:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -268,6 +268,7 @@ struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
 	    unsigned int);
 
 extern struct scbvec scb_iovectab[];
+extern void (*alpha_intr_redistribute)(void);
 
 void	scb_init(void);
 void	scb_set(u_long, void (*)(void *, u_long), void *);

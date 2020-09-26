@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.28 2020/09/26 02:50:41 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.28 2020/09/26 02:50:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ static void	dec_6600_intr_disable(pci_chipset_tag_t, int irq);
 static void	dec_6600_intr_set_affinity(pci_chipset_tag_t, int,
 		    struct cpu_info *);
 
+static void	dec_6600_intr_redistribute(void);
+
 /*
  * We keep 2 software copies of the interrupt enables: one global one,
  * and one per-CPU for setting the interrupt affinity.
@@ -131,6 +133,8 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	pc->pc_intr_enable = dec_6600_intr_enable;
 	pc->pc_intr_disable = dec_6600_intr_disable;
 	pc->pc_intr_set_affinity = dec_6600_intr_set_affinity;
+
+	alpha_intr_redistribute = dec_6600_intr_redistribute;
 
 	/* Note eligible CPUs for interrupt routing purposes. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -394,6 +398,17 @@ dec_6600_intr_set_affinity(pci_chipset_tag_t const pc, int const irq,
 	/* Only program the hardware if the irq is enabled. */
 	if (dec_6600_intr_enables & intr_bit)
 		dec_6600_intr_program(pc);
+}
+
+static void
+dec_6600_intr_redistribute(void)
+{
+	KASSERT(sioprimary != NULL);
+
+	pci_chipset_tag_t const pc = &sioprimary->pc_pc;
+
+	/* ISA interrupts always stay on primary. Shuffle PCI interrupts. */
+	alpha_pci_generic_intr_redistribute(pc);
 }
 
 static void *

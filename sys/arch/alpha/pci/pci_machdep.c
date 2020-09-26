@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.27 2020/09/26 02:46:28 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.28 2020/09/26 21:07:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2020/09/26 02:46:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2020/09/26 21:07:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -376,6 +376,45 @@ alpha_pci_generic_iointr(void * const arg, unsigned long const vec)
 	} else {
 		alpha_shared_intr_reset_strays(pc->pc_shared_intrs, irq);
 	}
+}
+
+void
+alpha_pci_generic_intr_redistribute(pci_chipset_tag_t const pc)
+{
+	struct cpu_info *current_ci, *new_ci;
+	unsigned int irq;
+
+	KASSERT(mutex_owned(&cpu_lock));
+	KASSERT(mp_online);
+
+	/* If we can't set affinity, then there's nothing to do. */
+	if (pc->pc_eligible_cpus == 0 || pc->pc_intr_set_affinity == NULL) {
+		return;
+	}
+
+	/*
+	 * Look at each IRQ, and allocate a new CPU for each IRQ
+	 * that's being serviced by a now-shielded CPU.
+	 */
+	for (irq = 0; irq < pc->pc_nirq; irq++) {
+		current_ci =
+		    alpha_shared_intr_get_cpu(pc->pc_shared_intrs, irq);
+		if (current_ci == NULL ||
+		    (current_ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0) {
+			continue;
+		}
+
+		new_ci = alpha_pci_generic_intr_select_cpu(pc, irq, 0);
+		if (new_ci == current_ci) {
+			/* Can't shield this one. */
+			continue;
+		}
+
+		alpha_shared_intr_set_cpu(pc->pc_shared_intrs, irq, new_ci);
+		pc->pc_intr_set_affinity(pc, irq, new_ci);
+	}
+
+	/* XXX should now re-balance */
 }
 
 #define	ALPHA_PCI_INTR_HANDLE_IRQ	__BITS(0,31)
