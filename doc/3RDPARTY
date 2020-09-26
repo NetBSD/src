@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1745 2020/09/12 08:39:36 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1746 2020/09/26 07:59:18 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1513,8 +1513,8 @@ Notes:
 3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.1.0
-Current Vers:	1.1.0
+Version:	1.2.0
+Current Vers:	1.2.0
 Maintainer:
 Archive Site:	http://www.multiprecision.org/mpc/download/
 Home Page:	http://www.multiprecision.org/mpc/
@@ -1525,8 +1525,8 @@ Location:	external/lgpl3/mpc/dist
 Notes:
 
 Package:	mpfr
-Version:	4.0.1
-Current Vers:	4.0.1
+Version:	4.1.0
+Current Vers:	4.1.0
 Maintainer:
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
@@ -1538,7 +1538,7 @@ Notes:
 
 Package:	GNU MP
 Version:	6.1.2
-Current Vers:	6.1.2
+Current Vers:	6.2.0
 Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	http://gmplib.org/
 Home Page:	http://gmplib.org/
@@ -1546,7 +1546,7 @@ Mailing List:	http://gmplib.org/mailman/listinfo/gmp-announce
 Responsible:	mrg
 License:	LGPL3
 Location:	external/lgpl3/gmp/dist
-Notes:
+Notes:		See the README.
 
 Package:	osnet
 Version:	osnet-20100224
