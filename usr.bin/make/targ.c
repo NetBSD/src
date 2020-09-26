@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.96 2020/09/26 16:18:44 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.97 2020/09/26 16:21:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.96 2020/09/26 16:18:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.97 2020/09/26 16:21:17 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -230,7 +230,6 @@ TargFreeGN(void *gnp)
     Lst_Free(gn->commands);
 
     /* XXX: does gn->suffix need to be freed? It is reference-counted. */
-    /* gn->fname points to name allocated when file was opened, don't free */
 
     free(gn);
 }
@@ -247,7 +246,6 @@ Targ_FindNode(const char *name)
 GNode *
 Targ_GetNode(const char *name)
 {
-
     Boolean isNew;
     Hash_Entry *he = Hash_CreateEntry(&targets, name, &isNew);
     if (!isNew)
