@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.146 2020/09/26 16:55:58 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.147 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.146 2020/09/26 16:55:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.147 2020/09/26 17:15:20 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -1306,7 +1306,7 @@ add_wait_dependency(GNodeListNode *owln, GNode *wn)
     GNodeListNode *cln;
     GNode *cn;
 
-    for (cln = owln; (cn = LstNode_Datum(cln)) != wn; cln = LstNode_Next(cln)) {
+    for (cln = owln; (cn = cln->datum) != wn; cln = cln->next) {
 	if (DEBUG(MAKE))
 	    fprintf(debug_file, ".WAIT: add dependency %s%s -> %s\n",
 		    cn->name, cn->cohort_num, wn->name);

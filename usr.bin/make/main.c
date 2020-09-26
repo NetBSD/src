@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.347 2020/09/26 16:55:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.348 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.347 2020/09/26 16:55:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.348 2020/09/26 17:15:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -869,8 +869,8 @@ doPrintVars(void)
 	else
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
-	for (ln = Lst_First(variables); ln != NULL; ln = LstNode_Next(ln)) {
-		char *var = LstNode_Datum(ln);
+	for (ln = variables->first; ln != NULL; ln = ln->next) {
+		const char *var = ln->datum;
 		const char *value;
 		char *p1;
 
