@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.147 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.148 2020/09/26 17:39:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.147 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.148 2020/09/26 17:39:45 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static GNodeList *toBeMade;	/* The current fringe of the graph. These
@@ -116,11 +116,14 @@ static GNodeList *toBeMade;	/* The current fringe of the graph. These
 				 * Make_Update and subtracted from by
 				 * MakeStartJobs */
 
+static int MakeAddChild(void *, void *);
+static int MakeFindChild(void *, void *);
+static int MakeHandleUse(void *, void *);
 static Boolean MakeStartJobs(void);
 static int MakePrintStatus(void *, void *);
 static int MakeCheckOrder(void *, void *);
 static int MakeBuildChild(void *, void *);
-static void MakeBuildParent(void *, void *);
+static int MakeBuildParent(void *, void *);
 
 MAKE_ATTR_DEAD static void
 make_abort(GNode *gn, int line)
@@ -375,11 +378,14 @@ Make_OODate(GNode *gn)
  *	gnp		the node to add
  *	lp		the list to which to add it
  *
+ * Results:
+ *	Always returns 0
+ *
  * Side Effects:
  *	The given list is extended
  *-----------------------------------------------------------------------
  */
-static void
+static int
 MakeAddChild(void *gnp, void *lp)
 {
     GNode *gn = gnp;
@@ -391,6 +397,7 @@ MakeAddChild(void *gnp, void *lp)
 		gn->name, gn->cohort_num);
 	Lst_Enqueue(l, gn);
     }
+    return 0;
 }
 
 /*-
@@ -402,12 +409,15 @@ MakeAddChild(void *gnp, void *lp)
  * Input:
  *	gnp		the node to find
  *
+ * Results:
+ *	Always returns 0
+ *
  * Side Effects:
  *	The path and mtime of the node and the cmgn of the parent are
  *	updated; the unmade children count of the parent is decremented.
  *-----------------------------------------------------------------------
  */
-static void
+static int
 MakeFindChild(void *gnp, void *pgnp)
 {
     GNode          *gn = (GNode *)gnp;
@@ -416,6 +426,8 @@ MakeFindChild(void *gnp, void *pgnp)
     (void)Dir_MTime(gn, 0);
     Make_TimeStamp(pgn, gn);
     pgn->unmade--;
+
+    return 0;
 }
 
 /* Called by Make_Run and SuffApplyTransform on the downward pass to handle
@@ -485,20 +497,28 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 }
 
-/* Callback function for Lst_ForEachUntil, used by Make_Run on the downward
- * pass to handle .USE nodes. Should be called before the children
- * are enqueued to be looked at by MakeAddChild.
- * This function calls Make_HandleUse to copy the .USE node's commands,
- * type flags and children to the parent node.
+/*-
+ *-----------------------------------------------------------------------
+ * MakeHandleUse --
+ *	Callback function for Lst_ForEachUntil, used by Make_Run on the downward
+ *	pass to handle .USE nodes. Should be called before the children
+ *	are enqueued to be looked at by MakeAddChild.
+ *	This function calls Make_HandleUse to copy the .USE node's commands,
+ *	type flags and children to the parent node.
  *
  * Input:
  *	cgnp		the child we've just examined
  *	pgnp		the current parent
  *
+ * Results:
+ *	returns 0.
+ *
  * Side Effects:
  *	After expansion, .USE child nodes are removed from the parent
+ *
+ *-----------------------------------------------------------------------
  */
-static void
+static int
 MakeHandleUse(void *cgnp, void *pgnp)
 {
     GNode	*cgn = (GNode *)cgnp;
@@ -510,7 +530,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_USE|OP_USEBEFORE)) == 0)
-	return;
+	return 0;
 
     if (unmarked)
 	Make_HandleUse(cgn, pgn);
@@ -526,6 +546,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 	Lst_Remove(pgn->children, ln);
 	pgn->unmade--;
     }
+    return 0;
 }
 
 
@@ -695,7 +716,7 @@ Make_Update(GNode *cgn)
     parents = centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
-    Lst_ForEach(centurion->order_succ, MakeBuildParent, Lst_First(toBeMade));
+    Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, Lst_First(toBeMade));
 
     /* Now mark all the parents as having one less unmade child */
     Lst_Open(parents);
@@ -950,6 +971,23 @@ Make_DoAllVar(GNode *gn)
     gn->flags |= DONE_ALLSRC;
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * MakeStartJobs --
+ *	Start as many jobs as possible.
+ *
+ * Results:
+ *	If the query flag was given to pmake, no job will be started,
+ *	but as soon as an out-of-date target is found, this function
+ *	returns TRUE. At all other times, this function returns FALSE.
+ *
+ * Side Effects:
+ *	Nodes are removed from the toBeMade queue and job table slots
+ *	are filled.
+ *
+ *-----------------------------------------------------------------------
+ */
+
 static int
 MakeCheckOrder(void *v_bn, void *ignore MAKE_ATTR_UNUSED)
 {
@@ -1003,26 +1041,22 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 }
 
 /* When a .ORDER LHS node completes we do this on each RHS */
-static void
+static int
 MakeBuildParent(void *v_pn, void *toBeMade_next)
 {
     GNode *pn = v_pn;
 
     if (pn->made != DEFERRED)
-	return;
+	return 0;
 
     if (MakeBuildChild(pn, toBeMade_next) == 0) {
 	/* Mark so that when this node is built we reschedule its parents */
 	pn->flags |= DONE_ORDER;
     }
+
+    return 0;
 }
 
-/* Start as many jobs as possible, taking them from the toBeMade queue.
- *
- * If the query flag was given to pmake, no job will be started,
- * but as soon as an out-of-date target is found, this function
- * returns TRUE. At all other times, this function returns FALSE.
- */
 static Boolean
 MakeStartJobs(void)
 {
@@ -1105,7 +1139,25 @@ MakeStartJobs(void)
     return FALSE;
 }
 
-static void
+/*-
+ *-----------------------------------------------------------------------
+ * MakePrintStatus --
+ *	Print the status of a top-level node, viz. it being up-to-date
+ *	already or not created due to an error in a lower level.
+ *	Callback function for Make_Run via Lst_ForEachUntil.
+ *
+ * Input:
+ *	gnp		Node to examine
+ *
+ * Results:
+ *	Always returns 0.
+ *
+ * Side Effects:
+ *	A message may be printed.
+ *
+ *-----------------------------------------------------------------------
+ */
+static int
 MakePrintStatusOrder(void *ognp, void *gnp)
 {
     GNode *ogn = ognp;
@@ -1113,7 +1165,7 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 
     if (!(ogn->flags & REMAKE) || ogn->made > REQUESTED)
 	/* not waiting for this one */
-	return;
+	return 0;
 
     printf("    `%s%s' has .ORDER dependency against %s%s ",
 	    gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
@@ -1124,14 +1176,9 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 		gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
 	GNode_FprintDetails(debug_file, "(", ogn, ")\n");
     }
+    return 0;
 }
 
-/* Print the status of a top-level node, viz. it being up-to-date
- * already or not created due to an error in a lower level.
- *
- * Input:
- *	gnp		Node to examine
- */
 static int
 MakePrintStatus(void *gnp, void *v_errors)
 {
@@ -1163,7 +1210,7 @@ MakePrintStatus(void *gnp, void *v_errors)
 		GNode_FprintDetails(debug_file, " (", gn, ")!\n");
 	    }
 	    /* Most likely problem is actually caused by .ORDER */
-	    Lst_ForEach(gn->order_pred, MakePrintStatusOrder, gn);
+	    Lst_ForEachUntil(gn->order_pred, MakePrintStatusOrder, gn);
 	    break;
 	default:
 	    /* Errors - already counted */
@@ -1269,26 +1316,37 @@ Make_ExpandUse(GNodeList *targs)
 	(void)Dir_MTime(gn, 0);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
 	UnmarkChildren(gn);
-	Lst_ForEach(gn->children, MakeHandleUse, gn);
+	Lst_ForEachUntil(gn->children, MakeHandleUse, gn);
 
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
 	else {
 	    /* Pretend we made all this node's children */
-	    Lst_ForEach(gn->children, MakeFindChild, gn);
+	    Lst_ForEachUntil(gn->children, MakeFindChild, gn);
 	    if (gn->unmade != 0)
 		    printf("Warning: %s%s still has %d unmade children\n",
 			    gn->name, gn->cohort_num, gn->unmade);
 	}
 
 	if (gn->unmade != 0)
-	    Lst_ForEach(gn->children, MakeAddChild, examine);
+	    Lst_ForEachUntil(gn->children, MakeAddChild, examine);
     }
 
     Lst_Free(examine);
 }
 
-static void
+/*-
+ *-----------------------------------------------------------------------
+ * Make_ProcessWait --
+ *	Convert .WAIT nodes into dependencies
+ *
+ * Input:
+ *	targs		the initial list of targets
+ *
+ *-----------------------------------------------------------------------
+ */
+
+static int
 link_parent(void *cnp, void *pnp)
 {
     GNode *cn = cnp;
@@ -1297,6 +1355,7 @@ link_parent(void *cnp, void *pnp)
     Lst_Append(pn->children, cn);
     Lst_Append(cn->parents, pn);
     pn->unmade++;
+    return 0;
 }
 
 /* Make the .WAIT node depend on the previous children */
@@ -1318,7 +1377,6 @@ add_wait_dependency(GNodeListNode *owln, GNode *wn)
     }
 }
 
-/* Convert .WAIT nodes into dependencies. */
 static void
 Make_ProcessWait(GNodeList *targs)
 {
@@ -1340,7 +1398,7 @@ Make_ProcessWait(GNodeList *targs)
     /* Get it displayed in the diag dumps */
     Lst_Prepend(Targ_List(), pgn);
 
-    Lst_ForEach(targs, link_parent, pgn);
+    Lst_ForEachUntil(targs, link_parent, pgn);
 
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.241 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.242 2020/09/26 17:39:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.241 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.242 2020/09/26 17:39:45 rillig Exp $");
 
 # define STATIC static
 
@@ -655,7 +655,7 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	jobp		job for which to print it
  *
  * Results:
- *	0, unless the command was "..."
+ *	Always 0, unless the command was "..."
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
