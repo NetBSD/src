@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.95 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.96 2020/09/26 16:18:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.95 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.96 2020/09/26 16:18:44 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -236,60 +236,28 @@ TargFreeGN(void *gnp)
 }
 #endif
 
-#define TARG_NOCREATE	0x00	  /* don't create it */
-#define TARG_CREATE	0x01	  /* create node if not found */
-#define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
-
-/* Find a node in the list using the given name for matching.
- * If the node is created, it is added to the .ALLTARGETS list.
- *
- * Input:
- *	name		the name to find
- *	flags		flags governing events when target not found
- *
- * Results:
- *	The node in the list if it was. If it wasn't, return NULL if
- *	flags was TARG_NOCREATE or the newly created and initialized node
- *	if it was TARG_CREATE
- */
-static GNode *
-Targ_FindNodeImpl(const char *name, int flags)
-{
-    GNode *gn;			/* node in that element */
-    Hash_Entry *he;		/* New or used hash entry for node */
-
-    if (!(flags & TARG_CREATE) && !(flags & TARG_NOHASH))
-	return Hash_FindValue(&targets, name);
-
-    if (!(flags & TARG_NOHASH)) {
-	Boolean isNew;
-	he = Hash_CreateEntry(&targets, name, &isNew);
-	if (!isNew)
-	    return Hash_GetValue(he);
-    }
-
-    gn = Targ_NewGN(name);
-    if (!(flags & TARG_NOHASH))
-	Hash_SetValue(he, gn);
-    Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
-    Lst_Append(allTargets, gn);
-    if (doing_depend)
-	gn->flags |= FROM_DEPEND;
-    return gn;
-}
-
 /* Get the existing global node, or return NULL. */
 GNode *
 Targ_FindNode(const char *name)
 {
-    return Targ_FindNodeImpl(name, TARG_NOCREATE);
+    return Hash_FindValue(&targets, name);
 }
 
 /* Get the existing global node, or create it. */
 GNode *
 Targ_GetNode(const char *name)
 {
-    return Targ_FindNodeImpl(name, TARG_CREATE);
+
+    Boolean isNew;
+    Hash_Entry *he = Hash_CreateEntry(&targets, name, &isNew);
+    if (!isNew)
+	return Hash_GetValue(he);
+
+    {
+	GNode *gn = Targ_NewInternalNode(name);
+	Hash_SetValue(he, gn);
+	return gn;
+    }
 }
 
 /* Create a node, register it in .ALLTARGETS but don't store it in the
@@ -299,7 +267,12 @@ Targ_GetNode(const char *name)
 GNode *
 Targ_NewInternalNode(const char *name)
 {
-    return Targ_FindNodeImpl(name, TARG_NOHASH);
+    GNode *gn = Targ_NewGN(name);
+    Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
+    Lst_Append(allTargets, gn);
+    if (doing_depend)
+	gn->flags |= FROM_DEPEND;
+    return gn;
 }
 
 /* Return the .END node, which contains the commands to be executed when
@@ -338,8 +311,8 @@ Targ_FindList(StringList *names)
 
     Lst_Open(names);
     while ((ln = Lst_Next(names)) != NULL) {
-    	char *name = LstNode_Datum(ln);
-    	GNode *gn = Targ_GetNode(name);
+	char *name = LstNode_Datum(ln);
+	GNode *gn = Targ_GetNode(name);
 	Lst_Append(nodes, gn);
     }
     Lst_Close(names);
@@ -439,22 +412,22 @@ Targ_PrintType(int type)
 	type &= ~tbit;
 
 	switch(tbit) {
-	    PRINTBIT(OPTIONAL);
-	    PRINTBIT(USE);
-	    PRINTBIT(EXEC);
-	    PRINTBIT(IGNORE);
-	    PRINTBIT(PRECIOUS);
-	    PRINTBIT(SILENT);
-	    PRINTBIT(MAKE);
-	    PRINTBIT(JOIN);
-	    PRINTBIT(INVISIBLE);
-	    PRINTBIT(NOTMAIN);
-	    PRINTDBIT(LIB);
+	PRINTBIT(OPTIONAL);
+	PRINTBIT(USE);
+	PRINTBIT(EXEC);
+	PRINTBIT(IGNORE);
+	PRINTBIT(PRECIOUS);
+	PRINTBIT(SILENT);
+	PRINTBIT(MAKE);
+	PRINTBIT(JOIN);
+	PRINTBIT(INVISIBLE);
+	PRINTBIT(NOTMAIN);
+	PRINTDBIT(LIB);
 	    /*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-	    case OP_MEMBER: if (DEBUG(TARG))fprintf(debug_file, " .MEMBER"); break;
-	    PRINTDBIT(ARCHV);
-	    PRINTDBIT(MADE);
-	    PRINTDBIT(PHONY);
+	case OP_MEMBER: if (DEBUG(TARG))fprintf(debug_file, " .MEMBER"); break;
+	PRINTDBIT(ARCHV);
+	PRINTDBIT(MADE);
+	PRINTDBIT(PHONY);
 	}
     }
 }
@@ -500,11 +473,11 @@ PrintNode(void *gnp, void *passp)
 	    if (! (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 		if (gn->mtime != 0) {
 		    fprintf(debug_file, "# last modified %s: %s\n",
-			      Targ_FmtTime(gn->mtime),
-			      made_name(gn->made));
+			    Targ_FmtTime(gn->mtime),
+			    made_name(gn->made));
 		} else if (gn->made != UNMADE) {
 		    fprintf(debug_file, "# non-existent (maybe): %s\n",
-			      made_name(gn->made));
+			    made_name(gn->made));
 		} else {
 		    fprintf(debug_file, "# unmade\n");
 		}
@@ -520,12 +493,12 @@ PrintNode(void *gnp, void *passp)
 
 	fprintf(debug_file, "%-16s", gn->name);
 	switch (gn->type & OP_OPMASK) {
-	    case OP_DEPENDS:
-		fprintf(debug_file, ":"); break;
-	    case OP_FORCE:
-		fprintf(debug_file, "!"); break;
-	    case OP_DOUBLEDEP:
-		fprintf(debug_file, "::"); break;
+	case OP_DEPENDS:
+	    fprintf(debug_file, ":"); break;
+	case OP_FORCE:
+	    fprintf(debug_file, "!"); break;
+	case OP_DOUBLEDEP:
+	    fprintf(debug_file, "::"); break;
 	}
 	Targ_PrintType(gn->type);
 	PrintNodeNames(gn->children);
