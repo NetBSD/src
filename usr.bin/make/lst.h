@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.68 2020/09/25 15:54:50 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.69 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -88,8 +88,8 @@ typedef	struct List	List;
 typedef	struct ListNode	ListNode;
 
 struct ListNode {
-    ListNode *prev;		/* previous element in list */
-    ListNode *next;		/* next in list */
+    ListNode *prev;		/* previous node in list, or NULL */
+    ListNode *next;		/* next node in list, or NULL */
     uint8_t priv_useCount;	/* Count of functions using the node.
 				 * node may not be deleted until count
 				 * goes to 0 */
@@ -175,12 +175,6 @@ void Lst_MoveAll(List *, List *);
 
 /* Node-specific functions */
 
-/* Return the successor of the node, or NULL. */
-static inline MAKE_ATTR_UNUSED ListNode *
-LstNode_Next(ListNode *node) { return node->next; }
-/* Return the predecessor of the node, or NULL. */
-static inline MAKE_ATTR_UNUSED ListNode *
-LstNode_Prev(ListNode *node) { return node->prev; }
 /* Return the datum of the node. Usually not NULL. */
 static inline MAKE_ATTR_UNUSED void *
 LstNode_Datum(ListNode *node) { return node->datum; }
