@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.93 2020/09/24 07:59:33 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.94 2020/09/26 14:59:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.93 2020/09/24 07:59:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.94 2020/09/26 14:59:21 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -255,22 +255,17 @@ TargFreeGN(void *gnp)
 GNode *
 Targ_FindNode(const char *name, int flags)
 {
-    GNode         *gn;	      /* node in that element */
-    Hash_Entry	  *he = NULL; /* New or used hash entry for node */
-    Boolean	  isNew;      /* Set TRUE if Hash_CreateEntry had to create */
-			      /* an entry for the node */
+    GNode *gn;			/* node in that element */
+    Hash_Entry *he;		/* New or used hash entry for node */
 
-    if (!(flags & (TARG_CREATE | TARG_NOHASH))) {
-	he = Hash_FindEntry(&targets, name);
-	if (he == NULL)
-	    return NULL;
-	return (GNode *)Hash_GetValue(he);
-    }
+    if (!(flags & TARG_CREATE) && !(flags & TARG_NOHASH))
+	return Hash_FindValue(&targets, name);
 
     if (!(flags & TARG_NOHASH)) {
+	Boolean isNew;
 	he = Hash_CreateEntry(&targets, name, &isNew);
 	if (!isNew)
-	    return (GNode *)Hash_GetValue(he);
+	    return Hash_GetValue(he);
     }
 
     gn = Targ_NewGN(name);
