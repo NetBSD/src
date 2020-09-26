@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/01/09 01:13:42 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/09/26 20:56:53 mrg Exp $
 #
 
 GNUHOSTDIST=   ${.CURDIR}/../../external/lgpl3/gmp/dist
@@ -15,3 +15,18 @@ CONFIGURE_ENV:=	${CONFIGURE_ENV:NPATH=*:NCFLAGS=*:NCXXFLAGS=*} \
 
 # Force avoiding possibly non-executable install-sh.
 CONFIGURE_ENV+=	ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
+
+# mknative-gmp support
+#
+# XXX early version; does not use mknative.common yet.
+
+native-gmp: .native/.configure_done
+	@echo 'Extracting GNU GMP configury for a native toolchain.'
+	(cd ${.OBJDIR}/.native && \
+	 ${MAKE} -f ${.CURDIR}/../../external/lgpl3/gmp/Makefile.netbsd-gmp copy-files)
+	@echo 'HA HA, only joking. Manual fixes maybe needed now.'
+
+.native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
+	mkdir .native 2>/dev/null || true
+	(cd ${.OBJDIR}/.native && \
+	 ${MAKE} -f ${.CURDIR}/../../external/lgpl3/gmp/Makefile.netbsd-gmp all)
