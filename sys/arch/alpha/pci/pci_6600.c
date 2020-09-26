@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.27 2020/09/23 18:48:50 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.28 2020/09/26 02:50:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,13 +33,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.27 2020/09/23 18:48:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.28 2020/09/26 02:50:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE
@@ -94,9 +95,15 @@ static void	 *dec_6600_pciide_compat_intr_establish(device_t,
 
 static void	dec_6600_intr_enable(pci_chipset_tag_t, int irq);
 static void	dec_6600_intr_disable(pci_chipset_tag_t, int irq);
+static void	dec_6600_intr_set_affinity(pci_chipset_tag_t, int,
+		    struct cpu_info *);
 
-/* Software copy of enabled interrupt bits. */
+/*
+ * We keep 2 software copies of the interrupt enables: one global one,
+ * and one per-CPU for setting the interrupt affinity.
+ */
 static uint64_t	dec_6600_intr_enables __read_mostly;
+static uint64_t dec_6600_cpu_intr_enables[4] __read_mostly;
 
 void
 pci_6600_pickintr(struct tsp_config *pcp)
@@ -105,6 +112,8 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	pci_chipset_tag_t pc = &pcp->pc_pc;
 	char *cp;
 	int i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 
 	pc->pc_intr_v = pcp;
 	pc->pc_intr_map = dec_6600_intr_map;
@@ -121,12 +130,25 @@ pci_6600_pickintr(struct tsp_config *pcp)
 
 	pc->pc_intr_enable = dec_6600_intr_enable;
 	pc->pc_intr_disable = dec_6600_intr_disable;
+	pc->pc_intr_set_affinity = dec_6600_intr_set_affinity;
+
+	/* Note eligible CPUs for interrupt routing purposes. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		KASSERT(ci->ci_cpuid < 4);
+		pc->pc_eligible_cpus |= __BIT(ci->ci_cpuid);
+	}
 
 	/*
 	 * System-wide and Pchip-0-only logic...
 	 */
 	if (sioprimary == NULL) {
 		sioprimary = pcp;
+		/*
+		 * Unless explicitly routed, all interrupts go to the
+		 * primary CPU.
+		 */
+		dec_6600_cpu_intr_enables[cpu_info_primary.ci_cpuid] =
+		    __BITS(0,63);
 		pc->pc_pciide_compat_intr_establish =
 		    dec_6600_pciide_compat_intr_establish;
 #define PCI_6600_IRQ_STR	8
@@ -146,7 +168,10 @@ pci_6600_pickintr(struct tsp_config *pcp)
 		}
 #if NSIO
 		sio_intr_setup(pc, iot);
-		dec_6600_intr_enable(pc, PCI_SIO_IRQ);	/* irq line for sio */
+
+		mutex_enter(&cpu_lock);
+		dec_6600_intr_enable(pc, PCI_SIO_IRQ);
+		mutex_exit(&cpu_lock);
 #endif
 	} else {
 		pc->pc_shared_intrs = sioprimary->pc_pc.pc_shared_intrs;
@@ -266,21 +291,109 @@ dec_6600_intr_disestablish(pci_chipset_tag_t const pc, void * const cookie)
 }
 
 static void
-dec_6600_intr_enable(pci_chipset_tag_t const pc __unused, int const irq)
+dec_6600_intr_program(pci_chipset_tag_t const pc)
 {
-	dec_6600_intr_enables |= 1UL << irq;
+	unsigned int irq, cpuno, cnt;
+
+	/*
+	 * Validate the configuration before we program it: each enabled
+	 * IRQ must be routed to exactly one CPU.
+	 */
+	for (irq = 0; irq < PCI_NIRQ; irq++) {
+		if ((dec_6600_intr_enables & __BIT(irq)) == 0)
+			continue;
+		for (cpuno = 0, cnt = 0; cpuno < 4; cpuno++) {
+			if (dec_6600_cpu_intr_enables[cpuno] != 0 &&
+			    (pc->pc_eligible_cpus & __BIT(cpuno)) == 0)
+				panic("%s: interrupts enabled on non-existent CPU %u",
+				    __func__, cpuno);
+			if (dec_6600_cpu_intr_enables[cpuno] & __BIT(irq))
+				cnt++;
+		}
+		if (cnt != 1) {
+			panic("%s: irq %u enabled on %u CPUs", __func__,
+			    irq, cnt);
+		}
+	}
+
+	const uint64_t enab0 =
+	    dec_6600_intr_enables & dec_6600_cpu_intr_enables[0];
+	const uint64_t enab1 =
+	    dec_6600_intr_enables & dec_6600_cpu_intr_enables[1];
+	const uint64_t enab2 =
+	    dec_6600_intr_enables & dec_6600_cpu_intr_enables[2];
+	const uint64_t enab3 =
+	    dec_6600_intr_enables & dec_6600_cpu_intr_enables[3];
+
+	/* Don't touch DIMx registers for non-existent CPUs. */
+	uint64_t black_hole;
+	volatile uint64_t * const dim0 = (pc->pc_eligible_cpus & __BIT(0)) ?
+	    (void *)ALPHA_PHYS_TO_K0SEG(TS_C_DIM0) : &black_hole;
+	volatile uint64_t * const dim1 = (pc->pc_eligible_cpus & __BIT(1)) ?
+	    (void *)ALPHA_PHYS_TO_K0SEG(TS_C_DIM1) : &black_hole;
+	volatile uint64_t * const dim2 = (pc->pc_eligible_cpus & __BIT(2)) ?
+	    (void *)ALPHA_PHYS_TO_K0SEG(TS_C_DIM2) : &black_hole;
+	volatile uint64_t * const dim3 = (pc->pc_eligible_cpus & __BIT(3)) ?
+	    (void *)ALPHA_PHYS_TO_K0SEG(TS_C_DIM3) : &black_hole;
+
+	const unsigned long psl = alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
+
 	alpha_mb();
-	STQP(TS_C_DIM0) = dec_6600_intr_enables;
+	*dim0 = enab0;
+	*dim1 = enab1;
+	*dim2 = enab2;
+	*dim3 = enab3;
 	alpha_mb();
+	(void) *dim0;
+	(void) *dim1;
+	(void) *dim2;
+	(void) *dim3;
+	alpha_mb();
+
+	alpha_pal_swpipl(psl);
 }
 
 static void
-dec_6600_intr_disable(pci_chipset_tag_t const pc __unused, int const irq)
+dec_6600_intr_enable(pci_chipset_tag_t const pc, int const irq)
 {
-	dec_6600_intr_enables &= ~(1UL << irq);
-	alpha_mb();
-	STQP(TS_C_DIM0) = dec_6600_intr_enables;
-	alpha_mb();
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	dec_6600_intr_enables |= __BIT(irq);
+	dec_6600_intr_program(pc);
+}
+
+static void
+dec_6600_intr_disable(pci_chipset_tag_t const pc, int const irq)
+{
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	dec_6600_intr_enables &= ~__BIT(irq);
+	dec_6600_intr_program(pc);
+}
+
+static void
+dec_6600_intr_set_affinity(pci_chipset_tag_t const pc, int const irq,
+    struct cpu_info * const ci)
+{
+	const uint64_t intr_bit = __BIT(irq);
+	cpuid_t cpuno;
+
+	KASSERT(mutex_owned(&cpu_lock));
+	KASSERT(ci->ci_cpuid < 4);
+	KASSERT(pc->pc_eligible_cpus & __BIT(ci->ci_cpuid));
+
+	for (cpuno = 0; cpuno < 4; cpuno++) {
+		if (cpuno == ci->ci_cpuid)
+			dec_6600_cpu_intr_enables[cpuno] |= intr_bit;
+		else
+			dec_6600_cpu_intr_enables[cpuno] &= ~intr_bit;
+	}
+
+	/* Only program the hardware if the irq is enabled. */
+	if (dec_6600_intr_enables & intr_bit)
+		dec_6600_intr_program(pc);
 }
 
 static void *
