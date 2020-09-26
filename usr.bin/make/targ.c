@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.98 2020/09/26 16:27:27 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.99 2020/09/26 16:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.98 2020/09/26 16:27:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.99 2020/09/26 16:55:58 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -129,7 +129,6 @@ static GNodeList *allGNs;	/* List of all the GNodes */
 #endif
 static Hash_Table targets;	/* a hash table of same */
 
-static int TargPrintOnlySrc(void *, void *);
 #ifdef CLEANUP
 static void TargFreeGN(void *);
 #endif
@@ -436,7 +435,7 @@ made_name(GNodeMade made)
     }
 }
 
-static int
+static void
 PrintNode(void *gnp, void *passp)
 {
     GNode *gn = gnp;
@@ -445,7 +444,7 @@ PrintNode(void *gnp, void *passp)
     fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
     GNode_FprintDetails(debug_file, ", ", gn, "\n");
     if (gn->flags == 0)
-	return 0;
+	return;
 
     if (!OP_NOP(gn->type)) {
 	fprintf(debug_file, "#\n");
@@ -494,10 +493,9 @@ PrintNode(void *gnp, void *passp)
 	Targ_PrintCmds(gn);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEachUntil(gn->cohorts, PrintNode, passp);
+	    Lst_ForEach(gn->cohorts, PrintNode, passp);
 	}
     }
-    return 0;
 }
 
 /* Print the contents of a node. */
@@ -510,24 +508,22 @@ Targ_PrintNode(GNode *gn, int pass)
 void
 Targ_PrintNodes(GNodeList *gnodes, int pass)
 {
-    Lst_ForEachUntil(gnodes, PrintNode, &pass);
+    Lst_ForEach(gnodes, PrintNode, &pass);
 }
 
 /* Print only those targets that are just a source.
  * The name of each file is printed, preceded by #\t. */
-static int
+static void
 TargPrintOnlySrc(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   	  *gn = (GNode *)gnp;
     if (!OP_NOP(gn->type))
-	return 0;
+	return;
 
     fprintf(debug_file, "#\t%s [%s]",
 	    gn->name, gn->path ? gn->path : gn->name);
     Targ_PrintType(gn->type);
     fprintf(debug_file, "\n");
-
-    return 0;
 }
 
 /* Input:
@@ -539,10 +535,10 @@ void
 Targ_PrintGraph(int pass)
 {
     fprintf(debug_file, "#*** Input graph:\n");
-    Lst_ForEachUntil(allTargets, PrintNode, &pass);
+    Lst_ForEach(allTargets, PrintNode, &pass);
     fprintf(debug_file, "\n\n");
     fprintf(debug_file, "#\n#   Files that are only sources:\n");
-    Lst_ForEachUntil(allTargets, TargPrintOnlySrc, NULL);
+    Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
     fprintf(debug_file, "#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
     fprintf(debug_file, "#*** Command-line Variables:\n");
