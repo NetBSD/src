@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.46 2020/09/26 04:11:48 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.47 2020/09/26 20:38:27 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.46 2020/09/26 04:11:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2020/09/26 20:38:27 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -141,8 +141,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 #ifndef DDB_TRACE
 	struct pcb *pcb;
-	struct proc p;
-	struct lwp l;
 	const char *cp = modif;
 	char c;
 	bool lwpaddr = false;
@@ -173,27 +171,42 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	if (lwpaddr) {
-		db_read_bytes(addr, sizeof(l), (char *)&l);
-		db_read_bytes((db_addr_t)l.l_proc, sizeof(p), (char *)&p);
-		(*pr)("pid %d.%d ", p.p_pid, l.l_lid);
+#ifdef _KERNEL
+		struct lwp *l;
+
+		l = (struct lwp *)(intptr_t)addr;
+		(*pr)("pid %d.%d ", l->l_proc->p_pid, l->l_lid);
+		pcb = lwp_getpcb(l);
+#else
+		struct proc pstore;
+		struct lwp lstore;
+
+		db_read_bytes(addr, sizeof(lstore), (char *)&lstore);
+		db_read_bytes((db_addr_t)lstore.l_proc, sizeof(pstore), 
+		    (char *)&pstore);
+		(*pr)("pid %d.%d ", pstore.p_pid, lstore.l_lid);
+		pcb = lwp_getpcb(&lstore);
+#endif
 	} else {
 		/* "trace/t" */
 
 		(*pr)("pid %d ", (int)addr);
 #ifdef _KERNEL
-		struct proc *p2 = proc_find_raw(addr);
-		if (p2 == NULL) {
+		struct lwp *l;
+		struct proc *p = proc_find_raw(addr);
+
+		if (p == NULL) {
 			(*pr)("not found\n");
 			return;
 		}	
-		l = *LIST_FIRST(&p2->p_lwps); /* XXX NJWLWP */
+		l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+		pcb = lwp_getpcb(l);
 #else
 		(*pr)("no proc_find_raw() in crash\n");
 		return;
 #endif
 	}
 
-	pcb = lwp_getpcb(&l);
 	(*pr)("at %p\n", pcb);
 
 #ifdef _KERNEL
