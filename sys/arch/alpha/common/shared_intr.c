@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.25 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.26 2020/09/26 02:35:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.25 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.26 2020/09/26 02:35:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -212,9 +212,11 @@ alpha_shared_intr_link_unlink_xcall(void *arg1, void *arg2)
 {
 	struct alpha_shared_intrhand *ih = arg1;
 	struct alpha_shared_intr *intr = ih->ih_intrhead;
-	struct cpu_info *ci = intr->intr_cpu;
 	unsigned int num = ih->ih_num;
 
+	struct cpu_info *ci = intr[num].intr_cpu;
+
+	KASSERT(ci != NULL);
 	KASSERT(ci == curcpu() || !mp_online);
 	KASSERT(!cpu_intr_p());
 
@@ -273,17 +275,17 @@ alpha_shared_intr_link(struct alpha_shared_intr *intr,
 	 * If a CPU hasn't been assigned yet, just give it to the
 	 * primary.
 	 */
-	if (intr->intr_cpu == NULL) {
-		intr->intr_cpu = &cpu_info_primary;
+	if (intr[num].intr_cpu == NULL) {
+		intr[num].intr_cpu = &cpu_info_primary;
 	}
 
 	kpreempt_disable();
-	if (intr->intr_cpu == curcpu() || !mp_online) {
-		alpha_shared_intr_link_unlink_xcall(ih, intr);
+	if (intr[num].intr_cpu == curcpu() || !mp_online) {
+		alpha_shared_intr_link_unlink_xcall(ih, ih);
 	} else {
 		uint64_t where = xc_unicast(XC_HIGHPRI,
-		    alpha_shared_intr_link_unlink_xcall, ih, intr,
-		        intr->intr_cpu);
+		    alpha_shared_intr_link_unlink_xcall, ih, ih,
+		    intr->intr_cpu);
 		xc_wait(where);
 	}
 	kpreempt_enable();
@@ -295,16 +297,17 @@ void
 alpha_shared_intr_unlink(struct alpha_shared_intr *intr,
     struct alpha_shared_intrhand *ih, const char *basename)
 {
+	unsigned int num = ih->ih_num;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
 	kpreempt_disable();
-	if (intr->intr_cpu == curcpu() || !mp_online) {
+	if (intr[num].intr_cpu == curcpu() || !mp_online) {
 		alpha_shared_intr_link_unlink_xcall(ih, NULL);
 	} else {
 		uint64_t where = xc_unicast(XC_HIGHPRI,
 		    alpha_shared_intr_link_unlink_xcall, ih, NULL,
-		        intr->intr_cpu);
+		    intr->intr_cpu);
 		xc_wait(where);
 	}
 	kpreempt_enable();
@@ -401,12 +404,79 @@ alpha_shared_intr_get_private(struct alpha_shared_intr *intr,
 	return (intr[num].intr_private);
 }
 
+static unsigned int
+alpha_shared_intr_q_count_handlers(struct alpha_shared_intr *intr_q)
+{
+	unsigned int cnt = 0;
+	struct alpha_shared_intrhand *ih;
+
+	TAILQ_FOREACH(ih, &intr_q->intr_q, ih_q) {
+		cnt++;
+	}
+
+	return cnt;
+}
+
+static void
+alpha_shared_intr_set_cpu_xcall(void *arg1, void *arg2)
+{
+	struct alpha_shared_intr *intr_q = arg1;
+	struct cpu_info *ci = arg2;
+	unsigned int cnt = alpha_shared_intr_q_count_handlers(intr_q);
+
+	KASSERT(ci == curcpu() || !mp_online);
+
+	ci->ci_nintrhand += cnt;
+	KASSERT(cnt <= ci->ci_nintrhand);
+}
+
+static void
+alpha_shared_intr_unset_cpu_xcall(void *arg1, void *arg2)
+{
+	struct alpha_shared_intr *intr_q = arg1;
+	struct cpu_info *ci = arg2;
+	unsigned int cnt = alpha_shared_intr_q_count_handlers(intr_q);
+
+	KASSERT(ci == curcpu() || !mp_online);
+
+	KASSERT(cnt <= ci->ci_nintrhand);
+	ci->ci_nintrhand -= cnt;
+}
+
 void
 alpha_shared_intr_set_cpu(struct alpha_shared_intr *intr, unsigned int num,
     struct cpu_info *ci)
 {
+	struct cpu_info *old_ci;
 
+	KASSERT(mutex_owned(&cpu_lock));
+
+	old_ci = intr[num].intr_cpu;
 	intr[num].intr_cpu = ci;
+
+	if (old_ci != NULL && old_ci != ci) {
+		kpreempt_disable();
+
+		if (ci == curcpu() || !mp_online) {
+			alpha_shared_intr_set_cpu_xcall(&intr[num], ci);
+		} else {
+			uint64_t where = xc_unicast(XC_HIGHPRI,
+			    alpha_shared_intr_set_cpu_xcall, &intr[num],
+			    ci, ci);
+			xc_wait(where);
+		}
+
+		if (old_ci == curcpu() || !mp_online) {
+			alpha_shared_intr_unset_cpu_xcall(&intr[num], old_ci);
+		} else {
+			uint64_t where = xc_unicast(XC_HIGHPRI,
+			    alpha_shared_intr_unset_cpu_xcall, &intr[num],
+			    old_ci, old_ci);
+			xc_wait(where);
+		}
+
+		kpreempt_enable();
+	}
 }
 
 struct cpu_info *
