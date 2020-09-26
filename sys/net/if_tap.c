@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.117 2020/02/04 05:46:32 thorpej Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.118 2020/09/26 19:38:45 roy Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.117 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.118 2020/09/26 19:38:45 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.117 2020/02/04 05:46:32 thorpej Exp $")
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_media.h>
 #include <net/if_tap.h>
 #include <net/bpf.h>
 
@@ -89,16 +88,8 @@ static int	tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
 static void	sysctl_tap_setup(struct sysctllog **);
 
-/*
- * Since we're an Ethernet device, we need the 2 following
- * components: a struct ethercom and a struct ifmedia
- * since we don't attach a PHY to ourselves.
- * We could emulate one, but there's no real point.
- */
-
 struct tap_softc {
 	device_t	sc_dev;
-	struct ifmedia	sc_im;
 	struct ethercom	sc_ec;
 	int		sc_flags;
 #define	TAP_INUSE	0x00000001	/* tap device can only be opened once */
@@ -191,18 +182,10 @@ static void	tap_kqdetach(struct knote *);
 static int	tap_kqread(struct knote *, long);
 
 /*
- * Those are needed by the if_media interface.
- */
-
-static int	tap_mediachange(struct ifnet *);
-static void	tap_mediastatus(struct ifnet *, struct ifmediareq *);
-
-/*
  * Those are needed by the ifnet interface, and would typically be
  * there for any network interface driver.
  * Some other routines are optional: watchdog and drain.
  */
-
 static void	tap_start(struct ifnet *);
 static void	tap_stop(struct ifnet *, int);
 static int	tap_init(struct ifnet *);
@@ -344,24 +327,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
-	 * Why 1000baseT? Why not? You can add more.
-	 *
-	 * Note that there are 3 steps: init, one or several additions to
-	 * list of supported media, and in the end, the selection of one
-	 * of them.
-	 */
-	sc->sc_ec.ec_ifmedia = &sc->sc_im;
-	ifmedia_init(&sc->sc_im, 0, tap_mediachange, tap_mediastatus);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_AUTO);
-
-	/*
 	 * One should note that an interface must do multicast in order
 	 * to support IPv6.
 	 */
@@ -385,7 +350,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	error = if_initialize(ifp);
 	if (error != 0) {
 		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
-		ifmedia_removeall(&sc->sc_im);
 		pmf_device_deregister(self);
 		mutex_destroy(&sc->sc_lock);
 		seldestroy(&sc->sc_rsel);
@@ -451,7 +415,6 @@ tap_detach(device_t self, int flags)
 		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	ifmedia_fini(&sc->sc_im);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_cv);
@@ -459,28 +422,6 @@ tap_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	return 0;
-}
-
-/*
- * This function is called by the ifmedia layer to notify the driver
- * that the user requested a media change.  A real driver would
- * reconfigure the hardware.
- */
-static int
-tap_mediachange(struct ifnet *ifp)
-{
-	return 0;
-}
-
-/*
- * Here the user asks for the currently used media.
- */
-static void
-tap_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
-
-	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
 }
 
 /*
@@ -571,8 +512,7 @@ tap_softintr(void *cookie)
  * The latter is a hack I used to set the Ethernet address of the
  * faked device.
  *
- * Note that both ifmedia_ioctl() and ether_ioctl() have to be
- * called under splnet().
+ * Note that ether_ioctl() has to be called under splnet().
  */
 static int
 tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
