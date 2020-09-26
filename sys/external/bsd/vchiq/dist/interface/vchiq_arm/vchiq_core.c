@@ -439,7 +439,7 @@ remote_event_wait(VCHIQ_STATE_T *state, REMOTE_EVENT_T *event)
 {
 	if (!event->fired) {
 		event->armed = 1;
-		dsb();
+		dsb(sy);
 		if (!event->fired) {
 			if (down_interruptible(
 					(struct semaphore *)
