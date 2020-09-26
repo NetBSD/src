@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.61 2020/08/12 08:56:37 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.62 2020/09/26 08:19:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -235,6 +235,14 @@ _C_LABEL(x):
 #define	EXPORT(x)			\
 	.globl	_C_LABEL(x);		\
 _C_LABEL(x):
+
+/*
+ * EXPORT_OBJECT -- export definition of symbol of symbol
+ * type Object, visible to ksyms(4) address search.
+ */
+#define	EXPORT_OBJECT(x)		\
+	EXPORT(x);			\
+	.type	_C_LABEL(x), @object;
 
 /*
  * VECTOR
