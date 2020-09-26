@@ -1,6 +1,6 @@
 /* mpfr_free_cache... - Free cache/pool memory used by MPFR.
 
-Copyright 2004-2018 Free Software Foundation, Inc.
+Copyright 2004-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,12 +17,12 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
 
-/* Theses caches may be global to all threads or local to the current one. */
+/* These caches may be global to all threads or local to the current one. */
 static void
 mpfr_free_const_caches (void)
 {
@@ -39,7 +39,7 @@ mpfr_free_const_caches (void)
   mpfr_clear_cache (__gmpfr_cache_const_catalan);
 }
 
-/* Theses caches/pools are always local to a thread. */
+/* These caches/pools are always local to a thread. */
 static void
 mpfr_free_local_cache (void)
 {
@@ -63,13 +63,13 @@ mpfr_free_cache2 (mpfr_free_cache_t way)
   if ((unsigned int) way & MPFR_FREE_LOCAL_CACHE)
     {
       mpfr_free_local_cache ();
-#if !defined (WANT_SHARED_CACHE)
+#if !defined(MPFR_WANT_SHARED_CACHE)
       mpfr_free_const_caches ();
 #endif
     }
   if ((unsigned int) way & MPFR_FREE_GLOBAL_CACHE)
     {
-#if defined (WANT_SHARED_CACHE)
+#if defined(MPFR_WANT_SHARED_CACHE)
       mpfr_free_const_caches ();
 #endif
     }

@@ -1,6 +1,6 @@
 /* Test file for mpfr_const_pi.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,12 +17,12 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
 
-#if defined (WANT_SHARED_CACHE) && defined(HAVE_PTHREAD)
+#if defined(MPFR_WANT_SHARED_CACHE) && defined(HAVE_PTHREAD)
 
 # include <pthread.h>
 
@@ -81,9 +81,11 @@ run_pthread_test (void)
 
 # define RUN_PTHREAD_TEST()                                             \
   (MPFR_ASSERTN(mpfr_buildopt_sharedcache_p() == 1), run_pthread_test())
+
 #else
-# define RUN_PTHREAD_TEST() \
-  (MPFR_ASSERTN(mpfr_buildopt_sharedcache_p() == 0))
+
+# define RUN_PTHREAD_TEST() ((void) 0)
+
 #endif
 
 /* tconst_pi [prec] [rnd] [0 = no print] */
@@ -245,7 +247,16 @@ main (int argc, char *argv[])
 
   RUN_PTHREAD_TEST();
 
+  /* the following is just to test mpfr_free_cache2 with MPFR_FREE_LOCAL_CACHE,
+     it should not hurt, since the call to mpfr_free_cache in tests_end_mpfr
+     will do nothing */
+  mpfr_free_cache2 (MPFR_FREE_LOCAL_CACHE);
+
   tests_end_mpfr ();
+
+  /* another test of mpfr_free_cache2 with MPFR_FREE_LOCAL_CACHE, to check
+     that we can call it when the caches are already freed */
+  mpfr_free_cache2 (MPFR_FREE_LOCAL_CACHE);
 
   return 0;
 }

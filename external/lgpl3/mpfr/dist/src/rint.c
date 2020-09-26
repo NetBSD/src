@@ -1,6 +1,6 @@
 /* mpfr_rint -- Round to an integer.
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -136,7 +136,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
           uj = un - ui;  /* lowest limb of the integer part */
           idiff = exp % GMP_NUMB_BITS;  /* #int-part bits in up[uj] or 0 */
 
-          uflags = idiff == 0 || (up[uj] << idiff) == 0 ? 0 : 2;
+          uflags = idiff == 0 || MPFR_LIMB_LSHIFT(up[uj],idiff) == 0 ? 0 : 2;
           if (uflags == 0)
             while (uj > 0)
               if (up[--uj] != 0)
@@ -191,7 +191,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
             }
           if (uflags == 0)
             { /* u is an integer; determine if it is representable in r */
-              if (sh != 0 && rp[0] << (GMP_NUMB_BITS - sh) != 0)
+              if (sh != 0 && MPFR_LIMB_LSHIFT(rp[0], GMP_NUMB_BITS - sh) != 0)
                 uflags = 1;  /* u is not representable in r */
               else
                 {
@@ -288,7 +288,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
         MPFR_RET(0);
 
       MPFR_ASSERTD (rnd_away >= 0);  /* rounding direction is defined */
-      if (rnd_away && mpn_add_1(rp, rp, rn, MPFR_LIMB_ONE << sh))
+      if (rnd_away && mpn_add_1 (rp, rp, rn, MPFR_LIMB_ONE << sh))
         {
           if (exp == __gmpfr_emax)
             return mpfr_overflow (r, rnd_mode, sign) >= 0 ?

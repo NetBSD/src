@@ -1,6 +1,6 @@
 /* mpfr_lngamma -- lngamma function
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -275,7 +275,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
           mpfr_const_euler (g, MPFR_IS_POS(z0) ? MPFR_RNDD : MPFR_RNDU); /* cached */
           mpfr_mul (g, g, z0, MPFR_RNDU);
           mpfr_sub (h, h, g, MPFR_RNDD);
-          mpfr_mul (g, z0, z0, MPFR_RNDU);
+          mpfr_sqr (g, z0, MPFR_RNDU);
           mpfr_add (h, h, g, MPFR_RNDU);
           inex1 = mpfr_prec_round (l, MPFR_PREC(y), rnd);
           inex2 = mpfr_prec_round (h, MPFR_PREC(y), rnd);
@@ -494,7 +494,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
       mpfr_set (v, t, MPFR_RNDN);        /* (1+u)^2, v < 2^(-5) */
       mpfr_add (s, s, v, MPFR_RNDN);     /* (1+u)^15 */
 
-      mpfr_mul (u, u, u, MPFR_RNDN); /* 1/z^2 * (1+u)^3 */
+      mpfr_sqr (u, u, MPFR_RNDN);        /* 1/z^2 * (1+u)^3 */
 
       /* m <= maxm ensures that 2*m*(2*m+1) <= ULONG_MAX */
       maxm = 1UL << (sizeof(unsigned long) * CHAR_BIT / 2 - 1);
@@ -628,7 +628,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
       /* now t: (1+u)^(2k-1) */
       /* instead of computing log(sqrt(2*Pi)/t), we compute
          1/2*log(2*Pi/t^2), which trades a square root for a square */
-      mpfr_mul (t, t, t, MPFR_RNDN); /* (z0*...*(z0+k-1))^2, (1+u)^(4k-1) */
+      mpfr_sqr (t, t, MPFR_RNDN); /* (z0*...*(z0+k-1))^2, (1+u)^(4k-1) */
       mpfr_div (v, v, t, MPFR_RNDN);
       /* 2*Pi/(z0*...*(z0+k-1))^2 (1+u)^(4k+1) */
 #ifdef IS_GAMMA

@@ -1,7 +1,7 @@
 /* mpfr_get_float128 -- convert a multiple precision floating-point
-                        number to a __float128 number
+                        number to a _Float128 number
 
-Copyright 2012-2018 Free Software Foundation, Inc.
+Copyright 2012-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -26,16 +26,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifdef MPFR_WANT_FLOAT128
 
 /* generic code */
-__float128
+_Float128
 mpfr_get_float128 (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
-    return (__float128) mpfr_get_d (x, rnd_mode);
+    return (_Float128) mpfr_get_d (x, rnd_mode);
   else /* now x is a normal non-zero number */
     {
-      __float128 r; /* result */
-      __float128 m;
+      _Float128 r; /* result */
+      _Float128 m;
       mpfr_exp_t e;  /* exponent of x (before rounding) */
       mpfr_exp_t sh; /* exponent shift, so that x/2^sh is in the double range */
       const int emin = -16381;
@@ -62,7 +62,7 @@ mpfr_get_float128 (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
           MPFR_SAVE_EXPO_MARK (expo);
 
-          /* First round x to the target __float128 precision, taking the
+          /* First round x to the target _Float128 precision, taking the
              reduced precision of the subnormals into account, so that all
              subsequent operations are exact (this avoids double rounding
              problems). */
@@ -83,7 +83,7 @@ mpfr_get_float128 (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
                  always work if GMP_NUMB_BITS > IEEE_FLOAT128_MANT_DIG.
                  MPFR_LIMB_HIGHBIT has the advantage to fit on 1 bit. */
               r += yp[i];
-              r *= 1 / (2 * (__float128) MPFR_LIMB_HIGHBIT);
+              r *= 1 / (2 * (_Float128) MPFR_LIMB_HIGHBIT);
             }
 
           mpfr_clear (y);

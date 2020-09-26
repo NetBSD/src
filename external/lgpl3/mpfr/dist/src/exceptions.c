@@ -1,6 +1,6 @@
 /* Exception flags and utilities. Constructors and destructors (debug).
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -467,6 +467,32 @@ predprint (void)
       ++sf;
       s += 2;
     }
+}
+
+#endif
+
+#if MPFR_WANT_ASSERT >= 2
+
+/* Similar to flags_out in tests/tests.c */
+
+void
+flags_fout (FILE *stream, mpfr_flags_t flags)
+{
+  int none = 1;
+
+  if (flags & MPFR_FLAGS_UNDERFLOW)
+    none = 0, fprintf (stream, " underflow");
+  if (flags & MPFR_FLAGS_OVERFLOW)
+    none = 0, fprintf (stream, " overflow");
+  if (flags & MPFR_FLAGS_NAN)
+    none = 0, fprintf (stream, " nan");
+  if (flags & MPFR_FLAGS_INEXACT)
+    none = 0, fprintf (stream, " inexact");
+  if (flags & MPFR_FLAGS_ERANGE)
+    none = 0, fprintf (stream, " erange");
+  if (none)
+    fprintf (stream, " none");
+  fprintf (stream, " (%u)\n", flags);
 }
 
 #endif

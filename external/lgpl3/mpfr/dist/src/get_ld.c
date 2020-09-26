@@ -1,7 +1,7 @@
 /* mpfr_get_ld, mpfr_get_ld_2exp -- convert a multiple precision floating-point
                                     number to a machine long double
 
-Copyright 2002-2018 Free Software Foundation, Inc.
+Copyright 2002-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h> /* needed so that MPFR_LDBL_MANT_DIG is correctly defined */
@@ -94,8 +94,73 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           ld.s.manl = tmpmant[1] >> (denorm - 32);
           ld.s.manh = 0;
         }
+#elif GMP_NUMB_BITS == 16
+      if (MPFR_LIKELY (denorm == 0))
+        {
+          /* manl = tmpmant[1] | tmpmant[0]
+             manh = tmpmant[3] | tmpmant[2] */
+          ld.s.manl = tmpmant[0] | ((unsigned long) tmpmant[1] << 16);
+          ld.s.manh = tmpmant[2] | ((unsigned long) tmpmant[3] << 16);
+        }
+      else if (denorm < 16)
+        {
+          /* manl = low(mant[2],denorm) | mant[1] | high(mant[0],16-denorm)
+             manh = mant[3] | high(mant[2],16-denorm) */
+          ld.s.manl = (tmpmant[0] >> denorm)
+            | ((unsigned long) tmpmant[1] << (16 - denorm))
+            | ((unsigned long) tmpmant[2] << (32 - denorm));
+          ld.s.manh = (tmpmant[2] >> denorm)
+            | ((unsigned long) tmpmant[3] << (16 - denorm));
+        }
+      else if (denorm == 16)
+        {
+          /* manl = tmpmant[2] | tmpmant[1]
+             manh = 0000000000 | tmpmant[3] */
+          ld.s.manl = tmpmant[1] | ((unsigned long) tmpmant[2] << 16);
+          ld.s.manh = tmpmant[3];
+        }
+      else if (denorm < 32)
+        {
+          /* manl = low(mant[3],denorm-16) | mant[2] | high(mant[1],32-denorm)
+             manh = high(mant[3],32-denorm) */
+          ld.s.manl = (tmpmant[1] >> (denorm - 16))
+            | ((unsigned long) tmpmant[2] << (32 - denorm))
+            | ((unsigned long) tmpmant[3] << (48 - denorm));
+          ld.s.manh = tmpmant[3] >> (denorm - 16);
+        }
+      else if (denorm == 32)
+        {
+          /* manl = tmpmant[3] | tmpmant[2]
+             manh = 0 */
+          ld.s.manl = tmpmant[2] | ((unsigned long) tmpmant[3] << 16);
+          ld.s.manh = 0;
+        }
+      else if (denorm < 48)
+        {
+          /* manl = zero(denorm-32) | tmpmant[3] | high(tmpmant[2],48-denorm)
+             manh = 0 */
+          ld.s.manl = (tmpmant[2] >> (denorm - 32))
+            | ((unsigned long) tmpmant[3] << (48 - denorm));
+          ld.s.manh = 0;
+        }
+      else /* 48 <= denorm < 64 */
+        {
+          /* we assume a right shift of 0 is identity */
+          ld.s.manl = tmpmant[3] >> (denorm - 48);
+          ld.s.manh = 0;
+        }
+#elif GMP_NUMB_BITS == 8
+      {
+        unsigned long long mant = 0;
+        int i;
+        for (i = 0; i < 8; i++)
+          mant |= ((unsigned long) tmpmant[i] << (8*i));
+        mant >>= denorm;
+        ld.s.manl = mant;
+        ld.s.manh = mant >> 32;
+      }
 #else
-# error "GMP_NUMB_BITS must be 32 or >= 64"
+# error "GMP_NUMB_BITS must be 16, 32 or >= 64"
       /* Other values have never been supported anyway. */
 #endif
       if (MPFR_LIKELY (denorm == 0))
@@ -251,28 +316,23 @@ mpfr_get_ld_2exp (long *expptr, mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   MPFR_ALIAS (tmp, src, MPFR_SIGN (src), 0);
   ret = mpfr_get_ld (tmp, rnd_mode);
 
-  if (MPFR_IS_PURE_FP(src))
+  exp = MPFR_GET_EXP (src);
+
+  /* rounding can give 1.0, adjust back to 0.5 <= abs(ret) < 1.0 */
+  if (ret == 1.0)
     {
-      exp = MPFR_GET_EXP (src);
-
-      /* rounding can give 1.0, adjust back to 0.5 <= abs(ret) < 1.0 */
-      if (ret == 1.0)
-        {
-          ret = 0.5;
-          exp ++;
-        }
-      else if (ret ==  -1.0)
-        {
-          ret = -0.5;
-          exp ++;
-        }
-
-      MPFR_ASSERTN ((ret >= 0.5 && ret < 1.0)
-                    || (ret <= -0.5 && ret > -1.0));
-      MPFR_ASSERTN (exp >= LONG_MIN && exp <= LONG_MAX);
+      ret = 0.5;
+      exp ++;
     }
-  else
-    exp = 0;
+  else if (ret ==  -1.0)
+    {
+      ret = -0.5;
+      exp ++;
+    }
+
+  MPFR_ASSERTN ((ret >= 0.5 && ret < 1.0)
+                || (ret <= -0.5 && ret > -1.0));
+  MPFR_ASSERTN (exp >= LONG_MIN && exp <= LONG_MAX);
 
   *expptr = exp;
   return ret;

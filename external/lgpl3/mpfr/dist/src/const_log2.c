@@ -1,6 +1,6 @@
 /* mpfr_const_log2 -- compute natural logarithm of 2
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -57,21 +57,18 @@ S (mpz_t *T, mpz_t *P, mpz_t *Q, unsigned long n1, unsigned long n2, int need_P)
           mpz_set_ui (P[0], n1);
           mpz_neg (P[0], P[0]);
         }
-      if (n1 <= (ULONG_MAX / 4 - 1) / 2)
-        mpz_set_ui (Q[0], 4 * (2 * n1 + 1));
-      else /* to avoid overflow in 4 * (2 * n1 + 1) */
-        {
-          mpz_set_ui (Q[0], n1);
-          mpz_mul_2exp (Q[0], Q[0], 1);
-          mpz_add_ui (Q[0], Q[0], 1);
-          mpz_mul_2exp (Q[0], Q[0], 2);
-        }
+      /* since n1 <= N, where N is the value from mpfr_const_log2_internal(),
+         and N = w / 3 + 1, where w <= PREC_MAX <= ULONG_MAX, then
+         N <= floor(ULONG_MAX/3) + 1, thus 2*N+1 <= ULONG_MAX */
+      MPFR_STAT_STATIC_ASSERT (MPFR_PREC_MAX <= ULONG_MAX);
+      mpz_set_ui (Q[0], 2 * n1 + 1);
+      mpz_mul_2exp (Q[0], Q[0], 2);
       mpz_set (T[0], P[0]);
     }
   else
     {
       unsigned long m = (n1 / 2) + (n2 / 2) + (n1 & 1UL & n2);
-      unsigned long v, w;
+      mp_bitcnt_t v, w;
 
       S (T, P, Q, n1, m, 1);
       S (T + 1, P + 1, Q + 1, m, n2, need_P);
@@ -126,11 +123,7 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
     ("rnd_mode=%d", rnd_mode),
     ("x[%Pu]=%.*Rg inex=%d", mpfr_get_prec(x), mpfr_log_prec, x, inexact));
 
-  if (n < 1069)
-    w = n + 9; /* ensures correct rounding for the four rounding modes,
-                   together with N = w / 3 + 1 (see below). */
-  else
-    w = n + 10; /* idem at least for prec < 300000 */
+  w = n + MPFR_INT_CEIL_LOG2 (n) + 3;
 
   MPFR_TMP_MARK(marker);
   MPFR_GROUP_INIT_2(group, w, t, q);
@@ -138,9 +131,7 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
   MPFR_ZIV_INIT (loop, w);
   for (;;)
     {
-      N = w / 3 + 1; /* Warning: do not change that (even increasing N!)
-                        without checking correct rounding in the above
-                        ranges for n. */
+      N = w / 3 + 1;
 
       /* the following are needed for error analysis (see algorithms.tex) */
       MPFR_ASSERTD(w >= 3 && N >= 2);
@@ -169,9 +160,7 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
           mpz_clear (Q[i]);
         }
 
-      /* for prec < 300000 and all rounding modes we checked by exhaustive
-         search that the rounding is correct */
-      if (MPFR_LIKELY (n < 300000 || MPFR_CAN_ROUND (t, w - 2, n, rnd_mode)))
+      if (MPFR_CAN_ROUND (t, w - 2, n, rnd_mode))
         break;
 
       MPFR_ZIV_NEXT (loop, w);

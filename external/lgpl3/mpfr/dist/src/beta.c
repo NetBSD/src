@@ -1,6 +1,6 @@
 /* mpfr_beta -- beta function
 
-Copyright 2017-2018 Free Software Foundation, Inc.
+Copyright 2017-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H /* for MPFR_INT_CEIL_LOG2 */
@@ -94,7 +94,7 @@ mpfr_beta (mpfr_ptr r, mpfr_srcptr z, mpfr_srcptr w, mpfr_rnd_t rnd_mode)
                   mpfr_clear (t);
                   MPFR_SAVE_EXPO_FREE (expo);
                   /* q contains the low bits of trunc(w) where trunc() rounds
-                     towards zero, thus if q is odd, then -2k-2 < w < -2k-1 */
+                     toward zero, thus if q is odd, then -2k-2 < w < -2k-1 */
                   MPFR_SET_INF(r);
                   if ((unsigned long) q & 1)
                     MPFR_SET_NEG(r);

@@ -1,6 +1,6 @@
 /* Test file for mpfr_cbrt.
 
-Copyright 2002-2018 Free Software Foundation, Inc.
+Copyright 2002-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -26,50 +26,76 @@ static void
 special (void)
 {
   mpfr_t x, y;
+  int inex;
 
   mpfr_init (x);
   mpfr_init (y);
 
   /* cbrt(NaN) = NaN */
   mpfr_set_nan (x);
-  mpfr_cbrt (y, x, MPFR_RNDN);
+  inex = mpfr_cbrt (y, x, MPFR_RNDN);
   if (!mpfr_nan_p (y))
     {
-      printf ("Error: cbrt(NaN) <> NaN\n");
+      printf ("Error: cbrt(NaN) is not NaN\n");
+      exit (1);
+    }
+  if (inex != 0)
+    {
+      printf ("Error: cbrt(NaN): incorrect ternary value %d\n", inex);
       exit (1);
     }
 
   /* cbrt(+Inf) = +Inf */
   mpfr_set_inf (x, 1);
-  mpfr_cbrt (y, x, MPFR_RNDN);
+  inex = mpfr_cbrt (y, x, MPFR_RNDN);
   if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0)
     {
       printf ("Error: cbrt(+Inf) <> +Inf\n");
       exit (1);
     }
+  if (inex != 0)
+    {
+      printf ("Error: cbrt(+Inf): incorrect ternary value %d\n", inex);
+      exit (1);
+    }
 
   /* cbrt(-Inf) =  -Inf */
   mpfr_set_inf (x, -1);
-  mpfr_cbrt (y, x, MPFR_RNDN);
+  inex = mpfr_cbrt (y, x, MPFR_RNDN);
   if (!mpfr_inf_p (y) || mpfr_sgn (y) > 0)
     {
       printf ("Error: cbrt(-Inf) <> -Inf\n");
       exit (1);
     }
+  if (inex != 0)
+    {
+      printf ("Error: cbrt(-Inf): incorrect ternary value %d\n", inex);
+      exit (1);
+    }
 
   /* cbrt(+/-0) =  +/-0 */
   mpfr_set_ui (x, 0, MPFR_RNDN);
-  mpfr_cbrt (y, x, MPFR_RNDN);
+  inex = mpfr_cbrt (y, x, MPFR_RNDN);
   if (MPFR_NOTZERO (y) || MPFR_IS_NEG (y))
     {
       printf ("Error: cbrt(+0) <> +0\n");
       exit (1);
     }
+  if (inex != 0)
+    {
+      printf ("Error: cbrt(+0): incorrect ternary value %d\n", inex);
+      exit (1);
+    }
   mpfr_neg (x, x, MPFR_RNDN);
-  mpfr_cbrt (y, x, MPFR_RNDN);
+  inex = mpfr_cbrt (y, x, MPFR_RNDN);
   if (MPFR_NOTZERO (y) || MPFR_IS_POS (y))
     {
       printf ("Error: cbrt(-0) <> -0\n");
+      exit (1);
+    }
+  if (inex != 0)
+    {
+      printf ("Error: cbrt(-0): incorrect ternary value %d\n", inex);
       exit (1);
     }
 
@@ -145,11 +171,17 @@ special (void)
 #define TEST_FUNCTION mpfr_cbrt
 #include "tgeneric.c"
 
+static int
+cube (mpfr_ptr a, mpfr_srcptr b, mpfr_rnd_t rnd_mode)
+{
+  return mpfr_pow_ui (a, b, 3, rnd_mode);
+}
+
 int
 main (void)
 {
   mpfr_t x;
-  int r;
+  int r, inex;
   mpfr_prec_t p;
 
   tests_start_mpfr ();
@@ -158,29 +190,30 @@ main (void)
 
   mpfr_init (x);
 
-  for (p=2; p<100; p++)
+  for (p = 2; p < 100; p++)
     {
       mpfr_set_prec (x, p);
       for (r = 0; r < MPFR_RND_MAX; r++)
         {
           mpfr_set_ui (x, 1, MPFR_RNDN);
-          mpfr_cbrt (x, x, (mpfr_rnd_t) r);
-          if (mpfr_cmp_ui (x, 1))
+          inex = mpfr_cbrt (x, x, (mpfr_rnd_t) r);
+          if (mpfr_cmp_ui (x, 1) || inex != 0)
             {
               printf ("Error in mpfr_cbrt for x=1, rnd=%s\ngot ",
                       mpfr_print_rnd_mode ((mpfr_rnd_t) r));
-              mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
-              printf ("\n");
+              mpfr_dump (x);
+              printf ("inex = %d\n", inex);
               exit (1);
             }
+
           mpfr_set_si (x, -1, MPFR_RNDN);
-          mpfr_cbrt (x, x, (mpfr_rnd_t) r);
-          if (mpfr_cmp_si (x, -1))
+          inex = mpfr_cbrt (x, x, (mpfr_rnd_t) r);
+          if (mpfr_cmp_si (x, -1) || inex != 0)
             {
               printf ("Error in mpfr_cbrt for x=-1, rnd=%s\ngot ",
                       mpfr_print_rnd_mode ((mpfr_rnd_t) r));
-              mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
-              printf ("\n");
+              mpfr_dump (x);
+              printf ("inex = %d\n", inex);
               exit (1);
             }
 
@@ -191,14 +224,15 @@ main (void)
                 {
                   mpfr_set_ui (x, 27, MPFR_RNDN);
                   mpfr_mul_2si (x, x, 3*i, MPFR_RNDN);
-                  mpfr_cbrt (x, x, MPFR_RNDN);
-                  if (mpfr_cmp_si_2exp (x, 3, i))
+                  inex = mpfr_cbrt (x, x, MPFR_RNDN);
+                  if (mpfr_cmp_si_2exp (x, 3, i) || inex != 0)
                     {
                       printf ("Error in mpfr_cbrt for "
                               "x = 27.0 * 2^(%d), rnd=%s\ngot ",
                               3*i, mpfr_print_rnd_mode ((mpfr_rnd_t) r));
-                      mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
-                      printf ("\ninstead of 3 * 2^(%d)\n", i);
+                      mpfr_dump (x);
+                      printf (", expected 3 * 2^(%d)\n", i);
+                      printf ("inex = %d, expected 0\n", inex);
                       exit (1);
                     }
                 }
@@ -210,6 +244,7 @@ main (void)
   test_generic (MPFR_PREC_MIN, 200, 10);
 
   data_check ("data/cbrt", mpfr_cbrt, "mpfr_cbrt");
+  bad_cases (mpfr_cbrt, cube, "mpfr_cbrt", 256, -256, 255, 4, 128, 200, 50);
 
   tests_end_mpfr ();
   return 0;

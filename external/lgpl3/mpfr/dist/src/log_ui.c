@@ -1,6 +1,6 @@
 /* mpfr_log_ui -- compute natural logarithm of an unsigned long
 
-Copyright 2014-2018 Free Software Foundation, Inc.
+Copyright 2014-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -193,7 +193,7 @@ mpfr_log_ui (mpfr_ptr x, unsigned long n, mpfr_rnd_t rnd_mode)
 
       mpfr_set_z (t, T[0], MPFR_RNDN); /* t = P[0] * (1 + theta_1) */
       mpfr_set_z (q, B[0], MPFR_RNDN); /* q = B[0] * (1 + theta_2) */
-      mpfr_mul_2exp (q, q, q0, MPFR_RNDN); /* B[0]*Q[0] */
+      mpfr_mul_2ui (q, q, q0, MPFR_RNDN); /* B[0]*Q[0] */
       mpfr_div (t, t, q, MPFR_RNDN);   /* t = T[0]/(B[0]*Q[0])*(1 + theta_3)^3
                                             = log(n/2^k) * (1 + theta_4)^4
                                             for |theta_i| < 2^(-w) */

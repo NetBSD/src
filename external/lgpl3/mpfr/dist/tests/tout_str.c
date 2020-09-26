@@ -1,6 +1,6 @@
 /* Test file for mpfr_out_str.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,8 +17,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
+
+/* FIXME: The output is not tested (thus coverage data are meaningless). */
 
 #include <float.h>
 
@@ -35,7 +37,7 @@ check4 (double d, mpfr_rnd_t rnd, int base, int prec)
 
   mpfr_init2 (x, prec);
   mpfr_set_d (x, d, rnd);
-  fprintf (fout, "%1.19e base %d rnd %d:\n ", d, base, rnd);
+  fprintf (fout, "%1.19e base %d %s:\n ", d, base, mpfr_print_rnd_mode (rnd));
   mpfr_out_str (fout, base, (base == 2) ? prec : 0, x, rnd);
   fputc ('\n', fout);
   mpfr_clear (x);
@@ -51,6 +53,7 @@ special (void)
 
   mpfr_set_nan (x);
   n = mpfr_out_str (fout, 10, 0, x, MPFR_RNDN);
+  fputc ('\n', fout);
   if (n != 5)
     {
       printf ("Error: mpfr_out_str (file, 10, 0, NaN, MPFR_RNDN) wrote %u "
@@ -60,6 +63,7 @@ special (void)
 
   mpfr_set_inf (x, 1);
   n = mpfr_out_str (fout, 10, 0, x, MPFR_RNDN);
+  fputc ('\n', fout);
   if (n != 5)
     {
       printf ("Error: mpfr_out_str (file, 10, 0, +Inf, MPFR_RNDN) wrote %u "
@@ -69,6 +73,7 @@ special (void)
 
   mpfr_set_inf (x, -1);
   n = mpfr_out_str (fout, 10, 0, x, MPFR_RNDN);
+  fputc ('\n', fout);
   if (n != 6)
     {
       printf ("Error: mpfr_out_str (file, 10, 0, -Inf, MPFR_RNDN) wrote %u "
@@ -78,6 +83,7 @@ special (void)
 
   mpfr_set_ui (x, 0, MPFR_RNDN);
   n = mpfr_out_str (fout, 10, 0, x, MPFR_RNDN);
+  fputc ('\n', fout);
   if (n != 1)
     {
       printf ("Error: mpfr_out_str (file, 10, 0, +0, MPFR_RNDN) wrote %u "
@@ -87,6 +93,7 @@ special (void)
 
   mpfr_neg (x, x, MPFR_RNDN);
   n = mpfr_out_str (fout, 10, 0, x, MPFR_RNDN);
+  fputc ('\n', fout);
   if (n != 2)
     {
       printf ("Error: mpfr_out_str (file, 10, 0, -0, MPFR_RNDN) wrote %u "
@@ -100,31 +107,27 @@ special (void)
 int
 main (int argc, char *argv[])
 {
-  int i, N=10000, p;
-  mpfr_rnd_t rnd;
-  double d;
+  const char *fname = "tout_str_out.txt";
+  int i, N = 10000;
 
   tests_start_mpfr ();
 
-  /* with no argument: prints to /dev/null,
+  /* with no argument: prints to a temporary file,
      tout_str N: prints N tests to stdout */
   if (argc == 1)
     {
-      fout = fopen ("/dev/null", "w");
-      /* If we failed to open this device, try with a dummy file */
+      fout = fopen (fname, "w");
       if (fout == NULL)
-        fout = fopen ("tout_str_out.txt", "w");
+        {
+          perror (NULL);
+          fprintf (stderr, "Failed to open \"%s\" for writing\n", fname);
+          exit (1);
+        }
     }
   else
     {
       fout = stdout;
       N = atoi (argv[1]);
-    }
-
-  if (fout == NULL)
-    {
-      printf ("Can't open /dev/null or stdout\n");
-      exit (1);
     }
 
   special ();
@@ -147,23 +150,30 @@ main (int argc, char *argv[])
   check (7.02293374921793516813e-84, MPFR_RNDN, 10);
 
   /* random tests */
-  for (i=0;i<N;i++)
+  for (i = 0; i < N; i++)
     {
-      do
-        {
-          d = DBL_RAND ();
-        }
-#ifdef HAVE_DENORMS
-      while (0);
-#else
-      while (ABS(d) < DBL_MIN);
-#endif
+      double d;
+      mpfr_rnd_t rnd;
+      int b;
+
+      d = DBL_RAND ();
       rnd = RND_RAND ();
-      p = 2 + randlimb () % 61;
-      check (d, rnd, p);
+      do
+        b = (randlimb () % (62 + 36 + 1)) - 36;
+      while (b > -2 && b < 2);
+      check (d, rnd, b);
     }
 
-  fclose (fout);
+  if (fout != stdout)
+    {
+      if (fclose (fout) != 0)
+        {
+          perror (NULL);
+          fprintf (stderr, "Failed to close \"%s\"\n", fname);
+          exit (1);
+        }
+      remove (fname);
+    }
 
   tests_end_mpfr ();
   return 0;

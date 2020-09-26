@@ -1,6 +1,6 @@
 /* mpfr_const_pi -- compute Pi
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -37,6 +37,11 @@ int
 mpfr_const_pi (mpfr_ptr x, mpfr_rnd_t rnd_mode) {
   return mpfr_cache (x, __gmpfr_cache_const_pi, rnd_mode);
 }
+
+/* The algorithm used here is taken from Section 8.2.5 of the book
+   "Fast Algorithms: A Multitape Turing Machine Implementation"
+   by A. Schönhage, A. F. W. Grotefeld and E. Vetter, 1994.
+   It is a clever form of Brent-Salamin formula. */
 
 /* Don't need to save/restore exponent range: the cache does it */
 int
@@ -80,7 +85,7 @@ mpfr_const_pi_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
         mpfr_sqrt (b, B, MPFR_RNDN); /* 1/2 <= b <= 1 */
         mpfr_add (ap, a, b, MPFR_RNDN); /* 1 <= ap <= 2 */
         mpfr_div_2ui (ap, ap, 1, MPFR_RNDN); /* exact, 1/2 <= ap <= 1 */
-        mpfr_mul (Ap, ap, ap, MPFR_RNDN); /* 1/4 <= Ap <= 1 */
+        mpfr_sqr (Ap, ap, MPFR_RNDN); /* 1/4 <= Ap <= 1 */
         mpfr_sub (Bp, Ap, S, MPFR_RNDN); /* -1/4 <= Bp <= 3/4 */
         mpfr_mul_2ui (Bp, Bp, 1, MPFR_RNDN); /* -1/2 <= Bp <= 3/2 */
         mpfr_sub (S, Ap, Bp, MPFR_RNDN);

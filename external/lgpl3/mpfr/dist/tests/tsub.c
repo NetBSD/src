@@ -1,6 +1,6 @@
 /* Test file for mpfr_sub.
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,17 +17,18 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
 
-#ifdef CHECK_EXTERNAL
 static int
 test_sub (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 {
+#ifdef CHECK_EXTERNAL
   int res;
   int ok = rnd_mode == MPFR_RNDN && mpfr_number_p (b) && mpfr_number_p (c);
+
   if (ok)
     {
       mpfr_print_raw (b);
@@ -42,10 +43,69 @@ test_sub (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
       printf ("\n");
     }
   return res;
-}
-#else
-#define test_sub mpfr_sub
+#else  /* reuse test */
+  int inex;
+
+  inex = mpfr_sub (a, b, c, rnd_mode);
+
+  if (a != b && a != c && ! MPFR_IS_NAN (a))
+    {
+      mpfr_t t;
+      int reuse_b, reuse_c, inex_r;
+
+      reuse_b = MPFR_PREC (a) == MPFR_PREC (b);
+      reuse_c = MPFR_PREC (a) == MPFR_PREC (c);
+
+      if (reuse_b || reuse_c)
+        mpfr_init2 (t, MPFR_PREC (a));
+
+      if (reuse_b)
+        {
+          mpfr_set (t, b, MPFR_RNDN);
+          inex_r = mpfr_sub (t, t, c, rnd_mode);
+          if (!(mpfr_equal_p (t, a) && SAME_SIGN (inex_r, inex)))
+            {
+              printf ("reuse of b error in b - c in %s for\n",
+                      mpfr_print_rnd_mode (rnd_mode));
+              printf ("b = ");
+              mpfr_dump (b);
+              printf ("c = ");
+              mpfr_dump (c);
+              printf ("Expected "); mpfr_dump (a);
+              printf ("  with inex = %d\n", inex);
+              printf ("Got      "); mpfr_dump (t);
+              printf ("  with inex = %d\n", inex_r);
+              exit (1);
+            }
+        }
+
+      if (reuse_c)
+        {
+          mpfr_set (t, c, MPFR_RNDN);
+          inex_r = mpfr_sub (t, b, t, rnd_mode);
+          if (!(mpfr_equal_p (t, a) && SAME_SIGN (inex_r, inex)))
+            {
+              printf ("reuse of c error in b - c in %s for\n",
+                      mpfr_print_rnd_mode (rnd_mode));
+              printf ("b = ");
+              mpfr_dump (b);
+              printf ("c = ");
+              mpfr_dump (c);
+              printf ("Expected "); mpfr_dump (a);
+              printf ("  with inex = %d\n", inex);
+              printf ("Got      "); mpfr_dump (t);
+              printf ("  with inex = %d\n", inex_r);
+              exit (1);
+            }
+        }
+
+      if (reuse_b || reuse_c)
+        mpfr_clear (t);
+    }
+
+  return inex;
 #endif
+}
 
 static void
 check_diverse (void)
@@ -82,6 +142,19 @@ check_diverse (void)
       printf ("Error in mpfr_sub(1,-2,RNDD)\n");
       exit (1);
     }
+
+  /* yet another coverage test */
+  mpfr_set_prec (x, 2);
+  mpfr_set_prec (y, 3);
+  mpfr_set_prec (z, 1);
+  mpfr_set_ui_2exp (y, 1, mpfr_get_emax (), MPFR_RNDZ);
+  /* y = (1 - 2^(-3))*2^emax */
+  mpfr_set_ui_2exp (z, 1, mpfr_get_emax () - 4, MPFR_RNDZ);
+  /* z = 2^(emax - 4) */
+  /* y - z = (1 - 2^(-3) - 2^(-4))*2^emax > (1-2^(-2))*2^emax */
+  inexact = mpfr_sub (x, y, z, MPFR_RNDU);
+  MPFR_ASSERTN(inexact > 0);
+  MPFR_ASSERTN(mpfr_inf_p (x) && mpfr_sgn (x) > 0);
 
   mpfr_set_prec (x, 288);
   mpfr_set_prec (y, 288);
@@ -264,7 +337,7 @@ check_diverse (void)
 
   mpfr_set_prec (x, 33);
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 32, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 32, MPFR_RNDN);
   mpfr_sub_ui (x, x, 1, MPFR_RNDN);
 
   mpfr_set_prec (x, 5);
@@ -325,7 +398,7 @@ bug_ddefour(void)
     mpfr_init2(tot1, 150);
 
     mpfr_set_ui( ex, 1, MPFR_RNDN);
-    mpfr_mul_2exp( ex, ex, 906, MPFR_RNDN);
+    mpfr_mul_2ui( ex, ex, 906, MPFR_RNDN);
     mpfr_log( tot, ex, MPFR_RNDN);
     mpfr_set( ex1, tot, MPFR_RNDN); /* ex1 = high(tot) */
     test_sub( ex2, tot, ex1, MPFR_RNDN); /* ex2 = high(tot - ex1) */
@@ -408,10 +481,10 @@ check_inexact (void)
 
   mpfr_set_prec (x, 2);
   mpfr_set_ui (x, 6, MPFR_RNDN);
-  mpfr_div_2exp (x, x, 4, MPFR_RNDN); /* x = 6/16 */
+  mpfr_div_2ui (x, x, 4, MPFR_RNDN); /* x = 6/16 */
   mpfr_set_prec (y, 2);
   mpfr_set_si (y, -1, MPFR_RNDN);
-  mpfr_div_2exp (y, y, 4, MPFR_RNDN); /* y = -1/16 */
+  mpfr_div_2ui (y, y, 4, MPFR_RNDN); /* y = -1/16 */
   inexact = test_sub (y, y, x, MPFR_RNDN); /* y = round(-7/16) = -1/2 */
   if (inexact >= 0)
     {
@@ -889,7 +962,7 @@ test_rndf_exact (mp_size_t pmax)
           for (eb = 0; eb <= pmax + 3; eb ++)
             {
               mpfr_urandomb (b, RANDS);
-              mpfr_mul_2exp (b, b, eb, MPFR_RNDN);
+              mpfr_mul_2ui (b, b, eb, MPFR_RNDN);
               for (pc = MPFR_PREC_MIN; pc <= pmax; pc++)
                 {
                   if ((pc + 2) % GMP_NUMB_BITS > 4)
@@ -940,6 +1013,523 @@ test_rndf_exact (mp_size_t pmax)
     }
 }
 
+/* Bug in the case 2 <= d < p in generic code mpfr_sub1sp() introduced
+ * in r12242. Before this change, the special case that is failing was
+ * handled by the MPFR_UNLIKELY(ap[n-1] == MPFR_LIMB_HIGHBIT) in the
+ * "truncate:" code.
+ */
+static void
+bug20180215 (void)
+{
+  mpfr_t x, y, z1, z2;
+  mpfr_rnd_t r[] = { MPFR_RNDN, MPFR_RNDU, MPFR_RNDA };
+  int i, p;
+
+  for (p = 3; p <= 3 + 4 * GMP_NUMB_BITS; p++)
+    {
+      mpfr_inits2 (p, x, y, z1, z2, (mpfr_ptr) 0);
+      mpfr_set_ui_2exp (x, 1, p - 1, MPFR_RNDN);
+      mpfr_nextabove (x);
+      mpfr_set_ui_2exp (y, 3, -1, MPFR_RNDN);
+      mpfr_set (z1, x, MPFR_RNDN);
+      mpfr_nextbelow (z1);
+      mpfr_nextbelow (z1);
+      for (i = 0; i < numberof (r); i++)
+        {
+          test_sub (z2, x, y, r[i]);
+          if (! mpfr_equal_p (z1, z2))
+            {
+              printf ("Error in bug20180215 in precision %d, %s\n",
+                      p, mpfr_print_rnd_mode (r[i]));
+              printf ("expected "); mpfr_dump (z1);
+              printf ("got      "); mpfr_dump (z2);
+              exit (1);
+            }
+        }
+      mpfr_clears (x, y, z1, z2, (mpfr_ptr) 0);
+    }
+}
+
+static void
+bug20180216 (void)
+{
+  mpfr_t x, y, z1, z2;
+  int r, p, d, inex;
+
+  for (p = 3; p <= 3 + 4 * GMP_NUMB_BITS; p++)
+    {
+      mpfr_inits2 (p, x, y, z1, z2, (mpfr_ptr) 0);
+      for (d = 1; d <= p-2; d++)
+        {
+          inex = mpfr_set_ui_2exp (z1, 1, d, MPFR_RNDN);  /* z1 = 2^d */
+          MPFR_ASSERTN (inex == 0);
+          inex = mpfr_add_ui (x, z1, 1, MPFR_RNDN);
+          MPFR_ASSERTN (inex == 0);
+          mpfr_nextabove (x);  /* x = 2^d + 1 + epsilon */
+          inex = mpfr_sub (y, x, z1, MPFR_RNDN);  /* y = 1 + epsilon */
+          MPFR_ASSERTN (inex == 0);
+          inex = mpfr_add (z2, y, z1, MPFR_RNDN);
+          MPFR_ASSERTN (inex == 0);
+          MPFR_ASSERTN (mpfr_equal_p (z2, x));  /* consistency check */
+          RND_LOOP (r)
+            {
+              inex = test_sub (z2, x, y, (mpfr_rnd_t) r);
+              if (! mpfr_equal_p (z1, z2) || inex != 0)
+                {
+                  printf ("Error in bug20180216 with p=%d, d=%d, %s\n",
+                          p, d, mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                  printf ("expected "); mpfr_dump (z1);
+                  printf ("  with inex = 0\n");
+                  printf ("got      "); mpfr_dump (z2);
+                  printf ("  with inex = %d\n", inex);
+                  exit (1);
+                }
+            }
+        }
+      mpfr_clears (x, y, z1, z2, (mpfr_ptr) 0);
+    }
+}
+
+/* Fails with r12281: "reuse of c error in b - c in MPFR_RNDN".
+ *
+ * If the fix in r10697 (2016-07-29) is reverted, this test also fails
+ * (there were no non-regression tests for this bug until this one);
+ * note that if --enable-assert=full is used, the error message is:
+ * "sub1 & sub1sp return different values for MPFR_RNDN".
+ */
+static void
+bug20180217 (void)
+{
+  mpfr_t x, y, z1, z2;
+  int r, p, d, i, inex1, inex2;
+
+  for (p = 3; p <= 3 + 4 * GMP_NUMB_BITS; p++)
+    {
+      mpfr_inits2 (p, x, y, z1, z2, (mpfr_ptr) 0);
+      for (d = p; d <= p+4; d++)
+        {
+          mpfr_set_ui (x, 1, MPFR_RNDN);
+          mpfr_set_ui_2exp (y, 1, -d, MPFR_RNDN);
+          for (i = 0; i < 3; i++)
+            {
+              RND_LOOP_NO_RNDF (r)
+                {
+                  mpfr_set (z1, x, MPFR_RNDN);
+                  if (d == p)
+                    {
+                      mpfr_nextbelow (z1);
+                      if (i == 0)
+                        inex1 = 0;
+                      else if (r == MPFR_RNDD || r == MPFR_RNDZ ||
+                               (r == MPFR_RNDN && i > 1))
+                        {
+                          mpfr_nextbelow (z1);
+                          inex1 = -1;
+                        }
+                      else
+                        inex1 = 1;
+                    }
+                  else if (r == MPFR_RNDD || r == MPFR_RNDZ ||
+                           (r == MPFR_RNDN && d == p+1 && i > 0))
+                    {
+                      mpfr_nextbelow (z1);
+                      inex1 = -1;
+                    }
+                  else
+                    inex1 = 1;
+                  inex2 = test_sub (z2, x, y, (mpfr_rnd_t) r);
+                  if (!(mpfr_equal_p (z1, z2) && SAME_SIGN (inex1, inex2)))
+                    {
+                      printf ("Error in bug20180217 with "
+                              "p=%d, d=%d, i=%d, %s\n", p, d, i,
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                      printf ("x = ");
+                      mpfr_dump (x);
+                      printf ("y = ");
+                      mpfr_dump (y);
+                      printf ("Expected "); mpfr_dump (z1);
+                      printf ("  with inex = %d\n", inex1);
+                      printf ("Got      "); mpfr_dump (z2);
+                      printf ("  with inex = %d\n", inex2);
+                      exit (1);
+                    }
+                }
+              if (i == 0)
+                mpfr_nextabove (y);
+              else
+                {
+                  if (p < 6)
+                    break;
+                  mpfr_nextbelow (y);
+                  mpfr_mul_ui (y, y, 25, MPFR_RNDD);
+                  mpfr_div_2ui (y, y, 4, MPFR_RNDN);
+                }
+            }
+        }
+      mpfr_clears (x, y, z1, z2, (mpfr_ptr) 0);
+    }
+}
+
+/* Tests on UBF.
+ *
+ * Note: mpfr_sub1sp will never be used as it does not support UBF.
+ * Thus there is no need to generate tests for both mpfr_sub1 and
+ * mpfr_sub1sp.
+ *
+ * Note that mpfr_sub1 has a special branch "c small", where the second
+ * argument c is sufficiently smaller than the ulp of the first argument
+ * and the ulp of the result: MAX (aq, bq) + 2 <= diff_exp.
+ * Tests should be done for both the main branch and this special branch
+ * when this makes sense.
+ */
+#define REXP 1024
+
+static void test_ubf_aux (void)
+{
+  mpfr_ubf_t x[11];
+  mpfr_ptr p[11];
+  int ex[11];
+  mpfr_t ee, y, z, w;
+  int i, j, k, neg, inexact, rnd;
+  const int kn = 2;
+  mpfr_exp_t e[] =
+    { MPFR_EXP_MIN, MPFR_EMIN_MIN, -REXP, 0,
+      REXP, MPFR_EMAX_MAX, MPFR_EXP_MAX };
+
+  mpfr_init2 (ee, sizeof (mpfr_exp_t) * CHAR_BIT);
+  mpfr_inits2 (64, y, z, (mpfr_ptr) 0);
+  mpfr_init2 (w, 2);
+
+  for (i = 0; i < 11; i++)
+    p[i] = (mpfr_ptr) x[i];
+
+  /* exact zero result, with small and large exponents */
+  for (i = 0; i < 2; i++)
+    {
+      mpfr_init2 (p[i], 5 + (randlimb () % 128));
+      mpfr_set_ui (p[i], 17, MPFR_RNDN);
+      mpz_init (MPFR_ZEXP (p[i]));
+      MPFR_SET_UBF (p[i]);
+    }
+  for (j = 0; j < numberof (e); j++)
+    {
+      inexact = mpfr_set_exp_t (ee, e[j], MPFR_RNDN);
+      MPFR_ASSERTN (inexact == 0);
+      inexact = mpfr_get_z (MPFR_ZEXP (p[0]), ee, MPFR_RNDN);
+      MPFR_ASSERTN (inexact == 0);
+      mpz_sub_ui (MPFR_ZEXP (p[0]), MPFR_ZEXP (p[0]), kn);
+
+      for (k = -kn; k <= kn; k++)
+        {
+          /* exponent: e[j] + k, with |k| <= kn */
+          mpz_set (MPFR_ZEXP (p[1]), MPFR_ZEXP (p[0]));
+
+          for (neg = 0; neg <= 1; neg++)
+            {
+              RND_LOOP (rnd)
+                {
+                  /* Note: x[0] and x[1] are equal MPFR numbers, but do not
+                     test mpfr_sub with arg2 == arg3 as pointers in order to
+                     skip potentially optimized mpfr_sub code. */
+                  inexact = mpfr_sub (z, p[0], p[1], (mpfr_rnd_t) rnd);
+                  if (inexact != 0 || MPFR_NOTZERO (z) ||
+                      (rnd != MPFR_RNDD ? MPFR_IS_NEG (z) : MPFR_IS_POS (z)))
+                    {
+                      printf ("Error 1 in test_ubf for exact zero result: "
+                              "j=%d k=%d neg=%d, rnd=%s\nGot ", j, k, neg,
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                      mpfr_dump (z);
+                      printf ("inexact = %d\n", inexact);
+                      exit (1);
+                    }
+                }
+
+              for (i = 0; i < 2; i++)
+                MPFR_CHANGE_SIGN (p[i]);
+            }
+
+          mpz_add_ui (MPFR_ZEXP (p[0]), MPFR_ZEXP (p[0]), 1);
+        }
+    }
+  for (i = 0; i < 2; i++)
+    {
+      MPFR_UBF_CLEAR_EXP (p[i]);
+      mpfr_clear (p[i]);
+    }
+
+  /* Up to a given exponent (for the result) and sign, test:
+   *   (t + .11010) - (t + .00001) = .11001
+   *   (t + 8) - (t + 111.00111)   = .11001
+   * where t = 0 or a power of 2, e.g. 2^200. Test various exponents
+   * (including those near the underflow/overflow boundaries) so that
+   * the subtraction yields a normal number, an overflow or an underflow.
+   * In MPFR_RNDA, also test with a 2-bit precision target, as this
+   * yields an exponent change.
+   *
+   * Also test the "MAX (aq, bq) + 2 <= diff_exp" branch of sub1.c with
+   * .1 - epsilon (possible decrease of the exponent) and .111 - epsilon
+   * in precision 2 (possible increase of the exponent). The first test
+   * triggers a possible decrease of the exponent (see bug fixed in r13806).
+   * The second test triggers a possible increase of the exponent (see the
+   * "exp_a != MPFR_EXP_MAX" test to avoid an integer overflow).
+   */
+  for (i = 0; i < 8; i++)
+    {
+      static int v[4] = { 26, 1, 256, 231 };
+
+      mpfr_init2 (p[i], i < 4 ? 8 + (randlimb () % 128) : 256);
+      if (i < 4)
+        {
+          inexact = mpfr_set_si_2exp (p[i], v[i], -5, MPFR_RNDN);
+          MPFR_ASSERTN (inexact == 0);
+        }
+      else
+        {
+          inexact = mpfr_set_si_2exp (p[i], 1, 200, MPFR_RNDN);
+          MPFR_ASSERTN (inexact == 0);
+          inexact = mpfr_add (p[i], p[i], p[i-4], MPFR_RNDN);
+          MPFR_ASSERTN (inexact == 0);
+        }
+      ex[i] = mpfr_get_exp (p[i]) + 5;
+      MPFR_ASSERTN (ex[i] >= 0);
+    }
+  mpfr_inits2 (3, p[8], p[9], p[10], (mpfr_ptr) 0);
+  inexact = mpfr_set_si_2exp (p[8], 1, 0, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  ex[8] = 5;
+  inexact = mpfr_set_si_2exp (p[9], 1, 0, MPFR_RNDN);  /* will be epsilon */
+  MPFR_ASSERTN (inexact == 0);
+  ex[9] = 0;
+  inexact = mpfr_set_si_2exp (p[10], 7, 0, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  ex[10] = 5;
+
+  for (i = 0; i < 11; i++)
+    {
+      mpz_init (MPFR_ZEXP (p[i]));
+      MPFR_SET_UBF (p[i]);
+    }
+
+  for (j = 0; j < numberof (e); j++)
+    {
+      inexact = mpfr_set_exp_t (ee, e[j], MPFR_RNDN);
+      MPFR_ASSERTN (inexact == 0);
+      inexact = mpfr_get_z (MPFR_ZEXP (p[0]), ee, MPFR_RNDN);
+      MPFR_ASSERTN (inexact == 0);
+      for (i = 1; i < 11; i++)
+        mpz_set (MPFR_ZEXP (p[i]), MPFR_ZEXP (p[0]));
+      for (i = 0; i < 11; i++)
+        {
+          mpz_add_ui (MPFR_ZEXP (p[i]), MPFR_ZEXP (p[i]), ex[i]);
+          mpz_sub_ui (MPFR_ZEXP (p[i]), MPFR_ZEXP (p[i]), 5 + kn);
+        }
+      mpz_sub_ui (MPFR_ZEXP (p[9]), MPFR_ZEXP (p[9]), 256);
+      for (k = -kn; k <= kn; k++)
+        {
+          for (neg = 0; neg <= 1; neg++)
+            {
+              int sign = neg ? -1 : 1;
+
+              RND_LOOP (rnd)
+                for (i = 0; i <= 10; i += 2)
+                  {
+                    mpfr_exp_t e0;
+                    mpfr_flags_t flags, flags_y;
+                    int inex_y;
+
+                    if (i >= 8)
+                      {
+                        int d;
+
+                        e0 = MPFR_UBF_GET_EXP (p[i]);
+                        if (e0 < MPFR_EXP_MIN + 3)
+                          e0 += 3;
+
+                        if (rnd == MPFR_RNDN)
+                          d = i == 8 ? (e0 == __gmpfr_emin - 1 ? 3 : 4) : 6;
+                        else if (MPFR_IS_LIKE_RNDZ (rnd, neg))
+                          d = i == 8 ? 3 : 6;
+                        else
+                          d = i == 8 ? 4 : 8;
+
+                        mpfr_clear_flags ();
+                        inex_y = mpfr_set_si_2exp (w, sign * d, e0 - 3,
+                                                   (mpfr_rnd_t) rnd);
+                        flags_y = __gmpfr_flags | MPFR_FLAGS_INEXACT;
+                        if (inex_y == 0)
+                          inex_y = rnd == MPFR_RNDN ?
+                            sign * (i == 8 ? 1 : -1) :
+                            MPFR_IS_LIKE_RNDD ((mpfr_rnd_t) rnd, sign) ?
+                            -1 : 1;
+                        mpfr_set (y, w, MPFR_RNDN);
+
+                        mpfr_clear_flags ();
+                        inexact = mpfr_sub (w, p[i], p[9], (mpfr_rnd_t) rnd);
+                        flags = __gmpfr_flags;
+
+                        /* For MPFR_RNDF, only do a basic test. */
+                        MPFR_ASSERTN (mpfr_check (w));
+                        if (rnd == MPFR_RNDF)
+                          continue;
+
+                        goto testw;
+                      }
+
+                    mpfr_clear_flags ();
+                    inexact = mpfr_sub (z, p[i], p[i+1], (mpfr_rnd_t) rnd);
+                    flags = __gmpfr_flags;
+
+                    /* For MPFR_RNDF, only do a basic test. */
+                    MPFR_ASSERTN (mpfr_check (z));
+                    if (rnd == MPFR_RNDF)
+                      continue;
+
+                    e0 = MPFR_UBF_GET_EXP (p[0]);
+
+                    if (e0 < __gmpfr_emin)
+                      {
+                        mpfr_rnd_t r =
+                          rnd == MPFR_RNDN && e0 < __gmpfr_emin - 1 ?
+                          MPFR_RNDZ : (mpfr_rnd_t) rnd;
+                        flags_y = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
+                        inex_y = mpfr_underflow (y, r, sign);
+                      }
+                    else if (e0 > __gmpfr_emax)
+                      {
+                        flags_y = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT;
+                        inex_y = mpfr_overflow (y, (mpfr_rnd_t) rnd, sign);
+                      }
+                    else
+                      {
+                        mpfr_set_si_2exp (y, sign * 25, e0 - 5, MPFR_RNDN);
+                        flags_y = 0;
+                        inex_y = 0;
+                      }
+
+                    if (flags != flags_y ||
+                        ! SAME_SIGN (inexact, inex_y) ||
+                        ! mpfr_equal_p (y, z))
+                      {
+                        printf ("Error 2 in test_ubf with "
+                                "j=%d k=%d neg=%d i=%d rnd=%s\n",
+                                j, k, neg, i,
+                                mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                        printf ("emin=%" MPFR_EXP_FSPEC "d "
+                                "emax=%" MPFR_EXP_FSPEC "d\n",
+                                (mpfr_eexp_t) __gmpfr_emin,
+                                (mpfr_eexp_t) __gmpfr_emax);
+                        printf ("b = ");
+                        mpfr_dump (p[i]);
+                        printf ("c = ");
+                        mpfr_dump (p[i+1]);
+                        printf ("Expected ");
+                        mpfr_dump (y);
+                        printf ("with inex = %d and flags =", inex_y);
+                        flags_out (flags_y);
+                        printf ("Got      ");
+                        mpfr_dump (z);
+                        printf ("with inex = %d and flags =", inexact);
+                        flags_out (flags);
+                        exit (1);
+                      }
+
+                    /* Do the following 2-bit precision test only in RNDA. */
+                    if (rnd != MPFR_RNDA)
+                      continue;
+
+                    mpfr_clear_flags ();
+                    inexact = mpfr_sub (w, p[i], p[i+1], MPFR_RNDA);
+                    flags = __gmpfr_flags;
+                    if (e0 < MPFR_EXP_MAX)
+                      e0++;
+
+                    if (e0 < __gmpfr_emin)
+                      {
+                        flags_y = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
+                        inex_y = mpfr_underflow (y, MPFR_RNDA, sign);
+                      }
+                    else if (e0 > __gmpfr_emax)
+                      {
+                        flags_y = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT;
+                        inex_y = mpfr_overflow (y, MPFR_RNDA, sign);
+                      }
+                    else
+                      {
+                        mpfr_set_si_2exp (y, sign, e0 - 1, MPFR_RNDN);
+                        flags_y = MPFR_FLAGS_INEXACT;
+                        inex_y = sign;
+                      }
+
+                  testw:
+                    if (flags != flags_y ||
+                        ! SAME_SIGN (inexact, inex_y) ||
+                        ! mpfr_equal_p (y, w))
+                      {
+                        printf ("Error 3 in test_ubf with "
+                                "j=%d k=%d neg=%d i=%d rnd=%s\n",
+                                j, k, neg, i,
+                                mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                        printf ("emin=%" MPFR_EXP_FSPEC "d "
+                                "emax=%" MPFR_EXP_FSPEC "d\n",
+                                (mpfr_eexp_t) __gmpfr_emin,
+                                (mpfr_eexp_t) __gmpfr_emax);
+                        printf ("b = ");
+                        mpfr_dump (p[i]);
+                        printf ("c = ");
+                        mpfr_dump (p[i <= 8 ? i+1 : 9]);
+                        printf ("Expected ");
+                        /* Set y to a 2-bit precision just for the output.
+                           Since we exit, this will have no other effect. */
+                        mpfr_prec_round (y, 2, MPFR_RNDA);
+                        mpfr_dump (y);
+                        printf ("with inex = %d and flags =", inex_y);
+                        flags_out (flags_y);
+                        printf ("Got      ");
+                        mpfr_dump (w);
+                        printf ("with inex = %d and flags =", inexact);
+                        flags_out (flags);
+                        exit (1);
+                      }
+                  }
+
+              for (i = 0; i < 11; i++)
+                MPFR_CHANGE_SIGN (p[i]);
+            }
+
+          for (i = 0; i < 11; i++)
+            mpz_add_ui (MPFR_ZEXP (p[i]), MPFR_ZEXP (p[i]), 1);
+        }
+    }
+  for (i = 0; i < 11; i++)
+    {
+      MPFR_UBF_CLEAR_EXP (p[i]);
+      mpfr_clear (p[i]);
+    }
+
+  mpfr_clears (ee, y, z, w, (mpfr_ptr) 0);
+}
+
+/* Run the tests on UBF with the maximum exponent range and with a
+   reduced exponent range. */
+static void test_ubf (void)
+{
+  mpfr_exp_t emin, emax;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
+  test_ubf_aux ();
+
+  set_emin (-REXP);
+  set_emax (REXP);
+  test_ubf_aux ();
+
+  set_emin (emin);
+  set_emax (emax);
+}
+
 #define TEST_FUNCTION test_sub
 #define TWO_ARGS
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), randlimb () % 100, RANDS)
@@ -962,10 +1552,14 @@ main (void)
   check_inexact ();
   check_max_almosteven ();
   bug_ddefour ();
+  bug20180215 ();
+  bug20180216 ();
+  bug20180217 ();
   for (p=2; p<200; p++)
     for (i=0; i<50; i++)
       check_two_sum (p);
   test_generic (MPFR_PREC_MIN, 800, 100);
+  test_ubf ();
 
   tests_end_mpfr ();
   return 0;

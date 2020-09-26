@@ -1,7 +1,7 @@
 /* mpfr_y0, mpfr_y1, mpfr_yn -- Bessel functions of 2nd kind, integer order.
    http://www.opengroup.org/onlinepubs/009695399/functions/y0.html
 
-Copyright 2007-2018 Free Software Foundation, Inc.
+Copyright 2007-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -228,29 +228,29 @@ mpfr_yn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       /* first enclose log(z) + euler - log(2) = log(z/2) + euler */
       mpfr_log (logz, z, MPFR_RNDD);    /* lower bound of log(z) */
       mpfr_set (h, logz, MPFR_RNDU);    /* exact */
-      mpfr_nextabove (h);              /* upper bound of log(z) */
+      mpfr_nextabove (h);               /* upper bound of log(z) */
       mpfr_const_euler (t, MPFR_RNDD);  /* lower bound of euler */
       mpfr_add (l, logz, t, MPFR_RNDD); /* lower bound of log(z) + euler */
-      mpfr_nextabove (t);              /* upper bound of euler */
+      mpfr_nextabove (t);               /* upper bound of euler */
       mpfr_add (h, h, t, MPFR_RNDU);    /* upper bound of log(z) + euler */
       mpfr_const_log2 (t, MPFR_RNDU);   /* upper bound of log(2) */
       mpfr_sub (l, l, t, MPFR_RNDD);    /* lower bound of log(z/2) + euler */
-      mpfr_nextbelow (t);              /* lower bound of log(2) */
+      mpfr_nextbelow (t);               /* lower bound of log(2) */
       mpfr_sub (h, h, t, MPFR_RNDU);    /* upper bound of log(z/2) + euler */
       mpfr_const_pi (t, MPFR_RNDU);     /* upper bound of Pi */
       mpfr_div (l, l, t, MPFR_RNDD);    /* lower bound of (log(z/2)+euler)/Pi */
-      mpfr_nextbelow (t);              /* lower bound of Pi */
+      mpfr_nextbelow (t);               /* lower bound of Pi */
       mpfr_div (h, h, t, MPFR_RNDD);    /* upper bound of (log(z/2)+euler)/Pi */
       mpfr_mul_2ui (l, l, 1, MPFR_RNDD); /* lower bound on g(z)*log(z) */
       mpfr_mul_2ui (h, h, 1, MPFR_RNDU); /* upper bound on g(z)*log(z) */
       /* we now have l <= g(z)*log(z) <= h, and we need to add -z^2/2*log(z)
          to h */
-      mpfr_mul (t, z, z, MPFR_RNDU);     /* upper bound on z^2 */
+      mpfr_sqr (t, z, MPFR_RNDU);        /* upper bound on z^2 */
       /* since logz is negative, a lower bound corresponds to an upper bound
          for its absolute value */
       mpfr_neg (t, t, MPFR_RNDD);
       mpfr_div_2ui (t, t, 1, MPFR_RNDD);
-      mpfr_mul (t, t, logz, MPFR_RNDU); /* upper bound on z^2/2*log(z) */
+      mpfr_mul (t, t, logz, MPFR_RNDU);  /* upper bound on z^2/2*log(z) */
       mpfr_add (h, h, t, MPFR_RNDU);
       inex = mpfr_prec_round (l, MPFR_PREC(res), r);
       inex2 = mpfr_prec_round (h, MPFR_PREC(res), r);
@@ -338,7 +338,7 @@ mpfr_yn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
         mpfr_set_prec (s2, prec);
         mpfr_set_prec (s3, prec);
 
-        mpfr_mul (y, z, z, MPFR_RNDN);
+        mpfr_sqr (y, z, MPFR_RNDN);
         mpfr_div_2ui (y, y, 2, MPFR_RNDN); /* z^2/4 */
 
         /* store (z/2)^n temporarily in s2 */
