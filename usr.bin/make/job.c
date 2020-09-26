@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.240 2020/09/26 16:55:58 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.241 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.240 2020/09/26 16:55:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.241 2020/09/26 17:15:20 rillig Exp $");
 
 # define STATIC static
 
@@ -689,7 +689,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
 	    StringListNode *dotsNode = Lst_FindDatum(job->node->commands, cmd);
-	    job->tailCmds = dotsNode != NULL ? LstNode_Next(dotsNode) : NULL;
+	    job->tailCmds = dotsNode != NULL ? dotsNode->next : NULL;
 	    return 1;
 	}
 	return 0;
@@ -884,8 +884,8 @@ JobSaveCommands(Job *job)
 {
     StringListNode *node;
 
-    for (node = job->tailCmds; node != NULL; node = LstNode_Next(node)) {
-	char *cmd = LstNode_Datum(node);
+    for (node = job->tailCmds; node != NULL; node = node->next) {
+	const char *cmd = node->datum;
 	char *expanded_cmd;
 	/* XXX: This Var_Subst is only intended to expand the dynamic
 	 * variables such as .TARGET, .IMPSRC.  It is not intended to

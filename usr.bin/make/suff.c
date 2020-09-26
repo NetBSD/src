@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.168 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.169 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.168 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.169 2020/09/26 17:15:20 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -487,8 +487,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 	if (srcLn == NULL) {
 	    srcLn = Lst_Find(sufflist, SuffSuffIsPrefix, str);
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, LstNode_Next(srcLn),
-				  SuffSuffIsPrefix, str);
+	    srcLn = Lst_FindFrom(sufflist, srcLn->next, SuffSuffIsPrefix, str);
 	}
 	if (srcLn == NULL) {
 	    /*
@@ -1332,7 +1331,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 	    Lst_Append(gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
-	    SuffExpandWildcards(LstNode_Prev(cln), pgn);
+	    SuffExpandWildcards(cln->prev, pgn);
 	}
 	Lst_Free(members);
 
@@ -1503,8 +1502,8 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Deal with wildcards and variables in any acquired sources
      */
-    for (ln = ln != NULL ? LstNode_Next(ln) : NULL; ln != NULL; ln = nln) {
-	nln = LstNode_Next(ln);
+    for (ln = ln != NULL ? ln->next : NULL; ln != NULL; ln = nln) {
+	nln = ln->next;
 	SuffExpandChildren(ln, tGn);
     }
 
@@ -1609,7 +1608,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * that still contain variables or wildcards in their names.
      */
     for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
-	nln = LstNode_Next(ln);
+	nln = ln->next;
 	SuffExpandChildren(ln, gn);
     }
 
@@ -1763,7 +1762,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 		/*
 		 * Search from this suffix's successor...
 		 */
-		ln = LstNode_Next(ln);
+		ln = ln->next;
 	    }
 	}
 
@@ -1839,7 +1838,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
      * that still contain variables or wildcards in their names.
      */
     for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
-	nln = LstNode_Next(ln);
+	nln = ln->next;
 	SuffExpandChildren(ln, gn);
     }
 

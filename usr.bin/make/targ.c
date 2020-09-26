@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.100 2020/09/26 17:02:11 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.101 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.100 2020/09/26 17:02:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.101 2020/09/26 17:15:20 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -344,8 +344,8 @@ PrintNodeNames(GNodeList *gnodes)
 {
     GNodeListNode *node;
 
-    for (node = Lst_First(gnodes); node != NULL; node = LstNode_Next(node)) {
-	GNode *gn = LstNode_Datum(node);
+    for (node = gnodes->first; node != NULL; node = node->next) {
+	GNode *gn = node->datum;
 	fprintf(debug_file, " %s%s", gn->name, gn->cohort_num);
     }
 }
@@ -363,8 +363,8 @@ PrintNodeNamesLine(const char *label, GNodeList *gnodes)
 void
 Targ_PrintCmds(GNode *gn)
 {
-    StringListNode *node = Lst_First(gn->commands);
-    for (; node != NULL; node = LstNode_Next(node)) {
+    StringListNode *node = gn->commands->first;
+    for (; node != NULL; node = node->next) {
 	const char *cmd = LstNode_Datum(node);
 	fprintf(debug_file, "\t%s\n", cmd);
     }
@@ -562,14 +562,14 @@ Targ_Propagate(void)
 {
     GNodeListNode *pn, *cn;
 
-    for (pn = Lst_First(allTargets); pn != NULL; pn = LstNode_Next(pn)) {
-	GNode *pgn = LstNode_Datum(pn);
+    for (pn = allTargets->first; pn != NULL; pn = pn->next) {
+	GNode *pgn = pn->datum;
 
 	if (!(pgn->type & OP_DOUBLEDEP))
 	    continue;
 
-	for (cn = Lst_First(pgn->cohorts); cn != NULL; cn = LstNode_Next(cn)) {
-	    GNode *cgn = LstNode_Datum(cn);
+	for (cn = pgn->cohorts->first; cn != NULL; cn = cn->next) {
+	    GNode *cgn = cn->datum;
 
 	    cgn->type |= pgn->type & ~OP_OPMASK;
 	}

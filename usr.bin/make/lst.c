@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.71 2020/09/25 04:18:11 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.72 2020/09/26 17:15:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.71 2020/09/25 04:18:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.72 2020/09/26 17:15:20 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -290,8 +290,7 @@ Lst_Find(List *list, LstFindProc match, const void *matchArgs)
 /* Return the first node from the list, starting at the given node, for which
  * the match function returns TRUE, or NULL if none of the nodes matches.
  *
- * The start node may be NULL, in which case nothing is found. This allows
- * for passing Lst_First or LstNode_Next as the start node. */
+ * The start node may be NULL, in which case nothing is found. */
 ListNode *
 Lst_FindFrom(List *list, ListNode *node, LstFindProc match, const void *matchArgs)
 {

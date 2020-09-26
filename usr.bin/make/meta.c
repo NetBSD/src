@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.119 2020/09/24 07:53:32 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.120 2020/09/26 17:15:20 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1331,7 +1331,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    do {
 				char *tp;
 				nln = Lst_FindFrom(missingFiles,
-						   LstNode_Next(missingNode),
+						   missingNode->next,
 						   path_match, p);
 				tp = LstNode_Datum(missingNode);
 				Lst_Remove(missingFiles, missingNode);
@@ -1565,7 +1565,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    oodate = TRUE;
 		    }
 		    free(cmd);
-		    cmdNode = LstNode_Next(cmdNode);
+		    cmdNode = cmdNode->next;
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
 		/*

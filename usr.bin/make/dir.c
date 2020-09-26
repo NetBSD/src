@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.147 2020/09/25 06:49:13 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.148 2020/09/26 17:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.147 2020/09/25 06:49:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.148 2020/09/26 17:15:20 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -1705,10 +1705,9 @@ void
 Dir_Concat(SearchPath *path1, SearchPath *path2)
 {
     SearchPathNode *ln;
-    CachedDir *dir;
 
-    for (ln = Lst_First(path2); ln != NULL; ln = LstNode_Next(ln)) {
-	dir = LstNode_Datum(ln);
+    for (ln = path2->first; ln != NULL; ln = ln->next) {
+	CachedDir *dir = ln->datum;
 	if (Lst_FindDatum(path1, dir) == NULL) {
 	    dir->refCount += 1;
 	    Lst_Append(path1, dir);
@@ -1746,8 +1745,8 @@ void
 Dir_PrintPath(SearchPath *path)
 {
     SearchPathNode *node;
-    for (node = Lst_First(path); node != NULL; node = LstNode_Next(node)) {
-	const CachedDir *dir = LstNode_Datum(node);
+    for (node = path->first; node != NULL; node = node->next) {
+	const CachedDir *dir = node->datum;
 	fprintf(debug_file, "%s ", dir->name);
     }
 }
