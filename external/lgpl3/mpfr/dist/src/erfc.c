@@ -1,6 +1,6 @@
 /* mpfr_erfc -- The Complementary Error Function of a floating-point number
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -43,7 +43,7 @@ mpfr_erfc_asympt (mpfr_ptr y, mpfr_srcptr x)
   mpfr_init2 (err, 31);
   /* let u = 2^(1-p), and let us represent the error as (1+u)^err
      with a bound for err */
-  mpfr_mul (xx, x, x, MPFR_RNDD); /* err <= 1 */
+  mpfr_sqr (xx, x, MPFR_RNDD); /* err <= 1 */
   mpfr_ui_div (xx, 1, xx, MPFR_RNDU); /* upper bound for 1/(2x^2), err <= 2 */
   mpfr_div_2ui (xx, xx, 1, MPFR_RNDU); /* exact */
   mpfr_set_ui (t, 1, MPFR_RNDN); /* current term, exact */
@@ -72,7 +72,7 @@ mpfr_erfc_asympt (mpfr_ptr y, mpfr_srcptr x)
         mpfr_add (y, y, t, MPFR_RNDN);
     }
   /* the error on y is bounded by err*ulp(y) */
-  mpfr_mul (t, x, x, MPFR_RNDU); /* rel. err <= 2^(1-p) */
+  mpfr_sqr (t, x, MPFR_RNDU);             /* rel. err <= 2^(1-p) */
   mpfr_div_2ui (err, err, 3, MPFR_RNDU);  /* err/8 */
   mpfr_add (err, err, t, MPFR_RNDU);      /* err/8 + xx */
   mpfr_mul_2ui (err, err, 3, MPFR_RNDU);  /* err + 8*xx */
@@ -97,7 +97,7 @@ mpfr_erfc_asympt (mpfr_ptr y, mpfr_srcptr x)
          using the fact that erfc(x) <= exp(-x^2)/sqrt(Pi)/x for x >= 0.
          We compute an upper approximation of exp(-x^2)/sqrt(Pi)/x.
       */
-      mpfr_mul (t, x, x, MPFR_RNDD); /* t <= x^2 */
+      mpfr_sqr (t, x, MPFR_RNDD);    /* t <= x^2 */
       mpfr_neg (t, t, MPFR_RNDU);    /* -x^2 <= t */
       mpfr_exp (t, t, MPFR_RNDU);    /* exp(-x^2) <= t */
       mpfr_const_pi (xx, MPFR_RNDD); /* xx <= sqrt(Pi), cached */

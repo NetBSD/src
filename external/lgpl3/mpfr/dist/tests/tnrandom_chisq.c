@@ -1,6 +1,6 @@
 /* Chi-squared test for mpfr_nrandom
 
-Copyright 2011-2018 Free Software Foundation, Inc.
+Copyright 2011-2020 Free Software Foundation, Inc.
 Contributed by Charles Karney <charles@karney.com>, SRI International.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -163,7 +163,7 @@ test_nrandom_chisq_cont (long num, mpfr_prec_t prec, int nu,
 }
 
 /* Return a sequential number for a positive low-precision x.  x is altered by
- * this fuction.  low precision means prec = 2, 3, or 4.  High values of
+ * this function.  low precision means prec = 2, 3, or 4.  High values of
  * precision will result in integer overflow. */
 static long
 sequential (mpfr_t x)

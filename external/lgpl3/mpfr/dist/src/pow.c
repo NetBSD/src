@@ -1,6 +1,6 @@
 /* mpfr_pow -- power function x^y
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,11 +17,15 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
+
+#ifndef MPFR_POW_EXP_THRESHOLD
+# define MPFR_POW_EXP_THRESHOLD (MAX (sizeof(mpfr_exp_t) * CHAR_BIT, 256))
+#endif
 
 /* return non zero iff x^y is exact.
    Assumes x and y are ordinary numbers,
@@ -34,8 +38,7 @@ mpfr_pow_is_exact (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
                    mpfr_rnd_t rnd_mode, int *inexact)
 {
   mpz_t a, c;
-  mpfr_exp_t d, b;
-  unsigned long i;
+  mpfr_exp_t d, b, i;
   int res;
 
   MPFR_ASSERTD (!MPFR_IS_SINGULAR (y));
@@ -48,7 +51,9 @@ mpfr_pow_is_exact (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   if (MPFR_IS_NEG (y))
     return 0; /* x is not a power of two => x^-y is not exact */
 
-  /* compute d such that y = c*2^d with c odd integer */
+  /* Compute d such that y = c*2^d with c odd integer.
+     Since c comes from a regular MPFR number, due to the constraints on the
+     exponent and the precision, there can be no integer overflow below. */
   mpz_init (c);
   d = mpfr_get_z_2exp (c, y);
   i = mpz_scan1 (c, 0);
@@ -58,7 +63,9 @@ mpfr_pow_is_exact (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   /* Since y is not an integer, d is necessarily < 0 */
   MPFR_ASSERTD (d < 0);
 
-  /* Compute a,b such that x=a*2^b */
+  /* Compute a,b such that x=a*2^b.
+     Since a comes from a regular MPFR number, due to the constrainst on the
+     exponent and the precision, there can be no integer overflow below. */
   mpz_init (a);
   b = mpfr_get_z_2exp (a, x);
   i = mpz_scan1 (a, 0);
@@ -109,7 +116,8 @@ mpfr_pow_is_exact (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
 
 /* Assumes that the exponent range has already been extended and if y is
    an integer, then the result is not exact in unbounded exponent range.
-   If x < 0, assumes y is an integer.
+   If y_is_integer is non-zero, y is an integer (always when x < 0).
+   expo is the saved exponent range and flags (at the call to mpfr_pow).
 */
 int
 mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
@@ -125,7 +133,6 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   mpfr_prec_t Nt;                              /* working precision */
   mpfr_exp_t err;                              /* error */
   MPFR_ZIV_DECL (ziv_loop);
-
 
   MPFR_LOG_FUNC
     (("x[%Pu]=%.*Rg y[%Pu]=%.*Rg rnd=%d",
@@ -321,30 +328,13 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
        */
       if (rnd_mode == MPFR_RNDN && inexact < 0 && lk < 0 &&
           MPFR_GET_EXP (z) == __gmpfr_emin - 1 - lk && mpfr_powerof2_raw (z))
-        {
-          /* Rounding to nearest, real result > z * 2^k = 2^(emin - 2),
-           * underflow case:
-           * (a) if the precision of z is > 1, we will obtain the correct
-           *     result and exceptions by replacing z by nextabove(z).
-           * (b) if the precision of z is 1, we first copy z to zcopy of
-           *     precision 2 bits and perform nextabove(zcopy).
-           */
-          if (MPFR_PREC(z) >= 2)
-            mpfr_nextabove (z);
-          else
-            {
-              mpfr_t zcopy;
-              mpfr_init2 (zcopy, MPFR_PREC(z) + 1);
-              mpfr_set (zcopy, z, MPFR_RNDZ);
-              mpfr_nextabove (zcopy);
-              inex2 = mpfr_mul_2si (z, zcopy, lk, rnd_mode);
-              mpfr_clear (zcopy);
-              goto under_over;
-            }
-        }
+        /* Rounding to nearest, real result > z * 2^k = 2^(emin - 2),
+         * underflow case: we will obtain the correct result and exceptions
+         *  by replacing z by nextabove(z).
+         */
+        mpfr_nextabove (z);
       MPFR_CLEAR_FLAGS ();
       inex2 = mpfr_mul_2si (z, z, lk, rnd_mode);
-    under_over:
       if (inex2)  /* underflow or overflow */
         {
           inexact = inex2;
@@ -537,25 +527,19 @@ mpfr_pow (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
 
   if (cmp_x_1 * MPFR_SIGN (y) > 0)
     {
-      mpfr_t t;
+      mpfr_t t, x_abs;
       int negative, overflow;
 
+      /* FIXME: since we round y*log2|x| toward zero, we could also do early
+         underflow detection */
       MPFR_SAVE_EXPO_MARK (expo);
-      mpfr_init2 (t, 53);
-      /* we want a lower bound on y*log2|x|:
-         (i) if x > 0, it suffices to round log2(x) toward zero, and
-             to round y*o(log2(x)) toward zero too;
-         (ii) if x < 0, we first compute t = o(-x), with rounding toward 1,
-              and then follow as in case (1). */
-      if (MPFR_IS_POS (x))
-        mpfr_log2 (t, x, MPFR_RNDZ);
-      else
-        {
-          mpfr_neg (t, x, (cmp_x_1 > 0) ? MPFR_RNDZ : MPFR_RNDU);
-          mpfr_log2 (t, t, MPFR_RNDZ);
-        }
+      mpfr_init2 (t, sizeof (mpfr_exp_t) * CHAR_BIT);
+      /* we want a lower bound on y*log2|x| */
+      MPFR_TMP_INIT_ABS (x_abs, x);
+      mpfr_log2 (t, x_abs, MPFR_RNDZ);
       mpfr_mul (t, t, y, MPFR_RNDZ);
-      overflow = mpfr_cmp_si (t, __gmpfr_emax) > 0;
+      overflow = mpfr_cmp_si (t, __gmpfr_emax) >= 0;
+      /* if t >= emax, then |z| >= 2^t >= 2^emax and we have overflow */
       mpfr_clear (t);
       MPFR_SAVE_EXPO_FREE (expo);
       if (overflow)
@@ -617,8 +601,9 @@ mpfr_pow (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
      MBs may be necessary). Note that in such a case, either x = +/-2^b
      (this case is handled below) or x^y cannot be represented exactly in
      any precision supported by MPFR (the general case uses this property).
-  */
-  if (y_is_integer && (MPFR_GET_EXP (y) <= 256))
+     Note: the threshold of 256 should not be decreased too much, see the
+     comments about (-2^b)^y just below. */
+  if (y_is_integer && MPFR_GET_EXP (y) <= MPFR_POW_EXP_THRESHOLD)
     {
       mpz_t zi;
 
@@ -633,37 +618,49 @@ mpfr_pow (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
   /* Special case (+/-2^b)^Y which could be exact. If x is negative, then
      necessarily y is a large integer. */
   if (mpfr_powerof2_raw (x))
-  {
-    mpfr_exp_t b = MPFR_GET_EXP (x) - 1;
-    mpfr_t tmp;
-    int sgnx = MPFR_SIGN (x);
+    {
+      mpfr_exp_t b = MPFR_GET_EXP (x) - 1;
+      mpfr_t tmp;
 
-    MPFR_ASSERTN (b >= LONG_MIN && b <= LONG_MAX);  /* FIXME... */
+      MPFR_STAT_STATIC_ASSERT (MPFR_POW_EXP_THRESHOLD >=
+                               sizeof(mpfr_exp_t) * CHAR_BIT);
 
-    MPFR_LOG_MSG (("special case (+/-2^b)^Y\n", 0));
-    /* now x = +/-2^b, so x^y = (+/-1)^y*2^(b*y) is exact whenever b*y is
-       an integer */
-    MPFR_SAVE_EXPO_MARK (expo);
-    mpfr_init2 (tmp, MPFR_PREC (y) + sizeof (long) * CHAR_BIT);
-    inexact = mpfr_mul_si (tmp, y, b, MPFR_RNDN); /* exact */
-    MPFR_ASSERTN (inexact == 0);
-    /* Note: as the exponent range has been extended, an overflow is not
-       possible (due to basic overflow and underflow checking above, as
-       the result is ~ 2^tmp), and an underflow is not possible either
-       because b is an integer (thus either 0 or >= 1). */
-    MPFR_CLEAR_FLAGS ();
-    inexact = mpfr_exp2 (z, tmp, rnd_mode);
-    mpfr_clear (tmp);
-    if (sgnx < 0 && mpfr_odd_p (y))
-      {
-        mpfr_neg (z, z, rnd_mode);
-        inexact = -inexact;
-      }
-    /* Without the following, the overflows3 test in tpow.c fails. */
-    MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
-    MPFR_SAVE_EXPO_FREE (expo);
-    return mpfr_check_range (z, inexact, rnd_mode);
-  }
+      /* For x < 0, we have EXP(y) > MPFR_POW_EXP_THRESHOLD, thus
+         EXP(y) > bitsize of mpfr_exp_t (1). Therefore, since |x| <> 1:
+         (a) either |x| >= 2, and we have an overflow due to (1), but
+             this was detected by the early overflow detection above,
+             i.e. this case is not possible;
+         (b) either |x| <= 1/2, and we have underflow. */
+      if (MPFR_SIGN (x) < 0)
+        {
+          MPFR_ASSERTD (MPFR_EXP (x) <= 0);
+          MPFR_ASSERTD (MPFR_EXP (y) > sizeof(mpfr_exp_t) * CHAR_BIT);
+          return mpfr_underflow (z,
+                                 rnd_mode == MPFR_RNDN ? MPFR_RNDZ : rnd_mode,
+                                 MPFR_IS_NEG (x) && mpfr_odd_p (y) ? -1 : 1);
+        }
+
+      MPFR_ASSERTN (b >= LONG_MIN && b <= LONG_MAX);  /* FIXME... */
+
+      MPFR_LOG_MSG (("special case (+/-2^b)^Y\n", 0));
+      /* now x = +/-2^b, so x^y = (+/-1)^y*2^(b*y) is exact whenever b*y is
+         an integer */
+      MPFR_SAVE_EXPO_MARK (expo);
+      mpfr_init2 (tmp, MPFR_PREC (y) + sizeof (long) * CHAR_BIT);
+      inexact = mpfr_mul_si (tmp, y, b, MPFR_RNDN); /* exact */
+      MPFR_ASSERTN (inexact == 0);
+      /* Note: as the exponent range has been extended, an overflow is not
+         possible (due to basic overflow and underflow checking above, as
+         the result is ~ 2^tmp), and an underflow is not possible either
+         because b is an integer (thus either 0 or >= 1). */
+      MPFR_CLEAR_FLAGS ();
+      inexact = mpfr_exp2 (z, tmp, rnd_mode);
+      mpfr_clear (tmp);
+      /* Without the following, the overflows3 test in tpow.c fails. */
+      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+      MPFR_SAVE_EXPO_FREE (expo);
+      return mpfr_check_range (z, inexact, rnd_mode);
+    }
 
   MPFR_SAVE_EXPO_MARK (expo);
 

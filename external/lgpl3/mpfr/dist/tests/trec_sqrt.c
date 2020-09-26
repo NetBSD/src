@@ -1,6 +1,6 @@
 /* Test file for mpfr_rec_sqrt.
 
-Copyright 2008-2018 Free Software Foundation, Inc.
+Copyright 2008-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -186,7 +186,7 @@ main (void)
   test_generic (MPFR_PREC_MIN, 300, 15);
 
   data_check ("data/rec_sqrt", mpfr_rec_sqrt, "mpfr_rec_sqrt");
-  bad_cases (mpfr_rec_sqrt, pm2, "mpfr_rec_sqrt", 8, -256, 255, 4, 128,
+  bad_cases (mpfr_rec_sqrt, pm2, "mpfr_rec_sqrt", 0, -256, 255, 4, 128,
              800, 50);
 
   tests_end_mpfr ();

@@ -1,6 +1,6 @@
 /* mpfr_sinh_cosh -- hyperbolic sine and cosine
 
-Copyright 2001-2018 Free Software Foundation, Inc.
+Copyright 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,14 +17,11 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
-
-#define INEXPOS(y) ((y) == 0 ? 0 : (((y) > 0) ? 1 : 2))
-#define INEX(y,z) (INEXPOS(y) | (INEXPOS(z) << 2))
 
  /* The computations are done by
     cosh(x) = 1/2 [e^(x)+e^(-x)]

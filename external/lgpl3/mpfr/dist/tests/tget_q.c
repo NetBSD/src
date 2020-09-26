@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_q.
 
-Copyright 2017-2018 Free Software Foundation, Inc.
+Copyright 2017-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -132,11 +132,35 @@ check_canonical (void)
   mpz_clear (z);
 }
 
+static void
+coverage (void)
+{
+  mpfr_t x;
+  mpq_t q;
+  mpz_t z;
+
+  mpfr_init2 (x, 5);
+  mpq_init (q);
+  mpz_init (z);
+
+  mpfr_set_ui_2exp (x, 17, 100, MPFR_RNDN);
+  mpfr_get_q (q, x);
+  MPFR_ASSERTN(mpz_cmp_ui (mpq_denref (q), 1) == 0);
+  mpz_set_ui (z, 17);
+  mpz_mul_2exp (z, z, 100);
+  MPFR_ASSERTN(mpz_cmp (mpq_numref (q), z) == 0);
+
+  mpfr_clear (x);
+  mpq_clear (q);
+  mpz_clear (z);
+}
+
 int
 main (void)
 {
   tests_start_mpfr ();
 
+  coverage ();
   special ();
   random_tests ();
 

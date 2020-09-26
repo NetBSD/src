@@ -1,6 +1,6 @@
 /* Test file for mpfr_mul.
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -267,10 +267,11 @@ check_exact (void)
 }
 
 static void
-check_max(void)
+check_max (void)
 {
   mpfr_t xx, yy, zz;
   mpfr_exp_t emin;
+  int inex;
 
   mpfr_init2(xx, 4);
   mpfr_init2(yy, 4);
@@ -332,6 +333,20 @@ check_max(void)
   /* exact result is just above 0.1E-1, which should round to minfloat */
   MPFR_ASSERTN(mpfr_cmp (zz, yy) == 0);
   set_emin (emin);
+
+  /* coverage test for mulders.c, case n > MUL_FFT_THRESHOLD */
+  mpfr_set_prec (xx, (MUL_FFT_THRESHOLD + 1) * GMP_NUMB_BITS);
+  mpfr_set_prec (yy, (MUL_FFT_THRESHOLD + 1) * GMP_NUMB_BITS);
+  mpfr_set_prec (zz, (MUL_FFT_THRESHOLD + 1) * GMP_NUMB_BITS);
+  mpfr_set_ui (xx, 1, MPFR_RNDN);
+  mpfr_nextbelow (xx);
+  mpfr_set_ui (yy, 1, MPFR_RNDN);
+  mpfr_nextabove (yy);
+  /* xx = 1 - 2^(-p), yy = 1 + 2^(1-p), where p = PREC(x),
+     thus xx * yy should be rounded to 1 */
+  inex = mpfr_mul (zz, xx, yy, MPFR_RNDN);
+  MPFR_ASSERTN(inex < 0);
+  MPFR_ASSERTN(mpfr_cmp_ui (zz, 1) == 0);
 
   mpfr_clear(xx);
   mpfr_clear(yy);
@@ -731,7 +746,7 @@ test_underflow (mpfr_prec_t pmax)
           printf ("c="); mpfr_dump (c);
           printf ("a="); mpfr_dump (a);
           mpfr_set_prec (a, mpfr_get_prec (b) + mpfr_get_prec (c));
-          mpfr_mul_2exp (b, b, 1, MPFR_RNDN);
+          mpfr_mul_2ui (b, b, 1, MPFR_RNDN);
           inex = mpfr_mul (a, b, c, MPFR_RNDN);
           MPFR_ASSERTN (inex == 0);
           printf ("Exact 2*a="); mpfr_dump (a);
@@ -774,7 +789,7 @@ test_underflow (mpfr_prec_t pmax)
           printf ("c="); mpfr_dump (c);
           printf ("a="); mpfr_dump (a);
           mpfr_set_prec (a, mpfr_get_prec (b) + mpfr_get_prec (c));
-          mpfr_mul_2exp (b, b, 1, MPFR_RNDN);
+          mpfr_mul_2ui (b, b, 1, MPFR_RNDN);
           inex = mpfr_mul (a, b, c, MPFR_RNDN);
           MPFR_ASSERTN (inex == 0);
           printf ("Exact 2*a="); mpfr_dump (a);
@@ -1017,8 +1032,9 @@ small_prec (void)
         inex2 = mpfr_mul (z2, x, y, rnd);
         flags2 = __gmpfr_flags;
         if (!(mpfr_equal_p (z1, z2) &&
-              SAME_SIGN (inex1, inex2) &&
-              flags1 == flags2))
+              SAME_SIGN (inex1, inex2)
+              && flags1 == flags2
+              ))
           {
             printf ("Error in small_prec on i = %d, j = %d\n", i, j);
             printf ("r = 0x%x, xq = %d, yq = %d, zq = %d, rnd = %s\n",
@@ -1087,11 +1103,205 @@ test_underflow2 (void)
   mpfr_set_emin (emin);
 }
 
+static void
+coverage (mpfr_prec_t pmax)
+{
+  mpfr_t a, b, c;
+  mpfr_prec_t p;
+  int inex;
+
+  for (p = MPFR_PREC_MIN; p <= pmax; p++)
+    {
+      mpfr_init2 (a, p);
+      mpfr_init2 (b, p);
+      mpfr_init2 (c, p);
+
+      /* exercise case b*c = 2^(emin-2), which is just in the middle
+         between 0 and the smallest positive number 0.5*2^emin */
+      mpfr_set_ui_2exp (b, 1, mpfr_get_emin (), MPFR_RNDN);
+      mpfr_set_ui_2exp (c, 1, -2, MPFR_RNDN);
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDN);
+      MPFR_ASSERTN(inex < 0);
+      MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+      MPFR_ASSERTN(mpfr_underflow_p ());
+
+      if (p == 1)
+        goto end_of_loop;
+
+      /* case b*c > 2^(emin-2): b = (1-2^(-p))*2^emin,
+         c = 0.25*(1+2^(1-p)), thus b*c = (1+2^(-p)-2^(1-2p))*2^(emin-2)
+         should be rounded to 2^(emin-1) for RNDN */
+      mpfr_nextbelow (b);
+      mpfr_nextabove (c);
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDN);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+      MPFR_ASSERTN(mpfr_underflow_p ());
+
+      /* b = (1-2^(1-p))*2^emin, c = 0.25*(1+2^(1-p)),
+         thus b*c = (1-2^(2-2p))*2^(emin-2) should be rounded to 0 */
+      mpfr_nextbelow (b);
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDN);
+      MPFR_ASSERTN(inex < 0);
+      MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+      MPFR_ASSERTN(mpfr_underflow_p ());
+
+      /* special case where b*c is in [nextbelow(0.5*2^emin),0.5*2^emin[ */
+      if ((p % 2) == 0)
+        {
+          /* the middle of the interval [nextbelow(0.5*2^emin),0.5*2^emin[
+             is (1-2^(-p-1))*2^(emin-1)
+             = (1-2^(-p/2))*(1+2^(-p/2))*2^(emin-1) */
+          mpfr_set_si_2exp (b, -1, -p/2, MPFR_RNDN);
+          mpfr_add_ui (b, b, 1, MPFR_RNDN);
+          mpfr_set_si_2exp (c, 1, -p/2, MPFR_RNDN);
+          mpfr_add_ui (c, c, 1, MPFR_RNDN);
+          MPFR_ASSERTN(mpfr_get_emin () < 0);
+          mpfr_mul_2si (b, b, (mpfr_get_emin () - 1) / 2, MPFR_RNDN);
+          mpfr_mul_2si (c, c, (mpfr_get_emin () - 2) / 2, MPFR_RNDN);
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDN);
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+          MPFR_ASSERTN(mpfr_underflow_p ());
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDU);
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+          MPFR_ASSERTN(mpfr_underflow_p ());
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDD);
+          MPFR_ASSERTN(inex < 0);
+          MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+          MPFR_ASSERTN(mpfr_underflow_p ());
+        }
+      else /* p is odd:
+              b = (1-2^(-(p+1)/2))*2^...
+              c = (1+2^(-(p+1)/2))*2^... */
+        {
+          mpfr_set_si_2exp (b, -1, -(p+1)/2, MPFR_RNDN);
+          mpfr_add_ui (b, b, 1, MPFR_RNDN);
+          mpfr_set_si_2exp (c, 1, -(p+1)/2, MPFR_RNDN);
+          mpfr_add_ui (c, c, 1, MPFR_RNDN);
+          MPFR_ASSERTN(mpfr_get_emin () < 0);
+          mpfr_mul_2si (b, b, (mpfr_get_emin () - 1) / 2, MPFR_RNDN);
+          mpfr_mul_2si (c, c, (mpfr_get_emin () - 2) / 2, MPFR_RNDN);
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDN);
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+          MPFR_ASSERTN(!mpfr_underflow_p ());
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDU);
+          MPFR_ASSERTN(inex > 0);
+          MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
+          MPFR_ASSERTN(!mpfr_underflow_p ());
+          mpfr_clear_flags ();
+          inex = mpfr_mul (a, b, c, MPFR_RNDD);
+          MPFR_ASSERTN(inex < 0);
+          MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
+          MPFR_ASSERTN(mpfr_underflow_p ());
+        }
+
+      if (p <= 2) /* for p=2, 1+2^(-ceil((p+1)/2)) = 1 + 2^(-2) is not
+                     exactly representable */
+        goto end_of_loop;
+
+      /* b = 1-2^(-ceil((p+1)/2))
+         c = 1+2^(-ceil((p+1)/2))
+         For p odd, b*c = 1-2^(p+1) should round to 1;
+         for p even, b*c = 1-2^(p+2) should round to 1 too. */
+      mpfr_set_si_2exp (b, -1, -(p+2)/2, MPFR_RNDN);
+      mpfr_add_ui (b, b, 1, MPFR_RNDN);
+      mpfr_set_si_2exp (c, 1, -(p+2)/2, MPFR_RNDN);
+      mpfr_add_ui (c, c, 1, MPFR_RNDN);
+      inex = mpfr_mul (a, b, c, MPFR_RNDN);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_cmp_ui (a, 1) == 0);
+      /* For RNDU, b*c should round to 1 */
+      inex = mpfr_mul (a, b, c, MPFR_RNDU);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_cmp_ui (a, 1) == 0);
+      /* For RNDD, b*c should round to 1-2^(-p) */
+      inex = mpfr_mul (a, b, c, MPFR_RNDD);
+      MPFR_ASSERTN(inex < 0);
+      mpfr_nextabove (a);
+      MPFR_ASSERTN(mpfr_cmp_ui (a, 1) == 0);
+
+      /* same as above, but near emax, to exercise the case where a carry
+         produces an overflow */
+      mpfr_set_si_2exp (b, -1, -(p+2)/2, MPFR_RNDN);
+      mpfr_add_ui (b, b, 1, MPFR_RNDN);
+      mpfr_mul_2si (b, b, mpfr_get_emax (), MPFR_RNDN);
+      mpfr_set_si_2exp (c, 1, -(p+2)/2, MPFR_RNDN);
+      mpfr_add_ui (c, c, 1, MPFR_RNDN);
+      /* b*c should round to 2^emax */
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDN);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+      MPFR_ASSERTN(mpfr_overflow_p ());
+      /* idem for RNDU */
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDU);
+      MPFR_ASSERTN(inex > 0);
+      MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+      MPFR_ASSERTN(mpfr_overflow_p ());
+      /* For RNDD, b*c should round to (1-2^(-p))*2^emax */
+      mpfr_clear_flags ();
+      inex = mpfr_mul (a, b, c, MPFR_RNDD);
+      MPFR_ASSERTN(inex < 0);
+      MPFR_ASSERTN(!mpfr_inf_p (a));
+      MPFR_ASSERTN(!mpfr_overflow_p ());
+      mpfr_nextabove (a);
+      MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
+
+    end_of_loop:
+      mpfr_clear (a);
+      mpfr_clear (b);
+      mpfr_clear (c);
+    }
+}
+
+/* check special underflow case for precision = 64 */
+static void
+coverage2 (void)
+{
+  mpfr_t a, b, c;
+  int inex;
+  mpfr_exp_t emin;
+
+  emin = mpfr_get_emin (); /* save emin */
+  mpfr_set_emin (0);
+
+  mpfr_init2 (a, 64);
+  mpfr_init2 (b, 64);
+  mpfr_init2 (c, 64);
+
+  mpfr_set_str_binary (b, "1111110110100001011100100000100000110110001100100010011010011001E-64"); /* 18276014142440744601/2^64 */
+  mpfr_set_str_binary (c, "1000000100110010000111000100010010010001000100101010111101010100E-64"); /* 9309534460545511252/2^64 */
+  /* since 1/2-2^-66 < b0*c0 < 1/2, b0*c0 should be rounded to 1/2 */
+  inex = mpfr_mul (a, b, c, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, -1) == 0);
+  MPFR_ASSERTN(inex > 0);
+
+  mpfr_clear (a);
+  mpfr_clear (b);
+  mpfr_clear (c);
+
+  mpfr_set_emin (emin); /* restore emin */
+}
+
 int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
+  coverage (1024);
+  coverage2 ();
   testall_rndf (9);
   check_nans ();
   check_exact ();

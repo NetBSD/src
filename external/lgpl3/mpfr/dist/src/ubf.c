@@ -1,6 +1,6 @@
 /* Functions to work with unbounded floats (limited low-level interface).
 
-Copyright 2016-2018 Free Software Foundation, Inc.
+Copyright 2016-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -31,7 +31,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    detected and handled separately, but for polynomial, this should not
    be needed). */
 
-/* This function does not change the flags. */
+/* Get the exponent of a regular MPFR number or UBF as a mpz_t, which is
+   initialized by this function. The flags are not changed. */
 static void
 mpfr_init_get_zexp (mpz_ptr ez, mpfr_srcptr x)
 {
@@ -41,20 +42,25 @@ mpfr_init_get_zexp (mpz_ptr ez, mpfr_srcptr x)
     mpz_set (ez, MPFR_ZEXP (x));
   else
     {
+      mpfr_exp_t ex = MPFR_GET_EXP (x);
+
+#if _MPFR_EXP_FORMAT <= 3
+      /* mpfr_exp_t fits in a long */
+      mpz_set_si (ez, ex);
+#else
       mp_limb_t e_limb[MPFR_EXP_LIMB_SIZE];
       mpfr_t e;
       int inex;
       MPFR_SAVE_EXPO_DECL (expo);
 
-      /* TODO: Once this has been tested, optimize based on whether
-         _MPFR_EXP_FORMAT <= 3. */
       MPFR_TMP_INIT1 (e_limb, e, sizeof (mpfr_exp_t) * CHAR_BIT);
       MPFR_SAVE_EXPO_MARK (expo);
-      MPFR_DBGRES (inex = mpfr_set_exp_t (e, MPFR_GET_EXP (x), MPFR_RNDN));
+      MPFR_DBGRES (inex = mpfr_set_exp_t (e, ex, MPFR_RNDN));
       MPFR_ASSERTD (inex == 0);
       MPFR_DBGRES (inex = mpfr_get_z (ez, e, MPFR_RNDN));
       MPFR_ASSERTD (inex == 0);
       MPFR_SAVE_EXPO_FREE (expo);
+#endif
     }
 }
 
@@ -181,6 +187,10 @@ mpfr_ubf_mul_exact (mpfr_ubf_ptr a, mpfr_srcptr b, mpfr_srcptr c)
     }
 }
 
+/* Compare the exponents of two numbers, which can be either MPFR numbers
+   or UBF numbers. If both numbers can be MPFR numbers, it is better to
+   use the MPFR_UBF_EXP_LESS_P wrapper macro, which is optimized for this
+   common case. */
 int
 mpfr_ubf_exp_less_p (mpfr_srcptr x, mpfr_srcptr y)
 {
@@ -195,7 +205,7 @@ mpfr_ubf_exp_less_p (mpfr_srcptr x, mpfr_srcptr y)
   return c;
 }
 
-/* Convert an mpz_t to an mpfr_exp_t, restricted to
+/* Convert an mpz_t to an mpfr_exp_t, saturated to
    the interval [MPFR_EXP_MIN,MPFR_EXP_MAX]. */
 mpfr_exp_t
 mpfr_ubf_zexp2exp (mpz_ptr ez)
@@ -224,7 +234,7 @@ mpfr_ubf_zexp2exp (mpz_ptr ez)
   return e;
 }
 
-/* Return the difference of the exponents of x and y, restricted to
+/* Return the difference of the exponents of x and y, saturated to
    the interval [MPFR_EXP_MIN,MPFR_EXP_MAX]. */
 mpfr_exp_t
 mpfr_ubf_diff_exp (mpfr_srcptr x, mpfr_srcptr y)

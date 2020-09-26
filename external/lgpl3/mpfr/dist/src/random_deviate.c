@@ -1,6 +1,6 @@
 /* random_deviate routines for mpfr_erandom and mpfr_nrandom.
 
-Copyright 2013-2018 Free Software Foundation, Inc.
+Copyright 2013-2020 Free Software Foundation, Inc.
 Contributed by Charles Karney <charles@karney.com>, SRI International.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /*
@@ -110,7 +110,7 @@ static void
 random_deviate_generate (mpfr_random_deviate_t x, mpfr_random_size_t k,
                          gmp_randstate_t r, mpz_t t)
 {
-  /* Various compile time checks on mprf_random_deviate_t */
+  /* Various compile time checks on mpfr_random_deviate_t */
 
   /* Check that the h field of a mpfr_random_deviate_t can hold W bits */
   MPFR_STAT_STATIC_ASSERT (W > 0 && W <= sizeof (unsigned long) * CHAR_BIT);
@@ -124,7 +124,7 @@ random_deviate_generate (mpfr_random_deviate_t x, mpfr_random_size_t k,
                            sizeof (mpfr_random_size_t) >=
                            sizeof (mpfr_uprec_t));
 
-  /* Finally, at runtime, check that k is not too big.  e is set to ceil(k/W)*W
+  /* Finally, at run time, check that k is not too big.  e is set to ceil(k/W)*W
    * and we require that this allows x->e + 1 in random_deviate_leading_bit to
    * be computed without overflow. */
   MPFR_ASSERTN (k <= (mpfr_random_size_t)(-((int) W + 1)));
@@ -172,24 +172,29 @@ random_deviate_generate (mpfr_random_deviate_t x, mpfr_random_size_t k,
     }
 }
 
+#ifndef MPFR_LONG_WITHIN_LIMB /* a long does not fit in a mp_limb_t */
 /*
- * return index [-1..127] of highest bit set.  Return -1 if x = 0, 2 if x = 4,
- * etc.  (From Algorithms for programmers by Joerg Arndt.)
+ * return index [0..127] of highest bit set.  Return 0 if x = 1, 2 if x = 4,
+ * etc. Assume x > 0. (From Algorithms for programmers by Joerg Arndt.)
  */
 static int
-highest_bit_idx_alt (unsigned long x)
+highest_bit_idx (unsigned long x)
 {
+  unsigned long y;
   int r = 0;
 
-  if (x == 0)
-    return -1;
-  MPFR_ASSERTN (sizeof (unsigned long) * CHAR_BIT <= 128);
-  if (sizeof (unsigned long) * CHAR_BIT > 64)
+  MPFR_ASSERTD(x > 0);
+  MPFR_STAT_STATIC_ASSERT (sizeof (unsigned long) * CHAR_BIT <= 128);
+
+  /* A compiler with VRP (like GCC) will optimize and not generate any code
+     for the following lines if unsigned long has at most 64 values bits. */
+  y = ((x >> 16) >> 24) >> 24;  /* portable x >> 64 */
+  if (y != 0)
     {
-      /* handle 128-bit unsigned longs avoiding compiler warnings */
-      unsigned long y = x >> 16; y >>= 24; y >>= 24;
-      if (y) { x = y; r += 64;}
+      x = y;
+      r += 64;
     }
+
   if (x & ~0xffffffffUL) { x >>= 16; x >>= 16; r +=32; }
   if (x &  0xffff0000UL) { x >>= 16; r += 16; }
   if (x &  0x0000ff00UL) { x >>=  8; r +=  8; }
@@ -198,29 +203,23 @@ highest_bit_idx_alt (unsigned long x)
   if (x &  0x00000002UL) {           r +=  1; }
   return r;
 }
-
+#else /* a long fits in a mp_limb_t */
 /*
- * return index [-1..63] of highest bit set.
- * Return -1 if x = 0, 63 is if x = ~0 (for 64-bit unsigned long).
- * See highest_bit_idx_alt too.
+ * return index [0..63] of highest bit set. Assume x > 0.
+ * Return 0 if x = 1, 63 is if x = ~0 (for 64-bit unsigned long).
+ * See alternate code above too.
  */
 static int
 highest_bit_idx (unsigned long x)
 {
-  /* this test should be evaluated at compile time */
-  if (sizeof (mp_limb_t) >= sizeof (unsigned long))
-    {
-      int cnt;
+  int cnt;
 
-      if (x == 0)
-        return -1;
-      count_leading_zeros (cnt, (mp_limb_t) x);
-      MPFR_ASSERTD (cnt <= GMP_NUMB_BITS - 1);
-      return GMP_NUMB_BITS - 1 - cnt;
-    }
-  else
-    return highest_bit_idx_alt (x);
+  MPFR_ASSERTD(x > 0);
+  count_leading_zeros (cnt, (mp_limb_t) x);
+  MPFR_ASSERTD (cnt <= GMP_NUMB_BITS - 1);
+  return GMP_NUMB_BITS - 1 - cnt;
 }
+#endif /* MPFR_LONG_WITHIN_LIMB */
 
 /* return position of leading bit, counting from 1 */
 static mpfr_random_size_t

@@ -1,6 +1,6 @@
 /* Test file for mpfr_root (also used for mpfr_rootn_ui).
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef TF
@@ -590,12 +590,12 @@ main (int argc, char *argv[])
 
   test_generic_ui (MPFR_PREC_MIN, 200, 30);
 
-  bad_cases (root2, pow2, "rootn[2]", 8, -256, 255, 4, 128, 800, 40);
-  bad_cases (root3, pow3, "rootn[3]", 8, -256, 255, 4, 128, 800, 40);
-  bad_cases (root4, pow4, "rootn[4]", 8, -256, 255, 4, 128, 800, 40);
-  bad_cases (root5, pow5, "rootn[5]", 8, -256, 255, 4, 128, 800, 40);
-  bad_cases (root17, pow17, "rootn[17]", 8, -256, 255, 4, 128, 800, 40);
-  bad_cases (root120, pow120, "rootn[120]", 8, -256, 255, 4, 128, 800, 40);
+  bad_cases (root2, pow2, "rootn[2]", 0, -256, 255, 4, 128, 80, 40);
+  bad_cases (root3, pow3, "rootn[3]", 256, -256, 255, 4, 128, 200, 40);
+  bad_cases (root4, pow4, "rootn[4]", 0, -256, 255, 4, 128, 320, 40);
+  bad_cases (root5, pow5, "rootn[5]", 256, -256, 255, 4, 128, 440, 40);
+  bad_cases (root17, pow17, "rootn[17]", 256, -256, 255, 4, 128, 800, 40);
+  bad_cases (root120, pow120, "rootn[120]", 0, -256, 255, 4, 128, 800, 40);
 
   tests_end_mpfr ();
   return 0;
