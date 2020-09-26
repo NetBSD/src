@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/09/04 05:16:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2020/09/26 07:57:56 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -40,6 +40,7 @@ SRCS=	\
 	div.c \
 	div_fr.c \
 	div_ui.c \
+	dot.c \
 	exp.c \
 	fma.c \
 	fr_div.c \
@@ -90,6 +91,7 @@ SRCS=	\
 	sub.c \
 	sub_fr.c \
 	sub_ui.c \
+	sum.c \
 	swap.c \
 	tan.c \
 	tanh.c \
