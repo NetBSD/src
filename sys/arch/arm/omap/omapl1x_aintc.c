@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_aintc.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_aintc.c,v 1.2 2020/09/26 10:06:26 skrll Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: omapl1x_aintc.c,v 1.1 2013/10/02 16:48:26 matt Exp $
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <arm/atomic.h>
 
 #include <arm/omap/omapl1x_reg.h>
 #include <arm/omap/omap_tipb.h>

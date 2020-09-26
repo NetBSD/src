@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.43 2020/09/06 10:54:26 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.44 2020/09/26 10:06:25 skrll Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -67,7 +67,7 @@
 ./usr/include/arm/arm32/vmparam.h		comp-c-include
 ./usr/include/arm/armreg.h			comp-c-include
 ./usr/include/arm/asm.h				comp-c-include
-./usr/include/arm/atomic.h			comp-c-include
+./usr/include/arm/atomic.h			comp-c-include		obsolete
 ./usr/include/arm/bswap.h			comp-c-include
 ./usr/include/arm/byte_swap.h			comp-c-include
 ./usr/include/arm/cdefs.h			comp-c-include
