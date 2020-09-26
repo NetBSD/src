@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.332 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.333 2020/09/26 16:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.332 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.333 2020/09/26 16:55:58 rillig Exp $");
 
 /* types and constants */
 
@@ -828,9 +828,6 @@ ParseLinkSrc(void *pgnp, void *data)
  * Input:
  *	gnp		The node to which the operator is to be applied
  *	opp		The operator to apply
- *
- * Results:
- *	Always 0
  *
  * Side Effects:
  *	The type field of the node is altered to reflect any new bits in
