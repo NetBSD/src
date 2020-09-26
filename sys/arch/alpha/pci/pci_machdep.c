@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.26 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.27 2020/09/26 02:46:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2020/09/26 02:46:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,6 +224,63 @@ alpha_pci_generic_intr_evcnt(pci_chipset_tag_t const pc,
 	return alpha_shared_intr_evcnt(pc->pc_shared_intrs, irq);
 }
 
+static struct cpu_info *
+alpha_pci_generic_intr_select_cpu(pci_chipset_tag_t const pc, u_int const irq,
+    u_int const flags)
+{
+	struct cpu_info *ci, *best_ci;
+	CPU_INFO_ITERATOR cii;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	/*
+	 * If the back-end didn't tell us where we can route, then
+	 * they all go to the primry CPU.
+	 */
+	if (pc->pc_eligible_cpus == 0) {
+		return &cpu_info_primary;
+	}
+
+	/*
+	 * If the interrupt already has a CPU assigned, keep on using it,
+	 * unless the CPU has become ineligible.
+	 */
+	ci = alpha_shared_intr_get_cpu(pc->pc_shared_intrs, irq);
+	if (ci != NULL) {
+		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0 ||
+		    CPU_IS_PRIMARY(ci)) {
+			return ci;
+		}
+	}
+
+	/*
+	 * Pick the CPU with the fewest handlers.
+	 */
+	best_ci = NULL;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((pc->pc_eligible_cpus & __BIT(ci->ci_cpuid)) == 0) {
+			/* This CPU is not eligible in hardware. */
+			continue;
+		}
+		if (ci->ci_schedstate.spc_flags & SPCF_NOINTR) {
+			/* This CPU is not eligible in software. */
+			continue;
+		}
+		if (best_ci == NULL ||
+		    ci->ci_nintrhand < best_ci->ci_nintrhand) {
+			best_ci = ci;
+		}
+	}
+
+	/* If we found one, cool... */
+	if (best_ci != NULL) {
+		return best_ci;
+	}
+
+	/* ...if not, well I guess we'll just fall back on the primary. */
+	return &cpu_info_primary;
+}
+
 void *
 alpha_pci_generic_intr_establish(pci_chipset_tag_t const pc,
     pci_intr_handle_t const ih, int const level,
@@ -243,6 +300,26 @@ alpha_pci_generic_intr_establish(pci_chipset_tag_t const pc,
 
 	mutex_enter(&cpu_lock);
 
+	struct cpu_info *target_ci =
+	    alpha_pci_generic_intr_select_cpu(pc, irq, flags);
+	struct cpu_info *current_ci =
+	    alpha_shared_intr_get_cpu(pc->pc_shared_intrs, irq);
+
+	const bool first_handler =
+	    ! alpha_shared_intr_isactive(pc->pc_shared_intrs, irq);
+
+	/*
+	 * If this is the first handler on this interrupt, or if the
+	 * target CPU has changed, then program the route if the
+	 * hardware supports it.
+	 */
+	if (first_handler || target_ci != current_ci) {
+		alpha_shared_intr_set_cpu(pc->pc_shared_intrs, irq, target_ci);
+		if (pc->pc_intr_set_affinity != NULL) {
+			pc->pc_intr_set_affinity(pc, irq, target_ci);
+		}
+	}
+
 	if (! alpha_shared_intr_link(pc->pc_shared_intrs, cookie,
 				     pc->pc_intr_desc)) {
 		mutex_exit(&cpu_lock);
@@ -250,7 +327,7 @@ alpha_pci_generic_intr_establish(pci_chipset_tag_t const pc,
 		return NULL;
 	}
 
-	if (alpha_shared_intr_firstactive(pc->pc_shared_intrs, irq)) {
+	if (first_handler) {
 		scb_set(pc->pc_vecbase + SCB_IDXTOVEC(irq),
 		    alpha_pci_generic_iointr, pc);
 		pc->pc_intr_enable(pc, irq);
