@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.25 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.26 2020/09/26 06:08:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.25 2020/08/12 13:19:35 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.26 2020/09/26 06:08:41 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -161,7 +161,7 @@ ENTRY_NP(cpu_switchto_softint)
 	stp	x23, x24, [sp, #TF_X23]
 	stp	x25, x26, [sp, #TF_X25]
 	stp	x27, x28, [sp, #TF_X27]
-	stp	x29, x2, [sp, #TF_X29]	/* tf->lr = softint_cleanup; */
+	stp	x29, x2, [sp, #TF_X29]	/* tf->tf_lr = softint_cleanup; */
 
 	mrs	x19, tpidr_el1		/* x19 := curlwp */
 	mov	x4, sp
