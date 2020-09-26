@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.51 2018/07/12 10:46:42 maxv Exp $
+#	$NetBSD: Makefile,v 1.52 2020/09/26 10:06:26 skrll Exp $
 
 INCSDIR= /usr/include/arm
 
-INCS=	aeabi.h ansi.h aout_machdep.h apmvar.h armreg.h asm.h atomic.h \
+INCS=	aeabi.h ansi.h aout_machdep.h apmvar.h armreg.h asm.h \
 	bswap.h byte_swap.h \
 	cdefs.h cpu.h cpuconf.h cputypes.h \
 	disklabel.h \
