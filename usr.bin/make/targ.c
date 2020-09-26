@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.97 2020/09/26 16:21:17 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.98 2020/09/26 16:27:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -85,9 +85,11 @@
  *	    	  	    	hash table, though all its fields are
  *	    	  	    	initialized.
  *
- *	Targ_FindNode	    	Find the node for a given target, creating
- *	    	  	    	and storing it if it doesn't exist and the
- *	    	  	    	flags are right (TARG_CREATE)
+ *	Targ_FindNode		Find the node, or return NULL.
+ *
+ *	Targ_GetNode		Find the node, or create it.
+ *
+ *	Targ_NewInternalNode	Create an internal node.
  *
  *	Targ_FindList	    	Given a list of names, find nodes for all
  *	    	  	    	of them, creating them as necessary.
@@ -119,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.97 2020/09/26 16:21:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.98 2020/09/26 16:27:27 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -286,19 +288,7 @@ GNode *Targ_GetEndNode(void)
     return endNode;
 }
 
-/* Make a complete list of GNodes from the given list of names.
- * If flags is TARG_CREATE, nodes will be created for all names in
- * names which do not yet have graph nodes. If flags is TARG_NOCREATE,
- * an error message will be printed for each name which can't be found.
- *
- * Input:
- *	name		list of names to find
- *	flags		flags used if no node is found for a given name
- *
- * Results:
- *	A complete list of graph nodes corresponding to all instances of all
- *	the names in names.
- */
+/* Return the named nodes, creating them as necessary. */
 GNodeList *
 Targ_FindList(StringList *names)
 {
