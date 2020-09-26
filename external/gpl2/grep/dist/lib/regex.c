@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.3 2020/09/26 11:39:17 mlelstv Exp $	*/
 
 /* Extended regular expression matching and search library,
    version 0.12.
@@ -2047,7 +2047,7 @@ static reg_errcode_t compile_range _RE_ARGS ((unsigned int range_start,
     /* If the buffer moved, move all the pointers into it.  */		\
     if (old_buffer != COMPILED_BUFFER_VAR)				\
       {									\
-	int incr = COMPILED_BUFFER_VAR - old_buffer;			\
+	ptrdiff_t incr = COMPILED_BUFFER_VAR - old_buffer;			\
 	MOVE_BUFFER_POINTER (b);					\
 	MOVE_BUFFER_POINTER (begalt);					\
 	if (fixup_alt_jump)						\
@@ -2075,7 +2075,7 @@ static reg_errcode_t compile_range _RE_ARGS ((unsigned int range_start,
     /* If the buffer moved, move all the pointers into it.  */		\
     if (old_buffer != COMPILED_BUFFER_VAR)				\
       {									\
-	int incr = COMPILED_BUFFER_VAR - old_buffer;			\
+	ptrdiff_t incr = COMPILED_BUFFER_VAR - old_buffer;			\
 	MOVE_BUFFER_POINTER (b);					\
 	MOVE_BUFFER_POINTER (begalt);					\
 	if (fixup_alt_jump)						\
