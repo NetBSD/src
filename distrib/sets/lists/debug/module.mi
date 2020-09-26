@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.5 2020/05/01 22:21:11 christos Exp $
+# $NetBSD: module.mi,v 1.6 2020/09/26 17:49:50 jmcneill Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -278,6 +278,8 @@
 ./usr/libdata/debug/@MODULEDIR@/ntfs/ntfs.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/null				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/null/null.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/nvmm				modules-base-kernel	kmod,nvmm,debug
+./usr/libdata/debug/@MODULEDIR@/nvmm/nvmm.kmod.debug			modules-base-kernel	kmod,nvmm,debug
 ./usr/libdata/debug/@MODULEDIR@/onewire				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/onewire/onewire.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/opencrypto			modules-base-kernel	kmod,debug

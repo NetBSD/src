@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1264 2020/09/14 00:40:03 rin Exp $
+# $NetBSD: mi,v 1.1265 2020/09/26 17:49:49 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1923,6 +1923,7 @@
 ./usr/sbin/ntptime				base-ntp-bin
 ./usr/sbin/ntptimeset				base-obsolete		obsolete
 ./usr/sbin/ntptrace				base-ntp-bin
+./usr/sbin/nvmmctl				base-sysutil-bin	nvmm
 ./usr/sbin/omshell				base-dhcpd-bin
 ./usr/sbin/opensnoop				base-debug-bin		dtrace
 ./usr/sbin/pac					base-sysutil-bin

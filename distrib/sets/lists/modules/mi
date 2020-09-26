@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.141 2020/09/08 14:55:44 martin Exp $
+# $NetBSD: mi,v 1.142 2020/09/26 17:49:50 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -337,6 +337,8 @@
 ./@MODULEDIR@/ntfs/ntfs.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/null				modules-base-kernel	kmod
 ./@MODULEDIR@/null/null.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/nvmm				modules-base-kernel	kmod,nvmm
+./@MODULEDIR@/nvmm/nvmm.kmod			modules-base-kernel	kmod,nvmm
 ./@MODULEDIR@/onewire				modules-base-kernel	kmod
 ./@MODULEDIR@/onewire/onewire.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/opencrypto			modules-base-kernel	kmod
