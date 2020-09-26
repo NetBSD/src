@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26 2020/08/17 04:15:33 mrg Exp $	*/
+/*	$NetBSD: pcb.h,v 1.27 2020/09/26 04:31:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@ struct pcb_faultinfo {
  */
 struct pcb {
 	mips_label_t pcb_context;	/* kernel context for resume */
-	void *	pcb_onfault;		/* for copyin/copyout faults */
+	void *pcb_onfault;		/* for copyin/copyout faults */
 	uint32_t pcb_ppl;		/* previous priority level */
 	struct fpreg pcb_fpregs;	/* saved floating point registers */
 	struct dspreg pcb_dspregs;	/* saved DSP registers */
