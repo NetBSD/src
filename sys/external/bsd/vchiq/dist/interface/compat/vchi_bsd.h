@@ -293,7 +293,7 @@ int fatal_signal_pending(VCHIQ_THREAD_T);
 #define __user
 
 #define	current			curlwp
-#define EXPORT_SYMBOL(x) 
+#define EXPORT_SYMBOL(x)
 #define PAGE_ALIGN(addr)	round_page(addr)
 
 typedef	void	irqreturn_t;
