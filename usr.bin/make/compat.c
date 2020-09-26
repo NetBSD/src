@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.151 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.152 2020/09/26 16:41:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.151 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.152 2020/09/26 16:41:42 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -471,30 +471,25 @@ CompatRunCommand(void *cmd, void *gn)
     return Compat_RunCommand(cmd, gn);
 }
 
-static int
-CompatMake(void *gn, void *pgn)
+static void
+MakeNodes(GNodeList *gnodes, GNode *pgn)
 {
-    return Compat_Make(gn, pgn);
+    GNodeListNode *node;
+    for (node = gnodes->first; node != NULL; node = node->next) {
+	GNode *cohort = node->datum;
+	Compat_Make(cohort, pgn);
+    }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Compat_Make --
- *	Make a target.
+/* Make a target.
+ *
+ * If an error is detected and not being ignored, the process exits.
  *
  * Input:
- *	gnp		The node to make
- *	pgnp		Parent to abort if necessary
- *
- * Results:
- *	0
- *
- * Side Effects:
- *	If an error is detected and not being ignored, the process exits.
- *
- *-----------------------------------------------------------------------
+ *	gn		The node to make
+ *	pgn		Parent to abort if necessary
  */
-int
+void
 Compat_Make(GNode *gn, GNode *pgn)
 {
     if (!shellName)		/* we came here from jobs */
@@ -512,7 +507,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEachUntil(gn->children, CompatMake, gn);
+	MakeNodes(gn->children, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
@@ -652,8 +647,7 @@ Compat_Make(GNode *gn, GNode *pgn)
     }
 
 cohorts:
-    Lst_ForEachUntil(gn->cohorts, CompatMake, pgn);
-    return 0;
+    MakeNodes(gn->cohorts, pgn);
 }
 
 /* Initialize this module and start making.
