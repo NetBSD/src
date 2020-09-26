@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1221 2020/09/23 23:39:18 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1222 2020/09/26 17:49:50 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -156,6 +156,15 @@ HAVE_ACPI=	no
 HAVE_UEFI=	yes
 .else
 HAVE_UEFI=	no
+.endif
+
+#
+# Does the platform support NVMM?
+#
+.if ${MACHINE_ARCH} == "x86_64"
+HAVE_NVMM=	yes
+.else
+HAVE_NVMM=	no
 .endif
 
 
