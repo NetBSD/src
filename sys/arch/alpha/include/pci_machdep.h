@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.19 2020/09/22 15:24:01 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.20 2020/09/26 02:46:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -87,8 +87,12 @@ struct alpha_pci_chipset {
 	u_long		pc_vecbase;
 	u_int		pc_nirq;
 
+	u_long		pc_eligible_cpus;
+
 	void		(*pc_intr_enable)(pci_chipset_tag_t, int);
 	void		(*pc_intr_disable)(pci_chipset_tag_t, int);
+	void		(*pc_intr_set_affinity)(pci_chipset_tag_t, int,
+			    struct cpu_info *);
 };
 
 /*
