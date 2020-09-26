@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.330 2020/09/25 23:39:51 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.331 2020/09/26 00:03:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.330 2020/09/25 23:39:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.331 2020/09/26 00:03:29 rillig Exp $");
 
 /* types and constants */
 
@@ -793,7 +793,7 @@ struct ParseLinkSrcArgs {
  * Add the parent to the child's parents, but only if the target is not
  * special.  An example for such a special target is .END, which does not
  * need to be informed once the child target has been made. */
-static int
+static void
 ParseLinkSrc(void *pgnp, void *data)
 {
     const struct ParseLinkSrcArgs *args = data;
@@ -815,8 +815,6 @@ ParseLinkSrc(void *pgnp, void *data)
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
-
-    return 0;
 }
 
 /*-
@@ -954,7 +952,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 		if (targets != NULL) {
 		    struct ParseLinkSrcArgs args = { gn, specType };
-		    Lst_ForEachUntil(targets, ParseLinkSrc, &args);
+		    Lst_ForEach(targets, ParseLinkSrc, &args);
 		}
 		return;
 	    }
@@ -1025,7 +1023,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	} else {
 	    if (targets != NULL) {
 	        struct ParseLinkSrcArgs args = { gn, specType };
-		Lst_ForEachUntil(targets, ParseLinkSrc, &args);
+		Lst_ForEach(targets, ParseLinkSrc, &args);
 	    }
 	}
 	break;
@@ -1063,44 +1061,16 @@ ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseAddDir --
- *	Front-end for Dir_AddDir to make sure Lst_ForEachUntil keeps going
- *
- * Results:
- *	=== 0
- *
- * Side Effects:
- *	See Dir_AddDir.
- *
- *-----------------------------------------------------------------------
- */
-static int
+static void
 ParseAddDir(void *path, void *name)
 {
     (void)Dir_AddDir(path, name);
-    return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseClearPath --
- *	Front-end for Dir_ClearPath to make sure Lst_ForEachUntil keeps going
- *
- * Results:
- *	=== 0
- *
- * Side Effects:
- *	See Dir_ClearPath
- *
- *-----------------------------------------------------------------------
- */
-static int
-ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
+static void
+ParseClearPath(void *path, void *unused MAKE_ATTR_UNUSED)
 {
     Dir_ClearPath(path);
-    return 0;
 }
 
 /*
@@ -1561,7 +1531,7 @@ ParseDoDependency(char *line)
 		break;
 	    case ExPath:
 		if (paths != NULL)
-		    Lst_ForEachUntil(paths, ParseClearPath, NULL);
+		    Lst_ForEach(paths, ParseClearPath, NULL);
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
@@ -1637,7 +1607,7 @@ ParseDoDependency(char *line)
 		    break;
 		case ExPath:
 		    if (paths != NULL)
-			Lst_ForEachUntil(paths, ParseAddDir, line);
+			Lst_ForEach(paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude(line);
@@ -2836,18 +2806,17 @@ ParseReadLine(void)
     }
 }
 
-static int
+static void
 SuffEndTransform(void *target, void *unused MAKE_ATTR_UNUSED)
 {
     Suff_EndTransform(target);
-    return 0;
 }
 
 static void
 FinishDependencyGroup(void)
 {
     if (targets != NULL) {
-	Lst_ForEachUntil(targets, SuffEndTransform, NULL);
+	Lst_ForEach(targets, SuffEndTransform, NULL);
 	Lst_Destroy(targets, ParseHasCommands);
     }
     targets = NULL;
