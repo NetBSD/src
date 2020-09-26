@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.152 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.153 2020/09/26 18:38:09 roy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.152 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.153 2020/09/26 18:38:09 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -355,9 +355,8 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 #ifdef NET_MPSAFE
-	ifp->if_extflags |= IFEF_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_start = vlan_start;
 	ifp->if_transmit = vlan_transmit;
@@ -370,6 +369,13 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 		    rv);
 		goto fail;
 	}
+
+	/*
+	 * Set the link state to down.
+	 * When the parent interface attaches we will use that link state.
+	 * When the parent interface link state changes, so will ours.
+	 */
+	ifp->if_link_state = LINK_STATE_DOWN;
 
 	vlan_reset_linkname(ifp);
 	if_register(ifp);
@@ -561,6 +567,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	nmib = NULL;
 	nmib_psref = NULL;
 	omib_cleanup = true;
+
+
+	/*
+	 * We inherit the parents link state.
+	 */
+	if_link_state_change(&ifv->ifv_if, p->if_link_state);
 
 done:
 	mutex_exit(&ifv->ifv_lock);
@@ -1666,6 +1678,35 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if_input(&ifv->ifv_if, m);
 out:
 	vlan_putref_linkmib(mib, &psref);
+}
+
+/*
+ * If the parent link state changed, the vlan link state should change also.
+ */
+void
+vlan_link_state_changed(struct ifnet *p, int link_state)
+{
+	struct ifvlan *ifv;
+	struct ifvlan_linkmib *mib;
+	struct psref psref;
+	struct ifnet *ifp;
+
+	mutex_enter(&ifv_list.lock);
+
+	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
+		mib = vlan_getref_linkmib(ifv, &psref);
+		if (mib == NULL)
+			continue;
+
+		if (mib->ifvm_p == p) {
+			ifp = &mib->ifvm_ifvlan->ifv_if;
+			if_link_state_change(ifp, link_state);
+		}
+
+		vlan_putref_linkmib(mib, &psref);
+	}
+
+	mutex_exit(&ifv_list.lock);
 }
 
 /*
