@@ -1741,8 +1741,6 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLTLIBRARIES \
 # we need to require GNU "make".
 .POSIX:
 get_patches.c: $(GET_PATCHES_SH) $(PATCHES)
-	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_get_patches.c:
 	$(GET_PATCHES_SH) $(PATCHES) > $@ || { rm -f $@; exit 1; }
 
 # Check that MPFR does not use GMP internal symbols. Of course, do not run
