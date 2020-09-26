@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.10 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.11 2020/09/26 08:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_ras.S,v 1.10 2019/04/06 03:06:26 thorpej Exp $")
+RCSID("$NetBSD: lock_stubs_ras.S,v 1.11 2020/09/26 08:21:27 simonb Exp $")
 
 #include "assym.h"
 
@@ -482,7 +482,7 @@ END(ras_mutex_spin_exit)
 #endif	/* !LOCKDEBUG */
 
 	.data
-EXPORT(mips_locore_atomicvec)
+EXPORT_OBJECT(mips_locore_atomicvec)
 	PTR_WORD 	ras_atomic_cas_uint
 	PTR_WORD 	ras_atomic_cas_ulong
 	PTR_WORD	ras_ucas_32

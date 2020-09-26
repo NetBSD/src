@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.12 2020/08/09 08:33:52 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.13 2020/09/26 08:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.12 2020/08/09 08:33:52 skrll Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.13 2020/09/26 08:21:27 simonb Exp $")
 
 #include "assym.h"
 
@@ -341,7 +341,7 @@ END(llsc_mutex_spin_exit)
 #endif	/* !LOCKDEBUG */
 
 	.rdata
-EXPORT(mips_llsc_locore_atomicvec)
+EXPORT_OBJECT(mips_llsc_locore_atomicvec)
 	PTR_WORD 	llsc_atomic_cas_uint
 	PTR_WORD 	llsc_atomic_cas_ulong
 	PTR_WORD	llsc_ucas_32
