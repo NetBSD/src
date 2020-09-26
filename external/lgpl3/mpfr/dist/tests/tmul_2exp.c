@@ -1,6 +1,6 @@
 /* Test file for mpfr_{mul,div}_2{ui,si}.
 
-Copyright 1999, 2001-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -101,10 +101,8 @@ underflow (mpfr_exp_t e)
                         printf ("MPFR_EMIN_MIN");
                       else if (e == emin)
                         printf ("default emin");
-                      else if (e >= LONG_MIN)
-                        printf ("%ld", (long) e);
                       else
-                        printf ("<LONG_MIN");
+                        printf ("%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) e);
                       printf (") with mpfr_%s,\nx = %d/16, prec = %d, k = %d,"
                               " %s\n", div == 0 ? "mul_2si" : div == 1 ?
                               "div_2si" : "div_2ui", s * i, prec, k,
@@ -167,10 +165,8 @@ large (mpfr_exp_t e)
         printf ("MPFR_EMAX_MAX");
       else if (e == emax)
         printf ("default emax");
-      else if (e <= LONG_MAX)
-        printf ("%ld", (long) e);
       else
-        printf (">LONG_MAX");
+        printf ("%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) e);
       printf (") for mpfr_mul_2si\n");
       printf ("Expected inex > 0, flags = %u,\n         y = ",
               (unsigned int) MPFR_FLAGS_INEXACT);
@@ -192,10 +188,8 @@ large (mpfr_exp_t e)
         printf ("MPFR_EMAX_MAX");
       else if (e == emax)
         printf ("default emax");
-      else if (e <= LONG_MAX)
-        printf ("%ld", (long) e);
       else
-        printf (">LONG_MAX");
+        printf ("%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) e);
       printf (") for mpfr_div_2si\n");
       printf ("Expected inex > 0, flags = %u,\n         y = ",
               (unsigned int) MPFR_FLAGS_INEXACT);
@@ -217,10 +211,8 @@ large (mpfr_exp_t e)
         printf ("MPFR_EMAX_MAX");
       else if (e == emax)
         printf ("default emax");
-      else if (e <= LONG_MAX)
-        printf ("%ld", (long) e);
       else
-        printf (">LONG_MAX");
+        printf ("%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) e);
       printf (") for mpfr_div_2ui\n");
       printf ("Expected inex > 0, flags = %u,\n         y = ",
               (unsigned int) MPFR_FLAGS_INEXACT);
@@ -238,10 +230,24 @@ large (mpfr_exp_t e)
 static void
 large0 (void)
 {
-  large (256);
-  if (mpfr_get_emax () != MPFR_EMAX_MAX)
-    large (mpfr_get_emax ());
-  large (MPFR_EMAX_MAX);
+  mpfr_exp_t emin;
+
+  emin = mpfr_get_emin ();
+
+  while (1)
+    {
+      large (256);
+      if (mpfr_get_emax () != MPFR_EMAX_MAX)
+        large (mpfr_get_emax ());
+      large (MPFR_EMAX_MAX);
+      if (mpfr_get_emin () == MPFR_EMIN_MIN)
+        break;
+      /* Redo the test with __gmpfr_emin set to MPFR_EMIN_MIN, which can
+         be useful to trigger integer overflows as in div_2ui.c r12272. */
+      set_emin (MPFR_EMIN_MIN);
+    }
+
+  set_emin (emin);
 }
 
 /* Cases where the function overflows on n = 0 when rounding is like
@@ -252,7 +258,7 @@ overflow0 (mpfr_exp_t emax)
   mpfr_exp_t old_emax;
   mpfr_t x, y1, y2;
   int neg, r, op;
-  static char *sop[4] = { "mul_2ui", "mul_2si", "div_2ui", "div_2si" };
+  static const char *sop[4] = { "mul_2ui", "mul_2si", "div_2ui", "div_2si" };
 
   old_emax = mpfr_get_emax ();
   set_emax (emax);
@@ -314,6 +320,21 @@ overflow0 (mpfr_exp_t emax)
   set_emax (old_emax);
 }
 
+static void
+coverage_div_2ui (void)
+{
+  mpfr_t x, y;
+
+  mpfr_init2 (x, 2);
+  mpfr_init2 (y, 2);
+  mpfr_set_ui_2exp (x, 1, mpfr_get_emax () - 1, MPFR_RNDN);
+  mpfr_div_2ui (y, x, (unsigned long) LONG_MAX + 1, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_zero_p (y));
+  MPFR_ASSERTN(mpfr_signbit (y) == 0);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -323,6 +344,7 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
+  coverage_div_2ui ();
   mpfr_inits2 (53, w, z, (mpfr_ptr) 0);
 
   for (i = 0; i < 3; i++)

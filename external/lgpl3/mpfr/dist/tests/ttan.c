@@ -1,6 +1,6 @@
 /* Test file for mpfr_tan.
 
-Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -111,6 +111,27 @@ bug20171218 (void)
   mpfr_clear (z);
 }
 
+static void
+coverage (void)
+{
+  mpfr_t x, y;
+  int inex;
+  mpfr_exp_t emax;
+
+  /* exercise mpfr_round_near_x when rounding gives an overflow */
+  emax = mpfr_get_emax ();
+  mpfr_set_emax (-2);
+  mpfr_init2 (x, 2);
+  mpfr_init2 (y, 2);
+  mpfr_setmax (x, mpfr_get_emax ());
+  inex = mpfr_tan (y, x, MPFR_RNDA);
+  MPFR_ASSERTN(inex > 0);
+  MPFR_ASSERTN(mpfr_inf_p (y) && mpfr_signbit (y) == 0);
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_set_emax (emax);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -121,6 +142,7 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
+  coverage ();
   bug20171218 ();
   check_nans ();
 

@@ -1,7 +1,7 @@
 /* mpfr_get_d, mpfr_get_d_2exp -- convert a multiple precision floating-point
                                   number to a machine double precision float
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h>
@@ -89,7 +89,6 @@ mpfr_get_d (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   else
     {
       int nbits;
-      mp_size_t np, i;
       mp_limb_t tp[ MPFR_LIMBS_PER_DOUBLE ];
       int carry;
 
@@ -97,17 +96,22 @@ mpfr_get_d (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
       if (MPFR_UNLIKELY (e < -1021))
         /*In the subnormal case, compute the exact number of significant bits*/
         {
-          nbits += (1021 + e);
-          MPFR_ASSERTD (nbits >= 1);
+          nbits += 1021 + e;
+          MPFR_ASSERTD (1 <= nbits && nbits < IEEE_DBL_MANT_DIG);
         }
-      np = MPFR_PREC2LIMBS (nbits);
-      MPFR_ASSERTD ( np <= MPFR_LIMBS_PER_DOUBLE );
       carry = mpfr_round_raw_4 (tp, MPFR_MANT(src), MPFR_PREC(src), negative,
                                 nbits, rnd_mode);
       if (MPFR_UNLIKELY(carry))
         d = 1.0;
       else
         {
+#if MPFR_LIMBS_PER_DOUBLE == 1
+          d = (double) tp[0] / MP_BASE_AS_DOUBLE;
+#else
+          mp_size_t np, i;
+          MPFR_ASSERTD (nbits <= IEEE_DBL_MANT_DIG);
+          np = MPFR_PREC2LIMBS (nbits);
+          MPFR_ASSERTD ( np <= MPFR_LIMBS_PER_DOUBLE );
           /* The following computations are exact thanks to the previous
              mpfr_round_raw. */
           d = (double) tp[0] / MP_BASE_AS_DOUBLE;
@@ -115,6 +119,7 @@ mpfr_get_d (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
             d = (d + tp[i]) / MP_BASE_AS_DOUBLE;
           /* d is the mantissa (between 1/2 and 1) of the argument rounded
              to 53 bits */
+#endif
         }
       d = mpfr_scale2 (d, e);
       if (negative)
@@ -154,28 +159,23 @@ mpfr_get_d_2exp (long *expptr, mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   MPFR_ALIAS (tmp, src, MPFR_SIGN (src), 0);
   ret = mpfr_get_d (tmp, rnd_mode);
 
-  if (MPFR_IS_PURE_FP(src))
+  exp = MPFR_GET_EXP (src);
+
+  /* rounding can give 1.0, adjust back to 0.5 <= abs(ret) < 1.0 */
+  if (ret == 1.0)
     {
-      exp = MPFR_GET_EXP (src);
-
-      /* rounding can give 1.0, adjust back to 0.5 <= abs(ret) < 1.0 */
-      if (ret == 1.0)
-        {
-          ret = 0.5;
-          exp++;
-        }
-      else if (ret == -1.0)
-        {
-          ret = -0.5;
-          exp++;
-        }
-
-      MPFR_ASSERTN ((ret >= 0.5 && ret < 1.0)
-                    || (ret <= -0.5 && ret > -1.0));
-      MPFR_ASSERTN (exp >= LONG_MIN && exp <= LONG_MAX);
+      ret = 0.5;
+      exp++;
     }
-  else
-    exp = 0;
+  else if (ret == -1.0)
+    {
+      ret = -0.5;
+      exp++;
+    }
+
+  MPFR_ASSERTN ((ret >= 0.5 && ret < 1.0)
+                || (ret <= -0.5 && ret > -1.0));
+  MPFR_ASSERTN (exp >= LONG_MIN && exp <= LONG_MAX);
 
   *expptr = exp;
   return ret;

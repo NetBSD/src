@@ -1,7 +1,7 @@
 /* mpfr_set_ld -- convert a machine long double to
                   a multiple precision floating-point number
 
-Copyright 2002-2018 Free Software Foundation, Inc.
+Copyright 2002-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include <float.h> /* needed so that MPFR_LDBL_MANT_DIG is correctly defined */
@@ -26,27 +26,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
-/* Various i386 systems have been seen with <float.h> LDBL constants equal
-   to the DBL ones, whereas they ought to be bigger, reflecting the 10-byte
-   IEEE extended format on that processor.  gcc 3.2.1 on FreeBSD and Solaris
-   has been seen with the problem, and gcc 2.95.4 on FreeBSD 4.7.  */
-
-#if HAVE_LDOUBLE_IEEE_EXT_LITTLE
-static const union {
-  char         bytes[10];
-  long double  d;
-} ldbl_max_struct = {
-  { '\377','\377','\377','\377',
-    '\377','\377','\377','\377',
-    '\376','\177' }
-};
-#define MPFR_LDBL_MAX   (ldbl_max_struct.d)
-#else
-#define MPFR_LDBL_MAX   LDBL_MAX
-#endif
-
-/* To check for +inf, one can use the test x > MPFR_LDBL_MAX, as LDBL_MAX
-   is the maximum finite number representable in a long double, according
+/* To check for +inf, one can use the test x > LDBL_MAX, as LDBL_MAX is
+   the maximum finite number representable in a long double, according
    to DR 467; see
      http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2092.htm
    If this fails on some platform, a test x - x != 0 might be used. */
@@ -62,11 +43,25 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 
 #elif defined(HAVE_LDOUBLE_IEEE_EXT_LITTLE)
 
+#if GMP_NUMB_BITS >= 64
+# define MPFR_LIMBS_PER_LONG_DOUBLE 1
+#elif GMP_NUMB_BITS == 32
+# define MPFR_LIMBS_PER_LONG_DOUBLE 2
+#elif GMP_NUMB_BITS == 16
+# define MPFR_LIMBS_PER_LONG_DOUBLE 4
+#elif GMP_NUMB_BITS == 8
+# define MPFR_LIMBS_PER_LONG_DOUBLE 8
+#else
+#error "GMP_NUMB_BITS is assumed to be 8, 16, 32 or >= 64"
+#endif
+/* The hypothetical GMP_NUMB_BITS == 16 is not supported. It will trigger
+   an error below. */
+
 /* IEEE Extended Little Endian Code */
 int
 mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 {
-  int inexact, i, k, cnt;
+  int inexact, k, cnt;
   mpfr_t tmp;
   mp_limb_t tmpmant[MPFR_LIMBS_PER_LONG_DOUBLE];
   mpfr_long_double_t x;
@@ -81,13 +76,13 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
       MPFR_RET_NAN;
     }
   /* Check for INF */
-  else if (MPFR_UNLIKELY (d > MPFR_LDBL_MAX))
+  else if (MPFR_UNLIKELY (d > LDBL_MAX))
     {
       MPFR_SET_INF (r);
       MPFR_SET_POS (r);
       return 0;
     }
-  else if (MPFR_UNLIKELY (d < -MPFR_LDBL_MAX))
+  else if (MPFR_UNLIKELY (d < -LDBL_MAX))
     {
       MPFR_SET_INF (r);
       MPFR_SET_NEG (r);
@@ -120,25 +115,48 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
       x.ld = -x.ld;
     }
 
-  /* Extract mantissa */
-#if GMP_NUMB_BITS >= 64
+  /* Extract and normalize the significand */
+#if MPFR_LIMBS_PER_LONG_DOUBLE == 1
   tmpmant[0] = ((mp_limb_t) x.s.manh << 32) | ((mp_limb_t) x.s.manl);
-#else
+  count_leading_zeros (cnt, tmpmant[0]);
+  tmpmant[0] <<= cnt;
+  k = 0; /* number of limbs shifted */
+#else /* MPFR_LIMBS_PER_LONG_DOUBLE >= 2 */
+#if MPFR_LIMBS_PER_LONG_DOUBLE == 2
   tmpmant[0] = (mp_limb_t) x.s.manl;
   tmpmant[1] = (mp_limb_t) x.s.manh;
-#endif
-
-  /* Normalize mantissa */
-  i = MPFR_LIMBS_PER_LONG_DOUBLE;
-  MPN_NORMALIZE_NOT_ZERO (tmpmant, i);
-  k = MPFR_LIMBS_PER_LONG_DOUBLE - i;
-  count_leading_zeros (cnt, tmpmant[i - 1]);
-  if (MPFR_UNLIKELY (cnt != 0))
-    mpn_lshift (tmpmant + k, tmpmant, i, cnt);
-  else if (MPFR_UNLIKELY (k != 0))
-    MPN_COPY (tmpmant + k, tmpmant, i);
-  if (MPFR_UNLIKELY (k != 0))
-    MPN_ZERO (tmpmant, k);
+#elif MPFR_LIMBS_PER_LONG_DOUBLE == 4
+  tmpmant[0] = (mp_limb_t) x.s.manl;
+  tmpmant[1] = (mp_limb_t) (x.s.manl >> 16);
+  tmpmant[2] = (mp_limb_t) x.s.manh;
+  tmpmant[3] = (mp_limb_t) (x.s.manh >> 16);
+#elif MPFR_LIMBS_PER_LONG_DOUBLE == 8
+  tmpmant[0] = (mp_limb_t) x.s.manl;
+  tmpmant[1] = (mp_limb_t) (x.s.manl >> 8);
+  tmpmant[2] = (mp_limb_t) (x.s.manl >> 16);
+  tmpmant[3] = (mp_limb_t) (x.s.manl >> 24);
+  tmpmant[4] = (mp_limb_t) x.s.manh;
+  tmpmant[5] = (mp_limb_t) (x.s.manh >> 8);
+  tmpmant[6] = (mp_limb_t) (x.s.manh >> 16);
+  tmpmant[7] = (mp_limb_t) (x.s.manh >> 24);
+#else
+#error "MPFR_LIMBS_PER_LONG_DOUBLE should be 1, 2, 4 or 8"
+#endif /* MPFR_LIMBS_PER_LONG_DOUBLE >= 2 */
+  {
+    int i = MPFR_LIMBS_PER_LONG_DOUBLE;
+    MPN_NORMALIZE_NOT_ZERO (tmpmant, i);
+    k = MPFR_LIMBS_PER_LONG_DOUBLE - i;
+    count_leading_zeros (cnt, tmpmant[i - 1]);
+    if (cnt != 0)
+      mpn_lshift (tmpmant + k, tmpmant, i, cnt);
+    else if (k != 0)
+      /* since we copy {tmpmant, i} into {tmpmant + k, i}, we should work
+         decreasingly, thus call mpn_copyd */
+      mpn_copyd (tmpmant + k, tmpmant, i);
+    if (k != 0)
+      MPN_ZERO (tmpmant, k);
+  }
+#endif /* MPFR_LIMBS_PER_LONG_DOUBLE == 1 */
 
   /* Set exponent */
   exp = (mpfr_exp_t) ((x.s.exph << 8) + x.s.expl);  /* 15-bit unsigned int */
@@ -163,7 +181,7 @@ int
 mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 {
   mpfr_t t, u;
-  int inexact, shift_exp;
+  int inexact;
   double h, l;
   MPFR_SAVE_EXPO_DECL (expo);
 
@@ -171,12 +189,12 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   LONGDOUBLE_NAN_ACTION (d, goto nan);
 
   /* Check for INF */
-  if (d > MPFR_LDBL_MAX)
+  if (d > LDBL_MAX)
     {
       mpfr_set_inf (r, 1);
       return 0;
     }
-  else if (d < -MPFR_LDBL_MAX)
+  else if (d < -LDBL_MAX)
     {
       mpfr_set_inf (r, -1);
       return 0;
@@ -185,8 +203,8 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   else if (d == 0.0)
     return mpfr_set_d (r, (double) d, rnd_mode);
 
-  if (d >= (long double) MPFR_LDBL_MAX || d <= (long double) -MPFR_LDBL_MAX)
-    h = (d >= (long double) MPFR_LDBL_MAX) ? MPFR_LDBL_MAX : -MPFR_LDBL_MAX;
+  if (d >= LDBL_MAX || d <= -LDBL_MAX)
+    h = (d >= LDBL_MAX) ? LDBL_MAX : -LDBL_MAX;
   else
     h = (double) d; /* should not overflow */
   l = (double) (d - (long double) h);
@@ -229,12 +247,12 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   LONGDOUBLE_NAN_ACTION (d, goto nan);
 
   /* Check for INF */
-  if (d > MPFR_LDBL_MAX)
+  if (d > LDBL_MAX)
     {
       mpfr_set_inf (r, 1);
       return 0;
     }
-  else if (d < -MPFR_LDBL_MAX)
+  else if (d < -LDBL_MAX)
     {
       mpfr_set_inf (r, -1);
       return 0;

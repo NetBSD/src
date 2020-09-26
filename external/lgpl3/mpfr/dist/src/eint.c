@@ -1,6 +1,6 @@
 /* mpfr_eint, mpfr_eint1 -- the exponential integral
 
-Copyright 2005-2018 Free Software Foundation, Inc.
+Copyright 2005-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -31,7 +31,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 */
 
 /* Compute in y an approximation of sum(x^k/k/k!, k=1..infinity),
-   and return e such that the absolute error is bound by 2^e ulp(y).
+   assuming x != 0, and return e such that the absolute error is
+   bounded by 2^e ulp(y).
    Return PREC(y) when the truncated series does not converge.
 */
 static mpfr_exp_t
@@ -44,6 +45,10 @@ mpfr_eint_aux (mpfr_t y, mpfr_srcptr x)
   mpfr_prec_t w = MPFR_PREC(y);
   unsigned long k;
   MPFR_GROUP_DECL (group);
+
+  MPFR_LOG_FUNC (
+    ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
+    ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
 
   /* for |x| <= 1, we have S := sum(x^k/k/k!, k=1..infinity) = x + R(x)
      where |R(x)| <= (x/2)^2/(1-|x|/2) <= 2*(x/2)^2
@@ -61,18 +66,32 @@ mpfr_eint_aux (mpfr_t y, mpfr_srcptr x)
   mpz_init (u);
   mpz_init (m);
   MPFR_GROUP_INIT_3 (group, 31, eps, erru, errs);
-  e = mpfr_get_z_2exp (m, x); /* x = m * 2^e */
-  MPFR_ASSERTD (mpz_sizeinbase (m, 2) == MPFR_PREC (x));
+  e = mpfr_get_z_2exp (m, x);  /* x = m * 2^e with m != 0 */
+  MPFR_LOG_MSG (("e=%" MPFR_EXP_FSPEC "d\n", (mpfr_eexp_t) e));
+  MPFR_ASSERTD (mpz_sizeinbase (m, 2) == MPFR_PREC (x));  /* since m != 0 */
   if (MPFR_PREC (x) > w)
     {
       e += MPFR_PREC (x) - w;
-      mpz_tdiv_q_2exp (m, m, MPFR_PREC (x) - w);
+      mpz_tdiv_q_2exp (m, m, MPFR_PREC (x) - w);  /* one still has m != 0 */
+      MPFR_LOG_MSG (("e=%" MPFR_EXP_FSPEC "d\n", (mpfr_eexp_t) e));
     }
-  /* remove trailing zeroes from m: this will speed up much cases where
-     x is a small integer divided by a power of 2 */
-  k = mpz_scan1 (m, 0);
-  mpz_tdiv_q_2exp (m, m, k);
-  e += k;
+  /* Remove trailing zeroes from m: this will speed up much cases where
+     x is a small integer divided by a power of 2.
+     Note: As shown above, m != 0. This is needed for the "e += ..." below,
+     otherwise n would take the largest value of mp_bitcnt_t and could be
+     too large. */
+  {
+    mp_bitcnt_t n = mpz_scan1 (m, 0);
+    mpz_tdiv_q_2exp (m, m, n);
+    /* Since one initially has mpz_sizeinbase (m, 2) == MPFR_PREC (x)
+       and m has not increased, one can deduce that n <= MPFR_PREC (x),
+       so that the cast to mpfr_prec_t is valid. This cast is needed to
+       ensure that the operand e of the addition below is not converted
+       to an unsigned integer type, which could yield incorrect results
+       with some C implementations. */
+    MPFR_ASSERTD (n <= MPFR_PREC (x));
+    e += (mpfr_prec_t) n;
+  }
   /* initialize t to 2^w */
   mpz_set_ui (t, 1);
   mpz_mul_2exp (t, t, w);
@@ -145,6 +164,7 @@ mpfr_eint_aux (mpfr_t y, mpfr_srcptr x)
   mpz_clear (t);
   mpz_clear (u);
   mpz_clear (m);
+  MPFR_LOG_MSG (("e=%" MPFR_EXP_FSPEC "d\n", (mpfr_eexp_t) e));
   return e;
 }
 
@@ -160,6 +180,10 @@ mpfr_eint_asympt (mpfr_ptr y, mpfr_srcptr x)
   mpfr_t invx, t, err;
   unsigned long k;
   mpfr_exp_t err_exp;
+
+  MPFR_LOG_FUNC (
+    ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x),
+    ("err_exp=%" MPFR_EXP_FSPEC "d", (mpfr_eexp_t) err_exp));
 
   mpfr_init2 (t, p);
   mpfr_init2 (invx, p);

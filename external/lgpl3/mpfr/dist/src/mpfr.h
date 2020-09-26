@@ -1,6 +1,6 @@
 /* mpfr.h -- Include file for mpfr.
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifndef __MPFR_H
@@ -25,9 +25,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Define MPFR version number */
 #define MPFR_VERSION_MAJOR 4
-#define MPFR_VERSION_MINOR 0
-#define MPFR_VERSION_PATCHLEVEL 1
-#define MPFR_VERSION_STRING "4.0.1"
+#define MPFR_VERSION_MINOR 1
+#define MPFR_VERSION_PATCHLEVEL 0
+#define MPFR_VERSION_STRING "4.1.0"
 
 /* User macros:
    MPFR_USE_FILE:        Define it to make MPFR define functions dealing
@@ -49,7 +49,11 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_VERSION \
 MPFR_VERSION_NUM(MPFR_VERSION_MAJOR,MPFR_VERSION_MINOR,MPFR_VERSION_PATCHLEVEL)
 
+#ifndef MPFR_USE_MINI_GMP
 #include <gmp.h>
+#else
+#include <mini-gmp.h>
+#endif
 
 /* Avoid some problems with macro expansion if the user defines macros
    with the same name as keywords. By convention, identifiers and macro
@@ -111,11 +115,21 @@ typedef enum {
 #define GMP_RNDU MPFR_RNDU
 #define GMP_RNDD MPFR_RNDD
 
-/* Note: With the following default choices for _MPFR_PREC_FORMAT and
-   _MPFR_EXP_FORMAT, mpfr_exp_t will be the same as [mp_exp_t] (at least
-   up to GMP 5). */
+/* The _MPFR_PREC_FORMAT and _MPFR_EXP_FORMAT values are automatically
+   defined below. You MUST NOT force a value (this will break the ABI),
+   possibly except for a very particular use, in which case you also need
+   to rebuild the MPFR library with the chosen values; do not install this
+   rebuilt library in a path that is searched by default, otherwise this
+   will break applications that are dynamically linked with MPFR.
 
-/* Define precision: 1 (short), 2 (int) or 3 (long) (DON'T USE IT!) */
+   Using non-default values is not guaranteed to work.
+
+   Note: With the following default choices for _MPFR_PREC_FORMAT and
+   _MPFR_EXP_FORMAT, mpfr_exp_t will be the same as [mp_exp_t] (at least
+   up to GMP 6). */
+
+/* Define precision: 1 (short), 2 (int) or 3 (long).
+   DON'T FORCE A VALUE (see above). */
 #ifndef _MPFR_PREC_FORMAT
 # if __GMP_MP_SIZE_T_INT
 #  define _MPFR_PREC_FORMAT 2
@@ -124,8 +138,8 @@ typedef enum {
 # endif
 #endif
 
-/* Define exponent: 1 (short), 2 (int), 3 (long) or 4 (intmax_t)
-   (DON'T USE IT!) */
+/* Define exponent: 1 (short), 2 (int), 3 (long) or 4 (intmax_t).
+   DON'T FORCE A VALUE (see above). */
 #ifndef _MPFR_EXP_FORMAT
 # define _MPFR_EXP_FORMAT _MPFR_PREC_FORMAT
 #endif
@@ -136,7 +150,11 @@ typedef enum {
 
 /* Let's make mpfr_prec_t signed in order to avoid problems due to the
    usual arithmetic conversions when mixing mpfr_prec_t and mpfr_exp_t
-   in an expression (for error analysis) if casts are forgotten. */
+   in an expression (for error analysis) if casts are forgotten.
+   Note: mpfr_prec_t is currently limited to "long". This means that
+   under MS Windows, the precisions are limited to about 2^31; however,
+   these are already huge precisions, probably sufficient in practice
+   on this platform. */
 #if   _MPFR_PREC_FORMAT == 1
 typedef short mpfr_prec_t;
 typedef unsigned short mpfr_uprec_t;
@@ -144,6 +162,9 @@ typedef unsigned short mpfr_uprec_t;
 typedef int   mpfr_prec_t;
 typedef unsigned int   mpfr_uprec_t;
 #elif _MPFR_PREC_FORMAT == 3
+/* we could use "long long" under Windows 64 here, which can be tested
+   with the macro _WIN64 according to
+   https://sourceforge.net/p/predef/wiki/OperatingSystems/ */
 typedef long  mpfr_prec_t;
 typedef unsigned long  mpfr_uprec_t;
 #else
@@ -264,12 +285,12 @@ typedef enum {
 #if defined (__GNUC__)
 # if __GNUC__ >= 4
 #  undef __MPFR_SENTINEL_ATTR
-#  define __MPFR_SENTINEL_ATTR __attribute__ ((sentinel))
+#  define __MPFR_SENTINEL_ATTR __attribute__ ((__sentinel__))
 # endif
 #endif
 
 /* If the user hasn't requested his/her preference
-   and if the intension of support by the compiler is C99
+   and if the intention of support by the compiler is C99
    and if the compiler is known to support the C99 feature
    then we can auto-detect the C99 support as OK.
    __GNUC__ is used to detect GNU-C, ICC & CLANG compilers.
@@ -323,7 +344,7 @@ typedef enum {
 */
 #if defined(__GNUC__) && \
   (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
-# define MPFR_DEPRECATED __attribute__ ((deprecated))
+# define MPFR_DEPRECATED __attribute__ ((__deprecated__))
 #elif defined(_MSC_VER) && _MSC_VER >= 1300
 # define MPFR_DEPRECATED __declspec(deprecated)
 #else
@@ -331,9 +352,16 @@ typedef enum {
 #endif
 /* TODO: Also define MPFR_EXPERIMENTAL for experimental functions?
    See SVN_EXPERIMENTAL in Subversion 1.9+ as an example:
-   __attribute__((warning("..."))) can be used with GCC 4.3.1+ but
+   __attribute__((__warning__("..."))) can be used with GCC 4.3.1+ but
    not __llvm__, and __declspec(deprecated("...")) can be used with
    MSC as above. */
+
+#if defined(__GNUC__) && \
+  (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))
+# define MPFR_RETURNS_NONNULL __attribute__ ((__returns_nonnull__))
+#else
+# define MPFR_RETURNS_NONNULL
+#endif
 
 /* Note: In order to be declared, some functions need a specific
    system header to be included *before* "mpfr.h". If the user
@@ -347,14 +375,16 @@ typedef enum {
 extern "C" {
 #endif
 
-__MPFR_DECLSPEC const char * mpfr_get_version (void);
-__MPFR_DECLSPEC const char * mpfr_get_patches (void);
+__MPFR_DECLSPEC MPFR_RETURNS_NONNULL const char * mpfr_get_version (void);
+__MPFR_DECLSPEC MPFR_RETURNS_NONNULL const char * mpfr_get_patches (void);
+
 __MPFR_DECLSPEC int mpfr_buildopt_tls_p          (void);
 __MPFR_DECLSPEC int mpfr_buildopt_float128_p     (void);
 __MPFR_DECLSPEC int mpfr_buildopt_decimal_p      (void);
 __MPFR_DECLSPEC int mpfr_buildopt_gmpinternals_p (void);
 __MPFR_DECLSPEC int mpfr_buildopt_sharedcache_p  (void);
-__MPFR_DECLSPEC const char * mpfr_buildopt_tune_case (void);
+__MPFR_DECLSPEC MPFR_RETURNS_NONNULL const char *
+  mpfr_buildopt_tune_case (void);
 
 __MPFR_DECLSPEC mpfr_exp_t mpfr_get_emin     (void);
 __MPFR_DECLSPEC int        mpfr_set_emin     (mpfr_exp_t);
@@ -430,11 +460,12 @@ __MPFR_DECLSPEC int mpfr_set_flt (mpfr_ptr, float, mpfr_rnd_t);
 /* _Decimal64 is not defined in C++,
    cf https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51364 */
 __MPFR_DECLSPEC int mpfr_set_decimal64 (mpfr_ptr, _Decimal64, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_set_decimal128 (mpfr_ptr, _Decimal128, mpfr_rnd_t);
 #endif
 __MPFR_DECLSPEC int mpfr_set_ld (mpfr_ptr, long double, mpfr_rnd_t);
 #ifdef MPFR_WANT_FLOAT128
-__MPFR_DECLSPEC int mpfr_set_float128 (mpfr_ptr, __float128, mpfr_rnd_t);
-__MPFR_DECLSPEC __float128 mpfr_get_float128 (mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_set_float128 (mpfr_ptr, _Float128, mpfr_rnd_t);
+__MPFR_DECLSPEC _Float128 mpfr_get_float128 (mpfr_srcptr, mpfr_rnd_t);
 #endif
 __MPFR_DECLSPEC int mpfr_set_z (mpfr_ptr, mpz_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_set_z_2exp (mpfr_ptr, mpz_srcptr, mpfr_exp_t,
@@ -481,6 +512,7 @@ __MPFR_DECLSPEC float mpfr_get_flt (mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC double mpfr_get_d (mpfr_srcptr, mpfr_rnd_t);
 #ifdef MPFR_WANT_DECIMAL_FLOATS
 __MPFR_DECLSPEC _Decimal64 mpfr_get_decimal64 (mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC _Decimal128 mpfr_get_decimal128 (mpfr_srcptr, mpfr_rnd_t);
 #endif
 __MPFR_DECLSPEC long double mpfr_get_ld (mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC double mpfr_get_d1 (mpfr_srcptr);
@@ -489,6 +521,7 @@ __MPFR_DECLSPEC long double mpfr_get_ld_2exp (long*, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_frexp (mpfr_exp_t*, mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC long mpfr_get_si (mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC unsigned long mpfr_get_ui (mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC size_t mpfr_get_str_ndigits (int, mpfr_prec_t);
 __MPFR_DECLSPEC char * mpfr_get_str (char*, mpfr_exp_t*, int, size_t,
                                      mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_get_z (mpz_ptr z, mpfr_srcptr f, mpfr_rnd_t);
@@ -588,11 +621,12 @@ __MPFR_DECLSPEC int mpfr_cmp  (mpfr_srcptr, mpfr_srcptr);
 __MPFR_DECLSPEC int mpfr_cmp3 (mpfr_srcptr, mpfr_srcptr, int);
 __MPFR_DECLSPEC int mpfr_cmp_d (mpfr_srcptr, double);
 __MPFR_DECLSPEC int mpfr_cmp_ld (mpfr_srcptr, long double);
-__MPFR_DECLSPEC int mpfr_cmpabs (mpfr_srcptr, mpfr_srcptr);
 __MPFR_DECLSPEC int mpfr_cmp_ui (mpfr_srcptr, unsigned long);
 __MPFR_DECLSPEC int mpfr_cmp_si (mpfr_srcptr, long);
 __MPFR_DECLSPEC int mpfr_cmp_ui_2exp (mpfr_srcptr, unsigned long, mpfr_exp_t);
 __MPFR_DECLSPEC int mpfr_cmp_si_2exp (mpfr_srcptr, long, mpfr_exp_t);
+__MPFR_DECLSPEC int mpfr_cmpabs (mpfr_srcptr, mpfr_srcptr);
+__MPFR_DECLSPEC int mpfr_cmpabs_ui (mpfr_srcptr, unsigned long);
 __MPFR_DECLSPEC void mpfr_reldiff (mpfr_ptr, mpfr_srcptr, mpfr_srcptr,
                                    mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_eq (mpfr_srcptr, mpfr_srcptr, unsigned long);
@@ -734,6 +768,8 @@ __MPFR_DECLSPEC int mpfr_fmms (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                                mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_sum (mpfr_ptr, const mpfr_ptr *, unsigned long,
                               mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_dot (mpfr_ptr, const mpfr_ptr *, const mpfr_ptr *,
+                              unsigned long, mpfr_rnd_t);
 
 __MPFR_DECLSPEC void mpfr_free_cache (void);
 __MPFR_DECLSPEC void mpfr_free_cache2 (mpfr_free_cache_t);
@@ -750,12 +786,15 @@ __MPFR_DECLSPEC int mpfr_round_nearest_away_end (mpfr_t, int);
 
 __MPFR_DECLSPEC size_t mpfr_custom_get_size (mpfr_prec_t);
 __MPFR_DECLSPEC void mpfr_custom_init (void *, mpfr_prec_t);
-__MPFR_DECLSPEC void * mpfr_custom_get_significand (mpfr_srcptr);
+__MPFR_DECLSPEC MPFR_RETURNS_NONNULL void *
+  mpfr_custom_get_significand (mpfr_srcptr);
 __MPFR_DECLSPEC mpfr_exp_t mpfr_custom_get_exp (mpfr_srcptr);
 __MPFR_DECLSPEC void mpfr_custom_move (mpfr_ptr, void *);
 __MPFR_DECLSPEC void mpfr_custom_init_set (mpfr_ptr, int, mpfr_exp_t,
                                            mpfr_prec_t, void *);
-__MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
+__MPFR_DECLSPEC int mpfr_custom_get_kind (mpfr_srcptr);
+
+__MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
 
 #if defined (__cplusplus)
 }
@@ -794,7 +833,7 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
    even if it produces faster and smaller code. */
 #ifndef MPFR_USE_NO_MACRO
 
-/* Inlining theses functions is both faster and smaller */
+/* Inlining these functions is both faster and smaller */
 #define mpfr_nan_p(_x)      ((_x)->_mpfr_exp == __MPFR_EXP_NAN)
 #define mpfr_inf_p(_x)      ((_x)->_mpfr_exp == __MPFR_EXP_INF)
 #define mpfr_zero_p(_x)     ((_x)->_mpfr_exp == __MPFR_EXP_ZERO)
@@ -832,17 +871,8 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
 #define mpfr_div_2exp(y,x,n,r) mpfr_div_2ui((y),(x),(n),(r))
 
 
-/* When using GCC, optimize certain common comparisons and affectations.
-   + Remove some Intel C/C++ (ICC) versions since they now define __GNUC__
-     but produce a huge number of warnings if you use this code.
-     VL: I couldn't reproduce a single warning when enabling these macros
-     with icc 10.1 20080212 on Itanium. But with this version, the obsolete
-     __ICC macro isn't defined (__INTEL_COMPILER is, though), so that these
-     macros are enabled anyway. Checking with other ICC versions is needed.
-     For now, !defined(__ICC) seems to be the right test. Possibly detect
-     whether warnings are produced or not with a configure test.
-   + Remove C++ too, since it complains too much. */
-/* Added casts to improve robustness in case of undefined behavior and
+/* When using GCC or ICC, optimize certain common comparisons and affectations.
+   Added casts to improve robustness in case of undefined behavior and
    compiler extensions based on UB (in particular -fwrapv). MPFR doesn't
    use such extensions, but these macros will be used by 3rd-party code,
    where such extensions may be required.
@@ -862,7 +892,7 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
    If this is not possible (for future macros), one of the tricks described
    on http://groups.google.com/group/comp.std.c/msg/e92abd24bf9eaf7b could
    be used. */
-#if defined (__GNUC__) && !defined(__ICC) && !defined(__cplusplus)
+#if defined (__GNUC__) && !defined(__cplusplus)
 #if (__GNUC__ >= 2)
 
 #undef mpfr_cmp_ui
@@ -970,7 +1000,7 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
 
 #endif /* MPFR_USE_NO_MACRO */
 
-/* Theses are defined to be macros */
+/* These are defined to be macros */
 #define mpfr_init_set_si(x, i, rnd) \
  ( mpfr_init(x), mpfr_set_si((x), (i), (rnd)) )
 #define mpfr_init_set_ui(x, i, rnd) \
@@ -1019,7 +1049,7 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind (mpfr_srcptr);
 
 
 /* Check if <stdint.h> / <inttypes.h> is included or if the user
-   explicitly wants intmax_t. Automatical detection is done by
+   explicitly wants intmax_t. Automatic detection is done by
    checking:
      - INTMAX_C and UINTMAX_C, but not if the compiler is a C++ one
        (as suggested by Patrick Pelissier) because the test does not

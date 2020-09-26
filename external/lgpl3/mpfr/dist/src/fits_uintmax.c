@@ -1,6 +1,6 @@
 /* mpfr_fits_uintmax_p -- test whether an mpfr fits an uintmax_t.
 
-Copyright 2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,14 +17,10 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "mpfr-intmax.h"
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-impl.h"
 
 /* Note: though mpfr-impl.h is included in fits_u.h, we also include it
@@ -37,7 +33,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifdef _MPFR_H_HAVE_INTMAX_T
 
 #define FUNCTION   mpfr_fits_uintmax_p
-#define MAXIMUM    MPFR_UINTMAX_MAX
+#define MAXIMUM    UINTMAX_MAX
 #define TYPE       uintmax_t
 
 #include "fits_u.h"

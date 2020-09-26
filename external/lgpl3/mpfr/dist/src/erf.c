@@ -1,6 +1,6 @@
 /* mpfr_erf -- error function of a floating-point number
 
-Copyright 2001, 2003-2018 Free Software Foundation, Inc.
+Copyright 2001, 2003-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -78,7 +78,7 @@ mpfr_erf (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       mpfr_init2 (l, MPFR_PREC(y) + 17);
       mpfr_init2 (h, MPFR_PREC(y) + 17);
       /* first compute l */
-      mpfr_mul (l, x, x, MPFR_RNDU);
+      mpfr_sqr (l, x, MPFR_RNDU);
       mpfr_div_ui (l, l, 3, MPFR_RNDU); /* upper bound on x^2/3 */
       mpfr_ui_sub (l, 1, l, MPFR_RNDZ); /* lower bound on 1 - x^2/3 */
       mpfr_const_pi (h, MPFR_RNDU); /* upper bound of Pi */
@@ -186,10 +186,8 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
 {
   mpfr_prec_t n, m;
   mpfr_exp_t nuk, sigmak;
-  double tauk;
   mpfr_t y, s, t, u;
   unsigned int k;
-  int log2tauk;
   int inex;
   MPFR_GROUP_DECL (group);
   MPFR_ZIV_DECL (loop);
@@ -204,10 +202,14 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
   MPFR_ZIV_INIT (loop, m);
   for (;;)
     {
-      mpfr_mul (y, x, x, MPFR_RNDU); /* err <= 1 ulp */
+      mpfr_t tauk;
+      mpfr_exp_t log2tauk;
+
+      mpfr_sqr (y, x, MPFR_RNDU); /* err <= 1 ulp */
       mpfr_set_ui (s, 1, MPFR_RNDN);
       mpfr_set_ui (t, 1, MPFR_RNDN);
-      tauk = 0.0;
+      mpfr_init2 (tauk, 53);
+      mpfr_set_ui (tauk, 0, MPFR_RNDU);
 
       for (k = 1; ; k++)
         {
@@ -222,12 +224,13 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
           sigmak -= MPFR_GET_EXP(s);
           nuk = MPFR_GET_EXP(u) - MPFR_GET_EXP(s);
 
-          if ((nuk < - (mpfr_exp_t) m) && ((double) k >= xf2))
+          if ((nuk < - (mpfr_exp_t) m) && (k >= xf2))
             break;
 
           /* tauk <- 1/2 + tauk * 2^sigmak + (1+8k)*2^nuk */
-          tauk = 0.5 + mul_2exp (tauk, sigmak)
-            + mul_2exp (1.0 + 8.0 * (double) k, nuk);
+          mpfr_mul_2si (tauk, tauk, sigmak, MPFR_RNDU);
+          mpfr_add_d (tauk, tauk, 0.5 + mul_2exp (1.0 + 8.0 * (double) k, nuk),
+                      MPFR_RNDU);
         }
 
       mpfr_mul (s, x, s, MPFR_RNDU);
@@ -236,8 +239,14 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
       mpfr_const_pi (t, MPFR_RNDZ);
       mpfr_sqrt (t, t, MPFR_RNDZ);
       mpfr_div (s, s, t, MPFR_RNDN);
-      tauk = 4.0 * tauk + 11.0; /* final ulp-error on s */
-      log2tauk = __gmpfr_ceil_log2 (tauk);
+      /* tauk = 4 * tauk + 11: final ulp-error on s */
+      mpfr_mul_2ui (tauk, tauk, 2, MPFR_RNDU);
+      mpfr_add_ui (tauk, tauk, 11, MPFR_RNDU);
+      /* In practice, one should not get an infinity, as it would require
+         a huge precision and a lot of time, but just in case... */
+      MPFR_ASSERTN (!MPFR_IS_INF (tauk));
+      log2tauk = MPFR_GET_EXP (tauk);
+      mpfr_clear (tauk);
 
       if (MPFR_LIKELY (MPFR_CAN_ROUND (s, m - log2tauk, n, rnd_mode)))
         break;

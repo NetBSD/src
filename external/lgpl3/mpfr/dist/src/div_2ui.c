@@ -1,6 +1,6 @@
 /* mpfr_div_2ui -- divide a floating-point number by a power of two
 
-Copyright 1999, 2001-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-impl.h"
@@ -40,6 +40,10 @@ mpfr_div_2ui (mpfr_ptr y, mpfr_srcptr x, unsigned long n, mpfr_rnd_t rnd_mode)
       mpfr_uexp_t diffexp;
 
       MPFR_SETRAW (inexact, y, x, exp, rnd_mode);
+      /* Warning! exp may have increased by 1 due to rounding. Thus the
+         difference below may overflow in a mpfr_exp_t; but mpfr_uexp_t
+         is OK to hold the value, with the difference done in unsigned
+         integer arithmetic in this type. */
       diffexp = (mpfr_uexp_t) exp - (mpfr_uexp_t) (__gmpfr_emin - 1);
       if (MPFR_UNLIKELY (n >= diffexp))  /* exp - n <= emin - 1 */
         {
@@ -50,13 +54,15 @@ mpfr_div_2ui (mpfr_ptr y, mpfr_srcptr x, unsigned long n, mpfr_rnd_t rnd_mode)
             rnd_mode = MPFR_RNDZ;
           return mpfr_underflow (y, rnd_mode, MPFR_SIGN (y));
         }
-      /* exp - n >= emin (no underflow, no integer overflow) */
-      while (n > LONG_MAX)
-        {
-          n -= LONG_MAX;
-          exp -= LONG_MAX;  /* note: signed values */
-        }
-      MPFR_SET_EXP (y, exp - (long) n);
+      /* Now, n < diffexp, i.e. n <= exp - emin, which a difference of
+       * two valid exponents + 0 or 1, thus fits in a mpfr_exp_t (from
+       * the constraints on valid exponents). Moreover, there cannot be
+       * an overflow (if exp had been increased by 1 due to rounding)
+       * since the case n = 0 has been filtered out.
+       */
+      MPFR_ASSERTD (n <= MPFR_EXP_MAX);
+      MPFR_ASSERTD (n >= 1);
+      MPFR_SET_EXP (y, exp - (mpfr_exp_t) n);
     }
 
   MPFR_RET (inexact);

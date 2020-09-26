@@ -1,6 +1,6 @@
 /* mpfr_agm -- arithmetic-geometric mean of two floating-point numbers
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -164,19 +164,27 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
                       e1 > emin (see restriction below).
                       e1 + scale > emin - 1, thus e1 + scale >= emin.
                  3. e2 + scale <= emax, since scale < 0. */
-              if (e1 + e2 > MPFR_EXT_EMAX)
+              if (e1 + e2 > MPFR_EMAX_MAX)
                 {
-                  scaleop = - (((e1 + e2) - MPFR_EXT_EMAX + 1) / 2);
+                  scaleop = - (((e1 + e2) - MPFR_EMAX_MAX + 1) / 2);
                   MPFR_ASSERTN (scaleop < 0);
                 }
               else
                 {
                   /* The addition necessarily overflowed. */
-                  MPFR_ASSERTN (e2 == MPFR_EXT_EMAX);
+                  MPFR_ASSERTN (e2 == MPFR_EMAX_MAX);
                   /* The case where e1 = emin and e2 = emax is not supported
                      here. This would mean that the precision of e2 would be
                      huge (and possibly not supported in practice anyway). */
-                  MPFR_ASSERTN (e1 > MPFR_EXT_EMIN);
+                  MPFR_ASSERTN (e1 > MPFR_EMIN_MIN);
+                  /* Note: this case is probably impossible to have in practice
+                     since we need e2 = emax, and no overflow in the product.
+                     Since the product is >= 2^(e1+e2-2), it implies
+                     e1 + e2 - 2 <= emax, thus e1 <= 2. Now to get an overflow
+                     we need op1 >= 1/2 ulp(op2), which implies that the
+                     precision of op2 should be at least emax-2. On a 64-bit
+                     computer this is impossible to have, and would require
+                     a huge amount of memory on a 32-bit computer. */
                   scaleop = -1;
                 }
 
@@ -191,7 +199,7 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
                  2. e1 + scale >= emin + 1 >= emin.
                  3. e2 + scale <= scale <= emax. */
               MPFR_ASSERTN (e1 <= e2 && e2 <= 0);
-              scaleop = (MPFR_EXT_EMIN + 2 - e1 - e2) / 2;
+              scaleop = (MPFR_EMIN_MIN + 2 - e1 - e2) / 2;
               MPFR_ASSERTN (scaleop > 0);
             }
 
@@ -220,7 +228,7 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
           mpfr_add (vf, u, v, MPFR_RNDN);  /* No overflow? */
           mpfr_div_2ui (vf, vf, 1, MPFR_RNDN);
           /* See proof in algorithms.tex */
-          if (4*eq > p)
+          if (eq > p / 4)
             {
               mpfr_t w;
               MPFR_BLOCK_DECL (flags3);
@@ -257,7 +265,7 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
               mpfr_exp_t scale2;
 
               scale2 = - (((MPFR_GET_EXP (u) + MPFR_GET_EXP (v))
-                           - MPFR_EXT_EMAX + 1) / 2);
+                           - MPFR_EMAX_MAX + 1) / 2);
               MPFR_EXP (u) += scale2;
               MPFR_EXP (v) += scale2;
               scaleit += scale2;

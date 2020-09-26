@@ -1,6 +1,6 @@
 /* mpfr_rec_sqrt -- inverse square root
 
-Copyright 2008-2018 Free Software Foundation, Inc.
+Copyright 2008-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H /* for umul_ppmm */
@@ -165,7 +165,7 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
   MPFR_ASSERTD((a[an - 1] & MPFR_LIMB_HIGHBIT) != 0);
   /* We should have enough bits in one limb and GMP_NUMB_BITS should be even.
      Since that does not depend on MPFR, we always check this. */
-  MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS >= 12 && (GMP_NUMB_BITS & 1) == 0);
+  MPFR_STAT_STATIC_ASSERT ((GMP_NUMB_BITS & 1) == 0);
   /* {a, an} and {x, n} should not overlap */
   MPFR_ASSERTD((a + an <= x) || (x + n <= a));
   MPFR_ASSERTD(p >= 11);
@@ -179,15 +179,34 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
   if (p == 11) /* should happen only from recursive calls */
     {
       unsigned long i, ab, ac;
-      mp_limb_t t;
+      unsigned int t;
 
       /* take the 12+as most significant bits of A */
+#if GMP_NUMB_BITS >= 16
       i = a[an - 1] >> (GMP_NUMB_BITS - (12 + as));
+#else
+      MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 8);
+      {
+        unsigned int a12 = a[an - 1] << 8;
+        if (an >= 2)
+          a12 |= a[an - 2];
+        MPFR_ASSERTN(GMP_NUMB_BITS >= 4 + as);
+        i = a12 >> (GMP_NUMB_BITS - (4 + as));
+      }
+#endif
       /* if one wants faithful rounding for p=11, replace #if 0 by #if 1 */
       ab = i >> 4;
       ac = (ab & 0x3F0) | (i & 0x0F);
-      t = (mp_limb_t) T1[ab - 0x80] + (mp_limb_t) T2[ac - 0x80];
-      x[0] = t << (GMP_NUMB_BITS - p);
+      t = T1[ab - 0x80] + T2[ac - 0x80];  /* fits on 16 bits */
+#if GMP_NUMB_BITS >= 16
+      /* x has only one limb */
+      x[0] = (mp_limb_t) t << (GMP_NUMB_BITS - p);
+#else
+      MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 8);
+      MPFR_ASSERTD (1024 <= t && t <= 2047);
+      x[1] = t >> 3; /* 128 <= x[1] <= 255 */
+      x[0] = MPFR_LIMB_LSHIFT(t, 5);
+#endif
     }
   else /* p >= 12 */
     {
@@ -225,7 +244,7 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
 
       /* we need h+1+as bits of a */
       ahn = LIMB_SIZE(h + 1 + as); /* number of high limbs of A
-                                      needed for the recursive call*/
+                                      needed for the recursive call */
       if (MPFR_UNLIKELY(ahn > an))
         ahn = an;
       mpfr_mpn_rec_sqrt (x + ln, h, a + an - ahn, ahn * GMP_NUMB_BITS, as);
@@ -373,9 +392,10 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
          thus we round u to nearest at bit pl-1 of u[0] */
       if (pl > 0)
         {
-          cu = mpn_add_1 (u, u, un, u[0] & (MPFR_LIMB_ONE << (pl - 1)));
+          cu = mpn_add_1 (u, u, un,
+                          u[0] & MPFR_LIMB_LSHIFT(MPFR_LIMB_ONE, pl - 1));
           /* mask bits 0..pl-1 of u[0] */
-          u[0] &= ~MPFR_LIMB_MASK(pl);
+          u[0] &= MPFR_LIMB(~MPFR_LIMB_MASK(pl));
         }
       else /* round bit is in u[-1] */
         cu = mpn_add_1 (u, u, un, u[-1] >> (GMP_NUMB_BITS - 1));

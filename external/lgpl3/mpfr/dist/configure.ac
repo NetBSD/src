@@ -4,7 +4,7 @@ dnl WARNING! C code starting with # (preprocessor directives) must not
 dnl be indented!
 
 AC_COPYRIGHT([
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,31 +21,43 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 ])
 
 dnl Add check-news when it checks for more than 15 lines
-AC_INIT([MPFR],[4.0.1])
+AC_INIT([MPFR],[4.1.0])
 
 dnl Older Automake versions than 1.13 may still be supported, but no longer
 dnl tested, and many things have changed in 1.13. Moreover the INSTALL file
 dnl and MPFR manual assume that MPFR has been built using Automake 1.13+
 dnl (due to parallel tests, introduced by default in Automake 1.13).
-AM_INIT_AUTOMAKE([1.13 no-define dist-bzip2 dist-xz dist-zip])
+dnl The subdir-objects option is needed due to configuration related to
+dnl mini-gmp, which has sources in an external directory.
+AM_INIT_AUTOMAKE([1.13 no-define dist-bzip2 dist-xz dist-zip subdir-objects])
 AM_MAINTAINER_MODE(enable)
 
 AC_CONFIG_MACRO_DIR([m4])
 
-dnl FIXME: Several AC_RUN_IFELSE programs can return several values
-dnl (one for each format to be detected), but the Autoconf manual says:
-dnl "This exit status might be that of a failed compilation, or it might
-dnl be that of a failed program execution." Unfortunately, we cannot
-dnl know whether a non-zero exit status comes from a failed compilation,
-dnl so that the detection may be incorrect. To avoid this problem, write
-dnl a test program for each possible format? Alternatively, the test
-dnl program could output the result of the format detection to a file
-dnl and return with the 0 exit status if it could do that successfully.
+dnl Some AC_RUN_IFELSE programs need to be able to return several values
+dnl (e.g., in a format detection, one for each possible format). But the
+dnl Autoconf manual says: "This exit status might be that of a failed
+dnl compilation, or it might be that of a failed program execution."
+dnl Unfortunately, we cannot know whether a non-zero exit status comes
+dnl from a failed compilation, so that the detection may be incorrect.
+dnl Since failures generally occur with a small exit status, the value 77
+dnl is reserved for skipped tests by Autoconf, and values larger than 125
+dnl have special meanings in POSIX[*], good candidates for success are 0
+dnl and values from 80 to 125.
+dnl https://tldp.org/LDP/abs/html/exitcodes.html suggests the range 64-113
+dnl but note that /usr/include/sysexits.h now allocates previously unused
+dnl exit codes from 64 - 78 (for various kinds of errors).
+dnl
+dnl Alternatively, the test program could output the result to a file and
+dnl return with the 0 exit status if it could do that successfully.
+dnl
+dnl [*] 2.8.2 Exit Status for Commands
+dnl https://pubs.opengroup.org/onlinepubs/9699919799//utilities/V3_chap02.html#tag_18_08_02
 
 test_CFLAGS=${CFLAGS+set}
 
@@ -66,9 +78,10 @@ dnl To use a separate config header.
 dnl There is still some problem with GMP's HAVE_CONFIG
 dnl AC_CONFIG_HEADERS([mpfrconf.h:mpfrconf.in])
 
-dnl Extra arguments to configure
-
 unset gmp_lib_path GMP_CFLAGS GMP_CC
+
+dnl ********************************************************************
+dnl Extra arguments to configure (AC_ARG_WITH and AC_ARG_ENABLE)
 
 AC_ARG_WITH(gmp_include,
    [  --with-gmp-include=DIR  GMP include directory ],
@@ -121,6 +134,25 @@ AC_ARG_WITH(gmp_build,
    fi
    ])
 
+AC_ARG_WITH(mini_gmp,
+   [  --with-mini-gmp=DIR     use mini-gmp (sources in DIR) instead of GMP
+                          (experimental, please read doc/mini-gmp file)],
+   [
+   MPFR_PARSE_DIRECTORY(["$withval"],[withval])
+   if test -z "$gmp_lib_path" && test -z "$with_gmp_include" && \
+      test -z "$use_gmp_build"; then
+     if test -f "$withval/mini-gmp.c" && test -f "$withval/mini-gmp.h"; then
+       AC_DEFINE([MPFR_USE_MINI_GMP],1,[Use mini-gmp])
+       mini_gmp_path="$withval"
+       AC_SUBST(mini_gmp_path)
+     else
+       AC_MSG_FAILURE([mini-gmp.{c,h} not found in $withval])
+     fi
+   else
+     AC_MSG_FAILURE([Do not use --with-mini-gmp and other --with-gmp options simultaneously.])
+   fi
+  ])
+
 AC_ARG_WITH(mulhigh_size,
    [  --with-mulhigh-size=NUM internal threshold table for mulhigh],
    AC_DEFINE_UNQUOTED([MPFR_MULHIGH_SIZE],$withval, [Mulhigh size]))
@@ -144,8 +176,8 @@ AC_ARG_ENABLE(assert,
      esac])
 
 AC_ARG_ENABLE(logging,
-   [  --enable-logging        enable MPFR logging (the system must support it)
-                          [[default=no]]],
+   [  --enable-logging        enable MPFR logging (needs nested functions
+                          and the 'cleanup' attribute) [[default=no]]],
    [ case $enableval in
       yes) AC_DEFINE([MPFR_USE_LOGGING],1,[Enable MPFR logging support]) ;;
       no)  ;;
@@ -167,8 +199,8 @@ AC_ARG_ENABLE(shared-cache,
                           for all MPFR constants.  It usually makes MPFR
                           dependent on PTHREAD [[default=no]]],
    [ case $enableval in
-      yes) mpfr_want_shared_cache=yes
-         AC_DEFINE([WANT_SHARED_CACHE],1,[Want shared cache]) ;;
+      yes)
+         AC_DEFINE([MPFR_WANT_SHARED_CACHE],1,[Want shared cache]) ;;
       no)  ;;
       *) AC_MSG_ERROR([bad value for --enable-shared-cache: yes or no]) ;;
      esac])
@@ -204,6 +236,99 @@ AC_ARG_ENABLE(tune-for-coverage,
       *)    AC_MSG_ERROR([bad value for --enable-tune-for-coverage]) ;;
      esac])
 
+dnl Support for _Decimal64 and _Decimal128 (ISO/IEC TS 18661).
+dnl See acinclude.m4 for more information and tests.
+dnl FIXME: differentiate the support of _Decimal64 and _Decimal128, e.g.
+dnl   --enable-decimal64  for _Decimal64
+dnl   --enable-decimal128 for _Decimal128
+dnl   --enable-decimal-float would explicitly enable both (or fail).
+dnl   --disable-decimal-float would explicitly disable both.
+AC_ARG_ENABLE(decimal-float,
+   [  --disable-decimal-float explicitly disable decimal floats support
+  --enable-decimal-float  build conversion functions from/to decimal floats
+                          (see INSTALL file for details) [[default=auto]]],
+   [ case $enableval in
+      yes|no|auto|bid|dpd|generic) ;;
+      *) AC_MSG_ERROR([bad value for --enable-decimal-float]) ;;
+     esac])
+
+dnl Warning! Not to be confused with _Decimal128. Thus it is better
+dnl to say binary128 in the description. It can correspond to either
+dnl _Float128 (ISO/IEC TS 18661) or __float128 (old type name).
+AC_ARG_ENABLE(float128,
+   [  --disable-float128      explicitly disable binary128 support
+  --enable-float128       build conversion functions from/to binary128
+                          (_Float128 or __float128) [[default=autodetect]]],
+   [ case $enableval in
+      yes) ;;
+      no)  ;;
+      *)   AC_MSG_ERROR([bad value for --enable-float128: yes or no]) ;;
+     esac])
+
+AC_ARG_ENABLE(debug-prediction,
+   [  --enable-debug-prediction
+                          [[for developers]] enable debug of branch prediction
+                          (for x86 and x86-64 with GCC, static libs)],
+   [ case $enableval in
+      yes)  if test "$enable_shared" != no; then
+              AC_MSG_ERROR([--enable-debug-prediction can only work in static mode (--disable-shared)])
+            fi
+            AC_DEFINE([MPFR_DEBUG_PREDICTION],1,
+	       [Enable debug of branch prediction]) ;;
+      no)   ;;
+      *)    AC_MSG_ERROR([bad value for --enable-debug-prediction: yes or no]) ;;
+     esac])
+
+AC_ARG_ENABLE(lto,
+   [  --enable-lto            build MPFR with link-time-optimization
+                          (experimental) [[default: no]]],
+   [ case $enableval in
+      yes)  if test "$enable_shared" != "no"; then
+              AC_MSG_ERROR([--enable-lto can only work in static mode (--disable-shared)])
+            fi
+            enable_lto=yes
+            ;;
+      no)   ;;
+      *)    AC_MSG_ERROR([bad value for --enable-lto: yes or no]) ;;
+     esac])
+
+AC_ARG_ENABLE(formally-proven-code,
+   [  --enable-formally-proven-code
+                          use formally proven code when available
+                          (needs a C99 compiler) [[default=no]]],
+   [ case $enableval in
+      yes) AC_DEFINE([MPFR_WANT_PROVEN_CODE],1,[Want formally proven code]) ;;
+      no)  ;;
+      *) AC_MSG_ERROR([bad value for --enable-formally-proven-code: yes or no]) ;;
+     esac])
+
+dnl Makefile.am files can use "if MINI_GMP" / ... / "endif".
+AM_CONDITIONAL([MINI_GMP], [test -n "$mini_gmp_path"])
+
+dnl First, detect incompatibilities between the above configure options.
+AC_MSG_CHECKING([whether configure options are compatible])
+if test "$enable_logging" = yes; then
+  if test "$enable_thread_safe" = yes; then
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([enable either logging or thread-safe, not both])
+  fi
+dnl The following test is done only to output a specific error message,
+dnl as there would otherwise be an error due to enable_thread_safe=no.
+  if test "$enable_shared_cache" = yes; then
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([shared cache does not work with logging support])
+  fi
+  enable_thread_safe=no
+fi
+if test "$enable_shared_cache" = yes; then
+  if test "$enable_thread_safe" = no; then
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([shared cache needs thread-safe support])
+  fi
+  enable_thread_safe=yes
+fi
+AC_MSG_RESULT([yes])
+
 
 dnl
 dnl Setup CC and CFLAGS
@@ -216,7 +341,11 @@ dnl Warning! The following tests must be done before Autoconf selects
 dnl a compiler. This means that some macros such as AC_PROG_CC and
 dnl AM_PROG_AR must be put after the following code.
 
-if test -z "$user_redefine_cc" && test "$cross_compiling" != yes ; then
+dnl We do not do this check if mini-gmp is used.
+
+if test -z "$user_redefine_cc" && \
+   test "$cross_compiling" != yes && \
+   test "${with_mini_gmp+set}" != set ; then
 
 dnl We need to guess the C preprocessor instead of using AC_PROG_CPP,
 dnl since AC_PROG_CPP implies AC_PROG_CC, which chooses a compiler
@@ -224,7 +353,6 @@ dnl (before we have the chance to get it from gmp.h) and does some
 dnl checking related to this compiler (such as dependency tracking
 dnl options); if the compiler changes due to __GMP_CC in gmp.h, one
 dnl would have incorrect settings.
-dnl FIXME: Move this in acinclude.m4 ?
 if test -z "$GMP_CC$GMP_CFLAGS" ; then
    AC_MSG_CHECKING(for CC and CFLAGS in gmp.h)
    GMP_CC=__GMP_CC
@@ -246,11 +374,9 @@ if test -z "$GMP_CC$GMP_CFLAGS" ; then
      # Get CFLAGS
      echo "#include \"gmp.h\"" >  conftest.c
      echo "MPFR_OPTION __GMP_CFLAGS" >> conftest.c
-     unset rmpedantic
-     [test "$enable_logging" = yes && rmpedantic='s/[ "]-pedantic[ "]/ /g;']
      $cpp $CPPFLAGS conftest.c 2> /dev/null > conftest.txt
      test $? -ne 0 && continue
-     GMP_CFLAGS=`$EGREP MPFR_OPTION conftest.txt | $SED -e "$rmpedantic"'s/MPFR_OPTION //g;s/ *" *//g'`
+     [GMP_CFLAGS=`$EGREP MPFR_OPTION conftest.txt | $SED -e 's/[ "]-pedantic[ "]/ /g;s/MPFR_OPTION //g;s/ *" *//g'`]
      break
    done
    rm -f conftest*
@@ -294,119 +420,9 @@ AM_PROG_AR
 dnl This must done before MPFR_CONFIGS.
 LT_INIT(win32-dll)
 
-dnl Try to determine the double format
-AC_MSG_CHECKING(format of `double' floating point)
-AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-]], [[
-union ieee_double_extract
-{
-  double d;
-  unsigned char x[8];
-} t;
-t.d = 2.877939254133025759330166692961938679218292236328125; /* exact */
-if (sizeof (double) != 8)
-   return 0;
-if (sizeof (unsigned char) != 1)
-   return 0;
-if (t.x[0] == 1 && t.x[1] == 2 && t.x[2] == 3 && t.x[3] == 4 &&
-    t.x[4] == 5 && t.x[5] == 6 && t.x[6] == 7 && t.x[7] == 64)
-   return 1; /* little endian */
-else if (t.x[7] == 1 && t.x[6] == 2 && t.x[5] == 3 && t.x[4] == 4 &&
-    t.x[3] == 5 && t.x[2] == 6 && t.x[1] == 7 && t.x[0] == 64)
-   return 2; /* big endian */
-else
-   return 0; /* unknown */
-]])],
-   [mpfr_ieee_double=$?],
-   [mpfr_ieee_double=$?],
-   [mpfr_ieee_double=0])
-case "$mpfr_ieee_double" in
-  1) AC_MSG_RESULT([IEEE little endian])
-     AC_DEFINE(HAVE_DOUBLE_IEEE_LITTLE_ENDIAN) ;;
-  2) AC_MSG_RESULT([IEEE big endian])
-     AC_DEFINE(HAVE_DOUBLE_IEEE_BIG_ENDIAN) ;;
-  *) AC_MSG_WARN([format of `double' floating-point not recognized]) ;;
-esac
-
-dnl For GCC, _Decimal64 was introduced in GCC 4.3 for some targets
-dnl (note that it is not guaranteed to be available because it may
-dnl be disabled in the GCC build). See:
-dnl   https://gcc.gnu.org/gcc-4.3/changes.html
-dnl _Decimal64 is not yet defined in GCC for C++:
-dnl   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51364
-dnl _Decimal64 support is broken with GCC 4.6.3 and 4.7.2 on powerpc64
-dnl with the mode32 ABI, e.g. "-m32 -mpowerpc64 -mtune=970 -O3"; this
-dnl is detected by the x != x test below.
-AC_ARG_ENABLE(decimal-float,
-   [  --disable-decimal-float explicitly disable decimal floats support
-  --enable-decimal-float  build conversion functions from/to decimal floats
-                          [[default=autodetect]]],
-   [ case $enableval in
-      yes) ;;
-      no)  ;;
-      *)   AC_MSG_ERROR([bad value for --enable-decimal-float: yes or no]) ;;
-     esac])
-
-dnl GCC >= 4.3 provides __float128, but since this is not standard,
-dnl the default is "autodetect" and not "yes"
-AC_ARG_ENABLE(float128,
-   [  --disable-float128      explicitly disable __float128 support
-  --enable-float128       build conversion functions from/to __float128
-                          [[default=autodetect]]],
-   [ case $enableval in
-      yes) ;;
-      no)  ;;
-      *)   AC_MSG_ERROR([bad value for --enable-float128: yes or no]) ;;
-     esac])
-
-test_libgmp=__gmpz_init
-
-AC_ARG_ENABLE(mini-gmp,
-   [  --enable-mini-gmp       build MPFR with mini-gmp (experimental) [[default=no]]],
-   [ case $enableval in
-      yes) AC_DEFINE([MPFR_USE_MINI_GMP],1,[Use mini-gmp])
-           # With mini-gmp, mp_limb_t is always unsigned long.
-           AC_COMPUTE_INT(nettle_cv_gmp_numb_bits, [(sizeof(unsigned long) * CHAR_BIT)],
-              [#include <limits.h>],
-              [AC_MSG_FAILURE([cannot find value of GMP_NUMB_BITS])])
-           AC_MSG_RESULT([$nettle_cv_gmp_numb_bits bits])
-           AC_DEFINE_UNQUOTED([GMP_NUMB_BITS], $nettle_cv_gmp_numb_bits, [number of bits in a limb])
-           AC_DEFINE([GMP_NAIL_BITS], 0, [number of nails in a limb])
-           test_libgmp=mpz_init;;
-      no)  ;;
-      *) AC_MSG_ERROR([bad value for --enable-mini-gmp: yes or no]) ;;
-     esac])
-
-AC_ARG_ENABLE(debug-prediction,
-   [  --enable-debug-prediction
-                          [[for developers]] enable debug of branch prediction
-                          (for x86 and x86-64 with GCC, static libs)],
-   [ case $enableval in
-      yes)  if test "$enable_shared" != no; then
-              AC_MSG_ERROR([--enable-debug-prediction can only work in static mode (--disable-shared)])
-            fi
-            AC_DEFINE([MPFR_DEBUG_PREDICTION],1,
-	       [Enable debug of branch prediction]) ;;
-      no)   ;;
-      *)    AC_MSG_ERROR([bad value for --enable-debug-prediction: yes or no]) ;;
-     esac])
-
-AC_ARG_ENABLE(lto,
-   [  --enable-lto            build MPFR with link-time-optimization
-                          (experimental) [[default: no]]],
-   [ case $enableval in
-      yes)  if test "$enable_shared" != "no"; then
-              AC_MSG_ERROR([--enable-lto can only work in static mode (--disable-shared)])
-            fi
-            enable_lto=yes
-            ;;
-      no)   ;;
-      *)    AC_MSG_ERROR([bad value for --enable-lto: yes or no]) ;;
-     esac])
-
-dnl Check if compiler is ICC, and if such a case, disable GCC
-dnl And add some specific flags.
-dnl Don't add Warnings Flags (Otherwise you'll get more than 20000 warnings).
+dnl Warning: This test is *only* for CFLAGS settings.
+dnl If the compiler is ICC, add some specific flags, except on MS-Windows.
+dnl Don't add warnings flags (Otherwise you'll get more than 20000 warnings).
 dnl Add -long_double flags? Don't use -pc64 !
 dnl Notes (VL):
 dnl   * With icc 10.1 20080212 on itanium, the __ICC macro is not defined,
@@ -424,10 +440,10 @@ dnl     to use -fp-model <arg> instead of -mp, but what is <arg>? Anyway
 dnl     -mieee-fp solves the tset_d failure due to a negative zero. This
 dnl     option has been introduced in ICC 9.0 for Linux (2005-06):
 dnl     http://www.ncsa.illinois.edu/UserInfo/Resources/Software/Intel/Compilers/9.0/C_ReleaseNotes.htm
-AC_MSG_CHECKING(for ICC)
+AC_MSG_CHECKING(for non-MS-Windows ICC)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if !defined(__ICC)
-# error "Not ICC"
+#if (!defined(__ICC) && !defined(__INTEL_COMPILER)) || defined(_WIN32)
+# error "Not a non-MS-Windows ICC"
 error
 #endif
 ]], [[]])],[
@@ -435,8 +451,15 @@ error
  CFLAGS="-fp_port -mieee-fp -wd1572 -wd265 -wd186 -wd239 $CFLAGS"
 ],[AC_MSG_RESULT(no)])
 
-dnl If compiler is gcc, then use some specific flags.
-dnl But don't touch user other flags.
+dnl If CFLAGS has not been set explicitly and the compiler is GCC, then
+dnl use some specific flags. But don't touch user other flags.
+dnl Note: This is done even when CFLAGS has been set from GMP's CFLAGS
+dnl (__GMP_CFLAGS macro in gmp.h) above. The consequence is that this
+dnl might yield a compilation failure if the -Werror option appears in
+dnl __GMP_CFLAGS. But in this case, since -Werror is not used by default,
+dnl one may expect that the user would also set CFLAGS for MPFR.
+dnl Note: When the compiler is GCC not in C++ mode, -Wc++-compat may be
+dnl interesting, but it has been introduced in GCC 4.1 only.
 if test "$test_CFLAGS" != set && test -n "$GCC"; then
   CFLAGS="-Wpointer-arith $CFLAGS"
   AC_MSG_CHECKING(whether the selected language is C++)
@@ -479,8 +502,6 @@ dnl (i.e. generic code must be used).
 AC_C_BIGENDIAN([AC_DEFINE(HAVE_BIG_ENDIAN)],[AC_DEFINE(HAVE_LITTLE_ENDIAN)],
 [true],[true])
 
-MPFR_CONFIGS
-
 # (Based on GMP 5.1)
 # clock_gettime is in librt on *-*-osf5.1 and on glibc < 2.17, so add -lrt to
 # TUNE_LIBS if needed (e.g. if clock_gettime is not already in the C library).
@@ -493,9 +514,55 @@ TUNE_LIBS="$LIBS"
 LIBS="$old_LIBS"
 AC_SUBST(TUNE_LIBS)
 
+dnl Under Linux, make sure that the old dtags are used if LD_LIBRARY_PATH
+dnl is defined. The issue is that with the new dtags, LD_LIBRARY_PATH has
+dnl the precedence over the run path, so that if a compatible MPFR library
+dnl is installed in some directory from $LD_LIBRARY_PATH, then the tested
+dnl MPFR library will be this library instead of the MPFR library from the
+dnl build tree. Other OS with the same issue might be added later.
 dnl
-dnl Setup GMP detection
+dnl References:
+dnl   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=859732
+dnl   http://lists.gnu.org/archive/html/libtool/2017-05/msg00000.html
 dnl
+dnl We need to check whether --disable-new-dtags is supported as alternate
+dnl linkers may be used (e.g., with tcc: CC=tcc LD=tcc).
+dnl
+case $host in
+  *-*-linux*)
+    if test -n "$LD_LIBRARY_PATH"; then
+      saved_LDFLAGS="$LDFLAGS"
+      LDFLAGS="$LDFLAGS -Wl,--disable-new-dtags"
+      AC_MSG_CHECKING(whether --disable-new-dtags is supported by the linker)
+      AC_LINK_IFELSE([AC_LANG_SOURCE([[
+int main (void) { return 0; }
+      ]])],
+      [AC_MSG_RESULT(yes (use it since LD_LIBRARY_PATH is set))],
+      [AC_MSG_RESULT(no)
+       LDFLAGS="$saved_LDFLAGS"
+      ])
+    fi
+    ;;
+esac
+
+dnl MPFR_CONFIGS uses LDFLAGS, thus must be invoked after LDFLAGS has
+dnl been determined completely.
+MPFR_CONFIGS
+
+dnl
+dnl For mpfr-longlong.h - TODO: should be replaced (see acinclude.m4).
+dnl
+
+GMP_C_ATTRIBUTE_MODE
+
+
+dnl
+dnl Setup related to GMP / mini-gmp
+dnl
+
+if test -z "$mini_gmp_path" ; then
+
+dnl Setup for GMP
 
 dnl Check GMP Header
 AC_MSG_CHECKING(for gmp.h)
@@ -550,57 +617,14 @@ error
   ;;
 esac
 
-dnl Under Linux, make sure that the old dtags are used if LD_LIBRARY_PATH
-dnl is defined. The issue is that with the new dtags, LD_LIBRARY_PATH has
-dnl the precedence over the run path, so that if a compatible MPFR library
-dnl is installed in some directory from $LD_LIBRARY_PATH, then the tested
-dnl MPFR library will be this library instead of the MPFR library from the
-dnl build tree. Other OS with the same issue might be added later.
-dnl
-dnl References:
-dnl   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=859732
-dnl   http://lists.gnu.org/archive/html/libtool/2017-05/msg00000.html
-dnl
-dnl We need to check whether --disable-new-dtags is supported as alternate
-dnl linkers may be used (e.g., with tcc: CC=tcc LD=tcc).
-dnl
-case $host in
-  *-*-linux*)
-    if test -n "$LD_LIBRARY_PATH"; then
-      saved_LDFLAGS="$LDFLAGS"
-      LDFLAGS="$LDFLAGS -Wl,--disable-new-dtags"
-      AC_MSG_CHECKING(whether --disable-new-dtags is supported by the linker)
-      AC_LINK_IFELSE([AC_LANG_SOURCE([[
-int main (void) { return 0; }
-      ]])],
-      [AC_MSG_RESULT(yes (use it since LD_LIBRARY_PATH is set))],
-      [AC_MSG_RESULT(no)
-       LDFLAGS="$saved_LDFLAGS"
-      ])
-    fi
-    ;;
-esac
-
-dnl
-dnl For mpfr-longlong.h - TODO: should be replaced (see acinclude.m4).
-dnl
-
-GMP_C_ATTRIBUTE_MODE
-
-
-dnl
-dnl Setup GMP detection (continued)
-dnl
-
 dnl Check minimal GMP version
 dnl We only guarantee that with a *functional* and recent enough GMP version,
 dnl MPFR will compile; we do not guarantee that GMP will compile.
 dnl In particular fat builds are broken in GMP 4.3.2 and GMP 5.0.0
 dnl (at least on 64-bit Core 2 under Linux),
 dnl see <https://gmplib.org/list-archives/gmp-bugs/2011-August/002345.html>.
-if test -z "$enable_mini_gmp" ; then
-  AC_MSG_CHECKING(for recent GMP)
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+AC_MSG_CHECKING(for recent GMP)
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #include "gmp.h"
 #if (__GNU_MP_VERSION*100+__GNU_MP_VERSION_MINOR*10 < 500)
 # error "GMP 5.0.0 or newer is required"
@@ -610,7 +634,6 @@ error
    AC_MSG_RESULT(no)
    AC_MSG_ERROR([GMP 5.0.0 or newer is required])
 ])
-fi
 
 dnl Check if gmp.h is usable at link time; this may detect errors such as
 dnl with GMP 4.1, which uses "extern __inline__" unconditionally with all
@@ -669,7 +692,7 @@ See 'config.log' for details (search for GMP_NUMB_BITS).])],
        [AC_MSG_RESULT([cannot test])])
 
 dnl Check if we can link with GMP
-AC_CHECK_LIB(gmp, $test_libgmp, [LIBS="-lgmp $LIBS"],
+AC_CHECK_LIB(gmp, __gmpz_init, [LIBS="-lgmp $LIBS"],
  [AC_MSG_ERROR([libgmp not found or uses a different ABI (including static vs shared).
 Please read the INSTALL file -- see "In case of problem".])])
 
@@ -682,11 +705,10 @@ dnl incorrect and even have security implications.
 dnl WARNING! LD_RUN_PATH is not taken into account by the GNU gold ld,
 dnl e.g. from binutils-gold 2.22-5 under Debian; see
 dnl   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=660813
-if test -z "$enable_mini_gmp" ; then
-  saved_LD_RUN_PATH="$LD_RUN_PATH"
-  LD_RUN_PATH="${LD_RUN_PATH:+$LD_RUN_PATH$PATH_SEPARATOR}$gmp_lib_path"
-  export LD_RUN_PATH
-  AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+saved_LD_RUN_PATH="$LD_RUN_PATH"
+LD_RUN_PATH="${LD_RUN_PATH:+$LD_RUN_PATH$PATH_SEPARATOR}$gmp_lib_path"
+export LD_RUN_PATH
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <string.h>
 #include "gmp.h"
@@ -708,7 +730,8 @@ if test -z "$enable_mini_gmp" ; then
    [AC_MSG_RESULT(yes)
     MPFR_CHECK_GMP
     MPFR_CHECK_DBL2INT_BUG
-    MPFR_CHECK_PRINTF_SPEC],
+    MPFR_CHECK_PRINTF_SPEC
+    MPFR_CHECK_PRINTF_GROUPFLAG],
    [AC_MSG_RESULT(no)
     AC_MSG_WARN([==========================================================])
     AC_MSG_WARN(['gmp.h' and 'libgmp' seem to have different versions or])
@@ -716,7 +739,9 @@ if test -z "$enable_mini_gmp" ; then
     AC_MSG_WARN([see the version numbers above). A cause may be different])
     AC_MSG_WARN([GMP versions with different ABI's or the use of --with-gmp])
     AC_MSG_WARN([or --with-gmp-include with a system include directory])
-    AC_MSG_WARN([(such as /usr/include or /usr/local/include).])
+    AC_MSG_WARN([(such as /usr/include or /usr/local/include). Another])
+    AC_MSG_WARN([cause may be that LD_RUN_PATH is not honored (problem])
+    AC_MSG_WARN([seen under OpenBSD 6.6).])
     AC_MSG_WARN([However since we can't use 'libtool' inside the configure,])
     AC_MSG_WARN([we can't be sure. See 'config.log' for details.])
     AC_MSG_WARN([CC="$CC"])
@@ -728,8 +753,7 @@ if test -z "$enable_mini_gmp" ; then
     AC_MSG_WARN([==========================================================])
     ],AC_MSG_RESULT([cannot test])
   )
-  LD_RUN_PATH="$saved_LD_RUN_PATH"
-fi
+LD_RUN_PATH="$saved_LD_RUN_PATH"
 
 dnl __gmpn_sbpi1_divappr_q is an internal GMP symbol; thus its behavior
 dnl may change or this symbol may be removed in the future (without being
@@ -743,33 +767,69 @@ dnl (see above).
 AC_CHECK_FUNCS([__gmpn_sbpi1_divappr_q])
 dnl same for other GMP internal functions
 AC_CHECK_FUNCS([__gmpn_invert_limb])
-AC_CHECK_FUNCS([__gmpn_rsblsh_n])
+dnl mpn_rsblsh1_n(rp, up, vp, n) does {rp, n} <- 2 * {vp, n} - {up, n}
+AC_CHECK_FUNCS([__gmpn_rsblsh1_n])
 
 MPFR_CHECK_MP_LIMB_T_VS_LONG
+MPFR_CHECK_MP_LIMB_T_VS_INTMAX
+
+else
+
+dnl Setup for mini-gmp
+
+dnl Let us make the configure script clean up the mini-gmp.* files
+dnl and add the symbolic links to mini-gmp.{c,h} instead of relying
+dnl on timestamp-based make rules, which may not work when testing
+dnl several mini-gmp versions (whose source can go back in time).
+mpfr_build_src="${ac_top_build_prefix}src"
+mkdir -p "$mpfr_build_src"
+rm -f -- "$mpfr_build_src"/mini-gmp.*
+for i in c h
+do
+  ln -s -- "$mini_gmp_path/mini-gmp.$i" "$mpfr_build_src/mini-gmp.$i"
+done
+
+dnl First check whether mini-gmp defines GMP_NUMB_BITS. If it doesn't,
+dnl then guess the value from the size of mp_limb_t.
+AC_MSG_CHECKING(for GMP_NUMB_BITS)
+how="from mini-gmp.h"
+saved_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -I$mpfr_build_src"
+AC_COMPUTE_INT(mini_gmp_numb_bits, [(GMP_NUMB_BITS)],
+   [#include <mini-gmp.h>],
+   [how="not in mini-gmp.h; guessed"
+    AC_COMPUTE_INT(mini_gmp_numb_bits, [(sizeof(mp_limb_t) * CHAR_BIT)],
+       [#include <limits.h>
+        #include <mini-gmp.h>],
+       [AC_MSG_FAILURE([cannot define GMP_NUMB_BITS])])
+    AC_DEFINE_UNQUOTED([GMP_NUMB_BITS], $mini_gmp_numb_bits, [number of bits in a limb])
+  ])
+CPPFLAGS="$saved_CPPFLAGS"
+AC_MSG_RESULT([$mini_gmp_numb_bits bits ($how)])
+
+dnl We need to check the availability of lrand48 (used by random_limb)
+dnl and srand48 (used by gmp_randseed_ui), in particular because these
+dnl functions are not part of the ISO C standard.
+AC_CHECK_FUNC(lrand48,,AC_MSG_FAILURE([MPFR + mini-gmp requires lrand48]))
+AC_CHECK_FUNC(srand48,,AC_MSG_FAILURE([MPFR + mini-gmp requires srand48]))
+
+fi
+
+dnl End of setup related to GMP / mini-gmp
 
 dnl The getrusage function is needed for MPFR bench (cf tools/bench)
 AC_CHECK_FUNCS([getrusage])
 
-dnl Remove also many MACROS (AC_DEFINE) which are unused by MPFR
-dnl and polluate (and slow down because libtool has to parse them) the build.
+dnl Remove also many macros (AC_DEFINE), which are unused by MPFR and
+dnl pollute (and slow down because libtool has to parse them) the build.
 if test -f confdefs.h; then
-  $SED '/#define PACKAGE_/d' <confdefs.h >confdefs.tmp
-  $SED '/#define HAVE_STRING/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_ALLOCA /d' <confdefs.h >confdefs.tmp
-  $SED '/#define HAVE_DLFCN_H/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_MEM/d' <confdefs.h >confdefs.tmp
-  $SED '/#define STDC_HEADERS/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_STRTOL/d' <confdefs.h >confdefs.tmp
-  $SED '/#define HAVE_STDLIB_H/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_UNISTD_H/d' <confdefs.h >confdefs.tmp
-  $SED '/#define HAVE_STDC_HEADERS/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_LONG_DOUBLE/d' <confdefs.h >confdefs.tmp
-  $SED '/#define HAVE_SYS_STAT_H/d' <confdefs.tmp >confdefs.h
-  $SED '/#define HAVE_SYS_TYPES_H/d' <confdefs.h >confdefs.tmp
-  $SED '/#define PROTOTYPES/d' <confdefs.tmp >confdefs.h
-  $SED '/#define __PROTOTYPES/d' <confdefs.h >confdefs.tmp
-
-  mv confdefs.tmp confdefs.h
+  for i in PACKAGE_ HAVE_STRING HAVE_DLFCN_H HAVE_MEM STDC_HEADERS \
+           HAVE_STDLIB_H HAVE_UNISTD_H HAVE_STDC_HEADERS \
+           HAVE_SYS_STAT_H HAVE_SYS_TYPES_H PROTOTYPES __PROTOTYPES
+  do
+    $SED "/#define $i/d" < confdefs.h > confdefs.tmp
+    mv confdefs.tmp confdefs.h
+  done
 fi
 
 if $EGREP -q -e '-dev$' $srcdir/VERSION; then

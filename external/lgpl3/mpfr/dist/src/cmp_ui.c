@@ -1,7 +1,7 @@
 /* mpfr_cmp_ui_2exp -- compare a floating-point number with an unsigned
 machine integer multiplied by a power of 2
 
-Copyright 1999, 2001-2004, 2006-2018 Free Software Foundation, Inc.
+Copyright 1999, 2001-2004, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -18,7 +18,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -52,6 +52,7 @@ mpfr_cmp_ui_2exp (mpfr_srcptr b, unsigned long int i, mpfr_exp_t f)
   else if (MPFR_UNLIKELY(i == 0))
     return 1;
   else /* b > 0, i > 0 */
+#ifdef MPFR_LONG_WITHIN_LIMB
     {
       mpfr_exp_t e;
       int k;
@@ -91,6 +92,22 @@ mpfr_cmp_ui_2exp (mpfr_srcptr b, unsigned long int i, mpfr_exp_t f)
           return 1;
       return 0;
     }
+#else
+  {
+      mpfr_t uu;
+      int ret;
+      MPFR_SAVE_EXPO_DECL (expo);
+
+      mpfr_init2 (uu, sizeof (unsigned long) * CHAR_BIT);
+      /* Warning: i*2^f might be outside the current exponent range! */
+      MPFR_SAVE_EXPO_MARK (expo);
+      mpfr_set_ui_2exp (uu, i, f, MPFR_RNDZ);
+      MPFR_SAVE_EXPO_FREE (expo);
+      ret = mpfr_cmp (b, uu);
+      mpfr_clear (uu);
+      return ret;
+  }
+#endif /* MPFR_LONG_WITHIN_LIMB */
 }
 
 #undef mpfr_cmp_ui

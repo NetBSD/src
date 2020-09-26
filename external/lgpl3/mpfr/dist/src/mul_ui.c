@@ -1,6 +1,6 @@
 /* mpfr_mul_ui -- multiply a floating-point number by a machine integer
 
-Copyright 1999-2018 Free Software Foundation, Inc.
+Copyright 1999-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
@@ -27,10 +27,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 MPFR_HOT_FUNCTION_ATTR int
 mpfr_mul_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u, mpfr_rnd_t rnd_mode)
 {
-  mp_limb_t *yp;
-  mp_size_t xn;
-  int cnt, inexact;
-  MPFR_TMP_DECL (marker);
+  int inexact;
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
     {
@@ -75,45 +72,68 @@ mpfr_mul_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u, mpfr_rnd_t rnd_mode
   else if (MPFR_UNLIKELY (IS_POW2 (u)))
     return mpfr_mul_2si (y, x, MPFR_INT_CEIL_LOG2 (u), rnd_mode);
 
-  yp = MPFR_MANT (y);
-  xn = MPFR_LIMB_SIZE (x);
+#ifdef MPFR_LONG_WITHIN_LIMB
+  {
+    mp_limb_t *yp;
+    mp_size_t xn;
+    int cnt;
+    MPFR_TMP_DECL (marker);
 
-  MPFR_ASSERTD (xn < MP_SIZE_T_MAX);
-  MPFR_TMP_MARK(marker);
-  yp = MPFR_TMP_LIMBS_ALLOC (xn + 1);
+    yp = MPFR_MANT (y);
+    xn = MPFR_LIMB_SIZE (x);
 
-  MPFR_ASSERTN (u == (mp_limb_t) u);
-  yp[xn] = mpn_mul_1 (yp, MPFR_MANT (x), xn, u);
+    MPFR_ASSERTD (xn < MP_SIZE_T_MAX);
+    MPFR_TMP_MARK(marker);
+    yp = MPFR_TMP_LIMBS_ALLOC (xn + 1);
 
-  /* x * u is stored in yp[xn], ..., yp[0] */
+    MPFR_ASSERTN (u == (mp_limb_t) u);
+    yp[xn] = mpn_mul_1 (yp, MPFR_MANT (x), xn, u);
 
-  /* since the case u=1 was treated above, we have u >= 2, thus
-     yp[xn] >= 1 since x was msb-normalized */
-  MPFR_ASSERTD (yp[xn] != 0);
-  if (MPFR_LIKELY (MPFR_LIMB_MSB (yp[xn]) == 0))
-    {
-      count_leading_zeros (cnt, yp[xn]);
-      mpn_lshift (yp, yp, xn + 1, cnt);
-    }
-  else
-    {
-      cnt = 0;
-    }
+    /* x * u is stored in yp[xn], ..., yp[0] */
 
-  /* now yp[xn], ..., yp[0] is msb-normalized too, and has at most
-     PREC(x) + (GMP_NUMB_BITS - cnt) non-zero bits */
-  MPFR_RNDRAW (inexact, y, yp, (mpfr_prec_t) (xn + 1) * GMP_NUMB_BITS,
-               rnd_mode, MPFR_SIGN (x), cnt -- );
+    /* since the case u=1 was treated above, we have u >= 2, thus
+       yp[xn] >= 1 since x was msb-normalized */
+    MPFR_ASSERTD (yp[xn] != 0);
+    if (MPFR_LIKELY (MPFR_LIMB_MSB (yp[xn]) == 0))
+      {
+        count_leading_zeros (cnt, yp[xn]);
+        mpn_lshift (yp, yp, xn + 1, cnt);
+      }
+    else
+      {
+        cnt = 0;
+      }
 
-  MPFR_TMP_FREE (marker);
+    /* now yp[xn], ..., yp[0] is msb-normalized too, and has at most
+       PREC(x) + (GMP_NUMB_BITS - cnt) non-zero bits */
+    MPFR_RNDRAW (inexact, y, yp, (mpfr_prec_t) (xn + 1) * GMP_NUMB_BITS,
+                 rnd_mode, MPFR_SIGN (x), cnt -- );
 
-  cnt = GMP_NUMB_BITS - cnt;
-  if (MPFR_UNLIKELY (__gmpfr_emax < MPFR_EMAX_MIN + cnt
-                     || MPFR_GET_EXP (x) > __gmpfr_emax - cnt))
-    return mpfr_overflow (y, rnd_mode, MPFR_SIGN(x));
+    MPFR_TMP_FREE (marker);
 
-  MPFR_SET_EXP (y, MPFR_GET_EXP (x) + cnt);
-  MPFR_SET_SAME_SIGN (y, x);
+    cnt = GMP_NUMB_BITS - cnt;
+    if (MPFR_UNLIKELY (__gmpfr_emax < MPFR_EMAX_MIN + cnt
+                       || MPFR_GET_EXP (x) > __gmpfr_emax - cnt))
+      return mpfr_overflow (y, rnd_mode, MPFR_SIGN(x));
 
-  MPFR_RET (inexact);
+    MPFR_SET_EXP (y, MPFR_GET_EXP (x) + cnt);
+    MPFR_SET_SAME_SIGN (y, x);
+    MPFR_RET (inexact);
+  }
+#else
+  {
+    mpfr_t uu;
+    MPFR_SAVE_EXPO_DECL (expo);
+
+    mpfr_init2 (uu, sizeof (unsigned long) * CHAR_BIT);
+    /* Warning: u might be outside the current exponent range! */
+    MPFR_SAVE_EXPO_MARK (expo);
+    mpfr_set_ui (uu, u, MPFR_RNDZ);
+    inexact = mpfr_mul (y, x, uu, rnd_mode);
+    mpfr_clear (uu);
+    MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+    MPFR_SAVE_EXPO_FREE (expo);
+    return mpfr_check_range (y, inexact, rnd_mode);
+  }
+#endif /* MPFR_LONG_WITHIN_LIMB */
 }

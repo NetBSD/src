@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp2.
 
-Copyright 1999-2003, 2006-2018 Free Software Foundation, Inc.
+Copyright 1999-2003, 2006-2020 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -17,7 +17,7 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
-http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
+https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
@@ -57,7 +57,7 @@ worst_cases (void)
   for (i = 1; i < MPFR_PREC(x); i++)
     {
       mpfr_set_ui (x, 1, MPFR_RNDN);
-      mpfr_div_2exp (y, y, 1, MPFR_RNDN); /* y = 1/2^i */
+      mpfr_div_2ui (y, y, 1, MPFR_RNDN); /* y = 1/2^i */
 
       l = 0;
       if (mpfr_cmp2 (x, y, &l) <= 0 || l != 1)
