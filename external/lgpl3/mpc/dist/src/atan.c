@@ -1,6 +1,6 @@
 /* mpc_atan -- arctangent of a complex number.
 
-Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017 INRIA
+Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -45,11 +45,9 @@ set_pi_over_2 (mpfr_ptr rop, int s, mpfr_rnd_t rnd)
 int
 mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
 {
-  int s_re;
-  int s_im;
-  int inex_re;
-  int inex_im;
-  int inex;
+  int s_re, s_im;
+  int inex_re, inex_im, inex;
+  mpfr_exp_t saved_emin, saved_emax;
 
   inex_re = 0;
   inex_im = 0;
@@ -215,6 +213,11 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
         }
       return MPC_INEX (inex_re, inex_im);
     }
+
+  saved_emin = mpfr_get_emin ();
+  saved_emax = mpfr_get_emax ();
+  mpfr_set_emin (mpfr_get_emin_min ());
+  mpfr_set_emax (mpfr_get_emax_max ());
 
   /* regular number argument */
   {
@@ -391,6 +394,15 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
     inex = mpc_set_fr_fr (rop, x, y, rnd);
 
     mpfr_clears (a, b, x, y, (mpfr_ptr) 0);
-    return inex;
+
+    /* restore the exponent range, and check the range of results */
+    mpfr_set_emin (saved_emin);
+    mpfr_set_emax (saved_emax);
+    inex_re = mpfr_check_range (mpc_realref (rop), MPC_INEX_RE (inex),
+                                MPC_RND_RE (rnd));
+    inex_im = mpfr_check_range (mpc_imagref (rop), MPC_INEX_IM (inex),
+                                MPC_RND_IM (rnd));
+
+    return MPC_INEX (inex_re, inex_im);
   }
 }

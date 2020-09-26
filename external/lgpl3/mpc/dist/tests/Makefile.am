@@ -1,6 +1,6 @@
 ## tests/Makefile.am -- Process this file with automake to produce Makefile.in
 ##
-## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2016 INRIA
+## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2020 INRIA
 ##
 ## This file is part of GNU MPC.
 ##
@@ -17,11 +17,17 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with this program. If not, see http://www.gnu.org/licenses/ .
 
-AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)
 LDADD = libmpc-tests.la $(top_builddir)/src/libmpc.la
 # let libtool create an executable instead of a shell script
 # useful for tests with valgrind
-AM_LDFLAGS = -no-install
+# The -L$(top_builddir)/src/.libs option is necessary for some platforms,
+# such as HP-UX, when --with-gmp or --with-mpfr is used and an old MPC
+# library is already installed in the corresponding lib directories: its
+# purpose is to make sure that the local .libs comes first in the library
+# search path (otherwise the tests are linked against the old MPC library
+# by the LINK command -- see the generated Makefile).
+AM_LDFLAGS = -no-install -L$(top_builddir)/src/.libs
 # LOADLIBES (documented in the "GNU make" manual and equivalent to LDLIBS)
 # enables to compile a program foo.c in the test directory by simply doing
 # "make foo".
@@ -31,13 +37,13 @@ LOADLIBES=$(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS)	\
 
 check_PROGRAMS = tabs tacos tacosh tadd tadd_fr tadd_si tadd_ui targ	\
   tasin tasinh tatan tatanh tcmp_abs tconj tcos tcosh                   \
-  tdiv tdiv_2si tdiv_2ui	                                        \
-  tdiv_fr tdiv_ui texp tfma tfr_div tfr_sub timag tio_str tlog tlog10	\
+  tdiv tdiv_2si tdiv_2ui tdiv_fr tdiv_ui tdot texp tfma tfr_div tfr_sub \
+  timag tio_str tlog tlog10						\
   tmul tmul_2si tmul_2ui tmul_fr tmul_i tmul_si tmul_ui tneg tnorm tpow	\
   tpow_d tpow_fr tpow_ld tpow_si tpow_ui tpow_z tprec tproj treal	\
   treimref trootofunity                                                 \
   tset tsin tsin_cos tsinh tsqr tsqrt tstrtoc tsub tsub_fr	        \
-  tsub_ui tswap ttan ttanh tui_div tui_ui_sub tget_version exceptions
+  tsub_ui tsum tswap ttan ttanh tui_div tui_ui_sub tget_version exceptions
 
 check_LTLIBRARIES=libmpc-tests.la
 libmpc_tests_la_SOURCES = mpc-tests.h check_data.c clear_parameters.c	\
