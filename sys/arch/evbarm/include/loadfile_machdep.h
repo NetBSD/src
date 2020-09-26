@@ -1,3 +1,4 @@
+/*	$NetBSD: loadfile_machdep.h,v 1.8 2020/09/26 14:18:06 skrll Exp $	*/
 
 #if defined(__aarch64__)
 #define BOOT_ELF64
