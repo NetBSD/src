@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.44.2.3 2019/11/11 17:15:42 martin Exp $	*/
+/*	$NetBSD: nvme.c,v 1.44.2.4 2020/09/27 10:30:16 martin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44.2.3 2019/11/11 17:15:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44.2.4 2020/09/27 10:30:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,23 +471,52 @@ nvme_rescan(device_t self, const char *attr, const int *flags)
 {
 	struct nvme_softc *sc = device_private(self);
 	struct nvme_attach_args naa;
+	struct nvm_namespace_format *f;
+	struct nvme_namespace *ns;
 	uint64_t cap;
 	int ioq_entries = nvme_ioq_size;
 	int i;
+	int error;
 
 	cap = nvme_read8(sc, NVME_CAP);
 	if (ioq_entries > NVME_CAP_MQES(cap))
 		ioq_entries = NVME_CAP_MQES(cap);
 
-	for (i = 0; i < sc->sc_nn; i++) {
-		if (sc->sc_namespaces[i].dev)
+	for (i = 1; i <= sc->sc_nn; i++) {
+		if (sc->sc_namespaces[i - 1].dev)
 			continue;
+
+		/* identify to check for availability */
+		error = nvme_ns_identify(sc, i);
+		if (error) {
+			aprint_error_dev(self, "couldn't identify namespace #%d\n", i);
+			continue;
+		}
+
+		ns = nvme_ns_get(sc, i);
+		KASSERT(ns);
+
+		f = &ns->ident->lbaf[NVME_ID_NS_FLBAS(ns->ident->flbas)];
+
+		/*
+		 * NVME1.0e 6.11 Identify command
+		 *
+		 * LBADS values smaller than 9 are not supported, a value
+		 * of zero means that the format is not used.
+		 */
+		if (f->lbads < 9) {
+			if (f->lbads > 0)
+				aprint_error_dev(self,
+						 "unsupported logical data size %u\n", f->lbads);
+			continue;
+		}
+
 		memset(&naa, 0, sizeof(naa));
-		naa.naa_nsid = i + 1;
+		naa.naa_nsid = i;
 		naa.naa_qentries = (ioq_entries - 1) * sc->sc_nq;
 		naa.naa_maxphys = sc->sc_mdts;
 		naa.naa_typename = sc->sc_modelname;
-		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
+		sc->sc_namespaces[i - 1].dev = config_found(sc->sc_dev, &naa,
 		    nvme_print);
 	}
 	return 0;
