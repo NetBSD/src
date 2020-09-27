@@ -3,7 +3,7 @@
 
 /*
 
-Copyright 1996-2016 Free Software Foundation, Inc.
+Copyright 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -37,7 +37,7 @@ see https://www.gnu.org/licenses/.
 
 /* The gmp-mparam.h file (a string) the tune program should suggest updating.
    */
-#define GMP_MPARAM_H_SUGGEST "./mpn/arm/gmp-mparam.h"
+#define GMP_MPARAM_H_SUGGEST "./mpn/arm/v7a/cora5/gmp-mparam.h"
 
 /* Define to 1 if you have the `alarm' function. */
 #define HAVE_ALARM 1
@@ -176,6 +176,26 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_HOST_CPU_pentiumpro */
 /* #undef HAVE_HOST_CPU_pentium2 */
 /* #undef HAVE_HOST_CPU_pentium3 */
+/* #undef HAVE_HOST_CPU_pentium4 */
+/* #undef HAVE_HOST_CPU_core2 */
+/* #undef HAVE_HOST_CPU_nehalem */
+/* #undef HAVE_HOST_CPU_westmere */
+/* #undef HAVE_HOST_CPU_sandybridge */
+/* #undef HAVE_HOST_CPU_ivybridge */
+/* #undef HAVE_HOST_CPU_haswell */
+/* #undef HAVE_HOST_CPU_broadwell */
+/* #undef HAVE_HOST_CPU_skylake */
+/* #undef HAVE_HOST_CPU_silvermont */
+/* #undef HAVE_HOST_CPU_goldmont */
+/* #undef HAVE_HOST_CPU_k8 */
+/* #undef HAVE_HOST_CPU_k10 */
+/* #undef HAVE_HOST_CPU_bulldozer */
+/* #undef HAVE_HOST_CPU_piledriver */
+/* #undef HAVE_HOST_CPU_steamroller */
+/* #undef HAVE_HOST_CPU_excavator */
+/* #undef HAVE_HOST_CPU_zen */
+/* #undef HAVE_HOST_CPU_bobcat */
+/* #undef HAVE_HOST_CPU_jaguar */
 /* #undef HAVE_HOST_CPU_s390_z900 */
 /* #undef HAVE_HOST_CPU_s390_z990 */
 /* #undef HAVE_HOST_CPU_s390_z9 */
@@ -258,8 +278,8 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_addlsh2_nc_ip2 */
 /* #undef HAVE_NATIVE_mpn_addlsh_nc_ip2 */
 /* #undef HAVE_NATIVE_mpn_addmul_1c */
-/* #undef HAVE_NATIVE_mpn_addmul_2 */
-/* #undef HAVE_NATIVE_mpn_addmul_3 */
+#define HAVE_NATIVE_mpn_addmul_2 1
+#define HAVE_NATIVE_mpn_addmul_3 1
 /* #undef HAVE_NATIVE_mpn_addmul_4 */
 /* #undef HAVE_NATIVE_mpn_addmul_5 */
 /* #undef HAVE_NATIVE_mpn_addmul_6 */
@@ -269,8 +289,8 @@ see https://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_and_n 1
 #define HAVE_NATIVE_mpn_andn_n 1
 #define HAVE_NATIVE_mpn_bdiv_dbm1c 1
-/* #undef HAVE_NATIVE_mpn_bdiv_q_1 */
-/* #undef HAVE_NATIVE_mpn_pi1_bdiv_q_1 */
+#define HAVE_NATIVE_mpn_bdiv_q_1 1
+#define HAVE_NATIVE_mpn_pi1_bdiv_q_1 1
 #define HAVE_NATIVE_mpn_cnd_add_n 1
 #define HAVE_NATIVE_mpn_cnd_sub_n 1
 #define HAVE_NATIVE_mpn_com 1
@@ -280,11 +300,13 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_div_qr_2 */
 #define HAVE_NATIVE_mpn_divexact_1 1
 /* #undef HAVE_NATIVE_mpn_divexact_by3c */
-/* #undef HAVE_NATIVE_mpn_divrem_1 */
+#define HAVE_NATIVE_mpn_divrem_1 1
 /* #undef HAVE_NATIVE_mpn_divrem_1c */
 /* #undef HAVE_NATIVE_mpn_divrem_2 */
 /* #undef HAVE_NATIVE_mpn_gcd_1 */
-/* #undef HAVE_NATIVE_mpn_hamdist */
+#define HAVE_NATIVE_mpn_gcd_11 1
+#define HAVE_NATIVE_mpn_gcd_22 1
+#define HAVE_NATIVE_mpn_hamdist 1
 #define HAVE_NATIVE_mpn_invert_limb 1
 #define HAVE_NATIVE_mpn_ior_n 1
 #define HAVE_NATIVE_mpn_iorn_n 1
@@ -292,16 +314,16 @@ see https://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_lshiftc 1
 /* #undef HAVE_NATIVE_mpn_lshsub_n */
 /* #undef HAVE_NATIVE_mpn_mod_1 */
-/* #undef HAVE_NATIVE_mpn_mod_1_1p */
+#define HAVE_NATIVE_mpn_mod_1_1p 1
 /* #undef HAVE_NATIVE_mpn_mod_1c */
-/* #undef HAVE_NATIVE_mpn_mod_1s_2p */
+#define HAVE_NATIVE_mpn_mod_1s_2p 1
 /* #undef HAVE_NATIVE_mpn_mod_1s_4p */
 #define HAVE_NATIVE_mpn_mod_34lsub1 1
 /* #undef HAVE_NATIVE_mpn_modexact_1_odd */
 #define HAVE_NATIVE_mpn_modexact_1c_odd 1
 #define HAVE_NATIVE_mpn_mul_1 1
 /* #undef HAVE_NATIVE_mpn_mul_1c */
-/* #undef HAVE_NATIVE_mpn_mul_2 */
+#define HAVE_NATIVE_mpn_mul_2 1
 /* #undef HAVE_NATIVE_mpn_mul_3 */
 /* #undef HAVE_NATIVE_mpn_mul_4 */
 /* #undef HAVE_NATIVE_mpn_mul_5 */
@@ -310,8 +332,8 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_mullo_basecase */
 #define HAVE_NATIVE_mpn_nand_n 1
 #define HAVE_NATIVE_mpn_nior_n 1
-/* #undef HAVE_NATIVE_mpn_popcount */
-/* #undef HAVE_NATIVE_mpn_preinv_divrem_1 */
+#define HAVE_NATIVE_mpn_popcount 1
+#define HAVE_NATIVE_mpn_preinv_divrem_1 1
 /* #undef HAVE_NATIVE_mpn_preinv_mod_1 */
 /* #undef HAVE_NATIVE_mpn_redc_1 */
 /* #undef HAVE_NATIVE_mpn_redc_2 */
@@ -326,7 +348,8 @@ see https://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_rsh1sub_n 1
 /* #undef HAVE_NATIVE_mpn_rsh1sub_nc */
 #define HAVE_NATIVE_mpn_rshift 1
-/* #undef HAVE_NATIVE_mpn_sqr_basecase */
+/* #undef HAVE_NATIVE_mpn_sbpi1_bdiv_r */
+#define HAVE_NATIVE_mpn_sqr_basecase 1
 /* #undef HAVE_NATIVE_mpn_sqr_diagonal */
 /* #undef HAVE_NATIVE_mpn_sqr_diag_addlsh1 */
 #define HAVE_NATIVE_mpn_sub_n 1
@@ -525,7 +548,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_NAME "GNU MP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU MP 6.1.2"
+#define PACKAGE_STRING "GNU MP 6.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gmp"
@@ -534,7 +557,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_URL "http://www.gnu.org/software/gmp/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.1.2"
+#define PACKAGE_VERSION "6.2.0"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -564,10 +587,10 @@ see https://www.gnu.org/licenses/.
 #define TIME_WITH_SYS_TIME 1
 
 /* Maximum size the tune program can test for SQR_TOOM2_THRESHOLD */
-#define TUNE_SQR_TOOM2_MAX SQR_TOOM2_MAX_GENERIC
+/* #undef TUNE_SQR_TOOM2_MAX */
 
 /* Version number of package */
-#define VERSION "6.1.2"
+#define VERSION "6.2.0"
 
 /* Define to 1 to enable ASSERT checking, per --enable-assert */
 /* #undef WANT_ASSERT */
@@ -612,6 +635,9 @@ see https://www.gnu.org/licenses/.
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
+
+/* Define to 1 if the assembler understands the mulx instruction */
+/* #undef X86_ASM_MULX */
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

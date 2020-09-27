@@ -4,6 +4,7 @@ ifdef(<__CONFIG_M4_INCLUDED__>,,<
 
 define(<WANT_ASSERT>,0)
 define(<WANT_PROFILING>,<`no'>)
+define(<GMP_AVX_NOT_REALLY_AVAILABLE>,1)
 define(<M4WRAP_SPURIOUS>,<no>)
 define(<TEXT>, <.text>)
 define(<DATA>, <.data>)
