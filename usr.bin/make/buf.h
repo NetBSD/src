@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.31 2020/09/27 16:21:06 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.32 2020/09/27 16:38:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -97,13 +97,13 @@ void Buf_Expand_1(Buffer *);
 static inline MAKE_ATTR_UNUSED void
 Buf_AddByte(Buffer *bp, char byte)
 {
-    size_t new_len = ++bp->len;
-    char *end_plus_one;
-    if (__predict_false(new_len >= bp->cap))
+    size_t old_len = bp->len++;
+    char *end;
+    if (__predict_false(old_len + 1 >= bp->cap))
 	Buf_Expand_1(bp);
-    end_plus_one = bp->data + new_len;
-    end_plus_one[-1] = byte;
-    end_plus_one[0] = 0;
+    end = bp->data + old_len;
+    end[0] = byte;
+    end[1] = '\0';
 }
 
 static inline MAKE_ATTR_UNUSED size_t
