@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.104 2020/09/27 11:53:03 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.105 2020/09/27 12:10:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.104 2020/09/27 11:53:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.105 2020/09/27 12:10:51 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -435,8 +435,9 @@ made_name(GNodeMade made)
     }
 }
 
-static void
-PrintNode(GNode *gn, int pass)
+/* Print the contents of a node. */
+void
+Targ_PrintNode(GNode *gn, int pass)
 {
     fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
     GNode_FprintDetails(debug_file, ", ", gn, "\n");
@@ -495,19 +496,12 @@ PrintNode(GNode *gn, int pass)
     }
 }
 
-/* Print the contents of a node. */
-void
-Targ_PrintNode(GNode *gn, int pass)
-{
-    PrintNode(gn, pass);
-}
-
 void
 Targ_PrintNodes(GNodeList *gnodes, int pass)
 {
     GNodeListNode *ln;
     for (ln = gnodes->first; ln != NULL; ln = ln->next)
-	PrintNode(ln->datum, pass);
+	Targ_PrintNode(ln->datum, pass);
 }
 
 /* Print only those targets that are just a source. */
