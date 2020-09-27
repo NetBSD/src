@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order-shuffle.mk,v 1.3 2020/08/16 20:43:01 rillig Exp $
+# $NetBSD: varmod-order-shuffle.mk,v 1.4 2020/09/27 20:13:44 rillig Exp $
 #
 # Tests for the :Ox variable modifier, which returns the words of the
 # variable, shuffled.
@@ -6,6 +6,8 @@
 # As of 2020-08-16, make uses random(3) seeded by the current time in seconds.
 # This makes the random numbers completely predictable since there is no other
 # part of make that uses random numbers.
+#
+# Tags: probabilistic
 
 NUMBERS=	one two three four five six seven eight nine ten
 
