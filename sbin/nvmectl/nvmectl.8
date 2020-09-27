@@ -1,4 +1,4 @@
-.\" $NetBSD: nvmectl.8,v 1.5 2018/04/18 10:17:54 nonaka Exp $
+.\" $NetBSD: nvmectl.8,v 1.6 2020/09/27 18:17:35 jdolecek Exp $
 .\"
 .\" Copyright (c) 2012 Intel Corporation
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\" $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.8 314230 2017-02-25 00:09:16Z imp $
 .\"
-.Dd May 19, 2016
+.Dd September 27, 2020
 .Dt NVMECTL 8
 .Os
 .Sh NAME
@@ -74,6 +74,7 @@
 .Nm
 .Ic power
 .Op Fl l
+.Op Fl s
 .Op Fl p Ar power_state
 .Op Fl w Ar workload_hint
 .Ar device_id
@@ -84,6 +85,19 @@
 .Sh DESCRIPTION
 NVM Express (NVMe) is a storage protocol standard, for SSDs and other
 high-speed storage devices over PCI Express.
+.Ss power
+The power command controls the supported power states.
+.Fl l
+will list supported power states.
+.Fl p
+will set the power state to specified value.
+.Fl w
+will set workload value.
+With
+.Fl s ,
+the specified power state and workload value is saved,
+so it persists any autonomous transitions and resets.
+Support for saving the values is optional, and depends on the controller.
 .Ss logpage
 The logpage command knows how to print log pages of various types.
 It also knows about vendor specific log pages from hgst/wdc and intel.
