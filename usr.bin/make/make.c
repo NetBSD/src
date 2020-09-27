@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.149 2020/09/27 11:14:03 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.150 2020/09/27 13:27:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.149 2020/09/27 11:14:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.150 2020/09/27 13:27:50 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -119,7 +119,6 @@ static GNodeList *toBeMade;
 
 static int MakeAddChild(void *, void *);
 static int MakeFindChild(void *, void *);
-static int MakeHandleUse(void *, void *);
 static Boolean MakeStartJobs(void);
 static int MakePrintStatus(void *, void *);
 static int MakeCheckOrder(void *, void *);
@@ -446,27 +445,24 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 /* Used by Make_Run on the downward pass to handle .USE nodes. Should be
  * called before the children are enqueued to be looked at by MakeAddChild.
  *
- * For .USE child, the commands, type flags and children are copied to the
+ * For a .USE child, the commands, type flags and children are copied to the
  * parent node, and since the relation to the .USE node is then no longer
  * needed, that relation is removed.
  *
  * Input:
- *	cgnp		the child, which may be a .USE node
- *	pgnp		the current parent
+ *	cgn		the child, which may be a .USE node
+ *	pgn		the current parent
  */
-static int
-MakeHandleUse(void *cgnp, void *pgnp)
+static void
+MakeHandleUse(GNode *cgn, GNode *pgn, GNodeListNode *ln)
 {
-    GNode	*cgn = (GNode *)cgnp;
-    GNode	*pgn = (GNode *)pgnp;
-    GNodeListNode *ln;
-    int		unmarked;
+    Boolean unmarked;
 
     unmarked = ((cgn->type & OP_MARK) == 0);
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_USE|OP_USEBEFORE)) == 0)
-	return 0;
+	return;
 
     if (unmarked)
 	Make_HandleUse(cgn, pgn);
@@ -478,11 +474,18 @@ MakeHandleUse(void *cgnp, void *pgnp)
      * children the parent has. This is used by Make_Run to decide
      * whether to queue the parent or examine its children...
      */
-    if ((ln = Lst_FindDatum(pgn->children, cgn)) != NULL) {
-	Lst_Remove(pgn->children, ln);
-	pgn->unmade--;
+    Lst_Remove(pgn->children, ln);
+    pgn->unmade--;
+}
+
+static void
+HandleUseNodes(GNode *gn)
+{
+    GNodeListNode *ln, *nln;
+    for (ln = gn->children->first; ln != NULL; ln = nln) {
+	nln = ln->next;
+        MakeHandleUse(ln->datum, gn, ln);
     }
-    return 0;
 }
 
 
@@ -1180,7 +1183,7 @@ Make_ExpandUse(GNodeList *targs)
 	(void)Dir_MTime(gn, 0);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
 	UnmarkChildren(gn);
-	Lst_ForEachUntil(gn->children, MakeHandleUse, gn);
+	HandleUseNodes(gn);
 
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
