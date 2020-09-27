@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.364 2020/09/04 03:53:12 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.365 2020/09/27 23:16:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2020/09/04 03:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.365 2020/09/27 23:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
+bool	alpha_is_qemu;		/* true if we've detected runnnig in qemu */
 
 int	bootdev_debug = 0;	/* patchable, or from DDB */
 

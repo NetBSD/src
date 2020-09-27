@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.56 2020/09/04 03:36:44 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.57 2020/09/27 23:16:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.56 2020/09/04 03:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.57 2020/09/27 23:16:10 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,7 +61,6 @@ extern struct prom_vec prom_dispatch_v;
 
 bool		prom_interface_initialized;
 int		prom_mapped = 1;	/* Is PROM still mapped? */
-static bool	prom_is_qemu;		/* XXX */
 
 static kmutex_t	prom_lock;
 
@@ -111,12 +110,12 @@ prom_init_cputype(const struct rpb * const rpb)
 static void
 prom_check_qemu(const struct rpb * const rpb)
 {
-	if (!prom_is_qemu) {
+	if (!alpha_is_qemu) {
 		if (rpb->rpb_ssn[0] == 'Q' &&
 		    rpb->rpb_ssn[1] == 'E' &&
 		    rpb->rpb_ssn[2] == 'M' &&
 		    rpb->rpb_ssn[3] == 'U') {
-			prom_is_qemu = true;
+			alpha_is_qemu = true;
 		}
 	}
 }
@@ -251,7 +250,7 @@ promcnputc(dev_t dev, int c)
 	unsigned char *to = (unsigned char *)0x20000000;
 
 	/* XXX */
-	if (prom_is_qemu)
+	if (alpha_is_qemu)
 		return;
 
 	prom_enter();
@@ -275,7 +274,7 @@ promcngetc(dev_t dev)
 	prom_return_t ret;
 
 	/* XXX */
-	if (prom_is_qemu)
+	if (alpha_is_qemu)
 		return 0;
 
 	for (;;) {
@@ -298,7 +297,7 @@ promcnlookc(dev_t dev, char *cp)
 	prom_return_t ret;
 
 	/* XXX */
-	if (prom_is_qemu)
+	if (alpha_is_qemu)
 		return 0;
 
 	prom_enter();
@@ -318,7 +317,7 @@ prom_getenv(int id, char *buf, int len)
 	prom_return_t ret;
 
 	/* XXX */
-	if (prom_is_qemu)
+	if (alpha_is_qemu)
 		return 0;
 
 	prom_enter();
