@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.408 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: GENERIC,v 1.409 2020/09/27 23:59:37 thorpej Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.408 $"
+ident		"GENERIC-$Revision: 1.409 $"
 
 maxusers 32
 
@@ -185,6 +185,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at	root
 cpu*	at	mainbus0
+qemu*	at	mainbus0
 
 # TurboLaser bus support and devices
 tlsb*	at	mainbus0

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.191 2019/08/21 04:17:40 msaitoh Exp $
+# $NetBSD: files.alpha,v 1.192 2020/09/27 23:59:37 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -54,6 +54,10 @@ attach	mainbus at root
 device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
+
+device	qemu
+attach	qemu at mainbus
+file	arch/alpha/alpha/qemu.c		qemu
 
 #
 # Machine-independent I2O drivers.
