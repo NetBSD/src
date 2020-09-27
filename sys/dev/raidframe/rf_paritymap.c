@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.9 2019/02/09 03:34:00 christos Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.10 2020/09/27 21:39:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.9 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.10 2020/09/27 21:39:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -220,10 +220,10 @@ rf_paritymap_write_locked(struct rf_paritymap *pm)
 	 * currently have no way to express that directly.)
 	 */
 	if (clearing)
-		rf_sync_component_caches(pm->raid);
+		rf_sync_component_caches(pm->raid, 1);
 	rf_paritymap_kern_write(pm->raid, pm->disk_now);
 	if (setting)
-		rf_sync_component_caches(pm->raid);
+		rf_sync_component_caches(pm->raid, 1);
 }
 
 /* Mark all parity as being in need of rewrite. */
