@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.30 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: WGT624V3,v 1.31 2020/09/27 13:48:50 roy Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.30 $"
+#ident 		"WGT624V3-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -165,6 +165,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan				# IEEE 802.1q encapsulation
 #pseudo-device	bridge				# simple inter-network bridging
+#pseudo-device	vether				# Virtual Ethernet for bridge
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals

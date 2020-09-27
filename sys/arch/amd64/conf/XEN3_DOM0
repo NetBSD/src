@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.184 2020/08/16 10:27:47 jdolecek Exp $
+# $NetBSD: XEN3_DOM0,v 1.185 2020/09/27 13:48:49 roy Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.184 $"
+#ident		"XEN3_DOM0-$Revision: 1.185 $"
 
 maxusers	32		# estimated number of users
 
@@ -841,6 +841,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	l2tp			# L2TPv3 interface
 pseudo-device	npf			# NPF packet filter
 

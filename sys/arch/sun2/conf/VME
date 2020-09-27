@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.52 2018/08/01 20:04:14 maxv Exp $
+# $NetBSD: VME,v 1.53 2020/09/27 13:48:54 roy Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.52 $"
+#ident 		"VME-$Revision: 1.53 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -211,6 +211,7 @@ pcons0	at mainbus0			# PROM console
 pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# packet filter
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
