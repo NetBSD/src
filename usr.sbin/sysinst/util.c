@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.46 2020/09/22 16:18:54 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.47 2020/09/27 17:36:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1343,6 +1343,26 @@ static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
 const char *tz_default;		/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
 static int save_cursel, save_topline;
+static int time_menu = -1;
+
+static void
+update_time_display(void)
+{
+	time_t t;
+	struct tm *tm;
+	char cur_time[STRSIZE], *p;
+
+	t = time(NULL);
+	tm = localtime(&t);
+	strlcpy(cur_time, safectime(&t), sizeof cur_time);
+	p = strchr(cur_time, '\n');
+	if (p != NULL)
+		*p = 0;
+
+	msg_clear();
+	msg_fmt_table_add(MSG_choose_timezone, "%s%s%s%s",
+	    tz_default, tz_selected, cur_time, tm ? tm->tm_zone : "?");
+}
 
 /*
  * Callback from timezone menu
@@ -1350,9 +1370,7 @@ static int save_cursel, save_topline;
 static int
 set_tz_select(menudesc *m, void *arg)
 {
-	time_t t;
 	char *new;
-	struct tm *tm;
 
 	if (m && strcmp(tz_selected, m->opts[m->cursel].opt_name) != 0) {
 		/* Change the displayed timezone */
@@ -1369,12 +1387,14 @@ set_tz_select(menudesc *m, void *arg)
 		/* Warp curser to 'Exit' line on menu */
 		m->cursel = -1;
 
-	/* Update displayed time */
-	t = time(NULL);
-	tm = localtime(&t);
-	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
-		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
-		    "?");
+	update_time_display();
+	if (time_menu >= 1) {
+		WINDOW *w = get_menudesc(time_menu)->mw;
+		if (w != NULL) {
+			touchwin(w);
+			wrefresh(w);
+		}
+	}
 	return 0;
 }
 
@@ -1529,8 +1549,6 @@ set_timezone(void)
 {
 	char localtime_link[STRSIZE];
 	char localtime_target[STRSIZE];
-	time_t t;
-	struct tm *tm;
 	int menu_no;
 
 	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
@@ -1542,10 +1560,7 @@ set_timezone(void)
 	tz_selected = strdup(tz_default);
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
-	t = time(NULL);
-	tm = localtime(&t);
-	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
-	    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone : "?");
+	update_time_display();
 
 	signal(SIGALRM, timezone_sig);
 	alarm(60);
@@ -1558,7 +1573,9 @@ set_timezone(void)
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
 
+	time_menu = menu_no;
 	process_menu(menu_no, NULL);
+	time_menu = -1;
 
 	free_menu(menu_no);
 

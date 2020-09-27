@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.28 2020/05/26 15:20:45 snj Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.29 2020/09/27 17:36:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -999,7 +999,7 @@ Appuyez sur la touche Entrée pour confirmer votre choix.
 Appuyez sur "x" puis sur Entrée pour valider la sélection en cours.
 
  Par défaut :		%s
- Sélection actuelle : %s
+ Sélection actuelle :   %s
  Heure locale :		%s %s
 }
 
