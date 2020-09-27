@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.481 2020/09/26 18:35:12 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.482 2020/09/27 00:32:17 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.481 2020/09/26 18:35:12 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.482 2020/09/27 00:32:17 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2419,6 +2419,11 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 
 	if (ifp->if_link_state_changed != NULL)
 		ifp->if_link_state_changed(ifp, link_state);
+
+#if NBRIDGE > 0
+	if (ifp->if_bridge != NULL)
+		bridge_calc_link_state(ifp->if_bridge);
+#endif
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_if_link_state_change != NULL)
