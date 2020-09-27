@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.34 2020/04/30 13:59:50 jdolecek Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.35 2020/09/27 00:32:17 roy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -346,6 +346,7 @@ void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
 
 void	bridge_calc_csum_flags(struct bridge_softc *);
+void	bridge_calc_link_state(struct bridge_softc *);
 
 #define BRIDGE_LOCK(_sc)	mutex_enter(&(_sc)->sc_iflist_psref.bip_lock)
 #define BRIDGE_UNLOCK(_sc)	mutex_exit(&(_sc)->sc_iflist_psref.bip_lock)
