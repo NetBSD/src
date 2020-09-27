@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.148 2020/09/26 17:39:45 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.149 2020/09/27 11:14:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,14 +107,15 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.148 2020/09/26 17:39:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.149 2020/09/27 11:14:03 rillig Exp $");
 
-static unsigned int checked = 1;/* Sequence # to detect recursion */
-static GNodeList *toBeMade;	/* The current fringe of the graph. These
-				 * are nodes which await examination by
-				 * MakeOODate. It is added to by
-				 * Make_Update and subtracted from by
-				 * MakeStartJobs */
+/* Sequence # to detect recursion. */
+static unsigned int checked = 1;
+
+/* The current fringe of the graph.
+ * These are nodes which await examination by MakeOODate.
+ * It is added to by Make_Update and subtracted from by MakeStartJobs */
+static GNodeList *toBeMade;
 
 static int MakeAddChild(void *, void *);
 static int MakeFindChild(void *, void *);
@@ -172,21 +173,7 @@ GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
 	    suffix);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_TimeStamp --
- *	Set the cmgn field of a parent node based on the mtime stamp in its
- *	child. Called from MakeOODate via Lst_ForEachUntil.
- *
- * Input:
- *	pgn		the current parent
- *	cgn		the child we've just examined
- *
- * Side Effects:
- *	The cmgn of the parent node will be changed if the mtime
- *	field of the child is greater than it.
- *-----------------------------------------------------------------------
- */
+/* Update the youngest child of the node, according to the given child. */
 void
 Make_TimeStamp(GNode *pgn, GNode *cgn)
 {
@@ -195,38 +182,22 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
     }
 }
 
-/*
- * Input:
- *	pgn		the current parent
- *	cgn		the child we've just examined
- *
- */
 static void
 MakeTimeStamp(void *pgn, void *cgn)
 {
     Make_TimeStamp(pgn, cgn);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_OODate --
- *	See if a given node is out of date with respect to its sources.
- *	Used by Make_Run when deciding which nodes to place on the
- *	toBeMade queue initially and by Make_Update to screen out USE and
- *	EXEC nodes. In the latter case, however, any other sort of node
- *	must be considered out-of-date since at least one of its children
- *	will have been recreated.
+/* See if the node is out of date with respect to its sources.
  *
- * Input:
- *	gn		the node to check
+ * Used by Make_Run when deciding which nodes to place on the
+ * toBeMade queue initially and by Make_Update to screen out .USE and
+ * .EXEC nodes. In the latter case, however, any other sort of node
+ * must be considered out-of-date since at least one of its children
+ * will have been recreated.
  *
- * Results:
- *	TRUE if the node is out of date. FALSE otherwise.
- *
- * Side Effects:
- *	The mtime field of the node and the cmgn field of its parents
- *	will/may be changed.
- *-----------------------------------------------------------------------
+ * The mtime field of the node and the cmgn field of its parents
+ * may be changed.
  */
 Boolean
 Make_OODate(GNode *gn)
@@ -368,23 +339,7 @@ Make_OODate(GNode *gn)
     return oodate;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * MakeAddChild  --
- *	Function used by Make_Run to add a child to the list l.
- *	It will only add the child if its make field is FALSE.
- *
- * Input:
- *	gnp		the node to add
- *	lp		the list to which to add it
- *
- * Results:
- *	Always returns 0
- *
- * Side Effects:
- *	The given list is extended
- *-----------------------------------------------------------------------
- */
+/* Add the node to the list if it needs to be examined. */
 static int
 MakeAddChild(void *gnp, void *lp)
 {
@@ -400,22 +355,13 @@ MakeAddChild(void *gnp, void *lp)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * MakeFindChild  --
- *	Function used by Make_Run to find the pathname of a child
- *	that was already made.
+/* Find the pathname of a child that was already made.
+ *
+ * The path and mtime of the node and the cmgn of the parent are
+ * updated; the unmade children count of the parent is decremented.
  *
  * Input:
  *	gnp		the node to find
- *
- * Results:
- *	Always returns 0
- *
- * Side Effects:
- *	The path and mtime of the node and the cmgn of the parent are
- *	updated; the unmade children count of the parent is decremented.
- *-----------------------------------------------------------------------
  */
 static int
 MakeFindChild(void *gnp, void *pgnp)
@@ -497,26 +443,16 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * MakeHandleUse --
- *	Callback function for Lst_ForEachUntil, used by Make_Run on the downward
- *	pass to handle .USE nodes. Should be called before the children
- *	are enqueued to be looked at by MakeAddChild.
- *	This function calls Make_HandleUse to copy the .USE node's commands,
- *	type flags and children to the parent node.
+/* Used by Make_Run on the downward pass to handle .USE nodes. Should be
+ * called before the children are enqueued to be looked at by MakeAddChild.
+ *
+ * For .USE child, the commands, type flags and children are copied to the
+ * parent node, and since the relation to the .USE node is then no longer
+ * needed, that relation is removed.
  *
  * Input:
- *	cgnp		the child we've just examined
+ *	cgnp		the child, which may be a .USE node
  *	pgnp		the current parent
- *
- * Results:
- *	returns 0.
- *
- * Side Effects:
- *	After expansion, .USE child nodes are removed from the parent
- *
- *-----------------------------------------------------------------------
  */
 static int
 MakeHandleUse(void *cgnp, void *pgnp)
@@ -550,21 +486,8 @@ MakeHandleUse(void *cgnp, void *pgnp)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Make_Recheck --
- *	Check the modification time of a gnode, and update it as described
- *	in the comments below.
- *
- * Results:
- *	returns 0 if the gnode does not exist, or its filesystem
- *	time if it does.
- *
- * Side Effects:
- *	the gnode's modification time and path name are affected.
- *
- *-----------------------------------------------------------------------
- */
+/* Check the modification time of a gnode, and update it if necessary.
+ * Return 0 if the gnode does not exist, or its filesystem time if it does. */
 time_t
 Make_Recheck(GNode *gn)
 {
@@ -640,36 +563,24 @@ Make_Recheck(GNode *gn)
     return mtime;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_Update  --
- *	Perform update on the parents of a node. Used by JobFinish once
- *	a node has been dealt with and by MakeStartJobs if it finds an
- *	up-to-date node.
+/* Perform update on the parents of a node. Used by JobFinish once
+ * a node has been dealt with and by MakeStartJobs if it finds an
+ * up-to-date node.
  *
- * Input:
- *	cgn		the child node
+ * The unmade field of pgn is decremented and pgn may be placed on
+ * the toBeMade queue if this field becomes 0.
  *
- * Results:
- *	Always returns 0
+ * If the child was made, the parent's flag CHILDMADE field will be
+ * set true.
  *
- * Side Effects:
- *	The unmade field of pgn is decremented and pgn may be placed on
- *	the toBeMade queue if this field becomes 0.
+ * If the child is not up-to-date and still does not exist,
+ * set the FORCE flag on the parents.
  *
- * 	If the child was made, the parent's flag CHILDMADE field will be
- *	set true.
+ * If the child wasn't made, the cmgn field of the parent will be
+ * altered if the child's mtime is big enough.
  *
- *	If the child is not up-to-date and still does not exist,
- *	set the FORCE flag on the parents.
- *
- *	If the child wasn't made, the cmgn field of the parent will be
- *	altered if the child's mtime is big enough.
- *
- *	Finally, if the child is the implied source for the parent, the
- *	parent's IMPSRC variable is set appropriately.
- *
- *-----------------------------------------------------------------------
+ * Finally, if the child is the implied source for the parent, the
+ * parent's IMPSRC variable is set appropriately.
  */
 void
 Make_Update(GNode *cgn)
@@ -846,29 +757,22 @@ UnmarkChildren(GNode *gn)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * MakeAddAllSrc --
- *	Add a child's name to the ALLSRC and OODATE variables of the given
- *	node. Called from Make_DoAllVar via Lst_ForEachUntil. A child is added only
- *	if it has not been given the .EXEC, .USE or .INVISIBLE attributes.
- *	.EXEC and .USE children are very rarely going to be files, so...
- *	If the child is a .JOIN node, its ALLSRC is propagated to the parent.
+/* Add a child's name to the ALLSRC and OODATE variables of the given
+ * node. Called from Make_DoAllVar via Lst_ForEachUntil. A child is added only
+ * if it has not been given the .EXEC, .USE or .INVISIBLE attributes.
+ * .EXEC and .USE children are very rarely going to be files, so...
+ * If the child is a .JOIN node, its ALLSRC is propagated to the parent.
  *
- *	A child is added to the OODATE variable if its modification time is
- *	later than that of its parent, as defined by Make, except if the
- *	parent is a .JOIN node. In that case, it is only added to the OODATE
- *	variable if it was actually made (since .JOIN nodes don't have
- *	modification times, the comparison is rather unfair...)..
+ * A child is added to the OODATE variable if its modification time is
+ * later than that of its parent, as defined by Make, except if the
+ * parent is a .JOIN node. In that case, it is only added to the OODATE
+ * variable if it was actually made (since .JOIN nodes don't have
+ * modification times, the comparison is rather unfair...)..
  *
  * Input:
  *	cgnp		The child to add
  *	pgnp		The parent to whose ALLSRC variable it should
  *			be added
- *
- * Side Effects:
- *	The ALLSRC variable for the given node is extended.
- *-----------------------------------------------------------------------
  */
 static void
 MakeAddAllSrc(void *cgnp, void *pgnp)
@@ -925,27 +829,18 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_DoAllVar --
- *	Set up the ALLSRC and OODATE variables. Sad to say, it must be
- *	done separately, rather than while traversing the graph. This is
- *	because Make defined OODATE to contain all sources whose modification
- *	times were later than that of the target, *not* those sources that
- *	were out-of-date. Since in both compatibility and native modes,
- *	the modification time of the parent isn't found until the child
- *	has been dealt with, we have to wait until now to fill in the
- *	variable. As for ALLSRC, the ordering is important and not
- *	guaranteed when in native mode, so it must be set here, too.
+/* Set up the ALLSRC and OODATE variables. Sad to say, it must be
+ * done separately, rather than while traversing the graph. This is
+ * because Make defined OODATE to contain all sources whose modification
+ * times were later than that of the target, *not* those sources that
+ * were out-of-date. Since in both compatibility and native modes,
+ * the modification time of the parent isn't found until the child
+ * has been dealt with, we have to wait until now to fill in the
+ * variable. As for ALLSRC, the ordering is important and not
+ * guaranteed when in native mode, so it must be set here, too.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	The ALLSRC and OODATE variables of the given node is filled in.
- *	If the node is a .JOIN node, its TARGET variable will be set to
- * 	match its ALLSRC variable.
- *-----------------------------------------------------------------------
+ * If the node is a .JOIN node, its TARGET variable will be set to
+ * match its ALLSRC variable.
  */
 void
 Make_DoAllVar(GNode *gn)
@@ -956,10 +851,10 @@ Make_DoAllVar(GNode *gn)
     UnmarkChildren(gn);
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
-    if (!Var_Exists (OODATE, gn)) {
+    if (!Var_Exists(OODATE, gn)) {
 	Var_Set(OODATE, "", gn);
     }
-    if (!Var_Exists (ALLSRC, gn)) {
+    if (!Var_Exists(ALLSRC, gn)) {
 	Var_Set(ALLSRC, "", gn);
     }
 
@@ -970,23 +865,6 @@ Make_DoAllVar(GNode *gn)
     }
     gn->flags |= DONE_ALLSRC;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * MakeStartJobs --
- *	Start as many jobs as possible.
- *
- * Results:
- *	If the query flag was given to pmake, no job will be started,
- *	but as soon as an out-of-date target is found, this function
- *	returns TRUE. At all other times, this function returns FALSE.
- *
- * Side Effects:
- *	Nodes are removed from the toBeMade queue and job table slots
- *	are filled.
- *
- *-----------------------------------------------------------------------
- */
 
 static int
 MakeCheckOrder(void *v_bn, void *ignore MAKE_ATTR_UNUSED)
@@ -1057,6 +935,12 @@ MakeBuildParent(void *v_pn, void *toBeMade_next)
     return 0;
 }
 
+/* Start as many jobs as possible, taking them from the toBeMade queue.
+ *
+ * If the query flag was given to pmake, no job will be started,
+ * but as soon as an out-of-date target is found, this function
+ * returns TRUE. At all other times, this function returns FALSE.
+ */
 static Boolean
 MakeStartJobs(void)
 {
@@ -1139,24 +1023,6 @@ MakeStartJobs(void)
     return FALSE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * MakePrintStatus --
- *	Print the status of a top-level node, viz. it being up-to-date
- *	already or not created due to an error in a lower level.
- *	Callback function for Make_Run via Lst_ForEachUntil.
- *
- * Input:
- *	gnp		Node to examine
- *
- * Results:
- *	Always returns 0.
- *
- * Side Effects:
- *	A message may be printed.
- *
- *-----------------------------------------------------------------------
- */
 static int
 MakePrintStatusOrder(void *ognp, void *gnp)
 {
@@ -1179,6 +1045,10 @@ MakePrintStatusOrder(void *ognp, void *gnp)
     return 0;
 }
 
+/* Print the status of a top-level node, viz. it being up-to-date already
+ * or not created due to an error in a lower level.
+ * Callback function for Make_Run via Lst_ForEachUntil.
+ */
 static int
 MakePrintStatus(void *gnp, void *v_errors)
 {
@@ -1253,16 +1123,10 @@ MakePrintStatus(void *gnp, void *v_errors)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Make_ExpandUse --
- *	Expand .USE nodes and create a new targets list
+/* Expand .USE nodes and create a new targets list.
  *
  * Input:
  *	targs		the initial list of targets
- *
- * Side Effects:
- *-----------------------------------------------------------------------
  */
 void
 Make_ExpandUse(GNodeList *targs)
@@ -1335,17 +1199,6 @@ Make_ExpandUse(GNodeList *targs)
     Lst_Free(examine);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_ProcessWait --
- *	Convert .WAIT nodes into dependencies
- *
- * Input:
- *	targs		the initial list of targets
- *
- *-----------------------------------------------------------------------
- */
-
 static int
 link_parent(void *cnp, void *pnp)
 {
@@ -1377,6 +1230,7 @@ add_wait_dependency(GNodeListNode *owln, GNode *wn)
     }
 }
 
+/* Convert .WAIT nodes into dependencies. */
 static void
 Make_ProcessWait(GNodeList *targs)
 {
