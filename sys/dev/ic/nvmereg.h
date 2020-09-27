@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.14 2019/10/05 23:27:20 mrg Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.15 2020/09/27 16:44:24 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -467,6 +467,7 @@ struct nvm_identify_controller {
 					   Configuration */
 	uint8_t		apsta;		/* Autonomous Power State Transition
 					   Attributes */
+#define	NVME_ID_CTRLR_APSTA_PRESENT	__BIT(0)
 
 	uint16_t	wctemp;		/* Warning Composite Temperature
 					   Threshold */
