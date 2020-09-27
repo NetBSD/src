@@ -64,6 +64,7 @@ no pseudo-device ccd
 no pseudo-device fss
 no pseudo-device npf
 no pseudo-device bridge
+no pseudo-device vether
 no pseudo-device accf_data
 no pseudo-device accf_http
 no pseudo-device sequencer

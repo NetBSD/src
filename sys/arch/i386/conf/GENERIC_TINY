@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.168 2020/05/16 13:46:11 maya Exp $
+#	$NetBSD: GENERIC_TINY,v 1.169 2020/09/27 13:48:51 roy Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -508,6 +508,7 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol

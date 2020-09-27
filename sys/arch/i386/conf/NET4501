@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.103 2020/01/19 01:25:05 thorpej Exp $
+# $NetBSD: NET4501,v 1.104 2020/09/27 13:48:51 roy Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.103 $"
+#ident 		"NET4501-$Revision: 1.104 $"
 
 maxusers	32		# estimated number of users
 
@@ -252,6 +252,7 @@ pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2020/08/10 06:29:49 rin Exp $
+# $NetBSD: GENERIC,v 1.108 2020/09/27 13:48:54 roy Exp $
 #
 # GENERIC machine description file
 # 
@@ -29,7 +29,7 @@ options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.108 $"
 
 # Bootloader has size limit (~2MB). Kernel should be smaller than this
 # hard limit. Otherwise, it freezes before adding swap even with 7MB
@@ -263,6 +263,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

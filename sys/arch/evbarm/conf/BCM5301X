@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.36 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: BCM5301X,v 1.37 2020/09/27 13:48:50 roy Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -263,6 +263,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
 pseudo-device	vlan
 pseudo-device	bridge
+#pseudo-device	vether			# Virtual Ethernet for bridge
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

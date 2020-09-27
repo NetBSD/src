@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.120 2020/08/16 10:27:47 jdolecek Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.121 2020/09/27 13:48:54 roy Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.120 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.121 $"
 
 maxusers	32
 
@@ -274,6 +274,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter

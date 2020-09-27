@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.64 2020/08/16 10:27:47 jdolecek Exp $
+#	$NetBSD: ARMADILLO9,v 1.65 2020/09/27 13:48:50 roy Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -269,6 +269,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 #pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices

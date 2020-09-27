@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.43 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: SMALLRAM,v 1.44 2020/09/27 13:48:52 roy Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -117,6 +117,7 @@ no pseudo-device	gif
 no pseudo-device	stf
 no pseudo-device	vlan
 no pseudo-device	bridge
+no pseudo-device	vether
 no pseudo-device	agr
 no pseudo-device	accf_data
 no pseudo-device	accf_http

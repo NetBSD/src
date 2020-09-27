@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.20 2020/08/16 10:27:47 jdolecek Exp $
+#	$NetBSD: DUOVERO,v 1.21 2020/09/27 13:48:50 roy Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -266,6 +266,7 @@ pseudo-device	tap			# virtual Ethernet
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices

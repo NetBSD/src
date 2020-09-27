@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.145 2020/08/10 06:32:57 rin Exp $
+# $NetBSD: GENERIC.in,v 1.146 2020/09/27 13:48:49 roy Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145 $"
+#ident 		"GENERIC-$Revision: 1.146 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
@@ -653,6 +653,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 #pseudo-device	fss			# file system snapshot device

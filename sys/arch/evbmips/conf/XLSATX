@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.30 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: XLSATX,v 1.31 2020/09/27 13:48:50 roy Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.30 $"
+#ident 		"XLSATX-$Revision: 1.31 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -199,6 +199,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan				# IEEE 802.1q encapsulation
 #pseudo-device	bridge				# simple inter-network bridging
+#pseudo-device	vether				# Virtual Ethernet for bridge
 pseudo-device	kttcp				# kernel ttcp
 
 # Miscellaneous pseudo-devices

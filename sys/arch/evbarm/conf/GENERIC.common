@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.38 2020/08/17 09:03:03 mrg Exp $
+#	$NetBSD: GENERIC.common,v 1.39 2020/09/27 13:48:50 roy Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -148,6 +148,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

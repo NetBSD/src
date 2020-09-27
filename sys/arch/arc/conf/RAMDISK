@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.83 2020/05/29 23:24:39 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.84 2020/09/27 13:48:49 roy Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -133,6 +133,7 @@ no pseudo-device tap
 #no pseudo-device stf
 no pseudo-device vlan
 no pseudo-device bridge
+no pseudo-device vether
 #no pseudo-device agr
 no pseudo-device clockctl
 
