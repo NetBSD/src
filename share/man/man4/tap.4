@@ -1,4 +1,4 @@
-.\" $NetBSD: tap.4,v 1.14 2020/09/27 15:19:04 roy Exp $
+.\" $NetBSD: tap.4,v 1.15 2020/09/27 19:36:54 roy Exp $
 .\"
 .\"  Copyright (c) 2004, 2005 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -159,6 +159,14 @@ ioctl on a
 .Dv PF_LINK
 socket, as it is not available on
 the ioctl handler of the character device interface.
+.Ss LINK STATE
+When an application has opened the
+.Nm
+character device the link is considered up, otherwise down.
+As such, it is best to open the character device once connectivity has
+been established so that Duplicate Address Detection, if applicable,
+can be performed.
+If connectivity is lost, the character device should be closed.
 .Sh FILES
 .Bl -tag -compact -width /dev/tap[0-9]*
 .It Pa /dev/tap
