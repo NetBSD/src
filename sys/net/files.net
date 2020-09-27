@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.28 2020/09/13 11:48:45 roy Exp $
+#	$NetBSD: files.net,v 1.29 2020/09/27 13:31:04 roy Exp $
 
 # XXX CLEANUP
 define	net
@@ -31,6 +31,7 @@ file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_tap.c			tap
 file	net/if_tun.c			tun
+file	net/if_vether.c			vether
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
 file	net/if_wg.c			wg			needs-flag
