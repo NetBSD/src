@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.30 2020/09/27 16:10:07 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.31 2020/09/27 16:21:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,9 +81,9 @@
 
 /* An automatically growing null-terminated buffer of characters. */
 typedef struct Buffer {
-    size_t size;	/* Allocated size of the buffer, including the null */
-    size_t count;	/* Number of bytes in buffer, excluding the null */
-    char *buffer;	/* The buffer itself (always null-terminated) */
+    size_t cap;		/* Allocated size of the buffer, including the null */
+    size_t len;		/* Number of bytes in buffer, excluding the null */
+    char *data;		/* The buffer itself (always null-terminated) */
 } Buffer;
 
 /* If we aren't on NetBSD, __predict_false() might not be defined. */
@@ -97,25 +97,25 @@ void Buf_Expand_1(Buffer *);
 static inline MAKE_ATTR_UNUSED void
 Buf_AddByte(Buffer *bp, char byte)
 {
-    size_t count = ++bp->count;
-    char *ptr;
-    if (__predict_false(count >= bp->size))
+    size_t new_len = ++bp->len;
+    char *end_plus_one;
+    if (__predict_false(new_len >= bp->cap))
 	Buf_Expand_1(bp);
-    ptr = bp->buffer + count;
-    ptr[-1] = byte;
-    ptr[0] = 0;
+    end_plus_one = bp->data + new_len;
+    end_plus_one[-1] = byte;
+    end_plus_one[0] = 0;
 }
 
 static inline MAKE_ATTR_UNUSED size_t
 Buf_Size(const Buffer *bp)
 {
-    return bp->count;
+    return bp->len;
 }
 
 static inline MAKE_ATTR_UNUSED Boolean
 Buf_EndsWith(const Buffer *bp, char ch)
 {
-    return bp->count > 0 && bp->buffer[bp->count - 1] == ch;
+    return bp->len > 0 && bp->data[bp->len - 1] == ch;
 }
 
 void Buf_AddBytes(Buffer *, const char *, size_t);
