@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.48 2020/09/21 17:44:25 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.49 2020/09/27 19:15:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -221,7 +221,7 @@ typedef struct Shell {
     const char   *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
-    int           noPLen;	/* length of noPrint command */
+    size_t        noPLen;	/* length of noPrint command */
     Boolean	  hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
     const char	 *errCheck;	/* string to turn error checking on */
