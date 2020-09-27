@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.152 2020/09/25 23:24:49 rillig Exp $
+# $NetBSD: Makefile,v 1.153 2020/09/27 13:18:30 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -447,6 +447,8 @@ LC_ALL=		C
 LANG=		C
 .export LANG LC_ALL
 
+MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
+
 # Each test is run in a sub-make, to keep the tests for interfering with
 # each other, and because they use different environment variables and
 # command line options.
@@ -455,7 +457,7 @@ LANG=		C
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
 	cd ${.OBJDIR}; \
-	env -i PATH="$$PATH" ${ENV.${.PREFIX:T}} \
+	env -i PATH="$$PATH" ${MAKE_TEST_ENV} ${ENV.${.PREFIX:T}} \
 	  ${TEST_MAKE} \
 	    -r -C ${.CURDIR} -f ${.IMPSRC} \
 	    ${FLAGS.${.PREFIX:T}:U-k} \
