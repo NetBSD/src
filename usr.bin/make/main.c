@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.349 2020/09/26 17:39:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.350 2020/09/27 16:52:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.349 2020/09/26 17:39:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.350 2020/09/27 16:52:22 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -1679,7 +1679,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	    JobReapChild(pid, status, FALSE);
 	    continue;
 	}
-	res_len = Buf_Size(&buf);
+	res_len = Buf_Len(&buf);
 	res = Buf_Destroy(&buf, FALSE);
 
 	if (savederr != 0)

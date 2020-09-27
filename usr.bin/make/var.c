@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.544 2020/09/27 16:10:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.545 2020/09/27 16:52:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.544 2020/09/27 16:10:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.545 2020/09/27 16:52:22 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1551,7 +1551,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
     for (i = 0; i < words.len; i++) {
 	modifyWord(words.words[i], &result, modifyWord_args);
-	if (Buf_Size(&result.buf) > 0)
+	if (Buf_Len(&result.buf) > 0)
 	    SepBuf_Sep(&result);
     }
 
@@ -1942,7 +1942,7 @@ ParseModifierPart(
 
     *pp = ++p;
     if (out_length != NULL)
-	*out_length = Buf_Size(&buf);
+	*out_length = Buf_Len(&buf);
 
     *out_part = Buf_Destroy(&buf, FALSE);
     VAR_DEBUG("Modifier part: \"%s\"\n", *out_part);
@@ -3361,7 +3361,7 @@ ParseVarname(const char **pp, char startc, char endc,
 	}
     }
     *pp = p;
-    *out_varname_len = Buf_Size(&buf);
+    *out_varname_len = Buf_Len(&buf);
     return Buf_Destroy(&buf, FALSE);
 }
 
