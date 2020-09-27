@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.153 2020/09/27 13:18:30 rillig Exp $
+# $NetBSD: Makefile,v 1.154 2020/09/27 20:11:34 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -169,6 +169,7 @@ TESTS+=		forloop
 TESTS+=		forsubst
 TESTS+=		impsrc
 TESTS+=		include-main
+TESTS+=		job-output-long-lines
 TESTS+=		lint
 TESTS+=		make-exported
 TESTS+=		misc
@@ -403,6 +404,8 @@ SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 # Some tests need an additional round of postprocessing.
 POSTPROC.deptgt-suffixes= \
 			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
+POSTPROC.job-output-long-lines= \
+			awk '/^[ab]+--- job-[ab] ---/ { print "bad"; exit }'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.varmod-match-escape= ${TOOL_SED} -n -e '/^Pattern/p'
 POSTPROC.varname=	${TOOL_SED} -n -e '/^MAGIC/p' -e '/^ORDER_/p'
