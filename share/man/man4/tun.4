@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.24 2019/03/26 09:58:20 pgoyette Exp $
+.\" $NetBSD: tun.4,v 1.25 2020/09/27 19:36:54 roy Exp $
 .\"
 .\" Copyright (c) 1996-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2006
+.Dd September 27, 2020
 .Dt TUN 4
 .Os
 .Sh NAME
@@ -272,6 +272,14 @@ All queued packets are thrown away.
 If the interface is up when the data device is not open
 output packets are always thrown away rather than letting
 them pile up.
+.Ss LINK STATE
+When an application has opened the
+.Nm
+character device the link is considered up, otherwise down.
+As such, it is best to open the character device once connectivity has
+been established so that Duplicate Address Detection, if applicable,
+can be performed.
+If connectivity is lost, the character device should be closed.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr intro 4
