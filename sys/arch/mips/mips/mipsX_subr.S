@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.111 2020/09/24 08:14:08 mrg Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.112 2020/09/27 10:35:57 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.111 2020/09/24 08:14:08 mrg Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.112 2020/09/27 10:35:57 mrg Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -137,7 +137,7 @@ RCSID("$NetBSD: mipsX_subr.S,v 1.111 2020/09/24 08:14:08 mrg Exp $")
 
 #include "assym.h"
 
-#if defined(MIPS64_OCTEON) || defined(MIPS64_XLR) || defined(MIPS64_XLS)
+#if defined(MIPS64_OCTEON)
 #include "cpunode.h"			/* for NWDOG */
 #else
 #define NWDOG 0
