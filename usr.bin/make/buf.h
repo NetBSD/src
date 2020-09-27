@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.29 2020/09/13 15:27:25 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.30 2020/09/27 16:10:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -110,6 +110,12 @@ static inline MAKE_ATTR_UNUSED size_t
 Buf_Size(const Buffer *bp)
 {
     return bp->count;
+}
+
+static inline MAKE_ATTR_UNUSED Boolean
+Buf_EndsWith(const Buffer *bp, char ch)
+{
+    return bp->count > 0 && bp->buffer[bp->count - 1] == ch;
 }
 
 void Buf_AddBytes(Buffer *, const char *, size_t);
