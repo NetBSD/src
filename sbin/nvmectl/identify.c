@@ -1,4 +1,4 @@
-/*	$NetBSD: identify.c,v 1.6 2018/12/01 18:29:19 jdolecek Exp $	*/
+/*	$NetBSD: identify.c,v 1.7 2020/09/27 16:45:21 jdolecek Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.6 2018/12/01 18:29:19 jdolecek Exp $");
+__RCSID("$NetBSD: identify.c,v 1.7 2020/09/27 16:45:21 jdolecek Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -145,6 +145,9 @@ print_controller(struct nvm_identify_controller *cdata)
 	printf("Volatile Write Cache:        %s\n",
 		(cdata->vwc & NVME_ID_CTRLR_VWC_PRESENT) ?
 		"Present" : "Not Present");
+	printf("Autonomous Power State Transitions:    %s\n",
+		(cdata->apsta & NVME_ID_CTRLR_APSTA_PRESENT) ?
+		"Supported" : "Not Supported");
 
 	if (cdata->oacs & NVME_ID_CTRLR_OACS_NS) {
 		printf("\n");
