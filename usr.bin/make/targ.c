@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.103 2020/09/27 01:07:12 mrg Exp $	*/
+/*	$NetBSD: targ.c,v 1.104 2020/09/27 11:53:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.103 2020/09/27 01:07:12 mrg Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.104 2020/09/27 11:53:03 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -435,16 +435,13 @@ made_name(GNodeMade made)
     }
 }
 
-static int
-PrintNode(void *gnp, void *passp)
+static void
+PrintNode(GNode *gn, int pass)
 {
-    GNode *gn = gnp;
-    int pass = *(const int *)passp;
-
     fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
     GNode_FprintDetails(debug_file, ", ", gn, "\n");
     if (gn->flags == 0)
-	return 0;
+	return;
 
     if (!OP_NOP(gn->type)) {
 	fprintf(debug_file, "#\n");
@@ -493,23 +490,24 @@ PrintNode(void *gnp, void *passp)
 	Targ_PrintCmds(gn);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEachUntil(gn->cohorts, PrintNode, passp);
+	    Targ_PrintNodes(gn->cohorts, pass);
 	}
     }
-    return 0;
 }
 
 /* Print the contents of a node. */
 void
 Targ_PrintNode(GNode *gn, int pass)
 {
-    PrintNode(gn, &pass);
+    PrintNode(gn, pass);
 }
 
 void
 Targ_PrintNodes(GNodeList *gnodes, int pass)
 {
-    Lst_ForEachUntil(gnodes, PrintNode, &pass);
+    GNodeListNode *ln;
+    for (ln = gnodes->first; ln != NULL; ln = ln->next)
+	PrintNode(ln->datum, pass);
 }
 
 /* Print only those targets that are just a source. */
