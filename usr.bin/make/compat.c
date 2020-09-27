@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.152 2020/09/26 16:41:42 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.153 2020/09/27 11:37:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.152 2020/09/26 16:41:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.153 2020/09/27 11:37:19 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -185,10 +185,10 @@ CompatInterrupt(int signo)
  *-----------------------------------------------------------------------
  */
 int
-Compat_RunCommand(char *cmdp, struct GNode *gn)
+Compat_RunCommand(const char *cmdp, struct GNode *gn)
 {
     char    	  *cmdStart;	/* Start of expanded command */
-    char 	  *cp, *bp;
+    char 	  *bp;
     Boolean 	  silent,   	/* Don't print command */
 		  doIt;		/* Execute even if -n */
     volatile Boolean errCheck; 	/* Check errors */
@@ -201,7 +201,7 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
     char	** volatile mav;/* Copy of the argument vector for freeing */
     Boolean 	  useShell;    	/* TRUE if command should be executed
 				 * using a shell */
-    char	  * volatile cmd = (char *)cmdp;
+    const char	  * volatile cmd = cmdp;
 
     silent = (gn->type & OP_SILENT) != 0;
     errCheck = !(gn->type & OP_IGNORE);
@@ -403,6 +403,7 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
 #endif
 	if (status != 0) {
 	    if (DEBUG(ERROR)) {
+		const char *cp;
 		fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
 		    gn->name);
 		for (cp = cmd; *cp; ) {
