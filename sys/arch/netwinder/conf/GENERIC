@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2020/08/16 10:27:47 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.142 2020/09/27 13:48:53 roy Exp $
 #
 # GENERIC machine description file
 #
@@ -275,6 +275,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	loop			# network loopback
 
 #

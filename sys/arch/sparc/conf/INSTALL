@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104 2020/04/12 06:05:34 mrg Exp $
+#	$NetBSD: INSTALL,v 1.105 2020/09/27 13:48:54 roy Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -85,6 +85,7 @@ no pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 no pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 no pseudo-device	vlan
 no pseudo-device	bridge
+no pseudo-device	vether			# Virtual Ethernet for bridge
 no pseudo-device	agr			# IEEE 802.3ad link aggregation
 no pseudo-device	accf_data		# "dataready" accept filter
 no pseudo-device	accf_http		# "httpready" accept filter

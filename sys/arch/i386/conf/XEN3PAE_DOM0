@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.32 2020/08/16 10:27:47 jdolecek Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.33 2020/09/27 13:48:51 roy Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -816,6 +816,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	l2tp			# L2TPv3 interface
 pseudo-device	npf			# NPF packet filter
 
