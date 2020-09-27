@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.287 2020/09/26 18:35:12 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.288 2020/09/27 19:16:28 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1134,6 +1134,7 @@ void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_down_locked(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
+void	if_domain_link_state_change(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);

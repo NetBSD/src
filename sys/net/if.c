@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.482 2020/09/27 00:32:17 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.483 2020/09/27 19:16:28 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.482 2020/09/27 00:32:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.483 2020/09/27 19:16:28 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2468,6 +2468,28 @@ if_link_state_change_work(struct work *work, void *arg)
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 
 out:
+	splx(s);
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+}
+
+/*
+ * Used to mark addresses on an interface as DETATCHED or TENTATIVE
+ * and thus start Duplicate Address Detection without changing the
+ * real link state.
+ */
+void
+if_domain_link_state_change(struct ifnet *ifp, int link_state)
+{
+	struct domain *dp;
+	int s = splnet();
+
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
+
+	DOMAIN_FOREACH(dp) {
+		if (dp->dom_if_link_state_change != NULL)
+			dp->dom_if_link_state_change(ifp, link_state);
+	}
+
 	splx(s);
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
