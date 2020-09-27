@@ -3,7 +3,7 @@
 
 /*
 
-Copyright 1996-2016 Free Software Foundation, Inc.
+Copyright 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -176,6 +176,26 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_HOST_CPU_pentiumpro */
 /* #undef HAVE_HOST_CPU_pentium2 */
 /* #undef HAVE_HOST_CPU_pentium3 */
+/* #undef HAVE_HOST_CPU_pentium4 */
+/* #undef HAVE_HOST_CPU_core2 */
+/* #undef HAVE_HOST_CPU_nehalem */
+/* #undef HAVE_HOST_CPU_westmere */
+/* #undef HAVE_HOST_CPU_sandybridge */
+/* #undef HAVE_HOST_CPU_ivybridge */
+/* #undef HAVE_HOST_CPU_haswell */
+/* #undef HAVE_HOST_CPU_broadwell */
+/* #undef HAVE_HOST_CPU_skylake */
+/* #undef HAVE_HOST_CPU_silvermont */
+/* #undef HAVE_HOST_CPU_goldmont */
+/* #undef HAVE_HOST_CPU_k8 */
+/* #undef HAVE_HOST_CPU_k10 */
+/* #undef HAVE_HOST_CPU_bulldozer */
+/* #undef HAVE_HOST_CPU_piledriver */
+/* #undef HAVE_HOST_CPU_steamroller */
+/* #undef HAVE_HOST_CPU_excavator */
+/* #undef HAVE_HOST_CPU_zen */
+/* #undef HAVE_HOST_CPU_bobcat */
+/* #undef HAVE_HOST_CPU_jaguar */
 /* #undef HAVE_HOST_CPU_s390_z900 */
 /* #undef HAVE_HOST_CPU_s390_z990 */
 /* #undef HAVE_HOST_CPU_s390_z9 */
@@ -284,6 +304,8 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_divrem_1c */
 /* #undef HAVE_NATIVE_mpn_divrem_2 */
 /* #undef HAVE_NATIVE_mpn_gcd_1 */
+/* #undef HAVE_NATIVE_mpn_gcd_11 */
+/* #undef HAVE_NATIVE_mpn_gcd_22 */
 /* #undef HAVE_NATIVE_mpn_hamdist */
 /* #undef HAVE_NATIVE_mpn_invert_limb */
 /* #undef HAVE_NATIVE_mpn_ior_n */
@@ -326,6 +348,7 @@ see https://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_rsh1sub_n */
 /* #undef HAVE_NATIVE_mpn_rsh1sub_nc */
 /* #undef HAVE_NATIVE_mpn_rshift */
+/* #undef HAVE_NATIVE_mpn_sbpi1_bdiv_r */
 /* #undef HAVE_NATIVE_mpn_sqr_basecase */
 /* #undef HAVE_NATIVE_mpn_sqr_diagonal */
 /* #undef HAVE_NATIVE_mpn_sqr_diag_addlsh1 */
@@ -525,7 +548,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_NAME "GNU MP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU MP 6.1.2"
+#define PACKAGE_STRING "GNU MP 6.2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gmp"
@@ -534,7 +557,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_URL "http://www.gnu.org/software/gmp/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.1.2"
+#define PACKAGE_VERSION "6.2.0"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -567,7 +590,7 @@ see https://www.gnu.org/licenses/.
 #define TUNE_SQR_TOOM2_MAX SQR_TOOM2_MAX_GENERIC
 
 /* Version number of package */
-#define VERSION "6.1.2"
+#define VERSION "6.2.0"
 
 /* Define to 1 to enable ASSERT checking, per --enable-assert */
 /* #undef WANT_ASSERT */
@@ -612,6 +635,9 @@ see https://www.gnu.org/licenses/.
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
+
+/* Define to 1 if the assembler understands the mulx instruction */
+/* #undef X86_ASM_MULX */
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
