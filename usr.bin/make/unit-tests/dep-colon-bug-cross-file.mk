@@ -1,4 +1,4 @@
-# $NetBSD: dep-colon-bug-cross-file.mk,v 1.3 2020/09/25 23:42:43 rillig Exp $
+# $NetBSD: dep-colon-bug-cross-file.mk,v 1.4 2020/09/27 09:53:41 rillig Exp $
 #
 # Until 2020-09-25, the very last dependency group of a top-level makefile
 # was not finished properly.  This made it possible to add further commands
