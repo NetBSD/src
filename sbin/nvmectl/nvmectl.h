@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.8 2018/04/18 10:16:22 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.9 2020/09/27 18:17:35 jdolecek Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -78,7 +78,7 @@ struct nvme_function {
 #endif
 
 #define POWER_USAGE							       \
-"power [-l] [-p new-state [-w workload-hint]] <controller_id>\n"
+"power [-l] [[-s] -p new-state [-w workload-hint]] <controller_id>\n"
 
 #define WDC_USAGE							       \
 "wdc cap-diag [-o path-templete]\n"
