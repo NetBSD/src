@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.242 2020/09/26 17:39:45 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.243 2020/09/27 11:14:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.242 2020/09/26 17:39:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.243 2020/09/27 11:14:03 rillig Exp $");
 
 # define STATIC static
 
@@ -162,12 +162,18 @@ int jobTokensRunning = 0;
 /*
  * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
  * is a char! So when we go above 127 we turn negative!
+ *
+ * XXX: This cannot have ever worked. Converting a signed char directly to
+ * unsigned creates very large numbers. It should have been converted to
+ * unsigned char first, in the same way as for the <ctype.h> functions.
  */
 #define FILENO(a) ((unsigned) fileno(a))
 
-static int     	  numCommands; 	    /* The number of commands actually printed
-				     * for a target. Should this number be
-				     * 0, no shell will be executed. */
+/* The number of commands actually printed for a target.
+ * XXX: Why printed? Shouldn't that be run/printed instead, depending on the
+ * command line options?
+ * Should this number be 0, no shell will be executed. */
+static int     	  numCommands;
 
 /*
  * Return values from JobStart.
@@ -181,7 +187,7 @@ static int     	  numCommands; 	    /* The number of commands actually printed
  *
  * The build environment may set DEFSHELL_INDEX to one of
  * DEFSHELL_INDEX_SH, DEFSHELL_INDEX_KSH, or DEFSHELL_INDEX_CSH, to
- * select one of the prefedined shells as the default shell.
+ * select one of the predefined shells as the default shell.
  *
  * Alternatively, the build environment may set DEFSHELL_CUSTOM to the
  * name or the full path of a sh-compatible shell, which will be used as
@@ -269,14 +275,12 @@ static Shell    shells[] = {
     NULL, NULL,
 }
 };
-static Shell *commandShell = &shells[DEFSHELL_INDEX]; /* this is the shell to
-						   * which we pass all
-						   * commands in the Makefile.
-						   * It is set by the
-						   * Job_ParseShell function */
-const char *shellPath = NULL,		  	  /* full pathname of
-						   * executable image */
-	   *shellName = NULL;		      	  /* last component of shell */
+
+/* This is the shell to which we pass all commands in the Makefile.
+ * It is set by the Job_ParseShell function. */
+static Shell *commandShell = &shells[DEFSHELL_INDEX];
+const char *shellPath = NULL;	/* full pathname of executable image */
+const char *shellName = NULL;	/* last component of shellPath */
 char *shellErrFlag = NULL;
 static char *shellArgv = NULL;	/* Custom shell args */
 
@@ -427,19 +431,7 @@ JobCreatePipe(Job *job, int minfd)
 	Punt("Cannot set flags: %s", strerror(errno));
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobCondPassSig --
- *	Pass a signal to a job
- *
- * Input:
- *	signop		Signal to send it
- *
- * Side Effects:
- *	None, except the job may bite it.
- *
- *-----------------------------------------------------------------------
- */
+/* Pass the signal to each running job. */
 static void
 JobCondPassSig(int signo)
 {
@@ -461,23 +453,9 @@ JobCondPassSig(int signo)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobChldSig --
- *	SIGCHLD handler.
+/* SIGCHLD handler.
  *
- * Input:
- *	signo		The signal number we've received
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Sends a token on the child exit pipe to wake us up from
- *	select()/poll().
- *
- *-----------------------------------------------------------------------
- */
+ * Sends a token on the child exit pipe to wake us up from select()/poll(). */
 static void
 JobChildSig(int signo MAKE_ATTR_UNUSED)
 {
@@ -486,22 +464,7 @@ JobChildSig(int signo MAKE_ATTR_UNUSED)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * JobContinueSig --
- *	Resume all stopped jobs.
- *
- * Input:
- *	signo		The signal number we've received
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Jobs start running again.
- *
- *-----------------------------------------------------------------------
- */
+/* Resume all stopped jobs. */
 static void
 JobContinueSig(int signo MAKE_ATTR_UNUSED)
 {
@@ -514,22 +477,8 @@ JobContinueSig(int signo MAKE_ATTR_UNUSED)
 	continue;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobPassSig --
- *	Pass a signal on to all jobs, then resend to ourselves.
- *
- * Input:
- *	signo		The signal number we've received
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	We die by the same signal.
- *
- *-----------------------------------------------------------------------
- */
+/* Pass a signal on to all jobs, then resend to ourselves.
+ * We die by the same signal. */
 MAKE_ATTR_DEAD static void
 JobPassSig_int(int signo)
 {
@@ -537,6 +486,8 @@ JobPassSig_int(int signo)
     JobInterrupt(TRUE, signo);
 }
 
+/* Pass a signal on to all jobs, then resend to ourselves.
+ * We die by the same signal. */
 MAKE_ATTR_DEAD static void
 JobPassSig_term(int signo)
 {
@@ -602,24 +553,6 @@ JobPassSig_suspend(int signo)
     (void)sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobFindPid  --
- *	Compare the pid of the job with the given pid and return 0 if they
- *	are equal. This function is called from Job_CatchChildren
- *	to find the job descriptor of the finished job.
- *
- * Input:
- *	job		job to examine
- *	pid		process id desired
- *
- * Results:
- *	Job with matching pid
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
 static Job *
 JobFindPid(int pid, int status, Boolean isJobs)
 {
@@ -655,7 +588,7 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	jobp		job for which to print it
  *
  * Results:
- *	Always 0, unless the command was "..."
+ *	0, unless the command was "..."
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
@@ -897,19 +830,7 @@ JobSaveCommands(Job *job)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * JobClose --
- *	Called to close both input and output pipes when a job is finished.
- *
- * Results:
- *	Nada
- *
- * Side Effects:
- *	The file descriptors associated with the job are closed.
- *
- *-----------------------------------------------------------------------
- */
+/* Called to close both input and output pipes when a job is finished. */
 static void
 JobClose(Job *job)
 {
@@ -936,9 +857,6 @@ JobClose(Job *job)
  *	job		job to finish
  *	status		sub-why job went away
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	Final commands for the job are placed on postCommands.
  *
@@ -948,7 +866,6 @@ JobClose(Job *job)
  *	to ABORT_ERROR so no more jobs will be started.
  *-----------------------------------------------------------------------
  */
-/*ARGSUSED*/
 static void
 JobFinish(Job *job, int status)
 {
@@ -1111,24 +1028,10 @@ JobFinish(Job *job, int status)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_Touch --
- *	Touch the given target. Called by JobStart when the -t flag was
- *	given
+/* Touch the given target. Called by JobStart when the -t flag was given.
  *
- * Input:
- *	gn		the node of the file to touch
- *	silent		TRUE if should not print message
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The data modification of the file is changed. In addition, if the
- *	file did not exist, it is created.
- *-----------------------------------------------------------------------
- */
+ * The modification date of the file is changed.
+ * If the file did not exist, it is created. */
 void
 Job_Touch(GNode *gn, Boolean silent)
 {
@@ -1187,10 +1090,10 @@ Job_Touch(GNode *gn, Boolean silent)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_CheckCommands --
- *	Make sure the given node has all the commands it needs.
+/* Make sure the given node has all the commands it needs.
+ *
+ * The node will have commands from the .DEFAULT rule added to it if it
+ * needs them.
  *
  * Input:
  *	gn		The target whose commands need verifying
@@ -1198,11 +1101,6 @@ Job_Touch(GNode *gn, Boolean silent)
  *
  * Results:
  *	TRUE if the commands list is/was ok.
- *
- * Side Effects:
- *	The node will have commands from the .DEFAULT rule added to it
- *	if it needs them.
- *-----------------------------------------------------------------------
  */
 Boolean
 Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
@@ -1748,7 +1646,7 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
  *	this makes up a line, we print it tagged by the job's identifier,
  *	as necessary.
  *	If output has been collected in a temporary file, we open the
- *	file and read it line by line, transfering it to our own
+ *	file and read it line by line, transferring it to our own
  *	output channel until the file is empty. At which point we
  *	remove the temporary file.
  *	In both cases, however, we keep our figurative eye out for the
@@ -1933,28 +1831,15 @@ JobRun(GNode *targ)
 #endif
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_CatchChildren --
- *	Handle the exit of a child. Called from Make_Make.
+/* Handle the exit of a child. Called from Make_Make.
  *
- * Input:
- *	block		TRUE if should block on the wait
- *
- * Results:
- *	none.
- *
- * Side Effects:
- *	The job descriptor is removed from the list of children.
+ * The job descriptor is removed from the list of children.
  *
  * Notes:
  *	We do waits, blocking or not, according to the wisdom of our
  *	caller, until there are no more children to report. For each
  *	job, call JobFinish to finish things off.
- *
- *-----------------------------------------------------------------------
  */
-
 void
 Job_CatchChildren(void)
 {
@@ -2028,22 +1913,10 @@ JobReapChild(pid_t pid, int status, Boolean isJobs)
     JobFinish(job, status);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_CatchOutput --
- *	Catch the output from our children, if we're using
- *	pipes do so. Otherwise just block time until we get a
- *	signal(most likely a SIGCHLD) since there's no point in
- *	just spinning when there's nothing to do and the reaping
- *	of a child can wait for a while.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Output is read from pipes if we're piping.
- * -----------------------------------------------------------------------
- */
+/* Catch the output from our children, if we're using pipes do so. Otherwise
+ * just block time until we get a signal(most likely a SIGCHLD) since there's
+ * no point in just spinning when there's nothing to do and the reaping of a
+ * child can wait for a while. */
 void
 Job_CatchOutput(void)
 {
@@ -2108,20 +1981,8 @@ Job_CatchOutput(void)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_Make --
- *	Start the creation of a target. Basically a front-end for
- *	JobStart used by the Make module.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Another job is started.
- *
- *-----------------------------------------------------------------------
- */
+/* Start the creation of a target. Basically a front-end for JobStart used by
+ * the Make module. */
 void
 Job_Make(GNode *gn)
 {
@@ -2173,10 +2034,8 @@ Shell_Init(void)
     }
 }
 
-/*-
- * Returns the string literal that is used in the current command shell
- * to produce a newline character.
- */
+/* Return the string literal that is used in the current command shell
+ * to produce a newline character. */
 const char *
 Shell_GetNewline(void)
 {
@@ -2522,23 +2381,15 @@ Job_ParseShell(char *line)
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobInterrupt --
- *	Handle the receipt of an interrupt.
+/* Handle the receipt of an interrupt.
+ *
+ * All children are killed. Another job will be started if the .INTERRUPT
+ * target is defined.
  *
  * Input:
  *	runINTERRUPT	Non-zero if commands for the .INTERRUPT target
  *			should be executed
  *	signo		signal received
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	All children are killed. Another job will be started if the
- *	.INTERRUPT target was given.
- *-----------------------------------------------------------------------
  */
 static void
 JobInterrupt(int runINTERRUPT, int signo)
@@ -2584,9 +2435,7 @@ JobInterrupt(int runINTERRUPT, int signo)
 
 /* Do the final processing, i.e. run the commands attached to the .END target.
  *
- * Results:
- *	Number of errors reported.
- */
+ * Return the number of errors reported. */
 int
 Job_Finish(void)
 {
@@ -2601,18 +2450,7 @@ Job_Finish(void)
     return errors;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_End --
- *	Cleanup any memory used by the jobs module
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Memory is freed
- *-----------------------------------------------------------------------
- */
+/* Clean up any memory used by the jobs module. */
 void
 Job_End(void)
 {
@@ -2621,20 +2459,8 @@ Job_End(void)
 #endif
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_Wait --
- *	Waits for all running jobs to finish and returns. Sets 'aborting'
- *	to ABORT_WAIT to prevent other jobs from starting.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Currently running jobs finish.
- *
- *-----------------------------------------------------------------------
- */
+/* Waits for all running jobs to finish and returns.
+ * Sets 'aborting' to ABORT_WAIT to prevent other jobs from starting. */
 void
 Job_Wait(void)
 {
@@ -2645,20 +2471,11 @@ Job_Wait(void)
     aborting = 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_AbortAll --
- *	Abort all currently running jobs without handling output or anything.
- *	This function is to be called only in the event of a major
- *	error. Most definitely NOT to be called from JobInterrupt.
+/* Abort all currently running jobs without handling output or anything.
+ * This function is to be called only in the event of a major error.
+ * Most definitely NOT to be called from JobInterrupt.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	All children are killed, not just the firstborn
- *-----------------------------------------------------------------------
- */
+ * All children are killed, not just the firstborn. */
 void
 Job_AbortAll(void)
 {
@@ -2687,20 +2504,8 @@ Job_AbortAll(void)
 	continue;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobRestartJobs --
- *	Tries to restart stopped jobs if there are slots available.
- *	Called in process context in response to a SIGCONT.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Resumes jobs.
- *
- *-----------------------------------------------------------------------
- */
+/* Tries to restart stopped jobs if there are slots available.
+ * Called in process context in response to a SIGCONT. */
 static void
 JobRestartJobs(void)
 {
@@ -2795,18 +2600,8 @@ readyfd(Job *job)
     return (job->inPollfd->revents & POLLIN) != 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobTokenAdd --
- *	Put a token into the job pipe so that some make process can start
- *	another job.
- *
- * Side Effects:
- *	Allows more build jobs to be spawned somewhere.
- *
- *-----------------------------------------------------------------------
- */
-
+/* Put a token (back) into the job pipe.
+ * This allows a make process to start a build job. */
 static void
 JobTokenAdd(void)
 {
@@ -2823,14 +2618,7 @@ JobTokenAdd(void)
 	continue;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_ServerStartTokenAdd --
- *	Prep the job token pipe in the root make process.
- *
- *-----------------------------------------------------------------------
- */
-
+/* Prep the job token pipe in the root make process. */
 void
 Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 {
@@ -2866,14 +2654,7 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	JobTokenAdd();
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_TokenReturn --
- *	Return a withdrawn token to the pool.
- *
- *-----------------------------------------------------------------------
- */
-
+/* Return a withdrawn token to the pool. */
 void
 Job_TokenReturn(void)
 {
@@ -2884,23 +2665,13 @@ Job_TokenReturn(void)
 	JobTokenAdd();
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_TokenWithdraw --
- *	Attempt to withdraw a token from the pool.
+/* Attempt to withdraw a token from the pool.
  *
- * Results:
- *	Returns TRUE if a token was withdrawn, and FALSE if the pool
- *	is currently empty.
+ * If pool is empty, set wantToken so that we wake up when a token is
+ * released.
  *
- * Side Effects:
- * 	If pool is empty, set wantToken so that we wake up
- *	when a token is released.
- *
- *-----------------------------------------------------------------------
- */
-
-
+ * Returns TRUE if a token was withdrawn, and FALSE if the pool is currently
+ * empty. */
 Boolean
 Job_TokenWithdraw(void)
 {
@@ -2952,20 +2723,10 @@ Job_TokenWithdraw(void)
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_RunTarget --
- *	Run the named target if found. If a filename is specified, then
- *	set that to the sources.
+/* Run the named target if found. If a filename is specified, then set that
+ * to the sources.
  *
- * Results:
- *	None
- *
- * Side Effects:
- * 	exits if the target fails.
- *
- *-----------------------------------------------------------------------
- */
+ * Exits if the target fails. */
 Boolean
 Job_RunTarget(const char *target, const char *fname) {
     GNode *gn = Targ_FindNode(target);
