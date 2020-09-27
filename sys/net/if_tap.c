@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.118 2020/09/26 19:38:45 roy Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.119 2020/09/27 13:44:47 roy Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.118 2020/09/26 19:38:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.119 2020/09/27 13:44:47 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -334,9 +334,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc	= sc;
 	ifp->if_flags	= IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 #ifdef NET_MPSAFE
-	ifp->if_extflags |= IFEF_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl	= tap_ioctl;
 	ifp->if_start	= tap_start;
@@ -358,6 +357,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 	}
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	ether_ifattach(ifp, enaddr);
+	/* Opening the device will bring the link state up. */
+	ifp->if_link_state = LINK_STATE_DOWN;
 	if_register(ifp);
 
 	/*
@@ -708,6 +709,8 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->sc_flags & TAP_INUSE)
 		return EBUSY;
 	sc->sc_flags |= TAP_INUSE;
+	if_link_state_change(&sc->sc_ec.ec_if, LINK_STATE_UP);
+
 	return 0;
 }
 
@@ -844,6 +847,7 @@ tap_dev_close(struct tap_softc *sc)
 		sc->sc_sih = NULL;
 	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
+	if_link_state_change(ifp, LINK_STATE_DOWN);
 
 	return 0;
 }
