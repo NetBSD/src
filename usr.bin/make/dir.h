@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.26 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.27 2020/09/27 22:17:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,20 +75,20 @@
 #ifndef	MAKE_DIR_H
 #define	MAKE_DIR_H
 
-/* A cache of a directory, remembering all the files that exist in that
- * directory. */
+/* A cache for the filenames in a directory. */
 typedef struct CachedDir {
-    char *name;			/* Name of directory */
-    int refCount;		/* Number of paths with this directory */
-    int hits;			/* the number of times a file in this
+    char *name;			/* Name of directory, either absolute or
+				 * relative to the current directory.
+				 * The name is not normalized in any way,
+				 * that is, "." and "./." are different.
+				 *
+				 * Not sure what happens when .CURDIR is
+				 * assigned a new value; see Parse_DoVar. */
+    int refCount;		/* Number of SearchPaths with this directory */
+    int hits;			/* The number of times a file in this
 				 * directory has been found */
     Hash_Table files;		/* Hash set of files in directory */
 } CachedDir;
-
-struct make_stat {
-    time_t mst_mtime;
-    mode_t mst_mode;
-};
 
 void Dir_Init(void);
 void Dir_InitDir(const char *);
@@ -109,6 +109,12 @@ void Dir_PrintDirectories(void);
 void Dir_PrintPath(SearchPath *);
 void Dir_Destroy(void *);
 void *Dir_CopyDir(void *);
+
+/* Stripped-down variant of struct stat. */
+struct make_stat {
+    time_t mst_mtime;
+    mode_t mst_mode;
+};
 
 int cached_lstat(const char *, struct make_stat *);
 int cached_stat(const char *, struct make_stat *);
