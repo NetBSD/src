@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.334 2020/09/26 17:39:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.335 2020/09/27 12:05:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.334 2020/09/26 17:39:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.335 2020/09/27 12:05:04 rillig Exp $");
 
 /* types and constants */
 
@@ -1030,34 +1030,26 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseFindMain --
- *	Find a real target in the list and set it to be the main one.
- *	Called by ParseDoDependency when a main target hasn't been found
- *	yet.
- *
- * Input:
- *	gnp		Node to examine
- *
- * Results:
- *	0 if main not found yet, 1 if it is.
- *
- * Side Effects:
- *	mainNode is changed and Targ_SetMain is called.
- *
- *-----------------------------------------------------------------------
- */
-static int
-ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
+/* If we have yet to decide on a main target to make, in the absence of any
+ * user input, we want the first target on the first dependency line that is
+ * actually a real target (i.e. isn't a .USE or .EXEC rule) to be made. */
+static void
+FindMainTarget(void)
 {
-    GNode   	  *gn = (GNode *)gnp;
-    if (!(gn->type & OP_NOTARGET)) {
-	mainNode = gn;
-	Targ_SetMain(gn);
-	return 1;
-    } else {
-	return 0;
+    GNodeListNode *ln;
+
+    if (mainNode != NULL)
+        return;
+    if (targets == NULL)
+	return;
+
+    for (ln = targets->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
+	if (!(gn->type & OP_NOTARGET)) {
+	    mainNode = gn;
+	    Targ_SetMain(gn);
+	    return;
+	}
     }
 }
 
@@ -1688,15 +1680,7 @@ ParseDoDependency(char *line)
 	}
     }
 
-    if (mainNode == NULL && targets != NULL) {
-	/*
-	 * If we have yet to decide on a main target to make, in the
-	 * absence of any user input, we want the first target on
-	 * the first dependency line that is actually a real target
-	 * (i.e. isn't a .USE or .EXEC rule) to be made.
-	 */
-	Lst_ForEachUntil(targets, ParseFindMain, NULL);
-    }
+    FindMainTarget();
 
 out:
     if (paths != NULL)
