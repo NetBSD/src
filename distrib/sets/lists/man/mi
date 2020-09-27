@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1703 2020/09/21 14:03:15 kim Exp $
+# $NetBSD: mi,v 1.1704 2020/09/27 13:31:04 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2020,6 +2020,7 @@
 ./usr/share/man/cat4/vioscsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/virt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/virtio.0			man-sys-catman		.cat
+./usr/share/man/cat4/vether.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
@@ -5158,6 +5159,7 @@
 ./usr/share/man/html4/vioscsi.html		man-sys-htmlman		html
 ./usr/share/man/html4/virt.html			man-sys-htmlman		html
 ./usr/share/man/html4/virtio.html		man-sys-htmlman		html
+./usr/share/man/html4/vether.html		man-sys-htmlman		html
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
@@ -8228,6 +8230,7 @@
 ./usr/share/man/man4/vioscsi.4			man-sys-man		.man
 ./usr/share/man/man4/virt.4			man-sys-man		.man
 ./usr/share/man/man4/virtio.4			man-sys-man		.man
+./usr/share/man/man4/vether.4			man-sys-man		.man
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
