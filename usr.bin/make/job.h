@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.50 2020/09/27 19:17:03 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.51 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,34 +141,34 @@ struct pollfd;
 
 #define JOB_BUFSIZE	1024
 typedef struct Job {
-    int       	pid;	    /* The child's process ID */
-    GNode    	*node;      /* The target the child is making */
-    StringListNode *tailCmds; /* The node of the first command to be
-			     * saved when the job has been run */
-    FILE 	*cmdFILE;   /* When creating the shell script, this is
-			     * where the commands go */
-    int		exit_status; /* from wait4() in signal handler */
-    char        job_state;  /* status of the job entry */
+    int pid;			/* The child's process ID */
+    GNode *node;		/* The target the child is making */
+    StringListNode *tailCmds;	/* The node of the first command to be
+				 * saved when the job has been run */
+    FILE *cmdFILE;		/* When creating the shell script, this is
+				 * where the commands go */
+    int exit_status;		/* from wait4() in signal handler */
+    char job_state;		/* status of the job entry */
 #define JOB_ST_FREE	0	/* Job is available */
 #define JOB_ST_SETUP	1	/* Job is allocated but otherwise invalid */
 #define JOB_ST_RUNNING	3	/* Job is running, pid valid */
 #define JOB_ST_FINISHED	4	/* Job is done (ie after SIGCHILD) */
-    char        job_suspended;
-    short      	flags;	    /* Flags to control treatment of job */
+    char job_suspended;
+    short flags;		/* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
 #define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
 				 * if we can't export it and maxLocal is 0 */
-#define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
+#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int	  	 jobPipe[2];	/* Pipe for reading output from job */
+    int jobPipe[2];		/* Pipe for reading output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
-    char  	outBuf[JOB_BUFSIZE + 1];
+    char outBuf[JOB_BUFSIZE + 1];
 				/* Buffer for storing the output of the
 				 * job, line by line */
-    int   	curPos;	/* Current position in op_outBuf */
+    int curPos;			/* Current position in op_outBuf */
 
 #ifdef USE_META
     struct BuildMon	bm;
@@ -209,28 +209,28 @@ typedef struct Job {
  * echo "%s\n" as a template.
  */
 typedef struct Shell {
-    const char	 *name;		/* the name of the shell. For Bourne and C
+    const char *name;		/* the name of the shell. For Bourne and C
 				 * shells, this is used only to find the
 				 * shell description when used as the single
 				 * source of a .SHELL target. For user-defined
 				 * shells, this is the full path of the shell.
 				 */
-    Boolean 	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
-    const char   *echoOff;	/* command to turn off echo */
-    const char   *echoOn;	/* command to turn it back on again */
-    const char   *noPrint;	/* command to skip when printing output from
+    Boolean hasEchoCtl;		/* True if both echoOff and echoOn defined */
+    const char *echoOff;	/* command to turn off echo */
+    const char *echoOn;		/* command to turn it back on again */
+    const char *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
-    size_t        noPLen;	/* length of noPrint command */
-    Boolean	  hasErrCtl;	/* set if can control error checking for
+    size_t noPLen;		/* length of noPrint command */
+    Boolean hasErrCtl;		/* set if can control error checking for
 				 * individual commands */
-    const char	 *errCheck;	/* string to turn error checking on */
-    const char	 *ignErr;	/* string to turn off error checking */
-    const char	 *errOut;	/* string to use for testing exit code */
-    const char	 *newline;	/* string literal that results in a newline
+    const char *errCheck;	/* string to turn error checking on */
+    const char *ignErr;		/* string to turn off error checking */
+    const char *errOut;		/* string to use for testing exit code */
+    const char *newline;	/* string literal that results in a newline
 				 * character when it appears outside of any
 				 * 'quote' or "quote" characters */
-    char   commentChar;		/* character used by shell for comment lines */
+    char commentChar;		/* character used by shell for comment lines */
 
     /*
      * command-line flags

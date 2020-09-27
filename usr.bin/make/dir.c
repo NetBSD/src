@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.148 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.149 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -76,47 +76,49 @@
  *	implicit sources.
  *
  * The interface for this module is:
- *	Dir_Init  	    Initialize the module.
+ *	Dir_Init	Initialize the module.
  *
- *	Dir_InitCur	    Set the cur CachedDir.
+ *	Dir_InitCur	Set the cur CachedDir.
  *
- *	Dir_InitDot	    Set the dot CachedDir.
+ *	Dir_InitDot	Set the dot CachedDir.
  *
- *	Dir_End  	    Cleanup the module.
+ *	Dir_End		Cleanup the module.
  *
- *	Dir_SetPATH	    Set ${.PATH} to reflect state of dirSearchPath.
+ *	Dir_SetPATH	Set ${.PATH} to reflect state of dirSearchPath.
  *
- *	Dir_HasWildcards    Returns TRUE if the name given it needs to
- *	    	  	    be wildcard-expanded.
+ *	Dir_HasWildcards
+ *			Returns TRUE if the name given it needs to
+ *			be wildcard-expanded.
  *
- *	Dir_Expand	    Given a pattern and a path, return a Lst of names
- *	    	  	    which match the pattern on the search path.
+ *	Dir_Expand	Given a pattern and a path, return a Lst of names
+ *			which match the pattern on the search path.
  *
- *	Dir_FindFile	    Searches for a file on a given search path.
- *	    	  	    If it exists, the entire path is returned.
- *	    	  	    Otherwise NULL is returned.
+ *	Dir_FindFile	Searches for a file on a given search path.
+ *			If it exists, the entire path is returned.
+ *			Otherwise NULL is returned.
  *
- *	Dir_FindHereOrAbove Search for a path in the current directory and
- *			    then all the directories above it in turn until
- *			    the path is found or we reach the root ("/").
+ *	Dir_FindHereOrAbove
+ *			Search for a path in the current directory and
+ *			then all the directories above it in turn until
+ *			the path is found or we reach the root ("/").
  *
- *	Dir_MTime 	    Return the modification time of a node. The file
- *	    	  	    is searched for along the default search path.
- *	    	  	    The path and mtime fields of the node are filled
- *	    	  	    in.
+ *	Dir_MTime	Return the modification time of a node. The file
+ *			is searched for along the default search path.
+ *			The path and mtime fields of the node are filled in.
  *
- *	Dir_AddDir	    Add a directory to a search path.
+ *	Dir_AddDir	Add a directory to a search path.
  *
- *	Dir_MakeFlags	    Given a search path and a command flag, create
- *	    	  	    a string with each of the directories in the path
- *	    	  	    preceded by the command flag and all of them
- *	    	  	    separated by a space.
+ *	Dir_MakeFlags	Given a search path and a command flag, create
+ *			a string with each of the directories in the path
+ *			preceded by the command flag and all of them
+ *			separated by a space.
  *
- *	Dir_Destroy	    Destroy an element of a search path. Frees up all
- *	    	  	    things that can be freed for the element as long
- *	    	  	    as the element is no longer referenced by any other
- *	    	  	    search path.
- *	Dir_ClearPath	    Resets a search path to the empty list.
+ *	Dir_Destroy	Destroy an element of a search path. Frees up all
+ *			things that can be freed for the element as long
+ *			as the element is no longer referenced by any other
+ *			search path.
+ *
+ *	Dir_ClearPath	Resets a search path to the empty list.
  *
  * For debugging:
  *	Dir_PrintDirectories	Print stats about the directory cache.
@@ -134,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.148 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.149 2020/09/27 21:35:16 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -548,7 +550,7 @@ Dir_HasWildcards(const char *name)
 /*-
  *-----------------------------------------------------------------------
  * DirMatchFiles --
- * 	Given a pattern and a CachedDir structure, see if any files
+ *	Given a pattern and a CachedDir structure, see if any files
  *	match the pattern and add their names to the 'expansions' list if
  *	any do. This is incomplete -- it doesn't take care of patterns like
  *	src / *src / *.c properly (just *.c on any of the directories), but it
