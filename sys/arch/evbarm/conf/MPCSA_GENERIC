@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.73 2020/08/01 08:20:48 maxv Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.74 2020/09/27 13:48:50 roy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	32		# estimated number of users
 
@@ -623,6 +623,7 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
 

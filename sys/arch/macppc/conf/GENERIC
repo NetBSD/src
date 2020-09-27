@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.370 2020/08/08 22:41:14 macallan Exp $
+# $NetBSD: GENERIC,v 1.371 2020/09/27 13:48:52 roy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.370 $"
+#ident 		"GENERIC-$Revision: 1.371 $"
 
 maxusers	32
 
@@ -551,6 +551,7 @@ pseudo-device	ipsecif			# tunnel interface for routing based ipsec
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm

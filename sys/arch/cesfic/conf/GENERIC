@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2020/08/10 06:32:58 rin Exp $
+# $NetBSD: GENERIC,v 1.75 2020/09/27 13:48:50 roy Exp $
 #
 # GENERIC machine description file
 # 
@@ -125,6 +125,7 @@ pseudo-device	pty			# pseudo ptys
 #pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 #pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd			# concatenated disk devices

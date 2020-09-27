@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.50 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: CP3100,v 1.51 2020/09/27 13:48:50 roy Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -214,6 +214,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
