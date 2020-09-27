@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.543 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.544 2020/09/27 16:10:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.543 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.544 2020/09/27 16:10:07 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1433,8 +1433,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	      "to \"%s\"\n",
 	      word, args->tvar, args->str, s);
 
-    if (s[0] == '\n' || (buf->buf.count > 0 &&
-			 buf->buf.buffer[buf->buf.count - 1] == '\n'))
+    if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
 	buf->needSep = FALSE;
     SepBuf_AddStr(buf, s);
     free(s);
@@ -1552,7 +1551,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
     for (i = 0; i < words.len; i++) {
 	modifyWord(words.words[i], &result, modifyWord_args);
-	if (result.buf.count > 0)
+	if (Buf_Size(&result.buf) > 0)
 	    SepBuf_Sep(&result);
     }
 
