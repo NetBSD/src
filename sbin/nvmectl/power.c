@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.5 2020/09/27 17:27:07 jdolecek Exp $	*/
+/*	$NetBSD: power.c,v 1.6 2020/09/27 18:17:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2016 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: power.c,v 1.5 2020/09/27 17:27:07 jdolecek Exp $");
+__RCSID("$NetBSD: power.c,v 1.6 2020/09/27 18:17:35 jdolecek Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -96,15 +96,14 @@ power_list(struct nvm_identify_controller *cdata)
 }
 
 static void
-power_set(int fd, int power_val, int workload, int perm)
+power_set(int fd, int power_val, int workload, int saveflag)
 {
 	struct nvme_pt_command	pt;
-	uint32_t p;
 
-	p = perm ? (1u << 31) : 0;
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_SET_FEATURES;
-	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT | p;
+	pt.cmd.cdw10 = NVM_FEAT_POWER_MANAGEMENT
+		| (saveflag ? NVM_SET_FEATURES_SV : 0);
 	pt.cmd.cdw11 = power_val | (workload << 5);
 
 	if (ioctl(fd, NVME_PASSTHROUGH_CMD, &pt) < 0)
@@ -138,14 +137,17 @@ void
 power(int argc, char *argv[])
 {
 	struct nvm_identify_controller	cdata;
-	int				ch, listflag = 0, powerflag = 0, power_val = 0, fd;
+	int				ch, listflag = 0, powerflag = 0, power_val = 0, fd, saveflag = 0;
 	int				workload = 0;
 	char				*end;
 
-	while ((ch = getopt(argc, argv, "lp:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "lsp:w:")) != -1) {
 		switch (ch) {
 		case 'l':
 			listflag = 1;
+			break;
+		case 's':
+			saveflag = 1;
 			break;
 		case 'p':
 			powerflag = 1;
@@ -185,7 +187,7 @@ power(int argc, char *argv[])
 	}
 
 	if (powerflag) {
-		power_set(fd, power_val, workload, 0);
+		power_set(fd, power_val, workload, saveflag);
 		goto out;
 	}
 	power_show(fd);
