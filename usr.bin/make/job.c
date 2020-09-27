@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.243 2020/09/27 11:14:03 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.244 2020/09/27 19:06:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.243 2020/09/27 11:14:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.244 2020/09/27 19:06:47 rillig Exp $");
 
 # define STATIC static
 
@@ -2257,44 +2257,44 @@ Job_ParseShell(char *line)
     shellArgv = path;
 
     for (path = NULL, argv = words; argc != 0; argc--, argv++) {
-	    if (strncmp(*argv, "path=", 5) == 0) {
-		path = &argv[0][5];
-	    } else if (strncmp(*argv, "name=", 5) == 0) {
-		newShell.name = &argv[0][5];
+	if (strncmp(*argv, "path=", 5) == 0) {
+	    path = &argv[0][5];
+	} else if (strncmp(*argv, "name=", 5) == 0) {
+	    newShell.name = &argv[0][5];
+	} else {
+	    if (strncmp(*argv, "quiet=", 6) == 0) {
+		newShell.echoOff = &argv[0][6];
+	    } else if (strncmp(*argv, "echo=", 5) == 0) {
+		newShell.echoOn = &argv[0][5];
+	    } else if (strncmp(*argv, "filter=", 7) == 0) {
+		newShell.noPrint = &argv[0][7];
+		newShell.noPLen = strlen(newShell.noPrint);
+	    } else if (strncmp(*argv, "echoFlag=", 9) == 0) {
+		newShell.echo = &argv[0][9];
+	    } else if (strncmp(*argv, "errFlag=", 8) == 0) {
+		newShell.exit = &argv[0][8];
+	    } else if (strncmp(*argv, "hasErrCtl=", 10) == 0) {
+		char c = argv[0][10];
+		newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
+				       (c != 'T') && (c != 't'));
+	    } else if (strncmp(*argv, "newline=", 8) == 0) {
+		newShell.newline = &argv[0][8];
+	    } else if (strncmp(*argv, "check=", 6) == 0) {
+		newShell.errCheck = &argv[0][6];
+	    } else if (strncmp(*argv, "ignore=", 7) == 0) {
+		newShell.ignErr = &argv[0][7];
+	    } else if (strncmp(*argv, "errout=", 7) == 0) {
+		newShell.errOut = &argv[0][7];
+	    } else if (strncmp(*argv, "comment=", 8) == 0) {
+		newShell.commentChar = argv[0][8];
 	    } else {
-		if (strncmp(*argv, "quiet=", 6) == 0) {
-		    newShell.echoOff = &argv[0][6];
-		} else if (strncmp(*argv, "echo=", 5) == 0) {
-		    newShell.echoOn = &argv[0][5];
-		} else if (strncmp(*argv, "filter=", 7) == 0) {
-		    newShell.noPrint = &argv[0][7];
-		    newShell.noPLen = strlen(newShell.noPrint);
-		} else if (strncmp(*argv, "echoFlag=", 9) == 0) {
-		    newShell.echo = &argv[0][9];
-		} else if (strncmp(*argv, "errFlag=", 8) == 0) {
-		    newShell.exit = &argv[0][8];
-		} else if (strncmp(*argv, "hasErrCtl=", 10) == 0) {
-		    char c = argv[0][10];
-		    newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
-					   (c != 'T') && (c != 't'));
-		} else if (strncmp(*argv, "newline=", 8) == 0) {
-		    newShell.newline = &argv[0][8];
-		} else if (strncmp(*argv, "check=", 6) == 0) {
-		    newShell.errCheck = &argv[0][6];
-		} else if (strncmp(*argv, "ignore=", 7) == 0) {
-		    newShell.ignErr = &argv[0][7];
-		} else if (strncmp(*argv, "errout=", 7) == 0) {
-		    newShell.errOut = &argv[0][7];
-		} else if (strncmp(*argv, "comment=", 8) == 0) {
-		    newShell.commentChar = argv[0][8];
-		} else {
-		    Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
-				*argv);
-		    free(words);
-		    return FALSE;
-		}
-		fullSpec = TRUE;
+		Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
+			    *argv);
+		free(words);
+		return FALSE;
 	    }
+	    fullSpec = TRUE;
+	}
     }
 
     if (path == NULL) {
