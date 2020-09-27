@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.32 2020/09/27 16:38:32 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.33 2020/09/27 16:52:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@ Buf_AddByte(Buffer *bp, char byte)
 }
 
 static inline MAKE_ATTR_UNUSED size_t
-Buf_Size(const Buffer *bp)
+Buf_Len(const Buffer *bp)
 {
     return bp->len;
 }
