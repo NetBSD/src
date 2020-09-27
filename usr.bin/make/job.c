@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.247 2020/09/27 23:52:02 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.248 2020/09/27 23:56:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.247 2020/09/27 23:52:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.248 2020/09/27 23:56:25 rillig Exp $");
 
 # define STATIC static
 
@@ -415,9 +415,9 @@ JobCreatePipe(Job *job, int minfd)
     }
 
     /* Set close-on-exec flag for both */
-    if (fcntl(job->jobPipe[0], F_SETFD, FD_CLOEXEC) == -1)
+    if (fcntl(job->inPipe, F_SETFD, FD_CLOEXEC) == -1)
 	Punt("Cannot set close-on-exec: %s", strerror(errno));
-    if (fcntl(job->jobPipe[1], F_SETFD, FD_CLOEXEC) == -1)
+    if (fcntl(job->outPipe, F_SETFD, FD_CLOEXEC) == -1)
 	Punt("Cannot set close-on-exec: %s", strerror(errno));
 
     /*
@@ -426,11 +426,11 @@ JobCreatePipe(Job *job, int minfd)
      * race for the token when a new one becomes available, so the read
      * from the pipe should not block.
      */
-    flags = fcntl(job->jobPipe[0], F_GETFL, 0);
+    flags = fcntl(job->inPipe, F_GETFL, 0);
     if (flags == -1)
 	Punt("Cannot get flags: %s", strerror(errno));
     flags |= O_NONBLOCK;
-    if (fcntl(job->jobPipe[0], F_SETFL, flags) == -1)
+    if (fcntl(job->inPipe, F_SETFL, flags) == -1)
 	Punt("Cannot set flags: %s", strerror(errno));
 }
 
