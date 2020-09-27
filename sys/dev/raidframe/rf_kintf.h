@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.25 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.26 2020/09/27 21:39:08 christos Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -61,7 +61,7 @@ void rf_print_component_label(RF_ComponentLabel_t *);
 void rf_UnconfigureVnodes( RF_Raid_t * );
 void rf_close_component( RF_Raid_t *, struct vnode *, int);
 int rf_getdisksize(struct vnode *, RF_RaidDisk_t *);
-int rf_sync_component_caches(RF_Raid_t *);
+int rf_sync_component_caches(RF_Raid_t *, int);
 
 void rf_check_recon_status_ext(RF_Raid_t *, RF_ProgressInfo_t *);
 void rf_check_parityrewrite_status_ext(RF_Raid_t *, RF_ProgressInfo_t *);

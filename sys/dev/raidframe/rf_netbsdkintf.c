@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.389 2020/08/25 13:50:00 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.390 2020/09/27 21:39:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.389 2020/08/25 13:50:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.390 2020/09/27 21:39:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1754,7 +1754,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	case DIOCCACHESYNC:
-		retcode = rf_sync_component_caches(raidPtr);
+		retcode = rf_sync_component_caches(raidPtr, *(int *)data);
 		break;
 
 	default:
@@ -3661,9 +3661,8 @@ rf_get_component_caches(RF_Raid_t *raidPtr, int *data)
  */
 
 static int
-rf_sync_component_cache(RF_Raid_t *raidPtr, int c)
+rf_sync_component_cache(RF_Raid_t *raidPtr, int c, int force)
 {
-	int force = 1;
 	int e = 0;
 	for (int i = 0; i < 5; i++) {
 		e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC,
@@ -3677,14 +3676,14 @@ rf_sync_component_cache(RF_Raid_t *raidPtr, int c)
 }
 
 int
-rf_sync_component_caches(RF_Raid_t *raidPtr)
+rf_sync_component_caches(RF_Raid_t *raidPtr, int force)
 {
 	int c, error;
 
 	error = 0;
 	for (c = 0; c < raidPtr->numCol; c++) {
 		if (raidPtr->Disks[c].status == rf_ds_optimal) {
-			int e = rf_sync_component_cache(raidPtr, c);
+			int e = rf_sync_component_cache(raidPtr, c, force);
 			if (e && !error)
 				error = e;
 		}
@@ -3694,7 +3693,8 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 		int sparecol = raidPtr->numCol + c;
 		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
-			int e = rf_sync_component_cache(raidPtr, sparecol);
+			int e = rf_sync_component_cache(raidPtr, sparecol,
+			    force);
 			if (e && !error)
 				error = e;
 		}
