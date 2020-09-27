@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.154 2020/09/27 11:39:02 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.155 2020/09/27 11:43:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.154 2020/09/27 11:39:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.155 2020/09/27 11:43:46 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -466,10 +466,15 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
     return status;
 }
 
-static int
-CompatRunCommand(void *cmd, void *gn)
+static void
+RunCommands(GNode *gn)
 {
-    return Compat_RunCommand(cmd, gn);
+    StringListNode *ln;
+    for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+	const char *cmd = ln->datum;
+	if (Compat_RunCommand(cmd, gn) != 0)
+	    break;
+    }
 }
 
 static void
@@ -578,7 +583,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 		    meta_job_start(NULL, gn);
 		}
 #endif
-		Lst_ForEachUntil(gn->commands, CompatRunCommand, gn);
+		RunCommands(gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch(gn, (gn->type & OP_SILENT) != 0);
@@ -730,7 +735,7 @@ Compat_Run(GNodeList *targs)
      * If the user has defined a .END target, run its commands.
      */
     if (errors == 0) {
-        GNode *endNode = Targ_GetEndNode();
+	GNode *endNode = Targ_GetEndNode();
 	Compat_Make(endNode, endNode);
 	/* XXX: Did you mean endNode->made instead of gn->made? */
 	if (gn->made == ERROR) {
