@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.336 2020/09/27 12:26:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.337 2020/09/27 12:42:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.336 2020/09/27 12:26:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.337 2020/09/27 12:42:09 rillig Exp $");
 
 /* types and constants */
 
@@ -819,31 +819,9 @@ ParseLinkSrc(void *pgnp, void *data)
     }
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseDoOp  --
- *	Apply the parsed operator to the given target node. Used in a
- *	Lst_ForEachUntil call by ParseDoDependency once all targets have
- *	been found and their operator parsed. If the previous and new
- *	operators are incompatible, a major error is taken.
- *
- * Input:
- *	gnp		The node to which the operator is to be applied
- *	opp		The operator to apply
- *
- * Results:
- *	Always 0
- *
- * Side Effects:
- *	The type field of the node is altered to reflect any new bits in
- *	the op.
- *---------------------------------------------------------------------
- */
-static int
-ParseDoOp(void *gnp, void *opp)
+static Boolean
+TryApplyDependencyOperator(GNode *gn, GNodeType op)
 {
-    GNode          *gn = (GNode *)gnp;
-    int             op = *(int *)opp;
     /*
      * If the dependency mask of the operator and the node don't match and
      * the node has actually had an operator applied to it before, and
@@ -853,7 +831,7 @@ ParseDoOp(void *gnp, void *opp)
 	!OP_NOP(gn->type) && !OP_NOP(op))
     {
 	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
-	return 1;
+	return FALSE;
     }
 
     if (op == OP_DOUBLEDEP && (gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
@@ -897,7 +875,16 @@ ParseDoOp(void *gnp, void *opp)
 	gn->type |= op;
     }
 
-    return 0;
+    return TRUE;
+}
+
+static void
+ApplyDependencyOperator(GNodeType op)
+{
+    GNodeListNode *ln;
+    for (ln = targets->first; ln != NULL; ln = ln->next)
+        if (!TryApplyDependencyOperator(ln->datum, op))
+	    break;
 }
 
 /*-
@@ -933,7 +920,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_ForEachUntil(targets, ParseDoOp, &op);
+		ApplyDependencyOperator(op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -1158,7 +1145,7 @@ ParseDoDependency(char *line)
     typedef List SearchPathList;
 
     char  	   *cp;		/* our current position */
-    int             op;		/* the operator on the line */
+    GNodeType op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
     SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
@@ -1483,7 +1470,7 @@ ParseDoDependency(char *line)
      * operator a target was defined with. It fails if the operator
      * used isn't consistent across all references.
      */
-    Lst_ForEachUntil(targets, ParseDoOp, &op);
+    ApplyDependencyOperator(op);
 
     /*
      * Onward to the sources.
