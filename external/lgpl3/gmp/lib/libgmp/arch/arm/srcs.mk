@@ -9,12 +9,13 @@ C_SRCS_LIST= \
 	mulmid_basecase.c		mpn/generic/mulmid_basecase.c \
 	jacobi_2.c		mpn/generic/jacobi_2.c \
 	toom32_mul.c		mpn/generic/toom32_mul.c \
+	toom2_sqr.c		mpn/generic/toom2_sqr.c \
 	toom44_mul.c		mpn/generic/toom44_mul.c \
 	toom8h_mul.c		mpn/generic/toom8h_mul.c \
-	toom2_sqr.c		mpn/generic/toom2_sqr.c \
 	zero.c		mpn/generic/zero.c \
 	mod_1_4.c		mpn/generic/mod_1_4.c \
 	gcdext.c		mpn/generic/gcdext.c \
+	hamdist.c		mpn/generic/popham.c \
 	sec_powm.c		mpn/generic/sec_powm.c \
 	add_err3_n.c		mpn/generic/add_err3_n.c \
 	binvert.c		mpn/generic/binvert.c \
@@ -27,6 +28,7 @@ C_SRCS_LIST= \
 	hgcd_reduce.c		mpn/generic/hgcd_reduce.c \
 	matrix22_mul1_inverse_vector.c		mpn/generic/matrix22_mul1_inverse_vector.c \
 	toom6_sqr.c		mpn/generic/toom6_sqr.c \
+	divrem_1.c		mpn/generic/divrem_1.c \
 	hgcd_step.c		mpn/generic/hgcd_step.c \
 	sub_err3_n.c		mpn/generic/sub_err3_n.c \
 	mod_1.c		mpn/generic/mod_1.c \
@@ -63,14 +65,17 @@ C_SRCS_LIST= \
 	jacbase.c		mpn/generic/jacbase.c \
 	sec_sqr.c		mpn/generic/sec_sqr.c \
 	hgcd_matrix.c		mpn/generic/hgcd_matrix.c \
+	toom_eval_dgr3_pm1.c		mpn/generic/toom_eval_dgr3_pm1.c \
 	mullo_n.c		mpn/generic/mullo_n.c \
 	toom33_mul.c		mpn/generic/toom33_mul.c \
-	toom_eval_dgr3_pm1.c		mpn/generic/toom_eval_dgr3_pm1.c \
+	mod_1_2.c		mpn/generic/mod_1_2.c \
+	gcd_22.c		mpn/generic/gcd_22.c \
 	sqrlo.c		mpn/generic/sqrlo.c \
 	sub_1.c		mpn/generic/sub_1.c \
 	add_err2_n.c		mpn/generic/add_err2_n.c \
 	trialdiv.c		mpn/generic/trialdiv.c \
 	add_1.c		mpn/generic/add_1.c \
+	sqr_basecase.c		mpn/generic/sqr_basecase.c \
 	toom_interpolate_5pts.c		mpn/generic/toom_interpolate_5pts.c \
 	sbpi1_bdiv_q.c		mpn/generic/sbpi1_bdiv_q.c \
 	pre_mod_1.c		mpn/generic/pre_mod_1.c \
@@ -95,6 +100,7 @@ C_SRCS_LIST= \
 	sub_err2_n.c		mpn/generic/sub_err2_n.c \
 	scan1.c		mpn/generic/scan1.c \
 	brootinv.c		mpn/generic/brootinv.c \
+	pre_divrem_1.c		mpn/generic/pre_divrem_1.c \
 	perfpow.c		mpn/generic/perfpow.c \
 	get_str.c		mpn/generic/get_str.c \
 	mulmod_bnm1.c		mpn/generic/mulmod_bnm1.c \
@@ -103,6 +109,7 @@ C_SRCS_LIST= \
 	sec_pi1_div_qr.c		mpn/generic/sec_pi1_div.c \
 	div_qr_2n_pi1.c		mpn/generic/div_qr_2n_pi1.c \
 	toom43_mul.c		mpn/generic/toom43_mul.c \
+	mod_1_1.c		mpn/generic/mod_1_1.c \
 	matrix22_mul.c		mpn/generic/matrix22_mul.c \
 	sec_pi1_div_r.c		mpn/generic/sec_pi1_div.c \
 	divrem.c		mpn/generic/divrem.c \
@@ -111,6 +118,7 @@ C_SRCS_LIST= \
 	dcpi1_bdiv_qr.c		mpn/generic/dcpi1_bdiv_qr.c \
 	mul_n.c		mpn/generic/mul_n.c \
 	redc_2.c		mpn/generic/redc_2.c \
+	gcd_11.c		mpn/generic/gcd_11.c \
 	toom6h_mul.c		mpn/generic/toom6h_mul.c \
 	sqrmod_bnm1.c		mpn/generic/sqrmod_bnm1.c \
 	mul_fft.c		mpn/generic/mul_fft.c \
@@ -135,6 +143,7 @@ C_SRCS_LIST= \
 	sec_sub_1.c		mpn/generic/sec_aors_1.c \
 	broot.c		mpn/generic/broot.c \
 	sec_add_1.c		mpn/generic/sec_aors_1.c \
+	popcount.c		mpn/generic/popham.c \
 	dcpi1_bdiv_q.c		mpn/generic/dcpi1_bdiv_q.c \
 	hgcd2_jacobi.c		mpn/generic/hgcd2_jacobi.c \
 	add_err1_n.c		mpn/generic/add_err1_n.c \
@@ -154,8 +163,8 @@ C_SRCS_LIST= \
 	bdiv_qr.c		mpn/generic/bdiv_qr.c \
 	hgcd_jacobi.c		mpn/generic/hgcd_jacobi.c \
 	div_qr_1n_pi1.c		mpn/generic/div_qr_1n_pi1.c \
-	sizeinbase.c		mpn/generic/sizeinbase.c \
 	toom3_sqr.c		mpn/generic/toom3_sqr.c \
+	sizeinbase.c		mpn/generic/sizeinbase.c \
 	gcd.c		mpn/generic/gcd.c \
 	redc_n.c		mpn/generic/redc_n.c \
 	sub_err1_n.c		mpn/generic/sub_err1_n.c \
@@ -164,44 +173,33 @@ ASM_SRCS_LIST= \
 	nand_n.asm		mpn/arm/logops_n.asm \
 	rsh1sub_n.asm		mpn/arm/rsh1aors_n.asm \
 	sec_tabselect.asm		mpn/arm/sec_tabselect.asm \
-	gcd_11.asm		mpn/arm/v6t2/gcd_11.asm \
-	mod_1_2.asm		mpn/arm/v5/mod_1_2.asm \
 	add_n.asm		mpn/arm/aors_n.asm \
 	rsh1add_n.asm		mpn/arm/rsh1aors_n.asm \
-	sqr_basecase.asm		mpn/arm/v6/sqr_basecase.asm \
 	sublsh1_n.asm		mpn/arm/aorslsh1_n.asm \
 	bdiv_q_1.asm		mpn/arm/bdiv_q_1.asm \
 	xor_n.asm		mpn/arm/logops_n.asm \
-	addmul_2.asm		mpn/arm/v6/addmul_2.asm \
-	submul_1.asm		mpn/arm/v6/submul_1.asm \
+	submul_1.asm		mpn/arm/aorsmul_1.asm \
 	nior_n.asm		mpn/arm/logops_n.asm \
 	lshift.asm		mpn/arm/lshift.asm \
 	and_n.asm		mpn/arm/logops_n.asm \
-	hamdist.asm		mpn/arm/v6/popham.asm \
 	cnd_sub_n.asm		mpn/arm/cnd_aors_n.asm \
-	mul_1.asm		mpn/arm/v6/mul_1.asm \
-	divrem_1.asm		mpn/arm/v6t2/divrem_1.asm \
+	mul_1.asm		mpn/arm/mul_1.asm \
 	copyd.asm		mpn/arm/copyd.asm \
 	bdiv_dbm1c.asm		mpn/arm/bdiv_dbm1c.asm \
-	gcd_22.asm		mpn/arm/v6t2/gcd_22.asm \
 	udiv.asm		mpn/arm/udiv.asm \
-	dive_1.asm		mpn/arm/v6/dive_1.asm \
+	dive_1.asm		mpn/arm/dive_1.asm \
 	cnd_add_n.asm		mpn/arm/cnd_aors_n.asm \
 	andn_n.asm		mpn/arm/logops_n.asm \
 	com.asm		mpn/arm/com.asm \
 	copyi.asm		mpn/arm/copyi.asm \
-	mod_1_1.asm		mpn/arm/v5/mod_1_1.asm \
 	rshift.asm		mpn/arm/rshift.asm \
-	addmul_3.asm		mpn/arm/v6/addmul_3.asm \
 	iorn_n.asm		mpn/arm/logops_n.asm \
 	ior_n.asm		mpn/arm/logops_n.asm \
 	mod_34lsub1.asm		mpn/arm/mod_34lsub1.asm \
-	popcount.asm		mpn/arm/v6/popham.asm \
 	xnor_n.asm		mpn/arm/logops_n.asm \
 	lshiftc.asm		mpn/arm/lshiftc.asm \
-	mode1o.asm		mpn/arm/v6/mode1o.asm \
+	mode1o.asm		mpn/arm/mode1o.asm \
 	addlsh1_n.asm		mpn/arm/aorslsh1_n.asm \
-	mul_2.asm		mpn/arm/v6/mul_2.asm \
 	invert_limb.asm		mpn/arm/invert_limb.asm \
-	addmul_1.asm		mpn/arm/v6/addmul_1.asm \
+	addmul_1.asm		mpn/arm/aorsmul_1.asm \
 	sub_n.asm		mpn/arm/aors_n.asm \
