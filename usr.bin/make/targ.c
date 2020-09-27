@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.102 2020/09/26 17:39:45 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.103 2020/09/27 01:07:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.102 2020/09/26 17:39:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.103 2020/09/27 01:07:12 mrg Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -129,7 +129,6 @@ static GNodeList *allGNs;	/* List of all the GNodes */
 #endif
 static Hash_Table targets;	/* a hash table of same */
 
-static int TargPrintOnlySrc(void *, void *);
 #ifdef CLEANUP
 static void TargFreeGN(void *);
 #endif
@@ -514,7 +513,7 @@ Targ_PrintNodes(GNodeList *gnodes, int pass)
 }
 
 /* Print only those targets that are just a source. */
-static int
+static void
 PrintOnlySources(void)
 {
     GNodeListNode *ln;
