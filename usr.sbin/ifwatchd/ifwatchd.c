@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.44 2020/09/23 02:32:04 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.45 2020/09/27 19:55:21 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.44 2020/09/23 02:32:04 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.45 2020/09/27 19:55:21 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: ifwatchd.c,v 1.44 2020/09/23 02:32:04 roy Exp $");
 #include <sys/wait.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -536,46 +535,13 @@ find_interface(int idx)
 	return NULL;
 }
 
-static bool
-has_carrier(int s, const char *ifname)
-{
-	struct ifmediareq ifmr = { .ifm_status = 0 };
-
-	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
-		struct ifdatareq ifdr = { .ifdr_data.ifi_link_state = 0 };
-
-		strlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
-		if (ioctl(s, SIOCGIFDATA, &ifdr) == -1) {
-			/* Should not be possible. */
-			return false;
-		}
-		if (ifdr.ifdr_data.ifi_link_state == LINK_STATE_UP)
-			return true;
-		else
-			return false;
-	}
-
-	if (!(ifmr.ifm_status & IFM_AVALID)) {
-		/*
-		 * Interface doesn't report media-valid status.
-		 * assume ok.
-		 */
-		return true;
-	}
-
-	if (ifmr.ifm_status & IFM_ACTIVE)
-		return true;
-	else
-		return false;
-}
-
 static void
 run_initial_ups(void)
 {
 	struct interface_data * ifd;
 	struct ifaddrs *res = NULL, *p;
 	struct sockaddr *ifa;
+	const struct if_data *ifi;
 	int s, aflag;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -602,11 +568,10 @@ run_initial_ups(void)
 		if (ifa == NULL)
 			continue;
 		if (ifa->sa_family == AF_LINK) {
-			if (has_carrier(s, ifd->ifname) == 0) {
+			ifi = (const struct if_data *)p->ifa_data;
+			if (ifi->ifi_link_state == LINK_STATE_UP)
 				invoke_script(ifd->ifname, CARRIER, NULL, NULL);
-				ifd->last_carrier_status =
-				    LINK_STATE_UP;
-			}
+			ifd->last_carrier_status = ifi->ifi_link_state;
 			continue;
 		}
 		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
