@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.51 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.52 2020/09/27 23:12:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -73,10 +73,10 @@
  *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
  */
 
-/*-
- * job.h --
- *	Definitions pertaining to the running of jobs in parallel mode.
+/*
+ * Running of jobs in parallel mode.
  */
+
 #ifndef MAKE_JOB_H
 #define MAKE_JOB_H
 
@@ -110,28 +110,6 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  */
 #define POLL_MSEC	5000
 
-/*-
- * Job Table definitions.
- *
- * Each job has several things associated with it:
- *	1) The process id of the child shell
- *	2) The graph node describing the target being made by this job
- *	3) A LstNode for the first command to be saved after the job
- *	   completes. This is NULL if there was no "..." in the job's
- *	   commands.
- *	4) An FILE* for writing out the commands. This is only
- *	   used before the job is actually started.
- *	5) The output is being caught via a pipe and
- *	   the descriptors of our pipe, an array in which output is line
- *	   buffered and the current position in that buffer are all
- *	   maintained for each job.
- *	6) A word of flags which determine how the module handles errors,
- *	   echoing, etc. for the job
- *
- * When a job is finished, the Make_Update function is called on each of the
- * parents of the node which was just remade. This takes care of the upward
- * traversal of the dependency graph.
- */
 struct pollfd;
 
 
@@ -139,21 +117,43 @@ struct pollfd;
 # include "meta.h"
 #endif
 
-#define JOB_BUFSIZE	1024
+/* A Job manages the shell commands that are run to create a single target.
+ * Each job is run in a separate subprocess by a shell.  Several jobs can run
+ * in parallel.
+ *
+ * The shell commands for the target are written to a temporary file,
+ * then the shell is run with the temporary file as stdin, and the output
+ * of that shell is captured via a pipe.
+ *
+ * When a job is finished, Make_Update updates all parents of the node
+ * that was just remade, marking them as ready to be made next if all
+ * other dependencies are finished as well. */
 typedef struct Job {
-    int pid;			/* The child's process ID */
-    GNode *node;		/* The target the child is making */
-    StringListNode *tailCmds;	/* The node of the first command to be
-				 * saved when the job has been run */
-    FILE *cmdFILE;		/* When creating the shell script, this is
-				 * where the commands go */
+    /* The process ID of the shell running the commands */
+    int pid;
+
+    /* The target the child is making */
+    GNode *node;
+
+    /* If one of the shell commands is "...", all following commands are
+     * delayed until the .END node is made.  This list node points to the
+     * first of these commands, if any. */
+    StringListNode *tailCmds;
+
+    /* When creating the shell script, this is where the commands go.
+     * This is only used before the job is actually started. */
+    FILE *cmdFILE;
+
     int exit_status;		/* from wait4() in signal handler */
+
     char job_state;		/* status of the job entry */
 #define JOB_ST_FREE	0	/* Job is available */
 #define JOB_ST_SETUP	1	/* Job is allocated but otherwise invalid */
 #define JOB_ST_RUNNING	3	/* Job is running, pid valid */
 #define JOB_ST_FINISHED	4	/* Job is done (ie after SIGCHILD) */
+
     char job_suspended;
+
     short flags;		/* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
@@ -165,10 +165,11 @@ typedef struct Job {
 
     int jobPipe[2];		/* Pipe for reading output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
+
+#define JOB_BUFSIZE	1024
+    /* Buffer for storing the output of the job, line by line. */
     char outBuf[JOB_BUFSIZE + 1];
-				/* Buffer for storing the output of the
-				 * job, line by line */
-    int curPos;			/* Current position in op_outBuf */
+    int curPos;			/* Current position in outBuf. */
 
 #ifdef USE_META
     struct BuildMon	bm;
