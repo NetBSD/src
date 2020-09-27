@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.463 2020/05/24 22:12:29 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.464 2020/09/27 16:58:11 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.463 2020/05/24 22:12:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.464 2020/09/27 16:58:11 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -203,7 +203,7 @@ static void	wdbiorequeue(void *);
 static void	wddone(device_t, struct ata_xfer *);
 static int	wd_get_params(struct wd_softc *, struct ataparams *);
 static void	wd_set_geometry(struct wd_softc *);
-static int	wd_flushcache(struct wd_softc *, int, bool);
+static int	wd_flushcache(struct wd_softc *, int);
 static int	wd_trim(struct wd_softc *, daddr_t, long);
 static bool	wd_shutdown(device_t, int);
 
@@ -512,7 +512,7 @@ wd_suspend(device_t dv, const pmf_qual_t *qual)
 	if (sc->atabus->ata_addref(sc->drvp))
 		return true; /* no need to complain */
 
-	wd_flushcache(sc, AT_WAIT, false);
+	wd_flushcache(sc, AT_WAIT);
 	wd_standby(sc, AT_WAIT);
 
 	sc->atabus->ata_delref(sc->drvp);
@@ -1194,7 +1194,7 @@ wd_lastclose(device_t self)
 	KASSERTMSG(bufq_peek(wd->sc_dksc.sc_bufq) == NULL, "bufq not empty");
 
 	if (wd->sc_flags & WDF_DIRTY)
-		wd_flushcache(wd, AT_WAIT, false);
+		wd_flushcache(wd, AT_WAIT);
 
 	wd->atabus->ata_delref(wd->drvp);
 	wd->sc_flags &= ~WDF_OPEN;
@@ -1373,7 +1373,7 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return wd_setcache(wd, *(int *)addr);
 
 	case DIOCCACHESYNC:
-		return wd_flushcache(wd, AT_WAIT, true);
+		return wd_flushcache(wd, AT_WAIT);
 
 	case ATAIOCCOMMAND:
 		/*
@@ -1765,7 +1765,28 @@ wd_getcache(struct wd_softc *wd, int *bitsp)
 	return 0;
 }
 
-const char at_errbits[] = "\20\10ERROR\11TIMEOU\12DF";
+
+static int
+wd_check_error(const struct dk_softc *dksc, const struct ata_xfer *xfer,
+    const char *func)
+{
+	static const char at_errbits[] = "\20\10ERROR\11TIMEOU\12DF";
+
+	int flags = xfer->c_ata_c.flags;
+
+	if ((flags & AT_ERROR) != 0 && xfer->c_ata_c.r_error == WDCE_ABRT) {
+		/* command not supported */
+		aprint_debug_dev(dksc->sc_dev, "%s: not supported\n", func);
+		return ENODEV;
+	}
+	if (flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		snprintb(sbuf, sizeof(sbuf), at_errbits, flags);
+		aprint_error_dev(dksc->sc_dev, "%s: status=%s\n", func, sbuf);
+		return EIO;
+	}
+	return 0;
+}
 
 int
 wd_setcache(struct wd_softc *wd, int bits)
@@ -1802,17 +1823,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	wd->atabus->ata_exec_command(wd->drvp, xfer);
 	ata_wait_cmd(wd->drvp->chnl_softc, xfer);
 
-	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
-		aprint_error_dev(dksc->sc_dev, "wd_setcache: status=%s\n", sbuf);
-		error = EIO;
-		goto out;
-	}
-
-	error = 0;
-
-out:
+	error = wd_check_error(dksc, xfer, __func__);
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
@@ -1836,31 +1847,13 @@ wd_standby(struct wd_softc *wd, int flags)
 	wd->atabus->ata_exec_command(wd->drvp, xfer);
 	ata_wait_cmd(wd->drvp->chnl_softc, xfer);
 
-	if (xfer->c_ata_c.flags & AT_ERROR) {
-		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
-			/* command not supported */
-			aprint_debug_dev(dksc->sc_dev,
-				"standby immediate not supported\n");
-			error = ENODEV;
-			goto out;
-		}
-	}
-	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
-		aprint_error_dev(dksc->sc_dev, "wd_standby: status=%s\n", sbuf);
-		error = EIO;
-		goto out;
-	}
-	error = 0;
-
-out:
+	error = wd_check_error(dksc, xfer, __func__);
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
 
 int
-wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
+wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct dk_softc *dksc = &wd->sc_dksc;
 	struct ata_xfer *xfer;
@@ -1891,25 +1884,8 @@ wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 	wd->atabus->ata_exec_command(wd->drvp, xfer);
 	ata_wait_cmd(wd->drvp->chnl_softc, xfer);
 
-	if (xfer->c_ata_c.flags & AT_ERROR) {
-		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
-			/* command not supported */
-			error = ENODEV;
-			goto out_xfer;
-		}
-	}
-	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
-		aprint_error_dev(dksc->sc_dev, "wd_flushcache: status=%s\n",
-		    sbuf);
-		error = EIO;
-		goto out_xfer;
-	}
+	error = wd_check_error(dksc, xfer, __func__);
 	wd->sc_flags &= ~WDF_DIRTY;
-	error = 0;
-
-out_xfer:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
@@ -1959,24 +1935,7 @@ wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 	ata_wait_cmd(wd->drvp->chnl_softc, xfer);
 
 	kmem_free(req, 512);
-	if (xfer->c_ata_c.flags & AT_ERROR) {
-		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
-			/* command not supported */
-			error = ENODEV;
-			goto out;
-		}
-	}
-	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
-		aprint_error_dev(dksc->sc_dev, "wd_trim: status=%s\n",
-		    sbuf);
-		error = EIO;
-		goto out;
-	}
-	error = 0;
-
-out:
+	error = wd_check_error(dksc, xfer, __func__);
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
@@ -1990,7 +1949,7 @@ wd_shutdown(device_t dev, int how)
 	if (wd->atabus->ata_addref(wd->drvp))
 		return true; /* no need to complain */
 
-	wd_flushcache(wd, AT_POLL, false);
+	wd_flushcache(wd, AT_POLL);
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		wd_standby(wd, AT_POLL);
 	return true;
