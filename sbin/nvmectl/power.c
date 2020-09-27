@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: power.c,v 1.5 2020/09/27 17:27:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2016 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: power.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: power.c,v 1.5 2020/09/27 17:27:07 jdolecek Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -129,7 +129,9 @@ power_show(int fd)
 	if (nvme_completion_is_error(&pt.cpl))
 		errx(1, "set feature power mgmt request returned error");
 
-	printf("Current Power Mode is %d\n", pt.cpl.cdw0);
+	printf("Current Power State is %d, Workload Hint %d\n",
+		pt.cpl.cdw0 & ((1 << 5) - 1),
+		pt.cpl.cdw0 >> 5);
 }
 
 void
