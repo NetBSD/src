@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.33 2020/09/27 16:52:22 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.34 2020/09/27 16:59:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,27 +95,27 @@ void Buf_Expand_1(Buffer *);
 
 /* Buf_AddByte adds a single byte to a buffer. */
 static inline MAKE_ATTR_UNUSED void
-Buf_AddByte(Buffer *bp, char byte)
+Buf_AddByte(Buffer *buf, char byte)
 {
-    size_t old_len = bp->len++;
+    size_t old_len = buf->len++;
     char *end;
-    if (__predict_false(old_len + 1 >= bp->cap))
-	Buf_Expand_1(bp);
-    end = bp->data + old_len;
+    if (__predict_false(old_len + 1 >= buf->cap))
+	Buf_Expand_1(buf);
+    end = buf->data + old_len;
     end[0] = byte;
     end[1] = '\0';
 }
 
 static inline MAKE_ATTR_UNUSED size_t
-Buf_Len(const Buffer *bp)
+Buf_Len(const Buffer *buf)
 {
-    return bp->len;
+    return buf->len;
 }
 
 static inline MAKE_ATTR_UNUSED Boolean
-Buf_EndsWith(const Buffer *bp, char ch)
+Buf_EndsWith(const Buffer *buf, char ch)
 {
-    return bp->len > 0 && bp->data[bp->len - 1] == ch;
+    return buf->len > 0 && buf->data[buf->len - 1] == ch;
 }
 
 void Buf_AddBytes(Buffer *, const char *, size_t);

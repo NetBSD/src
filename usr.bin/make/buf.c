@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.39 2020/09/27 16:21:06 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.40 2020/09/27 16:59:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,63 +75,63 @@
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.39 2020/09/27 16:21:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.40 2020/09/27 16:59:02 rillig Exp $");
 
 /* Extend the buffer for adding a single byte. */
 void
-Buf_Expand_1(Buffer *bp)
+Buf_Expand_1(Buffer *buf)
 {
-    bp->cap += MAX(bp->cap, 16);
-    bp->data = bmake_realloc(bp->data, bp->cap);
+    buf->cap += MAX(buf->cap, 16);
+    buf->data = bmake_realloc(buf->data, buf->cap);
 }
 
 /* Add the given bytes to the buffer. */
 void
-Buf_AddBytes(Buffer *bp, const char *bytes, size_t bytes_len)
+Buf_AddBytes(Buffer *buf, const char *bytes, size_t bytes_len)
 {
-    size_t old_len = bp->len;
+    size_t old_len = buf->len;
     char *end;
 
-    if (__predict_false(old_len + bytes_len >= bp->cap)) {
-	bp->cap += MAX(bp->cap, bytes_len + 16);
-	bp->data = bmake_realloc(bp->data, bp->cap);
+    if (__predict_false(old_len + bytes_len >= buf->cap)) {
+	buf->cap += MAX(buf->cap, bytes_len + 16);
+	buf->data = bmake_realloc(buf->data, buf->cap);
     }
 
-    end = bp->data + old_len;
-    bp->len = old_len + bytes_len;
+    end = buf->data + old_len;
+    buf->len = old_len + bytes_len;
     memcpy(end, bytes, bytes_len);
     end[bytes_len] = '\0';
 }
 
 /* Add the bytes between start and end to the buffer. */
 void
-Buf_AddBytesBetween(Buffer *bp, const char *start, const char *end)
+Buf_AddBytesBetween(Buffer *buf, const char *start, const char *end)
 {
-    Buf_AddBytes(bp, start, (size_t)(end - start));
+    Buf_AddBytes(buf, start, (size_t)(end - start));
 }
 
 /* Add the given string to the buffer. */
 void
-Buf_AddStr(Buffer *bp, const char *str)
+Buf_AddStr(Buffer *buf, const char *str)
 {
-    Buf_AddBytes(bp, str, strlen(str));
+    Buf_AddBytes(buf, str, strlen(str));
 }
 
 /* Add the given number to the buffer. */
 void
-Buf_AddInt(Buffer *bp, int n)
+Buf_AddInt(Buffer *buf, int n)
 {
     enum {
 	bits = sizeof(int) * CHAR_BIT,
 	max_octal_digits = (bits + 2) / 3,
 	max_decimal_digits = /* at most */ max_octal_digits,
 	max_sign_chars = 1,
-	buf_size = max_sign_chars + max_decimal_digits + 1
+	str_size = max_sign_chars + max_decimal_digits + 1
     };
-    char buf[buf_size];
+    char str[str_size];
 
-    size_t len = (size_t)snprintf(buf, sizeof buf, "%d", n);
-    Buf_AddBytes(bp, buf, len);
+    size_t len = (size_t)snprintf(str, sizeof str, "%d", n);
+    Buf_AddBytes(buf, str, len);
 }
 
 /* Get the data (usually a string) from the buffer.
@@ -141,32 +141,32 @@ Buf_AddInt(Buffer *bp, int n)
  * Returns the pointer to the data and optionally the length of the
  * data in the buffer. */
 char *
-Buf_GetAll(Buffer *bp, size_t *out_len)
+Buf_GetAll(Buffer *buf, size_t *out_len)
 {
     if (out_len != NULL)
-	*out_len = bp->len;
-    return bp->data;
+	*out_len = buf->len;
+    return buf->data;
 }
 
 /* Mark the buffer as empty, so it can be filled with data again. */
 void
-Buf_Empty(Buffer *bp)
+Buf_Empty(Buffer *buf)
 {
-    bp->len = 0;
-    bp->data[0] = '\0';
+    buf->len = 0;
+    buf->data[0] = '\0';
 }
 
 /* Initialize a buffer.
  * If the given initial capacity is 0, a reasonable default is used. */
 void
-Buf_Init(Buffer *bp, size_t cap)
+Buf_Init(Buffer *buf, size_t cap)
 {
     if (cap <= 0)
 	cap = 256;
-    bp->cap = cap;
-    bp->len = 0;
-    bp->data = bmake_malloc(cap);
-    bp->data[0] = '\0';
+    buf->cap = cap;
+    buf->len = 0;
+    buf->data = bmake_malloc(cap);
+    buf->data[0] = '\0';
 }
 
 /* Reset the buffer.
