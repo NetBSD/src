@@ -21,13 +21,12 @@ the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 #include <unistd.h>
 #include <signal.h>
 #include <math.h>
-#include "gmp.h"
 #include "gmpstat.h"
 
 #define RCSID(msg) \
 static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
-RCSID("$Id: findlc.c,v 1.1.1.3 2017/08/22 09:40:48 mrg Exp $");
+RCSID("$Id: findlc.c,v 1.1.1.4 2020/09/27 00:27:04 mrg Exp $");
 
 int g_debug = 0;
 
