@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.149 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.150 2020/09/27 22:17:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.149 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.150 2020/09/27 22:17:07 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
@@ -1480,27 +1480,17 @@ Dir_MTime(GNode *gn, Boolean recheck)
     return gn->mtime;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_AddDir --
- *	Add the given name to the end of the given path. The order of
- *	the arguments is backwards so ParseDoDependency can do a
- *	Lst_ForEachUntil of its list of paths...
+/* Read the list of filenames in the directory and store the result
+ * in openDirectories.
+ *
+ * If a path is given, append the directory to that path.
  *
  * Input:
- *	path		the path to which the directory should be
- *			added
- *			XXX: Why would this ever be NULL, and what does
- *			that mean?
- *	name		the name of the directory to add
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	A structure is added to the list and the directory is
- *	read and hashed.
- *-----------------------------------------------------------------------
+ *	path		The path to which the directory should be
+ *			added, or NULL to only add the directory to
+ *			openDirectories
+ *	name		The name of the directory to add.
+ *			The name is not normalized in any way.
  */
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
