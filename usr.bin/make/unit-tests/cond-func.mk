@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.2 2020/09/23 08:11:28 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.3 2020/09/27 21:35:16 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -15,12 +15,12 @@ ${:UVAR{value}}=	variable name with braces
 .error
 .endif
 
-# Horizontal whitespace after the opening parenthesis is ignored.
+# Horizontal whitespace (space tab) after the opening parenthesis is ignored.
 .if !defined( 	DEF)
 .error
 .endif
 
-# Horizontal whitespace before the closing parenthesis is ignored.
+# Horizontal whitespace (space tab) before the closing parenthesis is ignored.
 .if !defined(DEF 	)
 .error
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.87 2020/09/27 16:52:22 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.88 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -52,7 +52,8 @@
  * ${:Uvalue}, and then this modified body is "included" as a special file.
  *
  * Interface:
- *	For_Eval 	Evaluate the loop in the passed line.
+ *	For_Eval	Evaluate the loop in the passed line.
+ *
  *	For_Run		Run accumulated loop
  */
 
@@ -60,7 +61,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.87 2020/09/27 16:52:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.88 2020/09/27 21:35:16 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,

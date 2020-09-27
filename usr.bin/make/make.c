@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.150 2020/09/27 13:27:50 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.151 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -74,32 +74,32 @@
  *	their suitability for creation
  *
  * Interface:
- *	Make_Run 	    	Initialize things for the module and recreate
- *	    	  	    	whatever needs recreating. Returns TRUE if
- *	    	    	    	work was (or would have been) done and FALSE
- *	    	  	    	otherwise.
+ *	Make_Run	Initialize things for the module and recreate
+ *			whatever needs recreating. Returns TRUE if
+ *			work was (or would have been) done and FALSE
+ *			otherwise.
  *
- *	Make_Update	    	Update all parents of a given child. Performs
- *	    	  	    	various bookkeeping chores like the updating
- *	    	  	    	of the cmgn field of the parent, filling
- *	    	  	    	of the IMPSRC context variable, etc. It will
- *	    	  	    	place the parent on the toBeMade queue if it
- *	    	  	    	should be.
+ *	Make_Update	Update all parents of a given child. Performs
+ *			various bookkeeping chores like the updating
+ *			of the cmgn field of the parent, filling
+ *			of the IMPSRC context variable, etc. It will
+ *			place the parent on the toBeMade queue if it
+ *			should be.
  *
- *	Make_TimeStamp	    	Function to set the parent's cmgn field
- *	    	  	    	based on a child's modification time.
+ *	Make_TimeStamp	Function to set the parent's cmgn field
+ *			based on a child's modification time.
  *
- *	Make_DoAllVar	    	Set up the various local variables for a
- *	    	  	    	target, including the .ALLSRC variable, making
- *	    	  	    	sure that any variable that needs to exist
- *	    	  	    	at the very least has the empty value.
+ *	Make_DoAllVar	Set up the various local variables for a
+ *			target, including the .ALLSRC variable, making
+ *			sure that any variable that needs to exist
+ *			at the very least has the empty value.
  *
- *	Make_OODate 	    	Determine if a target is out-of-date.
+ *	Make_OODate	Determine if a target is out-of-date.
  *
- *	Make_HandleUse	    	See if a child is a .USE node for a parent
- *				and perform the .USE actions if so.
+ *	Make_HandleUse	See if a child is a .USE node for a parent
+ *			and perform the .USE actions if so.
  *
- *	Make_ExpandUse	    	Expand .USE nodes
+ *	Make_ExpandUse	Expand .USE nodes
  */
 
 #include    "make.h"
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.150 2020/09/27 13:27:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.151 2020/09/27 21:35:16 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -390,7 +390,7 @@ MakeFindChild(void *gnp, void *pgnp)
 void
 Make_HandleUse(GNode *cgn, GNode *pgn)
 {
-    GNodeListNode *ln; 	/* An element in the children list */
+    GNodeListNode *ln;	/* An element in the children list */
 
 #ifdef DEBUG_SRC
     if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
@@ -505,10 +505,10 @@ Make_Recheck(GNode *gn)
      * parse.h : parse.o
      *
      * parse.o : parse.y
-     *  	yacc -d parse.y
-     *  	cc -c y.tab.c
-     *  	mv y.tab.o parse.o
-     *  	cmp -s y.tab.h parse.h || mv y.tab.h parse.h
+     *		yacc -d parse.y
+     *		cc -c y.tab.c
+     *		mv y.tab.o parse.o
+     *		cmp -s y.tab.h parse.h || mv y.tab.h parse.h
      *
      * In this case, if the definitions produced by yacc haven't changed
      * from before, parse.h won't have been updated and gn->mtime will
@@ -588,8 +588,8 @@ Make_Recheck(GNode *gn)
 void
 Make_Update(GNode *cgn)
 {
-    GNode 	*pgn;	/* the parent node */
-    const char	*cname;	/* the child's name */
+    GNode *pgn;			/* the parent node */
+    const char *cname;		/* the child's name */
     GNodeListNode *ln;
     time_t	mtime = -1;
     char	*p1;
@@ -1055,8 +1055,8 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 static int
 MakePrintStatus(void *gnp, void *v_errors)
 {
-    GNode   	*gn = (GNode *)gnp;
-    int 	*errors = v_errors;
+    GNode *gn = (GNode *)gnp;
+    int *errors = v_errors;
 
     if (gn->flags & DONECYCLE)
 	/* We've completely processed this node before, don't do it again. */
@@ -1240,7 +1240,7 @@ Make_ProcessWait(GNodeList *targs)
     GNode  *pgn;		/* 'parent' node we are examining */
     GNode  *cgn;		/* Each child in turn */
     GNodeListNode *owln;	/* Previous .WAIT node */
-    GNodeList *examine; 	/* List of targets to examine */
+    GNodeList *examine;		/* List of targets to examine */
     GNodeListNode *ln;
 
     /*
@@ -1320,7 +1320,7 @@ Make_ProcessWait(GNodeList *targs)
 Boolean
 Make_Run(GNodeList *targs)
 {
-    int	    	    errors; 	/* Number of errors the Job module reports */
+    int errors;			/* Number of errors the Job module reports */
 
     /* Start trying to make the current targets... */
     toBeMade = Lst_Init();

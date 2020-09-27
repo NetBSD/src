@@ -1,4 +1,4 @@
-# $NetBSD: posix1.mk,v 1.4 2020/08/10 18:19:58 rillig Exp $
+# $NetBSD: posix1.mk,v 1.5 2020/09/27 21:35:16 rillig Exp $
 
 # Keep the default suffixes from interfering, just in case.
 .SUFFIXES:
@@ -60,7 +60,7 @@ ARFLAGS = -rcv
 localvars: lib.a
 
 # $@ = target or archive name	$< = implied source
-# $* = target without suffix 	$? = sources newer than target
+# $* = target without suffix	$? = sources newer than target
 # $% = archive member name
 LOCALS = \
 	"Local variables\n\

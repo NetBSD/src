@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.72 2020/09/26 17:15:20 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.73 2020/09/27 21:35:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.72 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.73 2020/09/27 21:35:16 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -347,7 +347,7 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	 * Take care of having the current element deleted out from under
 	 * us.
 	 */
-    	ListNode *next = tln->next;
+	ListNode *next = tln->next;
 
 	/*
 	 * We're done with the traversal if

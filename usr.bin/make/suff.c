@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.169 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.170 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -74,59 +74,62 @@
  *	using suffix transformation rules
  *
  * Interface:
- *	Suff_Init 	    	Initialize all things to do with suffixes.
+ *	Suff_Init	Initialize all things to do with suffixes.
  *
- *	Suff_End 	    	Cleanup the module
+ *	Suff_End	Cleanup the module
  *
- *	Suff_DoPaths	    	This function is used to make life easier
- *	    	  	    	when searching for a file according to its
- *	    	  	    	suffix. It takes the global search path,
- *	    	  	    	as defined using the .PATH: target, and appends
- *	    	  	    	its directories to the path of each of the
- *	    	  	    	defined suffixes, as specified using
- *	    	  	    	.PATH<suffix>: targets. In addition, all
- *	    	  	    	directories given for suffixes labeled as
- *	    	  	    	include files or libraries, using the .INCLUDES
- *	    	  	    	or .LIBS targets, are played with using
- *	    	  	    	Dir_MakeFlags to create the .INCLUDES and
- *	    	  	    	.LIBS global variables.
+ *	Suff_DoPaths	This function is used to make life easier
+ *			when searching for a file according to its
+ *			suffix. It takes the global search path,
+ *			as defined using the .PATH: target, and appends
+ *			its directories to the path of each of the
+ *			defined suffixes, as specified using
+ *			.PATH<suffix>: targets. In addition, all
+ *			directories given for suffixes labeled as
+ *			include files or libraries, using the .INCLUDES
+ *			or .LIBS targets, are played with using
+ *			Dir_MakeFlags to create the .INCLUDES and
+ *			.LIBS global variables.
  *
- *	Suff_ClearSuffixes  	Clear out all the suffixes and defined
- *	    	  	    	transformations.
+ *	Suff_ClearSuffixes
+ *			Clear out all the suffixes and defined
+ *			transformations.
  *
- *	Suff_IsTransform    	Return TRUE if the passed string is the lhs
- *	    	  	    	of a transformation rule.
+ *	Suff_IsTransform
+ *			Return TRUE if the passed string is the lhs
+ *			of a transformation rule.
  *
- *	Suff_AddSuffix	    	Add the passed string as another known suffix.
+ *	Suff_AddSuffix	Add the passed string as another known suffix.
  *
- *	Suff_GetPath	    	Return the search path for the given suffix.
+ *	Suff_GetPath	Return the search path for the given suffix.
  *
- *	Suff_AddInclude	    	Mark the given suffix as denoting an include
- *	    	  	    	file.
+ *	Suff_AddInclude
+ *			Mark the given suffix as denoting an include file.
  *
- *	Suff_AddLib	    	Mark the given suffix as denoting a library.
+ *	Suff_AddLib	Mark the given suffix as denoting a library.
  *
- *	Suff_AddTransform   	Add another transformation to the suffix
- *	    	  	    	graph. Returns  GNode suitable for framing, I
- *	    	  	    	mean, tacking commands, attributes, etc. on.
+ *	Suff_AddTransform
+ *			Add another transformation to the suffix
+ *			graph. Returns  GNode suitable for framing, I
+ *			mean, tacking commands, attributes, etc. on.
  *
- *	Suff_SetNull	    	Define the suffix to consider the suffix of
- *	    	  	    	any file that doesn't have a known one.
+ *	Suff_SetNull	Define the suffix to consider the suffix of
+ *			any file that doesn't have a known one.
  *
- *	Suff_FindDeps	    	Find implicit sources for and the location of
- *	    	  	    	a target based on its suffix. Returns the
- *	    	  	    	bottom-most node added to the graph or NULL
- *	    	  	    	if the target had no implicit sources.
+ *	Suff_FindDeps	Find implicit sources for and the location of
+ *			a target based on its suffix. Returns the
+ *			bottom-most node added to the graph or NULL
+ *			if the target had no implicit sources.
  *
- *	Suff_FindPath	    	Return the appropriate path to search in
- *				order to find the node.
+ *	Suff_FindPath	Return the appropriate path to search in order to
+ *			find the node.
  */
 
 #include	  "make.h"
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.169 2020/09/26 17:15:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.170 2020/09/27 21:35:16 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -171,12 +174,12 @@ typedef List SuffListList;
  * Structure describing an individual suffix.
  */
 typedef struct Suff {
-    char         *name;	    	/* The suffix itself, such as ".c" */
+    char         *name;		/* The suffix itself, such as ".c" */
     size_t	 nameLen;	/* Length of the name, to avoid strlen calls */
-    SuffFlags	 flags;      	/* Type of suffix */
+    SuffFlags	 flags;		/* Type of suffix */
     SearchPath	 *searchPath;	/* The path along which files of this suffix
 				 * may be found */
-    int          sNum;	      	/* The suffix number */
+    int          sNum;		/* The suffix number */
     int		 refCount;	/* Reference count of list membership */
     SuffList	 *parents;	/* Suffixes we have a transformation to */
     SuffList	 *children;	/* Suffixes we have a transformation from */
@@ -187,12 +190,12 @@ typedef struct Suff {
  * Structure used in the search for implied sources.
  */
 typedef struct Src {
-    char            *file;	/* The file to look for */
-    char    	    *pref;  	/* Prefix from which file was formed */
-    Suff            *suff;	/* The suffix on the file */
-    struct Src     *parent;	/* The Src for which this is a source */
-    GNode           *node;	/* The node describing the file */
-    int	    	    children;	/* Count of existing children (so we don't free
+    char *file;			/* The file to look for */
+    char *pref;			/* Prefix from which file was formed */
+    Suff *suff;			/* The suffix on the file */
+    struct Src *parent;		/* The Src for which this is a source */
+    GNode *node;		/* The node describing the file */
+    int children;		/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
 #ifdef DEBUG_SRC
     SrcList *cp;		/* Debug; children list */
@@ -215,8 +218,8 @@ typedef struct GNodeSuff {
     Boolean	    r;
 } GNodeSuff;
 
-static Suff 	    *suffNull;	/* The NULL suffix for this run */
-static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
+static Suff *suffNull;		/* The NULL suffix for this run */
+static Suff *emptySuff;		/* The empty suffix required for POSIX
 				 * single-suffix transformation rules */
 
 
@@ -270,8 +273,8 @@ struct SuffSuffGetSuffixArgs {
 static char *
 SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
 {
-    char  *p1;	    	/* Pointer into suffix name */
-    char  *p2;	    	/* Pointer into string being examined */
+    char *p1;			/* Pointer into suffix name */
+    char *p2;			/* Pointer into string being examined */
 
     if (str->name_len < s->nameLen)
 	return NULL;		/* this string is shorter than the suffix */
@@ -419,15 +422,15 @@ SuffNew(const char *name)
 {
     Suff *s = bmake_malloc(sizeof(Suff));
 
-    s->name =   	bmake_strdup(name);
-    s->nameLen = 	strlen(s->name);
+    s->name = bmake_strdup(name);
+    s->nameLen = strlen(s->name);
     s->searchPath = Lst_Init();
-    s->children = 	Lst_Init();
-    s->parents = 	Lst_Init();
-    s->ref = 	Lst_Init();
-    s->sNum =   	sNum++;
-    s->flags =  	0;
-    s->refCount =	1;
+    s->children = Lst_Init();
+    s->parents = Lst_Init();
+    s->ref = Lst_Init();
+    s->sNum = sNum++;
+    s->flags = 0;
+    s->refCount = 1;
 
     return s;
 }
@@ -450,7 +453,7 @@ Suff_ClearSuffixes(void)
     emptySuff = suffNull = SuffNew("");
 
     Dir_Concat(suffNull->searchPath, dirSearchPath);
-    suffNull->flags =  	    SUFF_NULL;
+    suffNull->flags = SUFF_NULL;
 }
 
 /* Parse a transformation string to find its two component suffixes.
@@ -530,7 +533,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 Boolean
 Suff_IsTransform(const char *str)
 {
-    Suff    	  *src, *targ;
+    Suff *src, *targ;
 
     return SuffParseTransform(str, &src, &targ);
 }
@@ -553,7 +556,7 @@ Suff_AddTransform(const char *line)
     GNode         *gn;		/* GNode of transformation rule */
     Suff          *s,		/* source suffix */
 		  *t;		/* target suffix */
-    GNodeListNode *ln;	    	/* Node for existing transformation */
+    GNodeListNode *ln;		/* Node for existing transformation */
     Boolean ok;
 
     ln = Lst_Find(transforms, SuffGNHasName, line);
@@ -665,9 +668,9 @@ Suff_EndTransform(GNode *gn)
 static void
 SuffRebuildGraph(void *transformp, void *sp)
 {
-    GNode   	*transform = (GNode *)transformp;
-    Suff    	*s = (Suff *)sp;
-    char 	*cp;
+    GNode *transform = (GNode *)transformp;
+    Suff *s = (Suff *)sp;
+    char *cp;
     struct SuffSuffGetSuffixArgs sd;
 
     /*
@@ -721,10 +724,10 @@ SuffRebuildGraph(void *transformp, void *sp)
 static int
 SuffScanTargets(void *targetp, void *gsp)
 {
-    GNode   	*target = (GNode *)targetp;
-    GNodeSuff	*gs = (GNodeSuff *)gsp;
-    Suff	*s, *t;
-    char 	*ptr;
+    GNode *target = (GNode *)targetp;
+    GNodeSuff *gs = (GNodeSuff *)gsp;
+    Suff *s, *t;
+    char *ptr;
 
     if (*gs->gnp == NULL && gs->r && (target->type & OP_NOTARGET) == 0) {
 	*gs->gnp = target;
@@ -914,10 +917,10 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
 static void
 SuffAddSrc(void *sp, void *lsp)
 {
-    Suff	*s = (Suff *)sp;
-    LstSrc      *ls = (LstSrc *)lsp;
-    Src         *s2;	    /* new Src structure */
-    Src    	*targ; 	    /* Target structure */
+    Suff *s = (Suff *)sp;
+    LstSrc *ls = (LstSrc *)lsp;
+    Src *s2;			/* new Src structure */
+    Src *targ;			/* Target structure */
 
     targ = ls->s;
 
@@ -928,11 +931,11 @@ SuffAddSrc(void *sp, void *lsp)
 	 * that...
 	 */
 	s2 = bmake_malloc(sizeof(Src));
-	s2->file =  	bmake_strdup(targ->pref);
-	s2->pref =  	targ->pref;
-	s2->parent = 	targ;
-	s2->node =  	NULL;
-	s2->suff =  	s;
+	s2->file = bmake_strdup(targ->pref);
+	s2->pref = targ->pref;
+	s2->parent = targ;
+	s2->node = NULL;
+	s2->suff = s;
 	s->refCount++;
 	s2->children =	0;
 	targ->children += 1;
@@ -946,11 +949,11 @@ SuffAddSrc(void *sp, void *lsp)
 #endif
     }
     s2 = bmake_malloc(sizeof(Src));
-    s2->file = 	    str_concat2(targ->pref, s->name);
-    s2->pref =	    targ->pref;
-    s2->parent =    targ;
-    s2->node = 	    NULL;
-    s2->suff = 	    s;
+    s2->file = str_concat2(targ->pref, s->name);
+    s2->pref = targ->pref;
+    s2->parent = targ;
+    s2->node = NULL;
+    s2->suff = s;
     s->refCount++;
     s2->children =  0;
     targ->children += 1;
@@ -1103,13 +1106,12 @@ static Src *
 SuffFindCmds(Src *targ, SrcList *slst)
 {
     GNodeListNode *gln;
-
-    GNode		*t, 	/* Target GNode */
-			*s; 	/* Source GNode */
-    size_t		prefLen;/* The length of the defined prefix */
-    Suff    	  	*suff;	/* Suffix on matching beastie */
-    Src	    	  	*ret;	/* Return value */
-    char    	  	*cp;
+    GNode *t;			/* Target GNode */
+    GNode *s;			/* Source GNode */
+    size_t prefLen;		/* The length of the defined prefix */
+    Suff *suff;			/* Suffix on matching beastie */
+    Src *ret;			/* Return value */
+    char *cp;
 
     t = targ->node;
     Lst_Open(t->children);
@@ -1202,9 +1204,9 @@ SuffFindCmds(Src *targ, SrcList *slst)
 static void
 SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 {
-    GNode   	*cgn = LstNode_Datum(cln);
-    GNode	*gn;	    /* New source 8) */
-    char	*cp;	    /* Expanded value */
+    GNode *cgn = LstNode_Datum(cln);
+    GNode *gn;			/* New source 8) */
+    char *cp;			/* Expanded value */
 
     if (!Lst_IsEmpty(cgn->order_pred) || !Lst_IsEmpty(cgn->order_succ))
 	/* It is all too hard to process the result of .ORDER */
@@ -1355,7 +1357,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 static void
 SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 {
-    GNode   	*cgn = LstNode_Datum(cln);
+    GNode *cgn = LstNode_Datum(cln);
     StringList *explist;
 
     if (!Dir_HasWildcards(cgn->name))
@@ -1459,8 +1461,8 @@ static Boolean
 SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 {
     GNodeListNode *ln, *nln;    /* General node */
-    char    	*tname;	    /* Name of transformation rule */
-    GNode   	*gn;	    /* Node for same */
+    char *tname;		/* Name of transformation rule */
+    GNode *gn;			/* Node for same */
 
     /*
      * Form the proper links between the target and source.
@@ -1674,17 +1676,17 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 static void
 SuffFindNormalDeps(GNode *gn, SrcList *slst)
 {
-    char    	*eoname;    /* End of name */
-    char    	*sopref;    /* Start of prefix */
+    char *eoname;		/* End of name */
+    char *sopref;		/* Start of prefix */
     SuffListNode *ln, *nln;
-    SrcList *srcs;	    /* List of sources at which to look */
-    SrcList *targs;	    /* List of targets to which things can be
-			     * transformed. They all have the same file,
-			     * but different suff and pref fields */
-    Src	    	*bottom;    /* Start of found transformation path */
-    Src 	*src;	    /* General Src pointer */
-    char    	*pref;	    /* Prefix to use */
-    Src	    	*targ;	    /* General Src target pointer */
+    SrcList *srcs;		/* List of sources at which to look */
+    SrcList *targs;		/* List of targets to which things can be
+				 * transformed. They all have the same file,
+				 * but different suff and pref fields */
+    Src *bottom;		/* Start of found transformation path */
+    Src *src;			/* General Src pointer */
+    char *pref;			/* Prefix to use */
+    Src *targ;			/* General Src target pointer */
     struct SuffSuffGetSuffixArgs sd; /* Search string data */
 
 

@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-defined.mk,v 1.3 2020/08/20 17:23:43 rillig Exp $
+# $NetBSD: cond-func-defined.mk,v 1.4 2020/09/27 21:35:16 rillig Exp $
 #
 # Tests for the defined() function in .if conditions.
 
@@ -9,12 +9,12 @@ ${:UA B}=	variable name with spaces
 .error
 .endif
 
-# Horizontal whitespace after the opening parenthesis is ignored.
+# Horizontal whitespace (space tab) after the opening parenthesis is ignored.
 .if !defined( 	DEF)
 .error
 .endif
 
-# Horizontal whitespace before the closing parenthesis is ignored.
+# Horizontal whitespace (space tab) before the closing parenthesis is ignored.
 .if !defined(DEF 	)
 .error
 .endif

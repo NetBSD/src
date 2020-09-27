@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.105 2020/09/27 12:10:51 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.106 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -74,44 +74,45 @@
  *	kept in two structures: a Lst and a hash table.
  *
  * Interface:
- *	Targ_Init 	    	Initialization procedure.
+ *	Targ_Init	Initialization procedure.
  *
- *	Targ_End 	    	Cleanup the module
+ *	Targ_End	Cleanup the module
  *
- *	Targ_List 	    	Return the list of all targets so far.
+ *	Targ_List	Return the list of all targets so far.
  *
- *	Targ_NewGN	    	Create a new GNode for the passed target
- *	    	  	    	(string). The node is *not* placed in the
- *	    	  	    	hash table, though all its fields are
- *	    	  	    	initialized.
+ *	Targ_NewGN	Create a new GNode for the passed target
+ *			(string). The node is *not* placed in the
+ *			hash table, though all its fields are
+ *			initialized.
  *
- *	Targ_FindNode		Find the node, or return NULL.
+ *	Targ_FindNode	Find the node, or return NULL.
  *
- *	Targ_GetNode		Find the node, or create it.
+ *	Targ_GetNode	Find the node, or create it.
  *
- *	Targ_NewInternalNode	Create an internal node.
+ *	Targ_NewInternalNode
+ *			Create an internal node.
  *
- *	Targ_FindList	    	Given a list of names, find nodes for all
- *	    	  	    	of them, creating them as necessary.
+ *	Targ_FindList	Given a list of names, find nodes for all
+ *			of them, creating them as necessary.
  *
- *	Targ_Ignore	    	Return TRUE if errors should be ignored when
- *	    	  	    	creating the given target.
+ *	Targ_Ignore	Return TRUE if errors should be ignored when
+ *			creating the given target.
  *
- *	Targ_Silent	    	Return TRUE if we should be silent when
- *	    	  	    	creating the given target.
+ *	Targ_Silent	Return TRUE if we should be silent when
+ *			creating the given target.
  *
- *	Targ_Precious	    	Return TRUE if the target is precious and
- *	    	  	    	should not be removed if we are interrupted.
+ *	Targ_Precious	Return TRUE if the target is precious and
+ *			should not be removed if we are interrupted.
  *
- *	Targ_Propagate		Propagate information between related
- *				nodes.	Should be called after the
- *				makefiles are parsed but before any
- *				action is taken.
+ *	Targ_Propagate	Propagate information between related nodes.
+ *			Should be called after the makefiles are parsed
+ *			but before any action is taken.
  *
  * Debugging:
- *	Targ_PrintGraph	    	Print out the entire graphm all variables
- *	    	  	    	and statistics for the directory cache. Should
- *	    	  	    	print something for suffixes, too, but...
+ *	Targ_PrintGraph
+ *			Print out the entire graphm all variables and
+ *			statistics for the directory cache. Should print
+ *			something for suffixes, too, but...
  */
 
 #include	  <stdio.h>
@@ -121,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.105 2020/09/27 12:10:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.106 2020/09/27 21:35:16 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -181,26 +182,26 @@ Targ_NewGN(const char *name)
     gn->uname = NULL;
     gn->path = NULL;
     gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : 0;
-    gn->unmade =    	0;
+    gn->unmade = 0;
     gn->unmade_cohorts = 0;
     gn->cohort_num[0] = 0;
-    gn->centurion =    	NULL;
-    gn->made = 	    	UNMADE;
-    gn->flags = 	0;
-    gn->checked =	0;
-    gn->mtime =		0;
-    gn->cmgn =		NULL;
+    gn->centurion = NULL;
+    gn->made = UNMADE;
+    gn->flags = 0;
+    gn->checked = 0;
+    gn->mtime = 0;
+    gn->cmgn = NULL;
     gn->implicitParents = Lst_Init();
-    gn->cohorts =   	Lst_Init();
-    gn->parents =   	Lst_Init();
-    gn->children =  	Lst_Init();
-    gn->order_pred =  	Lst_Init();
-    gn->order_succ =  	Lst_Init();
+    gn->cohorts = Lst_Init();
+    gn->parents = Lst_Init();
+    gn->children = Lst_Init();
+    gn->order_pred = Lst_Init();
+    gn->order_succ = Lst_Init();
     Hash_InitTable(&gn->context);
-    gn->commands =  	Lst_Init();
-    gn->suffix =	NULL;
-    gn->fname = 	NULL;
-    gn->lineno =	0;
+    gn->commands = Lst_Init();
+    gn->suffix = NULL;
+    gn->fname = NULL;
+    gn->lineno = 0;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
@@ -375,8 +376,8 @@ Targ_PrintCmds(GNode *gn)
 char *
 Targ_FmtTime(time_t tm)
 {
-    struct tm	  	*parts;
-    static char	  	buf[128];
+    struct tm *parts;
+    static char buf[128];
 
     parts = localtime(&tm);
     (void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);

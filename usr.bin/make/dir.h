@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.25 2020/09/22 04:05:41 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.26 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -78,11 +78,11 @@
 /* A cache of a directory, remembering all the files that exist in that
  * directory. */
 typedef struct CachedDir {
-    char         *name;	    	/* Name of directory */
-    int	    	  refCount; 	/* Number of paths with this directory */
-    int		  hits;	    	/* the number of times a file in this
+    char *name;			/* Name of directory */
+    int refCount;		/* Number of paths with this directory */
+    int hits;			/* the number of times a file in this
 				 * directory has been found */
-    Hash_Table    files;    	/* Hash set of files in directory */
+    Hash_Table files;		/* Hash set of files in directory */
 } CachedDir;
 
 struct make_stat {

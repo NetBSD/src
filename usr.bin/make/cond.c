@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.152 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.153 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
 /* Handling of conditionals in a makefile.
  *
  * Interface:
- *	Cond_EvalLine 	Evaluate the conditional in the passed line.
+ *	Cond_EvalLine	Evaluate the conditional in the passed line.
  *
  *	Cond_EvalCondition
  *			Evaluate the conditional in the passed line, which
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.152 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.153 2020/09/27 21:35:16 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1007,7 +1007,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
  *
  * Results:
  *	COND_PARSE	if the condition was valid grammatically
- *	COND_INVALID  	if not a valid conditional.
+ *	COND_INVALID	if not a valid conditional.
  *
  *	(*value) is set to the boolean value of the condition
  */
@@ -1069,7 +1069,7 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
  *	COND_SKIP	to skip the lines after the conditional
  *			(when .if or .elif returns FALSE, or when a previous
  *			branch has already been taken)
- *	COND_INVALID  	if the conditional was not valid, either because of
+ *	COND_INVALID	if the conditional was not valid, either because of
  *			a syntax error or because some variable was undefined
  *			or because the condition could not be evaluated
  */

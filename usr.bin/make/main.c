@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.350 2020/09/27 16:52:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.351 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.350 2020/09/27 16:52:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.351 2020/09/27 21:35:16 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -665,10 +665,10 @@ noarg:
 
 /*-
  * Main_ParseArgLine --
- *  	Used by the parse module when a .MFLAGS or .MAKEFLAGS target
+ *	Used by the parse module when a .MFLAGS or .MAKEFLAGS target
  *	is encountered and by main() when reading the .MAKEFLAGS envariable.
  *	Takes a line of arguments and breaks it into its
- * 	component words and passes those words and the number of them to the
+ *	component words and passes those words and the number of them to the
  *	MainParseArgs function.
  *	The line should have all its leading whitespace removed.
  *
@@ -896,7 +896,7 @@ static Boolean
 runTargets(void)
 {
 	GNodeList *targs; /* target nodes to create -- passed to Make_Init */
-	Boolean outOfDate; 	/* FALSE if all targets up to date */
+	Boolean outOfDate;	/* FALSE if all targets up to date */
 
 	/*
 	 * Have now read the entire graph and need to make a list of
@@ -977,7 +977,7 @@ InitVarTargets(void)
 int
 main(int argc, char **argv)
 {
-	Boolean outOfDate; 	/* FALSE if all targets up to date */
+	Boolean outOfDate;	/* FALSE if all targets up to date */
 	struct stat sb, sa;
 	char *p1, *path;
 	char mdpath[MAXPATHLEN];
@@ -1588,10 +1588,10 @@ found:
 char *
 Cmd_Exec(const char *cmd, const char **errfmt)
 {
-    const char	*args[4];   	/* Args for invoking the shell */
-    int 	fds[2];	    	/* Pipe streams */
-    int 	cpid;	    	/* Child PID */
-    int 	pid;	    	/* PID from wait() */
+    const char	*args[4];	/* Args for invoking the shell */
+    int		fds[2];		/* Pipe streams */
+    int		cpid;		/* Child PID */
+    int		pid;		/* PID from wait() */
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
     ssize_t	bytes_read;

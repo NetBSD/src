@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.33 2020/09/26 14:48:31 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.34 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,17 +69,17 @@
  * SUCH DAMAGE.
  */
 
-/* hash.c --
- *
- * 	This module contains routines to manipulate a hash table.
- * 	See hash.h for a definition of the structure of the hash
- * 	table.  Hash tables grow automatically as the amount of
- * 	information increases.
+/*
+ * This module contains routines to manipulate a hash table.
+ * See hash.h for a definition of the structure of the hash
+ * table.  Hash tables grow automatically as the amount of
+ * information increases.
  */
+
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.33 2020/09/26 14:48:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.34 2020/09/27 21:35:16 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're

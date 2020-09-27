@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.147 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.148 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -200,7 +200,7 @@ typedef enum {
     OP_USE		= 1 << 4,
     /* Target is never out of date, but always execute commands anyway.
      * Its time doesn't matter, so it has none...sort of */
-    OP_EXEC	  	= 1 << 5,
+    OP_EXEC		= 1 << 5,
     /* Ignore errors when creating the node */
     OP_IGNORE		= 1 << 6,
     /* Don't remove the target when interrupted */
@@ -387,43 +387,45 @@ typedef enum {
 /*
  * Definitions for the "local" variables. Used only for clarity.
  */
-#define TARGET	  	  "@" 	/* Target of dependency */
-#define OODATE	  	  "?" 	/* All out-of-date sources */
-#define ALLSRC	  	  ">" 	/* All sources */
-#define IMPSRC	  	  "<" 	/* Source implied by transformation */
-#define PREFIX	  	  "*" 	/* Common prefix */
-#define ARCHIVE	  	  "!" 	/* Archive in "archive(member)" syntax */
-#define MEMBER	  	  "%" 	/* Member in "archive(member)" syntax */
+#define TARGET		"@"	/* Target of dependency */
+#define OODATE		"?"	/* All out-of-date sources */
+#define ALLSRC		">"	/* All sources */
+#define IMPSRC		"<"	/* Source implied by transformation */
+#define PREFIX		"*"	/* Common prefix */
+#define ARCHIVE		"!"	/* Archive in "archive(member)" syntax */
+#define MEMBER		"%"	/* Member in "archive(member)" syntax */
 
-#define FTARGET           "@F"  /* file part of TARGET */
-#define DTARGET           "@D"  /* directory part of TARGET */
-#define FIMPSRC           "<F"  /* file part of IMPSRC */
-#define DIMPSRC           "<D"  /* directory part of IMPSRC */
-#define FPREFIX           "*F"  /* file part of PREFIX */
-#define DPREFIX           "*D"  /* directory part of PREFIX */
+#define FTARGET		"@F"	/* file part of TARGET */
+#define DTARGET		"@D"	/* directory part of TARGET */
+#define FIMPSRC		"<F"	/* file part of IMPSRC */
+#define DIMPSRC		"<D"	/* directory part of IMPSRC */
+#define FPREFIX		"*F"	/* file part of PREFIX */
+#define DPREFIX		"*D"	/* directory part of PREFIX */
 
 /*
  * Global Variables
  */
-extern StringList *create;    	/* The list of target names specified on the
+extern StringList *create;	/* The list of target names specified on the
 				 * command line. used to resolve #if
 				 * make(...) statements */
-extern SearchPath *dirSearchPath; 	/* The list of directories to search when
+extern SearchPath *dirSearchPath;
+				/* The list of directories to search when
 				 * looking for targets */
 
 extern Boolean	compatMake;	/* True if we are make compatible */
-extern Boolean	ignoreErrors;  	/* True if should ignore all errors */
-extern Boolean  beSilent;    	/* True if should print no commands */
-extern Boolean  noExecute;    	/* True if should execute nothing */
-extern Boolean  noRecursiveExecute;    	/* True if should execute nothing */
-extern Boolean  allPrecious;   	/* True if every target is precious */
+extern Boolean	ignoreErrors;	/* True if should ignore all errors */
+extern Boolean  beSilent;	/* True if should print no commands */
+extern Boolean  noExecute;	/* True if should execute nothing */
+extern Boolean  noRecursiveExecute;
+				/* True if should execute nothing */
+extern Boolean  allPrecious;	/* True if every target is precious */
 extern Boolean  deleteOnError;	/* True if failed targets should be deleted */
-extern Boolean  keepgoing;    	/* True if should continue on unaffected
+extern Boolean  keepgoing;	/* True if should continue on unaffected
 				 * portions of the graph when have an error
 				 * in one portion */
-extern Boolean 	touchFlag;    	/* TRUE if targets should just be 'touched'
+extern Boolean	touchFlag;	/* TRUE if targets should just be 'touched'
 				 * if out of date. Set by the -t flag */
-extern Boolean 	queryFlag;    	/* TRUE if we aren't supposed to really make
+extern Boolean	queryFlag;	/* TRUE if we aren't supposed to really make
 				 * anything, just see if the targets are out-
 				 * of-date */
 extern Boolean	doing_depend;	/* TRUE if processing .depend */
@@ -437,24 +439,24 @@ extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
 extern Boolean	varNoExportEnv;	/* TRUE if we should not export variables
 				 * set on the command line to the env. */
 
-extern GNode    *DEFAULT;    	/* .DEFAULT rule */
+extern GNode    *DEFAULT;	/* .DEFAULT rule */
 
 extern GNode	*VAR_INTERNAL;	/* Variables defined internally by make
 				 * which should not override those set by
 				 * makefiles.
 				 */
-extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
+extern GNode    *VAR_GLOBAL;	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
-extern GNode    *VAR_CMD;    	/* Variables defined on the command line */
-extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
+extern GNode    *VAR_CMD;	/* Variables defined on the command line */
+extern char	var_Error[];	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't
 				 * worry about it. */
 
-extern time_t 	now;	    	/* The time at the start of this whole
+extern time_t	now;		/* The time at the start of this whole
 				 * process */
 
-extern Boolean	oldVars;    	/* Do old-style variable substitution */
+extern Boolean	oldVars;	/* Do old-style variable substitution */
 
 extern SearchPath *sysIncPath;	/* The system include path. */
 extern SearchPath *defIncPath;	/* The default include path. */
@@ -540,7 +542,7 @@ int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 
 #ifdef __GNUC__
-#define UNCONST(ptr)	({ 		\
+#define UNCONST(ptr)	({		\
     union __unconst {			\
 	const void *__cp;		\
 	void *__p;			\
