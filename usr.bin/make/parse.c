@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.335 2020/09/27 12:05:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.336 2020/09/27 12:26:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.335 2020/09/27 12:05:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.336 2020/09/27 12:26:23 rillig Exp $");
 
 /* types and constants */
 
@@ -214,7 +214,9 @@ static GNode *mainNode;
 
 /* eval state */
 
-/* During parsing, the targets from the previous dependency line.
+/* During parsing, the targets from the currently active dependency line,
+ * or NULL if the current line does not belong to a dependency line, for
+ * example because it is a variable assignment.
  *
  * See unit-tests/deptgt.mk, keyword "parse.c:targets". */
 static GNodeList *targets;
@@ -931,8 +933,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		if (targets != NULL)
-		    Lst_ForEachUntil(targets, ParseDoOp, &op);
+		Lst_ForEachUntil(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -950,7 +951,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		if (targets != NULL) {
+		{
 		    struct ParseLinkSrcArgs args = { gn, specType };
 		    Lst_ForEach(targets, ParseLinkSrc, &args);
 		}
@@ -1021,7 +1022,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    if (targets != NULL) {
+	    {
 	        struct ParseLinkSrcArgs args = { gn, specType };
 		Lst_ForEach(targets, ParseLinkSrc, &args);
 	    }
@@ -1040,8 +1041,6 @@ FindMainTarget(void)
 
     if (mainNode != NULL)
         return;
-    if (targets == NULL)
-	return;
 
     for (ln = targets->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
@@ -1188,7 +1187,7 @@ ParseDoDependency(char *line)
      * First, grind through the targets.
      */
 
-    while (TRUE) {
+    for (;;) {
 	/*
 	 * Here LINE points to the beginning of the next word, and
 	 * LSTART points to the actual beginning of the line.
@@ -1434,7 +1433,7 @@ ParseDoDependency(char *line)
     Lst_Free(curTargs);
     curTargs = NULL;
 
-    if (targets != NULL && !Lst_IsEmpty(targets)) {
+    if (!Lst_IsEmpty(targets)) {
 	switch(specType) {
 	    default:
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
@@ -1484,8 +1483,7 @@ ParseDoDependency(char *line)
      * operator a target was defined with. It fails if the operator
      * used isn't consistent across all references.
      */
-    if (targets != NULL)
-	Lst_ForEachUntil(targets, ParseDoOp, &op);
+    Lst_ForEachUntil(targets, ParseDoOp, &op);
 
     /*
      * Onward to the sources.
@@ -2802,8 +2800,8 @@ FinishDependencyGroup(void)
     if (targets != NULL) {
 	Lst_ForEach(targets, SuffEndTransform, NULL);
 	Lst_Destroy(targets, ParseHasCommands);
+	targets = NULL;
     }
-    targets = NULL;
 }
 
 /* Add the command to each target from the current dependency spec. */
@@ -3101,8 +3099,7 @@ Parse_End(void)
 {
 #ifdef CLEANUP
     Lst_Destroy(targCmds, free);
-    if (targets)
-	Lst_Free(targets);
+    assert(targets == NULL);
     Lst_Destroy(defIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
