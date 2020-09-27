@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.123 2020/09/26 16:00:12 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.124 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -79,41 +79,42 @@
  * is referenced.
  *
  * The interface to this module is:
- *	Arch_ParseArchive   	Given an archive specification, return a list
- *	    	  	    	of GNode's, one for each member in the spec.
- *	    	  	    	FALSE is returned if the specification is
- *	    	  	    	invalid for some reason.
+ *	Arch_ParseArchive
+ *			Given an archive specification, return a list
+ *			of GNode's, one for each member in the spec.
+ *			FALSE is returned if the specification is
+ *			invalid for some reason.
  *
- *	Arch_Touch	    	Alter the modification time of the archive
- *	    	  	    	member described by the given node to be
- *	    	  	    	the current time.
+ *	Arch_Touch	Alter the modification time of the archive
+ *			member described by the given node to be
+ *			the current time.
  *
- *	Arch_TouchLib	    	Update the modification time of the library
- *	    	  	    	described by the given node. This is special
- *	    	  	    	because it also updates the modification time
- *	    	  	    	of the library's table of contents.
+ *	Arch_TouchLib	Update the modification time of the library
+ *			described by the given node. This is special
+ *			because it also updates the modification time
+ *			of the library's table of contents.
  *
- *	Arch_MTime	    	Find the modification time of a member of
- *	    	  	    	an archive *in the archive*. The time is also
- *	    	  	    	placed in the member's GNode. Returns the
- *	    	  	    	modification time.
+ *	Arch_MTime	Find the modification time of a member of
+ *			an archive *in the archive*. The time is also
+ *			placed in the member's GNode. Returns the
+ *			modification time.
  *
- *	Arch_MemTime	    	Find the modification time of a member of
- *	    	  	    	an archive. Called when the member doesn't
- *	    	  	    	already exist. Looks in the archive for the
- *	    	  	    	modification time. Returns the modification
- *	    	  	    	time.
+ *	Arch_MemTime	Find the modification time of a member of
+ *			an archive. Called when the member doesn't
+ *			already exist. Looks in the archive for the
+ *			modification time. Returns the modification
+ *			time.
  *
- *	Arch_FindLib	    	Search for a library along a path. The
- *	    	  	    	library name in the GNode should be in
- *	    	  	    	-l<name> format.
+ *	Arch_FindLib	Search for a library along a path. The
+ *			library name in the GNode should be in
+ *			-l<name> format.
  *
- *	Arch_LibOODate	    	Special function to decide if a library node
- *	    	  	    	is out-of-date.
+ *	Arch_LibOODate	Special function to decide if a library node
+ *			is out-of-date.
  *
- *	Arch_Init 	    	Initialize this module.
+ *	Arch_Init	Initialize this module.
  *
- *	Arch_End 	    	Cleanup this module.
+ *	Arch_End	Cleanup this module.
  */
 
 #include    <sys/types.h>
@@ -133,7 +134,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.123 2020/09/26 16:00:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.124 2020/09/27 21:35:16 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -208,13 +209,13 @@ ArchFree(void *ap)
 Boolean
 Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 {
-    char	    *cp;	    /* Pointer into line */
-    GNode	    *gn;     	    /* New node */
-    char	    *libName;  	    /* Library-part of specification */
-    char	    *memName;  	    /* Member-part of specification */
-    char	    saveChar;  	    /* Ending delimiter of member-name */
-    Boolean 	    subLibName;	    /* TRUE if libName should have/had
-				     * variable substitution performed on it */
+    char *cp;			/* Pointer into line */
+    GNode *gn;			/* New node */
+    char *libName;		/* Library-part of specification */
+    char *memName;		/* Member-part of specification */
+    char saveChar;		/* Ending delimiter of member-name */
+    Boolean subLibName;		/* TRUE if libName should have/had
+				 * variable substitution performed on it */
 
     libName = *linePtr;
 
@@ -946,7 +947,7 @@ Arch_TouchLib(GNode *gn)
 {
 #ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
-    struct ar_hdr   arh;      	/* Header describing table of contents */
+    struct ar_hdr   arh;	/* Header describing table of contents */
     struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
@@ -1104,7 +1105,7 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 Boolean
 Arch_LibOODate(GNode *gn)
 {
-    Boolean 	  oodate;
+    Boolean oodate;
 
     if (gn->type & OP_PHONY) {
 	oodate = TRUE;
@@ -1116,8 +1117,8 @@ Arch_LibOODate(GNode *gn)
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
-	struct ar_hdr  	*arhPtr;    /* Header for __.SYMDEF */
-	int 	  	modTimeTOC; /* The table-of-contents's mod time */
+	struct ar_hdr *arhPtr;	/* Header for __.SYMDEF */
+	int modTimeTOC;		/* The table-of-contents's mod time */
 
 	arhPtr = ArchStatMember(gn->path, RANLIBMAG, FALSE);
 

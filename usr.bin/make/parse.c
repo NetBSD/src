@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.337 2020/09/27 12:42:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.338 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -87,27 +87,28 @@
  *	messages can be more meaningful.
  *
  * Interface:
- *	Parse_Init	    	    Initialization function which must be
- *	    	  	    	    called before anything else in this module
- *	    	  	    	    is used.
+ *	Parse_Init	Initialization function which must be
+ *			called before anything else in this module
+ *			is used.
  *
- *	Parse_End		    Cleanup the module
+ *	Parse_End	Cleanup the module
  *
- *	Parse_File	    	    Function used to parse a makefile. It must
- *	    	  	    	    be given the name of the file, which should
- *	    	  	    	    already have been opened, and a function
- *	    	  	    	    to call to read a character from the file.
+ *	Parse_File	Function used to parse a makefile. It must
+ *			be given the name of the file, which should
+ *			already have been opened, and a function
+ *			to call to read a character from the file.
  *
- *	Parse_IsVar	    	    Returns TRUE if the given line is a
- *	    	  	    	    variable assignment. Used by MainParseArgs
- *	    	  	    	    to determine if an argument is a target
- *	    	  	    	    or a variable assignment. Used internally
- *	    	  	    	    for pretty much the same thing...
+ *	Parse_IsVar	Returns TRUE if the given line is a
+ *			variable assignment. Used by MainParseArgs
+ *			to determine if an argument is a target
+ *			or a variable assignment. Used internally
+ *			for pretty much the same thing...
  *
- *	Parse_Error	    	    Function called when an error occurs in
- *	    	  	    	    parsing. Used by the variable and
- *	    	  	    	    conditional modules.
- *	Parse_MainName	    	    Returns a Lst of the main target to create.
+ *	Parse_Error	Function called when an error occurs in
+ *			parsing. Used by the variable and
+ *			conditional modules.
+ *
+ *	Parse_MainName	Returns a Lst of the main target to create.
  */
 
 #include <sys/types.h>
@@ -131,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.337 2020/09/27 12:42:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.338 2020/09/27 21:35:16 rillig Exp $");
 
 /* types and constants */
 
@@ -139,18 +140,18 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.337 2020/09/27 12:42:09 rillig Exp $");
  * Structure for a file being read ("included file")
  */
 typedef struct IFile {
-    char      	    *fname;         /* name of file */
-    Boolean         fromForLoop;    /* simulated .include by the .for loop */
-    int             lineno;         /* current line number in file */
-    int             first_lineno;   /* line number of start of text */
-    int             cond_depth;     /* 'if' nesting when file opened */
-    Boolean         depending;      /* state of doing_depend on EOF */
-    char            *P_str;         /* point to base of string buffer */
-    char            *P_ptr;         /* point to next char of string buffer */
-    char            *P_end;         /* point to the end of string buffer */
-    char            *(*nextbuf)(void *, size_t *); /* Function to get more data */
-    void            *nextbuf_arg;   /* Opaque arg for nextbuf() */
-    struct loadedfile *lf;          /* loadedfile object, if any */
+    char *fname;		/* name of file */
+    Boolean fromForLoop;	/* simulated .include by the .for loop */
+    int lineno;			/* current line number in file */
+    int first_lineno;		/* line number of start of text */
+    int cond_depth;		/* 'if' nesting when file opened */
+    Boolean depending;		/* state of doing_depend on EOF */
+    char *P_str;		/* point to base of string buffer */
+    char *P_ptr;		/* point to next char of string buffer */
+    char *P_end;		/* point to the end of string buffer */
+    char *(*nextbuf)(void *, size_t *); /* Function to get more data */
+    void *nextbuf_arg;		/* Opaque arg for nextbuf() */
+    struct loadedfile *lf;	/* loadedfile object, if any */
 } IFile;
 
 
@@ -166,42 +167,42 @@ typedef struct IFile {
  * Tokens for target attributes
  */
 typedef enum {
-    Begin,  	    /* .BEGIN */
-    Default,	    /* .DEFAULT */
-    DeleteOnError,  /* .DELETE_ON_ERROR */
-    End,    	    /* .END */
-    dotError,	    /* .ERROR */
-    Ignore,	    /* .IGNORE */
-    Includes,	    /* .INCLUDES */
-    Interrupt,	    /* .INTERRUPT */
-    Libs,	    /* .LIBS */
-    Meta,	    /* .META */
-    MFlags,	    /* .MFLAGS or .MAKEFLAGS */
-    Main,	    /* .MAIN and we don't have anything user-specified to
-		     * make */
-    NoExport,	    /* .NOEXPORT */
-    NoMeta,	    /* .NOMETA */
-    NoMetaCmp,	    /* .NOMETA_CMP */
-    NoPath,	    /* .NOPATH */
-    Not,	    /* Not special */
-    NotParallel,    /* .NOTPARALLEL */
-    Null,   	    /* .NULL */
-    ExObjdir,	    /* .OBJDIR */
-    Order,  	    /* .ORDER */
-    Parallel,	    /* .PARALLEL */
-    ExPath,	    /* .PATH */
-    Phony,	    /* .PHONY */
+    Begin,		/* .BEGIN */
+    Default,		/* .DEFAULT */
+    DeleteOnError,	/* .DELETE_ON_ERROR */
+    End,		/* .END */
+    dotError,		/* .ERROR */
+    Ignore,		/* .IGNORE */
+    Includes,		/* .INCLUDES */
+    Interrupt,		/* .INTERRUPT */
+    Libs,		/* .LIBS */
+    Meta,		/* .META */
+    MFlags,		/* .MFLAGS or .MAKEFLAGS */
+    Main,		/* .MAIN and we don't have anything user-specified to
+			 * make */
+    NoExport,		/* .NOEXPORT */
+    NoMeta,		/* .NOMETA */
+    NoMetaCmp,		/* .NOMETA_CMP */
+    NoPath,		/* .NOPATH */
+    Not,		/* Not special */
+    NotParallel,	/* .NOTPARALLEL */
+    Null,		/* .NULL */
+    ExObjdir,		/* .OBJDIR */
+    Order,		/* .ORDER */
+    Parallel,		/* .PARALLEL */
+    ExPath,		/* .PATH */
+    Phony,		/* .PHONY */
 #ifdef POSIX
-    Posix,	    /* .POSIX */
+    Posix,		/* .POSIX */
 #endif
-    Precious,	    /* .PRECIOUS */
-    ExShell,	    /* .SHELL */
-    Silent,	    /* .SILENT */
-    SingleShell,    /* .SINGLESHELL */
-    Stale,	    /* .STALE */
-    Suffixes,	    /* .SUFFIXES */
-    Wait,	    /* .WAIT */
-    Attribute	    /* Generic attribute */
+    Precious,		/* .PRECIOUS */
+    ExShell,		/* .SHELL */
+    Silent,		/* .SILENT */
+    SingleShell,	/* .SINGLESHELL */
+    Stale,		/* .STALE */
+    Suffixes,		/* .SUFFIXES */
+    Wait,		/* .WAIT */
+    Attribute		/* Generic attribute */
 } ParseSpecial;
 
 /* result data */
@@ -301,54 +302,54 @@ SearchPath *defIncPath;		/* default for sysIncPath */
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
 static const struct {
-    const char   *name;    	/* Name of keyword */
-    ParseSpecial  spec;	    	/* Type when used as a target */
-    GNodeType	  op;	    	/* Operator when used as a source */
+    const char   *name;		/* Name of keyword */
+    ParseSpecial  spec;		/* Type when used as a target */
+    GNodeType	  op;		/* Operator when used as a source */
 } parseKeywords[] = {
-{ ".BEGIN", 	  Begin,    	0 },
-{ ".DEFAULT",	  Default,  	0 },
-{ ".DELETE_ON_ERROR", DeleteOnError, 0 },
-{ ".END",   	  End,	    	0 },
-{ ".ERROR",   	  dotError,    	0 },
-{ ".EXEC",	  Attribute,   	OP_EXEC },
-{ ".IGNORE",	  Ignore,   	OP_IGNORE },
-{ ".INCLUDES",	  Includes, 	0 },
-{ ".INTERRUPT",	  Interrupt,	0 },
-{ ".INVISIBLE",	  Attribute,   	OP_INVISIBLE },
-{ ".JOIN",  	  Attribute,   	OP_JOIN },
-{ ".LIBS",  	  Libs,	    	0 },
-{ ".MADE",	  Attribute,	OP_MADE },
-{ ".MAIN",	  Main,		0 },
-{ ".MAKE",  	  Attribute,   	OP_MAKE },
-{ ".MAKEFLAGS",	  MFlags,   	0 },
-{ ".META",	  Meta,		OP_META },
-{ ".MFLAGS",	  MFlags,   	0 },
-{ ".NOMETA",	  NoMeta,	OP_NOMETA },
-{ ".NOMETA_CMP",  NoMetaCmp,	OP_NOMETA_CMP },
-{ ".NOPATH",	  NoPath,	OP_NOPATH },
-{ ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
-{ ".NOTPARALLEL", NotParallel,	0 },
-{ ".NO_PARALLEL", NotParallel,	0 },
-{ ".NULL",  	  Null,	    	0 },
-{ ".OBJDIR",	  ExObjdir,	0 },
-{ ".OPTIONAL",	  Attribute,   	OP_OPTIONAL },
-{ ".ORDER", 	  Order,    	0 },
-{ ".PARALLEL",	  Parallel,	0 },
-{ ".PATH",	  ExPath,	0 },
-{ ".PHONY",	  Phony,	OP_PHONY },
+    { ".BEGIN",		Begin,		0 },
+    { ".DEFAULT",	Default,	0 },
+    { ".DELETE_ON_ERROR", DeleteOnError, 0 },
+    { ".END",		End,		0 },
+    { ".ERROR",		dotError,	0 },
+    { ".EXEC",		Attribute,	OP_EXEC },
+    { ".IGNORE",	Ignore,		OP_IGNORE },
+    { ".INCLUDES",	Includes,	0 },
+    { ".INTERRUPT",	Interrupt,	0 },
+    { ".INVISIBLE",	Attribute,	OP_INVISIBLE },
+    { ".JOIN",		Attribute,	OP_JOIN },
+    { ".LIBS",		Libs,		0 },
+    { ".MADE",		Attribute,	OP_MADE },
+    { ".MAIN",		Main,		0 },
+    { ".MAKE",		Attribute,	OP_MAKE },
+    { ".MAKEFLAGS",	MFlags,		0 },
+    { ".META",		Meta,		OP_META },
+    { ".MFLAGS",	MFlags,		0 },
+    { ".NOMETA",	NoMeta,		OP_NOMETA },
+    { ".NOMETA_CMP",	NoMetaCmp,	OP_NOMETA_CMP },
+    { ".NOPATH",	NoPath,		OP_NOPATH },
+    { ".NOTMAIN",	Attribute,	OP_NOTMAIN },
+    { ".NOTPARALLEL",	NotParallel,	0 },
+    { ".NO_PARALLEL",	NotParallel,	0 },
+    { ".NULL",		Null,		0 },
+    { ".OBJDIR",	ExObjdir,	0 },
+    { ".OPTIONAL",	Attribute,	OP_OPTIONAL },
+    { ".ORDER",		Order,		0 },
+    { ".PARALLEL",	Parallel,	0 },
+    { ".PATH",		ExPath,		0 },
+    { ".PHONY",		Phony,		OP_PHONY },
 #ifdef POSIX
-{ ".POSIX",	  Posix,	0 },
+    { ".POSIX",		Posix,		0 },
 #endif
-{ ".PRECIOUS",	  Precious, 	OP_PRECIOUS },
-{ ".RECURSIVE",	  Attribute,	OP_MAKE },
-{ ".SHELL", 	  ExShell,    	0 },
-{ ".SILENT",	  Silent,   	OP_SILENT },
-{ ".SINGLESHELL", SingleShell,	0 },
-{ ".STALE",	  Stale,	0 },
-{ ".SUFFIXES",	  Suffixes, 	0 },
-{ ".USE",   	  Attribute,   	OP_USE },
-{ ".USEBEFORE",   Attribute,   	OP_USEBEFORE },
-{ ".WAIT",	  Wait, 	0 },
+    { ".PRECIOUS",	Precious,	OP_PRECIOUS },
+    { ".RECURSIVE",	Attribute,	OP_MAKE },
+    { ".SHELL",		ExShell,	0 },
+    { ".SILENT",	Silent,		OP_SILENT },
+    { ".SINGLESHELL",	SingleShell,	0 },
+    { ".STALE",		Stale,		0 },
+    { ".SUFFIXES",	Suffixes,	0 },
+    { ".USE",		Attribute,	OP_USE },
+    { ".USEBEFORE",	Attribute,	OP_USEBEFORE },
+    { ".WAIT",		Wait,		0 },
 };
 
 /* file loader */
@@ -1144,12 +1145,12 @@ ParseDoDependency(char *line)
 {
     typedef List SearchPathList;
 
-    char  	   *cp;		/* our current position */
+    char *cp;			/* our current position */
     GNodeType op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
     SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
-    int	    	    tOp;    	/* operator from special target */
+    int tOp;			/* operator from special target */
     GNodeList *sources;		/* archive sources after expansion */
     StringList *curTargs;	/* target names to be found and added
 				 * to the targets list */
@@ -1245,7 +1246,7 @@ ParseDoDependency(char *line)
 		 *	.MAIN		Its sources are only used if
 		 *			nothing has been specified to
 		 *			create.
-		 *	.DEFAULT    	Need to create a node to hang
+		 *	.DEFAULT	Need to create a node to hang
 		 *			commands on, but we don't want
 		 *			it in the graph, nor do we want
 		 *			it to be the Main Target, so we
@@ -1253,10 +1254,10 @@ ParseDoDependency(char *line)
 		 *			add it to the list, setting
 		 *			DEFAULT to the new node for
 		 *			later use. We claim the node is
-		 *	    	    	A transformation rule to make
-		 *	    	    	life easier later, when we'll
-		 *	    	    	use Make_HandleUse to actually
-		 *	    	    	apply the .DEFAULT commands.
+		 *			A transformation rule to make
+		 *			life easier later, when we'll
+		 *			use Make_HandleUse to actually
+		 *			apply the .DEFAULT commands.
 		 *	.PHONY		The list of targets
 		 *	.NOPATH		Don't search for file in the path
 		 *	.STALE
@@ -1264,11 +1265,11 @@ ParseDoDependency(char *line)
 		 *	.END
 		 *	.ERROR
 		 *	.DELETE_ON_ERROR
-		 *	.INTERRUPT  	Are not to be considered the
+		 *	.INTERRUPT	Are not to be considered the
 		 *			main target.
-		 *  	.NOTPARALLEL	Make only one target at a time.
-		 *  	.SINGLESHELL	Create a shell for each command.
-		 *  	.ORDER	    	Must set initial predecessor to NULL
+		 *	.NOTPARALLEL	Make only one target at a time.
+		 *	.SINGLESHELL	Create a shell for each command.
+		 *	.ORDER		Must set initial predecessor to NULL
 		 */
 		switch (specType) {
 		case ExPath:
@@ -1769,11 +1770,11 @@ Parse_IsVar(const char *line)
 void
 Parse_DoVar(char *line, GNode *ctxt)
 {
-    char	   *cp;	/* pointer into line */
+    char *cp;			/* pointer into line */
     enum {
 	VAR_SUBST, VAR_APPEND, VAR_SHELL, VAR_NORMAL
-    }	    	    type;   	/* Type of assignment */
-    char            *opc;	/* ptr to operator character to
+    } type;			/* Type of assignment */
+    char *opc;			/* ptr to operator character to
 				 * null-terminate the variable name */
     Boolean	   freeCp = FALSE; /* TRUE if cp needs to be freed,
 				    * i.e. if any variable expansion was
@@ -1947,7 +1948,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 /*
  * ParseMaybeSubMake --
- * 	Scan the command string to see if it a possible submake node
+ *	Scan the command string to see if it a possible submake node
  * Input:
  *	cmd		the command to scan
  * Results:
@@ -2149,7 +2150,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 static void
 ParseDoInclude(char *line)
 {
-    char          endc;	    	/* the character which ends the file spec */
+    char          endc;		/* the character which ends the file spec */
     char          *cp;		/* current position in file spec */
     int		  silent = *line != 'i';
     char	  *file = &line[7 + silent];
@@ -2718,10 +2719,10 @@ ParseGetLine(int flags, int *length)
 static char *
 ParseReadLine(void)
 {
-    char 	  *line;    	/* Result */
-    int	    	  lineLength;	/* Length of result */
-    int	    	  lineno;	/* Saved line # */
-    int	    	  rval;
+    char *line;			/* Result */
+    int lineLength;		/* Length of result */
+    int lineno;			/* Saved line # */
+    int rval;
 
     for (;;) {
 	line = ParseGetLine(0, &lineLength);

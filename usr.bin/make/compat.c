@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.155 2020/09/27 11:43:46 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.156 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -78,8 +78,8 @@
  *	    - friendly variable substitution.
  *
  * Interface:
- *	Compat_Run	    Initialize things for this module and recreate
- *	    	  	    thems as need creatin'
+ *	Compat_Run	Initialize things for this module and recreate
+ *			thems as need creatin'
  */
 
 #include    <sys/types.h>
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.155 2020/09/27 11:43:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.156 2020/09/27 21:35:16 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -187,21 +187,21 @@ CompatInterrupt(int signo)
 int
 Compat_RunCommand(const char *cmdp, struct GNode *gn)
 {
-    char    	  *cmdStart;	/* Start of expanded command */
-    char 	  *bp;
-    Boolean 	  silent,   	/* Don't print command */
-		  doIt;		/* Execute even if -n */
-    volatile Boolean errCheck; 	/* Check errors */
-    int 	  reason;   	/* Reason for child's death */
-    int	    	  status;   	/* Description of child's death */
-    pid_t	  cpid;	    	/* Child actually found */
-    pid_t	  retstat;    	/* Result of wait */
-    StringListNode *cmdNode;  	/* Node where current command is located */
-    const char  ** volatile av;	/* Argument vector for thing to exec */
-    char	** volatile mav;/* Copy of the argument vector for freeing */
-    Boolean 	  useShell;    	/* TRUE if command should be executed
+    char *cmdStart;		/* Start of expanded command */
+    char *bp;
+    Boolean silent;		/* Don't print command */
+    Boolean doIt;		/* Execute even if -n */
+    volatile Boolean errCheck;	/* Check errors */
+    int reason;			/* Reason for child's death */
+    int status;			/* Description of child's death */
+    pid_t cpid;			/* Child actually found */
+    pid_t retstat;		/* Result of wait */
+    StringListNode *cmdNode;	/* Node where current command is located */
+    const char **volatile av;	/* Argument vector for thing to exec */
+    char **volatile mav;	/* Copy of the argument vector for freeing */
+    Boolean useShell;		/* TRUE if command should be executed
 				 * using a shell */
-    const char	  * volatile cmd = cmdp;
+    const char *volatile cmd = cmdp;
 
     silent = (gn->type & OP_SILENT) != 0;
     errCheck = !(gn->type & OP_IGNORE);
@@ -664,8 +664,8 @@ cohorts:
 void
 Compat_Run(GNodeList *targs)
 {
-    GNode   	  *gn = NULL;/* Current root target */
-    int	    	  errors;   /* Number of targets not remade due to errors */
+    GNode *gn = NULL;		/* Current root target */
+    int errors;			/* Number of targets not remade due to errors */
 
     if (!shellName)
 	Shell_Init();
@@ -712,11 +712,11 @@ Compat_Run(GNodeList *targs)
      * For each entry in the list of targets to create, call Compat_Make on
      * it to create the thing. Compat_Make will leave the 'made' field of gn
      * in one of several states:
-     *	    UPTODATE	    gn was already up-to-date
-     *	    MADE  	    gn was recreated successfully
-     *	    ERROR 	    An error occurred while gn was being created
-     *	    ABORTED	    gn was not remade because one of its inferiors
-     *	    	  	    could not be made due to errors.
+     *	    UPTODATE	gn was already up-to-date
+     *	    MADE	gn was recreated successfully
+     *	    ERROR	An error occurred while gn was being created
+     *	    ABORTED	gn was not remade because one of its inferiors
+     *			could not be made due to errors.
      */
     errors = 0;
     while (!Lst_IsEmpty(targs)) {

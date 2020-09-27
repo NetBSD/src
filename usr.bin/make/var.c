@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.545 2020/09/27 16:52:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.546 2020/09/27 21:35:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -73,35 +73,35 @@
  *	Variable-handling functions
  *
  * Interface:
- *	Var_Set		    Set the value of a variable in the given
- *			    context. The variable is created if it doesn't
- *			    yet exist.
+ *	Var_Set		Set the value of a variable in the given
+ *			context. The variable is created if it doesn't
+ *			yet exist.
  *
- *	Var_Append	    Append more characters to an existing variable
- *			    in the given context. The variable needn't
- *			    exist already -- it will be created if it doesn't.
- *			    A space is placed between the old value and the
- *			    new one.
+ *	Var_Append	Append more characters to an existing variable
+ *			in the given context. The variable needn't
+ *			exist already -- it will be created if it doesn't.
+ *			A space is placed between the old value and the
+ *			new one.
  *
- *	Var_Exists	    See if a variable exists.
+ *	Var_Exists	See if a variable exists.
  *
- *	Var_Value 	    Return the unexpanded value of a variable in a
- *			    context or NULL if the variable is undefined.
+ *	Var_Value	Return the unexpanded value of a variable in a
+ *			context or NULL if the variable is undefined.
  *
- *	Var_Subst 	    Substitute either a single variable or all
- *			    variables in a string, using the given context.
+ *	Var_Subst	Substitute either a single variable or all
+ *			variables in a string, using the given context.
  *
- *	Var_Parse 	    Parse a variable expansion from a string and
- *			    return the result and the number of characters
- *			    consumed.
+ *	Var_Parse	Parse a variable expansion from a string and
+ *			return the result and the number of characters
+ *			consumed.
  *
- *	Var_Delete	    Delete a variable in a context.
+ *	Var_Delete	Delete a variable in a context.
  *
- *	Var_Init  	    Initialize this module.
+ *	Var_Init	Initialize this module.
  *
  * Debugging:
- *	Var_Dump  	    Print out all variables defined in the given
- *			    context.
+ *	Var_Dump	Print out all variables defined in the given
+ *			context.
  *
  * XXX: There's a lot of duplication in these functions.
  */
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.545 2020/09/27 16:52:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.546 2020/09/27 21:35:16 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -222,7 +222,7 @@ typedef struct Var {
 				 * Hash_Entry name for all other variables,
 				 * and thus must not be modified */
     Buffer	  val;		/* its value */
-    VarFlags	  flags;    	/* miscellaneous status flags */
+    VarFlags	  flags;	/* miscellaneous status flags */
 } Var;
 
 /*
@@ -1319,11 +1319,11 @@ VarREError(int reerr, regex_t *pat, const char *str)
 }
 
 struct ModifyWord_SubstRegexArgs {
-    regex_t	   re;
-    size_t	   nsub;
-    char 	  *replace;
+    regex_t re;
+    size_t nsub;
+    char *replace;
     VarPatternFlags pflags;
-    Boolean	   matched;
+    Boolean matched;
 };
 
 /* Callback for ModifyWords to implement the :C/from/to/ modifier.
@@ -2769,7 +2769,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
  *
  * foo:	.USE
  * .for i in ${.TARGET} ${.TARGET:R}.gz
- * 	@: ${t::=$i}
+ *	@: ${t::=$i}
  *	@echo blah ${t:T}
  * .endfor
  *
@@ -3443,12 +3443,12 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 {
     const char *const start = *pp;
     const char *p;
-    Boolean 	 haveModifier;	/* TRUE if have modifiers for the variable */
-    char	 startc;	/* Starting character if variable in parens
+    Boolean haveModifier;	/* TRUE if have modifiers for the variable */
+    char startc;		/* Starting character if variable in parens
 				 * or braces */
-    char	 endc;		/* Ending character if variable in parens
+    char endc;			/* Ending character if variable in parens
 				 * or braces */
-    Boolean	 dynamic;	/* TRUE if the variable is local and we're
+    Boolean dynamic;		/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
 				 * is done to support dynamic sources. The
 				 * result is just the expression, unaltered */
