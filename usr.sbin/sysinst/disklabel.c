@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.37 2020/02/19 21:45:09 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.38 2020/09/28 18:40:23 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 
 	strncpy(parts->l.d_packname, "fictious", sizeof parts->l.d_packname);
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->dp.parent != NULL) {
 		parts->l.d_partitions[RAW_PART-1].p_fstype = FS_UNUSED;
 		parts->l.d_partitions[RAW_PART-1].p_offset = start;
@@ -231,7 +231,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		close(fd);
 		return NULL;
 	}
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->l.d_partitions[RAW_PART-1].p_fstype == FS_UNUSED) {
 		daddr_t dlstart = parts->l.d_partitions[RAW_PART-1].p_offset;
 		daddr_t dlend = start +
@@ -467,7 +467,7 @@ disklabel_delete_all(struct disk_partitions *arg)
 	memset(&parts->l.d_partitions, 0, sizeof(parts->l.d_partitions));
 	parts->dp.num_part = 0;
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->dp.parent != NULL) {
 		parts->l.d_partitions[RAW_PART-1].p_fstype = FS_UNUSED;
 		parts->l.d_partitions[RAW_PART-1].p_offset =
@@ -501,7 +501,7 @@ disklabel_delete(struct disk_partitions *arg, part_id id,
 
 		if (ndx == id) {
 			if (part == RAW_PART
-#if RAW_PART > 2
+#if RAW_PART == 3
 				|| (part == RAW_PART-1 &&
 				    parts->dp.parent != NULL)
 #endif
@@ -543,7 +543,7 @@ disklabel_delete_range(struct disk_partitions *arg, daddr_t r_start,
 		daddr_t start = parts->l.d_partitions[part].p_offset;
 		daddr_t end = start + parts->l.d_partitions[part].p_size;
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (parts->dp.parent != NULL &&
 		    part == RAW_PART - 1 && start == r_start &&
 		    r_start + r_size == end)
@@ -759,7 +759,7 @@ disklabel_get_part_info(const struct disk_partitions *arg, part_id id,
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
 				    PTI_PSCHEME_INTERNAL|PTI_RAW_PART;
-#if RAW_PART > 2
+#if RAW_PART == 3
 			if (part == (RAW_PART-1) && parts->dp.parent != NULL &&
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
@@ -906,7 +906,7 @@ disklabel_can_add_partition(const struct disk_partitions *arg)
 	for (i = 0; i < parts->l.d_npartitions; i++) {
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
@@ -1061,7 +1061,7 @@ disklabel_add_partition(struct disk_partitions *arg,
 			continue;
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
@@ -1124,7 +1124,7 @@ disklabel_add_outer_partition(struct disk_partitions *arg,
 			continue;
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
