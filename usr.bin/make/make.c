@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.154 2020/09/28 22:38:32 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.155 2020/09/28 23:02:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.154 2020/09/28 22:38:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.155 2020/09/28 23:02:02 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1175,7 +1175,7 @@ Make_ExpandUse(GNodeList *targs)
     Lst_Free(examine);
 }
 
-static int
+static void
 link_parent(void *cnp, void *pnp)
 {
     GNode *cn = cnp;
@@ -1184,7 +1184,6 @@ link_parent(void *cnp, void *pnp)
     Lst_Append(pn->children, cn);
     Lst_Append(cn->parents, pn);
     pn->unmade++;
-    return 0;
 }
 
 /* Make the .WAIT node depend on the previous children */
@@ -1227,7 +1226,7 @@ Make_ProcessWait(GNodeList *targs)
     /* Get it displayed in the diag dumps */
     Lst_Prepend(Targ_List(), pgn);
 
-    Lst_ForEachUntil(targs, link_parent, pgn);
+    Lst_ForEach(targs, link_parent, pgn);
 
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);
