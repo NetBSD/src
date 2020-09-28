@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.107 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.108 2020/09/28 23:31:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.107 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.108 2020/09/28 23:31:18 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -292,18 +292,13 @@ GNode *Targ_GetEndNode(void)
 GNodeList *
 Targ_FindList(StringList *names)
 {
-    GNodeList *nodes;
     StringListNode *ln;
-
-    nodes = Lst_Init();
-
-    Lst_Open(names);
-    while ((ln = Lst_Next(names)) != NULL) {
-	char *name = LstNode_Datum(ln);
+    GNodeList *nodes = Lst_Init();
+    for (ln = names->first; ln != NULL; ln = ln->next) {
+	const char *name = ln->datum;
 	GNode *gn = Targ_GetNode(name);
 	Lst_Append(nodes, gn);
     }
-    Lst_Close(names);
     return nodes;
 }
 
