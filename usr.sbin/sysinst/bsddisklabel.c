@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.43 2020/09/22 16:18:54 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.44 2020/09/28 18:13:25 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -260,7 +260,13 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		    pset->infos[opt].fs_version));
 		mount = swap;
 	} else if (pset->infos[opt].mount[0]) {
-		mount = pset->infos[opt].mount;
+		if (pset->infos[opt].instflags & PUIINST_BOOT) {
+			snprintf(swap, sizeof swap, "%s <%s>",
+			    pset->infos[opt].mount, msg_string(MSG_ptn_boot));
+			mount = swap;
+		} else {
+			mount = pset->infos[opt].mount;
+		}
 #ifndef NO_CLONES
 	} else if (pset->infos[opt].flags & PUIFLG_CLONE_PARTS) {
 		snprintf(swap, sizeof swap, "%zu %s",
@@ -278,6 +284,11 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		if (mount == NULL)
 			mount = getfslabelname(pset->infos[opt].fs_type,
 			    pset->infos[opt].fs_version);
+		if (pset->infos[opt].instflags & PUIINST_BOOT) {
+			snprintf(swap, sizeof swap, "%s <%s>",
+			    mount, msg_string(MSG_ptn_boot));
+			mount = swap;
+		}
 		mount = str_arg_subst(msg_string(MSG_size_ptn_not_mounted),
 		    1, &mount);
 		free_mount = true;
