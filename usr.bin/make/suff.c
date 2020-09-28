@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.171 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.172 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.171 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.172 2020/09/28 22:23:35 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -936,9 +936,9 @@ SuffAddSrc(void *sp, void *lsp)
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init();
 	Lst_Append(targ->cp, s2);
-	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
+	debug_printf("1 add %p %p to %p:", targ, s2, ls->l);
 	Lst_ForEach(ls->l, PrintAddr, NULL);
-	fprintf(debug_file, "\n");
+	debug_printf("\n");
 #endif
     }
     s2 = bmake_malloc(sizeof(Src));
@@ -954,9 +954,9 @@ SuffAddSrc(void *sp, void *lsp)
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init();
     Lst_Append(targ->cp, s2);
-    fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
+    debug_printf("2 add %p %p to %p:", targ, s2, ls->l);
     Lst_ForEach(ls->l, PrintAddr, NULL);
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
 #endif
 }
 
@@ -988,9 +988,9 @@ SuffRemoveSrc(SrcList *l)
     Lst_Open(l);
 
 #ifdef DEBUG_SRC
-    fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
+    debug_printf("cleaning %lx: ", (unsigned long) l);
     Lst_ForEach(l, PrintAddr, NULL);
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
 #endif
 
     while ((ln = Lst_Next(l)) != NULL) {
@@ -1008,7 +1008,7 @@ SuffRemoveSrc(SrcList *l)
 		--s->parent->children;
 	    }
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "free: [l=%p] p=%p %d\n", l, s, s->children);
+	    debug_printf("free: [l=%p] p=%p %d\n", l, s, s->children);
 	    Lst_Free(s->cp);
 #endif
 	    Lst_Remove(l, ln);
@@ -1018,9 +1018,9 @@ SuffRemoveSrc(SrcList *l)
 	}
 #ifdef DEBUG_SRC
 	else {
-	    fprintf(debug_file, "keep: [l=%p] p=%p %d: ", l, s, s->children);
+	    debug_printf("keep: [l=%p] p=%p %d: ", l, s, s->children);
 	    Lst_ForEach(s->cp, PrintAddr, NULL);
-	    fprintf(debug_file, "\n");
+	    debug_printf("\n");
 	}
 #endif
     }
@@ -1058,7 +1058,7 @@ SuffFindThem(SrcList *srcs, SrcList *slst)
 	 */
 	if (Targ_FindNode(s->file) != NULL) {
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %p from %p\n", s, srcs);
+	    debug_printf("remove %p from %p\n", s, srcs);
 #endif
 	    rs = s;
 	    break;
@@ -1067,7 +1067,7 @@ SuffFindThem(SrcList *srcs, SrcList *slst)
 	if ((ptr = Dir_FindFile(s->file, s->suff->searchPath)) != NULL) {
 	    rs = s;
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %p from %p\n", s, srcs);
+	    debug_printf("remove %p from %p\n", s, srcs);
 #endif
 	    free(ptr);
 	    break;
@@ -1175,7 +1175,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
     targ->children += 1;
 #ifdef DEBUG_SRC
     ret->cp = Lst_Init();
-    fprintf(debug_file, "3 add %p %p\n", targ, ret);
+    debug_printf("3 add %p %p\n", targ, ret);
     Lst_Append(targ->cp, ret);
 #endif
     Lst_Append(slst, ret);
@@ -2148,7 +2148,7 @@ Suff_End(void)
 static void
 SuffPrintName(void *s, void *dummy MAKE_ATTR_UNUSED)
 {
-    fprintf(debug_file, "%s ", ((Suff *)s)->name);
+    debug_printf("%s ", ((Suff *)s)->name);
 }
 
 static void
@@ -2156,23 +2156,23 @@ SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
 {
     Suff    *s = (Suff *)sp;
 
-    fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
+    debug_printf("# `%s' [%d] ", s->name, s->refCount);
 
     if (s->flags != 0) {
 	char flags_buf[SuffFlags_ToStringSize];
 
-	fprintf(debug_file, " (%s)",
-		Enum_FlagsToString(flags_buf, sizeof flags_buf,
-				   s->flags, SuffFlags_ToStringSpecs));
+	debug_printf(" (%s)",
+		     Enum_FlagsToString(flags_buf, sizeof flags_buf,
+					s->flags, SuffFlags_ToStringSpecs));
     }
     fputc('\n', debug_file);
-    fprintf(debug_file, "#\tTo: ");
+    debug_printf("#\tTo: ");
     Lst_ForEach(s->parents, SuffPrintName, NULL);
     fputc('\n', debug_file);
-    fprintf(debug_file, "#\tFrom: ");
+    debug_printf("#\tFrom: ");
     Lst_ForEach(s->children, SuffPrintName, NULL);
     fputc('\n', debug_file);
-    fprintf(debug_file, "#\tSearch Path: ");
+    debug_printf("#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
     fputc('\n', debug_file);
 }
@@ -2182,7 +2182,7 @@ SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   *t = (GNode *)tp;
 
-    fprintf(debug_file, "%-16s:", t->name);
+    debug_printf("%-16s:", t->name);
     Targ_PrintType(t->type);
     fputc('\n', debug_file);
     Targ_PrintCmds(t);
@@ -2192,9 +2192,9 @@ SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
 void
 Suff_PrintAll(void)
 {
-    fprintf(debug_file, "#*** Suffixes:\n");
+    debug_printf("#*** Suffixes:\n");
     Lst_ForEach(sufflist, SuffPrintSuff, NULL);
 
-    fprintf(debug_file, "#*** Transformations:\n");
+    debug_printf("#*** Transformations:\n");
     Lst_ForEach(transforms, SuffPrintTrans, NULL);
 }
