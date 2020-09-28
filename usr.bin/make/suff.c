@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.172 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.173 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.172 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.173 2020/09/28 23:13:57 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -931,7 +931,7 @@ SuffAddSrc(void *sp, void *lsp)
 	s2->suff = s;
 	s->refCount++;
 	s2->children =	0;
-	targ->children += 1;
+	targ->children++;
 	Lst_Append(ls->l, s2);
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init();
@@ -949,7 +949,7 @@ SuffAddSrc(void *sp, void *lsp)
     s2->suff = s;
     s->refCount++;
     s2->children =  0;
-    targ->children += 1;
+    targ->children++;
     Lst_Append(ls->l, s2);
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init();
@@ -1172,7 +1172,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
     ret->parent = targ;
     ret->node = s;
     ret->children = 0;
-    targ->children += 1;
+    targ->children++;
 #ifdef DEBUG_SRC
     ret->cp = Lst_Init();
     debug_printf("3 add %p %p\n", targ, ret);
@@ -1462,7 +1462,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      */
     Lst_Append(tGn->children, sGn);
     Lst_Append(sGn->parents, tGn);
-    tGn->unmade += 1;
+    tGn->unmade++;
 
     /*
      * Locate the transformation rule itself
@@ -1564,7 +1564,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      */
     Lst_Append(gn->children, mem);
     Lst_Append(mem->parents, gn);
-    gn->unmade += 1;
+    gn->unmade++;
 
     /*
      * Copy in the variables from the member node to this one.

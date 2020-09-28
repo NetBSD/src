@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.251 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.252 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.251 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.252 2020/09/28 23:13:57 rillig Exp $");
 
 # define STATIC static
 
@@ -634,7 +634,7 @@ JobPrintCommand(void *cmdp, void *jobp)
    (void)fprintf(job->cmdFILE, fmt, arg);	\
    (void)fflush(job->cmdFILE);
 
-    numCommands += 1;
+    numCommands++;
 
     Var_Subst(cmd, job->node, VARE_WANTRES, &cmd);
     /* TODO: handle errors */
@@ -997,7 +997,7 @@ JobFinish(Job *job, int status)
 	Make_Update(job->node);
 	job->job_state = JOB_ST_FREE;
     } else if (status != 0) {
-	errors += 1;
+	errors++;
 	job->job_state = JOB_ST_FREE;
     }
 
@@ -2327,7 +2327,7 @@ Job_ParseShell(char *line)
 	if (path == NULL) {
 	    path = UNCONST(shellPath);
 	} else {
-	    path += 1;
+	    path++;
 	}
 	if (newShell.name != NULL) {
 	    shellName = newShell.name;
