@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.546 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.547 2020/09/28 20:55:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,15 +121,12 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.546 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.547 2020/09/28 20:55:20 rillig Exp $");
 
-#define VAR_DEBUG_IF(cond, fmt, ...)	\
-    if (!(DEBUG(VAR) && (cond)))	\
-	(void) 0;			\
-    else				\
-	fprintf(debug_file, fmt, __VA_ARGS__)
-
-#define VAR_DEBUG(fmt, ...) VAR_DEBUG_IF(TRUE, fmt, __VA_ARGS__)
+#define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
+#define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
+#define VAR_DEBUG3(fmt, arg1, arg2, arg3) DEBUG3(VAR, fmt, arg1, arg2, arg3)
+#define VAR_DEBUG4(fmt, arg1, arg2, arg3, arg4) DEBUG4(VAR, fmt, arg1, arg2, arg3, arg4)
 
 ENUM_FLAGS_RTTI_3(VarEvalFlags,
 		  VARE_UNDEFERR, VARE_WANTRES, VARE_ASSIGN);
@@ -420,8 +417,9 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
     he = Hash_CreateEntry(&ctxt->context, name, NULL);
     Hash_SetValue(he, v);
     v->name = he->name;
-    VAR_DEBUG_IF(!(ctxt->flags & INTERNAL),
-		 "%s:%s = %s\n", ctxt->name, name, val);
+    if (!(ctxt->flags & INTERNAL)) {
+	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
+    }
 }
 
 /* Remove a variable from a context, freeing the Var structure as well. */
@@ -437,8 +435,8 @@ Var_Delete(const char *name, GNode *ctxt)
 	name = name_freeIt;
     }
     he = Hash_FindEntry(&ctxt->context, name);
-    VAR_DEBUG("%s:delete %s%s\n",
-	      ctxt->name, name, he != NULL ? "" : " (not found)");
+    VAR_DEBUG3("%s:delete %s%s\n",
+	       ctxt->name, name, he != NULL ? "" : " (not found)");
     free(name_freeIt);
 
     if (he != NULL) {
@@ -700,11 +698,11 @@ Var_UnExport(const char *str)
 	    const char *varname = words.words[i];
 	    v = VarFind(varname, VAR_GLOBAL, 0);
 	    if (v == NULL) {
-		VAR_DEBUG("Not unexporting \"%s\" (not found)\n", varname);
+		VAR_DEBUG1("Not unexporting \"%s\" (not found)\n", varname);
 		continue;
 	    }
 
-	    VAR_DEBUG("Unexporting \"%s\"\n", varname);
+	    VAR_DEBUG1("Unexporting \"%s\"\n", varname);
 	    if (!unexport_env && (v->flags & VAR_EXPORTED) &&
 		!(v->flags & VAR_REEXPORT))
 		unsetenv(v->name);
@@ -757,9 +755,9 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     }
 
     if (name[0] == '\0') {
-	VAR_DEBUG("Var_Set(\"%s\", \"%s\", ...) "
-		  "name expands to empty string - ignored\n",
-		  unexpanded_name, val);
+	VAR_DEBUG2("Var_Set(\"%s\", \"%s\", ...) "
+		   "name expands to empty string - ignored\n",
+		   unexpanded_name, val);
 	free(name_freeIt);
 	return;
     }
@@ -768,7 +766,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != NULL) {
 	    if (v->flags & VAR_FROM_CMD) {
-		VAR_DEBUG("%s:%s = %s ignored!\n", ctxt->name, name, val);
+		VAR_DEBUG3("%s:%s = %s ignored!\n", ctxt->name, name, val);
 		goto out;
 	    }
 	    VarFreeEnv(v, TRUE);
@@ -788,15 +786,15 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	VarAdd(name, val, ctxt, flags);
     } else {
 	if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
-	    VAR_DEBUG("%s:%s = %s ignored (read-only)\n",
-	      ctxt->name, name, val);
+	    VAR_DEBUG3("%s:%s = %s ignored (read-only)\n",
+		       ctxt->name, name, val);
 	    goto out;
 	}	    
 	Buf_Empty(&v->val);
 	if (val)
 	    Buf_AddStr(&v->val, val);
 
-	VAR_DEBUG("%s:%s = %s\n", ctxt->name, name, val);
+	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
 	if (v->flags & VAR_EXPORTED) {
 	    Var_Export1(name, VAR_EXPORT_PARENT);
 	}
@@ -900,7 +898,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	/* TODO: handle errors */
 	name = name_freeIt;
 	if (name[0] == '\0') {
-	    VAR_DEBUG("Var_Append(\"%s\", \"%s\", ...) "
+	    VAR_DEBUG2("Var_Append(\"%s\", \"%s\", ...) "
 		      "name expands to empty string - ignored\n",
 		      unexpanded_name, val);
 	    free(name_freeIt);
@@ -916,8 +914,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	Buf_AddByte(&v->val, ' ');
 	Buf_AddStr(&v->val, val);
 
-	VAR_DEBUG("%s:%s = %s\n", ctxt->name, name,
-		  Buf_GetAll(&v->val, NULL));
+	VAR_DEBUG3("%s:%s = %s\n",
+	    ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
 	if (v->flags & VAR_FROM_ENV) {
 	    Hash_Entry *h;
@@ -1103,7 +1101,7 @@ static void
 ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 {
     const char *pattern = data;
-    VAR_DEBUG("VarMatch [%s] [%s]\n", word, pattern);
+    VAR_DEBUG2("VarMatch [%s] [%s]\n", word, pattern);
     if (Str_Match(word, pattern))
 	SepBuf_AddStr(buf, word);
 }
@@ -1429,9 +1427,9 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
     (void)Var_Subst(args->str, args->ctx, args->eflags, &s);
     /* TODO: handle errors */
 
-    VAR_DEBUG("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
-	      "to \"%s\"\n",
-	      word, args->tvar, args->str, s);
+    VAR_DEBUG4("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
+	       "to \"%s\"\n",
+	       word, args->tvar, args->str, s);
 
     if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
 	buf->needSep = FALSE;
@@ -1547,7 +1545,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
     words = Str_Words(str, FALSE);
 
-    VAR_DEBUG("ModifyWords: split \"%s\" into %zu words\n", str, words.len);
+    VAR_DEBUG2("ModifyWords: split \"%s\" into %zu words\n", str, words.len);
 
     for (i = 0; i < words.len; i++) {
 	modifyWord(words.words[i], &result, modifyWord_args);
@@ -1623,7 +1621,7 @@ VarQuote(const char *str, Boolean quoteDollar)
     }
 
     res = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG("QuoteMeta: [%s]\n", res);
+    VAR_DEBUG1("QuoteMeta: [%s]\n", res);
     return res;
 }
 
@@ -1945,7 +1943,7 @@ ParseModifierPart(
 	*out_length = Buf_Len(&buf);
 
     *out_part = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG("Modifier part: \"%s\"\n", *out_part);
+    VAR_DEBUG1("Modifier part: \"%s\"\n", *out_part);
     return VPR_OK;
 }
 
@@ -2283,7 +2281,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	free(old_pattern);
     }
 
-    VAR_DEBUG("Pattern[%s] for [%s] is [%s]\n", st->v->name, st->val, pattern);
+    VAR_DEBUG3("Pattern[%s] for [%s] is [%s]\n", st->v->name, st->val, pattern);
 
     callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
     st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
@@ -3022,7 +3020,7 @@ ApplyModifiers(
 		goto apply_mods;
 	    }
 
-	    VAR_DEBUG("Indirect modifier \"%s\" from \"%.*s\"\n",
+	    VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
 		      rval, (int)(size_t)(nested_p - p), p);
 
 	    p = nested_p;
@@ -3062,15 +3060,16 @@ ApplyModifiers(
 
 	    /* At this point, only the first character of the modifier can
 	     * be used since the end of the modifier is not yet known. */
-	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-		      st.v->name, mod[0], is_single_char ? "" : "...", st.val,
-		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
-					 st.eflags, VarEvalFlags_ToStringSpecs),
-		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
-					 st.v->flags, VarFlags_ToStringSpecs),
-		      Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-					 st.exprFlags,
-					 VarExprFlags_ToStringSpecs));
+	    fprintf(debug_file,
+		    "Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
+		    st.v->name, mod[0], is_single_char ? "" : "...", st.val,
+		    Enum_FlagsToString(eflags_str, sizeof eflags_str,
+				       st.eflags, VarEvalFlags_ToStringSpecs),
+		    Enum_FlagsToString(vflags_str, sizeof vflags_str,
+				       st.v->flags, VarFlags_ToStringSpecs),
+		    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+				       st.exprFlags,
+				       VarExprFlags_ToStringSpecs));
 	}
 
 	switch (*mod) {
@@ -3209,15 +3208,16 @@ ApplyModifiers(
 	    const char *quot = st.newVal == var_Error ? "" : "\"";
 	    const char *newVal = st.newVal == var_Error ? "error" : st.newVal;
 
-	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-		      st.v->name, (int)(p - mod), mod, quot, newVal, quot,
-		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
-					 st.eflags, VarEvalFlags_ToStringSpecs),
-		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
-					 st.v->flags, VarFlags_ToStringSpecs),
-		      Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-					 st.exprFlags,
-					 VarExprFlags_ToStringSpecs));
+	    fprintf(debug_file,
+		    "Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
+		    st.v->name, (int)(p - mod), mod, quot, newVal, quot,
+		    Enum_FlagsToString(eflags_str, sizeof eflags_str,
+				       st.eflags, VarEvalFlags_ToStringSpecs),
+		    Enum_FlagsToString(vflags_str, sizeof vflags_str,
+				       st.v->flags, VarFlags_ToStringSpecs),
+		    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+				       st.exprFlags,
+				       VarExprFlags_ToStringSpecs));
 	}
 
 	if (st.newVal != st.val) {
@@ -3458,9 +3458,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     char eflags_str[VarEvalFlags_ToStringSize];
     VarExprFlags exprFlags = 0;
 
-    VAR_DEBUG("%s: %s with %s\n", __func__, start,
-	      Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
-				 VarEvalFlags_ToStringSpecs));
+    VAR_DEBUG3("%s: %s with %s\n", __func__, start,
+	       Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
+				  VarEvalFlags_ToStringSpecs));
 
     *freePtr = NULL;
     extramodifiers = NULL;	/* extra modifiers to apply first */
