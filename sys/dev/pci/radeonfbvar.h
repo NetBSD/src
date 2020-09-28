@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.21 2020/06/11 14:22:10 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.22 2020/09/28 05:43:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -293,7 +293,8 @@ struct radeonfb_softc {
 #define	RADEON_RV350	12
 #define	RADEON_RV380	13
 #define	RADEON_R420	14
-#define	RADEON_FAMILIES	15
+#define RADEON_R580	15
+#define	RADEON_FAMILIES	16
 
 /* feature flags */
 #define	RFB_MOB		(1 << 0)	/* Mobility */
@@ -305,6 +306,7 @@ struct radeonfb_softc {
 #define	RFB_RV100	(1 << 6)	/* RV100 variants -- previous gen */
 #define	RFB_ATOM	(1 << 7)	/* ATOM bios */
 #define RFB_INV_BLIGHT	(1 << 8)	/* backlight level inverted */
+#define RFB_IS_AVIVO	(1 << 9)	/* MC and CRTCs are different here */
 
 #define	IS_MOBILITY(sc)	((sc)->sc_flags & RFB_MOB)
 #define	HAS_CRTC2(sc)	(((sc)->sc_flags & RFB_NCRTC2) == 0)
@@ -315,6 +317,7 @@ struct radeonfb_softc {
 #define	IS_RV100(sc)	((sc)->sc_flags & RFB_RV100)
 #define	IS_IGP(sc)	((sc)->sc_flags & RFB_IGP)
 #define	IS_ATOM(sc)	((sc)->sc_flags & RFB_ATOM)
+#define	IS_AVIVO(sc)	((sc)->sc_flags & RFB_IS_AVIVO)
 
 #define	RADEON_TIMEOUT	2000000
 
