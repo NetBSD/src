@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.158 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.159 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.158 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.159 2020/09/28 23:13:57 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -721,7 +721,7 @@ Compat_Run(GNodeList *targs)
 	    printf("`%s' is up to date.\n", gn->name);
 	} else if (gn->made == ABORTED) {
 	    printf("`%s' not remade because of errors.\n", gn->name);
-	    errors += 1;
+	    errors++;
 	}
     }
 

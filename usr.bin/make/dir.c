@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.152 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.153 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.152 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.153 2020/09/28 23:13:57 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -375,12 +375,12 @@ Dir_InitCur(const char *cdname)
 	 * Keep this one around too.
 	 */
 	if ((dir = Dir_AddDir(NULL, cdname))) {
-	    dir->refCount += 1;
+	    dir->refCount++;
 	    if (cur && cur != dir) {
 		/*
 		 * We've been here before, cleanup.
 		 */
-		cur->refCount -= 1;
+		cur->refCount--;
 		Dir_Destroy(cur);
 	    }
 	    cur = dir;
@@ -412,7 +412,7 @@ Dir_InitDot(void)
      * We always need to have dot around, so we increment its reference count
      * to make sure it's not destroyed.
      */
-    dot->refCount += 1;
+    dot->refCount++;
     Dir_SetPATH();		/* initialize */
 }
 
@@ -422,11 +422,11 @@ Dir_End(void)
 {
 #ifdef CLEANUP
     if (cur) {
-	cur->refCount -= 1;
+	cur->refCount--;
 	Dir_Destroy(cur);
     }
-    dot->refCount -= 1;
-    dotLast->refCount -= 1;
+    dot->refCount--;
+    dotLast->refCount--;
     Dir_Destroy(dotLast);
     Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
@@ -900,8 +900,8 @@ DirLookup(CachedDir *dir, const char *name MAKE_ATTR_UNUSED, const char *cp,
 
     file = str_concat3(dir->name, "/", cp);
     DIR_DEBUG1("   returning %s\n", file);
-    dir->hits += 1;
-    hits += 1;
+    dir->hits++;
+    hits++;
     return file;
 }
 
@@ -938,7 +938,7 @@ DirLookupSubdir(CachedDir *dir, const char *name)
     DIR_DEBUG1("checking %s ...\n", file);
 
     if (cached_stat(file, &mst) == 0) {
-	nearmisses += 1;
+	nearmisses++;
 	return file;
     }
     free(file);
@@ -987,8 +987,8 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
 	return bmake_strdup("");
     }
 
-    dir->hits += 1;
-    hits += 1;
+    dir->hits++;
+    hits++;
     DIR_DEBUG1("   returning %s\n", name);
     return bmake_strdup(name);
 }
@@ -1012,14 +1012,14 @@ DirFindDot(Boolean hasSlash MAKE_ATTR_UNUSED, const char *name, const char *cp)
 
     if (Hash_FindEntry(&dot->files, cp) != NULL) {
 	DIR_DEBUG0("   in '.'\n");
-	hits += 1;
-	dot->hits += 1;
+	hits++;
+	dot->hits++;
 	return bmake_strdup(name);
     }
     if (cur && Hash_FindEntry(&cur->files, cp) != NULL) {
 	DIR_DEBUG1("   in ${.CURDIR} = %s\n", cur->name);
-	hits += 1;
-	cur->hits += 1;
+	hits++;
+	cur->hits++;
 	return str_concat3(cur->name, "/", cp);
     }
 
@@ -1067,7 +1067,7 @@ Dir_FindFile(const char *name, SearchPath *path)
     base = strrchr(name, '/');
     if (base) {
 	hasSlash = TRUE;
-	base += 1;
+	base++;
     } else {
 	hasSlash = FALSE;
 	base = name;
@@ -1077,7 +1077,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 
     if (path == NULL) {
 	DIR_DEBUG0("couldn't open path, file not found\n");
-	misses += 1;
+	misses++;
 	return NULL;
     }
 
@@ -1149,7 +1149,7 @@ Dir_FindFile(const char *name, SearchPath *path)
      */
     if (!hasSlash) {
 	DIR_DEBUG0("   failed.\n");
-	misses += 1;
+	misses++;
 	return NULL;
     }
 
@@ -1277,13 +1277,13 @@ Dir_FindFile(const char *name, SearchPath *path)
 #ifdef notdef
     if (base == trailing_dot) {
 	base = strrchr(name, '/');
-	base += 1;
+	base++;
     }
     base[-1] = '\0';
     (void)Dir_AddDir(path, name);
     base[-1] = '/';
 
-    bigmisses += 1;
+    bigmisses++;
     ln = Lst_Last(path);
     if (ln == NULL) {
 	return NULL;
@@ -1299,7 +1299,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 #else /* !notdef */
     DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
 
-    bigmisses += 1;
+    bigmisses++;
     if (cached_stat(name, &mst) == 0) {
 	return bmake_strdup(name);
     }
@@ -1508,7 +1508,7 @@ Dir_AddDir(SearchPath *path, const char *name)
     if (ln != NULL) {
 	dir = LstNode_Datum(ln);
 	if (Lst_FindDatum(path, dir) == NULL) {
-	    dir->refCount += 1;
+	    dir->refCount++;
 	    Lst_Append(path, dir);
 	}
 	return dir;
@@ -1559,7 +1559,7 @@ void *
 Dir_CopyDir(void *p)
 {
     CachedDir *dir = (CachedDir *)p;
-    dir->refCount += 1;
+    dir->refCount++;
 
     return p;
 }
@@ -1627,7 +1627,7 @@ void
 Dir_Destroy(void *dirp)
 {
     CachedDir *dir = dirp;
-    dir->refCount -= 1;
+    dir->refCount--;
 
     if (dir->refCount == 0) {
 	CachedDirListNode *node;
@@ -1695,7 +1695,7 @@ Dir_Concat(SearchPath *path1, SearchPath *path2)
     for (ln = path2->first; ln != NULL; ln = ln->next) {
 	CachedDir *dir = ln->datum;
 	if (Lst_FindDatum(path1, dir) == NULL) {
-	    dir->refCount += 1;
+	    dir->refCount++;
 	    Lst_Append(path1, dir);
 	}
     }
