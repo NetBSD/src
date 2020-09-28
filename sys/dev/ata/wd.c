@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.464 2020/09/27 16:58:11 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.465 2020/09/28 12:47:49 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.464 2020/09/27 16:58:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.465 2020/09/28 12:47:49 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -453,7 +453,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	    wd->sc_blksize, (unsigned long long)wd->sc_capacity);
 	if (wd->sc_sectoralign.dsa_alignment != 1) {
 		aprint_normal(" (%d bytes/physsect",
-		    wd->sc_sectoralign.dsa_alignment & wd->sc_blksize);
+		    wd->sc_sectoralign.dsa_alignment * wd->sc_blksize);
 		if (wd->sc_sectoralign.dsa_firstaligned != 0) {
 			aprint_normal("; first aligned sector: %jd",
 			    (intmax_t)wd->sc_sectoralign.dsa_firstaligned);
