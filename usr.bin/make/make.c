@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.153 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.154 2020/09/28 22:38:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.153 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.154 2020/09/28 22:38:32 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -124,6 +124,16 @@ static int MakePrintStatus(void *, void *);
 static int MakeCheckOrder(void *, void *);
 static int MakeBuildChild(void *, void *);
 static int MakeBuildParent(void *, void *);
+
+void
+debug_printf(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    vfprintf(debug_file, fmt, args);
+    va_end(args);
+}
 
 MAKE_ATTR_DEAD static void
 make_abort(GNode *gn, int line)
