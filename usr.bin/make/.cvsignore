@@ -1,3 +1,17 @@
 *.gcov
 *.gcda
 *.gcno
+*.log
+*.err
+.gdbinit
+.last-import
+Makefile.netbsd
+ac.h
+dirname.c
+getenv.c
+getopt.c
+local.init.mk
+make-conf.h
+realpath.c
+setenv.c
+stresep.c
