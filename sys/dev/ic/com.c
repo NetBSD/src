@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.359 2020/05/26 13:24:52 martin Exp $ */
+/* $NetBSD: com.c,v 1.360 2020/09/28 11:33:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.359 2020/05/26 13:24:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.360 2020/09/28 11:33:15 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -428,9 +428,10 @@ com_attach_subr(struct com_softc *sc)
 {
 	struct com_regs *regsp = &sc->sc_regs;
 	struct tty *tp;
-	u_int8_t lcr;
+	uint32_t cpr;
+	uint8_t lcr;
 	const char *fifo_msg = NULL;
-	prop_dictionary_t	dict;
+	prop_dictionary_t dict;
 	bool is_console = true;
 	bool force_console = false;
 
@@ -498,32 +499,32 @@ com_attach_subr(struct com_softc *sc)
 
 	case COM_TYPE_AU1x00:
 		sc->sc_fifolen = 16;
-		fifo_msg = "Au1X00 UART, working fifo";
+		fifo_msg = "Au1X00 UART";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 
 	case COM_TYPE_16550_NOERS:
 		sc->sc_fifolen = 16;
-		fifo_msg = "ns16650, no ERS, working fifo";
+		fifo_msg = "ns16650, no ERS";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 
 	case COM_TYPE_OMAP:
 		sc->sc_fifolen = 64;
-		fifo_msg = "OMAP UART, working fifo";
+		fifo_msg = "OMAP UART";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 
 	case COM_TYPE_INGENIC:
 		sc->sc_fifolen = 16;
-		fifo_msg = "Ingenic UART, working fifo";
+		fifo_msg = "Ingenic UART";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		SET(sc->sc_hwflags, COM_HW_NOIEN);
 		goto fifodelay;
 
 	case COM_TYPE_TEGRA:
 		sc->sc_fifolen = 8;
-		fifo_msg = "Tegra UART, working fifo";
+		fifo_msg = "Tegra UART";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
 		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
@@ -531,10 +532,25 @@ com_attach_subr(struct com_softc *sc)
 
 	case COM_TYPE_BCMAUXUART:
 		sc->sc_fifolen = 1;
-		fifo_msg = "BCM AUX UART, working fifo";
+		fifo_msg = "BCM AUX UART";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
 		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+		goto fifodelay;
+
+	case COM_TYPE_DW_APB:
+		cpr = bus_space_read_4(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh,
+		    DW_APB_UART_CPR);
+		sc->sc_fifolen = __SHIFTOUT(cpr, UART_CPR_FIFO_MODE) * 16;
+		if (sc->sc_fifolen == 0) {
+			fifo_msg = "DesignWare APB UART, no fifo";
+			CSR_WRITE_1(regsp, COM_REG_FIFO, 0);
+		} else {
+			fifo_msg = "DesignWare APB UART";
+			SET(sc->sc_hwflags, COM_HW_FIFO);
+			CSR_WRITE_1(regsp, COM_REG_FIFO,
+			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+		}
 		goto fifodelay;
 	}
 
@@ -554,7 +570,7 @@ com_attach_subr(struct com_softc *sc)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
-			fifo_msg = "ns16550a, working fifo";
+			fifo_msg = "ns16550a";
 
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
@@ -588,9 +604,9 @@ com_attach_subr(struct com_softc *sc)
 				if (sc->sc_fifolen == 0)
 					fifo_msg = "st16650, broken fifo";
 				else if (sc->sc_fifolen == 32)
-					fifo_msg = "st16650a, working fifo";
+					fifo_msg = "st16650a";
 				else
-					fifo_msg = "ns16550a, working fifo";
+					fifo_msg = "ns16550a";
 			}
 
 			/*
@@ -629,9 +645,9 @@ com_attach_subr(struct com_softc *sc)
 					CSR_WRITE_1(regsp, COM_REG_FIFO, fcr);
 
 				if (sc->sc_fifolen == 64)
-					fifo_msg = "tl16c750, working fifo";
+					fifo_msg = "tl16c750";
 				else
-					fifo_msg = "ns16750, working fifo";
+					fifo_msg = "ns16750";
 			}
 		} else
 			fifo_msg = "ns16550, broken fifo";
@@ -647,7 +663,11 @@ fifodelay:
 	 * printing it until now.
 	 */
 	delay(10);
-	aprint_normal(": %s\n", fifo_msg);
+	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+		aprint_normal(": %s, %d-byte FIFO\n", fifo_msg, sc->sc_fifolen);
+	} else {
+		aprint_normal(": %s\n", fifo_msg);
+	}
 	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
 		aprint_normal_dev(sc->sc_dev, "txfifo disabled\n");
