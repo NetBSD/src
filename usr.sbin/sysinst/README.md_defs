@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.4 2020/01/20 21:26:35 martin Exp $ */
+/* $NetBSD: README.md_defs,v 1.5 2020/09/28 18:40:23 martin Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -92,7 +92,7 @@ if something fails.
 
 HAVE_PLAIN_DISKLABEL_BOOT	may be undefined, only used on architectures
 				that have MBR as primary with disklabel as
-				secondary partitioning scheme (RAW_PART != 2)
+				secondary partitioning scheme (RAW_PART == 3)
 
 used like:
 

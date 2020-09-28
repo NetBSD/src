@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.10 2020/01/28 07:43:42 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.11 2020/09/28 18:40:23 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ extern const struct disk_partitioning_scheme gpt_parts;
 extern const struct disk_partitioning_scheme mbr_parts;
 #endif
 
-#if RAW_PART != 2
+#if RAW_PART == 3
 static struct disk_partitioning_scheme only_disklabel_parts;
 
 /*
@@ -163,7 +163,7 @@ partitions_init(void)
 	 * only offer very few entries.
 	 */
 static const struct part_scheme_desc all_descs[] = {
-#if RAW_PART == 2	/* only available as primary on some architectures */
+#if RAW_PART != 3	/* only available as primary on some architectures */
 		{ NULL, &disklabel_parts },
 #endif
 #ifdef HAVE_GPT
@@ -172,7 +172,7 @@ static const struct part_scheme_desc all_descs[] = {
 #ifdef HAVE_MBR
 		{ NULL, &mbr_parts },
 #endif
-#if RAW_PART != 2	/* "whole disk NetBSD" disklabel variant */
+#if RAW_PART == 3	/* "whole disk NetBSD" disklabel variant */
 		{ NULL, &only_disklabel_parts },
 #endif
 	};
@@ -184,7 +184,7 @@ static const struct part_scheme_desc all_descs[] = {
 
 	check_available_binaries();
 
-#if RAW_PART != 2
+#if RAW_PART == 3
 	/* generate a variant of disklabel w/o parent scheme */
 	only_disklabel_parts = disklabel_parts;
 	only_disklabel_parts.name = MSG_parttype_only_disklabel;
