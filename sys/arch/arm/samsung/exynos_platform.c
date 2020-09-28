@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.29 2020/07/10 12:25:09 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.30 2020/09/28 11:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.29 2020/07/10 12:25:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.30 2020/09/28 11:54:23 jmcneill Exp $");
 
 
 /*
@@ -222,11 +222,9 @@ static void
 exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	extern struct bus_space armv7_generic_bs_tag;
-	extern struct bus_space armv7_generic_a4x_bs_tag;
 	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 	faa->faa_bst = &armv7_generic_bs_tag;
-	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 

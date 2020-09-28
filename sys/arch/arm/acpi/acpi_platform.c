@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.19 2020/09/13 21:41:17 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.20 2020/09/28 11:54:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.19 2020/09/13 21:41:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.20 2020/09/28 11:54:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -239,10 +239,8 @@ static void
 acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	extern struct bus_space arm_generic_bs_tag;
-	extern struct bus_space arm_generic_a4x_bs_tag;
 
 	faa->faa_bst = &arm_generic_bs_tag;
-	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &acpi_coherent_dma_tag;
 }
 

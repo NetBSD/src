@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.40 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.41 2020/09/28 11:54:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.40 2020/07/10 12:25:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.41 2020/09/28 11:54:23 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1307,7 +1307,6 @@ bcm2835_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 
 	faa->faa_bst = &bcm2835_bs_tag;
-	faa->faa_a4x_bst = &bcm2835_a4x_bs_tag;
 }
 #endif
 
@@ -1317,7 +1316,6 @@ bcm2836_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 
 	faa->faa_bst = &bcm2836_bs_tag;
-	faa->faa_a4x_bst = &bcm2836_a4x_bs_tag;
 }
 
 static void
@@ -1325,7 +1323,6 @@ bcm2711_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 
 	faa->faa_bst = &bcm2711_bs_tag;
-	faa->faa_a4x_bst = &bcm2711_a4x_bs_tag;
 }
 #endif
 

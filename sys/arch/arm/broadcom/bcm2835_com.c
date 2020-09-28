@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.5 2018/12/08 17:46:09 thorpej Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.6 2020/09/28 11:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.5 2018/12/08 17:46:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.6 2020/09/28 11:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
-	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -105,7 +105,7 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_frequency *= 2;
 
-	com_init_regs(&sc->sc_regs, bst, bsh, addr);
+	com_init_regs_stride(&sc->sc_regs, bst, bsh, addr, 2);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");
@@ -137,7 +137,9 @@ static void
 bcmaux_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
 	const int phandle = faa->faa_phandle;
-	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t dummy_bsh;
+	struct com_regs regs;
 	bus_addr_t addr;
 	tcflag_t flags;
 	int speed;
@@ -148,7 +150,10 @@ bcmaux_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_BCMAUXUART,
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	com_init_regs_stride(&regs, bst, dummy_bsh, addr, 2);
+
+	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_BCMAUXUART,
 	    flags))
 		panic("Cannot initialize bcm com console");
 

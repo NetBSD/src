@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.15 2020/07/10 12:25:08 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.16 2020/09/28 11:54:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.15 2020/07/10 12:25:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.16 2020/09/28 11:54:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,11 +118,9 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.15 2020/07/10 12:25:08 skrll Ex
 
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern struct bus_space arm_generic_bs_tag;
-extern struct bus_space arm_generic_a4x_bs_tag;
 
 #define	meson_dma_tag		arm_generic_dma_tag
 #define	meson_bs_tag		arm_generic_bs_tag
-#define	meson_a4x_bs_tag	arm_generic_a4x_bs_tag
 
 static const struct pmap_devmap *
 meson_platform_devmap(void)
@@ -150,7 +148,6 @@ static void
 meson_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &meson_bs_tag;
-	faa->faa_a4x_bst = &meson_a4x_bs_tag;
 	faa->faa_dmat = &meson_dma_tag;
 }
 
