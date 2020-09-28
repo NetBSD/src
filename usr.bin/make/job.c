@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.252 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.253 2020/09/28 23:31:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.252 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.253 2020/09/28 23:31:18 rillig Exp $");
 
 # define STATIC static
 
@@ -871,7 +871,7 @@ JobFinish(Job *job, int status)
 {
     Boolean done, return_job_token;
 
-    DEBUG3(JOB, "Jobfinish: %d [%s], status %d\n",
+    DEBUG3(JOB, "JobFinish: %d [%s], status %d\n",
 	   job->pid, job->node->name, status);
 
     if ((WIFEXITED(status) &&
