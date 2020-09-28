@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.150 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.151 2020/09/28 22:38:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -524,15 +524,7 @@ extern int debug;
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
-static inline MAKE_ATTR_UNUSED void MAKE_ATTR_PRINTFLIKE(1, 2)
-debug_printf(const char *fmt, ...)
-{
-    va_list args;
-
-    va_start(args, fmt);
-    vfprintf(debug_file, fmt, args);
-    va_end(args);
-}
+void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 
 #define DEBUG0(module, text) \
     if (!DEBUG(module)) (void)0; \
