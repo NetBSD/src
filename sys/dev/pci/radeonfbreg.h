@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.8 2020/09/18 20:43:37 macallan Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.9 2020/09/28 05:38:41 macallan Exp $	*/
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -3892,6 +3892,8 @@
 #define AVIVO_D2CUR_SURFACE_ADDRESS             0x6c08
 #define AVIVO_D2CUR_SIZE                        0x6c10
 #define AVIVO_D2CUR_POSITION                    0x6c14
+#define AVIVO_D2CUR_HOT_SPOT                    0x6c18
+#define AVIVO_D2CUR_UPDATE                      0x6c24
 
 #define RS690_DCP_CONTROL                       0x6c9c
 
