@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.53 2020/09/28 00:06:36 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.54 2020/09/28 00:13:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -173,7 +173,7 @@ typedef struct Job {
     int curPos;			/* Current position in outBuf. */
 
 #ifdef USE_META
-    struct BuildMon	bm;
+    struct BuildMon bm;
 #endif
 } Job;
 
@@ -234,21 +234,21 @@ typedef struct Shell {
     /*
      * command-line flags
      */
-    const char   *echo;		/* echo commands */
-    const char   *exit;		/* exit on error */
-}               Shell;
+    const char *echo;		/* echo commands */
+    const char *exit;		/* exit on error */
+} Shell;
 
 extern const char *shellPath;
 extern const char *shellName;
 extern char *shellErrFlag;
 
-extern int	jobTokensRunning; /* tokens currently "out" */
-extern int	maxJobs;	/* Max jobs we can run */
+extern int jobTokensRunning;	/* tokens currently "out" */
+extern int maxJobs;		/* Max jobs we can run */
 
 void Shell_Init(void);
 const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
-Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
+Boolean Job_CheckCommands(GNode *, void (*abortProc)(const char *, ...));
 void Job_CatchChildren(void);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
