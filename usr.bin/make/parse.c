@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.342 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.343 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.342 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.343 2020/09/28 23:13:57 rillig Exp $");
 
 /* types and constants */
 
@@ -808,7 +808,7 @@ ParseLinkSrc(void *pgnp, void *data)
 	pgn = LstNode_Datum(Lst_Last(pgn->cohorts));
 
     Lst_Append(pgn->children, cgn);
-    pgn->unmade += 1;
+    pgn->unmade++;
 
     if (args->specType == Not)
 	Lst_Append(cgn->parents, pgn);
@@ -866,7 +866,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	cohort->type = op | OP_INVISIBLE;
 	Lst_Append(gn->cohorts, cohort);
 	cohort->centurion = gn;
-	gn->unmade_cohorts += 1;
+	gn->unmade_cohorts++;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
 		gn->unmade_cohorts);
     } else {
@@ -1654,7 +1654,7 @@ ParseDoDependency(char *line)
 	    } else {
 		if (*cp) {
 		    *cp = '\0';
-		    cp += 1;
+		    cp++;
 		}
 
 		ParseDoSrc(tOp, line, specType);

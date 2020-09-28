@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.155 2020/09/28 23:02:02 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.156 2020/09/28 23:13:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.155 2020/09/28 23:02:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.156 2020/09/28 23:13:57 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -436,7 +436,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
 	Lst_Append(pgn->children, gn);
 	Lst_Append(gn->parents, pgn);
-	pgn->unmade += 1;
+	pgn->unmade++;
     }
     Lst_Close(cgn->children);
 
@@ -617,7 +617,7 @@ Make_Update(GNode *cgn)
     if ((centurion = cgn->centurion) != NULL) {
 	if (!Lst_IsEmpty(cgn->parents))
 		Punt("%s%s: cohort has parents", cgn->name, cgn->cohort_num);
-	centurion->unmade_cohorts -= 1;
+	centurion->unmade_cohorts--;
 	if (centurion->unmade_cohorts < 0)
 	    Error("Graph cycles through centurion %s", centurion->name);
     } else {
@@ -676,7 +676,7 @@ Make_Update(GNode *cgn)
 	}
 
 	/* One more child of this parent is now made */
-	pgn->unmade -= 1;
+	pgn->unmade--;
 	if (pgn->unmade < 0) {
 	    if (DEBUG(MAKE)) {
 		debug_printf("Graph cycles through %s%s\n",
