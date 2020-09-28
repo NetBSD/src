@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.68 2020/09/22 15:16:49 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.69 2020/09/28 18:51:34 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1414,14 +1414,16 @@ done_with_disks:
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
-	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
-	    cdrom_dev);
+	if (cdrom_dev[0] != 0)
+		scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
+		    cdrom_dev);
 	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
 	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
-	make_target_dir("/cdrom");
+	if (cdrom_dev[0] != 0)
+		make_target_dir("/cdrom");
 	make_target_dir("/var/shm");
 
 	scripting_fprintf(NULL, "EOF\n");
