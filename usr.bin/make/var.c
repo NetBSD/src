@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.548 2020/09/28 21:01:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.549 2020/09/28 21:11:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.548 2020/09/28 21:01:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.549 2020/09/28 21:11:05 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2987,6 +2987,50 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 }
 #endif
 
+static void
+LogBeforeApply(const ApplyModifiersState *st, const char *mod, const char endc)
+{
+    char eflags_str[VarEvalFlags_ToStringSize];
+    char vflags_str[VarFlags_ToStringSize];
+    char exprflags_str[VarExprFlags_ToStringSize];
+    Boolean is_single_char = mod[0] != '\0' &&
+			     (mod[1] == endc || mod[1] == ':');
+
+    /* At this point, only the first character of the modifier can
+     * be used since the end of the modifier is not yet known. */
+    fprintf(debug_file,
+	    "Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
+	    st->v->name, mod[0], is_single_char ? "" : "...", st->val,
+	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
+			       st->eflags, VarEvalFlags_ToStringSpecs),
+	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
+			       st->v->flags, VarFlags_ToStringSpecs),
+	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+			       st->exprFlags,
+			       VarExprFlags_ToStringSpecs));
+}
+
+static void
+LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
+{
+    char eflags_str[VarEvalFlags_ToStringSize];
+    char vflags_str[VarFlags_ToStringSize];
+    char exprflags_str[VarExprFlags_ToStringSize];
+    const char *quot = st->newVal == var_Error ? "" : "\"";
+    const char *newVal = st->newVal == var_Error ? "error" : st->newVal;
+
+    fprintf(debug_file,
+	    "Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
+	    st->v->name, (int)(p - mod), mod, quot, newVal, quot,
+	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
+			       st->eflags, VarEvalFlags_ToStringSpecs),
+	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
+			       st->v->flags, VarFlags_ToStringSpecs),
+	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+			       st->exprFlags,
+			       VarExprFlags_ToStringSpecs));
+}
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
@@ -3072,26 +3116,8 @@ ApplyModifiers(
 	res = AMR_BAD;		/* just a safe fallback */
 	mod = p;
 
-	if (DEBUG(VAR)) {
-	    char eflags_str[VarEvalFlags_ToStringSize];
-	    char vflags_str[VarFlags_ToStringSize];
-	    char exprflags_str[VarExprFlags_ToStringSize];
-	    Boolean is_single_char = mod[0] != '\0' &&
-				     (mod[1] == endc || mod[1] == ':');
-
-	    /* At this point, only the first character of the modifier can
-	     * be used since the end of the modifier is not yet known. */
-	    fprintf(debug_file,
-		    "Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-		    st.v->name, mod[0], is_single_char ? "" : "...", st.val,
-		    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-				       st.eflags, VarEvalFlags_ToStringSpecs),
-		    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-				       st.v->flags, VarFlags_ToStringSpecs),
-		    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-				       st.exprFlags,
-				       VarExprFlags_ToStringSpecs));
-	}
+	if (DEBUG(VAR))
+	    LogBeforeApply(&st, mod, endc);
 
 	switch (*mod) {
 	case ':':
@@ -3211,24 +3237,8 @@ ApplyModifiers(
 	if (res == AMR_BAD)
 	    goto bad_modifier;
 
-	if (DEBUG(VAR)) {
-	    char eflags_str[VarEvalFlags_ToStringSize];
-	    char vflags_str[VarFlags_ToStringSize];
-	    char exprflags_str[VarExprFlags_ToStringSize];
-	    const char *quot = st.newVal == var_Error ? "" : "\"";
-	    const char *newVal = st.newVal == var_Error ? "error" : st.newVal;
-
-	    fprintf(debug_file,
-		    "Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-		    st.v->name, (int)(p - mod), mod, quot, newVal, quot,
-		    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-				       st.eflags, VarEvalFlags_ToStringSpecs),
-		    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-				       st.v->flags, VarFlags_ToStringSpecs),
-		    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-				       st.exprFlags,
-				       VarExprFlags_ToStringSpecs));
-	}
+	if (DEBUG(VAR))
+	    LogAfterApply(&st, p, mod);
 
 	if (st.newVal != st.val) {
 	    if (*freePtr) {
