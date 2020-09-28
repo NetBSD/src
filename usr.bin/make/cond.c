@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.153 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.154 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.153 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.154 2020/09/28 20:46:11 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -312,10 +312,7 @@ FuncExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
     char *path;
 
     path = Dir_FindFile(arg, dirSearchPath);
-    if (DEBUG(COND)) {
-	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
-		arg, path ? path : "");
-    }
+    DEBUG2(COND, "exists(%s) result is \"%s\"\n", arg, path ? path : "");
     if (path != NULL) {
 	result = TRUE;
 	free(path);
@@ -549,8 +546,7 @@ EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
 static Token
 EvalCompareNum(double lhs, const char *op, double rhs)
 {
-    if (DEBUG(COND))
-	fprintf(debug_file, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, op);
+    DEBUG3(COND, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, op);
 
     switch (op[0]) {
     case '!':
@@ -585,10 +581,7 @@ EvalCompareStr(const char *lhs, const char *op, const char *rhs)
 	return TOK_ERROR;
     }
 
-    if (DEBUG(COND)) {
-	fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-		lhs, rhs, op);
-    }
+    DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n", lhs, rhs, op);
     return (*op == '=') == (strcmp(lhs, rhs) == 0);
 }
 
@@ -987,8 +980,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
 {
     Token res;
 
-    if (DEBUG(COND))
-	fprintf(debug_file, "CondParser_Eval: %s\n", par->p);
+    DEBUG1(COND, "CondParser_Eval: %s\n", par->p);
 
     res = CondParser_Expr(par, TRUE);
     if (res != TOK_FALSE && res != TOK_TRUE)
