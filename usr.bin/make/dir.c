@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.151 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.152 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.151 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.152 2020/09/28 22:23:35 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -755,9 +755,9 @@ DirPrintExpansions(StringList *words)
     StringListNode *ln;
     for (ln = words->first; ln != NULL; ln = ln->next) {
 	const char *word = ln->datum;
-	fprintf(debug_file, "%s ", word);
+	debug_printf("%s ", word);
     }
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
 }
 
 /*-
@@ -1713,17 +1713,16 @@ Dir_PrintDirectories(void)
 {
     CachedDirListNode *ln;
 
-    fprintf(debug_file, "#*** Directory Cache:\n");
-    fprintf(debug_file,
-	    "# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
-	    hits, misses, nearmisses, bigmisses,
-	    percentage(hits, hits + bigmisses + nearmisses));
-    fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
+    debug_printf("#*** Directory Cache:\n");
+    debug_printf("# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
+		 hits, misses, nearmisses, bigmisses,
+		 percentage(hits, hits + bigmisses + nearmisses));
+    debug_printf("# %-20s referenced\thits\n", "directory");
 
     for (ln = openDirectories->first; ln != NULL; ln = ln->next) {
 	CachedDir *dir = ln->datum;
-	fprintf(debug_file, "# %-20s %10d\t%4d\n", dir->name, dir->refCount,
-		dir->hits);
+	debug_printf("# %-20s %10d\t%4d\n", dir->name, dir->refCount,
+		     dir->hits);
     }
 }
 
@@ -1733,6 +1732,6 @@ Dir_PrintPath(SearchPath *path)
     SearchPathNode *node;
     for (node = path->first; node != NULL; node = node->next) {
 	const CachedDir *dir = node->datum;
-	fprintf(debug_file, "%s ", dir->name);
+	debug_printf("%s ", dir->name);
     }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.549 2020/09/28 21:11:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.550 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.549 2020/09/28 21:11:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.550 2020/09/28 22:23:35 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2998,16 +2998,15 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, const char endc)
 
     /* At this point, only the first character of the modifier can
      * be used since the end of the modifier is not yet known. */
-    fprintf(debug_file,
-	    "Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-	    st->v->name, mod[0], is_single_char ? "" : "...", st->val,
-	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-			       st->eflags, VarEvalFlags_ToStringSpecs),
-	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-			       st->v->flags, VarFlags_ToStringSpecs),
-	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-			       st->exprFlags,
-			       VarExprFlags_ToStringSpecs));
+    debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
+		 st->v->name, mod[0], is_single_char ? "" : "...", st->val,
+		 Enum_FlagsToString(eflags_str, sizeof eflags_str,
+				    st->eflags, VarEvalFlags_ToStringSpecs),
+		 Enum_FlagsToString(vflags_str, sizeof vflags_str,
+				    st->v->flags, VarFlags_ToStringSpecs),
+		 Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+				    st->exprFlags,
+				    VarExprFlags_ToStringSpecs));
 }
 
 static void
@@ -3019,16 +3018,15 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
     const char *quot = st->newVal == var_Error ? "" : "\"";
     const char *newVal = st->newVal == var_Error ? "error" : st->newVal;
 
-    fprintf(debug_file,
-	    "Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-	    st->v->name, (int)(p - mod), mod, quot, newVal, quot,
-	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
-			       st->eflags, VarEvalFlags_ToStringSpecs),
-	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
-			       st->v->flags, VarFlags_ToStringSpecs),
-	    Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
-			       st->exprFlags,
-			       VarExprFlags_ToStringSpecs));
+    debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
+		 st->v->name, (int)(p - mod), mod, quot, newVal, quot,
+		 Enum_FlagsToString(eflags_str, sizeof eflags_str,
+				    st->eflags, VarEvalFlags_ToStringSpecs),
+		 Enum_FlagsToString(vflags_str, sizeof vflags_str,
+				    st->v->flags, VarFlags_ToStringSpecs),
+		 Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
+				    st->exprFlags,
+				    VarExprFlags_ToStringSpecs));
 }
 
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
@@ -3842,7 +3840,7 @@ static void
 VarPrintVar(void *vp, void *data MAKE_ATTR_UNUSED)
 {
     Var *v = (Var *)vp;
-    fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));
+    debug_printf("%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));
 }
 
 /* Print all variables in a context, unordered. */

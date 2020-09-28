@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.121 2020/09/28 20:46:11 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.122 2020/09/28 22:23:35 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -385,10 +385,10 @@ printCMD(void *cmdp, void *mfpp)
  * Certain node types never get a .meta file
  */
 #define SKIP_META_TYPE(_type) do { \
-    if ((gn->type & __CONCAT(OP_, _type))) {	\
+    if ((gn->type & __CONCAT(OP_, _type))) { \
 	if (verbose) { \
-	    fprintf(debug_file, "Skipping meta for %s: .%s\n", \
-		    gn->name, __STRING(_type));		       \
+	    debug_printf("Skipping meta for %s: .%s\n", \
+		    gn->name, __STRING(_type)); \
 	} \
 	return FALSE; \
     } \
@@ -421,8 +421,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     /* Check if there are no commands to execute. */
     if (Lst_IsEmpty(gn->commands)) {
 	if (verbose)
-	    fprintf(debug_file, "Skipping meta for %s: no commands\n",
-		    gn->name);
+	    debug_printf("Skipping meta for %s: no commands\n", gn->name);
 	return FALSE;
     }
     if ((gn->type & (OP_META|OP_SUBMAKE)) == OP_SUBMAKE) {
@@ -436,8 +435,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     /* The object directory may not exist. Check it.. */
     if (cached_stat(dname, &mst) != 0) {
 	if (verbose)
-	    fprintf(debug_file, "Skipping meta for %s: no .OBJDIR\n",
-		    gn->name);
+	    debug_printf("Skipping meta for %s: no .OBJDIR\n", gn->name);
 	return FALSE;
     }
 
@@ -448,8 +446,8 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     /* If we aren't in the object directory, don't create a meta file. */
     if (!metaCurdirOk && strcmp(curdir, dname) == 0) {
 	if (verbose)
-	    fprintf(debug_file, "Skipping meta for %s: .OBJDIR == .CURDIR\n",
-		    gn->name);
+	    debug_printf("Skipping meta for %s: .OBJDIR == .CURDIR\n",
+			 gn->name);
 	return FALSE;
     }
     return TRUE;
@@ -1240,9 +1238,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 			continue;
 #ifdef DEBUG_META_MODE
 		    if (DEBUG(META))
-			    fprintf(debug_file, "%s: %d: %d: %c: cwd=%s lcwd=%s ldir=%s\n",
-				    fname, lineno,
-				    pid, buf[0], cwd, lcwd, latestdir);
+			debug_printf("%s: %d: %d: %c: cwd=%s lcwd=%s ldir=%s\n",
+				     fname, lineno,
+				     pid, buf[0], cwd, lcwd, latestdir);
 #endif
 		    break;
 		}
@@ -1270,9 +1268,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    Var_Set(cldir, latestdir, VAR_GLOBAL);
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
-				    fprintf(debug_file, "%s: %d: %d: cwd=%s lcwd=%s ldir=%s\n",
-					    fname, lineno,
-					    child, cwd, lcwd, latestdir);
+				debug_printf(
+					"%s: %d: %d: cwd=%s lcwd=%s ldir=%s\n",
+					fname, lineno,
+					child, cwd, lcwd, latestdir);
 #endif
 			}
 		    }

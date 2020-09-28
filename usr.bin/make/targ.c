@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.106 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.107 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #include	  "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.106 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.107 2020/09/28 22:23:35 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -347,7 +347,7 @@ PrintNodeNames(GNodeList *gnodes)
 
     for (node = gnodes->first; node != NULL; node = node->next) {
 	GNode *gn = node->datum;
-	fprintf(debug_file, " %s%s", gn->name, gn->cohort_num);
+	debug_printf(" %s%s", gn->name, gn->cohort_num);
     }
 }
 
@@ -356,9 +356,9 @@ PrintNodeNamesLine(const char *label, GNodeList *gnodes)
 {
     if (Lst_IsEmpty(gnodes))
 	return;
-    fprintf(debug_file, "# %s:", label);
+    debug_printf("# %s:", label);
     PrintNodeNames(gnodes);
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
 }
 
 void
@@ -367,7 +367,7 @@ Targ_PrintCmds(GNode *gn)
     StringListNode *node = gn->commands->first;
     for (; node != NULL; node = node->next) {
 	const char *cmd = LstNode_Datum(node);
-	fprintf(debug_file, "\t%s\n", cmd);
+	debug_printf("\t%s\n", cmd);
     }
 }
 
@@ -390,8 +390,8 @@ Targ_PrintType(int type)
 {
     int    tbit;
 
-#define PRINTBIT(attr)	case CONCAT(OP_,attr): fprintf(debug_file, " ." #attr); break
-#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))fprintf(debug_file, " ." #attr); break
+#define PRINTBIT(attr)	case CONCAT(OP_,attr): debug_printf(" ." #attr); break
+#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))debug_printf(" ." #attr); break
 
     type &= ~OP_OPMASK;
 
@@ -412,7 +412,7 @@ Targ_PrintType(int type)
 	PRINTBIT(NOTMAIN);
 	PRINTDBIT(LIB);
 	    /*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-	case OP_MEMBER: if (DEBUG(TARG))fprintf(debug_file, " .MEMBER"); break;
+	case OP_MEMBER: if (DEBUG(TARG))debug_printf(" .MEMBER"); break;
 	PRINTDBIT(ARCHV);
 	PRINTDBIT(MADE);
 	PRINTDBIT(PHONY);
@@ -440,57 +440,57 @@ made_name(GNodeMade made)
 void
 Targ_PrintNode(GNode *gn, int pass)
 {
-    fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
+    debug_printf("# %s%s", gn->name, gn->cohort_num);
     GNode_FprintDetails(debug_file, ", ", gn, "\n");
     if (gn->flags == 0)
 	return;
 
     if (!OP_NOP(gn->type)) {
-	fprintf(debug_file, "#\n");
+	debug_printf("#\n");
 	if (gn == mainTarg) {
-	    fprintf(debug_file, "# *** MAIN TARGET ***\n");
+	    debug_printf("# *** MAIN TARGET ***\n");
 	}
 	if (pass >= 2) {
 	    if (gn->unmade) {
-		fprintf(debug_file, "# %d unmade children\n", gn->unmade);
+		debug_printf("# %d unmade children\n", gn->unmade);
 	    } else {
-		fprintf(debug_file, "# No unmade children\n");
+		debug_printf("# No unmade children\n");
 	    }
 	    if (! (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 		if (gn->mtime != 0) {
-		    fprintf(debug_file, "# last modified %s: %s\n",
+		    debug_printf("# last modified %s: %s\n",
 			    Targ_FmtTime(gn->mtime),
 			    made_name(gn->made));
 		} else if (gn->made != UNMADE) {
-		    fprintf(debug_file, "# non-existent (maybe): %s\n",
+		    debug_printf("# non-existent (maybe): %s\n",
 			    made_name(gn->made));
 		} else {
-		    fprintf(debug_file, "# unmade\n");
+		    debug_printf("# unmade\n");
 		}
 	    }
 	    PrintNodeNamesLine("implicit parents", gn->implicitParents);
 	} else {
 	    if (gn->unmade)
-		fprintf(debug_file, "# %d unmade children\n", gn->unmade);
+		debug_printf("# %d unmade children\n", gn->unmade);
 	}
 	PrintNodeNamesLine("parents", gn->parents);
 	PrintNodeNamesLine("order_pred", gn->order_pred);
 	PrintNodeNamesLine("order_succ", gn->order_succ);
 
-	fprintf(debug_file, "%-16s", gn->name);
+	debug_printf("%-16s", gn->name);
 	switch (gn->type & OP_OPMASK) {
 	case OP_DEPENDS:
-	    fprintf(debug_file, ":"); break;
+	    debug_printf(":"); break;
 	case OP_FORCE:
-	    fprintf(debug_file, "!"); break;
+	    debug_printf("!"); break;
 	case OP_DOUBLEDEP:
-	    fprintf(debug_file, "::"); break;
+	    debug_printf("::"); break;
 	}
 	Targ_PrintType(gn->type);
 	PrintNodeNames(gn->children);
-	fprintf(debug_file, "\n");
+	debug_printf("\n");
 	Targ_PrintCmds(gn);
-	fprintf(debug_file, "\n\n");
+	debug_printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
 	    Targ_PrintNodes(gn->cohorts, pass);
 	}
@@ -516,10 +516,10 @@ PrintOnlySources(void)
 	if (!OP_NOP(gn->type))
 	    continue;
 
-	fprintf(debug_file, "#\t%s [%s]",
+	debug_printf("#\t%s [%s]",
 		gn->name, gn->path ? gn->path : gn->name);
 	Targ_PrintType(gn->type);
-	fprintf(debug_file, "\n");
+	debug_printf("\n");
     }
 }
 
@@ -531,18 +531,18 @@ PrintOnlySources(void)
 void
 Targ_PrintGraph(int pass)
 {
-    fprintf(debug_file, "#*** Input graph:\n");
+    debug_printf("#*** Input graph:\n");
     Targ_PrintNodes(allTargets, pass);
-    fprintf(debug_file, "\n\n");
-    fprintf(debug_file, "#\n#   Files that are only sources:\n");
+    debug_printf("\n\n");
+    debug_printf("#\n#   Files that are only sources:\n");
     PrintOnlySources();
-    fprintf(debug_file, "#*** Global Variables:\n");
+    debug_printf("#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
-    fprintf(debug_file, "#*** Command-line Variables:\n");
+    debug_printf("#*** Command-line Variables:\n");
     Var_Dump(VAR_CMD);
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
     Dir_PrintDirectories();
-    fprintf(debug_file, "\n");
+    debug_printf("\n");
     Suff_PrintAll();
 }
 

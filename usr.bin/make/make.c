@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.152 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.153 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.152 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.153 2020/09/28 22:23:35 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -128,7 +128,7 @@ static int MakeBuildParent(void *, void *);
 MAKE_ATTR_DEAD static void
 make_abort(GNode *gn, int line)
 {
-    fprintf(debug_file, "make_abort from line %d\n", line);
+    debug_printf("make_abort from line %d\n", line);
     Targ_PrintNode(gn, 2);
     Targ_PrintNodes(toBeMade, 2);
     Targ_PrintGraph(3);
@@ -211,9 +211,9 @@ Make_OODate(GNode *gn)
 	(void)Dir_MTime(gn, 1);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
-		fprintf(debug_file, "modified %s...", Targ_FmtTime(gn->mtime));
+		debug_printf("modified %s...", Targ_FmtTime(gn->mtime));
 	    } else {
-		fprintf(debug_file, "non-existent...");
+		debug_printf("non-existent...");
 	    }
 	}
     }
@@ -264,11 +264,11 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->type & OP_FORCE) {
-		fprintf(debug_file, "! operator...");
+		debug_printf("! operator...");
 	    } else if (gn->type & OP_PHONY) {
-		fprintf(debug_file, ".PHONY node...");
+		debug_printf(".PHONY node...");
 	    } else {
-		fprintf(debug_file, ".EXEC node...");
+		debug_printf(".EXEC node...");
 	    }
 	}
 	oodate = TRUE;
@@ -286,12 +286,12 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime) {
-		fprintf(debug_file, "modified before source %s...",
-		    gn->cmgn->path ? gn->cmgn->path : gn->cmgn->name);
+		debug_printf("modified before source %s...",
+			     gn->cmgn->path ? gn->cmgn->path : gn->cmgn->name);
 	    } else if (gn->mtime == 0) {
-		fprintf(debug_file, "non-existent and no sources...");
+		debug_printf("non-existent and no sources...");
 	    } else {
-		fprintf(debug_file, ":: operator and no sources...");
+		debug_printf(":: operator and no sources...");
 	    }
 	}
 	oodate = TRUE;
@@ -305,7 +305,7 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->flags & FORCE)
-		fprintf(debug_file, "non existing child...");
+		debug_printf("non existing child...");
 	}
 	oodate = (gn->flags & FORCE) ? TRUE : FALSE;
     }
@@ -385,7 +385,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
 #ifdef DEBUG_SRC
     if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
-	fprintf(debug_file, "Make_HandleUse: called for plain node %s\n", cgn->name);
+	debug_printf("Make_HandleUse: called for plain node %s\n", cgn->name);
 	return;
     }
 #endif
@@ -623,10 +623,10 @@ Make_Update(GNode *cgn)
     while ((ln = Lst_Next(parents)) != NULL) {
 	pgn = LstNode_Datum(ln);
 	if (DEBUG(MAKE))
-	    fprintf(debug_file, "inspect parent %s%s: flags %x, "
-			"type %x, made %d, unmade %d ",
-		    pgn->name, pgn->cohort_num, pgn->flags,
-		    pgn->type, pgn->made, pgn->unmade-1);
+	    debug_printf("inspect parent %s%s: flags %x, "
+			 "type %x, made %d, unmade %d ",
+			 pgn->name, pgn->cohort_num, pgn->flags,
+			 pgn->type, pgn->made, pgn->unmade - 1);
 
 	if (!(pgn->flags & REMAKE)) {
 	    /* This parent isn't needed */
@@ -669,8 +669,8 @@ Make_Update(GNode *cgn)
 	pgn->unmade -= 1;
 	if (pgn->unmade < 0) {
 	    if (DEBUG(MAKE)) {
-		fprintf(debug_file, "Graph cycles through %s%s\n",
-		    pgn->name, pgn->cohort_num);
+		debug_printf("Graph cycles through %s%s\n",
+			     pgn->name, pgn->cohort_num);
 		Targ_PrintGraph(2);
 	    }
 	    Error("Graph cycles through %s%s", pgn->name, pgn->cohort_num);
@@ -697,9 +697,9 @@ Make_Update(GNode *cgn)
 	    continue;
 	}
 	if (DEBUG(MAKE)) {
-	    fprintf(debug_file, "- %s%s made, schedule %s%s (made %d)\n",
-		    cgn->name, cgn->cohort_num,
-		    pgn->name, pgn->cohort_num, pgn->made);
+	    debug_printf("- %s%s made, schedule %s%s (made %d)\n",
+			 cgn->name, cgn->cohort_num,
+			 pgn->name, pgn->cohort_num, pgn->made);
 	    Targ_PrintNode(pgn, 2);
 	}
 	/* Ok, we can schedule the parent again */
@@ -1007,8 +1007,8 @@ MakePrintStatusOrder(void *ognp, void *gnp)
     GNode_FprintDetails(stdout, "(", ogn, ")\n");
 
     if (DEBUG(MAKE) && debug_file != stdout) {
-	fprintf(debug_file, "    `%s%s' has .ORDER dependency against %s%s ",
-		gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
+	debug_printf("    `%s%s' has .ORDER dependency against %s%s ",
+		     gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
 	GNode_FprintDetails(debug_file, "(", ogn, ")\n");
     }
     return 0;
@@ -1044,8 +1044,7 @@ MakePrintStatus(void *gnp, void *v_errors)
 	    printf("`%s%s' was not built", gn->name, gn->cohort_num);
 	    GNode_FprintDetails(stdout, " (", gn, ")!\n");
 	    if (DEBUG(MAKE) && debug_file != stdout) {
-		fprintf(debug_file, "`%s%s' was not built",
-			gn->name, gn->cohort_num);
+		debug_printf("`%s%s' was not built", gn->name, gn->cohort_num);
 		GNode_FprintDetails(debug_file, " (", gn, ")!\n");
 	    }
 	    /* Most likely problem is actually caused by .ORDER */
@@ -1056,8 +1055,8 @@ MakePrintStatus(void *gnp, void *v_errors)
 	    printf("`%s%s' not remade because of errors.\n",
 		    gn->name, gn->cohort_num);
 	    if (DEBUG(MAKE) && debug_file != stdout)
-		fprintf(debug_file, "`%s%s' not remade because of errors.\n",
-			gn->name, gn->cohort_num);
+		debug_printf("`%s%s' not remade because of errors.\n",
+			     gn->name, gn->cohort_num);
 	    break;
 	}
 	return 0;
@@ -1291,7 +1290,7 @@ Make_Run(GNodeList *targs)
     Make_ProcessWait(targs);
 
     if (DEBUG(MAKE)) {
-	 fprintf(debug_file, "#***# full graph\n");
+	 debug_printf("#***# full graph\n");
 	 Targ_PrintGraph(1);
     }
 
@@ -1337,7 +1336,7 @@ Make_Run(GNodeList *targs)
     if (errors == 0) {
 	Lst_ForEachUntil(targs, MakePrintStatus, &errors);
 	if (DEBUG(MAKE)) {
-	    fprintf(debug_file, "done: errors %d\n", errors);
+	    debug_printf("done: errors %d\n", errors);
 	    if (errors)
 		Targ_PrintGraph(4);
 	}

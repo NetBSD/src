@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.149 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.150 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -87,6 +87,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -523,29 +524,39 @@ extern int debug;
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
+static inline MAKE_ATTR_UNUSED void MAKE_ATTR_PRINTFLIKE(1, 2)
+debug_printf(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    vfprintf(debug_file, fmt, args);
+    va_end(args);
+}
+
 #define DEBUG0(module, text) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, "%s", text)
+    else debug_printf("%s", text)
 
 #define DEBUG1(module, fmt, arg1) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, fmt, arg1)
+    else debug_printf(fmt, arg1)
 
 #define DEBUG2(module, fmt, arg1, arg2) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, fmt, arg1, arg2)
+    else debug_printf(fmt, arg1, arg2)
 
 #define DEBUG3(module, fmt, arg1, arg2, arg3) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, fmt, arg1, arg2, arg3)
+    else debug_printf(fmt, arg1, arg2, arg3)
 
 #define DEBUG4(module, fmt, arg1, arg2, arg3, arg4) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, fmt, arg1, arg2, arg3, arg4)
+    else debug_printf(fmt, arg1, arg2, arg3, arg4)
 
 #define DEBUG5(module, fmt, arg1, arg2, arg3, arg4, arg5) \
     if (!DEBUG(module)) (void)0; \
-    else fprintf(debug_file, fmt, arg1, arg2, arg3, arg4, arg5)
+    else debug_printf(fmt, arg1, arg2, arg3, arg4, arg5)
 
 #include "nonints.h"
 
