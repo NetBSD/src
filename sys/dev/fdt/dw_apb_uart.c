@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.6 2020/09/28 11:32:19 jmcneill Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.7 2020/09/28 11:34:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.6 2020/09/28 11:32:19 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.7 2020/09/28 11:34:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,8 +174,8 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	flags = fdtbus_get_stdout_flags();
 
 	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
-		/* missing or bad reg-shift property, assume 0 */
-		reg_shift = 0;
+		/* missing or bad reg-shift property, assume 2 */
+		reg_shift = 2;
 	}
 
 	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
