@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.2 2020/07/10 12:25:10 skrll Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.3 2020/09/28 11:54:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.2 2020/07/10 12:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.3 2020/09/28 11:54:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.2 2020/07/10 12:25:10 skrll Exp 
 #define ZYNQ_ARMCORE_SIZE	0x00003000
 
 extern struct bus_space arm_generic_bs_tag;
-extern struct bus_space arm_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 void zynq_platform_early_putchar(char);
@@ -104,7 +103,6 @@ static void
 zynq_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &arm_generic_bs_tag;
-	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
