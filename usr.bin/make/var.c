@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.547 2020/09/28 20:55:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.548 2020/09/28 21:01:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.547 2020/09/28 20:55:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.548 2020/09/28 21:01:53 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2966,6 +2966,27 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 }
 #endif
 
+#ifdef SUNSHCMD
+/* :sh */
+static ApplyModifierResult
+ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
+{
+    const char *p = *pp;
+    if (p[1] == 'h' && (p[2] == st->endc || p[2] == ':')) {
+	if (st->eflags & VARE_WANTRES) {
+	    const char *errfmt;
+	    st->newVal = Cmd_Exec(st->val, &errfmt);
+	    if (errfmt)
+		Error(errfmt, st->val);
+	} else
+	    st->newVal = emptyString;
+	*pp = p + 2;
+	return AMR_OK;
+    } else
+	return AMR_UNKNOWN;
+}
+#endif
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
@@ -3165,18 +3186,7 @@ ApplyModifiers(
 	    break;
 #ifdef SUNSHCMD
 	case 's':
-	    if (p[1] == 'h' && (p[2] == st.endc || p[2] == ':')) {
-		if (st.eflags & VARE_WANTRES) {
-		    const char *errfmt;
-		    st.newVal = Cmd_Exec(st.val, &errfmt);
-		    if (errfmt)
-			Error(errfmt, st.val);
-		} else
-		    st.newVal = emptyString;
-		p += 2;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
+	    res = ApplyModifier_SunShell(&p, &st);
 	    break;
 #endif
 	default:
