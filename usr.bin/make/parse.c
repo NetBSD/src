@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.341 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.342 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.341 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.342 2020/09/28 22:23:35 rillig Exp $");
 
 /* types and constants */
 
@@ -814,8 +814,8 @@ ParseLinkSrc(void *pgnp, void *data)
 	Lst_Append(cgn->parents, pgn);
 
     if (DEBUG(PARSE)) {
-	fprintf(debug_file, "# %s: added child %s - %s\n",
-		__func__, pgn->name, cgn->name);
+	debug_printf("# %s: added child %s - %s\n",
+		     __func__, pgn->name, cgn->name);
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
@@ -979,8 +979,8 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	    Lst_Append(predecessor->order_succ, gn);
 	    Lst_Append(gn->order_pred, predecessor);
 	    if (DEBUG(PARSE)) {
-		fprintf(debug_file, "# %s: added Order dependency %s - %s\n",
-		    __func__, predecessor->name, gn->name);
+		debug_printf("# %s: added Order dependency %s - %s\n",
+			     __func__, predecessor->name, gn->name);
 		Targ_PrintNode(predecessor, 0);
 		Targ_PrintNode(gn, 0);
 	    }
@@ -2307,9 +2307,10 @@ Parse_SetInput(const char *name, int line, int fd,
 	ParseTrackInput(name);
 
     if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: file %s, line %d, fd %d, nextbuf %s, arg %p\n",
-		__func__, name, line, fd,
-		nextbuf == loadedfile_nextbuf ? "loadedfile" : "other", arg);
+	debug_printf("%s: file %s, line %d, fd %d, nextbuf %s, arg %p\n",
+		     __func__, name, line, fd,
+		     nextbuf == loadedfile_nextbuf ? "loadedfile" : "other",
+		     arg);
 
     if (fd == -1 && nextbuf == NULL)
 	/* sanity */

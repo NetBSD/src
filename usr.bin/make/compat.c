@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.157 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.158 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.157 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.158 2020/09/28 22:23:35 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -403,19 +403,19 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
 	if (status != 0) {
 	    if (DEBUG(ERROR)) {
 		const char *cp;
-		fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
-		    gn->name);
+		debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
+			     gn->name);
 		for (cp = cmd; *cp; ) {
 		    if (ch_isspace(*cp)) {
-			fprintf(debug_file, " ");
+			debug_printf(" ");
 			while (ch_isspace(*cp))
 			    cp++;
 		    } else {
-			fprintf(debug_file, "%c", *cp);
+			debug_printf("%c", *cp);
 			cp++;
 		    }
 		}
-		fprintf(debug_file, "\n");
+		debug_printf("\n");
 	    }
 	    printf("*** Error code %d", status);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.125 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.126 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,7 +134,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.125 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.126 2020/09/28 22:23:35 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -612,7 +612,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 		if (fseek(arch, -elen, SEEK_CUR) != 0)
 			goto badarch;
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    fprintf(debug_file, "ArchStat: Extended format entry for %s\n", memName);
+		    debug_printf("ArchStat: Extended format entry for %s\n", memName);
 		}
 	    }
 #endif
@@ -840,7 +840,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 		}
 		ename[elen] = '\0';
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    fprintf(debug_file, "ArchFind: Extended format entry for %s\n", ename);
+		    debug_printf("ArchFind: Extended format entry for %s\n", ename);
 		}
 		if (strncmp(ename, member, len) == 0) {
 			/* Found as extended name */
@@ -1114,7 +1114,7 @@ Arch_LibOODate(GNode *gn)
 	    modTimeTOC = (int)strtol(arhPtr->ar_date, NULL, 10);
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		fprintf(debug_file, "%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
+		debug_printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
 	    oodate = (gn->cmgn == NULL || gn->cmgn->mtime > modTimeTOC);
 	} else {
@@ -1122,7 +1122,7 @@ Arch_LibOODate(GNode *gn)
 	     * A library w/o a table of contents is out-of-date
 	     */
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		fprintf(debug_file, "No t.o.c....");
+		debug_printf("No t.o.c....");
 	    }
 	    oodate = TRUE;
 	}

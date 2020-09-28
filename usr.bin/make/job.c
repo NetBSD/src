@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.250 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.251 2020/09/28 22:23:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.250 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.251 2020/09/28 22:23:35 rillig Exp $");
 
 # define STATIC static
 
@@ -356,9 +356,9 @@ job_table_dump(const char *where)
 {
     Job *job;
 
-    fprintf(debug_file, "job table @ %s\n", where);
+    debug_printf("job table @ %s\n", where);
     for (job = job_table; job < job_table_end; job++) {
-	fprintf(debug_file, "job %d, status %d, flags %d, pid %d\n",
+	debug_printf("job %d, status %d, flags %d, pid %d\n",
 	    (int)(job - job_table), job->job_state, job->flags, job->pid);
     }
 }
@@ -524,10 +524,8 @@ JobPassSig_suspend(int signo)
     act.sa_flags = 0;
     (void)sigaction(signo, &act, NULL);
 
-    if (DEBUG(JOB)) {
-	(void)fprintf(debug_file,
-		       "JobPassSig passing signal %d to self.\n", signo);
-    }
+    if (DEBUG(JOB))
+	debug_printf("JobPassSig passing signal %d to self.\n", signo);
 
     (void)kill(getpid(), signo);
 
@@ -631,7 +629,7 @@ JobPrintCommand(void *cmdp, void *jobp)
     }
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
-	(void)fprintf(debug_file, fmt, arg);	\
+	debug_printf(fmt, arg);			\
     }						\
    (void)fprintf(job->cmdFILE, fmt, arg);	\
    (void)fflush(job->cmdFILE);
@@ -1176,12 +1174,12 @@ JobExec(Job *job, char **argv)
     if (DEBUG(JOB)) {
 	int i;
 
-	(void)fprintf(debug_file, "Running %s %sly\n", job->node->name, "local");
-	(void)fprintf(debug_file, "\tCommand: ");
+	debug_printf("Running %s %sly\n", job->node->name, "local");
+	debug_printf("\tCommand: ");
 	for (i = 0; argv[i] != NULL; i++) {
-	    (void)fprintf(debug_file, "%s ", argv[i]);
+	    debug_printf("%s ", argv[i]);
 	}
-	(void)fprintf(debug_file, "\n");
+	debug_printf("\n");
     }
 
     /*
@@ -1328,8 +1326,8 @@ JobExec(Job *job, char **argv)
      * Now the job is actually running, add it to the table.
      */
     if (DEBUG(JOB)) {
-	fprintf(debug_file, "JobExec(%s): pid %d added to jobs table\n",
-		job->node->name, job->pid);
+	debug_printf("JobExec(%s): pid %d added to jobs table\n",
+		     job->node->name, job->pid);
 	job_table_dump("job started");
     }
     JobSigUnlock(&mask);
@@ -2510,7 +2508,7 @@ JobRestartJobs(void)
 	    }
 	    job->job_suspended = 0;
 	    if (KILLPG(job->pid, SIGCONT) != 0 && DEBUG(JOB)) {
-		fprintf(debug_file, "Failed to send SIGCONT to %d\n", job->pid);
+		debug_printf("Failed to send SIGCONT to %d\n", job->pid);
 	    }
 	}
 	if (job->job_state == JOB_ST_FINISHED)
