@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.52 2020/09/27 23:12:12 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.53 2020/09/28 00:06:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -163,7 +163,8 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int jobPipe[2];		/* Pipe for reading output from job */
+    int inPipe;			/* Pipe for reading output from job */
+    int outPipe;		/* Pipe for writing control commands */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
 
 #define JOB_BUFSIZE	1024
@@ -175,9 +176,6 @@ typedef struct Job {
     struct BuildMon	bm;
 #endif
 } Job;
-
-#define inPipe jobPipe[0]
-#define outPipe jobPipe[1]
 
 /*-
  * Shell Specifications:
