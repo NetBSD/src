@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.10 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.11 2020/09/28 12:15:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.10 2020/07/10 12:25:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.11 2020/09/28 12:15:23 jmcneill Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.10 2020/07/10 12:25:09 skrll Exp
 #endif
 
 extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 static const struct pmap_devmap *
@@ -91,7 +90,6 @@ static void
 imx_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &armv7_generic_bs_tag;
-	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
