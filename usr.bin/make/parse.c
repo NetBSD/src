@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.338 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.339 2020/09/28 01:24:34 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.338 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.339 2020/09/28 01:24:34 sjg Exp $");
 
 /* types and constants */
 
@@ -777,7 +777,9 @@ ParseMessage(char *line)
     free(line);
 
     if (mtype == PARSE_FATAL) {
-	/* Terminate immediately. */
+	/* Terminate almost immediately. */
+	dieQuietly(NULL, 0);
+	PrintOnError(NULL, NULL);
 	exit(1);
     }
     return TRUE;
@@ -3052,6 +3054,7 @@ Parse_File(const char *name, int fd)
 	(void)fprintf(stderr,
 	    "%s: Fatal errors encountered -- cannot continue",
 	    progname);
+	dieQuietly(NULL, 0);
 	PrintOnError(NULL, NULL);
 	exit(1);
     }
