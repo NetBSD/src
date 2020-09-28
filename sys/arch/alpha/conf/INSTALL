@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.116 2020/09/19 03:27:42 thorpej Exp $
+# $NetBSD: INSTALL,v 1.117 2020/09/28 03:48:12 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -87,6 +87,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at	root
 cpu*	at	mainbus0
+qemu*	at	mainbus0
 
 # TurboLaser bus support and devices
 tlsb*	at	mainbus0
