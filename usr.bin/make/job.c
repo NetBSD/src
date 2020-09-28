@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.248 2020/09/27 23:56:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.249 2020/09/28 00:06:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.248 2020/09/27 23:56:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.249 2020/09/28 00:06:36 rillig Exp $");
 
 # define STATIC static
 
@@ -401,18 +401,22 @@ static void
 JobCreatePipe(Job *job, int minfd)
 {
     int i, fd, flags;
+    int pipe_fds[2];
 
-    if (pipe(job->jobPipe) == -1)
+    if (pipe(pipe_fds) == -1)
 	Punt("Cannot create pipe: %s", strerror(errno));
 
     for (i = 0; i < 2; i++) {
 	/* Avoid using low numbered fds */
-	fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
+	fd = fcntl(pipe_fds[i], F_DUPFD, minfd);
 	if (fd != -1) {
-	    close(job->jobPipe[i]);
-	    job->jobPipe[i] = fd;
+	    close(pipe_fds[i]);
+	    pipe_fds[i] = fd;
 	}
     }
+
+    job->inPipe = pipe_fds[0];
+    job->outPipe = pipe_fds[1];
 
     /* Set close-on-exec flag for both */
     if (fcntl(job->inPipe, F_SETFD, FD_CLOEXEC) == -1)
