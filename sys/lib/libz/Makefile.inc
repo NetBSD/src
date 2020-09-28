@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2018/05/27 01:14:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2020/09/28 02:44:34 simonb Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -19,7 +19,7 @@
 # Default values:
 ZDST?=		${.OBJDIR}/lib/z
 Z_AS?=		library
-ZDOTDIR?= ../../.
+ZDOTDIR?=	 ../../.
 
 ZDIR=		${S:S@^.@${ZDOTDIR}@:q}/lib/libz
 .if (${Z_AS} == "obj")
