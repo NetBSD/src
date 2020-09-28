@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.88 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.89 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -61,7 +61,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.88 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.89 2020/09/28 20:46:11 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -272,14 +272,12 @@ For_Accum(const char *line)
 	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 && (ch_isspace(ptr[6]) || !ptr[6])) {
-	    if (DEBUG(FOR))
-		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
+	    DEBUG1(FOR, "For: end for %d\n", forLevel);
 	    if (--forLevel <= 0)
 		return FALSE;
 	} else if (strncmp(ptr, "for", 3) == 0 && ch_isspace(ptr[3])) {
 	    forLevel++;
-	    if (DEBUG(FOR))
-		(void)fprintf(debug_file, "For: new loop %d\n", forLevel);
+	    DEBUG1(FOR, "For: new loop %d\n", forLevel);
 	}
     }
 
@@ -436,8 +434,7 @@ ForIterate(void *v_arg, size_t *ret_len)
 
     *ret_len = Buf_Len(&cmds);
     cmds_str = Buf_Destroy(&cmds, FALSE);
-    if (DEBUG(FOR))
-	(void)fprintf(debug_file, "For: loop body:\n%s", cmds_str);
+    DEBUG1(FOR, "For: loop body:\n%s", cmds_str);
 
     arg->sub_next += strlist_num(&arg->vars);
 

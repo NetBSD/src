@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.148 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.149 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -522,6 +522,30 @@ extern int debug;
 #define CONCAT(a,b)	a##b
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
+
+#define DEBUG0(module, text) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, "%s", text)
+
+#define DEBUG1(module, fmt, arg1) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, fmt, arg1)
+
+#define DEBUG2(module, fmt, arg1, arg2) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, fmt, arg1, arg2)
+
+#define DEBUG3(module, fmt, arg1, arg2, arg3) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, fmt, arg1, arg2, arg3)
+
+#define DEBUG4(module, fmt, arg1, arg2, arg3, arg4) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, fmt, arg1, arg2, arg3, arg4)
+
+#define DEBUG5(module, fmt, arg1, arg2, arg3, arg4, arg5) \
+    if (!DEBUG(module)) (void)0; \
+    else fprintf(debug_file, fmt, arg1, arg2, arg3, arg4, arg5)
 
 #include "nonints.h"
 

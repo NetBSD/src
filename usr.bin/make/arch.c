@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.124 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.125 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,7 +134,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.124 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.125 2020/09/28 20:46:11 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -676,9 +676,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	strncmp(name, ARLONGNAMES2, sizeof(ARLONGNAMES2) - 1) == 0) {
 
 	if (ar->fnametab != NULL) {
-	    if (DEBUG(ARCH)) {
-		fprintf(debug_file, "Attempted to redefine an SVR4 name table\n");
-	    }
+	    DEBUG0(ARCH, "Attempted to redefine an SVR4 name table\n");
 	    return -1;
 	}
 
@@ -690,9 +688,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	ar->fnamesize = size;
 
 	if (fread(ar->fnametab, size, 1, arch) != 1) {
-	    if (DEBUG(ARCH)) {
-		fprintf(debug_file, "Reading an SVR4 name table failed\n");
-	    }
+	    DEBUG0(ARCH, "Reading an SVR4 name table failed\n");
 	    return -1;
 	}
 	eptr = ar->fnametab + size;
@@ -701,10 +697,8 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 		entry++;
 		*ptr = '\0';
 	    }
-	if (DEBUG(ARCH)) {
-	    fprintf(debug_file, "Found svr4 archive name table with %lu entries\n",
-		    (unsigned long)entry);
-	}
+	DEBUG1(ARCH, "Found svr4 archive name table with %lu entries\n",
+	       (unsigned long)entry);
 	return 0;
     }
 
@@ -713,22 +707,16 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 
     entry = (size_t)strtol(&name[1], &eptr, 0);
     if ((*eptr != ' ' && *eptr != '\0') || eptr == &name[1]) {
-	if (DEBUG(ARCH)) {
-	    fprintf(debug_file, "Could not parse SVR4 name %s\n", name);
-	}
+        DEBUG1(ARCH, "Could not parse SVR4 name %s\n", name);
 	return 2;
     }
     if (entry >= ar->fnamesize) {
-	if (DEBUG(ARCH)) {
-	    fprintf(debug_file, "SVR4 entry offset %s is greater than %lu\n",
+	DEBUG2(ARCH, "SVR4 entry offset %s is greater than %lu\n",
 		   name, (unsigned long)ar->fnamesize);
-	}
 	return 2;
     }
 
-    if (DEBUG(ARCH)) {
-	fprintf(debug_file, "Replaced %s with %s\n", name, &ar->fnametab[entry]);
-    }
+    DEBUG2(ARCH, "Replaced %s with %s\n", name, &ar->fnametab[entry]);
 
     snprintf(name, MAXPATHLEN + 1, "%s", &ar->fnametab[entry]);
     return 1;
