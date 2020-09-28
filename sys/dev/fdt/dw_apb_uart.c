@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.5 2019/07/21 15:57:23 rin Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.6 2020/09/28 11:32:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.5 2019/07/21 15:57:23 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.6 2020/09/28 11:32:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,8 +76,8 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 	struct dw_apb_uart_softc * const ssc = device_private(self);
 	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
+	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
-	bus_space_tag_t bst;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
@@ -91,17 +91,7 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 
 	if (of_getprop_uint32(faa->faa_phandle, "reg-shift", &reg_shift)) {
 		/* missing or bad reg-shift property, assume 2 */
-		bst = faa->faa_a4x_bst;
-	} else {
-		if (reg_shift == 2) {
-			bst = faa->faa_a4x_bst;
-		} else if (reg_shift == 0) {
-			bst = faa->faa_bst;
-		} else {
-			aprint_error(": unsupported reg-shift value %d\n",
-			    reg_shift);
-			return;
-		}
+		reg_shift = 2;
 	}
 
 	sc->sc_dev = self;
@@ -137,7 +127,7 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	com_init_regs(&sc->sc_regs, bst, bsh, addr);
+	com_init_regs_stride(&sc->sc_regs, bst, bsh, addr, reg_shift);
 
 	com_attach_subr(sc);
 
@@ -169,9 +159,12 @@ static void
 dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
 	const int phandle = faa->faa_phandle;
-	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t dummy_bsh;
+	struct com_regs regs;
 	bus_addr_t addr;
 	tcflag_t flags;
+	u_int reg_shift;
 	int speed;
 
 	fdtbus_get_reg(phandle, 0, &addr, NULL);
@@ -180,7 +173,15 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_DW_APB, flags))
+	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
+		/* missing or bad reg-shift property, assume 0 */
+		reg_shift = 0;
+	}
+
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	com_init_regs_stride(&regs, bst, dummy_bsh, addr, reg_shift);
+
+	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_DW_APB, flags))
 		panic("Cannot initialize dw-apb-uart console");
 
 	cn_set_magic("+++++");
