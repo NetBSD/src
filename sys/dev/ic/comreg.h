@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.26 2017/10/29 14:06:08 jmcneill Exp $	*/
+/*	$NetBSD: comreg.h,v 1.27 2020/09/28 11:33:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -162,6 +162,9 @@
 #define HALT_CHCFG_UD			0x04 /* apply updates to LCR/dividors */
 #define HALT_CHCFG_EN			0x02 /* enable change while busy */
 
+/* DesignWare-specific registers */
+#define	DW_APB_UART_CPR			0xf4
+#define	 UART_CPR_FIFO_MODE		__BITS(23,16)
 
 /* XXX ISA-specific. */
 #define	COM_NPORTS	8
