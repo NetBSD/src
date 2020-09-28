@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.340 2020/09/28 02:06:27 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.341 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.340 2020/09/28 02:06:27 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.341 2020/09/28 20:46:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1164,8 +1164,7 @@ ParseDoDependency(char *line)
      */
     ParseSpecial specType = Not;
 
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseDoDependency(%s)\n", line);
+    DEBUG1(PARSE, "ParseDoDependency(%s)\n", line);
     tOp = 0;
 
     paths = NULL;
@@ -2221,9 +2220,8 @@ SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
     Var_Set(dirvar, dirname, VAR_GLOBAL);
     Var_Set(filevar, basename, VAR_GLOBAL);
 
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: ${%s} = `%s' ${%s} = `%s'\n",
-		__func__, dirvar, dirname, filevar, basename);
+    DEBUG5(PARSE, "%s: ${%s} = `%s' ${%s} = `%s'\n",
+	   __func__, dirvar, dirname, filevar, basename);
     free(freeIt);
 }
 
@@ -2407,8 +2405,7 @@ ParseTraditionalInclude(char *line)
     char	  *file = &line[silent + 7];
     char	  *all_files;
 
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: %s\n", __func__, file);
+    DEBUG2(PARSE, "%s: %s\n", __func__, file);
 
     /*
      * Skip over whitespace
@@ -2454,8 +2451,7 @@ ParseGmakeExport(char *line)
     char	  *variable = &line[6];
     char	  *value;
 
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: %s\n", __func__, variable);
+    DEBUG2(PARSE, "%s: %s\n", __func__, variable);
 
     /*
      * Skip over whitespace
@@ -2535,9 +2531,8 @@ ParseEOF(void)
     }
 
     curFile = Stack_Pop(&includes);
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
-	    curFile->fname, curFile->lineno);
+    DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
+	   curFile->fname, curFile->lineno);
 
     ParseSetParseFile(curFile->fname);
     return CONTINUE;
@@ -2849,9 +2844,7 @@ Parse_File(const char *name, int fd)
 
     do {
 	for (; (line = ParseReadLine()) != NULL; ) {
-	    if (DEBUG(PARSE))
-		fprintf(debug_file, "ParseReadLine (%d): '%s'\n",
-			curFile->lineno, line);
+	    DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n", curFile->lineno, line);
 	    if (*line == '.') {
 		/*
 		 * Lines that begin with the special character may be

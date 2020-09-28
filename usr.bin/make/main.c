@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.351 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.352 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.351 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.352 2020/09/28 20:46:11 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -1411,10 +1411,8 @@ main(int argc, char **argv)
 
 	if (!compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
-	if (DEBUG(JOB))
-	    fprintf(debug_file,
-		    "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
-		    jp_0, jp_1, maxJobs, maxJobTokens, compatMake ? 1 : 0);
+	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
+	       jp_0, jp_1, maxJobs, maxJobTokens, compatMake ? 1 : 0);
 
 	if (!printVars)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */

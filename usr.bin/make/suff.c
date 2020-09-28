@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.170 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.171 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,19 +129,12 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.170 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.171 2020/09/28 20:46:11 rillig Exp $");
 
-#define SUFF_DEBUG0(fmt) \
-    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
-
-#define SUFF_DEBUG1(fmt, arg1) \
-    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1)
-
-#define SUFF_DEBUG2(fmt, arg1, arg2) \
-    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2)
-
-#define SUFF_DEBUG3(fmt, arg1, arg2, arg3) \
-    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2, arg3)
+#define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
+#define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
+#define SUFF_DEBUG2(fmt, arg1, arg2) DEBUG2(SUFF, fmt, arg1, arg2)
+#define SUFF_DEBUG3(fmt, arg1, arg2, arg3) DEBUG3(SUFF, fmt, arg1, arg2, arg3)
 
 typedef List SuffList;
 typedef ListNode SuffListNode;

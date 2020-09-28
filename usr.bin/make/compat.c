@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.156 2020/09/27 21:35:16 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.157 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.156 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.157 2020/09/28 20:46:11 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -301,8 +301,7 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
     if (!doIt && NoExecute(gn)) {
 	return 0;
     }
-    if (DEBUG(JOB))
-	fprintf(debug_file, "Execute: '%s'\n", cmd);
+    DEBUG1(JOB, "Execute: '%s'\n", cmd);
 
     if (useShell) {
 	/*
@@ -532,18 +531,13 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * exist and when we were modified last. The criteria for datedness
 	 * are defined by the Make_OODate function.
 	 */
-	if (DEBUG(MAKE)) {
-	    fprintf(debug_file, "Examining %s...", gn->name);
-	}
+	DEBUG1(MAKE, "Examining %s...", gn->name);
 	if (! Make_OODate(gn)) {
 	    gn->made = UPTODATE;
-	    if (DEBUG(MAKE)) {
-		fprintf(debug_file, "up-to-date.\n");
-	    }
+	    DEBUG0(MAKE, "up-to-date.\n");
 	    goto cohorts;
-	} else if (DEBUG(MAKE)) {
-	    fprintf(debug_file, "out-of-date.\n");
-	}
+	} else
+	    DEBUG0(MAKE, "out-of-date.\n");
 
 	/*
 	 * If the user is just seeing if something is out-of-date, exit now

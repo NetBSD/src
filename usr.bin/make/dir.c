@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.150 2020/09/27 22:17:07 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.151 2020/09/28 20:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,17 +136,11 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.150 2020/09/27 22:17:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.151 2020/09/28 20:46:11 rillig Exp $");
 
-#define DIR_DEBUG0(fmt) \
-    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
-
-#define DIR_DEBUG1(fmt, arg1) \
-    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt, arg1)
-
-#define DIR_DEBUG2(fmt, arg1, arg2) \
-    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2)
-
+#define DIR_DEBUG0(text) DEBUG0(DIR, text)
+#define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
+#define DIR_DEBUG2(fmt, arg1, arg2) DEBUG2(DIR, fmt, arg1, arg2)
 
 /*
  *	A search path consists of a list of CachedDir structures. A CachedDir

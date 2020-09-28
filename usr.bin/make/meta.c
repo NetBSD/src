@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.120 2020/09/26 17:15:20 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.121 2020/09/28 20:46:11 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -428,9 +428,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     if ((gn->type & (OP_META|OP_SUBMAKE)) == OP_SUBMAKE) {
 	/* OP_SUBMAKE is a bit too aggressive */
 	if (Lst_ForEachUntil(gn->commands, is_submake, gn)) {
-	    if (DEBUG(META))
-		fprintf(debug_file, "Skipping meta for %s: .SUBMAKE\n",
-			gn->name);
+	    DEBUG1(META, "Skipping meta for %s: .SUBMAKE\n", gn->name);
 	    return FALSE;
 	}
     }
@@ -510,8 +508,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 		      dname, tname, objdir);
 
 #ifdef DEBUG_META_MODE
-    if (DEBUG(META))
-	fprintf(debug_file, "meta_create: %s\n", fname);
+    DEBUG1(META, "meta_create: %s\n", fname);
 #endif
 
     if ((mf.fp = fopen(fname, "w")) == NULL)
@@ -930,9 +927,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		newsz = ROUNDUP(fs.st_size, BUFSIZ);
 	    if (newsz <= bufsz)
 		return x;		/* truncated */
-	    if (DEBUG(META))
-		fprintf(debug_file, "growing buffer %zu -> %zu\n",
-			bufsz, newsz);
+	    DEBUG2(META, "growing buffer %zu -> %zu\n", bufsz, newsz);
 	    p = bmake_realloc(buf, newsz);
 	    if (p) {
 		*bufp = buf = p;
@@ -990,9 +985,7 @@ meta_ignore(GNode *gn, const char *p)
 	cached_realpath(p, fname); /* clean it up */
 	if (Lst_ForEachUntil(metaIgnorePaths, prefix_match, fname)) {
 #ifdef DEBUG_META_MODE
-	    if (DEBUG(META))
-		fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
-			p);
+	    DEBUG1(META, "meta_oodate: ignoring path: %s\n", p);
 #endif
 	    return TRUE;
 	}
@@ -1008,9 +1001,7 @@ meta_ignore(GNode *gn, const char *p)
 	/* TODO: handle errors */
 	if (*pm) {
 #ifdef DEBUG_META_MODE
-	    if (DEBUG(META))
-		fprintf(debug_file, "meta_oodate: ignoring pattern: %s\n",
-			p);
+	    DEBUG1(META, "meta_oodate: ignoring pattern: %s\n", p);
 #endif
 	    free(pm);
 	    return TRUE;
@@ -1029,9 +1020,7 @@ meta_ignore(GNode *gn, const char *p)
 	/* TODO: handle errors */
 	if (*fm == '\0') {
 #ifdef DEBUG_META_MODE
-	    if (DEBUG(META))
-		fprintf(debug_file, "meta_oodate: ignoring filtered: %s\n",
-			p);
+	    DEBUG1(META, "meta_oodate: ignoring filtered: %s\n", p);
 #endif
 	    free(fm);
 	    return TRUE;
@@ -1121,8 +1110,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     meta_name(gn, fname, sizeof(fname), dname, tname, dname);
 
 #ifdef DEBUG_META_MODE
-    if (DEBUG(META))
-	fprintf(debug_file, "meta_oodate: %s\n", fname);
+    DEBUG1(META, "meta_oodate: %s\n", fname);
 #endif
 
     if ((fp = fopen(fname, "r")) != NULL) {
@@ -1183,8 +1171,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    /* Delimit the record type. */
 	    p = buf;
 #ifdef DEBUG_META_MODE
-	    if (DEBUG(META))
-		fprintf(debug_file, "%s: %d: %s\n", fname, lineno, buf);
+	    DEBUG3(META, "%s: %d: %s\n", fname, lineno, buf);
 #endif
 	    strsep(&p, " ");
 	    if (have_filemon) {
@@ -1298,8 +1285,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
 		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL);
 #ifdef DEBUG_META_MODE
-		    if (DEBUG(META))
-			fprintf(debug_file, "%s: %d: cwd=%s ldir=%s\n", fname, lineno, cwd, lcwd);
+		    DEBUG4(META, "%s: %d: cwd=%s ldir=%s\n",
+			   fname, lineno, cwd, lcwd);
 #endif
 		    break;
 
@@ -1342,9 +1329,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (buf[0] == 'M') {
 			/* the target of the mv is a file 'W'ritten */
 #ifdef DEBUG_META_MODE
-			if (DEBUG(META))
-			    fprintf(debug_file, "meta_oodate: M %s -> %s\n",
-				    p, move_target);
+			DEBUG2(META, "meta_oodate: M %s -> %s\n",
+			       p, move_target);
 #endif
 			p = move_target;
 			goto check_write;
@@ -1365,9 +1351,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    DEQUOTE(p);
 		    DEQUOTE(link_src);
 #ifdef DEBUG_META_MODE
-		    if (DEBUG(META))
-			fprintf(debug_file, "meta_oodate: L %s -> %s\n",
-				link_src, p);
+		    DEBUG2(META, "meta_oodate: L %s -> %s\n", link_src, p);
 #endif
 		    /* FALLTHROUGH */
 		case 'W':		/* Write */
@@ -1411,8 +1395,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    p = link_src;
 		    link_src = NULL;
 #ifdef DEBUG_META_MODE
-		    if (DEBUG(META))
-			fprintf(debug_file, "meta_oodate: L src %s\n", p);
+		    DEBUG1(META, "meta_oodate: L src %s\n", p);
 #endif
 		    /* FALLTHROUGH */
 		case 'R':		/* Read */
@@ -1460,8 +1443,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 			for (sdp = sdirs; *sdp && !found; sdp++) {
 #ifdef DEBUG_META_MODE
-			    if (DEBUG(META))
-				fprintf(debug_file, "%s: %d: looking for: %s\n", fname, lineno, *sdp);
+			    DEBUG3(META, "%s: %d: looking for: %s\n",
+				   fname, lineno, *sdp);
 #endif
 			    if (cached_stat(*sdp, &mst) == 0) {
 				found = 1;
@@ -1470,13 +1453,13 @@ meta_oodate(GNode *gn, Boolean oodate)
 			}
 			if (found) {
 #ifdef DEBUG_META_MODE
-			    if (DEBUG(META))
-				fprintf(debug_file, "%s: %d: found: %s\n", fname, lineno, p);
+			    DEBUG3(META, "%s: %d: found: %s\n",
+				   fname, lineno, p);
 #endif
 			    if (!S_ISDIR(mst.mst_mode) &&
 				mst.mst_mtime > gn->mtime) {
-				if (DEBUG(META))
-				    fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
+				DEBUG3(META, "%s: %d: file '%s' is newer than the target...\n",
+				       fname, lineno, p);
 				oodate = TRUE;
 			    } else if (S_ISDIR(mst.mst_mode)) {
 				/* Update the latest directory. */
@@ -1508,8 +1491,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		 * meta data file.
 		 */
 		if (cmdNode == NULL) {
-		    if (DEBUG(META))
-			fprintf(debug_file, "%s: %d: there were more build commands in the meta data file than there are now...\n", fname, lineno);
+		    DEBUG2(META, "%s: %d: there were more build commands in the meta data file than there are now...\n",
+			   fname, lineno);
 		    oodate = TRUE;
 		} else {
 		    char *cmd = LstNode_Datum(cmdNode);
@@ -1524,8 +1507,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    }
 		    if (hasOODATE) {
 			needOODATE = TRUE;
-			if (DEBUG(META))
-			    fprintf(debug_file, "%s: %d: cannot compare command using .OODATE\n", fname, lineno);
+			DEBUG2(META, "%s: %d: cannot compare command using .OODATE\n",
+			       fname, lineno);
 		    }
 		    (void)Var_Subst(cmd, gn, VARE_WANTRES|VARE_UNDEFERR, &cmd);
 		    /* TODO: handle errors */
@@ -1559,8 +1542,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
 			strcmp(p, cmd) != 0) {
-			if (DEBUG(META))
-			    fprintf(debug_file, "%s: %d: a build command has changed\n%s\nvs\n%s\n", fname, lineno, p, cmd);
+			DEBUG4(META, "%s: %d: a build command has changed\n%s\nvs\n%s\n",
+			       fname, lineno, p, cmd);
 			if (!metaIgnoreCMDs)
 			    oodate = TRUE;
 		    }
@@ -1573,14 +1556,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 		 * that weren't in the meta data file.
 		 */
 		if (!oodate && cmdNode != NULL) {
-		    if (DEBUG(META))
-			fprintf(debug_file, "%s: %d: there are extra build commands now that weren't in the meta data file\n", fname, lineno);
+		    DEBUG2(META, "%s: %d: there are extra build commands now that weren't in the meta data file\n",
+			   fname, lineno);
 		    oodate = TRUE;
 		}
 		CHECK_VALID_META(p);
 		if (strcmp(p, cwd) != 0) {
-		    if (DEBUG(META))
-			fprintf(debug_file, "%s: %d: the current working directory has changed from '%s' to '%s'\n", fname, lineno, p, curdir);
+		    DEBUG4(META, "%s: %d: the current working directory has changed from '%s' to '%s'\n",
+			   fname, lineno, p, curdir);
 		    oodate = TRUE;
 		}
 	    }
@@ -1588,14 +1571,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 	fclose(fp);
 	if (!Lst_IsEmpty(missingFiles)) {
-	    if (DEBUG(META))
-		fprintf(debug_file, "%s: missing files: %s...\n",
+	    DEBUG2(META, "%s: missing files: %s...\n",
 			fname, (char *)LstNode_Datum(Lst_First(missingFiles)));
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {
-	    if (DEBUG(META))
-		fprintf(debug_file, "%s: missing filemon data\n", fname);
+	    DEBUG1(META, "%s: missing filemon data\n", fname);
 	    oodate = TRUE;
 	}
     } else {
@@ -1609,8 +1590,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		}
 	    }
 	    if (!cp) {
-		if (DEBUG(META))
-		    fprintf(debug_file, "%s: required but missing\n", fname);
+		DEBUG1(META, "%s: required but missing\n", fname);
 		oodate = TRUE;
 		needOODATE = TRUE;	/* assume the worst */
 	    }
