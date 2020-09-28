@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.3 2020/07/10 12:25:10 skrll Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.4 2020/09/28 11:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.3 2020/07/10 12:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.4 2020/09/28 11:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,7 +99,6 @@ omap3_phystovirt(paddr_t pa)
 
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern struct bus_space arm_generic_bs_tag;
-extern struct bus_space arm_generic_a4x_bs_tag;
 
 static const struct pmap_devmap *
 omap3_platform_devmap(void)
@@ -124,7 +123,6 @@ static void
 omap3_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &arm_generic_bs_tag;
-	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 

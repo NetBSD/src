@@ -1,4 +1,4 @@
-/* $NetBSD: arm_platform.c,v 1.2 2020/01/06 08:29:08 skrll Exp $ */
+/* $NetBSD: arm_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.2 2020/01/06 08:29:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,13 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.2 2020/01/06 08:29:08 skrll Exp $
 
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern struct bus_space arm_generic_bs_tag;
-extern struct bus_space arm_generic_a4x_bs_tag;
 
 static void
 arm_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &arm_generic_bs_tag;
-	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.8 2019/10/29 22:19:13 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.8 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.9 2020/09/28 11:54:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,8 +76,8 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
-	bus_space_tag_t bst;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
@@ -87,8 +87,6 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-
-	bst = faa->faa_a4x_bst;
 
 	sc->sc_dev = self;
 
@@ -110,7 +108,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	com_init_regs(&sc->sc_regs, bst, bsh, addr);
+	com_init_regs_stride(&sc->sc_regs, bst, bsh, addr, 2);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");
@@ -143,7 +141,9 @@ static void
 ti_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
 	const int phandle = faa->faa_phandle;
-	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t dummy_bsh;
+	struct com_regs regs;
 	bus_addr_t addr;
 	tcflag_t flags;
 	int speed;
@@ -154,7 +154,10 @@ ti_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_NORMAL, flags))
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	com_init_regs_stride(&regs, bst, dummy_bsh, addr, 2);
+
+	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_NORMAL, flags))
 		panic("Cannot initialize ti com console");
 }
 

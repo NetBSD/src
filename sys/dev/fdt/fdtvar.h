@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.60 2020/02/20 01:35:55 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.61 2020/09/28 11:54:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,7 +54,6 @@ typedef void *audio_dai_tag_t;
 struct fdt_attach_args {
 	const char *faa_name;
 	bus_space_tag_t faa_bst;
-	bus_space_tag_t faa_a4x_bst;
 	bus_dma_tag_t faa_dmat;
 	int faa_phandle;
 	int faa_quiet;

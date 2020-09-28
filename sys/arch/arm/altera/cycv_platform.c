@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.13 2020/07/10 12:25:08 skrll Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.14 2020/09/28 11:54:22 jmcneill Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.13 2020/07/10 12:25:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.14 2020/09/28 11:54:22 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -131,7 +131,6 @@ cycv_mpstart(void)
 static void
 cycv_platform_init_attach_args(struct fdt_attach_args *faa) {
 	faa->faa_bst = &armv7_generic_bs_tag;
-	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
