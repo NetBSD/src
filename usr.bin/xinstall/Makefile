@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/09/07 00:26:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2020/09/29 12:04:48 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ MAN=	install.1
 
 .PATH:		${NETBSDSRCDIR}/usr.bin/make
 CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.bin/make
+CPPFLAGS+=	-DMAKE_NATIVE
 
 .PATH:		${NETBSDSRCDIR}/usr.sbin/mtree
 CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree
