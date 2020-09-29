@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.16 2020/01/27 21:21:22 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.17 2020/09/29 14:29:56 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -211,11 +211,14 @@ static int
 edit_part_start(menudesc *m, void *arg)
 {
 	struct part_edit_info *marg = arg;
+	struct disk_part_info pinfo;
 	daddr_t max_size;
 
+	marg->parts->pscheme->get_part_info(marg->parts, marg->cur_id, &pinfo);
 	marg->cur.start = getpartoff(marg->parts, marg->cur.start);
 	max_size = marg->parts->pscheme->max_free_space_at(marg->parts,
-	    marg->cur.start);
+	    pinfo.start);
+	max_size += pinfo.start - marg->cur.start;
 	if (marg->cur.size > max_size)
 		marg->cur.size = max_size;
 
@@ -226,9 +229,11 @@ static int
 edit_part_size(menudesc *m, void *arg)
 {
 	struct part_edit_info *marg = arg;
+	struct disk_part_info pinfo;
 
-	marg->cur.size = getpartsize(marg->parts, marg->cur.start,
-	    marg->cur.size);
+	marg->parts->pscheme->get_part_info(marg->parts, marg->cur_id, &pinfo);
+	marg->cur.size = getpartsize(marg->parts, pinfo.start,
+	    marg->cur.start, marg->cur.size);
 
 	return 0;
 }

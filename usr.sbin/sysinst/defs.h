@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.63 2020/09/22 16:18:54 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.64 2020/09/29 14:29:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -737,8 +737,8 @@ void	canonicalize_last_mounted(char*);
 int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset, bool install);
 int edit_ptn(menudesc *, void *);
 int checkoverlap(struct disk_partitions *parts);
-daddr_t getpartsize(struct disk_partitions *parts, daddr_t partstart,
-    daddr_t defpartsize);
+daddr_t getpartsize(struct disk_partitions *parts, daddr_t orig_start,
+    daddr_t partstart, daddr_t defpartsize);
 daddr_t getpartoff(struct disk_partitions *parts, daddr_t defpartstart);
 
 /* from install.c */
