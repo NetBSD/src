@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.347 2020/09/29 03:02:19 msaitoh Exp $	*/
+/*	$NetBSD: cd.c,v 1.348 2020/09/29 03:04:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.347 2020/09/29 03:02:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.348 2020/09/29 03:04:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1030,7 +1030,7 @@ cdminphys(struct buf *bp)
 	 *
 	 * XXX Note that the SCSI-I spec says that 256-block transfers
 	 * are allowed in a 6-byte read/write, and are specified
-	 * by settng the "length" to 0.  However, we're conservative
+	 * by setting the "length" to 0.  However, we're conservative
 	 * here, allowing only 255-block transfers in case an
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
