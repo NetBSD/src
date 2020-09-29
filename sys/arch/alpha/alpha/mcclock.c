@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.18 2011/11/21 19:50:37 christos Exp $ */
+/* $NetBSD: mcclock.c,v 1.19 2020/09/29 01:20:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.18 2011/11/21 19:50:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.19 2020/09/29 01:20:59 thorpej Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.18 2011/11/21 19:50:37 christos Exp $"
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <sys/bus.h>
 #include <machine/cpu_counter.h>
@@ -135,6 +136,11 @@ static void
 mcclock_init(void *dev)
 {
 	struct mc146818_softc *sc = dev;
+
+	/* Only do this on the primary CPU. */
+	if (! CPU_IS_PRIMARY(curcpu())) {
+		return;
+	}
 
 	/* enable interval clock interrupt */
 	(*sc->sc_mcwrite)(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
