@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.345 2020/09/29 02:49:56 msaitoh Exp $	*/
+/*	$NetBSD: cd.c,v 1.346 2020/09/29 02:58:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.345 2020/09/29 02:49:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.346 2020/09/29 02:58:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,7 @@ cd_lastclose(device_t self)
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 static int
 cdclose(dev_t dev, int flag, int fmt, struct lwp *l)

@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.5 2020/01/23 16:34:12 pgoyette Exp $	*/
+/*	$NetBSD: index.S,v 1.6 2020/09/29 02:58:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 /*
- * Find the first occurence of c in the string cp.
+ * Find the first occurrence of c in the string cp.
  * Return pointer to match or null pointer.
  *
  * char *
@@ -39,7 +39,7 @@
 #include "DEFS.h"
 
 #ifdef LIBC_SCCS
-RCSID("$NetBSD: index.S,v 1.5 2020/01/23 16:34:12 pgoyette Exp $")
+RCSID("$NetBSD: index.S,v 1.6 2020/09/29 02:58:51 msaitoh Exp $")
 #endif
 
 /* Alas not quite twice as fast as the generic C version on a uvax2 */
