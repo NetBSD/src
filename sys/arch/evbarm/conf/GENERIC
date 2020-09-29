@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.82 2020/07/12 13:35:33 skrll Exp $
+#	$NetBSD: GENERIC,v 1.83 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -8,13 +8,7 @@ include	"arch/evbarm/conf/std.generic"
 include "arch/evbarm/conf/files.generic"
 include	"arch/evbarm/conf/GENERIC.common"
 
-options 	CPU_CORTEXA5
-options 	CPU_CORTEXA7
-options 	CPU_CORTEXA8
-options 	CPU_CORTEXA9
-options 	CPU_CORTEXA15
-options 	CPU_CORTEXA17
-options 	CPU_CORTEXA53
+options 	CPU_CORTEX
 
 options 	SOC_AM33XX
 options 	SOC_BCM2836

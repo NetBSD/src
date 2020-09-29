@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.11 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: KOBO,v 1.12 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -7,7 +7,7 @@ include	"arch/evbarm/conf/std.kobo"
 include	"arch/evbarm/conf/GENERIC.common"
 
 # CPU options
-options 	CPU_CORTEXA8	# Support the ARM-v7a core
+options 	CPU_CORTEX	# Support the ARM-v7a core
 options		IMX51
 options 	IMX50
 options 	IMX508

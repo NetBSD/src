@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.36 2019/01/03 23:04:09 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.37 2020/09/29 19:58:50 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -11,12 +11,12 @@ defparam opt_exynos.h				EXYNOS_WDT_DEFAULT_PERIOD
 
 #
 defflag opt_exynos.h				SOC_EXYNOS
-defflag opt_exynos.h				SOC_EXYNOS4: SOC_EXYNOS, CPU_CORTEXA9
+defflag opt_exynos.h				SOC_EXYNOS4: SOC_EXYNOS, CPU_CORTEX
 defflag opt_exynos.h				SOC_EXYNOS4120: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4212: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4412: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4412P: SOC_EXYNOS4
-defflag opt_exynos.h				SOC_EXYNOS5: SOC_EXYNOS, CPU_CORTEXA15
+defflag opt_exynos.h				SOC_EXYNOS5: SOC_EXYNOS, CPU_CORTEX
 defflag opt_exynos.h				SOC_EXYNOS5250: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5260: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5410: SOC_EXYNOS5

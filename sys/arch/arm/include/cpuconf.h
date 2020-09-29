@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.27 2018/08/10 16:17:30 maxv Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.28 2020/09/29 19:58:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -72,8 +72,6 @@
 			 defined(CPU_ARM1176) +				\
 			 defined(CPU_ARM11MPCORE) +			\
 			 defined(CPU_CORTEX) +				\
-			 defined(CPU_CORTEXA8) +			\
-			 defined(CPU_CORTEXA9) +			\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_FA526) +				\

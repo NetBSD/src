@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PARALLELLA,v 1.8 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: PARALLELLA,v 1.9 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	Parallella -- Xilinx Zynq Eval Board Kernel
 #
@@ -17,7 +17,6 @@ options 	ZYNQ7000
 options 	ZYNQ7010
 options 	MULTIPROCESSOR
 options 	CPU_CORTEX
-options 	CPU_CORTEXA9
 options		MEMSIZE=1024
 
 # Architecture options

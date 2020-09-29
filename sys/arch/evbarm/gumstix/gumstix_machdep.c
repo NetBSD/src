@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.66 2020/04/18 11:00:39 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.67 2020/09/29 19:58:50 jmcneill Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -154,6 +154,9 @@
 #include "prcm.h"
 #endif
 
+#include "arma9tmr.h"
+#include "armgtmr.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -198,17 +201,13 @@
 #include <evbarm/gumstix/gumstixreg.h>
 #include <evbarm/gumstix/gumstixvar.h>
 
-#if defined(CPU_CORTEXA9)
 #include <arm/cortex/pl310_var.h>
 #include <arm/cortex/pl310_reg.h>
 #include <arm/cortex/scu_reg.h>
 
 #include <arm/cortex/a9tmr_var.h>
-#endif
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
 #include <arm/cortex/gtmr_var.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -479,10 +478,16 @@ void gumstix_cpu_hatch(struct cpu_info *);
 void
 gumstix_cpu_hatch(struct cpu_info *ci)
 {
-#if defined(CPU_CORTEXA9)
-	a9tmr_init_cpu_clock(ci);
-#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
-	gtmr_init_cpu_clock(ci);
+#if NARMA9TMR > 0
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		a9tmr_init_cpu_clock(ci);
+	}
+#endif
+#if NARMGTMR > 0
+	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid) ||
+	    CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid)) {
+		gtmr_init_cpu_clock(ci);
+	}
 #endif
 }
 #endif
@@ -495,27 +500,28 @@ gumstix_mpstart(void)
 	const bus_space_tag_t iot = &omap_bs_tag;
 	int error;
 
-#if defined(CPU_CORTEXA9)
-	bus_space_handle_t scu_ioh;
-	error = bus_space_map(iot, OMAP4_SCU_BASE, OMAP4_SCU_SIZE, 0, &scu_ioh);
-	if (error)
-		panic("Could't map OMAP4_SCU_BASE");
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		bus_space_handle_t scu_ioh;
+		error = bus_space_map(iot, OMAP4_SCU_BASE, OMAP4_SCU_SIZE, 0, &scu_ioh);
+		if (error)
+			panic("Could't map OMAP4_SCU_BASE");
 
-	/*
-	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
-	 */
-	bus_space_write_4(iot, scu_ioh, SCU_INV_ALL_REG, 0xffff);
+		/*
+		 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+		 */
+		bus_space_write_4(iot, scu_ioh, SCU_INV_ALL_REG, 0xffff);
 
-	uint32_t diagctl = bus_space_read_4(iot, scu_ioh, SCU_DIAG_CONTROL);
-	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
-	bus_space_write_4(iot, scu_ioh, SCU_DIAG_CONTROL, diagctl);
+		uint32_t diagctl = bus_space_read_4(iot, scu_ioh, SCU_DIAG_CONTROL);
+		diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+		bus_space_write_4(iot, scu_ioh, SCU_DIAG_CONTROL, diagctl);
 
-	uint32_t scu_ctl = bus_space_read_4(iot, scu_ioh, SCU_CTL);
-	scu_ctl |= SCU_CTL_SCU_ENA;
-	bus_space_write_4(iot, scu_ioh, SCU_CTL, scu_ctl);
+		uint32_t scu_ctl = bus_space_read_4(iot, scu_ioh, SCU_CTL);
+		scu_ctl |= SCU_CTL_SCU_ENA;
+		bus_space_write_4(iot, scu_ioh, SCU_CTL, scu_ctl);
 
-	armv7_dcache_wbinv_all();
-#endif
+		armv7_dcache_wbinv_all();
+	}
+
 	bus_space_handle_t wugen_ioh;
 	error = bus_space_map(iot, OMAP4_WUGEN_BASE, OMAP4_WUGEN_SIZE, 0,
 	    &wugen_ioh);

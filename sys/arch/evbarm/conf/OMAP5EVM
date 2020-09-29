@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OMAP5EVM,v 1.19 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: OMAP5EVM,v 1.20 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	OMAP5EVM -- TI OMAP 543x Eval Board Kernel
 #
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_CORTEXA15
+options 	CPU_CORTEX
 options 	OMAP_5430
 #options 	PMAPCOUNTERS
 options 	MULTIPROCESSOR
