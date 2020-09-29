@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.346 2020/09/29 02:58:52 msaitoh Exp $	*/
+/*	$NetBSD: cd.c,v 1.347 2020/09/29 03:02:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.346 2020/09/29 02:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.347 2020/09/29 03:02:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,7 +758,7 @@ bad:
 /*
  * Issue single I/O command
  *
- * Called from dk_start and implicitely from dk_strategy
+ * Called from dk_start and implicitly from dk_strategy
  */
 static int
 cd_diskstart(device_t dev, struct buf *bp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clbio.c,v 1.5 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: nfs_clbio.c,v 1.6 2020/09/29 03:02:19 msaitoh Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clbio.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clbio.c,v 1.5 2018/09/03 16:29:34 riastradh Exp $");
+__RCSID("$NetBSD: nfs_clbio.c,v 1.6 2020/09/29 03:02:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,7 +1231,7 @@ again:
 		if (ioflag & IO_UNIT) {
 			VATTR_NULL(&vattr);
 			vattr.va_size = orig_size;
-			/* IO_SYNC is handled implicitely */
+			/* IO_SYNC is handled implicitly */
 			(void)VOP_SETATTR(vp, &vattr, cred);
 			uio->uio_offset -= orig_resid - uio->uio_resid;
 			uio->uio_resid = orig_resid;
