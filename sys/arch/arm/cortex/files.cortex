@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.13 2019/10/14 11:00:13 jmcneill Exp $
+# $NetBSD: files.cortex,v 1.14 2020/09/29 19:58:50 jmcneill Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -32,12 +32,12 @@ file	arch/arm/cortex/pl310.c			arml2cc	needs-flag
 # ARMv7 Generic Timer
 device	armgtmr
 attach	armgtmr at mpcorebus
-file	arch/arm/cortex/gtmr.c			armgtmr
+file	arch/arm/cortex/gtmr.c			armgtmr needs-flag
 
 # A9 MPCore Global Timer
 device	arma9tmr
 attach	arma9tmr at mpcorebus
-file	arch/arm/cortex/a9tmr.c			arma9tmr
+file	arch/arm/cortex/a9tmr.c			arma9tmr needs-flag
 
 # A9 MPcore Private Timer
 device	arma9ptmr

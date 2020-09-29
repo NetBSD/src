@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.161 2020/08/02 06:58:16 maxv Exp $
+#	$NetBSD: GENERIC64,v 1.162 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -10,8 +10,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 
 maxusers	64
 
-options 	CPU_CORTEXA53
-options 	CPU_CORTEXA57
+options 	CPU_CORTEX
 options 	CPU_THUNDERX
 options 	SOC_BCM2837
 options 	SOC_MESONGXBB
