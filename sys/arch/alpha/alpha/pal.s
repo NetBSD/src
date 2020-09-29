@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.15 2002/05/13 21:38:30 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.16 2020/09/29 01:17:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.15 2002/05/13 21:38:30 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.16 2020/09/29 01:17:22 thorpej Exp $");
 
 inc2:	.stabs	__FILE__,132,0,0,inc2; .loc	1 __LINE__
 /*
@@ -155,3 +155,26 @@ LEAF_NOPROFILE(alpha_pal_wrvptptr,1)
 	call_pal PAL_OSF1_wrvptptr
 	RET
 	END(alpha_pal_wrvptptr)
+
+/*
+ * alpha_pal_wtint: Wait for interrupt. [PRIVILEGED]
+ *
+ * Arguments:
+ *	a0	maximum number of clock interrupts to skip
+ *
+ * Return value:
+ *	v0	actual number of clock interrupts skipped
+ *
+ * WTINT waits, in a low power mode, for either any device interrupt or
+ * for the next clock interrupt (a0 == 0) or up to the specified number
+ * of clock interrupts to pass.  Note that the PCC may slow or stop
+ * while waiting.
+ *
+ * Not all PALcode versions support WTINT.  If it is not supported,
+ * an OPDEC fault will occur.
+ */
+	.text
+LEAF_NOPROFILE(alpha_pal_wtint,1)
+	call_pal PAL_wtint
+	RET
+	END(alpha_pal_wtint)
