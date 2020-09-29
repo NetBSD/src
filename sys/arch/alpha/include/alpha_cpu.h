@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.51 2020/09/05 16:29:08 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.52 2020/09/29 01:17:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -378,6 +378,7 @@ void		alpha_pal_halt(void) __attribute__((__noreturn__));
 unsigned long	_alpha_pal_swpipl(unsigned long);	/* for profiling */
 void		alpha_pal_wrent(void *, unsigned long);
 void		alpha_pal_wrvptptr(unsigned long);
+unsigned long	alpha_pal_wtint(unsigned long);
 
 #define	alpha_pal_draina() __asm volatile("call_pal %0 # PAL_draina"	\
 				: : "i" (PAL_draina) : "memory")
