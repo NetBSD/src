@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.58 2017/12/03 12:53:52 maxv Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.59 2020/09/29 02:49:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.58 2017/12/03 12:53:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.59 2020/09/29 02:49:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.58 2017/12/03 12:53:52 maxv Exp $");
  ** Ultrix filesystem operations: mount(), getmnt().
  ** These are included purely so one can place an (ECOFF or ELF)
  ** NetBSD/pmax kernel in an Ultrix root filesystem, boot it,
- ** and over-write the Ultrix root parition with NetBSD binaries.
+ ** and over-write the Ultrix root partition with NetBSD binaries.
  **/
 
 /*
