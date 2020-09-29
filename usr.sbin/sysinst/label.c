@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.24 2020/09/22 16:18:54 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.25 2020/09/29 14:29:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.24 2020/09/22 16:18:54 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.25 2020/09/29 14:29:56 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -291,10 +291,15 @@ static int
 edit_fs_size(menudesc *m, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
+	struct disk_part_info pinfo;
 	daddr_t size;
 
-	size = getpartsize(edit->pset->parts, edit->info.start,
-	    edit->info.size);
+	/* get original partition data, in case start moved already */
+	edit->pset->parts->pscheme->get_part_info(edit->pset->parts,
+	    edit->id, &pinfo);
+	/* ask for new size with old start and current values */
+	size = getpartsize(edit->pset->parts, pinfo.start,
+	    edit->info.start, edit->info.size);
 	if (size < 0)
 		return 0;
 	if (size > edit->pset->parts->disk_size)
@@ -2040,7 +2045,8 @@ getpartoff(struct disk_partitions *parts, daddr_t defpartstart)
 
 /* Ask for a partition size, check bounds and do the needed roundups */
 daddr_t
-getpartsize(struct disk_partitions *parts, daddr_t partstart, daddr_t dflt)
+getpartsize(struct disk_partitions *parts, daddr_t orig_start,
+    daddr_t partstart, daddr_t dflt)
 {
 	char dsize[24], isize[24], max_size[24], maxpartc, valid_parts[4],
 	    *label_msg, *prompt, *head, *hint, *tail;
@@ -2050,7 +2056,10 @@ getpartsize(struct disk_partitions *parts, daddr_t partstart, daddr_t dflt)
 	part_id partn;
 
 	diskend = parts->disk_start + parts->disk_size;
-	max = parts->pscheme->max_free_space_at(parts, partstart);
+	max = parts->pscheme->max_free_space_at(parts, orig_start);
+	max += orig_start - partstart;
+	if (sizemult == 1)
+		max--;	/* with hugher scale proper rounding later will be ok */
 
 	/* We need to keep both the unrounded and rounded (_r) max and dflt */
 	dflt_r = (partstart + dflt) / sizemult - partstart / sizemult;
