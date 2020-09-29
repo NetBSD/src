@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2016/01/26 23:12:19 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2020/09/29 18:31:31 roy Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpnet_tap
-COMMENT=/dev/tap virtual Ethernet interface
+COMMENT=/dev/tap Ethernet tunnel software network interface
 
 IOCONF=	TAP.ioconf
 SRCS=	if_tap.c
