@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.343 2020/09/15 07:00:03 mrg Exp $
+# $NetBSD: shl.mi,v 1.344 2020/09/29 18:33:22 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -246,6 +246,7 @@
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_tap_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_tun_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpnet_vether_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_vlan_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_wg_pic.a			comp-c-piclib		picinstall,rump
