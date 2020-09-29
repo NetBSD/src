@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.550 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.551 2020/09/29 18:31:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.550 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.551 2020/09/29 18:31:39 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3029,6 +3029,85 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 				    VarExprFlags_ToStringSpecs));
 }
 
+static ApplyModifierResult
+ApplyModifier(const char **pp, ApplyModifiersState *st)
+{
+    switch (**pp) {
+    case ':':
+	return ApplyModifier_Assign(pp, st);
+    case '@':
+	return ApplyModifier_Loop(pp, st);
+    case '_':
+	return ApplyModifier_Remember(pp, st);
+    case 'D':
+    case 'U':
+	return ApplyModifier_Defined(pp, st);
+    case 'L':
+	ApplyModifiersState_Define(st);
+	st->newVal = bmake_strdup(st->v->name);
+	(*pp)++;
+	return AMR_OK;
+    case 'P':
+	return ApplyModifier_Path(pp, st);
+    case '!':
+	return ApplyModifier_ShellCommand(pp, st);
+    case '[':
+	return ApplyModifier_Words(pp, st);
+    case 'g':
+	return ApplyModifier_Gmtime(pp, st);
+    case 'h':
+	return ApplyModifier_Hash(pp, st);
+    case 'l':
+	return ApplyModifier_Localtime(pp, st);
+    case 't':
+	return ApplyModifier_To(pp, st);
+    case 'N':
+    case 'M':
+	return ApplyModifier_Match(pp, st);
+    case 'S':
+	return ApplyModifier_Subst(pp, st);
+    case '?':
+	return ApplyModifier_IfElse(pp, st);
+#ifndef NO_REGEX
+    case 'C':
+	return ApplyModifier_Regex(pp, st);
+#endif
+    case 'q':
+    case 'Q':
+	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	    st->newVal = VarQuote(st->val, **pp == 'q');
+	    (*pp)++;
+	    return AMR_OK;
+	} else
+	    return AMR_UNKNOWN;
+    case 'T':
+	return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
+    case 'H':
+	return ApplyModifier_WordFunc(pp, st, ModifyWord_Head);
+    case 'E':
+	return ApplyModifier_WordFunc(pp, st, ModifyWord_Suffix);
+    case 'R':
+	return ApplyModifier_WordFunc(pp, st, ModifyWord_Root);
+    case 'r':
+	return ApplyModifier_Range(pp, st);
+    case 'O':
+	return ApplyModifier_Order(pp, st);
+    case 'u':
+	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	    st->newVal = VarUniq(st->val);
+	    (*pp)++;
+	    return AMR_OK;
+	} else
+	    return AMR_UNKNOWN;
+#ifdef SUNSHCMD
+    case 's':
+	return ApplyModifier_SunShell(pp, st);
+#endif
+    default:
+	return AMR_UNKNOWN;
+    }
+}
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
@@ -3117,105 +3196,7 @@ ApplyModifiers(
 	if (DEBUG(VAR))
 	    LogBeforeApply(&st, mod, endc);
 
-	switch (*mod) {
-	case ':':
-	    res = ApplyModifier_Assign(&p, &st);
-	    break;
-	case '@':
-	    res = ApplyModifier_Loop(&p, &st);
-	    break;
-	case '_':
-	    res = ApplyModifier_Remember(&p, &st);
-	    break;
-	case 'D':
-	case 'U':
-	    res = ApplyModifier_Defined(&p, &st);
-	    break;
-	case 'L':
-	    ApplyModifiersState_Define(&st);
-	    st.newVal = bmake_strdup(st.v->name);
-	    p++;
-	    res = AMR_OK;
-	    break;
-	case 'P':
-	    res = ApplyModifier_Path(&p, &st);
-	    break;
-	case '!':
-	    res = ApplyModifier_ShellCommand(&p, &st);
-	    break;
-	case '[':
-	    res = ApplyModifier_Words(&p, &st);
-	    break;
-	case 'g':
-	    res = ApplyModifier_Gmtime(&p, &st);
-	    break;
-	case 'h':
-	    res = ApplyModifier_Hash(&p, &st);
-	    break;
-	case 'l':
-	    res = ApplyModifier_Localtime(&p, &st);
-	    break;
-	case 't':
-	    res = ApplyModifier_To(&p, &st);
-	    break;
-	case 'N':
-	case 'M':
-	    res = ApplyModifier_Match(&p, &st);
-	    break;
-	case 'S':
-	    res = ApplyModifier_Subst(&p, &st);
-	    break;
-	case '?':
-	    res = ApplyModifier_IfElse(&p, &st);
-	    break;
-#ifndef NO_REGEX
-	case 'C':
-	    res = ApplyModifier_Regex(&p, &st);
-	    break;
-#endif
-	case 'q':
-	case 'Q':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = VarQuote(st.val, *mod == 'q');
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
-	    break;
-	case 'T':
-	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Tail);
-	    break;
-	case 'H':
-	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Head);
-	    break;
-	case 'E':
-	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Suffix);
-	    break;
-	case 'R':
-	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Root);
-	    break;
-	case 'r':
-	    res = ApplyModifier_Range(&p, &st);
-	    break;
-	case 'O':
-	    res = ApplyModifier_Order(&p, &st);
-	    break;
-	case 'u':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = VarUniq(st.val);
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
-	    break;
-#ifdef SUNSHCMD
-	case 's':
-	    res = ApplyModifier_SunShell(&p, &st);
-	    break;
-#endif
-	default:
-	    res = AMR_UNKNOWN;
-	}
+	res = ApplyModifier(&p, &st);
 
 #ifdef SYSVVARSUB
 	if (res == AMR_UNKNOWN) {
