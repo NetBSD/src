@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.132 2019/12/26 04:53:12 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.133 2020/09/29 14:08:43 gson Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.132 2019/12/26 04:53:12 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.133 2020/09/29 14:08:43 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -2881,7 +2881,7 @@ logerror(const char *fmt, ...)
 	if (!daemonized && Debug)
 		DPRINTF(D_MISC, "%s\n", outbuf);
 	if (!daemonized && !Debug)
-		printf("%s\n", outbuf);
+		printf("%s: %s\n", getprogname(), outbuf);
 
 	logerror_running = 0;
 }
