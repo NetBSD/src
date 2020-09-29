@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.23 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.24 2020/09/29 07:51:01 gson Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.23 2020/08/14 00:53:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24 2020/09/29 07:51:01 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1297,6 +1297,9 @@ entropy_extract(void *buf, size_t len, int flags)
 
 		/* Wait for some entropy to come in and try again.  */
 		KASSERT(E->stage >= ENTROPY_WARM);
+		printf("entropy: pid %d (%s) blocking due to lack of entropy\n",
+		       curproc->p_pid, curproc->p_comm);
+
 		if (ISSET(flags, ENTROPY_SIG)) {
 			error = cv_wait_sig(&E->cv, &E->lock);
 			if (error)
