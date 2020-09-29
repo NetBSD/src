@@ -24,7 +24,7 @@
   /!pattern    * Search forward  for N-th line NOT containing the pattern.
   ?pattern     * Search backward for N-th line containing the pattern.
   ?!pattern    * Search backward for N-th line NOT containing the pattern.
-  n            * Repeat previous search (for N-th occurence).
+  n            * Repeat previous search (for N-th occurrence).
 
   :a              Display the list of files.
   E [file]        Examine a new file.
