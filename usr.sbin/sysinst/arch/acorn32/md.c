@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2019/07/13 17:13:36 martin Exp $ */
+/*	$NetBSD: md.c,v 1.6 2020/09/29 02:58:53 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -304,7 +304,7 @@ md_update(struct install_partition_desc *install)
  * end up with a checksum of X.  (Do the math; that can be derived
  * from the checksum calculation function!)  That means that
  * blocks which contain bytes which all have the same value will
- * always checksum properly.  That's a _very_ unlikely occurence
+ * always checksum properly.  That's a _very_ unlikely occurrence
  * (probably impossible, actually) for a valid filecore boot block,
  * so we treat such blocks as invalid.
  */

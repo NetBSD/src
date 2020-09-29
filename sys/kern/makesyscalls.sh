@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.181 2020/06/11 03:25:35 dholland Exp $
+#	$NetBSD: makesyscalls.sh,v 1.182 2020/09/29 02:58:53 msaitoh Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -719,7 +719,7 @@ function printproto(wrap) {
 		return
 
 	# accumulate fbases we have seen.  we want the last
-	# occurence for the default __RENAME()
+	# occurrence for the default __RENAME()
 	seen = funcseen[realname]
 	funcseen[realname] = rumpfname
 	# special case for mknod as type of last argument changed from

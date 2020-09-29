@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2020/09/29 02:49:55 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2020/09/29 02:58:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.54 2020/09/29 02:49:55 msaitoh Exp $");
+__RCSID("$NetBSD: main.c,v 1.55 2020/09/29 02:58:52 msaitoh Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1051,7 +1051,7 @@ writelabel_mbr(int f, u_int sector)
  * end up with a checksum of X.  (Do the math; that can be derived
  * from the checksum calculation function!)  That means that
  * blocks which contain bytes which all have the same value will
- * always checksum properly.  That's a _very_ unlikely occurence
+ * always checksum properly.  That's a _very_ unlikely occurrence
  * (probably impossible, actually) for a valid filecore boot block,
  * so we treat such blocks as invalid.
  */

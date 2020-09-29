@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.20 2014/10/14 01:04:39 christos Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.21 2020/09/29 02:58:52 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.20 2014/10/14 01:04:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.21 2020/09/29 02:58:52 msaitoh Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -472,7 +472,7 @@ static char *pnp_classes[] = {
 #endif
 
 /*
- * Search the first occurence of a token within a string
+ * Search the first occurrence of a token within a string
  * XXX should use strxxx() calls
  */
 static char *

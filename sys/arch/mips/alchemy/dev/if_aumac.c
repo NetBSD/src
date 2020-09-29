@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.48 2020/01/29 05:30:14 thorpej Exp $ */
+/* $NetBSD: if_aumac.c,v 1.49 2020/09/29 02:58:52 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.48 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.49 2020/09/29 02:58:52 msaitoh Exp $");
 
 
 
@@ -634,7 +634,7 @@ aumac_rxintr(struct aumac_softc *sc)
 			int error = 0;
 
 #if 0	/*
-	 * Missed frames are a semi-frequent occurence with this hardware,
+	 * Missed frames are a semi-frequent occurrence with this hardware,
 	 * and reporting of them just makes everything run slower and fills
 	 * the system log.  Be silent.
 	 * 

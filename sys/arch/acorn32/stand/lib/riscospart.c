@@ -1,4 +1,4 @@
-/*	$NetBSD: riscospart.c,v 1.5 2012/05/14 11:45:16 skrll Exp $	*/
+/*	$NetBSD: riscospart.c,v 1.6 2020/09/29 02:58:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -102,7 +102,7 @@
  * end up with a checksum of X.  (Do the math; that can be derived
  * from the checksum calculation function!)  That means that
  * blocks which contain bytes which all have the same value will
- * always checksum properly.  That's a _very_ unlikely occurence
+ * always checksum properly.  That's a _very_ unlikely occurrence
  * (probably impossible, actually) for a valid filecore boot block,
  * so we treat such blocks as invalid.
  */

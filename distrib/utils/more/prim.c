@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.10 2009/01/24 13:58:21 tsutsui Exp $	*/
+/*	$NetBSD: prim.c,v 1.11 2020/09/29 02:58:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: prim.c,v 1.10 2009/01/24 13:58:21 tsutsui Exp $");
+__RCSID("$NetBSD: prim.c,v 1.11 2020/09/29 02:58:51 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -604,7 +604,7 @@ get_back_scroll()
 }
 
 /*
- * Search for the n-th occurence of a specified pattern, 
+ * Search for the n-th occurrence of a specified pattern, 
  * either forward or backward.
  */
 int

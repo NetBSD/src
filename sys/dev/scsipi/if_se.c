@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.111 2020/07/27 15:41:03 jdc Exp $	*/
+/*	$NetBSD: if_se.c,v 1.112 2020/09/29 02:58:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.111 2020/07/27 15:41:03 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.112 2020/09/29 02:58:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1222,7 +1222,7 @@ seopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 int
 seclose(dev_t dev, int flag, int fmt, struct lwp *l)

@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.3 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.4 2020/09/29 02:58:52 msaitoh Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -1214,7 +1214,7 @@ struct intr_info {
  *  @reg: the interrupt status register to process
  *  @mask: a mask to apply to the interrupt status
  *  @acts: table of interrupt actions
- *  @stats: statistics counters tracking interrupt occurences
+ *  @stats: statistics counters tracking interrupt occurrences
  *
  *  A table driven interrupt handler that applies a set of masks to an
  *  interrupt status word and performs the corresponding actions if the
