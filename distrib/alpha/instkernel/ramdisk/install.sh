@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.6 2009/09/20 22:44:06 abs Exp $
+# $NetBSD: install.sh,v 1.7 2020/09/29 02:49:55 msaitoh Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -339,7 +339,7 @@ while [ $part_used -lt $partition ]; do
 			[1-9]*)
 				total=$(( $part_used + $resp ))
 				if [ $total -gt $partition ]; then
-					echo -n	"That would make the parition"
+					echo -n	"That would make the partition"
 					echo	"too large to fit!"
 				else
 					part_size=$resp

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2019/08/03 04:21:37 isaki Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2020/09/29 02:49:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2019/08/03 04:21:37 isaki Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2020/09/29 02:49:55 msaitoh Exp $");
 #endif
 #endif	/* not lint */
 
@@ -642,7 +642,7 @@ main(int argc, char *argv[])
 #ifndef HAVE_NBTOOL_CONFIG_H
 	/*
 	 * If the disklabel has the same location as the native disklabel and
-	 * fewer or equal paritions, we can use the native ioctls.  Otherwise
+	 * fewer or equal partitions, we can use the native ioctls.  Otherwise
 	 * force file/raw access.
 	 */
 	native_p = native_params.labelusesmbr == labelusesmbr
