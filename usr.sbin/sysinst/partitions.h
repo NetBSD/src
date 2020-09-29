@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.15 2020/01/27 21:21:22 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.16 2020/09/29 15:29:17 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ enum part_type {
 	PT_root,		/* the NetBSD / partition (bootable) */
 	PT_swap,		/* the NetBSD swap partition */
 	PT_FAT,			/* boot partition (e.g. for u-boot) */
+	PT_EXT2,		/* boot partition (for Linux appliances) */
+	PT_SYSVBFS,		/* boot partition (for some SYSV machines) */
 	PT_EFI_SYSTEM,		/* (U)EFI boot partition */
 };
 

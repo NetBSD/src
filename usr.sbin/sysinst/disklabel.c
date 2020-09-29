@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.38 2020/09/28 18:40:23 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.39 2020/09/29 15:29:17 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -582,6 +582,9 @@ dl_init_types(void)
 				pt = PT_root; break;
 		case FS_SWAP:	pt = PT_swap; break;
 		case FS_MSDOS:	pt = PT_FAT; break;
+		case FS_EX2FS:	pt = PT_EXT2; break;
+		case FS_SYSVBFS:
+				pt = PT_SYSVBFS; break;
 		default:	pt = PT_unknown; break;
 		}
 		dl_types[i].generic_ptype = pt;
@@ -707,6 +710,9 @@ disklabel_get_generic_type(enum part_type pt)
 	case PT_FAT:
 	case PT_EFI_SYSTEM:
 			nt = FS_MSDOS; break;
+	case PT_EXT2:	nt = FS_EX2FS; break;
+	case PT_SYSVBFS:
+			nt = FS_SYSVBFS; break;
 	default:	nt = FS_UNUSED; break;
 	}
 
