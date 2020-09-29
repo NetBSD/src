@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.32 2020/04/22 23:43:12 joerg Exp $ */
+/*	$NetBSD: mbr.c,v 1.33 2020/09/29 15:29:17 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1117,6 +1117,8 @@ mbr_map_part_type(unsigned int t)
 		return PT_FAT;
 	case MBR_PTYPE_EFI:
 		return PT_EFI_SYSTEM;
+	case MBR_PTYPE_LNXEXT2:
+		return PT_EXT2;
 	case MBR_PTYPE_NETBSD:
 		return PT_root;
 	}
@@ -1279,6 +1281,8 @@ mbr_get_generic_part_type(enum part_type pt)
 		return mbr_get_gen_type_desc(MBR_PTYPE_NETBSD);
 	case PT_FAT:
 		return mbr_get_gen_type_desc(MBR_PTYPE_FAT32L);
+	case PT_EXT2:
+		return mbr_get_gen_type_desc(MBR_PTYPE_LNXEXT2);
 	case PT_EFI_SYSTEM:
 		return mbr_get_gen_type_desc(MBR_PTYPE_EFI);
 	default:
@@ -1385,6 +1389,9 @@ mbr_do_get_part_info(const struct disk_partitions *arg, part_id id,
 		case MBR_PTYPE_SPEEDSTOR_16S:
 		case MBR_PTYPE_EFI:
 			info->fs_type = FS_MSDOS;
+			break;
+		case MBR_PTYPE_LNXEXT2:
+			info->fs_type = FS_EX2FS;
 			break;
 		case MBR_PTYPE_XENIX_ROOT:
 		case MBR_PTYPE_XENIX_USR:

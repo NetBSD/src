@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.44 2020/09/28 18:13:25 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.45 2020/09/29 15:29:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ default_parts_init[] =
 #endif
 #ifdef PART_BOOT_TYPE
 	  .fs_type = PART_BOOT_TYPE,
-#if PART_BOOT_TYPE == FS_MSDOS
+#if (PART_BOOT_TYPE == FS_MSDOS) || (PART_BOOT_TYPE == FS_EX2FS)
 	  .flags = PUIFLAG_ADD_OUTER,
 #endif
 #endif
@@ -100,7 +100,7 @@ default_parts_init[] =
 #endif
 #ifdef PART_BOOT1_TYPE
 	  .fs_type = PART_BOOT1_TYPE,
-#if PART_BOOT1_TYPE == FS_MSDOS
+#if (PART_BOOT1_TYPE == FS_MSDOS) || (PART_BOOT1_TYPE == FS_EX2FS)
 	  .flags = PUIFLAG_ADD_OUTER,
 #endif
 #endif
@@ -119,7 +119,7 @@ default_parts_init[] =
 #endif
 #ifdef PART_BOOT2_TYPE
 	  .fs_type = PART_BOOT2_TYPE,
-#if PART_BOOT2_TYPE == FS_MSDOS
+#if (PART_BOOT2_TYPE == FS_MSDOS) || (PART_BOOT2_TYPE == FS_EX2FS)
 	  .flags = PUIFLAG_ADD_OUTER,
 #endif
 #endif
@@ -974,7 +974,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 				wanted->infos[i].type = pt->generic_ptype;
 		}
 		if (wanted->parts->parent != NULL &&
-		    wanted->infos[i].fs_type == FS_MSDOS)
+		    (wanted->infos[i].fs_type == FS_MSDOS ||
+		     wanted->infos[i].fs_type == FS_EX2FS))
 			wanted->infos[i].flags |=
 			    PUIFLG_ADD_INNER|PUIFLAG_ADD_OUTER;
 
@@ -1021,8 +1022,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	 * empty disk. Merge the partitions in target range that are already
 	 * there (match with wanted) or are there additionaly.
 	 * The only thing outside of target range that we care for
-	 * are FAT partitions and a potential swap partition - we assume one
-	 * is enough.
+	 * are FAT partitions, EXT2FS partitions, and a potential
+	 * swap partition - we assume one is enough.
 	 */
 	size_t num = wanted->num;
 	if (parts->parent) {
@@ -1033,7 +1034,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			    parts->parent, pno, &info))
 				continue;
 			if (info.nat_type->generic_ptype != PT_swap &&
-			    info.fs_type != FS_MSDOS)
+			    info.fs_type != FS_MSDOS &&
+			    info.fs_type != FS_EX2FS)
 				continue;
 			merge_part_with_wanted(parts->parent, pno, &info,
 			    wanted, num, true);
