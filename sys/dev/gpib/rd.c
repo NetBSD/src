@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.42 2017/10/28 04:53:56 riastradh Exp $ */
+/*	$NetBSD: rd.c,v 1.43 2020/09/29 02:49:56 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.42 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.43 2020/09/29 02:49:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,7 +538,7 @@ rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 	/*
 	 * On last close, we wait for all activity to cease since
-	 * the label/parition info will become invalid.  Since we
+	 * the label/partition info will become invalid.  Since we
 	 * might sleep, we must block any opens while we are here.
 	 * Note we don't have to about other closes since we know
 	 * we are the last one.

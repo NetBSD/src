@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.156 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.157 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1759,7 +1759,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 	scsi: Made the SCSI disk drivers wait for the disc to spin up on open.
 		[mycroft 19950126]
 	add sysctl() variable kern.maxpartitions, so one can easily get
-		the value of MAXPARITIONS w/o compiling it in. (cgd)
+		the value of MAXPARTITIONS w/o compiling it in. (cgd)
 	remove ability to export null and umap file systems, by having
 		their fhtovp and vptofh functions return EOPNOTSUPP. (cgd)
 	config(8): fix config.new to handle differing values of MAXPARTITIONS.
@@ -2684,7 +2684,7 @@ Changes from NetBSD 1.1 to NetBSD 1.2:
 		scripts have been rewritten to deal with this. Also added
 		an option to install from a 'normal' (== hd/mo/...) disk
 		partition to allow people to gather the sets using the
-		native OS and mount that parition from the installer.
+		native OS and mount that partition from the installer.
 		XXX: All of the above changes can (and should) be merged
 		XXX: into the MI-miniroot.
 		[leo 19960519]

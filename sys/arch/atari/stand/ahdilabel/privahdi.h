@@ -1,4 +1,4 @@
-/*	$NetBSD: privahdi.h,v 1.3 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: privahdi.h,v 1.4 2020/09/29 02:49:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* Flags for ahdi_readlabel() */
 #define	FORCE_AHDI	0x01	/* Read AHDI label when NetBSD label exists */
 #define	AHDI_IGN_EXISTS	0x02	/* Ignore partition exists flag (ICD tools) */
-#define	AHDI_IGN_EXT	0x04	/* Ignore last extended parition (HDDriver) */
+#define	AHDI_IGN_EXT	0x04	/* Ignore last extended partition (HDDriver) */
 #define	AHDI_IGN_CKSUM	0x08	/* Ignore checksum mismatch on root sector */
 #define	AHDI_IGN_SPU	0x10	/* Ignore total sectors mismatch */
 
