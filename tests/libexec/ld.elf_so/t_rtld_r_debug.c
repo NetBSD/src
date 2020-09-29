@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.2 2020/09/29 16:34:07 roy Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.3 2020/09/29 16:35:42 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ getauxval(unsigned int type)
 	const AuxInfo *aux;
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux) {
-		if (type == aux->a_type)                                                                                                                      
+		if (type == aux->a_type)
 			return aux->a_v;
 	}
 
@@ -67,11 +67,11 @@ get_dynamic_section(void)
 	dynphdr = NULL;
 
 	for (; phdr < phlimit; ++phdr) {
-                if (phdr->p_type == PT_DYNAMIC)
-                        dynphdr = phdr;   
-                if (phdr->p_type == PT_PHDR)
-                        relocbase = (uintptr_t)phdr - phdr->p_vaddr;
-        }
+		if (phdr->p_type == PT_DYNAMIC)
+			dynphdr = phdr;
+		if (phdr->p_type == PT_PHDR)
+			relocbase = (uintptr_t)phdr - phdr->p_vaddr;
+	}
 
 	return (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
 }
