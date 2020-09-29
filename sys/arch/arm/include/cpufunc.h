@@ -44,6 +44,7 @@
 
 #define	isb()		__asm __volatile("isb" : : : "memory")
 
+#ifdef _ARM_ARCH_7
 /*
  * Options for DMB and DSB:
  *	oshld	Outer Shareable, load
@@ -61,6 +62,14 @@
  */
 #define	dsb(opt)	__asm __volatile("dsb " __STRING(opt) : : : "memory")
 #define	dmb(opt)	__asm __volatile("dmb " __STRING(opt) : : : "memory")
+#else
+
+#define dsb(opt)	\
+	__asm __volatile("mcr p15, 0, %0, c7, c10, 4" :: "r" (0) : "memory")
+#define dmb(opt)	\
+	__asm __volatile("mcr p15, 0, %0, c7, c10, 5" :: "r" (0) : "memory")
+
+#endif
 
 #ifdef __arm__
 
