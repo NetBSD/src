@@ -1,4 +1,4 @@
-# $NetBSD: job-output-long-lines.mk,v 1.1 2020/09/27 20:11:34 rillig Exp $
+# $NetBSD: job-output-long-lines.mk,v 1.2 2020/09/29 18:16:24 rillig Exp $
 #
 # The jobs may produce long lines of output.  A practical case are the echoed
 # command lines from compiler invocations, with their many -D options.
@@ -13,10 +13,6 @@
 # markers "--- job-a ---" and "--- job-b ---" are not always written at the
 # beginning of a line, even though this is expected by anyone reading the log
 # files.
-#
-# See Makefile, POSTPROC.job-output-long-lines for the output postprocessing.
-#
-# Tags: probabilistic
 
 .MAKEFLAGS: -j2
 

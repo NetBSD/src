@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.154 2020/09/27 20:11:34 rillig Exp $
+# $NetBSD: Makefile,v 1.155 2020/09/29 18:16:24 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -385,6 +385,17 @@ FLAGS.varname-dot-shell= -dpv
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra postprocessing.
+SED_CMDS.job-output-long-lines= \
+	${:D Job separators on their own line are ok. } \
+	-e '/^--- job-[ab] ---$$/d' \
+	${:D Plain output lines are ok as well. } \
+	${:D They may come in multiples of 1024 or as 10000. } \
+	-e '/^aa*$$/d' \
+	-e '/^bb*$$/d' \
+	${:D The following lines should rather not occur since the job } \
+	${:D marker should always be at the beginning of the line. } \
+	-e '/^aa*--- job-b ---$$/d' \
+	-e '/^bb*--- job-a ---$$/d'
 SED_CMDS.opt-debug-graph1= \
 			-e 's,${.CURDIR},CURDIR,'
 SED_CMDS.opt-debug-graph1+= \
@@ -404,8 +415,6 @@ SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 # Some tests need an additional round of postprocessing.
 POSTPROC.deptgt-suffixes= \
 			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
-POSTPROC.job-output-long-lines= \
-			awk '/^[ab]+--- job-[ab] ---/ { print "bad"; exit }'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.varmod-match-escape= ${TOOL_SED} -n -e '/^Pattern/p'
 POSTPROC.varname=	${TOOL_SED} -n -e '/^MAGIC/p' -e '/^ORDER_/p'
