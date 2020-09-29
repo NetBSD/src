@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.240 2020/09/11 15:22:12 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.241 2020/09/29 19:33:36 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.240 2020/09/11 15:22:12 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.241 2020/09/29 19:33:36 roy Exp $");
 
 #include "arp.h"
 
@@ -1579,14 +1579,15 @@ void
 in_if_link_state_change(struct ifnet *ifp, int link_state)
 {
 
-	switch (link_state) {
-	case LINK_STATE_DOWN:
+	/*
+	 * Treat LINK_STATE_UNKNOWN as UP.
+	 * LINK_STATE_UNKNOWN transitions to LINK_STATE_DOWN when
+	 * if_link_state_change() transitions to LINK_STATE_UP.
+	 */
+	if (link_state == LINK_STATE_DOWN)
 		in_if_link_down(ifp);
-		break;
-	case LINK_STATE_UP:
+	else
 		in_if_link_up(ifp);
-		break;
-	}
 }
 
 /*
