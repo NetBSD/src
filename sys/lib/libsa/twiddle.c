@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.8 2008/04/30 16:18:09 ad Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.9 2020/09/29 00:13:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,13 +40,24 @@
 
 char	twiddle_toggle;
 
+#ifdef LIBSA_SLOW_TWIDDLE
+#define	TWIDDLE_DELAY	4
+#else
+#define	TWIDDLE_DELAY	0
+#endif
+
+#define	TWIDDLE_MASK	((1 << TWIDDLE_DELAY) - 1)
+
 void
 twiddle(void)
 {
-	static int pos;
+	static unsigned int pos;
 
 	if (!twiddle_toggle) {
-		putchar(TWIDDLE_CHARS[pos++ & 3]);
-		putchar('\b');
+		if ((pos & TWIDDLE_MASK) == 0) {
+			putchar(TWIDDLE_CHARS[(pos >> TWIDDLE_DELAY) & 3]);
+			putchar('\b');
+		}
+		pos++;
 	}
 }
