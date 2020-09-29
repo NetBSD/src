@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.551 2020/09/29 18:31:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.552 2020/09/29 18:44:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.551 2020/09/29 18:31:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.552 2020/09/29 18:44:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3190,7 +3190,6 @@ ApplyModifiers(
 	}
     apply_mods:
 	st.newVal = var_Error;	/* default value, in case of errors */
-	res = AMR_BAD;		/* just a safe fallback */
 	mod = p;
 
 	if (DEBUG(VAR))
@@ -3237,7 +3236,6 @@ ApplyModifiers(
 	} else if (*p == ':') {
 	    p++;
 	}
-	mod = p;
     }
 out:
     *pp = p;
