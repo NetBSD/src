@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.45 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.46 2020/09/29 01:19:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.45 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.46 2020/09/29 01:19:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.45 2020/09/25 03:40:11 thorpej Exp $")
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 
+#include <machine/alpha.h>
 #include <machine/intr.h>
 #include <sys/bus.h>
 
@@ -463,6 +464,16 @@ sio_intr_establish(void *v, int irq, int type, int level, int flags,
 		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
 		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
+
+		/*
+		 * I've obsesrved stray ISA interrupts when interacting
+		 * with the serial console under Qemu.  Work around that
+		 * for now by suppressing stray interrupt reporting for
+		 * edge-triggered interrupts.
+		 */
+		if (alpha_is_qemu && type == IST_EDGE) {
+			alpha_shared_intr_set_maxstrays(sio_intr, irq, 0);
+		}
 	}
 
 	mutex_exit(&cpu_lock);
@@ -508,6 +519,7 @@ sio_intr_disestablish(void *v, void *cookie)
 		}
 		sio_setirqstat(irq, 0, ist);
 		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
+		alpha_shared_intr_set_maxstrays(sio_intr, irq, STRAY_MAX);
 
 		/* Release our SCB vector. */
 		scb_free(0x800 + SCB_IDXTOVEC(irq));
