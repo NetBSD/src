@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.552 2020/09/29 18:44:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.553 2020/09/29 19:20:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.552 2020/09/29 18:44:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.553 2020/09/29 19:20:08 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3294,7 +3294,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 }
 
 static const char *
-ShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
+UndefinedShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
 {
     if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
 	/*
@@ -3489,7 +3489,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (v == NULL) {
 	    *pp += 2;
 
-	    *out_val = ShortVarValue(startc, ctxt, eflags);
+	    *out_val = UndefinedShortVarValue(startc, ctxt, eflags);
 	    if (DEBUG(LINT) && *out_val == var_Error) {
 		Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", name);
 		return VPR_UNDEF_MSG;
