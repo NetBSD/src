@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.120 2020/09/23 02:09:18 roy Exp $
+.\"	$NetBSD: ifconfig.8,v 1.121 2020/09/29 08:52:11 msaitoh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd September 23, 2020
+.Dd September 29, 2020
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -614,6 +614,10 @@ Remove
 from the
 .Xr agr 4
 interface.
+.It Cm eee
+Enable IEEE 802.3az Energy Efficiency Ethernet function.
+.It Cm -eee
+Disable IEEE 802.3az Energy Efficiency Ethernet function.
 .It Cm vltime Ar n
 .Pq inet6 only
 Set valid lifetime for the address.
@@ -699,6 +703,10 @@ support it.
 .It Cm -tso6
 Disable hardware-assisted TCP/IPv6 segmentation on interfaces that
 support it.
+.It Cm vlan-hwfilter
+Enable hardware-assisted VLAN frame filter on interfaces that support it.
+.It Cm -vlan-hwfilter
+Disable hardware-assisted VLAN frame filter on interfaces that support it.
 .It Cm vlan-hwtagging
 Enable hardware-assisted VLAN tag insertion/removal on interfaces that
 support it.
