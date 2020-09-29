@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.100 2020/09/04 01:56:29 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.101 2020/09/29 01:33:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2020/09/04 01:56:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2020/09/29 01:33:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -99,6 +99,27 @@ volatile u_long cpus_paused __read_mostly;
 
 void	cpu_boot_secondary(struct cpu_info *);
 #endif /* MULTIPROCESSOR */
+
+static void
+cpu_idle_default(void)
+{
+	/*
+	 * Default is to do nothing.  Platform code can overwrite
+	 * as needed.
+	 */
+}
+
+void
+cpu_idle_wtint(void)
+{
+	/*
+	 * Some PALcode versions implement the WTINT call to idle
+	 * in a low power mode.
+	 */
+	alpha_pal_wtint(0);
+}
+
+void	(*cpu_idle_fn)(void) __read_mostly = cpu_idle_default;
 
 /*
  * The Implementation Version and the Architecture Mask must be
@@ -582,6 +603,8 @@ cpu_hatch(struct cpu_info *ci)
 	alpha_pal_imb();
 
 	cc_calibrate_cpu(ci);
+
+	cpu_initclocks_secondary();
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.97 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.98 2020/09/29 01:33:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -242,7 +242,11 @@ int	badaddr(void *, size_t);
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
 
-#define	cpu_idle()	/* nothing */
+void	cpu_idle_wtint(void);
+extern	void (*cpu_idle_fn)(void);
+#define	cpu_idle()	(*cpu_idle_fn)()
+
+void	cpu_initclocks_secondary(void);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

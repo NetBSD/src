@@ -1,4 +1,4 @@
-/* $NetBSD: qemu.c,v 1.1 2020/09/27 23:59:37 thorpej Exp $ */
+/* $NetBSD: qemu.c,v 1.2 2020/09/29 01:33:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -38,11 +38,15 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
+#include <sys/kernel.h>
 #include <sys/cpu.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 #include <machine/rpb.h>
 #include <machine/alpha.h>
+
+#include <alpha/alpha/clockvar.h>
 
 extern struct cfdriver qemu_cd;
 
@@ -57,13 +61,76 @@ qemu_get_timecount(struct timecounter * const tc __unused)
 {
 	register unsigned long v0 __asm("$0");
 	register unsigned long a0 __asm("$16") = 7;	/* Qemu get-time */
-	
+
 	__asm volatile ("call_pal %2"
 		: "=r"(v0), "+r"(a0)
 		: "i"(PAL_cserve)
 		: "$17", "$18", "$19", "$20", "$21");
 
 	return (u_int)v0;
+}
+
+static inline void
+qemu_set_alarm_relative(unsigned long nsec)
+{
+	register unsigned long a0 __asm("$16") = 5;	/* Qemu set-alarm-rel */
+	register unsigned long a1 __asm("$17") = nsec;
+
+	__asm volatile ("call_pal %2"
+		: "+r"(a0), "+r"(a1)
+		: "i"(PAL_cserve)
+		: "$0", "$18", "$19", "$20", "$21");
+}
+
+static unsigned long qemu_nsec_per_tick __read_mostly;
+
+static void
+qemu_hardclock(struct clockframe * const framep)
+{
+	if (__predict_false(qemu_nsec_per_tick == 0)) {
+		/* Spurious; qemu_clock_init() hasn't been called yet. */
+		return;
+	}
+
+	/* Schedule the next tick before we process the current one. */
+	qemu_set_alarm_relative(qemu_nsec_per_tick);
+
+	hardclock(framep);
+}
+
+static void
+qemu_clock_init(void * const v __unused)
+{
+	/* First-time initialization... */
+	if (qemu_nsec_per_tick == 0) {
+		KASSERT(CPU_IS_PRIMARY(curcpu()));
+		qemu_nsec_per_tick = 1000000000UL / hz;
+
+		/*
+		 * Override the clockintr routine; the Qemu alarm is
+		 * one-shot, so we have to restart it for the next one.
+		 */
+		platform.clockintr = qemu_hardclock;
+
+		/*
+		 * hz=1024 is a little bananas for an emulated
+		 * virtual machine.  Reset to something more
+		 * reasonable, and recalculate everything based
+		 * on it.
+		 */
+		hz = 50;
+		tick = 1000000 / hz;
+		tickadj = (240000 / (60 * hz)) ? (240000 / (60 * hz)) : 1;
+		schedhz = 0;
+
+		printf("Using the Qemu CPU alarm for %d Hz hardclock.\n", hz);
+	}
+
+	/*
+	 * Note: We need to do this on each CPU, as the Qemu
+	 * alarm is implemented as a per-CPU register.
+	 */
+	qemu_set_alarm_relative(qemu_nsec_per_tick);
 }
 
 static int
@@ -98,6 +165,16 @@ qemu_attach(device_t parent, device_t self, void *aux)
 	tc->tc_frequency = 1000000000UL;	/* nanosecond granularity */
 	tc->tc_priv = sc;
 	tc_init(tc);
+
+	/*
+	 * Use the Qemu alarm as the system clock.
+	 */
+	clockattach(qemu_clock_init, sc);
+
+	/*
+	 * Qemu's PALcode implements WTINT; use it to save host cycles.
+	 */
+	cpu_idle_fn = cpu_idle_wtint;
 }
 
 CFATTACH_DECL_NEW(qemu, sizeof(struct qemu_softc),
