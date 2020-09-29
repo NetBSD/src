@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.11 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.12 2020/09/29 02:58:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.11 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.12 2020/09/29 02:58:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.11 2012/12/20 08:03:42 hannken 
  * end up with a checksum of X.  (Do the math; that can be derived
  * from the checksum calculation function!)  That means that
  * blocks which contain bytes which all have the same value will
- * always checksum properly.  That's a _very_ unlikely occurence
+ * always checksum properly.  That's a _very_ unlikely occurrence
  * (probably impossible, actually) for a valid filecore boot block,
  * so we treat such blocks as invalid.
  */
