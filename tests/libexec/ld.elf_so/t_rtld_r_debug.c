@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.1 2020/09/22 01:09:32 kamil Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.2 2020/09/29 16:34:07 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ get_dynamic_section(void)
 static struct r_debug *
 get_rtld_r_debug(void)
 {
-	struct r_debug *debug;
+	struct r_debug *debug = NULL;
 	Elf_Dyn *dynp;
 
 	for (dynp = get_dynamic_section(); dynp->d_tag != DT_NULL; dynp++) {
