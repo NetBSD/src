@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.73 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.74 2020/09/29 03:02:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.73 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.74 2020/09/29 03:02:18 msaitoh Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1218,7 +1218,7 @@ handle_message(SC_REQ *reqp, u_int msg)
 	case MSG_SAVEDATAPOINTER:
 	case MSG_RESTOREPOINTERS:
 		/*
-		 * We save pointers implicitely at disconnect.
+		 * We save pointers implicitly at disconnect.
 		 * So we can ignore these messages.
 		 */
 		ack_message();
