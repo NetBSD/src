@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.5 2020/09/12 07:04:51 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.6 2020/09/29 18:48:43 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -72,6 +72,13 @@ DEF=	defined
 .  error
 .endif
 .if ${DEF:Uno:Dyes} != yes
+.  error
+.endif
+
+# Since the variable with the empty name is never defined, the :D modifier
+# can be used to add comments in the middle of an expression.  That
+# expression always evaluates to an empty string.
+.if ${:D This is a comment. } != ""
 .  error
 .endif
 
