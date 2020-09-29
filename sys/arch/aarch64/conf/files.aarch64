@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.27 2020/08/12 13:28:46 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.28 2020/09/29 19:58:49 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -8,9 +8,6 @@ defflag opt_cpuoptions.h	AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 
 defflag	opt_cputypes.h		CPU_ARMV8
 defflag	opt_cputypes.h		CPU_CORTEX: CPU_ARMV8
-defflag	opt_cputypes.h		CPU_CORTEXA35: CPU_CORTEX
-defflag	opt_cputypes.h		CPU_CORTEXA53: CPU_CORTEX
-defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_THUNDERX: CPU_ARMV8
 
 # Interrupt implementation header definition

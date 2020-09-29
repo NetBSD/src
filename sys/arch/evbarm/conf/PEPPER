@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.19 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: PEPPER,v 1.20 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -14,7 +14,7 @@ maxusers	32
 
 # CPU options
 
-options 	CPU_CORTEXA8
+options 	CPU_CORTEX
 options 	TI_AM335X
 options 	FPU_VFP
 #options 	PMAPCOUNTERS

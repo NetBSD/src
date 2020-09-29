@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.21 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: DUOVERO,v 1.22 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -14,7 +14,7 @@ maxusers	32
 
 # CPU options
 
-options 	CPU_CORTEXA9
+options 	CPU_CORTEX
 options 	OMAP_4430
 options 	MULTIPROCESSOR
 options 	 __HAVE_CPU_UAREA_ALLOC_IDLELWP	# need for MULTIPROCESSOR
