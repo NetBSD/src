@@ -75,7 +75,7 @@ add "-F host,host2,..." to "freerun" or "trust" only some hosts.  This
 
     It is also handy to build a hierarchy of timed masters crossing
     networks.  The TSP protocol has no provision of "goodness of clock",
-    no natural way to completely heal network paritions.  Judicious
+    no natural way to completely heal network partitions.  Judicious
     use of -F or -G can cause each gateway to trust only itself and
     machines closer to a central machine with a radio or atomic clock.
 

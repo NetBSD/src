@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.198 2020/07/25 22:14:35 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.199 2020/09/29 02:49:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.198 2020/07/25 22:14:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.199 2020/09/29 02:49:56 msaitoh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.198 2020/07/25 22:14:35 riastradh Exp
  * information that is passed up to the user (via system calls).
  *
  * each swap partition is assigned a "priority" (int) which controls
- * swap parition usage.
+ * swap partition usage.
  *
  * the system maintains a global data structure describing all swap
  * partitions/files.   there is a sorted LIST of "swappri" structures
