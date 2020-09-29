@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.12 2018/08/15 06:00:02 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.13 2020/09/29 19:58:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -143,7 +143,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 	return true;
 }
 
-#if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA5)
+#if !defined(MULTIPROCESSOR)
 static u_int
 tlb_cortex_a5_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
@@ -175,7 +175,7 @@ tlb_cortex_a5_record_asids(u_long *mapp, tlb_asid_t asid_max)
 }
 #endif
 
-#if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA7)
+#if !defined(MULTIPROCESSOR)
 static u_int
 tlb_cortex_a7_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
@@ -212,14 +212,10 @@ u_int
 tlb_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 #ifndef MULTIPROCESSOR
-#ifdef CPU_CORTEXA5
 	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return tlb_cortex_a5_record_asids(mapp, asid_max);
-#endif
-#ifdef CPU_CORTEXA7
 	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid))
 		return tlb_cortex_a7_record_asids(mapp, asid_max);
-#endif
 #endif /* MULTIPROCESSOR */
 #ifdef DIAGNOSTIC
 	mapp[0] = 0xfffffffe;

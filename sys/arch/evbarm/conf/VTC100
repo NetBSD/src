@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.23 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: VTC100,v 1.24 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_CORTEXA8
+options 	CPU_CORTEX
 options 	TI_AM335X
 #options 	PMAPCOUNTERS
 

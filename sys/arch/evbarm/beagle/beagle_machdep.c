@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.84 2020/09/29 19:58:50 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.84 2020/09/29 19:58:50 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Ex
 #include "prcm.h"
 #include "sdhc.h"
 #include "ukbd.h"
+#include "arma9tmr.h"
+#include "armgtmr.h"
 #include "arml2cc.h"
 
 #include <sys/param.h>
@@ -198,17 +200,13 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Ex
 # endif
 #endif
 
-#ifdef CPU_CORTEXA9
 #include <arm/cortex/pl310_reg.h>
 #include <arm/cortex/scu_reg.h>
 
 #include <arm/cortex/a9tmr_var.h>
 #include <arm/cortex/pl310_var.h>
-#endif
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
 #include <arm/cortex/gtmr_var.h>
-#endif
 
 #include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
@@ -245,9 +243,7 @@ int use_fb_console = false;
 int use_fb_console = true;
 #endif
 
-#ifdef CPU_CORTEXA15
 uint32_t omap5_cnt_frq;
-#endif
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -439,10 +435,16 @@ static const struct pmap_devmap devmap[] = {
 void
 beagle_cpu_hatch(struct cpu_info *ci)
 {
-#if defined(CPU_CORTEXA9)
-	a9tmr_init_cpu_clock(ci);
-#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
-	gtmr_init_cpu_clock(ci);
+#if NARMA9TMR > 0
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		a9tmr_init_cpu_clock(ci);
+	}
+#endif
+#if NARMGMR > 0
+	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid) ||
+	    CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid)) {
+		gtmr_init_cpu_clock(ci);
+	}
 #endif
 }
 #endif
@@ -453,25 +455,26 @@ beagle_mpstart(void)
 #if defined(MULTIPROCESSOR)
 	const bus_space_tag_t bst = &omap_bs_tag;
 
-#if defined(CPU_CORTEXA9)
-	const bus_space_handle_t scu_bsh = OMAP4_SCU_BASE
-	    + OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		const bus_space_handle_t scu_bsh = OMAP4_SCU_BASE
+		    + OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 
-	/*
-	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
-	 */
-	bus_space_write_4(bst, scu_bsh, SCU_INV_ALL_REG, 0xffff);
+		/*
+		 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+		 */
+		bus_space_write_4(bst, scu_bsh, SCU_INV_ALL_REG, 0xffff);
 
-	uint32_t diagctl = bus_space_read_4(bst, scu_bsh, SCU_DIAG_CONTROL);
-	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
-	bus_space_write_4(bst, scu_bsh, SCU_DIAG_CONTROL, diagctl);
+		uint32_t diagctl = bus_space_read_4(bst, scu_bsh, SCU_DIAG_CONTROL);
+		diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+		bus_space_write_4(bst, scu_bsh, SCU_DIAG_CONTROL, diagctl);
 
-	uint32_t scu_ctl = bus_space_read_4(bst, scu_bsh, SCU_CTL);
-	scu_ctl |= SCU_CTL_SCU_ENA;
-	bus_space_write_4(bst, scu_bsh, SCU_CTL, scu_ctl);
+		uint32_t scu_ctl = bus_space_read_4(bst, scu_bsh, SCU_CTL);
+		scu_ctl |= SCU_CTL_SCU_ENA;
+		bus_space_write_4(bst, scu_bsh, SCU_CTL, scu_ctl);
 
-	armv7_dcache_wbinv_all();
-#endif
+		armv7_dcache_wbinv_all();
+	}
+
 	const bus_space_handle_t wugen_bsh = OMAP4_WUGEN_BASE +	OMAP_L4_CORE_VOFFSET;
 	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
 
@@ -610,10 +613,10 @@ initarm(void *arg)
 	}
 	consinit();
 
-#ifdef CPU_CORTEXA15
 #ifdef MULTIPROCESSOR
-	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
-#endif
+	if (CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid)) {
+		arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+	}
 #endif
 #if defined(OMAP_4XXX)
 #if NARML2CC > 0
@@ -658,10 +661,6 @@ initarm(void *arg)
 #endif
 
 	VPRINTF("initarm: Configuring system ...\n");
-
-#if !defined(CPU_CORTEXA8)
-	printf("initarm: cbar=%#x\n", armreg_cbar_read());
-#endif
 
 	/*
 	 * Set up the variables that define the availability of physical
@@ -911,8 +910,8 @@ omap4_cpu_clk(void)
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 
-#if defined(CPU_CORTEXA15)
-	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
+	if (CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid) &&
+	    (armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
 		beagle_putchar('0');
 		uint32_t voffset = OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR;
@@ -959,7 +958,6 @@ omap4_cpu_clk(void)
 		omap5_cnt_frq = freq;
 		beagle_putchar('4');
 	}
-#endif
 }
 #endif /* OMAP_4XXX || OMAP_5XXX */
 
@@ -968,15 +966,15 @@ omap4_cpu_clk(void)
 static inline uint32_t
 emif_read_sdram_config(vaddr_t emif_base)
 {
-#ifdef CPU_CORTEXA15
-	return 0x61851b32; // XXX until i figure out why deref emif_base dies
-#else
+	if (CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid)) {
+		return 0x61851b32; // XXX until i figure out why deref emif_base dies
+	}
+
 	emif_base += EMIF_SDRAM_CONFIG;
 	//printf("%s: sdram_config @ %#"PRIxVADDR" = ", __func__, emif_base);
 	uint32_t v = *(const volatile uint32_t *)(emif_base);
 	//printf("%#x\n", v);
 	return v;
-#endif
 }
 
 static psize_t
@@ -1090,7 +1088,6 @@ beagle_device_register(device_t self, void *aux)
 		return;
 	}
 
-#ifdef CPU_CORTEXA9
 	/*
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
@@ -1104,9 +1101,7 @@ beagle_device_register(device_t self, void *aux)
 		    curcpu()->ci_data.cpu_cc_freq / 2);
 		return;
 	}
-#endif
 
-#ifdef CPU_CORTEXA15
 	if (device_is_a(self, "armgtmr")) {
 		/*
 		 * The frequency of the generic timer was figured out when
@@ -1114,7 +1109,6 @@ beagle_device_register(device_t self, void *aux)
 		 */
                 prop_dictionary_set_uint32(dict, "frequency", omap5_cnt_frq);
 	}
-#endif
 
 	if (device_is_a(self, "ehci")) {
 #if defined(OMAP_3530)

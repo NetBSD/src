@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.20 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: BCM56340,v 1.21 2020/09/29 19:58:50 jmcneill Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -23,7 +23,7 @@ options 	UVMHIST
 options 	BCM53XX_CONSOLE_EARLY
 options 	BCMETH_COUNTERS
 #options 	MULTIPROCESSOR
-options 	CPU_CORTEXA9
+options 	CPU_CORTEX
 #options 	MEMSIZE=256
 options 	BCM563XX
 options 	PMAPCOUNTERS
