@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.73 2020/09/27 21:35:16 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.74 2020/09/30 06:27:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.73 2020/09/27 21:35:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.74 2020/09/30 06:27:02 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -79,8 +79,6 @@ Lst_Copy(List *list, LstCopyProc copyProc)
     List *newList;
     ListNode *node;
 
-    assert(list != NULL);
-
     newList = Lst_Init();
 
     for (node = list->first; node != NULL; node = node->next) {
@@ -98,8 +96,6 @@ Lst_Free(List *list)
     ListNode *node;
     ListNode *next;
 
-    assert(list != NULL);
-
     for (node = list->first; node != NULL; node = next) {
 	next = node->next;
 	free(node);
@@ -115,9 +111,6 @@ Lst_Destroy(List *list, LstFreeProc freeProc)
 {
     ListNode *node;
     ListNode *next;
-
-    assert(list != NULL);
-    assert(freeProc != NULL);
 
     for (node = list->first; node != NULL; node = next) {
 	next = node->next;
@@ -139,9 +132,7 @@ Lst_InsertBefore(List *list, ListNode *node, void *datum)
 {
     ListNode *newNode;
 
-    assert(list != NULL);
     assert(!LstIsEmpty(list));
-    assert(node != NULL);
     assert(datum != NULL);
 
     newNode = LstNodeNew(datum);
@@ -164,7 +155,6 @@ Lst_Prepend(List *list, void *datum)
 {
     ListNode *node;
 
-    assert(list != NULL);
     assert(datum != NULL);
 
     node = LstNodeNew(datum);
@@ -186,7 +176,6 @@ Lst_Append(List *list, void *datum)
 {
     ListNode *node;
 
-    assert(list != NULL);
     assert(datum != NULL);
 
     node = LstNodeNew(datum);
@@ -207,9 +196,6 @@ Lst_Append(List *list, void *datum)
 void
 Lst_Remove(List *list, ListNode *node)
 {
-    assert(list != NULL);
-    assert(node != NULL);
-
     /*
      * unlink it from the list
      */
@@ -259,18 +245,16 @@ Lst_Remove(List *list, ListNode *node)
 void
 LstNode_Set(ListNode *node, void *datum)
 {
-    assert(node != NULL);
     assert(datum != NULL);
 
     node->datum = datum;
 }
 
-/* Replace the datum in the given node to NULL. */
+/* Replace the datum in the given node to NULL.
+ * Having NULL values in a list is unusual though. */
 void
 LstNode_SetNull(ListNode *node)
 {
-    assert(node != NULL);
-
     node->datum = NULL;
 }
 
@@ -313,7 +297,6 @@ Lst_FindDatum(List *list, const void *datum)
 {
     ListNode *node;
 
-    assert(list != NULL);
     assert(datum != NULL);
 
     for (node = list->first; node != NULL; node = node->next) {
@@ -358,7 +341,7 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	Boolean done = next == NULL;
 
 	tln->priv_useCount++;
-	result = (*proc)(tln->datum, procData);
+	result = proc(tln->datum, procData);
 	tln->priv_useCount--;
 
 	/*
@@ -387,9 +370,6 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 void
 Lst_MoveAll(List *list1, List *list2)
 {
-    assert(list1 != NULL);
-    assert(list2 != NULL);
-
     if (list2->first != NULL) {
 	list2->first->prev = list1->last;
 	if (list1->last != NULL) {
@@ -435,7 +415,6 @@ Lst_AppendAll(List *dst, List *src)
 void
 Lst_Open(List *list)
 {
-    assert(list != NULL);
     assert(!list->priv_isOpen);
 
     list->priv_isOpen = TRUE;
@@ -450,7 +429,6 @@ Lst_Next(List *list)
 {
     ListNode *node;
 
-    assert(list != NULL);
     assert(list->priv_isOpen);
 
     list->priv_prev = list->priv_curr;
@@ -492,7 +470,6 @@ Lst_Next(List *list)
 void
 Lst_Close(List *list)
 {
-    assert(list != NULL);
     assert(list->priv_isOpen);
 
     list->priv_isOpen = FALSE;
@@ -515,14 +492,9 @@ Lst_Enqueue(List *list, void *datum)
 void *
 Lst_Dequeue(List *list)
 {
-    void *datum;
-
-    assert(list != NULL);
-    assert(!LstIsEmpty(list));
-
-    datum = list->first->datum;
+    void *datum = list->first->datum;
     Lst_Remove(list, list->first);
-    assert(datum != NULL);
+    assert(datum != NULL);	/* since NULL would mean end of the list */
     return datum;
 }
 
