@@ -1,12 +1,13 @@
-# $NetBSD: Makefile,v 1.3 2020/09/30 14:43:15 roy Exp $
+# $NetBSD: Makefile,v 1.4 2020/09/30 17:05:59 roy Exp $
 #
 
 .include <bsd.own.mk>
 
 PROG=		rump_open_tap
-MAN=
+MAN=		# empty
 DPADD=		${LIBRUMPRES}
 LDADD=		-lrumpres
+BINDIR=		${TESTSDIR}
 
 TESTSDIR=	${TESTSBASE}/net/if_tap
 
