@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.360 2020/09/28 11:33:15 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.361 2020/09/30 14:56:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.360 2020/09/28 11:33:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.361 2020/09/30 14:56:34 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -543,6 +543,7 @@ com_attach_subr(struct com_softc *sc)
 		    DW_APB_UART_CPR);
 		sc->sc_fifolen = __SHIFTOUT(cpr, UART_CPR_FIFO_MODE) * 16;
 		if (sc->sc_fifolen == 0) {
+			sc->sc_fifolen = 1;
 			fifo_msg = "DesignWare APB UART, no fifo";
 			CSR_WRITE_1(regsp, COM_REG_FIFO, 0);
 		} else {
