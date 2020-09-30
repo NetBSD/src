@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.103 2020/02/15 01:21:56 riastradh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.104 2020/09/30 05:04:54 simonb Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.103 2020/02/15 01:21:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.104 2020/09/30 05:04:54 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -584,28 +584,28 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	int i;
 
-	for(i=0; i+8 <= length; i+=8)
+	for(i = 0; i + 8 <= length; i += 8)
 		DDOLOG("%.4x %.4x %.4x %.4x", (buf[i] << 8) | buf[i+1],
 		    (buf[i+2] << 8) | buf[i+3], (buf[i+4] << 8) | buf[i+5],
 		    (buf[i+6] << 8) | buf[i+7]);
-	if (length == i+7)
+	if (length == i + 7)
 		DDOLOG("%.4x %.4x %.4x %.2x", (buf[i] << 8) | buf[i+1],
 		    (buf[i+2] << 8) | buf[i+3], (buf[i+4] << 8) | buf[i+5],
 		    buf[i+6]);
-	else if (length == i+6)
+	else if (length == i + 6)
 		DDOLOG("%.4x %.4x %.4x", (buf[i] << 8) | buf[i+1],
 		    (buf[i+2] << 8) | buf[i+3], (buf[i+4] << 8) | buf[i+5], 0);
-	else if (length == i+5)
+	else if (length == i + 5)
 		DDOLOG("%.4x %.4x %.2x", (buf[i] << 8) | buf[i+1],
 		    (buf[i+2] << 8) | buf[i+3], buf[i+4], 0);
-	else if (length == i+4)
+	else if (length == i + 4)
 		DDOLOG("%.4x %.4x", (buf[i] << 8) | buf[i+1],
 		    (buf[i+2] << 8) | buf[i+3], 0,0);
-	else if (length == i+3)
+	else if (length == i + 3)
 		DDOLOG("%.4x %.2x", (buf[i] << 8) | buf[i+1], buf[i+2], 0,0);
-	else if (length == i+2)
+	else if (length == i + 2)
 		DDOLOG("%.4x", (buf[i] << 8) | buf[i+1], 0,0,0);
-	else if (length == i+1)
+	else if (length == i + 1)
 		DDOLOG("%.2x", buf[i], 0,0,0);
 }
 #define DLOGBUF(x, b, l) SLHCI_DEXEC(x, DDOLOGBUF(b, l))
@@ -702,7 +702,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 
 const struct usbd_bus_methods slhci_bus_methods = {
 	.ubm_open = slhci_open,
-	.ubm_softint= slhci_void,
+	.ubm_softint = slhci_void,
 	.ubm_dopoll = slhci_poll,
 	.ubm_allocx = slhci_allocx,
 	.ubm_freex = slhci_freex,
@@ -2742,7 +2742,7 @@ slhci_drain(struct slhci_softc *sc)
 
 	t->pend = INT_MAX;
 
-	for (i=0; i<=1; i++) {
+	for (i = 0; i <= 1; i++) {
 		t->len[i] = -1;
 		if (t->spipe[i] != NULL) {
 			enter_callback(t, t->spipe[i]);
@@ -3518,7 +3518,7 @@ slhci_log_sc(void)
 	DDOLOG("a = %p Alen=%d b = %p Blen=%d", t->spipe[0], t->len[0],
 	    t->spipe[1], t->len[1]);
 
-	for (i=0; i<=Q_MAX; i++)
+	for (i = 0; i <= Q_MAX; i++)
 		DDOLOG("Q %d: %p", i, gcq_hq(&t->q[i]), 0,0);
 
 	DDOLOG("TIMED: %p", GCQ_ITEM(gcq_hq(&t->to),
