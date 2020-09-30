@@ -1,10 +1,15 @@
-/*	$NetBSD: vectors.S,v 1.18 2020/08/12 13:19:35 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.19 2020/09/30 16:35:49 skrll Exp $	*/
 
 #include <aarch64/asm.h>
+#include <aarch64/locore.h>
+
 #include "assym.h"
+
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
+
+RCSID("$NetBSD: vectors.S,v 1.19 2020/09/30 16:35:49 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -179,3 +184,141 @@ ENTRY_NBTI(el1_vectors)
 	vector_entry	el0_32fiq_handler
 	vector_entry	el0_32error_handler
 END(el1_vectors)
+
+	.macro unwind_x0_x2
+	ldp	x0, x1, [sp, #TF_X0]
+	ldr	x2, [sp, #TF_X2]
+	.endm
+
+	.macro unwind_x3_x30
+	ldp	x3, x4, [sp, #TF_X3]
+	ldp	x5, x6, [sp, #TF_X5]
+	ldp	x7, x8, [sp, #TF_X7]
+	ldp	x9, x10, [sp, #TF_X9]
+	ldp	x11, x12, [sp, #TF_X11]
+	ldp	x13, x14, [sp, #TF_X13]
+	ldp	x15, x16, [sp, #TF_X15]
+	ldp	x17, x18, [sp, #TF_X17]
+	ldp	x19, x20, [sp, #TF_X19]
+	ldp	x21, x22, [sp, #TF_X21]
+	ldp	x23, x24, [sp, #TF_X23]
+	ldp	x25, x26, [sp, #TF_X25]
+	ldp	x27, x28, [sp, #TF_X27]
+	ldp	x29, x30, [sp, #TF_X29]
+	.endm
+
+/*
+ * EL1 exception return for trap and interrupt.
+ */
+#ifdef DDB
+ENTRY_NP(el1_trap)
+	nop				/* dummy for DDB backtrace (for lr-4) */
+#endif
+ENTRY_NP(el1_trap_exit)
+	DISABLE_INTERRUPT		/* make sure I|F marked */
+
+	unwind_x3_x30
+
+#if TF_PC + 8 == TF_SPSR
+	ldp	x0, x1, [sp, #TF_PC]
+#else
+	ldr	x0, [sp, #TF_PC]
+	ldr	x1, [sp, #TF_SPSR]
+#endif
+	msr	elr_el1, x0		/* exception pc */
+	msr	spsr_el1, x1		/* exception pstate */
+
+	/*
+	 * cpu_jump_onfault() modify tf->tf_sp, therefore
+	 * we need to restore sp from trapframe,
+	 * and unwind x0-x2 without sp.
+	 */
+	mov	x0, sp
+	ldr	x1, [x0, #TF_SP]
+	mov	sp, x1
+	ldp	x1, x2, [x0, #TF_X1]
+	ldr	x0, [x0, #TF_X0]
+
+	ERET
+END(el1_trap_exit)
+#ifdef DDB
+END(el1_trap)
+#endif
+
+/*
+ * EL0 exception return for trap, interrupt and syscall with
+ * possible AST processing.
+ */
+#ifdef DDB
+ENTRY_NP(el0_trap)
+	nop				/* dummy for DDB backtrace (for lr-4) */
+#endif
+ENTRY_NP(el0_trap_exit)
+	DISABLE_INTERRUPT		/* make sure I|F marked */
+1:
+	/* while (curlwp->l_md.md_astpending != 0) { */
+	mrs	x8, tpidr_el1
+	ldr	w9, [x8, #L_MD_ASTPENDING]
+	cbz	w9, 9f
+
+	/* curlwp->l_md.md_astpending = 0; */
+	str	xzr, [x8, #L_MD_ASTPENDING]
+
+	/*  trap_doast(tf); */
+	ENABLE_INTERRUPT
+	mov	x0, sp
+	bl	_C_LABEL(trap_doast)
+	DISABLE_INTERRUPT
+	b	1b
+	/* } */
+9:
+
+	mrs	x9, tpidr_el1
+	ldr	x23, [x9, #L_MD_CPACR]
+	msr	cpacr_el1, x23		/* FP unit EL0 handover */
+	isb				/* necessary? */
+
+	ldr	x0, [x9, #L_PRIVATE]	/* tpidr_el0 = curlwp->l_private */
+	msr	tpidr_el0, x0
+#ifdef COMPAT_NETBSD32
+	msr	tpidrro_el0, x0
+#endif
+
+#ifdef ARMV83_PAC
+	/* Switch to the user PAC key. */
+	adrl	x4, _C_LABEL(aarch64_pac_enabled)
+	ldr	w4, [x4]
+	cbz	w4, 1f
+	ldp	x5, x6, [x9, #L_MD_IA_USER]
+	msr	APIAKeyLo_EL1, x5
+	msr	APIAKeyHi_EL1, x6
+1:
+#endif
+
+	unwind_x3_x30
+
+#if TF_PC + 8 == TF_SPSR
+	ldp	x0, x1, [sp, #TF_PC]
+#else
+	ldr	x0, [sp, #TF_PC]
+	ldr	x1, [sp, #TF_SPSR]
+#endif
+	ldr	x2, [sp, #TF_SP]
+	msr	elr_el1, x0		/* exception pc */
+	msr	spsr_el1, x1		/* exception pstate */
+	msr	sp_el0, x2		/* restore EL0 stack */
+
+	/* if the process is traced, enable MDSCR_EL1.SS */
+	tbz	x1, #SPSR_SS_SHIFT, 1f
+	mrs	x0, mdscr_el1
+	orr	x0, x0, #MDSCR_SS
+	msr	mdscr_el1, x0
+1:
+	unwind_x0_x2
+
+	/* leave sp at l_md.md_utf, return back to EL0 user process */
+	ERET
+END(el0_trap_exit)
+#ifdef DDB
+END(el0_trap)
+#endif
