@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.932 2020/09/29 19:41:48 roy Exp $
+# $NetBSD: mi,v 1.933 2020/09/30 14:54:33 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3857,6 +3857,7 @@
 ./usr/tests/net/if_tap					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_tap/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_tap/Kyuafile				tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_tap/rump_open_tap			tests-net-tests		atf,rump
 ./usr/tests/net/if_tap/t_tap				tests-net-tests		atf,rump
 ./usr/tests/net/if_tun					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_tun/Atffile				tests-net-tests		atf,rump
