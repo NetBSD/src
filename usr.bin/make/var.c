@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.554 2020/09/30 05:58:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.555 2020/09/30 06:46:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.554 2020/09/30 05:58:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.555 2020/09/30 06:46:43 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2426,6 +2426,18 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 }
 #endif
 
+/* :Q, :q */
+static ApplyModifierResult
+ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
+{
+    if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	st->newVal = VarQuote(st->val, **pp == 'q');
+	(*pp)++;
+	return AMR_OK;
+    } else
+	return AMR_UNKNOWN;
+}
+
 static void
 ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
@@ -3074,12 +3086,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
 #endif
     case 'q':
     case 'Q':
-	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
-	    st->newVal = VarQuote(st->val, **pp == 'q');
-	    (*pp)++;
-	    return AMR_OK;
-	} else
-	    return AMR_UNKNOWN;
+        return ApplyModifier_Quote(pp, st);
     case 'T':
 	return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
     case 'H':
