@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.283 2020/09/26 17:49:49 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.284 2020/09/30 17:11:31 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1269,6 +1269,7 @@
 ./usr/libdata/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
 ./usr/libdata/ldscripts/i386nbsd.xr		comp-obsolete		obsolete
 ./usr/libdata/ldscripts/i386nbsd.xu		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
 ./usr/share/ldscripts/elf_i386.x		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf_i386.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf_i386.xc		comp-obsolete		obsolete
