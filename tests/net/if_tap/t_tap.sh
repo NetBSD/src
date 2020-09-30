@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.10 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.11 2020/09/30 14:43:15 roy Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ IP4_REMOTE=10.0.0.3
 IP6_LOCAL=fc00::1
 IP6_TAP=fc00::2
 IP6_REMOTE=fc00::3
+TAP_PID=./.__tap.pid
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -130,6 +131,7 @@ tap_bridged_head()
 
 tap_bridged_body()
 {
+	local src="$(atf_get_srcdir)"
 
 	rump_server_fs_start $SOCK_LOCAL netinet6 tap bridge
 	rump_server_fs_start $SOCK_REMOTE netinet6 tap
@@ -146,7 +148,6 @@ tap_bridged_body()
 	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 up
-	atf_check -s exit:0 rump.ifconfig -w 10
 
 	rump_server_add_iface $SOCK_LOCAL bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
@@ -155,6 +156,8 @@ tap_bridged_body()
 	atf_check -s exit:0 brconfig bridge0 add tap0
 	unset LD_PRELOAD
 
+	atf_check -s exit:0 rump.ifconfig -w 10
+
 	export RUMP_SERVER=${SOCK_REMOTE}
 
 	atf_check -s exit:0 rump.ifconfig shmif0 $IP4_REMOTE
@@ -162,10 +165,22 @@ tap_bridged_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
+	# shmif0 on the server bridge is active, we expect this to work
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_LOCAL
-	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
-
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_LOCAL
+
+	# The tap is not open, we expect this to fail
+	atf_check -s not-exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
+
+	# Open the tap on the server
+	export RUMP_SERVER=${SOCK_LOCAL}
+	atf_check -s exit:0 "$src"/rump_open_tap /dev/tap0 $TAP_PID
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	# Now we can ping the tap address
+	export RUMP_SERVER=${SOCK_LOCAL}
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4_TAP
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
 
 	rump_server_destroy_ifaces
@@ -174,6 +189,11 @@ tap_bridged_body()
 tap_bridged_cleanup()
 {
 
+        if [ -f $TAP_PID ]; then
+		kill -9 $(cat $TAP_PID)
+		rm -f $TAP_PID
+		sleep 1
+	fi
 	$DEBUG && dump
 	cleanup
 }
