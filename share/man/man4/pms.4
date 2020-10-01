@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.37 2020/03/16 09:31:41 nia Exp $
+.\" $NetBSD: pms.4,v 1.38 2020/10/01 17:13:19 nia Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 14, 2020
+.Dd October 1, 2020
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -215,6 +215,10 @@ If this variable is set too high then mouse movements will be interpreted
 as Z-axis events after the two finger scoll has finished.
 If the variable is set too low then there will be mouse movements observed
 during the two finger scroll.
+.It Dv hw.synaptics.aux_mid_button_scroll
+This causes Y-axis movement on the "passthrough device" (e.g. the TrackPoint
+on ThinkPads) to result in scrolling events instead of Y-axis movement when
+the middle button is held.
 .El
 .Pp
 The following
