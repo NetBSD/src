@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.353 2020/10/01 22:42:00 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.354 2020/10/01 23:02:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.353 2020/10/01 22:42:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.354 2020/10/01 23:02:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -388,6 +388,194 @@ is_relpath(const char *path)
 	return FALSE;
 }
 
+static Boolean
+MainParseArg(char c, char *argvalue)
+{
+	struct stat sa, sb;
+	char *p;
+	char found_path[MAXPATHLEN + 1];        /* for searching for sys.mk */
+
+	switch (c) {
+	case '\0':
+		break;
+	case 'B':
+		compatMake = TRUE;
+		Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
+		Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
+		break;
+	case 'C':
+		if (chdir(argvalue) == -1) {
+			(void)fprintf(stderr,
+				      "%s: chdir %s: %s\n",
+				      progname, argvalue,
+				      strerror(errno));
+			exit(1);
+		}
+		if (getcwd(curdir, MAXPATHLEN) == NULL) {
+			(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+			exit(2);
+		}
+		if (!is_relpath(argvalue) &&
+		    stat(argvalue, &sa) != -1 &&
+		    stat(curdir, &sb) != -1 &&
+		    sa.st_ino == sb.st_ino &&
+		    sa.st_dev == sb.st_dev)
+			strncpy(curdir, argvalue, MAXPATHLEN);
+		ignorePWD = TRUE;
+		break;
+	case 'D':
+		if (argvalue == NULL || argvalue[0] == 0) return FALSE;
+		Var_Set(argvalue, "1", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		break;
+	case 'I':
+		if (argvalue == NULL) return FALSE;
+		Parse_AddIncludeDir(argvalue);
+		Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		break;
+	case 'J':
+		if (argvalue == NULL) return FALSE;
+		if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
+			(void)fprintf(stderr,
+				      "%s: internal error -- J option malformed (%s)\n",
+				      progname, argvalue);
+			usage();
+		}
+		if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
+		    (fcntl(jp_1, F_GETFD, 0) < 0)) {
+#if 0
+			(void)fprintf(stderr,
+			    "%s: ###### warning -- J descriptors were closed!\n",
+			    progname);
+			exit(2);
+#endif
+			jp_0 = -1;
+			jp_1 = -1;
+			compatMake = TRUE;
+		} else {
+			Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		}
+		break;
+	case 'N':
+		noExecute = TRUE;
+		noRecursiveExecute = TRUE;
+		Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
+		break;
+	case 'S':
+		keepgoing = FALSE;
+		Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
+		break;
+	case 'T':
+		if (argvalue == NULL) return FALSE;
+		tracefile = bmake_strdup(argvalue);
+		Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		break;
+	case 'V':
+	case 'v':
+		if (argvalue == NULL) return FALSE;
+		printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
+		Lst_Append(variables, bmake_strdup(argvalue));
+		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		break;
+	case 'W':
+		parseWarnFatal = TRUE;
+		break;
+	case 'X':
+		varNoExportEnv = TRUE;
+		Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
+		break;
+	case 'd':
+		if (argvalue == NULL) return FALSE;
+		/* If '-d-opts' don't pass to children */
+		if (argvalue[0] == '-')
+			argvalue++;
+		else {
+			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		}
+		parse_debug_options(argvalue);
+		break;
+	case 'e':
+		checkEnvFirst = TRUE;
+		Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
+		break;
+	case 'f':
+		if (argvalue == NULL) return FALSE;
+		Lst_Append(makefiles, bmake_strdup(argvalue));
+		break;
+	case 'i':
+		ignoreErrors = TRUE;
+		Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
+		break;
+	case 'j':
+		if (argvalue == NULL) return FALSE;
+		forceJobs = TRUE;
+		maxJobs = strtol(argvalue, &p, 0);
+		if (*p != '\0' || maxJobs < 1) {
+			(void)fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
+			    progname);
+			exit(1);
+		}
+		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
+		maxJobTokens = maxJobs;
+		break;
+	case 'k':
+		keepgoing = TRUE;
+		Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
+		break;
+	case 'm':
+		if (argvalue == NULL) return FALSE;
+		/* look for magic parent directory search string */
+		if (strncmp(".../", argvalue, 4) == 0) {
+			if (!Dir_FindHereOrAbove(curdir, argvalue + 4,
+			    found_path, sizeof(found_path)))
+				break;		/* nothing doing */
+			(void)Dir_AddDir(sysIncPath, found_path);
+		} else {
+			(void)Dir_AddDir(sysIncPath, argvalue);
+		}
+		Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		break;
+	case 'n':
+		noExecute = TRUE;
+		Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
+		break;
+	case 'q':
+		queryFlag = TRUE;
+		/* Kind of nonsensical, wot? */
+		Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
+		break;
+	case 'r':
+		noBuiltins = TRUE;
+		Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
+		break;
+	case 's':
+		beSilent = TRUE;
+		Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
+		break;
+	case 't':
+		touchFlag = TRUE;
+		Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
+		break;
+	case 'w':
+		enterFlag = TRUE;
+		Var_Append(MAKEFLAGS, "-w", VAR_GLOBAL);
+		break;
+	default:
+	case '?':
+		usage();
+	}
+	return TRUE;
+}
+
 /* Parse the given arguments.  Called from main() and from
  * Main_ParseArgLine() when the .MAKEFLAGS target is used.
  *
@@ -398,15 +586,12 @@ is_relpath(const char *path)
 static void
 MainParseArgs(int argc, char **argv)
 {
-	char *p;
 	char c = '?';
 	int arginc;
 	char *argvalue;
 	const char *getopt_def;
-	struct stat sa, sb;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
-	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
 #define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w"
 /* Can't actually use getopt(3) because rescanning is not portable */
@@ -450,188 +635,17 @@ rearg:
 		} else {
 			argvalue = NULL;
 		}
-		switch(c) {
+		switch (c) {
 		case '\0':
-			arginc = 1;
-			inOption = FALSE;
-			break;
-		case 'B':
-			compatMake = TRUE;
-			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
-			Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
-			break;
-		case 'C':
-			if (chdir(argvalue) == -1) {
-				(void)fprintf(stderr,
-					      "%s: chdir %s: %s\n",
-					      progname, argvalue,
-					      strerror(errno));
-				exit(1);
-			}
-			if (getcwd(curdir, MAXPATHLEN) == NULL) {
-				(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
-				exit(2);
-			}
-			if (!is_relpath(argvalue) &&
-			    stat(argvalue, &sa) != -1 &&
-			    stat(curdir, &sb) != -1 &&
-			    sa.st_ino == sb.st_ino &&
-			    sa.st_dev == sb.st_dev)
-				strncpy(curdir, argvalue, MAXPATHLEN);
-			ignorePWD = TRUE;
-			break;
-		case 'D':
-			if (argvalue == NULL || argvalue[0] == 0) goto noarg;
-			Var_Set(argvalue, "1", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			break;
-		case 'I':
-			if (argvalue == NULL) goto noarg;
-			Parse_AddIncludeDir(argvalue);
-			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			break;
-		case 'J':
-			if (argvalue == NULL) goto noarg;
-			if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
-			    (void)fprintf(stderr,
-				"%s: internal error -- J option malformed (%s)\n",
-				progname, argvalue);
-				usage();
-			}
-			if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
-			    (fcntl(jp_1, F_GETFD, 0) < 0)) {
-#if 0
-			    (void)fprintf(stderr,
-				"%s: ###### warning -- J descriptors were closed!\n",
-				progname);
-			    exit(2);
-#endif
-			    jp_0 = -1;
-			    jp_1 = -1;
-			    compatMake = TRUE;
-			} else {
-			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-			    Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			}
-			break;
-		case 'N':
-			noExecute = TRUE;
-			noRecursiveExecute = TRUE;
-			Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
-			break;
-		case 'S':
-			keepgoing = FALSE;
-			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
-			break;
-		case 'T':
-			if (argvalue == NULL) goto noarg;
-			tracefile = bmake_strdup(argvalue);
-			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			break;
-		case 'V':
-		case 'v':
-			if (argvalue == NULL) goto noarg;
-			printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
-			Lst_Append(variables, bmake_strdup(argvalue));
-			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			break;
-		case 'W':
-			parseWarnFatal = TRUE;
-			break;
-		case 'X':
-			varNoExportEnv = TRUE;
-			Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
-			break;
-		case 'd':
-			if (argvalue == NULL) goto noarg;
-			/* If '-d-opts' don't pass to children */
-			if (argvalue[0] == '-')
-			    argvalue++;
-			else {
-			    Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
-			    Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			}
-			parse_debug_options(argvalue);
-			break;
-		case 'e':
-			checkEnvFirst = TRUE;
-			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
-			break;
-		case 'f':
-			if (argvalue == NULL) goto noarg;
-			Lst_Append(makefiles, bmake_strdup(argvalue));
-			break;
-		case 'i':
-			ignoreErrors = TRUE;
-			Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
-			break;
-		case 'j':
-			if (argvalue == NULL) goto noarg;
-			forceJobs = TRUE;
-			maxJobs = strtol(argvalue, &p, 0);
-			if (*p != '\0' || maxJobs < 1) {
-				(void)fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
-				    progname);
-				exit(1);
-			}
-			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
-			maxJobTokens = maxJobs;
-			break;
-		case 'k':
-			keepgoing = TRUE;
-			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
-			break;
-		case 'm':
-			if (argvalue == NULL) goto noarg;
-			/* look for magic parent directory search string */
-			if (strncmp(".../", argvalue, 4) == 0) {
-				if (!Dir_FindHereOrAbove(curdir, argvalue+4,
-				    found_path, sizeof(found_path)))
-					break;		/* nothing doing */
-				(void)Dir_AddDir(sysIncPath, found_path);
-			} else {
-				(void)Dir_AddDir(sysIncPath, argvalue);
-			}
-			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			break;
-		case 'n':
-			noExecute = TRUE;
-			Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
-			break;
-		case 'q':
-			queryFlag = TRUE;
-			/* Kind of nonsensical, wot? */
-			Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
-			break;
-		case 'r':
-			noBuiltins = TRUE;
-			Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
-			break;
-		case 's':
-			beSilent = TRUE;
-			Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
-			break;
-		case 't':
-			touchFlag = TRUE;
-			Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
-			break;
-		case 'w':
-			enterFlag = TRUE;
-			Var_Append(MAKEFLAGS, "-w", VAR_GLOBAL);
-			break;
+		    arginc = 1;
+		    inOption = FALSE;
+		    break;
 		case '-':
-			dashDash = TRUE;
-			break;
+		    dashDash = TRUE;
+		    break;
 		default:
-		case '?':
-			usage();
+		    if (!MainParseArg(c, argvalue))
+		        goto noarg;
 		}
 		argv += arginc;
 		argc -= arginc;
