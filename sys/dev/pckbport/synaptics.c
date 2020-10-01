@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.68 2020/10/01 14:33:26 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.69 2020/10/01 15:08:11 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.68 2020/10/01 14:33:26 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.69 2020/10/01 15:08:11 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1141,6 +1141,10 @@ pms_synaptics_parse(struct pms_softc *psc)
 	pms_synaptics_process_packet(psc, &sp);
 }
 
+/*
+ * Passthrough is used for e.g. TrackPoints and additional pointing
+ * devices connected to a Synaptics touchpad.
+ */
 static void
 pms_synaptics_passthrough(struct pms_softc *psc)
 {
