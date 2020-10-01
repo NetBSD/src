@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.354 2020/10/01 23:02:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.355 2020/10/01 23:06:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.354 2020/10/01 23:02:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.355 2020/10/01 23:06:56 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -388,10 +388,32 @@ is_relpath(const char *path)
 	return FALSE;
 }
 
+static void
+MainParseArgChdir(const char *argvalue)
+{
+	struct stat sa, sb;
+
+	if (chdir(argvalue) == -1) {
+		(void)fprintf(stderr, "%s: chdir %s: %s\n",
+		    progname, argvalue, strerror(errno));
+		exit(1);
+	}
+	if (getcwd(curdir, MAXPATHLEN) == NULL) {
+		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+		exit(2);
+	}
+	if (!is_relpath(argvalue) &&
+	    stat(argvalue, &sa) != -1 &&
+	    stat(curdir, &sb) != -1 &&
+	    sa.st_ino == sb.st_ino &&
+	    sa.st_dev == sb.st_dev)
+		strncpy(curdir, argvalue, MAXPATHLEN);
+	ignorePWD = TRUE;
+}
+
 static Boolean
 MainParseArg(char c, char *argvalue)
 {
-	struct stat sa, sb;
 	char *p;
 	char found_path[MAXPATHLEN + 1];        /* for searching for sys.mk */
 
@@ -404,24 +426,7 @@ MainParseArg(char c, char *argvalue)
 		Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
 		break;
 	case 'C':
-		if (chdir(argvalue) == -1) {
-			(void)fprintf(stderr,
-				      "%s: chdir %s: %s\n",
-				      progname, argvalue,
-				      strerror(errno));
-			exit(1);
-		}
-		if (getcwd(curdir, MAXPATHLEN) == NULL) {
-			(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
-			exit(2);
-		}
-		if (!is_relpath(argvalue) &&
-		    stat(argvalue, &sa) != -1 &&
-		    stat(curdir, &sb) != -1 &&
-		    sa.st_ino == sb.st_ino &&
-		    sa.st_dev == sb.st_dev)
-			strncpy(curdir, argvalue, MAXPATHLEN);
-		ignorePWD = TRUE;
+		MainParseArgChdir(argvalue);
 		break;
 	case 'D':
 		if (argvalue == NULL || argvalue[0] == 0) return FALSE;
