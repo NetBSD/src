@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.159 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.160 2020/10/01 21:00:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.159 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.160 2020/10/01 21:00:55 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static void CompatInterrupt(int);
@@ -207,6 +207,11 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
 
+    /* Luckily the commands don't end up in a string pool, otherwise
+     * this comparison could match too early, in a dependency using "..."
+     * for delayed commands, run in parallel mode, using the same shell
+     * command line more than once; see JobPrintCommand.
+     * TODO: write a unit-test to protect against this potential bug. */
     cmdNode = Lst_FindDatum(gn->commands, cmd);
     (void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
     /* TODO: handle errors */
