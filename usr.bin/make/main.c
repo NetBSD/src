@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.358 2020/10/01 23:28:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.359 2020/10/01 23:42:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.358 2020/10/01 23:28:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.359 2020/10/01 23:42:22 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -489,19 +489,17 @@ MainParseArg(char c, char *argvalue)
 		MainParseArgChdir(argvalue);
 		break;
 	case 'D':
-		if (argvalue == NULL || argvalue[0] == 0) return FALSE;
+		if (argvalue[0] == '\0') return FALSE;
 		Var_Set(argvalue, "1", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 		break;
 	case 'I':
-		if (argvalue == NULL) return FALSE;
 		Parse_AddIncludeDir(argvalue);
 		Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 		break;
 	case 'J':
-		if (argvalue == NULL) return FALSE;
 		MainParseArgJobsInternal(argvalue);
 		break;
 	case 'N':
@@ -514,14 +512,12 @@ MainParseArg(char c, char *argvalue)
 		Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 		break;
 	case 'T':
-		if (argvalue == NULL) return FALSE;
 		tracefile = bmake_strdup(argvalue);
 		Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 		break;
 	case 'V':
 	case 'v':
-		if (argvalue == NULL) return FALSE;
 		printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
 		Lst_Append(variables, bmake_strdup(argvalue));
 		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
@@ -535,7 +531,6 @@ MainParseArg(char c, char *argvalue)
 		Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
 		break;
 	case 'd':
-		if (argvalue == NULL) return FALSE;
 		/* If '-d-opts' don't pass to children */
 		if (argvalue[0] == '-')
 			argvalue++;
@@ -550,7 +545,6 @@ MainParseArg(char c, char *argvalue)
 		Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 		break;
 	case 'f':
-		if (argvalue == NULL) return FALSE;
 		Lst_Append(makefiles, bmake_strdup(argvalue));
 		break;
 	case 'i':
@@ -558,7 +552,6 @@ MainParseArg(char c, char *argvalue)
 		Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 		break;
 	case 'j':
-		if (argvalue == NULL) return FALSE;
 		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
@@ -566,7 +559,6 @@ MainParseArg(char c, char *argvalue)
 		Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 		break;
 	case 'm':
-		if (argvalue == NULL) return FALSE;
 		MainParseArgSysInc(argvalue);
 		break;
 	case 'n':
@@ -614,19 +606,17 @@ MainParseArgs(int argc, char **argv)
 	char c = '?';
 	int arginc;
 	char *argvalue;
-	const char *getopt_def;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
 
-#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w"
+	const char *optspecs = "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w";
 /* Can't actually use getopt(3) because rescanning is not portable */
 
-	getopt_def = OPTFLAGS;
 rearg:
 	inOption = FALSE;
 	optscan = NULL;
 	while (argc > 1) {
-		char *getopt_spec;
+		const char *optspec;
 		if (!inOption)
 			optscan = argv[1];
 		c = *optscan++;
@@ -645,8 +635,8 @@ rearg:
 			c = *optscan++;
 		}
 		/* '-' found at some earlier point */
-		getopt_spec = strchr(getopt_def, c);
-		if (c != '\0' && getopt_spec != NULL && getopt_spec[1] == ':') {
+		optspec = strchr(optspecs, c);
+		if (c != '\0' && optspec != NULL && optspec[1] == ':') {
 			/* -<something> found, and <something> should have an arg */
 			inOption = FALSE;
 			arginc = 1;
