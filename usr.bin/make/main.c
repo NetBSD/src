@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.360 2020/10/01 23:44:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.361 2020/10/01 23:52:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.360 2020/10/01 23:44:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.361 2020/10/01 23:52:51 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -691,24 +691,10 @@ noarg:
 	usage();
 }
 
-/*-
- * Main_ParseArgLine --
- *	Used by the parse module when a .MFLAGS or .MAKEFLAGS target
- *	is encountered and by main() when reading the .MAKEFLAGS envariable.
- *	Takes a line of arguments and breaks it into its
- *	component words and passes those words and the number of them to the
- *	MainParseArgs function.
- *	The line should have all its leading whitespace removed.
+/* Break a line of arguments into words and parse them.
  *
- * Input:
- *	line		Line to fracture
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Only those that come from the various arguments.
- */
+ * Used when a .MFLAGS or .MAKEFLAGS target is encountered during parsing and
+ * by main() when reading the MAKEFLAGS environment variable. */
 void
 Main_ParseArgLine(const char *line)
 {
