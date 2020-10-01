@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.20 2020/10/01 06:59:34 skrll Exp $ */
+/* $NetBSD: mcclock.c,v 1.21 2020/10/01 07:21:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.20 2020/10/01 06:59:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21 2020/10/01 07:21:36 skrll Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/lwp.h>
