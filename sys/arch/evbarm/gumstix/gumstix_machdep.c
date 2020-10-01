@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.67 2020/09/29 19:58:50 jmcneill Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.68 2020/10/01 08:27:20 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -152,10 +152,10 @@
 #include "arml2cc.h"
 #endif
 #include "prcm.h"
-#endif
 
 #include "arma9tmr.h"
 #include "armgtmr.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
