@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.359 2020/10/01 23:42:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.360 2020/10/01 23:44:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.359 2020/10/01 23:42:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.360 2020/10/01 23:44:36 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -475,7 +475,7 @@ MainParseArgSysInc(const char *argvalue)
 }
 
 static Boolean
-MainParseArg(char c, char *argvalue)
+MainParseArg(char c, const char *argvalue)
 {
 	switch (c) {
 	case '\0':
@@ -603,7 +603,7 @@ MainParseArg(char c, char *argvalue)
 static void
 MainParseArgs(int argc, char **argv)
 {
-	char c = '?';
+	char c;
 	int arginc;
 	char *argvalue;
 	char *optscan;
