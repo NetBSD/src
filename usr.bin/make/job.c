@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.253 2020/09/28 23:31:18 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.254 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.253 2020/09/28 23:31:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.254 2020/10/01 22:42:00 rillig Exp $");
 
 # define STATIC static
 
@@ -323,22 +323,9 @@ static const int npseudojobs = 2; /* number of pseudo-jobs */
 
 static sigset_t caught_signals;	/* Set of signals we handle */
 
-static void JobChildSig(int);
-static void JobContinueSig(int);
-static Job *JobFindPid(int, int, Boolean);
-static int JobPrintCommand(void *, void *);
-static void JobClose(Job *);
-static void JobExec(Job *, char **);
-static void JobMakeArgv(Job *, char **);
-static int JobStart(GNode *, int);
-static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, Boolean);
-static Shell *JobMatchShell(const char *);
 static void JobInterrupt(int, int) MAKE_ATTR_DEAD;
 static void JobRestartJobs(void);
-static void JobTokenAdd(void);
-static void JobSigLock(sigset_t *);
-static void JobSigUnlock(sigset_t *);
 static void JobSigReset(void);
 
 static unsigned
