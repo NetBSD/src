@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.67 2020/05/14 18:06:58 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.68 2020/10/01 14:33:26 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.67 2020/05/14 18:06:58 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.68 2020/10/01 14:33:26 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1683,20 +1683,12 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	if (synaptics_up_down_emul == 2) {
 		if (sc->up_down == 0) {
 			if (sp->sp_up && sp->sp_down) {
-				/*
-				 * Most up/down buttons will be actuated using
-				 * a rocker switch, so we should never see
-				 * them both simultaneously. But just in case,
-				 * treat this situation as a middle button
-				 * event.
-				 */
 				sp->sp_middle = 1;
-			} else
-			if (sp->sp_up)
+			} else if (sp->sp_up) {
 				dz = -synaptics_up_down_motion_delta;
-			else
-			if (sp->sp_down)
+			} else if (sp->sp_down) {
 				dz = synaptics_up_down_motion_delta;
+			}
 		}
 
 		sc->up_down = sp->sp_up | sp->sp_down;
