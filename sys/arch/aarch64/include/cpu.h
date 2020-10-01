@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.27 2020/09/14 10:06:35 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.28 2020/10/01 06:40:16 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ void	cpu_hatch(struct cpu_info *);
 extern struct cpu_info *cpu_info[];
 extern struct cpu_info cpu_info_store[];
 
-#define CPU_INFO_ITERATOR	cpuid_t
+#define CPU_INFO_ITERATOR	int
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define cpu_number()		(curcpu()->ci_index)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)

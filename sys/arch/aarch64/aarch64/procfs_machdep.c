@@ -1,4 +1,4 @@
-/* $NetBSD: procfs_machdep.c,v 1.2 2020/09/30 08:43:47 ryo Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.3 2020/10/01 06:40:16 ryo Exp $ */
 
 /*-
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.2 2020/09/30 08:43:47 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.3 2020/10/01 06:40:16 ryo Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <miscfs/procfs/procfs.h>
 #include <aarch64/armreg.h>
 
@@ -188,7 +190,7 @@ procfs_getcpuinfstr(char *buf, size_t *lenp)
 	total = 0;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		OUTPUT_BUF("processor\t: %lu\n", cii);
+		OUTPUT_BUF("processor\t: %d\n", cii);
 
 		len = procfs_cpuinfo_features(ci, buf, left);
 		FORWARD_BUF(len);
