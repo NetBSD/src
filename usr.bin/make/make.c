@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.156 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.157 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.156 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.157 2020/10/01 22:42:00 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -117,12 +117,7 @@ static unsigned int checked = 1;
  * It is added to by Make_Update and subtracted from by MakeStartJobs */
 static GNodeList *toBeMade;
 
-static int MakeAddChild(void *, void *);
-static int MakeFindChild(void *, void *);
-static Boolean MakeStartJobs(void);
-static int MakePrintStatus(void *, void *);
 static int MakeCheckOrder(void *, void *);
-static int MakeBuildChild(void *, void *);
 static int MakeBuildParent(void *, void *);
 
 void
