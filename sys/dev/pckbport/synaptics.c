@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.69 2020/10/01 15:08:11 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.70 2020/10/01 17:13:19 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.69 2020/10/01 15:08:11 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.70 2020/10/01 17:13:19 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ static int synaptics_fscroll_min = 13;
 static int synaptics_fscroll_max = 14;
 static int synaptics_dz_hold = 30;
 static int synaptics_movement_enable = 1;
+static bool synaptics_aux_mid_button_scroll = TRUE;
 
 /* Sysctl nodes. */
 static int synaptics_button_boundary_nodenum;
@@ -152,6 +153,7 @@ static int synaptics_finger_scroll_min_nodenum;
 static int synaptics_finger_scroll_max_nodenum;
 static int synaptics_dz_hold_nodenum;
 static int synaptics_movement_enable_nodenum;
+static int synaptics_aux_mid_button_scroll_nodenum;
 
 static int
 synaptics_poll_cmd(struct pms_softc *psc, ...)
@@ -830,6 +832,18 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 		goto err;
 
 	synaptics_dz_hold_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "aux_mid_button_scroll",
+	    SYSCTL_DESCR("Interpet Y-Axis movement with the middle button held as scrolling on the passthrough device (e.g. TrackPoint)"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_aux_mid_button_scroll,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_aux_mid_button_scroll_nodenum = node->sysctl_num;
 	return;
 
 err:
@@ -920,6 +934,10 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_movement_enable_nodenum) {
+		if (t < 0 || t > 1)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_aux_mid_button_scroll_nodenum) {
 		if (t < 0 || t > 1)
 			return (EINVAL);
 	} else
@@ -1174,6 +1192,15 @@ pms_synaptics_passthrough(struct pms_softc *psc)
 	psc->buttons ^= changed;
 
 	if (dx || dy || dz || changed) {
+		/*
+		 * If the middle button is held, interpret Y-axis
+		 * movement as scrolling.
+		 */
+		if (synaptics_aux_mid_button_scroll &&
+		    dy && (psc->buttons & 0x2)) {
+			dz = -dy;
+			dx = dy = 0;
+		}
 		buttons = (psc->buttons & 0x1f) | ((psc->buttons >> 5) & 0x7);
 		s = spltty();
 		wsmouse_input(psc->sc_wsmousedev,
