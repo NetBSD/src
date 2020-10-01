@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.343 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.344 2020/10/01 23:44:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.343 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.344 2020/10/01 23:44:36 rillig Exp $");
 
 /* types and constants */
 
@@ -2031,7 +2031,7 @@ ParseHasCommands(void *gnp)
 /* Add a directory to the path searched for included makefiles bracketed
  * by double-quotes. */
 void
-Parse_AddIncludeDir(char *dir)
+Parse_AddIncludeDir(const char *dir)
 {
     (void)Dir_AddDir(parseIncPath, dir);
 }
