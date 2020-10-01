@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.125 2020/04/04 16:25:17 jdolecek Exp $
+#	$NetBSD: RESPONSIBLE,v 1.126 2020/10/01 18:34:06 kamil Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -60,7 +60,7 @@ ppp(async)	christos
 ppp(sync)	martin?
 racoon		manu
 routed		christos
-sh		christos, dsl, kre
+sh		christos, kre
 sort		jdolecek
 sysctl		atatat*
 talk/talkd	dholland
@@ -263,7 +263,7 @@ Portmasters:
 
 [should be synced with src/distrib/notes/common/main]
 acorn32		reinoud
-amd64		dsl
+amd64		core
 algor		core
 alpha		matt
 amiga		is
@@ -272,7 +272,7 @@ arc		soda
 atari		jdc
 bebox		core
 cats		core
-cesfic		drochner
+cesfic		core
 cobalt		core
 emips		pooka
 evbarm		core
@@ -285,7 +285,7 @@ hpcarm		core
 hpcmips		core
 hpcsh		uwe
 hppa		skrll
-i386		dsl
+i386		core
 ibmnws		matt
 iyonix		gavan
 landisk		uwe
@@ -323,7 +323,7 @@ xen		bouyer
 MD Misc:
 
 hpcboot		uwe
-i386 bootblocks	dsl, drochner, fvdl*, christos
+i386 bootblocks	fvdl*, christos
 amiga pci	rkujawa
 
 
