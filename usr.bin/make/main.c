@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.352 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.353 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.352 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.353 2020/10/01 22:42:00 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -171,7 +171,6 @@ Boolean			varNoExportEnv;	/* -X flag */
 Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
-static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const char *);
 static void		usage(void) MAKE_ATTR_DEAD;
 static void		purge_cached_realpaths(void);

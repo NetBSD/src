@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.155 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.156 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.155 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.156 2020/10/01 22:42:00 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -151,7 +151,6 @@ typedef struct CondParser {
 } CondParser;
 
 static Token CondParser_Expr(CondParser *par, Boolean);
-static CondEvalResult CondParser_Eval(CondParser *par, Boolean *value);
 
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */

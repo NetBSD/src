@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.19 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.20 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,10 +33,9 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: make_malloc.c,v 1.19 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: make_malloc.c,v 1.20 2020/10/01 22:42:00 rillig Exp $");
 
 #ifndef USE_EMALLOC
-static MAKE_ATTR_DEAD void enomem(void);
 
 /* die when out of memory. */
 static MAKE_ATTR_DEAD void

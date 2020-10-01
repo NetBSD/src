@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.126 2020/09/28 22:23:35 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.127 2020/10/01 22:42:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,7 +134,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.126 2020/09/28 22:23:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.127 2020/10/01 22:42:00 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -158,7 +158,6 @@ typedef struct Arch {
     size_t	  fnamesize;  /* Size of the string table */
 } Arch;
 
-static struct ar_hdr *ArchStatMember(const char *, const char *, Boolean);
 static FILE *ArchFindMember(const char *, const char *,
 			    struct ar_hdr *, const char *);
 #if defined(__svr4__) || defined(__SVR4) || defined(__ELF__)
