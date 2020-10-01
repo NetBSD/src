@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.357 2020/10/01 23:20:48 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.358 2020/10/01 23:28:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.357 2020/10/01 23:20:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.358 2020/10/01 23:28:01 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -625,14 +625,14 @@ MainParseArgs(int argc, char **argv)
 rearg:
 	inOption = FALSE;
 	optscan = NULL;
-	while(argc > 1) {
+	while (argc > 1) {
 		char *getopt_spec;
-		if(!inOption)
+		if (!inOption)
 			optscan = argv[1];
 		c = *optscan++;
 		arginc = 0;
-		if(inOption) {
-			if(c == '\0') {
+		if (inOption) {
+			if (c == '\0') {
 				++argv;
 				--argc;
 				inOption = FALSE;
@@ -646,12 +646,12 @@ rearg:
 		}
 		/* '-' found at some earlier point */
 		getopt_spec = strchr(getopt_def, c);
-		if(c != '\0' && getopt_spec != NULL && getopt_spec[1] == ':') {
+		if (c != '\0' && getopt_spec != NULL && getopt_spec[1] == ':') {
 			/* -<something> found, and <something> should have an arg */
 			inOption = FALSE;
 			arginc = 1;
 			argvalue = optscan;
-			if(*argvalue == '\0') {
+			if (*argvalue == '\0') {
 				if (argc < 3)
 					goto noarg;
 				argvalue = argv[2];
@@ -662,15 +662,15 @@ rearg:
 		}
 		switch (c) {
 		case '\0':
-		    arginc = 1;
-		    inOption = FALSE;
-		    break;
+			arginc = 1;
+			inOption = FALSE;
+			break;
 		case '-':
-		    dashDash = TRUE;
-		    break;
+			dashDash = TRUE;
+			break;
 		default:
-		    if (!MainParseArg(c, argvalue))
-		        goto noarg;
+			if (!MainParseArg(c, argvalue))
+				goto noarg;
 		}
 		argv += arginc;
 		argc -= arginc;
