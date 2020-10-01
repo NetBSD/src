@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.356 2020/10/01 23:14:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.357 2020/10/01 23:20:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.356 2020/10/01 23:14:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.357 2020/10/01 23:20:48 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -456,11 +456,27 @@ MainParseArgJobs(const char *argvalue)
 	maxJobTokens = maxJobs;
 }
 
+static void
+MainParseArgSysInc(const char *argvalue)
+{
+	char found_path[MAXPATHLEN + 1];
+
+	/* look for magic parent directory search string */
+	if (strncmp(".../", argvalue, 4) == 0) {
+		if (!Dir_FindHereOrAbove(curdir, argvalue + 4,
+					 found_path, sizeof(found_path)))
+			return;
+		(void)Dir_AddDir(sysIncPath, found_path);
+	} else {
+		(void)Dir_AddDir(sysIncPath, argvalue);
+	}
+	Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
+	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+}
+
 static Boolean
 MainParseArg(char c, char *argvalue)
 {
-	char found_path[MAXPATHLEN + 1];        /* for searching for sys.mk */
-
 	switch (c) {
 	case '\0':
 		break;
@@ -551,17 +567,7 @@ MainParseArg(char c, char *argvalue)
 		break;
 	case 'm':
 		if (argvalue == NULL) return FALSE;
-		/* look for magic parent directory search string */
-		if (strncmp(".../", argvalue, 4) == 0) {
-			if (!Dir_FindHereOrAbove(curdir, argvalue + 4,
-			    found_path, sizeof(found_path)))
-				break;		/* nothing doing */
-			(void)Dir_AddDir(sysIncPath, found_path);
-		} else {
-			(void)Dir_AddDir(sysIncPath, argvalue);
-		}
-		Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+		MainParseArgSysInc(argvalue);
 		break;
 	case 'n':
 		noExecute = TRUE;
