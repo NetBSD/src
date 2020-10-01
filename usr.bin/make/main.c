@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.355 2020/10/01 23:06:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.356 2020/10/01 23:14:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.355 2020/10/01 23:06:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.356 2020/10/01 23:14:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -411,10 +411,54 @@ MainParseArgChdir(const char *argvalue)
 	ignorePWD = TRUE;
 }
 
+static void
+MainParseArgJobsInternal(const char *argvalue)
+{
+	if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
+		(void)fprintf(stderr,
+			      "%s: internal error -- J option malformed (%s)\n",
+			      progname, argvalue);
+		usage();
+	}
+	if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
+	    (fcntl(jp_1, F_GETFD, 0) < 0)) {
+#if 0
+		(void)fprintf(stderr,
+		    "%s: ###### warning -- J descriptors were closed!\n",
+		    progname);
+		exit(2);
+#endif
+		jp_0 = -1;
+		jp_1 = -1;
+		compatMake = TRUE;
+	} else {
+		Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+	}
+}
+
+static void
+MainParseArgJobs(const char *argvalue)
+{
+	char *p;
+
+	forceJobs = TRUE;
+	maxJobs = strtol(argvalue, &p, 0);
+	if (*p != '\0' || maxJobs < 1) {
+		(void)fprintf(stderr,
+		    "%s: illegal argument to -j -- must be positive integer!\n",
+		    progname);
+		exit(1);	/* XXX: why not 2? */
+	}
+	Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
+	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+	Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
+	maxJobTokens = maxJobs;
+}
+
 static Boolean
 MainParseArg(char c, char *argvalue)
 {
-	char *p;
 	char found_path[MAXPATHLEN + 1];        /* for searching for sys.mk */
 
 	switch (c) {
@@ -442,27 +486,7 @@ MainParseArg(char c, char *argvalue)
 		break;
 	case 'J':
 		if (argvalue == NULL) return FALSE;
-		if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
-			(void)fprintf(stderr,
-				      "%s: internal error -- J option malformed (%s)\n",
-				      progname, argvalue);
-			usage();
-		}
-		if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
-		    (fcntl(jp_1, F_GETFD, 0) < 0)) {
-#if 0
-			(void)fprintf(stderr,
-			    "%s: ###### warning -- J descriptors were closed!\n",
-			    progname);
-			exit(2);
-#endif
-			jp_0 = -1;
-			jp_1 = -1;
-			compatMake = TRUE;
-		} else {
-			Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-		}
+		MainParseArgJobsInternal(argvalue);
 		break;
 	case 'N':
 		noExecute = TRUE;
@@ -519,17 +543,7 @@ MainParseArg(char c, char *argvalue)
 		break;
 	case 'j':
 		if (argvalue == NULL) return FALSE;
-		forceJobs = TRUE;
-		maxJobs = strtol(argvalue, &p, 0);
-		if (*p != '\0' || maxJobs < 1) {
-			(void)fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
-			    progname);
-			exit(1);
-		}
-		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-		Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
-		maxJobTokens = maxJobs;
+		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
 		keepgoing = TRUE;
