@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.933 2020/09/30 14:54:33 roy Exp $
+# $NetBSD: mi,v 1.934 2020/10/01 02:00:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -167,6 +167,8 @@
 ./usr/libdata/debug/usr/tests/net/icmp			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_loop		tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/if_tap		tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/if_vether		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_vlan		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/ipsec			tests-net-debug		compattestfile,atf
