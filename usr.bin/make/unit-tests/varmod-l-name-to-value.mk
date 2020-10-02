@@ -1,4 +1,4 @@
-# $NetBSD: varmod-l-name-to-value.mk,v 1.5 2020/09/30 06:15:43 rillig Exp $
+# $NetBSD: varmod-l-name-to-value.mk,v 1.6 2020/10/02 20:48:37 rillig Exp $
 #
 # Tests for the :L modifier, which returns the variable name as the new value.
 
@@ -32,6 +32,12 @@
 # the below :L did not update the definedness of the enclosing expression.
 # This resulted in a wrong "Malformed conditional".
 .if ${value:${:UL}} == ""
+.endif
+
+# As of 2020-10-02, the :L modifier does not ensure that it is followed by
+# a delimiter, that is, a ':' or endc.  Neither does the :P modifier.
+.if ${value:LLLLLLPL} != "value"
+.  error
 .endif
 
 all:
