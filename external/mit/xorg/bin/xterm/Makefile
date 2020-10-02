@@ -1,16 +1,14 @@
-#	$NetBSD: Makefile,v 1.17 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2020/10/02 13:08:07 nia Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xterm
 SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
-	fontutils.c input.c linedata.c menu.c misc.c print.c ptydata.c \
-	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
-	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
-	wcwidth.c xutf8.c cachedGCs.c xtermcap.c version.c
-
-# graphics_regis.c graphics_sixel.c
-# xterm.appdata.xml
+	graphics.c graphics_sixel.c fontutils.c input.c linedata.c menu.c \
+	misc.c print.c ptydata.c screen.c scrollback.c scrollbar.c tabs.c \
+	util.c xstrings.c TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c \
+	charclass.c precompose.c wcwidth.c xutf8.c cachedGCs.c xtermcap.c \
+	version.c
 
 CPPFLAGS+=	-I. \
 		-I${X11SRCDIR.${PROG}} \
@@ -19,6 +17,8 @@ CPPFLAGS+=	-I. \
 		-I${DESTDIR}${X11INCDIR}/freetype2/freetype \
 		-DPROJECTROOT=${X11ROOTDIR} \
 		-DHAVE_CONFIG_H \
+		-DOPT_GRAPHICS \
+		-DOPT_SIXEL_GRAPHICS \
 		-D_REENTRANT \
 		${X11FLAGS.VERSION}
 
