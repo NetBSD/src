@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.555 2020/09/30 06:46:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.556 2020/10/02 17:42:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.555 2020/09/30 06:46:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.556 2020/10/02 17:42:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2448,9 +2448,7 @@ ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 static ApplyModifierResult
 ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 {
-    /* XXX: pp points to the 's', for historic reasons only.
-     * Changing this will influence the error messages. */
-    const char *sep = *pp + 1;
+    const char *sep = *pp + 2;
 
     /* ":ts<any><endc>" or ":ts<any>:" */
     if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
@@ -2467,8 +2465,10 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
     }
 
     /* ":ts<unrecognised><unrecognised>". */
-    if (sep[0] != '\\')
+    if (sep[0] != '\\') {
+	(*pp)++;		/* just for backwards compatibility */
 	return AMR_BAD;
+    }
 
     /* ":ts\n" */
     if (sep[1] == 'n') {
@@ -2493,12 +2493,16 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	if (sep[1] == 'x') {
 	    base = 16;
 	    numStart++;
-	} else if (!ch_isdigit(sep[1]))
+	} else if (!ch_isdigit(sep[1])) {
+	    (*pp)++;		/* just for backwards compatibility */
 	    return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
+	}
 
 	st->sep = (char)strtoul(numStart, &end, base);
-	if (*end != ':' && *end != st->endc)
+	if (*end != ':' && *end != st->endc) {
+	    (*pp)++;		/* just for backwards compatibility */
 	    return AMR_BAD;
+	}
 	*pp = end;
     }
 
@@ -2515,15 +2519,18 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
     const char *mod = *pp;
     assert(mod[0] == 't');
 
-    *pp = mod + 1;		/* make sure it is set */
-    if (mod[1] == st->endc || mod[1] == ':' || mod[1] == '\0')
+    if (mod[1] == st->endc || mod[1] == ':' || mod[1] == '\0') {
+	*pp = mod + 1;
 	return AMR_BAD;		/* Found ":t<endc>" or ":t:". */
+    }
 
     if (mod[1] == 's')
 	return ApplyModifier_ToSep(pp, st);
 
-    if (mod[2] != st->endc && mod[2] != ':')
+    if (mod[2] != st->endc && mod[2] != ':') {
+	*pp = mod + 1;
 	return AMR_BAD;		/* Found ":t<unrecognised><unrecognised>". */
+    }
 
     /* Check for two-character options: ":tu", ":tl" */
     if (mod[1] == 'A') {	/* absolute path */
@@ -2533,7 +2540,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	return AMR_OK;
     }
 
-    if (mod[1] == 'u') {
+    if (mod[1] == 'u') {	/* :tu */
 	size_t i;
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
@@ -2543,7 +2550,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	return AMR_OK;
     }
 
-    if (mod[1] == 'l') {
+    if (mod[1] == 'l') {	/* :tl */
 	size_t i;
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
@@ -2553,7 +2560,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	return AMR_OK;
     }
 
-    if (mod[1] == 'W' || mod[1] == 'w') {
+    if (mod[1] == 'W' || mod[1] == 'w') { /* :tW, :tw */
 	st->oneBigWord = mod[1] == 'W';
 	st->newVal = st->val;
 	*pp = mod + 2;
@@ -2561,6 +2568,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
     }
 
     /* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
+    *pp = mod + 1;
     return AMR_BAD;
 }
 
