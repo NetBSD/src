@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.120 2020/05/28 10:22:49 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.121 2020/10/02 17:27:12 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -12,7 +12,12 @@ EVBARM_BOARDS=
 EVBARM_BOARDS.${i}=
 .endfor
 
-.if !empty(MACHINE_ARCH:M*eb)
+.if ${MACHINE_ARCH} == "aarch64eb"
+# For AArch64 BE images, we need a LE image for efiboot to be able to
+# read the target file-system (no libsa FFS EI support).
+IMAGEENDIAN=	le
+KERNEL_SETS.arm64+=		GENERIC64
+.elif !empty(MACHINE_ARCH:M*eb)
 IMAGEENDIAN=	be
 # big endian boards
 KERNEL_SETS.armv4+=		IXM1200
@@ -114,6 +119,7 @@ ARCHES.earmv7hf=	armv7hf
 ARCHES.earmv7eb=	armv7
 ARCHES.earmv7hfeb=	armv7hf
 ARCHES.aarch64=		arm64
+ARCHES.aarch64eb=	arm64
 .for arch in ${ARCHES.${MACHINE_ARCH}}
 .for board in ${EVBARM_BOARDS.${arch}}
 KERNEL_SETS+=		${board}
@@ -122,7 +128,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 .endfor
 
-.if !empty(MACHINE_ARCH:Maarch64)
+.if !empty(MACHINE_ARCH:Maarch64*)
 smp_efibootaa64:
 	cd ${KERNSRCDIR}/stand/efiboot/bootaa64 && ${MAKE} release
 SNAP_MD_POST_DEPS+=	smp_efibootaa64
@@ -142,7 +148,7 @@ MKI_OPTS.smp_armv7=	-K ${IMAGE.kern}
 SNAP_MD_POST_DEPS+=	smp_armv7
 .endif
 
-.if !empty(MACHINE_ARCH:Maarch64) && empty(ALL_KERNELS)
+.if !empty(MACHINE_ARCH:Maarch64*) && empty(ALL_KERNELS)
 smp_arm64: __mkimage
 MKI_OPTS.smp_arm64=	-K ${IMAGE.kern}
 SNAP_MD_POST_DEPS+=	smp_arm64
