@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.156 2020/10/02 20:34:59 rillig Exp $
+# $NetBSD: Makefile,v 1.157 2020/10/03 08:16:53 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -403,6 +403,10 @@ SED_CMDS.opt-debug-graph1= \
 SED_CMDS.opt-debug-graph1+= \
 			-e '/Global Variables:/,/Suffixes:/d'
 SED_CMDS.sh-dots=	-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
+SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
+SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
+SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
+SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
