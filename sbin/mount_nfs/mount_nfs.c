@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.72 2018/05/17 02:34:31 thorpej Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.73 2020/10/03 18:06:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.72 2018/05/17 02:34:31 thorpej Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.73 2020/10/03 18:06:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.72 2018/05/17 02:34:31 thorpej Exp $");
 #define ALTF_CONN	0x00000002
 #define ALTF_DUMBTIMR	0x00000004
 #define ALTF_INTR	0x00000008
+#define ALTF_NOAC	0x00000010
 #define ALTF_NFSV3	0x00000020
 #define ALTF_RDIRPLUS	0x00000040
 #define	ALTF_MNTUDP	0x00000080
@@ -109,6 +110,7 @@ static const struct mntopt mopts[] = {
 	{ "conn", 0, ALTF_CONN, 1 },
 	{ "dumbtimer", 0, ALTF_DUMBTIMR, 1 },
 	{ "intr", 0, ALTF_INTR, 1 },
+	{ "ac", 1, ALTF_NOAC, 1 },
 	{ "nfsv3", 0, ALTF_NFSV3, 1 },
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
@@ -217,6 +219,9 @@ mount_nfs_parseargs(int argc, char *argv[],
 			force2 = 1;
 			nfsargsp->flags &= ~NFSMNT_NFSV3;
 			break;
+		case 'A':
+			nfsargsp->flags |= NFSMNT_NOAC;
+			break;
 		case 'a':
 			num = strtol(optarg, &p, 10);
 			if (*p || num < 0)
@@ -281,6 +286,8 @@ mount_nfs_parseargs(int argc, char *argv[],
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			if (altflags & ALTF_INTR)
 				nfsargsp->flags |= NFSMNT_INT;
+			if (altflags & ALTF_NOAC)
+				nfsargsp->flags |= NFSMNT_NOAC;
 			if (altflags & (ALTF_NFSV3|ALTF_NQNFS)) {
 				if (force2)
 					errx(1, "conflicting version options");
