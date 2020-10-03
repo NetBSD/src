@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.36 2020/10/03 22:25:04 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.37 2020/10/03 22:33:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.36 2020/10/03 22:25:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.37 2020/10/03 22:33:26 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're
@@ -257,8 +257,6 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 {
 	Hash_Entry **hp, *p;
 
-	if (e == NULL)
-		return;
 	for (hp = &t->buckets[e->namehash & t->bucketsMask];
 	     (p = *hp) != NULL; hp = &p->next) {
 		if (p == e) {
@@ -268,7 +266,6 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 			return;
 		}
 	}
-	(void)write(2, "bad call to Hash_DeleteEntry\n", 29);
 	abort();
 }
 
