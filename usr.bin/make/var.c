@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.559 2020/10/03 10:42:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.560 2020/10/03 12:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.559 2020/10/03 10:42:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.560 2020/10/03 12:30:17 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3169,13 +3169,21 @@ ApplyModifiers(
 	    /* TODO: handle errors */
 
 	    /*
-	     * If we have not parsed up to st.endc or ':',
-	     * we are not interested.
+	     * If we have not parsed up to st.endc or ':', we are not
+	     * interested.  This means the expression ${VAR:${M_1}${M_2}}
+	     * is not accepted, but ${VAR:${M_1}:${M_2}} is.
 	     */
 	    if (rval[0] != '\0' &&
 		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
+		if (DEBUG(LINT))
+		    Parse_Error(PARSE_FATAL,
+				"Missing delimiter ':' after indirect modifier \"%.*s\"",
+				(int)(nested_p - p), p);
+
 		free(freeIt);
 		/* XXX: apply_mods doesn't sound like "not interested". */
+		/* XXX: Why is the indirect modifier parsed again by
+		 * apply_mods?  If any, p should be advanced to nested_p. */
 		goto apply_mods;
 	    }
 
@@ -3196,6 +3204,7 @@ ApplyModifiers(
 		}
 	    }
 	    free(freeIt);
+
 	    if (*p == ':')
 		p++;
 	    else if (*p == '\0' && endc != '\0') {
@@ -3252,6 +3261,10 @@ ApplyModifiers(
 		  st.endc, st.v->name, st.val, *mod);
 	} else if (*p == ':') {
 	    p++;
+	} else if (DEBUG(LINT) && *p != '\0' && *p != endc) {
+	    Parse_Error(PARSE_FATAL,
+			"Missing delimiter ':' after modifier \"%.*s\"",
+			(int)(p - mod), mod);
 	}
     }
 out:
