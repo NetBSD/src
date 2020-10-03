@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.344 2020/10/01 23:44:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.345 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.344 2020/10/01 23:44:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.345 2020/10/03 21:19:54 rillig Exp $");
 
 /* types and constants */
 
@@ -768,8 +768,7 @@ ParseMessage(char *line)
 	line++;
     if (!ch_isspace(*line))
 	return FALSE;			/* not for us */
-    while (ch_isspace(*line))
-	line++;
+    pp_skip_whitespace(&line);
 
     (void)Var_Subst(line, VAR_CMD, VARE_WANTRES, &line);
     /* TODO: handle errors */
@@ -1071,8 +1070,7 @@ ParseErrorNoDependency(const char *lstart, const char *line)
     else if (lstart[0] == '.') {
 	const char *dirstart = lstart + 1;
 	const char *dirend;
-	while (ch_isspace(*dirstart))
-	    dirstart++;
+	cpp_skip_whitespace(&dirstart);
 	dirend = dirstart;
 	while (ch_isalnum(*dirend) || *dirend == '-')
 	    dirend++;
@@ -1404,9 +1402,7 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 	    }
 	} else {
-	    while (*cp && ch_isspace(*cp)) {
-		cp++;
-	    }
+	    pp_skip_whitespace(&cp);
 	}
 	line = cp;
 	if (*line == '\0')
@@ -1479,9 +1475,7 @@ ParseDoDependency(char *line)
      * LINE will now point to the first source word, if any, or the
      * end of the string if not.
      */
-    while (*cp && ch_isspace(*cp)) {
-	cp++;
-    }
+    pp_skip_whitespace(&cp);
     line = cp;
 
     /*
@@ -1606,9 +1600,7 @@ ParseDoDependency(char *line)
 	    if (savec != '\0') {
 		cp++;
 	    }
-	    while (*cp && ch_isspace(*cp)) {
-		cp++;
-	    }
+	    pp_skip_whitespace(&cp);
 	    line = cp;
 	}
 	if (paths) {
@@ -1659,9 +1651,7 @@ ParseDoDependency(char *line)
 
 		ParseDoSrc(tOp, line, specType);
 	    }
-	    while (*cp && ch_isspace(*cp)) {
-		cp++;
-	    }
+	    pp_skip_whitespace(&cp);
 	    line = cp;
 	}
     }
@@ -1854,8 +1844,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    break;
     }
 
-    while (ch_isspace(*cp))
-	cp++;
+    pp_skip_whitespace(&cp);
 
     if (DEBUG(LINT)) {
 	if (type != VAR_SUBST && strchr(cp, '$') != NULL) {
@@ -2408,11 +2397,7 @@ ParseTraditionalInclude(char *line)
 
     DEBUG2(PARSE, "%s: %s\n", __func__, file);
 
-    /*
-     * Skip over whitespace
-     */
-    while (ch_isspace(*file))
-	file++;
+    pp_skip_whitespace(&file);
 
     /*
      * Substitute for any variables in the file name before trying to
@@ -2454,11 +2439,7 @@ ParseGmakeExport(char *line)
 
     DEBUG2(PARSE, "%s: %s\n", __func__, variable);
 
-    /*
-     * Skip over whitespace
-     */
-    while (ch_isspace(*variable))
-	variable++;
+    pp_skip_whitespace(&variable);
 
     for (value = variable; *value && *value != '='; value++)
 	continue;
@@ -2793,9 +2774,7 @@ FinishDependencyGroup(void)
 static void
 ParseLine_ShellCommand(char *cp)
 {
-    for (; ch_isspace(*cp); cp++)
-	continue;
-
+    pp_skip_whitespace(&cp);
     if (*cp == '\0')
 	return;			/* skip empty commands */
 
@@ -2853,16 +2832,16 @@ Parse_File(const char *name, int fd)
 		 * On the other hand they can be suffix rules (.c.o: ...)
 		 * or just dependencies for filenames that start '.'.
 		 */
-		for (cp = line + 1; ch_isspace(*cp); cp++)
-		    continue;
+		cp = line + 1;
+		pp_skip_whitespace(&cp);
 		if (IsInclude(cp, FALSE)) {
 		    ParseDoInclude(cp);
 		    continue;
 		}
 		if (strncmp(cp, "undef", 5) == 0) {
 		    const char *varname;
-		    for (cp += 5; ch_isspace(*cp); cp++)
-			continue;
+		    cp += 5;
+		    pp_skip_whitespace(&cp);
 		    varname = cp;
 		    for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
 			continue;
@@ -2872,8 +2851,8 @@ Parse_File(const char *name, int fd)
 		    /* TODO: use Str_Words, like everywhere else */
 		    continue;
 		} else if (strncmp(cp, "export", 6) == 0) {
-		    for (cp += 6; ch_isspace(*cp); cp++)
-			continue;
+		    cp += 6;
+		    pp_skip_whitespace(&cp);
 		    Var_Export(cp, TRUE);
 		    continue;
 		} else if (strncmp(cp, "unexport", 8) == 0) {
@@ -2933,8 +2912,7 @@ Parse_File(const char *name, int fd)
 	     */
 	    cp = line;
 	    if (ch_isspace(line[0])) {
-		while (ch_isspace(*cp))
-		    cp++;
+		pp_skip_whitespace(&cp);
 		while (*cp && (ParseIsEscaped(line, cp) ||
 			*cp != ':' && *cp != '!')) {
 		    cp++;
