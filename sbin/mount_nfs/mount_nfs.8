@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.48 2018/05/17 06:37:06 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.49 2020/10/03 18:06:37 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd September 12, 2016
+.Dd October 3, 2020
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd mount NFS file systems
 .Sh SYNOPSIS
 .Nm
-.Op Fl 23bCcdilPpqsTUuX
+.Op Fl 23AbCcdilPpqsTUuX
 .Op Fl a Ar maxreadahead
 .Op Fl D Ar deadthresh
 .Op Fl g Ar maxgroups
@@ -75,6 +75,17 @@ Use the NFS Version 2 protocol.
 Use the NFS Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
+.It Fl A
+Disable the attribute cache in the client, making it consult the server
+for the current version of a given file's attributes every time the file
+is accessed.
+
+By default the attribute cache is enabled, making the client only consult
+the server every handful of seconds.  This improves performance, however
+at the cost of the risk of a mid-air collision when changes are made
+simultaneously by different NFS clients and/or locally on the NFS server
+that affect the same file.  In that case changes made elsewhere may be
+missed, leading to consistency issues.
 .It Fl a Ar maxreadahead
 Set the read-ahead count to the specified value.
 This may be in the range of 0 - 4, and determines how many blocks
@@ -186,6 +197,9 @@ Same as
 .It Cm nfsv3
 Same as
 .Fl 3 .
+.It Cm noac
+Same as
+.Fl A .
 .It Cm noresport
 Same as
 .Fl p .
