@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.41 2020/09/27 23:16:10 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.42 2020/10/03 17:31:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@ extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;
 extern int alpha_fp_sync_complete;
 extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
+extern void (*alpha_delay_fn)(unsigned long);
 
 void	XentArith(uint64_t, uint64_t, uint64_t);	/* MAGIC */
 void	XentIF(uint64_t, uint64_t, uint64_t);		/* MAGIC */

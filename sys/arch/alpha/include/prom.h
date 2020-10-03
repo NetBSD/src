@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.15 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: prom.h,v 1.16 2020/10/03 17:31:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -46,6 +46,13 @@ typedef union {
 	uint64_t bits;
 } prom_return_t;
 
+/* Linux kernel parameter block filled out by Qemu. */
+struct linux_kernel_params {
+	char		kernel_cmdline[256];
+	uint64_t	initrd_base;
+	uint64_t	initrd_size;
+};
+
 #ifdef _STANDALONE
 int	getchar(void);
 void	putchar(int);
@@ -53,6 +60,7 @@ void	putchar(int);
 
 void	prom_halt(int) __attribute__((__noreturn__));
 int	prom_getenv(int, char *, int);
+bool	prom_qemu_getenv(const char *, char *, size_t);
 
 void	hwrpb_primary_init(void);
 void	hwrpb_restart_setup(void);
