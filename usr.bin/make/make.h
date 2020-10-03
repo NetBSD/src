@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.151 2020/09/28 22:38:32 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.152 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -615,6 +615,20 @@ static inline MAKE_ATTR_UNUSED char ch_tolower(char ch)
 { return (char)tolower((unsigned char)ch); }
 static inline MAKE_ATTR_UNUSED char ch_toupper(char ch)
 { return (char)toupper((unsigned char)ch); }
+
+static inline MAKE_ATTR_UNUSED void
+cpp_skip_whitespace(const char **pp)
+{
+    while (ch_isspace(**pp))
+	(*pp)++;
+}
+
+static inline MAKE_ATTR_UNUSED void
+pp_skip_whitespace(char **pp)
+{
+    while (ch_isspace(**pp))
+	(*pp)++;
+}
 
 #ifndef MAKE_NATIVE
 #define MAKE_RCSID(id) static volatile char rcsid[] = id

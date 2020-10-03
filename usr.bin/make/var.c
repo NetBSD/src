@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.563 2020/10/03 14:41:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.564 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.563 2020/10/03 14:41:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.564 2020/10/03 21:19:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -677,8 +677,7 @@ Var_UnExport(const char *str)
 	if (cp && *cp)
 	    setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
-	for (; ch_isspace(*str); str++)
-	    continue;
+	cpp_skip_whitespace(&str);
 	if (str[0] != '\0')
 	    varnames = str;
     }

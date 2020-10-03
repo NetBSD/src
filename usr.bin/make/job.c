@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.256 2020/10/03 15:28:37 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.257 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.256 2020/10/03 15:28:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.257 2020/10/03 21:19:54 rillig Exp $");
 
 # define STATIC static
 
@@ -655,8 +655,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 	cmd++;
     }
 
-    while (ch_isspace(*cmd))
-	cmd++;
+    pp_skip_whitespace(&cmd);
 
     /*
      * If the shell doesn't have error control the alternate echo'ing will
@@ -2211,8 +2210,7 @@ Job_ParseShell(char *line)
     Boolean	fullSpec = FALSE;
     Shell	*sh;
 
-    while (ch_isspace(*line))
-	line++;
+    pp_skip_whitespace(&line);
 
     free(shellArgv);
 

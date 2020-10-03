@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.128 2020/10/03 10:04:34 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.129 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,7 +134,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.128 2020/10/03 10:04:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.129 2020/10/03 21:19:54 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -413,15 +413,9 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	free(libName);
     }
 
-    /*
-     * We promised the pointer would be set up at the next non-space, so
-     * we must advance cp there before setting *linePtr... (note that on
-     * entrance to the loop, cp is guaranteed to point at a ')')
-     */
-    do {
-	cp++;
-    } while (*cp != '\0' && ch_isspace(*cp));
-
+    cp++;			/* skip the ')' */
+    /* We promised that linePtr would be set up at the next non-space. */
+    pp_skip_whitespace(&cp);
     *linePtr = cp;
     return TRUE;
 }
