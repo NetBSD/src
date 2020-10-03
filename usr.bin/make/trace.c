@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.16 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: trace.c,v 1.17 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,14 +44,11 @@
 
 #include <sys/time.h>
 
-#include <stdio.h>
-#include <unistd.h>
-
 #include "make.h"
 #include "job.h"
 #include "trace.h"
 
-MAKE_RCSID("$NetBSD: trace.c,v 1.16 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: trace.c,v 1.17 2020/10/03 21:52:50 rillig Exp $");
 
 static FILE *trfile;
 static pid_t trpid;

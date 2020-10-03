@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.363 2020/10/03 13:22:39 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.364 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,16 +106,12 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 
 #include "make.h"
-#include "hash.h"
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
@@ -126,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.363 2020/10/03 13:22:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.364 2020/10/03 21:52:50 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "

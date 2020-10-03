@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.155 2020/10/02 22:20:25 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.156 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -129,14 +129,13 @@
 
 #include <dirent.h>
 #include <errno.h>
-#include <stdio.h>
 
 #include "make.h"
 #include "dir.h"
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.155 2020/10/02 22:20:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.156 2020/10/03 21:52:50 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
