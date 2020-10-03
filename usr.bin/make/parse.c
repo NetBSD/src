@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.346 2020/10/03 21:23:42 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.347 2020/10/03 21:43:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.346 2020/10/03 21:23:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.347 2020/10/03 21:43:41 rillig Exp $");
 
 /* types and constants */
 
@@ -2520,7 +2520,7 @@ ParseEOF(void)
 #define PARSE_SKIP 2
 
 static char *
-ParseGetLine(int flags, int *length)
+ParseGetLine(int flags)
 {
     IFile *cf = curFile;
     char *ptr;
@@ -2612,7 +2612,6 @@ ParseGetLine(int flags, int *length)
 
 	if (flags & PARSE_RAW) {
 	    /* Leave '\' (etc) in line buffer (eg 'for' lines) */
-	    *length = line_end - line;
 	    return line;
 	}
 
@@ -2632,10 +2631,8 @@ ParseGetLine(int flags, int *length)
     }
 
     /* If we didn't see a '\\' then the in-situ data is fine */
-    if (escaped == NULL) {
-	*length = line_end - line;
+    if (escaped == NULL)
 	return line;
-    }
 
     /* Remove escapes from '\n' and '#' */
     tp = ptr = escaped;
@@ -2678,7 +2675,6 @@ ParseGetLine(int flags, int *length)
 	tp--;
 
     *tp = 0;
-    *length = tp - line;
     return line;
 }
 
@@ -2694,12 +2690,11 @@ static char *
 ParseReadLine(void)
 {
     char *line;			/* Result */
-    int lineLength;		/* Length of result */
     int lineno;			/* Saved line # */
     int rval;
 
     for (;;) {
-	line = ParseGetLine(0, &lineLength);
+	line = ParseGetLine(0);
 	if (line == NULL)
 	    return NULL;
 
@@ -2714,7 +2709,7 @@ ParseReadLine(void)
 	case COND_SKIP:
 	    /* Skip to next conditional that evaluates to COND_PARSE.  */
 	    do {
-		line = ParseGetLine(PARSE_SKIP, &lineLength);
+		line = ParseGetLine(PARSE_SKIP);
 	    } while (line && Cond_EvalLine(line) != COND_PARSE);
 	    if (line == NULL)
 		break;
@@ -2734,7 +2729,7 @@ ParseReadLine(void)
 	    lineno = curFile->lineno;
 	    /* Accumulate loop lines until matching .endfor */
 	    do {
-		line = ParseGetLine(PARSE_RAW, &lineLength);
+		line = ParseGetLine(PARSE_RAW);
 		if (line == NULL) {
 		    Parse_Error(PARSE_FATAL,
 			     "Unexpected end of file in for loop.");
