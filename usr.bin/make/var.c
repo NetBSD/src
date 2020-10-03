@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.560 2020/10/03 12:30:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.561 2020/10/03 12:46:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.560 2020/10/03 12:30:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.561 2020/10/03 12:46:52 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2927,6 +2927,17 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
     return AMR_OK;
 }
 
+static ApplyModifierResult
+ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
+{
+    if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	st->newVal = VarUniq(st->val);
+	(*pp)++;
+	return AMR_OK;
+    } else
+	return AMR_UNKNOWN;
+}
+
 #ifdef SYSVVARSUB
 /* :from=to */
 static ApplyModifierResult
@@ -3110,12 +3121,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'O':
 	return ApplyModifier_Order(pp, st);
     case 'u':
-	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
-	    st->newVal = VarUniq(st->val);
-	    (*pp)++;
-	    return AMR_OK;
-	} else
-	    return AMR_UNKNOWN;
+        return ApplyModifier_Unique(pp, st);
 #ifdef SUNSHCMD
     case 's':
 	return ApplyModifier_SunShell(pp, st);
