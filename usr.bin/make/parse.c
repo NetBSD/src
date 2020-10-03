@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.345 2020/10/03 21:19:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.346 2020/10/03 21:23:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.345 2020/10/03 21:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.346 2020/10/03 21:23:42 rillig Exp $");
 
 /* types and constants */
 
@@ -1690,12 +1690,8 @@ Parse_IsVar(const char *line)
     Boolean wasSpace = FALSE;	/* set TRUE if found a space */
     char ch;
     int level = 0;
-#define ISEQOPERATOR(c) \
-	(((c) == '+') || ((c) == ':') || ((c) == '?') || ((c) == '!'))
 
-    /*
-     * Skip to variable name
-     */
+    /* Skip to variable name */
     while (*line == ' ' || *line == '\t')
 	line++;
 
@@ -1723,7 +1719,7 @@ Parse_IsVar(const char *line)
 #endif
 	if (ch == '=')
 	    return TRUE;
-	if (*line == '=' && ISEQOPERATOR(ch))
+	if (*line == '=' && (ch == '+' || ch == ':' || ch == '?' || ch == '!'))
 	    return TRUE;
 	if (wasSpace)
 	    return FALSE;
