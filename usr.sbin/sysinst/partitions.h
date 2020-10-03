@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.16 2020/09/29 15:29:17 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.17 2020/10/03 18:54:18 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -117,6 +117,12 @@ struct part_type_desc {
 #define	PTI_PSCHEME_INTERNAL	8		/* no user partition, e.g.
 						   MBRs extend partition */
 #define	PTI_RAW_PART		16		/* total disk */
+#define	PTI_INSTALL_TARGET	32		/* marks the target partition
+						 * assumed to become / after
+						 * reboot; may not be
+						 * persistent; may only be
+						 * set for a single partition!
+						 */
 
 /* A single partition */
 struct disk_part_info {
