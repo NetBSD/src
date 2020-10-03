@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.255 2020/10/03 15:00:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.256 2020/10/03 15:28:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.255 2020/10/03 15:00:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.256 2020/10/03 15:28:37 rillig Exp $");
 
 # define STATIC static
 
@@ -264,7 +264,7 @@ static Shell    shells[] = {
      */
 {
     "csh",
-    TRUE, "unset verbose", "set verbose", "unset verbose", 10,
+    TRUE, "unset verbose", "set verbose", "unset verbose", 13,
     FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
     "v", "e",
 },
