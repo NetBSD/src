@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.19 2016/01/23 02:34:09 dholland Exp $	*/
+/*	$NetBSD: auth.h,v 1.20 2020/10/03 18:30:39 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -172,6 +172,7 @@ extern AUTH *authnone_create		(void);
 extern AUTH *authdes_create		(char *, unsigned int,
 					    struct sockaddr_in *, des_block *);
 extern bool_t xdr_opaque_auth		(XDR *, struct opaque_auth *);
+extern void set_rpc_maxgrouplist	(int);
 
 #define authsys_create(c,i1,i2,i3,ip) authunix_create((c),(i1),(i2),(i3),(ip))
 #define authsys_create_default() authunix_create_default()
