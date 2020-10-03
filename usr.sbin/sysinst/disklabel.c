@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.39 2020/09/29 15:29:17 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.40 2020/10/03 18:54:18 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ const struct disk_partitioning_scheme disklabel_parts;
 struct disklabel_disk_partitions {
 	struct disk_partitions dp;
 	struct disklabel l;
-	daddr_t ptn_alignment;
+	daddr_t ptn_alignment, install_target;
 	char last_mounted[MAXPARTITIONS][MOUNTLEN];
 	uint fs_sub_type[MAXPARTITIONS];
 };
@@ -150,6 +150,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 	if (parts == NULL)
 		return NULL;
 
+	parts->install_target = -1;
 	total_size = geo.dg_secperunit;
 	if (len*(geo.dg_secsize/512) > disklabel_parts.size_limit)
 		len = disklabel_parts.size_limit/(geo.dg_secsize/512);
@@ -213,6 +214,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 	struct disklabel_disk_partitions *parts = calloc(1, sizeof(*parts));
 	if (parts == NULL)
 		return NULL;
+	parts->install_target = -1;
 
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
 	if (fd == -1) {
@@ -272,8 +274,12 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		flags = 0;
 		if (parts->l.d_partitions[part].p_fstype == FS_MSDOS)
 			flags = GLM_MAYBE_FAT32;
-		else if (parts->l.d_partitions[part].p_fstype == FS_BSDFFS)
+		else if (parts->l.d_partitions[part].p_fstype == FS_BSDFFS) {
 			flags = GLM_LIKELY_FFS;
+			if (parts->install_target < 0)
+				parts->install_target =
+				    parts->l.d_partitions[part].p_offset;
+		}
 		if (flags != 0) {
 			uint fs_type, fs_sub_type;
 			const char *lm = get_last_mounted(fd,
@@ -511,6 +517,9 @@ disklabel_delete(struct disk_partitions *arg, part_id id,
 					    MSG_part_not_deletable);
 				return false;
 			}
+			if (parts->install_target ==
+			    parts->l.d_partitions[part].p_offset)
+				parts->install_target = -1;
 			parts->l.d_partitions[part].p_size = 0;
 			parts->l.d_partitions[part].p_offset = 0;
 			parts->l.d_partitions[part].p_fstype = FS_UNUSED;
@@ -552,6 +561,8 @@ disklabel_delete_range(struct disk_partitions *arg, daddr_t r_start,
 
 		if ((start >= r_start && start <= r_start+r_size) ||
 		    (end >= r_start && end <= r_start+r_size)) {
+			if (start == parts->install_target)
+				parts->install_target  = -1;
 			if (parts->dp.num_part > 1)
 				parts->dp.num_part--;
 			parts->dp.free_space +=
@@ -765,6 +776,8 @@ disklabel_get_part_info(const struct disk_partitions *arg, part_id id,
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
 				    PTI_PSCHEME_INTERNAL|PTI_RAW_PART;
+			if (info->start == parts->install_target)
+				info->flags |= PTI_INSTALL_TARGET;
 #if RAW_PART == 3
 			if (part == (RAW_PART-1) && parts->dp.parent != NULL &&
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
@@ -789,6 +802,7 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 	struct disklabel_disk_partitions *parts =
 	    (struct disklabel_disk_partitions*)arg;
 	part_id ndx;
+	bool was_inst_target;
 
 	if (dl_types[0].description == NULL)
 		dl_init_types();
@@ -800,6 +814,8 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 			continue;
 
 		if (ndx == id) {
+			was_inst_target = parts->l.d_partitions[part].p_offset
+			    == parts->install_target;
 			parts->l.d_partitions[part].p_offset = info->start;
 			parts->l.d_partitions[part].p_size = info->size;
 			parts->l.d_partitions[part].p_fstype =
@@ -809,6 +825,10 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 				strlcpy(parts->last_mounted[part],
 				    info->last_mounted,
 				    sizeof(parts->last_mounted[part]));
+			if (info->flags & PTI_INSTALL_TARGET)
+				parts->install_target = info->start;
+			else if (was_inst_target)
+				parts->install_target = -1;
 			assert(info->fs_type == 0 || info->fs_type ==
 			    parts->l.d_partitions[part].p_fstype);
 			if (info->fs_sub_type != 0)

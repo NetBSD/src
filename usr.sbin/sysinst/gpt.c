@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.18 2020/03/30 12:19:28 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.19 2020/10/03 18:54:18 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ struct gpt_part_entry {
 #define	GPEF_MODIFIED	2		/* this entry has been changed */
 #define	GPEF_WEDGE	4		/* wedge for this exists */
 #define	GPEF_RESIZED	8		/* size has changed */
+#define	GPEF_TARGET	16		/* marked install target */
 	struct gpt_part_entry *gp_next;
 };
 
@@ -281,6 +282,9 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 	static const char regpart_prefix[] = "GPT part - ";
 	struct gpt_disk_partitions *parts;
 	struct gpt_part_entry *last = NULL, *add_to = NULL;
+	const struct gpt_ptype_desc *native_root
+	     = gpt_find_native_type(gpt_native_root);
+	bool have_target = false;
 
 	if (collect(T_OUTPUT, &textbuf, "gpt -r show -a %s 2>/dev/null", dev)
 	    < 1)
@@ -352,6 +356,11 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 			np->gp_start = p_start;
 			np->gp_size = p_size;
 			np->gp_flags |= GPEF_ON_DISK;
+			if (!have_target && native_root != NULL &&
+			    strcmp(np->gp_id, native_root->tid) == 0) {
+				have_target = true;
+				np->gp_flags |= GPEF_TARGET;
+			}
 
 			if (last == NULL)
 				parts->partitions = np;
@@ -509,6 +518,8 @@ gpt_get_part_info(const struct disk_partitions *arg, part_id id,
 	info->last_mounted = p->last_mounted;
 	info->fs_type = p->fs_type;
 	info->fs_sub_type = p->fs_sub_type;
+	if (p->gp_flags & GPEF_TARGET)
+		info->flags |= PTI_INSTALL_TARGET;
 
 	return true;
 }
@@ -604,12 +615,24 @@ gpt_set_part_info(struct disk_partitions *arg, part_id id,
 	struct gpt_part_entry *p = parts->partitions, *n;
 	part_id no;
 	daddr_t lendiff;
+	bool was_target;
 
 	for (no = 0; p != NULL && no < id; no++)
 		p = p->gp_next;
 
 	if (no != id || p == NULL)
 		return false;
+
+	/* update target mark - we can only have one */
+	was_target = (p->gp_flags & GPEF_TARGET) != 0;
+	if (info->flags & PTI_INSTALL_TARGET)
+		p->gp_flags |= GPEF_TARGET;
+	else
+		p->gp_flags &= ~GPEF_TARGET;
+	if (was_target)
+		for (n = parts->partitions; n != NULL; n = n->gp_next)
+			if (n != p)
+				n->gp_flags &= ~GPEF_TARGET;
 
 	if ((p->gp_flags & GPEF_ON_DISK)) {
 		if (info->start != p->gp_start) {
@@ -1444,7 +1467,7 @@ gpt_write_to_disk(struct disk_partitions *arg)
 		p->gp_flags &= ~GPEF_WEDGE;
 		if (root_id == NO_PART && p->gp_type != NULL) {
 			if (p->gp_type->gent.generic_ptype == PT_root &&
-			    p->gp_start == pm->ptstart) {
+			    (p->gp_flags & GPEF_TARGET)) {
 				root_id = pno;
 				root_is_new = !(p->gp_flags & GPEF_ON_DISK);
 			} else if (efi_id == NO_PART &&

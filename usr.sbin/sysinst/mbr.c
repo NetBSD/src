@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.33 2020/09/29 15:29:17 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.34 2020/10/03 18:54:18 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -133,7 +133,7 @@ struct mbr_disk_partitions {
 	struct disk_partitions dp, *dlabel;
 	mbr_info_t mbr;
 	uint ptn_alignment, ptn_0_offset, ext_ptn_alignment,
-	    geo_sec, geo_head, geo_cyl;
+	    geo_sec, geo_head, geo_cyl, target;
 };
 
 const struct disk_partitioning_scheme mbr_parts;
@@ -529,7 +529,8 @@ valid_mbr(struct mbr_sector *mbrs)
 }
 
 static int
-read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri)
+read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri,
+     struct mbr_disk_partitions *parts)
 {
 	struct mbr_partition *mbrp;
 	struct mbr_sector *mbrs = &mbri->mbr;
@@ -552,7 +553,8 @@ read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri)
 
 	for (;;) {
 		if (blockread(fd, secsize, mbrs, sizeof *mbrs,
-		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) - sizeof *mbrs != 0)
+		    (ext_base + next_ext) * (off_t)MBR_SECSIZE)
+		    - sizeof *mbrs != 0)
 			break;
 
 		if (!valid_mbr(mbrs))
@@ -605,9 +607,13 @@ read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri)
 				next_ext = mbrp->mbrp_start;
 			} else {
 				uint flags = 0;
-				if (mbrp->mbrp_type == MBR_PTYPE_NETBSD)
+				if (mbrp->mbrp_type == MBR_PTYPE_NETBSD) {
 					flags |= GLM_LIKELY_FFS;
-				else if (mbrp->mbrp_type == MBR_PTYPE_FAT12 ||
+					if (parts->target == ~0U)
+						parts->target =
+						    mbri->sector +
+						    mbrp->mbrp_start;
+				} else if (mbrp->mbrp_type == MBR_PTYPE_FAT12 ||
 				    mbrp->mbrp_type == MBR_PTYPE_FAT16S ||
 				    mbrp->mbrp_type == MBR_PTYPE_FAT16B ||
 				    mbrp->mbrp_type == MBR_PTYPE_FAT32 ||
@@ -923,6 +929,7 @@ mbr_create_new(const char *disk, daddr_t start, daddr_t len,
 	parts->geo_sec = MAXSECTOR;
 	parts->geo_head = MAXHEAD;
 	parts->geo_cyl = len/MAXHEAD/MAXSECTOR+1;
+	parts->target = ~0U;
 
 	if (get_disk_geom(disk, &geo)) {
 		parts->geo_sec = geo.dg_nsectors;
@@ -995,8 +1002,10 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len, size_t bps,
 	parts->geo_head = MAXHEAD;
 	parts->geo_cyl = len/MAXHEAD/MAXSECTOR+1;
 	parts->dp.bytes_per_sector = bps;
+	parts->target = ~0U;
 	mbr_init_default_alignments(parts, 0);
-	if (read_mbr(disk, parts->dp.bytes_per_sector, &parts->mbr) == -1) {
+	if (read_mbr(disk, parts->dp.bytes_per_sector, &parts->mbr, parts)
+	     == -1) {
 		free(parts);
 		return NULL;
 	}
@@ -1360,8 +1369,12 @@ mbr_do_get_part_info(const struct disk_partitions *arg, part_id id,
     const struct mbr_partition *mp, void *cookie)
 {
 	struct disk_part_info *info = cookie;
+	const struct mbr_disk_partitions *parts =
+	    (const struct mbr_disk_partitions*)arg;
 
 	mbr_partition_to_info(mp, mb->sector, info);
+	if (mp->mbrp_start + mb->sector == parts->target)
+		info->flags |= PTI_INSTALL_TARGET;
 	if (mb->last_mounted[i] != NULL && mb->last_mounted[i][0] != 0)
 		info->last_mounted = mb->last_mounted[i];
 	if (mb->fs_type[i] != FS_UNUSED) {
@@ -1760,6 +1773,10 @@ found:
 	if (!mbr_info_to_partitition(&data,
 	   &m->mbr.mbr_parts[i], m->sector, err_msg))
 		return false;
+	if (data.flags & PTI_INSTALL_TARGET)
+		parts->target = start;
+	else if (old_start == parts->target)
+		parts->target = -1;
 	if (data.last_mounted && m->last_mounted[i] &&
 	    data.last_mounted != m->last_mounted[i]) {
 		free(__UNCONST(m->last_mounted[i]));
@@ -2076,6 +2093,9 @@ mbr_delete_part(struct disk_partitions *arg, part_id pno, const char **err_msg)
 			*err_msg = INTERNAL_ERROR;
 		return false;
 	}
+
+	if (parts->target == data.start)
+		parts->target = ~0U;
 
 	if (parts->dlabel) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.45 2020/09/29 15:29:17 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.46 2020/10/03 18:54:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1431,7 +1431,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		}
 	}
 
-	from = -1;
+	from = p->ptstart > 0 ? pm->ptstart : -1;
 	/*
 	 * First add all outer partitions - we need to align those exactly
 	 * with the inner counterpart later.
