@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.556 2020/10/02 17:42:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.557 2020/10/03 10:13:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.556 2020/10/02 17:42:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.557 2020/10/03 10:13:39 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -601,14 +601,14 @@ Var_Export(const char *str, Boolean isExport)
 	return;
     }
 
-    flags = 0;
     if (strncmp(str, "-env", 4) == 0) {
 	str += 4;
+    	flags = 0;
     } else if (strncmp(str, "-literal", 8) == 0) {
 	str += 8;
-	flags |= VAR_EXPORT_LITERAL;
+	flags = VAR_EXPORT_LITERAL;
     } else {
-	flags |= VAR_EXPORT_PARENT;
+	flags = VAR_EXPORT_PARENT;
     }
 
     (void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &val);
