@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.157 2018/12/01 01:51:38 msaitoh Exp $ */
+/* $NetBSD: device.h,v 1.158 2020/10/03 22:32:50 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -164,6 +164,9 @@ struct device {
 	void		*dv_private;	/* this device's private storage */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
+
+	int		dv_pending;	/* config_pending count */
+	TAILQ_ENTRY(device) dv_pending_list;
 
 	size_t		dv_activity_count;
 	void		(**dv_activity_handlers)(device_t, devactive_t);

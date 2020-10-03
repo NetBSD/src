@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.159 2020/05/25 19:05:30 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.160 2020/10/03 22:32:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.159 2020/05/25 19:05:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.160 2020/10/03 22:32:50 riastradh Exp $");
 
 #include "opt_ata.h"
 
@@ -298,7 +298,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 
 	ata_delref(chp);
 
-	config_pending_decr(atac->atac_dev);
+	config_pending_decr(atabus_sc->sc_dev);
 }
 
 /*
@@ -424,7 +424,7 @@ atabusconfig_thread(void *arg)
 
 	ata_delref(chp);
 
-	config_pending_decr(atac->atac_dev);
+	config_pending_decr(atabus_sc->sc_dev);
 	kthread_exit(0);
 }
 
