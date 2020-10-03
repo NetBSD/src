@@ -1,10 +1,8 @@
 echo normal
 normal
-se
 hidden
 echo always
 always
-se
 echo ignore errors
 ignore errors
 exit status 0
