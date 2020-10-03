@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.173 2020/09/28 23:13:57 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.174 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,11 +125,11 @@
  *			find the node.
  */
 
-#include	  "make.h"
-#include	  "dir.h"
+#include "make.h"
+#include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.173 2020/09/28 23:13:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.174 2020/10/03 21:52:50 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
