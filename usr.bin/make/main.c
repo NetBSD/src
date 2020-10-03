@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.361 2020/10/01 23:52:51 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.362 2020/10/03 13:06:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.361 2020/10/01 23:52:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.362 2020/10/03 13:06:56 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
  The Regents of the University of California.  All rights reserved.");
@@ -270,6 +270,9 @@ parse_debug_options(const char *argvalue)
 
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
+		case '0':	/* undocumented, only intended for tests */
+			debug &= DEBUG_LINT;
+			break;
 		case 'A':
 			debug = ~(0|DEBUG_LINT);
 			break;
