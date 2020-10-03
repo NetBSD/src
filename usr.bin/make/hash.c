@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.35 2020/09/28 20:46:11 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.36 2020/10/03 22:25:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.35 2020/09/28 20:46:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.36 2020/10/03 22:25:04 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're
@@ -95,22 +95,20 @@ static void RebuildTable(Hash_Table *);
 
 #define rebuildLimit 3
 
-/* The hash function(s) */
+/* This hash function matches Gosling's emacs. */
+static unsigned int
+hash(const char *key, size_t *out_keylen)
+{
+	unsigned h = 0;
+	const char *p = key;
+	while (*p != '\0')
+		h = (h << 5) - h + (unsigned char)*p++;
+	if (out_keylen != NULL)
+		*out_keylen = (size_t)(p - key);
+	return h;
+}
 
-#ifndef HASH
-/* The default: this one matches Gosling's emacs */
-#define HASH(h, key, p) do { \
-	for (h = 0, p = key; *p;) \
-		h = (h << 5) - h + (unsigned char)*p++; \
-	} while (0)
-
-#endif
-
-/* Sets up the hash table.
- *
- * Input:
- *	t		Structure to to hold the table.
- */
+/* Sets up the hash table. */
 void
 Hash_InitTable(Hash_Table *t)
 {
@@ -164,21 +162,19 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 {
 	Hash_Entry *e;
 	unsigned h;
-	const char *p;
 	int chainlen;
 
-	if (t == NULL || t->buckets == NULL) {
+	if (t == NULL || t->buckets == NULL)
 	    return NULL;
-	}
-	HASH(h, key, p);
-	p = key;
+
+	h = hash(key, NULL);
 	chainlen = 0;
 #ifdef DEBUG_HASH_LOOKUP
 	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
 #endif
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
-		if (e->namehash == h && strcmp(e->name, p) == 0)
+		if (e->namehash == h && strcmp(e->name, key) == 0)
 			break;
 	}
 	if (chainlen > t->maxchain)
@@ -207,8 +203,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 {
 	Hash_Entry *e;
 	unsigned h;
-	const char *p;
-	int keylen;
+	size_t keylen;
 	int chainlen;
 	struct Hash_Entry **hp;
 
@@ -216,16 +211,14 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	 * Hash the key.  As a side effect, save the length (strlen) of the
 	 * key in case we need to create the entry.
 	 */
-	HASH(h, key, p);
-	keylen = p - key;
-	p = key;
+	h = hash(key, &keylen);
 	chainlen = 0;
 #ifdef DEBUG_HASH_LOOKUP
 	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
 #endif
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
-		if (e->namehash == h && strcmp(e->name, p) == 0) {
+		if (e->namehash == h && strcmp(e->name, key) == 0) {
 			if (newPtr != NULL)
 				*newPtr = FALSE;
 			break;
@@ -243,13 +236,14 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	 */
 	if (t->numEntries >= rebuildLimit * t->bucketsSize)
 		RebuildTable(t);
+
 	e = bmake_malloc(sizeof(*e) + keylen);
 	hp = &t->buckets[h & t->bucketsMask];
 	e->next = *hp;
 	*hp = e;
 	Hash_SetValue(e, NULL);
 	e->namehash = h;
-	(void)strcpy(e->name, p);
+	(void)strcpy(e->name, key);
 	t->numEntries++;
 
 	if (newPtr != NULL)
