@@ -1,4 +1,8 @@
-true normal
-true always
-true ignore errors
+echo normal
+normal
+hidden
+echo always
+always
+echo ignore errors
+ignore errors
 exit status 0
