@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.43 2019/04/08 00:47:21 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.44 2020/10/03 17:33:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -190,7 +190,7 @@ struct rpb {
 	char		rpb_revision[8];	/*  60; only first 4 valid */
 	uint64_t	rpb_intr_freq;		/*  68; scaled by 4096 */
 	uint64_t	rpb_cc_freq;		/*  70: cycle cntr frequency */
-	u_long		rpb_vptb;		/*  78: */
+	u_long		rpb_vptb;		/*  78: virtual page tbl base */
 	uint64_t	rpb_reserved_arch;	/*  80: */
 	u_long		rpb_tbhint_off;		/*  88: */
 	uint64_t	rpb_pcs_cnt;		/*  90: */
