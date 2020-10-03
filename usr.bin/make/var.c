@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.561 2020/10/03 12:46:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.562 2020/10/03 12:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.561 2020/10/03 12:46:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.562 2020/10/03 12:51:49 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2065,6 +2065,16 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     return AMR_OK;
 }
 
+/* :L */
+static ApplyModifierResult
+ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
+{
+    ApplyModifiersState_Define(st);
+    st->newVal = bmake_strdup(st->v->name);
+    (*pp)++;
+    return AMR_OK;
+}
+
 /* :gmtime */
 static ApplyModifierResult
 ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
@@ -3076,10 +3086,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'U':
 	return ApplyModifier_Defined(pp, st);
     case 'L':
-	ApplyModifiersState_Define(st);
-	st->newVal = bmake_strdup(st->v->name);
-	(*pp)++;
-	return AMR_OK;
+        return ApplyModifier_Literal(pp, st);
     case 'P':
 	return ApplyModifier_Path(pp, st);
     case '!':
