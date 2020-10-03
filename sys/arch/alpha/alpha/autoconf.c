@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.54 2018/09/03 16:29:22 riastradh Exp $ */
+/* $NetBSD: autoconf.c,v 1.55 2020/10/03 17:31:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2020/10/03 17:31:46 thorpej Exp $");
 
 #include "pci.h"
 
@@ -97,13 +97,64 @@ cpu_configure(void)
 	hwrpb_restart_setup();
 }
 
+static void
+qemu_find_rootdev(void)
+{
+	char buf[32];
+
+	/*
+	 * Check for "rootdev=wd0".
+	 */
+	if (prom_qemu_getenv("rootdev", buf, sizeof(buf))) {
+		snprintf(bootinfo.booted_dev, sizeof(bootinfo.booted_dev),
+		    "rootdev=%s", buf);
+		booted_device = device_find_by_xname(buf);
+		return;
+	}
+
+	/*
+	 * Check for "root=/dev/wd0a", "root=/dev/hda1", etc.
+	 */
+	if (prom_qemu_getenv("root", buf, sizeof(buf))) {
+		const size_t devlen = strlen("/dev/");
+		const char *cp = buf;
+		char *ecp = &buf[sizeof(buf) - 1];
+
+		snprintf(bootinfo.booted_dev, sizeof(bootinfo.booted_dev),
+		    "root=%s", buf);
+
+		/* Find the start of the device xname. */
+		if (strlen(cp) > devlen && strncmp(cp, "/dev/", devlen) == 0) {
+			cp += devlen;
+		}
+
+		/* Now strip any partition letter off the end. */
+		while (ecp != cp) {
+			if (*ecp >= '0' && *ecp <= '9') {
+				break;
+			}
+			*ecp-- = '\0';
+		}
+
+		booted_device = device_find_by_xname(cp);
+		return;
+	}
+
+	printf("WARNING: no rootdev= or root= arguments provided by Qemu\n");
+}
+
 void
 cpu_rootconf(void)
 {
 
-	if (booted_device == NULL)
+	if (booted_device == NULL && alpha_is_qemu) {
+		qemu_find_rootdev();
+	}
+
+	if (booted_device == NULL) {
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    bootinfo.booted_dev);
+	}
 	rootconf();
 }
 

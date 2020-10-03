@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.57 2020/09/27 23:16:10 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.58 2020/10/03 17:31:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.57 2020/09/27 23:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.58 2020/10/03 17:31:46 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,6 +63,8 @@ bool		prom_interface_initialized;
 int		prom_mapped = 1;	/* Is PROM still mapped? */
 
 static kmutex_t	prom_lock;
+
+static struct linux_kernel_params qemu_kernel_params;
 
 #ifdef _PROM_MAY_USE_PROM_CONSOLE
 
@@ -137,6 +139,21 @@ init_prom_interface(u_long ptb_pfn, struct rpb *rpb)
 	prom_dispatch_v.routine_arg = c->crb_v_dispatch;
 	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
+	if (alpha_is_qemu) {
+		/*
+		 * Qemu has placed a Linux kernel parameter block
+		 * at kernel_text[] - 0x6000.  We ensure the command
+		 * line field is always NUL-terminated to simplify
+		 * things later.
+		 */
+		extern char kernel_text[];
+		memcpy(&qemu_kernel_params,
+		       (void *)((vaddr_t)kernel_text - 0x6000),
+		       sizeof(qemu_kernel_params));
+		qemu_kernel_params.kernel_cmdline[
+		    sizeof(qemu_kernel_params.kernel_cmdline) - 1] = '\0';
+	}
+
 #ifdef _PROM_MAY_USE_PROM_CONSOLE
 	if (prom_uses_prom_console()) {
 		/*
@@ -168,6 +185,41 @@ init_bootstrap_console(void)
 
 	/* XXX fake out the console routines, for now */
 	cn_tab = &promcons;
+}
+
+bool
+prom_qemu_getenv(const char *var, char *buf, size_t buflen)
+{
+	const size_t varlen = strlen(var);
+	const char *sp;
+
+	if (!alpha_is_qemu) {
+		return false;
+	}
+
+	sp = qemu_kernel_params.kernel_cmdline;
+	for (;;) {
+		sp = strstr(sp, var);
+		if (sp == NULL) {
+			return false;
+		}
+		sp += varlen;
+		if (*sp++ != '=') {
+			continue;
+		}
+		/* Found it. */
+		break;
+	}
+
+	while (--buflen) {
+		if (*sp == ' ' || *sp == '\t' || *sp == '\0') {
+			break;
+		}
+		*buf++ = *sp++;
+	}
+	*buf = '\0';
+
+	return true;
 }
 
 #ifdef _PROM_MAY_USE_PROM_CONSOLE

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.365 2020/09/27 23:16:10 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.366 2020/10/03 17:31:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.365 2020/09/27 23:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366 2020/10/03 17:31:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,12 +320,24 @@ nobootinfo:
 		bootinfo.hwrpb_phys = ((struct rpb *)HWRPB_ADDR)->rpb_phys;
 		bootinfo.hwrpb_size = ((struct rpb *)HWRPB_ADDR)->rpb_size;
 		init_prom_interface(ptb, (struct rpb *)HWRPB_ADDR);
-		prom_getenv(PROM_E_BOOTED_OSFLAGS, bootinfo.boot_flags,
-		    sizeof bootinfo.boot_flags);
-		prom_getenv(PROM_E_BOOTED_FILE, bootinfo.booted_kernel,
-		    sizeof bootinfo.booted_kernel);
-		prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
-		    sizeof bootinfo.booted_dev);
+		if (alpha_is_qemu) {
+			/*
+			 * Grab boot flags from kernel command line.
+			 * Assume autoboot if not supplied.
+			 */
+			if (! prom_qemu_getenv("flags", bootinfo.boot_flags,
+					       sizeof(bootinfo.boot_flags))) {
+				strlcpy(bootinfo.boot_flags, "A",
+					sizeof(bootinfo.boot_flags));
+			}
+		} else {
+			prom_getenv(PROM_E_BOOTED_OSFLAGS, bootinfo.boot_flags,
+			    sizeof bootinfo.boot_flags);
+			prom_getenv(PROM_E_BOOTED_FILE, bootinfo.booted_kernel,
+			    sizeof bootinfo.booted_kernel);
+			prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
+			    sizeof bootinfo.booted_dev);
+		}
 	}
 
 	/*
@@ -1602,6 +1614,8 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 }
 
+void	(*alpha_delay_fn)(unsigned long);
+
 /*
  * Wait "n" microseconds.
  */
@@ -1612,6 +1626,15 @@ delay(unsigned long n)
 
 	if (n == 0)
 		return;
+
+	/*
+	 * If we have an alternative delay function, go ahead and
+	 * use it.
+	 */
+	if (alpha_delay_fn != NULL) {
+		(*alpha_delay_fn)(n);
+		return;
+	}
 
 	pcc0 = alpha_rpcc() & 0xffffffffUL;
 	cycles = 0;
