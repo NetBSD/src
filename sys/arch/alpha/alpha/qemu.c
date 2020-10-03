@@ -1,4 +1,4 @@
-/* $NetBSD: qemu.c,v 1.2 2020/09/29 01:33:00 thorpej Exp $ */
+/* $NetBSD: qemu.c,v 1.3 2020/10/03 17:32:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,8 +56,10 @@ struct qemu_softc {
 	struct timecounter sc_tc;
 };
 
-static u_int
-qemu_get_timecount(struct timecounter * const tc __unused)
+static unsigned long qemu_nsec_per_tick __read_mostly = (unsigned long)-1;
+
+static inline unsigned long
+qemu_get_vmtime(void)
 {
 	register unsigned long v0 __asm("$0");
 	register unsigned long a0 __asm("$16") = 7;	/* Qemu get-time */
@@ -67,7 +69,41 @@ qemu_get_timecount(struct timecounter * const tc __unused)
 		: "i"(PAL_cserve)
 		: "$17", "$18", "$19", "$20", "$21");
 
-	return (u_int)v0;
+	return v0;
+}
+
+static void
+qemu_delay(unsigned long usec)
+{
+	/* Get starting point. */
+	const unsigned long base = qemu_get_vmtime();
+
+	/* convert request from usec to nsec */
+	const unsigned long nsec = usec * 1000;
+	KASSERT(nsec > usec);
+
+	/* Figure out finish line. */
+	const unsigned long finished = base + nsec;
+	KASSERT(finished > base);
+
+	unsigned long now;
+
+	/* Spin until we're finished. */
+	while ((now = qemu_get_vmtime()) < finished) {
+		/*
+		 * If we have more than one clock tick worth of spinning
+		 * to do, when use WTINT to wait at a low power state.
+		 */
+		if (finished - now > qemu_nsec_per_tick) {
+			alpha_pal_wtint(0);
+		}
+	}
+}
+
+static u_int
+qemu_get_timecount(struct timecounter * const tc __unused)
+{
+	return (u_int)qemu_get_vmtime();
 }
 
 static inline void
@@ -81,8 +117,6 @@ qemu_set_alarm_relative(unsigned long nsec)
 		: "i"(PAL_cserve)
 		: "$0", "$18", "$19", "$20", "$21");
 }
-
-static unsigned long qemu_nsec_per_tick __read_mostly;
 
 static void
 qemu_hardclock(struct clockframe * const framep)
@@ -102,7 +136,7 @@ static void
 qemu_clock_init(void * const v __unused)
 {
 	/* First-time initialization... */
-	if (qemu_nsec_per_tick == 0) {
+	if (qemu_nsec_per_tick == (unsigned long)-1) {
 		KASSERT(CPU_IS_PRIMARY(curcpu()));
 		qemu_nsec_per_tick = 1000000000UL / hz;
 
@@ -175,6 +209,11 @@ qemu_attach(device_t parent, device_t self, void *aux)
 	 * Qemu's PALcode implements WTINT; use it to save host cycles.
 	 */
 	cpu_idle_fn = cpu_idle_wtint;
+
+	/*
+	 * Use Qemu's "VM time" hypercall to implement delay().
+	 */
+	alpha_delay_fn = qemu_delay;
 }
 
 CFATTACH_DECL_NEW(qemu, sizeof(struct qemu_softc),
