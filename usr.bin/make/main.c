@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.362 2020/10/03 13:06:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.363 2020/10/03 13:22:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,10 +126,11 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.362 2020/10/03 13:06:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.363 2020/10/03 13:22:39 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
- The Regents of the University of California.  All rights reserved.");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
+	    "The Regents of the University of California.  "
+	    "All rights reserved.");
 #endif
 
 #ifndef	DEFMAXLOCAL
