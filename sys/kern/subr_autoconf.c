@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.273 2020/08/01 11:18:26 jdolecek Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.274 2020/10/03 22:32:50 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.273 2020/08/01 11:18:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.274 2020/10/03 22:32:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -224,7 +224,8 @@ static int alldevs_nread = 0;
 static int alldevs_nwrite = 0;
 static bool alldevs_garbage = false;
 
-static int config_pending;		/* semaphore for mountroot */
+static struct devicelist config_pending =
+    TAILQ_HEAD_INITIALIZER(config_pending);
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
 
@@ -2095,9 +2096,12 @@ config_pending_incr(device_t dev)
 {
 
 	mutex_enter(&config_misc_lock);
-	config_pending++;
+	KASSERTMSG(dev->dv_pending < INT_MAX,
+	    "%s: excess config_pending_incr", device_xname(dev));
+	if (dev->dv_pending++ == 0)
+		TAILQ_INSERT_TAIL(&config_pending, dev, dv_pending_list);
 #ifdef DEBUG_AUTOCONF
-	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+	printf("%s: %s %d\n", __func__, device_xname(dev), dev->dv_pending);
 #endif
 	mutex_exit(&config_misc_lock);
 }
@@ -2106,13 +2110,15 @@ void
 config_pending_decr(device_t dev)
 {
 
-	KASSERT(0 < config_pending);
 	mutex_enter(&config_misc_lock);
-	config_pending--;
+	KASSERTMSG(dev->dv_pending > 0,
+	    "%s: excess config_pending_decr", device_xname(dev));
+	if (--dev->dv_pending == 0)
+		TAILQ_REMOVE(&config_pending, dev, dv_pending_list);
 #ifdef DEBUG_AUTOCONF
-	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+	printf("%s: %s %d\n", __func__, device_xname(dev), dev->dv_pending);
 #endif
-	if (config_pending == 0)
+	if (TAILQ_EMPTY(&config_pending))
 		cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
 }
@@ -2165,8 +2171,12 @@ config_finalize(void)
 	 * them to finish any deferred autoconfiguration.
 	 */
 	mutex_enter(&config_misc_lock);
-	while (config_pending != 0)
+	while (!TAILQ_EMPTY(&config_pending)) {
+		device_t dev;
+		TAILQ_FOREACH(dev, &config_pending, dv_pending_list)
+			aprint_debug_dev(dev, "holding up boot\n");
 		cv_wait(&config_misc_cv, &config_misc_lock);
+	}
 	mutex_exit(&config_misc_lock);
 
 	KERNEL_LOCK(1, NULL);
