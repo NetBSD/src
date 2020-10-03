@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2360 2020/09/29 18:33:22 roy Exp $
+#	$NetBSD: mi,v 1.2361 2020/10/03 18:33:52 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9886,6 +9886,7 @@
 ./usr/share/man/cat3/set_menu_win.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_new_page.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_panel_userptr.0	comp-c-catman		.cat
+./usr/share/man/cat3/set_rpc_maxgrouplist.0	comp-c-catman		.cat
 ./usr/share/man/cat3/set_tabsize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_term.0			comp-c-catman		.cat
 ./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
@@ -18116,6 +18117,7 @@
 ./usr/share/man/html3/set_menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_new_page.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_panel_userptr.html	comp-c-htmlman		html
+./usr/share/man/html3/set_rpc_maxgrouplist.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_tabsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_term.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
@@ -26351,6 +26353,7 @@
 ./usr/share/man/man3/set_menu_win.3		comp-c-man		.man
 ./usr/share/man/man3/set_new_page.3		comp-c-man		.man
 ./usr/share/man/man3/set_panel_userptr.3	comp-c-man		.man
+./usr/share/man/man3/set_rpc_maxgrouplist.3	comp-c-man		.man
 ./usr/share/man/man3/set_tabsize.3		comp-c-man		.man
 ./usr/share/man/man3/set_term.3			comp-c-man		.man
 ./usr/share/man/man3/set_top_row.3		comp-c-man		.man
