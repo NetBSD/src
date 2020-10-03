@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.133 2020/10/01 23:44:36 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.134 2020/10/03 15:00:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -147,7 +147,6 @@ Words_Free(Words w) {
 char *str_concat2(const char *, const char *);
 char *str_concat3(const char *, const char *, const char *);
 char *str_concat4(const char *, const char *, const char *, const char *);
-char *Str_FindSubstring(const char *, const char *);
 Boolean Str_Match(const char *, const char *);
 
 /* suff.c */
