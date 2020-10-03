@@ -2,15 +2,16 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_auth 1.4 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_auth.3,v 1.6 2003/04/16 13:34:43 wiz Exp $
-.Dd May 7, 1993
+.\"	$NetBSD: rpc_clnt_auth.3,v 1.7 2020/10/03 18:31:29 christos Exp $
+.Dd October 3, 2020
 .Dt RPC_CLNT_AUTH 3
 .Os
 .Sh NAME
 .Nm auth_destroy ,
 .Nm authnone_create ,
 .Nm authsys_create ,
-.Nm authsys_create_default
+.Nm authsys_create_default ,
+.Nm set_rpc_maxgrouplist
 .Nd library routines for client side remote procedure call authentication
 .Sh LIBRARY
 .Lb libc
@@ -24,6 +25,8 @@
 .Fn authsys_create "const char *host" "const uid_t uid" "const gid_t gid" "const int len" "const gid_t *aup_gids"
 .Ft "AUTH *"
 .Fn authsys_create_default "void"
+.Ft "void"
+.Fn set_rpc_maxgrouplist "int num"
 .Sh DESCRIPTION
 These routines are part of the
 RPC library that allows C language programs to make procedure
@@ -90,6 +93,14 @@ refer to a counted array of groups to which the user belongs.
 Call
 .Fn authsys_create
 with the appropriate parameters.
+.Pp
+.It Fn set_rpc_maxgrouplist
+Allow the application to set the maximum size of the group list
+that will be used in
+.Fn authunix_create_default to
+.Fa num .
+Some servers will refuse mounts if the group list is larger than it expects
+(like 8).
 .El
 .Sh SEE ALSO
 .Xr rpc 3 ,

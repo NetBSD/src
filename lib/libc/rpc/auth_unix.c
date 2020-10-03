@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.26 2014/10/18 08:33:23 snj Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.27 2020/10/03 18:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.26 2014/10/18 08:33:23 snj Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.27 2020/10/03 18:31:29 christos Exp $");
 #endif
 #endif
 
@@ -183,6 +183,20 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 }
 
 /*
+ * Some servers will refuse mounts if the group list is larger
+ * than it expects (like 8). This allows the application to set
+ * the maximum size of the group list that will be sent.
+ */
+static int maxgrplist = NGROUPS;
+
+void
+set_rpc_maxgrouplist(int num)
+{
+	if (num < NGROUPS)
+		maxgrplist = num;
+}
+
+/*
  * Returns an auth handle with parameters determined by doing lots of
  * syscalls.
  */
@@ -202,6 +216,8 @@ authunix_create_default(void)
 	gid = getegid();
 	if ((len = getgroups(NGRPS, gids)) < 0)
 		abort();
+	if (len > maxgrplist)
+		len = maxgrplist;
 	/* XXX: interface problem; those should all have been unsigned */
 	return (authunix_create(machname, (int)uid, (int)gid, len,
 	    (int *)gids));

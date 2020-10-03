@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2019/10/13 07:28:10 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2020/10/03 18:31:29 christos Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -38,6 +38,7 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		rpc_clnt_auth.3 authnone_create.3 \
 		rpc_clnt_auth.3 authsys_create.3 \
 		rpc_clnt_auth.3 authsys_create_default.3 \
+		rpc_clnt_auth.3 set_rpc_maxgrouplist.3 \
 		rpc_clnt_calls.3 clnt_call.3 \
 		rpc_clnt_calls.3 clnt_perrno.3 \
 		rpc_clnt_calls.3 clnt_perror.3 \
