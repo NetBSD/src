@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.25 2020/09/29 14:29:56 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.26 2020/10/03 18:54:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.25 2020/09/29 14:29:56 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.26 2020/10/03 18:54:18 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -190,8 +190,8 @@ verify_parts(struct partition_usage_set *pset, bool install)
 	daddr_t first_bsdstart, first_bsdsize, inst_start, inst_size;
 	int rv;
 
-	first_bsdstart = first_bsdsize = 0;
-	inst_start = inst_size = 0;
+	first_bsdstart = inst_start = -1;
+	first_bsdsize = inst_size = 0;
 	num_root = 0;
 	parts = pset->parts;
 	for (i = 0; i < pset->num; i++) {
@@ -207,18 +207,19 @@ verify_parts(struct partition_usage_set *pset, bool install)
 			continue;
 		num_root++;
  
-		if (first_bsdstart == 0) {
+		if (first_bsdstart <= 0) {
 			first_bsdstart = wanted->cur_start;
 			first_bsdsize = wanted->size;
 		}
-		if (inst_start == 0 && wanted->cur_start == pm->ptstart) {
+		if (inst_start < 0 &&
+		    (wanted->cur_flags & PTI_INSTALL_TARGET)) {
 			inst_start = wanted->cur_start;
 			inst_size = wanted->size;
 		}
 	}
 
 	if ((num_root == 0 && install) ||
-	    (num_root > 1 && inst_start == 0)) {
+	    (num_root > 1 && inst_start < 0)) {
 		if (num_root == 0 && install)
 			msg_display_subst(MSG_must_be_one_root, 2,
 			    msg_string(parts->pscheme->name),
@@ -322,10 +323,7 @@ edit_install(menudesc *m, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
 
-	if (edit->info.start == pm->ptstart)
-		pm->ptstart = 0;
-	else
-		pm->ptstart = edit->info.start;
+	edit->info.flags ^= PTI_INSTALL_TARGET;
 	return 0;
 }
 
@@ -1064,7 +1062,7 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 	}
 	if (m->opts[opt].opt_action == edit_install) {
 		wprintw(m->mw, "%*s : %s", col_width, ptn_install,
-			msg_string(edit->info.start == pm->ptstart
+			msg_string((edit->info.flags & PTI_INSTALL_TARGET)
 			    ? MSG_Yes : MSG_No));
 		return;
 	}
@@ -1318,7 +1316,7 @@ fmt_fspart_row(menudesc *m, int ptn, void *arg)
 
 	fp = flag_str;
 	inst_flags = pset->infos[ptn].instflags;
-	if (with_inst_flag && info.start == pm->ptstart &&
+	if (with_inst_flag && (info.flags & PTI_INSTALL_TARGET) &&
 	    info.nat_type->generic_ptype == PT_root) {
 		static char inst_flag;
 
