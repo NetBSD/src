@@ -1,4 +1,4 @@
-# $NetBSD: make-exported.mk,v 1.2 2020/10/03 09:48:40 rillig Exp $
+# $NetBSD: make-exported.mk,v 1.3 2020/10/03 10:31:05 rillig Exp $
 #
 # As of 2020-08-09, the code in Var_Export is shared between the .export
 # directive and the .MAKE.EXPORTED variable.  This leads to non-obvious
@@ -23,6 +23,8 @@ UT_VAR=		${UNEXPANDED}
 # Var_ExportVars is called, which treats "-literal" as an ordinary variable
 # name, therefore exports it and also overwrites the previously exported
 # UT_VAR with the expanded value.
+#
+# Since 2020-10-03, the "variable" named "-literal" is not exported anymore.
 .MAKE.EXPORTED=		-literal UT_VAR
 
 all:
