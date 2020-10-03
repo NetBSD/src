@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.23 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.24 2020/10/03 09:56:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -196,6 +196,8 @@ typedef struct {
 __CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
 __CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
 
+__BEGIN_DECLS
+
 static __inline struct tls_tcb *
 __lwp_gettcb_fast(void)
 {
@@ -233,6 +235,7 @@ __lwp_settcb(struct tls_tcb *__tcb)
 	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
 	_lwp_setprivate(__tcb);
 }
+__END_DECLS
 #endif
 
 #endif	/* _MIPS_MCONTEXT_H_ */
