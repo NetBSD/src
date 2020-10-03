@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.254 2020/10/01 22:42:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.255 2020/10/03 15:00:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.254 2020/10/01 22:42:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.255 2020/10/03 15:00:57 rillig Exp $");
 
 # define STATIC static
 
@@ -1580,9 +1580,8 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 {
     char *ecp;
 
-    if (commandShell->noPrint) {
-	ecp = Str_FindSubstring(cp, commandShell->noPrint);
-	while (ecp != NULL) {
+    if (commandShell->noPrint && commandShell->noPrint[0] != '\0') {
+	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
 		if (!beSilent && msg && job->node != lastNode) {
@@ -1609,7 +1608,6 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 		while (*cp == ' ' || *cp == '\t' || *cp == '\n') {
 		    cp++;
 		}
-		ecp = Str_FindSubstring(cp, commandShell->noPrint);
 	    } else {
 		return cp;
 	    }
