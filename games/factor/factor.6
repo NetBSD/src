@@ -1,4 +1,4 @@
-.\"	$NetBSD: factor.6,v 1.14 2017/11/11 23:48:44 rin Exp $
+.\"	$NetBSD: factor.6,v 1.15 2020/10/03 22:27:00 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\" By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
 .\"
-.Dd Nov 12, 2017
+.Dd October 3, 2020
 .Dt FACTOR 6
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nd factor a number
 .Sh SYNOPSIS
 .Nm
-.Op Fl h
+.Op Fl hx
 .Op Ar number ...
 .Sh DESCRIPTION
 The
@@ -98,6 +98,10 @@ If the
 .Fl h
 flag is specified, factors will be printed in "human-readable" format.
 If a factor x divides a value n (>1) times, it will appear as x^n.
+.It Fl x
+If the
+.Fl x
+flag is specified, factors will be printed int hexadecimal format.
 .El
 .Sh DIAGNOSTICS
 Out of range or invalid input results in
