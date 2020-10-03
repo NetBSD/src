@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.156 2020/10/01 22:42:00 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.157 2020/10/03 21:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.156 2020/10/01 22:42:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.157 2020/10/03 21:19:54 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -186,8 +186,7 @@ CondParser_PushBack(CondParser *par, Token t)
 static void
 CondParser_SkipWhitespace(CondParser *par)
 {
-    while (ch_isspace(par->p[0]))
-	par->p++;
+    cpp_skip_whitespace(&par->p);
 }
 
 /* Parse the argument of a built-in function.
@@ -697,8 +696,7 @@ ParseEmptyArg(const char **linePtr, Boolean doEval,
     }
 
     /* A variable is empty when it just contains spaces... 4/15/92, christos */
-    while (ch_isspace(val[0]))
-	val++;
+    cpp_skip_whitespace(&val);
 
     /*
      * For consistency with the other functions we can't generate the
@@ -745,8 +743,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
 	    continue;
 	cp += fn_def->fn_name_len;
 	/* There can only be whitespace before the '(' */
-	while (ch_isspace(*cp))
-	    cp++;
+	cpp_skip_whitespace(&cp);
 	if (*cp != '(')
 	    break;
 
@@ -776,8 +773,8 @@ CondParser_Func(CondParser *par, Boolean doEval)
      * expression.
      */
     arglen = ParseFuncArg(&cp, doEval, NULL, &arg);
-    for (cp1 = cp; ch_isspace(*cp1); cp1++)
-	continue;
+    cp1 = cp;
+    cpp_skip_whitespace(&cp1);
     if (*cp1 == '=' || *cp1 == '!')
 	return CondParser_Comparison(par, doEval);
     par->p = cp;
