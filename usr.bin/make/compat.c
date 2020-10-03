@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.161 2020/10/01 22:42:00 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.162 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,20 +86,17 @@
 #include    <sys/stat.h>
 #include    <sys/wait.h>
 
-#include    <ctype.h>
 #include    <errno.h>
 #include    <signal.h>
-#include    <stdio.h>
 
 #include    "make.h"
-#include    "hash.h"
 #include    "dir.h"
 #include    "job.h"
 #include    "metachar.h"
 #include    "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.161 2020/10/01 22:42:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.162 2020/10/03 21:52:50 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static pid_t compatChild;

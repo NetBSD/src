@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.129 2020/10/03 21:19:54 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.130 2020/10/03 21:52:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -123,18 +123,14 @@
 #include    <sys/param.h>
 
 #include    <ar.h>
-#include    <ctype.h>
-#include    <stdio.h>
-#include    <stdlib.h>
 #include    <utime.h>
 
 #include    "make.h"
-#include    "hash.h"
 #include    "dir.h"
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.129 2020/10/03 21:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.130 2020/10/03 21:52:50 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
