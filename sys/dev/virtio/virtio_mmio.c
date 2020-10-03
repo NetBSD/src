@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.3 2020/10/03 13:51:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,27 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp
 
 #define VIRTIO_MMIO_INT_VRING		(1 << 0)
 #define VIRTIO_MMIO_INT_CONFIG		(1 << 1)
+
+/*
+ * MMIO configuration space is in guest byte order. AArch64 BE is special,
+ * as the guest starts in LE and we switch to BE after the kernel starts.
+ * For this case, we need to byte swap all config space accesses.
+ */
+#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
+#define	VIO16TOH(x)	le16toh(x)
+#define	VIO32TOH(x)	le32toh(x)
+#define	VIO64TOH(x)	le64toh(x)
+#define	HTOVIO16(x)	htole16(x)
+#define	HTOVIO32(x)	htole32(x)
+#define	HTOVIO64(x)	htole64(x)
+#else
+#define	VIO16TOH(x)	(x)
+#define	VIO32TOH(x)	(x)
+#define	VIO64TOH(x)	(x)
+#define	HTOVIO16(x)	(x)
+#define	HTOVIO32(x)	(x)
+#define	HTOVIO64(x)	(x)
+#endif
 
 /*
  * XXX: Before being used on big endian arches, the access to config registers
@@ -242,16 +263,16 @@ static uint16_t
 virtio_mmio_read_device_config_2(struct virtio_softc *vsc, int index)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-				VIRTIO_MMIO_CONFIG + index);
+	return VIO16TOH(bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+					VIRTIO_MMIO_CONFIG + index));
 }
 
 static uint32_t
 virtio_mmio_read_device_config_4(struct virtio_softc *vsc, int index)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				VIRTIO_MMIO_CONFIG + index);
+	return VIO32TOH(bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+					VIRTIO_MMIO_CONFIG + index));
 }
 
 static uint64_t
@@ -265,7 +286,7 @@ virtio_mmio_read_device_config_8(struct virtio_softc *vsc, int index)
 	r <<= 32;
 	r += bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			      VIRTIO_MMIO_CONFIG + index);
-	return r;
+	return VIO64TOH(r);
 }
 
 static void
@@ -283,7 +304,7 @@ virtio_mmio_write_device_config_2(struct virtio_softc *vsc,
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index, value);
+			  VIRTIO_MMIO_CONFIG + index, HTOVIO16(value));
 }
 
 static void
@@ -292,7 +313,7 @@ virtio_mmio_write_device_config_4(struct virtio_softc *vsc,
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  VIRTIO_MMIO_CONFIG + index, value);
+			  VIRTIO_MMIO_CONFIG + index, HTOVIO32(value));
 }
 
 static void
@@ -302,10 +323,10 @@ virtio_mmio_write_device_config_8(struct virtio_softc *vsc,
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_MMIO_CONFIG + index,
-			  value & 0xffffffff);
+			  HTOVIO64(value) & 0xffffffff);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_MMIO_CONFIG + index + sizeof(uint32_t),
-			  value >> 32);
+			  HTOVIO64(value) >> 32);
 }
 
 /*
