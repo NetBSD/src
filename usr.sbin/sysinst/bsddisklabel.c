@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.46 2020/10/03 18:54:18 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.47 2020/10/04 16:09:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1771,6 +1771,35 @@ make_bsd_partitions(struct install_partition_desc *install)
 		}
 	} else {
 		usage_set_from_parts(&wanted, parts);
+	}
+
+	/*
+	 * Make sure the target root partition is properly marked
+	 */
+	bool have_inst_target = false;
+	for (size_t i = 0; i < wanted.num; i++) {
+		if (wanted.infos[i].cur_flags & PTI_INSTALL_TARGET) {
+			have_inst_target = true;
+			break;
+		 }
+	}
+	if (!have_inst_target) {
+		for (size_t i = 0; i < wanted.num; i++) {
+			struct disk_part_info info;
+
+			if (wanted.infos[i].type != PT_root ||
+			    strcmp(wanted.infos[i].mount, "/") != 0) 
+				continue;
+			wanted.infos[i].cur_flags |= PTI_INSTALL_TARGET;
+
+			if (!wanted.parts->pscheme->get_part_info(wanted.parts,
+			    wanted.infos[i].cur_part_id, &info))
+				break;
+			info.flags |= PTI_INSTALL_TARGET;
+			wanted.parts->pscheme->set_part_info(wanted.parts,
+			    wanted.infos[i].cur_part_id, &info, NULL);
+			break;
+		}
 	}
 
 	/*
