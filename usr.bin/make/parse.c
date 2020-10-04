@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.359 2020/10/04 20:57:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.360 2020/10/04 21:08:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.359 2020/10/04 20:57:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.360 2020/10/04 21:08:37 rillig Exp $");
 
 /* types and constants */
 
@@ -1807,10 +1807,10 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 }
 
 static Boolean
-VarAssign_Eval(VarAssign *var,
-	  const char *const uvalue, const char **out_avalue, char **out_evalue,
-	  GNode *ctxt)
+VarAssign_Eval(VarAssign *var, GNode *ctxt,
+	       const char **out_avalue, void **out_avalue_freeIt)
 {
+    const char *uvalue = var->value;
     const char *name = var->varname;
     const VarAssignOp type = var->op;
     const char *avalue = uvalue;
@@ -1857,7 +1857,8 @@ VarAssign_Eval(VarAssign *var,
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done.
 	     */
-	    (void)Var_Subst(uvalue, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &evalue);
+	    (void)Var_Subst(uvalue, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
+			    &evalue);
 	    /* TODO: handle errors */
 	    avalue = evalue;
 	}
@@ -1869,15 +1870,17 @@ VarAssign_Eval(VarAssign *var,
 	if (error)
 	    Parse_Error(PARSE_WARNING, error, avalue);
     } else {
-	if (type == VAR_DEFAULT && Var_Exists(var->varname, ctxt))
+	if (type == VAR_DEFAULT && Var_Exists(var->varname, ctxt)) {
+	    *out_avalue_freeIt = NULL;
 	    return FALSE;
+	}
 
 	/* Normal assignment -- just do it. */
 	Var_Set(name, uvalue, ctxt);
     }
 
     *out_avalue = avalue;
-    *out_evalue = evalue;
+    *out_avalue_freeIt = evalue;
     return TRUE;
 }
 
@@ -1917,20 +1920,16 @@ VarAssignSpecial(const char *name, const char *avalue)
 void
 Parse_DoVar(VarAssign *var, GNode *ctxt)
 {
-    const char *uvalue;		/* unexpanded value */
-    const char *avalue;		/* actual value */
-    char *evalue = NULL;	/* expanded value */
+    const char *avalue;		/* actual value (maybe expanded) */
+    void *avalue_freeIt;
 
     ParseVarassignOp(var);
 
-    uvalue = var->value;
-    avalue = uvalue;
-
-    VarCheckSyntax(var->op, uvalue, ctxt);
-    if (VarAssign_Eval(var, uvalue, &avalue, &evalue, ctxt))
+    VarCheckSyntax(var->op, var->value, ctxt);
+    if (VarAssign_Eval(var, ctxt, &avalue, &avalue_freeIt))
 	VarAssignSpecial(var->varname, avalue);
 
-    free(evalue);
+    free(avalue_freeIt);
     free(var->varname);
 }
 
