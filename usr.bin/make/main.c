@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.364 2020/10/03 21:52:50 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.365 2020/10/04 08:22:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.364 2020/10/03 21:52:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.365 2020/10/04 08:22:59 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1715,16 +1715,10 @@ bad:
     return bmake_strdup("");
 }
 
-/*-
- * Error --
- *	Print an error message given its format.
+/* Print a printf-style error message.
  *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The message is printed.
- */
+ * This error message has no consequences, in particular it does not affect
+ * the exit status. */
 void
 Error(const char *fmt, ...)
 {
