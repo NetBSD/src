@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.109.4.1 2020/08/19 18:36:59 martin Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.109.4.2 2020/10/04 18:14:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109.4.1 2020/08/19 18:36:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109.4.2 2020/10/04 18:14:13 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1588,7 +1588,7 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 	 * so that the ppref values match the current amap refcount.
 	 */
 
-	if (amap->am_ppref == NULL && !all && len != amap->am_nslot) {
+	if (amap->am_ppref == NULL) {
 		amap_pp_establish(amap, offset);
 	}
 #endif
@@ -1597,11 +1597,7 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		if (all) {
-			amap_pp_adjref(amap, 0, amap->am_nslot, refv, &tofree);
-		} else {
-			amap_pp_adjref(amap, offset, len, refv, &tofree);
-		}
+		amap_pp_adjref(amap, offset, len, refv, &tofree);
 	}
 #endif
 	uvm_anon_freelst(amap, tofree);
