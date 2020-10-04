@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.117 2020/09/27 10:31:09 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.118 2020/10/04 18:24:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5034,4 +5034,17 @@ sys/dev/ic/nvme.c				1.50
 	PR 55674: avoid creating many unusable ld(4) devices for nvme(4)
 	with multiple (partialy unused) name spaces.
 	[kardel, ticket #1094]
+
+sys/uvm/uvm_amap.c				1.124,1.125 (patch)
+sys/uvm/uvm_io.c				1.29 (patch)
+
+	Effectively disable the AMAP_REFALL flag because it is unsafe.
+	[chs, ticket #1095]
+
+sys/dev/fdt/dw_apb_uart.c			1.8
+
+	The device is capable to recognize break signal, reset cnmagic
+	from +++++ to default.
+	[rin, ticket #1096]
+
 
