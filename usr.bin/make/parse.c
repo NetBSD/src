@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.355 2020/10/04 19:21:13 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.356 2020/10/04 19:36:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.355 2020/10/04 19:21:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.356 2020/10/04 19:36:32 rillig Exp $");
 
 /* types and constants */
 
@@ -203,14 +203,6 @@ typedef enum {
     Wait,		/* .WAIT */
     Attribute		/* Generic attribute */
 } ParseSpecial;
-
-typedef enum VarAssignOp {
-    VAR_NORMAL,			/* = */
-    VAR_SUBST,			/* := */
-    VAR_SHELL,			/* != or :sh= */
-    VAR_APPEND,			/* += */
-    VAR_DEFAULT			/* ?= */
-} VarAssignOp;
 
 /* result data */
 
@@ -1672,21 +1664,23 @@ out:
 	Lst_Free(curTargs);
 }
 
-/* See if the given string is a variable assignment, consisting of a
- * single-word variable name, optional whitespace, an assignment operator,
- * optional whitespace and the variable value.
+/* Parse a variable assignment, consisting of a single-word variable name,
+ * optional whitespace, an assignment operator, optional whitespace and the
+ * variable value.
  *
  * Used for both lines in a file and command line arguments. */
 Boolean
-Parse_IsVar(const char *p)
+Parse_IsVar(const char *p, VarAssign *out_var)
 {
-    Boolean wasSpace = FALSE;	/* set TRUE if found a space */
+    const char *firstSpace = NULL;
     char ch;
     int level = 0;
 
     /* Skip to variable name */
     while (*p == ' ' || *p == '\t')
 	p++;
+
+    out_var->name = p;
 
     /* Scan for one of the assignment operators outside a variable expansion */
     while ((ch = *p++) != 0) {
@@ -1698,74 +1692,57 @@ Parse_IsVar(const char *p)
 	    level--;
 	    continue;
 	}
+
 	if (level != 0)
 	    continue;
-	while (ch == ' ' || ch == '\t') {
+
+	if (ch == ' ' || ch == '\t')
+	    if (firstSpace == NULL)
+	        firstSpace = p - 1;
+	while (ch == ' ' || ch == '\t')
 	    ch = *p++;
-	    wasSpace = TRUE;
-	}
+
 #ifdef SUNSHCMD
 	if (ch == ':' && strncmp(p, "sh", 2) == 0) {
 	    p += 2;
 	    continue;
 	}
 #endif
-	if (ch == '=')
+	if (ch == '=') {
+	    out_var->eq = p - 1;
+	    out_var->nameEndDraft = firstSpace != NULL ? firstSpace : p - 1;
+	    out_var->op = VAR_NORMAL;
+	    cpp_skip_whitespace(&p);
+	    out_var->value = p;
 	    return TRUE;
-	if (*p == '=' && (ch == '+' || ch == ':' || ch == '?' || ch == '!'))
+	}
+	if (*p == '=' && (ch == '+' || ch == ':' || ch == '?' || ch == '!')) {
+	    out_var->eq = p;
+	    out_var->nameEndDraft = firstSpace != NULL ? firstSpace : p;
+	    out_var->op = ch == '+' ? VAR_APPEND :
+			  ch == ':' ? VAR_SUBST :
+			  ch == '?' ? VAR_DEFAULT : VAR_SHELL;
+	    p++;
+	    cpp_skip_whitespace(&p);
+	    out_var->value = p;
 	    return TRUE;
-	if (wasSpace)
+	}
+	if (firstSpace != NULL)
 	    return FALSE;
     }
 
     return FALSE;
 }
 
-/*
-* Parse the variable name, up to the assignment operator.
-* XXX Rather than counting () and {} we should look for $ and
-* then expand the variable.
-*/
-static const char *
-ParseVarname(const char **pp)
-{
-    const char *p = *pp;
-    const char *nameEnd = NULL;
-    int depth;
-
-    for (depth = 0; depth > 0 || *p != '='; p++) {
-	if (*p == '(' || *p == '{') {
-	    depth++;
-	    continue;
-	}
-	if (*p == ')' || *p == '}') {
-	    depth--;
-	    continue;
-	}
-	if (depth == 0 && ch_isspace(*p)) {
-	    if (nameEnd == NULL)
-		nameEnd = p;
-	}
-    }
-
-    if (nameEnd == NULL)
-	nameEnd = p;
-
-    *pp = p;
-    return nameEnd;
-}
-
 static Boolean
-ParseVarassignOp(const char *p, const char *const nameEnd, const char **out_op,
-		 const char **inout_name, VarAssignOp *out_type,
-		 void **inout_name_freeIt, GNode *ctxt)
+ParseVarassignOp(VarAssign *var,
+		 const char **out_op, const char **inout_name,
+		 VarAssignOp *out_type, void **inout_name_freeIt, GNode *ctxt)
 {
-    const char *op;
+    const char *op = var->eq;
     const char *name = *inout_name;
     void *name_freeIt = *inout_name_freeIt;
     VarAssignOp type;
-
-    op = p;			/* points at the '=' */
 
     if (op > name && op[-1] == '+') {
 	type = VAR_APPEND;
@@ -1774,9 +1751,11 @@ ParseVarassignOp(const char *p, const char *const nameEnd, const char **out_op,
     } else if (op > name && op[-1] == '?') {
 	/* If the variable already has a value, we don't do anything. */
 	Boolean exists;
+	const char *nameEnd;
 
 	op--;
-	name = name_freeIt = bmake_strsedup(name, nameEnd < op ? nameEnd : op);
+	nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
+	name = name_freeIt = bmake_strsedup(name, nameEnd);
 	exists = Var_Exists(name, ctxt);
 	if (exists) {
 	    free(name_freeIt);
@@ -1829,7 +1808,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 }
 
 static void
-VarAssign(VarAssignOp const type, const char *const name,
+VarAssign_Eval(VarAssignOp const type, const char *const name,
 	  const char *const uvalue, const char **out_avalue, char **out_evalue,
 	  GNode *ctxt)
 {
@@ -1933,7 +1912,7 @@ VarAssignSpecial(const char *name, const char *avalue)
  *	ctxt		Context in which to do the assignment
  */
 void
-Parse_DoVar(const char *p, GNode *ctxt)
+Parse_DoVar(VarAssign *var, GNode *ctxt)
 {
     VarAssignOp type;
     const char *name;
@@ -1949,33 +1928,25 @@ Parse_DoVar(const char *p, GNode *ctxt)
      * as part of the variable name.  It is later corrected, as is the ':sh'
      * modifier. Of these two (nameEnd and op), the earlier one determines the
      * actual end of the variable name. */
-    const char *nameEnd, *op;
+    const char *op;
 
-    /*
-     * Skip to variable name
-     */
-    while (*p == ' ' || *p == '\t')
-	p++;
-
-    name = p;
+    name = var->name;
     name_freeIt = NULL;
 
-    nameEnd = ParseVarname(&p);
-
-    if (!ParseVarassignOp(p, nameEnd, &op, &name, &type, &name_freeIt, ctxt))
+    if (!ParseVarassignOp(var, &op, &name, &type, &name_freeIt, ctxt))
 	return;
 
-    p++;			/* Skip the '=' */
-    cpp_skip_whitespace(&p);
-    uvalue = p;
+    uvalue = var->value;
     avalue = uvalue;
 
     VarCheckSyntax(type, uvalue, ctxt);
 
-    if (name_freeIt == NULL)
-    	name = name_freeIt = bmake_strsedup(name, nameEnd < op ? nameEnd : op);
+    if (name_freeIt == NULL) {
+	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
+	name = name_freeIt = bmake_strsedup(name, nameEnd);
+    }
 
-    VarAssign(type, name, uvalue, &avalue, &evalue, ctxt);
+    VarAssign_Eval(type, name, uvalue, &avalue, &evalue, ctxt);
     VarAssignSpecial(name, avalue);
 
     free(evalue);
@@ -2939,10 +2910,13 @@ Parse_File(const char *name, int fd)
 		continue;
 	    }
 #endif
-	    if (Parse_IsVar(line)) {
-		FinishDependencyGroup();
-		Parse_DoVar(line, VAR_GLOBAL);
-		continue;
+	    {
+	        VarAssign var;
+		if (Parse_IsVar(line, &var)) {
+		    FinishDependencyGroup();
+		    Parse_DoVar(&var, VAR_GLOBAL);
+		    continue;
+		}
 	    }
 
 #ifndef POSIX

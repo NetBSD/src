@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.365 2020/10/04 08:22:59 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.366 2020/10/04 19:36:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.365 2020/10/04 08:22:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.366 2020/10/04 19:36:32 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -673,9 +673,10 @@ rearg:
 	 * perform them if so. Else take them to be targets and stuff them
 	 * on the end of the "create" list.
 	 */
-	for (; argc > 1; ++argv, --argc)
-		if (Parse_IsVar(argv[1])) {
-			Parse_DoVar(argv[1], VAR_CMD);
+	for (; argc > 1; ++argv, --argc) {
+		VarAssign var;
+		if (Parse_IsVar(argv[1], &var)) {
+			Parse_DoVar(&var, VAR_CMD);
 		} else {
 			if (!*argv[1])
 				Punt("illegal (null) argument.");
@@ -683,6 +684,7 @@ rearg:
 				goto rearg;
 			Lst_Append(create, bmake_strdup(argv[1]));
 		}
+	}
 
 	return;
 noarg:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.136 2020/10/04 14:40:13 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.137 2020/10/04 19:36:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -120,9 +120,26 @@ Boolean getBoolean(const char *, Boolean);
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
+
+typedef enum VarAssignOp {
+    VAR_NORMAL,			/* = */
+    VAR_SUBST,			/* := */
+    VAR_SHELL,			/* != or :sh= */
+    VAR_APPEND,			/* += */
+    VAR_DEFAULT			/* ?= */
+} VarAssignOp;
+
+typedef struct VarAssign {
+    const char *name;		/* unexpanded */
+    const char *nameEndDraft;	/* before operator adjustment */
+    const char *eq;		/* the '=' of the assignment operator */
+    VarAssignOp op;
+    const char *value;		/* unexpanded */
+} VarAssign;
+
 void Parse_Error(int, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-Boolean Parse_IsVar(const char *);
-void Parse_DoVar(const char *, GNode *);
+Boolean Parse_IsVar(const char *, VarAssign *out_var);
+void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_Init(void);
