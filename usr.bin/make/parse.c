@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.348 2020/10/03 21:52:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.349 2020/10/04 07:49:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.348 2020/10/03 21:52:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.349 2020/10/04 07:49:45 rillig Exp $");
 
 /* types and constants */
 
@@ -1826,12 +1826,14 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 	default:
 #ifdef SUNSHCMD
-	    while (opc > line && *opc != ':')
+	    while (opc > line && *opc == '\0')
 		opc--;
 
-	    if (strncmp(opc, ":sh", 3) == 0) {
+	    if (opc >= line + 2 &&
+		opc[-2] == ':' && opc[-1] == 's' && opc[0] == 'h')
+	    {
 		type = VAR_SHELL;
-		*opc = '\0';
+		opc[-2] = '\0';
 		break;
 	    }
 #endif

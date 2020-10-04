@@ -1,3 +1,1 @@
-make: Unclosed variable specification (expecting '}') for "" (value "echo 123") modifier U
-make: Unclosed variable specification (expecting '}') for "" (value " echo\") modifier U
 exit status 0
