@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.159 2020/10/03 17:30:54 rillig Exp $
+# $NetBSD: Makefile,v 1.160 2020/10/04 06:53:15 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -230,6 +230,7 @@ TESTS+=		opt-warnings-as-errors
 TESTS+=		opt-where-am-i
 TESTS+=		opt-x-reduce-exported
 TESTS+=		order
+TESTS+=		parse-var
 TESTS+=		phony-end
 TESTS+=		posix
 TESTS+=		# posix1	# broken by reverting POSIX changes
@@ -269,6 +270,7 @@ TESTS+=		var-op-assign
 TESTS+=		var-op-default
 TESTS+=		var-op-expand
 TESTS+=		var-op-shell
+TESTS+=		var-op-sunsh
 TESTS+=		varcmd
 TESTS+=		vardebug
 TESTS+=		varfind
