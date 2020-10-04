@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.361 2020/10/04 21:41:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.362 2020/10/04 21:53:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.361 2020/10/04 21:41:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.362 2020/10/04 21:53:28 rillig Exp $");
 
 /* types and constants */
 
@@ -1850,29 +1850,26 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 
 	Var_Set(name, avalue, ctxt);
     } else if (type == VAR_SHELL) {
-	char *res;
-	const char *error;
+        const char *cmd, *errfmt;
+        char *cmdOut;
+        void *cmd_freeIt = NULL;
 
-	if (strchr(uvalue, '$') != NULL) {
-	    char *evalue;
-	    /*
-	     * There's a dollar sign in the command, so perform variable
-	     * expansion on the whole thing. The resulting string will need
-	     * freeing when we're done.
-	     */
-	    (void)Var_Subst(uvalue, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
-			    &evalue);
+	cmd = uvalue;
+	if (strchr(cmd, '$') != NULL) {
+	    char *ecmd;
+	    (void)Var_Subst(cmd, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &ecmd);
 	    /* TODO: handle errors */
-	    avalue = evalue;
-	    avalue_freeIt = evalue;
+	    cmd = cmd_freeIt = ecmd;
 	}
 
-	res = Cmd_Exec(avalue, &error);
-	Var_Set(name, res, ctxt);
-	free(res);
+	cmdOut = Cmd_Exec(cmd, &errfmt);
+	Var_Set(name, cmdOut, ctxt);
+	avalue = avalue_freeIt = cmdOut;
 
-	if (error)
-	    Parse_Error(PARSE_WARNING, error, avalue);
+	if (errfmt)
+	    Parse_Error(PARSE_WARNING, errfmt, cmd);
+
+	free(cmd_freeIt);
     } else {
 	if (type == VAR_DEFAULT && Var_Exists(var->varname, ctxt)) {
 	    *out_avalue_freeIt = NULL;
