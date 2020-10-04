@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.50 2020/10/03 05:56:26 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.51 2020/10/04 08:09:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.50 2020/10/03 05:56:26 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.51 2020/10/04 08:09:12 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
+#include "opt_fdt.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
-#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
