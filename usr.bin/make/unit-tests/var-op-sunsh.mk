@@ -1,4 +1,4 @@
-# $NetBSD: var-op-sunsh.mk,v 1.3 2020/10/04 08:02:17 rillig Exp $
+# $NetBSD: var-op-sunsh.mk,v 1.4 2020/10/04 08:14:35 rillig Exp $
 #
 # Tests for the :sh= variable assignment operator, which runs its right-hand
 # side through the shell.  It is a seldom-used alternative to the !=
@@ -86,6 +86,24 @@ VAR.key:shift=		Shift
 # since the left-hand side of an assignment must be exactly one word.
 VAR :sh :sh :sh :sh=	echo multiple
 .if ${VAR} != "multiple"
+.  error
+.endif
+
+# The word ':sh' is not the only thing that can occur after a variable name.
+# Since the parser just counts braces and parentheses instead of properly
+# expanding nested expressions, the token ' :sh' can be used to add arbitrary
+# text between the variable name and the assignment operator, it just has to
+# be enclosed in braces or parentheses.
+VAR :sh(Put a comment here)=	comment in parentheses
+.if ${VAR} != "comment in parentheses"
+.  error
+.endif
+
+# The unintended comment can include multiple levels of nested braces and
+# parentheses, they don't even need to be balanced since they are only
+# counted by Parse_IsVar and ignored by Parse_DoVar.
+VAR :sh{Put}((((a}{comment}}}}{here}=	comment in braces
+.if ${VAR} != "comment in braces"
 .  error
 .endif
 
