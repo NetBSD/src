@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.358 2020/10/04 20:37:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.359 2020/10/04 20:57:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.358 2020/10/04 20:37:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.359 2020/10/04 20:57:26 rillig Exp $");
 
 /* types and constants */
 
@@ -1680,6 +1680,10 @@ Parse_IsVar(const char *p, VarAssign *out_var)
     while (*p == ' ' || *p == '\t')
 	p++;
 
+    /* During parsing, the '+' of the '+=' operator is initially parsed
+     * as part of the variable name.  It is later corrected, as is the ':sh'
+     * modifier. Of these two (nameEnd and op), the earlier one determines the
+     * actual end of the variable name. */
     out_var->nameStart = p;
 #ifdef CLEANUP
     out_var->nameEndDraft = NULL;
@@ -1744,13 +1748,12 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 /* Determine the assignment operator and adjust the end of the variable
  * name accordingly. */
 static void
-ParseVarassignOp(VarAssign *var, const char **out_op, GNode *ctxt)
+ParseVarassignOp(VarAssign *var)
 {
     const char *op = var->eq;
     const char * const name = var->nameStart;
     VarAssignOp type;
 
-    var->varname = NULL;
     if (op > name && op[-1] == '+') {
 	type = VAR_APPEND;
 	op--;
@@ -1780,8 +1783,11 @@ ParseVarassignOp(VarAssign *var, const char **out_op, GNode *ctxt)
 #endif
     }
 
-    *out_op = op;
-    var->op = type;
+    {
+	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
+	var->varname = bmake_strsedup(var->nameStart, nameEnd);
+	var->op = type;
+    }
 }
 
 static void
@@ -1915,27 +1921,12 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
     const char *avalue;		/* actual value */
     char *evalue = NULL;	/* expanded value */
 
-    /* The variable name consists of a single word (that is, no whitespace).
-     * It ends at the whitespace after that word (nameEnd).  If there is no
-     * whitespace, the name is followed directly by the assignment operator
-     * (op).  During parsing, the '+' of the '+=' operator is initially parsed
-     * as part of the variable name.  It is later corrected, as is the ':sh'
-     * modifier. Of these two (nameEnd and op), the earlier one determines the
-     * actual end of the variable name. */
-    const char *op;
-
-    ParseVarassignOp(var, &op, ctxt);
+    ParseVarassignOp(var);
 
     uvalue = var->value;
     avalue = uvalue;
 
     VarCheckSyntax(var->op, uvalue, ctxt);
-
-    if (var->varname == NULL) {
-	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
-	var->varname = bmake_strsedup(var->nameStart, nameEnd);
-    }
-
     if (VarAssign_Eval(var, uvalue, &avalue, &evalue, ctxt))
 	VarAssignSpecial(var->varname, avalue);
 
