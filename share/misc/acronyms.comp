@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.312 2020/09/19 01:43:20 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.313 2020/10/04 19:04:48 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -359,6 +359,7 @@ DBC	design by contract
 DBL	dynamic buffer limiting
 DBMS	database management system
 DBS	database server
+DC	data center
 DC	direct current
 DCC	Direct Client-to-Client
 DCC	direct cable connect
@@ -935,6 +936,7 @@ MCLAG	multi-chassis link aggregation group
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
+MD	MiniDisc
 MD-SAL	model-driven service abstraction layer
 MDA	mail delivery agent
 MDA	Monochrome Display Adapter
