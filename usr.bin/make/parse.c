@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.356 2020/10/04 19:36:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.357 2020/10/04 20:23:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.356 2020/10/04 19:36:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.357 2020/10/04 20:23:32 rillig Exp $");
 
 /* types and constants */
 
@@ -1680,7 +1680,14 @@ Parse_IsVar(const char *p, VarAssign *out_var)
     while (*p == ' ' || *p == '\t')
 	p++;
 
-    out_var->name = p;
+    out_var->nameStart = p;
+#ifdef CLEANUP
+    out_var->nameEndDraft = NULL;
+    out_var->varname = NULL;
+    out_var->eq = NULL;
+    out_var->op = VAR_NORMAL;
+    out_var->value = NULL;
+#endif
 
     /* Scan for one of the assignment operators outside a variable expansion */
     while ((ch = *p++) != 0) {
@@ -1734,50 +1741,50 @@ Parse_IsVar(const char *p, VarAssign *out_var)
     return FALSE;
 }
 
+/* Determine the assignment operator and adjust the end of the variable
+ * name accordingly. */
 static Boolean
-ParseVarassignOp(VarAssign *var,
-		 const char **out_op, const char **inout_name,
-		 VarAssignOp *out_type, void **inout_name_freeIt, GNode *ctxt)
+ParseVarassignOp(VarAssign *var, const char **out_op, GNode *ctxt)
 {
     const char *op = var->eq;
-    const char *name = *inout_name;
-    void *name_freeIt = *inout_name_freeIt;
+    const char * const nameStart = var->nameStart;
     VarAssignOp type;
 
-    if (op > name && op[-1] == '+') {
+    var->varname = NULL;
+    if (op > nameStart && op[-1] == '+') {
 	type = VAR_APPEND;
 	op--;
 
-    } else if (op > name && op[-1] == '?') {
+    } else if (op > nameStart && op[-1] == '?') {
 	/* If the variable already has a value, we don't do anything. */
 	Boolean exists;
 	const char *nameEnd;
 
 	op--;
 	nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
-	name = name_freeIt = bmake_strsedup(name, nameEnd);
-	exists = Var_Exists(name, ctxt);
+	var->varname = bmake_strsedup(nameStart, nameEnd);
+	exists = Var_Exists(var->varname, ctxt);
 	if (exists) {
-	    free(name_freeIt);
+	    free(var->varname);
 	    return FALSE;
 	}
 	type = VAR_NORMAL;
 
-    } else if (op > name && op[-1] == ':') {
+    } else if (op > nameStart && op[-1] == ':') {
 	op--;
 	type = VAR_SUBST;
 
-    } else if (op > name && op[-1] == '!') {
+    } else if (op > nameStart && op[-1] == '!') {
 	op--;
 	type = VAR_SHELL;
 
     } else {
 	type = VAR_NORMAL;
 #ifdef SUNSHCMD
-	while (op > name && ch_isspace(op[-1]))
+	while (op > nameStart && ch_isspace(op[-1]))
 	    op--;
 
-	if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
+	if (op >= nameStart + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
 	    type = VAR_SHELL;
 	    op -= 3;
 	}
@@ -1785,9 +1792,7 @@ ParseVarassignOp(VarAssign *var,
     }
 
     *out_op = op;
-    *inout_name = name;
-    *out_type = type;
-    *inout_name_freeIt = name_freeIt;
+    var->op = type;
     return TRUE;
 }
 
@@ -1808,10 +1813,12 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 }
 
 static void
-VarAssign_Eval(VarAssignOp const type, const char *const name,
+VarAssign_Eval(VarAssign *var,
 	  const char *const uvalue, const char **out_avalue, char **out_evalue,
 	  GNode *ctxt)
 {
+    const char *name = var->varname;
+    const VarAssignOp type = var->op;
     const char *avalue = uvalue;
     char *evalue = NULL;
 
@@ -1914,9 +1921,6 @@ VarAssignSpecial(const char *name, const char *avalue)
 void
 Parse_DoVar(VarAssign *var, GNode *ctxt)
 {
-    VarAssignOp type;
-    const char *name;
-    void *name_freeIt;
     const char *uvalue;		/* unexpanded value */
     const char *avalue;		/* actual value */
     char *evalue = NULL;	/* expanded value */
@@ -1930,27 +1934,24 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
      * actual end of the variable name. */
     const char *op;
 
-    name = var->name;
-    name_freeIt = NULL;
-
-    if (!ParseVarassignOp(var, &op, &name, &type, &name_freeIt, ctxt))
+    if (!ParseVarassignOp(var, &op, ctxt))
 	return;
 
     uvalue = var->value;
     avalue = uvalue;
 
-    VarCheckSyntax(type, uvalue, ctxt);
+    VarCheckSyntax(var->op, uvalue, ctxt);
 
-    if (name_freeIt == NULL) {
+    if (var->varname == NULL) {
 	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
-	name = name_freeIt = bmake_strsedup(name, nameEnd);
+	var->varname = bmake_strsedup(var->nameStart, nameEnd);
     }
 
-    VarAssign_Eval(type, name, uvalue, &avalue, &evalue, ctxt);
-    VarAssignSpecial(name, avalue);
+    VarAssign_Eval(var, uvalue, &avalue, &evalue, ctxt);
+    VarAssignSpecial(var->varname, avalue);
 
     free(evalue);
-    free(name_freeIt);
+    free(var->varname);
 }
 
 
