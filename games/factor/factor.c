@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.30 2020/10/03 22:27:00 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.31 2020/10/04 19:32:15 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.30 2020/10/03 22:27:00 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.31 2020/10/04 19:32:15 christos Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -424,9 +424,10 @@ convert_str2bn(BIGNUM **val, char *p)
 	if (*p == '-')
 		errx(1, "negative numbers aren't permitted.");
 	if (*p == '0') {
-		p++;
-		if (*p == 'x' || *p == 'X')
-			n = BN_hex2bn(val, ++p);
+		if (p[1] == 'x' || p[1] == 'X')
+			n = BN_hex2bn(val, p + 2);
+		else
+			n = BN_oct2bn(val, p + 1);
 	} else {
 		n = is_hex_str(p) ? BN_hex2bn(val, p) : BN_dec2bn(val, p);
 	}
