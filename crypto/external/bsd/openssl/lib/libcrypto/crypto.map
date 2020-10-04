@@ -552,6 +552,7 @@ OPENSSL_1_1_0 {
         BN_nnmod;
         BN_num_bits;
         BN_num_bits_word;
+	BN_oct2bn;
         BN_options;
         BN_print;
         BN_print_fp;
