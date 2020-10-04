@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.40 2020/10/04 17:50:41 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.41 2020/10/04 18:16:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.40 2020/10/04 17:50:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.41 2020/10/04 18:16:09 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -98,6 +98,28 @@ hash(const char *key, size_t *out_keylen)
 	if (out_keylen != NULL)
 		*out_keylen = (size_t)(p - key);
 	return h;
+}
+
+static Hash_Entry *
+HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
+{
+	Hash_Entry *e;
+	int chainlen = 0;
+
+#ifdef DEBUG_HASH_LOOKUP
+	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
+#endif
+
+	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
+		chainlen++;
+		if (e->namehash == h && strcmp(e->name, key) == 0)
+			break;
+	}
+
+	if (chainlen > t->maxchain)
+		t->maxchain = chainlen;
+
+	return e;
 }
 
 /* Sets up the hash table. */
@@ -152,23 +174,8 @@ Hash_DeleteTable(Hash_Table *t)
 Hash_Entry *
 Hash_FindEntry(Hash_Table *t, const char *key)
 {
-	Hash_Entry *e;
-	unsigned h;
-	int chainlen;
-
-	h = hash(key, NULL);
-	chainlen = 0;
-#ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
-#endif
-	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
-		chainlen++;
-		if (e->namehash == h && strcmp(e->name, key) == 0)
-			break;
-	}
-	if (chainlen > t->maxchain)
-		t->maxchain = chainlen;
-	return e;
+	unsigned int h = hash(key, NULL);
+	return HashTable_Find(t, h, key);
 }
 
 void *
@@ -225,30 +232,15 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	Hash_Entry *e;
 	unsigned h;
 	size_t keylen;
-	int chainlen;
 	struct Hash_Entry **hp;
 
-	/*
-	 * Hash the key.  As a side effect, save the length (strlen) of the
-	 * key in case we need to create the entry.
-	 */
 	h = hash(key, &keylen);
-	chainlen = 0;
-#ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
-#endif
-	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
-		chainlen++;
-		if (e->namehash == h && strcmp(e->name, key) == 0) {
-			if (newPtr != NULL)
-				*newPtr = FALSE;
-			break;
-		}
-	}
-	if (chainlen > t->maxchain)
-		t->maxchain = chainlen;
-	if (e)
+	e = HashTable_Find(t, h, key);
+	if (e) {
+		if (newPtr != NULL)
+			*newPtr = FALSE;
 		return e;
+	}
 
 	/*
 	 * The desired entry isn't there.  Before allocating a new entry,
