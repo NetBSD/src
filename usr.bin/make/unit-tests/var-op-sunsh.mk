@@ -1,8 +1,8 @@
-# $NetBSD: var-op-sunsh.mk,v 1.1 2020/10/04 06:53:15 rillig Exp $
+# $NetBSD: var-op-sunsh.mk,v 1.2 2020/10/04 07:49:45 rillig Exp $
 #
 # Tests for the :sh= variable assignment operator, which runs its right-hand
 # side through the shell.  It is a seldom-used alternative to the !=
-# assignment operator.
+# assignment operator, adopted from Sun make.
 
 .MAKEFLAGS: -dL			# Enable sane error messages
 
@@ -13,54 +13,63 @@ VAR:sh=		echo colon-sh
 .  error
 .endif
 
-# XXX: As of 2020-10-04, the ':sh' can even be followed by other characters.
-# This is neither documented by NetBSD make nor by Solaris make.
+# It is also possible to have whitespace around the :sh assignment
+# operator modifier.
+VAR :sh =	echo colon-sh-spaced
+.if ${VAR} != "colon-sh-spaced"
+.  error
+.endif
+
+# Until 2020-10-04, the ':sh' could even be followed by other characters.
+# This was neither documented by NetBSD make nor by Solaris make and was
+# an implementation error.
+#
+# Since 2020-10-04, this is a normal variable assignment using the '='
+# assignment operator.
 VAR:shell=	echo colon-shell
-.if ${VAR} != "colon-shell"
+.if ${${:UVAR\:shell}} != "echo colon-shell"
 .  error
 .endif
 
-# XXX: Several colons can syntactically appear in a variable name.
-# Neither of these should be interpreted as the ':sh' assignment operator
-# modifier.
+# Several colons can syntactically appear in a variable name.
+# Until 2020-10-04, the last of them was interpreted as the ':sh'
+# assignment operator.
+#
+# Since 2020-10-04, the colons are part of the variable name.
 VAR:shoe:shore=	echo two-colons
-.if ${VAR${:U\:}shoe} != "two-colons"
+.if ${${:UVAR\:shoe\:shore}} != "echo two-colons"
 .  error
 .endif
 
-#.MAKEFLAGS: -dcpv
-
-# XXX: As of 2020-10-04, the following expression is wrongly marked as
-# a parse error.  This is caused by the ':sh' modifier.
+# Until 2020-10-04, the following expression was wrongly marked as
+# a parse error.  This was because the parser for variable assignments
+# just looked for the previous ":sh", without taking any contextual
+# information into account.
 #
 # There are two different syntactical elements that look exactly the same:
 # The variable modifier ':sh' and the assignment operator modifier ':sh'.
-# Intuitively this variable name contains the variable modifier, but the
-# parser sees it as operator modifier, in Parse_DoVar.
-#
-VAR.${:Uecho 123:sh}=	echo oops
-.if ${VAR.echo 123} != "oops"
+# Intuitively this variable name contains the variable modifier, but until
+# 2020-10-04, the parser regarded it as an assignment operator modifier, in
+# Parse_DoVar.
+VAR.${:Uecho 123:sh}=	ok-123
+.if ${VAR.123} != "ok-123"
 .  error
 .endif
 
-# XXX: Same pattern here. The ':sh' inside the nested expression is taken
-# for the assignment operator, even though it is escaped by a backslash.
-#
-VAR.${:U echo\:shell}=	echo oops
-.if ${VAR.${:U echo\\}} != "oops"
+# Same pattern here. Until 2020-10-04, the ':sh' inside the nested expression
+# was taken for the :sh assignment operator modifier, even though it was
+# escaped by a backslash.
+VAR.${:U echo\:shell}=	ok-shell
+.if ${VAR.${:U echo\:shell}} != "ok-shell"
 .  error
 .endif
 
-# XXX: The word 'shift' is also affected since it starts with ':sh'.
-#
-VAR.key:shift=		echo Shift
-.if ${VAR.key} != "Shift"
+# Until 2020-10-04, the word 'shift' was also affected since it starts with
+# ':sh'.
+VAR.key:shift=		Shift
+.if ${${:UVAR.key\:shift}} != "Shift"
 .  error
 .endif
-
-.MAKEFLAGS: -d0
-
-# XXX: Despite the error messages the exit status is still 0.
 
 all:
 	@:;
