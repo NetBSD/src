@@ -1,4 +1,4 @@
-# $NetBSD: var-op-sunsh.mk,v 1.2 2020/10/04 07:49:45 rillig Exp $
+# $NetBSD: var-op-sunsh.mk,v 1.3 2020/10/04 08:02:17 rillig Exp $
 #
 # Tests for the :sh= variable assignment operator, which runs its right-hand
 # side through the shell.  It is a seldom-used alternative to the !=
@@ -68,6 +68,24 @@ VAR.${:U echo\:shell}=	ok-shell
 # ':sh'.
 VAR.key:shift=		Shift
 .if ${${:UVAR.key\:shift}} != "Shift"
+.  error
+.endif
+
+# Just for fun: The code in Parse_IsVar allows for multiple appearances of
+# the ':sh' assignment operator modifier.  Let's see what happens ...
+#
+# Well, the end result is correct but the way until there is rather
+# adventurous.  This only works because the parser replaces each an every
+# whitespace character that is not nested with '\0' (see Parse_DoVar).
+# The variable name therefore ends before the first ':sh', and the last
+# ':sh' turns the assignment operator into the shell command evaluation.
+# Parse_DoVar completely trusts Parse_IsVar to properly verify the syntax.
+#
+# The ':sh' is the only word that may occur between the variable name and
+# the assignment operator.  All other words would lead to a parse error
+# since the left-hand side of an assignment must be exactly one word.
+VAR :sh :sh :sh :sh=	echo multiple
+.if ${VAR} != "multiple"
 .  error
 .endif
 
