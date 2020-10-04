@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.349 2020/10/04 07:49:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.350 2020/10/04 10:35:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.349 2020/10/04 07:49:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.350 2020/10/04 10:35:25 rillig Exp $");
 
 /* types and constants */
 
@@ -1845,10 +1845,11 @@ Parse_DoVar(char *line, GNode *ctxt)
 
     if (DEBUG(LINT)) {
 	if (type != VAR_SUBST && strchr(cp, '$') != NULL) {
-	    /* sanity check now */
+	    /* Check for syntax errors such as unclosed expressions or
+	     * unknown modifiers. */
 	    char *expandedValue;
 
-	    (void)Var_Subst(cp, ctxt, VARE_ASSIGN, &expandedValue);
+	    (void)Var_Subst(cp, ctxt, VARE_NONE, &expandedValue);
 	    /* TODO: handle errors */
 	    free(expandedValue);
 	}
