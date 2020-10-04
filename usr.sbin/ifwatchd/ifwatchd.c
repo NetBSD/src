@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.45 2020/09/27 19:55:21 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.46 2020/10/04 20:36:32 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.45 2020/09/27 19:55:21 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.46 2020/10/04 20:36:32 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -44,15 +44,16 @@ __RCSID("$NetBSD: ifwatchd.c,v 1.45 2020/09/27 19:55:21 roy Exp $");
 #include <netinet/in_var.h>
 #include <arpa/inet.h>
 
+#include <err.h>
+#include <errno.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <err.h>
-#include <ifaddrs.h>
 #include <syslog.h>
+#include <unistd.h>
 
 enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
 enum addrflag { NOTREADY, DETACHED, READY };
@@ -69,7 +70,7 @@ static void check_announce(const struct if_announcemsghdr *ifan);
 static void check_carrier(const struct if_msghdr *ifm);
 static void free_interfaces(void);
 static struct interface_data * find_interface(int index);
-static void run_initial_ups(void);
+static void run_initial_ups(bool);
 
 /* global variables */
 static int verbose = 0, quiet = 0;
@@ -197,9 +198,12 @@ main(int argc, char **argv)
 	if (setsockopt(s, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter)) < 0)
 		syslog(LOG_ERR, "RO_MSGFILTER: %m");
+	n = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &n, sizeof(n)) < 0)
+		syslog(LOG_ERR, "SO_RERROR: %m");
 
 	if (!inhibit_initial)
-		run_initial_ups();
+		run_initial_ups(true);
 
 	iov[0].iov_base = buf;
 	iov[0].iov_len = sizeof(buf);
@@ -210,6 +214,15 @@ main(int argc, char **argv)
 	for (;;) {
 		n = recvmsg(s, &msg, 0);
 		if (n == -1) {
+			if (errno == ENOBUFS) {
+				syslog(LOG_ERR,
+				    "routing socket overflow detected");
+				/* XXX We don't track addresses, so they
+				 * won't be reported. */
+				if (!inhibit_initial)
+					run_initial_ups(false);
+				continue;
+			}
 			syslog(LOG_ERR, "recvmsg: %m");
 			exit(EXIT_FAILURE);
 		}
@@ -482,6 +495,28 @@ check_carrier(const struct if_msghdr *ifm)
 }
 
 static void
+do_announce(struct interface_data *ifd,
+    unsigned short what, unsigned short index)
+{
+
+	switch (what) {
+	case IFAN_ARRIVAL:
+		ifd->index = index;
+		invoke_script(ifd->ifname, ARRIVAL, NULL, NULL);
+		break;
+	case IFAN_DEPARTURE:
+		ifd->index = -1;
+		ifd->last_carrier_status = -1;
+		invoke_script(ifd->ifname, DEPARTURE, NULL, NULL);
+		break;
+	default:
+		if (verbose)
+			(void) printf("unknown announce: what=%d\n", what);
+		break;
+	}
+}
+
+static void
 check_announce(const struct if_announcemsghdr *ifan)
 {
 	struct interface_data * p;
@@ -491,22 +526,7 @@ check_announce(const struct if_announcemsghdr *ifan)
 		if (strcmp(p->ifname, ifname) != 0)
 			continue;
 
-		switch (ifan->ifan_what) {
-		case IFAN_ARRIVAL:
-			p->index = ifan->ifan_index;
-			invoke_script(p->ifname, ARRIVAL, NULL, NULL);
-			break;
-		case IFAN_DEPARTURE:
-			p->index = -1;
-			p->last_carrier_status = -1;
-			invoke_script(p->ifname, DEPARTURE, NULL, NULL);
-			break;
-		default:
-			if (verbose)
-				(void) printf("unknown announce: "
-				    "what=%d\n", ifan->ifan_what);
-			break;
-		}
+		do_announce(p, ifan->ifan_what, ifan->ifan_index);
 		return;
 	}
 }
@@ -536,7 +556,7 @@ find_interface(int idx)
 }
 
 static void
-run_initial_ups(void)
+run_initial_ups(bool do_addrs)
 {
 	struct interface_data * ifd;
 	struct ifaddrs *res = NULL, *p;
@@ -551,6 +571,19 @@ run_initial_ups(void)
 	if (getifaddrs(&res) != 0)
 		goto out;
 
+	/* Check if any interfaces vanished */
+	SLIST_FOREACH(ifd, &ifs, next) {
+		for (p = res; p; p = p->ifa_next) {
+			if (strcmp(ifd->ifname, p->ifa_name) != 0)
+				continue;
+			ifa = p->ifa_addr;
+			if (ifa != NULL && ifa->sa_family == AF_LINK)
+				break;
+		}
+		if (p == NULL)
+			do_announce(ifd, IFAN_DEPARTURE, ifd->index);
+	}
+
 	for (p = res; p; p = p->ifa_next) {
 		SLIST_FOREACH(ifd, &ifs, next) {
 			if (strcmp(ifd->ifname, p->ifa_name) == 0)
@@ -560,7 +593,8 @@ run_initial_ups(void)
 			continue;
 
 		ifa = p->ifa_addr;
-		if (ifa != NULL && ifa->sa_family == AF_LINK)
+		if (ifa != NULL && ifa->sa_family == AF_LINK &&
+		    ifd->index == -1)
 			invoke_script(ifd->ifname, ARRIVAL, NULL, NULL);
 
 		if ((p->ifa_flags & IFF_UP) == 0)
@@ -569,11 +603,23 @@ run_initial_ups(void)
 			continue;
 		if (ifa->sa_family == AF_LINK) {
 			ifi = (const struct if_data *)p->ifa_data;
-			if (ifi->ifi_link_state == LINK_STATE_UP)
+			if (ifd->last_carrier_status == ifi->ifi_link_state)
+				continue;
+			switch (ifi->ifi_link_state) {
+			case LINK_STATE_UP:
 				invoke_script(ifd->ifname, CARRIER, NULL, NULL);
+				break;
+			case LINK_STATE_DOWN:
+				if (ifd->last_carrier_status == -1)
+					break;
+				invoke_script(ifd->ifname, CARRIER, NULL, NULL);
+				break;
+			}
 			ifd->last_carrier_status = ifi->ifi_link_state;
 			continue;
 		}
+		if (!do_addrs)
+			continue;
 		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
 		if (aflag != READY)
 			continue;
