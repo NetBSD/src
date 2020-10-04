@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.21 2020/06/22 05:34:57 rin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.22 2020/10/04 10:34:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -153,6 +153,8 @@ typedef struct {
 #define	TLS_DTV_OFFSET	0x8000
 __CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
 
+__BEGIN_DECLS
+
 static __inline void *
 __lwp_gettcb_fast(void)
 {
@@ -180,6 +182,7 @@ __lwp_settcb(void *__tcb)
 
 	_lwp_setprivate(__tcb);
 }
+__END_DECLS
 #endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */
