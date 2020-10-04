@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.306 2020/08/29 18:54:33 christos Exp $
+$NetBSD: acronyms,v 1.307 2020/10/04 19:04:48 nia Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -118,6 +118,7 @@ D/B/A	doing business as
 D/L	download
 DBA	doing business as
 DBEYR	don't believe everything you read
+DC	Dreamcast
 DIAFYO	did I ask for your opinion?
 DIY	do it yourself
 DKDC	don't know, don't care
@@ -132,6 +133,7 @@ DNFT	do not feed troll
 DOA	dead on arrival
 DOTADIW	do one thing and do it well
 DRY	don't repeat yourself
+DS	Dual Screen
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
@@ -192,7 +194,11 @@ G2K	good to know
 GA	go ahead
 GAC	get a clue
 GAL	get a life
+GB	Game Boy
+GBA	Game Boy Advance
+GBC	Game Boy Color
 GBTW	get back to work
+GC	GameCube
 GCD	greatest common divisor
 GCHQ	Government Communications Headquarters (UK)
 GDPR	General Data Protection Regulation
@@ -351,6 +357,7 @@ M&O	management & operations
 M8	mate
 MAD	mutually assured destruction
 MBA	master of business administration
+MD	Mega Drive
 MDMA	methylenedioxy methamphetamine
 MFW	my face when
 MIA	missing in action
@@ -371,8 +378,11 @@ NB	nota bene
 NBD	no big deal
 NE1	anyone
 NEDM	not even Doom music
+NES	Nintendo Entertainment System
 NFA	no flaming allowed
 NFC	no functional change
+NGP	Neo Geo Pocket
+NGP	Neo Geo Pocket Color
 NIFOC	naked in front of computer
 NIH	not invented here
 NIMBY	not in my backyard
@@ -428,6 +438,7 @@ OWTTE	or words to that effect
 PC	player character
 PC	politically correct
 PCB	polychlorinated biphenyl(s)
+PCE 	PC Engine
 PD	police department
 PDA	public display of affection
 PDQ	pretty darn quick
@@ -460,6 +471,7 @@ PPS	pulse per second (signal)
 PR	public relations
 PSA 	prostate-specific antigen
 PSA 	public service announcement
+PSX	PlayStation
 PTA	parent-teacher association
 PTO	{paid,personal} time off
 PTO	parent-teacher organization
@@ -510,7 +522,9 @@ SMAP	Soil Moisture Active Passive
 SMH	shaking my head
 SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
+SMS	Sega Master System
 SNERT	snot-nosed egotistical rude teenager
+SNES	Super Nintendo Entertainment System
 SNMP	sorry, not my problem
 SO	significant other
 SOB	son of [a] bitch
