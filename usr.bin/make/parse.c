@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.351 2020/10/04 11:58:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.352 2020/10/04 13:24:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.351 2020/10/04 11:58:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.352 2020/10/04 13:24:59 rillig Exp $");
 
 /* types and constants */
 
@@ -1727,71 +1727,62 @@ Parse_IsVar(const char *line)
     return FALSE;
 }
 
-/*-
- *---------------------------------------------------------------------
- * Parse_DoVar  --
- *	Take the variable assignment in the passed line and do it in the
- *	global context.
+/* Take the variable assignment in the passed line and execute it.
  *
- *	Note: There is a lexical ambiguity with assignment modifier characters
- *	in variable names. This routine interprets the character before the =
- *	as a modifier. Therefore, an assignment like
- *	    C++=/usr/bin/CC
- *	is interpreted as "C+ +=" instead of "C++ =".
+ * Note: There is a lexical ambiguity with assignment modifier characters
+ * in variable names. This routine interprets the character before the =
+ * as a modifier. Therefore, an assignment like
+ *	C++=/usr/bin/CC
+ * is interpreted as "C+ +=" instead of "C++ =".
  *
  * Input:
- *	line		a line guaranteed to be a variable assignment.
- *			This reduces error checks
+ *	p		A line guaranteed to be a variable assignment
+ *			(see Parse_IsVar).
+ *			Is destroyed but not freed during parsing.
  *	ctxt		Context in which to do the assignment
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	the variable structure of the given variable name is altered in the
- *	global context.
- *---------------------------------------------------------------------
  */
 void
-Parse_DoVar(char *line, GNode *ctxt)
+Parse_DoVar(char *p, GNode *ctxt)
 {
-    char *cp;			/* pointer into line */
     enum {
 	VAR_SUBST, VAR_APPEND, VAR_SHELL, VAR_NORMAL
     } type;			/* Type of assignment */
     char *opc;			/* ptr to operator character to
 				 * null-terminate the variable name */
-    Boolean	   freeCp = FALSE; /* TRUE if cp needs to be freed,
-				    * i.e. if any variable expansion was
-				    * performed */
     int depth;
+    const char *name;
+    const char *uvalue;		/* unexpanded value */
+    const char *avalue;		/* actual value */
+    char *evalue = NULL;	/* expanded value */
 
     /*
      * Skip to variable name
      */
-    while (*line == ' ' || *line == '\t')
-	line++;
+    while (*p == ' ' || *p == '\t')
+	p++;
+
+    name = p;
 
     /*
      * Skip to operator character, nulling out whitespace as we go
      * XXX Rather than counting () and {} we should look for $ and
      * then expand the variable.
      */
-    for (depth = 0, cp = line; depth > 0 || *cp != '='; cp++) {
-	if (*cp == '(' || *cp == '{') {
+    for (depth = 0; depth > 0 || *p != '='; p++) {
+	if (*p == '(' || *p == '{') {
 	    depth++;
 	    continue;
 	}
-	if (*cp == ')' || *cp == '}') {
+	if (*p == ')' || *p == '}') {
 	    depth--;
 	    continue;
 	}
-	if (depth == 0 && ch_isspace(*cp)) {
-	    *cp = '\0';
+	if (depth == 0 && ch_isspace(*p)) {
+	    *p = '\0';
 	}
     }
-    opc = cp > line ? cp - 1 : cp;	/* operator is the previous character */
-    *cp++ = '\0';	/* nuke the = */
+    opc = p > name ? p - 1 : p;	/* operator is the previous character */
+    *p++ = '\0';		/* nuke the = */
 
     /*
      * Check operator type
@@ -1807,7 +1798,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	     * If the variable already has a value, we don't do anything.
 	     */
 	    *opc = '\0';
-	    if (Var_Exists(line, ctxt)) {
+	    if (Var_Exists(name, ctxt)) {
 		return;
 	    } else {
 		type = VAR_NORMAL;
@@ -1826,10 +1817,10 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 	default:
 #ifdef SUNSHCMD
-	    while (opc > line && *opc == '\0')
+	    while (opc > name && *opc == '\0')
 		opc--;
 
-	    if (opc >= line + 2 &&
+	    if (opc >= name + 2 &&
 		opc[-2] == ':' && opc[-1] == 's' && opc[0] == 'h')
 	    {
 		type = VAR_SHELL;
@@ -1841,22 +1832,24 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    break;
     }
 
-    pp_skip_whitespace(&cp);
+    pp_skip_whitespace(&p);
+    uvalue = p;
+    avalue = uvalue;
 
     if (DEBUG(LINT)) {
-	if (type != VAR_SUBST && strchr(cp, '$') != NULL) {
+	if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
 	    /* Check for syntax errors such as unclosed expressions or
 	     * unknown modifiers. */
 	    char *expandedValue;
 
-	    (void)Var_Subst(cp, ctxt, VARE_NONE, &expandedValue);
+	    (void)Var_Subst(uvalue, ctxt, VARE_NONE, &expandedValue);
 	    /* TODO: handle errors */
 	    free(expandedValue);
 	}
     }
 
     if (type == VAR_APPEND) {
-	Var_Append(line, cp, ctxt);
+	Var_Append(name, uvalue, ctxt);
     } else if (type == VAR_SUBST) {
 	/*
 	 * Allow variables in the old value to be undefined, but leave their
@@ -1877,59 +1870,58 @@ Parse_DoVar(char *line, GNode *ctxt)
 	 * make sure that we set the variable the first time to nothing
 	 * so that it gets substituted!
 	 */
-	if (!Var_Exists(line, ctxt))
-	    Var_Set(line, "", ctxt);
+	if (!Var_Exists(name, ctxt))
+	    Var_Set(name, "", ctxt);
 
-	(void)Var_Subst(cp, ctxt, VARE_WANTRES|VARE_ASSIGN, &cp);
+	(void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_ASSIGN, &evalue);
 	/* TODO: handle errors */
 	oldVars = oldOldVars;
-	freeCp = TRUE;
+	avalue = evalue;
 
-	Var_Set(line, cp, ctxt);
+	Var_Set(name, avalue, ctxt);
     } else if (type == VAR_SHELL) {
 	char *res;
 	const char *error;
 
-	if (strchr(cp, '$') != NULL) {
+	if (strchr(uvalue, '$') != NULL) {
 	    /*
 	     * There's a dollar sign in the command, so perform variable
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done.
 	     */
-	    (void)Var_Subst(cp, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &cp);
+	    (void)Var_Subst(uvalue, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &evalue);
 	    /* TODO: handle errors */
-	    freeCp = TRUE;
+	    avalue = evalue;
 	}
 
-	res = Cmd_Exec(cp, &error);
-	Var_Set(line, res, ctxt);
+	res = Cmd_Exec(avalue, &error);
+	Var_Set(name, res, ctxt);
 	free(res);
 
 	if (error)
-	    Parse_Error(PARSE_WARNING, error, cp);
+	    Parse_Error(PARSE_WARNING, error, avalue);
     } else {
 	/*
 	 * Normal assignment -- just do it.
 	 */
-	Var_Set(line, cp, ctxt);
+	Var_Set(name, uvalue, ctxt);
     }
-    if (strcmp(line, MAKEOVERRIDES) == 0)
+    if (strcmp(name, MAKEOVERRIDES) == 0)
 	Main_ExportMAKEFLAGS(FALSE);	/* re-export MAKEFLAGS */
-    else if (strcmp(line, ".CURDIR") == 0) {
+    else if (strcmp(name, ".CURDIR") == 0) {
 	/*
 	 * Someone is being (too?) clever...
 	 * Let's pretend they know what they are doing and
 	 * re-initialize the 'cur' CachedDir.
 	 */
-	Dir_InitCur(cp);
+	Dir_InitCur(avalue);
 	Dir_SetPATH();
-    } else if (strcmp(line, MAKE_JOB_PREFIX) == 0) {
+    } else if (strcmp(name, MAKE_JOB_PREFIX) == 0) {
 	Job_SetPrefix();
-    } else if (strcmp(line, MAKE_EXPORTED) == 0) {
-	Var_Export(cp, FALSE);
+    } else if (strcmp(name, MAKE_EXPORTED) == 0) {
+	Var_Export(avalue, FALSE);
     }
-    if (freeCp)
-	free(cp);
+    free(evalue);
 }
 
 
