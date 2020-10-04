@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.134 2020/10/03 15:00:57 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.135 2020/10/04 10:35:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -192,10 +192,13 @@ void Targ_Propagate(void);
 /* var.c */
 
 typedef enum {
+    VARE_NONE		= 0,
     /* Treat undefined variables as errors. */
     VARE_UNDEFERR	= 0x01,
     /* Expand and evaluate variables during parsing. */
     VARE_WANTRES	= 0x02,
+    /* In an assignment using the ':=' operator, keep '$$' as '$$' instead
+     * of reducing it to a single '$'. */
     VARE_ASSIGN		= 0x04
 } VarEvalFlags;
 
