@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.113 2020/05/11 23:47:45 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.114 2020/10/04 16:23:04 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.113 2020/05/11 23:47:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.114 2020/10/04 16:23:04 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	}
 
 	if (i == SK_TIMEOUT) {
-		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
+		device_printf(sc_if->sk_dev, "phy failed to come ready\n");
 		return ETIMEDOUT;
 	}
 
@@ -289,7 +289,7 @@ msk_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	}
 
 	if (i == SK_TIMEOUT) {
-		aprint_error_dev(sc_if->sk_dev, "phy write timed out\n");
+		device_printf(sc_if->sk_dev, "phy write timed out\n");
 		return ETIMEDOUT;
 	}
 
@@ -2035,7 +2035,7 @@ msk_watchdog(struct ifnet *ifp)
 	 */
 	msk_txeof(sc_if);
 	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
-		aprint_error_dev(sc_if->sk_dev, "watchdog timeout\n");
+		device_printf(sc_if->sk_dev, "watchdog timeout\n");
 
 		if_statinc(ifp, if_oerrors);
 
