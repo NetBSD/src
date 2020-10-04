@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.564 2020/10/03 21:19:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.565 2020/10/04 10:35:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.564 2020/10/03 21:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.565 2020/10/04 10:35:25 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3768,11 +3768,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 
     while (*p != '\0') {
 	if (p[0] == '$' && p[1] == '$') {
-	    /*
-	     * A dollar sign may be escaped with another dollar sign.
-	     * In such a case, we skip over the escape character and store the
-	     * dollar sign into the buffer directly.
-	     */
+	    /* A dollar sign may be escaped with another dollar sign. */
 	    if (save_dollars && (eflags & VARE_ASSIGN))
 		Buf_AddByte(&buf, '$');
 	    Buf_AddByte(&buf, '$');
