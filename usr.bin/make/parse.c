@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.350 2020/10/04 10:35:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.351 2020/10/04 11:58:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.350 2020/10/04 10:35:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.351 2020/10/04 11:58:57 rillig Exp $");
 
 /* types and constants */
 
@@ -1790,7 +1790,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    *cp = '\0';
 	}
     }
-    opc = cp-1;		/* operator is the previous character */
+    opc = cp > line ? cp - 1 : cp;	/* operator is the previous character */
     *cp++ = '\0';	/* nuke the = */
 
     /*
