@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.354 2020/10/04 16:43:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.355 2020/10/04 19:21:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.354 2020/10/04 16:43:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.355 2020/10/04 19:21:13 rillig Exp $");
 
 /* types and constants */
 
@@ -1672,38 +1672,24 @@ out:
 	Lst_Free(curTargs);
 }
 
-/*-
- *---------------------------------------------------------------------
- * Parse_IsVar  --
- *	Return TRUE if the passed line is a variable assignment. A variable
- *	assignment consists of a single word followed by optional whitespace
- *	followed by either a += or an = operator.
- *	This function is used both by the Parse_File function and main when
- *	parsing the command-line arguments.
+/* See if the given string is a variable assignment, consisting of a
+ * single-word variable name, optional whitespace, an assignment operator,
+ * optional whitespace and the variable value.
  *
- * Input:
- *	line		the line to check
- *
- * Results:
- *	TRUE if it is. FALSE if it ain't
- *
- * Side Effects:
- *	none
- *---------------------------------------------------------------------
- */
+ * Used for both lines in a file and command line arguments. */
 Boolean
-Parse_IsVar(const char *line)
+Parse_IsVar(const char *p)
 {
     Boolean wasSpace = FALSE;	/* set TRUE if found a space */
     char ch;
     int level = 0;
 
     /* Skip to variable name */
-    while (*line == ' ' || *line == '\t')
-	line++;
+    while (*p == ' ' || *p == '\t')
+	p++;
 
     /* Scan for one of the assignment operators outside a variable expansion */
-    while ((ch = *line++) != 0) {
+    while ((ch = *p++) != 0) {
 	if (ch == '(' || ch == '{') {
 	    level++;
 	    continue;
@@ -1715,18 +1701,18 @@ Parse_IsVar(const char *line)
 	if (level != 0)
 	    continue;
 	while (ch == ' ' || ch == '\t') {
-	    ch = *line++;
+	    ch = *p++;
 	    wasSpace = TRUE;
 	}
 #ifdef SUNSHCMD
-	if (ch == ':' && strncmp(line, "sh", 2) == 0) {
-	    line += 2;
+	if (ch == ':' && strncmp(p, "sh", 2) == 0) {
+	    p += 2;
 	    continue;
 	}
 #endif
 	if (ch == '=')
 	    return TRUE;
-	if (*line == '=' && (ch == '+' || ch == ':' || ch == '?' || ch == '!'))
+	if (*p == '=' && (ch == '+' || ch == ':' || ch == '?' || ch == '!'))
 	    return TRUE;
 	if (wasSpace)
 	    return FALSE;
