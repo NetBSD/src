@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.257 2020/10/03 21:19:54 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.258 2020/10/04 16:50:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.257 2020/10/03 21:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.258 2020/10/04 16:50:37 rillig Exp $");
 
 # define STATIC static
 
@@ -1575,7 +1575,7 @@ JobStart(GNode *gn, int flags)
 }
 
 static char *
-JobOutput(Job *job, char *cp, char *endp, int msg)
+JobOutput(Job *job, char *cp, char *endp)
 {
     char *ecp;
 
@@ -1583,10 +1583,6 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
-		if (!beSilent && msg && job->node != lastNode) {
-		    MESSAGE(stdout, job->node);
-		    lastNode = job->node;
-		}
 		/*
 		 * The only way there wouldn't be a newline after
 		 * this line is if it were the last in the buffer.
@@ -1735,7 +1731,7 @@ end_loop:
 	if (i >= job->curPos) {
 	    char *cp;
 
-	    cp = JobOutput(job, job->outBuf, &job->outBuf[i], FALSE);
+	    cp = JobOutput(job, job->outBuf, &job->outBuf[i]);
 
 	    /*
 	     * There's still more in that thar buffer. This time, though,
