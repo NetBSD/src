@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.56 2016/09/24 23:54:49 mrg Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.56 2016/09/24 23:54:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $");
 
 #include "opt_cardslot.h"
 
@@ -157,6 +157,7 @@ cardslotattach(device_t parent, device_t self, void *aux)
 	}
 
 	if (csc != NULL || psc != NULL) {
+		sc->sc_th_enable = 1;
 		config_pending_incr(self);
 		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
 		    sc, &sc->sc_event_thread, "%s", device_xname(self))) {
@@ -164,7 +165,6 @@ cardslotattach(device_t parent, device_t self, void *aux)
 					 "unable to create thread\n");
 			panic("cardslotattach");
 		}
-		sc->sc_th_enable = 1;
 	}
 
 	if (csc && (csc->sc_cf->cardbus_ctrl)(csc->sc_cc, CARDBUS_CD)) {
