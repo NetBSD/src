@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.357 2020/10/04 20:23:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.358 2020/10/04 20:37:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.357 2020/10/04 20:23:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.358 2020/10/04 20:37:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1743,48 +1743,37 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 
 /* Determine the assignment operator and adjust the end of the variable
  * name accordingly. */
-static Boolean
+static void
 ParseVarassignOp(VarAssign *var, const char **out_op, GNode *ctxt)
 {
     const char *op = var->eq;
-    const char * const nameStart = var->nameStart;
+    const char * const name = var->nameStart;
     VarAssignOp type;
 
     var->varname = NULL;
-    if (op > nameStart && op[-1] == '+') {
+    if (op > name && op[-1] == '+') {
 	type = VAR_APPEND;
 	op--;
 
-    } else if (op > nameStart && op[-1] == '?') {
-	/* If the variable already has a value, we don't do anything. */
-	Boolean exists;
-	const char *nameEnd;
+    } else if (op > name && op[-1] == '?') {
+        op--;
+        type = VAR_DEFAULT;
 
-	op--;
-	nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
-	var->varname = bmake_strsedup(nameStart, nameEnd);
-	exists = Var_Exists(var->varname, ctxt);
-	if (exists) {
-	    free(var->varname);
-	    return FALSE;
-	}
-	type = VAR_NORMAL;
-
-    } else if (op > nameStart && op[-1] == ':') {
+    } else if (op > name && op[-1] == ':') {
 	op--;
 	type = VAR_SUBST;
 
-    } else if (op > nameStart && op[-1] == '!') {
+    } else if (op > name && op[-1] == '!') {
 	op--;
 	type = VAR_SHELL;
 
     } else {
 	type = VAR_NORMAL;
 #ifdef SUNSHCMD
-	while (op > nameStart && ch_isspace(op[-1]))
+	while (op > name && ch_isspace(op[-1]))
 	    op--;
 
-	if (op >= nameStart + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
+	if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
 	    type = VAR_SHELL;
 	    op -= 3;
 	}
@@ -1793,7 +1782,6 @@ ParseVarassignOp(VarAssign *var, const char **out_op, GNode *ctxt)
 
     *out_op = op;
     var->op = type;
-    return TRUE;
 }
 
 static void
@@ -1812,7 +1800,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
     }
 }
 
-static void
+static Boolean
 VarAssign_Eval(VarAssign *var,
 	  const char *const uvalue, const char **out_avalue, char **out_evalue,
 	  GNode *ctxt)
@@ -1875,14 +1863,16 @@ VarAssign_Eval(VarAssign *var,
 	if (error)
 	    Parse_Error(PARSE_WARNING, error, avalue);
     } else {
-	/*
-	 * Normal assignment -- just do it.
-	 */
+	if (type == VAR_DEFAULT && Var_Exists(var->varname, ctxt))
+	    return FALSE;
+
+	/* Normal assignment -- just do it. */
 	Var_Set(name, uvalue, ctxt);
     }
 
     *out_avalue = avalue;
     *out_evalue = evalue;
+    return TRUE;
 }
 
 static void
@@ -1934,8 +1924,7 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
      * actual end of the variable name. */
     const char *op;
 
-    if (!ParseVarassignOp(var, &op, ctxt))
-	return;
+    ParseVarassignOp(var, &op, ctxt);
 
     uvalue = var->value;
     avalue = uvalue;
@@ -1947,8 +1936,8 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
 	var->varname = bmake_strsedup(var->nameStart, nameEnd);
     }
 
-    VarAssign_Eval(var, uvalue, &avalue, &evalue, ctxt);
-    VarAssignSpecial(var->varname, avalue);
+    if (VarAssign_Eval(var, uvalue, &avalue, &evalue, ctxt))
+	VarAssignSpecial(var->varname, avalue);
 
     free(evalue);
     free(var->varname);
