@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.38 2020/10/03 23:16:28 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.39 2020/10/04 17:21:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.38 2020/10/03 23:16:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.39 2020/10/04 17:21:28 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're
@@ -163,9 +163,6 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	Hash_Entry *e;
 	unsigned h;
 	int chainlen;
-
-	if (t == NULL || t->buckets == NULL)
-	    return NULL;
 
 	h = hash(key, NULL);
 	chainlen = 0;
