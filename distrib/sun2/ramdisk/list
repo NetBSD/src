@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.11 2010/03/10 23:13:09 abs Exp $
+#	$NetBSD: list,v 1.12 2020/10/04 23:50:59 rin Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -58,9 +58,9 @@ PROG		sbin/route
 # From /usr/src/sbin:
 PROG		sbin/mknod
 PROG		sbin/mount
-PROG		sbin/mount_cd9660
+# PROG		sbin/mount_cd9660
 PROG		sbin/mount_ffs
-PROG		sbin/mount_nfs
+# PROG		sbin/mount_nfs
 PROG		sbin/reboot	sbin/halt
 PROG		sbin/umount
 
