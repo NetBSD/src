@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.352 2020/10/04 13:24:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.353 2020/10/04 14:40:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.352 2020/10/04 13:24:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.353 2020/10/04 14:40:13 rillig Exp $");
 
 /* types and constants */
 
@@ -1738,22 +1738,29 @@ Parse_IsVar(const char *line)
  * Input:
  *	p		A line guaranteed to be a variable assignment
  *			(see Parse_IsVar).
- *			Is destroyed but not freed during parsing.
  *	ctxt		Context in which to do the assignment
  */
 void
-Parse_DoVar(char *p, GNode *ctxt)
+Parse_DoVar(const char *p, GNode *ctxt)
 {
     enum {
 	VAR_SUBST, VAR_APPEND, VAR_SHELL, VAR_NORMAL
     } type;			/* Type of assignment */
-    char *opc;			/* ptr to operator character to
-				 * null-terminate the variable name */
     int depth;
     const char *name;
+    void *name_freeIt;
     const char *uvalue;		/* unexpanded value */
     const char *avalue;		/* actual value */
     char *evalue = NULL;	/* expanded value */
+
+    /* The variable name consists of a single word (that is, no whitespace).
+     * It ends at the whitespace after that word (nameEnd).  If there is no
+     * whitespace, the name is followed directly by the assignment operator
+     * (op).  During parsing, the '+' of the '+=' operator is initially parsed
+     * as part of the variable name.  It is later corrected, as is the ':sh'
+     * modifier. Of these two (nameEnd and op), the earlier one determines the
+     * actual end of the variable name. */
+    const char *nameEnd, *op;
 
     /*
      * Skip to variable name
@@ -1762,12 +1769,14 @@ Parse_DoVar(char *p, GNode *ctxt)
 	p++;
 
     name = p;
+    name_freeIt = NULL;
 
     /*
-     * Skip to operator character, nulling out whitespace as we go
+     * Parse the variable name, up to the assignment operator.
      * XXX Rather than counting () and {} we should look for $ and
      * then expand the variable.
      */
+    nameEnd = NULL;
     for (depth = 0; depth > 0 || *p != '='; p++) {
 	if (*p == '(' || *p == '{') {
 	    depth++;
@@ -1778,61 +1787,55 @@ Parse_DoVar(char *p, GNode *ctxt)
 	    continue;
 	}
 	if (depth == 0 && ch_isspace(*p)) {
-	    *p = '\0';
+	    if (nameEnd == NULL)
+		nameEnd = p;
 	}
     }
-    opc = p > name ? p - 1 : p;	/* operator is the previous character */
-    *p++ = '\0';		/* nuke the = */
 
-    /*
-     * Check operator type
-     */
-    switch (*opc) {
-	case '+':
-	    type = VAR_APPEND;
-	    *opc = '\0';
-	    break;
+    if (nameEnd == NULL)
+	nameEnd = p;
+    op = p;			/* points at the '=' */
 
-	case '?':
-	    /*
-	     * If the variable already has a value, we don't do anything.
-	     */
-	    *opc = '\0';
-	    if (Var_Exists(name, ctxt)) {
-		return;
-	    } else {
-		type = VAR_NORMAL;
-	    }
-	    break;
+    if (op > name && op[-1] == '+') {
+        type = VAR_APPEND;
+        op--;
 
-	case ':':
-	    type = VAR_SUBST;
-	    *opc = '\0';
-	    break;
+    } else if (op > name && op[-1] == '?') {
+	/* If the variable already has a value, we don't do anything. */
+        Boolean exists;
 
-	case '!':
-	    type = VAR_SHELL;
-	    *opc = '\0';
-	    break;
+        op--;
+	name = name_freeIt = bmake_strsedup(name, nameEnd < op ? nameEnd : op);
+        exists = Var_Exists(name, ctxt);
+	if (exists) {
+	    free(name_freeIt);
+	    return;
+	}
+	type = VAR_NORMAL;
 
-	default:
+    } else if (op > name && op[-1] == ':') {
+        op--;
+	type = VAR_SUBST;
+
+    } else if (op > name && op[-1] == '!') {
+        op--;
+        type = VAR_SHELL;
+
+    } else {
+	type = VAR_NORMAL;
 #ifdef SUNSHCMD
-	    while (opc > name && *opc == '\0')
-		opc--;
+	while (op > name && ch_isspace(op[-1]))
+	    op--;
 
-	    if (opc >= name + 2 &&
-		opc[-2] == ':' && opc[-1] == 's' && opc[0] == 'h')
-	    {
-		type = VAR_SHELL;
-		opc[-2] = '\0';
-		break;
-	    }
+	if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
+	    type = VAR_SHELL;
+	    op -= 3;
+	}
 #endif
-	    type = VAR_NORMAL;
-	    break;
     }
 
-    pp_skip_whitespace(&p);
+    p++;			/* Skip the '=' */
+    cpp_skip_whitespace(&p);
     uvalue = p;
     avalue = uvalue;
 
@@ -1847,6 +1850,9 @@ Parse_DoVar(char *p, GNode *ctxt)
 	    free(expandedValue);
 	}
     }
+
+    if (name_freeIt == NULL)
+    	name = name_freeIt = bmake_strsedup(name, nameEnd < op ? nameEnd : op);
 
     if (type == VAR_APPEND) {
 	Var_Append(name, uvalue, ctxt);
@@ -1922,6 +1928,7 @@ Parse_DoVar(char *p, GNode *ctxt)
 	Var_Export(avalue, FALSE);
     }
     free(evalue);
+    free(name_freeIt);
 }
 
 
