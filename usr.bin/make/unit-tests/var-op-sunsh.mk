@@ -1,4 +1,4 @@
-# $NetBSD: var-op-sunsh.mk,v 1.4 2020/10/04 08:14:35 rillig Exp $
+# $NetBSD: var-op-sunsh.mk,v 1.5 2020/10/04 08:32:52 rillig Exp $
 #
 # Tests for the :sh= variable assignment operator, which runs its right-hand
 # side through the shell.  It is a seldom-used alternative to the !=
@@ -82,8 +82,9 @@ VAR.key:shift=		Shift
 # Parse_DoVar completely trusts Parse_IsVar to properly verify the syntax.
 #
 # The ':sh' is the only word that may occur between the variable name and
-# the assignment operator.  All other words would lead to a parse error
-# since the left-hand side of an assignment must be exactly one word.
+# the assignment operator at nesting level 0.  All other words would lead
+# to a parse error since the left-hand side of an assignment must be
+# exactly one word.
 VAR :sh :sh :sh :sh=	echo multiple
 .if ${VAR} != "multiple"
 .  error
@@ -105,6 +106,16 @@ VAR :sh(Put a comment here)=	comment in parentheses
 VAR :sh{Put}((((a}{comment}}}}{here}=	comment in braces
 .if ${VAR} != "comment in braces"
 .  error
+.endif
+
+# Syntactically, the ':sh' modifier can be combined with the '+=' assignment
+# operator.  In such a case the ':sh' modifier is silently ignored.
+#
+# XXX: This combination should not be allowed at all.
+VAR=		one
+VAR :sh +=	echo two
+.if ${VAR} != "one echo two"
+.  error ${VAR}
 .endif
 
 all:
