@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.39 2020/10/04 17:21:28 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.40 2020/10/04 17:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,20 +79,12 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.39 2020/10/04 17:21:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.40 2020/10/04 17:50:41 rillig Exp $");
 
 /*
- * Forward references to local procedures that are used before they're
- * defined:
+ * The ratio of # entries to # buckets at which we rebuild the table to
+ * make it larger.
  */
-
-static void RebuildTable(Hash_Table *);
-
-/*
- * The following defines the ratio of # entries to # buckets
- * at which we rebuild the table to make it larger.
- */
-
 #define rebuildLimit 3
 
 /* This hash function matches Gosling's emacs. */
@@ -182,8 +174,40 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 void *
 Hash_FindValue(Hash_Table *t, const char *key)
 {
-    Hash_Entry *he = Hash_FindEntry(t, key);
-    return he != NULL ? he->value : NULL;
+	Hash_Entry *he = Hash_FindEntry(t, key);
+	return he != NULL ? he->value : NULL;
+}
+
+/* Makes a new hash table that is larger than the old one. The entire hash
+ * table is moved, so any bucket numbers from the old table become invalid. */
+static void
+RebuildTable(Hash_Table *t)
+{
+	Hash_Entry *e, *next = NULL, **hp, **xp;
+	int i, mask;
+	Hash_Entry **oldhp;
+	int oldsize;
+
+	oldhp = t->buckets;
+	oldsize = i = t->bucketsSize;
+	i <<= 1;
+	t->bucketsSize = i;
+	t->bucketsMask = mask = i - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
+	while (--i >= 0)
+		*hp++ = NULL;
+	for (hp = oldhp, i = oldsize; --i >= 0;) {
+		for (e = *hp++; e != NULL; e = next) {
+			next = e->next;
+			xp = &t->buckets[e->namehash & mask];
+			e->next = *xp;
+			*xp = e;
+		}
+	}
+	free(oldhp);
+	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
+	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
+	t->maxchain = 0;
 }
 
 /* Searches the hash table for an entry corresponding to the key.
@@ -318,38 +342,6 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	return e;
 }
 
-/* Makes a new hash table that is larger than the old one. The entire hash
- * table is moved, so any bucket numbers from the old table become invalid. */
-static void
-RebuildTable(Hash_Table *t)
-{
-	Hash_Entry *e, *next = NULL, **hp, **xp;
-	int i, mask;
-	Hash_Entry **oldhp;
-	int oldsize;
-
-	oldhp = t->buckets;
-	oldsize = i = t->bucketsSize;
-	i <<= 1;
-	t->bucketsSize = i;
-	t->bucketsMask = mask = i - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
-	while (--i >= 0)
-		*hp++ = NULL;
-	for (hp = oldhp, i = oldsize; --i >= 0;) {
-		for (e = *hp++; e != NULL; e = next) {
-			next = e->next;
-			xp = &t->buckets[e->namehash & mask];
-			e->next = *xp;
-			*xp = e;
-		}
-	}
-	free(oldhp);
-	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
-	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
-	t->maxchain = 0;
-}
-
 void
 Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 {
@@ -365,6 +357,6 @@ Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 void
 Hash_DebugStats(Hash_Table *t, const char *name)
 {
-    DEBUG4(HASH, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
-	   name, t->bucketsSize, t->numEntries, t->maxchain);
+	DEBUG4(HASH, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
+	       name, t->bucketsSize, t->numEntries, t->maxchain);
 }
