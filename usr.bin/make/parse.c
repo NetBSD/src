@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.360 2020/10/04 21:08:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.361 2020/10/04 21:41:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.360 2020/10/04 21:08:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.361 2020/10/04 21:41:44 rillig Exp $");
 
 /* types and constants */
 
@@ -1814,11 +1814,12 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
     const char *name = var->varname;
     const VarAssignOp type = var->op;
     const char *avalue = uvalue;
-    char *evalue = NULL;
+    void *avalue_freeIt = NULL;
 
     if (type == VAR_APPEND) {
 	Var_Append(name, uvalue, ctxt);
     } else if (type == VAR_SUBST) {
+        char *evalue;
 	/*
 	 * Allow variables in the old value to be undefined, but leave their
 	 * expressions alone -- this is done by forcing oldVars to be false.
@@ -1845,6 +1846,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 	/* TODO: handle errors */
 	oldVars = oldOldVars;
 	avalue = evalue;
+	avalue_freeIt = evalue;
 
 	Var_Set(name, avalue, ctxt);
     } else if (type == VAR_SHELL) {
@@ -1852,6 +1854,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 	const char *error;
 
 	if (strchr(uvalue, '$') != NULL) {
+	    char *evalue;
 	    /*
 	     * There's a dollar sign in the command, so perform variable
 	     * expansion on the whole thing. The resulting string will need
@@ -1861,6 +1864,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 			    &evalue);
 	    /* TODO: handle errors */
 	    avalue = evalue;
+	    avalue_freeIt = evalue;
 	}
 
 	res = Cmd_Exec(avalue, &error);
@@ -1880,7 +1884,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
     }
 
     *out_avalue = avalue;
-    *out_avalue_freeIt = evalue;
+    *out_avalue_freeIt = avalue_freeIt;
     return TRUE;
 }
 
