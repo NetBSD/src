@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 2, 2020
+.Dd September 28, 2020
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -211,12 +211,15 @@ is an empty string then
 sends a default
 .Ar clientid
 of the hardware family and the hardware address.
-.It Ic duid
+.It Ic duid Op ll | lt | uuid
 Use a DHCP Unique Identifier.
 If a system UUID is available, that will be used to create a DUID-UUID,
 otheriwse if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
+The DUID type can be hinted as an optional parameter if the file
+.Pa @DBDIR@/duid
+does not exist.
 This, plus the IAID will be used as the
 .Ic clientid .
 The DUID generated will be held in
@@ -538,12 +541,6 @@ Don't receive link messages about carrier status.
 You should only set this for buggy interface drivers.
 .It Ic noup
 Don't bring the interface up when in master mode.
-If
-.Nm
-cannot determine the carrier state,
-.Nm
-will enter a tight polling loop until the interface is marked up and running
-or a valid carrier state is reported.
 .It Ic option Ar option
 Requests the
 .Ar option
@@ -601,12 +598,6 @@ If
 detects an address added to a point to point interface (PPP, TUN, etc) then
 it will set the listed DHCP options to the destination address of the
 interface.
-.It Ic poll Op Ar time
-Polls the interface every
-.Ar time
-milliseconds (default of 100) to check flags and carrier status.
-This option should only be used if the driver does not report link state
-changes but can report the link state.
 .It Ic profile Ar name
 Subsequent options are only parsed for this profile
 .Ar name .

@@ -30,6 +30,7 @@
 #define DUID_H
 
 #define DUID_LEN	128 + 2
+#define	DUID_DEFAULT	0
 #define	DUID_LLT	1
 #define	DUID_LL		3
 #define	DUID_UUID	4

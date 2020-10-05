@@ -159,8 +159,7 @@ void if_free(struct interface *);
 int if_domtu(const struct interface *, short int);
 #define if_getmtu(ifp) if_domtu((ifp), 0)
 #define if_setmtu(ifp, mtu) if_domtu((ifp), (mtu))
-int if_carrier(struct interface *);
-int if_pollinit(struct interface *ifp);
+int if_carrier(struct interface *, const void *);
 
 #ifdef ALIAS_ADDR
 int if_makealias(char *, size_t, const char *, int);
@@ -184,6 +183,7 @@ struct if_spec {
 int if_nametospec(const char *, struct if_spec *);
 
 /* The below functions are provided by if-KERNEL.c */
+int os_init(void);
 int if_conf(struct interface *);
 int if_init(struct interface *);
 int if_getssid(struct interface *);
@@ -191,6 +191,7 @@ int if_ignoregroup(int, const char *);
 bool if_ignore(struct dhcpcd_ctx *, const char *);
 int if_vimaster(struct dhcpcd_ctx *ctx, const char *);
 unsigned short if_vlanid(const struct interface *);
+char * if_getnetworknamespace(char *, size_t);
 int if_opensockets(struct dhcpcd_ctx *);
 int if_opensockets_os(struct dhcpcd_ctx *);
 void if_closesockets(struct dhcpcd_ctx *);
