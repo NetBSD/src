@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.154 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.155 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -259,7 +259,9 @@ typedef enum {
     /* Already processed by Suff_FindDeps */
     OP_DEPS_FOUND	= 1 << 25,
     /* Node found while expanding .ALLSRC */
-    OP_MARK		= 1 << 24
+    OP_MARK		= 1 << 24,
+
+    OP_NOTARGET		= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
 
 typedef enum {
@@ -357,15 +359,6 @@ typedef struct GNode {
     /* line number where the GNode got defined */
     int lineno;
 } GNode;
-
-#define NoExecute(gn) ((gn->type & OP_MAKE) ? noRecursiveExecute : noExecute)
-/*
- * OP_NOP will return TRUE if the node with the given type was not the
- * object of a dependency operator
- */
-#define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
-
-#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
 /*
  * Error levels for parsing. PARSE_FATAL means the process cannot continue
@@ -568,6 +561,22 @@ int mkTempFile(const char *, char **);
 int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 
+static Boolean MAKE_ATTR_UNUSED
+NoExecute(GNode *gn)
+{
+    return (gn->type & OP_MAKE) ? noRecursiveExecute : noExecute;
+}
+
+/*
+ * See if the node with the given type was not the object of a dependency
+ * operator.
+ */
+static Boolean MAKE_ATTR_UNUSED
+OP_NOP(GNodeType t)
+{
+    return !(t & OP_OPMASK);
+}
+
 #ifdef __GNUC__
 #define UNCONST(ptr)	({		\
     union __unconst {			\
@@ -615,6 +624,20 @@ static inline MAKE_ATTR_UNUSED char ch_tolower(char ch)
 { return (char)tolower((unsigned char)ch); }
 static inline MAKE_ATTR_UNUSED char ch_toupper(char ch)
 { return (char)toupper((unsigned char)ch); }
+
+static inline MAKE_ATTR_UNUSED void
+cpp_skip_whitespace(const char **pp)
+{
+    while (ch_isspace(**pp))
+	(*pp)++;
+}
+
+static inline MAKE_ATTR_UNUSED void
+pp_skip_whitespace(char **pp)
+{
+    while (ch_isspace(**pp))
+	(*pp)++;
+}
 
 #ifndef MAKE_NATIVE
 #define MAKE_RCSID(id) static volatile char rcsid[] = id
