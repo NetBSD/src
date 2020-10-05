@@ -266,87 +266,6 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     return 0;
 }
 
-int BN_oct2bn(BIGNUM **bn, const char *a)
-{
-    BIGNUM *ret = NULL;
-    BN_ULONG l = 0;
-    int neg = 0, h, m, i, j, b, k, c, r;
-    int num;
-
-    if (a == NULL || *a == '\0')
-        return 0;
-
-    if (*a == '-') {
-        neg = 1;
-        a++;
-    }
-
-    for (i = 0; i <= INT_MAX / 4 && ossl_isdigit(a[i]) && a[i] < '8'; i++)
-        continue;
-
-    if (i == 0 || i > INT_MAX / 4)
-        goto err;
-
-    num = i + neg;
-    if (bn == NULL)
-        return num;
-
-    /* a is the start of the hex digits, and it is 'i' long */
-    if (*bn == NULL) {
-        if ((ret = BN_new()) == NULL)
-            return 0;
-    } else {
-        ret = *bn;
-        BN_zero(ret);
-    }
-
-    /* i is the number of hex digits */
-    if (bn_expand(ret, i * 4) == NULL)
-        goto err;
-
-    j = i;                      /* least significant 'oct' */
-    h = 0;
-    b = 0;
-#define M (BN_BYTES * 8 / 3)
-    while (j > 0) {
-        m = (M <= j) ? M : j;
-	while (m > 0) {
-	    k = a[j - m] - '0';
-	    l = (l << 3) | k;
-	    b += 3;
-	    m--;
-	}
-        j -= M;
-	if (j <= 0) {
-	    ret->d[h++] = l;
-	    break;
-	}
-	b = BN_BYTES * 8 - b;
-	r = 3 - b;
-	k = a[j--] - '0';
-	l = (l << r) | (k >> b);
-	ret->d[h++] = l;
-	l = k & ((2 << r) - 1);
-	if (j == 0) {
-	    ret->d[h++] = l;
-	    break;
-	}
-    }
-    ret->top = h;
-    bn_correct_top(ret);
-
-    *bn = ret;
-    bn_check_top(ret);
-    /* Don't set the negative flag if it's zero. */
-    if (ret->top != 0)
-        ret->neg = neg;
-    return num;
- err:
-    if (*bn == NULL)
-        BN_free(ret);
-    return 0;
-}
-
 int BN_asc2bn(BIGNUM **bn, const char *a)
 {
     const char *p = a;
@@ -354,14 +273,9 @@ int BN_asc2bn(BIGNUM **bn, const char *a)
     if (*p == '-')
         p++;
 
-    if (p[0] == '0') {
-	if (p[1] == 'X' || p[1] == 'x') {
-	    if (!BN_hex2bn(bn, p + 2))
-		return 0;
-	} else {
-	    if (!BN_oct2bn(bn, p + 1))
-		return 0;
-	}
+    if (p[0] == '0' && (p[1] == 'X' || p[1] == 'x')) {
+        if (!BN_hex2bn(bn, p + 2))
+            return 0;
     } else {
         if (!BN_dec2bn(bn, p))
             return 0;
