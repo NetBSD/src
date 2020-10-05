@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.363 2020/10/05 15:43:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.364 2020/10/05 16:33:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.363 2020/10/05 15:43:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.364 2020/10/05 16:33:20 rillig Exp $");
 
 /* types and constants */
 
@@ -203,6 +203,8 @@ typedef enum {
     Wait,		/* .WAIT */
     Attribute		/* Generic attribute */
 } ParseSpecial;
+
+typedef List SearchPathList;
 
 /* result data */
 
@@ -1110,6 +1112,357 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
     *pp = cp;
 }
 
+/*
+ * Certain special targets have special semantics:
+ *	.PATH		Have to set the dirSearchPath
+ *			variable too
+ *	.MAIN		Its sources are only used if
+ *			nothing has been specified to
+ *			create.
+ *	.DEFAULT	Need to create a node to hang
+ *			commands on, but we don't want
+ *			it in the graph, nor do we want
+ *			it to be the Main Target, so we
+ *			create it, set OP_NOTMAIN and
+ *			add it to the list, setting
+ *			DEFAULT to the new node for
+ *			later use. We claim the node is
+ *			A transformation rule to make
+ *			life easier later, when we'll
+ *			use Make_HandleUse to actually
+ *			apply the .DEFAULT commands.
+ *	.PHONY		The list of targets
+ *	.NOPATH		Don't search for file in the path
+ *	.STALE
+ *	.BEGIN
+ *	.END
+ *	.ERROR
+ *	.DELETE_ON_ERROR
+ *	.INTERRUPT	Are not to be considered the
+ *			main target.
+ *	.NOTPARALLEL	Make only one target at a time.
+ *	.SINGLESHELL	Create a shell for each command.
+ *	.ORDER		Must set initial predecessor to NULL
+ */
+static void
+ParseDoDependencyTargetSpecial(ParseSpecial *const inout_specType,
+			       const char *const line,
+			       SearchPathList **const inout_paths)
+{
+    switch (*inout_specType) {
+    case ExPath:
+	if (*inout_paths == NULL) {
+	    *inout_paths = Lst_Init();
+	}
+	Lst_Append(*inout_paths, dirSearchPath);
+	break;
+    case Main:
+	if (!Lst_IsEmpty(create)) {
+	    *inout_specType = Not;
+	}
+	break;
+    case Begin:
+    case End:
+    case Stale:
+    case dotError:
+    case Interrupt: {
+	GNode *gn = Targ_GetNode(line);
+	if (doing_depend)
+	    ParseMark(gn);
+	gn->type |= OP_NOTMAIN|OP_SPECIAL;
+	Lst_Append(targets, gn);
+	break;
+    }
+    case Default: {
+	GNode *gn = Targ_NewGN(".DEFAULT");
+	gn->type |= OP_NOTMAIN|OP_TRANSFORM;
+	Lst_Append(targets, gn);
+	DEFAULT = gn;
+	break;
+    }
+    case DeleteOnError:
+	deleteOnError = TRUE;
+	break;
+    case NotParallel:
+	maxJobs = 1;
+	break;
+    case SingleShell:
+	compatMake = TRUE;
+	break;
+    case Order:
+	predecessor = NULL;
+	break;
+    default:
+	break;
+    }
+}
+
+/*
+ * .PATH<suffix> has to be handled specially.
+ * Call on the suffix module to give us a path to modify.
+ */
+static Boolean
+ParseDoDependencyTargetPath(const char *const line,
+			    SearchPathList **const inout_paths)
+{
+    SearchPath *path;
+
+    path = Suff_GetPath(&line[5]);
+    if (path == NULL) {
+	Parse_Error(PARSE_FATAL,
+		    "Suffix '%s' not defined (yet)",
+		    &line[5]);
+	return FALSE;
+    } else {
+	if (*inout_paths == NULL) {
+	    *inout_paths = Lst_Init();
+	}
+	Lst_Append(*inout_paths, path);
+    }
+    return TRUE;
+}
+
+/*
+ * See if it's a special target and if so set specType to match it.
+ */
+static Boolean
+ParseDoDependencyTarget(const char *const line,
+			ParseSpecial *const inout_specType,
+			GNodeType *out_tOp,
+			SearchPathList **inout_paths)
+{
+    int keywd;
+
+    if (!(*line == '.' && ch_isupper(line[1])))
+	return TRUE;
+
+    /*
+     * See if the target is a special target that must have it
+     * or its sources handled specially.
+     */
+    keywd = ParseFindKeyword(line);
+    if (keywd != -1) {
+	if (*inout_specType == ExPath && parseKeywords[keywd].spec != ExPath) {
+	    Parse_Error(PARSE_FATAL, "Mismatched special targets");
+	    return FALSE;
+	}
+
+	*inout_specType = parseKeywords[keywd].spec;
+	*out_tOp = parseKeywords[keywd].op;
+
+	ParseDoDependencyTargetSpecial(inout_specType, line, inout_paths);
+
+    } else if (strncmp(line, ".PATH", 5) == 0) {
+	*inout_specType = ExPath;
+	if (!ParseDoDependencyTargetPath(line, inout_paths))
+	    return FALSE;
+    }
+    return TRUE;
+}
+
+static void
+ParseDoDependencyTargetMundane(char *const line,
+			       StringList *const curTargs)
+{
+    if (Dir_HasWildcards(line)) {
+	/*
+	 * Targets are to be sought only in the current directory,
+	 * so create an empty path for the thing. Note we need to
+	 * use Dir_Destroy in the destruction of the path as the
+	 * Dir module could have added a directory to the path...
+	 */
+	SearchPath *emptyPath = Lst_Init();
+
+	Dir_Expand(line, emptyPath, curTargs);
+
+	Lst_Destroy(emptyPath, Dir_Destroy);
+    } else {
+	/*
+	 * No wildcards, but we want to avoid code duplication,
+	 * so create a list with the word on it.
+	 */
+	Lst_Append(curTargs, line);
+    }
+
+    /* Apply the targets. */
+
+    while(!Lst_IsEmpty(curTargs)) {
+	char *targName = Lst_Dequeue(curTargs);
+	GNode *gn = Suff_IsTransform(targName)
+		    ? Suff_AddTransform(targName)
+		    : Targ_GetNode(targName);
+	if (doing_depend)
+	    ParseMark(gn);
+
+	Lst_Append(targets, gn);
+    }
+}
+
+static void
+ParseDoDependencyTargetExtraWarn(char **pp, const char *lstart)
+{
+    Boolean warning = FALSE;
+    char *cp = *pp;
+
+    while (*cp && (ParseIsEscaped(lstart, cp) ||
+		   (*cp != '!' && *cp != ':'))) {
+	if (ParseIsEscaped(lstart, cp) ||
+	    (*cp != ' ' && *cp != '\t')) {
+	    warning = TRUE;
+	}
+	cp++;
+    }
+    if (warning) {
+	Parse_Error(PARSE_WARNING, "Extra target ignored");
+    }
+    *pp = cp;
+}
+
+static void
+ParseDoDependencyCheckSpec(ParseSpecial const specType)
+{
+    switch(specType) {
+    default:
+	Parse_Error(PARSE_WARNING,
+		    "Special and mundane targets don't mix. Mundane ones ignored");
+	break;
+    case Default:
+    case Stale:
+    case Begin:
+    case End:
+    case dotError:
+    case Interrupt:
+	/*
+	 * These four create nodes on which to hang commands, so
+	 * targets shouldn't be empty...
+	 */
+    case Not:
+	/*
+	 * Nothing special here -- targets can be empty if it wants.
+	 */
+	break;
+    }
+}
+
+static Boolean
+ParseDoDependencyParseOp(char **const pp, const char *const lstart,
+			 GNodeType *const out_op)
+{
+    const char *cp = *pp;
+
+    if (*cp == '!') {
+	*out_op = OP_FORCE;
+	(*pp)++;
+	return TRUE;
+    }
+
+    if (*cp == ':') {
+	if (cp[1] == ':') {
+	    *out_op = OP_DOUBLEDEP;
+	    (*pp) += 2;
+	} else {
+	    *out_op = OP_DEPENDS;
+	    (*pp)++;
+	}
+	return TRUE;
+    }
+
+    {
+	const char *msg = lstart[0] == '.' ? "Unknown directive"
+					   : "Missing dependency operator";
+	Parse_Error(PARSE_FATAL, "%s", msg);
+	return FALSE;
+    }
+}
+
+static void
+ParseDoDependencySourcesEmpty(ParseSpecial const specType,
+			      SearchPathList *const paths)
+{
+    switch (specType) {
+    case Suffixes:
+	Suff_ClearSuffixes();
+	break;
+    case Precious:
+	allPrecious = TRUE;
+	break;
+    case Ignore:
+	ignoreErrors = TRUE;
+	break;
+    case Silent:
+	beSilent = TRUE;
+	break;
+    case ExPath:
+	if (paths != NULL)
+	    Lst_ForEach(paths, ParseClearPath, NULL);
+	Dir_SetPATH();
+	break;
+#ifdef POSIX
+    case Posix:
+	Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
+	break;
+#endif
+    default:
+	break;
+    }
+}
+
+/*
+ * If the target was one that doesn't take files as its sources
+ * but takes something like suffixes, we take each
+ * space-separated word on the line as a something and deal
+ * with it accordingly.
+ *
+ * If the target was .SUFFIXES, we take each source as a
+ * suffix and add it to the list of suffixes maintained by the
+ * Suff module.
+ *
+ * If the target was a .PATH, we add the source as a directory
+ * to search on the search path.
+ *
+ * If it was .INCLUDES, the source is taken to be the suffix of
+ * files which will be #included and whose search path should
+ * be present in the .INCLUDES variable.
+ *
+ * If it was .LIBS, the source is taken to be the suffix of
+ * files which are considered libraries and whose search path
+ * should be present in the .LIBS variable.
+ *
+ * If it was .NULL, the source is the suffix to use when a file
+ * has no valid suffix.
+ *
+ * If it was .OBJDIR, the source is a new definition for .OBJDIR,
+ * and will cause make to do a new chdir to that path.
+ */
+static void
+ParseDoDependencySourceSpecial(ParseSpecial const specType, char *const line,
+			       SearchPathList *const paths)
+{
+    switch (specType) {
+    case Suffixes:
+	Suff_AddSuffix(line, &mainNode);
+	break;
+    case ExPath:
+	if (paths != NULL)
+	    Lst_ForEach(paths, ParseAddDir, line);
+	break;
+    case Includes:
+	Suff_AddInclude(line);
+	break;
+    case Libs:
+	Suff_AddLib(line);
+	break;
+    case Null:
+	Suff_SetNull(line);
+	break;
+    case ExObjdir:
+	Main_SetObjdir("%s", line);
+	break;
+    default:
+	break;
+    }
+}
+
 /* Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
@@ -1138,8 +1491,6 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
 static void
 ParseDoDependency(char *line)
 {
-    typedef List SearchPathList;
-
     char *cp;			/* our current position */
     GNodeType op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
@@ -1214,164 +1565,15 @@ ParseDoDependency(char *line)
 	savec = *cp;
 	*cp = '\0';
 
-	/*
-	 * Got the word. See if it's a special target and if so set
-	 * specType to match it.
-	 */
-	if (*line == '.' && ch_isupper(line[1])) {
-	    /*
-	     * See if the target is a special target that must have it
-	     * or its sources handled specially.
-	     */
-	    int keywd = ParseFindKeyword(line);
-	    if (keywd != -1) {
-		if (specType == ExPath && parseKeywords[keywd].spec != ExPath) {
-		    Parse_Error(PARSE_FATAL, "Mismatched special targets");
-		    goto out;
-		}
-
-		specType = parseKeywords[keywd].spec;
-		tOp = parseKeywords[keywd].op;
-
-		/*
-		 * Certain special targets have special semantics:
-		 *	.PATH		Have to set the dirSearchPath
-		 *			variable too
-		 *	.MAIN		Its sources are only used if
-		 *			nothing has been specified to
-		 *			create.
-		 *	.DEFAULT	Need to create a node to hang
-		 *			commands on, but we don't want
-		 *			it in the graph, nor do we want
-		 *			it to be the Main Target, so we
-		 *			create it, set OP_NOTMAIN and
-		 *			add it to the list, setting
-		 *			DEFAULT to the new node for
-		 *			later use. We claim the node is
-		 *			A transformation rule to make
-		 *			life easier later, when we'll
-		 *			use Make_HandleUse to actually
-		 *			apply the .DEFAULT commands.
-		 *	.PHONY		The list of targets
-		 *	.NOPATH		Don't search for file in the path
-		 *	.STALE
-		 *	.BEGIN
-		 *	.END
-		 *	.ERROR
-		 *	.DELETE_ON_ERROR
-		 *	.INTERRUPT	Are not to be considered the
-		 *			main target.
-		 *	.NOTPARALLEL	Make only one target at a time.
-		 *	.SINGLESHELL	Create a shell for each command.
-		 *	.ORDER		Must set initial predecessor to NULL
-		 */
-		switch (specType) {
-		case ExPath:
-		    if (paths == NULL) {
-			paths = Lst_Init();
-		    }
-		    Lst_Append(paths, dirSearchPath);
-		    break;
-		case Main:
-		    if (!Lst_IsEmpty(create)) {
-			specType = Not;
-		    }
-		    break;
-		case Begin:
-		case End:
-		case Stale:
-		case dotError:
-		case Interrupt: {
-		    GNode *gn = Targ_GetNode(line);
-		    if (doing_depend)
-			ParseMark(gn);
-		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
-		    Lst_Append(targets, gn);
-		    break;
-		}
-		case Default: {
-		    GNode *gn = Targ_NewGN(".DEFAULT");
-		    gn->type |= OP_NOTMAIN|OP_TRANSFORM;
-		    Lst_Append(targets, gn);
-		    DEFAULT = gn;
-		    break;
-		}
-		case DeleteOnError:
-		    deleteOnError = TRUE;
-		    break;
-		case NotParallel:
-		    maxJobs = 1;
-		    break;
-		case SingleShell:
-		    compatMake = TRUE;
-		    break;
-		case Order:
-		    predecessor = NULL;
-		    break;
-		default:
-		    break;
-		}
-	    } else if (strncmp(line, ".PATH", 5) == 0) {
-		/*
-		 * .PATH<suffix> has to be handled specially.
-		 * Call on the suffix module to give us a path to
-		 * modify.
-		 */
-		SearchPath *path;
-
-		specType = ExPath;
-		path = Suff_GetPath(&line[5]);
-		if (path == NULL) {
-		    Parse_Error(PARSE_FATAL,
-				 "Suffix '%s' not defined (yet)",
-				 &line[5]);
-		    goto out;
-		} else {
-		    if (paths == NULL) {
-			paths = Lst_Init();
-		    }
-		    Lst_Append(paths, path);
-		}
-	    }
-	}
+	if (!ParseDoDependencyTarget(line, &specType, &tOp, &paths))
+	    goto out;
 
 	/*
 	 * Have word in line. Get or create its node and stick it at
 	 * the end of the targets list
 	 */
 	if (specType == Not && *line != '\0') {
-	    if (Dir_HasWildcards(line)) {
-		/*
-		 * Targets are to be sought only in the current directory,
-		 * so create an empty path for the thing. Note we need to
-		 * use Dir_Destroy in the destruction of the path as the
-		 * Dir module could have added a directory to the path...
-		 */
-		SearchPath *emptyPath = Lst_Init();
-
-		Dir_Expand(line, emptyPath, curTargs);
-
-		Lst_Destroy(emptyPath, Dir_Destroy);
-	    } else {
-		/*
-		 * No wildcards, but we want to avoid code duplication,
-		 * so create a list with the word on it.
-		 */
-		Lst_Append(curTargs, line);
-	    }
-
-	    /* Apply the targets. */
-
-	    while(!Lst_IsEmpty(curTargs)) {
-		char *targName = Lst_Dequeue(curTargs);
-		GNode *gn = Suff_IsTransform(targName)
-			    ? Suff_AddTransform(targName)
-			    : Targ_GetNode(targName);
-		if (doing_depend)
-		    ParseMark(gn);
-
-		Lst_Append(targets, gn);
-	    }
+	    ParseDoDependencyTargetMundane(line, curTargs);
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
 	}
@@ -1384,19 +1586,7 @@ ParseDoDependency(char *line)
 	 * allow on this line...
 	 */
 	if (specType != Not && specType != ExPath) {
-	    Boolean warning = FALSE;
-
-	    while (*cp && (ParseIsEscaped(lstart, cp) ||
-		(*cp != '!' && *cp != ':'))) {
-		if (ParseIsEscaped(lstart, cp) ||
-		    (*cp != ' ' && *cp != '\t')) {
-		    warning = TRUE;
-		}
-		cp++;
-	    }
-	    if (warning) {
-		Parse_Error(PARSE_WARNING, "Extra target ignored");
-	    }
+	    ParseDoDependencyTargetExtraWarn(&cp, lstart);
 	} else {
 	    pp_skip_whitespace(&cp);
 	}
@@ -1413,50 +1603,14 @@ ParseDoDependency(char *line)
     Lst_Free(curTargs);
     curTargs = NULL;
 
-    if (!Lst_IsEmpty(targets)) {
-	switch(specType) {
-	    default:
-		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
-		break;
-	    case Default:
-	    case Stale:
-	    case Begin:
-	    case End:
-	    case dotError:
-	    case Interrupt:
-		/*
-		 * These four create nodes on which to hang commands, so
-		 * targets shouldn't be empty...
-		 */
-	    case Not:
-		/*
-		 * Nothing special here -- targets can be empty if it wants.
-		 */
-		break;
-	}
-    }
+    if (!Lst_IsEmpty(targets))
+        ParseDoDependencyCheckSpec(specType);
 
     /*
-     * Have now parsed all the target names. Must parse the operator next. The
-     * result is left in  op .
+     * Have now parsed all the target names. Must parse the operator next.
      */
-    if (*cp == '!') {
-	op = OP_FORCE;
-    } else if (*cp == ':') {
-	if (cp[1] == ':') {
-	    op = OP_DOUBLEDEP;
-	    cp++;
-	} else {
-	    op = OP_DEPENDS;
-	}
-    } else {
-	Parse_Error(PARSE_FATAL, lstart[0] == '.' ? "Unknown directive"
-		    : "Missing dependency operator");
-	goto out;
-    }
-
-    /* Advance beyond the operator */
-    cp++;
+    if (!ParseDoDependencyParseOp(&cp, lstart, &op))
+        goto out;
 
     /*
      * Apply the operator to the target. This is how we remember which
@@ -1484,32 +1638,7 @@ ParseDoDependency(char *line)
      *	a .PATH removes all directories from the search path(s).
      */
     if (!*line) {
-	switch (specType) {
-	    case Suffixes:
-		Suff_ClearSuffixes();
-		break;
-	    case Precious:
-		allPrecious = TRUE;
-		break;
-	    case Ignore:
-		ignoreErrors = TRUE;
-		break;
-	    case Silent:
-		beSilent = TRUE;
-		break;
-	    case ExPath:
-		if (paths != NULL)
-		    Lst_ForEach(paths, ParseClearPath, NULL);
-		Dir_SetPATH();
-		break;
-#ifdef POSIX
-	    case Posix:
-		Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
-		break;
-#endif
-	    default:
-		break;
-	}
+        ParseDoDependencySourcesEmpty(specType, paths);
     } else if (specType == MFlags) {
 	/*
 	 * Call on functions in main.c to deal with these arguments and
@@ -1537,61 +1666,12 @@ ParseDoDependency(char *line)
 	specType == Null || specType == ExObjdir)
     {
 	while (*line) {
-	    /*
-	     * If the target was one that doesn't take files as its sources
-	     * but takes something like suffixes, we take each
-	     * space-separated word on the line as a something and deal
-	     * with it accordingly.
-	     *
-	     * If the target was .SUFFIXES, we take each source as a
-	     * suffix and add it to the list of suffixes maintained by the
-	     * Suff module.
-	     *
-	     * If the target was a .PATH, we add the source as a directory
-	     * to search on the search path.
-	     *
-	     * If it was .INCLUDES, the source is taken to be the suffix of
-	     * files which will be #included and whose search path should
-	     * be present in the .INCLUDES variable.
-	     *
-	     * If it was .LIBS, the source is taken to be the suffix of
-	     * files which are considered libraries and whose search path
-	     * should be present in the .LIBS variable.
-	     *
-	     * If it was .NULL, the source is the suffix to use when a file
-	     * has no valid suffix.
-	     *
-	     * If it was .OBJDIR, the source is a new definition for .OBJDIR,
-	     * and will cause make to do a new chdir to that path.
-	     */
 	    while (*cp && !ch_isspace(*cp)) {
 		cp++;
 	    }
 	    savec = *cp;
 	    *cp = '\0';
-	    switch (specType) {
-		case Suffixes:
-		    Suff_AddSuffix(line, &mainNode);
-		    break;
-		case ExPath:
-		    if (paths != NULL)
-			Lst_ForEach(paths, ParseAddDir, line);
-		    break;
-		case Includes:
-		    Suff_AddInclude(line);
-		    break;
-		case Libs:
-		    Suff_AddLib(line);
-		    break;
-		case Null:
-		    Suff_SetNull(line);
-		    break;
-		case ExObjdir:
-		    Main_SetObjdir("%s", line);
-		    break;
-		default:
-		    break;
-	    }
+	    ParseDoDependencySourceSpecial(specType, line, paths);
 	    *cp = savec;
 	    if (savec != '\0') {
 		cp++;
