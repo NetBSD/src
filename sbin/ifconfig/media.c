@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.11 2020/10/05 16:17:05 roy Exp $");
+__RCSID("$NetBSD: media.c,v 1.12 2020/10/05 17:29:22 roy Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -424,10 +424,10 @@ media_status(int media_type, int link_state,
 		return;
 	}
 
-	/* Interface link status is queried through SIOCGIFMEDIA.
-	 * Not all interfaces have actual media. */
-	if (ifmr.ifm_count == 0)
+	if (ifmr.ifm_count == 0) {
 		warnx("%s: no media types?", ifname);
+		return;
+	}
 
 	media_list = calloc(ifmr.ifm_count, sizeof(int));
 	if (media_list == NULL)
