@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.176 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.177 2020/10/05 21:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.176 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.177 2020/10/05 21:37:07 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1619,7 +1619,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	/*
 	 * Use first matching suffix...
 	 */
-	sd.name_len = eoarch - gn->name;
+	sd.name_len = (size_t)(eoarch - gn->name);
 	sd.name_end = eoarch;
 	ln = Lst_Find(ms->parents, SuffSuffIsSuffix, &sd);
 
@@ -2099,7 +2099,7 @@ Suff_SetNull(const char *name)
     }
 
     if (suffNull != NULL) {
-	suffNull->flags &= ~SUFF_NULL;
+	suffNull->flags &= ~(unsigned)SUFF_NULL;
     }
     s->flags |= SUFF_NULL;
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.368 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.369 2020/10/05 21:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.368 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.369 2020/10/05 21:37:07 rillig Exp $");
 
 /* types and constants */
 
@@ -143,7 +143,7 @@ typedef struct IFile {
     Boolean fromForLoop;	/* simulated .include by the .for loop */
     int lineno;			/* current line number in file */
     int first_lineno;		/* line number of start of text */
-    int cond_depth;		/* 'if' nesting when file opened */
+    unsigned int cond_depth;	/* 'if' nesting when file opened */
     Boolean depending;		/* state of doing_depend on EOF */
     char *P_str;		/* point to base of string buffer */
     char *P_ptr;		/* point to next char of string buffer */
@@ -454,7 +454,7 @@ static struct loadedfile *
 loadfile(const char *path, int fd)
 {
 	struct loadedfile *lf;
-	static long pagesize = 0;
+	static unsigned long pagesize = 0;
 	ssize_t result;
 	size_t bufpos;
 
@@ -477,8 +477,8 @@ loadfile(const char *path, int fd)
 	if (load_getsize(fd, &lf->len)) {
 		/* found a size, try mmap */
 		if (pagesize == 0)
-			pagesize = sysconf(_SC_PAGESIZE);
-		if (pagesize <= 0) {
+			pagesize = (unsigned long)sysconf(_SC_PAGESIZE);
+		if (pagesize == 0 || pagesize == (unsigned long)-1) {
 			pagesize = 0x1000;
 		}
 		/* round size up to a page */
@@ -540,7 +540,7 @@ loadfile(const char *path, int fd)
 		if (result == 0) {
 			break;
 		}
-		bufpos += result;
+		bufpos += (size_t)result;
 	}
 	assert(bufpos <= lf->len);
 	lf->len = bufpos;
@@ -709,7 +709,7 @@ Parse_Error(int type, const char *fmt, ...)
 		lineno = 0;
 	} else {
 		fname = curFile->fname;
-		lineno = curFile->lineno;
+		lineno = (size_t)curFile->lineno;
 	}
 
 	va_start(ap, fmt);
@@ -2113,7 +2113,7 @@ ParseAddCmd(GNode *gn, char *cmd)
 	Parse_Error(PARSE_WARNING,
 		     "duplicate script for target \"%s\" ignored",
 		     gn->name);
-	ParseErrorInternal(gn->fname, gn->lineno, PARSE_WARNING,
+	ParseErrorInternal(gn->fname, (size_t)gn->lineno, PARSE_WARNING,
 			    "using previous script for \"%s\" defined here",
 			    gn->name);
 #endif
