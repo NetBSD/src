@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.48 2020/10/04 19:05:47 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.49 2020/10/05 12:28:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1776,12 +1776,19 @@ make_bsd_partitions(struct install_partition_desc *install)
 	}
 
 	/*
-	 * Make sure the target root partition is properly marked
+	 * Make sure the target root partition is properly marked,
+	 * check for existing EFI boot partition.
 	 */
 	bool have_inst_target = false;
+#ifdef HAVE_EFI_BOOT
+	daddr_t target_start = -1;
+#endif
 	for (size_t i = 0; i < wanted.num; i++) {
 		if (wanted.infos[i].cur_flags & PTI_INSTALL_TARGET) {
 			have_inst_target = true;
+#ifdef HAVE_EFI_BOOT
+			target_start = wanted.infos[i].cur_start;
+#endif
 			break;
 		 }
 	}
@@ -1800,9 +1807,53 @@ make_bsd_partitions(struct install_partition_desc *install)
 			info.flags |= PTI_INSTALL_TARGET;
 			wanted.parts->pscheme->set_part_info(wanted.parts,
 			    wanted.infos[i].cur_part_id, &info, NULL);
+#ifdef HAVE_EFI_BOOT
+			target_start = wanted.infos[i].cur_start;
+#endif
 			break;
 		}
 	}
+#ifdef HAVE_EFI_BOOT
+	size_t boot_part = ~0U;
+	for (part_id i = 0; i < wanted.num; i++) {
+		if ((wanted.infos[i].cur_flags & PTI_BOOT) != 0 ||
+		    wanted.infos[i].type ==  PT_EFI_SYSTEM) {
+			boot_part = i;
+			break;
+		}
+	}
+	if (boot_part == ~0U) {
+		for (part_id i = 0; i < wanted.num; i++) {
+			/*
+			 * heuristic to recognize existing MBR FAT
+			 * partitions as EFI without looking for
+			 * details
+			 */
+			if ((wanted.infos[i].type != PT_FAT &&
+			    wanted.infos[i].type != PT_EFI_SYSTEM) ||
+			    wanted.infos[i].fs_type != FS_MSDOS)
+				continue;
+			daddr_t ps = wanted.infos[i].cur_start;
+			daddr_t pe = ps + wanted.infos[i].size;
+			if (target_start >= 0 &&
+			   (ps >= target_start || pe >= target_start)) 
+				continue;
+			boot_part = i;
+			break;
+		}
+	}
+	if (boot_part != ~0U) {
+		struct disk_part_info info;
+
+		if (wanted.parts->pscheme->get_part_info(wanted.parts,
+		    wanted.infos[boot_part].cur_part_id, &info)) {
+			info.flags |= PTI_BOOT;
+			wanted.parts->pscheme->set_part_info(wanted.parts,
+			    wanted.infos[boot_part].cur_part_id, &info, NULL);
+		}
+		wanted.infos[boot_part].instflags |= PUIINST_BOOT;
+	}
+#endif
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to

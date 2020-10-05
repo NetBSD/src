@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2020/05/04 18:19:34 joerg Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2020/10/05 12:28:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,4 +117,6 @@ void evbarm_part_defaults(struct pm_devs*, struct part_usage_info*,
             size_t num_usage_infos);
 
 #define MD_PART_DEFAULTS(A,B,C)	evbarm_part_defaults(A,B,C)
+
+#define	HAVE_EFI_BOOT		1	/* we support EFI boot partitions */
 

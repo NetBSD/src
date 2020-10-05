@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.5 2020/09/28 18:40:23 martin Exp $ */
+/* $NetBSD: README.md_defs,v 1.6 2020/10/05 12:28:45 martin Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -111,6 +111,9 @@ partitions this way).
 
 
 HAVE_GPT_BOOT			defined if the architecture can boot from GPT
+
+HAVE_EFI_BOOT			defined if the architecture may be able
+				to boot from an EFI partition
 
 NO_DISKLABEL_BOOT		defined if the architecture can NOT boot
 				from a disklabel partitioned disk
