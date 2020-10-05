@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.369 2020/10/05 21:37:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.370 2020/10/05 22:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.369 2020/10/05 21:37:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.370 2020/10/05 22:15:45 rillig Exp $");
 
 /* types and constants */
 
@@ -854,7 +854,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	cohort->centurion = gn;
 	gn->unmade_cohorts++;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
-		gn->unmade_cohorts);
+		gn->unmade_cohorts % 1000000);
     } else {
 	/*
 	 * We don't want to nuke any previous flags (whatever they were) so we
