@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.369 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.370 2020/10/05 21:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.369 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.370 2020/10/05 21:37:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -443,7 +443,7 @@ MainParseArgJobs(const char *argvalue)
 	char *p;
 
 	forceJobs = TRUE;
-	maxJobs = strtol(argvalue, &p, 0);
+	maxJobs = (int)strtol(argvalue, &p, 0);
 	if (*p != '\0' || maxJobs < 1) {
 		(void)fprintf(stderr,
 		    "%s: illegal argument to -j -- must be positive integer!\n",
@@ -1073,7 +1073,7 @@ main(int argc, char **argv)
 	 * on each program execution.
 	 */
 	gettimeofday(&rightnow, NULL);
-	srandom(rightnow.tv_sec + rightnow.tv_usec);
+	srandom((unsigned int)(rightnow.tv_sec + rightnow.tv_usec));
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
@@ -1419,7 +1419,7 @@ main(int argc, char **argv)
 
 	    (void)Var_Subst("${.MAKE.JOBS}", VAR_GLOBAL, VARE_WANTRES, &value);
 	    /* TODO: handle errors */
-	    n = strtol(value, NULL, 0);
+	    n = (int)strtol(value, NULL, 0);
 	    if (n < 1) {
 		(void)fprintf(stderr, "%s: illegal value for .MAKE.JOBS -- must be positive integer!\n",
 		    progname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.260 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.261 2020/10/05 21:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.260 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.261 2020/10/05 21:37:07 rillig Exp $");
 
 # define STATIC static
 
@@ -290,7 +290,7 @@ static char *shellArgv = NULL;	/* Custom shell args */
 
 STATIC Job	*job_table;	/* The structures that describe them */
 STATIC Job	*job_table_end;	/* job_table + maxJobs */
-static int	wantToken;	/* we want a token */
+static unsigned int wantToken;	/* we want a token */
 static int lurking_children = 0;
 static int make_suspended = 0;	/* non-zero if we've seen a SIGTSTP (etc) */
 
@@ -300,7 +300,7 @@ static int make_suspended = 0;	/* non-zero if we've seen a SIGTSTP (etc) */
  */
 static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
-static int nfds = 0;
+static nfds_t nfds = 0;
 static void watchfd(Job *);
 static void clearfd(Job *);
 static int readyfd(Job *);
@@ -314,7 +314,7 @@ static Job childExitJob;	/* child exit pseudo-job */
 #define	CHILD_EXIT	"."
 #define	DO_JOB_RESUME	"R"
 
-static const int npseudojobs = 2; /* number of pseudo-jobs */
+enum { npseudojobs = 2 };	/* number of pseudo-jobs */
 
 #define TARG_FMT  "%s %s ---\n" /* Default format */
 #define MESSAGE(fp, gn) \
@@ -1648,10 +1648,10 @@ JobDoOutput(Job *job, Boolean finish)
 {
     Boolean gotNL = FALSE;	/* true if got a newline */
     Boolean fbuf;		/* true if our buffer filled up */
-    int nr;			/* number of bytes read */
-    int i;			/* auxiliary index into outBuf */
-    int max;			/* limit for i (end of current data) */
-    int nRead;			/* (Temporary) number of bytes read */
+    size_t nr;			/* number of bytes read */
+    size_t i;			/* auxiliary index into outBuf */
+    size_t max;			/* limit for i (end of current data) */
+    ssize_t nRead;		/* (Temporary) number of bytes read */
 
     /*
      * Read as many bytes as will fit in the buffer.
@@ -1670,7 +1670,7 @@ end_loop:
 	}
 	nr = 0;
     } else {
-	nr = nRead;
+	nr = (size_t)nRead;
     }
 
     /*
@@ -1693,7 +1693,7 @@ end_loop:
      * TRUE.
      */
     max = job->curPos + nr;
-    for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
+    for (i = job->curPos + nr - 1; i >= job->curPos && i != (size_t)-1; i--) {
 	if (job->outBuf[i] == '\n') {
 	    gotNL = TRUE;
 	    break;
@@ -1892,7 +1892,7 @@ Job_CatchOutput(void)
 {
     int nready;
     Job *job;
-    int i;
+    unsigned int i;
 
     (void)fflush(stdout);
 
@@ -1926,9 +1926,9 @@ Job_CatchOutput(void)
 
     Job_CatchChildren();
     if (nready == 0)
-	    return;
+	return;
 
-    for (i = npseudojobs*nfds_per_job(); i < nfds; i++) {
+    for (i = npseudojobs * nfds_per_job(); i < nfds; i++) {
 	if (!fds[i].revents)
 	    continue;
 	job = jobfds[i];
@@ -1947,7 +1947,7 @@ Job_CatchOutput(void)
 	}
 #endif
 	if (--nready == 0)
-		return;
+	    return;
     }
 }
 
@@ -1991,7 +1991,7 @@ Shell_Init(void)
 	    shellErrFlag = NULL;
 	}
 	if (!shellErrFlag) {
-	    int n = strlen(commandShell->exit) + 2;
+	    size_t n = strlen(commandShell->exit) + 2;
 
 	    shellErrFlag = bmake_malloc(n);
 	    if (shellErrFlag) {
@@ -2032,8 +2032,8 @@ Job_Init(void)
 {
     Job_SetPrefix();
     /* Allocate space for all the job info */
-    job_table = bmake_malloc(maxJobs * sizeof *job_table);
-    memset(job_table, 0, maxJobs * sizeof *job_table);
+    job_table = bmake_malloc((size_t)maxJobs * sizeof *job_table);
+    memset(job_table, 0, (size_t)maxJobs * sizeof *job_table);
     job_table_end = job_table + maxJobs;
     wantToken =	0;
 
@@ -2065,9 +2065,9 @@ Job_Init(void)
 
     /* Preallocate enough for the maximum number of jobs.  */
     fds = bmake_malloc(sizeof(*fds) *
-	(npseudojobs + maxJobs) * nfds_per_job());
+	(npseudojobs + (size_t)maxJobs) * nfds_per_job());
     jobfds = bmake_malloc(sizeof(*jobfds) *
-	(npseudojobs + maxJobs) * nfds_per_job());
+	(npseudojobs + (size_t)maxJobs) * nfds_per_job());
 
     /* These are permanent entries and take slots 0 and 1 */
     watchfd(&tokenWaitJob);
@@ -2521,10 +2521,10 @@ watchfd(Job *job)
 static void
 clearfd(Job *job)
 {
-    int i;
+    size_t i;
     if (job->inPollfd == NULL)
 	Punt("Unwatching unwatched job");
-    i = job->inPollfd - fds;
+    i = (size_t)(job->inPollfd - fds);
     nfds--;
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     if (useMeta) {
@@ -2638,7 +2638,7 @@ Boolean
 Job_TokenWithdraw(void)
 {
     char tok, tok1;
-    int count;
+    ssize_t count;
 
     wantToken = 0;
     DEBUG3(JOB, "Job_TokenWithdraw(%d): aborting %d, running %d\n",
