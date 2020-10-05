@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.139 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.140 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -120,9 +120,27 @@ Boolean getBoolean(const char *, Boolean);
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
+
+typedef enum VarAssignOp {
+    VAR_NORMAL,			/* = */
+    VAR_SUBST,			/* := */
+    VAR_SHELL,			/* != or :sh= */
+    VAR_APPEND,			/* += */
+    VAR_DEFAULT			/* ?= */
+} VarAssignOp;
+
+typedef struct VarAssign {
+    const char *nameStart;	/* unexpanded */
+    const char *nameEndDraft;	/* before operator adjustment */
+    char *varname;
+    const char *eq;		/* the '=' of the assignment operator */
+    VarAssignOp op;
+    const char *value;		/* unexpanded */
+} VarAssign;
+
 void Parse_Error(int, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-Boolean Parse_IsVar(const char *);
-void Parse_DoVar(char *, GNode *);
+Boolean Parse_IsVar(const char *, VarAssign *out_var);
+void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_Init(void);
@@ -147,7 +165,6 @@ Words_Free(Words w) {
 char *str_concat2(const char *, const char *);
 char *str_concat3(const char *, const char *, const char *);
 char *str_concat4(const char *, const char *, const char *, const char *);
-char *Str_FindSubstring(const char *, const char *);
 Boolean Str_Match(const char *, const char *);
 
 /* suff.c */
@@ -193,10 +210,13 @@ void Targ_Propagate(void);
 /* var.c */
 
 typedef enum {
+    VARE_NONE		= 0,
     /* Treat undefined variables as errors. */
     VARE_UNDEFERR	= 0x01,
     /* Expand and evaluate variables during parsing. */
     VARE_WANTRES	= 0x02,
+    /* In an assignment using the ':=' operator, keep '$$' as '$$' instead
+     * of reducing it to a single '$'. */
     VARE_ASSIGN		= 0x04
 } VarEvalFlags;
 
