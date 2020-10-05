@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.159 2020/10/05 19:30:37 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.160 2020/10/05 20:21:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.159 2020/10/05 19:30:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.160 2020/10/05 20:21:30 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1377,7 +1377,7 @@ Dir_FindFile(const char *name, SearchPath *path)
  */
 Boolean
 Dir_FindHereOrAbove(const char *here, const char *search_path,
-		    char *result, int result_len)
+		    char *result, size_t result_len)
 {
     struct make_stat mst;
     char dirbase[MAXPATHLEN + 1], *dirbase_end;
@@ -1446,7 +1446,7 @@ Dir_FindHereOrAbove(const char *here, const char *search_path,
  *	found one for it, the full name is placed in the path slot.
  *-----------------------------------------------------------------------
  */
-int
+time_t
 Dir_MTime(GNode *gn, Boolean recheck)
 {
     char *fullName;		/* the full pathname of name */

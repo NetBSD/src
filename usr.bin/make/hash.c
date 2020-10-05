@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.43 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.44 2020/10/05 20:21:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.43 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.44 2020/10/05 20:21:30 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -104,7 +104,7 @@ static Hash_Entry *
 HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
 {
 	Hash_Entry *e;
-	int chainlen = 0;
+	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
 	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
@@ -126,7 +126,7 @@ HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
 void
 Hash_InitTable(Hash_Table *t)
 {
-	size_t n = 16, i;
+	unsigned int n = 16, i;
 	struct Hash_Entry **hp;
 
 	t->numEntries = 0;
@@ -146,7 +146,7 @@ Hash_DeleteTable(Hash_Table *t)
 	struct Hash_Entry **hp, *h, *nexth = NULL;
 	int i;
 
-	for (hp = t->buckets, i = t->bucketsSize; --i >= 0;) {
+	for (hp = t->buckets, i = (int)t->bucketsSize; --i >= 0;) {
 		for (h = *hp++; h != NULL; h = nexth) {
 			nexth = h->next;
 			free(h);
@@ -191,19 +191,20 @@ static void
 RebuildTable(Hash_Table *t)
 {
 	Hash_Entry *e, *next = NULL, **hp, **xp;
-	int i, mask;
+	int i;
+	unsigned int mask, oldsize, newsize;
 	Hash_Entry **oldhp;
-	int oldsize;
 
 	oldhp = t->buckets;
-	oldsize = i = t->bucketsSize;
-	i <<= 1;
-	t->bucketsSize = i;
-	t->bucketsMask = mask = i - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
+	oldsize = t->bucketsSize;
+	newsize = oldsize << 1;
+	t->bucketsSize = (unsigned int)newsize;
+	t->bucketsMask = mask = newsize - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * newsize);
+	i = (int)newsize;
 	while (--i >= 0)
 		*hp++ = NULL;
-	for (hp = oldhp, i = oldsize; --i >= 0;) {
+	for (hp = oldhp, i = (int)oldsize; --i >= 0;) {
 		for (e = *hp++; e != NULL; e = next) {
 			next = e->next;
 			xp = &t->buckets[e->namehash & mask];
@@ -349,6 +350,6 @@ Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 void
 Hash_DebugStats(Hash_Table *t, const char *name)
 {
-	DEBUG4(HASH, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
+	DEBUG4(HASH, "Hash_Table %s: size=%u numEntries=%u maxchain=%u\n",
 	       name, t->bucketsSize, t->numEntries, t->maxchain);
 }
