@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 2020/10/05 19:27:47 rillig Exp $
+#	$NetBSD: Makefile,v 1.103 2020/10/05 22:15:45 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -77,7 +77,6 @@ COPTS.arch.c+=	-Wno-error=format-truncation
 COPTS.dir.c+=	-Wno-error=format-truncation
 COPTS.main.c+=	-Wno-error=format-truncation
 COPTS.meta.c+=	-Wno-error=format-truncation
-COPTS.parse.c+=	-Wno-error=format-truncation
 .endif
 
 # Whether to compile with GCC 8 from pkgsrc, during development.

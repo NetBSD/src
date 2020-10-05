@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.155 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.156 2020/10/05 22:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -332,7 +332,7 @@ typedef struct GNode {
      * in the normal sense. */
     GNodeList *order_succ;
 
-    /* #n for this cohort */
+    /* The "#n" suffix for this cohort, or "" for other nodes */
     char cohort_num[8];
     /* The number of unmade instances on the cohorts list */
     int unmade_cohorts;
