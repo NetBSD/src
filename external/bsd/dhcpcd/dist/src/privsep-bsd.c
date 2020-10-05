@@ -55,6 +55,9 @@ ps_root_doioctldom(int domain, unsigned long req, void *data, size_t len)
 
 	/* Only allow these ioctls */
 	switch(req) {
+#ifdef SIOCGIFDATA
+	case SIOCGIFDATA:	/* FALLTHROUGH */
+#endif
 #ifdef SIOCG80211NWID
 	case SIOCG80211NWID:	/* FALLTHROUGH */
 #endif
@@ -115,7 +118,7 @@ ps_root_doroute(void *data, size_t len)
 	return err;
 }
 
-#ifdef HAVE_PLEDGE
+#if defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE)
 static ssize_t
 ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
 {
@@ -136,7 +139,9 @@ ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
 
 	return ps_root_doioctldom(PF_INET, req, &ifr, sizeof(ifr));
 }
+#endif
 
+#ifdef HAVE_PLEDGE
 static ssize_t
 ps_root_doifignoregroup(void *data, size_t len)
 {
@@ -174,10 +179,12 @@ ps_root_os(struct ps_msghdr *psm, struct msghdr *msg,
 		break;
 	case PS_ROUTE:
 		return ps_root_doroute(data, len);
-#ifdef HAVE_PLEDGE
+#if defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE)
 	case PS_IOCTLINDIRECT:
 		err = ps_root_doindirectioctl(psm->ps_flags, data, len);
 		break;
+#endif
+#ifdef HAVE_PLEDGE
 	case PS_IFIGNOREGRP:
 		return ps_root_doifignoregroup(data, len);
 #endif
@@ -229,7 +236,7 @@ ps_root_route(struct dhcpcd_ctx *ctx, void *data, size_t len)
 	return ps_root_readerror(ctx, data, len);
 }
 
-#ifdef HAVE_PLEDGE
+#if defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE)
 ssize_t
 ps_root_indirectioctl(struct dhcpcd_ctx *ctx, unsigned long request,
     const char *ifname, void *data, size_t len)

@@ -615,7 +615,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 	}
 
 	/* Trim any extra data.
-	 * Maybe we need a settng to reject DHCP options with extra data? */
+	 * Maybe we need a setting to reject DHCP options with extra data? */
 	if (opt->type & OT_ARRAY)
 		return (ssize_t)(dl - (dl % sz));
 	return (ssize_t)sz;

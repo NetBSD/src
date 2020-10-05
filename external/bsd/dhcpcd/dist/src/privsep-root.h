@@ -67,7 +67,7 @@ ssize_t ps_root_sendnetlink(struct dhcpcd_ctx *, int, struct msghdr *);
 #endif
 
 #ifdef PLUGIN_DEV
-int ps_root_dev_initialized(struct dhcpcd_ctx *, const char *);
+int ps_root_dev_initialised(struct dhcpcd_ctx *, const char *);
 int ps_root_dev_listening(struct dhcpcd_ctx *);
 #endif
 
