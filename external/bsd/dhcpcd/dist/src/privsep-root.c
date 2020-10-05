@@ -346,15 +346,14 @@ ps_root_monordm(uint64_t *rdm, size_t len)
 #endif
 
 #ifdef PRIVSEP_GETIFADDRS
-#define	IFA_NADDRS	3
+#define	IFA_NADDRS	4
 static ssize_t
 ps_root_dogetifaddrs(void **rdata, size_t *rlen)
 {
-	struct ifaddrs *ifaddrs, *ifa, *ifa_next;
+	struct ifaddrs *ifaddrs, *ifa;
 	size_t len;
 	uint8_t *buf, *sap;
 	socklen_t salen;
-	void *ifa_data;
 
 	if (getifaddrs(&ifaddrs) == -1)
 		return -1;
@@ -380,6 +379,15 @@ ps_root_dogetifaddrs(void **rdata, size_t *rlen)
 			len += ALIGN(sa_len(ifa->ifa_netmask));
 		if (ifa->ifa_broadaddr != NULL)
 			len += ALIGN(sa_len(ifa->ifa_broadaddr));
+#ifdef BSD
+		/*
+		 * On BSD we need to carry ifa_data so we can access
+		 * if_data->ifi_link_state
+		 */
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_LINK)
+			len += ALIGN(sizeof(struct if_data));
+#endif
 	}
 
 	/* Use calloc to set everything to zero.
@@ -394,15 +402,8 @@ ps_root_dogetifaddrs(void **rdata, size_t *rlen)
 	*rlen = len;
 
 	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-		/* Don't carry ifa_data or ifa_next. */
-		ifa_data = ifa->ifa_data;
-		ifa_next = ifa->ifa_next;
-		ifa->ifa_data = NULL;
-		ifa->ifa_next = NULL;
 		memcpy(buf, ifa, sizeof(*ifa));
 		buf += ALIGN(sizeof(*ifa));
-		ifa->ifa_data = ifa_data;
-		ifa->ifa_next = ifa_next;
 
 		strlcpy((char *)buf, ifa->ifa_name, IFNAMSIZ);
 		buf += ALIGN(IFNAMSIZ);
@@ -411,7 +412,10 @@ ps_root_dogetifaddrs(void **rdata, size_t *rlen)
 
 #define	COPYINSA(addr)						\
 	do {							\
-		salen = sa_len((addr));				\
+		if ((addr) != NULL)				\
+			salen = sa_len((addr));			\
+		else						\
+			salen = 0;				\
 		if (salen != 0) {				\
 			memcpy(sap, &salen, sizeof(salen));	\
 			memcpy(buf, (addr), salen);		\
@@ -420,12 +424,21 @@ ps_root_dogetifaddrs(void **rdata, size_t *rlen)
 		sap += sizeof(salen);				\
 	} while (0 /*CONSTCOND */)
 
-		if (ifa->ifa_addr != NULL)
-			COPYINSA(ifa->ifa_addr);
-		if (ifa->ifa_netmask != NULL)
-			COPYINSA(ifa->ifa_netmask);
-		if (ifa->ifa_broadaddr != NULL)
-			COPYINSA(ifa->ifa_broadaddr);
+		COPYINSA(ifa->ifa_addr);
+		COPYINSA(ifa->ifa_netmask);
+		COPYINSA(ifa->ifa_broadaddr);
+
+#ifdef BSD
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_LINK)
+		{
+			salen = (socklen_t)sizeof(struct if_data);
+			memcpy(buf, ifa->ifa_data, salen);
+			buf += ALIGN(salen);
+		} else
+#endif
+			salen = 0;
+		memcpy(sap, &salen, sizeof(salen));
 	}
 
 	freeifaddrs(ifaddrs);
@@ -570,7 +583,7 @@ ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 #endif
 #ifdef PLUGIN_DEV
 	case PS_DEV_INITTED:
-		err = dev_initialized(ctx, data);
+		err = dev_initialised(ctx, data);
 		break;
 	case PS_DEV_LISTENING:
 		err = dev_listening(ctx);
@@ -948,6 +961,17 @@ ps_root_getifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **ifahead)
 		COPYOUTSA(ifa->ifa_addr);
 		COPYOUTSA(ifa->ifa_netmask);
 		COPYOUTSA(ifa->ifa_broadaddr);
+
+		memcpy(&salen, sap, sizeof(salen));
+		if (len < salen)
+			goto err;
+		if (salen != 0) {
+			ifa->ifa_data = bp;
+			bp += ALIGN(salen);
+			len -= ALIGN(salen);
+		} else
+			ifa->ifa_data = NULL;
+
 		if (len != 0)
 			ifa->ifa_next = (struct ifaddrs *)(void *)bp;
 		else
@@ -989,7 +1013,7 @@ ps_root_getauthrdm(struct dhcpcd_ctx *ctx, uint64_t *rdm)
 
 #ifdef PLUGIN_DEV
 int
-ps_root_dev_initialized(struct dhcpcd_ctx *ctx, const char *ifname)
+ps_root_dev_initialised(struct dhcpcd_ctx *ctx, const char *ifname)
 {
 
 	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_DEV_INITTED, 0,

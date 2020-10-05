@@ -31,7 +31,7 @@
 // dev plugin setup
 struct dev {
 	const char *name;
-	int (*initialized)(const char *);
+	int (*initialised)(const char *);
 	int (*listening)(void);
 	int (*handle_device)(void *);
 	int (*start)(void);
@@ -47,7 +47,7 @@ int dev_init(struct dev *, const struct dev_dhcpcd *);
 // hooks for dhcpcd
 #ifdef PLUGIN_DEV
 #include "dhcpcd.h"
-int dev_initialized(struct dhcpcd_ctx *, const char *);
+int dev_initialised(struct dhcpcd_ctx *, const char *);
 int dev_listening(struct dhcpcd_ctx *);
 int dev_start(struct dhcpcd_ctx *, int (*)(void *, int, const char *));
 void dev_stop(struct dhcpcd_ctx *);
