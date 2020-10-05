@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.258 2020/10/04 16:50:37 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.259 2020/10/05 19:24:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.258 2020/10/04 16:50:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.259 2020/10/05 19:24:29 rillig Exp $");
 
 # define STATIC static
 
@@ -264,7 +264,7 @@ static Shell    shells[] = {
      */
 {
     "csh",
-    TRUE, "unset verbose", "set verbose", "unset verbose", 13,
+    TRUE, "unset verbose", "set verbose", "unset verbose", 10,
     FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
     "v", "e",
 },
@@ -655,7 +655,8 @@ JobPrintCommand(void *cmdp, void *jobp)
 	cmd++;
     }
 
-    pp_skip_whitespace(&cmd);
+    while (ch_isspace(*cmd))
+	cmd++;
 
     /*
      * If the shell doesn't have error control the alternate echo'ing will
@@ -1575,14 +1576,19 @@ JobStart(GNode *gn, int flags)
 }
 
 static char *
-JobOutput(Job *job, char *cp, char *endp)
+JobOutput(Job *job, char *cp, char *endp, int msg)
 {
     char *ecp;
 
-    if (commandShell->noPrint && commandShell->noPrint[0] != '\0') {
-	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
+    if (commandShell->noPrint) {
+	ecp = Str_FindSubstring(cp, commandShell->noPrint);
+	while (ecp != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
+		if (!beSilent && msg && job->node != lastNode) {
+		    MESSAGE(stdout, job->node);
+		    lastNode = job->node;
+		}
 		/*
 		 * The only way there wouldn't be a newline after
 		 * this line is if it were the last in the buffer.
@@ -1603,6 +1609,7 @@ JobOutput(Job *job, char *cp, char *endp)
 		while (*cp == ' ' || *cp == '\t' || *cp == '\n') {
 		    cp++;
 		}
+		ecp = Str_FindSubstring(cp, commandShell->noPrint);
 	    } else {
 		return cp;
 	    }
@@ -1731,7 +1738,7 @@ end_loop:
 	if (i >= job->curPos) {
 	    char *cp;
 
-	    cp = JobOutput(job, job->outBuf, &job->outBuf[i]);
+	    cp = JobOutput(job, job->outBuf, &job->outBuf[i], FALSE);
 
 	    /*
 	     * There's still more in that thar buffer. This time, though,
@@ -2206,7 +2213,8 @@ Job_ParseShell(char *line)
     Boolean	fullSpec = FALSE;
     Shell	*sh;
 
-    pp_skip_whitespace(&line);
+    while (ch_isspace(*line))
+	line++;
 
     free(shellArgv);
 

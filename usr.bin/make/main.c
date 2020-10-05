@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.367 2020/10/05 17:33:21 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.368 2020/10/05 19:24:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,12 +106,16 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "make.h"
+#include "hash.h"
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
@@ -122,11 +126,10 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.367 2020/10/05 17:33:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.368 2020/10/05 19:24:29 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
-	    "The Regents of the University of California.  "
-	    "All rights reserved.");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif
 
 #ifndef	DEFMAXLOCAL
@@ -267,9 +270,6 @@ parse_debug_options(const char *argvalue)
 
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
-		case '0':	/* undocumented, only intended for tests */
-			debug &= DEBUG_LINT;
-			break;
 		case 'A':
 			debug = ~(0|DEBUG_LINT);
 			break;
@@ -673,10 +673,9 @@ rearg:
 	 * perform them if so. Else take them to be targets and stuff them
 	 * on the end of the "create" list.
 	 */
-	for (; argc > 1; ++argv, --argc) {
-		VarAssign var;
-		if (Parse_IsVar(argv[1], &var)) {
-			Parse_DoVar(&var, VAR_CMD);
+	for (; argc > 1; ++argv, --argc)
+		if (Parse_IsVar(argv[1])) {
+			Parse_DoVar(argv[1], VAR_CMD);
 		} else {
 			if (!*argv[1])
 				Punt("illegal (null) argument.");
@@ -684,7 +683,6 @@ rearg:
 				goto rearg;
 			Lst_Append(create, bmake_strdup(argv[1]));
 		}
-	}
 
 	return;
 noarg:
@@ -973,60 +971,6 @@ InitVarTargets(void)
 	}
 }
 
-static const char *
-init_machine(const struct utsname *utsname)
-{
-	const char *machine = getenv("MACHINE");
-	if (machine != NULL)
-		return machine;
-
-#ifdef MAKE_NATIVE
-	return utsname->machine;
-#else
-#ifdef MAKE_MACHINE
-	return MAKE_MACHINE;
-#else
-	return "unknown";
-#endif
-#endif
-}
-
-static const char *
-init_machine_arch(void)
-{
-	const char *env = getenv("MACHINE_ARCH");
-	if (env != NULL)
-		return env;
-
-#ifdef MAKE_NATIVE
-	{
-		struct utsname utsname;
-		static char machine_arch_buf[sizeof(utsname.machine)];
-		const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
-		size_t len = sizeof(machine_arch_buf);
-
-		if (sysctl(mib, __arraycount(mib), machine_arch_buf,
-			&len, NULL, 0) < 0) {
-		    (void)fprintf(stderr, "%s: sysctl failed (%s).\n", progname,
-			strerror(errno));
-		    exit(2);
-		}
-
-		return machine_arch_buf;
-	}
-#else
-#ifndef MACHINE_ARCH
-#ifdef MAKE_MACHINE_ARCH
-	return MAKE_MACHINE_ARCH;
-#else
-	return "unknown";
-#endif
-#else
-	return MACHINE_ARCH;
-#endif
-#endif
-}
-
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1051,8 +995,8 @@ main(int argc, char **argv)
 	struct stat sb, sa;
 	char *p1, *path;
 	char mdpath[MAXPATHLEN];
-	const char *machine;
-	const char *machine_arch;
+	const char *machine = getenv("MACHINE");
+	const char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
 	StringList *sysMkPath;		/* Path of sys.mk */
 	char *cp = NULL, *start;
@@ -1107,8 +1051,44 @@ main(int argc, char **argv)
 	 * Note that both MACHINE and MACHINE_ARCH are decided at
 	 * run-time.
 	 */
-	machine = init_machine(&utsname);
-	machine_arch = init_machine_arch();
+	if (!machine) {
+#ifdef MAKE_NATIVE
+	    machine = utsname.machine;
+#else
+#ifdef MAKE_MACHINE
+	    machine = MAKE_MACHINE;
+#else
+	    machine = "unknown";
+#endif
+#endif
+	}
+
+	if (!machine_arch) {
+#ifdef MAKE_NATIVE
+	    static char machine_arch_buf[sizeof(utsname.machine)];
+	    const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+	    size_t len = sizeof(machine_arch_buf);
+
+	    if (sysctl(mib, __arraycount(mib), machine_arch_buf,
+		    &len, NULL, 0) < 0) {
+		(void)fprintf(stderr, "%s: sysctl failed (%s).\n", progname,
+		    strerror(errno));
+		exit(2);
+	    }
+
+	    machine_arch = machine_arch_buf;
+#else
+#ifndef MACHINE_ARCH
+#ifdef MAKE_MACHINE_ARCH
+	    machine_arch = MAKE_MACHINE_ARCH;
+#else
+	    machine_arch = "unknown";
+#endif
+#else
+	    machine_arch = MACHINE_ARCH;
+#endif
+#endif
+	}
 
 	myPid = getpid();		/* remember this for vFork() */
 
@@ -1735,10 +1715,16 @@ bad:
     return bmake_strdup("");
 }
 
-/* Print a printf-style error message.
+/*-
+ * Error --
+ *	Print an error message given its format.
  *
- * This error message has no consequences, in particular it does not affect
- * the exit status. */
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	The message is printed.
+ */
 void
 Error(const char *fmt, ...)
 {
