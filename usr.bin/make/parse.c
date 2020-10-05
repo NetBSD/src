@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.362 2020/10/04 21:53:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.363 2020/10/05 15:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.362 2020/10/04 21:53:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.363 2020/10/05 15:43:32 rillig Exp $");
 
 /* types and constants */
 
@@ -584,21 +584,8 @@ ParseMark(GNode *gn)
     gn->lineno = curFile->lineno;
 }
 
-/*-
- *----------------------------------------------------------------------
- * ParseFindKeyword --
- *	Look in the table of keywords for one matching the given string.
- *
- * Input:
- *	str		String to find
- *
- * Results:
- *	The index of the keyword, or -1 if it isn't there.
- *
- * Side Effects:
- *	None
- *----------------------------------------------------------------------
- */
+/* Look in the table of keywords for one matching the given string.
+ * Return the index of the keyword, or -1 if it isn't there. */
 static int
 ParseFindKeyword(const char *str)
 {
@@ -659,8 +646,7 @@ PrintLocation(FILE *f, const char *filename, size_t lineno)
  *
  * Increment "fatals" if the level is PARSE_FATAL, and continue parsing
  * until the end of the current top-level makefile, then exit (see
- * Parse_File).
- */
+ * Parse_File). */
 static void
 ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
     const char *fmt, va_list ap)
@@ -887,33 +873,12 @@ ApplyDependencyOperator(GNodeType op)
 	    break;
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseDoSrc  --
- *	Given the name of a source, figure out if it is an attribute
- *	and apply it to the targets if it is. Else decide if there is
- *	some attribute which should be applied *to* the source because
- *	of some special target and apply it if so. Otherwise, make the
- *	source be a child of the targets in the list 'targets'
- *
- * Input:
- *	tOp		operator (if any) from special targets
- *	src		name of the source to handle
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Operator bits may be added to the list of targets or to the source.
- *	The targets may have a new source added to their lists of children.
- *---------------------------------------------------------------------
- */
-static void
-ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
+static Boolean
+ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 {
-    GNode	*gn = NULL;
     static int wait_number = 0;
     char wait_src[16];
+    GNode *gn;
 
     if (*src == '.' && ch_isupper(src[1])) {
 	int keywd = ParseFindKeyword(src);
@@ -921,7 +886,7 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
 		ApplyDependencyOperator(op);
-		return;
+		return TRUE;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
 		/*
@@ -942,80 +907,112 @@ ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 		    struct ParseLinkSrcArgs args = { gn, specType };
 		    Lst_ForEach(targets, ParseLinkSrc, &args);
 		}
-		return;
+		return TRUE;
 	    }
 	}
     }
+    return FALSE;
+}
 
-    switch (specType) {
-    case Main:
-	/*
-	 * If we have noted the existence of a .MAIN, it means we need
-	 * to add the sources of said target to the list of things
-	 * to create. The string 'src' is likely to be free, so we
-	 * must make a new copy of it. Note that this will only be
-	 * invoked if the user didn't specify a target on the command
-	 * line. This is to allow #ifmake's to succeed, or something...
-	 */
-	Lst_Append(create, bmake_strdup(src));
-	/*
-	 * Add the name to the .TARGETS variable as well, so the user can
-	 * employ that, if desired.
-	 */
-	Var_Append(".TARGETS", src, VAR_GLOBAL);
-	return;
+static void
+ParseDoSrcMain(const char *src)
+{
+    /*
+     * If we have noted the existence of a .MAIN, it means we need
+     * to add the sources of said target to the list of things
+     * to create. The string 'src' is likely to be free, so we
+     * must make a new copy of it. Note that this will only be
+     * invoked if the user didn't specify a target on the command
+     * line. This is to allow #ifmake's to succeed, or something...
+     */
+    Lst_Append(create, bmake_strdup(src));
+    /*
+     * Add the name to the .TARGETS variable as well, so the user can
+     * employ that, if desired.
+     */
+    Var_Append(".TARGETS", src, VAR_GLOBAL);
+}
 
-    case Order:
-	/*
-	 * Create proper predecessor/successor links between the previous
-	 * source and the current one.
-	 */
-	gn = Targ_GetNode(src);
-	if (doing_depend)
-	    ParseMark(gn);
-	if (predecessor != NULL) {
-	    Lst_Append(predecessor->order_succ, gn);
-	    Lst_Append(gn->order_pred, predecessor);
-	    if (DEBUG(PARSE)) {
-		debug_printf("# %s: added Order dependency %s - %s\n",
-			     __func__, predecessor->name, gn->name);
-		Targ_PrintNode(predecessor, 0);
-		Targ_PrintNode(gn, 0);
-	    }
+static void
+ParseDoSrcOrder(const char *src)
+{
+    GNode *gn;
+    /*
+     * Create proper predecessor/successor links between the previous
+     * source and the current one.
+     */
+    gn = Targ_GetNode(src);
+    if (doing_depend)
+	ParseMark(gn);
+    if (predecessor != NULL) {
+	Lst_Append(predecessor->order_succ, gn);
+	Lst_Append(gn->order_pred, predecessor);
+	if (DEBUG(PARSE)) {
+	    debug_printf("# %s: added Order dependency %s - %s\n",
+			 __func__, predecessor->name, gn->name);
+	    Targ_PrintNode(predecessor, 0);
+	    Targ_PrintNode(gn, 0);
 	}
-	/*
-	 * The current source now becomes the predecessor for the next one.
-	 */
-	predecessor = gn;
-	break;
-
-    default:
-	/*
-	 * If the source is not an attribute, we need to find/create
-	 * a node for it. After that we can apply any operator to it
-	 * from a special target or link it to its parents, as
-	 * appropriate.
-	 *
-	 * In the case of a source that was the object of a :: operator,
-	 * the attribute is applied to all of its instances (as kept in
-	 * the 'cohorts' list of the node) or all the cohorts are linked
-	 * to all the targets.
-	 */
-
-	/* Find/create the 'src' node and attach to all targets */
-	gn = Targ_GetNode(src);
-	if (doing_depend)
-	    ParseMark(gn);
-	if (tOp) {
-	    gn->type |= tOp;
-	} else {
-	    {
-	        struct ParseLinkSrcArgs args = { gn, specType };
-		Lst_ForEach(targets, ParseLinkSrc, &args);
-	    }
-	}
-	break;
     }
+    /*
+     * The current source now becomes the predecessor for the next one.
+     */
+    predecessor = gn;
+}
+
+static void
+ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
+{
+    GNode *gn;
+
+    /*
+     * If the source is not an attribute, we need to find/create
+     * a node for it. After that we can apply any operator to it
+     * from a special target or link it to its parents, as
+     * appropriate.
+     *
+     * In the case of a source that was the object of a :: operator,
+     * the attribute is applied to all of its instances (as kept in
+     * the 'cohorts' list of the node) or all the cohorts are linked
+     * to all the targets.
+     */
+
+    /* Find/create the 'src' node and attach to all targets */
+    gn = Targ_GetNode(src);
+    if (doing_depend)
+	ParseMark(gn);
+    if (tOp) {
+	gn->type |= tOp;
+    } else {
+	{
+	    struct ParseLinkSrcArgs args = { gn, specType };
+	    Lst_ForEach(targets, ParseLinkSrc, &args);
+	}
+    }
+}
+
+/* Given the name of a source in a dependency line, figure out if it is an
+ * attribute (such as .SILENT) and apply it to the targets if it is. Else
+ * decide if there is some attribute which should be applied *to* the source
+ * because of some special target (such as .PHONY) and apply it if so.
+ * Otherwise, make the source a child of the targets in the list 'targets'.
+ *
+ * Input:
+ *	tOp		operator (if any) from special targets
+ *	src		name of the source to handle
+ */
+static void
+ParseDoSrc(GNodeType tOp, const char *src, ParseSpecial specType)
+{
+    if (ParseDoSrcKeyword(src, specType))
+        return;
+
+    if (specType == Main)
+        ParseDoSrcMain(src);
+    else if (specType == Order)
+        ParseDoSrcOrder(src);
+    else
+        ParseDoSrcOther(src, tOp, specType);
 }
 
 /* If we have yet to decide on a main target to make, in the absence of any
