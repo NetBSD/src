@@ -47,10 +47,6 @@
 #include "logerr.h"
 #include "privsep.h"
 
-#ifdef HAVE_CAPSICUM
-#include <sys/capsicum.h>
-#endif
-
 #ifdef INET
 static void
 ps_inet_recvbootp(void *arg)
@@ -337,14 +333,8 @@ ps_inet_start(struct dhcpcd_ctx *ctx)
 	    ps_inet_startcb, NULL,
 	    PSF_DROPPRIVS);
 
-#ifdef HAVE_CAPSICUM
-	if (pid == 0 && cap_enter() == -1 && errno != ENOSYS)
-		logerr("%s: cap_enter", __func__);
-#endif
-#ifdef HAVE_PLEDGE
-	if (pid == 0 && pledge("stdio", NULL) == -1)
-		logerr("%s: pledge", __func__);
-#endif
+	if (pid == 0)
+		ps_entersandbox("stdio", NULL);
 
 	return pid;
 }
@@ -570,14 +560,7 @@ ps_inet_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 		ps_freeprocess(psp);
 		return -1;
 	case 0:
-#ifdef HAVE_CAPSICUM
-		if (cap_enter() == -1 && errno != ENOSYS)
-			logerr("%s: cap_enter", __func__);
-#endif
-#ifdef HAVE_PLEDGE
-		if (pledge("stdio", NULL) == -1)
-			logerr("%s: pledge", __func__);
-#endif
+		ps_entersandbox("stdio", NULL);
 		break;
 	default:
 		break;
