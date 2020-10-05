@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.210 2020/10/05 10:44:09 rin Exp $
+# $NetBSD: HACKS,v 1.211 2020/10/05 13:20:30 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -985,15 +985,14 @@ descr	GCC 8.4 miscompiles dwarf2expr.c with -O2 or -O1, which results in
 kcah
 
 port	m68k
-hack	compile aes_ccm_tag() with -O0 for GCC8
+hack	compile aes_ccm_tag() with -O0 for GCC8 and GCC9
 cdate	Mon Aug 10 06:27:29 UTC 2020
+mdate	Mon Oct  5 22:00:00 JST 2020
 who	rin
 file	src/sys/crypto/aes/aes_ccm.c: 1.5
-descr	GCC 8.4 miscompiles aes_ccm_tag() for m68k with optimization level
-	-O[12], which results in failure in aes_ccm_selftest().
-	This is observed for amiga (A1200, 68060), mac68k (Quadra 840AV,
-	68040), and luna68k (nono, 68030 emulator). However, it is not for
-	sun3 (TME, 68020 emulator) and sun2 (TME, 68010 emulator).
-	At the moment, it is unclear whether this is due to differences b/w
-	68010-20 vs 68030-60, or something wrong with TME.
+descr	GCC 9.4 and 8.3 miscompile aes_ccm_tag() for m68k with optimization
+	level -O[12], which results in failure in aes_ccm_selftest().
+	For 9.4, -O0 and -O1 work but -O2 fails for amiga (A1200, 68060) and
+	mac68k (Quadra 840AV, 68040). Whereas -O0 and -O2 work but -O1 fails
+	for sun3 (TME, 68020 emulator) and sun2 (TME, 68010 emulator).
 kcah
