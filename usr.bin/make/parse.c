@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.365 2020/10/05 16:45:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.366 2020/10/05 16:54:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.365 2020/10/05 16:45:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.366 2020/10/05 16:54:41 rillig Exp $");
 
 /* types and constants */
 
@@ -1559,6 +1559,78 @@ ParseDoDependencyTargets(char **const inout_cp,
     return TRUE;
 }
 
+static void
+ParseDoDependencySourcesSpecial(char *line, char *cp,
+				ParseSpecial specType, SearchPathList *paths)
+{
+    char savec;
+
+    while (*line) {
+	while (*cp && !ch_isspace(*cp)) {
+	    cp++;
+	}
+	savec = *cp;
+	*cp = '\0';
+	ParseDoDependencySourceSpecial(specType, line, paths);
+	*cp = savec;
+	if (savec != '\0') {
+	    cp++;
+	}
+	pp_skip_whitespace(&cp);
+	line = cp;
+    }
+}
+
+static Boolean
+ParseDoDependencySourcesMundane(char *line, char *cp,
+			 ParseSpecial specType, GNodeType tOp)
+{
+    while (*line) {
+	/*
+	 * The targets take real sources, so we must beware of archive
+	 * specifications (i.e. things with left parentheses in them)
+	 * and handle them accordingly.
+	 */
+	for (; *cp && !ch_isspace(*cp); cp++) {
+	    if (*cp == '(' && cp > line && cp[-1] != '$') {
+		/*
+		 * Only stop for a left parenthesis if it isn't at the
+		 * start of a word (that'll be for variable changes
+		 * later) and isn't preceded by a dollar sign (a dynamic
+		 * source).
+		 */
+		break;
+	    }
+	}
+
+	if (*cp == '(') {
+	    GNodeList *sources = Lst_Init();
+	    if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
+		Parse_Error(PARSE_FATAL,
+			    "Error in source archive spec \"%s\"", line);
+		return FALSE;
+	    }
+
+	    while (!Lst_IsEmpty(sources)) {
+		GNode *gn = Lst_Dequeue(sources);
+		ParseDoSrc(tOp, gn->name, specType);
+	    }
+	    Lst_Free(sources);
+	    cp = line;
+	} else {
+	    if (*cp) {
+		*cp = '\0';
+		cp++;
+	    }
+
+	    ParseDoSrc(tOp, line, specType);
+	}
+	pp_skip_whitespace(&cp);
+	line = cp;
+    }
+    return TRUE;
+}
+
 /* Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
@@ -1589,11 +1661,9 @@ ParseDoDependency(char *line)
 {
     char *cp;			/* our current position */
     GNodeType op;		/* the operator on the line */
-    char            savec;	/* a place to save a character */
     SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
     int tOp;			/* operator from special target */
-    GNodeList *sources;		/* archive sources after expansion */
     StringList *curTargs;	/* target names to be found and added
 				 * to the targets list */
     char	   *lstart = line;
@@ -1687,20 +1757,7 @@ ParseDoDependency(char *line)
 	specType == Includes || specType == Libs ||
 	specType == Null || specType == ExObjdir)
     {
-	while (*line) {
-	    while (*cp && !ch_isspace(*cp)) {
-		cp++;
-	    }
-	    savec = *cp;
-	    *cp = '\0';
-	    ParseDoDependencySourceSpecial(specType, line, paths);
-	    *cp = savec;
-	    if (savec != '\0') {
-		cp++;
-	    }
-	    pp_skip_whitespace(&cp);
-	    line = cp;
-	}
+        ParseDoDependencySourcesSpecial(line, cp, specType, paths);
 	if (paths) {
 	    Lst_Free(paths);
 	    paths = NULL;
@@ -1709,49 +1766,8 @@ ParseDoDependency(char *line)
 	    Dir_SetPATH();
     } else {
 	assert(paths == NULL);
-	while (*line) {
-	    /*
-	     * The targets take real sources, so we must beware of archive
-	     * specifications (i.e. things with left parentheses in them)
-	     * and handle them accordingly.
-	     */
-	    for (; *cp && !ch_isspace(*cp); cp++) {
-		if (*cp == '(' && cp > line && cp[-1] != '$') {
-		    /*
-		     * Only stop for a left parenthesis if it isn't at the
-		     * start of a word (that'll be for variable changes
-		     * later) and isn't preceded by a dollar sign (a dynamic
-		     * source).
-		     */
-		    break;
-		}
-	    }
-
-	    if (*cp == '(') {
-		sources = Lst_Init();
-		if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
-		    Parse_Error(PARSE_FATAL,
-				 "Error in source archive spec \"%s\"", line);
-		    goto out;
-		}
-
-		while (!Lst_IsEmpty(sources)) {
-		    GNode *gn = Lst_Dequeue(sources);
-		    ParseDoSrc(tOp, gn->name, specType);
-		}
-		Lst_Free(sources);
-		cp = line;
-	    } else {
-		if (*cp) {
-		    *cp = '\0';
-		    cp++;
-		}
-
-		ParseDoSrc(tOp, line, specType);
-	    }
-	    pp_skip_whitespace(&cp);
-	    line = cp;
-	}
+        if (!ParseDoDependencySourcesMundane(line, cp, specType, tOp))
+            goto out;
     }
 
     FindMainTarget();
