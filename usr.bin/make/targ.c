@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.111 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.112 2020/10/05 22:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.111 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.112 2020/10/05 22:15:45 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -183,7 +183,7 @@ Targ_NewGN(const char *name)
     gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : 0;
     gn->unmade = 0;
     gn->unmade_cohorts = 0;
-    gn->cohort_num[0] = 0;
+    gn->cohort_num[0] = '\0';
     gn->centurion = NULL;
     gn->made = UNMADE;
     gn->flags = 0;
