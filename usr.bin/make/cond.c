@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.161 2020/10/05 19:56:08 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.162 2020/10/05 19:59:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.161 2020/10/05 19:56:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.162 2020/10/05 19:59:07 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1213,10 +1213,10 @@ Cond_EvalLine(const char *line)
 void
 Cond_restore_depth(unsigned int saved_depth)
 {
-    int open_conds = cond_depth - cond_min_depth;
+    unsigned int open_conds = cond_depth - cond_min_depth;
 
     if (open_conds != 0 || saved_depth > cond_depth) {
-	Parse_Error(PARSE_FATAL, "%d open conditional%s", open_conds,
+	Parse_Error(PARSE_FATAL, "%u open conditional%s", open_conds,
 		    open_conds == 1 ? "" : "s");
 	cond_depth = cond_min_depth;
     }
@@ -1227,7 +1227,7 @@ Cond_restore_depth(unsigned int saved_depth)
 unsigned int
 Cond_save_depth(void)
 {
-    int depth = cond_min_depth;
+    unsigned int depth = cond_min_depth;
 
     cond_min_depth = cond_depth;
     return depth;
