@@ -70,14 +70,14 @@
 	(insn)->jt = 0;						\
 	(insn)->jf = 0;						\
 	(insn)->k = (uint32_t)(v);				\
-};
+}
 
 #define	BPF_SET_JUMP(insn, c, v, t, f) {			\
 	(insn)->code = (c);					\
 	(insn)->jt = (t);					\
 	(insn)->jf = (f);					\
 	(insn)->k = (uint32_t)(v);				\
-};
+}
 
 size_t
 bpf_frame_header_len(const struct interface *ifp)
@@ -584,9 +584,6 @@ static const struct bpf_insn bpf_bootp_ether[] = {
 	BPF_STMT(BPF_LDX + BPF_K, sizeof(struct ether_header)),
 };
 #define BPF_BOOTP_ETHER_LEN	__arraycount(bpf_bootp_ether)
-
-#define BOOTP_MIN_SIZE		sizeof(struct ip) + sizeof(struct udphdr) + \
-				sizeof(struct bootp)
 
 static const struct bpf_insn bpf_bootp_base[] = {
 	/* Make sure it's an IPv4 packet. */

@@ -36,10 +36,6 @@
 #include "logerr.h"
 #include "privsep.h"
 
-#ifdef HAVE_CAPSICUM
-#include <sys/capsicum.h>
-#endif
-
 static int
 ps_ctl_startcb(void *arg)
 {
@@ -267,14 +263,7 @@ ps_ctl_start(struct dhcpcd_ctx *ctx)
 	    ps_ctl_listen, ctx) == -1)
 		return -1;
 
-#ifdef HAVE_CAPSICUM
-	if (cap_enter() == -1 && errno != ENOSYS)
-		logerr("%s: cap_enter", __func__);
-#endif
-#ifdef HAVE_PLEDGE
-	if (pledge("stdio inet", NULL) == -1)
-		logerr("%s: pledge", __func__);
-#endif
+	ps_entersandbox("stdio inet", NULL);
 	return 0;
 }
 

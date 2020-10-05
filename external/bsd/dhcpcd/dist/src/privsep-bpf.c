@@ -53,10 +53,6 @@
 #include "logerr.h"
 #include "privsep.h"
 
-#ifdef HAVE_CAPSICUM
-#include <sys/capsicum.h>
-#endif
-
 static void
 ps_bpf_recvbpf(void *arg)
 {
@@ -132,13 +128,6 @@ ps_bpf_start_bpf(void *arg)
 	struct dhcpcd_ctx *ctx = psp->psp_ctx;
 	char *addr;
 	struct in_addr *ia = &psp->psp_id.psi_addr.psa_in_addr;
-#ifdef HAVE_CAPSICUM
-	cap_rights_t rights;
-
-	/* We need CAP_IOCTL so we can change the BPF filter when we
-	 * need to. */
-	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT, CAP_IOCTL);
-#endif
 
 	if (ia->s_addr == INADDR_ANY) {
 		ia = NULL;
@@ -152,10 +141,9 @@ ps_bpf_start_bpf(void *arg)
 	psp->psp_bpf = bpf_open(&psp->psp_ifp, psp->psp_filter, ia);
 	if (psp->psp_bpf == NULL)
 		logerr("%s: bpf_open",__func__);
-#ifdef HAVE_CAPSICUM
-	else if (cap_rights_limit(psp->psp_bpf->bpf_fd, &rights) == -1 &&
-	    errno != ENOSYS)
-		logerr("%s: cap_rights_limit", __func__);
+#ifdef PRIVSEP_RIGHTS
+	else if (ps_rights_limit_fd(psp->psp_bpf->bpf_fd) == -1)
+		logerr("%s: ps_rights_limit_fd", __func__);
 #endif
 	else if (eloop_event_add(ctx->eloop,
 	    psp->psp_bpf->bpf_fd, ps_bpf_recvbpf, psp) == -1)
@@ -244,14 +232,7 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 		ps_freeprocess(psp);
 		return -1;
 	case 0:
-#ifdef HAVE_CAPSICUM
-		if (cap_enter() == -1 && errno != ENOSYS)
-			logerr("%s: cap_enter", __func__);
-#endif
-#ifdef HAVE_PLEDGE
-		if (pledge("stdio", NULL) == -1)
-			logerr("%s: pledge", __func__);
-#endif
+		ps_entersandbox("stdio", NULL);
 		break;
 	default:
 #ifdef PRIVSEP_DEBUG
@@ -273,6 +254,10 @@ ps_bpf_dispatch(struct dhcpcd_ctx *ctx,
 	size_t bpf_len;
 
 	ifp = if_findindex(ctx->ifaces, psm->ps_id.psi_ifindex);
+	/* interface may have departed .... */
+	if (ifp == NULL)
+		return -1;
+
 	bpf = iov->iov_base;
 	bpf_len = iov->iov_len;
 
