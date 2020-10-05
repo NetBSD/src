@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.31 2020/10/04 19:32:15 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.32 2020/10/05 12:22:49 tnn Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.31 2020/10/04 19:32:15 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.32 2020/10/05 12:22:49 tnn Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -117,7 +117,7 @@ static void	convert_str2bn(BIGNUM **, char *);
 static bool	is_hex_str(char *);
 static void	pr_fact(BIGNUM *, int, int);	/* print factors of a value */
 static void	pr_print(BIGNUM *, int);	/* print a prime */
-static void	usage(void);
+static void	usage(void) __dead;
 
 static BN_CTX	*ctx;			/* just use a global context */
 
