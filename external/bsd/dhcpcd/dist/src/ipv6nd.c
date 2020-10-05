@@ -1223,7 +1223,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	if (rap->willexpire)
 		new_data = true;
 	loglevel = new_rap || rap->willexpire || !rap->isreachable ?
-	    LOG_INFO : LOG_DEBUG,
+	    LOG_INFO : LOG_DEBUG;
 	logmessage(loglevel, "%s: Router Advertisement from %s",
 	    ifp->name, rap->sfrom);
 

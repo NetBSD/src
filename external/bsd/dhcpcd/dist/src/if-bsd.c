@@ -107,6 +107,7 @@ static const char * const ifnames_ignore[] = {
 	"fwe",		/* Firewire */
 	"fwip",		/* Firewire */
 	"tap",
+	"vether",
 	"xvif",		/* XEN DOM0 -> guest interface */
 	NULL
 };
@@ -120,6 +121,12 @@ struct rtm
 	struct rt_msghdr hdr;
 	char buffer[sizeof(struct sockaddr_storage) * RTAX_MAX];
 };
+
+int
+os_init(void)
+{
+	return 0;
+}
 
 int
 if_init(__unused struct interface *iface)
@@ -206,6 +213,13 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 		logerr(__func__);
 #else
 #warning kernel does not support route message filtering
+#endif
+
+#ifdef PRIVSEP_RIGHTS
+	/* We need to getsockopt for SO_RCVBUF and
+	 * setsockopt for RO_MISSFILTER. */
+	if (IN_PRIVSEP(ctx))
+		ps_rights_limit_fd_sockopt(ctx->link_fd);
 #endif
 
 	return 0;
@@ -353,21 +367,40 @@ if_ignore(struct dhcpcd_ctx *ctx, const char *ifname)
 #endif
 }
 
-int
-if_carrier(struct interface *ifp)
+static int if_indirect_ioctl(struct dhcpcd_ctx *ctx,
+    const char *ifname, unsigned long cmd, void *data, size_t len)
 {
-	struct ifmediareq ifmr = { .ifm_status = 0 };
+	struct ifreq ifr = { .ifr_flags = 0 };
 
-	/* Not really needed, but the other OS update flags here also */
-	if (if_getflags(ifp) == -1)
+#if defined(PRIVSEP) && (defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE))
+	if (IN_PRIVSEP(ctx))
+		return (int)ps_root_indirectioctl(ctx, cmd, ifname, data, len);
+#else
+	UNUSED(len);
+#endif
+
+	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_data = data;
+	return ioctl(ctx->pf_inet_fd, cmd, &ifr);
+}
+
+int
+if_carrier(__unused struct interface *ifp, const void *ifadata)
+{
+	const struct if_data *ifi = ifadata;
+
+	/*
+	 * Every BSD returns this and it is the sole source of truth.
+	 * Not all BSD's support SIOCGIFDATA and not all interfaces
+	 * support SIOCGIFMEDIA.
+	 */
+	assert(ifadata != NULL);
+
+	if (ifi->ifi_link_state >= LINK_STATE_UP)
+		return LINK_UP;
+	if (ifi->ifi_link_state == LINK_STATE_UNKNOWN)
 		return LINK_UNKNOWN;
-
-	strlcpy(ifmr.ifm_name, ifp->name, sizeof(ifmr.ifm_name));
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMEDIA, &ifmr) == -1 ||
-	    !(ifmr.ifm_status & IFM_AVALID))
-		return LINK_UNKNOWN;
-
-	return (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
+	return LINK_DOWN;
 }
 
 static void
@@ -380,25 +413,6 @@ if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 	sdl->sdl_nlen = sdl->sdl_alen = sdl->sdl_slen = 0;
 	sdl->sdl_index = (unsigned short)ifp->index;
 }
-
-#if defined(SIOCG80211NWID) || defined(SIOCGETVLAN)
-static int if_indirect_ioctl(struct dhcpcd_ctx *ctx,
-    const char *ifname, unsigned long cmd, void *data, size_t len)
-{
-	struct ifreq ifr = { .ifr_flags = 0 };
-
-#if defined(PRIVSEP) && defined(HAVE_PLEDGE)
-	if (IN_PRIVSEP(ctx))
-		return (int)ps_root_indirectioctl(ctx, cmd, ifname, data, len);
-#else
-	UNUSED(len);
-#endif
-
-	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	ifr.ifr_data = data;
-	return ioctl(ctx->pf_inet_fd, cmd, &ifr);
-}
-#endif
 
 static int
 if_getssid1(struct dhcpcd_ctx *ctx, const char *ifname, void *ssid)
@@ -1186,24 +1200,8 @@ if_ifinfo(struct dhcpcd_ctx *ctx, const struct if_msghdr *ifm)
 	if ((ifp = if_findindex(ctx->ifaces, ifm->ifm_index)) == NULL)
 		return 0;
 
-	switch (ifm->ifm_data.ifi_link_state) {
-	case LINK_STATE_UNKNOWN:
-		link_state = LINK_UNKNOWN;
-		break;
-#ifdef LINK_STATE_FULL_DUPLEX
-	case LINK_STATE_HALF_DUPLEX:	/* FALLTHROUGH */
-	case LINK_STATE_FULL_DUPLEX:	/* FALLTHROUGH */
-#endif
-	case LINK_STATE_UP:
-		link_state = LINK_UP;
-		break;
-	default:
-		link_state = LINK_DOWN;
-		break;
-	}
-
-	dhcpcd_handlecarrier(ctx, link_state,
-	    (unsigned int)ifm->ifm_flags, ifp->name);
+	link_state = if_carrier(ifp, &ifm->ifm_data);
+	dhcpcd_handlecarrier(ifp, link_state, (unsigned int)ifm->ifm_flags);
 	return 0;
 }
 

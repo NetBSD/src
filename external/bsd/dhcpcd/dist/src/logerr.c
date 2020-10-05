@@ -382,7 +382,7 @@ logopen(const char *path)
 	}
 
 #ifndef SMALL
-	if ((ctx->log_file = fopen(path, "a")) == NULL)
+	if ((ctx->log_file = fopen(path, "ae")) == NULL)
 		return -1;
 	setlinebuf(ctx->log_file);
 	return fileno(ctx->log_file);

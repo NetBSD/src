@@ -1164,7 +1164,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 		logdebugx("reading standard input");
 		sbytes = read(fileno(stdin), buf.buf, sizeof(buf.buf));
 	} else {
-		logdebugx("%s: reading lease `%s'",
+		logdebugx("%s: reading lease: %s",
 		    ifp->name, state->leasefile);
 		sbytes = dhcp_readfile(ifp->ctx, state->leasefile,
 		    buf.buf, sizeof(buf.buf));
@@ -2314,7 +2314,7 @@ dhcp_bind(struct interface *ifp)
 	state->state = DHS_BOUND;
 	if (!state->lease.frominfo &&
 	    !(ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))) {
-		logdebugx("%s: writing lease `%s'",
+		logdebugx("%s: writing lease: %s",
 		    ifp->name, state->leasefile);
 		if (dhcp_writefile(ifp->ctx, state->leasefile, 0640,
 		    state->new, state->new_len) == -1)
@@ -2865,10 +2865,10 @@ log_dhcp(int loglevel, const char *msg,
 		print_string(sname, sizeof(sname), OT_STRING | OT_DOMAIN,
 		    bootp->sname, sizeof(bootp->sname));
 		if (a == NULL)
-			logmessage(loglevel, "%s: %s %s %s `%s'",
+			logmessage(loglevel, "%s: %s %s %s %s",
 			    ifp->name, msg, tfrom, inet_ntoa(addr), sname);
 		else
-			logmessage(loglevel, "%s: %s %s %s %s `%s'",
+			logmessage(loglevel, "%s: %s %s %s %s %s",
 			    ifp->name, msg, a, tfrom, inet_ntoa(addr), sname);
 	} else {
 		if (r != 0) {
@@ -3476,6 +3476,16 @@ dhcp_packet(struct interface *ifp, uint8_t *data, size_t len,
 	size_t fl = bpf_frame_header_len(ifp);
 #ifdef PRIVSEP
 	const struct dhcp_state *state = D_CSTATE(ifp);
+
+	/* It's possible that an interface departs and arrives in short
+	 * order to receive a BPF frame out of order.
+	 * There is a similar check in ARP, but much lower down the stack.
+	 * It's not needed for other inet protocols because we send the
+	 * message as a whole and select the interface off that and then
+	 * check state. BPF on the other hand is very interface
+	 * specific and we do need this check. */
+	if (state == NULL)
+		return;
 
 	/* Ignore double reads */
 	if (IN_PRIVSEP(ifp->ctx)) {

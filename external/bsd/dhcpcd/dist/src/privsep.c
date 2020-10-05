@@ -76,7 +76,6 @@
 #ifdef HAVE_CAPSICUM
 #include <sys/capsicum.h>
 #include <capsicum_helpers.h>
-#define ps_rights_limit_stdio caph_limit_stdio
 #endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
@@ -118,11 +117,12 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	struct passwd *pw = ctx->ps_user;
 
 	if (!(ctx->options & DHCPCD_FORKED))
-		logdebugx("chrooting to `%s' as %s", pw->pw_dir, pw->pw_name);
-	if (chroot(pw->pw_dir) == -1)
-		logerr("%s: chroot `%s'", __func__, pw->pw_dir);
+		logdebugx("chrooting as %s to %s", pw->pw_name, pw->pw_dir);
+	if (chroot(pw->pw_dir) == -1 &&
+	    (errno != EPERM || ctx->options & DHCPCD_FORKED))
+		logerr("%s: chroot: %s", __func__, pw->pw_dir);
 	if (chdir("/") == -1)
-		logerr("%s: chdir `/'", __func__);
+		logerr("%s: chdir: /", __func__);
 
 	if ((setgroups(1, &pw->pw_gid) == -1 ||
 	     setgid(pw->pw_gid) == -1 ||
@@ -260,6 +260,18 @@ ps_rights_limit_fd(int fd)
 }
 
 int
+ps_rights_limit_fd_sockopt(int fd)
+{
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT,
+	    CAP_GETSOCKOPT, CAP_SETSOCKOPT);
+	if (cap_rights_limit(fd, &rights) == -1 && errno != ENOSYS)
+		return -1;
+	return 0;
+}
+
+int
 ps_rights_limit_fd_rdonly(int fd)
 {
 	cap_rights_t rights;
@@ -277,6 +289,25 @@ ps_rights_limit_fdpair(int fd[])
 	if (ps_rights_limit_fd(fd[0]) == -1 || ps_rights_limit_fd(fd[1]) == -1)
 		return -1;
 	return 0;
+}
+
+static int
+ps_rights_limit_stdio(struct dhcpcd_ctx *ctx)
+{
+	const int iebadf = CAPH_IGNORE_EBADF;
+	int error = 0;
+
+	if (ctx->stdin_valid &&
+	    caph_limit_stream(STDIN_FILENO, CAPH_READ | iebadf) == -1)
+		error = -1;
+	if (ctx->stdout_valid &&
+	    caph_limit_stream(STDOUT_FILENO, CAPH_WRITE | iebadf) == -1)
+		error = -1;
+	if (ctx->stderr_valid &&
+	    caph_limit_stream(STDERR_FILENO, CAPH_WRITE | iebadf) == -1)
+		error = -1;
+
+	return error;
 }
 #endif
 
@@ -346,7 +377,7 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 
 #ifdef PRIVSEP_RIGHTS
 		/* We cannot limit the root process in any way. */
-		if (ps_rights_limit_stdio() == -1) {
+		if (ps_rights_limit_stdio(ctx) == -1) {
 			logerr("ps_rights_limit_stdio");
 			goto errexit;
 		}
@@ -472,10 +503,45 @@ started_net:
 }
 
 int
-ps_mastersandbox(struct dhcpcd_ctx *ctx)
+ps_entersandbox(const char *_pledge, const char **sandbox)
 {
 
-	if (ps_dropprivs(ctx) == -1) {
+#if !defined(HAVE_PLEDGE)
+	UNUSED(_pledge);
+#endif
+
+#if defined(HAVE_CAPSICUM)
+	if (sandbox != NULL)
+		*sandbox = "capsicum";
+	return cap_enter();
+#elif defined(HAVE_PLEDGE)
+	if (sandbox != NULL)
+		*sandbox = "pledge";
+	return pledge(_pledge, NULL);
+#elif defined(HAVE_SECCOMP)
+	if (sandbox != NULL)
+		*sandbox = "seccomp";
+	return ps_seccomp_enter();
+#else
+	if (sandbox != NULL)
+		*sandbox = "posix resource limited";
+	return 0;
+#endif
+}
+
+int
+ps_mastersandbox(struct dhcpcd_ctx *ctx, const char *_pledge)
+{
+	const char *sandbox = NULL;
+	bool forked;
+	int dropped;
+
+	forked = ctx->options & DHCPCD_FORKED;
+	ctx->options &= ~DHCPCD_FORKED;
+	dropped = ps_dropprivs(ctx);
+	if (forked)
+		ctx->options |= DHCPCD_FORKED;
+	if (dropped == -1) {
 		logerr("%s: ps_dropprivs", __func__);
 		return -1;
 	}
@@ -483,26 +549,25 @@ ps_mastersandbox(struct dhcpcd_ctx *ctx)
 #ifdef PRIVSEP_RIGHTS
 	if ((ctx->pf_inet_fd != -1 &&
 	    ps_rights_limit_ioctl(ctx->pf_inet_fd) == -1) ||
-	    (ctx->link_fd != -1 && ps_rights_limit_fd(ctx->link_fd) == -1) ||
-	     ps_rights_limit_stdio() == -1)
+	     ps_rights_limit_stdio(ctx) == -1)
 	{
 		logerr("%s: cap_rights_limit", __func__);
 		return -1;
 	}
 #endif
-#ifdef HAVE_CAPSICUM
-	if (cap_enter() == -1 && errno != ENOSYS) {
-		logerr("%s: cap_enter", __func__);
-		return -1;
-	}
-#endif
-#ifdef HAVE_PLEDGE
-	if (pledge("stdio route", NULL) == -1) {
-		logerr("%s: pledge", __func__);
-		return -1;
-	}
-#endif
 
+	if (_pledge == NULL)
+		_pledge = "stdio";
+	if (ps_entersandbox(_pledge, &sandbox) == -1) {
+		if (errno == ENOSYS) {
+			if (sandbox != NULL)
+				logwarnx("sandbox unavailable: %s", sandbox);
+			return 0;
+		}
+		logerr("%s: %s", __func__, sandbox);
+		return -1;
+	} else if (!forked)
+		logdebugx("sandbox: %s", sandbox);
 	return 0;
 }
 
