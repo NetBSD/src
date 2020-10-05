@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2742 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2743 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -289,3 +289,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		MULTIPROCESSOR in GENERIC.  [thorpej 20200918]
 	ld.so(1): Upgrade r_debug to the protocol version 1. [kamil 20200921]
 	vether(4): Imported from OpenBSD. [roy 20200927]
+	dhcpcd: Update to version 9.3.0 [roy 20201005]
