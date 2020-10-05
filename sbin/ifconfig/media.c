@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.10 2020/09/22 14:14:17 roy Exp $");
+__RCSID("$NetBSD: media.c,v 1.11 2020/10/05 16:17:05 roy Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -426,25 +426,25 @@ media_status(int media_type, int link_state,
 
 	/* Interface link status is queried through SIOCGIFMEDIA.
 	 * Not all interfaces have actual media. */
-	if (ifmr.ifm_count != 0) {
-		media_list = calloc(ifmr.ifm_count, sizeof(int));
-		if (media_list == NULL)
-			err(EXIT_FAILURE, "malloc");
-		ifmr.ifm_ulist = media_list;
+	if (ifmr.ifm_count == 0)
+		warnx("%s: no media types?", ifname);
 
-		if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
-			err(EXIT_FAILURE, "SIOCGIFMEDIA");
+	media_list = calloc(ifmr.ifm_count, sizeof(int));
+	if (media_list == NULL)
+		err(EXIT_FAILURE, "malloc");
+	ifmr.ifm_ulist = media_list;
 
-		printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));
-		print_media_word(ifmr.ifm_current, " ");
-		if (ifmr.ifm_active != ifmr.ifm_current) {
-			printf(" (");
-			print_media_word(ifmr.ifm_active, " ");
-			printf(")");
-		}
-		printf("\n");
-	} else
-		media_list = NULL;
+	if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
+		err(EXIT_FAILURE, "SIOCGIFMEDIA");
+
+	printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));
+	print_media_word(ifmr.ifm_current, " ");
+	if (ifmr.ifm_active != ifmr.ifm_current) {
+		printf(" (");
+		print_media_word(ifmr.ifm_active, " ");
+		printf(")");
+	}
+	printf("\n");
 
 	if (ifmr.ifm_status & IFM_STATUS_VALID)
 		print_media_status(IFM_TYPE(ifmr.ifm_current), ifmr.ifm_status);
