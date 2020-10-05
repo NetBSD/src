@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.160 2020/10/05 20:21:30 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.161 2020/10/05 22:45:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.160 2020/10/05 20:21:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.161 2020/10/05 22:45:47 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1355,43 +1355,32 @@ Dir_FindFile(const char *name, SearchPath *path)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_FindHereOrAbove  --
- *	search for a path starting at a given directory and then working
- *	our way up towards the root.
+/* Search for a path starting at a given directory and then working our way
+ * up towards the root.
  *
  * Input:
  *	here		starting directory
- *	search_path	the path we are looking for
- *	result		the result of a successful search is placed here
- *	result_len	the length of the result buffer
- *			(typically MAXPATHLEN + 1)
+ *	search_path	the relative path we are looking for
  *
  * Results:
- *	0 on failure, 1 on success [in which case the found path is put
- *	in the result buffer].
- *
- * Side Effects:
- *-----------------------------------------------------------------------
+ *	The found path, or NULL.
  */
-Boolean
-Dir_FindHereOrAbove(const char *here, const char *search_path,
-		    char *result, size_t result_len)
+char *
+Dir_FindHereOrAbove(const char *here, const char *search_path)
 {
     struct make_stat mst;
-    char dirbase[MAXPATHLEN + 1], *dirbase_end;
-    char try[MAXPATHLEN + 1], *try_end;
+    char *dirbase, *dirbase_end;
+    char *try, *try_end;
 
     /* copy out our starting point */
-    snprintf(dirbase, sizeof(dirbase), "%s", here);
+    dirbase = bmake_strdup(here);
     dirbase_end = dirbase + strlen(dirbase);
 
     /* loop until we determine a result */
-    while (TRUE) {
+    for (;;) {
 
 	/* try and stat(2) it ... */
-	snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
+	try = str_concat3(dirbase, "/", search_path);
 	if (cached_stat(try, &mst) != -1) {
 	    /*
 	     * success!  if we found a file, chop off
@@ -1405,9 +1394,10 @@ Dir_FindHereOrAbove(const char *here, const char *search_path,
 		    *try_end = '\0';	/* chop! */
 	    }
 
-	    snprintf(result, result_len, "%s", try);
-	    return TRUE;
+	    free(dirbase);
+	    return try;
 	}
+	free(try);
 
 	/*
 	 * nope, we didn't find it.  if we used up dirbase we've
@@ -1422,10 +1412,10 @@ Dir_FindHereOrAbove(const char *here, const char *search_path,
 	while (dirbase_end > dirbase && *dirbase_end != '/')
 	    dirbase_end--;
 	*dirbase_end = '\0';	/* chop! */
+    }
 
-    } /* while (TRUE) */
-
-    return FALSE;
+    free(dirbase);
+    return NULL;
 }
 
 /*-
