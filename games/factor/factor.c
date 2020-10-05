@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.33 2020/10/05 14:31:30 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.34 2020/10/05 21:11:47 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.33 2020/10/05 14:31:30 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.34 2020/10/05 21:11:47 christos Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -100,11 +100,16 @@ typedef u_long	BN_ULONG;
 
 #define BN_CTX			int
 #define BN_CTX_new()		NULL
-#define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
+#define BN_new()		calloc(sizeof(BIGNUM), 1)
+#define BN_free(a)		free(a)
+
+#define BN_copy(a, b)		*(a) = *(b)
+#define BN_cmp(a, b)		(*(a) - *(b))
 #define BN_is_zero(v)		(*(v) == 0)
 #define BN_is_one(v)		(*(v) == 1)
 #define BN_mod_word(a, b)	(*(a) % (b))
 
+static BIGNUM  *BN_dup(const BIGNUM *);
 static int	BN_dec2bn(BIGNUM **, const char *);
 static int	BN_hex2bn(BIGNUM **, const char *);
 static BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
@@ -232,6 +237,7 @@ pr_fact(BIGNUM *val, int hflag, int xflag)
 #else
 			pr_print(val, xflag);
 #endif
+			pr_print(NULL, xflag);
 			break;
 		}
 
@@ -260,6 +266,20 @@ pr_fact(BIGNUM *val, int hflag, int xflag)
 static void
 pr_print(BIGNUM *val, int xflag)
 {
+	static BIGNUM *sval;
+	static int ex = 1;
+	if (sval == NULL) {
+		sval = BN_dup(val);
+		return;
+	}
+
+	if (val != NULL && BN_cmp(val, sval) == 0) {
+		ex++;
+		return;
+	}
+	if (val == NULL)
+		val = sval;
+
 	if (xflag) {
 		fputs(" 0x", stdout);
 		BN_print_fp(stdout, val);
@@ -267,6 +287,16 @@ pr_print(BIGNUM *val, int xflag)
 		putchar(' ');
 		BN_print_dec_fp(stdout, val);
 	}
+	if (ex > 1)
+		printf(xflag ? "^0x%x" : "^%d", ex);
+
+	if (val != NULL) {
+		BN_copy(sval, val);
+	} else {
+		BN_free(sval);
+		sval = NULL;
+	}
+	ex = 1;
 }
 
 static void
@@ -387,6 +417,14 @@ BN_div_word(BIGNUM *a, BN_ULONG b)
 	mod = *a % b;
 	*a /= b;
 	return mod;
+}
+
+static BIGNUM *
+BN_dup(const BIGNUM *a)
+{
+	BIGNUM *b = BN_new();
+	BN_copy(b, a);
+	return b;
 }
 
 #endif
