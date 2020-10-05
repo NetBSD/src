@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.370 2020/10/05 21:37:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.371 2020/10/05 22:45:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.370 2020/10/05 21:37:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.371 2020/10/05 22:45:47 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -459,14 +459,13 @@ MainParseArgJobs(const char *argvalue)
 static void
 MainParseArgSysInc(const char *argvalue)
 {
-	char found_path[MAXPATHLEN + 1];
-
 	/* look for magic parent directory search string */
 	if (strncmp(".../", argvalue, 4) == 0) {
-		if (!Dir_FindHereOrAbove(curdir, argvalue + 4,
-					 found_path, sizeof(found_path)))
+		char *found_path = Dir_FindHereOrAbove(curdir, argvalue + 4);
+		if (found_path == NULL)
 			return;
 		(void)Dir_AddDir(sysIncPath, found_path);
+		free(found_path);
 	} else {
 		(void)Dir_AddDir(sysIncPath, argvalue);
 	}
@@ -1058,8 +1057,7 @@ main(int argc, char **argv)
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
 	static char defsyspath[] = _PATH_DEFSYSPATH;
-	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
-	struct timeval rightnow;		/* to initialize random seed */
+	struct timeval rightnow;	/* to initialize random seed */
 	struct utsname utsname;
 
 	/* default to writing debug to stderr */
@@ -1348,9 +1346,10 @@ main(int argc, char **argv)
 		if (strncmp(".../", start, 4) != 0) {
 			(void)Dir_AddDir(defIncPath, start);
 		} else {
-			if (Dir_FindHereOrAbove(curdir, start+4,
-			    found_path, sizeof(found_path))) {
-				(void)Dir_AddDir(defIncPath, found_path);
+			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
+			if (dir != NULL) {
+				(void)Dir_AddDir(defIncPath, dir);
+				free(dir);
 			}
 		}
 	}
