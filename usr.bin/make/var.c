@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.567 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.568 2020/10/05 19:39:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.567 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.568 2020/10/05 19:39:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1399,7 +1399,7 @@ tryagain:
 	break;
     default:
 	VarREError(xrv, &args->re, "Unexpected regex error");
-	/* fall through */
+	/* FALLTHROUGH */
     case REG_NOMATCH:
     nosub:
 	SepBuf_AddStr(buf, wp);
