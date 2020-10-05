@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.62 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.63 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -10,13 +10,12 @@
 #include <sys/param.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <time.h>
 #include <signal.h>
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.62 2020/10/05 19:24:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.63 2020/10/05 19:27:47 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;

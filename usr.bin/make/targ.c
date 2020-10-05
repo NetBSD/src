@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.110 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.111 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,14 +115,13 @@
  *			something for suffixes, too, but...
  */
 
-#include	  <stdio.h>
-#include	  <time.h>
+#include <time.h>
 
-#include	  "make.h"
-#include	  "dir.h"
+#include "make.h"
+#include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.110 2020/10/05 19:24:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.111 2020/10/05 19:27:47 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
