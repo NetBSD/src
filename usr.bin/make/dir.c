@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.158 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.159 2020/10/05 19:30:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.158 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.159 2020/10/05 19:30:37 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -234,7 +234,13 @@ OpenDirs_Init(OpenDirs *odirs)
 static void MAKE_ATTR_UNUSED
 OpenDirs_Done(OpenDirs *odirs)
 {
-    Dir_ClearPath(odirs->list);
+    CachedDirListNode *ln = odirs->list->first;
+    while (ln != NULL) {
+        CachedDirListNode *next = ln->next;
+        CachedDir *dir = ln->datum;
+        Dir_Destroy(dir);	/* removes the dir from odirs->list */
+        ln = next;
+    }
     Lst_Free(odirs->list);
     Hash_DeleteTable(&odirs->table);
 }
