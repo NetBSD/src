@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.90 2020/10/03 21:19:54 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.91 2020/10/05 19:24:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -61,7 +61,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.90 2020/10/03 21:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.91 2020/10/05 19:24:29 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -119,8 +119,8 @@ For_Eval(const char *line)
     Words words;
 
     /* Skip the '.' and any following whitespace */
-    ptr = line + 1;
-    cpp_skip_whitespace(&ptr);
+    for (ptr = line + 1; ch_isspace(*ptr); ptr++)
+	continue;
 
     /*
      * If we are not in a for loop quickly determine if the statement is
@@ -152,7 +152,8 @@ For_Eval(const char *line)
     while (TRUE) {
 	size_t len;
 
-	cpp_skip_whitespace(&ptr);
+	while (ch_isspace(*ptr))
+	    ptr++;
 	if (*ptr == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
 	    For_Free(new_for);
@@ -178,7 +179,8 @@ For_Eval(const char *line)
 	return -1;
     }
 
-    cpp_skip_whitespace(&ptr);
+    while (ch_isspace(*ptr))
+	ptr++;
 
     /*
      * Make a list with the remaining words.
@@ -265,8 +267,9 @@ For_Accum(const char *line)
     const char *ptr = line;
 
     if (*ptr == '.') {
-	ptr++;
-	cpp_skip_whitespace(&ptr);
+
+	for (ptr++; *ptr && ch_isspace(*ptr); ptr++)
+	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 && (ch_isspace(ptr[6]) || !ptr[6])) {
 	    DEBUG1(FOR, "For: end for %d\n", forLevel);

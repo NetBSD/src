@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.565 2020/10/04 10:35:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.566 2020/10/05 19:24:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.565 2020/10/04 10:35:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.566 2020/10/05 19:24:29 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -470,8 +470,6 @@ Var_Export1(const char *name, VarExportFlags flags)
 
     if (name[0] == '.')
 	return FALSE;		/* skip internals */
-    if (name[0] == '-')
-	return FALSE;		/* skip misnamed variables */
     if (name[1] == '\0') {
 	/*
 	 * A single char.
@@ -603,14 +601,14 @@ Var_Export(const char *str, Boolean isExport)
 	return;
     }
 
-    if (isExport && strncmp(str, "-env", 4) == 0) {
+    flags = 0;
+    if (strncmp(str, "-env", 4) == 0) {
 	str += 4;
-    	flags = 0;
-    } else if (isExport && strncmp(str, "-literal", 8) == 0) {
+    } else if (strncmp(str, "-literal", 8) == 0) {
 	str += 8;
-	flags = VAR_EXPORT_LITERAL;
+	flags |= VAR_EXPORT_LITERAL;
     } else {
-	flags = VAR_EXPORT_PARENT;
+	flags |= VAR_EXPORT_PARENT;
     }
 
     (void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &val);
@@ -677,7 +675,8 @@ Var_UnExport(const char *str)
 	if (cp && *cp)
 	    setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
-	cpp_skip_whitespace(&str);
+	for (; ch_isspace(*str); str++)
+	    continue;
 	if (str[0] != '\0')
 	    varnames = str;
     }
@@ -1291,11 +1290,8 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	return;
     }
 
-    if (args->lhs[0] == '\0')
-    	goto nosub;
-
     /* unanchored case, may match more than once */
-    while ((match = strstr(word, args->lhs)) != NULL) {
+    while ((match = Str_FindSubstring(word, args->lhs)) != NULL) {
 	SepBuf_AddBytesBetween(buf, word, match);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	args->matched = TRUE;
@@ -2064,16 +2060,6 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	st->newVal = st->val;
 	Buf_Destroy(&buf, TRUE);
     }
-    return AMR_OK;
-}
-
-/* :L */
-static ApplyModifierResult
-ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
-{
-    ApplyModifiersState_Define(st);
-    st->newVal = bmake_strdup(st->v->name);
-    (*pp)++;
     return AMR_OK;
 }
 
@@ -2939,17 +2925,6 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
     return AMR_OK;
 }
 
-static ApplyModifierResult
-ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
-{
-    if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
-	st->newVal = VarUniq(st->val);
-	(*pp)++;
-	return AMR_OK;
-    } else
-	return AMR_UNKNOWN;
-}
-
 #ifdef SYSVVARSUB
 /* :from=to */
 static ApplyModifierResult
@@ -3088,7 +3063,10 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'U':
 	return ApplyModifier_Defined(pp, st);
     case 'L':
-        return ApplyModifier_Literal(pp, st);
+	ApplyModifiersState_Define(st);
+	st->newVal = bmake_strdup(st->v->name);
+	(*pp)++;
+	return AMR_OK;
     case 'P':
 	return ApplyModifier_Path(pp, st);
     case '!':
@@ -3130,7 +3108,12 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'O':
 	return ApplyModifier_Order(pp, st);
     case 'u':
-        return ApplyModifier_Unique(pp, st);
+	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
+	    st->newVal = VarUniq(st->val);
+	    (*pp)++;
+	    return AMR_OK;
+	} else
+	    return AMR_UNKNOWN;
 #ifdef SUNSHCMD
     case 's':
 	return ApplyModifier_SunShell(pp, st);
@@ -3184,21 +3167,13 @@ ApplyModifiers(
 	    /* TODO: handle errors */
 
 	    /*
-	     * If we have not parsed up to st.endc or ':', we are not
-	     * interested.  This means the expression ${VAR:${M_1}${M_2}}
-	     * is not accepted, but ${VAR:${M_1}:${M_2}} is.
+	     * If we have not parsed up to st.endc or ':',
+	     * we are not interested.
 	     */
 	    if (rval[0] != '\0' &&
 		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
-		if (DEBUG(LINT))
-		    Parse_Error(PARSE_FATAL,
-				"Missing delimiter ':' after indirect modifier \"%.*s\"",
-				(int)(nested_p - p), p);
-
 		free(freeIt);
 		/* XXX: apply_mods doesn't sound like "not interested". */
-		/* XXX: Why is the indirect modifier parsed again by
-		 * apply_mods?  If any, p should be advanced to nested_p. */
 		goto apply_mods;
 	    }
 
@@ -3219,7 +3194,6 @@ ApplyModifiers(
 		}
 	    }
 	    free(freeIt);
-
 	    if (*p == ':')
 		p++;
 	    else if (*p == '\0' && endc != '\0') {
@@ -3276,10 +3250,6 @@ ApplyModifiers(
 		  st.endc, st.v->name, st.val, *mod);
 	} else if (*p == ':') {
 	    p++;
-	} else if (DEBUG(LINT) && *p != '\0' && *p != endc) {
-	    Parse_Error(PARSE_FATAL,
-			"Missing delimiter ':' after modifier \"%.*s\"",
-			(int)(p - mod), mod);
 	}
     }
 out:
@@ -3768,7 +3738,11 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 
     while (*p != '\0') {
 	if (p[0] == '$' && p[1] == '$') {
-	    /* A dollar sign may be escaped with another dollar sign. */
+	    /*
+	     * A dollar sign may be escaped with another dollar sign.
+	     * In such a case, we skip over the escape character and store the
+	     * dollar sign into the buffer directly.
+	     */
 	    if (save_dollars && (eflags & VARE_ASSIGN))
 		Buf_AddByte(&buf, '$');
 	    Buf_AddByte(&buf, '$');

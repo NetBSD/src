@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.156 2020/10/03 21:52:50 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.157 2020/10/05 19:24:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -129,13 +129,14 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "make.h"
 #include "dir.h"
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.156 2020/10/03 21:52:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.157 2020/10/05 19:24:29 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -218,58 +219,7 @@ typedef ListNode SearchPathNode;
 
 SearchPath *dirSearchPath;		/* main search path */
 
-/* A list of cached directories, with fast lookup by directory name. */
-typedef struct OpenDirs {
-    CachedDirList *list;
-    Hash_Table /* of CachedDirListNode */ table;
-} OpenDirs;
-
-static void
-OpenDirs_Init(OpenDirs *odirs)
-{
-    odirs->list = Lst_Init();
-    Hash_InitTable(&odirs->table);
-}
-
-static void MAKE_ATTR_UNUSED
-OpenDirs_Done(OpenDirs *odirs)
-{
-    Dir_ClearPath(odirs->list);
-    Lst_Free(odirs->list);
-    Hash_DeleteTable(&odirs->table);
-}
-
-static CachedDir *
-OpenDirs_Find(OpenDirs *odirs, const char *name)
-{
-    CachedDirListNode *ln = Hash_FindValue(&odirs->table, name);
-    return ln != NULL ? ln->datum : NULL;
-}
-
-static void
-OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
-{
-    Hash_Entry *he = Hash_FindEntry(&odirs->table, cdir->name);
-    if (he != NULL)
-	return;
-    he = Hash_CreateEntry(&odirs->table, cdir->name, NULL);
-    Lst_Append(odirs->list, cdir);
-    Hash_SetValue(he, odirs->list->last);
-}
-
-static void
-OpenDirs_Remove(OpenDirs *odirs, const char *name)
-{
-    Hash_Entry *he = Hash_FindEntry(&odirs->table, name);
-    CachedDirListNode *ln;
-    if (he == NULL)
-	return;
-    ln = Hash_GetValue(he);
-    Hash_DeleteEntry(&odirs->table, he);
-    Lst_Remove(odirs->list, ln);
-}
-
-static OpenDirs openDirs;	/* the list of all open directories */
+static CachedDirList *openDirectories;	/* the list of all open directories */
 
 /*
  * Variables for gathering statistics on the efficiency of the hashing
@@ -387,7 +337,7 @@ void
 Dir_Init(void)
 {
     dirSearchPath = Lst_Init();
-    OpenDirs_Init(&openDirs);
+    openDirectories = Lst_Init();
     Hash_InitTable(&mtimes);
     Hash_InitTable(&lmtimes);
 }
@@ -437,8 +387,11 @@ void
 Dir_InitDot(void)
 {
     if (dot != NULL) {
-	/* Remove old entry from openDirs, but do not destroy. */
-	OpenDirs_Remove(&openDirs, dot->name);
+	CachedDirListNode *ln;
+
+	/* Remove old entry from openDirectories, but do not destroy. */
+	ln = Lst_FindDatum(openDirectories, dot);
+	Lst_Remove(openDirectories, ln);
     }
 
     dot = Dir_AddDir(NULL, ".");
@@ -471,7 +424,8 @@ Dir_End(void)
     Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
     Lst_Free(dirSearchPath);
-    OpenDirs_Done(&openDirs);
+    Dir_ClearPath(openDirectories);
+    Lst_Free(openDirectories);
     Hash_DeleteTable(&mtimes);
 #endif
 }
@@ -1528,12 +1482,13 @@ Dir_MTime(GNode *gn, Boolean recheck)
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
 {
+    SearchPathNode *ln = NULL;
     CachedDir *dir = NULL;	/* the added directory */
     DIR *d;
     struct dirent *dp;
 
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
-	SearchPathNode *ln = Lst_Find(path, DirFindName, name);
+	ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
 	    return LstNode_Datum(ln);
 
@@ -1542,8 +1497,9 @@ Dir_AddDir(SearchPath *path, const char *name)
     }
 
     if (path != NULL)
-	dir = OpenDirs_Find(&openDirs, name);
-    if (dir != NULL) {
+	ln = Lst_Find(openDirectories, DirFindName, name);
+    if (ln != NULL) {
+	dir = LstNode_Datum(ln);
 	if (Lst_FindDatum(path, dir) == NULL) {
 	    dir->refCount++;
 	    Lst_Append(path, dir);
@@ -1574,7 +1530,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 	    (void)Hash_CreateEntry(&dir->files, dp->d_name, NULL);
 	}
 	(void)closedir(d);
-	OpenDirs_Add(&openDirs, dir);
+	Lst_Append(openDirectories, dir);
 	if (path != NULL)
 	    Lst_Append(path, dir);
     }
@@ -1667,7 +1623,11 @@ Dir_Destroy(void *dirp)
     dir->refCount--;
 
     if (dir->refCount == 0) {
-	OpenDirs_Remove(&openDirs, dir->name);
+	CachedDirListNode *node;
+
+	node = Lst_FindDatum(openDirectories, dir);
+	if (node != NULL)
+	    Lst_Remove(openDirectories, node);
 
 	Hash_DeleteTable(&dir->files);
 	free(dir->name);
@@ -1752,7 +1712,7 @@ Dir_PrintDirectories(void)
 		 percentage(hits, hits + bigmisses + nearmisses));
     debug_printf("# %-20s referenced\thits\n", "directory");
 
-    for (ln = openDirs.list->first; ln != NULL; ln = ln->next) {
+    for (ln = openDirectories->first; ln != NULL; ln = ln->next) {
 	CachedDir *dir = ln->datum;
 	debug_printf("# %-20s %10d\t%4d\n", dir->name, dir->refCount,
 		     dir->hits);

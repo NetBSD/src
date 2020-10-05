@@ -1,11 +1,8 @@
-# $NetBSD: directive-export-literal.mk,v 1.3 2020/10/03 09:37:04 rillig Exp $
+# $NetBSD: directive-export-literal.mk,v 1.4 2020/10/05 19:24:29 rillig Exp $
 #
-# Tests for the .export-literal directive, which exports a variable value
-# without expanding it.
+# Tests for the .export-literal directive.
 
-UT_VAR=		value with ${UNEXPANDED} expression
-
-.export-literal UT_VAR
+# TODO: Implementation
 
 all:
-	@echo "$$UT_VAR"
+	@:;
