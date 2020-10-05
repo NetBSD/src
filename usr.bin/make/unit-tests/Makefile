@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.161 2020/10/05 19:24:29 rillig Exp $
+# $NetBSD: Makefile,v 1.162 2020/10/05 19:27:48 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -168,6 +168,7 @@ TESTS+=		export-env
 TESTS+=		export-variants
 TESTS+=		forloop
 TESTS+=		forsubst
+TESTS+=		hanoi-include
 TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		job-output-long-lines
@@ -229,6 +230,7 @@ TESTS+=		opt-warnings-as-errors
 TESTS+=		opt-where-am-i
 TESTS+=		opt-x-reduce-exported
 TESTS+=		order
+TESTS+=		parse-var
 TESTS+=		phony-end
 TESTS+=		posix
 TESTS+=		# posix1	# broken by reverting POSIX changes
@@ -244,6 +246,10 @@ TESTS+=		sh-leading-plus
 TESTS+=		sh-meta-chars
 TESTS+=		sh-multi-line
 TESTS+=		sh-single-line
+TESTS+=		shell-csh
+TESTS+=		shell-custom
+TESTS+=		shell-ksh
+TESTS+=		shell-sh
 TESTS+=		# suffixes	# runs into an endless loop (try -dA)
 TESTS+=		suff-rebuild
 TESTS+=		sunshcmd
@@ -264,6 +270,7 @@ TESTS+=		var-op-assign
 TESTS+=		var-op-default
 TESTS+=		var-op-expand
 TESTS+=		var-op-shell
+TESTS+=		var-op-sunsh
 TESTS+=		varcmd
 TESTS+=		vardebug
 TESTS+=		varfind
@@ -403,6 +410,10 @@ SED_CMDS.opt-debug-graph1= \
 SED_CMDS.opt-debug-graph1+= \
 			-e '/Global Variables:/,/Suffixes:/d'
 SED_CMDS.sh-dots=	-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
+SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
+SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
+SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
+SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'

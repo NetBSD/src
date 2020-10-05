@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.67 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.68 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.67 2020/10/05 19:24:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.68 2020/10/05 19:27:47 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -266,46 +266,6 @@ Str_Words(const char *str, Boolean expand)
 done:
 	words[words_len] = NULL;
 	return (Words){ words, words_len, words_buf };
-}
-
-/*
- * Str_FindSubstring -- See if a string contains a particular substring.
- *
- * Input:
- *	string		String to search.
- *	substring	Substring to find in string.
- *
- * Results: If string contains substring, the return value is the location of
- * the first matching instance of substring in string.  If string doesn't
- * contain substring, the return value is NULL.  Matching is done on an exact
- * character-for-character basis with no wildcards or special characters.
- *
- * Side effects: None.
- */
-char *
-Str_FindSubstring(const char *string, const char *substring)
-{
-	const char *a, *b;
-
-	/*
-	 * First scan quickly through the two strings looking for a single-
-	 * character match.  When it's found, then compare the rest of the
-	 * substring.
-	 */
-
-	for (b = substring; *string != 0; string++) {
-		if (*string != *b)
-			continue;
-		a = string;
-		for (;;) {
-			if (*b == 0)
-				return UNCONST(string);
-			if (*a++ != *b++)
-				break;
-		}
-		b = substring;
-	}
-	return NULL;
 }
 
 /*

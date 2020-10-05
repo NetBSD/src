@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.42 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.43 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,38 +79,50 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.42 2020/10/05 19:24:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.43 2020/10/05 19:27:47 rillig Exp $");
 
 /*
- * Forward references to local procedures that are used before they're
- * defined:
+ * The ratio of # entries to # buckets at which we rebuild the table to
+ * make it larger.
  */
-
-static void RebuildTable(Hash_Table *);
-
-/*
- * The following defines the ratio of # entries to # buckets
- * at which we rebuild the table to make it larger.
- */
-
 #define rebuildLimit 3
 
-/* The hash function(s) */
+/* This hash function matches Gosling's emacs. */
+static unsigned int
+hash(const char *key, size_t *out_keylen)
+{
+	unsigned h = 0;
+	const char *p = key;
+	while (*p != '\0')
+		h = (h << 5) - h + (unsigned char)*p++;
+	if (out_keylen != NULL)
+		*out_keylen = (size_t)(p - key);
+	return h;
+}
 
-#ifndef HASH
-/* The default: this one matches Gosling's emacs */
-#define HASH(h, key, p) do { \
-	for (h = 0, p = key; *p;) \
-		h = (h << 5) - h + (unsigned char)*p++; \
-	} while (0)
+static Hash_Entry *
+HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
+{
+	Hash_Entry *e;
+	int chainlen = 0;
 
+#ifdef DEBUG_HASH_LOOKUP
+	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
 #endif
 
-/* Sets up the hash table.
- *
- * Input:
- *	t		Structure to to hold the table.
- */
+	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
+		chainlen++;
+		if (e->namehash == h && strcmp(e->name, key) == 0)
+			break;
+	}
+
+	if (chainlen > t->maxchain)
+		t->maxchain = chainlen;
+
+	return e;
+}
+
+/* Sets up the hash table. */
 void
 Hash_InitTable(Hash_Table *t)
 {
@@ -162,35 +174,47 @@ Hash_DeleteTable(Hash_Table *t)
 Hash_Entry *
 Hash_FindEntry(Hash_Table *t, const char *key)
 {
-	Hash_Entry *e;
-	unsigned h;
-	const char *p;
-	int chainlen;
-
-	if (t == NULL || t->buckets == NULL) {
-	    return NULL;
-	}
-	HASH(h, key, p);
-	p = key;
-	chainlen = 0;
-#ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
-#endif
-	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
-		chainlen++;
-		if (e->namehash == h && strcmp(e->name, p) == 0)
-			break;
-	}
-	if (chainlen > t->maxchain)
-		t->maxchain = chainlen;
-	return e;
+	unsigned int h = hash(key, NULL);
+	return HashTable_Find(t, h, key);
 }
 
 void *
 Hash_FindValue(Hash_Table *t, const char *key)
 {
-    Hash_Entry *he = Hash_FindEntry(t, key);
-    return he != NULL ? he->value : NULL;
+	Hash_Entry *he = Hash_FindEntry(t, key);
+	return he != NULL ? he->value : NULL;
+}
+
+/* Makes a new hash table that is larger than the old one. The entire hash
+ * table is moved, so any bucket numbers from the old table become invalid. */
+static void
+RebuildTable(Hash_Table *t)
+{
+	Hash_Entry *e, *next = NULL, **hp, **xp;
+	int i, mask;
+	Hash_Entry **oldhp;
+	int oldsize;
+
+	oldhp = t->buckets;
+	oldsize = i = t->bucketsSize;
+	i <<= 1;
+	t->bucketsSize = i;
+	t->bucketsMask = mask = i - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
+	while (--i >= 0)
+		*hp++ = NULL;
+	for (hp = oldhp, i = oldsize; --i >= 0;) {
+		for (e = *hp++; e != NULL; e = next) {
+			next = e->next;
+			xp = &t->buckets[e->namehash & mask];
+			e->next = *xp;
+			*xp = e;
+		}
+	}
+	free(oldhp);
+	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
+	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
+	t->maxchain = 0;
 }
 
 /* Searches the hash table for an entry corresponding to the key.
@@ -207,34 +231,16 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 {
 	Hash_Entry *e;
 	unsigned h;
-	const char *p;
-	int keylen;
-	int chainlen;
+	size_t keylen;
 	struct Hash_Entry **hp;
 
-	/*
-	 * Hash the key.  As a side effect, save the length (strlen) of the
-	 * key in case we need to create the entry.
-	 */
-	HASH(h, key, p);
-	keylen = p - key;
-	p = key;
-	chainlen = 0;
-#ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
-#endif
-	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
-		chainlen++;
-		if (e->namehash == h && strcmp(e->name, p) == 0) {
-			if (newPtr != NULL)
-				*newPtr = FALSE;
-			break;
-		}
-	}
-	if (chainlen > t->maxchain)
-		t->maxchain = chainlen;
-	if (e)
+	h = hash(key, &keylen);
+	e = HashTable_Find(t, h, key);
+	if (e) {
+		if (newPtr != NULL)
+			*newPtr = FALSE;
 		return e;
+	}
 
 	/*
 	 * The desired entry isn't there.  Before allocating a new entry,
@@ -243,13 +249,14 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	 */
 	if (t->numEntries >= rebuildLimit * t->bucketsSize)
 		RebuildTable(t);
+
 	e = bmake_malloc(sizeof(*e) + keylen);
 	hp = &t->buckets[h & t->bucketsMask];
 	e->next = *hp;
 	*hp = e;
 	Hash_SetValue(e, NULL);
 	e->namehash = h;
-	(void)strcpy(e->name, p);
+	memcpy(e->name, key, keylen + 1);
 	t->numEntries++;
 
 	if (newPtr != NULL)
@@ -263,8 +270,6 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 {
 	Hash_Entry **hp, *p;
 
-	if (e == NULL)
-		return;
 	for (hp = &t->buckets[e->namehash & t->bucketsMask];
 	     (p = *hp) != NULL; hp = &p->next) {
 		if (p == e) {
@@ -274,7 +279,6 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 			return;
 		}
 	}
-	(void)write(2, "bad call to Hash_DeleteEntry\n", 29);
 	abort();
 }
 
@@ -330,38 +334,6 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	return e;
 }
 
-/* Makes a new hash table that is larger than the old one. The entire hash
- * table is moved, so any bucket numbers from the old table become invalid. */
-static void
-RebuildTable(Hash_Table *t)
-{
-	Hash_Entry *e, *next = NULL, **hp, **xp;
-	int i, mask;
-	Hash_Entry **oldhp;
-	int oldsize;
-
-	oldhp = t->buckets;
-	oldsize = i = t->bucketsSize;
-	i <<= 1;
-	t->bucketsSize = i;
-	t->bucketsMask = mask = i - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
-	while (--i >= 0)
-		*hp++ = NULL;
-	for (hp = oldhp, i = oldsize; --i >= 0;) {
-		for (e = *hp++; e != NULL; e = next) {
-			next = e->next;
-			xp = &t->buckets[e->namehash & mask];
-			e->next = *xp;
-			*xp = e;
-		}
-	}
-	free(oldhp);
-	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
-	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
-	t->maxchain = 0;
-}
-
 void
 Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 {
@@ -377,6 +349,6 @@ Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 void
 Hash_DebugStats(Hash_Table *t, const char *name)
 {
-    DEBUG4(HASH, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
-	   name, t->bucketsSize, t->numEntries, t->maxchain);
+	DEBUG4(HASH, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
+	       name, t->bucketsSize, t->numEntries, t->maxchain);
 }

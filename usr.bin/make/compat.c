@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.164 2020/10/05 19:24:29 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.165 2020/10/05 19:27:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -82,26 +82,23 @@
  *			thems as need creatin'
  */
 
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 
-#include    <ctype.h>
-#include    <errno.h>
-#include    <signal.h>
-#include    <stdio.h>
+#include <errno.h>
+#include <signal.h>
 
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "job.h"
-#include    "metachar.h"
-#include    "pathnames.h"
+#include "make.h"
+#include "dir.h"
+#include "job.h"
+#include "metachar.h"
+#include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.164 2020/10/05 19:24:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.165 2020/10/05 19:27:47 rillig Exp $");
 
-static GNode	    *curTarg = NULL;
+static GNode *curTarg = NULL;
 static pid_t compatChild;
 static int compatSigno;
 
@@ -112,15 +109,15 @@ static int compatSigno;
 static void
 CompatDeleteTarget(GNode *gn)
 {
-    if ((gn != NULL) && !Targ_Precious (gn)) {
-	char *p1;
-	const char *file = Var_Value(TARGET, gn, &p1);
+    if (gn != NULL && !Targ_Precious(gn)) {
+	char *file_freeIt;
+	const char *file = Var_Value(TARGET, gn, &file_freeIt);
 
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed", file);
 	}
 
-	bmake_free(p1);
+	bmake_free(file_freeIt);
     }
 }
 
@@ -139,7 +136,7 @@ CompatInterrupt(int signo)
 
     CompatDeleteTarget(curTarg);
 
-    if ((curTarg != NULL) && !Targ_Precious (curTarg)) {
+    if (curTarg != NULL && !Targ_Precious(curTarg)) {
 	/*
 	 * Run .INTERRUPT only if hit with interrupt signal
 	 */
@@ -150,11 +147,13 @@ CompatInterrupt(int signo)
 	    }
 	}
     }
+
     if (signo == SIGQUIT)
 	_exit(signo);
+
     /*
-     * If there is a child running, pass the signal on
-     * we will exist after it has exited.
+     * If there is a child running, pass the signal on.
+     * We will exist after it has exited.
      */
     compatSigno = signo;
     if (compatChild > 0) {
@@ -165,11 +164,8 @@ CompatInterrupt(int signo)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CompatRunCommand --
- *	Execute the next command for a target. If the command returns an
- *	error, the node's made field is set to ERROR and creation stops.
+/* Execute the next command for a target. If the command returns an error,
+ * the node's made field is set to ERROR and creation stops.
  *
  * Input:
  *	cmdp		Command to execute
@@ -177,11 +173,6 @@ CompatInterrupt(int signo)
  *
  * Results:
  *	0 if the command succeeded, 1 if an error occurred.
- *
- * Side Effects:
- *	The node's 'made' field may be set to ERROR.
- *
- *-----------------------------------------------------------------------
  */
 int
 Compat_RunCommand(const char *cmdp, struct GNode *gn)
@@ -215,13 +206,6 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
     (void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
     /* TODO: handle errors */
 
-    /*
-     * brk_string will return an argv with a NULL in av[0], thus causing
-     * execvp to choke and die horribly. Besides, how can we execute a null
-     * command? In any case, we warn the user that the command expanded to
-     * nothing (is this the right thing to do?).
-     */
-
     if (*cmdStart == '\0') {
 	free(cmdStart);
 	return 0;
@@ -241,7 +225,7 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
 	return 0;
     }
 
-    while ((*cmd == '@') || (*cmd == '-') || (*cmd == '+')) {
+    while (*cmd == '@' || *cmd == '-' || *cmd == '+') {
 	switch (*cmd) {
 	case '@':
 	    silent = !DEBUG(LOUD);
@@ -439,8 +423,7 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
 	    gn->made = ERROR;
 	    if (keepgoing) {
 		/*
-		 * Abort the current target, but let others
-		 * continue.
+		 * Abort the current target, but let others continue.
 		 */
 		printf(" (continuing)\n");
 	    } else {
@@ -503,7 +486,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 {
     if (!shellName)		/* we came here from jobs */
 	Shell_Init();
-    if (gn->made == UNMADE && (gn == pgn || (pgn->type & OP_MADE) == 0)) {
+    if (gn->made == UNMADE && (gn == pgn || !(pgn->type & OP_MADE))) {
 	/*
 	 * First mark ourselves to be made, then apply whatever transformations
 	 * the suffix module thinks are necessary. Once that's done, we can
@@ -514,19 +497,19 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 */
 	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
-	if ((gn->type & OP_MADE) == 0)
+	if (!(gn->type & OP_MADE))
 	    Suff_FindDeps(gn);
 	MakeNodes(gn->children, gn);
-	if ((gn->flags & REMAKE) == 0) {
+	if (!(gn->flags & REMAKE)) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
 	    goto cohorts;
 	}
 
 	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
-	    char *p1;
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
-	    bmake_free(p1);
+	    char *target_freeIt;
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &target_freeIt), pgn);
+	    bmake_free(target_freeIt);
 	}
 
 	/*
@@ -536,7 +519,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * are defined by the Make_OODate function.
 	 */
 	DEBUG1(MAKE, "Examining %s...", gn->name);
-	if (! Make_OODate(gn)) {
+	if (!Make_OODate(gn)) {
 	    gn->made = UPTODATE;
 	    DEBUG0(MAKE, "up-to-date.\n");
 	    goto cohorts;
@@ -623,10 +606,10 @@ Compat_Make(GNode *gn, GNode *pgn)
 	pgn->flags &= ~(unsigned)REMAKE;
     } else {
 	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
-	    char *p1;
-	    const char *target = Var_Value(TARGET, gn, &p1);
+	    char *target_freeIt;
+	    const char *target = Var_Value(TARGET, gn, &target_freeIt);
 	    Var_Set(IMPSRC, target != NULL ? target : "", pgn);
-	    bmake_free(p1);
+	    bmake_free(target_freeIt);
 	}
 	switch(gn->made) {
 	    case BEINGMADE:

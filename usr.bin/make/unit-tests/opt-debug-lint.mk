@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.9 2020/10/05 19:24:29 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.10 2020/10/05 19:27:48 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -54,6 +54,18 @@ ${UNDEF}: ${UNDEF}
 # or not.
 .if defined(UNDEF) && exists(${UNDEF})
 .  error
+.endif
+
+# Since 2020-10-03, in lint mode the variable modifier must be separated
+# by colons.  See varparse-mod.mk.
+.if ${value:LPL} != "value"
+.  error
+.endif
+
+# Since 2020-10-03, in lint mode the variable modifier must be separated
+# by colons.  See varparse-mod.mk.
+.if ${value:${:UL}PL} != "LPL}"		# FIXME: "LPL}" is unexpected here.
+.  error ${value:${:UL}PL}
 .endif
 
 all:
