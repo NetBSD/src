@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.54 2020/09/28 00:13:03 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.55 2020/10/05 21:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -154,7 +154,7 @@ typedef struct Job {
 
     char job_suspended;
 
-    short flags;		/* Flags to control treatment of job */
+    int flags;			/* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
 #define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
@@ -170,7 +170,7 @@ typedef struct Job {
 #define JOB_BUFSIZE	1024
     /* Buffer for storing the output of the job, line by line. */
     char outBuf[JOB_BUFSIZE + 1];
-    int curPos;			/* Current position in outBuf. */
+    size_t curPos;		/* Current position in outBuf. */
 
 #ifdef USE_META
     struct BuildMon bm;
