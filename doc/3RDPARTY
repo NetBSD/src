@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1747 2020/09/27 00:32:22 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1748 2020/10/05 16:04:11 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -352,12 +352,12 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	9.2.0
-Current Vers:	9.2.0
+Version:	9.3.0
+Current Vers:	9.3.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
-Date:		2020-09-06
+Date:		2020-10-05
 Mailing List: 	dhcpcd-discuss@marples.name
 License:	BSD (2-clause)
 Location:	external/bsd/dhcpcd/dist
