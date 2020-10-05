@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2020/09/01 17:12:30 rillig Exp $
+#	$NetBSD: Makefile,v 1.100 2020/10/05 15:11:37 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -189,3 +189,10 @@ retest:
 	rm -f *.gcov *.gcda
 .endif
 	${.MAKE} test
+
+# Just out of curiosity, during development.
+.SUFFIXES: .cpre .casm
+.c.cpre:
+	${COMPILE.c:S,^-c$,-E,} ${.IMPSRC} -o ${.TARGET}
+.c.casm:
+	${COMPILE.c:S,^-c$,-S,} ${.IMPSRC} -o ${.TARGET}
