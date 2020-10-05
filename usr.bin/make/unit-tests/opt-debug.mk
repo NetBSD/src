@@ -1,14 +1,8 @@
-# $NetBSD: opt-debug.mk,v 1.3 2020/10/03 13:06:56 rillig Exp $
+# $NetBSD: opt-debug.mk,v 1.4 2020/10/05 19:24:29 rillig Exp $
 #
-# Tests for the -d command line option, which controls debug logging.
+# Tests for the -d command line option.
 
-# Enable debug logging for the variables (var.c).
-.MAKEFLAGS: -dv
-
-VAR=	value
-
-# Disable all debug logging again.
-.MAKEFLAGS: -d0			# -d0 is available since 2020-10-03
+# TODO: Implementation
 
 all:
 	@:;
