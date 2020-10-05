@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.211 2020/10/05 13:20:30 rin Exp $
+# $NetBSD: HACKS,v 1.212 2020/10/05 13:32:31 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -974,11 +974,12 @@ descr	Disable optimization on tc.c, logerr.c, ubsan.c crashes:
 kcah
 
 port	earmv7hf*
-hack	compile gdb/dwarf2expr.c with -O0 for GCC8 (toolchain/54820 and 54877)
+hack	compile gdb/dwarf2expr.c with -O0 for GCC[89] (toolchain/54820, 54877)
 cdate	Wed Apr 29 11:04:58 UTC 2020
+mdate	Mon Oct  5 22:30:00 JST 2020
 who	rin
 file	src/external/gpl3/gdb/lib/libgdb/Makefile: 1.22
-descr	GCC 8.4 miscompiles dwarf2expr.c with -O2 or -O1, which results in
+descr	GCC 8.4 and 9.3 miscompile dwarf2expr.c with -O[21], which results in
 	crashes with 'gdb_exception_RETURN_MASK_ERROR'. Note that this occurs
 	only for earmv7hf{,eb} as far as I can see. Neither earmv6hf{,eb} nor
 	earmv7{,eb} (softfloat) are affected.
