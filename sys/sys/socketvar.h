@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.160 2019/03/07 12:29:14 maxv Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.161 2020/10/05 08:38:17 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -442,7 +442,7 @@ soreadable(const struct socket *so)
 
 	return so->so_rcv.sb_cc >= so->so_rcv.sb_lowat ||
 	    (so->so_state & SS_CANTRCVMORE) != 0 ||
-	    so->so_qlen != 0 || so->so_error != 0;
+	    so->so_qlen != 0 || so->so_error != 0 || so->so_rerror != 0;
 }
 
 /* can we write something to so? */
