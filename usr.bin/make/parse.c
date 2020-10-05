@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.364 2020/10/05 16:33:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.365 2020/10/05 16:45:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.364 2020/10/05 16:33:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.365 2020/10/05 16:45:03 rillig Exp $");
 
 /* types and constants */
 
@@ -1463,6 +1463,102 @@ ParseDoDependencySourceSpecial(ParseSpecial const specType, char *const line,
     }
 }
 
+static Boolean
+ParseDoDependencyTargets(char **const inout_cp,
+			 char **const inout_line,
+			 const char *const lstart,
+			 ParseSpecial *const inout_specType,
+			 GNodeType *const inout_tOp,
+			 SearchPathList **const inout_paths,
+			 StringList *const curTargs)
+{
+    char *cp = *inout_cp;
+    char *line = *inout_line;
+    char savec;
+
+    for (;;) {
+	/*
+	 * Here LINE points to the beginning of the next word, and
+	 * LSTART points to the actual beginning of the line.
+	 */
+
+	/* Find the end of the next word. */
+	cp = line;
+	ParseDependencyTargetWord(&cp, lstart);
+
+	/*
+	 * If the word is followed by a left parenthesis, it's the
+	 * name of an object file inside an archive (ar file).
+	 */
+	if (!ParseIsEscaped(lstart, cp) && *cp == '(') {
+	    /*
+	     * Archives must be handled specially to make sure the OP_ARCHV
+	     * flag is set in their 'type' field, for one thing, and because
+	     * things like "archive(file1.o file2.o file3.o)" are permissible.
+	     * Arch_ParseArchive will set 'line' to be the first non-blank
+	     * after the archive-spec. It creates/finds nodes for the members
+	     * and places them on the given list, returning TRUE if all
+	     * went well and FALSE if there was an error in the
+	     * specification. On error, line should remain untouched.
+	     */
+	    if (!Arch_ParseArchive(&line, targets, VAR_CMD)) {
+		Parse_Error(PARSE_FATAL,
+			    "Error in archive specification: \"%s\"", line);
+		return FALSE;
+	    } else {
+		/* Done with this word; on to the next. */
+		cp = line;
+		continue;
+	    }
+	}
+
+	if (!*cp) {
+	    ParseErrorNoDependency(lstart, line);
+	    return FALSE;
+	}
+
+	/* Insert a null terminator. */
+	savec = *cp;
+	*cp = '\0';
+
+	if (!ParseDoDependencyTarget(line, inout_specType, inout_tOp,
+				     inout_paths))
+	    return FALSE;
+
+	/*
+	 * Have word in line. Get or create its node and stick it at
+	 * the end of the targets list
+	 */
+	if (*inout_specType == Not && *line != '\0') {
+	    ParseDoDependencyTargetMundane(line, curTargs);
+	} else if (*inout_specType == ExPath && *line != '.' && *line != '\0') {
+	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
+	}
+
+	/* Don't need the inserted null terminator any more. */
+	*cp = savec;
+
+	/*
+	 * If it is a special type and not .PATH, it's the only target we
+	 * allow on this line...
+	 */
+	if (*inout_specType != Not && *inout_specType != ExPath) {
+	    ParseDoDependencyTargetExtraWarn(&cp, lstart);
+	} else {
+	    pp_skip_whitespace(&cp);
+	}
+	line = cp;
+	if (*line == '\0')
+	    break;
+	if ((*line == '!' || *line == ':') && !ParseIsEscaped(lstart, line))
+	    break;
+    }
+
+    *inout_cp = cp;
+    *inout_line = line;
+    return TRUE;
+}
+
 /* Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
@@ -1519,83 +1615,9 @@ ParseDoDependency(char *line)
     /*
      * First, grind through the targets.
      */
-
-    for (;;) {
-	/*
-	 * Here LINE points to the beginning of the next word, and
-	 * LSTART points to the actual beginning of the line.
-	 */
-
-	/* Find the end of the next word. */
-	cp = line;
-	ParseDependencyTargetWord(&cp, lstart);
-
-	/*
-	 * If the word is followed by a left parenthesis, it's the
-	 * name of an object file inside an archive (ar file).
-	 */
-	if (!ParseIsEscaped(lstart, cp) && *cp == '(') {
-	    /*
-	     * Archives must be handled specially to make sure the OP_ARCHV
-	     * flag is set in their 'type' field, for one thing, and because
-	     * things like "archive(file1.o file2.o file3.o)" are permissible.
-	     * Arch_ParseArchive will set 'line' to be the first non-blank
-	     * after the archive-spec. It creates/finds nodes for the members
-	     * and places them on the given list, returning TRUE if all
-	     * went well and FALSE if there was an error in the
-	     * specification. On error, line should remain untouched.
-	     */
-	    if (!Arch_ParseArchive(&line, targets, VAR_CMD)) {
-		Parse_Error(PARSE_FATAL,
-			     "Error in archive specification: \"%s\"", line);
-		goto out;
-	    } else {
-		/* Done with this word; on to the next. */
-		cp = line;
-		continue;
-	    }
-	}
-
-	if (!*cp) {
-	    ParseErrorNoDependency(lstart, line);
-	    goto out;
-	}
-
-	/* Insert a null terminator. */
-	savec = *cp;
-	*cp = '\0';
-
-	if (!ParseDoDependencyTarget(line, &specType, &tOp, &paths))
-	    goto out;
-
-	/*
-	 * Have word in line. Get or create its node and stick it at
-	 * the end of the targets list
-	 */
-	if (specType == Not && *line != '\0') {
-	    ParseDoDependencyTargetMundane(line, curTargs);
-	} else if (specType == ExPath && *line != '.' && *line != '\0') {
-	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
-	}
-
-	/* Don't need the inserted null terminator any more. */
-	*cp = savec;
-
-	/*
-	 * If it is a special type and not .PATH, it's the only target we
-	 * allow on this line...
-	 */
-	if (specType != Not && specType != ExPath) {
-	    ParseDoDependencyTargetExtraWarn(&cp, lstart);
-	} else {
-	    pp_skip_whitespace(&cp);
-	}
-	line = cp;
-	if (*line == '\0')
-	    break;
-	if ((*line == '!' || *line == ':') && !ParseIsEscaped(lstart, line))
-	    break;
-    }
+    if (!ParseDoDependencyTargets(&cp, &line, lstart, &specType, &tOp, &paths,
+				  curTargs))
+	goto out;
 
     /*
      * Don't need the list of target names anymore...
