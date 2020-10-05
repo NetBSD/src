@@ -736,7 +736,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	argv[0] = ctx->script;
 	argv[1] = NULL;
-	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
+	logdebugx("%s: executing: %s %s", ifp->name, argv[0], reason);
 
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP) {
