@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.4 2020/10/06 21:05:21 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.5 2020/10/06 21:19:17 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -86,5 +86,17 @@ LIST=	one two
 .  error
 .endif
 .if ${LIST:%nes=%xxx} != "one two" # lhs is longer than the word "one"
+.  error
+.endif
+
+# As of 2020-10-06, the right-hand side of the SysV modifier is expanded
+# twice.  The first expansion happens in ApplyModifier_SysV, where the
+# modifier is split into its two parts.  The second expansion happens
+# when each word is replaced in ModifyWord_SYSVSubst.
+# XXX: This is unexpected.  Add more test case to demonstrate the effects
+# of removing one of the expansions.
+VALUE=		value
+INDIRECT=	1:${VALUE} 2:$${VALUE} 4:$$$${VALUE}
+.if ${x:L:x=${INDIRECT}} != "1:value 2:value 4:\${VALUE}"
 .  error
 .endif
