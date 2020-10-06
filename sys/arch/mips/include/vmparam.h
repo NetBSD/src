@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.63 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.64 2020/10/06 13:42:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,9 +126,6 @@
 /*
  * Virtual memory related constants, all in bytes
  */
-#ifndef MAXTSIZ32
-#define	MAXTSIZ32	MAXTSIZ			/* max text size */
-#endif
 #ifndef DFLDSIZ32
 #define	DFLDSIZ32	DFLDSIZ			/* initial data size limit */
 #endif

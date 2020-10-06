@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40 2020/01/22 16:59:37 ad Exp $ */
+/*	$NetBSD: vmparam.h,v 1.41 2020/10/06 13:42:03 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,9 +155,6 @@
 /*
  * 32-bit emulation limits (same as sparc - we could go bigger)
  */
-#ifndef MAXTSIZ32
-#define	MAXTSIZ32	(64*1024*1024)		/* max text size */
-#endif
 #ifndef DFLDSIZ32
 #define	DFLDSIZ32	(64*1024*1024)		/* initial data size limit */
 #endif
