@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.15 2020/09/23 05:02:27 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.16 2020/10/06 13:42:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -102,10 +102,6 @@
 #endif
 
 #define USRSTACK32	VM_MAXUSER_ADDRESS32
-
-#ifndef MAXTSIZ32
-#define	MAXTSIZ32	(1L << 26)	/* 32bit max text size (64MB) */
-#endif
 
 #ifndef	MAXDSIZ32
 #define	MAXDSIZ32	(3U*1024*1024*1024)	/* max data size */
