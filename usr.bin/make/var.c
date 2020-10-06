@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.569 2020/10/06 07:52:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.570 2020/10/06 08:13:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.569 2020/10/06 07:52:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.570 2020/10/06 08:13:27 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -213,11 +213,31 @@ ENUM_FLAGS_RTTI_6(VarFlags,
 		  VAR_IN_USE, VAR_FROM_ENV,
 		  VAR_EXPORTED, VAR_REEXPORT, VAR_FROM_CMD, VAR_READONLY);
 
+/* Variables are defined using one of the VAR=value assignments.  Their
+ * value can be queried by expressions such as $V, ${VAR}, or with modifiers
+ * such as ${VAR:S,from,to,g:Q}.
+ *
+ * There are 3 kinds of variables: context variables, environment variables,
+ * undefined variables.
+ *
+ * Context variables are stored in a GNode.context.  The only way to undefine
+ * a context variable is using the .undef directive.  In particular, it must
+ * not be possible to undefine a variable during the evaluation of an
+ * expression, or Var.name might point nowhere.
+ *
+ * Environment variables are temporary.  They are returned by VarFind, and
+ * after using them, they must be freed using VarFreeEnv.
+ *
+ * Undefined variables occur during evaluation of variable expressions such
+ * as ${UNDEF:Ufallback} in Var_Parse and ApplyModifiers.
+ */
 typedef struct Var {
-    char          *name;	/* the variable's name; it is allocated for
-				 * environment variables and aliased to the
-				 * Hash_Entry name for all other variables,
-				 * and thus must not be modified */
+    /* The name of the variable, once set, doesn't change anymore.
+     * For context variables, it aliases the corresponding Hash_Entry name.
+     * For environment and undefined variables, it is allocated. */
+    const char *name;
+    void *name_freeIt;
+
     Buffer	  val;		/* its value */
     VarFlags	  flags;	/* miscellaneous status flags */
 } Var;
@@ -254,11 +274,12 @@ typedef enum {
 } VarPatternFlags;
 
 static Var *
-VarNew(char *name, const char *value, VarFlags flags)
+VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
 {
     size_t value_len = strlen(value);
     Var *var = bmake_malloc(sizeof *var);
     var->name = name;
+    var->name_freeIt = name_freeIt;
     Buf_Init(&var->val, value_len + 1);
     Buf_AddBytes(&var->val, value, value_len);
     var->flags = flags;
@@ -360,8 +381,10 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
     if (var == NULL && (flags & FIND_ENV)) {
 	char *env;
 
-	if ((env = getenv(name)) != NULL)
-	    return VarNew(bmake_strdup(name), env, VAR_FROM_ENV);
+	if ((env = getenv(name)) != NULL) {
+	    char *varname = bmake_strdup(name);
+	    return VarNew(varname, varname, env, VAR_FROM_ENV);
+	}
 
 	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
 	    var = Hash_FindValue(&VAR_GLOBAL->context, name);
@@ -394,7 +417,7 @@ VarFreeEnv(Var *v, Boolean destroy)
 {
     if (!(v->flags & VAR_FROM_ENV))
 	return FALSE;
-    free(v->name);
+    free(v->name_freeIt);
     Buf_Destroy(&v->val, destroy);
     free(v);
     return TRUE;
@@ -406,7 +429,8 @@ static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
     Hash_Entry *he = Hash_CreateEntry(&ctxt->context, name, NULL);
-    Var *v = VarNew(he->name, val, flags & VAR_SET_READONLY ? VAR_READONLY : 0);
+    Var *v = VarNew(he->name, NULL, val,
+		      flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     Hash_SetValue(he, v);
     if (!(ctxt->flags & INTERNAL)) {
 	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
@@ -436,8 +460,7 @@ Var_Delete(const char *name, GNode *ctxt)
 	    unsetenv(v->name);
 	if (strcmp(v->name, MAKE_EXPORTED) == 0)
 	    var_exportedVars = VAR_EXPORTED_NONE;
-	if (v->name != he->name)
-	    free(v->name);
+	assert(v->name_freeIt == NULL);
 	Hash_DeleteEntry(&ctxt->context, he);
 	Buf_Destroy(&v->val, TRUE);
 	free(v);
@@ -2807,7 +2830,6 @@ static ApplyModifierResult
 ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 {
     GNode *v_ctxt;
-    char *sv_name;
     char delim;
     char *val;
     VarParseResult res;
@@ -2820,20 +2842,13 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	return AMR_UNKNOWN;	/* "::<unrecognised>" */
 
 
-    if (st->v->name[0] == 0) {
+    if (st->v->name[0] == '\0') {
 	*pp = mod + 1;
 	return AMR_BAD;
     }
 
     v_ctxt = st->ctxt;		/* context where v belongs */
-    sv_name = NULL;
-    if (st->exprFlags & VEF_UNDEF) {
-	/*
-	 * We need to bmake_strdup() it in case ParseModifierPart() recurses.
-	 */
-	sv_name = st->v->name;
-	st->v->name = bmake_strdup(st->v->name);
-    } else if (st->ctxt != VAR_GLOBAL) {
+    if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
 	Var *gv = VarFind(st->v->name, st->ctxt, 0);
 	if (gv == NULL)
 	    v_ctxt = VAR_GLOBAL;
@@ -2854,11 +2869,6 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 
     delim = st->startc == '(' ? ')' : '}';
     res = ParseModifierPart(pp, delim, st->eflags, st, &val, NULL, NULL, NULL);
-    if (st->exprFlags & VEF_UNDEF) {
-	/* restore original name */
-	free(st->v->name);
-	st->v->name = sv_name;
-    }
     if (res != VPR_OK)
 	return AMR_CLEANUP;
 
@@ -3630,7 +3640,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	     * At the end, after applying all modifiers, if the expression
 	     * is still undefined, Var_Parse will return an empty string
 	     * instead of the actually computed value. */
-	    v = VarNew(varname, "", 0);
+	    v = VarNew(varname, varname, "", 0);
 	    exprFlags = VEF_UNDEF;
 	} else
 	    free(varname);
@@ -3716,7 +3726,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	}
 	if (nstr != Buf_GetAll(&v->val, NULL))
 	    Buf_Destroy(&v->val, TRUE);
-	free(v->name);
+	free(v->name_freeIt);
 	free(v);
     }
     *out_val = nstr;
