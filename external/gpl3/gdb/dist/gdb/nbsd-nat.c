@@ -587,9 +587,6 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
   siginfo_t *si = &psi.psi_siginfo;
 
   int lwp = psi.psi_lwpid;
-  // XXX: should the kernel return this?
-  if (lwp == 0)
-    lwp = pid;
 
   int signo = si->si_signo;
   const int code = si->si_code;
