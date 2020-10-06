@@ -754,6 +754,7 @@ changequote(,)dnl
       case "$host_os" in
                               # Guess no on AIX and glibc systems.
         aix* | *-gnu* | gnu*) gl_cv_func_mbrtowc_empty_input="guessing no" ;;
+                              # Guess yes on native Windows.
         mingw*)               gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
         *)                    gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
       esac
