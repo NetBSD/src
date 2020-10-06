@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.261 2020/10/05 21:37:07 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.262 2020/10/06 16:39:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.261 2020/10/05 21:37:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.262 2020/10/06 16:39:23 rillig Exp $");
 
 # define STATIC static
 
@@ -161,16 +161,6 @@ static int aborting = 0;	/* why is the make aborting? */
  * this tracks the number of tokens currently "out" to build jobs.
  */
 int jobTokensRunning = 0;
-
-/*
- * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
- * is a char! So when we go above 127 we turn negative!
- *
- * XXX: This cannot have ever worked. Converting a signed char directly to
- * unsigned creates very large numbers. It should have been converted to
- * unsigned char first, in the same way as for the <ctype.h> functions.
- */
-#define FILENO(a) ((unsigned) fileno(a))
 
 /* The number of commands actually printed for a target.
  * XXX: Why printed? Shouldn't that be run/printed instead, depending on the
@@ -1213,7 +1203,7 @@ JobExec(Job *job, char **argv)
 	 * reset it to the beginning (again). Since the stream was marked
 	 * close-on-exec, we must clear that bit in the new input.
 	 */
-	if (dup2(FILENO(job->cmdFILE), 0) == -1) {
+	if (dup2(fileno(job->cmdFILE), 0) == -1) {
 	    execError("dup2", "job->cmdFILE");
 	    _exit(1);
 	}
@@ -1466,7 +1456,7 @@ JobStart(GNode *gn, int flags)
 	if (job->cmdFILE == NULL) {
 	    Punt("Could not fdopen %s", tfile);
 	}
-	(void)fcntl(FILENO(job->cmdFILE), F_SETFD, FD_CLOEXEC);
+	(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
 	/*
 	 * Send the commands to the command file, flush all its buffers then
 	 * rewind and remove the thing.
