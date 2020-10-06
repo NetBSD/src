@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.57 2020/09/06 02:34:30 mrg Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.58 2020/10/06 18:47:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.57 2020/09/06 02:34:30 mrg Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.58 2020/10/06 18:47:07 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -391,24 +391,38 @@ pathtounit(char *path, int *unitp)
 static char *
 resolve_ccdname(char *name)
 {
-	char c, *path;
+	char *path, *buf;
+	const char *p;
+	char c;
 	size_t len;
 	int rawpart;
 
 	if (name[0] == '/' || name[0] == '.') {
 		/* Assume they gave the correct pathname. */
-		return estrdup(name);
+		path = estrdup(name);
+	} else {
+
+		len = strlen(name);
+		c = name[len - 1];
+
+		if (isdigit((unsigned char)c)) {
+			if ((rawpart = getrawpartition()) < 0)
+				return NULL;
+			easprintf(&path, "/dev/%s%c", name, 'a' + rawpart);
+		} else
+			easprintf(&path, "/dev/%s", name);
 	}
 
-	len = strlen(name);
-	c = name[len - 1];
-
-	if (isdigit((unsigned char)c)) {
-		if ((rawpart = getrawpartition()) < 0)
-			return NULL;
-		easprintf(&path, "/dev/%s%c", name, 'a' + rawpart);
-	} else
-		easprintf(&path, "/dev/%s", name);
+	/*
+	 * Convert to raw device if possible.
+	 */
+	buf = emalloc(MAXPATHLEN);
+	p = getdiskrawname(buf, MAXPATHLEN, path);
+	if (p) {
+		free(path);
+		path = estrdup(p);
+	}
+	free(buf);
 
 	return path;
 }
@@ -562,6 +576,7 @@ dump_ccd(int argc, char **argv, int action)
 			continue;
 		}
 		errs += printccdinfo(i);
+		free(ccd);
 	}
 	return errs;
 }
