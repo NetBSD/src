@@ -138,7 +138,7 @@ static int
 gdb_connect_sync_socket (int pid)
 {
 #ifdef HAVE_SYS_UN_H
-  struct sockaddr_un addr;
+  struct sockaddr_un addr = {};
   int res, fd;
   char path[UNIX_PATH_MAX];
 
@@ -153,7 +153,6 @@ gdb_connect_sync_socket (int pid)
       return -1;
     }
 
-  memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
 
   res = xsnprintf (addr.sun_path, UNIX_PATH_MAX, "%s", path);
