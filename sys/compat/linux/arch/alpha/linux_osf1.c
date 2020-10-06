@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $	*/
+/*	$NetBSD: linux_osf1.c,v 1.4 2020/10/06 13:38:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.4 2020/10/06 13:38:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +314,10 @@ linux_sys_osf1_set_program_attributes(struct lwp *l, const struct linux_sys_osf1
 
 	if (dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return (ENOMEM);
+#ifdef MAXTSIZ
 	if (tsize > MAXTSIZ)
 		return (ENOMEM);
+#endif
 
 	/* XXXSMP unlocked */
 	p->p_vmspace->vm_taddr = SCARG(uap, taddr);
