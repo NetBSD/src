@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.501 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.502 2020/10/06 13:38:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.501 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.502 2020/10/06 13:38:00 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -498,18 +498,25 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 			}
 
 			/* check limits */
-			if ((epp->ep_tsize > MAXTSIZ) ||
-			    (epp->ep_dsize > (u_quad_t)l->l_proc->p_rlimit
-						    [RLIMIT_DATA].rlim_cur)) {
+#ifdef MAXTSIZ
+			if (epp->ep_tsize > MAXTSIZ) {
 #ifdef DIAGNOSTIC
-				printf("%s: rejecting due to "
-				    "limits (t=%llu > %llu || d=%llu > %llu)\n",
-				    __func__,
-				    (unsigned long long)epp->ep_tsize,
-				    (unsigned long long)MAXTSIZ,
-				    (unsigned long long)epp->ep_dsize,
-				    (unsigned long long)
-				    l->l_proc->p_rlimit[RLIMIT_DATA].rlim_cur);
+#define LMSG "%s: rejecting due to %s limit (%ju > %ju)\n"
+				printf(LMSG, __func__, "text",
+				    (uintmax_t)epp->ep_tsize,
+				    (uintmax_t)MAXTSIZ);
+#endif
+				error = ENOMEM;
+				break;
+			}
+#endif
+			vsize_t dlimit =
+			    (vsize_t)l->l_proc->p_rlimit[RLIMIT_DATA].rlim_cur;
+			if (epp->ep_dsize > dlimit) {
+#ifdef DIAGNOSTIC
+				printf(LMSG, __func__, "data",
+				    (uintmax_t)epp->ep_dsize,
+				    (uintmax_t)dlimit);
 #endif
 				error = ENOMEM;
 				break;
