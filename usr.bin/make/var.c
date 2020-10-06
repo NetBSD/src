@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.568 2020/10/05 19:39:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.569 2020/10/06 07:52:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.568 2020/10/05 19:39:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.569 2020/10/06 07:52:47 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -253,6 +253,18 @@ typedef enum {
     VARP_ANCHOR_END	= 0x08	/* Match at end of word */
 } VarPatternFlags;
 
+static Var *
+VarNew(char *name, const char *value, VarFlags flags)
+{
+    size_t value_len = strlen(value);
+    Var *var = bmake_malloc(sizeof *var);
+    var->name = name;
+    Buf_Init(&var->val, value_len + 1);
+    Buf_AddBytes(&var->val, value, value_len);
+    var->flags = flags;
+    return var;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarFind --
@@ -348,18 +360,8 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
     if (var == NULL && (flags & FIND_ENV)) {
 	char *env;
 
-	if ((env = getenv(name)) != NULL) {
-	    Var *v = bmake_malloc(sizeof(Var));
-	    size_t len;
-	    v->name = bmake_strdup(name);
-
-	    len = strlen(env);
-	    Buf_Init(&v->val, len + 1);
-	    Buf_AddBytes(&v->val, env, len);
-
-	    v->flags = VAR_FROM_ENV;
-	    return v;
-	}
+	if ((env = getenv(name)) != NULL)
+	    return VarNew(bmake_strdup(name), env, VAR_FROM_ENV);
 
 	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
 	    var = Hash_FindValue(&VAR_GLOBAL->context, name);
@@ -403,20 +405,9 @@ VarFreeEnv(Var *v, Boolean destroy)
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
-    Var *v = bmake_malloc(sizeof(Var));
-    size_t len = strlen(val);
-    Hash_Entry *he;
-
-    Buf_Init(&v->val, len + 1);
-    Buf_AddBytes(&v->val, val, len);
-
-    v->flags = 0;
-    if (flags & VAR_SET_READONLY)
-	v->flags |= VAR_READONLY;
-
-    he = Hash_CreateEntry(&ctxt->context, name, NULL);
+    Hash_Entry *he = Hash_CreateEntry(&ctxt->context, name, NULL);
+    Var *v = VarNew(he->name, val, flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     Hash_SetValue(he, v);
-    v->name = he->name;
     if (!(ctxt->flags & INTERNAL)) {
 	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
     }
@@ -3639,10 +3630,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	     * At the end, after applying all modifiers, if the expression
 	     * is still undefined, Var_Parse will return an empty string
 	     * instead of the actually computed value. */
-	    v = bmake_malloc(sizeof(Var));
-	    v->name = varname;
-	    Buf_Init(&v->val, 1);
-	    v->flags = 0;
+	    v = VarNew(varname, "", 0);
 	    exprFlags = VEF_UNDEF;
 	} else
 	    free(varname);
