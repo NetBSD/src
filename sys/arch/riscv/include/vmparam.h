@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2019/06/01 12:42:28 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2020/10/06 13:42:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -79,9 +79,6 @@
 /*
  * Virtual memory related constants, all in bytes
  */
-#ifndef MAXTSIZ32
-#define	MAXTSIZ32	MAXTSIZ			/* max text size */
-#endif
 #ifndef DFLDSIZ32
 #define	DFLDSIZ32	DFLDSIZ			/* initial data size limit */
 #endif
