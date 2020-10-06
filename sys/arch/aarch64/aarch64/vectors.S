@@ -1,15 +1,16 @@
-/*	$NetBSD: vectors.S,v 1.19 2020/09/30 16:35:49 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.20 2020/10/06 06:26:46 skrll Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
 
 #include "assym.h"
 
+#include "opt_compat_netbsd32.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 
-RCSID("$NetBSD: vectors.S,v 1.19 2020/09/30 16:35:49 skrll Exp $")
+RCSID("$NetBSD: vectors.S,v 1.20 2020/10/06 06:26:46 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
