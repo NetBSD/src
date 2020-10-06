@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.63 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.64 2020/10/06 21:51:33 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.63 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.64 2020/10/06 21:51:33 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -397,65 +397,4 @@ snprintf(char *s, size_t n, const char *fmt, ...)
 	return rv;
 }
 
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRFTIME)
-size_t
-strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
-{
-	static char months[][4] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
-
-	size_t s;
-	char *b = buf;
-
-	while (*fmt) {
-		if (len == 0)
-			return buf - b;
-		if (*fmt != '%') {
-			*buf++ = *fmt++;
-			len--;
-			continue;
-		}
-		switch (*fmt++) {
-		case '%':
-			*buf++ = '%';
-			len--;
-			if (len == 0) return buf - b;
-			/*FALLTHROUGH*/
-		case '\0':
-			*buf = '%';
-			s = 1;
-			break;
-		case 'k':
-			s = snprintf(buf, len, "%d", tm->tm_hour);
-			break;
-		case 'M':
-			s = snprintf(buf, len, "%02d", tm->tm_min);
-			break;
-		case 'S':
-			s = snprintf(buf, len, "%02d", tm->tm_sec);
-			break;
-		case 'b':
-			if (tm->tm_mon >= 12)
-				return buf - b;
-			s = snprintf(buf, len, "%s", months[tm->tm_mon]);
-			break;
-		case 'd':
-			s = snprintf(buf, len, "%02d", tm->tm_mday);
-			break;
-		case 'Y':
-			s = snprintf(buf, len, "%d", 1900 + tm->tm_year);
-			break;
-		default:
-			s = snprintf(buf, len, "Unsupported format %c",
-			    fmt[-1]);
-			break;
-		}
-		buf += s;
-		len -= s;
-	}
-	return buf - b;
-}
-#endif
 #endif
