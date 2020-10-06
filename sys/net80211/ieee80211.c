@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.60 2020/10/06 23:51:05 roy Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.60 2020/10/06 23:51:05 roy Exp $");
 #endif
 
 /*
@@ -150,6 +150,30 @@ ieee80211_default_reset(struct ifnet *ifp)
 	return ENETRESET;
 }
 
+static void
+ieee80211_init_link_state(struct ieee80211com *ic)
+{
+	struct ifnet *ifp = ic->ic_ifp;
+
+	/*
+	 * Link state does not make sense in IBSS or HOSTAP modes.
+	 * We know that the link in MONITOR mode is DOWN as we cannot
+	 * transmit, only monitor.
+	 * That leaves BSS mode, which starts off DOWN and will
+	 * transition to UP when it joins a node.
+	 */
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_AHDEMO:
+	case IEEE80211_M_HOSTAP:
+	case IEEE80211_M_IBSS:
+		if_link_state_change(ifp, LINK_STATE_UNKNOWN);
+		break;
+	default:
+		if_link_state_change(ifp, LINK_STATE_DOWN);
+		break;
+	}
+}
+
 void
 ieee80211_ifattach(struct ieee80211com *ic)
 {
@@ -246,6 +270,8 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	 */
 	if (ic->ic_reset == NULL)
 		ic->ic_reset = ieee80211_default_reset;
+
+	ieee80211_init_link_state(ic);
 }
 
 void
@@ -703,6 +729,7 @@ ieee80211_media_change(struct ifnet *ifp)
 		 */
 		ieee80211_reset_erp(ic);
 		ieee80211_wme_initparams(ic);	/* after opmode change */
+		ieee80211_init_link_state(ic);	/* after opmode change */
 		error = ENETRESET;
 	}
 #ifdef notdef
