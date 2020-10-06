@@ -199,7 +199,7 @@ _initialize_ppcnbsd_tdep ()
 			  ppcnbsd_init_abi);
 
   /* Avoid initializing the register offsets again if they were
-     already initailized by ppcnbsd-nat.c.  */
+     already initialized by ppcnbsd-nat.c.  */
   if (ppcnbsd_reg_offsets.pc_offset == 0)
     {
       /* General-purpose registers.  */
