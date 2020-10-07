@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2019/11/01 20:53:10 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2020/10/07 07:35:28 rin Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -51,11 +51,11 @@ COPTS.ctl.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
 
-.if ${MACHINE} == "alpha"
+.if ${MACHINE} == "alpha" && ${ACTIVE_CC} == "gcc"
 # These files need to be compiled with -O0, or build everything with
 # -DJEMALLOC_DEBUG. Otherwise, userland binaries crash randomly, as
 # reported in port-alpha/54307.
-COPTS.rtree.c+=-O0
+COPTS.rtree.c+=	${${HAVE_GCC:U0} < 9:? -O0 :}
 COPTS.tcache.c+=-O0
 .endif
 

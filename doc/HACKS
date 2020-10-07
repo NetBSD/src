@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.212 2020/10/05 13:32:31 rin Exp $
+# $NetBSD: HACKS,v 1.213 2020/10/07 07:35:28 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -951,12 +951,14 @@ descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
 kcah
 
 port	alpha
-hack	GCC 7.4/8.3: userland binaries crash randomly (port-alpha/54307)
+hack	GCC 7.4/8.3/9.3: userland binaries crash randomly (port-alpha/54307)
 cdate	Fri Nov  1 20:43:35 UTC 2019
+mdate	Wed Oct  7 16:00:00 JST 2020
 who	rin
 file	src/external/bsd/jemalloc/lib/Makefile.inc: 1.11
-descr	rtree.c and tcache.c need to be compiled with -O0, alternatively,
-	you can compile whole jemalloc with -DJEMALLOC_DEBUG.
+descr	GCC miscompiles rtree.c (for 7.4 and 8.3) and tcache.c (for 7.4, 8.3,
+	and 9.3) with optimization levels -O[12]. Compile these files with -O0,
+	alternatively, compile whole jemalloc with -DJEMALLOC_DEBUG.
 kcah
 
 port	powerpc
