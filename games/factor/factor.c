@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.34 2020/10/05 21:11:47 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.35 2020/10/07 19:48:29 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.34 2020/10/05 21:11:47 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.35 2020/10/07 19:48:29 christos Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -177,6 +177,18 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+static void
+pr_exp(int i, int xflag)
+{
+	printf(xflag && i > 9 ? "^0x%x" : "^%d", i);
+}
+
+static void
+pr_uint64(uint64_t i, int xflag)
+{
+	printf(xflag ? " 0x%" PRIx64 : " %" PRIu64, i);
+}
+
 /*
  * pr_fact - print the factors of a number
  *
@@ -246,15 +258,14 @@ pr_fact(BIGNUM *val, int hflag, int xflag)
 		do {
 			i++;
 			if (!hflag)
-				printf(xflag ? " 0x%" PRIx64 : " %" PRIu64,
-				    *fact);
+				pr_uint64(*fact, xflag);
 			BN_div_word(val, (BN_ULONG)*fact);
 		} while (BN_mod_word(val, (BN_ULONG)*fact) == 0);
 
 		if (hflag) {
-			printf(xflag ? " 0x%" PRIx64 : " %" PRIu64, *fact);
+			pr_uint64(*fact, xflag);
 			if (i > 1)
-				printf(xflag ? "^0x%x" : "^%d", i);
+				pr_exp(i, xflag);
 		}
 
 		/* Let the user know we're doing something. */
@@ -288,7 +299,7 @@ pr_print(BIGNUM *val, int xflag)
 		BN_print_dec_fp(stdout, val);
 	}
 	if (ex > 1)
-		printf(xflag ? "^0x%x" : "^%d", ex);
+		pr_exp(ex, xflag);
 
 	if (val != NULL) {
 		BN_copy(sval, val);
@@ -302,7 +313,7 @@ pr_print(BIGNUM *val, int xflag)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: factor [-h] [value ...]\n");
+	fprintf(stderr, "Usage: %s [-hx] [value ...]\n", getprogname());
 	exit(1);
 }
 
