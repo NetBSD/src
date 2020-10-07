@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_32.S,v 1.2 2020/08/12 12:59:57 skrll Exp $ */
+/* $NetBSD: atomic_cas_32.S,v 1.3 2020/10/07 07:31:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_cas_32)
-	mov	x4, x0			/* we need r0 for return value */
+	mov	x4, x0			/* we need x0 for return value */
 1:	ldxr	w0, [x4]		/* load old value */
 	cmp	w0, w1			/*   compare? */
 	b.ne	2f			/*     return if different */
