@@ -1,4 +1,4 @@
-/* $NetBSD: qemu.c,v 1.3 2020/10/03 17:32:49 thorpej Exp $ */
+/* $NetBSD: qemu.c,v 1.4 2020/10/07 14:07:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ qemu_set_alarm_relative(unsigned long nsec)
 static void
 qemu_hardclock(struct clockframe * const framep)
 {
-	if (__predict_false(qemu_nsec_per_tick == 0)) {
+	if (__predict_false(qemu_nsec_per_tick == (unsigned long)-1)) {
 		/* Spurious; qemu_clock_init() hasn't been called yet. */
 		return;
 	}
@@ -138,7 +138,6 @@ qemu_clock_init(void * const v __unused)
 	/* First-time initialization... */
 	if (qemu_nsec_per_tick == (unsigned long)-1) {
 		KASSERT(CPU_IS_PRIMARY(curcpu()));
-		qemu_nsec_per_tick = 1000000000UL / hz;
 
 		/*
 		 * Override the clockintr routine; the Qemu alarm is
@@ -156,6 +155,8 @@ qemu_clock_init(void * const v __unused)
 		tick = 1000000 / hz;
 		tickadj = (240000 / (60 * hz)) ? (240000 / (60 * hz)) : 1;
 		schedhz = 0;
+
+		qemu_nsec_per_tick = 1000000000UL / hz;
 
 		printf("Using the Qemu CPU alarm for %d Hz hardclock.\n", hz);
 	}
