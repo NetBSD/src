@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_op_asm.h,v 1.3 2019/02/08 06:56:56 ryo Exp $ */
+/* $NetBSD: atomic_op_asm.h,v 1.4 2020/10/07 07:34:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ END(_atomic_##OP##_8)
 
 #define	ATOMIC_OP8_NV(OP, INSN)						\
 ENTRY_NP(_atomic_##OP##_8_nv)						;\
-	mov	x4, x0			/* need r0 for return value */	;\
+	mov	x4, x0			/* need x0 for return value */	;\
 1:	ldxrb	w0, [x4]		/* load old value */		;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrb	w3, w0, [x4]		/* try to store */		;\
@@ -69,7 +69,7 @@ END(_atomic_##OP##_16)
 
 #define	ATOMIC_OP16_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_16_nv)						;\
-	mov	x4, x0			/* need r0 for return value */	;\
+	mov	x4, x0			/* need x0 for return value */	;\
 1:	ldxrh	w0, [x4]		/* load old value */		;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrh	w3, w0, [x4]		/* try to store */		;\
@@ -91,7 +91,7 @@ END(_atomic_##OP##_32)
 
 #define	ATOMIC_OP32_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_32_nv)						;\
-	mov	x4, x0			/* need r0 for return value */	;\
+	mov	x4, x0			/* need x0 for return value */	;\
 1:	ldxr	w0, [x4]		/* load old value */		;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxr	w3, w0, [x4]		/* try to store */		;\
@@ -113,7 +113,7 @@ END(_atomic_##OP##_64)
 
 #define	ATOMIC_OP64_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_64_nv)						;\
-	mov	x4, x0			/* need r0 for return value */	;\
+	mov	x4, x0			/* need x0 for return value */	;\
 1:	ldxr	x0, [x4]		/* load old value */		;\
 	INSN	x0, x0, x1		/* calc new (return) value */	;\
 	stxr	w3, x0, [x4]		/* try to store */		;\
