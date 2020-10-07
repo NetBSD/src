@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.199 2020/09/29 02:49:56 msaitoh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.200 2020/10/07 17:51:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.199 2020/09/29 02:49:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.200 2020/10/07 17:51:50 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1700,6 +1700,10 @@ uvm_swapisfull(void)
 {
 	int swpgonly;
 	bool rv;
+
+	if (uvmexp.swpages == 0) {
+		return true;
+	}
 
 	mutex_enter(&uvm_swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);

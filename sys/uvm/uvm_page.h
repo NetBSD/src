@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.106 2020/09/20 10:30:05 skrll Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.107 2020/10/07 17:51:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -259,6 +259,7 @@ struct vm_page {
 #define	PG_FREE		0x00004000	/* page is on free list */
 #define	PG_MARKER	0x00008000	/* dummy marker page */
 #define	PG_PAGER1	0x00010000	/* pager-specific flag */
+#define	PG_PGLCA	0x00020000	/* allocated by uvm_pglistalloc_contig */
 
 #define	PG_STAT		(PG_ANON|PG_AOBJ|PG_FILE)
 #define	PG_SWAPBACKED	(PG_ANON|PG_AOBJ)
@@ -268,7 +269,7 @@ struct vm_page {
 	"\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
 	"\11ZERO\12TABLED\13AOBJ\14ANON" \
 	"\15FILE\16READAHEAD\17FREE\20MARKER" \
-	"\21PAGER1"
+	"\21PAGER1\22PGLCA"
 
 /*
  * Flags stored in pg->pqflags, which is protected by pg->interlock.
@@ -330,6 +331,7 @@ struct vm_page {
  */
 
 void uvm_page_init(vaddr_t *, vaddr_t *);
+void uvm_pglistalloc_init(void);
 #if defined(UVM_PAGE_TRKOWN)
 void uvm_page_own(struct vm_page *, const char *);
 #endif
