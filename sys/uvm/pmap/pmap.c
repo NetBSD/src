@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2020/09/24 06:45:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2020/10/08 14:02:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2020/09/24 06:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2020/10/08 14:02:40 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -407,13 +407,13 @@ pmap_page_syncicache(struct vm_page *pg)
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 
-	UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx", (uintptr_t)pv,
+	UVMHIST_LOG(pmaphist, "pv %#jx pv_pmap %#jx", (uintptr_t)pv,
 	    (uintptr_t)pv->pv_pmap, 0, 0);
 
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
 #ifdef MULTIPROCESSOR
-			UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx",
+			UVMHIST_LOG(pmaphist, "pv %#jx pv_pmap %#jx",
 			    (uintptr_t)pv, (uintptr_t)pv->pv_pmap, 0, 0);
 			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
 			if (kcpuset_match(onproc, kcpuset_running)) {
@@ -779,7 +779,7 @@ pmap_page_remove(struct vm_page *pg)
 		npv = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 		if (PV_ISKENTER_P(pv)) {
-			UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %jx"
+			UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %#jx"
 			    " skip", (uintptr_t)pv, (uintptr_t)pv->pv_pmap,
 			    pv->pv_va, 0);
 
@@ -815,8 +815,8 @@ pmap_page_remove(struct vm_page *pg)
 		KASSERTMSG(ptep != NULL, "%#"PRIxVADDR " %#"PRIxVADDR, va,
 		    pmap_limits.virtual_end);
 		pt_entry_t pte = *ptep;
-		UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %jx"
-		    " pte %jx", (uintptr_t)pv, (uintptr_t)pmap, va,
+		UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %#jx"
+		    " pte %#jx", (uintptr_t)pv, (uintptr_t)pmap, va,
 		    pte_value(pte));
 		if (!pte_valid_p(pte))
 			continue;
@@ -918,7 +918,7 @@ pmap_update(struct pmap *pmap)
 	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- done (kernel=%#jx)",
+	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jx)",
 		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
 }
 
