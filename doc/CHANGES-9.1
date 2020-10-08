@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.118 2020/10/04 18:24:07 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.119 2020/10/08 18:11:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5047,4 +5047,63 @@ sys/dev/fdt/dw_apb_uart.c			1.8
 	from +++++ to default.
 	[rin, ticket #1096]
 
+external/mit/xorg/bin/xterm/Makefile		1.18
+
+	xterm: Enable SIXEL graphics support.
+	[nia, ticket #1097]
+
+external/mit/xorg/bin/xeyes/Makefile		1.3
+
+	xeyes: Enable anti-aliasing with XRENDER.
+	[nia, ticket #1098]
+
+external/mit/xdm/dist/config/Xsession.in	1.2-1.5
+external/mit/xinit/dist/xinitrc.cpp		1.5-1.7
+external/mit/xsm/dist/system.xsm		1.2
+distrib/sets/lists/xbase/mi			1.157
+external/mit/ctwm/Makefile			1.2-1.5
+external/mit/ctwm/bin/ctwm/Makefile		1.6-1.8
+external/mit/ctwm/etc/Makefile			1.1,1.2
+external/mit/ctwm/etc/system.ctwmrc		1.1
+external/mit/ctwm/libexec/Makefile		1.1
+external/mit/ctwm/libexec/ctwm_app_menu		1.1
+
+	Make ctwm the default X session window manager.
+	Add a script for dynamically generating a menu in the ctwm desktop.
+	Move the new ctwmrc here so it doesn't conflict with the upstream one.
+	[nia, ticket #1099]
+
+share/man/man4/pms.4				1.38
+sys/dev/pckbport/synaptics.c			1.69,1.70
+
+	pms(4): synaptics: emulate scrolling when the middle button is held
+	with TrackPoints.
+	[nia, ticket #1100]
+
+share/man/man8/afterboot.8			1.74
+
+	Fix wifi setup instructions.
+	[nia, ticket #1101]
+
+etc/ntp.conf					1.21,1.22
+
+	Use "pool" for the pool.ntp.org servers. Add some hints.
+	[kim, ticket #1102]
+
+sys/netipsec/xform_esp.c			1.101
+
+	Make sequence number of esp header MP-safe for IPsec Tx side.
+	[knakahara, ticket #1103]
+
+sys/netinet/in.c				1.241
+sys/netinet6/in6.c				1.282
+
+	Fix detached address handling for interfaces transitioning
+	from DOWN to UNKNOWN link state.
+	[roy, ticket #1104]
+
+sys/arch/arm/include/arm32/vmparam.h		1.56
+
+	Maximize allowed data size.
+	[he, ticket #1105]
 
