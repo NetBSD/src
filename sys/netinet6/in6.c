@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.12 2018/11/06 14:38:58 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.13 2020/10/08 18:06:13 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.12 2018/11/06 14:38:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.13 2020/10/08 18:06:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2325,14 +2325,15 @@ void
 in6_if_link_state_change(struct ifnet *ifp, int link_state)
 {
 
-	switch (link_state) {
-	case LINK_STATE_DOWN:
+	/*
+	 * Treat LINK_STATE_UNKNOWN as UP.
+	 * LINK_STATE_UNKNOWN transitions to LINK_STATE_DOWN when
+	 * if_link_state_change() transitions to LINK_STATE_UP.
+	 */
+	if (link_state == LINK_STATE_DOWN)
 		in6_if_link_down(ifp);
-		break;
-	case LINK_STATE_UP:
+	else
 		in6_if_link_up(ifp);
-		break;
-	}
 }
 
 /*
