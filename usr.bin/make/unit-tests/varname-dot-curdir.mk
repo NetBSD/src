@@ -1,8 +1,26 @@
-# $NetBSD: varname-dot-curdir.mk,v 1.6 2020/10/05 19:27:48 rillig Exp $
+# $NetBSD: varname-dot-curdir.mk,v 1.7 2020/10/08 19:09:08 rillig Exp $
 #
-# Tests for the special .CURDIR variable.
+# Tests for the special .CURDIR variable, which is initially set to the
+# canonical path of the current working directory, when make started.
 
-# TODO: Implementation
+# In all normal situations, the current directory exists, and its name can
+# be resolved.  If not, make fails at startup.
+#
+# It would be possible on some systems to remove the current directory, even
+# while a process runs in it, but this is so unrealistic that it's no worth
+# testing.
+.if !exists(${.CURDIR})
+.  error
+.endif
+.if !exists(${.CURDIR}/)
+.  error
+.endif
+.if !exists(${.CURDIR}/.)
+.  error
+.endif
+.if !exists(${.CURDIR}/..)
+.  error
+.endif
 
 # Until 2020-10-04, assigning the result of a shell assignment to .CURDIR
 # tried to add the shell command ("echo /") to the .PATH instead of the
