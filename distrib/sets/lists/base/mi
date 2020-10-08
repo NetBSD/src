@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1265 2020/09/26 17:49:49 jmcneill Exp $
+# $NetBSD: mi,v 1.1266 2020/10/08 14:22:21 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6055,7 +6055,7 @@
 ./usr/share/zoneinfo/US/Michigan		base-sys-share		share
 ./usr/share/zoneinfo/US/Mountain		base-sys-share		share
 ./usr/share/zoneinfo/US/Pacific			base-sys-share		share
-./usr/share/zoneinfo/US/Pacific-New		base-sys-share		share
+./usr/share/zoneinfo/US/Pacific-New		base-obsolete		obsolete
 ./usr/share/zoneinfo/US/Samoa			base-sys-share		share
 ./usr/share/zoneinfo/UTC			base-sys-share		share
 ./usr/share/zoneinfo/Universal			base-sys-share		share
