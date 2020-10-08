@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.10 2020/06/17 06:51:08 thorpej Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.11 2020/10/08 22:14:00 tnn Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.10 2020/06/17 06:51:08 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.11 2020/10/08 22:14:00 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ again:
 	reset_assert(phandle, "mgmt-sticky");
 	reset_assert(phandle, "pipe");
 
-	delay(10);
+	delay(1000);	/* TPERST. use 1ms */
 	
 	reset_deassert(phandle, "pm");
 	reset_deassert(phandle, "aclk");
@@ -311,10 +311,11 @@ again:
 	reset_deassert(phandle, "mgmt");
 	reset_deassert(phandle, "pipe");
 
+	fdtbus_gpio_write(ep_gpio, 1);
+	delay(20000);	/* 20 ms according to PCI-e BS "Conventional Reset" */
+
 	/* Start link training. */
 	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCBSC_LINK_TRAIN_EN);
-
-	fdtbus_gpio_write(ep_gpio, 1);
 
 	for (timo = 500; timo > 0; timo--) {
 		status = HREAD4(sc, PCIE_CLIENT_BASIC_STATUS1);
@@ -346,6 +347,7 @@ again:
 			goto again;
 		}
 	}
+	delay(80000);	/* wait 100 ms before CSR access. already waited 20. */
 
 	fdtbus_gpio_release(ep_gpio);
 
