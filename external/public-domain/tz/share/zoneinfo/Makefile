@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/06/16 15:17:56 agc Exp $
+#	$NetBSD: Makefile,v 1.4 2020/10/08 13:44:36 kre Exp $
 
 .include <bsd.own.mk>
 .include "../../Makefile.inc"
@@ -46,17 +46,14 @@ TZDIR=	/usr/share/zoneinfo
 
 REDO=		posix_only
 
-# Since "." may not be in PATH...
-YEARISTYPE=	"${HOST_SH} ${TZDISTDIR}/yearistype.sh"
-
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
-YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
-NDATA=		systemv factory
+YDATA=		$(PRIMARY_YDATA) etcetera backward
+NDATA=		factory
 TDATA=		$(YDATA) $(NDATA)
 ZONETABLES=	zone1970.tab zone.tab
 TABDATA=	iso3166.tab leapseconds $(ZONETABLES)
-DATA=		$(YDATA) $(NDATA) $(TABDATA) # yearistype.sh
+DATA=		$(YDATA) $(NDATA) $(TABDATA)
 
 TZBUILDDIR=	${.OBJDIR}/builddir
 
@@ -65,23 +62,23 @@ posix_only: ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
 	cd ${TZDISTDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
 	cd ${TZDISTDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
 	mkdir -p ${TZBUILDDIR}
 	cd ${TZDISTDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
 	cd ${TZDISTDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
 posix_right: posix_only other_two
@@ -100,7 +97,7 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 	${_MKMSG_CREATE} ${POSIXRULES}
 	mkdir -p ${TZBUILDDIR}
 	cd ${TZDISTDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
+	    ${TOOL_ZIC} -d ${TZBUILDDIR} -p ${POSIXRULES}
 	cd ${TZBUILDDIR} && \
 	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
 	| while read devino tzfile; do \
