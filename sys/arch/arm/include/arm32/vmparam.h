@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.55 2020/08/29 06:49:53 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.56 2020/10/08 12:49:06 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
 #define	DFLDSIZ		(384*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(1536*1024*1024)	/* max data size */
+#define	MAXDSIZ		(1856*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
