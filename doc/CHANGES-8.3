@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.40 2020/09/27 10:34:32 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.41 2020/10/08 18:07:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1081,4 +1081,21 @@ sys/dev/ic/nvme.c				1.50 (patch)
 	PR 55674: avoid creating many unusable ld(4) devices for nvme(4)
 	with multiple (partialy unused) name spaces.
 	[kardel, ticket #1610]
+
+etc/ntp.conf					1.21,1.22
+
+	Use "pool" for the pool.ntp.org servers. Add some hints.
+	[kim, ticket #1611]
+
+sys/netipsec/xform_esp.c			1.101
+
+	Make sequence number of esp header MP-safe for IPsec Tx side.
+	[knakahara, ticket #1612]
+
+sys/netinet/in.c				1.241
+sys/netinet6/in6.c				1.282
+
+	Fix detached address handling for interfaces transitioning
+	from DOWN to UNKNOWN link state.
+	[roy, ticket #1613]
 
