@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.5 2020/10/08 11:29:04 nisimura Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.6 2020/10/08 21:00:25 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -167,17 +167,29 @@
 #define DM9000_PID1	0x2B	/* product ID 15:8 */
 #define DM9000_CHIPR	0x2C	/* chip revision */
 
-#define DM9000_SMCR	0x2F	/* "serial mode" control */
+#define DM9000_TCR2	0x2D	/* Tx control 2 */
+#define DM9000_OTCR	0x2E	/* operation test control */
+#define DM9000_SMCR	0x2F	/* special mode control */
 #define  DM9000_FB0	(1<<0)	/* force shortest back-off time */
 #define  DM9000_FB1	(1<<1)	/* force longeset back-off time */
 #define  DM9000_FLC	(1<<2)	/* force late collsion */
 #define  DM9000_SM_EN	(1<<7)	/* serial mode enable */
-#define DM9000_MRCMDX	0xF0	/* "no increment"   read byte */
-#define DM9000_MRCMD	0xF2	/* "auto increment" read byte */
+#define DM9000_ETXCSR	0x30	/* early xmit control and status */
+#define DM9000_TCSCR	0x31	/* xmit checksum control */
+#define DM9000_RCSCSR	0x32	/* recv checksum control and status */
+#define DM9000_MPAR	0x33	/* MII PHY address */
+#define DM9000_LEDCR	0x34	/* LED pin control */
+#define DM9000_BUSCR	0x38	/* processor bus control */
+#define DM9000_INTCR	0x39	/* INT pin control */
+#define DM9000_SCCR	0x50	/* system clock turn on control */
+#define DM9000_RSCCR	0x51	/* resume system clock control */
+#define DM9000_MRCMDX	0xF0	/* "no increment" pre-fetch read */
+#define DM9000_MRCMDX1	0xF1	/* "no increment" read */
+#define DM9000_MRCMD	0xF2	/* "auto increment" read */
 #define DM9000_MRRL	0xF4	/* memory read address 7:0 */
 #define DM9000_MRRH	0xF5	/* memory read address 15:8 */
-#define DM9000_MWCMDX	0xF6	/* "no increment"   write byte */
-#define DM9000_MWCMD	0xF8	/* "auto increment" write byte */
+#define DM9000_MWCMDX	0xF6	/* "no increment" write */
+#define DM9000_MWCMD	0xF8	/* "auto increment" write */
 #define DM9000_MWRL	0xFA	/* memory write address 7:0 */
 #define DM9000_MWRH	0xFB	/* memory write address 15:8 */
 #define DM9000_TXPLL	0xFC	/* frame len 7:0 to transmit */
