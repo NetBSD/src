@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.213 2020/10/07 07:35:28 rin Exp $
+# $NetBSD: HACKS,v 1.214 2020/10/08 08:31:37 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -975,16 +975,17 @@ descr	Disable optimization on tc.c, logerr.c, ubsan.c crashes:
 	function "__int64_t llvm::MachineFrameInfo::getObjectOffset(int) const"
 kcah
 
-port	earmv7hf*
-hack	compile gdb/dwarf2expr.c with -O0 for GCC[89] (toolchain/54820, 54877)
+port	arm
+hack	compile gdb/dwarf2{expr,loc}.c with -O0 for GCC[89] (PR/54820, 54877)
 cdate	Wed Apr 29 11:04:58 UTC 2020
-mdate	Mon Oct  5 22:30:00 JST 2020
+mdate	Thu Oct  8 17:00:00 JST 2020
 who	rin
 file	src/external/gpl3/gdb/lib/libgdb/Makefile: 1.22
-descr	GCC 8.4 and 9.3 miscompile dwarf2expr.c with -O[21], which results in
-	crashes with 'gdb_exception_RETURN_MASK_ERROR'. Note that this occurs
-	only for earmv7hf{,eb} as far as I can see. Neither earmv6hf{,eb} nor
-	earmv7{,eb} (softfloat) are affected.
+descr	For earmv7hf{,eb}, GCC 8.4 and 9.3 miscompile dwarf2expr.c with -O[21].
+	For earmv5hf{,eb}, GCC 9.3 miscompiles dwarf2{expr,loc}.c with -O2
+	(GCC9 -O1 and GCC8 -O2 work fine). These result in GDB crash with
+	``gdb_exception_RETURN_MASK_ERROR''. For everyone's safety, compile
+	these files with -O0 for all arm variants with GCC >= 8.
 kcah
 
 port	m68k
