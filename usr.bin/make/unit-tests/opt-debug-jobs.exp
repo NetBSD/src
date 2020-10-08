@@ -11,7 +11,7 @@ echo ": 'single' and \"double\" quotes"
 { : 'single' and "double" quotes 
 } || exit $?
 Running all locally
-	Command: sh -q 
+	Command: sh 
 JobExec(all): pid <pid> added to jobs table
 job table @ job started
 job 0, status 3, flags 0, pid <pid>
