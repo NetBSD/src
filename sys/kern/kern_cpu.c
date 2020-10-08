@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.92 2020/07/13 13:16:07 jruoho Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.93 2020/10/08 09:16:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.92 2020/07/13 13:16:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.93 2020/10/08 09:16:13 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -212,9 +212,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ESRCH;
 			break;
 		}
-		error = cpu_setintr(ci, cs->cs_intr);
-		if (error)
-			break;
+		cpu_setintr(ci, cs->cs_intr);	/* XXX neglect errors */
 		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
@@ -492,7 +490,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 			return 0;
 		func = (xcfunc_t)cpu_xc_intr;
 	} else {
-		if (CPU_IS_PRIMARY(ci))
+		if (CPU_IS_PRIMARY(ci))	/* XXX kern/45117 */
 			return EINVAL;
 		if ((spc->spc_flags & SPCF_NOINTR) != 0)
 			return 0;
