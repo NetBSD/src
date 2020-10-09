@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.25 2020/04/24 03:25:20 thorpej Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.26 2020/10/09 17:43:07 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -3089,9 +3089,13 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	}
 
 #if defined(__x86_64__)
-#define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
+#define ST_MAN(n) fxs->fx_87_ac[n].r.f87_mantissa
 #else
-#define MM_REG(n) fpr.fstate.s87_ac[n].f87_mantissa
+#define ST_MAN(n) *(							\
+    regset == TEST_FPREGS						\
+    ? &fpr.fstate.s87_ac[n].f87_mantissa				\
+    : &fxs->fx_87_ac[n].r.f87_mantissa					\
+    )
 #endif
 
 	switch (regmode) {
@@ -3155,33 +3159,14 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 			break;
 		case FPREGS_MM:
-			if (regset == TEST_FPREGS) {
-				ATF_CHECK_EQ(MM_REG(0), expected[0].u64);
-				ATF_CHECK_EQ(MM_REG(1), expected[1].u64);
-				ATF_CHECK_EQ(MM_REG(2), expected[2].u64);
-				ATF_CHECK_EQ(MM_REG(3), expected[3].u64);
-				ATF_CHECK_EQ(MM_REG(4), expected[4].u64);
-				ATF_CHECK_EQ(MM_REG(5), expected[5].u64);
-				ATF_CHECK_EQ(MM_REG(6), expected[6].u64);
-				ATF_CHECK_EQ(MM_REG(7), expected[7].u64);
-			} else {
-				ATF_CHECK_EQ(fxs->fx_87_ac[0].r.f87_mantissa,
-			    expected[0].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[1].r.f87_mantissa,
-			    expected[1].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[2].r.f87_mantissa,
-			    expected[2].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[3].r.f87_mantissa,
-			    expected[3].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[4].r.f87_mantissa,
-			    expected[4].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[5].r.f87_mantissa,
-			    expected[5].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[6].r.f87_mantissa,
-			    expected[6].u64);
-				ATF_CHECK_EQ(fxs->fx_87_ac[7].r.f87_mantissa,
-			    expected[7].u64);
-			}
+			ATF_CHECK_EQ(ST_MAN(0), expected[0].u64);
+			ATF_CHECK_EQ(ST_MAN(1), expected[1].u64);
+			ATF_CHECK_EQ(ST_MAN(2), expected[2].u64);
+			ATF_CHECK_EQ(ST_MAN(3), expected[3].u64);
+			ATF_CHECK_EQ(ST_MAN(4), expected[4].u64);
+			ATF_CHECK_EQ(ST_MAN(5), expected[5].u64);
+			ATF_CHECK_EQ(ST_MAN(6), expected[6].u64);
+			ATF_CHECK_EQ(ST_MAN(7), expected[7].u64);
 			break;
 		case FPREGS_YMM:
 			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[0],
@@ -3300,33 +3285,14 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 			break;
 		case FPREGS_MM:
-			if (regset == TEST_FPREGS) {
-				MM_REG(0) = expected[0].u64;
-				MM_REG(1) = expected[1].u64;
-				MM_REG(2) = expected[2].u64;
-				MM_REG(3) = expected[3].u64;
-				MM_REG(4) = expected[4].u64;
-				MM_REG(5) = expected[5].u64;
-				MM_REG(6) = expected[6].u64;
-				MM_REG(7) = expected[7].u64;
-			} else {
-				fxs->fx_87_ac[0].r.f87_mantissa =
-				    expected[0].u64;
-				fxs->fx_87_ac[1].r.f87_mantissa =
-				    expected[1].u64;
-				fxs->fx_87_ac[2].r.f87_mantissa =
-				    expected[2].u64;
-				fxs->fx_87_ac[3].r.f87_mantissa =
-				    expected[3].u64;
-				fxs->fx_87_ac[4].r.f87_mantissa =
-				    expected[4].u64;
-				fxs->fx_87_ac[5].r.f87_mantissa =
-				    expected[5].u64;
-				fxs->fx_87_ac[6].r.f87_mantissa =
-				    expected[6].u64;
-				fxs->fx_87_ac[7].r.f87_mantissa =
-				    expected[7].u64;
-			}
+			ST_MAN(0) = expected[0].u64;
+			ST_MAN(1) = expected[1].u64;
+			ST_MAN(2) = expected[2].u64;
+			ST_MAN(3) = expected[3].u64;
+			ST_MAN(4) = expected[4].u64;
+			ST_MAN(5) = expected[5].u64;
+			ST_MAN(6) = expected[6].u64;
+			ST_MAN(7) = expected[7].u64;
 			break;
 		case FPREGS_YMM:
 			memcpy(&xst.xs_ymm_hi128.xs_ymm[0],
@@ -3431,7 +3397,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		break;
 	}
 
-#undef MM_REG
+#undef ST_MAN
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
