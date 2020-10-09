@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.6 2020/09/03 00:00:06 riastradh Exp $
+.\"	$NetBSD: membar_ops.3,v 1.7 2020/10/09 17:36:16 riastradh Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,28 +140,40 @@ A
 followed by a store implies a
 .Em store-release
 operation in the language of C11.
-For a regular store, rather than an atomic read/modify/write store, you
-should use
-.Xr atomic_store_release 9
-instead of
 .Fn membar_exit
-followed by the store.
+should only be used before atomic read/modify/write, such as
+.Xr atomic_inc_uint 3 .
+For regular stores, instead of
+.Li "membar_exit(); *p = x" ,
+you should use
+.Li "atomic_store_release(p, x)" .
 .Pp
 .Fn membar_exit
-is typically used in code that implements locking primitives to ensure
-that a lock protects its data, and is typically paired with
-.Fn membar_enter .
+is typically paired with
+.Fn membar_enter ,
+and is typically used in code that implements locking or reference
+counting primitives.
+Releasing a lock or reference count should use
+.Fn membar_exit ,
+and acquiring a lock or handling an object after draining references
+should use
+.Fn membar_enter ,
+so that whatever happened before releasing will also have happened
+before acquiring.
 For example:
 .Bd -literal -offset abcdefgh
-/* thread A */
+/* thread A -- release a reference */
 obj->state.mumblefrotz = 42;
 KASSERT(valid(&obj->state));
 membar_exit();
-obj->lock = 0;
+atomic_dec_uint(&obj->refcnt);
 
-/* thread B */
-if (atomic_cas_uint(&obj->lock, 0, 1) != 0)
-	return;
+/*
+ * thread B -- busy-wait until last reference is released,
+ * then lock it by setting refcnt to UINT_MAX
+ */
+while (atomic_cas_uint(&obj->refcnt, 0, -1) != 0)
+	continue;
 membar_enter();
 KASSERT(valid(&obj->state));
 obj->state.mumblefrotz--;
@@ -169,11 +181,11 @@ obj->state.mumblefrotz--;
 .Pp
 In this example,
 .Em if
-the
+the load in
 .Fn atomic_cas_uint
-operation in thread B witnesses the store
-.Li "obj->lock = 0"
-from thread A,
+in thread B witnesses the store in
+.Fn atomic_dec_uint
+in thread A setting the reference count to zero,
 .Em then
 everything in thread A before the
 .Fn membar_exit
