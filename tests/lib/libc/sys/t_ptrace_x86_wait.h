@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.26 2020/10/09 17:43:07 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.27 2020/10/09 17:43:30 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2186,6 +2186,21 @@ union x86_test_register {
 	uint32_t u32;
 };
 
+struct x86_test_fpu_registers {
+	struct {
+		uint64_t mantissa;
+		uint16_t sign_exp;
+	} __aligned(16) st[8];
+
+	uint16_t cw;
+	uint16_t sw;
+	uint16_t tw;
+	uint8_t tw_abridged;
+	uint16_t opcode;
+	union fp_addr ip;
+	union fp_addr dp;
+};
+
 enum x86_test_regset {
 	TEST_GPREGS,
 	TEST_FPREGS,
@@ -2201,6 +2216,7 @@ enum x86_test_registers {
 	GPREGS_64,
 	GPREGS_64_R8,
 	/* TEST_FPREGS/TEST_XMMREGS */
+	FPREGS_FPU,
 	FPREGS_MM,
 	FPREGS_XMM,
 	/* TEST_XSTATE */
@@ -2417,6 +2433,79 @@ static __inline void set_gp64_r8_regs(const union x86_test_register data[])
 #else
 	__unreachable();
 #endif
+}
+
+static __inline void get_fpu_regs(struct x86_test_fpu_registers *out)
+{
+	struct save87 fsave;
+	struct fxsave fxsave;
+
+	__CTASSERT(sizeof(out->st[0]) == 16);
+
+	__asm__ __volatile__(
+		"finit\n\t"
+		"int3\n\t"
+#if defined(__x86_64__)
+		"fxsave64 %2\n\t"
+#else
+		"fxsave %2\n\t"
+#endif
+		"fnstenv %1\n\t"
+		"fnclex\n\t"
+		"fstpt 0x00(%0)\n\t"
+		"fstpt 0x10(%0)\n\t"
+		"fstpt 0x20(%0)\n\t"
+		"fstpt 0x30(%0)\n\t"
+		"fstpt 0x40(%0)\n\t"
+		"fstpt 0x50(%0)\n\t"
+		"fstpt 0x60(%0)\n\t"
+		"fstpt 0x70(%0)\n\t"
+		:
+		: "a"(out->st), "m"(fsave), "m"(fxsave)
+		: "st", "memory"
+	);
+
+	FORKEE_ASSERT(fsave.s87_cw == fxsave.fx_cw);
+	FORKEE_ASSERT(fsave.s87_sw == fxsave.fx_sw);
+
+	/* fsave contains full tw */
+	out->cw = fsave.s87_cw;
+	out->sw = fsave.s87_sw;
+	out->tw = fsave.s87_tw;
+	out->tw_abridged = fxsave.fx_tw;
+	out->opcode = fxsave.fx_opcode;
+	out->ip = fxsave.fx_ip;
+	out->dp = fxsave.fx_dp;
+}
+
+/* used as single-precision float */
+uint32_t x86_test_zero = 0;
+
+static __inline void set_fpu_regs(const struct x86_test_fpu_registers *data)
+{
+	__CTASSERT(sizeof(data->st[0]) == 16);
+
+	__asm__ __volatile__(
+		"finit\n\t"
+		"fldcw %1\n\t"
+		/* load on stack in reverse order to make it easier to read */
+		"fldt 0x70(%0)\n\t"
+		"fldt 0x60(%0)\n\t"
+		"fldt 0x50(%0)\n\t"
+		"fldt 0x40(%0)\n\t"
+		"fldt 0x30(%0)\n\t"
+		"fldt 0x20(%0)\n\t"
+		"fldt 0x10(%0)\n\t"
+		"fldt 0x00(%0)\n\t"
+		/* free st7 */
+		"ffree %%st(7)\n\t"
+		/* this should trigger a divide-by-zero */
+		"fdivs (%2)\n\t"
+		"int3\n\t"
+		:
+		: "a"(&data->st), "m"(data->cw), "b"(&x86_test_zero)
+		: "st"
+	);
 }
 
 __attribute__((target("mmx")))
@@ -2712,6 +2801,54 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		   0x262524232221201F, 0x2E2D2C2B2A292827, }},
 	};
 
+	const struct x86_test_fpu_registers expected_fpu = {
+		.st = {
+			{0x8000000000000000, 0x4000}, /* +2.0 */
+			{0x3f00000000000000, 0x0000}, /* 1.654785e-4932 */
+			{0x0000000000000000, 0x0000}, /* +0 */
+			{0x0000000000000000, 0x8000}, /* -0 */
+			{0x8000000000000000, 0x7fff}, /* +inf */
+			{0x8000000000000000, 0xffff}, /* -inf */
+			{0xc000000000000000, 0xffff}, /* nan */
+			/* st(7) will be freed to test tag word better */
+			{0x0000000000000000, 0x0000}, /* +0 */
+		},
+		/* 0000 0011 0111 1011
+		 *             PU OZDI -- unmask divide-by-zero exc.
+		 *           RR --------- reserved
+		 *        PC ------------ 64-bit precision
+		 *      RC -------------- round to nearest
+		 *    I ----------------- allow interrupts (unused)
+		 */
+		.cw = 0x037b,
+		/* 1000 0000 1000 0100
+		 *            SPU OZDI -- divide-by-zero exception
+		 *           I ---------- interrupt (exception handling)
+		 *  C    CCC ------------ condition codes
+		 *   TO P --------------- top register is 0
+		 * B -------------------- FPU is busy
+		 */
+		.sw = 0x8084,
+		/* 1110 1010 0101 1000
+		 * R7R6 R5R4 R3R2 R1R0
+		 *                  nz -- non-zero (+2.0)
+		 *                sp ---- special (denormal)
+		 *           zrzr ------- zeroes
+		 *   sp spsp ------------ specials (NaN + infinities)
+		 * em ------------------- empty register
+		 */
+		.tw = 0xea58,
+		/* 0111 1111 -- registers 0 to 6 are used */
+		.tw_abridged = 0x7f,
+		/* FDIV */
+		.opcode = 0x0033,
+		/* random bits for IP/DP write test
+		 * keep it below 48 bits since it can be truncated
+		 */
+		.ip = {.fa_64 = 0x00000a9876543210},
+		.dp = {.fa_64 = 0x0000056789abcdef},
+	};
+
 	bool need_32 = false, need_64 = false, need_cpuid = false;
 
 	switch (regs) {
@@ -2722,6 +2859,8 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	case GPREGS_64:
 	case GPREGS_64_R8:
 		need_64 = true;
+		break;
+	case FPREGS_FPU:
 		break;
 	case FPREGS_MM:
 	case FPREGS_XMM:
@@ -2768,6 +2907,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		case GPREGS_32_EBP_ESP:
 		case GPREGS_64:
 		case GPREGS_64_R8:
+		case FPREGS_FPU:
 			__unreachable();
 		}
 	}
@@ -2776,6 +2916,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		union x86_test_register vals[16] __aligned(32);
+		struct x86_test_fpu_registers vals_fpu;
 
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -2796,6 +2937,9 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				break;
 			case GPREGS_64_R8:
 				set_gp64_r8_regs(expected);
+				break;
+			case FPREGS_FPU:
+				set_fpu_regs(&expected_fpu);
 				break;
 			case FPREGS_MM:
 				set_mm_regs(expected);
@@ -2821,6 +2965,9 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				break;
 			case GPREGS_64_R8:
 				get_gp64_r8_regs(vals);
+				break;
+			case FPREGS_FPU:
+				get_fpu_regs(&vals_fpu);
 				break;
 			case FPREGS_MM:
 				get_mm_regs(vals);
@@ -2870,6 +3017,47 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				    &expected[6].u64, sizeof(vals->u64)));
 				FORKEE_ASSERT(!memcmp(&vals[7].u64,
 				    &expected[7].u64, sizeof(vals->u64)));
+				break;
+			case FPREGS_FPU:
+				FORKEE_ASSERT(vals_fpu.cw == expected_fpu.cw);
+				FORKEE_ASSERT(vals_fpu.sw == expected_fpu.sw);
+				FORKEE_ASSERT(vals_fpu.tw == expected_fpu.tw);
+				FORKEE_ASSERT(vals_fpu.tw_abridged
+				    == expected_fpu.tw_abridged);
+				FORKEE_ASSERT(vals_fpu.ip.fa_64
+				    == expected_fpu.ip.fa_64);
+				FORKEE_ASSERT(vals_fpu.dp.fa_64
+				    == expected_fpu.dp.fa_64);
+
+				FORKEE_ASSERT(vals_fpu.st[0].sign_exp
+				    == expected_fpu.st[0].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[0].mantissa
+				    == expected_fpu.st[0].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[1].sign_exp
+				    == expected_fpu.st[1].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[1].mantissa
+				    == expected_fpu.st[1].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[2].sign_exp
+				    == expected_fpu.st[2].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[2].mantissa
+				    == expected_fpu.st[2].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[3].sign_exp
+				    == expected_fpu.st[3].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[3].mantissa
+				    == expected_fpu.st[3].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[4].sign_exp
+				    == expected_fpu.st[4].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[4].mantissa
+				    == expected_fpu.st[4].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[5].sign_exp
+				    == expected_fpu.st[5].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[5].mantissa
+				    == expected_fpu.st[5].mantissa);
+				FORKEE_ASSERT(vals_fpu.st[6].sign_exp
+				    == expected_fpu.st[6].sign_exp);
+				FORKEE_ASSERT(vals_fpu.st[6].mantissa
+				    == expected_fpu.st[6].mantissa);
+				/* st(7) is left empty == undefined */
 				break;
 			case FPREGS_XMM:
 				FORKEE_ASSERT(!memcmp(&vals[0].xmm,
@@ -2959,6 +3147,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 
 	if (regset == TEST_XSTATE) {
 		switch (regs) {
+		case FPREGS_FPU:
 		case FPREGS_MM:
 			xst_flags |= XCR0_X87;
 			break;
@@ -2980,16 +3169,19 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	switch (regmode) {
 	case TEST_GETREGS:
 	case TEST_SETREGS:
-		switch (regset) {
-		case TEST_GPREGS:
-			ATF_REQUIRE(regs < FPREGS_MM);
+		if (regset == TEST_GPREGS || regs == FPREGS_FPU) {
 			DPRINTF("Call GETREGS for the child process\n");
 			SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &gpr, 0)
 			    != -1);
+		}
+
+		switch (regset) {
+		case TEST_GPREGS:
+			/* already handled above */
 			break;
 		case TEST_XMMREGS:
 #if defined(__i386__)
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_YMM);
 			DPRINTF("Call GETXMMREGS for the child process\n");
 			SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &xmm, 0)
 			    != -1);
@@ -3000,17 +3192,17 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 		case TEST_FPREGS:
 #if defined(__x86_64__)
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_YMM);
 			fxs = &fpr.fxstate;
 #else
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_XMM);
 #endif
 			DPRINTF("Call GETFPREGS for the child process\n");
 			SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0)
 			    != -1);
 			break;
 		case TEST_XSTATE:
-			ATF_REQUIRE(regs >= FPREGS_MM);
+			ATF_REQUIRE(regs >= FPREGS_FPU);
 			iov.iov_base = &xst;
 			iov.iov_len = sizeof(xst);
 
@@ -3045,17 +3237,20 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		SYSCALL_REQUIRE(ptrace(PT_DUMPCORE, child, core_path,
 		    strlen(core_path)) != -1);
 
-		switch (regset) {
-		case TEST_GPREGS:
-			ATF_REQUIRE(regs < FPREGS_MM);
+		if (regset == TEST_GPREGS || regs == FPREGS_FPU) {
 			DPRINTF("Parse core file for PT_GETREGS\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
 			    "NetBSD-CORE@*", PT_GETREGS, &gpr, sizeof(gpr)),
 			    sizeof(gpr));
+		}
+
+		switch (regset) {
+		case TEST_GPREGS:
+			/* handled above */
 			break;
 		case TEST_XMMREGS:
 #if defined(__i386__)
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_YMM);
 			unlink(core_path);
 			atf_tc_skip("XMMREGS not supported in core dumps");
 			break;
@@ -3064,10 +3259,10 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 		case TEST_FPREGS:
 #if defined(__x86_64__)
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_YMM);
 			fxs = &fpr.fxstate;
 #else
-			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+			ATF_REQUIRE(regs >= FPREGS_FPU && regs < FPREGS_XMM);
 #endif
 			DPRINTF("Parse core file for PT_GETFPREGS\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
@@ -3075,7 +3270,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			    sizeof(fpr));
 			break;
 		case TEST_XSTATE:
-			ATF_REQUIRE(regs >= FPREGS_MM);
+			ATF_REQUIRE(regs >= FPREGS_FPU);
 			DPRINTF("Parse core file for PT_GETXSTATE\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
 			    "NetBSD-CORE@*", PT_GETXSTATE, &xst, sizeof(xst)),
@@ -3089,8 +3284,14 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	}
 
 #if defined(__x86_64__)
+#define ST_EXP(n) fxs->fx_87_ac[n].r.f87_exp_sign
 #define ST_MAN(n) fxs->fx_87_ac[n].r.f87_mantissa
 #else
+#define ST_EXP(n) *(							\
+    regset == TEST_FPREGS						\
+    ? &fpr.fstate.s87_ac[n].f87_exp_sign				\
+    : &fxs->fx_87_ac[n].r.f87_exp_sign					\
+    )
 #define ST_MAN(n) *(							\
     regset == TEST_FPREGS						\
     ? &fpr.fstate.s87_ac[n].f87_mantissa				\
@@ -3157,6 +3358,68 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R15],
 			    expected[7].u64);
 #endif
+			break;
+		case FPREGS_FPU:
+#if defined(__i386__)
+			if (regset == TEST_FPREGS) {
+				/* GETFPREGS on i386 */
+				ATF_CHECK_EQ(fpr.fstate.s87_cw,
+				    expected_fpu.cw);
+				ATF_CHECK_EQ(fpr.fstate.s87_sw,
+				    expected_fpu.sw);
+#if 0 /* TODO: translation from FXSAVE is broken */
+				ATF_CHECK_EQ(fpr.fstate.s87_tw,
+				    expected_fpu.tw);
+#endif
+				ATF_CHECK_EQ(fpr.fstate.s87_opcode,
+				    expected_fpu.opcode);
+				ATF_CHECK_EQ(fpr.fstate.s87_ip.fa_32.fa_off,
+				    (uint32_t)gpr.r_eip - 3);
+				ATF_CHECK_EQ(fpr.fstate.s87_dp.fa_32.fa_off,
+				    (uint32_t)&x86_test_zero);
+				/* note: fa_seg is missing on newer CPUs */
+			} else
+#endif
+			{
+				/* amd64 or GETXSTATE on i386 */
+				ATF_CHECK_EQ(fxs->fx_cw, expected_fpu.cw);
+				ATF_CHECK_EQ(fxs->fx_sw, expected_fpu.sw);
+				ATF_CHECK_EQ(fxs->fx_tw,
+				    expected_fpu.tw_abridged);
+				ATF_CHECK_EQ(fxs->fx_opcode,
+				    expected_fpu.opcode);
+#if defined(__x86_64__)
+#if 0 /* TODO: kernel needs patching to call *XSAVE64 */
+				ATF_CHECK_EQ(fxs->fx_ip.fa_64,
+				    ((uint64_t)gpr.regs[_REG_RIP]) - 3);
+				ATF_CHECK_EQ(fxs->fx_dp.fa_64,
+				    (uint64_t)&x86_test_zero);
+#endif
+#else
+				ATF_CHECK_EQ(fxs->fx_ip.fa_32.fa_off,
+				    (uint32_t)gpr.r_eip - 3);
+				ATF_CHECK_EQ(fxs->fx_dp.fa_32.fa_off,
+				    (uint32_t)&x86_test_zero);
+				/* note: fa_seg is missing on newer CPUs */
+#endif
+			}
+
+			ATF_CHECK_EQ(ST_EXP(0), expected_fpu.st[0].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(0), expected_fpu.st[0].mantissa);
+			ATF_CHECK_EQ(ST_EXP(1), expected_fpu.st[1].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(1), expected_fpu.st[1].mantissa);
+			ATF_CHECK_EQ(ST_EXP(2), expected_fpu.st[2].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(2), expected_fpu.st[2].mantissa);
+			ATF_CHECK_EQ(ST_EXP(3), expected_fpu.st[3].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(3), expected_fpu.st[3].mantissa);
+			ATF_CHECK_EQ(ST_EXP(4), expected_fpu.st[4].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(4), expected_fpu.st[4].mantissa);
+			ATF_CHECK_EQ(ST_EXP(5), expected_fpu.st[5].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(5), expected_fpu.st[5].mantissa);
+			ATF_CHECK_EQ(ST_EXP(6), expected_fpu.st[6].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(6), expected_fpu.st[6].mantissa);
+			ATF_CHECK_EQ(ST_EXP(7), expected_fpu.st[7].sign_exp);
+			ATF_CHECK_EQ(ST_MAN(7), expected_fpu.st[7].mantissa);
 			break;
 		case FPREGS_MM:
 			ATF_CHECK_EQ(ST_MAN(0), expected[0].u64);
@@ -3284,6 +3547,47 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			gpr.regs[_REG_R15] = expected[7].u64;
 #endif
 			break;
+		case FPREGS_FPU:
+#if defined(__i386__)
+			if (regset == TEST_FPREGS) {
+				/* SETFPREGS on i386 */
+				fpr.fstate.s87_cw = expected_fpu.cw;
+				fpr.fstate.s87_sw = expected_fpu.sw;
+//#if 0 /* TODO: translation from FXSAVE is broken */
+				fpr.fstate.s87_tw = expected_fpu.tw;
+//#endif
+				fpr.fstate.s87_opcode = expected_fpu.opcode;
+				fpr.fstate.s87_ip = expected_fpu.ip;
+				fpr.fstate.s87_dp = expected_fpu.dp;
+			} else
+#endif /*defined(__i386__)*/
+			{
+				/* amd64 or SETXSTATE on i386 */
+				fxs->fx_cw = expected_fpu.cw;
+				fxs->fx_sw = expected_fpu.sw;
+				fxs->fx_tw = expected_fpu.tw_abridged;
+				fxs->fx_opcode = expected_fpu.opcode;
+				fxs->fx_ip = expected_fpu.ip;
+				fxs->fx_dp = expected_fpu.dp;
+			}
+
+			ST_EXP(0) = expected_fpu.st[0].sign_exp;
+			ST_MAN(0) = expected_fpu.st[0].mantissa;
+			ST_EXP(1) = expected_fpu.st[1].sign_exp;
+			ST_MAN(1) = expected_fpu.st[1].mantissa;
+			ST_EXP(2) = expected_fpu.st[2].sign_exp;
+			ST_MAN(2) = expected_fpu.st[2].mantissa;
+			ST_EXP(3) = expected_fpu.st[3].sign_exp;
+			ST_MAN(3) = expected_fpu.st[3].mantissa;
+			ST_EXP(4) = expected_fpu.st[4].sign_exp;
+			ST_MAN(4) = expected_fpu.st[4].mantissa;
+			ST_EXP(5) = expected_fpu.st[5].sign_exp;
+			ST_MAN(5) = expected_fpu.st[5].mantissa;
+			ST_EXP(6) = expected_fpu.st[6].sign_exp;
+			ST_MAN(6) = expected_fpu.st[6].mantissa;
+			ST_EXP(7) = expected_fpu.st[7].sign_exp;
+			ST_MAN(7) = expected_fpu.st[7].mantissa;
+			break;
 		case FPREGS_MM:
 			ST_MAN(0) = expected[0].u64;
 			ST_MAN(1) = expected[1].u64;
@@ -3397,6 +3701,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		break;
 	}
 
+#undef ST_EXP
 #undef ST_MAN
 
 	DPRINTF("Before resuming the child process where it left off and "
@@ -3457,6 +3762,12 @@ X86_REGISTER_TEST(x86_gpregs64_r8_write, TEST_GPREGS, GPREGS_64_R8,
 X86_REGISTER_TEST(x86_gpregs64_r8_core, TEST_GPREGS, GPREGS_64_R8,
     TEST_COREDUMP, "Test reading r8..r15 registers from core dump.");
 
+X86_REGISTER_TEST(x86_fpregs_fpu_read, TEST_FPREGS, FPREGS_FPU, TEST_GETREGS,
+    "Test reading base FPU registers from debugged program via PT_GETFPREGS.");
+X86_REGISTER_TEST(x86_fpregs_fpu_write, TEST_FPREGS, FPREGS_FPU, TEST_SETREGS,
+    "Test writing base FPU registers into debugged program via PT_SETFPREGS.");
+X86_REGISTER_TEST(x86_fpregs_fpu_core, TEST_FPREGS, FPREGS_FPU, TEST_COREDUMP,
+    "Test reading base FPU registers from coredump.");
 X86_REGISTER_TEST(x86_fpregs_mm_read, TEST_FPREGS, FPREGS_MM, TEST_GETREGS,
     "Test reading mm0..mm7 registers from debugged program "
     "via PT_GETFPREGS.");
@@ -3474,6 +3785,12 @@ X86_REGISTER_TEST(x86_fpregs_xmm_write, TEST_XMMREGS, FPREGS_XMM, TEST_SETREGS,
 X86_REGISTER_TEST(x86_fpregs_xmm_core, TEST_XMMREGS, FPREGS_XMM, TEST_COREDUMP,
     "Test reading xmm0..xmm15 (..xmm7 on i386) from coredump.");
 
+X86_REGISTER_TEST(x86_xstate_fpu_read, TEST_XSTATE, FPREGS_FPU, TEST_GETREGS,
+    "Test reading base FPU registers from debugged program via PT_GETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_fpu_write, TEST_XSTATE, FPREGS_FPU, TEST_SETREGS,
+    "Test writing base FPU registers into debugged program via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_fpu_core, TEST_XSTATE, FPREGS_FPU, TEST_COREDUMP,
+    "Test reading base FPU registers from core dump via XSTATE note.");
 X86_REGISTER_TEST(x86_xstate_mm_read, TEST_XSTATE, FPREGS_MM, TEST_GETREGS,
     "Test reading mm0..mm7 registers from debugged program "
     "via PT_GETXSTATE.");
@@ -3664,12 +3981,18 @@ thread_concurrent_handle_sigtrap(pid_t child, ptrace_siginfo_t *info)
 	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_read); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_write); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_core); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_fpu_read); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_fpu_write); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_fpu_core); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_mm_read); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_mm_write); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_mm_core); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_read); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_write); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_core); \
+	ATF_TP_ADD_TC(tp, x86_xstate_fpu_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_fpu_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_fpu_core); \
 	ATF_TP_ADD_TC(tp, x86_xstate_mm_read); \
 	ATF_TP_ADD_TC(tp, x86_xstate_mm_write); \
 	ATF_TP_ADD_TC(tp, x86_xstate_mm_core); \
