@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.49 2020/10/05 12:28:45 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.50 2020/10/09 18:33:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -501,7 +501,7 @@ fill_ptn_menu(struct partition_usage_set *pset)
 	m++;
 
 	/* calculate free space */
-	free_space = pset->parts->free_space;
+	free_space = pset->parts->free_space - pset->reserved_space;
 	for (i = 0; i < pset->parts->num_part; i++) {
 		if (!pset->parts->pscheme->get_part_info(pset->parts, i,
 		    &info))
@@ -936,6 +936,12 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 
 	memset(wanted, 0, sizeof(*wanted));
 	wanted->parts = parts;
+	if (ptstart > parts->disk_start)
+		wanted->reserved_space = ptstart - parts->disk_start;
+	if ((ptstart + ptsize) < (parts->disk_start+parts->disk_size))
+		wanted->reserved_space +=
+		    (parts->disk_start+parts->disk_size) -
+		    (ptstart + ptsize);
 	wanted->num = __arraycount(default_parts_init);
 	wanted->infos = calloc(wanted->num, sizeof(*wanted->infos));
 	if (wanted->infos == NULL) {
@@ -1110,7 +1116,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	 * adjustments, so we don't present the user inherently
 	 * impossible defaults.
 	 */
-	free_space = parts->free_space;
+	free_space = parts->free_space - wanted->reserved_space;
 	required = 0;
 	if (root < wanted->num)
 		required += wanted->infos[root].size;
@@ -1200,7 +1206,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 	size_t i, j, no;
 	part_id pno;
 
-	pset->cur_free_space = pset->parts->free_space;
+	pset->cur_free_space = pset->parts->free_space - pset->reserved_space;
 
 	/* count non-empty entries that are not in pset->parts */
 	no = pset->parts->num_part;
@@ -1336,8 +1342,8 @@ normalize_clones(struct part_usage_info **infos, size_t *num)
 #endif
 
 static void
-apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
-    struct partition_usage_set *wanted, daddr_t start, daddr_t size)
+apply_settings_to_partitions(struct disk_partitions *parts,
+    struct partition_usage_set *wanted, daddr_t start, daddr_t xsize)
 {
 	size_t i, exp_ndx = ~0U;
 	daddr_t planned_space = 0, nsp, from, align;
@@ -1361,7 +1367,6 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 	}
 
 	align = wanted->parts->pscheme->get_part_alignment(wanted->parts);
-
 	/*
 	 * Pass one: calculate space available for expanding
 	 * the marked partition.
@@ -1391,15 +1396,21 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 	 * but check size limits.
 	 */
 	if (exp_ndx < wanted->num) {
+		daddr_t free_space =
+		    parts->free_space - roundup(wanted->reserved_space, align);
+		free_space -= planned_space;
+		daddr_t new_size = wanted->infos[exp_ndx].size;
+		if (free_space > 0)
+			new_size += free_space;
+
 		if (wanted->infos[exp_ndx].limit > 0 &&
-		    (wanted->infos[exp_ndx].size + parts->free_space
-		    - planned_space) > wanted->infos[exp_ndx].limit) {
+		    (new_size + wanted->infos[exp_ndx].cur_start)
+		     > wanted->infos[exp_ndx].limit) {
 			wanted->infos[exp_ndx].size =
 			    wanted->infos[exp_ndx].limit
 			    - wanted->infos[exp_ndx].cur_start;
 		} else {
-			wanted->infos[exp_ndx].size +=
-			    parts->free_space - planned_space;
+			wanted->infos[exp_ndx].size = new_size;
 		}
 	}
 
@@ -1433,7 +1444,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		}
 	}
 
-	from = p->ptstart > 0 ? pm->ptstart : -1;
+	from = start > 0 ? start : -1;
 	/*
 	 * First add all outer partitions - we need to align those exactly
 	 * with the inner counterpart later.
@@ -1477,16 +1488,20 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			want->cur_part_id = new_part_id;
 
 			want->flags |= PUIFLG_ADD_INNER|PUIFLG_IS_OUTER;
-			from = rounddown(infos[i].start + 
-			    infos[i].size+outer_align, outer_align);
+			from = roundup(infos[i].start + 
+			    infos[i].size, outer_align);
 		}
 	}
 
 	/*
 	 * Now add new inner partitions (and cloned partitions)
 	 */
-	for (i = 0; i < wanted->num && from < 
-	    (wanted->parts->disk_size + wanted->parts->disk_start); i++) {
+	for (i = 0; i < wanted->num; i++) {
+
+		daddr_t limit = wanted->parts->disk_size + wanted->parts->disk_start;
+		if (from >= limit)
+			break;
+
 		struct part_usage_info *want = &wanted->infos[i];
 
 		if (want->cur_part_id != NO_PART)
@@ -1562,7 +1577,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 
 		wanted->parts->pscheme->get_part_info(
 		    wanted->parts, new_part_id, &infos[i]);
-		from = rounddown(infos[i].start+infos[i].size+align, align);
+		from = roundup(infos[i].start+infos[i].size, align);
 	}
 
 
@@ -1647,7 +1662,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 }
 
 static void
-replace_by_default(struct pm_devs *p, struct disk_partitions *parts,
+replace_by_default(struct disk_partitions *parts,
     daddr_t start, daddr_t size, struct partition_usage_set *wanted)
 {
 
@@ -1659,11 +1674,11 @@ replace_by_default(struct pm_devs *p, struct disk_partitions *parts,
 		assert(parts->num_part == 0);
 
 	fill_defaults(wanted, parts, start, size);
-	apply_settings_to_partitions(p, parts, wanted, start, size);
+	apply_settings_to_partitions(parts, wanted, start, size);
 }
 
 static bool
-edit_with_defaults(struct pm_devs *p, struct disk_partitions *parts,
+edit_with_defaults(struct disk_partitions *parts,
     daddr_t start, daddr_t size, struct partition_usage_set *wanted)
 {
 	bool ok;
@@ -1671,7 +1686,7 @@ edit_with_defaults(struct pm_devs *p, struct disk_partitions *parts,
 	fill_defaults(wanted, parts, start, size);
 	ok = get_ptn_sizes(wanted);
 	if (ok)
-		apply_settings_to_partitions(p, parts, wanted, start, size);
+		apply_settings_to_partitions(parts, wanted, start, size);
 	return ok;
 }
 
@@ -1763,10 +1778,10 @@ make_bsd_partitions(struct install_partition_desc *install)
 	}
 
 	if (layoutkind == LY_USEDEFAULT) {
-		replace_by_default(pm, parts, pm->ptstart, pm->ptsize,
+		replace_by_default(parts, pm->ptstart, pm->ptsize,
 		    &wanted);
 	} else if (layoutkind == LY_SETSIZES) {
-		if (!edit_with_defaults(pm, parts, pm->ptstart, pm->ptsize,
+		if (!edit_with_defaults(parts, pm->ptstart, pm->ptsize,
 		    &wanted)) {
 			free_usage_set(&wanted);
 			return false;
