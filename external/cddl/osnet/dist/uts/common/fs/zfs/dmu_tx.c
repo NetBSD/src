@@ -1153,6 +1153,9 @@ dmu_tx_delay(dmu_tx_t *tx, uint64_t dirty)
 #ifdef __NetBSD__
 	int timo = (wakeup - now) * hz / 1000000000;
 
+	if (timo < 0)
+		return;
+
 	if (timo == 0)
 		timo = 1;
 	kpause("dmu_tx_delay", false, timo, NULL);
