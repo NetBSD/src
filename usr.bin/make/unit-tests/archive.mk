@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.9 2020/10/08 18:37:26 rillig Exp $
+# $NetBSD: archive.mk,v 1.10 2020/10/09 06:44:42 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -35,7 +35,7 @@ create-archive: ${ARCHIVE} pre post
 # Arch_ParseArchive is called, the dependency line is already fully expanded.
 #
 ${ARCHIVE}: $${:Ulibprog.a}(archive.mk modmisc.mk $${:Uvarmisc.mk}) pre post
-	ar cru ${.TARGET} ${.OODATE}
+	ar cru ${.TARGET} ${.OODATE:O}
 	ranlib ${.TARGET}
 
 list-archive: ${ARCHIVE} pre post
@@ -57,6 +57,6 @@ remove-archive: pre post
 	rm -f ${ARCHIVE}
 
 pre: .USEBEFORE
-	@echo Making ${.TARGET} ${.OODATE:C,.+,out-of-date,W} ${.OODATE}
+	@echo Making ${.TARGET} ${.OODATE:C,.+,out-of-date,W} ${.OODATE:O}
 post: .USE
 	@echo
