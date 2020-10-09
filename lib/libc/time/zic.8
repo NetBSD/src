@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.34 2020/05/25 14:52:48 christos Exp $
-.Dd May 25, 2020
+.\"	$NetBSD: zic.8,v 1.35 2020/10/09 18:38:48 christos Exp $
+.Dd October 9, 2020
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -52,15 +52,12 @@ is
 .Dv slim ,
 keep the output files small; this can help check for the bugs
 and incompatibilities.
-Although the default is currently
-.Dv fat ,
-this is intended to change in future
-.Nm
-versions, as software that mishandles the 64-bit data typically
-mishandles timestamps after the year 2038 anyway.
+The default is
+.Dv slim ,
+as software that mishandles 64-bit data typically
 Also see the
 .Fl r
-option for another way to shrink output size.
+option for another way to alter output size.
 .It Fl d Ar directory
 Create time conversion information files in the named directory rather than
 in the standard directory named below.
@@ -71,6 +68,11 @@ as local time.
 .Nm
 will act as if the input contained a link line of the form
 .Dl Link	timezone	localtime
+If
+.Ar timezone
+is
+.Dv \*- ,
+any already-existing link is removed.
 .It Fl L Ar leapsecondfilename
 Read leap second information from the file with the given name.
 If this option is not used,
@@ -93,6 +95,11 @@ and it should not be combined with
 if
 .Va timezone's
 transitions are at standard time or Universal Time (UT) instead of local time.
+If
+.Ar timezone
+is
+.Dv \*- ,
+any already-existing link is removed.
 .It Fl r Op Ar @lo / Op Ar @hi
 Reduce the size of output files by limiting their applicability
 to timestamps in the range from
@@ -263,11 +270,11 @@ abbreviation must be unambiguous in context.
 .Pp
 A rule line has the form
 .Pp
-.Dl Rule	NAME	FROM	TO	TYPE	IN	ON		AT		SAVE		LETTER/S
+.Dl Rule	NAME	FROM	TO	\&-	IN	ON		AT		SAVE		LETTER/S
 .Pp
 For example:
 .Pp
-.Dl Rule	US	1967	1973	\-	Apr	lastSun	2:00w	1:00d	D
+.Dl Rule	US	1967	1973	\&-	Apr	lastSun	2:00w	1:00d	D
 .Pp
 The fields that make up a rule line are:
 .Bl -tag -width "LETTER/S"
@@ -307,12 +314,17 @@ the word
 may be used to repeat the value of the
 .Em FROM
 field.
-.It TYPE
+.It \&-
 should be
-.Qq -
-and is present for compatibility with older versions of
-.Nm
-in which it could contain year types.
+.Qq \&-
+for compatibility with older versions of
+.Nm .
+It was previously known as the
+.Em TYPE
+field, which could contain values to allow a
+separate script to further restrict in which
+.Em types
+of years the rule would apply.
 .It IN
 Names the month in which the rule takes effect.
 Month names may be abbreviated.
@@ -663,23 +675,23 @@ input, intended to illustrate many of its features.
 In this example, the EU rules are for the European Union
 and for its predecessor organization, the European Communities.
 .Pp
-.Bl -column -compact -offset indent "# Rule" "Swiss" "FROM" "1995" "TYPE" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
-.It # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-.It Rule	Swiss	1941	1942	-	May	Mon>=1	1:00	1:00	S
-.It Rule	Swiss	1941	1942	-	Oct	Mon>=1	2:00	0	-
+.Bl -column -compact -offset indent "# Rule" "Swiss" "FROM" "1995" "\&*" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
+.It # Rule	NAME	FROM	TO	\&-	IN	ON	AT	SAVE	LETTER/S
+.It Rule	Swiss	1941	1942	\&-	May	Mon>=1	1:00	1:00	S
+.It Rule	Swiss	1941	1942	\&-	Oct	Mon>=1	2:00	0	-
 .Pp
-.It Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
-.It Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
-.It Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
-.It Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
-.It Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
-.It Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
+.It Rule	EU	1977	1980	\&-	Apr	Sun>=1	1:00u	1:00	S
+.It Rule	EU	1977	only	\&-	Sep	lastSun	1:00u	0	-
+.It Rule	EU	1978	only	\&-	Oct	 1	1:00u	0	-
+.It Rule	EU	1979	1995	\&-	Sep	lastSun	1:00u	0	-
+.It Rule	EU	1981	max	\&-	Mar	lastSun	1:00u	1:00	S
+.It Rule	EU	1996	max	\&-	Oct	lastSun	1:00u	0	-
 .El
 .Pp
 .Bl -column -compact -offset indent "# Zone" "Europe/Zurich" "0:29:45.50" "RULES/SAVE" "FORMAT" "UNTIL"
 .It # Zone	NAME	STDOFF	RULES/SAVE	FORMAT	[UNTIL]
-.It Zone	Europe/Zurich	0:34:08	-	LMT	1853 Jul 16
-.It 		0:29:45.50	-	BMT	1894 Jun
+.It Zone	Europe/Zurich	0:34:08	\&-	LMT	1853 Jul 16
+.It 		0:29:45.50	\&-	BMT	1894 Jun
 .It 		1:00	Swiss	CE%sT	1981
 .It 		1:00	EU	CE%sT
 .Pp

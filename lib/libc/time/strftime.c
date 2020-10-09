@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.47 2020/05/25 14:52:48 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.48 2020/10/09 18:38:48 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.47 2020/05/25 14:52:48 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.48 2020/10/09 18:38:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,9 +147,14 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
     const char *const format, const struct tm *const t, locale_t loc)
 {
 	char *	p;
+	int saved_errno = errno;
 	enum warn warn = IN_NONE;
 
 	p = _fmt(sp, format, t, s, s + maxsize, &warn, loc);
+	if (!p) {
+		errno = EOVERFLOW;
+		return 0;
+	}
 	if (/*CONSTCOND*/DEPRECATE_TWO_DIGIT_YEARS
 	    && warn != IN_NONE && getenv(YEAR_2000_NAME)) {
 		(void) fprintf(stderr, "\n");
@@ -162,9 +167,12 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 		else	(void) fprintf(stderr, "all locales");
 		(void) fprintf(stderr, "\n");
 	}
-	if (p == s + maxsize)
+	if (p == s + maxsize) {
+		errno = ERANGE;
 		return 0;
+	}
 	*p = '\0';
+	errno = saved_errno;
 	return p - s;
 }
 
@@ -368,6 +376,23 @@ label:
 
 					tm = *t;
 					mkt = mktime_z(sp, &tm);
+					if (mkt == (time_t) -1) {
+						/* Fail unless this -1
+						 * represents a valid time.
+						 */
+						struct tm tm_1;
+#define sametm(tm1, tm2) \
+	((tm1)->tm_year == (tm2)->tm_year && \
+	(tm1)->tm_yday == (tm2)->tm_yday && \
+	(tm1)->tm_hour == (tm2)->tm_hour && \
+	(tm1)->tm_min == (tm2)->tm_min && \
+	(tm1)->tm_sec == (tm2)->tm_sec)
+						if (!localtime_rz(sp, &mkt,
+						    &tm_1))
+							return NULL;
+						if (!sametm(&tm, &tm_1))
+							return NULL;
+					}
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t))
 						(void)snprintf(buf, sizeof(buf),
