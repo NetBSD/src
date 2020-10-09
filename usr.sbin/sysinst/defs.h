@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.64 2020/09/29 14:29:56 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.65 2020/10/09 18:33:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -332,6 +332,7 @@ struct partition_usage_set {
 					 * no active partition remains. */
 	size_t num_write_back;		/* number of write_back */
 	daddr_t cur_free_space;		/* estimate of free sectors */
+	daddr_t reserved_space;		/* space we are not allowed to use */
 	menu_ent *menu_opts;		/* 0 .. num+N */
 	int menu;			/* the menu to edit this */
 	bool ok;			/* ok to continue (all fit) */

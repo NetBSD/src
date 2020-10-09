@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.18 2020/10/03 18:54:18 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.19 2020/10/09 18:33:00 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -542,7 +542,7 @@ add_part_clone(menudesc *menu, void *arg)
 		if (cid == NO_PART)
 			continue;
 		parts->pscheme->get_part_info(parts, cid, &cinfo);
-		offset = rounddown(cinfo.start+cinfo.size+align, align);
+		offset = roundup(cinfo.start+cinfo.size, align);
 	}
 
 	/* reload menu and start again */
