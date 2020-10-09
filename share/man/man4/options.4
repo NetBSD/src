@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.516 2020/08/28 16:07:49 fcambus Exp $
+.\"	$NetBSD: options.4,v 1.517 2020/10/09 01:49:53 gutteridge Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 25, 2020
+.Dd October 9, 2020
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -562,6 +562,10 @@ This option overrides using break to enter the kernel debugger
 on the serial console.
 The value given is the ASCII value to be used instead.
 This is currently only supported by the com driver.
+.It Cd options CNMAGIC=string
+This option overrides the
+.Xr cnmagic 9
+string used to enter the kernel debugger.
 .It Cd options DDB_VERBOSE_HELP
 This option adds more verbose descriptions to the
 .Em help
@@ -2706,6 +2710,7 @@ support in the kernel.
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
 .Xr sysctl 8 ,
+.Xr cnmagic 9 ,
 .Xr in_getifa 9 ,
 .Xr kernhist 9
 .Sh HISTORY
