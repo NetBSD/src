@@ -13,7 +13,7 @@ archive.mk
 modmisc.mk
 varmisc.mk
 
-Making list-archive-wildcard out-of-date ternary.mk archive-suffix.mk archive.mk
+Making list-archive-wildcard out-of-date archive-suffix.mk archive.mk ternary.mk
 list-archive-wildcard: archive-suffix.mk
 list-archive-wildcard: archive.mk
 list-archive-wildcard: ternary.mk
