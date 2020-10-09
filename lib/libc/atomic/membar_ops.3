@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.7 2020/10/09 17:36:16 riastradh Exp $
+.\"	$NetBSD: membar_ops.3,v 1.8 2020/10/09 19:41:02 uwe Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ memory operations \(em that is, all loads and stores on regular
 memory \(em are affected by
 .Nm ,
 not just C11 atomic operations on
-.Vt _Atomic Ns -qualified
+.Vt _Atomic\^ Ns -qualified
 objects.
 .Bl -tag -width abcd
 .It Fn membar_enter
