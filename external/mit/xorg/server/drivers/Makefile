@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2020/01/19 10:45:50 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.100 2020/10/09 04:28:38 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -211,6 +211,13 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-wsfb
 .endif # ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
+
+.if ${MACHINE} == "hppa"
+SUBDIR+= \
+	xf86-video-mga \
+	xf86-video-r128 \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "hppa"
 
 .if ${MACHINE} == "ibmnws"
 SUBDIR+= \
