@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1222 2020/09/26 17:49:50 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.1223 2020/10/09 04:19:43 macallan Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1311,6 +1311,7 @@ MKSLJIT=	yes
     ${MACHINE} == "hpcarm"	|| \
     ${MACHINE} == "hpcmips"	|| \
     ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "hppa"	|| \
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "ibmnws"	|| \
     ${MACHINE} == "iyonix"	|| \
