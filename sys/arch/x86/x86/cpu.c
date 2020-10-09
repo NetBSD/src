@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.198 2020/08/09 15:32:44 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.199 2020/10/09 21:14:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.198 2020/08/09 15:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.199 2020/10/09 21:14:05 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -274,11 +274,17 @@ cpu_pcpuarea_init(struct cpu_info *ci)
 static void
 cpu_vm_init(struct cpu_info *ci)
 {
-	int ncolors = 2, i;
+	unsigned int ncolors = 2;
 
-	for (i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
+	/*
+	 * XXX: for AP's the cache info has not been initialized yet
+	 * but that does not matter because uvm only pays attention at
+	 * the maximum only. We should fix it once cpus have different
+	 * cache sizes.
+	 */
+	for (unsigned int i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
 		struct x86_cache_info *cai;
-		int tcolors;
+		unsigned int tcolors;
 
 		cai = &ci->ci_cinfo[i];
 
@@ -293,24 +299,27 @@ cpu_vm_init(struct cpu_info *ci)
 		default:
 			tcolors /= cai->cai_associativity;
 		}
-		ncolors = uimax(ncolors, tcolors);
-		/*
-		 * If the desired number of colors is not a power of
-		 * two, it won't be good.  Find the greatest power of
-		 * two which is an even divisor of the number of colors,
-		 * to preserve even coloring of pages.
-		 */
-		if (ncolors & (ncolors - 1) ) {
-			int try, picked = 1;
-			for (try = 1; try < ncolors; try *= 2) {
-				if (ncolors % try == 0) picked = try;
-			}
-			if (picked == 1) {
-				panic("desired number of cache colors %d is "
-				" > 1, but not even!", ncolors);
-			}
-			ncolors = picked;
+		if (tcolors <= ncolors)
+			continue;
+		ncolors = tcolors;
+	}
+
+	/*
+	 * If the desired number of colors is not a power of
+	 * two, it won't be good.  Find the greatest power of
+	 * two which is an even divisor of the number of colors,
+	 * to preserve even coloring of pages.
+	 */
+	if (ncolors & (ncolors - 1) ) {
+		unsigned int try, picked = 1;
+		for (try = 1; try < ncolors; try *= 2) {
+			if (ncolors % try == 0) picked = try;
 		}
+		if (picked == 1) {
+			panic("desired number of cache colors %u is "
+			" > 1, but not even!", ncolors);
+		}
+		ncolors = picked;
 	}
 
 	/*
