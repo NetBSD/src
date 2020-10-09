@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb.old,v 1.1 2020/09/17 02:14:48 christos Exp $
+#	$NetBSD: mknative-gdb.old,v 1.2 2020/10/09 23:48:42 rin Exp $
 #
 # Shell script for generating all the constants needed for a native
-# platform build of src/external/gpl3/gdb
+# platform build of src/external/gpl3/gdb.old
 #
 
 # initialise
@@ -12,7 +12,7 @@ _TOP=$3
 _PLATFORM=$4
 _MACHINE_SUBDIR=$5
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
-_GDB=external/gpl3/gdb
+_GDB=external/gpl3/gdb.old
 
 . $_TOP/tools/gcc/mknative.common
 
