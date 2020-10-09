@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1223 2020/10/09 04:19:43 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.1224 2020/10/09 05:41:16 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -63,10 +63,6 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if ${MACHINE_CPU} == "powerpc" || ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_CPU} == "m68k" || ${MACHINE} == "vax"
-HAVE_GCC?=	8
-.endif
 HAVE_GCC?=	9
 
 #
