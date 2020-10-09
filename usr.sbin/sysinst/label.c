@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.26 2020/10/03 18:54:18 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.27 2020/10/09 18:33:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.26 2020/10/03 18:54:18 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.27 2020/10/09 18:33:00 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1449,7 +1449,7 @@ part_ext_clone(menudesc *m, void *arg)
 		clones[clone_cnt].new_id = cid;
 		clones[clone_cnt].ndx = s;
 		clone_cnt++;
-		offset = rounddown(cinfo.start+cinfo.size+align, align);
+		offset = roundup(cinfo.start+cinfo.size, align);
 	}
 
 	/* insert new clone records at offset data.res */
