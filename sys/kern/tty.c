@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.289 2020/08/26 16:36:32 maxv Exp $	*/
+/*	$NetBSD: tty.c,v 1.290 2020/10/09 09:03:55 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.289 2020/08/26 16:36:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.290 2020/10/09 09:03:55 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -226,7 +226,7 @@ int tty_qsize = TTY_MINQSIZE;
 static int
 tty_get_qsize(int *qsize, int newsize)
 {
-	if (newsize == 0)
+	if (newsize <= 0)
 		return EINVAL;
 
 	newsize = 1 << ilog2(newsize);	/* Make it a power of two */
