@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.11 2020/07/05 19:40:27 riastradh Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.12 2020/10/10 08:27:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.11 2020/07/05 19:40:27 riastradh Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.12 2020/10/10 08:27:41 jmcneill Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -141,6 +141,7 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 		.bitpos = 16, .bitwidth = 4, .name = "FP",
 		.info = (const char *[16]) { /* 16=4bit */
 			[0] = "Floating Point",
+			[1] = "Floating Point including half-precision support",
 			[15] = "No Floating Point"
 		}
 	},
@@ -148,6 +149,7 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 		.bitpos = 20, .bitwidth = 4, .name = "AdvSIMD",
 		.info = (const char *[16]) { /* 16=4bit */
 			[0] = "Advanced SIMD",
+			[1] = "Advanced SIMD including half-precision support",
 			[15] = "No Advanced SIMD"
 		}
 	},
