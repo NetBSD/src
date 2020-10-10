@@ -1,7 +1,7 @@
-/*	$NetBSD: cctr.h,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: cctr.h,v 1.4 2020/10/10 03:05:04 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,28 @@
  * Variables used by cycle counter in kern_cctr.c.
  */
 struct cctr_state {
-	volatile u_int   cc_gen;   /* generation number for this data set */
-	volatile int64_t cc_val;   /* reference CC value at calibration time */
-	volatile int64_t cc_cc;	   /* local CC value at calibration time */
-	volatile int64_t cc_delta; /* reference CC difference for
-				      last calibration period */
-	volatile int64_t cc_denom; /* local CC difference for
-				      last calibration period */
+	volatile int64_t cc_delta;	/* delta from primary CPU CC */
+	u_int cc_cal_ticks;		/* # ticks between calibrations */
+	u_int cc_ticks;			/* # ticks since last calibration */
 };
 
+#ifdef _KERNEL
 struct cpu_info;
 
-void cc_calibrate_cpu(struct cpu_info *);
 struct timecounter *cc_init(timecounter_get_t, uint64_t, const char *, int);
-u_int cc_get_timecount(struct timecounter *);
+void	cc_init_secondary(struct cpu_info *);
+u_int	cc_get_timecount(struct timecounter *);
+void	cc_calibrate_cpu(struct cpu_info *);
+void	cc_primary_cc(void);
+
+#define	cc_hardclock(ci)						\
+do {									\
+	if ((ci)->ci_cc.cc_cal_ticks &&					\
+	    ++(ci)->ci_cc.cc_ticks == (ci)->ci_cc.cc_cal_ticks) {	\
+		(ci)->ci_cc.cc_ticks = 0;				\
+		cc_calibrate_cpu((ci));					\
+	}								\
+} while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
 
 #endif /* _SYS_CCTR_H_ */
