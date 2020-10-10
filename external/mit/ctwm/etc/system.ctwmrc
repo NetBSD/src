@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.1 2020/09/24 05:43:30 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.2 2020/10/10 10:28:08 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -139,10 +139,10 @@ WorkSpaces
 
 Color
 {
-  BorderColor           "steelblue"
+  BorderColor           "firebrick"
 
-  BorderTileBackground  "lavender"
-  BorderTileForeground  "lavender"
+  BorderTileBackground  "steelblue"
+  BorderTileForeground  "steelblue"
 
   DefaultBackground     "grey70"
   DefaultForeground     "black"
