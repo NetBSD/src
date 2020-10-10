@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.293 2020/10/10 17:25:11 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.294 2020/10/10 18:53:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.293 2020/10/10 17:25:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.294 2020/10/10 18:53:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1377,7 +1377,6 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		    s != tp->t_qsize)
 			error = tty_set_qsize(tp, s);
 		return error;
-		break;
 
 	case TIOCSBRK:
 	case TIOCCBRK:
