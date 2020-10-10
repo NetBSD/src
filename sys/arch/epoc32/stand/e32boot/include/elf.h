@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.4 2018/05/24 17:07:51 christos Exp $	*/
+/*	$NetBSD: elf.h,v 1.5 2020/10/10 21:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ typedef struct {
 #define EM_RH32		38	/* TRW RH-32 */
 #define EM_RCE		39	/* Motorola RCE */
 #define EM_ARM		40	/* Advanced RISC Machines ARM */
-#define EM_ALPHA	41	/* DIGITAL Alpha */
+#define EM_OLD_ALPHA	41	/* DIGITAL Alpha (obsolete) */
 #define EM_SH		42	/* Hitachi Super-H */
 #define EM_SPARCV9	43	/* SPARC Version 9 */
 #define EM_TRICORE	44	/* Siemens Tricore */
@@ -313,7 +313,7 @@ typedef struct {
 #define EM_RISCV	243	/* RISC-V */
 
 /* Unofficial machine types follow */
-#define EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
+#define EM_ALPHA	36902	/* DIGITAL Alpha */
 #define EM_NUM		36903
 
 /*

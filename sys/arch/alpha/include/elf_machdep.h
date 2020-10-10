@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.14 2019/04/08 14:08:16 thorpej Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.15 2020/10/10 21:25:51 thorpej Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
@@ -15,11 +15,11 @@
 
 #define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF64_MACHDEP_ID_CASES						\
+		case EM_OLD_ALPHA:					\
 		case EM_ALPHA:						\
-		case EM_ALPHA_EXP:					\
 			break;
 
-#define	ELF64_MACHDEP_ID	EM_ALPHA_EXP	/* XXX */
+#define	ELF64_MACHDEP_ID	EM_ALPHA
 
 #define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
