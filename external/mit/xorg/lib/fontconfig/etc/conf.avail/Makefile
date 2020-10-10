@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2019/03/11 05:05:32 nakayama Exp $
+#	$NetBSD: Makefile,v 1.8 2020/10/10 09:17:33 nia Exp $
 
 .include <bsd.own.mk>
 
-.PATH:	${X11SRCDIR.fontconfig}/conf.d
+.PATH:	. ${X11SRCDIR.fontconfig}/conf.d
 CONFIGFILES= \
 	10-autohint.conf \
 	10-hinting-full.conf \
@@ -34,6 +34,7 @@ CONFIGFILES= \
 	65-khmer.conf \
 	65-nonlatin.conf \
 	69-unifont.conf \
+	70-no-bitmap-webfonts.conf \
 	70-no-bitmaps.conf \
 	70-yes-bitmaps.conf \
 	80-delicious.conf \
