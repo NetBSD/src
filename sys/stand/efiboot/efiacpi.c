@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.7 2020/05/14 19:19:08 riastradh Exp $ */
+/* $NetBSD: efiacpi.c,v 1.8 2020/10/10 19:17:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -155,9 +155,6 @@ efi_acpi_create_fdt(void)
 	fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,acpi-root-table", (uint64_t)(uintptr_t)acpi_root);
 	if (smbios3_table)
 		fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,smbios-table", (uint64_t)(uintptr_t)smbios3_table);
-#ifdef EFIBOOT_RUNTIME_ADDRESS
-	fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-system-table", (uint64_t)(uintptr_t)ST);
-#endif
 
 	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "acpi");
 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/acpi"), "compatible", "netbsd,acpi");

@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.24 2020/06/21 17:24:26 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.25 2020/10/10 19:17:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -30,6 +30,7 @@
 #include "efiboot.h"
 #include "efifdt.h"
 #include "efiblock.h"
+#include "efiacpi.h"
 
 #include <libfdt.h>
 
@@ -55,6 +56,7 @@ static EFI_GUID FdtTableGuid = FDT_TABLE_GUID;
 #define PRIxUINTN "x"
 #endif
 static void *fdt_data = NULL;
+static size_t fdt_data_size = 512*1024;
 
 int
 efi_fdt_probe(void)
@@ -76,10 +78,23 @@ efi_fdt_probe(void)
 int
 efi_fdt_set_data(void *data)
 {
+	int err;
+
 	if (fdt_check_header(data) != 0)
 		return EINVAL;
 
-	fdt_data = data;
+	fdt_data = alloc(fdt_data_size);
+	if (fdt_data == NULL)
+		return ENOMEM;
+	memset(fdt_data, 0, fdt_data_size);
+
+	err = fdt_open_into(data, fdt_data, fdt_data_size);
+	if (err != 0) {
+		dealloc(fdt_data, fdt_data_size);
+		fdt_data = NULL;
+		return ENXIO;
+	}
+
 	return 0;
 }
 
@@ -202,6 +217,18 @@ efi_fdt_chosen(void)
 }
 
 void
+efi_fdt_system_table(void)
+{
+#ifdef EFIBOOT_RUNTIME_ADDRESS
+	int chosen;
+
+	chosen = efi_fdt_chosen();
+
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,uefi-system-table", (uint64_t)(uintptr_t)ST);
+#endif
+}
+
+void
 efi_fdt_memory_map(void)
 {
 	UINTN nentries = 0, mapkey, descsize;
@@ -278,7 +305,7 @@ efi_fdt_gop(void)
 	EFI_HANDLE *gop_handle;
 	UINTN ngop_handle, n;
 	char buf[48];
-	int fb;
+	int fb, chosen;
 
 	status = LibLocateHandle(ByProtocol, &GraphicsOutputProtocol, NULL, &ngop_handle, &gop_handle);
 	if (EFI_ERROR(status) || ngop_handle == 0)
@@ -311,15 +338,13 @@ efi_fdt_gop(void)
 			continue;
 		}
 
-		fdt_setprop_u32(fdt_data,
-		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#address-cells", 2);
-		fdt_setprop_u32(fdt_data,
-		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#size-cells", 2);
-		fdt_setprop_empty(fdt_data,
-		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "ranges");
+		chosen = efi_fdt_chosen();
+		fdt_setprop_u32(fdt_data, chosen, "#address-cells", 2);
+		fdt_setprop_u32(fdt_data, chosen, "#size-cells", 2);
+		fdt_setprop_empty(fdt_data, chosen, "ranges");
 
 		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
-		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), buf);
+		fb = fdt_add_subnode(fdt_data, chosen, buf);
 		if (fb < 0)
 			panic("FDT: Failed to create framebuffer node");
 
@@ -332,9 +357,13 @@ efi_fdt_gop(void)
 		fdt_appendprop_u32(fdt_data, fb, "stride", mode->Info->PixelsPerScanLine * 4);	/* XXX */
 		fdt_appendprop_string(fdt_data, fb, "format", "a8b8g8r8");
 
-		snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
-		fdt_setprop_string(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH),
-		    "stdout-path", buf);
+		/*
+		 * In ACPI mode, use GOP as console.
+		 */
+		if (efi_acpi_available()) {
+			snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
+			fdt_setprop_string(fdt_data, chosen, "stdout-path", buf);
+		}
 
 		return;
 	}
