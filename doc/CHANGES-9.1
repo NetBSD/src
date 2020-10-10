@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.119 2020/10/08 18:11:21 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.120 2020/10/10 14:36:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5106,4 +5106,9 @@ sys/arch/arm/include/arm32/vmparam.h		1.56
 
 	Maximize allowed data size.
 	[he, ticket #1105]
+
+sys/compat/common/tty_43.c			1.38
+
+	tty_43: better input limit validation to avoid undefined behaviour.
+	[nia, ticket #1106]
 
