@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.18 2020/10/10 09:58:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.18 2020/10/10 09:58:16 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -245,7 +245,8 @@ pcihost_config(struct pcihost_softc *sc)
 	/*
 	 * If this flag is set, skip configuration of the PCI bus and use existing config.
 	 */
-	if (of_getprop_uint32(sc->sc_phandle, "linux,pci-probe-only", &probe_only))
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen <= 0 || of_getprop_uint32(chosen, "linux,pci-probe-only", &probe_only))
 		probe_only = 0;
 	if (probe_only)
 		return 0;
