@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.138 2020/05/16 18:31:48 christos Exp $
+	$NetBSD: syscalls.master,v 1.139 2020/10/10 00:00:54 rin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -235,7 +235,9 @@
 89	COMPAT_43 MODULAR compat_43	\
 			{ int|sys||getdtablesize(void); } ogetdtablesize
 90	STD		{ int|netbsd32||dup2(int from, int to); }
-91	UNIMPL		getdopt
+91	STD		{ netbsd32_ssize_t|netbsd32||getrandom( \
+			    netbsd32_voidp buf, netbsd32_size_t buflen, \
+			    unsigned int flags); }
 92	STD		{ int|netbsd32||fcntl(int fd, int cmd, \
 			    ... netbsd32_voidp arg); }
 93	COMPAT_50 MODULAR compat_netbsd32_50	\
