@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.27 2020/10/09 18:33:00 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.28 2020/10/10 19:42:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.27 2020/10/09 18:33:00 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.28 2020/10/10 19:42:19 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -187,11 +187,10 @@ verify_parts(struct partition_usage_set *pset, bool install)
 	struct part_usage_info *wanted;
 	struct disk_partitions *parts;
 	size_t i, num_root;
-	daddr_t first_bsdstart, first_bsdsize, inst_start, inst_size;
+	daddr_t first_bsdstart, inst_start;
 	int rv;
 
 	first_bsdstart = inst_start = -1;
-	first_bsdsize = inst_size = 0;
 	num_root = 0;
 	parts = pset->parts;
 	for (i = 0; i < pset->num; i++) {
@@ -209,12 +208,10 @@ verify_parts(struct partition_usage_set *pset, bool install)
  
 		if (first_bsdstart <= 0) {
 			first_bsdstart = wanted->cur_start;
-			first_bsdsize = wanted->size;
 		}
 		if (inst_start < 0 &&
 		    (wanted->cur_flags & PTI_INSTALL_TARGET)) {
 			inst_start = wanted->cur_start;
-			inst_size = wanted->size;
 		}
 	}
 
@@ -231,21 +228,6 @@ verify_parts(struct partition_usage_set *pset, bool install)
 		rv = ask_reedit(parts);
 		if (rv != 2)
 			return rv;
-	}
-
-	if (pm->ptstart == 0) {
-		if (inst_start > 0) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		} else if (first_bsdstart > 0) {
-			pm->ptstart = first_bsdstart;
-			pm->ptsize = first_bsdsize;
-		} else if (parts->pscheme->guess_install_target &&
-			   parts->pscheme->guess_install_target(
-			   parts, &inst_start, &inst_size)) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		}
 	}
 
 	/* Check for overlaps */

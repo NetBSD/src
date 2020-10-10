@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.20 2020/10/10 18:48:32 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.21 2020/10/10 19:42:19 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1093,10 +1093,10 @@ verify_outer_parts(struct disk_partitions *parts, bool quiet)
 {
 	part_id i;
 	int num_bsdparts;
-	daddr_t first_bsdstart, first_bsdsize, inst_start, inst_size;
+	daddr_t first_bsdstart, inst_start, inst_size;
 
 	first_bsdstart = inst_start = -1;
-	first_bsdsize = inst_size = 0;
+	inst_size = 0;
 	num_bsdparts = 0;
 	for (i = 0; i < parts->num_part; i++) {
 		struct disk_part_info info;
@@ -1110,7 +1110,6 @@ verify_outer_parts(struct disk_partitions *parts, bool quiet)
 
 		if (first_bsdstart < 0) {
 			first_bsdstart = info.start;
-			first_bsdsize = info.size;
 		}
 		if (inst_start<  0 && (info.flags & PTI_INSTALL_TARGET)) {
 			inst_start = info.start;
@@ -1122,12 +1121,9 @@ verify_outer_parts(struct disk_partitions *parts, bool quiet)
 	    (num_bsdparts > 1 && inst_start < 0)) {
 		if (quiet && num_bsdparts == 0)
 			return 0;
-		if (quiet && parts->pscheme->guess_install_target &&
-		    parts->pscheme->guess_install_target(parts,
+		if (!quiet || parts->pscheme->guess_install_target == NULL ||
+		    !parts->pscheme->guess_install_target(parts,
 		    &inst_start, &inst_size)) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		} else {
 			if (num_bsdparts == 0)
 				msg_display_subst(MSG_nobsdpart, 2,
 				    msg_string(parts->pscheme->name),
@@ -1138,21 +1134,6 @@ verify_outer_parts(struct disk_partitions *parts, bool quiet)
 				    msg_string(parts->pscheme->short_name));
 
 			return ask_reedit(parts);
-		}
-	}
-
-	if (pm->ptstart == 0) {
-		if (inst_start > 0) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		} else if (first_bsdstart > 0) {
-			pm->ptstart = first_bsdstart;
-			pm->ptsize = first_bsdsize;
-		} else if (parts->pscheme->guess_install_target &&
-			   parts->pscheme->guess_install_target(
-			   parts, &inst_start, &inst_size)) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
 		}
 	}
 
