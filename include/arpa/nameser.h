@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.25 2009/04/12 17:07:34 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.26 2020/10/10 19:51:48 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -56,12 +56,15 @@
 #define BIND_4_COMPAT
 
 #include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#else
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 #include <sys/cdefs.h>
+
+#if !defined(_NETBSD_SOURCE)
+typedef	unsigned char	u_char;
+typedef	unsigned short	u_short;
+typedef	unsigned int	u_int;
+typedef	unsigned long	u_long;
+#endif
 
 /*%
  * Revision information.  This is the release date in YYYYMMDD format.
