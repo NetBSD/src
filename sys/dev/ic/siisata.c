@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.42 2020/04/13 10:49:34 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.43 2020/10/10 20:27:54 thorpej Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.42 2020/04/13 10:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.43 2020/10/10 20:27:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -540,10 +540,9 @@ siisata_intr_port(struct siisata_channel *schp)
 		tfd = ATACH_ERR_ST(WDCE_CRC, WDCS_ERR);
 
 		if (ec <= PR_PCE_DATAFISERROR) {
-			if (ec == PR_PCE_DEVICEERROR
-			    && (chp->ch_flags & ATACH_NCQ) == 0) {
-				xfer = ata_queue_get_active_xfer(chp);
-
+			if (ec == PR_PCE_DEVICEERROR &&
+			    (chp->ch_flags & ATACH_NCQ) == 0 &&
+			    (xfer = ata_queue_get_active_xfer(chp)) != NULL) {
 				/* read in specific information about error */
 				uint32_t prbfis = bus_space_read_stream_4(
 				    sc->sc_prt, sc->sc_prh,
