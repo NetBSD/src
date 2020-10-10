@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.18 2020/06/28 11:39:50 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.19 2020/10/10 19:17:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -315,10 +315,8 @@ exec_netbsd(const char *fname, const char *args)
 		efi_fdt_rndseed(rndseed_addr, rndseed_size);
 		efi_fdt_efirng(efirng_addr, efirng_size);
 		efi_fdt_bootargs(args);
-#ifdef EFIBOOT_ACPI
-		if (efi_acpi_available())
-			efi_fdt_gop();
-#endif
+		efi_fdt_system_table();
+		efi_fdt_gop();
 		efi_fdt_memory_map();
 	}
 
