@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_simplefb.c,v 1.2 2020/01/24 10:49:41 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.1 2020/10/10 15:25:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,8 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pci.h"
+#include "opt_pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_simplefb.c,v 1.2 2020/01/24 10:49:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.1 2020/10/10 15:25:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,21 +49,27 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_simplefb.c,v 1.2 2020/01/24 10:49:41 jmcneill E
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
-#include <arm/acpi/acpi_simplefb.h>
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
+#endif
+
+#include <arm/fdt/arm_simplefb.h>
 
 #include <libfdt.h>
 
 extern struct bus_space arm_generic_bs_tag;
 
-static struct acpi_simplefb_softc {
+static struct arm_simplefb_softc {
 	uint32_t	sc_width;
 	uint32_t	sc_height;
 	uint32_t	sc_stride;
 	uint16_t	sc_depth;
 	void		*sc_bits;
-} acpi_simplefb_softc;
+} arm_simplefb_softc;
 
-static struct wsscreen_descr acpi_simplefb_stdscreen = {
+static struct wsscreen_descr arm_simplefb_stdscreen = {
 	.name = "std",
 	.ncols = 0,
 	.nrows = 0,
@@ -71,12 +80,12 @@ static struct wsscreen_descr acpi_simplefb_stdscreen = {
 	.modecookie = NULL
 };
 
-static struct wsdisplay_accessops acpi_simplefb_accessops;
-static struct vcons_data acpi_simplefb_vcons_data;
-static struct vcons_screen acpi_simplefb_screen;
+static struct wsdisplay_accessops arm_simplefb_accessops;
+static struct vcons_data arm_simplefb_vcons_data;
+static struct vcons_screen arm_simplefb_screen;
 
 static int
-acpi_simplefb_find_node(void)
+arm_simplefb_find_node(void)
 {
 	static const char * simplefb_compatible[] = { "simple-framebuffer", NULL };
 	int chosen_phandle, child;
@@ -98,10 +107,10 @@ acpi_simplefb_find_node(void)
 }
 
 static void
-acpi_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
+arm_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
-	struct acpi_simplefb_softc * const sc = cookie;
+	struct arm_simplefb_softc * const sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
 	ri->ri_width = sc->sc_width;
@@ -123,27 +132,27 @@ acpi_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static int
-acpi_simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
+arm_simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	return EPASSTHROUGH;
 }
 
 static paddr_t
-acpi_simplefb_mmap(void *v, void *vs, off_t offset, int prot)
+arm_simplefb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	return -1;
 }
 
 static void
-acpi_simplefb_pollc(void *v, int on)
+arm_simplefb_pollc(void *v, int on)
 {
 }
 
 void
-acpi_simplefb_preattach(void)
+arm_simplefb_preattach(void)
 {
-	struct acpi_simplefb_softc * const sc = &acpi_simplefb_softc;
-	struct rasops_info *ri = &acpi_simplefb_screen.scr_ri;
+	struct arm_simplefb_softc * const sc = &arm_simplefb_softc;
+	struct rasops_info *ri = &arm_simplefb_screen.scr_ri;
 	bus_space_tag_t bst = &arm_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t width, height, stride;
@@ -153,7 +162,7 @@ acpi_simplefb_preattach(void)
 	uint16_t depth;
 	long defattr;
 
-	const int phandle = acpi_simplefb_find_node();
+	const int phandle = arm_simplefb_find_node();
 	if (phandle == -1)
 		return;
 
@@ -190,26 +199,35 @@ acpi_simplefb_preattach(void)
 
 	wsfont_init();
 
-	acpi_simplefb_accessops.ioctl = acpi_simplefb_ioctl;
-	acpi_simplefb_accessops.mmap = acpi_simplefb_mmap;
-	acpi_simplefb_accessops.pollc = acpi_simplefb_pollc;
+	arm_simplefb_accessops.ioctl = arm_simplefb_ioctl;
+	arm_simplefb_accessops.mmap = arm_simplefb_mmap;
+	arm_simplefb_accessops.pollc = arm_simplefb_pollc;
 
-	vcons_init(&acpi_simplefb_vcons_data, sc, &acpi_simplefb_stdscreen,
-		&acpi_simplefb_accessops);
-	acpi_simplefb_vcons_data.init_screen = acpi_simplefb_init_screen;
-	acpi_simplefb_vcons_data.use_intr = 0;
-	vcons_init_screen(&acpi_simplefb_vcons_data, &acpi_simplefb_screen, 1, &defattr);
-	acpi_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;    
+	vcons_init(&arm_simplefb_vcons_data, sc, &arm_simplefb_stdscreen,
+		&arm_simplefb_accessops);
+	arm_simplefb_vcons_data.init_screen = arm_simplefb_init_screen;
+	arm_simplefb_vcons_data.use_intr = 0;
+	vcons_init_screen(&arm_simplefb_vcons_data, &arm_simplefb_screen, 1, &defattr);
+	arm_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;    
 
 	if (ri->ri_rows < 1 || ri->ri_cols < 1)
 		return;
 
-	acpi_simplefb_stdscreen.nrows = ri->ri_rows;
-	acpi_simplefb_stdscreen.ncols = ri->ri_cols;
-	acpi_simplefb_stdscreen.textops = &ri->ri_ops;
-	acpi_simplefb_stdscreen.capabilities = ri->ri_caps;
+	arm_simplefb_stdscreen.nrows = ri->ri_rows;
+	arm_simplefb_stdscreen.ncols = ri->ri_cols;
+	arm_simplefb_stdscreen.textops = &ri->ri_ops;
+	arm_simplefb_stdscreen.capabilities = ri->ri_caps;
 
-	wsdisplay_preattach(&acpi_simplefb_stdscreen, ri, 0, 0, defattr);
+	wsdisplay_preattach(&arm_simplefb_stdscreen, ri, 0, 0, defattr);
 
-	vcons_replay_msgbuf(&acpi_simplefb_screen);
+	vcons_replay_msgbuf(&arm_simplefb_screen);
+
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+	/*
+	 * Let the PCI resource allocator know about our framebuffer. This
+	 * protects the VGA device BARs from being reprogrammed when we the
+	 * framebuffer is located in VRAM.
+	 */
+	pciconf_resource_reserve(PCI_CONF_MAP_MEM, addr, size);
+#endif
 }
