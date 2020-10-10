@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2016/08/19 22:37:04 mrg Exp $
+# $NetBSD: mi,v 1.43 2020/10/10 08:33:29 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4320,6 +4320,12 @@
 ./usr/X11R7/lib/X11/fonts/misc/jiskan24.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/k14.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/nil2.pcf.gz		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-12x24.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-16x32.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-32x64.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-5x8.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-6x12.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-8x16.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-1		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-10		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-11		xfont	share,xorg,x11fonts
