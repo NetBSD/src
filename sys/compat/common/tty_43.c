@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.34 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.34.4.1 2020/10/10 14:35:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.34 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.34.4.1 2020/10/10 14:35:06 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -220,20 +220,24 @@ compat_43_ttioctl(struct tty *tp, u_long com, void *data, int flag,
 	case TIOCLBIC:
 	case TIOCLSET: {
 		struct termios term;
-		int flags;
+		int argbits, flags;
+
+		argbits = *(int *)data;
+		if (argbits < 0)
+			return EINVAL;
 
 		mutex_spin_enter(&tty_lock);
 		term = tp->t_termios;
 		flags = ttcompatgetflags(tp);
 		switch (com) {
 		case TIOCLSET:
-			tp->t_flags = (flags&0xffff) | (*(int *)data<<16);
+			tp->t_flags = (flags & 0xffff) | (argbits << 16);
 			break;
 		case TIOCLBIS:
-			tp->t_flags = flags | (*(int *)data<<16);
+			tp->t_flags = flags | (argbits << 16);
 			break;
 		case TIOCLBIC:
-			tp->t_flags = flags & ~(*(int *)data<<16);
+			tp->t_flags = flags & ~(argbits << 16);
 			break;
 		}
 		ttcompatsetlflags(tp, &term);
