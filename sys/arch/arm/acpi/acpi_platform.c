@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.20 2020/09/28 11:54:22 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.21 2020/10/10 15:25:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,13 +31,11 @@
 
 #include "com.h"
 #include "plcom.h"
-#include "wsdisplay.h"
-#include "genfb.h"
 #include "opt_efi.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.20 2020/09/28 11:54:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.21 2020/10/10 15:25:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,10 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.20 2020/09/28 11:54:22 jmcneill 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
-#endif
-
-#if NWSDISPLAY > 0 && NGENFB > 0
-#include <arm/acpi/acpi_simplefb.h>
 #endif
 
 #ifdef EFI_RUNTIME
@@ -247,15 +241,6 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
-#if NWSDISPLAY > 0 && NGENFB > 0
-	if (device_is_a(self, "armfdt")) {
-		/*
-		 * Setup framebuffer console, if present.
-		 */
-		acpi_simplefb_preattach();
-	}
-#endif
-
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 

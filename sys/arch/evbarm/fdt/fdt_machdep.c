@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.74 2020/09/25 06:47:24 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.75 2020/10/10 15:25:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.74 2020/09/25 06:47:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.75 2020/10/10 15:25:30 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.74 2020/09/25 06:47:24 skrll Exp $
 #include "opt_cpuoptions.h"
 #include "opt_efi.h"
 
+#include "genfb.h"
 #include "ukbd.h"
 #include "wsdisplay.h"
 
@@ -94,6 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.74 2020/09/25 06:47:24 skrll Exp $
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
+#endif
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+#include <arm/fdt/arm_simplefb.h>
 #endif
 
 #if NUKBD > 0
@@ -848,8 +853,16 @@ fdt_device_register(device_t self, void *aux)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
 
-	if (device_is_a(self, "armfdt"))
+	if (device_is_a(self, "armfdt")) {
 		fdt_setup_initrd();
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+		/*
+		 * Setup framebuffer console, if present.
+		 */
+		arm_simplefb_preattach();
+#endif
+	}
 
 	if (plat && plat->ap_device_register)
 		plat->ap_device_register(self, aux);

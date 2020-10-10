@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_simplefb.h,v 1.1 2019/09/22 18:31:59 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.h,v 1.1 2020/10/10 15:25:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,9 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_ACPI_SIMPLEFB_H
-#define _ARM_ACPI_SIMPLEFB_H
+#ifndef _ARM_ARM_SIMPLEFB_H
+#define _ARM_ARM_SIMPLEFB_H
 
-void		acpi_simplefb_preattach(void);
+void		arm_simplefb_preattach(void);
 
-#endif /* !_ARM_ACPI_SIMPLEFB_H */
+#endif /* !_ARM_ARM_SIMPLEFB_H */
