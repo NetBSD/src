@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.23 2020/10/10 03:29:48 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,35 +29,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NOT_MP_SAFE	0
 
 /*
  * Socionext SC2A11 SynQuacer NetSec GbE driver
  *
- *   (possibly incorrect notes to be removed eventually)
- * - 32 byte descriptor for 64 bit paddr design.
- * - multiple rings seems available. There are special descriptor fields
- *   to designify ring number from which to arrive or to which go.
- * - memory mapped EEPROM to hold MAC address. The rest of the area is
- *   occupied by a set of ucode for two DMA engines and one packet engine.
- * - The size of frame address filter is 16 plus 16.
- * - The first slot is my own station address. Always enabled to perform
- *   to identify oneself.
- * - 1~15 are for supplimental MAC addresses. Independently enabled for
- *   use. Good to catch multicast. Byte-wise selective match available.
- *   Use the mask to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
- * - 16~32 might be exact match without byte-mask.
- * - The size of multicast hash filter store is 64 bit.
- * - Socionext/Linaro "NetSec" code contains some constants left unexplained.
- *   Fortunately, Intel/Altera CycloneV PDFs describe every detail of
- *   "such the instance of" DW EMAC IP and most of them are likely applicable
- *   to SC2A11 GbE.
- * - not known "NetSec" instanciates DW timestamp or builds its own.
- * - DW EMAC implmentation (0x20) is known 0x10.36
+ * Multiple Tx and Rx queues exist inside and dedicated descriptor
+ * fields specifies which queue is to use. Three internal micro-processors
+ * to handle incoming frames, outgoing frames and packet data crypto
+ * processing. uP programs are stored in an external flash memory and
+ * have to be loaded by device driver.
+ * NetSec uses Synopsys DesignWare Core EMAC.  DWC implmentation
+ * regiter (0x20) is known to have 0x10.36 and feature register (0x1058)
+ * to report XX.XX.
  */
 
+#define NOT_MP_SAFE	0
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.23 2020/10/10 03:29:48 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,8 +73,47 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
+/* Socionext SC2A11 descriptor format */
+struct tdes {
+	uint32_t t0, t1, t2, t3;
+};
+
+struct rdes {
+	uint32_t r0, r1, r2, r3;
+};
+
+#define T0_OWN		(1U<<31)	/* desc is ready to Tx */
+#define T0_EOD		(1U<<30)	/* end of descriptor array */
+#define T0_DRID		(24)		/* 29:24 D-RID */
+#define T0_PT		(1U<<21)	/* 23:21 PT */
+#define T0_TRID		(16)		/* 20:16 T-RID */
+#define T0_FS		(1U<<9)		/* first segment of frame */
+#define T0_LS		(1U<<8)		/* last segment of frame */
+#define T0_CSUM		(1U<<7)		/* enable check sum offload */
+#define T0_SGOL		(1U<<6)		/* enable TCP segment offload */
+#define T0_TRS		(1U<<4)		/* 5:4 TRS */
+#define T0_IOC		(0)		/* XXX TBD interrupt when completed */
+/* T1 segment address 63:32 */
+/* T2 segment address 31:0 */
+/* T3 31:16 TCP segment length, 15:0 segment length to transmit */
+
+#define R0_OWN		(1U<<31)	/* desc is empty */
+#define R0_EOD		(1U<<30)	/* end of descriptor array */
+#define R0_SRID		(24)		/* 29:24 S-RID */
+#define R0_FR		(1U<<23)	/* FR */
+#define R0_ER		(1U<<21)	/* Rx error indication */
+#define R0_ERR		(3U<<16)	/* 18:16 receive error code */
+#define R0_TDRID	(14)		/* 15:14 TD-RID */
+#define R0_FS		(1U<<9)		/* first segment of frame */
+#define R0_LS		(1U<<8)		/* last segment of frame */
+#define R0_CSUM		(3U<<6)		/* 7:6 checksum status */
+#define R0_CERR		(2U<<6)		/* 0 (undone), 1 (found ok), 2 (bad) */
+/* R1 frame address 63:32 */
+/* R2 frame address 31:0 */
+/* R3 31:16 received frame length, 15:0 buffer length to receive */
+
 /*
- * SC2A11 register block 0x100-0x1204?
+ * SC2A11 NetSec registers. 0x100 - 1204
  */
 #define SWRESET		0x104
 #define COMINIT		0x120
@@ -98,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define xINTBEN		0x23c		/* INT_B enable */
 #define xINTB_SET	0x240		/* bit to set */
 #define xINTB_CLR	0x244		/* bit to clr */
-/* 0x00c-048 */		/* pkt,tls,s0,s1 SR/IE/SET/CLR */
+/* 0x00c - 048 */			/* pkt,tls,s0,s1 SR/IE/SET/CLR */
 #define TXISR		0x400
 #define TXIEN		0x404
 #define TXI_SET		0x428
@@ -123,7 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define PKTENG		0x0d0		/* packet engine ucode port */
 #define CLKEN		0x100		/* clock distribution enable */
 #define  CLK_G		(1U<<5)
-#define  CLK_ALL	0x24
+#define  CLK_ALL	0x13		/* 0x24 ??? */
 #define MACADRH		0x10c		/* ??? */
 #define MACADRL		0x110		/* ??? */
 #define MCVER		0x22c		/* micro controller version */
@@ -140,6 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 /* 0xA00 */		/* enc RAW Rx  SR/IE/SET/CLR */
 /* 0xA40 */		/* dec RAW Rx  SR/IE/SET/CLR */
 
+/* indirect GMAC registers. accessed thru MACCMD/MACDATA operation */
 #define MACCMD		0x11c4		/* gmac operation */
 #define  CMD_IOWR	(1U<<28)	/* write op */
 #define  CMD_BUSY	(1U<<31)	/* busy bit */
@@ -150,7 +179,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define DESC_SRST	0x1204		/* desc engine sw reset */
 
 /*
- * GMAC register block. use mac_write()/mac_read() to handle
+ * GMAC registers. not memory mapped, but handled by indirect access.
+ * Mostly identical to Synopsys DesignWare Core Ethernet.
  */
 #define GMACMCR		0x0000		/* MAC configuration */
 #define  MCR_IBN	(1U<<30)	/* ??? */
@@ -183,8 +213,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define  AFR_MHTE	(1U<<2)		/* use multicast hash table */
 #define  AFR_UHTE	(1U<<1)		/* use hash table for unicast */
 #define  AFR_PR		(1U<<0)		/* run promisc mode */
-#define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
-#define GMACMHTL	0x000c		/* 64bit multicast hash table 31:0 */
 #define GMACGAR		0x0010		/* MDIO operation */
 #define  GAR_PHY	(11)		/* mii phy 15:11 */
 #define  GAR_REG	(6)		/* mii reg 10:6 */
@@ -193,8 +221,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define  GAR_BUSY	(1U)		/* busy bit */
 #define GMACGDR		0x0014		/* MDIO rd/wr data */
 #define GMACFCR		0x0018		/* 802.3x flowcontrol */
-					/* 31:16 pause timer value */
-					/* 5:4 pause timer threthold */
+/* 31:16 pause timer value, 5:4 pause timer threthold */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
 #define GMACVTAG	0x001c		/* VLAN tag control */
@@ -209,42 +236,37 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define  ISR_RX		(1U<<5)		/* Rx completed */
 #define  ISR_ANY	(1U<<4)		/* any of above 5-7 report */
 #define  ISR_LC		(1U<<0)		/* link status change detected */
-#define GMACMAH0	0x0040		/* MAC address 0 47:32 */
-#define GMACMAL0	0x0044		/* MAC address 0 31:0 */
-#define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
-#define GMACMAL(i) 	((i)*8+0x44)	/* bit 31 to use, 30 SA,
-					 * 29:24 byte-wise don'care */
-#define GMACMIISR	0x00d8		/* resolved xMII link status */
-					/*  3   link up detected
-					 *  2:1 resovled speed
-					 *      0 2.5Mhz (10Mbps)
-					 *	1 25Mhz  (100Mbps)
-					 *	2 125Mhz (1000Mbps)
-					 *  1   full duplex detected */
-#define GMACEVCTL	0x0100		/* event counter control */
-#define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
-
-#define GMACMHT(i)	((i)*4+0x500)	/* 256bit multicast hash table 0 - 7 */
-#define GMACVHT		0x0588		/* VLAN tag hash */
-
-/* 0x0700-0734 ??? */
+#define GMACMAH0	0x0040		/* my own MAC address 47:32 */
+#define GMACMAL0	0x0044		/* my own MAC address 31:0 */
+#define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1-15 */
+#define GMACMAL(i) 	((i)*8+0x44)	/* 31:0 MAC address low part */
+/* MAH bit-31: slot in use, 30: SA to match, 29:24 byte-wise don'care */
 #define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
-#define GMACAMAL(i)	((i)*8+0x804)	/* bit 31 to use */
+#define GMACAMAL(i)	((i)*8+0x804)	/* 31: MAC address low part */
+/* MAH bit-31: slot in use, no other bit is effective */
+#define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
+#define GMACMHTL	0x000c		/* 64bit multicast hash table 31:0 */
+#define GMACMHT(i)	((i)*4+0x500)	/* 256-bit alternative mcast hash 0-7 */
+#define GMACVHT		0x0588		/* 16-bit VLAN tag hash */
+#define GMACMIISR	0x00d8		/* resolved xMII link status */
+/* 3: link up detected, 2:1 resovled speed (0/1/2), 1: fdx detected */
 
-#define GMACBMR		0x1000		/* DMA bus mode control
-					 * 24    4PBL 8???
-					 * 23    USP
-					 * 22:17 RPBL
-					 * 16    fixed burst, or undefined b.
-					 * 15:14 priority between Rx and Tx
-					 *  3    rxtx ratio 41
-					 *  2    rxtx ratio 31
-					 *  1    rxtx ratio 21
-					 *  0    rxtx ratio 11
-					 * 13:8  PBL possible DMA burst len
-					 *  7    alternative des8
-					 *  0    reset op. self clear
-					 */
+/* 0x0700 - 0734 ??? */
+
+#define GMACBMR		0x1000		/* DMA bus mode control */
+/* 24    4PBL 8???
+ * 23    USP
+ * 22:17 RPBL
+ * 16    fixed burst, or undefined b.
+ * 15:14 priority between Rx and Tx
+ *  3    rxtx ratio 41
+ *  2    rxtx ratio 31
+ *  1    rxtx ratio 21
+ *  0    rxtx ratio 11
+ * 13:8  PBL packet burst len
+ *  7    alternative des8
+ *  0    reset op. (SC)
+ */
 #define  _BMR		0x00412080	/* XXX TBD */
 #define  _BMR0		0x00020181	/* XXX TBD */
 #define  BMR_RST	(1)		/* reset op. self clear when done */
@@ -252,8 +274,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define GMACRPD		0x1008		/* write any to resume rdes */
 #define GMACRDLA	0x100c		/* rdes base address 32bit paddr */
 #define GMACTDLA	0x1010		/* tdes base address 32bit paddr */
-#define  _RDLA		0x18000		/* XXX TBD system SRAM with CC ? */
-#define  _TDLA		0x1c000		/* XXX TBD system SRAM with CC ? */
+#define  _RDLA		0x18000		/* XXX TBD system SRAM ? */
+#define  _TDLA		0x1c000		/* XXX TBD system SRAM ? */
 #define GMACDSR		0x1014		/* DMA status detail report; W1C */
 #define GMACOMR		0x1018		/* DMA operation */
 #define  OMR_TSF	(1U<<25)	/* 1: Tx store&forword, 0: immed. */
@@ -267,55 +289,45 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $")
 #define GMACRWDT	0x1024		/* receive watchdog timer count */
 #define GMACAXIB	0x1028		/* AXI bus mode control */
 #define GMACAXIS	0x102c		/* AXI status report */
-/* 0x1048-1054 */			/* descriptor and buffer cur. address */
+/* 0x1048 - 1054 */			/* descriptor and buffer cur. address */
 #define HWFEA		0x1058		/* feature report */
 
-/* descriptor format definition */
-struct tdes {
-	uint32_t t0, t1, t2, t3;
-};
+#define GMACEVCTL	0x0100		/* event counter control */
+#define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114 - 0x284 */
 
-struct rdes {
-	uint32_t r0, r1, r2, r3;
-};
+/* memory mapped CSR register */
+#define CSR_READ(sc,off) \
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
+#define CSR_WRITE(sc,off,val) \
+	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
-#define T0_OWN		(1U<<31)	/* desc is ready to Tx */
-#define T0_EOD		(1U<<30)	/* end of descriptor array */
-#define T0_DRID		(24)		/* 29:24 D-RID */
-#define T0_PT		(1U<<21)	/* 23:21 PT */
-#define T0_TRID		(16)		/* 20:16 T-RID */
-#define T0_FS		(1U<<9)		/* first segment of frame */
-#define T0_LS		(1U<<8)		/* last segment of frame */
-#define T0_CSUM		(1U<<7)		/* enable check sum offload */
-#define T0_SGOL		(1U<<6)		/* enable TCP segment offload */
-#define T0_TRS		(1U<<4)		/* 5:4 TRS */
-#define T0_IOC		(0)		/* XXX TBD interrupt when completed */
-/* T1 segment address 63:32 */
-/* T2 segment address 31:0 */
-/* T3 31:16 TCP segment length, 15:0 segment length to transmit */
-#define R0_OWN		(1U<<31)	/* desc is empty */
-#define R0_EOD		(1U<<30)	/* end of descriptor array */
-#define R0_SRID		(24)		/* 29:24 S-RID */
-#define R0_FR		(1U<<23)	/* FR */
-#define R0_ER		(1U<<21)	/* Rx error indication */
-#define R0_ERR		(3U<<16)	/* 18:16 receive error code */
-#define R0_TDRID	(14)		/* 15:14 TD-RID */
-#define R0_FS		(1U<<9)		/* first segment of frame */
-#define R0_LS		(1U<<8)		/* last segment of frame */
-#define R0_CSUM		(3U<<6)		/* 7:6 checksum status */
-#define R0_CERR		(2U<<6)		/* 0 (undone), 1 (found ok), 2 (bad) */
-/* R1 frame address 63:32 */
-/* R2 frame address 31:0 */
-/* R3 31:16 received frame length, 15:0 buffer length to receive */
+/* flash memory access */
+#define EE_READ(sc,off) \
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_eesh, (off))
 
 /*
- * software constraction
+ * flash memory layout
+ * 0x00 - 07	48-bit MAC station address. 4 byte wise in BE order.
+ * 0x08 - 0b	H->MAC xfer uengine program start addr 63:32.
+ * 0x0c - 0f	H2M program addr 31:0 (these are absolute addr, not relative)
+ * 0x10 - 13	H2M program length in 4 byte count.
+ * 0x14 - 0b	M->HOST xfer uengine program start addr 63:32.
+ * 0x18 - 0f	M2H program addr 31:0 (absolute, not relative)
+ * 0x1c - 13	M2H program length in 4 byte count.
+ * 0x20 - 23	packet uengine program addr 31:0, (absolute, not relative)
+ * 0x24 - 27	packet program length in 4 byte count.
+ *
+ * above ucode are loaded via mapped reg 0x210, 0x21c and 0x0c0.
+ */
+
+/*
+ * all below are software constraction.
  */
 #define MD_NTXSEGS		16		/* fixed */
-#define MD_TXQUEUELEN		16		/* tunable */
+#define MD_TXQUEUELEN		8		/* tunable */
 #define MD_TXQUEUELEN_MASK	(MD_TXQUEUELEN - 1)
 #define MD_TXQUEUE_GC		(MD_TXQUEUELEN / 4)
-#define MD_NTXDESC		(MD_TXQUEUELEN * MD_NTXSEGS)
+#define MD_NTXDESC		128
 #define MD_NTXDESC_MASK	(MD_NTXDESC - 1)
 #define MD_NEXTTX(x)		(((x) + 1) & MD_NTXDESC_MASK)
 #define MD_NEXTTXS(x)		(((x) + 1) & MD_TXQUEUELEN_MASK)
@@ -323,20 +335,6 @@ struct rdes {
 #define MD_NRXDESC		64		/* tunable */
 #define MD_NRXDESC_MASK	(MD_NRXDESC - 1)
 #define MD_NEXTRX(x)		(((x) + 1) & MD_NRXDESC_MASK)
-
-#define SCX_INIT_RXDESC(sc, x)						\
-do {									\
-	struct scx_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
-	struct rdes *__rxd = &(sc)->sc_rxdescs[(x)];			\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
-	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
-	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->r3 = __rxs->rxs_dmamap->dm_segs[0].ds_len;		\
-	__rxd->r2 = htole32(BUS_ADDR_LO32(__paddr));			\
-	__rxd->r1 = htole32(BUS_ADDR_HI32(__paddr));			\
-	__rxd->r0 = R0_OWN | R0_FS | R0_LS;				\
-	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= R0_EOD;			\
-} while (/*CONSTCOND*/0)
 
 struct control_data {
 	struct tdes cd_txdescs[MD_NTXDESC];
@@ -370,7 +368,7 @@ struct scx_softc {
 	bus_dma_tag_t sc_dmat32;
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct mii_data sc_mii;		/* MII */
-	callout_t sc_tick_ch;		/* PHY monitor callout */
+	callout_t sc_callout;		/* PHY monitor callout */
 	bus_dma_segment_t sc_seg;	/* descriptor store seg */
 	int sc_nseg;			/* descriptor store nseg */
 	void *sc_ih;			/* interrupt cookie */
@@ -432,48 +430,96 @@ do {									\
 	    SCX_CDRXOFF((x)), sizeof(struct rdes), (ops));		\
 } while (/*CONSTCOND*/0)
 
+#define SCX_INIT_RXDESC(sc, x)						\
+do {									\
+	struct scx_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
+	struct rdes *__rxd = &(sc)->sc_rxdescs[(x)];			\
+	struct mbuf *__m = __rxs->rxs_mbuf;				\
+	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
+	__m->m_data = __m->m_ext.ext_buf;				\
+	__rxd->r3 = __rxs->rxs_dmamap->dm_segs[0].ds_len;		\
+	__rxd->r2 = htole32(BUS_ADDR_LO32(__paddr));			\
+	__rxd->r1 = htole32(BUS_ADDR_HI32(__paddr));			\
+	__rxd->r0 = R0_OWN | R0_FS | R0_LS;				\
+	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= R0_EOD;			\
+} while (/*CONSTCOND*/0)
+
 static int scx_fdt_match(device_t, cfdata_t, void *);
 static void scx_fdt_attach(device_t, device_t, void *);
 static int scx_acpi_match(device_t, cfdata_t, void *);
 static void scx_acpi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(scx_fdt, sizeof(struct scx_softc),
+const CFATTACH_DECL_NEW(scx_fdt, sizeof(struct scx_softc),
     scx_fdt_match, scx_fdt_attach, NULL, NULL);
 
-CFATTACH_DECL_NEW(scx_acpi, sizeof(struct scx_softc),
+const CFATTACH_DECL_NEW(scx_acpi, sizeof(struct scx_softc),
     scx_acpi_match, scx_acpi_attach, NULL, NULL);
 
 static void scx_attach_i(struct scx_softc *);
 static void scx_reset(struct scx_softc *);
 static int scx_init(struct ifnet *);
-static void scx_start(struct ifnet *);
 static void scx_stop(struct ifnet *, int);
-static void scx_watchdog(struct ifnet *);
 static int scx_ioctl(struct ifnet *, u_long, void *);
 static void scx_set_rcvfilt(struct scx_softc *);
-static void scx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-static void mii_statchg(struct ifnet *);
-static void phy_tick(void *);
-static int mii_readreg(device_t, int, int, uint16_t *);
-static int mii_writereg(device_t, int, int, uint16_t);
+static void scx_start(struct ifnet *);
+static void scx_watchdog(struct ifnet *);
 static int scx_intr(void *);
 static void txreap(struct scx_softc *);
 static void rxintr(struct scx_softc *);
 static int add_rxbuf(struct scx_softc *, int);
+static void rxdrain(struct scx_softc *sc);
+static void mii_statchg(struct ifnet *);
+static void scx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int mii_readreg(device_t, int, int, uint16_t *);
+static int mii_writereg(device_t, int, int, uint16_t);
+static void phy_tick(void *);
 
-static int spin_waitfor(struct scx_softc *, int, int);
-static int mac_read(struct scx_softc *, int);
-static void mac_write(struct scx_softc *, int, int);
 static void loaducode(struct scx_softc *);
 static void injectucode(struct scx_softc *, int, bus_addr_t, bus_size_t);
+
 static int get_mdioclk(uint32_t);
 
-#define CSR_READ(sc,off) \
-	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
-#define CSR_WRITE(sc,off,val) \
-	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
-#define EE_READ(sc,off) \
-	    bus_space_read_4((sc)->sc_st, (sc)->sc_eesh, (off))
+#define WAIT_FOR_SET(sc, reg, set, fail) \
+	wait_for_bits(sc, reg, set, ~0, fail)
+#define WAIT_FOR_CLR(sc, reg, clr, fail) \
+	wait_for_bits(sc, reg, 0, clr, fail)
+
+static int
+wait_for_bits(struct scx_softc *sc, int reg,
+    uint32_t set, uint32_t clr, uint32_t fail)
+{
+	uint32_t val;
+	int ntries;
+
+	for (ntries = 0; ntries < 1000; ntries++) {
+		val = CSR_READ(sc, reg);
+		if ((val & set) || !(val & clr))
+			return 0;
+		if (val & fail)
+			return 1;
+		DELAY(1);
+	}
+	return 1;
+}
+
+/* GMAC register indirect access */
+static int
+mac_read(struct scx_softc *sc, int reg)
+{
+
+	CSR_WRITE(sc, MACCMD, reg);
+	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
+	return CSR_READ(sc, MACDATA);
+}
+
+static void
+mac_write(struct scx_softc *sc, int reg, int val)
+{
+
+	CSR_WRITE(sc, MACDATA, val);
+	CSR_WRITE(sc, MACCMD, reg | CMD_IOWR);
+	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
+}
 
 static int
 scx_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -540,10 +586,6 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	if (phy_mode == NULL)
 		aprint_error(": missing 'phy-mode' property\n");
 	sc->sc_100mii = (phy_mode  && strcmp(phy_mode, "rgmii") != 0);
-sc->sc_phy_id = 7; /* XXX */
-sc->sc_freq = 125 * 1000 * 1000; /* XXX */
-aprint_normal_dev(self,
-"phy mode %s, phy id %d, freq %ld\n", phy_mode, sc->sc_phy_id, sc->sc_freq);
 
 	scx_attach_i(sc);
 	return;
@@ -666,37 +708,34 @@ scx_attach_i(struct scx_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t hwver, dwimp;
+	uint32_t hwver, dwimp, dwfea;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	uint32_t csr;
 	int i, nseg, error = 0;
 
-	hwver = CSR_READ(sc, HWVER);	/* Socionext HW */
+	hwver = CSR_READ(sc, HWVER);	/* Socionext version */
 	dwimp = mac_read(sc, GMACIMPL);	/* DW EMAC XX.YY */
+	dwfea = mac_read(sc, HWFEA);	/* DW feature */
 	aprint_normal_dev(sc->sc_dev,
-	    "Socionext NetSec GbE hw %d.%d impl 0x%x\n",
-	    hwver >> 16, hwver & 0xffff, dwimp);
+	    "Socionext NetSec GbE %d.%d (impl 0x%x, feature 0x%x)\n",
+	    hwver >> 16, hwver & 0xffff,
+	    dwimp, dwfea);
 
 	/* fetch MAC address in flash. stored in big endian order */
-	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 0);
+	csr = EE_READ(sc, 0x00);
 	enaddr[0] = csr >> 24;
 	enaddr[1] = csr >> 16;
 	enaddr[2] = csr >> 8;
 	enaddr[3] = csr;
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
+	csr = EE_READ(sc, 0x04);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
-sc->sc_phy_id = MII_PHY_ANY;
 	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
-sc->sc_mdclk = 5; /* XXX */
-aprint_normal_dev(sc->sc_dev, "using %d for mdclk\n", sc->sc_mdclk);
-sc->sc_mdclk <<= 2;
-
-	sc->sc_flowflags = 0;
 
 	if (sc->sc_ucodeloaded == 0)
 		loaducode(sc);
@@ -708,7 +747,7 @@ sc->sc_mdclk <<= 2;
 
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(ifm, 0, ether_mediachange, scx_ifmedia_sts);
-	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -716,23 +755,6 @@ sc->sc_mdclk <<= 2;
 	} else
 		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 	ifm->ifm_media = ifm->ifm_cur->ifm_media; /* as if user has requested */
-
-	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = scx_ioctl;
-	ifp->if_start = scx_start;
-	ifp->if_watchdog = scx_watchdog;
-	ifp->if_init = scx_init;
-	ifp->if_stop = scx_stop;
-	IFQ_SET_READY(&ifp->if_snd);
-
-	if_attach(ifp);
-	if_deferred_start_init(ifp, NULL);
-	ether_ifattach(ifp, enaddr);
-
-	callout_init(&sc->sc_tick_ch, 0);
-	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -794,11 +816,24 @@ sc->sc_mdclk <<= 2;
 	sc->sc_nseg = nseg;
 aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", seg.ds_addr, seg.ds_len, nseg);
 
-	if (pmf_device_register(sc->sc_dev, NULL, NULL))
-		pmf_class_network_register(sc->sc_dev, ifp);
-	else
-		aprint_error_dev(sc->sc_dev,
-			"couldn't establish power handler\n");
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = scx_ioctl;
+	ifp->if_start = scx_start;
+	ifp->if_watchdog = scx_watchdog;
+	ifp->if_init = scx_init;
+	ifp->if_stop = scx_stop;
+	IFQ_SET_READY(&ifp->if_snd);
+
+	sc->sc_flowflags = 0;
+
+	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
+	ether_ifattach(ifp, enaddr);
+
+	callout_init(&sc->sc_callout, 0);
+	callout_setfunc(&sc->sc_callout, phy_tick, sc);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -851,7 +886,7 @@ scx_reset(struct scx_softc *sc)
 	CSR_WRITE(sc, CLKEN, CLK_ALL);	/* distribute clock sources */
 	CSR_WRITE(sc, SWRESET, 0);	/* reset operation */
 	CSR_WRITE(sc, SWRESET, 1U<<31);	/* manifest run */
-	CSR_WRITE(sc, COMINIT, 3); 	/* DB|CLS*/
+	CSR_WRITE(sc, COMINIT, 3); 	/* DB|CLS */
 
 	mac_write(sc, GMACEVCTL, 1);
 }
@@ -862,24 +897,13 @@ scx_init(struct ifnet *ifp)
 	struct scx_softc *sc = ifp->if_softc;
 	const uint8_t *ea = CLLADDR(ifp->if_sadl);
 	uint32_t csr;
-	int i;
+	int i, error;
 
 	/* Cancel pending I/O. */
 	scx_stop(ifp, 0);
 
 	/* Reset the chip to a known state. */
 	scx_reset(sc);
-
-	/* set my address in perfect match slot 0. little endin order */
-	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
-	mac_write(sc, GMACMAL0, csr);
-	csr = (ea[5] << 8) | ea[4];
-	mac_write(sc, GMACMAH0, csr);
-
-	/* accept multicast frame or run promisc mode */
-	scx_set_rcvfilt(sc);
-
-	(void)ether_mediachange(ifp);
 
 	/* build sane Tx */
 	memset(sc->sc_txdescs, 0, sizeof(struct tdes) * MD_NTXDESC);
@@ -895,9 +919,36 @@ scx_init(struct ifnet *ifp)
 	sc->sc_txsdirty = 0;
 
 	/* load Rx descriptors with fresh mbuf */
-	for (i = 0; i < MD_NRXDESC; i++)
-		(void)add_rxbuf(sc, i);
+	for (i = 0; i < MD_NRXDESC; i++) {
+		if (sc->sc_rxsoft[i].rxs_mbuf == NULL) {
+			if ((error = add_rxbuf(sc, i)) != 0) {
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate or map rx "
+				    "buffer %d, error = %d\n",
+				    i, error);
+				rxdrain(sc);
+				goto out;
+			}
+		}
+		else
+			SCX_INIT_RXDESC(sc, i);
+	}
+	sc->sc_rxdescs[MD_NRXDESC - 1].r0 = R0_EOD;
 	sc->sc_rxptr = 0;
+	sc->sc_rxptr = 0;
+
+	/* set my address in perfect match slot 0. little endin order */
+	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
+	mac_write(sc, GMACMAL0, csr);
+	csr = (ea[5] << 8) | ea[4];
+	mac_write(sc, GMACMAH0, csr);
+
+	/* accept multicast frame or run promisc mode */
+	scx_set_rcvfilt(sc);
+
+	/* set current media */
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/* XXX 32 bit paddr XXX hand Tx/Rx rings to HW XXX */
 	mac_write(sc, GMACTDLA, SCX_CDTXADDR(sc, 0));
@@ -913,9 +964,9 @@ scx_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* start one second timer */
-	callout_schedule(&sc->sc_tick_ch, hz);
-
-	return 0;
+	callout_schedule(&sc->sc_callout, hz);
+ out:
+	return error;
 }
 
 static void
@@ -924,7 +975,7 @@ scx_stop(struct ifnet *ifp, int disable)
 	struct scx_softc *sc = ifp->if_softc;
 
 	/* Stop the one second clock. */
-	callout_stop(&sc->sc_tick_ch);
+	callout_stop(&sc->sc_callout);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
@@ -934,36 +985,12 @@ scx_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
-static void
-scx_watchdog(struct ifnet *ifp)
-{
-	struct scx_softc *sc = ifp->if_softc;
-
-	/*
-	 * Since we're not interrupting every packet, sweep
-	 * up before we report an error.
-	 */
-	txreap(sc);
-
-	if (sc->sc_txfree != MD_NTXDESC) {
-		aprint_error_dev(sc->sc_dev,
-		    "device timeout (txfree %d txsfree %d txnext %d)\n",
-		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
-		if_statinc(ifp, if_oerrors);
-
-		/* Reset the interface. */
-		scx_init(ifp);
-	}
-
-	scx_start(ifp);
-}
-
 static int
 scx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct scx_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifmedia *ifm;
+	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	int s, error;
 
 	s = splnet();
@@ -982,15 +1009,13 @@ scx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		ifm = &sc->sc_mii.mii_media;
 		error = ifmedia_ioctl(ifp, ifr, ifm, cmd);
 		break;
 	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+		error = ether_ioctl(ifp, cmd, data);
+		if (error != ENETRESET)
 			break;
-
 		error = 0;
-
 		if (cmd == SIOCSIFCAP)
 			error = (*ifp->if_init)(ifp);
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
@@ -1087,129 +1112,6 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	/* With PR or PM, MHTE/MHTL/MHTH are never consulted. really? */
 	mac_write(sc, GMACAFR, csr);
 	return;
-}
-
-static void
-scx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct scx_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_mii;
-
-	mii_pollstat(mii);
-	ifmr->ifm_status = mii->mii_media_status;
-	ifmr->ifm_active = sc->sc_flowflags |
-	    (mii->mii_media_active & ~IFM_ETH_FMASK);
-}
-
-void
-mii_statchg(struct ifnet *ifp)
-{
-	struct scx_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_mii;
-	const int Mbps[4] = { 10, 100, 1000, 0 };
-	uint32_t miisr, mcr, fcr;
-	int spd;
-
-	/* decode MIISR register value */
-	miisr = mac_read(sc, GMACMIISR);
-	spd = Mbps[(miisr >> 1) & 03];
-#if 1
-	printf("MII link status (0x%x) %s",
-	    miisr, (miisr & 8) ? "up" : "down");
-	if (miisr & 8) {
-		printf(" spd%d", spd);
-		if (miisr & 01)
-			printf(",full-duplex");
-	}
-	printf("\n");
-#endif
-	/* Get flow control negotiation result. */
-	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
-	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
-		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
-
-	/* Adjust speed 1000/100/10. */
-	mcr = mac_read(sc, GMACMCR);
-	if (spd == 1000)
-		mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
-	else {
-		if (spd == 100 && sc->sc_100mii)
-			mcr |= MCR_SPD100;
-		mcr |= MCR_USEMII;
-	}
-	mcr |= MCR_CST | MCR_JE;
-	if (sc->sc_100mii == 0)
-		mcr |= MCR_IBN;
-
-	/* Adjust duplexity and PAUSE flow control. */
-	mcr &= ~MCR_USEFDX;
-	fcr = mac_read(sc, GMACFCR) & ~(FCR_TFE | FCR_RFE);
-	if (miisr & 01) {
-		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
-			fcr |= FCR_TFE;
-		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
-			fcr |= FCR_RFE;
-		mcr |= MCR_USEFDX;
-	}
-	mac_write(sc, GMACMCR, mcr);
-	mac_write(sc, GMACFCR, fcr);
-
-printf("%ctxfe, %crxfe\n",
-     (fcr & FCR_TFE) ? '+' : '-', (fcr & FCR_RFE) ? '+' : '-');
-}
-
-static void
-phy_tick(void *arg)
-{
-	struct scx_softc *sc = arg;
-	struct mii_data *mii = &sc->sc_mii;
-	int s;
-
-	s = splnet();
-	mii_tick(mii);
-	splx(s);
-
-	callout_schedule(&sc->sc_tick_ch, hz);
-}
-
-static int
-mii_readreg(device_t self, int phy, int reg, uint16_t *val)
-{
-	struct scx_softc *sc = device_private(self);
-	uint32_t miia;
-	int error;
-
-uint32_t clk = CSR_READ(sc, CLKEN);
-CSR_WRITE(sc, CLKEN, clk | CLK_G);
-
-	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
-	mac_write(sc, GMACGAR, miia | GAR_BUSY);
-	error = spin_waitfor(sc, GMACGAR, GAR_BUSY);
-	if (error)
-		return error;
-	*val = mac_read(sc, GMACGDR);
-	return 0;
-}
-
-static int
-mii_writereg(device_t self, int phy, int reg, uint16_t val)
-{
-	struct scx_softc *sc = device_private(self);
-	uint32_t miia;
-	uint16_t dummy;
-	int error;
-
-uint32_t clk = CSR_READ(sc, CLKEN);
-CSR_WRITE(sc, CLKEN, clk | CLK_G);
-
-	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
-	mac_write(sc, GMACGDR, val);
-	mac_write(sc, GMACGAR, miia | GAR_IOWR | GAR_BUSY);
-	error = spin_waitfor(sc, GMACGAR, GAR_BUSY);
-	if (error)
-		return error;
-	mii_readreg(self, phy, MII_PHYIDR1, &dummy); /* dummy read cycle */
-	return 0;
 }
 
 static void
@@ -1355,6 +1257,30 @@ scx_start(struct ifnet *ifp)
 	}
 }
 
+static void
+scx_watchdog(struct ifnet *ifp)
+{
+	struct scx_softc *sc = ifp->if_softc;
+
+	/*
+	 * Since we're not interrupting every packet, sweep
+	 * up before we report an error.
+	 */
+	txreap(sc);
+
+	if (sc->sc_txfree != MD_NTXDESC) {
+		aprint_error_dev(sc->sc_dev,
+		    "device timeout (txfree %d txsfree %d txnext %d)\n",
+		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
+		if_statinc(ifp, if_oerrors);
+
+		/* Reset the interface. */
+		scx_init(ifp);
+	}
+
+	scx_start(ifp);
+}
+
 static int
 scx_intr(void *arg)
 {
@@ -1494,44 +1420,157 @@ add_rxbuf(struct scx_softc *sc, int i)
 	return 0;
 }
 
-static int
-spin_waitfor(struct scx_softc *sc, int reg, int exist)
+static void
+rxdrain(struct scx_softc *sc)
 {
-	int busy, loop;
+	struct scx_rxsoft *rxs;
+	int i;
 
-	busy = CSR_READ(sc, reg) & exist;
-	if (busy == 0)
-		return 0;
-	loop = 30000;
-	do {
-		DELAY(10);
-		busy = CSR_READ(sc, reg) & exist;
-	} while (--loop > 0 && busy);
-	return (loop > 0) ? 0 : ETIMEDOUT;
+	for (i = 0; i < MD_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+	}
 }
 
-/* GMAC register needs to use indirect rd/wr via memory mapped registers. */
-
-static int
-mac_read(struct scx_softc *sc, int reg)
+void
+mii_statchg(struct ifnet *ifp)
 {
+	struct scx_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
+	const int Mbps[4] = { 10, 100, 1000, 0 };
+	uint32_t miisr, mcr, fcr;
+	int spd;
 
-	CSR_WRITE(sc, MACCMD, reg);
-	(void)spin_waitfor(sc, MACCMD, CMD_BUSY);
-	return CSR_READ(sc, MACDATA);
+	/* decode MIISR register value */
+	miisr = mac_read(sc, GMACMIISR);
+	spd = Mbps[(miisr >> 1) & 03];
+#if 1
+	printf("MII link status (0x%x) %s",
+	    miisr, (miisr & 8) ? "up" : "down");
+	if (miisr & 8) {
+		printf(" spd%d", spd);
+		if (miisr & 01)
+			printf(",full-duplex");
+	}
+	printf("\n");
+#endif
+	/* Get flow control negotiation result. */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+
+	/* Adjust speed 1000/100/10. */
+	mcr = mac_read(sc, GMACMCR);
+	if (spd == 1000)
+		mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
+	else {
+		if (spd == 100 && sc->sc_100mii)
+			mcr |= MCR_SPD100;
+		mcr |= MCR_USEMII;
+	}
+	mcr |= MCR_CST | MCR_JE;
+	if (sc->sc_100mii == 0)
+		mcr |= MCR_IBN;
+
+	/* Adjust duplexity and PAUSE flow control. */
+	mcr &= ~MCR_USEFDX;
+	fcr = mac_read(sc, GMACFCR) & ~(FCR_TFE | FCR_RFE);
+	if (miisr & 01) {
+		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
+			fcr |= FCR_TFE;
+		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
+			fcr |= FCR_RFE;
+		mcr |= MCR_USEFDX;
+	}
+	mac_write(sc, GMACMCR, mcr);
+	mac_write(sc, GMACFCR, fcr);
+
+printf("%ctxfe, %crxfe\n",
+     (fcr & FCR_TFE) ? '+' : '-', (fcr & FCR_RFE) ? '+' : '-');
 }
 
 static void
-mac_write(struct scx_softc *sc, int reg, int val)
+scx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
+	struct scx_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
 
-	CSR_WRITE(sc, MACDATA, val);
-	CSR_WRITE(sc, MACCMD, reg | CMD_IOWR);
-	(void)spin_waitfor(sc, MACCMD, CMD_BUSY);
+	mii_pollstat(mii);
+	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = sc->sc_flowflags |
+	    (mii->mii_media_active & ~IFM_ETH_FMASK);
+}
+
+static int
+mii_readreg(device_t self, int phy, int reg, uint16_t *val)
+{
+	struct scx_softc *sc = device_private(self);
+	uint32_t miia;
+	int ntries;
+
+#define CLK_150_250M (1<<2)
+uint32_t clk = CSR_READ(sc, CLKEN);
+CSR_WRITE(sc, CLKEN, clk | CLK_G);
+
+	miia = (phy << GAR_PHY) | (reg << GAR_REG) | CLK_150_250M;
+	mac_write(sc, GMACGAR, miia | GAR_BUSY);
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if ((mac_read(sc, GMACGAR) & GAR_BUSY) == 0)
+			goto unbusy;
+		DELAY(1);
+	}
+	return ETIMEDOUT;
+ unbusy:
+	*val = mac_read(sc, GMACGDR);
+	return 0;
+}
+
+static int
+mii_writereg(device_t self, int phy, int reg, uint16_t val)
+{
+	struct scx_softc *sc = device_private(self);
+	uint32_t miia;
+	uint16_t dummy;
+	int ntries;
+
+uint32_t clk = CSR_READ(sc, CLKEN);
+CSR_WRITE(sc, CLKEN, clk | CLK_G);
+
+	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
+	mac_write(sc, GMACGDR, val);
+	mac_write(sc, GMACGAR, miia | GAR_IOWR | GAR_BUSY);
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if ((mac_read(sc, GMACGAR) & GAR_BUSY) == 0)
+			goto unbusy;
+		DELAY(1);
+	}
+	return ETIMEDOUT;	
+  unbusy:
+	mii_readreg(self, phy, MII_PHYIDR1, &dummy); /* dummy read cycle */
+	return 0;
+}
+
+static void
+phy_tick(void *arg)
+{
+	struct scx_softc *sc = arg;
+	struct mii_data *mii = &sc->sc_mii;
+	int s;
+
+	s = splnet();
+	mii_tick(mii);
+	splx(s);
+#ifdef SCX_EVENT_COUNTERS /* if tally counter details are made clear */
+#endif
+	callout_schedule(&sc->sc_callout, hz);
 }
 
 /*
- * 3 independent uengines exist * to process host2media, media2host and
+ * 3 independent uengines exist to process host2media, media2host and
  * packet data flows.
  */
 static void
