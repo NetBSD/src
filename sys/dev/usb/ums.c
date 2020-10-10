@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.98 2020/04/12 07:41:11 jdolecek Exp $	*/
+/*	$NetBSD: ums.c,v 1.99 2020/10/10 21:47:42 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.98 2020/04/12 07:41:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.99 2020/10/10 21:47:42 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,6 +137,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 {
 	struct ums_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
+	struct hid_data *d;
+	struct hid_item item;
 	int size, error;
 	void *desc;
 	uint32_t quirks;
@@ -209,6 +211,35 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	tpcalib_init(&sc->sc_ms.sc_tpcalib);
+
+	/* calibrate the pointer if it reports absolute events */
+	if (sc->sc_ms.flags & HIDMS_ABS) {
+		memset(&sc->sc_ms.sc_calibcoords, 0, sizeof(sc->sc_ms.sc_calibcoords));
+		sc->sc_ms.sc_calibcoords.maxx = 0;
+		sc->sc_ms.sc_calibcoords.maxy = 0;
+		sc->sc_ms.sc_calibcoords.samplelen = WSMOUSE_CALIBCOORDS_RESET;
+		d = hid_start_parse(desc, size, hid_input);
+		if (d != NULL) {
+			while (hid_get_item(d, &item)) {
+				if (item.kind != hid_input
+				    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
+				    || item.report_ID != sc->sc_hdev.sc_report_id)
+					continue;
+				if (HID_GET_USAGE(item.usage) == HUG_X) {
+					sc->sc_ms.sc_calibcoords.minx = item.logical_minimum;
+					sc->sc_ms.sc_calibcoords.maxx = item.logical_maximum;
+				}
+				if (HID_GET_USAGE(item.usage) == HUG_Y) {
+					sc->sc_ms.sc_calibcoords.miny = item.logical_minimum;
+					sc->sc_ms.sc_calibcoords.maxy = item.logical_maximum;
+				}
+			}
+			hid_end_parse(d);
+		}
+        	tpcalib_ioctl(&sc->sc_ms.sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+        	    (void *)&sc->sc_ms.sc_calibcoords, 0, 0);
+	}
+
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
 
 	if (sc->sc_alwayson) {
@@ -321,10 +352,18 @@ ums_disable(void *v)
 
 Static int
 ums_ioctl(void *v, u_long cmd, void *data, int flag,
-    struct lwp * p)
+    struct lwp *l)
 
 {
 	struct ums_softc *sc = v;
+	int error;
+
+	if (sc->sc_ms.flags & HIDMS_ABS) {
+		error = tpcalib_ioctl(&sc->sc_ms.sc_tpcalib, cmd, data,
+		    flag, l);
+		if (error != EPASSTHROUGH)
+			return error;
+	}
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
