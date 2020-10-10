@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.13 2013/09/23 16:41:57 tsutsui Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.14 2020/10/10 21:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.13 2013/09/23 16:41:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.14 2020/10/10 21:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,13 +231,6 @@ tsp_dma_init(struct tsp_config *pcp)
 
 	tsp_tlb_invalidate(pcp);
 	alpha_mb();
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = dwbase;			/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.25 2019/11/10 21:16:22 chs Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.26 2020/10/10 21:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.25 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.26 2020/10/10 21:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,13 +239,6 @@ dwlpx_dma_init(struct dwlpx_config *ccp)
 		    DWLPx_SG_MAPPED_BASE | PCIA_WBASE_W_EN | PCIA_WBASE_SG_EN;
 		alpha_mb();
 	}
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = DWLPx_DIRECT_MAPPED_BASE;	/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 }
 
 /*

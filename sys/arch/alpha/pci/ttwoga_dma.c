@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.7 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.8 2020/10/10 21:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.7 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.8 2020/10/10 21:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,13 +230,6 @@ ttwoga_dma_init(struct ttwoga_config *tcp)
 		alpha_mb();	/* MAGIC */
 		tcp->tc_use_tlb = 1;
 	}
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = TTWOGA_DIRECT_MAPPED_BASE;/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 }
 
 /*
