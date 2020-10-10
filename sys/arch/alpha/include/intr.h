@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.82 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.83 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ void	alpha_softint_switchto(struct lwp *, int, struct lwp *);
  * Interprocessor interrupts.  In order how we want them processed.
  */
 #define	ALPHA_IPI_HALT			(1UL << 0)
-#define	ALPHA_IPI_MICROSET		(1UL << 1)
+#define	ALPHA_IPI_PRIMARY_CC		(1UL << 1)
 #define	ALPHA_IPI_SHOOTDOWN		(1UL << 2)
 #define	ALPHA_IPI_AST			(1UL << 3)
 #define	ALPHA_IPI_PAUSE			(1UL << 4)

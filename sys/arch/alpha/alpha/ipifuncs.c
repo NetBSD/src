@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.53 2020/09/03 02:03:14 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.54 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.53 2020/09/03 02:03:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.54 2020/10/10 03:05:04 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.53 2020/09/03 02:03:14 thorpej Exp $"
 typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
 
 static void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
-static void	alpha_ipi_microset(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_primary_cc(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
@@ -69,7 +69,7 @@ static void	alpha_ipi_generic(struct cpu_info *, struct trapframe *);
 
 const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_HALT)] =	alpha_ipi_halt,
-	[ilog2(ALPHA_IPI_MICROSET)] =	alpha_ipi_microset,
+	[ilog2(ALPHA_IPI_PRIMARY_CC)] =	alpha_ipi_primary_cc,
 	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	pmap_tlb_shootdown_ipi,
 	[ilog2(ALPHA_IPI_AST)] =	alpha_ipi_ast,
 	[ilog2(ALPHA_IPI_PAUSE)] =	alpha_ipi_pause,
@@ -79,7 +79,7 @@ const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 
 const char * const ipinames[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_HALT)] =	"halt ipi",
-	[ilog2(ALPHA_IPI_MICROSET)] =	"microset ipi",
+	[ilog2(ALPHA_IPI_PRIMARY_CC)] =	"primary cc ipi",
 	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	"shootdown ipi",
 	[ilog2(ALPHA_IPI_AST)] =	"ast ipi",
 	[ilog2(ALPHA_IPI_PAUSE)] =	"pause ipi",
@@ -250,11 +250,12 @@ alpha_ipi_halt(struct cpu_info * const ci,
 }
 
 static void
-alpha_ipi_microset(struct cpu_info * const ci,
+alpha_ipi_primary_cc(struct cpu_info * const ci __unused,
     struct trapframe * const framep __unused)
 {
-
-	cc_calibrate_cpu(ci);
+	int const s = splhigh();
+	cc_primary_cc();
+	splx(s);
 }
 
 static void

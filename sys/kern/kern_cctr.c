@@ -1,11 +1,9 @@
-/*	$NetBSD: kern_cctr.c,v 1.10 2019/06/24 06:24:33 skrll Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.11 2020/10/10 03:05:04 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 Jason R. Thorpe
+ * Copyright (c) 2018 Naruaki Etomi
  * All rights reserved.
- *
- * re-implementation of TSC for MP systems merging cc_microtime and
- * TSC for timecounters by Frank Kardel
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,70 +14,60 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* basic calibration ideas are (kern_microtime.c): */
-/******************************************************************************
- *                                                                            *
- * Copyright (c) David L. Mills 1993, 1994                                    *
- *                                                                            *
- * Permission to use, copy, modify, and distribute this software and its      *
- * documentation for any purpose and without fee is hereby granted, provided  *
- * that the above copyright notice appears in all copies and that both the    *
- * copyright notice and this permission notice appear in supporting           *
- * documentation, and that the name University of Delaware not be used in     *
- * advertising or publicity pertaining to distribution of the software        *
- * without specific, written prior permission.  The University of Delaware    *
- * makes no representations about the suitability this software for any       *
- * purpose.  It is provided "as is" without express or implied warranty.      *
- *                                                                            *
- ******************************************************************************/
-
-/* reminiscents from older version of this file are: */
-/*-
- * Copyright (c) 1998-2003 Poul-Henning Kamp
- * All rights reserved.
+/*
+ * Most of the following was adapted from the Linux/ia64 cycle counter
+ * synchronization algorithm:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	IA-64 Linux Kernel: Design and Implementation p356-p361
+ *	(Hewlett-Packard Professional Books)
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * Here's a rough description of how it works.
+ *
+ * The primary CPU is the reference monotonic counter.  Each secondary
+ * CPU is responsible for knowing the offset of its own cycle counter
+ * relative to the primary's.  When the time counter is read, the CC
+ * value is adjusted by this delta.
+ *
+ * Calibration happens periodically, and works like this:
+ *
+ * Secondary CPU                               Primary CPU
+ *   T0 = local CC
+ *   Send IPI to publish reference CC
+ *                                   --------->
+ *     (assume this happens at Tavg)           Publish reference CC
+ *                     <-----------------------
+ *   Notice publication
+ *   T1 = local CC
+ *
+ *   Tavg = (T0 + T1) / 2
+ *
+ *   Delta = Tavg - Published primary CC value
+ *
+ * We trigger calibration roughly once a second; the period is actually
+ * skewed based on the CPU index in order to avoid lock contention.  The
+ * calibration interval does not need to be precise, and so this is fine.
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.10 2019/06/24 06:24:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.11 2020/10/10 03:05:04 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/timepps.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/kernel.h>
@@ -89,15 +77,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.10 2019/06/24 06:24:33 skrll Exp $")
 
 /* XXX make cc_timecounter.tc_frequency settable by sysctl() */
 
-static timecounter_pps_t cc_calibrate;
+#if defined(MULTIPROCESSOR)
+static uint32_t cc_primary __cacheline_aligned;
+static uint32_t cc_calibration_state __cacheline_aligned;
+static kmutex_t cc_calibration_lock __cacheline_aligned;
 
-void cc_calibrate_cpu(struct cpu_info *);
-
-static int64_t cc_cal_val;  /* last calibrate time stamp */
+#define	CC_CAL_START		0	/* initial state */
+#define	CC_CAL_PRIMARY_READY	1	/* primary CPU ready to respond */
+#define	CC_CAL_SECONDARY_READY	2	/* secondary CPU ready to receive */
+#define	CC_CAL_FINISHED		3	/* calibration attempt complete */
+#endif /* MULTIPROCESSOR */
 
 static struct timecounter cc_timecounter = {
 	.tc_get_timecount	= cc_get_timecount,
-	.tc_poll_pps		= cc_calibrate,
+	.tc_poll_pps		= NULL,
 	.tc_counter_mask	= ~0u,
 	.tc_frequency		= 0,
 	.tc_name		= "unknown cycle counter",
@@ -112,11 +105,28 @@ static struct timecounter cc_timecounter = {
 };
 
 /*
- * initialize cycle counter based timecounter
+ * Initialize cycle counter based timecounter.  This must be done on the
+ * primary CPU.
  */
 struct timecounter *
 cc_init(timecounter_get_t getcc, uint64_t freq, const char *name, int quality)
 {
+	static bool cc_init_done __diagused;
+	struct cpu_info * const ci = curcpu();
+
+	KASSERT(!cc_init_done);
+	KASSERT(cold);
+	KASSERT(CPU_IS_PRIMARY(ci));
+
+#if defined(MULTIPROCESSOR)
+	mutex_init(&cc_calibration_lock, MUTEX_DEFAULT, IPL_HIGH);
+#endif
+
+	cc_init_done = true;
+
+	ci->ci_cc.cc_delta = 0;
+	ci->ci_cc.cc_ticks = 0;
+	ci->ci_cc.cc_cal_ticks = 0;
 
 	if (getcc != NULL)
 		cc_timecounter.tc_get_timecount = getcc;
@@ -130,176 +140,141 @@ cc_init(timecounter_get_t getcc, uint64_t freq, const char *name, int quality)
 }
 
 /*
+ * Initialize cycle counter timecounter calibration data on a secondary
+ * CPU.  Must be called on that secondary CPU.
+ */
+void
+cc_init_secondary(struct cpu_info * const ci)
+{
+	KASSERT(!CPU_IS_PRIMARY(curcpu()));
+	KASSERT(ci == curcpu());
+
+	ci->ci_cc.cc_ticks = 0;
+
+	/*
+	 * It's not critical that calibration be performed in
+	 * precise intervals, so skew when calibration is done
+	 * on each secondary CPU based on it's CPU index to
+	 * avoid contending on the calibration lock.
+	 */
+	ci->ci_cc.cc_cal_ticks = hz - cpu_index(ci);
+	KASSERT(ci->ci_cc.cc_cal_ticks);
+
+	cc_calibrate_cpu(ci);
+}
+
+/*
  * pick up tick count scaled to reference tick count
  */
 u_int
 cc_get_timecount(struct timecounter *tc)
 {
-	struct cpu_info *ci;
-	int64_t rcc, cc, ncsw;
-	u_int gen;
+#if defined(MULTIPROCESSOR)
+	int64_t rcc, ncsw;
 
  retry:
  	ncsw = curlwp->l_ncsw;
+
  	__insn_barrier();
-	ci = curcpu();
-	if (ci->ci_cc.cc_denom == 0) {
-		/*
-		 * This is our first time here on this CPU.  Just
-		 * start with reasonable initial values.
-		 */
-	        ci->ci_cc.cc_cc    = cpu_counter32();
-		ci->ci_cc.cc_val   = 0;
-		if (ci->ci_cc.cc_gen == 0)
-			ci->ci_cc.cc_gen++;
-
-		ci->ci_cc.cc_denom = cpu_frequency(ci);
-		if (ci->ci_cc.cc_denom == 0)
-			ci->ci_cc.cc_denom = cc_timecounter.tc_frequency;
-		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
-	}
-
-	/*
-	 * read counter and re-read when the re-calibration
-	 * strikes inbetween
-	 */
-	do {
-		/* pick up current generation number */
-		gen = ci->ci_cc.cc_gen;
-
-		/* determine local delta ticks */
-		cc = cpu_counter32() - ci->ci_cc.cc_cc;
-		if (cc < 0)
-			cc += 0x100000000LL;
-
-		/* scale to primary */
-		rcc = (cc * ci->ci_cc.cc_delta) / ci->ci_cc.cc_denom
-		    + ci->ci_cc.cc_val;
-	} while (gen == 0 || gen != ci->ci_cc.cc_gen);
+	/* N.B. the delta is always 0 on the primary. */
+	rcc = cpu_counter32() - curcpu()->ci_cc.cc_delta;
  	__insn_barrier();
+
  	if (ncsw != curlwp->l_ncsw) {
  		/* Was preempted */ 
  		goto retry;
 	}
 
 	return rcc;
+#else
+	return cpu_counter32();
+#endif /* MULTIPROCESSOR */
 }
-
-/*
- * called once per clock tick via the pps callback
- * for the calibration of the TSC counters.
- * it is called only for the PRIMARY cpu. all
- * other cpus are called via a broadcast IPI
- * calibration interval is 1 second - we call
- * the calibration code only every hz calls
- */
-static void
-cc_calibrate(struct timecounter *tc)
-{
-	static int calls;
-	struct cpu_info *ci;
-
-	KASSERT(kpreempt_disabled());
-
-	 /*
-	  * XXX: for high interrupt frequency
-	  * support: ++calls < hz / tc_tick
-	  */
-	if (++calls < hz)
-		return;
-
-	calls = 0;
-	ci = curcpu();
-	/* pick up reference ticks */
-	cc_cal_val = cpu_counter32();
 
 #if defined(MULTIPROCESSOR)
-	cc_calibrate_mp(ci);
-#endif
-	cc_calibrate_cpu(ci);
-}
-
-/*
- * This routine is called about once per second directly by the master
- * processor and via an interprocessor interrupt for other processors.
- * It determines the CC frequency of each processor relative to the
- * master clock and the time this determination is made.  These values
- * are used by cc_get_timecount() to interpolate the ticks between
- * timer interrupts.  Note that we assume the kernel variables have
- * been zeroed early in life.
- */
-void
-cc_calibrate_cpu(struct cpu_info *ci)
+static inline bool
+cc_get_delta(struct cpu_info * const ci)
 {
-	u_int   gen;
-	int64_t val;
-	int64_t delta, denom;
-	int s;
-#ifdef TIMECOUNTER_DEBUG
-	int64_t factor, old_factor;
-#endif
-	val = cc_cal_val;
+	int64_t t0, t1, tcenter = 0;
 
-	s = splhigh();
-	/* create next generation number */
-	gen = ci->ci_cc.cc_gen;
-	gen++;
-	if (gen == 0)
-		gen++;
+	t0 = cpu_counter32();
 
-	/* update in progress */
-	ci->ci_cc.cc_gen = 0;
+	atomic_store_release(&cc_calibration_state, CC_CAL_SECONDARY_READY);
 
-	denom = ci->ci_cc.cc_cc;
-	ci->ci_cc.cc_cc = cpu_counter32();
-
-	if (ci->ci_cc.cc_denom == 0) {
-		/*
-		 * This is our first time here on this CPU.  Just
-		 * start with reasonable initial values.
-		 */
-		ci->ci_cc.cc_val = val;
-		ci->ci_cc.cc_denom = cpu_frequency(ci);
-		if (ci->ci_cc.cc_denom == 0)
-			ci->ci_cc.cc_denom = cc_timecounter.tc_frequency;
-		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
-		ci->ci_cc.cc_gen = gen;
-		splx(s);
-		return;
+	for (;;) {
+		if (atomic_load_acquire(&cc_calibration_state) ==
+		    CC_CAL_FINISHED) {
+			break;
+		}
 	}
 
-#ifdef TIMECOUNTER_DEBUG
-	old_factor = (ci->ci_cc.cc_delta * 1000 ) / ci->ci_cc.cc_denom;
-#endif
+	t1 = cpu_counter32();
 
-	/* local ticks per period */
-	denom = ci->ci_cc.cc_cc - denom;
-	if (denom < 0)
-		denom += 0x100000000LL;
+	if (t1 < t0) {
+		/* Overflow! */
+		return false;
+	}
 
-	ci->ci_cc.cc_denom = denom;
+	/* average t0 and t1 without overflow: */
+	tcenter = (t0 >> 1) + (t1 >> 1);
+	if ((t0 & 1) + (t1 & 1) == 2)
+		tcenter++;
 
-	/* reference ticks per period */
-	delta = val - ci->ci_cc.cc_val;
-	if (delta < 0)
-		delta += 0x100000000LL;
+	ci->ci_cc.cc_delta = tcenter - cc_primary;
 
-	ci->ci_cc.cc_val = val;
-	ci->ci_cc.cc_delta = delta;
-	
-	/* publish new generation number */
-	ci->ci_cc.cc_gen = gen;
-	splx(s);
+	return true;
+}
+#endif /* MULTIPROCESSOR */
 
-#ifdef TIMECOUNTER_DEBUG
-	factor = (delta * 1000) / denom - old_factor;
-	if (factor < 0)
-		factor = -factor;
+/*
+ * Called on secondary CPUs to calibrate their cycle counter offset
+ * relative to the primary CPU.
+ */
+void
+cc_calibrate_cpu(struct cpu_info * const ci)
+{
+#if defined(MULTIPROCESSOR)
+	KASSERT(!CPU_IS_PRIMARY(ci));
 
-	if (factor > old_factor / 10)
-		printf("cc_calibrate_cpu[%u]: 10%% exceeded - delta %"
-		    PRId64 ", denom %" PRId64 ", factor %" PRId64
-		    ", old factor %" PRId64"\n", ci->ci_index,
-		    delta, denom, (delta * 1000) / denom, old_factor);
-#endif /* TIMECOUNTER_DEBUG */
+	mutex_spin_enter(&cc_calibration_lock);
+
+ retry:
+	atomic_store_release(&cc_calibration_state, CC_CAL_START);
+
+	/* Trigger primary CPU. */
+	cc_get_primary_cc();
+
+	for (;;) {
+		if (atomic_load_acquire(&cc_calibration_state) ==
+		    CC_CAL_PRIMARY_READY) {
+			break;
+		}
+	}
+
+	if (! cc_get_delta(ci)) {
+		goto retry;
+	}
+
+	mutex_exit(&cc_calibration_lock);
+#endif /* MULTIPROCESSOR */
+}
+
+void
+cc_primary_cc(void)
+{
+#if defined(MULTIPROCESSOR)
+	/* N.B. We expect all interrupts to be blocked. */
+
+	atomic_store_release(&cc_calibration_state, CC_CAL_PRIMARY_READY);
+
+	for (;;) {
+		if (atomic_load_acquire(&cc_calibration_state) ==
+		    CC_CAL_SECONDARY_READY) {
+			break;
+		}
+	}
+
+	cc_primary = cpu_counter32();
+	atomic_store_release(&cc_calibration_state, CC_CAL_FINISHED);
+#endif /* MULTIPROCESSOR */
 }

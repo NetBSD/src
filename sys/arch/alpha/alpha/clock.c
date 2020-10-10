@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.45 2020/09/29 01:33:00 thorpej Exp $ */
+/* $NetBSD: clock.c,v 1.46 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2020/09/29 01:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2020/10/10 03:05:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2020/09/29 01:33:00 thorpej Exp $");
 
 void (*clock_init)(void *);
 void *clockdev;
+
+int	alpha_use_cctr;		/* != 0 if we're using the PCC timecounter */
 
 void
 clockattach(void (*fns)(void *), void *dev)
@@ -111,6 +113,7 @@ cpu_initclocks(void)
 	if (! alpha_is_qemu) {
 		const uint64_t pcc_freq = cpu_frequency(curcpu());
 		cc_init(NULL, pcc_freq, "PCC", PCC_QUAL);
+		alpha_use_cctr = 1;
 	}
 
 	/*

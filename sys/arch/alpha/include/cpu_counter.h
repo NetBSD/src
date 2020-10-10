@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_counter.h,v 1.6 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: cpu_counter.h,v 1.7 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 #include <machine/cpu.h>
 #include <machine/rpb.h>
 
-#define cc_calibrate_mp(ci)	\
-	alpha_multicast_ipi(cpus_running, ALPHA_IPI_MICROSET)
+#define	cc_get_primary_cc()	\
+	alpha_send_ipi(hwrpb->rpb_primary_cpu_id, ALPHA_IPI_PRIMARY_CC)
 
 /* Process Cycle Counter is always available. */
 #define cpu_hascounter()	(1)
