@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.21 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.22 2020/10/10 21:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.21 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.22 2020/10/10 21:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,13 +240,6 @@ mcpcia_dma_init(struct mcpcia_config *ccp)
 	REGVAL(MCPCIA_W2_BASE(ccp)) =
 		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_PCI_SG_MAPPED_BASE;
 	alpha_mb();
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = MCPCIA_DIRECT_MAPPED_BASE;/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 }
 
 /*
