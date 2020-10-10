@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.42 2020/10/03 17:31:46 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.43 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@ struct rpb;
 struct trapframe;
 
 extern bool alpha_is_qemu;
+extern int alpha_use_cctr;
 extern u_long cpu_implver;		/* from IMPLVER instruction */
 extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;

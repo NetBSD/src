@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.91 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.92 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.91 2020/09/26 21:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.92 2020/10/10 03:05:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,6 +227,12 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * will also deal with time-of-day stuff.
 			 */
 			(*platform.clockintr)((struct clockframe *)framep);
+
+#if defined(MULTIPROCESSOR)
+			if (alpha_use_cctr) {
+				cc_hardclock(ci);
+			}
+#endif /* MULTIPROCESSOR */
 
 			/*
 			 * If it's time to call the scheduler clock,

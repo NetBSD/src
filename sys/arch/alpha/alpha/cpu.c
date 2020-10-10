@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.101 2020/09/29 01:33:00 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.102 2020/10/10 03:05:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2020/09/29 01:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2020/10/10 03:05:04 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -602,7 +602,9 @@ cpu_hatch(struct cpu_info *ci)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
-	cc_calibrate_cpu(ci);
+	if (alpha_use_cctr) {
+		cc_init_secondary(ci);
+	}
 
 	cpu_initclocks_secondary();
 }
