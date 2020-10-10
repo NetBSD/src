@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.5 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.6 2020/10/10 21:59:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.5 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.6 2020/10/10 21:59:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,12 +123,6 @@ jensenio_dma_init(struct jensenio_config *jcp)
 	t->_dmamem_map = _bus_dmamem_map;
 	t->_dmamem_unmap = _bus_dmamem_unmap;
 	t->_dmamem_mmap = _bus_dmamem_mmap;
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0;			/* XXX */
-	}
 }
 
 /*

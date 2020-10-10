@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_dma.c,v 1.6 2011/07/01 19:19:49 dyoung Exp $ */
+/* $NetBSD: irongate_dma.c,v 1.7 2020/10/10 21:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.6 2011/07/01 19:19:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.7 2020/10/10 21:59:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,13 +122,6 @@ irongate_dma_init(struct irongate_config *icp)
 	t->_dmamem_map = _bus_dmamem_map;
 	t->_dmamem_unmap = _bus_dmamem_unmap;
 	t->_dmamem_mmap = _bus_dmamem_mmap;
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0;			/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 }
 
 /*
