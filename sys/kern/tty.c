@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.291 2020/10/10 14:07:18 nia Exp $	*/
+/*	$NetBSD: tty.c,v 1.292 2020/10/10 15:59:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.291 2020/10/10 14:07:18 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.292 2020/10/10 15:59:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1377,6 +1377,19 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		    s != tp->t_qsize)
 			error = tty_set_qsize(tp, s);
 		return error;
+	case TIOCGSID:
+		mutex_enter(&proc_lock);
+		if (tp->t_session == NULL) {
+			mutex_exit(&proc_lock);
+			return ENOTTY;
+		}
+		if (tp->t_session->s_leader == NULL) {
+			mutex_exit(&proc_lock);
+			return ENOTTY;
+		}
+		*(int *) data =  tp->t_session->s_leader->p_pid;
+		mutex_exit(&proc_lock);
+		break;
 
 	case TIOCSBRK:
 	case TIOCCBRK:
