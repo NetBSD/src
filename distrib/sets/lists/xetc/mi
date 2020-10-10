@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2020/08/27 15:32:01 riastradh Exp $
+# $NetBSD: mi,v 1.39 2020/10/10 09:17:33 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,6 +57,7 @@
 ./etc/fonts/conf.avail/65-khmer.conf			xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/65-nonlatin.conf			xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/69-unifont.conf			xetc-fontconfig-etc	xorg
+./etc/fonts/conf.avail/70-no-bitmap-webfonts.conf	xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/70-no-bitmaps.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/70-yes-bitmaps.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/80-delicious.conf		xetc-fontconfig-etc	xorg
@@ -78,6 +79,7 @@
 ./etc/fonts/conf.d/65-fonts-persian.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/65-nonlatin.conf			xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/69-unifont.conf			xetc-fontconfig-etc	xorg
+./etc/fonts/conf.d/70-no-bitmap-webfonts.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/80-delicious.conf			xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/90-synthetic.conf			xetc-fontconfig-etc	xorg
 ./etc/fonts/fonts.conf					xetc-fontconfig-etc	xorg
