@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/03/08 09:58:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2020/10/10 09:17:33 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ FONTCONFIG_LINKS= \
 	65-fonts-persian.conf \
 	65-nonlatin.conf \
 	69-unifont.conf \
+	70-no-bitmap-webfonts.conf \
 	80-delicious.conf \
 	90-synthetic.conf
 
