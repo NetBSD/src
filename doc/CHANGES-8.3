@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.41 2020/10/08 18:07:38 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.42 2020/10/10 14:38:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1098,4 +1098,9 @@ sys/netinet6/in6.c				1.282
 	Fix detached address handling for interfaces transitioning
 	from DOWN to UNKNOWN link state.
 	[roy, ticket #1613]
+
+sys/compat/common/tty_43.c			1.38
+
+	tty_43: better input limit validation to avoid undefined behaviour.
+	[nia, ticket #1614]
 
