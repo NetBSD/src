@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.34 2020/10/03 18:54:18 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.35 2020/10/10 18:49:27 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1579,7 +1579,8 @@ mbr_part_attr_str(const struct disk_partitions *arg, part_id id,
 
 static bool
 mbr_info_to_partitition(const struct disk_part_info *info,
-   struct mbr_partition *mp, uint sector, const char **err_msg)
+   struct mbr_partition *mp, uint sector,
+   struct mbr_info_t *mb, size_t index, const char **err_msg)
 {
 	size_t pt = mbr_type_from_gen_desc(info->nat_type);
 	if (info->start + info->size > UINT_MAX
@@ -1591,6 +1592,12 @@ mbr_info_to_partitition(const struct disk_part_info *info,
 	mp->mbrp_start = info->start - sector;
 	mp->mbrp_size = info->size;
 	mp->mbrp_type = pt;
+	if (info->flags & PTI_INSTALL_TARGET) {
+		mp->mbrp_flag |= MBR_PFLAG_ACTIVE;
+#ifdef BOOTSEL
+		strcpy(mb->mbrb.mbrbs_nametab[index], "NetBSD");
+#endif
+	}
 
 	return true;
 }
@@ -1771,7 +1778,7 @@ found:
 		data.size = size;
 	uint old_start = m->mbr.mbr_parts[i].mbrp_start;
 	if (!mbr_info_to_partitition(&data,
-	   &m->mbr.mbr_parts[i], m->sector, err_msg))
+	   &m->mbr.mbr_parts[i], m->sector, m, i, err_msg))
 		return false;
 	if (data.flags & PTI_INSTALL_TARGET)
 		parts->target = start;
@@ -2262,7 +2269,7 @@ mbr_add_part(struct disk_partitions *arg,
 			/* empty slot, we can just use it */
 			newp = &m->mbr.mbr_parts[0];
 			mbr_info_to_partitition(&data, &m->mbr.mbr_parts[0],
-			    m->sector, errmsg);
+			    m->sector, m, 0, errmsg);
 			if (data.last_mounted && m->last_mounted[0] &&
 			    data.last_mounted != m->last_mounted[0]) {
 				free(__UNCONST(m->last_mounted[0]));
@@ -2316,7 +2323,7 @@ mbr_add_part(struct disk_partitions *arg,
 				newp = &new_mbr->mbr.mbr_parts[0];
 				mbr_info_to_partitition(&data,
 				    &new_mbr->mbr.mbr_parts[0],
-				    new_mbr->sector, errmsg);
+				    new_mbr->sector, new_mbr, 0, errmsg);
 				if (data.last_mounted && m->last_mounted[0] &&
 				    data.last_mounted != m->last_mounted[0]) {
 					free(__UNCONST(m->last_mounted[0]));
@@ -2335,7 +2342,7 @@ mbr_add_part(struct disk_partitions *arg,
 				newp = &new_mbr->mbr.mbr_parts[0];
 				mbr_info_to_partitition(&data,
 				    &new_mbr->mbr.mbr_parts[0],
-				    new_mbr->sector, errmsg);
+				    new_mbr->sector, new_mbr, 0, errmsg);
 				if (data.last_mounted && m->last_mounted[0] &&
 				    data.last_mounted != m->last_mounted[0]) {
 					free(__UNCONST(m->last_mounted[0]));
@@ -2399,7 +2406,7 @@ mbr_add_part(struct disk_partitions *arg,
 	if (data.start + data.size > start + size)
 		data.size = start + size - data.start;
 	mbr_info_to_partitition(&data, &m->mbr.mbr_parts[free_primary],
-	     m->sector, errmsg);
+	     m->sector, m, free_primary, errmsg);
 	if (data.last_mounted && m->last_mounted[free_primary] &&
 	    data.last_mounted != m->last_mounted[free_primary]) {
 		free(__UNCONST(m->last_mounted[free_primary]));
