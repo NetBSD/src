@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.48 2020/07/08 13:12:35 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.49 2020/10/10 15:22:15 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.48 2020/07/08 13:12:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.49 2020/10/10 15:22:15 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -116,6 +116,16 @@ static const char *pciconf_resource_names[] = {
 struct pciconf_resources {
 	struct pciconf_resource resources[PCICONF_RESOURCE_NTYPES];
 };
+
+struct pciconf_resource_rsvd {
+	int		type;
+	uint64_t	start;
+	bus_size_t	size;
+	LIST_ENTRY(pciconf_resource_rsvd) next;
+};
+
+static LIST_HEAD(, pciconf_resource_rsvd) pciconf_resource_reservations =
+    LIST_HEAD_INITIALIZER(pciconf_resource_reservations);
 
 typedef struct _s_pciconf_dev_t {
 	int		ipin;
@@ -506,6 +516,73 @@ err:
 	return NULL;
 }
 
+static bool
+pci_resource_is_reserved(int type, uint64_t addr, uint64_t size)
+{
+	struct pciconf_resource_rsvd *rsvd;
+
+	LIST_FOREACH(rsvd, &pciconf_resource_reservations, next) {
+		if (rsvd->type != type)
+			continue;
+		if (rsvd->start <= addr + size && rsvd->start + rsvd->size >= addr)
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+pci_device_is_reserved(pciconf_bus_t *pb, pcitag_t tag)
+{
+	pcireg_t base, base64, mask, mask64;
+	uint64_t addr, size;
+	int br, width;
+
+	/*
+	 * Look to see if this device is enabled and one of the resources
+	 * is already in use (firmware configured console device). If so,
+	 * skip resource assignment and use firmware values.
+	 */
+	width = 4;
+	for (br = PCI_MAPREG_START; br < PCI_MAPREG_END; br += width) {
+
+		base = pci_conf_read(pb->pc, tag, br);
+		pci_conf_write(pb->pc, tag, br, 0xffffffff);
+		mask = pci_conf_read(pb->pc, tag, br);
+		pci_conf_write(pb->pc, tag, br, base);
+		width = 4;
+
+		switch (PCI_MAPREG_TYPE(base)) {
+		case PCI_MAPREG_TYPE_IO:
+			addr = PCI_MAPREG_IO_ADDR(base);
+			size = PCI_MAPREG_IO_SIZE(mask);
+			if (pci_resource_is_reserved(PCI_CONF_MAP_IO, addr, size))
+				return true;
+			break;
+		case PCI_MAPREG_TYPE_MEM:
+			if (PCI_MAPREG_MEM_TYPE(base) == PCI_MAPREG_MEM_TYPE_64BIT) {
+				base64 = pci_conf_read(pb->pc, tag, br + 4);
+				pci_conf_write(pb->pc, tag, br + 4, 0xffffffff);
+				mask64 = pci_conf_read(pb->pc, tag, br + 4);
+				pci_conf_write(pb->pc, tag, br + 4, base64);
+				addr = (uint64_t)PCI_MAPREG_MEM64_ADDR(
+				      (((uint64_t)base64) << 32) | base);
+				size = (uint64_t)PCI_MAPREG_MEM64_SIZE(
+				      (((uint64_t)mask64) << 32) | mask);
+				width = 8;
+			} else {
+				addr = PCI_MAPREG_MEM_ADDR(base);
+				size = PCI_MAPREG_MEM_SIZE(mask);
+			}
+			if (pci_resource_is_reserved(PCI_CONF_MAP_MEM, addr, size))
+				return true;
+			break;
+		}
+	}
+
+	return false;
+}
+
 static int
 pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
     int mode)
@@ -593,6 +670,14 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 
 		pb->bandwidth_used += pd->min_gnt * 4000000 /
 				(pd->min_gnt + pd->max_lat);
+	}
+
+	if (PCI_HDRTYPE_TYPE(bhlc) == PCI_HDRTYPE_DEVICE &&
+	    pci_device_is_reserved(pb, tag)) {
+		/*
+		 * Device already configured by firmware.
+		 */
+		return 0;
 	}
 
 	width = 4;
@@ -1312,7 +1397,9 @@ pciconf_resource_add(struct pciconf_resources *rs, int type,
 {
 	bus_addr_t end = start + (size - 1);
 	struct pciconf_resource *r;
-	int error;
+	struct pciconf_resource_rsvd *rsvd;
+	int error, rsvd_type, align;
+	vmem_addr_t result;
 	bool first;
 
 	if (size == 0 || end <= start)
@@ -1341,7 +1428,58 @@ pciconf_resource_add(struct pciconf_resources *rs, int type,
 
 	r->total_size += size;
 
+	switch (type) {
+	case PCICONF_RESOURCE_IO:
+		rsvd_type = PCI_CONF_MAP_IO;
+		align = 0x1000;
+		break;
+	case PCICONF_RESOURCE_MEM:
+	case PCICONF_RESOURCE_PREFETCHABLE_MEM:
+		rsvd_type = PCI_CONF_MAP_MEM;
+		align = 0x100000;
+		break;
+	default:
+		rsvd_type = 0;
+		align = 0;
+		break;
+	}
+
+	/*
+	 * Exclude reserved ranges from available resources
+	 */
+	LIST_FOREACH(rsvd, &pciconf_resource_reservations, next) {
+		if (rsvd->type != rsvd_type)
+			continue;
+		/*
+		 * The reserved range may not be within our resource window.
+		 * That's fine, so ignore the error.
+		 */
+		(void)vmem_xalloc(r->arena, rsvd->size, align, 0, 0,
+				  rsvd->start, rsvd->start + rsvd->size,
+				  VM_BESTFIT | VM_NOSLEEP,
+				  &result);
+	}
+
 	return 0;
+}
+
+/*
+ * pciconf_resource_reserve:
+ *
+ *	Mark a pci configuration resource as in-use. Devices
+ *	already configured to use these resources are skipped
+ *	during resource assignment.
+ */
+void
+pciconf_resource_reserve(int type, bus_addr_t start, bus_size_t size)
+{
+	struct pciconf_resource_rsvd *rsvd;
+
+	rsvd = kmem_zalloc(sizeof(*rsvd), KM_SLEEP);
+	rsvd->type = type;
+	rsvd->start = start;
+	rsvd->size = size;
+	LIST_INSERT_HEAD(&pciconf_resource_reservations, rsvd, next);
 }
 
 /*
