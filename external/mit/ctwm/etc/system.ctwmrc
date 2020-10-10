@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.2 2020/10/10 10:28:08 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.3 2020/10/10 10:33:37 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -72,8 +72,8 @@ IgnoreLockModifier
 RandomPlacement          "on"
 
 MoveDelta                 3
-ClearShadowContrast       50
-DarkShadowContrast        50
+ClearShadowContrast       40
+DarkShadowContrast        60
 MovePackResistance        100
 
 RaiseWhenAutoUnSqueeze
