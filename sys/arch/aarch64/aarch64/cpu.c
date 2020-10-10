@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.55 2020/10/07 16:03:10 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.56 2020/10/10 08:22:57 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.55 2020/10/07 16:03:10 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.56 2020/10/10 08:22:57 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -378,7 +378,9 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_FP)) {
-	case ID_AA64PFR0_EL1_FP_IMPL:
+	case ID_AA64PFR0_EL1_FP_NONE:
+		break;
+	default:
 		aprint_verbose(", FP");
 		break;
 	}
@@ -422,7 +424,9 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 
 	/* PFR0:AdvSIMD */
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
-	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
+	case ID_AA64PFR0_EL1_ADV_SIMD_NONE:
+		break;
+	default:
 		aprint_verbose(", NEON");
 		break;
 	}
