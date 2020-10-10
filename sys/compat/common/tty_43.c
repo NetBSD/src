@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.38 2020/10/09 10:41:53 nia Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.39 2020/10/10 15:59:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.38 2020/10/09 10:41:53 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.39 2020/10/10 15:59:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -275,20 +275,6 @@ compat_43_ttioctl(struct tty *tp, u_long com, void *data, int flag,
 		mutex_spin_enter(&tty_lock);
 		SET(tp->t_cflag, HUPCL);
 		mutex_spin_exit(&tty_lock);
-		break;
-
-	case TIOCGSID:
-		mutex_enter(&proc_lock);
-		if (tp->t_session == NULL) {
-			mutex_exit(&proc_lock);
-			return ENOTTY;
-		}
-		if (tp->t_session->s_leader == NULL) {
-			mutex_exit(&proc_lock);
-			return ENOTTY;
-		}
-		*(int *) data =  tp->t_session->s_leader->p_pid;
-		mutex_exit(&proc_lock);
 		break;
 
 	default:
