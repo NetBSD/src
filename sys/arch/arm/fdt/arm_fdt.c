@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.11 2020/06/21 17:25:03 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.12 2020/10/10 15:34:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include "opt_arm_timer.h"
+#include "opt_efi.h"
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.11 2020/06/21 17:25:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.12 2020/10/10 15:34:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +48,21 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.11 2020/06/21 17:25:03 jmcneill Exp $"
 
 #include <arm/fdt/arm_fdtvar.h>
 
+#ifdef EFI_RUNTIME
+#include <arm/arm/efi_runtime.h>
+#include <dev/clock_subr.h>
+#endif
+
 static int	arm_fdt_match(device_t, cfdata_t, void *);
 static void	arm_fdt_attach(device_t, device_t, void *);
+
+#ifdef EFI_RUNTIME
+static void	arm_fdt_efi_init(device_t);
+static int	arm_fdt_efi_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
+static int	arm_fdt_efi_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
+
+static struct todr_chip_handle efi_todr;
+#endif
 
 CFATTACH_DECL_NEW(arm_fdt, 0,
     arm_fdt_match, arm_fdt_attach, NULL, NULL);
@@ -79,6 +93,10 @@ arm_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+#ifdef EFI_RUNTIME
+	arm_fdt_efi_init(self);
+#endif
 
 	plat->ap_init_attach_args(&faa);
 	faa.faa_name = "";
@@ -253,3 +271,71 @@ arm_fdt_module_init(void)
 	}
 #endif /* !MODULAR */
 }
+
+#ifdef EFI_RUNTIME
+static void
+arm_fdt_efi_init(device_t dev)
+{
+	uint64_t efi_system_table;
+	struct efi_tm tm;
+	int error;
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen < 0)
+		return;
+
+	if (of_getprop_uint64(chosen, "netbsd,uefi-system-table", &efi_system_table) != 0)
+		return;
+
+	error = arm_efirt_init(efi_system_table);
+	if (error)
+		return;
+
+	aprint_debug_dev(dev, "EFI system table at %#" PRIx64 "\n", efi_system_table);
+
+	if (arm_efirt_gettime(&tm) == 0) {
+		aprint_normal_dev(dev, "using EFI runtime services for RTC\n");
+		efi_todr.cookie = NULL;
+		efi_todr.todr_gettime_ymdhms = arm_fdt_efi_rtc_gettime;
+		efi_todr.todr_settime_ymdhms = arm_fdt_efi_rtc_settime;
+		todr_attach(&efi_todr);
+	}
+}
+
+static int
+arm_fdt_efi_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct efi_tm tm;
+	int error;
+
+	error = arm_efirt_gettime(&tm);
+	if (error)
+		return error;
+
+	dt->dt_year = tm.tm_year;
+	dt->dt_mon = tm.tm_mon;
+	dt->dt_day = tm.tm_mday;
+	dt->dt_wday = 0;
+	dt->dt_hour = tm.tm_hour;
+	dt->dt_min = tm.tm_min;
+	dt->dt_sec = tm.tm_sec;
+
+	return 0;
+}
+
+static int
+arm_fdt_efi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct efi_tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_year = dt->dt_year;
+	tm.tm_mon = dt->dt_mon;
+	tm.tm_mday = dt->dt_day;
+	tm.tm_hour = dt->dt_hour;
+	tm.tm_min = dt->dt_min;
+	tm.tm_sec = dt->dt_sec;
+
+	return arm_efirt_settime(&tm);
+}
+#endif

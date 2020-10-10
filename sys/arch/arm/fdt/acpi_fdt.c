@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.15 2020/09/15 10:33:58 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.16 2020/10/10 15:34:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.15 2020/09/15 10:33:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.16 2020/10/10 15:34:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.15 2020/09/15 10:33:58 jmcneill Exp $
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
-#include <dev/clock_subr.h>
 #endif
 
 static int	acpi_fdt_match(device_t, cfdata_t, void *);
@@ -62,21 +61,11 @@ static void	acpi_fdt_attach(device_t, device_t, void *);
 
 static void	acpi_fdt_poweroff(device_t);
 
-#ifdef EFI_RUNTIME
-static void	acpi_fdt_efi_init(device_t);
-static int	acpi_fdt_efi_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
-static int	acpi_fdt_efi_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
-#endif
-
 static void	acpi_fdt_sysctl_init(void);
 
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
 
 static uint64_t smbios_table = 0;
-
-#ifdef EFI_RUNTIME
-static struct todr_chip_handle efi_todr;
-#endif
 
 static const char * const compatible[] = {
 	"netbsd,acpi",
@@ -105,10 +94,6 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-#ifdef EFI_RUNTIME
-	acpi_fdt_efi_init(self);
-#endif
 
 	fdtbus_register_power_controller(self, faa->faa_phandle,
 	    &acpi_fdt_power_funcs);
@@ -171,71 +156,3 @@ acpi_fdt_sysctl_init(void)
 		    CTL_CREATE, CTL_EOL);
 	}
 }
-
-#ifdef EFI_RUNTIME
-static void
-acpi_fdt_efi_init(device_t dev)
-{
-	uint64_t efi_system_table;
-	struct efi_tm tm;
-	int error;
-
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen < 0)
-		return;
-
-	if (of_getprop_uint64(chosen, "netbsd,uefi-system-table", &efi_system_table) != 0)
-		return;
-
-	error = arm_efirt_init(efi_system_table);
-	if (error)
-		return;
-
-	aprint_debug_dev(dev, "EFI system table at %#" PRIx64 "\n", efi_system_table);
-
-	if (arm_efirt_gettime(&tm) == 0) {
-		aprint_normal_dev(dev, "using EFI runtime services for RTC\n");
-		efi_todr.cookie = NULL;
-		efi_todr.todr_gettime_ymdhms = acpi_fdt_efi_rtc_gettime;
-		efi_todr.todr_settime_ymdhms = acpi_fdt_efi_rtc_settime;
-		todr_attach(&efi_todr);
-	}
-}
-
-static int
-acpi_fdt_efi_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
-{
-	struct efi_tm tm;
-	int error;
-
-	error = arm_efirt_gettime(&tm);
-	if (error)
-		return error;
-
-	dt->dt_year = tm.tm_year;
-	dt->dt_mon = tm.tm_mon;
-	dt->dt_day = tm.tm_mday;
-	dt->dt_wday = 0;
-	dt->dt_hour = tm.tm_hour;
-	dt->dt_min = tm.tm_min;
-	dt->dt_sec = tm.tm_sec;
-
-	return 0;
-}
-
-static int
-acpi_fdt_efi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
-{
-	struct efi_tm tm;
-
-	memset(&tm, 0, sizeof(tm));
-	tm.tm_year = dt->dt_year;
-	tm.tm_mon = dt->dt_mon;
-	tm.tm_mday = dt->dt_day;
-	tm.tm_hour = dt->dt_hour;
-	tm.tm_min = dt->dt_min;
-	tm.tm_sec = dt->dt_sec;
-
-	return arm_efirt_settime(&tm);
-}
-#endif
