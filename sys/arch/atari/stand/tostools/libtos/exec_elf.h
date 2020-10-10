@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.7 2014/01/03 16:40:58 dsl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.8 2020/10/10 21:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ typedef struct {
 #define	EM_RH32		38	/* TRW RH-32 */
 #define	EM_RCE		39	/* Motorola RCE */
 #define	EM_ARM		40	/* Advanced RISC Machines ARM */
-#define	EM_ALPHA	41	/* DIGITAL Alpha */
+#define	EM_OLD_ALPHA	41	/* DIGITAL Alpha (obsolete) */
 #define	EM_SH		42	/* Hitachi Super-H */
 #define	EM_SPARCV9	43	/* SPARC Version 9 */
 #define	EM_TRICORE	44	/* Siemens Tricore */
@@ -265,8 +265,9 @@ typedef struct {
 #define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
 #define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+
 /* Unofficial machine types follow */
-#define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
+#define	EM_ALPHA	36902	/* DIGITAL Alpha */
 #define	EM_NUM		36903
 
 /*
