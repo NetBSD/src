@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.102 2020/08/07 23:31:07 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.103 2020/10/10 08:29:32 jdc Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.102 2020/08/07 23:31:07 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.103 2020/10/10 08:29:32 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,7 @@ static int	mach64_ref_freq(void);
 
 #ifdef MACHFB_DEBUG
 static void	mach64_get_mode(struct mach64_softc *, struct videomode *);
+static void	mach64_print_reg(struct mach64_softc *);
 #endif
 
 static int	mach64_calc_crtcregs(struct mach64_softc *,
@@ -413,6 +414,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	struct mach64_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri;
+	const char *mptr = NULL;
 	prop_data_t edid_data;
 	const struct videomode *mode = NULL;
 	int bar, id, expected_id;
@@ -509,6 +511,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	    (int)sc->sc_rom.vb_size >> 10, (uint32_t)sc->sc_rom.vb_base);
 #ifdef MACHFB_DEBUG
 	mach64_get_mode(sc, NULL);
+	mach64_print_reg(sc);
 #endif
 
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
@@ -517,8 +520,12 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	default_mode.hdisplay = width;
 	default_mode.vdisplay = height;
 
+	prop_dictionary_get_cstring_nocopy(device_properties(sc->sc_dev),
+	    "videomode", &mptr);
+
 	memset(&sc->sc_ei, 0, sizeof(sc->sc_ei));
-	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
+	if (mptr == NULL &&
+	    (edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
 
 		sc->sc_edid_size = uimin(1024, prop_data_size(edid_data));
@@ -923,8 +930,8 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 {
 	int htotal, hdisplay, hsync_start, hsync_end;
 	int vtotal, vdisplay, vsync_start, vsync_end;
-	int gen_ctl, clk_ctl, clock;
-	int ref_freq, ref_div, mclk_fb_div, vclk_post_div, vclk_fb_div;
+	int clk_ctl, clock;
+	int ref_freq, ref_div, vclk_post_div, vclk_fb_div;
 	int nhsync, nvsync;
 	int post_div, dot_clock, vrefresh, vrefresh2;
 
@@ -932,26 +939,12 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	hsync_end = regr(sc, CRTC_H_SYNC_STRT_WID);
 	vdisplay = regr(sc, CRTC_V_TOTAL_DISP);
 	vsync_end = regr(sc, CRTC_V_SYNC_STRT_WID);
-	gen_ctl = regr(sc, CRTC_GEN_CNTL);
 	clk_ctl = regr(sc, CLOCK_CNTL);
 	clock = clk_ctl & 3;
 	ref_div = regrb_pll(sc, PLL_REF_DIV);
-	mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
 	vclk_post_div = regrb_pll(sc, VCLK_POST_DIV);
 	vclk_fb_div = regrb_pll(sc, VCLK0_FB_DIV + clock);
 	ref_freq = mach64_ref_freq();
-
-	aprint_normal_dev(sc->sc_dev, "CRTC registers:\n");
-	aprint_normal("\th total: 0x%08x  h sync: 0x%08x\n",
-	    hdisplay, hsync_end);
-	aprint_normal("\tv total: 0x%08x  v sync: 0x%08x\n",
-	    vdisplay, vsync_end);
-	aprint_normal("\t g cntl: 0x%08x  c cntl: 0x%08x\n",
-	    gen_ctl, clk_ctl);
-	aprint_normal("\t rfreq %d  rdiv: %d\n", ref_freq, ref_div);
-	aprint_normal_dev(sc->sc_dev, "PLL registers:\n");
-	aprint_normal("\t m div: 0x%02x  p div: 0x%02x  v%d div: 0x%02x\n",
-	    mclk_fb_div, vclk_post_div, clock, vclk_fb_div);
 
 	htotal = ((hdisplay & 0x01ff) + 1) << 3;
 	hdisplay = (((hdisplay & 0x1ff0000) >> 16) + 1) << 3;
@@ -1014,6 +1007,55 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 		if (nvsync)
 			mode->flags |= VID_NVSYNC;
 	}
+}
+
+static void
+mach64_print_reg(struct mach64_softc *sc)
+{
+	struct reglist {
+		int offset;
+		const char *name;
+	};
+	static const struct reglist reglist_tab[] = {
+		{ 0x0000, "CRTC_H_TOTAL_DISP" },
+		{ 0x0004, "CRTC_H_SYNC_STRT_WID" },
+		{ 0x0008, "CRTC_V_TOTAL_DISP" },
+		{ 0x000C, "CRTC_V_SYNC_STRT_WID" },
+		{ 0x0010, "CRTC_VLINE_CRNT_VLINE" },
+		{ 0x0014, "CRTC_OFF_PITCH" },
+		{ 0x001C, "CRTC_GEN_CNTL" },
+		{ 0x0090, "CLOCK_CNTL" },
+		{ 0, NULL }
+	};
+	static const struct reglist plllist_tab[] = {
+		{ 0x02, "PLL_REF_DIV" },
+		{ 0x03, "PLL_GEN_CNTL" },
+		{ 0x04, "MCLK_FB_DIV" },
+		{ 0x05, "PLL_VCLK_CNTL" },
+		{ 0x06, "VCLK_POST_DIV" },
+		{ 0x07, "VCLK0_FB_DIV" },
+		{ 0x08, "VCLK1_FB_DIV" },
+		{ 0x09, "VCLK2_FB_DIV" },
+		{ 0x0A, "VCLK3_FB_DIV" },
+		{ 0x0B, "PLL_XCLK_CNTL" },
+		{ 0x10, "LVDSPLL_CNTL0" },
+		{ 0x11, "LVDSPLL_CNTL0" },
+		{ 0x19, "EXT_VPLL_CNTL" },
+		{ 0x1A, "EXT_VPLL_REF_DIV" },
+		{ 0x1B, "EXT_VPLL_FB_DIV" },
+		{ 0x1C, "EXT_VPLL_MSB" },
+		{ 0, NULL }
+	};
+	const struct reglist *r;
+
+	aprint_normal("CRTC registers\n");
+	for (r = reglist_tab; r->name != NULL; r++)
+		aprint_normal("0x%04x 0x%08x %s\n", r->offset,
+		    regr(sc, r->offset), r->name);
+	aprint_normal("PLL registers\n");
+	for (r = plllist_tab; r->name != NULL; r++)
+		aprint_normal("0x%02x 0x%02x %s\n", r->offset,
+		    regrb_pll(sc, r->offset), r->name);
 }
 #endif
 
