@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.7 2019/10/13 07:28:07 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2020/10/10 14:23:05 christos Exp $
 
 USE_FORT?= yes	# network client/server
+
+.include <bsd.own.mk>
 
 PROG=	sntp
 MAN=	sntp.1
