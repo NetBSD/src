@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_impl.c,v 1.4 2020/07/25 22:36:06 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_impl.c,v 1.5 2020/10/10 08:24:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.4 2020/07/25 22:36:06 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.5 2020/10/10 08:24:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -200,10 +200,10 @@ aes_neon_probe(void)
 		return -1;
 #endif
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
-	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
-		break;
-	default:
+	case ID_AA64PFR0_EL1_ADV_SIMD_NONE:
 		return -1;
+	default:
+		break;
 	}
 #else
 #ifdef _KERNEL

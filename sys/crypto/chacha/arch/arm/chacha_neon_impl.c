@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_impl.c,v 1.1 2020/07/25 22:51:57 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_impl.c,v 1.2 2020/10/10 08:24:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: chacha_neon_impl.c,v 1.1 2020/07/25 22:51:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: chacha_neon_impl.c,v 1.2 2020/10/10 08:24:10 jmcneill Exp $");
 
 #include "chacha_neon.h"
 
@@ -147,10 +147,10 @@ chacha_probe_neon(void)
 		return -1;
 #endif
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
-	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
-		break;
-	default:
+	case ID_AA64PFR0_EL1_ADV_SIMD_NONE:
 		return -1;
+	default:
+		break;
 	}
 #else
 #ifdef _KERNEL
