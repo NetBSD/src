@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2019/09/29 23:44:59 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2020/10/10 14:23:34 christos Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -11,9 +11,6 @@ CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration \
 			-Wno-error=unused-const-variable
 
 WARNS?=	4
-
-
-.include <bsd.own.mk>
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
 NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
@@ -73,5 +70,28 @@ COPTS.libopts.c+=		-Wno-error=implicit-fallthrough
 COPTS.ntp_loopfilter.c+=	-Wno-error=implicit-fallthrough
 COPTS.refclock_ulink.c+=	-Wno-error=implicit-fallthrough
 .endif
+
+.SUFFIXES: .1 .5 .8 .1ntpdmdoc .5mdoc .1ntp-keygenmdoc .1ntpdcmdoc .1ntpqmdoc .1sntpmdoc
+
+.5mdoc.5:
+	${TOOL_SED} -e 's/5mdoc/5/g' < ${.IMPSRC} > ${.TARGET}
+
+.1ntpdmdoc.8:
+	${TOOL_SED} -e 's/1ntpdmdoc/8/g' < ${.IMPSRC} > ${.TARGET}
+
+.1ntp-keygenmdoc.8:
+	${TOOL_SED} -e 's/1ntp-keygenmdoc/8/g' < ${.IMPSRC} > ${.TARGET}
+
+.1ntpdcmdoc.8:
+	${TOOL_SED} -e 's/1ntpdcmdoc/8/g' < ${.IMPSRC} > ${.TARGET}
+
+.1ntpqmdoc.8:
+	${TOOL_SED} -e 's/1ntpqmdoc/8/g' < ${.IMPSRC} > ${.TARGET}
+
+.1sntpmdoc.1:
+	${TOOL_SED} -e 's/1sntpmdoc/1/g' < ${.IMPSRC} > ${.TARGET}
+
+
+CLEANFILES+=${MAN}
 
 .endif
