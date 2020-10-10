@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.11 2020/10/10 03:05:04 thorpej Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.12 2020/10/10 18:18:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 Jason R. Thorpe
@@ -43,17 +43,31 @@
  * Calibration happens periodically, and works like this:
  *
  * Secondary CPU                               Primary CPU
- *   T0 = local CC
  *   Send IPI to publish reference CC
  *                                   --------->
+ *                                             Indicate Primary Ready
+ *                <----------------------------
+ *   T0 = local CC
+ *   Indicate Secondary Ready
+ *                           ----------------->
  *     (assume this happens at Tavg)           Publish reference CC
- *                     <-----------------------
- *   Notice publication
+ *                                             Indicate completion
+ *                    <------------------------
+ *   Notice completion
  *   T1 = local CC
  *
  *   Tavg = (T0 + T1) / 2
  *
  *   Delta = Tavg - Published primary CC value
+ *
+ * "Notice completion" is performed by waiting for the primary to set
+ * the calibration state to FINISHED.  This is a little unfortunate,
+ * because T0->Tavg involves a single store-release on the secondary, and
+ * Tavg->T1 involves a store-relaxed and a store-release.  It would be
+ * better to simply wait for the reference CC to transition from 0 to
+ * non-0 (i.e. just wait for a single store-release from Tavg->T1), but
+ * if the cycle counter just happened to read back as 0 at that instant,
+ * we would never break out of the loop.
  *
  * We trigger calibration roughly once a second; the period is actually
  * skewed based on the CPU index in order to avoid lock contention.  The
@@ -61,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.11 2020/10/10 03:05:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.12 2020/10/10 18:18:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
