@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.19 2020/10/09 18:33:00 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.20 2020/10/10 18:48:32 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -991,6 +991,9 @@ parts_use_wholedisk(struct disk_partitions *parts,
 	memset(&info, 0, sizeof(info));
 	info.start = space.start;
 	info.size = space.size;
+	info.flags = PTI_INSTALL_TARGET;
+	if (parts->pscheme->secondary_scheme != NULL)
+		info.flags |= PTI_SEC_CONTAINER;
 	info.nat_type = parts->pscheme->get_generic_part_type(PT_root);
 	nbsd = parts->pscheme->add_partition(parts, &info, NULL);
 
