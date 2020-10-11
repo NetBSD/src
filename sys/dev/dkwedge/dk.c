@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.97.8.3 2020/04/24 17:42:53 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.97.8.4 2020/10/11 12:34:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.8.3 2020/04/24 17:42:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.8.4 2020/10/11 12:34:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1412,7 +1412,10 @@ dkminphys(struct buf *bp)
 
 	dev = bp->b_dev;
 	bp->b_dev = sc->sc_pdev;
-	(*sc->sc_parent->dk_driver->d_minphys)(bp);
+	if (sc->sc_parent->dk_driver && sc->sc_parent->dk_driver->d_minphys)
+		(*sc->sc_parent->dk_driver->d_minphys)(bp);
+	else
+		minphys(bp);
 	bp->b_dev = dev;
 }
 
