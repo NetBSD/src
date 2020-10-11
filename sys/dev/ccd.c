@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.179 2019/03/27 19:13:34 martin Exp $	*/
+/*	$NetBSD: ccd.c,v 1.179.4.1 2020/10/11 12:34:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.179 2019/03/27 19:13:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.179.4.1 2020/10/11 12:34:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,11 @@ const struct cdevsw ccd_cdevsw = {
 	.d_flag = D_DISK | D_MPSAFE
 };
 
+static const struct dkdriver ccddkdriver = {
+	.d_strategy = ccdstrategy,
+	.d_minphys = minphys
+}; 
+
 #ifdef DEBUG
 static	void printiinfo(struct ccdiinfo *);
 #endif
@@ -233,7 +238,7 @@ ccdcreate(int unit) {
 	sc->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_stop, "ccdstop");
 	cv_init(&sc->sc_push, "ccdthr");
-	disk_init(&sc->sc_dkdev, sc->sc_xname, NULL); /* XXX */
+	disk_init(&sc->sc_dkdev, sc->sc_xname, &ccddkdriver);
 	return sc;
 }
 
@@ -1138,8 +1143,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EBADF);
 	}
 
-	mutex_enter(&cs->sc_dvlock);
-
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case CCDIOCCLR:
@@ -1163,15 +1166,102 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ODIOCWDINFO:
 	case ODIOCGDEFLABEL:
 #endif
-		if ((cs->sc_flags & CCDF_INITED) == 0) {
-			error = ENXIO;
-			goto out;
-		}
+		if ((cs->sc_flags & CCDF_INITED) == 0)
+			return ENXIO;
 	}
 
 	error = disk_ioctl(&cs->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		goto out;
+		return error;
+
+	switch (cmd) {
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+
+		mutex_enter(cs->sc_iolock);
+		if (cs->sc_bufq != NULL)
+			strlcpy(dks->dks_name,
+			    bufq_getstrategyname(cs->sc_bufq),
+			    sizeof(dks->dks_name));
+		else
+			error = EINVAL;
+		mutex_exit(cs->sc_iolock);
+		dks->dks_paramlen = 0;
+		break;
+	    }
+
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+#endif
+	{
+		struct disklabel *lp;
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, data, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)data;
+
+		cs->sc_flags |= CCDF_LABELLING;
+
+		error = setdisklabel(cs->sc_dkdev.dk_label,
+		    lp, 0, cs->sc_dkdev.dk_cpulabel);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO
+#ifdef __HAVE_OLD_DISKLABEL
+			    || cmd == ODIOCWDINFO
+#endif
+			   )
+				error = writedisklabel(CCDLABELDEV(dev),
+				    ccdstrategy, cs->sc_dkdev.dk_label,
+				    cs->sc_dkdev.dk_cpulabel);
+		}
+
+		cs->sc_flags &= ~CCDF_LABELLING;
+		break;
+	}
+
+	case DIOCKLABEL:
+		if (*(int *)data != 0)
+			cs->sc_flags |= CCDF_KLABEL;
+		else
+			cs->sc_flags &= ~CCDF_KLABEL;
+		break;
+
+	case DIOCWLABEL:
+		if (*(int *)data != 0)
+			cs->sc_flags |= CCDF_WLABEL;
+		else
+			cs->sc_flags &= ~CCDF_WLABEL;
+		break;
+
+	case DIOCGDEFLABEL:
+		ccdgetdefaultlabel(cs, (struct disklabel *)data);
+		break;
+
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		ccdgetdefaultlabel(cs, &newlabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		memcpy(data, &newlabel, sizeof (struct olddisklabel));
+		break;
+#endif
+	default:
+		error = ENOTTY;
+			break;
+	}
+
+	if (error != ENOTTY)
+		return error;
+
+	mutex_enter(&cs->sc_dvlock);
 
 	error = 0;
 	switch (cmd) {
@@ -1237,6 +1327,12 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				    sizeof(*vpp));
 				kmem_free(cpp, ccio->ccio_ndisks *
 				    sizeof(*cpp));
+
+				/*
+				 * No component data is allocated,
+				 * nothing is to be freed.
+				*/
+				cs->sc_nccdisks = 0;
 				goto out;
 			}
 			++lookedup;
@@ -1336,42 +1432,30 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    cs->sc_cinfo[i].ci_pathlen);
 		}
 
-		/* Free interleave index. */
-		for (i = 0; cs->sc_itable[i].ii_ndisk; ++i) {
-			kmem_free(cs->sc_itable[i].ii_index,
-			    cs->sc_itable[i].ii_indexsz);
+		if (cs->sc_nccdisks != 0) {
+			/* Free interleave index. */
+			for (i = 0; cs->sc_itable[i].ii_ndisk; ++i) {
+				kmem_free(cs->sc_itable[i].ii_index,
+				    cs->sc_itable[i].ii_indexsz);
+			}
+			/* Free component info and interleave table. */
+			kmem_free(cs->sc_cinfo, cs->sc_nccdisks *
+			    sizeof(struct ccdcinfo));
+			kmem_free(cs->sc_itable, (cs->sc_nccdisks + 1) *
+			    sizeof(struct ccdiinfo));
 		}
-
-		/* Free component info and interleave table. */
-		kmem_free(cs->sc_cinfo, cs->sc_nccdisks *
-		    sizeof(struct ccdcinfo));
-		kmem_free(cs->sc_itable, (cs->sc_nccdisks + 1) *
-		    sizeof(struct ccdiinfo));
 
 		aprint_normal("%s: detached\n", cs->sc_xname);
 
 		/* Detach the disk. */
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
+
+		/* also releases dv_lock */
 		ccdput(cs);
+
 		/* Don't break, otherwise cs is read again. */
 		return 0;
-
-	case DIOCGSTRATEGY:
-	    {
-		struct disk_strategy *dks = (void *)data;
-
-		mutex_enter(cs->sc_iolock);
-		if (cs->sc_bufq != NULL)
-			strlcpy(dks->dks_name,
-			    bufq_getstrategyname(cs->sc_bufq),
-			    sizeof(dks->dks_name));
-		else
-			error = EINVAL;
-		mutex_exit(cs->sc_iolock);
-		dks->dks_paramlen = 0;
-		break;
-	    }
 
 	case DIOCGCACHE:
 	    {
@@ -1414,71 +1498,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		break;
 
-	case DIOCWDINFO:
-	case DIOCSDINFO:
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCWDINFO:
-	case ODIOCSDINFO:
-#endif
-	{
-		struct disklabel *lp;
-#ifdef __HAVE_OLD_DISKLABEL
-		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
-			memset(&newlabel, 0, sizeof newlabel);
-			memcpy(&newlabel, data, sizeof (struct olddisklabel));
-			lp = &newlabel;
-		} else
-#endif
-		lp = (struct disklabel *)data;
-
-		cs->sc_flags |= CCDF_LABELLING;
-
-		error = setdisklabel(cs->sc_dkdev.dk_label,
-		    lp, 0, cs->sc_dkdev.dk_cpulabel);
-		if (error == 0) {
-			if (cmd == DIOCWDINFO
-#ifdef __HAVE_OLD_DISKLABEL
-			    || cmd == ODIOCWDINFO
-#endif
-			   )
-				error = writedisklabel(CCDLABELDEV(dev),
-				    ccdstrategy, cs->sc_dkdev.dk_label,
-				    cs->sc_dkdev.dk_cpulabel);
-		}
-
-		cs->sc_flags &= ~CCDF_LABELLING;
+default:
+	error = ENOTTY;
 		break;
-	}
-
-	case DIOCKLABEL:
-		if (*(int *)data != 0)
-			cs->sc_flags |= CCDF_KLABEL;
-		else
-			cs->sc_flags &= ~CCDF_KLABEL;
-		break;
-
-	case DIOCWLABEL:
-		if (*(int *)data != 0)
-			cs->sc_flags |= CCDF_WLABEL;
-		else
-			cs->sc_flags &= ~CCDF_WLABEL;
-		break;
-
-	case DIOCGDEFLABEL:
-		ccdgetdefaultlabel(cs, (struct disklabel *)data);
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDEFLABEL:
-		ccdgetdefaultlabel(cs, &newlabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	default:
-		error = ENOTTY;
 	}
 
  out:
