@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.120 2020/10/10 14:36:21 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.121 2020/10/11 12:36:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5111,4 +5111,50 @@ sys/compat/common/tty_43.c			1.38
 
 	tty_43: better input limit validation to avoid undefined behaviour.
 	[nia, ticket #1106]
+
+external/bsd/ntp/dist/libntp/work_fork.c	1.15
+
+	ndtpd(8): fix asynchronous DNS resolution to avoid bind(2)
+	socket errors on startup.
+	[kim, ticket #1107]
+
+external/public-domain/tz/dist/systemv          delete
+external/public-domain/tz/dist/pacificnew       delete
+external/public-domain/tz/dist/yearistype.sh    delete
+external/public-domain/tz/dist/Makefile         up to 1.1.1.27
+external/public-domain/tz/dist/NEWS             up to 1.1.1.30
+external/public-domain/tz/dist/README           up to 1.1.1.9
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.20
+external/public-domain/tz/dist/africa           up to 1.1.1.23
+external/public-domain/tz/dist/antarctica       up to 1.1.1.13
+external/public-domain/tz/dist/asia             up to 1.1.1.26
+external/public-domain/tz/dist/australasia      up to 1.1.1.19
+external/public-domain/tz/dist/backzone         up to 1.1.1.19
+external/public-domain/tz/dist/europe           up to 1.1.1.27
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.14
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.16
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.11
+external/public-domain/tz/dist/northamerica     up to 1.1.1.26
+external/public-domain/tz/dist/southamerica     up to 1.1.1.17
+external/public-domain/tz/dist/theory.html      up to 1.1.1.11
+external/public-domain/tz/dist/version          up to 1.1.1.17
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.7
+external/public-domain/tz/dist/zoneinfo2tdf.pl  up to 1.1.1.4
+external/public-domain/tz/share/zoneinfo/Makefile	1.4
+distrib/sets/lists/base/mi			1.1266
+doc/3RDPARTY					1.1750 (patch)
+
+	Import tzdata2020b:
+	  Revised predictions for Morocco's changes starting in 2023.
+	  Canada's Yukon changes to -07 on 2020-11-01, not 2020-03-08.
+	  Macquarie Island has stayed in sync with Tasmania since 2011.
+	  Casey, Antarctica is at +08 in winter and +11 in summer.
+	[kre, ticket #1108]
+
+sbin/ccdconfig/ccdconfig.c			1.58
+sys/dev/ccd.c					1.185
+sys/dev/dkwedge/dk.c				1.102
+
+	ccd(4): fix various bugs related to handling of dk(4) wedges.
+	[mlelstv, ticket #1110]
 
