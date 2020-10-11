@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.20 2020/04/17 13:36:48 kim Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.21 2020/10/11 22:38:48 kim Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -96,20 +96,21 @@ and any per interface configuration or restriction is done in
 .Pp
 If the line is equal to
 .Dq rtsol ,
-kernel processing of router advertisements will be enabled and an IPv6
-router solicitation message will be sent out on the interface.
+a dedicated
+.Xr dhcpcd 8
+process will be started for processing received router advertisements
+and sending out IPv6 router solicitation messages on the interface.
 This is useful on networks where default routes can best be learned
 from router advertisements.
 However, if
 .Sy dhcpcd
 has been set to true in
 .Xr rc.conf 5 ,
-it is assumed that
+it is assumed that that
 .Xr dhcpcd 8
-will take care of sending any necessary router solicitation messages and
-processing received router advertisements through its configuration in
-.Xr dhcpcd.conf 5
-instead.
+process will take care of sending any necessary router solicitation
+messages and processing received router advertisements on all
+interfaces, and therefore no per-interface process is started.
 .Pp
 If a line is empty, or starts with
 .Sq # ,
