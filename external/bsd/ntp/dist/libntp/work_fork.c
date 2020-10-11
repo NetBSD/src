@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.11 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.11.4.1 2020/10/11 10:53:45 martin Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -529,6 +529,9 @@ fork_blocking_child(
 		/* wire into I/O loop */
 		(*addremove_io_fd)(c->resp_read_pipe, is_pipe, FALSE);
 
+		/* wait until child is done */
+		rc = netread(c->resp_read_pipe, &rc, sizeof(rc));
+
 		return;		/* parent returns */
 	}
 
@@ -565,6 +568,10 @@ fork_blocking_child(
 	c->resp_write_pipe = blocking_pipes[3];
 
 	kill_asyncio(0);
+
+	/* Tell parent we are ready */
+	rc = netwrite(c->resp_write_pipe, &rc, sizeof(rc));
+
 	closelog();
 	if (syslog_file != NULL) {
 		fclose(syslog_file);
