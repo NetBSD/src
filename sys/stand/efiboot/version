@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.20 2020/10/10 19:17:39 jmcneill Exp $
+$NetBSD: version,v 1.21 2020/10/11 14:03:33 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -24,3 +24,4 @@ is taken as the current.
 2.1:	Remove efiboot.plist support; support dtoverlay in boot.cfg.
 2.2:	Remove support for storing settings in EFI env vars.
 2.3:	EFI RT and GOP support for devicetree mode.
+2.4:	Add ISO9660 support.

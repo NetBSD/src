@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.4 2018/11/15 23:52:33 jmcneill Exp $ */
+/* $NetBSD: conf.c,v 1.5 2020/10/11 14:03:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/dosfs.h>
+#include <lib/libsa/cd9660.h>
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/net.h>
@@ -55,6 +56,7 @@ struct fs_ops file_system[] = {
 	FS_OPS(ffsv1),
 	FS_OPS(ffsv2),
 	FS_OPS(dosfs),
+	FS_OPS(cd9660),
 };
 int nfsys = __arraycount(file_system);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.7 2019/09/27 20:10:42 jakllsch Exp $ */
+/* $NetBSD: efiblock.c,v 1.8 2020/10/11 14:03:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,6 +32,8 @@
 #include <sys/param.h>
 #include <sys/md5.h>
 #include <sys/uuid.h>
+
+#include <fs/cd9660/iso.h>
 
 #include "efiboot.h"
 #include "efiblock.h"
@@ -113,6 +115,53 @@ efi_block_allocate_device_buffer(struct efi_block_dev *bdev, UINTN size,
 	}
 
 	return buf;
+}
+
+static int
+efi_block_find_partitions_cd9660(struct efi_block_dev *bdev)
+{
+	struct efi_block_part *bpart;
+	struct iso_primary_descriptor *vd;
+	void *buf, *buf_start;
+	EFI_STATUS status;
+	EFI_LBA lba;
+	UINT32 sz;
+
+	sz = __MAX(sizeof(*vd), bdev->bio->Media->BlockSize);
+	sz = roundup(sz, bdev->bio->Media->BlockSize);
+	if ((buf = efi_block_allocate_device_buffer(bdev, sz, &buf_start)) == NULL)
+		return ENOMEM;
+
+	for (lba = 16;; lba++) {
+		status = uefi_call_wrapper(bdev->bio->ReadBlocks, 5, bdev->bio, bdev->media_id,
+		    lba, sz, buf_start);
+		if (EFI_ERROR(status))
+			goto io_error;
+
+		vd = (struct iso_primary_descriptor *)buf_start;
+		if (memcmp(vd->id, ISO_STANDARD_ID, sizeof vd->id) != 0)
+			goto io_error;
+		if (isonum_711(vd->type) == ISO_VD_END)
+			goto io_error;
+		if (isonum_711(vd->type) == ISO_VD_PRIMARY)
+			break;
+	}
+
+	if (isonum_723(vd->logical_block_size) != ISO_DEFAULT_BLOCK_SIZE)
+		goto io_error;
+
+	bpart = alloc(sizeof(*bpart));
+	bpart->index = 0;
+	bpart->bdev = bdev;
+	bpart->type = EFI_BLOCK_PART_CD9660;
+	TAILQ_INSERT_TAIL(&bdev->partitions, bpart, entries);
+
+	FreePool(buf);
+	return 0;
+
+io_error:
+	FreePool(buf);
+	return EIO;
 }
 
 static int
@@ -310,6 +359,8 @@ efi_block_find_partitions(struct efi_block_dev *bdev)
 	error = efi_block_find_partitions_gpt(bdev);
 	if (error)
 		error = efi_block_find_partitions_mbr(bdev);
+	if (error)
+		error = efi_block_find_partitions_cd9660(bdev);
 
 	return error;
 }
@@ -365,11 +416,15 @@ efi_block_probe(void)
 				case EFI_BLOCK_PART_GPT:
 					fstype = bpart->gpt.fstype;
 					break;
+				case EFI_BLOCK_PART_CD9660:
+					fstype = FS_ISO9660;
+					break;
 				}
-				if (fstype == FS_BSDFFS) {
+				if (fstype == FS_BSDFFS || fstype == FS_ISO9660) {
 					char devname[9];
 					snprintf(devname, sizeof(devname), "hd%u%c", bdev->index, bpart->index + 'a');
 					set_default_device(devname);
+					set_default_fstype(fstype);
 					break;
 				}
 			}
@@ -450,6 +505,9 @@ efi_block_show(void)
 					printf(" (%"PRIu64" MB): ", size);
 
 				printf("%s\n", fstypenames[bpart->gpt.fstype]);
+				break;
+			case EFI_BLOCK_PART_CD9660:
+				printf("  hd%u%c %s\n", bdev->index, bpart->index + 'a', fstypenames[FS_ISO9660]);
 				break;
 			default:
 				break;
@@ -532,6 +590,8 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 			return EIO;
 		}
 		dblk += le64toh(bpart->gpt.ent.ent_lba_start);
+		break;
+	case EFI_BLOCK_PART_CD9660:
 		break;
 	default:
 		return EINVAL;
