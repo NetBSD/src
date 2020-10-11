@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.222 2020/07/23 16:08:02 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.223 2020/10/11 19:39:22 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.222 2020/07/23 16:08:02 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223 2020/10/11 19:39:22 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.222 2020/07/23 16:08:02 jdc Exp $");
 #include <machine/pmap.h>
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
+#include <sparc64/sparc64/static_edid.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/cbusvar.h>
 
@@ -1205,6 +1206,21 @@ set_hw_props(device_t dev)
 	}
 }
 
+/* Static EDID definitions */
+static void
+set_static_edid(prop_dictionary_t dict)
+{
+	if (!strcmp(machine_model, "NATE,Meso-999")) {
+		prop_data_t edid;
+
+		DPRINTF(ACDB_PROBE, ("\nAdding EDID for Meso-999 "));
+		edid = prop_data_create_copy(edid_meso999,
+		    sizeof(edid_meso999));
+		prop_dictionary_set(dict, "EDID:1", edid);
+		prop_object_release(edid);
+	}
+}
+
 /*
  * Called back during autoconfiguration for each device found
  */
@@ -1508,7 +1524,10 @@ noether:
 			if (OF_getprop(node, "width", &width, sizeof(width))
 			    != 4) {
 				instance = OF_open(name);
+			}
+		}
 #endif
+		set_static_edid(dict);
 	}
 
 	set_hw_props(dev);
