@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.3 2018/11/01 00:43:38 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.4 2020/10/11 14:03:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,8 @@
 
 enum efi_block_part_type {
 	EFI_BLOCK_PART_DISKLABEL,
-	EFI_BLOCK_PART_GPT
+	EFI_BLOCK_PART_GPT,
+	EFI_BLOCK_PART_CD9660
 };
 
 struct efi_block_part;

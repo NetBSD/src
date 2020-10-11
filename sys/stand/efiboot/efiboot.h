@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.13 2020/07/15 00:51:40 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.14 2020/10/11 14:03:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -56,6 +56,8 @@ extern const struct boot_command commands[];
 void command_help(char *);
 int set_default_device(const char *);
 char *get_default_device(void);
+void set_default_fstype(int);
+int get_default_fstype(void);
 int set_initrd_path(const char *);
 char *get_initrd_path(void);
 int set_dtb_path(const char *);
