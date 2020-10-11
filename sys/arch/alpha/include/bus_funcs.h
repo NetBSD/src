@@ -1,4 +1,4 @@
-/* $NetBSD: bus_funcs.h,v 1.2 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: bus_funcs.h,v 1.3 2020/10/11 00:33:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -340,6 +340,7 @@ int	_bus_dmamap_load_raw_direct(bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
 
 void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_unload_common(bus_dma_tag_t, bus_dmamap_t);
 void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
@@ -358,6 +359,14 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
+
+#define	_DMA_COUNT_DECL(type, cnt)					\
+	static struct evcnt dma_stat_##type##_##cnt =			\
+	    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, #type, #cnt);	\
+	EVCNT_ATTACH_STATIC(dma_stat_##type##_##cnt)
+#define	_DMA_COUNT(type, cnt)						\
+	atomic_inc_64(&dma_stat_##type##_##cnt .ev_count)
+
 #endif /* _ALPHA_BUS_DMA_PRIVATE */
 
 #endif /* _KERNEL */

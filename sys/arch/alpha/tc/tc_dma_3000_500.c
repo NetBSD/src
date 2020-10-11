@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.21 2019/11/10 21:16:22 chs Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.22 2020/10/11 00:33:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.21 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.22 2020/10/11 00:33:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,5 +206,5 @@ tc_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 	/*
 	 * Do the generic bits of the unload.
 	 */
-	_bus_dmamap_unload(t, map);
+	_bus_dmamap_unload_common(t, map);
 }
