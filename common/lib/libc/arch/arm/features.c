@@ -1,4 +1,4 @@
-/* $NetBSD: features.c,v 1.2 2019/08/02 12:07:24 joerg Exp $ */
+/* $NetBSD: features.c,v 1.3 2020/10/11 16:22:02 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,8 @@
  * FEAT_THUMB2!=if ${COMPILE.c} -fsyntax-only -DTHUMB2_TEST ${TESTFILE} >/dev/null 2>/dev/null; then echo yes; else echo no; fi
  */
 
-#if defined (__ARM_ARCH_8A__)  || defined (__ARM_ARCH_7__) || \
+#if defined(__ARM_ARCH_8A) || defined (__ARM_ARCH_8A__)  || \
+    defined (__ARM_ARCH_7__) || \
     defined (__ARM_ARCH_7A__)  || defined (__ARM_ARCH_7R__) || \
     defined (__ARM_ARCH_7M__)  || defined (__ARM_ARCH_7EM__) || \
     defined (__ARM_ARCH_6T2__)
