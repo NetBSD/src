@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/10/11 14:24:50 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2020/10/11 14:54:08 jmcneill Exp $
 
 .include <bsd.own.mk>
 .include "${.CURDIR}/Makefile.cdrom"
@@ -13,3 +13,6 @@ prepare_md_post:
 		< ${.CURDIR}/boot.cfg.in > boot.cfg
 
 .include "${.CURDIR}/../../common/Makefile.bootcd"
+
+# Exclude live images from installation media
+CDRELEASE_EXCLUDE+=	-s ',./binary/gzimg.*,,gp'
