@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.6 2020/10/11 10:02:51 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.7 2020/10/11 10:12:53 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -129,7 +129,7 @@ ReverseCurrentWorkspace
 StartInMapState
 WMgrHorizButtonIndent     0
 WMgrVertButtonIndent      0
-WorkSpaceManagerGeometry  "70x270-4-4" 1
+WorkSpaceManagerGeometry  "60x240-4-4" 1
 
 WorkSpaces 
 {
