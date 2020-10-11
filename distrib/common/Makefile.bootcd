@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.43 2019/12/20 19:46:51 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.44 2020/10/11 14:10:04 jmcneill Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -188,8 +188,8 @@ copy-releasedir:
 			echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 			exit 1; 					\
 		fi; 							\
-		${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/${MACHINE}"; 	\
-		release_destdir="${CUROBJDIR}/cdrom/${MACHINE}";	\
+		${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/${RELEASEMACHINEDIR}"; 	\
+		release_destdir="${CUROBJDIR}/cdrom/${RELEASEMACHINEDIR}";	\
 		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 			\
 		echo Copying $$(pwd) to $$release_destdir ...; 		\
 		${TOOL_PAX} ${PAX_TIMESTAMP}				\
