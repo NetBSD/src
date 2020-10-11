@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.110 2020/09/28 05:43:58 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.111 2020/10/11 21:41:57 jdc Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.110 2020/09/28 05:43:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.111 2020/10/11 21:41:57 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,7 +590,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	PRINTREG(RADEON_LVDS_GEN_CNTL);
 	PRINTREG(RADEON_DISP_HW_DEBUG);
 	if (!IS_AVIVO(sc)) {
+		/*
+		XXX: We can't print this, as it's not correctly aligned
 		PRINTREG(RADEON_PIXCLKS_CNTL);
+		*/
 		PRINTREG(RADEON_CRTC_H_SYNC_STRT_WID);
 		PRINTREG(RADEON_FP_H_SYNC_STRT_WID);
 		PRINTREG(RADEON_CRTC2_H_SYNC_STRT_WID);
@@ -927,10 +930,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 		dp->rd_vd.init_screen = radeonfb_init_screen;
 
-#ifdef RADEONFB_DEBUG
-		dp->rd_virty -= 200;
-#endif
-
 		dp->rd_console = 0;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_console", &dp->rd_console);
@@ -1068,7 +1067,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		PRINTREG(RADEON_TMDS_CNTL);
 		PRINTREG(RADEON_TMDS_TRANSMITTER_CNTL);
 		PRINTREG(RADEON_TMDS_PLL_CNTL);
+		/*
+		XXX: We can't print this, as it's not correctly aligned
 		PRINTREG(RADEON_PIXCLKS_CNTL);
+		*/
 	}
 	return;
 
@@ -1968,7 +1970,7 @@ nobios:
 	}
 
 	for (i = 0; i < 2; i++) {
-		char	edid[128];
+		char	edid[128], edid_port_str[7] = "EDID:";
 		uint8_t	ddc;
 		struct edid_info *eip = &sc->sc_ports[i].rp_edid;
 		prop_data_t edid_data;
@@ -1981,10 +1983,17 @@ nobios:
 		DPRINTF(("   crtc = %d\n", sc->sc_ports[i].rp_number));
 
 		sc->sc_ports[i].rp_edid_valid = 0;
-		/* first look for static EDID data */
-		if ((edid_data = prop_dictionary_get(device_properties(
-		      sc->sc_dev), "EDID")) != NULL) {
-
+		/*
+		 * First look for static EDID data
+		 * Try "EDID:port" then "EDID"
+		 */
+		snprintf(&edid_port_str[5], 2, "%d", i);
+		edid_data = prop_dictionary_get(device_properties(
+		    sc->sc_dev), edid_port_str);
+		if (edid_data == NULL)
+			edid_data = prop_dictionary_get(device_properties(
+			      sc->sc_dev), "EDID");
+		if (edid_data != NULL) {
 			aprint_debug_dev(sc->sc_dev, "using static EDID\n");
 			memcpy(edid, prop_data_value(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
@@ -2078,12 +2087,17 @@ const struct videomode *
 radeonfb_modelookup(const char *name)
 {
 	int	i;
+	/* Use a default mode in case we don't find a matching mode */
+	const char *vm = "1024x768x60";
+	const struct videomode *vmp = NULL;
 
 	for (i = 0; i < videomode_count; i++) {
 		if (!strcmp(name, videomode_list[i].name))
 			return &videomode_list[i];
+		if (!strcmp(vm, videomode_list[i].name))
+			vmp = &videomode_list[i];
 	}
-	return NULL;
+	return vmp;
 }
 
 void
