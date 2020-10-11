@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.28 2020/06/03 06:36:44 rin Exp $
+#	$NetBSD: list,v 1.29 2020/10/11 14:10:34 jmcneill Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin usr.bin usr.sbin
 
@@ -42,6 +42,7 @@ PROG	sbin/mount_nfs
 PROG	sbin/mount_tmpfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/newfs_ext2fs
+PROG	sbin/newfs_msdos
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
