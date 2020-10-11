@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.5 2020/10/11 07:08:29 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.6 2020/10/11 10:02:51 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -43,6 +43,9 @@ WorkSpaceFont    "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
 RestartPreviousState
 
 DecorateTransients
+
+# allow the user to have their root window recolored as they choose
+DontPaintRootWindow
 
 # hide window contents while altering windows for performance
 NoOpaqueMove
