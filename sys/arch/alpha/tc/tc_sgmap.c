@@ -1,4 +1,4 @@
-/* $NetBSD: tc_sgmap.c,v 1.8 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: tc_sgmap.c,v 1.9 2020/10/11 00:33:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: tc_sgmap.c,v 1.8 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tc_sgmap.c,v 1.9 2020/10/11 00:33:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: tc_sgmap.c,v 1.8 2011/07/01 19:19:50 dyoung Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
+#define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 
 #include <alpha/tc/tc_sgmap.h>
