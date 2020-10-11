@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2019/10/01 10:52:53 kardel Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2020/10/11 21:32:37 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.19 2019/10/01 10:52:53 kardel Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 2020/10/11 21:32:37 roy Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -275,8 +275,10 @@ print_link_addresses(prop_dictionary_t env, bool print_active_only)
 		iflr.flags = IFLR_PREFIX;
 		iflr.prefixlen = sdl->sdl_alen * NBBY;
 
-		if (prog_ioctl(s, SIOCGLIFADDR, &iflr) == -1)
+		if (prog_ioctl(s, SIOCGLIFADDR, &iflr) == -1) {
 			warn("%s: ioctl SIOCGLIFADDR", __func__);
+			continue;
+		}
 
 		if (((iflr.flags & IFLR_ACTIVE) != 0) != print_active_only)
 			continue;
