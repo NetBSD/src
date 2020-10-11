@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/10/13 07:28:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2020/10/11 07:07:31 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -22,5 +22,7 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 .PATH: ${DIST}
 
 COPTS.ntpq.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+
+CLEANFILES+=${MAN}
 
 .include <bsd.prog.mk>
