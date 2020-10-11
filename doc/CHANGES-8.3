@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.42 2020/10/10 14:38:03 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.43 2020/10/11 12:31:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1103,4 +1103,10 @@ sys/compat/common/tty_43.c			1.38
 
 	tty_43: better input limit validation to avoid undefined behaviour.
 	[nia, ticket #1614]
+
+external/bsd/ntp/dist/libntp/work_fork.c	1.15
+
+	ndtpd(8): fix asynchronous DNS resolution to avoid bind(2)
+	socket errors on startup.
+	[kim, ticket #1615]
 
