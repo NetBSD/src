@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/12/28 03:19:43 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2020/10/11 07:07:31 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -21,5 +21,7 @@ DIST=${IDIST}/ntpdc
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
+
+CLEANFILES+=${MAN}
 
 .include <bsd.prog.mk>

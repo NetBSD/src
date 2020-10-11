@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/09/06 07:20:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2020/10/11 07:07:31 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -96,5 +96,7 @@ COPTS.refclock_parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.refclock_leitch.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.refclock_neoclock4x.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.ntp_io.c+=        	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
+CLEANFILES+=${MAN}
 
 .include <bsd.prog.mk>
