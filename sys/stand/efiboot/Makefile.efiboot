@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.18 2020/09/06 07:20:31 mrg Exp $
+# $NetBSD: Makefile.efiboot,v 1.19 2020/10/11 14:03:33 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -71,7 +71,7 @@ CPPFLAGS+= -Wall -Wmissing-prototypes
 CPPFLAGS+= -Wno-pointer-sign
 
 CPPFLAGS+= -DHEAP_VARIABLE
-#CPPFLAGS+= -DSUPPORT_CD9660
+CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
 CPPFLAGS+= -DSUPPORT_DOSFS
 #CPPFLAGS+= -DSUPPORT_EXT2FS
