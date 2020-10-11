@@ -1,4 +1,4 @@
-/* $NetBSD: qemu.c,v 1.4 2020/10/07 14:07:42 thorpej Exp $ */
+/* $NetBSD: qemu.c,v 1.5 2020/10/11 18:39:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -147,13 +147,9 @@ qemu_clock_init(void * const v __unused)
 
 		/*
 		 * hz=1024 is a little bananas for an emulated
-		 * virtual machine.  Reset to something more
-		 * reasonable, and recalculate everything based
-		 * on it.
+		 * virtual machine.  Let MI code drive schedhz.
 		 */
 		hz = 50;
-		tick = 1000000 / hz;
-		tickadj = (240000 / (60 * hz)) ? (240000 / (60 * hz)) : 1;
 		schedhz = 0;
 
 		qemu_nsec_per_tick = 1000000000UL / hz;
