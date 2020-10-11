@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2020/10/10 14:23:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2020/10/11 07:07:31 rin Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -90,8 +90,4 @@ COPTS.refclock_ulink.c+=	-Wno-error=implicit-fallthrough
 
 .1sntpmdoc.1:
 	${TOOL_SED} -e 's/1sntpmdoc/1/g' < ${.IMPSRC} > ${.TARGET}
-
-
-CLEANFILES+=${MAN}
-
 .endif
