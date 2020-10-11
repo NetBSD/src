@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.36 2020/10/11 17:18:34 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.37 2020/10/11 18:46:21 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.36 2020/10/11 17:18:34 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.37 2020/10/11 18:46:21 christos Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -120,7 +120,6 @@ static void	BN_print_fp(FILE *, const BIGNUM *);
 
 static void	BN_print_dec_fp(FILE *, const BIGNUM *);
 static void	convert_str2bn(BIGNUM **, char *);
-static bool	is_hex_str(char *);
 static void	pr_fact(BIGNUM *, int, int);	/* print factors of a value */
 static void	pr_print(BIGNUM *, int, int);	/* print a prime */
 static void	usage(void) __dead;
@@ -451,29 +450,6 @@ BN_dup(const BIGNUM *a)
 
 #endif
 
-/*
- * Scan the string from left-to-right to see if the longest substring
- * is a valid hexadecimal number.
- */
-static bool
-is_hex_str(char *str)
-{
-	char c, *p;
-	bool saw_hex = false;
-
-	for (p = str; *p; p++) {
-		if (isdigit((unsigned char)*p))
-			continue;
-		c = tolower((unsigned char)*p);
-		if (c >= 'a' && c <= 'f') {
-			saw_hex = true;
-			continue;
-		}
-		break;	/* Not a hexadecimal digit. */
-	}
-	return saw_hex;
-}
-
 /* Convert string pointed to by *str to a bignum.  */
 static void
 convert_str2bn(BIGNUM **val, char *p)
@@ -486,7 +462,7 @@ convert_str2bn(BIGNUM **val, char *p)
 	if (*p == '0' && (p[1] == 'x' || p[1] == 'X')) {
 		n = BN_hex2bn(val, p + 2);
 	} else {
-		n = is_hex_str(p) ? BN_hex2bn(val, p) : BN_dec2bn(val, p);
+		n = BN_dec2bn(val, p);
 	}
 	if (n == 0)
 		errx(1, "%s: illegal numeric format.", p);
