@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.159 2020/05/11 15:56:15 jdc Exp $
+#	$NetBSD: files.sparc64,v 1.160 2020/10/11 19:39:22 jdc Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -257,6 +257,7 @@ file	arch/sparc64/sparc64/kobj_machdep.c	modular & exec_elf64
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
+file	arch/sparc64/sparc64/static_edid.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
