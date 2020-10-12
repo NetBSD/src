@@ -1237,7 +1237,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 	};
 	char uaddr[INET6_ADDRSTRLEN];
 
-	if (!callback && ifp->carrier <= LINK_DOWN)
+	if (!callback && !if_is_link_up(ifp))
 		return 0;
 
 	if (!IN6_IS_ADDR_UNSPECIFIED(&state->unicast)) {
@@ -1298,7 +1298,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 		    + (unsigned int)((float)state->RT
 		    * ((float)lr / DHCP6_RAND_DIV));
 
-		if (ifp->carrier > LINK_DOWN)
+		if (if_is_link_up(ifp))
 			logdebugx("%s: %s %s (xid 0x%02x%02x%02x)%s%s,"
 			    " next in %0.1f seconds",
 			    ifp->name,
@@ -1320,7 +1320,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 		}
 	}
 
-	if (ifp->carrier <= LINK_DOWN)
+	if (!if_is_link_up(ifp))
 		return 0;
 
 	/* Update the elapsed time */
@@ -2906,7 +2906,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 				if (ia->sla_len == 0) {
 					/* no SLA configured, so lets
 					 * automate it */
-					if (ifd->carrier != LINK_UP) {
+					if (!if_is_link_up(ifd)) {
 						logdebugx(
 						    "%s: has no carrier, cannot"
 						    " delegate addresses",
@@ -2922,7 +2922,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 					sla = &ia->sla[j];
 					if (strcmp(ifd->name, sla->ifname))
 						continue;
-					if (ifd->carrier != LINK_UP) {
+					if (!if_is_link_up(ifd)) {
 						logdebugx(
 						    "%s: has no carrier, cannot"
 						    " delegate addresses",
@@ -4029,7 +4029,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 		if (drop && options & DHCPCD_RELEASE &&
 		    state->state != DH6S_DELEGATED)
 		{
-			if (ifp->carrier == LINK_UP &&
+			if (if_is_link_up(ifp) &&
 			    state->state != DH6S_RELEASED &&
 			    state->state != DH6S_INFORMED)
 			{
