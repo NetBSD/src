@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.128 2020/10/12 21:05:54 uwe Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.129 2020/10/12 21:12:34 uwe Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,6 +36,16 @@
 .Dd July 1, 2020
 .Dt BUILDING 8
 .Os NetBSD
+.
+.\" if this file is processed with real roff (doc.tmac)
+.\" now that the tmac files have been lazily read,
+.\" we can override ``quotes'' with "quotes" for ascii output
+.ie '\*[Lq]'``' \{\
+.ds Lq \*q
+.ds Rq \*q
+.\}
+.\" and disable hyphenation
+.nr hyphen-flags 0
 .
 .Sh NAME
 .
