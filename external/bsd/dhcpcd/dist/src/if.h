@@ -146,6 +146,7 @@ int if_getflags(struct interface *);
 int if_setflag(struct interface *, short, short);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
 #define if_down(ifp) if_setflag((ifp), 0, IFF_UP);
+bool if_is_link_up(const struct interface *);
 bool if_valid_hwaddr(const uint8_t *, size_t);
 struct if_head *if_discover(struct dhcpcd_ctx *, struct ifaddrs **,
     int, char * const *);
