@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.69 2020/09/28 18:51:34 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.70 2020/10/12 14:29:41 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1188,23 +1188,8 @@ make_filesystems(struct install_partition_desc *install)
 			break;
 		}
 		if ((ptn->instflags & PUIINST_NEWFS) && newfs != NULL) {
-			if (ptn->fs_type == FS_MSDOS) {
-			        /* newfs only if mount fails */
-			        if (run_program(RUN_SILENT | RUN_ERROR_OK,
-				    "mount -rt msdos %s /mnt2", devdev) != 0)
-					error = run_program(
-					    RUN_DISPLAY | RUN_PROGRESS,
-					    "%s %s",
-					    newfs, rdev);
-				else {
-					run_program(RUN_SILENT | RUN_ERROR_OK,
-					    "umount /mnt2");
-					error = 0;
-				}
-			} else {
-				error = run_program(RUN_DISPLAY | RUN_PROGRESS,
+			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s %s", newfs, rdev);
-			}
 		} else if ((ptn->instflags & (PUIINST_MOUNT|PUIINST_BOOT))
 		    && fsname != NULL) {
 			/* We'd better check it isn't dirty */
