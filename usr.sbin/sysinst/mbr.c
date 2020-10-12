@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.35 2020/10/10 18:49:27 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.36 2020/10/12 16:14:32 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -318,7 +318,7 @@ free_mbr_info(mbr_info_t *m)
 /*
  * To be used only on ports which cannot provide any bios geometry
  */
-bool
+int
 set_bios_geom_with_mbr_guess(struct disk_partitions *parts)
 {
 	int cyl, head, sec;
@@ -2686,6 +2686,29 @@ mbr_free(struct disk_partitions *arg)
 	free(parts);
 }
 
+static void
+mbr_destroy_part_scheme(struct disk_partitions *arg)
+{
+	struct mbr_disk_partitions *parts = (struct mbr_disk_partitions*)arg;
+	char diskpath[MAXPATHLEN];
+	int fd;
+
+	if (parts->dlabel != NULL)
+		parts->dlabel->pscheme->destroy_part_scheme(parts->dlabel);
+	fd = opendisk(arg->disk, O_RDWR, diskpath, sizeof(diskpath), 0);
+	if (fd != -1) {
+		char *buf;
+
+		buf = calloc(arg->bytes_per_sector, 1);
+		if (buf != NULL) {
+			write(fd, buf, arg->bytes_per_sector);
+			free(buf);
+		}
+		close(fd);
+	}
+	mbr_free(arg);
+}
+
 static bool
 mbr_verify_for_update(struct disk_partitions *arg)
 {
@@ -3177,6 +3200,7 @@ mbr_parts = {
 	.post_edit_verify = mbr_verify,
 	.pre_update_verify = mbr_verify_for_update,
 	.free = mbr_free,
+	.destroy_part_scheme = mbr_destroy_part_scheme,
 };
 
 #endif

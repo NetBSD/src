@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2020/02/10 16:08:58 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10 2020/10/12 16:14:35 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,7 +244,7 @@ md_get_info(struct install_partition_desc *install)
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
 	int i, j, rv;
@@ -265,7 +265,7 @@ md_make_bsd_partitions(struct install_partition_desc *install)
 	    if (check_for_errors()) {
 	        process_menu (MENU_sanity, &rv);
 	        if (rv < 0)
-		    return false;
+		    return 0;
 	        else if (rv)
 		    break;
 	        edit_diskmap();
@@ -317,7 +317,7 @@ md_make_bsd_partitions(struct install_partition_desc *install)
 			pid = pm->parts->pscheme->add_outer_partition(pm->parts,
 			    &info, NULL);
 			if (pid == NO_PART)
-				return false;
+				return 0;
 		}
 	    }
 	}
@@ -327,11 +327,11 @@ md_make_bsd_partitions(struct install_partition_desc *install)
 
 	/* Write the converted partitions */
 	if (!pm->parts->pscheme->write_to_disk(pm->parts))
-		return false;
+		return 0;
 
 	/* now convert to install info */
 	if (!install_desc_from_parts(install, pm->parts))
-		return false;
+		return 0;
 
 	/* set newfs flag for all FFS partitions */
 	for (ndx = 0; ndx < install->num; ndx++) {
@@ -341,7 +341,7 @@ md_make_bsd_partitions(struct install_partition_desc *install)
 			install->infos[ndx].instflags |= PUIINST_NEWFS;
 	}
 
-	return true;
+	return 1;
 }
 
 /*
