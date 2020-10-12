@@ -385,7 +385,7 @@ static int if_indirect_ioctl(struct dhcpcd_ctx *ctx,
 }
 
 int
-if_carrier(__unused struct interface *ifp, const void *ifadata)
+if_carrier(struct interface *ifp, const void *ifadata)
 {
 	const struct if_data *ifi = ifadata;
 
@@ -398,8 +398,15 @@ if_carrier(__unused struct interface *ifp, const void *ifadata)
 
 	if (ifi->ifi_link_state >= LINK_STATE_UP)
 		return LINK_UP;
-	if (ifi->ifi_link_state == LINK_STATE_UNKNOWN)
+	if (ifi->ifi_link_state == LINK_STATE_UNKNOWN) {
+		/*
+		 * Work around net80211 issues in some BSDs.
+		 * Wireless MUST support link state change.
+		 */
+		if (ifp->wireless)
+			return LINK_DOWN;
 		return LINK_UNKNOWN;
+	}
 	return LINK_DOWN;
 }
 

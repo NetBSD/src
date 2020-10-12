@@ -116,7 +116,7 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 {
 	struct passwd *pw = ctx->ps_user;
 
-	if (!(ctx->options & DHCPCD_FORKED))
+	if (ctx->options & DHCPCD_LAUNCHER)
 		logdebugx("chrooting as %s to %s", pw->pw_name, pw->pw_dir);
 	if (chroot(pw->pw_dir) == -1 &&
 	    (errno != EPERM || ctx->options & DHCPCD_FORKED))
@@ -166,7 +166,10 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	/* Prohibit writing to files.
 	 * Obviously this won't work if we are using a logfile
 	 * or redirecting stderr to a file. */
-	if (ctx->logfile == NULL) {
+	if (ctx->logfile == NULL &&
+	    (ctx->options & DHCPCD_STARTED ||
+	     !ctx->stderr_valid || isatty(STDERR_FILENO) == 1))
+	{
 		if (setrlimit(RLIMIT_FSIZE, &rzero) == -1)
 			logerr("setrlimit RLIMIT_FSIZE");
 	}
@@ -467,13 +470,11 @@ ps_start(struct dhcpcd_ctx *ctx)
 
 	/* No point in spawning the generic network listener if we're
 	 * not going to use it. */
-	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_IPV6)))
+	if (!ps_inet_canstart(ctx))
 		goto started_net;
 
 	switch (pid = ps_inet_start(ctx)) {
 	case -1:
-		if (errno == ENXIO)
-			return 0;
 		return -1;
 	case 0:
 		return 0;
@@ -566,7 +567,7 @@ ps_mastersandbox(struct dhcpcd_ctx *ctx, const char *_pledge)
 		}
 		logerr("%s: %s", __func__, sandbox);
 		return -1;
-	} else if (!forked)
+	} else if (ctx->options & DHCPCD_LAUNCHER)
 		logdebugx("sandbox: %s", sandbox);
 	return 0;
 }

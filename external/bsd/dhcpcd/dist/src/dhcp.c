@@ -1712,7 +1712,7 @@ send_message(struct interface *ifp, uint8_t type,
 
 	if (callback == NULL) {
 		/* No carrier? Don't bother sending the packet. */
-		if (ifp->carrier <= LINK_DOWN)
+		if (!if_is_link_up(ifp))
 			return;
 		logdebugx("%s: sending %s with xid 0x%x",
 		    ifp->name,
@@ -1731,7 +1731,7 @@ send_message(struct interface *ifp, uint8_t type,
 		    (arc4random_uniform(MSEC_PER_SEC * 2) - MSEC_PER_SEC);
 		/* No carrier? Don't bother sending the packet.
 		 * However, we do need to advance the timeout. */
-		if (ifp->carrier <= LINK_DOWN)
+		if (!if_is_link_up(ifp))
 			goto fail;
 		logdebugx("%s: sending %s (xid 0x%x), next in %0.1f seconds",
 		    ifp->name,
@@ -2633,7 +2633,7 @@ dhcp_reboot(struct interface *ifp)
 	state->state = DHS_REBOOT;
 	state->interval = 0;
 
-	if (ifo->options & DHCPCD_LINK && ifp->carrier <= LINK_DOWN) {
+	if (ifo->options & DHCPCD_LINK && !if_is_link_up(ifp)) {
 		loginfox("%s: waiting for carrier", ifp->name);
 		return;
 	}
@@ -2733,7 +2733,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 		state->state = DHS_RELEASE;
 
 		dhcp_unlink(ifp->ctx, state->leasefile);
-		if (ifp->carrier > LINK_DOWN &&
+		if (if_is_link_up(ifp) &&
 		    state->new != NULL &&
 		    state->lease.server.s_addr != INADDR_ANY)
 		{
