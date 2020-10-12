@@ -1,4 +1,4 @@
-.\"	$NetBSD: factor.6,v 1.17 2020/10/11 18:48:20 christos Exp $
+.\"	$NetBSD: factor.6,v 1.18 2020/10/12 13:53:43 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\" By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
 .\"
-.Dd October 11, 2020
+.Dd October 12, 2020
 .Dt FACTOR 6
 .Os
 .Sh NAME
@@ -48,7 +48,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility factors integers larger than 1.
+utility factors integers larger than 
+.Dv 0 .
 When a number is factored, it is printed, followed by a
 .Dq \&: ,
 and the list of
@@ -76,7 +77,10 @@ Numbers may be preceded by a single +.
 Numbers that start with
 .Dv 0x
 are interpreted as hexadecimal.
-Integer less than 2 are rejected.
+A 
+.Dv 0
+input exits the program.
+Negative numbers are not allowed.
 Numbers are terminated by a non-digit character (such as a newline).
 After a number is read, it is factored.
 Input lines must not be longer than
