@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.121 2020/10/11 12:36:14 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.122 2020/10/12 10:27:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5157,4 +5157,27 @@ sys/dev/dkwedge/dk.c				1.102
 
 	ccd(4): fix various bugs related to handling of dk(4) wedges.
 	[mlelstv, ticket #1110]
+
+external/bsd/ntp/Makefile.inc			1.20,1.21
+external/bsd/ntp/bin/Makefile.inc		1.4
+external/bsd/ntp/bin/ntp-keygen/Makefile	1.7 (patch)
+external/bsd/ntp/bin/ntp-keygen/ntp-keygen.8	delete
+external/bsd/ntp/bin/ntpd/Makefile		1.28 (patch)
+external/bsd/ntp/bin/ntpd/ntp.conf.5		delete
+external/bsd/ntp/bin/ntpd/ntp.keys.5		delete
+external/bsd/ntp/bin/ntpd/ntpd.8		delete
+external/bsd/ntp/bin/ntpdc/Makefile		1.7
+external/bsd/ntp/bin/ntpdc/ntpdc.8		delete
+external/bsd/ntp/bin/ntpq/Makefile		1.9 (patch)
+external/bsd/ntp/bin/ntpq/ntpq.8		delete
+external/bsd/ntp/bin/sntp/Makefile		1.8,1.9 (patch)
+external/bsd/ntp/bin/sntp/sntp.1		delete
+
+	ntpd(8): PR 55710: install the correct man pages.
+	[kim, ticket #1109]
+
+external/cddl/osnet/sys/sys/cred.h		1.8
+
+	Fix PR kern/55675: ZFS mounts do not work with setuid programs.
+	[hannken, ticket #1111]
 
