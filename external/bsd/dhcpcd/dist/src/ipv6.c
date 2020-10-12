@@ -105,7 +105,7 @@
     defined(IFF_NOLINKLOCAL)
 /* Only add the LL address if we have a carrier, so DaD works. */
 #define	CAN_ADD_LLADDR(ifp) \
-    (!((ifp)->options->options & DHCPCD_LINK) || (ifp)->carrier != LINK_DOWN)
+    (!((ifp)->options->options & DHCPCD_LINK) || if_is_link_up((ifp)))
 #ifdef __sun
 /* Although we can add our own LL address, we cannot drop it
  * without unplumbing the if which is a lot of code.

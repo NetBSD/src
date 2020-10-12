@@ -437,7 +437,7 @@ ipv6nd_sendadvertisement(void *arg)
 	const struct rs_state *state = RS_CSTATE(ifp);
 	int s;
 
-	if (state == NULL || ifp->carrier <= LINK_DOWN)
+	if (state == NULL || !if_is_link_up(ifp))
 		goto freeit;
 
 #ifdef SIN6_LEN
@@ -505,7 +505,7 @@ ipv6nd_advertise(struct ipv6_addr *ia)
 	iaf = NULL;
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		state = IPV6_STATE(ifp);
-		if (state == NULL || ifp->carrier <= LINK_DOWN)
+		if (state == NULL || !if_is_link_up(ifp))
 			continue;
 
 		TAILQ_FOREACH(iap, &state->addrs, next) {
