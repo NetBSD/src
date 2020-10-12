@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/10/11 10:08:26 nia Exp $
+#	$NetBSD: Makefile,v 1.11 2020/10/12 11:43:11 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ CPPSCRIPTS=	startx xinitrc
 CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR} \
 		-DSHELL_CMD=/bin/sh -DXRDB=xrdb -DXMODMAP=xmodmap \
 		-DTWM=twm -DXCLOCK=xclock -DXTERM=${X11BINDIR}/xterm \
+		-DXSETROOT=${X11BINDIR}/xsetroot \
 		-DUXTERM=${X11BINDIR}/uxterm \
 		-DCTWM=${X11BINDIR}/ctwm
 CPPSCRIPTFLAGS_startx=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR} \
