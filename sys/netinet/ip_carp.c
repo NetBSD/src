@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.112 2020/10/12 11:07:27 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.113 2020/10/12 15:18:48 roy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.112 2020/10/12 11:07:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.113 2020/10/12 15:18:48 roy Exp $");
 
 /*
  * TODO:
@@ -890,6 +890,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	/* Overwrite ethernet defaults */
 	ifp->if_type = IFT_CARP;
 	ifp->if_output = carp_output;
+	ifp->if_link_state = LINK_STATE_DOWN;
 	carp_set_enaddr(sc);
 	if_register(ifp);
 
@@ -2228,8 +2229,8 @@ carp_update_link_state(struct carp_softc *sc)
 		link_state = LINK_STATE_UP;
 		break;
 	default:
-		link_state = ((sc->sc_if.if_flags & IFF_ONLY_MASTER_UP) != 0)
-			     ? LINK_STATE_DOWN : LINK_STATE_UNKNOWN;
+		/* Not useable, so down makes perfect sense. */
+		link_state = LINK_STATE_DOWN;
 		break;
 	}
 	if_link_state_change(&sc->sc_if, link_state);

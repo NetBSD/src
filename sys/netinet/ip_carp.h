@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.11 2020/01/16 12:56:40 kardel Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.12 2020/10/12 15:18:48 roy Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -132,9 +132,6 @@ struct carpreq {
 	int		carpr_advbase;
 	unsigned char	carpr_key[CARP_KEY_LEN];
 };
-
-/* enable link status up only for MASTER state */
-#define IFF_ONLY_MASTER_UP       IFF_LINK0
 
 /*
  * Names for CARP sysctl objects
