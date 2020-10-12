@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.50 2020/10/09 18:33:00 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.51 2020/10/12 12:17:29 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1701,6 +1701,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	struct disk_partitions *parts = pm->parts;
 	const struct disk_partitioning_scheme *pscheme;
 	struct partition_usage_set wanted;
+	daddr_t p_start, p_size;
 	enum layout_type layoutkind = LY_SETSIZES;
 	bool have_existing;
 
@@ -1777,11 +1778,20 @@ make_bsd_partitions(struct install_partition_desc *install)
 		layoutkind = ask_layout(parts, have_existing);
 	}
 
+	if (layoutkind == LY_USEDEFAULT || layoutkind == LY_SETSIZES) {
+		/* calc available disk area for the NetBSD partitions */
+		p_start = pm->ptstart;
+		p_size = pm->ptsize;
+		if (parts->parent != NULL && 
+		    parts->parent->pscheme->guess_install_target != NULL)
+			parts->parent->pscheme->guess_install_target(
+			    parts->parent, &p_start, &p_size);
+	}
 	if (layoutkind == LY_USEDEFAULT) {
-		replace_by_default(parts, pm->ptstart, pm->ptsize,
+		replace_by_default(parts, p_start, p_size,
 		    &wanted);
 	} else if (layoutkind == LY_SETSIZES) {
-		if (!edit_with_defaults(parts, pm->ptstart, pm->ptsize,
+		if (!edit_with_defaults(parts, p_start, p_size,
 		    &wanted)) {
 			free_usage_set(&wanted);
 			return false;
