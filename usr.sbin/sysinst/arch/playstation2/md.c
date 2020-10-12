@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2020/01/27 21:21:23 martin Exp $ */
+/*	$NetBSD: md.c,v 1.9 2020/10/12 16:14:35 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,11 +62,12 @@ md_init_set_status(int minimal)
 bool
 md_get_info(struct install_partition_desc *install)
 {
-	int cyl, head, sec;
+	int cyl, head, sec, res;
 
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
+again:
 	if (pm->parts == NULL) {
 
 		const struct disk_partitioning_scheme *ps =
@@ -107,13 +108,21 @@ md_get_info(struct install_partition_desc *install)
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
-	return edit_outer_parts(pm->parts);
+	res = edit_outer_parts(pm->parts);
+	if (res == 0)
+		return false;
+	else if (res == 1)
+		return true;
+
+	pm->parts->pscheme->destroy_part_scheme(pm->parts);
+	pm->parts = NULL;
+	goto again;
 } 
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
 	return make_bsd_partitions(install);

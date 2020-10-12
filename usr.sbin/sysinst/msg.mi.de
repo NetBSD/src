@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.22 2020/05/18 21:19:36 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.23 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1067,6 +1067,13 @@ message Set_Sizes {Größen der NetBSD-Partitionen festlegen}
  *  $1 = short version of $0		MBR
  */
 message Use_Default_Parts {Standard-Partitionsgößen verwenden}
+
+/* Called with:				Example
+ *  $0 = current partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_Different_Part_Scheme
+{Alles löschen, anderes Partitionierungsverfahren statt $1 verwenden}
 
 message Gigabytes {Gigabytes}
 message Megabytes {Megabytes}

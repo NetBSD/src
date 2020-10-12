@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.51 2020/10/12 12:17:29 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.52 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -755,6 +755,13 @@ set_keep_existing(menudesc *m, void *arg)
 }
 
 static int
+set_switch_scheme(menudesc *m, void *arg)
+{
+	((arg_rep_int*)arg)->rv = LY_OTHERSCHEME;
+	return 0;
+}
+
+static int
 set_edit_part_sizes(menudesc *m, void *arg)
 {
 	((arg_rep_int*)arg)->rv = LY_SETSIZES;
@@ -802,14 +809,14 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 	const char *args[2];
 	int menu;
 	size_t num_opts;
-	menu_ent options[3], *opt;
+	menu_ent options[4], *opt;
 
 	args[0] = msg_string(parts->pscheme->name);
 	args[1] = msg_string(parts->pscheme->short_name);
 	ai.args.argv = args;
 	ai.args.argc = 2;
-	ai.rv = LY_SETSIZES;
-	        
+	ai.rv = LY_ERROR;
+
 	memset(options, 0, sizeof(options));
 	num_opts = 0;
 	opt = &options[0];
@@ -833,8 +840,17 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 	opt++;
 	num_opts++;
 
+	if (have_existing && num_available_part_schemes > 1 &&
+	    parts->parent == NULL) {
+		opt->opt_name = MSG_Use_Different_Part_Scheme;
+		opt->opt_flags = OPT_EXIT;
+		opt->opt_action = set_switch_scheme;
+		opt++;
+		num_opts++;
+	}
+
 	menu = new_menu(MSG_Select_your_choice, options, num_opts,
-	    -1, -10, 0, 0, MC_NOEXITOPT, NULL, NULL, NULL, NULL, NULL);
+	    -1, -10, 0, 0, 0, NULL, NULL, NULL, NULL, MSG_cancel);
 	if (menu != -1) {
 		get_menudesc(menu)->expand_act = expand_all_option_texts;
 		process_menu(menu, &ai);
@@ -1692,10 +1708,10 @@ edit_with_defaults(struct disk_partitions *parts,
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
- * returns 0 on failure, 1 on success.
+ * returns 0 on failure, 1 on success, -1 for restart.
  * fills the install target with a list for newfs/fstab.
  */
-bool
+int
 make_bsd_partitions(struct install_partition_desc *install)
 {
 	struct disk_partitions *parts = pm->parts;
@@ -1706,16 +1722,15 @@ make_bsd_partitions(struct install_partition_desc *install)
 	bool have_existing;
 
 	if (pm && pm->no_part && parts == NULL)
-		return true;
-
+		return 1;
 	if (parts == NULL) {
 		pscheme = select_part_scheme(pm, NULL, !pm->no_mbr, NULL);
 		if (pscheme == NULL)
-			return false;
+			return 0;
 		parts = pscheme->create_new_for_disk(pm->diskdev,
 		    0, pm->dlsize, true, NULL);
 		if (parts == NULL)
-			return false;
+			return 0;
 		pm->parts = parts;
 	} else {
 		pscheme = parts->pscheme;
@@ -1734,19 +1749,13 @@ make_bsd_partitions(struct install_partition_desc *install)
 	have_existing = check_existing_netbsd(parts);
 
 	/*
-	 * Initialize global variables that track space used on this disk.
+	 * Make sure the cylinder size multiplier/divisor and disk sieze are
+	 * valid
 	 */
-	if (pm->ptsize == 0)
-		pm->ptsize = pm->dlsize - pm->ptstart;
-	if (pm->dlsize == 0)
-		pm->dlsize = pm->ptstart + pm->ptsize;
-
-	if (logfp) fprintf(logfp, "dlsize=%" PRId64 " ptsize=%" PRId64
-	    " ptstart=%" PRId64 "\n",
-	    pm->dlsize, pm->ptsize, pm->ptstart);
-
 	if (pm->current_cylsize == 0)
 		pm->current_cylsize = pm->dlcylsize;
+	if (pm->ptsize == 0)
+		pm->ptsize = pm->dlsize;
 
 	/* Ask for layout type -- standard or special */
 	if (partman_go == 0) {
@@ -1776,6 +1785,8 @@ make_bsd_partitions(struct install_partition_desc *install)
 		    bsd_size, min_size, x_size);
 		msg_display_add("\n\n");
 		layoutkind = ask_layout(parts, have_existing);
+		if (layoutkind == LY_ERROR)
+			return 0;
 	}
 
 	if (layoutkind == LY_USEDEFAULT || layoutkind == LY_SETSIZES) {
@@ -1787,14 +1798,17 @@ make_bsd_partitions(struct install_partition_desc *install)
 			parts->parent->pscheme->guess_install_target(
 			    parts->parent, &p_start, &p_size);
 	}
-	if (layoutkind == LY_USEDEFAULT) {
+	if (layoutkind == LY_OTHERSCHEME) {
+		parts->pscheme->destroy_part_scheme(parts);
+		return -1;
+	} else if (layoutkind == LY_USEDEFAULT) { 
 		replace_by_default(parts, p_start, p_size,
 		    &wanted);
 	} else if (layoutkind == LY_SETSIZES) {
 		if (!edit_with_defaults(parts, p_start, p_size,
 		    &wanted)) {
 			free_usage_set(&wanted);
-			return false;
+			return 0;
 		}
 	} else {
 		usage_set_from_parts(&wanted, parts);
@@ -1889,7 +1903,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 		if (rv == 0) {
 			msg_display(MSG_abort_part);
 			free_usage_set(&wanted);
-			return false;
+			return 0;
 		}
 		/* update install infos */
 		install->num = wanted.num;
@@ -1907,7 +1921,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	free_usage_set(&wanted);
 
 	/* Everything looks OK. */
-	return true;
+	return 1;
 }
 
 #ifndef MD_NEED_BOOTBLOCK
