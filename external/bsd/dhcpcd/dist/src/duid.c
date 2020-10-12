@@ -178,8 +178,9 @@ duid_get(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 	if (ifp == NULL) {
 		if (ctx->duid_type != DUID_DEFAULT &&
 		    ctx->duid_type != DUID_UUID)
-			return 0;
-		len = duid_make_uuid(data);
+			len = 0;
+		else
+			len = duid_make_uuid(data);
 		if (len == 0)
 			free(data);
 		else
