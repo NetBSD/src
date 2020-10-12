@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.7 2020/10/11 10:12:53 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.8 2020/10/12 11:07:24 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -26,19 +26,79 @@ UseThreeDBorders
 #UseThreeDMenus
 UseThreeDTitles
 
-ThreeDBorderWidth         3
+esyscmd(`printf "define(fontsize, %d)\n" "$(/usr/X11R7/libexec/ctwm_font_size)"')
 
-# TODO: we can use syscmd() in combination with xdpyinfo to detect
-# HiDPI screens and set appropiate fonts.
-#
-# need some good scaled bitmap fonts imported - terminus or spleen
-# would be good candidates
-MenuFont         "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
-TitleFont        "-misc-fixed-bold-r-*-*-18-*-*-*-*-*-*-*"
-IconManagerFont  "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
-IconFont         "-misc-fixed-bold-r-*-*-18-*-*-*-*-*-*-*"
-ResizeFont       "-misc-fixed-medium-r-*-*-18-*-*-*-*-*-*-*"
-WorkSpaceFont    "-misc-fixed-medium-r-*-*-14-*-*-*-*-*-*-*"
+ifelse(fontsize, `64', `
+TitleFont        "-*-spleen-*-*-*-*-64-*-*-*-*-*-*-*"
+MenuFont         "-*-spleen-*-*-*-*-64-*-*-*-*-*-*-*"
+IconManagerFont  "-*-spleen-*-*-*-*-64-*-*-*-*-*-*-*"
+IconFont         "-*-spleen-*-*-*-*-64-*-*-*-*-*-*-*"
+ResizeFont       "-*-spleen-*-*-*-*-64-*-*-*-*-*-*-*"
+WorkSpaceFont    "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+WorkSpaceManagerGeometry  "240x960-4-4" 1
+IconManagerGeometry       "800x-1-1+0" 1
+ThreeDBorderWidth         12
+BorderWidth               12
+define(setsizes, `yes')
+')
+
+ifelse(fontsize, `32', `
+TitleFont        "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+MenuFont         "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+IconManagerFont  "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+IconFont         "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+ResizeFont       "-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*"
+WorkSpaceFont    "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+WorkSpaceManagerGeometry  "120x480-4-4" 1
+IconManagerGeometry       "400x-1-1+0" 1
+ThreeDBorderWidth         6
+BorderWidth               6
+define(setsizes, `yes')
+')
+
+ifelse(fontsize, `24', `
+TitleFont        "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+MenuFont         "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+IconManagerFont  "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+IconFont         "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+ResizeFont       "-*-spleen-*-*-*-*-24-*-*-*-*-*-*-*"
+WorkSpaceFont    "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+WorkSpaceManagerGeometry  "90x360-4-4" 1
+IconManagerGeometry       "300x-1-1+0" 1
+ThreeDBorderWidth         4
+BorderWidth               4
+define(setsizes, `yes')
+')
+
+ifelse(fontsize, `12', `
+TitleFont        "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+MenuFont         "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+IconManagerFont  "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+IconFont         "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+ResizeFont       "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+WorkSpaceFont    "-*-spleen-*-*-*-*-8-*-*-*-*-*-*-*"
+WorkSpaceManagerGeometry  "45x180-4-4" 1
+IconManagerGeometry       "150x-1-1+0" 1
+ThreeDBorderWidth         1
+BorderWidth               1
+define(setsizes, `yes')
+')
+
+# Fallback in case a valid font size was not returned.
+# "Default case" is 16px.
+
+ifdef(`setsizes', `', `
+TitleFont        "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+MenuFont         "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+IconManagerFont  "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+IconFont         "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+ResizeFont       "-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*"
+WorkSpaceFont    "-*-spleen-*-*-*-*-12-*-*-*-*-*-*-*"
+WorkSpaceManagerGeometry  "60x240-4-4" 1
+IconManagerGeometry       "200x-1-1+0" 1
+ThreeDBorderWidth         3
+BorderWidth               3
+')
 
 RestartPreviousState
 
@@ -110,14 +170,12 @@ LeftTitleButton           ":xpm:dot"      = f.menu "titleops"
 RightTitleButton          ":xpm:resize"   = f.resize
 RightTitleButton          ":xpm:cross"    = f.delete
 
-BorderWidth               4
 BorderShadowDepth         2
 BorderResizeCursors
 
 MaxIconTitleWidth         120
 NoIconManagerFocus
 IconManagerShadowDepth    1
-IconManagerGeometry       "200x-1-1+0" 1
 IconifyByUnmapping
 
 ReallyMoveInWorkspaceManager
@@ -129,7 +187,6 @@ ReverseCurrentWorkspace
 StartInMapState
 WMgrHorizButtonIndent     0
 WMgrVertButtonIndent      0
-WorkSpaceManagerGeometry  "60x240-4-4" 1
 
 WorkSpaces 
 {
