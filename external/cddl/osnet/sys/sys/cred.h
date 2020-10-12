@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.6.2.1 2020/04/29 13:47:51 martin Exp $	*/
+/*	$NetBSD: cred.h,v 1.6.2.2 2020/10/12 10:26:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -70,10 +70,12 @@ extern kauth_cred_t	cred0;
 static __inline int
 groupmember(gid_t gid, cred_t *cr) 
 {
-	int result;
+	int result, error;
 
-	kauth_cred_ismember_gid(cr, gid, &result);
-	return result;
+	error = kauth_cred_ismember_gid(cr, gid, &result);
+	if (error)
+		return 0;
+	return (kauth_cred_getegid(cr) == gid || result);
 }
 
 #endif	/* _KERNEL */
