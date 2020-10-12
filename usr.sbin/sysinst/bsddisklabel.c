@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.52 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.53 2020/10/12 16:27:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -840,7 +840,7 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 	opt++;
 	num_opts++;
 
-	if (have_existing && num_available_part_schemes > 1 &&
+	if (num_available_part_schemes > 1 &&
 	    parts->parent == NULL) {
 		opt->opt_name = MSG_Use_Different_Part_Scheme;
 		opt->opt_flags = OPT_EXIT;
