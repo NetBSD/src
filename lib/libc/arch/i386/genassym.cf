@@ -1,10 +1,10 @@
-#	$NetBSD: genassym.cf,v 1.1 2020/10/12 23:56:08 kamil Exp $
+#	$NetBSD: genassym.cf,v 1.2 2020/10/12 23:58:14 kamil Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Kamil Rytarowski or Moritz Systems Technology Company Sp. z o.o.
+# by Kamil Rytarowski for Moritz Systems Technology Company Sp. z o.o.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
