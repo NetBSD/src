@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/07/13 17:13:39 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2020/10/12 16:14:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,7 +105,7 @@ md_get_info(struct install_partition_desc *install)
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
 

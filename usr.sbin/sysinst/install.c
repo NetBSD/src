@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.17 2020/09/22 16:18:54 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.18 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ void
 do_install(void)
 {
 	int find_disks_ret;
-	int retcode = 0;
+	int retcode = 0, res;
 	struct install_partition_desc install = {};
 	struct disk_partitions *parts;
 
@@ -195,8 +195,16 @@ do_install(void)
 			}
 		}
 
-		if (!md_get_info(&install) ||
-		    !md_make_bsd_partitions(&install)) {
+		for (;;) {
+			if (md_get_info(&install)) {
+				res = md_make_bsd_partitions(&install);
+				if (res == -1) {
+					pm->parts = NULL;
+					continue;
+				} else if (res == 1) {
+					break;
+				}
+			}
 			hit_enter_to_continue(MSG_abort_inst, NULL);
 			goto error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.19 2020/10/03 18:54:18 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.20 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1609,6 +1609,14 @@ gpt_free(struct disk_partitions *arg)
 	free(parts);
 }
 
+static void
+gpt_destroy_part_scheme(struct disk_partitions *arg)
+{
+
+	run_program(RUN_SILENT, "gpt destroy %s", arg->disk);
+	gpt_free(arg);
+}
+
 static bool
 gpt_custom_attribute_writable(const struct disk_partitions *arg,
     part_id ptn, size_t attr_no)
@@ -1835,5 +1843,6 @@ gpt_parts = {
 	.delete_partition = gpt_delete_partition,
 	.write_to_disk = gpt_write_to_disk,
 	.free = gpt_free,
+	.destroy_part_scheme = gpt_destroy_part_scheme,
 	.cleanup = gpt_cleanup,
 };

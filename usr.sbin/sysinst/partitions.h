@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.17 2020/10/03 18:54:18 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.18 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -541,6 +541,9 @@ struct disk_partitioning_scheme {
 
 	/* Free all the data */
 	void (*free)(struct disk_partitions*);
+
+	/* Wipe all on-disk state, leave blank disk - and free data */
+	void (*destroy_part_scheme)(struct disk_partitions*);
 
 	/* Scheme global cleanup */
 	void (*cleanup)(void);

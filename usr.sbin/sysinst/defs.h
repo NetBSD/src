@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.65 2020/10/09 18:33:00 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.66 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -103,7 +103,15 @@ const char *getfslabelname(uint, uint);
 #define RUN_XFER_DIR	0x0200		/* cd to xfer_dir in child */
 
 /* for bsddisklabel.c */
-enum layout_type { LY_KEEPEXISTING, LY_SETSIZES, LY_USEDEFAULT, LY_USEFULL };
+enum layout_type {
+	LY_KEEPEXISTING,	/* keep exisiting partitions */
+	LY_OTHERSCHEME,		/* delete all, select new partitioning scheme */
+	LY_SETSIZES,		/* edit sizes */
+	LY_USEDEFAULT,		/* use default sizes */
+	LY_USEFULL,		/* use full disk for NetBSD */
+	LY_ERROR		/* used for "abort" in menu */
+};
+
 enum setup_type { SY_NEWRAID, SY_NEWCGD, SY_NEWLVM };
 
 /* Installation sets */
@@ -619,7 +627,8 @@ void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */
 bool	md_get_info(struct install_partition_desc*);
-bool	md_make_bsd_partitions(struct install_partition_desc*);
+/* returns -1 to restart partitioning, 0 for error, 1 for success */
+int	md_make_bsd_partitions(struct install_partition_desc*);
 bool	md_check_partitions(struct install_partition_desc*);
 #ifdef HAVE_GPT
 /*
@@ -786,7 +795,13 @@ int	err_msg_win(const char*);
 const struct disk_partitioning_scheme *select_part_scheme(struct pm_devs *dev,
     const struct disk_partitioning_scheme *skip, bool bootable,
     const char *title);
-bool	edit_outer_parts(struct disk_partitions*);
+/*
+ * return value:
+ *  0 -> abort
+ *  1 -> ok, continue
+ *  -1 -> partitions have been deleted, start from scratch
+*/
+int	edit_outer_parts(struct disk_partitions*);
 bool	parts_use_wholedisk(struct disk_partitions*,
 	     size_t add_ext_parts, const struct disk_part_info *ext_parts);
 
@@ -952,7 +967,8 @@ extern int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 void check_available_binaries(void);
 
 /* from bsddisklabel.c */
-bool	make_bsd_partitions(struct install_partition_desc*);
+/* returns -1 to restart partitioning, 0 for error, 1 for success */
+int	make_bsd_partitions(struct install_partition_desc*);
 void	set_ptn_titles(menudesc *, int, void *);
 int	set_ptn_size(menudesc *, void *);
 bool	get_ptn_sizes(struct partition_usage_set*);

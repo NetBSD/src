@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.40 2020/10/03 18:54:18 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.41 2020/10/12 16:14:32 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1259,6 +1259,14 @@ disklabel_free(struct disk_partitions *arg)
 	free(arg);
 }
 
+static void
+disklabel_destroy_part_scheme(struct disk_partitions *arg)
+{
+
+	run_program(RUN_SILENT, "disklabel -D %s", arg->disk);
+	free(arg);
+}
+
 const struct disk_partitioning_scheme
 disklabel_parts = {
 	.name = MSG_parttype_disklabel,
@@ -1297,4 +1305,5 @@ disklabel_parts = {
 	.get_free_spaces = disklabel_get_free_spaces,
 	.get_part_device = disklabel_get_part_device,
 	.free = disklabel_free,
+	.destroy_part_scheme = disklabel_destroy_part_scheme,
 };
