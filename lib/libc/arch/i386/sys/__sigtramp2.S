@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.5 2014/05/23 02:34:19 uebayasi Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.6 2020/10/12 23:56:08 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 /*
  * The i386 signal trampoline is invoked only to return from
@@ -42,7 +43,26 @@
  *		pointer to ucontext structure		[8]
  *		pointer to siginfo structure		[4]
  *	sp->	signal number				[0]
+ *
+ * The unwind entry includes the one byte prior to the trampoline
+ * because the unwinder will look up (return PC - 1) while unwinding.
+ * Normally (return PC - 1) computes an address inside the call
+ * instruction that created the child frame, but here there is no call
+ * instruction so we have to manually add padding.
  */
+	.cfi_startproc simple
+	.cfi_signal_frame
+	.cfi_def_cfa esp, 140
+	.cfi_offset eax, UC_GREGS_EAX
+	.cfi_offset ecx, UC_GREGS_ECX
+	.cfi_offset edx, UC_GREGS_EDX
+	.cfi_offset ebx, UC_GREGS_EBX
+	/* The unwinder will use the CFA to restore ESP. */
+	.cfi_offset ebp, UC_GREGS_EBP
+	.cfi_offset esi, UC_GREGS_ESI
+	.cfi_offset edi, UC_GREGS_EDI
+	.cfi_offset eip, UC_GREGS_EIP
+	nop
 NENTRY(__sigtramp_siginfo_2)
 	leal	12+128(%esp),%eax	/* get address of ucontext */
 	movl	%eax,4(%esp)	/* put it in the argument slot */
@@ -50,4 +70,5 @@ NENTRY(__sigtramp_siginfo_2)
 	SYSTRAP(setcontext)	/* do setcontext */
 	movl	$-1,4(%esp)	/* if we return here, something is wrong */
 	SYSTRAP(exit)		/* exit */
+	.cfi_endproc
 END(__sigtramp_siginfo_2)
