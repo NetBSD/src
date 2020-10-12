@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.7 2019/12/02 01:38:54 christos Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.8 2020/10/12 17:55:54 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,14 +36,40 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 /*
  * The x86-64 signal trampoline is invoked only to return from
  * the signal; the kernel calls the signal handler directly.
+ *
+ * The unwind entry includes the one byte prior to the trampoline
+ * because the unwinder will look up (return PC - 1) while unwinding.
+ * Normally (return PC - 1) computes an address inside the call
+ * instruction that created the child frame, but here there is no call
+ * instruction so we have to manually add padding.
  */
+	.cfi_startproc simple
+	.cfi_signal_frame
+	.cfi_def_cfa r15, 0
+	.cfi_offset rax, UC_GREGS_RAX
+	.cfi_offset rdx, UC_GREGS_RDX
+	.cfi_offset rcx, UC_GREGS_RCX
+	.cfi_offset rbx, UC_GREGS_RBX
+	.cfi_offset rsi, UC_GREGS_RSI
+	.cfi_offset rdi, UC_GREGS_RDI
+	.cfi_offset rbp, UC_GREGS_RBP
+	/* The unwinder will use the CFA to restore RSP. */
+	.cfi_offset r8,  UC_GREGS_R8
+	.cfi_offset r9,  UC_GREGS_R9
+	.cfi_offset r10, UC_GREGS_R10
+	.cfi_offset r11, UC_GREGS_R11
+	.cfi_offset r12, UC_GREGS_R12
+	.cfi_offset r13, UC_GREGS_R13
+	.cfi_offset r14, UC_GREGS_R14
+	.cfi_offset r15, UC_GREGS_R15
+	.cfi_offset rip, UC_GREGS_RIP
+	nop
 NENTRY(__sigtramp_siginfo_2)
-	.cfi_startproc
-	.cfi_def_cfa rsp, 8
 	movq	%r15,%rdi
 	movq	$SYS_setcontext, %rax
 	syscall
