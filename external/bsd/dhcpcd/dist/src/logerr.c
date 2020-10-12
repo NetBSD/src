@@ -366,20 +366,24 @@ int
 logopen(const char *path)
 {
 	struct logctx *ctx = &_logctx;
+	int opts = 0;
 
 	/* Cache timezone */
 	tzset();
 
 	(void)setvbuf(stderr, ctx->log_buf, _IOLBF, sizeof(ctx->log_buf));
 
-	if (path == NULL) {
-		int opts = 0;
-
-		if (ctx->log_opts & LOGERR_LOG_PID)
-			opts |= LOG_PID;
-		openlog(NULL, opts, LOGERR_SYSLOG_FACILITY);
+	if (!(ctx->log_opts & LOGERR_LOG))
 		return 1;
-	}
+
+#ifdef LOG_NDELAY
+	opts |= LOG_NDELAY;
+#endif
+	if (ctx->log_opts & LOGERR_LOG_PID)
+		opts |= LOG_PID;
+	openlog(NULL, opts, LOGERR_SYSLOG_FACILITY);
+	if (path == NULL)
+		return 1;
 
 #ifndef SMALL
 	if ((ctx->log_file = fopen(path, "ae")) == NULL)
