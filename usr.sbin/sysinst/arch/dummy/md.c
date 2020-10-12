@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2019/07/13 17:13:37 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2020/10/12 16:14:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@ md_get_info(struct install_partition_desc *desc)
 	return true;
 }
 
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *desc)
 {
 	return make_bsd_partitions(desc);

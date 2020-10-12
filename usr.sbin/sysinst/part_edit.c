@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.22 2020/10/12 11:23:45 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.23 2020/10/12 16:14:32 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1038,6 +1038,13 @@ set_use_entire_disk(menudesc *m, void *arg)
 	return 0;
 }
 
+static int
+set_switch_scheme(menudesc *m, void *arg)
+{
+	((arg_rep_int*)arg)->rv = LY_OTHERSCHEME;
+	return 0;
+}
+
 static enum layout_type
 ask_fullpart(struct disk_partitions *parts)
 {
@@ -1045,14 +1052,15 @@ ask_fullpart(struct disk_partitions *parts)
 	const char *args[2];
 	int menu;
 	size_t num_opts;
-	menu_ent options[3], *opt;
+	menu_ent options[4], *opt;
 	daddr_t start, size;
+	bool have_existing = false;
 
 	args[0] = msg_string(pm->parts->pscheme->name);
 	args[1] = msg_string(pm->parts->pscheme->short_name);
 	ai.args.argv = args;
 	ai.args.argc = 2;
-	ai.rv = LY_SETSIZES;
+	ai.rv = LY_ERROR;
 
 	memset(options, 0, sizeof(options));
 	num_opts = 0;
@@ -1064,6 +1072,7 @@ ask_fullpart(struct disk_partitions *parts)
 		opt->opt_action = set_keep_existing;
 		opt++;
 		num_opts++;
+		have_existing = true;
 	}
 	opt->opt_name = MSG_Use_only_part_of_the_disk;
 	opt->opt_flags = OPT_EXIT;
@@ -1077,8 +1086,16 @@ ask_fullpart(struct disk_partitions *parts)
 	opt++;
 	num_opts++;
 
+	if (have_existing && num_available_part_schemes > 1) {
+		opt->opt_name = MSG_Use_Different_Part_Scheme;
+		opt->opt_flags = OPT_EXIT;
+		opt->opt_action = set_switch_scheme;
+		opt++;
+		num_opts++;
+	}
+
 	menu = new_menu(MSG_Select_your_choice, options, num_opts,
-	    -1, -10, 0, 0, MC_NOEXITOPT, NULL, NULL, NULL, NULL, NULL);
+	    -1, -10, 0, 0, 0, NULL, NULL, NULL, NULL, MSG_cancel);
 	if (menu != -1) {
 		get_menudesc(menu)->expand_act = expand_all_option_texts;
 		process_menu(menu, &ai);
@@ -1227,7 +1244,7 @@ ask_outer_partsizes(struct disk_partitions *parts)
 	return data.av.rv == 0;
 }
 
-bool
+int
 edit_outer_parts(struct disk_partitions *parts)
 {
 	part_id i;
@@ -1236,13 +1253,13 @@ edit_outer_parts(struct disk_partitions *parts)
 
 	/* If targeting a wedge, do not ask for further partitioning */
 	if (pm && (pm->no_part || pm->no_mbr))
-		return true;
+		return 1;
 
 	/* Make sure parts has been properly initialized */
 	assert(parts && parts->pscheme);
 
 	if (parts->pscheme->secondary_scheme == NULL)
-		return true;	/* no outer parts */
+		return 1;	/* no outer parts */
 
 	if (partman_go) {
 		layout = LY_SETSIZES;
@@ -1275,6 +1292,10 @@ edit_outer_parts(struct disk_partitions *parts)
 		msg_display_add("\n\n");
 
 		layout = ask_fullpart(parts);
+		if (layout == LY_ERROR)
+			return 0;
+		else if (layout == LY_OTHERSCHEME)
+			return -1;
 	}
 
 	if (layout == LY_USEFULL) {
@@ -1303,18 +1324,18 @@ edit_outer_parts(struct disk_partitions *parts)
 					(void)fprintf(logfp,
 					    "User answered no to destroy "
 					    "other data, aborting.\n");
-				return false;
+				return 0;
 			}
 		}
 		if (!md_parts_use_wholedisk(parts)) {
 			hit_enter_to_continue(MSG_No_free_space, NULL);
-			return false;
+			return 0;
 		}
 		if (parts->pscheme->post_edit_verify) {
 			return
 			    parts->pscheme->post_edit_verify(parts, true) == 2;
 		}
-		return true;
+		return 1;
 	} else if (layout == LY_SETSIZES) {
 		return ask_outer_partsizes(parts);
 	} else {
