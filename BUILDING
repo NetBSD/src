@@ -906,6 +906,17 @@ BUILDING
                may be specified via multiple -C options, or via a single
                option whose argument contains multiple space-separated paths.
 
+     -c compiler
+               Select the compiler for the toolchain to build NetBSD and for
+               inclusion in the NetBSD distribution.  Supported choices:
+
+                     clang
+
+                     gcc [default]
+
+               The compiler used to build the toolchain can be different; see
+               HOST_CC and HOST_CXX.
+
      -D dest   Set the value of DESTDIR to dest.  If a relative path is
                specified, it will be converted to an absolute path before
                being used.
@@ -1113,4 +1124,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           July 29, 2018                          NetBSD
+NetBSD                           July 1, 2020                           NetBSD
