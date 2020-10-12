@@ -253,6 +253,17 @@ ps_bpf_dispatch(struct dhcpcd_ctx *ctx,
 	uint8_t *bpf;
 	size_t bpf_len;
 
+	switch (psm->ps_cmd) {
+#ifdef ARP
+	case PS_BPF_ARP:
+#endif
+	case PS_BPF_BOOTP:
+		break;
+	default:
+		errno = ENOTSUP;
+		return -1;
+	}
+
 	ifp = if_findindex(ctx->ifaces, psm->ps_id.psi_ifindex);
 	/* interface may have departed .... */
 	if (ifp == NULL)
@@ -270,9 +281,6 @@ ps_bpf_dispatch(struct dhcpcd_ctx *ctx,
 	case PS_BPF_BOOTP:
 		dhcp_packet(ifp, bpf, bpf_len, (unsigned int)psm->ps_flags);
 		break;
-	default:
-		errno = ENOTSUP;
-		return -1;
 	}
 
 	return 1;
