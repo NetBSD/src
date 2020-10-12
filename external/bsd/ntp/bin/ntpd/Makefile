@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2018/02/02 01:02:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.22.6.1 2020/10/12 10:17:33 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -91,5 +91,7 @@ YHEADER=1
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
 COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
 .endif
+
+CLEANFILES+=${MAN}
 
 .include <bsd.prog.mk>
