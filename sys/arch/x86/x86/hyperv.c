@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.11 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.12 2020/10/12 12:11:03 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,11 +29,11 @@
  */
 
 /**
- * Implements low-level interactions with Hyper-V/Azuree
+ * Implements low-level interactions with Hyper-V/Azure
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.11 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.12 2020/10/12 12:11:03 ryoon Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
