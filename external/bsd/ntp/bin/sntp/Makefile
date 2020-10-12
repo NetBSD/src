@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.6 2013/12/28 03:19:43 christos Exp $
+# $NetBSD: Makefile,v 1.6.34.1 2020/10/12 10:17:33 martin Exp $
 
 USE_FORT?= yes	# network client/server
+
+.include <bsd.own.mk>
 
 PROG=	sntp
 MAN=	sntp.1
@@ -30,5 +32,7 @@ CPPFLAGS+= -DLOCKNAME=\"/var/run/sntp.pid\"
 CPPFLAGS+= -DSAVENAME=\"/var/db/sntp.state\"
 LDADD+= -L${LIBISC} -liscntp -levent -lm
 DPADD+=	${LIBM} ${LIBEVENT}
+
+CLEANFILES+=${MAN}
 
 .include <bsd.prog.mk>
