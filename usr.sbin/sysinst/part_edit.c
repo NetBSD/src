@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.23 2020/10/12 16:14:32 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.24 2020/10/12 16:27:23 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1054,7 +1054,6 @@ ask_fullpart(struct disk_partitions *parts)
 	size_t num_opts;
 	menu_ent options[4], *opt;
 	daddr_t start, size;
-	bool have_existing = false;
 
 	args[0] = msg_string(pm->parts->pscheme->name);
 	args[1] = msg_string(pm->parts->pscheme->short_name);
@@ -1072,7 +1071,6 @@ ask_fullpart(struct disk_partitions *parts)
 		opt->opt_action = set_keep_existing;
 		opt++;
 		num_opts++;
-		have_existing = true;
 	}
 	opt->opt_name = MSG_Use_only_part_of_the_disk;
 	opt->opt_flags = OPT_EXIT;
@@ -1086,7 +1084,7 @@ ask_fullpart(struct disk_partitions *parts)
 	opt++;
 	num_opts++;
 
-	if (have_existing && num_available_part_schemes > 1) {
+	if (num_available_part_schemes > 1) {
 		opt->opt_name = MSG_Use_Different_Part_Scheme;
 		opt->opt_flags = OPT_EXIT;
 		opt->opt_action = set_switch_scheme;
