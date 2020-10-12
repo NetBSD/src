@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.8 2020/10/12 11:07:24 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.9 2020/10/12 15:24:16 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -300,6 +300,7 @@ OccupyAll
 
 AlwaysOnTop
 {
+   "xclock"
    "XEyes"
    "XVidCap"
 }
