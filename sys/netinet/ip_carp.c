@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.111 2020/10/09 08:10:41 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.112 2020/10/12 11:07:27 roy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.111 2020/10/09 08:10:41 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.112 2020/10/12 11:07:27 roy Exp $");
 
 /*
  * TODO:
@@ -887,10 +887,10 @@ carp_clone_create(struct if_clone *ifc, int unit)
 		return rv;
 	}
 	ether_ifattach(ifp, NULL);
-	carp_set_enaddr(sc);
 	/* Overwrite ethernet defaults */
 	ifp->if_type = IFT_CARP;
 	ifp->if_output = carp_output;
+	carp_set_enaddr(sc);
 	if_register(ifp);
 
 	return (0);
