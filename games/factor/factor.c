@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.37 2020/10/11 18:46:21 christos Exp $	*/
+/*	$NetBSD: factor.c,v 1.38 2020/10/12 13:54:51 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 __SCCSID("@(#)factor.c	8.4 (Berkeley) 5/4/95");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: factor.c,v 1.37 2020/10/11 18:46:21 christos Exp $");
+__RCSID("$NetBSD: factor.c,v 1.38 2020/10/12 13:54:51 christos Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad $");
@@ -70,7 +70,6 @@ __FBSDID("$FreeBSD: head/usr.bin/factor/factor.c 356666 2020-01-12 20:25:11Z gad
  * If the -x flag is specified numbers are printed in hex.
  *
  * If no number args are given, the list of numbers are read from stdin.
- * If no args are given, the list of numbers are read from stdin.
  */
 
 #include <ctype.h>
@@ -225,6 +224,7 @@ pr_fact(BIGNUM *val, int hflag, int xflag)
 	} else
 		BN_print_dec_fp(stdout, val);
 	putchar(':');
+	fflush(stdout);
 	for (fact = &prime[0]; !BN_is_one(val); ++fact) {
 		/* Look for the smallest factor. */
 		do {
