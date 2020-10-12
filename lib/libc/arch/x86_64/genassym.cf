@@ -1,3 +1,4 @@
+#	$NetBSD: genassym.cf,v 1.2 2020/10/12 21:33:46 kamil Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
