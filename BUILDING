@@ -114,7 +114,11 @@ CONFIGURATION
 
      HOST_CC           Path name to C compiler used to create the toolchain.
 
+     HOST_CFLAGS       Flags passed to the host C compiler.
+
      HOST_CXX          Path name to C++ compiler used to create the toolchain.
+
+     HOST_CXXFLAGS     Flags passed to the host C++ compiler.
 
      MACHINE           Machine type, e.g., "macppc".
 
@@ -1124,4 +1128,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           July 1, 2020                           NetBSD
+NetBSD                         October 13, 2020                         NetBSD

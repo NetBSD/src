@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.129 2020/10/12 21:12:34 uwe Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.130 2020/10/12 21:14:37 uwe Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd July 1, 2020
+.Dd October 13, 2020
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -230,8 +230,14 @@ to an absolute path by searching the
 .It Sy HOST_CC
 Path name to C compiler used to create the toolchain.
 .
+.It Sy HOST_CFLAGS
+Flags passed to the host C compiler.
+.
 .It Sy HOST_CXX
 Path name to C++ compiler used to create the toolchain.
+.
+.It Sy HOST_CXXFLAGS
+Flags passed to the host C++ compiler.
 .
 .It Sy MACHINE
 Machine type, e.g.,
