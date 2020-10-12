@@ -89,6 +89,28 @@ ps_inet_recvdhcp6(void *arg)
 }
 #endif
 
+bool
+ps_inet_canstart(const struct dhcpcd_ctx *ctx)
+{
+
+#ifdef INET
+	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MASTER)) ==
+	    (DHCPCD_IPV4 | DHCPCD_MASTER))
+		return true;
+#endif
+#if defined(INET6) && !defined(__sun)
+	if (ctx->options & DHCPCD_IPV6)
+		return true;
+#endif
+#ifdef DHCP6
+	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MASTER)) ==
+	    (DHCPCD_IPV6 | DHCPCD_MASTER))
+		return true;
+#endif
+
+	return false;
+}
+
 static int
 ps_inet_startcb(void *arg)
 {

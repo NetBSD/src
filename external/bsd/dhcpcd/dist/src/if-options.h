@@ -99,7 +99,7 @@
 #define DHCPCD_NOALIAS			(1ULL << 39)
 #define DHCPCD_IA_FORCED		(1ULL << 40)
 #define DHCPCD_STOPPING			(1ULL << 41)
-#define DHCPCD_DEPARTED			(1ULL << 42)
+#define DHCPCD_LAUNCHER			(1ULL << 42)
 #define DHCPCD_HOSTNAME_SHORT		(1ULL << 43)
 #define DHCPCD_EXITING			(1ULL << 44)
 #define DHCPCD_WAITIP4			(1ULL << 45)

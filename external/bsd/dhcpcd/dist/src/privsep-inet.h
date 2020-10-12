@@ -29,6 +29,7 @@
 #ifndef PRIVSEP_INET_H
 #define PRIVSEP_INET_H
 
+bool ps_inet_canstart(const struct dhcpcd_ctx *);
 pid_t ps_inet_start(struct dhcpcd_ctx *);
 int ps_inet_stop(struct dhcpcd_ctx *);
 ssize_t ps_inet_cmd(struct dhcpcd_ctx *, struct ps_msghdr *, struct msghdr *);

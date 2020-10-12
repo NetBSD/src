@@ -506,7 +506,7 @@ arp_announceaddr(struct dhcpcd_ctx *ctx, const struct in_addr *ia)
 	struct ipv4_addr *iap;
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (!ifp->active || ifp->carrier <= LINK_DOWN)
+		if (!ifp->active || !if_is_link_up(ifp))
 			continue;
 		iap = ipv4_iffindaddr(ifp, ia, NULL);
 		if (iap == NULL)

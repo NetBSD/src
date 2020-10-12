@@ -55,7 +55,6 @@
 #define	LINK_UP		1
 #define	LINK_UNKNOWN	0
 #define	LINK_DOWN	-1
-#define	LINK_DOWN_IFFUP	-2
 
 #define IF_DATA_IPV4	0
 #define IF_DATA_ARP	1
