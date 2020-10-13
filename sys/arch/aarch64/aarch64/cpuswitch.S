@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.29 2020/10/06 06:26:46 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.30 2020/10/13 21:24:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.29 2020/10/06 06:26:46 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.30 2020/10/13 21:24:22 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -119,7 +119,7 @@ ENTRY_NP(cpu_switchto)
 	msr	tpidr_el1, x1		/* switch curlwp to new lwp */
 	ldr	x3, [x1, #L_CPU]
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
-	dmb	st			/* see comments in kern_mutex.c */
+	dmb	ishst			/* see comments in kern_mutex.c */
 	ENABLE_INTERRUPT
 
 	/*
