@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.29 2020/09/22 00:55:08 mrg Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.30 2020/10/13 21:06:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -721,7 +721,6 @@ armv7_mmuinit:
 	mov	r4, lr
 	mov	r5, r0			// save TTBR
 
-	// XXXNH dsb - Why?
 	XPUTC(#'F')
 	dsb				// Drain the write buffers.
 
@@ -755,7 +754,6 @@ armv7_mmuinit:
 	mov	r1, #0			// get KERNEL_PID
 	mcr	p15, 0, r1, c13, c0, 1	// CONTEXTIDR write
 
-	// XXXNH FreeBSD doesn't do this isb
 	isb
 
 	// Set the Domain Access register.  Very important!
