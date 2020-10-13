@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.47 2020/09/27 17:36:40 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.48 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2133,6 +2133,9 @@ usage_info_list_from_parts(struct part_usage_info **list, size_t *count,
 			(*list)[no].fs_type = info.fs_type;
 			(*list)[no].fs_version = info.fs_sub_type;
 		}
+		(*list)[no].fs_opt1 = info.fs_opt1;
+		(*list)[no].fs_opt2 = info.fs_opt2;
+		(*list)[no].fs_opt3 = info.fs_opt3;
 		no++;
 	}
 	return true;
