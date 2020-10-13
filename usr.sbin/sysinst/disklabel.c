@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.41 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.42 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct disklabel_disk_partitions {
 	struct disklabel l;
 	daddr_t ptn_alignment, install_target;
 	char last_mounted[MAXPARTITIONS][MOUNTLEN];
-	uint fs_sub_type[MAXPARTITIONS];
+	uint fs_sub_type[MAXPARTITIONS], fs_opt3[MAXPARTITIONS];
 };
 
 /*
@@ -772,6 +772,10 @@ disklabel_get_part_info(const struct disk_partitions *arg, part_id id,
 				info->last_mounted = parts->last_mounted[part];
 			info->fs_type = parts->l.d_partitions[part].p_fstype;
 			info->fs_sub_type = parts->fs_sub_type[part];
+			info->fs_opt2 = parts->l.d_partitions[part].p_fsize;
+			info->fs_opt1 = info->fs_opt2 *
+			    parts->l.d_partitions[part].p_frag;
+			info->fs_opt3 = parts->fs_opt3[part];
 			if (part == RAW_PART &&
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
@@ -820,6 +824,13 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 			parts->l.d_partitions[part].p_size = info->size;
 			parts->l.d_partitions[part].p_fstype =
 			    dl_part_type_from_generic(info->nat_type);
+			parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+			if (info->fs_opt2 != 0)
+				parts->l.d_partitions[part].p_frag =
+				    info->fs_opt1 / info->fs_opt2;
+			else
+				parts->l.d_partitions[part].p_frag = 0;
+			parts->fs_opt3[part] = info->fs_opt3;
 			if (info->last_mounted != NULL &&
 			    info->last_mounted != parts->last_mounted[part])
 				strlcpy(parts->last_mounted[part],
@@ -1111,6 +1122,12 @@ disklabel_add_partition(struct disk_partitions *arg,
 	parts->l.d_partitions[part].p_size = data.size;
 	parts->l.d_partitions[part].p_fstype =
 	     dl_part_type_from_generic(data.nat_type);
+	parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+	if (info->fs_opt2 != 0)
+		parts->l.d_partitions[part].p_frag =
+		    info->fs_opt1 / info->fs_opt2;
+	else
+		parts->l.d_partitions[part].p_frag = 0;
 	if (data.last_mounted && data.last_mounted[0])
 		strlcpy(parts->last_mounted[part], data.last_mounted,
 		    sizeof(parts->last_mounted[part]));
@@ -1174,6 +1191,12 @@ disklabel_add_outer_partition(struct disk_partitions *arg,
 	parts->l.d_partitions[part].p_size = info->size;
 	parts->l.d_partitions[part].p_fstype =
 	     dl_part_type_from_generic(info->nat_type);
+	parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+	if (info->fs_opt2 != 0)
+		parts->l.d_partitions[part].p_frag =
+		    info->fs_opt1 / info->fs_opt2;
+	else
+		parts->l.d_partitions[part].p_frag = 0;
 	if (info->last_mounted && info->last_mounted[0])
 		strlcpy(parts->last_mounted[part], info->last_mounted,
 		    sizeof(parts->last_mounted[part]));

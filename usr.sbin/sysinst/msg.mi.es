@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.25 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.26 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,9 +146,6 @@ message heads
 
 message sectors
 {sectores}
-
-message fs_isize
-{tamaño promedio del fichero (bytes)}
 
 message mountpoint
 {punto de montaje (o 'ninguno')}
@@ -404,12 +401,6 @@ message label_offset_tail		{inicio ($2)}
 
 message invalid_sector_number
 {Número mal formado}
-
-message Select_file_system_block_size
-{Seleccione el tamaño de bloque del sistema de archivos}
-
-message Select_file_system_fragment_size
-{Seleccione el tamaño de fragmento del sistema de archivos}
 
 message packname
 {Por favor entroduzca un nombre para el disco NetBSD}
@@ -1042,6 +1033,7 @@ message Use_Different_Part_Scheme
 
 message Gigabytes {Gigabytes}
 message Megabytes {Megabytes}
+message Bytes {Bytes}
 message Cylinders {Cilindros}
 message Sectors {Sectores}
 message Select_medium {Seleccione el medio}
@@ -1319,6 +1311,25 @@ message ptn_type		{tipo}
 message ptn_start		{inicio}
 message ptn_size		{tamaño}
 message ptn_end			{fin}
+
+message ptn_bsize		{tamaño bloque}
+message ptn_fsize		{tamaño frag}
+message ptn_isize		{tam prom archi}
+
+/* Called with:                         Example
+ *  $0 = avg file size in byte          1200
+ */
+message ptn_isize_bytes		{$0 bytes (para número de inodos)}
+message ptn_isize_dflt		{4 fragmentos}
+
+message Select_file_system_block_size
+{Seleccione el tamaño de bloque del sistema de archivos}
+
+message Select_file_system_fragment_size
+{Seleccione el tamaño de fragmento del sistema de archivos}
+
+message ptn_isize_prompt
+{tamaño promedio del fichero (bytes)}
 
 message No_free_space {Sin espacio libre}
 message Invalid_numeric {Número no válido!}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.55 2020/10/13 10:44:25 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.56 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1494,6 +1494,9 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
+			infos[i].fs_opt1 = want->fs_opt1;
+			infos[i].fs_opt2 = want->fs_opt2;
+			infos[i].fs_opt3 = want->fs_opt3;
 			new_part_id = ps->pscheme->add_partition(ps,
 			    &infos[i], NULL);
 			if (new_part_id == NO_PART)
@@ -1578,6 +1581,9 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
+			infos[i].fs_opt1 = want->fs_opt1;
+			infos[i].fs_opt2 = want->fs_opt2;
+			infos[i].fs_opt3 = want->fs_opt3;
 			if (want->fs_type != FS_UNUSED &&
 			    want->type != PT_swap) {
 				want->instflags |= PUIINST_NEWFS;
@@ -1637,6 +1643,9 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
+			infos[i].fs_opt1 = want->fs_opt1;
+			infos[i].fs_opt2 = want->fs_opt2;
+			infos[i].fs_opt3 = want->fs_opt3;
 
 			if (wanted->parts->pscheme->add_outer_partition
 			    != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.31 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.32 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -139,9 +139,6 @@ message heads
 
 message sectors
 {sectors}
-
-message fs_isize
-{average file size (bytes)}
 
 message mountpoint
 {mount point (or 'none')}
@@ -398,12 +395,6 @@ message label_offset_tail		{Start ($2)}
 
 message invalid_sector_number
 {Badly formed number}
-
-message Select_file_system_block_size
-{Select file system block size}
-
-message Select_file_system_fragment_size
-{Select file system fragment size}
 
 message packname
 {Please enter a name for your NetBSD disk}
@@ -1015,6 +1006,7 @@ message Use_Different_Part_Scheme
 
 message Gigabytes {Gigabytes}
 message Megabytes {Megabytes}
+message Bytes {Bytes}
 message Cylinders {Cylinders}
 message Sectors {Sectors}
 message Select_medium {Install from}
@@ -1269,6 +1261,25 @@ message ptn_type		{type}
 message ptn_start		{start}
 message ptn_size		{size}
 message ptn_end			{end}
+
+message ptn_bsize		{block size}
+message ptn_fsize		{fragment size}
+message ptn_isize		{avg file size}
+
+/* Called with: 			Example
+ *  $0 = avg file size in byte		1200
+ */
+message ptn_isize_bytes {$0 bytes (for number of inodes)}
+message ptn_isize_dflt	{4 fragments}
+
+message Select_file_system_block_size
+{Select file system block size}
+
+message Select_file_system_fragment_size
+{Select file system fragment size}
+
+message ptn_isize_prompt
+{average file size (bytes)}
 
 message No_free_space {No free space}
 message Invalid_numeric {Invalid numeric!}

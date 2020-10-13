@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.66 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.67 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -311,6 +311,7 @@ struct part_usage_info {
 	unsigned int instflags;		/* installer handling flags */
 	uint fs_type, fs_version;	/* e.g. FS_LFS, or FS_BSDFS,
 					 * version = 2 for FFSv2 */
+	uint fs_opt1, fs_opt2, fs_opt3;	/* FS specific, FFS: block/frag */
 #ifndef	NO_CLONES
 	/*
 	 * Only != NULL when PUIFLG_CLONE_PARTS is set, describes the
@@ -352,7 +353,7 @@ struct partition_usage_set {
  */
 struct single_part_fs_edit {
  	struct partition_usage_set *pset;
-	size_t index, first_custom_attr;
+	size_t index, first_custom_attr, offset, mode;
 	part_id id;
 	struct disk_part_info info;	/* current partition data */
 	struct part_usage_info *wanted;	/* points at our edit data */

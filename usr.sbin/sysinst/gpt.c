@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.20 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.21 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -131,7 +131,8 @@ struct gpt_part_entry {
 	char gp_label[GPT_LABEL_LEN];	/* user defined label */
 	char gp_dev_name[GPT_DEV_LEN];	/* name of wedge */
 	const char *last_mounted;	/* last mounted if known */
-	uint fs_type, fs_sub_type;	/* FS_* and maybe sub type */
+	uint fs_type, fs_sub_type,	/* FS_* and maybe sub type */
+	    fs_opt1, fs_opt2, fs_opt3;	/* transient file system options */
 	uint gp_flags;	
 #define	GPEF_ON_DISK	1		/* This entry exists on-disk */
 #define	GPEF_MODIFIED	2		/* this entry has been changed */
@@ -518,6 +519,9 @@ gpt_get_part_info(const struct disk_partitions *arg, part_id id,
 	info->last_mounted = p->last_mounted;
 	info->fs_type = p->fs_type;
 	info->fs_sub_type = p->fs_sub_type;
+	info->fs_opt1 = p->fs_opt1;
+	info->fs_opt2 = p->fs_opt2;
+	info->fs_opt3 = p->fs_opt3;
 	if (p->gp_flags & GPEF_TARGET)
 		info->flags |= PTI_INSTALL_TARGET;
 
@@ -1055,6 +1059,9 @@ gpt_info_to_part(struct gpt_part_entry *p, const struct disk_part_info *info,
 	}
 	p->fs_type = info->fs_type;
 	p->fs_sub_type = info->fs_sub_type;
+	p->fs_opt1 = info->fs_opt1;
+	p->fs_opt2 = info->fs_opt2;
+	p->fs_opt3 = info->fs_opt3;
 	
 	return true;
 }
