@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.130 2020/10/12 21:14:37 uwe Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.131 2020/10/13 01:59:32 thorpej Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -404,6 +404,11 @@ Using a fixed value causes C++ binaries to be the same when
 built from the same sources, resulting in identical (reproducible) builds.
 Additional information is available in the GCC
 documentation of -frandom-seed.
+.
+.It Sy CPUFLAGS
+Additional flags to the compiler/assembler to select
+CPU instruction set options, CPU tuning options, etc.
+.DFLTu
 .
 .It Sy DESTDIR
 Directory to contain the built
