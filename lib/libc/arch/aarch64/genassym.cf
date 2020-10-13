@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.2 2020/05/10 14:05:59 skrll Exp $
+# $NetBSD: genassym.cf,v 1.3 2020/10/13 01:59:55 kamil Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,36 @@ include <ucontext.h>
 include <setjmp.h>
 
 define _UC_REGS_X0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X0])
+define _UC_REGS_X1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X1])
+define _UC_REGS_X2	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X2])
+define _UC_REGS_X3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X3])
+define _UC_REGS_X4	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X4])
+define _UC_REGS_X5	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X5])
+define _UC_REGS_X6	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X6])
+define _UC_REGS_X7	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X7])
+define _UC_REGS_X8	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X8])
+define _UC_REGS_X9	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X9])
+define _UC_REGS_X10	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X10])
+define _UC_REGS_X11	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X11])
+define _UC_REGS_X12	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X12])
+define _UC_REGS_X13	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X13])
+define _UC_REGS_X14	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X14])
+define _UC_REGS_X15	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X15])
+define _UC_REGS_X16	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X16])
+define _UC_REGS_X17	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X17])
+define _UC_REGS_X18	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X18])
+define _UC_REGS_X19	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X19])
+define _UC_REGS_X20	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X20])
+define _UC_REGS_X21	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X21])
+define _UC_REGS_X22	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X22])
+define _UC_REGS_X23	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X23])
+define _UC_REGS_X24	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X24])
+define _UC_REGS_X25	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X25])
+define _UC_REGS_X26	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X26])
+define _UC_REGS_X27	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X27])
+define _UC_REGS_X28	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X28])
+define _UC_REGS_X29	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X29])
+define _UC_REGS_X30	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X30])
 define _UC_REGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
 define _UC_REGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
 
