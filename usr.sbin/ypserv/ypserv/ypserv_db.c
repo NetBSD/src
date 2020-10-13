@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.22 2011/02/01 21:00:25 chuck Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.23 2020/10/13 13:56:34 kamil Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.22 2011/02/01 21:00:25 chuck Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.23 2020/10/13 13:56:34 kamil Exp $");
 #endif
 
 /*
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: ypserv_db.c,v 1.22 2011/02/01 21:00:25 chuck Exp $");
 
 LIST_HEAD(domainlist, opt_domain);	/* LIST of domains */
 LIST_HEAD(maplist, opt_map);		/* LIST of maps (in a domain) */
-CIRCLEQ_HEAD(mapq, opt_map);		/* CIRCLEQ of maps (LRU) */
+TAILQ_HEAD(mapq, opt_map);		/* TAILQ of maps (LRU) */
 
 struct opt_map {
 	char	*map;			/* map name (malloc'd) */
@@ -76,7 +76,7 @@ struct opt_map {
 	dev_t	dbdev;			/* device db is on */
 	ino_t	dbino;			/* inode of db */
 	time_t	dbmtime;		/* time of last db modification */
-	CIRCLEQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
+	TAILQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
 	LIST_ENTRY(opt_map) mapsl;	/* map list pointers */
 };
 
@@ -106,7 +106,7 @@ ypdb_init(void)
 {
 
 	LIST_INIT(&doms);
-	CIRCLEQ_INIT(&maps);
+	TAILQ_INIT(&maps);
 }
 
 /*
@@ -161,7 +161,7 @@ yp_private(datum key, int ypprivate)
 void
 ypdb_close_map(struct opt_map *map)
 {
-	CIRCLEQ_REMOVE(&maps, map, mapsq);	/* remove from LRU circleq */
+	TAILQ_REMOVE(&maps, map, mapsq);	/* remove from LRU tailq */
 	LIST_REMOVE(map, mapsl);		/* remove from domain list */
 
 #ifdef DEBUG
@@ -182,13 +182,14 @@ ypdb_close_map(struct opt_map *map)
 void
 ypdb_close_last(void)
 {
-	struct opt_map *last = maps.cqh_last;
+	struct opt_map *last;
 
-	if (last == (void *) &maps) {
+	if (TAILQ_EMPTY(&maps)) {
 		syslog(LOG_ERR,
 		    "ypdb_close_last: LRU list is empty!");
 		return;
 	}
+	last = TAILQ_LAST(&maps, mapq);
 	ypdb_close_map(last);
 }
 
@@ -203,7 +204,7 @@ ypdb_close_all(void)
 	syslog(LOG_DEBUG, "ypdb_close_all(): start");
 #endif
 
-	while (maps.cqh_first != (void *) &maps)
+	while (!TAILQ_EMPTY(&maps))
 		ypdb_close_last();
 
 #ifdef DEBUG
@@ -326,8 +327,8 @@ ypdb_open_db(const char *domain, const char *map, u_int *status,
 		 */
 		if (finfo.st_dev == m->dbdev && finfo.st_ino == m->dbino &&
 		    finfo.st_mtime == m->dbmtime) {
-			CIRCLEQ_REMOVE(&maps, m, mapsq); /* adjust LRU queue */
-			CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
+			TAILQ_REMOVE(&maps, m, mapsq); /* adjust LRU queue */
+			TAILQ_INSERT_HEAD(&maps, m, mapsq);
 			if (map_info)
 				*map_info = m;
 			return (m->db);
@@ -423,7 +424,7 @@ retryopen:
 	m->dbdev = finfo.st_dev;
 	m->dbino = finfo.st_ino;
 	m->dbmtime = finfo.st_mtime;
-	CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
+	TAILQ_INSERT_HEAD(&maps, m, mapsq);
 	LIST_INSERT_HEAD(&d->dmaps, m, mapsl);
 	if (strcmp(map, YP_HOSTNAME) == 0 || strcmp(map, YP_HOSTADDR) == 0) {
 		if (!usedns) {
