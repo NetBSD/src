@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.28 2020/10/10 19:42:19 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.29 2020/10/13 11:28:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.28 2020/10/10 19:42:19 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.29 2020/10/13 11:28:32 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -413,12 +413,15 @@ renumber_partitions(struct partition_usage_set *pset)
 				continue;
 			if (pset->infos[i].cur_flags != info.flags)
 				continue;
-			if (pset->infos[i].type != info.nat_type->generic_ptype)
-				continue;
-			memcpy(&ninfos[pno], &pset->infos[i],
-			    sizeof(ninfos[pno]));
-			ninfos[pno].cur_part_id = pno;
-			break;
+			if ((info.fs_type != FS_UNUSED &&
+			    info.fs_type == pset->infos[i].fs_type) ||
+			    (pset->infos[i].type ==
+			    info.nat_type->generic_ptype)) {
+				memcpy(&ninfos[pno], &pset->infos[i],
+				    sizeof(ninfos[pno]));
+				ninfos[pno].cur_part_id = pno;
+				break;
+			}
 		}
 	}
 
