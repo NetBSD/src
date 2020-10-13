@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.18 2020/10/12 16:14:32 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.19 2020/10/13 17:26:28 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -139,9 +139,13 @@ struct disk_part_info {
 	 * returned. Backends can not rely on them to be valid.
 	 */
 	const char *last_mounted;		/* last mount point or NULL */
-	unsigned int fs_type, fs_sub_type;	/* FS_* type of filesystem
+	unsigned int fs_type, fs_sub_type,	/* FS_* type of filesystem
 						 * and for some FS a sub
 						 * type (e.g. FFSv1 vs. FFSv2)
+						 */
+		fs_opt1, fs_opt2, fs_opt3;	/* FS specific option, used
+						 * for FFS block/fragsize
+						 * and inodes
 						 */
 };
 
