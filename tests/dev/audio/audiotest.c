@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.12 2020/06/26 07:50:12 jruoho Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.13 2020/10/13 09:00:17 rin Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.12 2020/06/26 07:50:12 jruoho Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.13 2020/10/13 09:00:17 rin Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -4430,7 +4430,7 @@ DEF(AUDIO_WSEEK)
 	struct audio_info ai;
 	int r;
 	int fd;
-	int n;
+	u_long n;
 
 	TEST("AUDIO_WSEEK");
 
