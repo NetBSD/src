@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.41 2020/08/24 06:55:16 gson Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.42 2020/10/13 06:55:25 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -476,9 +476,10 @@ ATF_TC_BODY(sigbus_adraln, tc)
 
 	/* m68k (except sun2) never issue SIGBUS (PR lib/49653),
 	 * same for armv8 or newer */
-	if (strcmp(MACHINE_ARCH, "m68k") == 0 ||
-	    strcmp(MACHINE_ARCH, "aarch64") == 0)
-		atf_tc_skip("No SIGBUS signal for unaligned accesses");
+#if (defined(__m68k__) && !defined(__mc68010__)) || \
+    defined(__aarch64__)
+	atf_tc_skip("No SIGBUS signal for unaligned accesses");
+#endif
 
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = sigbus_action;
