@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.6 2017/01/13 21:16:38 christos Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.6 2017/01/13 21:16:38 christos Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -517,7 +517,7 @@ ATF_TC_BODY(setrlimit_stack, tc)
 	struct rlimit res;
 
 	/* Ensure soft limit is not bigger than hard limit */
-	res.rlim_cur = res.rlim_max = 4192256;
+	res.rlim_cur = res.rlim_max = 6 * 1024 * 1024;
 	ATF_REQUIRE(setrlimit(RLIMIT_STACK, &res) == 0);
 	ATF_REQUIRE(getrlimit(RLIMIT_STACK, &res) == 0);
 	ATF_CHECK(res.rlim_cur <= res.rlim_max);
