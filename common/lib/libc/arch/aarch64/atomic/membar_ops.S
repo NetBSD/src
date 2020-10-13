@@ -1,4 +1,4 @@
-/* $NetBSD: membar_ops.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: membar_ops.S,v 1.2 2020/10/13 21:22:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,24 +32,28 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_membar_producer)
-	dsb	sy
+	dmb	ishst
 	ret
 END(_membar_producer)
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_write,_membar_producer)
 STRONG_ALIAS(_membar_write,_membar_producer)
 
+ENTRY_NP(_membar_consumer)
+	dmb	ishld
+	ret
+END(_membar_producer)
+ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
+ATOMIC_OP_ALIAS(membar_read,_membar_consumer)
+STRONG_ALIAS(_membar_read,_membar_consumer)
+
 ENTRY_NP(_membar_sync)
-	dmb	sy
+	dmb	ish
 	ret
 END(_membar_sync)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
-ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
-ATOMIC_OP_ALIAS(membar_read,_membar_sync)
 STRONG_ALIAS(__sync_synchronize,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
-STRONG_ALIAS(_membar_consumer,_membar_sync)
-STRONG_ALIAS(_membar_read,_membar_sync)
