@@ -192,6 +192,11 @@ CONFIGURATION
                  information is available in the GCC documentation of
                  -frandom-seed.
 
+     CPUFLAGS    Additional flags to the compiler/assembler to select CPU
+                 instruction set options, CPU tuning options, etc.
+
+                 Default: Unset.
+
      DESTDIR     Directory to contain the built NetBSD system.  If set,
                  special options are passed to the compilation tools to
                  prevent their default use of the host system's /usr/include,
