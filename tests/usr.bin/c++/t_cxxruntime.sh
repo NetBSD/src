@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.4 2020/02/11 06:26:19 riastradh Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.5 2020/10/13 06:49:27 rin Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -105,11 +105,6 @@ cxxruntime_profile_body() {
 int main(void) {std::cout << "hello world" << std::endl;exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o hello test.cpp
-	case `uname -p` in
-	aarch64)
-		atf_expect_fail 'cc -pg is busted on aarch64'
-		;;
-	esac
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
@@ -213,11 +208,6 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o hello test.cpp -L. -ltest
 
-	case `uname -p` in
-	aarch64)
-		atf_expect_fail 'cc -pg is busted on aarch64'
-		;;
-	esac
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
