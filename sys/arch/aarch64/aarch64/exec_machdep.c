@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.7 2020/05/23 18:08:59 ryo Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.8 2020/10/13 07:04:49 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.7 2020/05/23 18:08:59 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.8 2020/10/13 07:04:49 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -77,6 +77,11 @@ aarch64_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	/* OABI not support */
 	if (!elf_aapcs_p)
 		return ENOEXEC;
+#ifdef __AARCH64EB__
+	/* BE32 not support */
+	if ((eh->e_flags & EF_ARM_BE8) == 0)
+		return ENOEXEC;
+#endif
 
 	/*
 	 * require aarch32 feature.
