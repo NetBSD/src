@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2020/08/13 07:14:04 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3 2020/10/13 21:27:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: lock_stubs.S,v 1.2 2020/08/13 07:14:04 skrll Exp $")
+RCSID("$NetBSD: lock_stubs.S,v 1.3 2020/10/13 21:27:18 skrll Exp $")
 
 #ifndef LOCKDEBUG
 /*
@@ -45,11 +45,10 @@ RCSID("$NetBSD: lock_stubs.S,v 1.2 2020/08/13 07:14:04 skrll Exp $")
 ENTRY(mutex_enter)
 	mrs	x1, tpidr_el1		/* x1 = curlwp */
 1:
-	ldxr	x2, [x0]		/* load old value */
+	ldaxr	x2, [x0]		/* load old value */
 	cbnz	x2, 3f			/*   equals zero? */
 	stxr	w3, x1, [x0]		/* store curlwp as new value */
 	cbnz	w3, 2f			/*   succeed? nope, try again. */
-	dmb	sy			/* membar_enter() */
 	ret
 2:
 	b	1b
@@ -64,13 +63,12 @@ END(mutex_enter)
  * so just use ldxr+stxr to achieve the same.
  */
 ENTRY(mutex_exit)
-	dmb	sy			/* membar_exit() */
 	mrs	x1, tpidr_el1		/* x1 = curlwp */
 1:
 	ldxr	x2, [x0]		/* load old value */
 	cmp	x1, x2			/*   equals curlwp? */
 	b.ne	3f			/*     slow path if different */
-	stxr	w3, xzr, [x0]		/* store zero as new value */
+	stlxr	w3, xzr, [x0]		/* store zero as new value */
 	cbnz	w3, 2f			/*   succeed? nope, try again. */
 	ret
 2:
