@@ -1,4 +1,4 @@
-#	$NetBSD: t_pthread_once.sh,v 1.3 2020/02/11 06:26:19 riastradh Exp $
+#	$NetBSD: t_pthread_once.sh,v 1.4 2020/10/13 06:49:27 rin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -110,11 +110,6 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o pthread_once test.cpp -pthread
-	case `uname -p` in
-	aarch64)
-		atf_expect_fail 'cc -pg is busted on aarch64'
-		;;
-	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./pthread_once
 }
 
@@ -227,11 +222,6 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o pthread_once test.cpp -L. -ltest -pthread
 
-	case `uname -p` in
-	aarch64)
-		atf_expect_fail 'cc -pg is busted on aarch64'
-		;;
-	esac
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./pthread_once
 }
