@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_op_asm.h,v 1.4 2020/10/07 07:34:29 skrll Exp $ */
+/* $NetBSD: atomic_op_asm.h,v 1.5 2020/10/13 21:17:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@ ENTRY_NP(_atomic_##OP##_8)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxrb	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_8)
 
@@ -52,7 +51,6 @@ ENTRY_NP(_atomic_##OP##_8_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrb	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_8_nv)
 
@@ -63,7 +61,6 @@ ENTRY_NP(_atomic_##OP##_16)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxrh	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_16)
 
@@ -74,7 +71,6 @@ ENTRY_NP(_atomic_##OP##_16_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrh	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_16_nv)
 
@@ -85,7 +81,6 @@ ENTRY_NP(_atomic_##OP##_32)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxr	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_32)
 
@@ -96,7 +91,6 @@ ENTRY_NP(_atomic_##OP##_32_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxr	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_32_nv)
 
@@ -107,7 +101,6 @@ ENTRY_NP(_atomic_##OP##_64)						;\
 	INSN	x2, x0, x1		/* calculate new value */	;\
 	stxr	w3, x2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_64)
 
@@ -118,7 +111,6 @@ ENTRY_NP(_atomic_##OP##_64_nv)						;\
 	INSN	x0, x0, x1		/* calc new (return) value */	;\
 	stxr	w3, x0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_64_nv)
 
