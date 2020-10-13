@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.53 2020/10/12 16:27:23 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.54 2020/10/13 10:43:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1615,26 +1615,44 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 		    (PUIFLG_ADD_INNER|PUIFLG_IS_OUTER))
 			continue;
 
-		infos[i].start = want->cur_start;
-		infos[i].size = want->size;
-		infos[i].nat_type = wanted->parts->pscheme->get_fs_part_type(
-		    want->type, want->fs_type, want->fs_version);
-		infos[i].last_mounted = want->mount;
-		infos[i].fs_type = want->fs_type;
-		infos[i].fs_sub_type = want->fs_version;
+		new_part_id = NO_PART;
+		for (part_id j = 0; new_part_id == NO_PART &&
+		    j < wanted->parts->num_part; j++) {
+			struct disk_part_info test;
 
-		if (wanted->parts->pscheme->add_outer_partition
-		    != NULL)
-			new_part_id = wanted->parts->pscheme->
-			    add_outer_partition(
-			    wanted->parts, &infos[i], NULL);
-		else
-			new_part_id = wanted->parts->pscheme->
-			    add_partition(
-			    wanted->parts, &infos[i], NULL);
+			if (!wanted->parts->pscheme->get_part_info(
+			    wanted->parts, j, &test))
+				continue;
+			if (test.start == want->cur_start &&
+			    test.size == want->size)
+				new_part_id = j;
+		}
+
+		if (new_part_id == NO_PART) {
+			infos[i].start = want->cur_start;
+			infos[i].size = want->size;
+			infos[i].nat_type = wanted->parts->pscheme->
+			    get_fs_part_type(want->type, want->fs_type,
+			    want->fs_version);
+			infos[i].last_mounted = want->mount;
+			infos[i].fs_type = want->fs_type;
+			infos[i].fs_sub_type = want->fs_version;
+			infos[i].fs_opt1 = want->fs_opt1;
+			infos[i].fs_opt2 = want->fs_opt2;
+
+			if (wanted->parts->pscheme->add_outer_partition
+			    != NULL)
+				new_part_id = wanted->parts->pscheme->
+				    add_outer_partition(
+				    wanted->parts, &infos[i], NULL);
+			else
+				new_part_id = wanted->parts->pscheme->
+				    add_partition(
+				    wanted->parts, &infos[i], NULL);
 		
-		if (new_part_id == NO_PART)
-			continue;	/* failed to add, skip */
+			if (new_part_id == NO_PART)
+				continue;	/* failed to add, skip */
+		}
 
 		wanted->parts->pscheme->get_part_info(
 		    wanted->parts, new_part_id, &infos[i]);
