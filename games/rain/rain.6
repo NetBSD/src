@@ -1,4 +1,4 @@
-.\"	$NetBSD: rain.6,v 1.12 2005/09/15 02:09:41 wiz Exp $
+.\"	$NetBSD: rain.6,v 1.13 2020/10/14 18:32:04 nia Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rain.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd October 14, 2020
 .Dt RAIN 6
 .Os
 .Sh NAME
@@ -44,11 +44,12 @@ The output of
 is modeled after the
 .Tn VAX/VMS
 program of the same name.
-To obtain the proper effect, either the terminal must be set for 9600
-baud or the
-.Fl d
-option must be used to specify a delay, in milliseconds, between each
-update.
-A reasonable delay is 120; the default is 0.
+.Bl -tag -width Ds
+.It Fl d
+Delay between updates (in milliseconds).
+If the terminal is faster than 9600 baud, must be set to non-zero to
+obtain a proper rain effect.
+The default is 120.
+.El
 .Sh AUTHORS
 .An Eric P. Scott
