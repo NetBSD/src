@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.60 2020/04/27 23:40:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.1 2020/10/14 10:19:11 ryo Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.60 2020/04/27 23:40:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.1 2020/10/14 10:19:11 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.60 2020/04/27 23:40:37 yamaguchi Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <arch/x86/pci/if_vmxreg.h>
+#include <dev/pci/if_vmxreg.h>
 
 #define VMXNET3_DRIVER_VERSION 0x00010000
 
