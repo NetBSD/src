@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.29 2020/03/13 02:43:31 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.30 2020/10/14 18:48:05 roy Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.29 2020/03/13 02:43:31 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.30 2020/10/14 18:48:05 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -336,7 +336,7 @@ if_ipsec_attach0(struct ipsec_softc *sc)
 	sc->ipsec_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 	/* set ipsec(4) specific default flags. */
 	sc->ipsec_if.if_flags  |= IFF_FWD_IPV6;
-	sc->ipsec_if.if_extflags = IFEF_NO_LINK_STATE_CHANGE | IFEF_MPSAFE;
+	sc->ipsec_if.if_extflags = IFEF_MPSAFE;
 	sc->ipsec_if.if_ioctl  = if_ipsec_ioctl;
 	sc->ipsec_if.if_output = if_ipsec_output;
 	sc->ipsec_if.if_type   = IFT_IPSEC;
@@ -344,6 +344,7 @@ if_ipsec_attach0(struct ipsec_softc *sc)
 	sc->ipsec_if.if_softc  = sc;
 	IFQ_SET_READY(&sc->ipsec_if.if_snd);
 	if_initialize(&sc->ipsec_if);
+	sc->ipsec_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&sc->ipsec_if);
 	bpf_attach(&sc->ipsec_if, DLT_NULL, sizeof(u_int));
 	if_register(&sc->ipsec_if);
@@ -774,12 +775,14 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = if_ipsec_set_tunnel(&sc->ipsec_if, src, dst);
 		if (error)
 			goto bad;
+		if_link_state_change(&sc->ipsec_if, LINK_STATE_UP);
 		curlwp_bindx(bound);
 		break;
 
 	case SIOCDIFPHYADDR:
 		bound = curlwp_bind();
 		if_ipsec_delete_tunnel(&sc->ipsec_if);
+		if_link_state_change(&sc->ipsec_if, LINK_STATE_DOWN);
 		curlwp_bindx(bound);
 		break;
 
