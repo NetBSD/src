@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.21 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: rain.c,v 1.22 2020/10/14 18:32:04 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.21 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: rain.c,v 1.22 2020/10/14 18:32:04 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ main(int argc, char **argv)
 {
 	int x, y, j;
 	long cols, lines;
-	unsigned int delay = 0;
+	unsigned int delay = 120000;
 	unsigned long val = 0;
 	int ch;
 	char *ep;
