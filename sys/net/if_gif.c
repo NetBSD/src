@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.153 2020/03/30 11:57:50 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.154 2020/10/14 15:22:17 roy Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.153 2020/03/30 11:57:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.154 2020/10/14 15:22:17 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -384,7 +384,6 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_addrlen = 0;
 	sc->gif_if.if_mtu    = GIF_MTU;
 	sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
-	sc->gif_if.if_extflags  = IFEF_NO_LINK_STATE_CHANGE;
 #ifdef GIF_MPSAFE
 	sc->gif_if.if_extflags  |= IFEF_MPSAFE;
 #endif
@@ -400,6 +399,7 @@ gifattach0(struct gif_softc *sc)
 	if (rv != 0)
 		return rv;
 
+	sc->gif_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&sc->gif_if);
 	bpf_attach(&sc->gif_if, DLT_NULL, sizeof(u_int));
 	if_register(&sc->gif_if);
@@ -848,19 +848,24 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* checks done in the above */
 			break;
 		}
+
 		/*
 		 * calls gif_getref_variant() for other softcs to check
 		 * address pair duplicattion
 		 */
 		bound = curlwp_bind();
 		error = gif_set_tunnel(&sc->gif_if, src, dst);
+		if (error == 0)
+			if_link_state_change(&sc->gif_if, LINK_STATE_UP);
 		curlwp_bindx(bound);
+
 		break;
 
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
 		bound = curlwp_bind();
 		gif_delete_tunnel(&sc->gif_if);
+		if_link_state_change(&sc->gif_if, LINK_STATE_DOWN);
 		curlwp_bindx(bound);
 		break;
 #endif
