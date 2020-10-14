@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.19 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.20 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.19 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.20 2020/10/14 00:59:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,7 @@ dec_2000_300_init(void)
 	platform.iobus = "jensenio";
 	platform.cons_init = dec_2000_300_cons_init;
 	platform.device_register = dec_2000_300_device_register;
+	platform.page_physload = jensenio_page_physload;
 }
 
 static void

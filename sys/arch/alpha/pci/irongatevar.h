@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.6 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: irongatevar.h,v 1.7 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ struct irongate_softc {
 	struct	irongate_config *sc_icp;
 };
 
+void	irongate_page_physload(unsigned long, unsigned long);
 void	irongate_init(struct irongate_config *, int);
 void	irongate_pci_init(pci_chipset_tag_t, void *);
 void	irongate_dma_init(struct irongate_config *);
