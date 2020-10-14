@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.18 2020/10/14 14:37:59 martin Exp $ */
+/*	$NetBSD: md.c,v 1.19 2020/10/14 15:09:10 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -333,7 +333,8 @@ md_parts_use_wholedisk(struct disk_partitions *parts)
 {
 	struct disk_part_info boot_part = {
 		.size = boardtype == BOARD_TYPE_NORMAL ? 
-		    PART_BOOT_LARGE/512 : PART_BOOT/512,
+		    PART_BOOT_LARGE/parts->bytes_per_sector :
+		    PART_BOOT/parts->bytes_per_sector,
 		.fs_type = PART_BOOT_TYPE, .fs_sub_type = MBR_PTYPE_FAT16L,
 	};
 
@@ -373,7 +374,8 @@ evbarm_part_defaults(struct pm_devs *my_pm, struct part_usage_info *infos,
 		if (infos[i].fs_type == PART_BOOT_TYPE &&
 		    infos[i].mount[0] != 0 &&
 		    strcmp(infos[i].mount, PART_BOOT_MOUNT) == 0) {
-			infos[i].size = PART_BOOT_LARGE;
+			infos[i].size = PART_BOOT_LARGE /
+			    my_pm->parts->bytes_per_sector;
 			return;
 		}
 	}
