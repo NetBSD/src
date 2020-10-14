@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.113 2020/10/12 15:18:48 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.114 2020/10/14 13:43:56 roy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.113 2020/10/12 15:18:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.114 2020/10/14 13:43:56 roy Exp $");
 
 /*
  * TODO:
@@ -878,7 +878,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
 	rv = if_initialize(ifp);
-	if (rv != 0) {	
+	if (rv != 0) {
 		callout_destroy(&sc->sc_ad_tmo);
 		callout_destroy(&sc->sc_md_tmo);
 		callout_destroy(&sc->sc_md6_tmo);
@@ -1733,7 +1733,15 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 static void
 carp_set_enaddr(struct carp_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+
+	if (sc->sc_vhid == -1) {
+		ifp->if_addrlen = 0;
+		if_alloc_sadl(ifp);
+		return;
+	}
+
 	if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
 		enaddr[0] = 3;
 		enaddr[1] = 0;
@@ -1749,7 +1757,8 @@ carp_set_enaddr(struct carp_softc *sc)
 		enaddr[4] = 1;
 		enaddr[5] = sc->sc_vhid;
 	}
-	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr), false);
+
+	if_set_sadl(ifp, enaddr, sizeof(enaddr), false);
 }
 
 #if 0
