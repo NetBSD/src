@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.110 2020/01/29 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.111 2020/10/14 15:55:49 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.110 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.111 2020/10/14 15:55:49 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -183,9 +183,8 @@ loop_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_mtu = LOMTU;
 	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
-	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 #ifdef NET_MPSAFE
-	ifp->if_extflags |= IFEF_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl = loioctl;
 	ifp->if_output = looutput;
@@ -199,7 +198,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0)
 		lo0ifp = ifp;
-	rv = if_attach(ifp);
+	rv = if_initialize(ifp);
 	if (rv != 0) {
 		if_free(ifp);
 		return rv;
@@ -215,6 +214,8 @@ loop_clone_create(struct if_clone *ifc, int unit)
 #endif
 
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_link_state = LINK_STATE_UP;
+	if_register(ifp);
 
 	return (0);
 }
