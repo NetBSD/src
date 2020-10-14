@@ -251,7 +251,7 @@ typedef enum {
 	PGP_PTAG_SS_FEATURES = 0x200 + 30,	/* features */
 	PGP_PTAG_SS_SIGNATURE_TARGET = 0x200 + 31,	/* signature target */
 	PGP_PTAG_SS_EMBEDDED_SIGNATURE = 0x200 + 32,	/* embedded signature */
-
+	PGP_PTAG_SS_ISSUER_FINGERPRINT = 0x200 + 33,	/* issuer fingerprint */
 	PGP_PTAG_SS_USERDEFINED00 = 0x200 + 100,	/* internal or
 							 * user-defined */
 	PGP_PTAG_SS_USERDEFINED01 = 0x200 + 101,
@@ -659,6 +659,11 @@ typedef struct pgp_ss_trust_t {
 	uint8_t			 amount;	/* Amount */
 } pgp_ss_trust_t;
 
+typedef struct pgp_ss_issuer_fingerprint {
+	uint8_t			len; /* 20 or 32 */
+	uint8_t			fingerprint[32]; /* max 32 */
+} pgp_ss_issuer_fingerprint;
+
 /** Signature Subpacket : Notation Data */
 typedef struct pgp_ss_notation_t {
 	pgp_data_t		flags;
@@ -823,13 +828,14 @@ typedef union {
 	pgp_data_t			userattr;
 	pgp_sig_t			sig;
 	pgp_ss_raw_t			ss_raw;
-	pgp_ss_trust_t		ss_trust;
+	pgp_ss_trust_t			ss_trust;
+	pgp_ss_issuer_fingerprint 	ss_issuer_fingerprint;
 	unsigned			ss_revocable;
 	time_t				ss_time;
 	uint8_t				ss_issuer[PGP_KEY_ID_SIZE];
 	pgp_ss_notation_t		ss_notation;
-	pgp_subpacket_t		packet;
-	pgp_compression_type_t	compressed;
+	pgp_subpacket_t			packet;
+	pgp_compression_type_t		compressed;
 	pgp_one_pass_sig_t		one_pass_sig;
 	pgp_data_t			ss_skapref;
 	pgp_data_t			ss_hashpref;
@@ -840,7 +846,7 @@ typedef union {
 	char				*ss_regexp;
 	char				*ss_policy;
 	char				*ss_keyserv;
-	pgp_ss_revocation_key_t	ss_revocation_key;
+	pgp_ss_revocation_key_t		ss_revocation_key;
 	pgp_data_t			ss_userdef;
 	pgp_data_t			ss_unknown;
 	pgp_litdata_header_t		litdata_header;
