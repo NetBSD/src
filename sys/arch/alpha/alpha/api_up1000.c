@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.30 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: api_up1000.c,v 1.31 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.30 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.31 2020/10/14 00:59:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ api_up1000_init(void)
 	platform.iobus = "irongate";
 	platform.cons_init = api_up1000_cons_init;
 	platform.device_register = api_up1000_device_register;
+	platform.page_physload = irongate_page_physload;
 }
 
 static void

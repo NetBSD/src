@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.16 2020/09/28 16:27:47 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.17 2020/10/14 00:59:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@ struct platform {
 	void	(*mcheck_handler)(unsigned long, struct trapframe *,
 		    unsigned long, unsigned long);
 	void	(*powerdown)(void);
+	void	(*page_physload)(unsigned long, unsigned long);
 };
 
 /*
