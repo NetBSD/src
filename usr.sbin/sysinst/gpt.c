@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.21 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.22 2020/10/14 04:17:43 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1266,7 +1266,7 @@ gpt_modify_part(const char *disk, struct gpt_part_entry *p)
 	/* Check type */
 	if (p->gp_type != old.gp_type) {
 		if (run_program(RUN_SILENT,
-		    "gpt label -b %" PRIu64 " -T %s %s",
+		    "gpt type -b %" PRIu64 " -T %s %s",
 		    p->gp_start, p->gp_type->tid, disk) != 0)
 			return false;
 	}
