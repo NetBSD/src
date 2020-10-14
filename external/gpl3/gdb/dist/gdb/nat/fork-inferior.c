@@ -503,7 +503,6 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
 	  case TARGET_WAITKIND_SYSCALL_ENTRY:
 	  case TARGET_WAITKIND_SYSCALL_RETURN:
 	    /* Ignore gracefully during startup of the inferior.  */
-	    switch_to_thread (proc_target, event_ptid);
 	    break;
 
 	  case TARGET_WAITKIND_SIGNALLED:
@@ -536,7 +535,9 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
 
 	  case TARGET_WAITKIND_STOPPED:
 	    resume_signal = ws.value.sig;
-	    switch_to_thread (proc_target, event_ptid);
+	    /* Ignore gracefully the !TRAP signals intercepted from the shell.  */
+	    if (resume_signal == GDB_SIGNAL_TRAP)
+	      switch_to_thread (proc_target, event_ptid);
 	    break;
 	}
 
