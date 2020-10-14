@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.43 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.44 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,7 @@ void	XentRestart(void);				/* MAGIC */
 void	XentSys(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	XentUna(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	alpha_init(u_long, u_long, u_long, u_long, u_long);
+void	alpha_page_physload_sheltered(u_long, u_long, u_long, u_long);
 void	ast(struct trapframe *);
 int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);

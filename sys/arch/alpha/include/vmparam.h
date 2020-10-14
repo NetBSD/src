@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.39 2020/08/29 20:08:08 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.40 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,7 +125,8 @@
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define	VM_NFREELIST		1
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_SHELTERED	1
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */

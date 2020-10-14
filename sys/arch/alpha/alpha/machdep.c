@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.367 2020/10/10 21:59:03 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.368 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.367 2020/10/10 21:59:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.368 2020/10/14 00:59:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,69 @@ const pcu_ops_t fpu_ops = {
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 	[PCU_FPU] = &fpu_ops,
 };
+
+static void
+alpha_page_physload(unsigned long const start_pfn, unsigned long const end_pfn)
+{
+
+	/*
+	 * Some Alpha platforms may have unique requirements about
+	 * how physical memory is managed (e.g. reserving memory
+	 * ranges due to lack of SGMAP DMA).
+	 */
+	if (platform.page_physload != NULL) {
+		(*platform.page_physload)(start_pfn, end_pfn);
+		return;
+	}
+
+	uvm_page_physload(start_pfn, end_pfn, start_pfn, end_pfn,
+	    VM_FREELIST_DEFAULT);
+}
+
+void
+alpha_page_physload_sheltered(unsigned long const start_pfn,
+    unsigned long const end_pfn, unsigned long const shelter_start_pfn,
+    unsigned long const shelter_end_pfn)
+{
+
+	/*
+	 * If the added region ends before or starts after the sheltered
+	 * region, then it just goes on the default freelist.
+	 */
+	if (end_pfn <= shelter_start_pfn || start_pfn >= shelter_end_pfn) {
+		uvm_page_physload(start_pfn, end_pfn,
+		    start_pfn, end_pfn, VM_FREELIST_DEFAULT);
+		return;
+	}
+
+	/*
+	 * Load any portion that comes before the sheltered region.
+	 */
+	if (start_pfn < shelter_start_pfn) {
+		KASSERT(end_pfn > shelter_start_pfn);
+		uvm_page_physload(start_pfn, shelter_start_pfn,
+		    start_pfn, shelter_start_pfn, VM_FREELIST_DEFAULT);
+	}
+
+	/*
+	 * Load the portion that overlaps that sheltered region.
+	 */
+	const unsigned long ov_start = MAX(start_pfn, shelter_start_pfn);
+	const unsigned long ov_end = MIN(end_pfn, shelter_end_pfn);
+	KASSERT(ov_start >= shelter_start_pfn);
+	KASSERT(ov_end <= shelter_end_pfn);
+	uvm_page_physload(ov_start, ov_end, ov_start, ov_end,
+	    VM_FREELIST_SHELTERED);
+
+	/*
+	 * Load any portion that comes after the sheltered region.
+	 */
+	if (end_pfn > shelter_end_pfn) {
+		KASSERT(start_pfn < shelter_end_pfn);
+		uvm_page_physload(shelter_end_pfn, end_pfn,
+		    shelter_end_pfn, end_pfn, VM_FREELIST_DEFAULT);
+	}
+}
 
 void
 alpha_init(u_long xxx_pfn __unused, u_long ptb, u_long bim, u_long bip,
@@ -535,8 +598,7 @@ nobootinfo:
 				printf("Loading chunk before kernel: "
 				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
 #endif
-				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
+				alpha_page_physload(pfn0, kernstartpfn);
 			}
 			if (kernendpfn < pfn1) {
 				/*
@@ -546,8 +608,7 @@ nobootinfo:
 				printf("Loading chunk after kernel: "
 				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
 #endif
-				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
+				alpha_page_physload(kernendpfn, pfn1);
 			}
 		} else {
 			/*
@@ -557,8 +618,7 @@ nobootinfo:
 			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
 			    pfn0, pfn1);
 #endif
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
-			    VM_FREELIST_DEFAULT);
+			alpha_page_physload(pfn0, pfn1);
 		}
 	}
 
