@@ -1,4 +1,4 @@
-/* $NetBSD: jenseniovar.h,v 1.5 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: jenseniovar.h,v 1.6 2020/10/14 00:59:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ struct jensenio_scb_intrhand {
 	struct evcnt	jih_evcnt;
 };
 
+void	jensenio_page_physload(unsigned long, unsigned long);
 void	jensenio_init(struct jensenio_config *, int);
 void	jensenio_bus_io_init(bus_space_tag_t, void *);
 void	jensenio_bus_intio_init(bus_space_tag_t, void *);
