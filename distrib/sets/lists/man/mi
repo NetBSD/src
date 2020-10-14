@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1704 2020/09/27 13:31:04 roy Exp $
+# $NetBSD: mi,v 1.1705 2020/10/14 10:19:10 ryo Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2024,6 +2024,7 @@
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
+./usr/share/man/cat4/vmx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/voodoofb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
@@ -2089,7 +2090,6 @@
 ./usr/share/man/cat4/x86/tprof_amdpmi.0		man-obsolete		obsolete
 ./usr/share/man/cat4/x86/tprof_pmi.0		man-obsolete		obsolete
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
-./usr/share/man/cat4/x86/vmx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
@@ -5163,6 +5163,7 @@
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
+./usr/share/man/html4/vmx.html			man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
 ./usr/share/man/html4/voodoofb.html		man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
@@ -5228,7 +5229,6 @@
 ./usr/share/man/html4/x86/tprof_amdpmi.html	man-obsolete		obsolete
 ./usr/share/man/html4/x86/tprof_pmi.html	man-obsolete		obsolete
 ./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
-./usr/share/man/html4/x86/vmx.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
@@ -8234,6 +8234,7 @@
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
+./usr/share/man/man4/vmx.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/voodoofb.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
@@ -8299,7 +8300,6 @@
 ./usr/share/man/man4/x86/tprof_amdpmi.4		man-obsolete		obsolete
 ./usr/share/man/man4/x86/tprof_pmi.4		man-obsolete		obsolete
 ./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
-./usr/share/man/man4/x86/vmx.4			man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
 ./usr/share/man/man4/xbdback.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.431 2020/09/08 10:05:47 yamaguchi Exp $
+#	$NetBSD: files.pci,v 1.432 2020/10/14 10:19:11 ryo Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1177,3 +1177,9 @@ attach  wwanc at pci
 device  wwan: ifnet
 attach  wwan at wwanc
 file    dev/pci/xmm7360.c               wwanc | wwan            needs-flag
+
+# VMware VMXNET3 virtual interface
+device	vmx: ether, ifnet, arp
+attach	vmx at pci
+file	dev/pci/if_vmx.c	vmx
+
