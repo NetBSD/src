@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.12 2020/10/05 17:29:22 roy Exp $");
+__RCSID("$NetBSD: media.c,v 1.13 2020/10/14 13:37:14 roy Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -395,8 +395,7 @@ print_media_status(int media_type, int media_status)
 }
 
 void
-media_status(int media_type, int link_state,
-    prop_dictionary_t env, prop_dictionary_t oenv)
+media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifmediareq ifmr;
 	int af, i, s;
@@ -416,11 +415,17 @@ media_status(int media_type, int link_state,
 	estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
 	if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+		struct ifdatareq ifdr = { .ifdr_data.ifi_link_state = 0 };
+		struct if_data *ifi = &ifdr.ifdr_data;
+
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA.
 		 */
-		if (link_state != LINK_STATE_UNKNOWN)
-			print_link_status(media_type, link_state);
+		if (direct_ioctl(env, SIOCGIFDATA, &ifdr) == -1)
+			err(EXIT_FAILURE, "%s: SIOCGIFDATA", __func__);
+
+		if (ifi->ifi_link_state != LINK_STATE_UNKNOWN)
+			print_link_status(ifi->ifi_type, ifi->ifi_link_state);
 		return;
 	}
 
