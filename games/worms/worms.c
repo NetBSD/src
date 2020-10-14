@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.22 2012/06/19 05:46:09 dholland Exp $	*/
+/*	$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.22 2012/06/19 05:46:09 dholland Exp $");
+__RCSID("$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 	short **ref;
 	const char *field;
 	char *mp;
-	unsigned int delay = 0;
+	unsigned int delay = 20000;
 
 	mp = NULL;
 	length = 16;
