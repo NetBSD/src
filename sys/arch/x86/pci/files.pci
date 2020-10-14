@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.24 2018/03/01 06:36:12 mrg Exp $
+#	$NetBSD: files.pci,v 1.25 2020/10/14 10:19:11 ryo Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -79,11 +79,6 @@ file	arch/x86/pci/tcpcib.c		tcpcib
 device	fwhrng
 attach	fwhrng at fwhichbus
 file	arch/x86/pci/fwhrng.c		fwhrng needs-flag
-
-# VMware VMXNET3 virtual interface
-device	vmx: ether, ifnet, arp
-attach	vmx at pci
-file	arch/x86/pci/if_vmx.c		vmx
 
 # Intel Integrated Memory Controller and associated SMBus
 # (Experimental)
