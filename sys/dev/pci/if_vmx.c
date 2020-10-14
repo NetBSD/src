@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.1 2020/10/14 10:19:11 ryo Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.2 2020/10/14 10:26:59 ryo Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.1 2020/10/14 10:19:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.2 2020/10/14 10:26:59 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -29,6 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.1 2020/10/14 10:19:11 ryo Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/sockio.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
@@ -536,7 +537,7 @@ static inline int
 vmxnet3_txring_avail(struct vmxnet3_txring *txr)
 {
 	int avail = txr->vxtxr_next - txr->vxtxr_head - 1;
-	return (avail < 0 ? txr->vxtxr_ndesc + avail : avail);
+	return (avail < 0 ? (int)txr->vxtxr_ndesc + avail : avail);
 }
 
 /*
@@ -1372,7 +1373,8 @@ vmxnet3_alloc_txq_data(struct vmxnet3_softc *sc)
 	struct vmxnet3_txring *txr;
 	struct vmxnet3_comp_ring *txc;
 	size_t descsz, compsz;
-	int i, q, error;
+	u_int i;
+	int q, error;
 
 	dev = sc->vmx_dev;
 
@@ -1424,7 +1426,8 @@ vmxnet3_free_txq_data(struct vmxnet3_softc *sc)
 	struct vmxnet3_txring *txr;
 	struct vmxnet3_comp_ring *txc;
 	struct vmxnet3_txbuf *txb;
-	int i, q;
+	u_int i;
+	int q;
 
 	for (q = 0; q < sc->vmx_ntxqueues; q++) {
 		txq = &sc->vmx_queue[q].vxq_txqueue;
@@ -1460,7 +1463,8 @@ vmxnet3_alloc_rxq_data(struct vmxnet3_softc *sc)
 	struct vmxnet3_rxring *rxr;
 	struct vmxnet3_comp_ring *rxc;
 	int descsz, compsz;
-	int i, j, q, error;
+	u_int i, j;
+	int q, error;
 
 	dev = sc->vmx_dev;
 
@@ -1536,7 +1540,8 @@ vmxnet3_free_rxq_data(struct vmxnet3_softc *sc)
 	struct vmxnet3_rxring *rxr;
 	struct vmxnet3_comp_ring *rxc;
 	struct vmxnet3_rxbuf *rxb;
-	int i, j, q;
+	u_int i, j;
+	int q;
 
 	for (q = 0; q < sc->vmx_nrxqueues; q++) {
 		rxq = &sc->vmx_queue[q].vxq_rxqueue;
@@ -2337,7 +2342,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 	struct vmxnet3_rxdesc *rxd __diagused;
 	struct vmxnet3_rxcompdesc *rxcd;
 	struct mbuf *m, *m_head, *m_tail;
-	int idx, length;
+	u_int idx, length;
 	bool more = false;
 
 	sc = rxq->vxrxq_sc;
@@ -2648,7 +2653,7 @@ vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_txring *txr;
 	struct vmxnet3_txbuf *txb;
-	int i;
+	u_int i;
 
 	txr = &txq->vxtxq_cmd_ring;
 
@@ -2672,7 +2677,7 @@ vmxnet3_rxstop(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_rxring *rxr;
 	struct vmxnet3_rxbuf *rxb;
-	int i, j;
+	u_int i, j;
 
 	if (rxq->vxrxq_mhead != NULL) {
 		m_freem(rxq->vxrxq_mhead);
@@ -2780,7 +2785,8 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_rxring *rxr;
 	struct vmxnet3_comp_ring *rxc;
-	int i, populate, idx, error;
+	u_int i, populate, idx;
+	int error;
 
 	/* LRO and jumbo frame is not supported yet */
 	populate = 1;
@@ -3377,7 +3383,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		if (ifp->if_mtu != nmtu) {
+		if (ifp->if_mtu != (uint64_t)nmtu) {
 			s = splnet();
 			error = ether_ioctl(ifp, cmd, data);
 			splx(s);
@@ -3656,3 +3662,33 @@ vmxnet3_dma_free(struct vmxnet3_softc *sc, struct vmxnet3_dma_alloc *dma)
 
 	memset(dma, 0, sizeof(*dma));
 }
+
+MODULE(MODULE_CLASS_DRIVER, if_vmx, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_vmx_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_vmx,
+		    cfattach_ioconf_if_vmx, cfdata_ioconf_if_vmx);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_vmx,
+		    cfattach_ioconf_if_vmx, cfdata_ioconf_if_vmx);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
+}
+
