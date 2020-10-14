@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2020/10/12 16:14:35 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2020/10/14 08:49:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,6 +84,7 @@ md_get_info(struct install_partition_desc *install)
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
+again:
 	if (pm->parts == NULL) {
 
 		const struct disk_partitioning_scheme *ps =
