@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.56 2018/11/13 14:52:30 mlelstv Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.57 2020/10/14 05:19:41 jhigh Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -620,8 +620,12 @@ cb_keyring_read(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 		key->subsigc += 1;
 		break;
 	case PGP_PTAG_CT_TRUST:
-		key->subsigs[key->subsigc - 1].trustlevel = pkt->u.ss_trust.level;
-		key->subsigs[key->subsigc - 1].trustamount = pkt->u.ss_trust.amount;
+		EXPAND_ARRAY(key, subsig);
+		key->subsigs[key->subsigc].trustlevel = pkt->u.ss_trust.level;
+		key->subsigs[key->subsigc].trustamount = pkt->u.ss_trust.amount;
+
+		key->subsigc += 1;
+
 		break;
 	case PGP_PTAG_SS_KEY_EXPIRY:
 		EXPAND_ARRAY(keyring, key);
@@ -667,7 +671,6 @@ cb_keyring_read(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 	default:
 		break;
 	}
-
 	return PGP_RELEASE_MEMORY;
 }
 

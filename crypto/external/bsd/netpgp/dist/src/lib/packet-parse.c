@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.52 2018/11/13 14:52:30 mlelstv Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.53 2020/10/14 05:19:41 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -984,6 +984,7 @@ pgp_parser_content_free(pgp_packet_t *c)
 	case PGP_PTAG_SS_PRIMARY_USER_ID:
 	case PGP_PTAG_SS_REVOCABLE:
 	case PGP_PTAG_SS_REVOCATION_KEY:
+	case PGP_PTAG_SS_ISSUER_FINGERPRINT:
 	case PGP_PTAG_CT_LITDATA_HEADER:
 	case PGP_PTAG_CT_LITDATA_BODY:
 	case PGP_PTAG_CT_SIGNED_CLEARTEXT_BODY:
@@ -1554,6 +1555,7 @@ parse_one_sig_subpacket(pgp_sig_t *sig,
 	pgp_packet_t	pkt;
 	uint8_t		bools = 0x0;
 	uint8_t		c = 0x0;
+	uint8_t		temp = 0x0;
 	unsigned	doread = 1;
 	unsigned        t8;
 	unsigned        t7;
@@ -1760,6 +1762,26 @@ parse_one_sig_subpacket(pgp_sig_t *sig,
 		/* the rest is a human-readable UTF-8 string */
 		if (!read_string(&pkt.u.ss_revocation.reason, &subregion,
 				stream)) {
+			return 0;
+		}
+		break;
+
+	case PGP_PTAG_SS_ISSUER_FINGERPRINT:
+		/* octet 0: version */
+		/* 	0x04:20 bytes, 0x05:32 bytes */
+		if (!limread(&temp, 1, &subregion, stream)) {
+			return 0;
+		}
+
+		switch (temp) {
+			case 0x04: pkt.u.ss_issuer_fingerprint.len = 20; break;
+			case 0x05: pkt.u.ss_issuer_fingerprint.len = 32; break;
+			default:
+				return 0;
+		}
+
+		if (!limread(pkt.u.ss_issuer_fingerprint.fingerprint, 
+			pkt.u.ss_issuer_fingerprint.len, &subregion, stream)) {
 			return 0;
 		}
 		break;
