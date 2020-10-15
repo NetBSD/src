@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2014/02/19 13:01:51 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.2 2020/10/15 05:43:38 skrll Exp $
 
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,4 +36,4 @@ define _REG_PCOQH	_REG_PCOQH
 define _REG_PCOQT	_REG_PCOQT
 define _REG_RET0	_REG_RET0
 
-define _OFFSETOF_UC_GREGS	offsetof(ucontext_t, uc_mcontext.__gregs[0])
+define _UC_GREGS	offsetof(ucontext_t, uc_mcontext.__gregs[0])
