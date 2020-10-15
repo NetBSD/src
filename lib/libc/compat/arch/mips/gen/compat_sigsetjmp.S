@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.2 2009/12/14 03:04:33 matt Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2020/10/15 05:27:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -42,7 +42,7 @@
 #if 0
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	ASMSTR("$NetBSD: compat_sigsetjmp.S,v 1.2 2009/12/14 03:04:33 matt Exp $")
+	ASMSTR("$NetBSD: compat_sigsetjmp.S,v 1.3 2020/10/15 05:27:53 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@
 LEAF(sigsetjmp)
 	SETUP_GP
 	SETUP_GP64(t0, sigsetjmp)
-	INT_S	a1, _OFFSETOF_SC_MASK13(a0)	# save "savemask"
+	INT_S	a1, _SC_MASK13(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
 	PTR_LA	t9, _C_LABEL(_setjmp)
 	jr	t9
@@ -73,7 +73,7 @@ END(sigsetjmp)
 LEAF(siglongjmp)
 	SETUP_GP
 	SETUP_GP64(t0, siglongjmp)
-	INT_L	t1, _OFFSETOF_SC_MASK13(a0)	# get "savemask"
+	INT_L	t1, _SC_MASK13(a0)		# get "savemask"
 	bne	t1, 0x0, 1f			# restore signal mask?
 	PTR_LA	t9, _C_LABEL(_longjmp)
 	jr	t9
