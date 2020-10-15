@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_xmm_s87.c,v 1.6 2020/10/15 17:43:08 mgorny Exp $	*/
+/*	$NetBSD: convert_xmm_s87.c,v 1.7 2020/10/15 17:43:30 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.6 2020/10/15 17:43:08 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.7 2020/10/15 17:43:30 mgorny Exp $");
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <x86/fpu.h>
 
 void
