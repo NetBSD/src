@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.21 2020/06/14 16:12:05 riastradh Exp $	*/
+/*	$NetBSD: fpu.h,v 1.22 2020/10/15 17:40:14 mgorny Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -23,6 +23,9 @@ void fpu_set_default_cw(struct lwp *, unsigned int);
 
 void fputrap(struct trapframe *);
 void fpudna(struct trapframe *);
+
+void process_xmm_to_s87(const struct fxsave *, struct save87 *);
+void process_s87_to_xmm(const struct save87 *, struct fxsave *);
 
 void fpu_clear(struct lwp *, unsigned int);
 void fpu_sigreset(struct lwp *);
