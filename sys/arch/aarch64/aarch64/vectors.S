@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.20 2020/10/06 06:26:46 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.21 2020/10/15 08:37:20 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -10,7 +10,7 @@
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 
-RCSID("$NetBSD: vectors.S,v 1.20 2020/10/06 06:26:46 skrll Exp $")
+RCSID("$NetBSD: vectors.S,v 1.21 2020/10/15 08:37:20 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -255,26 +255,26 @@ ENTRY_NP(el0_trap)
 	nop				/* dummy for DDB backtrace (for lr-4) */
 #endif
 ENTRY_NP(el0_trap_exit)
-	DISABLE_INTERRUPT		/* make sure I|F marked */
+
+	adr	lr, 1f			/* return address from trap_doast */
 1:
 	/* while (curlwp->l_md.md_astpending != 0) { */
-	mrs	x8, tpidr_el1
-	ldr	w9, [x8, #L_MD_ASTPENDING]
-	cbz	w9, 9f
+	DISABLE_INTERRUPT		/* make sure I|F marked */
+	mrs	x9, tpidr_el1
+	ldr	w8, [x9, #L_MD_ASTPENDING]
+	cbz	w8, 9f
 
 	/* curlwp->l_md.md_astpending = 0; */
-	str	xzr, [x8, #L_MD_ASTPENDING]
+	str	xzr, [x9, #L_MD_ASTPENDING]
 
 	/*  trap_doast(tf); */
 	ENABLE_INTERRUPT
 	mov	x0, sp
-	bl	_C_LABEL(trap_doast)
-	DISABLE_INTERRUPT
-	b	1b
+	b	_C_LABEL(trap_doast)	/* tail call (return to 1b) */
 	/* } */
 9:
 
-	mrs	x9, tpidr_el1
+	/* x9 is tpidr_el1 */
 	ldr	x23, [x9, #L_MD_CPACR]
 	msr	cpacr_el1, x23		/* FP unit EL0 handover */
 	isb				/* necessary? */
