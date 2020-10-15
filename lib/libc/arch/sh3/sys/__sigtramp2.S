@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.3 2008/04/28 20:22:57 martin Exp $ */
+/*	$NetBSD: __sigtramp2.S,v 1.4 2020/10/15 05:50:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * NB: This order is different from what other ports use (siginfo at
  * the top of the stack), because we want to avoid wasting two
  * instructions to skip to the ucontext.  Not that this order really
- * matters, but I think this inconsistency deserves an explanation.	
+ * matters, but I think this inconsistency deserves an explanation.
  */
 NENTRY(__sigtramp_siginfo_2)
 	mov	r15, r4			/* get pointer to ucontext */
