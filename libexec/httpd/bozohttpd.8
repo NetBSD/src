@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.86 2020/10/15 04:21:53 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.87 2020/10/15 09:54:22 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -127,7 +127,8 @@ Enables CGI/1.1 interface for
 .Em ~user
 translation.
 Note that enabling this support implies that users can run commands
-as the web server user. This may have security implications.
+as the web server user.
+This may have security implications.
 .It Fl e
 Causes
 .Nm
@@ -141,7 +142,8 @@ Stops the
 .Fl b
 flag from detaching
 .Nm
-from the tty and going into the background. This implies the
+from the tty and going into the background.
+This implies the
 .Fl b
 flag.
 .It Fl G
@@ -809,7 +811,7 @@ provided chroot and change-to-user support, and other various fixes
 .An Jukka Ruohonen
 .Aq Mt jruoho@NetBSD.org
 provided support for
-.Xr blocklist 8
+.Xr blocklistd 8
 .It
 .An Jared McNeill
 .Aq Mt jmcneill@NetBSD.org
