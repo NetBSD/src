@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.19 2020/08/09 07:26:20 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.20 2020/10/15 22:30:34 rin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.19 2020/08/09 07:26:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.20 2020/10/15 22:30:34 rin Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -134,7 +134,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	vaddr_t va;
 	uint32_t esr, fsc, rw;
 	vm_prot_t ftype;
-	int error = 0, len;
+	int error = EFAULT, len;
 	const bool user = IS_SPSR_USER(tf->tf_spsr) ? true : false;
 	bool is_pan_trap = false;
 
@@ -169,10 +169,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		map = &p->p_vmspace->vm_map;
 		UVMHIST_LOG(pmaphist, "use user vm_map %p (kernel_map=%p)",
 		   map, kernel_map, 0, 0);
-	} else {
-		error = EINVAL;
+	} else
 		goto do_fault;
-	}
 
 	if ((eclass == ESR_EC_INSN_ABT_EL0) || (eclass == ESR_EC_INSN_ABT_EL1))
 		ftype = VM_PROT_EXECUTE;
@@ -223,7 +221,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	if (curcpu()->ci_intr_depth == 0) {
 		fb = cpu_disable_onfault();
 		if (fb != NULL) {
-			cpu_jump_onfault(tf, fb, EFAULT);
+			cpu_jump_onfault(tf, fb, error);
 			return;
 		}
 	}
