@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.121 2020/09/05 13:38:24 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.122 2020/10/15 02:19:23 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20200820"
+#define SERVER_SOFTWARE		"bozohttpd/20201014"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -651,7 +651,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	 * if passed through a proxy that doesn't rewrite the port.
 	 */
 	if (httpd->bindport) {
-		if (strcmp(httpd->bindport, "80") != 0)
+		if (strcmp(httpd->bindport, BOZO_HTTP_PORT) != 0)
 			port = httpd->bindport;
 		else
 			port = NULL;
@@ -1099,7 +1099,7 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 		hostname = "";
 		portbuf[0] = '\0';
 	} else {
-		const char *defport = httpd->sslinfo ? "443" : "80";
+		const char *defport = httpd->sslinfo ? BOZO_HTTPS_PORT : BOZO_HTTP_PORT;
 
 		if (request->hr_serverport &&
 		    strcmp(request->hr_serverport, defport) != 0)
@@ -1335,7 +1335,8 @@ check_virtual(bozo_httpreq_t *request)
 	 * canonicalise hr_host - that is, remove any :80.
 	 */
 	len = strlen(request->hr_host);
-	if (len > 3 && strcmp(request->hr_host + len - 3, ":80") == 0) {
+	if (len > 3 &&
+	    strcmp(request->hr_host + len - 3, ":" BOZO_HTTP_PORT) == 0) {
 		request->hr_host[len - 3] = '\0';
 		len = strlen(request->hr_host);
 	}
@@ -1554,7 +1555,7 @@ bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 		if (s[1] == '0' && s[2] == '0')
 			return bozo_http_error(httpd, 404, request,
 			    "percent hack was %00");
-		if (s[1] == '2' && s[2] == 'f')
+		if (s[1] == '2' && (s[2] == 'f' || s[2] == 'F'))
 			return bozo_http_error(httpd, 404, request,
 			    "percent hack was %2f (/)");
 
@@ -2213,7 +2214,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	}
 
 	if (request && request->hr_serverport &&
-	    strcmp(request->hr_serverport, "80") != 0)
+	    strcmp(request->hr_serverport, BOZO_HTTP_PORT) != 0)
 		snprintf(portbuf, sizeof(portbuf), ":%s",
 				request->hr_serverport);
 	else
