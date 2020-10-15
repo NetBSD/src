@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.60 2020/09/14 04:57:20 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.61 2020/10/15 10:09:49 roy Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.60 2020/09/14 04:57:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.61 2020/10/15 10:09:49 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3509,6 +3509,8 @@ wg_destroy_peer_name(struct wg_softc *wg, const char *name)
 		garbage_bypubkey = thmap_stage_gc(wg->wg_peers_bypubkey);
 		WG_PEER_WRITER_REMOVE(wgp);
 		wg->wg_npeers--;
+		if (wg->wg_npeers == 0)
+			if_link_state_change(&wg->wg_if, LINK_STATE_DOWN);
 		mutex_enter(wgp->wgp_lock);
 		pserialize_perform(wgp->wgp_psz);
 		mutex_exit(wgp->wgp_lock);
@@ -3536,8 +3538,7 @@ wg_if_attach(struct wg_softc *wg)
 	wg->wg_if.if_addrlen = 0;
 	wg->wg_if.if_mtu = WG_MTU;
 	wg->wg_if.if_flags = IFF_MULTICAST;
-	wg->wg_if.if_extflags = IFEF_NO_LINK_STATE_CHANGE;
-	wg->wg_if.if_extflags |= IFEF_MPSAFE;
+	wg->wg_if.if_extflags = IFEF_MPSAFE;
 	wg->wg_if.if_ioctl = wg_ioctl;
 	wg->wg_if.if_output = wg_output;
 	wg->wg_if.if_init = wg_init;
@@ -3556,6 +3557,7 @@ wg_if_attach(struct wg_softc *wg)
 	if (error != 0)
 		return error;
 
+	wg->wg_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&wg->wg_if);
 	if_register(&wg->wg_if);
 
@@ -4380,6 +4382,8 @@ wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 	WG_PEER_WRITER_INSERT_HEAD(wgp, wg);
 	wg->wg_npeers++;
 	mutex_exit(wg->wg_lock);
+
+	if_link_state_change(&wg->wg_if, LINK_STATE_UP);
 
 out:
 	kmem_free(buf, ifd->ifd_len + 1);
