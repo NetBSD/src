@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.134 2020/08/21 20:46:03 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.135 2020/10/15 09:37:40 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.134 2020/08/21 20:46:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.135 2020/10/15 09:37:40 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -312,6 +312,12 @@ xhci_write_4(const struct xhci_softc * const sc, bus_size_t offset,
 }
 #endif /* unused */
 
+static inline void
+xhci_barrier(const struct xhci_softc * const sc, int flags)
+{
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_ios, flags);
+}
+
 static inline uint32_t
 xhci_cap_read_4(const struct xhci_softc * const sc, bus_size_t offset)
 {
@@ -367,13 +373,6 @@ xhci_op_write_8(const struct xhci_softc * const sc, bus_size_t offset,
 	} else {
 		bus_space_write_4(sc->sc_iot, sc->sc_obh, offset, value);
 	}
-}
-
-static inline void
-xhci_op_barrier(const struct xhci_softc * const sc, bus_size_t offset,
-    bus_size_t len, int flags)
-{
-	bus_space_barrier(sc->sc_iot, sc->sc_obh, offset, len, flags);
 }
 
 static inline uint32_t
@@ -1229,7 +1228,7 @@ xhci_init(struct xhci_softc *sc)
 	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(sc->sc_cr, 0) |
 	    sc->sc_cr->xr_cs);
 
-	xhci_op_barrier(sc, 0, 4, BUS_SPACE_BARRIER_WRITE);
+	xhci_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 
 	HEXDUMP("eventst", KERNADDR(&sc->sc_eventst_dma, 0),
 	    XHCI_ERSTE_SIZE * XHCI_EVENT_RING_SEGMENTS);
