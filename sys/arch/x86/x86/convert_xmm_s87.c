@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_xmm_s87.c,v 1.5 2020/10/15 17:42:31 mgorny Exp $	*/
+/*	$NetBSD: convert_xmm_s87.c,v 1.6 2020/10/15 17:43:08 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.5 2020/10/15 17:42:31 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.6 2020/10/15 17:43:08 mgorny Exp $");
 
 
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.5 2020/10/15 17:42:31 mgorny E
 void
 process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 {
-	unsigned int tag, ab_tag;
+	unsigned int tag, ab_tag, st;
 	const struct fpaccfx *fx_reg;
 	struct fpacc87 *s87_reg;
 	int i;
@@ -95,12 +95,28 @@ process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 		return;
 	}
 
+	/* For ST(i), i = fpu_reg - top, we start with fpu_reg=7. */
+	st = 7 - ((sxmm->fx_sw >> 11) & 7);
 	tag = 0;
-	/* Separate bits of abridged tag word with zeros */
-	for (i = 0x80; i != 0; tag <<= 1, i >>= 1)
-		tag |= ab_tag & i;
-	/* Replicate and invert so that 0 => 0b11 and 1 => 0b00 */
-	s87->s87_tw = (tag | tag >> 1) ^ 0xffff;
+	for (i = 0x80; i != 0; i >>= 1) {
+		tag <<= 2;
+		if (ab_tag & i) {
+			unsigned int exp;
+			/* Non-empty - we need to check ST(i) */
+			fx_reg = &sxmm->fx_87_ac[st];
+			exp = fx_reg->r.f87_exp_sign & 0x7fff;
+			if (exp == 0) {
+				if (fx_reg->r.f87_mantissa == 0)
+					tag |= 1; /* Zero */
+				else
+					tag |= 2; /* Denormal */
+			} else if (exp == 0x7fff)
+				tag |= 2; /* Infinity or NaN */
+		} else
+			tag |= 3; /* Empty */
+		st = (st - 1) & 7;
+	}
+	s87->s87_tw = tag;
 }
 
 void

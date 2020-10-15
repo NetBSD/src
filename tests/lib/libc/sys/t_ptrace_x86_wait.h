@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.27 2020/10/09 17:43:30 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.28 2020/10/15 17:43:09 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -3367,10 +3367,8 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				    expected_fpu.cw);
 				ATF_CHECK_EQ(fpr.fstate.s87_sw,
 				    expected_fpu.sw);
-#if 0 /* TODO: translation from FXSAVE is broken */
 				ATF_CHECK_EQ(fpr.fstate.s87_tw,
 				    expected_fpu.tw);
-#endif
 				ATF_CHECK_EQ(fpr.fstate.s87_opcode,
 				    expected_fpu.opcode);
 				ATF_CHECK_EQ(fpr.fstate.s87_ip.fa_32.fa_off,
