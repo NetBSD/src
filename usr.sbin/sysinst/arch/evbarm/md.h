@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2.2.2 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: md.h,v 1.2.2.3 2020/10/15 19:36:52 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@
 #define BOARD_TYPE_NORMAL	0	/* assume u-boot */
 #define BOARD_TYPE_RPI		1	/* RPi firmware booted us */
 #define	BOARD_TYPE_ACPI		2	/* generic SBSA machine */
-int boardtype;
+extern int boardtype;
 
 /*
  * Size limit for the initial GPT part, in bytes. This allows us to
@@ -117,4 +117,6 @@ void evbarm_part_defaults(struct pm_devs*, struct part_usage_info*,
             size_t num_usage_infos);
 
 #define MD_PART_DEFAULTS(A,B,C)	evbarm_part_defaults(A,B,C)
+
+#define	HAVE_EFI_BOOT		1	/* we support EFI boot partitions */
 

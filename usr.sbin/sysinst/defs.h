@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.7 2020/02/10 21:39:37 bouyer Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.8 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ const char *getfslabelname(uint, uint);
  * if a system has less ram (in MB) than this, we will not create a
  * tmpfs /tmp by default (to workaround PR misc/54886)
  */
-#define	SMALL_RAM_SIZE		256
+#define	SMALL_RAM_SIZE		384
 
 /* helper macros to create unique internal error messages */
 #define STR_NO(STR)	#STR
@@ -103,7 +103,15 @@ const char *getfslabelname(uint, uint);
 #define RUN_XFER_DIR	0x0200		/* cd to xfer_dir in child */
 
 /* for bsddisklabel.c */
-enum layout_type { LY_KEEPEXISTING, LY_SETSIZES, LY_USEDEFAULT, LY_USEFULL };
+enum layout_type {
+	LY_KEEPEXISTING,	/* keep exisiting partitions */
+	LY_OTHERSCHEME,		/* delete all, select new partitioning scheme */
+	LY_SETSIZES,		/* edit sizes */
+	LY_USEDEFAULT,		/* use default sizes */
+	LY_USEFULL,		/* use full disk for NetBSD */
+	LY_ERROR		/* used for "abort" in menu */
+};
+
 enum setup_type { SY_NEWRAID, SY_NEWCGD, SY_NEWLVM };
 
 /* Installation sets */
@@ -298,6 +306,7 @@ struct part_usage_info {
 	unsigned int instflags;		/* installer handling flags */
 	uint fs_type, fs_version;	/* e.g. FS_LFS, or FS_BSDFS,
 					 * version = 2 for FFSv2 */
+	uint fs_opt1, fs_opt2, fs_opt3;	/* FS specific, FFS: block/frag */
 #ifndef	NO_CLONES
 	/*
 	 * Only != NULL when PUIFLG_CLONE_PARTS is set, describes the
@@ -317,10 +326,17 @@ struct part_usage_info {
  * A list of partition suggestions, bundled for editing
  */
 struct partition_usage_set {
-	struct disk_partitions *parts;
-	size_t num;
+	struct disk_partitions *parts;	/* main partition table */
+	size_t num;			/* number of infos */
 	struct part_usage_info *infos;	/* 0 .. num-1 */
+	struct disk_partitions **write_back;
+					/* partition tables from which we
+					 * did delete some partitions and
+					 * that need updating, even if
+					 * no active partition remains. */
+	size_t num_write_back;		/* number of write_back */
 	daddr_t cur_free_space;		/* estimate of free sectors */
+	daddr_t reserved_space;		/* space we are not allowed to use */
 	menu_ent *menu_opts;		/* 0 .. num+N */
 	int menu;			/* the menu to edit this */
 	bool ok;			/* ok to continue (all fit) */
@@ -332,7 +348,7 @@ struct partition_usage_set {
  */
 struct single_part_fs_edit {
  	struct partition_usage_set *pset;
-	size_t index, first_custom_attr;
+	size_t index, first_custom_attr, offset, mode;
 	part_id id;
 	struct disk_part_info info;	/* current partition data */
 	struct part_usage_info *wanted;	/* points at our edit data */
@@ -355,37 +371,42 @@ struct single_part_fs_edit {
 struct install_partition_desc {
 	size_t num;				/* how many entries in infos */
 	struct part_usage_info *infos;		/* individual partitions */
+	struct disk_partitions **write_back;	/* partition tables from 
+						 * which we did delete some
+						 * partitions and that need
+						 * updating, even if no
+						 * active partition remains. */
+	size_t num_write_back;			/* number of write_back */
 	bool cur_system;			/* target is the life system */
 };
 
 /* variables */
 
-int debug;		/* set by -D option */
+extern int debug;		/* set by -D option */
 
-char rel[SSTRSIZE];
-char machine[SSTRSIZE];
+extern char machine[SSTRSIZE];
 
-int ignorerror;
-int ttysig_ignore;
-pid_t ttysig_forward;
-uint sizemult;
+extern int ignorerror;
+extern int ttysig_ignore;
+extern pid_t ttysig_forward;
+extern uint sizemult;
 extern const char *multname;
 extern const char *err_outofmem;
-int partman_go; /* run extended partition manager */
+extern int partman_go; /* run extended partition manager */
 
 /* logging variables */
 
-FILE *logfp;
-FILE *script;
+extern FILE *logfp;
+extern FILE *script;
 
 #define MAX_DISKS 15
 
-daddr_t root_limit;    /* BIOS (etc) read limit */
+extern daddr_t root_limit;    /* BIOS (etc) read limit */
 
 enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM };
 
 /* All information that is unique for each drive */
-SLIST_HEAD(pm_head_t, pm_devs) pm_head;
+extern SLIST_HEAD(pm_head_t, pm_devs) pm_head;
 
 struct pm_devs {
 	/*
@@ -454,8 +475,8 @@ struct pm_devs {
 
 	SLIST_ENTRY(pm_devs) l;
 };
-struct pm_devs *pm; /* Pointer to current device with which we work */
-struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
+extern struct pm_devs *pm; /* Pointer to current device with which we work */
+extern struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
 
 /* Generic structure for partman */
 struct part_entry {
@@ -470,8 +491,8 @@ struct part_entry {
 };
 
 /* Relative file name for storing a distribution. */
-char xfer_dir[STRSIZE];
-int  clean_xfer_dir;
+extern char xfer_dir[STRSIZE];
+extern int  clean_xfer_dir;
 
 #if !defined(SYSINST_FTP_HOST)
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
@@ -531,28 +552,28 @@ int  clean_xfer_dir;
 #endif
 
 /* Abs. path we extract binary sets from */
-char ext_dir_bin[STRSIZE];
+extern char ext_dir_bin[STRSIZE];
 
 /* Abs. path we extract source sets from */
-char ext_dir_src[STRSIZE];
+extern char ext_dir_src[STRSIZE];
 
 /* Abs. path we extract pkgsrc from */
-char ext_dir_pkgsrc[STRSIZE];
+extern char ext_dir_pkgsrc[STRSIZE];
 
 /* Place we look for binary sets in all fs types */
-char set_dir_bin[STRSIZE];
+extern char set_dir_bin[STRSIZE];
 
 /* Place we look for source sets in all fs types */
-char set_dir_src[STRSIZE];
+extern char set_dir_src[STRSIZE];
 
 /* Place we look for pkgs in all fs types */
-char pkg_dir[STRSIZE];
+extern char pkg_dir[STRSIZE];
 
 /* Place we look for pkgsrc in all fs types */
-char pkgsrc_dir[STRSIZE];
+extern char pkgsrc_dir[STRSIZE];
 
 /* User shell */
-const char *ushell;
+extern const char *ushell;
 
 #define	XFER_FTP	0
 #define	XFER_HTTP	1
@@ -568,26 +589,26 @@ struct ftpinfo {
 };
 
 /* use the same struct for sets ftp and to build pkgpath */
-struct ftpinfo ftp, pkg, pkgsrc;
+extern struct ftpinfo ftp, pkg, pkgsrc;
 
-int (*fetch_fn)(const char *);
-char nfs_host[STRSIZE];
-char nfs_dir[STRSIZE];
+extern int (*fetch_fn)(const char *);
+extern char nfs_host[STRSIZE];
+extern char nfs_dir[STRSIZE];
 
-char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
-char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
-const char *fd_type;			/* "msdos", "ffs" or maybe "ados" */
+extern char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
+extern char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
+extern const char *fd_type;			/* "msdos", "ffs" or maybe "ados" */
 
-char localfs_dev[SSTRSIZE];
-char localfs_fs[SSTRSIZE];
-char localfs_dir[STRSIZE];
+extern char localfs_dev[SSTRSIZE];
+extern char localfs_fs[SSTRSIZE];
+extern char localfs_dir[STRSIZE];
 
-char targetroot_mnt[SSTRSIZE];
+extern char targetroot_mnt[SSTRSIZE];
 
-int  mnt2_mounted;
+extern int  mnt2_mounted;
 
-char dist_postfix[SSTRSIZE];
-char dist_tgz_postfix[SSTRSIZE];
+extern char dist_postfix[SSTRSIZE];
+extern char dist_tgz_postfix[SSTRSIZE];
 
 /* needed prototypes */
 void set_menu_numopts(int, int);
@@ -602,7 +623,8 @@ void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */
 bool	md_get_info(struct install_partition_desc*);
-bool	md_make_bsd_partitions(struct install_partition_desc*);
+/* returns -1 to restart partitioning, 0 for error, 1 for success */
+int	md_make_bsd_partitions(struct install_partition_desc*);
 bool	md_check_partitions(struct install_partition_desc*);
 #ifdef HAVE_GPT
 /*
@@ -674,8 +696,14 @@ void	disp_cur_fspart(int, int);
 int	make_filesystems(struct install_partition_desc *);
 int	make_fstab(struct install_partition_desc *);
 int	mount_disks(struct install_partition_desc *);
+/*
+ * set_swap_if_low_ram and set_swap return -1 on error,
+ * 0 if no swap was added on purpose and
+ * 1 if swap has been added (and needs to be cleared later).
+ */
 int	set_swap_if_low_ram(struct install_partition_desc *);
 int	set_swap(struct install_partition_desc *);
+void	clear_swap(void);
 int	check_swap(const char *, int);
 char *bootxx_name(struct install_partition_desc *);
 int get_dkwedges(struct dkwedge_info **, const char *);
@@ -715,8 +743,8 @@ void	canonicalize_last_mounted(char*);
 int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset, bool install);
 int edit_ptn(menudesc *, void *);
 int checkoverlap(struct disk_partitions *parts);
-daddr_t getpartsize(struct disk_partitions *parts, daddr_t partstart,
-    daddr_t defpartsize);
+daddr_t getpartsize(struct disk_partitions *parts, daddr_t orig_start,
+    daddr_t partstart, daddr_t defpartsize);
 daddr_t getpartoff(struct disk_partitions *parts, daddr_t defpartstart);
 
 /* from install.c */
@@ -763,7 +791,13 @@ int	err_msg_win(const char*);
 const struct disk_partitioning_scheme *select_part_scheme(struct pm_devs *dev,
     const struct disk_partitioning_scheme *skip, bool bootable,
     const char *title);
-bool	edit_outer_parts(struct disk_partitions*);
+/*
+ * return value:
+ *  0 -> abort
+ *  1 -> ok, continue
+ *  -1 -> partitions have been deleted, start from scratch
+*/
+int	edit_outer_parts(struct disk_partitions*);
 bool	parts_use_wholedisk(struct disk_partitions*,
 	     size_t add_ext_parts, const struct disk_part_info *ext_parts);
 
@@ -929,7 +963,8 @@ extern int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 void check_available_binaries(void);
 
 /* from bsddisklabel.c */
-bool	make_bsd_partitions(struct install_partition_desc*);
+/* returns -1 to restart partitioning, 0 for error, 1 for success */
+int	make_bsd_partitions(struct install_partition_desc*);
 void	set_ptn_titles(menudesc *, int, void *);
 int	set_ptn_size(menudesc *, void *);
 bool	get_ptn_sizes(struct partition_usage_set*);
@@ -952,7 +987,7 @@ void	do_configmenu(struct install_partition_desc*);
 /* from checkrc.c */
 int	check_rcvar(const char *);
 int	check_rcdefault(const char *);
-	WINDOW *mainwin;
+extern	WINDOW *mainwin;
 
 /* in menus.mi */
 void expand_all_option_texts(menudesc *menu, void *arg);

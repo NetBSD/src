@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22.2.2 2019/12/17 09:48:30 msaitoh Exp $
+#	$NetBSD: Makefile.inc,v 1.22.2.3 2020/10/15 19:36:50 bouyer Exp $
 #
 # Makefile for sysinst
 
@@ -119,10 +119,10 @@ O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
 CPPFLAGS+=-DDEBUG
 DBG +=-g -O0 ${O0TRACKING}
-.endif
-
-.if empty(DBG:M-g)
+.else
+.if defined(SMALLPROG)
 COPTS += -Os
+.endif
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6.2.1 2019/11/17 07:04:34 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.6.2.2 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -123,3 +123,5 @@ void x86_md_part_defaults(struct pm_devs*, struct part_usage_info**,
 /* no need to install bootblock if installing for UEFI */
 bool x86_md_need_bootblock(struct install_partition_desc *install);
 #define	MD_NEED_BOOTBLOCK(A)	x86_md_need_bootblock(A)
+
+#define	HAVE_EFI_BOOT		1	/* we support EFI boot partitions */

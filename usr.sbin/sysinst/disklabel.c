@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10.2.9 2020/02/10 21:39:37 bouyer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.2.10 2020/10/15 19:36:50 bouyer Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -42,9 +42,9 @@ const struct disk_partitioning_scheme disklabel_parts;
 struct disklabel_disk_partitions {
 	struct disk_partitions dp;
 	struct disklabel l;
-	daddr_t ptn_alignment;
+	daddr_t ptn_alignment, install_target;
 	char last_mounted[MAXPARTITIONS][MOUNTLEN];
-	uint fs_sub_type[MAXPARTITIONS];
+	uint fs_sub_type[MAXPARTITIONS], fs_opt3[MAXPARTITIONS];
 };
 
 /*
@@ -150,6 +150,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 	if (parts == NULL)
 		return NULL;
 
+	parts->install_target = -1;
 	total_size = geo.dg_secperunit;
 	if (len*(geo.dg_secsize/512) > disklabel_parts.size_limit)
 		len = disklabel_parts.size_limit/(geo.dg_secsize/512);
@@ -172,7 +173,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 
 	strncpy(parts->l.d_packname, "fictious", sizeof parts->l.d_packname);
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->dp.parent != NULL) {
 		parts->l.d_partitions[RAW_PART-1].p_fstype = FS_UNUSED;
 		parts->l.d_partitions[RAW_PART-1].p_offset = start;
@@ -213,6 +214,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 	struct disklabel_disk_partitions *parts = calloc(1, sizeof(*parts));
 	if (parts == NULL)
 		return NULL;
+	parts->install_target = -1;
 
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
 	if (fd == -1) {
@@ -231,7 +233,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		close(fd);
 		return NULL;
 	}
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->l.d_partitions[RAW_PART-1].p_fstype == FS_UNUSED) {
 		daddr_t dlstart = parts->l.d_partitions[RAW_PART-1].p_offset;
 		daddr_t dlend = start +
@@ -272,8 +274,12 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		flags = 0;
 		if (parts->l.d_partitions[part].p_fstype == FS_MSDOS)
 			flags = GLM_MAYBE_FAT32;
-		else if (parts->l.d_partitions[part].p_fstype == FS_BSDFFS)
+		else if (parts->l.d_partitions[part].p_fstype == FS_BSDFFS) {
 			flags = GLM_LIKELY_FFS;
+			if (parts->install_target < 0)
+				parts->install_target =
+				    parts->l.d_partitions[part].p_offset;
+		}
 		if (flags != 0) {
 			uint fs_type, fs_sub_type;
 			const char *lm = get_last_mounted(fd,
@@ -467,7 +473,7 @@ disklabel_delete_all(struct disk_partitions *arg)
 	memset(&parts->l.d_partitions, 0, sizeof(parts->l.d_partitions));
 	parts->dp.num_part = 0;
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 	if (parts->dp.parent != NULL) {
 		parts->l.d_partitions[RAW_PART-1].p_fstype = FS_UNUSED;
 		parts->l.d_partitions[RAW_PART-1].p_offset =
@@ -501,7 +507,7 @@ disklabel_delete(struct disk_partitions *arg, part_id id,
 
 		if (ndx == id) {
 			if (part == RAW_PART
-#if RAW_PART > 2
+#if RAW_PART == 3
 				|| (part == RAW_PART-1 &&
 				    parts->dp.parent != NULL)
 #endif
@@ -511,6 +517,9 @@ disklabel_delete(struct disk_partitions *arg, part_id id,
 					    MSG_part_not_deletable);
 				return false;
 			}
+			if (parts->install_target ==
+			    parts->l.d_partitions[part].p_offset)
+				parts->install_target = -1;
 			parts->l.d_partitions[part].p_size = 0;
 			parts->l.d_partitions[part].p_offset = 0;
 			parts->l.d_partitions[part].p_fstype = FS_UNUSED;
@@ -543,7 +552,7 @@ disklabel_delete_range(struct disk_partitions *arg, daddr_t r_start,
 		daddr_t start = parts->l.d_partitions[part].p_offset;
 		daddr_t end = start + parts->l.d_partitions[part].p_size;
 
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (parts->dp.parent != NULL &&
 		    part == RAW_PART - 1 && start == r_start &&
 		    r_start + r_size == end)
@@ -552,6 +561,8 @@ disklabel_delete_range(struct disk_partitions *arg, daddr_t r_start,
 
 		if ((start >= r_start && start <= r_start+r_size) ||
 		    (end >= r_start && end <= r_start+r_size)) {
+			if (start == parts->install_target)
+				parts->install_target  = -1;
 			if (parts->dp.num_part > 1)
 				parts->dp.num_part--;
 			parts->dp.free_space +=
@@ -582,6 +593,9 @@ dl_init_types(void)
 				pt = PT_root; break;
 		case FS_SWAP:	pt = PT_swap; break;
 		case FS_MSDOS:	pt = PT_FAT; break;
+		case FS_EX2FS:	pt = PT_EXT2; break;
+		case FS_SYSVBFS:
+				pt = PT_SYSVBFS; break;
 		default:	pt = PT_unknown; break;
 		}
 		dl_types[i].generic_ptype = pt;
@@ -707,6 +721,9 @@ disklabel_get_generic_type(enum part_type pt)
 	case PT_FAT:
 	case PT_EFI_SYSTEM:
 			nt = FS_MSDOS; break;
+	case PT_EXT2:	nt = FS_EX2FS; break;
+	case PT_SYSVBFS:
+			nt = FS_SYSVBFS; break;
 	default:	nt = FS_UNUSED; break;
 	}
 
@@ -755,11 +772,17 @@ disklabel_get_part_info(const struct disk_partitions *arg, part_id id,
 				info->last_mounted = parts->last_mounted[part];
 			info->fs_type = parts->l.d_partitions[part].p_fstype;
 			info->fs_sub_type = parts->fs_sub_type[part];
+			info->fs_opt2 = parts->l.d_partitions[part].p_fsize;
+			info->fs_opt1 = info->fs_opt2 *
+			    parts->l.d_partitions[part].p_frag;
+			info->fs_opt3 = parts->fs_opt3[part];
 			if (part == RAW_PART &&
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
 				    PTI_PSCHEME_INTERNAL|PTI_RAW_PART;
-#if RAW_PART > 2
+			if (info->start == parts->install_target)
+				info->flags |= PTI_INSTALL_TARGET;
+#if RAW_PART == 3
 			if (part == (RAW_PART-1) && parts->dp.parent != NULL &&
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
@@ -783,6 +806,7 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 	struct disklabel_disk_partitions *parts =
 	    (struct disklabel_disk_partitions*)arg;
 	part_id ndx;
+	bool was_inst_target;
 
 	if (dl_types[0].description == NULL)
 		dl_init_types();
@@ -794,15 +818,28 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 			continue;
 
 		if (ndx == id) {
+			was_inst_target = parts->l.d_partitions[part].p_offset
+			    == parts->install_target;
 			parts->l.d_partitions[part].p_offset = info->start;
 			parts->l.d_partitions[part].p_size = info->size;
 			parts->l.d_partitions[part].p_fstype =
 			    dl_part_type_from_generic(info->nat_type);
+			parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+			if (info->fs_opt2 != 0)
+				parts->l.d_partitions[part].p_frag =
+				    info->fs_opt1 / info->fs_opt2;
+			else
+				parts->l.d_partitions[part].p_frag = 0;
+			parts->fs_opt3[part] = info->fs_opt3;
 			if (info->last_mounted != NULL &&
 			    info->last_mounted != parts->last_mounted[part])
 				strlcpy(parts->last_mounted[part],
 				    info->last_mounted,
 				    sizeof(parts->last_mounted[part]));
+			if (info->flags & PTI_INSTALL_TARGET)
+				parts->install_target = info->start;
+			else if (was_inst_target)
+				parts->install_target = -1;
 			assert(info->fs_type == 0 || info->fs_type ==
 			    parts->l.d_partitions[part].p_fstype);
 			if (info->fs_sub_type != 0)
@@ -906,7 +943,7 @@ disklabel_can_add_partition(const struct disk_partitions *arg)
 	for (i = 0; i < parts->l.d_npartitions; i++) {
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
@@ -1061,7 +1098,7 @@ disklabel_add_partition(struct disk_partitions *arg,
 			continue;
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
@@ -1085,6 +1122,12 @@ disklabel_add_partition(struct disk_partitions *arg,
 	parts->l.d_partitions[part].p_size = data.size;
 	parts->l.d_partitions[part].p_fstype =
 	     dl_part_type_from_generic(data.nat_type);
+	parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+	if (info->fs_opt2 != 0)
+		parts->l.d_partitions[part].p_frag =
+		    info->fs_opt1 / info->fs_opt2;
+	else
+		parts->l.d_partitions[part].p_frag = 0;
 	if (data.last_mounted && data.last_mounted[0])
 		strlcpy(parts->last_mounted[part], data.last_mounted,
 		    sizeof(parts->last_mounted[part]));
@@ -1124,7 +1167,7 @@ disklabel_add_outer_partition(struct disk_partitions *arg,
 			continue;
 		if (i == RAW_PART)
 			continue;
-#if RAW_PART > 2
+#if RAW_PART == 3
 		if (i == RAW_PART-1 && parts->dp.parent != NULL)
 			continue;
 #endif
@@ -1148,6 +1191,12 @@ disklabel_add_outer_partition(struct disk_partitions *arg,
 	parts->l.d_partitions[part].p_size = info->size;
 	parts->l.d_partitions[part].p_fstype =
 	     dl_part_type_from_generic(info->nat_type);
+	parts->l.d_partitions[part].p_fsize = info->fs_opt2;
+	if (info->fs_opt2 != 0)
+		parts->l.d_partitions[part].p_frag =
+		    info->fs_opt1 / info->fs_opt2;
+	else
+		parts->l.d_partitions[part].p_frag = 0;
 	if (info->last_mounted && info->last_mounted[0])
 		strlcpy(parts->last_mounted[part], info->last_mounted,
 		    sizeof(parts->last_mounted[part]));
@@ -1233,6 +1282,14 @@ disklabel_free(struct disk_partitions *arg)
 	free(arg);
 }
 
+static void
+disklabel_destroy_part_scheme(struct disk_partitions *arg)
+{
+
+	run_program(RUN_SILENT, "disklabel -D %s", arg->disk);
+	free(arg);
+}
+
 const struct disk_partitioning_scheme
 disklabel_parts = {
 	.name = MSG_parttype_disklabel,
@@ -1271,4 +1328,5 @@ disklabel_parts = {
 	.get_free_spaces = disklabel_get_free_spaces,
 	.get_part_device = disklabel_get_part_device,
 	.free = disklabel_free,
+	.destroy_part_scheme = disklabel_destroy_part_scheme,
 };

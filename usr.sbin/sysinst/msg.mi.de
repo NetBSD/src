@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.13.2.7 2020/02/10 21:39:37 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.13.2.8 2020/10/15 19:36:50 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,9 +146,6 @@ message heads
 
 message sectors
 {Sektoren}
-
-message fs_isize
-{Durchschnittliche Dateigröße (in Bytes)}
 
 message mountpoint
 {Mountpoint (oder 'kein(e)'))}
@@ -409,12 +406,6 @@ message label_offset_tail	{Start ($2)}
 
 message invalid_sector_number
 {Ungültiger Wert}
-
-message Select_file_system_block_size
-{Wählen Sie die Blockgröße des Dateisystems aus}
-
-message Select_file_system_fragment_size
-{Wählen Sie die Fragmentgröße des Dateisystems aus}
 
 message packname
 {Bitte geben Sie Ihrer NetBSD-Festplatte einen Namen}
@@ -1065,10 +1056,18 @@ message Set_Sizes {Größen der NetBSD-Partitionen festlegen}
  */
 message Use_Default_Parts {Standard-Partitionsgößen verwenden}
 
-message Gigabytes {Gigabytes}
-message Megabytes {Megabytes}
-message Cylinders {Zylinder}
-message Sectors {Sektoren}
+/* Called with:				Example
+ *  $0 = current partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_Different_Part_Scheme
+{Alles löschen, anderes Partitionierungsverfahren statt $1 verwenden}
+
+message Gigabytes	{Gigabyte}
+message Megabytes	{Megabyte}
+message Bytes		{Byte}
+message Cylinders	{Zylinder}
+message Sectors		{Sektoren}
 message Select_medium {Medium auswählen}
 message ftp {FTP}
 message http {HTTP}
@@ -1328,6 +1327,25 @@ message ptn_type	{Typ}
 message ptn_start	{Start}
 message ptn_size	{Größe}
 message ptn_end		{Ende}
+
+message ptn_bsize	{Blockgröße}
+message ptn_fsize	{Fragmentgröße}
+message ptn_isize	{Durchschnittliche Dateigröße}
+
+/* Called with:				Example
+ *  $0 = avg file size in byte		1200
+ */
+message ptn_isize_bytes	{$0 Bytes (zur Inode-Bestimmung)}
+message ptn_isize_dflt	{4 Fragmente}
+
+message Select_file_system_block_size
+{Wählen Sie die Blockgröße des Dateisystems aus}
+
+message Select_file_system_fragment_size
+{Wählen Sie die Fragmentgröße des Dateisystems aus}
+
+message ptn_isize_prompt
+{Durchschnittliche Dateigröße (in Bytes)}
 
 message Invalid_numeric {Ungültige Zahl!}
 message Too_large {Zu groß!}

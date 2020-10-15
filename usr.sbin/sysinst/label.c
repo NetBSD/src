@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.5 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.6 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.5 2020/01/28 10:17:58 msaitoh Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.6 2020/10/15 19:36:51 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: label.c,v 1.10.2.5 2020/01/28 10:17:58 msaitoh Exp $");
 #include <sys/dkio.h>
 #include <sys/param.h>
 #include <sys/bootblock.h>
+#include <sys/bitops.h>
 #include <ufs/ffs/fs.h>
 
 #include "defs.h"
@@ -187,11 +188,10 @@ verify_parts(struct partition_usage_set *pset, bool install)
 	struct part_usage_info *wanted;
 	struct disk_partitions *parts;
 	size_t i, num_root;
-	daddr_t first_bsdstart, first_bsdsize, inst_start, inst_size;
+	daddr_t first_bsdstart, inst_start;
 	int rv;
 
-	first_bsdstart = first_bsdsize = 0;
-	inst_start = inst_size = 0;
+	first_bsdstart = inst_start = -1;
 	num_root = 0;
 	parts = pset->parts;
 	for (i = 0; i < pset->num; i++) {
@@ -207,18 +207,17 @@ verify_parts(struct partition_usage_set *pset, bool install)
 			continue;
 		num_root++;
  
-		if (first_bsdstart == 0) {
+		if (first_bsdstart <= 0) {
 			first_bsdstart = wanted->cur_start;
-			first_bsdsize = wanted->size;
 		}
-		if (inst_start == 0 && wanted->cur_start == pm->ptstart) {
+		if (inst_start < 0 &&
+		    (wanted->cur_flags & PTI_INSTALL_TARGET)) {
 			inst_start = wanted->cur_start;
-			inst_size = wanted->size;
 		}
 	}
 
 	if ((num_root == 0 && install) ||
-	    (num_root > 1 && inst_start == 0)) {
+	    (num_root > 1 && inst_start < 0)) {
 		if (num_root == 0 && install)
 			msg_display_subst(MSG_must_be_one_root, 2,
 			    msg_string(parts->pscheme->name),
@@ -230,21 +229,6 @@ verify_parts(struct partition_usage_set *pset, bool install)
 		rv = ask_reedit(parts);
 		if (rv != 2)
 			return rv;
-	}
-
-	if (pm->ptstart == 0) {
-		if (inst_start > 0) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		} else if (first_bsdstart > 0) {
-			pm->ptstart = first_bsdstart;
-			pm->ptsize = first_bsdsize;
-		} else if (parts->pscheme->guess_install_target &&
-			   parts->pscheme->guess_install_target(
-			   parts, &inst_start, &inst_size)) {
-			pm->ptstart = inst_start;
-			pm->ptsize = inst_size;
-		}
 	}
 
 	/* Check for overlaps */
@@ -291,15 +275,111 @@ static int
 edit_fs_size(menudesc *m, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
+	struct disk_part_info pinfo;
 	daddr_t size;
 
-	size = getpartsize(edit->pset->parts, edit->info.start,
-	    edit->info.size);
+	/* get original partition data, in case start moved already */
+	edit->pset->parts->pscheme->get_part_info(edit->pset->parts,
+	    edit->id, &pinfo);
+	/* ask for new size with old start and current values */
+	size = getpartsize(edit->pset->parts, pinfo.start,
+	    edit->info.start, edit->info.size);
 	if (size < 0)
 		return 0;
 	if (size > edit->pset->parts->disk_size)
 		size = edit->pset->parts->disk_size - edit->info.start;
 	edit->info.size = size;
+	return 0;
+}
+
+static int
+set_ffs_opt_pow2(menudesc *m, void *arg)
+{
+	struct single_part_fs_edit *edit = arg;
+	size_t val = 1 << (edit->offset+m->cursel);
+
+	if (edit->mode == 1) {
+		edit->info.fs_opt1 = val;
+		edit->wanted->fs_opt1 = val;
+	} else if (edit->mode == 2) {
+		edit->info.fs_opt2 = val;
+		edit->wanted->fs_opt2 = val;
+	}
+	return 0;
+}
+
+static int
+edit_fs_ffs_opt(menudesc *m, void *arg, msg head,
+    size_t min_val, size_t max_val)
+{
+	struct single_part_fs_edit *edit = arg;
+	menu_ent opts[min(MAXPHYS/4096, 8)];
+	char names[min(MAXPHYS/4096, 8)][20];
+	size_t i, val;
+	int menu;
+
+	edit->offset = ilog2(min_val);
+	memset(opts, 0, sizeof opts);
+	for (i = 0, val = min_val; val <= max_val; i++, val <<= 1) {
+		snprintf(names[i], sizeof names[i], "%zu", val);
+		opts[i].opt_name = names[i];
+		opts[i].opt_action = set_ffs_opt_pow2;
+		opts[i].opt_flags = OPT_EXIT;
+	}
+	menu = new_menu(head, opts, i, 40, 6, 0, 0, MC_NOEXITOPT,
+	    NULL, NULL, NULL, NULL, NULL);
+	if (menu < 0)
+		return 1;
+	process_menu(menu, arg);
+	free_menu(menu);
+	return 0;
+}
+
+static int
+edit_fs_ffs_block(menudesc *m, void *arg)
+{
+	struct single_part_fs_edit *edit = arg;
+
+	edit->mode = 1;		/* edit fs_opt1 */
+	return edit_fs_ffs_opt(m, arg, MSG_Select_file_system_block_size,
+	    4096, MAXPHYS);
+}
+
+static int
+edit_fs_ffs_frag(menudesc *m, void *arg)
+{
+	struct single_part_fs_edit *edit = arg;
+	size_t bsize, sec_size;
+
+	edit->mode = 2;		/* edit fs_opt2 */
+	bsize = edit->info.fs_opt1;
+	if (bsize == 0) {
+		sec_size = edit->wanted->parts->bytes_per_sector;
+		if (edit->wanted->size >= (daddr_t)(128L*(GIG/sec_size)))
+			bsize = 32*1024;
+		else if (edit->wanted->size >= (daddr_t)(1000L*(MEG/sec_size)))
+			bsize = 16*1024;
+		else if (edit->wanted->size >= (daddr_t)(20L*(MEG/sec_size)))
+			bsize = 8*1024;
+		else
+			bsize = 4+1024;
+	}
+	return edit_fs_ffs_opt(m, arg, MSG_Select_file_system_fragment_size,
+		bsize / 8, bsize);
+}
+
+static int
+edit_fs_ffs_avg_size(menudesc *m, void *arg)
+{
+	struct single_part_fs_edit *edit = arg;
+	char answer[12];
+
+	snprintf(answer, sizeof answer, "%u", edit->info.fs_opt3);
+	msg_prompt_win(MSG_ptn_isize_prompt, -1, 18, 0, 0,
+		answer, answer, sizeof answer);
+	edit->info.fs_opt3 = atol(answer);
+	edit->wanted->fs_opt3 = edit->info.fs_opt3;
+
 	return 0;
 }
 
@@ -317,10 +397,7 @@ edit_install(menudesc *m, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
 
-	if (edit->info.start == pm->ptstart)
-		pm->ptstart = 0;
-	else
-		pm->ptstart = edit->info.start;
+	edit->info.flags ^= PTI_INSTALL_TARGET;
 	return 0;
 }
 
@@ -356,7 +433,7 @@ edit_fs_mountpt(menudesc *m, void *arg)
 	if (last != NULL)
 		last[1] = 0;
 
-	if (*first == 0 || strcmp(first, "none") == 0) {
+	if (first == NULL || *first == 0 || strcmp(first, "none") == 0) {
 		edit->wanted->mount[0] = 0;
 		edit->wanted->instflags &= ~PUIINST_MOUNT;
 		return 0;
@@ -428,12 +505,15 @@ renumber_partitions(struct partition_usage_set *pset)
 				continue;
 			if (pset->infos[i].cur_flags != info.flags)
 				continue;
-			if (pset->infos[i].type != info.nat_type->generic_ptype)
-				continue;
-			memcpy(&ninfos[pno], &pset->infos[i],
-			    sizeof(ninfos[pno]));
-			ninfos[pno].cur_part_id = pno;
-			break;
+			if ((info.fs_type != FS_UNUSED &&
+			    info.fs_type == pset->infos[i].fs_type) ||
+			    (pset->infos[i].type ==
+			    info.nat_type->generic_ptype)) {
+				memcpy(&ninfos[pno], &pset->infos[i],
+				    sizeof(ninfos[pno]));
+				ninfos[pno].cur_part_id = pno;
+				break;
+			}
 		}
 	}
 
@@ -710,6 +790,29 @@ static void update_edit_ptn_menu(menudesc *m, void *arg);
 static void draw_edit_ptn_line(menudesc *m, int opt, void *arg);
 static int edit_ptn_custom_type(menudesc *m, void *arg);
 
+static void
+remember_deleted(struct partition_usage_set *pset,
+    struct disk_partitions *parts)
+{
+	size_t i, num;
+	struct disk_partitions **tab;
+
+	/* do we have parts on record already? */
+	for (i = 0; i < pset->num_write_back; i++)
+		if (pset->write_back[i] == parts)
+			return;
+	/*
+	 * Need to record this partition table for write back
+	 */
+	num = pset->num_write_back + 1;
+	tab = realloc(pset->write_back, num*sizeof(*pset->write_back));
+	if (!tab)
+		return;
+	tab[pset->num_write_back] = parts;
+	pset->write_back = tab;
+	pset->num_write_back = num;
+}
+
 int
 edit_ptn(menudesc *menu, void *arg)
 {
@@ -737,6 +840,13 @@ edit_ptn(menudesc *menu, void *arg)
 		{ .opt_menu=MENU_mountoptions, .opt_flags=OPT_SUB },
 		{ .opt_action=edit_fs_mountpt },
 	};
+
+	static const menu_ent edit_ptn_fields_ffs[] = {
+		{ .opt_action=edit_fs_ffs_avg_size },
+		{ .opt_action=edit_fs_ffs_block },
+		{ .opt_action=edit_fs_ffs_frag },
+	};
+
 	static const menu_ent edit_ptn_fields_tail[] = {
 		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
 		  .opt_flags=OPT_SUB },
@@ -760,6 +870,9 @@ edit_ptn(menudesc *menu, void *arg)
 	num_opts = __arraycount(edit_ptn_fields_head) +
 	    __arraycount(edit_ptn_fields_head2) +
 	    __arraycount(edit_ptn_fields_tail);
+	if (edit.wanted->fs_type == FS_BSDFFS ||
+	    edit.wanted->fs_type == FS_BSDLFS)
+		num_opts += __arraycount(edit_ptn_fields_ffs);
 	if (with_inst_opt)
 		num_opts += __arraycount(edit_ptn_fields_head_add);
 	if (is_new_part)
@@ -781,6 +894,11 @@ edit_ptn(menudesc *menu, void *arg)
 	}
 	memcpy(popt, edit_ptn_fields_head2, sizeof(edit_ptn_fields_head2));
 	popt +=  __arraycount(edit_ptn_fields_head2);
+	if (edit.wanted->fs_type == FS_BSDFFS ||
+	    edit.wanted->fs_type == FS_BSDLFS) {
+		memcpy(popt, edit_ptn_fields_ffs, sizeof(edit_ptn_fields_ffs));
+		popt +=  __arraycount(edit_ptn_fields_ffs);
+	}
 	edit.first_custom_attr = popt - mopts;
 	if (!is_new_part) {
 		for (size_t i = 0;
@@ -835,6 +953,7 @@ edit_ptn(menudesc *menu, void *arg)
 	if (edit.rv == 0) {	/* OK, set new data */
 		edit.info.last_mounted = edit.wanted->mount;
 		if (is_new_part) {
+			edit.wanted->parts = pset->parts;
 			edit.wanted->cur_part_id = pset->parts->pscheme->
 			    add_partition(pset->parts, &edit.info, &err);
 			if (edit.wanted->cur_part_id == NO_PART)
@@ -883,6 +1002,9 @@ edit_ptn(menudesc *menu, void *arg)
 			err_msg_win(err);
 			return 0;
 		}
+		remember_deleted(pset,
+		    pset->infos[edit.index].parts);
+		pset->cur_free_space += pset->infos[edit.index].size;
 		memmove(pset->infos+edit.index,
 		    pset->infos+edit.index+1,
 		    sizeof(*pset->infos)*(pset->num-edit.index));
@@ -891,6 +1013,8 @@ edit_ptn(menudesc *menu, void *arg)
 		    sizeof(*menu->opts)*(menu->numopts-edit.index));
 		menu->numopts--;
 		menu->cursel = 0;
+		if (pset->parts->num_part == 0)
+			menu->cursel = 1;	/* skip sentinel line */
 
 		/* things have changed, re-sort */
 		pset->num--;
@@ -958,7 +1082,7 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 	static int col_width;
 	static const char *ptn_type, *ptn_start, *ptn_size, *ptn_end,
 	     *ptn_newfs, *ptn_mount, *ptn_mount_options, *ptn_mountpt,
-	     *ptn_install;
+	     *ptn_install, *ptn_bsize, *ptn_fsize, *ptn_isize;
 	const char *c;
 	char val[MENUSTRSIZE];
 	const char *attrname;
@@ -979,6 +1103,9 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 		LOAD(ptn_mount);
 		LOAD(ptn_mount_options);
 		LOAD(ptn_mountpt);
+		LOAD(ptn_bsize);
+		LOAD(ptn_fsize);
+		LOAD(ptn_isize);
 #undef LOAD
 
 		for (size_t i = 0;
@@ -1031,7 +1158,7 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 	}
 	if (m->opts[opt].opt_action == edit_install) {
 		wprintw(m->mw, "%*s : %s", col_width, ptn_install,
-			msg_string(edit->info.start == pm->ptstart
+			msg_string((edit->info.flags & PTI_INSTALL_TARGET)
 			    ? MSG_Yes : MSG_No));
 		return;
 	}
@@ -1045,6 +1172,33 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 		wprintw(m->mw, "%*s : %s", col_width, ptn_mount,
 			msg_string(edit->wanted->instflags & PUIINST_MOUNT
 			    ? MSG_Yes : MSG_No));
+		return;
+	}
+	if (m->opts[opt].opt_action == edit_fs_ffs_block) {
+		wprintw(m->mw, "%*s : %u", col_width, ptn_bsize,
+			edit->wanted->fs_opt1);
+		return;
+	}
+	if (m->opts[opt].opt_action == edit_fs_ffs_frag) {
+		wprintw(m->mw, "%*s : %u", col_width, ptn_fsize,
+			edit->wanted->fs_opt2);
+		return;
+	}
+	if (m->opts[opt].opt_action == edit_fs_ffs_avg_size) {
+		if (edit->wanted->fs_opt3 == 0)
+			wprintw(m->mw, "%*s : %s", col_width, ptn_isize,
+				msg_string(MSG_ptn_isize_dflt));
+		else {
+        	        char buf[24], *line;
+			const char *t = buf;
+
+			snprintf(buf, sizeof buf, "%u", edit->wanted->fs_opt3);
+			line = str_arg_subst(msg_string(MSG_ptn_isize_bytes),
+			    1, &t);
+			wprintw(m->mw, "%*s : %s", col_width, ptn_isize,
+				line);
+			free(line);
+		}
 		return;
 	}
 	if (m->opts[opt].opt_menu == MENU_mountoptions) {
@@ -1285,7 +1439,7 @@ fmt_fspart_row(menudesc *m, int ptn, void *arg)
 
 	fp = flag_str;
 	inst_flags = pset->infos[ptn].instflags;
-	if (with_inst_flag && info.start == pm->ptstart &&
+	if (with_inst_flag && (info.flags & PTI_INSTALL_TARGET) &&
 	    info.nat_type->generic_ptype == PT_root) {
 		static char inst_flag;
 
@@ -1418,7 +1572,7 @@ part_ext_clone(menudesc *m, void *arg)
 		clones[clone_cnt].new_id = cid;
 		clones[clone_cnt].ndx = s;
 		clone_cnt++;
-		offset = rounddown(cinfo.start+cinfo.size+align, align);
+		offset = roundup(cinfo.start+cinfo.size, align);
 	}
 
 	/* insert new clone records at offset data.res */
@@ -2012,7 +2166,8 @@ getpartoff(struct disk_partitions *parts, daddr_t defpartstart)
 
 /* Ask for a partition size, check bounds and do the needed roundups */
 daddr_t
-getpartsize(struct disk_partitions *parts, daddr_t partstart, daddr_t dflt)
+getpartsize(struct disk_partitions *parts, daddr_t orig_start,
+    daddr_t partstart, daddr_t dflt)
 {
 	char dsize[24], isize[24], max_size[24], maxpartc, valid_parts[4],
 	    *label_msg, *prompt, *head, *hint, *tail;
@@ -2022,7 +2177,10 @@ getpartsize(struct disk_partitions *parts, daddr_t partstart, daddr_t dflt)
 	part_id partn;
 
 	diskend = parts->disk_start + parts->disk_size;
-	max = parts->pscheme->max_free_space_at(parts, partstart);
+	max = parts->pscheme->max_free_space_at(parts, orig_start);
+	max += orig_start - partstart;
+	if (sizemult == 1)
+		max--;	/* with hugher scale proper rounding later will be ok */
 
 	/* We need to keep both the unrounded and rounded (_r) max and dflt */
 	dflt_r = (partstart + dflt) / sizemult - partstart / sizemult;
