@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigpending.S,v 1.2 2009/12/14 03:04:33 matt Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.3 2020/10/15 05:27:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: compat_sigpending.S,v 1.2 2009/12/14 03:04:33 matt Exp $")
+	RCSID("$NetBSD: compat_sigpending.S,v 1.3 2020/10/15 05:27:53 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ LEAF(sigpending)
 
 	SYSTRAP(compat_13_sigpending13)
 	bne	a3, zero, 1f
-	INT_S	v0, _OFFSETOF_SC_ONSTACK(a0)
+	INT_S	v0, _SC_ONSTACK(a0)
 	move	v0, zero
 	PIC_RETURN()
 

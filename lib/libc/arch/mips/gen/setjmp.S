@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.19 2010/09/03 17:22:51 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.20 2020/10/15 05:27:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.19 2010/09/03 17:22:51 matt Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.20 2020/10/15 05:27:53 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,7 +70,7 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	move		s0, a0				# save sigcontext
 
 	/* Get the signal mask. */
-	PTR_ADDU	a2, a0, _OFFSETOF_SC_MASK	# &sc.sc_mask
+	PTR_ADDU	a2, a0, _SC_MASK		# &sc.sc_mask
 	move		a1, zero
 	jal		_C_LABEL(__sigprocmask14)	# get current signal mask
 
@@ -80,14 +80,14 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	jal		_C_LABEL(__sigaltstack14)
 
 	move		a0, s0				# restore jmpbuf
-	INT_L		v1, CALLFRAME_SIZ+_OFFSETOF_STACK_T_FLAGS(sp)
+	INT_L		v1, CALLFRAME_SIZ+_STACK_T_FLAGS(sp)
 							# get old ss_onstack
 	and		v1, v1, SS_ONSTACK		# extract onstack flag
-	INT_S		v1, _OFFSETOF_SC_ONSTACK(a0)	# save it in sc_onstack
+	INT_S		v1, _SC_ONSTACK(a0)		# save it in sc_onstack
 
 	REG_L		s0, CALLFRAME_S0(sp)		# restore S0
 	REG_L		ra, CALLFRAME_RA(sp)		# restore RA
-	blt		v0, zero, botch		# check for sigaltstack() error
+	blt		v0, zero, botch			# check for sigaltstack() error
 	nop
 	/*
 	 * We know we won't need this routine's GP anymore.
@@ -97,46 +97,46 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 
 
 	REG_PROLOGUE
-	REG_S	ra, _OFFSETOF_SC_PC(a0)		# sc_pc = return address
-	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
-	REG_S	v0, _OFFSETOF_SC_REGS(a0)	#   saved in sc_regs[0]
-	REG_S	s0, _OFFSETOF_SC_REGS_S0(a0)
-	REG_S	s1, _OFFSETOF_SC_REGS_S1(a0)
-	REG_S	s2, _OFFSETOF_SC_REGS_S2(a0)
-	REG_S	s3, _OFFSETOF_SC_REGS_S3(a0)
-	REG_S	s4, _OFFSETOF_SC_REGS_S4(a0)
-	REG_S	s5, _OFFSETOF_SC_REGS_S5(a0)
-	REG_S	s6, _OFFSETOF_SC_REGS_S6(a0)
-	REG_S	s7, _OFFSETOF_SC_REGS_S7(a0)
-	REG_S	gp, _OFFSETOF_SC_REGS_GP(a0)
-	REG_S	sp, _OFFSETOF_SC_REGS_SP(a0)
-	REG_S	s8, _OFFSETOF_SC_REGS_S8(a0)
+	REG_S	ra, _SC_PC(a0)				# sc_pc = return address
+	REG_LI	v0, 0xACEDBADE				# sigcontext magic number
+	REG_S	v0, _SC_REGS(a0)			#   saved in sc_regs[0]
+	REG_S	s0, _SC_REGS_S0(a0)
+	REG_S	s1, _SC_REGS_S1(a0)
+	REG_S	s2, _SC_REGS_S2(a0)
+	REG_S	s3, _SC_REGS_S3(a0)
+	REG_S	s4, _SC_REGS_S4(a0)
+	REG_S	s5, _SC_REGS_S5(a0)
+	REG_S	s6, _SC_REGS_S6(a0)
+	REG_S	s7, _SC_REGS_S7(a0)
+	REG_S	gp, _SC_REGS_GP(a0)
+	REG_S	sp, _SC_REGS_SP(a0)
+	REG_S	s8, _SC_REGS_S8(a0)
 #ifdef SOFTFLOAT_FOR_GCC
-	INT_S	zero, _OFFSETOF_SC_FPUSED(a0)	# sc_fpused = 0
+	INT_S	zero, _SC_FPUSED(a0)			# sc_fpused = 0
 #else
-	li	v0, 1				# be nice if we could tell
-	INT_S	v0, _OFFSETOF_SC_FPUSED(a0)	# sc_fpused = 1
+	li	v0, 1					# be nice if we could tell
+	INT_S	v0, _SC_FPUSED(a0)			# sc_fpused = 1
 	cfc1	v0, $31
-	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
+	INT_S	v0, _SC_FPREGS_FCSR(a0)
 #if defined(__mips_o32) || defined(__mips_o64) || defined(__mips_n32)
-	FP_S	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
-	FP_S	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+	FP_S	$f20, _SC_FPREGS_F20(a0)
+	FP_S	$f22, _SC_FPREGS_F22(a0)
 #endif
 #if defined(__mips_o32) || defined(__mips_o64)
-	FP_S	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
-	FP_S	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+	FP_S	$f21, _SC_FPREGS_F21(a0)
+	FP_S	$f23, _SC_FPREGS_F23(a0)
 #endif
 #if defined(__mips_n32) || defined(__mips_n64)
-	FP_S	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
-	FP_S	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
-	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
-	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FP_S	$f24, _SC_FPREGS_F24(a0)
+	FP_S	$f26, _SC_FPREGS_F26(a0)
+	FP_S	$f28, _SC_FPREGS_F28(a0)
+	FP_S	$f30, _SC_FPREGS_F30(a0)
 #endif
 #if defined(__mips_n64)
-	FP_S	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
-	FP_S	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
-	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
-	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+	FP_S	$f25, _SC_FPREGS_F25(a0)
+	FP_S	$f27, _SC_FPREGS_F27(a0)
+	FP_S	$f29, _SC_FPREGS_F29(a0)
+	FP_S	$f31, _SC_FPREGS_F31(a0)
 #endif
 #endif	/* SOFTFLOAT_FOR_GCC */
 	REG_EPILOGUE
