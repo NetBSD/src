@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.70 2020/05/14 13:32:15 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.71 2020/10/15 17:37:36 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -243,6 +243,7 @@ struct ptrace_methods {
 
 int	ptrace_init(void);
 int	ptrace_fini(void);
+int	ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid);
 void	ptrace_hooks(void);
 
 int	process_doregs(struct lwp *, struct lwp *, struct uio *);
@@ -337,7 +338,7 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 #endif
 
-int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
+int	ptrace_machdep_dorequest(struct lwp *, struct lwp **, int,
 	    void *, int);
 
 #ifndef FIX_SSTEP

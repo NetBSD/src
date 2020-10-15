@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.39 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.40 2020/10/15 17:37:36 mgorny Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2020/10/15 17:37:36 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -188,7 +188,7 @@ process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 }
 
 int
-ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
+ptrace_machdep_dorequest(struct lwp *l, struct lwp **lt,
 	int req, void *addr, int data)
 {
 	struct uio uio;
@@ -201,7 +201,9 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 
 	case PT_GETVECREGS:
 		/* write = 0 done above. */
-		if (!process_machdep_validvecregs(lt->l_proc))
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validvecregs((*lt)->l_proc))
 			return (EINVAL);
 		iov.iov_base = addr;
 		iov.iov_len = sizeof(struct vreg);
@@ -211,7 +213,7 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 		uio.uio_resid = sizeof(struct vreg);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = l->l_proc->p_vmspace;
-		return process_machdep_dovecregs(l, lt, &uio);
+		return process_machdep_dovecregs(l, *lt, &uio);
 	}
 
 #ifdef DIAGNOSTIC

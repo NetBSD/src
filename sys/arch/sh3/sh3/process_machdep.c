@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.22 2019/11/20 19:37:52 pgoyette Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.23 2020/10/15 17:37:36 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2019/11/20 19:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2020/10/15 17:37:36 mgorny Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 #ifdef __HAVE_PTRACE_MACHDEP
 
 int
-ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
+ptrace_machdep_dorequest(struct lwp *l, struct lwp **lt,
 			 int req, void *addr, int data)
 {
 	struct uio uio;
@@ -200,7 +200,9 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 		/* FALLTHROUGH*/
 
 	case PT___GETREGS40:
-		if (!process_validregs(lt))
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_validregs(*lt))
 			return EINVAL;
 		iov.iov_base = addr;
 		iov.iov_len = sizeof(struct __reg40);
@@ -210,7 +212,7 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 		uio.uio_resid = sizeof(struct __reg40);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = l->l_proc->p_vmspace;
-		return process_machdep_doregs40(l, lt, &uio);
+		return process_machdep_doregs40(l, *lt, &uio);
 #endif	/* COMPAT_40 */
 	}
 }
