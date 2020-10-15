@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.102 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.103 2020/10/15 01:00:01 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2020/10/10 03:05:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2020/10/15 01:00:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2020/10/10 03:05:04 thorpej Exp $");
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -147,32 +148,150 @@ static const char * const lcaminor[] = {
 	"",
 	"21066", "21066",
 	"21068", "21068",
-	"21066A", "21068A", 0
+	"21066A", "21068A",
+	NULL
 };
 
 const struct cputable_struct {
-	int	cpu_major_code;
+	const char *cpu_evname;
 	const char *cpu_major_name;
 	const char * const *cpu_minor_names;
 } cpunametable[] = {
-	{ PCS_PROC_EV3,		"EV3",		NULL		},
-	{ PCS_PROC_EV4,		"21064",	NULL		},
-	{ PCS_PROC_SIMULATION,	"Sim",		NULL		},
-	{ PCS_PROC_LCA4,	"LCA",		lcaminor	},
-	{ PCS_PROC_EV5,		"21164",	NULL		},
-	{ PCS_PROC_EV45,	"21064A",	NULL		},
-	{ PCS_PROC_EV56,	"21164A",	NULL		},
-	{ PCS_PROC_EV6,		"21264",	NULL		},
-	{ PCS_PROC_PCA56,	"PCA56",	NULL		},
-	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
-	{ PCS_PROC_EV67,	"21264A",	NULL		},
-	{ PCS_PROC_EV68CB,	"21264C",	NULL		},
-	{ PCS_PROC_EV68AL,	"21264B",	NULL		},
-	{ PCS_PROC_EV68CX,	"21264D",	NULL		},
-	{ PCS_PROC_EV7,		"21364",	NULL		},
-	{ PCS_PROC_EV79,	"EV79",		NULL		},
-	{ PCS_PROC_EV69,	"EV69",		NULL		},
+[PCS_PROC_EV3]       ={	"EV3",		NULL,		NULL		},
+[PCS_PROC_EV4]       ={	"EV4",		"21064",	NULL		},
+[PCS_PROC_SIMULATION]={ "Sim",		NULL,		NULL		},
+[PCS_PROC_LCA4]      ={	"LCA4",		NULL,		lcaminor	},
+[PCS_PROC_EV5]       ={	"EV5",		"21164",	NULL		},
+[PCS_PROC_EV45]      ={	"EV45",		"21064A",	NULL		},
+[PCS_PROC_EV56]      ={	"EV56",		"21164A",	NULL		},
+[PCS_PROC_EV6]       ={	"EV6",		"21264",	NULL		},
+[PCS_PROC_PCA56]     ={	"PCA56",	"21164PC",	NULL		},
+[PCS_PROC_PCA57]     ={	"PCA57",	"21164PC"/*XXX*/,NULL		},
+[PCS_PROC_EV67]      ={	"EV67",		"21264A",	NULL		},
+[PCS_PROC_EV68CB]    ={	"EV68CB",	"21264C",	NULL		},
+[PCS_PROC_EV68AL]    ={	"EV68AL",	"21264B",	NULL		},
+[PCS_PROC_EV68CX]    ={	"EV68CX",	"21264D",	NULL		},
+[PCS_PROC_EV7]       ={	"EV7",		"21364",	NULL		},
+[PCS_PROC_EV79]      ={	"EV79",		NULL,		NULL		},
+[PCS_PROC_EV69]      ={	"EV69",		NULL,		NULL		},
 };
+
+static bool
+cpu_description(const struct cpu_softc * const sc,
+    char * const buf, size_t const buflen)
+{
+	const char * const *s;
+	const char *ev;
+	int i;
+
+	const uint32_t major = sc->sc_major_type;
+	const uint32_t minor = sc->sc_minor_type;
+
+	if (major < __arraycount(cpunametable) &&
+	    (ev = cpunametable[major].cpu_evname) != NULL) {
+		s = cpunametable[major].cpu_minor_names;
+		for (i = 0; s != NULL && s[i] != NULL; i++) {
+			if (i == minor && strlen(s[i]) != 0) {
+				break;
+			}
+		}
+		if (s == NULL || s[i] == NULL) {
+			s = &cpunametable[major].cpu_major_name;
+			i = 0;
+			if (s[i] == NULL) {
+				s = NULL;
+			}
+		}
+
+		/*
+		 * Example strings:
+		 *
+		 *	Sim-0
+		 *	21068-3 (LCA4)		[uses minor table]
+		 *	21264C-5 (EV68CB)
+		 *	21164PC-1 (PCA56)
+		 */
+		if (s != NULL) {
+			snprintf(buf, buflen, "%s-%d (%s)", s[i], minor, ev);
+		} else {
+			snprintf(buf, buflen, "%s-%d", ev, minor);
+		}
+		return true;
+	}
+
+	snprintf(buf, buflen, "UNKNOWN CPU TYPE (%u:%u)", major, minor);
+	return false;
+}
+
+static int
+cpu_sysctl_model(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	const struct cpu_softc * const sc = node.sysctl_data;
+	char model[32];
+
+	cpu_description(sc, model, sizeof(model));
+	node.sysctl_data = model;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+cpu_sysctl_amask_bit(SYSCTLFN_ARGS, unsigned long const bit)
+{
+	struct sysctlnode node = *rnode;
+	const struct cpu_softc * const sc = node.sysctl_data;
+
+	bool result = (sc->sc_amask & bit) ? true : false;
+	node.sysctl_data = &result;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+cpu_sysctl_bwx(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_BWX);
+}
+
+static int
+cpu_sysctl_fix(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_FIX);
+}
+
+static int
+cpu_sysctl_cix(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_CIX);
+}
+
+static int
+cpu_sysctl_mvi(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_MVI);
+}
+
+static int
+cpu_sysctl_pat(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_PAT);
+}
+
+static int
+cpu_sysctl_pmi(SYSCTLFN_ARGS)
+{
+	return cpu_sysctl_amask_bit(SYSCTLFN_CALL(rnode), ALPHA_AMASK_PMI);
+}
+
+static int
+cpu_sysctl_primary(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	const struct cpu_softc * const sc = node.sysctl_data;
+
+	bool result = CPU_IS_PRIMARY(sc->sc_ci);
+	node.sysctl_data = &result;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
 
 /*
  * The following is an attempt to map out how booting secondary CPUs
@@ -219,43 +338,30 @@ static void
 cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc * const sc = device_private(self);
-	struct mainbus_attach_args *ma = aux;
-	int i;
-	const char * const *s;
-	struct pcs *p;
-	uint32_t major, minor;
+	const struct mainbus_attach_args * const ma = aux;
 	struct cpu_info *ci;
+	char model[32];
+
+	const bool primary = ma->ma_slot == hwrpb->rpb_primary_cpu_id;
 
 	sc->sc_dev = self;
 
-	p = LOCATE_PCS(hwrpb, ma->ma_slot);
-	major = PCS_CPU_MAJORTYPE(p);
-	minor = PCS_CPU_MINORTYPE(p);
+	const struct pcs * const p = LOCATE_PCS(hwrpb, ma->ma_slot);
+	sc->sc_major_type = PCS_CPU_MAJORTYPE(p);
+	sc->sc_minor_type = PCS_CPU_MINORTYPE(p);
 
-	aprint_normal(": ID %d%s, ", ma->ma_slot,
-	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
+	const bool recognized = cpu_description(sc, model, sizeof(model));
 
-	for(i = 0; i < __arraycount(cpunametable); ++i) {
-		if (cpunametable[i].cpu_major_code == major) {
-			aprint_normal("%s-%d",
-			    cpunametable[i].cpu_major_name, minor);
-			s = cpunametable[i].cpu_minor_names;
-			for(i = 0; s && s[i]; ++i) {
-				if (i == minor && strlen(s[i]) != 0) {
-					aprint_normal(" (%s)", s[i]);
-					goto recognized;
-				}
-			}
-			goto recognized;
-		}
+	aprint_normal(": ID %d%s, ", ma->ma_slot, primary ? " (primary)" : "");
+	if (recognized) {
+		aprint_normal("%s", model);
+	} else {
+		aprint_error("%s", model);
 	}
-	aprint_error("UNKNOWN CPU TYPE (%d:%d)", major, minor);
 
-recognized:
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#ifdef DEBUG
 	if (p->pcs_proc_var != 0) {
 		bool needcomma = false;
 		const char *vaxfp = "";
@@ -263,16 +369,19 @@ recognized:
 		const char *pe = "";
 
 		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
+			sc->sc_vax_fp = true;
 			vaxfp = "VAX FP support";
 			needcomma = true;
 		}
 		if (p->pcs_proc_var & PCS_VAR_IEEEFP) {
+			sc->sc_ieee_fp = true;
 			ieeefp = ", IEEE FP support";
 			if (!needcomma)
 				ieeefp += 2;
 			needcomma = true;
 		}
 		if (p->pcs_proc_var & PCS_VAR_PE) {
+			sc->sc_primary_eligible = true;
 			pe = ", Primary Eligible";
 			if (!needcomma)
 				pe += 2;
@@ -285,19 +394,18 @@ recognized:
 			    p->pcs_proc_var & PCS_VAR_RESERVED);
 		aprint_debug("\n");
 	}
-#endif
 
 	if (ma->ma_slot > ALPHA_WHAMI_MAXID) {
-		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		if (primary)
 			panic("cpu_attach: primary CPU ID too large");
 		aprint_error_dev(sc->sc_dev,
 		    "processor ID too large, ignoring\n");
 		return;
 	}
 
-	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+	if (primary) {
 		ci = &cpu_info_primary;
-	else {
+	} else {
 		/*
 		 * kmem_zalloc() will guarante cache line alignment for
 		 * all allocations >= CACHE_LINE_SIZE.
@@ -312,19 +420,14 @@ recognized:
 	ci->ci_softc = sc;
 	ci->ci_pcc_freq = hwrpb->rpb_cc_freq;
 
-	/*
-	 * Though we could (should?) attach the LCA cpus' PCI
-	 * bus here there is no good reason to do so, and
-	 * the bus attachment code is easier to understand
-	 * and more compact if done the 'normal' way.
-	 */
+	sc->sc_ci = ci;
 
 #if defined(MULTIPROCESSOR)
 	/*
 	 * Make sure the processor is available for use.
 	 */
 	if ((p->pcs_flags & PCS_PA) == 0) {
-		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		if (primary)
 			panic("cpu_attach: primary not available?!");
 		aprint_normal_dev(sc->sc_dev,
 		    "processor not available for use\n");
@@ -333,7 +436,7 @@ recognized:
 
 	/* Make sure the processor has valid PALcode. */
 	if ((p->pcs_flags & PCS_PV) == 0) {
-		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		if (primary)
 			panic("cpu_attach: primary has invalid PALcode?!");
 		aprint_error_dev(sc->sc_dev, "PALcode not valid\n");
 		return;
@@ -344,7 +447,7 @@ recognized:
 	 * If we're the primary CPU, no more work to do; we're already
 	 * running!
 	 */
-	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
+	if (primary) {
 		cpu_announce_extensions(ci);
 #if defined(MULTIPROCESSOR)
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
@@ -387,6 +490,154 @@ recognized:
 #if defined(MULTIPROCESSOR)
 	alpha_ipi_init(ci);
 #endif
+
+	struct sysctllog **log = &sc->sc_sysctllog;
+	const struct sysctlnode *rnode, *cnode;
+	int error;
+
+	error = sysctl_createv(log, 0, NULL, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("cpu properties"),
+	    NULL, 0,
+	    NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_STRING, "model",
+	    SYSCTL_DESCR("cpu model"),
+	    cpu_sysctl_model, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "major",
+	    SYSCTL_DESCR("cpu major type"),
+	    NULL, 0,
+	    &sc->sc_major_type, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "minor",
+	    SYSCTL_DESCR("cpu minor type"),
+	    NULL, 0,
+	    &sc->sc_minor_type, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_LONG, "implver",
+	    SYSCTL_DESCR("cpu implementation version"),
+	    NULL, 0,
+	    &sc->sc_implver, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_HEX, CTLTYPE_LONG, "amask",
+	    SYSCTL_DESCR("architecture extensions mask"),
+	    NULL, 0,
+	    &sc->sc_amask, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "bwx",
+	    SYSCTL_DESCR("cpu supports BWX extension"),
+	    cpu_sysctl_bwx, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "fix",
+	    SYSCTL_DESCR("cpu supports FIX extension"),
+	    cpu_sysctl_fix, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "cix",
+	    SYSCTL_DESCR("cpu supports CIX extension"),
+	    cpu_sysctl_cix, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "mvi",
+	    SYSCTL_DESCR("cpu supports MVI extension"),
+	    cpu_sysctl_mvi, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "pat",
+	    SYSCTL_DESCR("cpu supports PAT extension"),
+	    cpu_sysctl_pat, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "pmi",
+	    SYSCTL_DESCR("cpu supports PMI extension"),
+	    cpu_sysctl_pmi, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "vax_fp",
+	    SYSCTL_DESCR("cpu supports VAX FP"),
+	    NULL, 0,
+	    &sc->sc_vax_fp, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "ieee_fp",
+	    SYSCTL_DESCR("cpu supports IEEE FP"),
+	    NULL, 0,
+	    &sc->sc_ieee_fp, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "primary_eligible",
+	    SYSCTL_DESCR("cpu is primary-eligible"),
+	    NULL, 0,
+	    &sc->sc_primary_eligible, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_BOOL, "primary",
+	    SYSCTL_DESCR("cpu is the primary cpu"),
+	    cpu_sysctl_primary, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_LONG, "cpu_id",
+	    SYSCTL_DESCR("hardware cpu ID"),
+	    NULL, 0,
+	    &sc->sc_ci->ci_cpuid, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
+
+	error = sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_LONG, "pcc_freq",
+	    SYSCTL_DESCR("PCC frequency"),
+	    NULL, 0,
+	    &sc->sc_ci->ci_pcc_freq, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		return;
 }
 
 static void
@@ -398,6 +649,9 @@ cpu_announce_extensions(struct cpu_info *ci)
 	implver = alpha_implver();
 	if (implver >= ALPHA_IMPLVER_EV5)
 		amask = (~alpha_amask(ALPHA_AMASK_ALL)) & ALPHA_AMASK_ALL;
+
+	ci->ci_softc->sc_implver = implver;
+	ci->ci_softc->sc_amask = amask;
 
 	if (ci->ci_cpuid == hwrpb->rpb_primary_cpu_id) {
 		cpu_implver = implver;
@@ -417,7 +671,7 @@ cpu_announce_extensions(struct cpu_info *ci)
 
 	if (amask) {
 		snprintb(bits, sizeof(bits),
-		    ALPHA_AMASK_BITS, cpu_amask);
+		    ALPHA_AMASK_BITS, amask);
 		aprint_normal_dev(ci->ci_softc->sc_dev,
 		    "Architecture extensions: %s\n", bits);
 	}
