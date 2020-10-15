@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.40 2020/10/15 17:37:36 mgorny Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.41 2020/10/15 18:57:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2020/10/15 17:37:36 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2020/10/15 18:57:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -193,7 +193,7 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp **lt,
 {
 	struct uio uio;
 	struct iovec iov;
-	int write = 0;
+	int write = 0, error;
 
 	switch (req) {
 	case PT_SETVECREGS:
