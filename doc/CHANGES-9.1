@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.123 2020/10/15 12:07:11 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.124 2020/10/15 19:39:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5192,4 +5192,102 @@ xsrc/external/mit/xf86-input-mouse/dist/src/mouse.h	1.7
 	Scale absolute positions to screen resolution before passing
 	them to the X server.
 	[jmcneill, ticket #1112]
+
+usr.sbin/sysinst/Makefile.inc			1.34
+usr.sbin/sysinst/arch/acorn32/md.c		1.7
+usr.sbin/sysinst/arch/alpha/md.c		1.9
+usr.sbin/sysinst/arch/amd64/md.h		1.9
+usr.sbin/sysinst/arch/amiga/md.c		1.6
+usr.sbin/sysinst/arch/arc/md.c			1.13
+usr.sbin/sysinst/arch/atari/md.c		1.7
+usr.sbin/sysinst/arch/bebox/md.c		1.9
+usr.sbin/sysinst/arch/cats/md.c			1.5
+usr.sbin/sysinst/arch/cobalt/md.c		1.13,1.14
+usr.sbin/sysinst/arch/cobalt/md.h		1.6
+usr.sbin/sysinst/arch/dummy/md.c		1.6
+usr.sbin/sysinst/arch/emips/md.c		1.9
+usr.sbin/sysinst/arch/evbarm/Makefile		1.3
+usr.sbin/sysinst/arch/evbarm/md.c		1.17-1.19
+usr.sbin/sysinst/arch/evbarm/md.h		1.6,1.7
+usr.sbin/sysinst/arch/evbarm/msg.md.en		1.2
+usr.sbin/sysinst/arch/evbmips/md.c		1.9
+usr.sbin/sysinst/arch/evbppc/md.c		1.9
+usr.sbin/sysinst/arch/evbsh3/md.c		1.6
+usr.sbin/sysinst/arch/ews4800mips/md.c		1.7
+usr.sbin/sysinst/arch/hp300/md.c		1.11
+usr.sbin/sysinst/arch/hpcarm/md.c		1.9
+usr.sbin/sysinst/arch/hpcmips/md.c		1.9
+usr.sbin/sysinst/arch/hpcsh/md.c		1.10
+usr.sbin/sysinst/arch/hppa/md.c			1.8
+usr.sbin/sysinst/arch/i386/md.c			1.31,1.32
+usr.sbin/sysinst/arch/i386/md.h			1.8
+usr.sbin/sysinst/arch/landisk/md.c		1.14
+usr.sbin/sysinst/arch/luna68k/md.c		1.9
+usr.sbin/sysinst/arch/mac68k/Makefile		1.3
+usr.sbin/sysinst/arch/mac68k/md.c		1.10
+usr.sbin/sysinst/arch/macppc/md.c		1.6
+usr.sbin/sysinst/arch/mipsco/md.c		1.8
+usr.sbin/sysinst/arch/mvme68k/md.c		1.11
+usr.sbin/sysinst/arch/news68k/md.c		1.7
+usr.sbin/sysinst/arch/newsmips/md.c		1.6
+usr.sbin/sysinst/arch/ofppc/md.c		1.11,1.12
+usr.sbin/sysinst/arch/playstation2/md.c		1.9
+usr.sbin/sysinst/arch/pmax/md.c			1.8
+usr.sbin/sysinst/arch/prep/md.c			1.13
+usr.sbin/sysinst/arch/sandpoint/md.c		1.9
+usr.sbin/sysinst/arch/sgimips/md.c		1.9
+usr.sbin/sysinst/arch/shark/md.c		1.6
+usr.sbin/sysinst/arch/sparc/md.c		1.6
+usr.sbin/sysinst/arch/sparc64/md.c		1.6
+usr.sbin/sysinst/arch/vax/md.c			1.7
+usr.sbin/sysinst/arch/x68k/md.c			1.11
+usr.sbin/sysinst/arch/zaurus/md.c		1.9,1.10
+usr.sbin/sysinst/bsddisklabel.c			1.40-1.56
+usr.sbin/sysinst/defs.h				1.56-1.61,1.63-1.67
+usr.sbin/sysinst/disklabel.c			1.36-1.42
+usr.sbin/sysinst/disks.c			1.66-1.71
+usr.sbin/sysinst/gpt.c				1.19-1.22
+usr.sbin/sysinst/install.c			1.15-1.19
+usr.sbin/sysinst/label.c			1.21-1.30
+usr.sbin/sysinst/main.c				1.21-1.25
+usr.sbin/sysinst/mbr.c				1.32-1.36
+usr.sbin/sysinst/mbr.h				1.5,1.6
+usr.sbin/sysinst/msg.mi.de			1.23,1.24
+usr.sbin/sysinst/msg.mi.en			1.30-1.32
+usr.sbin/sysinst/msg.mi.es			1.24-1.26
+usr.sbin/sysinst/msg.mi.fr			1.28-1.31
+usr.sbin/sysinst/msg.mi.pl			1.31,1.32
+usr.sbin/sysinst/part_edit.c			1.17
+usr.sbin/sysinst/part_edit.c			1.18-1.24
+usr.sbin/sysinst/partitions.c			1.11
+usr.sbin/sysinst/partitions.h			1.16-1.19
+usr.sbin/sysinst/target.c			1.13,1.14
+usr.sbin/sysinst/util.c				1.43,1.44,1.46-1.48
+
+	Various updates to the installer:
+	 - PR misc/54886: bump threshold for automatic/default creation of a
+	   tmpfs /tmp to 384 MB ram.
+	 - fix partition size limit checks.
+	 - For all non-root partitions default to FFSv2.
+	 - PR 55202: disable swapping if we started it due to low ram.
+	 - PR 55572: avoid crash when answering the mount point prompt
+	   for a previously empty mount point with an emptry sting.
+	 - Fix display of timezone selection menu.
+	 - PR 55377: mark boot partitions in the partition size display.
+	 - PR 55379: avoid creating bogus /etc/fstab lines for /dev/cd* if
+	   no cdrom is available.
+	 - PR 55381: try to deal with moved (but not yet saved) partitions when
+	   calculating free space
+	 - PR 55382: make ext2 partitions show up in the outer (MBR) partition
+	   table.
+	 - PR 55384: fix disk reservation in machine dependend support code.
+	 - When creating a MSDOS file system marked to need newfs, always
+	   newfs it (instead of trying to preserve existing MSDOS file
+	   systems, which sometimes went wrong).
+	 - PR 55536: offer to delete partition tables and replace them with
+	   some other partitioning scheme.
+	 - PR 55142: add back expert options to adjust the number of inodes,
+	   block size and fragment size for FFS and LFS.
+	 - Miscelaneous machine dependent fixes.
+	[martin, ticket #1113]
 
