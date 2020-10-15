@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15 2020/10/15 22:41:02 rin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.16 2020/10/15 23:10:06 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15 2020/10/15 22:41:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.16 2020/10/15 23:10:06 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,8 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
+
+	netbsd32_adjust_limits(p);
 
 	aarch64_setregs_ptrauth(l, false);
 
