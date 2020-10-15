@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.288 2020/09/27 19:16:28 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.289 2020/10/15 10:20:44 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -457,7 +457,6 @@ typedef struct ifnet {
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
 
 #define	IFEF_MPSAFE			__BIT(0)	/* handlers can run in parallel (see below) */
-#define	IFEF_NO_LINK_STATE_CHANGE	__BIT(1)	/* doesn't use link state interrupts */
 
 /*
  * The guidelines for converting an interface to IFEF_MPSAFE are as follows
@@ -535,13 +534,6 @@ if_start_lock(struct ifnet *ifp)
 		(*ifp->if_start)(ifp);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
-}
-
-static __inline bool
-if_is_link_state_changeable(struct ifnet *ifp)
-{
-
-	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
 }
 
 #define KERNEL_LOCK_IF_IFP_MPSAFE(ifp)					\
