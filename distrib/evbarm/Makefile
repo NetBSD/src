@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/10/11 14:24:50 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.14 2020/10/15 08:59:57 jmcneill Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -22,8 +22,10 @@ release: check_RELEASEDIR .WAIT ${MDECBOOT}
 	${RELEASE_INSTALL} ${MDECBOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 .endif
 
+.if ${MACHINE_ARCH} == "aarch64"
 iso_image:
 	${MAKEDIRTARGET} isoimage iso_image
+.endif
 
 install_image:
 	${MAKEDIRTARGET} installimage install_image
