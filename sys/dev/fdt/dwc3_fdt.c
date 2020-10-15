@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.10 2020/03/26 00:21:27 thorpej Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.11 2020/10/15 09:33:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.10 2020/03/26 00:21:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.11 2020/10/15 09:33:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -278,6 +278,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
+	sc->sc_ios = size;
 	sc->sc_iot = faa->faa_bst;
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
 		aprint_error(": couldn't map registers\n");
