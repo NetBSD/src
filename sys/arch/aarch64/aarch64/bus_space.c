@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.10 2020/09/05 16:44:54 jakllsch Exp $ */
+/* $NetBSD: bus_space.c,v 1.11 2020/10/15 21:14:15 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.10 2020/09/05 16:44:54 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.11 2020/10/15 21:14:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.10 2020/09/05 16:44:54 jakllsch Exp 
 #include <aarch64/bus_funcs.h>
 #include <aarch64/machdep.h>
 
+#include <arm/cpufunc.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(generic)
@@ -612,8 +613,17 @@ generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
 
-	if (flags != 0)
-		__asm __volatile ("dmb sy" ::: "memory");
+	switch (flags) {
+	case BUS_SPACE_BARRIER_READ:
+		dmb(ishld);
+		break;
+	case BUS_SPACE_BARRIER_WRITE:
+		dmb(ishst);
+		break;
+	case BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE:
+		dmb(ish);
+		break;
+	}
 }
 
 void *
