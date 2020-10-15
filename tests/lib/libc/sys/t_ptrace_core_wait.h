@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_core_wait.h,v 1.2 2020/06/24 04:47:10 rin Exp $	*/
+/*	$NetBSD: t_ptrace_core_wait.h,v 1.3 2020/10/15 22:59:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -207,21 +207,27 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-#ifndef __powerpc__
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-#else
+
+#if defined(__aarch64__) || defined(__arm__) || defined(__powerpc__)
 	/*
-	 * For powerpc, program counter is not automatically incremented by
-	 * a trap instruction. We cannot increment PC in the trap handler,
+	 * For these archs, program counter is not automatically incremented
+	 * by a trap instruction. We cannot increment PC in the trap handler,
 	 * which breaks applications depending on this behavior, e.g., GDB.
-	 * Therefore, we need to pass (PC + 4) instead of (void *)1 (== PC)
-	 * to PT_CONTINUE here.
+	 * Therefore, we need to pass PC++ instead of (void *)1 (== PC) to
+	 * PT_CONTINUE here.
 	 */
 	struct reg r;
 
 	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
-	SYSCALL_REQUIRE(
-	    ptrace(PT_CONTINUE, child, (void *)(r.pc + 4), 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child,
+#  if defined(__aarch64__) || defined(__arm__)
+	    (void *)(r.r_pc + PTRACE_BREAKPOINT_SIZE),
+#  elif defined(__powerpc__)
+	    (void *)(r.pc + PTRACE_BREAKPOINT_SIZE),
+#  endif
+	    0) != -1);
+#else
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 #endif
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
