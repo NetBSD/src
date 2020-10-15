@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23 2020/10/15 17:37:36 mgorny Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24 2020/10/15 18:58:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2020/10/15 17:37:36 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2020/10/15 18:58:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp **lt,
 {
 	struct uio uio;
 	struct iovec iov;
-	int write = 0;
+	int write = 0, error;
 
 	switch (req) {
 	default:
