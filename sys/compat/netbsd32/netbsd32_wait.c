@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.23 2016/09/23 14:09:39 skrll Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.24 2020/10/15 23:06:06 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.23 2016/09/23 14:09:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.24 2020/10/15 23:06:06 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,14 @@ netbsd32___wait450(struct lwp *l, const struct netbsd32___wait450_args *uap,
 	if (pid == 0)
 		return error;
 
-	if (SCARG_P32(uap, rusage)) {
+	if (SCARG_P32(uap, status))
+		error = copyout(&status, SCARG_P32(uap, status),
+		    sizeof(status));
+
+	if (SCARG_P32(uap, rusage) && error == 0) {
 		netbsd32_from_rusage(&ru, &ru32);
 		error = copyout(&ru32, SCARG_P32(uap, rusage), sizeof(ru32));
 	}
-
-	if (error == 0 && SCARG_P32(uap, status))
-		error = copyout(&status, SCARG_P32(uap, status), sizeof(status));
 
 	return error;
 }
