@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/06/30 20:32:11 riastradh Exp $
+# $NetBSD: Makefile,v 1.5 2020/10/15 17:44:44 mgorny Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,8 @@ TESTS_SUBDIRS+=	netatalk
 TESTS_SUBDIRS+=	netinet
 TESTS_SUBDIRS+=	netinet6
 TESTS_SUBDIRS+=	rc
+.if ${MACHINE} == amd64 || ${MACHINE} == i386
+TESTS_SUBDIRS+=	x86
+.endif
 
 .include <bsd.test.mk>
