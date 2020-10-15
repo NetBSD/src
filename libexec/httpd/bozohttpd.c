@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.122 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.123 2020/10/15 04:21:53 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  *	- CGI/1.1 this will only be provided for "system" scripts
  *	- automatic "missing trailing slash" redirections
  *	- configurable translation of /~user/ to ~user/public_html,
- *	  however, this does not include cgi-bin support
  *	- access lists via libwrap via inetd/tcpd
  *	- virtual hosting
  *	- not that we do not even pretend to understand MIME, but
@@ -373,6 +372,7 @@ bozo_clean_request(bozo_httpreq_t *request)
 static void
 alarmer(int sig)
 {
+	USE_ARG(sig);
 	bozo_timeout_hit = 1;
 }
 
@@ -2192,7 +2192,6 @@ pfilter_notify(const int what, const int code)
 #endif /* !NO_BLOCKLIST_SUPPORT */
 
 /* the follow functions and variables are used in handling HTTP errors */
-/* ARGSUSED */
 int
 bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		const char *msg)
@@ -2204,6 +2203,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 				request->hr_proto : httpd->consts.http_11;
 	int	size;
 	bozoheaders_t *hdr;
+
+	USE_ARG(msg);
 
 	debug((httpd, DEBUG_FAT, "bozo_http_error %d: %s", code, msg));
 	if (header == NULL || reason == NULL) {

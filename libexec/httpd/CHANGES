@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.43 2020/10/15 02:19:23 mrg Exp $
+$NetBSD: CHANGES,v 1.44 2020/10/15 04:21:53 mrg Exp $
 
 changes in bozohttpd 20201014:
 	o  also set -D_GNU_SOURCE in Makefile.boot.  from
@@ -6,6 +6,9 @@ changes in bozohttpd 20201014:
 	o  fix array size botch (assertion, not exploitable.)  from
 	   martin@netbsd.org.
 	o  also match %2F as well as %2f.  from leah@vuxu.org.
+	o  many manual and help fixes.  clean ups for higher lint levels,
+	   consistency/style clean ups.  various option fixes including made
+	   -f imply -b.  from <henrik@gulbra.net> for freebsd.
 
 changes in bozohttpd 20200912:
 	o  add .m4a and .m4v file extensions.

@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.64 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.65 2020/10/15 04:21:53 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef BOZOHTTOPD_H_
-#define BOZOHTTOPD_H_	1
+#ifndef BOZOHTTPD_H_
+#define BOZOHTTPD_H_	1
 
 #include "netbsd_queue.h"
 
@@ -307,7 +307,7 @@ char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 
 #define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
 
-#define have_all					(1)
+#define have_core					(1)
 
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
@@ -459,4 +459,4 @@ int bozo_get_version(char */*buf*/, size_t /*size*/);
 
 extern volatile sig_atomic_t	bozo_timeout_hit;
 
-#endif	/* BOZOHTTOPD_H_ */
+#endif	/* BOZOHTTPD_H_ */
