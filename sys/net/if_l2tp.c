@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.43 2020/02/01 12:54:50 riastradh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.44 2020/10/15 02:54:10 roy Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.43 2020/02/01 12:54:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.44 2020/10/15 02:54:10 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -286,9 +286,8 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if.if_addrlen = 0;
 	sc->l2tp_ec.ec_if.if_mtu    = L2TP_MTU;
 	sc->l2tp_ec.ec_if.if_flags  = IFF_POINTOPOINT|IFF_MULTICAST|IFF_SIMPLEX;
-	sc->l2tp_ec.ec_if.if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 #ifdef NET_MPSAFE
-	sc->l2tp_ec.ec_if.if_extflags |= IFEF_MPSAFE;
+	sc->l2tp_ec.ec_if.if_extflags = IFEF_MPSAFE;
 #endif
 	sc->l2tp_ec.ec_if.if_ioctl  = l2tp_ioctl;
 	sc->l2tp_ec.ec_if.if_output = l2tp_output;
@@ -322,11 +321,13 @@ l2tpattach0(struct l2tp_softc *sc)
 	 * if_percpuq_enqueue(). However, that causes recursive softnet_lock
 	 * when NET_MPSAFE is not set.
 	 */
-	rv = if_attach(&sc->l2tp_ec.ec_if);
+	rv = if_initialize(&sc->l2tp_ec.ec_if);
 	if (rv != 0)
 		return rv;
+	sc->l2tp_ec.ec_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&sc->l2tp_ec.ec_if);
 	bpf_attach(&sc->l2tp_ec.ec_if, DLT_EN10MB, sizeof(struct ether_header));
+	if_register(&sc->l2tp_ec.ec_if);
 
 	return 0;
 }
@@ -810,6 +811,7 @@ l2tp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCDIFPHYADDR:
 		l2tp_delete_tunnel(&sc->l2tp_ec.ec_if);
+		if_link_state_change(&sc->l2tp_ec.ec_if, LINK_STATE_DOWN);
 		break;
 
 	case SIOCGIFPSRCADDR:
@@ -1073,6 +1075,7 @@ l2tp_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		sockaddr_free(odst);
 	kmem_free(ovar, sizeof(*ovar));
 
+	if_link_state_change(ifp, LINK_STATE_UP);
 	return 0;
 
 error:
