@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.47 2019/11/27 09:16:58 rin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.48 2020/10/15 17:37:35 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.47 2019/11/27 09:16:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.48 2020/10/15 17:37:35 mgorny Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -307,7 +307,7 @@ process_machdep_write_xstate(struct lwp *l, const struct xstate *regs)
 int
 ptrace_machdep_dorequest(
     struct lwp *l,
-    struct lwp *lt,
+    struct lwp **lt,
     int req,
     void *addr,
     int data
@@ -326,7 +326,9 @@ ptrace_machdep_dorequest(
 		/* FALLTHROUGH */
 	case PT_GETXSTATE:
 		/* write = false done above. */
-		if (!process_machdep_validfpu(lt->l_proc))
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validfpu((*lt)->l_proc))
 			return EINVAL;
 		if (__predict_false(l->l_proc->p_flag & PK_32)) {
 			struct netbsd32_iovec user_iov;
@@ -357,7 +359,7 @@ ptrace_machdep_dorequest(
 		uio.uio_resid = iov.iov_len;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = vm;
-		error = process_machdep_doxstate(l, lt, &uio);
+		error = process_machdep_doxstate(l, *lt, &uio);
 		uvmspace_free(vm);
 		return error;
 
@@ -367,8 +369,10 @@ ptrace_machdep_dorequest(
 		/* FALLTHROUGH */
 	case PT_GETXMMREGS:		/* only for COMPAT_NETBSD32 */
 		/* write = false done above. */
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
 		MODULE_HOOK_CALL(netbsd32_process_doxmmregs_hook,
-		    (l, lt, addr, write), EINVAL, error);
+		    (l, *lt, addr, write), EINVAL, error);
 		return error;
 	}
 

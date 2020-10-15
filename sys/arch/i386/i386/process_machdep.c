@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.94 2019/08/06 02:04:43 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.95 2020/10/15 17:37:35 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.94 2019/08/06 02:04:43 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.95 2020/10/15 17:37:35 mgorny Exp $");
 
 #include "opt_ptrace.h"
 
@@ -273,7 +273,7 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 int
 ptrace_machdep_dorequest(
     struct lwp *l,
-    struct lwp *lt,
+    struct lwp **lt,
     int req,
     void *addr,
     int data
@@ -293,7 +293,9 @@ ptrace_machdep_dorequest(
 		/* FALLTHROUGH */
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
-		if (!process_machdep_validxmmregs(lt->l_proc))
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validxmmregs((*lt)->l_proc))
 			return (EINVAL);
 		error = proc_vmspace_getref(l->l_proc, &vm);
 		if (error) {
@@ -307,7 +309,7 @@ ptrace_machdep_dorequest(
 		uio.uio_resid = sizeof(struct xmmregs);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = vm;
-		error = process_machdep_doxmmregs(l, lt, &uio);
+		error = process_machdep_doxmmregs(l, *lt, &uio);
 		uvmspace_free(vm);
 		return error;
 
@@ -317,7 +319,9 @@ ptrace_machdep_dorequest(
 		/* FALLTHROUGH */
 	case PT_GETXSTATE:
 		/* write = 0 done above. */
-		if (!process_machdep_validxstate(lt->l_proc))
+		if ((error = ptrace_update_lwp((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validxstate((*lt)->l_proc))
 			return EINVAL;
 		if ((error = copyin(addr, &user_iov, sizeof(user_iov))) != 0)
 			return error;
@@ -335,7 +339,7 @@ ptrace_machdep_dorequest(
 		uio.uio_resid = iov.iov_len;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = vm;
-		error = process_machdep_doxstate(l, lt, &uio);
+		error = process_machdep_doxstate(l, *lt, &uio);
 		uvmspace_free(vm);
 		return error;
 	}
