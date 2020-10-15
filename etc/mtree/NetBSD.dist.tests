@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.180 2020/09/30 20:20:53 roy Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.181 2020/10/15 17:44:44 mgorny Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -171,6 +171,7 @@
 ./usr/libdata/debug/usr/tests/sys/netatalk
 ./usr/libdata/debug/usr/tests/sys/netinet
 ./usr/libdata/debug/usr/tests/sys/netinet6
+./usr/libdata/debug/usr/tests/sys/x86
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.bin/cpio
 ./usr/libdata/debug/usr/tests/usr.bin/id
@@ -402,6 +403,7 @@
 ./usr/tests/sys/netinet
 ./usr/tests/sys/netinet6
 ./usr/tests/sys/rc
+./usr/tests/sys/x86
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/awk
 ./usr/tests/usr.bin/basename
