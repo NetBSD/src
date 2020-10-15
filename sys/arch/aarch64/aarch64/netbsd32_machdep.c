@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.14 2020/07/02 13:04:46 rin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.15 2020/10/15 22:41:02 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.14 2020/07/02 13:04:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15 2020/10/15 22:41:02 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -198,8 +198,7 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 	if ((p->p_flag & PK_32) == 0)
 		return EINVAL;
 
-	if ((regs->r_cpsr & ~(SPSR_NZCV | SPSR_A32_T)) != 0 ||
-	    regs->r_pc >= VM_MAXUSER_ADDRESS32 ||
+	if (regs->r_pc >= VM_MAXUSER_ADDRESS32 ||
 	    regs->r_sp >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
@@ -209,7 +208,7 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 	tf->tf_reg[14] = regs->r_lr;		/* r14 = lr */
 	tf->tf_pc = regs->r_pc;			/* r15 = pc */
 	tf->tf_spsr &= ~(SPSR_NZCV | SPSR_A32_T);
-	tf->tf_spsr |= regs->r_cpsr;
+	tf->tf_spsr |= regs->r_cpsr & (SPSR_NZCV | SPSR_A32_T);
 
 	/* THUMB CODE? */
 	if (regs->r_pc & 1)
