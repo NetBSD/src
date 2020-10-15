@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.3 2020/10/15 04:33:24 ryo Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.4 2020/10/15 04:37:48 ryo Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.3 2020/10/15 04:33:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.4 2020/10/15 04:37:48 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -3486,12 +3486,11 @@ static void
 vmxnet3_if_link_status(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
-	u_int x, link;
+	u_int link;
+	bool up;
 
-	vmxnet3_cmd_link_status(ifp);
-
-	x = vmxnet3_read_cmd(sc, VMXNET3_CMD_GET_LINK);
-	if (x & 1) {
+	up = vmxnet3_cmd_link_status(ifp);
+	if (up) {
 		sc->vmx_link_active = 1;
 		link = LINK_STATE_UP;
 	} else {
