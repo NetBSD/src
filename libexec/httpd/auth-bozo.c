@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.25 2020/07/11 08:10:52 jruoho Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.26 2020/10/15 02:19:23 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
