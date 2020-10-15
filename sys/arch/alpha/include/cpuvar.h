@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.5 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: cpuvar.h,v 1.6 2020/10/15 01:00:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,6 +33,21 @@
 
 struct cpu_softc {
 	device_t sc_dev;		/* base device */
+	struct cpu_info *sc_ci;		/* our cpu_info structure */
+
+	/* Info exported to user-space. */
+	uint32_t sc_major_type;		/* CPU major type */
+	uint32_t sc_minor_type;		/* CPU minor type */
+	bool sc_vax_fp;			/* supports VAX FP */
+	bool sc_ieee_fp;		/* supports IEEE FP */
+	bool sc_primary_eligible;	/* CPU is primary eligible */
+
+	/* These are only valid if the CPU runs kernel code. */
+	u_long sc_amask;		/* AMASK bits (inverted) */
+	u_long sc_implver;		/* IMPLVER */
+
+	struct sysctllog *sc_sysctllog;
+
 	struct evcnt sc_evcnt_clock;	/* clock interrupts */
 	struct evcnt sc_evcnt_device;	/* device interrupts */
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.98 2020/09/29 01:33:00 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.99 2020/10/15 01:00:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -229,6 +229,9 @@ void	cpu_signotify(struct lwp *);
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
+#define	CPU_CCTR		8	/* int: using CC timecounter */
+#define	CPU_IS_QEMU		9	/* int: running under Qemu */
+
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.368 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.369 2020/10/15 01:00:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.368 2020/10/14 00:59:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2020/10/15 01:00:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1628,6 +1628,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "fp_sync_complete", NULL,
 		       NULL, 0, &alpha_fp_sync_complete, 0,
 		       CTL_MACHDEP, CPU_FP_SYNC_COMPLETE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "cctr", NULL,
+		       NULL, 0, &alpha_use_cctr, 0,
+		       CTL_MACHDEP, CPU_CCTR, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_BOOL, "is_qemu", NULL,
+		       NULL, 0, &alpha_is_qemu, 0,
+		       CTL_MACHDEP, CPU_IS_QEMU, CTL_EOL);
 }
 
 /*
