@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.2 2020/10/14 10:26:59 ryo Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.3 2020/10/15 04:33:24 ryo Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.2 2020/10/14 10:26:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.3 2020/10/15 04:33:24 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2905,7 +2905,7 @@ vmxnet3_init_locked(struct vmxnet3_softc *sc)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	vmxnet3_cmd_link_status(ifp);
+	vmxnet3_if_link_status(sc);
 
 	vmxnet3_enable_all_intrs(sc);
 	callout_reset(&sc->vmx_tick, hz, vmxnet3_tick, sc);
