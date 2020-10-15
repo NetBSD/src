@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.483 2020/09/27 19:16:28 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.484 2020/10/15 10:20:44 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.483 2020/09/27 19:16:28 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.484 2020/10/15 10:20:44 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2276,10 +2276,6 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int idx;
-
-	KASSERTMSG(if_is_link_state_changeable(ifp),
-	    "%s: IFEF_NO_LINK_STATE_CHANGE must not be set, but if_extflags=0x%x",
-	    ifp->if_xname, ifp->if_extflags);
 
 	/* Ensure change is to a valid state */
 	switch (link_state) {
