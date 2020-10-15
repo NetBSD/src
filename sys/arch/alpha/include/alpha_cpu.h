@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.52 2020/09/29 01:17:22 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.53 2020/10/15 00:55:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -314,7 +314,7 @@ typedef unsigned long alpha_pt_entry_t;
 				 ALPHA_AMASK_PAT|ALPHA_AMASK_PMI)
 
 #define	ALPHA_AMASK_BITS						\
-    "\20\17PMI\12PAT\11MVI\3CIX\2FIX\1BWX"
+    "\20\15PMI\12PAT\11MVI\3CIX\2FIX\1BWX"
 
 /*
  * Chip family IDs returned by implver instruction
