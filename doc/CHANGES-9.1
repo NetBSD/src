@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.122 2020/10/12 10:27:57 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.123 2020/10/15 12:07:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5180,4 +5180,16 @@ external/cddl/osnet/sys/sys/cred.h		1.8
 
 	Fix PR kern/55675: ZFS mounts do not work with setuid programs.
 	[hannken, ticket #1111]
+
+sys/dev/usb/ums.c				1.94,1.99
+xsrc/external/mit/xf86-input-mouse/dist/src/bsd_mouse.c 1.6
+xsrc/external/mit/xf86-input-mouse/dist/src/mouse.h	1.7
+
+	ums(4):
+	- Initialize tcpalib for ums devices.
+	- For absolute pointers, report min/max X and Y values using
+	  WSMOUSEIO_[SG]CALIBCOORDS ioctl.
+	Scale absolute positions to screen resolution before passing
+	them to the X server.
+	[jmcneill, ticket #1112]
 
