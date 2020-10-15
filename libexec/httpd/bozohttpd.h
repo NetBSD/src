@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.63 2020/08/20 05:46:31 spz Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.64 2020/10/15 02:19:23 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -252,6 +252,9 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
 #define have_debug	(1)
 #endif /* NO_DEBUG */
+
+#define BOZO_HTTP_PORT	"80"
+#define BOZO_HTTPS_PORT	"443"
 
 /*
  * bozohttpd special files.  avoid serving these out.
