@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.4.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.4.2.7 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ enum part_type {
 	PT_root,		/* the NetBSD / partition (bootable) */
 	PT_swap,		/* the NetBSD swap partition */
 	PT_FAT,			/* boot partition (e.g. for u-boot) */
+	PT_EXT2,		/* boot partition (for Linux appliances) */
+	PT_SYSVBFS,		/* boot partition (for some SYSV machines) */
 	PT_EFI_SYSTEM,		/* (U)EFI boot partition */
 };
 
@@ -115,6 +117,12 @@ struct part_type_desc {
 #define	PTI_PSCHEME_INTERNAL	8		/* no user partition, e.g.
 						   MBRs extend partition */
 #define	PTI_RAW_PART		16		/* total disk */
+#define	PTI_INSTALL_TARGET	32		/* marks the target partition
+						 * assumed to become / after
+						 * reboot; may not be
+						 * persistent; may only be
+						 * set for a single partition!
+						 */
 
 /* A single partition */
 struct disk_part_info {
@@ -131,9 +139,13 @@ struct disk_part_info {
 	 * returned. Backends can not rely on them to be valid.
 	 */
 	const char *last_mounted;		/* last mount point or NULL */
-	unsigned int fs_type, fs_sub_type;	/* FS_* type of filesystem
+	unsigned int fs_type, fs_sub_type,	/* FS_* type of filesystem
 						 * and for some FS a sub
 						 * type (e.g. FFSv1 vs. FFSv2)
+						 */
+		fs_opt1, fs_opt2, fs_opt3;	/* FS specific option, used
+						 * for FFS block/fragsize
+						 * and inodes
 						 */
 };
 
@@ -533,6 +545,9 @@ struct disk_partitioning_scheme {
 
 	/* Free all the data */
 	void (*free)(struct disk_partitions*);
+
+	/* Wipe all on-disk state, leave blank disk - and free data */
+	void (*destroy_part_scheme)(struct disk_partitions*);
 
 	/* Scheme global cleanup */
 	void (*cleanup)(void);

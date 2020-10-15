@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: util.c,v 1.29.2.7 2020/10/15 19:36:50 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1083,6 +1083,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	distinfo *dist;
 	int status;
 	int set, olderror, oldfound;
+	bool entropy_loaded = false;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -1200,7 +1201,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 		/* Don't discard the system's old entropy if any */
 		run_program(RUN_CHROOT | RUN_SILENT,
-			    "/etc/rc.d/random_seed start");
+		    "/etc/rc.d/random_seed start");
+		entropy_loaded = true;
 	}
 
 	/* Configure the system */
@@ -1242,7 +1244,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	umount_mnt2();
 
 	/* Save entropy -- on some systems it's ~all we'll ever get */
-	run_program(RUN_DISPLAY | RUN_CHROOT | RUN_FATAL | RUN_PROGRESS,
+	if (!update || entropy_loaded)
+		run_program(RUN_SILENT | RUN_CHROOT | RUN_ERROR_OK,
 		    "/etc/rc.d/random_seed stop");
 	/* Install/Upgrade complete ... reboot or exit to script */
 	hit_enter_to_continue(success_msg, NULL);
@@ -1334,6 +1337,26 @@ static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
 const char *tz_default;		/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
 static int save_cursel, save_topline;
+static int time_menu = -1;
+
+static void
+update_time_display(void)
+{
+	time_t t;
+	struct tm *tm;
+	char cur_time[STRSIZE], *p;
+
+	t = time(NULL);
+	tm = localtime(&t);
+	strlcpy(cur_time, safectime(&t), sizeof cur_time);
+	p = strchr(cur_time, '\n');
+	if (p != NULL)
+		*p = 0;
+
+	msg_clear();
+	msg_fmt_table_add(MSG_choose_timezone, "%s%s%s%s",
+	    tz_default, tz_selected, cur_time, tm ? tm->tm_zone : "?");
+}
 
 /*
  * Callback from timezone menu
@@ -1341,9 +1364,7 @@ static int save_cursel, save_topline;
 static int
 set_tz_select(menudesc *m, void *arg)
 {
-	time_t t;
 	char *new;
-	struct tm *tm;
 
 	if (m && strcmp(tz_selected, m->opts[m->cursel].opt_name) != 0) {
 		/* Change the displayed timezone */
@@ -1360,12 +1381,14 @@ set_tz_select(menudesc *m, void *arg)
 		/* Warp curser to 'Exit' line on menu */
 		m->cursel = -1;
 
-	/* Update displayed time */
-	t = time(NULL);
-	tm = localtime(&t);
-	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
-		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
-		    "?");
+	update_time_display();
+	if (time_menu >= 1) {
+		WINDOW *w = get_menudesc(time_menu)->mw;
+		if (w != NULL) {
+			touchwin(w);
+			wrefresh(w);
+		}
+	}
 	return 0;
 }
 
@@ -1520,8 +1543,6 @@ set_timezone(void)
 {
 	char localtime_link[STRSIZE];
 	char localtime_target[STRSIZE];
-	time_t t;
-	struct tm *tm;
 	int menu_no;
 
 	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
@@ -1533,10 +1554,7 @@ set_timezone(void)
 	tz_selected = strdup(tz_default);
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
-	t = time(NULL);
-	tm = localtime(&t);
-	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
-	    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone : "?");
+	update_time_display();
 
 	signal(SIGALRM, timezone_sig);
 	alarm(60);
@@ -1549,7 +1567,9 @@ set_timezone(void)
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
 
+	time_menu = menu_no;
 	process_menu(menu_no, NULL);
+	time_menu = -1;
 
 	free_menu(menu_no);
 
@@ -2107,6 +2127,9 @@ usage_info_list_from_parts(struct part_usage_info **list, size_t *count,
 			(*list)[no].fs_type = info.fs_type;
 			(*list)[no].fs_version = info.fs_sub_type;
 		}
+		(*list)[no].fs_opt1 = info.fs_opt1;
+		(*list)[no].fs_opt2 = info.fs_opt2;
+		(*list)[no].fs_opt3 = info.fs_opt3;
 		no++;
 	}
 	return true;
@@ -2172,6 +2195,7 @@ void
 free_usage_set(struct partition_usage_set *wanted)
 {
 	/* XXX - free parts? free clone src? */
+	free(wanted->write_back);
 	free(wanted->menu_opts);
 	free(wanted->infos);
 }
@@ -2193,6 +2217,7 @@ free_install_desc(struct install_partition_desc *install)
 				install->infos[j].clone_src = NULL; 
 	}
 #endif
+	free(install->write_back);
 	free(install->infos);
 }
 

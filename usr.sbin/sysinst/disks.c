@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44.2.14 2020/02/10 21:39:37 bouyer Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.15 2020/10/15 19:36:50 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1078,7 +1078,8 @@ int
 make_filesystems(struct install_partition_desc *install)
 {
 	int error = 0, partno = -1;
-	char *newfs = NULL, devdev[PATH_MAX], rdev[PATH_MAX];
+	char *newfs = NULL, devdev[PATH_MAX], rdev[PATH_MAX],
+	    opts[200], opt[30];
 	size_t i;
 	struct part_usage_info *ptn;
 	struct disk_partitions *parts;
@@ -1120,7 +1121,7 @@ make_filesystems(struct install_partition_desc *install)
 
 	for (i = 0; i < install->num; i++) {
 		/*
-		 * Newfs all file systems mareked as needing this.
+		 * Newfs all file systems marked as needing this.
 		 * Mount the ones that have a mountpoint in the target.
 		 */
 		ptn = &install->infos[i];
@@ -1142,16 +1143,33 @@ make_filesystems(struct install_partition_desc *install)
 		parts->pscheme->get_part_device(parts, ptn->cur_part_id,
 		    rdev, sizeof rdev, &partno, raw_dev_name, true, true);
 
+		opts[0] = 0;
 		switch (ptn->fs_type) {
 		case FS_APPLEUFS:
-			asprintf(&newfs, "/sbin/newfs");
+			if (ptn->fs_opt3 != 0)
+				snprintf(opts, sizeof opts, "-i %u",
+				    ptn->fs_opt3);
+			asprintf(&newfs, "/sbin/newfs %s", opts);
 			mnt_opts = "-tffs -o async";
 			fsname = "ffs";
 			break;
 		case FS_BSDFFS:
+			if (ptn->fs_opt3 != 0)
+				snprintf(opts, sizeof opts, "-i %u ",
+				    ptn->fs_opt3);
+			if (ptn->fs_opt1 != 0) {
+				snprintf(opt, sizeof opt, "-b %u ",
+				    ptn->fs_opt1);
+				strcat(opts, opt);
+			}
+			if (ptn->fs_opt2 != 0) {
+				snprintf(opt, sizeof opt, "-f %u ",
+				    ptn->fs_opt2);
+				strcat(opts, opt);
+			}
 			asprintf(&newfs,
-			    "/sbin/newfs -V2 -O %d",
-			    ptn->fs_version == 2 ? 2 : 1);
+			    "/sbin/newfs -V2 -O %d %s",
+			    ptn->fs_version == 2 ? 2 : 1, opts);
 			if (ptn->mountflags & PUIMNT_LOG)
 				mnt_opts = "-tffs -o log";
 			else
@@ -1159,7 +1177,10 @@ make_filesystems(struct install_partition_desc *install)
 			fsname = "ffs";
 			break;
 		case FS_BSDLFS:
-			asprintf(&newfs, "/sbin/newfs_lfs");
+			if (ptn->fs_opt1 != 0 && ptn->fs_opt2 != 0)
+				snprintf(opts, sizeof opts, "-b %u",
+				     ptn->fs_opt1 * ptn->fs_opt2);
+			asprintf(&newfs, "/sbin/newfs_lfs %s", opts);
 			mnt_opts = "-tlfs";
 			fsname = "lfs";
 			break;
@@ -1188,23 +1209,8 @@ make_filesystems(struct install_partition_desc *install)
 			break;
 		}
 		if ((ptn->instflags & PUIINST_NEWFS) && newfs != NULL) {
-			if (ptn->fs_type == FS_MSDOS) {
-			        /* newfs only if mount fails */
-			        if (run_program(RUN_SILENT | RUN_ERROR_OK,
-				    "mount -rt msdos %s /mnt2", devdev) != 0)
-					error = run_program(
-					    RUN_DISPLAY | RUN_PROGRESS,
-					    "%s %s",
-					    newfs, rdev);
-				else {
-					run_program(RUN_SILENT | RUN_ERROR_OK,
-					    "umount /mnt2");
-					error = 0;
-				}
-			} else {
-				error = run_program(RUN_DISPLAY | RUN_PROGRESS,
+			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s %s", newfs, rdev);
-			}
 		} else if ((ptn->instflags & (PUIINST_MOUNT|PUIINST_BOOT))
 		    && fsname != NULL) {
 			/* We'd better check it isn't dirty */
@@ -1347,7 +1353,7 @@ make_fstab(struct install_partition_desc *install)
 			break;
 		case FS_SWAP:
 			if (swap_dev[0] == 0) {
-				strncpy(swap_dev, dev, sizeof swap_dev);
+				strlcpy(swap_dev, dev, sizeof swap_dev);
 				dump_dev = ",dp";
 			} else {
 				dump_dev = "";
@@ -1414,14 +1420,16 @@ done_with_disks:
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
-	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
-	    cdrom_dev);
+	if (cdrom_dev[0] != 0)
+		scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
+		    cdrom_dev);
 	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
 	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
-	make_target_dir("/cdrom");
+	if (cdrom_dev[0] != 0)
+		make_target_dir("/cdrom");
 	make_target_dir("/var/shm");
 
 	scripting_fprintf(NULL, "EOF\n");
@@ -1905,9 +1913,12 @@ mount_disks(struct install_partition_desc *install)
 	return error;
 }
 
+static char swap_dev[PATH_MAX];
+
 int
 set_swap_if_low_ram(struct install_partition_desc *install)
 {
+	swap_dev[0] = 0;
 	if (get_ramsize() <= TINY_RAM_SIZE)
 		return set_swap(install);
 	return 0;
@@ -1917,9 +1928,9 @@ int
 set_swap(struct install_partition_desc *install)
 {
 	size_t i;
-	char dev_buf[PATH_MAX];
 	int rval;
 
+	swap_dev[0] = 0;
 	for (i = 0; i < install->num; i++) {
 		if (install->infos[i].type == PT_swap)
 			break;
@@ -1928,15 +1939,27 @@ set_swap(struct install_partition_desc *install)
 		return 0;
 
 	if (!install->infos[i].parts->pscheme->get_part_device(
-	    install->infos[i].parts, install->infos[i].cur_part_id, dev_buf,
-	    sizeof dev_buf, NULL, plain_name, true, true))
+	    install->infos[i].parts, install->infos[i].cur_part_id, swap_dev,
+	    sizeof swap_dev, NULL, plain_name, true, true))
 		return -1;
 
-	rval = swapctl(SWAP_ON, dev_buf, 0);
-	if (rval != 0)
+	rval = swapctl(SWAP_ON, swap_dev, 0);
+	if (rval != 0) {
+		swap_dev[0] = 0;
 		return -1;
+	}
 
-	return 0;
+	return 1;
+}
+
+void
+clear_swap(void)
+{
+
+	if (swap_dev[0] == 0)
+		return;
+	swapctl(SWAP_OFF, swap_dev, 0);
+	swap_dev[0] = 0;
 }
 
 int

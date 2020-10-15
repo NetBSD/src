@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.6.2.8 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6.2.9 2020/10/15 19:36:50 bouyer Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -130,12 +130,14 @@ struct gpt_part_entry {
 	char gp_label[GPT_LABEL_LEN];	/* user defined label */
 	char gp_dev_name[GPT_DEV_LEN];	/* name of wedge */
 	const char *last_mounted;	/* last mounted if known */
-	uint fs_type, fs_sub_type;	/* FS_* and maybe sub type */
+	uint fs_type, fs_sub_type,	/* FS_* and maybe sub type */
+	    fs_opt1, fs_opt2, fs_opt3;	/* transient file system options */
 	uint gp_flags;	
 #define	GPEF_ON_DISK	1		/* This entry exists on-disk */
 #define	GPEF_MODIFIED	2		/* this entry has been changed */
 #define	GPEF_WEDGE	4		/* wedge for this exists */
 #define	GPEF_RESIZED	8		/* size has changed */
+#define	GPEF_TARGET	16		/* marked install target */
 	struct gpt_part_entry *gp_next;
 };
 
@@ -280,6 +282,9 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 	static const char regpart_prefix[] = "GPT part - ";
 	struct gpt_disk_partitions *parts;
 	struct gpt_part_entry *last = NULL, *add_to = NULL;
+	const struct gpt_ptype_desc *native_root
+	     = gpt_find_native_type(gpt_native_root);
+	bool have_target = false;
 
 	if (collect(T_OUTPUT, &textbuf, "gpt -r show -a %s 2>/dev/null", dev)
 	    < 1)
@@ -351,6 +356,11 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 			np->gp_start = p_start;
 			np->gp_size = p_size;
 			np->gp_flags |= GPEF_ON_DISK;
+			if (!have_target && native_root != NULL &&
+			    strcmp(np->gp_id, native_root->tid) == 0) {
+				have_target = true;
+				np->gp_flags |= GPEF_TARGET;
+			}
 
 			if (last == NULL)
 				parts->partitions = np;
@@ -508,6 +518,11 @@ gpt_get_part_info(const struct disk_partitions *arg, part_id id,
 	info->last_mounted = p->last_mounted;
 	info->fs_type = p->fs_type;
 	info->fs_sub_type = p->fs_sub_type;
+	info->fs_opt1 = p->fs_opt1;
+	info->fs_opt2 = p->fs_opt2;
+	info->fs_opt3 = p->fs_opt3;
+	if (p->gp_flags & GPEF_TARGET)
+		info->flags |= PTI_INSTALL_TARGET;
 
 	return true;
 }
@@ -603,12 +618,24 @@ gpt_set_part_info(struct disk_partitions *arg, part_id id,
 	struct gpt_part_entry *p = parts->partitions, *n;
 	part_id no;
 	daddr_t lendiff;
+	bool was_target;
 
 	for (no = 0; p != NULL && no < id; no++)
 		p = p->gp_next;
 
 	if (no != id || p == NULL)
 		return false;
+
+	/* update target mark - we can only have one */
+	was_target = (p->gp_flags & GPEF_TARGET) != 0;
+	if (info->flags & PTI_INSTALL_TARGET)
+		p->gp_flags |= GPEF_TARGET;
+	else
+		p->gp_flags &= ~GPEF_TARGET;
+	if (was_target)
+		for (n = parts->partitions; n != NULL; n = n->gp_next)
+			if (n != p)
+				n->gp_flags &= ~GPEF_TARGET;
 
 	if ((p->gp_flags & GPEF_ON_DISK)) {
 		if (info->start != p->gp_start) {
@@ -1031,6 +1058,9 @@ gpt_info_to_part(struct gpt_part_entry *p, const struct disk_part_info *info,
 	}
 	p->fs_type = info->fs_type;
 	p->fs_sub_type = info->fs_sub_type;
+	p->fs_opt1 = info->fs_opt1;
+	p->fs_opt2 = info->fs_opt2;
+	p->fs_opt3 = info->fs_opt3;
 	
 	return true;
 }
@@ -1235,7 +1265,7 @@ gpt_modify_part(const char *disk, struct gpt_part_entry *p)
 	/* Check type */
 	if (p->gp_type != old.gp_type) {
 		if (run_program(RUN_SILENT,
-		    "gpt label -b %" PRIu64 " -T %s %s",
+		    "gpt type -b %" PRIu64 " -T %s %s",
 		    p->gp_start, p->gp_type->tid, disk) != 0)
 			return false;
 	}
@@ -1443,7 +1473,7 @@ gpt_write_to_disk(struct disk_partitions *arg)
 		p->gp_flags &= ~GPEF_WEDGE;
 		if (root_id == NO_PART && p->gp_type != NULL) {
 			if (p->gp_type->gent.generic_ptype == PT_root &&
-			    p->gp_start == pm->ptstart) {
+			    (p->gp_flags & GPEF_TARGET)) {
 				root_id = pno;
 				root_is_new = !(p->gp_flags & GPEF_ON_DISK);
 			} else if (efi_id == NO_PART &&
@@ -1583,6 +1613,14 @@ gpt_free(struct disk_partitions *arg)
 	}
 	free(__UNCONST(parts->dp.disk));
 	free(parts);
+}
+
+static void
+gpt_destroy_part_scheme(struct disk_partitions *arg)
+{
+
+	run_program(RUN_SILENT, "gpt destroy %s", arg->disk);
+	gpt_free(arg);
 }
 
 static bool
@@ -1811,5 +1849,6 @@ gpt_parts = {
 	.delete_partition = gpt_delete_partition,
 	.write_to_disk = gpt_write_to_disk,
 	.free = gpt_free,
+	.destroy_part_scheme = gpt_destroy_part_scheme,
 	.cleanup = gpt_cleanup,
 };

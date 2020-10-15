@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.3 2020/01/28 10:17:57 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.4 2020/10/15 19:36:51 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,10 +65,12 @@ md_init_set_status(int flags)
 bool
 md_get_info(struct install_partition_desc *install)
 {
+	int res;
 
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
+again:
 	if (pm->parts == NULL) {
 
 		const struct disk_partitioning_scheme *ps =
@@ -88,13 +90,21 @@ md_get_info(struct install_partition_desc *install)
 			pm->dlsize = ps->size_limit;
 	}
 
-	return set_bios_geom_with_mbr_guess(pm->parts);
+	res = set_bios_geom_with_mbr_guess(pm->parts);
+	if (res == 0)
+		return false;
+	else if (res == 1)
+		return true;
+
+	pm->parts->pscheme->destroy_part_scheme(pm->parts);
+	pm->parts = NULL;
+	goto again;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
 	return make_bsd_partitions(install);
@@ -281,7 +291,7 @@ md_parts_use_wholedisk(struct disk_partitions *parts)
 	struct disk_part_info boot_part = {
 		.size = PART_BOOT / 512,
 		.fs_type = PART_BOOT_TYPE,
-		.fs_sub_type = MBR_PTYPE_FAT12,
+		.fs_sub_type = MBR_PTYPE_LNXEXT2,
 		.last_mounted = PART_BOOT_MOUNT,
 	};
 

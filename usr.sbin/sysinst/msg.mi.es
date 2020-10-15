@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.14.2.7 2020/02/10 21:39:37 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.14.2.8 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,9 +146,6 @@ message heads
 
 message sectors
 {sectores}
-
-message fs_isize
-{tamaño promedio del fichero (bytes)}
 
 message mountpoint
 {punto de montaje (o 'ninguno')}
@@ -404,12 +401,6 @@ message label_offset_tail		{inicio ($2)}
 
 message invalid_sector_number
 {Número mal formado}
-
-message Select_file_system_block_size
-{Seleccione el tamaño de bloque del sistema de archivos}
-
-message Select_file_system_fragment_size
-{Seleccione el tamaño de fragmento del sistema de archivos}
 
 message packname
 {Por favor entroduzca un nombre para el disco NetBSD}
@@ -1030,8 +1021,16 @@ message Set_Sizes {Establecer los tamaños de las particiones NetBSD}
  */
 message Use_Default_Parts {Use default partition sizes}
 
+/* Called with:				Example
+ *  $0 = current partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_Different_Part_Scheme
+{Delete everything, use different partitions (not $1)}
+
 message Gigabytes {Gigabytes}
 message Megabytes {Megabytes}
+message Bytes {Bytes}
 message Cylinders {Cilindros}
 message Sectors {Sectores}
 message Select_medium {Seleccione el medio}
@@ -1298,7 +1297,7 @@ message	mp_already_exists	{$0 already defined!}
 
 message ptnsize_replace_existing
 {This is an already existing partition. 
-To change it's size, the partition will need to be deleted and later
+To change its size, the partition will need to be deleted and later
 recreated.  All data in this partition will be lost.
 
 Would you like to delete this partition and continue?}
@@ -1309,6 +1308,25 @@ message ptn_type		{tipo}
 message ptn_start		{inicio}
 message ptn_size		{tamaño}
 message ptn_end			{fin}
+
+message ptn_bsize		{tamaño bloque}
+message ptn_fsize		{tamaño frag}
+message ptn_isize		{tam prom archi}
+
+/* Called with:                         Example
+ *  $0 = avg file size in byte          1200
+ */
+message ptn_isize_bytes		{$0 bytes (para número de inodos)}
+message ptn_isize_dflt		{4 fragmentos}
+
+message Select_file_system_block_size
+{Seleccione el tamaño de bloque del sistema de archivos}
+
+message Select_file_system_fragment_size
+{Seleccione el tamaño de fragmento del sistema de archivos}
+
+message ptn_isize_prompt
+{tamaño promedio del fichero (bytes)}
 
 message No_free_space {Sin espacio libre}
 message Invalid_numeric {Número no válido!}

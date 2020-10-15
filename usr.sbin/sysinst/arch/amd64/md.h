@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6.2.2 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: md.h,v 1.6.2.3 2020/10/15 19:36:52 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,3 +128,6 @@ bool x86_md_need_bootblock(struct install_partition_desc *install);
 /* post-process boot.cfg for KASLR if that kernel has been selected */
 void amd64_md_boot_cfg_finalize(const char*);
 #define	MD_BOOT_CFG_FINALIZE(P)	amd64_md_boot_cfg_finalize(P)
+
+#define	HAVE_EFI_BOOT		1	/* we support EFI boot partitions */
+

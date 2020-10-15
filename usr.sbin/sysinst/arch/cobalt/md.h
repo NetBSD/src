@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3.2.2 2019/12/17 09:44:51 msaitoh Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.3 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,7 @@
 #define PART_BOOT_MIN		(1 * 1024 * 1024)	/* 1MB minimum */
 #define	PART_BOOT_TYPE		FS_EX2FS
 #define	PART_BOOT_SUBT		1			/* use "old" ext2 */
-#define	PART_BOOT_MOUNT		"/stand"
+#define	PART_BOOT_MOUNT		"/ext2"
 
 /* default partition size */
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20.2.6 2020/02/10 21:39:38 bouyer Exp $ */
+/*	$NetBSD: md.c,v 1.20.2.7 2020/10/15 19:36:51 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,7 +65,7 @@ static bool uefi_boot;
 /* prototypes */
 
 static bool get_bios_info(const char*, struct disk_partitions*, int*, int*, int*);
-static int mbr_root_above_chs(void);
+static int mbr_root_above_chs(daddr_t);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 
@@ -107,11 +107,12 @@ md_init_set_status(int flags)
 bool
 md_get_info(struct install_partition_desc *install)
 {
-	int bcyl = 0, bhead = 0, bsec = 0;
+	int bcyl = 0, bhead = 0, bsec = 0, res;
 
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
+again:
 	if (pm->parts == NULL) {
 
 		const struct disk_partitioning_scheme *ps =
@@ -149,13 +150,21 @@ md_get_info(struct install_partition_desc *install)
 	if (pm->no_mbr || pm->no_part)
 		return true;
 
-	return edit_outer_parts(pm->parts);
+	res = edit_outer_parts(pm->parts);
+	if (res == 0)
+		return false;
+	else if (res == 1)
+		return true;
+
+	pm->parts->pscheme->destroy_part_scheme(pm->parts);
+	pm->parts = NULL;
+	goto again;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-bool
+int
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
 	return make_bsd_partitions(install);
@@ -462,6 +471,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 	mbr_info_t *ext;
 	struct mbr_partition *p;
 	const char *bootcode;
+	daddr_t inst_start, inst_size;
 	int i, names, fl, ofl;
 #define	ACTIVE_FOUND	0x0100
 #define	NETBSD_ACTIVE	0x0200
@@ -469,8 +479,15 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 #define	ACTIVE_NAMED	0x0800
 
 	root_limit = 0;
+	if (parts->pscheme->guess_install_target == NULL ||
+	    !parts->pscheme->guess_install_target(parts, &inst_start,
+	    &inst_size)) {
+		inst_start = parts->disk_start;
+		inst_size = parts->disk_size;
+	}
+
 	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13) == 0) {
-		if (mbr_root_above_chs()) {
+		if (mbr_root_above_chs(inst_start)) {
 			if (quiet)
 				return 0;
 			msg_display(MSG_partabovechs);
@@ -487,7 +504,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 	}
 
 	/*
-	 * Ensure the install partition (at sector pm->ptstart) and the active
+	 * Ensure the install partition (at sector inst_start) and the active
 	 * partition are bootable.
 	 * Determine whether the bootselect code is needed.
 	 * Note that MBR_BS_NEWMBR is always set, so we ignore it!
@@ -499,14 +516,14 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 		for (i = 0; i < MBR_PART_COUNT; p++, i++) {
 			if (p->mbrp_flag == MBR_PFLAG_ACTIVE) {
 				fl |= ACTIVE_FOUND;
-			    if (ext->sector + p->mbrp_start == pm->ptstart)
+			    if (ext->sector + p->mbrp_start == inst_start)
 				fl |= NETBSD_ACTIVE;
 			}
 			if (ext->mbrb.mbrbs_nametab[i][0] == 0) {
 				/* No bootmenu label... */
 				if (ext->sector == 0)
 					continue;
-				if (ext->sector + p->mbrp_start == pm->ptstart)
+				if (ext->sector + p->mbrp_start == inst_start)
 					/*
 					 * Have installed into an extended ptn
 					 * force name & bootsel...
@@ -517,7 +534,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 			/* Partition has a bootmenu label... */
 			if (ext->sector != 0)
 				fl |= MBR_BS_EXTLBA;
-			if (ext->sector + p->mbrp_start == pm->ptstart)
+			if (ext->sector + p->mbrp_start == inst_start)
 				fl |= NETBSD_NAMED;
 			else if (p->mbrp_flag == MBR_PFLAG_ACTIVE)
 				fl |= ACTIVE_NAMED;
@@ -571,7 +588,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 		/* Check there is some bootcode at all... */
 		if (mbri->mbr.mbr_magic != htole16(MBR_MAGIC) ||
 		    mbri->mbr.mbr_jmpboot[0] == 0 ||
-		    mbr_root_above_chs())
+		    mbr_root_above_chs(inst_start))
 			/* Existing won't do, force update */
 			fl |= MBR_BS_NEWMBR;
 	}
@@ -709,9 +726,9 @@ nogeom:
 }
 
 static int
-mbr_root_above_chs(void)
+mbr_root_above_chs(daddr_t ptstart)
 {
-	return pm->ptstart + (daddr_t)DEFROOTSIZE * (daddr_t)(MEG / 512)
+	return ptstart + (daddr_t)DEFROOTSIZE * (daddr_t)(MEG / 512)
 	    >= pm->max_chs;
 }
 

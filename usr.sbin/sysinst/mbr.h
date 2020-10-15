@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.3.2.1 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: mbr.h,v 1.3.2.2 2020/10/15 19:36:50 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ struct mbr_info_t {
 };
 
 #ifdef BOOTSEL
-struct mbr_bootsel *mbs;
+extern struct mbr_bootsel *mbs;
 
 	/* sync with src/sbin/fdisk/fdisk.c */
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
@@ -102,7 +102,8 @@ int 	partsoverlap(struct mbr_partition *, int, int);
 /* from mbr.c */
 
 int	guess_biosgeom_from_parts(struct disk_partitions*, int *, int *, int *);
-bool	set_bios_geom_with_mbr_guess(struct disk_partitions*);
+/* same return values as edit_outer_parts() */
+int	set_bios_geom_with_mbr_guess(struct disk_partitions*);
 void	set_bios_geom(struct disk_partitions *, int *cyl, int *head, int *sec);
 int	otherpart(int);
 int	ourpart(int);

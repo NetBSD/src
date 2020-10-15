@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17.2.3 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.17.2.4 2020/10/15 19:36:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,6 +52,45 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
+int debug;
+char machine[SSTRSIZE];
+int ignorerror;
+int ttysig_ignore;
+pid_t ttysig_forward;
+uint sizemult;
+int partman_go;
+FILE *logfp;
+FILE *script;
+daddr_t root_limit;
+struct pm_head_t pm_head;
+struct pm_devs *pm;
+struct pm_devs *pm_new;
+char xfer_dir[STRSIZE];
+int  clean_xfer_dir;
+char ext_dir_bin[STRSIZE];
+char ext_dir_src[STRSIZE];
+char ext_dir_pkgsrc[STRSIZE];
+char set_dir_bin[STRSIZE];
+char set_dir_src[STRSIZE];
+char pkg_dir[STRSIZE];
+char pkgsrc_dir[STRSIZE];
+const char *ushell;
+struct ftpinfo ftp, pkg, pkgsrc;
+int (*fetch_fn)(const char *);
+char nfs_host[STRSIZE];
+char nfs_dir[STRSIZE];
+char cdrom_dev[SSTRSIZE];
+char fd_dev[SSTRSIZE];
+const char *fd_type;
+char localfs_dev[SSTRSIZE];
+char localfs_fs[SSTRSIZE];
+char localfs_dir[STRSIZE];
+char targetroot_mnt[SSTRSIZE];
+int  mnt2_mounted;
+char dist_postfix[SSTRSIZE];
+char dist_tgz_postfix[SSTRSIZE];
+WINDOW *mainwin;
+
 static void select_language(void);
 __dead static void usage(void);
 __dead static void miscsighandler(int);
@@ -87,7 +126,7 @@ struct f_arg {
 };
 
 static const struct f_arg fflagopts[] = {
-	{"release", REL, rel, sizeof rel},
+	{"release", REL, NULL, 0},
 	{"machine", MACH, machine, sizeof machine},
 	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
 	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
@@ -144,6 +183,8 @@ init(void)
 	memset(pm_new, 0, sizeof *pm_new);
 
 	for (arg = fflagopts; arg->name != NULL; arg++) {
+		if (arg->var == NULL)
+			continue;
 		if (arg->var == cdrom_dev)
 			get_default_cdrom(arg->var, arg->size);
 		else
@@ -192,8 +233,7 @@ main(int argc, char **argv)
 			debug = 1;
 			break;
 		case 'r':
-			/* Release name other than compiled in release. */
-			strncpy(rel, optarg, sizeof rel);
+			/* Release name - ignore for compatibility with older versions */
 			break;
 		case 'f':
 			/* Definition file to read. */
@@ -410,6 +450,7 @@ toplevel(void)
 		if (chdir(home) != 0)
 			(void)chdir("/");
 	unwind_mounts();
+	clear_swap();
 
 	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
@@ -500,6 +541,7 @@ cleanup(void)
 	chdir(getenv("HOME"));
 	unwind_mounts();
 	umount_mnt2();
+	clear_swap();
 
 	endwin();
 
@@ -550,6 +592,8 @@ process_f_flag(char *f_name)
 		for (arg = fflagopts; arg->name != NULL; arg++) {
 			len = strlen(arg->name);
 			if (memcmp(cp, arg->name, len) != 0)
+				continue;
+			if (arg->var == NULL || arg->size == 0)
 				continue;
 			cp1 = cp + len;
 			cp1 += strspn(cp1, " \t");
