@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.11 2016/09/21 06:49:39 skrll Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.12 2020/10/15 05:10:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _resumecontext.S,v 1.11 2016/09/21 06:49:39 skrll Exp $")
+	RCSID("$NetBSD: _resumecontext.S,v 1.12 2020/10/15 05:10:30 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
@@ -56,7 +56,7 @@ LEAF_NOPROFILE(__resumecontext)
 #if defined(__mips_n32) || defined(__mips_n64)
 	.cpsetup ra, t3, __resumecontext
 #endif
-	
+
 	PTR_SUBU	sp, sp, UCONTEXT_SIZE		# get space for ucontext
 	move		a0, sp				# arg0 for getcontext
 	PTR_S		zero, _OFFSETOF_UC_LINK(a0)	# make sure uc_link is 0
