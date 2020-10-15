@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.37 2020/09/14 10:53:02 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.38 2020/10/15 23:15:36 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.37 2020/09/14 10:53:02 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.38 2020/10/15 23:15:36 rin Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -532,6 +532,12 @@ int
 fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 {
 
+	/*
+	 * Instructions are stored in little endian for BE8,
+	 * only a valid binary format for ILP32EB. Therefore,
+	 * we need byte-swapping before decoding on aarch64eb.
+	 */
+
 	/* THUMB? */
 	if (spsr & SPSR_A32_T) {
 		uint16_t *p = (uint16_t *)(pc & ~1UL); /* XXX */
@@ -539,6 +545,7 @@ fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 
 		if (ufetch_16(p, &hi))
 			return -1;
+		LE16TOH(hi);
 
 		if (!THUMB_32BIT(hi)) {
 			/* 16-bit Thumb instruction */
@@ -549,6 +556,7 @@ fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 		/* 32-bit Thumb instruction */
 		if (ufetch_16(p + 1, &lo))
 			return -1;
+		LE16TOH(lo);
 
 		*insn = ((uint32_t)hi << 16) | lo;
 		return 4;
@@ -556,6 +564,7 @@ fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 
 	if (ufetch_32((uint32_t *)pc, insn))
 		return -1;
+	LE32TOH(*insn);
 
 	return 4;
 }
