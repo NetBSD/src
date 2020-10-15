@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2020/10/15 04:21:53 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -63,53 +63,58 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozowarn(httpd, "options:");
 
 	if (have_daemon_mode)
-		bozowarn(httpd, "   -b\t\t\tbackground and go into daemon mode");
+		bozowarn(httpd, "   -b\t\t\tbackground in daemon mode");
 	if (have_cgibin &&
 	    have_dynamic_content)
-		bozowarn(httpd, "   -C arg prog\t\tadd this CGI handler");
+		bozowarn(httpd, "   -C suffix handler\tadd this CGI handler "
+				"for paths ending with `suffix'");
 	if (have_cgibin)
 		bozowarn(httpd, "   -c cgibin\t\tenable cgi-bin support in "
 				"this directory");
 	if (have_debug)
 		bozowarn(httpd, "   -d\t\t\tenable debug support");
-	if (have_cgibin)
-		bozowarn(httpd, "   -E\t\t\tenable CGI support for user dirs");
 	if (have_user &&
 	    have_cgibin)
+		bozowarn(httpd, "   -E\t\t\tenable CGI support for user dirs");
+	if (have_core)
 		bozowarn(httpd, "   -e\t\t\tdon't clean the environment "
 				"(-t and -U only)");
 	if (have_daemon_mode)
 		bozowarn(httpd, "   -f\t\t\tforeground in daemon mode");
-	if (have_all)
-		bozowarn(httpd, "   -G print version number and exit");
+	if (have_core)
+		bozowarn(httpd, "   -G\t\t\tprint version number and exit");
 	if (have_dirindex)
 		bozowarn(httpd, "   -H\t\t\thide files starting with a period "
 				"(.) in index mode");
-	if (have_all)
+	if (have_core)
 		bozowarn(httpd, "   -I port\t\tbind or use on this port");
 	if (have_daemon_mode)
 		bozowarn(httpd, "   -i address\t\tbind on this address "
 				"(daemon mode only)");
 	if (have_lua)
-		bozowarn(httpd, "   -L arg script\tadd this Lua script");
+		bozowarn(httpd, "   -L prefix script\tadd this Lua script for "
+				"paths starting with `prefix'");
 	if (have_dynamic_content)
-		bozowarn(httpd, "   -M arg t c c11\tadd this mime extenstion");
+		bozowarn(httpd, "   -M suffix t c c11\tadd this mime entry");
+	if (have_core)
+		bozowarn(httpd, "   -n\t\t\tdon't resolve host names");
 	if (have_daemon_mode)
 		bozowarn(httpd, "   -P pidfile\t\tpid file path");
 	if (have_user)
 		bozowarn(httpd, "   -p dir\t\t\"public_html\" directory name");
 
-	if (have_all) {
+	if (have_core) {
 		bozowarn(httpd, "   -S version\t\tset server version string");
 		bozowarn(httpd, "   -s\t\t\talways log to stderr");
-		bozowarn(httpd, "   -T type timeout\tset `type' timeout");
+		bozowarn(httpd, "   -T type timeout\t"
+				"set <ssl|initial|header|request> timeout");
 		bozowarn(httpd, "   -t dir\t\tchroot to `dir'");
-		bozowarn(httpd, "   -U username\t\tchange user to `user'");
+		bozowarn(httpd, "   -U user\t\tchange user to `user'");
 	}
 	if (have_user)
 		bozowarn(httpd, "   -u\t\t\tenable ~user/public_html support");
 
-	if (have_all) {
+	if (have_core) {
 		bozowarn(httpd, "   -V\t\t\tUnknown virtual hosts go to "
 				"`slashdir'");
 		bozowarn(httpd, "   -v virtualroot\tenable virtual host "
@@ -118,7 +123,7 @@ usage(bozohttpd_t *httpd, char *progname)
 
 	if (have_dirindex)
 		bozowarn(httpd, "   -X\t\t\tdirectory index support");
-	if (have_all)
+	if (have_core)
 		bozowarn(httpd, "   -x index\t\tdefault \"index.html\" "
 				"file name");
 
@@ -178,15 +183,9 @@ main(int argc, char **argv)
 			bozo_set_pref(&httpd, &prefs, "background", val);
 			break;
 
-		case 'c':
-			if (!have_cgibin)
-				bozoerr(&httpd, 1, "CGI not enabled");
-
-			bozo_cgi_setbin(&httpd, optarg);
-			break;
-
 		case 'C':
-			if (!have_dynamic_content && !have_cgibin)
+			if (!have_dynamic_content ||
+			    !have_cgibin)
 				bozoerr(&httpd, 1,
 				    "dynamic CGI handler support not enabled");
 
@@ -197,6 +196,13 @@ main(int argc, char **argv)
 					argv[optind++]);
 			break;
 
+		case 'c':
+			if (!have_cgibin)
+				bozoerr(&httpd, 1, "CGI not enabled");
+
+			bozo_cgi_setbin(&httpd, optarg);
+			break;
+
 		case 'd':
 			if (!have_debug)
 				bozowarn(&httpd, "Debugging not enabled");
@@ -204,8 +210,8 @@ main(int argc, char **argv)
 			break;
 
 		case 'E':
-			if (have_user &&
-			    have_cgibin)
+			if (!have_user ||
+			    !have_cgibin)
 				bozoerr(&httpd, 1, "CGI not enabled");
 
 			bozo_set_pref(&httpd, &prefs, "enable user cgibin",
@@ -213,9 +219,6 @@ main(int argc, char **argv)
 			break;
 
 		case 'e':
-			if (!have_daemon_mode)
-				goto no_daemon_mode;
-
 			bozo_set_pref(&httpd, &prefs, "dirty environment",
 				      "true");
 			break;

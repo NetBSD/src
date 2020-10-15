@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.28 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.29 2020/10/15 04:21:53 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2019 Matthew R. Green
+ * Copyright (c) 1997-2020 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,14 @@
 
 #include "bozohttpd.h"
 
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
+
 #ifndef NO_SSL_SUPPORT
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-
-#ifndef USE_ARG
-#define USE_ARG(x)	/*LINTED*/(void)&(x)
-#endif
 
 #ifndef BOZO_SSL_CIPHERS
 #define BOZO_SSL_CIPHERS 					\
@@ -352,6 +352,8 @@ bozo_printf(bozohttpd_t *httpd, const char *fmt, ...)
 	va_list	args;
 	int	cc;
 
+	USE_ARG(httpd);
+
 	va_start(args, fmt);
 #ifndef NO_SSL_SUPPORT
 	if (httpd->sslinfo)
@@ -370,6 +372,7 @@ bozo_read(bozohttpd_t *httpd, int fd, void *buf, size_t len)
 	if (httpd->sslinfo)
 		return bozo_ssl_read(httpd, fd, buf, len);
 #endif
+	USE_ARG(httpd);
 	return read(fd, buf, len);
 }
 
@@ -380,6 +383,7 @@ bozo_write(bozohttpd_t *httpd, int fd, const void *buf, size_t len)
 	if (httpd->sslinfo)
 		return bozo_ssl_write(httpd, fd, buf, len);
 #endif
+	USE_ARG(httpd);
 	return write(fd, buf, len);
 }
 
@@ -390,5 +394,6 @@ bozo_flush(bozohttpd_t *httpd, FILE *fp)
 	if (httpd->sslinfo)
 		return 0;
 #endif
+	USE_ARG(httpd);
 	return fflush(fp);
 }
