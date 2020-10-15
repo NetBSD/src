@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.20 2020/08/29 19:06:17 jakllsch Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.20 2020/08/29 19:06:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.21 2020/10/15 09:33:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -243,6 +243,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	DPRINTF(sc->sc_dev, "mapped %#" PRIxBUSADDR "\n", addr);
+	sc->sc_ios = size;
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "fpci", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");

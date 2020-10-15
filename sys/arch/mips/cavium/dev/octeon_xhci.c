@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.2 2020/07/17 08:06:02 simonb Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.3 2020/10/15 09:32:40 jmcneill Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ octxhci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
 	sc->sc_iot = &octxhci_bus_tag;
+	sc->sc_ios = size;
 
 	child = of_find_bycompat(phandle, "synopsys,dwc3");
 	if (child == -1) {
