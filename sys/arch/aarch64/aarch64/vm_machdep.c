@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.8 2020/05/23 18:08:59 ryo Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.9 2020/10/15 22:52:08 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2020/05/23 18:08:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2020/10/15 22:52:08 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,11 +144,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*utf = *l1->l_md.md_utf;
 
 	/*
-	 * If specified, give the child a different stack
-	 * (make sure it's 16-byte aligned).
+	 * If specified, give the child a different stack (make sure it's
+	 * 16- or 8-byte aligned for 64- or 32-bit processes, respectively).
 	 */
-	if (stack != NULL)
-		utf->tf_sp = ((vaddr_t)(stack) + stacksize) & -16;
+	if (stack != NULL) {
+		utf->tf_sp = (vaddr_t)(stack) + stacksize;
+#ifdef COMPAT_NETBSD32
+		if (__predict_false(l2->l_proc->p_flag & PK_32)) {
+			utf->tf_sp &= -8;
+			utf->tf_reg[13] = utf->tf_sp;
+		} else
+#endif
+			utf->tf_sp &= -16;
+	}
 
 	/* build a new switchframe */
 	struct trapframe * const ktf = utf - 1;
