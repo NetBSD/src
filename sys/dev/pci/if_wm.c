@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.645.2.7 2020/09/23 08:46:54 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.645.2.8 2020/10/16 08:03:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.7 2020/09/23 08:46:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.8 2020/10/16 08:03:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2860,7 +2860,8 @@ alloc_retry:
 			reg &= ~CTRL_EXT_I2C_ENA;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 		if ((sc->sc_flags & WM_F_SGMII) != 0) {
-			wm_gmii_setup_phytype(sc, 0, 0);
+			if (!wm_sgmii_uses_mdio(sc))
+				wm_gmii_setup_phytype(sc, 0, 0);
 			wm_reset_mdicnfg_82580(sc);
 		}
 	} else if (sc->sc_type < WM_T_82543 ||
