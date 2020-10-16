@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.19 2020/09/12 15:25:42 jmcneill Exp $
+# $NetBSD: md.i386,v 1.20 2020/10/16 11:09:32 rin Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete
@@ -20,3 +20,4 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait6.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/sys/x86/t_convert_xmm_s87.debug	tests-sys-debug		debug,atf
