@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.4 2018/08/28 15:04:58 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.5 2020/10/16 22:39:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,9 +40,15 @@
 #define	MULTIPROCESSOR	1	/* safer to assume multiprocessor */
 #endif
 
+#if defined(__aarch64__)
+#define	mb()	__asm __volatile ("dsb sy" ::: "memory")
+#define	wmb()	__asm __volatile ("dsb st" ::: "memory")
+#define	rmb()	__asm __volatile ("dsb ld" ::: "memory")
+#else
 #define	mb	membar_sync
 #define	wmb	membar_producer
 #define	rmb	membar_consumer
+#endif
 
 #ifdef __alpha__		/* XXX As if...  */
 #  define	read_barrier_depends	membar_sync
@@ -51,9 +57,9 @@
 #endif
 
 #ifdef MULTIPROCESSOR
-#  define	smp_mb				mb
-#  define	smp_wmb				wmb
-#  define	smp_rmb				rmb
+#  define	smp_mb				membar_sync
+#  define	smp_wmb				membar_producer
+#  define	smp_rmb				membar_consumer
 #  define	smp_read_barrier_depends	read_barrier_depends
 #else
 #  define	smp_mb()			do {} while (0)
