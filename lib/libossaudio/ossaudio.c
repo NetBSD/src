@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.47 2020/10/16 15:40:16 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.48 2020/10/16 20:24:35 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.47 2020/10/16 15:40:16 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.48 2020/10/16 20:24:35 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -106,6 +106,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct audio_offset tmpoffs;
 	struct audio_buf_info bufinfo;
 	struct audio_format_query fmtq;
+	struct audio_errinfo *tmperrinfo;
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
 	struct oss_sysinfo tmpsysinfo;
@@ -118,6 +119,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	u_int u;
 	u_int encoding;
 	u_int precision;
+	int perrors, rerrors;
+	static int totalperrors = 0;
+	static int totalrerrors = 0;
 	int idat, idata;
 	int props;
 	int retval;
@@ -135,6 +139,39 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_DRAIN, 0);
 		if (retval < 0)
 			return retval;
+		break;
+	case SNDCTL_DSP_GETERROR:
+		tmperrinfo = (struct audio_errinfo *)argp;
+		if (tmperrinfo == NULL)
+			return EINVAL;
+		memset(tmperrinfo, 0, sizeof(struct audio_errinfo));
+		if ((retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo)) < 0)
+			return retval;
+		/*
+		 * OSS requires that we return counters that are relative to
+		 * the last call. We must maintain state here...
+		 */
+		if (ioctl(fd, AUDIO_PERROR, &perrors) != -1) {
+			perrors /= ((tmpinfo.play.precision / NBBY) *
+			    tmpinfo.play.channels);
+			tmperrinfo->play_underruns =
+			    (perrors / tmpinfo.blocksize) - totalperrors;
+			totalperrors += tmperrinfo->play_underruns;
+		}
+		if (ioctl(fd, AUDIO_RERROR, &rerrors) != -1) {
+			rerrors /= ((tmpinfo.record.precision / NBBY) *
+			    tmpinfo.record.channels);
+			tmperrinfo->rec_overruns =
+			    (rerrors / tmpinfo.blocksize) - totalrerrors;
+			totalrerrors += tmperrinfo->rec_overruns;
+		}
+		break;
+	case SNDCTL_DSP_COOKEDMODE:
+		/*
+		 * NetBSD is always running in "cooked mode" - the kernel
+		 * always performs format conversions.
+		 */
+		INTARG = 1;
 		break;
 	case SNDCTL_DSP_POST:
 		/* This call is merely advisory, and may be a nop. */
