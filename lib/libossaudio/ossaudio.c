@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.44 2020/04/20 12:01:44 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.45 2020/10/16 12:23:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.44 2020/04/20 12:01:44 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.45 2020/10/16 12:23:34 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -103,6 +103,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct audio_info tmpinfo, hwfmt;
 	struct audio_offset tmpoffs;
 	struct audio_buf_info bufinfo;
+	struct audio_format_query fmtq;
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
 	struct oss_sysinfo tmpsysinfo;
@@ -116,8 +117,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	u_int encoding;
 	u_int precision;
 	int idat, idata;
+	int props;
 	int retval;
-	int i;
+	int newfd;
 
 	idat = 0;
 
@@ -583,53 +585,68 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpaudioinfo->dev = 0;
 
 		snprintf(tmpaudioinfo->devnode, OSS_DEVNODE_SIZE,
-		    "/dev/audio%d", tmpaudioinfo->dev); 
+		    "/dev/audio%d", tmpaudioinfo->dev);
 
-		retval = ioctl(fd, AUDIO_GETDEV, &tmpaudiodev);
-		if (retval < 0)
+		if ((newfd = open(tmpaudioinfo->devnode, O_WRONLY)) < 0) {
+			if ((newfd = open(tmpaudioinfo->devnode, O_RDONLY)) < 0) {
+				return newfd;
+			}
+		}
+
+		retval = ioctl(newfd, AUDIO_GETDEV, &tmpaudiodev);
+		if (retval < 0) {
+			close(newfd);
 			return retval;
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-		if (retval < 0)
+		}
+		retval = ioctl(newfd, AUDIO_GETPROPS, &props);
+		if (retval < 0) {
+			close(newfd);
 			return retval;
-		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
-		if (retval < 0)
-			return retval;
+		}
 		idat = DSP_CAP_TRIGGER;
-		if (idata & AUDIO_PROP_FULLDUPLEX)
+		if (props & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
-		if (idata & AUDIO_PROP_MMAP)
+		if (props & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
-		idat = PCM_CAP_INPUT | PCM_CAP_OUTPUT;
-		strlcpy(tmpaudioinfo->name, tmpaudiodev.name,
-		    sizeof tmpaudioinfo->name);
-		tmpaudioinfo->busy = tmpinfo.play.open;
+		if (props & AUDIO_PROP_CAPTURE)
+			idat |= PCM_CAP_INPUT;
+		if (props & AUDIO_PROP_PLAYBACK)
+			idat |= PCM_CAP_OUTPUT;
+		snprintf(tmpaudioinfo->name, sizeof(tmpaudioinfo->name),
+		    "%s %s", tmpaudiodev.name, tmpaudiodev.version);
+		tmpaudioinfo->busy = 0;
 		tmpaudioinfo->pid = -1;
 		tmpaudioinfo->caps = idat;
-		ioctl(fd, SNDCTL_DSP_GETFMTS, &tmpaudioinfo->iformats);
+		ioctl(newfd, SNDCTL_DSP_GETFMTS, &tmpaudioinfo->iformats);
 		tmpaudioinfo->oformats = tmpaudioinfo->iformats;
 		tmpaudioinfo->magic = -1;
-		memset(tmpaudioinfo->cmd, 0, 64);
+		memset(tmpaudioinfo->cmd, 0, sizeof(tmpaudioinfo->cmd));
 		tmpaudioinfo->card_number = -1;
-		memset(tmpaudioinfo->song_name, 0, 64);
-		memset(tmpaudioinfo->label, 0, 16);
-		tmpaudioinfo->port_number = tmpinfo.play.port;
+		memset(tmpaudioinfo->song_name, 0,
+		    sizeof(tmpaudioinfo->song_name));
+		memset(tmpaudioinfo->label, 0, sizeof(tmpaudioinfo->label));
+		tmpaudioinfo->port_number = 0;
 		tmpaudioinfo->mixer_dev = tmpaudioinfo->dev;
 		tmpaudioinfo->legacy_device = -1;
 		tmpaudioinfo->enabled = 1;
 		tmpaudioinfo->flags = -1;
-		tmpaudioinfo->min_rate = tmpinfo.play.sample_rate;
-		tmpaudioinfo->max_rate = tmpinfo.play.sample_rate;
-		tmpaudioinfo->nrates = 2;
-		for (i = 0; i < tmpaudioinfo->nrates; i++)
-			tmpaudioinfo->rates[i] = tmpinfo.play.sample_rate;
-		tmpaudioinfo->min_channels = tmpinfo.play.channels;
-		tmpaudioinfo->max_channels = tmpinfo.play.channels;
+		tmpaudioinfo->min_rate = 8000;
+		tmpaudioinfo->max_rate = 192000;
+		tmpaudioinfo->nrates = 0;
+		tmpaudioinfo->min_channels = 1;
+		tmpaudioinfo->max_channels = 2;
+		for (fmtq.index = 0; ioctl(newfd, AUDIO_QUERYFORMAT, &fmtq) != -1; ++fmtq.index) {
+			if (fmtq.fmt.channels > (unsigned)tmpaudioinfo->max_channels)
+				tmpaudioinfo->max_channels = fmtq.fmt.channels;
+		}
 		tmpaudioinfo->binding = -1;
 		tmpaudioinfo->rate_source = -1;
-		memset(tmpaudioinfo->handle, 0, 16);
+		strlcpy(tmpaudioinfo->handle, tmpaudioinfo->devnode,
+		    sizeof(tmpaudioinfo->handle));
 		tmpaudioinfo->next_play_engine = 0;
 		tmpaudioinfo->next_rec_engine = 0;
 		argp = tmpaudioinfo;
+		close(newfd);
 		break;
 	case SNDCTL_DSP_SETPLAYVOL:
 		setvol(fd, INTARG, false);
