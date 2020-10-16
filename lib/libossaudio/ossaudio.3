@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.21 2020/10/16 16:30:53 nia Exp $
+.\"	$NetBSD: ossaudio.3,v 1.22 2020/10/16 16:48:07 nia Exp $
 .\"
 .\" Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,17 @@ device names to OSS mixer controls.
 .It *.fmsynth Ta SOUND_MIXER_SYNTH
 .It *.midi Ta SOUND_MIXER_SYNTH
 .El
+.Sh COMPATIBILITY
+The
+.Nm
+interface aims to be compatible with the Open Sound System version 4, as
+described in:
+.Pp
+.Rs
+.%A 4Front Technologies
+.%T OSS 4.x Programmer's Guide 
+.%U http://manuals.opensound.com/developer/
+.%D 2007
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr audio 4 ,
@@ -85,17 +96,6 @@ API for writing audio code under Linux until ALSA became the new default
 in Linux 2.6.
 It remains the preferred API in FreeBSD and Solaris, and a large body
 of code exists supporting it.
-.Sh COMPATIBILITY
-The
-.Nm
-interface aims to be compatible with the Open Sound System version 4, as
-described in:
-.Pp
-.Rs
-.%A 4Front Technologies
-.%T OSS 4.x Programmer's Guide 
-.%U http://manuals.opensound.com/developer/
-.%D 2007
 .Sh BUGS
 .Pp
 The emulation is incomplete.
