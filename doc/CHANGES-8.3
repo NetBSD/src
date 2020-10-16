@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.44 2020/10/12 10:25:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.45 2020/10/16 14:38:13 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1039,7 +1039,7 @@ sys/netinet/tcp_input.c				1.419
 	1 byte every 5 or even 60 seconds.
 	[kardel, ticket #1602]
 
-etc/defaults/rc.conf				1.159
+etc/defaults/rc.conf				1.159 (patch)
 etc/rc.d/motd					1.10,1.11
 share/man/man5/rc.conf.5			1.186,1.187
 
@@ -1127,4 +1127,10 @@ external/bsd/ntp/bin/sntp/sntp.1		delete
 
 	ntpd(8): PR 55710: install the correct man pages.
 	[kim, ticket #1616]
+
+sys/dev/pci/if_wm.c				1.691
+
+	Fix SGMII code to not to print error message. This problem was added
+	when SFP support was added.
+	[msaitoh, ticket #1617]
 
