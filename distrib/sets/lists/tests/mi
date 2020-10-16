@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.941 2020/10/15 22:15:08 mgorny Exp $
+# $NetBSD: mi,v 1.942 2020/10/16 07:12:26 mgorny Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -191,6 +191,7 @@
 ./usr/libdata/debug/usr/tests/sys/netatalk		tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/netinet		tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/netinet6		tests-sys-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/sys/x86			tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/syscall			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/usr.bin			tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/cpio		tests-usr.bin-debug	compattestfile,atf
@@ -4137,6 +4138,7 @@
 ./usr/tests/sys/rc/h_args				tests-sys-tests		compattestfile,atf
 ./usr/tests/sys/rc/h_simple				tests-sys-tests		compattestfile,atf
 ./usr/tests/sys/rc/t_rc_d_cli				tests-sys-tests		compattestfile,atf
+./usr/tests/sys/x86					tests-sys-tests		compattestfile,atf
 ./usr/tests/syscall					tests-obsolete		obsolete
 ./usr/tests/syscall/Atffile				tests-obsolete		obsolete
 ./usr/tests/syscall/t_access				tests-obsolete		obsolete
