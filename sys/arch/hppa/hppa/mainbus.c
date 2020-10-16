@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2019/04/26 18:37:24 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2020/10/16 17:50:44 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2019/04/26 18:37:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2020/10/16 17:50:44 macallan Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -354,8 +354,7 @@ mbus_vaddr(void *v, bus_space_handle_t h)
 paddr_t
 mbus_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 {
-
-	return -1;
+	return btop(addr + off);
 }
 
 uint8_t
