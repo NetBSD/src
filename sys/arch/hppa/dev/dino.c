@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.7 2020/10/16 17:59:46 macallan Exp $ */
+/*	$NetBSD: dino.c,v 1.8 2020/10/16 18:27:02 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.7 2020/10/16 17:59:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.8 2020/10/16 18:27:02 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -350,7 +350,8 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	 * accessing dev 1f / func 7 on the 2nd Dino causes a machine check
 	 * exception on my C200
 	 */
-	if ((tag & 0xff00) == 0xff00) return -1;
+	if ((tag & 0xff00) == 0xff00)
+		return -1;
 
 	/* fix arbitration errata by disabling all pci devs on config read */
 	pamr = r->pamr;
