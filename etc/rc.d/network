@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.84 2020/10/15 07:05:27 kim Exp $
+# $NetBSD: network,v 1.85 2020/10/16 15:31:04 kim Exp $
 #
 
 # PROVIDE: network
@@ -325,9 +325,7 @@ network_start_interfaces()
 				;;
 			rtsol)
 				if ! checkyesno dhcpcd; then
-					/sbin/dhcpcd -n -f /dev/null \
-						--background --persistent \
-						--noipv4 \
+					/sbin/dhcpcd -n6b \
 						${dhcpcd_flags} $int
 				fi
 				;;
