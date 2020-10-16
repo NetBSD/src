@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1225 2020/10/09 23:58:50 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1226 2020/10/16 06:55:36 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1572,7 +1572,7 @@ HAVE_XORG_GLAMOR?=	no
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
 	xorg-cf-files imake xbiff xkeyboard-config \
-	xbitmaps appres xeyes xev xedit sessreg pixman \
+	xcompmgr xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib.old MesaLib7 \
 	ico iceauth listres lndir \

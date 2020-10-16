@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.331 2020/06/15 01:57:31 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.332 2020/10/16 06:55:36 nia Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -259,7 +259,7 @@ PAM_STATIC_DPADD=
 _X11LIBLIST= dps fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
     ICE lbxutil SM X11 X11_xcb Xau Xaw xcb Xdmcp Xext Xfont Xfont2 Xft Xi \
     Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt XTrap Xtst Xv Xxf86dga \
-    Xxf86misc Xxf86vm
+    Xxf86misc Xxf86vm Xcomposite Xdamage Xfixes
 
 .for _lib in ${_X11LIBLIST}
 .ifndef LIB${_lib:tu}
