@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.45 2020/10/16 12:23:34 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.46 2020/10/16 12:36:01 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.45 2020/10/16 12:23:34 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.46 2020/10/16 12:36:01 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -574,6 +574,15 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpaudioinfo = (struct oss_audioinfo*)argp;
 		if (tmpaudioinfo == NULL)
 			return EINVAL;
+
+		/*
+		 * Takes the audio dev node as input, since this ioctl is
+		 * supposed to work on the OSS /dev/mixer to query all
+		 * all available audio devices.
+		 *
+		 * If the input device is -1, guess the device related to
+		 * the open mixer device.
+		 */
 		if (tmpaudioinfo->dev < 0) {
 			fstat(fd, &tmpstat);
 			if ((tmpstat.st_rdev & 0xff00) == 0x2a00)
@@ -619,7 +628,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpaudioinfo->caps = idat;
 		ioctl(newfd, SNDCTL_DSP_GETFMTS, &tmpaudioinfo->iformats);
 		tmpaudioinfo->oformats = tmpaudioinfo->iformats;
-		tmpaudioinfo->magic = -1;
+		tmpaudioinfo->magic = -1; /* reserved for "internal use" */
 		memset(tmpaudioinfo->cmd, 0, sizeof(tmpaudioinfo->cmd));
 		tmpaudioinfo->card_number = -1;
 		memset(tmpaudioinfo->song_name, 0,
@@ -627,10 +636,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		memset(tmpaudioinfo->label, 0, sizeof(tmpaudioinfo->label));
 		tmpaudioinfo->port_number = 0;
 		tmpaudioinfo->mixer_dev = tmpaudioinfo->dev;
-		tmpaudioinfo->legacy_device = -1;
+		tmpaudioinfo->legacy_device = tmpaudioinfo->dev;
 		tmpaudioinfo->enabled = 1;
-		tmpaudioinfo->flags = -1;
-		tmpaudioinfo->min_rate = 8000;
+		tmpaudioinfo->flags = -1; /* reserved for "future versions" */
+		tmpaudioinfo->min_rate = 1000;
 		tmpaudioinfo->max_rate = 192000;
 		tmpaudioinfo->nrates = 0;
 		tmpaudioinfo->min_channels = 1;
@@ -639,8 +648,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			if (fmtq.fmt.channels > (unsigned)tmpaudioinfo->max_channels)
 				tmpaudioinfo->max_channels = fmtq.fmt.channels;
 		}
-		tmpaudioinfo->binding = -1;
+		tmpaudioinfo->binding = -1; /* reserved for "future versions" */
 		tmpaudioinfo->rate_source = -1;
+		/*
+		 * 'handle' is supposed to be globally unique. The closest
+		 * we have to that is probably device nodes.
+		 */
 		strlcpy(tmpaudioinfo->handle, tmpaudioinfo->devnode,
 		    sizeof(tmpaudioinfo->handle));
 		tmpaudioinfo->next_play_engine = 0;
