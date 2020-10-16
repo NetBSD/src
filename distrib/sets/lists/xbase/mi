@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 2020/10/12 11:07:23 nia Exp $
+# $NetBSD: mi,v 1.159 2020/10/16 08:28:17 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -75,6 +75,7 @@
 ./usr/X11R7/bin/xclipboard				xbase-xclipboard-bin	xorg
 ./usr/X11R7/bin/xclock					xbase-xclock-bin	xorg
 ./usr/X11R7/bin/xcmsdb					xbase-xcmsdb-bin	xorg
+./usr/X11R7/bin/xcompmgr				xbase-xcompmgr-bin	xorg
 ./usr/X11R7/bin/xconsole				xbase-xconsole-bin	xorg
 ./usr/X11R7/bin/xcutsel					xbase-xcutsel-bin	xorg
 ./usr/X11R7/bin/xditview				xbase-xditview-bin	xorg
@@ -1328,6 +1329,7 @@
 ./usr/X11R7/man/cat1/xclipboard.0			xbase-xclipboard-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xclock.0				xbase-xclock-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xcmsdb.0				xbase-xcmsdb-catman	.cat,xorg
+./usr/X11R7/man/cat1/xcompmgr.0				xbase-xcompmgr-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xconsole.0				xbase-xconsole-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xcutsel.0				xbase-xcutsel-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xditview.0				xbase-xditview-catman	.cat,xorg
@@ -1475,6 +1477,7 @@
 ./usr/X11R7/man/html1/xclipboard.html			xbase-xclipboard-htmlman	html,xorg
 ./usr/X11R7/man/html1/xclock.html			xbase-xclock-htmlman	html,xorg
 ./usr/X11R7/man/html1/xcmsdb.html			xbase-xcmsdb-htmlman	html,xorg
+./usr/X11R7/man/html1/xcompmgr.html			xbase-xcompmgr-htmlman	html,xorg
 ./usr/X11R7/man/html1/xconsole.html			xbase-xconsole-htmlman	html,xorg
 ./usr/X11R7/man/html1/xcutsel.html			xbase-xcutsel-htmlman	html,xorg
 ./usr/X11R7/man/html1/xditview.html			xbase-xditview-htmlman	html,xorg
@@ -1623,6 +1626,7 @@
 ./usr/X11R7/man/man1/xclipboard.1			xbase-xclipboard-man	.man,xorg
 ./usr/X11R7/man/man1/xclock.1				xbase-xclock-man	.man,xorg
 ./usr/X11R7/man/man1/xcmsdb.1				xbase-xcmsdb-man	.man,xorg
+./usr/X11R7/man/man1/xcompmgr.1				xbase-xcompmgr-man	.man,xorg
 ./usr/X11R7/man/man1/xconsole.1				xbase-xconsole-man	.man,xorg
 ./usr/X11R7/man/man1/xcutsel.1				xbase-xcutsel-man	.man,xorg
 ./usr/X11R7/man/man1/xditview.1				xbase-xditview-man	.man,xorg
