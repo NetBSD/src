@@ -1,5 +1,4 @@
-# $NetBSD: md.i386,v 1.6 2020/10/15 22:15:08 mgorny Exp $
-./usr/libdata/debug/usr/tests/sys/x86		tests-sys-debug	compattestfile,atf
+# $NetBSD: md.i386,v 1.7 2020/10/16 07:12:26 mgorny Exp $
 ./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete
@@ -8,7 +7,6 @@
 ./usr/tests/kernel/arch/x86/t_ptrace_wait6	tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_waitid	tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_waitpid	tests-obsolete	obsolete
-./usr/tests/sys/x86				tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/x86/Atffile			tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/x86/Kyuafile			tests-sys-tests	compattestfile,atf,kyua
 ./usr/tests/sys/x86/t_convert_xmm_s87		tests-sys-tests	compattestfile,atf
