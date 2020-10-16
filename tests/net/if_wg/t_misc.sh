@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.5 2020/08/31 20:32:58 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.6 2020/10/16 16:17:23 roy Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -65,16 +65,14 @@ wg_rekey_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$fconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -166,16 +164,14 @@ wg_handshake_timeout_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	# Resolve arp
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -244,16 +240,14 @@ wg_cookie_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	# Emulate load on the peer
@@ -330,17 +324,15 @@ wg_mobility_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	# Initially, the local doesn't know the endpoint of the peer
+	add_peer wg0 peer0 $key_pub_peer "" $ip_wg_peer/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	# Initially, the local doesn't know the endpoint of the peer
-	add_peer wg0 peer0 $key_pub_peer "" $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	extract_new_packets $BUS > $outfile
 	$DEBUG && cat $outfile
@@ -363,7 +355,7 @@ wg_mobility_body()
 
 	# Change the IP address of the peer
 	setup_common shmif0 inet $ip_peer_new 24
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$ifconfig -w 10
 
 	# Ping from the local to the peer doesn't work because the local
 	# doesn't know the change of the IP address of the peer
@@ -427,16 +419,14 @@ wg_keepalive_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$ifconfg -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	# Shorten keepalive_timeout of the peer
 	atf_check -s exit:0 -o ignore \
@@ -529,11 +519,13 @@ wg_psk_body()
 	# The local always has the preshared key
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32 \
 	    $pskfile "$key_psk"
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 
 	# First, try the peer without the preshared key
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -550,6 +542,7 @@ wg_psk_body()
 	delete_peer wg0 peer0
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32 \
 	    $pskfile "$key_psk"
+	$ifconfig -w 10
 
 	# Need a rekey
 	atf_check -s exit:0 sleep $((rekey_after_time + 1))
@@ -568,6 +561,7 @@ wg_psk_body()
 	export RUMP_SERVER=$SOCK_PEER
 	delete_peer wg0 peer0
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	# Need a rekey
 	atf_check -s exit:0 sleep $((rekey_after_time + 1))
@@ -613,16 +607,14 @@ wg_malformed_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
 	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
-
-	export RUMP_SERVER=$SOCK_LOCAL
-	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-
-	export RUMP_SERVER=$SOCK_PEER
 	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
