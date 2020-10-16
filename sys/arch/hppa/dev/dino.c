@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.8 2020/10/16 18:27:02 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.9 2020/10/16 18:27:34 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.8 2020/10/16 18:27:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.9 2020/10/16 18:27:34 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -356,7 +356,7 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	/* fix arbitration errata by disabling all pci devs on config read */
 	pamr = r->pamr;
 	r->pamr = 0;
-	
+
 	r->pci_addr = tag | reg;
 	data = r->pci_conf_data;
 
