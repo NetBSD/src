@@ -1,7 +1,7 @@
-/*	$NetBSD: ossaudio.c,v 1.46 2020/10/16 12:36:01 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.47 2020/10/16 15:40:16 nia Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.46 2020/10/16 12:36:01 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.47 2020/10/16 15:40:16 nia Exp $");
 
 /*
- * This is an OSS (Linux) sound API emulator.
- * It provides the essentials of the API.
- */
-
-/* XXX This file is essentially the same as sys/compat/ossaudio.c.
- * With some preprocessor magic it could be the same file.
+ * This is an Open Sound System compatibility layer, which provides
+ * fairly complete ioctl emulation for OSSv3 and some of OSSv4.
+ *
+ * The canonical OSS specification is available at
+ * http://manuals.opensound.com/developer/
+ * 
+ * This file is similar to sys/compat/ossaudio.c with additional OSSv4
+ * compatibility - with some preprocessor magic it could be the same file.
  */
 
 #include <string.h>
