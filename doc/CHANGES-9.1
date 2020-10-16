@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.124 2020/10/15 19:39:02 bouyer Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.125 2020/10/16 08:17:09 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5290,4 +5290,17 @@ usr.sbin/sysinst/util.c				1.43,1.44,1.46-1.48
 	   block size and fragment size for FFS and LFS.
 	 - Miscelaneous machine dependent fixes.
 	[martin, ticket #1113]
+
+sys/dev/pci/if_wm.c				1.691
+
+	Fix SGMII code to not to print error message. This problem was added
+	when SFP support was added.
+	[msaitoh, ticket #1114]
+
+
+external/gpl2/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h 				patched by hand
+
+	Welcome to 9.1!
+	[martin]
 
