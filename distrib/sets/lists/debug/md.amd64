@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.112 2020/09/26 17:49:50 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.113 2020/10/16 11:09:32 rin Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
@@ -23,3 +23,4 @@
 ./usr/libdata/debug/usr/tests/lib/libnvmm/h_io_assist.debug	tests-lib-debug	debug,atf,nvmm
 ./usr/libdata/debug/usr/tests/lib/libnvmm/h_mem_assist.debug	tests-lib-debug	debug,atf,nvmm
 ./usr/libdata/debug/usr/tests/modules/t_x86_pte.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/sys/x86/t_convert_xmm_s87.debug	tests-sys-debug		debug,atf
