@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.262 2020/10/06 16:39:23 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.263 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@
  *			Hence, the makefile must have been parsed
  *			before this function is called.
  *
- *	Job_End		Cleanup any memory used.
+ *	Job_End		Clean up any memory used.
  *
  *	Job_ParseShell	Given the line following a .SHELL target, parse
  *			the line as a shell specification. Returns
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.262 2020/10/06 16:39:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.263 2020/10/17 21:32:30 rillig Exp $");
 
 # define STATIC static
 

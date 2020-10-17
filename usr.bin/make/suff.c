@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.178 2020/10/17 17:47:14 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.179 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -76,7 +76,7 @@
  * Interface:
  *	Suff_Init	Initialize all things to do with suffixes.
  *
- *	Suff_End	Cleanup the module
+ *	Suff_End	Clean up the module
  *
  *	Suff_DoPaths	This function is used to make life easier
  *			when searching for a file according to its
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.178 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.179 2020/10/17 21:32:30 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)

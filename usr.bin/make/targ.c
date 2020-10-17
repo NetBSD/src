@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.112 2020/10/05 22:15:45 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.113 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -76,7 +76,7 @@
  * Interface:
  *	Targ_Init	Initialization procedure.
  *
- *	Targ_End	Cleanup the module
+ *	Targ_End	Clean up the module
  *
  *	Targ_List	Return the list of all targets so far.
  *
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.112 2020/10/05 22:15:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.113 2020/10/17 21:32:30 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
