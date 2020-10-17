@@ -1,10 +1,12 @@
-# $NetBSD: counter.mk,v 1.4 2020/09/23 07:54:08 rillig Exp $
+# $NetBSD: counter.mk,v 1.5 2020/10/17 16:57:17 rillig Exp $
 #
 # Demonstrates how to let make count the number of times a variable
 # is actually accessed, using the ::= variable modifier.
 #
 # This works since 2020-09-23.  Before that, the counter ended up at having
 # 4 words, even though the NEXT variable was only accessed 3 times.
+# The cause for this surprising behavior was that the ::= variable modifiers
+# returned an error marker instead of a simple empty string.
 
 RELEVANT=	yes (load-time part)	# just to filter the output
 
