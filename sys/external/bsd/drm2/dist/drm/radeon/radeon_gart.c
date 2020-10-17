@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gart.c,v 1.11 2020/01/20 23:22:09 jmcneill Exp $	*/
+/*	$NetBSD: radeon_gart.c,v 1.12 2020/10/17 10:46:39 jmcneill Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.11 2020/01/20 23:22:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.12 2020/10/17 10:46:39 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -306,7 +306,7 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 		    BUS_DMASYNC_PREWRITE);
 	}
 	if (rdev->gart.ptr != NULL) {
-		membar_sync();		/* XXX overkill */
+		mb();
 		radeon_gart_tlb_flush(rdev);
 	}
 }
