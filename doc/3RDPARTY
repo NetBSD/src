@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1753 2020/10/16 11:17:54 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1754 2020/10/17 08:29:48 kre Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1409,8 +1409,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2020b / tzdata2020b
-Current Vers:	tzcode2020b / tzdata2020b
+Version:	tzcode2020b / tzdata2020c
+Current Vers:	tzcode2020c / tzdata2020c
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
