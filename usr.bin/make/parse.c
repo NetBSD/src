@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.375 2020/10/17 18:39:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.376 2020/10/17 18:58:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.375 2020/10/17 18:39:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.376 2020/10/17 18:58:26 rillig Exp $");
 
 /* types and constants */
 
@@ -152,15 +152,6 @@ typedef struct IFile {
     void *nextbuf_arg;		/* Opaque arg for nextbuf() */
     struct loadedfile *lf;	/* loadedfile object, if any */
 } IFile;
-
-
-/*
- * These values are returned by ParseEOF to tell Parse_File whether to
- * CONTINUE parsing, i.e. it had only reached the end of an include file,
- * or if it's DONE.
- */
-#define CONTINUE	1
-#define DONE		0
 
 /*
  * Tokens for target attributes
@@ -2572,9 +2563,10 @@ ParseGmakeExport(char *line)
  * to reading the previous file at the previous location.
  *
  * Results:
- *	CONTINUE if there's more to do. DONE if not.
+ *	TRUE to continue parsing, i.e. it had only reached the end of an
+ *	included file, FALSE if the main file has been parsed completely.
  */
-static int
+static Boolean
 ParseEOF(void)
 {
     char *ptr;
@@ -2591,7 +2583,7 @@ ParseEOF(void)
     curFile->lineno = curFile->first_lineno;
     if (ptr != NULL) {
 	/* Iterate again */
-	return CONTINUE;
+	return TRUE;
     }
 
     /* Ensure the makefile (or loop) didn't have mismatched conditionals */
@@ -2614,7 +2606,7 @@ ParseEOF(void)
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
 	Var_Delete(".INCLUDEDFROMDIR", VAR_GLOBAL);
 	Var_Delete(".INCLUDEDFROMFILE", VAR_GLOBAL);
-	return DONE;
+	return FALSE;
     }
 
     curFile = Stack_Pop(&includes);
@@ -2622,7 +2614,7 @@ ParseEOF(void)
 	   curFile->fname, curFile->lineno);
 
     ParseSetParseFile(curFile->fname);
-    return CONTINUE;
+    return TRUE;
 }
 
 #define PARSE_RAW 1
@@ -3125,7 +3117,7 @@ Parse_File(const char *name, int fd)
 	/*
 	 * Reached EOF, but it may be just EOF of an include file...
 	 */
-    } while (ParseEOF() == CONTINUE);
+    } while (ParseEOF());
 
     FinishDependencyGroup();
 
