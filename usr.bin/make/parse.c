@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.381 2020/10/17 20:57:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.382 2020/10/17 21:21:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.381 2020/10/17 20:57:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.382 2020/10/17 21:21:37 rillig Exp $");
 
 /* types and constants */
 
@@ -752,33 +752,22 @@ ParseMessage(const char *directive)
     return TRUE;
 }
 
-struct ParseLinkSrcArgs {
-    GNode *cgn;
-
-    /* The special target of the current dependency line. */
-    /* Example: for ".END: action", it is 'End'. */
-    ParseSpecial specType;
-};
-
 /* Add the child to the parent's children.
  *
- * Add the parent to the child's parents, but only if the target is not
- * special.  An example for such a special target is .END, which does not
- * need to be informed once the child target has been made. */
+ * Additionally, add the parent to the child's parents, but only if the
+ * target is not special.  An example for such a special target is .END,
+ * which does not need to be informed once the child target has been made. */
 static void
-ParseLinkSrc(void *pgnp, void *data)
+LinkSource(GNode *pgn, GNode *cgn, Boolean isSpecial)
 {
-    const struct ParseLinkSrcArgs *args = data;
-    GNode *pgn = pgnp;
-    GNode *cgn = args->cgn;
-
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
 	pgn = LstNode_Datum(Lst_Last(pgn->cohorts));
 
     Lst_Append(pgn->children, cgn);
     pgn->unmade++;
 
-    if (args->specType == Not)
+    /* Special targets like .END don't need any children. */
+    if (!isSpecial)
 	Lst_Append(cgn->parents, pgn);
 
     if (DEBUG(PARSE)) {
@@ -787,6 +776,15 @@ ParseLinkSrc(void *pgnp, void *data)
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
+}
+
+/* Add the node to each target from the current dependency group. */
+static void
+LinkToTargets(GNode *gn, Boolean isSpecial)
+{
+    GNodeListNode *ln;
+    for (ln = targets->first; ln != NULL; ln = ln->next)
+	LinkSource(ln->datum, gn, isSpecial);
 }
 
 static Boolean
@@ -887,10 +885,7 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		{
-		    struct ParseLinkSrcArgs args = { gn, specType };
-		    Lst_ForEach(targets, ParseLinkSrc, &args);
-		}
+		LinkToTargets(gn, specType != Not);
 		return TRUE;
 	    }
 	}
@@ -968,10 +963,7 @@ ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
     if (tOp) {
 	gn->type |= tOp;
     } else {
-	{
-	    struct ParseLinkSrcArgs args = { gn, specType };
-	    Lst_ForEach(targets, ParseLinkSrc, &args);
-	}
+	LinkToTargets(gn, specType != Not);
     }
 }
 
