@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.377 2020/10/17 19:10:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.378 2020/10/17 20:32:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.377 2020/10/17 19:10:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.378 2020/10/17 20:32:20 rillig Exp $");
 
 /* types and constants */
 
@@ -2991,30 +2991,6 @@ Parse_File(const char *name, int fd)
 		}
 	    }
 
-#ifndef POSIX
-	    /*
-	     * To make life easier on novices, if the line is indented we
-	     * first make sure the line has a dependency operator in it.
-	     * If it doesn't have an operator and we're in a dependency
-	     * line's script, we assume it's actually a shell command
-	     * and add it to the current list of targets.
-	     */
-	    cp = line;
-	    if (ch_isspace(line[0])) {
-		pp_skip_whitespace(&cp);
-		while (*cp && (ParseIsEscaped(line, cp) ||
-			*cp != ':' && *cp != '!')) {
-		    cp++;
-		}
-		if (*cp == '\0') {
-		    if (targets == NULL) {
-			Parse_Error(PARSE_WARNING,
-				     "Shell command needs a leading tab");
-			goto shellCommand;
-		    }
-		}
-	    }
-#endif
 	    FinishDependencyGroup();
 
 	    /*
