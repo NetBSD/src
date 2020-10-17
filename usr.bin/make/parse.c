@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.370 2020/10/05 22:15:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.371 2020/10/17 17:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.370 2020/10/05 22:15:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.371 2020/10/17 17:16:54 rillig Exp $");
 
 /* types and constants */
 
@@ -2120,18 +2120,6 @@ ParseAddCmd(GNode *gn, char *cmd)
     }
 }
 
-/* Callback procedure for Parse_File when destroying the list of targets on
- * the last dependency line. Marks a target as already having commands if it
- * does, to keep from having shell commands on multiple dependency lines. */
-static void
-ParseHasCommands(void *gnp)
-{
-    GNode *gn = (GNode *)gnp;
-    if (!Lst_IsEmpty(gn->commands)) {
-	gn->type |= OP_HAS_COMMANDS;
-    }
-}
-
 /* Add a directory to the path searched for included makefiles bracketed
  * by double-quotes. */
 void
@@ -2865,17 +2853,22 @@ ParseReadLine(void)
 }
 
 static void
-SuffEndTransform(void *target, void *unused MAKE_ATTR_UNUSED)
-{
-    Suff_EndTransform(target);
-}
-
-static void
 FinishDependencyGroup(void)
 {
     if (targets != NULL) {
-	Lst_ForEach(targets, SuffEndTransform, NULL);
-	Lst_Destroy(targets, ParseHasCommands);
+	GNodeListNode *ln;
+	for (ln = targets->first; ln != NULL; ln = ln->next) {
+	    GNode *gn = ln->datum;
+
+	    Suff_EndTransform(gn);
+
+	    /* Mark the target as already having commands if it does, to
+	     * keep from having shell commands on multiple dependency lines. */
+	    if (!Lst_IsEmpty(gn->commands))
+		gn->type |= OP_HAS_COMMANDS;
+	}
+
+	Lst_Free(targets);
 	targets = NULL;
     }
 }
