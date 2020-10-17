@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.374 2020/10/17 18:36:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.375 2020/10/17 18:39:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.374 2020/10/17 18:36:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.375 2020/10/17 18:39:43 rillig Exp $");
 
 /* types and constants */
 
@@ -598,10 +598,10 @@ ParseFindKeyword(const char *str)
     int diff;
 
     start = 0;
-    end = (sizeof(parseKeywords)/sizeof(parseKeywords[0])) - 1;
+    end = sizeof parseKeywords / sizeof parseKeywords[0] - 1;
 
     do {
-	cur = start + ((end - start) / 2);
+	cur = start + (end - start) / 2;
 	diff = strcmp(str, parseKeywords[cur].name);
 
 	if (diff == 0) {
@@ -2076,7 +2076,7 @@ ParseMaybeSubMake(const char *cmd)
 	MKV("$(.MAKE)"),
 	MKV("make"),
     };
-    for (i = 0; i < sizeof(vals)/sizeof(vals[0]); i++) {
+    for (i = 0; i < sizeof vals / sizeof vals[0]; i++) {
 	char *ptr;
 	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
 	    continue;
@@ -2213,8 +2213,8 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	/*
 	 * Look for it on the system path
 	 */
-	fullname = Dir_FindFile(file,
-		    Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
+	SearchPath *path = Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath;
+	fullname = Dir_FindFile(file, path);
     }
 
     if (fullname == NULL) {
@@ -2248,7 +2248,7 @@ ParseDoInclude(char *line)
     char endc;			/* the character which ends the file spec */
     char *cp;			/* current position in file spec */
     int silent = *line != 'i';
-    char *file = &line[7 + silent];
+    char *file = line + (silent ? 8 : 7);
 
     /* Skip to delimiter character so we know where to look */
     while (*file == ' ' || *file == '\t')
@@ -2452,7 +2452,7 @@ Parse_SetInput(const char *name, int line, int fd,
     ParseSetParseFile(name);
 }
 
-/* Check if the line is an include directive. */
+/* Check if the directive is an include directive. */
 static Boolean
 IsInclude(const char *dir, Boolean sysv)
 {
@@ -2477,7 +2477,7 @@ IsSysVInclude(const char *line)
 	if (!IsInclude(line, TRUE))
 		return FALSE;
 
-	/* Avoid interpeting a dependency line as an include */
+	/* Avoid interpreting a dependency line as an include */
 	for (p = line; (p = strchr(p, ':')) != NULL;) {
 		if (*++p == '\0') {
 			/* end of line -> dependency */
@@ -2535,11 +2535,11 @@ out:
 #endif
 
 #ifdef GMAKEEXPORT
-/* Parse export <variable>=<value>, and actually export it. */
+/* Parse "export <variable>=<value>", and actually export it. */
 static void
 ParseGmakeExport(char *line)
 {
-    char *variable = &line[6];
+    char *variable = line + 6;
     char *value;
 
     DEBUG2(PARSE, "%s: %s\n", __func__, variable);
@@ -2878,19 +2878,19 @@ FinishDependencyGroup(void)
 
 /* Add the command to each target from the current dependency spec. */
 static void
-ParseLine_ShellCommand(char *cp)
+ParseLine_ShellCommand(const char *p)
 {
-    pp_skip_whitespace(&cp);
-    if (*cp == '\0')
+    cpp_skip_whitespace(&p);
+    if (*p == '\0')
 	return;			/* skip empty commands */
 
     if (targets == NULL) {
-	Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", cp);
+	Parse_Error(PARSE_FATAL, "Unassociated shell command \"%s\"", p);
 	return;
     }
 
     {
-	char *cmd = bmake_strdup(cp);
+	char *cmd = bmake_strdup(p);
 	GNodeListNode *ln;
 
 	for (ln = targets->first; ln != NULL; ln = ln->next) {
