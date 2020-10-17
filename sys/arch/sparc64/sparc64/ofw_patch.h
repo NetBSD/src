@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.h,v 1.1 2020/10/16 07:35:16 jdc Exp $ */
+/*	$NetBSD: ofw_patch.h,v 1.2 2020/10/17 08:10:31 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define ACDB_BOOTDEV    0x1
 #define ACDB_PROBE      0x2
 #define ACDB_BOOTARGS   0x4
-int autoconf_debug = 0x0;
+extern int autoconf_debug;
 #define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
