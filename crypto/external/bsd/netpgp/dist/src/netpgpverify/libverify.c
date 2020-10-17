@@ -151,6 +151,8 @@ typedef struct pgpv_signature_t {
 	char			*features;
 	char			*why_revoked;
 	uint8_t			*revoke_fingerprint;
+	uint8_t			*issuer_fingerprint;
+	uint8_t			 ifver;
 	uint8_t			 revoke_alg;
 	uint8_t			 revoke_sensitive;
 	uint8_t			 trustsig;
@@ -925,6 +927,7 @@ str_to_keyid(const char *s, uint8_t *keyid)
 #define SUBPKT_FEATURES			30
 #define SUBPKT_SIGNATURE_TARGET		31
 #define SUBPKT_EMBEDDED_SIGNATURE	32
+#define SUBPKT_ISSUER_FINGERPRINT	33
 
 #define UNCOMPRESSED			0
 #define ZIP_COMPRESSION			1
@@ -1179,6 +1182,10 @@ read_sig_subpackets(pgpv_t *pgp, pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktle
 		case SUBPKT_REVOCATION_REASON:
 			sigpkt->sig.revoked = *p++ + 1;
 			sigpkt->sig.why_revoked = (char *)(void *)p;
+			break;
+		case SUBPKT_ISSUER_FINGERPRINT:
+			sigpkt->sig.ifver = *p;
+			sigpkt->sig.issuer_fingerprint = &p[1];
 			break;
 		default:
 			printf("Ignoring unusual/reserved signature subpacket %d\n", subpkt.tag);
