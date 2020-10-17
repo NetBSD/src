@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.140 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.141 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -73,6 +73,9 @@
  */
 
 /* arch.c */
+void Arch_Init(void);
+void Arch_End(void);
+
 Boolean Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
 void Arch_TouchLib(GNode *);
@@ -80,8 +83,6 @@ time_t Arch_MTime(GNode *);
 time_t Arch_MemMTime(GNode *);
 void Arch_FindLib(GNode *, SearchPath *);
 Boolean Arch_LibOODate(GNode *);
-void Arch_Init(void);
-void Arch_End(void);
 Boolean Arch_IsLib(GNode *);
 
 /* compat.c */
@@ -120,6 +121,8 @@ Boolean getBoolean(const char *, Boolean);
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
+void Parse_Init(void);
+void Parse_End(void);
 
 typedef enum VarAssignOp {
     VAR_NORMAL,			/* = */
@@ -143,8 +146,6 @@ Boolean Parse_IsVar(const char *, VarAssign *out_var);
 void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_Init(void);
-void Parse_End(void);
 void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *);
 GNodeList *Parse_MainName(void);
 
@@ -168,6 +169,9 @@ char *str_concat4(const char *, const char *, const char *, const char *);
 Boolean Str_Match(const char *, const char *);
 
 /* suff.c */
+void Suff_Init(void);
+void Suff_End(void);
+
 void Suff_ClearSuffixes(void);
 Boolean Suff_IsTransform(const char *);
 GNode *Suff_AddTransform(const char *);
@@ -180,13 +184,12 @@ void Suff_AddLib(const char *);
 void Suff_FindDeps(GNode *);
 SearchPath *Suff_FindPath(GNode *);
 void Suff_SetNull(const char *);
-void Suff_Init(void);
-void Suff_End(void);
 void Suff_PrintAll(void);
 
 /* targ.c */
 void Targ_Init(void);
 void Targ_End(void);
+
 void Targ_Stats(void);
 GNodeList *Targ_List(void);
 GNode *Targ_NewGN(const char *);
@@ -208,6 +211,8 @@ void Targ_PrintGraph(int);
 void Targ_Propagate(void);
 
 /* var.c */
+void Var_Init(void);
+void Var_End(void);
 
 typedef enum {
     VARE_NONE		= 0,
@@ -291,8 +296,6 @@ const char *Var_Value(const char *, GNode *, char **);
 VarParseResult Var_Parse(const char **, GNode *, VarEvalFlags,
 			 const char **, void **);
 VarParseResult Var_Subst(const char *, GNode *, VarEvalFlags, char **);
-void Var_Init(void);
-void Var_End(void);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ExportVars(void);

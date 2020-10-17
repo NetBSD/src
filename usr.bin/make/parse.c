@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.382 2020/10/17 21:21:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.383 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -91,7 +91,7 @@
  *			called before anything else in this module
  *			is used.
  *
- *	Parse_End	Cleanup the module
+ *	Parse_End	Clean up the module
  *
  *	Parse_File	Function used to parse a makefile. It must
  *			be given the name of the file, which should
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.382 2020/10/17 21:21:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.383 2020/10/17 21:32:30 rillig Exp $");
 
 /* types and constants */
 
@@ -3119,18 +3119,7 @@ Parse_File(const char *name, int fd)
     }
 }
 
-/*-
- *---------------------------------------------------------------------
- * Parse_Init --
- *	initialize the parsing module
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	the parseIncPath list is initialized...
- *---------------------------------------------------------------------
- */
+/* Initialize the parsing module. */
 void
 Parse_Init(void)
 {
@@ -3144,6 +3133,7 @@ Parse_Init(void)
 #endif
 }
 
+/* Clean up the parsing module. */
 void
 Parse_End(void)
 {
