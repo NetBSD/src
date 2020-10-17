@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.150 2020/10/17 09:06:15 mlelstv Exp $
+.\"	$NetBSD: sysctl.7,v 1.151 2020/10/17 09:20:33 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 20, 2020
+.Dd October 17, 2020
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1208,7 +1208,10 @@ See
 .Xr sched 3 .
 .El
 .It Li kern.sofixedbuf ( Dv KERN_SOFIXEDBUF )
-Prevent socket buffer autoscaling when a size is set with SO_SNDBUF or SO_RCVBUF.
+Prevent socket buffer autoscaling when a size is set with
+.Dv SO_SNDBUF
+or
+.Dv SO_RCVBUF .
 .It Li kern.somaxkva ( Dv KERN_SOMAXKVA )
 Maximum amount of kernel memory to be used for socket buffers in bytes.
 .It Li kern.sooptions
