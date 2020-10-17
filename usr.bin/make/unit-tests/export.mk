@@ -1,4 +1,4 @@
-# $Id: export.mk,v 1.6 2020/09/27 13:18:30 rillig Exp $
+# $Id: export.mk,v 1.7 2020/10/17 16:53:26 rillig Exp $
 
 UT_TEST=export
 UT_FOO=foo${BAR}
@@ -29,6 +29,9 @@ ${:U!}=	exclamation		# A direct != would try to run "exclamation"
 .export %
 .export *
 .export !
+# This is exported (see the .rawout file) but not displayed since the dash
+# shell filters it out.  To reach consistent output for each shell, the
+# ampersand is filtered out already by FILTER_CMD.
 .export &
 # This is ignored because it is undefined.
 .export UNDEFINED
@@ -37,7 +40,7 @@ BAR=bar is ${UT_FU}
 
 .MAKE.EXPORTED+= UT_ZOO UT_TEST
 
-FILTER_CMD?=	egrep -v '^(MAKEFLAGS|MALLOC_OPTIONS|PATH|PWD|SHLVL|_)='
+FILTER_CMD?=	egrep -v '^(MAKEFLAGS|MALLOC_OPTIONS|PATH|PWD|SHLVL|_|&)='
 
 all:
 	@env | ${FILTER_CMD} | sort
