@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.22 2020/04/23 07:54:53 simonb Exp $ */
+/* $NetBSD: time.c,v 1.23 2020/10/17 08:46:02 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.22 2020/04/23 07:54:53 simonb Exp $");
+__RCSID("$NetBSD: time.c,v 1.23 2020/10/17 08:46:02 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ prusage1(FILE *fp, const char *cp, int prec,
 			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / t));
 		break;
 	    case 'M':		/* max. Resident Set Size */
-		(void)fprintf(fp, "%ld", r1->ru_maxrss / 2L);
+		(void)fprintf(fp, "%ld", r1->ru_maxrss);
 		break;
 	    case 'O':		/* FS blocks out */
 		(void)fprintf(fp, "%ld", r1->ru_oublock - r0->ru_oublock);
