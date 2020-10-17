@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.376 2020/10/17 18:58:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.377 2020/10/17 19:10:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.376 2020/10/17 18:58:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.377 2020/10/17 19:10:07 rillig Exp $");
 
 /* types and constants */
 
@@ -726,38 +726,26 @@ Parse_Error(int type, const char *fmt, ...)
  * is malformed.
  */
 static Boolean
-ParseMessage(char *line)
+ParseMessage(const char *directive)
 {
-    int mtype;
+    const char *p = directive;
+    int mtype = *p == 'i' ? PARSE_INFO :
+		*p == 'w' ? PARSE_WARNING : PARSE_FATAL;
+    char *arg;
 
-    switch (*line) {
-    case 'i':
-	mtype = PARSE_INFO;
-	break;
-    case 'w':
-	mtype = PARSE_WARNING;
-	break;
-    case 'e':
-	mtype = PARSE_FATAL;
-	break;
-    default:
-	Parse_Error(PARSE_WARNING, "invalid syntax: \".%s\"", line);
-	return FALSE;
-    }
+    while (ch_isalpha(*p))
+	p++;
+    if (!ch_isspace(*p))
+	return FALSE;		/* missing argument */
 
-    while (ch_isalpha(*line))
-	line++;
-    if (!ch_isspace(*line))
-	return FALSE;			/* not for us */
-    pp_skip_whitespace(&line);
-
-    (void)Var_Subst(line, VAR_CMD, VARE_WANTRES, &line);
+    cpp_skip_whitespace(&p);
+    (void)Var_Subst(p, VAR_CMD, VARE_WANTRES, &arg);
     /* TODO: handle errors */
-    Parse_Error(mtype, "%s", line);
-    free(line);
+
+    Parse_Error(mtype, "%s", arg);
+    free(arg);
 
     if (mtype == PARSE_FATAL) {
-	/* Terminate almost immediately. */
 	PrintOnError(NULL, NULL);
 	exit(1);
     }
