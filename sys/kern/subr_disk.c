@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.131 2020/06/11 02:32:06 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.132 2020/10/17 09:42:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.131 2020/06/11 02:32:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.132 2020/10/17 09:42:35 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -687,21 +687,17 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 	dk->dk_blkshift = DK_BSIZE2BLKSHIFT(dg->dg_secsize);
 	dk->dk_byteshift = DK_BSIZE2BYTESHIFT(dg->dg_secsize);
 
-	if (dg->dg_secperunit == 0 && dg->dg_ncylinders == 0) {
-#ifdef DIAGNOSTIC
-		printf("%s: secperunit and ncylinders are zero\n", dk->dk_name);
-#endif
-		return;
-	}
-
 	if (dg->dg_secperunit == 0) {
-		if (dg->dg_nsectors == 0 || dg->dg_ntracks == 0) {
 #ifdef DIAGNOSTIC
+		if (dg->dg_ncylinders == 0) {
+			printf("%s: secperunit and ncylinders are zero\n",
+			    dk->dk_name);
+		}
+		if (dg->dg_nsectors == 0 || dg->dg_ntracks == 0) {
 			printf("%s: secperunit and (sectors or tracks) "
 			    "are zero\n", dk->dk_name);
-#endif
-			return;
 		}
+#endif
 		dg->dg_secperunit = (int64_t) dg->dg_nsectors *
 		    dg->dg_ntracks * dg->dg_ncylinders;
 	}
