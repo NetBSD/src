@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.224 2020/10/16 07:35:16 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.225 2020/10/17 08:10:31 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.224 2020/10/16 07:35:16 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.225 2020/10/17 08:10:31 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.224 2020/10/16 07:35:16 jdc Exp $");
 #include <dev/wsfb/genfbvar.h>
 
 #include "ksyms.h"
+
+int autoconf_debug = 0x0;
 
 struct evcnt intr_evcnts[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "spur"),
