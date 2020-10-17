@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.379 2020/10/17 20:37:38 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.380 2020/10/17 20:51:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.379 2020/10/17 20:37:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.380 2020/10/17 20:51:34 rillig Exp $");
 
 /* types and constants */
 
@@ -2943,13 +2943,42 @@ ParseVarassign(const char *line)
     return FALSE;
 }
 
+static char *
+FindSemicolon(char *p)
+{
+    int level = 0;
+
+    for (; *p != '\0'; p++) {
+	if (*p == '\\' && p[1] != '\0') {
+	    p++;
+	    continue;
+	}
+
+	if (*p == '$' && (p[1] == '(' || p[1] == '{')) {
+	    level++;
+	    continue;
+	}
+
+	if (level > 0 && (*p == ')' || *p == '}')) {
+	    level--;
+	    continue;
+	}
+
+	if (level == 0 && *p == ';') {
+	    break;
+	}
+    }
+    return p;
+}
+
 /* dependency	-> target... op [source...]
  * op		-> ':' | '::' | '!' */
 static void
-ParseDependency(char *line, const char **out_shellcmd)
+ParseDependency(char *line)
 {
     VarEvalFlags eflags;
     char *expanded_line;
+    const char *shellcmd = NULL;
 
     /*
      * For some reason - probably to make the parser impossible -
@@ -2957,35 +2986,12 @@ ParseDependency(char *line, const char **out_shellcmd)
      * Attempt to avoid ';' inside substitution patterns.
      */
     {
-	int level = 0;
-	char *cp;
-
-	for (cp = line; *cp != 0; cp++) {
-	    if (*cp == '\\' && cp[1] != 0) {
-		cp++;
-		continue;
-	    }
-	    if (*cp == '$' &&
-		(cp[1] == '(' || cp[1] == '{')) {
-		level++;
-		continue;
-	    }
-	    if (level > 0) {
-		if (*cp == ')' || *cp == '}') {
-		    level--;
-		    continue;
-		}
-	    } else if (*cp == ';') {
-		break;
-	    }
-	}
-
-	if (*cp != 0) {
+        char *semicolon = FindSemicolon(line);
+	if (*semicolon != '\0') {
 	    /* Terminate the dependency list at the ';' */
-	    *cp++ = 0;
-	    *out_shellcmd = cp;
-	} else
-	    *out_shellcmd = NULL;
+	    *semicolon = '\0';
+	    shellcmd = semicolon + 1;
+	}
     }
 
     /*
@@ -3030,6 +3036,9 @@ ParseDependency(char *line, const char **out_shellcmd)
 
     ParseDoDependency(expanded_line);
     free(expanded_line);
+
+    if (shellcmd != NULL)
+	ParseLine_ShellCommand(shellcmd);
 }
 
 /* Parse a top-level makefile into its component parts, incorporating them
@@ -3090,18 +3099,9 @@ Parse_File(const char *name, int fd)
 	    if (ParseVarassign(line))
 		continue;
 
-#ifndef POSIX
-	    if (ParseNoviceMistake())
-	        continue;
-#endif
 	    FinishDependencyGroup();
 
-	    {
-		const char *shellcmd;
-		ParseDependency(line, &shellcmd);
-		if (shellcmd != NULL)
-		    ParseLine_ShellCommand(shellcmd);
-	    }
+	    ParseDependency(line);
 	}
 	/*
 	 * Reached EOF, but it may be just EOF of an include file...
