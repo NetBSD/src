@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.74 2020/08/29 22:42:53 macallan Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.75 2020/10/17 10:28:10 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -685,7 +685,7 @@ action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
-enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1800 };
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1d00 };
 
 /* Define list of KB_xxx and country codes for array initialisation */
 #define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },
