@@ -1,4 +1,4 @@
-/*	$NetBSD: fbmem.h,v 1.3 2018/08/27 14:51:33 riastradh Exp $	*/
+/*	$NetBSD: fbmem.h,v 1.4 2020/10/17 10:47:10 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -112,11 +112,10 @@ fbmem_poke(struct io_mapping *fb, u32 off, u32 val)
 {
 	u8 __iomem *p = io_mapping_map_atomic_wc(fb, off & PAGE_MASK);
 	iowrite32(val, p + (off & ~PAGE_MASK));
+	wmb();
 #ifdef __NetBSD__
-	membar_producer();
 	io_mapping_unmap_atomic(fb, __UNVOLATILE(p));
 #else
-	wmb();
 	io_mapping_unmap_atomic(p);
 #endif
 }
