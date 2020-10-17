@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.23 2020/10/16 20:51:54 nia Exp $
+.\"	$NetBSD: ossaudio.3,v 1.24 2020/10/17 09:04:59 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,6 @@ building code written for other operating systems.
 .Ss Mixer Control Map
 The following table summarizes the mappings from native interface
 device names to OSS mixer controls.
-.Pp
 .Bl -column ".Sy Native Device Name" "SOUND_MIXER_SPEAKER"
 .It Sy "Native Device Name" Ta Sy "OSS Mixer Control"
 .It *.mic Ta SOUND_MIXER_MIC
@@ -77,9 +76,10 @@ described in:
 .Pp
 .Rs
 .%A 4Front Technologies
-.%T OSS 4.x Programmer's Guide 
+.%T OSS 4.x Programmer's Guide
 .%U http://manuals.opensound.com/developer/
 .%D 2007
+.Re
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr audio 4 ,
@@ -94,10 +94,10 @@ library first appeared in
 The Open Sound System up to version 3 was originally the preferred
 API for writing audio code under Linux until ALSA became the new default
 in Linux 2.6.
-It remains the preferred API in FreeBSD and Solaris, and a large body
-of code exists supporting it.
+It remains the preferred API in
+.Fx
+and Solaris, and a large body of code exists supporting it.
 .Sh BUGS
-.Pp
 The emulation is incomplete, covering most of OSSv3 and some of OSSv4.
 Some obscure features are not included, but the essential ioctls used
 by the majority of software are covered.
@@ -107,7 +107,9 @@ The emulation uses a #define for
 so some obscure programs
 can fail to compile.
 .Pp
-Linux, FreeBSD, and Solaris provide
+Linux,
+.Fx ,
+and Solaris provide
 .Pa /dev/dsp
 and
 .Pa /dev/mixer
@@ -115,7 +117,8 @@ devices in place of the
 .Pa /dev/audio
 and
 .Pa /dev/mixer
-devices this compatibility layer must be accessed through on NetBSD.
+devices this compatibility layer must be accessed through on
+.Nx .
 However, changing this is typically trivial when porting programs.
 .Pp
 The emulation only covers
