@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.74 2020/09/30 06:27:02 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.75 2020/10/17 17:47:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.74 2020/09/30 06:27:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.75 2020/10/17 17:47:14 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -313,7 +313,7 @@ Lst_ForEach(List *list, LstActionProc proc, void *procData)
 {
     ListNode *node;
     for (node = list->first; node != NULL; node = node->next)
-        proc(node->datum, procData);
+	proc(node->datum, procData);
 }
 
 /* Apply the given function to each element of the given list. The function

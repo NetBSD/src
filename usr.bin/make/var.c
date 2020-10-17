@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.570 2020/10/06 08:13:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.571 2020/10/17 17:47:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.570 2020/10/06 08:13:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.571 2020/10/17 17:47:14 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -619,7 +619,7 @@ Var_Export(const char *str, Boolean isExport)
 
     if (isExport && strncmp(str, "-env", 4) == 0) {
 	str += 4;
-    	flags = 0;
+	flags = 0;
     } else if (isExport && strncmp(str, "-literal", 8) == 0) {
 	str += 8;
 	flags = VAR_EXPORT_LITERAL;
@@ -1306,7 +1306,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
     }
 
     if (args->lhs[0] == '\0')
-    	goto nosub;
+	goto nosub;
 
     /* unanchored case, may match more than once */
     while ((match = strstr(word, args->lhs)) != NULL) {
@@ -1817,7 +1817,7 @@ static void
 ApplyModifiersState_Define(ApplyModifiersState *st)
 {
     if (st->exprFlags & VEF_UNDEF)
-        st->exprFlags |= VEF_DEF;
+	st->exprFlags |= VEF_DEF;
 }
 
 typedef enum {
@@ -3089,7 +3089,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'U':
 	return ApplyModifier_Defined(pp, st);
     case 'L':
-        return ApplyModifier_Literal(pp, st);
+	return ApplyModifier_Literal(pp, st);
     case 'P':
 	return ApplyModifier_Path(pp, st);
     case '!':
@@ -3117,7 +3117,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
 #endif
     case 'q':
     case 'Q':
-        return ApplyModifier_Quote(pp, st);
+	return ApplyModifier_Quote(pp, st);
     case 'T':
 	return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
     case 'H':
@@ -3131,7 +3131,7 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     case 'O':
 	return ApplyModifier_Order(pp, st);
     case 'u':
-        return ApplyModifier_Unique(pp, st);
+	return ApplyModifier_Unique(pp, st);
 #ifdef SUNSHCMD
     case 's':
 	return ApplyModifier_SunShell(pp, st);
@@ -3419,7 +3419,7 @@ ValidShortVarname(char varname, const char *start)
     case '$':
 	break;			/* and continue below */
     default:
-        return TRUE;
+	return TRUE;
     }
 
     if (!DEBUG(LINT))
@@ -3598,7 +3598,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    dynamic = VarIsDynamic(ctxt, varname, namelen);
 
 	    if (!haveModifier) {
-	        p++;		/* skip endc */
+		p++;		/* skip endc */
 		*pp = p;
 		if (dynamic) {
 		    char *pstr = bmake_strsedup(start, p);
@@ -3664,9 +3664,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
      */
     nstr = Buf_GetAll(&v->val, NULL);
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES)) {
-        VarEvalFlags nested_eflags = eflags;
-        if (DEBUG(LINT))
-            nested_eflags &= ~(unsigned)VARE_UNDEFERR;
+	VarEvalFlags nested_eflags = eflags;
+	if (DEBUG(LINT))
+	    nested_eflags &= ~(unsigned)VARE_UNDEFERR;
 	(void)Var_Subst(nstr, ctxt, nested_eflags, &nstr);
 	/* TODO: handle errors */
 	*freePtr = nstr;
@@ -3702,8 +3702,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     *pp = p;
 
     if (v->flags & VAR_FROM_ENV) {
-        /* Free the environment variable now since we own it,
-         * but don't free the variable value if it will be returned. */
+	/* Free the environment variable now since we own it,
+	 * but don't free the variable value if it will be returned. */
 	Boolean keepValue = nstr == Buf_GetAll(&v->val, NULL);
 	if (keepValue)
 	    *freePtr = nstr;
