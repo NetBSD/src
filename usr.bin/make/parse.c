@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.378 2020/10/17 20:32:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.379 2020/10/17 20:37:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.378 2020/10/17 20:32:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.379 2020/10/17 20:37:38 rillig Exp $");
 
 /* types and constants */
 
@@ -2883,6 +2883,155 @@ ParseLine_ShellCommand(const char *p)
     }
 }
 
+static Boolean
+ParseDirective(char *line)
+{
+    char *cp;
+
+    if (*line == '.') {
+	/*
+	 * Lines that begin with the special character may be
+	 * include or undef directives.
+	 * On the other hand they can be suffix rules (.c.o: ...)
+	 * or just dependencies for filenames that start '.'.
+	 */
+	cp = line + 1;
+	pp_skip_whitespace(&cp);
+	if (IsInclude(cp, FALSE)) {
+	    ParseDoInclude(cp);
+	    return TRUE;
+	}
+	if (strncmp(cp, "undef", 5) == 0) {
+	    const char *varname;
+	    cp += 5;
+	    pp_skip_whitespace(&cp);
+	    varname = cp;
+	    for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
+		continue;
+	    *cp = '\0';
+	    Var_Delete(varname, VAR_GLOBAL);
+	    /* TODO: undefine all variables, not only the first */
+	    /* TODO: use Str_Words, like everywhere else */
+	    return TRUE;
+	} else if (strncmp(cp, "export", 6) == 0) {
+	    cp += 6;
+	    pp_skip_whitespace(&cp);
+	    Var_Export(cp, TRUE);
+	    return TRUE;
+	} else if (strncmp(cp, "unexport", 8) == 0) {
+	    Var_UnExport(cp);
+	    return TRUE;
+	} else if (strncmp(cp, "info", 4) == 0 ||
+		   strncmp(cp, "error", 5) == 0 ||
+		   strncmp(cp, "warning", 7) == 0) {
+	    if (ParseMessage(cp))
+		return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+static Boolean
+ParseVarassign(const char *line)
+{
+    VarAssign var;
+    if (Parse_IsVar(line, &var)) {
+	FinishDependencyGroup();
+	Parse_DoVar(&var, VAR_GLOBAL);
+	return TRUE;
+    }
+    return FALSE;
+}
+
+/* dependency	-> target... op [source...]
+ * op		-> ':' | '::' | '!' */
+static void
+ParseDependency(char *line, const char **out_shellcmd)
+{
+    VarEvalFlags eflags;
+    char *expanded_line;
+
+    /*
+     * For some reason - probably to make the parser impossible -
+     * a ';' can be used to separate commands from dependencies.
+     * Attempt to avoid ';' inside substitution patterns.
+     */
+    {
+	int level = 0;
+	char *cp;
+
+	for (cp = line; *cp != 0; cp++) {
+	    if (*cp == '\\' && cp[1] != 0) {
+		cp++;
+		continue;
+	    }
+	    if (*cp == '$' &&
+		(cp[1] == '(' || cp[1] == '{')) {
+		level++;
+		continue;
+	    }
+	    if (level > 0) {
+		if (*cp == ')' || *cp == '}') {
+		    level--;
+		    continue;
+		}
+	    } else if (*cp == ';') {
+		break;
+	    }
+	}
+
+	if (*cp != 0) {
+	    /* Terminate the dependency list at the ';' */
+	    *cp++ = 0;
+	    *out_shellcmd = cp;
+	} else
+	    *out_shellcmd = NULL;
+    }
+
+    /*
+     * We now know it's a dependency line so it needs to have all
+     * variables expanded before being parsed.
+     *
+     * XXX: Ideally the dependency line would first be split into
+     * its left-hand side, dependency operator and right-hand side,
+     * and then each side would be expanded on its own.  This would
+     * allow for the left-hand side to allow only defined variables
+     * and to allow variables on the right-hand side to be undefined
+     * as well.
+     *
+     * Parsing the line first would also prevent that targets
+     * generated from variable expressions are interpreted as the
+     * dependency operator, such as in "target${:U:} middle: source",
+     * in which the middle is interpreted as a source, not a target.
+     */
+
+    /* In lint mode, allow undefined variables to appear in
+     * dependency lines.
+     *
+     * Ideally, only the right-hand side would allow undefined
+     * variables since it is common to have no dependencies.
+     * Having undefined variables on the left-hand side is more
+     * unusual though.  Since both sides are expanded in a single
+     * pass, there is not much choice what to do here.
+     *
+     * In normal mode, it does not matter whether undefined
+     * variables are allowed or not since as of 2020-09-14,
+     * Var_Parse does not print any parse errors in such a case.
+     * It simply returns the special empty string var_Error,
+     * which cannot be detected in the result of Var_Subst. */
+    eflags = DEBUG(LINT) ? VARE_WANTRES : VARE_UNDEFERR | VARE_WANTRES;
+    (void)Var_Subst(line, VAR_CMD, eflags, &expanded_line);
+    /* TODO: handle errors */
+
+    /* Need a fresh list for the target nodes */
+    if (targets != NULL)
+	Lst_Free(targets);
+    targets = Lst_Init();
+
+    ParseDoDependency(expanded_line);
+    free(expanded_line);
+}
+
 /* Parse a top-level makefile into its component parts, incorporating them
  * into the global dependency graph.
  *
@@ -2893,7 +3042,6 @@ ParseLine_ShellCommand(const char *p)
 void
 Parse_File(const char *name, int fd)
 {
-    char *cp;			/* pointer into the line */
     char *line;			/* the line we're working on */
     struct loadedfile *lf;
 
@@ -2911,55 +3059,12 @@ Parse_File(const char *name, int fd)
     do {
 	for (; (line = ParseReadLine()) != NULL; ) {
 	    DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n", curFile->lineno, line);
-	    if (*line == '.') {
-		/*
-		 * Lines that begin with the special character may be
-		 * include or undef directives.
-		 * On the other hand they can be suffix rules (.c.o: ...)
-		 * or just dependencies for filenames that start '.'.
-		 */
-		cp = line + 1;
-		pp_skip_whitespace(&cp);
-		if (IsInclude(cp, FALSE)) {
-		    ParseDoInclude(cp);
-		    continue;
-		}
-		if (strncmp(cp, "undef", 5) == 0) {
-		    const char *varname;
-		    cp += 5;
-		    pp_skip_whitespace(&cp);
-		    varname = cp;
-		    for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
-			continue;
-		    *cp = '\0';
-		    Var_Delete(varname, VAR_GLOBAL);
-		    /* TODO: undefine all variables, not only the first */
-		    /* TODO: use Str_Words, like everywhere else */
-		    continue;
-		} else if (strncmp(cp, "export", 6) == 0) {
-		    cp += 6;
-		    pp_skip_whitespace(&cp);
-		    Var_Export(cp, TRUE);
-		    continue;
-		} else if (strncmp(cp, "unexport", 8) == 0) {
-		    Var_UnExport(cp);
-		    continue;
-		} else if (strncmp(cp, "info", 4) == 0 ||
-			   strncmp(cp, "error", 5) == 0 ||
-			   strncmp(cp, "warning", 7) == 0) {
-		    if (ParseMessage(cp))
-			continue;
-		}
-	    }
+
+	    if (ParseDirective(line))
+		continue;
 
 	    if (*line == '\t') {
-		/*
-		 * If a line starts with a tab, it can only hope to be
-		 * a creation command.
-		 */
-		cp = line + 1;
-	    shellCommand:
-		ParseLine_ShellCommand(cp);
+		ParseLine_ShellCommand(line + 1);
 		continue;
 	    }
 
@@ -2982,100 +3087,20 @@ Parse_File(const char *name, int fd)
 		continue;
 	    }
 #endif
-	    {
-		VarAssign var;
-		if (Parse_IsVar(line, &var)) {
-		    FinishDependencyGroup();
-		    Parse_DoVar(&var, VAR_GLOBAL);
-		    continue;
-		}
-	    }
+	    if (ParseVarassign(line))
+		continue;
 
+#ifndef POSIX
+	    if (ParseNoviceMistake())
+	        continue;
+#endif
 	    FinishDependencyGroup();
 
-	    /*
-	     * For some reason - probably to make the parser impossible -
-	     * a ';' can be used to separate commands from dependencies.
-	     * Attempt to avoid ';' inside substitution patterns.
-	     */
 	    {
-		int level = 0;
-
-		for (cp = line; *cp != 0; cp++) {
-		    if (*cp == '\\' && cp[1] != 0) {
-			cp++;
-			continue;
-		    }
-		    if (*cp == '$' &&
-			(cp[1] == '(' || cp[1] == '{')) {
-			level++;
-			continue;
-		    }
-		    if (level > 0) {
-			if (*cp == ')' || *cp == '}') {
-			    level--;
-			    continue;
-			}
-		    } else if (*cp == ';') {
-			break;
-		    }
-		}
-	    }
-	    if (*cp != 0)
-		/* Terminate the dependency list at the ';' */
-		*cp++ = 0;
-	    else
-		cp = NULL;
-
-	    /*
-	     * We now know it's a dependency line so it needs to have all
-	     * variables expanded before being parsed.
-	     *
-	     * XXX: Ideally the dependency line would first be split into
-	     * its left-hand side, dependency operator and right-hand side,
-	     * and then each side would be expanded on its own.  This would
-	     * allow for the left-hand side to allow only defined variables
-	     * and to allow variables on the right-hand side to be undefined
-	     * as well.
-	     *
-	     * Parsing the line first would also prevent that targets
-	     * generated from variable expressions are interpreted as the
-	     * dependency operator, such as in "target${:U:} middle: source",
-	     * in which the middle is interpreted as a source, not a target.
-	     */
-	    {
-		/* In lint mode, allow undefined variables to appear in
-		 * dependency lines.
-		 *
-		 * Ideally, only the right-hand side would allow undefined
-		 * variables since it is common to have no dependencies.
-		 * Having undefined variables on the left-hand side is more
-		 * unusual though.  Since both sides are expanded in a single
-		 * pass, there is not much choice what to do here.
-		 *
-		 * In normal mode, it does not matter whether undefined
-		 * variables are allowed or not since as of 2020-09-14,
-		 * Var_Parse does not print any parse errors in such a case.
-		 * It simply returns the special empty string var_Error,
-		 * which cannot be detected in the result of Var_Subst. */
-		VarEvalFlags eflags = DEBUG(LINT)
-				      ? VARE_WANTRES
-				      : VARE_UNDEFERR|VARE_WANTRES;
-		(void)Var_Subst(line, VAR_CMD, eflags, &line);
-		/* TODO: handle errors */
-	    }
-
-	    /* Need a fresh list for the target nodes */
-	    if (targets != NULL)
-		Lst_Free(targets);
-	    targets = Lst_Init();
-
-	    ParseDoDependency(line);
-	    free(line);
-
-	    /* If there were commands after a ';', add them now */
-	    if (cp != NULL) {
-		goto shellCommand;
+		const char *shellcmd;
+		ParseDependency(line, &shellcmd);
+		if (shellcmd != NULL)
+		    ParseLine_ShellCommand(shellcmd);
 	    }
 	}
 	/*
