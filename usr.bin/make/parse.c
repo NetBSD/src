@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.372 2020/10/17 17:23:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.373 2020/10/17 17:47:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.372 2020/10/17 17:23:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.373 2020/10/17 17:47:14 rillig Exp $");
 
 /* types and constants */
 
@@ -874,7 +874,7 @@ ApplyDependencyOperator(GNodeType op)
 {
     GNodeListNode *ln;
     for (ln = targets->first; ln != NULL; ln = ln->next)
-        if (!TryApplyDependencyOperator(ln->datum, op))
+	if (!TryApplyDependencyOperator(ln->datum, op))
 	    break;
 }
 
@@ -1010,14 +1010,14 @@ static void
 ParseDoSrc(GNodeType tOp, const char *src, ParseSpecial specType)
 {
     if (ParseDoSrcKeyword(src, specType))
-        return;
+	return;
 
     if (specType == Main)
-        ParseDoSrcMain(src);
+	ParseDoSrcMain(src);
     else if (specType == Order)
-        ParseDoSrcOrder(src);
+	ParseDoSrcOrder(src);
     else
-        ParseDoSrcOther(src, tOp, specType);
+	ParseDoSrcOther(src, tOp, specType);
 }
 
 /* If we have yet to decide on a main target to make, in the absence of any
@@ -1029,7 +1029,7 @@ FindMainTarget(void)
     GNodeListNode *ln;
 
     if (mainNode != NULL)
-        return;
+	return;
 
     for (ln = targets->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
@@ -1699,13 +1699,13 @@ ParseDoDependency(char *line)
     curTargs = NULL;
 
     if (!Lst_IsEmpty(targets))
-        ParseDoDependencyCheckSpec(specType);
+	ParseDoDependencyCheckSpec(specType);
 
     /*
      * Have now parsed all the target names. Must parse the operator next.
      */
     if (!ParseDoDependencyParseOp(&cp, lstart, &op))
-        goto out;
+	goto out;
 
     /*
      * Apply the operator to the target. This is how we remember which
@@ -1733,7 +1733,7 @@ ParseDoDependency(char *line)
      *	a .PATH removes all directories from the search path(s).
      */
     if (!*line) {
-        ParseDoDependencySourcesEmpty(specType, paths);
+	ParseDoDependencySourcesEmpty(specType, paths);
     } else if (specType == MFlags) {
 	/*
 	 * Call on functions in main.c to deal with these arguments and
@@ -1760,7 +1760,7 @@ ParseDoDependency(char *line)
 	specType == Includes || specType == Libs ||
 	specType == Null || specType == ExObjdir)
     {
-        ParseDoDependencySourcesSpecial(line, cp, specType, paths);
+	ParseDoDependencySourcesSpecial(line, cp, specType, paths);
 	if (paths) {
 	    Lst_Free(paths);
 	    paths = NULL;
@@ -1769,8 +1769,8 @@ ParseDoDependency(char *line)
 	    Dir_SetPATH();
     } else {
 	assert(paths == NULL);
-        if (!ParseDoDependencySourcesMundane(line, cp, specType, tOp))
-            goto out;
+	if (!ParseDoDependencySourcesMundane(line, cp, specType, tOp))
+	    goto out;
     }
 
     FindMainTarget();
@@ -1827,7 +1827,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 
 	if (ch == ' ' || ch == '\t')
 	    if (firstSpace == NULL)
-	        firstSpace = p - 1;
+		firstSpace = p - 1;
 	while (ch == ' ' || ch == '\t')
 	    ch = *p++;
 
@@ -1877,8 +1877,8 @@ ParseVarassignOp(VarAssign *var)
 	op--;
 
     } else if (op > name && op[-1] == '?') {
-        op--;
-        type = VAR_DEFAULT;
+	op--;
+	type = VAR_DEFAULT;
 
     } else if (op > name && op[-1] == ':') {
 	op--;
@@ -1937,7 +1937,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
     if (type == VAR_APPEND) {
 	Var_Append(name, uvalue, ctxt);
     } else if (type == VAR_SUBST) {
-        char *evalue;
+	char *evalue;
 	/*
 	 * Allow variables in the old value to be undefined, but leave their
 	 * expressions alone -- this is done by forcing oldVars to be false.
@@ -1968,9 +1968,9 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 
 	Var_Set(name, avalue, ctxt);
     } else if (type == VAR_SHELL) {
-        const char *cmd, *errfmt;
-        char *cmdOut;
-        void *cmd_freeIt = NULL;
+	const char *cmd, *errfmt;
+	char *cmdOut;
+	void *cmd_freeIt = NULL;
 
 	cmd = uvalue;
 	if (strchr(cmd, '$') != NULL) {
@@ -2979,7 +2979,7 @@ Parse_File(const char *name, int fd)
 		 */
 		cp = line + 1;
 	      shellCommand:
-	        ParseLine_ShellCommand(cp);
+		ParseLine_ShellCommand(cp);
 		continue;
 	    }
 
@@ -3003,7 +3003,7 @@ Parse_File(const char *name, int fd)
 	    }
 #endif
 	    {
-	        VarAssign var;
+		VarAssign var;
 		if (Parse_IsVar(line, &var)) {
 		    FinishDependencyGroup();
 		    Parse_DoVar(&var, VAR_GLOBAL);
@@ -3088,20 +3088,20 @@ Parse_File(const char *name, int fd)
 	     * in which the middle is interpreted as a source, not a target.
 	     */
 	    {
-	        /* In lint mode, allow undefined variables to appear in
-	         * dependency lines.
-	         *
-	         * Ideally, only the right-hand side would allow undefined
-	         * variables since it is common to have no dependencies.
-	         * Having undefined variables on the left-hand side is more
-	         * unusual though.  Since both sides are expanded in a single
-	         * pass, there is not much choice what to do here.
-	         *
-	         * In normal mode, it does not matter whether undefined
-	         * variables are allowed or not since as of 2020-09-14,
-	         * Var_Parse does not print any parse errors in such a case.
-	         * It simply returns the special empty string var_Error,
-	         * which cannot be detected in the result of Var_Subst. */
+		/* In lint mode, allow undefined variables to appear in
+		 * dependency lines.
+		 *
+		 * Ideally, only the right-hand side would allow undefined
+		 * variables since it is common to have no dependencies.
+		 * Having undefined variables on the left-hand side is more
+		 * unusual though.  Since both sides are expanded in a single
+		 * pass, there is not much choice what to do here.
+		 *
+		 * In normal mode, it does not matter whether undefined
+		 * variables are allowed or not since as of 2020-09-14,
+		 * Var_Parse does not print any parse errors in such a case.
+		 * It simply returns the special empty string var_Error,
+		 * which cannot be detected in the result of Var_Subst. */
 		VarEvalFlags eflags = DEBUG(LINT)
 				      ? VARE_WANTRES
 				      : VARE_UNDEFERR|VARE_WANTRES;
