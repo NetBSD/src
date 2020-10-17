@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.4 2020/10/17 10:47:28 jmcneill Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.4 2020/10/17 10:47:28 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -289,7 +289,7 @@ amdgpu_gart_post_update(struct amdgpu_device *adev, unsigned gpu_pgstart,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
 		    BUS_DMASYNC_PREWRITE);
 	}
-	membar_sync();		/* XXX overkill */
+	mb();
 	amdgpu_gart_flush_gpu_tlb(adev, 0);
 }
 #endif
