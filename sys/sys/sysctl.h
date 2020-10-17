@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.230 2019/05/31 23:01:39 kamil Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.231 2020/10/17 09:06:15 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -274,6 +274,7 @@ struct ctlname {
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
 #define	KERN_EVCNT		84	/* struct: evcnts */
+#define	KERN_SOFIXEDBUF		85	/* bool: fixed socket buffer sizes */
 
 /*
  *  KERN_CLOCKRATE structure
