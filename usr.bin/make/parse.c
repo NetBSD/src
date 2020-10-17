@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.371 2020/10/17 17:16:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.372 2020/10/17 17:23:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.371 2020/10/17 17:16:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.372 2020/10/17 17:23:22 rillig Exp $");
 
 /* types and constants */
 
@@ -224,7 +224,10 @@ static GNode *mainNode;
 static GNodeList *targets;
 
 #ifdef CLEANUP
-/* command lines for targets */
+/* All shell commands for all targets, in no particular order and possibly
+ * with duplicates.  Kept in a separate list since the commands from .USE or
+ * .USEBEFORE nodes are shared with other GNodes, thereby giving up the
+ * easily understandable ownership over the allocated strings. */
 static StringList *targCmds;
 #endif
 
