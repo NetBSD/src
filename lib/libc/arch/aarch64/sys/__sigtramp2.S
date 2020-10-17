@@ -1,4 +1,4 @@
-/* $NetBSD: __sigtramp2.S,v 1.2 2020/10/13 01:59:55 kamil Exp $ */
+/* $NetBSD: __sigtramp2.S,v 1.3 2020/10/17 15:44:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 	.cfi_offset x27, _UC_REGS_X27
 	.cfi_offset x28, _UC_REGS_X28
 	.cfi_offset x29, _UC_REGS_X29
-	.cfi_offset x30, _UC_REGS_X30
+	.cfi_offset lr, _UC_REGS_LR
 	/* The unwinder will use the CFA to restore X31 (SP). */
 	nop
 ENTRY_NP(__sigtramp_siginfo_2)
