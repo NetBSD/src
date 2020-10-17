@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.380 2020/10/17 20:51:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.381 2020/10/17 20:57:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.380 2020/10/17 20:51:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.381 2020/10/17 20:57:08 rillig Exp $");
 
 /* types and constants */
 
@@ -3041,6 +3041,46 @@ ParseDependency(char *line)
 	ParseLine_ShellCommand(shellcmd);
 }
 
+static void
+ParseLine(char *line)
+{
+    if (ParseDirective(line))
+	return;
+
+    if (*line == '\t') {
+	ParseLine_ShellCommand(line + 1);
+	return;
+    }
+
+#ifdef SYSVINCLUDE
+    if (IsSysVInclude(line)) {
+	/*
+	 * It's an S3/S5-style "include".
+	 */
+	ParseTraditionalInclude(line);
+	return;
+    }
+#endif
+
+#ifdef GMAKEEXPORT
+    if (strncmp(line, "export", 6) == 0 && ch_isspace(line[6]) &&
+	strchr(line, ':') == NULL) {
+	/*
+	 * It's a Gmake "export".
+	 */
+	ParseGmakeExport(line);
+	return;
+    }
+#endif
+
+    if (ParseVarassign(line))
+	return;
+
+    FinishDependencyGroup();
+
+    ParseDependency(line);
+}
+
 /* Parse a top-level makefile into its component parts, incorporating them
  * into the global dependency graph.
  *
@@ -3066,42 +3106,9 @@ Parse_File(const char *name, int fd)
     curFile->lf = lf;
 
     do {
-	for (; (line = ParseReadLine()) != NULL; ) {
+	while ((line = ParseReadLine()) != NULL) {
 	    DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n", curFile->lineno, line);
-
-	    if (ParseDirective(line))
-		continue;
-
-	    if (*line == '\t') {
-		ParseLine_ShellCommand(line + 1);
-		continue;
-	    }
-
-#ifdef SYSVINCLUDE
-	    if (IsSysVInclude(line)) {
-		/*
-		 * It's an S3/S5-style "include".
-		 */
-		ParseTraditionalInclude(line);
-		continue;
-	    }
-#endif
-#ifdef GMAKEEXPORT
-	    if (strncmp(line, "export", 6) == 0 && ch_isspace(line[6]) &&
-		strchr(line, ':') == NULL) {
-		/*
-		 * It's a Gmake "export".
-		 */
-		ParseGmakeExport(line);
-		continue;
-	    }
-#endif
-	    if (ParseVarassign(line))
-		continue;
-
-	    FinishDependencyGroup();
-
-	    ParseDependency(line);
+	    ParseLine(line);
 	}
 	/*
 	 * Reached EOF, but it may be just EOF of an include file...
