@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.373 2020/10/17 17:47:14 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.374 2020/10/17 18:36:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.373 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.374 2020/10/17 18:36:56 rillig Exp $");
 
 /* types and constants */
 
@@ -235,7 +235,7 @@ static StringList *targCmds;
  * Predecessor node for handling .ORDER. Initialized to NULL when .ORDER
  * seen, then set to each successive source on the line.
  */
-static GNode	*predecessor;
+static GNode *predecessor;
 
 /* parser state */
 
@@ -594,8 +594,8 @@ ParseMark(GNode *gn)
 static int
 ParseFindKeyword(const char *str)
 {
-    int    start, end, cur;
-    int    diff;
+    int start, end, cur;
+    int diff;
 
     start = 0;
     end = (sizeof(parseKeywords)/sizeof(parseKeywords[0])) - 1;
@@ -680,7 +680,7 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 
 static void
 ParseErrorInternal(const char *cfname, size_t clineno, int type,
-    const char *fmt, ...)
+		   const char *fmt, ...)
 {
 	va_list ap;
 
@@ -739,7 +739,7 @@ ParseMessage(char *line)
 {
     int mtype;
 
-    switch(*line) {
+    switch (*line) {
     case 'i':
 	mtype = PARSE_INFO;
 	break;
@@ -834,7 +834,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	 * and the new instance is linked to all parents of the initial
 	 * instance.
 	 */
-	GNode	*cohort;
+	GNode *cohort;
 
 	/*
 	 * Propagate copied bits to the initial node.  They'll be propagated
@@ -857,7 +857,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	cohort->centurion = gn;
 	gn->unmade_cohorts++;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
-		gn->unmade_cohorts % 1000000);
+		 gn->unmade_cohorts % 1000000);
     } else {
 	/*
 	 * We don't want to nuke any previous flags (whatever they were) so we
@@ -1101,7 +1101,7 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
 	     */
 	    const char *nested_p = cp;
 	    const char *nested_val;
-	    void    *freeIt;
+	    void *freeIt;
 
 	    (void)Var_Parse(&nested_p, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
 			    &nested_val, &freeIt);
@@ -1289,7 +1289,7 @@ ParseDoDependencyTargetMundane(char *const line,
 
     /* Apply the targets. */
 
-    while(!Lst_IsEmpty(curTargs)) {
+    while (!Lst_IsEmpty(curTargs)) {
 	char *targName = Lst_Dequeue(curTargs);
 	GNode *gn = Suff_IsTransform(targName)
 		    ? Suff_AddTransform(targName)
@@ -1324,7 +1324,7 @@ ParseDoDependencyTargetExtraWarn(char **pp, const char *lstart)
 static void
 ParseDoDependencyCheckSpec(ParseSpecial const specType)
 {
-    switch(specType) {
+    switch (specType) {
     default:
 	Parse_Error(PARSE_WARNING,
 		    "Special and mundane targets don't mix. Mundane ones ignored");
@@ -1586,7 +1586,7 @@ ParseDoDependencySourcesSpecial(char *line, char *cp,
 
 static Boolean
 ParseDoDependencySourcesMundane(char *line, char *cp,
-			 ParseSpecial specType, GNodeType tOp)
+				ParseSpecial specType, GNodeType tOp)
 {
     while (*line) {
 	/*
@@ -1669,7 +1669,7 @@ ParseDoDependency(char *line)
     int tOp;			/* operator from special target */
     StringList *curTargs;	/* target names to be found and added
 				 * to the targets list */
-    char	   *lstart = line;
+    char *lstart = line;
 
     /*
      * specType contains the SPECial TYPE of the current target. It is Not
@@ -1749,7 +1749,7 @@ ParseDoDependency(char *line)
 	}
 	*line = '\0';
     } else if (specType == NotParallel || specType == SingleShell ||
-	    specType == DeleteOnError) {
+	       specType == DeleteOnError) {
 	*line = '\0';
     }
 
@@ -1949,7 +1949,7 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
 	 *
 	 * And not get an error.
 	 */
-	Boolean	  oldOldVars = oldVars;
+	Boolean oldOldVars = oldVars;
 
 	oldVars = FALSE;
 
@@ -2114,11 +2114,11 @@ ParseAddCmd(GNode *gn, char *cmd)
 		     gn->name, gn->fname, gn->lineno);
 #else
 	Parse_Error(PARSE_WARNING,
-		     "duplicate script for target \"%s\" ignored",
-		     gn->name);
+		    "duplicate script for target \"%s\" ignored",
+		    gn->name);
 	ParseErrorInternal(gn->fname, (size_t)gn->lineno, PARSE_WARNING,
-			    "using previous script for \"%s\" defined here",
-			    gn->name);
+			   "using previous script for \"%s\" defined here",
+			   gn->name);
 #endif
     }
 }
@@ -2142,11 +2142,11 @@ static void
 Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 {
     struct loadedfile *lf;
-    char          *fullname;	/* full pathname of file */
-    char          *newName;
-    char          *prefEnd, *incdir;
-    int           fd;
-    int           i;
+    char *fullname;		/* full pathname of file */
+    char *newName;
+    char *prefEnd, *incdir;
+    int fd;
+    int i;
 
     /*
      * Now we know the file's name and its search path, we attempt to
@@ -2239,16 +2239,16 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
     Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
     curFile->lf = lf;
     if (depinc)
-	doing_depend = depinc;		/* only turn it on */
+	doing_depend = depinc;	/* only turn it on */
 }
 
 static void
 ParseDoInclude(char *line)
 {
-    char          endc;		/* the character which ends the file spec */
-    char          *cp;		/* current position in file spec */
-    int		  silent = *line != 'i';
-    char	  *file = &line[7 + silent];
+    char endc;			/* the character which ends the file spec */
+    char *cp;			/* current position in file spec */
+    int silent = *line != 'i';
+    char *file = &line[7 + silent];
 
     /* Skip to delimiter character so we know where to look */
     while (*file == ' ' || *file == '\t')
@@ -2256,7 +2256,7 @@ ParseDoInclude(char *line)
 
     if (*file != '"' && *file != '<') {
 	Parse_Error(PARSE_FATAL,
-	    ".include filename must be delimited by '\"' or '<'");
+		    ".include filename must be delimited by '\"' or '<'");
 	return;
     }
 
@@ -2277,8 +2277,8 @@ ParseDoInclude(char *line)
 
     if (*cp != endc) {
 	Parse_Error(PARSE_FATAL,
-		     "Unclosed %cinclude filename. '%c' expected",
-		     '.', endc);
+		    "Unclosed %cinclude filename. '%c' expected",
+		    '.', endc);
 	return;
     }
     *cp = '\0';
@@ -2373,14 +2373,14 @@ ParseTrackInput(const char *name)
 	    if (*old == ' ')
 		old++;
 	    if (old >= ep)
-		break;			/* cannot contain name */
-	    if (memcmp(old, name, name_len) == 0
-		    && (old[name_len] == 0 || old[name_len] == ' '))
+		break;		/* cannot contain name */
+	    if (memcmp(old, name, name_len) == 0 &&
+		(old[name_len] == '\0' || old[name_len] == ' '))
 		goto cleanup;
 	}
     }
-    Var_Append (MAKE_MAKEFILES, name, VAR_GLOBAL);
- cleanup:
+    Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
+cleanup:
     bmake_free(fp);
 }
 
@@ -2390,7 +2390,7 @@ ParseTrackInput(const char *name)
  * The given file is added to the includes stack. */
 void
 Parse_SetInput(const char *name, int line, int fd,
-	char *(*nextbuf)(void *, size_t *), void *arg)
+	       char *(*nextbuf)(void *, size_t *), void *arg)
 {
     char *buf;
     size_t len;
@@ -2446,7 +2446,7 @@ Parse_SetInput(const char *name, int line, int fd,
     }
     curFile->P_str = buf;
     curFile->P_ptr = buf;
-    curFile->P_end = buf+len;
+    curFile->P_end = buf + len;
 
     curFile->cond_depth = Cond_save_depth();
     ParseSetParseFile(name);
@@ -2495,11 +2495,11 @@ IsSysVInclude(const char *line)
 static void
 ParseTraditionalInclude(char *line)
 {
-    char          *cp;		/* current position in file spec */
-    int		   done = 0;
-    int		   silent = line[0] != 'i';
-    char	  *file = &line[silent + 7];
-    char	  *all_files;
+    char *cp;			/* current position in file spec */
+    int done = 0;
+    int silent = line[0] != 'i';
+    char *file = line + (silent ? 8 : 7);
+    char *all_files;
 
     DEBUG2(PARSE, "%s: %s\n", __func__, file);
 
@@ -2513,8 +2513,7 @@ ParseTraditionalInclude(char *line)
     /* TODO: handle errors */
 
     if (*file == '\0') {
-	Parse_Error(PARSE_FATAL,
-		     "Filename missing from \"include\"");
+	Parse_Error(PARSE_FATAL, "Filename missing from \"include\"");
 	goto out;
     }
 
@@ -2540,8 +2539,8 @@ out:
 static void
 ParseGmakeExport(char *line)
 {
-    char	  *variable = &line[6];
-    char	  *value;
+    char *variable = &line[6];
+    char *value;
 
     DEBUG2(PARSE, "%s: %s\n", __func__, variable);
 
@@ -2555,7 +2554,7 @@ ParseGmakeExport(char *line)
 		    "Variable/Value missing from \"export\"");
 	return;
     }
-    *value++ = '\0';			/* terminate variable */
+    *value++ = '\0';		/* terminate variable */
 
     /*
      * Expand the value before putting it in the environment.
@@ -2599,8 +2598,8 @@ ParseEOF(void)
     Cond_restore_depth(curFile->cond_depth);
 
     if (curFile->lf != NULL) {
-	    loadedfile_destroy(curFile->lf);
-	    curFile->lf = NULL;
+	loadedfile_destroy(curFile->lf);
+	curFile->lf = NULL;
     }
 
     /* Dispose of curFile info */
@@ -2666,7 +2665,8 @@ ParseGetLine(int flags)
 			if (ptr > line && ptr[-1] == '\\')
 			    continue;
 			Parse_Error(PARSE_WARNING,
-			    "Zero byte read from file, skipping rest of line.");
+				    "Zero byte read from file, "
+				    "skipping rest of line.");
 			break;
 		    }
 		}
@@ -2842,7 +2842,7 @@ ParseReadLine(void)
 		line = ParseGetLine(PARSE_RAW);
 		if (line == NULL) {
 		    Parse_Error(PARSE_FATAL,
-			     "Unexpected end of file in for loop.");
+				"Unexpected end of file in for loop.");
 		    break;
 		}
 	    } while (For_Accum(line));
@@ -2913,8 +2913,8 @@ ParseLine_ShellCommand(char *cp)
 void
 Parse_File(const char *name, int fd)
 {
-    char	  *cp;		/* pointer into the line */
-    char          *line;	/* the line we're working on */
+    char *cp;			/* pointer into the line */
+    char *line;			/* the line we're working on */
     struct loadedfile *lf;
 
     lf = loadfile(name, fd);
@@ -2978,7 +2978,7 @@ Parse_File(const char *name, int fd)
 		 * a creation command.
 		 */
 		cp = line + 1;
-	      shellCommand:
+	    shellCommand:
 		ParseLine_ShellCommand(cp);
 		continue;
 	    }
@@ -3132,8 +3132,8 @@ Parse_File(const char *name, int fd)
     if (fatals) {
 	(void)fflush(stdout);
 	(void)fprintf(stderr,
-	    "%s: Fatal errors encountered -- cannot continue",
-	    progname);
+		      "%s: Fatal errors encountered -- cannot continue",
+		      progname);
 	PrintOnError(NULL, NULL);
 	exit(1);
     }
@@ -3206,8 +3206,7 @@ Parse_MainName(void)
     } else if (mainNode->type & OP_DOUBLEDEP) {
 	Lst_Append(mainList, mainNode);
 	Lst_AppendAll(mainList, mainNode->cohorts);
-    }
-    else
+    } else
 	Lst_Append(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return mainList;
