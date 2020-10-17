@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.162 2020/10/17 17:47:14 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.163 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  *
  *	Dir_InitDot	Set the dot CachedDir.
  *
- *	Dir_End		Cleanup the module.
+ *	Dir_End		Clean up the module.
  *
  *	Dir_SetPATH	Set ${.PATH} to reflect state of dirSearchPath.
  *
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.162 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.163 2020/10/17 21:32:30 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -388,7 +388,7 @@ cached_lstat(const char *pathname, struct make_stat *st)
     return cached_stats(&lmtimes, pathname, st, CST_LSTAT);
 }
 
-/* Initialize things for this module. */
+/* Initialize the directories module. */
 void
 Dir_Init(void)
 {
@@ -427,7 +427,7 @@ Dir_InitCur(const char *cdname)
 	    dir->refCount++;
 	    if (cur && cur != dir) {
 		/*
-		 * We've been here before, cleanup.
+		 * We've been here before, clean up.
 		 */
 		cur->refCount--;
 		Dir_Destroy(cur);
@@ -462,7 +462,7 @@ Dir_InitDot(void)
     Dir_SetPATH();		/* initialize */
 }
 
-/* Clean up things for this module. */
+/* Clean up the directories module. */
 void
 Dir_End(void)
 {

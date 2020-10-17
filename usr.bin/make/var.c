@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.571 2020/10/17 17:47:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.572 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.571 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.572 2020/10/17 21:32:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3830,7 +3830,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
     return VPR_OK;
 }
 
-/* Initialize the module. */
+/* Initialize the variables module. */
 void
 Var_Init(void)
 {
@@ -3839,7 +3839,7 @@ Var_Init(void)
     VAR_CMD = Targ_NewGN("Command");
 }
 
-
+/* Clean up the variables module. */
 void
 Var_End(void)
 {

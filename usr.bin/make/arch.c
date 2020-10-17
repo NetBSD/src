@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.132 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.133 2020/10/17 21:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
  *
  *	Arch_Init	Initialize this module.
  *
- *	Arch_End	Cleanup this module.
+ *	Arch_End	Clean up this module.
  */
 
 #include    <sys/types.h>
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.132 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.133 2020/10/17 21:32:30 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -1123,14 +1123,14 @@ Arch_LibOODate(GNode *gn)
     return oodate;
 }
 
-/* Initialize things for this module. */
+/* Initialize the archives module. */
 void
 Arch_Init(void)
 {
     archives = Lst_Init();
 }
 
-/* Clean up things for this module. */
+/* Clean up the archives module. */
 void
 Arch_End(void)
 {
