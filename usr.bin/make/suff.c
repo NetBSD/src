@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.177 2020/10/05 21:37:07 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.178 2020/10/17 17:47:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.177 2020/10/05 21:37:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.178 2020/10/17 17:47:14 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -296,9 +296,9 @@ FindSuffByName(const char *name)
     SuffListNode *ln;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-        Suff *suff = ln->datum;
-        if (strcmp(suff->name, name) == 0)
-            return suff;
+	Suff *suff = ln->datum;
+	if (strcmp(suff->name, name) == 0)
+	    return suff;
     }
     return NULL;
 }

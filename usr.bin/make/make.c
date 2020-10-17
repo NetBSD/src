@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.157 2020/10/01 22:42:00 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.158 2020/10/17 17:47:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.157 2020/10/01 22:42:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.158 2020/10/17 17:47:14 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -480,7 +480,7 @@ HandleUseNodes(GNode *gn)
     GNodeListNode *ln, *nln;
     for (ln = gn->children->first; ln != NULL; ln = nln) {
 	nln = ln->next;
-        MakeHandleUse(ln->datum, gn, ln);
+	MakeHandleUse(ln->datum, gn, ln);
     }
 }
 
