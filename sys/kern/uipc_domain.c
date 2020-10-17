@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.106 2018/12/27 07:56:43 maxv Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.107 2020/10/17 09:45:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.106 2018/12/27 07:56:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.107 2020/10/17 09:45:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -412,6 +412,13 @@ static int
 sun_print(char *buf, size_t len, const void *v)
 {
 	const struct sockaddr_un *sun = v;
+	size_t plen;
+
+	KASSERT(sun->sun_len >= offsetof(struct sockaddr_un, sun_path[0]));
+	plen = sun->sun_len - offsetof(struct sockaddr_un, sun_path[0]);
+
+	len = MIN(len, plen);
+
 	return snprintf(buf, len, "%s", sun->sun_path);
 }
 
