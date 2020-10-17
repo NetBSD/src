@@ -1,11 +1,11 @@
-/*	$NetBSD: soundcard.h,v 1.25 2020/10/16 20:24:35 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.26 2020/10/17 23:23:06 nia Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson.
+ * by Lennart Augustsson and Nia Alarie.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +31,9 @@
 
 /*
  * WARNING!  WARNING!
- * This is an OSS (Linux) audio emulator.
- * Use the Native NetBSD API for developing new code, and this
- * only for compiling Linux programs.
+ * This is an Open Sound System compatibility layer.
+ * Use the Native NetBSD API in <sys/audioio.h> for developing new code,
+ * and this only for compiling programs written for other operating systems.
  */
 
 #ifndef _SOUNDCARD_H_
@@ -318,9 +318,6 @@ typedef struct buffmem_desc {
 #define OSS_LONGNAME_SIZE		64
 #define OSS_MAX_AUDIO_DEVS		64
 
-#define SNDCTL_SYSINFO			_IOR ('P',24, struct oss_sysinfo)
-#define SNDCTL_AUDIOINFO		_IOWR ('P',25, struct oss_audioinfo)
-#define SNDCTL_ENGINEINFO		_IOWR ('P',26, struct oss_audioinfo)
 #define SNDCTL_DSP_GETPLAYVOL		_IOR ('P',27, uint)
 #define SNDCTL_DSP_SETPLAYVOL		_IOW ('P',28, uint)
 #define SNDCTL_DSP_GETRECVOL		_IOR ('P',29, uint)
@@ -397,6 +394,145 @@ typedef struct oss_audioinfo {
 	int next_rec_engine;
 	int filler[184];			/* For expansion */
 } oss_audioinfo;
+
+#define SNDCTL_SYSINFO		_IOR ('X', 1, oss_sysinfo)
+#define OSS_SYSINFO		SNDCTL_SYSINFO /* Old name */
+#define SNDCTL_MIX_NRMIX	_IOR ('X',2, int)
+#define SNDCTL_MIX_NREXT	_IOWR ('X',3, int)
+#define SNDCTL_MIX_EXTINFO	_IOWR ('X',4, oss_mixext)
+#define SNDCTL_MIX_READ		_IOWR ('X',5, oss_mixer_value)
+#define SNDCTL_MIX_WRITE	_IOWR ('X',6, oss_mixer_value)
+#define SNDCTL_AUDIOINFO	_IOWR ('X',7, oss_audioinfo)
+#define SNDCTL_MIX_ENUMINFO	_IOWR ('X',8, oss_mixer_enuminfo)
+#define SNDCTL_MIXERINFO	_IOWR ('X',10, oss_mixerinfo)
+#define SNDCTL_ENGINEINFO	_IOWR ('X',12, oss_audioinfo)
+#define SNDCTL_MIX_DESCRIPTION	_IOWR ('X',14, oss_mixer_enuminfo)
+
+#define MIXT_DEVROOT	 	0 /* Used for default classes */
+#define MIXT_GROUP	 	1 /* Used for classes */
+#define MIXT_ONOFF	 	2 /* Used for mute controls */
+#define MIXT_ENUM	 	3 /* Used for enum controls */
+#define MIXT_MONOSLIDER	 	4 /* Used for mono and surround controls */
+#define MIXT_STEREOSLIDER 	5 /* Used for stereo controls */
+#define MIXT_MESSAGE	 	6 /* OSS compat, unused on NetBSD */
+#define MIXT_MONOVU	 	7 /* OSS compat, unused on NetBSD */
+#define MIXT_STEREOVU	 	8 /* OSS compat, unused on NetBSD */
+#define MIXT_MONOPEAK	 	9 /* OSS compat, unused on NetBSD */
+#define MIXT_STEREOPEAK		10 /* OSS compat, unused on NetBSD */
+#define MIXT_RADIOGROUP		11 /* OSS compat, unused on NetBSD */
+#define MIXT_MARKER		12 /* OSS compat, unused on NetBSD */
+#define MIXT_VALUE		13 /* OSS compat, unused on NetBSD */
+#define MIXT_HEXVALUE		14 /* OSS compat, unused on NetBSD */
+#define MIXT_MONODB		15 /* OSS compat, unused on NetBSD */
+#define MIXT_STEREODB		16 /* OSS compat, unused on NetBSD */
+#define MIXT_SLIDER		17 /* OSS compat, unused on NetBSD */
+#define MIXT_3D			18 /* OSS compat, unused on NetBSD */
+#define MIXT_MONOSLIDER16	19 /* OSS compat, unused on NetBSD */
+#define MIXT_STEREOSLIDER16	20 /* OSS compat, unused on NetBSD */
+#define MIXT_MUTE		21 /* OSS compat, unused on NetBSD */
+/*
+ * Should be used for Set controls. 
+ * In practice nothing uses this because it's "reserved for Sun's
+ * implementation".
+ */
+#define MIXT_ENUM_MULTI		22
+
+#define MIXF_READABLE	0x00000001 /* Value is readable: always true */
+#define MIXF_WRITEABLE	0x00000002 /* Value is writable: always true */
+#define MIXF_POLL	0x00000004 /* Can change between reads: always true */
+#define MIXF_HZ		0x00000008 /* OSS compat, unused on NetBSD */
+#define MIXF_STRING	0x00000010 /* OSS compat, unused on NetBSD */
+#define MIXF_DYNAMIC	0x00000010 /* OSS compat, unused on NetBSD */
+#define MIXF_OKFAIL	0x00000020 /* OSS compat, unused on NetBSD */
+#define MIXF_FLAT	0x00000040 /* OSS compat, unused on NetBSD */
+#define MIXF_LEGACY	0x00000080 /* OSS compat, unused on NetBSD */
+#define MIXF_CENTIBEL	0x00000100 /* OSS compat, unused on NetBSD */
+#define MIXF_DECIBEL	0x00000200 /* OSS compat, unused on NetBSD */
+#define MIXF_MAINVOL	0x00000400 /* OSS compat, unused on NetBSD */
+#define MIXF_PCMVOL	0x00000800 /* OSS compat, unused on NetBSD */
+#define MIXF_RECVOL	0x00001000 /* OSS compat, unused on NetBSD */
+#define MIXF_MONVOL	0x00002000 /* OSS compat, unused on NetBSD */
+#define MIXF_WIDE	0x00004000 /* OSS compat, unused on NetBSD */
+#define MIXF_DESCR	0x00008000 /* OSS compat, unused on NetBSD */
+#define MIXF_DISABLED	0x00010000 /* OSS compat, unused on NetBSD */
+
+/* None of the mixer capabilities are set on NetBSD. */
+#define MIXER_CAP_VIRTUAL	0x00000001	/* Virtual device */
+#define MIXER_CAP_LAYOUT_B	0x00000002	/* "Internal use only" */
+#define MIXER_CAP_NARROW	0x00000004	/* "Conserve screen space" */
+
+#define OSS_ID_SIZE		16
+typedef char oss_id_t[OSS_ID_SIZE];
+#define OSS_DEVNODE_SIZE	32
+typedef char oss_devnode_t[OSS_DEVNODE_SIZE];
+#define OSS_HANDLE_SIZE		32
+typedef char oss_handle_t[OSS_HANDLE_SIZE];
+
+typedef struct oss_mixext_root {
+	oss_id_t id;
+	char name[48];
+} oss_mixext_root;
+
+typedef struct oss_mixerinfo {
+	int dev;
+	oss_id_t id;
+	char name[32];	
+	int modify_counter;
+	int card_number;
+	int port_number;
+	oss_handle_t handle;
+	int magic;		/* "Reserved for internal use" */
+	int enabled;
+	int caps;
+	int flags;		/* "Reserved for internal use" */
+	int nrext;
+	int priority;
+	oss_devnode_t devnode;
+	int legacy_device;
+	int filler[245];
+} oss_mixerinfo;
+
+typedef struct oss_mixer_value {
+	int dev;	/* Set by caller */
+	int ctrl;	/* Set by caller */
+	int value;
+	int flags;	/* Reserved for "future use" */
+	int timestamp;
+	int filler[8];	/* Reserved for "future use" */
+} oss_mixer_value;
+
+#define OSS_ENUM_MAXVALUE	255
+#define OSS_ENUM_STRINGSIZE	3000
+
+typedef struct oss_mixer_enuminfo {
+	int dev;	/* Set by caller */
+	int ctrl;	/* Set by caller */
+	int nvalues;
+	int version;
+	short strindex[OSS_ENUM_MAXVALUE];
+	char strings[OSS_ENUM_STRINGSIZE];
+} oss_mixer_enuminfo;
+
+typedef struct oss_mixext {
+	int dev;
+	int ctrl;
+	int type;
+	int maxvalue;
+	int minvalue;
+	int flags;
+	oss_id_t id;
+	int parent;
+	int dummy;
+	int timestamp;
+	char data[64];
+	unsigned char enum_present[32];
+	int control_no;
+	unsigned int desc;
+	char extname[32];
+	int update_counter;
+	int rgbcolor;
+	int filler[6];
+} oss_mixext;
 
 #define ioctl _oss_ioctl
 /*
