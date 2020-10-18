@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2020/10/18 15:20:13 christos Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR+= libntp libiscntp libopts libparse
 
