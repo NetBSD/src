@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.263 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.264 2020/10/18 07:46:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.263 2020/10/17 21:32:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.264 2020/10/18 07:46:04 rillig Exp $");
 
 # define STATIC static
 
@@ -1203,55 +1203,40 @@ JobExec(Job *job, char **argv)
 	 * reset it to the beginning (again). Since the stream was marked
 	 * close-on-exec, we must clear that bit in the new input.
 	 */
-	if (dup2(fileno(job->cmdFILE), 0) == -1) {
-	    execError("dup2", "job->cmdFILE");
-	    _exit(1);
-	}
-	if (fcntl(0, F_SETFD, 0) == -1) {
-	    execError("fcntl clear close-on-exec", "stdin");
-	    _exit(1);
-	}
-	if (lseek(0, (off_t)0, SEEK_SET) == -1) {
-	    execError("lseek to 0", "stdin");
-	    _exit(1);
-	}
+	if (dup2(fileno(job->cmdFILE), 0) == -1)
+	    execDie("dup2", "job->cmdFILE");
+	if (fcntl(0, F_SETFD, 0) == -1)
+	    execDie("fcntl clear close-on-exec", "stdin");
+	if (lseek(0, (off_t)0, SEEK_SET) == -1)
+	    execDie("lseek to 0", "stdin");
 
 	if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
 		/*
 		 * Pass job token pipe to submakes.
 		 */
-		if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1) {
-		    execError("clear close-on-exec", "tokenWaitJob.inPipe");
-		    _exit(1);
-		}
-		if (fcntl(tokenWaitJob.outPipe, F_SETFD, 0) == -1) {
-		    execError("clear close-on-exec", "tokenWaitJob.outPipe");
-		    _exit(1);
-		}
+		if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1)
+		    execDie("clear close-on-exec", "tokenWaitJob.inPipe");
+		if (fcntl(tokenWaitJob.outPipe, F_SETFD, 0) == -1)
+		    execDie("clear close-on-exec", "tokenWaitJob.outPipe");
 	}
 
 	/*
 	 * Set up the child's output to be routed through the pipe
 	 * we've created for it.
 	 */
-	if (dup2(job->outPipe, 1) == -1) {
-	    execError("dup2", "job->outPipe");
-	    _exit(1);
-	}
+	if (dup2(job->outPipe, 1) == -1)
+	    execDie("dup2", "job->outPipe");
+
 	/*
 	 * The output channels are marked close on exec. This bit was
 	 * duplicated by the dup2(on some systems), so we have to clear
 	 * it before routing the shell's error output to the same place as
 	 * its standard output.
 	 */
-	if (fcntl(1, F_SETFD, 0) == -1) {
-	    execError("clear close-on-exec", "stdout");
-	    _exit(1);
-	}
-	if (dup2(1, 2) == -1) {
-	    execError("dup2", "1, 2");
-	    _exit(1);
-	}
+	if (fcntl(1, F_SETFD, 0) == -1)
+	    execDie("clear close-on-exec", "stdout");
+	if (dup2(1, 2) == -1)
+	    execDie("dup2", "1, 2");
 
 	/*
 	 * We want to switch the child into a different process family so
@@ -1270,8 +1255,7 @@ JobExec(Job *job, char **argv)
 	Var_ExportVars();
 
 	(void)execv(shellPath, argv);
-	execError("exec", shellPath);
-	_exit(1);
+	execDie("exec", shellPath);
     }
 
     /* Parent, continuing after the child exec */
