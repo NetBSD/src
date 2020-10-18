@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.383 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.384 2020/10/18 08:58:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.383 2020/10/17 21:32:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.384 2020/10/18 08:58:29 rillig Exp $");
 
 /* types and constants */
 
@@ -280,7 +280,7 @@ static IFile *curFile;
  *			(not printed since it is below a .for loop)
  *	includes[0]:	include-main.mk:27
  */
-static Stack /* of *IFile */ includes;
+static Vector /* of IFile pointer */ includes;
 
 /* include paths (lists of directories) */
 SearchPath *parseIncPath;	/* dirs for "..." includes */
@@ -2300,7 +2300,6 @@ GetActuallyIncludingFile(void)
 {
     size_t i;
 
-    /* XXX: Stack was supposed to be an opaque data structure. */
     for (i = includes.len; i > 0; i--) {
 	IFile *parent = includes.items[i - 1];
 	IFile *child = i < includes.len ? includes.items[i] : curFile;
@@ -2384,7 +2383,7 @@ Parse_SetInput(const char *name, int line, int fd,
 
     if (curFile != NULL)
 	/* Save existing file info */
-	Stack_Push(&includes, curFile);
+	Vector_Push(&includes, curFile);
 
     /* Allocate and fill in new structure */
     curFile = bmake_malloc(sizeof *curFile);
@@ -2579,7 +2578,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    if (Stack_IsEmpty(&includes)) {
+    if (Vector_IsEmpty(&includes)) {
 	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
@@ -2589,7 +2588,7 @@ ParseEOF(void)
 	return FALSE;
     }
 
-    curFile = Stack_Pop(&includes);
+    curFile = Vector_Pop(&includes);
     DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
 	   curFile->fname, curFile->lineno);
 
@@ -3127,7 +3126,7 @@ Parse_Init(void)
     parseIncPath = Lst_Init();
     sysIncPath = Lst_Init();
     defIncPath = Lst_Init();
-    Stack_Init(&includes);
+    Vector_Init(&includes);
 #ifdef CLEANUP
     targCmds = Lst_Init();
 #endif
@@ -3143,8 +3142,8 @@ Parse_End(void)
     Lst_Destroy(defIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
-    assert(Stack_IsEmpty(&includes));
-    Stack_Done(&includes);
+    assert(Vector_IsEmpty(&includes));
+    Vector_Done(&includes);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.69 2020/09/26 17:15:20 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.70 2020/10/18 08:58:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -210,18 +210,17 @@ void Lst_Enqueue(List *, void *);
 /* Remove the head node of the queue and return its datum. */
 void *Lst_Dequeue(List *);
 
-/* A stack is a very simple collection of items that only allows access to the
- * top-most item. */
-typedef struct Stack {
+/* A vector is an ordered collection of items, allowing fast indexed access. */
+typedef struct Vector {
     void **items;
     size_t len;
     size_t cap;
-} Stack;
+} Vector;
 
-void Stack_Init(Stack *);
-Boolean Stack_IsEmpty(Stack *);
-void Stack_Push(Stack *, void *);
-void *Stack_Pop(Stack *);
-void Stack_Done(Stack *);
+void Vector_Init(Vector *);
+Boolean Vector_IsEmpty(Vector *);
+void Vector_Push(Vector *, void *);
+void *Vector_Pop(Vector *);
+void Vector_Done(Vector *);
 
 #endif /* MAKE_LST_H */

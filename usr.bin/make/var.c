@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.573 2020/10/18 08:47:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.574 2020/10/18 08:58:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.573 2020/10/18 08:47:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.574 2020/10/18 08:58:29 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3856,16 +3856,16 @@ Var_Stats(void)
 void
 Var_Dump(GNode *ctxt)
 {
-    Stack varnames;
+    Vector varnames;
     Hash_Search iter;
     Hash_Entry *he;
     size_t i;
 
-    Stack_Init(&varnames);
+    Vector_Init(&varnames);
     for (he = Hash_EnumFirst(&ctxt->context, &iter);
 	 he != NULL;
 	 he = Hash_EnumNext(&iter))
-        Stack_Push(&varnames, he->name);
+	Vector_Push(&varnames, he->name);
 
     qsort(varnames.items, varnames.len, sizeof varnames.items[0], str_cmp_asc);
 
@@ -3875,5 +3875,5 @@ Var_Dump(GNode *ctxt)
 	debug_printf("%-16s = %s\n", varname, Buf_GetAll(&var->val, NULL));
     }
 
-    Stack_Done(&varnames);
+    Vector_Done(&varnames);
 }
