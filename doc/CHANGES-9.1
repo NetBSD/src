@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.125 2020/10/16 08:17:09 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.126 2020/10/18 19:24:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -5301,6 +5301,57 @@ sys/dev/pci/if_wm.c				1.691
 external/gpl2/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h 				patched by hand
 
-	Welcome to 9.1!
+	Original 9.1 tag - later moved for the files below
 	[martin]
 
+external/mit/xorg/bin/xinit/Makefile		1.8,1.9
+
+	Define CTWM when building xinit.
+	Allow uxterm to be used in the default xinitrc.
+	[nia, ticket #1115]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.28
+external/public-domain/tz/dist/NEWS             up to 1.1.1.31
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.21
+external/public-domain/tz/dist/australasia      up to 1.1.1.20
+external/public-domain/tz/dist/europe           up to 1.1.1.28
+external/public-domain/tz/dist/version          up to 1.1.1.18
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.5
+doc/3RDPARTY					(apply patch)
+
+	Update tzdata to 2020c.
+
+sys/arch/amd64/amd64/process_machdep.c		1.48 (via patch, adapted)
+sys/arch/i386/i386/process_machdep.c		1.95 (via patch, adapted)
+sys/arch/powerpc/powerpc/process_machdep.c	1.40,1.41 (via patch, adapted)
+sys/arch/sh3/include/ptrace.h			1.19 (via patch, adapted)
+sys/arch/sh3/sh3/process_machdep.c		1.23,1.24 (via patch, adapted)
+sys/arch/x86/x86/fpu.c				(apply patch)
+sys/kern/sys_ptrace_common.c			1.84 (via patch, adapted)
+sys/sys/ptrace.h				1.71 (via patch, adapted)
+
+	Fix s87_tw reconstruction to correctly indicate register states.
+	Fix the machine-dependent ptrace requests to respect LWP number.
+	[kamil, ticket #1117]
+
+external/mit/xorg/bin/xinit/Makefile
+external/public-domain/tz/dist/Makefile
+external/public-domain/tz/dist/NEWS
+external/public-domain/tz/dist/TZDATA_VERSION
+external/public-domain/tz/dist/australasia
+external/public-domain/tz/dist/europe
+external/public-domain/tz/dist/version
+external/public-domain/tz/dist/ziguard.awk
+doc/3RDPARTY
+sys/arch/amd64/amd64/process_machdep.c
+sys/arch/i386/i386/process_machdep.c
+sys/arch/powerpc/powerpc/process_machdep.c
+sys/arch/sh3/include/ptrace.h
+sys/arch/sh3/sh3/process_machdep.c
+sys/arch/x86/x86/fpu.c
+sys/kern/sys_ptrace_common.c
+sys/sys/ptrace.h
+doc/CHANGES-9.1
+
+	Move 9.1 release tag. Welcome to 9.1!
+	[martin]
