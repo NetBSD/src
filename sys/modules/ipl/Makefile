@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/10/18 14:33:40 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/10/18 15:02:12 christos Exp $
 #
 
 .include "../Makefile.inc"
@@ -57,12 +57,12 @@ SRCS+=	radix_ipf.c
 WARNS=	3
 
 CWARNFLAGS.clang+=	-Wno-self-assign
-COPTS.fil.c += -Wno-error=address-of-packed-member
-COPTS.ip_fil_netbsd.c += -Wno-error=address-of-packed-member
-COPTS.ip_htable.c += -Wno-error=address-of-packed-member
-COPTS.ip_nat.c += -Wno-error=address-of-packed-member
-COPTS.ip_nat6.c += -Wno-error=address-of-packed-member
-COPTS.ip_proxy.c += -Wno-error=address-of-packed-member
-COPTS.ip_state.c += -Wno-error=address-of-packed-member
+CWARNFLAGS.fil.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_fil_netbsd.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_htable.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_nat.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_nat6.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_proxy.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.ip_state.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>
