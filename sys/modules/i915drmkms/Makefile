@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2020/02/14 09:35:52 riastradh Exp $
+# $NetBSD: Makefile,v 1.16 2020/10/18 19:56:41 christos Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -120,5 +120,6 @@ COPTS.intel_display.c+=	-Wno-error=implicit-fallthrough
 COPTS.intel_ddi.c+=	-Wno-error=implicit-fallthrough
 COPTS.intel_sdvo.c+=	-Wno-error=implicit-fallthrough
 .endif
+COPTS.i915_guc_submission.c += ${NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>
