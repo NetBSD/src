@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.6 2020/09/26 17:49:50 jmcneill Exp $
+# $NetBSD: module.mi,v 1.7 2020/10/18 10:10:18 rin Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -407,6 +407,10 @@
 ./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/k_uvm				tests-sys-debug	atf,debug,rump
 ./usr/libdata/debug/usr/tests/modules/k_uvm/k_uvm.kmod.debug		tests-sys-debug	atf,debug,rump
+./usr/libdata/debug/usr/tests/modules/t_builtin.debug			tests-sys-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_kcov.debug			tests-sys-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_ufetchstore.debug		tests-sys-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/threadpool_tester			tests-sys-debug	atf,debug,rump
 ./usr/libdata/debug/usr/tests/modules/threadpool_tester/threadpool_tester.kmod.debug	tests-sys-debug	atf,debug,rump
 ./usr/libdata/debug/usr/tests/modules/ufetchstore_tester		tests-sys-debug	atf,debug,rump
