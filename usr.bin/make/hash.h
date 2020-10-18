@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.28 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.29 2020/10/18 12:47:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -82,8 +82,8 @@ typedef struct HashEntry {
     struct HashEntry *next;	/* Used to link together all the entries
 				 * associated with the same bucket. */
     void	      *value;
-    unsigned	      namehash;	/* hash value of key */
-    char	      name[1];	/* key string, variable length */
+    unsigned	      key_hash;	/* hash value of the key */
+    char	      key[1];	/* key string, variable length */
 } HashEntry;
 
 /* The hash table containing the entries. */
