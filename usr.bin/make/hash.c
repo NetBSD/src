@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.44 2020/10/05 20:21:30 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.45 2020/10/18 10:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.44 2020/10/05 20:21:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.45 2020/10/18 10:44:25 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -283,43 +283,29 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 	abort();
 }
 
-/* Sets things up for enumerating all entries in the hash table.
- *
- * Input:
- *	t		Table to be searched.
- *	searchPtr	Area in which to keep state about search.
- *
- * Results:
- *	The return value is the address of the first entry in
- *	the hash table, or NULL if the table is empty.
- */
-Hash_Entry *
-Hash_EnumFirst(Hash_Table *t, Hash_Search *searchPtr)
+/* Set things up for iterating over all entries in the hash table. */
+void
+HashIter_Init(HashIter *hi, Hash_Table *t)
 {
-	searchPtr->table = t;
-	searchPtr->nextBucket = 0;
-	searchPtr->entry = NULL;
-	return Hash_EnumNext(searchPtr);
+	hi->table = t;
+	hi->nextBucket = 0;
+	hi->entry = NULL;
 }
 
-/* Returns the next entry in the hash table, or NULL if the end of the table
- * is reached.
- *
- * Input:
- *	searchPtr	Area used to keep state about search.
- */
+/* Return the next entry in the hash table, or NULL if the end of the table
+ * is reached. */
 Hash_Entry *
-Hash_EnumNext(Hash_Search *searchPtr)
+HashIter_Next(HashIter *hi)
 {
 	Hash_Entry *e;
-	Hash_Table *t = searchPtr->table;
+	Hash_Table *t = hi->table;
 
 	/*
 	 * The entry field points to the most recently returned
 	 * entry, or is NULL if we are starting up.  If not NULL, we have
 	 * to start at the next one in the chain.
 	 */
-	e = searchPtr->entry;
+	e = hi->entry;
 	if (e != NULL)
 		e = e->next;
 	/*
@@ -327,24 +313,12 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	 * find the next nonempty chain.
 	 */
 	while (e == NULL) {
-		if (searchPtr->nextBucket >= t->bucketsSize)
+		if (hi->nextBucket >= t->bucketsSize)
 			return NULL;
-		e = t->buckets[searchPtr->nextBucket++];
+		e = t->buckets[hi->nextBucket++];
 	}
-	searchPtr->entry = e;
+	hi->entry = e;
 	return e;
-}
-
-void
-Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
-{
-	Hash_Search search;
-	Hash_Entry *e;
-
-	for (e = Hash_EnumFirst(t, &search);
-	     e != NULL;
-	     e = Hash_EnumNext(&search))
-		action(Hash_GetValue(e), data);
 }
 
 void
