@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2010/08/28 15:42:45 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2020/10/18 15:20:13 christos Exp $
+
+.include <bsd.own.mk>
 
 MAN=	ntptrace.8
 BINDIR=	/usr/sbin
