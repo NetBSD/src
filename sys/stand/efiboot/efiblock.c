@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.8 2020/10/11 14:03:33 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.9 2020/10/18 18:05:48 tnn Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -269,6 +269,7 @@ static const struct {
 	{ GPT_ENT_TYPE_NETBSD_CCD,		FS_CCD },
 	{ GPT_ENT_TYPE_NETBSD_CGD,		FS_CGD },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA,		FS_MSDOS },	/* or NTFS? ambiguous */
+	{ GPT_ENT_TYPE_EFI,			FS_MSDOS },
 };
 
 static int
