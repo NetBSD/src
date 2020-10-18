@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.123 2020/10/18 07:46:04 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.124 2020/10/18 11:54:43 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -161,7 +161,6 @@ static int
 filemon_read(FILE *mfp, int fd)
 {
     char buf[BUFSIZ];
-    int n;
     int error;
 
     /* Check if we're not writing to a meta data file.*/
@@ -176,11 +175,13 @@ filemon_read(FILE *mfp, int fd)
 	warn("Could not rewind filemon");
 	fprintf(mfp, "\n");
     } else {
+        ssize_t n;
+
 	error = 0;
 	fprintf(mfp, "\n-- filemon acquired metadata --\n");
 
 	while ((n = read(fd, buf, sizeof(buf))) > 0) {
-	    if ((int)fwrite(buf, 1, n, mfp) < n)
+	    if ((ssize_t)fwrite(buf, 1, (size_t)n, mfp) < n)
 		error = EIO;
 	}
     }
@@ -226,7 +227,7 @@ eat_dots(char *buf, size_t bufsz, int dots)
 		} while (cp > buf && *cp != '/');
 	    }
 	    if (*cp == '/') {
-		strlcpy(cp, cp2, bufsz - (cp - buf));
+		strlcpy(cp, cp2, bufsz - (size_t)(cp - buf));
 	    } else {
 		return;			/* can't happen? */
 	    }
@@ -260,7 +261,7 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
 		rp++;
 		cp++;
 		if (strcmp(cp, rp) != 0)
-		    strlcpy(rp, cp, sizeof(buf) - (rp - buf));
+		    strlcpy(rp, cp, sizeof buf - (size_t)(rp - buf));
 	    }
 	    tname = buf;
 	} else {
@@ -316,7 +317,7 @@ static int
 is_submake(void *cmdp, void *gnp)
 {
     static const char *p_make = NULL;
-    static int p_len;
+    static size_t p_len;
     char  *cmd = cmdp;
     GNode *gn = gnp;
     char *mp = NULL;
@@ -809,7 +810,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
     if (pbm->mfp != NULL) {
 	if (metaVerbose) {
 	    static char *meta_prefix = NULL;
-	    static int meta_prefix_len;
+	    static size_t meta_prefix_len;
 
 	    if (!meta_prefix) {
 		char *cp2;
@@ -818,7 +819,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 				VAR_GLOBAL, VARE_WANTRES, &meta_prefix);
 		/* TODO: handle errors */
 		if ((cp2 = strchr(meta_prefix, '$')))
-		    meta_prefix_len = cp2 - meta_prefix;
+		    meta_prefix_len = (size_t)(cp2 - meta_prefix);
 		else
 		    meta_prefix_len = strlen(meta_prefix);
 	    }
@@ -907,9 +908,9 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
     struct stat fs;
     int x;
 
-    if (fgets(&buf[o], bufsz - o, fp) != NULL) {
+    if (fgets(&buf[o], (int)bufsz - o, fp) != NULL) {
     check_newline:
-	x = o + strlen(&buf[o]);
+	x = o + (int)strlen(&buf[o]);
 	if (buf[x - 1] == '\n')
 	    return x;
 	/*
@@ -920,9 +921,9 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 	    size_t newsz;
 	    char *p;
 
-	    newsz = ROUNDUP((fs.st_size / 2), BUFSIZ);
+	    newsz = ROUNDUP(((size_t)fs.st_size / 2), BUFSIZ);
 	    if (newsz <= bufsz)
-		newsz = ROUNDUP(fs.st_size, BUFSIZ);
+		newsz = ROUNDUP((size_t)fs.st_size, BUFSIZ);
 	    if (newsz <= bufsz)
 		return x;		/* truncated */
 	    DEBUG2(META, "growing buffer %zu -> %zu\n", bufsz, newsz);
@@ -931,7 +932,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		*bufp = buf = p;
 		*szp = bufsz = newsz;
 		/* fetch the rest */
-		if (!fgets(&buf[x], bufsz - x, fp))
+		if (!fgets(&buf[x], (int)bufsz - x, fp))
 		    return x;		/* truncated! */
 		goto check_newline;
 	    }
@@ -1584,7 +1585,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 	    /* if target is in .CURDIR we do not need a meta file */
 	    if (gn->path && (cp = strrchr(gn->path, '/')) && cp > gn->path) {
-		if (strncmp(curdir, gn->path, (cp - gn->path)) != 0) {
+		if (strncmp(curdir, gn->path, (size_t)(cp - gn->path)) != 0) {
 		    cp = NULL;		/* not in .CURDIR */
 		}
 	    }
