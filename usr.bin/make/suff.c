@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.189 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.190 2020/10/18 17:41:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.189 2020/10/18 17:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.190 2020/10/18 17:41:06 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -880,6 +880,29 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
 }
 #endif
 
+static void
+SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
+	   const char *debug_tag)
+{
+    Src *s2 = bmake_malloc(sizeof(Src));
+    s2->file = srcName;
+    s2->pref = targ->pref;
+    s2->parent = targ;
+    s2->node = NULL;
+    s2->suff = suff;
+    suff->refCount++;
+    s2->children = 0;
+    targ->children++;
+    Lst_Append(srcList, s2);
+#ifdef DEBUG_SRC
+    s2->cp = Lst_New();
+    Lst_Append(targ->cp, s2);
+    debug_printf("%s add %p %p to %p:", debug_tag, targ, s2, srcList);
+    Lst_ForEach(srcList, PrintAddr, NULL);
+    debug_printf("\n");
+#endif
+}
+
 /* Add a suffix as a Src structure to the given list with its parent
  * being the given Src structure. If the suffix is the null suffix,
  * the prefix is used unaltered as the file name in the Src structure.
@@ -890,51 +913,17 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
  *	targ		parent for the new Src
  */
 static void
-SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ)
+SuffAddSources(Suff *suff, SrcList *srcList, Src *targ)
 {
-    Src *s2;			/* new Src structure */
-
     if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
 	/*
 	 * If the suffix has been marked as the NULL suffix, also create a Src
 	 * structure for a file with no suffix attached. Two birds, and all
 	 * that...
 	 */
-	s2 = bmake_malloc(sizeof(Src));
-	s2->file = bmake_strdup(targ->pref);
-	s2->pref = targ->pref;
-	s2->parent = targ;
-	s2->node = NULL;
-	s2->suff = suff;
-	suff->refCount++;
-	s2->children =	0;
-	targ->children++;
-	Lst_Append(srcList, s2);
-#ifdef DEBUG_SRC
-	s2->cp = Lst_New();
-	Lst_Append(targ->cp, s2);
-	debug_printf("1 add %p %p to %p:", targ, s2, srcList);
-	Lst_ForEach(srcList, PrintAddr, NULL);
-	debug_printf("\n");
-#endif
+	SuffAddSrc(suff, srcList, targ, bmake_strdup(targ->pref), "1");
     }
-    s2 = bmake_malloc(sizeof(Src));
-    s2->file = str_concat2(targ->pref, suff->name);
-    s2->pref = targ->pref;
-    s2->parent = targ;
-    s2->node = NULL;
-    s2->suff = suff;
-    suff->refCount++;
-    s2->children =  0;
-    targ->children++;
-    Lst_Append(srcList, s2);
-#ifdef DEBUG_SRC
-    s2->cp = Lst_New();
-    Lst_Append(targ->cp, s2);
-    debug_printf("2 add %p %p to %p:", targ, s2, srcList);
-    Lst_ForEach(srcList, PrintAddr, NULL);
-    debug_printf("\n");
-#endif
+    SuffAddSrc(suff, srcList, targ, str_concat2(targ->pref, suff->name), "2");
 }
 
 /* Add all the children of targ as Src structures to the given list.
@@ -949,7 +938,7 @@ SuffAddLevel(SrcList *l, Src *targ)
     SrcListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
 	Suff *childSuff = ln->datum;
-	SuffAddSrc(childSuff, l, targ);
+	SuffAddSources(childSuff, l, targ);
     }
 }
 
