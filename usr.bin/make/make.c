@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.158 2020/10/17 17:47:14 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.159 2020/10/18 11:09:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.158 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.159 2020/10/18 11:09:08 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -175,6 +175,12 @@ GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
 	    Enum_FlagsToString(flags_buf, sizeof flags_buf,
 			       gn->flags, GNodeFlags_ToStringSpecs),
 	    suffix);
+}
+
+Boolean
+NoExecute(GNode *gn)
+{
+    return (gn->type & OP_MAKE) ? noRecursiveExecute : noExecute;
 }
 
 /* Update the youngest child of the node, according to the given child. */
