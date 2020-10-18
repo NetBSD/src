@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.143 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.144 2020/10/18 20:14:27 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,10 +133,7 @@ typedef enum VarAssignOp {
 } VarAssignOp;
 
 typedef struct VarAssign {
-    const char *nameStart;	/* unexpanded */
-    const char *nameEndDraft;	/* before operator adjustment */
-    char *varname;
-    const char *eq;		/* the '=' of the assignment operator */
+    char *varname;		/* unexpanded */
     VarAssignOp op;
     const char *value;		/* unexpanded */
 } VarAssign;
