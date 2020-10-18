@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.21.20.1 2020/10/18 18:42:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21.20.1 2020/10/18 18:42:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,69 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 	}
 }
 
+#ifdef COMPAT_40
+static int
+ptrace_update_lwp2(struct proc *t, struct lwp **lt, lwpid_t lid)
+{
+	if (lid == 0 || lid == (*lt)->l_lid || t->p_nlwps == 1)
+		return 0;
+
+	mutex_enter(t->p_lock);
+	lwp_delref2(*lt);
+
+	*lt = lwp_find(t, lid);
+	if (*lt == NULL) {
+		mutex_exit(t->p_lock);
+		return ESRCH;
+	}
+
+	if ((*lt)->l_flag & LW_SYSTEM) {
+		mutex_exit(t->p_lock);
+		*lt = NULL;
+		return EINVAL;
+	}
+
+	lwp_addref(*lt);
+	mutex_exit(t->p_lock);
+
+	return 0;
+}
+#endif
+
+int
+ptrace_machdep_dorequest2(struct lwp *l, struct lwp **lt,
+			 int req, void *addr, int data)
+{
+	struct uio uio;
+	struct iovec iov;
+	int write = 0, error;
+
+	switch (req) {
+	default:
+		return EINVAL;
+
+#ifdef COMPAT_40
+	case PT___SETREGS40:
+		write = 1;
+		/* FALLTHROUGH*/
+
+	case PT___GETREGS40:
+		if ((error = ptrace_update_lwp2((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_validregs(*lt))
+			return EINVAL;
+		iov.iov_base = addr;
+		iov.iov_len = sizeof(struct __reg40);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = sizeof(struct __reg40);
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = l->l_proc->p_vmspace;
+		return process_machdep_doregs40(l, *lt, &uio);
+#endif	/* COMPAT_40 */
+	}
+}
 
 #ifdef COMPAT_40
 
