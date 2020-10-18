@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.248 2020/10/18 18:22:29 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.249 2020/10/18 18:31:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.248 2020/10/18 18:22:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.249 2020/10/18 18:31:31 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1069,6 +1069,7 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 			KASSERT(pg->flags == PG_FREE);
 			pg->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
 			pgb->pgb_nfree--;
+			CPU_COUNT(CPU_COUNT_FREEPAGES, -1);
 
 			/*
 			 * While we have the bucket locked and our data
@@ -1270,7 +1271,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * while still at IPL_VM, update allocation statistics.
 	 */
 
-    	CPU_COUNT(CPU_COUNT_FREEPAGES, -1);
 	if (anon) {
 		CPU_COUNT(CPU_COUNT_ANONCLEAN, 1);
 	}
@@ -1567,7 +1567,6 @@ uvm_pagefree(struct vm_page *pg)
 
 	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
-    	CPU_COUNT(CPU_COUNT_FREEPAGES, 1);
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	bucket = uvm_page_get_bucket(pg);
 	if (bucket == ucpu->pgflbucket && uvm_pgflcache_free(ucpu, pg)) {
@@ -1585,6 +1584,7 @@ uvm_pagefree(struct vm_page *pg)
 	pg->flags = PG_FREE;
 	LIST_INSERT_HEAD(&pgb->pgb_colors[VM_PGCOLOR(pg)], pg, pageq.list);
 	pgb->pgb_nfree++;
+    	CPU_COUNT(CPU_COUNT_FREEPAGES, 1);
 	mutex_spin_exit(lock);
 	splx(s);
 }
