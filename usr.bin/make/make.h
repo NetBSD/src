@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.156 2020/10/05 22:15:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.157 2020/10/18 11:09:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -560,12 +560,7 @@ Boolean Main_SetObjdir(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 int mkTempFile(const char *, char **);
 int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
-
-static Boolean MAKE_ATTR_UNUSED
-NoExecute(GNode *gn)
-{
-    return (gn->type & OP_MAKE) ? noRecursiveExecute : noExecute;
-}
+Boolean NoExecute(GNode *gn);
 
 /*
  * See if the node with the given type was not the object of a dependency
