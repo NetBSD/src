@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.574 2020/10/18 08:58:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.575 2020/10/18 10:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.574 2020/10/18 08:58:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.575 2020/10/18 10:44:25 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -551,13 +551,6 @@ Var_Export1(const char *name, VarExportFlags flags)
     return TRUE;
 }
 
-static void
-Var_ExportVars_callback(void *entry, void *unused MAKE_ATTR_UNUSED)
-{
-    Var *var = entry;
-    Var_Export1(var->name, 0);
-}
-
 /*
  * This gets called from our children.
  */
@@ -580,8 +573,15 @@ Var_ExportVars(void)
 	return;
 
     if (var_exportedVars == VAR_EXPORTED_ALL) {
-	/* Ouch! This is crazy... */
-	Hash_ForEach(&VAR_GLOBAL->context, Var_ExportVars_callback, NULL);
+        HashIter hi;
+        Hash_Entry *he;
+
+	/* Ouch! Exporting all variables at once is crazy... */
+	HashIter_Init(&hi, &VAR_GLOBAL->context);
+	while ((he = HashIter_Next(&hi)) != NULL) {
+	    Var *var = Hash_GetValue(he);
+	    Var_Export1(var->name, 0);
+	}
 	return;
     }
 
@@ -3857,14 +3857,14 @@ void
 Var_Dump(GNode *ctxt)
 {
     Vector varnames;
-    Hash_Search iter;
+    HashIter hi;
     Hash_Entry *he;
     size_t i;
 
     Vector_Init(&varnames);
-    for (he = Hash_EnumFirst(&ctxt->context, &iter);
-	 he != NULL;
-	 he = Hash_EnumNext(&iter))
+
+    HashIter_Init(&hi, &ctxt->context);
+    while ((he = HashIter_Next(&hi)) != NULL)
 	Vector_Push(&varnames, he->name);
 
     qsort(varnames.items, varnames.len, sizeof varnames.items[0], str_cmp_asc);
