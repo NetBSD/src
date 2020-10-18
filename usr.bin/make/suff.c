@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.185 2020/10/18 16:01:44 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.186 2020/10/18 17:00:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.185 2020/10/18 16:01:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.186 2020/10/18 17:00:22 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -685,48 +685,39 @@ SuffRebuildGraph(void *transformp, void *sp)
     }
 }
 
-struct SuffScanTargetsArgs {
-    GNode **const gnp;
-    Suff *const s;
-    Boolean r;
-};
-
-/* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
- * existing targets and find if any of the existing targets can be turned
- * into a transformation rule.
+/* During Suff_AddSuffix, search through the list of existing targets and find
+ * if any of the existing targets can be turned into a transformation rule.
  *
  * If such a target is found and the target is the current main target, the
  * main target is set to NULL and the next target examined (if that exists)
  * becomes the main target.
  *
  * Results:
- *	1 if a new main target has been selected, 0 otherwise.
+ *	TRUE iff a new main target has been selected.
  */
-static int
-SuffScanTargets(void *targetp, void *gsp)
+static Boolean
+SuffScanTargets(GNode *target, GNode **gs_gnp, Suff *gs_s, Boolean *gs_r)
 {
-    GNode *target = targetp;
-    struct SuffScanTargetsArgs *gs = gsp;
     Suff *s, *t;
     char *ptr;
 
-    if (*gs->gnp == NULL && gs->r && (target->type & OP_NOTARGET) == 0) {
-	*gs->gnp = target;
+    if (*gs_gnp == NULL && *gs_r && (target->type & OP_NOTARGET) == 0) {
+	*gs_gnp = target;
 	Targ_SetMain(target);
-	return 1;
+	return TRUE;
     }
 
     if (target->type == OP_TRANSFORM)
-	return 0;
+	return FALSE;
 
-    if ((ptr = strstr(target->name, gs->s->name)) == NULL ||
+    if ((ptr = strstr(target->name, gs_s->name)) == NULL ||
 	ptr == target->name)
-	return 0;
+	return FALSE;
 
     if (SuffParseTransform(target->name, &s, &t)) {
-	if (*gs->gnp == target) {
-	    gs->r = TRUE;
-	    *gs->gnp = NULL;
+	if (*gs_gnp == target) {
+	    *gs_r = TRUE;
+	    *gs_gnp = NULL;
 	    Targ_SetMain(NULL);
 	}
 	Lst_Free(target->children);
@@ -740,7 +731,7 @@ SuffScanTargets(void *targetp, void *gsp)
 	SuffInsert(t->children, s);
 	SuffInsert(s->parents, t);
     }
-    return 0;
+    return FALSE;
 }
 
 /* Add the suffix to the end of the list of known suffixes.
@@ -771,8 +762,13 @@ Suff_AddSuffix(const char *name, GNode **gnp)
      * that start with a . as suffix rules.
      */
     {
-	struct SuffScanTargetsArgs args = { gnp, s, FALSE };
-	Lst_ForEachUntil(Targ_List(), SuffScanTargets, &args);
+        Boolean r = FALSE;
+	GNodeListNode *ln;
+	for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
+	    GNode *gn = ln->datum;
+	    if (SuffScanTargets(gn, gnp, s, &r))
+		break;
+	}
     }
 
     /*
