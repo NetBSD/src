@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.165 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.166 2020/10/18 12:47:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.165 2020/10/18 12:36:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.166 2020/10/18 12:47:43 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -622,13 +622,12 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 	 * begins with a dot (note also that as a side effect of the hashing
 	 * scheme, .* won't match . or .. since they aren't hashed).
 	 */
-	if (Str_Match(entry->name, pattern) &&
-	    ((entry->name[0] != '.') ||
-	     (pattern[0] == '.')))
+	if (Str_Match(entry->key, pattern) &&
+	    (entry->key[0] != '.' || pattern[0] == '.'))
 	{
 	    Lst_Append(expansions,
-		       (isDot ? bmake_strdup(entry->name) :
-			str_concat3(dir->name, "/", entry->name)));
+		       (isDot ? bmake_strdup(entry->key) :
+			str_concat3(dir->name, "/", entry->key)));
 	}
     }
 }

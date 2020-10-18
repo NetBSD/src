@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.576 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.577 2020/10/18 12:47:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.576 2020/10/18 12:36:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.577 2020/10/18 12:47:43 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -429,8 +429,8 @@ static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
     HashEntry *he = Hash_CreateEntry(&ctxt->context, name, NULL);
-    Var *v = VarNew(he->name, NULL, val,
-		      flags & VAR_SET_READONLY ? VAR_READONLY : 0);
+    Var *v = VarNew(he->key, NULL, val,
+		    flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     Hash_SetValue(he, v);
     if (!(ctxt->flags & INTERNAL)) {
 	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
@@ -3865,7 +3865,7 @@ Var_Dump(GNode *ctxt)
 
     HashIter_Init(&hi, &ctxt->context);
     while ((he = HashIter_Next(&hi)) != NULL)
-	Vector_Push(&varnames, he->name);
+	Vector_Push(&varnames, he->key);
 
     qsort(varnames.items, varnames.len, sizeof varnames.items[0], str_cmp_asc);
 

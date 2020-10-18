@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.46 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.47 2020/10/18 12:47:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.46 2020/10/18 12:36:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.47 2020/10/18 12:47:43 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -112,7 +112,7 @@ HashTable_Find(HashTable *t, unsigned int h, const char *key)
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
-		if (e->namehash == h && strcmp(e->name, key) == 0)
+		if (e->key_hash == h && strcmp(e->key, key) == 0)
 			break;
 	}
 
@@ -207,7 +207,7 @@ RebuildTable(HashTable *t)
 	for (hp = oldhp, i = (int)oldsize; --i >= 0;) {
 		for (e = *hp++; e != NULL; e = next) {
 			next = e->next;
-			xp = &t->buckets[e->namehash & mask];
+			xp = &t->buckets[e->key_hash & mask];
 			e->next = *xp;
 			*xp = e;
 		}
@@ -256,8 +256,8 @@ Hash_CreateEntry(HashTable *t, const char *key, Boolean *newPtr)
 	e->next = *hp;
 	*hp = e;
 	Hash_SetValue(e, NULL);
-	e->namehash = h;
-	memcpy(e->name, key, keylen + 1);
+	e->key_hash = h;
+	memcpy(e->key, key, keylen + 1);
 	t->numEntries++;
 
 	if (newPtr != NULL)
@@ -271,7 +271,7 @@ Hash_DeleteEntry(HashTable *t, HashEntry *e)
 {
 	HashEntry **hp, *p;
 
-	for (hp = &t->buckets[e->namehash & t->bucketsMask];
+	for (hp = &t->buckets[e->key_hash & t->bucketsMask];
 	     (p = *hp) != NULL; hp = &p->next) {
 		if (p == e) {
 			*hp = p->next;
