@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.12 2020/07/10 12:25:08 skrll Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.13 2020/10/18 16:28:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.12 2020/07/10 12:25:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.13 2020/10/18 16:28:57 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kmem.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.12 2020/07/10 12:25:08 skrll Exp $"
 #include <net/if_ether.h>
 #endif
 
-/* 
+/*
  * Function to identify and process different types of boot argument
  * Note, results may contain trailing data, eg:
  * get_bootconf_option("cow=moo milk=1", "moo", BOOTOPT_TYPE_STRING, &ptr)
@@ -109,7 +109,7 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 					break;
 				case BOOTOPT_TYPE_STRING :
 					*((char **)result) = ptr;
-					break;			
+					break;
 				case BOOTOPT_TYPE_INT :
 					*((int *)result) =
 					    (u_int)strtoul(ptr, NULL, 10);
