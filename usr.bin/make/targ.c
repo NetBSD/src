@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.113 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.114 2020/10/18 08:24:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.113 2020/10/17 21:32:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.114 2020/10/18 08:24:01 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -430,6 +430,20 @@ made_name(GNodeMade made)
     }
 }
 
+static const char *
+GNode_OpName(const GNode *gn)
+{
+    switch (gn->type & OP_OPMASK) {
+    case OP_DEPENDS:
+	return ":";
+    case OP_FORCE:
+	return "!";
+    case OP_DOUBLEDEP:
+	return "::";
+    }
+    return "";
+}
+
 /* Print the contents of a node. */
 void
 Targ_PrintNode(GNode *gn, int pass)
@@ -471,15 +485,7 @@ Targ_PrintNode(GNode *gn, int pass)
 	PrintNodeNamesLine("order_pred", gn->order_pred);
 	PrintNodeNamesLine("order_succ", gn->order_succ);
 
-	debug_printf("%-16s", gn->name);
-	switch (gn->type & OP_OPMASK) {
-	case OP_DEPENDS:
-	    debug_printf(":"); break;
-	case OP_FORCE:
-	    debug_printf("!"); break;
-	case OP_DOUBLEDEP:
-	    debug_printf("::"); break;
-	}
+	debug_printf("%-16s%s", gn->name, GNode_OpName(gn));
 	Targ_PrintType(gn->type);
 	PrintNodeNames(gn->children);
 	debug_printf("\n");
