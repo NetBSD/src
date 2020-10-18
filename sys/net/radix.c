@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: radix.c,v 1.49 2020/10/18 13:07:31 gson Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.49 2020/10/18 13:07:31 gson Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1119,8 +1119,10 @@ rn_init(void)
 	}
 #endif
 	if (max_keylen == 0) {
+#ifndef _KERNEL
 		log(LOG_ERR,
 		    "rn_init: radix functions require max_keylen be set\n");
+#endif
 		return;
 	}
 
