@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.187 2020/10/18 17:06:14 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.188 2020/10/18 17:12:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.187 2020/10/18 17:06:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.188 2020/10/18 17:12:43 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -696,13 +696,13 @@ SuffRebuildGraph(void *transformp, void *sp)
  *	TRUE iff a new main target has been selected.
  */
 static Boolean
-SuffScanTargets(GNode *target, GNode **gs_gnp, Suff *gs_s, Boolean *gs_r)
+SuffScanTargets(GNode *target, GNode **inout_main, Suff *gs_s, Boolean *gs_r)
 {
     Suff *s, *t;
     char *ptr;
 
-    if (*gs_gnp == NULL && *gs_r && (target->type & OP_NOTARGET) == 0) {
-	*gs_gnp = target;
+    if (*inout_main == NULL && *gs_r && !(target->type & OP_NOTARGET)) {
+	*inout_main = target;
 	Targ_SetMain(target);
 	return TRUE;
     }
@@ -715,9 +715,9 @@ SuffScanTargets(GNode *target, GNode **gs_gnp, Suff *gs_s, Boolean *gs_r)
 	return FALSE;
 
     if (SuffParseTransform(target->name, &s, &t)) {
-	if (*gs_gnp == target) {
+	if (*inout_main == target) {
 	    *gs_r = TRUE;
-	    *gs_gnp = NULL;
+	    *inout_main = NULL;
 	    Targ_SetMain(NULL);
 	}
 	Lst_Free(target->children);
@@ -740,13 +740,13 @@ SuffScanTargets(GNode *target, GNode **gs_gnp, Suff *gs_s, Boolean *gs_r)
  * This is ugly, but other makes treat all targets that start with a '.' as
  * suffix rules. */
 static void
-UpdateTargets(GNode **gnp, Suff *s)
+UpdateTargets(GNode **inout_main, Suff *s)
 {
     Boolean r = FALSE;
     GNodeListNode *ln;
     for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
-	if (SuffScanTargets(gn, gnp, s, &r))
+	if (SuffScanTargets(gn, inout_main, s, &r))
 	    break;
     }
 }
@@ -763,7 +763,7 @@ UpdateTargets(GNode **gnp, Suff *s)
  *	name		the name of the suffix to add
  */
 void
-Suff_AddSuffix(const char *name, GNode **gnp)
+Suff_AddSuffix(const char *name, GNode **inout_main)
 {
     Suff *s = FindSuffByName(name);
     if (s != NULL)
@@ -772,7 +772,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
     s = SuffNew(name);
     Lst_Append(sufflist, s);
 
-    UpdateTargets(gnp, s);
+    UpdateTargets(inout_main, s);
 
     /*
      * Look for any existing transformations from or to this suffix.
