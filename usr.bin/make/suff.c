@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.184 2020/10/18 15:53:47 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.185 2020/10/18 16:01:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.184 2020/10/18 15:53:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.185 2020/10/18 16:01:44 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -194,13 +194,6 @@ typedef struct Src {
     SrcList *cp;		/* Debug; children list */
 #endif
 } Src;
-
-/* XXX: Name doesn't match content */
-typedef struct GNodeSuff {
-    GNode	  **gnp;
-    Suff	   *s;
-    Boolean	    r;
-} GNodeSuff;
 
 static Suff *suffNull;		/* The NULL suffix for this run */
 static Suff *emptySuff;		/* The empty suffix required for POSIX
@@ -692,6 +685,12 @@ SuffRebuildGraph(void *transformp, void *sp)
     }
 }
 
+struct SuffScanTargetsArgs {
+    GNode **const gnp;
+    Suff *const s;
+    Boolean r;
+};
+
 /* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
  * existing targets and find if any of the existing targets can be turned
  * into a transformation rule.
@@ -706,8 +705,8 @@ SuffRebuildGraph(void *transformp, void *sp)
 static int
 SuffScanTargets(void *targetp, void *gsp)
 {
-    GNode *target = (GNode *)targetp;
-    GNodeSuff *gs = (GNodeSuff *)gsp;
+    GNode *target = targetp;
+    struct SuffScanTargetsArgs *gs = gsp;
     Suff *s, *t;
     char *ptr;
 
@@ -758,8 +757,6 @@ SuffScanTargets(void *targetp, void *gsp)
 void
 Suff_AddSuffix(const char *name, GNode **gnp)
 {
-    GNodeSuff gs;
-
     Suff *s = FindSuffByName(name);
     if (s != NULL)
 	return;
@@ -773,10 +770,10 @@ Suff_AddSuffix(const char *name, GNode **gnp)
      * a suffix rule. This is ugly, but other makes treat all targets
      * that start with a . as suffix rules.
      */
-    gs.gnp = gnp;
-    gs.s  = s;
-    gs.r  = FALSE;
-    Lst_ForEachUntil(Targ_List(), SuffScanTargets, &gs);
+    {
+	struct SuffScanTargetsArgs args = { gnp, s, FALSE };
+	Lst_ForEachUntil(Targ_List(), SuffScanTargets, &args);
+    }
 
     /*
      * Look for any existing transformations from or to this suffix.
