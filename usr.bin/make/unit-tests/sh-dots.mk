@@ -1,8 +1,10 @@
-# $NetBSD: sh-dots.mk,v 1.1 2020/08/22 11:27:02 rillig Exp $
+# $NetBSD: sh-dots.mk,v 1.2 2020/10/18 18:12:42 rillig Exp $
 #
 # Tests for the special shell command line "...", which does not run the
 # commands below it but appends them to the list of commands that are run
 # at the end.
+
+.MAKEFLAGS: -d0			# switch stdout to being line-buffered
 
 all: first hidden repeated commented
 
