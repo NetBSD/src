@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.129 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.130 2020/10/18 18:22:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.129 2020/08/14 09:06:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.130 2020/10/18 18:22:29 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -454,18 +454,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
 			uvm_pageunlock(pg);
-		}
-
-		/*
-		 * do accounting for pagedaemon i/o and arrange to free
-		 * the pages instead of just unbusying them.
-		 */
-
-		if (pg->flags & PG_PAGEOUT) {
-			pg->flags &= ~PG_PAGEOUT;
-			pageout_done++;
-			atomic_inc_uint(&uvmexp.pdfreed);
-			pg->flags |= PG_RELEASED;
 		}
 
 #if defined(VMSWAP)
