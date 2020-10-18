@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.3 2020/09/13 07:32:32 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.4 2020/10/18 21:12:13 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -66,3 +66,18 @@ mod-loop-dollar:
 	@echo $@:${:U4:@word@$$$${word}$$$$@:Q}:
 	@echo $@:${:U5:@word@$$$$${word}$$$$$@:Q}:
 	@echo $@:${:U6:@word@$$$$$${word}$$$$$$@:Q}:
+
+# It may happen that there are nested :@ modifiers that use the same name for
+# for the loop variable.  These modifiers influence each other.
+#
+# As of 2020-10-18, the :@ modifier is implemented by actually setting an
+# variable in the context of the expression and deleting it again after the
+# loop.  This is different from the .for loops, which substitute the variable
+# expression with ${:Uvalue}, leading to different unwanted side effects.
+#
+# To make the behavior more predictable, the :@ modifier should restore the
+# loop variable to the value it had before the loop.  This would result in
+# the string "1a b c1 2a b c2 3a b c3", making the two loops independent.
+.if ${:U1 2 3:@i@$i${:Ua b c:@i@$i@}${i:Uu}@} != "1a b cu 2a b cu 3a b cu"
+.  error
+.endif
