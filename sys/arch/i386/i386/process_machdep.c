@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.93.2.1 2019/08/06 16:20:19 martin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.93.2.2 2020/10/18 18:42:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.93.2.1 2019/08/06 16:20:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.93.2.2 2020/10/18 18:42:11 martin Exp $");
 
 #include "opt_ptrace.h"
 
@@ -336,6 +336,114 @@ ptrace_machdep_dorequest(
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_vmspace = vm;
 		error = process_machdep_doxstate(l, lt, &uio);
+		uvmspace_free(vm);
+		return error;
+	}
+
+#ifdef DIAGNOSTIC
+	panic("ptrace_machdep: impossible");
+#endif
+
+	return 0;
+}
+
+static int
+ptrace_update_lwp2(struct proc *t, struct lwp **lt, lwpid_t lid)
+{
+	if (lid == 0 || lid == (*lt)->l_lid || t->p_nlwps == 1)
+		return 0;
+
+	mutex_enter(t->p_lock);
+	lwp_delref2(*lt);
+
+	*lt = lwp_find(t, lid);
+	if (*lt == NULL) {
+		mutex_exit(t->p_lock);
+		return ESRCH;
+	}
+
+	if ((*lt)->l_flag & LW_SYSTEM) {
+		mutex_exit(t->p_lock);
+		*lt = NULL;
+		return EINVAL;
+	}
+
+	lwp_addref(*lt);
+	mutex_exit(t->p_lock);
+
+	return 0;
+}
+
+int
+ptrace_machdep_dorequest2(
+    struct lwp *l,
+    struct lwp **lt,
+    int req,
+    void *addr,
+    int data
+)
+{
+	struct uio uio;
+	struct iovec iov;
+	struct iovec user_iov;
+	struct vmspace *vm;
+	int error;
+	int write = 0;
+
+	switch (req) {
+	case PT_SETXMMREGS:
+		write = 1;
+
+		/* FALLTHROUGH */
+	case PT_GETXMMREGS:
+		/* write = 0 done above. */
+		if ((error = ptrace_update_lwp2((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validxmmregs((*lt)->l_proc))
+			return (EINVAL);
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
+		iov.iov_base = addr;
+		iov.iov_len = sizeof(struct xmmregs);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = sizeof(struct xmmregs);
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = vm;
+		error = process_machdep_doxmmregs(l, *lt, &uio);
+		uvmspace_free(vm);
+		return error;
+
+	case PT_SETXSTATE:
+		write = 1;
+
+		/* FALLTHROUGH */
+	case PT_GETXSTATE:
+		/* write = 0 done above. */
+		if ((error = ptrace_update_lwp2((*lt)->l_proc, lt, data)) != 0)
+			return error;
+		if (!process_machdep_validxstate((*lt)->l_proc))
+			return EINVAL;
+		if ((error = copyin(addr, &user_iov, sizeof(user_iov))) != 0)
+			return error;
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
+		iov.iov_base = user_iov.iov_base;
+		iov.iov_len = user_iov.iov_len;
+		if (iov.iov_len > sizeof(struct xstate))
+			iov.iov_len = sizeof(struct xstate);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = iov.iov_len;
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = vm;
+		error = process_machdep_doxstate(l, *lt, &uio);
 		uvmspace_free(vm);
 		return error;
 	}

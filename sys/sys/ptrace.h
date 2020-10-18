@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.65.2.1 2019/10/15 19:11:02 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.65.2.2 2020/10/18 18:42:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -279,6 +279,9 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 
 int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
+	    void *, int);
+
+int	ptrace_machdep_dorequest2(struct lwp *, struct lwp **, int,
 	    void *, int);
 
 #ifndef FIX_SSTEP

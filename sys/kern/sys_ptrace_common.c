@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.12 2019/11/24 08:16:52 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.13 2020/10/18 18:42:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.12 2019/11/24 08:16:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.13 2020/10/18 18:42:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1432,7 +1432,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		error = ptrace_machdep_dorequest(l, lt, req, addr, data);
+		error = ptrace_machdep_dorequest2(l, &lt, req, addr, data);
 		break;
 #endif
 	}

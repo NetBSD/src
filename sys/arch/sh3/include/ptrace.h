@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.15 2019/06/18 21:18:13 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.15.2.1 2020/10/18 18:42:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -94,6 +94,7 @@
 
 #ifdef __HAVE_PTRACE_MACHDEP
 int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, void *, int);
+int ptrace_machdep_dorequest2(struct lwp *, struct lwp **, int, void *, int);
 #endif
 
 #endif /* _KERNEL */
