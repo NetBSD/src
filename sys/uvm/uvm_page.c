@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.247 2020/09/20 10:30:05 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.248 2020/10/18 18:22:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.247 2020/09/20 10:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.248 2020/10/18 18:22:29 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1602,9 +1602,10 @@ void
 uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
-	int i;
+	int i, pageout_done;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
+	pageout_done = 0;
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -1613,7 +1614,13 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 
 		KASSERT(uvm_page_owner_locked_p(pg, true));
 		KASSERT(pg->flags & PG_BUSY);
-		KASSERT((pg->flags & PG_PAGEOUT) == 0);
+
+		if (pg->flags & PG_PAGEOUT) {
+			pg->flags &= ~PG_PAGEOUT;
+			pg->flags |= PG_RELEASED;
+			pageout_done++;
+			atomic_inc_uint(&uvmexp.pdfreed);
+		}
 		if (pg->flags & PG_RELEASED) {
 			UVMHIST_LOG(ubchist, "releasing pg %#jx",
 			    (uintptr_t)pg, 0, 0, 0);
@@ -1631,6 +1638,9 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			uvm_pageunlock(pg);
 			UVM_PAGE_OWN(pg, NULL);
 		}
+	}
+	if (pageout_done != 0) {
+		uvm_pageout_done(pageout_done);
 	}
 }
 
