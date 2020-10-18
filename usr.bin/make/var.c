@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.572 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.573 2020/10/18 08:47:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.572 2020/10/17 21:32:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.573 2020/10/18 08:47:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3852,18 +3852,28 @@ Var_Stats(void)
     Hash_DebugStats(&VAR_GLOBAL->context, "VAR_GLOBAL");
 }
 
-
-/****************** PRINT DEBUGGING INFO *****************/
-static void
-VarPrintVar(void *vp, void *data MAKE_ATTR_UNUSED)
-{
-    Var *v = (Var *)vp;
-    debug_printf("%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));
-}
-
-/* Print all variables in a context, unordered. */
+/* Print all variables in a context, sorted by name. */
 void
 Var_Dump(GNode *ctxt)
 {
-    Hash_ForEach(&ctxt->context, VarPrintVar, NULL);
+    Stack varnames;
+    Hash_Search iter;
+    Hash_Entry *he;
+    size_t i;
+
+    Stack_Init(&varnames);
+    for (he = Hash_EnumFirst(&ctxt->context, &iter);
+	 he != NULL;
+	 he = Hash_EnumNext(&iter))
+        Stack_Push(&varnames, he->name);
+
+    qsort(varnames.items, varnames.len, sizeof varnames.items[0], str_cmp_asc);
+
+    for (i = 0; i < varnames.len; i++) {
+        const char *varname = varnames.items[i];
+        Var *var = Hash_FindValue(&ctxt->context, varname);
+	debug_printf("%-16s = %s\n", varname, Buf_GetAll(&var->val, NULL));
+    }
+
+    Stack_Done(&varnames);
 }
