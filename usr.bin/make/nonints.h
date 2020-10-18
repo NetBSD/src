@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.141 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.142 2020/10/18 07:46:04 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@ void Punt(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void DieHorribly(void) MAKE_ATTR_DEAD;
 void Finish(int) MAKE_ATTR_DEAD;
 int eunlink(const char *);
-void execError(const char *, const char *);
+void execDie(const char *, const char *);
 char *getTmpdir(void);
 Boolean s2Boolean(const char *, Boolean);
 Boolean getBoolean(const char *, Boolean);
