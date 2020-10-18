@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.181 2020/10/18 14:09:39 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.182 2020/10/18 15:31:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.181 2020/10/18 14:09:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.182 2020/10/18 15:31:43 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -384,14 +384,12 @@ SuffInsert(SuffList *l, Suff *s)
     SuffListNode *ln;		/* current element in l we're examining */
     Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
-    Lst_Open(l);
-    while ((ln = Lst_Next(l)) != NULL) {
+    for (ln = l->first; ln != NULL; ln = ln->next) {
 	s2 = LstNode_Datum(ln);
 	if (s2->sNum >= s->sNum) {
 	    break;
 	}
     }
-    Lst_Close(l);
 
     SUFF_DEBUG2("inserting %s(%d)...", s->name, s->sNum);
 
