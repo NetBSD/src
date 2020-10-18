@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.387 2020/10/18 19:11:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.388 2020/10/18 20:07:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.387 2020/10/18 19:11:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.388 2020/10/18 20:07:26 rillig Exp $");
 
 /* types and constants */
 
@@ -1753,6 +1753,51 @@ out:
 	Lst_Free(curTargs);
 }
 
+/* Determine the assignment operator and adjust the end of the variable
+ * name accordingly. */
+static void
+ParseVarassignOp(VarAssign *var)
+{
+    const char *op = var->eq;
+    const char * const name = var->nameStart;
+    VarAssignOp type;
+
+    if (op > name && op[-1] == '+') {
+	type = VAR_APPEND;
+	op--;
+
+    } else if (op > name && op[-1] == '?') {
+	op--;
+	type = VAR_DEFAULT;
+
+    } else if (op > name && op[-1] == ':') {
+	op--;
+	type = VAR_SUBST;
+
+    } else if (op > name && op[-1] == '!') {
+	op--;
+	type = VAR_SHELL;
+
+    } else {
+	type = VAR_NORMAL;
+#ifdef SUNSHCMD
+	while (op > name && ch_isspace(op[-1]))
+	    op--;
+
+	if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
+	    type = VAR_SHELL;
+	    op -= 3;
+	}
+#endif
+    }
+
+    {
+	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
+	var->varname = bmake_strsedup(var->nameStart, nameEnd);
+	var->op = type;
+    }
+}
+
 /* Parse a variable assignment, consisting of a single-word variable name,
  * optional whitespace, an assignment operator, optional whitespace and the
  * variable value.
@@ -1832,51 +1877,6 @@ Parse_IsVar(const char *p, VarAssign *out_var)
     }
 
     return FALSE;
-}
-
-/* Determine the assignment operator and adjust the end of the variable
- * name accordingly. */
-static void
-ParseVarassignOp(VarAssign *var)
-{
-    const char *op = var->eq;
-    const char * const name = var->nameStart;
-    VarAssignOp type;
-
-    if (op > name && op[-1] == '+') {
-	type = VAR_APPEND;
-	op--;
-
-    } else if (op > name && op[-1] == '?') {
-	op--;
-	type = VAR_DEFAULT;
-
-    } else if (op > name && op[-1] == ':') {
-	op--;
-	type = VAR_SUBST;
-
-    } else if (op > name && op[-1] == '!') {
-	op--;
-	type = VAR_SHELL;
-
-    } else {
-	type = VAR_NORMAL;
-#ifdef SUNSHCMD
-	while (op > name && ch_isspace(op[-1]))
-	    op--;
-
-	if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' && op[-1] == 'h') {
-	    type = VAR_SHELL;
-	    op -= 3;
-	}
-#endif
-    }
-
-    {
-	const char *nameEnd = var->nameEndDraft < op ? var->nameEndDraft : op;
-	var->varname = bmake_strsedup(var->nameStart, nameEnd);
-	var->op = type;
-    }
 }
 
 static void
