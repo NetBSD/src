@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.75 2020/10/18 11:54:20 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.76 2020/10/18 12:00:12 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.75 2020/10/18 11:54:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.76 2020/10/18 12:00:12 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,6 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	 */
 	switch (cmd) {
 		case WSDISPLAYIO_GET_EDID: {
-			
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
