@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.313 2020/10/04 19:04:48 nia Exp $
+$NetBSD: acronyms.comp,v 1.314 2020/10/18 10:17:09 leot Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1154,6 +1154,7 @@ PATA	parallel ATA
 PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
+PBR	partition boot record
 PC	personal computer
 PC	program counter
 PCB	printed circuit board
@@ -1714,6 +1715,7 @@ VA	virtual address
 VA	volt-ampere
 VAX	virtual address extension
 VB	Visual Basic
+VBR	volume boot record
 VCA	variable-gain amplifier
 VCC	common collector voltage
 VCCP	virtual chassis control protocol
