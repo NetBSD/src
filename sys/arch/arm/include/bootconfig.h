@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.9 2018/03/03 16:11:22 skrll Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.10 2020/10/18 16:28:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #define BOOTOPT_TYPE_MASK		7
 
 struct boot_physmem {
-	paddr_t bp_start;		/* starting PFN (not address) */ 
+	paddr_t bp_start;		/* starting PFN (not address) */
 	psize_t bp_pages;		/* # of pages */
 	u_int bp_freelist;		/* VM_FREELIST_ * */
 	u_int bp_flags;
