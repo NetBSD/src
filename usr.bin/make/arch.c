@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.134 2020/10/18 12:00:16 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.135 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.134 2020/10/18 12:00:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.135 2020/10/18 12:36:43 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -148,7 +148,7 @@ static ArchList *archives;	/* The archives we've already examined */
 
 typedef struct Arch {
     char *name;			/* Name of archive */
-    Hash_Table members;		/* All the members of the archive described
+    HashTable members;		/* All the members of the archive described
 				 * by <name, struct ar_hdr *> key/value pairs */
     char *fnametab;		/* Extended name table strings */
     size_t fnamesize;		/* Size of the string table */
@@ -167,7 +167,7 @@ ArchFree(void *ap)
 {
     Arch *a = (Arch *)ap;
     HashIter hi;
-    Hash_Entry *he;
+    HashEntry *he;
 
     /* Free memory from hash entries */
     HashIter_Init(&hi, &a->members);
@@ -606,7 +606,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 #endif
 
 	    {
-		Hash_Entry *he;
+		HashEntry *he;
 		he = Hash_CreateEntry(&ar->members, memName, NULL);
 		Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
 		memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));

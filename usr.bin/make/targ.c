@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.114 2020/10/18 08:24:01 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.115 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,13 +121,13 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.114 2020/10/18 08:24:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.115 2020/10/18 12:36:43 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
 static GNodeList *allGNs;	/* List of all the GNodes */
 #endif
-static Hash_Table targets;	/* a hash table of same */
+static HashTable targets;	/* a hash table of same */
 
 #ifdef CLEANUP
 static void TargFreeGN(void *);
@@ -248,7 +248,7 @@ GNode *
 Targ_GetNode(const char *name)
 {
     Boolean isNew;
-    Hash_Entry *he = Hash_CreateEntry(&targets, name, &isNew);
+    HashEntry *he = Hash_CreateEntry(&targets, name, &isNew);
     if (!isNew)
 	return Hash_GetValue(he);
 

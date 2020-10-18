@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.157 2020/10/18 11:09:08 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.158 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -345,7 +345,7 @@ typedef struct GNode {
 
     /* The "local" variables that are specific to this target and this target
      * only, such as $@, $<, $?. */
-    Hash_Table context;
+    HashTable context;
 
     /* The commands to be given to a shell to create this target. */
     StringList *commands;
