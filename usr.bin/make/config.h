@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.23 2020/09/27 17:17:01 rillig Exp $	*/
+/*	$NetBSD: config.h,v 1.24 2020/10/18 08:01:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -153,12 +153,6 @@
  *				# of ${VAR}
  */
 #define SUNSHCMD
-
-/*
- * USE_IOVEC
- *	We have writev(2)
- */
-#define USE_IOVEC
 
 #if defined(MAKE_NATIVE) && !defined(__ELF__)
 # ifndef RANLIBMAG
