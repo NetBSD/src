@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.160 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.161 2020/10/18 14:58:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.160 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.161 2020/10/18 14:58:45 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -386,8 +386,9 @@ MakeFindChild(void *gnp, void *pgnp)
  * has commands.
  *
  * Input:
- *	cgn		The .USE node
- *	pgn		The target of the .USE node
+ *	cgn		The source node, which is either a .USE/.USEBEFORE
+ *			node or a transformation node (OP_TRANSFORM).
+ *	pgn		The target node
  */
 void
 Make_HandleUse(GNode *cgn, GNode *pgn)
@@ -411,9 +412,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	    }
     }
 
-    Lst_Open(cgn->children);
-    while ((ln = Lst_Next(cgn->children)) != NULL) {
-	GNode *gn = LstNode_Datum(ln);
+    for (ln = cgn->children->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
 
 	/*
 	 * Expand variables in the .USE node's name
@@ -439,7 +439,6 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	Lst_Append(gn->parents, pgn);
 	pgn->unmade++;
     }
-    Lst_Close(cgn->children);
 
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 }
