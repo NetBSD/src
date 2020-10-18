@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.186 2020/10/18 17:00:22 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.187 2020/10/18 17:06:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.186 2020/10/18 17:00:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.187 2020/10/18 17:06:14 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -734,6 +734,23 @@ SuffScanTargets(GNode *target, GNode **gs_gnp, Suff *gs_s, Boolean *gs_r)
     return FALSE;
 }
 
+/* Look at all existing targets to see if adding this suffix will make one
+ * of the current targets mutate into a suffix rule.
+ *
+ * This is ugly, but other makes treat all targets that start with a '.' as
+ * suffix rules. */
+static void
+UpdateTargets(GNode **gnp, Suff *s)
+{
+    Boolean r = FALSE;
+    GNodeListNode *ln;
+    for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
+	if (SuffScanTargets(gn, gnp, s, &r))
+	    break;
+    }
+}
+
 /* Add the suffix to the end of the list of known suffixes.
  * Should we restructure the suffix graph? Make doesn't...
  *
@@ -755,21 +772,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
     s = SuffNew(name);
     Lst_Append(sufflist, s);
 
-    /*
-     * We also look at our existing targets list to see if adding
-     * this suffix will make one of our current targets mutate into
-     * a suffix rule. This is ugly, but other makes treat all targets
-     * that start with a . as suffix rules.
-     */
-    {
-        Boolean r = FALSE;
-	GNodeListNode *ln;
-	for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
-	    GNode *gn = ln->datum;
-	    if (SuffScanTargets(gn, gnp, s, &r))
-		break;
-	}
-    }
+    UpdateTargets(gnp, s);
 
     /*
      * Look for any existing transformations from or to this suffix.
