@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.26 2020/10/05 20:21:30 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.27 2020/10/18 10:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,15 +96,12 @@ typedef struct Hash_Table {
     unsigned int maxchain;	/* max length of chain detected */
 } Hash_Table;
 
-/*
- * The following structure is used by the searching routines
- * to record where we are in the search.
- */
-typedef struct Hash_Search {
+/* State of an iteration over all entries in a table. */
+typedef struct HashIter {
     Hash_Table *table;		/* Table being searched. */
     unsigned int nextBucket;	/* Next bucket to check (after current). */
     Hash_Entry *entry;		/* Next entry to check in current bucket. */
-} Hash_Search;
+} HashIter;
 
 static inline MAKE_ATTR_UNUSED void *
 Hash_GetValue(Hash_Entry *h)
@@ -124,9 +121,10 @@ Hash_Entry *Hash_FindEntry(Hash_Table *, const char *);
 void *Hash_FindValue(Hash_Table *, const char *);
 Hash_Entry *Hash_CreateEntry(Hash_Table *, const char *, Boolean *);
 void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
-Hash_Entry *Hash_EnumFirst(Hash_Table *, Hash_Search *);
-Hash_Entry *Hash_EnumNext(Hash_Search *);
-void Hash_ForEach(Hash_Table *, void (*)(void *, void *), void *);
+
+void HashIter_Init(HashIter *, Hash_Table *);
+Hash_Entry *HashIter_Next(HashIter *);
+
 void Hash_DebugStats(Hash_Table *, const char *);
 
 #endif /* MAKE_HASH_H */

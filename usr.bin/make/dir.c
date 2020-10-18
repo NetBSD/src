@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.163 2020/10/17 21:32:30 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.164 2020/10/18 10:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.163 2020/10/17 21:32:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.164 2020/10/18 10:44:25 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -608,16 +608,14 @@ Dir_HasWildcards(const char *name)
 static void
 DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 {
-    Hash_Search search;		/* Index into the directory's table */
+    HashIter hi;
     Hash_Entry *entry;		/* Current entry in the table */
     Boolean isDot;		/* TRUE if the directory being searched is . */
 
     isDot = (dir->name[0] == '.' && dir->name[1] == '\0');
 
-    for (entry = Hash_EnumFirst(&dir->files, &search);
-	 entry != NULL;
-	 entry = Hash_EnumNext(&search))
-    {
+    HashIter_Init(&hi, &dir->files);
+    while ((entry = HashIter_Next(&hi)) != NULL) {
 	/*
 	 * See if the file matches the given pattern. Note we follow the UNIX
 	 * convention that dot files will only be found if the pattern
