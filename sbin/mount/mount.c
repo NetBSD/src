@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.102 2016/10/09 21:03:43 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.103 2020/10/18 10:57:30 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.102 2016/10/09 21:03:43 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.103 2020/10/18 10:57:30 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,11 @@ static const struct opt {
 	__MNT_FLAGS
 };
 
+#define FLG_UPDATE	1
+#define FLG_RDONLY	2
+#define FLG_RDWRITE	4
+#define FLG_FORCE	8
+
 static const char ffs_fstype[] = "ffs";
 
 int
@@ -128,14 +133,14 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'f':
-			init_flags |= MNT_FORCE;
+			init_flags |= FLG_FORCE;
 			break;
 		case 'o':
 			if (*optarg)
 				catopt(&options, optarg);
 			break;
 		case 'r':
-			init_flags |= MNT_RDONLY;
+			init_flags |= FLG_RDONLY;
 			break;
 		case 't':
 			if (vfslist != NULL)
@@ -145,13 +150,13 @@ main(int argc, char *argv[])
 			vfstype = optarg;
 			break;
 		case 'u':
-			init_flags |= MNT_UPDATE;
+			init_flags |= FLG_UPDATE;
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'w':
-			init_flags &= ~MNT_RDONLY;
+			init_flags |= FLG_RDWRITE;
 			break;
 		case '?':
 		default:
@@ -218,7 +223,7 @@ main(int argc, char *argv[])
 		 */
 		canonical_path = realpath(*argv, canonical_path_buf);
 
-		if (init_flags & MNT_UPDATE) {
+		if (init_flags & FLG_UPDATE) {
 			/*
 			 * Try looking up the canonical path first,
 			 * then try exactly what the user entered.
@@ -395,7 +400,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		catopt(&optbuf, "rw");
 
 	if (getargs == 0 && strcmp(name, "/") == 0 && !hasopt(optbuf, "union"))
-		flags |= MNT_UPDATE;
+		flags |= FLG_UPDATE;
 	else if (skipmounted) {
 		if ((numfs = getmntinfo(&sfp, MNT_WAIT)) == 0) {
 			warn("getmntinfo");
@@ -431,12 +436,15 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 			}
 		}
 	}
-	if (flags & MNT_FORCE)
+	if (flags & FLG_FORCE)
 		catopt(&optbuf, "force");
-	if (flags & MNT_RDONLY)
+	if (flags & FLG_RDONLY)
 		catopt(&optbuf, "ro");
+	/* make -w override -r */
+	if (flags & FLG_RDWRITE)
+		catopt(&optbuf, "rw");
 
-	if (flags & MNT_UPDATE) {
+	if (flags & FLG_UPDATE) {
 		catopt(&optbuf, "update");
 		/* Figure out the fstype only if we defaulted to ffs */
 		if (vfstype == ffs_fstype && statvfs(name, &sf) != -1)
@@ -690,7 +698,7 @@ mangle(char *options, int *argcp, const char ** volatile *argvp, int *maxargcp)
 					*p = '\0';
 					argv[argc++] = p+1;
 				}
-			} else if (strcmp(p, "rw") != 0) {
+			} else {
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
