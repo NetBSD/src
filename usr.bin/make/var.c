@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.577 2020/10/18 12:47:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.578 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.577 2020/10/18 12:47:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.578 2020/10/18 17:19:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -182,13 +182,13 @@ GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMD;	/* variables defined on the command-line */
 
-typedef enum {
+typedef enum VarFindFlags {
     FIND_CMD		= 0x01,	/* look in VAR_CMD when searching */
     FIND_GLOBAL		= 0x02,	/* look in VAR_GLOBAL as well */
     FIND_ENV		= 0x04	/* look in the environment also */
 } VarFindFlags;
 
-typedef enum {
+typedef enum VarFlags {
     /* The variable's value is currently being used by Var_Parse or Var_Subst.
      * This marker is used to avoid endless recursion. */
     VAR_IN_USE = 0x01,
@@ -245,7 +245,7 @@ typedef struct Var {
 /*
  * Exporting vars is expensive so skip it if we can
  */
-typedef enum {
+typedef enum VarExportedMode {
     VAR_EXPORTED_NONE,
     VAR_EXPORTED_YES,
     VAR_EXPORTED_ALL
@@ -253,7 +253,7 @@ typedef enum {
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
-typedef enum {
+typedef enum VarExportFlags {
     /*
      * We pass this to Var_Export when doing the initial export
      * or after updating an exported var.
@@ -266,7 +266,7 @@ typedef enum {
 } VarExportFlags;
 
 /* Flags for pattern matching in the :S and :C modifiers */
-typedef enum {
+typedef enum VarPatternFlags {
     VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
     VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
     VARP_ANCHOR_START	= 0x04,	/* Match at start of word */
@@ -1820,7 +1820,7 @@ ApplyModifiersState_Define(ApplyModifiersState *st)
 	st->exprFlags |= VEF_DEF;
 }
 
-typedef enum {
+typedef enum ApplyModifierResult {
     AMR_OK,			/* Continue parsing */
     AMR_UNKNOWN,		/* Not a match, try other modifiers as well */
     AMR_BAD,			/* Error out with "Bad modifier" message */
