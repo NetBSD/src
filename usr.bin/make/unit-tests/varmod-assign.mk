@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.7 2020/10/18 21:36:22 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.8 2020/10/18 21:37:24 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -91,3 +91,17 @@ mod-assign-shell-error:
 	# FIXME: the error message says: "previous" returned non-zero status
 	@${SH_ERR::=previous}
 	@${SH_ERR::!= echo word; false } echo err=${SH_ERR}
+
+# XXX: The ::= modifier expands its right-hand side, exactly once.
+# This differs subtly from normal assignments such as '+=' or '=', which copy
+# their right-hand side literally.
+APPEND.prev=		previous
+APPEND.var=		${APPEND.prev}
+APPEND.indirect=	indirect $${:Unot expanded}
+APPEND.dollar=		$${APPEND.indirect}
+.if ${APPEND.var::+=${APPEND.dollar}} != ""
+.  error
+.endif
+.if ${APPEND.var} != "previous indirect \${:Unot expanded}"
+.  error
+.endif
