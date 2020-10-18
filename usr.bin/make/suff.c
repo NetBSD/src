@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.180 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.181 2020/10/18 14:09:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.180 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.181 2020/10/18 14:09:39 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -816,19 +816,16 @@ Suff_GetPath(const char *sname)
 void
 Suff_DoPaths(void)
 {
-    Suff *s;
     SuffListNode *ln;
     char *ptr;
     SearchPath *inIncludes; /* Cumulative .INCLUDES path */
     SearchPath *inLibs;	    /* Cumulative .LIBS path */
 
-
     inIncludes = Lst_New();
     inLibs = Lst_New();
 
-    Lst_Open(sufflist);
-    while ((ln = Lst_Next(sufflist)) != NULL) {
-	s = LstNode_Datum(ln);
+    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+	Suff *s = LstNode_Datum(ln);
 	if (!Lst_IsEmpty(s->searchPath)) {
 #ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
@@ -846,7 +843,6 @@ Suff_DoPaths(void)
 	    s->searchPath = Lst_Copy(dirSearchPath, Dir_CopyDir);
 	}
     }
-    Lst_Close(sufflist);
 
     Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
     free(ptr);
