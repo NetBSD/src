@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.167 2020/10/18 16:33:18 rillig Exp $
+# $NetBSD: Makefile,v 1.168 2020/10/18 22:55:52 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -546,7 +546,12 @@ sync-mi:
 	cvs diff "$$mi" || true
 
 .if exists(${TEST_MAKE})
-${TESTS:=.rawout}: ${TEST_MAKE} ${.PARSEDIR}/Makefile
+${TESTS:=.rawout}: ${TEST_MAKE}
+# in meta mode, we *know* if a target script is impacted
+# by a makefile change.
+.if ${.MAKE.MODE:Unormal:Mmeta} == ""
+${TESTS:=.rawout}: ${.PARSEDIR}/Makefile
+.endif
 .endif
 
 .-include <bsd.obj.mk>
