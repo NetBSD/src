@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.166 2020/10/17 16:53:26 rillig Exp $
+# $NetBSD: Makefile,v 1.167 2020/10/18 16:33:18 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -250,6 +250,7 @@ TESTS+=		shell-custom
 TESTS+=		shell-ksh
 TESTS+=		shell-sh
 TESTS+=		# suffixes	# runs into an endless loop (try -dA)
+TESTS+=		suff-main
 TESTS+=		suff-rebuild
 TESTS+=		sunshcmd
 TESTS+=		sysv
