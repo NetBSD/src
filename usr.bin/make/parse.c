@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.385 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.386 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.385 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.386 2020/10/18 17:19:54 rillig Exp $");
 
 /* types and constants */
 
@@ -156,7 +156,7 @@ typedef struct IFile {
 /*
  * Tokens for target attributes
  */
-typedef enum {
+typedef enum ParseSpecial {
     Begin,		/* .BEGIN */
     Default,		/* .DEFAULT */
     DeleteOnError,	/* .DELETE_ON_ERROR */

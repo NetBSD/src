@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.158 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.159 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -145,7 +145,7 @@ typedef unsigned char Boolean;
 #define TRUE ((unsigned char)0xFF)
 #define FALSE ((unsigned char)0x00)
 #elif defined(USE_ENUM_BOOLEAN)
-typedef enum { FALSE, TRUE } Boolean;
+typedef enum Boolean { FALSE, TRUE } Boolean;
 #else
 typedef int Boolean;
 #endif
@@ -185,7 +185,7 @@ typedef enum  {
  * of each node. Any node that has a 'type' field which satisfies the OP_NOP
  * function was never never on the left-hand side of an operator, though it
  * may have been on the right-hand side... */
-typedef enum {
+typedef enum GNodeType {
     /* Execution of commands depends on children (:) */
     OP_DEPENDS		= 1 << 0,
     /* Always execute commands (!) */
@@ -264,7 +264,7 @@ typedef enum {
     OP_NOTARGET		= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
 
-typedef enum {
+typedef enum GNodeFlags {
     REMAKE	= 0x0001,	/* this target needs to be (re)made */
     CHILDMADE	= 0x0002,	/* children of this target were made */
     FORCE	= 0x0004,	/* children don't exist, and we pretend made */
@@ -372,7 +372,7 @@ typedef struct GNode {
 /*
  * Values returned by Cond_EvalLine and Cond_EvalCondition.
  */
-typedef enum {
+typedef enum CondEvalResult {
     COND_PARSE,			/* Parse the next lines */
     COND_SKIP,			/* Skip the next lines */
     COND_INVALID		/* Not a conditional statement */

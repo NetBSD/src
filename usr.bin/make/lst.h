@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.71 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.72 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ struct ListNode {
     };
 };
 
-typedef enum {
+typedef enum ListForEachUntilWhere {
     Head, Middle, Tail, Unknown
 } ListForEachUntilWhere;
 

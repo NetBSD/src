@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.93 2020/10/05 20:21:30 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.94 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -61,9 +61,9 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.93 2020/10/05 20:21:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.94 2020/10/18 17:19:54 rillig Exp $");
 
-typedef enum {
+typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
     FOR_SUB_ESCAPE_BRACE = 0x0002,
     FOR_SUB_ESCAPE_PAREN = 0x0004

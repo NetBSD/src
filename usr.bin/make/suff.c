@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.188 2020/10/18 17:12:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.189 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.188 2020/10/18 17:12:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.189 2020/10/18 17:19:54 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -151,7 +151,7 @@ static GNodeList *transforms;	/* List of transformation rules */
 
 static int        sNum = 0;	/* Counter for assigning suffix numbers */
 
-typedef enum {
+typedef enum SuffFlags {
     SUFF_INCLUDE	= 0x01,	/* One which is #include'd */
     SUFF_LIBRARY	= 0x02,	/* One which contains a library */
     SUFF_NULL		= 0x04	/* The empty suffix */

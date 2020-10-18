@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.142 2020/10/18 07:46:04 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.143 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -214,7 +214,7 @@ void Targ_Propagate(void);
 void Var_Init(void);
 void Var_End(void);
 
-typedef enum {
+typedef enum VarEvalFlags {
     VARE_NONE		= 0,
     /* Treat undefined variables as errors. */
     VARE_UNDEFERR	= 0x01,
@@ -225,7 +225,7 @@ typedef enum {
     VARE_ASSIGN		= 0x04
 } VarEvalFlags;
 
-typedef enum {
+typedef enum VarSet_Flags {
     VAR_NO_EXPORT	= 0x01,	/* do not export */
     /* Make the variable read-only. No further modification is possible,
      * except for another call to Var_Set with the same flag. */
@@ -241,7 +241,7 @@ typedef enum {
  * and then migrate away from the SILENT constants, step by step,
  * as these are not suited for reliable, consistent error handling
  * and reporting. */
-typedef enum {
+typedef enum VarParseResult {
 
     /* Both parsing and evaluation succeeded. */
     VPR_OK		= 0x0000,
