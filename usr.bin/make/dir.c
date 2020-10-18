@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.167 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.168 2020/10/18 14:32:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.167 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.168 2020/10/18 14:32:04 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1095,7 +1095,6 @@ Dir_FindFile(const char *name, SearchPath *path)
 {
     SearchPathNode *ln;
     char *file;			/* the current filename to check */
-    CachedDir *dir;
     const char *base;		/* Terminal name of file */
     Boolean hasLastDot = FALSE;	/* true if we should search dot last */
     Boolean hasSlash;		/* true if 'name' contains a / */
@@ -1123,9 +1122,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 	return NULL;
     }
 
-    Lst_Open(path);
-    if ((ln = Lst_First(path)) != NULL) {
-	dir = LstNode_Datum(ln);
+    if ((ln = path->first) != NULL) {
+	CachedDir *dir = ln->datum;
 	if (dir == dotLast) {
 	    hasLastDot = TRUE;
 	    DIR_DEBUG0("[dot last]...");
@@ -1153,27 +1151,20 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * This is so there are no conflicts between what the user
 	 * specifies (fish.c) and what pmake finds (./fish.c).
 	 */
-	if (!hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL) {
-	    Lst_Close(path);
+	if (!hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL)
 	    return file;
-	}
 
-	while ((ln = Lst_Next(path)) != NULL) {
-	    dir = LstNode_Datum(ln);
+	for (; ln != NULL; ln = ln->next) {
+	    CachedDir *dir = ln->datum;
 	    if (dir == dotLast)
 		continue;
-	    if ((file = DirLookup(dir, name, base, hasSlash)) != NULL) {
-		Lst_Close(path);
+	    if ((file = DirLookup(dir, name, base, hasSlash)) != NULL)
 		return file;
-	    }
 	}
 
-	if (hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL) {
-	    Lst_Close(path);
+	if (hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL)
 	    return file;
-	}
     }
-    Lst_Close(path);
 
     /*
      * We didn't find the file on any directory in the search path.
@@ -1215,9 +1206,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return file;
 	}
 
-	Lst_Open(path);
-	while ((ln = Lst_Next(path)) != NULL) {
-	    dir = LstNode_Datum(ln);
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+	    CachedDir *dir = ln->datum;
 	    if (dir == dotLast)
 		continue;
 	    if (dir == dot) {
@@ -1225,12 +1215,9 @@ Dir_FindFile(const char *name, SearchPath *path)
 		    continue;
 		checkedDot = TRUE;
 	    }
-	    if ((file = DirLookupSubdir(dir, name)) != NULL) {
-		Lst_Close(path);
+	    if ((file = DirLookupSubdir(dir, name)) != NULL)
 		return file;
-	    }
 	}
-	Lst_Close(path);
 
 	if (hasLastDot) {
 	    if (dot && !checkedDot) {
@@ -1273,13 +1260,11 @@ Dir_FindFile(const char *name, SearchPath *path)
 	    return file;
 	}
 
-	Lst_Open(path);
-	while ((ln = Lst_Next(path)) != NULL) {
-	    dir = LstNode_Datum(ln);
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+	    CachedDir *dir = ln->datum;
 	    if (dir == dotLast)
 		continue;
 	    if ((file = DirLookupAbs(dir, name, base)) != NULL) {
-		Lst_Close(path);
 		if (file[0] == '\0') {
 		    free(file);
 		    return NULL;
@@ -1287,7 +1272,6 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return file;
 	    }
 	}
-	Lst_Close(path);
 
 	if (hasLastDot && cur &&
 	    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
