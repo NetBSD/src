@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.164 2020/10/18 10:44:25 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.165 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.164 2020/10/18 10:44:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.165 2020/10/18 12:36:43 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -221,7 +221,7 @@ SearchPath *dirSearchPath;		/* main search path */
 /* A list of cached directories, with fast lookup by directory name. */
 typedef struct OpenDirs {
     CachedDirList *list;
-    Hash_Table /* of CachedDirListNode */ table;
+    HashTable /* of CachedDirListNode */ table;
 } OpenDirs;
 
 static void
@@ -255,7 +255,7 @@ OpenDirs_Find(OpenDirs *odirs, const char *name)
 static void
 OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
 {
-    Hash_Entry *he = Hash_FindEntry(&odirs->table, cdir->name);
+    HashEntry *he = Hash_FindEntry(&odirs->table, cdir->name);
     if (he != NULL)
 	return;
     he = Hash_CreateEntry(&odirs->table, cdir->name, NULL);
@@ -266,7 +266,7 @@ OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
 static void
 OpenDirs_Remove(OpenDirs *odirs, const char *name)
 {
-    Hash_Entry *he = Hash_FindEntry(&odirs->table, name);
+    HashEntry *he = Hash_FindEntry(&odirs->table, name);
     CachedDirListNode *ln;
     if (he == NULL)
 	return;
@@ -298,9 +298,9 @@ static CachedDir *dotLast;	/* a fake path entry indicating we need to
  * already updated the file, in which case we'll update it again. Generally,
  * there won't be two rules to update a single file, so this should be ok,
  * but... */
-static Hash_Table mtimes;
+static HashTable mtimes;
 
-static Hash_Table lmtimes;	/* same as mtimes but for lstat */
+static HashTable lmtimes;	/* same as mtimes but for lstat */
 
 /*
  * We use stat(2) a lot, cache the results.
@@ -320,10 +320,10 @@ typedef enum {
 
 /* Returns 0 and the result of stat(2) or lstat(2) in *mst, or -1 on error. */
 static int
-cached_stats(Hash_Table *htp, const char *pathname, struct make_stat *mst,
+cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
 	     CachedStatsFlags flags)
 {
-    Hash_Entry *entry;
+    HashEntry *entry;
     struct stat sys_st;
     struct cache_st *cst;
     int rc;
@@ -609,7 +609,7 @@ static void
 DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 {
     HashIter hi;
-    Hash_Entry *entry;		/* Current entry in the table */
+    HashEntry *entry;		/* Current entry in the table */
     Boolean isDot;		/* TRUE if the directory being searched is . */
 
     isDot = (dir->name[0] == '.' && dir->name[1] == '\0');
