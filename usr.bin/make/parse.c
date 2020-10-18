@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.389 2020/10/18 20:14:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.390 2020/10/18 20:29:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.389 2020/10/18 20:14:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.390 2020/10/18 20:29:50 rillig Exp $");
 
 /* types and constants */
 
@@ -1897,6 +1897,73 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
     }
 }
 
+static void
+VarAssign_EvalSubst(const VarAssign *var, GNode *ctxt,
+		    const char **out_avalue, void **out_avalue_freeIt)
+{
+    const char *name = var->varname;
+    const char *uvalue = var->value;
+    const char *avalue = uvalue;
+    char *evalue;
+    /*
+     * Allow variables in the old value to be undefined, but leave their
+     * expressions alone -- this is done by forcing oldVars to be false.
+     * XXX: This can cause recursive variables, but that's not hard to do,
+     * and this allows someone to do something like
+     *
+     *  CFLAGS = $(.INCLUDES)
+     *  CFLAGS := -I.. $(CFLAGS)
+     *
+     * And not get an error.
+     */
+    Boolean oldOldVars = oldVars;
+
+    oldVars = FALSE;
+
+    /*
+     * make sure that we set the variable the first time to nothing
+     * so that it gets substituted!
+     */
+    if (!Var_Exists(name, ctxt))
+	Var_Set(name, "", ctxt);
+
+    (void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_ASSIGN, &evalue);
+    /* TODO: handle errors */
+    oldVars = oldOldVars;
+    avalue = evalue;
+    Var_Set(name, avalue, ctxt);
+
+    *out_avalue = avalue;
+    *out_avalue_freeIt = evalue;
+}
+
+static void
+VarAssign_EvalShell(const VarAssign *var, GNode *ctxt,
+		    const char **out_avalue, void **out_avalue_freeIt)
+{
+    const char *uvalue = var->value;
+    const char *cmd, *errfmt;
+    char *cmdOut;
+    void *cmd_freeIt = NULL;
+
+    cmd = uvalue;
+    if (strchr(cmd, '$') != NULL) {
+	char *ecmd;
+	(void)Var_Subst(cmd, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &ecmd);
+	/* TODO: handle errors */
+	cmd = cmd_freeIt = ecmd;
+    }
+
+    cmdOut = Cmd_Exec(cmd, &errfmt);
+    Var_Set(var->varname, cmdOut, ctxt);
+    *out_avalue = *out_avalue_freeIt = cmdOut;
+
+    if (errfmt)
+	Parse_Error(PARSE_WARNING, errfmt, cmd);
+
+    free(cmd_freeIt);
+}
+
 static Boolean
 VarAssign_Eval(VarAssign *var, GNode *ctxt,
 	       const char **out_avalue, void **out_avalue_freeIt)
@@ -1910,59 +1977,11 @@ VarAssign_Eval(VarAssign *var, GNode *ctxt,
     if (type == VAR_APPEND) {
 	Var_Append(name, uvalue, ctxt);
     } else if (type == VAR_SUBST) {
-	char *evalue;
-	/*
-	 * Allow variables in the old value to be undefined, but leave their
-	 * expressions alone -- this is done by forcing oldVars to be false.
-	 * XXX: This can cause recursive variables, but that's not hard to do,
-	 * and this allows someone to do something like
-	 *
-	 *  CFLAGS = $(.INCLUDES)
-	 *  CFLAGS := -I.. $(CFLAGS)
-	 *
-	 * And not get an error.
-	 */
-	Boolean oldOldVars = oldVars;
-
-	oldVars = FALSE;
-
-	/*
-	 * make sure that we set the variable the first time to nothing
-	 * so that it gets substituted!
-	 */
-	if (!Var_Exists(name, ctxt))
-	    Var_Set(name, "", ctxt);
-
-	(void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_ASSIGN, &evalue);
-	/* TODO: handle errors */
-	oldVars = oldOldVars;
-	avalue = evalue;
-	avalue_freeIt = evalue;
-
-	Var_Set(name, avalue, ctxt);
+        VarAssign_EvalSubst(var, ctxt, &avalue, out_avalue_freeIt);
     } else if (type == VAR_SHELL) {
-	const char *cmd, *errfmt;
-	char *cmdOut;
-	void *cmd_freeIt = NULL;
-
-	cmd = uvalue;
-	if (strchr(cmd, '$') != NULL) {
-	    char *ecmd;
-	    (void)Var_Subst(cmd, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &ecmd);
-	    /* TODO: handle errors */
-	    cmd = cmd_freeIt = ecmd;
-	}
-
-	cmdOut = Cmd_Exec(cmd, &errfmt);
-	Var_Set(name, cmdOut, ctxt);
-	avalue = avalue_freeIt = cmdOut;
-
-	if (errfmt)
-	    Parse_Error(PARSE_WARNING, errfmt, cmd);
-
-	free(cmd_freeIt);
+        VarAssign_EvalShell(var, ctxt, &avalue, &avalue_freeIt);
     } else {
-	if (type == VAR_DEFAULT && Var_Exists(var->varname, ctxt)) {
+	if (type == VAR_DEFAULT && Var_Exists(name, ctxt)) {
 	    *out_avalue_freeIt = NULL;
 	    return FALSE;
 	}
