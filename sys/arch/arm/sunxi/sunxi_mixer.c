@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.11 2020/02/09 15:22:25 jakllsch Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.12 2020/10/18 14:00:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.11 2020/02/09 15:22:25 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.12 2020/10/18 14:00:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,8 +99,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.11 2020/02/09 15:22:25 jakllsch Ex
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV422		0x06
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV420		0x0a
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV411		0x0e
+#if BYTE_ORDER == BIG_ENDIAN
+#define	  OVL_V_ATTCTL_LAY_FBFMT_ARGB_8888	0x03
+#define	  OVL_V_ATTCTL_LAY_FBFMT_XRGB_8888	0x07
+#else
 #define	  OVL_V_ATTCTL_LAY_FBFMT_ARGB_8888	0x00
 #define	  OVL_V_ATTCTL_LAY_FBFMT_XRGB_8888	0x04
+#endif
 #define	 OVL_V_ATTCTL_LAY0_EN			__BIT(0)
 #define	OVL_V_MBSIZE(n)		(0x004 + (n) * 0x30)
 #define	OVL_V_COOR(n)		(0x008 + (n) * 0x30)
@@ -124,8 +129,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.11 2020/02/09 15:22:25 jakllsch Ex
 /* OVL_UI registers */
 #define	OVL_UI_ATTR_CTL(n)	(0x000 + (n) * 0x20)
 #define	 OVL_UI_ATTR_CTL_LAY_FBFMT		__BITS(12,8)
+#if BYTE_ORDER == BIG_ENDIAN
+#define	  OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888	0x03
+#define	  OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888	0x07
+#else
 #define	  OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888	0x00
 #define	  OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888	0x04
+#endif
 #define	 OVL_UI_ATTR_CTL_LAY_EN			__BIT(0)
 #define	OVL_UI_MBSIZE(n)	(0x004 + (n) * 0x20)
 #define	OVL_UI_COOR(n)		(0x008 + (n) * 0x20)
