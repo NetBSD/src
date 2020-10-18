@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.372 2020/10/18 07:46:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.373 2020/10/18 08:01:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,12 +117,8 @@
 #include "pathnames.h"
 #include "trace.h"
 
-#ifdef USE_IOVEC
-#include <sys/uio.h>
-#endif
-
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.372 2020/10/18 07:46:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.373 2020/10/18 08:01:23 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1876,6 +1872,22 @@ eunlink(const char *file)
 	return unlink(file);
 }
 
+static void
+write_all(int fd, const void *data, size_t n)
+{
+	const char *mem = data;
+
+	while (n > 0) {
+		ssize_t written = write(fd, mem, n);
+		if (written == -1 && errno == EAGAIN)
+			continue;
+		if (written == -1)
+			break;
+		mem += written;
+		n -= written;
+	}
+}
+
 /*
  * execDie --
  *	Print why exec failed, avoiding stdio.
@@ -1883,30 +1895,21 @@ eunlink(const char *file)
 void MAKE_ATTR_DEAD
 execDie(const char *af, const char *av)
 {
-#ifdef USE_IOVEC
-	int i = 0;
-	struct iovec iov[8];
-#define IOADD(s) \
-	(void)(iov[i].iov_base = UNCONST(s), \
-	    iov[i].iov_len = strlen(iov[i].iov_base), \
-	    i++)
-#else
-#define	IOADD(void)write(2, s, strlen(s))
-#endif
+	Buffer buf;
 
-	IOADD(progname);
-	IOADD(": ");
-	IOADD(af);
-	IOADD("(");
-	IOADD(av);
-	IOADD(") failed (");
-	IOADD(strerror(errno));
-	IOADD(")\n");
+	Buf_Init(&buf, 0);
+	Buf_AddStr(&buf, progname);
+	Buf_AddStr(&buf, ": ");
+	Buf_AddStr(&buf, af);
+	Buf_AddStr(&buf, "(");
+	Buf_AddStr(&buf, av);
+	Buf_AddStr(&buf, ") failed (");
+	Buf_AddStr(&buf, strerror(errno));
+	Buf_AddStr(&buf, ")\n");
 
-#ifdef USE_IOVEC
-	while (writev(2, iov, 8) == -1 && errno == EAGAIN)
-	    continue;
-#endif
+	write_all(STDERR_FILENO, Buf_GetAll(&buf, NULL), Buf_Len(&buf));
+
+	Buf_Destroy(&buf, TRUE);
 	_exit(1);
 }
 
