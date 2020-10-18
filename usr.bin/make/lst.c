@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.75 2020/10/17 17:47:14 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.76 2020/10/18 08:58:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.75 2020/10/17 17:47:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.76 2020/10/18 08:58:29 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -499,43 +499,43 @@ Lst_Dequeue(List *list)
 }
 
 void
-Stack_Init(Stack *stack)
+Vector_Init(Vector *v)
 {
-    stack->len = 0;
-    stack->cap = 10;
-    stack->items = bmake_malloc(stack->cap * sizeof stack->items[0]);
+    v->len = 0;
+    v->cap = 10;
+    v->items = bmake_malloc(v->cap * sizeof v->items[0]);
 }
 
-Boolean Stack_IsEmpty(Stack *stack)
+Boolean Vector_IsEmpty(Vector *v)
 {
-    return stack->len == 0;
+    return v->len == 0;
 }
 
-void Stack_Push(Stack *stack, void *datum)
+void Vector_Push(Vector *v, void *datum)
 {
-    if (stack->len >= stack->cap) {
-	stack->cap *= 2;
-	stack->items = bmake_realloc(stack->items,
-				     stack->cap * sizeof stack->items[0]);
+    if (v->len >= v->cap) {
+	v->cap *= 2;
+	v->items = bmake_realloc(v->items,
+				 v->cap * sizeof v->items[0]);
     }
-    stack->items[stack->len] = datum;
-    stack->len++;
+    v->items[v->len] = datum;
+    v->len++;
 }
 
-void *Stack_Pop(Stack *stack)
+void *Vector_Pop(Vector *v)
 {
     void *datum;
 
-    assert(stack->len > 0);
-    stack->len--;
-    datum = stack->items[stack->len];
+    assert(v->len > 0);
+    v->len--;
+    datum = v->items[v->len];
 #ifdef CLEANUP
-    stack->items[stack->len] = NULL;
+    v->items[v->len] = NULL;
 #endif
     return datum;
 }
 
-void Stack_Done(Stack *stack)
+void Vector_Done(Vector *v)
 {
-    free(stack->items);
+    free(v->items);
 }
