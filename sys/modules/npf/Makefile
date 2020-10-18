@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2020/10/18 14:34:39 christos Exp $
+# $NetBSD: Makefile,v 1.27 2020/10/18 15:02:12 christos Exp $
 #
 # Public Domain.
 #
@@ -21,6 +21,7 @@ SRCS+=		nvlist.c nvpair.c nv_kern_netbsd.c dnvlist.c
 CPPFLAGS+=	-DINET6
 CPPFLAGS+=	-I${S}/external/bsd/libnv/dist
 
-COPTS.npf_inet.c += -Wno-error=address-of-packed-member
+CWARNFLAGS.npf_inet.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
 
 .include <bsd.kmodule.mk>
