@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.384 2020/10/18 08:58:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.385 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.384 2020/10/18 08:58:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.385 2020/10/18 13:02:10 rillig Exp $");
 
 /* types and constants */
 
@@ -1126,7 +1126,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *const inout_specType,
     switch (*inout_specType) {
     case ExPath:
 	if (*inout_paths == NULL) {
-	    *inout_paths = Lst_Init();
+	    *inout_paths = Lst_New();
 	}
 	Lst_Append(*inout_paths, dirSearchPath);
 	break;
@@ -1189,7 +1189,7 @@ ParseDoDependencyTargetPath(const char *const line,
 	return FALSE;
     } else {
 	if (*inout_paths == NULL) {
-	    *inout_paths = Lst_Init();
+	    *inout_paths = Lst_New();
 	}
 	Lst_Append(*inout_paths, path);
     }
@@ -1245,7 +1245,7 @@ ParseDoDependencyTargetMundane(char *const line,
 	 * use Dir_Destroy in the destruction of the path as the
 	 * Dir module could have added a directory to the path...
 	 */
-	SearchPath *emptyPath = Lst_Init();
+	SearchPath *emptyPath = Lst_New();
 
 	Dir_Expand(line, emptyPath, curTargs);
 
@@ -1578,7 +1578,7 @@ ParseDoDependencySourcesMundane(char *line, char *cp,
 	}
 
 	if (*cp == '(') {
-	    GNodeList *sources = Lst_Init();
+	    GNodeList *sources = Lst_New();
 	    if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
 		Parse_Error(PARSE_FATAL,
 			    "Error in source archive spec \"%s\"", line);
@@ -1654,7 +1654,7 @@ ParseDoDependency(char *line)
 
     paths = NULL;
 
-    curTargs = Lst_Init();
+    curTargs = Lst_New();
 
     /*
      * First, grind through the targets.
@@ -3023,7 +3023,7 @@ ParseDependency(char *line)
     /* Need a fresh list for the target nodes */
     if (targets != NULL)
 	Lst_Free(targets);
-    targets = Lst_Init();
+    targets = Lst_New();
 
     ParseDoDependency(expanded_line);
     free(expanded_line);
@@ -3123,12 +3123,12 @@ void
 Parse_Init(void)
 {
     mainNode = NULL;
-    parseIncPath = Lst_Init();
-    sysIncPath = Lst_Init();
-    defIncPath = Lst_Init();
+    parseIncPath = Lst_New();
+    sysIncPath = Lst_New();
+    defIncPath = Lst_New();
     Vector_Init(&includes);
 #ifdef CLEANUP
-    targCmds = Lst_Init();
+    targCmds = Lst_New();
 #endif
 }
 
@@ -3167,7 +3167,7 @@ Parse_MainName(void)
 {
     GNodeList *mainList;
 
-    mainList = Lst_Init();
+    mainList = Lst_New();
 
     if (mainNode == NULL) {
 	Punt("no target to make.");

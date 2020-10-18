@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.70 2020/10/18 08:58:29 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.71 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -133,7 +133,7 @@ typedef int LstActionUntilProc(void *datum, void *args);
 /* Create or destroy a list */
 
 /* Create a new list. */
-List *Lst_Init(void);
+List *Lst_New(void);
 /* Duplicate an existing list. */
 List *Lst_Copy(List *, LstCopyProc);
 /* Free the list, leaving the node data unmodified. */

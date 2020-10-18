@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.124 2020/10/18 11:54:43 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.125 2020/10/18 13:02:10 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -625,7 +625,7 @@ meta_mode_init(const char *make_mode)
     /*
      * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
      */
-    metaBailiwick = Lst_Init();
+    metaBailiwick = Lst_New();
     (void)Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
 		    VAR_GLOBAL, VARE_WANTRES, &metaBailiwickStr);
     /* TODO: handle errors */
@@ -633,7 +633,7 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
-    metaIgnorePaths = Lst_Init();
+    metaIgnorePaths = Lst_New();
     Var_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
     (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
@@ -1096,7 +1096,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	goto oodate_out;
     dname = fname3;
 
-    missingFiles = Lst_Init();
+    missingFiles = Lst_New();
 
     /*
      * We need to check if the target is out-of-date. This includes

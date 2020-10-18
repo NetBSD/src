@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.76 2020/10/18 08:58:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.77 2020/10/18 13:02:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.76 2020/10/18 08:58:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.77 2020/10/18 13:02:10 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -58,7 +58,7 @@ LstIsEmpty(List *list)
 
 /* Create and initialize a new, empty list. */
 List *
-Lst_Init(void)
+Lst_New(void)
 {
     List *list = bmake_malloc(sizeof *list);
 
@@ -79,7 +79,7 @@ Lst_Copy(List *list, LstCopyProc copyProc)
     List *newList;
     ListNode *node;
 
-    newList = Lst_Init();
+    newList = Lst_New();
 
     for (node = list->first; node != NULL; node = node->next) {
 	void *datum = copyProc != NULL ? copyProc(node->datum) : node->datum;

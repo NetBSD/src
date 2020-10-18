@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.135 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.136 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.135 2020/10/18 12:36:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.136 2020/10/18 13:02:10 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -357,7 +357,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	     */
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
-	    StringList *members = Lst_Init();
+	    StringList *members = Lst_New();
 	    Dir_Expand(memName, dirSearchPath, members);
 
 	    while (!Lst_IsEmpty(members)) {
@@ -1126,7 +1126,7 @@ Arch_LibOODate(GNode *gn)
 void
 Arch_Init(void)
 {
-    archives = Lst_Init();
+    archives = Lst_New();
 }
 
 /* Clean up the archives module. */

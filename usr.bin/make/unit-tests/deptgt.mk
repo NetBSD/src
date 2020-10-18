@@ -1,4 +1,4 @@
-# $NetBSD: deptgt.mk,v 1.7 2020/09/25 23:39:51 rillig Exp $
+# $NetBSD: deptgt.mk,v 1.8 2020/10/18 13:02:10 rillig Exp $
 #
 # Tests for special targets like .BEGIN or .SUFFIXES in dependency
 # declarations.
@@ -15,7 +15,7 @@
 #	ParseDoDependency	at the beginning
 #	FinishDependencyGroup	at "targets = NULL"
 #	Parse_File		at "Lst_Free(targets)"
-#	Parse_File		at "targets = Lst_Init()"
+#	Parse_File		at "targets = Lst_New()"
 #	ParseLine_ShellCommand	at "targets == NULL"
 #
 # Keywords:
