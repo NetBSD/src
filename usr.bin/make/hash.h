@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.27 2020/10/18 10:44:25 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.28 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -78,53 +78,53 @@
 #define	MAKE_HASH_H
 
 /* A single key-value entry in the hash table. */
-typedef struct Hash_Entry {
-    struct Hash_Entry *next;	/* Used to link together all the entries
+typedef struct HashEntry {
+    struct HashEntry *next;	/* Used to link together all the entries
 				 * associated with the same bucket. */
     void	      *value;
     unsigned	      namehash;	/* hash value of key */
     char	      name[1];	/* key string, variable length */
-} Hash_Entry;
+} HashEntry;
 
 /* The hash table containing the entries. */
-typedef struct Hash_Table {
-    Hash_Entry **buckets;	/* Pointers to Hash_Entry, one
+typedef struct HashTable {
+    HashEntry **buckets;	/* Pointers to HashEntry, one
 				 * for each bucket in the table. */
     unsigned int bucketsSize;
     unsigned int numEntries;	/* Number of entries in the table. */
     unsigned int bucketsMask;	/* Used to select the bucket for a hash. */
     unsigned int maxchain;	/* max length of chain detected */
-} Hash_Table;
+} HashTable;
 
 /* State of an iteration over all entries in a table. */
 typedef struct HashIter {
-    Hash_Table *table;		/* Table being searched. */
+    HashTable *table;		/* Table being searched. */
     unsigned int nextBucket;	/* Next bucket to check (after current). */
-    Hash_Entry *entry;		/* Next entry to check in current bucket. */
+    HashEntry *entry;		/* Next entry to check in current bucket. */
 } HashIter;
 
 static inline MAKE_ATTR_UNUSED void *
-Hash_GetValue(Hash_Entry *h)
+Hash_GetValue(HashEntry *h)
 {
     return h->value;
 }
 
 static inline MAKE_ATTR_UNUSED void
-Hash_SetValue(Hash_Entry *h, void *datum)
+Hash_SetValue(HashEntry *h, void *datum)
 {
     h->value = datum;
 }
 
-void Hash_InitTable(Hash_Table *);
-void Hash_DeleteTable(Hash_Table *);
-Hash_Entry *Hash_FindEntry(Hash_Table *, const char *);
-void *Hash_FindValue(Hash_Table *, const char *);
-Hash_Entry *Hash_CreateEntry(Hash_Table *, const char *, Boolean *);
-void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
+void Hash_InitTable(HashTable *);
+void Hash_DeleteTable(HashTable *);
+HashEntry *Hash_FindEntry(HashTable *, const char *);
+void *Hash_FindValue(HashTable *, const char *);
+HashEntry *Hash_CreateEntry(HashTable *, const char *, Boolean *);
+void Hash_DeleteEntry(HashTable *, HashEntry *);
 
-void HashIter_Init(HashIter *, Hash_Table *);
-Hash_Entry *HashIter_Next(HashIter *);
+void HashIter_Init(HashIter *, HashTable *);
+HashEntry *HashIter_Next(HashIter *);
 
-void Hash_DebugStats(Hash_Table *, const char *);
+void Hash_DebugStats(HashTable *, const char *);
 
 #endif /* MAKE_HASH_H */

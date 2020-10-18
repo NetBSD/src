@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.45 2020/10/18 10:44:25 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.46 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.45 2020/10/18 10:44:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.46 2020/10/18 12:36:43 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -100,10 +100,10 @@ hash(const char *key, size_t *out_keylen)
 	return h;
 }
 
-static Hash_Entry *
-HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
+static HashEntry *
+HashTable_Find(HashTable *t, unsigned int h, const char *key)
 {
-	Hash_Entry *e;
+	HashEntry *e;
 	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
@@ -124,10 +124,10 @@ HashTable_Find(Hash_Table *t, unsigned int h, const char *key)
 
 /* Sets up the hash table. */
 void
-Hash_InitTable(Hash_Table *t)
+Hash_InitTable(HashTable *t)
 {
 	unsigned int n = 16, i;
-	struct Hash_Entry **hp;
+	HashEntry **hp;
 
 	t->numEntries = 0;
 	t->maxchain = 0;
@@ -139,11 +139,11 @@ Hash_InitTable(Hash_Table *t)
 }
 
 /* Removes everything from the hash table and frees up the memory space it
- * occupied (except for the space in the Hash_Table structure). */
+ * occupied (except for the space in the HashTable structure). */
 void
-Hash_DeleteTable(Hash_Table *t)
+Hash_DeleteTable(HashTable *t)
 {
-	struct Hash_Entry **hp, *h, *nexth = NULL;
+	HashEntry **hp, *h, *nexth = NULL;
 	int i;
 
 	for (hp = t->buckets, i = (int)t->bucketsSize; --i >= 0;) {
@@ -171,29 +171,29 @@ Hash_DeleteTable(Hash_Table *t)
  *	Returns a pointer to the entry for key, or NULL if the table contains
  *	no entry for the key.
  */
-Hash_Entry *
-Hash_FindEntry(Hash_Table *t, const char *key)
+HashEntry *
+Hash_FindEntry(HashTable *t, const char *key)
 {
 	unsigned int h = hash(key, NULL);
 	return HashTable_Find(t, h, key);
 }
 
 void *
-Hash_FindValue(Hash_Table *t, const char *key)
+Hash_FindValue(HashTable *t, const char *key)
 {
-	Hash_Entry *he = Hash_FindEntry(t, key);
+	HashEntry *he = Hash_FindEntry(t, key);
 	return he != NULL ? he->value : NULL;
 }
 
 /* Makes a new hash table that is larger than the old one. The entire hash
  * table is moved, so any bucket numbers from the old table become invalid. */
 static void
-RebuildTable(Hash_Table *t)
+RebuildTable(HashTable *t)
 {
-	Hash_Entry *e, *next = NULL, **hp, **xp;
+	HashEntry *e, *next = NULL, **hp, **xp;
 	int i;
 	unsigned int mask, oldsize, newsize;
-	Hash_Entry **oldhp;
+	HashEntry **oldhp;
 
 	oldhp = t->buckets;
 	oldsize = t->bucketsSize;
@@ -227,13 +227,13 @@ RebuildTable(Hash_Table *t)
  *	newPtr		Filled with TRUE if new entry created,
  *			FALSE otherwise.
  */
-Hash_Entry *
-Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
+HashEntry *
+Hash_CreateEntry(HashTable *t, const char *key, Boolean *newPtr)
 {
-	Hash_Entry *e;
+	HashEntry *e;
 	unsigned h;
 	size_t keylen;
-	struct Hash_Entry **hp;
+	HashEntry **hp;
 
 	h = hash(key, &keylen);
 	e = HashTable_Find(t, h, key);
@@ -267,9 +267,9 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 
 /* Delete the given hash table entry and free memory associated with it. */
 void
-Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
+Hash_DeleteEntry(HashTable *t, HashEntry *e)
 {
-	Hash_Entry **hp, *p;
+	HashEntry **hp, *p;
 
 	for (hp = &t->buckets[e->namehash & t->bucketsMask];
 	     (p = *hp) != NULL; hp = &p->next) {
@@ -285,7 +285,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 
 /* Set things up for iterating over all entries in the hash table. */
 void
-HashIter_Init(HashIter *hi, Hash_Table *t)
+HashIter_Init(HashIter *hi, HashTable *t)
 {
 	hi->table = t;
 	hi->nextBucket = 0;
@@ -294,11 +294,11 @@ HashIter_Init(HashIter *hi, Hash_Table *t)
 
 /* Return the next entry in the hash table, or NULL if the end of the table
  * is reached. */
-Hash_Entry *
+HashEntry *
 HashIter_Next(HashIter *hi)
 {
-	Hash_Entry *e;
-	Hash_Table *t = hi->table;
+	HashEntry *e;
+	HashTable *t = hi->table;
 
 	/*
 	 * The entry field points to the most recently returned
@@ -322,8 +322,8 @@ HashIter_Next(HashIter *hi)
 }
 
 void
-Hash_DebugStats(Hash_Table *t, const char *name)
+Hash_DebugStats(HashTable *t, const char *name)
 {
-	DEBUG4(HASH, "Hash_Table %s: size=%u numEntries=%u maxchain=%u\n",
+	DEBUG4(HASH, "HashTable %s: size=%u numEntries=%u maxchain=%u\n",
 	       name, t->bucketsSize, t->numEntries, t->maxchain);
 }
