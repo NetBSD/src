@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.169 2020/10/18 14:36:09 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.170 2020/10/18 17:19:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.169 2020/10/18 14:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.170 2020/10/18 17:19:54 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -313,7 +313,7 @@ struct cache_st {
 };
 
 /* minimize changes below */
-typedef enum {
+typedef enum CachedStatsFlags {
     CST_LSTAT = 0x01,		/* call lstat(2) instead of stat(2) */
     CST_UPDATE = 0x02		/* ignore existing cached entry */
 } CachedStatsFlags;
