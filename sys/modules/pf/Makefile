@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/10/18 14:36:43 christos Exp $
+# $NetBSD: Makefile,v 1.14 2020/10/18 15:02:12 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -25,8 +25,8 @@ WARNS=	3
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.pf.c+=	-Wno-error=implicit-fallthrough
 .endif
-COPTS.pf.c += -Wno-error=address-of-packed-member
-COPTS.pf_norm.c += -Wno-error=address-of-packed-member
-COPTS.pf_table.c += -Wno-error=address-of-packed-member
+CWARNFLAGS.pf.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.pf_norm.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.pf_table.c+=   ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>
