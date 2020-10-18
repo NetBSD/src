@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2020/10/05 22:15:45 rillig Exp $
+#	$NetBSD: Makefile,v 1.104 2020/10/18 19:11:35 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -65,7 +65,6 @@ COPTS.arch.c+=	-Wno-error=format-truncation
 COPTS.dir.c+=	-Wno-error=format-truncation
 COPTS.main.c+=	-Wno-error=format-truncation
 COPTS.meta.c+=	-Wno-error=format-truncation
-COPTS.parse.c+=	-Wno-error=format-truncation
 .endif
 
 # Whether to compile with GCC 9 from pkgsrc, during development.
@@ -88,7 +87,6 @@ COPTS.arch.c+=	-Wno-error=format-truncation
 COPTS.dir.c+=	-Wno-error=format-truncation
 COPTS.main.c+=	-Wno-error=format-truncation
 COPTS.meta.c+=	-Wno-error=format-truncation
-COPTS.parse.c+=	-Wno-error=format-truncation
 .endif
 
 USE_META?=	yes
@@ -160,7 +158,6 @@ COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 COPTS+=		-Wdeclaration-after-statement
 
