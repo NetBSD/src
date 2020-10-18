@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.71 2020/09/10 02:34:13 rin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.72 2020/10/18 19:57:44 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -31,8 +31,7 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_MODULE -DSYSCTL_INCLUDE_DESCR
 
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member -Wno-error=constant-conversion
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.clang+=	-Wno-error=constant-conversion
 
 # XXX until the kernel is fixed again...
 CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
