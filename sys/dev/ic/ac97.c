@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.99 2019/11/28 05:07:27 isaki Exp $ */
+/*      $NetBSD: ac97.c,v 1.100 2020/10/18 11:51:08 rin Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.99 2019/11/28 05:07:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.100 2020/10/18 11:51:08 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1315,7 +1315,7 @@ ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type, kmutex
 
 	mutex_exit(as->lock);
 
-	id = (id1 << 16) | id2;
+	id = ((uint32_t)id1 << 16) | id2;
 	aprint_normal_dev(sc_dev, "ac97: ");
 
 	for (i = 0; ; i++) {
@@ -1696,7 +1696,8 @@ ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 		if (name)
 			strcpy(dip->label.name, name);
 
-		memcpy(&dip->un, si->info, si->info_size);
+		if (si->info)
+			memcpy(&dip->un, si->info, si->info_size);
 
 		/* Set the delta for volume sources */
 		if (dip->type == AUDIO_MIXER_VALUE)
