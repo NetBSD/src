@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.371 2020/10/05 22:45:47 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.372 2020/10/18 07:46:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -122,7 +122,7 @@
 #endif
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.371 2020/10/05 22:45:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.372 2020/10/18 07:46:04 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1877,11 +1877,11 @@ eunlink(const char *file)
 }
 
 /*
- * execError --
+ * execDie --
  *	Print why exec failed, avoiding stdio.
  */
-void
-execError(const char *af, const char *av)
+void MAKE_ATTR_DEAD
+execDie(const char *af, const char *av)
 {
 #ifdef USE_IOVEC
 	int i = 0;
@@ -1907,6 +1907,7 @@ execError(const char *af, const char *av)
 	while (writev(2, iov, 8) == -1 && errno == EAGAIN)
 	    continue;
 #endif
+	_exit(1);
 }
 
 /*

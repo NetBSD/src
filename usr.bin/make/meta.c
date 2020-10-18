@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.122 2020/09/28 22:23:35 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.123 2020/10/18 07:46:04 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1647,11 +1647,8 @@ void
 meta_compat_child(void)
 {
     meta_job_child(NULL);
-    if (dup2(childPipe[1], 1) < 0 ||
-	dup2(1, 2) < 0) {
-	execError("dup2", "pipe");
-	_exit(1);
-    }
+    if (dup2(childPipe[1], 1) < 0 || dup2(1, 2) < 0)
+	execDie("dup2", "pipe");
 }
 
 void
