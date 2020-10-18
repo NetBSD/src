@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.166 2020/10/18 12:47:43 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.167 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.166 2020/10/18 12:47:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.167 2020/10/18 13:02:10 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -227,7 +227,7 @@ typedef struct OpenDirs {
 static void
 OpenDirs_Init(OpenDirs *odirs)
 {
-    odirs->list = Lst_Init();
+    odirs->list = Lst_New();
     Hash_InitTable(&odirs->table);
 }
 
@@ -392,7 +392,7 @@ cached_lstat(const char *pathname, struct make_stat *st)
 void
 Dir_Init(void)
 {
-    dirSearchPath = Lst_Init();
+    dirSearchPath = Lst_New();
     OpenDirs_Init(&openDirs);
     Hash_InitTable(&mtimes);
     Hash_InitTable(&lmtimes);
@@ -883,7 +883,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 			char *dp = &dirpath[strlen(dirpath) - 1];
 			if (*dp == '/')
 			    *dp = '\0';
-			path = Lst_Init();
+			path = Lst_New();
 			(void)Dir_AddDir(path, dirpath);
 			DirExpandInt(cp + 1, path, expansions);
 			Lst_Free(path);

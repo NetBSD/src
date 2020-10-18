@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.159 2020/10/18 11:09:08 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.160 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.159 2020/10/18 11:09:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.160 2020/10/18 13:02:10 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1232,7 +1232,7 @@ Make_ProcessWait(GNodeList *targs)
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);
 
-    examine = Lst_Init();
+    examine = Lst_New();
     Lst_Append(examine, pgn);
 
     while (!Lst_IsEmpty(examine)) {
@@ -1294,7 +1294,7 @@ Make_Run(GNodeList *targs)
     int errors;			/* Number of errors the Job module reports */
 
     /* Start trying to make the current targets... */
-    toBeMade = Lst_Init();
+    toBeMade = Lst_New();
 
     Make_ExpandUse(targs);
     Make_ProcessWait(targs);
