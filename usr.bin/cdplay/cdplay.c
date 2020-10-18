@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.49 2015/06/17 00:01:59 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.50 2020/10/18 21:58:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.49 2015/06/17 00:01:59 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.50 2020/10/18 21:58:32 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 		}
 		*p = '\0';
 		arg = parse(buf, &cmd);
-		return (run(cmd, arg));
+		return run(cmd, arg);
 	}
 
 	setbuf(stdout, NULL);
@@ -372,7 +372,7 @@ start_digital(const char *arg)
 	intv_usecs = 13333 * da.fpw;
 	/*
 	 * interrupt earlier for safety, by a value which
-	 * doesn't hurt interactice response if we block
+	 * doesn't hurt interactive response if we block
 	 * in the signal handler
 	 */
 	intv_usecs -= 50000;
@@ -387,20 +387,20 @@ start_digital(const char *arg)
 	da.aubuf = malloc(da.fpw * CDDA_SIZE);
 	if (da.aubuf == NULL) {
 		warn("Not enough memory for audio buffers");
-		return (1);
+		return 1;
 	}
 	if (da.afd == -1 && !openaudio()) {
 		warn("Cannot open audio device");
-		return (1);
+		return 1;
 	}
 	itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec =
 		intv_usecs / 1000000;
 	itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec =
 		intv_usecs % 1000000;
 	rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
-	if (rv == 0) {
+	if (rv == 0)
 		digital = 1;
-	} else
+	else
 		warn("setitimer in CMD_DIGITAL");
 	msf = 0;
 	tbvalid = 0;
@@ -437,7 +437,7 @@ run(int cmd, const char *arg)
 	}
 
 	if (fd < 0 && !opencd())
-		return (0);
+		return 0;
 
 	switch (cmd) {
 	case CMD_INFO:
@@ -451,7 +451,7 @@ run(int cmd, const char *arg)
 	case CMD_PAUSE:
 		if (digital) {
 			da.playing = 0;
-			return (0);
+			return 0;
 		} else if ((rv = ioctl(fd, CDIOCPAUSE)) < 0)
 			warn("ioctl(CDIOCPAUSE)");
 		break;
@@ -459,7 +459,7 @@ run(int cmd, const char *arg)
 	case CMD_RESUME:
 		if (digital) {
 			da.playing = 1;
-			return (0);
+			return 0;
 		} else if ((rv = ioctl(fd, CDIOCRESUME)) < 0)
 			warn("ioctl(CDIOCRESUME)");
 		break;
@@ -467,7 +467,7 @@ run(int cmd, const char *arg)
 	case CMD_STOP:
 		if (digital) {
 			da.playing = 0;
-			return (0);
+			return 0;
 		} else {
 			if ((rv = ioctl(fd, CDIOCSTOP)) < 0)
 				warn("ioctl(CDIOCSTOP)");
@@ -479,7 +479,7 @@ run(int cmd, const char *arg)
 	case CMD_RESET:
 		tbvalid = 0;
 		IOCTL_SIMPLE(fd, CDIOCRESET);
-		return (0);
+		return 0;
 
 	case CMD_EJECT:
 		tbvalid = 0;
@@ -634,7 +634,7 @@ run(int cmd, const char *arg)
 		break;
 	}
 
-	return (rv);
+	return rv;
 }
 
 static int
@@ -647,12 +647,12 @@ play(const char *arg, int fromuser)
 
 	if (shuffle && fromuser) {
 		warnx("`play' not valid in shuffle mode");
-		return (0);
+		return 0;
 	}
 
 	if ((rv = ioctl(fd, CDIOREADTOCHEADER, &h)) <  0) {
 		warn("ioctl(CDIOREADTOCHEADER)");
-		return (int)(rv);
+		return (int)rv;
 	}
 
 	end = 0;
@@ -660,11 +660,11 @@ play(const char *arg, int fromuser)
 	n = h.ending_track - h.starting_track + 1;
 	rv = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 	if (rv < 0)
-		return (int)(rv);
+		return (int)rv;
 
 	if (arg == NULL || *arg == '\0') {
 		/* Play the whole disc */
-		return (play_track(h.starting_track, 1, h.ending_track, 99));
+		return play_track(h.starting_track, 1, h.ending_track, 99);
 	}
 
 	if (strchr(arg, '#') != NULL) {
@@ -678,14 +678,14 @@ play(const char *arg, int fromuser)
 		if (len == 0) {
 			len = toc2lba(n);
 		}
-		return (play_blocks(blk, len));
+		return play_blocks(blk, len);
 	}
 
 	if (strchr(arg, ':') != NULL) {
 		/*
 		 * Play MSF m1:s1 [ .f1 ] [ m2:s2 [ .f2 ] ]
 		 *
-		 * Will now also undestand timed addresses relative
+		 * Will now also understand timed addresses relative
 		 * to the beginning of a track in the form...
 		 *
 		 *      tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]
@@ -776,7 +776,7 @@ Play_Relative_Addresses:
 		if ((m1 > tm) || ((m1 == tm) && ((s1 > ts) || ((s1 == ts) &&
 		    (f1 > tf))))) {
 			warnx("Track %d is not that long.", tr1);
-			return (0);
+			return 0;
 		}
 		tr1--;	/* XXXXX ???? */
 
@@ -809,10 +809,10 @@ Play_Relative_Addresses:
 		if ((tr2 < n) && ((m2 > tm) || ((m2 == tm) && ((s2 > ts) ||
 		    ((s2 == ts) && (f2 > tf)))))) {
 			warnx("The playing time of the disc is not that long.");
-			return (0);
+			return 0;
 		}
 
-		return (play_msf(m1, s1, f1, m2, s2, f2));
+		return play_msf(m1, s1, f1, m2, s2, f2);
 
 Try_Absolute_Timed_Addresses:
 		m2 = UINT_MAX;
@@ -838,7 +838,7 @@ Try_Absolute_Timed_Addresses:
 				f2 = tf;
 			}
 		}
-		return (play_msf(m1, s1, f1, m2, s2, f2));
+		return play_msf(m1, s1, f1, m2, s2, f2);
 	}
 
 	/*
@@ -854,11 +854,11 @@ Try_Absolute_Timed_Addresses:
 
 	if (end == 0)
 		end = n;
-	return (play_track(start, istart, end, iend));
+	return play_track(start, istart, end, iend);
 
 Clean_up:
 	warnx("invalid command arguments");
-	return (0);
+	return 0;
 }
 
 static void
@@ -909,10 +909,10 @@ skip(int dir, int fromuser)
 
 	if ((rv = ioctl(fd, CDIOREADTOCHEADER, &h)) <  0) {
 		warn("ioctl(CDIOREADTOCHEADER)");
-		return (rv);
+		return rv;
 	}
 	if ((rv = get_status(&trk, &idx, &m, &s, &f)) < 0)
-		return (rv);
+		return rv;
 
 	if (dir == 0 || shuffle != 0) {
 		if (fromuser || (rv != CD_AS_PLAY_IN_PROGRESS &&
@@ -921,7 +921,7 @@ skip(int dir, int fromuser)
 			    (int)((h.starting_track +
 			    arc4random() % (h.ending_track - h.starting_track + 1)));
 		else
-			return (0);
+			return 0;
 	} else {
 		trk += dir;
 		if (trk > h.ending_track)
@@ -935,7 +935,7 @@ skip(int dir, int fromuser)
 	else
 		snprintf(str, sizeof(str), "%d", trk);
 
-	return (play(str, 0));
+	return play(str, 0);
 }
 
 static const char *
@@ -967,7 +967,7 @@ strstatus(int sts)
 		break;
 	}
 
-	return (str);
+	return str;
 }
 
 static int
@@ -996,7 +996,7 @@ print_status(void)
 		       "(%d frames per wakeup, %lld.%06lds period)\n",
 		    da.auname, da.fpw, 
 		    (long long)itv_timer.it_interval.tv_sec,
-		    
+
 		    (long)itv_timer.it_interval.tv_usec);
 	else
 		printf("digital xfer:\toff\n");
@@ -1019,7 +1019,7 @@ print_status(void)
 		printf("media catalog:\tnone\n");
 
 	if (digital)
-		return (0);
+		return 0;
 	if (ioctl(fd, CDIOCGETVOL, &v) >= 0) {
 		printf("left volume:\t%d\n", v.vol[0]);
 		printf("right volume:\t%d\n", v.vol[1]);
@@ -1028,7 +1028,7 @@ print_status(void)
 		printf("right volume:\tnot available\n");
 	}
 
-;	return (0);
+	return 0;
 }
 
 static int
@@ -1039,13 +1039,13 @@ info(void)
 
 	if ((rc = ioctl(fd, CDIOREADTOCHEADER, &h)) < 0) {
 		warn("ioctl(CDIOREADTOCHEADER)");
-		return (rc);
+		return rc;
 	}
 
 	n = h.ending_track - h.starting_track + 1;
 	rc = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 	if (rc < 0)
-		return (rc);
+		return rc;
 
 	printf("track     start  duration   block  length     type\n");
 	printf("--------------------------------------------------\n");
@@ -1056,7 +1056,7 @@ info(void)
 	}
 	printf("    -  ");	/* Lead-out area */
 	print_track(toc_buffer + n);
-	return (0);
+	return 0;
 }
 
 static void
@@ -1150,7 +1150,7 @@ play_track(int tstart, int istart, int tend, int iend)
 		errno = oerrno;
 		warn("ioctl(CDIOCPLAYTRACKS)");
 	}
-	return (rv);
+	return rv;
 }
 
 static int
@@ -1164,7 +1164,7 @@ play_blocks(int blk, int len)
 
 	if ((rv = ioctl(fd, CDIOCPLAYBLOCKS, &t)) < 0)
 		warn("ioctl(CDIOCPLAYBLOCKS");
-	return (rv);
+	return rv;
 }
 
 static int
@@ -1176,7 +1176,7 @@ play_digital(u_int start, u_int end)
 	if (!interactive)
 		while (da.playing)
 			sleep(1);
-	return (0);
+	return 0;
 }
 
 static int
@@ -1192,7 +1192,7 @@ setvol(int left, int right)
 
 	if ((rv = ioctl(fd, CDIOCSETVOL, &v)) < 0)
 		warn("ioctl(CDIOCSETVOL)");
-	return (rv);
+	return rv;
 }
 
 static int
@@ -1209,7 +1209,7 @@ read_toc_entries(size_t len)
 	if ((rv = ioctl(fd, CDIOREADTOCENTRYS, &t)) < 0)
 		warn("ioctl(CDIOREADTOCENTRYS)");
 	tbvalid = 1;
-	return (rv);
+	return rv;
 }
 
 static int
@@ -1220,8 +1220,8 @@ play_msf(u_int start_m, u_int start_s, u_int start_f, u_int end_m, u_int end_s,
 	int rv;
 
 	if (digital)
-		return (play_digital(msf2lba(start_m, start_s, start_f),
-			msf2lba(end_m, end_s, end_f)));
+		return play_digital(msf2lba(start_m, start_s, start_f),
+			msf2lba(end_m, end_s, end_f));
 	a.start_m = start_m;
 	a.start_s = start_s;
 	a.start_f = start_f;
@@ -1231,7 +1231,7 @@ play_msf(u_int start_m, u_int start_s, u_int start_f, u_int end_m, u_int end_s,
 
 	if ((rv = ioctl(fd, CDIOCPLAYMSF, &a)) < 0)
 		warn("ioctl(CDIOCPLAYMSF)");
-	return (rv);
+	return rv;
 }
 
 static int
@@ -1248,13 +1248,13 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 	if (!tbvalid) {
 		if ((rc = ioctl(fd, CDIOREADTOCHEADER, &h)) < 0) {
 			warn("ioctl(CDIOREADTOCHEADER)");
-			return (rc);
+			return rc;
 		}
 
 		n = h.ending_track - h.starting_track + 1;
 		rc = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 		if (rc < 0)
-			return (rc);
+			return rc;
 	}
 
 #define SWAPLBA(x) (msf?be32toh(x):(x))
@@ -1282,7 +1282,7 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 
 	if ((rv = ioctl(fd, CDIOCREADSUBCHANNEL, &s)) < 0) {
 		warn("ioctl(CDIOCREADSUBCHANNEL)");
-		return (rv);
+		return rv;
 	}
 
 	*trk = s.data->what.position.track_number;
@@ -1299,14 +1299,14 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 		*frame = ff;
 	}
 
-	return (s.data->header.audio_status);
+	return s.data->header.audio_status;
 }
 
 static const char *
 prompt(void)
 {
 
-	return ("cdplay> ");
+	return "cdplay> ";
 }
 
 static const char *
@@ -1321,14 +1321,14 @@ parse(char *buf, int *cmd)
 
 	if (isdigit((unsigned char)*p) || (p[0] == '#' && isdigit((unsigned char)p[1]))) {
 		*cmd = CMD_PLAY;
-		return (p);
+		return p;
 	}
 
 	for (buf = p; *p != '\0' && !isspace((unsigned char)*p); p++)
 		continue;
 
 	if ((len = p - buf) == 0)
-		return (0);
+		return NULL;
 
 	if (*p != '\0') {		/* It must be a spacing character! */
 		*p++ = 0;
@@ -1350,7 +1350,7 @@ parse(char *buf, int *cmd)
 		if (len >= c->min && strncasecmp(buf, c->name, len) == 0) {
 			if (*cmd != -1 && *cmd != (int)c->command) {
 				warnx("ambiguous command");
-				return (0);
+				return NULL;
 			}
 			*cmd = c->command;
 		}
@@ -1358,12 +1358,12 @@ parse(char *buf, int *cmd)
 
 	if (*cmd == -1) {
 		warnx("invalid command, enter ``help'' for commands");
-		return (0);
+		return NULL;
 	}
 
 	while (isspace((unsigned char)*p))
 		p++;
-	return (p);
+	return p;
 }
 
 static int
@@ -1372,7 +1372,7 @@ opencd(void)
 	char devbuf[80];
 
 	if (fd > -1)
-		return (1);
+		return 1;
 
 	fd = opendisk(cdname, O_RDONLY, devbuf, sizeof(devbuf), 0);
 	if (fd < 0) {
@@ -1383,11 +1383,11 @@ opencd(void)
 			 * interpreted as "No disc in drive %s".
 			 */
 			warnx("no disc in drive %s", devbuf);
-			return (0);
+			return 0;
 		}
 		err(EXIT_FAILURE, "%s", devbuf);
 	}
-	return (1);
+	return 1;
 }
 
 static int
@@ -1398,11 +1398,11 @@ openaudio(void)
 	int rc, aei;
 
 	if (da.afd > -1)
-		return (1);
+		return 1;
 	da.afd = open(da.auname, O_WRONLY);
 	if (da.afd < 0) {
 		warn("openaudio");
-		return (0);
+		return 0;
 	}
 	AUDIO_INITINFO(&ai);
 	ae.index = 0;
@@ -1418,7 +1418,7 @@ openaudio(void)
 		warn("No suitable audio encoding found!");
 		close(da.afd);
 		da.afd = -1;
-		return (0);
+		return 0;
 	}
 	ai.mode = AUMODE_PLAY_ALL;
 	ai.play.sample_rate = 44100;
@@ -1431,9 +1431,9 @@ openaudio(void)
 		warn("AUDIO_SETINFO");
 		close(da.afd);
 		da.afd = -1;
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 static int
@@ -1506,7 +1506,7 @@ toc2lba(u_int i)
 		    (u_int)ctep->addr.msf.second,
 		    (u_int)ctep->addr.msf.frame);
 	} else {
-		return (ctep->addr.lba);
+		return ctep->addr.lba;
 	}
 }
 
