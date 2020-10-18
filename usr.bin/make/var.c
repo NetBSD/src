@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.575 2020/10/18 10:44:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.576 2020/10/18 12:36:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.575 2020/10/18 10:44:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.576 2020/10/18 12:36:43 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -233,7 +233,7 @@ ENUM_FLAGS_RTTI_6(VarFlags,
  */
 typedef struct Var {
     /* The name of the variable, once set, doesn't change anymore.
-     * For context variables, it aliases the corresponding Hash_Entry name.
+     * For context variables, it aliases the corresponding HashEntry name.
      * For environment and undefined variables, it is allocated. */
     const char *name;
     void *name_freeIt;
@@ -428,7 +428,7 @@ VarFreeEnv(Var *v, Boolean destroy)
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
-    Hash_Entry *he = Hash_CreateEntry(&ctxt->context, name, NULL);
+    HashEntry *he = Hash_CreateEntry(&ctxt->context, name, NULL);
     Var *v = VarNew(he->name, NULL, val,
 		      flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     Hash_SetValue(he, v);
@@ -442,7 +442,7 @@ void
 Var_Delete(const char *name, GNode *ctxt)
 {
     char *name_freeIt = NULL;
-    Hash_Entry *he;
+    HashEntry *he;
 
     if (strchr(name, '$') != NULL) {
 	(void)Var_Subst(name, VAR_GLOBAL, VARE_WANTRES, &name_freeIt);
@@ -574,7 +574,7 @@ Var_ExportVars(void)
 
     if (var_exportedVars == VAR_EXPORTED_ALL) {
         HashIter hi;
-        Hash_Entry *he;
+        HashEntry *he;
 
 	/* Ouch! Exporting all variables at once is crazy... */
 	HashIter_Init(&hi, &VAR_GLOBAL->context);
@@ -933,7 +933,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	    ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
 	if (v->flags & VAR_FROM_ENV) {
-	    Hash_Entry *h;
+	    HashEntry *h;
 
 	    /*
 	     * If the original variable came from the environment, we
@@ -3858,7 +3858,7 @@ Var_Dump(GNode *ctxt)
 {
     Vector varnames;
     HashIter hi;
-    Hash_Entry *he;
+    HashEntry *he;
     size_t i;
 
     Vector_Init(&varnames);
