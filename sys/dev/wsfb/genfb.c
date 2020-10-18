@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.76 2020/10/18 12:00:12 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.77 2020/10/18 12:47:37 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.76 2020/10/18 12:00:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.77 2020/10/18 12:47:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,12 +499,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	
 		case WSDISPLAYIO_GET_FBINFO: {
 			struct wsdisplayio_fbinfo *fbi = data;
-			ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-			if (ret == 0) {
-				if (sc->sc_enable_shadowfb)
-					fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
-			}
-			return ret;
+			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 		}
 	}
 	return EPASSTHROUGH;
