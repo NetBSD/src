@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.942 2020/10/16 07:12:26 mgorny Exp $
+# $NetBSD: mi,v 1.943 2020/10/18 16:33:18 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4987,6 +4987,8 @@
 ./usr/tests/usr.bin/make/unit-tests/shell-ksh.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/shell-sh.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/shell-sh.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-main.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-main.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-rebuild.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-rebuild.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suffixes.exp				tests-usr.bin-tests	compattestfile,atf
