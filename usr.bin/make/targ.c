@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.115 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.116 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.115 2020/10/18 12:36:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.116 2020/10/18 13:02:10 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -136,7 +136,7 @@ static void TargFreeGN(void *);
 void
 Targ_Init(void)
 {
-    allTargets = Lst_Init();
+    allTargets = Lst_New();
     Hash_InitTable(&targets);
 }
 
@@ -190,21 +190,21 @@ Targ_NewGN(const char *name)
     gn->checked = 0;
     gn->mtime = 0;
     gn->cmgn = NULL;
-    gn->implicitParents = Lst_Init();
-    gn->cohorts = Lst_Init();
-    gn->parents = Lst_Init();
-    gn->children = Lst_Init();
-    gn->order_pred = Lst_Init();
-    gn->order_succ = Lst_Init();
+    gn->implicitParents = Lst_New();
+    gn->cohorts = Lst_New();
+    gn->parents = Lst_New();
+    gn->children = Lst_New();
+    gn->order_pred = Lst_New();
+    gn->order_succ = Lst_New();
     Hash_InitTable(&gn->context);
-    gn->commands = Lst_Init();
+    gn->commands = Lst_New();
     gn->suffix = NULL;
     gn->fname = NULL;
     gn->lineno = 0;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
-	allGNs = Lst_Init();
+	allGNs = Lst_New();
     Lst_Append(allGNs, gn);
 #endif
 
@@ -292,7 +292,7 @@ GNodeList *
 Targ_FindList(StringList *names)
 {
     StringListNode *ln;
-    GNodeList *nodes = Lst_Init();
+    GNodeList *nodes = Lst_New();
     for (ln = names->first; ln != NULL; ln = ln->next) {
 	const char *name = ln->datum;
 	GNode *gn = Targ_GetNode(name);

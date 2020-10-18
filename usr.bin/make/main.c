@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.377 2020/10/18 12:47:43 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.378 2020/10/18 13:02:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.377 2020/10/18 12:47:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.378 2020/10/18 13:02:10 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1128,11 +1128,11 @@ main(int argc, char **argv)
 		VAR_GLOBAL);
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
-	create = Lst_Init();
-	makefiles = Lst_Init();
+	create = Lst_New();
+	makefiles = Lst_New();
 	printVars = 0;
 	debugVflag = FALSE;
-	variables = Lst_Init();
+	variables = Lst_New();
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
@@ -1360,7 +1360,7 @@ main(int argc, char **argv)
 	if (!noBuiltins) {
 		StringListNode *ln;
 
-		sysMkPath = Lst_Init();
+		sysMkPath = Lst_New();
 		Dir_Expand(_PATH_DEFSYSMK,
 			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
 			   sysMkPath);
