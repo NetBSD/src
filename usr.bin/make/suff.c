@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.182 2020/10/18 15:31:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.183 2020/10/18 15:40:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.182 2020/10/18 15:31:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.183 2020/10/18 15:40:54 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -902,10 +902,8 @@ PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
  *	lsp		list and parent for the new Src
  */
 static void
-SuffAddSrc(void *sp, void *lsp)
+SuffAddSrc(Suff *s, LstSrc *ls)
 {
-    Suff *s = (Suff *)sp;
-    LstSrc *ls = (LstSrc *)lsp;
     Src *s2;			/* new Src structure */
     Src *targ;			/* Target structure */
 
@@ -963,12 +961,12 @@ SuffAddSrc(void *sp, void *lsp)
 static void
 SuffAddLevel(SrcList *l, Src *targ)
 {
-    LstSrc         ls;
-
-    ls.s = targ;
-    ls.l = l;
-
-    Lst_ForEach(targ->suff->children, SuffAddSrc, &ls);
+    SrcListNode *ln;
+    for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
+	Suff *childSuff = ln->datum;
+	LstSrc ls = { l, targ };
+	SuffAddSrc(childSuff, &ls);
+    }
 }
 
 /* Free the first Src in the list that doesn't have a reference count.
@@ -977,7 +975,6 @@ static Boolean
 SuffRemoveSrc(SrcList *l)
 {
     SrcListNode *ln;
-    Src *s;
 
     Lst_Open(l);
 
@@ -988,7 +985,7 @@ SuffRemoveSrc(SrcList *l)
 #endif
 
     while ((ln = Lst_Next(l)) != NULL) {
-	s = LstNode_Datum(ln);
+	Src *s = LstNode_Datum(ln);
 	if (s->children == 0) {
 	    free(s->file);
 	    if (!s->parent)
