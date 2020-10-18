@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.341 2020/10/01 02:00:04 pgoyette Exp $
+# $NetBSD: mi,v 1.342 2020/10/18 10:10:18 rin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2364,11 +2364,6 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_rtld_r_debug.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_ifunc.debug	tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_kcov.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/modules/t_ufetchstore.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_mbuf.debug		tests-net-debug		debug,atf,rump
