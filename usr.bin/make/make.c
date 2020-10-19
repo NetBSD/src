@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.161 2020/10/18 14:58:45 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.162 2020/10/19 19:45:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.161 2020/10/18 14:58:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.162 2020/10/19 19:45:50 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -763,16 +763,13 @@ UnmarkChildren(GNode *gn)
  * modification times, the comparison is rather unfair...)..
  *
  * Input:
- *	cgnp		The child to add
- *	pgnp		The parent to whose ALLSRC variable it should
+ *	cgn		The child to add
+ *	pgn		The parent to whose ALLSRC variable it should
  *			be added
  */
 static void
-MakeAddAllSrc(void *cgnp, void *pgnp)
+MakeAddAllSrc(GNode *cgn, GNode *pgn)
 {
-    GNode	*cgn = (GNode *)cgnp;
-    GNode	*pgn = (GNode *)pgnp;
-
     if (cgn->type & OP_MARK)
 	return;
     cgn->type |= OP_MARK;
@@ -838,11 +835,14 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 void
 Make_DoAllVar(GNode *gn)
 {
+    GNodeListNode *ln;
+
     if (gn->flags & DONE_ALLSRC)
 	return;
 
     UnmarkChildren(gn);
-    Lst_ForEach(gn->children, MakeAddAllSrc, gn);
+    for (ln = gn->children->first; ln != NULL; ln = ln->next)
+        MakeAddAllSrc(ln->datum, gn);
 
     if (!Var_Exists(OODATE, gn)) {
 	Var_Set(OODATE, "", gn);
