@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.2 2020/05/17 20:29:39 riastradh Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.3 2020/10/19 13:44:25 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.2 2020/05/17 20:29:39 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.3 2020/10/19 13:44:25 tnn Exp $");
 
 #include <sys/types.h>
 
@@ -82,7 +82,7 @@ RKC_READ(struct rk_v1crypto_softc *sc, bus_addr_t reg)
 static void
 RKC_WRITE(struct rk_v1crypto_softc *sc, bus_addr_t reg, uint32_t v)
 {
-	return bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, v);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, v);
 }
 
 static inline void
