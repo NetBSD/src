@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.24 2020/10/15 18:58:59 martin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.25 2020/10/19 17:47:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2020/10/15 18:58:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2020/10/19 17:47:37 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2020/10/15 18:58:59 martin 
 
 #include <machine/psl.h>
 #include <machine/reg.h>
-
-#include "opt_compat_netbsd.h"
-#include "opt_ptrace.h"
 
 #ifdef COMPAT_40
 static int process_machdep_doregs40(struct lwp *, struct lwp *, struct uio *);
