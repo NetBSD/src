@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.192 2020/10/19 21:23:07 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.193 2020/10/19 21:33:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.192 2020/10/19 21:23:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.193 2020/10/19 21:33:09 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -875,9 +875,13 @@ Suff_AddLib(const char *sname)
 
 #ifdef DEBUG_SRC
 static void
-PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
+SrcList_PrintAddrs(SrcList *srcList)
 {
-    printf("%lx ", (unsigned long) a);
+    SrcListNode *ln;
+    for (ln = srcList->first; ln != NULL; ln = ln->next) {
+        Src *src = ln->datum;
+    	printf("%lx ", (unsigned long) src);
+    }
 }
 #endif
 
@@ -899,7 +903,7 @@ SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
     s2->cp = Lst_New();
     Lst_Append(targ->cp, s2);
     debug_printf("%s add %p %p to %p:", debug_tag, targ, s2, srcList);
-    Lst_ForEach(srcList, PrintAddr, NULL);
+    SrcList_PrintAddrs(srcList);
     debug_printf("\n");
 #endif
 }
@@ -954,7 +958,7 @@ SuffRemoveSrc(SrcList *l)
 
 #ifdef DEBUG_SRC
     debug_printf("cleaning %lx: ", (unsigned long) l);
-    Lst_ForEach(l, PrintAddr, NULL);
+    SrcList_PrintAddrs(l);
     debug_printf("\n");
 #endif
 
@@ -984,7 +988,7 @@ SuffRemoveSrc(SrcList *l)
 #ifdef DEBUG_SRC
 	else {
 	    debug_printf("keep: [l=%p] p=%p %d: ", l, s, s->children);
-	    Lst_ForEach(s->cp, PrintAddr, NULL);
+	    SrcList_PrintAddrs(s->cp);
 	    debug_printf("\n");
 	}
 #endif
