@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.9 2018/06/01 17:18:44 bouyer Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.9 2018/06/01 17:18:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.10 2020/10/19 01:13:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -560,6 +560,10 @@ sunxi_debe_ep_enable(device_t dev, struct fdt_endpoint *ep, bool enable)
 	return 0;
 }
 
+/*
+ * FIXME 2020/10/19
+ * This function is not called actually at the moment.
+ */
 void
 sunxi_debe_set_videomode(device_t dev, const struct videomode *mode)
 {
@@ -613,7 +617,12 @@ sunxi_debe_set_videomode(device_t dev, const struct videomode *mode)
 				 SUNXI_DEBE_ATTCTL1_LAY_FBFMT);
 		val &= ~SUNXI_DEBE_ATTCTL1_LAY_BRSWAPEN;
 		val &= ~SUNXI_DEBE_ATTCTL1_LAY_FBPS;
-#if __ARMEB__
+#if 0 /* __ARMEB__ */
+		/*
+		 * For big endian, we dynamically override FDT to let
+		 * genfb(4) know that framebuffer is byte-swapped.
+		 * See fdt_update_fb_format() in fdt_machdep.c.
+		 */
 		val |= __SHIFTIN(SUNXI_DEBE_ATTCTL1_LAY_FBPS_32BPP_BGRA,
 				 SUNXI_DEBE_ATTCTL1_LAY_FBPS);
 #else
