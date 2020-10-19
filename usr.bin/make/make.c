@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.165 2020/10/19 21:57:37 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.166 2020/10/19 23:43:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.165 2020/10/19 21:57:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.166 2020/10/19 23:43:55 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -947,13 +947,13 @@ MakeStartJobs(void)
 	    make_abort(gn, __LINE__);
 	}
 
-	if (gn->checked == checked) {
+	if (gn->checked_seqno == checked) {
 	    /* We've already looked at this node since a job finished... */
 	    DEBUG2(MAKE, "already checked %s%s\n", gn->name, gn->cohort_num);
 	    gn->made = DEFERRED;
 	    continue;
 	}
-	gn->checked = checked;
+	gn->checked_seqno = checked;
 
 	if (gn->unmade != 0) {
 	    /*
