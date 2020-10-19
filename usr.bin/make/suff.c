@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.191 2020/10/19 21:17:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.192 2020/10/19 21:23:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.191 2020/10/19 21:17:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.192 2020/10/19 21:23:07 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -637,14 +637,12 @@ Suff_EndTransform(GNode *gn)
  * transformation rules exist for it.
  *
  * Input:
- *	transformp	Transformation to test
- *	sp		Suffix to rebuild
+ *	transform	Transformation to test
+ *	s		Suffix to rebuild
  */
 static void
-SuffRebuildGraph(void *transformp, void *sp)
+SuffRebuildGraph(GNode *transform, Suff *s)
 {
-    GNode *transform = (GNode *)transformp;
-    Suff *s = (Suff *)sp;
     char *cp;
     struct SuffSuffGetSuffixArgs sd;
 
@@ -765,6 +763,8 @@ UpdateTargets(GNode **inout_main, Suff *s)
 void
 Suff_AddSuffix(const char *name, GNode **inout_main)
 {
+    GNodeListNode *ln;
+
     Suff *s = FindSuffByName(name);
     if (s != NULL)
 	return;
@@ -778,7 +778,8 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
      * Look for any existing transformations from or to this suffix.
      * XXX: Only do this after a Suff_ClearSuffixes?
      */
-    Lst_ForEach(transforms, SuffRebuildGraph, s);
+    for (ln = transforms->first; ln != NULL; ln = ln->next)
+	SuffRebuildGraph(ln->datum, s);
 }
 
 /* Return the search path for the given suffix, or NULL. */
