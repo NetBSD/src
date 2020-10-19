@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.50 2020/10/19 09:01:24 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.51 2020/10/19 09:07:29 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.50 2020/10/19 09:01:24 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.51 2020/10/19 09:07:29 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -584,8 +584,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		/* XXX: 'samples' may wrap */
 		memset(osscount.filler, 0, sizeof(osscount.filler));
-		osscount.samples = tmpinfo.record.samples;
-		osscount.fifo_samples = tmpinfo.record.seek;
+		osscount.samples = tmpinfo.record.samples /
+		    ((tmpinfo.record.precision / NBBY) *
+			tmpinfo.record.channels);
+		osscount.fifo_samples = tmpinfo.record.seek /
+		    ((tmpinfo.record.precision / NBBY) *
+			tmpinfo.record.channels);
 		*(oss_count_t *)argp = osscount;
 		break;
 	case SNDCTL_DSP_GETOPTR:
@@ -603,8 +607,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		/* XXX: 'samples' may wrap */
 		memset(osscount.filler, 0, sizeof(osscount.filler));
-		osscount.samples = tmpinfo.play.samples;
-		osscount.fifo_samples = tmpinfo.play.seek;
+		osscount.samples = tmpinfo.play.samples /
+		    ((tmpinfo.play.precision / NBBY) *
+			tmpinfo.play.channels);
+		osscount.fifo_samples = tmpinfo.play.seek /
+		    ((tmpinfo.play.precision / NBBY) *
+			tmpinfo.play.channels);
 		*(oss_count_t *)argp = osscount;
 		break;
 	case SNDCTL_DSP_SETPLAYVOL:
