@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.84 2020/10/15 17:37:36 mgorny Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.85 2020/10/19 14:47:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -106,19 +106,9 @@
  *	from: @(#)sys_process.c	8.1 (Berkeley) 6/10/93
  */
 
-/*
- * References:
- *	(1) Bach's "The Design of the UNIX Operating System",
- *	(2) sys/miscfs/procfs from UCB's 4.4BSD-Lite distribution,
- *	(3) the "4.4BSD Programmer's Reference Manual" published
- *		by USENIX and O'Reilly & Associates.
- * The 4.4BSD PRM does a reasonably good job of documenting what the various
- * ptrace() requests should actually do, and its text is quoted several times
- * in this file.
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.84 2020/10/15 17:37:36 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.85 2020/10/19 14:47:01 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -145,7 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.84 2020/10/15 17:37:36 mgorn
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/module.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 #include <sys/compat_stub.h>
@@ -1796,25 +1785,3 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 	return 0;
 }
 #endif /* PTRACE */
-
-MODULE(MODULE_CLASS_EXEC, ptrace_common, NULL);
- 
-static int
-ptrace_common_modcmd(modcmd_t cmd, void *arg)
-{
-        int error;
- 
-        switch (cmd) {
-        case MODULE_CMD_INIT:
-                error = ptrace_init();
-                break;
-        case MODULE_CMD_FINI:
-                error = ptrace_fini();
-                break;
-        default:
-		ptrace_hooks();
-                error = ENOTTY;
-                break;
-        }
-        return error;
-}
