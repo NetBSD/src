@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.77 2020/10/18 12:47:37 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.78 2020/10/19 01:08:06 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.77 2020/10/18 12:47:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.78 2020/10/19 01:08:06 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct genfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	int wantcols;
-	bool is_bgr;
+	bool is_bgr, is_swapped;
 
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
@@ -565,24 +565,30 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	switch (ri->ri_depth) {
 	case 32:
 	case 24:
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 
 		is_bgr = false;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
+
+		is_swapped = false;
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "is_swapped", &is_swapped);
+
 		if (is_bgr) {
 			/* someone requested BGR */
-			ri->ri_rnum = 8;
-			ri->ri_gnum = 8;
-			ri->ri_bnum = 8;
 			ri->ri_rpos = 0;
 			ri->ri_gpos = 8;
 			ri->ri_bpos = 16;
+		} else if (is_swapped) {
+			/* byte-swapped, must be 32 bpp */
+			KASSERT(ri->ri_depth == 32);
+			ri->ri_rpos = 8;
+			ri->ri_gpos = 16;
+			ri->ri_bpos = 24;
 		} else {
 			/* assume RGB */
-			ri->ri_rnum = 8;
-			ri->ri_gnum = 8;
-			ri->ri_bnum = 8;
 			ri->ri_rpos = 16;
 			ri->ri_gpos = 8;
 			ri->ri_bpos = 0;
