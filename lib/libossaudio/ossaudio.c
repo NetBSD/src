@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.51 2020/10/19 09:07:29 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.52 2020/10/19 10:28:47 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.51 2020/10/19 09:07:29 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.52 2020/10/19 10:28:47 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: ossaudio.c,v 1.51 2020/10/19 09:07:29 nia Exp $");
  * http://manuals.opensound.com/developer/
  * 
  * This file is similar to sys/compat/ossaudio.c with additional OSSv4
- * compatibility - with some preprocessor magic it could be the same file.
+ * compatibility.
  */
 
 #include <string.h>
@@ -79,6 +79,7 @@ static void setblocksize(int, struct audio_info *);
 static int audio_ioctl(int, unsigned long, void *);
 static int mixer_oss3_ioctl(int, unsigned long, void *);
 static int mixer_oss4_ioctl(int, unsigned long, void *);
+static int global_oss4_ioctl(int, unsigned long, void *);
 static int opaque_to_enum(struct audiodevinfo *, audio_mixer_name_t *, int);
 static int enum_to_ord(struct audiodevinfo *, int);
 static int enum_to_mask(struct audiodevinfo *, int);
@@ -101,6 +102,8 @@ _oss_ioctl(int fd, unsigned long com, ...)
 		return mixer_oss3_ioctl(fd, com, argp);
 	else if (IOCGROUP(com) == 'X')
 		return mixer_oss4_ioctl(fd, com, argp);
+	else if (IOCGROUP(com) == 'Y')
+		return global_oss4_ioctl(fd, com, argp);
 	else
 		return ioctl(fd, com, argp);
 }
@@ -1512,6 +1515,37 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		return -1;
 	}
 	return 0;
+}
+
+static int
+global_oss4_ioctl(int fd, unsigned long com, void *argp)
+{
+	int retval = 0;
+
+	switch (com) {
+	/*
+	 * These ioctls were added in OSSv4 with the idea that
+	 * applications could apply strings to audio devices to
+	 * display what they are using them for (e.g. with song
+	 * names) in mixer applications. In practice, the popular
+	 * implementations of the API in FreeBSD and Solaris treat
+	 * these as a no-op and return EINVAL, and no software in the
+	 * wild seems to use them.
+	 */
+	case SNDCTL_SETSONG:
+	case SNDCTL_GETSONG:
+	case SNDCTL_SETNAME:
+	case SNDCTL_SETLABEL:
+	case SNDCTL_GETLABEL:
+		errno = EINVAL;
+		retval = -1;
+		break;
+	default:
+		errno = EINVAL;
+		retval = -1;
+		break;
+	}
+	return retval;
 }
 
 static int
