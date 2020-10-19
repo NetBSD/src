@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.266 2020/10/19 23:07:22 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.267 2020/10/19 23:43:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.266 2020/10/19 23:07:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.267 2020/10/19 23:43:55 rillig Exp $");
 
 # define STATIC static
 
@@ -190,10 +190,10 @@ typedef struct Shell {
     const char *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
-    size_t noPLen;		/* length of noPrint command */
+    size_t noPrintLen;		/* length of noPrint command */
     Boolean hasErrCtl;		/* set if can control error checking for
 				 * individual commands */
-    const char *errCheck;	/* string to turn error checking on */
+    const char *errCheck;	/* string to turn on error checking */
     const char *ignErr;		/* string to turn off error checking */
     const char *errOut;		/* string to use for testing exit code */
     const char *newline;	/* string literal that results in a newline
@@ -1627,7 +1627,7 @@ JobOutput(Job *job, char *cp, char *endp)
 		(void)fprintf(stdout, "%s", cp);
 		(void)fflush(stdout);
 	    }
-	    cp = ecp + commandShell->noPLen;
+	    cp = ecp + commandShell->noPrintLen;
 	    if (cp != endp) {
 		/*
 		 * Still more to print, look again after skipping
@@ -2273,7 +2273,7 @@ Job_ParseShell(char *line)
 		newShell.echoOn = arg + 5;
 	    } else if (strncmp(arg, "filter=", 7) == 0) {
 		newShell.noPrint = arg + 7;
-		newShell.noPLen = strlen(newShell.noPrint);
+		newShell.noPrintLen = strlen(newShell.noPrint);
 	    } else if (strncmp(arg, "echoFlag=", 9) == 0) {
 		newShell.echo = arg + 9;
 	    } else if (strncmp(arg, "errFlag=", 8) == 0) {
