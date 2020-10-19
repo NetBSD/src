@@ -1,11 +1,9 @@
-# $NetBSD: MODULAR,v 1.17 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: MODULAR,v 1.18 2020/10/19 19:33:01 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
 
 include "arch/amd64/conf/GENERIC"
-options 	MODULAR		# new style module(7) framework
-options 	MODULAR_DEFAULT_AUTOLOAD
 
 -no acpicpu*	at cpu?
 -no est0		at cpu0
@@ -84,6 +82,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options 	PPP_DEFLATE	# Deflate compression support for PPP
 
 -no options	AIO
+
+-no options	PTRACE
+-no options	COREDUMP
 
 -no acpiacad*	at acpi?		# ACPI AC Adapter
 -no acpibat*	at acpi?		# ACPI Battery
