@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.8 2020/10/12 17:55:54 kamil Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.9 2020/10/19 11:29:26 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,7 +58,7 @@
 	.cfi_offset rsi, UC_GREGS_RSI
 	.cfi_offset rdi, UC_GREGS_RDI
 	.cfi_offset rbp, UC_GREGS_RBP
-	/* The unwinder will use the CFA to restore RSP. */
+	.cfi_offset rsp, UC_GREGS_RSP
 	.cfi_offset r8,  UC_GREGS_R8
 	.cfi_offset r9,  UC_GREGS_R9
 	.cfi_offset r10, UC_GREGS_R10
