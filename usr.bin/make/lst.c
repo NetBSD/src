@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.77 2020/10/18 13:02:10 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.78 2020/10/19 21:41:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.77 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.78 2020/10/19 21:41:31 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -306,14 +306,6 @@ Lst_FindDatum(List *list, const void *datum)
     }
 
     return NULL;
-}
-
-void
-Lst_ForEach(List *list, LstActionProc proc, void *procData)
-{
-    ListNode *node;
-    for (node = list->first; node != NULL; node = node->next)
-	proc(node->datum, procData);
 }
 
 /* Apply the given function to each element of the given list. The function
