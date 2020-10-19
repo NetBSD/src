@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.7 2020/10/19 14:47:01 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.8 2020/10/19 14:52:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -106,9 +106,8 @@
  *	from: @(#)sys_process.c	8.1 (Berkeley) 6/10/93
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.7 2020/10/19 14:47:01 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.8 2020/10/19 14:52:19 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -129,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.7 2020/10/19 14:47:01 kamil Exp $")
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/syscall.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -213,4 +213,27 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
  
         return do_ptrace(&native_ptm, l, SCARG(uap, req), SCARG(uap, pid),
             SCARG(uap, addr), SCARG(uap, data), retval);
+}
+
+#define	DEPS	"ptrace_common"  
+
+MODULE(MODULE_CLASS_EXEC, ptrace, DEPS);
+ 
+static int
+ptrace_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT: 
+		error = syscall_establish(&emul_netbsd, ptrace_syscalls);
+		break;
+	case MODULE_CMD_FINI:
+		error = syscall_disestablish(&emul_netbsd, ptrace_syscalls);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+	return error;
 }
