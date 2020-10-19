@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.170 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.171 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.170 2020/10/18 17:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.171 2020/10/19 21:57:37 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1510,7 +1510,7 @@ Dir_AddDir(SearchPath *path, const char *name)
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
 	SearchPathNode *ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
-	    return LstNode_Datum(ln);
+	    return ln->datum;
 
 	dotLast->refCount++;
 	Lst_Prepend(path, dotLast);

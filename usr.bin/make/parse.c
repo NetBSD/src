@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.393 2020/10/19 20:55:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.394 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.393 2020/10/19 20:55:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.394 2020/10/19 21:57:37 rillig Exp $");
 
 /* types and constants */
 
@@ -762,7 +762,7 @@ static void
 LinkSource(GNode *pgn, GNode *cgn, Boolean isSpecial)
 {
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
-	pgn = LstNode_Datum(Lst_Last(pgn->cohorts));
+	pgn = pgn->cohorts->last->datum;
 
     Lst_Append(pgn->children, cgn);
     pgn->unmade++;

@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.78 2020/10/19 21:41:31 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.79 2020/10/19 21:57:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.78 2020/10/19 21:41:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.79 2020/10/19 21:57:37 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -268,7 +268,7 @@ LstNode_SetNull(ListNode *node)
 ListNode *
 Lst_Find(List *list, LstFindProc match, const void *matchArgs)
 {
-    return Lst_FindFrom(list, Lst_First(list), match, matchArgs);
+    return Lst_FindFrom(list, list->first, match, matchArgs);
 }
 
 /* Return the first node from the list, starting at the given node, for which

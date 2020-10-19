@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.136 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.137 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.136 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.137 2020/10/19 21:57:37 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -468,7 +468,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     if (ln != NULL) {
 	struct ar_hdr *hdr;
 
-	ar = LstNode_Datum(ln);
+	ar = ln->datum;
 	hdr = Hash_FindValue(&ar->members, member);
 	if (hdr != NULL)
 	    return hdr;
