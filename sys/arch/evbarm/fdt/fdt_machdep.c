@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.75 2020/10/10 15:25:30 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.76 2020/10/19 01:12:14 rin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.75 2020/10/10 15:25:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.76 2020/10/19 01:12:14 rin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.75 2020/10/10 15:25:30 jmcneill Ex
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -142,6 +143,10 @@ static void fdt_device_register_post_config(device_t, void *);
 static void fdt_cpu_rootconf(void);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
+
+#if BYTE_ORDER == BIG_ENDIAN
+static void fdt_update_fb_format(void);
+#endif
 
 static void
 earlyconsputc(dev_t dev, int c)
@@ -578,6 +583,17 @@ initarm(void *arg)
 	VPRINTF("stdout\n");
 	fdt_update_stdout_path();
 
+#if BYTE_ORDER == BIG_ENDIAN
+	/*
+	 * Most boards are configured to little-endian mode in initial, and
+	 * switched to big-endian mode after kernel is loaded. In this case,
+	 * framebuffer seems byte-swapped to CPU. Override FDT to let
+	 * drivers know.
+	 */
+	VPRINTF("fb_format\n");
+	fdt_update_fb_format();
+#endif
+
 	/*
 	 * Done making changes to the FDT.
 	 */
@@ -916,3 +932,36 @@ fdt_powerdown(void)
 {
 	fdtbus_power_poweroff();
 }
+
+#if BYTE_ORDER == BIG_ENDIAN
+static void
+fdt_update_fb_format(void)
+{
+	int off, len;
+	const char *format, *replace;
+
+	off = fdt_path_offset(fdt_data, "/chosen");
+	if (off < 0)
+		return;
+
+	for (;;) {
+		off = fdt_node_offset_by_compatible(fdt_data, off,
+		    "simple-framebuffer");
+		if (off < 0)
+			return;
+
+		format = fdt_getprop(fdt_data, off, "format", &len);
+		if (format == NULL)
+			continue;
+
+		replace = NULL;
+		if (strcmp(format, "a8b8g8r8") == 0)
+			replace = "r8g8b8a8";
+		else if (strcmp(format, "x8r8g8b8") == 0)
+			replace = "b8g8r8x8";
+		if (replace != NULL)
+			fdt_setprop(fdt_data, off, "format", replace,
+			    strlen(replace) + 1);
+	}
+}
+#endif
