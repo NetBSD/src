@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.116 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.117 2020/10/19 19:34:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.116 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.117 2020/10/19 19:34:18 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -554,18 +554,19 @@ Targ_PrintGraph(int pass)
 void
 Targ_Propagate(void)
 {
-    GNodeListNode *pn, *cn;
+    GNodeListNode *ln, *cln;
 
-    for (pn = allTargets->first; pn != NULL; pn = pn->next) {
-	GNode *pgn = pn->datum;
+    for (ln = allTargets->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
+	GNodeType type = gn->type;
 
-	if (!(pgn->type & OP_DOUBLEDEP))
+	if (!(type & OP_DOUBLEDEP))
 	    continue;
 
-	for (cn = pgn->cohorts->first; cn != NULL; cn = cn->next) {
-	    GNode *cgn = cn->datum;
+	for (cln = gn->cohorts->first; cln != NULL; cln = cln->next) {
+	    GNode *cohort = cln->datum;
 
-	    cgn->type |= pgn->type & ~OP_OPMASK;
+	    cohort->type |= type & ~OP_OPMASK;
 	}
     }
 }
