@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.24 2017/03/22 18:17:42 kre Exp $
+.\"     $NetBSD: parsedate.3,v 1.25 2020/10/19 15:08:39 kre Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2017
+.Dd October 19, 2020
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh DESCRIPTION
 The
 .Fn parsedate
-function parses a datetime from
+function parses a date and time from
 .Ar datestr
 described in English relative to an optional
 .Ar time
@@ -65,9 +65,28 @@ The
 .Ar datestr
 is a sequence of white-space separated items.
 The white-space is optional if the concatenated items are not ambiguous.
-An empty
+The string contains data which can specify a base time (used in
+conjunction with the
+.Ar time
+parameter, totally replacing that parameter's value if sufficient data
+appears in
 .Ar datestr
-is equivalent to midnight today (the beginning of this day).
+to do so), and data specifying an offset from the base time.
+Both of those are optional.
+If no data specifies the base time, then
+.Nm
+simply uses the value given by
+.Ar \&*time
+.Pq "or now" .
+If there is no offset data then no offset is applied.
+An empty
+.Ar datestr ,
+or a
+.Ar datestr
+containing nothing but whitespace,
+is equivalent to midnight at the start of the day specified by
+.Ar \&*time
+.Pq "or today" .
 .Pp
 The following words have the indicated numeric meanings:
 .Dv last =
@@ -147,6 +166,11 @@ The months:
 .Dv november ,
 .Dv december ,
 and common abbreviations for them.
+When a month name (or its ordinal number) is given,
+the number of some particular day of that month is required to accompany it.
+This is generally true of any data that specifies a period
+with a duration longer than a day, so simply specifying a year,
+or a month, is invalid, as also is specifying a year and a month.
 .Pp
 The days of the week:
 .Dv sunday ,
@@ -157,6 +181,9 @@ The days of the week:
 .Dv friday ,
 .Dv saturday ,
 and common abbreviations for them.
+Weekday names are typically ignored if any other data
+is given to specify the date, even if the name given
+is not the day on which the specified date occurred.
 .Pp
 Time units:
 .Dv year ,
@@ -239,20 +266,27 @@ Timezone names:
 .Dv nzdt (+1300) ,
 .Dv idle (+1200) .
 .Pp
-The timezone names specify an offset from Coordinated Universal Time (UTC)
+The timezone names simply specify an offset from
+Coordinated Universal Time (UTC)
 and do not imply validating the time/date to be reasonable in any zone
 that happens to use the abbreviation specified.
 .Pp
 A variety of unambiguous dates are recognized:
 .Bl -tag -compact -width "20 Jun 1994"
 .It 9/10/69
-For years between 70-99 we assume 1900+ and for years between 0-69
+For years between 69-99 we assume 1900+ and for years between 0-68
 we assume 2000+.
 .It 2006-11-17
 An ISO-8601 date.
-.It 69-09-10
+Note that when using the ISO-8601 format date and time with the
+.Sq T
+designator to separate date and time-of-day,
+this must appear at the start of the input string,
+with no preceding whitespace.
+Other modifiers may optionally follow.
+.It 67-09-10
 The year in an ISO-8601 date is always taken literally,
-so this is the year 69, not 2069.
+so this is the year 67, not 2067.
 .It 10/1/2000
 October 1, 2000; the common, but bizarre, US format.
 .It 20 Jun 1994
@@ -261,7 +295,14 @@ October 1, 2000; the common, but bizarre, US format.
 Other common abbreviations.
 .It 1/11
 The year can be omitted.
-This is the US month/day format.
+A missing year is taken from the
+.Ar \&*time
+value, or
+.Dq now
+if
+.Ar time
+is NULL.
+Again, this is the US month/day format (the 11th of January).
 .El
 .Pp
 Standard e-mail (RFC822, RFC2822, etc)
@@ -269,18 +310,28 @@ formats and the output from
 .Xr date 1 ,
 and
 .Xr asctime 3
-are all supported as input.
+are all supported as input,
+as is cvs date format (where years < 100 are treated as
+20th century).
 .Pp
-As well as times:
+Times can also be specified in common forms:
 .Bl -tag -compact -width 12:11:01.000012
 .It 10:01
 .It 10:12pm
 .It 12:11:01.000012
 .It 12:21-0500
 .El
-Fractions of seconds (after a decimal point) are parsed, but ignored.
+Fractions of seconds (after a decimal point, or comma) are parsed, but ignored.
+If no time is given, midnight on the specified date is assumed.
+If a time is given without a date, that time on the day
+specified by
+.Ar \&*time
+.Pq or now
+is used.
+Missing minutes, or seconds, are taken to be zero.
 .Pp
-Relative items are also supported:
+A variety of forms for relative items to specify
+an offset from the base time are also supported:
 .Bl -tag -compact -width "this thursday"
 .It -1 month
 .It last friday
@@ -294,21 +345,33 @@ Note that, as a special case for
 .Dv midnight
 with the name of a day only,
 .Dq "midnight tuesday"
-implies 00:00 at the beginning of Tuesday, whereas
+implies 00:00 at the beginning of Tuesday,
+.Pq "the midnight before Tuesday"
+whereas
 .Dq "Sat mn"
-implies 00:00 at the end of Saturday (i.e. early Sunday morning.)
+implies 00:00 at the end of Saturday
+.Pq "midnight after Saturday"
+.Pq "i.e. early Sunday morning" .
 .Pp
-Seconds since epoch, UTC, (also known as UNIX time) are also supported:
-.Bl -tag -compact -width "@735275209"
-.It @735275209
-Tue Apr 20 03:06:49 UTC 1993
+Seconds since epoch, UTC, (also known as UNIX time) are also supported
+to specify the base time:
+.Bl -tag -compact -width "E.g.:\ @735275209\ \ \ \ "
+.It "E.g.: @735275209"
+to specify: Tue Apr 20 03:06:49 UTC 1993
 .El
 provided that the value given is within the range
 that can be represented as a
 .Va "struct tm" .
 Negative values
 (times before the epoch)
-are permitted, but no other significant data.
+are permitted, but no other significant data as part of
+the base time \(en the value given specifies year, month,
+day, hour, minute, and second, there is no more.
+An offset from this base time may still be included.
+Thus
+.Dq "@735275209 +2 months 5 hours 15 minutes"
+produces a time_t which represents
+.Dq "Sun Jun 20 08:21:49 UTC 1993" .
 .Pp
 Text in
 .Ar datestr
@@ -370,6 +433,8 @@ was originally written by Steven M. Bellovin while at the University
 of North Carolina at Chapel Hill.
 It was later tweaked by a couple of people on Usenet.
 Completely overhauled by Rich $alz and Jim Berets in August, 1990.
+Further mangled during its residence with
+.Nx .
 .Pp
 The
 .Fn parsedate
@@ -387,10 +452,13 @@ The
 function assumes years less than 0 mean \(mi
 .Fa year ,
 and in non ISO formats,
-that years less than 70 mean 2000 +
+that years less than 69 mean 2000 +
 .Fa year ,
 otherwise
 years less than 100 mean 1900 +
+.Fa year .
+That is except in the CVS format, where years less than 100
+mean 1900 +
 .Fa year .
 .It 3
 The
@@ -429,4 +497,16 @@ current year.
 Use caution with
 .Dq next
 it rarely does what humans expect.
+For example, on a Sunday
+.Dq "next sunday"
+means the following Sunday (7 days hence)
+whereas
+.Dq "next monday"
+means the monday that follows that (8 days hence)
+rather than
+.Dq tomorrow
+or just
+.Dq Mon
+.Pq without the Dq next
+which is the nearest subsequent Monday.
 .El
