@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.30 2017/03/22 05:35:33 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.31 2020/10/19 15:06:49 kre Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.30 2017/03/22 05:35:33 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.31 2020/10/19 15:06:49 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -125,12 +125,12 @@ ATF_TC_HEAD(dates, tc)
 ATF_TC_BODY(dates, tc)
 {
 
+	parsecheck("9/10/68", NULL, NULL, localtime_r,
+		2068, 9, 10, 0, 0, 0); /* year < 69: add 2000 */
 	parsecheck("9/10/69", NULL, NULL, localtime_r,
-		2069, 9, 10, 0, 0, 0); /* year < 70: add 2000 */
-	parsecheck("9/10/70", NULL, NULL, localtime_r,
-		1970, 9, 10, 0, 0, 0); /* 70 <= year < 100: add 1900 */
-	parsecheck("69-09-10", NULL, NULL, localtime_r,
-		69, 9, 10, 0, 0, 0); /* ISO8601 year remains unchanged */
+		1969, 9, 10, 0, 0, 0); /* 69 <= year < 100: add 1900 */
+	parsecheck("68-09-10", NULL, NULL, localtime_r,
+		68, 9, 10, 0, 0, 0); /* ISO8601 year remains unchanged */
 	parsecheck("70-09-10", NULL, NULL, localtime_r,
 		70, 9, 10, 0, 0, 0); /* ISO8601 year remains unchanged */
 	parsecheck("2006-11-17", NULL, NULL, localtime_r,
