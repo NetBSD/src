@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.34 2020/10/19 15:08:17 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.35 2020/10/19 17:47:45 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -1081,6 +1081,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	const unsigned char *pp = (const unsigned char *)p;
 	char *ep;	/* starts as "expected, becomes "end ptr" */
 	static char format[] = "-dd-ddTdd:dd:dd";
+	time_t yr;
 
 	while (isdigit(*pp))
 		pp++;
@@ -1121,6 +1122,11 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	if (*pp != '\0' && !isspace(*pp))
 		break;
 
+	errno = 0;
+	yr = (time_t)strtol(p, &ep, 10);
+	if (errno != 0)			/* out of range (can be big number) */
+		break;			/* the ones below are all 2 digits */
+
 	/*
 	 * This is good enough to commit to there being an ISO format
 	 * timestamp leading the input string.   We permit standard
@@ -1135,10 +1141,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 		param.yyHaveZone = 1;
 	}
 
-	errno = 0;
-	param.yyYear = (time_t)strtol(p, &ep, 10);
-	if (errno != 0)			/* out of range (can be big number) */
-		break;			/* the ones below are all 2 digits */
+	param.yyYear = yr;
 	param.yyMonth = (time_t)strtol(ep + 1, &ep, 10);
 	param.yyDay = (time_t)strtol(ep + 1, &ep, 10);
 	param.yyHour = (time_t)strtol(ep + 1, &ep, 10);
