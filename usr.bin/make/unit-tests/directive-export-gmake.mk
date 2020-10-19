@@ -1,4 +1,4 @@
-# $NetBSD: directive-export-gmake.mk,v 1.1 2020/10/02 20:34:59 rillig Exp $
+# $NetBSD: directive-export-gmake.mk,v 1.2 2020/10/19 18:59:53 rillig Exp $
 #
 # Tests for the export directive (without leading dot), as in GNU make.
 
@@ -34,9 +34,15 @@ export VAR=  leading spaces
 # Contrary to the usual variable assignments, spaces are significant
 # before the '=' sign and are appended to the name of the environment
 # variable.
+#
+# Depending on the shell, environment variables with such exotic names
+# may be silently discarded.  One such shell is dash, which is the default
+# shell on Ubuntu and Debian.
 export VAR =trailing space in varname
 .if ${:!env | grep trailing!} != "VAR =trailing space in varname"
-.  error
+.  if ${:!env | grep trailing!} != "" # for dash
+.    error
+.  endif
 .endif
 
 # The right-hand side of the exported variable is expanded exactly once.
