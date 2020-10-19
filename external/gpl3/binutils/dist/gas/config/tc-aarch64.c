@@ -250,12 +250,6 @@ set_fatal_syntax_error (const char *error)
 typedef struct
 {
   const char *template;
-  unsigned long value;
-} asm_barrier_opt;
-
-typedef struct
-{
-  const char *template;
   uint32_t value;
 } asm_nzcv;
 
@@ -3994,7 +3988,7 @@ static int
 parse_barrier (char **str)
 {
   char *p, *q;
-  const asm_barrier_opt *o;
+  const struct aarch64_name_value_pair *o;
 
   p = q = *str;
   while (ISALPHA (*q))
