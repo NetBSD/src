@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.126 2020/10/19 20:41:53 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.127 2020/10/19 21:57:37 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1150,7 +1150,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
 
-	cmdNode = Lst_First(gn->commands);
+	cmdNode = gn->commands->first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
 	    lineno++;
 	    if (buf[x - 1] == '\n')
@@ -1327,7 +1327,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 				nln = Lst_FindFrom(missingFiles,
 						   missingNode->next,
 						   path_match, p);
-				tp = LstNode_Datum(missingNode);
+				tp = missingNode->datum;
 				Lst_Remove(missingFiles, missingNode);
 				free(tp);
 			    } while ((missingNode = nln) != NULL);
@@ -1502,7 +1502,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			   fname, lineno);
 		    oodate = TRUE;
 		} else {
-		    char *cmd = LstNode_Datum(cmdNode);
+		    char *cmd = cmdNode->datum;
 		    Boolean hasOODATE = FALSE;
 
 		    if (strstr(cmd, "$?"))
@@ -1579,7 +1579,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	fclose(fp);
 	if (!Lst_IsEmpty(missingFiles)) {
 	    DEBUG2(META, "%s: missing files: %s...\n",
-			fname, (char *)LstNode_Datum(Lst_First(missingFiles)));
+		   fname, (char *)missingFiles->first->datum);
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {

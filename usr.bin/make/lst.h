@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.73 2020/10/19 21:41:31 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.74 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -145,12 +145,7 @@ void Lst_Destroy(List *, LstFreeProc);
 
 static inline MAKE_ATTR_UNUSED Boolean
 Lst_IsEmpty(List *list) { return list->first == NULL; }
-/* Return the first node of the list, or NULL if the list is empty. */
-static inline MAKE_ATTR_UNUSED ListNode *
-Lst_First(List *list) { return list->first; }
-/* Return the last node of the list, or NULL if the list is empty. */
-static inline MAKE_ATTR_UNUSED ListNode *
-Lst_Last(List *list) { return list->last; }
+
 /* Find the first node for which the function returns TRUE, or NULL. */
 ListNode *Lst_Find(List *, LstFindProc, const void *);
 /* Find the first node for which the function returns TRUE, or NULL.
@@ -175,9 +170,6 @@ void Lst_MoveAll(List *, List *);
 
 /* Node-specific functions */
 
-/* Return the datum of the node. Usually not NULL. */
-static inline MAKE_ATTR_UNUSED void *
-LstNode_Datum(ListNode *node) { return node->datum; }
 /* Replace the value of the node. */
 void LstNode_Set(ListNode *, void *);
 /* Set the value of the node to NULL. Having NULL in a list is unusual. */
