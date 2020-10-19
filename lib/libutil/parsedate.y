@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.32 2017/03/22 18:17:42 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.33 2020/10/19 15:05:53 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -249,7 +249,14 @@ time:
 		param->yyMinutes = $3;
 		param->yySeconds = $5;
 		param->yyMeridian = MER24;
-		/* XXX: Do nothing with millis */
+		/* XXX: Do nothing with fractional secs ($7) */
+	  }
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER ',' tUNUMBER {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yySeconds = $5;
+		param->yyMeridian = MER24;
+		/* XXX: Do nothing with fractional seconds ($7) */
 	  }
 	| tTIME {
 		param->yyHour = $1;
@@ -664,7 +671,8 @@ RelVal(struct dateinfo *param, time_t v, int type)
  * e.g. convert 70 to 1970.
  * Input Year is either:
  *  - A negative number, which means to use its absolute value (why?)
- *  - A number from 0 to 99, which means a year from 1900 to 1999, or
+ *  - A number from 0 to 68, which means a year from 2000 to 2068, 
+ *  - A number from 69 to 99, which means a year from 1969 to 1999, or
  *  - The actual year (>=100).
  * Returns the full year.
  */
@@ -674,7 +682,7 @@ AdjustYear(time_t Year)
     /* XXX Y2K */
     if (Year < 0)
 	Year = -Year;
-    if (Year < 70)
+    if (Year < 69)	/* POSIX compliant, 0..68 is 2000's, 69-99 1900's */
 	Year += 2000;
     else if (Year < 100)
 	Year += 1900;
