@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.167 2020/10/10 21:25:51 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.168 2020/10/19 19:33:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1439,12 +1439,14 @@ int	elf32_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
+int	elf32_check_header(Elf32_Ehdr *);
+#endif
+
+int	real_coredump_elf32(struct lwp *, struct coredump_iostate *);
 int	coredump_elf32(struct lwp *, struct coredump_iostate *);
 void	coredump_savenote_elf32(struct note_state *, unsigned int,
 	    const char *, void *, size_t);
 
-int	elf32_check_header(Elf32_Ehdr *);
-#endif
 
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
@@ -1452,12 +1454,14 @@ int	elf64_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
+int	elf64_check_header(Elf64_Ehdr *);
+#endif
+
+int	real_coredump_elf64(struct lwp *, struct coredump_iostate *);
 int	coredump_elf64(struct lwp *, struct coredump_iostate *);
 void	coredump_savenote_elf64(struct note_state *, unsigned int,
 	    const char *, void *, size_t);
 
-int	elf64_check_header(Elf64_Ehdr *);
-#endif
 
 #endif /* _KERNEL */
 
