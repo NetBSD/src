@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.33 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.34 2020/10/19 17:47:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -129,11 +129,13 @@
  *	Set the process's program counter.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_armfpe.h"
+#endif
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2020/10/19 17:47:37 christos Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.95 2020/10/15 17:37:35 mgorny Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.96 2020/10/19 17:47:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,9 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.95 2020/10/15 17:37:35 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.96 2020/10/19 17:47:37 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
