@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.390 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.391 2020/10/19 19:33:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.390 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.391 2020/10/19 19:33:02 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.390 2020/05/23 23:42:43 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/sdt.h>
+#include <sys/exec_elf.h>
 #include <sys/compat_stub.h>
 
 #ifdef PAX_SEGVGUARD
@@ -2343,12 +2344,9 @@ sigexit(struct lwp *l, int signo)
 }
 
 /*
- * Many emulations have a common coredump_netbsd() established as their
- * dump routine.  Since the "real" code may (or may not) be present in
- * loadable module, we provide a routine here which calls the module
- * hook.
+ * Since the "real" code may (or may not) be present in loadable module,
+ * we provide routines here which calls the module hooks.
  */
-
 int
 coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
 {
@@ -2357,6 +2355,26 @@ coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
 	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie), ENOSYS, retval);
 	return retval;
 }
+
+int
+coredump_elf32(struct lwp *l, struct coredump_iostate *iocookie)
+{
+	int retval;
+
+	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie), ENOSYS, retval);
+	return retval;
+}
+
+#ifdef _LP64
+int
+coredump_elf64(struct lwp *l, struct coredump_iostate *iocookie)
+{
+	int retval;
+
+	MODULE_HOOK_CALL(coredump_elf64_hook, (l, iocookie), ENOSYS, retval);
+	return retval;
+}
+#endif
 
 /*
  * Put process 'p' into the stopped state and optionally, notify the parent.

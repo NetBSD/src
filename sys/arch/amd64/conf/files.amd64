@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.117 2020/10/15 17:40:13 mgorny Exp $
+#	$NetBSD: files.amd64,v 1.118 2020/10/19 19:33:01 christos Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -47,7 +47,7 @@ file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c			machdep
 file	arch/amd64/amd64/machdep.c		machdep
 file	arch/amd64/amd64/prekern.c		kaslr
-file	arch/amd64/amd64/process_machdep.c	machdep
+file	arch/amd64/amd64/process_machdep.c	machdep & ptrace
 file	arch/amd64/amd64/trap.c			machdep
 file	arch/x86/x86/fpu.c			machdep
 file	arch/x86/x86/dbregs.c			machdep

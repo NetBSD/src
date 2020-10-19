@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.65 2020/10/10 00:10:06 rin Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.66 2020/10/19 19:33:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.65 2020/10/10 00:10:06 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.66 2020/10/19 19:33:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -109,7 +109,7 @@ static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
 #define elf_fpreg		CONCAT(process_fpreg, ELFSIZE)
 
 int
-ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
+ELFNAMEEND(real_coredump)(struct lwp *l, struct coredump_iostate *cookie)
 {
 	Elf_Ehdr ehdr;
 	Elf_Shdr shdr;
