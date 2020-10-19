@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.117 2020/10/19 19:34:18 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.118 2020/10/19 21:17:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.117 2020/10/19 19:34:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.118 2020/10/19 21:17:35 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -358,9 +358,9 @@ PrintNodeNamesLine(const char *label, GNodeList *gnodes)
 void
 Targ_PrintCmds(GNode *gn)
 {
-    StringListNode *node = gn->commands->first;
-    for (; node != NULL; node = node->next) {
-	const char *cmd = LstNode_Datum(node);
+    StringListNode *ln;
+    for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+	const char *cmd = ln->datum;
 	debug_printf("\t%s\n", cmd);
     }
 }
