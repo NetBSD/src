@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.378 2020/10/18 13:02:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.379 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.378 2020/10/18 13:02:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.379 2020/10/19 21:57:37 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1370,7 +1370,7 @@ main(int argc, char **argv)
 		ln = Lst_Find(sysMkPath, ReadMakefileSucceeded, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)LstNode_Datum(Lst_First(sysMkPath)));
+			    (char *)sysMkPath->first->datum);
 	}
 
 	if (!Lst_IsEmpty(makefiles)) {
@@ -1379,7 +1379,7 @@ main(int argc, char **argv)
 		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)LstNode_Datum(ln));
+			    (char *)ln->datum);
 	} else {
 		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
 		    VAR_CMD, VARE_WANTRES, &p1);

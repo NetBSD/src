@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.194 2020/10/19 21:38:10 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.195 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.194 2020/10/19 21:38:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.195 2020/10/19 21:57:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -369,7 +369,7 @@ SuffInsert(SuffList *l, Suff *s)
     Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
     for (ln = l->first; ln != NULL; ln = ln->next) {
-	s2 = LstNode_Datum(ln);
+	s2 = ln->datum;
 	if (s2->sNum >= s->sNum) {
 	    break;
 	}
@@ -487,7 +487,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 	    }
 	    return FALSE;
 	}
-	src = LstNode_Datum(srcLn);
+	src = srcLn->datum;
 	str2 = str + src->nameLen;
 	if (*str2 == '\0') {
 	    single = src;
@@ -549,7 +549,7 @@ Suff_AddTransform(const char *line)
 	 * free the commands themselves, because a given command can be
 	 * attached to several different transformations.
 	 */
-	gn = LstNode_Datum(ln);
+	gn = ln->datum;
 	Lst_Free(gn->commands);
 	Lst_Free(gn->children);
 	gn->commands = Lst_New();
@@ -586,7 +586,7 @@ void
 Suff_EndTransform(GNode *gn)
 {
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
-	gn = LstNode_Datum(Lst_Last(gn->cohorts));
+	gn = gn->cohorts->last->datum;
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))
     {
@@ -811,7 +811,7 @@ Suff_DoPaths(void)
     inLibs = Lst_New();
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *s = LstNode_Datum(ln);
+	Suff *s = ln->datum;
 	if (!Lst_IsEmpty(s->searchPath)) {
 #ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
@@ -961,7 +961,7 @@ SuffRemoveSrc(SrcList *l)
 #endif
 
     while ((ln = Lst_Next(l)) != NULL) {
-	Src *s = LstNode_Datum(ln);
+	Src *s = ln->datum;
 	if (s->children == 0) {
 	    free(s->file);
 	    if (!s->parent)
@@ -1083,7 +1083,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
 	    Lst_Close(t->children);
 	    return NULL;
 	}
-	s = LstNode_Datum(gln);
+	s = gln->datum;
 
 	if (s->type & OP_OPTIONAL && Lst_IsEmpty(t->commands)) {
 	    /*
@@ -1164,7 +1164,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
 static void
 SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 {
-    GNode *cgn = LstNode_Datum(cln);
+    GNode *cgn = cln->datum;
     GNode *gn;			/* New source 8) */
     char *cp;			/* Expanded value */
 
@@ -1317,7 +1317,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 static void
 SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 {
-    GNode *cgn = LstNode_Datum(cln);
+    GNode *cgn = cln->datum;
     StringList *explist;
 
     if (!Dir_HasWildcards(cgn->name))
@@ -1383,7 +1383,7 @@ Suff_FindPath(GNode* gn)
 
 	SUFF_DEBUG1("Wildcard expanding \"%s\"...", gn->name);
 	if (ln != NULL)
-	    suff = LstNode_Datum(ln);
+	    suff = ln->datum;
 	/* XXX: Here we can save the suffix so we don't have to do this again */
     }
 
@@ -1447,14 +1447,14 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 	return FALSE;
     }
 
-    gn = LstNode_Datum(ln);
+    gn = ln->datum;
 
     SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
 
     /*
      * Record last child for expansion purposes
      */
-    ln = Lst_Last(tGn->children);
+    ln = tGn->children->last;
 
     /*
      * Pass the buck to Make_HandleUse to apply the rule
@@ -1569,7 +1569,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
+    for (ln = gn->children->first; ln != NULL; ln = nln) {
 	nln = ln->next;
 	SuffExpandChildren(ln, gn);
     }
@@ -1594,7 +1594,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	    /*
 	     * Got one -- apply it
 	     */
-	    Suff *suff = LstNode_Datum(ln);
+	    Suff *suff = ln->datum;
 	    if (!SuffApplyTransform(gn, mem, suff, ms)) {
 		SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
 			    ms->name, suff->name);
@@ -1658,7 +1658,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     /*
      * Begin at the beginning...
      */
-    ln = Lst_First(sufflist);
+    ln = sufflist->first;
     srcs = Lst_New();
     targs = Lst_New();
 
@@ -1699,7 +1699,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 		 */
 		targ = bmake_malloc(sizeof(Src));
 		targ->file = bmake_strdup(gn->name);
-		targ->suff = LstNode_Datum(ln);
+		targ->suff = ln->datum;
 		targ->suff->refCount++;
 		targ->node = gn;
 		targ->parent = NULL;
@@ -1776,7 +1776,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	     * for setting the local variables.
 	     */
 	    if (!Lst_IsEmpty(targs)) {
-		targ = LstNode_Datum(Lst_First(targs));
+		targ = targs->first->datum;
 	    } else {
 		targ = NULL;
 	    }
@@ -1799,7 +1799,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
+    for (ln = gn->children->first; ln != NULL; ln = nln) {
 	nln = ln->next;
 	SuffExpandChildren(ln, gn);
     }

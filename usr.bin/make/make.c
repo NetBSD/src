@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.164 2020/10/19 19:55:25 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.165 2020/10/19 21:57:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.164 2020/10/19 19:55:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.165 2020/10/19 21:57:37 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -622,12 +622,12 @@ Make_Update(GNode *cgn)
     parents = centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
-    Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, Lst_First(toBeMade));
+    Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, toBeMade->first);
 
     /* Now mark all the parents as having one less unmade child */
     Lst_Open(parents);
     while ((ln = Lst_Next(parents)) != NULL) {
-	pgn = LstNode_Datum(ln);
+	pgn = ln->datum;
 	if (DEBUG(MAKE))
 	    debug_printf("inspect parent %s%s: flags %x, "
 			 "type %x, made %d, unmade %d ",
@@ -723,7 +723,7 @@ Make_Update(GNode *cgn)
 	const char *cpref = Var_Value(PREFIX, cgn, &p1);
 
 	while ((ln = Lst_Next(cgn->implicitParents)) != NULL) {
-	    pgn = LstNode_Datum(ln);
+	    pgn = ln->datum;
 	    if (pgn->flags & REMAKE) {
 		Var_Set(IMPSRC, cname, pgn);
 		if (cpref != NULL)
@@ -961,7 +961,7 @@ MakeStartJobs(void)
 	     * just before the current first element.
 	     */
 	    gn->made = DEFERRED;
-	    Lst_ForEachUntil(gn->children, MakeBuildChild, Lst_First(toBeMade));
+	    Lst_ForEachUntil(gn->children, MakeBuildChild, toBeMade->first);
 	    /* and drop this node on the floor */
 	    DEBUG2(MAKE, "dropped %s%s\n", gn->name, gn->cohort_num);
 	    continue;
@@ -1240,10 +1240,10 @@ Make_ProcessWait(GNodeList *targs)
 	if (pgn->type & OP_DOUBLEDEP)
 	    Lst_PrependAll(examine, pgn->cohorts);
 
-	owln = Lst_First(pgn->children);
+	owln = pgn->children->first;
 	Lst_Open(pgn->children);
 	for (; (ln = Lst_Next(pgn->children)) != NULL; ) {
-	    GNode *cgn = LstNode_Datum(ln);
+	    GNode *cgn = ln->datum;
 	    if (cgn->type & OP_WAIT) {
 		add_wait_dependency(owln, cgn);
 		owln = ln;
