@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.27 2020/10/19 09:01:24 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.28 2020/10/19 10:28:47 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -475,6 +475,10 @@ typedef char oss_id_t[OSS_ID_SIZE];
 typedef char oss_devnode_t[OSS_DEVNODE_SIZE];
 #define OSS_HANDLE_SIZE		32
 typedef char oss_handle_t[OSS_HANDLE_SIZE];
+#define	OSS_LONGNAME_SIZE	64
+typedef char oss_longname_t[OSS_LONGNAME_SIZE];
+#define	OSS_LABEL_SIZE		16
+typedef char oss_label_t[OSS_LABEL_SIZE];
 
 typedef struct oss_mixext_root {
 	oss_id_t id;
@@ -541,6 +545,17 @@ typedef struct oss_mixext {
 	int rgbcolor;
 	int filler[6];
 } oss_mixext;
+
+
+/*
+ * These are no-ops on FreeBSD, NetBSD, and Solaris,
+ * but are defined for compatibility with OSSv4.
+ */
+#define SNDCTL_SETSONG		_IOW ('Y',2, oss_longname_t)
+#define SNDCTL_GETSONG		_IOR ('Y',2, oss_longname_t)
+#define SNDCTL_SETNAME		_IOW ('Y',3, oss_longname_t)
+#define SNDCTL_SETLABEL		_IOW ('Y',4, oss_label_t)
+#define SNDCTL_GETLABEL		_IOR ('Y',4, oss_label_t)
 
 #define ioctl _oss_ioctl
 /*
