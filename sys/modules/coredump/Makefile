@@ -1,25 +1,24 @@
-#	$NetBSD: Makefile,v 1.6 2019/11/20 19:37:54 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.7 2020/10/19 19:33:02 christos Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	coredump
 
 .PATH:	${S}/kern
-SRCS=	kern_core.c core_netbsd.c 
+SRCS=	kern_core.c core_netbsd.c
+SRCS+=	${OBJECT_FMTS:S/^/core_/:S/$/.c/}
 
 .PATH:	${S}/uvm
 SRCS+=	uvm_coredump.c
 
-.PATH:	${S}/arch/${MACHINE}/${MACHINE}
-.PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.PATH:	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-.PATH:	${S}/arch/x86/x86
-.endif
-.if ${MACHINE_ARCH} == "powerpc64"
-.PATH:	${S}/arch/powerpc/powerpc
-.endif
+.include "../ptrace_common/machdep.mk"
 SRCS+=	core_machdep.c
+
+.include "${.CURDIR}/../../compat/netbsd32/netbsd32.mk"
+.if ${COMPAT_USE_NETBSD32} != "no"
+CPPFLAGS.core_elf32.c+=     -DCOMPAT_NETBSD32
+CPPFLAGS.kern_core.c+=     -DCOMPAT_NETBSD32
+.endif
 
 WARNS=	3
 
