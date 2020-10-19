@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.1 2020/10/10 15:25:31 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.2 2020/10/19 01:12:14 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.1 2020/10/10 15:25:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.2 2020/10/19 01:12:14 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,7 @@ static struct arm_simplefb_softc {
 	uint32_t	sc_height;
 	uint32_t	sc_stride;
 	uint16_t	sc_depth;
+	bool		sc_swapped;
 	void		*sc_bits;
 } arm_simplefb_softc;
 
@@ -120,6 +121,14 @@ arm_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = sc->sc_bits;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
 
+	if (sc->sc_swapped) {
+		KASSERT(ri->ri_depth == 32);
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
+		ri->ri_rpos =  8;
+		ri->ri_gpos = 16;
+		ri->ri_bpos = 24;
+	}
+
 	scr->scr_flags |= VCONS_LOADFONT;
 	scr->scr_flags |= VCONS_DONT_READ;
 
@@ -161,6 +170,7 @@ arm_simplefb_preattach(void)
 	bus_size_t size;
 	uint16_t depth;
 	long defattr;
+	bool swapped = false;
 
 	const int phandle = arm_simplefb_find_node();
 	if (phandle == -1)
@@ -181,6 +191,10 @@ arm_simplefb_preattach(void)
 	if (strcmp(format, "a8b8g8r8") == 0 ||
 	    strcmp(format, "x8r8g8b8") == 0) {
 		depth = 32;
+	} else if (strcmp(format, "r8g8b8a8") == 0 ||
+		   strcmp(format, "b8g8r8x8") == 0) {
+		depth = 32;
+		swapped = true;
 	} else if (strcmp(format, "r5g6b5") == 0) {
 		depth = 16;
 	} else {
@@ -196,6 +210,7 @@ arm_simplefb_preattach(void)
 	sc->sc_depth = depth;
 	sc->sc_stride = stride;
 	sc->sc_bits = bus_space_vaddr(bst, bsh);
+	sc->sc_swapped = swapped;
 
 	wsfont_init();
 
