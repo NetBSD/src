@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.6 2020/10/12 23:56:08 kamil Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.7 2020/10/19 11:31:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 	.cfi_offset ecx, UC_GREGS_ECX
 	.cfi_offset edx, UC_GREGS_EDX
 	.cfi_offset ebx, UC_GREGS_EBX
-	/* The unwinder will use the CFA to restore ESP. */
+	.cfi_offset esp, UC_GREGS_ESP
 	.cfi_offset ebp, UC_GREGS_EBP
 	.cfi_offset esi, UC_GREGS_ESI
 	.cfi_offset edi, UC_GREGS_EDI
