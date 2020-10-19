@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.125 2020/10/18 13:02:10 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.126 2020/10/19 20:41:53 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -367,10 +367,8 @@ typedef struct meta_file_s {
 } meta_file_t;
 
 static void
-printCMD(void *cmdp, void *mfpp)
+printCMD(const char *cmd, meta_file_t *mfp)
 {
-    meta_file_t *mfp = mfpp;
-    char *cmd = cmdp;
     char *cmd_freeIt = NULL;
 
     if (strchr(cmd, '$')) {
@@ -380,6 +378,15 @@ printCMD(void *cmdp, void *mfpp)
     }
     fprintf(mfp->fp, "CMD %s\n", cmd);
     free(cmd_freeIt);
+}
+
+static void
+printCMDs(GNode *gn, meta_file_t *mf)
+{
+    GNodeListNode *ln;
+
+    for (ln = gn->commands->first; ln != NULL; ln = ln->next)
+	printCMD(ln->datum, mf);
 }
 
 /*
@@ -517,7 +524,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     mf.gn = gn;
 
-    Lst_ForEach(gn->commands, printCMD, &mf);
+    printCMDs(gn, &mf);
 
     fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof(buf)));
     fprintf(mf.fp, "TARGET %s\n", tname);
