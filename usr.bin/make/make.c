@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.162 2020/10/19 19:45:50 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.163 2020/10/19 19:48:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.162 2020/10/19 19:45:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.163 2020/10/19 19:48:09 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -190,12 +190,6 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
     if (pgn->cmgn == NULL || cgn->mtime > pgn->cmgn->mtime) {
 	pgn->cmgn = cgn;
     }
-}
-
-static void
-MakeTimeStamp(void *pgn, void *cgn)
-{
-    Make_TimeStamp(pgn, cgn);
 }
 
 /* See if the node is out of date with respect to its sources.
@@ -335,7 +329,9 @@ Make_OODate(GNode *gn)
      * thinking they're out-of-date.
      */
     if (!oodate) {
-	Lst_ForEach(gn->parents, MakeTimeStamp, gn);
+	GNodeListNode *ln;
+	for (ln = gn->parents->first; ln != NULL; ln = ln->next)
+	    Make_TimeStamp(ln->datum, gn);
     }
 
     return oodate;
