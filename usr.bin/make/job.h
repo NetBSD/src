@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.55 2020/10/05 21:37:07 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.56 2020/10/19 23:07:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -176,67 +176,6 @@ typedef struct Job {
     struct BuildMon bm;
 #endif
 } Job;
-
-/*-
- * Shell Specifications:
- * Each shell type has associated with it the following information:
- *	1) The string which must match the last character of the shell name
- *	   for the shell to be considered of this type. The longest match
- *	   wins.
- *	2) A command to issue to turn off echoing of command lines
- *	3) A command to issue to turn echoing back on again
- *	4) What the shell prints, and its length, when given the echo-off
- *	   command. This line will not be printed when received from the shell
- *	5) A boolean to tell if the shell has the ability to control
- *	   error checking for individual commands.
- *	6) The string to turn this checking on.
- *	7) The string to turn it off.
- *	8) The command-flag to give to cause the shell to start echoing
- *	   commands right away.
- *	9) The command-flag to cause the shell to Lib_Exit when an error is
- *	   detected in one of the commands.
- *
- * Some special stuff goes on if a shell doesn't have error control. In such
- * a case, errCheck becomes a printf template for echoing the command,
- * should echoing be on and ignErr becomes another printf template for
- * executing the command while ignoring the return status. Finally errOut
- * is a printf template for running the command and causing the shell to
- * exit on error. If any of these strings are empty when hasErrCtl is FALSE,
- * the command will be executed anyway as is and if it causes an error, so be
- * it. Any templates setup to echo the command will escape any '$ ` \ "'i
- * characters in the command string to avoid common problems with
- * echo "%s\n" as a template.
- */
-typedef struct Shell {
-    const char *name;		/* the name of the shell. For Bourne and C
-				 * shells, this is used only to find the
-				 * shell description when used as the single
-				 * source of a .SHELL target. For user-defined
-				 * shells, this is the full path of the shell.
-				 */
-    Boolean hasEchoCtl;		/* True if both echoOff and echoOn defined */
-    const char *echoOff;	/* command to turn off echo */
-    const char *echoOn;		/* command to turn it back on again */
-    const char *noPrint;	/* command to skip when printing output from
-				 * shell. This is usually the command which
-				 * was executed to turn off echoing */
-    size_t noPLen;		/* length of noPrint command */
-    Boolean hasErrCtl;		/* set if can control error checking for
-				 * individual commands */
-    const char *errCheck;	/* string to turn error checking on */
-    const char *ignErr;		/* string to turn off error checking */
-    const char *errOut;		/* string to use for testing exit code */
-    const char *newline;	/* string literal that results in a newline
-				 * character when it appears outside of any
-				 * 'quote' or "quote" characters */
-    char commentChar;		/* character used by shell for comment lines */
-
-    /*
-     * command-line flags
-     */
-    const char *echo;		/* echo commands */
-    const char *exit;		/* exit on error */
-} Shell;
 
 extern const char *shellPath;
 extern const char *shellName;
