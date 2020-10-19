@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.163 2020/10/19 19:48:09 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.164 2020/10/19 19:55:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.163 2020/10/19 19:48:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.164 2020/10/19 19:55:25 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1171,17 +1171,6 @@ Make_ExpandUse(GNodeList *targs)
     Lst_Free(examine);
 }
 
-static void
-link_parent(void *cnp, void *pnp)
-{
-    GNode *cn = cnp;
-    GNode *pn = pnp;
-
-    Lst_Append(pn->children, cn);
-    Lst_Append(cn->parents, pn);
-    pn->unmade++;
-}
-
 /* Make the .WAIT node depend on the previous children */
 static void
 add_wait_dependency(GNodeListNode *owln, GNode *wn)
@@ -1205,10 +1194,8 @@ static void
 Make_ProcessWait(GNodeList *targs)
 {
     GNode  *pgn;		/* 'parent' node we are examining */
-    GNode  *cgn;		/* Each child in turn */
     GNodeListNode *owln;	/* Previous .WAIT node */
     GNodeList *examine;		/* List of targets to examine */
-    GNodeListNode *ln;
 
     /*
      * We need all the nodes to have a common parent in order for the
@@ -1222,7 +1209,16 @@ Make_ProcessWait(GNodeList *targs)
     /* Get it displayed in the diag dumps */
     Lst_Prepend(Targ_List(), pgn);
 
-    Lst_ForEach(targs, link_parent, pgn);
+    {
+	GNodeListNode *ln;
+	for (ln = targs->first; ln != NULL; ln = ln->next) {
+	    GNode *cgn = ln->datum;
+
+	    Lst_Append(pgn->children, cgn);
+	    Lst_Append(cgn->parents, pgn);
+	    pgn->unmade++;
+	}
+    }
 
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);
@@ -1231,6 +1227,8 @@ Make_ProcessWait(GNodeList *targs)
     Lst_Append(examine, pgn);
 
     while (!Lst_IsEmpty(examine)) {
+	GNodeListNode *ln;
+
 	pgn = Lst_Dequeue(examine);
 
 	/* We only want to process each child-list once */
@@ -1245,7 +1243,7 @@ Make_ProcessWait(GNodeList *targs)
 	owln = Lst_First(pgn->children);
 	Lst_Open(pgn->children);
 	for (; (ln = Lst_Next(pgn->children)) != NULL; ) {
-	    cgn = LstNode_Datum(ln);
+	    GNode *cgn = LstNode_Datum(ln);
 	    if (cgn->type & OP_WAIT) {
 		add_wait_dependency(owln, cgn);
 		owln = ln;
