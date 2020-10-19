@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.30 2020/10/18 12:36:43 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.31 2020/10/19 23:43:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -87,7 +87,8 @@ typedef struct CachedDir {
     int refCount;		/* Number of SearchPaths with this directory */
     int hits;			/* The number of times a file in this
 				 * directory has been found */
-    HashTable files;		/* Hash set of files in directory */
+    HashTable files;		/* Hash set of files in directory;
+				 * all values are NULL. */
 } CachedDir;
 
 void Dir_Init(void);

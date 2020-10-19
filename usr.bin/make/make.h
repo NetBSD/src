@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.159 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.160 2020/10/19 23:43:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -202,7 +202,7 @@ typedef enum GNodeType {
     /* Target is never out of date, but always execute commands anyway.
      * Its time doesn't matter, so it has none...sort of */
     OP_EXEC		= 1 << 5,
-    /* Ignore errors when creating the node */
+    /* Ignore non-zero exit status from shell commands when creating the node */
     OP_IGNORE		= 1 << 6,
     /* Don't remove the target when interrupted */
     OP_PRECIOUS		= 1 << 7,
@@ -245,12 +245,15 @@ typedef enum GNodeType {
     OP_TRANSFORM	= 1 << 31,
     /* Target is a member of an archive */
     OP_MEMBER		= 1 << 30,
-    /* Target is a library */
+    /* Target is a library;
+     * the node's name has the form "-l<libname>" */
     OP_LIB		= 1 << 29,
-    /* Target is an archive construct */
+    /* Target is an archive construct;
+     * the node's name has the form "archive(member)" */
     OP_ARCHV		= 1 << 28,
     /* Target has all the commands it should. Used when parsing to catch
-     * multiple commands for a target. */
+     * multiple command groups for a target.  Only applies to the dependency
+     * operators ':' and '!', but not to '::'. */
     OP_HAS_COMMANDS	= 1 << 27,
     /* The special command "..." has been seen. All further commands from
      * this node will be saved on the .END node instead, to be executed at
@@ -299,14 +302,15 @@ typedef struct GNode {
     /* The type of operator used to define the sources (see the OP flags below).
      * XXX: This looks like a wild mixture of type and flags. */
     GNodeType type;
-    /* whether it is involved in this invocation of make */
     GNodeFlags flags;
 
     /* The state of processing on this node */
     GNodeMade made;
     int unmade;			/* The number of unmade children */
 
-    time_t mtime;		/* Its modification time */
+    /* The modification time; 0 means the node does not have a corresponding
+     * file; see Make_OODate. */
+    time_t mtime;
     struct GNode *cmgn;		/* The youngest child */
 
     /* The GNodes for which this node is an implied source. May be empty.
@@ -314,7 +318,7 @@ typedef struct GNode {
      * file.c has the node for file.o in this list. */
     GNodeList *implicitParents;
 
-    /* Other nodes of the same name for the :: operator. */
+    /* Other nodes of the same name, for the '::' operator. */
     GNodeList *cohorts;
 
     /* The nodes that depend on this one, or in other words, the nodes for
@@ -341,10 +345,13 @@ typedef struct GNode {
     struct GNode *centurion;
 
     /* Last time (sequence number) we tried to make this node */
-    unsigned int checked;
+    unsigned int checked_seqno;
 
     /* The "local" variables that are specific to this target and this target
-     * only, such as $@, $<, $?. */
+     * only, such as $@, $<, $?.
+     *
+     * Also used for the global variable scopes VAR_GLOBAL, VAR_CMD,
+     * VAR_INTERNAL, which contain variables with arbitrary names. */
     HashTable context;
 
     /* The commands to be given to a shell to create this target. */
@@ -473,7 +480,7 @@ extern pid_t	myPid;
 #define	MAKEOVERRIDES	".MAKEOVERRIDES"
 #define	MAKE_JOB_PREFIX	".MAKE.JOB.PREFIX" /* prefix for job target output */
 #define	MAKE_EXPORTED	".MAKE.EXPORTED"   /* variables we export */
-#define	MAKE_MAKEFILES	".MAKE.MAKEFILES"  /* all the makefiles we read */
+#define	MAKE_MAKEFILES	".MAKE.MAKEFILES"  /* all makefiles already loaded */
 #define	MAKE_LEVEL	".MAKE.LEVEL"	   /* recursion level */
 #define MAKEFILE_PREFERENCE ".MAKE.MAKEFILE_PREFERENCE"
 #define MAKE_DEPENDFILE	".MAKE.DEPENDFILE" /* .depend */
@@ -563,8 +570,8 @@ void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 Boolean NoExecute(GNode *gn);
 
 /*
- * See if the node with the given type was not the object of a dependency
- * operator.
+ * See if the node with the given type was never seen on the left-hand side
+ * of a dependency operator.
  */
 static Boolean MAKE_ATTR_UNUSED
 OP_NOP(GNodeType t)
@@ -634,13 +641,13 @@ pp_skip_whitespace(char **pp)
 	(*pp)++;
 }
 
-#ifndef MAKE_NATIVE
-#define MAKE_RCSID(id) static volatile char rcsid[] = id
+#ifdef MAKE_NATIVE
+#  include <sys/cdefs.h>
+#  ifndef lint
+#    define MAKE_RCSID(id) __RCSID(id)
+#  endif
 #else
-#include <sys/cdefs.h>
-#ifndef lint
-#define MAKE_RCSID(id) __RCSID(id)
-#endif
+#  define MAKE_RCSID(id) static volatile char rcsid[] = id
 #endif
 
 #endif /* MAKE_MAKE_H */
