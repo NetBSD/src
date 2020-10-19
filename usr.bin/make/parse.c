@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.392 2020/10/19 20:51:18 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.393 2020/10/19 20:55:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.392 2020/10/19 20:51:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.393 2020/10/19 20:55:30 rillig Exp $");
 
 /* types and constants */
 
@@ -1013,12 +1013,6 @@ FindMainTarget(void)
     }
 }
 
-static void
-ParseAddDir(void *path, void *name)
-{
-    (void)Dir_AddDir(path, name);
-}
-
 /*
  * We got to the end of the line while we were still looking at targets.
  *
@@ -1386,6 +1380,16 @@ ParseDoDependencySourcesEmpty(ParseSpecial const specType,
     }
 }
 
+static void
+AddToPaths(const char *dir, SearchPathList *paths)
+{
+    if (paths != NULL) {
+	SearchPathListNode *ln;
+	for (ln = paths->first; ln != NULL; ln = ln->next)
+	    (void)Dir_AddDir(ln->datum, dir);
+    }
+}
+
 /*
  * If the target was one that doesn't take files as its sources
  * but takes something like suffixes, we take each
@@ -1422,8 +1426,7 @@ ParseDoDependencySourceSpecial(ParseSpecial const specType, char *const line,
 	Suff_AddSuffix(line, &mainNode);
 	break;
     case ExPath:
-	if (paths != NULL)
-	    Lst_ForEach(paths, ParseAddDir, line);
+	AddToPaths(line, paths);
 	break;
     case Includes:
 	Suff_AddInclude(line);
