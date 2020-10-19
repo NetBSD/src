@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.49 2020/10/17 23:23:06 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.50 2020/10/19 09:01:24 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.49 2020/10/17 23:23:06 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.50 2020/10/19 09:01:24 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -121,6 +121,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	int perrors, rerrors;
 	static int totalperrors = 0;
 	static int totalrerrors = 0;
+	oss_count_t osscount;
 	int idat, idata;
 	int retval;
 
@@ -577,6 +578,16 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		cntinfo.ptr = tmpoffs.offset;
 		*(struct count_info *)argp = cntinfo;
 		break;
+	case SNDCTL_DSP_CURRENT_IPTR:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		/* XXX: 'samples' may wrap */
+		memset(osscount.filler, 0, sizeof(osscount.filler));
+		osscount.samples = tmpinfo.record.samples;
+		osscount.fifo_samples = tmpinfo.record.seek;
+		*(oss_count_t *)argp = osscount;
+		break;
 	case SNDCTL_DSP_GETOPTR:
 		retval = ioctl(fd, AUDIO_GETOOFFS, &tmpoffs);
 		if (retval < 0)
@@ -585,6 +596,16 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		cntinfo.blocks = tmpoffs.deltablks;
 		cntinfo.ptr = tmpoffs.offset;
 		*(struct count_info *)argp = cntinfo;
+		break;
+	case SNDCTL_DSP_CURRENT_OPTR:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		/* XXX: 'samples' may wrap */
+		memset(osscount.filler, 0, sizeof(osscount.filler));
+		osscount.samples = tmpinfo.play.samples;
+		osscount.fifo_samples = tmpinfo.play.seek;
+		*(oss_count_t *)argp = osscount;
 		break;
 	case SNDCTL_DSP_SETPLAYVOL:
 		setvol(fd, INTARG, false);

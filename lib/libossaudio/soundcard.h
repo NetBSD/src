@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.26 2020/10/17 23:23:06 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.27 2020/10/19 09:01:24 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -326,6 +326,14 @@ typedef struct buffmem_desc {
 #define SNDCTL_DSP_SILENCE		_IO ('P',32)
 #define SNDCTL_DSP_COOKEDMODE		_IOW ('P',33, int)
 #define SNDCTL_DSP_GETERROR		_IOR ('P',34, struct audio_errinfo)
+#define SNDCTL_DSP_CURRENT_IPTR		_IOR ('P',35, oss_count_t)
+#define SNDCTL_DSP_CURRENT_OPTR		_IOR ('P',36, oss_count_t)
+
+typedef struct {
+	long long samples;
+	int fifo_samples;
+	int filler[32];			/* "Future use" */
+} oss_count_t;
 
 typedef struct audio_errinfo {
 	int play_underruns;
