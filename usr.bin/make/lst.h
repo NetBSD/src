@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.72 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.73 2020/10/19 21:41:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -185,10 +185,6 @@ void LstNode_SetNull(ListNode *);
 
 /* Iterating over a list, using a callback function */
 
-/* Apply a function to each datum of the list.
- * The function must not modify the structure of the list, for example by
- * adding or removing nodes. */
-void Lst_ForEach(List *, LstActionProc, void *);
 /* Apply a function to each datum of the list, until the callback function
  * returns non-zero. */
 int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
