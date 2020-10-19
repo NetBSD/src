@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.190 2020/10/18 17:41:06 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.191 2020/10/19 21:17:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.190 2020/10/18 17:41:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.191 2020/10/19 21:17:35 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -2110,18 +2110,22 @@ Suff_End(void)
 /********************* DEBUGGING FUNCTIONS **********************/
 
 static void
-SuffPrintName(void *s, void *dummy MAKE_ATTR_UNUSED)
+PrintSuffNames(const char *prefix, SuffList *suffs)
 {
-    debug_printf("%s ", ((Suff *)s)->name);
+    SuffListNode *ln;
+
+    debug_printf("#\t%s: ", prefix);
+    for (ln = suffs->first; ln != NULL; ln = ln->next) {
+	Suff *suff = ln->datum;
+	debug_printf("%s ", suff->name);
+    }
+    debug_printf("\n");
 }
 
 static void
-SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
+PrintSuff(Suff *s)
 {
-    Suff    *s = (Suff *)sp;
-
     debug_printf("# `%s' [%d] ", s->name, s->refCount);
-
     if (s->flags != 0) {
 	char flags_buf[SuffFlags_ToStringSize];
 
@@ -2129,36 +2133,40 @@ SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
 		     Enum_FlagsToString(flags_buf, sizeof flags_buf,
 					s->flags, SuffFlags_ToStringSpecs));
     }
-    fputc('\n', debug_file);
-    debug_printf("#\tTo: ");
-    Lst_ForEach(s->parents, SuffPrintName, NULL);
-    fputc('\n', debug_file);
-    debug_printf("#\tFrom: ");
-    Lst_ForEach(s->children, SuffPrintName, NULL);
-    fputc('\n', debug_file);
+    debug_printf("\n");
+
+    PrintSuffNames("To", s->parents);
+    PrintSuffNames("From", s->children);
+
     debug_printf("#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
-    fputc('\n', debug_file);
+    debug_printf("\n");
 }
 
 static void
-SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
+PrintTransformation(GNode *t)
 {
-    GNode   *t = (GNode *)tp;
-
     debug_printf("%-16s:", t->name);
     Targ_PrintType(t->type);
-    fputc('\n', debug_file);
+    debug_printf("\n");
     Targ_PrintCmds(t);
-    fputc('\n', debug_file);
+    debug_printf("\n");
 }
 
 void
 Suff_PrintAll(void)
 {
     debug_printf("#*** Suffixes:\n");
-    Lst_ForEach(sufflist, SuffPrintSuff, NULL);
+    {
+	SuffListNode *ln;
+	for (ln = sufflist->first; ln != NULL; ln = ln->next)
+	    PrintSuff(ln->datum);
+    }
 
     debug_printf("#*** Transformations:\n");
-    Lst_ForEach(transforms, SuffPrintTrans, NULL);
+    {
+	GNodeListNode *ln;
+	for (ln = transforms->first; ln != NULL; ln = ln->next)
+	    PrintTransformation(ln->datum);
+    }
 }
