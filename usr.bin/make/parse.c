@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.391 2020/10/18 20:46:42 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.392 2020/10/19 20:51:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.391 2020/10/18 20:46:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.392 2020/10/19 20:51:18 rillig Exp $");
 
 /* types and constants */
 
@@ -196,6 +196,7 @@ typedef enum ParseSpecial {
 } ParseSpecial;
 
 typedef List SearchPathList;
+typedef ListNode SearchPathListNode;
 
 /* result data */
 
@@ -1018,12 +1019,6 @@ ParseAddDir(void *path, void *name)
     (void)Dir_AddDir(path, name);
 }
 
-static void
-ParseClearPath(void *path, void *unused MAKE_ATTR_UNUSED)
-{
-    Dir_ClearPath(path);
-}
-
 /*
  * We got to the end of the line while we were still looking at targets.
  *
@@ -1350,6 +1345,18 @@ ParseDoDependencyParseOp(char **const pp, const char *const lstart,
 }
 
 static void
+ClearPaths(SearchPathList *paths)
+{
+    if (paths != NULL) {
+	SearchPathListNode *ln;
+	for (ln = paths->first; ln != NULL; ln = ln->next)
+	    Dir_ClearPath(ln->datum);
+    }
+
+    Dir_SetPATH();
+}
+
+static void
 ParseDoDependencySourcesEmpty(ParseSpecial const specType,
 			      SearchPathList *const paths)
 {
@@ -1367,9 +1374,7 @@ ParseDoDependencySourcesEmpty(ParseSpecial const specType,
 	beSilent = TRUE;
 	break;
     case ExPath:
-	if (paths != NULL)
-	    Lst_ForEach(paths, ParseClearPath, NULL);
-	Dir_SetPATH();
+	ClearPaths(paths);
 	break;
 #ifdef POSIX
     case Posix:
