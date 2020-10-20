@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.394 2020/10/19 21:57:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.395 2020/10/20 22:50:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.394 2020/10/19 21:57:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.395 2020/10/20 22:50:55 rillig Exp $");
 
 /* types and constants */
 
@@ -1021,11 +1021,11 @@ FindMainTarget(void)
  * cvs/rcs merges.
  */
 static void
-ParseErrorNoDependency(const char *lstart, const char *line)
+ParseErrorNoDependency(const char *lstart)
 {
-    if ((strncmp(line, "<<<<<<", 6) == 0) ||
-	(strncmp(line, "======", 6) == 0) ||
-	(strncmp(line, ">>>>>>", 6) == 0))
+    if ((strncmp(lstart, "<<<<<<", 6) == 0) ||
+	(strncmp(lstart, "======", 6) == 0) ||
+	(strncmp(lstart, ">>>>>>", 6) == 0))
 	Parse_Error(PARSE_FATAL,
 		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
     else if (lstart[0] == '.') {
@@ -1108,9 +1108,9 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
  *	.ORDER		Must set initial predecessor to NULL
  */
 static void
-ParseDoDependencyTargetSpecial(ParseSpecial *const inout_specType,
-			       const char *const line,
-			       SearchPathList **const inout_paths)
+ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
+			       const char *line,
+			       SearchPathList **inout_paths)
 {
     switch (*inout_specType) {
     case ExPath:
@@ -1165,8 +1165,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *const inout_specType,
  * Call on the suffix module to give us a path to modify.
  */
 static Boolean
-ParseDoDependencyTargetPath(const char *const line,
-			    SearchPathList **const inout_paths)
+ParseDoDependencyTargetPath(const char *line, SearchPathList **inout_paths)
 {
     SearchPath *path;
 
@@ -1189,10 +1188,8 @@ ParseDoDependencyTargetPath(const char *const line,
  * See if it's a special target and if so set specType to match it.
  */
 static Boolean
-ParseDoDependencyTarget(const char *const line,
-			ParseSpecial *const inout_specType,
-			GNodeType *out_tOp,
-			SearchPathList **inout_paths)
+ParseDoDependencyTarget(const char *line, ParseSpecial *inout_specType,
+			GNodeType *out_tOp, SearchPathList **inout_paths)
 {
     int keywd;
 
@@ -1224,8 +1221,7 @@ ParseDoDependencyTarget(const char *const line,
 }
 
 static void
-ParseDoDependencyTargetMundane(char *const line,
-			       StringList *const curTargs)
+ParseDoDependencyTargetMundane(char *line, StringList *curTargs)
 {
     if (Dir_HasWildcards(line)) {
 	/*
@@ -1282,7 +1278,7 @@ ParseDoDependencyTargetExtraWarn(char **pp, const char *lstart)
 }
 
 static void
-ParseDoDependencyCheckSpec(ParseSpecial const specType)
+ParseDoDependencyCheckSpec(ParseSpecial specType)
 {
     switch (specType) {
     default:
@@ -1308,8 +1304,7 @@ ParseDoDependencyCheckSpec(ParseSpecial const specType)
 }
 
 static Boolean
-ParseDoDependencyParseOp(char **const pp, const char *const lstart,
-			 GNodeType *const out_op)
+ParseDoDependencyParseOp(char **pp, const char *lstart, GNodeType *out_op)
 {
     const char *cp = *pp;
 
@@ -1351,8 +1346,7 @@ ClearPaths(SearchPathList *paths)
 }
 
 static void
-ParseDoDependencySourcesEmpty(ParseSpecial const specType,
-			      SearchPathList *const paths)
+ParseDoDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 {
     switch (specType) {
     case Suffixes:
@@ -1418,27 +1412,27 @@ AddToPaths(const char *dir, SearchPathList *paths)
  * and will cause make to do a new chdir to that path.
  */
 static void
-ParseDoDependencySourceSpecial(ParseSpecial const specType, char *const line,
-			       SearchPathList *const paths)
+ParseDoDependencySourceSpecial(ParseSpecial specType, char *word,
+			       SearchPathList *paths)
 {
     switch (specType) {
     case Suffixes:
-	Suff_AddSuffix(line, &mainNode);
+	Suff_AddSuffix(word, &mainNode);
 	break;
     case ExPath:
-	AddToPaths(line, paths);
+	AddToPaths(word, paths);
 	break;
     case Includes:
-	Suff_AddInclude(line);
+	Suff_AddInclude(word);
 	break;
     case Libs:
-	Suff_AddLib(line);
+	Suff_AddLib(word);
 	break;
     case Null:
-	Suff_SetNull(line);
+	Suff_SetNull(word);
 	break;
     case ExObjdir:
-	Main_SetObjdir("%s", line);
+	Main_SetObjdir("%s", word);
 	break;
     default:
 	break;
@@ -1446,13 +1440,13 @@ ParseDoDependencySourceSpecial(ParseSpecial const specType, char *const line,
 }
 
 static Boolean
-ParseDoDependencyTargets(char **const inout_cp,
-			 char **const inout_line,
-			 const char *const lstart,
-			 ParseSpecial *const inout_specType,
-			 GNodeType *const inout_tOp,
-			 SearchPathList **const inout_paths,
-			 StringList *const curTargs)
+ParseDoDependencyTargets(char **inout_cp,
+			 char **inout_line,
+			 const char *lstart,
+			 ParseSpecial *inout_specType,
+			 GNodeType *inout_tOp,
+			 SearchPathList **inout_paths,
+			 StringList *curTargs)
 {
     char *cp = *inout_cp;
     char *line = *inout_line;
@@ -1495,7 +1489,7 @@ ParseDoDependencyTargets(char **const inout_cp,
 	}
 
 	if (!*cp) {
-	    ParseErrorNoDependency(lstart, line);
+	    ParseErrorNoDependency(lstart);
 	    return FALSE;
 	}
 
@@ -1542,39 +1536,37 @@ ParseDoDependencyTargets(char **const inout_cp,
 }
 
 static void
-ParseDoDependencySourcesSpecial(char *line, char *cp,
+ParseDoDependencySourcesSpecial(char *start, char *end,
 				ParseSpecial specType, SearchPathList *paths)
 {
     char savec;
 
-    while (*line) {
-	while (*cp && !ch_isspace(*cp)) {
-	    cp++;
-	}
-	savec = *cp;
-	*cp = '\0';
-	ParseDoDependencySourceSpecial(specType, line, paths);
-	*cp = savec;
-	if (savec != '\0') {
-	    cp++;
-	}
-	pp_skip_whitespace(&cp);
-	line = cp;
+    while (*start) {
+	while (*end && !ch_isspace(*end))
+	    end++;
+	savec = *end;
+	*end = '\0';
+	ParseDoDependencySourceSpecial(specType, start, paths);
+	*end = savec;
+	if (savec != '\0')
+	    end++;
+	pp_skip_whitespace(&end);
+	start = end;
     }
 }
 
 static Boolean
-ParseDoDependencySourcesMundane(char *line, char *cp,
+ParseDoDependencySourcesMundane(char *start, char *end,
 				ParseSpecial specType, GNodeType tOp)
 {
-    while (*line) {
+    while (*start) {
 	/*
 	 * The targets take real sources, so we must beware of archive
 	 * specifications (i.e. things with left parentheses in them)
 	 * and handle them accordingly.
 	 */
-	for (; *cp && !ch_isspace(*cp); cp++) {
-	    if (*cp == '(' && cp > line && cp[-1] != '$') {
+	for (; *end && !ch_isspace(*end); end++) {
+	    if (*end == '(' && end > start && end[-1] != '$') {
 		/*
 		 * Only stop for a left parenthesis if it isn't at the
 		 * start of a word (that'll be for variable changes
@@ -1585,11 +1577,11 @@ ParseDoDependencySourcesMundane(char *line, char *cp,
 	    }
 	}
 
-	if (*cp == '(') {
+	if (*end == '(') {
 	    GNodeList *sources = Lst_New();
-	    if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
+	    if (!Arch_ParseArchive(&start, sources, VAR_CMD)) {
 		Parse_Error(PARSE_FATAL,
-			    "Error in source archive spec \"%s\"", line);
+			    "Error in source archive spec \"%s\"", start);
 		return FALSE;
 	    }
 
@@ -1598,17 +1590,17 @@ ParseDoDependencySourcesMundane(char *line, char *cp,
 		ParseDoSrc(tOp, gn->name, specType);
 	    }
 	    Lst_Free(sources);
-	    cp = line;
+	    end = start;
 	} else {
-	    if (*cp) {
-		*cp = '\0';
-		cp++;
+	    if (*end) {
+		*end = '\0';
+		end++;
 	    }
 
-	    ParseDoSrc(tOp, line, specType);
+	    ParseDoSrc(tOp, start, specType);
 	}
-	pp_skip_whitespace(&cp);
-	line = cp;
+	pp_skip_whitespace(&end);
+	start = end;
     }
     return TRUE;
 }
