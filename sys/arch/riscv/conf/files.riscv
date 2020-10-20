@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.4 2019/11/20 19:37:52 pgoyette Exp $
+#	$NetBSD: files.riscv,v 1.5 2020/10/20 20:36:08 christos Exp $
 #
 
 maxpartitions	16
@@ -27,7 +27,7 @@ file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/kgdb_machdep.c		kgdb
 file	arch/riscv/riscv/kobj_machdep.c		modular
 file	arch/riscv/riscv/pmap_machdep.c
-file	arch/riscv/riscv/process_machdep.c
+file	arch/riscv/riscv/process_machdep.c		ptrace | coredump | procfs
 file	arch/riscv/riscv/procfs_machdep.c	procfs
 file	arch/riscv/riscv/riscv_machdep.c
 file	arch/riscv/riscv/sig_machdep.c		# signal delivery

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.161 2020/10/16 07:35:16 jdc Exp $
+#	$NetBSD: files.sparc64,v 1.162 2020/10/20 20:36:08 christos Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -256,7 +256,7 @@ file	arch/sparc64/sparc64/kobj_machdep.c	modular & exec_elf64
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/ofw_patch.c
-file	arch/sparc64/sparc64/process_machdep.c
+file	arch/sparc64/sparc64/process_machdep.c	ptrace | coredump | procfs
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/static_edid.c
 file	arch/sparc/sparc/openprom.c
