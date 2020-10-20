@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.49 2020/02/04 13:47:34 martin Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.50 2020/10/20 18:17:58 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.49 2020/02/04 13:47:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.50 2020/10/20 18:17:58 roy Exp $");
 
 #include "opt_inet.h"
 
@@ -458,6 +458,7 @@ mcintr(void *arg)
 	 * Pretend we have carrier; if we don't this will be cleared
 	 * shortly.
 	 */
+	const int ocarrier = sc->sc_havecarrier;
 	sc->sc_havecarrier = 1;
 
 	if (ir & XMTINT)
@@ -465,6 +466,10 @@ mcintr(void *arg)
 
 	if (ir & RCVINT)
 		mc_rint(sc);
+
+	if (sc->sc_havecarrier != ocarrier)
+		if_link_state_change(&sc->sc_if,
+		    sc->sc_havecarrier ? LINK_STATE_UP : LINK_STATE_DOWN);
 
 	return 1;
 }
