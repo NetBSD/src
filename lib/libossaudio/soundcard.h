@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.29 2020/10/20 06:33:52 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.30 2020/10/20 08:57:45 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -418,6 +418,7 @@ typedef struct oss_audioinfo {
 #define SNDCTL_MIX_ENUMINFO	_IOWR ('X',8, oss_mixer_enuminfo)
 #define SNDCTL_MIXERINFO	_IOWR ('X',10, oss_mixerinfo)
 #define SNDCTL_ENGINEINFO	_IOWR ('X',12, oss_audioinfo)
+#define SNDCTL_AUDIOINFO_EX	_IOWR ('X',13, oss_audioinfo)
 #define SNDCTL_MIX_DESCRIPTION	_IOWR ('X',14, oss_mixer_enuminfo)
 
 #define MIXT_DEVROOT	 	0 /* Used for default classes */
