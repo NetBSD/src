@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.60 2018/06/18 02:48:56 eadler Exp $
+.\"	$NetBSD: queue.3,v 1.61 2020/10/20 23:27:57 kamil Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1091,3 +1091,13 @@ and
 .Nm STAILQ
 functions first appeared in
 .Fx 2.1.5 .
+.Pp
+The
+.Nm CIRCLEQ
+functions first appeared in
+.Bx 4.4
+and were deprecated in
+.Nx 7
+and removed in
+.Nx 10
+due to the pointer aliasing violations.
