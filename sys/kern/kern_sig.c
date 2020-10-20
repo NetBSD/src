@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.391 2020/10/19 19:33:02 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.392 2020/10/20 13:16:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.391 2020/10/19 19:33:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.392 2020/10/20 13:16:26 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2356,6 +2356,7 @@ coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
 	return retval;
 }
 
+#if !defined(_LP64) || defined(COMPAT_NETBSD32)
 int
 coredump_elf32(struct lwp *l, struct coredump_iostate *iocookie)
 {
@@ -2364,6 +2365,7 @@ coredump_elf32(struct lwp *l, struct coredump_iostate *iocookie)
 	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie), ENOSYS, retval);
 	return retval;
 }
+#endif
 
 #ifdef _LP64
 int
