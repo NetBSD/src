@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.71 2020/10/15 17:37:36 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.72 2020/10/20 20:28:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -343,6 +343,15 @@ int	ptrace_machdep_dorequest(struct lwp *, struct lwp **, int,
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
+#endif
+
+typedef int (*ptrace_regrfunc_t)(struct lwp *, void *, size_t *);
+typedef int (*ptrace_regwfunc_t)(struct lwp *, void *, size_t);
+
+#if defined(PT_SETREGS) || defined(PT_GETREGS) || \
+    defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
+    defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+# define PT_REGISTERS
 #endif
 
 #else /* !_KERNEL */
