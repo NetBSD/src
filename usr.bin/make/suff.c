@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.196 2020/10/20 20:51:15 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.197 2020/10/20 20:55:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.196 2020/10/20 20:51:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.197 2020/10/20 20:55:35 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -287,15 +287,6 @@ FindSuffByName(const char *name)
     return NULL;
 }
 
-/* See if the suffix name is a prefix of the string. Care must be taken when
- * using this to search for transformations and what-not, since there could
- * well be two suffixes, one of which is a prefix of the other... */
-static Boolean
-SuffSuffIsPrefix(const void *s, const void *str)
-{
-    return SuffStrIsPrefix(((const Suff *)s)->name, str) != NULL;
-}
-
 /* See if the graph node has the desired name. */
 static Boolean
 SuffGNHasName(const void *gn, const void *desiredName)
@@ -451,7 +442,8 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
      */
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
 	Suff *src = ln->datum;
-        if (!SuffSuffIsPrefix(src, str))
+
+	if (SuffStrIsPrefix(src->name, str) == NULL)
 	    continue;
 
 	if (str[src->nameLen] == '\0') {
