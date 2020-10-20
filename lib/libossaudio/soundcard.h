@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.28 2020/10/19 10:28:47 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.29 2020/10/20 06:33:52 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@
 /* Need native 16 bit format which depends on byte order */
 #include <machine/endian_machdep.h>
 #if _BYTE_ORDER == _LITTLE_ENDIAN
+#define  AFMT_U16_NE AFMT_U16_LE
+#define  AFMT_U16_OE AFMT_U16_BE
 #define  AFMT_S16_NE AFMT_S16_LE
 #define  AFMT_S16_OE AFMT_S16_BE
 #define  AFMT_S24_NE AFMT_S24_LE
@@ -118,6 +120,8 @@
 #define  AFMT_S32_NE AFMT_S32_LE
 #define  AFMT_S32_OE AFMT_S32_BE
 #else
+#define  AFMT_U16_NE AFMT_U16_BE
+#define  AFMT_U16_OE AFMT_U16_LE
 #define  AFMT_S16_NE AFMT_S16_BE
 #define  AFMT_S16_OE AFMT_S16_LE
 #define  AFMT_S24_NE AFMT_S24_BE
