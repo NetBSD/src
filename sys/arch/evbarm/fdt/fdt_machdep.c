@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.76 2020/10/19 01:12:14 rin Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.76 2020/10/19 01:12:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -879,6 +879,14 @@ fdt_device_register(device_t self, void *aux)
 		arm_simplefb_preattach();
 #endif
 	}
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+	if (device_is_a(self, "genfb")) {
+		prop_dictionary_t dict = device_properties(self);
+		prop_dictionary_set_uint64(dict,
+		    "simplefb-physaddr", arm_simplefb_physaddr());
+	}
+#endif
 
 	if (plat && plat->ap_device_register)
 		plat->ap_device_register(self, aux);
