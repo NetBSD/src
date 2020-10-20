@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.h,v 1.1 2020/10/10 15:25:31 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.h,v 1.2 2020/10/20 23:03:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -33,5 +33,6 @@
 #define _ARM_ARM_SIMPLEFB_H
 
 void		arm_simplefb_preattach(void);
+uint64_t	arm_simplefb_physaddr(void);
 
 #endif /* !_ARM_ARM_SIMPLEFB_H */
