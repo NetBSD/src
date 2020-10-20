@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.52 2020/10/19 10:28:47 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.53 2020/10/20 06:53:37 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.52 2020/10/19 10:28:47 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.53 2020/10/20 06:53:37 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -1328,9 +1328,9 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 			return newfd;
 		mdi.index = ei->ctrl - 1;
 		retval = ioctl(newfd, AUDIO_MIXER_DEVINFO, &mdi);
+		tmperrno = errno;
+		close(newfd);
 		if (retval < 0) {
-			tmperrno = errno;
-			close(newfd);
 			errno = tmperrno;
 			return retval;
 		}
@@ -1343,7 +1343,6 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 				ei->strindex[i] = noffs;
 				len = strlen(mdi.un.e.member[i].label.name) + 1;
 				if ((noffs + len) >= sizeof(ei->strings)) {
-				    close(newfd);
 				    errno = ENOMEM;
 				    return -1;
 				}
@@ -1359,7 +1358,6 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 				ei->strindex[i] = noffs;
 				len = strlen(mdi.un.s.member[i].label.name) + 1;
 				if ((noffs + len) >= sizeof(ei->strings)) {
-				    close(newfd);
 				    errno = ENOMEM;
 				    return -1;
 				}
@@ -1369,7 +1367,6 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 			}
 			break;
 		default:
-			close(newfd);
 			errno = EINVAL;
 			return -1;
 		}
