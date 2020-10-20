@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.82 2020/03/19 02:31:28 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.83 2020/10/20 18:17:58 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.82 2020/03/19 02:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.83 2020/10/20 18:17:58 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,12 +435,17 @@ am7990_intr(void *arg)
 	 * Pretend we have carrier; if we don't this will be cleared
 	 * shortly.
 	 */
+	const int ocarrier = sc->sc_havecarrier;
 	sc->sc_havecarrier = 1;
 
 	if (isr & LE_C0_RINT)
 		am7990_rint(sc);
 	if (isr & LE_C0_TINT)
 		am7990_tint(sc);
+
+	if (sc->sc_havecarrier != ocarrier)
+		if_link_state_change(ifp,
+		    sc->sc_havecarrier ? LINK_STATE_UP : LINK_STATE_DOWN);
 
 	rnd_add_uint32(&sc->rnd_source, isr);
 
