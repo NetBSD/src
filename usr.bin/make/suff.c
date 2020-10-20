@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.195 2020/10/19 21:57:37 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.196 2020/10/20 20:51:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.195 2020/10/19 21:57:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.196 2020/10/20 20:51:15 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -431,29 +431,17 @@ Suff_ClearSuffixes(void)
     suffNull->flags = SUFF_NULL;
 }
 
-/* Parse a transformation string to find its two component suffixes.
+/* Parse a transformation string such as ".c.o" to find its two component
+ * suffixes (the source ".c" and the target ".o").  If there are no such
+ * suffixes, try a single-suffix transformation as well.
  *
- * Input:
- *	str		String being parsed
- *	out_src		Place to store source of trans.
- *	out_targ	Place to store target of trans.
- *
- * Results:
- *	TRUE if the string is a valid transformation, FALSE otherwise.
+ * Return TRUE if the string is a valid transformation.
  */
 static Boolean
 SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 {
-    SuffListNode *srcLn;	/* element in suffix list of trans source*/
-    Suff *src;			/* Source of transformation */
-    const char *str2;		/* Extra pointer (maybe target suffix) */
-    SuffListNode *singleLn;	/* element in suffix list of any suffix
-				 * that exactly matches str */
-    Suff *single = NULL;	/* Source of possible transformation to
-				 * null suffix */
-
-    srcLn = NULL;
-    singleLn = NULL;
+    SuffListNode *ln;
+    Suff *singleSrc = NULL;
 
     /*
      * Loop looking first for a suffix that matches the start of the
@@ -461,39 +449,15 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
      * we can find two that meet these criteria, we've successfully
      * parsed the string.
      */
-    for (;;) {
-	if (srcLn == NULL) {
-	    srcLn = Lst_Find(sufflist, SuffSuffIsPrefix, str);
+    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+	Suff *src = ln->datum;
+        if (!SuffSuffIsPrefix(src, str))
+	    continue;
+
+	if (str[src->nameLen] == '\0') {
+	    singleSrc = src;
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, srcLn->next, SuffSuffIsPrefix, str);
-	}
-	if (srcLn == NULL) {
-	    /*
-	     * Ran out of source suffixes -- no such rule
-	     */
-	    if (singleLn != NULL) {
-		/*
-		 * Not so fast Mr. Smith! There was a suffix that encompassed
-		 * the entire string, so we assume it was a transformation
-		 * to the null suffix (thank you POSIX). We still prefer to
-		 * find a double rule over a singleton, hence we leave this
-		 * check until the end.
-		 *
-		 * XXX: Use emptySuff over suffNull?
-		 */
-		*out_src = single;
-		*out_targ = suffNull;
-		return TRUE;
-	    }
-	    return FALSE;
-	}
-	src = srcLn->datum;
-	str2 = str + src->nameLen;
-	if (*str2 == '\0') {
-	    single = src;
-	    singleLn = srcLn;
-	} else {
-	    Suff *targ = FindSuffByName(str2);
+	    Suff *targ = FindSuffByName(str + src->nameLen);
 	    if (targ != NULL) {
 		*out_src = src;
 		*out_targ = targ;
@@ -501,6 +465,22 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 	    }
 	}
     }
+
+    if (singleSrc != NULL) {
+	/*
+	 * Not so fast Mr. Smith! There was a suffix that encompassed
+	 * the entire string, so we assume it was a transformation
+	 * to the null suffix (thank you POSIX). We still prefer to
+	 * find a double rule over a singleton, hence we leave this
+	 * check until the end.
+	 *
+	 * XXX: Use emptySuff over suffNull?
+	 */
+	*out_src = singleSrc;
+	*out_targ = suffNull;
+	return TRUE;
+    }
+    return FALSE;
 }
 
 /* Return TRUE if the given string is a transformation rule, that is, a
