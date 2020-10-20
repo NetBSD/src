@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.11 2020/09/10 17:40:34 kre Exp $
+# $NetBSD: t_make.sh,v 1.12 2020/10/20 20:36:53 rillig Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,6 @@ run_and_check()
 	case ${makename} in
 	escape)		atf_expect_fail "see PR toolchain/49085";;
 	posix1)		atf_expect_fail "see PR toolchain/49085";;
-	suffixes)	atf_expect_fail "see PR toolchain/49085"
-			atf_fail "this uses up all memory and then fails";;
 	esac
 
 	local srcdir="$(atf_get_srcdir)"

@@ -1,0 +1,9 @@
+: 'Making issue5a.c out of nothing.'
+make: don't know how to make issue5a.d (continuing)
+make: don't know how to make issue5b.c (continuing)
+make: don't know how to make issue5c (continuing)
+: 'Making issue5d.d out of nothing.'
+make: don't know how to make issue5d.e (continuing)
+make: don't know how to make issue5e.d (continuing)
+`all' not remade because of errors.
+exit status 0
