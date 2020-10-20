@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.578 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.579 2020/10/20 23:15:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.578 2020/10/18 17:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.579 2020/10/20 23:15:23 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3444,6 +3444,10 @@ ValidShortVarname(char varname, const char *start)
  *	${VAR:Mpattern}), extract the variable name, possibly some
  *	modifiers and find its value by applying the modifiers to the
  *	original value.
+ *
+ *	When parsing a condition in ParseEmptyArg, pp may also point to
+ *	the "y" of "empty(VARNAME:Modifiers)", which is syntactically
+ *	identical.
  *
  * Input:
  *	str		The string to parse
