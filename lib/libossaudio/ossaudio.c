@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.53 2020/10/20 06:53:37 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.54 2020/10/20 08:57:45 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.53 2020/10/20 06:53:37 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.54 2020/10/20 08:57:45 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -1045,6 +1045,13 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 
 	switch (com) {
 	case SNDCTL_AUDIOINFO:
+	/*
+	 * SNDCTL_AUDIOINFO_EX is intended for underlying hardware devices
+	 * that are to be opened in "exclusive mode" (bypassing the normal
+	 * kernel mixer for exclusive control). NetBSD does not support
+	 * bypassing the kernel mixer, so it's an alias of SNDCTL_AUDIOINFO.
+	 */
+	case SNDCTL_AUDIOINFO_EX:
 	case SNDCTL_ENGINEINFO:
 		devno = 0;
 		tmpai = (struct oss_audioinfo*)argp;
