@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.198 2020/10/20 21:15:47 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.199 2020/10/20 23:04:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.198 2020/10/20 21:15:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.199 2020/10/20 23:04:35 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -238,16 +238,14 @@ struct SuffSuffGetSuffixArgs {
     char *name_end;
 };
 
-/* See if suff is a suffix of str. str->ename should point to THE END
- * of the string to check. (THE END == the null byte)
+/* See if suff is a suffix of str.
  *
  * Input:
  *	s		possible suffix
  *	str		string to examine
  *
  * Results:
- *	NULL if it ain't, pointer to character in str before suffix if
- *	it is.
+ *	NULL if it ain't, pointer to the start of suffix in str if it is.
  */
 static char *
 SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
@@ -266,7 +264,7 @@ SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
 	p2--;
     }
 
-    return p1 == s->name - 1 ? p2 : NULL;
+    return p1 == s->name - 1 ? p2 + 1 : NULL;
 }
 
 /* Predicate form of SuffSuffGetSuffix, for Lst_Find. */
@@ -638,9 +636,9 @@ SuffRebuildGraph(GNode *transform, Suff *s)
 
 	/* Null-terminate the source suffix in order to find it. */
 	/* XXX: don't modify strings, not even temporarily */
-	cp[1] = '\0';
+	cp[0] = '\0';
 	s2 = FindSuffByName(transform->name);
-	cp[1] = s->name[0];		/* restore */
+	cp[0] = s->name[0];		/* restore */
 
 	if (s2 != NULL) {
 	    /* establish the proper relationship */
