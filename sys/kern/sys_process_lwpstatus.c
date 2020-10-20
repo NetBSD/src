@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.2 2020/10/20 20:28:55 christos Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.3 2020/10/20 22:31:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.2 2020/10/20 20:28:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.3 2020/10/20 22:31:20 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.2 2020/10/20 20:28:55 ch
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 
 #ifndef PTRACE_REGS_ALIGN
