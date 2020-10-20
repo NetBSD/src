@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.197 2020/10/20 20:55:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.198 2020/10/20 21:15:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,12 +129,14 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.197 2020/10/20 20:55:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.198 2020/10/20 21:15:47 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
 #define SUFF_DEBUG2(fmt, arg1, arg2) DEBUG2(SUFF, fmt, arg1, arg2)
 #define SUFF_DEBUG3(fmt, arg1, arg2, arg3) DEBUG3(SUFF, fmt, arg1, arg2, arg3)
+#define SUFF_DEBUG4(fmt, arg1, arg2, arg3, arg4) \
+	DEBUG4(SUFF, fmt, arg1, arg2, arg3, arg4)
 
 typedef List SuffList;
 typedef ListNode SuffListNode;
@@ -297,14 +299,12 @@ SuffGNHasName(const void *gn, const void *desiredName)
 	    /*********** Maintenance Functions ************/
 
 static void
-SuffUnRef(void *lp, void *sp)
+SuffUnRef(SuffList *list, Suff *suff)
 {
-    SuffList *l = lp;
-
-    SuffListNode *ln = Lst_FindDatum(l, sp);
+    SuffListNode *ln = Lst_FindDatum(list, suff);
     if (ln != NULL) {
-	Lst_Remove(l, ln);
-	((Suff *)sp)->refCount--;
+	Lst_Remove(list, ln);
+	suff->refCount--;
     }
 }
 
@@ -320,7 +320,7 @@ SuffFree(void *sp)
     if (s == emptySuff)
 	emptySuff = NULL;
 
-#ifdef notdef
+#if 0
     /* We don't delete suffixes in order, so we cannot use this */
     if (s->refCount)
 	Punt("Internal error deleting suffix `%s' with refcount = %d", s->name,
@@ -338,48 +338,43 @@ SuffFree(void *sp)
 
 /* Remove the suffix from the list, and free if it is otherwise unused. */
 static void
-SuffRemove(SuffList *l, Suff *s)
+SuffRemove(SuffList *list, Suff *suff)
 {
-    SuffUnRef(l, s);
-    if (s->refCount == 0) {
-	SuffUnRef(sufflist, s);
-	SuffFree(s);
+    SuffUnRef(list, suff);
+    if (suff->refCount == 0) {
+	SuffUnRef(sufflist, suff);
+	SuffFree(suff);
     }
 }
 
-/* Insert the suffix into the list keeping the list ordered by suffix numbers.
- *
- * Input:
- *	l		the list where in s should be inserted
- *	s		the suffix to insert
- */
+/* Insert the suffix into the list, keeping the list ordered by suffix
+ * numbers. */
 static void
-SuffInsert(SuffList *l, Suff *s)
+SuffInsert(SuffList *list, Suff *suff)
 {
-    SuffListNode *ln;		/* current element in l we're examining */
-    Suff          *s2 = NULL;	/* the suffix descriptor in this element */
+    SuffListNode *ln;
+    Suff *listSuff = NULL;
 
-    for (ln = l->first; ln != NULL; ln = ln->next) {
-	s2 = ln->datum;
-	if (s2->sNum >= s->sNum) {
+    for (ln = list->first; ln != NULL; ln = ln->next) {
+	listSuff = ln->datum;
+	if (listSuff->sNum >= suff->sNum)
 	    break;
-	}
     }
 
-    SUFF_DEBUG2("inserting %s(%d)...", s->name, s->sNum);
-
     if (ln == NULL) {
-	SUFF_DEBUG0("at end of list\n");
-	Lst_Append(l, s);
-	s->refCount++;
-	Lst_Append(s->ref, l);
-    } else if (s2->sNum != s->sNum) {
-	SUFF_DEBUG2("before %s(%d)\n", s2->name, s2->sNum);
-	Lst_InsertBefore(l, ln, s);
-	s->refCount++;
-	Lst_Append(s->ref, l);
+	SUFF_DEBUG2("inserting \"%s\" (%d) at end of list\n",
+		    suff->name, suff->sNum);
+	Lst_Append(list, suff);
+	suff->refCount++;
+	Lst_Append(suff->ref, list);
+    } else if (listSuff->sNum != suff->sNum) {
+	SUFF_DEBUG4("inserting \"%s\" (%d) before \"%s\" (%d)\n",
+		    suff->name, suff->sNum, listSuff->name, listSuff->sNum);
+	Lst_InsertBefore(list, ln, suff);
+	suff->refCount++;
+	Lst_Append(suff->ref, list);
     } else {
-	SUFF_DEBUG0("already there\n");
+	SUFF_DEBUG2("\"%s\" (%d) is already there\n", suff->name, suff->sNum);
     }
 }
 
