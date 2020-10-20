@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.9 2020/10/19 01:12:14 rin Exp $ */
+/* $NetBSD: simplefb.c,v 1.10 2020/10/20 23:03:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.9 2020/10/19 01:12:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.10 2020/10/20 23:03:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	uint32_t width, height, stride;
 	uint16_t depth;
 	const char *format;
-	bus_addr_t addr;
+	bus_addr_t addr, sfb_addr;
 	bus_size_t size;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -166,6 +166,12 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	} else {
 		aprint_error(": unsupported format '%s'\n", format);
 		return ENXIO;
+	}
+
+	/* Device may have been reconfigured. MD code will tell us. */
+	if (prop_dictionary_get_uint64(dict, "simplefb-physaddr", &sfb_addr) &&
+	    sfb_addr != 0) {
+		addr = (bus_addr_t)sfb_addr;
 	}
 
 	if (bus_space_map(sc->sc_bst, addr, size,
