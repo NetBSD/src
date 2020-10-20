@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_dp.c,v 1.2 2020/01/07 13:51:38 msaitoh Exp $	*/
+/*	$NetBSD: radeon_atombios_dp.c,v 1.3 2020/10/20 09:53:59 ryo Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_dp.c,v 1.2 2020/01/07 13:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_dp.c,v 1.3 2020/10/20 09:53:59 ryo Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_atombios_dp.c,v 1.2 2020/01/07 13:51:38 msait
 #include "atom.h"
 #include "atom-bits.h"
 #include <drm/drm_dp_helper.h>
+
+#include <linux/nbsd-namespace.h>
 
 /* move these to drm_dp_helper.c/h */
 #define DP_LINK_CONFIGURATION_SIZE 9
