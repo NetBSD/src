@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.206 2020/10/21 06:46:21 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.207 2020/10/21 07:05:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.206 2020/10/21 06:46:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.207 2020/10/21 07:05:52 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -234,45 +234,42 @@ SuffStrIsPrefix(const char *pref, const char *str)
     return *pref ? NULL : str;
 }
 
-struct SuffSuffGetSuffixArgs {
-    size_t name_len;
-    char *name_end;
-};
-
 /* See if suff is a suffix of str.
  *
  * Input:
  *	s		possible suffix
- *	str		string to examine
+ *	nameLen		length of the string to examine
+ *	nameEnd		end of the string to examine
  *
  * Results:
  *	NULL if it ain't, pointer to the start of suffix in str if it is.
  */
 static char *
-SuffSuffGetSuffix(const Suff *s, const struct SuffSuffGetSuffixArgs *str)
+SuffSuffGetSuffix(const Suff *s, size_t nameLen, char *nameEnd)
 {
     char *p1;			/* Pointer into suffix name */
     char *p2;			/* Pointer into string being examined */
 
-    if (str->name_len < s->nameLen)
+    if (nameLen < s->nameLen)
 	return NULL;		/* this string is shorter than the suffix */
 
     p1 = s->name + s->nameLen;
-    p2 = str->name_end;
+    p2 = nameEnd;
 
     while (p1 >= s->name && *p1 == *p2) {
 	p1--;
 	p2--;
     }
 
+    /* XXX: s->name - 1 invokes undefined behavior */
     return p1 == s->name - 1 ? p2 + 1 : NULL;
 }
 
 /* Predicate form of SuffSuffGetSuffix, for Lst_Find. */
 static Boolean
-SuffSuffIsSuffix(const void *s, const void *sd)
+SuffSuffIsSuffix(const Suff *suff, size_t nameLen, char *nameEnd)
 {
-    return SuffSuffGetSuffix(s, sd) != NULL;
+    return SuffSuffGetSuffix(suff, nameLen, nameEnd) != NULL;
 }
 
 static Suff *
@@ -609,13 +606,14 @@ Suff_EndTransform(GNode *gn)
 static void
 SuffRebuildGraph(GNode *transform, Suff *s)
 {
+    char *name = transform->name;
+    size_t nameLen = strlen(name);
     char *cp;
-    struct SuffSuffGetSuffixArgs sd;
 
     /*
      * First see if it is a transformation from this suffix.
      */
-    cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
+    cp = UNCONST(SuffStrIsPrefix(s->name, name));
     if (cp != NULL) {
 	Suff *s2 = FindSuffByName(cp);
 	if (s2 != NULL) {
@@ -629,16 +627,14 @@ SuffRebuildGraph(GNode *transform, Suff *s)
     /*
      * Not from, maybe to?
      */
-    sd.name_len = strlen(transform->name);
-    sd.name_end = transform->name + sd.name_len;
-    cp = SuffSuffGetSuffix(s, &sd);
+    cp = SuffSuffGetSuffix(s, nameLen, name + nameLen);
     if (cp != NULL) {
 	Suff *s2;
 
 	/* Null-terminate the source suffix in order to find it. */
 	/* XXX: don't modify strings, not even temporarily */
 	cp[0] = '\0';
-	s2 = FindSuffByName(transform->name);
+	s2 = FindSuffByName(name);
 	cp[0] = s->name[0];		/* restore */
 
 	if (s2 != NULL) {
@@ -1339,11 +1335,12 @@ Suff_FindPath(GNode* gn)
     Suff *suff = gn->suffix;
 
     if (suff == NULL) {
-	struct SuffSuffGetSuffixArgs sd;   /* Search string data */
+        char *name = gn->name;
+	size_t nameLen = strlen(gn->name);
 	SuffListNode *ln;
-	sd.name_len = strlen(gn->name);
-	sd.name_end = gn->name + sd.name_len;
-	ln = Lst_Find(sufflist, SuffSuffIsSuffix, &sd);
+	for (ln = sufflist->first; ln != NULL; ln = ln->next)
+	    if (SuffSuffIsSuffix(ln->datum, nameLen, name + nameLen))
+		break;
 
 	SUFF_DEBUG1("Wildcard expanding \"%s\"...", gn->name);
 	if (ln != NULL)
@@ -1545,14 +1542,12 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	 * through the entire list, we just look at suffixes to which the
 	 * member's suffix may be transformed...
 	 */
-	struct SuffSuffGetSuffixArgs sd;	/* Search string data */
+	size_t nameLen = (size_t)(eoarch - gn->name);
 
-	/*
-	 * Use first matching suffix...
-	 */
-	sd.name_len = (size_t)(eoarch - gn->name);
-	sd.name_end = eoarch;
-	ln = Lst_Find(ms->parents, SuffSuffIsSuffix, &sd);
+	/* Use first matching suffix... */
+	for (ln = ms->parents->first; ln != NULL; ln = ln->next)
+	    if (SuffSuffIsSuffix(ln->datum, nameLen, eoarch))
+		break;
 
 	if (ln != NULL) {
 	    /*
@@ -1590,16 +1585,15 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 }
 
 static void
-SuffFindNormalDepsKnown(const struct SuffSuffGetSuffixArgs *sd, GNode *gn,
-			const char *eoname, const char *sopref,
-			SrcList *srcs, SrcList *targs)
+SuffFindNormalDepsKnown(size_t nameLen, char *nameEnd, GNode *gn,
+			const char *sopref, SrcList *srcs, SrcList *targs)
 {
     SuffListNode *ln;
     const char *eopref;
     Src *targ;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	if (!SuffSuffIsSuffix(ln->datum, sd))
+	if (!SuffSuffIsSuffix(ln->datum, nameLen, nameEnd))
 	    continue;
 
 	targ = bmake_malloc(sizeof(Src));
@@ -1613,7 +1607,7 @@ SuffFindNormalDepsKnown(const struct SuffSuffGetSuffixArgs *sd, GNode *gn,
 	targ->cp = Lst_New();
 #endif
 
-	eopref = eoname - targ->suff->nameLen;
+	eopref = nameEnd - targ->suff->nameLen;
 	targ->pref = bmake_strsedup(sopref, eopref);
 
 	/*
@@ -1742,8 +1736,6 @@ SuffFindNormalDepsPath(GNode *gn, Src *targ)
 static void
 SuffFindNormalDeps(GNode *gn, SrcList *slst)
 {
-    char *eoname;		/* End of name */
-    char *sopref;		/* Start of prefix */
     SrcList *srcs;		/* List of sources at which to look */
     SrcList *targs;		/* List of targets to which things can be
 				 * transformed. They all have the same file,
@@ -1752,13 +1744,10 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     Src *src;			/* General Src pointer */
     char *pref;			/* Prefix to use */
     Src *targ;			/* General Src target pointer */
-    struct SuffSuffGetSuffixArgs sd; /* Search string data */
 
-
-    sd.name_len = strlen(gn->name);
-    sd.name_end = eoname = gn->name + sd.name_len;
-
-    sopref = gn->name;
+    size_t nameLen = strlen(gn->name);
+    char *eoname = gn->name + nameLen;
+    char *sopref = gn->name;
 
     /*
      * Begin at the beginning...
@@ -1789,7 +1778,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 
     if (!(gn->type & OP_PHONY)) {
 
-	SuffFindNormalDepsKnown(&sd, gn, eoname, sopref, srcs, targs);
+	SuffFindNormalDepsKnown(nameLen, eoname, gn, sopref, srcs, targs);
 
 	/* Handle target of unknown suffix... */
 	SuffFindNormalDepsUnknown(gn, sopref, srcs, targs);
