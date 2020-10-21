@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.204 2020/10/21 06:36:10 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.205 2020/10/21 06:40:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.204 2020/10/21 06:36:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.205 2020/10/21 06:40:28 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1667,6 +1667,68 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
     Lst_Append(targs, targ);
 }
 
+/*
+ * Deal with finding the thing on the default search path. We
+ * always do that, not only if the node is only a source (not
+ * on the lhs of a dependency operator or [XXX] it has neither
+ * children or commands) as the old pmake did.
+ */
+static void
+SuffFindNormalDepsPath(GNode *gn, Src *targ)
+{
+    if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
+	free(gn->path);
+	gn->path = Dir_FindFile(gn->name,
+				(targ == NULL ? dirSearchPath :
+				 targ->suff->searchPath));
+	if (gn->path != NULL) {
+	    char *ptr;
+	    Var_Set(TARGET, gn->path, gn);
+
+	    if (targ != NULL) {
+		/*
+		 * Suffix known for the thing -- trim the suffix off
+		 * the path to form the proper .PREFIX variable.
+		 */
+		size_t savep = strlen(gn->path) - targ->suff->nameLen;
+		char    savec;
+
+		if (gn->suffix)
+		    gn->suffix->refCount--;
+		gn->suffix = targ->suff;
+		gn->suffix->refCount++;
+
+		savec = gn->path[savep];
+		gn->path[savep] = '\0';
+
+		if ((ptr = strrchr(gn->path, '/')) != NULL)
+		    ptr++;
+		else
+		    ptr = gn->path;
+
+		Var_Set(PREFIX, ptr, gn);
+
+		gn->path[savep] = savec;
+	    } else {
+		/*
+		 * The .PREFIX gets the full path if the target has
+		 * no known suffix.
+		 */
+		if (gn->suffix)
+		    gn->suffix->refCount--;
+		gn->suffix = NULL;
+
+		if ((ptr = strrchr(gn->path, '/')) != NULL)
+		    ptr++;
+		else
+		    ptr = gn->path;
+
+		Var_Set(PREFIX, ptr, gn);
+	    }
+	}
+    }
+}
+
 /* Locate implicit dependencies for regular targets.
  *
  * Input:
@@ -1777,64 +1839,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	SUFF_DEBUG1("\tNo valid suffix on %s\n", gn->name);
 
 sfnd_abort:
-	/*
-	 * Deal with finding the thing on the default search path. We
-	 * always do that, not only if the node is only a source (not
-	 * on the lhs of a dependency operator or [XXX] it has neither
-	 * children or commands) as the old pmake did.
-	 */
-	if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
-	    free(gn->path);
-	    gn->path = Dir_FindFile(gn->name,
-				    (targ == NULL ? dirSearchPath :
-				     targ->suff->searchPath));
-	    if (gn->path != NULL) {
-		char *ptr;
-		Var_Set(TARGET, gn->path, gn);
-
-		if (targ != NULL) {
-		    /*
-		     * Suffix known for the thing -- trim the suffix off
-		     * the path to form the proper .PREFIX variable.
-		     */
-		    size_t savep = strlen(gn->path) - targ->suff->nameLen;
-		    char    savec;
-
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = targ->suff;
-		    gn->suffix->refCount++;
-
-		    savec = gn->path[savep];
-		    gn->path[savep] = '\0';
-
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
-
-		    Var_Set(PREFIX, ptr, gn);
-
-		    gn->path[savep] = savec;
-		} else {
-		    /*
-		     * The .PREFIX gets the full path if the target has
-		     * no known suffix.
-		     */
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = NULL;
-
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
-
-		    Var_Set(PREFIX, ptr, gn);
-		}
-	    }
-	}
-
+	SuffFindNormalDepsPath(gn, targ);
 	goto sfnd_return;
     }
 
