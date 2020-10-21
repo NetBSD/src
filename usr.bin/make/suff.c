@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.210 2020/10/21 07:57:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.211 2020/10/21 08:00:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.210 2020/10/21 07:57:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.211 2020/10/21 08:00:06 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -194,7 +194,7 @@ typedef struct Src {
     int children;		/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
 #ifdef DEBUG_SRC
-    SrcList *cp;		/* Debug; children list */
+    SrcList *childrenList;
 #endif
 } Src;
 
@@ -860,7 +860,7 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
     src->node = gn;
     src->children = 0;
 #ifdef DEBUG_SRC
-    src->cp = Lst_New();
+    src->childrenList = Lst_New();
 #endif
 
     return src;
@@ -875,7 +875,7 @@ SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
     targ->children++;
     Lst_Append(srcList, s2);
 #ifdef DEBUG_SRC
-    Lst_Append(targ->cp, s2);
+    Lst_Append(targ->childrenList, s2);
     debug_printf("%s add %p %p to %p:", debug_tag, targ, s2, srcList);
     SrcList_PrintAddrs(srcList);
 #endif
@@ -942,15 +942,15 @@ SuffRemoveSrc(SrcList *l)
 		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
-		SrcListNode *ln2 = Lst_FindDatum(s->parent->cp, s);
+		SrcListNode *ln2 = Lst_FindDatum(s->parent->childrenList, s);
 		if (ln2 != NULL)
-		    Lst_Remove(s->parent->cp, ln2);
+		    Lst_Remove(s->parent->childrenList, ln2);
 #endif
 		--s->parent->children;
 	    }
 #ifdef DEBUG_SRC
 	    debug_printf("free: [l=%p] p=%p %d\n", l, s, s->children);
-	    Lst_Free(s->cp);
+	    Lst_Free(s->childrenList);
 #endif
 	    Lst_Remove(l, ln);
 	    free(s);
@@ -960,7 +960,7 @@ SuffRemoveSrc(SrcList *l)
 #ifdef DEBUG_SRC
 	else {
 	    debug_printf("keep: [l=%p] p=%p %d:", l, s, s->children);
-	    SrcList_PrintAddrs(s->cp);
+	    SrcList_PrintAddrs(s->childrenList);
 	}
 #endif
     }
@@ -1109,7 +1109,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
     targ->children++;
 #ifdef DEBUG_SRC
     debug_printf("3 add %p %p\n", targ, ret);
-    Lst_Append(targ->cp, ret);
+    Lst_Append(targ->childrenList, ret);
 #endif
     Lst_Append(slst, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", s->name);
