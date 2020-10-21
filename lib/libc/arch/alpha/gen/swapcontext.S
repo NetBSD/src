@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.4 2020/10/21 01:24:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 NESTED(swapcontext, 2, 24, ra, IM_RA|IM_A0|IM_A1, 0)
 	LDGP(pv)
@@ -41,10 +42,10 @@ NESTED(swapcontext, 2, 24, ra, IM_RA|IM_A0|IM_A1, 0)
 	ldq	t0, (24-16)(sp)
 	bne	v0, Lerr
 	ldq	t1, (24- 8)(sp)
-	stq	t1, (56 + 26 * 8)(t0)	/* Adjust saved RA */
-	stq	t1, (56 + 32 * 8)(t0)	/* Adjust saved PC */
+	stq	t1, (UC_GREGS + _REG_RA*8)(t0)	/* Adjust saved RA */
+	stq	t1, (UC_GREGS + _REG_PC*8)(t0)	/* Adjust saved PC */
 	lda	t1, 24(sp)
-	stq	t1, (56 + 30 * 8)(t0)	/* Adjust saved SP */
+	stq	t1, (UC_GREGS + _REG_SP*8)(t0)	/* Adjust saved SP */
 
 	ldq	a0, (24-24)(sp)
 	CALL(setcontext)		/* setcontext(ucp) */
