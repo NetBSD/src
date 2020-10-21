@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.207 2020/10/21 07:05:52 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.208 2020/10/21 07:11:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.207 2020/10/21 07:05:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.208 2020/10/21 07:11:50 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1585,15 +1585,15 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 }
 
 static void
-SuffFindNormalDepsKnown(size_t nameLen, char *nameEnd, GNode *gn,
-			const char *sopref, SrcList *srcs, SrcList *targs)
+SuffFindNormalDepsKnown(char *name, size_t nameLen, GNode *gn,
+			SrcList *srcs, SrcList *targs)
 {
     SuffListNode *ln;
     const char *eopref;
     Src *targ;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	if (!SuffSuffIsSuffix(ln->datum, nameLen, nameEnd))
+	if (!SuffSuffIsSuffix(ln->datum, nameLen, name + nameLen))
 	    continue;
 
 	targ = bmake_malloc(sizeof(Src));
@@ -1607,8 +1607,8 @@ SuffFindNormalDepsKnown(size_t nameLen, char *nameEnd, GNode *gn,
 	targ->cp = Lst_New();
 #endif
 
-	eopref = nameEnd - targ->suff->nameLen;
-	targ->pref = bmake_strsedup(sopref, eopref);
+	eopref = name + nameLen - targ->suff->nameLen;
+	targ->pref = bmake_strsedup(name, eopref);
 
 	/*
 	 * Add nodes from which the target can be made
@@ -1745,9 +1745,8 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     char *pref;			/* Prefix to use */
     Src *targ;			/* General Src target pointer */
 
-    size_t nameLen = strlen(gn->name);
-    char *eoname = gn->name + nameLen;
-    char *sopref = gn->name;
+    char *name = gn->name;
+    size_t nameLen = strlen(name);
 
     /*
      * Begin at the beginning...
@@ -1778,10 +1777,10 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 
     if (!(gn->type & OP_PHONY)) {
 
-	SuffFindNormalDepsKnown(nameLen, eoname, gn, sopref, srcs, targs);
+	SuffFindNormalDepsKnown(name, nameLen, gn, srcs, targs);
 
 	/* Handle target of unknown suffix... */
-	SuffFindNormalDepsUnknown(gn, sopref, srcs, targs);
+	SuffFindNormalDepsUnknown(gn, name, srcs, targs);
 
 	/*
 	 * Using the list of possible sources built up from the target
