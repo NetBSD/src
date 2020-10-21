@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2006/11/08 21:16:40 drochner Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2020/10/21 01:24:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 /*
  * The Alpha signal trampoline is invoked only to return from
@@ -40,7 +41,7 @@
  */
 NESTED_NOPROFILE(__sigtramp_siginfo_2,0,0,ra,0,0)
 	ldgp	gp,0(ra)
-	lda	a0,(128)(sp)		/* get pointer to ucontext */
+	lda	a0,(SIZEOF_SIGINFO)(sp)	/* get pointer to ucontext */
 	CALLSYS_NOERROR(setcontext)	/* and call setcontext() with it */
 	ldiq	a0,-1			/* if that failed, set an exit code */
 	CALLSYS_NOERROR(exit)		/* and call exit() */

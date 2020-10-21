@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.3 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.4 2020/10/21 01:24:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(getcontext, _getcontext)
@@ -37,7 +38,7 @@ WEAK_ALIAS(getcontext, _getcontext)
 
 LEAF(_getcontext, 1)
 	CALLSYS_ERROR(getcontext)
-	stq	ra, (56 + 32 * 8)(a0)	/* Adjust saved PC */
-	stq	zero, (56 + 0 * 8)(a0)	/* Arrange for a return value of 0 */
+	stq	ra, (UC_GREGS + _REG_PC*8)(a0)	/* Adjust saved PC */
+	stq	zero, (UC_GREGS + _REG_V0*8)(a0)/* Arrange for a rv of 0 */
 	RET
 END(_getcontext)
