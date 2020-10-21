@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.10 2020/10/20 20:36:07 christos Exp $
+#	$NetBSD: files.ia64,v 1.11 2020/10/21 13:31:51 christos Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -17,7 +17,7 @@ file	arch/ia64/ia64/autoconf.c
 file	arch/ia64/ia64/core_machdep.c		coredump
 file	arch/ia64/ia64/machdep.c
 file	arch/ia64/ia64/clock.c
-file	arch/ia64/ia64/process_machdep.c	ptrace | coredump | procfs
+file	arch/ia64/ia64/process_machdep.c
 file	arch/ia64/ia64/pmap.c
 file	arch/ia64/ia64/sys_machdep.c
 file	arch/ia64/ia64/syscall.c
