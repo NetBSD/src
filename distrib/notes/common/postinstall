@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall,v 1.87 2020/07/26 18:53:50 nia Exp $
+.\"	$NetBSD: postinstall,v 1.88 2020/10/21 07:46:22 nia Exp $
 .\"
-.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -164,7 +164,7 @@ For example:
 .if \n[amd64]     .ds IFname wm0
 .if \n[arc]       .ds IFname sn0
 .if \n[cats]      .ds IFname tlp0
-.if \n[evbarm]    .ds IFname fxp0
+.if \n[evbarm]    .ds IFname awge0
 .if \n[hppa]      .ds IFname ie0
 .if \n[hpcmips]   .ds IFname ne0
 .if \n[hpcsh]     .ds IFname ne0
@@ -344,31 +344,33 @@ Assuming that
 is correctly configured, you can install them with the following commands:
 .Pp
 .Bd -unfilled
-.Ic # pkgin install tcsh
-.Ic # pkgin install bash
-.Ic # pkgin install perl
-.Ic # pkgin install apache
-.Ic # pkgin install xfce4
-.Ic # pkgin install firefox
+.Ic # pkgin install tcsh bash perl apache xfce4 firefox
 \&...
 .Ed
-.(Note
-Some mirror sites don't mirror the
-.Pa /pub/pkgsrc
-directory.
-.Note)
 .Pp
-The above commands will install the Tenex-csh and Bourne Again shells,
+The above command will install the Tenex-csh and Bourne Again shells,
 the Perl programming language, Apache web server, Xfce desktop
 environment and the Firefox web browser
 as well as all the packages they depend on.
+.Pp
+If it was not automatically installed,
+.Xr pkgin 1
+can be installed on a fresh
+.Nx
+system with
+.Xr pkg_add 1 :
+.Pp
+.Bd -unfilled
+.Ic export PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r | cut -d_ -f1)/All
+.Ic pkg_add pkgin
+.Ed
 .It
-If you did not install it from the
-.Ic sysinst
-post-installation configuration menu, the
+If you wish to use the
 .Xr pkgsrc 7
-framework for compiling packages can be obtained by
-retrieving the file
+framework for compiling packages and did not install it from the
+.Xr sysinst 8
+post-installation configuration menu, you can obtain it by retrieving
+the file
 .Lk https://cdn.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
 It is typically extracted into
 .Pa /usr/pkgsrc
