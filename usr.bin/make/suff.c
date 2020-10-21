@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.202 2020/10/21 06:30:30 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.203 2020/10/21 06:34:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.202 2020/10/21 06:30:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.203 2020/10/21 06:34:26 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1593,49 +1593,37 @@ SuffFindNormalDepsKnown(const struct SuffSuffGetSuffixArgs *sd, GNode *gn,
 			const char *eoname, const char *sopref,
 			SrcList *srcs, SrcList *targs)
 {
-    SuffListNode *ln = sufflist->first;
+    SuffListNode *ln;
+    const char *eopref;
+    Src *targ;
 
-    while (ln != NULL) {
-	/*
-	 * Look for next possible suffix...
-	 */
-	ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffix, sd);
+    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+	if (!SuffSuffIsSuffix(ln->datum, sd))
+	    continue;
 
-	if (ln != NULL) {
-	    const char *eopref;
-
-	    /*
-	     * Allocate a Src structure to which things can be transformed
-	     */
-	    Src *targ = bmake_malloc(sizeof(Src));
-	    targ->file = bmake_strdup(gn->name);
-	    targ->suff = ln->datum;
-	    targ->suff->refCount++;
-	    targ->node = gn;
-	    targ->parent = NULL;
-	    targ->children = 0;
+	targ = bmake_malloc(sizeof(Src));
+	targ->file = bmake_strdup(gn->name);
+	targ->suff = ln->datum;
+	targ->suff->refCount++;
+	targ->node = gn;
+	targ->parent = NULL;
+	targ->children = 0;
 #ifdef DEBUG_SRC
-	    targ->cp = Lst_New();
+	targ->cp = Lst_New();
 #endif
 
-	    eopref = eoname - targ->suff->nameLen;
-	    targ->pref = bmake_strsedup(sopref, eopref);
+	eopref = eoname - targ->suff->nameLen;
+	targ->pref = bmake_strsedup(sopref, eopref);
 
-	    /*
-	     * Add nodes from which the target can be made
-	     */
-	    SuffAddLevel(srcs, targ);
+	/*
+	 * Add nodes from which the target can be made
+	 */
+	SuffAddLevel(srcs, targ);
 
-	    /*
-	     * Record the target so we can nuke it
-	     */
-	    Lst_Append(targs, targ);
-
-	    /*
-	     * Search from this suffix's successor...
-	     */
-	    ln = ln->next;
-	}
+	/*
+	 * Record the target so we can nuke it
+	 */
+	Lst_Append(targs, targ);
     }
 }
 
