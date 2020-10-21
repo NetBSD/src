@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.217 2020/08/30 04:51:03 mrg Exp $
+#	 $NetBSD: mi,v 1.218 2020/10/21 15:12:15 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -570,6 +570,9 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftmodule.h	xcomp-freetype2-include	xorg
 ./usr/X11R7/include/freetype2/freetype/config/ftoption.h	xcomp-freetype2-include	xorg
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	xcomp-freetype2-include	xorg
+./usr/X11R7/include/freetype2/freetype/config/integer-types.h	xcomp-freetype2-include	xorg
+./usr/X11R7/include/freetype2/freetype/config/mac-support.h	xcomp-freetype2-include	xorg
+./usr/X11R7/include/freetype2/freetype/config/public-macros.h	xcomp-freetype2-include	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	xcomp-freetype2-include	xorg
 ./usr/X11R7/include/freetype2/freetype/ftadvanc.h	xcomp-freetype2-include	xorg
 ./usr/X11R7/include/freetype2/freetype/ftautoh.h	xcomp-obsolete	obsolete
