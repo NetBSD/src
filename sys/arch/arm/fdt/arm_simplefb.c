@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.3 2020/10/20 23:03:30 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.3 2020/10/20 23:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.4 2020/10/21 11:06:13 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,6 +161,7 @@ arm_simplefb_pollc(void *v, int on)
 {
 }
 
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 static void
 arm_simplefb_reconfig(void *arg, uint64_t new_addr)
 {
@@ -177,6 +178,7 @@ arm_simplefb_reconfig(void *arg, uint64_t new_addr)
 
 	arm_simplefb_addr = (bus_addr_t)new_addr;
 }
+#endif
 
 uint64_t
 arm_simplefb_physaddr(void)
