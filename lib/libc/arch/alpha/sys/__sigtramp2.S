@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.4 2020/10/21 01:55:07 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.5 2020/10/21 01:58:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -81,7 +81,7 @@
  * The unwind entry includes one instruction slot prior to the trampoline
  * because the unwinder will look up to (return PC - 1 insn) while unwinding.
  * Normally this would be the jump / branch, but since there isn't one in
- * this case, we place an explcit nop there instead.
+ * this case, we place an explicit nop there instead.
  */
 	nop
 
