@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.205 2020/10/21 06:40:28 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.206 2020/10/21 06:46:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.205 2020/10/21 06:40:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.206 2020/10/21 06:46:21 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -175,7 +175,8 @@ typedef struct Suff {
     SearchPath	 *searchPath;	/* The path along which files of this suffix
 				 * may be found */
     int          sNum;		/* The suffix number */
-    int		 refCount;	/* Reference count of list membership */
+    int		 refCount;	/* Reference count of list membership
+				 * and several other places */
     SuffList	 *parents;	/* Suffixes we have a transformation to */
     SuffList	 *children;	/* Suffixes we have a transformation from */
     SuffListList *ref;		/* Lists in which this suffix is referenced */
@@ -1676,56 +1677,57 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
 static void
 SuffFindNormalDepsPath(GNode *gn, Src *targ)
 {
-    if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
-	free(gn->path);
-	gn->path = Dir_FindFile(gn->name,
-				(targ == NULL ? dirSearchPath :
-				 targ->suff->searchPath));
-	if (gn->path != NULL) {
-	    char *ptr;
-	    Var_Set(TARGET, gn->path, gn);
+    if (gn->type & (OP_PHONY | OP_NOPATH))
+        return;
 
-	    if (targ != NULL) {
-		/*
-		 * Suffix known for the thing -- trim the suffix off
-		 * the path to form the proper .PREFIX variable.
-		 */
-		size_t savep = strlen(gn->path) - targ->suff->nameLen;
-		char    savec;
+    free(gn->path);
+    gn->path = Dir_FindFile(gn->name,
+			    (targ == NULL ? dirSearchPath :
+			     targ->suff->searchPath));
+    if (gn->path == NULL)
+        return;
 
-		if (gn->suffix)
-		    gn->suffix->refCount--;
-		gn->suffix = targ->suff;
-		gn->suffix->refCount++;
+    Var_Set(TARGET, gn->path, gn);
 
-		savec = gn->path[savep];
-		gn->path[savep] = '\0';
+    if (targ != NULL) {
+	/*
+	 * Suffix known for the thing -- trim the suffix off
+	 * the path to form the proper .PREFIX variable.
+	 */
+	size_t savep = strlen(gn->path) - targ->suff->nameLen;
+	char savec;
+	char *ptr;
 
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-		    ptr++;
-		else
-		    ptr = gn->path;
+	if (gn->suffix)
+	    gn->suffix->refCount--;
+	gn->suffix = targ->suff;
+	gn->suffix->refCount++;
 
-		Var_Set(PREFIX, ptr, gn);
+	savec = gn->path[savep];
+	gn->path[savep] = '\0';
 
-		gn->path[savep] = savec;
-	    } else {
-		/*
-		 * The .PREFIX gets the full path if the target has
-		 * no known suffix.
-		 */
-		if (gn->suffix)
-		    gn->suffix->refCount--;
-		gn->suffix = NULL;
+	if ((ptr = strrchr(gn->path, '/')) != NULL)
+	    ptr++;
+	else
+	    ptr = gn->path;
 
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-		    ptr++;
-		else
-		    ptr = gn->path;
+	Var_Set(PREFIX, ptr, gn);
 
-		Var_Set(PREFIX, ptr, gn);
-	    }
-	}
+	gn->path[savep] = savec;
+    } else {
+	char *ptr;
+
+	/* The .PREFIX gets the full path if the target has no known suffix. */
+	if (gn->suffix)
+	    gn->suffix->refCount--;
+	gn->suffix = NULL;
+
+	if ((ptr = strrchr(gn->path, '/')) != NULL)
+	    ptr++;
+	else
+	    ptr = gn->path;
+
+	Var_Set(PREFIX, ptr, gn);
     }
 }
 
