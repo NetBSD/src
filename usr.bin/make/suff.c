@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.203 2020/10/21 06:34:26 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.204 2020/10/21 06:36:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.203 2020/10/21 06:34:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.204 2020/10/21 06:36:10 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1633,38 +1633,38 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
 {
     Src *targ;
 
-    if (Lst_IsEmpty(targs) && suffNull != NULL) {
-	SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n",
-		    gn->name);
+    if (!Lst_IsEmpty(targs) || suffNull == NULL)
+        return;
 
-	targ = bmake_malloc(sizeof *targ);
-	targ->file = bmake_strdup(gn->name);
-	targ->suff = suffNull;
-	targ->suff->refCount++;
-	targ->node = gn;
-	targ->parent = NULL;
-	targ->children = 0;
-	targ->pref = bmake_strdup(sopref);
+    SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
+
+    targ = bmake_malloc(sizeof *targ);
+    targ->file = bmake_strdup(gn->name);
+    targ->suff = suffNull;
+    targ->suff->refCount++;
+    targ->node = gn;
+    targ->parent = NULL;
+    targ->children = 0;
+    targ->pref = bmake_strdup(sopref);
 #ifdef DEBUG_SRC
-	targ->cp = Lst_New();
+    targ->cp = Lst_New();
 #endif
 
-	/*
-	 * Only use the default suffix rules if we don't have commands
-	 * defined for this gnode; traditional make programs used to
-	 * not define suffix rules if the gnode had children but we
-	 * don't do this anymore.
-	 */
-	if (Lst_IsEmpty(gn->commands))
-	    SuffAddLevel(srcs, targ);
-	else {
-	    SUFF_DEBUG0("not ");
-	}
-
-	SUFF_DEBUG0("adding suffix rules\n");
-
-	Lst_Append(targs, targ);
+    /*
+     * Only use the default suffix rules if we don't have commands
+     * defined for this gnode; traditional make programs used to
+     * not define suffix rules if the gnode had children but we
+     * don't do this anymore.
+     */
+    if (Lst_IsEmpty(gn->commands))
+	SuffAddLevel(srcs, targ);
+    else {
+	SUFF_DEBUG0("not ");
     }
+
+    SUFF_DEBUG0("adding suffix rules\n");
+
+    Lst_Append(targs, targ);
 }
 
 /* Locate implicit dependencies for regular targets.
