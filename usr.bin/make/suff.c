@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.208 2020/10/21 07:11:50 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.209 2020/10/21 07:42:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.208 2020/10/21 07:11:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.209 2020/10/21 07:42:36 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -846,22 +846,33 @@ SrcList_PrintAddrs(SrcList *srcList)
 }
 #endif
 
+static Src *
+SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
+{
+    Src *src = bmake_malloc(sizeof *src);
+
+    src->file = name;
+    src->pref = pref;
+    src->suff = suff;
+    src->parent = parent;
+    src->node = gn;
+    src->children = 0;
+#ifdef DEBUG_SRC
+    src->cp = Lst_New();
+#endif
+
+    return src;
+}
+
 static void
 SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
 	   const char *debug_tag)
 {
-    Src *s2 = bmake_malloc(sizeof(Src));
-    s2->file = srcName;
-    s2->pref = targ->pref;
-    s2->parent = targ;
-    s2->node = NULL;
-    s2->suff = suff;
+    Src *s2 = SrcNew(srcName, targ->pref, suff, targ, NULL);
     suff->refCount++;
-    s2->children = 0;
     targ->children++;
     Lst_Append(srcList, s2);
 #ifdef DEBUG_SRC
-    s2->cp = Lst_New();
     Lst_Append(targ->cp, s2);
     debug_printf("%s add %p %p to %p:", debug_tag, targ, s2, srcList);
     SrcList_PrintAddrs(srcList);
@@ -1091,17 +1102,10 @@ SuffFindCmds(Src *targ, SrcList *slst)
      * source node's name so Suff_FindDeps can free it
      * again (ick)), and return the new structure.
      */
-    ret = bmake_malloc(sizeof(Src));
-    ret->file = bmake_strdup(s->name);
-    ret->pref = targ->pref;
-    ret->suff = suff;
+    ret = SrcNew(bmake_strdup(s->name), targ->pref, suff, targ, s);
     suff->refCount++;
-    ret->parent = targ;
-    ret->node = s;
-    ret->children = 0;
     targ->children++;
 #ifdef DEBUG_SRC
-    ret->cp = Lst_New();
     debug_printf("3 add %p %p\n", targ, ret);
     Lst_Append(targ->cp, ret);
 #endif
@@ -1589,26 +1593,17 @@ SuffFindNormalDepsKnown(char *name, size_t nameLen, GNode *gn,
 			SrcList *srcs, SrcList *targs)
 {
     SuffListNode *ln;
-    const char *eopref;
     Src *targ;
+    char *pref;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	if (!SuffSuffIsSuffix(ln->datum, nameLen, name + nameLen))
+	Suff *suff = ln->datum;
+	if (!SuffSuffIsSuffix(suff, nameLen, name + nameLen))
 	    continue;
 
-	targ = bmake_malloc(sizeof(Src));
-	targ->file = bmake_strdup(gn->name);
-	targ->suff = ln->datum;
-	targ->suff->refCount++;
-	targ->node = gn;
-	targ->parent = NULL;
-	targ->children = 0;
-#ifdef DEBUG_SRC
-	targ->cp = Lst_New();
-#endif
-
-	eopref = name + nameLen - targ->suff->nameLen;
-	targ->pref = bmake_strsedup(name, eopref);
+	pref = bmake_strldup(name, (size_t)(nameLen - suff->nameLen));
+	targ = SrcNew(bmake_strdup(gn->name), pref, suff, NULL, gn);
+	suff->refCount++;
 
 	/*
 	 * Add nodes from which the target can be made
@@ -1633,17 +1628,9 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
 
     SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 
-    targ = bmake_malloc(sizeof *targ);
-    targ->file = bmake_strdup(gn->name);
-    targ->suff = suffNull;
+    targ = SrcNew(bmake_strdup(gn->name), bmake_strdup(sopref),
+		  suffNull, NULL, gn);
     targ->suff->refCount++;
-    targ->node = gn;
-    targ->parent = NULL;
-    targ->children = 0;
-    targ->pref = bmake_strdup(sopref);
-#ifdef DEBUG_SRC
-    targ->cp = Lst_New();
-#endif
 
     /*
      * Only use the default suffix rules if we don't have commands
