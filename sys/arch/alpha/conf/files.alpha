@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.193 2020/10/20 20:36:07 christos Exp $
+# $NetBSD: files.alpha,v 1.194 2020/10/21 13:31:50 christos Exp $
 #
 # alpha-specific configuration info
 
@@ -381,7 +381,7 @@ file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/patch.c
 file	arch/alpha/alpha/pmap.c
-file	arch/alpha/alpha/process_machdep.c	ptrace | coredump | procfs
+file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/procfs_machdep.c	procfs
 file	arch/alpha/alpha/prom.c
 file	arch/alpha/alpha/sys_machdep.c
