@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.74 2020/10/19 21:57:37 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.75 2020/10/21 07:14:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,8 +125,6 @@ typedef void *LstCopyProc(void *);
 typedef void LstFreeProc(void *);
 /* Return TRUE if the datum matches the args, for Lst_Find. */
 typedef Boolean LstFindProc(const void *datum, const void *args);
-/* An action for Lst_ForEach. */
-typedef void LstActionProc(void *datum, void *args);
 /* An action for Lst_ForEachUntil. */
 typedef int LstActionUntilProc(void *datum, void *args);
 
