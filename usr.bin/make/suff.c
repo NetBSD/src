@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.209 2020/10/21 07:42:36 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.210 2020/10/21 07:57:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.209 2020/10/21 07:42:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.210 2020/10/21 07:57:41 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -285,11 +285,16 @@ FindSuffByName(const char *name)
     return NULL;
 }
 
-/* See if the graph node has the desired name. */
-static Boolean
-SuffGNHasName(const void *gn, const void *desiredName)
+static GNode *
+FindTransformByName(const char *name)
 {
-    return strcmp(((const GNode *)gn)->name, desiredName) == 0;
+    GNodeListNode *ln;
+    for (ln = transforms->first; ln != NULL; ln = ln->next) {
+        GNode *gn = ln->datum;
+        if (strcmp(gn->name, name) == 0)
+            return gn;
+    }
+    return NULL;
 }
 
 	    /*********** Maintenance Functions ************/
@@ -476,34 +481,32 @@ Suff_IsTransform(const char *str)
     return SuffParseTransform(str, &src, &targ);
 }
 
-/* Add the transformation rule described by the line to the list of rules
- * and place the transformation itself in the graph.
+/* Add the transformation rule to the list of rules and place the
+ * transformation itself in the graph.
  *
- * The node is placed on the end of the transforms Lst and links are made
- * between the two suffixes mentioned in the target name.
-
+ * The transformation is linked to the two suffixes mentioned in the name.
+ *
  * Input:
- *	line		name of transformation to add
+ *	name		must have the form ".from.to" or just ".from"
  *
  * Results:
- *	The node created for the transformation in the transforms list
+ *	The created or existing transformation node in the transforms list
  */
 GNode *
-Suff_AddTransform(const char *line)
+Suff_AddTransform(const char *name)
 {
     GNode         *gn;		/* GNode of transformation rule */
     Suff          *s,		/* source suffix */
 		  *t;		/* target suffix */
-    GNodeListNode *ln;		/* Node for existing transformation */
     Boolean ok;
 
-    ln = Lst_Find(transforms, SuffGNHasName, line);
-    if (ln == NULL) {
+    gn = FindTransformByName(name);
+    if (gn == NULL) {
 	/*
 	 * Make a new graph node for the transformation. It will be filled in
 	 * by the Parse module.
 	 */
-	gn = Targ_NewGN(line);
+	gn = Targ_NewGN(name);
 	Lst_Append(transforms, gn);
     } else {
 	/*
@@ -512,7 +515,6 @@ Suff_AddTransform(const char *line)
 	 * free the commands themselves, because a given command can be
 	 * attached to several different transformations.
 	 */
-	gn = ln->datum;
 	Lst_Free(gn->commands);
 	Lst_Free(gn->children);
 	gn->commands = Lst_New();
@@ -521,7 +523,7 @@ Suff_AddTransform(const char *line)
 
     gn->type = OP_TRANSFORM;
 
-    ok = SuffParseTransform(line, &s, &t);
+    ok = SuffParseTransform(name, &s, &t);
     assert(ok);
     (void)ok;
 
@@ -1400,10 +1402,10 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Locate the transformation rule itself
      */
     tname = str_concat2(s->name, t->name);
-    ln = Lst_Find(transforms, SuffGNHasName, tname);
+    gn = FindTransformByName(tname);
     free(tname);
 
-    if (ln == NULL) {
+    if (gn == NULL) {
 	/*
 	 * Not really such a transformation rule (can happen when we're
 	 * called to link an OP_MEMBER and OP_ARCHV node), so return
@@ -1411,8 +1413,6 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 	 */
 	return FALSE;
     }
-
-    gn = ln->datum;
 
     SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
 
