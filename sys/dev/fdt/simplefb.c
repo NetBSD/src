@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.10 2020/10/20 23:03:30 jmcneill Exp $ */
+/* $NetBSD: simplefb.c,v 1.11 2020/10/21 11:02:31 rin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.10 2020/10/20 23:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.11 2020/10/21 11:02:31 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,8 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	uint32_t width, height, stride;
 	uint16_t depth;
 	const char *format;
-	bus_addr_t addr, sfb_addr;
+	uint64_t sfb_addr;
+	bus_addr_t addr;
 	bus_size_t size;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
