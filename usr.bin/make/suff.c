@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.200 2020/10/21 06:12:16 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.201 2020/10/21 06:26:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.200 2020/10/21 06:12:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.201 2020/10/21 06:26:46 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1588,6 +1588,57 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
     mem->type |= OP_MEMBER | OP_JOIN | OP_MADE;
 }
 
+static void
+SuffFindNormalDepsKnown(const struct SuffSuffGetSuffixArgs *sd, GNode *gn,
+			const char *eoname, const char *sopref,
+			SrcList *srcs, SrcList *targs)
+{
+    SuffListNode *ln = sufflist->first;
+
+    while (ln != NULL) {
+	/*
+	 * Look for next possible suffix...
+	 */
+	ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffix, sd);
+
+	if (ln != NULL) {
+	    const char *eopref;
+
+	    /*
+	     * Allocate a Src structure to which things can be transformed
+	     */
+	    Src *targ = bmake_malloc(sizeof(Src));
+	    targ->file = bmake_strdup(gn->name);
+	    targ->suff = ln->datum;
+	    targ->suff->refCount++;
+	    targ->node = gn;
+	    targ->parent = NULL;
+	    targ->children = 0;
+#ifdef DEBUG_SRC
+	    targ->cp = Lst_New();
+#endif
+
+	    eopref = eoname - targ->suff->nameLen;
+	    targ->pref = bmake_strsedup(sopref, eopref);
+
+	    /*
+	     * Add nodes from which the target can be made
+	     */
+	    SuffAddLevel(srcs, targ);
+
+	    /*
+	     * Record the target so we can nuke it
+	     */
+	    Lst_Append(targs, targ);
+
+	    /*
+	     * Search from this suffix's successor...
+	     */
+	    ln = ln->next;
+	}
+    }
+}
+
 /* Locate implicit dependencies for regular targets.
  *
  * Input:
@@ -1601,7 +1652,6 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 {
     char *eoname;		/* End of name */
     char *sopref;		/* Start of prefix */
-    SuffListNode *ln, *nln;
     SrcList *srcs;		/* List of sources at which to look */
     SrcList *targs;		/* List of targets to which things can be
 				 * transformed. They all have the same file,
@@ -1621,7 +1671,6 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     /*
      * Begin at the beginning...
      */
-    ln = sufflist->first;
     srcs = Lst_New();
     targs = Lst_New();
 
@@ -1648,48 +1697,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 
     if (!(gn->type & OP_PHONY)) {
 
-	while (ln != NULL) {
-	    /*
-	     * Look for next possible suffix...
-	     */
-	    ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffix, &sd);
-
-	    if (ln != NULL) {
-		const char *eopref;
-
-		/*
-		 * Allocate a Src structure to which things can be transformed
-		 */
-		targ = bmake_malloc(sizeof(Src));
-		targ->file = bmake_strdup(gn->name);
-		targ->suff = ln->datum;
-		targ->suff->refCount++;
-		targ->node = gn;
-		targ->parent = NULL;
-		targ->children = 0;
-#ifdef DEBUG_SRC
-		targ->cp = Lst_New();
-#endif
-
-		eopref = eoname - targ->suff->nameLen;
-		targ->pref = bmake_strsedup(sopref, eopref);
-
-		/*
-		 * Add nodes from which the target can be made
-		 */
-		SuffAddLevel(srcs, targ);
-
-		/*
-		 * Record the target so we can nuke it
-		 */
-		Lst_Append(targs, targ);
-
-		/*
-		 * Search from this suffix's successor...
-		 */
-		ln = ln->next;
-	    }
-	}
+	SuffFindNormalDepsKnown(&sd, gn, eoname, sopref, srcs, targs);
 
 	/*
 	 * Handle target of unknown suffix...
@@ -1762,9 +1770,12 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    for (ln = gn->children->first; ln != NULL; ln = nln) {
-	nln = ln->next;
-	SuffExpandChildren(ln, gn);
+    {
+	SuffListNode *ln, *nln;
+	for (ln = gn->children->first; ln != NULL; ln = nln) {
+	    nln = ln->next;
+	    SuffExpandChildren(ln, gn);
+	}
     }
 
     if (targ == NULL) {
