@@ -1,7 +1,9 @@
-# $NetBSD: suff-add-later.mk,v 1.1 2020/10/20 20:36:53 rillig Exp $
+# $NetBSD: suff-add-later.mk,v 1.2 2020/10/21 08:18:24 rillig Exp $
 #
 # https://gnats.netbsd.org/49086, issue 5:
 # Adding more suffixes does not turn existing rules into suffix rules.
+
+.MAKEFLAGS: -ds
 
 all: issue5a.d issue5b.c issue5c issue5d.e issue5e.d
 
@@ -29,3 +31,4 @@ issue5a.c issue5b.d issue5c.d issue5d.d issue5e.e:
 # XXX: don't know how to make issue5a.d (even though .c.d is a transformation
 # rule and issue5a.c can be readily made)
 #.MAKEFLAGS: -dg1
+.MAKEFLAGS: -d0
