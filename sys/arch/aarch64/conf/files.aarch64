@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.29 2020/10/20 20:36:06 christos Exp $
+#	$NetBSD: files.aarch64,v 1.30 2020/10/21 13:31:50 christos Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -98,7 +98,7 @@ file	arch/aarch64/aarch64/fusu.S
 file	arch/aarch64/aarch64/idle_machdep.S
 file	arch/aarch64/aarch64/kobj_machdep.c		modular
 file	arch/aarch64/aarch64/lock_stubs.S
-file	arch/aarch64/aarch64/process_machdep.c		ptrace | coredump | procfs
+file	arch/aarch64/aarch64/process_machdep.c
 file	arch/aarch64/aarch64/procfs_machdep.c		procfs
 file	arch/aarch64/aarch64/sig_machdep.c
 file	arch/aarch64/aarch64/sys_machdep.c

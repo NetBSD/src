@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.96 2020/10/20 20:36:08 christos Exp $
+#	$NetBSD: files.powerpc,v 1.97 2020/10/21 13:31:51 christos Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -16,7 +16,7 @@ file	arch/powerpc/powerpc/lock_stubs.S
 file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap_subr.c		ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/powerpc_machdep.c
-file	arch/powerpc/powerpc/process_machdep.c		ptrace | coredump | procfs
+file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S			compat_16

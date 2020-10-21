@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.20 2020/10/20 20:36:08 christos Exp $
+# $NetBSD: files.usermode,v 1.21 2020/10/21 13:31:52 christos Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -56,7 +56,7 @@ file	arch/usermode/usermode/copy.c
 file	arch/usermode/usermode/intr.c
 file	arch/usermode/usermode/machdep.c
 file	arch/usermode/usermode/pmap.c
-file	arch/usermode/usermode/process_machdep.c	ptrace | coredump | procfs
+file	arch/usermode/usermode/process_machdep.c
 file	arch/usermode/usermode/procfs_machdep.c	procfs
 file	arch/usermode/usermode/sys_machdep.c
 file	arch/usermode/usermode/syscall.c

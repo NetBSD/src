@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.80 2020/10/20 20:36:07 christos Exp $
+#	$NetBSD: files.mips,v 1.81 2020/10/21 13:31:51 christos Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -61,7 +61,7 @@ file	arch/mips/mips/mips_softint.c
 file	arch/mips/mips/sig_machdep.c		# signal delivery
 file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c
-file	arch/mips/mips/process_machdep.c	ptrace | coredump | procfs
+file	arch/mips/mips/process_machdep.c
 file	arch/mips/mips/cpu_exec.c
 file	arch/mips/mips/wired_map.c (mips3|mips4|mips32|mips32r2|mips64|mips64r2) & enable_mips3_wired_map
 

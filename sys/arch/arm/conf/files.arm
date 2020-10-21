@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.163 2020/10/20 20:36:07 christos Exp $
+#	$NetBSD: files.arm,v 1.164 2020/10/21 13:31:51 christos Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -199,7 +199,7 @@ file	arch/arm/arm/cpu_subr.c
 file	arch/arm/arm/fusu.S
 file	arch/arm/arm/idle_machdep.c
 file	arch/arm/arm/lock_cas.S
-file	arch/arm/arm/process_machdep.c		ptrace | coredump | procfs
+file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S

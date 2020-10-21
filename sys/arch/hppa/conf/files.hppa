@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.22 2020/10/20 20:36:07 christos Exp $
+#	$NetBSD: files.hppa,v 1.23 2020/10/21 13:31:51 christos Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -297,7 +297,7 @@ file	arch/hppa/hppa/intr.c
 file    arch/hppa/hppa/lock_stubs.S
 file	arch/hppa/hppa/machdep.c
 file	arch/hppa/hppa/pmap.c
-file	arch/hppa/hppa/process_machdep.c	ptrace | coredump | procfs
+file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sig_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
