@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.1 2020/10/22 11:21:42 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.2 2020/10/22 11:28:40 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -9,3 +9,858 @@ sys/sys/param.h 				patched by hand
 	Welcome to 9.1_STABLE.
 	[martin]
 
+xsrc/external/mit/freetype/dist/builds/unix/ftconfig.h.in up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/unix/ax_compare_version.m4 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/unix/ax_prog_python_version.m4 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/vms/LIBS.OPT_IA64 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/vms/_LINK.OPT_IA64 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/vms/vmslib.dat up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/cmake/FindBrotliDec.cmake up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/meson/extract_freetype_version.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/meson/extract_libtool_version.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/meson/generate_reference_docs.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/meson/parse_modules_cfg.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/meson/process_ftoption_h.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/ft2-auto_hinter.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/404.html up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/ft2-base_interface.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-basic_types.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-bdf_fonts.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-bitmap_handling.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-bzip2.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-cache_subsystem.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-cff_driver.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-cid_fonts.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-color_management.html up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/ft2-computations.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-error_code_values.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-error_enumerations.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-font_formats.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-gasp_table.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-glyph_management.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-glyph_stroker.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-glyph_variants.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-gx_validation.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-gzip.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-header_file_macros.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-header_inclusion.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-incremental.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-index.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-layer_management.html up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/ft2-lcd_rendering.html up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/ft2-list_processing.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-lzw.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-mac_specific.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-module_management.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-multiple_masters.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-ot_validation.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-outline_processing.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-parameter_tags.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-pcf_driver.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-pfr_fonts.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-properties.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-quick_advance.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-raster.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-sfnt_names.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-sizes_management.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-system_interface.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-t1_cid_driver.html up to 1.3
+xsrc/external/mit/freetype/dist/docs/reference/ft2-truetype_engine.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-tt_driver.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-truetype_tables.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-type1_tables.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-user_allocation.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-version.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/ft2-winfnt_fonts.html up to 1.5
+xsrc/external/mit/freetype/dist/docs/reference/index.html up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/sitemap.xml up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/sitemap.xml.gz up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/FontAwesome.ttf up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/FontAwesome.woff up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/FontAwesome.woff2 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/MaterialIcons-Regular.ttf up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/MaterialIcons-Regular.woff up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/specimen/MaterialIcons-Regular.woff2 up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/font-awesome.css up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/fonts/material-icons.css up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/images/icons/bitbucket.1b09e088.svg up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/images/icons/github.f0b8504a.svg up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/images/icons/gitlab.6dd19c00.svg up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/images/favicon.png up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.ar.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.da.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.de.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.du.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.es.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.fi.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.fr.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.hu.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.it.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.ja.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.jp.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.multi.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.nl.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.no.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.pt.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.ro.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.ru.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.stemmer.support.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.sv.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.th.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.tr.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/lunr.vi.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/tinyseg.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/lunr/wordcut.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/application.c33a9706.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/javascripts/modernizr.86422ebf.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/stylesheets/application-palette.a8b3c06d.css up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/assets/stylesheets/application.adb8469c.css up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/images/favico.ico up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/javascripts/extra.js up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/search/search_index.json up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/reference/stylesheets/extra.css up to 1.1.1.1
+xsrc/external/mit/freetype/dist/docs/README          up to 1.1.1.1
+xsrc/external/mit/freetype/dist/include/freetype/config/integer-types.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/include/freetype/config/mac-support.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/include/freetype/config/public-macros.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/include/freetype/internal/wofftypes.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/include/freetype/internal/compiler-macros.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/sfwoff.c    up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/sfwoff.h    up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/sfwoff2.c   up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/sfwoff2.h   up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/woff2tags.c up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/sfnt/woff2tags.h up to 1.1.1.1
+xsrc/external/mit/freetype/dist/src/tools/make_distribution_archives.py up to 1.1.1.1
+xsrc/external/mit/freetype/dist/meson.build          up to 1.1.1.1
+xsrc/external/mit/freetype/dist/.ChangeLog.swp       up to 1.1.1.1
+xsrc/external/mit/freetype/dist/.clang-format        up to 1.1.1.1
+xsrc/external/mit/freetype/dist/ChangeLog.29         up to 1.1.1.1
+xsrc/external/mit/freetype/dist/meson_options.txt    up to 1.1.1.1
+xsrc/external/mit/freetype/dist/builds/unix/ftconfig.in delete
+xsrc/external/mit/freetype/dist/Jamfile              delete
+xsrc/external/mit/freetype/dist/Jamrules             delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/FontAwesome.ttf delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/FontAwesome.woff delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/FontAwesome.woff2 delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/MaterialIcons-Regular.ttf delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/MaterialIcons-Regular.woff delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/specimen/MaterialIcons-Regular.woff2 delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/font-awesome.css delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/fonts/material-icons.css delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/images/icons/bitbucket.1b09e088.svg delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/images/icons/github.f0b8504a.svg delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/images/icons/gitlab.6dd19c00.svg delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/images/favicon.png delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.da.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.de.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.du.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.es.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.fi.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.fr.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.hu.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.it.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.ja.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.jp.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.multi.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.nl.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.no.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.pt.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.ro.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.ru.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.stemmer.support.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.sv.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.th.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/lunr.tr.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/tinyseg.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/lunr/wordcut.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/application.d9aa80ab.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/javascripts/modernizr.1f0bcf2b.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/stylesheets/application-palette.224b79ff.css delete
+xsrc/external/mit/freetype/dist/docs/reference/site/assets/stylesheets/application.982221ab.css delete
+xsrc/external/mit/freetype/dist/docs/reference/site/404.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-auto_hinter.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-base_interface.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-basic_types.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-bdf_fonts.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-bitmap_handling.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-bzip2.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-cache_subsystem.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-cff_driver.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-cid_fonts.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-color_management.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-computations.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-error_code_values.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-error_enumerations.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/images/favico.ico delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-font_formats.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-gasp_table.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-glyph_management.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-glyph_stroker.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-glyph_variants.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-gx_validation.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-gzip.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-header_file_macros.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-header_inclusion.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-incremental.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-index.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-layer_management.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-lcd_rendering.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-list_processing.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-lzw.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-mac_specific.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-module_management.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-multiple_masters.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-ot_validation.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-outline_processing.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-parameter_tags.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-pcf_driver.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-pfr_fonts.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-properties.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-quick_advance.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-raster.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-sfnt_names.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-sizes_management.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-system_interface.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-t1_cid_driver.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-truetype_engine.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-tt_driver.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-truetype_tables.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-type1_tables.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-user_allocation.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-version.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/ft2-winfnt_fonts.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/index.html delete
+xsrc/external/mit/freetype/dist/docs/reference/site/sitemap.xml delete
+xsrc/external/mit/freetype/dist/docs/reference/site/sitemap.xml.gz delete
+xsrc/external/mit/freetype/dist/docs/reference/site/javascripts/extra.js delete
+xsrc/external/mit/freetype/dist/docs/reference/site/search/search_index.json delete
+xsrc/external/mit/freetype/dist/docs/reference/site/stylesheets/extra.css delete
+xsrc/external/mit/freetype/dist/docs/reference/README delete
+xsrc/external/mit/freetype/dist/include/freetype/internal/internal.h delete
+xsrc/external/mit/freetype/dist/src/Jamfile          delete
+xsrc/external/mit/freetype/dist/src/autofit/Jamfile  delete
+xsrc/external/mit/freetype/dist/src/base/Jamfile     delete
+xsrc/external/mit/freetype/dist/src/bdf/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/bzip2/Jamfile    delete
+xsrc/external/mit/freetype/dist/src/cache/Jamfile    delete
+xsrc/external/mit/freetype/dist/src/cff/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/cid/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/gxvalid/Jamfile  delete
+xsrc/external/mit/freetype/dist/src/gzip/Jamfile     delete
+xsrc/external/mit/freetype/dist/src/lzw/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/otvalid/Jamfile  delete
+xsrc/external/mit/freetype/dist/src/pcf/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/pfr/Jamfile      delete
+xsrc/external/mit/freetype/dist/src/psaux/Jamfile    delete
+xsrc/external/mit/freetype/dist/src/pshinter/Jamfile delete
+xsrc/external/mit/freetype/dist/src/psnames/Jamfile  delete
+xsrc/external/mit/freetype/dist/src/raster/Jamfile   delete
+xsrc/external/mit/freetype/dist/src/sfnt/Jamfile     delete
+xsrc/external/mit/freetype/dist/src/smooth/Jamfile   delete
+xsrc/external/mit/freetype/dist/src/tools/Jamfile    delete
+xsrc/external/mit/freetype/dist/src/truetype/Jamfile delete
+xsrc/external/mit/freetype/dist/src/type1/Jamfile    delete
+xsrc/external/mit/freetype/dist/src/type42/Jamfile   delete
+xsrc/external/mit/freetype/dist/src/winfonts/Jamfile delete
+xsrc/external/mit/freetype/dist/CMakeLists.txt       up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog            up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.20         up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.21         up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.22         up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.23         up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.24         up to 1.5
+xsrc/external/mit/freetype/dist/ChangeLog.25         up to 1.1.1.4
+xsrc/external/mit/freetype/dist/ChangeLog.26         up to 1.1.1.3
+xsrc/external/mit/freetype/dist/ChangeLog.27         up to 1.1.1.3
+xsrc/external/mit/freetype/dist/ChangeLog.28         up to 1.1.1.3
+xsrc/external/mit/freetype/dist/Makefile             up to 1.5
+xsrc/external/mit/freetype/dist/README               up to 1.5
+xsrc/external/mit/freetype/dist/README.git           up to 1.5
+xsrc/external/mit/freetype/dist/autogen.sh           up to 1.5
+xsrc/external/mit/freetype/dist/configure            up to 1.5
+xsrc/external/mit/freetype/dist/modules.cfg          up to 1.5
+xsrc/external/mit/freetype/dist/vms_make.com         up to 1.5
+xsrc/external/mit/freetype/dist/builds/detect.mk     up to 1.5
+xsrc/external/mit/freetype/dist/builds/exports.mk    up to 1.5
+xsrc/external/mit/freetype/dist/builds/freetype.mk   up to 1.5
+xsrc/external/mit/freetype/dist/builds/link_dos.mk   up to 1.5
+xsrc/external/mit/freetype/dist/builds/link_std.mk   up to 1.5
+xsrc/external/mit/freetype/dist/builds/modules.mk    up to 1.5
+xsrc/external/mit/freetype/dist/builds/toplevel.mk   up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/README  up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/makefile up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/makefile.os4 up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/smakefile up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/include/config/ftconfig.h up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/include/config/ftmodule.h up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/src/base/ftdebug.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/amiga/src/base/ftsystem.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/ansi/ansi-def.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/ansi/ansi.mk  up to 1.5
+xsrc/external/mit/freetype/dist/builds/beos/beos-def.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/beos/beos.mk  up to 1.5
+xsrc/external/mit/freetype/dist/builds/beos/detect.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/cmake/FindHarfBuzz.cmake up to 1.1.1.3
+xsrc/external/mit/freetype/dist/builds/cmake/iOS.cmake up to 1.5
+xsrc/external/mit/freetype/dist/builds/cmake/testbuild.sh up to 1.1.1.4
+xsrc/external/mit/freetype/dist/builds/compiler/ansi-cc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/bcc-dev.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/bcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/emx.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/gcc-dev.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/gcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/intelc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/unix-lcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/visualage.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/visualc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/watcom.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/compiler/win-lcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/dos/detect.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/dos/dos-def.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/dos/dos-emx.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/dos/dos-gcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/dos/dos-wat.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/mac/ftmac.c   up to 1.5
+xsrc/external/mit/freetype/dist/builds/os2/detect.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/os2/os2-def.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/os2/os2-dev.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/os2/os2-gcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/symbian/bld.inf up to 1.5
+xsrc/external/mit/freetype/dist/builds/symbian/freetype.mmp up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/aclocal.m4 up to 1.4
+xsrc/external/mit/freetype/dist/builds/unix/config.guess up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/config.sub up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/configure up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/configure.ac up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/configure.raw up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/detect.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/freetype-config.in up to 1.13
+xsrc/external/mit/freetype/dist/builds/unix/freetype2.m4 up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/ft-munmap.m4 up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/ftsystem.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/install.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unix-cc.in up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unix-def.in up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unix-dev.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unix-lcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unix.mk  up to 1.5
+xsrc/external/mit/freetype/dist/builds/unix/unixddef.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/vms/ftconfig.h up to 1.5
+xsrc/external/mit/freetype/dist/builds/vms/ftsystem.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/wince/ftdebug.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/wince/vc2005-ce/freetype.vcproj up to 1.5
+xsrc/external/mit/freetype/dist/builds/wince/vc2005-ce/index.html up to 1.5
+xsrc/external/mit/freetype/dist/builds/wince/vc2008-ce/freetype.vcproj up to 1.5
+xsrc/external/mit/freetype/dist/builds/wince/vc2008-ce/index.html up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/detect.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/ftdebug.c up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-bcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-bccd.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-dev.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-gcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-icc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-intl.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-lcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-mingw32.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-vcc.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/w32-wat.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/win32-def.mk up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/vc2010/index.html up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/visualc/freetype.vcproj up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/visualc/index.html up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/visualce/freetype.dsp up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/visualce/freetype.vcproj up to 1.5
+xsrc/external/mit/freetype/dist/builds/windows/visualce/index.html up to 1.5
+xsrc/external/mit/freetype/dist/devel/ft2build.h     up to 1.5
+xsrc/external/mit/freetype/dist/devel/ftoption.h     up to 1.5
+xsrc/external/mit/freetype/dist/docs/CHANGES         up to 1.5
+xsrc/external/mit/freetype/dist/docs/CUSTOMIZE       up to 1.5
+xsrc/external/mit/freetype/dist/docs/DEBUG           up to 1.5
+xsrc/external/mit/freetype/dist/docs/DOCGUIDE        up to 1.1.1.2
+xsrc/external/mit/freetype/dist/docs/INSTALL         up to 1.5
+xsrc/external/mit/freetype/dist/docs/INSTALL.ANY     up to 1.5
+xsrc/external/mit/freetype/dist/docs/INSTALL.CROSS   up to 1.5
+xsrc/external/mit/freetype/dist/docs/INSTALL.GNU     up to 1.5
+xsrc/external/mit/freetype/dist/docs/INSTALL.UNIX    up to 1.5
+xsrc/external/mit/freetype/dist/docs/INSTALL.VMS     up to 1.5
+xsrc/external/mit/freetype/dist/docs/TODO            up to 1.5
+xsrc/external/mit/freetype/dist/docs/VERSIONS.TXT    up to 1.1.1.3
+xsrc/external/mit/freetype/dist/docs/formats.txt     up to 1.5
+xsrc/external/mit/freetype/dist/docs/freetype-config.1 up to 1.5
+xsrc/external/mit/freetype/dist/docs/raster.txt      up to 1.5
+xsrc/external/mit/freetype/dist/docs/release         up to 1.5
+xsrc/external/mit/freetype/dist/include/ft2build.h   up to 1.5
+xsrc/external/mit/freetype/dist/include/freetype/freetype.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftadvanc.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftbbox.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftbdf.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftbitmap.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftbzip2.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftcache.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftcid.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftcolor.h up to 1.1.1.2
+xsrc/external/mit/freetype/dist/include/freetype/ftdriver.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/fterrdef.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/fterrors.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftfntfmt.h up to 1.1.1.4
+xsrc/external/mit/freetype/dist/include/freetype/ftgasp.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftglyph.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftgxval.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftgzip.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftimage.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftincrem.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftlcdfil.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftlist.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftlzw.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftmac.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftmm.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftmodapi.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftmoderr.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftotval.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftoutln.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftparams.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/ftpfr.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftrender.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftsizes.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftsnames.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftstroke.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftsynth.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftsystem.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/fttrigon.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/fttypes.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ftwinfnt.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/t1tables.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/ttnameid.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/tttables.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/tttags.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/config/ftconfig.h up to 1.10
+xsrc/external/mit/freetype/dist/include/freetype/config/ftheader.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/config/ftmodule.h up to 1.5
+xsrc/external/mit/freetype/dist/include/freetype/config/ftoption.h up to 1.9
+xsrc/external/mit/freetype/dist/include/freetype/config/ftstdlib.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/autohint.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/cffotypes.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/cfftypes.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftcalc.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftdebug.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftdrv.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftgloadr.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/fthash.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftmemory.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftobjs.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftpsprop.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftrfork.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftserv.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftstream.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/fttrace.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/ftvalid.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/psaux.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/pshints.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/sfnt.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/t1types.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/tttypes.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svbdf.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svcfftl.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svcid.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svfntfmt.h up to 1.1.1.4
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svgldict.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svgxval.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svkern.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svmetric.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svmm.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svotval.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svpfr.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svpostnm.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svprop.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svpscmap.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svpsinfo.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svsfnt.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svttcmap.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svtteng.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svttglyf.h up to 1.6
+xsrc/external/mit/freetype/dist/include/freetype/internal/services/svwinfnt.h up to 1.6
+xsrc/external/mit/freetype/dist/src/autofit/afangles.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afblue.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afblue.cin up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afblue.dat up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afblue.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afblue.hin up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afcjk.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afcjk.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afcover.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afdummy.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afdummy.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aferrors.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afglobal.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afglobal.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afhints.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afhints.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afindic.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afindic.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aflatin.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aflatin.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aflatin2.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aflatin2.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afloader.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afloader.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afmodule.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afmodule.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afranges.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afranges.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afscript.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afshaper.c up to 1.1.1.4
+xsrc/external/mit/freetype/dist/src/autofit/afshaper.h up to 1.1.1.4
+xsrc/external/mit/freetype/dist/src/autofit/afstyles.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/aftypes.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afwarp.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afwarp.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/afwrtsys.h up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/autofit.c up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/autofit/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftadvanc.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftbase.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftbase.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftbbox.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftbdf.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftbitmap.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftcalc.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftcid.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftcolor.c   up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/base/ftdbgmem.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftdebug.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/fterrors.c  up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/base/ftfntfmt.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftfstype.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftgasp.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftgloadr.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftglyph.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftgxval.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/fthash.c    up to 1.1.1.4
+xsrc/external/mit/freetype/dist/src/base/ftinit.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftlcdfil.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftmac.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftmm.c      up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftobjs.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftotval.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftoutln.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftpatent.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftpfr.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftpsprop.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/base/ftrfork.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftsnames.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftstream.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftstroke.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftsynth.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftsystem.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/fttrigon.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/fttype1.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftutil.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/base/ftver.rc    up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/base/ftwinfnt.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/base/rules.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/bdf/bdf.c        up to 1.4
+xsrc/external/mit/freetype/dist/src/bdf/bdf.h        up to 1.5
+xsrc/external/mit/freetype/dist/src/bdf/bdfdrivr.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/bdf/bdfdrivr.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/bdf/bdferror.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/bdf/bdflib.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/bzip2/ftbzip2.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/bzip2/rules.mk   up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcache.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcbasic.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftccache.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftccache.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftccback.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftccmap.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcerror.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcglyph.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcglyph.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcimage.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcimage.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcmanag.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcmanag.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcmru.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcmru.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcsbits.c up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/ftcsbits.h up to 1.5
+xsrc/external/mit/freetype/dist/src/cache/rules.mk   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cff.c        up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffcmap.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffcmap.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffdrivr.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffdrivr.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cfferrs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffgload.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffgload.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffload.c    up to 1.13
+xsrc/external/mit/freetype/dist/src/cff/cffload.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffobjs.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffobjs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffparse.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cffparse.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/cfftoken.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/module.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/cff/rules.mk     up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/ciderrs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidgload.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidgload.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidload.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidload.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidobjs.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidobjs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidparse.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidparse.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidriver.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidriver.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/cidtoken.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/module.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/rules.mk     up to 1.5
+xsrc/external/mit/freetype/dist/src/cid/type1cid.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/README   up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvalid.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvalid.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvbsln.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvcommn.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvcommn.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxverror.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvfeat.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvfeat.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvfgen.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvjust.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvkern.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvlcar.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmod.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmod.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort0.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort1.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort2.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort4.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmort5.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx.h up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx0.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx1.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx2.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx4.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvmorx5.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvopbd.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvprop.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/gxvtrak.c up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/gxvalid/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/gzip/ftgzip.c    up to 1.15
+xsrc/external/mit/freetype/dist/src/gzip/infblock.c  up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/gzip/infcodes.c  up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/gzip/inflate.c   up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/gzip/infutil.h   up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/gzip/rules.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/lzw/ftlzw.c      up to 1.5
+xsrc/external/mit/freetype/dist/src/lzw/ftzopen.c    up to 1.12
+xsrc/external/mit/freetype/dist/src/lzw/ftzopen.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/lzw/rules.mk     up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvalid.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvalid.h up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvbase.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvcommn.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvcommn.h up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otverror.h up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvgdef.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvgpos.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvgpos.h up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvgsub.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvjstf.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvmath.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvmod.c up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/otvmod.h up to 1.5
+xsrc/external/mit/freetype/dist/src/otvalid/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcf.c        up to 1.4
+xsrc/external/mit/freetype/dist/src/pcf/pcf.h        up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcfdrivr.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcfdrivr.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcferror.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcfread.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcfread.h    up to 1.4
+xsrc/external/mit/freetype/dist/src/pcf/pcfutil.c    up to 1.1.1.5
+xsrc/external/mit/freetype/dist/src/pcf/pcfutil.h    up to 1.4
+xsrc/external/mit/freetype/dist/src/pfr/module.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfr.c        up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrcmap.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrcmap.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrdrivr.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrdrivr.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrerror.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrgload.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrgload.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrload.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrload.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrobjs.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrobjs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrsbit.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrsbit.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/pfrtypes.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/pfr/rules.mk     up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/afmparse.c up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/afmparse.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/cffdecode.c up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/cffdecode.h up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/module.mk  up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psarrst.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psaux.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psauxerr.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psauxmod.c up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psauxmod.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psblues.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psconv.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psconv.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/pserror.h  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psfixed.h  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psfont.c   up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psfont.h   up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psft.c     up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psft.h     up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/pshints.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psintrp.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psobjs.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psobjs.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/psread.c   up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psstack.c  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/psstack.h  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/pstypes.h  up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/psaux/rules.mk   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/t1cmap.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/t1cmap.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/t1decode.c up to 1.5
+xsrc/external/mit/freetype/dist/src/psaux/t1decode.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshalgo.c up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshalgo.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshglob.c up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshglob.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshinter.c up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshmod.c up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshmod.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshnterr.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshrec.c up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/pshrec.h up to 1.5
+xsrc/external/mit/freetype/dist/src/pshinter/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/psmodule.c up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/psmodule.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/psnamerr.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/psnames.c up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/pstables.h up to 1.5
+xsrc/external/mit/freetype/dist/src/psnames/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/ftmisc.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/ftraster.c up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/ftraster.h up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/ftrend1.c up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/ftrend1.h up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/raster.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/rasterrs.h up to 1.5
+xsrc/external/mit/freetype/dist/src/raster/rules.mk  up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/module.mk   up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/pngshim.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/pngshim.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/rules.mk    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sfdriver.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sfdriver.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sferrors.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sfnt.c      up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sfobjs.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/sfobjs.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttbdf.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttbdf.h     up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttcmap.c    up to 1.13
+xsrc/external/mit/freetype/dist/src/sfnt/ttcmap.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttcmapc.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttcolr.c    up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/sfnt/ttcolr.h    up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/sfnt/ttcpal.c    up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/sfnt/ttcpal.h    up to 1.1.1.2
+xsrc/external/mit/freetype/dist/src/sfnt/ttkern.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttkern.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttload.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttload.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttmtx.c     up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttmtx.h     up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttpost.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttpost.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttsbit.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/sfnt/ttsbit.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/ftgrays.c up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/ftgrays.h up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/ftsmerrs.h up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/ftsmooth.c up to 1.14
+xsrc/external/mit/freetype/dist/src/smooth/ftsmooth.h up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/rules.mk  up to 1.5
+xsrc/external/mit/freetype/dist/src/smooth/smooth.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/tools/afblue.pl  up to 1.5
+xsrc/external/mit/freetype/dist/src/tools/apinames.c up to 1.4
+xsrc/external/mit/freetype/dist/src/tools/glnames.py up to 1.5
+xsrc/external/mit/freetype/dist/src/tools/test_afm.c up to 1.1.1.5
+xsrc/external/mit/freetype/dist/src/tools/test_bbox.c up to 1.1.1.3
+xsrc/external/mit/freetype/dist/src/tools/test_trig.c up to 1.1.1.5
+xsrc/external/mit/freetype/dist/src/tools/update-copyright-year up to 1.5
+xsrc/external/mit/freetype/dist/src/tools/ftrandom/ftrandom.c up to 1.4
+xsrc/external/mit/freetype/dist/src/truetype/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/truetype.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttdriver.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttdriver.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/tterrors.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttgload.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttgload.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttgxvar.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttgxvar.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttinterp.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttinterp.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttobjs.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttobjs.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttpload.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttpload.h up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttsubpix.c up to 1.5
+xsrc/external/mit/freetype/dist/src/truetype/ttsubpix.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/module.mk  up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/rules.mk   up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1afm.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1afm.h    up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1driver.c up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1driver.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1errors.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1gload.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1gload.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1load.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1load.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1objs.c   up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1objs.h   up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1parse.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1parse.h  up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/t1tokens.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type1/type1.c    up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/rules.mk  up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42drivr.c up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42drivr.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42error.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42objs.c up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42objs.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42parse.c up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42parse.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/t42types.h up to 1.5
+xsrc/external/mit/freetype/dist/src/type42/type42.c  up to 1.5
+xsrc/external/mit/freetype/dist/src/winfonts/fnterrs.h up to 1.5
+xsrc/external/mit/freetype/dist/src/winfonts/module.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/winfonts/rules.mk up to 1.5
+xsrc/external/mit/freetype/dist/src/winfonts/winfnt.c up to 1.5
+xsrc/external/mit/freetype/dist/src/winfonts/winfnt.h up to 1.5
+distrib/sets/lists/xcomp/mi				(apply patch)
+
+	Update freetype to 2.10.4.
+	[maya, ticket #1118]
