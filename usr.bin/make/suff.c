@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.216 2020/10/22 19:30:37 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.217 2020/10/22 21:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.216 2020/10/22 19:30:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.217 2020/10/22 21:27:24 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -592,7 +592,7 @@ Suff_EndTransform(GNode *gn)
     }
 }
 
-/* Called from Suff_AddSuffix via Lst_ForEachUntil to search through the list of
+/* Called from Suff_AddSuffix to search through the list of
  * existing transformation rules and rebuild the transformation graph when
  * it has been destroyed by Suff_ClearSuffixes. If the given rule is a
  * transformation involving this suffix and another, existing suffix, the
