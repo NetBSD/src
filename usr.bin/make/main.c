@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.380 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.381 2020/10/22 06:38:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.380 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.381 2020/10/22 06:38:52 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1022,6 +1022,43 @@ init_machine_arch(void)
 #endif
 }
 
+#ifndef NO_PWD_OVERRIDE
+/*
+ * All this code is so that we know where we are when we start up
+ * on a different machine with pmake.
+ * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
+ * since the value of curdir can vary depending on how we got
+ * here.  Ie sitting at a shell prompt (shell that provides $PWD)
+ * or via subdir.mk in which case its likely a shell which does
+ * not provide it.
+ * So, to stop it breaking this case only, we ignore PWD if
+ * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a transform.
+ */
+static void
+HandlePWD(const struct stat *sa)
+{
+	char *pwd, *ptmp1 = NULL, *ptmp2 = NULL;
+	struct stat sb;
+
+	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
+		return;
+
+	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMD, &ptmp1) == NULL) {
+		const char *makeobjdir = Var_Value("MAKEOBJDIR",
+						   VAR_CMD, &ptmp2);
+
+		if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
+			if (stat(pwd, &sb) == 0 &&
+			    sa->st_ino == sb.st_ino &&
+			    sa->st_dev == sb.st_dev)
+				(void)strncpy(curdir, pwd, MAXPATHLEN);
+		}
+	}
+	bmake_free(ptmp1);
+	bmake_free(ptmp2);
+}
+#endif
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1043,7 +1080,7 @@ int
 main(int argc, char **argv)
 {
 	Boolean outOfDate;	/* FALSE if all targets up to date */
-	struct stat sb, sa;
+	struct stat sa;
 	char *p1, *path;
 	char mdpath[MAXPATHLEN];
 	const char *machine;
@@ -1172,6 +1209,7 @@ main(int argc, char **argv)
 	     */
 	    p1 = argv[0];
 	} else {
+	    struct stat sb;
 	    /*
 	     * A relative path, canonicalize it.
 	     */
@@ -1253,36 +1291,8 @@ main(int argc, char **argv)
 	    exit(2);
 	}
 
-	/*
-	 * All this code is so that we know where we are when we start up
-	 * on a different machine with pmake.
-	 * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
-	 * since the value of curdir can vary depending on how we got
-	 * here.  Ie sitting at a shell prompt (shell that provides $PWD)
-	 * or via subdir.mk in which case its likely a shell which does
-	 * not provide it.
-	 * So, to stop it breaking this case only, we ignore PWD if
-	 * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a transform.
-	 */
 #ifndef NO_PWD_OVERRIDE
-	if (!ignorePWD) {
-		char *pwd, *ptmp1 = NULL, *ptmp2 = NULL;
-
-		if ((pwd = getenv("PWD")) != NULL &&
-		    Var_Value("MAKEOBJDIRPREFIX", VAR_CMD, &ptmp1) == NULL) {
-			const char *makeobjdir = Var_Value("MAKEOBJDIR",
-			    VAR_CMD, &ptmp2);
-
-			if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
-				if (stat(pwd, &sb) == 0 &&
-				    sa.st_ino == sb.st_ino &&
-				    sa.st_dev == sb.st_dev)
-					(void)strncpy(curdir, pwd, MAXPATHLEN);
-			}
-		}
-		bmake_free(ptmp1);
-		bmake_free(ptmp2);
-	}
+	HandlePWD(&sa);
 #endif
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 
