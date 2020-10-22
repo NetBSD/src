@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.173 2020/10/22 21:43:56 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.174 2020/10/22 21:49:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.173 2020/10/22 21:43:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.174 2020/10/22 21:49:44 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1032,16 +1032,15 @@ MakePrintStatusOrder(GNode *gn)
         MakePrintStatusOrderNode(ln->datum, gn);
 }
 
+static void MakePrintStatusList(GNodeList *, int *);
+
 /* Print the status of a top-level node, viz. it being up-to-date already
  * or not created due to an error in a lower level.
  * Callback function for Make_Run via Lst_ForEachUntil.
  */
 static int
-MakePrintStatus(void *gnp, void *v_errors)
+MakePrintStatus(GNode *gn, int *errors)
 {
-    GNode *gn = gnp;
-    int *errors = v_errors;
-
     if (gn->flags & DONECYCLE)
 	/* We've completely processed this node before, don't do it again. */
 	return 0;
@@ -1089,7 +1088,7 @@ MakePrintStatus(void *gnp, void *v_errors)
     if (!(gn->flags & CYCLE)) {
 	/* Fist time we've seen this node, check all children */
 	gn->flags |= CYCLE;
-	Lst_ForEachUntil(gn->children, MakePrintStatus, errors);
+	MakePrintStatusList(gn->children, errors);
 	/* Mark that this node needn't be processed again */
 	gn->flags |= DONECYCLE;
 	return 0;
@@ -1103,10 +1102,17 @@ MakePrintStatus(void *gnp, void *v_errors)
 	return 1;
 
     /* Reporting for our children will give the rest of the loop */
-    Lst_ForEachUntil(gn->children, MakePrintStatus, errors);
+    MakePrintStatusList(gn->children, errors);
     return 0;
 }
 
+static void
+MakePrintStatusList(GNodeList *gnodes, int *errors)
+{
+    GNodeListNode *ln;
+    for (ln = gnodes->first; ln != NULL; ln = ln->next)
+        MakePrintStatus(ln->datum, errors);
+}
 
 /* Expand .USE nodes and create a new targets list.
  *
@@ -1347,7 +1353,7 @@ Make_Run(GNodeList *targs)
      */
     DEBUG1(MAKE, "done: errors %d\n", errors);
     if (errors == 0) {
-	Lst_ForEachUntil(targs, MakePrintStatus, &errors);
+	MakePrintStatusList(targs, &errors);
 	if (DEBUG(MAKE)) {
 	    debug_printf("done: errors %d\n", errors);
 	    if (errors)
