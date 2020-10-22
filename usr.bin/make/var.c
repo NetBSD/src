@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.579 2020/10/20 23:15:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.580 2020/10/22 05:35:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.579 2020/10/20 23:15:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.580 2020/10/22 05:35:21 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -286,6 +286,51 @@ VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
     return var;
 }
 
+static const char *
+CanonicalVarname(const char *name)
+{
+    if (*name == '.' && ch_isupper(name[1])) {
+	switch (name[1]) {
+	case 'A':
+	    if (strcmp(name, ".ALLSRC") == 0)
+		name = ALLSRC;
+	    if (strcmp(name, ".ARCHIVE") == 0)
+		name = ARCHIVE;
+	    break;
+	case 'I':
+	    if (strcmp(name, ".IMPSRC") == 0)
+		name = IMPSRC;
+	    break;
+	case 'M':
+	    if (strcmp(name, ".MEMBER") == 0)
+		name = MEMBER;
+	    break;
+	case 'O':
+	    if (strcmp(name, ".OODATE") == 0)
+		name = OODATE;
+	    break;
+	case 'P':
+	    if (strcmp(name, ".PREFIX") == 0)
+		name = PREFIX;
+	    break;
+	case 'S':
+	    if (strcmp(name, ".SHELL") == 0) {
+		if (!shellPath)
+		    Shell_Init();
+	    }
+	    break;
+	case 'T':
+	    if (strcmp(name, ".TARGET") == 0)
+		name = TARGET;
+	    break;
+	}
+    }
+
+    /* GNU make has an additional alias $^ == ${.ALLSRC}. */
+
+    return name;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarFind --
@@ -315,48 +360,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      * and substitute the short version in for 'name' if it matches one of
      * them.
      */
-    if (*name == '.' && ch_isupper(name[1])) {
-	switch (name[1]) {
-	case 'A':
-	    if (strcmp(name, ".ALLSRC") == 0)
-		name = ALLSRC;
-	    if (strcmp(name, ".ARCHIVE") == 0)
-		name = ARCHIVE;
-	    break;
-	case 'I':
-	    if (strcmp(name, ".IMPSRC") == 0)
-		name = IMPSRC;
-	    break;
-	case 'M':
-	    if (strcmp(name, ".MEMBER") == 0)
-		name = MEMBER;
-	    break;
-	case 'O':
-	    if (strcmp(name, ".OODATE") == 0)
-		name = OODATE;
-	    break;
-	case 'P':
-	    if (strcmp(name, ".PREFIX") == 0)
-		name = PREFIX;
-	    break;
-	case 'S':
-	    if (strcmp(name, ".SHELL") == 0 ) {
-		if (!shellPath)
-		    Shell_Init();
-	    }
-	    break;
-	case 'T':
-	    if (strcmp(name, ".TARGET") == 0)
-		name = TARGET;
-	    break;
-	}
-    }
-
-#if 0
-    /* for compatibility with gmake */
-    if (name[0] == '^' && name[1] == '\0')
-	name = ALLSRC;
-#endif
+    name = CanonicalVarname(name);
 
     /*
      * First look for the variable in the given context. If it's not there,
