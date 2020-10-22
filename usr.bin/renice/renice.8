@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.15 2012/12/06 07:52:12 wiz Exp $
+.\"	$NetBSD: renice.8,v 1.16 2020/10/22 19:55:14 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd December 6, 2012
+.Dd October 22, 2020
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -39,77 +39,76 @@
 .Nm
 .Ar priority
 .Oo
-.Op Fl p
-.Ar pid ...
+.Op Fl pgu
+.Ar who ...
 .Oc
-.Oo
-.Fl g
-.Ar pgrp ...
-.Oc
-.Oo
-.Fl u
-.Ar user ...
-.Oc
+.Ar ...
 .Nm
 .Fl n
 .Ar increment
 .Oo
-.Op Fl p
-.Ar pid ...
+.Op Fl pgu
+.Ar who ...
 .Oc
-.Oo
-.Fl g
-.Ar pgrp ...
-.Oc
-.Oo
-.Fl u
-.Ar user ...
-.Oc
+.Ar ...
 .Sh DESCRIPTION
 .Nm
 alters the
 scheduling priority of one or more running processes.
+The first argument is the new priority to apply, or if
+.Fl n
+is given, the change to make (applied additively) to the priority.
+This argument may be negative.
+(The interpretation of priorities is discussed below.)
+.Pp
 The following
 .Ar who
-parameters are interpreted as process ID's, process group
-ID's, or user names.
-.Nm Ns 'ing
-a process group causes all processes in the process group
-to have their scheduling priority altered.
-.Nm Ns 'ing
-a user causes all processes owned by the user to have
-their scheduling priority altered.
-By default, the processes to be affected are specified by
-their process ID's.
-.Pp
-Options supported by
-.Nm :
+parameters name the target processes, as either process IDs, process
+group IDs, or user names.
+The
+.It pgf
+options control the interpretation as follows:
 .Bl -tag -width Ds
 .It Fl g
-Force
+Interpret
 .Ar who
-parameters to be interpreted as process group ID's.
-.It Fl n
-Instead of changing the specified processes to the given priority,
-interpret the following argument as an increment to be applied to
-the current priority of each process.
+parameters as process group ID's.
 .It Fl u
-Force the
+Interpret
 .Ar who
-parameters to be interpreted as user names.
+parameters as user names.
 .It Fl p
-Resets the
+Interpret
 .Ar who
-interpretation to be (the default) process ID's.
+parameters as process IDs.
+This is the default.
 .El
 .Pp
-For example,
-.Bd -literal -offset indent
-renice +1 987 -u daemon root -p 32
-.Ed
-.Pp
-would change the priority of process ID's 987 and 32, and
-all processes owned by users daemon and root.
+Each
+.Ar who
+parameter is processed separately and updates the priority of the
+processes it names as follows:
+.Bl -tag -width "with Ds"
+.It with Fl g
+All processes in the process group are updated to the selected
+priority.
+If an
+.Ar increment
+is used, the increment is added to the highest priority found among
+the members of the process group prior to the change.
+.It with Fl u
+All processes belonging to the specified user are updated to the
+selected priority.
+If an
+.Ar increment
+is used, the increment is added to the highest priority found among
+the processes belonging to the user prior to the change.
+.It with Fl p
+The named process is updated to the selected priority.
+If an
+.Ar increment
+is used, the increment is added to the process's previous priority.
+.El
 .Pp
 Users other than the super-user may only alter the priority of
 processes they own,
@@ -136,6 +135,13 @@ anything negative, the processes will receive a scheduling preference.
 .It Pa /etc/passwd
 to map user names to user ID's
 .El
+.Sh EXAMPLES
+.Bd -literal -offset indent
+renice +1 987 -u daemon root -p 32
+.Ed
+.Pp
+changes the priority of process ID's 987 and 32, and
+all processes owned by users daemon and root.
 .Sh SEE ALSO
 .Xr nice 1 ,
 .Xr prenice 1 ,
@@ -147,5 +153,5 @@ The
 command appeared in
 .Bx 4.0 .
 .Sh BUGS
-Non super-users can not increase scheduling priorities of their own processes,
+Non-super-users can not increase scheduling priorities of their own processes,
 even if they were the ones that decreased the priorities in the first place.
