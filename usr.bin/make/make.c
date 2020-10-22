@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.174 2020/10/22 21:49:44 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.175 2020/10/22 21:53:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.174 2020/10/22 21:49:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.175 2020/10/22 21:53:01 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1038,12 +1038,12 @@ static void MakePrintStatusList(GNodeList *, int *);
  * or not created due to an error in a lower level.
  * Callback function for Make_Run via Lst_ForEachUntil.
  */
-static int
+static Boolean
 MakePrintStatus(GNode *gn, int *errors)
 {
     if (gn->flags & DONECYCLE)
 	/* We've completely processed this node before, don't do it again. */
-	return 0;
+	return FALSE;
 
     if (gn->unmade == 0) {
 	gn->flags |= DONECYCLE;
@@ -1076,7 +1076,7 @@ MakePrintStatus(GNode *gn, int *errors)
 			     gn->name, gn->cohort_num);
 	    break;
 	}
-	return 0;
+	return FALSE;
     }
 
     DEBUG3(MAKE, "MakePrintStatus: %s%s has %d unmade children\n",
@@ -1091,7 +1091,7 @@ MakePrintStatus(GNode *gn, int *errors)
 	MakePrintStatusList(gn->children, errors);
 	/* Mark that this node needn't be processed again */
 	gn->flags |= DONECYCLE;
-	return 0;
+	return FALSE;
     }
 
     /* Only output the error once per node */
@@ -1099,11 +1099,11 @@ MakePrintStatus(GNode *gn, int *errors)
     Error("Graph cycles through `%s%s'", gn->name, gn->cohort_num);
     if ((*errors)++ > 100)
 	/* Abandon the whole error report */
-	return 1;
+	return TRUE;
 
     /* Reporting for our children will give the rest of the loop */
     MakePrintStatusList(gn->children, errors);
-    return 0;
+    return FALSE;
 }
 
 static void
@@ -1111,7 +1111,8 @@ MakePrintStatusList(GNodeList *gnodes, int *errors)
 {
     GNodeListNode *ln;
     for (ln = gnodes->first; ln != NULL; ln = ln->next)
-        MakePrintStatus(ln->datum, errors);
+        if (MakePrintStatus(ln->datum, errors))
+	    break;
 }
 
 /* Expand .USE nodes and create a new targets list.
