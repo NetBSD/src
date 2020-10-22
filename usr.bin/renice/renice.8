@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.16 2020/10/22 19:55:14 dholland Exp $
+.\"	$NetBSD: renice.8,v 1.17 2020/10/22 20:13:02 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,26 +110,57 @@ If an
 is used, the increment is added to the process's previous priority.
 .El
 .Pp
-Users other than the super-user may only alter the priority of
-processes they own,
-and can only monotonically increase their ``nice value''
-within the range 0 to
-.Dv PRIO_MAX
-(20).
-(This prevents overriding administrative fiats.)
-The super-user
-may alter the priority of any process
-and set the priority to any value in the range
+In conventional terminology a
+.Dq high priority
+process receives a lot of CPU time and a
+.Dq low priority
+process receives relatively little.
+.Dq Niceness
+is the inverse concept: a process with a high niceness level receives
+relatively little CPU time.
+It is about the process being nice to the rest of the system, rather
+than the system being nice to the process.
+.Pp
+The numerical priority values accepted by
+.Nm
+are
+.Em called
+priorities but are actually nicenesses.
+They range from
 .Dv PRIO_MIN
 (\-20)
 to
-.Dv PRIO_MAX .
+.Dv PRIO_MAX
+(20).
+.Dv PRIO_MIN
+is the highest priority, lowest niceness, and receives the most CPU
+time.
+.Dv PRIO_MAX
+is the lowest priority, highest niceness, and receives the least CPU
+time.
+This is confusing but enshrined in historical practice and standards.
+If in doubt, check with
+.Xr ps 1 :
+processes running with elevated priority (getting more CPU time)
+include
+.Sq <
+in the FLAGS column; processes running with reduced priority
+(getting less CPU time) show
+.Sq N
+for
+.Dq nice
+in FLAGS.
+The default priority is 0.
 .Pp
-Useful priorities are:
-0, the ``base'' scheduling priority;
-20, the affected processes will run only when nothing at the base priority
-wants to;
-anything negative, the processes will receive a scheduling preference.
+At priority 20, processes will specifically run only when nothing else
+wants to.
+.Pp
+Users other than the super-user may only alter the priority of
+processes they own,
+and only by increasing the niceness.
+(This prevents overriding administrative fiats.)
+The super-user
+may alter the priority of any process to any legal value.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa /etc/passwd
@@ -153,5 +184,5 @@ The
 command appeared in
 .Bx 4.0 .
 .Sh BUGS
-Non-super-users can not increase scheduling priorities of their own processes,
+Non-super-users cannot increase scheduling priorities of their own processes,
 even if they were the ones that decreased the priorities in the first place.
