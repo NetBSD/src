@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.170 2020/10/22 20:00:13 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.171 2020/10/22 20:09:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.170 2020/10/22 20:00:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.171 2020/10/22 20:09:07 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1246,8 +1246,7 @@ Make_ProcessWait(GNodeList *targs)
 	    Lst_PrependAll(examine, pgn->cohorts);
 
 	owln = pgn->children->first;
-	Lst_Open(pgn->children);
-	for (; (ln = Lst_Next(pgn->children)) != NULL; ) {
+	for (ln = pgn->children->first; ln != NULL; ln = ln->next) {
 	    GNode *cgn = ln->datum;
 	    if (cgn->type & OP_WAIT) {
 		add_wait_dependency(owln, cgn);
@@ -1256,7 +1255,6 @@ Make_ProcessWait(GNodeList *targs)
 		Lst_Append(examine, cgn);
 	    }
 	}
-	Lst_Close(pgn->children);
     }
 
     Lst_Free(examine);
