@@ -1,7 +1,3 @@
-/* $NetBSD: cpufunc.h,v 1.1 2018/10/12 22:09:04 jmcneill Exp $ */
+/* $NetBSD: cpufunc.h,v 1.2 2020/10/22 07:23:24 skrll Exp $ */
 
-#ifdef __aarch64__
-#include <aarch64/cpufunc.h>
-#else
 #include <arm/cpufunc.h>
-#endif
