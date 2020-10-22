@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.25 2020/10/10 19:17:39 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.26 2020/10/22 09:14:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -338,12 +338,18 @@ efi_fdt_gop(void)
 			continue;
 		}
 
+		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
+		fb = fdt_path_offset(fdt_data, buf);
+		if (fb >= 0) {
+			/* Framebuffer node already exists, no need to create one */
+			return;
+		}
+
 		chosen = efi_fdt_chosen();
 		fdt_setprop_u32(fdt_data, chosen, "#address-cells", 2);
 		fdt_setprop_u32(fdt_data, chosen, "#size-cells", 2);
 		fdt_setprop_empty(fdt_data, chosen, "ranges");
 
-		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
 		fb = fdt_add_subnode(fdt_data, chosen, buf);
 		if (fb < 0)
 			panic("FDT: Failed to create framebuffer node");
