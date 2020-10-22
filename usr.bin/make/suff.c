@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.215 2020/10/22 19:05:24 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.216 2020/10/22 19:30:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.215 2020/10/22 19:05:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.216 2020/10/22 19:30:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1043,15 +1043,9 @@ SuffFindCmds(Src *targ, SrcList *slst)
     char *cp;
 
     tgn = targ->node;
-    Lst_Open(tgn->children);
     prefLen = strlen(targ->pref);
 
-    for (;;) {
-	gln = Lst_Next(tgn->children);
-	if (gln == NULL) {
-	    Lst_Close(tgn->children);
-	    return NULL;
-	}
+    for (gln = tgn->children->first; gln != NULL; gln = gln->next) {
 	sgn = gln->datum;
 
 	if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(tgn->commands)) {
@@ -1094,6 +1088,9 @@ SuffFindCmds(Src *targ, SrcList *slst)
 	    break;
     }
 
+    if (gln == NULL)
+	return NULL;
+
     /*
      * Hot Damn! Create a new Src structure to describe
      * this transformation (making sure to duplicate the
@@ -1109,7 +1106,6 @@ SuffFindCmds(Src *targ, SrcList *slst)
 #endif
     Lst_Append(slst, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
-    Lst_Close(tgn->children);
     return ret;
 }
 
