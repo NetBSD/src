@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.73 2020/09/15 09:28:20 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.74 2020/10/22 07:16:06 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.73 2020/09/15 09:28:20 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.74 2020/10/22 07:16:06 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -241,9 +241,8 @@ ASEND(clear_bss)
 init_sysregs:
 	stp	x0, lr, [sp, #-16]!
 
-	/* init debug event */
-	ldr	x0, mdscr_setting
-	msr	mdscr_el1, x0
+	/* init debug registers */
+	msr	mdscr_el1, xzr
 	msr	oslar_el1, xzr
 
 	/* Clear context id register */
@@ -1039,11 +1038,6 @@ sctlr_pac:
 	    SCTLR_EnIB |    /* PACIB (APIBKey_EL1) instruction enable */ \
 	    SCTLR_EnDA |    /* PACDA (APDAKey_EL1) instruction enable */ \
 	    SCTLR_EnDB |    /* PACDB (APDBKey_EL1) instruction enable */ \
-	    0)
-
-mdscr_setting:
-	.quad ( \
-	    MDSCR_TDCC |    /* Trap Debug Communications Channel access */ \
 	    0)
 
 .L_devmap_addr:
