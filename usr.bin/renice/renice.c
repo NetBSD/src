@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.18 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: renice.c,v 1.19 2020/10/22 19:34:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.18 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: renice.c,v 1.19 2020/10/22 19:34:12 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>
@@ -73,7 +73,7 @@ main(int argc, char **argv)
 	if (strcmp(*argv, "-n") == 0) {
 		incr = 1;
 		argc--, argv++;
-		if (argc == 0)
+		if (argc < 2)
 			usage();
 	}
 	if (getnum("priority", *argv, &prio))
