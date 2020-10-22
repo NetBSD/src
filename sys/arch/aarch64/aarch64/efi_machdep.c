@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.7 2020/10/22 07:23:24 skrll Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.8 2020/10/22 07:31:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.7 2020/10/22 07:23:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.8 2020/10/22 07:31:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -91,7 +91,7 @@ arm_efirt_md_enter(void)
 
 	/* Enable FP access (AArch64 UEFI calling convention) */
 	reg_cpacr_el1_write(CPACR_FPEN_ALL);
-	__asm __volatile ("isb");
+	isb();
 
 	/*
 	 * Install custom fault handler. EFI lock is held across calls so
@@ -107,7 +107,7 @@ arm_efirt_md_exit(void)
 
 	/* Disable FP access */
 	reg_cpacr_el1_write(CPACR_FPEN_NONE);
-	__asm __volatile ("isb");
+	isb();
 
 	/* Restore FPU state */
 	if (arm_efirt_state.fpu_used)
