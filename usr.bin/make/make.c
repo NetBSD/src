@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.169 2020/10/22 17:29:32 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.170 2020/10/22 20:00:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.169 2020/10/22 17:29:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.170 2020/10/22 20:00:13 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -606,6 +606,7 @@ Make_Update(GNode *cgn)
     const char *cname;		/* the child's name */
     time_t	mtime = -1;
     GNodeList *parents;
+    GNodeListNode *ln;
     GNode	*centurion;
 
     /* It is save to re-examine any nodes again */
@@ -647,13 +648,8 @@ Make_Update(GNode *cgn)
     Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, toBeMade->first);
 
     /* Now mark all the parents as having one less unmade child */
-    Lst_Open(parents);
-    for (;;) {
-	GNodeListNode *ln = Lst_Next(parents);
-	GNode *pgn;
-	if (ln == NULL)
-	    break;
-	pgn = ln->datum;
+    for (ln = parents->first; ln != NULL; ln = ln->next) {
+	GNode *pgn = ln->datum;
 
 	if (DEBUG(MAKE))
 	    debug_printf("inspect parent %s%s: flags %x, "
@@ -739,7 +735,6 @@ Make_Update(GNode *cgn)
 	pgn->made = REQUESTED;
 	Lst_Enqueue(toBeMade, pgn);
     }
-    Lst_Close(parents);
 
     UpdateImplicitParentsVars(cgn, cname);
 }
@@ -871,6 +866,7 @@ MakeCheckOrder(void *v_bn, void *ignore MAKE_ATTR_UNUSED)
 
     if (bn->made >= MADE || !(bn->flags & REMAKE))
 	return 0;
+
     DEBUG2(MAKE, "MakeCheckOrder: Waiting for .ORDER node %s%s\n",
 	   bn->name, bn->cohort_num);
     return 1;
