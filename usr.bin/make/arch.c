@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.137 2020/10/19 21:57:37 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.138 2020/10/22 05:50:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.137 2020/10/19 21:57:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.138 2020/10/22 05:50:02 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -165,7 +165,7 @@ static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
 static void
 ArchFree(void *ap)
 {
-    Arch *a = (Arch *)ap;
+    Arch *a = ap;
     HashIter hi;
     HashEntry *he;
 
