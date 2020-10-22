@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2020/10/22 07:31:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2020/10/22 07:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2020/10/22 07:34:18 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1478,7 +1478,7 @@ pmap_deactivate(struct lwp *l)
 	/* Disable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
 	reg_tcr_el1_write(tcr | TCR_EPD0);
-	__asm __volatile("isb" ::: "memory");
+	isb();
 
 	/* XXX */
 	pm->pm_activated = false;
