@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.382 2020/10/22 06:54:51 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.383 2020/10/22 07:01:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.382 2020/10/22 06:54:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.383 2020/10/22 07:01:25 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -868,6 +868,29 @@ MakeMode(const char *mode)
 }
 
 static void
+PrintVar(const char *varname, Boolean expandVars)
+{
+	const char *value;
+	char *p1;
+
+	if (strchr(varname, '$')) {
+		(void)Var_Subst(varname, VAR_GLOBAL, VARE_WANTRES, &p1);
+		/* TODO: handle errors */
+		value = p1;
+	} else if (expandVars) {
+		char *expr = str_concat3("${", varname, "}");
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &p1);
+		/* TODO: handle errors */
+		value = p1;
+		free(expr);
+	} else {
+		value = Var_Value(varname, VAR_GLOBAL, &p1);
+	}
+	printf("%s\n", value ? value : "");
+	bmake_free(p1);
+}
+
+static void
 doPrintVars(void)
 {
 	StringListNode *ln;
@@ -881,25 +904,8 @@ doPrintVars(void)
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
 	for (ln = variables->first; ln != NULL; ln = ln->next) {
-		const char *var = ln->datum;
-		const char *value;
-		char *p1;
-
-		if (strchr(var, '$')) {
-			(void)Var_Subst(var, VAR_GLOBAL, VARE_WANTRES, &p1);
-			/* TODO: handle errors */
-			value = p1;
-		} else if (expandVars) {
-			char *expr = str_concat3("${", var, "}");
-			(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &p1);
-			/* TODO: handle errors */
-			value = p1;
-			free(expr);
-		} else {
-			value = Var_Value(var, VAR_GLOBAL, &p1);
-		}
-		printf("%s\n", value ? value : "");
-		bmake_free(p1);
+		const char *varname = ln->datum;
+		PrintVar(varname, expandVars);
 	}
 }
 
