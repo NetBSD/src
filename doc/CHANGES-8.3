@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.45 2020/10/16 14:38:13 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.46 2020/10/22 11:33:29 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1133,4 +1133,9 @@ sys/dev/pci/if_wm.c				1.691
 	Fix SGMII code to not to print error message. This problem was added
 	when SFP support was added.
 	[msaitoh, ticket #1617]
+
+xsrc/external/mit/freetype/dist/src/sfnt/pngshim.c	(apply patch)
+
+	Fix CVE-2020-15999.
+	[maya, ticket #1618]
 
