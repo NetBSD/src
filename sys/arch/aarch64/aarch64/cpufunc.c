@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.25 2020/10/22 07:23:24 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.26 2020/10/22 07:31:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.25 2020/10/22 07:23:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.26 2020/10/22 07:31:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,7 +69,7 @@ extract_cacheunit(int level, bool insn, int cachetype,
 	/* select and extract level N data cache */
 	reg_csselr_el1_write(__SHIFTIN(level, CSSELR_LEVEL) |
 	    __SHIFTIN(insn ? 1 : 0, CSSELR_IND));
-	__asm __volatile ("isb");
+	isb();
 
 	ccsidr = reg_ccsidr_el1_read();
 	mmfr2 = reg_id_aa64mmfr2_el1_read();
@@ -391,10 +391,10 @@ aarch64_dcache_wbinv_all(void)
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
-		__asm __volatile ("dsb ish");
+		dsb(ish);
 		ln_dcache_wbinv_all(level, &cinfo[level].dcache);
 	}
-	__asm __volatile ("dsb ish");
+	dsb(ish);
 }
 
 void
@@ -409,10 +409,10 @@ aarch64_dcache_inv_all(void)
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
-		__asm __volatile ("dsb ish");
+		dsb(ish);
 		ln_dcache_inv_all(level, &cinfo[level].dcache);
 	}
-	__asm __volatile ("dsb ish");
+	dsb(ish);
 }
 
 void
@@ -427,10 +427,10 @@ aarch64_dcache_wb_all(void)
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
-		__asm __volatile ("dsb ish");
+		dsb(ish);
 		ln_dcache_wb_all(level, &cinfo[level].dcache);
 	}
-	__asm __volatile ("dsb ish");
+	dsb(ish);
 }
 
 int
