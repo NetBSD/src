@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.381 2020/10/22 06:38:52 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.382 2020/10/22 06:54:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.381 2020/10/22 06:38:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.382 2020/10/22 06:54:51 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1026,36 +1026,43 @@ init_machine_arch(void)
 /*
  * All this code is so that we know where we are when we start up
  * on a different machine with pmake.
+ *
  * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
  * since the value of curdir can vary depending on how we got
  * here.  Ie sitting at a shell prompt (shell that provides $PWD)
  * or via subdir.mk in which case its likely a shell which does
  * not provide it.
+ *
  * So, to stop it breaking this case only, we ignore PWD if
- * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a transform.
+ * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a variable expression.
  */
 static void
-HandlePWD(const struct stat *sa)
+HandlePWD(const struct stat *curdir_st)
 {
-	char *pwd, *ptmp1 = NULL, *ptmp2 = NULL;
-	struct stat sb;
+	char *pwd;
+	char *prefix_freeIt, *makeobjdir_freeIt;
+	const char *makeobjdir;
+	struct stat pwd_st;
 
 	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
 		return;
 
-	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMD, &ptmp1) == NULL) {
-		const char *makeobjdir = Var_Value("MAKEOBJDIR",
-						   VAR_CMD, &ptmp2);
-
-		if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
-			if (stat(pwd, &sb) == 0 &&
-			    sa->st_ino == sb.st_ino &&
-			    sa->st_dev == sb.st_dev)
-				(void)strncpy(curdir, pwd, MAXPATHLEN);
-		}
+	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMD, &prefix_freeIt) != NULL) {
+		bmake_free(prefix_freeIt);
+		return;
 	}
-	bmake_free(ptmp1);
-	bmake_free(ptmp2);
+
+	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMD, &makeobjdir_freeIt);
+	if (makeobjdir != NULL && strchr(makeobjdir, '$') != NULL)
+		goto ignore_pwd;
+
+	if (stat(pwd, &pwd_st) == 0 &&
+	    curdir_st->st_ino == pwd_st.st_ino &&
+	    curdir_st->st_dev == pwd_st.st_dev)
+		(void)strncpy(curdir, pwd, MAXPATHLEN);
+
+ignore_pwd:
+	bmake_free(makeobjdir_freeIt);
 }
 #endif
 
