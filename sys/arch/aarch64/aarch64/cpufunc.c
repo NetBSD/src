@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.24 2020/08/02 06:58:16 maxv Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.25 2020/10/22 07:23:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.24 2020/08/02 06:58:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.25 2020/10/22 07:23:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.24 2020/08/02 06:58:16 maxv Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
-#include <aarch64/cpufunc.h>
+#include <arm/cpufunc.h>
 
 u_int cputype;			/* compat arm */
 u_int arm_dcache_align;		/* compat arm */
