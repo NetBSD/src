@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.81 2020/10/22 20:18:20 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.82 2020/10/22 21:27:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.81 2020/10/22 20:18:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.82 2020/10/22 21:27:24 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -293,11 +293,28 @@ Lst_FindDatum(List *list, const void *datum)
     return NULL;
 }
 
+/* Apply the given function to each element of the given list, until the
+ * function returns non-zero. During this iteration, the list must not be
+ * modified structurally. */
+int
+Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
+{
+    ListNode *node;
+    int result = 0;
+
+    for (node = list->first; node != NULL; node = node->next) {
+	result = proc(node->datum, procData);
+	if (result != 0)
+	    break;
+    }
+    return result;
+}
+
 /* Apply the given function to each element of the given list. The function
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
-Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
+Lst_ForEachUntilConcurrent(List *list, LstActionUntilProc proc, void *procData)
 {
     ListNode *tln = list->first;
     int result = 0;

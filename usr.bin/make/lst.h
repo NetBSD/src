@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.76 2020/10/22 20:18:20 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.77 2020/10/22 21:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -114,7 +114,7 @@ typedef void *LstCopyProc(void *);
 typedef void LstFreeProc(void *);
 /* Return TRUE if the datum matches the args, for Lst_Find. */
 typedef Boolean LstFindProc(const void *datum, const void *args);
-/* An action for Lst_ForEachUntil. */
+/* An action for Lst_ForEachUntil and Lst_ForEachUntilConcurrent. */
 typedef int LstActionUntilProc(void *datum, void *args);
 
 /* Create or destroy a list */
@@ -167,6 +167,7 @@ void LstNode_SetNull(ListNode *);
 /* Apply a function to each datum of the list, until the callback function
  * returns non-zero. */
 int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
+int Lst_ForEachUntilConcurrent(List *, LstActionUntilProc, void *);
 
 /* Iterating over a list while keeping track of the current node and possible
  * concurrent modifications */
