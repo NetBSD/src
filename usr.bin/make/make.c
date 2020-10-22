@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.167 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.168 2020/10/22 17:20:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.167 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.168 2020/10/22 17:20:35 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -581,19 +581,20 @@ Make_Recheck(GNode *gn)
 void
 Make_Update(GNode *cgn)
 {
-    GNode *pgn;			/* the parent node */
     const char *cname;		/* the child's name */
     GNodeListNode *ln;
     time_t	mtime = -1;
-    char	*p1;
     GNodeList *parents;
     GNode	*centurion;
 
     /* It is save to re-examine any nodes again */
     checked++;
 
-    cname = Var_Value(TARGET, cgn, &p1);
-    bmake_free(p1);
+    {
+        char *cname_freeIt;
+	cname = Var_Value(TARGET, cgn, &cname_freeIt);
+	assert(cname_freeIt == NULL);
+    }
 
     DEBUG2(MAKE, "Make_Update: %s%s\n", cgn->name, cgn->cohort_num);
 
@@ -627,7 +628,7 @@ Make_Update(GNode *cgn)
     /* Now mark all the parents as having one less unmade child */
     Lst_Open(parents);
     while ((ln = Lst_Next(parents)) != NULL) {
-	pgn = ln->datum;
+	GNode *pgn = ln->datum;
 	if (DEBUG(MAKE))
 	    debug_printf("inspect parent %s%s: flags %x, "
 			 "type %x, made %d, unmade %d ",
@@ -718,20 +719,19 @@ Make_Update(GNode *cgn)
      * Set the .PREFIX and .IMPSRC variables for all the implied parents
      * of this node.
      */
-    Lst_Open(cgn->implicitParents);
     {
-	const char *cpref = Var_Value(PREFIX, cgn, &p1);
+        char *cpref_freeIt;
+	const char *cpref = Var_Value(PREFIX, cgn, &cpref_freeIt);
 
-	while ((ln = Lst_Next(cgn->implicitParents)) != NULL) {
-	    pgn = ln->datum;
+	for (ln = cgn->implicitParents->first; ln != NULL; ln = ln->next) {
+	    GNode *pgn = ln->datum;
 	    if (pgn->flags & REMAKE) {
 		Var_Set(IMPSRC, cname, pgn);
 		if (cpref != NULL)
 		    Var_Set(PREFIX, cpref, pgn);
 	    }
 	}
-	bmake_free(p1);
-	Lst_Close(cgn->implicitParents);
+	bmake_free(cpref_freeIt);
     }
 }
 
