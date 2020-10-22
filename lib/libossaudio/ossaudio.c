@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.54 2020/10/20 08:57:45 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.55 2020/10/22 19:39:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.54 2020/10/20 08:57:45 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.55 2020/10/22 19:39:48 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -672,7 +672,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 
 
 /* If the NetBSD mixer device should have more than NETBSD_MAXDEVS devices
- * some will not be available to Linux */
+ * some will not be available to OSS applications */
 #define NETBSD_MAXDEVS 64
 struct audiodevinfo {
 	int done;
@@ -733,7 +733,7 @@ enum_to_mask(struct audiodevinfo *di, int enm)
 
 /*
  * Collect the audio device information to allow faster
- * emulation of the Linux mixer ioctls.  Cache the information
+ * emulation of the OSSv3 mixer ioctls.  Cache the information
  * to eliminate the overhead of repeating all the ioctls needed
  * to collect the information.
  */
