@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.39 2020/10/22 07:23:24 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.40 2020/10/22 07:31:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.39 2020/10/22 07:23:24 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.40 2020/10/22 07:31:15 skrll Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -717,7 +717,7 @@ emul_arm_insn(struct trapframe *tf)
 			 * mcr p15, 0, <Rd>, c7, c5, 4
 			 * (flush prefetch buffer)
 			 */
-			__asm __volatile("isb sy" ::: "memory");
+			isb();
 		}
 		goto emulated;
 	case 0x0e070f9a:
@@ -726,7 +726,7 @@ emul_arm_insn(struct trapframe *tf)
 			 * mcr p15, 0, <Rd>, c7, c10, 4
 			 * (data synchronization barrier)
 			 */
-			__asm __volatile("dsb sy" ::: "memory");
+			dsb(sy);
 		}
 		goto emulated;
 	case 0x0e070fba:
@@ -735,7 +735,7 @@ emul_arm_insn(struct trapframe *tf)
 			 * mcr p15, 0, <Rd>, c7, c10, 5
 			 * (data memory barrier)
 			 */
-			__asm __volatile("dmb sy" ::: "memory");
+			dmb(sy);
 		}
 		goto emulated;
 	default:
