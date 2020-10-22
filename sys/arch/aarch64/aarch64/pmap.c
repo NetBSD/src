@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2020/09/28 12:04:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2020/10/22 07:31:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2020/09/28 12:04:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2020/10/22 07:31:15 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2020/09/28 12:04:19 skrll Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
+
+#include <arm/cpufunc.h>
 
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
@@ -793,7 +795,7 @@ pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
 			 */
 			register_t s = daif_disable(DAIF_I|DAIF_F);
 			reg_s1e1r_write(va);
-			__asm __volatile ("isb");
+			isb();
 			uint64_t par = reg_par_el1_read();
 			reg_daif_write(s);
 
@@ -1440,7 +1442,7 @@ pmap_activate(struct lwp *l)
 	/* Disable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
 	reg_tcr_el1_write(tcr | TCR_EPD0);
-	__asm __volatile("isb" ::: "memory");
+	isb();
 
 	/* XXX: allocate asid, and regenerate if needed */
 	if (pm->pm_asid == -1)
@@ -1452,7 +1454,7 @@ pmap_activate(struct lwp *l)
 	/* Re-enable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
 	reg_tcr_el1_write(tcr & ~TCR_EPD0);
-	__asm __volatile("isb" ::: "memory");
+	isb();
 
 	pm->pm_activated = true;
 
