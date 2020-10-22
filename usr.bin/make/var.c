@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.580 2020/10/22 05:35:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.581 2020/10/22 05:50:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.580 2020/10/22 05:35:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.581 2020/10/22 05:50:02 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -459,7 +459,7 @@ Var_Delete(const char *name, GNode *ctxt)
     free(name_freeIt);
 
     if (he != NULL) {
-	Var *v = (Var *)Hash_GetValue(he);
+	Var *v = Hash_GetValue(he);
 	if (v->flags & VAR_EXPORTED)
 	    unsetenv(v->name);
 	if (strcmp(v->name, MAKE_EXPORTED) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.166 2020/10/19 23:43:55 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.167 2020/10/22 05:50:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.166 2020/10/19 23:43:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.167 2020/10/22 05:50:02 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -363,8 +363,8 @@ MakeAddChild(void *gnp, void *lp)
 static int
 MakeFindChild(void *gnp, void *pgnp)
 {
-    GNode          *gn = (GNode *)gnp;
-    GNode          *pgn = (GNode *)pgnp;
+    GNode *gn = gnp;
+    GNode *pgn = pgnp;
 
     (void)Dir_MTime(gn, 0);
     Make_TimeStamp(pgn, gn);
@@ -1027,7 +1027,7 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 static int
 MakePrintStatus(void *gnp, void *v_errors)
 {
-    GNode *gn = (GNode *)gnp;
+    GNode *gn = gnp;
     int *errors = v_errors;
 
     if (gn->flags & DONECYCLE)
