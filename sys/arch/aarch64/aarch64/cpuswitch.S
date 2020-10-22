@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.30 2020/10/13 21:24:22 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.31 2020/10/22 07:36:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.30 2020/10/13 21:24:22 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.31 2020/10/22 07:36:02 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -219,7 +219,7 @@ ENTRY_NP(cpu_switchto_softint)
 	msr	tpidr_el1, x19		/* curlwp = pinned_lwp */
 	ldr	x3, [x19, #L_CPU]	/* x3 = curlwp->l_cpu */
 	str	x19, [x3, #CI_CURLWP]	/* curlwp->l_cpu->ci_curlwp := x19 */
-	dmb	st			/* see comments in kern_mutex.c */
+	dmb	ishst			/* see comments in kern_mutex.c */
 
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
