@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.214 2020/10/22 18:59:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.215 2020/10/22 19:05:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.214 2020/10/22 18:59:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.215 2020/10/22 19:05:24 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1035,26 +1035,26 @@ static Src *
 SuffFindCmds(Src *targ, SrcList *slst)
 {
     GNodeListNode *gln;
-    GNode *t;			/* Target GNode */
-    GNode *s;			/* Source GNode */
+    GNode *tgn;			/* Target GNode */
+    GNode *sgn;			/* Source GNode */
     size_t prefLen;		/* The length of the defined prefix */
     Suff *suff;			/* Suffix on matching beastie */
     Src *ret;			/* Return value */
     char *cp;
 
-    t = targ->node;
-    Lst_Open(t->children);
+    tgn = targ->node;
+    Lst_Open(tgn->children);
     prefLen = strlen(targ->pref);
 
     for (;;) {
-	gln = Lst_Next(t->children);
+	gln = Lst_Next(tgn->children);
 	if (gln == NULL) {
-	    Lst_Close(t->children);
+	    Lst_Close(tgn->children);
 	    return NULL;
 	}
-	s = gln->datum;
+	sgn = gln->datum;
 
-	if (s->type & OP_OPTIONAL && Lst_IsEmpty(t->commands)) {
+	if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(tgn->commands)) {
 	    /*
 	     * We haven't looked to see if .OPTIONAL files exist yet, so
 	     * don't use one as the implicit source.
@@ -1065,9 +1065,9 @@ SuffFindCmds(Src *targ, SrcList *slst)
 	    continue;
 	}
 
-	cp = strrchr(s->name, '/');
+	cp = strrchr(sgn->name, '/');
 	if (cp == NULL) {
-	    cp = s->name;
+	    cp = sgn->name;
 	} else {
 	    cp++;
 	}
@@ -1100,7 +1100,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
      * source node's name so Suff_FindDeps can free it
      * again (ick)), and return the new structure.
      */
-    ret = SrcNew(bmake_strdup(s->name), targ->pref, suff, targ, s);
+    ret = SrcNew(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
     suff->refCount++;
     targ->children++;
 #ifdef DEBUG_SRC
@@ -1108,8 +1108,8 @@ SuffFindCmds(Src *targ, SrcList *slst)
     Lst_Append(targ->childrenList, ret);
 #endif
     Lst_Append(slst, ret);
-    SUFF_DEBUG1("\tusing existing source %s\n", s->name);
-    Lst_Close(t->children);
+    SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
+    Lst_Close(tgn->children);
     return ret;
 }
 
