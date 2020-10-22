@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2749 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2750 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -296,3 +296,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata updated to 2020c  [kre 20201017]
 	tzcode: Updated to 2020c. [christos 20201017]
 	ossaudio(3): Added support for the OSSv4 Mixer API [nia 20201017]
+	tzdata updated to 2020d  [kre 20201022]
