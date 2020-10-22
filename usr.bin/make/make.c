@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.172 2020/10/22 21:27:24 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.173 2020/10/22 21:43:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.172 2020/10/22 21:27:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.173 2020/10/22 21:43:56 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1006,18 +1006,15 @@ MakeStartJobs(void)
     return FALSE;
 }
 
-static int
-MakePrintStatusOrder(void *ognp, void *gnp)
+static void
+MakePrintStatusOrderNode(GNode *ogn, GNode *gn)
 {
-    GNode *ogn = ognp;
-    GNode *gn = gnp;
-
     if (!(ogn->flags & REMAKE) || ogn->made > REQUESTED)
 	/* not waiting for this one */
-	return 0;
+	return;
 
     printf("    `%s%s' has .ORDER dependency against %s%s ",
-	    gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
+	   gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
     GNode_FprintDetails(stdout, "(", ogn, ")\n");
 
     if (DEBUG(MAKE) && debug_file != stdout) {
@@ -1025,7 +1022,14 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 		     gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
 	GNode_FprintDetails(debug_file, "(", ogn, ")\n");
     }
-    return 0;
+}
+
+static void
+MakePrintStatusOrder(GNode *gn)
+{
+    GNodeListNode *ln;
+    for (ln = gn->order_pred->first; ln != NULL; ln = ln->next)
+        MakePrintStatusOrderNode(ln->datum, gn);
 }
 
 /* Print the status of a top-level node, viz. it being up-to-date already
@@ -1062,7 +1066,7 @@ MakePrintStatus(void *gnp, void *v_errors)
 		GNode_FprintDetails(debug_file, " (", gn, ")!\n");
 	    }
 	    /* Most likely problem is actually caused by .ORDER */
-	    Lst_ForEachUntil(gn->order_pred, MakePrintStatusOrder, gn);
+	    MakePrintStatusOrder(gn);
 	    break;
 	default:
 	    /* Errors - already counted */
