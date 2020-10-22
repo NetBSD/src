@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.168 2020/10/22 17:20:35 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.169 2020/10/22 17:29:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.168 2020/10/22 17:20:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.169 2020/10/22 17:29:32 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -559,6 +559,28 @@ Make_Recheck(GNode *gn)
     return mtime;
 }
 
+/*
+ * Set the .PREFIX and .IMPSRC variables for all the implied parents
+ * of this node.
+ */
+static void
+UpdateImplicitParentsVars(GNode *cgn, const char *cname)
+{
+    GNodeListNode *ln;
+    char *cpref_freeIt;
+    const char *cpref = Var_Value(PREFIX, cgn, &cpref_freeIt);
+
+    for (ln = cgn->implicitParents->first; ln != NULL; ln = ln->next) {
+	GNode *pgn = ln->datum;
+	if (pgn->flags & REMAKE) {
+	    Var_Set(IMPSRC, cname, pgn);
+	    if (cpref != NULL)
+		Var_Set(PREFIX, cpref, pgn);
+	}
+    }
+    bmake_free(cpref_freeIt);
+}
+
 /* Perform update on the parents of a node. Used by JobFinish once
  * a node has been dealt with and by MakeStartJobs if it finds an
  * up-to-date node.
@@ -582,7 +604,6 @@ void
 Make_Update(GNode *cgn)
 {
     const char *cname;		/* the child's name */
-    GNodeListNode *ln;
     time_t	mtime = -1;
     GNodeList *parents;
     GNode	*centurion;
@@ -627,8 +648,13 @@ Make_Update(GNode *cgn)
 
     /* Now mark all the parents as having one less unmade child */
     Lst_Open(parents);
-    while ((ln = Lst_Next(parents)) != NULL) {
-	GNode *pgn = ln->datum;
+    for (;;) {
+	GNodeListNode *ln = Lst_Next(parents);
+	GNode *pgn;
+	if (ln == NULL)
+	    break;
+	pgn = ln->datum;
+
 	if (DEBUG(MAKE))
 	    debug_printf("inspect parent %s%s: flags %x, "
 			 "type %x, made %d, unmade %d ",
@@ -715,24 +741,7 @@ Make_Update(GNode *cgn)
     }
     Lst_Close(parents);
 
-    /*
-     * Set the .PREFIX and .IMPSRC variables for all the implied parents
-     * of this node.
-     */
-    {
-        char *cpref_freeIt;
-	const char *cpref = Var_Value(PREFIX, cgn, &cpref_freeIt);
-
-	for (ln = cgn->implicitParents->first; ln != NULL; ln = ln->next) {
-	    GNode *pgn = ln->datum;
-	    if (pgn->flags & REMAKE) {
-		Var_Set(IMPSRC, cname, pgn);
-		if (cpref != NULL)
-		    Var_Set(PREFIX, cpref, pgn);
-	    }
-	}
-	bmake_free(cpref_freeIt);
-    }
+    UpdateImplicitParentsVars(cgn, cname);
 }
 
 static void
