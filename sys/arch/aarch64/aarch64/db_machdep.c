@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.26 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.27 2020/10/22 07:23:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.26 2020/08/12 13:19:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.27 2020/10/22 07:23:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -45,9 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.26 2020/08/12 13:19:35 skrll Exp $"
 
 #include <uvm/uvm.h>
 
+#include <arm/cpufunc.h>
+
 #include <aarch64/db_machdep.h>
 #include <aarch64/armreg.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/locore.h>
 #include <aarch64/pmap.h>
 
