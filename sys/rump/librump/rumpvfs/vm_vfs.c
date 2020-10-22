@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.39 2020/10/18 18:22:29 chs Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.40 2020/10/22 03:05:17 chs Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.39 2020/10/18 18:22:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.40 2020/10/22 03:05:17 chs Exp $");
 
 #include <sys/param.h>
 
@@ -46,7 +46,8 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
-		KASSERT((pg->flags & PG_FAKE) == 0);
+		KASSERT((pg->flags & PG_PAGEOUT) == 0 ||
+			(pg->flags & PG_FAKE) == 0);
 	}
 	uvm_page_unbusy(pgs, npages);
 	rw_exit(uobj->vmobjlock);
