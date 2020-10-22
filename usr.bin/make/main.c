@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.383 2020/10/22 07:01:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.384 2020/10/22 07:12:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.383 2020/10/22 07:01:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.384 2020/10/22 07:12:13 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -870,24 +870,28 @@ MakeMode(const char *mode)
 static void
 PrintVar(const char *varname, Boolean expandVars)
 {
-	const char *value;
-	char *p1;
-
 	if (strchr(varname, '$')) {
-		(void)Var_Subst(varname, VAR_GLOBAL, VARE_WANTRES, &p1);
+		char *evalue;
+		(void)Var_Subst(varname, VAR_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
-		value = p1;
+		printf("%s\n", evalue);
+		bmake_free(evalue);
+
 	} else if (expandVars) {
 		char *expr = str_concat3("${", varname, "}");
-		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &p1);
+		char *evalue;
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
-		value = p1;
 		free(expr);
+		printf("%s\n", evalue);
+		bmake_free(evalue);
+
 	} else {
-		value = Var_Value(varname, VAR_GLOBAL, &p1);
+		char *freeIt;
+		const char *value = Var_Value(varname, VAR_GLOBAL, &freeIt);
+		printf("%s\n", value ? value : "");
+		bmake_free(freeIt);
 	}
-	printf("%s\n", value ? value : "");
-	bmake_free(p1);
 }
 
 static void
