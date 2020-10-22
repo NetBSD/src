@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.171 2020/10/22 20:09:07 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.172 2020/10/22 21:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.171 2020/10/22 20:09:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.172 2020/10/22 21:27:24 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -645,7 +645,8 @@ Make_Update(GNode *cgn)
     parents = centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
-    Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, toBeMade->first);
+    Lst_ForEachUntilConcurrent(centurion->order_succ,
+			       MakeBuildParent, toBeMade->first);
 
     /* Now mark all the parents as having one less unmade child */
     for (ln = parents->first; ln != NULL; ln = ln->next) {
@@ -751,9 +752,10 @@ UnmarkChildren(GNode *gn)
 }
 
 /* Add a child's name to the ALLSRC and OODATE variables of the given
- * node. Called from Make_DoAllVar via Lst_ForEachUntil. A child is added only
- * if it has not been given the .EXEC, .USE or .INVISIBLE attributes.
- * .EXEC and .USE children are very rarely going to be files, so...
+ * node, but only if it has not been given the .EXEC, .USE or .INVISIBLE
+ * attributes. .EXEC and .USE children are very rarely going to be files,
+ * so...
+ *
  * If the child is a .JOIN node, its ALLSRC is propagated to the parent.
  *
  * A child is added to the OODATE variable if its modification time is
@@ -899,7 +901,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 	Lst_InsertBefore(toBeMade, toBeMade_next, cn);
 
     if (cn->unmade_cohorts != 0)
-	Lst_ForEachUntil(cn->cohorts, MakeBuildChild, toBeMade_next);
+	Lst_ForEachUntilConcurrent(cn->cohorts, MakeBuildChild, toBeMade_next);
 
     /*
      * If this node is a .WAIT node with unmade children
@@ -966,7 +968,8 @@ MakeStartJobs(void)
 	     * just before the current first element.
 	     */
 	    gn->made = DEFERRED;
-	    Lst_ForEachUntil(gn->children, MakeBuildChild, toBeMade->first);
+	    Lst_ForEachUntilConcurrent(gn->children,
+				       MakeBuildChild, toBeMade->first);
 	    /* and drop this node on the floor */
 	    DEBUG2(MAKE, "dropped %s%s\n", gn->name, gn->cohort_num);
 	    continue;
@@ -1163,7 +1166,7 @@ Make_ExpandUse(GNodeList *targs)
 	    Suff_FindDeps(gn);
 	else {
 	    /* Pretend we made all this node's children */
-	    Lst_ForEachUntil(gn->children, MakeFindChild, gn);
+	    Lst_ForEachUntilConcurrent(gn->children, MakeFindChild, gn);
 	    if (gn->unmade != 0)
 		    printf("Warning: %s%s still has %d unmade children\n",
 			    gn->name, gn->cohort_num, gn->unmade);
