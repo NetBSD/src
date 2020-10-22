@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.80 2020/10/22 19:14:06 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.81 2020/10/22 20:18:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.80 2020/10/22 19:14:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.81 2020/10/22 20:18:20 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -64,8 +64,6 @@ Lst_New(void)
 
     list->first = NULL;
     list->last = NULL;
-    list->priv_isOpen = FALSE;
-    list->priv_lastAccess = Unknown;
 
     return list;
 }
@@ -215,19 +213,6 @@ Lst_Remove(List *list, ListNode *node)
     }
     if (list->last == node) {
 	list->last = node->prev;
-    }
-
-    /*
-     * Sequential access stuff. If the node we're removing is the current
-     * node in the list, reset the current node to the previous one. If the
-     * previous one was non-existent (prev == NULL), we set the
-     * end to be Unknown, since it is.
-     */
-    if (list->priv_isOpen && list->priv_curr == node) {
-	list->priv_curr = list->priv_prev;
-	if (list->priv_curr == NULL) {
-	    list->priv_lastAccess = Unknown;
-	}
     }
 
     /*
@@ -390,72 +375,6 @@ Lst_AppendAll(List *dst, List *src)
     for (node = src->first; node != NULL; node = node->next)
 	Lst_Append(dst, node->datum);
 }
-
-/*
- * these functions are for dealing with a list as a table, of sorts.
- * An idea of the "current element" is kept and used by all the functions
- * between Lst_Open() and Lst_Close().
- *
- * The sequential functions access the list in a slightly different way.
- * CurPtr points to their idea of the current node in the list and they
- * access the list based on it.
- */
-
-/* Open a list for sequential access. A list can still be searched, etc.,
- * without confusing these functions. */
-void
-Lst_Open(List *list)
-{
-    assert(!list->priv_isOpen);
-
-    list->priv_isOpen = TRUE;
-    list->priv_lastAccess = LstIsEmpty(list) ? Head : Unknown;
-    list->priv_curr = NULL;
-}
-
-/* Return the next node for the given list, or NULL if the end has been
- * reached. */
-ListNode *
-Lst_Next(List *list)
-{
-    ListNode *node;
-
-    assert(list->priv_isOpen);
-
-    list->priv_prev = list->priv_curr;
-
-    if (list->priv_curr == NULL) {
-	if (list->priv_lastAccess == Unknown) {
-	    /*
-	     * If we're just starting out, lastAccess will be Unknown.
-	     * Then we want to start this thing off in the right
-	     * direction -- at the start with lastAccess being Middle.
-	     */
-	    list->priv_curr = node = list->first;
-	    list->priv_lastAccess = Middle;
-	} else {
-	    node = NULL;
-	    list->priv_lastAccess = Tail;
-	}
-    } else {
-	node = list->priv_curr->next;
-	list->priv_curr = node;
-	list->priv_lastAccess = node == NULL ? Tail : Middle;
-    }
-
-    return node;
-}
-
-/* Close a list which was opened for sequential access. */
-void
-Lst_Close(List *list)
-{
-    assert(list->priv_isOpen);
-
-    list->priv_isOpen = FALSE;
-    list->priv_lastAccess = Unknown;
-}
-
 
 /*
  * for using the list as a queue

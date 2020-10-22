@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.75 2020/10/21 07:14:22 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.76 2020/10/22 20:18:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -101,20 +101,9 @@ struct ListNode {
     };
 };
 
-typedef enum ListForEachUntilWhere {
-    Head, Middle, Tail, Unknown
-} ListForEachUntilWhere;
-
 struct List {
     ListNode *first;		/* first node in list */
     ListNode *last;		/* last node in list */
-
-    /* fields for sequential access */
-    Boolean priv_isOpen;	/* true if list has been Lst_Open'ed */
-    ListForEachUntilWhere priv_lastAccess;
-    ListNode *priv_curr;	/* current node, if open. NULL if
-				 * *just* opened */
-    ListNode *priv_prev;	/* Previous node, if open. Used by Lst_Remove */
 };
 
 /* Copy a node, usually by allocating a copy of the given object.
@@ -181,13 +170,6 @@ int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
 
 /* Iterating over a list while keeping track of the current node and possible
  * concurrent modifications */
-
-/* Start iterating the list. */
-void Lst_Open(List *);
-/* Return the next node, or NULL. */
-ListNode *Lst_Next(List *);
-/* Finish iterating the list. */
-void Lst_Close(List *);
 
 /* Using the list as a queue */
 
