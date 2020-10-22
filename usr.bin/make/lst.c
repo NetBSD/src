@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.79 2020/10/19 21:57:37 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.80 2020/10/22 19:14:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.79 2020/10/19 21:57:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.80 2020/10/22 19:14:06 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -343,12 +343,11 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	 */
 	if (next != tln->next) {
 	    next = tln->next;
-	    done = 0;
+	    done = FALSE;
 	}
 
-	if (tln->priv_deleted) {
-	    free((char *)tln);
-	}
+	if (tln->priv_deleted)
+	    free(tln);
 	tln = next;
 	if (result || LstIsEmpty(list) || done)
 	    break;
@@ -441,18 +440,7 @@ Lst_Next(List *list)
     } else {
 	node = list->priv_curr->next;
 	list->priv_curr = node;
-
-	if (node == list->first || node == NULL) {
-	    /*
-	     * If back at the front, then we've hit the end...
-	     */
-	    list->priv_lastAccess = Tail;
-	} else {
-	    /*
-	     * Reset to Middle if gone past first.
-	     */
-	    list->priv_lastAccess = Middle;
-	}
+	list->priv_lastAccess = node == NULL ? Tail : Middle;
     }
 
     return node;
