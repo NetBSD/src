@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 2020/10/12 16:14:34 martin Exp $ */
+/*	$NetBSD: md.c,v 1.33 2020/10/23 19:03:42 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -573,12 +573,14 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 	}
 
 	/* Sort out the name of the mbr code we need */
-	if (names > 0 || fl & (NETBSD_NAMED | ACTIVE_NAMED)) {
+	if (names > 1 ||
+	    (parts->num_part > 1 && (fl & (NETBSD_NAMED | ACTIVE_NAMED)))) {
 		/* Need bootselect code */
 		fl |= MBR_BS_ACTIVE;
 		bootcode = fl & MBR_BS_EXTLBA ? _PATH_BOOTEXT : _PATH_BOOTSEL;
-	} else
+	} else {
 		bootcode = _PATH_MBR;
+	}
 
 	fl &=  MBR_BS_ACTIVE | MBR_BS_EXTLBA;
 
