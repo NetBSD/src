@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.218 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.219 2020/10/23 20:15:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.218 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.219 2020/10/23 20:15:19 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -603,25 +603,26 @@ Suff_EndTransform(GNode *gn)
  *
  * Input:
  *	transform	Transformation to test
- *	s		Suffix to rebuild
+ *	suff		Suffix to rebuild
  */
 static void
-SuffRebuildGraph(GNode *transform, Suff *s)
+SuffRebuildGraph(GNode *transform, Suff *suff)
 {
     char *name = transform->name;
     size_t nameLen = strlen(name);
-    char *cp;
+    char *prefixName;
+    const char *suffixName;
 
     /*
      * First see if it is a transformation from this suffix.
      */
-    cp = UNCONST(SuffStrIsPrefix(s->name, name));
-    if (cp != NULL) {
-	Suff *s2 = FindSuffByName(cp);
-	if (s2 != NULL) {
+    suffixName = SuffStrIsPrefix(suff->name, name);
+    if (suffixName != NULL) {
+	Suff *to = FindSuffByName(suffixName);
+	if (to != NULL) {
 	    /* Link in and return, since it can't be anything else. */
-	    SuffInsert(s2->children, s);
-	    SuffInsert(s->parents, s2);
+	    SuffInsert(to->children, suff);
+	    SuffInsert(suff->parents, to);
 	    return;
 	}
     }
@@ -629,20 +630,20 @@ SuffRebuildGraph(GNode *transform, Suff *s)
     /*
      * Not from, maybe to?
      */
-    cp = SuffSuffGetSuffix(s, nameLen, name + nameLen);
-    if (cp != NULL) {
-	Suff *s2;
+    prefixName = SuffSuffGetSuffix(suff, nameLen, name + nameLen);
+    if (prefixName != NULL) {
+	Suff *from;
 
 	/* Null-terminate the source suffix in order to find it. */
 	/* XXX: don't modify strings, not even temporarily */
-	cp[0] = '\0';
-	s2 = FindSuffByName(name);
-	cp[0] = s->name[0];		/* restore */
+	prefixName[0] = '\0';
+	from = FindSuffByName(name);
+	prefixName[0] = suff->name[0];	/* restore */
 
-	if (s2 != NULL) {
+	if (from != NULL) {
 	    /* establish the proper relationship */
-	    SuffInsert(s->children, s2);
-	    SuffInsert(s2->parents, s);
+	    SuffInsert(suff->children, from);
+	    SuffInsert(from->parents, suff);
 	}
     }
 }
