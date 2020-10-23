@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.164 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.165 2020/10/23 19:11:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -191,11 +191,15 @@ typedef enum  {
  *
  * Some of the OP_ constants can be combined, others cannot. */
 typedef enum GNodeType {
-    /* Execution of commands depends on children (:) */
+    /* The dependency operator ':' is the most common one.  The commands of
+     * this node are executed if any child is out-of-date. */
     OP_DEPENDS		= 1 << 0,
-    /* Always execute commands (!) */
+    /* The dependency operator '!' always executes its commands, even if
+     * its children are up-to-date. */
     OP_FORCE		= 1 << 1,
-    /* Execution of commands depends on children per line (::) */
+    /* The dependency operator '::' behaves like ':', except that it allows
+     * multiple dependency groups to be defined.  Each of these groups is
+     * executed on its own, independently from the others. */
     OP_DOUBLEDEP	= 1 << 2,
 
     /* Matches the dependency operators ':', '!' and '::'. */
