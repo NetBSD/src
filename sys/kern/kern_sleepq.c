@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.68 2020/05/21 00:39:04 thorpej Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.69 2020/10/23 00:25:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.68 2020/05/21 00:39:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.69 2020/10/23 00:25:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -267,13 +267,29 @@ sleepq_transfer(lwp_t *l, sleepq_t *from_sq, sleepq_t *sq, wchan_t wchan,
 	l->l_wmesg = wmesg;
 
 	if (catch_p)
-		l->l_flag |= LW_SINTR;
+		l->l_flag = LW_SINTR | LW_CATCHINTR;
 	else
-		l->l_flag &= ~LW_SINTR;
+		l->l_flag = ~(LW_SINTR | LW_CATCHINTR);
 
-	lwp_setlock(l, mp);
+	/*
+	 * This allows the transfer from one sleepq to another where
+	 * it is known that they're both protected by the same lock.
+	 */
+	if (mp != NULL)
+		lwp_setlock(l, mp);
 
 	sleepq_insert(sq, l, sobj);
+}
+
+/*
+ * sleepq_uncatch:
+ *
+ *	Mark the LWP as no longer sleeping interruptibly.
+ */
+void
+sleepq_uncatch(lwp_t *l)
+{
+	l->l_flag = ~(LW_SINTR | LW_CATCHINTR);
 }
 
 /*
@@ -299,6 +315,11 @@ sleepq_block(int timo, bool catch_p)
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
 	 * core dump events.
+	 *
+	 * Note the usage of LW_CATCHINTR.  This expresses our intent
+	 * to catch or not catch sleep interruptions, which might change
+	 * while we are sleeping.  It is independent from LW_SINTR because
+	 * we don't want to leave LW_SINTR set when the LWP is not asleep.
 	 */
 	if (catch_p) {
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
@@ -307,7 +328,9 @@ sleepq_block(int timo, bool catch_p)
 			early = true;
 		} else if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))
 			early = true;
-	}
+		l->l_flag |= LW_CATCHINTR;
+	} else
+		l->l_flag &= ~LW_CATCHINTR;
 
 	if (early) {
 		/* lwp_unsleep() will release the lock */
@@ -342,7 +365,18 @@ sleepq_block(int timo, bool catch_p)
 		}
 	}
 
-	if (catch_p && error == 0) {
+	/*
+	 * LW_CATCHINTR is only modified in this function OR when we
+	 * are asleep (with the sleepq locked).  We can therefore safely
+	 * test it unlocked here as it is guaranteed to be stable by
+	 * virtue of us running.
+	 *
+	 * We do not bother clearing it if set; that would require us
+	 * to take the LWP lock, and it doesn't seem worth the hassle
+	 * considering it is only meaningful here inside this function,
+	 * and is set to reflect intent upon entry.
+	 */
+	if ((l->l_flag & LW_CATCHINTR) != 0 && error == 0) {
 		p = l->l_proc;
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
