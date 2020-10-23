@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.948 2020/10/23 19:23:00 rillig Exp $
+# $NetBSD: mi,v 1.949 2020/10/23 19:54:35 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4635,6 +4635,8 @@
 ./usr/tests/usr.bin/make/unit-tests/dep-exclam.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-none.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-none.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dep-percent.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dep-percent.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-var.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-var.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep-wildcards.exp				tests-usr.bin-tests	compattestfile,atf
