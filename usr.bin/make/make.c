@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.177 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.178 2020/10/23 19:48:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -81,12 +81,12 @@
  *
  *	Make_Update	Update all parents of a given child. Performs
  *			various bookkeeping chores like the updating
- *			of the cmgn field of the parent, filling
+ *			of the youngestChild field of the parent, filling
  *			of the IMPSRC context variable, etc. It will
  *			place the parent on the toBeMade queue if it
  *			should be.
  *
- *	Make_TimeStamp	Function to set the parent's cmgn field
+ *	Make_TimeStamp	Function to set the parent's youngestChild field
  *			based on a child's modification time.
  *
  *	Make_DoAllVar	Set up the various local variables for a
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.177 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.178 2020/10/23 19:48:17 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -187,8 +187,8 @@ NoExecute(GNode *gn)
 void
 Make_TimeStamp(GNode *pgn, GNode *cgn)
 {
-    if (pgn->cmgn == NULL || cgn->mtime > pgn->cmgn->mtime) {
-	pgn->cmgn = cgn;
+    if (pgn->youngestChild == NULL || cgn->mtime > pgn->youngestChild->mtime) {
+	pgn->youngestChild = cgn;
     }
 }
 
@@ -200,7 +200,7 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
  * must be considered out-of-date since at least one of its children
  * will have been recreated.
  *
- * The mtime field of the node and the cmgn field of its parents
+ * The mtime field of the node and the youngestChild field of its parents
  * may be changed.
  */
 Boolean
@@ -253,7 +253,7 @@ Make_OODate(GNode *gn)
 	 * or non-existent.
 	 */
 	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) ||
-		  (gn->cmgn == NULL && (gn->type & OP_DOUBLEDEP)));
+		  (gn->youngestChild == NULL && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
 	 * A target with the .JOIN attribute is only considered
@@ -277,22 +277,25 @@ Make_OODate(GNode *gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if ((gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime) ||
-	       (gn->cmgn == NULL &&
+    } else if ((gn->youngestChild != NULL &&
+		gn->mtime < gn->youngestChild->mtime) ||
+	       (gn->youngestChild == NULL &&
 		((gn->mtime == 0 && !(gn->type & OP_OPTIONAL))
-		  || gn->type & OP_DOUBLEDEP)))
+		 || gn->type & OP_DOUBLEDEP)))
     {
 	/*
 	 * A node whose modification time is less than that of its
-	 * youngest child or that has no children (cmgn == NULL) and
+	 * youngest child or that has no children (youngestChild == NULL) and
 	 * either doesn't exist (mtime == 0) and it isn't optional
 	 * or was the object of a * :: operator is out-of-date.
 	 * Why? Because that's the way Make does it.
 	 */
 	if (DEBUG(MAKE)) {
-	    if (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime) {
+	    if (gn->youngestChild != NULL &&
+		gn->mtime < gn->youngestChild->mtime) {
 		debug_printf("modified before source %s...",
-			     gn->cmgn->path ? gn->cmgn->path : gn->cmgn->name);
+			     gn->youngestChild->path ? gn->youngestChild->path
+						     : gn->youngestChild->name);
 	    } else if (gn->mtime == 0) {
 		debug_printf("non-existent and no sources...");
 	    } else {
@@ -354,7 +357,7 @@ MakeAddChild(void *gnp, void *lp)
 
 /* Find the pathname of a child that was already made.
  *
- * The path and mtime of the node and the cmgn of the parent are
+ * The path and mtime of the node and the youngestChild of the parent are
  * updated; the unmade children count of the parent is decremented.
  *
  * Input:
@@ -594,7 +597,7 @@ UpdateImplicitParentsVars(GNode *cgn, const char *cname)
  * If the child is not up-to-date and still does not exist,
  * set the FORCE flag on the parents.
  *
- * If the child wasn't made, the cmgn field of the parent will be
+ * If the child wasn't made, the youngestChild field of the parent will be
  * altered if the child's mtime is big enough.
  *
  * Finally, if the child is the implied source for the parent, the
@@ -667,7 +670,7 @@ Make_Update(GNode *cgn)
 
 	/*
 	 * If the parent has the .MADE attribute, its timestamp got
-	 * updated to that of its newest child, and its unmake
+	 * updated to that of its newest child, and its unmade
 	 * child count got set to zero in Make_ExpandUse().
 	 * However other things might cause us to build one of its
 	 * children - and so we mustn't do any processing here when
