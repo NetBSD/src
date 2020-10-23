@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.19 2020/10/22 19:34:12 dholland Exp $	*/
+/*	$NetBSD: renice.c,v 1.20 2020/10/23 16:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.19 2020/10/22 19:34:12 dholland Exp $");
+__RCSID("$NetBSD: renice.c,v 1.20 2020/10/23 16:16:10 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>
@@ -175,7 +175,6 @@ usage(void)
 
 	(void)fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ",
 	    getprogname());
-	(void)fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
-	(void)fprintf(stderr, "[-u <user>...]\n");
+	(void)fprintf(stderr, "[[-gpu] who ...] ...\n");
 	exit(1);
 }
