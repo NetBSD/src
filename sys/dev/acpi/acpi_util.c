@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.18 2019/12/31 09:10:15 mlelstv Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.19 2020/10/23 10:59:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.18 2019/12/31 09:10:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.19 2020/10/23 10:59:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -550,7 +550,6 @@ out:
 }
 
 struct acpi_irq_handler {
-	ACPI_HANDLE aih_hdl;
 	uint32_t aih_irq;
 	void *aih_ih;
 };
@@ -563,8 +562,7 @@ acpi_intr_establish(device_t dev, uint64_t c, int ipl, bool mpsafe,
 	ACPI_HANDLE hdl = (void *)(uintptr_t)c;
 	struct acpi_resources res;
 	struct acpi_irq *irq;
-	struct acpi_irq_handler *aih = NULL;
-	void *ih;
+	void *aih = NULL;
 
 	rv = acpi_resource_parse(dev, hdl, "_CRS", &res,
 	    &acpi_resource_parse_ops_quiet);
@@ -575,18 +573,31 @@ acpi_intr_establish(device_t dev, uint64_t c, int ipl, bool mpsafe,
 	if (irq == NULL)
 		goto end;
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = acpi_md_intr_establish(irq->ar_irq, ipl, type, intr, iarg, mpsafe, xname);
-	if (ih == NULL)
-		goto end;
-
-	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_SLEEP);
-	aih->aih_hdl = hdl;
-	aih->aih_irq = irq->ar_irq;
-	aih->aih_ih = ih;
+	aih = acpi_intr_establish_irq(dev, irq, ipl, mpsafe,
+	    intr, iarg, xname);
 
 end:
 	acpi_resource_cleanup(&res);
+
+	return aih;
+}
+
+void *
+acpi_intr_establish_irq(device_t dev, struct acpi_irq *irq, int ipl,
+    bool mpsafe, int (*intr)(void *), void *iarg, const char *xname)
+{
+	struct acpi_irq_handler *aih;
+	void *ih;
+
+	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
+	ih = acpi_md_intr_establish(irq->ar_irq, ipl, type, intr, iarg, mpsafe, xname);
+	if (ih == NULL)
+		return NULL;
+
+	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_SLEEP);
+	aih->aih_irq = irq->ar_irq;
+	aih->aih_ih = ih;
+
 	return aih;
 }
 
