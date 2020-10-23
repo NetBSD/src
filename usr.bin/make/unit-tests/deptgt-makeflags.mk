@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-makeflags.mk,v 1.3 2020/09/10 21:22:07 rillig Exp $
+# $NetBSD: deptgt-makeflags.mk,v 1.4 2020/10/23 14:48:49 rillig Exp $
 #
 # Tests for the special target .MAKEFLAGS in dependency declarations,
 # which adds command line options later, at parse time.
@@ -36,6 +36,16 @@
 .if ${VAR} != "value with spaces"
 .  error
 .endif
+
+# When parsing this line, each '$$' becomes '$', resulting in '$$$$'.
+# This is assigned to the variable DOLLAR.
+# In the condition, that variable is expanded, and at that point, each '$$'
+# becomes '$' again, the final expression is thus '$$'.
+.MAKEFLAGS: -dcv
+.MAKEFLAGS: DOLLAR=$$$$$$$$
+.if ${DOLLAR} != "\$\$"
+.endif
+.MAKEFLAGS: -d0
 
 all:
 	@:;
