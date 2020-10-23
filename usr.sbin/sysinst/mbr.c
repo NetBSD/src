@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.36 2020/10/12 16:14:32 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.37 2020/10/23 19:02:58 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -889,16 +889,15 @@ mbr_init_default_alignments(struct mbr_disk_partitions *parts, uint track)
 	if (parts->dp.disk_size < 0)
 		return;
 
+	parts->ptn_0_offset = parts->geo_sec;
+
 	/* Use 1MB offset/alignemnt for large (>128GB) disks */
 	if (parts->dp.disk_size > HUGE_DISK_SIZE) {
 		parts->ptn_alignment = 2048;
-		parts->ptn_0_offset = 2048;
 	} else if (parts->dp.disk_size > TINY_DISK_SIZE) {
 		parts->ptn_alignment = 64;
-		parts->ptn_0_offset = parts->geo_sec;
 	} else {
 		parts->ptn_alignment = 1;
-		parts->ptn_0_offset = parts->geo_sec;
 	}
 	parts->ext_ptn_alignment = track;
 }
