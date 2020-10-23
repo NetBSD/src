@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.82 2020/10/22 21:27:24 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.83 2020/10/23 04:58:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.82 2020/10/22 21:27:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.83 2020/10/23 04:58:33 rillig Exp $");
 
 /* Allocate and initialize a list node.
  *
@@ -44,8 +44,6 @@ static ListNode *
 LstNodeNew(void *datum)
 {
     ListNode *node = bmake_malloc(sizeof *node);
-    node->priv_useCount = 0;
-    node->priv_deleted = FALSE;
     node->datum = datum;
     return node;
 }
@@ -214,16 +212,6 @@ Lst_Remove(List *list, ListNode *node)
     if (list->last == node) {
 	list->last = node->prev;
     }
-
-    /*
-     * note that the datum is unmolested. The caller must free it as
-     * necessary and as expected.
-     */
-    if (node->priv_useCount == 0) {
-	free(node);
-    } else {
-	node->priv_deleted = TRUE;
-    }
 }
 
 /* Replace the datum in the given node with the new datum. */
@@ -293,9 +281,6 @@ Lst_FindDatum(List *list, const void *datum)
     return NULL;
 }
 
-/* Apply the given function to each element of the given list, until the
- * function returns non-zero. During this iteration, the list must not be
- * modified structurally. */
 int
 Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 {
@@ -307,54 +292,6 @@ Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
 	if (result != 0)
 	    break;
     }
-    return result;
-}
-
-/* Apply the given function to each element of the given list. The function
- * should return 0 if traversal should continue and non-zero if it should
- * abort. */
-int
-Lst_ForEachUntilConcurrent(List *list, LstActionUntilProc proc, void *procData)
-{
-    ListNode *tln = list->first;
-    int result = 0;
-
-    while (tln != NULL) {
-	/*
-	 * Take care of having the current element deleted out from under
-	 * us.
-	 */
-	ListNode *next = tln->next;
-
-	/*
-	 * We're done with the traversal if
-	 *  - the next node to examine doesn't exist and
-	 *  - nothing's been added after the current node (check this
-	 *    after proc() has been called).
-	 */
-	Boolean done = next == NULL;
-
-	tln->priv_useCount++;
-	result = proc(tln->datum, procData);
-	tln->priv_useCount--;
-
-	/*
-	 * Now check whether a node has been added.
-	 * Note: this doesn't work if this node was deleted before
-	 *       the new node was added.
-	 */
-	if (next != tln->next) {
-	    next = tln->next;
-	    done = FALSE;
-	}
-
-	if (tln->priv_deleted)
-	    free(tln);
-	tln = next;
-	if (result || LstIsEmpty(list) || done)
-	    break;
-    }
-
     return result;
 }
 

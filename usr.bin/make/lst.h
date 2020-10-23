@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.77 2020/10/22 21:27:24 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.78 2020/10/23 04:58:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -90,10 +90,6 @@ typedef	struct ListNode	ListNode;
 struct ListNode {
     ListNode *prev;		/* previous node in list, or NULL */
     ListNode *next;		/* next node in list, or NULL */
-    uint8_t priv_useCount;	/* Count of functions using the node.
-				 * node may not be deleted until count
-				 * goes to 0 */
-    Boolean priv_deleted;	/* List node should be removed when done */
     union {
 	void *datum;		/* datum associated with this element */
 	const struct GNode *priv_gnode; /* alias, just for debugging */
@@ -164,10 +160,11 @@ void LstNode_SetNull(ListNode *);
 
 /* Iterating over a list, using a callback function */
 
-/* Apply a function to each datum of the list, until the callback function
- * returns non-zero. */
+/* Run the action for each datum of the list, until the action returns
+ * non-zero.
+ *
+ * During this iteration, the list must not be modified structurally. */
 int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
-int Lst_ForEachUntilConcurrent(List *, LstActionUntilProc, void *);
 
 /* Iterating over a list while keeping track of the current node and possible
  * concurrent modifications */
