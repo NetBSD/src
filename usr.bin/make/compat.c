@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.166 2020/10/18 07:46:04 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.167 2020/10/23 19:48:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.166 2020/10/18 07:46:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.167 2020/10/23 19:48:17 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -512,7 +512,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	}
 
 	/*
-	 * All the children were made ok. Now cmgn->mtime contains the
+	 * All the children were made ok. Now youngestChild->mtime contains the
 	 * modification time of the newest child, we need to find out if we
 	 * exist and when we were modified last. The criteria for datedness
 	 * are defined by the Make_OODate function.
