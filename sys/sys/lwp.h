@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.211 2020/08/01 02:04:55 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.212 2020/10/23 00:25:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -255,6 +255,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_STIMO	0x00000040 /* Sleep timed out */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
+#define	LW_CATCHINTR	0x00000100 /* LW_SINTR intent; see sleepq_block(). */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_SYSTEM_FPU	0x00000400 /* Kernel thread with vector/FP enabled */
 #define	LW_DBGSUSPEND	0x00010000 /* Suspend by debugger */
