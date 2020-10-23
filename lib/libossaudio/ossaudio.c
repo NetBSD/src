@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.55 2020/10/22 19:39:48 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.56 2020/10/23 09:05:20 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.55 2020/10/22 19:39:48 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.56 2020/10/23 09:05:20 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: ossaudio.c,v 1.55 2020/10/22 19:39:48 nia Exp $");
 
 static struct audiodevinfo *getdevinfo(int);
 
+static int getaudiocount(void);
 static int getmixercount(void);
 static int getmixercontrolcount(int);
 
@@ -1016,6 +1017,7 @@ static int
 mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 {
 	oss_audioinfo *tmpai;
+	oss_card_info *cardinfo;
 	oss_mixext *ext;
 	oss_mixext_root root;
 	oss_mixer_enuminfo *ei;
@@ -1147,6 +1149,43 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		argp = tmpai;
 		close(newfd);
 		break;
+	case SNDCTL_CARDINFO:
+		cardinfo = (oss_card_info *)argp;
+		if (cardinfo == NULL)
+			return EINVAL;
+		if (cardinfo->card != -1) {
+			snprintf(devname, sizeof(devname),
+			    "/dev/audio%d", cardinfo->card);
+			newfd = open(devname, O_RDONLY);
+			if (newfd < 0)
+				return retval;
+		} else {
+			newfd = fd;
+		}
+		retval = ioctl(newfd, AUDIO_GETDEV, &dev);
+		tmperrno = errno;
+		if (newfd != fd)
+			close(newfd);
+		if (retval < 0) {
+			errno = tmperrno;
+			return retval;
+		}
+		strlcpy(cardinfo->shortname, dev.name,
+		    sizeof(cardinfo->shortname));
+		snprintf(cardinfo->longname, sizeof(cardinfo->longname),
+		    "%s %s %s", dev.name, dev.version, dev.config);
+		memset(cardinfo->hw_info, 0, sizeof(cardinfo->hw_info));
+		/*
+		 * OSSv4 does not document this ioctl, and claims it should
+		 * not be used by applications and is provided for "utiltiy
+		 * programs included in OSS". We follow the Solaris
+		 * implementation (which is doucmented) and leave these fields
+		 * unset.
+		 */
+		cardinfo->flags = 0;
+		cardinfo->intr_count = 0;
+		cardinfo->ack_count = 0;
+		break;
 	case SNDCTL_SYSINFO:
 		memset(&sysinfo, 0, sizeof(sysinfo));
 		strlcpy(sysinfo.product,
@@ -1156,13 +1195,14 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		strlcpy(sysinfo.license,
 		    "BSD", sizeof(sysinfo.license));
 		sysinfo.versionnum = SOUND_VERSION;
-		sysinfo.numaudios = OSS_MAX_AUDIO_DEVS;
+		sysinfo.numaudios = 
+		    sysinfo.numcards =
+			getaudiocount();
 		sysinfo.numaudioengines = 1;
 		sysinfo.numsynths = 1;
 		sysinfo.nummidis = -1;
 		sysinfo.numtimers = -1;
-		sysinfo.nummixers = OSS_MAX_AUDIO_DEVS;
-		sysinfo.numcards = 1;
+		sysinfo.nummixers = getmixercount();
 		*(struct oss_sysinfo *)argp = sysinfo;
 		break;
 	case SNDCTL_MIXERINFO:
@@ -1550,6 +1590,27 @@ global_oss4_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	}
 	return retval;
+}
+
+static int
+getaudiocount(void)
+{
+	char devname[32];
+	int ndevs = 0;
+	int tmpfd;
+	int tmperrno = errno;
+
+	do {
+		snprintf(devname, sizeof(devname),
+		    "/dev/audio%d", ndevs);
+		if ((tmpfd = open(devname, O_RDONLY)) != -1 ||
+		    (tmpfd = open(devname, O_WRONLY)) != -1) {
+			ndevs++;
+			close(tmpfd);
+		}
+	} while (tmpfd != -1);
+	errno = tmperrno;
+	return ndevs;
 }
 
 static int
