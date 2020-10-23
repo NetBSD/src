@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.225 2020/10/17 08:10:31 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.226 2020/10/23 15:18:10 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.225 2020/10/17 08:10:31 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.226 2020/10/23 15:18:10 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1281,6 +1281,16 @@ noether:
 		    (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
 		    !strcmp(machine_model, "SUNW,Sun-Fire-V210")))
 			add_env_sensors_v210(busdev);
+
+		/* E450 SUNW,envctrl */
+		if (device_is_a(busdev, "pcfiic") &&
+		    (!strcmp(machine_model, "SUNW,Ultra-4")))
+			add_i2c_props_e450(busdev, busnode);
+		/* E250 SUNW,envctrltwo */
+		if (device_is_a(busdev, "pcfiic") &&
+		    (!strcmp(machine_model, "SUNW,Ultra-250")))
+			add_i2c_props_e250(busdev, busnode);
+
 	}
 
 	/* set properties for PCI framebuffers */
