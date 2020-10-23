@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.h,v 1.2 2020/10/17 08:10:31 jdc Exp $ */
+/*	$NetBSD: ofw_patch.h,v 1.3 2020/10/23 15:18:10 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@ void add_gpio_props_v210(device_t, void *);
 void add_drivebay_props_v210(device_t, int, void *);
 void add_spdmem_props_sparcle(device_t);
 void add_env_sensors_v210(device_t);
+void add_i2c_props_e450(device_t, uint64_t);
+void add_i2c_props_e250(device_t, uint64_t);
 void set_hw_props(device_t);
 void set_static_edid(prop_dictionary_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.1 2020/10/16 07:35:16 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.2 2020/10/23 15:18:10 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.1 2020/10/16 07:35:16 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.2 2020/10/23 15:18:10 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -54,7 +54,42 @@ add_gpio_LED(prop_array_t pins, const char *name, int num, int act, int def)
 	prop_array_add(pins, pin);
 	prop_object_release(pin);
 }
-	
+
+static prop_array_t
+create_i2c_dict(device_t busdev)
+{
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg = NULL;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+ 	if (!cfg) {
+		cfg = prop_array_create();
+		prop_dictionary_set(props, "i2c-child-devices", cfg);
+		prop_dictionary_set_bool(props, "i2c-indirect-config", false);
+	}
+	return cfg;
+}
+
+static void
+add_i2c_device(prop_array_t cfg, const char *name, const char *compat,
+uint32_t addr, uint64_t node)
+{
+	prop_dictionary_t dev;
+	prop_data_t data;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding i2c device: %s (%s) @ 0x%x (%lx)\n",
+	    name, compat, addr, node & 0xffffffff));
+	dev = prop_dictionary_create();
+	prop_dictionary_set_string(dev, "name", name);
+	data = prop_data_create_copy(compat, strlen(compat) + 1);
+	prop_dictionary_set(dev, "compatible", data);
+	prop_object_release(data);
+	prop_dictionary_set_uint32(dev, "addr", addr);
+	prop_dictionary_set_uint64(dev, "cookie", node);
+	prop_array_add(cfg, dev);
+	prop_object_release(dev);
+}
+
 void
 add_gpio_props_v210(device_t dev, void *aux)
 {
@@ -134,42 +169,56 @@ add_spdmem_props_sparcle(device_t busdev)
 void
 add_env_sensors_v210(device_t busdev)
 {
-	prop_dictionary_t props = device_properties(busdev);
-	prop_array_t cfg = NULL;
-	prop_dictionary_t sens;
-	prop_data_t data;
-	const char name_lm[] = "i2c-lm75";
-	const char name_adm[] = "i2c-adm1026";
+	prop_array_t cfg;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
-	cfg = prop_dictionary_get(props, "i2c-child-devices");
- 	if (!cfg) {
-		cfg = prop_array_create();
-		prop_dictionary_set(props, "i2c-child-devices", cfg);
-		prop_dictionary_set_bool(props, "i2c-indirect-config", false);
-	}
+	cfg = create_i2c_dict(busdev);
 
 	/* ADM1026 at 0x2e */
-	sens = prop_dictionary_create();
-	prop_dictionary_set_uint32(sens, "addr", 0x2e);
-	prop_dictionary_set_uint64(sens, "cookie", 0);
-	prop_dictionary_set_string(sens, "name", "hardware-monitor");
-	data = prop_data_create_copy(&name_adm[0], sizeof(name_adm));
-	prop_dictionary_set(sens, "compatible", data);
-	prop_object_release(data);
-	prop_array_add(cfg, sens);
-	prop_object_release(sens);
-
+	add_i2c_device(cfg, "hardware-monitor", "i2c-adm1026", 0x2e, 0);
 	/* LM75 at 0x4e */
-	sens = prop_dictionary_create();
-	prop_dictionary_set_uint32(sens, "addr", 0x4e);
-	prop_dictionary_set_uint64(sens, "cookie", 0);
-	prop_dictionary_set_string(sens, "name", "temperature-sensor");
-	data = prop_data_create_copy(&name_lm[0], sizeof(name_lm));
-	prop_dictionary_set(sens, "compatible", data);
-	prop_object_release(data);
-	prop_array_add(cfg, sens);
-	prop_object_release(sens);
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75", 0x4e, 0);
+
+	prop_object_release(cfg);
+}
+
+/* Sensors and GPIO's for E450 and E250 */
+void
+add_i2c_props_e450(device_t busdev, uint64_t node)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* Power supply 1 temperature. */
+	add_i2c_device(cfg, "PSU-1", "ecadc", 0x48, node);
+
+	/* Power supply 2 termperature. */
+	add_i2c_device(cfg, "PSU-2", "ecadc", 0x49, node);
+
+	/* Power supply 3 tempterature. */
+	add_i2c_device(cfg, "PSU-3", "ecadc", 0x4a, node);
+
+	/* Ambient tempterature. */
+	add_i2c_device(cfg, "ambient", "i2c-lm75", 0x4d, node);
+
+	/* CPU temperatures. */
+	add_i2c_device(cfg, "CPU", "ecadc", 0x4f, node);
+}
+
+void
+add_i2c_props_e250(device_t busdev, uint64_t node)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* PSU temperature / CPU fan */
+	add_i2c_device(cfg, "PSU", "ecadc", 0x4a, node);
+	/* CPU & system board temperature */
+	add_i2c_device(cfg, "CPU", "ecadc", 0x4f, node);
 }
 
 /* Hardware specific device properties */
