@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.31 2020/05/23 20:45:11 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.32 2020/10/23 00:25:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -64,6 +64,7 @@ void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, struct syncobj *,
 	    bool);
 void	sleepq_transfer(lwp_t *, sleepq_t *, sleepq_t *, wchan_t, const char *,
 	    struct syncobj *, kmutex_t *, bool);
+void	sleepq_uncatch(lwp_t *);
 void	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
 void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
