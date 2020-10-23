@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.217 2020/10/22 21:27:24 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.218 2020/10/23 18:36:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.217 2020/10/22 21:27:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.218 2020/10/23 18:36:09 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1568,7 +1568,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * the user needn't provide a transformation from the member to the
      * archive.
      */
-    if (OP_NOP(gn->type)) {
+    if (!GNode_IsTarget(gn)) {
 	gn->type |= OP_DEPENDS;
     }
 

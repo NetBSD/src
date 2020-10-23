@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.396 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.397 2020/10/23 18:36:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.396 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.397 2020/10/23 18:36:09 rillig Exp $");
 
 /* types and constants */
 
@@ -792,12 +792,11 @@ static Boolean
 TryApplyDependencyOperator(GNode *gn, GNodeType op)
 {
     /*
-     * If the dependency mask of the operator and the node don't match and
-     * the node has actually had an operator applied to it before, and
-     * the operator actually has some dependency information in it, complain.
+     * If the node occurred on the left-hand side of a dependency and the
+     * operator also defines a dependency, they must match.
      */
-    if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
-	!OP_NOP(gn->type) && !OP_NOP(op))
+    if ((op & OP_OPMASK) && (gn->type & OP_OPMASK) &&
+	((op & OP_OPMASK) != (gn->type & OP_OPMASK)))
     {
 	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
 	return FALSE;
