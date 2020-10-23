@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.945 2020/10/23 06:18:23 rillig Exp $
+# $NetBSD: mi,v 1.946 2020/10/23 14:24:51 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4617,8 +4617,8 @@
 ./usr/tests/usr.bin/make/unit-tests/cond-undef-lint.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond1.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond1.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/cond2.exp					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/cond2.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond2.exp					obsolete-tests		obsolete
+./usr/tests/usr.bin/make/unit-tests/cond2.mk					obsolete-tests		obsolete
 ./usr/tests/usr.bin/make/unit-tests/counter-append.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/counter-append.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/counter.exp					tests-usr.bin-tests	compattestfile,atf
