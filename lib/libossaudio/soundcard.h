@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.30 2020/10/20 08:57:45 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.31 2020/10/23 09:05:20 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -407,6 +407,17 @@ typedef struct oss_audioinfo {
 	int filler[184];			/* For expansion */
 } oss_audioinfo;
 
+typedef struct oss_card_info {
+	int card;
+	char shortname[16];
+	char longname[128];
+	int flags;
+	char hw_info[400];
+	int intr_count;
+	int ack_count;
+	int filler[154];
+} oss_card_info;
+
 #define SNDCTL_SYSINFO		_IOR ('X', 1, oss_sysinfo)
 #define OSS_SYSINFO		SNDCTL_SYSINFO /* Old name */
 #define SNDCTL_MIX_NRMIX	_IOR ('X',2, int)
@@ -417,6 +428,7 @@ typedef struct oss_audioinfo {
 #define SNDCTL_AUDIOINFO	_IOWR ('X',7, oss_audioinfo)
 #define SNDCTL_MIX_ENUMINFO	_IOWR ('X',8, oss_mixer_enuminfo)
 #define SNDCTL_MIXERINFO	_IOWR ('X',10, oss_mixerinfo)
+#define SNDCTL_CARDINFO		_IOWR ('X',11, oss_card_info)
 #define SNDCTL_ENGINEINFO	_IOWR ('X',12, oss_audioinfo)
 #define SNDCTL_AUDIOINFO_EX	_IOWR ('X',13, oss_audioinfo)
 #define SNDCTL_MIX_DESCRIPTION	_IOWR ('X',14, oss_mixer_enuminfo)
