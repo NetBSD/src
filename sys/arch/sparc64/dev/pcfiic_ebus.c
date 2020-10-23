@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.6 2020/06/12 03:41:57 thorpej Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.7 2020/10/23 15:18:10 jdc Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.6 2020/06/12 03:41:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.7 2020/10/23 15:18:10 jdc Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -56,11 +56,6 @@ struct pcfiic_ebus_softc {
 
 CFATTACH_DECL_NEW(pcfiic, sizeof(struct pcfiic_ebus_softc),
 	pcfiic_ebus_match, pcfiic_ebus_attach, NULL, NULL);
-
-static prop_array_t create_dict(device_t);
-static void add_prop(prop_array_t, const char *, const char *, u_int, int);
-static void envctrl_props(prop_array_t, int);
-static void envctrltwo_props(prop_array_t, int);
 
 int
 pcfiic_ebus_match(device_t parent, struct cfdata *match, void *aux)
@@ -102,6 +97,11 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 		printf(": expected 1 or 2 registers, got %d\n", ea->ea_nreg);
 		return;
 	}
+
+	/* E450 and E250 have a different clock */
+	if ((strcmp(ea->ea_name, "SUNW,envctrl") == 0) ||
+	    (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0))
+		clock = PCF8584_CLK_12 | PCF8584_SCL_45;
 
 	sc->sc_dev = self;
 	if (OF_getprop(ea->ea_node, "compatible", compat, sizeof(compat)) > 0 &&
@@ -160,65 +160,5 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 	if (esc->esc_ih == NULL)
 		sc->sc_poll = 1;
 
-	if (strcmp(ea->ea_name, "SUNW,envctrl") == 0) {
-		envctrl_props(create_dict(self), ea->ea_node);
-		pcfiic_attach(sc, 0x55, PCF8584_CLK_12 | PCF8584_SCL_45, 0);
-	} else if (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0) {
-		envctrltwo_props(create_dict(self), ea->ea_node);
-		pcfiic_attach(sc, 0x55, PCF8584_CLK_12 | PCF8584_SCL_45, 0);
-	} else
-		pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, swapregs);
-}
-
-static prop_array_t
-create_dict(device_t parent)
-{
-	prop_dictionary_t props = device_properties(parent);
-	prop_array_t cfg = prop_dictionary_get(props, "i2c-child-devices");
-	if (cfg) return cfg;
-	cfg = prop_array_create();
-	prop_dictionary_set(props, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
-	return cfg;
-}
-
-static void
-add_prop(prop_array_t c, const char *name, const char *compat, u_int addr,
-	int node)
-{
-	prop_dictionary_t dev;
-
-	dev = prop_dictionary_create();
-	prop_dictionary_set_string(dev, "name", name);
-	prop_dictionary_set_data(dev, "compatible", compat, strlen(compat)+1);
-	prop_dictionary_set_uint32(dev, "addr", addr);
-	prop_dictionary_set_uint64(dev, "cookie", node);
-	prop_array_add(c, dev);
-	prop_object_release(dev);
-}
-
-static void
-envctrl_props(prop_array_t c, int node)
-{
-	/* Power supply 1 temperature. */
-	add_prop(c, "PSU-1", "ecadc", 0x48, node);
-
-	/* Power supply 2 termperature. */
-	add_prop(c, "PSU-2", "ecadc", 0x49, node);
-
-	/* Power supply 3 tempterature. */
-	add_prop(c, "PSU-3", "ecadc", 0x4a, node);
-
-	/* Ambient tempterature. */
-	add_prop(c, "ambient", "i2c-lm75", 0x4d, node);
-
-	/* CPU temperatures. */
-	add_prop(c, "CPU", "ecadc", 0x4f, node);
-}
-
-static void
-envctrltwo_props(prop_array_t c, int node)
-{
-	add_prop(c, "PSU", "ecadc", 0x4a, node);
-	add_prop(c, "CPU", "ecadc", 0x4f, node);
+	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, swapregs);
 }
