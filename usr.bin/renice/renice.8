@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.17 2020/10/22 20:13:02 dholland Exp $
+.\"	$NetBSD: renice.8,v 1.18 2020/10/23 16:14:40 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nm
 .Ar priority
 .Oo
-.Op Fl pgu
+.Op Fl gpu
 .Ar who ...
 .Oc
 .Ar ...
@@ -47,7 +47,7 @@
 .Fl n
 .Ar increment
 .Oo
-.Op Fl pgu
+.Op Fl gpu
 .Ar who ...
 .Oc
 .Ar ...
@@ -66,22 +66,22 @@ The following
 parameters name the target processes, as either process IDs, process
 group IDs, or user names.
 The
-.It pgf
+.Fl gpu
 options control the interpretation as follows:
 .Bl -tag -width Ds
 .It Fl g
 Interpret
 .Ar who
 parameters as process group ID's.
-.It Fl u
-Interpret
-.Ar who
-parameters as user names.
 .It Fl p
 Interpret
 .Ar who
 parameters as process IDs.
 This is the default.
+.It Fl u
+Interpret
+.Ar who
+parameters as user names.
 .El
 .Pp
 Each
@@ -96,6 +96,11 @@ If an
 .Ar increment
 is used, the increment is added to the highest priority found among
 the members of the process group prior to the change.
+.It with Fl p
+The named process is updated to the selected priority.
+If an
+.Ar increment
+is used, the increment is added to the process's previous priority.
 .It with Fl u
 All processes belonging to the specified user are updated to the
 selected priority.
@@ -103,11 +108,6 @@ If an
 .Ar increment
 is used, the increment is added to the highest priority found among
 the processes belonging to the user prior to the change.
-.It with Fl p
-The named process is updated to the selected priority.
-If an
-.Ar increment
-is used, the increment is added to the process's previous priority.
 .El
 .Pp
 In conventional terminology a
