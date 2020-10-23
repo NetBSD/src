@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_ged.c,v 1.1 2018/10/22 22:36:19 jmcneill Exp $ */
+/* $NetBSD: acpi_ged.c,v 1.2 2020/10/23 11:00:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ged.c,v 1.1 2018/10/22 22:36:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ged.c,v 1.2 2020/10/23 11:00:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ged.c,v 1.1 2018/10/22 22:36:19 jmcneill Exp $"
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_event.h>
+#include <dev/acpi/acpi_intr.h>
 
 static int	acpi_ged_match(device_t, cfdata_t, void *);
 static void	acpi_ged_attach(device_t, device_t, void *);
@@ -83,8 +84,8 @@ acpi_ged_register_event(void *priv, struct acpi_event *ev, struct acpi_irq *irq)
 	device_t dev = priv;
 	void *ih;
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_VM, type, acpi_ged_intr, ev);
+	ih = acpi_intr_establish_irq(dev, irq, IPL_VM, true,
+	    acpi_ged_intr, ev, device_xname(dev));
 	if (ih == NULL) {
 		aprint_error_dev(dev, "couldn't establish interrupt (irq %d)\n", irq->ar_irq);
 		return;
