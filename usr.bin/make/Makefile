@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2020/10/18 19:11:35 rillig Exp $
+#	$NetBSD: Makefile,v 1.105 2020/10/23 15:44:38 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -189,6 +189,6 @@ retest:
 # Just out of curiosity, during development.
 .SUFFIXES: .cpre .casm
 .c.cpre:
-	${COMPILE.c:S,^-c$,-E,} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c:S,^-c$,-E,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
 .c.casm:
-	${COMPILE.c:S,^-c$,-S,} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c:S,^-c$,-S,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
