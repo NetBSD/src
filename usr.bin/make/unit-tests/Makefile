@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.172 2020/10/23 19:11:30 rillig Exp $
+# $NetBSD: Makefile,v 1.173 2020/10/23 19:23:01 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -81,6 +81,7 @@ TESTS+=		dep-none
 TESTS+=		dep-var
 TESTS+=		dep-wildcards
 TESTS+=		depsrc
+TESTS+=		depsrc-end
 TESTS+=		depsrc-exec
 TESTS+=		depsrc-ignore
 TESTS+=		depsrc-made

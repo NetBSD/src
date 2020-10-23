@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.947 2020/10/23 19:11:30 rillig Exp $
+# $NetBSD: mi,v 1.948 2020/10/23 19:23:00 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4641,6 +4641,8 @@
 ./usr/tests/usr.bin/make/unit-tests/dep-wildcards.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dep.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/depsrc-end.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/depsrc-end.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-exec.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-exec.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-ignore.exp				tests-usr.bin-tests	compattestfile,atf
