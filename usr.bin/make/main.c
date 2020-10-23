@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.384 2020/10/22 07:12:13 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.385 2020/10/23 06:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.384 2020/10/22 07:12:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.385 2020/10/23 06:27:39 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2024,16 +2024,6 @@ cached_realpath(const char *pathname, char *resolved)
     return rp ? resolved : NULL;
 }
 
-
-static int
-addErrorCMD(void *cmdp, void *gnp)
-{
-    if (cmdp == NULL)
-	return 1;			/* stop */
-    Var_Append(".ERROR_CMD", cmdp, VAR_GLOBAL);
-    return 0;
-}
-
 /*
  * Return true if we should die without noise.
  * For example our failing child was a sub-make
@@ -2053,6 +2043,26 @@ dieQuietly(GNode *gn, int bf)
 	    quietly = gn != NULL ? ((gn->type  & (OP_MAKE)) != 0) : 0;
     }
     return quietly;
+}
+
+static void
+SetErrorVars(GNode *gn)
+{
+    StringListNode *ln;
+
+    /*
+     * We can print this even if there is no .ERROR target.
+     */
+    Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
+    Var_Delete(".ERROR_CMD", VAR_GLOBAL);
+
+    for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+	const char *cmd = ln->datum;
+
+	if (cmd == NULL)
+	    break;
+	Var_Append(".ERROR_CMD", cmd, VAR_GLOBAL);
+    }
 }
 
 void
@@ -2078,14 +2088,8 @@ PrintOnError(GNode *gn, const char *s)
 
     if (en)
 	return;				/* we've been here! */
-    if (gn) {
-	/*
-	 * We can print this even if there is no .ERROR target.
-	 */
-	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
-	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
-	Lst_ForEachUntil(gn->commands, addErrorCMD, gn);
-    }
+    if (gn)
+        SetErrorVars(gn);
     expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
     (void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
     /* TODO: handle errors */
