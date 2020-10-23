@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.176 2020/10/23 04:58:33 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.177 2020/10/23 18:36:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.176 2020/10/23 04:58:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.177 2020/10/23 18:36:09 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -225,8 +225,8 @@ Make_OODate(GNode *gn)
 
     /*
      * A target is remade in one of the following circumstances:
-     *	its modification time is smaller than that of its youngest child
-     *	    and it would actually be run (has commands or type OP_NOP)
+     *	its modification time is smaller than that of its youngest child and
+     *	    it would actually be run (has commands or is not GNode_IsTarget)
      *	it's the object of a force operator
      *	it has no children, was on the lhs of an operator and doesn't exist
      *	    already.
@@ -324,7 +324,7 @@ Make_OODate(GNode *gn)
     /*
      * If the target isn't out-of-date, the parents need to know its
      * modification time. Note that targets that appear to be out-of-date
-     * but aren't, because they have no commands and aren't of type OP_NOP,
+     * but aren't, because they have no commands and are GNode_IsTarget,
      * have their mtime stay below their children's mtime to keep parents from
      * thinking they're out-of-date.
      */

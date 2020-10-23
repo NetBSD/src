@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.138 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.139 2020/10/23 18:36:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.138 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.139 2020/10/23 18:36:09 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -1086,7 +1086,7 @@ Arch_LibOODate(GNode *gn)
 
     if (gn->type & OP_PHONY) {
 	oodate = TRUE;
-    } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
+    } else if (!GNode_IsTarget(gn) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
     } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
 	       (gn->mtime > now) ||
