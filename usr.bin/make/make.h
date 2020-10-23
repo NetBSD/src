@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.163 2020/10/23 18:10:39 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.164 2020/10/23 18:36:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -198,6 +198,7 @@ typedef enum GNodeType {
     /* Execution of commands depends on children per line (::) */
     OP_DOUBLEDEP	= 1 << 2,
 
+    /* Matches the dependency operators ':', '!' and '::'. */
     OP_OPMASK		= OP_DEPENDS|OP_FORCE|OP_DOUBLEDEP,
 
     /* Don't care if the target doesn't exist and can't be created */
@@ -574,14 +575,11 @@ int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 Boolean NoExecute(GNode *gn);
 
-/*
- * See if the node with the given type was never seen on the left-hand side
- * of a dependency operator, though it may have been on the right-hand side.
- */
+/* See if the node was seen on the left-hand side of a dependency operator. */
 static Boolean MAKE_ATTR_UNUSED
-OP_NOP(GNodeType t)
+GNode_IsTarget(const GNode *gn)
 {
-    return !(t & OP_OPMASK);
+    return (gn->type & OP_OPMASK) != 0;
 }
 
 #ifdef __GNUC__
