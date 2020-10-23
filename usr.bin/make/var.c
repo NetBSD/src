@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.581 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.582 2020/10/23 13:38:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.581 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.582 2020/10/23 13:38:17 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -762,11 +762,6 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 
     assert(val != NULL);
 
-    /*
-     * We only look for a variable in the given context since anything set
-     * here will override anything in a lower context, so there's not much
-     * point in searching them all just to save a bit of memory...
-     */
     if (strchr(name, '$') != NULL) {
 	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
 	/* TODO: handle errors */
@@ -792,6 +787,11 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	}
     }
 
+    /*
+     * We only look for a variable in the given context since anything set
+     * here will override anything in a lower context, so there's not much
+     * point in searching them all just to save a bit of memory...
+     */
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
 	if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
