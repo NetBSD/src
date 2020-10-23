@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.161 2020/10/23 17:59:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.162 2020/10/23 18:05:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -138,6 +138,8 @@
 #ifdef USE_DOUBLE_BOOLEAN
 /* During development, to find type mismatches in function declarations. */
 typedef double Boolean;
+#define TRUE 1.0
+#define FALSE 0.0
 #elif defined(USE_UCHAR_BOOLEAN)
 /* During development, to find code that depends on the exact value of TRUE or
  * that stores other values in Boolean variables. */
@@ -154,12 +156,12 @@ typedef char Boolean;
 typedef enum Boolean { FALSE, TRUE } Boolean;
 #else
 typedef int Boolean;
-#endif
 #ifndef TRUE
 #define TRUE	1
 #endif
 #ifndef FALSE
 #define FALSE	0
+#endif
 #endif
 
 #include "lst.h"
