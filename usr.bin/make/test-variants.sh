@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.4 2020/09/21 04:20:35 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.5 2020/10/23 17:59:25 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -42,6 +42,10 @@ testcase USER_CPPFLAGS="-DUSE_DOUBLE_BOOLEAN"
 # The only valid values are TRUE and FALSE.
 #
 testcase USER_CPPFLAGS="-DUSE_UCHAR_BOOLEAN"
+
+# Ensure that variables of type Boolean are not used as array index.
+#
+testcase USER_CPPFLAGS="-DUSE_CHAR_BOOLEAN"
 
 # Try a different compiler, with slightly different warnings and error
 # messages.  One feature that is missing from GCC is a little stricter
