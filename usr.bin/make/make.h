@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.167 2020/10/23 20:04:56 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.168 2020/10/23 20:14:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -428,13 +428,13 @@ extern SearchPath *dirSearchPath;
 extern Boolean	compatMake;	/* True if we are make compatible */
 extern Boolean	ignoreErrors;	/* True if should ignore all errors */
 extern Boolean  beSilent;	/* True if should print no commands */
-extern Boolean  noExecute;	/* True if should execute nothing */
+extern Boolean  noExecute;	/* True if should execute almost nothing */
 extern Boolean  noRecursiveExecute;
 				/* True if should execute nothing */
 extern Boolean  allPrecious;	/* True if every target is precious */
 extern Boolean  deleteOnError;	/* True if failed targets should be deleted */
 extern Boolean  keepgoing;	/* True if should continue on unaffected
-				 * portions of the graph when have an error
+				 * portions of the graph when an error occurs
 				 * in one portion */
 extern Boolean	touchFlag;	/* TRUE if targets should just be 'touched'
 				 * if out of date. Set by the -t flag */
