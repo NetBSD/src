@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.268 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.269 2020/10/23 05:18:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.268 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.269 2020/10/23 05:18:18 rillig Exp $");
 
 # define STATIC static
 
@@ -626,7 +626,7 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	jobp		job for which to print it
  *
  * Results:
- *	0, unless the command was "..."
+ *	FALSE, unless the command was "..."
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
@@ -636,9 +636,10 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	numCommands is incremented if the command is actually printed.
  *-----------------------------------------------------------------------
  */
-static int
-JobPrintCommand(void *cmdp, void *jobp)
+static Boolean
+JobPrintCommand(Job *job, char *cmd)
 {
+    const char *const cmdp = cmd;
     Boolean noSpecials;		/* true if we shouldn't worry about
 				 * inserting special commands into
 				 * the input stream. */
@@ -651,8 +652,6 @@ JobPrintCommand(void *cmdp, void *jobp)
 				 * command */
     char *cmdStart;		/* Start of expanded command */
     char *escCmd = NULL;	/* Command with quotes/backticks escaped */
-    char *cmd = cmdp;
-    Job *job = jobp;
 
     noSpecials = NoExecute(job->node);
 
@@ -661,9 +660,9 @@ JobPrintCommand(void *cmdp, void *jobp)
 	if ((job->flags & JOB_IGNDOTS) == 0) {
 	    StringListNode *dotsNode = Lst_FindDatum(job->node->commands, cmd);
 	    job->tailCmds = dotsNode != NULL ? dotsNode->next : NULL;
-	    return 1;
+	    return TRUE;
 	}
-	return 0;
+	return FALSE;
     }
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
@@ -845,7 +844,17 @@ JobPrintCommand(void *cmdp, void *jobp)
     if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
     }
-    return 0;
+    return FALSE;
+}
+
+static void
+JobPrintCommands(Job *job)
+{
+    StringListNode *ln;
+
+    for (ln = job->node->commands->first; ln != NULL; ln = ln->next)
+	if (JobPrintCommand(job, ln->datum))
+	    break;
 }
 
 /* Save the delayed commands, to be executed when everything else is done. */
@@ -1520,7 +1529,7 @@ JobStart(GNode *gn, int flags)
 	 * We can do all the commands at once. hooray for sanity
 	 */
 	numCommands = 0;
-	Lst_ForEachUntil(gn->commands, JobPrintCommand, job);
+	JobPrintCommands(job);
 
 	/*
 	 * If we didn't print out any commands to the shell script,
@@ -1546,9 +1555,8 @@ JobStart(GNode *gn, int flags)
 	 * not -- just let the user know they're bad and keep going. It
 	 * doesn't do any harm in this case and may do some good.
 	 */
-	if (cmdsOK) {
-	    Lst_ForEachUntil(gn->commands, JobPrintCommand, job);
-	}
+	if (cmdsOK)
+	    JobPrintCommands(job);
 	/*
 	 * Don't execute the shell, thank you.
 	 */
