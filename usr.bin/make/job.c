@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.272 2020/10/23 15:19:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.273 2020/10/23 15:54:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.272 2020/10/23 15:19:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.273 2020/10/23 15:54:17 rillig Exp $");
 
 # define STATIC static
 
@@ -347,15 +347,6 @@ static Shell    shells[] = {
     '#',			/* .commentChar */
     "v", 			/* .echo */
     "e",			/* .exit */
-},
-    /*
-     * UNKNOWN.
-     */
-{
-    NULL,
-    FALSE, NULL, NULL, NULL, 0,
-    FALSE, NULL, NULL, NULL, NULL, '\0',
-    NULL, NULL,
 }
 };
 
@@ -2207,9 +2198,10 @@ static void JobSigReset(void)
 static Shell *
 JobMatchShell(const char *name)
 {
-    Shell	*sh;
+    Shell *sh = shells;
+    const Shell *shellsEnd = sh + sizeof shells / sizeof shells[0];
 
-    for (sh = shells; sh->name != NULL; sh++) {
+    for (sh = shells; sh < shellsEnd; sh++) {
 	if (strcmp(name, sh->name) == 0)
 		return sh;
     }
