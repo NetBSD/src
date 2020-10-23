@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.270 2020/10/23 05:27:33 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.271 2020/10/23 07:14:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.270 2020/10/23 05:27:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.271 2020/10/23 07:14:32 rillig Exp $");
 
 # define STATIC static
 
@@ -592,7 +592,7 @@ JobPassSig_suspend(int signo)
 }
 
 static Job *
-JobFindPid(int pid, int status, Boolean isJobs)
+JobFindPid(int pid, JobState status, Boolean isJobs)
 {
     Job *job;
 
