@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.9 2020/10/16 18:27:34 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.10 2020/10/23 22:14:47 macallan Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.9 2020/10/16 18:27:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.10 2020/10/23 22:14:47 macallan Exp $");
 
 /* #include "cardbus.h" */
 
@@ -617,7 +617,7 @@ dino_vaddr(void *v, bus_space_handle_t h)
 paddr_t
 dino_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 {
-	return -1;
+	return btop(addr + off);
 }
 
 uint8_t
