@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.271 2020/10/23 07:14:32 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.272 2020/10/23 15:19:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.271 2020/10/23 07:14:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.272 2020/10/23 15:19:51 rillig Exp $");
 
 # define STATIC static
 
@@ -178,24 +178,25 @@ MAKE_RCSID("$NetBSD: job.c,v 1.271 2020/10/23 07:14:32 rillig Exp $");
  * echo "%s\n" as a template.
  */
 typedef struct Shell {
-    const char *name;		/* the name of the shell. For Bourne and C
-				 * shells, this is used only to find the
-				 * shell description when used as the single
-				 * source of a .SHELL target. For user-defined
-				 * shells, this is the full path of the shell.
-				 */
+
+    /* The name of the shell. For Bourne and C shells, this is used only to
+     * find the shell description when used as the single source of a .SHELL
+     * target. For user-defined shells, this is the full path of the shell. */
+    const char *name;
+
     Boolean hasEchoCtl;		/* True if both echoOff and echoOn defined */
     const char *echoOff;	/* command to turn off echo */
     const char *echoOn;		/* command to turn it back on again */
-    const char *noPrint;	/* command to skip when printing output from
-				 * shell. This is usually the command which
-				 * was executed to turn off echoing */
+    const char *noPrint;	/* text to skip when printing output from
+				 * shell. This is usually the same as echoOff */
     size_t noPrintLen;		/* length of noPrint command */
+
     Boolean hasErrCtl;		/* set if can control error checking for
 				 * individual commands */
     const char *errCheck;	/* string to turn on error checking */
     const char *ignErr;		/* string to turn off error checking */
     const char *errOut;		/* string to use for testing exit code */
+
     const char *newline;	/* string literal that results in a newline
 				 * character when it appears outside of any
 				 * 'quote' or "quote" characters */
@@ -288,25 +289,43 @@ static Shell    shells[] = {
      * sun UNIX anyway, one can even control error checking.
      */
 {
-    "sh",
-    FALSE, "", "", "", 0,
-    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
+    "sh",			/* .name */
+    FALSE,			/* .hasEchoCtl */
+    "",				/* .echoOff */
+    "",				/* .echoOn */
+    "",				/* .noPrint */
+    0,				/* .noPrintLen */
+    FALSE,			/* .hasErrCtl */
+    "echo \"%s\"\n", 		/* .errCheck */
+    "%s\n",			/* .ignErr */
+    "{ %s \n} || exit $?\n",	/* .errOut */
+    "'\n'",			/* .newline */
+    '#',			/* .commentChar*/
 #if defined(MAKE_NATIVE) && defined(__NetBSD__)
-    "q",
+    "q",			/* .echo */
 #else
-    "",
+    "",				/* .echo */
 #endif
-    "",
+    "",				/* .exit */
 },
     /*
      * KSH description.
      */
 {
-    "ksh",
-    TRUE, "set +v", "set -v", "set +v", 6,
-    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
-    "v",
-    "",
+    "ksh",			/* .name */
+    TRUE,			/* .hasEchoCtl */
+    "set +v",			/* .echoOff */
+    "set -v",			/* .echoOn */
+    "set +v",			/* .noPrint */
+    6,				/* .noPrintLen */
+    FALSE,			/* .hasErrCtl */
+    "echo \"%s\"\n",		/* .errCheck */
+    "%s\n",			/* .ignErr */
+    "{ %s \n} || exit $?\n",	/* .errOut */
+    "'\n'",			/* .newline */
+    '#',			/* .commentChar */
+    "v",			/* .echo */
+    "",				/* .exit */
 },
     /*
      * CSH description. The csh can do echo control by playing
@@ -314,10 +333,20 @@ static Shell    shells[] = {
      * however, it is unable to do error control nicely.
      */
 {
-    "csh",
-    TRUE, "unset verbose", "set verbose", "unset verbose", 13,
-    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
-    "v", "e",
+    "csh",			/* .name */
+    TRUE,			/* .hasEchoCtl */
+    "unset verbose",		/* .echoOff */
+    "set verbose",		/* .echoOn */
+    "unset verbose", 		/* .noPrint */
+    13,				/* .noPrintLen */
+    FALSE, 			/* .hasErrCtl */
+    "echo \"%s\"\n", 		/* .errCheck */
+    "csh -c \"%s || exit 0\"\n", /* .ignErr */
+    "", 			/* .errOut */
+    "'\\\n'",			/* .newline */
+    '#',			/* .commentChar */
+    "v", 			/* .echo */
+    "e",			/* .exit */
 },
     /*
      * UNKNOWN.
@@ -325,7 +354,7 @@ static Shell    shells[] = {
 {
     NULL,
     FALSE, NULL, NULL, NULL, 0,
-    FALSE, NULL, NULL, NULL, NULL, 0,
+    FALSE, NULL, NULL, NULL, NULL, '\0',
     NULL, NULL,
 }
 };
