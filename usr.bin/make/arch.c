@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.139 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.140 2020/10/23 19:48:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.139 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.140 2020/10/23 19:48:17 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -1060,7 +1060,7 @@ Arch_FindLib(GNode *gn, SearchPath *path)
  * given that it is a target on a dependency line somewhere:
  *
  *	Its modification time is less than that of one of its sources
- *	(gn->mtime < gn->cmgn->mtime).
+ *	(gn->mtime < gn->youngestChild->mtime).
  *
  *	Its modification time is greater than the time at which the make
  *	began (i.e. it's been modified in the course of the make, probably
@@ -1088,9 +1088,10 @@ Arch_LibOODate(GNode *gn)
 	oodate = TRUE;
     } else if (!GNode_IsTarget(gn) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
+    } else if ((!Lst_IsEmpty(gn->children) && gn->youngestChild == NULL) ||
 	       (gn->mtime > now) ||
-	       (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime)) {
+	       (gn->youngestChild != NULL &&
+		gn->mtime < gn->youngestChild->mtime)) {
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
@@ -1105,7 +1106,7 @@ Arch_LibOODate(GNode *gn)
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		debug_printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
-	    oodate = (gn->cmgn == NULL || gn->cmgn->mtime > modTimeTOC);
+	    oodate = (gn->youngestChild == NULL || gn->youngestChild->mtime > modTimeTOC);
 	} else {
 	    /*
 	     * A library w/o a table of contents is out-of-date
