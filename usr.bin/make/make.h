@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.165 2020/10/23 19:11:30 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.166 2020/10/23 19:48:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -321,7 +321,7 @@ typedef struct GNode {
     /* The modification time; 0 means the node does not have a corresponding
      * file; see Make_OODate. */
     time_t mtime;
-    struct GNode *cmgn;		/* The youngest child */
+    struct GNode *youngestChild;
 
     /* The GNodes for which this node is an implied source. May be empty.
      * For example, when there is an inference rule for .c.o, the node for
