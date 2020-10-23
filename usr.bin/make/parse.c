@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.397 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.398 2020/10/23 20:04:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.397 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.398 2020/10/23 20:04:56 rillig Exp $");
 
 /* types and constants */
 
@@ -645,8 +645,8 @@ PrintLocation(FILE *f, const char *filename, size_t lineno)
  * until the end of the current top-level makefile, then exit (see
  * Parse_File). */
 static void
-ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
-    const char *fmt, va_list ap)
+ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno,
+		    ParseErrorLevel type, const char *fmt, va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
@@ -671,7 +671,7 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 }
 
 static void
-ParseErrorInternal(const char *cfname, size_t clineno, int type,
+ParseErrorInternal(const char *cfname, size_t clineno, ParseErrorLevel type,
 		   const char *fmt, ...)
 {
 	va_list ap;
@@ -693,7 +693,7 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
  *
  * Fmt is given without a trailing newline. */
 void
-Parse_Error(int type, const char *fmt, ...)
+Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 {
 	va_list ap;
 	const char *fname;
