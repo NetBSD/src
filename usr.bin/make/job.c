@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.273 2020/10/23 15:54:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.274 2020/10/23 16:00:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.273 2020/10/23 15:54:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.274 2020/10/23 16:00:23 rillig Exp $");
 
 # define STATIC static
 
@@ -277,11 +277,20 @@ static Shell    shells[] = {
      * sh-compatible shells.
      */
 {
-    DEFSHELL_CUSTOM,
-    FALSE, "", "", "", 0,
-    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
-    "",
-    "",
+    DEFSHELL_CUSTOM,		/* .name */
+    FALSE,			/* .hasEchoCtl */
+    "",				/* .echoOff */
+    "",				/* .echoOn */
+    "",				/* .noPrint */
+    0,				/* .noPrintLen */
+    FALSE,			/* .hasErrCtl */
+    "echo \"%s\"\n",		/* .errCheck */
+    "%s\n",			/* .ignErr */
+    "{ %s \n} || exit $?\n",	/* .errOut */
+    "'\n'",			/* .newline */
+    '#',			/* .commentChar */
+    "",				/* .echo */
+    "",				/* .exit */
 },
 #endif /* DEFSHELL_CUSTOM */
     /*
