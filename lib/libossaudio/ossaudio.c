@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.56 2020/10/23 09:05:20 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.57 2020/10/23 12:13:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.56 2020/10/23 09:05:20 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.57 2020/10/23 12:13:04 wiz Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -1179,7 +1179,7 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		 * OSSv4 does not document this ioctl, and claims it should
 		 * not be used by applications and is provided for "utiltiy
 		 * programs included in OSS". We follow the Solaris
-		 * implementation (which is doucmented) and leave these fields
+		 * implementation (which is documented) and leave these fields
 		 * unset.
 		 */
 		cardinfo->flags = 0;
