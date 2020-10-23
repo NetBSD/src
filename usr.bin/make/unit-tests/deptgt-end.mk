@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-end.mk,v 1.5 2020/09/23 03:06:38 rillig Exp $
+# $NetBSD: deptgt-end.mk,v 1.6 2020/10/23 19:28:17 rillig Exp $
 #
 # Tests for the special target .END in dependency declarations,
 # which is run after making the desired targets.
@@ -14,6 +14,13 @@ VAR=	Should not be expanded.
 # The Var_Subst in JobSaveCommand looks suspicious.
 
 .END:
+	: $@ '$${VAR}'
+	...
+	: $@ '$${VAR}' deferred
+
+# The .END node can define dependencies, just like a regular target.
+.END: end-action
+end-action: .NOTMAIN
 	: $@ '$${VAR}'
 	...
 	: $@ '$${VAR}' deferred
