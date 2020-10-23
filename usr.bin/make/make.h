@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.166 2020/10/23 19:48:17 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.167 2020/10/23 20:04:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -379,12 +379,14 @@ typedef struct GNode {
 
 /*
  * Error levels for parsing. PARSE_FATAL means the process cannot continue
- * once the makefile has been parsed. PARSE_WARNING means it can. Passed
- * as the first argument to Parse_Error.
+ * once the top-level makefile has been parsed. PARSE_WARNING and PARSE_INFO
+ * mean it can.
  */
-#define PARSE_INFO	3
-#define PARSE_WARNING	2
-#define PARSE_FATAL	1
+typedef enum ParseErrorLevel {
+    PARSE_FATAL = 1,
+    PARSE_WARNING,
+    PARSE_INFO
+} ParseErrorLevel;
 
 /*
  * Values returned by Cond_EvalLine and Cond_EvalCondition.
