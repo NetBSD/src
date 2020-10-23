@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.165 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.166 2020/10/23 06:57:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.165 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.166 2020/10/23 06:57:41 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -288,18 +288,16 @@ FuncDefined(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
     return result;
 }
 
-/* Wrapper around Str_Match, to be used by Lst_Find. */
-static Boolean
-CondFindStrMatch(const void *string, const void *pattern)
-{
-    return Str_Match(string, pattern);
-}
-
 /* See if the given target is being made. */
 static Boolean
 FuncMake(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    return Lst_Find(create, CondFindStrMatch, arg) != NULL;
+    StringListNode *ln;
+
+    for (ln = create->first; ln != NULL; ln = ln->next)
+	if (Str_Match(ln->datum, arg))
+	    return TRUE;
+    return FALSE;
 }
 
 /* See if the given file exists. */
