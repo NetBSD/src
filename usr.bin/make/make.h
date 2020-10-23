@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.162 2020/10/23 18:05:35 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.163 2020/10/23 18:10:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -189,10 +189,7 @@ typedef enum  {
  * communicating to other parts of the program the way in which a target
  * should be made.
  *
- * These constants are bitwise-OR'ed together and placed in the 'type' field
- * of each node. Any node that has a 'type' field which satisfies the OP_NOP
- * function was never never on the left-hand side of an operator, though it
- * may have been on the right-hand side... */
+ * Some of the OP_ constants can be combined, others cannot. */
 typedef enum GNodeType {
     /* Execution of commands depends on children (:) */
     OP_DEPENDS		= 1 << 0,
@@ -579,7 +576,7 @@ Boolean NoExecute(GNode *gn);
 
 /*
  * See if the node with the given type was never seen on the left-hand side
- * of a dependency operator.
+ * of a dependency operator, though it may have been on the right-hand side.
  */
 static Boolean MAKE_ATTR_UNUSED
 OP_NOP(GNodeType t)
