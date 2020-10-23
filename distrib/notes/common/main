@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.9 2020/08/05 14:29:59 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.10 2020/10/23 08:32:27 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -515,28 +515,28 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss "Dedication"
-.Pp
-.
-.Nx
-9.0 is dedicated to the memory of Matthias Drochner, who
-passed away in August 2018 and Eric Schnoebelen, who
-passed away in March 2019.
-.Pp
-Matthias' technical contributions are too many to list here in full.
-He was a long term contributor and commited more than 3000 changes all
-over the
-.Nx
-source tree and lately was especially active in keeping some of our most weired
-ancient VME architectures in shape.
-.Pp
-Eric was a long term pkgsrc developer and well known community member.
-.Pp
-Beyond their technical contributions, Eric and Matthias were always
-helpful and friendly.
-Their example encouraged users to contribute to the project and share their
-work with the community.
-.Pp
+.\" .Ss "Dedication"
+.\" .Pp
+.\" .
+.\" .Nx
+.\" 9.0 is dedicated to the memory of Matthias Drochner, who
+.\" passed away in August 2018 and Eric Schnoebelen, who
+.\" passed away in March 2019.
+.\" .Pp
+.\" Matthias' technical contributions are too many to list here in full.
+.\" He was a long term contributor and commited more than 3000 changes all
+.\" over the
+.\" .Nx
+.\" source tree and lately was especially active in keeping some of our most weird
+.\" ancient VME architectures in shape.
+.\" .Pp
+.\" Eric was a long term pkgsrc developer and well known community member.
+.\" .Pp
+.\" Beyond their technical contributions, Eric and Matthias were always
+.\" helpful and friendly.
+.\" Their example encouraged users to contribute to the project and share their
+.\" work with the community.
+.\" .Pp
 .\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
