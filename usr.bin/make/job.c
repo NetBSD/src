@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.269 2020/10/23 05:18:18 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.270 2020/10/23 05:27:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.269 2020/10/23 05:18:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.270 2020/10/23 05:27:33 rillig Exp $");
 
 # define STATIC static
 
@@ -625,18 +625,13 @@ JobFindPid(int pid, int status, Boolean isJobs)
  *	cmdp		command string to print
  *	jobp		job for which to print it
  *
- * Results:
- *	FALSE, unless the command was "..."
- *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
  *	the JOB_IGNERR flag is set in the job descriptor.
- *	If the command is "..." and we're not ignoring such things,
- *	tailCmds is set to the successor node of the cmd.
  *	numCommands is incremented if the command is actually printed.
  *-----------------------------------------------------------------------
  */
-static Boolean
+static void
 JobPrintCommand(Job *job, char *cmd)
 {
     const char *const cmdp = cmd;
@@ -654,16 +649,6 @@ JobPrintCommand(Job *job, char *cmd)
     char *escCmd = NULL;	/* Command with quotes/backticks escaped */
 
     noSpecials = NoExecute(job->node);
-
-    if (strcmp(cmd, "...") == 0) {
-	job->node->type |= OP_SAVE_CMDS;
-	if ((job->flags & JOB_IGNDOTS) == 0) {
-	    StringListNode *dotsNode = Lst_FindDatum(job->node->commands, cmd);
-	    job->tailCmds = dotsNode != NULL ? dotsNode->next : NULL;
-	    return TRUE;
-	}
-	return FALSE;
-    }
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
 	debug_printf(fmt, arg);			\
@@ -698,7 +683,7 @@ JobPrintCommand(Job *job, char *cmd)
 		 */
 		Compat_RunCommand(cmdp, job->node);
 		free(cmdStart);
-		return 0;
+		return;
 	    }
 	    break;
 	}
@@ -844,17 +829,29 @@ JobPrintCommand(Job *job, char *cmd)
     if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
     }
-    return FALSE;
 }
 
+/* Print all commands to the shell file that is later executed.
+ *
+ * The special command "..." stops printing and saves the remaining commands
+ * to be executed later. */
 static void
 JobPrintCommands(Job *job)
 {
     StringListNode *ln;
 
-    for (ln = job->node->commands->first; ln != NULL; ln = ln->next)
-	if (JobPrintCommand(job, ln->datum))
-	    break;
+    for (ln = job->node->commands->first; ln != NULL; ln = ln->next) {
+        const char *cmd = ln->datum;
+
+	if (strcmp(cmd, "...") == 0) {
+	    job->node->type |= OP_SAVE_CMDS;
+	    if ((job->flags & JOB_IGNDOTS) == 0) {
+		job->tailCmds = ln->next;
+		break;
+	    }
+	} else
+	    JobPrintCommand(job, ln->datum);
+    }
 }
 
 /* Save the delayed commands, to be executed when everything else is done. */
