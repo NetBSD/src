@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.2 2020/10/23 15:18:10 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.3 2020/10/23 17:53:07 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.2 2020/10/23 15:18:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.3 2020/10/23 17:53:07 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -75,15 +75,14 @@ add_i2c_device(prop_array_t cfg, const char *name, const char *compat,
 uint32_t addr, uint64_t node)
 {
 	prop_dictionary_t dev;
-	prop_data_t data;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding i2c device: %s (%s) @ 0x%x (%lx)\n",
-	    name, compat, addr, node & 0xffffffff));
+	    name, compat == NULL ? "NULL" : compat, addr, node & 0xffffffff));
 	dev = prop_dictionary_create();
 	prop_dictionary_set_string(dev, "name", name);
-	data = prop_data_create_copy(compat, strlen(compat) + 1);
-	prop_dictionary_set(dev, "compatible", data);
-	prop_object_release(data);
+	if (compat != NULL)
+		prop_dictionary_set_data(dev, "compatible", compat,
+		    strlen(compat) + 1);
 	prop_dictionary_set_uint32(dev, "addr", addr);
 	prop_dictionary_set_uint64(dev, "cookie", node);
 	prop_array_add(cfg, dev);
@@ -146,20 +145,14 @@ add_drivebay_props_v210(device_t dev, int ofnode, void *aux)
 void
 add_spdmem_props_sparcle(device_t busdev)
 {
-	prop_dictionary_t props = device_properties(busdev);
-	prop_array_t cfg = prop_array_create();
+	prop_array_t cfg;
 	int i;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding spdmem for SPARCle "));
-	for (i = 0x50; i <= 0x51; i++) {
-		prop_dictionary_t spd = prop_dictionary_create();
-		prop_dictionary_set_string(spd, "name", "dimm-spd");
-		prop_dictionary_set_uint32(spd, "addr", i);
-		prop_dictionary_set_uint64(spd, "cookie", 0);
-		prop_array_add(cfg, spd);
-		prop_object_release(spd);
-	}
-	prop_dictionary_set(props, "i2c-child-devices", cfg);
+
+	cfg = create_i2c_dict(busdev);
+	for (i = 0x50; i <= 0x51; i++)
+		add_i2c_device(cfg, "dimm-spd", NULL, i, 0);
 	prop_object_release(cfg);
 }
 
@@ -205,6 +198,8 @@ add_i2c_props_e450(device_t busdev, uint64_t node)
 
 	/* CPU temperatures. */
 	add_i2c_device(cfg, "CPU", "ecadc", 0x4f, node);
+
+	prop_object_release(cfg);
 }
 
 void
@@ -219,6 +214,8 @@ add_i2c_props_e250(device_t busdev, uint64_t node)
 	add_i2c_device(cfg, "PSU", "ecadc", 0x4a, node);
 	/* CPU & system board temperature */
 	add_i2c_device(cfg, "CPU", "ecadc", 0x4f, node);
+
+	prop_object_release(cfg);
 }
 
 /* Hardware specific device properties */
