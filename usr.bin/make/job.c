@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.274 2020/10/23 16:00:23 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.275 2020/10/23 16:45:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,39 +143,42 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.274 2020/10/23 16:00:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.275 2020/10/23 16:45:34 rillig Exp $");
 
 # define STATIC static
 
-/*-
- * Shell Specifications:
- * Each shell type has associated with it the following information:
- *	1) The string which must match the last character of the shell name
- *	   for the shell to be considered of this type. The longest match
- *	   wins.
- *	2) A command to issue to turn off echoing of command lines
- *	3) A command to issue to turn echoing back on again
- *	4) What the shell prints, and its length, when given the echo-off
- *	   command. This line will not be printed when received from the shell
- *	5) A boolean to tell if the shell has the ability to control
- *	   error checking for individual commands.
- *	6) The string to turn this checking on.
- *	7) The string to turn it off.
- *	8) The command-flag to give to cause the shell to start echoing
- *	   commands right away.
- *	9) The command-flag to cause the shell to Lib_Exit when an error is
- *	   detected in one of the commands.
+/* A shell defines how the commands are run.  All commands for a target are
+ * written into a single file, which is then given to the shell to execute
+ * the commands from it.  The commands are written to the file using a few
+ * templates for echo control and error control.
  *
- * Some special stuff goes on if a shell doesn't have error control. In such
- * a case, errCheck becomes a printf template for echoing the command,
- * should echoing be on and ignErr becomes another printf template for
- * executing the command while ignoring the return status. Finally errOut
- * is a printf template for running the command and causing the shell to
- * exit on error. If any of these strings are empty when hasErrCtl is FALSE,
- * the command will be executed anyway as is and if it causes an error, so be
- * it. Any templates setup to echo the command will escape any '$ ` \ "'i
- * characters in the command string to avoid common problems with
- * echo "%s\n" as a template.
+ * The name of the shell is the basename for the predefined shells, such as
+ * "sh", "csh", "bash".  For custom shells, it is the full pathname, and its
+ * basename is used to select the type of shell; the longest match wins.
+ * So /usr/pkg/bin/bash has type sh, /usr/local/bin/tcsh has type csh.
+ *
+ * The echoing of command lines is controlled using hasEchoCtl, echoOff,
+ * echoOn, noPrint and noPrintLen.  When echoOff is executed by the shell, it
+ * still outputs something, but this something is not interesting, therefore
+ * it is filtered out using noPrint and noPrintLen.
+ *
+ * The error checking for individual commands is controlled using hasErrCtl,
+ * errCheck, ignErr and errOut.
+ *
+ * If a shell doesn't have error control, errCheck becomes a printf template
+ * for echoing the command, should echoing be on and ignErr becomes another
+ * printf template for executing the command while ignoring the return
+ * status. Finally errOut is a printf template for running the command and
+ * causing the shell to exit on error. If any of these strings are empty when
+ * hasErrCtl is FALSE, the command will be executed anyway as is and if it
+ * causes an error, so be it. Any templates setup to echo the command will
+ * escape any '$ ` \ "' characters in the command string to avoid common
+ * problems with echo "%s\n" as a template.
+ *
+ * The command-line flags "echo" and "exit" also control the behavior.  The
+ * "echo" flag causes the shell to start echoing commands right away.  The
+ * "exit" flag causes the shell to exit when an error is detected in one of
+ * the commands.
  */
 typedef struct Shell {
 
@@ -197,9 +200,9 @@ typedef struct Shell {
     const char *ignErr;		/* string to turn off error checking */
     const char *errOut;		/* string to use for testing exit code */
 
-    const char *newline;	/* string literal that results in a newline
-				 * character when it appears outside of any
-				 * 'quote' or "quote" characters */
+    /* string literal that results in a newline character when it appears
+     * outside of any 'quote' or "quote" characters */
+    const char *newline;
     char commentChar;		/* character used by shell for comment lines */
 
     /*
