@@ -4,6 +4,7 @@ dep-double-colon-indep.mk
 dep-double-colon.mk
 dep-exclam.mk
 dep-none.mk
+dep-percent.mk
 dep-var.mk
 dep-wildcards.mk
 exit status 0
