@@ -1,19 +1,19 @@
-# $NetBSD: modmisc.mk,v 1.48 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: modmisc.mk,v 1.49 2020/10/24 08:50:17 rillig Exp $
 #
 # miscellaneous modifier tests
 
 # do not put any dirs in this list which exist on some
 # but not all target systems - an exists() check is below.
-path=:/bin:/tmp::/:.:/no/such/dir:.
+path=		:/bin:/tmp::/:.:/no/such/dir:.
 # strip cwd from path.
-MOD_NODOT=S/:/ /g:N.:ts:
-# and decorate, note that $'s need to be doubled. Also note that 
+MOD_NODOT=	S/:/ /g:N.:ts:
+# and decorate, note that $'s need to be doubled. Also note that
 # the modifier_variable can be used with other modifiers.
-MOD_NODOTX=S/:/ /g:N.:@d@'$$d'@
+MOD_NODOTX=	S/:/ /g:N.:@d@'$$d'@
 # another mod - pretend it is more interesting
-MOD_HOMES=S,/home/,/homes/,
-MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
-MOD_SEP=S,:, ,g
+MOD_HOMES=	S,/home/,/homes/,
+MOD_OPT=	@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
+MOD_SEP=	S,:, ,g
 
 all:	modvar modvarloop modsysv emptyvar undefvar
 all:	mod-quote
@@ -32,8 +32,8 @@ modvar:
 	@echo "path=${path:${MOD_HOMES}:${MOD_NODOTX}:ts:}"
 
 .for d in ${path:${MOD_SEP}:N.} /usr/xbin
-path_$d?= ${d:${MOD_OPT}:${MOD_HOMES}}/
-paths+= ${d:${MOD_OPT}:${MOD_HOMES}}
+path_$d?=	${d:${MOD_OPT}:${MOD_HOMES}}/
+paths+=		${d:${MOD_OPT}:${MOD_HOMES}}
 .endfor
 
 modvarloop:
