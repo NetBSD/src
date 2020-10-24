@@ -1,4 +1,4 @@
-/* $NetBSD: __sigtramp2.S,v 1.4 2020/10/19 22:33:53 kamil Exp $ */
+/* $NetBSD: __sigtramp2.S,v 1.5 2020/10/24 07:00:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 /*
- * The ARM signal trampoline is invoked only to return from
+ * The ARM64 signal trampoline is invoked only to return from
  * the signal; the kernel calls the signal handler directly.
  *
  * On entry, the stack looks like:
