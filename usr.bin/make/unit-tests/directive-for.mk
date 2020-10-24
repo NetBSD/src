@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.5 2020/09/22 19:08:48 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.6 2020/10/24 08:50:17 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -81,8 +81,8 @@ var2=	value before
 # Since that date, the .for loop expands to:
 #	EXPANSION${:U+}= value
 #
-EXPANSION=	before
-EXPANSION+ =	before
+EXPANSION=		before
+EXPANSION+ =		before
 .for plus in +
 EXPANSION${plus}=	value
 .endfor

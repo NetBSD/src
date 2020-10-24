@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-parsefile.mk,v 1.4 2020/09/21 03:45:29 rillig Exp $
+# $NetBSD: varname-dot-parsefile.mk,v 1.5 2020/10/24 08:50:17 rillig Exp $
 #
 # Tests for the special .PARSEFILE variable, which contains the basename part
 # of the file that is currently parsed.
@@ -25,7 +25,7 @@
 # There is absolutely no point in faking the location of the file that is
 # being parsed.  Technically, it's possible though, but only if the file
 # being parsed is a relative pathname.  See PrintLocation for details.
-.PARSEFILE = fake-parsefile
+.PARSEFILE=	fake-parsefile
 .info The location can be faked in some cases.
 
 # After including another file, .PARSEFILE is reset.

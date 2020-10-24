@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.25 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.26 2020/10/24 08:50:17 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -12,10 +12,10 @@ all: varerror-unclosed
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
 
-True = ${echo true >&2:L:sh}TRUE
-False= ${echo false >&2:L:sh}FALSE
+True=	${echo true >&2:L:sh}TRUE
+False=	${echo false >&2:L:sh}FALSE
 
-VSET= is set
+VSET=	is set
 .undef UNDEF
 
 U_false:
@@ -46,7 +46,7 @@ NQ_none:
 	@echo do not evaluate or expand :? if discarding
 	@echo ${VSET:U${1:L:?${True}:${False}}}
 
-April1= 1459494000
+April1=	1459494000
 
 # slightly contorted syntax to use utc via variable
 strftime:
@@ -54,11 +54,11 @@ strftime:
 	@echo date=${%Y%m%d:L:${gmtime=${April1}:L}}
 
 # big jumps to handle 3 digits per step
-M_cmpv.units = 1 1000 1000000
-M_cmpv = S,., ,g:_:range:@i@+ $${_:[-$$i]} \* $${M_cmpv.units:[$$i]}@:S,^,expr 0 ,1:sh
+M_cmpv.units=	1 1000 1000000
+M_cmpv=		S,., ,g:_:range:@i@+ $${_:[-$$i]} \* $${M_cmpv.units:[$$i]}@:S,^,expr 0 ,1:sh
 
-Version = 123.456.789
-cmpv.only = target specific vars
+Version=	123.456.789
+cmpv.only=	target specific vars
 
 cmpv:
 	@echo Version=${Version} == ${Version:${M_cmpv}}
@@ -67,10 +67,10 @@ cmpv:
 
 # catch misshandling of nested vars in .for loop
 MAN=
-MAN1= make.1
+MAN1=	make.1
 .for s in 1 2
 .  if defined(MAN$s) && !empty(MAN$s)
-MAN+= ${MAN$s}
+MAN+=	${MAN$s}
 .  endif
 .endfor
 
@@ -199,8 +199,8 @@ UNCLOSED_INDIR_1=	${UNCLOSED_ORIG
 UNCLOSED_INDIR_2=	${UNCLOSED_INDIR_1}
 
 FLAGS=	one two
-FLAGS+= ${FLAGS.${.ALLSRC:M*.c:T:u}}
-FLAGS.target2.c = three four
+FLAGS+=	${FLAGS.${.ALLSRC:M*.c:T:u}}
+FLAGS.target2.c= three four
 
 target1.c:
 target2.c:
