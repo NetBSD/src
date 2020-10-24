@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.83 2020/10/23 04:58:33 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.84 2020/10/24 08:56:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,16 +34,14 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.83 2020/10/23 04:58:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.84 2020/10/24 08:56:27 rillig Exp $");
 
-/* Allocate and initialize a list node.
- *
- * The fields 'prev' and 'next' must be initialized by the caller.
- */
 static ListNode *
-LstNodeNew(void *datum)
+LstNodeNew(ListNode *prev, ListNode *next, void *datum)
 {
     ListNode *node = bmake_malloc(sizeof *node);
+    node->prev = prev;
+    node->next = next;
     node->datum = datum;
     return node;
 }
@@ -131,9 +129,7 @@ Lst_InsertBefore(List *list, ListNode *node, void *datum)
     assert(!LstIsEmpty(list));
     assert(datum != NULL);
 
-    newNode = LstNodeNew(datum);
-    newNode->prev = node->prev;
-    newNode->next = node;
+    newNode = LstNodeNew(node->prev, node, datum);
 
     if (node->prev != NULL) {
 	node->prev->next = newNode;
@@ -153,9 +149,7 @@ Lst_Prepend(List *list, void *datum)
 
     assert(datum != NULL);
 
-    node = LstNodeNew(datum);
-    node->prev = NULL;
-    node->next = list->first;
+    node = LstNodeNew(NULL, list->first, datum);
 
     if (list->first == NULL) {
 	list->first = node;
@@ -174,9 +168,7 @@ Lst_Append(List *list, void *datum)
 
     assert(datum != NULL);
 
-    node = LstNodeNew(datum);
-    node->prev = list->last;
-    node->next = NULL;
+    node = LstNodeNew(list->last, NULL, datum);
 
     if (list->last == NULL) {
 	list->first = node;
