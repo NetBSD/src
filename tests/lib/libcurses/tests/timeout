@@ -11,7 +11,7 @@ input "b"
 # return ERR not the character b.
 call -1 getch
 # drain input....
-call OK drain
+call OK drain STDSCR
 call OK timeout -1
 call OK keypad STDSCR 1
 delay 0

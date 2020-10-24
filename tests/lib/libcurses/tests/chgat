@@ -12,4 +12,3 @@ call OK move 0 0
 call OK chgat -1 $UNDERSCORE 3 0
 call OK refresh
 compare chgat3.chk
- 

@@ -1,5 +1,6 @@
 include start
-call OK mvvline 3 5 `\000B` 15
+call OK move 3 5
+call OK vline `\000B` 15
 call OK refresh
 compare mvvline1.chk
 call OK mvvline 10 12 `\004C` 12

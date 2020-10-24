@@ -1,1 +1,2 @@
+include start
 call 0x15 killchar

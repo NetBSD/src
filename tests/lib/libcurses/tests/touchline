@@ -1,27 +1,26 @@
-include start
-include window_create
-call OK wmove $win1 0 0
-call OK waddstr $win1 "000000"
-call OK wmove $win1 1 0
-call OK waddstr $win1 "000000"
-call OK wmove $win1 2 0
-call OK waddstr $win1 "000000"
-call OK wmove $win1 3 0
-call OK waddstr $win1 "000000"
-call OK wmove $win1 4 0
-call OK waddstr $win1 "000000"
-call OK wmove $win1 5 0
-call OK waddstr $win1 "000000"
+include window
+include fill_window_numbers
 call OK wrefresh $win1
-compare touchline1.chk
+compare fill_window_numbers.chk
+
 call win2 subwin $win1 3 3 3 6
 check win2 NON_NULL
 call OK wmove $win2 0 0
-call OK waddstr $win2 "222"
+call OK winsstr $win2 "999"
 call OK wmove $win2 1 0
-call OK waddstr $win2 "222"
+call OK winsstr $win2 "999"
 call OK wmove $win2 2 0
-call OK waddstr $win2 "222"
-#call OK touchline $win1 3 3
-call OK wrefresh $win2
+call OK winsstr $win2 "999"
+call OK touchline $win1 3 3
+call OK wrefresh $win1
+compare touchline1.chk
+
+# test on stdscr
+call OK mvaddstr 15 15 "aaaaaa"
+call OK mvaddstr 16 15 "bbbbbb"
+call OK mvaddstr 17 15 "cccccc"
+call OK mvaddstr 18 15 "dddddd"
+call OK refresh
+call OK touchline STDSCR 16 2
+call OK refresh
 compare touchline2.chk

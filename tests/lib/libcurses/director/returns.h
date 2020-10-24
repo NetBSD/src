@@ -1,4 +1,4 @@
-/*	$NetBSD: returns.h,v 1.2 2019/09/19 11:31:57 blymn Exp $	*/
+/*	$NetBSD: returns.h,v 1.3 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -38,6 +38,7 @@ typedef enum {
 	data_string,
 	data_byte,
 	data_cchar,
+	data_wchar,
 	data_err,
 	data_ok,
 	data_null,

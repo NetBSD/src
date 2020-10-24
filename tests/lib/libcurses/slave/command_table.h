@@ -1,4 +1,4 @@
-/*	$NetBSD: command_table.h,v 1.3 2011/09/15 11:46:19 blymn Exp $	*/
+/*	$NetBSD: command_table.h,v 1.4 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -34,10 +34,20 @@
 
 #include "curses_commands.h"
 
+static const char *restricted_commands[] = { "filter", "ripoffline", "use_env",
+	"slk_init", "initscr", "newterm"
+};
+
+size_t nrcmds = sizeof(restricted_commands) / sizeof(char *);
+
 /*
  * Curses commands
  */
 struct command_def commands[] = {
+	{"filter", cmd_filter},
+	{"ripoffline", cmd_ripoffline},
+	{"use_env", cmd_use_env},
+	{"slk_init", cmd_slk_init},
 	{"DRAIN", cmd_DRAIN},
 	{"addbytes", cmd_addbytes},
 	{"addch", cmd_addch},
@@ -151,6 +161,10 @@ struct command_def commands[] = {
 	{"getpary", cmd_getpary},
 	{"getparx", cmd_getparx},
 	{"getparyx", cmd_getparyx},
+	{"getmaxyx", cmd_getmaxyx},
+	{"getbegyx", cmd_getbegyx},
+	{"setsyx", cmd_setsyx},
+	{"getsyx", cmd_getsyx},
 	{"gettmode", cmd_gettmode},
 	{"getwin", cmd_getwin},
 	{"halfdelay", cmd_halfdelay},
@@ -169,9 +183,11 @@ struct command_def commands[] = {
 	{"is_wintouched", cmd_is_wintouched},
 	{"keyok", cmd_keyok},
 	{"keypad", cmd_keypad},
+	{"is_keypad", cmd_is_keypad},
 	{"keyname", cmd_keyname},
 	{"killchar", cmd_killchar},
 	{"leaveok", cmd_leaveok},
+	{"is_leaveok", cmd_is_leaveok},
 	{"meta", cmd_meta},
 	{"mvcur", cmd_mvcur},
 	{"mvderwin", cmd_mvderwin},
@@ -390,6 +406,26 @@ struct command_def commands[] = {
 	{"wbkgrnd", cmd_wbkgrnd},
 	{"wbkgrndset", cmd_wbkgrndset},
 	{"wgetbkgrnd", cmd_wgetbkgrnd},
+	{"immedok", cmd_immedok},
+	{"syncok", cmd_syncok},
+	{"wcursyncup", cmd_wcursyncup},
+	{"wsyncup", cmd_wsyncup},
+	{"wsyncdown", cmd_wsyncdown},
+	{"slk_attroff", cmd_slk_attroff},
+	{"slk_attr_off", cmd_slk_attr_off},
+	{"slk_attron", cmd_slk_attron},
+	{"slk_attr_on", cmd_slk_attr_on},
+	{"slk_attrset", cmd_slk_attrset},
+	{"slk_attr_set", cmd_slk_attr_set},
+	{"slk_clear", cmd_slk_clear},
+	{"slk_color", cmd_slk_color},
+	{"slk_label", cmd_slk_label},
+	{"slk_noutrefresh", cmd_slk_noutrefresh},
+	{"slk_refresh", cmd_slk_refresh},
+	{"slk_restore", cmd_slk_restore},
+	{"slk_set", cmd_slk_set},
+	{"slk_touch", cmd_slk_touch},
+	{"slk_wset", cmd_slk_wset},
 };
 
 size_t ncmds = sizeof(commands) / sizeof(struct command_def);

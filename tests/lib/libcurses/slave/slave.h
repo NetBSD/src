@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.h,v 1.3 2011/09/15 11:46:19 blymn Exp $	*/
+/*	$NetBSD: slave.h,v 1.4 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -43,6 +43,9 @@ void report_int(int);
 void report_byte(chtype);
 void report_return(int);
 void report_nstr(chtype *);
+void report_cchar(cchar_t);
+void report_wchar(wchar_t);
+void report_wstr(wchar_t *);
 void report_status(const char *);
 void report_ptr(void *);
 int  check_arg_count(int, int);
