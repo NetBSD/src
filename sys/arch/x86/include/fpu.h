@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.22 2020/10/15 17:40:14 mgorny Exp $	*/
+/*	$NetBSD: fpu.h,v 1.23 2020/10/24 07:14:29 mgorny Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -14,8 +14,8 @@ struct trapframe;
 void fpuinit(struct cpu_info *);
 void fpuinit_mxcsr_mask(void);
 
-void fpu_area_save(void *, uint64_t);
-void fpu_area_restore(const void *, uint64_t);
+void fpu_area_save(void *, uint64_t, bool);
+void fpu_area_restore(const void *, uint64_t, bool);
 
 void fpu_save(void);
 

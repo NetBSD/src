@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.80 2020/09/08 17:02:03 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.81 2020/10/24 07:14:30 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.80 2020/09/08 17:02:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.81 2020/10/24 07:14:30 mgorny Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2014,7 +2014,8 @@ vmx_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	fpu_kern_enter();
-	fpu_area_restore(&cpudata->gfpu, vmx_xcr0_mask);
+	/* TODO: should we use *XSAVE64 here? */
+	fpu_area_restore(&cpudata->gfpu, vmx_xcr0_mask, false);
 
 	if (vmx_xcr0_mask != 0) {
 		cpudata->hxcr0 = rdxcr(0);
@@ -2032,7 +2033,8 @@ vmx_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 		wrxcr(0, cpudata->hxcr0);
 	}
 
-	fpu_area_save(&cpudata->gfpu, vmx_xcr0_mask);
+	/* TODO: should we use *XSAVE64 here? */
+	fpu_area_save(&cpudata->gfpu, vmx_xcr0_mask, false);
 	fpu_kern_leave();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.41 2020/06/15 09:09:23 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.42 2020/10/24 07:14:29 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -484,6 +484,82 @@ xrstor(const void *addr, uint64_t mask)
 		: "memory"
 	);
 }
+
+#ifdef __x86_64__
+static inline void
+fxsave64(void *addr)
+{
+	uint8_t *area = addr;
+
+	__asm volatile (
+		"fxsave64	%[area]"
+		: [area] "=m" (*area)
+		:
+		: "memory"
+	);
+}
+
+static inline void
+fxrstor64(const void *addr)
+{
+	const uint8_t *area = addr;
+
+	__asm volatile (
+		"fxrstor64 %[area]"
+		:
+		: [area] "m" (*area)
+		: "memory"
+	);
+}
+
+static inline void
+xsave64(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsave64	%[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xsaveopt64(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsaveopt64 %[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xrstor64(const void *addr, uint64_t mask)
+{
+	const uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xrstor64 %[area]"
+		:
+		: [area] "m" (*area), "a" (low), "d" (high)
+		: "memory"
+	);
+}
+#endif
 
 /* -------------------------------------------------------------------------- */
 
