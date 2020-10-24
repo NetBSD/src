@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.220 2020/10/24 03:01:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.221 2020/10/24 03:30:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.220 2020/10/24 03:01:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.221 2020/10/24 03:30:25 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -244,11 +244,11 @@ SuffStrIsPrefix(const char *pref, const char *str)
  * Results:
  *	NULL if it ain't, pointer to the start of suffix in str if it is.
  */
-static char *
-SuffSuffGetSuffix(const Suff *s, size_t nameLen, char *nameEnd)
+static const char *
+SuffSuffGetSuffix(const Suff *s, size_t nameLen, const char *nameEnd)
 {
-    char *p1;			/* Pointer into suffix name */
-    char *p2;			/* Pointer into string being examined */
+    const char *p1;		/* Pointer into suffix name */
+    const char *p2;		/* Pointer into string being examined */
 
     if (nameLen < s->nameLen)
 	return NULL;		/* this string is shorter than the suffix */
@@ -273,16 +273,22 @@ SuffSuffIsSuffix(const Suff *suff, size_t nameLen, char *nameEnd)
 }
 
 static Suff *
-FindSuffByName(const char *name)
+FindSuffByNameLen(const char *name, size_t nameLen)
 {
     SuffListNode *ln;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
 	Suff *suff = ln->datum;
-	if (strcmp(suff->name, name) == 0)
+	if (suff->nameLen == nameLen && memcmp(suff->name, name, nameLen) == 0)
 	    return suff;
     }
     return NULL;
+}
+
+static Suff *
+FindSuffByName(const char *name)
+{
+    return FindSuffByNameLen(name, strlen(name));
 }
 
 static GNode *
@@ -608,17 +614,16 @@ Suff_EndTransform(GNode *gn)
 static void
 SuffRebuildGraph(GNode *transform, Suff *suff)
 {
-    char *name = transform->name;
+    const char *name = transform->name;
     size_t nameLen = strlen(name);
-    char *prefixName;
-    const char *suffixName;
+    const char *toName;
 
     /*
      * First see if it is a transformation from this suffix.
      */
-    suffixName = SuffStrIsPrefix(suff->name, name);
-    if (suffixName != NULL) {
-	Suff *to = FindSuffByName(suffixName);
+    toName = SuffStrIsPrefix(suff->name, name);
+    if (toName != NULL) {
+	Suff *to = FindSuffByName(toName);
 	if (to != NULL) {
 	    /* Link in and return, since it can't be anything else. */
 	    SuffInsert(to->children, suff);
@@ -630,15 +635,9 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
     /*
      * Not from, maybe to?
      */
-    prefixName = SuffSuffGetSuffix(suff, nameLen, name + nameLen);
-    if (prefixName != NULL) {
-	Suff *from;
-
-	/* Null-terminate the source suffix in order to find it. */
-	/* XXX: don't modify strings, not even temporarily */
-	prefixName[0] = '\0';
-	from = FindSuffByName(name);
-	prefixName[0] = suff->name[0];	/* restore */
+    toName = SuffSuffGetSuffix(suff, nameLen, name + nameLen);
+    if (toName != NULL) {
+	Suff *from = FindSuffByNameLen(name, (size_t)(toName - name));
 
 	if (from != NULL) {
 	    /* establish the proper relationship */
