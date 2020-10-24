@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.219 2020/10/23 20:15:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.220 2020/10/24 03:01:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.219 2020/10/23 20:15:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.220 2020/10/24 03:01:19 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -978,48 +978,47 @@ SuffRemoveSrc(SrcList *l)
 static Src *
 SuffFindThem(SrcList *srcs, SrcList *slst)
 {
-    Src            *s;		/* current Src */
-    Src		   *rs;		/* returned Src */
-    char	   *ptr;
-
-    rs = NULL;
+    Src *retsrc = NULL;
 
     while (!Lst_IsEmpty(srcs)) {
-	s = Lst_Dequeue(srcs);
+	Src *src = Lst_Dequeue(srcs);
 
-	SUFF_DEBUG1("\ttrying %s...", s->file);
+	SUFF_DEBUG1("\ttrying %s...", src->file);
 
 	/*
 	 * A file is considered to exist if either a node exists in the
 	 * graph for it or the file actually exists.
 	 */
-	if (Targ_FindNode(s->file) != NULL) {
+	if (Targ_FindNode(src->file) != NULL) {
 #ifdef DEBUG_SRC
-	    debug_printf("remove %p from %p\n", s, srcs);
+	    debug_printf("remove %p from %p\n", src, srcs);
 #endif
-	    rs = s;
+	    retsrc = src;
 	    break;
 	}
 
-	if ((ptr = Dir_FindFile(s->file, s->suff->searchPath)) != NULL) {
-	    rs = s;
+	{
+	    char *file = Dir_FindFile(src->file, src->suff->searchPath);
+	    if (file != NULL) {
+		retsrc = src;
 #ifdef DEBUG_SRC
-	    debug_printf("remove %p from %p\n", s, srcs);
+		debug_printf("remove %p from %p\n", src, srcs);
 #endif
-	    free(ptr);
-	    break;
+		free(file);
+		break;
+	    }
 	}
 
 	SUFF_DEBUG0("not there\n");
 
-	SuffAddLevel(srcs, s);
-	Lst_Append(slst, s);
+	SuffAddLevel(srcs, src);
+	Lst_Append(slst, src);
     }
 
-    if (rs) {
+    if (retsrc) {
 	SUFF_DEBUG0("got it\n");
     }
-    return rs;
+    return retsrc;
 }
 
 /* See if any of the children of the target in the Src structure is one from
