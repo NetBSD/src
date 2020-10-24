@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus_acpi.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: vmbus_acpi.c,v 1.3 2020/10/24 08:57:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.3 2020/10/24 08:57:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,7 +84,8 @@ vmbus_acpi_attach(device_t parent, device_t self, void *opaque)
 	sc->sc.sc_dev = self;
 	sc->sc.sc_iot = aa->aa_iot;
 	sc->sc.sc_memt = aa->aa_memt;
-	sc->sc.sc_dmat = aa->aa_dmat64 ? aa->aa_dmat64 : aa->aa_dmat;
+	sc->sc.sc_dmat = BUS_DMA_TAG_VALID(aa->aa_dmat64) ?
+	    aa->aa_dmat64 : aa->aa_dmat;
 
 	if (vmbus_attach(&sc->sc))
 		return;
