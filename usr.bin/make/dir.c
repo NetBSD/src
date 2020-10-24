@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.173 2020/10/24 09:18:09 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.174 2020/10/24 23:27:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.173 2020/10/24 09:18:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.174 2020/10/24 23:27:33 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -808,7 +808,6 @@ DirPrintExpansions(StringList *words)
  *
  * Side Effects:
  *	Directories may be opened. Who knows?
- *	Undefined behavior if the word is really in read-only memory.
  *-----------------------------------------------------------------------
  */
 void
@@ -850,16 +849,13 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 		    cp--;
 		}
 		if (cp != word) {
-		    char sc;
-		    char *dirpath;
+		    char *prefix = bmake_strsedup(word, cp + 1);
 		    /*
 		     * If the glob isn't in the first component, try and find
 		     * all the components up to the one with a wildcard.
 		     */
-		    sc = cp[1];
-		    ((char *)UNCONST(cp))[1] = '\0';
-		    dirpath = Dir_FindFile(word, path);
-		    ((char *)UNCONST(cp))[1] = sc;
+		    char *dirpath = Dir_FindFile(prefix, path);
+		    free(prefix);
 		    /*
 		     * dirpath is null if can't find the leading component
 		     * XXX: Dir_FindFile won't find internal components.
