@@ -1,0 +1,37 @@
+defining transformation from `.ccc' to `.cc'
+inserting ".ccc" (3) at end of list
+inserting ".cc" (2) at end of list
+transformation .ccc.cc complete
+defining transformation from `.c' to `.ccc'
+inserting ".c" (1) at end of list
+inserting ".ccc" (3) at end of list
+transformation .c.ccc complete
+defining transformation from `.short' to `.c'
+inserting ".short" (4) at end of list
+inserting ".c" (1) at end of list
+transformation .short.c complete
+defining transformation from `.sho' to `.c'
+inserting ".sho" (5) at end of list
+inserting ".c" (1) at end of list
+transformation .sho.c complete
+Wildcard expanding "all"...SuffFindDeps (all)
+	No known suffix on all. Using .NULL suffix
+adding suffix rules
+Wildcard expanding "suff-main.cc"...suffix is ".cc"...SuffFindDeps (suff-main.cc)
+	trying suff-main.ccc...not there
+	trying suff-main.c...not there
+	trying suff-main.short...not there
+	trying suff-main.sho...got it
+	applying .sho -> .c to "suff-main.c"
+	applying .c -> .ccc to "suff-main.ccc"
+	applying .ccc -> .cc to "suff-main.cc"
+suffix is ".ccc"...suffix is ".c"...suffix is ".sho"...SuffFindDeps (suff-main.sho)
+suffix is ".sho"...: 'Making suff-main.sho out of nothing.'
+: 'Making suff-main.c from suff-main.sho.'
+: 'Making suff-main.ccc from suff-main.c.'
+: 'Making suff-main.cc from suff-main.ccc.'
+Wildcard expanding "all"...SuffFindDeps (.END)
+	No known suffix on .END. Using .NULL suffix
+adding suffix rules
+Wildcard expanding ".END"...
+exit status 0
