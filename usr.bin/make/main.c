@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.387 2020/10/24 10:36:23 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.388 2020/10/24 20:29:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.387 2020/10/24 10:36:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.388 2020/10/24 20:29:40 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -145,7 +145,7 @@ static StringList *	variables;	/* list of variables to print
 int			maxJobs;	/* -j argument */
 static int		maxJobTokens;	/* -j argument */
 Boolean			compatMake;	/* -B argument */
-int			debug;		/* -d argument */
+DebugFlags		debug;		/* -d argument */
 Boolean			debugVflag;	/* -dV */
 Boolean			noExecute;	/* -n flag */
 Boolean			noRecursiveExecute;	/* -N flag */
