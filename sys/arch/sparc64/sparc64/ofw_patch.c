@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.3 2020/10/23 17:53:07 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.4 2020/10/24 13:47:53 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.3 2020/10/23 17:53:07 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.4 2020/10/24 13:47:53 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -187,13 +187,13 @@ add_i2c_props_e450(device_t busdev, uint64_t node)
 	/* Power supply 1 temperature. */
 	add_i2c_device(cfg, "PSU-1", "ecadc", 0x48, node);
 
-	/* Power supply 2 termperature. */
+	/* Power supply 2 temperature. */
 	add_i2c_device(cfg, "PSU-2", "ecadc", 0x49, node);
 
-	/* Power supply 3 tempterature. */
+	/* Power supply 3 temperature. */
 	add_i2c_device(cfg, "PSU-3", "ecadc", 0x4a, node);
 
-	/* Ambient tempterature. */
+	/* Ambient temperature. */
 	add_i2c_device(cfg, "ambient", "i2c-lm75", 0x4d, node);
 
 	/* CPU temperatures. */
@@ -206,14 +206,28 @@ void
 add_i2c_props_e250(device_t busdev, uint64_t node)
 {
 	prop_array_t cfg;
+	int i;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
 	cfg = create_i2c_dict(busdev);
 
 	/* PSU temperature / CPU fan */
 	add_i2c_device(cfg, "PSU", "ecadc", 0x4a, node);
+
 	/* CPU & system board temperature */
 	add_i2c_device(cfg, "CPU", "ecadc", 0x4f, node);
+
+	/* GPIO's */
+	for (i = 0x38; i <= 0x39; i++)
+		add_i2c_device(cfg, "gpio", "i2c-pcf8574", i, node);
+	for (i = 0x3d; i <= 0x3f; i++)
+		add_i2c_device(cfg, "gpio", "i2c-pcf8574", i, node);
+
+	/* NVRAM */
+	add_i2c_device(cfg, "nvram", "i2c-at24c02", 0x52, node);
+
+	/* RSC clock */
+	add_i2c_device(cfg, "rscrtc", "i2c-ds1307", 0x68, node);
 
 	prop_object_release(cfg);
 }
