@@ -1,8 +1,8 @@
-# $NetBSD: opt-debug-lint.mk,v 1.10 2020/10/05 19:27:48 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.11 2020/10/24 08:50:17 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
- 
+
 .MAKEFLAGS: -dL
 
 # Since 2020-09-13, undefined variables that are used on the left-hand side

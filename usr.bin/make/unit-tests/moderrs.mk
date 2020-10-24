@@ -1,12 +1,12 @@
-# $NetBSD: moderrs.mk,v 1.16 2020/10/24 08:34:59 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.17 2020/10/24 08:50:17 rillig Exp $
 #
 # various modifier error tests
 
-VAR=TheVariable
+VAR=		TheVariable
 # incase we have to change it ;-)
-MOD_UNKN=Z
-MOD_TERM=S,V,v
-MOD_S:= ${MOD_TERM},
+MOD_UNKN=	Z
+MOD_TERM=	S,V,v
+MOD_S:=		${MOD_TERM},
 
 FIB=	1 1 2 3 5 8 13 21 34
 
