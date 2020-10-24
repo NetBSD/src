@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.144 2020/10/24 04:03:04 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.145 2020/10/24 04:20:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.144 2020/10/24 04:03:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.145 2020/10/24 04:20:50 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -744,6 +744,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
     }
 
     while (fread((char *)arhPtr, sizeof(struct ar_hdr), 1, arch) == 1) {
+
 	if (strncmp(arhPtr->ar_fmag, ARFMAG, sizeof(arhPtr->ar_fmag)) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
@@ -751,7 +752,9 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	     */
 	    fclose(arch);
 	    return NULL;
-	} else if (strncmp(member, arhPtr->ar_name, tlen) == 0) {
+	}
+
+	if (strncmp(member, arhPtr->ar_name, tlen) == 0) {
 	    /*
 	     * If the member's name doesn't take up the entire 'name' field,
 	     * we have to be careful of matching prefixes. Names are space-
@@ -759,79 +762,75 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	     * of the matched string is anything but a space, this isn't the
 	     * member we sought.
 	     */
-	    if (tlen != sizeof(arhPtr->ar_name) &&
-		arhPtr->ar_name[tlen] != ' ') {
+	    if (tlen != sizeof arhPtr->ar_name && arhPtr->ar_name[tlen] != ' ')
 		goto skip;
-	    } else {
-		/*
-		 * To make life easier, we reposition the file at the start
-		 * of the header we just read before we return the stream.
-		 * In a more general situation, it might be better to leave
-		 * the file at the actual member, rather than its header, but
-		 * not here...
-		 */
-		if (fseek(arch, -(long)sizeof(struct ar_hdr), SEEK_CUR) != 0) {
+
+	    /*
+	     * To make life easier, we reposition the file at the start
+	     * of the header we just read before we return the stream.
+	     * In a more general situation, it might be better to leave
+	     * the file at the actual member, rather than its header, but
+	     * not here...
+	     */
+	    if (fseek(arch, -(long)sizeof(struct ar_hdr), SEEK_CUR) != 0) {
+		fclose(arch);
+		return NULL;
+	    }
+	    return arch;
+	}
+
+#ifdef AR_EFMT1
+	/*
+	 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
+	 * first <namelen> bytes of the file
+	 */
+	if (strncmp(arhPtr->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
+	    ch_isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1]))
+	{
+	    int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1) - 1]);
+	    char ename[MAXPATHLEN + 1];
+
+	    if ((unsigned int)elen > MAXPATHLEN) {
+		fclose(arch);
+		return NULL;
+	    }
+	    if (fread(ename, (size_t)elen, 1, arch) != 1) {
+		fclose(arch);
+		return NULL;
+	    }
+	    ename[elen] = '\0';
+	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
+		debug_printf("ArchFind: Extended format entry for %s\n", ename);
+	    }
+	    if (strncmp(ename, member, len) == 0) {
+		/* Found as extended name */
+		if (fseek(arch, -(long)sizeof(struct ar_hdr) - elen,
+			  SEEK_CUR) != 0) {
 		    fclose(arch);
 		    return NULL;
 		}
 		return arch;
 	    }
-	} else
-#ifdef AR_EFMT1
-		/*
-		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
-		 * first <namelen> bytes of the file
-		 */
-	    if (strncmp(arhPtr->ar_name, AR_EFMT1,
-					sizeof(AR_EFMT1) - 1) == 0 &&
-		ch_isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
-
-		int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
-		char ename[MAXPATHLEN + 1];
-
-		if ((unsigned int)elen > MAXPATHLEN) {
-			fclose(arch);
-			return NULL;
-		}
-		if (fread(ename, (size_t)elen, 1, arch) != 1) {
-			fclose(arch);
-			return NULL;
-		}
-		ename[elen] = '\0';
-		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    debug_printf("ArchFind: Extended format entry for %s\n", ename);
-		}
-		if (strncmp(ename, member, len) == 0) {
-			/* Found as extended name */
-			if (fseek(arch, -(long)sizeof(struct ar_hdr) - elen,
-				SEEK_CUR) != 0) {
-			    fclose(arch);
-			    return NULL;
-			}
-			return arch;
-		}
-		if (fseek(arch, -elen, SEEK_CUR) != 0) {
-		    fclose(arch);
-		    return NULL;
-		}
-		goto skip;
-	} else
-#endif
-	{
-skip:
-	    /*
-	     * This isn't the member we're after, so we need to advance the
-	     * stream's pointer to the start of the next header. Files are
-	     * padded with newlines to an even-byte boundary, so we need to
-	     * extract the size of the file from the 'size' field of the
-	     * header and round it up during the seek.
-	     */
-	    arhPtr->ar_size[sizeof(arhPtr->ar_size) - 1] = '\0';
-	    size = (int)strtol(arhPtr->ar_size, NULL, 10);
-	    if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0) {
+	    if (fseek(arch, -elen, SEEK_CUR) != 0) {
 		fclose(arch);
 		return NULL;
 	    }
+	}
+#endif
+
+skip:
+	/*
+	 * This isn't the member we're after, so we need to advance the
+	 * stream's pointer to the start of the next header. Files are
+	 * padded with newlines to an even-byte boundary, so we need to
+	 * extract the size of the file from the 'size' field of the
+	 * header and round it up during the seek.
+	 */
+	arhPtr->ar_size[sizeof(arhPtr->ar_size) - 1] = '\0';
+	size = (int)strtol(arhPtr->ar_size, NULL, 10);
+	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0) {
+	    fclose(arch);
+	    return NULL;
 	}
     }
 
