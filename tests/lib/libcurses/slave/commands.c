@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.5 2019/09/19 11:31:58 blymn Exp $	*/
+/*	$NetBSD: commands.c,v 1.6 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -42,6 +42,7 @@
 
 extern int cmdpipe[2];
 extern int slvpipe[2];
+extern int initdone;
 
 static void report_type(data_enum_t);
 static void report_message(int, const char *);
@@ -53,11 +54,29 @@ static void report_message(int, const char *);
 void
 command_execute(char *func, int nargs, char **args)
 {
-	size_t i;
+	size_t i, j;
 
 	i = 0;
 	while (i < ncmds) {
 		if (strcasecmp(func, commands[i].name) == 0) {
+			/* Check only restricted set of functions is called before
+			 * initscr/newterm */
+			if(!initdone){
+				j = 0;
+				while(j < nrcmds) {
+					if(strcasecmp(func, restricted_commands[j]) == 0){
+						if(strcasecmp(func, "initscr") == 0  ||
+							strcasecmp(func, "newterm") == 0)
+							initdone = 1;
+						/* matched function */
+						commands[i].func(nargs, args);
+						return;
+					}
+					j++;
+				}
+				report_status("YOU NEED TO CALL INITSCR/NEWTERM FIRST");
+				return;
+			}
 			/* matched function */
 			commands[i].func(nargs, args);
 			return;
@@ -107,6 +126,8 @@ report_return(int status)
 		report_type(data_err);
 	else if (status == OK)
 		report_type(data_ok);
+	else if (status == KEY_CODE_YES)
+		report_int(status);
 	else
 		report_status("INVALID_RETURN");
 }
@@ -222,6 +243,75 @@ report_nstr(chtype *string)
 		    __func__);
 
 	if (write(slvpipe[WRITE_PIPE], string, len) < 0)
+		err(1, "%s: command pipe write of status data failed",
+		    __func__);
+}
+
+/*
+ * Report a cchar_t back to the director via the command pipe.
+ */
+void
+report_cchar(cchar_t c)
+{
+	int len, type;
+	len = sizeof(cchar_t);
+	type = data_cchar;
+
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status type failed",
+		    __func__);
+
+	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status length failed",
+		    __func__);
+
+	if (write(slvpipe[WRITE_PIPE], &c, len) < 0)
+		err(1, "%s: command pipe write of status data failed",
+		    __func__);
+}
+
+/*
+ * Report a wchar_t back to the director via the command pipe.
+ */
+void
+report_wchar(wchar_t ch)
+{
+	wchar_t wstr[2];
+
+	wstr[0] = ch;
+	wstr[1] = L'\0';
+	report_wstr(wstr);
+}
+
+
+/*
+ * Report a string of wchar_t back to the director via the command pipe.
+ */
+void
+report_wstr(wchar_t *wstr)
+{
+	int len, type;
+	wchar_t *p;
+
+	len = 0;
+	p = wstr;
+
+	while (*p++ != L'\0')
+		len++;
+
+	len++; /* add in the termination chtype */
+	len *= sizeof(wchar_t);
+
+	type = data_wchar;
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status type failed",
+		    __func__);
+
+	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status length failed",
+		    __func__);
+
+	if (write(slvpipe[WRITE_PIPE], wstr, len) < 0)
 		err(1, "%s: command pipe write of status data failed",
 		    __func__);
 }

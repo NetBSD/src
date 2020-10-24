@@ -135,4 +135,4 @@ assign    KEY_SUSPEND    0x197
 assign    KEY_UNDO       0x198
 assign    KEY_MOUSE      0x199
 assign    KEY_RESIZE     0x200
-
+assign    KEY_CODE_YES   0x241

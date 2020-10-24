@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.8 2019/09/19 11:31:57 blymn Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.9 2020/10/24 04:46:17 blymn Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -156,6 +156,7 @@ VARNAME		[A-Za-z][A-Za-z0-9_-]+
 NULL_RET	NULL
 NON_NULL	NON_NULL
 CCHAR		[cC][cC][hH][aA][rR]
+WCHAR		[wW][cC][hH][aA][rR]
 BYTE		BYTE
 OR		\|
 LHB		\(
@@ -294,8 +295,12 @@ include		BEGIN(incl);
 			return MULTIPLIER;
 		}
 
-{CCHAR}	{
+{CCHAR}		{
 			return CCHAR;
+		}
+
+{WCHAR}		{
+			return WCHAR;
 		}
 
 {OR}		{
@@ -385,7 +390,7 @@ include		BEGIN(incl);
 			if ((yylval.retval = malloc(sizeof(ct_data_t))) == NULL)
 				err(1, "Cannot allocate return struct");
 			p = yytext;
-			p++; /* skip the leading ' */
+			p++; /* skip the leading ` */
 			if ((str = dequote(p, &len)) == NULL)
 				err(1, "Cannot allocate string");
 			len--; /* trim trailing ` */
