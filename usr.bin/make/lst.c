@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.85 2020/10/24 09:03:54 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.86 2020/10/24 10:18:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.85 2020/10/24 09:03:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.86 2020/10/24 10:18:29 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -77,7 +77,7 @@ Lst_Copy(List *list, LstCopyProc copyProc)
     return newList;
 }
 
-/* Free a list and all its nodes. The list data itself are not freed though. */
+/* Free a list and all its nodes. The node data are not freed though. */
 void
 Lst_Free(List *list)
 {
@@ -113,8 +113,7 @@ Lst_Destroy(List *list, LstFreeProc freeProc)
  * Functions to modify a list
  */
 
-/* Insert a new node with the given piece of data before the given node in the
- * given list. */
+/* Insert a new node with the datum before the given node. */
 void
 Lst_InsertBefore(List *list, ListNode *node, void *datum)
 {
