@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.167 2020/10/23 19:48:17 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.168 2020/10/24 04:40:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.167 2020/10/23 19:48:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.168 2020/10/24 04:40:45 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -175,7 +175,7 @@ CompatInterrupt(int signo)
  *	0 if the command succeeded, 1 if an error occurred.
  */
 int
-Compat_RunCommand(const char *cmdp, struct GNode *gn)
+Compat_RunCommand(const char *cmdp, GNode *gn)
 {
     char *cmdStart;		/* Start of expanded command */
     char *bp;
@@ -412,7 +412,7 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
     }
 
 
-    if (!WIFEXITED(reason) || (status != 0)) {
+    if (!WIFEXITED(reason) || status != 0) {
 	if (errCheck) {
 #ifdef USE_META
 	    if (useMeta) {
@@ -421,16 +421,13 @@ Compat_RunCommand(const char *cmdp, struct GNode *gn)
 #endif
 	    gn->made = ERROR;
 	    if (keepgoing) {
-		/*
-		 * Abort the current target, but let others continue.
-		 */
+		/* Abort the current target, but let others continue. */
 		printf(" (continuing)\n");
 	    } else {
 		printf("\n");
 	    }
-	    if (deleteOnError) {
-		    CompatDeleteTarget(gn);
-	    }
+	    if (deleteOnError)
+		CompatDeleteTarget(gn);
 	} else {
 	    /*
 	     * Continue executing commands for this target.
@@ -544,12 +541,10 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * Alter our type to tell if errors should be ignored or things
 	 * should not be printed so CompatRunCommand knows what to do.
 	 */
-	if (Targ_Ignore(gn)) {
+	if (Targ_Ignore(gn))
 	    gn->type |= OP_IGNORE;
-	}
-	if (Targ_Silent(gn)) {
+	if (Targ_Silent(gn))
 	    gn->type |= OP_SILENT;
-	}
 
 	if (Job_CheckCommands(gn, Fatal)) {
 	    /*
@@ -598,10 +593,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	    exit(1);
 	}
     } else if (gn->made == ERROR) {
-	/*
-	 * Already had an error when making this beastie. Tell the parent
-	 * to abort.
-	 */
+	/* Already had an error when making this. Tell the parent to abort. */
 	pgn->flags &= ~(unsigned)REMAKE;
     } else {
 	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
@@ -650,18 +642,14 @@ Compat_Run(GNodeList *targs)
     if (!shellName)
 	Shell_Init();
 
-    if (bmake_signal(SIGINT, SIG_IGN) != SIG_IGN) {
+    if (bmake_signal(SIGINT, SIG_IGN) != SIG_IGN)
 	bmake_signal(SIGINT, CompatInterrupt);
-    }
-    if (bmake_signal(SIGTERM, SIG_IGN) != SIG_IGN) {
+    if (bmake_signal(SIGTERM, SIG_IGN) != SIG_IGN)
 	bmake_signal(SIGTERM, CompatInterrupt);
-    }
-    if (bmake_signal(SIGHUP, SIG_IGN) != SIG_IGN) {
+    if (bmake_signal(SIGHUP, SIG_IGN) != SIG_IGN)
 	bmake_signal(SIGHUP, CompatInterrupt);
-    }
-    if (bmake_signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
+    if (bmake_signal(SIGQUIT, SIG_IGN) != SIG_IGN)
 	bmake_signal(SIGQUIT, CompatInterrupt);
-    }
 
     /* Create the .END node now, to keep the (debug) output of the
      * counter.mk test the same as before 2020-09-23.  This implementation
