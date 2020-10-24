@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.69 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.70 2020/10/24 20:51:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.69 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.70 2020/10/24 20:51:49 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -147,7 +147,7 @@ Str_Words(const char *str, Boolean expand)
 	str_len = strlen(str);
 	words_buf = bmake_malloc(strlen(str) + 1);
 
-	words_cap = MAX((str_len / 5), 50);
+	words_cap = str_len / 5 > 50 ? str_len / 5 : 50;
 	words = bmake_malloc((words_cap + 1) * sizeof(char *));
 
 	/*
