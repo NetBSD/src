@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.19 2020/01/21 11:24:47 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.20 2020/10/24 07:08:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.19 2020/01/21 11:24:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20 2020/10/24 07:08:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,7 @@ arm_acpi_dma64_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 
 	if (ad->ad_dmat64 != NULL)
 		return ad->ad_dmat64;
-		
+
 	dmat = kmem_alloc(sizeof(*dmat), KM_SLEEP);
 	*dmat = arm_generic_dma_tag;
 
