@@ -13,3 +13,4 @@ call OK wmove $win1 3 0
 call OK waddstr $win1 "444444"
 call OK wmove $win1 4 0
 call OK waddstr $win1 "555555"
+call OK scrollok $win1 $FALSE

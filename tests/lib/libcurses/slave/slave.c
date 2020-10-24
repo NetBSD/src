@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.7 2019/09/19 11:31:58 blymn Exp $	*/
+/*	$NetBSD: slave.c,v 1.8 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -41,6 +41,7 @@
 
 int cmdpipe[2];
 int slvpipe[2];
+int initdone = 0;
 
 #if 0
 static const char *returns_enum_names[] = {
@@ -54,7 +55,7 @@ static const char *returns_enum_names[] = {
  * and then process the command.
  */
 static void
-process_commands(WINDOW *mainscr)
+process_commands(void)
 {
 	int len, maxlen, argslen, i, ret, type;
 	char *cmdbuf, *tmpbuf, **args, **tmpargs;
@@ -155,10 +156,8 @@ process_commands(WINDOW *mainscr)
 int
 main(int argc, char *argv[])
 {
-	WINDOW *mainscr;
-
 	if (argc != 5) {
-		fprintf(stderr, "Usage: %s <cmdin> <cmdout> <slvin> slvout>\n",
+		fprintf(stderr, "Usage: %s <cmdin> <cmdout> <slvin> <slvout>\n",
 			getprogname());
 		return 0;
 	}
@@ -167,11 +166,7 @@ main(int argc, char *argv[])
 	sscanf(argv[3], "%d", &slvpipe[0]);
 	sscanf(argv[4], "%d", &slvpipe[1]);
 
-	mainscr = initscr();
-	if (mainscr == NULL)
-		err(1, "initscr failed");
-
-	process_commands(mainscr);
+	process_commands();
 
 	return 0;
 }

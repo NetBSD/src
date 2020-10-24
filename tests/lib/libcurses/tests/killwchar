@@ -1,0 +1,3 @@
+include start
+wchar kchar 0x15
+call2 OK $kchar killwchar

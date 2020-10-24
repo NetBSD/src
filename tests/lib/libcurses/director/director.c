@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.10 2012/06/03 23:19:11 joerg Exp $	*/
+/*	$NetBSD: director.c,v 1.11 2020/10/24 04:46:17 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -43,6 +43,7 @@
 #include <util.h>
 #include <err.h>
 #include "returns.h"
+#include "director.h"
 
 void yyparse(void);
 #define DEF_TERMPATH "."
@@ -58,6 +59,7 @@ int cmdpipe[2];		/* command pipe between director and slave */
 int slvpipe[2];		/* reply pipe back from slave */
 int master;		/* pty to the slave */
 int verbose;		/* control verbosity of tests */
+int check_file_flag;		/* control checkfile generation */
 const char *check_path;	/* path to prepend to check files for output
 			   validation */
 const char *include_path;	/* path to prepend to include files */
@@ -98,11 +100,13 @@ slave_died(int param)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-v] [-I include-path] [-C check-path] "
+	fprintf(stderr, "Usage: %s [-vgf] [-I include-path] [-C check-path] "
 	    "[-T terminfo-file] [-s pathtoslave] [-t term] "
 	    "commandfile\n", getprogname());
 	fprintf(stderr, " where:\n");
 	fprintf(stderr, "    -v enables verbose test output\n");
+	fprintf(stderr, "    -g enables check file generation if does not exist\n");
+	fprintf(stderr, "    -f forces check file generation if -g flag is set\n");
 	fprintf(stderr, "    -T is a directory containing the terminfo.cdb "
 	    "file, or a file holding the terminfo description n");
 	fprintf(stderr, "    -s is the path to the slave executable\n");
@@ -129,8 +133,9 @@ main(int argc, char *argv[])
 
 	termpath = term = slave = NULL;
 	verbose = 0;
+	check_file_flag = 0;
 
-	while ((ch = getopt(argc, argv, "vC:I:p:s:t:T:")) != -1) {
+	while ((ch = getopt(argc, argv, "vgfC:I:p:s:t:T:")) != -1) {
 		switch(ch) {
 		case 'I':
 			include_path = optarg;
@@ -152,6 +157,12 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'g':
+			check_file_flag |= GEN_CHECK_FILE;
+			break;
+		case 'f':
+			check_file_flag |= FORCE_GEN;
 			break;
 		case '?':
 		default:
