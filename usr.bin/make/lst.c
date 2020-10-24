@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.84 2020/10/24 08:56:27 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.85 2020/10/24 09:03:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.84 2020/10/24 08:56:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.85 2020/10/24 09:03:54 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -44,12 +44,6 @@ LstNodeNew(ListNode *prev, ListNode *next, void *datum)
     node->next = next;
     node->datum = datum;
     return node;
-}
-
-static Boolean
-LstIsEmpty(List *list)
-{
-    return list->first == NULL;
 }
 
 /* Create and initialize a new, empty list. */
@@ -126,19 +120,16 @@ Lst_InsertBefore(List *list, ListNode *node, void *datum)
 {
     ListNode *newNode;
 
-    assert(!LstIsEmpty(list));
     assert(datum != NULL);
 
     newNode = LstNodeNew(node->prev, node, datum);
 
-    if (node->prev != NULL) {
+    if (node->prev != NULL)
 	node->prev->next = newNode;
-    }
     node->prev = newNode;
 
-    if (node == list->first) {
+    if (node == list->first)
 	list->first = newNode;
-    }
 }
 
 /* Add a piece of data at the start of the given list. */
@@ -184,26 +175,17 @@ Lst_Append(List *list, void *datum)
 void
 Lst_Remove(List *list, ListNode *node)
 {
-    /*
-     * unlink it from the list
-     */
-    if (node->next != NULL) {
+    /* unlink it from its neighbors */
+    if (node->next != NULL)
 	node->next->prev = node->prev;
-    }
-    if (node->prev != NULL) {
+    if (node->prev != NULL)
 	node->prev->next = node->next;
-    }
 
-    /*
-     * if either the first or last of the list point to this node,
-     * adjust them accordingly
-     */
-    if (list->first == node) {
+    /* unlink it from the list */
+    if (list->first == node)
 	list->first = node->next;
-    }
-    if (list->last == node) {
+    if (list->last == node)
 	list->last = node->prev;
-    }
 }
 
 /* Replace the datum in the given node with the new datum. */
@@ -241,17 +223,17 @@ Lst_Find(List *list, LstFindProc match, const void *matchArgs)
  *
  * The start node may be NULL, in which case nothing is found. */
 ListNode *
-Lst_FindFrom(List *list, ListNode *node, LstFindProc match, const void *matchArgs)
+Lst_FindFrom(List *list, ListNode *node,
+	     LstFindProc match, const void *matchArgs)
 {
     ListNode *tln;
 
     assert(list != NULL);
     assert(match != NULL);
 
-    for (tln = node; tln != NULL; tln = tln->next) {
+    for (tln = node; tln != NULL; tln = tln->next)
 	if (match(tln->datum, matchArgs))
 	    return tln;
-    }
 
     return NULL;
 }
@@ -264,11 +246,9 @@ Lst_FindDatum(List *list, const void *datum)
 
     assert(datum != NULL);
 
-    for (node = list->first; node != NULL; node = node->next) {
-	if (node->datum == datum) {
+    for (node = list->first; node != NULL; node = node->next)
+	if (node->datum == datum)
 	    return node;
-	}
-    }
 
     return NULL;
 }
@@ -294,11 +274,11 @@ Lst_MoveAll(List *list1, List *list2)
 {
     if (list2->first != NULL) {
 	list2->first->prev = list1->last;
-	if (list1->last != NULL) {
+	if (list1->last != NULL)
 	    list1->last->next = list2->first;
-	} else {
+	else
 	    list1->first = list2->first;
-	}
+
 	list1->last = list2->last;
     }
     free(list2);
