@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.41 2020/10/24 04:27:24 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.42 2020/10/24 20:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,13 +75,13 @@
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.41 2020/10/24 04:27:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.42 2020/10/24 20:51:49 rillig Exp $");
 
 /* Make space in the buffer for adding a single byte. */
 void
 Buf_Expand_1(Buffer *buf)
 {
-    buf->cap += MAX(buf->cap, 16);
+    buf->cap += buf->cap > 16 ? buf->cap : 16;
     buf->data = bmake_realloc(buf->data, buf->cap);
 }
 
@@ -93,7 +93,7 @@ Buf_AddBytes(Buffer *buf, const char *bytes, size_t bytes_len)
     char *end;
 
     if (__predict_false(old_len + bytes_len >= buf->cap)) {
-	buf->cap += MAX(buf->cap, bytes_len + 16);
+	buf->cap += buf->cap > bytes_len + 16 ? buf->cap : bytes_len + 16;
 	buf->data = bmake_realloc(buf->data, buf->cap);
     }
 
