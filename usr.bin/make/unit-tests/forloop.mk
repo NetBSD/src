@@ -1,4 +1,4 @@
-# $Id: forloop.mk,v 1.3 2020/09/02 05:36:58 rillig Exp $
+# $NetBSD: forloop.mk,v 1.4 2020/10/24 08:34:59 rillig Exp $
 
 all: for-loop
 
