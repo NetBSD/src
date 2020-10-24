@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.142 2020/10/24 03:48:09 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.143 2020/10/24 04:00:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.142 2020/10/24 03:48:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.143 2020/10/24 04:00:56 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -403,25 +403,16 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ArchStatMember --
- *	Locate a member of an archive, given the path of the archive and
- *	the path of the desired member.
+/* Locate a member of an archive, given the path of the archive and the path
+ * of the desired member.
  *
  * Input:
  *	archive		Path to the archive
- *	member		Name of member. If it is a path, only the last
- *			component is used.
+ *	member		Name of member; only its basename is used.
  *	hash		TRUE if archive should be hashed if not already so.
  *
  * Results:
- *	A pointer to the current struct ar_hdr structure for the member. Note
- *	That no position is returned, so this is not useful for touching
- *	archive members. This is mostly because we have no assurances that
- *	The archive will remain constant after we read all the headers, so
- *	there's not much point in remembering the position...
- *-----------------------------------------------------------------------
+ *	The ar_hdr for the member.
  */
 static struct ar_hdr *
 ArchStatMember(const char *archive, const char *member, Boolean hash)
@@ -438,14 +429,11 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 
     /*
      * Because of space constraints and similar things, files are archived
-     * using their final path components, not the entire thing, so we need
-     * to point 'member' to the final component, if there is one, to make
-     * the comparisons easier...
+     * using their basename, not the entire path.
      */
     const char *base = strrchr(member, '/');
-    if (base != NULL) {
+    if (base != NULL)
 	member = base + 1;
-    }
 
     for (ln = archives->first; ln != NULL; ln = ln->next) {
 	const Arch *archPtr = ln->datum;
@@ -486,13 +474,11 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	static struct ar_hdr sarh;
 
 	arch = ArchFindMember(archive, member, &sarh, "r");
-
-	if (arch == NULL) {
+	if (arch == NULL)
 	    return NULL;
-	} else {
-	    fclose(arch);
-	    return &sarh;
-	}
+
+	fclose(arch);
+	return &sarh;
     }
 
     /*
@@ -500,9 +486,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * everything that's in it and cache it so we can get at it quickly.
      */
     arch = fopen(archive, "r");
-    if (arch == NULL) {
+    if (arch == NULL)
 	return NULL;
-    }
 
     /*
      * We use the ARMAG string to make sure this is an archive we
@@ -732,9 +717,8 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
     const char *base;
 
     arch = fopen(archive, mode);
-    if (arch == NULL) {
+    if (arch == NULL)
 	return NULL;
-    }
 
     /*
      * We use the ARMAG string to make sure this is an archive we
@@ -748,14 +732,12 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 
     /*
      * Because of space constraints and similar things, files are archived
-     * using their final path components, not the entire thing, so we need
-     * to point 'member' to the final component, if there is one, to make
-     * the comparisons easier...
+     * using their basename, not the entire path.
      */
     base = strrchr(member, '/');
-    if (base != NULL) {
+    if (base != NULL)
 	member = base + 1;
-    }
+
     len = tlen = strlen(member);
     if (len > sizeof(arhPtr->ar_name)) {
 	tlen = sizeof(arhPtr->ar_name);
