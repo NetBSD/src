@@ -243,7 +243,7 @@ be used as an expected result for a call.
 
 In addition to all the curses calls being supported by the slave,
 there is one more special call called "drain".  This call repeatedly
-called getch() until there are no more characters in stdin.  The call
+called wgetch(win) until there are no more characters in win.  The call
 assumes that the curses input is either in no delay or timed input
 mode otherwise the test will time out and fail.  This call can be used
 to clear any pending input when testing testing a timed read to

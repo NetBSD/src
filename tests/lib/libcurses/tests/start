@@ -1,3 +1,5 @@
 include std_defines
+call mainscr initscr
+check mainscr NON_NULL
 call OK refresh
 compare curses_start.chk
