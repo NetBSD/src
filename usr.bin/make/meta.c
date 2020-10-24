@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.127 2020/10/19 21:57:37 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.128 2020/10/24 04:31:53 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -236,7 +236,7 @@ eat_dots(char *buf, size_t bufsz, int dots)
 }
 
 static char *
-meta_name(struct GNode *gn, char *mname, size_t mnamelen,
+meta_name(char *mname, size_t mnamelen,
 	  const char *dname,
 	  const char *tname,
 	  const char *cwd)
@@ -510,7 +510,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	/* Don't create meta data. */
 	goto out;
 
-    fname = meta_name(gn, pbm->meta_fname, sizeof(pbm->meta_fname),
+    fname = meta_name(pbm->meta_fname, sizeof(pbm->meta_fname),
 		      dname, tname, objdir);
 
 #ifdef DEBUG_META_MODE
@@ -1113,7 +1113,7 @@ meta_oodate(GNode *gn, Boolean oodate)
      */
     Make_DoAllVar(gn);
 
-    meta_name(gn, fname, sizeof(fname), dname, tname, dname);
+    meta_name(fname, sizeof(fname), dname, tname, dname);
 
 #ifdef DEBUG_META_MODE
     DEBUG1(META, "meta_oodate: %s\n", fname);
