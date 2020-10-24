@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.18 2020/10/24 04:46:17 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.19 2020/10/24 14:45:06 roy Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -990,7 +990,7 @@ compare_streams(char *filename, bool discard)
 
 	int create_check_file = 0;
 
-	if ((check_file_flag == (GEN_CHECK_FILE | FORCE_GEN)))
+	if (check_file_flag == (GEN_CHECK_FILE | FORCE_GEN))
 		create_check_file = 1;
 	else if ((check_fd = open(check_file, O_RDONLY, 0)) < 0){
 		if (check_file_flag & GEN_CHECK_FILE)
