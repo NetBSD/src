@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.128 2020/10/24 04:31:53 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.129 2020/10/24 10:17:21 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -961,10 +961,8 @@ prefix_match(void *p, void *q)
 
 /* See if the path equals prefix or starts with "prefix/". */
 static Boolean
-path_match(const void *p, const void *q)
+path_starts_with(const char *path, const char *prefix)
 {
-    const char *path = p;
-    const char *prefix = q;
     size_t n = strlen(prefix);
 
     if (strncmp(path, prefix, n) != 0)
@@ -1315,22 +1313,16 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    DEQUOTE(move_target);
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
-		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
+		    if (*p == '/') {
 			/* remove any missingFiles entries that match p */
-			StringListNode *missingNode =
-				Lst_Find(missingFiles, path_match, p);
-			if (missingNode != NULL) {
-			    StringListNode *nln;
-
-			    do {
-				char *tp;
-				nln = Lst_FindFrom(missingFiles,
-						   missingNode->next,
-						   path_match, p);
-				tp = missingNode->datum;
-				Lst_Remove(missingFiles, missingNode);
-				free(tp);
-			    } while ((missingNode = nln) != NULL);
+			StringListNode *ln = missingFiles->first;
+			while (ln != NULL) {
+			    StringListNode *next = ln->next;
+			    if (path_starts_with(ln->datum, p)) {
+			        free(ln->datum);
+			        Lst_Remove(missingFiles, ln);
+			    }
+			    ln = next;
 			}
 		    }
 		    if (buf[0] == 'M') {
