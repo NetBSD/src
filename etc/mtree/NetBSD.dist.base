@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.224 2020/09/09 06:50:33 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.225 2020/10/24 07:03:00 kamil Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -426,6 +426,8 @@
 ./usr/share/games/fortune
 ./usr/share/games/larn
 ./usr/share/games/quiz.db
+./usr/share/gdb
+./usr/share/gdb/syscalls
 ./usr/share/gnats
 ./usr/share/groff_font
 ./usr/share/groff_font/devX100
