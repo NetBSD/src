@@ -14,22 +14,36 @@ defining transformation from `.sho' to `.c'
 inserting ".sho" (5) at end of list
 inserting ".c" (1) at end of list
 transformation .sho.c complete
+defining transformation from `.dead-end' to `.short'
+inserting ".dead-end" (6) at end of list
+inserting ".short" (4) at end of list
+transformation .dead-end.short complete
+inserting ".ccc" (3) at end of list
+inserting ".cc" (2) at end of list
+inserting ".c" (1) at end of list
+inserting ".ccc" (3) at end of list
+inserting ".short" (4) at end of list
+inserting ".c" (1) at end of list
+inserting ".sho" (5) at end of list
+inserting ".c" (1) at end of list
+inserting ".dead-end" (6) at end of list
+inserting ".short" (4) at end of list
 Wildcard expanding "all"...SuffFindDeps (all)
 	No known suffix on all. Using .NULL suffix
 adding suffix rules
-Wildcard expanding "suff-main.cc"...suffix is ".cc"...SuffFindDeps (suff-main.cc)
-	trying suff-main.ccc...not there
-	trying suff-main.c...not there
-	trying suff-main.short...not there
-	trying suff-main.sho...got it
-	applying .sho -> .c to "suff-main.c"
-	applying .c -> .ccc to "suff-main.ccc"
-	applying .ccc -> .cc to "suff-main.cc"
-suffix is ".ccc"...suffix is ".c"...suffix is ".sho"...SuffFindDeps (suff-main.sho)
-suffix is ".sho"...: 'Making suff-main.sho out of nothing.'
-: 'Making suff-main.c from suff-main.sho.'
-: 'Making suff-main.ccc from suff-main.c.'
-: 'Making suff-main.cc from suff-main.ccc.'
+Wildcard expanding "suff-lookup.cc"...suffix is ".cc"...SuffFindDeps (suff-lookup.cc)
+	trying suff-lookup.ccc...not there
+	trying suff-lookup.c...not there
+	trying suff-lookup.short...not there
+	trying suff-lookup.sho...got it
+	applying .sho -> .c to "suff-lookup.c"
+	applying .c -> .ccc to "suff-lookup.ccc"
+	applying .ccc -> .cc to "suff-lookup.cc"
+suffix is ".ccc"...suffix is ".c"...suffix is ".sho"...SuffFindDeps (suff-lookup.sho)
+suffix is ".sho"...: 'Making suff-lookup.sho out of nothing.'
+: 'Making suff-lookup.c from suff-lookup.sho.'
+: 'Making suff-lookup.ccc from suff-lookup.c.'
+: 'Making suff-lookup.cc from suff-lookup.ccc.'
 Wildcard expanding "all"...SuffFindDeps (.END)
 	No known suffix on .END. Using .NULL suffix
 adding suffix rules
