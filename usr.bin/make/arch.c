@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.141 2020/10/24 03:45:02 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.142 2020/10/24 03:48:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.141 2020/10/24 03:45:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.142 2020/10/24 03:48:09 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -255,9 +255,8 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	 */
 	Boolean doSubst = FALSE; /* TRUE if need to substitute in memName */
 
-	while (*cp != '\0' && *cp != ')' && ch_isspace(*cp)) {
-	    cp++;
-	}
+	pp_skip_whitespace(&cp);
+
 	memName = cp;
 	while (*cp != '\0' && *cp != ')' && !ch_isspace(*cp)) {
 	    if (*cp == '$') {
