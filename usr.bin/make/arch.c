@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.140 2020/10/23 19:48:17 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.141 2020/10/24 03:45:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.140 2020/10/23 19:48:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.141 2020/10/24 03:45:02 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -345,17 +345,12 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 		Lst_Append(nodeLst, gn);
 
 	    } else if (!Arch_ParseArchive(&sacrifice, nodeLst, ctxt)) {
-		/*
-		 * Error in nested call -- free buffer and return FALSE
-		 * ourselves.
-		 */
+		/* Error in nested call. */
 		free(buf);
 		return FALSE;
 	    }
-	    /*
-	     * Free buffer and continue with our work.
-	     */
 	    free(buf);
+
 	} else if (Dir_HasWildcards(memName)) {
 	    StringList *members = Lst_New();
 	    Dir_Expand(memName, dirSearchPath, members);
@@ -368,17 +363,11 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 		gn = Targ_GetNode(fullname);
 		free(fullname);
 
-		/*
-		 * We've found the node, but have to make sure the rest of
-		 * the world knows it's an archive member, without having
-		 * to constantly check for parentheses, so we type the
-		 * thing with the OP_ARCHV bit before we place it on the
-		 * end of the provided list.
-		 */
 		gn->type |= OP_ARCHV;
 		Lst_Append(nodeLst, gn);
 	    }
 	    Lst_Free(members);
+
 	} else {
 	    char *fullname = str_concat4(libName, "(", memName, ")");
 	    gn = Targ_GetNode(fullname);
