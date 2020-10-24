@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.143 2020/10/24 04:00:56 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.144 2020/10/24 04:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.143 2020/10/24 04:00:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.144 2020/10/24 04:03:04 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -431,9 +431,9 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * Because of space constraints and similar things, files are archived
      * using their basename, not the entire path.
      */
-    const char *base = strrchr(member, '/');
-    if (base != NULL)
-	member = base + 1;
+    const char *lastSlash = strrchr(member, '/');
+    if (lastSlash != NULL)
+	member = lastSlash + 1;
 
     for (ln = archives->first; ln != NULL; ln = ln->next) {
 	const Arch *archPtr = ln->datum;
@@ -714,7 +714,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
     int size;			/* Size of archive member */
     char magic[SARMAG];
     size_t len, tlen;
-    const char *base;
+    const char *lastSlash;
 
     arch = fopen(archive, mode);
     if (arch == NULL)
@@ -734,9 +734,9 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
      * Because of space constraints and similar things, files are archived
      * using their basename, not the entire path.
      */
-    base = strrchr(member, '/');
-    if (base != NULL)
-	member = base + 1;
+    lastSlash = strrchr(member, '/');
+    if (lastSlash != NULL)
+	member = lastSlash + 1;
 
     len = tlen = strlen(member);
     if (len > sizeof(arhPtr->ar_name)) {
