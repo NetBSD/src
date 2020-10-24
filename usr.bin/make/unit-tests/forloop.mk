@@ -1,4 +1,4 @@
-# $NetBSD: forloop.mk,v 1.4 2020/10/24 08:34:59 rillig Exp $
+# $NetBSD: forloop.mk,v 1.5 2020/10/24 08:46:08 rillig Exp $
 
 all: for-loop
 
@@ -10,36 +10,36 @@ for-fail:
 XTRA_LIST = xtra
 .else
 
-.for x in ${LIST}
+.  for x in ${LIST}
 X!= echo 'x=$x' >&2; echo
-.endfor
+.  endfor
 
 CFL = -I/this -I"This or that" -Ithat "-DTHIS=\"this and that\""
 cfl=
-.for x in ${CFL}
+.  for x in ${CFL}
 X!= echo 'x=$x' >&2; echo
-.if empty(cfl)
+.    if empty(cfl)
 cfl= $x
-.else
+.    else
 cfl+= $x
-.endif
-.endfor
+.    endif
+.  endfor
 X!= echo 'cfl=${cfl}' >&2; echo
 
-.if ${cfl} != ${CFL}
-.error ${.newline}'${cfl}' != ${.newline}'${CFL}'
-.endif
+.  if ${cfl} != ${CFL}
+.    error ${.newline}'${cfl}' != ${.newline}'${CFL}'
+.  endif
 
-.for a b in ${EMPTY}
+.  for a b in ${EMPTY}
 X!= echo 'a=$a b=$b' >&2; echo
-.endfor
+.  endfor
 
 # Since at least 1993, iteration stops at the first newline.
 # Back then, the .newline variable didn't exist, therefore it was unlikely
 # that a newline ever occurred.
-.for var in a${.newline}b${.newline}c
+.  for var in a${.newline}b${.newline}c
 X!= echo 'newline-item=('${var:Q}')' 1>&2; echo
-.endfor
+.  endfor
 
 .endif	# for-fail
 

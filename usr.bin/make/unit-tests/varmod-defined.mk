@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.6 2020/09/29 18:48:43 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.7 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -10,7 +10,7 @@ DEF=	defined
 # "defined".
 #
 .if ${DEF:Dvalue} != "value"
-.error
+.  error
 .endif
 
 # Since UNDEF is not defined, the "value" is ignored.  Instead of leaving the
@@ -21,7 +21,7 @@ DEF=	defined
 # 2020-08-25 it is "Malformed conditional".
 #
 .if ${UNDEF:Dvalue} != ""
-.error
+.  error
 .endif
 
 # The modifier text may contain plain text as well as expressions.

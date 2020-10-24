@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-shell.mk,v 1.2 2020/08/23 09:28:52 rillig Exp $
+# $NetBSD: varname-dot-shell.mk,v 1.3 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for the special .SHELL variable, which contains the shell used for
 # running the commands.
@@ -9,7 +9,7 @@ ORIG_SHELL:=	${.SHELL}
 
 .SHELL=		overwritten
 .if ${.SHELL} != ${ORIG_SHELL}
-.error
+.  error
 .endif
 
 # Trying to delete the variable.
@@ -18,7 +18,7 @@ ORIG_SHELL:=	${.SHELL}
 .undef .SHELL
 .SHELL=		newly overwritten
 .if ${.SHELL} != ${ORIG_SHELL}
-.error
+.  error
 .endif
 
 all:
