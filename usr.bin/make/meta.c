@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.129 2020/10/24 10:17:21 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.130 2020/10/24 10:32:25 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -970,13 +970,6 @@ path_starts_with(const char *path, const char *prefix)
     return path[n] == '\0' || path[n] == '/';
 }
 
-static Boolean
-string_match(const void *p, const void *q)
-{
-    return strcmp(p, q) == 0;
-}
-
-
 static int
 meta_ignore(GNode *gn, const char *p)
 {
@@ -1059,6 +1052,17 @@ meta_ignore(GNode *gn, const char *p)
     if ((ep = strchr(p, '\''))) \
 	*ep = '\0'; \
     }
+
+static void
+append_if_new(StringList *list, const char *str)
+{
+    StringListNode *ln;
+
+    for (ln = list->first; ln != NULL; ln = ln->next)
+        if (strcmp(ln->datum, str) == 0)
+	    return;
+    Lst_Append(list, bmake_strdup(str));
+}
 
 Boolean
 meta_oodate(GNode *gn, Boolean oodate)
@@ -1384,10 +1388,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 		    if ((link_src != NULL && cached_lstat(p, &mst) < 0) ||
 			(link_src == NULL && cached_stat(p, &mst) < 0)) {
-			if (!meta_ignore(gn, p)) {
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
-				Lst_Append(missingFiles, bmake_strdup(p));
-			}
+			if (!meta_ignore(gn, p))
+			    append_if_new(missingFiles, p);
 		    }
 		    break;
 		check_link_src:
@@ -1470,8 +1472,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
-				Lst_Append(missingFiles, bmake_strdup(p));
+			    append_if_new(missingFiles, p);
 			}
 		    }
 		    if (buf[0] == 'E') {
