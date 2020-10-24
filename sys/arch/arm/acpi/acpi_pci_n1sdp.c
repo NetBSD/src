@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_n1sdp.c,v 1.5 2020/09/13 21:41:17 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_n1sdp.c,v 1.6 2020/10/24 07:08:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.5 2020/09/13 21:41:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.6 2020/10/24 07:08:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,7 +83,7 @@ acpi_pci_n1sdp_valid(pci_chipset_tag_t pc, pcitag_t tag)
 
 	pci_decompose_tag(pc, tag, &b, &d, &f);
 
-	bdfaddr = (b << N1SDP_BUS_SHIFT) + 
+	bdfaddr = (b << N1SDP_BUS_SHIFT) +
 		  (d << N1SDP_DEV_SHIFT) +
 		  (f << N1SDP_FUNC_SHIFT);
 
@@ -116,7 +116,7 @@ acpi_pci_n1sdp_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *
 		*data = -1;
 		return 0;
 	}
-	
+
 	return acpimcfg_conf_read(pc, tag, reg, data);
 }
 
@@ -138,7 +138,7 @@ acpi_pci_n1sdp_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t 
 
 	if (!acpi_pci_n1sdp_valid(pc, tag))
 		return 0;
-	
+
 	return acpimcfg_conf_write(pc, tag, reg, data);
 }
 
