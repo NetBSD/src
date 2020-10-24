@@ -1,4 +1,4 @@
-# $NetBSD: varmod-undefined.mk,v 1.5 2020/09/12 07:04:51 rillig Exp $
+# $NetBSD: varmod-undefined.mk,v 1.6 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for the :U variable modifier, which returns the given string
 # if the variable is undefined.
@@ -22,7 +22,7 @@
 # nested.
 
 .if ${:U${:Unested}${${${:Udeeply}}}} != nested
-.error
+.  error
 .endif
 
 # The nested variable expressions may contain braces, and these braces don't
@@ -32,7 +32,7 @@
 # For more similar examples, see varmod-subst.mk, mod-subst-delimiter.
 
 .if ${:U${:Uvalue:S{a{X{}} != vXlue
-.error
+.  error
 .endif
 
 # The escaping rules for the :U modifier (left-hand side) and condition
@@ -50,7 +50,7 @@
 # Whitespace at the edges is preserved, on both sides of the comparison.
 #
 .if ${:U \: \} \$ \\ \a \b \n } != " : } \$ \\ \\a \\b \\n "
-.error
+.  error
 .endif
 
 # Even after the :U modifier has been applied, the expression still remembers

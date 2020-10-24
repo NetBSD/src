@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.3 2020/08/28 17:15:04 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -10,26 +10,26 @@ all: mod-regex-errors
 # the regular expression "a b" since these words don't contain any
 # whitespace.
 .if ${:Ua b b c:C,a b,,} != "a b b c"
-.error
+.  error
 .endif
 
 # Using the '1' modifier does not change anything.  The '1' modifier just
 # means to apply at most 1 replacement in the whole variable expression.
 .if ${:Ua b b c:C,a b,,1} != "a b b c"
-.error
+.  error
 .endif
 
 # The 'W' modifier treats the whole variable value as a single big word,
 # containing whitespace.  This big word matches the regular expression,
 # therefore it gets replaced.  Whitespace is preserved after replacing.
 .if ${:Ua b b c:C,a b,,W} != " b c"
-.error
+.  error
 .endif
 
 # The 'g' modifier does not have any effect here since each of the words
 # contains the character 'b' a single time.
 .if ${:Ua b b c:C,b,,g} != "a c"
-.error
+.  error
 .endif
 
 # The first :C modifier has the 'W' modifier, which makes the whole
@@ -39,7 +39,7 @@ all: mod-regex-errors
 # 'W' modifier would be preserved, only a single underscore would have been
 # replaced with an 'x'.
 .if ${:U1 2 3 1 2 3:C,1 2,___,Wg:C,_,x,} != "x__ 3 x__ 3"
-.error
+.  error
 .endif
 
 # The regular expression does not match in the first word.
@@ -50,7 +50,7 @@ all: mod-regex-errors
 # and that cannot match the regular expression "..".  Therefore only the
 # "45" is doubled in the result.
 .if ${:U1 23 456:C,..,\0\0,} != "1 2323 45456"
-.error
+.  error
 .endif
 
 # The modifier '1' applies the replacement at most once, across the whole
@@ -60,7 +60,7 @@ all: mod-regex-errors
 # Up to 2020-08-28, the manual page said that the modifiers '1' and 'g'
 # were orthogonal, which was wrong.
 .if ${:U12345 12345:C,.,\0\0,1} != "112345 12345"
-.error
+.  error
 .endif
 
 # Multiple asterisks form an invalid regular expression.  This produces an

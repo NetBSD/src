@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.24 2020/10/24 08:34:59 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.25 2020/10/24 08:46:08 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -69,9 +69,9 @@ cmpv:
 MAN=
 MAN1= make.1
 .for s in 1 2
-.if defined(MAN$s) && !empty(MAN$s)
+.  if defined(MAN$s) && !empty(MAN$s)
 MAN+= ${MAN$s}
-.endif
+.  endif
 .endfor
 
 manok:
@@ -106,7 +106,7 @@ save-dollars:
 .undef APPENDED
 APPENDED+=	value
 .if ${APPENDED} != "value"
-.error "${APPENDED}"
+.  error "${APPENDED}"
 .endif
 
 # Appending to an empty variable adds a space between the old value
@@ -114,7 +114,7 @@ APPENDED+=	value
 APPENDED=	# empty
 APPENDED+=	value
 .if ${APPENDED} != " value"
-.error "${APPENDED}"
+.  error "${APPENDED}"
 .endif
 
 # Appending to parameterized variables works as well.
@@ -122,7 +122,7 @@ PARAM=		param
 VAR.${PARAM}=	1
 VAR.${PARAM}+=	2
 .if ${VAR.param} != "1 2"
-.error "${VAR.param}"
+.  error "${VAR.param}"
 .endif
 
 # The variable name can contain arbitrary characters.
@@ -134,13 +134,13 @@ PARAM=		+
 VAR.${PARAM}=	1
 VAR.${PARAM}+=	2
 .if ${VAR.+} != "1 2"
-.error "${VAR.+}"
+.  error "${VAR.+}"
 .endif
 .for param in + ! ?
 VAR.${param}=	${param}
 .endfor
 .if ${VAR.+} != "+" || ${VAR.!} != "!" || ${VAR.?} != "?"
-.error "${VAR.+}" "${VAR.!}" "${VAR.?}"
+.  error "${VAR.+}" "${VAR.!}" "${VAR.?}"
 .endif
 
 # Appending to a variable from the environment creates a copy of that variable

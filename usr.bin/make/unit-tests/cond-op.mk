@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.7 2020/09/11 05:29:46 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.8 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -14,24 +14,24 @@
 # If || were to bind more tightly than &&, the result would be different
 # as well.
 .if !(1 || 1 && 0)
-.error
+.  error
 .endif
 
 # If make were to interpret the && and || operators like the shell, the
 # implicit binding would be this:
 .if (1 || 1) && 0
-.error
+.  error
 .endif
 
 # The precedence of the ! operator is different from C though. It has a
 # lower precedence than the comparison operators.
 .if !"word" == "word"
-.error
+.  error
 .endif
 
 # This is how the above condition is actually interpreted.
 .if !("word" == "word")
-.error
+.  error
 .endif
 
 # TODO: Demonstrate that the precedence of the ! and == operators actually
@@ -43,14 +43,14 @@
 # In any case, it is not interpreted as a negation of an unquoted string.
 # See CondParser_String.
 .if "!word" == !word
-.error
+.  error
 .endif
 
 # Surprisingly, the ampersand and pipe are allowed in bare strings.
 # That's another opportunity for writing confusing code.
 # See CondParser_String, which only has '!' in the list of stop characters.
 .if "a&&b||c" != a&&b||c
-.error
+.  error
 .endif
 
 # As soon as the parser sees the '$', it knows that the condition will

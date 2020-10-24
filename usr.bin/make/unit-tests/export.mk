@@ -1,4 +1,4 @@
-# $NetBSD: export.mk,v 1.8 2020/10/24 08:34:59 rillig Exp $
+# $NetBSD: export.mk,v 1.9 2020/10/24 08:46:08 rillig Exp $
 
 UT_TEST=export
 UT_FOO=foo${BAR}
@@ -12,7 +12,7 @@ UT_DOLLAR= This is $$UT_FU
 .export UT_DOLLAR
 
 .if !defined(.MAKE.PID)
-.error .MAKE.PID must be defined
+.  error .MAKE.PID must be defined
 .endif
 @=	at
 %=	percent
