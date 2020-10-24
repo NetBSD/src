@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2361 2020/10/03 18:33:52 christos Exp $
+#	$NetBSD: mi,v 1.2362 2020/10/24 05:01:57 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4154,6 +4154,7 @@
 ./usr/sbin/gspahextoc				comp-obsolete		obsolete
 ./usr/sbin/kgmon				comp-debug-sbin
 ./usr/share/examples/openssl/CA.sh		comp-obsolete	openssl=11,obsolete
+./usr/share/gdb/syscalls/netbsd.xml		comp-debug-bin		gdb=1100
 ./usr/share/ldscripts/elf32_sparc.x		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf32_sparc.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf32_sparc.xn		comp-obsolete		obsolete

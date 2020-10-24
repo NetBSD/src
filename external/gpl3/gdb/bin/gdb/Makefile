@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/09/17 20:26:22 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2020/10/24 05:01:57 kamil Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -40,6 +40,9 @@ gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 
 CLEANFILES+= GDBvn.texi gdb-cfg.texi
 stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
+
+FILES=		netbsd.xml
+FILESDIR=	/usr/share/gdb/syscalls
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
@@ -109,4 +112,5 @@ CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
+    ${DIST}/gdb/signals ${DIST}/gdb/syscalls ${DIST}/gdb/doc \
+    ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
