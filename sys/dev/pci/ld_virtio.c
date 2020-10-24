@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.27 2019/01/17 10:20:01 hannken Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.28 2020/10/24 09:00:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.27 2019/01/17 10:20:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.28 2020/10/24 09:00:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 
 	allocsize = sizeof(struct virtio_blk_req) * qsize;
 	r = bus_dmamem_alloc(virtio_dmat(sc->sc_virtio), allocsize, 0, 0,
-			     &sc->sc_reqs_seg, 1, &rsegs, BUS_DMA_NOWAIT);
+			     &sc->sc_reqs_seg, 1, &rsegs, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "DMA memory allocation failed, size %d, "
@@ -185,7 +185,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 	}
 	r = bus_dmamem_map(virtio_dmat(sc->sc_virtio),
 			   &sc->sc_reqs_seg, 1, allocsize,
-			   &vaddr, BUS_DMA_NOWAIT);
+			   &vaddr, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 				 "DMA memory map failed, "
@@ -201,7 +201,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 				      1,
 				      offsetof(struct virtio_blk_req, vr_bp),
 				      0,
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+				      BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW,
 				      &vr->vr_cmdsts);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -212,7 +212,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 		r = bus_dmamap_load(virtio_dmat(sc->sc_virtio), vr->vr_cmdsts,
 				    &vr->vr_hdr,
 				    offsetof(struct virtio_blk_req, vr_bp),
-				    NULL, BUS_DMA_NOWAIT);
+				    NULL, BUS_DMA_WAITOK);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
 					 "command dmamap load failed, "
@@ -225,7 +225,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 				      VIRTIO_BLK_MIN_SEGMENTS,
 				      ld->sc_maxxfer,
 				      0,
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+				      BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW,
 				      &vr->vr_payload);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
