@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.385 2020/10/23 06:27:39 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.386 2020/10/24 09:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.385 2020/10/23 06:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.386 2020/10/24 09:28:50 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -792,18 +792,10 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 
 /* Read and parse the makefile.
  * Return TRUE if reading the makefile succeeded, for Lst_Find. */
-static Boolean
-ReadMakefileSucceeded(const void *fname, const void *unused)
+static int
+ReadMakefileSucceeded(void *fname, void *unused)
 {
 	return ReadMakefile(fname) == 0;
-}
-
-/* Read and parse the makefile.
- * Return TRUE if reading the makefile failed, for Lst_Find. */
-static Boolean
-ReadMakefileFailed(const void *fname, const void *unused)
-{
-	return ReadMakefile(fname) != 0;
 }
 
 int
@@ -1385,8 +1377,6 @@ main(int argc, char **argv)
 	 * if no makefiles were given on the command line.
 	 */
 	if (!noBuiltins) {
-		StringListNode *ln;
-
 		sysMkPath = Lst_New();
 		Dir_Expand(_PATH_DEFSYSMK,
 			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
@@ -1394,25 +1384,25 @@ main(int argc, char **argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, ReadMakefileSucceeded, NULL);
-		if (ln == NULL)
+		if (!Lst_ForEachUntil(sysMkPath, ReadMakefileSucceeded, NULL))
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)sysMkPath->first->datum);
 	}
 
-	if (!Lst_IsEmpty(makefiles)) {
+	if (makefiles->first != NULL) {
 		StringListNode *ln;
 
-		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
-		if (ln != NULL)
-			Fatal("%s: cannot open %s.", progname,
-			    (char *)ln->datum);
+		for (ln = makefiles->first; ln != NULL; ln = ln->next) {
+			if (ReadMakefile(ln->datum) != 0)
+				Fatal("%s: cannot open %s.",
+				      progname, (char *)ln->datum);
+		}
 	} else {
 		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
 		    VAR_CMD, VARE_WANTRES, &p1);
 		/* TODO: handle errors */
 		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_Find(makefiles, ReadMakefileSucceeded, NULL);
+		(void)Lst_ForEachUntil(makefiles, ReadMakefileSucceeded, NULL);
 		free(p1);
 	}
 
