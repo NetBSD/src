@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.169 2020/10/24 03:45:02 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.170 2020/10/24 20:29:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -503,36 +503,39 @@ extern pid_t	myPid;
 # define MAKE_LEVEL_ENV	"MAKELEVEL"
 #endif
 
+typedef enum DebugFlags {
+    DEBUG_ARCH		= 1 << 0,
+    DEBUG_COND		= 1 << 1,
+    DEBUG_DIR		= 1 << 2,
+    DEBUG_GRAPH1	= 1 << 3,
+    DEBUG_GRAPH2	= 1 << 4,
+    DEBUG_JOB		= 1 << 5,
+    DEBUG_MAKE		= 1 << 6,
+    DEBUG_SUFF		= 1 << 7,
+    DEBUG_TARG		= 1 << 8,
+    DEBUG_VAR		= 1 << 9,
+    DEBUG_FOR		= 1 << 10,
+    DEBUG_SHELL		= 1 << 11,
+    DEBUG_ERROR		= 1 << 12,
+    DEBUG_LOUD		= 1 << 13,
+    DEBUG_META		= 1 << 14,
+    DEBUG_HASH		= 1 << 15,
+
+    DEBUG_GRAPH3	= 1 << 16,
+    DEBUG_SCRIPT	= 1 << 17,
+    DEBUG_PARSE		= 1 << 18,
+    DEBUG_CWD		= 1 << 19,
+
+    DEBUG_LINT		= 1 << 20
+} DebugFlags;
+
 /*
  * debug control:
  *	There is one bit per module.  It is up to the module what debug
  *	information to print.
  */
 extern FILE *debug_file;	/* Output is written here - default stderr */
-extern int debug;
-#define	DEBUG_ARCH	0x00001
-#define	DEBUG_COND	0x00002
-#define	DEBUG_DIR	0x00004
-#define	DEBUG_GRAPH1	0x00008
-#define	DEBUG_GRAPH2	0x00010
-#define	DEBUG_JOB	0x00020
-#define	DEBUG_MAKE	0x00040
-#define	DEBUG_SUFF	0x00080
-#define	DEBUG_TARG	0x00100
-#define	DEBUG_VAR	0x00200
-#define DEBUG_FOR	0x00400
-#define DEBUG_SHELL	0x00800
-#define DEBUG_ERROR	0x01000
-#define DEBUG_LOUD	0x02000
-#define DEBUG_META	0x04000
-#define DEBUG_HASH	0x08000
-
-#define DEBUG_GRAPH3	0x10000
-#define DEBUG_SCRIPT	0x20000
-#define DEBUG_PARSE	0x40000
-#define DEBUG_CWD	0x80000
-
-#define DEBUG_LINT	0x100000
+extern DebugFlags debug;
 
 #define CONCAT(a,b)	a##b
 
