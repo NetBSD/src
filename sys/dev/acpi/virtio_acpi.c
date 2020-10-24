@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.3 2020/10/24 07:21:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.3 2020/10/24 07:21:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,14 @@ virtio_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_handle = aa->aa_node->ad_handle;
 	msc->sc_iot = aa->aa_memt;
 	vsc->sc_dev = self;
-	vsc->sc_dmat = aa->aa_dmat;
+
+	if (BUS_DMA_TAG_VALID(aa->aa_dmat64)) {
+		aprint_verbose(": using 64-bit DMA");
+		vsc->sc_dmat = aa->aa_dmat64;
+	} else {
+		aprint_verbose(": using 32-bit DMA");
+		vsc->sc_dmat = aa->aa_dmat;
+	}
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
