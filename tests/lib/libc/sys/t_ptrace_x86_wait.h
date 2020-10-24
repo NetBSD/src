@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.29 2020/10/16 08:51:12 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.30 2020/10/24 07:14:30 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -3387,12 +3387,10 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				ATF_CHECK_EQ(fxs->fx_opcode,
 				    expected_fpu.opcode);
 #if defined(__x86_64__)
-#if 0 /* TODO: kernel needs patching to call *XSAVE64 */
 				ATF_CHECK_EQ(fxs->fx_ip.fa_64,
 				    ((uint64_t)gpr.regs[_REG_RIP]) - 3);
 				ATF_CHECK_EQ(fxs->fx_dp.fa_64,
 				    (uint64_t)&x86_test_zero);
-#endif
 #else
 				ATF_CHECK_EQ(fxs->fx_ip.fa_32.fa_off,
 				    (uint32_t)gpr.r_eip - 3);

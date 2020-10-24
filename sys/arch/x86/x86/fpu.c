@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.75 2020/10/15 17:40:14 mgorny Exp $	*/
+/*	$NetBSD: fpu.c,v 1.76 2020/10/24 07:14:30 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.75 2020/10/15 17:40:14 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.76 2020/10/24 07:14:30 mgorny Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -156,7 +156,7 @@ fpu_save_lwp(struct lwp *l)
 	s = splvm();
 	if (l->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT((l->l_flag & LW_SYSTEM) == 0);
-		fpu_area_save(area, x86_xsave_features);
+		fpu_area_save(area, x86_xsave_features, !(l->l_proc->p_flag & PK_32));
 		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
 	splx(s);
@@ -246,21 +246,27 @@ fpu_errata_amd(void)
 	fldummy();
 }
 
+#ifdef __x86_64__
+#define XS64(x) (is_64bit ? x##64 : x)
+#else
+#define XS64(x) x
+#endif
+
 void
-fpu_area_save(void *area, uint64_t xsave_features)
+fpu_area_save(void *area, uint64_t xsave_features, bool is_64bit)
 {
 	switch (x86_fpu_save) {
 	case FPU_SAVE_FSAVE:
 		fnsave(area);
 		break;
 	case FPU_SAVE_FXSAVE:
-		fxsave(area);
+		XS64(fxsave)(area);
 		break;
 	case FPU_SAVE_XSAVE:
-		xsave(area, xsave_features);
+		XS64(xsave)(area, xsave_features);
 		break;
 	case FPU_SAVE_XSAVEOPT:
-		xsaveopt(area, xsave_features);
+		XS64(xsaveopt)(area, xsave_features);
 		break;
 	}
 
@@ -268,7 +274,7 @@ fpu_area_save(void *area, uint64_t xsave_features)
 }
 
 void
-fpu_area_restore(const void *area, uint64_t xsave_features)
+fpu_area_restore(const void *area, uint64_t xsave_features, bool is_64bit)
 {
 	clts();
 
@@ -279,13 +285,13 @@ fpu_area_restore(const void *area, uint64_t xsave_features)
 	case FPU_SAVE_FXSAVE:
 		if (cpu_vendor == CPUVENDOR_AMD)
 			fpu_errata_amd();
-		fxrstor(area);
+		XS64(fxrstor)(area);
 		break;
 	case FPU_SAVE_XSAVE:
 	case FPU_SAVE_XSAVEOPT:
 		if (cpu_vendor == CPUVENDOR_AMD)
 			fpu_errata_amd();
-		xrstor(area, xsave_features);
+		XS64(xrstor)(area, xsave_features);
 		break;
 	}
 }
@@ -294,7 +300,8 @@ void
 fpu_handle_deferred(void)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
-	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features);
+	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features,
+	    !(curlwp->l_proc->p_flag & PK_32));
 }
 
 void
@@ -309,7 +316,8 @@ fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	if (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
 		pcb = lwp_getpcb(oldlwp);
-		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);
+		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features,
+		    !(oldlwp->l_proc->p_flag & PK_32));
 		oldlwp->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
 	KASSERT(!(newlwp->l_md.md_flags & MDL_FPU_IN_CPU));
@@ -413,7 +421,7 @@ fpu_kern_leave(void)
 	 * through Spectre-class attacks to userland, even if there are
 	 * no bugs in fpu state management.
 	 */
-	fpu_area_restore(&zero_fpu, x86_xsave_features);
+	fpu_area_restore(&zero_fpu, x86_xsave_features, false);
 
 	/*
 	 * Set CR0_TS again so that the kernel can't accidentally use
