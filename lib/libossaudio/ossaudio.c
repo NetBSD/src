@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.57 2020/10/23 12:13:04 wiz Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.58 2020/10/24 14:43:53 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.57 2020/10/23 12:13:04 wiz Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.58 2020/10/24 14:43:53 roy Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -1158,7 +1158,7 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 			    "/dev/audio%d", cardinfo->card);
 			newfd = open(devname, O_RDONLY);
 			if (newfd < 0)
-				return retval;
+				return newfd;
 		} else {
 			newfd = fd;
 		}
