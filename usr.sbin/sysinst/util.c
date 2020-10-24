@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.48 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.49 2020/10/24 16:13:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -419,6 +419,8 @@ get_iso9660_volname(int dev, int sess, char *volname, size_t volnamelen)
  * Local state while iterating CDs and collecting volumes
  */
 struct get_available_cds_state {
+	size_t num_mounted;
+	struct statvfs *mounted;
 	struct cd_info *info;
 	size_t count;
 };
@@ -430,14 +432,26 @@ static bool
 get_available_cds_helper(void *arg, const char *device)
 {
 	struct get_available_cds_state *state = arg;
-	char dname[16], volname[80];
+	char dname[16], tname[16], volname[80], *t;
 	struct disklabel label;
-	int part, dev, error, sess, ready;
+	int part, dev, error, sess, ready, tlen;
 
 	if (!is_cdrom_device(device, false))
 		return true;
 
 	sprintf(dname, "/dev/r%s%c", device, 'a'+RAW_PART);
+	tlen = sprintf(tname, "/dev/%s", device);
+
+	/* check if this is mounted already */
+	for (size_t i = 0; i < state->num_mounted; i++) {
+		if (strncmp(state->mounted[i].f_mntfromname, tname, tlen)
+		    == 0) {
+			t = state->mounted[i].f_mntfromname + tlen;
+			if (t[0] >= 'a' && t[0] <= 'z' && t[1] == 0)
+				return true;
+		}
+	}
+
 	dev = open(dname, O_RDONLY, 0);
 	if (dev == -1)
 		return true;
@@ -501,11 +515,23 @@ static int
 get_available_cds(void)
 {
 	struct get_available_cds_state data;
+	int n, e;
 
+	memset(&data, 0, sizeof data);
 	data.info = cds;
-	data.count = 0;
+
+	n = getvfsstat(NULL, 0, ST_NOWAIT);
+	if (n > 0) {
+		data.mounted = calloc(n, sizeof(*data.mounted));
+		e = getvfsstat(data.mounted, n*sizeof(*data.mounted),
+		    ST_NOWAIT);
+		assert(e == n);
+		data.num_mounted = n;
+	}
 
 	enumerate_disks(&data, get_available_cds_helper);
+
+	free(data.mounted);
 
 	return data.count;
 }
@@ -590,7 +616,8 @@ get_via_cdrom(void)
 	memset(cd_menu, 0, sizeof(cd_menu));
 	num_cds = get_available_cds();
 	if (num_cds <= 0) {
-		silent = true;
+		hit_enter_to_continue(MSG_No_cd_found, NULL);
+		return SET_RETRY;
 	} else if (num_cds == 1) {
 		/* single CD found, check for sets on it */
 		strcpy(cdrom_dev, cds[0].device_name);

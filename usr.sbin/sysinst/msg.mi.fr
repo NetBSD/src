@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.31 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.32 2020/10/24 16:13:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -498,13 +498,17 @@ Trois types d'installations vous sont proposés : complète, minimale ou
 personnalisée.
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ *  $1 = URL protocol used		ftp
+ */
 message ftpsource
-{Voici la configuration actuelle pour : nom du site (%s), répertoire, nom
+{Voici la configuration actuelle pour : nom du site ($1), répertoire, nom
 d'utilisateur et mot de passe.
 Si vous utilisez le mode FTP, le mot de passe n'est pas requis.
 Le répertoire contenant les composants doit être défini par
 rapport au répertoire de base, et contenir chaque composant sous
-la forme de fichiers .tgz
+la forme de fichiers $0
 
 }
 
@@ -537,6 +541,9 @@ tgz.
 
 }
 
+message No_cd_found
+{Could not locate a CD medium in any drive with the distribution sets. 
+Check the proper medium and retry!}
 
 message Available_cds
 {CD-ROM disponibles}
