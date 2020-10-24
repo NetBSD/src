@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.87 2018/01/09 09:15:57 wiz Exp $
+.\"	$NetBSD: mount.8,v 1.88 2020/10/24 10:51:34 nia Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd January 8, 2018
+.Dd October 24, 2020
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -239,8 +239,8 @@ list of file systems shown by default with
 .Xr df 1 .
 .It Cm noatime
 Never update the access time field for files.
-This option is useful for optimizing read performance on file systems
-that are used as news spools.
+This option is useful for optimizing read performance on file systems,
+and avoiding excess writes on flash-based file systems.
 .It Cm noauto
 This file system should be skipped when mount is run with the
 .Fl a
