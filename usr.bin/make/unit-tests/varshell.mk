@@ -1,4 +1,4 @@
-# $Id: varshell.mk,v 1.2 2015/04/10 20:41:59 sjg Exp $
+# $NetBSD: varshell.mk,v 1.3 2020/10/24 08:34:59 rillig Exp $
 #
 # Test VAR != shell command
 

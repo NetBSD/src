@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.11 2020/01/07 20:50:12 rillig Exp $
+# $NetBSD: escape.mk,v 1.12 2020/10/24 08:34:59 rillig Exp $
 #
 # Test backslash escaping.
 
