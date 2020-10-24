@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.86 2020/10/24 10:18:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.87 2020/10/24 10:36:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.86 2020/10/24 10:18:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.87 2020/10/24 10:36:23 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -204,38 +204,9 @@ LstNode_SetNull(ListNode *node)
     node->datum = NULL;
 }
 
-
 /*
  * Functions for entire lists
  */
-
-/* Return the first node from the list for which the match function returns
- * TRUE, or NULL if none of the nodes matched. */
-ListNode *
-Lst_Find(List *list, LstFindProc match, const void *matchArgs)
-{
-    return Lst_FindFrom(list, list->first, match, matchArgs);
-}
-
-/* Return the first node from the list, starting at the given node, for which
- * the match function returns TRUE, or NULL if none of the nodes matches.
- *
- * The start node may be NULL, in which case nothing is found. */
-ListNode *
-Lst_FindFrom(List *list, ListNode *node,
-	     LstFindProc match, const void *matchArgs)
-{
-    ListNode *tln;
-
-    assert(list != NULL);
-    assert(match != NULL);
-
-    for (tln = node; tln != NULL; tln = tln->next)
-	if (match(tln->datum, matchArgs))
-	    return tln;
-
-    return NULL;
-}
 
 /* Return the first node that contains the given datum, or NULL. */
 ListNode *

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.386 2020/10/24 09:28:50 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.387 2020/10/24 10:36:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.386 2020/10/24 09:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.387 2020/10/24 10:36:23 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -791,7 +791,7 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 }
 
 /* Read and parse the makefile.
- * Return TRUE if reading the makefile succeeded, for Lst_Find. */
+ * Return TRUE if reading the makefile succeeded. */
 static int
 ReadMakefileSucceeded(void *fname, void *unused)
 {

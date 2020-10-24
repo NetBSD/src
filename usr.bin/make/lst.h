@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.78 2020/10/23 04:58:33 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.79 2020/10/24 10:36:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -108,8 +108,6 @@ struct List {
 typedef void *LstCopyProc(void *);
 /* Free the datum of a node, called before freeing the node itself. */
 typedef void LstFreeProc(void *);
-/* Return TRUE if the datum matches the args, for Lst_Find. */
-typedef Boolean LstFindProc(const void *datum, const void *args);
 /* An action for Lst_ForEachUntil and Lst_ForEachUntilConcurrent. */
 typedef int LstActionUntilProc(void *datum, void *args);
 
@@ -129,11 +127,6 @@ void Lst_Destroy(List *, LstFreeProc);
 static inline MAKE_ATTR_UNUSED Boolean
 Lst_IsEmpty(List *list) { return list->first == NULL; }
 
-/* Find the first node for which the function returns TRUE, or NULL. */
-ListNode *Lst_Find(List *, LstFindProc, const void *);
-/* Find the first node for which the function returns TRUE, or NULL.
- * The search starts at the given node, towards the end of the list. */
-ListNode *Lst_FindFrom(List *, ListNode *, LstFindProc, const void *);
 /* Find the first node that contains the given datum, or NULL. */
 ListNode *Lst_FindDatum(List *, const void *);
 
