@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.40 2020/09/27 16:59:02 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.41 2020/10/24 04:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,15 +69,15 @@
  * SUCH DAMAGE.
  */
 
-/* Functions for automatically-expanded null-terminated buffers. */
+/* Automatically-expanding null-terminated buffers. */
 
 #include <limits.h>
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.40 2020/09/27 16:59:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.41 2020/10/24 04:27:24 rillig Exp $");
 
-/* Extend the buffer for adding a single byte. */
+/* Make space in the buffer for adding a single byte. */
 void
 Buf_Expand_1(Buffer *buf)
 {
@@ -85,7 +85,7 @@ Buf_Expand_1(Buffer *buf)
     buf->data = bmake_realloc(buf->data, buf->cap);
 }
 
-/* Add the given bytes to the buffer. */
+/* Add the bytes to the buffer. */
 void
 Buf_AddBytes(Buffer *buf, const char *bytes, size_t bytes_len)
 {
@@ -110,14 +110,14 @@ Buf_AddBytesBetween(Buffer *buf, const char *start, const char *end)
     Buf_AddBytes(buf, start, (size_t)(end - start));
 }
 
-/* Add the given string to the buffer. */
+/* Add the string to the buffer. */
 void
 Buf_AddStr(Buffer *buf, const char *str)
 {
     Buf_AddBytes(buf, str, strlen(str));
 }
 
-/* Add the given number to the buffer. */
+/* Add the number to the buffer. */
 void
 Buf_AddInt(Buffer *buf, int n)
 {
@@ -138,8 +138,7 @@ Buf_AddInt(Buffer *buf, int n)
  * The returned data is valid until the next modifying operation
  * on the buffer.
  *
- * Returns the pointer to the data and optionally the length of the
- * data in the buffer. */
+ * Returns the data and optionally the length of the data. */
 char *
 Buf_GetAll(Buffer *buf, size_t *out_len)
 {
