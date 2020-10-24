@@ -1,4 +1,4 @@
-# $Id: unexport.mk,v 1.3 2020/08/08 13:00:07 rillig Exp $
+# $NetBSD: unexport.mk,v 1.4 2020/10/24 08:34:59 rillig Exp $
 
 # pick up a bunch of exported vars
 FILTER_CMD=	grep ^UT_

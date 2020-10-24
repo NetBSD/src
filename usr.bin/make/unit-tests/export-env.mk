@@ -1,4 +1,4 @@
-# $Id: export-env.mk,v 1.2 2016/02/18 20:25:08 sjg Exp $
+# $NetBSD: export-env.mk,v 1.3 2020/10/24 08:34:59 rillig Exp $
 
 # our normal .export, subsequent changes affect the environment
 UT_TEST=this
