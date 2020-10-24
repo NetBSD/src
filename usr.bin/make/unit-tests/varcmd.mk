@@ -1,4 +1,4 @@
-# $Id: varcmd.mk,v 1.3 2017/12/08 03:36:42 sjg Exp $
+# $NetBSD: varcmd.mk,v 1.4 2020/10/24 08:34:59 rillig Exp $
 #
 # Test behaviour of recursive make and vars set on command line.
 

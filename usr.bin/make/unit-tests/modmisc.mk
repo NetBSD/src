@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.46 2020/08/23 15:18:43 rillig Exp $
+# $NetBSD: modmisc.mk,v 1.47 2020/10/24 08:34:59 rillig Exp $
 #
 # miscellaneous modifier tests
 

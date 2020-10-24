@@ -1,3 +1,4 @@
+# $NetBSD: modts.mk,v 1.6 2020/10/24 08:34:59 rillig Exp $
 
 LIST= one two three
 LIST+= four five six

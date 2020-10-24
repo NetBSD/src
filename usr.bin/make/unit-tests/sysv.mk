@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.13 2020/08/23 14:52:06 rillig Exp $
+# $NetBSD: sysv.mk,v 1.14 2020/10/24 08:34:59 rillig Exp $
 
 all: foo fun sam bla
 

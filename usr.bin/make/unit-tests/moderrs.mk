@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.15 2020/08/25 20:49:40 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.16 2020/10/24 08:34:59 rillig Exp $
 #
 # various modifier error tests
 

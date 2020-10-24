@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.23 2020/08/31 16:20:00 sjg Exp $
+# $NetBSD: varmisc.mk,v 1.24 2020/10/24 08:34:59 rillig Exp $
 #
 # Miscellaneous variable tests.
 

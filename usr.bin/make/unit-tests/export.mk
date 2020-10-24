@@ -1,4 +1,4 @@
-# $Id: export.mk,v 1.7 2020/10/17 16:53:26 rillig Exp $
+# $NetBSD: export.mk,v 1.8 2020/10/24 08:34:59 rillig Exp $
 
 UT_TEST=export
 UT_FOO=foo${BAR}
