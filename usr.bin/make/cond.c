@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.167 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.168 2020/10/24 04:51:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,12 +72,12 @@
 /* Handling of conditionals in a makefile.
  *
  * Interface:
- *	Cond_EvalLine	Evaluate the conditional in the passed line.
+ *	Cond_EvalLine	Evaluate the conditional.
  *
  *	Cond_EvalCondition
- *			Evaluate the conditional in the passed line, which
- *			is either the argument of one of the .if directives
- *			or the condition in a :?true:false variable modifier.
+ *			Evaluate the conditional, which is either the argument
+ *			of one of the .if directives or the condition in a
+ *			':?then:else' variable modifier.
  *
  *	Cond_save_depth
  *	Cond_restore_depth
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.167 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.168 2020/10/24 04:51:19 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
