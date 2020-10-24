@@ -1,4 +1,4 @@
-# $NetBSD: var-op-assign.mk,v 1.5 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: var-op-assign.mk,v 1.6 2020/10/24 08:50:17 rillig Exp $
 #
 # Tests for the = variable assignment operator, which overwrites an existing
 # variable or creates it.
@@ -26,7 +26,7 @@ VAR=	value
 # The '$' needs to be escaped with another '$', otherwise it would refer to
 # another variable.
 #
-VAR	=new value and \# some $$ special characters	# comment
+VAR=	new value and \# some $$ special characters	# comment
 
 # When a string literal appears in a condition, the escaping rules are
 # different.  Run make with the -dc option to see the details.

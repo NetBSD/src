@@ -1,12 +1,12 @@
-# $NetBSD: export.mk,v 1.9 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: export.mk,v 1.10 2020/10/24 08:50:17 rillig Exp $
 
-UT_TEST=export
-UT_FOO=foo${BAR}
-UT_FU=fubar
-UT_ZOO=hoopie
-UT_NO=all
+UT_TEST=	export
+UT_FOO=		foo${BAR}
+UT_FU=		fubar
+UT_ZOO=		hoopie
+UT_NO=		all
 # believe it or not, we expect this one to come out with $UT_FU unexpanded.
-UT_DOLLAR= This is $$UT_FU
+UT_DOLLAR=	This is $$UT_FU
 
 .export UT_FU UT_FOO
 .export UT_DOLLAR
@@ -36,9 +36,9 @@ ${:U!}=	exclamation		# A direct != would try to run "exclamation"
 # This is ignored because it is undefined.
 .export UNDEFINED
 
-BAR=bar is ${UT_FU}
+BAR=	bar is ${UT_FU}
 
-.MAKE.EXPORTED+= UT_ZOO UT_TEST
+.MAKE.EXPORTED+=	UT_ZOO UT_TEST
 
 FILTER_CMD?=	egrep -v '^(MAKEFLAGS|MALLOC_OPTIONS|PATH|PWD|SHLVL|_|&)='
 
