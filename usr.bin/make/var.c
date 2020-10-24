@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.582 2020/10/23 13:38:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.583 2020/10/24 20:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.582 2020/10/23 13:38:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.583 2020/10/24 20:51:49 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1470,7 +1470,7 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 	       int last)
 {
     Words words;
-    int start, end, step;
+    int len, start, end, step;
     int i;
 
     SepBuf buf;
@@ -1492,21 +1492,22 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
      * If first or last are negative, convert them to the positive equivalents
      * (-1 gets converted to ac, -2 gets converted to (ac - 1), etc.).
      */
+    len = (int)words.len;
     if (first < 0)
-	first += (int)words.len + 1;
+	first += len + 1;
     if (last < 0)
-	last += (int)words.len + 1;
+	last += len + 1;
 
     /*
      * We avoid scanning more of the list than we need to.
      */
     if (first > last) {
-	start = MIN((int)words.len, first) - 1;
-	end = MAX(0, last - 1);
+	start = (first > len ? len : first) - 1;
+	end = last < 1 ? 0 : last - 1;
 	step = -1;
     } else {
-	start = MAX(0, first - 1);
-	end = MIN((int)words.len, last);
+	start = first < 1 ? 0 : first - 1;
+	end = last > len ? len : last;
 	step = 1;
     }
 
