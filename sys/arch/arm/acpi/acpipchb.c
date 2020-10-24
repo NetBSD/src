@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.20 2020/06/17 06:46:09 thorpej Exp $ */
+/* $NetBSD: acpipchb.c,v 1.21 2020/10/24 07:08:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.20 2020/06/17 06:46:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.21 2020/10/24 07:08:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,7 +188,7 @@ acpipchb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	for (i = 0; i < abs->nrange; i++) {
 		struct acpipchb_bus_range * const range = &abs->range[i];
-		if (bpa >= range->min && bpa + size - 1 <= range->max) 
+		if (bpa >= range->min && bpa + size - 1 <= range->max)
 			return abs->map(t, bpa + range->offset, size, flag, bshp);
 	}
 
