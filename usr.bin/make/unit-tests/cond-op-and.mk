@@ -1,21 +1,21 @@
-# $NetBSD: cond-op-and.mk,v 1.4 2020/09/10 22:38:57 rillig Exp $
+# $NetBSD: cond-op-and.mk,v 1.5 2020/10/24 08:46:08 rillig Exp $
 #
 # Tests for the && operator in .if conditions.
 
 .if 0 && 0
-.error
+.  error
 .endif
 
 .if 1 && 0
-.error
+.  error
 .endif
 
 .if 0 && 1
-.error
+.  error
 .endif
 
 .if !(1 && 1)
-.error
+.  error
 .endif
 
 # The right-hand side is not evaluated since the left-hand side is already

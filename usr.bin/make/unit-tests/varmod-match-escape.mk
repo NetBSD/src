@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match-escape.mk,v 1.1 2020/08/16 20:03:53 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.2 2020/10/24 08:46:08 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
@@ -12,7 +12,7 @@
 SPECIALS=	\: : \\ * \*
 RELEVANT=	yes
 .if ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
-.warning unexpected
+.  warning unexpected
 .endif
 RELEVANT=	no
 

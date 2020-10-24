@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.9 2020/08/19 22:47:09 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.10 2020/10/24 08:46:08 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -76,7 +76,7 @@ VAR=	# empty again, for the following tests
 .if 0 && ${echo.1 echo.2 echo.3:L:@i@${RAN::!=${i:C,.*,&; & 1>\&2,:S,., ,g}}@}
 .endif
 .if defined(FIRST) || defined(LAST) || defined(APPENDED) || defined(RAN)
-.warning first=${FIRST} last=${LAST} appended=${APPENDED} ran=${RAN}
+.  warning first=${FIRST} last=${LAST} appended=${APPENDED} ran=${RAN}
 .endif
 
 # The || operator.
