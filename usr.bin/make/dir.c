@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.172 2020/10/22 05:50:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.173 2020/10/24 09:18:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.172 2020/10/22 05:50:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.173 2020/10/24 09:18:09 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -525,16 +525,6 @@ Dir_SetPATH(void)
 	if (cur)
 	    Var_Append(".PATH", cur->name, VAR_GLOBAL);
     }
-}
-
-/* See if the CachedDir structure describes the same directory as the
- * given one by comparing their names. Called from Dir_AddDir via
- * Lst_Find when searching the list of open directories. */
-static Boolean
-DirFindName(const void *p, const void *desiredName)
-{
-    const CachedDir *dir = p;
-    return strcmp(dir->name, desiredName) == 0;
 }
 
 /* See if the given name has any wildcard characters in it. Be careful not to
@@ -1508,9 +1498,13 @@ Dir_AddDir(SearchPath *path, const char *name)
     struct dirent *dp;
 
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
-	SearchPathNode *ln = Lst_Find(path, DirFindName, name);
-	if (ln != NULL)
-	    return ln->datum;
+	SearchPathNode *ln;
+
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+	    CachedDir *pathDir = ln->datum;
+	    if (strcmp(pathDir->name, name) == 0)
+		return pathDir;
+	}
 
 	dotLast->refCount++;
 	Lst_Prepend(path, dotLast);
