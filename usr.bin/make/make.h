@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.168 2020/10/23 20:14:50 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.169 2020/10/24 03:45:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -254,12 +254,14 @@ typedef enum GNodeType {
     /* The node is a transformation rule */
     OP_TRANSFORM	= 1 << 31,
     /* Target is a member of an archive */
+    /* XXX: How does this differ from OP_ARCHV? */
     OP_MEMBER		= 1 << 30,
-    /* Target is a library;
-     * the node's name has the form "-l<libname>" */
+    /* The node is a library,
+     * its name has the form "-l<libname>" */
     OP_LIB		= 1 << 29,
-    /* Target is an archive construct;
-     * the node's name has the form "archive(member)" */
+    /* The node is an archive member,
+     * its name has the form "archive(member)" */
+    /* XXX: How does this differ from OP_MEMBER? */
     OP_ARCHV		= 1 << 28,
     /* Target has all the commands it should. Used when parsing to catch
      * multiple command groups for a target.  Only applies to the dependency
