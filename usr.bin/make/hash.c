@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.50 2020/10/25 18:03:59 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.51 2020/10/25 18:12:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.50 2020/10/25 18:03:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.51 2020/10/25 18:12:35 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -149,13 +149,15 @@ Hash_InitTable(HashTable *t)
 void
 Hash_DeleteTable(HashTable *t)
 {
-	HashEntry **hp, *h, *nexth = NULL;
-	int i;
+	HashEntry **buckets = t->buckets;
+	size_t i, n = t->bucketsSize;
 
-	for (hp = t->buckets, i = (int)t->bucketsSize; --i >= 0;) {
-		for (h = *hp++; h != NULL; h = nexth) {
-			nexth = h->next;
-			free(h);
+	for (i = 0; i < n; i++) {
+		HashEntry *he = buckets[i];
+		while (he != NULL) {
+			HashEntry *next = he->next;
+			free(he);
+			he = next;
 		}
 	}
 	free(t->buckets);
