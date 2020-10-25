@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.175 2020/10/25 07:27:06 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.176 2020/10/25 07:32:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.175 2020/10/25 07:27:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.176 2020/10/25 07:32:07 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -902,31 +902,19 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	DirPrintExpansions(expansions);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * DirLookup  --
- *	Find if the file with the given name exists in the given path.
- *
- * Results:
- *	The path to the file or NULL. This path is guaranteed to be in a
- *	different part of memory than name and so may be safely free'd.
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
- */
+/* Find if the file with the given name exists in the given path.
+ * Return the freshly allocated path to the file, or NULL. */
 static char *
-DirLookup(CachedDir *dir, const char *name MAKE_ATTR_UNUSED, const char *cp,
-	  Boolean hasSlash MAKE_ATTR_UNUSED)
+DirLookup(CachedDir *dir, const char *name)
 {
     char *file;			/* the current filename to check */
 
     DIR_DEBUG1("   %s ...\n", dir->name);
 
-    if (Hash_FindEntry(&dir->files, cp) == NULL)
+    if (Hash_FindEntry(&dir->files, name) == NULL)
 	return NULL;
 
-    file = str_concat3(dir->name, "/", cp);
+    file = str_concat3(dir->name, "/", name);
     DIR_DEBUG1("   returning %s\n", file);
     dir->hits++;
     hits++;
@@ -1144,7 +1132,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	    CachedDir *dir = ln->datum;
 	    if (dir == dotLast)
 		continue;
-	    if ((file = DirLookup(dir, name, base, hasSlash)) != NULL)
+	    if ((file = DirLookup(dir, base)) != NULL)
 		return file;
 	}
 
