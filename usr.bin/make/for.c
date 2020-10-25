@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.102 2020/10/25 15:26:18 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.103 2020/10/25 15:41:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.102 2020/10/25 15:26:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.103 2020/10/25 15:41:31 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -80,15 +80,15 @@ typedef struct ForVar {
  * State of a for loop.
  */
 typedef struct For {
-    Buffer buf;			/* Body of loop */
-    Vector /* of ForVar */ vars;	/* Iteration variables */
+    Buffer body;		/* Unexpanded body of the loop */
+    Vector /* of ForVar */ vars; /* Iteration variables */
     Words items;		/* Substitution items */
-    char *parse_buf;
+    Buffer curBody;		/* Expanded body of the current iteration */
     /* Is any of the names 1 character long? If so, when the variable values
      * are substituted, the parser must handle $V expressions as well, not
      * only ${V} and $(V). */
     Boolean short_var;
-    unsigned int sub_next;
+    unsigned int sub_next;	/* Where to continue iterating */
 } For;
 
 static For *accumFor;		/* Loop being accumulated */
@@ -110,14 +110,14 @@ ForVarDone(ForVar *var)
 static void
 For_Free(For *arg)
 {
-    Buf_Destroy(&arg->buf, TRUE);
+    Buf_Destroy(&arg->body, TRUE);
 
     while (arg->vars.len > 0)
         ForVarDone(Vector_Pop(&arg->vars));
     Vector_Done(&arg->vars);
 
     Words_Free(arg->items);
-    free(arg->parse_buf);
+    Buf_Destroy(&arg->curBody, TRUE);
 
     free(arg);
 }
@@ -186,11 +186,11 @@ For_Eval(const char *line)
      */
 
     new_for = bmake_malloc(sizeof *new_for);
-    Buf_Init(&new_for->buf, 0);
+    Buf_Init(&new_for->body, 0);
     Vector_Init(&new_for->vars, sizeof(ForVar));
     new_for->items.words = NULL;
     new_for->items.freeIt = NULL;
-    new_for->parse_buf = NULL;
+    Buf_Init(&new_for->curBody, 0);
     new_for->short_var = FALSE;
     new_for->sub_next = 0;
 
@@ -290,8 +290,8 @@ For_Accum(const char *line)
 	}
     }
 
-    Buf_AddStr(&accumFor->buf, line);
-    Buf_AddByte(&accumFor->buf, '\n');
+    Buf_AddStr(&accumFor->body, line);
+    Buf_AddByte(&accumFor->body, '\n');
     return TRUE;
 }
 
@@ -361,7 +361,7 @@ for_substitute(Buffer *cmds, const char *item, char ech)
 
 static void
 SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
-	     Buffer *cmds, char ech)
+	     char ech)
 {
     size_t i;
     const char *cp = *inout_cp;
@@ -380,11 +380,11 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
 	    continue;
 
 	/* Found a variable match. Replace with :U<value> */
-	Buf_AddBytesBetween(cmds, cmd_cp, cp);
-	Buf_AddStr(cmds, ":U");
+	Buf_AddBytesBetween(&arg->curBody, cmd_cp, cp);
+	Buf_AddStr(&arg->curBody, ":U");
 	cp += vlen;
 	cmd_cp = cp;
-	for_substitute(cmds, arg->items.words[arg->sub_next + i], ech);
+	for_substitute(&arg->curBody, arg->items.words[arg->sub_next + i], ech);
 	break;
     }
 
@@ -394,7 +394,7 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
 
 static void
 SubstVarShort(For *arg, char const ch,
-	      const char **inout_cp, const char **input_cmd_cp, Buffer *cmds)
+	      const char **inout_cp, const char **input_cmd_cp)
 {
     const char *cp = *inout_cp;
     const char *cmd_cp = *input_cmd_cp;
@@ -414,11 +414,11 @@ SubstVarShort(For *arg, char const ch,
 	    continue;
 
 	/* Found a variable match. Replace with ${:U<value>} */
-	Buf_AddBytesBetween(cmds, cmd_cp, cp);
-	Buf_AddStr(cmds, "{:U");
+	Buf_AddBytesBetween(&arg->curBody, cmd_cp, cp);
+	Buf_AddStr(&arg->curBody, "{:U");
 	cmd_cp = ++cp;
-	for_substitute(cmds, arg->items.words[arg->sub_next + i], '}');
-	Buf_AddByte(cmds, '}');
+	for_substitute(&arg->curBody, arg->items.words[arg->sub_next + i], '}');
+	Buf_AddByte(&arg->curBody, '}');
 	break;
     }
 
@@ -445,7 +445,6 @@ ForIterate(void *v_arg, size_t *ret_len)
     const char *cp;
     const char *cmd_cp;
     const char *body_end;
-    Buffer cmds;
     char *cmds_str;
     size_t cmd_len;
 
@@ -455,35 +454,32 @@ ForIterate(void *v_arg, size_t *ret_len)
 	return NULL;
     }
 
-    free(arg->parse_buf);
-    arg->parse_buf = NULL;
+    Buf_Empty(&arg->curBody);
 
-    cmd_cp = Buf_GetAll(&arg->buf, &cmd_len);
+    cmd_cp = Buf_GetAll(&arg->body, &cmd_len);
     body_end = cmd_cp + cmd_len;
-    Buf_Init(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ch, ech;
 	ch = *++cp;
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
 	    /* Check variable name against the .for loop variables */
-	    SubstVarLong(arg, &cp, &cmd_cp, &cmds, ech);
+	    SubstVarLong(arg, &cp, &cmd_cp, ech);
 	    continue;
 	}
 	if (ch == '\0')
 	    break;
 
-	SubstVarShort(arg, ch, &cp, &cmd_cp, &cmds);
+	SubstVarShort(arg, ch, &cp, &cmd_cp);
     }
-    Buf_AddBytesBetween(&cmds, cmd_cp, body_end);
+    Buf_AddBytesBetween(&arg->curBody, cmd_cp, body_end);
 
-    *ret_len = Buf_Len(&cmds);
-    cmds_str = Buf_Destroy(&cmds, FALSE);
+    *ret_len = Buf_Len(&arg->curBody);
+    cmds_str = Buf_GetAll(&arg->curBody, NULL);
     DEBUG1(FOR, "For: loop body:\n%s", cmds_str);
 
     arg->sub_next += arg->vars.len;
 
-    arg->parse_buf = cmds_str;
     return cmds_str;
 }
 
