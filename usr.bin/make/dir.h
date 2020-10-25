@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.31 2020/10/19 23:43:55 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.32 2020/10/25 10:00:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -109,7 +109,7 @@ void Dir_Concat(SearchPath *, SearchPath *);
 void Dir_PrintDirectories(void);
 void Dir_PrintPath(SearchPath *);
 void Dir_Destroy(void *);
-void *Dir_CopyDir(void *);
+SearchPath *Dir_CopyDirSearchPath(void);
 
 /* Stripped-down variant of struct stat. */
 struct make_stat {
