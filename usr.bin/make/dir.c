@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.180 2020/10/25 08:10:03 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.181 2020/10/25 08:59:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.180 2020/10/25 08:10:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.181 2020/10/25 08:59:26 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -576,48 +576,48 @@ Dir_HasWildcards(const char *name)
     return wild && brackets == 0 && braces == 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * DirMatchFiles --
- *	Given a pattern and a CachedDir structure, see if any files
- *	match the pattern and add their names to the 'expansions' list if
- *	any do. This is incomplete -- it doesn't take care of patterns like
- *	src / *src / *.c properly (just *.c on any of the directories), but it
- *	will do for now.
+/* See if any files match the pattern and add their names to the 'expansions'
+ * list if they do.
+ *
+ * This is incomplete -- wildcards are only expanded in the final path
+ * component, but not in directories like src/lib*c/file*.c, but it
+ * will do for now (now being 1993 until at least 2020). To expand these,
+ * use the ':sh' variable modifier such as in ${:!echo src/lib*c/file*.c!}.
  *
  * Input:
  *	pattern		Pattern to look for
  *	dir		Directory to search
  *	expansion	Place to store the results
- *
- * Side Effects:
- *	File names are added to the expansions lst. The directory will be
- *	fully hashed when this is done.
- *-----------------------------------------------------------------------
  */
 static void
 DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 {
+    const char *dirName = dir->name;
+    Boolean isDot = dirName[0] == '.' && dirName[1] == '\0';
     HashIter hi;
-    HashEntry *entry;		/* Current entry in the table */
-    Boolean isDot;		/* TRUE if the directory being searched is . */
-
-    isDot = (dir->name[0] == '.' && dir->name[1] == '\0');
 
     HashIter_Init(&hi, &dir->files);
-    while ((entry = HashIter_Next(&hi)) != NULL) {
+    while (HashIter_Next(&hi) != NULL) {
+	const char *base = hi.entry->key;
+
+	if (!Str_Match(base, pattern))
+	    continue;
+
 	/*
-	 * See if the file matches the given pattern. Note we follow the UNIX
-	 * convention that dot files will only be found if the pattern
-	 * begins with a dot (note also that as a side effect of the hashing
-	 * scheme, .* won't match . or .. since they aren't hashed).
+	 * Follow the UNIX convention that dot files are only found if the
+	 * pattern begins with a dot. The pattern '.*' does not match '.' or
+	 * '..' since these are not included in the directory cache.
+	 *
+	 * XXX: This means that the pattern '[a-z.]*' does not find '.file'.
 	 */
-	if (Str_Match(entry->key, pattern) &&
-	    (entry->key[0] != '.' || pattern[0] == '.'))
+	if (base[0] == '.' && pattern[0] != '.')
+	    continue;
+
 	{
-	    Lst_Append(expansions,
-		       (isDot ? bmake_strdup(entry->key) :
-			str_concat3(dir->name, "/", entry->key)));
+	    char *fullName = isDot
+			     ? bmake_strdup(base)
+			     : str_concat3(dirName, "/", base);
+	    Lst_Append(expansions, fullName);
 	}
     }
 }
@@ -686,10 +686,14 @@ concat3(const char *a, size_t a_len, const char *b, size_t b_len,
     return s;
 }
 
-/* Expand curly braces like the C shell. Does this recursively.
- * Note the special case: if after the piece of the curly brace is
- * done, there are no wildcard characters in the result, the result is
- * placed on the list WITHOUT CHECKING FOR ITS EXISTENCE.
+/* Expand curly braces like the C shell. Brace expansion by itself is purely
+ * textual, the expansions are not looked up in the file system. But if an
+ * expanded word contains wildcard characters, it is expanded further,
+ * matching only the actually existing files.
+ *
+ * Example: "{a{b,c}}" expands to "ab" and "ac".
+ * Example: "{a}" expands to "a".
+ * Example: "{a,*.c}" expands to "a" and all "*.c" files that exist.
  *
  * Input:
  *	word		Entire word to expand
