@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.179 2020/10/25 10:07:23 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.180 2020/10/25 21:51:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.179 2020/10/25 10:07:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.180 2020/10/25 21:51:48 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -294,8 +294,7 @@ Make_OODate(GNode *gn)
 	    if (gn->youngestChild != NULL &&
 		gn->mtime < gn->youngestChild->mtime) {
 		debug_printf("modified before source %s...",
-			     gn->youngestChild->path ? gn->youngestChild->path
-						     : gn->youngestChild->name);
+			     GNode_Path(gn->youngestChild));
 	    } else if (gn->mtime == 0) {
 		debug_printf("non-existent and no sources...");
 	    } else {
@@ -785,7 +784,7 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 	if (cgn->type & OP_ARCHV)
 	    child = Var_Value(MEMBER, cgn, &p1);
 	else
-	    child = cgn->path ? cgn->path : cgn->name;
+	    child = GNode_Path(cgn);
 	if (cgn->type & OP_JOIN) {
 	    allsrc = Var_Value(ALLSRC, cgn, &p2);
 	} else {
@@ -1178,7 +1177,7 @@ Make_ExpandUse(GNodeList *targs)
 	}
 
 	(void)Dir_MTime(gn, 0);
-	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
+	Var_Set(TARGET, GNode_Path(gn), gn);
 	UnmarkChildren(gn);
 	HandleUseNodes(gn);
 
