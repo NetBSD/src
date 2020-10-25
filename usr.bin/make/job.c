@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.285 2020/10/25 20:34:05 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.286 2020/10/25 21:34:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.285 2020/10/25 20:34:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.286 2020/10/25 21:34:52 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -443,12 +443,20 @@ job_table_dump(const char *where)
 static void
 JobDeleteTarget(GNode *gn)
 {
-	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
-	    char *file = (gn->path == NULL ? gn->name : gn->path);
-	    if (!noExecute && eunlink(file) != -1) {
-		Error("*** %s removed", file);
-	    }
-	}
+    if (gn->type & OP_JOIN)
+	return;
+    if (gn->type & OP_PHONY)
+	return;
+    if (Targ_Precious(gn))
+	return;
+    if (noExecute)
+	return;
+
+    {
+	char *file = (gn->path == NULL ? gn->name : gn->path);
+	if (eunlink(file) != -1)
+	    Error("*** %s removed", file);
+    }
 }
 
 /*
