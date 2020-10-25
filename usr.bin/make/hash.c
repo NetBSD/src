@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.51 2020/10/25 18:12:35 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.52 2020/10/25 18:37:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.51 2020/10/25 18:12:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.52 2020/10/25 18:37:08 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -241,23 +241,19 @@ RebuildTable(HashTable *t)
  * Input:
  *	t		Hash table to search.
  *	key		A hash key.
- *	newPtr		Filled with TRUE if new entry created,
- *			FALSE otherwise.
+ *	out_isNew	Filled with TRUE if new entry created, FALSE otherwise.
  */
 HashEntry *
-Hash_CreateEntry(HashTable *t, const char *key, Boolean *newPtr)
+Hash_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 {
-	HashEntry *e;
-	unsigned h;
 	size_t keylen;
-	HashEntry **hp;
+	unsigned int h = hash(key, &keylen);
+	HashEntry *he = HashTable_Find(t, h, key);
 
-	h = hash(key, &keylen);
-	e = HashTable_Find(t, h, key);
-	if (e) {
-		if (newPtr != NULL)
-			*newPtr = FALSE;
-		return e;
+	if (he != NULL) {
+		if (out_isNew != NULL)
+			*out_isNew = FALSE;
+		return he;
 	}
 
 	/*
@@ -268,30 +264,30 @@ Hash_CreateEntry(HashTable *t, const char *key, Boolean *newPtr)
 	if (t->numEntries >= rebuildLimit * t->bucketsSize)
 		RebuildTable(t);
 
-	e = bmake_malloc(sizeof(*e) + keylen);
-	hp = &t->buckets[h & t->bucketsMask];
-	e->next = *hp;
-	*hp = e;
-	Hash_SetValue(e, NULL);
-	e->key_hash = h;
-	memcpy(e->key, key, keylen + 1);
+	he = bmake_malloc(sizeof(*he) + keylen);
+	he->value = NULL;
+	he->key_hash = h;
+	memcpy(he->key, key, keylen + 1);
+
+	he->next = t->buckets[h & t->bucketsMask];
+	t->buckets[h & t->bucketsMask] = he;
 	t->numEntries++;
 
-	if (newPtr != NULL)
-		*newPtr = TRUE;
-	return e;
+	if (out_isNew != NULL)
+		*out_isNew = TRUE;
+	return he;
 }
 
 /* Delete the given hash table entry and free memory associated with it. */
 void
-Hash_DeleteEntry(HashTable *t, HashEntry *e)
+Hash_DeleteEntry(HashTable *t, HashEntry *he)
 {
-	HashEntry **hp, *p;
+	HashEntry **ref = &t->buckets[he->key_hash & t->bucketsMask];
+	HashEntry *p;
 
-	for (hp = &t->buckets[e->key_hash & t->bucketsMask];
-	     (p = *hp) != NULL; hp = &p->next) {
-		if (p == e) {
-			*hp = p->next;
+	for (; (p = *ref) != NULL; ref = &p->next) {
+		if (p == he) {
+			*ref = p->next;
 			free(p);
 			t->numEntries--;
 			return;
@@ -314,28 +310,21 @@ HashIter_Init(HashIter *hi, HashTable *t)
 HashEntry *
 HashIter_Next(HashIter *hi)
 {
-	HashEntry *e;
 	HashTable *t = hi->table;
+	HashEntry *he = hi->entry;
+	HashEntry **buckets = t->buckets;
+	unsigned int bucketsSize = t->bucketsSize;
 
-	/*
-	 * The entry field points to the most recently returned
-	 * entry, or is NULL if we are starting up.  If not NULL, we have
-	 * to start at the next one in the chain.
-	 */
-	e = hi->entry;
-	if (e != NULL)
-		e = e->next;
-	/*
-	 * If the chain ran out, or if we are starting up, we need to
-	 * find the next nonempty chain.
-	 */
-	while (e == NULL) {
-		if (hi->nextBucket >= t->bucketsSize)
+	if (he != NULL)
+		he = he->next;	/* skip the most recently returned entry */
+
+	while (he == NULL) {	/* find the next nonempty chain */
+		if (hi->nextBucket >= bucketsSize)
 			return NULL;
-		e = t->buckets[hi->nextBucket++];
+		he = buckets[hi->nextBucket++];
 	}
-	hi->entry = e;
-	return e;
+	hi->entry = he;
+	return he;
 }
 
 void
