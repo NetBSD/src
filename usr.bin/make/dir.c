@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.182 2020/10/25 09:03:05 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.183 2020/10/25 09:10:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.182 2020/10/25 09:03:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.183 2020/10/25 09:10:46 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -745,28 +745,9 @@ DirExpandCurly(const char *word, const char *brace, SearchPath *path,
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * DirExpandInt --
- *	Internal expand routine. Passes through the directories in the
- *	path one by one, calling DirMatchFiles for each. NOTE: This still
- *	doesn't handle patterns in directories...
- *
- * Input:
- *	word		Word to expand
- *	path		Directory in which to look
- *	expansions	Place to store the result
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Things are added to the expansions list.
- *
- *-----------------------------------------------------------------------
- */
+/* Expand the word in each of the directories from the path. */
 static void
-DirExpandInt(const char *word, SearchPath *path, StringList *expansions)
+DirExpandPath(const char *word, SearchPath *path, StringList *expansions)
 {
     SearchPathNode *ln;
     for (ln = path->first; ln != NULL; ln = ln->next) {
@@ -853,20 +834,20 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 			    *dp = '\0';
 			path = Lst_New();
 			(void)Dir_AddDir(path, dirpath);
-			DirExpandInt(cp + 1, path, expansions);
+			DirExpandPath(cp + 1, path, expansions);
 			Lst_Free(path);
 		    }
 		} else {
 		    /*
 		     * Start the search from the local directory
 		     */
-		    DirExpandInt(word, path, expansions);
+		    DirExpandPath(word, path, expansions);
 		}
 	    } else {
 		/*
 		 * Return the file -- this should never happen.
 		 */
-		DirExpandInt(word, path, expansions);
+		DirExpandPath(word, path, expansions);
 	    }
 	} else {
 	    /*
@@ -877,7 +858,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	    /*
 	     * Then the files in every other directory on the path.
 	     */
-	    DirExpandInt(word, path, expansions);
+	    DirExpandPath(word, path, expansions);
 	}
     }
     if (DEBUG(DIR))
