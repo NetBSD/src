@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.584 2020/10/25 12:08:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.585 2020/10/25 13:06:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.584 2020/10/25 12:08:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.585 2020/10/25 13:06:12 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3865,24 +3865,26 @@ Var_Stats(void)
 void
 Var_Dump(GNode *ctxt)
 {
-    PtrVector varnames;
+    Vector /* of const char * */ vec;
     HashIter hi;
     HashEntry *he;
     size_t i;
+    const char **varnames;
 
-    PtrVector_Init(&varnames);
+    Vector_Init(&vec, sizeof(const char *));
 
     HashIter_Init(&hi, &ctxt->context);
     while ((he = HashIter_Next(&hi)) != NULL)
-	PtrVector_Push(&varnames, he->key);
+	*(const char **)Vector_Push(&vec) = he->key;
+    varnames = vec.items;
 
-    qsort(varnames.items, varnames.len, sizeof varnames.items[0], str_cmp_asc);
+    qsort(varnames, vec.len, sizeof varnames[0], str_cmp_asc);
 
-    for (i = 0; i < varnames.len; i++) {
-        const char *varname = varnames.items[i];
+    for (i = 0; i < vec.len; i++) {
+        const char *varname = varnames[i];
         Var *var = Hash_FindValue(&ctxt->context, varname);
 	debug_printf("%-16s = %s\n", varname, Buf_GetAll(&var->val, NULL));
     }
 
-    PtrVector_Done(&varnames);
+    Vector_Done(&vec);
 }
