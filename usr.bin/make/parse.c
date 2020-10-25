@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.399 2020/10/25 12:08:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.400 2020/10/25 13:06:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.399 2020/10/25 12:08:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.400 2020/10/25 13:06:12 rillig Exp $");
 
 /* types and constants */
 
@@ -281,7 +281,13 @@ static IFile *curFile;
  *			(not printed since it is below a .for loop)
  *	includes[0]:	include-main.mk:27
  */
-static PtrVector /* of IFile pointer */ includes;
+static Vector /* of IFile pointer */ includes;
+
+static IFile *
+GetInclude(size_t i)
+{
+    return *((IFile **)Vector_Get(&includes, i));
+}
 
 /* include paths (lists of directories) */
 SearchPath *parseIncPath;	/* dirs for "..." includes */
@@ -2322,8 +2328,8 @@ GetActuallyIncludingFile(void)
     size_t i;
 
     for (i = includes.len; i > 0; i--) {
-	IFile *parent = includes.items[i - 1];
-	IFile *child = i < includes.len ? includes.items[i] : curFile;
+	IFile *parent = GetInclude(i - 1);
+	IFile *child = i < includes.len ? GetInclude(i) : curFile;
 	if (!child->fromForLoop)
 	    return parent->fname;
     }
@@ -2402,9 +2408,11 @@ Parse_SetInput(const char *name, int line, int fd,
 	/* sanity */
 	return;
 
-    if (curFile != NULL)
+    if (curFile != NULL) {
 	/* Save existing file info */
-	PtrVector_Push(&includes, curFile);
+	IFile **next = Vector_Push(&includes);
+	*next = curFile;
+    }
 
     /* Allocate and fill in new structure */
     curFile = bmake_malloc(sizeof *curFile);
@@ -2599,7 +2607,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    if (PtrVector_IsEmpty(&includes)) {
+    if (includes.len == 0) {
 	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
@@ -2609,7 +2617,8 @@ ParseEOF(void)
 	return FALSE;
     }
 
-    curFile = PtrVector_Pop(&includes);
+    curFile = GetInclude(includes.len - 1);
+    Vector_Pop(&includes);
     DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
 	   curFile->fname, curFile->lineno);
 
@@ -3147,7 +3156,7 @@ Parse_Init(void)
     parseIncPath = Lst_New();
     sysIncPath = Lst_New();
     defIncPath = Lst_New();
-    PtrVector_Init(&includes);
+    Vector_Init(&includes, sizeof(IFile *));
 #ifdef CLEANUP
     targCmds = Lst_New();
 #endif
@@ -3163,8 +3172,8 @@ Parse_End(void)
     Lst_Destroy(defIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
-    assert(PtrVector_IsEmpty(&includes));
-    PtrVector_Done(&includes);
+    assert(includes.len == 0);
+    Vector_Done(&includes);
 #endif
 }
 
