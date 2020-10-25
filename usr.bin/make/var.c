@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.586 2020/10/25 17:01:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.587 2020/10/25 19:11:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.586 2020/10/25 17:01:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.587 2020/10/25 19:11:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -331,6 +331,12 @@ CanonicalVarname(const char *name)
     return name;
 }
 
+static Var *
+GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
+{
+    return Hash_FindValueHash(&ctxt->context, varname, hash);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarFind --
@@ -369,18 +375,18 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Hash_FindValueHash(&ctxt->context, name, nameHash);
+    var = GNode_FindVar(ctxt, name, nameHash);
 
     if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD)
-	var = Hash_FindValueHash(&VAR_CMD->context, name, nameHash);
+	var = GNode_FindVar(VAR_CMD, name, nameHash);
 
     if (!checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
 	ctxt != VAR_GLOBAL)
     {
-	var = Hash_FindValueHash(&VAR_GLOBAL->context, name, nameHash);
+	var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
 	if (var == NULL && ctxt != VAR_INTERNAL) {
 	    /* VAR_INTERNAL is subordinate to VAR_GLOBAL */
-	    var = Hash_FindValueHash(&VAR_INTERNAL->context, name, nameHash);
+	    var = GNode_FindVar(VAR_INTERNAL, name, nameHash);
 	}
     }
 
@@ -393,9 +399,9 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	}
 
 	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
-	    var = Hash_FindValueHash(&VAR_GLOBAL->context, name, nameHash);
+	    var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
 	    if (var == NULL && ctxt != VAR_INTERNAL)
-		var = Hash_FindValueHash(&VAR_INTERNAL->context, name, nameHash);
+		var = GNode_FindVar(VAR_INTERNAL, name, nameHash);
 	    return var;
 	}
 
