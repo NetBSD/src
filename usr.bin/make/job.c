@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.287 2020/10/25 21:51:48 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.288 2020/10/25 22:05:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.287 2020/10/25 21:51:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.288 2020/10/25 22:05:00 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -552,7 +552,7 @@ static void
 JobContinueSig(int signo MAKE_ATTR_UNUSED)
 {
     /*
-     * Defer sending to SIGCONT to our stopped children until we return
+     * Defer sending SIGCONT to our stopped children until we return
      * from the signal handler.
      */
     while (write(childExitJob.outPipe, DO_JOB_RESUME, 1) == -1 &&
@@ -623,7 +623,7 @@ JobPassSig_suspend(int signo)
      * events will have happened by then - and that the waitpid() will
      * collect the child 'suspended' events.
      * For correct sequencing we just need to ensure we process the
-     * waitpid() before passign on the SIGCONT.
+     * waitpid() before passing on the SIGCONT.
      *
      * In any case nothing else is needed here.
      */
