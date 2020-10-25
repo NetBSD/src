@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.10 2017/06/01 02:45:08 chs Exp $ */
+/*	$NetBSD: powernow.c,v 1.11 2020/10/25 16:39:00 nia Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.10 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.11 2020/10/25 16:39:00 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -249,7 +249,7 @@ powernow_detach(device_t self, int flags)
 static int
 powernow_sysctl(device_t self)
 {
-	const struct sysctlnode *freqnode, *node, *pnownode;
+	const struct sysctlnode *freqnode, *node, *cpunode;
 	struct powernow_softc *sc = device_private(self);
 	int rv;
 
@@ -263,14 +263,14 @@ powernow_sysctl(device_t self)
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(&sc->sc_log, 0, &node, &pnownode,
-	    0, CTLTYPE_NODE, "powernow", NULL,
+	rv = sysctl_createv(&sc->sc_log, 0, &node, &cpunode,
+	    0, CTLTYPE_NODE, "cpu", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(&sc->sc_log, 0, &pnownode, &freqnode,
+	rv = sysctl_createv(&sc->sc_log, 0, &cpunode, &freqnode,
 	    0, CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 

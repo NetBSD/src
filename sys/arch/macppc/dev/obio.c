@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.46 2018/06/08 23:39:31 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.47 2020/10/25 16:39:00 nia Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.46 2018/06/08 23:39:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.47 2020/10/25 16:39:00 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,9 +431,9 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &me, 
-	    CTLFLAG_READWRITE, CTLTYPE_NODE, "intrepid", NULL, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_NODE, "cpu", NULL, NULL,
 	    0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL) != 0)
-		printf("couldn't create 'intrepid' node\n");
+		printf("couldn't create 'cpu' node\n");
 	
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &freq, 
