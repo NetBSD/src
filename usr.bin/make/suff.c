@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.224 2020/10/25 17:12:51 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.225 2020/10/25 21:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.224 2020/10/25 17:12:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.225 2020/10/25 21:51:49 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1788,7 +1788,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	}
     }
 
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
+    Var_Set(TARGET, GNode_Path(gn), gn);
 
     pref = (targ != NULL) ? targ->pref : gn->name;
     Var_Set(PREFIX, pref, gn);
@@ -1953,7 +1953,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
     /*
      * Make sure we have these set, may get revised below.
      */
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
+    Var_Set(TARGET, GNode_Path(gn), gn);
     Var_Set(PREFIX, gn->name, gn);
 
     SUFF_DEBUG1("SuffFindDeps (%s)\n", gn->name);

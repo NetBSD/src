@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.171 2020/10/24 20:51:49 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.172 2020/10/25 21:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -587,10 +587,16 @@ void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 Boolean NoExecute(GNode *gn);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
-static Boolean MAKE_ATTR_UNUSED
+static MAKE_ATTR_UNUSED Boolean
 GNode_IsTarget(const GNode *gn)
 {
     return (gn->type & OP_OPMASK) != 0;
+}
+
+static MAKE_ATTR_UNUSED const char *
+GNode_Path(const GNode *gn)
+{
+    return gn->path != NULL ? gn->path : gn->name;
 }
 
 #ifdef __GNUC__
