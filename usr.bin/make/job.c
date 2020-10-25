@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.283 2020/10/25 20:24:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.284 2020/10/25 20:29:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.283 2020/10/25 20:24:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.284 2020/10/25 20:29:51 rillig Exp $");
 
 # define STATIC static
 
@@ -238,12 +238,11 @@ int jobTokensRunning = 0;
  * Should this number be 0, no shell will be executed. */
 static int numCommands;
 
-/*
- * Return values from JobStart.
- */
-#define JOB_RUNNING	0	/* Job is running */
-#define JOB_ERROR	1	/* Error in starting the job */
-#define JOB_FINISHED	2	/* The job is already finished */
+typedef enum JobStartResult {
+    JOB_RUNNING,		/* Job is running */
+    JOB_ERROR,			/* Error in starting the job */
+    JOB_FINISHED		/* The job is already finished */
+} JobStartResult;
 
 /*
  * Descriptions for various shells.
@@ -657,11 +656,6 @@ JobFindPid(int pid, JobState status, Boolean isJobs)
  *	made and return non-zero to signal that the end of the commands
  *	was reached. These commands are later attached to the postCommands
  *	node and executed by Job_End when all things are done.
- *	This function is called from JobStart via Lst_ForEachUntil.
- *
- * Input:
- *	cmdp		command string to print
- *	jobp		job for which to print it
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
@@ -1248,7 +1242,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
     return FALSE;
 }
 
-/* Execute the shell for the given job. Called from JobStart
+/* Execute the shell for the given job.
  *
  * A shell is executed, its output is altered and the Job structure added
  * to the job table.
@@ -1475,7 +1469,7 @@ JobMakeArgv(Job *job, char **argv)
  *     Also the return value is ignored by everyone.
  *-----------------------------------------------------------------------
  */
-static int
+static JobStartResult
 JobStart(GNode *gn, int flags)
 {
     Job *job;			/* new job descriptor */
