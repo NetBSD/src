@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.82 2020/10/25 13:06:12 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.83 2020/10/25 13:31:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -152,9 +152,6 @@ void LstNode_SetNull(ListNode *);
  *
  * During this iteration, the list must not be modified structurally. */
 int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
-
-/* Iterating over a list while keeping track of the current node and possible
- * concurrent modifications */
 
 /* Using the list as a queue */
 
