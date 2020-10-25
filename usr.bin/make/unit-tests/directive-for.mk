@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.7 2020/10/25 14:55:23 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.8 2020/10/25 15:49:03 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -130,6 +130,14 @@ EXPANSION${plus}=	value
 # See GetEscapes.
 .for v in ( [ { ) ] } (()) [[]] {{}} )( ][ }{
 .  info $v ${v} $(v)
+.endfor
+
+# As of 2020-10-25, the variable names may contain arbitrary characters,
+# except for whitespace.  This allows for creative side effects. Hopefully
+# nobody is misusing this "feature".
+var=	outer
+.for var:Q in value "quoted"
+.  info ${var} ${var:Q} ${var:Q:Q}
 .endfor
 
 all:
