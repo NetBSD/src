@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.6 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.7 2020/10/25 14:55:23 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -123,6 +123,13 @@ EXPANSION${plus}=	value
 # removed.
 .for path in a:\ a:\file.txt d:\\ d:\\file.txt
 .  info ${path}
+.endfor
+
+# Ensure that braces and parentheses are properly escaped by the .for loop.
+# Each line must print the same word 3 times.
+# See GetEscapes.
+.for v in ( [ { ) ] } (()) [[]] {{}} )( ][ }{
+.  info $v ${v} $(v)
 .endfor
 
 all:
