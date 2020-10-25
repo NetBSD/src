@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.96 2020/10/25 13:20:11 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.97 2020/10/25 13:45:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.96 2020/10/25 13:20:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.97 2020/10/25 13:45:33 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -389,6 +389,39 @@ for_substitute(Buffer *cmds, ForItem *forItem, char ech)
     }
 }
 
+static void
+SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
+	     Buffer *cmds, char ech)
+{
+    size_t i;
+    const char *cp = *inout_cp;
+    const char *cmd_cp = *inout_cmd_cp;
+
+    for (i = 0; i < arg->vars.len; i++) {
+	ForVar *forVar = Vector_Get(&arg->vars, i);
+	char *var = forVar->name;
+	size_t vlen = forVar->len;
+
+	/* XXX: undefined behavior for cp if vlen is longer than cp? */
+	if (memcmp(cp, var, vlen) != 0)
+	    continue;
+	/* XXX: why test for backslash here? */
+	if (cp[vlen] != ':' && cp[vlen] != ech && cp[vlen] != '\\')
+	    continue;
+
+	/* Found a variable match. Replace with :U<value> */
+	Buf_AddBytesBetween(cmds, cmd_cp, cp);
+	Buf_AddStr(cmds, ":U");
+	cp += vlen;
+	cmd_cp = cp;
+	for_substitute(cmds, Vector_Get(&arg->items, arg->sub_next + i), ech);
+	break;
+    }
+
+    *inout_cp = cp;
+    *inout_cmd_cp = cmd_cp;
+}
+
 /*
  * Scan the for loop body and replace references to the loop variables
  * with variable references that expand to the required text.
@@ -431,26 +464,12 @@ ForIterate(void *v_arg, size_t *ret_len)
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
 	    /* Check variable name against the .for loop variables */
-	    for (i = 0; i < arg->vars.len; i++) {
-	        ForVar *forVar = Vector_Get(&arg->vars, i);
-		char *var = forVar->name;
-		size_t vlen = forVar->len;
-		if (memcmp(cp, var, vlen) != 0)
-		    continue;
-		if (cp[vlen] != ':' && cp[vlen] != ech && cp[vlen] != '\\')
-		    continue;
-		/* Found a variable match. Replace with :U<value> */
-		Buf_AddBytesBetween(&cmds, cmd_cp, cp);
-		Buf_AddStr(&cmds, ":U");
-		cp += vlen;
-		cmd_cp = cp;
-		for_substitute(&cmds, Vector_Get(&arg->items, arg->sub_next + i), ech);
-		break;
-	    }
+	    SubstVarLong(arg, &cp, &cmd_cp, &cmds, ech);
 	    continue;
 	}
 	if (ch == '\0')
 	    break;
+
 	/* Probably a single character name, ignore $$ and stupid ones. {*/
 	if (!arg->short_var || strchr("}):$", ch) != NULL) {
 	    cp++;
