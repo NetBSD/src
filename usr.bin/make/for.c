@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.94 2020/10/18 17:19:54 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.95 2020/10/25 12:01:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -61,7 +61,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.94 2020/10/18 17:19:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.95 2020/10/25 12:01:33 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -235,13 +235,13 @@ For_Eval(const char *line)
     Words_Free(words);
 
     {
-	size_t len, n;
+	size_t nitems, nvars;
 
-	if ((len = strlist_num(&new_for->items)) > 0 &&
-	    len % (n = strlist_num(&new_for->vars))) {
+	if ((nitems = strlist_num(&new_for->items)) > 0 &&
+	    nitems% (nvars = strlist_num(&new_for->vars))) {
 	    Parse_Error(PARSE_FATAL,
 			"Wrong number of words (%zu) in .for substitution list"
-			" with %zu vars", len, n);
+			" with %zu vars", nitems, nvars);
 	    /*
 	     * Return 'success' so that the body of the .for loop is
 	     * accumulated.
@@ -334,7 +334,7 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 
     /* Escape ':', '$', '\\' and 'ech' - these will be removed later by
      * :U processing, see ApplyModifier_Defined. */
-    while ((ch = *item++) != 0) {
+    while ((ch = *item++) != '\0') {
 	if (ch == '$') {
 	    size_t len = for_var_len(item);
 	    if (len != 0) {
@@ -349,16 +349,25 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
     }
 }
 
+/*
+ * Scan the for loop body and replace references to the loop variables
+ * with variable references that expand to the required text.
+ *
+ * Using variable expansions ensures that the .for loop can't generate
+ * syntax, and that the later parsing will still see a variable.
+ * We assume that the null variable will never be defined.
+ *
+ * The detection of substitutions of the loop control variable is naive.
+ * Many of the modifiers use \ to escape $ (not $) so it is possible
+ * to contrive a makefile where an unwanted substitution happens.
+ */
 static char *
 ForIterate(void *v_arg, size_t *ret_len)
 {
     For *arg = v_arg;
-    unsigned int i;
-    char *var;
     const char *cp;
     const char *cmd_cp;
     const char *body_end;
-    char ch;
     Buffer cmds;
     char *cmds_str;
     size_t cmd_len;
@@ -372,23 +381,13 @@ ForIterate(void *v_arg, size_t *ret_len)
     free(arg->parse_buf);
     arg->parse_buf = NULL;
 
-    /*
-     * Scan the for loop body and replace references to the loop variables
-     * with variable references that expand to the required text.
-     * Using variable expansions ensures that the .for loop can't generate
-     * syntax, and that the later parsing will still see a variable.
-     * We assume that the null variable will never be defined.
-     *
-     * The detection of substitutions of the loop control variable is naive.
-     * Many of the modifiers use \ to escape $ (not $) so it is possible
-     * to contrive a makefile where an unwanted substitution happens.
-     */
-
     cmd_cp = Buf_GetAll(&arg->buf, &cmd_len);
     body_end = cmd_cp + cmd_len;
     Buf_Init(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
-	char ech;
+	char *var;
+	char ch, ech;
+	unsigned int i;
 	ch = *++cp;
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
@@ -409,7 +408,7 @@ ForIterate(void *v_arg, size_t *ret_len)
 	    }
 	    continue;
 	}
-	if (ch == 0)
+	if (ch == '\0')
 	    break;
 	/* Probably a single character name, ignore $$ and stupid ones. {*/
 	if (!arg->short_var || strchr("}):$", ch) != NULL) {
