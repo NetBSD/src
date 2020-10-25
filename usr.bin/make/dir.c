@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.183 2020/10/25 09:10:46 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.184 2020/10/25 09:19:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.183 2020/10/25 09:10:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.184 2020/10/25 09:19:10 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -757,12 +757,14 @@ DirExpandPath(const char *word, SearchPath *path, StringList *expansions)
 }
 
 static void
-DirPrintExpansions(StringList *words)
+PrintExpansions(StringList *expansions)
 {
+    const char *sep = "";
     StringListNode *ln;
-    for (ln = words->first; ln != NULL; ln = ln->next) {
+    for (ln = expansions->first; ln != NULL; ln = ln->next) {
 	const char *word = ln->datum;
-	debug_printf("%s ", word);
+	debug_printf("%s%s", sep, word);
+	sep = " ";
     }
     debug_printf("\n");
 }
@@ -862,7 +864,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	}
     }
     if (DEBUG(DIR))
-	DirPrintExpansions(expansions);
+	PrintExpansions(expansions);
 }
 
 /* Find if the file with the given name exists in the given path.
