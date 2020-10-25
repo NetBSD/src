@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.389 2020/10/25 17:37:36 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.390 2020/10/25 19:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.389 2020/10/25 17:37:36 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.390 2020/10/25 19:19:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1987,7 +1987,7 @@ purge_cached_realpaths(void)
 	if (he->key[0] != '/') {
 	    if (DEBUG(DIR))
 		fprintf(stderr, "cached_realpath: purging %s\n", he->key);
-	    Hash_DeleteEntry(&cache->context, he);
+	    HashTable_DeleteEntry(&cache->context, he);
 	}
 	he = nhe;
     }

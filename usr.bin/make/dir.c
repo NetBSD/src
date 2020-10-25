@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.187 2020/10/25 10:00:20 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.188 2020/10/25 19:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.187 2020/10/25 10:00:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.188 2020/10/25 19:19:07 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -228,7 +228,7 @@ static void
 OpenDirs_Init(OpenDirs *odirs)
 {
     odirs->list = Lst_New();
-    Hash_InitTable(&odirs->table);
+    HashTable_Init(&odirs->table);
 }
 
 #ifdef CLEANUP
@@ -243,37 +243,37 @@ OpenDirs_Done(OpenDirs *odirs)
 	ln = next;
     }
     Lst_Free(odirs->list);
-    Hash_DeleteTable(&odirs->table);
+    HashTable_Done(&odirs->table);
 }
 #endif
 
 static CachedDir *
 OpenDirs_Find(OpenDirs *odirs, const char *name)
 {
-    CachedDirListNode *ln = Hash_FindValue(&odirs->table, name);
+    CachedDirListNode *ln = HashTable_FindValue(&odirs->table, name);
     return ln != NULL ? ln->datum : NULL;
 }
 
 static void
 OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
 {
-    HashEntry *he = Hash_FindEntry(&odirs->table, cdir->name);
+    HashEntry *he = HashTable_FindEntry(&odirs->table, cdir->name);
     if (he != NULL)
 	return;
-    he = Hash_CreateEntry(&odirs->table, cdir->name, NULL);
+    he = HashTable_CreateEntry(&odirs->table, cdir->name, NULL);
     Lst_Append(odirs->list, cdir);
-    Hash_SetValue(he, odirs->list->last);
+    HashEntry_Set(he, odirs->list->last);
 }
 
 static void
 OpenDirs_Remove(OpenDirs *odirs, const char *name)
 {
-    HashEntry *he = Hash_FindEntry(&odirs->table, name);
+    HashEntry *he = HashTable_FindEntry(&odirs->table, name);
     CachedDirListNode *ln;
     if (he == NULL)
 	return;
-    ln = Hash_GetValue(he);
-    Hash_DeleteEntry(&odirs->table, he);
+    ln = HashEntry_Get(he);
+    HashTable_DeleteEntry(&odirs->table, he);
     Lst_Remove(odirs->list, ln);
 }
 
@@ -333,10 +333,10 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     if (!pathname || !pathname[0])
 	return -1;
 
-    entry = Hash_FindEntry(htp, pathname);
+    entry = HashTable_FindEntry(htp, pathname);
 
     if (entry && !(flags & CST_UPDATE)) {
-	cst = Hash_GetValue(entry);
+	cst = HashEntry_Get(entry);
 
 	mst->mst_mode = cst->mode;
 	mst->mst_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
@@ -360,12 +360,12 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     mst->mst_mtime = sys_st.st_mtime;
 
     if (entry == NULL)
-	entry = Hash_CreateEntry(htp, pathname, NULL);
-    if (Hash_GetValue(entry) == NULL) {
-	Hash_SetValue(entry, bmake_malloc(sizeof(*cst)));
-	memset(Hash_GetValue(entry), 0, sizeof(*cst));
+	entry = HashTable_CreateEntry(htp, pathname, NULL);
+    if (HashEntry_Get(entry) == NULL) {
+	HashEntry_Set(entry, bmake_malloc(sizeof(*cst)));
+	memset(HashEntry_Get(entry), 0, sizeof(*cst));
     }
-    cst = Hash_GetValue(entry);
+    cst = HashEntry_Get(entry);
     if (flags & CST_LSTAT) {
 	cst->lmtime = sys_st.st_mtime;
     } else {
@@ -396,8 +396,8 @@ Dir_Init(void)
 {
     dirSearchPath = Lst_New();
     OpenDirs_Init(&openDirs);
-    Hash_InitTable(&mtimes);
-    Hash_InitTable(&lmtimes);
+    HashTable_Init(&mtimes);
+    HashTable_Init(&lmtimes);
 }
 
 void
@@ -409,7 +409,7 @@ Dir_InitDir(const char *cdname)
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = bmake_strdup(".DOTLAST");
-    Hash_InitTable(&dotLast->files);
+    HashTable_Init(&dotLast->files);
 }
 
 /*
@@ -480,7 +480,7 @@ Dir_End(void)
     Dir_ClearPath(dirSearchPath);
     Lst_Free(dirSearchPath);
     OpenDirs_Done(&openDirs);
-    Hash_DeleteTable(&mtimes);
+    HashTable_Done(&mtimes);
 #endif
 }
 
@@ -872,7 +872,7 @@ DirLookup(CachedDir *dir, const char *base)
 
     DIR_DEBUG1("   %s ...\n", dir->name);
 
-    if (Hash_FindEntry(&dir->files, base) == NULL)
+    if (HashTable_FindEntry(&dir->files, base) == NULL)
 	return NULL;
 
     file = str_concat3(dir->name, "/", base);
@@ -925,7 +925,7 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
     if (*dnp != '\0' || np != cp - 1)
 	return NULL;
 
-    if (Hash_FindEntry(&dir->files, cp) == NULL) {
+    if (HashTable_FindEntry(&dir->files, cp) == NULL) {
 	DIR_DEBUG0("   must be here but isn't -- returning\n");
 	return bmake_strdup("");	/* to terminate the search */
     }
@@ -942,13 +942,14 @@ static char *
 DirFindDot(const char *name, const char *base)
 {
 
-    if (Hash_FindEntry(&dot->files, base) != NULL) {
+    if (HashTable_FindEntry(&dot->files, base) != NULL) {
 	DIR_DEBUG0("   in '.'\n");
 	hits++;
 	dot->hits++;
 	return bmake_strdup(name);
     }
-    if (cur != NULL && Hash_FindEntry(&cur->files, base) != NULL) {
+
+    if (cur != NULL && HashTable_FindEntry(&cur->files, base) != NULL) {
 	DIR_DEBUG1("   in ${.CURDIR} = %s\n", cur->name);
 	hits++;
 	cur->hits++;
@@ -1423,7 +1424,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 	dir->name = bmake_strdup(name);
 	dir->hits = 0;
 	dir->refCount = 1;
-	Hash_InitTable(&dir->files);
+	HashTable_Init(&dir->files);
 
 	while ((dp = readdir(d)) != NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
@@ -1436,7 +1437,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 		continue;
 	    }
 #endif /* sun && d_ino */
-	    (void)Hash_CreateEntry(&dir->files, dp->d_name, NULL);
+	    (void)HashTable_CreateEntry(&dir->files, dp->d_name, NULL);
 	}
 	(void)closedir(d);
 	OpenDirs_Add(&openDirs, dir);
@@ -1530,7 +1531,7 @@ Dir_Destroy(void *dirp)
     if (dir->refCount == 0) {
 	OpenDirs_Remove(&openDirs, dir->name);
 
-	Hash_DeleteTable(&dir->files);
+	HashTable_Done(&dir->files);
 	free(dir->name);
 	free(dir);
     }
