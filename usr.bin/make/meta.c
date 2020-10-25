@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.130 2020/10/24 10:32:25 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.131 2020/10/25 21:51:49 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -794,7 +794,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
 		"(ignored)" : "");
     }
     if (gn) {
-	Var_Set(".ERROR_TARGET", gn->path ? gn->path : gn->name, VAR_GLOBAL);
+	Var_Set(".ERROR_TARGET", GNode_Path(gn), VAR_GLOBAL);
     }
     getcwd(cwd, sizeof(cwd));
     Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL);

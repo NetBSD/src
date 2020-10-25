@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.123 2020/10/25 19:19:07 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.124 2020/10/25 21:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.123 2020/10/25 19:19:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.124 2020/10/25 21:51:49 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -516,8 +516,7 @@ PrintOnlySources(void)
 	if (GNode_IsTarget(gn))
 	    continue;
 
-	debug_printf("#\t%s [%s]",
-		gn->name, gn->path ? gn->path : gn->name);
+	debug_printf("#\t%s [%s]", gn->name, GNode_Path(gn));
 	Targ_PrintType(gn->type);
 	debug_printf("\n");
     }

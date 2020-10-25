@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.286 2020/10/25 21:34:52 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.287 2020/10/25 21:51:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.286 2020/10/25 21:34:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.287 2020/10/25 21:51:48 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -443,6 +443,8 @@ job_table_dump(const char *where)
 static void
 JobDeleteTarget(GNode *gn)
 {
+    const char *file;
+
     if (gn->type & OP_JOIN)
 	return;
     if (gn->type & OP_PHONY)
@@ -452,11 +454,9 @@ JobDeleteTarget(GNode *gn)
     if (noExecute)
 	return;
 
-    {
-	char *file = (gn->path == NULL ? gn->name : gn->path);
-	if (eunlink(file) != -1)
-	    Error("*** %s removed", file);
-    }
+    file = GNode_Path(gn);
+    if (eunlink(file) != -1)
+	Error("*** %s removed", file);
 }
 
 /*
@@ -1138,7 +1138,7 @@ Job_Touch(GNode *gn, Boolean silent)
     } else if (gn->type & OP_LIB) {
 	Arch_TouchLib(gn);
     } else {
-	char	*file = gn->path ? gn->path : gn->name;
+	const char *file = GNode_Path(gn);
 
 	times.actime = times.modtime = now;
 	if (utime(file, &times) < 0){
