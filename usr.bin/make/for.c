@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.100 2020/10/25 14:58:23 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.101 2020/10/25 15:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.100 2020/10/25 14:58:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.101 2020/10/25 15:15:45 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -76,18 +76,13 @@ typedef struct ForVar {
     size_t len;
 } ForVar;
 
-/* One of the items to the right of the "in" in a .for loop. */
-typedef struct ForItem {
-    char *value;
-} ForItem;
-
 /*
  * State of a for loop.
  */
 typedef struct For {
     Buffer buf;			/* Body of loop */
-    Vector /* of ForVar */ vars;
-    Vector /* of ForItem */ items;	/* Substitution items */
+    Vector /* of ForVar */ vars;	/* Iteration variables */
+    Vector /* of char * */ items;	/* Substitution items */
     char *parse_buf;
     /* Is any of the names 1 character long? If so, when the variable values
      * are substituted, the parser must handle $V expressions as well, not
@@ -112,17 +107,24 @@ ForVarDone(ForVar *var)
     free(var->name);
 }
 
-static void
-ForAddItem(For *f, const char *value)
+static const char *
+ForItem(For *f, size_t i)
 {
-    ForItem *item = Vector_Push(&f->items);
-    item->value = bmake_strdup(value);
+    const char **item = Vector_Get(&f->items, i);
+    return *item;
 }
 
 static void
-ForItemDone(ForItem *item)
+ForAddItem(For *f, const char *value)
 {
-    free(item->value);
+    char **item = Vector_Push(&f->items);
+    *item = bmake_strdup(value);
+}
+
+static void
+ForItemDone(char **item)
+{
+    free(*item);
 }
 
 static void
@@ -210,7 +212,7 @@ For_Eval(const char *line)
     new_for = bmake_malloc(sizeof *new_for);
     Buf_Init(&new_for->buf, 0);
     Vector_Init(&new_for->vars, sizeof(ForVar));
-    Vector_Init(&new_for->items, sizeof(ForItem));
+    Vector_Init(&new_for->items, sizeof(char *));
     new_for->parse_buf = NULL;
     new_for->short_var = FALSE;
     new_for->sub_next = 0;
@@ -363,9 +365,8 @@ for_var_len(const char *var)
 }
 
 static void
-for_substitute(Buffer *cmds, ForItem *forItem, char ech)
+for_substitute(Buffer *cmds, const char *item, char ech)
 {
-    const char *item = forItem->value;
     ForEscapes escapes = GetEscapes(item);
     char ch;
 
@@ -419,7 +420,7 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
 	Buf_AddStr(cmds, ":U");
 	cp += vlen;
 	cmd_cp = cp;
-	for_substitute(cmds, Vector_Get(&arg->items, arg->sub_next + i), ech);
+	for_substitute(cmds, ForItem(arg, arg->sub_next + i), ech);
 	break;
     }
 
@@ -452,7 +453,7 @@ SubstVarShort(For *arg, char const ch,
 	Buf_AddBytesBetween(cmds, cmd_cp, cp);
 	Buf_AddStr(cmds, "{:U");
 	cmd_cp = ++cp;
-	for_substitute(cmds, Vector_Get(&arg->items, arg->sub_next + i), '}');
+	for_substitute(cmds, ForItem(arg, arg->sub_next + i), '}');
 	Buf_AddByte(cmds, '}');
 	break;
     }
