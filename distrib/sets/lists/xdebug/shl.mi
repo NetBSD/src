@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.55 2020/08/27 15:32:00 riastradh Exp $
+# $NetBSD: shl.mi,v 1.56 2020/10/25 16:59:27 nia Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	xorg,obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	xorg,obsolete		xorg,obsolete
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.19.0.debug	xdebug-freetype-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libgbm.so.1.0.debug	xdebug-libgbm-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libglapi.so.1.0.debug	xdebug-libglapi-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	xdebug-libglut-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	xdebug-obsolete			xorg,obsolete,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.3.debug	xdebug-libpciaccess-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.2.debug	xdebug-pixman-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-atom.so.1.0.debug	xdebug-xcb-util-debug		xorg,debug,compatx11file
