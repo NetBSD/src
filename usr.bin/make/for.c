@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.101 2020/10/25 15:15:45 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.102 2020/10/25 15:26:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.101 2020/10/25 15:15:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.102 2020/10/25 15:26:18 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -82,7 +82,7 @@ typedef struct ForVar {
 typedef struct For {
     Buffer buf;			/* Body of loop */
     Vector /* of ForVar */ vars;	/* Iteration variables */
-    Vector /* of char * */ items;	/* Substitution items */
+    Words items;		/* Substitution items */
     char *parse_buf;
     /* Is any of the names 1 character long? If so, when the variable values
      * are substituted, the parser must handle $V expressions as well, not
@@ -107,26 +107,6 @@ ForVarDone(ForVar *var)
     free(var->name);
 }
 
-static const char *
-ForItem(For *f, size_t i)
-{
-    const char **item = Vector_Get(&f->items, i);
-    return *item;
-}
-
-static void
-ForAddItem(For *f, const char *value)
-{
-    char **item = Vector_Push(&f->items);
-    *item = bmake_strdup(value);
-}
-
-static void
-ForItemDone(char **item)
-{
-    free(*item);
-}
-
 static void
 For_Free(For *arg)
 {
@@ -136,10 +116,7 @@ For_Free(For *arg)
         ForVarDone(Vector_Pop(&arg->vars));
     Vector_Done(&arg->vars);
 
-    while (arg->items.len > 0)
-	ForItemDone(Vector_Pop(&arg->items));
-    Vector_Done(&arg->items);
-
+    Words_Free(arg->items);
     free(arg->parse_buf);
 
     free(arg);
@@ -185,7 +162,6 @@ For_Eval(const char *line)
 {
     For *new_for;
     const char *ptr;
-    Words words;
 
     /* Skip the '.' and any following whitespace */
     ptr = line + 1;
@@ -212,7 +188,8 @@ For_Eval(const char *line)
     new_for = bmake_malloc(sizeof *new_for);
     Buf_Init(&new_for->buf, 0);
     Vector_Init(&new_for->vars, sizeof(ForVar));
-    Vector_Init(&new_for->items, sizeof(char *));
+    new_for->items.words = NULL;
+    new_for->items.freeIt = NULL;
     new_for->parse_buf = NULL;
     new_for->short_var = FALSE;
     new_for->sub_next = 0;
@@ -261,24 +238,12 @@ For_Eval(const char *line)
 	char *items;
 	(void)Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES, &items);
 	/* TODO: handle errors */
-	words = Str_Words(items, FALSE);
+	new_for->items = Str_Words(items, FALSE);
 	free(items);
+
+	if (new_for->items.len == 1 && new_for->items.words[0][0] == '\0')
+	    new_for->items.len = 0;	/* .for var in ${:U} */
     }
-
-    {
-	size_t i;
-
-	for (i = 0; i < words.len; i++) {
-	    const char *word = words.words[i];
-
-	    if (word[0] == '\0')
-		continue;	/* .for var in ${:U} */
-
-	    ForAddItem(new_for, word);
-	}
-    }
-
-    Words_Free(words);
 
     {
 	size_t nitems, nvars;
@@ -293,8 +258,7 @@ For_Eval(const char *line)
 	     * accumulated.
 	     * Remove all items so that the loop doesn't iterate.
 	     */
-	    while (new_for->items.len > 0)
-		ForItemDone(Vector_Pop(&new_for->items));
+	    new_for->items.len = 0;
 	}
     }
 
@@ -420,7 +384,7 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
 	Buf_AddStr(cmds, ":U");
 	cp += vlen;
 	cmd_cp = cp;
-	for_substitute(cmds, ForItem(arg, arg->sub_next + i), ech);
+	for_substitute(cmds, arg->items.words[arg->sub_next + i], ech);
 	break;
     }
 
@@ -453,7 +417,7 @@ SubstVarShort(For *arg, char const ch,
 	Buf_AddBytesBetween(cmds, cmd_cp, cp);
 	Buf_AddStr(cmds, "{:U");
 	cmd_cp = ++cp;
-	for_substitute(cmds, ForItem(arg, arg->sub_next + i), '}');
+	for_substitute(cmds, arg->items.words[arg->sub_next + i], '}');
 	Buf_AddByte(cmds, '}');
 	break;
     }
