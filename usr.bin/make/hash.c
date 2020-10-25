@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.49 2020/10/25 17:58:53 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.50 2020/10/25 18:03:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.49 2020/10/25 17:58:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.50 2020/10/25 18:03:59 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -133,15 +133,15 @@ void
 Hash_InitTable(HashTable *t)
 {
 	unsigned int n = 16, i;
-	HashEntry **hp;
-
-	t->numEntries = 0;
-	t->maxchain = 0;
-	t->bucketsSize = n;
-	t->bucketsMask = n - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * n);
+	HashEntry **buckets = bmake_malloc(sizeof(*buckets) * n);
 	for (i = 0; i < n; i++)
-		hp[i] = NULL;
+		buckets[i] = NULL;
+
+	t->buckets = buckets;
+	t->bucketsSize = n;
+	t->numEntries = 0;
+	t->bucketsMask = n - 1;
+	t->maxchain = 0;
 }
 
 /* Removes everything from the hash table and frees up the memory space it
