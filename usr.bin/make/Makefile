@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2020/10/23 15:44:38 rillig Exp $
+#	$NetBSD: Makefile,v 1.106 2020/10/25 13:25:19 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -18,7 +18,6 @@ SRCS+=  make_malloc.c
 SRCS+=  metachar.c
 SRCS+=  parse.c
 SRCS+=	str.c
-SRCS+=  strlist.c
 SRCS+=  suff.c
 SRCS+=  targ.c
 SRCS+=  trace.c
@@ -37,7 +36,6 @@ HDRS+=  meta.h
 HDRS+=  metachar.h
 HDRS+=  nonints.h
 HDRS+=  pathnames.h
-HDRS+=  strlist.h
 HDRS+=  trace.h
 
 # Whether to generate a coverage report after running the tests.
