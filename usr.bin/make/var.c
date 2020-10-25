@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.585 2020/10/25 13:06:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.586 2020/10/25 17:01:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.585 2020/10/25 13:06:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.586 2020/10/25 17:01:05 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -353,6 +353,7 @@ static Var *
 VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 {
     Var *var;
+    unsigned int nameHash;
 
     /*
      * If the variable name begins with a '.', it could very well be one of
@@ -361,24 +362,25 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      * them.
      */
     name = CanonicalVarname(name);
+    nameHash = Hash_Hash(name);
 
     /*
      * First look for the variable in the given context. If it's not there,
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Hash_FindValue(&ctxt->context, name);
+    var = Hash_FindValueHash(&ctxt->context, name, nameHash);
 
     if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD)
-	var = Hash_FindValue(&VAR_CMD->context, name);
+	var = Hash_FindValueHash(&VAR_CMD->context, name, nameHash);
 
     if (!checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
 	ctxt != VAR_GLOBAL)
     {
-	var = Hash_FindValue(&VAR_GLOBAL->context, name);
+	var = Hash_FindValueHash(&VAR_GLOBAL->context, name, nameHash);
 	if (var == NULL && ctxt != VAR_INTERNAL) {
 	    /* VAR_INTERNAL is subordinate to VAR_GLOBAL */
-	    var = Hash_FindValue(&VAR_INTERNAL->context, name);
+	    var = Hash_FindValueHash(&VAR_INTERNAL->context, name, nameHash);
 	}
     }
 
@@ -391,9 +393,9 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	}
 
 	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
-	    var = Hash_FindValue(&VAR_GLOBAL->context, name);
+	    var = Hash_FindValueHash(&VAR_GLOBAL->context, name, nameHash);
 	    if (var == NULL && ctxt != VAR_INTERNAL)
-		var = Hash_FindValue(&VAR_INTERNAL->context, name);
+		var = Hash_FindValueHash(&VAR_INTERNAL->context, name, nameHash);
 	    return var;
 	}
 
