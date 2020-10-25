@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.398 2020/10/23 20:04:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.399 2020/10/25 12:08:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.398 2020/10/23 20:04:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.399 2020/10/25 12:08:53 rillig Exp $");
 
 /* types and constants */
 
@@ -281,7 +281,7 @@ static IFile *curFile;
  *			(not printed since it is below a .for loop)
  *	includes[0]:	include-main.mk:27
  */
-static Vector /* of IFile pointer */ includes;
+static PtrVector /* of IFile pointer */ includes;
 
 /* include paths (lists of directories) */
 SearchPath *parseIncPath;	/* dirs for "..." includes */
@@ -2404,7 +2404,7 @@ Parse_SetInput(const char *name, int line, int fd,
 
     if (curFile != NULL)
 	/* Save existing file info */
-	Vector_Push(&includes, curFile);
+	PtrVector_Push(&includes, curFile);
 
     /* Allocate and fill in new structure */
     curFile = bmake_malloc(sizeof *curFile);
@@ -2599,7 +2599,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    if (Vector_IsEmpty(&includes)) {
+    if (PtrVector_IsEmpty(&includes)) {
 	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
@@ -2609,7 +2609,7 @@ ParseEOF(void)
 	return FALSE;
     }
 
-    curFile = Vector_Pop(&includes);
+    curFile = PtrVector_Pop(&includes);
     DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
 	   curFile->fname, curFile->lineno);
 
@@ -3147,7 +3147,7 @@ Parse_Init(void)
     parseIncPath = Lst_New();
     sysIncPath = Lst_New();
     defIncPath = Lst_New();
-    Vector_Init(&includes);
+    PtrVector_Init(&includes);
 #ifdef CLEANUP
     targCmds = Lst_New();
 #endif
@@ -3163,8 +3163,8 @@ Parse_End(void)
     Lst_Destroy(defIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
-    assert(Vector_IsEmpty(&includes));
-    Vector_Done(&includes);
+    assert(PtrVector_IsEmpty(&includes));
+    PtrVector_Done(&includes);
 #endif
 }
 
