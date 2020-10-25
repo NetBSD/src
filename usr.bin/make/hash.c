@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.54 2020/10/25 19:19:07 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.55 2020/10/25 19:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.54 2020/10/25 19:19:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.55 2020/10/25 19:28:44 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -86,7 +86,7 @@ MAKE_RCSID("$NetBSD: hash.c,v 1.54 2020/10/25 19:19:07 rillig Exp $");
 static unsigned int
 hash(const char *key, size_t *out_keylen)
 {
-	unsigned h = 0;
+	unsigned int h = 0;
 	const char *p = key;
 	while (*p != '\0')
 		h = (h << 5) - h + (unsigned char)*p++;
@@ -108,7 +108,7 @@ HashTable_Find(HashTable *t, unsigned int h, const char *key)
 	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%x key=%s\n", __func__, t, h, key);
+	DEBUG4(HASH, "%s: %p h=%08x key=%s\n", __func__, t, h, key);
 #endif
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
@@ -156,11 +156,9 @@ HashTable_Done(HashTable *t)
 	}
 	free(t->buckets);
 
-	/*
-	 * Set up the hash table to cause memory faults on any future access
-	 * attempts until re-initialization.
-	 */
+#ifdef CLEANUP
 	t->buckets = NULL;
+#endif
 }
 
 /* Find the entry corresponding to the key, or return NULL. */
