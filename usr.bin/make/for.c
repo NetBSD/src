@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.95 2020/10/25 12:01:33 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.96 2020/10/25 13:20:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,10 +58,9 @@
  */
 
 #include    "make.h"
-#include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.95 2020/10/25 12:01:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.96 2020/10/25 13:20:11 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -71,13 +70,25 @@ typedef enum ForEscapes {
 
 static int forLevel = 0;	/* Nesting level */
 
+/* One of the variables to the left of the "in" in a .for loop. */
+typedef struct ForVar {
+    char *name;
+    size_t len;
+} ForVar;
+
+/* One of the items to the right of the "in" in a .for loop. */
+typedef struct ForItem {
+    char *value;		/* unexpanded */
+    ForEscapes escapes;
+} ForItem;
+
 /*
  * State of a for loop.
  */
 typedef struct For {
     Buffer buf;			/* Body of loop */
-    strlist_t vars;		/* Iteration variables */
-    strlist_t items;		/* Substitution items */
+    Vector /* of ForVar */ vars;
+    Vector /* of ForItem */ items;	/* Substitution items */
     char *parse_buf;
     /* Is any of the names 1 character long? If so, when the variable values
      * are substituted, the parser must handle $V expressions as well, not
@@ -88,13 +99,47 @@ typedef struct For {
 
 static For *accumFor;		/* Loop being accumulated */
 
+static void
+ForAddVar(For *f, const char *name, size_t len)
+{
+    ForVar *var = Vector_Push(&f->vars);
+    var->name = bmake_strldup(name, len);
+    var->len = len;
+}
+
+static void
+ForVarDone(ForVar *var)
+{
+    free(var->name);
+}
+
+static void
+ForAddItem(For *f, const char *value, ForEscapes escapes)
+{
+    ForItem *item = Vector_Push(&f->items);
+    item->value = bmake_strdup(value);
+    item->escapes = escapes;
+}
+
+static void
+ForItemDone(ForItem *item)
+{
+    free(item->value);
+}
 
 static void
 For_Free(For *arg)
 {
     Buf_Destroy(&arg->buf, TRUE);
-    strlist_clean(&arg->vars);
-    strlist_clean(&arg->items);
+
+    while (arg->vars.len > 0)
+        ForVarDone(Vector_Pop(&arg->vars));
+    Vector_Done(&arg->vars);
+
+    while (arg->items.len > 0)
+	ForItemDone(Vector_Pop(&arg->items));
+    Vector_Done(&arg->items);
+
     free(arg->parse_buf);
 
     free(arg);
@@ -142,8 +187,8 @@ For_Eval(const char *line)
 
     new_for = bmake_malloc(sizeof *new_for);
     Buf_Init(&new_for->buf, 0);
-    strlist_init(&new_for->vars);
-    strlist_init(&new_for->items);
+    Vector_Init(&new_for->vars, sizeof(ForVar));
+    Vector_Init(&new_for->items, sizeof(ForItem));
     new_for->parse_buf = NULL;
     new_for->short_var = FALSE;
     new_for->sub_next = 0;
@@ -168,12 +213,11 @@ For_Eval(const char *line)
 	if (len == 1)
 	    new_for->short_var = TRUE;
 
-	strlist_add_str(&new_for->vars, bmake_strldup(ptr, len),
-			(unsigned int)len);
+	ForAddVar(new_for, ptr, len);
 	ptr += len;
     }
 
-    if (strlist_num(&new_for->vars) == 0) {
+    if (new_for->vars.len == 0) {
 	Parse_Error(PARSE_FATAL, "no iteration variables in for");
 	For_Free(new_for);
 	return -1;
@@ -223,12 +267,7 @@ For_Eval(const char *line)
 		    break;
 		}
 	    }
-	    /*
-	     * We have to dup words[n] to maintain the semantics of
-	     * strlist.
-	     */
-	    strlist_add_str(&new_for->items, bmake_strdup(words.words[n]),
-			    escapes);
+	    ForAddItem(new_for, words.words[n], escapes);
 	}
     }
 
@@ -237,8 +276,8 @@ For_Eval(const char *line)
     {
 	size_t nitems, nvars;
 
-	if ((nitems = strlist_num(&new_for->items)) > 0 &&
-	    nitems% (nvars = strlist_num(&new_for->vars))) {
+	if ((nitems = new_for->items.len) > 0 &&
+	    nitems % (nvars = new_for->vars.len)) {
 	    Parse_Error(PARSE_FATAL,
 			"Wrong number of words (%zu) in .for substitution list"
 			" with %zu vars", nitems, nvars);
@@ -247,7 +286,8 @@ For_Eval(const char *line)
 	     * accumulated.
 	     * Remove all items so that the loop doesn't iterate.
 	     */
-	    strlist_clean(&new_for->items);
+	    while (new_for->items.len > 0)
+		ForItemDone(Vector_Pop(&new_for->items));
 	}
     }
 
@@ -318,10 +358,10 @@ for_var_len(const char *var)
 }
 
 static void
-for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
+for_substitute(Buffer *cmds, ForItem *forItem, char ech)
 {
-    const char *item = strlist_str(items, item_no);
-    ForEscapes escapes = strlist_info(items, item_no);
+    const char *item = forItem->value;
+    ForEscapes escapes = forItem->escapes;
     char ch;
 
     /* If there were no escapes, or the only escape is the other variable
@@ -372,7 +412,7 @@ ForIterate(void *v_arg, size_t *ret_len)
     char *cmds_str;
     size_t cmd_len;
 
-    if (arg->sub_next + strlist_num(&arg->vars) > strlist_num(&arg->items)) {
+    if (arg->sub_next + arg->vars.len > arg->items.len) {
 	/* No more iterations */
 	For_Free(arg);
 	return NULL;
@@ -385,15 +425,16 @@ ForIterate(void *v_arg, size_t *ret_len)
     body_end = cmd_cp + cmd_len;
     Buf_Init(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
-	char *var;
 	char ch, ech;
 	unsigned int i;
 	ch = *++cp;
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
 	    /* Check variable name against the .for loop variables */
-	    STRLIST_FOREACH(var, &arg->vars, i) {
-		size_t vlen = strlist_info(&arg->vars, i);
+	    for (i = 0; i < arg->vars.len; i++) {
+	        ForVar *forVar = Vector_Get(&arg->vars, i);
+		char *var = forVar->name;
+		size_t vlen = forVar->len;
 		if (memcmp(cp, var, vlen) != 0)
 		    continue;
 		if (cp[vlen] != ':' && cp[vlen] != ech && cp[vlen] != '\\')
@@ -403,7 +444,7 @@ ForIterate(void *v_arg, size_t *ret_len)
 		Buf_AddStr(&cmds, ":U");
 		cp += vlen;
 		cmd_cp = cp;
-		for_substitute(&cmds, &arg->items, arg->sub_next + i, ech);
+		for_substitute(&cmds, Vector_Get(&arg->items, arg->sub_next + i), ech);
 		break;
 	    }
 	    continue;
@@ -415,14 +456,16 @@ ForIterate(void *v_arg, size_t *ret_len)
 	    cp++;
 	    continue;
 	}
-	STRLIST_FOREACH(var, &arg->vars, i) {
+	for (i = 0; i < arg->vars.len; i++) {
+	    ForVar *forVar = Vector_Get(&arg->vars, i);
+	    char *var = forVar->name;
 	    if (var[0] != ch || var[1] != 0)
 		continue;
 	    /* Found a variable match. Replace with ${:U<value>} */
 	    Buf_AddBytesBetween(&cmds, cmd_cp, cp);
 	    Buf_AddStr(&cmds, "{:U");
 	    cmd_cp = ++cp;
-	    for_substitute(&cmds, &arg->items, arg->sub_next + i, '}');
+	    for_substitute(&cmds, Vector_Get(&arg->items, arg->sub_next + i), '}');
 	    Buf_AddByte(&cmds, '}');
 	    break;
 	}
@@ -433,7 +476,7 @@ ForIterate(void *v_arg, size_t *ret_len)
     cmds_str = Buf_Destroy(&cmds, FALSE);
     DEBUG1(FOR, "For: loop body:\n%s", cmds_str);
 
-    arg->sub_next += strlist_num(&arg->vars);
+    arg->sub_next += arg->vars.len;
 
     arg->parse_buf = cmds_str;
     return cmds_str;
@@ -448,7 +491,7 @@ For_Run(int lineno)
     arg = accumFor;
     accumFor = NULL;
 
-    if (strlist_num(&arg->items) == 0) {
+    if (arg->items.len == 0) {
 	/* Nothing to expand - possibly due to an earlier syntax error. */
 	For_Free(arg);
 	return;
