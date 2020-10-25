@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.106 2020/10/25 16:14:08 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.107 2020/10/25 16:15:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.106 2020/10/25 16:14:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.107 2020/10/25 16:15:48 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -260,7 +260,7 @@ For_Eval(const char *line)
 	    nitems % (nvars = new_for->vars.len)) {
 	    Parse_Error(PARSE_FATAL,
 			"Wrong number of words (%zu) in .for substitution list"
-			" with %zu vars", nitems, nvars);
+			" with %zu variables", nitems, nvars);
 	    /*
 	     * Return 'success' so that the body of the .for loop is
 	     * accumulated.
