@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.179 2020/10/25 07:59:09 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.180 2020/10/25 08:10:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.179 2020/10/25 07:59:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.180 2020/10/25 08:10:03 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -686,27 +686,16 @@ concat3(const char *a, size_t a_len, const char *b, size_t b_len,
     return s;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * DirExpandCurly --
- *	Expand curly braces like the C shell. Does this recursively.
- *	Note the special case: if after the piece of the curly brace is
- *	done there are no wildcard characters in the result, the result is
- *	placed on the list WITHOUT CHECKING FOR ITS EXISTENCE.
+/* Expand curly braces like the C shell. Does this recursively.
+ * Note the special case: if after the piece of the curly brace is
+ * done, there are no wildcard characters in the result, the result is
+ * placed on the list WITHOUT CHECKING FOR ITS EXISTENCE.
  *
  * Input:
  *	word		Entire word to expand
  *	brace		First curly brace in it
  *	path		Search path to use
  *	expansions	Place to store the expansions
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The given list is filled with the expansions...
- *
- *-----------------------------------------------------------------------
  */
 static void
 DirExpandCurly(const char *word, const char *brace, SearchPath *path,
@@ -792,25 +781,13 @@ DirPrintExpansions(StringList *words)
     debug_printf("\n");
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_Expand  --
- *	Expand the given word into a list of words by globbing it looking
- *	in the directories on the given search path.
+/* Expand the given word into a list of words by globbing it, looking in the
+ * directories on the given search path.
  *
  * Input:
  *	word		the word to expand
- *	path		the list of directories in which to find the
- *			resulting files
+ *	path		the directories in which to find the files
  *	expansions	the list on which to place the results
- *
- * Results:
- *	A list of words consisting of the files which exist along the search
- *	path matching the given pattern.
- *
- * Side Effects:
- *	Directories may be opened. Who knows?
- *-----------------------------------------------------------------------
  */
 void
 Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
