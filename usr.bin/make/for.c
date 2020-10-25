@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.103 2020/10/25 15:41:31 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.104 2020/10/25 15:49:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.103 2020/10/25 15:41:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.104 2020/10/25 15:49:03 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -205,8 +205,10 @@ For_Eval(const char *line)
 	    return -1;
 	}
 
+	/* XXX: This allows arbitrary variable names; see directive-for.mk. */
 	for (len = 1; ptr[len] && !ch_isspace(ptr[len]); len++)
 	    continue;
+
 	if (len == 2 && ptr[0] == 'i' && ptr[1] == 'n') {
 	    ptr += 2;
 	    break;
