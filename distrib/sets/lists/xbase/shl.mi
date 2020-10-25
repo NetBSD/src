@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.89 2020/08/27 15:32:00 riastradh Exp $
+# $NetBSD: shl.mi,v 1.90 2020/10/25 16:59:27 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -191,9 +191,9 @@
 ./usr/X11R7/lib/libglapi.so			xbase-libglapi-lib		xorg,compatx11file
 ./usr/X11R7/lib/libglapi.so.1			xbase-libglapi-lib		xorg,compatx11file
 ./usr/X11R7/lib/libglapi.so.1.0			xbase-libglapi-lib		xorg,compatx11file
-./usr/X11R7/lib/libglut.so			xbase-libglut-lib		xorg,compatx11file
-./usr/X11R7/lib/libglut.so.4			xbase-libglut-lib		xorg,compatx11file
-./usr/X11R7/lib/libglut.so.4.0			xbase-libglut-lib		xorg,compatx11file
+./usr/X11R7/lib/libglut.so			xbase-obsolete		obsolete
+./usr/X11R7/lib/libglut.so.4			xbase-obsolete		obsolete
+./usr/X11R7/lib/libglut.so.4.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/liblbxutil.so			xbase-obsolete		obsolete
 ./usr/X11R7/lib/liblbxutil.so.2			xbase-obsolete		obsolete
 ./usr/X11R7/lib/liblbxutil.so.2.0		xbase-obsolete		obsolete

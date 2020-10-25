@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.218 2020/10/21 15:12:15 maya Exp $
+#	 $NetBSD: mi,v 1.219 2020/10/25 16:59:27 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,8 +20,8 @@
 ./usr/X11R7/include/GL/glext.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glu.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glu_mangle.h			xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/glut.h				xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/glutf90.h			xcomp-xorgproto-include	xorg
+./usr/X11R7/include/GL/glut.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/GL/glutf90.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glx.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glx_mangle.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glxext.h				xcomp-xorgproto-include	xorg
@@ -1229,8 +1229,8 @@
 ./usr/X11R7/lib/libgbm_p.a				xcomp-libgbm-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libglapi.a				xcomp-libglapi-lib	xorg,compatx11file
 ./usr/X11R7/lib/libglapi_p.a				xcomp-libglapi-lib	profile,xorg,compatx11file
-./usr/X11R7/lib/libglut.a				xcomp-libglut-lib	xorg,compatx11file
-./usr/X11R7/lib/libglut_p.a				xcomp-libglut-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libglut.a				xcomp-obsolete	obsolete
+./usr/X11R7/lib/libglut_p.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/liblbxutil.a				xcomp-obsolete	obsolete,compatx11file
 ./usr/X11R7/lib/liblbxutil_p.a				xcomp-obsolete	obsolete,compatx11file
 ./usr/X11R7/lib/liblisp.a				xcomp-obsolete	obsolete
@@ -1340,7 +1340,7 @@
 ./usr/X11R7/lib/pkgconfig/gl.pc				xcomp-libGL-lib	xorg
 ./usr/X11R7/lib/pkgconfig/glproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/glu.pc			xcomp-libGLU-lib	xorg
-./usr/X11R7/lib/pkgconfig/glut.pc			xcomp-libglut-lib	xorg
+./usr/X11R7/lib/pkgconfig/glut.pc			xcomp-obsolete	obsolete
 ./usr/X11R7/lib/pkgconfig/glw.pc			xcomp-libGLw-lib	xorg
 ./usr/X11R7/lib/pkgconfig/ice.pc			xcomp-libICE-lib	xorg
 ./usr/X11R7/lib/pkgconfig/inputproto.pc			xcomp-xorgproto-lib	xorg
@@ -4381,7 +4381,7 @@
 ./usr/libdata/lint/llib-lfontenc.ln			xcomp-libXfont2-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lfreetype.ln			xcomp-freetype-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lgbm.ln				xcomp-libgbm-lintlib	lint,xorg
-./usr/libdata/lint/llib-lglut.ln			xcomp-libglut-lintlib	lint,xorg
+./usr/libdata/lint/llib-lglut.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-llbxutil.ln			xcomp-obsolete	obsolete,xorg
 ./usr/libdata/lint/llib-llisp.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lmp.ln				xcomp-obsolete	obsolete
