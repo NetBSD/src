@@ -28,10 +28,12 @@ inserting ".sho" (5) at end of list
 inserting ".c" (1) at end of list
 inserting ".dead-end" (6) at end of list
 inserting ".short" (4) at end of list
-Wildcard expanding "all"...SuffFindDeps (all)
+Wildcard expanding "all"...
+SuffFindDeps (all)
 	No known suffix on all. Using .NULL suffix
 adding suffix rules
-Wildcard expanding "suff-lookup.cc"...suffix is ".cc"...SuffFindDeps (suff-lookup.cc)
+Wildcard expanding "suff-lookup.cc"...suffix is ".cc"...
+SuffFindDeps (suff-lookup.cc)
 	trying suff-lookup.ccc...not there
 	trying suff-lookup.c...not there
 	trying suff-lookup.short...not there
@@ -39,12 +41,17 @@ Wildcard expanding "suff-lookup.cc"...suffix is ".cc"...SuffFindDeps (suff-looku
 	applying .sho -> .c to "suff-lookup.c"
 	applying .c -> .ccc to "suff-lookup.ccc"
 	applying .ccc -> .cc to "suff-lookup.cc"
-suffix is ".ccc"...suffix is ".c"...suffix is ".sho"...SuffFindDeps (suff-lookup.sho)
-suffix is ".sho"...: 'Making suff-lookup.sho out of nothing.'
+suffix is ".ccc"...
+suffix is ".c"...
+suffix is ".sho"...
+SuffFindDeps (suff-lookup.sho)
+suffix is ".sho"...
+: 'Making suff-lookup.sho out of nothing.'
 : 'Making suff-lookup.c from suff-lookup.sho.'
 : 'Making suff-lookup.ccc from suff-lookup.c.'
 : 'Making suff-lookup.cc from suff-lookup.ccc.'
-Wildcard expanding "all"...SuffFindDeps (.END)
+Wildcard expanding "all"...
+SuffFindDeps (.END)
 	No known suffix on .END. Using .NULL suffix
 adding suffix rules
 Wildcard expanding ".END"...
