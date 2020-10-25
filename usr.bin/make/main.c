@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.388 2020/10/24 20:29:40 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.389 2020/10/25 17:37:36 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.388 2020/10/24 20:29:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.389 2020/10/25 17:37:36 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1408,12 +1408,15 @@ main(int argc, char **argv)
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!noBuiltins || !printVars) {
-	    (void)Var_Subst("${.MAKE.DEPENDFILE:T}",
+	    /* ignore /dev/null and anything starting with "no" */
+	    (void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
 		VAR_CMD, VARE_WANTRES, &makeDependfile);
-	    /* TODO: handle errors */
-	    doing_depend = TRUE;
-	    (void)ReadMakefile(makeDependfile);
-	    doing_depend = FALSE;
+	    if (makeDependfile[0] != '\0') {
+		/* TODO: handle errors */
+		doing_depend = TRUE;
+		(void)ReadMakefile(makeDependfile);
+		doing_depend = FALSE;
+	    }
 	}
 
 	if (enterFlagObj)

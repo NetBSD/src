@@ -1,3 +1,5 @@
 Pattern[SPECIALS] for [\: : \\ * \*] is [\:]
 Pattern[SPECIALS] for [\: : \\ * \*] is [:]
+Pattern[.MAKE.DEPENDFILE] for [.depend] is [/dev/null]
+Pattern[.MAKE.DEPENDFILE] for [.depend] is [no*]
 exit status 0
