@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.181 2020/10/25 08:59:26 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.182 2020/10/25 09:03:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.181 2020/10/25 08:59:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.182 2020/10/25 09:03:05 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -608,7 +608,8 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 	 * pattern begins with a dot. The pattern '.*' does not match '.' or
 	 * '..' since these are not included in the directory cache.
 	 *
-	 * XXX: This means that the pattern '[a-z.]*' does not find '.file'.
+	 * This means that the pattern '[a-z.]*' does not find '.file', which
+	 * is consistent with bash, NetBSD sh and csh.
 	 */
 	if (base[0] == '.' && pattern[0] != '.')
 	    continue;
