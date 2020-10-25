@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.280 2020/10/25 20:14:08 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.281 2020/10/25 20:15:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.280 2020/10/25 20:14:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.281 2020/10/25 20:15:56 rillig Exp $");
 
 # define STATIC static
 
@@ -1180,63 +1180,64 @@ Boolean
 Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 {
     if (GNode_IsTarget(gn))
-        return TRUE;
+	return TRUE;
     if (!Lst_IsEmpty(gn->commands))
-        return TRUE;
+	return TRUE;
     if ((gn->type & OP_LIB) && !Lst_IsEmpty(gn->children))
-        return TRUE;
+	return TRUE;
 
-    {
+    /*
+     * No commands. Look for .DEFAULT rule from which we might infer
+     * commands
+     */
+    if ((DEFAULT != NULL) && !Lst_IsEmpty(DEFAULT->commands) &&
+	(gn->type & OP_SPECIAL) == 0) {
+	char *p1;
 	/*
-	 * No commands. Look for .DEFAULT rule from which we might infer
-	 * commands
+	 * Make only looks for a .DEFAULT if the node was never the
+	 * target of an operator, so that's what we do too. If
+	 * a .DEFAULT was given, we substitute its commands for gn's
+	 * commands and set the IMPSRC variable to be the target's name
+	 * The DEFAULT node acts like a transformation rule, in that
+	 * gn also inherits any attributes or sources attached to
+	 * .DEFAULT itself.
 	 */
-	if ((DEFAULT != NULL) && !Lst_IsEmpty(DEFAULT->commands) &&
-		(gn->type & OP_SPECIAL) == 0) {
-	    char *p1;
-	    /*
-	     * Make only looks for a .DEFAULT if the node was never the
-	     * target of an operator, so that's what we do too. If
-	     * a .DEFAULT was given, we substitute its commands for gn's
-	     * commands and set the IMPSRC variable to be the target's name
-	     * The DEFAULT node acts like a transformation rule, in that
-	     * gn also inherits any attributes or sources attached to
-	     * .DEFAULT itself.
-	     */
-	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
-	    bmake_free(p1);
-	} else if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
-	    /*
-	     * The node wasn't the target of an operator.  We have no .DEFAULT
-	     * rule to go on and the target doesn't already exist. There's
-	     * nothing more we can do for this branch. If the -k flag wasn't
-	     * given, we stop in our tracks, otherwise we just don't update
-	     * this node's parents so they never get examined.
-	     */
+	Make_HandleUse(DEFAULT, gn);
+	Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
+	bmake_free(p1);
+	return TRUE;
+    }
 
-	    if (gn->flags & FROM_DEPEND) {
-		if (!Job_RunTarget(".STALE", gn->fname))
-		    fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
+    if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
+	/*
+	 * The node wasn't the target of an operator.  We have no .DEFAULT
+	 * rule to go on and the target doesn't already exist. There's
+	 * nothing more we can do for this branch. If the -k flag wasn't
+	 * given, we stop in our tracks, otherwise we just don't update
+	 * this node's parents so they never get examined.
+	 */
+
+	if (gn->flags & FROM_DEPEND) {
+	    if (!Job_RunTarget(".STALE", gn->fname))
+		fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
 			progname, gn->fname, gn->lineno, makeDependfile,
 			gn->name);
-		return TRUE;
-	    }
+	    return TRUE;
+	}
 
-	    if (gn->type & OP_OPTIONAL) {
-		(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
-			      progname, gn->name, "ignored");
-		(void)fflush(stdout);
-	    } else if (keepgoing) {
-		(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
-			      progname, gn->name, "continuing");
-		(void)fflush(stdout);
-		return FALSE;
-	    } else {
-		abortProc("%s: don't know how to make %s. Stop",
-			  progname, gn->name);
-		return FALSE;
-	    }
+	if (gn->type & OP_OPTIONAL) {
+	    (void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+			  progname, gn->name, "ignored");
+	    (void)fflush(stdout);
+	} else if (keepgoing) {
+	    (void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+			  progname, gn->name, "continuing");
+	    (void)fflush(stdout);
+	    return FALSE;
+	} else {
+	    abortProc("%s: don't know how to make %s. Stop",
+		      progname, gn->name);
+	    return FALSE;
 	}
     }
     return TRUE;
