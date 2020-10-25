@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.178 2020/10/25 07:46:05 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.179 2020/10/25 07:59:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.178 2020/10/25 07:46:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.179 2020/10/25 07:59:09 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1031,27 +1031,21 @@ DirFindDot(const char *name, const char *base)
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_FindFile  --
- *	Find the file with the given name along the given search path.
+/* Find the file with the given name along the given search path.
+ *
+ * If the file is found in a directory that is not on the path
+ * already (either 'name' is absolute or it is a relative path
+ * [ dir1/.../dirn/file ] which exists below one of the directories
+ * already on the search path), its directory is added to the end
+ * of the path, on the assumption that there will be more files in
+ * that directory later on. Sometimes this is true. Sometimes not.
  *
  * Input:
  *	name		the file to find
- *	path		the Lst of directories to search
+ *	path		the directories to search, or NULL
  *
  * Results:
- *	The path to the file or NULL. This path is guaranteed to be in a
- *	different part of memory than name and so may be safely free'd.
- *
- * Side Effects:
- *	If the file is found in a directory which is not on the path
- *	already (either 'name' is absolute or it is a relative path
- *	[ dir1/.../dirn/file ] which exists below one of the directories
- *	already on the search path), its directory is added to the end
- *	of the path on the assumption that there will be more files in
- *	that directory later on. Sometimes this is true. Sometimes not.
- *-----------------------------------------------------------------------
+ *	The freshly allocated path to the file, or NULL.
  */
 char *
 Dir_FindFile(const char *name, SearchPath *path)
