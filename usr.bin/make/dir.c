@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.184 2020/10/25 09:19:10 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.185 2020/10/25 09:30:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.184 2020/10/25 09:19:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.185 2020/10/25 09:30:45 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -887,34 +887,14 @@ DirLookup(CachedDir *dir, const char *base)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * DirLookupSubdir  --
- *	Find if the file with the given name exists in the given path.
- *
- * Results:
- *	The path to the file or NULL. This path is guaranteed to be in a
- *	different part of memory than name and so may be safely free'd.
- *
- * Side Effects:
- *	If the file is found, it is added in the modification times hash
- *	table.
- *-----------------------------------------------------------------------
- */
+/* Find if the file with the given name exists in the given directory.
+ * Return the freshly allocated path to the file, or NULL. */
 static char *
 DirLookupSubdir(CachedDir *dir, const char *name)
 {
     struct make_stat mst;
-    char *file;			/* the current filename to check */
-
-    if (dir != dot) {
-	file = str_concat3(dir->name, "/", name);
-    } else {
-	/*
-	 * Checking in dot -- DON'T put a leading ./ on the thing.
-	 */
-	file = bmake_strdup(name);
-    }
+    char *file = dir == dot ? bmake_strdup(name)
+			    : str_concat3(dir->name, "/", name);
 
     DIR_DEBUG1("checking %s ...\n", file);
 
@@ -926,26 +906,15 @@ DirLookupSubdir(CachedDir *dir, const char *name)
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * DirLookupAbs  --
- *	Find if the file with the given name exists in the given path.
- *
- * Results:
- *	The path to the file, the empty string or NULL. If the file is
- *	the empty string, the search should be terminated.
- *	This path is guaranteed to be in a different part of memory
- *	than name and so may be safely free'd.
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
+/* Find if the file with the given name exists in the given path.
+ * Return the freshly allocated path to the file, the empty string, or NULL.
+ * Returning the empty string means that the search should be terminated.
  */
 static char *
 DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
 {
-    char *p1;			/* pointer into dir->name */
-    const char *p2;		/* pointer into name */
+    const char *dnp;		/* pointer into dir->name */
+    const char *np;		/* pointer into name */
 
     DIR_DEBUG1("   %s ...\n", dir->name);
 
@@ -955,17 +924,14 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
      * directory, we can attempt another cache lookup. And if we don't
      * have a hit, we can safely assume the file does not exist at all.
      */
-    for (p1 = dir->name, p2 = name; *p1 && *p1 == *p2; p1++, p2++) {
+    for (dnp = dir->name, np = name; *dnp != '\0' && *dnp == *np; dnp++, np++)
 	continue;
-    }
-    if (*p1 != '\0' || p2 != cp - 1) {
+    if (*dnp != '\0' || np != cp - 1)
 	return NULL;
-    }
 
     if (Hash_FindEntry(&dir->files, cp) == NULL) {
 	DIR_DEBUG0("   must be here but isn't -- returning\n");
-	/* Return empty string: terminates search */
-	return bmake_strdup("");
+	return bmake_strdup("");	/* to terminate the search */
     }
 
     dir->hits++;
