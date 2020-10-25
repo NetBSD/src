@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.49 2020/10/24 16:13:15 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.50 2020/10/25 08:50:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -515,7 +515,7 @@ static int
 get_available_cds(void)
 {
 	struct get_available_cds_state data;
-	int n, e;
+	int n, __diagused e;
 
 	memset(&data, 0, sizeof data);
 	data.info = cds;
