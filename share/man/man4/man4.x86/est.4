@@ -1,4 +1,4 @@
-.\" $NetBSD: est.4,v 1.5 2017/02/17 22:10:47 christos Exp $
+.\" $NetBSD: est.4,v 1.6 2020/10/25 16:39:00 nia Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2017
+.Dd September 7, 2020
 .Dt EST 4
 .Os
 .Sh NAME
@@ -41,13 +41,13 @@ The following
 .Xr sysctl 8
 variables are available with
 .Nm :
-.Bl -tag -width "machdep.est.frequency.available" -offset indent
-.It Ic machdep.est.frequency.target
+.Bl -tag -width "machdep.cpu.frequency.available" -offset indent
+.It Ic machdep.cpu.frequency.target
 The target frequency of the
 .Tn CPUs .
-.It Ic machdep.est.frequency.current
+.It Ic machdep.cpu.frequency.current
 The current frequency.
-.It Ic machdep.est.frequency.available
+.It Ic machdep.cpu.frequency.available
 The frequencies recognized by
 .Nm .
 .El

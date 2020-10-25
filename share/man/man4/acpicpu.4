@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.35 2018/08/31 19:34:44 sevan Exp $
+.\" $NetBSD: acpicpu.4,v 1.36 2020/10/25 16:39:00 nia Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -257,10 +257,6 @@ controls for P-states as the ones provided by
 .Xr est 4
 and
 .Xr powernow 4 .
-Depending on the processor, the second-level node is either
-.Ic machdep.est
-or
-.Ic machdep.powernow .
 Please note that future versions of
 .Nm
 may however remove these system control variables without further notice.

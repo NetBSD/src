@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.84 2020/10/25 16:39:00 nia Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.84 2020/10/25 16:39:00 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1003,24 +1003,7 @@ static int
 acpicpu_md_pstate_sysctl_init(void)
 {
 	const struct sysctlnode	*fnode, *mnode, *rnode;
-	const char *str;
 	int rv;
-
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_IDT:
-	case CPUVENDOR_INTEL:
-		str = "est";
-		break;
-
-	case CPUVENDOR_AMD:
-		str = "powernow";
-		break;
-
-	default:
-		return ENODEV;
-	}
-
 
 	rv = sysctl_createv(&acpicpu_log, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
@@ -1030,7 +1013,7 @@ acpicpu_md_pstate_sysctl_init(void)
 		goto fail;
 
 	rv = sysctl_createv(&acpicpu_log, 0, &rnode, &mnode,
-	    0, CTLTYPE_NODE, str, NULL,
+	    0, CTLTYPE_NODE, "cpu", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
