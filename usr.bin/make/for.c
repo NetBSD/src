@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.105 2020/10/25 15:58:04 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.106 2020/10/25 16:14:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,8 +60,10 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.105 2020/10/25 15:58:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.106 2020/10/25 16:14:08 rillig Exp $");
 
+/* The .for loop substitutes the items as ${:U<value>...}, which means
+ * that characters that break this syntax must be backslash-escaped. */
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
     FOR_SUB_ESCAPE_BRACE = 0x0002,
@@ -146,6 +148,19 @@ GetEscapes(const char *word)
     return escapes;
 }
 
+static Boolean
+IsFor(const char *p)
+{
+    return p[0] == 'f' && p[1] == 'o' && p[2] == 'r' && ch_isspace(p[3]);
+}
+
+static Boolean
+IsEndfor(const char *p)
+{
+    return p[0] == 'e' && strncmp(p, "endfor", 6) == 0 &&
+	   (p[6] == '\0' || ch_isspace(p[6]));
+}
+
 /* Evaluate the for loop in the passed line. The line looks like this:
  *	.for <varname...> in <value...>
  *
@@ -171,8 +186,8 @@ For_Eval(const char *line)
      * If we are not in a for loop quickly determine if the statement is
      * a for.
      */
-    if (p[0] != 'f' || p[1] != 'o' || p[2] != 'r' || !ch_isspace(p[3])) {
-	if (p[0] == 'e' && strncmp(p + 1, "ndfor", 5) == 0) {
+    if (!IsFor(p)) {
+	if (IsEndfor(p)) {
 	    Parse_Error(PARSE_FATAL, "for-less endfor");
 	    return -1;
 	}
@@ -205,7 +220,7 @@ For_Eval(const char *line)
 	}
 
 	/* XXX: This allows arbitrary variable names; see directive-for.mk. */
-	for (len = 1; p[len] && !ch_isspace(p[len]); len++)
+	for (len = 1; p[len] != '\0' && !ch_isspace(p[len]); len++)
 	    continue;
 
 	if (len == 2 && p[0] == 'i' && p[1] == 'n') {
@@ -227,14 +242,6 @@ For_Eval(const char *line)
 
     cpp_skip_whitespace(&p);
 
-    /*
-     * Make a list with the remaining words.
-     * The values are later substituted as ${:U<value>...} so we must
-     * backslash-escape characters that break that syntax.
-     * Variables are fully expanded - so it is safe for escape $.
-     * We can't do the escapes here - because we don't know whether
-     * we will be substituting into ${...} or $(...).
-     */
     {
 	char *items;
 	(void)Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items);
@@ -281,11 +288,11 @@ For_Accum(const char *line)
 	ptr++;
 	cpp_skip_whitespace(&ptr);
 
-	if (strncmp(ptr, "endfor", 6) == 0 && (ch_isspace(ptr[6]) || !ptr[6])) {
+	if (IsEndfor(ptr)) {
 	    DEBUG1(FOR, "For: end for %d\n", forLevel);
 	    if (--forLevel <= 0)
 		return FALSE;
-	} else if (strncmp(ptr, "for", 3) == 0 && ch_isspace(ptr[3])) {
+	} else if (IsFor(ptr)) {
 	    forLevel++;
 	    DEBUG1(FOR, "For: new loop %d\n", forLevel);
 	}
