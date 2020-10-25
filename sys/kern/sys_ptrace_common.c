@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.87 2020/10/20 20:28:55 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.88 2020/10/25 15:55:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.87 2020/10/20 20:28:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.88 2020/10/25 15:55:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1577,16 +1577,30 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 MODULE(MODULE_CLASS_EXEC, ptrace_common, NULL);
  
 static int
+ptrace_common_init(void)
+{
+
+	return 0;
+}
+
+static int
+ptrace_common_fini(void)
+{
+
+	return 0;
+}
+
+static int
 ptrace_common_modcmd(modcmd_t cmd, void *arg)
 {
         int error;
  
         switch (cmd) {
         case MODULE_CMD_INIT:
-                error = ptrace_init();
+                error = ptrace_common_init();
                 break;
         case MODULE_CMD_FINI:
-                error = ptrace_fini();
+                error = ptrace_common_fini();
                 break;
         default:
 		ptrace_hooks();
