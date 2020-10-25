@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.284 2020/10/25 20:29:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.285 2020/10/25 20:34:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,9 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.284 2020/10/25 20:29:51 rillig Exp $");
-
-# define STATIC static
+MAKE_RCSID("$NetBSD: job.c,v 1.285 2020/10/25 20:34:05 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -376,8 +374,8 @@ char *shellErrFlag = NULL;
 static char *shellArgv = NULL;	/* Custom shell args */
 
 
-STATIC Job	*job_table;	/* The structures that describe them */
-STATIC Job	*job_table_end;	/* job_table + maxJobs */
+static Job *job_table;		/* The structures that describe them */
+static Job *job_table_end;	/* job_table + maxJobs */
 static unsigned int wantToken;	/* we want a token */
 static int lurking_children = 0;
 static int make_suspended = 0;	/* non-zero if we've seen a SIGTSTP (etc) */
@@ -393,7 +391,7 @@ static void watchfd(Job *);
 static void clearfd(Job *);
 static int readyfd(Job *);
 
-STATIC GNode *lastNode;		/* The node for which output was most recently
+static GNode *lastNode;		/* The node for which output was most recently
 				 * produced. */
 static char *targPrefix = NULL; /* What we print at the start of TARG_FMT */
 static Job tokenWaitJob;	/* token wait pseudo-job */
@@ -1724,7 +1722,7 @@ JobOutput(Job *job, char *cp, char *endp)
  *	curPos may be shifted as may the contents of outBuf.
  *-----------------------------------------------------------------------
  */
-STATIC void
+static void
 JobDoOutput(Job *job, Boolean finish)
 {
     Boolean gotNL = FALSE;	/* true if got a newline */
