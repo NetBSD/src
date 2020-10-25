@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.30 2020/10/25 17:01:05 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.31 2020/10/25 19:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -104,29 +104,28 @@ typedef struct HashIter {
 } HashIter;
 
 static inline MAKE_ATTR_UNUSED void *
-Hash_GetValue(HashEntry *h)
+HashEntry_Get(HashEntry *h)
 {
     return h->value;
 }
 
 static inline MAKE_ATTR_UNUSED void
-Hash_SetValue(HashEntry *h, void *datum)
+HashEntry_Set(HashEntry *h, void *datum)
 {
     h->value = datum;
 }
 
-void Hash_InitTable(HashTable *);
-void Hash_DeleteTable(HashTable *);
-HashEntry *Hash_FindEntry(HashTable *, const char *);
-void *Hash_FindValue(HashTable *, const char *);
+void HashTable_Init(HashTable *);
+void HashTable_Done(HashTable *);
+HashEntry *HashTable_FindEntry(HashTable *, const char *);
+void *HashTable_FindValue(HashTable *, const char *);
 unsigned int Hash_Hash(const char *);
-void *Hash_FindValueHash(HashTable *, const char *, unsigned int);
-HashEntry *Hash_CreateEntry(HashTable *, const char *, Boolean *);
-void Hash_DeleteEntry(HashTable *, HashEntry *);
+void *HashTable_FindValueHash(HashTable *, const char *, unsigned int);
+HashEntry *HashTable_CreateEntry(HashTable *, const char *, Boolean *);
+void HashTable_DeleteEntry(HashTable *, HashEntry *);
+void HashTable_DebugStats(HashTable *, const char *);
 
 void HashIter_Init(HashIter *, HashTable *);
 HashEntry *HashIter_Next(HashIter *);
-
-void Hash_DebugStats(HashTable *, const char *);
 
 #endif /* MAKE_HASH_H */

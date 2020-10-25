@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.146 2020/10/25 07:57:01 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.147 2020/10/25 19:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.146 2020/10/25 07:57:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.147 2020/10/25 19:19:07 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -172,11 +172,11 @@ ArchFree(void *ap)
     /* Free memory from hash entries */
     HashIter_Init(&hi, &a->members);
     while ((he = HashIter_Next(&hi)) != NULL)
-	free(Hash_GetValue(he));
+	free(HashEntry_Get(he));
 
     free(a->name);
     free(a->fnametab);
-    Hash_DeleteTable(&a->members);
+    HashTable_Done(&a->members);
     free(a);
 }
 #endif
@@ -445,7 +445,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	struct ar_hdr *hdr;
 
 	ar = ln->datum;
-	hdr = Hash_FindValue(&ar->members, member);
+	hdr = HashTable_FindValue(&ar->members, member);
 	if (hdr != NULL)
 	    return hdr;
 
@@ -458,7 +458,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 		len = AR_MAX_NAME_LEN;
 		snprintf(copy, sizeof copy, "%s", member);
 	    }
-	    hdr = Hash_FindValue(&ar->members, copy);
+	    hdr = HashTable_FindValue(&ar->members, copy);
 	    return hdr;
 	}
     }
@@ -503,7 +503,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     ar->name = bmake_strdup(archive);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
-    Hash_InitTable(&ar->members);
+    HashTable_Init(&ar->members);
     memName[AR_MAX_NAME_LEN] = '\0';
 
     while (fread((char *)&arh, sizeof(struct ar_hdr), 1, arch) == 1) {
@@ -580,9 +580,9 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 
 	    {
 		HashEntry *he;
-		he = Hash_CreateEntry(&ar->members, memName, NULL);
-		Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
-		memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
+		he = HashTable_CreateEntry(&ar->members, memName, NULL);
+		HashEntry_Set(he, bmake_malloc(sizeof(struct ar_hdr)));
+		memcpy(HashEntry_Get(he), &arh, sizeof(struct ar_hdr));
 	    }
 	}
 	if (fseek(arch, ((long)size + 1) & ~1, SEEK_CUR) != 0)
@@ -597,11 +597,11 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * Now that the archive has been read and cached, we can look into
      * the hash table to find the desired member's header.
      */
-    return Hash_FindValue(&ar->members, member);
+    return HashTable_FindValue(&ar->members, member);
 
 badarch:
     fclose(arch);
-    Hash_DeleteTable(&ar->members);
+    HashTable_Done(&ar->members);
     free(ar->fnametab);
     free(ar);
     return NULL;
