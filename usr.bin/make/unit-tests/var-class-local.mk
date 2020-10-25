@@ -1,4 +1,4 @@
-# $NetBSD: var-class-local.mk,v 1.3 2020/10/23 17:21:22 rillig Exp $
+# $NetBSD: var-class-local.mk,v 1.4 2020/10/25 09:46:25 rillig Exp $
 #
 # Tests for target-local variables, such as ${.TARGET} or $@.
 
@@ -25,4 +25,7 @@
 .endif
 
 all:
-	@:;
+	# The ::= modifier overwrites the .TARGET variable in the node
+	# 'all', not in the global scope.  This can be seen with the -dv
+	# option, looking for "all:@ = overwritten".
+	: ${.TARGET} ${.TARGET::=overwritten}${.TARGET}
