@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.22 2020/08/09 15:54:13 rillig Exp $
+#	$NetBSD: Makefile.boot,v 1.23 2020/10/25 13:25:19 rillig Exp $
 #
 # A very simple makefile...
 #
@@ -18,7 +18,7 @@ EXTRA_LIBS=
 
 OBJS=	arch.o buf.o compat.o cond.o dir.o enum.o for.o hash.o \
 	job.o lst.o main.o make.o make_malloc.o metachar.o parse.o \
-	str.o strlist.o suff.o targ.o trace.o var.o util.o
+	str.o suff.o targ.o trace.o var.o util.o
 
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} ${EXTRA_CFLAGS} -c $< -o $@
