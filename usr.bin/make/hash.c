@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.47 2020/10/18 12:47:43 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.48 2020/10/25 17:01:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.47 2020/10/18 12:47:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.48 2020/10/25 17:01:05 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -98,6 +98,12 @@ hash(const char *key, size_t *out_keylen)
 	if (out_keylen != NULL)
 		*out_keylen = (size_t)(p - key);
 	return h;
+}
+
+unsigned int
+Hash_Hash(const char *key)
+{
+    return hash(key, NULL);
 }
 
 static HashEntry *
@@ -182,6 +188,13 @@ void *
 Hash_FindValue(HashTable *t, const char *key)
 {
 	HashEntry *he = Hash_FindEntry(t, key);
+	return he != NULL ? he->value : NULL;
+}
+
+void *
+Hash_FindValueHash(HashTable *t, const char *key, unsigned int h)
+{
+	HashEntry *he = HashTable_Find(t, h, key);
 	return he != NULL ? he->value : NULL;
 }
 
