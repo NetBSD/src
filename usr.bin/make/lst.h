@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.80 2020/10/25 10:07:23 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.81 2020/10/25 12:08:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -163,17 +163,18 @@ void Lst_Enqueue(List *, void *);
 /* Remove the head node of the queue and return its datum. */
 void *Lst_Dequeue(List *);
 
-/* A vector is an ordered collection of items, allowing fast indexed access. */
-typedef struct Vector {
+/* A pointer vector is an ordered collection of pointers, allowing for fast
+ * indexed access. */
+typedef struct PtrVector {
     void **items;
     size_t len;
     size_t cap;
-} Vector;
+} PtrVector;
 
-void Vector_Init(Vector *);
-Boolean Vector_IsEmpty(Vector *);
-void Vector_Push(Vector *, void *);
-void *Vector_Pop(Vector *);
-void Vector_Done(Vector *);
+void PtrVector_Init(PtrVector *);
+Boolean PtrVector_IsEmpty(PtrVector *);
+void PtrVector_Push(PtrVector *, void *);
+void *PtrVector_Pop(PtrVector *);
+void PtrVector_Done(PtrVector *);
 
 #endif /* MAKE_LST_H */

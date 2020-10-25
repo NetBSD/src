@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.88 2020/10/25 10:07:23 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.89 2020/10/25 12:08:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.88 2020/10/25 10:07:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.89 2020/10/25 12:08:53 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -275,19 +275,19 @@ Lst_Dequeue(List *list)
 }
 
 void
-Vector_Init(Vector *v)
+PtrVector_Init(PtrVector *v)
 {
     v->len = 0;
     v->cap = 10;
     v->items = bmake_malloc(v->cap * sizeof v->items[0]);
 }
 
-Boolean Vector_IsEmpty(Vector *v)
+Boolean PtrVector_IsEmpty(PtrVector *v)
 {
     return v->len == 0;
 }
 
-void Vector_Push(Vector *v, void *datum)
+void PtrVector_Push(PtrVector *v, void *datum)
 {
     if (v->len >= v->cap) {
 	v->cap *= 2;
@@ -298,7 +298,7 @@ void Vector_Push(Vector *v, void *datum)
     v->len++;
 }
 
-void *Vector_Pop(Vector *v)
+void *PtrVector_Pop(PtrVector *v)
 {
     void *datum;
 
@@ -311,7 +311,7 @@ void *Vector_Pop(Vector *v)
     return datum;
 }
 
-void Vector_Done(Vector *v)
+void PtrVector_Done(PtrVector *v)
 {
     free(v->items);
 }
