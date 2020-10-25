@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.53 2019/08/28 12:24:03 uki Exp $
+#	$NetBSD: shl.mi,v 1.54 2020/10/25 16:59:27 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -61,7 +61,7 @@
 ./usr/X11R7/lib/libfreetype_pic.a			xcomp-freetype-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libgbm_pic.a				xcomp-libgbm-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libglapi_pic.a				xcomp-libglapi-lib	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libglut_pic.a				xcomp-libglut-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libglut_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/liblbxutil_pic.a			xcomp-obsolete	obsolete
 ./usr/X11R7/lib/liblisp_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libmp_pic.a				xcomp-obsolete	obsolete

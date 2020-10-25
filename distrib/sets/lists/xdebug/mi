@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2020/10/16 10:32:52 nia Exp $
+# $NetBSD: mi,v 1.37 2020/10/25 16:59:27 nia Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -59,7 +59,7 @@
 ./usr/X11R7/lib/libfreetype_g.a				xdebug-freetype-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libgbm_g.a				xdebug-libgbm-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libglapi_g.a				xdebug-libglapi-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libglut_g.a				xdebug-libglut-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libglut_g.a				xdebug-obsolete xorg,obsolete
 ./usr/X11R7/lib/liblbxutil_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/liblisp_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libmp_g.a				xdebug-obsolete	xorg,obsolete
