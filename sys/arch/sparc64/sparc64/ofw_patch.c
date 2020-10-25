@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.4 2020/10/24 13:47:53 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.5 2020/10/25 07:46:53 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.4 2020/10/24 13:47:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.5 2020/10/25 07:46:53 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,7 @@ create_i2c_dict(device_t busdev)
 
 	cfg = prop_dictionary_get(props, "i2c-child-devices");
  	if (!cfg) {
+		DPRINTF(ACDB_PROBE, ("\nCreating new i2c-child-devices\n"));
 		cfg = prop_array_create();
 		prop_dictionary_set(props, "i2c-child-devices", cfg);
 		prop_dictionary_set_bool(props, "i2c-indirect-config", false);
@@ -171,8 +172,6 @@ add_env_sensors_v210(device_t busdev)
 	add_i2c_device(cfg, "hardware-monitor", "i2c-adm1026", 0x2e, 0);
 	/* LM75 at 0x4e */
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75", 0x4e, 0);
-
-	prop_object_release(cfg);
 }
 
 /* Sensors and GPIO's for E450 and E250 */
