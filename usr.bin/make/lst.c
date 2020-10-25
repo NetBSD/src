@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.87 2020/10/24 10:36:23 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.88 2020/10/25 10:07:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.87 2020/10/24 10:36:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.88 2020/10/25 10:07:23 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -56,25 +56,6 @@ Lst_New(void)
     list->last = NULL;
 
     return list;
-}
-
-/* Duplicate an entire list, usually by copying the datum pointers.
- * If copyProc is given, that function is used to create the new datum from the
- * old datum, usually by creating a copy of it. */
-List *
-Lst_Copy(List *list, LstCopyProc copyProc)
-{
-    List *newList;
-    ListNode *node;
-
-    newList = Lst_New();
-
-    for (node = list->first; node != NULL; node = node->next) {
-	void *datum = copyProc != NULL ? copyProc(node->datum) : node->datum;
-	Lst_Append(newList, datum);
-    }
-
-    return newList;
 }
 
 /* Free a list and all its nodes. The node data are not freed though. */
