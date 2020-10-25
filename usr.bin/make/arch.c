@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.145 2020/10/24 04:20:50 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.146 2020/10/25 07:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.145 2020/10/24 04:20:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.146 2020/10/25 07:57:01 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -993,19 +993,12 @@ Arch_MemMTime(GNode *gn)
  *
  * Input:
  *	gn		Node of library to find
- *	path		Search path
  */
 void
 Arch_FindLib(GNode *gn, SearchPath *path)
 {
-    char *libName;		/* file name for archive */
-    size_t sz = strlen(gn->name) + 6 - 2;
-
-    libName = bmake_malloc(sz);
-    snprintf(libName, sz, "lib%s.a", &gn->name[2]);
-
+    char *libName = str_concat3("lib", gn->name + 2, ".a");
     gn->path = Dir_FindFile(libName, path);
-
     free(libName);
 
 #ifdef LIBRARIES
