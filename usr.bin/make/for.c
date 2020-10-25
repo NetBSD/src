@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.99 2020/10/25 14:29:13 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.100 2020/10/25 14:58:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.99 2020/10/25 14:29:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.100 2020/10/25 14:58:23 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -78,8 +78,7 @@ typedef struct ForVar {
 
 /* One of the items to the right of the "in" in a .for loop. */
 typedef struct ForItem {
-    char *value;		/* unexpanded */
-    ForEscapes escapes;
+    char *value;
 } ForItem;
 
 /*
@@ -114,11 +113,10 @@ ForVarDone(ForVar *var)
 }
 
 static void
-ForAddItem(For *f, const char *value, ForEscapes escapes)
+ForAddItem(For *f, const char *value)
 {
     ForItem *item = Vector_Push(&f->items);
     item->value = bmake_strdup(value);
-    item->escapes = escapes;
 }
 
 static void
@@ -270,13 +268,11 @@ For_Eval(const char *line)
 
 	for (i = 0; i < words.len; i++) {
 	    const char *word = words.words[i];
-	    ForEscapes escapes;
 
 	    if (word[0] == '\0')
 		continue;	/* .for var in ${:U} */
 
-	    escapes = GetEscapes(word);
-	    ForAddItem(new_for, word, escapes);
+	    ForAddItem(new_for, word);
 	}
     }
 
@@ -370,7 +366,7 @@ static void
 for_substitute(Buffer *cmds, ForItem *forItem, char ech)
 {
     const char *item = forItem->value;
-    ForEscapes escapes = forItem->escapes;
+    ForEscapes escapes = GetEscapes(item);
     char ch;
 
     /* If there were no escapes, or the only escape is the other variable
