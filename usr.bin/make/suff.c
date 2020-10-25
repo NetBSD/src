@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.225 2020/10/25 21:51:49 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.226 2020/10/25 22:13:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.225 2020/10/25 21:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.226 2020/10/25 22:13:53 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1348,13 +1348,11 @@ Suff_FindPath(GNode* gn)
     }
 
     if (suff != NULL) {
-	SUFF_DEBUG1("suffix is \"%s\"...", suff->name);
+	SUFF_DEBUG1("suffix is \"%s\"...\n", suff->name);
 	return suff->searchPath;
     } else {
-	/*
-	 * Use default search path
-	 */
-	return dirSearchPath;
+        SUFF_DEBUG0("\n");
+	return dirSearchPath;	/* Use default search path */
     }
 }
 
