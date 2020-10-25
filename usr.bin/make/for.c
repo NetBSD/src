@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.97 2020/10/25 13:45:33 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.98 2020/10/25 13:51:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.97 2020/10/25 13:45:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.98 2020/10/25 13:51:56 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -422,6 +422,40 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
     *inout_cmd_cp = cmd_cp;
 }
 
+static void
+SubstVarShort(For *arg, char const ch,
+	      const char **inout_cp, const char **input_cmd_cp, Buffer *cmds)
+{
+    const char *cp = *inout_cp;
+    const char *cmd_cp = *input_cmd_cp;
+    size_t i;
+
+    /* Probably a single character name, ignore $$ and stupid ones. {*/
+    if (!arg->short_var || strchr("}):$", ch) != NULL) {
+	cp++;
+	*inout_cp = cp;
+	return;
+    }
+
+    for (i = 0; i < arg->vars.len; i++) {
+	ForVar *forVar = Vector_Get(&arg->vars, i);
+	char *var = forVar->name;
+	if (var[0] != ch || var[1] != 0)
+	    continue;
+
+	/* Found a variable match. Replace with ${:U<value>} */
+	Buf_AddBytesBetween(cmds, cmd_cp, cp);
+	Buf_AddStr(cmds, "{:U");
+	cmd_cp = ++cp;
+	for_substitute(cmds, Vector_Get(&arg->items, arg->sub_next + i), '}');
+	Buf_AddByte(cmds, '}');
+	break;
+    }
+
+    *inout_cp = cp;
+    *input_cmd_cp = cmd_cp;
+}
+
 /*
  * Scan the for loop body and replace references to the loop variables
  * with variable references that expand to the required text.
@@ -459,7 +493,6 @@ ForIterate(void *v_arg, size_t *ret_len)
     Buf_Init(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ch, ech;
-	unsigned int i;
 	ch = *++cp;
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
@@ -470,24 +503,7 @@ ForIterate(void *v_arg, size_t *ret_len)
 	if (ch == '\0')
 	    break;
 
-	/* Probably a single character name, ignore $$ and stupid ones. {*/
-	if (!arg->short_var || strchr("}):$", ch) != NULL) {
-	    cp++;
-	    continue;
-	}
-	for (i = 0; i < arg->vars.len; i++) {
-	    ForVar *forVar = Vector_Get(&arg->vars, i);
-	    char *var = forVar->name;
-	    if (var[0] != ch || var[1] != 0)
-		continue;
-	    /* Found a variable match. Replace with ${:U<value>} */
-	    Buf_AddBytesBetween(&cmds, cmd_cp, cp);
-	    Buf_AddStr(&cmds, "{:U");
-	    cmd_cp = ++cp;
-	    for_substitute(&cmds, Vector_Get(&arg->items, arg->sub_next + i), '}');
-	    Buf_AddByte(&cmds, '}');
-	    break;
-	}
+	SubstVarShort(arg, ch, &cp, &cmd_cp, &cmds);
     }
     Buf_AddBytesBetween(&cmds, cmd_cp, body_end);
 
