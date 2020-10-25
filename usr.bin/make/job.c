@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.277 2020/10/23 18:36:09 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.278 2020/10/25 19:57:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,6 +74,14 @@
  *	handle the creation etc. of our child processes.
  *
  * Interface:
+ *	Job_Init	Called to initialize this module. In addition,
+ *			any commands attached to the .BEGIN target
+ *			are executed before this function returns.
+ *			Hence, the makefiles must have been parsed
+ *			before this function is called.
+ *
+ *	Job_End		Clean up any memory used.
+ *
  *	Job_Make	Start the creation of the given target.
  *
  *	Job_CatchChildren
@@ -91,14 +99,6 @@
  *			a time given by the SEL_* constants, below,
  *			or until output is ready.
  *
- *	Job_Init	Called to initialize this module. in addition,
- *			any commands attached to the .BEGIN target
- *			are executed before this function returns.
- *			Hence, the makefile must have been parsed
- *			before this function is called.
- *
- *	Job_End		Clean up any memory used.
- *
  *	Job_ParseShell	Given the line following a .SHELL target, parse
  *			the line as a shell specification. Returns
  *			FALSE if the spec was incorrect.
@@ -112,7 +112,7 @@
  *	Job_AbortAll	Abort all currently running jobs. It doesn't
  *			handle output or do anything for the jobs,
  *			just kills them. It should only be called in
- *			an emergency, as it were.
+ *			an emergency.
  *
  *	Job_CheckCommands
  *			Verify that the commands for a target are
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.277 2020/10/23 18:36:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.278 2020/10/25 19:57:43 rillig Exp $");
 
 # define STATIC static
 
