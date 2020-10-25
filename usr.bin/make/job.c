@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.281 2020/10/25 20:15:56 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.282 2020/10/25 20:19:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.281 2020/10/25 20:15:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.282 2020/10/25 20:19:06 rillig Exp $");
 
 # define STATIC static
 
@@ -1208,39 +1208,41 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	return TRUE;
     }
 
-    if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
-	/*
-	 * The node wasn't the target of an operator.  We have no .DEFAULT
-	 * rule to go on and the target doesn't already exist. There's
-	 * nothing more we can do for this branch. If the -k flag wasn't
-	 * given, we stop in our tracks, otherwise we just don't update
-	 * this node's parents so they never get examined.
-	 */
+    if (Dir_MTime(gn, 0) != 0 || (gn->type & OP_SPECIAL))
+	return TRUE;
 
-	if (gn->flags & FROM_DEPEND) {
-	    if (!Job_RunTarget(".STALE", gn->fname))
-		fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
-			progname, gn->fname, gn->lineno, makeDependfile,
-			gn->name);
-	    return TRUE;
-	}
+    /*
+     * The node wasn't the target of an operator.  We have no .DEFAULT
+     * rule to go on and the target doesn't already exist. There's
+     * nothing more we can do for this branch. If the -k flag wasn't
+     * given, we stop in our tracks, otherwise we just don't update
+     * this node's parents so they never get examined.
+     */
 
-	if (gn->type & OP_OPTIONAL) {
-	    (void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
-			  progname, gn->name, "ignored");
-	    (void)fflush(stdout);
-	} else if (keepgoing) {
-	    (void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
-			  progname, gn->name, "continuing");
-	    (void)fflush(stdout);
-	    return FALSE;
-	} else {
-	    abortProc("%s: don't know how to make %s. Stop",
-		      progname, gn->name);
-	    return FALSE;
-	}
+    if (gn->flags & FROM_DEPEND) {
+	if (!Job_RunTarget(".STALE", gn->fname))
+	    fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
+		    progname, gn->fname, gn->lineno, makeDependfile,
+		    gn->name);
+	return TRUE;
     }
-    return TRUE;
+
+    if (gn->type & OP_OPTIONAL) {
+	(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+		      progname, gn->name, "ignored");
+	(void)fflush(stdout);
+	return TRUE;
+    }
+
+    if (keepgoing) {
+	(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+		      progname, gn->name, "continuing");
+	(void)fflush(stdout);
+	return FALSE;
+    }
+
+    abortProc("%s: don't know how to make %s. Stop", progname, gn->name);
+    return FALSE;
 }
 
 /* Execute the shell for the given job. Called from JobStart
