@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.52 2020/10/25 18:37:08 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.53 2020/10/25 18:40:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,17 +69,12 @@
  * SUCH DAMAGE.
  */
 
-/*
- * This module contains routines to manipulate a hash table.
- * See hash.h for a definition of the structure of the hash
- * table.  Hash tables grow automatically as the amount of
- * information increases.
- */
+/* Hash tables with string keys. */
 
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.52 2020/10/25 18:37:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.53 2020/10/25 18:40:00 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -87,7 +82,7 @@ MAKE_RCSID("$NetBSD: hash.c,v 1.52 2020/10/25 18:37:08 rillig Exp $");
  */
 #define rebuildLimit 3
 
-/* This hash function matches Gosling's emacs. */
+/* This hash function matches Gosling's emacs and java.lang.String. */
 static unsigned int
 hash(const char *key, size_t *out_keylen)
 {
