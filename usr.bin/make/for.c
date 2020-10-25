@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.98 2020/10/25 13:51:56 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.99 2020/10/25 14:29:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.98 2020/10/25 13:51:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.99 2020/10/25 14:29:13 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -143,6 +143,30 @@ For_Free(For *arg)
     free(arg->parse_buf);
 
     free(arg);
+}
+
+static ForEscapes
+GetEscapes(const char *word)
+{
+    const char *p;
+    ForEscapes escapes = 0;
+
+    for (p = word; *p != '\0'; p++) {
+	switch (*p) {
+	case ':':
+	case '$':
+	case '\\':
+	    escapes |= FOR_SUB_ESCAPE_CHAR;
+	    break;
+	case ')':
+	    escapes |= FOR_SUB_ESCAPE_PAREN;
+	    break;
+	case '}':
+	    escapes |= FOR_SUB_ESCAPE_BRACE;
+	    break;
+	}
+    }
+    return escapes;
 }
 
 /* Evaluate the for loop in the passed line. The line looks like this:
@@ -242,32 +266,17 @@ For_Eval(const char *line)
     }
 
     {
-	size_t n;
+	size_t i;
 
-	for (n = 0; n < words.len; n++) {
+	for (i = 0; i < words.len; i++) {
+	    const char *word = words.words[i];
 	    ForEscapes escapes;
-	    char ch;
 
-	    ptr = words.words[n];
-	    if (ptr[0] == '\0')
-		continue;
-	    escapes = 0;
-	    while ((ch = *ptr++)) {
-		switch (ch) {
-		case ':':
-		case '$':
-		case '\\':
-		    escapes |= FOR_SUB_ESCAPE_CHAR;
-		    break;
-		case ')':
-		    escapes |= FOR_SUB_ESCAPE_PAREN;
-		    break;
-		case '}':
-		    escapes |= FOR_SUB_ESCAPE_BRACE;
-		    break;
-		}
-	    }
-	    ForAddItem(new_for, words.words[n], escapes);
+	    if (word[0] == '\0')
+		continue;	/* .for var in ${:U} */
+
+	    escapes = GetEscapes(word);
+	    ForAddItem(new_for, word, escapes);
 	}
     }
 
