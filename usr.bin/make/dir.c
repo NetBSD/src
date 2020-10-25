@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.186 2020/10/25 09:51:52 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.187 2020/10/25 10:00:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.186 2020/10/25 09:51:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.187 2020/10/25 10:00:20 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1447,22 +1447,19 @@ Dir_AddDir(SearchPath *path, const char *name)
     return dir;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_CopyDir --
- *	Callback function for duplicating a search path via Lst_Copy.
- *	Ups the reference count for the directory.
- *
- * Results:
- *	Returns the Path it was given.
- *-----------------------------------------------------------------------
- */
-void *
-Dir_CopyDir(void *p)
+/* Return a copy of dirSearchPath, incrementing the reference counts for
+ * the contained directories. */
+SearchPath *
+Dir_CopyDirSearchPath(void)
 {
-    CachedDir *dir = p;
-    dir->refCount++;
-    return dir;
+    SearchPath *path = Lst_New();
+    SearchPathNode *ln;
+    for (ln = dirSearchPath->first; ln != NULL; ln = ln->next) {
+	CachedDir *dir = ln->datum;
+	dir->refCount++;
+        Lst_Append(path, dir);
+    }
+    return path;
 }
 
 /*-

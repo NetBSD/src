@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.222 2020/10/24 10:36:23 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.223 2020/10/25 10:00:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.222 2020/10/24 10:36:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.223 2020/10/25 10:00:20 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -789,7 +789,7 @@ Suff_DoPaths(void)
 	    Dir_Concat(s->searchPath, dirSearchPath);
 	} else {
 	    Lst_Destroy(s->searchPath, Dir_Destroy);
-	    s->searchPath = Lst_Copy(dirSearchPath, Dir_CopyDir);
+	    s->searchPath = Dir_CopyDirSearchPath();
 	}
     }
 
