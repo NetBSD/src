@@ -14,4 +14,6 @@ make: "directive-for.mk" line 132: {{}} {{}} {{}}
 make: "directive-for.mk" line 132: )( )( )(
 make: "directive-for.mk" line 132: ][ ][ ][
 make: "directive-for.mk" line 132: }{ }{ }{
+make: "directive-for.mk" line 140: outer value value
+make: "directive-for.mk" line 140: outer "quoted" \"quoted\"
 exit status 0
