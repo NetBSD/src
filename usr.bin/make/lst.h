@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.79 2020/10/24 10:36:23 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.80 2020/10/25 10:07:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -102,10 +102,6 @@ struct List {
     ListNode *last;		/* last node in list */
 };
 
-/* Copy a node, usually by allocating a copy of the given object.
- * For reference-counted objects, the original object may need to be
- * modified, therefore the parameter is not const. */
-typedef void *LstCopyProc(void *);
 /* Free the datum of a node, called before freeing the node itself. */
 typedef void LstFreeProc(void *);
 /* An action for Lst_ForEachUntil and Lst_ForEachUntilConcurrent. */
@@ -115,8 +111,6 @@ typedef int LstActionUntilProc(void *datum, void *args);
 
 /* Create a new list. */
 List *Lst_New(void);
-/* Duplicate an existing list. */
-List *Lst_Copy(List *, LstCopyProc);
 /* Free the list, leaving the node data unmodified. */
 void Lst_Free(List *);
 /* Free the list, freeing the node data using the given function. */
