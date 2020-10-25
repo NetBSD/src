@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.282 2020/10/25 20:19:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.283 2020/10/25 20:24:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.282 2020/10/25 20:19:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.283 2020/10/25 20:24:25 rillig Exp $");
 
 # define STATIC static
 
@@ -218,10 +218,13 @@ typedef struct Shell {
  * error handling variables
  */
 static int errors = 0;		/* number of errors reported */
-static int aborting = 0;	/* why is the make aborting? */
-#define ABORT_ERROR	1	/* Because of an error */
-#define ABORT_INTERRUPT	2	/* Because it was interrupted */
-#define ABORT_WAIT	3	/* Waiting for jobs to finish */
+typedef enum AbortReason {	/* why is the make aborting? */
+    ABORT_NONE,
+    ABORT_ERROR,		/* Because of an error */
+    ABORT_INTERRUPT,		/* Because it was interrupted */
+    ABORT_WAIT			/* Waiting for jobs to finish */
+} AbortReason;
+static AbortReason aborting = ABORT_NONE;
 #define JOB_TOKENS	"+EI+"	/* Token to requeue for each abort state */
 
 /*
