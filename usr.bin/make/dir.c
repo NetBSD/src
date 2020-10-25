@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.185 2020/10/25 09:30:45 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.186 2020/10/25 09:51:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.185 2020/10/25 09:30:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.186 2020/10/25 09:51:52 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -529,28 +529,24 @@ Dir_SetPATH(void)
     }
 }
 
-/* See if the given name has any wildcard characters in it. Be careful not to
- * expand unmatching brackets or braces.
+/* See if the given name has any wildcard characters in it and all braces and
+ * brackets are properly balanced.
  *
  * XXX: This code is not 100% correct ([^]] fails etc.). I really don't think
  * that make(1) should be expanding patterns, because then you have to set a
  * mechanism for escaping the expansion!
  *
- * Input:
- *	name		name to check
- *
- * Results:
- *	returns TRUE if the word should be expanded, FALSE otherwise
+ * Return TRUE if the word should be expanded, FALSE otherwise.
  */
 Boolean
 Dir_HasWildcards(const char *name)
 {
-    const char *cp;
+    const char *p;
     Boolean wild = FALSE;
     int braces = 0, brackets = 0;
 
-    for (cp = name; *cp; cp++) {
-	switch (*cp) {
+    for (p = name; *p != '\0'; p++) {
+	switch (*p) {
 	case '{':
 	    braces++;
 	    wild = TRUE;
