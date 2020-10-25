@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.53 2020/10/25 18:40:00 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.54 2020/10/25 19:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.53 2020/10/25 18:40:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.54 2020/10/25 19:19:07 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -123,9 +123,9 @@ HashTable_Find(HashTable *t, unsigned int h, const char *key)
 	return e;
 }
 
-/* Sets up the hash table. */
+/* Set up the hash table. */
 void
-Hash_InitTable(HashTable *t)
+HashTable_Init(HashTable *t)
 {
 	unsigned int n = 16, i;
 	HashEntry **buckets = bmake_malloc(sizeof(*buckets) * n);
@@ -139,10 +139,9 @@ Hash_InitTable(HashTable *t)
 	t->maxchain = 0;
 }
 
-/* Removes everything from the hash table and frees up the memory space it
- * occupied (except for the space in the HashTable structure). */
+/* Remove everything from the hash table and frees up the memory. */
 void
-Hash_DeleteTable(HashTable *t)
+HashTable_Done(HashTable *t)
 {
 	HashEntry **buckets = t->buckets;
 	size_t i, n = t->bucketsSize;
@@ -164,41 +163,35 @@ Hash_DeleteTable(HashTable *t)
 	t->buckets = NULL;
 }
 
-/* Searches the hash table for an entry corresponding to the key.
- *
- * Input:
- *	t		Hash table to search.
- *	key		A hash key.
- *
- * Results:
- *	Returns a pointer to the entry for key, or NULL if the table contains
- *	no entry for the key.
- */
+/* Find the entry corresponding to the key, or return NULL. */
 HashEntry *
-Hash_FindEntry(HashTable *t, const char *key)
+HashTable_FindEntry(HashTable *t, const char *key)
 {
 	unsigned int h = hash(key, NULL);
 	return HashTable_Find(t, h, key);
 }
 
+/* Find the value corresponding to the key, or return NULL. */
 void *
-Hash_FindValue(HashTable *t, const char *key)
+HashTable_FindValue(HashTable *t, const char *key)
 {
-	HashEntry *he = Hash_FindEntry(t, key);
+	HashEntry *he = HashTable_FindEntry(t, key);
 	return he != NULL ? he->value : NULL;
 }
 
+/* Find the value corresponding to the key and the precomputed hash,
+ * or return NULL. */
 void *
-Hash_FindValueHash(HashTable *t, const char *key, unsigned int h)
+HashTable_FindValueHash(HashTable *t, const char *key, unsigned int h)
 {
 	HashEntry *he = HashTable_Find(t, h, key);
 	return he != NULL ? he->value : NULL;
 }
 
-/* Makes a new hash table that is larger than the old one. The entire hash
- * table is moved, so any bucket numbers from the old table become invalid. */
+/* Make the hash table larger. Any bucket numbers from the old table become
+ * invalid; the hash codes stay valid though. */
 static void
-RebuildTable(HashTable *t)
+HashTable_Enlarge(HashTable *t)
 {
 	unsigned int oldSize = t->bucketsSize;
 	HashEntry **oldBuckets = t->buckets;
@@ -230,16 +223,10 @@ RebuildTable(HashTable *t)
 	t->maxchain = 0;
 }
 
-/* Searches the hash table for an entry corresponding to the key.
- * If no entry is found, then one is created.
- *
- * Input:
- *	t		Hash table to search.
- *	key		A hash key.
- *	out_isNew	Filled with TRUE if new entry created, FALSE otherwise.
- */
+/* Find or create an entry corresponding to the key.
+ * Return in out_isNew whether a new entry has been created. */
 HashEntry *
-Hash_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
+HashTable_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 {
 	size_t keylen;
 	unsigned int h = hash(key, &keylen);
@@ -251,13 +238,8 @@ Hash_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 		return he;
 	}
 
-	/*
-	 * The desired entry isn't there.  Before allocating a new entry,
-	 * expand the table if necessary (and this changes the resulting
-	 * bucket chain).
-	 */
 	if (t->numEntries >= rebuildLimit * t->bucketsSize)
-		RebuildTable(t);
+		HashTable_Enlarge(t);
 
 	he = bmake_malloc(sizeof(*he) + keylen);
 	he->value = NULL;
@@ -273,9 +255,9 @@ Hash_CreateEntry(HashTable *t, const char *key, Boolean *out_isNew)
 	return he;
 }
 
-/* Delete the given hash table entry and free memory associated with it. */
+/* Delete the entry from the table and free the associated memory. */
 void
-Hash_DeleteEntry(HashTable *t, HashEntry *he)
+HashTable_DeleteEntry(HashTable *t, HashEntry *he)
 {
 	HashEntry **ref = &t->buckets[he->key_hash & t->bucketsMask];
 	HashEntry *p;
@@ -323,7 +305,7 @@ HashIter_Next(HashIter *hi)
 }
 
 void
-Hash_DebugStats(HashTable *t, const char *name)
+HashTable_DebugStats(HashTable *t, const char *name)
 {
 	DEBUG4(HASH, "HashTable %s: size=%u numEntries=%u maxchain=%u\n",
 	       name, t->bucketsSize, t->numEntries, t->maxchain);
