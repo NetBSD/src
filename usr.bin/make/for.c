@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.104 2020/10/25 15:49:03 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.105 2020/10/25 15:58:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.104 2020/10/25 15:49:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.105 2020/10/25 15:58:04 rillig Exp $");
 
 typedef enum ForEscapes {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -161,25 +161,24 @@ int
 For_Eval(const char *line)
 {
     For *new_for;
-    const char *ptr;
+    const char *p;
 
     /* Skip the '.' and any following whitespace */
-    ptr = line + 1;
-    cpp_skip_whitespace(&ptr);
+    p = line + 1;
+    cpp_skip_whitespace(&p);
 
     /*
      * If we are not in a for loop quickly determine if the statement is
      * a for.
      */
-    if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-	!ch_isspace(ptr[3])) {
-	if (ptr[0] == 'e' && strncmp(ptr + 1, "ndfor", 5) == 0) {
+    if (p[0] != 'f' || p[1] != 'o' || p[2] != 'r' || !ch_isspace(p[3])) {
+	if (p[0] == 'e' && strncmp(p + 1, "ndfor", 5) == 0) {
 	    Parse_Error(PARSE_FATAL, "for-less endfor");
 	    return -1;
 	}
 	return 0;
     }
-    ptr += 3;
+    p += 3;
 
     /*
      * we found a for loop, and now we are going to parse it.
@@ -198,26 +197,26 @@ For_Eval(const char *line)
     for (;;) {
 	size_t len;
 
-	cpp_skip_whitespace(&ptr);
-	if (*ptr == '\0') {
+	cpp_skip_whitespace(&p);
+	if (*p == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
 	    For_Free(new_for);
 	    return -1;
 	}
 
 	/* XXX: This allows arbitrary variable names; see directive-for.mk. */
-	for (len = 1; ptr[len] && !ch_isspace(ptr[len]); len++)
+	for (len = 1; p[len] && !ch_isspace(p[len]); len++)
 	    continue;
 
-	if (len == 2 && ptr[0] == 'i' && ptr[1] == 'n') {
-	    ptr += 2;
+	if (len == 2 && p[0] == 'i' && p[1] == 'n') {
+	    p += 2;
 	    break;
 	}
 	if (len == 1)
 	    new_for->short_var = TRUE;
 
-	ForAddVar(new_for, ptr, len);
-	ptr += len;
+	ForAddVar(new_for, p, len);
+	p += len;
     }
 
     if (new_for->vars.len == 0) {
@@ -226,7 +225,7 @@ For_Eval(const char *line)
 	return -1;
     }
 
-    cpp_skip_whitespace(&ptr);
+    cpp_skip_whitespace(&p);
 
     /*
      * Make a list with the remaining words.
@@ -238,7 +237,7 @@ For_Eval(const char *line)
      */
     {
 	char *items;
-	(void)Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES, &items);
+	(void)Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items);
 	/* TODO: handle errors */
 	new_for->items = Str_Words(items, FALSE);
 	free(items);
