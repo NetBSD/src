@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.278 2020/10/25 19:57:43 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.279 2020/10/25 20:09:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.278 2020/10/25 19:57:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.279 2020/10/25 20:09:28 rillig Exp $");
 
 # define STATIC static
 
@@ -1208,7 +1208,6 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	     * given, we stop in our tracks, otherwise we just don't update
 	     * this node's parents so they never get examined.
 	     */
-	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->flags & FROM_DEPEND) {
 		if (!Job_RunTarget(".STALE", gn->fname))
@@ -1219,16 +1218,17 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    }
 
 	    if (gn->type & OP_OPTIONAL) {
-		(void)fprintf(stdout, "%s%s %s (ignored)\n", progname,
-		    msg, gn->name);
+		(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+			      progname, gn->name, "ignored");
 		(void)fflush(stdout);
 	    } else if (keepgoing) {
-		(void)fprintf(stdout, "%s%s %s (continuing)\n", progname,
-		    msg, gn->name);
+		(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
+			      progname, gn->name, "continuing");
 		(void)fflush(stdout);
 		return FALSE;
 	    } else {
-		(*abortProc)("%s%s %s. Stop", progname, msg, gn->name);
+		abortProc("%s: don't know how to make %s. Stop",
+			  progname, gn->name);
 		return FALSE;
 	    }
 	}
