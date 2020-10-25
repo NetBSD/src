@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.89 2020/10/25 12:08:53 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.90 2020/10/25 13:06:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.89 2020/10/25 12:08:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.90 2020/10/25 13:06:12 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -275,43 +275,48 @@ Lst_Dequeue(List *list)
 }
 
 void
-PtrVector_Init(PtrVector *v)
+Vector_Init(Vector *v, size_t itemSize)
 {
     v->len = 0;
-    v->cap = 10;
-    v->items = bmake_malloc(v->cap * sizeof v->items[0]);
+    v->priv_cap = 10;
+    v->itemSize = itemSize;
+    v->items = bmake_malloc(v->priv_cap * v->itemSize);
 }
 
-Boolean PtrVector_IsEmpty(PtrVector *v)
+/* Return the pointer to the given item in the vector.
+ * The returned data is valid until the next modifying operation. */
+void *
+Vector_Get(Vector *v, size_t i)
 {
-    return v->len == 0;
+    unsigned char *items = v->items;
+    return items + i * v->itemSize;
 }
 
-void PtrVector_Push(PtrVector *v, void *datum)
+/* Add space for a new item to the vector and return a pointer to that space.
+ * The returned data is valid until the next modifying operation. */
+void *
+Vector_Push(Vector *v)
 {
-    if (v->len >= v->cap) {
-	v->cap *= 2;
-	v->items = bmake_realloc(v->items,
-				 v->cap * sizeof v->items[0]);
+    if (v->len >= v->priv_cap) {
+	v->priv_cap *= 2;
+	v->items = bmake_realloc(v->items, v->priv_cap * v->itemSize);
     }
-    v->items[v->len] = datum;
     v->len++;
+    return Vector_Get(v, v->len - 1);
 }
 
-void *PtrVector_Pop(PtrVector *v)
+/* Return the pointer to the last item in the vector.
+ * The returned data is valid until the next modifying operation. */
+void *
+Vector_Pop(Vector *v)
 {
-    void *datum;
-
     assert(v->len > 0);
     v->len--;
-    datum = v->items[v->len];
-#ifdef CLEANUP
-    v->items[v->len] = NULL;
-#endif
-    return datum;
+    return Vector_Get(v, v->len);
 }
 
-void PtrVector_Done(PtrVector *v)
+void
+Vector_Done(Vector *v)
 {
     free(v->items);
 }
