@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.48 2020/10/25 17:01:05 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.49 2020/10/25 17:58:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.48 2020/10/25 17:01:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.49 2020/10/25 17:58:53 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -203,29 +203,31 @@ Hash_FindValueHash(HashTable *t, const char *key, unsigned int h)
 static void
 RebuildTable(HashTable *t)
 {
-	HashEntry *e, *next = NULL, **hp, **xp;
-	int i;
-	unsigned int mask, oldsize, newsize;
-	HashEntry **oldhp;
+	unsigned int oldSize = t->bucketsSize;
+	HashEntry **oldBuckets = t->buckets;
+	unsigned int newSize = 2 * oldSize;
+	unsigned int newMask = newSize - 1;
+	HashEntry **newBuckets = bmake_malloc(sizeof(*newBuckets) * newSize);
+	size_t i;
 
-	oldhp = t->buckets;
-	oldsize = t->bucketsSize;
-	newsize = oldsize << 1;
-	t->bucketsSize = (unsigned int)newsize;
-	t->bucketsMask = mask = newsize - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * newsize);
-	i = (int)newsize;
-	while (--i >= 0)
-		*hp++ = NULL;
-	for (hp = oldhp, i = (int)oldsize; --i >= 0;) {
-		for (e = *hp++; e != NULL; e = next) {
-			next = e->next;
-			xp = &t->buckets[e->key_hash & mask];
-			e->next = *xp;
-			*xp = e;
+	for (i = 0; i < newSize; i++)
+		newBuckets[i] = NULL;
+
+	for (i = 0; i < oldSize; i++) {
+		HashEntry *he = oldBuckets[i];
+		while (he != NULL) {
+			HashEntry *next = he->next;
+			he->next = newBuckets[he->key_hash & newMask];
+			newBuckets[he->key_hash & newMask] = he;
+			he = next;
 		}
 	}
-	free(oldhp);
+
+	free(oldBuckets);
+
+	t->bucketsSize = newSize;
+	t->bucketsMask = newMask;
+	t->buckets = newBuckets;
 	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
 	       __func__, t, t->bucketsSize, t->numEntries, t->maxchain);
 	t->maxchain = 0;
