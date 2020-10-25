@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.107 2020/10/25 16:15:48 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.108 2020/10/25 16:18:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.107 2020/10/25 16:15:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.108 2020/10/25 16:18:02 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -178,14 +178,9 @@ For_Eval(const char *line)
     For *new_for;
     const char *p;
 
-    /* Skip the '.' and any following whitespace */
-    p = line + 1;
+    p = line + 1;		/* skip the '.' */
     cpp_skip_whitespace(&p);
 
-    /*
-     * If we are not in a for loop quickly determine if the statement is
-     * a for.
-     */
     if (!IsFor(p)) {
 	if (IsEndfor(p)) {
 	    Parse_Error(PARSE_FATAL, "for-less endfor");
