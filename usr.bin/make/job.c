@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.289 2020/10/26 20:11:02 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.290 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.289 2020/10/26 20:11:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.290 2020/10/26 21:34:10 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -402,7 +402,7 @@ enum { npseudojobs = 2 };	/* number of pseudo-jobs */
 
 #define TARG_FMT  "%s %s ---\n" /* Default format */
 #define MESSAGE(fp, gn) \
-	if (maxJobs != 1 && targPrefix && *targPrefix) \
+	if (opts.maxJobs != 1 && targPrefix && *targPrefix) \
 	    (void)fprintf(fp, TARG_FMT, targPrefix, gn->name)
 
 static sigset_t caught_signals;	/* Set of signals we handle */
@@ -449,7 +449,7 @@ JobDeleteTarget(GNode *gn)
 	return;
     if (Targ_Precious(gn))
 	return;
-    if (noExecute)
+    if (opts.noExecute)
 	return;
 
     file = GNode_Path(gn);
@@ -1083,7 +1083,7 @@ JobFinish(Job *job, int status)
     /*
      * Set aborting if any error.
      */
-    if (errors && !keepgoing && (aborting != ABORT_INTERRUPT)) {
+    if (errors && !opts.keepgoing && (aborting != ABORT_INTERRUPT)) {
 	/*
 	 * If we found any errors in this batch of children and the -k flag
 	 * wasn't given, we set the aborting flag so no more jobs get
@@ -1235,7 +1235,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	return TRUE;
     }
 
-    if (keepgoing) {
+    if (opts.keepgoing) {
 	(void)fprintf(stdout, "%s: don't know how to make %s (%s)\n",
 		      progname, gn->name, "continuing");
 	(void)fflush(stdout);
@@ -1524,8 +1524,8 @@ JobStart(GNode *gn, int flags)
      * need to reopen it to feed it to the shell. If the -n flag *was* given,
      * we just set the file to be stdout. Cute, huh?
      */
-    if (((gn->type & OP_MAKE) && !(noRecursiveExecute)) ||
-	    (!noExecute && !touchFlag)) {
+    if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
+	    (!opts.noExecute && !opts.touchFlag)) {
 	/*
 	 * tfile is the name of a file into which all shell commands are
 	 * put. It is removed before the child shell is executed, unless
@@ -1824,7 +1824,7 @@ end_loop:
 	     * our own free will.
 	     */
 	    if (*cp != '\0') {
-		if (!beSilent && job->node != lastNode) {
+		if (!opts.beSilent && job->node != lastNode) {
 		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
@@ -2117,9 +2117,9 @@ Job_Init(void)
 {
     Job_SetPrefix();
     /* Allocate space for all the job info */
-    job_table = bmake_malloc((size_t)maxJobs * sizeof *job_table);
-    memset(job_table, 0, (size_t)maxJobs * sizeof *job_table);
-    job_table_end = job_table + maxJobs;
+    job_table = bmake_malloc((size_t)opts.maxJobs * sizeof *job_table);
+    memset(job_table, 0, (size_t)opts.maxJobs * sizeof *job_table);
+    job_table_end = job_table + opts.maxJobs;
     wantToken =	0;
 
     aborting = 0;
@@ -2150,9 +2150,9 @@ Job_Init(void)
 
     /* Preallocate enough for the maximum number of jobs.  */
     fds = bmake_malloc(sizeof(*fds) *
-	(npseudojobs + (size_t)maxJobs) * nfds_per_job());
+	(npseudojobs + (size_t)opts.maxJobs) * nfds_per_job());
     jobfds = bmake_malloc(sizeof(*jobfds) *
-	(npseudojobs + (size_t)maxJobs) * nfds_per_job());
+	(npseudojobs + (size_t)opts.maxJobs) * nfds_per_job());
 
     /* These are permanent entries and take slots 0 and 1 */
     watchfd(&tokenWaitJob);
@@ -2474,10 +2474,10 @@ JobInterrupt(int runINTERRUPT, int signo)
 
     JobSigUnlock(&mask);
 
-    if (runINTERRUPT && !touchFlag) {
+    if (runINTERRUPT && !opts.touchFlag) {
 	interrupt = Targ_FindNode(".INTERRUPT");
 	if (interrupt != NULL) {
-	    ignoreErrors = FALSE;
+	    opts.ignoreErrors = FALSE;
 	    JobRun(interrupt);
 	}
     }
@@ -2730,7 +2730,7 @@ Job_TokenWithdraw(void)
     DEBUG3(JOB, "Job_TokenWithdraw(%d): aborting %d, running %d\n",
 	   getpid(), aborting, jobTokensRunning);
 
-    if (aborting || (jobTokensRunning >= maxJobs))
+    if (aborting || (jobTokensRunning >= opts.maxJobs))
 	return FALSE;
 
     count = read(tokenWaitJob.inPipe, &tok, 1);

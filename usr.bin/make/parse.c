@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.400 2020/10/25 13:06:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.401 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.400 2020/10/25 13:06:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.401 2020/10/26 21:34:10 rillig Exp $");
 
 /* types and constants */
 
@@ -668,9 +668,9 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno,
 
 	if (type == PARSE_INFO)
 		return;
-	if (type == PARSE_FATAL || parseWarnFatal)
+	if (type == PARSE_FATAL || opts.parseWarnFatal)
 		fatals++;
-	if (parseWarnFatal && !fatal_warning_error_printed) {
+	if (opts.parseWarnFatal && !fatal_warning_error_printed) {
 		Error("parsing warnings being treated as errors");
 		fatal_warning_error_printed = TRUE;
 	}
@@ -687,9 +687,10 @@ ParseErrorInternal(const char *cfname, size_t clineno, ParseErrorLevel type,
 	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
 	va_end(ap);
 
-	if (debug_file != stderr && debug_file != stdout) {
+	if (opts.debug_file != stderr && opts.debug_file != stdout) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(debug_file, cfname, clineno, type, fmt, ap);
+		ParseVErrorInternal(opts.debug_file, cfname, clineno, type,
+				    fmt, ap);
 		va_end(ap);
 	}
 }
@@ -718,9 +719,10 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
-	if (debug_file != stderr && debug_file != stdout) {
+	if (opts.debug_file != stderr && opts.debug_file != stdout) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(debug_file, fname, lineno, type, fmt, ap);
+		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
+				    fmt, ap);
 		va_end(ap);
 	}
 }
@@ -910,7 +912,7 @@ ParseDoSrcMain(const char *src)
      * invoked if the user didn't specify a target on the command
      * line. This is to allow #ifmake's to succeed, or something...
      */
-    Lst_Append(create, bmake_strdup(src));
+    Lst_Append(opts.create, bmake_strdup(src));
     /*
      * Add the name to the .TARGETS variable as well, so the user can
      * employ that, if desired.
@@ -1125,7 +1127,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	Lst_Append(*inout_paths, dirSearchPath);
 	break;
     case Main:
-	if (!Lst_IsEmpty(create)) {
+	if (!Lst_IsEmpty(opts.create)) {
 	    *inout_specType = Not;
 	}
 	break;
@@ -1152,10 +1154,10 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	deleteOnError = TRUE;
 	break;
     case NotParallel:
-	maxJobs = 1;
+	opts.maxJobs = 1;
 	break;
     case SingleShell:
-	compatMake = TRUE;
+	opts.compatMake = TRUE;
 	break;
     case Order:
 	predecessor = NULL;
@@ -1361,10 +1363,10 @@ ParseDoDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 	allPrecious = TRUE;
 	break;
     case Ignore:
-	ignoreErrors = TRUE;
+	opts.ignoreErrors = TRUE;
 	break;
     case Silent:
-	beSilent = TRUE;
+	opts.beSilent = TRUE;
 	break;
     case ExPath:
 	ClearPaths(paths);
