@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.189 2020/10/25 21:51:48 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.190 2020/10/26 23:28:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.189 2020/10/25 21:51:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.190 2020/10/26 23:28:52 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1503,23 +1503,11 @@ Dir_MakeFlags(const char *flag, SearchPath *path)
     return Buf_Destroy(&buf, FALSE);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_Destroy --
- *	Nuke a directory descriptor, if possible. Callback procedure
- *	for the suffixes module when destroying a search path.
+/* Nuke a directory descriptor, if possible. Callback procedure for the
+ * suffixes module when destroying a search path.
  *
  * Input:
  *	dirp		The directory descriptor to nuke
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	If no other path references this directory (refCount == 0),
- *	the CachedDir and all its data are freed.
- *
- *-----------------------------------------------------------------------
  */
 void
 Dir_Destroy(void *dirp)
@@ -1536,23 +1524,8 @@ Dir_Destroy(void *dirp)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_ClearPath --
- *	Clear out all elements of the given search path. This is different
- *	from destroying the list, notice.
- *
- * Input:
- *	path		Path to clear
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The path is set to the empty list.
- *
- *-----------------------------------------------------------------------
- */
+/* Clear out all elements from the given search path.
+ * The path is set to the empty list but is not destroyed. */
 void
 Dir_ClearPath(SearchPath *path)
 {
@@ -1563,34 +1536,18 @@ Dir_ClearPath(SearchPath *path)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_Concat --
- *	Concatenate two paths, adding the second to the end of the first.
- *	Makes sure to avoid duplicates.
- *
- * Input:
- *	path1		Dest
- *	path2		Source
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Reference counts for added dirs are upped.
- *
- *-----------------------------------------------------------------------
- */
+/* Concatenate two paths, adding the second to the end of the first,
+ * skipping duplicates. */
 void
-Dir_Concat(SearchPath *path1, SearchPath *path2)
+Dir_Concat(SearchPath *dst, SearchPath *src)
 {
     SearchPathNode *ln;
 
-    for (ln = path2->first; ln != NULL; ln = ln->next) {
+    for (ln = src->first; ln != NULL; ln = ln->next) {
 	CachedDir *dir = ln->datum;
-	if (Lst_FindDatum(path1, dir) == NULL) {
+	if (Lst_FindDatum(dst, dir) == NULL) {
 	    dir->refCount++;
-	    Lst_Append(path1, dir);
+	    Lst_Append(dst, dir);
 	}
     }
 }
