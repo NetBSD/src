@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.290 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.291 2020/10/26 22:51:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.290 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.291 2020/10/26 22:51:56 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -2331,8 +2331,8 @@ Job_ParseShell(char *line)
 		newShell.exit = arg + 8;
 	    } else if (strncmp(arg, "hasErrCtl=", 10) == 0) {
 		char c = arg[10];
-		newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
-				       (c != 'T') && (c != 't'));
+		newShell.hasErrCtl = c == 'Y' || c == 'y' ||
+				     c == 'T' || c == 't';
 	    } else if (strncmp(arg, "newline=", 8) == 0) {
 		newShell.newline = arg + 8;
 	    } else if (strncmp(arg, "check=", 6) == 0) {
