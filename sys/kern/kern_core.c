@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.32 2020/10/20 13:47:30 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.33 2020/10/26 17:35:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.32 2020/10/20 13:47:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.33 2020/10/26 17:35:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_execfmt.h"
 #include "opt_compat_netbsd32.h"
 #endif
 
@@ -88,10 +89,10 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 		MODULE_HOOK_SET(coredump_write_hook, coredump_write);
 		MODULE_HOOK_SET(coredump_offset_hook, coredump_offset);
 		MODULE_HOOK_SET(coredump_netbsd_hook, real_coredump_netbsd);
-#if !defined(_LP64) || defined(COMPAT_NETBSD32)
+#ifdef EXEC_ELF32
 		MODULE_HOOK_SET(coredump_elf32_hook, real_coredump_elf32);
 #endif
-#ifdef _LP64
+#ifdef EXEC_ELF64
 		MODULE_HOOK_SET(coredump_elf64_hook, real_coredump_elf64);
 #endif
 		MODULE_HOOK_SET(uvm_coredump_walkmap_hook,
@@ -102,10 +103,10 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		MODULE_HOOK_UNSET(uvm_coredump_count_segs_hook);
 		MODULE_HOOK_UNSET(uvm_coredump_walkmap_hook);
-#ifdef _LP64
+#ifdef EXEC_ELF64
 		MODULE_HOOK_UNSET(coredump_elf64_hook);
 #endif
-#if !defined(_LP64) || defined(COMPAT_NETBSD32)
+#ifdef EXEC_ELF32
 		MODULE_HOOK_UNSET(coredump_elf32_hook);
 #endif
 		MODULE_HOOK_UNSET(coredump_netbsd_hook);
