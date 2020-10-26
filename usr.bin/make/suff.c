@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.226 2020/10/25 22:13:53 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.227 2020/10/26 20:14:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.226 2020/10/25 22:13:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.227 2020/10/26 20:14:27 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -266,7 +266,7 @@ SuffSuffGetSuffix(const Suff *s, size_t nameLen, const char *nameEnd)
 }
 
 static Boolean
-SuffSuffIsSuffix(const Suff *suff, size_t nameLen, char *nameEnd)
+SuffSuffIsSuffix(const Suff *suff, size_t nameLen, const char *nameEnd)
 {
     return SuffSuffGetSuffix(suff, nameLen, nameEnd) != NULL;
 }
@@ -1580,7 +1580,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 }
 
 static void
-SuffFindNormalDepsKnown(char *name, size_t nameLen, GNode *gn,
+SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
 			SrcList *srcs, SrcList *targs)
 {
     SuffListNode *ln;
@@ -1723,7 +1723,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
     char *pref;			/* Prefix to use */
     Src *targ;			/* General Src target pointer */
 
-    char *name = gn->name;
+    const char *name = gn->name;
     size_t nameLen = strlen(name);
 
     /*
