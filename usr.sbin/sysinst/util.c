@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.50 2020/10/25 08:50:32 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.51 2020/10/26 20:18:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -515,7 +515,7 @@ static int
 get_available_cds(void)
 {
 	struct get_available_cds_state data;
-	int n, __diagused e;
+	int n, m;
 
 	memset(&data, 0, sizeof data);
 	data.info = cds;
@@ -523,10 +523,10 @@ get_available_cds(void)
 	n = getvfsstat(NULL, 0, ST_NOWAIT);
 	if (n > 0) {
 		data.mounted = calloc(n, sizeof(*data.mounted));
-		e = getvfsstat(data.mounted, n*sizeof(*data.mounted),
+		m = getvfsstat(data.mounted, n*sizeof(*data.mounted),
 		    ST_NOWAIT);
-		assert(e == n);
-		data.num_mounted = n;
+		assert(m >= 0 && m <= n);
+		data.num_mounted = m;
 	}
 
 	enumerate_disks(&data, get_available_cds_helper);
