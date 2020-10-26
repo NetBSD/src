@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.330 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: GENERIC,v 1.331 2020/10/26 06:22:28 rin Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.145 2020/08/10 06:32:57 rin Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.147 2020/10/26 06:21:49 rin Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.330 $"
+#ident 		"GENERIC-$Revision: 1.331 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -174,6 +174,7 @@ options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
+makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
 #options 	PANICBUTTON	# Forced crash via keypress (?)
