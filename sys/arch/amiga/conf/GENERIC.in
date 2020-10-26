@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.146 2020/09/27 13:48:49 roy Exp $
+# $NetBSD: GENERIC.in,v 1.147 2020/10/26 06:21:49 rin Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.146 $"
+#ident 		"GENERIC-$Revision: 1.147 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
@@ -226,6 +226,7 @@ options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
+makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
 #options 	PANICBUTTON	# Forced crash via keypress (?)
