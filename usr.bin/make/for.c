@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.110 2020/10/26 07:33:48 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.111 2020/10/26 07:37:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.110 2020/10/26 07:33:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.111 2020/10/26 07:37:52 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -400,7 +400,7 @@ SubstVarShort(For *f, char const ch, const char **pp, const char **inout_mark)
     const char *p = *pp;
     size_t i;
 
-    /* Probably a single character name, ignore $$ and stupid ones. {*/
+    /* Probably a single character name, ignore $$ and stupid ones. */
     if (!f->short_var || strchr("}):$", ch) != NULL) {
 	p++;
 	*pp = p;
