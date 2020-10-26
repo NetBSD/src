@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.348 2020/09/29 03:04:03 msaitoh Exp $	*/
+/*	$NetBSD: cd.c,v 1.349 2020/10/26 11:39:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.348 2020/09/29 03:04:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.349 2020/10/26 11:39:48 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ cd_make_bounce(struct cd_softc *cd, struct buf *bp, struct cdbounce **bouncep)
 	cd_iosize(dksc->sc_dev, &count);
 
 	bounce->head = skip * DEV_BSIZE;
-	bounce->lcount = count - bounce->head;
+	bounce->lcount = imin(count - bounce->head, bp->b_bcount);
 	bounce->rcount = bp->b_bcount - bounce->lcount;
 
 	error = cd_make_bounce_buffer(cd, bp, blkno, count, &lbp, bounce);
@@ -678,10 +678,10 @@ cd_make_bounce(struct cd_softc *cd, struct buf *bp, struct cdbounce **bouncep)
 	count = total - count;
 
 	if (count > 0) {
-		bounce->lbp->b_private = bounce;
 		error = cd_make_bounce_buffer(cd, bp, blkno, count, &rbp, bounce);
 		if (error) {
-			putiobuf(bounce->lbp);
+			free(lbp->b_data, M_DEVBUF);
+			putiobuf(lbp);
 			goto bad;
 		}
 	} else
