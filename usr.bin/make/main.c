@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.391 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.392 2020/10/26 23:28:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.391 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.392 2020/10/26 23:28:52 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1783,17 +1783,8 @@ Fatal(const char *fmt, ...)
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
-/*
- * Punt --
- *	Major exception once jobs are being created. Kills all jobs, prints
- *	a message and exits.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	All children are killed indiscriminately and the program Lib_Exits
- */
+/* Major exception once jobs are being created.
+ * Kills all jobs, prints a message and exits. */
 void
 Punt(const char *fmt, ...)
 {
@@ -1812,16 +1803,7 @@ Punt(const char *fmt, ...)
 	DieHorribly();
 }
 
-/*-
- * DieHorribly --
- *	Exit without giving a message.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	A big one...
- */
+/* Exit without giving a message. */
 void
 DieHorribly(void)
 {
@@ -1833,20 +1815,11 @@ DieHorribly(void)
 	exit(2);		/* Not 1, so -q can distinguish error */
 }
 
-/*
- * Finish --
- *	Called when aborting due to errors in child shell to signal
- *	abnormal exit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The program exits
- */
+/* Called when aborting due to errors in child shell to signal abnormal exit.
+ * The program exits.
+ * Errors is the number of errors encountered in Make_Make. */
 void
 Finish(int errors)
-			/* number of errors encountered in Make_Make */
 {
 	if (dieQuietly(NULL, -1))
 		exit(2);
