@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.58 2020/10/25 08:29:30 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.59 2020/10/26 07:14:42 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.58 2020/10/25 08:29:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.59 2020/10/26 07:14:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -208,8 +208,10 @@ intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
 				continue;
 
 			(*pic->pic_ops->pic_ipi_send)(pic, kcp, ipi);
-			// If we were targeting a single CPU or this pic
-			// handles all cpus, we're done.
+			/*
+			 * If we were targeting a single CPU or this pic
+			 * handles all cpus, we're done.
+			 */
 			if (kcp != NULL || pic->pic_cpus == kcpuset_running)
 				return;
 			sent_p = true;
