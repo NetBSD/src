@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.108 2020/10/25 16:18:02 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.109 2020/10/26 07:03:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.108 2020/10/25 16:18:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.109 2020/10/26 07:03:47 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -104,24 +104,20 @@ ForAddVar(For *f, const char *name, size_t len)
 }
 
 static void
-ForVarDone(ForVar *var)
+For_Free(For *f)
 {
-    free(var->name);
-}
+    Buf_Destroy(&f->body, TRUE);
 
-static void
-For_Free(For *arg)
-{
-    Buf_Destroy(&arg->body, TRUE);
+    while (f->vars.len > 0) {
+	ForVar *var = Vector_Pop(&f->vars);
+	free(var->name);
+    }
+    Vector_Done(&f->vars);
 
-    while (arg->vars.len > 0)
-        ForVarDone(Vector_Pop(&arg->vars));
-    Vector_Done(&arg->vars);
+    Words_Free(f->items);
+    Buf_Destroy(&f->curBody, TRUE);
 
-    Words_Free(arg->items);
-    Buf_Destroy(&arg->curBody, TRUE);
-
-    free(arg);
+    free(f);
 }
 
 static ForEscapes
@@ -175,7 +171,7 @@ IsEndfor(const char *p)
 int
 For_Eval(const char *line)
 {
-    For *new_for;
+    For *f;
     const char *p;
 
     p = line + 1;		/* skip the '.' */
@@ -194,14 +190,14 @@ For_Eval(const char *line)
      * we found a for loop, and now we are going to parse it.
      */
 
-    new_for = bmake_malloc(sizeof *new_for);
-    Buf_Init(&new_for->body, 0);
-    Vector_Init(&new_for->vars, sizeof(ForVar));
-    new_for->items.words = NULL;
-    new_for->items.freeIt = NULL;
-    Buf_Init(&new_for->curBody, 0);
-    new_for->short_var = FALSE;
-    new_for->sub_next = 0;
+    f = bmake_malloc(sizeof *f);
+    Buf_Init(&f->body, 0);
+    Vector_Init(&f->vars, sizeof(ForVar));
+    f->items.words = NULL;
+    f->items.freeIt = NULL;
+    Buf_Init(&f->curBody, 0);
+    f->short_var = FALSE;
+    f->sub_next = 0;
 
     /* Grab the variables. Terminate on "in". */
     for (;;) {
@@ -210,7 +206,7 @@ For_Eval(const char *line)
 	cpp_skip_whitespace(&p);
 	if (*p == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
-	    For_Free(new_for);
+	    For_Free(f);
 	    return -1;
 	}
 
@@ -223,15 +219,15 @@ For_Eval(const char *line)
 	    break;
 	}
 	if (len == 1)
-	    new_for->short_var = TRUE;
+	    f->short_var = TRUE;
 
-	ForAddVar(new_for, p, len);
+	ForAddVar(f, p, len);
 	p += len;
     }
 
-    if (new_for->vars.len == 0) {
+    if (f->vars.len == 0) {
 	Parse_Error(PARSE_FATAL, "no iteration variables in for");
-	For_Free(new_for);
+	For_Free(f);
 	return -1;
     }
 
@@ -241,18 +237,17 @@ For_Eval(const char *line)
 	char *items;
 	(void)Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items);
 	/* TODO: handle errors */
-	new_for->items = Str_Words(items, FALSE);
+	f->items = Str_Words(items, FALSE);
 	free(items);
 
-	if (new_for->items.len == 1 && new_for->items.words[0][0] == '\0')
-	    new_for->items.len = 0;	/* .for var in ${:U} */
+	if (f->items.len == 1 && f->items.words[0][0] == '\0')
+	    f->items.len = 0;	/* .for var in ${:U} */
     }
 
     {
 	size_t nitems, nvars;
 
-	if ((nitems = new_for->items.len) > 0 &&
-	    nitems % (nvars = new_for->vars.len)) {
+	if ((nitems = f->items.len) > 0 && nitems % (nvars = f->vars.len)) {
 	    Parse_Error(PARSE_FATAL,
 			"Wrong number of words (%zu) in .for substitution list"
 			" with %zu variables", nitems, nvars);
@@ -261,11 +256,11 @@ For_Eval(const char *line)
 	     * accumulated.
 	     * Remove all items so that the loop doesn't iterate.
 	     */
-	    new_for->items.len = 0;
+	    f->items.len = 0;
 	}
     }
 
-    accumFor = new_for;
+    accumFor = f;
     forLevel = 1;
     return 1;
 }
@@ -362,16 +357,17 @@ for_substitute(Buffer *cmds, const char *item, char ech)
     }
 }
 
+/* While expanding the body of a .for loop, replace expressions like
+ * ${i}, ${i:...}, $(i) or $(i:...) with their ${:U...} expansion. */
 static void
-SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
-	     char ech)
+SubstVarLong(For *f, const char **inout_cp, const char **inout_cmd_cp, char ech)
 {
     size_t i;
     const char *cp = *inout_cp;
     const char *cmd_cp = *inout_cmd_cp;
 
-    for (i = 0; i < arg->vars.len; i++) {
-	ForVar *forVar = Vector_Get(&arg->vars, i);
+    for (i = 0; i < f->vars.len; i++) {
+	ForVar *forVar = Vector_Get(&f->vars, i);
 	char *var = forVar->name;
 	size_t vlen = forVar->len;
 
@@ -383,11 +379,11 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
 	    continue;
 
 	/* Found a variable match. Replace with :U<value> */
-	Buf_AddBytesBetween(&arg->curBody, cmd_cp, cp);
-	Buf_AddStr(&arg->curBody, ":U");
+	Buf_AddBytesBetween(&f->curBody, cmd_cp, cp);
+	Buf_AddStr(&f->curBody, ":U");
 	cp += vlen;
 	cmd_cp = cp;
-	for_substitute(&arg->curBody, arg->items.words[arg->sub_next + i], ech);
+	for_substitute(&f->curBody, f->items.words[f->sub_next + i], ech);
 	break;
     }
 
@@ -395,8 +391,10 @@ SubstVarLong(For *arg, const char **inout_cp, const char **inout_cmd_cp,
     *inout_cmd_cp = cmd_cp;
 }
 
+/* While expanding the body of a .for loop, replace single-character
+ * variable expressions like $i with their ${:U...} expansion. */
 static void
-SubstVarShort(For *arg, char const ch,
+SubstVarShort(For *f, char const ch,
 	      const char **inout_cp, const char **input_cmd_cp)
 {
     const char *cp = *inout_cp;
@@ -404,24 +402,24 @@ SubstVarShort(For *arg, char const ch,
     size_t i;
 
     /* Probably a single character name, ignore $$ and stupid ones. {*/
-    if (!arg->short_var || strchr("}):$", ch) != NULL) {
+    if (!f->short_var || strchr("}):$", ch) != NULL) {
 	cp++;
 	*inout_cp = cp;
 	return;
     }
 
-    for (i = 0; i < arg->vars.len; i++) {
-	ForVar *forVar = Vector_Get(&arg->vars, i);
-	char *var = forVar->name;
-	if (var[0] != ch || var[1] != 0)
+    for (i = 0; i < f->vars.len; i++) {
+	ForVar *var = Vector_Get(&f->vars, i);
+	char *varname = var->name;
+	if (varname[0] != ch || varname[1] != '\0')
 	    continue;
 
 	/* Found a variable match. Replace with ${:U<value>} */
-	Buf_AddBytesBetween(&arg->curBody, cmd_cp, cp);
-	Buf_AddStr(&arg->curBody, "{:U");
+	Buf_AddBytesBetween(&f->curBody, cmd_cp, cp);
+	Buf_AddStr(&f->curBody, "{:U");
 	cmd_cp = ++cp;
-	for_substitute(&arg->curBody, arg->items.words[arg->sub_next + i], '}');
-	Buf_AddByte(&arg->curBody, '}');
+	for_substitute(&f->curBody, f->items.words[f->sub_next + i], '}');
+	Buf_AddByte(&f->curBody, '}');
 	break;
     }
 
@@ -442,24 +440,24 @@ SubstVarShort(For *arg, char const ch,
  * to contrive a makefile where an unwanted substitution happens.
  */
 static char *
-ForIterate(void *v_arg, size_t *ret_len)
+ForIterate(void *v_arg, size_t *out_len)
 {
-    For *arg = v_arg;
+    For *f = v_arg;
     const char *cp;
     const char *cmd_cp;
     const char *body_end;
     char *cmds_str;
     size_t cmd_len;
 
-    if (arg->sub_next + arg->vars.len > arg->items.len) {
+    if (f->sub_next + f->vars.len > f->items.len) {
 	/* No more iterations */
-	For_Free(arg);
+	For_Free(f);
 	return NULL;
     }
 
-    Buf_Empty(&arg->curBody);
+    Buf_Empty(&f->curBody);
 
-    cmd_cp = Buf_GetAll(&arg->body, &cmd_len);
+    cmd_cp = Buf_GetAll(&f->body, &cmd_len);
     body_end = cmd_cp + cmd_len;
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ch, ech;
@@ -467,21 +465,21 @@ ForIterate(void *v_arg, size_t *ret_len)
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
 	    /* Check variable name against the .for loop variables */
-	    SubstVarLong(arg, &cp, &cmd_cp, ech);
+	    SubstVarLong(f, &cp, &cmd_cp, ech);
 	    continue;
 	}
 	if (ch == '\0')
 	    break;
 
-	SubstVarShort(arg, ch, &cp, &cmd_cp);
+	SubstVarShort(f, ch, &cp, &cmd_cp);
     }
-    Buf_AddBytesBetween(&arg->curBody, cmd_cp, body_end);
+    Buf_AddBytesBetween(&f->curBody, cmd_cp, body_end);
 
-    *ret_len = Buf_Len(&arg->curBody);
-    cmds_str = Buf_GetAll(&arg->curBody, NULL);
+    *out_len = Buf_Len(&f->curBody);
+    cmds_str = Buf_GetAll(&f->curBody, NULL);
     DEBUG1(FOR, "For: loop body:\n%s", cmds_str);
 
-    arg->sub_next += arg->vars.len;
+    f->sub_next += f->vars.len;
 
     return cmds_str;
 }
@@ -490,16 +488,14 @@ ForIterate(void *v_arg, size_t *ret_len)
 void
 For_Run(int lineno)
 {
-    For *arg;
-
-    arg = accumFor;
+    For *f = accumFor;
     accumFor = NULL;
 
-    if (arg->items.len == 0) {
+    if (f->items.len == 0) {
 	/* Nothing to expand - possibly due to an earlier syntax error. */
-	For_Free(arg);
+	For_Free(f);
 	return;
     }
 
-    Parse_SetInput(NULL, lineno, -1, ForIterate, arg);
+    Parse_SetInput(NULL, lineno, -1, ForIterate, f);
 }
