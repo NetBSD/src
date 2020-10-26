@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.57 2020/10/23 07:14:32 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.58 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -192,7 +192,6 @@ extern const char *shellName;
 extern char *shellErrFlag;
 
 extern int jobTokensRunning;	/* tokens currently "out" */
-extern int maxJobs;		/* Max jobs we can run */
 
 void Shell_Init(void);
 const char *Shell_GetNewline(void);

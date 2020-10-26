@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.168 2020/10/24 04:40:45 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.169 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.168 2020/10/24 04:40:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.169 2020/10/26 21:34:10 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -113,7 +113,7 @@ CompatDeleteTarget(GNode *gn)
 	char *file_freeIt;
 	const char *file = Var_Value(TARGET, gn, &file_freeIt);
 
-	if (!noExecute && eunlink(file) != -1) {
+	if (!opts.noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed", file);
 	}
 
@@ -420,7 +420,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	    }
 #endif
 	    gn->made = ERROR;
-	    if (keepgoing) {
+	    if (opts.keepgoing) {
 		/* Abort the current target, but let others continue. */
 		printf(" (continuing)\n");
 	    } else {
@@ -526,7 +526,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * If the user is just seeing if something is out-of-date, exit now
 	 * to tell him/her "yes".
 	 */
-	if (queryFlag) {
+	if (opts.queryFlag) {
 	    exit(1);
 	}
 
@@ -551,7 +551,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	     * Our commands are ok, but we still have to worry about the -t
 	     * flag...
 	     */
-	    if (!touchFlag || (gn->type & OP_MAKE)) {
+	    if (!opts.touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
 #ifdef USE_META
 		if (useMeta && !NoExecute(gn)) {
@@ -586,7 +586,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 		pgn->flags |= CHILDMADE;
 		Make_TimeStamp(pgn, gn);
 	    }
-	} else if (keepgoing) {
+	} else if (opts.keepgoing) {
 	    pgn->flags &= ~(unsigned)REMAKE;
 	} else {
 	    PrintOnError(gn, "\nStop.");
@@ -659,7 +659,7 @@ Compat_Run(GNodeList *targs)
      * If the user has defined a .BEGIN target, execute the commands attached
      * to it.
      */
-    if (!queryFlag) {
+    if (!opts.queryFlag) {
 	gn = Targ_FindNode(".BEGIN");
 	if (gn != NULL) {
 	    Compat_Make(gn, gn);

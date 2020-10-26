@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.172 2020/10/25 21:51:49 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.173 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -420,39 +420,12 @@ typedef enum CondEvalResult {
 /*
  * Global Variables
  */
-extern StringList *create;	/* The list of target names specified on the
-				 * command line. used to resolve #if
-				 * make(...) statements */
 extern SearchPath *dirSearchPath;
 				/* The list of directories to search when
 				 * looking for targets */
-
-extern Boolean	compatMake;	/* True if we are make compatible */
-extern Boolean	ignoreErrors;	/* True if should ignore all errors */
-extern Boolean  beSilent;	/* True if should print no commands */
-extern Boolean  noExecute;	/* True if should execute almost nothing */
-extern Boolean  noRecursiveExecute;
-				/* True if should execute nothing */
 extern Boolean  allPrecious;	/* True if every target is precious */
 extern Boolean  deleteOnError;	/* True if failed targets should be deleted */
-extern Boolean  keepgoing;	/* True if should continue on unaffected
-				 * portions of the graph when an error occurs
-				 * in one portion */
-extern Boolean	touchFlag;	/* TRUE if targets should just be 'touched'
-				 * if out of date. Set by the -t flag */
-extern Boolean	queryFlag;	/* TRUE if we aren't supposed to really make
-				 * anything, just see if the targets are out-
-				 * of-date */
 extern Boolean	doing_depend;	/* TRUE if processing .depend */
-
-extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
-				 * variables before the global context */
-
-extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
-				 * treated as errors */
-
-extern Boolean	varNoExportEnv;	/* TRUE if we should not export variables
-				 * set on the command line to the env. */
 
 extern GNode    *DEFAULT;	/* .DEFAULT rule */
 
@@ -529,17 +502,9 @@ typedef enum DebugFlags {
     DEBUG_LINT		= 1 << 20
 } DebugFlags;
 
-/*
- * debug control:
- *	There is one bit per module.  It is up to the module what debug
- *	information to print.
- */
-extern FILE *debug_file;	/* Output is written here - default stderr */
-extern DebugFlags debug;
-
 #define CONCAT(a,b)	a##b
 
-#define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
+#define	DEBUG(module)	(opts.debug & CONCAT(DEBUG_,module))
 
 void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 
@@ -566,6 +531,83 @@ void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 #define DEBUG5(module, fmt, arg1, arg2, arg3, arg4, arg5) \
     if (!DEBUG(module)) (void)0; \
     else debug_printf(fmt, arg1, arg2, arg3, arg4, arg5)
+
+typedef enum PrintVarsMode {
+    COMPAT_VARS = 1,
+    EXPAND_VARS
+} PrintVarsMode;
+
+/* Command line options */
+typedef struct CmdOpts {
+    /* -B: whether we are make compatible */
+    Boolean compatMake;
+
+    /* -d: debug control: There is one bit per module.  It is up to the
+     * module what debug information to print. */
+    DebugFlags debug;
+
+    /* -df: debug output is written here - default stderr */
+    FILE *debug_file;
+
+    /* -e: check environment variables before global variables */
+    Boolean checkEnvFirst;
+
+    /* -f: the makefiles to read */
+    StringList *makefiles;
+
+    /* -i: if true, ignore all errors from shell commands */
+    Boolean ignoreErrors;
+
+    /* -j: the maximum number of jobs that can run in parallel;
+     * this is coordinated with the submakes */
+    int maxJobs;
+
+    /* -k: if true, continue on unaffected portions of the graph when an
+     * error occurs in one portion */
+    Boolean keepgoing;
+
+    /* -N: execute no commands from the targets */
+    Boolean noRecursiveExecute;
+
+    /* -n: execute almost no commands from the targets */
+    Boolean noExecute;
+
+    /* -q: if true, we aren't supposed to really make anything, just see if
+     * the targets are out-of-date */
+    Boolean queryFlag;
+
+    /* -r: raw mode, without loading the builtin rules. */
+    Boolean noBuiltins;
+
+    /* -s: don't echo the shell commands before executing them */
+    Boolean beSilent;
+
+    /* -t: touch the targets if they are out-of-date, but don't actually
+     * make them */
+    Boolean touchFlag;
+
+    /* -[Vv]: print expanded or unexpanded selected variables */
+    PrintVarsMode printVars;
+    /* -[Vv]: the variables to print */
+    StringList *variables;
+
+    /* -W: if true, makefile parsing warnings are treated as errors */
+    Boolean parseWarnFatal;
+
+    /* -w: print Entering and Leaving for submakes */
+    Boolean enterFlag;
+
+    /* -X: if true, do not export variables set on the command line to the
+     * environment. */
+    Boolean varNoExportEnv;
+
+    /* The target names specified on the command line.
+     * Used to resolve .if make(...) statements. */
+    StringList *create;
+
+} CmdOpts;
+
+extern CmdOpts opts;
 
 #include "nonints.h"
 

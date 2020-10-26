@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.589 2020/10/25 21:51:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.590 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.589 2020/10/25 21:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.590 2020/10/26 21:34:10 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -380,7 +380,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
     if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD)
 	var = GNode_FindVar(VAR_CMD, name, nameHash);
 
-    if (!checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
+    if (!opts.checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
 	ctxt != VAR_GLOBAL)
     {
 	var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
@@ -398,7 +398,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	    return VarNew(varname, varname, env, VAR_FROM_ENV);
 	}
 
-	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
+	if (opts.checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
 	    var = GNode_FindVar(VAR_GLOBAL, name, nameHash);
 	    if (var == NULL && ctxt != VAR_INTERNAL)
 		var = GNode_FindVar(VAR_INTERNAL, name, nameHash);
@@ -844,7 +844,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	 * that the command-line settings continue to override
 	 * Makefile settings.
 	 */
-	if (!varNoExportEnv)
+	if (!opts.varNoExportEnv)
 	    setenv(name, val ? val : "", 1);
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
