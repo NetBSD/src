@@ -22,19 +22,19 @@ xlogin*greetFont: -adobe-helvetica-bold-o-normal-*-18-*-*-*-*-*-iso8859-1
 xlogin*font: -adobe-helvetica-medium-o-normal-*-14-*-*-*-*-*-iso8859-1
 xlogin*promptFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
 xlogin*failFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*greetFace:	Serif-24:bold:italic
-xlogin*face: 		Helvetica-14
-xlogin*promptFace: 	Helvetica-14:bold
-xlogin*failFace: 	Helvetica-14:bold
+xlogin*greetFace:	Sans-24
+xlogin*face: 		Sans-14
+xlogin*promptFace: 	Sans-14:bold
+xlogin*failFace: 	Sans-14:bold
 XHASHelse
 xlogin*greetFont: -adobe-helvetica-bold-o-normal--17-120-100-100-p-92-iso8859-1
 xlogin*font: -adobe-helvetica-medium-r-normal--12-120-75-75-p-67-iso8859-1
 xlogin*promptFont: -adobe-helvetica-bold-r-normal--12-120-75-75-p-70-iso8859-1
 xlogin*failFont: -adobe-helvetica-bold-o-normal--14-140-75-75-p-82-iso8859-1
-xlogin*greetFace:	Serif-18:bold:italic
-xlogin*face:		Helvetica-12
-xlogin*promptFace:	Helvetica-12:bold
-xlogin*failFace:	Helvetica-14:bold
+xlogin*greetFace:	Sans-18
+xlogin*face:		Sans-12
+xlogin*promptFace:	Sans-12:bold
+xlogin*failFace:	Sans-14:bold
 XHASHendif
 
 XHASHifdef COLOR
