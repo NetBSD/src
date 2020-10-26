@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.390 2020/10/25 19:19:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.391 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.390 2020/10/25 19:19:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.391 2020/10/26 21:34:10 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -129,38 +129,18 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 #define	DEFMAXLOCAL DEFMAXJOBS
 #endif
 
-StringList *		create;		/* Targets to be made */
+CmdOpts opts;
 time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 
-static Boolean		noBuiltins;	/* -r flag */
-static StringList *	makefiles;	/* ordered list of makefiles to read */
-static int		printVars;	/* -[vV] argument */
-#define COMPAT_VARS 1
-#define EXPAND_VARS 2
-static StringList *	variables;	/* list of variables to print
-					 * (for -v and -V) */
-int			maxJobs;	/* -j argument */
 static int		maxJobTokens;	/* -j argument */
-Boolean			compatMake;	/* -B argument */
-DebugFlags		debug;		/* -d argument */
 Boolean			debugVflag;	/* -dV */
-Boolean			noExecute;	/* -n flag */
-Boolean			noRecursiveExecute;	/* -N flag */
-Boolean			keepgoing;	/* -k flag */
-Boolean			queryFlag;	/* -q flag */
-Boolean			touchFlag;	/* -t flag */
-Boolean			enterFlag;	/* -w flag */
 Boolean			enterFlagObj;	/* -w and objdir != srcdir */
-Boolean			ignoreErrors;	/* -i flag */
-Boolean			beSilent;	/* -s flag */
+
 Boolean			oldVars;	/* variable substitution style */
-Boolean			checkEnvFirst;	/* -e flag */
-Boolean			parseWarnFatal;	/* -W flag */
 static int jp_0 = -1, jp_1 = -1;	/* ends of parent job pipe */
-Boolean			varNoExportEnv;	/* -X flag */
 Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
@@ -175,8 +155,6 @@ char *progname;				/* the program name */
 char *makeDependfile;
 pid_t myPid;
 int makelevel;
-
-FILE *debug_file;
 
 Boolean forceJobs = FALSE;
 
@@ -221,8 +199,8 @@ parse_debug_option_F(const char *modules)
     size_t len;
     char *fname;
 
-    if (debug_file != stdout && debug_file != stderr)
-	fclose(debug_file);
+    if (opts.debug_file != stdout && opts.debug_file != stderr)
+	fclose(opts.debug_file);
 
     if (*modules == '+') {
 	modules++;
@@ -231,11 +209,11 @@ parse_debug_option_F(const char *modules)
 	mode = "w";
 
     if (strcmp(modules, "stdout") == 0) {
-	debug_file = stdout;
+	opts.debug_file = stdout;
 	return;
     }
     if (strcmp(modules, "stderr") == 0) {
-	debug_file = stderr;
+	opts.debug_file = stderr;
 	return;
     }
 
@@ -247,8 +225,8 @@ parse_debug_option_F(const char *modules)
     if (strcmp(fname + len - 3, ".%d") == 0)
 	snprintf(fname + len - 2, 20, "%d", getpid());
 
-    debug_file = fopen(fname, mode);
-    if (!debug_file) {
+    opts.debug_file = fopen(fname, mode);
+    if (!opts.debug_file) {
 	fprintf(stderr, "Cannot open debug file %s\n",
 		fname);
 	usage();
@@ -264,81 +242,81 @@ parse_debug_options(const char *argvalue)
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
 		case '0':	/* undocumented, only intended for tests */
-			debug &= DEBUG_LINT;
+			opts.debug &= DEBUG_LINT;
 			break;
 		case 'A':
-			debug = ~(0|DEBUG_LINT);
+			opts.debug = ~(0|DEBUG_LINT);
 			break;
 		case 'a':
-			debug |= DEBUG_ARCH;
+			opts.debug |= DEBUG_ARCH;
 			break;
 		case 'C':
-			debug |= DEBUG_CWD;
+			opts.debug |= DEBUG_CWD;
 			break;
 		case 'c':
-			debug |= DEBUG_COND;
+			opts.debug |= DEBUG_COND;
 			break;
 		case 'd':
-			debug |= DEBUG_DIR;
+			opts.debug |= DEBUG_DIR;
 			break;
 		case 'e':
-			debug |= DEBUG_ERROR;
+			opts.debug |= DEBUG_ERROR;
 			break;
 		case 'f':
-			debug |= DEBUG_FOR;
+			opts.debug |= DEBUG_FOR;
 			break;
 		case 'g':
 			if (modules[1] == '1') {
-				debug |= DEBUG_GRAPH1;
+				opts.debug |= DEBUG_GRAPH1;
 				++modules;
 			}
 			else if (modules[1] == '2') {
-				debug |= DEBUG_GRAPH2;
+				opts.debug |= DEBUG_GRAPH2;
 				++modules;
 			}
 			else if (modules[1] == '3') {
-				debug |= DEBUG_GRAPH3;
+				opts.debug |= DEBUG_GRAPH3;
 				++modules;
 			}
 			break;
 		case 'h':
-			debug |= DEBUG_HASH;
+			opts.debug |= DEBUG_HASH;
 			break;
 		case 'j':
-			debug |= DEBUG_JOB;
+			opts.debug |= DEBUG_JOB;
 			break;
 		case 'L':
-			debug |= DEBUG_LINT;
+			opts.debug |= DEBUG_LINT;
 			break;
 		case 'l':
-			debug |= DEBUG_LOUD;
+			opts.debug |= DEBUG_LOUD;
 			break;
 		case 'M':
-			debug |= DEBUG_META;
+			opts.debug |= DEBUG_META;
 			break;
 		case 'm':
-			debug |= DEBUG_MAKE;
+			opts.debug |= DEBUG_MAKE;
 			break;
 		case 'n':
-			debug |= DEBUG_SCRIPT;
+			opts.debug |= DEBUG_SCRIPT;
 			break;
 		case 'p':
-			debug |= DEBUG_PARSE;
+			opts.debug |= DEBUG_PARSE;
 			break;
 		case 's':
-			debug |= DEBUG_SUFF;
+			opts.debug |= DEBUG_SUFF;
 			break;
 		case 't':
-			debug |= DEBUG_TARG;
+			opts.debug |= DEBUG_TARG;
 			break;
 		case 'V':
 			debugVflag = TRUE;
 			break;
 		case 'v':
-			debug |= DEBUG_VAR;
+			opts.debug |= DEBUG_VAR;
 			break;
 		case 'x':
-			debug |= DEBUG_SHELL;
+			opts.debug |= DEBUG_SHELL;
 			break;
 		case 'F':
 			parse_debug_option_F(modules + 1);
@@ -355,8 +333,8 @@ debug_setbuf:
 	 * Make the debug_file unbuffered, and make
 	 * stdout line buffered (unless debugfile == stdout).
 	 */
-	setvbuf(debug_file, NULL, _IONBF, 0);
-	if (debug_file != stdout) {
+	setvbuf(opts.debug_file, NULL, _IONBF, 0);
+	if (opts.debug_file != stdout) {
 		setvbuf(stdout, NULL, _IOLBF, 0);
 	}
 }
@@ -426,7 +404,7 @@ MainParseArgJobsInternal(const char *argvalue)
 #endif
 		jp_0 = -1;
 		jp_1 = -1;
-		compatMake = TRUE;
+		opts.compatMake = TRUE;
 	} else {
 		Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
@@ -439,8 +417,8 @@ MainParseArgJobs(const char *argvalue)
 	char *p;
 
 	forceJobs = TRUE;
-	maxJobs = (int)strtol(argvalue, &p, 0);
-	if (*p != '\0' || maxJobs < 1) {
+	opts.maxJobs = (int)strtol(argvalue, &p, 0);
+	if (*p != '\0' || opts.maxJobs < 1) {
 		(void)fprintf(stderr,
 		    "%s: illegal argument to -j -- must be positive integer!\n",
 		    progname);
@@ -449,7 +427,7 @@ MainParseArgJobs(const char *argvalue)
 	Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 	Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 	Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
-	maxJobTokens = maxJobs;
+	maxJobTokens = opts.maxJobs;
 }
 
 static void
@@ -476,7 +454,7 @@ MainParseArg(char c, const char *argvalue)
 	case '\0':
 		break;
 	case 'B':
-		compatMake = TRUE;
+		opts.compatMake = TRUE;
 		Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
 		Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
 		break;
@@ -498,12 +476,12 @@ MainParseArg(char c, const char *argvalue)
 		MainParseArgJobsInternal(argvalue);
 		break;
 	case 'N':
-		noExecute = TRUE;
-		noRecursiveExecute = TRUE;
+		opts.noExecute = TRUE;
+		opts.noRecursiveExecute = TRUE;
 		Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
 		break;
 	case 'S':
-		keepgoing = FALSE;
+		opts.keepgoing = FALSE;
 		Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 		break;
 	case 'T':
@@ -513,16 +491,17 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'V':
 	case 'v':
-		printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
-		Lst_Append(variables, bmake_strdup(argvalue));
+		opts.printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
+		Lst_Append(opts.variables, bmake_strdup(argvalue));
+		/* XXX: Why always -V? */
 		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 		break;
 	case 'W':
-		parseWarnFatal = TRUE;
+		opts.parseWarnFatal = TRUE;
 		break;
 	case 'X':
-		varNoExportEnv = TRUE;
+		opts.varNoExportEnv = TRUE;
 		Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
 		break;
 	case 'd':
@@ -536,49 +515,49 @@ MainParseArg(char c, const char *argvalue)
 		parse_debug_options(argvalue);
 		break;
 	case 'e':
-		checkEnvFirst = TRUE;
+		opts.checkEnvFirst = TRUE;
 		Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 		break;
 	case 'f':
-		Lst_Append(makefiles, bmake_strdup(argvalue));
+		Lst_Append(opts.makefiles, bmake_strdup(argvalue));
 		break;
 	case 'i':
-		ignoreErrors = TRUE;
+		opts.ignoreErrors = TRUE;
 		Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 		break;
 	case 'j':
 		MainParseArgJobs(argvalue);
 		break;
 	case 'k':
-		keepgoing = TRUE;
+		opts.keepgoing = TRUE;
 		Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 		break;
 	case 'm':
 		MainParseArgSysInc(argvalue);
 		break;
 	case 'n':
-		noExecute = TRUE;
+		opts.noExecute = TRUE;
 		Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
 		break;
 	case 'q':
-		queryFlag = TRUE;
+		opts.queryFlag = TRUE;
 		/* Kind of nonsensical, wot? */
 		Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
 		break;
 	case 'r':
-		noBuiltins = TRUE;
+		opts.noBuiltins = TRUE;
 		Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
 		break;
 	case 's':
-		beSilent = TRUE;
+		opts.beSilent = TRUE;
 		Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
 		break;
 	case 't':
-		touchFlag = TRUE;
+		opts.touchFlag = TRUE;
 		Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
 		break;
 	case 'w':
-		enterFlag = TRUE;
+		opts.enterFlag = TRUE;
 		Var_Append(MAKEFLAGS, "-w", VAR_GLOBAL);
 		break;
 	default:
@@ -677,7 +656,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
-			Lst_Append(create, bmake_strdup(argv[1]));
+			Lst_Append(opts.create, bmake_strdup(argv[1]));
 		}
 	}
 
@@ -753,7 +732,7 @@ Main_SetObjdir(const char *fmt, ...)
 			Dir_InitDot();
 			purge_cached_realpaths();
 			rc = TRUE;
-			if (enterFlag && strcmp(objdir, curdir) != 0)
+			if (opts.enterFlag && strcmp(objdir, curdir) != 0)
 				enterFlagObj = TRUE;
 		}
 	}
@@ -847,7 +826,7 @@ MakeMode(const char *mode)
 
     if (mode[0] != '\0') {
 	if (strstr(mode, "compat")) {
-	    compatMake = TRUE;
+	    opts.compatMake = TRUE;
 	    forceJobs = FALSE;
 	}
 #if USE_META
@@ -892,14 +871,14 @@ doPrintVars(void)
 	StringListNode *ln;
 	Boolean expandVars;
 
-	if (printVars == EXPAND_VARS)
+	if (opts.printVars == EXPAND_VARS)
 		expandVars = TRUE;
 	else if (debugVflag)
 		expandVars = FALSE;
 	else
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
-	for (ln = variables->first; ln != NULL; ln = ln->next) {
+	for (ln = opts.variables->first; ln != NULL; ln = ln->next) {
 		const char *varname = ln->datum;
 		PrintVar(varname, expandVars);
 	}
@@ -917,12 +896,12 @@ runTargets(void)
 	 * we consult the parsing module to find the main target(s)
 	 * to create.
 	 */
-	if (Lst_IsEmpty(create))
+	if (Lst_IsEmpty(opts.create))
 		targs = Parse_MainName();
 	else
-		targs = Targ_FindList(create);
+		targs = Targ_FindList(opts.create);
 
-	if (!compatMake) {
+	if (!opts.compatMake) {
 		/*
 		 * Initialize job module before traversing the graph
 		 * now that any .BEGIN and .END targets have been read.
@@ -930,7 +909,7 @@ runTargets(void)
 		 * (to prevent the .BEGIN from being executed should
 		 * it exist).
 		 */
-		if (!queryFlag) {
+		if (!opts.queryFlag) {
 			Job_Init();
 			jobsRunning = TRUE;
 		}
@@ -959,12 +938,12 @@ InitVarTargets(void)
 {
 	StringListNode *ln;
 
-	if (Lst_IsEmpty(create)) {
+	if (Lst_IsEmpty(opts.create)) {
 		Var_Set(".TARGETS", "", VAR_GLOBAL);
 		return;
 	}
 
-	for (ln = create->first; ln != NULL; ln = ln->next) {
+	for (ln = opts.create->first; ln != NULL; ln = ln->next) {
 		char *name = ln->datum;
 		Var_Append(".TARGETS", name, VAR_GLOBAL);
 	}
@@ -1103,7 +1082,7 @@ main(int argc, char **argv)
 	struct utsname utsname;
 
 	/* default to writing debug to stderr */
-	debug_file = stderr;
+	opts.debug_file = stderr;
 
 #ifdef SIGINFO
 	(void)bmake_signal(SIGINFO, siginfo);
@@ -1174,27 +1153,27 @@ main(int argc, char **argv)
 		VAR_GLOBAL);
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
-	create = Lst_New();
-	makefiles = Lst_New();
-	printVars = 0;
+	opts.create = Lst_New();
+	opts.makefiles = Lst_New();
+	opts.printVars = 0;
 	debugVflag = FALSE;
-	variables = Lst_New();
-	beSilent = FALSE;		/* Print commands as executed */
-	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
-	noExecute = FALSE;		/* Execute all commands */
-	noRecursiveExecute = FALSE;	/* Execute all .MAKE targets */
-	keepgoing = FALSE;		/* Stop on error */
+	opts.variables = Lst_New();
+	opts.beSilent = FALSE;		/* Print commands as executed */
+	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
+	opts.noExecute = FALSE;		/* Execute all commands */
+	opts.noRecursiveExecute = FALSE; /* Execute all .MAKE targets */
+	opts.keepgoing = FALSE;		/* Stop on error */
 	allPrecious = FALSE;		/* Remove targets when interrupted */
 	deleteOnError = FALSE;		/* Historical default behavior */
-	queryFlag = FALSE;		/* This is not just a check-run */
-	noBuiltins = FALSE;		/* Read the built-in rules */
-	touchFlag = FALSE;		/* Actually update targets */
-	debug = 0;			/* No debug verbosity, please. */
+	opts.queryFlag = FALSE;		/* This is not just a check-run */
+	opts.noBuiltins = FALSE;	/* Read the built-in rules */
+	opts.touchFlag = FALSE;		/* Actually update targets */
+	opts.debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
-	maxJobs = DEFMAXLOCAL;		/* Set default local max concurrency */
-	maxJobTokens = maxJobs;
-	compatMake = FALSE;		/* No compat mode */
+	opts.maxJobs = DEFMAXLOCAL;	/* Set default local max concurrency */
+	maxJobTokens = opts.maxJobs;
+	opts.compatMake = FALSE;	/* No compat mode */
 	ignorePWD = FALSE;
 
 	/*
@@ -1288,7 +1267,7 @@ main(int argc, char **argv)
 
 	MainParseArgs(argc, argv);
 
-	if (enterFlag)
+	if (opts.enterFlag)
 		printf("%s: Entering directory `%s'\n", progname, curdir);
 
 	/*
@@ -1376,7 +1355,7 @@ main(int argc, char **argv)
 	 * makefiles, or the default makefile and Makefile, in that order,
 	 * if no makefiles were given on the command line.
 	 */
-	if (!noBuiltins) {
+	if (!opts.noBuiltins) {
 		sysMkPath = Lst_New();
 		Dir_Expand(_PATH_DEFSYSMK,
 			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
@@ -1389,10 +1368,10 @@ main(int argc, char **argv)
 			    (char *)sysMkPath->first->datum);
 	}
 
-	if (makefiles->first != NULL) {
+	if (opts.makefiles->first != NULL) {
 		StringListNode *ln;
 
-		for (ln = makefiles->first; ln != NULL; ln = ln->next) {
+		for (ln = opts.makefiles->first; ln != NULL; ln = ln->next) {
 			if (ReadMakefile(ln->datum) != 0)
 				Fatal("%s: cannot open %s.",
 				      progname, (char *)ln->datum);
@@ -1401,13 +1380,14 @@ main(int argc, char **argv)
 		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
 		    VAR_CMD, VARE_WANTRES, &p1);
 		/* TODO: handle errors */
-		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_ForEachUntil(makefiles, ReadMakefileSucceeded, NULL);
+		(void)str2Lst_Append(opts.makefiles, p1, NULL);
+		(void)Lst_ForEachUntil(opts.makefiles,
+				       ReadMakefileSucceeded, NULL);
 		free(p1);
 	}
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
-	if (!noBuiltins || !printVars) {
+	if (!opts.noBuiltins || !opts.printVars) {
 	    /* ignore /dev/null and anything starting with "no" */
 	    (void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
 		VAR_CMD, VARE_WANTRES, &makeDependfile);
@@ -1427,7 +1407,7 @@ main(int argc, char **argv)
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	bmake_free(p1);
 
-	if (!forceJobs && !compatMake &&
+	if (!forceJobs && !opts.compatMake &&
 	    Var_Exists(".MAKE.JOBS", VAR_GLOBAL)) {
 	    char *value;
 	    int n;
@@ -1440,12 +1420,12 @@ main(int argc, char **argv)
 		    progname);
 		exit(1);
 	    }
-	    if (n != maxJobs) {
+	    if (n != opts.maxJobs) {
 		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, value, VAR_GLOBAL);
 	    }
-	    maxJobs = n;
-	    maxJobTokens = maxJobs;
+	    opts.maxJobs = n;
+	    maxJobTokens = opts.maxJobs;
 	    forceJobs = TRUE;
 	    free(value);
 	}
@@ -1454,16 +1434,16 @@ main(int argc, char **argv)
 	 * Be compatible if user did not specify -j and did not explicitly
 	 * turned compatibility on
 	 */
-	if (!compatMake && !forceJobs) {
-	    compatMake = TRUE;
+	if (!opts.compatMake && !forceJobs) {
+	    opts.compatMake = TRUE;
 	}
 
-	if (!compatMake)
+	if (!opts.compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
 	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
-	       jp_0, jp_1, maxJobs, maxJobTokens, compatMake ? 1 : 0);
+	       jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
 
-	if (!printVars)
+	if (!opts.printVars)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
 
@@ -1516,7 +1496,7 @@ main(int argc, char **argv)
 		Targ_PrintGraph(1);
 
 	/* print the values of any variables requested by the user */
-	if (printVars) {
+	if (opts.printVars) {
 		doPrintVars();
 		outOfDate = FALSE;
 	} else {
@@ -1524,9 +1504,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef CLEANUP
-	Lst_Free(variables);
-	Lst_Free(makefiles);
-	Lst_Destroy(create, free);
+	Lst_Free(opts.variables);
+	Lst_Free(opts.makefiles);
+	Lst_Destroy(opts.create, free);
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
@@ -1537,7 +1517,7 @@ main(int argc, char **argv)
 
 	if (enterFlagObj)
 		printf("%s: Leaving directory `%s'\n", progname, objdir);
-	if (enterFlag)
+	if (opts.enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
 #ifdef USE_META
@@ -1760,7 +1740,7 @@ Error(const char *fmt, ...)
 	va_list ap;
 	FILE *err_file;
 
-	err_file = debug_file;
+	err_file = opts.debug_file;
 	if (err_file == stdout)
 		err_file = stderr;
 	(void)fflush(stdout);
