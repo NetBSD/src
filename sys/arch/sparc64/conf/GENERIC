@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231 2020/10/25 18:53:11 martin Exp $
+# $NetBSD: GENERIC,v 1.232 2020/10/26 11:49:45 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.231 $"
+#ident		"GENERIC-$Revision: 1.232 $"
 
 maxusers	64
 
@@ -861,6 +861,3 @@ options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 # options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
-
-# Temporary workaround while analyzing memory corruption when booting from CD
-no file-system NTFS
