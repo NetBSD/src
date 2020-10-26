@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.124 2020/10/25 21:51:49 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.125 2020/10/26 21:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.124 2020/10/25 21:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.125 2020/10/26 21:34:10 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -305,14 +305,14 @@ Targ_FindList(StringList *names)
 Boolean
 Targ_Ignore(GNode *gn)
 {
-    return ignoreErrors || gn->type & OP_IGNORE;
+    return opts.ignoreErrors || gn->type & OP_IGNORE;
 }
 
 /* Return true if be silent when creating gn. */
 Boolean
 Targ_Silent(GNode *gn)
 {
-    return beSilent || gn->type & OP_SILENT;
+    return opts.beSilent || gn->type & OP_SILENT;
 }
 
 /* See if the given target is precious. */
@@ -449,7 +449,7 @@ void
 Targ_PrintNode(GNode *gn, int pass)
 {
     debug_printf("# %s%s", gn->name, gn->cohort_num);
-    GNode_FprintDetails(debug_file, ", ", gn, "\n");
+    GNode_FprintDetails(opts.debug_file, ", ", gn, "\n");
     if (gn->flags == 0)
 	return;
 
