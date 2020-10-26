@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.288 2020/10/25 22:05:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.289 2020/10/26 20:11:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.288 2020/10/25 22:05:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.289 2020/10/26 20:11:02 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -230,10 +230,8 @@ static AbortReason aborting = ABORT_NONE;
  */
 int jobTokensRunning = 0;
 
-/* The number of commands actually printed for a target.
- * XXX: Why printed? Shouldn't that be run/printed instead, depending on the
- * command line options?
- * Should this number be 0, no shell will be executed. */
+/* The number of commands actually printed to the shell commands file for
+ * the current job.  Should this number be 0, no shell will be executed. */
 static int numCommands;
 
 typedef enum JobStartResult {
@@ -254,7 +252,7 @@ typedef enum JobStartResult {
  * the default shell.
  *
  * ".SHELL" lines in Makefiles can choose the default shell from the
- # set defined here, or add additional shells.
+ * set defined here, or add additional shells.
  */
 
 #ifdef DEFSHELL_CUSTOM
