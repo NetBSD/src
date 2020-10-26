@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.127 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.128 2020/10/26 12:24:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.127 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.128 2020/10/26 12:24:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -434,7 +434,7 @@ ucom_detach(device_t self, int flags)
 	}
 
 	sc->sc_refcnt--;
-	while (sc->sc_refcnt > 0) {
+	while (sc->sc_refcnt >= 0) {
 		/* Wake up anyone waiting */
 		if (tp != NULL) {
 			mutex_spin_enter(&tty_lock);
