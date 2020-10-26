@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.109 2020/10/26 07:03:47 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.110 2020/10/26 07:33:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.109 2020/10/26 07:03:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.110 2020/10/26 07:33:48 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -326,8 +326,10 @@ for_var_len(const char *var)
     return 0;
 }
 
+/* While expanding the body of a .for loop, write the item in the ${:U...}
+ * expression, escaping characters as needed. See ApplyModifier_Defined. */
 static void
-for_substitute(Buffer *cmds, const char *item, char ech)
+Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
 {
     ForEscapes escapes = GetEscapes(item);
     char ch;
@@ -360,71 +362,68 @@ for_substitute(Buffer *cmds, const char *item, char ech)
 /* While expanding the body of a .for loop, replace expressions like
  * ${i}, ${i:...}, $(i) or $(i:...) with their ${:U...} expansion. */
 static void
-SubstVarLong(For *f, const char **inout_cp, const char **inout_cmd_cp, char ech)
+SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 {
     size_t i;
-    const char *cp = *inout_cp;
-    const char *cmd_cp = *inout_cmd_cp;
+    const char *p = *pp;
 
     for (i = 0; i < f->vars.len; i++) {
 	ForVar *forVar = Vector_Get(&f->vars, i);
 	char *var = forVar->name;
 	size_t vlen = forVar->len;
 
-	/* XXX: undefined behavior for cp if vlen is longer than cp? */
-	if (memcmp(cp, var, vlen) != 0)
+	/* XXX: undefined behavior for p if vlen is longer than p? */
+	if (memcmp(p, var, vlen) != 0)
 	    continue;
 	/* XXX: why test for backslash here? */
-	if (cp[vlen] != ':' && cp[vlen] != ech && cp[vlen] != '\\')
+	if (p[vlen] != ':' && p[vlen] != ech && p[vlen] != '\\')
 	    continue;
 
 	/* Found a variable match. Replace with :U<value> */
-	Buf_AddBytesBetween(&f->curBody, cmd_cp, cp);
+	Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
 	Buf_AddStr(&f->curBody, ":U");
-	cp += vlen;
-	cmd_cp = cp;
-	for_substitute(&f->curBody, f->items.words[f->sub_next + i], ech);
+	Buf_AddEscaped(&f->curBody, f->items.words[f->sub_next + i], ech);
+
+	p += vlen;
+	*inout_mark = p;
 	break;
     }
 
-    *inout_cp = cp;
-    *inout_cmd_cp = cmd_cp;
+    *pp = p;
 }
 
 /* While expanding the body of a .for loop, replace single-character
  * variable expressions like $i with their ${:U...} expansion. */
 static void
-SubstVarShort(For *f, char const ch,
-	      const char **inout_cp, const char **input_cmd_cp)
+SubstVarShort(For *f, char const ch, const char **pp, const char **inout_mark)
 {
-    const char *cp = *inout_cp;
-    const char *cmd_cp = *input_cmd_cp;
+    const char *p = *pp;
     size_t i;
 
     /* Probably a single character name, ignore $$ and stupid ones. {*/
     if (!f->short_var || strchr("}):$", ch) != NULL) {
-	cp++;
-	*inout_cp = cp;
+	p++;
+	*pp = p;
 	return;
     }
 
     for (i = 0; i < f->vars.len; i++) {
 	ForVar *var = Vector_Get(&f->vars, i);
-	char *varname = var->name;
+	const char *varname = var->name;
 	if (varname[0] != ch || varname[1] != '\0')
 	    continue;
 
 	/* Found a variable match. Replace with ${:U<value>} */
-	Buf_AddBytesBetween(&f->curBody, cmd_cp, cp);
+	Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
 	Buf_AddStr(&f->curBody, "{:U");
-	cmd_cp = ++cp;
-	for_substitute(&f->curBody, f->items.words[f->sub_next + i], '}');
+	Buf_AddEscaped(&f->curBody, f->items.words[f->sub_next + i], '}');
 	Buf_AddByte(&f->curBody, '}');
+
+	*inout_mark = ++p;
 	break;
     }
 
-    *inout_cp = cp;
-    *input_cmd_cp = cmd_cp;
+    *pp = p;
 }
 
 /*
@@ -443,11 +442,10 @@ static char *
 ForIterate(void *v_arg, size_t *out_len)
 {
     For *f = v_arg;
-    const char *cp;
-    const char *cmd_cp;
+    const char *p;
+    const char *mark;		/* where the last replacement left off */
     const char *body_end;
     char *cmds_str;
-    size_t cmd_len;
 
     if (f->sub_next + f->vars.len > f->items.len) {
 	/* No more iterations */
@@ -457,23 +455,23 @@ ForIterate(void *v_arg, size_t *out_len)
 
     Buf_Empty(&f->curBody);
 
-    cmd_cp = Buf_GetAll(&f->body, &cmd_len);
-    body_end = cmd_cp + cmd_len;
-    for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
+    mark = Buf_GetAll(&f->body, NULL);
+    body_end = mark + Buf_Len(&f->body);
+    for (p = mark; (p = strchr(p, '$')) != NULL;) {
 	char ch, ech;
-	ch = *++cp;
+	ch = *++p;
 	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
-	    cp++;
+	    p++;
 	    /* Check variable name against the .for loop variables */
-	    SubstVarLong(f, &cp, &cmd_cp, ech);
+	    SubstVarLong(f, &p, &mark, ech);
 	    continue;
 	}
 	if (ch == '\0')
 	    break;
 
-	SubstVarShort(f, ch, &cp, &cmd_cp);
+	SubstVarShort(f, ch, &p, &mark);
     }
-    Buf_AddBytesBetween(&f->curBody, cmd_cp, body_end);
+    Buf_AddBytesBetween(&f->curBody, mark, body_end);
 
     *out_len = Buf_Len(&f->curBody);
     cmds_str = Buf_GetAll(&f->curBody, NULL);
