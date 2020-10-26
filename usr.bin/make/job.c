@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.291 2020/10/26 22:51:56 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.292 2020/10/26 23:19:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.291 2020/10/26 22:51:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.292 2020/10/26 23:19:17 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1637,7 +1637,7 @@ JobStart(GNode *gn, int flags)
 	 * We only want to work our way up the graph if we aren't here because
 	 * the commands for the job were no good.
 	 */
-	if (cmdsOK && aborting == 0) {
+	if (cmdsOK && aborting == ABORT_NONE) {
 	    JobSaveCommands(job);
 	    job->node->made = MADE;
 	    Make_Update(job->node);
@@ -2122,7 +2122,7 @@ Job_Init(void)
     job_table_end = job_table + opts.maxJobs;
     wantToken =	0;
 
-    aborting = 0;
+    aborting = ABORT_NONE;
     errors = 0;
 
     lastNode = NULL;
@@ -2168,7 +2168,7 @@ Job_Init(void)
 #define ADDSIG(s,h)				\
     if (bmake_signal(s, SIG_IGN) != SIG_IGN) {	\
 	sigaddset(&caught_signals, s);		\
-	(void)bmake_signal(s, h);			\
+	(void)bmake_signal(s, h);		\
     }
 
     /*
@@ -2520,7 +2520,7 @@ Job_Wait(void)
     while (jobTokensRunning != 0) {
 	Job_CatchOutput();
     }
-    aborting = 0;
+    aborting = ABORT_NONE;
 }
 
 /* Abort all currently running jobs without handling output or anything.
@@ -2730,7 +2730,7 @@ Job_TokenWithdraw(void)
     DEBUG3(JOB, "Job_TokenWithdraw(%d): aborting %d, running %d\n",
 	   getpid(), aborting, jobTokensRunning);
 
-    if (aborting || (jobTokensRunning >= opts.maxJobs))
+    if (aborting != ABORT_NONE || (jobTokensRunning >= opts.maxJobs))
 	return FALSE;
 
     count = read(tokenWaitJob.inPipe, &tok, 1);
