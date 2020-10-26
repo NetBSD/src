@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.59 2020/10/26 07:14:42 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.60 2020/10/26 07:16:41 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.59 2020/10/26 07:14:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.60 2020/10/26 07:16:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -203,11 +203,19 @@ intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
 		if (pic == NULL || pic->pic_cpus == NULL)
 			continue;
 		if (kcp == NULL || kcpuset_intersecting_p(kcp, pic->pic_cpus)) {
-			// never send to ourself
+			/*
+			 * Never send to ourself.
+			 *
+			 * This test uses pointer comparison for systems
+			 * that have a pic per cpu, e.g. RPI[23].  GIC sets
+			 * pic_cpus to kcpuset_running and handles "not for
+			 * self" internally.
+			 */
 			if (pic->pic_cpus == ci->ci_kcpuset)
 				continue;
 
 			(*pic->pic_ops->pic_ipi_send)(pic, kcp, ipi);
+
 			/*
 			 * If we were targeting a single CPU or this pic
 			 * handles all cpus, we're done.
