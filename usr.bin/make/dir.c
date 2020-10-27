@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.190 2020/10/26 23:28:52 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.191 2020/10/27 06:55:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,11 +69,9 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * dir.c --
- *	Directory searching using wildcards and/or normal names...
- *	Used both for source wildcarding in the Makefile and for finding
- *	implicit sources.
+/* Directory searching using wildcards and/or normal names.
+ * Used both for source wildcarding in the makefile and for finding
+ * implicit sources.
  *
  * The interface for this module is:
  *	Dir_Init	Initialize the module.
@@ -121,7 +119,8 @@
  *	Dir_ClearPath	Resets a search path to the empty list.
  *
  * For debugging:
- *	Dir_PrintDirectories	Print stats about the directory cache.
+ *	Dir_PrintDirectories
+ *			Print stats about the directory cache.
  */
 
 #include <sys/types.h>
@@ -135,80 +134,77 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.190 2020/10/26 23:28:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.191 2020/10/27 06:55:18 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
 #define DIR_DEBUG2(fmt, arg1, arg2) DEBUG2(DIR, fmt, arg1, arg2)
 
-/*
- *	A search path consists of a list of CachedDir structures. A CachedDir
- *	has in it the name of the directory and a hash table of all the files
- *	in the directory. This is used to cut down on the number of system
- *	calls necessary to find implicit dependents and their like. Since
- *	these searches are made before any actions are taken, we need not
- *	worry about the directory changing due to creation commands. If this
- *	hampers the style of some makefiles, they must be changed.
+/* A search path is a list of CachedDir structures. A CachedDir has in it the
+ * name of the directory and the names of all the files in the directory.
+ * This is used to cut down on the number of system calls necessary to find
+ * implicit dependents and their like. Since these searches are made before
+ * any actions are taken, we need not worry about the directory changing due
+ * to creation commands. If this hampers the style of some makefiles, they
+ * must be changed.
  *
- *	A list of all previously-read directories is kept in the
- *	openDirectories Lst. This list is checked first before a directory
- *	is opened.
+ * All previously-read directories are kept in openDirs, which is checked
+ * first before a directory is opened.
  *
- *	The need for the caching of whole directories is brought about by
- *	the multi-level transformation code in suff.c, which tends to search
- *	for far more files than regular make does. In the initial
- *	implementation, the amount of time spent performing "stat" calls was
- *	truly astronomical. The problem with hashing at the start is,
- *	of course, that pmake doesn't then detect changes to these directories
- *	during the course of the make. Three possibilities suggest themselves:
+ * The need for the caching of whole directories is brought about by the
+ * multi-level transformation code in suff.c, which tends to search for far
+ * more files than regular make does. In the initial implementation, the
+ * amount of time spent performing "stat" calls was truly astronomical.
+ * The problem with caching at the start is, of course, that pmake doesn't
+ * then detect changes to these directories during the course of the make.
+ * Three possibilities suggest themselves:
  *
- *	    1) just use stat to test for a file's existence. As mentioned
- *	       above, this is very inefficient due to the number of checks
- *	       engendered by the multi-level transformation code.
- *	    2) use readdir() and company to search the directories, keeping
- *	       them open between checks. I have tried this and while it
- *	       didn't slow down the process too much, it could severely
- *	       affect the amount of parallelism available as each directory
- *	       open would take another file descriptor out of play for
- *	       handling I/O for another job. Given that it is only recently
- *	       that UNIX OS's have taken to allowing more than 20 or 32
- *	       file descriptors for a process, this doesn't seem acceptable
- *	       to me.
- *	    3) record the mtime of the directory in the CachedDir structure and
- *	       verify the directory hasn't changed since the contents were
- *	       hashed. This will catch the creation or deletion of files,
- *	       but not the updating of files. However, since it is the
- *	       creation and deletion that is the problem, this could be
- *	       a good thing to do. Unfortunately, if the directory (say ".")
- *	       were fairly large and changed fairly frequently, the constant
- *	       rehashing could seriously degrade performance. It might be
- *	       good in such cases to keep track of the number of rehashes
- *	       and if the number goes over a (small) limit, resort to using
- *	       stat in its place.
+ * 1)	just use stat to test for a file's existence. As mentioned above,
+ *	this is very inefficient due to the number of checks engendered by
+ *	the multi-level transformation code.
  *
- *	An additional thing to consider is that pmake is used primarily
- *	to create C programs and until recently pcc-based compilers refused
- *	to allow you to specify where the resulting object file should be
- *	placed. This forced all objects to be created in the current
- *	directory. This isn't meant as a full excuse, just an explanation of
- *	some of the reasons for the caching used here.
+ * 2)	use readdir() and company to search the directories, keeping them
+ *	open between checks. I have tried this and while it didn't slow down
+ *	the process too much, it could severely affect the amount of
+ *	parallelism available as each directory open would take another file
+ *	descriptor out of play for handling I/O for another job. Given that
+ *	it is only recently that UNIX OS's have taken to allowing more than
+ *	20 or 32 file descriptors for a process, this doesn't seem acceptable
+ *	to me.
  *
- *	One more note: the location of a target's file is only performed
- *	on the downward traversal of the graph and then only for terminal
- *	nodes in the graph. This could be construed as wrong in some cases,
- *	but prevents inadvertent modification of files when the "installed"
- *	directory for a file is provided in the search path.
+ * 3)	record the mtime of the directory in the CachedDir structure and
+ *	verify the directory hasn't changed since the contents were cached.
+ *	This will catch the creation or deletion of files, but not the
+ *	updating of files. However, since it is the creation and deletion
+ *	that is the problem, this could be a good thing to do. Unfortunately,
+ *	if the directory (say ".") were fairly large and changed fairly
+ *	frequently, the constant reloading could seriously degrade
+ *	performance. It might be good in such cases to keep track of the
+ *	number of reloadings and if the number goes over a (small) limit,
+ *	resort to using stat in its place.
  *
- *	Another data structure maintained by this module is an mtime
- *	cache used when the searching of cached directories fails to find
- *	a file. In the past, Dir_FindFile would simply perform an access()
- *	call in such a case to determine if the file could be found using
- *	just the name given. When this hit, however, all that was gained
- *	was the knowledge that the file existed. Given that an access() is
- *	essentially a stat() without the copyout() call, and that the same
- *	filesystem overhead would have to be incurred in Dir_MTime, it made
- *	sense to replace the access() with a stat() and record the mtime
- *	in a cache for when Dir_MTime was actually called.
+ * An additional thing to consider is that pmake is used primarily to create
+ * C programs and until recently pcc-based compilers refused to allow you to
+ * specify where the resulting object file should be placed. This forced all
+ * objects to be created in the current directory. This isn't meant as a full
+ * excuse, just an explanation of some of the reasons for the caching used
+ * here.
+ *
+ * One more note: the location of a target's file is only performed on the
+ * downward traversal of the graph and then only for terminal nodes in the
+ * graph. This could be construed as wrong in some cases, but prevents
+ * inadvertent modification of files when the "installed" directory for a
+ * file is provided in the search path.
+ *
+ * Another data structure maintained by this module is an mtime cache used
+ * when the searching of cached directories fails to find a file. In the past,
+ * Dir_FindFile would simply perform an access() call in such a case to
+ * determine if the file could be found using just the name given. When this
+ * hit, however, all that was gained was the knowledge that the file existed.
+ * Given that an access() is essentially a stat() without the copyout() call,
+ * and that the same filesystem overhead would have to be incurred in
+ * Dir_MTime, it made sense to replace the access() with a stat() and record
+ * the mtime in a cache for when Dir_MTime was actually called.
  */
 
 typedef List CachedDirList;
@@ -280,7 +276,7 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
 static OpenDirs openDirs;	/* the list of all open directories */
 
 /*
- * Variables for gathering statistics on the efficiency of the hashing
+ * Variables for gathering statistics on the efficiency of the cashing
  * mechanism.
  */
 static int hits;		/* Found in directory cache */
