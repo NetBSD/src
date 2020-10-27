@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.30 2020/10/24 07:14:30 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.31 2020/10/27 08:32:36 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2177,6 +2177,9 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 
 union x86_test_register {
 	struct {
+		uint64_t a, b, c, d, e, f, g, h;
+	} zmm;
+	struct {
 		uint64_t a, b, c, d;
 	} ymm;
 	struct {
@@ -2220,7 +2223,8 @@ enum x86_test_registers {
 	FPREGS_MM,
 	FPREGS_XMM,
 	/* TEST_XSTATE */
-	FPREGS_YMM
+	FPREGS_YMM,
+	FPREGS_ZMM
 };
 
 enum x86_test_regmode {
@@ -2396,14 +2400,14 @@ static __inline void get_gp64_r8_regs(union x86_test_register out[])
 		"\n\t"
 		"int3\n\t"
 		"\n\t"
-		"movq    %%r8, 0x00(%0)\n\t"
-		"movq    %%r9, 0x20(%0)\n\t"
-		"movq    %%r10, 0x40(%0)\n\t"
-		"movq    %%r11, 0x60(%0)\n\t"
-		"movq    %%r12, 0x80(%0)\n\t"
-		"movq    %%r13, 0xA0(%0)\n\t"
-		"movq    %%r14, 0xC0(%0)\n\t"
-		"movq    %%r15, 0xE0(%0)\n\t"
+		"movq    %%r8, 0x000(%0)\n\t"
+		"movq    %%r9, 0x040(%0)\n\t"
+		"movq    %%r10, 0x080(%0)\n\t"
+		"movq    %%r11, 0x0C0(%0)\n\t"
+		"movq    %%r12, 0x100(%0)\n\t"
+		"movq    %%r13, 0x140(%0)\n\t"
+		"movq    %%r14, 0x180(%0)\n\t"
+		"movq    %%r15, 0x1C0(%0)\n\t"
 		:
 		: "a"(out), "m"(fill)
 		: "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15"
@@ -2417,14 +2421,14 @@ static __inline void set_gp64_r8_regs(const union x86_test_register data[])
 {
 #if defined(__x86_64__)
 	__asm__ __volatile__(
-		"movq    0x00(%0), %%r8\n\t"
-		"movq    0x20(%0), %%r9\n\t"
-		"movq    0x40(%0), %%r10\n\t"
-		"movq    0x60(%0), %%r11\n\t"
-		"movq    0x80(%0), %%r12\n\t"
-		"movq    0xA0(%0), %%r13\n\t"
-		"movq    0xC0(%0), %%r14\n\t"
-		"movq    0xE0(%0), %%r15\n\t"
+		"movq    0x000(%0), %%r8\n\t"
+		"movq    0x040(%0), %%r9\n\t"
+		"movq    0x080(%0), %%r10\n\t"
+		"movq    0x0C0(%0), %%r11\n\t"
+		"movq    0x100(%0), %%r12\n\t"
+		"movq    0x140(%0), %%r13\n\t"
+		"movq    0x180(%0), %%r14\n\t"
+		"movq    0x1C0(%0), %%r15\n\t"
 		"int3\n\t"
 		:
 		: "b"(data)
@@ -2526,14 +2530,14 @@ static __inline void get_mm_regs(union x86_test_register out[])
 		"\n\t"
 		"int3\n\t"
 		"\n\t"
-		"movq    %%mm0, 0x00(%0)\n\t"
-		"movq    %%mm1, 0x20(%0)\n\t"
-		"movq    %%mm2, 0x40(%0)\n\t"
-		"movq    %%mm3, 0x60(%0)\n\t"
-		"movq    %%mm4, 0x80(%0)\n\t"
-		"movq    %%mm5, 0xA0(%0)\n\t"
-		"movq    %%mm6, 0xC0(%0)\n\t"
-		"movq    %%mm7, 0xE0(%0)\n\t"
+		"movq    %%mm0, 0x000(%0)\n\t"
+		"movq    %%mm1, 0x040(%0)\n\t"
+		"movq    %%mm2, 0x080(%0)\n\t"
+		"movq    %%mm3, 0x0C0(%0)\n\t"
+		"movq    %%mm4, 0x100(%0)\n\t"
+		"movq    %%mm5, 0x140(%0)\n\t"
+		"movq    %%mm6, 0x180(%0)\n\t"
+		"movq    %%mm7, 0x1C0(%0)\n\t"
 		:
 		: "a"(out), "m"(fill)
 		: "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7"
@@ -2544,14 +2548,14 @@ __attribute__((target("mmx")))
 static __inline void set_mm_regs(const union x86_test_register data[])
 {
 	__asm__ __volatile__(
-		"movq    0x00(%0), %%mm0\n\t"
-		"movq    0x20(%0), %%mm1\n\t"
-		"movq    0x40(%0), %%mm2\n\t"
-		"movq    0x60(%0), %%mm3\n\t"
-		"movq    0x80(%0), %%mm4\n\t"
-		"movq    0xA0(%0), %%mm5\n\t"
-		"movq    0xC0(%0), %%mm6\n\t"
-		"movq    0xE0(%0), %%mm7\n\t"
+		"movq    0x000(%0), %%mm0\n\t"
+		"movq    0x040(%0), %%mm1\n\t"
+		"movq    0x080(%0), %%mm2\n\t"
+		"movq    0x0C0(%0), %%mm3\n\t"
+		"movq    0x100(%0), %%mm4\n\t"
+		"movq    0x140(%0), %%mm5\n\t"
+		"movq    0x180(%0), %%mm6\n\t"
+		"movq    0x1C0(%0), %%mm7\n\t"
 		"int3\n\t"
 		:
 		: "b"(data)
@@ -2590,22 +2594,22 @@ static __inline void get_xmm_regs(union x86_test_register out[])
 		"int3\n\t"
 		"\n\t"
 		"movaps  %%xmm0, 0x000(%0)\n\t"
-		"movaps  %%xmm1, 0x020(%0)\n\t"
-		"movaps  %%xmm2, 0x040(%0)\n\t"
-		"movaps  %%xmm3, 0x060(%0)\n\t"
-		"movaps  %%xmm4, 0x080(%0)\n\t"
-		"movaps  %%xmm5, 0x0A0(%0)\n\t"
-		"movaps  %%xmm6, 0x0C0(%0)\n\t"
-		"movaps  %%xmm7, 0x0E0(%0)\n\t"
+		"movaps  %%xmm1, 0x040(%0)\n\t"
+		"movaps  %%xmm2, 0x080(%0)\n\t"
+		"movaps  %%xmm3, 0x0C0(%0)\n\t"
+		"movaps  %%xmm4, 0x100(%0)\n\t"
+		"movaps  %%xmm5, 0x140(%0)\n\t"
+		"movaps  %%xmm6, 0x180(%0)\n\t"
+		"movaps  %%xmm7, 0x1C0(%0)\n\t"
 #if defined(__x86_64__)
-		"movaps  %%xmm8, 0x100(%0)\n\t"
-		"movaps  %%xmm9, 0x120(%0)\n\t"
-		"movaps  %%xmm10, 0x140(%0)\n\t"
-		"movaps  %%xmm11, 0x160(%0)\n\t"
-		"movaps  %%xmm12, 0x180(%0)\n\t"
-		"movaps  %%xmm13, 0x1A0(%0)\n\t"
-		"movaps  %%xmm14, 0x1C0(%0)\n\t"
-		"movaps  %%xmm15, 0x1E0(%0)\n\t"
+		"movaps  %%xmm8, 0x200(%0)\n\t"
+		"movaps  %%xmm9, 0x240(%0)\n\t"
+		"movaps  %%xmm10, 0x280(%0)\n\t"
+		"movaps  %%xmm11, 0x2C0(%0)\n\t"
+		"movaps  %%xmm12, 0x300(%0)\n\t"
+		"movaps  %%xmm13, 0x340(%0)\n\t"
+		"movaps  %%xmm14, 0x380(%0)\n\t"
+		"movaps  %%xmm15, 0x3C0(%0)\n\t"
 #endif
 		:
 		: "a"(out), "m"(fill)
@@ -2622,22 +2626,22 @@ static __inline void set_xmm_regs(const union x86_test_register data[])
 {
 	__asm__ __volatile__(
 		"movaps   0x000(%0), %%xmm0\n\t"
-		"movaps   0x020(%0), %%xmm1\n\t"
-		"movaps   0x040(%0), %%xmm2\n\t"
-		"movaps   0x060(%0), %%xmm3\n\t"
-		"movaps   0x080(%0), %%xmm4\n\t"
-		"movaps   0x0A0(%0), %%xmm5\n\t"
-		"movaps   0x0C0(%0), %%xmm6\n\t"
-		"movaps   0x0E0(%0), %%xmm7\n\t"
+		"movaps   0x040(%0), %%xmm1\n\t"
+		"movaps   0x080(%0), %%xmm2\n\t"
+		"movaps   0x0C0(%0), %%xmm3\n\t"
+		"movaps   0x100(%0), %%xmm4\n\t"
+		"movaps   0x140(%0), %%xmm5\n\t"
+		"movaps   0x180(%0), %%xmm6\n\t"
+		"movaps   0x1C0(%0), %%xmm7\n\t"
 #if defined(__x86_64__)
-		"movaps   0x100(%0), %%xmm8\n\t"
-		"movaps   0x120(%0), %%xmm9\n\t"
-		"movaps   0x140(%0), %%xmm10\n\t"
-		"movaps   0x160(%0), %%xmm11\n\t"
-		"movaps   0x180(%0), %%xmm12\n\t"
-		"movaps   0x1A0(%0), %%xmm13\n\t"
-		"movaps   0x1C0(%0), %%xmm14\n\t"
-		"movaps   0x1E0(%0), %%xmm15\n\t"
+		"movaps   0x200(%0), %%xmm8\n\t"
+		"movaps   0x240(%0), %%xmm9\n\t"
+		"movaps   0x280(%0), %%xmm10\n\t"
+		"movaps   0x2C0(%0), %%xmm11\n\t"
+		"movaps   0x300(%0), %%xmm12\n\t"
+		"movaps   0x340(%0), %%xmm13\n\t"
+		"movaps   0x380(%0), %%xmm14\n\t"
+		"movaps   0x3C0(%0), %%xmm15\n\t"
 #endif
 		"int3\n\t"
 		:
@@ -2655,8 +2659,10 @@ __attribute__((target("avx")))
 static __inline void get_ymm_regs(union x86_test_register out[])
 {
 	union x86_test_register fill __aligned(32) = {
-		{ 0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
-		  0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F }
+		.ymm = {
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F
+		}
 	};
 
 	__asm__ __volatile__(
@@ -2683,22 +2689,22 @@ static __inline void get_ymm_regs(union x86_test_register out[])
 		"int3\n\t"
 		"\n\t"
 		"vmovaps %%ymm0,  0x000(%0)\n\t"
-		"vmovaps %%ymm1,  0x020(%0)\n\t"
-		"vmovaps %%ymm2,  0x040(%0)\n\t"
-		"vmovaps %%ymm3,  0x060(%0)\n\t"
-		"vmovaps %%ymm4,  0x080(%0)\n\t"
-		"vmovaps %%ymm5,  0x0A0(%0)\n\t"
-		"vmovaps %%ymm6,  0x0C0(%0)\n\t"
-		"vmovaps %%ymm7,  0x0E0(%0)\n\t"
+		"vmovaps %%ymm1,  0x040(%0)\n\t"
+		"vmovaps %%ymm2,  0x080(%0)\n\t"
+		"vmovaps %%ymm3,  0x0C0(%0)\n\t"
+		"vmovaps %%ymm4,  0x100(%0)\n\t"
+		"vmovaps %%ymm5,  0x140(%0)\n\t"
+		"vmovaps %%ymm6,  0x180(%0)\n\t"
+		"vmovaps %%ymm7,  0x1C0(%0)\n\t"
 #if defined(__x86_64__)
-		"vmovaps %%ymm8,  0x100(%0)\n\t"
-		"vmovaps %%ymm9,  0x120(%0)\n\t"
-		"vmovaps %%ymm10, 0x140(%0)\n\t"
-		"vmovaps %%ymm11, 0x160(%0)\n\t"
-		"vmovaps %%ymm12, 0x180(%0)\n\t"
-		"vmovaps %%ymm13, 0x1A0(%0)\n\t"
-		"vmovaps %%ymm14, 0x1C0(%0)\n\t"
-		"vmovaps %%ymm15, 0x1E0(%0)\n\t"
+		"vmovaps %%ymm8,  0x200(%0)\n\t"
+		"vmovaps %%ymm9,  0x240(%0)\n\t"
+		"vmovaps %%ymm10, 0x280(%0)\n\t"
+		"vmovaps %%ymm11, 0x2C0(%0)\n\t"
+		"vmovaps %%ymm12, 0x300(%0)\n\t"
+		"vmovaps %%ymm13, 0x340(%0)\n\t"
+		"vmovaps %%ymm14, 0x380(%0)\n\t"
+		"vmovaps %%ymm15, 0x3C0(%0)\n\t"
 #endif
 		:
 		: "a"(out), "m"(fill)
@@ -2715,22 +2721,22 @@ static __inline void set_ymm_regs(const union x86_test_register data[])
 {
 	__asm__ __volatile__(
 		"vmovaps  0x000(%0), %%ymm0\n\t"
-		"vmovaps  0x020(%0), %%ymm1\n\t"
-		"vmovaps  0x040(%0), %%ymm2\n\t"
-		"vmovaps  0x060(%0), %%ymm3\n\t"
-		"vmovaps  0x080(%0), %%ymm4\n\t"
-		"vmovaps  0x0A0(%0), %%ymm5\n\t"
-		"vmovaps  0x0C0(%0), %%ymm6\n\t"
-		"vmovaps  0x0E0(%0), %%ymm7\n\t"
+		"vmovaps  0x040(%0), %%ymm1\n\t"
+		"vmovaps  0x080(%0), %%ymm2\n\t"
+		"vmovaps  0x0C0(%0), %%ymm3\n\t"
+		"vmovaps  0x100(%0), %%ymm4\n\t"
+		"vmovaps  0x140(%0), %%ymm5\n\t"
+		"vmovaps  0x180(%0), %%ymm6\n\t"
+		"vmovaps  0x1C0(%0), %%ymm7\n\t"
 #if defined(__x86_64__)
-		"vmovaps  0x100(%0), %%ymm8\n\t"
-		"vmovaps  0x120(%0), %%ymm9\n\t"
-		"vmovaps  0x140(%0), %%ymm10\n\t"
-		"vmovaps  0x160(%0), %%ymm11\n\t"
-		"vmovaps  0x180(%0), %%ymm12\n\t"
-		"vmovaps  0x1A0(%0), %%ymm13\n\t"
-		"vmovaps  0x1C0(%0), %%ymm14\n\t"
-		"vmovaps  0x1E0(%0), %%ymm15\n\t"
+		"vmovaps  0x200(%0), %%ymm8\n\t"
+		"vmovaps  0x240(%0), %%ymm9\n\t"
+		"vmovaps  0x280(%0), %%ymm10\n\t"
+		"vmovaps  0x2C0(%0), %%ymm11\n\t"
+		"vmovaps  0x300(%0), %%ymm12\n\t"
+		"vmovaps  0x340(%0), %%ymm13\n\t"
+		"vmovaps  0x380(%0), %%ymm14\n\t"
+		"vmovaps  0x3C0(%0), %%ymm15\n\t"
 #endif
 		"int3\n\t"
 		:
@@ -2741,6 +2747,181 @@ static __inline void set_ymm_regs(const union x86_test_register data[])
 		, "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13",
 		"%ymm14", "%ymm15"
 #endif
+	);
+}
+
+__attribute__((target("avx512f")))
+static __inline void get_zmm_regs(union x86_test_register out[])
+{
+	union x86_test_register fill __aligned(64) = {
+		.zmm = {
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+			0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F
+		}
+	};
+
+	__asm__ __volatile__(
+		/* fill registers with clobber pattern */
+		"vmovaps  %1, %%zmm0\n\t"
+		"vmovaps  %1, %%zmm1\n\t"
+		"vmovaps  %1, %%zmm2\n\t"
+		"vmovaps  %1, %%zmm3\n\t"
+		"vmovaps  %1, %%zmm4\n\t"
+		"vmovaps  %1, %%zmm5\n\t"
+		"vmovaps  %1, %%zmm6\n\t"
+		"vmovaps  %1, %%zmm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  %1, %%zmm8\n\t"
+		"vmovaps  %1, %%zmm9\n\t"
+		"vmovaps  %1, %%zmm10\n\t"
+		"vmovaps  %1, %%zmm11\n\t"
+		"vmovaps  %1, %%zmm12\n\t"
+		"vmovaps  %1, %%zmm13\n\t"
+		"vmovaps  %1, %%zmm14\n\t"
+		"vmovaps  %1, %%zmm15\n\t"
+		"vmovaps  %1, %%zmm16\n\t"
+		"vmovaps  %1, %%zmm17\n\t"
+		"vmovaps  %1, %%zmm18\n\t"
+		"vmovaps  %1, %%zmm19\n\t"
+		"vmovaps  %1, %%zmm20\n\t"
+		"vmovaps  %1, %%zmm21\n\t"
+		"vmovaps  %1, %%zmm22\n\t"
+		"vmovaps  %1, %%zmm23\n\t"
+		"vmovaps  %1, %%zmm24\n\t"
+		"vmovaps  %1, %%zmm25\n\t"
+		"vmovaps  %1, %%zmm26\n\t"
+		"vmovaps  %1, %%zmm27\n\t"
+		"vmovaps  %1, %%zmm28\n\t"
+		"vmovaps  %1, %%zmm29\n\t"
+		"vmovaps  %1, %%zmm30\n\t"
+		"vmovaps  %1, %%zmm31\n\t"
+#endif
+		"kmovq %1, %%k0\n\t"
+		"kmovq %1, %%k1\n\t"
+		"kmovq %1, %%k2\n\t"
+		"kmovq %1, %%k3\n\t"
+		"kmovq %1, %%k4\n\t"
+		"kmovq %1, %%k5\n\t"
+		"kmovq %1, %%k6\n\t"
+		"kmovq %1, %%k7\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"vmovaps %%zmm0,  0x000(%0)\n\t"
+		"vmovaps %%zmm1,  0x040(%0)\n\t"
+		"vmovaps %%zmm2,  0x080(%0)\n\t"
+		"vmovaps %%zmm3,  0x0C0(%0)\n\t"
+		"vmovaps %%zmm4,  0x100(%0)\n\t"
+		"vmovaps %%zmm5,  0x140(%0)\n\t"
+		"vmovaps %%zmm6,  0x180(%0)\n\t"
+		"vmovaps %%zmm7,  0x1C0(%0)\n\t"
+#if defined(__x86_64__)
+		"vmovaps %%zmm8,  0x200(%0)\n\t"
+		"vmovaps %%zmm9,  0x240(%0)\n\t"
+		"vmovaps %%zmm10, 0x280(%0)\n\t"
+		"vmovaps %%zmm11, 0x2C0(%0)\n\t"
+		"vmovaps %%zmm12, 0x300(%0)\n\t"
+		"vmovaps %%zmm13, 0x340(%0)\n\t"
+		"vmovaps %%zmm14, 0x380(%0)\n\t"
+		"vmovaps %%zmm15, 0x3C0(%0)\n\t"
+		"vmovaps %%zmm16, 0x400(%0)\n\t"
+		"vmovaps %%zmm17, 0x440(%0)\n\t"
+		"vmovaps %%zmm18, 0x480(%0)\n\t"
+		"vmovaps %%zmm19, 0x4C0(%0)\n\t"
+		"vmovaps %%zmm20, 0x500(%0)\n\t"
+		"vmovaps %%zmm21, 0x540(%0)\n\t"
+		"vmovaps %%zmm22, 0x580(%0)\n\t"
+		"vmovaps %%zmm23, 0x5C0(%0)\n\t"
+		"vmovaps %%zmm24, 0x600(%0)\n\t"
+		"vmovaps %%zmm25, 0x640(%0)\n\t"
+		"vmovaps %%zmm26, 0x680(%0)\n\t"
+		"vmovaps %%zmm27, 0x6C0(%0)\n\t"
+		"vmovaps %%zmm28, 0x700(%0)\n\t"
+		"vmovaps %%zmm29, 0x740(%0)\n\t"
+		"vmovaps %%zmm30, 0x780(%0)\n\t"
+		"vmovaps %%zmm31, 0x7C0(%0)\n\t"
+#endif
+		"kmovq %%k0, 0x800(%0)\n\t"
+		"kmovq %%k1, 0x808(%0)\n\t"
+		"kmovq %%k2, 0x810(%0)\n\t"
+		"kmovq %%k3, 0x818(%0)\n\t"
+		"kmovq %%k4, 0x820(%0)\n\t"
+		"kmovq %%k5, 0x828(%0)\n\t"
+		"kmovq %%k6, 0x830(%0)\n\t"
+		"kmovq %%k7, 0x838(%0)\n\t"
+		:
+		: "a"(out), "m"(fill)
+		: "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7"
+#if defined(__x86_64__)
+		, "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13", "%zmm14",
+		  "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21",
+		  "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28",
+		  "%zmm29", "%zmm30", "%zmm31"
+#endif
+		, "%k0", "%k1", "%k2", "%k3", "%k4", "%k5", "%k6", "%k7"
+	);
+}
+
+__attribute__((target("avx512f")))
+static __inline void set_zmm_regs(const union x86_test_register data[])
+{
+	__asm__ __volatile__(
+		"vmovaps  0x000(%0), %%zmm0\n\t"
+		"vmovaps  0x040(%0), %%zmm1\n\t"
+		"vmovaps  0x080(%0), %%zmm2\n\t"
+		"vmovaps  0x0C0(%0), %%zmm3\n\t"
+		"vmovaps  0x100(%0), %%zmm4\n\t"
+		"vmovaps  0x140(%0), %%zmm5\n\t"
+		"vmovaps  0x180(%0), %%zmm6\n\t"
+		"vmovaps  0x1C0(%0), %%zmm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  0x200(%0), %%zmm8\n\t"
+		"vmovaps  0x240(%0), %%zmm9\n\t"
+		"vmovaps  0x280(%0), %%zmm10\n\t"
+		"vmovaps  0x2C0(%0), %%zmm11\n\t"
+		"vmovaps  0x300(%0), %%zmm12\n\t"
+		"vmovaps  0x340(%0), %%zmm13\n\t"
+		"vmovaps  0x380(%0), %%zmm14\n\t"
+		"vmovaps  0x3C0(%0), %%zmm15\n\t"
+		"vmovaps  0x400(%0), %%zmm16\n\t"
+		"vmovaps  0x440(%0), %%zmm17\n\t"
+		"vmovaps  0x480(%0), %%zmm18\n\t"
+		"vmovaps  0x4C0(%0), %%zmm19\n\t"
+		"vmovaps  0x500(%0), %%zmm20\n\t"
+		"vmovaps  0x540(%0), %%zmm21\n\t"
+		"vmovaps  0x580(%0), %%zmm22\n\t"
+		"vmovaps  0x5C0(%0), %%zmm23\n\t"
+		"vmovaps  0x600(%0), %%zmm24\n\t"
+		"vmovaps  0x640(%0), %%zmm25\n\t"
+		"vmovaps  0x680(%0), %%zmm26\n\t"
+		"vmovaps  0x6C0(%0), %%zmm27\n\t"
+		"vmovaps  0x700(%0), %%zmm28\n\t"
+		"vmovaps  0x740(%0), %%zmm29\n\t"
+		"vmovaps  0x780(%0), %%zmm30\n\t"
+		"vmovaps  0x7C0(%0), %%zmm31\n\t"
+#endif
+		"kmovq 0x800(%0), %%k0\n\t"
+		"kmovq 0x808(%0), %%k1\n\t"
+		"kmovq 0x810(%0), %%k2\n\t"
+		"kmovq 0x818(%0), %%k3\n\t"
+		"kmovq 0x820(%0), %%k4\n\t"
+		"kmovq 0x828(%0), %%k5\n\t"
+		"kmovq 0x830(%0), %%k6\n\t"
+		"kmovq 0x838(%0), %%k7\n\t"
+		"int3\n\t"
+		:
+		: "b"(data)
+		: "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", "%zmm7"
+#if defined(__x86_64__)
+		, "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13", "%zmm14",
+		  "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", "%zmm21",
+		  "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", "%zmm28",
+		  "%zmm29", "%zmm30", "%zmm31"
+#endif
+		, "%k0", "%k1", "%k2", "%k3", "%k4",
+		  "%k5", "%k6", "%k7"
 	);
 }
 
@@ -2766,39 +2947,140 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	char core_path[] = "/tmp/core.XXXXXX";
 	int core_fd;
 
-	const union x86_test_register expected[] __aligned(32) = {
+	const union x86_test_register expected[] __aligned(64) = {
 		{{ 0x0706050403020100, 0x0F0E0D0C0B0A0908,
-		   0x1716151413121110, 0x1F1E1D1C1B1A1918, }},
+		   0x1716151413121110, 0x1F1E1D1C1B1A1918,
+		   0x2726252423222120, 0x2F2E2D2C2B2A2928,
+		   0x3736353433323130, 0x3F3E3D3C3B3A3938, }},
 		{{ 0x0807060504030201, 0x100F0E0D0C0B0A09,
-		   0x1817161514131211, 0x201F1E1D1C1B1A19, }},
+		   0x1817161514131211, 0x201F1E1D1C1B1A19,
+		   0x2827262524232221, 0x302F2E2D2C2B2A29,
+		   0x3837363534333231, 0x403F3E3D3C3B3A39, }},
 		{{ 0x0908070605040302, 0x11100F0E0D0C0B0A,
-		   0x1918171615141312, 0x21201F1E1D1C1B1A, }},
+		   0x1918171615141312, 0x21201F1E1D1C1B1A,
+		   0x2928272625242322, 0x31302F2E2D2C2B2A,
+		   0x3938373635343332, 0x41403F3E3D3C3B3A, }},
 		{{ 0x0A09080706050403, 0x1211100F0E0D0C0B,
-		   0x1A19181716151413, 0x2221201F1E1D1C1B, }},
+		   0x1A19181716151413, 0x2221201F1E1D1C1B,
+		   0x2A29282726252423, 0x3231302F2E2D2C2B,
+		   0x3A39383736353433, 0x4241403F3E3D3C3B, }},
 		{{ 0x0B0A090807060504, 0x131211100F0E0D0C,
-		   0x1B1A191817161514, 0x232221201F1E1D1C, }},
+		   0x1B1A191817161514, 0x232221201F1E1D1C,
+		   0x2B2A292827262524, 0x333231302F2E2D2C,
+		   0x3B3A393837363534, 0x434241403F3E3D3C, }},
 		{{ 0x0C0B0A0908070605, 0x14131211100F0E0D,
-		   0x1C1B1A1918171615, 0x24232221201F1E1D, }},
+		   0x1C1B1A1918171615, 0x24232221201F1E1D,
+		   0x2C2B2A2928272625, 0x34333231302F2E2D,
+		   0x3C3B3A3938373635, 0x44434241403F3E3D, }},
 		{{ 0x0D0C0B0A09080706, 0x1514131211100F0E,
-		   0x1D1C1B1A19181716, 0x2524232221201F1E, }},
+		   0x1D1C1B1A19181716, 0x2524232221201F1E,
+		   0x2D2C2B2A29282726, 0x3534333231302F2E,
+		   0x3D3C3B3A39383736, 0x4544434241403F3E, }},
 		{{ 0x0E0D0C0B0A090807, 0x161514131211100F,
-		   0x1E1D1C1B1A191817, 0x262524232221201F, }},
+		   0x1E1D1C1B1A191817, 0x262524232221201F,
+		   0x2E2D2C2B2A292827, 0x363534333231302F,
+		   0x3E3D3C3B3A393837, 0x464544434241403F, }},
 		{{ 0x0F0E0D0C0B0A0908, 0x1716151413121110,
-		   0x1F1E1D1C1B1A1918, 0x2726252423222120, }},
+		   0x1F1E1D1C1B1A1918, 0x2726252423222120,
+		   0x2F2E2D2C2B2A2928, 0x3736353433323130,
+		   0x3F3E3D3C3B3A3938, 0x4746454443424140, }},
 		{{ 0x100F0E0D0C0B0A09, 0x1817161514131211,
-		   0x201F1E1D1C1B1A19, 0x2827262524232221, }},
+		   0x201F1E1D1C1B1A19, 0x2827262524232221,
+		   0x302F2E2D2C2B2A29, 0x3837363534333231,
+		   0x403F3E3D3C3B3A39, 0x4847464544434241, }},
 		{{ 0x11100F0E0D0C0B0A, 0x1918171615141312,
-		   0x21201F1E1D1C1B1A, 0x2928272625242322, }},
+		   0x21201F1E1D1C1B1A, 0x2928272625242322,
+		   0x31302F2E2D2C2B2A, 0x3938373635343332,
+		   0x41403F3E3D3C3B3A, 0x4948474645444342, }},
 		{{ 0x1211100F0E0D0C0B, 0x1A19181716151413,
-		   0x2221201F1E1D1C1B, 0x2A29282726252423, }},
+		   0x2221201F1E1D1C1B, 0x2A29282726252423,
+		   0x3231302F2E2D2C2B, 0x3A39383736353433,
+		   0x4241403F3E3D3C3B, 0x4A49484746454443, }},
 		{{ 0x131211100F0E0D0C, 0x1B1A191817161514,
-		   0x232221201F1E1D1C, 0x2B2A292827262524, }},
+		   0x232221201F1E1D1C, 0x2B2A292827262524,
+		   0x333231302F2E2D2C, 0x3B3A393837363534,
+		   0x434241403F3E3D3C, 0x4B4A494847464544, }},
 		{{ 0x14131211100F0E0D, 0x1C1B1A1918171615,
-		   0x24232221201F1E1D, 0x2C2B2A2928272625, }},
+		   0x24232221201F1E1D, 0x2C2B2A2928272625,
+		   0x34333231302F2E2D, 0x3C3B3A3938373635,
+		   0x44434241403F3E3D, 0x4C4B4A4948474645, }},
 		{{ 0x1514131211100F0E, 0x1D1C1B1A19181716,
-		   0x2524232221201F1E, 0x2D2C2B2A29282726, }},
+		   0x2524232221201F1E, 0x2D2C2B2A29282726,
+		   0x3534333231302F2E, 0x3D3C3B3A39383736,
+		   0x4544434241403F3E, 0x4D4C4B4A49484746, }},
 		{{ 0x161514131211100F, 0x1E1D1C1B1A191817,
-		   0x262524232221201F, 0x2E2D2C2B2A292827, }},
+		   0x262524232221201F, 0x2E2D2C2B2A292827,
+		   0x363534333231302F, 0x3E3D3C3B3A393837,
+		   0x464544434241403F, 0x4E4D4C4B4A494847, }},
+		{{ 0x1716151413121110, 0x1F1E1D1C1B1A1918,
+		   0x2726252423222120, 0x2F2E2D2C2B2A2928,
+		   0x3736353433323130, 0x3F3E3D3C3B3A3938,
+		   0x4746454443424140, 0x4F4E4D4C4B4A4948, }},
+		{{ 0x1817161514131211, 0x201F1E1D1C1B1A19,
+		   0x2827262524232221, 0x302F2E2D2C2B2A29,
+		   0x3837363534333231, 0x403F3E3D3C3B3A39,
+		   0x4847464544434241, 0x504F4E4D4C4B4A49, }},
+		{{ 0x1918171615141312, 0x21201F1E1D1C1B1A,
+		   0x2928272625242322, 0x31302F2E2D2C2B2A,
+		   0x3938373635343332, 0x41403F3E3D3C3B3A,
+		   0x4948474645444342, 0x51504F4E4D4C4B4A, }},
+		{{ 0x1A19181716151413, 0x2221201F1E1D1C1B,
+		   0x2A29282726252423, 0x3231302F2E2D2C2B,
+		   0x3A39383736353433, 0x4241403F3E3D3C3B,
+		   0x4A49484746454443, 0x5251504F4E4D4C4B, }},
+		{{ 0x1B1A191817161514, 0x232221201F1E1D1C,
+		   0x2B2A292827262524, 0x333231302F2E2D2C,
+		   0x3B3A393837363534, 0x434241403F3E3D3C,
+		   0x4B4A494847464544, 0x535251504F4E4D4C, }},
+		{{ 0x1C1B1A1918171615, 0x24232221201F1E1D,
+		   0x2C2B2A2928272625, 0x34333231302F2E2D,
+		   0x3C3B3A3938373635, 0x44434241403F3E3D,
+		   0x4C4B4A4948474645, 0x54535251504F4E4D, }},
+		{{ 0x1D1C1B1A19181716, 0x2524232221201F1E,
+		   0x2D2C2B2A29282726, 0x3534333231302F2E,
+		   0x3D3C3B3A39383736, 0x4544434241403F3E,
+		   0x4D4C4B4A49484746, 0x5554535251504F4E, }},
+		{{ 0x1E1D1C1B1A191817, 0x262524232221201F,
+		   0x2E2D2C2B2A292827, 0x363534333231302F,
+		   0x3E3D3C3B3A393837, 0x464544434241403F,
+		   0x4E4D4C4B4A494847, 0x565554535251504F, }},
+		{{ 0x1F1E1D1C1B1A1918, 0x2726252423222120,
+		   0x2F2E2D2C2B2A2928, 0x3736353433323130,
+		   0x3F3E3D3C3B3A3938, 0x4746454443424140,
+		   0x4F4E4D4C4B4A4948, 0x5756555453525150, }},
+		{{ 0x201F1E1D1C1B1A19, 0x2827262524232221,
+		   0x302F2E2D2C2B2A29, 0x3837363534333231,
+		   0x403F3E3D3C3B3A39, 0x4847464544434241,
+		   0x504F4E4D4C4B4A49, 0x5857565554535251, }},
+		{{ 0x21201F1E1D1C1B1A, 0x2928272625242322,
+		   0x31302F2E2D2C2B2A, 0x3938373635343332,
+		   0x41403F3E3D3C3B3A, 0x4948474645444342,
+		   0x51504F4E4D4C4B4A, 0x5958575655545352, }},
+		{{ 0x2221201F1E1D1C1B, 0x2A29282726252423,
+		   0x3231302F2E2D2C2B, 0x3A39383736353433,
+		   0x4241403F3E3D3C3B, 0x4A49484746454443,
+		   0x5251504F4E4D4C4B, 0x5A59585756555453, }},
+		{{ 0x232221201F1E1D1C, 0x2B2A292827262524,
+		   0x333231302F2E2D2C, 0x3B3A393837363534,
+		   0x434241403F3E3D3C, 0x4B4A494847464544,
+		   0x535251504F4E4D4C, 0x5B5A595857565554, }},
+		{{ 0x24232221201F1E1D, 0x2C2B2A2928272625,
+		   0x34333231302F2E2D, 0x3C3B3A3938373635,
+		   0x44434241403F3E3D, 0x4C4B4A4948474645,
+		   0x54535251504F4E4D, 0x5C5B5A5958575655, }},
+		{{ 0x2524232221201F1E, 0x2D2C2B2A29282726,
+		   0x3534333231302F2E, 0x3D3C3B3A39383736,
+		   0x4544434241403F3E, 0x4D4C4B4A49484746,
+		   0x5554535251504F4E, 0x5D5C5B5A59585756, }},
+		{{ 0x262524232221201F, 0x2E2D2C2B2A292827,
+		   0x363534333231302F, 0x3E3D3C3B3A393837,
+		   0x464544434241403F, 0x4E4D4C4B4A494847,
+		   0x565554535251504F, 0x5E5D5C5B5A595857, }},
+		/* k0..k7 */
+		{{ 0x2726252423222120, 0x2F2E2D2C2B2A2928,
+		   0x3736353433323130, 0x3F3E3D3C3B3A3938,
+		   0x4746454443424140, 0x4F4E4D4C4B4A4948,
+		   0x5756555453525150, 0x5F5E5D5C5B5A5958, }},
 	};
 
 	const struct x86_test_fpu_registers expected_fpu = {
@@ -2865,6 +3147,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	case FPREGS_MM:
 	case FPREGS_XMM:
 	case FPREGS_YMM:
+	case FPREGS_ZMM:
 		need_cpuid = true;
 		break;
 	}
@@ -2883,14 +3166,25 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	if (need_cpuid) {
 		/* verify whether needed instruction sets are supported here */
 		unsigned int eax, ebx, ecx, edx;
+		unsigned int eax7, ebx7, ecx7, edx7;
 
 		DPRINTF("Before invoking cpuid\n");
 		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
 			atf_tc_skip("CPUID is not supported by the CPU");
 
-		DPRINTF("cpuid: ECX = %08x, EDX = %08xd\n", ecx, edx);
+		DPRINTF("cpuid[eax=1]: ECX = %08x, EDX = %08xd\n", ecx, edx);
 
 		switch (regs) {
+		case FPREGS_ZMM:
+			/* ZMM is in EAX=7, ECX=0 */
+			if (!__get_cpuid_count(7, 0, &eax7, &ebx7, &ecx7, &edx7))
+				atf_tc_skip(
+				    "AVX512F is not supported by the CPU");
+			DPRINTF("cpuid[eax=7,ecx=0]: EBX = %08x\n", ebx7);
+			if (!(ebx7 & bit_AVX512F))
+				atf_tc_skip(
+				    "AVX512F is not supported by the CPU");
+			/*FALLTHROUGH*/
 		case FPREGS_YMM:
 			if (!(ecx & bit_AVX))
 				atf_tc_skip("AVX is not supported by the CPU");
@@ -2915,7 +3209,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		union x86_test_register vals[16] __aligned(32);
+		union x86_test_register vals[__arraycount(expected)] __aligned(64);
 		struct x86_test_fpu_registers vals_fpu;
 
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
@@ -2950,6 +3244,9 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			case FPREGS_YMM:
 				set_ymm_regs(expected);
 				break;
+			case FPREGS_ZMM:
+				set_zmm_regs(expected);
+				break;
 			}
 			break;
 		case TEST_SETREGS:
@@ -2977,6 +3274,9 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				break;
 			case FPREGS_YMM:
 				get_ymm_regs(vals);
+				break;
+			case FPREGS_ZMM:
+				get_zmm_regs(vals);
 				break;
 			}
 
@@ -3131,6 +3431,83 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 				    &expected[15].ymm, sizeof(vals->ymm)));
 #endif
 				break;
+			case FPREGS_ZMM:
+				FORKEE_ASSERT(!memcmp(&vals[0].zmm,
+				    &expected[0].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[1].zmm,
+				    &expected[1].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[2].zmm,
+				    &expected[2].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[3].zmm,
+				    &expected[3].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[4].zmm,
+				    &expected[4].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[5].zmm,
+				    &expected[5].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[6].zmm,
+				    &expected[6].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[7].zmm,
+				    &expected[7].zmm, sizeof(vals->zmm)));
+#if defined(__x86_64__)
+				FORKEE_ASSERT(!memcmp(&vals[8].zmm,
+				    &expected[8].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[9].zmm,
+				    &expected[9].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[10].zmm,
+				    &expected[10].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[11].zmm,
+				    &expected[11].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[12].zmm,
+				    &expected[12].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[13].zmm,
+				    &expected[13].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[14].zmm,
+				    &expected[14].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[15].zmm,
+				    &expected[15].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[16].zmm,
+				    &expected[16].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[17].zmm,
+				    &expected[17].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[18].zmm,
+				    &expected[18].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[19].zmm,
+				    &expected[19].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[20].zmm,
+				    &expected[20].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[21].zmm,
+				    &expected[21].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[22].zmm,
+				    &expected[22].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[23].zmm,
+				    &expected[23].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[24].zmm,
+				    &expected[24].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[25].zmm,
+				    &expected[25].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[26].zmm,
+				    &expected[26].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[27].zmm,
+				    &expected[27].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[28].zmm,
+				    &expected[28].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[29].zmm,
+				    &expected[29].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[30].zmm,
+				    &expected[30].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT(!memcmp(&vals[31].zmm,
+				    &expected[31].zmm, sizeof(vals->zmm)));
+#endif
+				/* k0..k7 */
+				FORKEE_ASSERT(vals[32].zmm.a == expected[32].zmm.a);
+				FORKEE_ASSERT(vals[32].zmm.b == expected[32].zmm.b);
+				FORKEE_ASSERT(vals[32].zmm.c == expected[32].zmm.c);
+				FORKEE_ASSERT(vals[32].zmm.d == expected[32].zmm.d);
+				FORKEE_ASSERT(vals[32].zmm.e == expected[32].zmm.e);
+				FORKEE_ASSERT(vals[32].zmm.f == expected[32].zmm.f);
+				FORKEE_ASSERT(vals[32].zmm.g == expected[32].zmm.g);
+				FORKEE_ASSERT(vals[32].zmm.h == expected[32].zmm.h);
+				break;
 			}
 			break;
 		}
@@ -3151,6 +3528,12 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		case FPREGS_MM:
 			xst_flags |= XCR0_X87;
 			break;
+		case FPREGS_ZMM:
+			xst_flags |= XCR0_Opmask | XCR0_ZMM_Hi256;
+#if defined(__x86_64__)
+			xst_flags |= XCR0_Hi16_ZMM;
+#endif
+			/*FALLTHROUGH*/
 		case FPREGS_YMM:
 			xst_flags |= XCR0_YMM_Hi128;
 			/*FALLTHROUGH*/
@@ -3427,6 +3810,85 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			ATF_CHECK_EQ(ST_MAN(6), expected[6].u64);
 			ATF_CHECK_EQ(ST_MAN(7), expected[7].u64);
 			break;
+		case FPREGS_ZMM:
+			/* zmm0..zmm15 are split between xmm, ymm_hi128 and zmm_hi256 */
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[0],
+			    &expected[0].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[1],
+			    &expected[1].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[2],
+			    &expected[2].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[3],
+			    &expected[3].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[4],
+			    &expected[4].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[5],
+			    &expected[5].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[6],
+			    &expected[6].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[7],
+			    &expected[7].zmm.e, sizeof(expected->zmm)/2));
+#if defined(__x86_64__)
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[8],
+			    &expected[8].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[9],
+			    &expected[9].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[10],
+			    &expected[10].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[11],
+			    &expected[11].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[12],
+			    &expected[12].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[13],
+			    &expected[13].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[14],
+			    &expected[14].zmm.e, sizeof(expected->zmm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_zmm_hi256.xs_zmm[15],
+			    &expected[15].zmm.e, sizeof(expected->zmm)/2));
+			/* zmm16..zmm31 are stored as a whole */
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[0],
+			    &expected[16].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[1],
+			    &expected[17].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[2],
+				&expected[18].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[3],
+				&expected[19].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[4],
+				&expected[20].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[5],
+				&expected[21].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[6],
+				&expected[22].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[7],
+				&expected[23].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[8],
+				&expected[24].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[9],
+				&expected[25].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[10],
+				&expected[26].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[11],
+				&expected[27].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[12],
+				&expected[28].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[13],
+				&expected[29].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[14],
+				&expected[30].zmm, sizeof(expected->zmm)));
+			ATF_CHECK(!memcmp(&xst.xs_hi16_zmm.xs_hi16_zmm[15],
+				&expected[31].zmm, sizeof(expected->zmm)));
+#endif
+			/* k0..k7 */
+			ATF_CHECK(xst.xs_opmask.xs_k[0] == expected[32].zmm.a);
+			ATF_CHECK(xst.xs_opmask.xs_k[1] == expected[32].zmm.b);
+			ATF_CHECK(xst.xs_opmask.xs_k[2] == expected[32].zmm.c);
+			ATF_CHECK(xst.xs_opmask.xs_k[3] == expected[32].zmm.d);
+			ATF_CHECK(xst.xs_opmask.xs_k[4] == expected[32].zmm.e);
+			ATF_CHECK(xst.xs_opmask.xs_k[5] == expected[32].zmm.f);
+			ATF_CHECK(xst.xs_opmask.xs_k[6] == expected[32].zmm.g);
+			ATF_CHECK(xst.xs_opmask.xs_k[7] == expected[32].zmm.h);
+			/*FALLTHROUGH*/
 		case FPREGS_YMM:
 			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[0],
 			    &expected[0].ymm.c, sizeof(expected->ymm)/2));
@@ -3592,6 +4054,85 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			ST_MAN(6) = expected[6].u64;
 			ST_MAN(7) = expected[7].u64;
 			break;
+		case FPREGS_ZMM:
+			/* zmm0..zmm15 are split between xmm, ymm_hi128, zmm_hi256 */
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[0],
+			    &expected[0].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[1],
+			    &expected[1].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[2],
+			    &expected[2].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[3],
+			    &expected[3].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[4],
+			    &expected[4].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[5],
+			    &expected[5].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[6],
+			    &expected[6].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[7],
+			    &expected[7].zmm.e, sizeof(expected->zmm)/2);
+#if defined(__x86_64__)
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[8],
+			    &expected[8].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[9],
+			    &expected[9].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[10],
+			    &expected[10].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[11],
+			    &expected[11].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[12],
+			    &expected[12].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[13],
+			    &expected[13].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[14],
+			    &expected[14].zmm.e, sizeof(expected->zmm)/2);
+			memcpy(&xst.xs_zmm_hi256.xs_zmm[15],
+			    &expected[15].zmm.e, sizeof(expected->zmm)/2);
+			/* zmm16..zmm31 are stored as a whole */
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[0],
+			    &expected[16].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[1],
+			    &expected[17].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[2],
+			    &expected[18].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[3],
+			    &expected[19].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[4],
+			    &expected[20].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[5],
+			    &expected[21].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[6],
+			    &expected[22].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[7],
+			    &expected[23].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[8],
+			    &expected[24].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[9],
+			    &expected[25].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[10],
+			    &expected[26].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[11],
+			    &expected[27].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[12],
+			    &expected[28].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[13],
+			    &expected[29].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[14],
+			    &expected[30].zmm, sizeof(expected->zmm));
+			memcpy(&xst.xs_hi16_zmm.xs_hi16_zmm[15],
+			    &expected[31].zmm, sizeof(expected->zmm));
+#endif
+			/* k0..k7 */
+			xst.xs_opmask.xs_k[0] = expected[32].zmm.a;
+			xst.xs_opmask.xs_k[1] = expected[32].zmm.b;
+			xst.xs_opmask.xs_k[2] = expected[32].zmm.c;
+			xst.xs_opmask.xs_k[3] = expected[32].zmm.d;
+			xst.xs_opmask.xs_k[4] = expected[32].zmm.e;
+			xst.xs_opmask.xs_k[5] = expected[32].zmm.f;
+			xst.xs_opmask.xs_k[6] = expected[32].zmm.g;
+			xst.xs_opmask.xs_k[7] = expected[32].zmm.h;
+			/*FALLTHROUGH*/
 		case FPREGS_YMM:
 			memcpy(&xst.xs_ymm_hi128.xs_ymm[0],
 			    &expected[0].ymm.c, sizeof(expected->ymm)/2);
@@ -3809,6 +4350,15 @@ X86_REGISTER_TEST(x86_xstate_ymm_write, TEST_XSTATE, FPREGS_YMM, TEST_SETREGS,
     "via PT_SETXSTATE.");
 X86_REGISTER_TEST(x86_xstate_ymm_core, TEST_XSTATE, FPREGS_YMM, TEST_COREDUMP,
     "Test reading ymm0..ymm15 (..ymm7 on i386) from coredump via XSTATE note.");
+X86_REGISTER_TEST(x86_xstate_zmm_read, TEST_XSTATE, FPREGS_ZMM, TEST_GETREGS,
+    "Test reading zmm0..zmm31 (..zmm7 on i386), k0..k7 from debugged program "
+    "via PT_GETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_zmm_write, TEST_XSTATE, FPREGS_ZMM, TEST_SETREGS,
+    "Test writing zmm0..zmm31 (..zmm7 on i386), k0..k7 into debugged program "
+    "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_zmm_core, TEST_XSTATE, FPREGS_ZMM, TEST_COREDUMP,
+    "Test reading zmm0..zmm31 (..zmm7 on i386), k0..k7 from coredump "
+    "via XSTATE note.");
 
 /// ----------------------------------------------------------------------------
 
@@ -3995,7 +4545,10 @@ thread_concurrent_handle_sigtrap(pid_t child, ptrace_siginfo_t *info)
 	ATF_TP_ADD_TC(tp, x86_xstate_xmm_core); \
 	ATF_TP_ADD_TC(tp, x86_xstate_ymm_read); \
 	ATF_TP_ADD_TC(tp, x86_xstate_ymm_write); \
-	ATF_TP_ADD_TC(tp, x86_xstate_ymm_core);
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_core); \
+	ATF_TP_ADD_TC(tp, x86_xstate_zmm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_zmm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_zmm_core);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86()
 #endif
