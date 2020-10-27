@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.27 2020/10/24 16:13:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.28 2020/10/27 15:28:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -546,8 +546,15 @@ Recuerde, el directorio debe contener los archivos $0.
 }
 
 message No_cd_found
-{Could not locate a CD medium in any drive with the distribution sets. 
-Check the proper medium and retry!}
+{Could not locate a CD medium in any drive with the distribution sets! 
+Enter the correct data manually, or insert a disk and retry. 
+}
+
+message abort_install
+{Cancel installation}
+
+message source_sel_retry
+{Back to source selection & retry}
 
 message Available_cds
 {Available CDs}
