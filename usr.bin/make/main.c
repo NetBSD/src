@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.404 2020/10/27 17:09:09 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.405 2020/10/27 17:36:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.404 2020/10/27 17:09:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.405 2020/10/27 17:36:17 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1096,6 +1096,33 @@ CmdOpts_Init(void)
 }
 
 static void
+InitVarMake(char **argv)
+{
+	char mdpath[MAXPATHLEN];
+	const char *p1;
+
+	if (argv[0][0] == '/' || strchr(argv[0], '/') == NULL) {
+		/*
+		 * Leave alone if it is an absolute path, or if it does
+		 * not contain a '/' in which case we need to find it in
+		 * the path, like execvp(3) and the shells do.
+		 */
+		p1 = argv[0];
+	} else {
+		struct stat sb;
+		/*
+		 * A relative path, canonicalize it.
+		 */
+		p1 = cached_realpath(argv[0], mdpath);
+		if (!p1 || *p1 != '/' || stat(p1, &sb) < 0) {
+			p1 = argv[0];		/* realpath failed */
+		}
+	}
+	Var_Set("MAKE", p1, VAR_GLOBAL);
+	Var_Set(".MAKE", p1, VAR_GLOBAL);
+}
+
+static void
 InitDefIncPath(char *syspath)
 {
 	static char defsyspath[] = _PATH_DEFSYSPATH;
@@ -1260,7 +1287,6 @@ main(int argc, char **argv)
 	Boolean outOfDate;	/* FALSE if all targets up to date */
 	struct stat sa;
 	char *p1;
-	char mdpath[MAXPATHLEN];
 	const char *machine;
 	const char *machine_arch;
 	char *syspath = getenv("MAKESYSPATH");
@@ -1344,25 +1370,7 @@ main(int argc, char **argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Parse_Init();
-	if (argv[0][0] == '/' || strchr(argv[0], '/') == NULL) {
-	    /*
-	     * Leave alone if it is an absolute path, or if it does
-	     * not contain a '/' in which case we need to find it in
-	     * the path, like execvp(3) and the shells do.
-	     */
-	    p1 = argv[0];
-	} else {
-	    struct stat sb;
-	    /*
-	     * A relative path, canonicalize it.
-	     */
-	    p1 = cached_realpath(argv[0], mdpath);
-	    if (!p1 || *p1 != '/' || stat(p1, &sb) < 0) {
-		p1 = argv[0];		/* realpath failed */
-	    }
-	}
-	Var_Set("MAKE", p1, VAR_GLOBAL);
-	Var_Set(".MAKE", p1, VAR_GLOBAL);
+	InitVarMake(argv);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
