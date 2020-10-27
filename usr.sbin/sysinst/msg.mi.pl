@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.33 2020/10/24 16:13:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.34 2020/10/27 15:28:01 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -524,8 +524,15 @@ Pamietaj, ze katalog musi zawierac pliki $0.
 }
 
 message No_cd_found
-{Could not locate a CD medium in any drive with the distribution sets. 
-Check the proper medium and retry!}
+{Could not locate a CD medium in any drive with the distribution sets! 
+Enter the correct data manually, or insert a disk and retry. 
+}
+
+message abort_install
+{Cancel installation}
+
+message source_sel_retry
+{Back to source selection & retry}
 
 message Available_cds
 {Dostepne napedy CD}
