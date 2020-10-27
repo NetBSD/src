@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.402 2020/10/27 08:00:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.403 2020/10/27 08:05:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.402 2020/10/27 08:00:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.403 2020/10/27 08:05:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1173,6 +1173,29 @@ InitVpath(void)
 }
 
 static void
+ReadMakefiles(void)
+{
+	if (opts.makefiles->first != NULL) {
+		StringListNode *ln;
+
+		for (ln = opts.makefiles->first; ln != NULL; ln = ln->next) {
+			if (ReadMakefile(ln->datum) != 0)
+				Fatal("%s: cannot open %s.",
+				      progname, (char *)ln->datum);
+		}
+	} else {
+		char *p1;
+		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
+				VAR_CMD, VARE_WANTRES, &p1);
+		/* TODO: handle errors */
+		(void)str2Lst_Append(opts.makefiles, p1, NULL);
+		(void)Lst_ForEachUntil(opts.makefiles,
+				       ReadMakefileSucceeded, NULL);
+		free(p1);
+	}
+}
+
+static void
 CleanUp(void)
 {
 #ifdef CLEANUP
@@ -1456,25 +1479,8 @@ main(int argc, char **argv)
 	 */
 	if (!opts.noBuiltins)
 		ReadBuiltinRules();
-
-	if (opts.makefiles->first != NULL) {
-		StringListNode *ln;
-
-		for (ln = opts.makefiles->first; ln != NULL; ln = ln->next) {
-			if (ReadMakefile(ln->datum) != 0)
-				Fatal("%s: cannot open %s.",
-				      progname, (char *)ln->datum);
-		}
-	} else {
-		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
-		    VAR_CMD, VARE_WANTRES, &p1);
-		/* TODO: handle errors */
-		(void)str2Lst_Append(opts.makefiles, p1, NULL);
-		(void)Lst_ForEachUntil(opts.makefiles,
-				       ReadMakefileSucceeded, NULL);
-		free(p1);
-	}
-
+	ReadMakefiles();
+	
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || !opts.printVars) {
 	    /* ignore /dev/null and anything starting with "no" */
