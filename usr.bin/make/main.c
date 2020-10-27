@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.397 2020/10/27 07:28:33 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.398 2020/10/27 07:34:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.397 2020/10/27 07:28:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.398 2020/10/27 07:34:36 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1125,6 +1125,21 @@ InitDefIncPath(char *syspath)
 		free(syspath);
 }
 
+static void
+ReadBuiltinRules(void)
+{
+	StringList *sysMkPath = Lst_New();
+	Dir_Expand(_PATH_DEFSYSMK,
+		   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
+		   sysMkPath);
+	if (Lst_IsEmpty(sysMkPath))
+		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);
+	if (!Lst_ForEachUntil(sysMkPath, ReadMakefileSucceeded, NULL))
+		Fatal("%s: cannot open %s.", progname,
+		      (char *)sysMkPath->first->datum);
+	/* XXX: sysMkPath is not freed */
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1152,7 +1167,6 @@ main(int argc, char **argv)
 	const char *machine;
 	const char *machine_arch;
 	char *syspath = getenv("MAKESYSPATH");
-	StringList *sysMkPath;		/* Path of sys.mk */
 	struct timeval rightnow;	/* to initialize random seed */
 	struct utsname utsname;
 
@@ -1375,18 +1389,8 @@ main(int argc, char **argv)
 	 * makefiles, or the default makefile and Makefile, in that order,
 	 * if no makefiles were given on the command line.
 	 */
-	if (!opts.noBuiltins) {
-		sysMkPath = Lst_New();
-		Dir_Expand(_PATH_DEFSYSMK,
-			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
-			   sysMkPath);
-		if (Lst_IsEmpty(sysMkPath))
-			Fatal("%s: no system rules (%s).", progname,
-			    _PATH_DEFSYSMK);
-		if (!Lst_ForEachUntil(sysMkPath, ReadMakefileSucceeded, NULL))
-			Fatal("%s: cannot open %s.", progname,
-			    (char *)sysMkPath->first->datum);
-	}
+	if (!opts.noBuiltins)
+		ReadBuiltinRules();
 
 	if (opts.makefiles->first != NULL) {
 		StringListNode *ln;
