@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.393 2020/10/27 06:59:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.394 2020/10/27 07:03:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.393 2020/10/27 06:59:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.394 2020/10/27 07:03:55 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -136,7 +136,6 @@ Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 
 static int		maxJobTokens;	/* -j argument */
-Boolean			debugVflag;	/* -dV */
 Boolean			enterFlagObj;	/* -w and objdir != srcdir */
 
 Boolean			oldVars;	/* variable substitution style */
@@ -310,7 +309,7 @@ parse_debug_options(const char *argvalue)
 			opts.debug |= DEBUG_TARG;
 			break;
 		case 'V':
-			debugVflag = TRUE;
+			opts.debugVflag = TRUE;
 			break;
 		case 'v':
 			opts.debug |= DEBUG_VAR;
@@ -873,7 +872,7 @@ doPrintVars(void)
 
 	if (opts.printVars == EXPAND_VARS)
 		expandVars = TRUE;
-	else if (debugVflag)
+	else if (opts.debugVflag)
 		expandVars = FALSE;
 	else
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
@@ -1159,7 +1158,7 @@ main(int argc, char **argv)
 	opts.create = Lst_New();
 	opts.makefiles = Lst_New();
 	opts.printVars = 0;
-	debugVflag = FALSE;
+	opts.debugVflag = FALSE;
 	opts.variables = Lst_New();
 	opts.beSilent = FALSE;		/* Print commands as executed */
 	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
