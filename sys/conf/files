@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1276 2020/09/27 19:08:11 roy Exp $
+#	$NetBSD: files,v 1.1277 2020/10/27 08:57:11 ryo Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1493,6 +1493,9 @@ file	dev/ic/anx_dp.c			anxdp
 # Broadcom GENET v5 ethernet
 device	genet: arp, ether, ifnet, mii
 file	dev/ic/bcmgenet.c		genet
+
+# VMware Tools driver
+include "dev/vmt/files.vmt"
 
 #
 # File systems

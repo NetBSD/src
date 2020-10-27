@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.710 2020/10/14 10:19:11 ryo Exp $
+#	$NetBSD: Makefile,v 1.711 2020/10/27 08:57:10 ryo Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -69,7 +69,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	unix.4 userconf.4 \
 	vald.4 valz.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 \
 	vio9p.4 vioif.4 viomb.4 viornd.4 vioscsi.4 virt.4 virtio.4 \
-	vether.4 vlan.4 vmmon.4 vmnet.4 vmx.4 vnd.4 voodoofb.4 vr.4 vte.4 \
+	vether.4 vlan.4 vmmon.4 vmnet.4 vmt.4 vmx.4 vnd.4 voodoofb.4 vr.4 \
+	vte.4 \
 	wapbl.4 wb.4 wbsio.4 wd.4 wdc.4 wg.4 wi.4 wm.4 wpi.4 \
 	wsbell.4 wscons.4 wsdisplay.4 wsfont.4 wskbd.4 wsmouse.4 wsmux.4 \
 	xbox.4 xge.4 \

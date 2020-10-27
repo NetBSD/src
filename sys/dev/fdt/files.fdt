@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.54 2020/07/16 16:39:18 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.55 2020/10/27 08:57:11 ryo Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -187,3 +187,7 @@ file	dev/fdt/simple_amplifier.c		simpleamp
 # Broadcom GENET v5
 attach	genet at fdt with genet_fdt
 file	dev/fdt/genet_fdt.c			genet_fdt
+
+# VMware Tools driver
+attach	vmt at fdt with vmt_fdt
+file	dev/fdt/vmt_fdt.c			vmt_fdt

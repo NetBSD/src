@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.163 2020/10/15 04:39:24 ryo Exp $
+#	$NetBSD: GENERIC64,v 1.164 2020/10/27 08:57:10 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -99,6 +99,8 @@ acpitz*		at acpi?
 cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
 cpu*		at acpi?
+
+vmt*		at fdt?			# VMware Tools
 
 # Performance monitors
 armpmu*		at fdt?
