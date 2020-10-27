@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.7 2019/12/27 09:41:52 msaitoh Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.8 2020/10/27 17:16:24 abs Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transferred via MOP.
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.7 2019/12/27 09:41:52 msaitoh Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.8 2020/10/27 17:16:24 abs Exp $");
 #endif
 
 #include "os.h"
@@ -69,6 +69,9 @@ __RCSID("$NetBSD: mopcopy.c,v 1.7 2019/12/27 09:41:52 msaitoh Exp $");
 #define NOAOUT
 #endif
 #if !defined(MID_VAX)
+#define MID_VAX 150
+#endif
+#if !defined(MID_VAX1K)
 #define MID_VAX 140
 #endif
 
@@ -125,7 +128,7 @@ main(int argc, char **argv)
 
 #ifndef NOAOUT
 	case IMAGE_TYPE_AOUT:
-		if (dl.a_mid != MID_VAX)
+		if (dl.a_mid != MID_VAX && dl.a_mid != MID_VAX1K)
 			printf("WARNING: `%s' is not a VAX image (mid=%d)\n",
 			    argv[1], dl.a_mid);
 		i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
