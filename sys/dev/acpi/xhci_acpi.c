@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.8 2020/10/24 08:55:23 skrll Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.9 2020/10/27 13:50:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.8 2020/10/24 08:55:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.9 2020/10/27 13:50:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,11 +129,17 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
-	if (XHCI_HCC_AC64(hccparams) && BUS_DMA_TAG_VALID(aa->aa_dmat64)) {
-		aprint_verbose_dev(self, "using 64-bit DMA\n");
-		sc->sc_bus.ub_dmatag = aa->aa_dmat64;
+	if (XHCI_HCC_AC64(hccparams)) {
+		aprint_verbose_dev(self, "64-bit DMA");
+		if (BUS_DMA_TAG_VALID(aa->aa_dmat64)) {
+			aprint_verbose("\n");
+			sc->sc_bus.ub_dmatag = aa->aa_dmat64;
+		} else {
+			aprint_verbose(" - limited\n");
+			sc->sc_bus.ub_dmatag = aa->aa_dmat;
+		}
 	} else {
-		aprint_verbose_dev(self, "using 32-bit DMA\n");
+		aprint_verbose_dev(self, "32-bit DMA\n");
 		sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	}
 
