@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.16 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.16 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $");
 #endif
 
 #include "os.h"
@@ -46,7 +46,10 @@ __RCSID("$NetBSD: file.c,v 1.16 2016/06/08 01:11:49 christos Exp $");
 #  include <sys/imgact_aout.h>
 # endif
 # if !defined(MID_VAX)
-#  define MID_VAX 140
+#  define MID_VAX 150
+# endif
+# if !defined(MID_VAX1K)
+#  define MID_VAX1K 140
 # endif
 #endif /* NOAOUT */
 
@@ -328,6 +331,11 @@ getMID(int old_mid, int new_mid)
 		mid = MID_VAX;
 		break;
 #endif
+#ifdef MID_VAX1K
+	case MID_VAX1K:
+		mid = MID_VAX1K;
+		break;
+#endif
 #ifdef MID_ALPHA
 	case MID_ALPHA:
 		mid = MID_ALPHA;
@@ -356,8 +364,8 @@ getCLBYTES(int mid)
 	int	clbytes;
 
 	switch (mid) {
-#ifdef MID_VAX
-	case MID_VAX:
+#ifdef MID_VAX1K
+	case MID_VAX1K:
 		clbytes = 1024;
 		break;
 #endif
@@ -379,8 +387,12 @@ getCLBYTES(int mid)
 #ifdef MID_ARM6
 	case MID_ARM6:
 #endif
+#ifdef MID_VAX
+	case MID_VAX:
+#endif
 #if defined(MID_I386) || defined(MID_M68K4K) || defined(MID_NS32532) || \
-    defined(MID_PMAX) || defined(MID_MIPS) || defined(MID_ARM6)
+    defined(MID_PMAX) || defined(MID_MIPS) || defined(MID_ARM6) || \
+    defined(MID_VAX)
 		clbytes = 4096;
 		break;
 #endif
@@ -697,6 +709,9 @@ GetAOutFileInfo(struct dllist *dl)
 #ifdef MID_VAX
 	case MID_VAX:
 #endif
+#ifdef MID_VAX1K
+	case MID_VAX1K:
+#endif
 #ifdef MID_ALPHA
 	case MID_ALPHA:
 #endif
@@ -764,6 +779,11 @@ GetAOutFileInfo(struct dllist *dl)
 #ifdef MID_VAX
 	case MID_VAX:
 		printf("vax");
+		break;
+#endif
+#ifdef MID_VAX1K
+	case MID_VAX1K:
+		printf("vax 1k");
 		break;
 #endif
 #ifdef MID_ALPHA
