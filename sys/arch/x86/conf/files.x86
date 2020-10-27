@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.119 2020/08/01 12:15:40 jdolecek Exp $
+#	$NetBSD: files.x86,v 1.120 2020/10/27 08:57:11 ryo Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -74,7 +74,6 @@ device	viac7temp: sysmon_envsys
 attach	viac7temp at cpufeaturebus
 file	arch/x86/x86/viac7temp.c	viac7temp
 
-device	vmt: sysmon_power, sysmon_taskq
 attach	vmt at cpufeaturebus
 file	arch/x86/x86/vmt.c		vmt
 
