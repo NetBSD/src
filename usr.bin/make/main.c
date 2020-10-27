@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.394 2020/10/27 07:03:55 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.395 2020/10/27 07:13:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.394 2020/10/27 07:03:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.395 2020/10/27 07:13:02 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1060,6 +1060,32 @@ UnlimitFiles(void)
 #endif
 }
 
+static void
+CmdOpts_Init(void)
+{
+	opts.compatMake = FALSE;	/* No compat mode */
+	opts.debug = 0;			/* No debug verbosity, please. */
+	/* opts.debug_file has been initialized earlier */
+	opts.debugVflag = FALSE;
+	/* TODO: checkEnvFirst = FALSE; */
+	opts.makefiles = Lst_New();
+	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
+	opts.maxJobs = DEFMAXLOCAL;	/* Set default local max concurrency */
+	opts.keepgoing = FALSE;		/* Stop on error */
+	opts.noRecursiveExecute = FALSE; /* Execute all .MAKE targets */
+	opts.noExecute = FALSE;		/* Execute all commands */
+	opts.queryFlag = FALSE;		/* This is not just a check-run */
+	opts.noBuiltins = FALSE;	/* Read the built-in rules */
+	opts.beSilent = FALSE;		/* Print commands as executed */
+	opts.touchFlag = FALSE;		/* Actually update targets */
+	opts.printVars = 0;
+	opts.variables = Lst_New();
+	/* TODO: parseWarnFatal = FALSE; */
+	/* TODO: enterFlag = FALSE; */
+	/* TODO: varNoExportEnv = FALSE; */
+	opts.create = Lst_New();
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1155,27 +1181,12 @@ main(int argc, char **argv)
 		VAR_GLOBAL);
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
-	opts.create = Lst_New();
-	opts.makefiles = Lst_New();
-	opts.printVars = 0;
-	opts.debugVflag = FALSE;
-	opts.variables = Lst_New();
-	opts.beSilent = FALSE;		/* Print commands as executed */
-	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
-	opts.noExecute = FALSE;		/* Execute all commands */
-	opts.noRecursiveExecute = FALSE; /* Execute all .MAKE targets */
-	opts.keepgoing = FALSE;		/* Stop on error */
+	CmdOpts_Init();
 	allPrecious = FALSE;		/* Remove targets when interrupted */
 	deleteOnError = FALSE;		/* Historical default behavior */
-	opts.queryFlag = FALSE;		/* This is not just a check-run */
-	opts.noBuiltins = FALSE;	/* Read the built-in rules */
-	opts.touchFlag = FALSE;		/* Actually update targets */
-	opts.debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
-	opts.maxJobs = DEFMAXLOCAL;	/* Set default local max concurrency */
 	maxJobTokens = opts.maxJobs;
-	opts.compatMake = FALSE;	/* No compat mode */
 	ignorePWD = FALSE;
 
 	/*
