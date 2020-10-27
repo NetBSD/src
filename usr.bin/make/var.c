@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.590 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.591 2020/10/27 07:16:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.590 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.591 2020/10/27 07:16:27 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -176,7 +176,7 @@ static Boolean save_dollars = TRUE;
  *	   list. On this list are located the structures describing such
  *	   local variables as $(@) and $(*)
  * The four contexts are searched in the reverse order from which they are
- * listed (but see checkEnvFirst).
+ * listed (but see opts.checkEnvFirst).
  */
 GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
