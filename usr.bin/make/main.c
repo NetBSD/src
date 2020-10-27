@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.392 2020/10/26 23:28:52 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.393 2020/10/27 06:59:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.392 2020/10/26 23:28:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.393 2020/10/27 06:59:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1047,6 +1047,20 @@ ignore_pwd:
 }
 #endif
 
+/* get rid of resource limit on file descriptors */
+static void
+UnlimitFiles(void)
+{
+#if defined(MAKE_NATIVE) || (defined(HAVE_SETRLIMIT) && defined(RLIMIT_NOFILE))
+	struct rlimit rl;
+	if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
+	    rl.rlim_cur != rl.rlim_max) {
+		rl.rlim_cur = rl.rlim_max;
+		(void)setrlimit(RLIMIT_NOFILE, &rl);
+	}
+#endif
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1098,19 +1112,8 @@ main(int argc, char **argv)
 		progname++;
 	else
 		progname = argv[0];
-#if defined(MAKE_NATIVE) || (defined(HAVE_SETRLIMIT) && defined(RLIMIT_NOFILE))
-	/*
-	 * get rid of resource limit on file descriptors
-	 */
-	{
-		struct rlimit rl;
-		if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
-		    rl.rlim_cur != rl.rlim_max) {
-			rl.rlim_cur = rl.rlim_max;
-			(void)setrlimit(RLIMIT_NOFILE, &rl);
-		}
-	}
-#endif
+
+	UnlimitFiles();
 
 	if (uname(&utsname) == -1) {
 	    (void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
