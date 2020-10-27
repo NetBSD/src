@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.399 2020/10/27 07:38:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.400 2020/10/27 07:44:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.399 2020/10/27 07:38:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.400 2020/10/27 07:44:43 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1140,6 +1140,38 @@ ReadBuiltinRules(void)
 	/* XXX: sysMkPath is not freed */
 }
 
+/*
+ * For compatibility, look at the directories in the VPATH variable
+ * and add them to the search path, if the variable is defined. The
+ * variable's value is in the same format as the PATH environment
+ * variable, i.e. <directory>:<directory>:<directory>...
+ */
+static void
+InitVpath(void)
+{
+	char *vpath, savec, *path;
+	if (!Var_Exists("VPATH", VAR_CMD))
+		return;
+
+	(void)Var_Subst("${VPATH}", VAR_CMD, VARE_WANTRES, &vpath);
+	/* TODO: handle errors */
+	path = vpath;
+	do {
+		char *cp;
+		/* skip to end of directory */
+		for (cp = path; *cp != ':' && *cp != '\0'; cp++)
+			continue;
+		/* Save terminator character so know when to stop */
+		savec = *cp;
+		*cp = '\0';
+		/* Add directory to search path */
+		(void)Dir_AddDir(dirSearchPath, path);
+		*cp = savec;
+		path = cp + 1;
+	} while (savec == ':');
+	free(vpath);
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1162,7 +1194,7 @@ main(int argc, char **argv)
 {
 	Boolean outOfDate;	/* FALSE if all targets up to date */
 	struct stat sa;
-	char *p1, *path;
+	char *p1;
 	char mdpath[MAXPATHLEN];
 	const char *machine;
 	const char *machine_arch;
@@ -1470,34 +1502,7 @@ main(int argc, char **argv)
 	if (!opts.printVars)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
-
-	/*
-	 * For compatibility, look at the directories in the VPATH variable
-	 * and add them to the search path, if the variable is defined. The
-	 * variable's value is in the same format as the PATH envariable, i.e.
-	 * <directory>:<directory>:<directory>...
-	 */
-	if (Var_Exists("VPATH", VAR_CMD)) {
-		char *vpath, savec;
-
-		(void)Var_Subst("${VPATH}", VAR_CMD, VARE_WANTRES, &vpath);
-		/* TODO: handle errors */
-		path = vpath;
-		do {
-			char *cp;
-			/* skip to end of directory */
-			for (cp = path; *cp != ':' && *cp != '\0'; cp++)
-				continue;
-			/* Save terminator character so know when to stop */
-			savec = *cp;
-			*cp = '\0';
-			/* Add directory to search path */
-			(void)Dir_AddDir(dirSearchPath, path);
-			*cp = savec;
-			path = cp + 1;
-		} while (savec == ':');
-		free(vpath);
-	}
+	InitVpath();
 
 	/*
 	 * Now that all search paths have been read for suffixes et al, it's
