@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.405 2020/10/27 17:36:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.406 2020/10/27 18:12:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.405 2020/10/27 17:36:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.406 2020/10/27 18:12:15 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1095,31 +1095,26 @@ CmdOpts_Init(void)
 	opts.create = Lst_New();
 }
 
+/* Initialize MAKE and .MAKE to the path of the executable, so that it can be
+ * found by execvp(3) and the shells, even after a chdir.
+ *
+ * If it's a relative path and contains a '/', resolve it to an absolute path.
+ * Otherwise keep it as is, assuming it will be found in the PATH. */
 static void
-InitVarMake(char **argv)
+InitVarMake(const char *argv0)
 {
-	char mdpath[MAXPATHLEN];
-	const char *p1;
+	const char *make = argv0;
 
-	if (argv[0][0] == '/' || strchr(argv[0], '/') == NULL) {
-		/*
-		 * Leave alone if it is an absolute path, or if it does
-		 * not contain a '/' in which case we need to find it in
-		 * the path, like execvp(3) and the shells do.
-		 */
-		p1 = argv[0];
-	} else {
-		struct stat sb;
-		/*
-		 * A relative path, canonicalize it.
-		 */
-		p1 = cached_realpath(argv[0], mdpath);
-		if (!p1 || *p1 != '/' || stat(p1, &sb) < 0) {
-			p1 = argv[0];		/* realpath failed */
-		}
+	if (argv0[0] != '/' && strchr(argv0, '/') != NULL) {
+		char pathbuf[MAXPATHLEN];
+		const char *abs = cached_realpath(argv0, pathbuf);
+		struct stat st;
+		if (abs != NULL && abs[0] == '/' && stat(make, &st) == 0)
+			make = abs;
 	}
-	Var_Set("MAKE", p1, VAR_GLOBAL);
-	Var_Set(".MAKE", p1, VAR_GLOBAL);
+
+	Var_Set("MAKE", make, VAR_GLOBAL);
+	Var_Set(".MAKE", make, VAR_GLOBAL);
 }
 
 static void
@@ -1370,7 +1365,7 @@ main(int argc, char **argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Parse_Init();
-	InitVarMake(argv);
+	InitVarMake(argv[0]);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
