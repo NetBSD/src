@@ -21,12 +21,12 @@ r_run()
 	file="$(atf_get_srcdir)/tests/${1}"
 	export COLUMNS=80
 	export LINES=24
-	$(atf_get_srcdir)/director/director $2 \
+	$(atf_get_srcdir)/director $2 \
 		-T $(atf_get_srcdir) \
 		-t atf \
 		-I $(atf_get_srcdir)/tests \
 		-C $(atf_get_srcdir)/check_files \
-		-s $(atf_get_srcdir)/slave/slave $file || atf_fail "test ${file} failed"
+		-s $(atf_get_srcdir)/slave $file || atf_fail "test ${file} failed"
 }
 
 ##########################################
