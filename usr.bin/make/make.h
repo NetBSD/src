@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.173 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.174 2020/10/27 07:03:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -548,6 +548,9 @@ typedef struct CmdOpts {
 
     /* -df: debug output is written here - default stderr */
     FILE *debug_file;
+
+    /* -dV: for the -V option, print unexpanded variable values */
+    Boolean debugVflag;
 
     /* -e: check environment variables before global variables */
     Boolean checkEnvFirst;
