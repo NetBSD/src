@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.24 2019/12/02 03:06:51 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.25 2020/10/27 13:50:57 skrll Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.24 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.25 2020/10/27 13:50:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -193,10 +193,19 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
 
-	if (pci_dma64_available(pa) && (XHCI_HCC_AC64(hccparams) != 0))
-		sc->sc_bus.ub_dmatag = pa->pa_dmat64;
-	else
+	if (XHCI_HCC_AC64(hccparams) != 0) {
+		aprint_verbose_dev(self, "64-bit DMA");
+		if (pci_dma64_available(pa)) {
+			sc->sc_bus.ub_dmatag = pa->pa_dmat64;
+			aprint_verbose("\n");
+		} else {
+			aprint_verbose(" - limited\n");
+			sc->sc_bus.ub_dmatag = pa->pa_dmat;
+		}
+	} else {
+		aprint_verbose_dev(self, "32-bit DMA\n");
 		sc->sc_bus.ub_dmatag = pa->pa_dmat;
+	}
 
 	/* Enable the device. */
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
