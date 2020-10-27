@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.396 2020/10/27 07:16:27 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.397 2020/10/27 07:28:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.396 2020/10/27 07:16:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.397 2020/10/27 07:28:33 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1086,6 +1086,45 @@ CmdOpts_Init(void)
 	opts.create = Lst_New();
 }
 
+static void
+InitDefIncPath(char *syspath)
+{
+	static char defsyspath[] = _PATH_DEFSYSPATH;
+	char *start, *cp;
+
+	/*
+	 * If no user-supplied system path was given (through the -m option)
+	 * add the directories from the DEFSYSPATH (more than one may be given
+	 * as dir1:...:dirn) to the system include path.
+	 */
+	/* XXX: mismatch: the -m option sets sysIncPath, not syspath */
+	if (syspath == NULL || syspath[0] == '\0')
+		syspath = defsyspath;
+	else
+		syspath = bmake_strdup(syspath);
+
+	for (start = syspath; *start != '\0'; start = cp) {
+		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
+			continue;
+		if (*cp == ':') {
+			*cp++ = '\0';
+		}
+		/* look for magic parent directory search string */
+		if (strncmp(".../", start, 4) != 0) {
+			(void)Dir_AddDir(defIncPath, start);
+		} else {
+			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
+			if (dir != NULL) {
+				(void)Dir_AddDir(defIncPath, dir);
+				free(dir);
+			}
+		}
+	}
+
+	if (syspath != defsyspath)
+		free(syspath);
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1114,9 +1153,6 @@ main(int argc, char **argv)
 	const char *machine_arch;
 	char *syspath = getenv("MAKESYSPATH");
 	StringList *sysMkPath;		/* Path of sys.mk */
-	char *cp = NULL, *start;
-					/* avoid faults on read-only strings */
-	static char defsyspath[] = _PATH_DEFSYSPATH;
 	struct timeval rightnow;	/* to initialize random seed */
 	struct utsname utsname;
 
@@ -1332,36 +1368,7 @@ main(int argc, char **argv)
 
 	InitVarTargets();
 
-	/*
-	 * If no user-supplied system path was given (through the -m option)
-	 * add the directories from the DEFSYSPATH (more than one may be given
-	 * as dir1:...:dirn) to the system include path.
-	 */
-	/* XXX: mismatch: the -m option sets sysIncPath, not syspath */
-	if (syspath == NULL || syspath[0] == '\0')
-		syspath = defsyspath;
-	else
-		syspath = bmake_strdup(syspath);
-
-	for (start = syspath; *start != '\0'; start = cp) {
-		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
-			continue;
-		if (*cp == ':') {
-			*cp++ = '\0';
-		}
-		/* look for magic parent directory search string */
-		if (strncmp(".../", start, 4) != 0) {
-			(void)Dir_AddDir(defIncPath, start);
-		} else {
-			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
-			if (dir != NULL) {
-				(void)Dir_AddDir(defIncPath, dir);
-				free(dir);
-			}
-		}
-	}
-	if (syspath != defsyspath)
-		free(syspath);
+	InitDefIncPath(syspath);
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
@@ -1479,6 +1486,7 @@ main(int argc, char **argv)
 		/* TODO: handle errors */
 		path = vpath;
 		do {
+			char *cp;
 			/* skip to end of directory */
 			for (cp = path; *cp != ':' && *cp != '\0'; cp++)
 				continue;
