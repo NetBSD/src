@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.84 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: lapic.c,v 1.85 2020/10/27 08:57:11 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.84 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.85 2020/10/27 08:57:11 ryo Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -90,8 +90,8 @@ extern int ddb_vec;
 #endif
 #endif
 
-#include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
-#include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
+#include <dev/vmt/vmtreg.h>	/* for vmt_hvcall() */
+#include <dev/vmt/vmtvar.h>	/* for vmt_hvcall() */
 
 /* Referenced from vector.S */
 void		lapic_clockintr(void *, struct intrframe *);

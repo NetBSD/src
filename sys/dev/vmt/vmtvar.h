@@ -1,4 +1,4 @@
-/* $NetBSD: vmtvar.h,v 1.1 2017/05/23 08:48:34 nonaka Exp $ */
+/* $NetBSD: vmtvar.h,v 1.1 2020/10/27 08:57:11 ryo Exp $ */
 /* NetBSD: vmt.c,v 1.15 2016/11/10 03:32:04 ozaki-r Exp */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
@@ -19,6 +19,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _DEV_VMT_VMTVAR_H_
+#define _DEV_VMT_VMTVAR_H_
+
+#include <sys/uuid.h>
+#include <dev/sysmon/sysmonvar.h>
+
+/* XXX: depend on little-endian */
 /* A register. */
 union vm_reg {
 	struct {
@@ -26,7 +33,7 @@ union vm_reg {
 		uint16_t high;
 	} part;
 	uint32_t word;
-#ifdef __amd64__
+#if defined(__amd64__) || defined(__aarch64__)
 	struct {
 		uint32_t low;
 		uint32_t high;
@@ -53,6 +60,43 @@ struct vm_rpc {
 	uint32_t cookie1;
 	uint32_t cookie2;
 };
+
+struct vmt_event {
+	struct sysmon_pswitch	ev_smpsw;
+	int			ev_code;
+};
+
+struct vmt_softc {
+	device_t		sc_dev;
+
+	struct sysctllog	*sc_log;
+	struct vm_rpc		sc_tclo_rpc;
+	bool			sc_tclo_rpc_open;
+	char			*sc_rpc_buf;
+	int			sc_rpc_error;
+	int			sc_tclo_ping;
+	int			sc_set_guest_os;
+#define VMT_RPC_BUFLEN			256
+
+	struct callout		sc_tick;
+	struct callout		sc_tclo_tick;
+
+#define VMT_CLOCK_SYNC_PERIOD_SECONDS 60
+	int			sc_clock_sync_period_seconds;
+	struct callout		sc_clock_sync_tick;
+
+	struct vmt_event	sc_ev_power;
+	struct vmt_event	sc_ev_reset;
+	struct vmt_event	sc_ev_sleep;
+	bool			sc_smpsw_valid;
+
+	char			sc_hostname[MAXHOSTNAMELEN];
+	char			sc_uuid[_UUID_STR_LEN];
+};
+
+bool vmt_probe(void);
+void vmt_common_attach(struct vmt_softc *);
+int vmt_common_detach(struct vmt_softc *);
 
 #define BACKDOOR_OP_I386(op, frame)		\
 	__asm__ __volatile__ (			\
@@ -106,10 +150,51 @@ struct vm_rpc {
 		: "rbx", "rcx", "rdx", "rdi", "rsi", "cc", "memory" \
 	)
 
-#ifdef __i386__
+#define X86_IO_MAGIC		0x86	/* magic for upper 32bit of x7 */
+#define X86_IO_W7_SIZE_MASK	__BITS(1, 0)
+#define X86_IO_W7_SIZE(n)	__SHIFTIN((n), X86_IO_W7_SIZE_MASK)
+#define X86_IO_W7_DIR		__BIT(2)
+#define X86_IO_W7_WITH		__BIT(3)
+#define X86_IO_W7_STR		__BIT(4)
+#define X86_IO_W7_DF		__BIT(5)
+#define X86_IO_W7_IMM_MASK	__BITS(12, 5)
+#define X86_IO_W7_IMM(imm)	__SHIFTIN((imm), X86_IO_W7_IMM_MASK)
+#define BACKDOOR_OP_AARCH64(op, frame)		\
+	__asm__ __volatile__ (			\
+		"ldp x0, x1, [%0, 8 * 0];	\n\t" \
+		"ldp x2, x3, [%0, 8 * 2];	\n\t" \
+		"ldp x4, x5, [%0, 8 * 4];	\n\t" \
+		"ldr x6,     [%0, 8 * 6];	\n\t" \
+		"mov x7, %1			\n\t" \
+		"movk x7, %2, lsl #32;		\n\t" \
+		"mrs xzr, mdccsr_el0;		\n\t" \
+		"stp x0, x1, [%0, 8 * 0];	\n\t" \
+		"stp x2, x3, [%0, 8 * 2];	\n\t" \
+		"stp x4, x5, [%0, 8 * 4];	\n\t" \
+		"str x6,     [%0, 8 * 6];	\n\t" \
+		: /* No outputs. */ \
+		: "r" (frame), \
+		  "r" (op), \
+		  "i" (X86_IO_MAGIC) \
+		: "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "memory" \
+	)
+
+#if defined(__i386__)
 #define BACKDOOR_OP(op, frame) BACKDOOR_OP_I386(op, frame)
-#else
+#elif defined(__amd64__)
 #define BACKDOOR_OP(op, frame) BACKDOOR_OP_AMD64(op, frame)
+#elif defined(__aarch64__)
+#define BACKDOOR_OP(op, frame) BACKDOOR_OP_AARCH64(op, frame)
+#endif
+
+#if defined(__i386__) || defined(__amd64__)
+#define BACKDOOR_OP_CMD	"inl %%dx, %%eax;"
+#define BACKDOOR_OP_IN	"cld;\n\trep insb;"
+#define BACKDOOR_OP_OUT	"cld;\n\trep outsb;"
+#elif defined(__aarch64__)
+#define BACKDOOR_OP_CMD	(X86_IO_W7_WITH | X86_IO_W7_DIR | X86_IO_W7_SIZE(2))
+#define BACKDOOR_OP_IN	(X86_IO_W7_WITH | X86_IO_W7_STR | X86_IO_W7_DIR)
+#define BACKDOOR_OP_OUT	(X86_IO_W7_WITH | X86_IO_W7_STR)
 #endif
 
 static __inline void
@@ -123,7 +208,7 @@ vmt_hvcall(uint8_t cmd, u_int regs[6])
 	frame.ecx.part.low = cmd;
 	frame.edx.part.low = VM_PORT_CMD;
 
-	BACKDOOR_OP("inl %%dx, %%eax;", &frame);
+	BACKDOOR_OP(BACKDOOR_OP_CMD, &frame);
 
 	regs[0] = frame.eax.word;
 	regs[1] = frame.ebx.word;
@@ -132,3 +217,5 @@ vmt_hvcall(uint8_t cmd, u_int regs[6])
 	regs[4] = frame.esi.word;
 	regs[5] = frame.edi.word;
 }
+
+#endif /* _DEV_VMT_VMTVAR_H_ */
