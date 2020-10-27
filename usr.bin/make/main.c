@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.406 2020/10/27 18:12:15 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.407 2020/10/27 18:16:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.406 2020/10/27 18:12:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.407 2020/10/27 18:16:19 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1055,6 +1055,29 @@ ignore_pwd:
 }
 #endif
 
+/*
+ * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
+ * MAKEOBJDIR is set in the environment, try only that value
+ * and fall back to .CURDIR if it does not exist.
+ *
+ * Otherwise, try _PATH_OBJDIR.MACHINE-MACHINE_ARCH, _PATH_OBJDIR.MACHINE,
+ * and * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
+ * of these paths exist, just use .CURDIR.
+ */
+static void
+InitObjdir(const char *machine, const char *machine_arch)
+{
+	Dir_InitDir(curdir);
+	(void)Main_SetObjdir("%s", curdir);
+
+	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX", curdir) &&
+	    !Main_SetVarObjdir("MAKEOBJDIR", "") &&
+	    !Main_SetObjdir("%s.%s-%s", _PATH_OBJDIR, machine, machine_arch) &&
+	    !Main_SetObjdir("%s.%s", _PATH_OBJDIR, machine) &&
+	    !Main_SetObjdir("%s", _PATH_OBJDIR))
+		(void)Main_SetObjdir("%s%s", _PATH_OBJDIRPREFIX, curdir);
+}
+
 /* get rid of resource limit on file descriptors */
 static void
 UnlimitFiles(void)
@@ -1442,24 +1465,7 @@ main(int argc, char **argv)
 #endif
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 
-	/*
-	 * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
-	 * MAKEOBJDIR is set in the environment, try only that value
-	 * and fall back to .CURDIR if it does not exist.
-	 *
-	 * Otherwise, try _PATH_OBJDIR.MACHINE-MACHINE_ARCH, _PATH_OBJDIR.MACHINE,
-	 * and * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
-	 * of these paths exist, just use .CURDIR.
-	 */
-	Dir_InitDir(curdir);
-	(void)Main_SetObjdir("%s", curdir);
-
-	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX", curdir) &&
-	    !Main_SetVarObjdir("MAKEOBJDIR", "") &&
-	    !Main_SetObjdir("%s.%s-%s", _PATH_OBJDIR, machine, machine_arch) &&
-	    !Main_SetObjdir("%s.%s", _PATH_OBJDIR, machine) &&
-	    !Main_SetObjdir("%s", _PATH_OBJDIR))
-		(void)Main_SetObjdir("%s%s", _PATH_OBJDIRPREFIX, curdir);
+	InitObjdir(machine, machine_arch);
 
 	/*
 	 * Initialize archive, target and suffix modules in preparation for
