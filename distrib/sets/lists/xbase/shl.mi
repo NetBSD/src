@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.90 2020/10/25 16:59:27 nia Exp $
+# $NetBSD: shl.mi,v 1.91 2020/10/27 13:42:22 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -83,9 +83,9 @@
 ./usr/X11R7/lib/libXdmcp.so			xbase-libXdmcp-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXdmcp.so.7			xbase-libXdmcp-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXdmcp.so.7.0			xbase-libXdmcp-lib		xorg,compatx11file
-./usr/X11R7/lib/libXevie.so			xbase-libXevie-lib		xorg,compatx11file
-./usr/X11R7/lib/libXevie.so.2			xbase-libXevie-lib		xorg,compatx11file
-./usr/X11R7/lib/libXevie.so.2.0			xbase-libXevie-lib		xorg,compatx11file
+./usr/X11R7/lib/libXevie.so			xbase-obsolete	obsolete
+./usr/X11R7/lib/libXevie.so.2			xbase-obsolete	obsolete
+./usr/X11R7/lib/libXevie.so.2.0			xbase-obsolete	obsolete
 ./usr/X11R7/lib/libXext.so			xbase-libXext-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXext.so.7			xbase-libXext-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXext.so.7.1			xbase-libXext-lib		xorg,compatx11file
