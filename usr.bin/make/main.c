@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.403 2020/10/27 08:05:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.404 2020/10/27 17:09:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.403 2020/10/27 08:05:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.404 2020/10/27 17:09:09 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -948,6 +948,15 @@ InitVarTargets(void)
 	}
 }
 
+static void
+InitRandom(void)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	srandom((unsigned int)(tv.tv_sec + tv.tv_usec));
+}
+
 static const char *
 init_machine(const struct utsname *utsname)
 {
@@ -1255,7 +1264,6 @@ main(int argc, char **argv)
 	const char *machine;
 	const char *machine_arch;
 	char *syspath = getenv("MAKESYSPATH");
-	struct timeval rightnow;	/* to initialize random seed */
 	struct utsname utsname;
 
 	/* default to writing debug to stderr */
@@ -1264,12 +1272,8 @@ main(int argc, char **argv)
 #ifdef SIGINFO
 	(void)bmake_signal(SIGINFO, siginfo);
 #endif
-	/*
-	 * Set the seed to produce a different random sequence
-	 * on each program execution.
-	 */
-	gettimeofday(&rightnow, NULL);
-	srandom((unsigned int)(rightnow.tv_sec + rightnow.tv_usec));
+
+	InitRandom();
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
