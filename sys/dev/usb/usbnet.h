@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.17 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.18 2020/10/27 13:46:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -219,7 +219,7 @@ struct usbnet_mii {
 	int			un_mii_offset;
 };
 
-#define UBSNET_MII_DECL(name, capmask, loc, off, flags)	\
+#define USBNET_MII_DECL(name, capmask, loc, off, flags)	\
 	struct usbnet_mii name = {			\
 		.un_mii_capmask = capmask,		\
 		.un_mii_phyloc = loc,			\
@@ -227,7 +227,7 @@ struct usbnet_mii {
 		.un_mii_flags = flags,			\
 	}
 #define USBNET_MII_DECL_DEFAULT(name)				\
-	UBSNET_MII_DECL(name, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0)
+	USBNET_MII_DECL(name, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0)
 
 /*
  * Generic USB ethernet structure.  Use this as ifp->if_softc and set as
