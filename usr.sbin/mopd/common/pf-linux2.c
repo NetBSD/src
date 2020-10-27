@@ -1,4 +1,4 @@
-/*	$NetBSD: pf-linux2.c,v 1.1 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: pf-linux2.c,v 1.2 2020/10/27 17:07:14 abs Exp $	*/
 
 /*
  * General Purpose AppleTalk Packet Filter Interface
@@ -23,7 +23,7 @@
  */
 
 #include "port.h"
-__RCSID("$NetBSD: pf-linux2.c,v 1.1 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: pf-linux2.c,v 1.2 2020/10/27 17:07:14 abs Exp $");
 
 /*
  * include header files
@@ -86,7 +86,7 @@ static int setup_pf(int, int, u_short);
 
 
 int
-pfInit(char *interface, u_short protocol, int typ, int mode)
+pfInit(char *interface, int mode, u_short protocol, int typ)
 {
   int s;
   int ioarg;
