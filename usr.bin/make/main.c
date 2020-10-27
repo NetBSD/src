@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.398 2020/10/27 07:34:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.399 2020/10/27 07:38:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.398 2020/10/27 07:34:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.399 2020/10/27 07:38:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1479,14 +1479,8 @@ main(int argc, char **argv)
 	 */
 	if (Var_Exists("VPATH", VAR_CMD)) {
 		char *vpath, savec;
-		/*
-		 * GCC stores string constants in read-only memory, but
-		 * Var_Subst will want to write this thing, so store it
-		 * in an array
-		 */
-		static char VPATH[] = "${VPATH}";
 
-		(void)Var_Subst(VPATH, VAR_CMD, VARE_WANTRES, &vpath);
+		(void)Var_Subst("${VPATH}", VAR_CMD, VARE_WANTRES, &vpath);
 		/* TODO: handle errors */
 		path = vpath;
 		do {
