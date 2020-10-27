@@ -1,4 +1,4 @@
-/* $NetBSD: vmtreg.h,v 1.2 2017/10/17 06:50:00 maya Exp $ */
+/* $NetBSD: vmtreg.h,v 1.1 2020/10/27 08:57:11 ryo Exp $ */
 /* NetBSD: vmt.c,v 1.15 2016/11/10 03:32:04 ozaki-r Exp */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
@@ -18,6 +18,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _DEV_VMT_VMTREG_H_
+#define _DEV_VMT_VMTREG_H_
 
 /* OS name to report to host */
 #ifdef __i386__
@@ -110,3 +113,5 @@
 #define VM_RPC_RESET_REPLY		"OK ATR toolbox"
 #define VM_RPC_REPLY_ERROR		"ERROR Unknown command"
 #define VM_RPC_REPLY_ERROR_IP_ADDR	"ERROR Unable to find guest IP address"
+
+#endif /* _DEV_VMT_VMTREG_H_ */

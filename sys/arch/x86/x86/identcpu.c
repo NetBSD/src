@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.117 2020/09/05 07:45:44 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.118 2020/10/27 08:57:11 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.117 2020/09/05 07:45:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.118 2020/10/27 08:57:11 ryo Exp $");
 
 #include "opt_xen.h"
 
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.117 2020/09/05 07:45:44 maxv Exp $");
 #include <x86/cpuvar.h>
 #include <x86/fpu.h>
 
-#include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
-#include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
+#include <dev/vmt/vmtreg.h>	/* for vmt_hvcall() */
+#include <dev/vmt/vmtvar.h>	/* for vmt_hvcall() */
 
 #ifndef XENPV
 #include "hyperv.h"
