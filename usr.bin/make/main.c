@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.401 2020/10/27 07:51:43 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.402 2020/10/27 08:00:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.401 2020/10/27 07:51:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.402 2020/10/27 08:00:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1172,6 +1172,39 @@ InitVpath(void)
 	free(vpath);
 }
 
+static void
+CleanUp(void)
+{
+#ifdef CLEANUP
+	Lst_Destroy(opts.variables, free);
+	Lst_Free(opts.makefiles);	/* don't free, may be used in GNodes */
+	Lst_Destroy(opts.create, free);
+#endif
+
+	/* print the graph now it's been processed if the user requested it */
+	if (DEBUG(GRAPH2))
+		Targ_PrintGraph(2);
+
+	Trace_Log(MAKEEND, 0);
+
+	if (enterFlagObj)
+		printf("%s: Leaving directory `%s'\n", progname, objdir);
+	if (opts.enterFlag)
+		printf("%s: Leaving directory `%s'\n", progname, curdir);
+
+#ifdef USE_META
+	meta_finish();
+#endif
+	Suff_End();
+	Targ_End();
+	Arch_End();
+	Var_End();
+	Parse_End();
+	Dir_End();
+	Job_End();
+	Trace_End();
+}
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -1527,34 +1560,7 @@ main(int argc, char **argv)
 		outOfDate = runTargets();
 	}
 
-#ifdef CLEANUP
-	Lst_Destroy(opts.variables, free);
-	Lst_Free(opts.makefiles);	/* don't free, may be used in GNodes */
-	Lst_Destroy(opts.create, free);
-#endif
-
-	/* print the graph now it's been processed if the user requested it */
-	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
-
-	Trace_Log(MAKEEND, 0);
-
-	if (enterFlagObj)
-		printf("%s: Leaving directory `%s'\n", progname, objdir);
-	if (opts.enterFlag)
-		printf("%s: Leaving directory `%s'\n", progname, curdir);
-
-#ifdef USE_META
-	meta_finish();
-#endif
-	Suff_End();
-	Targ_End();
-	Arch_End();
-	Var_End();
-	Parse_End();
-	Dir_End();
-	Job_End();
-	Trace_End();
+	CleanUp();
 
 	return outOfDate ? 1 : 0;
 }
