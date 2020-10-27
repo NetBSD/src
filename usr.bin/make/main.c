@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.407 2020/10/27 18:16:19 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.408 2020/10/27 19:16:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.407 2020/10/27 18:16:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.408 2020/10/27 19:16:46 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1194,6 +1194,38 @@ ReadBuiltinRules(void)
 	/* XXX: sysMkPath is not freed */
 }
 
+static void
+InitMaxJobs(void)
+{
+	char *value;
+	int n;
+
+	if (forceJobs || opts.compatMake ||
+	    !Var_Exists(".MAKE.JOBS", VAR_GLOBAL))
+		return;
+
+	(void)Var_Subst("${.MAKE.JOBS}", VAR_GLOBAL, VARE_WANTRES, &value);
+	/* TODO: handle errors */
+	n = (int)strtol(value, NULL, 0);
+	if (n < 1) {
+		(void)fprintf(stderr,
+			      "%s: illegal value for .MAKE.JOBS "
+			      "-- must be positive integer!\n",
+			      progname);
+		exit(1);
+	}
+
+	if (n != opts.maxJobs) {
+		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, value, VAR_GLOBAL);
+	}
+
+	opts.maxJobs = n;
+	maxJobTokens = opts.maxJobs;
+	forceJobs = TRUE;
+	free(value);
+}
+
 /*
  * For compatibility, look at the directories in the VPATH variable
  * and add them to the search path, if the variable is defined. The
@@ -1515,28 +1547,7 @@ main(int argc, char **argv)
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	bmake_free(p1);
 
-	if (!forceJobs && !opts.compatMake &&
-	    Var_Exists(".MAKE.JOBS", VAR_GLOBAL)) {
-	    char *value;
-	    int n;
-
-	    (void)Var_Subst("${.MAKE.JOBS}", VAR_GLOBAL, VARE_WANTRES, &value);
-	    /* TODO: handle errors */
-	    n = (int)strtol(value, NULL, 0);
-	    if (n < 1) {
-		(void)fprintf(stderr, "%s: illegal value for .MAKE.JOBS -- must be positive integer!\n",
-		    progname);
-		exit(1);
-	    }
-	    if (n != opts.maxJobs) {
-		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-		Var_Append(MAKEFLAGS, value, VAR_GLOBAL);
-	    }
-	    opts.maxJobs = n;
-	    maxJobTokens = opts.maxJobs;
-	    forceJobs = TRUE;
-	    free(value);
-	}
+	InitMaxJobs();
 
 	/*
 	 * Be compatible if user did not specify -j and did not explicitly
