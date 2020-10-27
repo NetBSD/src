@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.25 2020/10/24 16:13:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.26 2020/10/27 15:28:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -551,7 +551,16 @@ die Distribution zu finden ist.
 }
 
 message No_cd_found
-{Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!}
+{Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!  
+Geben Sie die korrekten Daten manuel ein, oder legen Sie eine CD
+ein und versuchen Sie es erneut. 
+}
+
+message abort_install
+{Installation abbrechen}
+
+message source_sel_retry
+{Zurück zur Quellauswahl}
 
 message Available_cds
 {Verfügbare CDs}
