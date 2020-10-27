@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.395 2020/10/27 07:13:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.396 2020/10/27 07:16:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.395 2020/10/27 07:13:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.396 2020/10/27 07:16:27 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1067,7 +1067,7 @@ CmdOpts_Init(void)
 	opts.debug = 0;			/* No debug verbosity, please. */
 	/* opts.debug_file has been initialized earlier */
 	opts.debugVflag = FALSE;
-	/* TODO: checkEnvFirst = FALSE; */
+	opts.checkEnvFirst = FALSE;
 	opts.makefiles = Lst_New();
 	opts.ignoreErrors = FALSE;	/* Pay attention to non-zero returns */
 	opts.maxJobs = DEFMAXLOCAL;	/* Set default local max concurrency */
@@ -1080,9 +1080,9 @@ CmdOpts_Init(void)
 	opts.touchFlag = FALSE;		/* Actually update targets */
 	opts.printVars = 0;
 	opts.variables = Lst_New();
-	/* TODO: parseWarnFatal = FALSE; */
-	/* TODO: enterFlag = FALSE; */
-	/* TODO: varNoExportEnv = FALSE; */
+	opts.parseWarnFatal = FALSE;
+	opts.enterFlag = FALSE;
+	opts.varNoExportEnv = FALSE;
 	opts.create = Lst_New();
 }
 
