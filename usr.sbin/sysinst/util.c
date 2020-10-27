@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.51 2020/10/26 20:18:33 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.52 2020/10/27 15:28:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -539,6 +539,11 @@ get_available_cds(void)
 static int
 cd_has_sets(void)
 {
+
+	/* sanity check */
+	if (cdrom_dev[0] == 0)
+		return 0;
+
 	/* Mount it */
 	if (run_program(RUN_SILENT, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
 	    cdrom_dev) != 0)
@@ -596,7 +601,6 @@ get_via_cdrom(void)
 	menu_ent cd_menu[MAX_CD_INFOS];
 	struct stat sb;
 	int rv, num_cds, menu_cd, i, selected_cd = 0;
-	bool silent = false;
 	int mib[2];
 	char rootdev[SSTRSIZE] = "";
 	size_t varlen;
@@ -616,8 +620,8 @@ get_via_cdrom(void)
 	memset(cd_menu, 0, sizeof(cd_menu));
 	num_cds = get_available_cds();
 	if (num_cds <= 0) {
-		hit_enter_to_continue(MSG_No_cd_found, NULL);
-		return SET_RETRY;
+		msg_display(MSG_No_cd_found);
+		cdrom_dev[0] = 0;
 	} else if (num_cds == 1) {
 		/* single CD found, check for sets on it */
 		strcpy(cdrom_dev, cds[0].device_name);
@@ -644,9 +648,7 @@ get_via_cdrom(void)
 			return SET_OK;
 	}
 
-	if (silent)
-		msg_display("");
-	else {
+	if (num_cds >= 1 && mnt2_mounted) {
 		umount_mnt2();
 		hit_enter_to_continue(MSG_cd_path_not_found, NULL);
 	}
@@ -654,8 +656,8 @@ get_via_cdrom(void)
 	/* ask for paths on the CD */
 	rv = -1;
 	process_menu(MENU_cdromsource, &rv);
-	if (rv == SET_RETRY)
-		return SET_RETRY;
+	if (rv == SET_RETRY || rv == SET_ABANDON)
+		return rv;
 
 	if (cd_has_sets())
 		return SET_OK;
