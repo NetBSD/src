@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.406 2020/10/28 01:51:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.407 2020/10/28 01:58:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.406 2020/10/28 01:51:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.407 2020/10/28 01:58:37 rillig Exp $");
 
 /* types and constants */
 
@@ -215,7 +215,7 @@ static StringList *targCmds;
  * Predecessor node for handling .ORDER. Initialized to NULL when .ORDER
  * seen, then set to each successive source on the line.
  */
-static GNode *predecessor;
+static GNode *order_pred;
 
 /* parser state */
 
@@ -919,20 +919,20 @@ ParseDoSrcOrder(const char *src)
     gn = Targ_GetNode(src);
     if (doing_depend)
 	ParseMark(gn);
-    if (predecessor != NULL) {
-	Lst_Append(predecessor->order_succ, gn);
-	Lst_Append(gn->order_pred, predecessor);
+    if (order_pred != NULL) {
+	Lst_Append(order_pred->order_succ, gn);
+	Lst_Append(gn->order_pred, order_pred);
 	if (DEBUG(PARSE)) {
 	    debug_printf("# %s: added Order dependency %s - %s\n",
-			 __func__, predecessor->name, gn->name);
-	    Targ_PrintNode(predecessor, 0);
+			 __func__, order_pred->name, gn->name);
+	    Targ_PrintNode(order_pred, 0);
 	    Targ_PrintNode(gn, 0);
 	}
     }
     /*
      * The current source now becomes the predecessor for the next one.
      */
-    predecessor = gn;
+    order_pred = gn;
 }
 
 static void
@@ -1148,7 +1148,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	opts.compatMake = TRUE;
 	break;
     case SP_ORDER:
-	predecessor = NULL;
+	order_pred = NULL;
 	break;
     default:
 	break;
