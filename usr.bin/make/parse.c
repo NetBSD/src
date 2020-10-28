@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.405 2020/10/28 01:47:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.406 2020/10/28 01:51:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.405 2020/10/28 01:47:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.406 2020/10/28 01:51:36 rillig Exp $");
 
 /* types and constants */
 
@@ -146,6 +146,7 @@ typedef struct IFile {
  * Tokens for target attributes
  */
 typedef enum ParseSpecial {
+    SP_ATTRIBUTE,	/* Generic attribute */
     SP_BEGIN,		/* .BEGIN */
     SP_DEFAULT,		/* .DEFAULT */
     SP_DELETE_ON_ERROR,	/* .DELETE_ON_ERROR */
@@ -155,10 +156,10 @@ typedef enum ParseSpecial {
     SP_INCLUDES,	/* .INCLUDES; not mentioned in the manual page */
     SP_INTERRUPT,	/* .INTERRUPT */
     SP_LIBS,		/* .LIBS; not mentioned in the manual page */
-    SP_META,		/* .META */
-    SP_MFLAGS,		/* .MFLAGS or .MAKEFLAGS */
     SP_MAIN,		/* .MAIN and we don't have anything user-specified to
 			 * make */
+    SP_META,		/* .META */
+    SP_MFLAGS,		/* .MFLAGS or .MAKEFLAGS */
     SP_NOMETA,		/* .NOMETA */
     SP_NOMETA_CMP,	/* .NOMETA_CMP */
     SP_NOPATH,		/* .NOPATH */
@@ -179,8 +180,7 @@ typedef enum ParseSpecial {
     SP_SINGLESHELL,	/* .SINGLESHELL; not mentioned in the manual page */
     SP_STALE,		/* .STALE */
     SP_SUFFIXES,	/* .SUFFIXES */
-    SP_WAIT,		/* .WAIT */
-    SP_ATTRIBUTE	/* Generic attribute */
+    SP_WAIT		/* .WAIT */
 } ParseSpecial;
 
 typedef List SearchPathList;
