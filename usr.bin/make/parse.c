@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.408 2020/10/28 03:12:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.409 2020/10/28 03:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.408 2020/10/28 03:12:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.409 2020/10/28 03:21:25 rillig Exp $");
 
 /* types and constants */
 
@@ -280,10 +280,10 @@ CurFile(void)
     return GetInclude(includes.len - 1);
 }
 
-/* include paths (lists of directories) */
+/* include paths */
 SearchPath *parseIncPath;	/* dirs for "..." includes */
 SearchPath *sysIncPath;		/* dirs for <...> includes */
-SearchPath *defIncPath;		/* default for sysIncPath */
+SearchPath *defSysIncPath;		/* default for sysIncPath */
 
 /* parser tables */
 
@@ -2206,7 +2206,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	/*
 	 * Look for it on the system path
 	 */
-	SearchPath *path = Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath;
+	SearchPath *path = Lst_IsEmpty(sysIncPath) ? defSysIncPath : sysIncPath;
 	fullname = Dir_FindFile(file, path);
     }
 
@@ -3144,7 +3144,7 @@ Parse_Init(void)
     mainNode = NULL;
     parseIncPath = Lst_New();
     sysIncPath = Lst_New();
-    defIncPath = Lst_New();
+    defSysIncPath = Lst_New();
     Vector_Init(&includes, sizeof(IFile));
 #ifdef CLEANUP
     targCmds = Lst_New();
@@ -3158,7 +3158,7 @@ Parse_End(void)
 #ifdef CLEANUP
     Lst_Destroy(targCmds, free);
     assert(targets == NULL);
-    Lst_Destroy(defIncPath, Dir_Destroy);
+    Lst_Destroy(defSysIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
     assert(includes.len == 0);
