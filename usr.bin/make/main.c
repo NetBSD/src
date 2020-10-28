@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.408 2020/10/27 19:16:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.409 2020/10/28 03:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.408 2020/10/27 19:16:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.409 2020/10/28 03:21:25 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1141,7 +1141,7 @@ InitVarMake(const char *argv0)
 }
 
 static void
-InitDefIncPath(char *syspath)
+InitDefSysIncPath(char *syspath)
 {
 	static char defsyspath[] = _PATH_DEFSYSPATH;
 	char *start, *cp;
@@ -1165,11 +1165,11 @@ InitDefIncPath(char *syspath)
 		}
 		/* look for magic parent directory search string */
 		if (strncmp(".../", start, 4) != 0) {
-			(void)Dir_AddDir(defIncPath, start);
+			(void)Dir_AddDir(defSysIncPath, start);
 		} else {
 			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
 			if (dir != NULL) {
-				(void)Dir_AddDir(defIncPath, dir);
+				(void)Dir_AddDir(defSysIncPath, dir);
 				free(dir);
 			}
 		}
@@ -1184,7 +1184,7 @@ ReadBuiltinRules(void)
 {
 	StringList *sysMkPath = Lst_New();
 	Dir_Expand(_PATH_DEFSYSMK,
-		   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
+		   Lst_IsEmpty(sysIncPath) ? defSysIncPath : sysIncPath,
 		   sysMkPath);
 	if (Lst_IsEmpty(sysMkPath))
 		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);
@@ -1515,7 +1515,7 @@ main(int argc, char **argv)
 
 	InitVarTargets();
 
-	InitDefIncPath(syspath);
+	InitDefSysIncPath(syspath);
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
@@ -1634,9 +1634,11 @@ ReadMakefile(const char *fname)
 		}
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
-		if (!name)
-			name = Dir_FindFile(fname,
-				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
+		if (!name) {
+			SearchPath *sysInc = Lst_IsEmpty(sysIncPath)
+					     ? defSysIncPath : sysIncPath;
+			name = Dir_FindFile(fname, sysInc);
+		}
 		if (!name || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);
