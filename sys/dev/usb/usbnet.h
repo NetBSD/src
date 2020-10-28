@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.18 2020/10/27 13:46:33 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.19 2020/10/28 01:51:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -367,15 +367,15 @@ void	usbnet_stop(struct usbnet *, struct ifnet *, int);
 /* module hook up */
 
 #ifdef _MODULE
-#define USENET_INIT(name)						\
+#define USBNET_INIT(name)						\
 	error = config_init_component(cfdriver_ioconf_##name,		\
 	    cfattach_ioconf_##name, cfdata_ioconf_##name);
-#define USENET_FINI(name)						\
+#define USBNET_FINI(name)						\
 	error = config_fini_component(cfdriver_ioconf_##name,		\
 	    cfattach_ioconf_##name, cfdata_ioconf_##name);
 #else
-#define USENET_INIT(name)
-#define USENET_FINI(name)
+#define USBNET_INIT(name)
+#define USBNET_FINI(name)
 #endif
 
 #define USBNET_MODULE(name)						\
@@ -389,10 +389,10 @@ if_##name##_modcmd(modcmd_t cmd, void *aux)				\
 									\
 	switch (cmd) {							\
 	case MODULE_CMD_INIT:						\
-		USENET_INIT(name)					\
+		USBNET_INIT(name)					\
 		return error;						\
 	case MODULE_CMD_FINI:						\
-		USENET_FINI(name)					\
+		USBNET_FINI(name)					\
 		return error;						\
 	default:							\
 		return ENOTTY;						\
