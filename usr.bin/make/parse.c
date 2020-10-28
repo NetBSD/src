@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.407 2020/10/28 01:58:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.408 2020/10/28 03:12:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.407 2020/10/28 01:58:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.408 2020/10/28 03:12:54 rillig Exp $");
 
 /* types and constants */
 
@@ -226,13 +226,9 @@ static int fatals = 0;
  * Variables for doing includes
  */
 
-/* current file being read */
-static IFile *curFile;
-
-/* The include chain of makefiles that leads to curFile.  At the bottom of
- * the stack is the top-level makefile from the command line, and on top of
- * this file, there are the included files or .for loops, up to but excluding
- * curFile.
+/* The include chain of makefiles.  At the bottom is the top-level makefile
+ * from the command line, and on top of that, there are the included files or
+ * .for loops, up to and including the current file.
  *
  * This data could be used to print stack traces on parse errors.  As of
  * 2020-09-14, this is not done though.  It seems quite simple to print the
@@ -249,13 +245,13 @@ static IFile *curFile;
  *
  * To make the stack trace intuitive, the entry below the first .for loop must
  * be ignored completely since neither its lineno nor its first_lineno is
- * useful.  Instead, the topmost .for loop needs to be printed twice, once
- * with its first_lineno and once with its lineno.
+ * useful.  Instead, the topmost of each chain of .for loop needs to be
+ * printed twice, once with its first_lineno and once with its lineno.
  *
- * As of 2020-09-15, using the above rules, the stack trace for the .info line
+ * As of 2020-10-28, using the above rules, the stack trace for the .info line
  * in include-subsub.mk would be:
  *
- *	curFile:	include-subsub.mk:4
+ *	includes[5]:	include-subsub.mk:4
  *			(lineno, from an .include)
  *	includes[4]:	include-sub.mk:32
  *			(lineno, from a .for loop below an .include)
@@ -269,12 +265,19 @@ static IFile *curFile;
  *			(not printed since it is below a .for loop)
  *	includes[0]:	include-main.mk:27
  */
-static Vector /* of IFile pointer */ includes;
+static Vector /* of IFile */ includes;
 
 static IFile *
 GetInclude(size_t i)
 {
-    return *((IFile **)Vector_Get(&includes, i));
+    return Vector_Get(&includes, i);
+}
+
+/* The file that is currently being read. */
+static IFile *
+CurFile(void)
+{
+    return GetInclude(includes.len - 1);
 }
 
 /* include paths (lists of directories) */
@@ -571,6 +574,7 @@ ParseIsEscaped(const char *line, const char *c)
 static void
 ParseMark(GNode *gn)
 {
+    IFile *curFile = CurFile();
     gn->fname = curFile->fname;
     gn->lineno = curFile->lineno;
 }
@@ -694,10 +698,11 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 	const char *fname;
 	size_t lineno;
 
-	if (curFile == NULL) {
+	if (includes.len == 0) {
 		fname = NULL;
 		lineno = 0;
 	} else {
+		IFile *curFile = CurFile();
 		fname = curFile->fname;
 		lineno = (size_t)curFile->lineno;
 	}
@@ -2152,7 +2157,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	 * we can locate the beast.
 	 */
 
-	incdir = bmake_strdup(curFile->fname);
+	incdir = bmake_strdup(CurFile()->fname);
 	prefEnd = strrchr(incdir, '/');
 	if (prefEnd != NULL) {
 	    *prefEnd = '\0';
@@ -2225,7 +2230,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 
     /* Start reading from this file next */
     Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
-    curFile->lf = lf;
+    CurFile()->lf = lf;
     if (depinc)
 	doing_depend = depinc;	/* only turn it on */
 }
@@ -2316,13 +2321,11 @@ static const char *
 GetActuallyIncludingFile(void)
 {
     size_t i;
+    const IFile *incs = GetInclude(0);
 
-    for (i = includes.len; i > 0; i--) {
-	IFile *parent = GetInclude(i - 1);
-	IFile *child = i < includes.len ? GetInclude(i) : curFile;
-	if (!child->fromForLoop)
-	    return parent->fname;
-    }
+    for (i = includes.len; i >= 2; i--)
+	if (!incs[i - 1].fromForLoop)
+	    return incs[i - 2].fname;
     return NULL;
 }
 
@@ -2379,12 +2382,13 @@ void
 Parse_SetInput(const char *name, int line, int fd,
 	       char *(*nextbuf)(void *, size_t *), void *arg)
 {
+    IFile *curFile;
     char *buf;
     size_t len;
     Boolean fromForLoop = name == NULL;
 
     if (fromForLoop)
-	name = curFile->fname;
+	name = CurFile()->fname;
     else
 	ParseTrackInput(name);
 
@@ -2398,14 +2402,7 @@ Parse_SetInput(const char *name, int line, int fd,
 	/* sanity */
 	return;
 
-    if (curFile != NULL) {
-	/* Save existing file info */
-	IFile **next = Vector_Push(&includes);
-	*next = curFile;
-    }
-
-    /* Allocate and fill in new structure */
-    curFile = bmake_malloc(sizeof *curFile);
+    curFile = Vector_Push(&includes);
 
     /*
      * Once the previous state has been saved, we can get down to reading
@@ -2569,6 +2566,7 @@ ParseEOF(void)
 {
     char *ptr;
     size_t len;
+    IFile *curFile = CurFile();
 
     assert(curFile->nextbuf != NULL);
 
@@ -2595,10 +2593,9 @@ ParseEOF(void)
     /* Dispose of curFile info */
     /* Leak curFile->fname because all the gnodes have pointers to it */
     free(curFile->buf_freeIt);
-    free(curFile);
+    Vector_Pop(&includes);
 
     if (includes.len == 0) {
-	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
@@ -2607,8 +2604,7 @@ ParseEOF(void)
 	return FALSE;
     }
 
-    curFile = GetInclude(includes.len - 1);
-    Vector_Pop(&includes);
+    curFile = CurFile();
     DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
 	   curFile->fname, curFile->lineno);
 
@@ -2622,7 +2618,7 @@ ParseEOF(void)
 static char *
 ParseGetLine(int flags)
 {
-    IFile *cf = curFile;
+    IFile *cf = CurFile();
     char *ptr;
     char ch;
     char *line;
@@ -2829,7 +2825,7 @@ ParseReadLine(void)
 		/* Syntax error - error printed, ignore line */
 		continue;
 	    /* Start of a .for loop */
-	    lineno = curFile->lineno;
+	    lineno = CurFile()->lineno;
 	    /* Accumulate loop lines until matching .endfor */
 	    do {
 		line = ParseGetLine(PARSE_RAW);
@@ -3116,11 +3112,12 @@ Parse_File(const char *name, int fd)
 	name = "(stdin)";
 
     Parse_SetInput(name, 0, -1, loadedfile_nextbuf, lf);
-    curFile->lf = lf;
+    CurFile()->lf = lf;
 
     do {
 	while ((line = ParseReadLine()) != NULL) {
-	    DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n", curFile->lineno, line);
+	    DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n",
+		   CurFile()->lineno, line);
 	    ParseLine(line);
 	}
 	/*
@@ -3148,7 +3145,7 @@ Parse_Init(void)
     parseIncPath = Lst_New();
     sysIncPath = Lst_New();
     defIncPath = Lst_New();
-    Vector_Init(&includes, sizeof(IFile *));
+    Vector_Init(&includes, sizeof(IFile));
 #ifdef CLEANUP
     targCmds = Lst_New();
 #endif
