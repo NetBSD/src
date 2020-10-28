@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.174 2020/10/27 07:03:55 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.175 2020/10/28 03:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -447,7 +447,7 @@ extern time_t	now;		/* The time at the start of this whole
 extern Boolean	oldVars;	/* Do old-style variable substitution */
 
 extern SearchPath *sysIncPath;	/* The system include path. */
-extern SearchPath *defIncPath;	/* The default include path. */
+extern SearchPath *defSysIncPath; /* The default system include path. */
 
 extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
