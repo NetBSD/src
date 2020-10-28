@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.402 2020/10/28 00:38:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.403 2020/10/28 00:44:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.402 2020/10/28 00:38:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.403 2020/10/28 00:44:39 rillig Exp $");
 
 /* types and constants */
 
@@ -131,9 +131,12 @@ typedef struct IFile {
     int first_lineno;		/* line number of start of text */
     unsigned int cond_depth;	/* 'if' nesting when file opened */
     Boolean depending;		/* state of doing_depend on EOF */
-    char *P_str;		/* point to base of string buffer */
-    char *P_ptr;		/* point to next char of string buffer */
-    char *P_end;		/* point to the end of string buffer */
+
+    /* The buffer from which the file's content is read. */
+    char *buf_freeIt;
+    char *buf_ptr;		/* next char to be read */
+    char *buf_end;
+
     char *(*nextbuf)(void *, size_t *); /* Function to get more data */
     void *nextbuf_arg;		/* Opaque arg for nextbuf() */
     struct loadedfile *lf;	/* loadedfile object, if any */
@@ -2431,9 +2434,9 @@ Parse_SetInput(const char *name, int line, int fd,
 	free(curFile);
 	return;
     }
-    curFile->P_str = buf;
-    curFile->P_ptr = buf;
-    curFile->P_end = buf + len;
+    curFile->buf_freeIt = buf;
+    curFile->buf_ptr = buf;
+    curFile->buf_end = buf + len;
 
     curFile->cond_depth = Cond_save_depth();
     ParseSetParseFile(name);
@@ -2573,9 +2576,9 @@ ParseEOF(void)
     doing_depend = curFile->depending;	/* restore this */
     /* get next input buffer, if any */
     ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
-    curFile->P_ptr = ptr;
-    curFile->P_str = ptr;
-    curFile->P_end = ptr + len;
+    curFile->buf_ptr = ptr;
+    curFile->buf_freeIt = ptr;
+    curFile->buf_end = ptr + len;
     curFile->lineno = curFile->first_lineno;
     if (ptr != NULL) {
 	/* Iterate again */
@@ -2592,7 +2595,7 @@ ParseEOF(void)
 
     /* Dispose of curFile info */
     /* Leak curFile->fname because all the gnodes have pointers to it */
-    free(curFile->P_str);
+    free(curFile->buf_freeIt);
     free(curFile);
 
     if (includes.len == 0) {
@@ -2632,24 +2635,26 @@ ParseGetLine(int flags)
     /* Loop through blank lines and comment lines */
     for (;;) {
 	cf->lineno++;
-	line = cf->P_ptr;
+	line = cf->buf_ptr;
 	ptr = line;
 	line_end = line;
 	escaped = NULL;
 	comment = NULL;
 	for (;;) {
-	    if (cf->P_end != NULL && ptr == cf->P_end) {
+	    /* XXX: can buf_end ever be null? */
+	    if (cf->buf_end != NULL && ptr == cf->buf_end) {
 		/* end of buffer */
 		ch = 0;
 		break;
 	    }
 	    ch = *ptr;
 	    if (ch == 0 || (ch == '\\' && ptr[1] == 0)) {
-		if (cf->P_end == NULL)
+		/* XXX: can buf_end ever be null? */
+		if (cf->buf_end == NULL)
 		    /* End of string (aka for loop) data */
 		    break;
 		/* see if there is more we can parse */
-		while (ptr++ < cf->P_end) {
+		while (ptr++ < cf->buf_end) {
 		    if ((ch = *ptr) == '\n') {
 			if (ptr > line && ptr[-1] == '\\')
 			    continue;
@@ -2695,7 +2700,7 @@ ParseGetLine(int flags)
 	}
 
 	/* Save next 'to be processed' location */
-	cf->P_ptr = ptr;
+	cf->buf_ptr = ptr;
 
 	/* Check we have a non-comment, non-blank line */
 	if (line_end == line || comment == line) {
