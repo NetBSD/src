@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.691 2020/10/16 05:53:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.692 2020/10/28 07:08:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.691 2020/10/16 05:53:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.692 2020/10/28 07:08:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6523,6 +6523,8 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 	for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
 		struct wm_txqueue *txq = &wmq->wmq_txq;
+		struct mbuf *m;
+
 		mutex_enter(txq->txq_lock);
 		txq->txq_sending = false; /* Ensure watchdog disabled */
 		for (i = 0; i < WM_TXQUEUELEN(txq); i++) {
@@ -6533,6 +6535,9 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 				txs->txs_mbuf = NULL;
 			}
 		}
+		/* Drain txq_interq */
+		while ((m = pcq_get(txq->txq_interq)) != NULL)
+			m_freem(m);
 		mutex_exit(txq->txq_lock);
 	}
 
