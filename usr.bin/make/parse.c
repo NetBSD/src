@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.403 2020/10/28 00:44:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.404 2020/10/28 01:43:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.403 2020/10/28 00:44:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.404 2020/10/28 01:43:01 rillig Exp $");
 
 /* types and constants */
 
@@ -146,42 +146,42 @@ typedef struct IFile {
  * Tokens for target attributes
  */
 typedef enum ParseSpecial {
-    Begin,		/* .BEGIN */
-    Default,		/* .DEFAULT */
-    DeleteOnError,	/* .DELETE_ON_ERROR */
-    End,		/* .END */
-    dotError,		/* .ERROR */
-    Ignore,		/* .IGNORE */
-    Includes,		/* .INCLUDES */
-    Interrupt,		/* .INTERRUPT */
-    Libs,		/* .LIBS */
-    Meta,		/* .META */
-    MFlags,		/* .MFLAGS or .MAKEFLAGS */
-    Main,		/* .MAIN and we don't have anything user-specified to
+    SP_BEGIN,		/* .BEGIN */
+    SP_DEFAULT,		/* .DEFAULT */
+    SP_DELETE_ON_ERROR,	/* .DELETE_ON_ERROR */
+    SP_END,		/* .END */
+    SP_ERROR,		/* .ERROR */
+    SP_IGNORE,		/* .IGNORE */
+    SP_INCLUDES,	/* .INCLUDES; not mentioned in the manual page */
+    SP_INTERRUPT,	/* .INTERRUPT */
+    SP_LIBS,		/* .LIBS; not mentioned in the manual page */
+    SP_META,		/* .META */
+    SP_MFLAGS,		/* .MFLAGS or .MAKEFLAGS */
+    SP_MAIN,		/* .MAIN and we don't have anything user-specified to
 			 * make */
-    NoExport,		/* .NOEXPORT */
-    NoMeta,		/* .NOMETA */
-    NoMetaCmp,		/* .NOMETA_CMP */
-    NoPath,		/* .NOPATH */
-    Not,		/* Not special */
-    NotParallel,	/* .NOTPARALLEL */
-    Null,		/* .NULL */
-    ExObjdir,		/* .OBJDIR */
-    Order,		/* .ORDER */
-    Parallel,		/* .PARALLEL */
-    ExPath,		/* .PATH */
-    Phony,		/* .PHONY */
+    SP_NOEXPORT,	/* .NOEXPORT; not mentioned in the manual page */
+    SP_NOMETA,		/* .NOMETA */
+    SP_NOMETA_CMP,	/* .NOMETA_CMP */
+    SP_NOPATH,		/* .NOPATH */
+    SP_NOT,		/* Not special */
+    SP_NOTPARALLEL,	/* .NOTPARALLEL or .NO_PARALLEL */
+    SP_NULL,		/* .NULL; not mentioned in the manual page */
+    SP_OBJDIR,		/* .OBJDIR */
+    SP_ORDER,		/* .ORDER */
+    SP_PARALLEL,	/* .PARALLEL; not mentioned in the manual page */
+    SP_PATH,		/* .PATH or .PATH.suffix */
+    SP_PHONY,		/* .PHONY */
 #ifdef POSIX
-    Posix,		/* .POSIX */
+    SP_POSIX,		/* .POSIX; not mentioned in the manual page */
 #endif
-    Precious,		/* .PRECIOUS */
-    ExShell,		/* .SHELL */
-    Silent,		/* .SILENT */
-    SingleShell,	/* .SINGLESHELL */
-    Stale,		/* .STALE */
-    Suffixes,		/* .SUFFIXES */
-    Wait,		/* .WAIT */
-    Attribute		/* Generic attribute */
+    SP_PRECIOUS,	/* .PRECIOUS */
+    SP_SHELL,		/* .SHELL */
+    SP_SILENT,		/* .SILENT */
+    SP_SINGLESHELL,	/* .SINGLESHELL; not mentioned in the manual page */
+    SP_STALE,		/* .STALE */
+    SP_SUFFIXES,	/* .SUFFIXES */
+    SP_WAIT,		/* .WAIT */
+    SP_ATTRIBUTE	/* Generic attribute */
 } ParseSpecial;
 
 typedef List SearchPathList;
@@ -288,7 +288,7 @@ SearchPath *defIncPath;		/* default for sysIncPath */
 /*
  * The parseKeywords table is searched using binary search when deciding
  * if a target or source is special. The 'spec' field is the ParseSpecial
- * type of the keyword ("Not" if the keyword isn't special as a target) while
+ * type of the keyword (SP_NOT if the keyword isn't special as a target) while
  * the 'op' field is the operator to apply to the list of targets if the
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
@@ -297,50 +297,50 @@ static const struct {
     ParseSpecial  spec;		/* Type when used as a target */
     GNodeType	  op;		/* Operator when used as a source */
 } parseKeywords[] = {
-    { ".BEGIN",		Begin,		0 },
-    { ".DEFAULT",	Default,	0 },
-    { ".DELETE_ON_ERROR", DeleteOnError, 0 },
-    { ".END",		End,		0 },
-    { ".ERROR",		dotError,	0 },
-    { ".EXEC",		Attribute,	OP_EXEC },
-    { ".IGNORE",	Ignore,		OP_IGNORE },
-    { ".INCLUDES",	Includes,	0 },
-    { ".INTERRUPT",	Interrupt,	0 },
-    { ".INVISIBLE",	Attribute,	OP_INVISIBLE },
-    { ".JOIN",		Attribute,	OP_JOIN },
-    { ".LIBS",		Libs,		0 },
-    { ".MADE",		Attribute,	OP_MADE },
-    { ".MAIN",		Main,		0 },
-    { ".MAKE",		Attribute,	OP_MAKE },
-    { ".MAKEFLAGS",	MFlags,		0 },
-    { ".META",		Meta,		OP_META },
-    { ".MFLAGS",	MFlags,		0 },
-    { ".NOMETA",	NoMeta,		OP_NOMETA },
-    { ".NOMETA_CMP",	NoMetaCmp,	OP_NOMETA_CMP },
-    { ".NOPATH",	NoPath,		OP_NOPATH },
-    { ".NOTMAIN",	Attribute,	OP_NOTMAIN },
-    { ".NOTPARALLEL",	NotParallel,	0 },
-    { ".NO_PARALLEL",	NotParallel,	0 },
-    { ".NULL",		Null,		0 },
-    { ".OBJDIR",	ExObjdir,	0 },
-    { ".OPTIONAL",	Attribute,	OP_OPTIONAL },
-    { ".ORDER",		Order,		0 },
-    { ".PARALLEL",	Parallel,	0 },
-    { ".PATH",		ExPath,		0 },
-    { ".PHONY",		Phony,		OP_PHONY },
+    { ".BEGIN",		SP_BEGIN,	0 },
+    { ".DEFAULT",	SP_DEFAULT,	0 },
+    { ".DELETE_ON_ERROR", SP_DELETE_ON_ERROR, 0 },
+    { ".END",		SP_END,		0 },
+    { ".ERROR",		SP_ERROR,	0 },
+    { ".EXEC",		SP_ATTRIBUTE,	OP_EXEC },
+    { ".IGNORE",	SP_IGNORE,	OP_IGNORE },
+    { ".INCLUDES",	SP_INCLUDES,	0 },
+    { ".INTERRUPT",	SP_INTERRUPT,	0 },
+    { ".INVISIBLE",	SP_ATTRIBUTE,	OP_INVISIBLE },
+    { ".JOIN",		SP_ATTRIBUTE,	OP_JOIN },
+    { ".LIBS",		SP_LIBS,	0 },
+    { ".MADE",		SP_ATTRIBUTE,	OP_MADE },
+    { ".MAIN",		SP_MAIN,	0 },
+    { ".MAKE",		SP_ATTRIBUTE,	OP_MAKE },
+    { ".MAKEFLAGS",	SP_MFLAGS,	0 },
+    { ".META",		SP_META,	OP_META },
+    { ".MFLAGS",	SP_MFLAGS,	0 },
+    { ".NOMETA",	SP_NOMETA,	OP_NOMETA },
+    { ".NOMETA_CMP",	SP_NOMETA_CMP,	OP_NOMETA_CMP },
+    { ".NOPATH",	SP_NOPATH,	OP_NOPATH },
+    { ".NOTMAIN",	SP_ATTRIBUTE,	OP_NOTMAIN },
+    { ".NOTPARALLEL",	SP_NOTPARALLEL,	0 },
+    { ".NO_PARALLEL",	SP_NOTPARALLEL,	0 },
+    { ".NULL",		SP_NULL,	0 },
+    { ".OBJDIR",	SP_OBJDIR,	0 },
+    { ".OPTIONAL",	SP_ATTRIBUTE,	OP_OPTIONAL },
+    { ".ORDER",		SP_ORDER,	0 },
+    { ".PARALLEL",	SP_PARALLEL,	0 },
+    { ".PATH",		SP_PATH,	0 },
+    { ".PHONY",		SP_PHONY,	OP_PHONY },
 #ifdef POSIX
-    { ".POSIX",		Posix,		0 },
+    { ".POSIX",		SP_POSIX,	0 },
 #endif
-    { ".PRECIOUS",	Precious,	OP_PRECIOUS },
-    { ".RECURSIVE",	Attribute,	OP_MAKE },
-    { ".SHELL",		ExShell,	0 },
-    { ".SILENT",	Silent,		OP_SILENT },
-    { ".SINGLESHELL",	SingleShell,	0 },
-    { ".STALE",		Stale,		0 },
-    { ".SUFFIXES",	Suffixes,	0 },
-    { ".USE",		Attribute,	OP_USE },
-    { ".USEBEFORE",	Attribute,	OP_USEBEFORE },
-    { ".WAIT",		Wait,		0 },
+    { ".PRECIOUS",	SP_PRECIOUS,	OP_PRECIOUS },
+    { ".RECURSIVE",	SP_ATTRIBUTE,	OP_MAKE },
+    { ".SHELL",		SP_SHELL,	0 },
+    { ".SILENT",	SP_SILENT,	OP_SILENT },
+    { ".SINGLESHELL",	SP_SINGLESHELL,	0 },
+    { ".STALE",		SP_STALE,	0 },
+    { ".SUFFIXES",	SP_SUFFIXES,	0 },
+    { ".USE",		SP_ATTRIBUTE,	OP_USE },
+    { ".USEBEFORE",	SP_ATTRIBUTE,	OP_USEBEFORE },
+    { ".WAIT",		SP_WAIT,	0 },
 };
 
 /* file loader */
@@ -867,7 +867,7 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 		ApplyDependencyOperator(op);
 		return TRUE;
 	    }
-	    if (parseKeywords[keywd].spec == Wait) {
+	    if (parseKeywords[keywd].spec == SP_WAIT) {
 		/*
 		 * We add a .WAIT node in the dependency list.
 		 * After any dynamic dependencies (and filename globbing)
@@ -882,7 +882,7 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		LinkToTargets(gn, specType != Not);
+		LinkToTargets(gn, specType != SP_NOT);
 		return TRUE;
 	    }
 	}
@@ -960,7 +960,7 @@ ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
     if (tOp) {
 	gn->type |= tOp;
     } else {
-	LinkToTargets(gn, specType != Not);
+	LinkToTargets(gn, specType != SP_NOT);
     }
 }
 
@@ -980,9 +980,9 @@ ParseDoSrc(GNodeType tOp, const char *src, ParseSpecial specType)
     if (ParseDoSrcKeyword(src, specType))
 	return;
 
-    if (specType == Main)
+    if (specType == SP_MAIN)
 	ParseDoSrcMain(src);
-    else if (specType == Order)
+    else if (specType == SP_ORDER)
 	ParseDoSrcOrder(src);
     else
 	ParseDoSrcOther(src, tOp, specType);
@@ -1109,22 +1109,22 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 			       SearchPathList **inout_paths)
 {
     switch (*inout_specType) {
-    case ExPath:
+    case SP_PATH:
 	if (*inout_paths == NULL) {
 	    *inout_paths = Lst_New();
 	}
 	Lst_Append(*inout_paths, dirSearchPath);
 	break;
-    case Main:
+    case SP_MAIN:
 	if (!Lst_IsEmpty(opts.create)) {
-	    *inout_specType = Not;
+	    *inout_specType = SP_NOT;
 	}
 	break;
-    case Begin:
-    case End:
-    case Stale:
-    case dotError:
-    case Interrupt: {
+    case SP_BEGIN:
+    case SP_END:
+    case SP_STALE:
+    case SP_ERROR:
+    case SP_INTERRUPT: {
 	GNode *gn = Targ_GetNode(line);
 	if (doing_depend)
 	    ParseMark(gn);
@@ -1132,23 +1132,23 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	Lst_Append(targets, gn);
 	break;
     }
-    case Default: {
+    case SP_DEFAULT: {
 	GNode *gn = Targ_NewGN(".DEFAULT");
 	gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 	Lst_Append(targets, gn);
 	DEFAULT = gn;
 	break;
     }
-    case DeleteOnError:
+    case SP_DELETE_ON_ERROR:
 	deleteOnError = TRUE;
 	break;
-    case NotParallel:
+    case SP_NOTPARALLEL:
 	opts.maxJobs = 1;
 	break;
-    case SingleShell:
+    case SP_SINGLESHELL:
 	opts.compatMake = TRUE;
 	break;
-    case Order:
+    case SP_ORDER:
 	predecessor = NULL;
 	break;
     default:
@@ -1198,7 +1198,7 @@ ParseDoDependencyTarget(const char *line, ParseSpecial *inout_specType,
      */
     keywd = ParseFindKeyword(line);
     if (keywd != -1) {
-	if (*inout_specType == ExPath && parseKeywords[keywd].spec != ExPath) {
+	if (*inout_specType == SP_PATH && parseKeywords[keywd].spec != SP_PATH) {
 	    Parse_Error(PARSE_FATAL, "Mismatched special targets");
 	    return FALSE;
 	}
@@ -1209,7 +1209,7 @@ ParseDoDependencyTarget(const char *line, ParseSpecial *inout_specType,
 	ParseDoDependencyTargetSpecial(inout_specType, line, inout_paths);
 
     } else if (strncmp(line, ".PATH", 5) == 0) {
-	*inout_specType = ExPath;
+	*inout_specType = SP_PATH;
 	if (!ParseDoDependencyTargetPath(line, inout_paths))
 	    return FALSE;
     }
@@ -1281,17 +1281,17 @@ ParseDoDependencyCheckSpec(ParseSpecial specType)
 	Parse_Error(PARSE_WARNING,
 		    "Special and mundane targets don't mix. Mundane ones ignored");
 	break;
-    case Default:
-    case Stale:
-    case Begin:
-    case End:
-    case dotError:
-    case Interrupt:
+    case SP_DEFAULT:
+    case SP_STALE:
+    case SP_BEGIN:
+    case SP_END:
+    case SP_ERROR:
+    case SP_INTERRUPT:
 	/*
 	 * These four create nodes on which to hang commands, so
 	 * targets shouldn't be empty...
 	 */
-    case Not:
+    case SP_NOT:
 	/*
 	 * Nothing special here -- targets can be empty if it wants.
 	 */
@@ -1345,23 +1345,23 @@ static void
 ParseDoDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 {
     switch (specType) {
-    case Suffixes:
+    case SP_SUFFIXES:
 	Suff_ClearSuffixes();
 	break;
-    case Precious:
+    case SP_PRECIOUS:
 	allPrecious = TRUE;
 	break;
-    case Ignore:
+    case SP_IGNORE:
 	opts.ignoreErrors = TRUE;
 	break;
-    case Silent:
+    case SP_SILENT:
 	opts.beSilent = TRUE;
 	break;
-    case ExPath:
+    case SP_PATH:
 	ClearPaths(paths);
 	break;
 #ifdef POSIX
-    case Posix:
+    case SP_POSIX:
 	Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
 	break;
 #endif
@@ -1412,22 +1412,22 @@ ParseDoDependencySourceSpecial(ParseSpecial specType, char *word,
 			       SearchPathList *paths)
 {
     switch (specType) {
-    case Suffixes:
+    case SP_SUFFIXES:
 	Suff_AddSuffix(word, &mainNode);
 	break;
-    case ExPath:
+    case SP_PATH:
 	AddToPaths(word, paths);
 	break;
-    case Includes:
+    case SP_INCLUDES:
 	Suff_AddInclude(word);
 	break;
-    case Libs:
+    case SP_LIBS:
 	Suff_AddLib(word);
 	break;
-    case Null:
+    case SP_NULL:
 	Suff_SetNull(word);
 	break;
-    case ExObjdir:
+    case SP_OBJDIR:
 	Main_SetObjdir("%s", word);
 	break;
     default:
@@ -1501,9 +1501,9 @@ ParseDoDependencyTargets(char **inout_cp,
 	 * Have word in line. Get or create its node and stick it at
 	 * the end of the targets list
 	 */
-	if (*inout_specType == Not && *line != '\0') {
+	if (*inout_specType == SP_NOT && *line != '\0') {
 	    ParseDoDependencyTargetMundane(line, curTargs);
-	} else if (*inout_specType == ExPath && *line != '.' && *line != '\0') {
+	} else if (*inout_specType == SP_PATH && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
 	}
 
@@ -1514,7 +1514,7 @@ ParseDoDependencyTargets(char **inout_cp,
 	 * If it is a special type and not .PATH, it's the only target we
 	 * allow on this line...
 	 */
-	if (*inout_specType != Not && *inout_specType != ExPath) {
+	if (*inout_specType != SP_NOT && *inout_specType != SP_PATH) {
 	    ParseDoDependencyTargetExtraWarn(&cp, lstart);
 	} else {
 	    pp_skip_whitespace(&cp);
@@ -1639,11 +1639,11 @@ ParseDoDependency(char *line)
     char *lstart = line;
 
     /*
-     * specType contains the SPECial TYPE of the current target. It is Not
+     * specType contains the SPECial TYPE of the current target. It is SP_NOT
      * if the target is unspecial. If it *is* special, however, the children
      * are linked as children of the parent but not vice versa.
      */
-    ParseSpecial specType = Not;
+    ParseSpecial specType = SP_NOT;
 
     DEBUG1(PARSE, "ParseDoDependency(%s)\n", line);
     tOp = 0;
@@ -1701,7 +1701,7 @@ ParseDoDependency(char *line)
      */
     if (!*line) {
 	ParseDoDependencySourcesEmpty(specType, paths);
-    } else if (specType == MFlags) {
+    } else if (specType == SP_MFLAGS) {
 	/*
 	 * Call on functions in main.c to deal with these arguments and
 	 * set the initial character to a null-character so the loop to
@@ -1709,30 +1709,30 @@ ParseDoDependency(char *line)
 	 */
 	Main_ParseArgLine(line);
 	*line = '\0';
-    } else if (specType == ExShell) {
+    } else if (specType == SP_SHELL) {
 	if (!Job_ParseShell(line)) {
 	    Parse_Error(PARSE_FATAL, "improper shell specification");
 	    goto out;
 	}
 	*line = '\0';
-    } else if (specType == NotParallel || specType == SingleShell ||
-	       specType == DeleteOnError) {
+    } else if (specType == SP_NOTPARALLEL || specType == SP_SINGLESHELL ||
+	       specType == SP_DELETE_ON_ERROR) {
 	*line = '\0';
     }
 
     /*
      * NOW GO FOR THE SOURCES
      */
-    if (specType == Suffixes || specType == ExPath ||
-	specType == Includes || specType == Libs ||
-	specType == Null || specType == ExObjdir)
+    if (specType == SP_SUFFIXES || specType == SP_PATH ||
+	specType == SP_INCLUDES || specType == SP_LIBS ||
+	specType == SP_NULL || specType == SP_OBJDIR)
     {
 	ParseDoDependencySourcesSpecial(line, cp, specType, paths);
 	if (paths) {
 	    Lst_Free(paths);
 	    paths = NULL;
 	}
-	if (specType == ExPath)
+	if (specType == SP_PATH)
 	    Dir_SetPATH();
     } else {
 	assert(paths == NULL);
