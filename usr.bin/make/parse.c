@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.401 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.402 2020/10/28 00:38:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,47 +68,33 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * parse.c --
- *	Functions to parse a makefile.
+/*
+ * Parsing of makefiles.
  *
- *	One function, Parse_Init, must be called before any functions
- *	in this module are used. After that, the function Parse_File is the
- *	main entry point and controls most of the other functions in this
- *	module.
+ * Parse_File is the main entry point and controls most of the other
+ * functions in this module.
  *
- *	Most important structures are kept in Lsts. Directories for
- *	the .include "..." function are kept in the 'parseIncPath' Lst, while
- *	those for the .include <...> are kept in the 'sysIncPath' Lst. The
- *	targets currently being defined are kept in the 'targets' Lst.
- *
- *	The variables 'fname' and 'lineno' are used to track the name
- *	of the current file and the line number in that file so that error
- *	messages can be more meaningful.
+ * The directories for the .include "..." directive are kept in
+ * 'parseIncPath', while those for .include <...> are kept in 'sysIncPath'.
+ * The targets currently being defined are kept in 'targets'.
  *
  * Interface:
- *	Parse_Init	Initialization function which must be
- *			called before anything else in this module
- *			is used.
+ *	Parse_Init	Initialize the module
  *
  *	Parse_End	Clean up the module
  *
- *	Parse_File	Function used to parse a makefile. It must
- *			be given the name of the file, which should
- *			already have been opened, and a function
- *			to call to read a character from the file.
+ *	Parse_File	Parse a top-level makefile.  Included files are
+ *			handled by Parse_include_file though.
  *
- *	Parse_IsVar	Returns TRUE if the given line is a
- *			variable assignment. Used by MainParseArgs
- *			to determine if an argument is a target
- *			or a variable assignment. Used internally
- *			for pretty much the same thing...
+ *	Parse_IsVar	Return TRUE if the given line is a variable
+ *			assignment. Used by MainParseArgs to determine if
+ *			an argument is a target or a variable assignment.
+ *			Used internally for pretty much the same thing.
  *
- *	Parse_Error	Function called when an error occurs in
- *			parsing. Used by the variable and
- *			conditional modules.
+ *	Parse_Error	Report a parse error, a warning or an informational
+ *			message.
  *
- *	Parse_MainName	Returns a Lst of the main target to create.
+ *	Parse_MainName	Returns a list of the main target to create.
  */
 
 #include <sys/types.h>
@@ -131,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.401 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.402 2020/10/28 00:38:37 rillig Exp $");
 
 /* types and constants */
 
