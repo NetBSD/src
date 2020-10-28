@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.90 2020/10/25 13:06:12 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.91 2020/10/28 02:43:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.90 2020/10/25 13:06:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.91 2020/10/28 02:43:16 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -281,15 +281,6 @@ Vector_Init(Vector *v, size_t itemSize)
     v->priv_cap = 10;
     v->itemSize = itemSize;
     v->items = bmake_malloc(v->priv_cap * v->itemSize);
-}
-
-/* Return the pointer to the given item in the vector.
- * The returned data is valid until the next modifying operation. */
-void *
-Vector_Get(Vector *v, size_t i)
-{
-    unsigned char *items = v->items;
-    return items + i * v->itemSize;
 }
 
 /* Add space for a new item to the vector and return a pointer to that space.

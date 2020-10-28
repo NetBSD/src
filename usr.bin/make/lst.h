@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.83 2020/10/25 13:31:16 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.84 2020/10/28 02:43:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -170,7 +170,16 @@ typedef struct Vector {
 } Vector;
 
 void Vector_Init(Vector *, size_t);
-void *Vector_Get(Vector *, size_t);
+
+/* Return the pointer to the given item in the vector.
+ * The returned data is valid until the next modifying operation. */
+static inline MAKE_ATTR_UNUSED void *
+Vector_Get(Vector *v, size_t i)
+{
+    unsigned char *items = v->items;
+    return items + i * v->itemSize;
+}
+
 void *Vector_Push(Vector *);
 void *Vector_Pop(Vector *);
 void Vector_Done(Vector *);
