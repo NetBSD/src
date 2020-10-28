@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 2020/10/16 08:28:17 nia Exp $
+# $NetBSD: mi,v 1.160 2020/10/28 08:10:08 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -133,13 +133,13 @@
 ./usr/X11R7/bin/xsm					xbase-xsm-bin	xorg
 ./usr/X11R7/bin/xstdcmap				xbase-xstdcmap-bin	xorg
 ./usr/X11R7/bin/xterm					xbase-xterm-bin	xorg
-./usr/X11R7/bin/xtrapchar				xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapin					xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapinfo				xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapout				xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapproto				xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapreset				xbase-xtrap-bin	xorg
-./usr/X11R7/bin/xtrapstats				xbase-xtrap-bin	xorg
+./usr/X11R7/bin/xtrapchar				xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapin					xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapinfo				xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapout				xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapproto				xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapreset				xbase-obsolete	obsolete
+./usr/X11R7/bin/xtrapstats				xbase-obsolete	obsolete
 ./usr/X11R7/bin/xvidtune				xbase-xvidtune-bin	xorg
 ./usr/X11R7/bin/xvinfo					xbase-xvinfo-bin	xorg
 ./usr/X11R7/bin/xwd					xbase-xwd-bin	xorg
@@ -1386,14 +1386,14 @@
 ./usr/X11R7/man/cat1/xsm.0				xbase-xsm-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xstdcmap.0				xbase-xstdcmap-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xterm.0				xbase-xterm-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrap.0				xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapchar.0			xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapin.0				xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapinfo.0			xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapout.0				xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapproto.0			xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapreset.0			xbase-xtrap-catman	.cat,xorg
-./usr/X11R7/man/cat1/xtrapstats.0			xbase-xtrap-catman	.cat,xorg
+./usr/X11R7/man/cat1/xtrap.0				xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapchar.0			xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapin.0				xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapinfo.0			xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapout.0				xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapproto.0			xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapreset.0			xbase-obsolete	obsolete
+./usr/X11R7/man/cat1/xtrapstats.0			xbase-obsolete	obsolete
 ./usr/X11R7/man/cat1/xvidtune.0				xbase-xvidtune-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xvinfo.0				xbase-xvinfo-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xwd.0				xbase-xwd-catman	.cat,xorg
@@ -1534,14 +1534,14 @@
 ./usr/X11R7/man/html1/xsm.html				xbase-xsm-htmlman	html,xorg
 ./usr/X11R7/man/html1/xstdcmap.html			xbase-xstdcmap-htmlman	html,xorg
 ./usr/X11R7/man/html1/xterm.html			xbase-xterm-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrap.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapchar.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapin.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapinfo.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapout.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapproto.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapreset.html			xbase-xtrap-htmlman	html,xorg
-./usr/X11R7/man/html1/xtrapstats.html			xbase-xtrap-htmlman	html,xorg
+./usr/X11R7/man/html1/xtrap.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapchar.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapin.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapinfo.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapout.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapproto.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapreset.html			xbase-obsolete	obsolete
+./usr/X11R7/man/html1/xtrapstats.html			xbase-obsolete	obsolete
 ./usr/X11R7/man/html1/xvidtune.html			xbase-xvidtune-htmlman	html,xorg
 ./usr/X11R7/man/html1/xvinfo.html			xbase-xvinfo-htmlman	html,xorg
 ./usr/X11R7/man/html1/xwd.html				xbase-xwd-htmlman	html,xorg
@@ -1683,14 +1683,14 @@
 ./usr/X11R7/man/man1/xsm.1				xbase-xsm-man	.man,xorg
 ./usr/X11R7/man/man1/xstdcmap.1				xbase-xstdcmap-man	.man,xorg
 ./usr/X11R7/man/man1/xterm.1				xbase-xterm-man	.man,xorg
-./usr/X11R7/man/man1/xtrap.1				xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapchar.1			xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapin.1				xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapinfo.1			xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapout.1				xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapproto.1			xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapreset.1			xbase-xtrap-man	.man,xorg
-./usr/X11R7/man/man1/xtrapstats.1			xbase-xtrap-man	.man,xorg
+./usr/X11R7/man/man1/xtrap.1				xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapchar.1			xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapin.1				xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapinfo.1			xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapout.1				xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapproto.1			xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapreset.1			xbase-obsolete	obsolete
+./usr/X11R7/man/man1/xtrapstats.1			xbase-obsolete	obsolete
 ./usr/X11R7/man/man1/xvidtune.1				xbase-xvidtune-man	.man,xorg
 ./usr/X11R7/man/man1/xvinfo.1				xbase-xvinfo-man	.man,xorg
 ./usr/X11R7/man/man1/xwd.1				xbase-xwd-man	.man,xorg

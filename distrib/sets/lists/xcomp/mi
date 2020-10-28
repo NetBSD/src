@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.220 2020/10/27 13:42:22 nia Exp $
+#	 $NetBSD: mi,v 1.221 2020/10/28 08:10:09 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1135,8 +1135,8 @@
 ./usr/X11R7/lib/libX11_p.a				xcomp-libX11-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXRes.a				xcomp-libXRes-lib	xorg,compatx11file
 ./usr/X11R7/lib/libXRes_p.a				xcomp-libXRes-lib	profile,xorg,compatx11file
-./usr/X11R7/lib/libXTrap.a				xcomp-libXTrap-lib	xorg,compatx11file
-./usr/X11R7/lib/libXTrap_p.a				xcomp-libXTrap-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libXTrap.a				xcomp-obsolete	xorg,obsolete
+./usr/X11R7/lib/libXTrap_p.a				xcomp-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libXau.a				xcomp-libXau-lib	xorg,compatx11file
 ./usr/X11R7/lib/libXau_p.a				xcomp-libXau-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXaw.a				xcomp-libXaw-lib	xorg,compatx11file
@@ -1446,7 +1446,7 @@
 ./usr/X11R7/lib/pkgconfig/xshmfence.pc			xcomp-libxshmfence-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xt.pc				xcomp-libXt-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xtrans.pc			xcomp-xtrans-lib	xorg
-./usr/X11R7/lib/pkgconfig/xtrap.pc			xcomp-libXTrap-lib	xorg
+./usr/X11R7/lib/pkgconfig/xtrap.pc			xcomp-obsolete	obsolete
 ./usr/X11R7/lib/pkgconfig/xtst.pc			xcomp-libXtst-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xv.pc				xcomp-libXv-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xvmc.pc			xcomp-libXvMC-lib	xorg
@@ -4337,7 +4337,7 @@
 ./usr/libdata/lint/llib-lSM.ln				xcomp-libSM-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lX11.ln				xcomp-libX11-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lXRes.ln			xcomp-libXRes-lintlib	lint,xorg
-./usr/libdata/lint/llib-lXTrap.ln			xcomp-libXTrap-lintlib	lint,xorg
+./usr/libdata/lint/llib-lXTrap.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lXau.ln				xcomp-libXau-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lXaw7.ln			xcomp-libXaw-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lXaw8.ln			xcomp-obsolete	obsolete

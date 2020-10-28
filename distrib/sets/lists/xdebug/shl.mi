@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.57 2020/10/27 13:42:22 nia Exp $
+# $NetBSD: shl.mi,v 1.58 2020/10/28 08:10:09 nia Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	xorg,obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	xorg,obsolete		xorg,obsolete
@@ -23,7 +23,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libX11-xcb.so.1.0.debug	xdebug-libX11-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libX11.so.7.0.debug	xdebug-libX11-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXRes.so.2.0.debug	xdebug-libXres-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libXTrap.so.7.0.debug	xdebug-libXTrap-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libXTrap.so.7.0.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libXau.so.7.0.debug	xdebug-libXau-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXaw6.so.7.0.debug	xdebug-libXaw6-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXaw7.so.10.0.debug	xdebug-libXaw7-debug		xorg,debug,compatx11file

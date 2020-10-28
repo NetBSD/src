@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.91 2020/10/27 13:42:22 nia Exp $
+# $NetBSD: shl.mi,v 1.92 2020/10/28 08:10:08 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -53,9 +53,9 @@
 ./usr/X11R7/lib/libXRes.so			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so.2			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so.2.0			xbase-libXres-lib		xorg,compatx11file
-./usr/X11R7/lib/libXTrap.so			xbase-libXTrap-lib		xorg,compatx11file
-./usr/X11R7/lib/libXTrap.so.7			xbase-libXTrap-lib		xorg,compatx11file
-./usr/X11R7/lib/libXTrap.so.7.0			xbase-libXTrap-lib		xorg,compatx11file
+./usr/X11R7/lib/libXTrap.so			xbase-obsolete	obsolete
+./usr/X11R7/lib/libXTrap.so.7			xbase-obsolete	obsolete
+./usr/X11R7/lib/libXTrap.so.7.0			xbase-obsolete	obsolete
 ./usr/X11R7/lib/libXau.so			xbase-libXau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXau.so.7			xbase-libXau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXau.so.7.0			xbase-libXau-lib		xorg,compatx11file
