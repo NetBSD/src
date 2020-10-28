@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.404 2020/10/28 01:43:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.405 2020/10/28 01:47:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.404 2020/10/28 01:43:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.405 2020/10/28 01:47:11 rillig Exp $");
 
 /* types and constants */
 
@@ -159,7 +159,6 @@ typedef enum ParseSpecial {
     SP_MFLAGS,		/* .MFLAGS or .MAKEFLAGS */
     SP_MAIN,		/* .MAIN and we don't have anything user-specified to
 			 * make */
-    SP_NOEXPORT,	/* .NOEXPORT; not mentioned in the manual page */
     SP_NOMETA,		/* .NOMETA */
     SP_NOMETA_CMP,	/* .NOMETA_CMP */
     SP_NOPATH,		/* .NOPATH */
