@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.111 2020/04/24 12:38:31 macallan Exp $
+#	$NetBSD: files.i2c,v 1.112 2020/10/29 06:55:51 jdc Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -395,3 +395,8 @@ file	dev/i2c/cwfg.c				cwfg
 device	pcagpio: leds
 attach	pcagpio at iic
 file	dev/i2c/pcagpio.c			pcagpio
+
+# Philips PCF8574 IO expander
+device	pcf8574io: leds, sysmon_envsys
+attach	pcf8574io at iic
+file	dev/i2c/pcf8574.c			pcf8574io
