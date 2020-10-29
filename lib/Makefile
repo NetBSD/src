@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.285 2020/09/26 17:49:50 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.286 2020/10/29 20:11:17 nia Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -53,8 +53,6 @@ SUBDIR+=	libskey
 .if ${HAVE_NVMM:Uno} == "yes" && !defined(MLIBDIR)
 SUBDIR+=	libnvmm
 .endif
-
-SUBDIR+=	../external/public-domain/sqlite/lib
 
 .if (${MKMDNS} != "no")
 SUBDIR+=	../external/apache2/mDNSResponder/lib
@@ -122,6 +120,7 @@ SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
 SUBDIR+=	../external/bsd/blocklist/lib		# depends on libpthread
 SUBDIR+=	../external/bsd/elftoolchain/lib/libdwarf # depends on libelf
 SUBDIR+=	../external/mit/lua/lib # depends on libm
+SUBDIR+=	../external/public-domain/sqlite/lib # depends on libm
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
