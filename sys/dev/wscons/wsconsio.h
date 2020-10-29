@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.123 2019/05/24 14:28:48 nonaka Exp $ */
+/* $NetBSD: wsconsio.h,v 1.124 2020/10/29 09:08:35 nia Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -87,7 +87,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_LK201	1	/* lk-201 */
 #define	WSKBD_TYPE_LK401	2	/* lk-401 */
 #define	WSKBD_TYPE_PC_XT	3	/* PC-ish, XT scancode */
-#define	WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode */
+#define	WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode, not used by modern kernels */
 #define	WSKBD_TYPE_USB		5	/* USB, XT scancode */
 #define	WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
 #define	WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
