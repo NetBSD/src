@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.409 2020/10/28 03:21:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.410 2020/10/29 20:37:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.409 2020/10/28 03:21:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.410 2020/10/29 20:37:47 rillig Exp $");
 
 /* types and constants */
 
@@ -1810,6 +1810,12 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
  * optional whitespace, an assignment operator, optional whitespace and the
  * variable value.
  *
+ * Note: There is a lexical ambiguity with assignment modifier characters
+ * in variable names. This routine interprets the character before the =
+ * as a modifier. Therefore, an assignment like
+ *	C++=/usr/bin/CC
+ * is interpreted as "C+ +=" instead of "C++ =".
+ *
  * Used for both lines in a file and command line arguments. */
 Boolean
 Parse_IsVar(const char *p, VarAssign *out_var)
@@ -2017,19 +2023,7 @@ VarAssignSpecial(const char *name, const char *avalue)
     }
 }
 
-/* Take the variable assignment in the passed line and execute it.
- *
- * Note: There is a lexical ambiguity with assignment modifier characters
- * in variable names. This routine interprets the character before the =
- * as a modifier. Therefore, an assignment like
- *	C++=/usr/bin/CC
- * is interpreted as "C+ +=" instead of "C++ =".
- *
- * Input:
- *	p		A line guaranteed to be a variable assignment
- *			(see Parse_IsVar).
- *	ctxt		Context in which to do the assignment
- */
+/* Perform the variable variable assignment in the given context. */
 void
 Parse_DoVar(VarAssign *var, GNode *ctxt)
 {
