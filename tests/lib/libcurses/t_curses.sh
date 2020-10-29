@@ -2203,7 +2203,7 @@ atf_init_test_cases()
 
 	# curses input stream routines
 	atf_add_test_case getch
-	atf_add_test_case wgetch
+	#atf_add_test_case wgetch [test is missing]
 	atf_add_test_case define_key
 	atf_add_test_case keyok
 	atf_add_test_case getnstr
