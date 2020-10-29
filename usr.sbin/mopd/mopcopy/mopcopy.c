@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.8 2020/10/27 17:16:24 abs Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.9 2020/10/29 08:50:42 martin Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transferred via MOP.
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.8 2020/10/27 17:16:24 abs Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.9 2020/10/29 08:50:42 martin Exp $");
 #endif
 
 #include "os.h"
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: mopcopy.c,v 1.8 2020/10/27 17:16:24 abs Exp $");
 #define MID_VAX 150
 #endif
 #if !defined(MID_VAX1K)
-#define MID_VAX 140
+#define MID_VAX1K 140
 #endif
 
 #ifndef NOELF
