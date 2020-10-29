@@ -1,8 +1,8 @@
-# $NetBSD: vardebug.mk,v 1.3 2020/08/08 14:28:46 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.4 2020/10/29 18:19:41 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
-RELEVANT=	yes
+.MAKEFLAGS: -dv FROM_CMDLINE=
 
 VAR=		added		# VarAdd
 VAR=		overwritten	# Var_Set
@@ -53,7 +53,7 @@ VAR+=		3
 .if ${UNDEFINED}
 .endif
 
-RELEVANT=	no
+.MAKEFLAGS: -d0
 
 all:
 	@:
