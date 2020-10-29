@@ -1,10 +1,18 @@
-# $NetBSD: varmod-gmtime.mk,v 1.2 2020/08/16 12:48:55 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.3 2020/10/29 18:59:43 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3).
 
 all:	mod-gmtime
 all:	mod-gmtime-indirect
+
+# Test for the default time format, %c.  Since the time always varies, it's
+# only possible to check for the general format here.  The names of the
+# month and weekday are always in English, independent from the locale.
+# Example: Thu Oct 29 18:56:41 2020
+.if ${:U:gmtime:tW:M??? ??? ?? ??\:??\:?? ????} == ""
+.  error
+.endif
 
 mod-gmtime:
 	@echo $@:
