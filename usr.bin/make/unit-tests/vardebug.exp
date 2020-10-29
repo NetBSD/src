@@ -78,6 +78,9 @@ Result of ${:unknown} is error (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF|VEF_
 make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})
 Var_Parse: ${UNDEFINED} with VARE_UNDEFERR|VARE_WANTRES
 make: "vardebug.mk" line 53: Malformed conditional (${UNDEFINED})
+Global:delete .SHELL (not found)
+Command:.SHELL = /bin/sh
+Command:.SHELL = overwritten ignored (read-only)
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0
 make: Fatal errors encountered -- cannot continue
