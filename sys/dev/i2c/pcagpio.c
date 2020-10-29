@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.4 2020/10/27 20:13:21 jdc Exp $ */
+/* $NetBSD: pcagpio.c,v 1.5 2020/10/29 06:50:53 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.4 2020/10/27 20:13:21 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.5 2020/10/29 06:50:53 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 	if (pins != NULL) {
 		int i, num, def;
 		char name[32];
-		const char *nptr;
+		const char *spptr, *nptr;
 		bool ok = TRUE, act;
 
 		for (i = 0; i < prop_array_count(pins); i++) {
@@ -192,16 +192,22 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 			pin = prop_array_get(pins, i);
 			ok &= prop_dictionary_get_cstring_nocopy(pin, "name",
 			    &nptr);
-			strncpy(name, nptr, 31);
 			ok &= prop_dictionary_get_uint32(pin, "pin", &num);
-			ok &= prop_dictionary_get_bool(
-			    pin, "active_high", &act);
+			ok &= prop_dictionary_get_bool( pin, "active_high",
+			    &act);
 			/* optional default state */
 			def = -1;
 			prop_dictionary_get_int32(pin, "default_state", &def);
-			if (ok) {		
+			if (!ok)
+				continue;
+			/* Extract pin type from the name */
+			spptr = strstr(nptr, " ");
+			if (spptr == NULL)
+				continue;
+			spptr += 1;
+			strncpy(name, spptr, 31);
+			if (!strncmp(nptr, "LED ", 4))
 				pcagpio_attach_led(sc, name, num, act, def);
-			}
 		}
 	}
 }
