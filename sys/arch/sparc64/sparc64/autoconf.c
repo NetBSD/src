@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.226 2020/10/23 15:18:10 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.227 2020/10/29 06:47:38 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.226 2020/10/23 15:18:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227 2020/10/29 06:47:38 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1089,6 +1089,11 @@ device_register(device_t dev, void *aux)
 				add_gpio_props_v210(dev, aux);
 			}
 		} 
+		if (device_is_a(dev, "pcf8574io")) {
+			if (!strcmp(machine_model, "SUNW,Ultra-250")) {
+				add_gpio_props_e250(dev, aux);
+			}
+		} 
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -1117,9 +1122,7 @@ device_register(device_t dev, void *aux)
 		    0, periph->periph_lun);
 		if (device_is_a(busdev, "scsibus")) {
 			/* see if we're in a known SCA drivebay */
-			if (strcmp(machine_model, "SUNW,Sun-Fire-V210") == 0) {
-				add_drivebay_props_v210(dev, ofnode, aux);
-			}
+			add_drivebay_props(dev, ofnode, aux);
 		}
 		return;
 	} else if (device_is_a(dev, "wd")) {
