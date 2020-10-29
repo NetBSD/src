@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.5 2020/10/25 07:46:53 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.6 2020/10/29 06:47:38 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.5 2020/10/25 07:46:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.6 2020/10/29 06:47:38 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -42,11 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.5 2020/10/25 07:46:53 jdc Exp $");
 #include <sparc64/sparc64/static_edid.h>
 
 static void
-add_gpio_LED(prop_array_t pins, const char *name, int num, int act, int def)
+add_gpio_pin(prop_array_t pins, const char *name, int num, int act, int def)
 {
 	prop_dictionary_t pin = prop_dictionary_create();
 	prop_dictionary_set_string(pin, "name", name);
-	prop_dictionary_set_uint32(pin, "type", 0);	/* 0 for LED, for now */
 	prop_dictionary_set_uint32(pin, "pin", num);
 	prop_dictionary_set_bool(pin, "active_high", act);
 	if (def != -1)
@@ -62,7 +61,7 @@ create_i2c_dict(device_t busdev)
 	prop_array_t cfg = NULL;
 
 	cfg = prop_dictionary_get(props, "i2c-child-devices");
- 	if (!cfg) {
+	if (!cfg) {
 		DPRINTF(ACDB_PROBE, ("\nCreating new i2c-child-devices\n"));
 		cfg = prop_array_create();
 		prop_dictionary_set(props, "i2c-child-devices", cfg);
@@ -100,18 +99,27 @@ add_gpio_props_v210(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x38:	/* front panel LEDs */
 			pins = prop_array_create();
-			add_gpio_LED(pins, "indicator", 7, 0, -1);
-			add_gpio_LED(pins, "fault", 5, 0, 0);
-			add_gpio_LED(pins, "power", 4, 0, 1);
+			add_gpio_pin(pins, "LED indicator", 7, 0, -1);
+			add_gpio_pin(pins, "LED fault", 5, 0, 0);
+			add_gpio_pin(pins, "LED power", 4, 0, 1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
-		case 0x23:	/* drive bay LEDs */
+		case 0x23:	/* drive bay O/1 LEDs */
 			pins = prop_array_create();
-			add_gpio_LED(pins, "bay0_fault", 10, 0, 0);
-			add_gpio_LED(pins, "bay1_fault", 11, 0, 0);
-			add_gpio_LED(pins, "bay0_remove", 12, 0, 0);
-			add_gpio_LED(pins, "bay1_remove", 13, 0, 0);
+			add_gpio_pin(pins, "LED bay0_fault", 10, 0, 0);
+			add_gpio_pin(pins, "LED bay1_fault", 11, 0, 0);
+			add_gpio_pin(pins, "LED bay0_remove", 12, 0, 0);
+			add_gpio_pin(pins, "LED bay1_remove", 13, 0, 0);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x25:	/* drive bay 2/3 LEDs (v240 only)*/
+			pins = prop_array_create();
+			add_gpio_pin(pins, "LED bay2_fault", 10, 0, 0);
+			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0);
+			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0);
+			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -119,24 +127,112 @@ add_gpio_props_v210(device_t dev, void *aux)
 }
 
 void
-add_drivebay_props_v210(device_t dev, int ofnode, void *aux)
+add_gpio_props_e250(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x39:	/* PSU status */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "INDICATOR psu0_present", 0, 0, -1);
+			add_gpio_pin(pins, "INDICATOR psu1_present", 1, 0, -1);
+			add_gpio_pin(pins, "INDICATOR psu0_fault", 4, 0, -1);
+			add_gpio_pin(pins, "INDICATOR psu1_fault", 5, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x3d:	/* disk status */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "INDICATOR disk0_present",
+			    0, 0, -1);
+			add_gpio_pin(pins, "INDICATOR disk1_present",
+			    1, 0, -1);
+			add_gpio_pin(pins, "INDICATOR disk2_present",
+			    2, 0, -1);
+			add_gpio_pin(pins, "INDICATOR disk3_present",
+			    3, 0, -1);
+			add_gpio_pin(pins, "INDICATOR disk4_present",
+			    4, 0, -1);
+			add_gpio_pin(pins, "INDICATOR disk5_present",
+			    5, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x3e:	/* front panel LEDs */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1);
+			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1);
+			add_gpio_pin(pins, "LED overtemp", 2, 0, -1);
+			add_gpio_pin(pins, "LED fault", 3, 0, -1);
+			add_gpio_pin(pins, "LED activity", 4, 0, -1);
+			/* Pin 5 is power LED, but not controllable */
+			add_gpio_pin(pins, "INDICATOR key_normal", 6, 0, -1);
+			add_gpio_pin(pins, "INDICATOR key_diag", 7, 0, -1);
+			/* If not "normal" or "diag", key is "lock" */
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x3f:	/* disk fault LEDs */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "LED disk0_fault", 0, 0, -1);
+			add_gpio_pin(pins, "LED disk1_fault", 1, 0, -1);
+			add_gpio_pin(pins, "LED disk2_fault", 2, 0, -1);
+			add_gpio_pin(pins, "LED disk3_fault", 3, 0, -1);
+			add_gpio_pin(pins, "LED disk4_fault", 4, 0, -1);
+			add_gpio_pin(pins, "LED disk5_fault", 5, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+void
+add_drivebay_props(device_t dev, int ofnode, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int target = sa->sa_periph->periph_target;
+	prop_dictionary_t dict = device_properties(dev);
 	char path[256]= "";
+	char name[16];
+	int nbays;
 
-	OF_package_to_path(ofnode, path, sizeof(path));
+	if ((strcmp(machine_model, "SUNW,Sun-Fire-V210") == 0) ||
+	    (strcmp(machine_model, "SUNW,Sun-Fire-V240") == 0)) {
+		OF_package_to_path(ofnode, path, sizeof(path));
 
-	/* see if we're on the onboard controller's 1st channel */
-	if (strcmp(path, "/pci@1c,600000/scsi@2") != 0)
-		return;
-	/* yes, yes we are */
-	if ( target < 2) {
-		prop_dictionary_t dict = device_properties(dev);
-		char name[16];
+		/* see if we're on the onboard controller's 1st channel */
+		if (strcmp(path, "/pci@1c,600000/scsi@2") != 0)
+			return;
 
-		snprintf(name, sizeof(name), "bay%d", target);		
-		prop_dictionary_set_string(dict, "location", name);
+		/* yes, yes we are */
+		if (strcmp(machine_model, "SUNW,Sun-Fire-V240") == 0)
+			nbays = 4;
+		else
+			nbays = 2;
+		if ( target < nbays) {
+			snprintf(name, sizeof(name), "bay%d", target);
+			prop_dictionary_set_string(dict, "location", name);
+		}
+	}
+
+	if (!strcmp(machine_model, "SUNW,Ultra-250")) {
+		OF_package_to_path(ofnode, path, sizeof(path));
+
+		/* see if we're on the onboard controller's 1st channel */
+		if (strcmp(path, "/pci@1f,4000/scsi@3") != 0)
+			return;
+
+		/* disk 0 is target 0 */
+		if (!target) {
+			strncpy(name, "bay0", sizeof(name));
+			prop_dictionary_set_string(dict, "location", name);
+		/* disks 1 - 5 are targets 8 - 12 */
+		} else if ( target < 13) {
+			snprintf(name, sizeof(name), "bay%d", target - 7);
+			prop_dictionary_set_string(dict, "location", name);
+		}
 	}
 }
 
