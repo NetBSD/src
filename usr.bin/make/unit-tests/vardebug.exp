@@ -1,4 +1,6 @@
-Global:RELEVANT = yes
+Global:delete FROM_CMDLINE (not found)
+Command:FROM_CMDLINE = 
+Global:.MAKEOVERRIDES =  FROM_CMDLINE
 Global:VAR = added
 Global:VAR = overwritten
 Global:delete VAR
@@ -76,5 +78,8 @@ Result of ${:unknown} is error (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF|VEF_
 make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})
 Var_Parse: ${UNDEFINED} with VARE_UNDEFERR|VARE_WANTRES
 make: "vardebug.mk" line 53: Malformed conditional (${UNDEFINED})
-Global:RELEVANT = no
+Global:.MAKEFLAGS =  -r -k -d v -d
+Global:.MAKEFLAGS =  -r -k -d v -d 0
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
 exit status 1
