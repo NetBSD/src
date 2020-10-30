@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.228 2020/10/30 15:39:17 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.229 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.228 2020/10/30 15:39:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.229 2020/10/30 20:30:44 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1493,7 +1493,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * Copy in the variables from the member node to this one.
      */
     {
-	char *freeIt;
+	void *freeIt;
 	Var_Set(PREFIX, Var_Value(PREFIX, mem, &freeIt), gn);
 	bmake_free(freeIt);
 	Var_Set(TARGET, Var_Value(TARGET, mem, &freeIt), gn);

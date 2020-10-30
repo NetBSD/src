@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.19 2020/10/05 19:27:47 rillig Exp $	*/
+/*	$NetBSD: trace.c,v 1.20 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include "job.h"
 #include "trace.h"
 
-MAKE_RCSID("$NetBSD: trace.c,v 1.19 2020/10/05 19:27:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: trace.c,v 1.20 2020/10/30 20:30:44 rillig Exp $");
 
 static FILE *trfile;
 static pid_t trpid;
@@ -67,7 +67,7 @@ void
 Trace_Init(const char *pathname)
 {
 	if (pathname != NULL) {
-		char *dontFreeIt;
+		void *dontFreeIt;
 		trpid = getpid();
 		trwd = Var_Value(".CURDIR", VAR_GLOBAL, &dontFreeIt);
 

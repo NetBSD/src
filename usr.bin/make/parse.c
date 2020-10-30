@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.412 2020/10/30 15:39:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.413 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.412 2020/10/30 15:39:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.413 2020/10/30 20:30:44 rillig Exp $");
 
 /* types and constants */
 
@@ -610,7 +610,7 @@ PrintLocation(FILE *f, const char *filename, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN+1];
 	const char *dir, *base;
-	char *dir_freeIt, *base_freeIt;
+	void *dir_freeIt, *base_freeIt;
 
 	if (*filename == '/' || strcmp(filename, "(stdin)") == 0) {
 		(void)fprintf(f, "\"%s\" line %zu: ", filename, lineno);
@@ -2346,7 +2346,7 @@ ParseSetParseFile(const char *filename)
 static void
 ParseTrackInput(const char *name)
 {
-    char *fp = NULL;
+    void *fp = NULL;
 
     const char *old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
     if (old) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.182 2020/10/30 15:39:17 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.183 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.182 2020/10/30 15:39:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.183 2020/10/30 20:30:44 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -569,7 +569,7 @@ static void
 UpdateImplicitParentsVars(GNode *cgn, const char *cname)
 {
     GNodeListNode *ln;
-    char *cpref_freeIt;
+    void *cpref_freeIt;
     const char *cpref = Var_Value(PREFIX, cgn, &cpref_freeIt);
 
     for (ln = cgn->implicitParents->first; ln != NULL; ln = ln->next) {
@@ -615,7 +615,7 @@ Make_Update(GNode *cgn)
     checked++;
 
     {
-	char *cname_freeIt;
+	void *cname_freeIt;
 	cname = Var_Value(TARGET, cgn, &cname_freeIt);
 	assert(cname_freeIt == NULL);
     }
@@ -779,7 +779,7 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
 	const char *child, *allsrc;
-	char *p1 = NULL, *p2 = NULL;
+	void *p1 = NULL, *p2 = NULL;
 
 	if (cgn->type & OP_ARCHV)
 	    child = Var_Value(MEMBER, cgn, &p1);
@@ -855,7 +855,7 @@ Make_DoAllVar(GNode *gn)
     }
 
     if (gn->type & OP_JOIN) {
-	char *p1;
+	void *p1;
 	Var_Set(TARGET, Var_Value(ALLSRC, gn, &p1), gn);
 	bmake_free(p1);
     }
