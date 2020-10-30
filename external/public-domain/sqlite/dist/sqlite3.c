@@ -185409,7 +185409,7 @@ SQLITE_API int sqlite3_rtree_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.18 2018/12/22 03:22:19 christos Exp $
+** $Id: sqlite3.c,v 1.19 2020/10/30 06:02:05 martin Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
@@ -213756,7 +213756,7 @@ static int fts5BestIndexMethod(sqlite3_vtab *pVTab, sqlite3_index_info *pInfo){
       }else{
         /* As there exists an unusable MATCH constraint this is an 
         ** unusable plan. Set a prohibitively high cost. */
-        pInfo->estimatedCost = 1e50;
+        pInfo->estimatedCost = DBL_MAX;
         return SQLITE_OK;
       }
     }else if( p->op<=SQLITE_INDEX_CONSTRAINT_MATCH ){
