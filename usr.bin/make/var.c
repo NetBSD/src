@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.594 2020/10/30 07:19:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.595 2020/10/30 07:30:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.594 2020/10/30 07:19:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.595 2020/10/30 07:30:29 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -192,7 +192,7 @@ GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
 
 typedef enum VarFindFlags {
-    FIND_CMD		= 0x01,	/* look in VAR_CMDLINE when searching */
+    FIND_CMDLINE	= 0x01,	/* look in VAR_CMDLINE when searching */
     FIND_GLOBAL		= 0x02,	/* look in VAR_GLOBAL as well */
     FIND_ENV		= 0x04	/* look in the environment also */
 } VarFindFlags;
@@ -355,9 +355,7 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
  * Input:
  *	name		name to find
  *	ctxt		context in which to find it
- *	flags		FIND_GLOBAL	look in VAR_GLOBAL as well
- *			FIND_CMD	look in VAR_CMDLINE as well
- *			FIND_ENV	look in the environment as well
+ *	flags		to look on other contexts as well
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
@@ -386,7 +384,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      */
     var = GNode_FindVar(ctxt, name, nameHash);
 
-    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMDLINE)
+    if (var == NULL && (flags & FIND_CMDLINE) && ctxt != VAR_CMDLINE)
 	var = GNode_FindVar(VAR_CMDLINE, name, nameHash);
 
     if (!opts.checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
@@ -942,7 +940,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	}
     }
 
-    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD | FIND_ENV) : 0);
+    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMDLINE | FIND_ENV) : 0);
 
     if (v == NULL) {
 	Var_Set(name, val, ctxt);
@@ -989,7 +987,7 @@ Var_Exists(const char *name, GNode *ctxt)
 	name = name_freeIt;
     }
 
-    v = VarFind(name, ctxt, FIND_CMD | FIND_GLOBAL | FIND_ENV);
+    v = VarFind(name, ctxt, FIND_CMDLINE | FIND_GLOBAL | FIND_ENV);
     free(name_freeIt);
     if (v == NULL)
 	return FALSE;
@@ -1017,7 +1015,7 @@ Var_Exists(const char *name, GNode *ctxt)
 const char *
 Var_Value(const char *name, GNode *ctxt, char **freeIt)
 {
-    Var *v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    Var *v = VarFind(name, ctxt, FIND_CMDLINE | FIND_GLOBAL | FIND_ENV);
     char *p;
 
     *freeIt = NULL;
@@ -3557,7 +3555,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 
 	name[0] = startc;
 	name[1] = '\0';
-	v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind(name, ctxt, FIND_CMDLINE | FIND_GLOBAL | FIND_ENV);
 	if (v == NULL) {
 	    *pp += 2;
 
@@ -3592,7 +3590,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    return VPR_PARSE_MSG;
 	}
 
-	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind(varname, ctxt, FIND_CMDLINE | FIND_GLOBAL | FIND_ENV);
 
 	/* At this point, p points just after the variable name,
 	 * either at ':' or at endc. */
