@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.170 2020/04/13 11:43:27 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.171 2020/10/30 06:57:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.170 2020/04/13 11:43:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.171 2020/10/30 06:57:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -472,7 +472,7 @@ int
 db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 {
 	struct db_cmd_tbl_en *list_ent;
-	
+
 	/* empty list - ignore */
 	if (cmd_tbl->name == 0)
 		return 0;
