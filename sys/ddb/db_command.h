@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.38 2020/05/31 09:51:55 rin Exp $	*/
+/*	$NetBSD: db_command.h,v 1.39 2020/10/30 06:57:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct db_command;
 #define DDB_ADD_CMD(name,funct,type,cmd_descr,cmd_arg,arg_desc)\
  name,funct,type
 #endif
-   
+
 
 
 /*
@@ -109,7 +109,7 @@ int db_unregister_tbl(uint8_t, const struct db_command *);
  */
 struct db_command {
 	const char	*name;		/* command name */
-  
+
 	/* function to call */
 	void		(*fcn)(db_expr_t, bool, db_expr_t, const char *);
 	/*
@@ -130,7 +130,7 @@ struct db_command {
 #define	CS_OWN		0x1			/* non-standard syntax */
 #define	CS_MORE		0x2			/* standard syntax, but may have other
 					   				words at end */
-#define CS_COMPAT	0x4			/* is set for compatibilty with old 
+#define CS_COMPAT	0x4			/* is set for compatibilty with old
 									ddb versions*/
 #define CS_SHOW		0x8			/* select show list */
 #define CS_MACH		0x10		/* select machine dependent list */

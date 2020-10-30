@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.27 2019/09/29 02:00:22 uwe Exp $	*/
+/*	$NetBSD: db_input.c,v 1.28 2020/10/30 06:57:08 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.27 2019/09/29 02:00:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.28 2020/10/30 06:57:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -153,7 +153,7 @@ db_hist_put(int c)
 	    db_history_last = db_history;
 }
 #endif
-	
+
 
 /* returns true at end-of-line */
 static int
