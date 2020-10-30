@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.598 2020/10/30 15:28:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.599 2020/10/30 15:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.598 2020/10/30 15:28:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.599 2020/10/30 15:39:17 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -378,7 +378,7 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
      */
     var = GNode_FindVar(ctxt, name, nameHash);
     if (!elsewhere)
-        return var;
+	return var;
 
     if (var == NULL && ctxt != VAR_CMDLINE)
 	var = GNode_FindVar(VAR_CMDLINE, name, nameHash);
@@ -593,8 +593,8 @@ Var_ExportVars(void)
 	return;
 
     if (var_exportedVars == VAR_EXPORTED_ALL) {
-        HashIter hi;
-        HashEntry *he;
+	HashIter hi;
+	HashEntry *he;
 
 	/* Ouch! Exporting all variables at once is crazy... */
 	HashIter_Init(&hi, &VAR_GLOBAL->context);
@@ -824,7 +824,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	    VAR_DEBUG3("%s:%s = %s ignored (read-only)\n",
 		       ctxt->name, name, val);
 	    goto out;
-	}	    
+	}
 	Buf_Empty(&v->val);
 	if (val)
 	    Buf_AddStr(&v->val, val);
@@ -934,8 +934,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	name = name_freeIt;
 	if (name[0] == '\0') {
 	    VAR_DEBUG2("Var_Append(\"%s\", \"%s\", ...) "
-		      "name expands to empty string - ignored\n",
-		      unexpanded_name, val);
+		       "name expands to empty string - ignored\n",
+		       unexpanded_name, val);
 	    free(name_freeIt);
 	    return;
 	}
@@ -950,7 +950,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	Buf_AddStr(&v->val, val);
 
 	VAR_DEBUG3("%s:%s = %s\n",
-	    ctxt->name, name, Buf_GetAll(&v->val, NULL));
+		   ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
 	if (v->flags & VAR_FROM_ENV) {
 	    HashEntry *h;
@@ -1894,8 +1894,8 @@ ParseModifierPart(
 	const char *varstart;
 
 	Boolean is_escaped = p[0] == '\\' && (
-	    p[1] == delim || p[1] == '\\' || p[1] == '$' ||
-	    (p[1] == '&' && subst != NULL));
+		p[1] == delim || p[1] == '\\' || p[1] == '$' ||
+		(p[1] == '&' && subst != NULL));
 	if (is_escaped) {
 	    Buf_AddByte(&buf, p[1]);
 	    p += 2;
@@ -2427,7 +2427,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
     *pp += 2;
 
     res = ParseModifierPart(pp, delim, st->eflags, st,
-			   &re, NULL, NULL, NULL);
+			    &re, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
 
@@ -3225,7 +3225,7 @@ ApplyModifiers(
 	    }
 
 	    VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
-		      rval, (int)(size_t)(nested_p - p), p);
+		       rval, (int)(size_t)(nested_p - p), p);
 
 	    p = nested_p;
 
@@ -3897,8 +3897,8 @@ Var_Dump(GNode *ctxt)
     qsort(varnames, vec.len, sizeof varnames[0], str_cmp_asc);
 
     for (i = 0; i < vec.len; i++) {
-        const char *varname = varnames[i];
-        Var *var = HashTable_FindValue(&ctxt->context, varname);
+	const char *varname = varnames[i];
+	Var *var = HashTable_FindValue(&ctxt->context, varname);
 	debug_printf("%-16s = %s\n", varname, Buf_GetAll(&var->val, NULL));
     }
 

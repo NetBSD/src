@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.411 2020/10/30 07:19:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.412 2020/10/30 15:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.411 2020/10/30 07:19:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.412 2020/10/30 15:39:17 rillig Exp $");
 
 /* types and constants */
 
@@ -1985,9 +1985,9 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
     if (op == VAR_APPEND) {
 	Var_Append(name, uvalue, ctxt);
     } else if (op == VAR_SUBST) {
-        VarAssign_EvalSubst(name, uvalue, ctxt, &avalue, &avalue_freeIt);
+	VarAssign_EvalSubst(name, uvalue, ctxt, &avalue, &avalue_freeIt);
     } else if (op == VAR_SHELL) {
-        VarAssign_EvalShell(name, uvalue, ctxt, &avalue, &avalue_freeIt);
+	VarAssign_EvalShell(name, uvalue, ctxt, &avalue, &avalue_freeIt);
     } else {
 	if (op == VAR_DEFAULT && Var_Exists(name, ctxt)) {
 	    *out_avalue_freeIt = NULL;
@@ -2989,7 +2989,7 @@ ParseDependency(char *line)
      * Attempt to avoid ';' inside substitution patterns.
      */
     {
-        char *semicolon = FindSemicolon(line);
+	char *semicolon = FindSemicolon(line);
 	if (*semicolon != '\0') {
 	    /* Terminate the dependency list at the ';' */
 	    *semicolon = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.294 2020/10/30 07:19:30 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.295 2020/10/30 15:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.294 2020/10/30 07:19:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.295 2020/10/30 15:39:17 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -877,7 +877,7 @@ JobPrintCommands(Job *job)
     StringListNode *ln;
 
     for (ln = job->node->commands->first; ln != NULL; ln = ln->next) {
-        const char *cmd = ln->datum;
+	const char *cmd = ln->datum;
 
 	if (strcmp(cmd, "...") == 0) {
 	    job->node->type |= OP_SAVE_CMDS;

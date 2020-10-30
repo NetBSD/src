@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.181 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.182 2020/10/30 15:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.181 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.182 2020/10/30 15:39:17 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -615,7 +615,7 @@ Make_Update(GNode *cgn)
     checked++;
 
     {
-        char *cname_freeIt;
+	char *cname_freeIt;
 	cname = Var_Value(TARGET, cgn, &cname_freeIt);
 	assert(cname_freeIt == NULL);
     }
@@ -845,7 +845,7 @@ Make_DoAllVar(GNode *gn)
 
     UnmarkChildren(gn);
     for (ln = gn->children->first; ln != NULL; ln = ln->next)
-        MakeAddAllSrc(ln->datum, gn);
+	MakeAddAllSrc(ln->datum, gn);
 
     if (!Var_Exists(OODATE, gn)) {
 	Var_Set(OODATE, "", gn);
@@ -1029,7 +1029,7 @@ MakePrintStatusOrder(GNode *gn)
 {
     GNodeListNode *ln;
     for (ln = gn->order_pred->first; ln != NULL; ln = ln->next)
-        MakePrintStatusOrderNode(ln->datum, gn);
+	MakePrintStatusOrderNode(ln->datum, gn);
 }
 
 static void MakePrintStatusList(GNodeList *, int *);
@@ -1111,7 +1111,7 @@ MakePrintStatusList(GNodeList *gnodes, int *errors)
 {
     GNodeListNode *ln;
     for (ln = gnodes->first; ln != NULL; ln = ln->next)
-        if (MakePrintStatus(ln->datum, errors))
+	if (MakePrintStatus(ln->datum, errors))
 	    break;
 }
 
@@ -1126,9 +1126,9 @@ Make_ExpandUse(GNodeList *targs)
     GNodeList *examine;		/* List of targets to examine */
 
     {
-        /* XXX: Why is it necessary to copy the list? There shouldn't be
-         * any modifications to the list, at least the function name
-         * ExpandUse doesn't suggest that. */
+	/* XXX: Why is it necessary to copy the list? There shouldn't be
+	 * any modifications to the list, at least the function name
+	 * ExpandUse doesn't suggest that. */
 	GNodeListNode *ln;
 	examine = Lst_New();
 	for (ln = targs->first; ln != NULL; ln = ln->next)
