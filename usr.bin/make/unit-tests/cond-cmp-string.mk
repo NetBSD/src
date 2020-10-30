@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.7 2020/10/30 08:13:17 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.8 2020/10/30 13:41:14 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -57,12 +57,17 @@
 .  error
 .endif
 
-# XXX: As of 2020-10-30, adding a space to the string results in a parse
-# error.  This is a bug and should have been caught much earlier.
+# XXX: As of 2020-10-30, adding literal characters to the string results
+# in a parse error.  This is a bug and should have been caught much earlier.
 # I wonder since when it exists.
 .if ${:Uword} != "${:Uword} "
 .  error
 .else
+.  error
+.endif
+
+# Adding another variable expression to the string literal works though.
+.if ${:Uword} != "${:Uwo}${:Urd}"
 .  error
 .endif
 
