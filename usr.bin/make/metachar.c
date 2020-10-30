@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.c,v 1.7 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: metachar.c,v 1.8 2020/10/30 19:14:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -39,15 +39,13 @@
 
 #include "metachar.h"
 
-MAKE_RCSID("$NetBSD: metachar.c,v 1.7 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: metachar.c,v 1.8 2020/10/30 19:14:20 rillig Exp $");
 
 /*
  * The following array is used to make a fast determination of which
  * characters are interpreted specially by the shell.  If a command
  * contains any of these characters, it is executed by the shell, not
  * directly by us.
- *
- * perhaps move it to ctype?
  */
 
 unsigned char _metachar[128] = {
