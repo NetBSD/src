@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.137 2020/08/28 13:15:05 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.138 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.137 2020/08/28 13:15:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.138 2020/10/30 18:54:36 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -752,7 +752,7 @@ cpu_init_secondary_processor(int cpuindex)
 
 	armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
 	cpu_setttb(pmap_kernel()->pm_l1_pa , KERNEL_PID);
-	arm_isb();
+	isb();
 #else
 	cpu_setttb(pmap_kernel()->pm_l1->l1_physaddr, true);
 #endif

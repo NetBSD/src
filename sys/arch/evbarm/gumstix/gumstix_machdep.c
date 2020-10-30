@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.68 2020/10/01 08:27:20 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.69 2020/10/30 18:54:37 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -537,7 +537,7 @@ gumstix_mpstart(void)
 		bus_space_write_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT0, boot);
 	}
 
-	arm_dsb();
+	dsb(sy);
 	__asm __volatile("sev" ::: "memory");
 
 	for (int loop = 0; loop < 16; loop++) {

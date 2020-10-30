@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.3 2020/02/24 12:38:57 rin Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.4 2020/10/30 18:54:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.3 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.4 2020/10/30 18:54:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,7 +77,7 @@ static void
 armv7_pmu_set_pmevtyper(u_int counter, uint64_t val)
 {
 	armreg_pmselr_write(counter);
-	arm_isb();
+	isb();
 	armreg_pmxevtyper_write(val);
 }
 
@@ -85,7 +85,7 @@ static void
 armv7_pmu_set_pmevcntr(u_int counter, uint32_t val)
 {
 	armreg_pmselr_write(counter);
-	arm_isb();
+	isb();
 	armreg_pmxevcntr_write(val);
 }
 

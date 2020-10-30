@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.168 2020/07/03 06:49:26 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.169 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -538,7 +538,7 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 		    cnt * sizeof(pt_entry_t));
 #endif
 	}
-	arm_dsb();
+	dsb(sy);
 }
 
 #define	PDE_SYNC(pdep)			pmap_ptesync((pdep), 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.33 2020/08/14 16:18:36 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.34 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -237,35 +237,6 @@ read_thumb_insn(vaddr_t va, bool user_p)
 #endif
 	return insn;
 }
-
-#ifndef _RUMPKERNEL
-static inline void
-arm_dmb(void)
-{
-	if (CPU_IS_ARMV6_P())
-		armreg_dmb_write(0);
-	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dmb" ::: "memory");
-}
-
-static inline void
-arm_dsb(void)
-{
-	if (CPU_IS_ARMV6_P())
-		armreg_dsb_write(0);
-	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dsb" ::: "memory");
-}
-
-static inline void
-arm_isb(void)
-{
-	if (CPU_IS_ARMV6_P())
-		armreg_isb_write(0);
-	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("isb" ::: "memory");
-}
-#endif
 
 /*
  * Random cruft

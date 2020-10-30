@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.41 2019/08/12 23:31:48 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.42 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.41 2019/08/12 23:31:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.42 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 static uint64_t
 gtmr_read_cntct(struct gtmr_softc *sc)
 {
-	arm_isb();
+	isb();
 
 	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
 		/*
@@ -209,7 +209,7 @@ gtmr_write_ctl(struct gtmr_softc *sc, uint32_t val)
 	else
 		gtmr_cntv_ctl_write(val);
 
-	arm_isb();
+	isb();
 }
 
 static void
@@ -220,7 +220,7 @@ gtmr_write_tval(struct gtmr_softc *sc, uint32_t val)
 	else
 		gtmr_cntv_tval_write(val);
 
-	arm_isb();
+	isb();
 }
 
 static void
@@ -231,7 +231,7 @@ gtmr_write_cval(struct gtmr_softc *sc, uint64_t val)
 	else
 		gtmr_cntv_cval_write(val);
 
-	arm_isb();
+	isb();
 }
 
 
@@ -259,7 +259,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 		val &= ~CNTKCTL_PL0PCTEN;
 	}
 	gtmr_cntk_ctl_write(val);
-	arm_isb();
+	isb();
 
 	/*
 	 * enable timer and stop masking the timer.
@@ -364,7 +364,7 @@ gtmr_intr(void *arg)
 		delta = 0;
 	}
 
-	arm_isb();
+	isb();
 	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
 		gtmr_write_cval(sc, now + sc->sc_autoinc - delta);
 	} else {

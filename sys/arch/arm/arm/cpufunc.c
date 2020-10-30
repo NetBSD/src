@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.177 2020/07/10 12:25:08 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.178 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.177 2020/07/10 12:25:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.178 2020/10/30 18:54:36 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -1330,7 +1330,7 @@ get_cachesize_cp15(int cssr)
 	__asm volatile(".arch\tarmv7a");
 
 	armreg_csselr_write(cssr);
-	arm_isb();			 /* sync to the new cssr */
+	isb();			 /* sync to the new cssr */
 
 #else
 	__asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr) : "memory");

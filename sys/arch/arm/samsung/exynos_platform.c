@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.30 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.31 2020/10/30 18:54:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.30 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.31 2020/10/30 18:54:36 skrll Exp $");
 
 
 /*
@@ -129,7 +129,7 @@ exynos5800_mpstart(void)
 	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_OPTION(1), val | option);
 
 	bus_space_write_4(bst, sysram_bsh, EXYNOS5800_SYSRAM_HOTPLUG, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
-	arm_dsb();
+	dsb(sy);
 
 	/* Power on clusters */
 	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_CONFIG(0),
