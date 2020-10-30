@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.603 2020/10/30 16:48:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.604 2020/10/30 16:54:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.603 2020/10/30 16:48:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.604 2020/10/30 16:54:38 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -278,10 +278,10 @@ typedef enum VarExportFlags {
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef enum VarPatternFlags {
-    VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
-    VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
-    VARP_ANCHOR_START	= 0x04,	/* Match at start of word */
-    VARP_ANCHOR_END	= 0x08	/* Match at end of word */
+    VARP_SUB_GLOBAL	= 0x01,	/* Replace as often as possible ('g') */
+    VARP_SUB_ONE	= 0x02,	/* Replace only once ('1') */
+    VARP_ANCHOR_START	= 0x04,	/* Match at start of word ('^') */
+    VARP_ANCHOR_END	= 0x08	/* Match at end of word ('$') */
 } VarPatternFlags;
 
 static Var *
