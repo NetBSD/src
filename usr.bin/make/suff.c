@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.227 2020/10/26 20:14:27 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.228 2020/10/30 15:39:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.227 2020/10/26 20:14:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.228 2020/10/30 15:39:17 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -295,9 +295,9 @@ FindTransformByName(const char *name)
 {
     GNodeListNode *ln;
     for (ln = transforms->first; ln != NULL; ln = ln->next) {
-        GNode *gn = ln->datum;
-        if (strcmp(gn->name, name) == 0)
-            return gn;
+	GNode *gn = ln->datum;
+	if (strcmp(gn->name, name) == 0)
+	    return gn;
     }
     return NULL;
 }
@@ -1334,7 +1334,7 @@ Suff_FindPath(GNode* gn)
     Suff *suff = gn->suffix;
 
     if (suff == NULL) {
-        char *name = gn->name;
+	char *name = gn->name;
 	size_t nameLen = strlen(gn->name);
 	SuffListNode *ln;
 	for (ln = sufflist->first; ln != NULL; ln = ln->next)
@@ -1351,7 +1351,7 @@ Suff_FindPath(GNode* gn)
 	SUFF_DEBUG1("suffix is \"%s\"...\n", suff->name);
 	return suff->searchPath;
     } else {
-        SUFF_DEBUG0("\n");
+	SUFF_DEBUG0("\n");
 	return dirSearchPath;	/* Use default search path */
     }
 }
@@ -1615,7 +1615,7 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
     Src *targ;
 
     if (!Lst_IsEmpty(targs) || suffNull == NULL)
-        return;
+	return;
 
     SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 
@@ -1650,14 +1650,14 @@ static void
 SuffFindNormalDepsPath(GNode *gn, Src *targ)
 {
     if (gn->type & (OP_PHONY | OP_NOPATH))
-        return;
+	return;
 
     free(gn->path);
     gn->path = Dir_FindFile(gn->name,
 			    (targ == NULL ? dirSearchPath :
 			     targ->suff->searchPath));
     if (gn->path == NULL)
-        return;
+	return;
 
     Var_Set(TARGET, gn->path, gn);
 
