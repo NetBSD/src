@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.39 2020/10/30 06:57:08 skrll Exp $	*/
+/*	$NetBSD: db_command.h,v 1.40 2020/10/30 06:59:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -126,20 +126,20 @@ struct db_command {
 	 * CS_SET_DOT specify if this command is put to last added command memory.
 	 * CS_NOREPEAT this command does not repeat
 	 */
-	uint16_t		flag;		/* extra info: */
-#define	CS_OWN		0x1			/* non-standard syntax */
-#define	CS_MORE		0x2			/* standard syntax, but may have other
-					   				words at end */
-#define CS_COMPAT	0x4			/* is set for compatibilty with old
-									ddb versions*/
-#define CS_SHOW		0x8			/* select show list */
+	uint16_t	flag;		/* extra info: */
+#define	CS_OWN		0x1		/* non-standard syntax */
+#define	CS_MORE		0x2		/* standard syntax, but may have other
+								words at end */
+#define CS_COMPAT	0x4		/* is set for compatibilty with old
+								ddb versions */
+#define CS_SHOW		0x8		/* select show list */
 #define CS_MACH		0x10		/* select machine dependent list */
 
 #define	CS_SET_DOT	0x100		/* set dot after command */
 #define	CS_NOREPEAT	0x200		/* don't set last_command */
 #ifdef DDB_VERBOSE_HELP
-	const char *cmd_descr; /* description of command */
-	const char *cmd_arg;   /* command arguments */
+	const char *cmd_descr;		/* description of command */
+	const char *cmd_arg;		/* command arguments */
 	const char *cmd_arg_help;	/* arguments description */
 #endif
 };
