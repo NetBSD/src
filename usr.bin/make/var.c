@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.593 2020/10/30 06:59:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.594 2020/10/30 07:19:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.593 2020/10/30 06:59:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.594 2020/10/30 07:19:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -175,12 +175,12 @@ static Boolean save_dollars = TRUE;
 /*
  * Internally, variables are contained in four different contexts.
  *	1) the environment. They cannot be changed. If an environment
- *	    variable is appended to, the result is placed in the global
- *	    context.
- *	2) the global context. Variables set in the Makefile are located in
- *	    the global context.
+ *	   variable is appended to, the result is placed in the global
+ *	   context.
+ *	2) the global context. Variables set in the makefiles are located
+ *	   here.
  *	3) the command-line context. All variables set on the command line
- *	   are placed in this context. They are UNALTERABLE once placed here.
+ *	   are placed in this context.
  *	4) the local context. Each target has associated with it a context
  *	   list. On this list are located the structures describing such
  *	   local variables as $(@) and $(*)
@@ -189,10 +189,10 @@ static Boolean save_dollars = TRUE;
  */
 GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
-GNode          *VAR_CMD;	/* variables defined on the command-line */
+GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
 
 typedef enum VarFindFlags {
-    FIND_CMD		= 0x01,	/* look in VAR_CMD when searching */
+    FIND_CMD		= 0x01,	/* look in VAR_CMDLINE when searching */
     FIND_GLOBAL		= 0x02,	/* look in VAR_GLOBAL as well */
     FIND_ENV		= 0x04	/* look in the environment also */
 } VarFindFlags;
@@ -356,7 +356,7 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
  *	name		name to find
  *	ctxt		context in which to find it
  *	flags		FIND_GLOBAL	look in VAR_GLOBAL as well
- *			FIND_CMD	look in VAR_CMD as well
+ *			FIND_CMD	look in VAR_CMDLINE as well
  *			FIND_ENV	look in the environment as well
  *
  * Results:
@@ -381,13 +381,13 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 
     /*
      * First look for the variable in the given context. If it's not there,
-     * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
+     * look for it in VAR_CMDLINE, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
     var = GNode_FindVar(ctxt, name, nameHash);
 
-    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD)
-	var = GNode_FindVar(VAR_CMD, name, nameHash);
+    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMDLINE)
+	var = GNode_FindVar(VAR_CMDLINE, name, nameHash);
 
     if (!opts.checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
 	ctxt != VAR_GLOBAL)
@@ -794,7 +794,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     }
 
     if (ctxt == VAR_GLOBAL) {
-	v = VarFind(name, VAR_CMD, 0);
+	v = VarFind(name, VAR_CMDLINE, 0);
 	if (v != NULL) {
 	    if (v->flags & VAR_FROM_CMD) {
 		VAR_DEBUG3("%s:%s = %s ignored!\n", ctxt->name, name, val);
@@ -811,7 +811,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      */
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
-	if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
+	if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT)) {
 	    /*
 	     * This var would normally prevent the same name being added
 	     * to VAR_GLOBAL, so delete it from there if needed.
@@ -840,7 +840,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * to the environment (as per POSIX standard)
      * Other than internals.
      */
-    if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
+    if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
 	if (v == NULL) {
 	    /* we just added it */
 	    v = VarFind(name, ctxt, 0);
@@ -883,12 +883,12 @@ out:
  * Notes:
  *	The variable is searched for only in its context before being
  *	created in that context. I.e. if the context is VAR_GLOBAL,
- *	only VAR_GLOBAL->context is searched. Likewise if it is VAR_CMD, only
- *	VAR_CMD->context is searched. This is done to avoid the literally
- *	thousands of unnecessary strcmp's that used to be done to
+ *	only VAR_GLOBAL->context is searched. Likewise if it is VAR_CMDLINE,
+ *	only VAR_CMDLINE->context is searched. This is done to avoid the
+ *	literally thousands of unnecessary strcmp's that used to be done to
  *	set, say, $(@) or $(<).
  *	If the context is VAR_GLOBAL though, we check if the variable
- *	was set in VAR_CMD from the command line and skip it if so.
+ *	was set in VAR_CMDLINE from the command line and skip it if so.
  *-----------------------------------------------------------------------
  */
 void
@@ -946,7 +946,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 
     if (v == NULL) {
 	Var_Set(name, val, ctxt);
-    } else if (ctxt == VAR_CMD || !(v->flags & VAR_FROM_CMD)) {
+    } else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
 	Buf_AddByte(&v->val, ' ');
 	Buf_AddStr(&v->val, val);
 
@@ -3328,7 +3328,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 {
     if ((namelen == 1 ||
 	 (namelen == 2 && (varname[1] == 'F' || varname[1] == 'D'))) &&
-	(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
+	(ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL))
     {
 	/*
 	 * If substituting a local variable in a non-local context,
@@ -3350,7 +3350,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
     }
 
     if ((namelen == 7 || namelen == 8) && varname[0] == '.' &&
-	ch_isupper(varname[1]) && (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
+	ch_isupper(varname[1]) && (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL))
     {
 	return strcmp(varname, ".TARGET") == 0 ||
 	       strcmp(varname, ".ARCHIVE") == 0 ||
@@ -3364,7 +3364,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 static const char *
 UndefinedShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
 {
-    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
+    if (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL) {
 	/*
 	 * If substituting a local variable in a non-local context,
 	 * assume it's for dynamic source stuff. We have to handle
@@ -3601,7 +3601,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	 * Check also for bogus D and F forms of local variables since we're
 	 * in a local context and the name is the right length.
 	 */
-	if (v == NULL && ctxt != VAR_CMD && ctxt != VAR_GLOBAL &&
+	if (v == NULL && ctxt != VAR_CMDLINE && ctxt != VAR_GLOBAL &&
 	    namelen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
 	    strchr("@%?*!<>", varname[0]) != NULL)
 	{
@@ -3862,7 +3862,7 @@ Var_Init(void)
 {
     VAR_INTERNAL = Targ_NewGN("Internal");
     VAR_GLOBAL = Targ_NewGN("Global");
-    VAR_CMD = Targ_NewGN("Command");
+    VAR_CMDLINE = Targ_NewGN("Command");
 }
 
 /* Clean up the variables module. */
