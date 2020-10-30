@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.173 2020/10/30 07:17:29 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.174 2020/10/30 16:08:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,11 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.173 2020/10/30 07:17:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.174 2020/10/30 16:08:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
 #include "opt_ddb.h"
+#include "opt_fdt.h"
 #include "opt_kgdb.h"
 #include "opt_mqueue.h"
 #include "opt_inet.h"
@@ -101,6 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.173 2020/10/30 07:17:29 skrll Exp $
 #include <uvm/uvm_ddb.h>
 
 #include <net/route.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_ddb.h>
+#endif
 
 /*
  * Results of command search.
@@ -219,6 +225,9 @@ static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vnode_lock_print_cmd(db_expr_t, bool, db_expr_t,
 		    const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef FDT
+static void	db_fdt_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("all",	NULL,
@@ -239,6 +248,10 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("devices", db_show_all_devices,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/fitm]",NULL) },
+#ifdef FDT
+	{ DDB_ADD_CMD("fdt", db_fdt_print_cmd, 0,
+	    "Show FDT information", NULL, NULL) },
+#endif
 	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
@@ -1345,6 +1358,27 @@ db_show_lockstats(db_expr_t addr, bool have_addr,
 	db_kernelonly();
 #endif
 }
+
+#ifdef FDT
+/*ARGSUSED*/
+static void
+db_fdt_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL /* XXX CRASH(8) */
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	fdt_print(have_addr ? (void *)(uintptr_t)addr : fdtbus_get_data(),
+	    full, db_printf);
+#else
+	also;
+	db_kernelonly();
+#endif
+}
+#endif
 
 /*
  * Call random function:
