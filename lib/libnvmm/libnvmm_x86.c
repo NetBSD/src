@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.40 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.41 2020/10/30 21:06:13 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -1051,6 +1051,7 @@ struct x86_opcode {
 	bool movs:1;
 	bool stos:1;
 	bool lods:1;
+	bool cmps:1;
 	bool szoverride:1;
 	bool group1:1;
 	bool group3:1;
@@ -1463,6 +1464,26 @@ static const struct x86_opcode primary_opcode_table[256] __cacheline_aligned = {
 	},
 
 	/*
+	 * CMPS
+	 */
+	[0xA6] = {
+		/* Yb, Xb */
+		.valid = true,
+		.cmps = true,
+		.szoverride = false,
+		.defsize = OPSIZE_BYTE,
+		.emul = &x86_emul_cmp
+	},
+	[0xA7] = {
+		/* Yv, Xv */
+		.valid = true,
+		.cmps = true,
+		.szoverride = true,
+		.defsize = -1,
+		.emul = &x86_emul_cmp
+	},
+
+	/*
 	 * STOS
 	 */
 	[0xAA] = {
@@ -1849,6 +1870,35 @@ resolve_special_register(struct x86_instr *instr, uint8_t enc, size_t regsize)
  */
 static int
 node_movs(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	size_t adrsize;
+
+	adrsize = instr->address_size;
+
+	/* DS:RSI */
+	instr->src.type = STORE_REG;
+	instr->src.u.reg = &gpr_map__special[1][2][adrsize-1];
+	instr->src.disp.type = DISP_0;
+
+	/* ES:RDI, force ES */
+	instr->dst.type = STORE_REG;
+	instr->dst.u.reg = &gpr_map__special[1][3][adrsize-1];
+	instr->dst.disp.type = DISP_0;
+	instr->dst.hardseg = NVMM_X64_SEG_ES;
+
+	fsm_advance(fsm, 0, NULL);
+
+	return 0;
+}
+
+/*
+ * Special node, for CMPS. Fake two displacements of zero on the source and
+ * destination registers.
+ * XXX coded as clone of movs as its similar in register usage
+ * XXX might be merged with node_movs()
+ */
+static int
+node_cmps(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	size_t adrsize;
 
@@ -2470,6 +2520,8 @@ node_primary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		fsm_advance(fsm, 1, node_stlo);
 	} else if (opcode->movs) {
 		fsm_advance(fsm, 1, node_movs);
+	} else if (opcode->cmps) {
+		fsm_advance(fsm, 1, node_cmps);
 	} else {
 		return -1;
 	}
@@ -2646,8 +2698,16 @@ x86_decode(uint8_t *inst_bytes, size_t inst_len, struct x86_instr *instr,
 
 	while (fsm.fn != NULL) {
 		ret = (*fsm.fn)(&fsm, instr);
-		if (ret == -1)
+		if (ret == -1) {
+			printf("\nNVMM: %s missing support for instruction " \
+			       "with max length %ld : [ ", __func__,
+			       inst_len);
+			for (uint i = 0; i < inst_len; i++)
+				printf("%02x ", inst_bytes[i]);
+			printf("], please report to NetBSD!\n\n");
+			fflush(stdout);
 			return -1;
+		}
 	}
 
 	instr->len = fsm.buf - inst_bytes;
