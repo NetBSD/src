@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.9 2020/10/30 14:46:01 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.10 2020/10/30 14:51:47 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -57,12 +57,10 @@
 .  error
 .endif
 
-# XXX: As of 2020-10-30, adding literal characters to the string results
-# in a parse error.  This is a bug and should have been caught much earlier.
-# I wonder since when it exists.
-.if ${:Uword} != "${:Uword} "
-.  error
-.else
+# Between 2003-01-01 (maybe even earlier) and 2020-10-30, adding one of the
+# characters " \t!=><" directly after a variable expression resulted in a
+# "Malformed conditional", even though the string was well-formed.
+.if ${:Uword } != "${:Uword} "
 .  error
 .endif
 
