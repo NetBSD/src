@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.604 2020/10/30 16:54:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.605 2020/10/30 17:10:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.604 2020/10/30 16:54:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.605 2020/10/30 17:10:48 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -348,21 +348,17 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
     return HashTable_FindValueHash(&ctxt->context, varname, hash);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarFind --
- *	Find the given variable in the given context and any other contexts
- *	indicated.
+/* Find the variable in the context, and maybe in other contexts as well.
  *
  * Input:
  *	name		name to find
- *	ctxt		context in which to find it
- *	elsewhere	to look in other contexts as well
+ *	ctxt		context in which to look first
+ *	elsewhere	TRUE to look in other contexts as well
  *
  * Results:
- *	A pointer to the structure describing the desired variable or
- *	NULL if the variable does not exist.
- *-----------------------------------------------------------------------
+ *	The found variable, or NULL if the variable does not exist.
+ *	If the variable is an environment variable, it must be freed using
+ *	VarFreeEnv after use.
  */
 static Var *
 VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
@@ -379,15 +375,13 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
     name = CanonicalVarname(name);
     nameHash = Hash_Hash(name);
 
-    /*
-     * First look for the variable in the given context. If it's not there,
-     * look for it in VAR_CMDLINE, VAR_GLOBAL and the environment, in that order,
-     * depending on the FIND_* flags in 'flags'
-     */
+    /* First look for the variable in the given context. */
     var = GNode_FindVar(ctxt, name, nameHash);
     if (!elsewhere)
 	return var;
 
+    /* The variable was not found in the given context.  Now look for it in
+     * the other contexts as well. */
     if (var == NULL && ctxt != VAR_CMDLINE)
 	var = GNode_FindVar(VAR_CMDLINE, name, nameHash);
 
@@ -420,26 +414,23 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
     return var;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarFreeEnv  --
- *	If the variable is an environment variable, free it
+/* If the variable is an environment variable, free it.
  *
  * Input:
  *	v		the variable
- *	destroy		true if the value buffer should be destroyed.
+ *	freeValue	true if the variable value should be freed as well
  *
  * Results:
  *	TRUE if it is an environment variable, FALSE otherwise.
- *-----------------------------------------------------------------------
  */
 static Boolean
-VarFreeEnv(Var *v, Boolean destroy)
+VarFreeEnv(Var *v, Boolean freeValue)
 {
     if (!(v->flags & VAR_FROM_ENV))
 	return FALSE;
+
     free(v->name_freeIt);
-    Buf_Destroy(&v->val, destroy);
+    Buf_Destroy(&v->val, freeValue);
     free(v);
     return TRUE;
 }
@@ -450,7 +441,7 @@ static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
     HashEntry *he = HashTable_CreateEntry(&ctxt->context, name, NULL);
-    Var *v = VarNew(he->key, NULL, val,
+    Var *v = VarNew(he->key /* aliased */, NULL, val,
 		    flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     HashEntry_Set(he, v);
     if (!(ctxt->flags & INTERNAL)) {
@@ -458,7 +449,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
     }
 }
 
-/* Remove a variable from a context, freeing the Var structure as well. */
+/* Remove a variable from a context, freeing all related memory as well. */
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
@@ -543,9 +534,9 @@ Var_Export1(const char *name, VarExportFlags flags)
 
 	if (parent) {
 	    /*
-	     * Flag this as something we need to re-export.
+	     * Flag the variable as something we need to re-export.
 	     * No point actually exporting it now though,
-	     * the child can do it at the last minute.
+	     * the child process can do it at the last minute.
 	     */
 	    v->flags |= VAR_EXPORTED | VAR_REEXPORT;
 	    return TRUE;
@@ -570,6 +561,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	if (parent || !(v->flags & VAR_EXPORTED))
 	    setenv(name, val, 1);
     }
+
     /*
      * This is so Var_Set knows to call Var_Export again...
      */
@@ -580,7 +572,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 }
 
 /*
- * This gets called from our children.
+ * This gets called from our child processes.
  */
 void
 Var_ExportVars(void)
