@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.9,v 1.1 2020/10/30 22:14:03 uwe Exp $
+.\"	$NetBSD: ddb.9,v 1.2 2020/10/30 22:29:30 uwe Exp $
 .\"
 .\" Copyright (c) 2020 Valery Ushakov
 .\" All rights reserved.
@@ -132,7 +132,7 @@ remainder of its command line.
 .It Dv CS_NOREPEAT
 The command should not be automatically repeated by the
 .Tn REPL
-when user enters an empty command after it.
+when the user enters an empty command after it.
 .\"
 .It Dv CS_OWN
 The command doesn't follow the normal
@@ -152,9 +152,9 @@ The command sets the
 .Pp
 The remaining parameters are strings that provide documentation for
 the command and its arguments.
-That documentation is available to the user via
+That documentation is available to the user via the
 .Ic help
-command if the kernel was compiled with
+command if the kernel was compiled with the
 .Dv DDB_VERBOSE_HELP
 option.
 .\"
