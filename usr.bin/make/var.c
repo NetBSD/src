@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.600 2020/10/30 16:09:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.601 2020/10/30 16:16:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.600 2020/10/30 16:09:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.601 2020/10/30 16:16:16 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -192,23 +192,31 @@ GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
 
 typedef enum VarFlags {
+
     /* The variable's value is currently being used by Var_Parse or Var_Subst.
      * This marker is used to avoid endless recursion. */
     VAR_IN_USE = 0x01,
+
     /* The variable comes from the environment.
      * These variables are not registered in any GNode, therefore they must
      * be freed as soon as they are not used anymore. */
     VAR_FROM_ENV = 0x02,
+
     /* The variable is exported to the environment, to be used by child
      * processes. */
     VAR_EXPORTED = 0x10,
+
     /* At the point where this variable was exported, it contained an
      * unresolved reference to another variable.  Before any child process is
      * started, it needs to be exported again, in the hope that the referenced
      * variable can then be resolved. */
     VAR_REEXPORT = 0x20,
-    /* The variable came from command line. */
+
+    /* The variable came from the command line. */
     VAR_FROM_CMD = 0x40,
+
+    /* The variable value cannot be changed anymore, and the variable cannot
+     * be deleted.  Any attempts to do so are ignored. */
     VAR_READONLY = 0x80
 } VarFlags;
 
