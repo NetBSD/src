@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.58 2020/10/24 14:43:53 roy Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.59 2020/10/30 21:44:49 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.58 2020/10/24 14:43:53 roy Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.59 2020/10/30 21:44:49 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -180,36 +180,15 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_SPEED:
 		AUDIO_INITINFO(&tmpinfo);
+		/* Conform to kernel limits. */
+		if (INTARG < 1000)
+			INTARG = 1000;
+		if (INTARG > 192000)
+			INTARG = 192000;
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
-		/*
-		 * The default NetBSD behavior if an unsupported sample rate
-		 * is set is to return an error code and keep the rate at the
-		 * default of 8000 Hz.
-		 * 
-		 * However, OSS specifies that a sample rate supported by the
-		 * hardware is returned if the exact rate could not be set.
-		 * 
-		 * So, if the chosen sample rate is invalid, set and return
-		 * the current hardware rate.
-		 */
 		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
-			/* Don't care that SETINFO failed the first time... */
-			errno = 0;
-			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
-			if (retval < 0)
-				return retval;
-			retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
-			if (retval < 0)
-				return retval;
-			tmpinfo.play.sample_rate =
-			tmpinfo.record.sample_rate =
-			    (tmpinfo.mode == AUMODE_RECORD) ?
-			    hwfmt.record.sample_rate :
-			    hwfmt.play.sample_rate;
-			retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-			if (retval < 0)
-				return retval;
+			return retval;
 		}
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
