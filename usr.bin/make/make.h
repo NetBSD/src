@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.176 2020/10/30 07:19:30 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.177 2020/10/30 17:10:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -364,7 +364,7 @@ typedef struct GNode {
      *
      * Also used for the global variable scopes VAR_GLOBAL, VAR_CMDLINE,
      * VAR_INTERNAL, which contain variables with arbitrary names. */
-    HashTable context;
+    HashTable /* of Var pointer */ context;
 
     /* The commands to be given to a shell to create this target. */
     StringList *commands;
