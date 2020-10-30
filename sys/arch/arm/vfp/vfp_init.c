@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.71 2020/08/01 02:13:04 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.72 2020/10/30 18:54:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.71 2020/08/01 02:13:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.72 2020/10/30 18:54:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -287,7 +287,7 @@ vfp_attach(struct cpu_info *ci)
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
 		armreg_cpacr_write(cpacr);
 
-		arm_isb();
+		isb();
 
 		/*
 		 * If we could enable them, then they exist.
