@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.169 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.170 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.169 2020/10/26 21:34:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.170 2020/10/30 20:30:44 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -110,7 +110,7 @@ static void
 CompatDeleteTarget(GNode *gn)
 {
     if (gn != NULL && !Targ_Precious(gn)) {
-	char *file_freeIt;
+	void *file_freeIt;
 	const char *file = Var_Value(TARGET, gn, &file_freeIt);
 
 	if (!opts.noExecute && eunlink(file) != -1) {
@@ -503,7 +503,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	}
 
 	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
-	    char *target_freeIt;
+	    void *target_freeIt;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &target_freeIt), pgn);
 	    bmake_free(target_freeIt);
 	}
@@ -597,7 +597,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	pgn->flags &= ~(unsigned)REMAKE;
     } else {
 	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
-	    char *target_freeIt;
+	    void *target_freeIt;
 	    const char *target = Var_Value(TARGET, gn, &target_freeIt);
 	    Var_Set(IMPSRC, target != NULL ? target : "", pgn);
 	    bmake_free(target_freeIt);

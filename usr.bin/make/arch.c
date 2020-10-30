@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.148 2020/10/30 16:48:58 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.149 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.148 2020/10/30 16:48:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.149 2020/10/30 20:30:44 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -861,7 +861,7 @@ Arch_Touch(GNode *gn)
 {
     FILE *arch;		/* Stream open to archive, positioned properly */
     struct ar_hdr arh;	/* Current header describing member */
-    char *p1, *p2;
+    void *p1, *p2;
 
     arch = ArchFindMember(Var_Value(ARCHIVE, gn, &p1),
 			  Var_Value(MEMBER, gn, &p2),
@@ -921,7 +921,7 @@ Arch_MTime(GNode *gn)
 {
     struct ar_hdr *arhPtr;	/* Header of desired member */
     time_t modTime;		/* Modification time as an integer */
-    char *p1, *p2;
+    void *p1, *p2;
 
     arhPtr = ArchStatMember(Var_Value(ARCHIVE, gn, &p1),
 			    Var_Value(MEMBER, gn, &p2),
