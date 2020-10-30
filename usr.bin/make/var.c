@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.592 2020/10/30 06:44:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.593 2020/10/30 06:59:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.592 2020/10/30 06:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.593 2020/10/30 06:59:12 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -162,13 +162,14 @@ static char varUndefined[] = "";
 static char emptyString[] = "";
 
 /*
- * Traditionally we consume $$ during := like any other expansion.
- * Other make's do not.
+ * Traditionally this make consumed $$ during := like any other expansion.
+ * Other make's do not, and this make follows straight since 2016-01-09.
+ *
  * This knob allows controlling the behavior.
  * FALSE to consume $$ during := assignment.
  * TRUE to preserve $$ during := assignment.
  */
-#define SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
+#define MAKE_SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
 static Boolean save_dollars = TRUE;
 
 /*
@@ -857,7 +858,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-    if (name[0] == '.' && strcmp(name, SAVE_DOLLARS) == 0)
+    if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
 	save_dollars = s2Boolean(val, save_dollars);
 
 out:
