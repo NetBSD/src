@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.591 2020/10/27 07:16:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.592 2020/10/30 06:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,40 +68,48 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * var.c --
- *	Variable-handling functions
+/*
+ * Handling of variables and the expressions formed from them.
+ *
+ * Variables are set using lines of the form VAR=value.  Both the variable
+ * name and the value can contain references to other variables, by using
+ * expressions like ${VAR}, ${VAR:Modifiers}, ${${VARNAME}} or ${VAR:${MODS}}.
  *
  * Interface:
- *	Var_Set		Set the value of a variable in the given
- *			context. The variable is created if it doesn't
- *			yet exist.
+ *	Var_Init	Initialize this module.
  *
- *	Var_Append	Append more characters to an existing variable
- *			in the given context. The variable needn't
- *			exist already -- it will be created if it doesn't.
- *			A space is placed between the old value and the
- *			new one.
+ *	Var_End		Clean up the module.
+ *
+ *	Var_Set		Set the value of the variable, creating it if
+ *			necessary.
+ *
+ *	Var_Append	Append more characters to the variable, creating it if
+ *			necessary. A space is placed between the old value and
+ *			the new one.
  *
  *	Var_Exists	See if a variable exists.
  *
- *	Var_Value	Return the unexpanded value of a variable in a
- *			context or NULL if the variable is undefined.
+ *	Var_Value	Return the unexpanded value of a variable, or NULL if
+ *			the variable is undefined.
  *
- *	Var_Subst	Substitute either a single variable or all
- *			variables in a string, using the given context.
+ *	Var_Subst	Substitute all variable expressions in a string.
  *
- *	Var_Parse	Parse a variable expansion from a string and
- *			return the result and the number of characters
- *			consumed.
+ *	Var_Parse	Parse a variable expression such as ${VAR:Mpattern}.
  *
- *	Var_Delete	Delete a variable in a context.
+ *	Var_Delete	Delete a variable.
  *
- *	Var_Init	Initialize this module.
+ *	Var_ExportVars	Export some or even all variables to the environment
+ *			of this process and its child processes.
+ *
+ *	Var_Export	Export the variable to the environment of this process
+ *			and its child processes.
+ *
+ *	Var_UnExport	Don't export the variable anymore.
  *
  * Debugging:
- *	Var_Dump	Print out all variables defined in the given
- *			context.
+ *	Var_Stats	Print out hashing statistics if in -dh mode.
+ *
+ *	Var_Dump	Print out all variables defined in the given context.
  *
  * XXX: There's a lot of duplication in these functions.
  */
@@ -121,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.591 2020/10/27 07:16:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.592 2020/10/30 06:44:57 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
