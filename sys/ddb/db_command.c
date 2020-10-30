@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.172 2020/10/30 07:03:50 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.173 2020/10/30 07:17:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.172 2020/10/30 07:03:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.173 2020/10/30 07:17:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -221,34 +221,11 @@ static void	db_vnode_lock_print_cmd(db_expr_t, bool, db_expr_t,
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
-	/* added from all sub cmds */
-	{ DDB_ADD_CMD("callout",  db_show_callout,
-	    0 ,"List all used callout functions.",NULL,NULL) },
-	/* added from all sub cmds */
-	{ DDB_ADD_CMD("pages",	db_show_all_pages,
-	    0 ,"List all used memory pages.",NULL,NULL) },
-	{ DDB_ADD_CMD("proc",	db_show_proc,
-	    0 ,"Print process information.",NULL,NULL) },
-	/* added from all sub cmds */
-	{ DDB_ADD_CMD("procs",	db_show_all_procs,
-	    0 ,"List all processes.",NULL,NULL) },
-	/* added from all sub cmds */
-	{ DDB_ADD_CMD("pools",	db_show_all_pools,
-	    0 ,"Show all pools",NULL,NULL) },
-	{ DDB_ADD_CMD("locks",	db_show_all_locks,
-	    0 ,"Show all held locks", "[/t]", NULL) },
-	{ DDB_ADD_CMD("mount",	db_show_all_mount,	0,
-	    "Print all mount structures.", "[/f]", NULL) },
-	{ DDB_ADD_CMD("freelists",	db_show_all_freelists,
-	    0 ,"Show all freelists", NULL, NULL) },
+	{ DDB_ADD_CMD("all",	NULL,
+	    CS_COMPAT, NULL,NULL,NULL) },
 #ifdef AIO
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
 	    "Show aio jobs",NULL,NULL) },
-#endif
-	{ DDB_ADD_CMD("all",	NULL,
-	    CS_COMPAT, NULL,NULL,NULL) },
-#if defined(INET)
-	{ DDB_ADD_CMD("routes",	db_show_routes,		0,NULL,NULL,NULL) },
 #endif
 #ifdef _KERNEL
 	{ DDB_ADD_CMD("breaks",	db_listbreak_cmd, 	0,
@@ -256,61 +233,84 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("buf",	db_buf_print_cmd,	0,
 	    "Print the struct buf at address.", "[/f] address",NULL) },
+	/* added from all sub cmds */
+	{ DDB_ADD_CMD("callout",  db_show_callout,
+	    0 ,"List all used callout functions.",NULL,NULL) },
 	{ DDB_ADD_CMD("devices", db_show_all_devices,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/fitm]",NULL) },
 	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
+	{ DDB_ADD_CMD("freelists",	db_show_all_freelists,
+	    0 ,"Show all freelists", NULL, NULL) },
+#ifdef KERNHIST
+	{ DDB_ADD_CMD("kernhist", db_kernhist_print_cmd, 0,
+	    "Print the UVM history logs.",
+	    NULL,NULL) },
+#endif
+	/* added from all sub cmds */
+	{ DDB_ADD_CMD("locks",	db_show_all_locks,
+	    0 ,"Show all held locks", "[/t]", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("lockstats",
 				db_show_lockstats,	0,
 	    "Print statistics of locks", NULL, NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
-	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
+	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
 	    "Print kernel modules", NULL, NULL) },
+	{ DDB_ADD_CMD("mount",	db_show_all_mount,	0,
+	    "Print all mount structures.", "[/f]", NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
 #ifdef MQUEUE
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
 	    "Print the message queues", NULL, NULL) },
 #endif
-	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
-	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("ncache",	db_namecache_print_cmd,	0,
 	    "Dump the namecache list.", "address",NULL) },
 	{ DDB_ADD_CMD("object",	db_object_print_cmd,	0,
 	    "Print the vm_object at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("page",	db_page_print_cmd,	0,
 	    "Print the vm_page at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("pages",	db_show_all_pages,
+	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("panic",	db_show_panic,	0,
 	    "Print the current panic string",NULL,NULL) },
 	{ DDB_ADD_CMD("pool",	db_pool_print_cmd,	0,
 	    "Print the pool at address.", "[/clp] address",NULL) },
+	/* added from all sub cmds */
+	{ DDB_ADD_CMD("pools",	db_show_all_pools,
+	    0 ,"Show all pools",NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_show_proc,
+	    0 ,"Print process information.",NULL,NULL) },
+	/* added from all sub cmds */
+	{ DDB_ADD_CMD("procs",	db_show_all_procs,
+	    0 ,"List all processes.",NULL,NULL) },
 	{ DDB_ADD_CMD("registers",	db_show_regs,		0,
 	    "Display the register set.", "[/u]",NULL) },
+#if defined(INET)
+	{ DDB_ADD_CMD("routes",	db_show_routes,		0,NULL,NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("sched_qs",	db_show_sched_qs,	0,
 	    "Print the state of the scheduler's run queues.",
 	    NULL,NULL) },
+	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("uvmexp",	db_uvmexp_print_cmd, 0,
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
-#ifdef KERNHIST
-	{ DDB_ADD_CMD("kernhist", db_kernhist_print_cmd, 0,
-	    "Print the UVM history logs.",
-	    NULL,NULL) },
-#endif
+	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
+	    "Print the vmem usage.", "[/a] address", NULL) },
+	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
+	    "Show all vmems.", NULL, NULL) },
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("vnode_lock",	db_vnode_lock_print_cmd,	0,
 	    "Print the vnode having that address as v_lock.",
 	    "[/f] address",NULL) },
-	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
-	    "Print the vmem usage.", "[/a] address", NULL) },
-	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
-	    "Show all vmems.", NULL, NULL) },
 #ifdef _KERNEL
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
 	    "Display all watchpoints.", NULL,NULL) },
