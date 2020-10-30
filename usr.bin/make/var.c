@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.605 2020/10/30 17:10:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.606 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.605 2020/10/30 17:10:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.606 2020/10/30 20:30:44 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1015,7 +1015,7 @@ Var_Exists(const char *name, GNode *ctxt)
  *-----------------------------------------------------------------------
  */
 const char *
-Var_Value(const char *name, GNode *ctxt, char **freeIt)
+Var_Value(const char *name, GNode *ctxt, void **freeIt)
 {
     Var *v = VarFind(name, ctxt, TRUE);
     char *p;
