@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.597 2020/10/30 07:47:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.598 2020/10/30 15:28:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.597 2020/10/30 07:47:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.598 2020/10/30 15:28:38 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -480,21 +480,9 @@ Var_Delete(const char *name, GNode *ctxt)
     }
 }
 
-
-/*
- * Export a single variable.
- * We ignore make internal variables (those which start with '.').
- * Also we jump through some hoops to avoid calling setenv
- * more than necessary since it can leak.
- * We only manipulate flags of vars if 'parent' is set.
- */
 static Boolean
-Var_Export1(const char *name, VarExportFlags flags)
+MayExport(const char *name)
 {
-    VarExportFlags parent = flags & VAR_EXPORT_PARENT;
-    Var *v;
-    char *val;
-
     if (name[0] == '.')
 	return FALSE;		/* skip internals */
     if (name[0] == '-')
@@ -514,6 +502,25 @@ Var_Export1(const char *name, VarExportFlags flags)
 	    return FALSE;
 	}
     }
+    return TRUE;
+}
+
+/*
+ * Export a single variable.
+ * We ignore make internal variables (those which start with '.').
+ * Also we jump through some hoops to avoid calling setenv
+ * more than necessary since it can leak.
+ * We only manipulate flags of vars if 'parent' is set.
+ */
+static Boolean
+Var_Export1(const char *name, VarExportFlags flags)
+{
+    VarExportFlags parent = flags & VAR_EXPORT_PARENT;
+    Var *v;
+    char *val;
+
+    if (!MayExport(name))
+	return FALSE;
 
     v = VarFind(name, VAR_GLOBAL, 0);
     if (v == NULL)
