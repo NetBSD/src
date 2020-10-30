@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.609 2020/10/30 22:49:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.610 2020/10/30 22:55:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.609 2020/10/30 22:49:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.610 2020/10/30 22:55:34 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1033,7 +1033,7 @@ Var_Value(const char *name, GNode *ctxt, void **freeIt)
 }
 
 
-/* SepBuf is a string being built from "words", interleaved with separators. */
+/* SepBuf is a string being built from words, interleaved with separators. */
 typedef struct SepBuf {
     Buffer buf;
     Boolean needSep;
@@ -1158,10 +1158,7 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
 }
 
 #ifdef SYSVVARSUB
-/*-
- *-----------------------------------------------------------------------
- * Str_SYSVMatch --
- *	Check word against pattern for a match (% is wild),
+/* Check word against pattern for a match (% is a wildcard).
  *
  * Input:
  *	word		Word to examine
@@ -1169,13 +1166,12 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
  *
  * Results:
  *	Returns the start of the match, or NULL.
- *	*match_len returns the length of the match, if any.
- *	*hasPercent returns whether the pattern contains a percent.
- *-----------------------------------------------------------------------
+ *	out_match_len returns the length of the match, if any.
+ *	out_hasPercent returns whether the pattern contains a percent.
  */
 static const char *
-Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
-	      Boolean *hasPercent)
+SysVMatch(const char *word, const char *pattern,
+	      size_t *out_match_len, Boolean *out_hasPercent)
 {
     const char *p = pattern;
     const char *w = word;
@@ -1184,15 +1180,15 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
     size_t p_len;
     const char *w_tail;
 
-    *hasPercent = FALSE;
+    *out_hasPercent = FALSE;
     if (*p == '\0') {		/* ${VAR:=suffix} */
-	*match_len = strlen(w);	/* Null pattern is the whole string */
+	*out_match_len = strlen(w);	/* Null pattern is the whole string */
 	return w;
     }
 
     percent = strchr(p, '%');
     if (percent != NULL) {	/* ${VAR:...%...=...} */
-	*hasPercent = TRUE;
+	*out_hasPercent = TRUE;
 	if (*w == '\0')
 	    return NULL;	/* empty word does not match pattern */
 
@@ -1205,7 +1201,7 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
 	p++;			/* Skip the percent */
 	if (*p == '\0') {
 	    /* No more pattern, return the rest of the string */
-	    *match_len = strlen(w);
+	    *out_match_len = strlen(w);
 	    return w;
 	}
     }
@@ -1220,7 +1216,7 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
     if (memcmp(p, w_tail, p_len) != 0)
 	return NULL;
 
-    *match_len = (size_t)(w_tail - w);
+    *out_match_len = (size_t)(w_tail - w);
     return w;
 }
 
@@ -1241,7 +1237,7 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 
     size_t match_len;
     Boolean lhsPercent;
-    const char *match = Str_SYSVMatch(word, args->lhs, &match_len, &lhsPercent);
+    const char *match = SysVMatch(word, args->lhs, &match_len, &lhsPercent);
     if (match == NULL) {
 	SepBuf_AddStr(buf, word);
 	return;
