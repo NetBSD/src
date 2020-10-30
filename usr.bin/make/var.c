@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.608 2020/10/30 22:43:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.609 2020/10/30 22:49:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.608 2020/10/30 22:43:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.609 2020/10/30 22:49:07 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1020,16 +1020,16 @@ const char *
 Var_Value(const char *name, GNode *ctxt, void **freeIt)
 {
     Var *v = VarFind(name, ctxt, TRUE);
-    char *p;
+    char *value;
 
     *freeIt = NULL;
     if (v == NULL)
 	return NULL;
 
-    p = Buf_GetAll(&v->val, NULL);
+    value = Buf_GetAll(&v->val, NULL);
     if (VarFreeEnv(v, FALSE))
-	*freeIt = p;
-    return p;
+	*freeIt = value;
+    return value;
 }
 
 
@@ -1085,9 +1085,12 @@ SepBuf_Destroy(SepBuf *buf, Boolean free_buf)
 }
 
 
-/* This callback for ModifyWords gets a single word from an expression and
- * typically adds a modification of this word to the buffer. It may also do
- * nothing or add several words. */
+/* This callback for ModifyWords gets a single word from a variable expression
+ * and typically adds a modification of this word to the buffer. It may also
+ * do nothing or add several words.
+ *
+ * For example, in ${:Ua b c:M*2}, the callback is called 3 times, once for
+ * each word of "a b c". */
 typedef void (*ModifyWordsCallback)(const char *word, SepBuf *buf, void *data);
 
 
