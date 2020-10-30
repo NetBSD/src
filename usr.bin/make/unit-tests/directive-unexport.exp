@@ -1,1 +1,5 @@
+make: "directive-unexport.mk" line 14: A=a B=b C=c
+make: "directive-unexport.mk" line 15: A B C
+make: "directive-unexport.mk" line 23: A=a B=b C=c
+make: "directive-unexport.mk" line 24: 
 exit status 0
