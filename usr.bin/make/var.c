@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.601 2020/10/30 16:16:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.602 2020/10/30 16:45:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.601 2020/10/30 16:16:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.602 2020/10/30 16:45:37 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -258,7 +258,7 @@ typedef struct Var {
  */
 typedef enum VarExportedMode {
     VAR_EXPORTED_NONE,
-    VAR_EXPORTED_YES,
+    VAR_EXPORTED_SOME,
     VAR_EXPORTED_ALL
 } VarExportedMode;
 
@@ -664,8 +664,8 @@ Var_Export(const char *str, Boolean isExport)
 	for (i = 0; i < words.len; i++) {
 	    const char *name = words.words[i];
 	    if (Var_Export1(name, flags)) {
-		if (var_exportedVars != VAR_EXPORTED_ALL)
-		    var_exportedVars = VAR_EXPORTED_YES;
+		if (var_exportedVars == VAR_EXPORTED_NONE)
+		    var_exportedVars = VAR_EXPORTED_SOME;
 		if (isExport && (flags & VAR_EXPORT_PARENT)) {
 		    Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
 		}
