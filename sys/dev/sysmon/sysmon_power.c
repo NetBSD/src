@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.64 2020/06/11 02:39:31 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.65 2020/10/30 22:19:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.64 2020/06/11 02:39:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.65 2020/10/30 22:19:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -555,17 +555,17 @@ filt_sysmon_power_read(struct knote *kn, long hint)
 }
 
 static const struct filterops sysmon_power_read_filtops = {
-    .f_isfd = 1,
-    .f_attach = NULL,
-    .f_detach = filt_sysmon_power_rdetach,
-    .f_event = filt_sysmon_power_read,
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sysmon_power_rdetach,
+	.f_event = filt_sysmon_power_read,
 };
 
 static const struct filterops sysmon_power_write_filtops = {
-    .f_isfd = 1,
-    .f_attach = NULL,
-    .f_detach = filt_sysmon_power_rdetach,
-    .f_event = filt_seltrue,
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sysmon_power_rdetach,
+	.f_event = filt_seltrue,
 };
 
 /*
