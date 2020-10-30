@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.131 2020/10/25 21:51:49 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.132 2020/10/30 15:39:17 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -175,7 +175,7 @@ filemon_read(FILE *mfp, int fd)
 	warn("Could not rewind filemon");
 	fprintf(mfp, "\n");
     } else {
-        ssize_t n;
+	ssize_t n;
 
 	error = 0;
 	fprintf(mfp, "\n-- filemon acquired metadata --\n");
@@ -1059,7 +1059,7 @@ append_if_new(StringList *list, const char *str)
     StringListNode *ln;
 
     for (ln = list->first; ln != NULL; ln = ln->next)
-        if (strcmp(ln->datum, str) == 0)
+	if (strcmp(ln->datum, str) == 0)
 	    return;
     Lst_Append(list, bmake_strdup(str));
 }
@@ -1323,8 +1323,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 			while (ln != NULL) {
 			    StringListNode *next = ln->next;
 			    if (path_starts_with(ln->datum, p)) {
-			        free(ln->datum);
-			        Lst_Remove(missingFiles, ln);
+				free(ln->datum);
+				Lst_Remove(missingFiles, ln);
 			    }
 			    ln = next;
 			}
