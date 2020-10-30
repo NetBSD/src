@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.171 2020/10/30 14:51:47 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.172 2020/10/30 14:56:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.171 2020/10/30 14:51:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.172 2020/10/30 14:56:23 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -376,7 +376,7 @@ TryParseNumber(const char *str, double *value)
 static Boolean
 is_separator(char ch)
 {
-    return ch == '\0' || ch_isspace(ch) || strchr("!=><)", ch);
+    return ch == '\0' || ch_isspace(ch) || strchr("!=><)", ch) != NULL;
 }
 
 /*-
