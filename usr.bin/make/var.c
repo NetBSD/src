@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.607 2020/10/30 22:30:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.608 2020/10/30 22:43:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.607 2020/10/30 22:30:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.608 2020/10/30 22:43:39 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -829,8 +829,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	    goto out;
 	}
 	Buf_Empty(&v->val);
-	if (val)
-	    Buf_AddStr(&v->val, val);
+	Buf_AddStr(&v->val, val);
 
 	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
 	if (v->flags & VAR_EXPORTED) {
@@ -843,12 +842,10 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * Other than internals.
      */
     if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
-	if (v == NULL) {
-	    /* we just added it */
-	    v = VarFind(name, ctxt, 0);
-	}
-	if (v != NULL)
-	    v->flags |= VAR_FROM_CMD;
+	if (v == NULL)
+	    v = VarFind(name, ctxt, 0);	/* we just added it */
+	v->flags |= VAR_FROM_CMD;
+
 	/*
 	 * If requested, don't export these in the environment
 	 * individually.  We still put them in MAKEOVERRIDES so
