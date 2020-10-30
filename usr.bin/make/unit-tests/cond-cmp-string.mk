@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.8 2020/10/30 13:41:14 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.9 2020/10/30 14:46:01 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -63,6 +63,21 @@
 .if ${:Uword} != "${:Uword} "
 .  error
 .else
+.  error
+.endif
+
+# Some other characters work though, and some don't.
+# Those that are mentioned in is_separator don't work.
+.if ${:Uword0} != "${:Uword}0"
+.  error
+.endif
+.if ${:Uword&} != "${:Uword}&"
+.  error
+.endif
+.if ${:Uword!} != "${:Uword}!"
+.  error
+.endif
+.if ${:Uword<} != "${:Uword}<"
 .  error
 .endif
 
