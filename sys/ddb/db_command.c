@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.171 2020/10/30 06:57:08 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.172 2020/10/30 07:03:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.171 2020/10/30 06:57:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.172 2020/10/30 07:03:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -221,15 +221,18 @@ static void	db_vnode_lock_print_cmd(db_expr_t, bool, db_expr_t,
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
-	/*added from all sub cmds*/
+	/* added from all sub cmds */
 	{ DDB_ADD_CMD("callout",  db_show_callout,
 	    0 ,"List all used callout functions.",NULL,NULL) },
+	/* added from all sub cmds */
 	{ DDB_ADD_CMD("pages",	db_show_all_pages,
 	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("proc",	db_show_proc,
 	    0 ,"Print process information.",NULL,NULL) },
+	/* added from all sub cmds */
 	{ DDB_ADD_CMD("procs",	db_show_all_procs,
 	    0 ,"List all processes.",NULL,NULL) },
+	/* added from all sub cmds */
 	{ DDB_ADD_CMD("pools",	db_show_all_pools,
 	    0 ,"Show all pools",NULL,NULL) },
 	{ DDB_ADD_CMD("locks",	db_show_all_locks,
@@ -239,7 +242,6 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("freelists",	db_show_all_freelists,
 	    0 ,"Show all freelists", NULL, NULL) },
 #ifdef AIO
-	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
 	    "Show aio jobs",NULL,NULL) },
 #endif
