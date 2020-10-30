@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2020/05/18 21:19:36 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2020/10/30 18:47:38 martin Exp $
 #
 # Makefile for sysinst
 
@@ -74,6 +74,10 @@ CPPFLAGS+=	-DUSING_PAXASTAR
 
 .if ${MKDTB:Uno} != "no"
 CPPFLAGS+=	-DHAVE_DTB
+.endif
+
+.if ${MKKMOD:Uno} != "no"
+CPPFLAGS+=	-DHAVE_MODULES
 .endif
 
 CATALOGDIR=	/usr/share/sysinst/catalog
