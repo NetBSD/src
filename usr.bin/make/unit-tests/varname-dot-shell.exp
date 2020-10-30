@@ -10,15 +10,22 @@ CondParser_Eval: ${.SHELL} != ${ORIG_SHELL}
 Var_Parse: ${.SHELL} != ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
 Var_Parse: ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
 lhs = "(details omitted)", rhs = "(details omitted)", op = !=
-ParseReadLine (20): '.undef .SHELL'
+ParseReadLine (19): '.MAKEFLAGS: .SHELL+=appended'
+ParseDoDependency(.MAKEFLAGS: .SHELL+=appended)
+Command:.SHELL = (details omitted) appended
+CondParser_Eval: ${.SHELL} != "${ORIG_SHELL} appended"
+Var_Parse: ${.SHELL} != "${ORIG_SHELL} appended" with VARE_UNDEFERR|VARE_WANTRES
+Var_Parse: ${ORIG_SHELL} appended" with VARE_WANTRES
+lhs = "/bin/sh appended", rhs = "/bin/sh appended", op = !=
+ParseReadLine (27): '.undef .SHELL'
 Global:delete .SHELL
-ParseReadLine (21): '.SHELL=		newly overwritten'
+ParseReadLine (28): '.SHELL=		newly overwritten'
 Global:.SHELL = newly overwritten
-CondParser_Eval: ${.SHELL} != ${ORIG_SHELL}
-Var_Parse: ${.SHELL} != ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
-Var_Parse: ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
-lhs = "(details omitted)", rhs = "(details omitted)", op = !=
-ParseReadLine (26): '.MAKEFLAGS: -d0'
+CondParser_Eval: ${.SHELL} != "${ORIG_SHELL} appended"
+Var_Parse: ${.SHELL} != "${ORIG_SHELL} appended" with VARE_UNDEFERR|VARE_WANTRES
+Var_Parse: ${ORIG_SHELL} appended" with VARE_WANTRES
+lhs = "/bin/sh appended", rhs = "/bin/sh appended", op = !=
+ParseReadLine (33): '.MAKEFLAGS: -d0'
 ParseDoDependency(.MAKEFLAGS: -d0)
 Global:.MAKEFLAGS =  -r -k -d cpv -d
 Global:.MAKEFLAGS =  -r -k -d cpv -d 0
