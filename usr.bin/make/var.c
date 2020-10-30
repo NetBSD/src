@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.606 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.607 2020/10/30 22:30:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.606 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.607 2020/10/30 22:30:42 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -351,7 +351,7 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
 /* Find the variable in the context, and maybe in other contexts as well.
  *
  * Input:
- *	name		name to find
+ *	name		name to find, is not expanded any further
  *	ctxt		context in which to look first
  *	elsewhere	TRUE to look in other contexts as well
  *
@@ -449,7 +449,8 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
     }
 }
 
-/* Remove a variable from a context, freeing all related memory as well. */
+/* Remove a variable from a context, freeing all related memory as well.
+ * The variable name is expanded once. */
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
@@ -549,6 +550,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	    return FALSE;
 	}
 
+	/* XXX: name is injected without escaping it */
 	expr = str_concat3("${", name, "}");
 	(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &val);
 	/* TODO: handle errors */
@@ -749,6 +751,7 @@ Var_UnExport(const char *str)
 	     * just delete .MAKE.EXPORTED below.
 	     */
 	    if (varnames == str) {
+	        /* XXX: v->name is injected without escaping it */
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
 		char *cp;
 		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
@@ -815,6 +818,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	     * to VAR_GLOBAL, so delete it from there if needed.
 	     * Otherwise -V name may show the wrong value.
 	     */
+	    /* XXX: name is expanded for the second time */
 	    Var_Delete(name, VAR_GLOBAL);
 	}
 	VarAdd(name, val, ctxt, flags);
@@ -874,7 +878,7 @@ out:
  *	Otherwise the new value overwrites and replaces the old value.
  *
  * Input:
- *	name		name of variable to set
+ *	name		name of the variable to set, is expanded once
  *	val		value to give to the variable
  *	ctxt		context in which to set it
  *
@@ -905,7 +909,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  *	are concatenated, with a space in between.
  *
  * Input:
- *	name		name of variable to modify
+ *	name		name of the variable to modify, is expanded once
  *	val		string to append to it
  *	ctxt		context in which this should occur
  *
@@ -943,6 +947,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
 
     if (v == NULL) {
+	/* XXX: name is expanded for the second time */
 	Var_Set(name, val, ctxt);
     } else if (v->flags & VAR_READONLY) {
         VAR_DEBUG1("Ignoring append to %s since it is read-only\n", name);
@@ -974,7 +979,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
  * fallback contexts.
  *
  * Input:
- *	name		Variable to find
+ *	name		Variable to find, is expanded once
  *	ctxt		Context in which to start search
  */
 Boolean
@@ -1005,7 +1010,7 @@ Var_Exists(const char *name, GNode *ctxt)
  *	context, or the usual contexts.
  *
  * Input:
- *	name		name to find
+ *	name		name to find, is not expanded any further
  *	ctxt		context in which to search for it
  *
  * Results:
