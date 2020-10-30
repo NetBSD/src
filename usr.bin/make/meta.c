@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.132 2020/10/30 15:39:17 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.133 2020/10/30 20:30:44 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -326,7 +326,8 @@ is_submake(void *cmdp, void *gnp)
     int rc = 0;				/* keep looking */
 
     if (!p_make) {
-	p_make = Var_Value(".MAKE", gn, &cp);
+        void *dontFreeIt;
+	p_make = Var_Value(".MAKE", gn, &dontFreeIt);
 	p_len = strlen(p_make);
     }
     cp = strchr(cmd, '$');
@@ -473,7 +474,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     const char *tname;
     char *fname;
     const char *cp;
-    char *p[5];				/* >= possible uses */
+    void *p[5];				/* >= possible uses */
     int i;
 
     mf.fp = NULL;
@@ -594,6 +595,7 @@ meta_mode_init(const char *make_mode)
 {
     static int once = 0;
     char *cp;
+    void *freeIt;
 
     useMeta = TRUE;
     useFilemon = TRUE;
@@ -651,15 +653,15 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
      */
-    cp = NULL;
-    if (Var_Value(MAKE_META_IGNORE_PATTERNS, VAR_GLOBAL, &cp)) {
+    freeIt = NULL;
+    if (Var_Value(MAKE_META_IGNORE_PATTERNS, VAR_GLOBAL, &freeIt)) {
 	metaIgnorePatterns = TRUE;
-	bmake_free(cp);
+	bmake_free(freeIt);
     }
-    cp = NULL;
-    if (Var_Value(MAKE_META_IGNORE_FILTER, VAR_GLOBAL, &cp)) {
+    freeIt = NULL;
+    if (Var_Value(MAKE_META_IGNORE_FILTER, VAR_GLOBAL, &freeIt)) {
 	metaIgnoreFilter = TRUE;
-	bmake_free(cp);
+	bmake_free(freeIt);
     }
 }
 
@@ -1088,7 +1090,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     FILE *fp;
     Boolean needOODATE = FALSE;
     StringList *missingFiles;
-    char *pa[4];			/* >= possible uses */
+    void *pa[4];			/* >= possible uses */
     int i;
     int have_filemon = FALSE;
 
@@ -1222,7 +1224,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    pid = atoi(p);
 		    if (pid > 0 && pid != lastpid) {
 			const char *ldir;
-			char *tp;
+			void *tp;
 
 			if (lastpid > 0) {
 			    /* We need to remember these. */
@@ -1600,14 +1602,15 @@ meta_oodate(GNode *gn, Boolean oodate)
     Lst_Destroy(missingFiles, free);
 
     if (oodate && needOODATE) {
+        void *freeIt;
 	/*
 	 * Target uses .OODATE which is empty; or we wouldn't be here.
 	 * We have decided it is oodate, so .OODATE needs to be set.
 	 * All we can sanely do is set it to .ALLSRC.
 	 */
 	Var_Delete(OODATE, gn);
-	Var_Set(OODATE, Var_Value(ALLSRC, gn, &cp), gn);
-	bmake_free(cp);
+	Var_Set(OODATE, Var_Value(ALLSRC, gn, &freeIt), gn);
+	bmake_free(freeIt);
     }
 
  oodate_out:

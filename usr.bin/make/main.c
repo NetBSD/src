@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.411 2020/10/30 15:39:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.412 2020/10/30 20:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.411 2020/10/30 15:39:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.412 2020/10/30 20:30:44 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -674,7 +674,7 @@ void
 Main_ParseArgLine(const char *line)
 {
 	Words words;
-	char *p1;
+	void *p1;
 	const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 	char *buf;
 
@@ -742,7 +742,7 @@ Main_SetObjdir(const char *fmt, ...)
 static Boolean
 Main_SetVarObjdir(const char *var, const char *suffix)
 {
-	char *path_freeIt;
+	void *path_freeIt;
 	const char *path = Var_Value(var, VAR_CMDLINE, &path_freeIt);
 	const char *xpath;
 	char *xpath_freeIt;
@@ -857,7 +857,7 @@ PrintVar(const char *varname, Boolean expandVars)
 		bmake_free(evalue);
 
 	} else {
-		char *freeIt;
+		void *freeIt;
 		const char *value = Var_Value(varname, VAR_GLOBAL, &freeIt);
 		printf("%s\n", value ? value : "");
 		bmake_free(freeIt);
@@ -1029,7 +1029,7 @@ static void
 HandlePWD(const struct stat *curdir_st)
 {
 	char *pwd;
-	char *prefix_freeIt, *makeobjdir_freeIt;
+	void *prefix_freeIt, *makeobjdir_freeIt;
 	const char *makeobjdir;
 	struct stat pwd_st;
 
@@ -1336,7 +1336,6 @@ main(int argc, char **argv)
 {
 	Boolean outOfDate;	/* FALSE if all targets up to date */
 	struct stat sa;
-	char *p1;
 	const char *machine;
 	const char *machine_arch;
 	char *syspath = getenv("MAKESYSPATH");
@@ -1461,9 +1460,11 @@ main(int argc, char **argv)
 	 * in a different format).
 	 */
 #ifdef POSIX
-	p1 = explode(getenv("MAKEFLAGS"));
-	Main_ParseArgLine(p1);
-	free(p1);
+	{
+	    char *p1 = explode(getenv("MAKEFLAGS"));
+	    Main_ParseArgLine(p1);
+	    free(p1);
+	}
 #else
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
@@ -1544,8 +1545,13 @@ main(int argc, char **argv)
 
 	MakeMode(NULL);
 
-	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
-	bmake_free(p1);
+	{
+	    void *freeIt;
+	    Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &freeIt),
+		       VAR_GLOBAL);
+	    bmake_free(freeIt);
+
+	}
 
 	InitMaxJobs();
 
@@ -2013,14 +2019,14 @@ cached_realpath(const char *pathname, char *resolved)
 {
     GNode *cache;
     const char *rp;
-    char *cp;
+    void *freeIt;
 
     if (!pathname || !pathname[0])
 	return NULL;
 
     cache = get_cached_realpaths();
 
-    if ((rp = Var_Value(pathname, cache, &cp)) != NULL) {
+    if ((rp = Var_Value(pathname, cache, &freeIt)) != NULL) {
 	/* a hit */
 	strncpy(resolved, rp, MAXPATHLEN);
 	resolved[MAXPATHLEN - 1] = '\0';
@@ -2028,7 +2034,7 @@ cached_realpath(const char *pathname, char *resolved)
 	Var_Set(pathname, rp, cache);
     } /* else should we negative-cache? */
 
-    bmake_free(cp);
+    bmake_free(freeIt);
     return rp ? resolved : NULL;
 }
 
