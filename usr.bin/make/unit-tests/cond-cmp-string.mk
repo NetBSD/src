@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.6 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.7 2020/10/30 08:13:17 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -52,3 +52,22 @@
 .  error
 .endif
 
+# A variable expression can be enclosed in double quotes.
+.if ${:Uword} != "${:Uword}"
+.  error
+.endif
+
+# XXX: As of 2020-10-30, adding a space to the string results in a parse
+# error.  This is a bug and should have been caught much earlier.
+# I wonder since when it exists.
+.if ${:Uword} != "${:Uword} "
+.  error
+.else
+.  error
+.endif
+
+# Adding a space at the beginning of the quoted variable expression works
+# though.
+.if ${:U word } != " ${:Uword} "
+.  error
+.endif
