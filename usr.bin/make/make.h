@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.175 2020/10/28 03:21:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.176 2020/10/30 07:19:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -362,7 +362,7 @@ typedef struct GNode {
     /* The "local" variables that are specific to this target and this target
      * only, such as $@, $<, $?.
      *
-     * Also used for the global variable scopes VAR_GLOBAL, VAR_CMD,
+     * Also used for the global variable scopes VAR_GLOBAL, VAR_CMDLINE,
      * VAR_INTERNAL, which contain variables with arbitrary names. */
     HashTable context;
 
@@ -435,7 +435,7 @@ extern GNode	*VAR_INTERNAL;	/* Variables defined internally by make
 				 */
 extern GNode    *VAR_GLOBAL;	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
-extern GNode    *VAR_CMD;	/* Variables defined on the command line */
+extern GNode    *VAR_CMDLINE;	/* Variables defined on the command line */
 extern char	var_Error[];	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't

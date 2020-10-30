@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.409 2020/10/28 03:21:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.410 2020/10/30 07:19:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.409 2020/10/28 03:21:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.410 2020/10/30 07:19:30 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -649,7 +649,7 @@ rearg:
 	for (; argc > 1; ++argv, --argc) {
 		VarAssign var;
 		if (Parse_IsVar(argv[1], &var)) {
-			Parse_DoVar(&var, VAR_CMD);
+			Parse_DoVar(&var, VAR_CMDLINE);
 		} else {
 			if (!*argv[1])
 				Punt("illegal (null) argument.");
@@ -743,7 +743,7 @@ static Boolean
 Main_SetVarObjdir(const char *var, const char *suffix)
 {
 	char *path_freeIt;
-	const char *path = Var_Value(var, VAR_CMD, &path_freeIt);
+	const char *path = Var_Value(var, VAR_CMDLINE, &path_freeIt);
 	const char *xpath;
 	char *xpath_freeIt;
 
@@ -1036,12 +1036,12 @@ HandlePWD(const struct stat *curdir_st)
 	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
 		return;
 
-	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMD, &prefix_freeIt) != NULL) {
+	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMDLINE, &prefix_freeIt) != NULL) {
 		bmake_free(prefix_freeIt);
 		return;
 	}
 
-	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMD, &makeobjdir_freeIt);
+	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMDLINE, &makeobjdir_freeIt);
 	if (makeobjdir != NULL && strchr(makeobjdir, '$') != NULL)
 		goto ignore_pwd;
 
@@ -1236,10 +1236,10 @@ static void
 InitVpath(void)
 {
 	char *vpath, savec, *path;
-	if (!Var_Exists("VPATH", VAR_CMD))
+	if (!Var_Exists("VPATH", VAR_CMDLINE))
 		return;
 
-	(void)Var_Subst("${VPATH}", VAR_CMD, VARE_WANTRES, &vpath);
+	(void)Var_Subst("${VPATH}", VAR_CMDLINE, VARE_WANTRES, &vpath);
 	/* TODO: handle errors */
 	path = vpath;
 	do {
@@ -1272,7 +1272,7 @@ ReadMakefiles(void)
 	} else {
 		char *p1;
 		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
-				VAR_CMD, VARE_WANTRES, &p1);
+				VAR_CMDLINE, VARE_WANTRES, &p1);
 		/* TODO: handle errors */
 		(void)str2Lst_Append(opts.makefiles, p1, NULL);
 		(void)Lst_ForEachUntil(opts.makefiles,
@@ -1426,7 +1426,7 @@ main(int argc, char **argv)
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set(".ALLTARGETS", "", VAR_GLOBAL);
 	/* some makefiles need to know this */
-	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMD);
+	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMDLINE);
 
 	/*
 	 * Set some other useful macros
@@ -1530,7 +1530,7 @@ main(int argc, char **argv)
 	if (!opts.noBuiltins || !opts.printVars) {
 	    /* ignore /dev/null and anything starting with "no" */
 	    (void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
-		VAR_CMD, VARE_WANTRES, &makeDependfile);
+			    VAR_CMDLINE, VARE_WANTRES, &makeDependfile);
 	    if (makeDependfile[0] != '\0') {
 		/* TODO: handle errors */
 		doing_depend = TRUE;
@@ -2127,7 +2127,7 @@ Main_ExportMAKEFLAGS(Boolean first)
     once = FALSE;
 
     expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
-    (void)Var_Subst(expr, VAR_CMD, VARE_WANTRES, &s);
+    (void)Var_Subst(expr, VAR_CMDLINE, VARE_WANTRES, &s);
     /* TODO: handle errors */
     if (s[0] != '\0') {
 #ifdef POSIX
