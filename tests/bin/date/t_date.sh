@@ -1,4 +1,4 @@
-# $NetBSD: t_date.sh,v 1.1 2020/07/03 03:59:18 jruoho Exp $
+# $NetBSD: t_date.sh,v 1.2 2020/10/30 22:03:35 kre Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@ overflow_head() {
 
 overflow_body() {
 
-	atf_expect_fail "PR lib/46542"
+	## atf_expect_fail "PR lib/46542"	# no longer true
 
 	years="1 10 100 1000 10000 100000 1000000 10000000 \
 	      100000000 1000000000 10000000000 100000000000"
@@ -42,10 +42,10 @@ overflow_body() {
 	for year in $years; do
 
 		y=$(date +%Y)
-		yy=$(expr $y + $year)
-		yyy=$(date -d "$year years" +%Y)
+		yy=$((y + year))
+		yyy=$(date -d "$year years" +%Y) || continue
 
-		if [ ! $yy -eq $yyy ]; then
+		if [ "$yy" -ne "$yyy" ]; then
 			atf_fail "$yy vs. $yyy"
 		fi
 	done
