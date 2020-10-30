@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.174 2020/10/30 16:08:44 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.175 2020/10/30 16:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.174 2020/10/30 16:08:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.175 2020/10/30 16:29:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1374,7 +1374,6 @@ db_fdt_print_cmd(db_expr_t addr, bool have_addr,
 	fdt_print(have_addr ? (void *)(uintptr_t)addr : fdtbus_get_data(),
 	    full, db_printf);
 #else
-	also;
 	db_kernelonly();
 #endif
 }
