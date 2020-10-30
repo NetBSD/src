@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.410 2020/10/29 20:37:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.411 2020/10/30 07:19:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.410 2020/10/29 20:37:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.411 2020/10/30 07:19:30 rillig Exp $");
 
 /* types and constants */
 
@@ -741,7 +741,7 @@ ParseMessage(const char *directive)
 	return FALSE;		/* missing argument */
 
     cpp_skip_whitespace(&p);
-    (void)Var_Subst(p, VAR_CMD, VARE_WANTRES, &arg);
+    (void)Var_Subst(p, VAR_CMDLINE, VARE_WANTRES, &arg);
     /* TODO: handle errors */
 
     Parse_Error(mtype, "%s", arg);
@@ -1063,7 +1063,7 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
 	    const char *nested_val;
 	    void *freeIt;
 
-	    (void)Var_Parse(&nested_p, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
+	    (void)Var_Parse(&nested_p, VAR_CMDLINE, VARE_UNDEFERR|VARE_WANTRES,
 			    &nested_val, &freeIt);
 	    /* TODO: handle errors */
 	    free(freeIt);
@@ -1477,7 +1477,7 @@ ParseDoDependencyTargets(char **inout_cp,
 	     * went well and FALSE if there was an error in the
 	     * specification. On error, line should remain untouched.
 	     */
-	    if (!Arch_ParseArchive(&line, targets, VAR_CMD)) {
+	    if (!Arch_ParseArchive(&line, targets, VAR_CMDLINE)) {
 		Parse_Error(PARSE_FATAL,
 			    "Error in archive specification: \"%s\"", line);
 		return FALSE;
@@ -1579,7 +1579,7 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 
 	if (*end == '(') {
 	    GNodeList *sources = Lst_New();
-	    if (!Arch_ParseArchive(&start, sources, VAR_CMD)) {
+	    if (!Arch_ParseArchive(&start, sources, VAR_CMDLINE)) {
 		Parse_Error(PARSE_FATAL,
 			    "Error in source archive spec \"%s\"", start);
 		return FALSE;
@@ -1952,7 +1952,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
     cmd = uvalue;
     if (strchr(cmd, '$') != NULL) {
 	char *ecmd;
-	(void)Var_Subst(cmd, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES, &ecmd);
+	(void)Var_Subst(cmd, VAR_CMDLINE, VARE_UNDEFERR | VARE_WANTRES, &ecmd);
 	/* TODO: handle errors */
 	cmd = cmd_freeIt = ecmd;
     }
@@ -2274,7 +2274,7 @@ ParseDoInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    (void)Var_Subst(file, VAR_CMD, VARE_WANTRES, &file);
+    (void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
     /* TODO: handle errors */
 
     Parse_include_file(file, endc == '>', *line == 'd', silent);
@@ -2489,7 +2489,7 @@ ParseTraditionalInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    (void)Var_Subst(file, VAR_CMD, VARE_WANTRES, &all_files);
+    (void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &all_files);
     /* TODO: handle errors */
 
     if (*file == '\0') {
@@ -2539,7 +2539,7 @@ ParseGmakeExport(char *line)
     /*
      * Expand the value before putting it in the environment.
      */
-    (void)Var_Subst(value, VAR_CMD, VARE_WANTRES, &value);
+    (void)Var_Subst(value, VAR_CMDLINE, VARE_WANTRES, &value);
     /* TODO: handle errors */
 
     setenv(variable, value, 1);
@@ -3029,7 +3029,7 @@ ParseDependency(char *line)
      * It simply returns the special empty string var_Error,
      * which cannot be detected in the result of Var_Subst. */
     eflags = DEBUG(LINT) ? VARE_WANTRES : VARE_UNDEFERR | VARE_WANTRES;
-    (void)Var_Subst(line, VAR_CMD, eflags, &expanded_line);
+    (void)Var_Subst(line, VAR_CMDLINE, eflags, &expanded_line);
     /* TODO: handle errors */
 
     /* Need a fresh list for the target nodes */
