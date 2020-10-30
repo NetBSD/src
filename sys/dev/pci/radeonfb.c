@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.111 2020/10/11 21:41:57 jdc Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.112 2020/10/30 15:30:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.111 2020/10/11 21:41:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.112 2020/10/30 15:30:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2558,10 +2558,13 @@ radeonfb_isblank(struct radeonfb_display *dp)
 	struct radeonfb_softc	*sc = dp->rd_softc;
 	uint32_t	reg, mask;
 
-	if (IS_AVIVO(sc)) return 0;
-
 	if(!dp->rd_softc->sc_mapped)
 		return 1;
+
+	if (IS_AVIVO(sc)) {
+		reg = GET32(sc, AVIVO_D1CRTC_CONTROL);
+		return ((reg & AVIVO_CRTC_EN) == 0);
+	}
 
 	if (dp->rd_crtcs[0].rc_number) {
 		reg = RADEON_CRTC2_GEN_CNTL;
@@ -2581,11 +2584,27 @@ radeonfb_blank(struct radeonfb_display *dp, int blank)
 	uint32_t		fpreg, fpval;
 	int			i;
 
-	if(IS_AVIVO(sc)) return;
 
 	if (!sc->sc_mapped)
 		return;
 
+	if(IS_AVIVO(sc)) {
+
+		/*
+		 * XXX
+		 * I don't know how to turn the sunc outputs off for DPMS
+		 * power control, so for now just turn the entire CRTC off
+		 */
+		if (blank) {
+			CLR32(sc, AVIVO_D1CRTC_CONTROL, AVIVO_CRTC_EN);
+			CLR32(sc, AVIVO_D2CRTC_CONTROL, AVIVO_CRTC_EN);
+		} else {
+			SET32(sc, AVIVO_D1CRTC_CONTROL, AVIVO_CRTC_EN);
+			SET32(sc, AVIVO_D2CRTC_CONTROL, AVIVO_CRTC_EN);
+		}
+		return;
+	}
+	/* non-AVIVO case */
 	for (i = 0; i < dp->rd_ncrtcs; i++) {
 
 		if (dp->rd_crtcs[i].rc_number) {
