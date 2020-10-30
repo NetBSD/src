@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.147 2020/10/25 19:19:07 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.148 2020/10/30 16:48:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.147 2020/10/25 19:19:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.148 2020/10/30 16:48:58 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -167,12 +167,11 @@ ArchFree(void *ap)
 {
     Arch *a = ap;
     HashIter hi;
-    HashEntry *he;
 
     /* Free memory from hash entries */
     HashIter_Init(&hi, &a->members);
-    while ((he = HashIter_Next(&hi)) != NULL)
-	free(HashEntry_Get(he));
+    while (HashIter_Next(&hi) != NULL)
+	free(hi.entry->value);
 
     free(a->name);
     free(a->fnametab);
