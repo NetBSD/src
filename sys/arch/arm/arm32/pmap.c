@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.421 2020/08/12 18:30:46 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.422 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.421 2020/08/12 18:30:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.422 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -932,7 +932,7 @@ pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 {
 	if (PMAP_NEEDS_PTE_SYNC && pmap_is_cached(pm))
 		PTE_SYNC(ptep);
-	arm_dsb();
+	dsb(sy);
 }
 
 # define PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
@@ -4749,7 +4749,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 			armreg_ats1cuw_write(va);
 		else
 			armreg_ats1cur_write(va);
-		arm_isb();
+		isb();
 		printf("fixup: par %#x\n", armreg_par_read());
 #endif
 #endif
@@ -4864,7 +4864,7 @@ pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 	 */
 	const uint32_t old_ttbcr = armreg_ttbcr_read();
 	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	arm_isb();
+	isb();
 
 	pmap_tlb_asid_acquire(pm, l);
 
@@ -4873,7 +4873,7 @@ pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
 	 * have been updated.
 	 */
-	arm_isb();
+	isb();
 
 	if (pm != pmap_kernel()) {
 		armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
@@ -4900,10 +4900,10 @@ pmap_md_pdetab_deactivate(pmap_t pm)
 	 */
 	const uint32_t old_ttbcr = armreg_ttbcr_read();
 	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	arm_isb();
+	isb();
 	pmap_tlb_asid_deactivate(pm);
 	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
-	arm_isb();
+	isb();
 
 	ci->ci_pmap_cur = pmap_kernel();
 	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",

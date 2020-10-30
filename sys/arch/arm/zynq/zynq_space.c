@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_space.c,v 1.3 2018/03/16 17:56:32 ryo Exp $	*/
+/*	$NetBSD: zynq_space.c,v 1.4 2020/10/30 18:54:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_space.c,v 1.3 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_space.c,v 1.4 2020/10/30 18:54:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ zynq_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
 
 	if (flags)
-		arm_dsb();
+		dsb(sy);
 }
 
 void *

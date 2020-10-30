@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.36 2020/09/29 19:58:49 jmcneill Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.37 2020/10/30 18:54:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.36 2020/09/29 19:58:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.37 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -135,9 +135,11 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("reset",	db_reset_cmd,		0,
 			"Reset the system",
 			NULL,NULL) },
+#ifdef _ARM_ARCH_7
 	{ DDB_ADD_CMD("tlb",	db_show_tlb_cmd,	0,
 			"Displays the TLB",
 		     	NULL,NULL) },
+#endif
 #endif /* _KERNEL */
 
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
@@ -403,6 +405,7 @@ tlb_lookup_tlbinfo(void)
 	return NULL;
 }
 
+#ifdef _ARM_ARCH_7
 void
 db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -420,7 +423,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(va_index, dti->dti_index)
 			    | __SHIFTIN(way, ARM_TLBDATAOP_WAY));
-			arm_isb();
+			isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if ((d0 & ARM_TLBDATA_VALID)
@@ -441,7 +444,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(way, ARM_TLBDATAOP_WAY)
 			    | __SHIFTIN(va_index, dti->dti_index));
-			arm_isb();
+			isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if (d0 & ARM_TLBDATA_VALID) {
@@ -456,6 +459,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 	}
 	db_printf("%zu TLB valid entries found\n", n);
 }
+#endif
 
 #if defined(MULTIPROCESSOR)
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.11 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: virt_platform.c,v 1.12 2020/10/30 18:54:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.11 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.12 2020/10/30 18:54:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,7 +75,7 @@ virt_platform_early_putchar(char c)
 		continue;
 
 	uartaddr[PL01XCOM_DR / 4] = htole32(c);
-	arm_dsb();
+	dsb(sy);
 
 	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
 		continue;

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.5 2018/07/09 09:09:47 jmcneill Exp $ */
+/* $NetBSD: locore.h,v 1.6 2020/10/30 18:54:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -84,18 +84,6 @@ daif_disable(register_t psw)
 		reg_daifset_write((psw & DAIF_MASK) >> DAIF_SETCLR_SHIFT);
 	}
 	return oldpsw;
-}
-
-static inline void
-arm_dsb(void)
-{
-	__asm __volatile("dsb sy" ::: "memory");
-}
-
-static inline void
-arm_isb(void)
-{
-	__asm __volatile("isb" ::: "memory");
 }
 
 #endif /* _LOCORE */
