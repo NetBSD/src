@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.19 2020/07/07 03:38:45 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.20 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -417,12 +417,12 @@ bcmpax_conf_addr_write(struct bcmpax_softc *sc, pcitag_t tag)
 		bcmpax_write_4(sc, PCIE_CFG_IND_ADDR,
 		    __SHIFTIN(func, CFG_IND_ADDR_FUNC)
 		    | __SHIFTIN(reg, CFG_IND_ADDR_REG));
-		arm_dsb();
+		dsb(sy);
 		return PCIE_CFG_IND_DATA;
 	}
 	if (sc->sc_linkup) {
 		bcmpax_write_4(sc, PCIE_CFG_ADDR, tag);
-		arm_dsb();
+		dsb(sy);
 		return PCIE_CFG_DATA;
 	} 
 	return 0;

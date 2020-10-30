@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.23 2020/02/15 08:16:12 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.24 2020/10/30 18:54:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.23 2020/02/15 08:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.24 2020/10/30 18:54:37 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -242,7 +242,7 @@ bcm53xx_mpstart(void)
 	 */
 	bus_space_write_4(bcm53xx_rom_bst, bcm53xx_rom_entry_bsh, mpstart);
 
-	arm_dsb();
+	dsb(sy);
 	__asm __volatile("sev" ::: "memory");
 
 	for (int loop = 0; loop < 16; loop++) {

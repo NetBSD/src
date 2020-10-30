@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.25 2020/04/13 12:14:55 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.26 2020/10/30 18:54:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.25 2020/04/13 12:14:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.26 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -214,7 +214,7 @@ gicv3_set_priority(struct pic_softc *pic, int ipl)
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 
 	icc_pmr_write(IPL_TO_PMR(sc, ipl));
-	arm_isb();
+	isb();
 }
 
 static void
@@ -439,7 +439,7 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 			if ((ci->ci_gic_sgir & ICC_SGIR_EL1_Aff) != aff) {
 				if (targets != 0) {
 					icc_sgi1r_write(intid | aff | targets);
-					arm_isb();
+					isb();
 					targets = 0;
 				}
 				aff = (ci->ci_gic_sgir & ICC_SGIR_EL1_Aff);
@@ -448,7 +448,7 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 		}
 		if (targets != 0) {
 			icc_sgi1r_write(intid | aff | targets);
-			arm_isb();
+			isb();
 		}
 	}
 }
@@ -529,7 +529,7 @@ gicv3_lpi_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	}
 
 	if (!sc->sc_lpiconf_flush)
-		__asm __volatile ("dsb ishst");
+		dsb(ishst);
 }
 
 static void
@@ -546,7 +546,7 @@ gicv3_lpi_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	}
 
 	if (!sc->sc_lpiconf_flush)
-		__asm __volatile ("dsb ishst");
+		dsb(ishst);
 }
 
 static void
@@ -559,7 +559,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	if (sc->sc_lpiconf_flush)
 		cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
 	else
-		__asm __volatile ("dsb ishst");
+		dsb(ishst);
 }
 
 static void
@@ -582,7 +582,7 @@ gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	ctlr = gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR);
 	ctlr &= ~GICR_CTLR_Enable_LPIs;
 	gicr_write_4(sc, ci->ci_gic_redist, GICR_CTLR, ctlr);
-	arm_dsb();
+	dsb(sy);
 
 	/* Setup the LPI configuration table */
 	propbase = sc->sc_lpiconf.segs[0].ds_addr |
@@ -620,7 +620,7 @@ gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	ctlr = gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR);
 	ctlr |= GICR_CTLR_Enable_LPIs;
 	gicr_write_4(sc, ci->ci_gic_redist, GICR_CTLR, ctlr);
-	arm_dsb();
+	dsb(sy);
 
 	/* Setup ITS if present */
 	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list)
@@ -721,7 +721,7 @@ gicv3_irq_handler(void *frame)
 
 	for (;;) {
 		const uint32_t iar = icc_iar1_read();
-		arm_dsb();
+		dsb(sy);
 		const uint32_t irq = __SHIFTOUT(iar, ICC_IAR_INTID);
 		if (irq == ICC_IAR_INTID_SPURIOUS)
 			break;
@@ -745,7 +745,7 @@ gicv3_irq_handler(void *frame)
 
 		if (early_eoi) {
 			icc_eoi1r_write(iar);
-			arm_isb();
+			isb();
 		}
 
 		cpsie(I32_bit);
@@ -754,7 +754,7 @@ gicv3_irq_handler(void *frame)
 
 		if (!early_eoi) {
 			icc_eoi1r_write(iar);
-			arm_isb();
+			isb();
 		}
 	}
 

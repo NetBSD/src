@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.13 2020/09/29 19:58:49 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.14 2020/10/30 18:54:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,26 +52,26 @@ tlb_get_asid(void)
 void
 tlb_set_asid(tlb_asid_t asid)
 {
-	arm_dsb();
+	dsb(sy);
 	if (asid == KERNEL_PID) {
 		armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
-		arm_isb();
+		isb();
 	}
 	armreg_contextidr_write(asid);
-	arm_isb();
+	isb();
 }
 
 void
 tlb_invalidate_all(void)
 {
 	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
-	arm_dsb();
+	dsb(sy);
 	if (arm_has_mpext_p) {
 		armreg_tlbiallis_write(0);
 	} else {
 		armreg_tlbiall_write(0);
 	}
-	arm_isb();
+	isb();
 	if (__predict_false(vivt_icache_p)) {
 		if (arm_has_tlbiasid_p) {
 			armreg_icialluis_write(0);
@@ -79,8 +79,8 @@ tlb_invalidate_all(void)
 			armreg_iciallu_write(0);
 		}
 	}
-	arm_dsb();
-	arm_isb();
+	dsb(sy);
+	isb();
 }
 
 void
@@ -93,7 +93,7 @@ void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
 	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
-	arm_dsb();
+	dsb(sy);
 	if (arm_has_tlbiasid_p) {
 		for (; lo <= hi; lo++) {
 			if (arm_has_mpext_p) {
@@ -102,8 +102,8 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 				armreg_tlbiasid_write(lo);
 			}
 		}
-		arm_dsb();
-		arm_isb();
+		dsb(sy);
+		isb();
 		if (__predict_false(vivt_icache_p)) {
 			if (arm_has_mpext_p) {
 				armreg_icialluis_write(0);
@@ -113,18 +113,18 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 		}
 	} else {
 		armreg_tlbiall_write(0);
-		arm_isb();
+		isb();
 		if (__predict_false(vivt_icache_p)) {
 			armreg_iciallu_write(0);
 		}
 	}
-	arm_isb();
+	isb();
 }
 
 void
 tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
-	arm_dsb();
+	dsb(sy);
 	va = trunc_page(va) | asid;
 	for (vaddr_t eva = va + PAGE_SIZE; va < eva; va += L2_S_SIZE) {
 		if (arm_has_mpext_p) {
@@ -133,7 +133,7 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 			armreg_tlbimva_write(va);
 		}
 	}
-	arm_isb();
+	isb();
 }
 
 bool
@@ -153,7 +153,7 @@ tlb_cortex_a5_record_asids(u_long *mapp, tlb_asid_t asid_max)
 			armreg_tlbdataop_write(
 			     __SHIFTIN(way, ARM_TLBDATAOP_WAY)
 			     | __SHIFTIN(va_index, ARM_A5_TLBDATAOP_INDEX));
-			arm_isb();
+			isb();
 			const uint64_t d = ((uint64_t) armreg_tlbdata1_read())
 			    | armreg_tlbdata0_read();
 			if (!(d & ARM_TLBDATA_VALID)
@@ -185,7 +185,7 @@ tlb_cortex_a7_record_asids(u_long *mapp, tlb_asid_t asid_max)
 			armreg_tlbdataop_write(
 			     __SHIFTIN(way, ARM_TLBDATAOP_WAY)
 			     | __SHIFTIN(va_index, ARM_A7_TLBDATAOP_INDEX));
-			arm_isb();
+			isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if (!(d0 & ARM_TLBDATA_VALID)
