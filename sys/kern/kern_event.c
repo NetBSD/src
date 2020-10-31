@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.107 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.108 2020/10/31 01:08:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
+ * Copyright (c) 2009 Apple, Inc
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.107 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.108 2020/10/31 01:08:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +110,10 @@ static int	filt_timer(struct knote *, long hint);
 static int	filt_fsattach(struct knote *kn);
 static void	filt_fsdetach(struct knote *kn);
 static int	filt_fs(struct knote *kn, long hint);
+static int	filt_userattach(struct knote *);
+static void	filt_userdetach(struct knote *);
+static int	filt_user(struct knote *, long hint);
+static void	filt_usertouch(struct knote *, struct kevent *, long type);
 
 static const struct fileops kqueueops = {
 	.fo_name = "kqueue",
@@ -158,6 +163,14 @@ static const struct filterops fs_filtops = {
 	.f_event = filt_fs,
 };
 
+static const struct filterops user_filtops = {
+	.f_isfd = 0,
+	.f_attach = filt_userattach,
+	.f_detach = filt_userdetach,
+	.f_event = filt_user,
+	.f_touch = filt_usertouch,
+};
+
 static u_int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
 
@@ -192,6 +205,7 @@ static struct kfilter sys_kfilters[] = {
 	{ "EVFILT_SIGNAL",	EVFILT_SIGNAL,	0, &sig_filtops, 0 },
 	{ "EVFILT_TIMER",	EVFILT_TIMER,	0, &timer_filtops, 0 },
 	{ "EVFILT_FS",		EVFILT_FS,	0, &fs_filtops, 0 },
+	{ "EVFILT_USER",	EVFILT_USER,	0, &user_filtops, 0 },
 	{ NULL,			0,		0, NULL, 0 },
 };
 
@@ -776,6 +790,106 @@ filt_fs(struct knote *kn, long hint)
 	return rv;
 }
 
+static int
+filt_userattach(struct knote *kn)
+{
+	struct kqueue *kq = kn->kn_kq;
+
+	/*
+	 * EVFILT_USER knotes are not attached to anything in the kernel.
+	 */
+	mutex_spin_enter(&kq->kq_lock);
+	kn->kn_hook = NULL;
+	if (kn->kn_fflags & NOTE_TRIGGER)
+		kn->kn_hookid = 1;
+	else
+		kn->kn_hookid = 0;
+	mutex_spin_exit(&kq->kq_lock);
+	return (0);
+}
+
+static void
+filt_userdetach(struct knote *kn)
+{
+
+	/*
+	 * EVFILT_USER knotes are not attached to anything in the kernel.
+	 */
+}
+
+static int
+filt_user(struct knote *kn, long hint)
+{
+	struct kqueue *kq = kn->kn_kq;
+	int hookid;
+
+	mutex_spin_enter(&kq->kq_lock);
+	hookid = kn->kn_hookid;
+	mutex_spin_exit(&kq->kq_lock);
+
+	return hookid;
+}
+
+static void
+filt_usertouch(struct knote *kn, struct kevent *kev, long type)
+{
+	struct kqueue *kq = kn->kn_kq;
+	int ffctrl;
+
+	mutex_spin_enter(&kq->kq_lock);
+	switch (type) {
+	case EVENT_REGISTER:
+		if (kev->fflags & NOTE_TRIGGER)
+			kn->kn_hookid = 1;
+
+		ffctrl = kev->fflags & NOTE_FFCTRLMASK;
+		kev->fflags &= NOTE_FFLAGSMASK;
+		switch (ffctrl) {
+		case NOTE_FFNOP:
+			break;
+
+		case NOTE_FFAND:
+			kn->kn_sfflags &= kev->fflags;
+			break;
+
+		case NOTE_FFOR:
+			kn->kn_sfflags |= kev->fflags;
+			break;
+
+		case NOTE_FFCOPY:
+			kn->kn_sfflags = kev->fflags;
+			break;
+
+		default:
+			/* XXX Return error? */
+			break;
+		}
+		kn->kn_sdata = kev->data;
+		if (kev->flags & EV_CLEAR) {
+			kn->kn_hookid = 0;
+			kn->kn_data = 0;
+			kn->kn_fflags = 0;
+		}
+		break;
+
+	case EVENT_PROCESS:
+		*kev = kn->kn_kevent;
+		kev->fflags = kn->kn_sfflags;
+		kev->data = kn->kn_sdata;
+		if (kn->kn_flags & EV_CLEAR) {
+			kn->kn_hookid = 0;
+			kn->kn_data = 0;
+			kn->kn_fflags = 0;
+		}
+		break;
+
+	default:
+		panic("filt_usertouch() - invalid type (%ld)", type);
+		break;
+	}
+	mutex_spin_exit(&kq->kq_lock);
+}
+
 /*
  * filt_seltrue:
  *
@@ -809,6 +923,7 @@ const struct filterops seltrue_filtops = {
 	.f_attach = NULL,
 	.f_detach = filt_seltruedetach,
 	.f_event = filt_seltrue,
+	.f_touch = NULL,
 };
 
 int
@@ -1072,8 +1187,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	/*
 	 * kn now contains the matching knote, or NULL if no match
 	 */
-	if (kev->flags & EV_ADD) {
-		if (kn == NULL) {
+	if (kn == NULL) {
+		if (kev->flags & EV_ADD) {
 			/* create new knote */
 			kn = newkn;
 			newkn = NULL;
@@ -1137,40 +1252,50 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				goto done;
 			}
 			atomic_inc_uint(&kfilter->refcnt);
+			goto done_ev_add;
 		} else {
-			/*
-			 * The user may change some filter values after the
-			 * initial EV_ADD, but doing so will not reset any
-			 * filter which have already been triggered.
-			 */
-			kn->kn_sfflags = kev->fflags;
-			kn->kn_sdata = kev->data;
-			kn->kn_kevent.udata = kev->udata;
-		}
-		/*
-		 * We can get here if we are trying to attach
-		 * an event to a file descriptor that does not
-		 * support events, and the attach routine is
-		 * broken and does not return an error.
-		 */
-		KASSERT(kn->kn_fop != NULL);
-		KASSERT(kn->kn_fop->f_event != NULL);
-		KERNEL_LOCK(1, NULL);			/* XXXSMP */
-		rv = (*kn->kn_fop->f_event)(kn, 0);
-		KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
-		if (rv)
-			knote_activate(kn);
-	} else {
-		if (kn == NULL) {
+			/* No matching knote and the EV_ADD flag is not set. */
 			error = ENOENT;
 			goto doneunlock;
 		}
-		if (kev->flags & EV_DELETE) {
-			/* knote_detach() drops fdp->fd_lock */
-			knote_detach(kn, fdp, true);
-			goto done;
-		}
 	}
+
+	if (kev->flags & EV_DELETE) {
+		/* knote_detach() drops fdp->fd_lock */
+		knote_detach(kn, fdp, true);
+		goto done;
+	}
+
+	/*
+	 * The user may change some filter values after the
+	 * initial EV_ADD, but doing so will not reset any
+	 * filter which have already been triggered.
+	 */
+	kn->kn_kevent.udata = kev->udata;
+	KASSERT(kn->kn_fop != NULL);
+	if (!kn->kn_fop->f_isfd && kn->kn_fop->f_touch != NULL) {
+		KERNEL_LOCK(1, NULL);			/* XXXSMP */
+		(*kn->kn_fop->f_touch)(kn, kev, EVENT_REGISTER);
+		KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
+	} else {
+		kn->kn_sfflags = kev->fflags;
+		kn->kn_sdata = kev->data;
+	}
+
+	/*
+	 * We can get here if we are trying to attach
+	 * an event to a file descriptor that does not
+	 * support events, and the attach routine is
+	 * broken and does not return an error.
+	 */
+done_ev_add:
+	KASSERT(kn->kn_fop != NULL);
+	KASSERT(kn->kn_fop->f_event != NULL);
+	KERNEL_LOCK(1, NULL);			/* XXXSMP */
+	rv = (*kn->kn_fop->f_event)(kn, 0);
+	KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
+	if (rv)
+		knote_activate(kn);
 
 	/* disable knote */
 	if ((kev->flags & EV_DISABLE)) {
@@ -1271,7 +1396,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	struct timespec	ats, sleepts;
 	struct knote	*kn, *marker, morker;
 	size_t		count, nkev, nevents;
-	int		timeout, error, rv;
+	int		timeout, error, touch, rv;
 	filedesc_t	*fdp;
 
 	fdp = curlwp->l_fd;
@@ -1382,8 +1507,20 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 					continue;
 				}
 			}
+			KASSERT(kn->kn_fop != NULL);
+			touch = (!kn->kn_fop->f_isfd &&
+					kn->kn_fop->f_touch != NULL);
 			/* XXXAD should be got from f_event if !oneshot. */
-			*kevp++ = kn->kn_kevent;
+			if (touch) {
+				mutex_spin_exit(&kq->kq_lock);
+				KERNEL_LOCK(1, NULL);		/* XXXSMP */
+				(*kn->kn_fop->f_touch)(kn, kevp, EVENT_PROCESS);
+				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+				mutex_spin_enter(&kq->kq_lock);
+			} else {
+				*kevp = kn->kn_kevent;
+			}
+			kevp++;
 			nkev++;
 			if (kn->kn_flags & EV_ONESHOT) {
 				/* delete ONESHOT events after retrieval */
@@ -1396,6 +1533,14 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				/* clear state after retrieval */
 				kn->kn_data = 0;
 				kn->kn_fflags = 0;
+				/*
+				 * Manually clear knotes who weren't
+				 * 'touch'ed.
+				 */
+				if (touch == 0) {
+					kn->kn_data = 0;
+					kn->kn_fflags = 0;
+				}
 				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
 			} else if (kn->kn_flags & EV_DISPATCH) {
 				kn->kn_status |= KN_DISABLED;
