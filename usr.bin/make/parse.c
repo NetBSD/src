@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.416 2020/10/31 23:01:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.417 2020/10/31 23:10:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.416 2020/10/31 23:01:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.417 2020/10/31 23:10:06 rillig Exp $");
 
 /* types and constants */
 
@@ -2356,11 +2356,12 @@ ParseSetParseFile(const char *filename)
 static void
 ParseTrackInput(const char *name)
 {
-    void *fp = NULL;
+    void *old_freeIt = NULL;
 
-    const char *old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
-    if (old) {
+    const char *old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &old_freeIt);
+    if (old != NULL) {
 	size_t name_len = strlen(name);
+	/* XXX: undefined behavior if name_len > strlen(old) */
 	const char *ep = old + strlen(old) - name_len;
 	/* does it contain name? */
 	for (; old != NULL; old = strchr(old, ' ')) {
@@ -2375,7 +2376,7 @@ ParseTrackInput(const char *name)
     }
     Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
 cleanup:
-    bmake_free(fp);
+    bmake_free(old_freeIt);
 }
 
 
