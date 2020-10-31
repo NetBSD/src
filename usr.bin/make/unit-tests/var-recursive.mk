@@ -1,9 +1,9 @@
-# $NetBSD: var-recursive.mk,v 1.1 2020/10/31 11:30:57 rillig Exp $
+# $NetBSD: var-recursive.mk,v 1.2 2020/10/31 13:45:00 rillig Exp $
 #
 # Tests for variable expressions that refer to themselves and thus
 # cannot be evaluated.
 
-TESTS=	direct indirect conditional
+TESTS=	direct indirect conditional short
 
 # Since make exits immediately when it detects a recursive expression,
 # the actual tests are run in sub-makes.
@@ -33,6 +33,14 @@ INDIRECT2=	${INDIRECT1}
 # is never satisfied and is thus not evaluated.
 CONDITIONAL=	${1:?ok:${CONDITIONAL}}
 .  info ${CONDITIONAL}
+
+.elif ${TEST} == short
+
+# Short variable names can be expanded using the short-hand $V notation,
+# which takes a different code path in Var_Parse for parsing the variable
+# name.  Ensure that these are checked as well.
+V=	$V
+.  info $V
 
 .else
 .  error Unknown test "${TEST}"
