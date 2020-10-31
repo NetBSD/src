@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2362 2020/10/24 05:01:57 kamil Exp $
+#	$NetBSD: mi,v 1.2363 2020/10/31 22:43:01 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11347,6 +11347,7 @@
 ./usr/share/man/cat9/days_in_month.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/days_per_year.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/dbtob.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ddb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/device_printf.0		comp-sys-catman		.cat
@@ -19508,6 +19509,7 @@
 ./usr/share/man/html9/days_in_month.html	comp-sys-htmlman	html
 ./usr/share/man/html9/days_per_year.html	comp-sys-htmlman	html
 ./usr/share/man/html9/dbtob.html		comp-sys-htmlman	html
+./usr/share/man/html9/ddb.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
 ./usr/share/man/html9/device_printf.html	comp-sys-htmlman	html
@@ -27809,6 +27811,7 @@
 ./usr/share/man/man9/days_in_month.9		comp-sys-man		.man
 ./usr/share/man/man9/days_per_year.9		comp-sys-man		.man
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
+./usr/share/man/man9/ddb.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
 ./usr/share/man/man9/device_printf.9		comp-sys-man		.man
