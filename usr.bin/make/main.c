@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.414 2020/10/31 09:20:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.415 2020/10/31 09:23:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.414 2020/10/31 09:20:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.415 2020/10/31 09:23:38 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2215,23 +2215,12 @@ s2Boolean(const char *s, Boolean bf)
 	case 'f':
 	case 'N':
 	case 'n':
-	    bf = FALSE;
-	    break;
+	    return FALSE;
 	case 'O':
 	case 'o':
-	    switch (s[1]) {
-	    case 'F':
-	    case 'f':
-		bf = FALSE;
-		break;
-	    default:
-		bf = TRUE;
-		break;
-	    }
-	    break;
+	    return s[1] != 'F' && s[1] != 'f';
 	default:
-	    bf = TRUE;
-	    break;
+	    return TRUE;
 	}
     }
     return bf;
