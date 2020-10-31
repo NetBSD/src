@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.133 2020/10/30 20:30:44 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.134 2020/10/31 09:57:47 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -326,7 +326,7 @@ is_submake(void *cmdp, void *gnp)
     int rc = 0;				/* keep looking */
 
     if (!p_make) {
-        void *dontFreeIt;
+	void *dontFreeIt;
 	p_make = Var_Value(".MAKE", gn, &dontFreeIt);
 	p_len = strlen(p_make);
     }
@@ -1602,7 +1602,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     Lst_Destroy(missingFiles, free);
 
     if (oodate && needOODATE) {
-        void *freeIt;
+	void *freeIt;
 	/*
 	 * Target uses .OODATE which is empty; or we wouldn't be here.
 	 * We have decided it is oodate, so .OODATE needs to be set.
