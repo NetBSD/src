@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.612 2020/10/31 09:03:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.613 2020/10/31 09:27:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.612 2020/10/31 09:03:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.613 2020/10/31 09:27:19 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -853,7 +853,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	 * Makefile settings.
 	 */
 	if (!opts.varNoExportEnv)
-	    setenv(name, val ? val : "", 1);
+	    setenv(name, val, 1);
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
