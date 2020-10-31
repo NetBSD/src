@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.418 2020/10/31 23:39:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.419 2020/10/31 23:44:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.418 2020/10/31 23:39:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.419 2020/10/31 23:44:42 rillig Exp $");
 
 /* types and constants */
 
@@ -2354,23 +2354,22 @@ ParseSetParseFile(const char *filename)
 static Boolean
 StrContainsWord(const char *str, const char *word)
 {
-    const char *val = str;
-    size_t valLen = strlen(val);
+    size_t strLen = strlen(str);
     size_t wordLen = strlen(word);
-    const char *end;
+    const char *p, *end;
 
-    if (valLen < wordLen)
+    if (strLen < wordLen)
 	return FALSE;		/* str is too short to contain word */
 
-    end = val + valLen - wordLen;
-    for (; val != NULL; val = strchr(val, ' ')) {
-	if (*val == ' ')
-	    val++;
-	if (val > end)
+    end = str + strLen - wordLen;
+    for (p = str; p != NULL; p = strchr(p, ' ')) {
+	if (*p == ' ')
+	    p++;
+	if (p > end)
 	    return FALSE;	/* cannot contain word */
 
-	if (memcmp(val, word, wordLen) == 0 &&
-	    (val[wordLen] == '\0' || val[wordLen] == ' '))
+	if (memcmp(p, word, wordLen) == 0 &&
+	    (p[wordLen] == '\0' || p[wordLen] == ' '))
 	    return TRUE;
     }
     return FALSE;
