@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.192 2020/10/30 15:39:17 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.193 2020/10/31 17:39:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.192 2020/10/30 15:39:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.193 2020/10/31 17:39:20 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -790,17 +790,12 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	     * in the string.
 	     */
 	    for (cp = word; *cp; cp++) {
-		if (*cp == '?' || *cp == '[' || *cp == '*' || *cp == '{') {
+		if (*cp == '?' || *cp == '[' || *cp == '*') {
 		    break;
 		}
 	    }
-	    if (*cp == '{') {
-		/*
-		 * This one will be fun.
-		 */
-		DirExpandCurly(word, cp, path, expansions);
-		return;
-	    } else if (*cp != '\0') {
+
+	    if (*cp != '\0') {
 		/*
 		 * Back up to the start of the component
 		 */
