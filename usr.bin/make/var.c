@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.628 2020/10/31 18:14:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.629 2020/10/31 18:17:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.628 2020/10/31 18:14:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.629 2020/10/31 18:17:08 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1647,7 +1647,7 @@ VarQuote(const char *str, Boolean quoteDollar)
 	    Buf_AddStr(&buf, newline);
 	    continue;
 	}
-	if (ch_isspace(*str) || ismeta((unsigned char)*str))
+	if (ch_isspace(*str) || is_shell_metachar((unsigned char)*str))
 	    Buf_AddByte(&buf, '\\');
 	Buf_AddByte(&buf, *str);
 	if (quoteDollar && *str == '$')
