@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.10 2020/10/24 15:16:39 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.11 2020/10/31 13:17:34 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.10 2020/10/24 15:16:39 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.11 2020/10/31 13:17:34 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ ecadc_detach(device_t self, int flags)
 	}
 
 	if (sc->sc_sme != NULL)
-		sysmon_envsys_destroy(sc->sc_sme);
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	return 0;
 }
