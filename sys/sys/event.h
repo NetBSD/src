@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.39 2020/10/31 01:08:32 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.40 2020/10/31 14:55:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -46,6 +46,20 @@
 #define	EVFILT_FS		7U	/* filesystem events */
 #define	EVFILT_USER		8U	/* user events */
 #define	EVFILT_SYSCOUNT		9U	/* number of filters */
+
+#ifdef EVFILT_NAMES
+static const char *evfiltnames[] = {
+	"EVFILT_READ",
+	"EVFILT_WRITE",
+	"EVFILT_AIO",
+	"EVFILT_VNODE",
+	"EVFILT_PROC",
+	"EVFILT_SIGNAL",
+	"EVFILT_TIMER",
+	"EVFILT_FS",
+	"EVFILT_USER",
+};
+#endif
 
 struct kevent {
 	uintptr_t	ident;		/* identifier for this event */
