@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.415 2020/10/31 09:23:38 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.416 2020/10/31 09:27:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.415 2020/10/31 09:23:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.416 2020/10/31 09:27:19 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2206,22 +2206,20 @@ mkTempFile(const char *pattern, char **out_fname)
 Boolean
 s2Boolean(const char *s, Boolean bf)
 {
-    if (s) {
-	switch(*s) {
-	case '\0':			/* not set - the default wins */
-	    break;
-	case '0':
-	case 'F':
-	case 'f':
-	case 'N':
-	case 'n':
-	    return FALSE;
-	case 'O':
-	case 'o':
-	    return s[1] != 'F' && s[1] != 'f';
-	default:
-	    return TRUE;
-	}
+    switch(s[0]) {
+    case '\0':			/* not set - the default wins */
+	break;
+    case '0':
+    case 'F':
+    case 'f':
+    case 'N':
+    case 'n':
+	return FALSE;
+    case 'O':
+    case 'o':
+	return s[1] != 'F' && s[1] != 'f';
+    default:
+	return TRUE;
     }
     return bf;
 }
