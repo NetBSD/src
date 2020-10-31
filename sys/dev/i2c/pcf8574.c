@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.1 2020/10/29 06:55:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2 2020/10/31 14:39:31 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.1 2020/10/29 06:55:51 jdc Exp $");
 
 struct pcf8574_led {
 	void *cookie;
+	struct led_device *led;
 	uint8_t mask, v_on, v_off;
 };
 
@@ -215,13 +216,19 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 static int
 pcf8574_detach(device_t self, int flags)
 {
-#ifdef PCF8574_DEBUG
 	struct pcf8574_softc *sc = device_private(self);
+	int i;
 
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	for (i = 0; i < sc->sc_nleds; i++)
+		led_detach(sc->sc_leds[i].led);
+
+#ifdef PCF8574_DEBUG
 	callout_halt(&sc->sc_timer, NULL);
 	callout_destroy(&sc->sc_timer);
 #endif
-
 	return 0;
 }
 
