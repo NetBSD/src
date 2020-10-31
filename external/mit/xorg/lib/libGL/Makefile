@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2020/09/16 18:19:23 nia Exp $
+#	$NetBSD: Makefile,v 1.31 2020/10/31 13:28:22 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -180,7 +180,7 @@ CPPFLAGS+=	\
 	-DHAVE_FUNC_ATTRIBUTE_NORETURN=1 -DHAVE_ENDIAN_H=1 -DHAVE_DLADDR=1 \
 	-DHAVE_CLOCK_GETTIME=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 \
 	-DHAVE_PTHREAD=1 -DENABLE_ST_OMX_BELLAGIO=0 -DENABLE_ST_OMX_TIZONIA=0 \
-	-DHAVE_TIMESPEC_GET
+	-DHAVE_TIMESPEC_GET -DGLX_USE_TLS
 
 .include "../asm.mk"
 
@@ -224,7 +224,7 @@ PKGCONFIG_SED_FLAGS= \
 	    s,@GL_PKGCONF_LIB@,GL,; \
 	    s,@GL_PC_LIB_PRIV@,-lm -lpthread -pthread,; \
 	    s,@GL_PC_CFLAGS@,,; \
-	    s,@GLX_TLS@,no,"
+	    s,@GLX_TLS@,yes,"
 
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format -Wno-constant-conversion \
