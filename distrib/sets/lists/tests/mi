@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.952 2020/10/31 11:03:18 rillig Exp $
+# $NetBSD: mi,v 1.953 2020/10/31 11:06:24 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5264,8 +5264,8 @@
 ./usr/tests/usr.bin/make/unit-tests/suffixes.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/sunshcmd.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/sunshcmd.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/sysv.exp					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/sysv.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/sysv.exp					tests-obsolete		obsolete
+./usr/tests/usr.bin/make/unit-tests/sysv.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/ternary.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/ternary.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/unexport-env.exp				tests-usr.bin-tests	compattestfile,atf

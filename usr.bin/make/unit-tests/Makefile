@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.177 2020/10/30 15:03:58 rillig Exp $
+# $NetBSD: Makefile,v 1.178 2020/10/31 11:06:24 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -261,7 +261,6 @@ TESTS+=		suff-transform-endless
 TESTS+=		suff-transform-expand
 TESTS+=		suff-transform-select
 TESTS+=		sunshcmd
-TESTS+=		sysv
 TESTS+=		ternary
 TESTS+=		unexport
 TESTS+=		unexport-env
