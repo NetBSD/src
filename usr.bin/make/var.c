@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.622 2020/10/31 14:12:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.623 2020/10/31 14:40:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.622 2020/10/31 14:12:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.623 2020/10/31 14:40:34 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3507,6 +3507,145 @@ ParseVarnameShort(char const startc, const char **const pp, GNode *const ctxt,
     return TRUE;
 }
 
+/* Parse a long variable name enclosed in braces or parentheses such as $(VAR)
+ * or ${VAR}, up to the closing brace or parenthesis, or in the case of
+ * ${VAR:Modifiers}, up to the ':' that starts the modifiers.
+ * Return whether to continue parsing. */
+static Boolean
+ParseVarnameLong(
+	const char **const pp,
+	char const startc,
+	GNode *const ctxt,
+	VarEvalFlags const eflags,
+
+	VarParseResult *const out_FALSE_res,
+	const char **const out_FALSE_val,
+	void **const out_FALSE_freePtr,
+
+	char *const out_TRUE_endc,
+	const char **const out_TRUE_p,
+	Var **const out_TRUE_v,
+	Boolean *const out_TRUE_haveModifier,
+	const char **const out_TRUE_extraModifiers,
+	Boolean *const out_TRUE_dynamic,
+	VarExprFlags *const out_TRUE_exprFlags
+) {
+    size_t namelen;
+    char *varname;
+    Var *v;
+    Boolean haveModifier;
+    Boolean dynamic = FALSE;
+
+    const char *const start = *pp;
+    char endc = startc == '(' ? ')' : '}';
+
+    const char *p = start + 2;
+    varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
+
+    if (*p == ':') {
+	haveModifier = TRUE;
+    } else if (*p == endc) {
+	haveModifier = FALSE;
+    } else {
+	Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
+	*pp = p;
+	free(varname);
+	*out_FALSE_val = var_Error;
+	*out_FALSE_res = VPR_PARSE_MSG;
+	return FALSE;
+    }
+
+    v = VarFind(varname, ctxt, TRUE);
+
+    /* At this point, p points just after the variable name,
+     * either at ':' or at endc. */
+
+    /*
+     * Check also for bogus D and F forms of local variables since we're
+     * in a local context and the name is the right length.
+     */
+    if (v == NULL && ctxt != VAR_CMDLINE && ctxt != VAR_GLOBAL &&
+	namelen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
+	strchr("@%?*!<>", varname[0]) != NULL)
+    {
+	/*
+	 * Well, it's local -- go look for it.
+	 */
+	char name[] = { varname[0], '\0' };
+	v = VarFind(name, ctxt, 0);
+
+	if (v != NULL) {
+	    if (varname[1] == 'D') {
+		*out_TRUE_extraModifiers = "H:";
+	    } else { /* F */
+		*out_TRUE_extraModifiers = "T:";
+	    }
+	}
+    }
+
+    if (v == NULL) {
+	dynamic = VarIsDynamic(ctxt, varname, namelen);
+
+	if (!haveModifier) {
+	    p++;		/* skip endc */
+	    *pp = p;
+	    if (dynamic) {
+		char *pstr = bmake_strsedup(start, p);
+		free(varname);
+		*out_FALSE_res = VPR_OK;
+		*out_FALSE_freePtr = pstr;
+		*out_FALSE_val = pstr;
+		return FALSE;
+	    }
+
+	    if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
+		DEBUG(LINT))
+	    {
+		Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
+			    varname);
+		free(varname);
+		*out_FALSE_res = VPR_UNDEF_MSG;
+		*out_FALSE_val = var_Error;
+		return FALSE;
+	    }
+
+	    if (eflags & VARE_UNDEFERR) {
+		free(varname);
+		*out_FALSE_res = VPR_UNDEF_SILENT;
+		*out_FALSE_val = var_Error;
+		return FALSE;
+	    }
+
+	    free(varname);
+	    *out_FALSE_res = VPR_OK;
+	    *out_FALSE_val = varUndefined;
+	    return FALSE;
+	}
+
+	/* The variable expression is based on an undefined variable.
+	 * Nevertheless it needs a Var, for modifiers that access the
+	 * variable name, such as :L or :?.
+	 *
+	 * Most modifiers leave this expression in the "undefined" state
+	 * (VEF_UNDEF), only a few modifiers like :D, :U, :L, :P turn this
+	 * undefined expression into a defined expression (VEF_DEF).
+	 *
+	 * At the end, after applying all modifiers, if the expression
+	 * is still undefined, Var_Parse will return an empty string
+	 * instead of the actually computed value. */
+	v = VarNew(varname, varname, "", 0);
+	*out_TRUE_exprFlags = VEF_UNDEF;
+    } else
+	free(varname);
+
+    *out_TRUE_endc = endc;
+    *out_TRUE_p = p;
+    *out_TRUE_v = v;
+    *out_TRUE_haveModifier = haveModifier;
+    *out_TRUE_dynamic = dynamic;
+    return TRUE;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -3589,110 +3728,18 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 
     startc = start[1];
     if (startc != '(' && startc != '{') {
-        VarParseResult res;
+	VarParseResult res;
 	if (!ParseVarnameShort(startc, pp, ctxt, eflags, out_val, &res, &v))
 	    return res;
 	haveModifier = FALSE;
 	p = start + 1;
     } else {
-	size_t namelen;
-	char *varname;
-
-	endc = startc == '(' ? ')' : '}';
-
-	p = start + 2;
-	varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
-
-	if (*p == ':') {
-	    haveModifier = TRUE;
-	} else if (*p == endc) {
-	    haveModifier = FALSE;
-	} else {
-	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
-	    *pp = p;
-	    free(varname);
-	    *out_val = var_Error;
-	    return VPR_PARSE_MSG;
-	}
-
-	v = VarFind(varname, ctxt, TRUE);
-
-	/* At this point, p points just after the variable name,
-	 * either at ':' or at endc. */
-
-	/*
-	 * Check also for bogus D and F forms of local variables since we're
-	 * in a local context and the name is the right length.
-	 */
-	if (v == NULL && ctxt != VAR_CMDLINE && ctxt != VAR_GLOBAL &&
-	    namelen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
-	    strchr("@%?*!<>", varname[0]) != NULL)
-	{
-	    /*
-	     * Well, it's local -- go look for it.
-	     */
-	    char name[] = { varname[0], '\0' };
-	    v = VarFind(name, ctxt, 0);
-
-	    if (v != NULL) {
-		if (varname[1] == 'D') {
-		    extramodifiers = "H:";
-		} else { /* F */
-		    extramodifiers = "T:";
-		}
-	    }
-	}
-
-	if (v == NULL) {
-	    dynamic = VarIsDynamic(ctxt, varname, namelen);
-
-	    if (!haveModifier) {
-		p++;		/* skip endc */
-		*pp = p;
-		if (dynamic) {
-		    char *pstr = bmake_strsedup(start, p);
-		    *freePtr = pstr;
-		    free(varname);
-		    *out_val = pstr;
-		    return VPR_OK;
-		}
-
-		if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
-		    DEBUG(LINT))
-		{
-		    Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
-				varname);
-		    free(varname);
-		    *out_val = var_Error;
-		    return VPR_UNDEF_MSG;
-		}
-
-		if (eflags & VARE_UNDEFERR) {
-		    free(varname);
-		    *out_val = var_Error;
-		    return VPR_UNDEF_SILENT;
-		}
-
-		free(varname);
-		*out_val = varUndefined;
-		return VPR_OK;
-	    }
-
-	    /* The variable expression is based on an undefined variable.
-	     * Nevertheless it needs a Var, for modifiers that access the
-	     * variable name, such as :L or :?.
-	     *
-	     * Most modifiers leave this expression in the "undefined" state
-	     * (VEF_UNDEF), only a few modifiers like :D, :U, :L, :P turn this
-	     * undefined expression into a defined expression (VEF_DEF).
-	     *
-	     * At the end, after applying all modifiers, if the expression
-	     * is still undefined, Var_Parse will return an empty string
-	     * instead of the actually computed value. */
-	    v = VarNew(varname, varname, "", 0);
-	    exprFlags = VEF_UNDEF;
-	} else
-	    free(varname);
+	VarParseResult res;
+	if (!ParseVarnameLong(pp, startc, ctxt, eflags,
+			      &res, out_val, freePtr,
+			      &endc, &p, &v, &haveModifier, &extramodifiers,
+			      &dynamic, &exprFlags))
+	    return res;
     }
 
     if (v->flags & VAR_IN_USE)
