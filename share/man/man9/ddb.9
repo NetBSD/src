@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.9,v 1.2 2020/10/30 22:29:30 uwe Exp $
+.\"	$NetBSD: ddb.9,v 1.3 2020/10/31 10:48:17 wiz Exp $
 .\"
 .\" Copyright (c) 2020 Valery Ushakov
 .\" All rights reserved.
@@ -95,7 +95,7 @@ command.
 .Pp
 The
 .Fa commands
-is an array of
+argument is an array of
 .Vt struct db_command\|
 entries.
 The initializer list for the array should use the
@@ -103,7 +103,7 @@ The initializer list for the array should use the
 macro for its entries.
 The
 .Fa name
-is the name of the debugger command.
+argument is the name of the debugger command.
 An entry with
 .Dv NULL
 .Fa name
