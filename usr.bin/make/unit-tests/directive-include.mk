@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.2 2020/10/31 22:55:35 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.3 2020/10/31 23:01:23 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -15,17 +15,10 @@
 .endif
 
 # Each file is recorded only once in the variable .MAKE.MAKEFILES.
-# XXX: As of 2020-10-31, the very last file can be repeated, due to an
-# off-by-one bug in ParseTrackInput.
+# Between 2015-11-26 and 2020-10-31, the very last file could be repeated,
+# due to an off-by-one bug in ParseTrackInput.
 .include "/dev/null"
-.if ${.MAKE.MAKEFILES:T} != "${.PARSEFILE} null null"
-.  error
-.endif
-
-# Since the file /dev/null is not only recorded at the very end of the
-# variable .MAKE.MAKEFILES, it is not added a third time.
-.include "/dev/null"
-.if ${.MAKE.MAKEFILES:T} != "${.PARSEFILE} null null"
+.if ${.MAKE.MAKEFILES:T} != "${.PARSEFILE} null"
 .  error
 .endif
 
