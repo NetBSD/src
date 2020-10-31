@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.5 2020/10/29 06:50:53 jdc Exp $ */
+/* $NetBSD: pcagpio.c,v 1.6 2020/10/31 14:38:54 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.5 2020/10/29 06:50:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.6 2020/10/31 14:38:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ static void	pcagpio_timeout(void *);
 /* we can only pass one cookie to led_attach() but we need several values... */
 struct pcagpio_led {
 	void *cookie;
+	struct led_device *led;
 	uint32_t mask, v_on, v_off;
 };
 
@@ -215,9 +216,13 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 static int
 pcagpio_detach(device_t self, int flags)
 {
-#ifdef PCAGPIO_DEBUG
 	struct pcagpio_softc *sc = device_private(self);
+	int i;
 
+	for (i = 0; i < sc->sc_nleds; i++)
+		led_detach(sc->sc_leds[i].led);
+
+#ifdef PCAGPIO_DEBUG
 	callout_halt(&sc->sc_timer, NULL);
 	callout_destroy(&sc->sc_timer);
 #endif
@@ -311,7 +316,7 @@ pcagpio_attach_led(struct pcagpio_softc *sc, char *n, int pin, int act, int def)
 	l->mask = 1 << pin;
 	l->v_on = act ? l->mask : 0;
 	l->v_off = act ? 0 : l->mask;
-	led_attach(n, l, pcagpio_get, pcagpio_set);
+	l->led = led_attach(n, l, pcagpio_get, pcagpio_set);
 	if (def != -1) pcagpio_set(l, def);
 	DPRINTF("%s: %04x %04x %04x def %d\n",
 	    __func__, l->mask, l->v_on, l->v_off, def);
