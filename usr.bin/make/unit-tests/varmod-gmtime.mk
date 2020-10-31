@@ -1,7 +1,7 @@
-# $NetBSD: varmod-gmtime.mk,v 1.5 2020/10/31 19:55:26 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.6 2020/10/31 20:30:06 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
-# using strftime(3).
+# using strftime(3) in UTC.
 
 all:	mod-gmtime
 all:	mod-gmtime-indirect
@@ -17,10 +17,19 @@ all:	parse-errors
 
 mod-gmtime:
 	@echo $@:
-	@echo ${%Y:L:gmtim=1593536400}		# modifier name too short
-	@echo ${%Y:L:gmtime=1593536400}		# 2020-07-01T00:00:00Z
-	@echo ${%Y:L:gmtimer=1593536400}	# modifier name too long
-	@echo ${%Y:L:gm=gm:M*}
+
+	# modifier name too short
+	@echo ${%Y:L:gmtim=1593536400}
+
+	# 2020-07-01T00:00:00Z
+	@echo ${%Y:L:gmtime=1593536400}
+
+	# modifier name too long
+	@echo ${%Y:L:gmtimer=1593536400}
+
+	# If the modifier name is not matched exactly, fall back to the
+	# :from=to modifier.
+	@echo ${gmtime:L:gm%=local%} == localtime
 
 mod-gmtime-indirect:
 	@echo $@:
@@ -76,6 +85,3 @@ parse-errors:
 	# more variable modifiers.  Because of the unknown modifier 'e',
 	# the whole variable value is discarded and thus not printed.
 	: letter becomes ${:L:gmtime=error}.
-
-all:
-	@:;
