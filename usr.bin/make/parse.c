@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.413 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.414 2020/10/31 09:47:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.413 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.414 2020/10/31 09:47:27 rillig Exp $");
 
 /* types and constants */
 
@@ -283,7 +283,7 @@ CurFile(void)
 /* include paths */
 SearchPath *parseIncPath;	/* dirs for "..." includes */
 SearchPath *sysIncPath;		/* dirs for <...> includes */
-SearchPath *defSysIncPath;		/* default for sysIncPath */
+SearchPath *defSysIncPath;	/* default for sysIncPath */
 
 /* parser tables */
 
@@ -432,41 +432,13 @@ load_getsize(int fd, size_t *ret)
 	return TRUE;
 }
 
-/*
- * Read in a file.
- *
- * Until the path search logic can be moved under here instead of
- * being in the caller in another source file, we need to have the fd
- * passed in already open. Bleh.
- *
- * If the path is NULL use stdin and (to insure against fd leaks)
- * assert that the caller passed in -1.
- */
-static struct loadedfile *
-loadfile(const char *path, int fd)
+static Boolean
+loadedfile_mmap(struct loadedfile *lf, int fd)
 {
-	struct loadedfile *lf;
 	static unsigned long pagesize = 0;
-	ssize_t result;
-	size_t bufpos;
-
-	lf = loadedfile_create(path);
-
-	if (path == NULL) {
-		assert(fd == -1);
-		fd = STDIN_FILENO;
-	} else {
-#if 0 /* notyet */
-		fd = open(path, O_RDONLY);
-		if (fd < 0) {
-			...
-			Error("%s: %s", path, strerror(errno));
-			exit(1);
-		}
-#endif
-	}
 
 	if (load_getsize(fd, &lf->len)) {
+
 		/* found a size, try mmap */
 		if (pagesize == 0)
 			pagesize = (unsigned long)sysconf(_SC_PAGESIZE);
@@ -474,7 +446,7 @@ loadfile(const char *path, int fd)
 			pagesize = 0x1000;
 		}
 		/* round size up to a page */
-		lf->maplen = pagesize * ((lf->len + pagesize - 1)/pagesize);
+		lf->maplen = pagesize * ((lf->len + pagesize - 1) / pagesize);
 
 		/*
 		 * XXX hack for dealing with empty files; remove when
@@ -501,9 +473,47 @@ loadfile(const char *path, int fd)
 				lf->maplen = 0;
 				lf->buf = b;
 			}
-			goto done;
+			return TRUE;
 		}
 	}
+	return FALSE;
+}
+
+/*
+ * Read in a file.
+ *
+ * Until the path search logic can be moved under here instead of
+ * being in the caller in another source file, we need to have the fd
+ * passed in already open. Bleh.
+ *
+ * If the path is NULL use stdin and (to insure against fd leaks)
+ * assert that the caller passed in -1.
+ */
+static struct loadedfile *
+loadfile(const char *path, int fd)
+{
+	struct loadedfile *lf;
+	ssize_t result;
+	size_t bufpos;
+
+	lf = loadedfile_create(path);
+
+	if (path == NULL) {
+		assert(fd == -1);
+		fd = STDIN_FILENO;
+	} else {
+#if 0 /* notyet */
+		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			...
+			Error("%s: %s", path, strerror(errno));
+			exit(1);
+		}
+#endif
+	}
+
+	if (loadedfile_mmap(lf, fd))
+		goto done;
 
 	/* cannot mmap; load the traditional way */
 
