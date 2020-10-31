@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.631 2020/10/31 21:40:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.632 2020/10/31 23:23:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.631 2020/10/31 21:40:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.632 2020/10/31 23:23:22 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1013,23 +1013,23 @@ Var_Exists(const char *name, GNode *ctxt)
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't.
- *	If the returned value is not NULL, the caller must free *freeIt
- *	as soon as the returned value is no longer needed.
+ *	If the returned value is not NULL, the caller must free
+ *	out_freeIt when the returned value is no longer needed.
  *-----------------------------------------------------------------------
  */
 const char *
-Var_Value(const char *name, GNode *ctxt, void **freeIt)
+Var_Value(const char *name, GNode *ctxt, void **out_freeIt)
 {
     Var *v = VarFind(name, ctxt, TRUE);
     char *value;
 
-    *freeIt = NULL;
+    *out_freeIt = NULL;
     if (v == NULL)
 	return NULL;
 
     value = Buf_GetAll(&v->val, NULL);
     if (VarFreeEnv(v, FALSE))
-	*freeIt = value;
+	*out_freeIt = value;
     return value;
 }
 
