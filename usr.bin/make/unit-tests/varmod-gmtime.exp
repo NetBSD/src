@@ -8,6 +8,7 @@ make: Unknown modifier '1'
 
 parse-errors:
 : -1 becomes Wed Dec 31 23:59:59 1969.
+: space 1 becomes Thu Jan  1 00:00:01 1970.
 : 0 becomes ok.
 : 1 becomes Thu Jan  1 00:00:01 1970.
 : INT32_MAX becomes Tue Jan 19 03:14:07 2038.
