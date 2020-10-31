@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.10 2020/10/31 18:17:08 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.11 2020/10/31 18:20:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -38,14 +38,10 @@ extern unsigned char _metachar[];
 #define is_shell_metachar(c)	_metachar[(c) & 0x7f]
 
 static inline MAKE_ATTR_UNUSED int
-needshell(const char *cmd, int white)
+needshell(const char *cmd)
 {
-	while (!is_shell_metachar(*cmd) && *cmd != ':' && *cmd != '=') {
-		if (white && ch_isspace(*cmd))
-			break;
+	while (!is_shell_metachar(*cmd) && *cmd != ':' && *cmd != '=')
 		cmd++;
-	}
-
 	return *cmd != '\0';
 }
 

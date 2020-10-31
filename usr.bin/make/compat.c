@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.171 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.172 2020/10/31 18:20:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.171 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.172 2020/10/31 18:20:00 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -267,7 +267,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
      * meta characters as documented in make(1).
      */
 
-    useShell = needshell(cmd, FALSE);
+    useShell = needshell(cmd);
 #endif
 
     /*
