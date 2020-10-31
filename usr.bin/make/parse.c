@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.415 2020/10/31 21:52:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.416 2020/10/31 23:01:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.415 2020/10/31 21:52:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.416 2020/10/31 23:01:23 rillig Exp $");
 
 /* types and constants */
 
@@ -2366,7 +2366,7 @@ ParseTrackInput(const char *name)
 	for (; old != NULL; old = strchr(old, ' ')) {
 	    if (*old == ' ')
 		old++;
-	    if (old >= ep)
+	    if (old > ep)
 		break;		/* cannot contain name */
 	    if (memcmp(old, name, name_len) == 0 &&
 		(old[name_len] == '\0' || old[name_len] == ' '))
