@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.417 2020/10/31 09:35:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.418 2020/10/31 11:34:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.417 2020/10/31 09:35:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.418 2020/10/31 11:34:30 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1827,7 +1827,7 @@ Error(const char *fmt, ...)
 
 /* Produce a Fatal error message, then exit immediately.
  *
- * If jobs are running, waits for them to finish. */
+ * If jobs are running, wait for them to finish. */
 void
 Fatal(const char *fmt, ...)
 {
