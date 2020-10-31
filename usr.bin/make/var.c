@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.620 2020/10/31 12:57:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.621 2020/10/31 12:59:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.620 2020/10/31 12:57:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.621 2020/10/31 12:59:28 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1871,7 +1871,7 @@ IsEscapedModifierPart(const char *p, char delim,
 static VarParseResult
 ParseModifierPart(
     const char **pp,		/* The parsing position, updated upon return */
-    int delim,			/* Parsing stops at this delimiter */
+    char delim,			/* Parsing stops at this delimiter */
     VarEvalFlags eflags,	/* Flags for evaluating nested variables;
 				 * if VARE_WANTRES is not set, the text is
 				 * only parsed */
