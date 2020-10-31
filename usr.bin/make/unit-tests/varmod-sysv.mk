@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.6 2020/10/31 08:31:37 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.7 2020/10/31 09:03:36 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -57,6 +57,11 @@ all:
 # The % placeholder can be anywhere in the string, it doesn't have to be at
 # the beginning of the pattern.
 .if ${:Ufile.c other.c:file.%=renamed.%} != "renamed.c other.c"
+.  error
+.endif
+
+# Each word gets the suffix "X" appended.
+.if ${one two:L:=X} != "oneX twoX"
 .  error
 .endif
 
