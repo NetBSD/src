@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.8 2020/06/25 11:12:03 jruoho Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.9 2020/10/31 01:08:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.8 2020/06/25 11:12:03 jruoho Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.9 2020/10/31 01:08:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -172,7 +172,39 @@ ATF_TC_BODY(kqueue_unsupported_fd, tc)
 	ATF_REQUIRE_ERRNO(EOPNOTSUPP, true);
 
 	(void)close(fd);
+	(void)close(kq);
 }
+
+ATF_TC(kqueue_EVFILT_USER);
+ATF_TC_HEAD(kqueue_EVFILT_USER, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks usability of EVFILT_USER");
+}
+
+ATF_TC_BODY(kqueue_EVFILT_USER, tc)
+{
+	/* mqueue and semaphore use fnullop_kqueue also */
+	int kq;
+	struct kevent ev, rev;
+
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	EV_SET(&ev, 666, EVFILT_USER, EV_ADD | EV_ENABLE, 0, 0, 0);
+	ATF_REQUIRE(kevent(kq, &ev, 1, NULL, 0, NULL) == 0);
+	EV_SET(&ev, 666, EVFILT_USER, 0, NOTE_FFCOPY | NOTE_TRIGGER | 8, 0, 0);
+	ATF_REQUIRE(kevent(kq, &ev, 1, NULL, 0, NULL) == 0);
+	const struct timespec timeout = {
+		.tv_sec = 1,
+		.tv_nsec = 0,
+	};
+
+	ATF_REQUIRE(kevent(kq, NULL, 0, &rev, 1, &timeout) == 1);
+	ATF_REQUIRE(rev.ident == 666);
+	ATF_REQUIRE(rev.filter == EVFILT_USER);
+	ATF_REQUIRE(rev.fflags == 8);
+	(void)close(kq);
+}
+
 
 
 ATF_TP_ADD_TCS(tp)
@@ -181,6 +213,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kevent_zerotimer);
 	ATF_TP_ADD_TC(tp, kqueue_desc_passing);
 	ATF_TP_ADD_TC(tp, kqueue_unsupported_fd);
+	ATF_TP_ADD_TC(tp, kqueue_EVFILT_USER);
 
 	return atf_no_error();
 }
