@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.625 2020/10/31 14:55:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.626 2020/10/31 15:23:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.625 2020/10/31 14:55:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.626 2020/10/31 15:23:52 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3326,23 +3326,13 @@ cleanup:
     return var_Error;
 }
 
+/* Only four of the local variables are treated specially as they are the
+ * only four that will be set when dynamic sources are expanded. */
 static Boolean
-VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
+VarnameIsDynamic(const char *name, size_t len)
 {
-    if ((namelen == 1 ||
-	 (namelen == 2 && (varname[1] == 'F' || varname[1] == 'D'))) &&
-	(ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL))
-    {
-	/*
-	 * If substituting a local variable in a non-local context,
-	 * assume it's for dynamic source stuff. We have to handle
-	 * this specially and return the longhand for the variable
-	 * with the dollar sign escaped so it makes it back to the
-	 * caller. Only four of the local variables are treated
-	 * specially as they are the only four that will be set
-	 * when dynamic sources are expanded.
-	 */
-	switch (varname[0]) {
+    if (len == 1 || (len == 2 && (name[1] == 'F' || name[1] == 'D'))) {
+	switch (name[0]) {
 	case '@':
 	case '%':
 	case '*':
@@ -3352,13 +3342,11 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 	return FALSE;
     }
 
-    if ((namelen == 7 || namelen == 8) && varname[0] == '.' &&
-	ch_isupper(varname[1]) && (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL))
-    {
-	return strcmp(varname, ".TARGET") == 0 ||
-	       strcmp(varname, ".ARCHIVE") == 0 ||
-	       strcmp(varname, ".PREFIX") == 0 ||
-	       strcmp(varname, ".MEMBER") == 0;
+    if ((len == 7 || len == 8) && name[0] == '.' && ch_isupper(name[1])) {
+	return strcmp(name, ".TARGET") == 0 ||
+	       strcmp(name, ".ARCHIVE") == 0 ||
+	       strcmp(name, ".PREFIX") == 0 ||
+	       strcmp(name, ".MEMBER") == 0;
     }
 
     return FALSE;
@@ -3587,7 +3575,10 @@ ParseVarnameLong(
     }
 
     if (v == NULL) {
-	dynamic = VarIsDynamic(ctxt, varname, namelen);
+	/* Defer expansion of dynamic variables if they appear in non-local
+	 * context since they are not defined there. */
+	dynamic = VarnameIsDynamic(varname, namelen) &&
+		  (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL);
 
 	if (!haveModifier) {
 	    p++;		/* skip endc */
@@ -3714,7 +3705,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     char eflags_str[VarEvalFlags_ToStringSize];
     VarExprFlags exprFlags = 0;
 
-    VAR_DEBUG3("%s: %s with %s\n", __func__, start,
+    VAR_DEBUG2("Var_Parse: %s with %s\n", start,
 	       Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
 				  VarEvalFlags_ToStringSpecs));
 
