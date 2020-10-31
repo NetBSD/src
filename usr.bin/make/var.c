@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.623 2020/10/31 14:40:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.624 2020/10/31 14:47:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.623 2020/10/31 14:40:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.624 2020/10/31 14:47:32 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3465,12 +3465,15 @@ ValidShortVarname(char varname, const char *start)
 /* Parse a single-character variable name such as $V or $@.
  * Return whether to continue parsing. */
 static Boolean
-ParseVarnameShort(char const startc, const char **const pp, GNode *const ctxt,
-		  VarEvalFlags const eflags,
-		  const char **const out_FALSE_val,
-		  VarParseResult *const out_FALSE_res,
-		  Var **out_TRUE_var)
-{
+ParseVarnameShort(
+	char startc,
+	const char **pp,
+	GNode *ctxt,
+	VarEvalFlags eflags,
+	VarParseResult *out_FALSE_res,
+	const char **out_FALSE_val,
+	Var **out_TRUE_var
+) {
     char name[2];
     Var *v;
 
@@ -3513,22 +3516,22 @@ ParseVarnameShort(char const startc, const char **const pp, GNode *const ctxt,
  * Return whether to continue parsing. */
 static Boolean
 ParseVarnameLong(
-	const char **const pp,
-	char const startc,
-	GNode *const ctxt,
-	VarEvalFlags const eflags,
+	const char **pp,
+	char startc,
+	GNode *ctxt,
+	VarEvalFlags eflags,
 
-	VarParseResult *const out_FALSE_res,
-	const char **const out_FALSE_val,
-	void **const out_FALSE_freePtr,
+	VarParseResult *out_FALSE_res,
+	const char **out_FALSE_val,
+	void **out_FALSE_freePtr,
 
-	char *const out_TRUE_endc,
-	const char **const out_TRUE_p,
-	Var **const out_TRUE_v,
-	Boolean *const out_TRUE_haveModifier,
-	const char **const out_TRUE_extraModifiers,
-	Boolean *const out_TRUE_dynamic,
-	VarExprFlags *const out_TRUE_exprFlags
+	char *out_TRUE_endc,
+	const char **out_TRUE_p,
+	Var **out_TRUE_v,
+	Boolean *out_TRUE_haveModifier,
+	const char **out_TRUE_extraModifiers,
+	Boolean *out_TRUE_dynamic,
+	VarExprFlags *out_TRUE_exprFlags
 ) {
     size_t namelen;
     char *varname;
@@ -3729,7 +3732,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     startc = start[1];
     if (startc != '(' && startc != '{') {
 	VarParseResult res;
-	if (!ParseVarnameShort(startc, pp, ctxt, eflags, out_val, &res, &v))
+	if (!ParseVarnameShort(startc, pp, ctxt, eflags, &res, out_val, &v))
 	    return res;
 	haveModifier = FALSE;
 	p = start + 1;
