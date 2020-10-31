@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.621 2020/10/31 12:59:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.622 2020/10/31 14:12:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.621 2020/10/31 12:59:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.622 2020/10/31 14:12:01 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3462,6 +3462,51 @@ ValidShortVarname(char varname, const char *start)
     return FALSE;
 }
 
+/* Parse a single-character variable name such as $V or $@.
+ * Return whether to continue parsing. */
+static Boolean
+ParseVarnameShort(char const startc, const char **const pp, GNode *const ctxt,
+		  VarEvalFlags const eflags,
+		  const char **const out_FALSE_val,
+		  VarParseResult *const out_FALSE_res,
+		  Var **out_TRUE_var)
+{
+    char name[2];
+    Var *v;
+
+    /*
+     * If it's not bounded by braces of some sort, life is much simpler.
+     * We just need to check for the first character and return the
+     * value if it exists.
+     */
+
+    if (!ValidShortVarname(startc, *pp)) {
+	(*pp)++;
+	*out_FALSE_val = var_Error;
+	*out_FALSE_res = VPR_PARSE_MSG;
+	return FALSE;
+    }
+
+    name[0] = startc;
+    name[1] = '\0';
+    v = VarFind(name, ctxt, TRUE);
+    if (v == NULL) {
+	*pp += 2;
+
+	*out_FALSE_val = UndefinedShortVarValue(startc, ctxt, eflags);
+	if (DEBUG(LINT) && *out_FALSE_val == var_Error) {
+	    Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", name);
+	    *out_FALSE_res = VPR_UNDEF_MSG;
+	    return FALSE;
+	}
+	*out_FALSE_res = eflags & VARE_UNDEFERR ? VPR_UNDEF_SILENT : VPR_OK;
+	return FALSE;
+    }
+
+    *out_TRUE_var = v;
+    return TRUE;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -3544,36 +3589,11 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 
     startc = start[1];
     if (startc != '(' && startc != '{') {
-	char name[2];
-
-	/*
-	 * If it's not bounded by braces of some sort, life is much simpler.
-	 * We just need to check for the first character and return the
-	 * value if it exists.
-	 */
-
-	if (!ValidShortVarname(startc, start)) {
-	    (*pp)++;
-	    *out_val = var_Error;
-	    return VPR_PARSE_MSG;
-	}
-
-	name[0] = startc;
-	name[1] = '\0';
-	v = VarFind(name, ctxt, TRUE);
-	if (v == NULL) {
-	    *pp += 2;
-
-	    *out_val = UndefinedShortVarValue(startc, ctxt, eflags);
-	    if (DEBUG(LINT) && *out_val == var_Error) {
-		Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", name);
-		return VPR_UNDEF_MSG;
-	    }
-	    return eflags & VARE_UNDEFERR ? VPR_UNDEF_SILENT : VPR_OK;
-	} else {
-	    haveModifier = FALSE;
-	    p = start + 1;
-	}
+        VarParseResult res;
+	if (!ParseVarnameShort(startc, pp, ctxt, eflags, out_val, &res, &v))
+	    return res;
+	haveModifier = FALSE;
+	p = start + 1;
     } else {
 	size_t namelen;
 	char *varname;
