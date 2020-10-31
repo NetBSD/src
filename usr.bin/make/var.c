@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.616 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.617 2020/10/31 12:22:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.616 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.617 2020/10/31 12:22:43 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1408,7 +1408,7 @@ tryagain:
 
 		if (n >= args->nsub) {
 		    Error("No subexpression \\%zu", n);
-		} else if (m[n].rm_so == -1 && m[n].rm_eo == -1) {
+		} else if (m[n].rm_so == -1) {
 		    Error("No match for subexpression \\%zu", n);
 		} else {
 		    SepBuf_AddBytesBetween(buf, wp + m[n].rm_so,
