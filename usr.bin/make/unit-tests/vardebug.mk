@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.5 2020/10/29 18:38:24 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.6 2020/10/31 13:15:10 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -19,12 +19,12 @@ VAR=		1
 VAR+=		2
 VAR+=		3
 
-.if ${VAR:M[2]}			# VarMatch
+.if ${VAR:M[2]}			# ModifyWord_Match
 .endif
-.if ${VAR:N[2]}			# VarNoMatch (no debug output)
+.if ${VAR:N[2]}			# ModifyWord_NoMatch (no debug output)
 .endif
 
-.if ${VAR:S,2,two,}		# VarGetPattern
+.if ${VAR:S,2,two,}		# ParseModifierPart
 .endif
 
 .if ${VAR:Q}			# VarQuote
