@@ -1,4 +1,4 @@
-.\"	$NetBSD: kfilter_register.9,v 1.10 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: kfilter_register.9,v 1.11 2020/10/31 16:03:01 christos Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 23, 2002
+.Dd October 31, 2020
 .Dt KFILTER_REGISTER 9
 .Os
 .Sh NAME
@@ -97,6 +97,11 @@ struct filterops {
 				/* called when knote is DELETEd */
 	int	(*f_event)(struct knote *kn, long hint);
 				/* called when event is triggered */
+	void	(*f_touch)(struct knote *kn, struct kevent *kev, long hint);
+				/* called during registration and event 
+				 * processing to provide custom handling 
+				 * of event fflags and data
+				 */
 };
 .Ed
 .Pp
