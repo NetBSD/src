@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.7 2020/10/31 09:03:36 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.8 2020/10/31 10:18:32 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -7,10 +7,37 @@
 #
 # See ApplyModifier_SysV.
 
-all:
+# A typical use case for the :from=to modifier is conversion of filename
+# extensions.
+.if ${src.c:L:.c=.o} != "src.o"
+.  error
+.endif
 
-# The :Q looks like a modifier but isn't.
-# It is part of the replacement string.
+# The modifier applies to each word on its own.
+.if ${one.c two.c three.c:L:.c=.o} != "one.o two.o three.o"
+.  error
+.endif
+
+# Words that don't match the pattern are passed unmodified.
+.if ${src.c src.h:L:.c=.o} != "src.o src.h"
+.  error
+.endif
+
+# The :from=to modifier is therefore often combined with the :M modifier.
+.if ${src.c src.h:L:M*.c:.c=.o} != "src.o"
+.  error
+.endif
+
+# Another use case for the :from=to modifier is to append a suffix to each
+# word.  In this case, the "from" string is empty, therefore it always
+# matches.  The same effect can be achieved with the :S,$,teen, modifier.
+.if ${four six seven nine:L:=teen} != "fourteen sixteen seventeen nineteen"
+.  error
+.endif
+
+# When the :from=to modifier is parsed, it lasts until the closing brace
+# or parenthesis.  The :Q in the below expression may look like a modifier
+# but isn't.  It is part of the replacement string.
 .if ${a b c d e:L:%a=x:Q} != "x:Q b c d e"
 .  error
 .endif
@@ -127,3 +154,5 @@ INDIRECT=	1:${VALUE} 2:$${VALUE} 4:$$$${VALUE}
 .if ${x:L:x=${INDIRECT}} != "1:value 2:value 4:\${VALUE}"
 .  error
 .endif
+
+all:
