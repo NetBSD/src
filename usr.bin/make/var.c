@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.613 2020/10/31 09:27:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.614 2020/10/31 09:57:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.613 2020/10/31 09:27:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.614 2020/10/31 09:57:47 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -751,7 +751,7 @@ Var_UnExport(const char *str)
 	     * just delete .MAKE.EXPORTED below.
 	     */
 	    if (varnames == str) {
-	        /* XXX: v->name is injected without escaping it */
+		/* XXX: v->name is injected without escaping it */
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
 		char *cp;
 		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
@@ -947,7 +947,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	/* XXX: name is expanded for the second time */
 	Var_Set(name, val, ctxt);
     } else if (v->flags & VAR_READONLY) {
-        VAR_DEBUG1("Ignoring append to %s since it is read-only\n", name);
+	VAR_DEBUG1("Ignoring append to %s since it is read-only\n", name);
     } else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
 	Buf_AddByte(&v->val, ' ');
 	Buf_AddStr(&v->val, val);
