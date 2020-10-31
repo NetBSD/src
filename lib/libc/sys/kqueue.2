@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.52 2020/10/31 10:51:59 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.53 2020/10/31 14:35:28 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -392,6 +392,7 @@ when the BPF has
 .Dq immediate mode
 enabled and there is any data to read;
 .Va data
+contains the number of bytes available.
 .El
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
