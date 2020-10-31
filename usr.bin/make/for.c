@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.111 2020/10/26 07:37:52 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.112 2020/10/31 18:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -57,10 +57,10 @@
  *	For_Run		Run accumulated loop
  */
 
-#include    "make.h"
+#include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.111 2020/10/26 07:37:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.112 2020/10/31 18:41:07 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
