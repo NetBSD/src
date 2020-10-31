@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.296 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.297 2020/10/31 11:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.296 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.297 2020/10/31 11:54:33 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1193,7 +1193,6 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
      */
     if ((DEFAULT != NULL) && !Lst_IsEmpty(DEFAULT->commands) &&
 	(gn->type & OP_SPECIAL) == 0) {
-	void *p1;
 	/*
 	 * Make only looks for a .DEFAULT if the node was never the
 	 * target of an operator, so that's what we do too. If
@@ -1204,8 +1203,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	 * .DEFAULT itself.
 	 */
 	Make_HandleUse(DEFAULT, gn);
-	Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
-	bmake_free(p1);
+	Var_Set(IMPSRC, GNode_VarTarget(gn), gn);
 	return TRUE;
     }
 
