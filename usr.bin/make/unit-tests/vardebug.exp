@@ -38,7 +38,6 @@ ModifyWords: split "1 2 3" into 3 words
 Result of ${VAR:S,2,two,} is "1 two 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Var_Parse: ${VAR:Q} with VARE_UNDEFERR|VARE_WANTRES
 Applying ${VAR:Q} to "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
-QuoteMeta: [1\ 2\ 3]
 Result of ${VAR:Q} is "1\ 2\ 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Var_Parse: ${VAR:tu:tl:Q} with VARE_UNDEFERR|VARE_WANTRES
 Applying ${VAR:t...} to "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
@@ -46,7 +45,6 @@ Result of ${VAR:tu} is "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Applying ${VAR:t...} to "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Result of ${VAR:tl} is "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Applying ${VAR:Q} to "1 2 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
-QuoteMeta: [1\ 2\ 3]
 Result of ${VAR:Q} is "1\ 2\ 3" (VARE_UNDEFERR|VARE_WANTRES, none, none)
 Var_Parse: ${:Uvalue:${:UM*e}:Mvalu[e]} with VARE_UNDEFERR|VARE_WANTRES
 Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF)
