@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.619 2020/10/31 12:45:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.620 2020/10/31 12:57:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.619 2020/10/31 12:45:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.620 2020/10/31 12:57:39 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1844,9 +1844,22 @@ typedef enum ApplyModifierResult {
     AMR_CLEANUP			/* Error out without error message */
 } ApplyModifierResult;
 
-/*-
- * Parse a part of a modifier such as the "from" and "to" in :S/from/to/
- * or the "var" or "replacement" in :@var@replacement+${var}@, up to and
+/* Allow backslashes to escape the delimiter, $, and \, but don't touch other
+ * backslashes. */
+static Boolean
+IsEscapedModifierPart(const char *p, char delim,
+		      struct ModifyWord_SubstArgs *subst)
+{
+    if (p[0] != '\\')
+	return FALSE;
+    if (p[1] == delim || p[1] == '\\' || p[1] == '$')
+	return TRUE;
+    return p[1] == '&' && subst != NULL;
+}
+
+/*
+ * Parse a part of a modifier such as the "from" and "to" in :S/from/to/ or
+ * the "var" or "replacement ${var}" in :@var@replacement ${var}@, up to and
  * including the next unescaped delimiter.  The delimiter, as well as the
  * backslash or the dollar, can be escaped with a backslash.
  *
@@ -1880,19 +1893,14 @@ ParseModifierPart(
     Buf_Init(&buf, 0);
 
     /*
-     * Skim through until the matching delimiter is found;
-     * pick up variable substitutions on the way. Also allow
-     * backslashes to quote the delimiter, $, and \, but don't
-     * touch other backslashes.
+     * Skim through until the matching delimiter is found; pick up variable
+     * expressions on the way.
      */
     p = *pp;
     while (*p != '\0' && *p != delim) {
 	const char *varstart;
 
-	Boolean is_escaped = p[0] == '\\' && (
-		p[1] == delim || p[1] == '\\' || p[1] == '$' ||
-		(p[1] == '&' && subst != NULL));
-	if (is_escaped) {
+	if (IsEscapedModifierPart(p, delim, subst)) {
 	    Buf_AddByte(&buf, p[1]);
 	    p += 2;
 	    continue;
