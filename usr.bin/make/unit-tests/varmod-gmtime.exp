@@ -6,4 +6,13 @@ mod-gmtime:
 mod-gmtime-indirect:
 make: Unknown modifier '1'
 
+parse-errors:
+: -1 becomes Wed Dec 31 23:59:59 1969.
+: 0 becomes ok.
+: 1 becomes Thu Jan  1 00:00:01 1970.
+: INT32_MAX becomes Tue Jan 19 03:14:07 2038.
+: INT32_MAX + 1 becomes Tue Jan 19 03:14:08 2038.
+: overflow becomes Wed Dec 31 23:59:59 1969.
+make: Unknown modifier 'e'
+: letter becomes .
 exit status 0
