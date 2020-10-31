@@ -1,4 +1,4 @@
-/* $NetBSD: t_ioctl.c,v 1.4 2018/01/09 17:35:29 martin Exp $ */
+/* $NetBSD: t_ioctl.c,v 1.5 2020/10/31 14:57:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ioctl.c,v 1.4 2018/01/09 17:35:29 martin Exp $");
+__RCSID("$NetBSD: t_ioctl.c,v 1.5 2020/10/31 14:57:02 christos Exp $");
 
+#define EVFILT_NAMES
 #include <sys/event.h>
 #include <sys/ioctl.h>
 
@@ -61,13 +62,13 @@ ATF_TC_BODY(kfilter_byfilter, tc)
 	km.name = buf;
 	km.len = sizeof(buf) - 1;
 
-	for (i = 0; i < 8; ++i) {
+	for (i = 0; i < EVFILT_SYSCOUNT; ++i) {
 		km.filter = i;
 		RL(ioctl(kq, KFILTER_BYFILTER, &km));
 		(void)printf("  map %d -> %s\n", km.filter, km.name);
 	}
 
-	km.filter = 8;
+	km.filter = EVFILT_SYSCOUNT;
 	ATF_REQUIRE_EQ(ioctl(kq, KFILTER_BYFILTER, &km), -1);
 }
 
@@ -78,28 +79,16 @@ ATF_TC_HEAD(kfilter_byname, tc)
 }
 ATF_TC_BODY(kfilter_byname, tc)
 {
-	const char *tests[] = {
-		"EVFILT_READ",
-		"EVFILT_WRITE",
-		"EVFILT_AIO",
-		"EVFILT_VNODE",
-		"EVFILT_PROC",
-		"EVFILT_SIGNAL",
-		"EVFILT_TIMER",
-		"EVFILT_FS",
-		NULL
-	};
 	char buf[32];
 	struct kfilter_mapping km;
-	const char **test;
 	int kq;
 
 	RL(kq = kqueue());
 
 	km.name = buf;
 
-	for (test = &tests[0]; *test != NULL; ++test) {
-		(void)strlcpy(buf, *test, sizeof(buf));
+	for (size_t i = 0; i < EVFILT_SYSCOUNT; i++) {
+		(void)strlcpy(buf, evfiltnames[i], sizeof(buf));
 		RL(ioctl(kq, KFILTER_BYNAME, &km));
 		(void)printf("  map %s -> %d\n", km.name, km.filter);
 	}
