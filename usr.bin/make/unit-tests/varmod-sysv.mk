@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.8 2020/10/31 10:18:32 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.9 2020/10/31 11:06:24 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -35,10 +35,49 @@
 .  error
 .endif
 
+# The :from=to modifier can also be used to surround each word by strings.
+# It might be tempting to use this for enclosing a string in quotes for the
+# shell, but that's the job of the :Q modifier.
+.if ${one two three:L:%=(%)} != "(one) (two) (three)"
+.  error
+.endif
+
 # When the :from=to modifier is parsed, it lasts until the closing brace
 # or parenthesis.  The :Q in the below expression may look like a modifier
 # but isn't.  It is part of the replacement string.
 .if ${a b c d e:L:%a=x:Q} != "x:Q b c d e"
+.  error
+.endif
+
+# In the :from=to modifier, both parts can contain variable expressions.
+.if ${one two:L:${:Uone}=${:U1}} != "1 two"
+.  error
+.endif
+
+# In the :from=to modifier, the "from" part is expanded exactly once.
+.if ${:U\$ \$\$ \$\$\$\$:${:U\$\$\$\$}=4} != "\$ \$\$ 4"
+.  error
+.endif
+
+# In the :from=to modifier, the "to" part is expanded exactly twice.
+# XXX: The right-hand side should be expanded only once.
+# XXX: It's hard to get the escaping correct here, and to read that.
+# XXX: It's not intuitive why the closing brace must be escaped but not
+#      the opening brace.
+.if ${:U1 2 4:4=${:Uonce\${\:Utwice\}}} != "1 2 oncetwice"
+.  error
+.endif
+
+# The replacement string can contain spaces, thereby changing the number
+# of words in the variable expression.
+.if ${In:L:%=% ${:Uthe Sun}} != "In the Sun"
+.  error
+.endif
+
+# If the variable is empty, it is debatable whether it consists of a single
+# empty word, or no word at all.  The :from=to modifier treats it as no
+# word at all.
+.if ${:L:=suffix} != ""
 .  error
 .endif
 
@@ -84,6 +123,12 @@
 # The % placeholder can be anywhere in the string, it doesn't have to be at
 # the beginning of the pattern.
 .if ${:Ufile.c other.c:file.%=renamed.%} != "renamed.c other.c"
+.  error
+.endif
+
+# It's also possible to modify each word by replacing the prefix and adding
+# a suffix.
+.if ${one two:L:o%=a%w} != "anew two"
 .  error
 .endif
 
@@ -140,6 +185,14 @@
 # In the word "one", only a prefix of the pattern suffix "nes" matches,
 # the whole word is too short.  Therefore it doesn't match.
 .if ${one two:L:%nes=%xxx} != "one two"
+.  error
+.endif
+
+# The :from=to modifier can be used to replace both the prefix and a suffix
+# of a word with other strings.  This is not possible with a single :S
+# modifier, and using a :C modifier for the same task looks more complicated
+# in many cases.
+.if ${prefix-middle-suffix:L:prefix-%-suffix=p-%-s} != "p-middle-s"
 .  error
 .endif
 
