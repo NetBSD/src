@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.624 2020/10/31 14:47:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.625 2020/10/31 14:55:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.624 2020/10/31 14:47:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.625 2020/10/31 14:55:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3664,11 +3664,8 @@ ParseVarnameLong(
  * Input:
  *	str		The string to parse
  *	ctxt		The context for the variable
- *	flags		VARE_UNDEFERR	if undefineds are an error
- *			VARE_WANTRES	if we actually want the result
- *			VARE_ASSIGN	if we are in a := assignment
- *	lengthPtr	OUT: The length of the specification
- *	freePtr		OUT: Non-NULL if caller should free *freePtr
+ *	flags		Select the exact details of parsing
+ *	out_val_freeIt	Must be freed by the caller after using out_val
  *
  * Results:
  *	Returns the value of the variable expression, never NULL.
@@ -3688,8 +3685,8 @@ ParseVarnameLong(
  *	If varUndefined is returned, a diagnostic may or may not have been
  *	printed. XXX: This is inconsistent.
  *
- *	After using the returned value, *freePtr must be freed, preferably
- *	using bmake_free since it is NULL in most cases.
+ *	After using the returned value, *out_val_freeIt must be freed,
+ *	preferably using bmake_free since it is NULL in most cases.
  *
  * Side Effects:
  *	Any effects from the modifiers, such as :!cmd! or ::=value.
@@ -3698,7 +3695,7 @@ ParseVarnameLong(
 /* coverity[+alloc : arg-*4] */
 VarParseResult
 Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
-	  const char **out_val, void **freePtr)
+	  const char **out_val, void **out_val_freeIt)
 {
     const char *const start = *pp;
     const char *p;
@@ -3721,7 +3718,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	       Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
 				  VarEvalFlags_ToStringSpecs));
 
-    *freePtr = NULL;
+    *out_val_freeIt = NULL;
     extramodifiers = NULL;	/* extra modifiers to apply first */
     dynamic = FALSE;
 
@@ -3739,7 +3736,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     } else {
 	VarParseResult res;
 	if (!ParseVarnameLong(pp, startc, ctxt, eflags,
-			      &res, out_val, freePtr,
+			      &res, out_val, out_val_freeIt,
 			      &endc, &p, &v, &haveModifier, &extramodifiers,
 			      &dynamic, &exprFlags))
 	    return res;
@@ -3766,7 +3763,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	(void)Var_Subst(nstr, ctxt, nested_eflags, &nstr);
 	v->flags &= ~(unsigned)VAR_IN_USE;
 	/* TODO: handle errors */
-	*freePtr = nstr;
+	*out_val_freeIt = nstr;
     }
 
     if (haveModifier || extramodifiers != NULL) {
@@ -3784,10 +3781,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    p++;
 
 	    nstr = ApplyModifiers(&p, nstr, startc, endc,
-				  v, &exprFlags, ctxt, eflags, freePtr);
+				  v, &exprFlags, ctxt, eflags, out_val_freeIt);
 	    free(extraFree);
 	} else {
-	    *freePtr = extraFree;
+	    *out_val_freeIt = extraFree;
 	}
     }
 
@@ -3801,18 +3798,18 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	 * but don't free the variable value if it will be returned. */
 	Boolean keepValue = nstr == Buf_GetAll(&v->val, NULL);
 	if (keepValue)
-	    *freePtr = nstr;
+	    *out_val_freeIt = nstr;
 	(void)VarFreeEnv(v, !keepValue);
 
     } else if (exprFlags & VEF_UNDEF) {
 	if (!(exprFlags & VEF_DEF)) {
-	    if (*freePtr != NULL) {
-		free(*freePtr);
-		*freePtr = NULL;
+	    if (*out_val_freeIt != NULL) {
+		free(*out_val_freeIt);
+		*out_val_freeIt = NULL;
 	    }
 	    if (dynamic) {
 		nstr = bmake_strsedup(start, p);
-		*freePtr = nstr;
+		*out_val_freeIt = nstr;
 	    } else {
 		/* The expression is still undefined, therefore discard the
 		 * actual value and return an error marker instead. */
