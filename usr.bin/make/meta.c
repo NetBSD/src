@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.135 2020/10/31 11:54:33 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.136 2020/10/31 12:04:24 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -474,13 +474,11 @@ meta_create(BuildMon *pbm, GNode *gn)
     const char *tname;
     char *fname;
     const char *cp;
-    void *p[5];				/* >= possible uses */
-    int i;
+    void *objdir_freeIt;
 
     mf.fp = NULL;
-    i = 0;
 
-    dname = Var_Value(".OBJDIR", gn, &p[i++]);
+    dname = Var_Value(".OBJDIR", gn, &objdir_freeIt);
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds objdir is realpath of dname */
@@ -549,9 +547,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	    gn->type |= OP_SILENT;
     }
  out:
-    for (i--; i >= 0; i--) {
-	bmake_free(p[i]);
-    }
+    bmake_free(objdir_freeIt);
 
     return mf.fp;
 }
@@ -1090,16 +1086,13 @@ meta_oodate(GNode *gn, Boolean oodate)
     FILE *fp;
     Boolean needOODATE = FALSE;
     StringList *missingFiles;
-    void *pa[4];			/* >= possible uses */
-    int i;
     int have_filemon = FALSE;
+    void *objdir_freeIt;
 
     if (oodate)
 	return oodate;		/* we're done */
 
-    i = 0;
-
-    dname = Var_Value(".OBJDIR", gn, &pa[i++]);
+    dname = Var_Value(".OBJDIR", gn, &objdir_freeIt);
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds fname3 is realpath of dname */
@@ -1612,9 +1605,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     }
 
  oodate_out:
-    for (i--; i >= 0; i--) {
-	bmake_free(pa[i]);
-    }
+    bmake_free(objdir_freeIt);
     return oodate;
 }
 
