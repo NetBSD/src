@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.617 2020/10/31 12:22:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.618 2020/10/31 12:34:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.617 2020/10/31 12:22:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.618 2020/10/31 12:34:03 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1465,8 +1465,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
     (void)Var_Subst(args->str, args->ctx, args->eflags, &s);
     /* TODO: handle errors */
 
-    VAR_DEBUG4("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
-	       "to \"%s\"\n",
+    VAR_DEBUG4("ModifyWord_Loop: "
+	       "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
 	       word, args->tvar, args->str, s);
 
     if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
