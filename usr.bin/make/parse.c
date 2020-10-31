@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.414 2020/10/31 09:47:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.415 2020/10/31 21:52:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.414 2020/10/31 09:47:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.415 2020/10/31 21:52:56 rillig Exp $");
 
 /* types and constants */
 
@@ -196,9 +196,9 @@ static GNode *mainNode;
 
 /* eval state */
 
-/* During parsing, the targets from the currently active dependency line,
- * or NULL if the current line does not belong to a dependency line, for
- * example because it is a variable assignment.
+/* During parsing, the targets from the left-hand side of the currently
+ * active dependency line, or NULL if the current line does not belong to a
+ * dependency line, for example because it is a variable assignment.
  *
  * See unit-tests/deptgt.mk, keyword "parse.c:targets". */
 static GNodeList *targets;
