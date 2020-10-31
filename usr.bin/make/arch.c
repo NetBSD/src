@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.149 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.150 2020/10/31 11:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.149 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.150 2020/10/31 11:54:33 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -861,14 +861,9 @@ Arch_Touch(GNode *gn)
 {
     FILE *arch;		/* Stream open to archive, positioned properly */
     struct ar_hdr arh;	/* Current header describing member */
-    void *p1, *p2;
 
-    arch = ArchFindMember(Var_Value(ARCHIVE, gn, &p1),
-			  Var_Value(MEMBER, gn, &p2),
+    arch = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn),
 			  &arh, "r+");
-
-    bmake_free(p1);
-    bmake_free(p2);
 
     snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long)now);
 
@@ -921,15 +916,8 @@ Arch_MTime(GNode *gn)
 {
     struct ar_hdr *arhPtr;	/* Header of desired member */
     time_t modTime;		/* Modification time as an integer */
-    void *p1, *p2;
 
-    arhPtr = ArchStatMember(Var_Value(ARCHIVE, gn, &p1),
-			    Var_Value(MEMBER, gn, &p2),
-			    TRUE);
-
-    bmake_free(p1);
-    bmake_free(p2);
-
+    arhPtr = ArchStatMember(GNode_VarArchive(gn), GNode_VarMember(gn), TRUE);
     if (arhPtr != NULL) {
 	modTime = (time_t)strtol(arhPtr->ar_date, NULL, 10);
     } else {

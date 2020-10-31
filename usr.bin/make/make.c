@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.183 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.184 2020/10/31 11:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include    "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.183 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.184 2020/10/31 11:54:33 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -569,8 +569,7 @@ static void
 UpdateImplicitParentsVars(GNode *cgn, const char *cname)
 {
     GNodeListNode *ln;
-    void *cpref_freeIt;
-    const char *cpref = Var_Value(PREFIX, cgn, &cpref_freeIt);
+    const char *cpref = GNode_VarPrefix(cgn);
 
     for (ln = cgn->implicitParents->first; ln != NULL; ln = ln->next) {
 	GNode *pgn = ln->datum;
@@ -580,7 +579,6 @@ UpdateImplicitParentsVars(GNode *cgn, const char *cname)
 		Var_Set(PREFIX, cpref, pgn);
 	}
     }
-    bmake_free(cpref_freeIt);
 }
 
 /* Perform update on the parents of a node. Used by JobFinish once
@@ -614,11 +612,7 @@ Make_Update(GNode *cgn)
     /* It is save to re-examine any nodes again */
     checked++;
 
-    {
-	void *cname_freeIt;
-	cname = Var_Value(TARGET, cgn, &cname_freeIt);
-	assert(cname_freeIt == NULL);
-    }
+    cname = GNode_VarTarget(cgn);
 
     DEBUG2(MAKE, "Make_Update: %s%s\n", cgn->name, cgn->cohort_num);
 
@@ -779,20 +773,18 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
 	const char *child, *allsrc;
-	void *p1 = NULL, *p2 = NULL;
 
 	if (cgn->type & OP_ARCHV)
-	    child = Var_Value(MEMBER, cgn, &p1);
+	    child = GNode_VarMember(cgn);
 	else
 	    child = GNode_Path(cgn);
 	if (cgn->type & OP_JOIN) {
-	    allsrc = Var_Value(ALLSRC, cgn, &p2);
+	    allsrc = GNode_VarAllsrc(cgn);
 	} else {
 	    allsrc = child;
 	}
 	if (allsrc != NULL)
 		Var_Append(ALLSRC, allsrc, pgn);
-	bmake_free(p2);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {
 		Var_Append(OODATE, child, pgn);
@@ -818,7 +810,6 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 	     */
 	    Var_Append(OODATE, child, pgn);
 	}
-	bmake_free(p1);
     }
 }
 
@@ -854,11 +845,8 @@ Make_DoAllVar(GNode *gn)
 	Var_Set(ALLSRC, "", gn);
     }
 
-    if (gn->type & OP_JOIN) {
-	void *p1;
-	Var_Set(TARGET, Var_Value(ALLSRC, gn, &p1), gn);
-	bmake_free(p1);
-    }
+    if (gn->type & OP_JOIN)
+	Var_Set(TARGET, GNode_VarAllsrc(gn), gn);
     gn->flags |= DONE_ALLSRC;
 }
 

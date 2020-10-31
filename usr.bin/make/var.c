@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.615 2020/10/31 11:34:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.616 2020/10/31 11:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.615 2020/10/31 11:34:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.616 2020/10/31 11:54:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1030,6 +1030,15 @@ Var_Value(const char *name, GNode *ctxt, void **freeIt)
     if (VarFreeEnv(v, FALSE))
 	*freeIt = value;
     return value;
+}
+
+/* Return the unexpanded variable value from this node, without trying to look
+ * up the variable in any other context. */
+const char *
+Var_ValueDirect(const char *name, GNode *ctxt)
+{
+    Var *v = VarFind(name, ctxt, FALSE);
+    return v != NULL ? Buf_GetAll(&v->val, NULL) : NULL;
 }
 
 
