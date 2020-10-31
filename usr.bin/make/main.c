@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.419 2020/10/31 16:13:00 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.420 2020/10/31 21:09:22 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.419 2020/10/31 16:13:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.420 2020/10/31 21:09:22 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -721,7 +721,9 @@ Main_SetObjdir(const char *fmt, ...)
 
 	/* look for the directory and try to chdir there */
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-		if (chdir(path)) {
+		/* if not .CURDIR it must be writable */
+		if ((strcmp(path, curdir) != 0 && access(path, W_OK) != 0) ||
+		    chdir(path)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 				      path, strerror(errno));
 		} else {
