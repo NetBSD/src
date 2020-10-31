@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.12 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.13 2020/10/31 15:18:09 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,7 +75,7 @@ ENTRY_NP(start)
 #ifdef _LP64
 	add	s3, s2, s10		// s3 = second PDE page (RV64 only)
 #else
-	move	s3, 22
+	mv	s3, 22
 #endif
 	add	s4, s3, s10		// s4 = first kernel PTE page
 	add	s5, s1, s9		// s5 = kernel_end
@@ -187,7 +187,7 @@ ENTRY_NP(cpu_switchto)
 
 	csrrci	t0, sstatus, SR_EI	// # disable interrupts
 
-	move	tp, a1			// # put the new lwp in thread pointer
+	mv	tp, a1			// # put the new lwp in thread pointer
 
 	PTR_L	t1, L_CPU(tp)		// # get curcpu
 	PTR_S	tp, CI_CURLWP(t1)	// # update curcpu with the new curlwp
@@ -221,10 +221,10 @@ ENTRY_NP(cpu_switchto)
 END(cpu_switchto)
 
 ENTRY_NP(cpu_lwp_trampoline)
-	move	a1, tp			// get new lwp
+	mv	a1, tp			// get new lwp
 	call	_C_LABEL(lwp_startup)	// call lwp startup
 
-	move	a0, s1			// get saved arg
+	mv	a0, s1			// get saved arg
 	jalr	s0			// call saved func
 
 	// If the saved func returns, we are returning to user land.
@@ -271,8 +271,8 @@ ENTRY_NP(cpu_fast_switchto)
 	csrr	t4, sstatus		// get status register (for intr state)
 	REG_S	t4, TF_SR(sp)		// save it
 
-	move	s0, tp			// remember curlwp
-	move	s1, sp			// remember kernel stack
+	mv	s0, tp			// remember curlwp
+	mv	s1, sp			// remember kernel stack
 
 #if 0
 	csrrci	t0, sstatus, SR_EI	// disable interrupts
@@ -280,7 +280,7 @@ ENTRY_NP(cpu_fast_switchto)
 	PTR_L	t1, L_CPU(tp)		// get curcpu()
 
 	PTR_S	sp, L_MD_KTF(tp)	// save trapframe ptr in oldlwp
-	move	tp, a0			// set thread pointer to newlwp
+	mv	tp, a0			// set thread pointer to newlwp
 	PTR_S	tp, CI_CURLWP(t1)	// update curlwp
 	PTR_L	sp, L_MD_KTF(tp)	// switch to its stack
 #if 0
@@ -291,12 +291,12 @@ ENTRY_NP(cpu_fast_switchto)
 	csrrci	t0, sstatus, SR_EI	// disable interrupts
 #endif
 	PTR_L	t1, L_CPU(tp)		// get curcpu() again
-	move	tp, s0			// return to pinned lwp
+	mv	tp, s0			// return to pinned lwp
 	PTR_S	tp, CI_CURLWP(t1)	// restore curlwp
 #if 0
 	csrw	sstatus, t0		// reeanble interrupts
 #endif
-	move	sp, s1			// restore stack pointer
+	mv	sp, s1			// restore stack pointer
 
 	REG_L	ra, (TF_RA + CALLFRAME_RA)(sp)	// get return address
 	REG_L	s0, TF_S0(sp)		// restore register we used
@@ -365,7 +365,7 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	t6, TF_T6(sp)		// save t6
 
 	// Now we get the
-	move	a0, sp			// trapframe pointer
+	mv	a0, sp			// trapframe pointer
 	csrr	a1, sepc		// get execption pc
 	csrr	a2, sstatus		// get status
 	csrr	a3, scause		// get cause
@@ -480,7 +480,7 @@ intr_usersave:
 	REG_S	s11, TF_S11(sp)		// only save from userland
 	PTR_LA	ra, exception_userexit
 trap_doast:
-	move	a0, sp			// only argument is trapframe
+	mv	a0, sp			// only argument is trapframe
 	tail	_C_LABEL(cpu_ast)
 
 intr_user:
@@ -555,7 +555,7 @@ ENTRY(longjmp)
 	REG_L	s10, FB_S10(a0)
 	REG_L	s11, FB_S11(a0)
 	REG_L	sp, FB_SP(a0)
-	move	a0, a1
+	mv	a0, a1
 	ret
 END(longjmp)
 
