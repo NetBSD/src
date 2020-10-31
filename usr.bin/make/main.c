@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.416 2020/10/31 09:27:19 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.417 2020/10/31 09:35:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.416 2020/10/31 09:27:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.417 2020/10/31 09:35:58 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2049,7 +2049,7 @@ dieQuietly(GNode *gn, int bf)
     static int quietly = -1;
 
     if (quietly < 0) {
-	if (DEBUG(JOB) || getBoolean(".MAKE.DIE_QUIETLY", 1) == 0)
+	if (DEBUG(JOB) || !getBoolean(".MAKE.DIE_QUIETLY", TRUE))
 	    quietly = 0;
 	else if (bf >= 0)
 	    quietly = bf;
@@ -2225,16 +2225,16 @@ s2Boolean(const char *s, Boolean bf)
 }
 
 /*
- * Return a Boolean based on setting of a knob.
+ * Return a Boolean based on a variable.
  *
- * If the knob is not set, the supplied default is the return value.
- * If set, anything that looks or smells like "No", "False", "Off", "0" etc,
+ * If the knob is not set, return the fallback.
+ * If set, anything that looks or smells like "No", "False", "Off", "0", etc.
  * is FALSE, otherwise TRUE.
  */
 Boolean
-getBoolean(const char *name, Boolean fallback)
+getBoolean(const char *varname, Boolean fallback)
 {
-    char *expr = str_concat3("${", name, ":U:tl}");
+    char *expr = str_concat3("${", varname, ":U}");
     char *value;
     Boolean res;
 
