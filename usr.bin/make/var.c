@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.618 2020/10/31 12:34:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.619 2020/10/31 12:45:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.618 2020/10/31 12:34:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.619 2020/10/31 12:45:42 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1476,11 +1476,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 }
 
 
-/*-
- * Implements the :[first..last] modifier.
- * This is a special case of ModifyWords since we want to be able
- * to scan the list backwards if first > last.
- */
+/* The :[first..last] modifier selects words from the expression.
+ * It can also reverse the words. */
 static char *
 VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 	       int last)
@@ -1553,9 +1550,7 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
     SepBuf_AddStr(buf, word);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Modify each of the words of the passed string using the given function.
+/* Modify each of the words of the passed string using the given function.
  *
  * Input:
  *	str		String whose words should be modified
@@ -1567,8 +1562,9 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
  *-----------------------------------------------------------------------
  */
 static char *
-ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
-	    ModifyWordsCallback modifyWord, void *modifyWord_args)
+ModifyWords(const char *str,
+	    ModifyWordsCallback modifyWord, void *modifyWord_args,
+	    Boolean oneBigWord, char sep)
 {
     SepBuf result;
     Words words;
@@ -2036,8 +2032,8 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     prev_sep = st->sep;
     st->sep = ' ';		/* XXX: should be st->sep for consistency */
-    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
-			     ModifyWord_Loop, &args);
+    st->newVal = ModifyWords(st->val, ModifyWord_Loop, &args,
+			     st->oneBigWord, st->sep);
     st->sep = prev_sep;
     Var_Delete(args.tvar, st->ctxt);
     free(args.tvar);
@@ -2333,8 +2329,8 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
     VAR_DEBUG3("Pattern[%s] for [%s] is [%s]\n", st->v->name, st->val, pattern);
 
     callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
-    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
-			     callback, pattern);
+    st->newVal = ModifyWords(st->val, callback, pattern,
+			     st->oneBigWord, st->sep);
     free(pattern);
     return AMR_OK;
 }
@@ -2397,8 +2393,8 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 	break;
     }
 
-    st->newVal = ModifyWords(st->ctxt, st->sep, oneBigWord, st->val,
-			     ModifyWord_Subst, &args);
+    st->newVal = ModifyWords(st->val, ModifyWord_Subst, &args,
+			     oneBigWord, st->sep);
 
     free(lhs);
     free(rhs);
@@ -2467,8 +2463,8 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
     args.nsub = args.re.re_nsub + 1;
     if (args.nsub > 10)
 	args.nsub = 10;
-    st->newVal = ModifyWords(st->ctxt, st->sep, oneBigWord, st->val,
-			     ModifyWord_SubstRegex, &args);
+    st->newVal = ModifyWords(st->val, ModifyWord_SubstRegex, &args,
+			     oneBigWord, st->sep);
     regfree(&args.re);
     free(args.replace);
     return AMR_OK;
@@ -2556,8 +2552,8 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
     }
 
 ok:
-    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
-			     ModifyWord_Copy, NULL);
+    st->newVal = ModifyWords(st->val, ModifyWord_Copy, NULL,
+			     st->oneBigWord, st->sep);
     return AMR_OK;
 }
 
@@ -2583,8 +2579,8 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 
     /* Check for two-character options: ":tu", ":tl" */
     if (mod[1] == 'A') {	/* absolute path */
-	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
-				 ModifyWord_Realpath, NULL);
+	st->newVal = ModifyWords(st->val, ModifyWord_Realpath, NULL,
+				 st->oneBigWord, st->sep);
 	*pp = mod + 2;
 	return AMR_OK;
     }
@@ -2955,8 +2951,8 @@ ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
     if (delim != st->endc && delim != ':')
 	return AMR_UNKNOWN;
 
-    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord,
-			     st->val, modifyWord, NULL);
+    st->newVal = ModifyWords(st->val, modifyWord, NULL,
+			     st->oneBigWord, st->sep);
     (*pp)++;
     return AMR_OK;
 }
@@ -3024,8 +3020,8 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 	st->newVal = st->val;	/* special case */
     } else {
 	struct ModifyWord_SYSVSubstArgs args = {st->ctxt, lhs, rhs};
-	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
-				 ModifyWord_SYSVSubst, &args);
+	st->newVal = ModifyWords(st->val, ModifyWord_SYSVSubst, &args,
+				 st->oneBigWord, st->sep);
     }
     free(lhs);
     free(rhs);
