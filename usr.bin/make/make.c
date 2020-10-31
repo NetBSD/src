@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.184 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.185 2020/10/31 18:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,12 +102,12 @@
  *	Make_ExpandUse	Expand .USE nodes
  */
 
-#include    "make.h"
-#include    "dir.h"
-#include    "job.h"
+#include "make.h"
+#include "dir.h"
+#include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.184 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.185 2020/10/31 18:41:07 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;

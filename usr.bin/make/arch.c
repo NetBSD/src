@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.150 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.151 2020/10/31 18:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,20 +117,20 @@
  *	Arch_End	Clean up this module.
  */
 
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/time.h>
-#include    <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/param.h>
 
-#include    <ar.h>
-#include    <utime.h>
+#include <ar.h>
+#include <utime.h>
 
-#include    "make.h"
-#include    "dir.h"
-#include    "config.h"
+#include "make.h"
+#include "dir.h"
+#include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.150 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.151 2020/10/31 18:41:07 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.629 2020/10/31 18:17:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.630 2020/10/31 18:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,22 +114,22 @@
  * XXX: There's a lot of duplication in these functions.
  */
 
-#include    <sys/stat.h>
+#include <sys/stat.h>
 #ifndef NO_REGEX
-#include    <sys/types.h>
-#include    <regex.h>
+#include <sys/types.h>
+#include <regex.h>
 #endif
-#include    <inttypes.h>
-#include    <limits.h>
-#include    <time.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <time.h>
 
-#include    "make.h"
-#include    "dir.h"
-#include    "job.h"
-#include    "metachar.h"
+#include "make.h"
+#include "dir.h"
+#include "job.h"
+#include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.629 2020/10/31 18:17:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.630 2020/10/31 18:41:07 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
