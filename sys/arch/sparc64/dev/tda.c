@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.13 2019/03/01 02:38:17 mrg Exp $	*/
+/*	$NetBSD: tda.c,v 1.14 2020/10/31 13:17:34 jdc Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.13 2019/03/01 02:38:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.14 2020/10/31 13:17:34 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ tda_detach(device_t self, int flags)
 	struct tda_softc *sc = device_private(self);
 
 	if (sc->sc_sme != NULL)
-		sysmon_envsys_destroy(sc->sc_sme);
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	callout_halt(&sc->sc_timer, NULL);
 	callout_destroy(&sc->sc_timer);
