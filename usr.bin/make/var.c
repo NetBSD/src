@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.627 2020/10/31 18:05:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.628 2020/10/31 18:14:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.627 2020/10/31 18:05:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.628 2020/10/31 18:14:59 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1636,7 +1636,6 @@ VarUniq(const char *str)
 static char *
 VarQuote(const char *str, Boolean quoteDollar)
 {
-    char *res;
     Buffer buf;
     Buf_Init(&buf, 0);
 
@@ -1655,9 +1654,7 @@ VarQuote(const char *str, Boolean quoteDollar)
 	    Buf_AddStr(&buf, "\\$");
     }
 
-    res = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG1("QuoteMeta: [%s]\n", res);
-    return res;
+    return Buf_Destroy(&buf, FALSE);
 }
 
 /* Compute the 32-bit hash of the given string, using the MurmurHash3
