@@ -2,7 +2,7 @@ mod-gmtime:
 %Y
 2020
 %Y
-%Y
+localtime == localtime
 mod-gmtime-indirect:
 make: Unknown modifier '1'
 
