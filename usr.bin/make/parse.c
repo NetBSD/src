@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.417 2020/10/31 23:10:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.418 2020/10/31 23:39:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.417 2020/10/31 23:10:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.418 2020/10/31 23:39:01 rillig Exp $");
 
 /* types and constants */
 
@@ -2351,32 +2351,50 @@ ParseSetParseFile(const char *filename)
     }
 }
 
+static Boolean
+StrContainsWord(const char *str, const char *word)
+{
+    const char *val = str;
+    size_t valLen = strlen(val);
+    size_t wordLen = strlen(word);
+    const char *end;
+
+    if (valLen < wordLen)
+	return FALSE;		/* str is too short to contain word */
+
+    end = val + valLen - wordLen;
+    for (; val != NULL; val = strchr(val, ' ')) {
+	if (*val == ' ')
+	    val++;
+	if (val > end)
+	    return FALSE;	/* cannot contain word */
+
+	if (memcmp(val, word, wordLen) == 0 &&
+	    (val[wordLen] == '\0' || val[wordLen] == ' '))
+	    return TRUE;
+    }
+    return FALSE;
+}
+
+/* XXX: Searching through a set of words with this linear search is
+ * inefficient for variables that contain thousands of words. */
+static Boolean
+VarContainsWord(const char *varname, const char *word)
+{
+    void *val_freeIt;
+    const char *val = Var_Value(varname, VAR_GLOBAL, &val_freeIt);
+    Boolean found = val != NULL && StrContainsWord(val, word);
+    bmake_free(val_freeIt);
+    return found;
+}
+
 /* Track the makefiles we read - so makefiles can set dependencies on them.
  * Avoid adding anything more than once. */
 static void
 ParseTrackInput(const char *name)
 {
-    void *old_freeIt = NULL;
-
-    const char *old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &old_freeIt);
-    if (old != NULL) {
-	size_t name_len = strlen(name);
-	/* XXX: undefined behavior if name_len > strlen(old) */
-	const char *ep = old + strlen(old) - name_len;
-	/* does it contain name? */
-	for (; old != NULL; old = strchr(old, ' ')) {
-	    if (*old == ' ')
-		old++;
-	    if (old > ep)
-		break;		/* cannot contain name */
-	    if (memcmp(old, name, name_len) == 0 &&
-		(old[name_len] == '\0' || old[name_len] == ' '))
-		goto cleanup;
-	}
-    }
-    Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
-cleanup:
-    bmake_free(old_freeIt);
+    if (!VarContainsWord(MAKE_MAKEFILES, name))
+	Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
 }
 
 
