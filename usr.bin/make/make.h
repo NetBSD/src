@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.177 2020/10/30 17:10:48 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.178 2020/10/31 11:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -643,6 +643,21 @@ GNode_Path(const GNode *gn)
 {
     return gn->path != NULL ? gn->path : gn->name;
 }
+
+static MAKE_ATTR_UNUSED const char *
+GNode_VarTarget(GNode *gn) { return Var_ValueDirect(TARGET, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarOodate(GNode *gn) { return Var_ValueDirect(OODATE, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarAllsrc(GNode *gn) { return Var_ValueDirect(ALLSRC, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarImpsrc(GNode *gn) { return Var_ValueDirect(IMPSRC, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarPrefix(GNode *gn) { return Var_ValueDirect(PREFIX, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarArchive(GNode *gn) { return Var_ValueDirect(ARCHIVE, gn); }
+static MAKE_ATTR_UNUSED const char *
+GNode_VarMember(GNode *gn) { return Var_ValueDirect(MEMBER, gn); }
 
 #ifdef __GNUC__
 #define UNCONST(ptr)	({		\
