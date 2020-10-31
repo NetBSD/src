@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.4 2020/10/31 19:48:23 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.5 2020/10/31 19:55:26 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3).
@@ -48,6 +48,10 @@ parse-errors:
 	# Going back 50 years in the past is not a practical use case for
 	# make.
 	: -1 becomes ${:L:gmtime=-1}.
+
+	# Spaces are allowed, not because it would make sense but just as
+	# a side-effect from using strtoul.
+	: space 1 becomes ${:L:gmtime= 1}.
 
 	# 0 means now; to get consistent test results, the actual value has
 	# to be normalized.
