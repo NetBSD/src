@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.614 2020/10/31 09:57:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.615 2020/10/31 11:34:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.614 2020/10/31 09:57:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.615 2020/10/31 11:34:30 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3662,12 +3662,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    free(varname);
     }
 
-    if (v->flags & VAR_IN_USE) {
+    if (v->flags & VAR_IN_USE)
 	Fatal("Variable %s is recursive.", v->name);
-	/*NOTREACHED*/
-    } else {
-	v->flags |= VAR_IN_USE;
-    }
 
     /*
      * Before doing any modification, we have to make sure the value
@@ -3683,12 +3679,12 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	VarEvalFlags nested_eflags = eflags;
 	if (DEBUG(LINT))
 	    nested_eflags &= ~(unsigned)VARE_UNDEFERR;
+	v->flags |= VAR_IN_USE;
 	(void)Var_Subst(nstr, ctxt, nested_eflags, &nstr);
+	v->flags &= ~(unsigned)VAR_IN_USE;
 	/* TODO: handle errors */
 	*freePtr = nstr;
     }
-
-    v->flags &= ~(unsigned)VAR_IN_USE;
 
     if (haveModifier || extramodifiers != NULL) {
 	void *extraFree;
