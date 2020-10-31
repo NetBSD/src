@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.5 2020/10/31 12:20:36 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -48,18 +48,35 @@ all: mod-regex-errors
 # and since the matches must not overlap, the next possible match would
 # start at the 6, but at that point, there is only one character left,
 # and that cannot match the regular expression "..".  Therefore only the
-# "45" is doubled in the result.
+# "45" is doubled in the third word.
 .if ${:U1 23 456:C,..,\0\0,} != "1 2323 45456"
 .  error
 .endif
 
 # The modifier '1' applies the replacement at most once, across the whole
-# variable value, no matter whether it is a single big word or many small
+# expression value, no matter whether it is a single big word or many small
 # words.
 #
 # Up to 2020-08-28, the manual page said that the modifiers '1' and 'g'
-# were orthogonal, which was wrong.
+# were orthogonal, which was wrong.  It doesn't make sense to specify both
+# 'g' and '1' at the same time.
 .if ${:U12345 12345:C,.,\0\0,1} != "112345 12345"
+.  error
+.endif
+
+# A regular expression that matches the empty string applies before every
+# single character of the word.
+# XXX: Most other places where regular expression are used match at the end
+# of the string as well.
+.if ${:U1a2b3c:C,a*,*,g} != "*1**2*b*3*c"
+.  error
+.endif
+
+# A dot in the regular expression matches any character, even a newline.
+# In most other contexts where regular expressions are used, a dot matches
+# any character except newline.  In make, regcomp is called without
+# REG_NEWLINE, thus newline is an ordinary character.
+.if ${:U"${.newline}":C,.,.,g} != "..."
 .  error
 .endif
 
