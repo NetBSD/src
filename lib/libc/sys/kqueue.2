@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.50 2019/12/23 01:46:09 kamil Exp $
+.\"	$NetBSD: kqueue.2,v 1.51 2020/10/31 01:08:31 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd December 22, 2019
+.Dd October 30, 2020
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -54,7 +54,9 @@
 .Fn kevent "int kq" "const struct kevent *changelist" "size_t nchanges" "struct kevent *eventlist" "size_t nevents" "const struct timespec *timeout"
 .Fn EV_SET "&kev" ident filter flags fflags data udata
 .Sh DESCRIPTION
+The
 .Fn kqueue
+system call
 provides a generic method of notifying the user when an event
 happens or a condition holds, based on the results of small
 pieces of kernel code termed filters.
@@ -80,12 +82,14 @@ Calling
 .Xr close 2
 on a file descriptor will remove any kevents that reference the descriptor.
 .Pp
+The
 .Fn kqueue
+system call
 creates a new kernel event queue and returns a descriptor.
 .Pp
 The
 .Fn kqueue1
-function also allows to set the following
+system call also allows to set the following
 .Fa flags
 on the returned file descriptor:
 .Bl -column O_NONBLOCK -offset indent
@@ -109,10 +113,14 @@ The queue is not inherited by a child created with
 .\" flag, then the descriptor table is shared,
 .\" which will allow sharing of the kqueue between two processes.
 .Pp
+The
 .Fn kevent
+system call
 is used to register events with the queue, and return any pending
 events to the user.
+The
 .Fa changelist
+argument
 is a pointer to an array of
 .Va kevent
 structures, as defined in
@@ -120,14 +128,28 @@ structures, as defined in
 All changes contained in the
 .Fa changelist
 are applied before any pending events are read from the queue.
+The
 .Fa nchanges
+argument
 gives the size of
 .Fa changelist .
+The
 .Fa eventlist
+argument
 is a pointer to an array of kevent structures.
+The 
 .Fa nevents
+argument
 determines the size of
 .Fa eventlist .
+When
+.Fa nevents
+is zero,
+.Fn kevent
+will return immediately even if there is a
+.Fa timeout
+specified unlike
+.Xr select 2 .
 If
 .Fa timeout
 is a
@@ -154,8 +176,9 @@ The same array may be used for the
 and
 .Fa eventlist .
 .Pp
+The
 .Fn EV_SET
-is a macro which is provided for ease of initializing a kevent structure.
+macro is provided for ease of initializing a kevent structure.
 This macro does not evaluate its parameters multiple times.
 .Pp
 The
@@ -175,22 +198,22 @@ struct kevent {
 The fields of
 .Fa struct kevent
 are:
-.Bl -tag -width XXXfilter -offset indent
+.Bl -tag -width "Fa filter" -offset indent
 .It ident
 Value used to identify this event.
 The exact interpretation is determined by the attached filter,
 but often is a file descriptor.
-.It filter
+.It Fa filter
 Identifies the kernel filter used to process this event.
 There are pre-defined system filters (which are described below), and
 other filters may be added by kernel subsystems as necessary.
-.It flags
+.It Fa flags
 Actions to perform on the event.
-.It fflags
+.It Fa fflags
 Filter-specific flags.
-.It data
+.It Fa data
 Filter-specific data value.
-.It udata
+.It Fa udata
 Opaque user-defined value passed through the kernel unchanged.
 .El
 .Pp
@@ -231,6 +254,11 @@ to always be returned.
 When a filter is successfully added the
 .Va data
 field will be zero.
+Note that if this flag is encountered and there is no remaining space in
+.Fa eventlist
+to hold the
+.Dv EV_ERROR
+event, then subsequent changes will not get processed.
 .It Dv EV_ONESHOT
 Causes the event to return only the first occurrence of the filter
 being triggered.
@@ -289,6 +317,7 @@ struct kfilter_mapping {
 };
 .Ed
 .Pp
+The predefined system filters are listed below.
 Arguments may be passed to and from the filter via the
 .Va fflags
 and
@@ -339,6 +368,14 @@ Returns when the file pointer is not at the end of file.
 .Va data
 contains the offset from current position to end of file,
 and may be negative.
+.\" .Pp
+.\" This behavior is different from
+.\" .Xr poll 2 ,
+.\" where read events are triggered for regular files unconditionally.
+.\" This event can be triggered unconditionally by setting the
+.\" .Dv NOTE_FILE_POLL
+.\" flag in
+.\" .Va fflags .
 .It "Fifos, Pipes"
 Returns when there is data to read;
 .Va data
@@ -349,6 +386,12 @@ When the last writer disconnects, the filter will set EV_EOF in
 This may be cleared by passing in EV_CLEAR, at which point the
 filter will resume waiting for data to become available before
 returning.
+.It "BPF devices"
+Returns when the BPF buffer is full, the BPF timeout has expired, or
+when the BPF has
+.Dq immediate mode
+enabled and there is any data to read;
+.Va data
 .El
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
@@ -487,16 +530,68 @@ This filter automatically sets the EV_CLEAR flag internally.
 .It Dv EVFILT_FS
 Establishes a file system monitor.
 Currently it only monitors file system mount and unmount actions.
+.It Dv EVFILT_USER
+Establishes a user event identified by
+.Va ident
+which is not associated with any kernel mechanism but is triggered by
+user level code.
+The lower 24 bits of the
+.Va fflags
+may be used for user defined flags and manipulated using the following:
+.Bl -tag -width "Dv NOTE_FFLAGSMASK"
+.It Dv NOTE_FFNOP
+Ignore the input
+.Va fflags .
+.It Dv NOTE_FFAND
+Bitwise AND
+.Va fflags .
+.It Dv NOTE_FFOR
+Bitwise OR
+.Va fflags .
+.It Dv NOTE_FFCOPY
+Copy
+.Va fflags .
+.It Dv NOTE_FFCTRLMASK
+Control mask for
+.Va fflags .
+.It Dv NOTE_FFLAGSMASK
+User defined flag mask for
+.Va fflags .
 .El
+.Pp
+A user event is triggered for output with the following:
+.Bl -tag -width "Dv NOTE_FFLAGSMASK"
+.It Dv NOTE_TRIGGER
+Cause the event to be triggered.
+.El
+.Pp
+On return,
+.Va fflags
+contains the users defined flags in the lower 24 bits.
+.El
+.Sh CANCELLATION BEHAVIOUR
+If
+.Fa nevents
+is non-zero, i.e., the function is potentially blocking, the call
+is a cancellation point.
+Otherwise, i.e., if
+.Fa nevents
+is zero, the call is not cancellable.
+Cancellation can only occur before any changes are made to the kqueue,
+or when the call was blocked and no changes to the queue were requested.
 .Sh RETURN VALUES
+The
 .Fn kqueue
+system call
 creates a new kernel event queue and returns a file descriptor.
 If there was an error creating the kernel event queue, a value of \-1 is
 returned and
 .Dv errno
 is set.
 .Pp
+The
 .Fn kevent
+system call
 returns the number of events placed in the
 .Fa eventlist ,
 up to the value given by
