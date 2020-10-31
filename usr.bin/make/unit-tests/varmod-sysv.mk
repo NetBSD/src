@@ -1,9 +1,11 @@
-# $NetBSD: varmod-sysv.mk,v 1.5 2020/10/06 21:19:17 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.6 2020/10/31 08:31:37 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
 #
 # This modifier is applied when the other modifiers don't match exactly.
+#
+# See ApplyModifier_SysV.
 
 all:
 
@@ -58,34 +60,54 @@ all:
 .  error
 .endif
 
-# Trying to cover all possible variants of the SysV modifier.
-LIST=	one two
+# The suffix "o" is replaced with "X".
+.if ${one two:L:o=X} != "one twX"
+.  error
+.endif
 
-.if ${LIST:o=X} != "one twX"
+# The suffix "o" is replaced with nothing.
+.if ${one two:L:o=} != "one tw"
 .  error
 .endif
-.if ${LIST:o=} != "one tw"
+
+# The suffix "o" is replaced with a literal percent.  The percent is only
+# a wildcard when it appears on the left-hand side.
+.if ${one two:L:o=%} != "one tw%"
 .  error
 .endif
-.if ${LIST:o=%} != "one tw%"
+
+# Each word with the suffix "o" is replaced with "X".  The percent is a
+# wildcard even though the right-hand side does not contain another percent.
+.if ${one two:L:%o=X} != "one X"
 .  error
 .endif
-.if ${LIST:%o=X} != "one X"
+
+# Each word with the prefix "o" is replaced with "X".  The percent is a
+# wildcard even though the right-hand side does not contain another percent.
+.if ${one two:L:o%=X} != "X two"
 .  error
 .endif
-.if ${LIST:o%=X} != "X two"
+
+# For each word with the prefix "o" and the suffix "e", the whole word is
+# replaced with "X".
+.if ${one two oe oxen:L:o%e=X} != "X two X oxen"
 .  error
 .endif
-.if ${LIST:o%e=X} != "X two"
+
+# Only the first '%' is the wildcard.
+.if ${one two o%e other%e:L:o%%e=X} != "one two X X"
 .  error
 .endif
-.if ${LIST:o%%e=X} != "one two"	# Only the first '%' is the wildcard.
+
+# In the replacement, only the first '%' is the placeholder, all others
+# are literal percent characters.
+.if ${one two:L:%=%%} != "one% two%"
 .  error
 .endif
-.if ${LIST:%=%%} != "one% two%"	# None of the words contains a literal '%'.
-.  error
-.endif
-.if ${LIST:%nes=%xxx} != "one two" # lhs is longer than the word "one"
+
+# In the word "one", only a prefix of the pattern suffix "nes" matches,
+# the whole word is too short.  Therefore it doesn't match.
+.if ${one two:L:%nes=%xxx} != "one two"
 .  error
 .endif
 
