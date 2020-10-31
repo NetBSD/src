@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.626 2020/10/31 15:23:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.627 2020/10/31 18:05:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.626 2020/10/31 15:23:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.627 2020/10/31 18:05:16 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1955,15 +1955,15 @@ ParseModifierPart(
 	     * and suck it in without further ado.
 	     * It will be interpreted later.
 	     */
-	    char have = p[1];
-	    int want = have == '(' ? ')' : '}';
+	    char startc = p[1];
+	    int endc = startc == '(' ? ')' : '}';
 	    int depth = 1;
 
 	    for (p += 2; *p != '\0' && depth > 0; p++) {
 		if (p[-1] != '\\') {
-		    if (*p == have)
+		    if (*p == startc)
 			depth++;
-		    if (*p == want)
+		    if (*p == endc)
 			depth--;
 		}
 	    }
