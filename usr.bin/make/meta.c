@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.134 2020/10/31 09:57:47 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.135 2020/10/31 11:54:33 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -481,7 +481,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     i = 0;
 
     dname = Var_Value(".OBJDIR", gn, &p[i++]);
-    tname = Var_Value(TARGET, gn, &p[i++]);
+    tname = GNode_VarTarget(gn);
 
     /* if this succeeds objdir is realpath of dname */
     if (!meta_needed(gn, dname, tname, objdir, TRUE))
@@ -529,7 +529,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof(buf)));
     fprintf(mf.fp, "TARGET %s\n", tname);
-    cp = Var_Value(".OODATE", gn, &p[i++]);
+    cp = GNode_VarOodate(gn);
     if (cp && *cp) {
 	    fprintf(mf.fp, "OODATE %s\n", cp);
     }
@@ -1100,7 +1100,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     i = 0;
 
     dname = Var_Value(".OBJDIR", gn, &pa[i++]);
-    tname = Var_Value(TARGET, gn, &pa[i++]);
+    tname = GNode_VarTarget(gn);
 
     /* if this succeeds fname3 is realpath of dname */
     if (!meta_needed(gn, dname, tname, fname3, FALSE))
@@ -1602,15 +1602,13 @@ meta_oodate(GNode *gn, Boolean oodate)
     Lst_Destroy(missingFiles, free);
 
     if (oodate && needOODATE) {
-	void *freeIt;
 	/*
 	 * Target uses .OODATE which is empty; or we wouldn't be here.
 	 * We have decided it is oodate, so .OODATE needs to be set.
 	 * All we can sanely do is set it to .ALLSRC.
 	 */
 	Var_Delete(OODATE, gn);
-	Var_Set(OODATE, Var_Value(ALLSRC, gn, &freeIt), gn);
-	bmake_free(freeIt);
+	Var_Set(OODATE, GNode_VarAllsrc(gn), gn);
     }
 
  oodate_out:
