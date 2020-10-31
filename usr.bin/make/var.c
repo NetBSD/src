@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.610 2020/10/30 22:55:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.611 2020/10/31 08:40:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.610 2020/10/30 22:55:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.611 2020/10/31 08:40:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1294,19 +1294,13 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	    memcmp(word, args->lhs, args->lhsLen) != 0)
 	    goto nosub;
 
-	if (args->pflags & VARP_ANCHOR_END) {
-	    if (wordLen != args->lhsLen)
-		goto nosub;
+	if ((args->pflags & VARP_ANCHOR_END) && wordLen != args->lhsLen)
+	    goto nosub;
 
-	    /* :S,^whole$,replacement, */
-	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-	    args->matched = TRUE;
-	} else {
-	    /* :S,^prefix,replacement, */
-	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-	    SepBuf_AddBytes(buf, word + args->lhsLen, wordLen - args->lhsLen);
-	    args->matched = TRUE;
-	}
+	/* :S,^prefix,replacement, or :S,^whole$,replacement, */
+	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
+	SepBuf_AddBytes(buf, word + args->lhsLen, wordLen - args->lhsLen);
+	args->matched = TRUE;
 	return;
     }
 
