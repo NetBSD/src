@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.630 2020/10/31 18:41:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.631 2020/10/31 21:40:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,6 +119,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #endif
+#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <time.h>
@@ -129,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.630 2020/10/31 18:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.631 2020/10/31 21:40:20 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2113,6 +2114,24 @@ ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
     return AMR_OK;
 }
 
+static Boolean TryParseTime(const char **pp, time_t *out_time)
+{
+    char *end;
+    unsigned long n;
+
+    if (!ch_isdigit(**pp))
+	return FALSE;
+
+    errno = 0;
+    n = strtoul(*pp, &end, 10);
+    if (n == ULONG_MAX && errno == ERANGE)
+	return FALSE;
+
+    *pp = end;
+    *out_time = (time_t)n;	/* ignore possible truncation for now */
+    return TRUE;
+}
+
 /* :gmtime */
 static ApplyModifierResult
 ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
@@ -2124,9 +2143,12 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 	return AMR_UNKNOWN;
 
     if (mod[6] == '=') {
-	char *ep;
-	utc = (time_t)strtoul(mod + 7, &ep, 10);
-	*pp = ep;
+	const char *arg = mod + 7;
+	if (!TryParseTime(&arg, &utc)) {
+	    Parse_Error(PARSE_FATAL, "Invalid time value: %s\n", mod + 7);
+	    return AMR_CLEANUP;
+	}
+	*pp = arg;
     } else {
 	utc = 0;
 	*pp = mod + 6;
@@ -2146,9 +2168,12 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 	return AMR_UNKNOWN;
 
     if (mod[9] == '=') {
-	char *ep;
-	utc = (time_t)strtoul(mod + 10, &ep, 10);
-	*pp = ep;
+	const char *arg = mod + 10;
+	if (!TryParseTime(&arg, &utc)) {
+	    Parse_Error(PARSE_FATAL, "Invalid time value: %s\n", mod + 10);
+	    return AMR_CLEANUP;
+	}
+	*pp = arg;
     } else {
 	utc = 0;
 	*pp = mod + 9;
