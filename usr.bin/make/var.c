@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.634 2020/11/01 13:55:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.635 2020/11/01 14:36:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.634 2020/11/01 13:55:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.635 2020/11/01 14:36:25 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2006,6 +2006,66 @@ ModMatchEq(const char *mod, const char *modname, char endc)
 	   (mod[n] == endc || mod[n] == ':' || mod[n] == '=');
 }
 
+static Boolean
+TryParseIntBase0(const char **pp, int *out_num)
+{
+    char *end;
+    long n;
+
+    errno = 0;
+    n = strtol(*pp, &end, 0);
+    if ((n == LONG_MIN || n == LONG_MAX) && errno == ERANGE)
+	return FALSE;
+    if (n < INT_MIN || n > INT_MAX)
+	return FALSE;
+
+    *pp = end;
+    *out_num = (int)n;
+    return TRUE;
+}
+
+static Boolean
+TryParseSize(const char **pp, size_t *out_num)
+{
+    char *end;
+    unsigned long n;
+
+    if (!ch_isdigit(**pp))
+	return FALSE;
+
+    errno = 0;
+    n = strtoul(*pp, &end, 10);
+    if (n == ULONG_MAX && errno == ERANGE)
+	return FALSE;
+    if (n > SIZE_MAX)
+	return FALSE;
+
+    *pp = end;
+    *out_num = (size_t)n;
+    return TRUE;
+}
+
+static Boolean
+TryParseChar(const char **pp, int base, char *out_ch)
+{
+    char *end;
+    unsigned long n;
+
+    if (!ch_isalnum(**pp))
+	return FALSE;
+
+    errno = 0;
+    n = strtoul(*pp, &end, base);
+    if (n == ULONG_MAX && errno == ERANGE)
+	return FALSE;
+    if (n > UCHAR_MAX)
+	return FALSE;
+
+    *pp = end;
+    *out_ch = (char)n;
+    return TRUE;
+}
+
 /* :@var@...${var}...@ */
 static ApplyModifierResult
 ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
@@ -2263,9 +2323,12 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 	return AMR_UNKNOWN;
 
     if (mod[5] == '=') {
-	char *ep;
-	n = (size_t)strtoul(mod + 6, &ep, 10);
-	*pp = ep;
+	const char *p = mod + 6;
+	if (!TryParseSize(&p, &n)) {
+	    Parse_Error(PARSE_FATAL, "Invalid number: %s\n", mod + 6);
+	    return AMR_CLEANUP;
+	}
+	*pp = p;
     } else {
 	n = 0;
 	*pp = mod + 5;
@@ -2562,24 +2625,27 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 
     /* ":ts\x40" or ":ts\100" */
     {
-	const char *numStart = sep + 1;
+	const char *p = sep + 1;
 	int base = 8;		/* assume octal */
-	char *end;
 
 	if (sep[1] == 'x') {
 	    base = 16;
-	    numStart++;
+	    p++;
 	} else if (!ch_isdigit(sep[1])) {
 	    (*pp)++;		/* just for backwards compatibility */
 	    return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
 	}
 
-	st->sep = (char)strtoul(numStart, &end, base);
-	if (*end != ':' && *end != st->endc) {
+	if (!TryParseChar(&p, base, &st->sep)) {
+	    Parse_Error(PARSE_FATAL, "Invalid character number: %s\n", p);
+	    return AMR_CLEANUP;
+	}
+	if (*p != ':' && *p != st->endc) {
 	    (*pp)++;		/* just for backwards compatibility */
 	    return AMR_BAD;
 	}
-	*pp = end;
+
+	*pp = p;
     }
 
 ok:
@@ -2653,9 +2719,9 @@ static ApplyModifierResult
 ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 {
     char *estr;
-    char *ep;
     int first, last;
     VarParseResult res;
+    const char *p;
 
     (*pp)++;			/* skip the '[' */
     res = ParseModifierPart(pp, ']', st->eflags, st,
@@ -2705,18 +2771,17 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
      * We expect estr to contain a single integer for :[N], or two integers
      * separated by ".." for :[start..end].
      */
-    first = (int)strtol(estr, &ep, 0);
-    if (ep == estr)		/* Found junk instead of a number */
-	goto bad_modifier;
+    p = estr;
+    if (!TryParseIntBase0(&p, &first))
+	goto bad_modifier;	/* Found junk instead of a number */
 
-    if (ep[0] == '\0') {	/* Found only one integer in :[N] */
+    if (p[0] == '\0') {	/* Found only one integer in :[N] */
 	last = first;
-    } else if (ep[0] == '.' && ep[1] == '.' && ep[2] != '\0') {
+    } else if (p[0] == '.' && p[1] == '.' && p[2] != '\0') {
 	/* Expecting another integer after ".." */
-	ep += 2;
-	last = (int)strtol(ep, &ep, 0);
-	if (ep[0] != '\0')	/* Found junk after ".." */
-	    goto bad_modifier;
+	p += 2;
+	if (!TryParseIntBase0(&p, &last) || *p != '\0')
+	    goto bad_modifier;	/* Found junk after ".." */
     } else
 	goto bad_modifier;	/* Found junk instead of ".." */
 
