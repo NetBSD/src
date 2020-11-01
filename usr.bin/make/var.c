@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.638 2020/11/01 21:28:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.639 2020/11/01 22:12:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.638 2020/11/01 21:28:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.639 2020/11/01 22:12:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3018,7 +3018,8 @@ ok:
     return AMR_OK;
 }
 
-/* remember current value */
+/* :_=...
+ * remember current value */
 static ApplyModifierResult
 ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 {
@@ -3040,7 +3041,8 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
     return AMR_OK;
 }
 
-/* Apply the given function to each word of the variable value. */
+/* Apply the given function to each word of the variable value,
+ * for a single-letter modifier such as :H, :T. */
 static ApplyModifierResult
 ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
 		       ModifyWordsCallback modifyWord)
@@ -3078,24 +3080,23 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
     Boolean eqFound = FALSE;
 
     /*
-     * First we make a pass through the string trying
-     * to verify it is a SYSV-make-style translation:
-     * it must be: <string1>=<string2>)
+     * First we make a pass through the string trying to verify it is a
+     * SysV-make-style translation. It must be: <lhs>=<rhs>
      */
-    int nest = 1;
-    const char *next = mod;
-    while (*next != '\0' && nest > 0) {
-	if (*next == '=') {
+    int depth = 1;
+    const char *p = mod;
+    while (*p != '\0' && depth > 0) {
+	if (*p == '=') {	/* XXX: should also test depth == 1 */
 	    eqFound = TRUE;
 	    /* continue looking for st->endc */
-	} else if (*next == st->endc)
-	    nest--;
-	else if (*next == st->startc)
-	    nest++;
-	if (nest > 0)
-	    next++;
+	} else if (*p == st->endc)
+	    depth--;
+	else if (*p == st->startc)
+	    depth++;
+	if (depth > 0)
+	    p++;
     }
-    if (*next != st->endc || !eqFound)
+    if (*p != st->endc || !eqFound)
 	return AMR_UNKNOWN;
 
     *pp = mod;
