@@ -70,9 +70,21 @@ ps_bpf_recvbpf(void *arg)
 	 * This mechanism allows us to read each packet from the buffer. */
 	while (!(bpf->bpf_flags & BPF_EOF)) {
 		len = bpf_read(bpf, buf, sizeof(buf));
-		if (len == -1)
-			logerr(__func__);
-		if (len == -1 || len == 0)
+		if (len == -1) {
+			int error = errno;
+
+			logerr("%s: %s", psp->psp_ifname, __func__);
+			if (error != ENXIO)
+				break;
+			/* If the interface has departed, close the BPF
+			 * socket. This stops log spam if RTM_IFANNOUNCE is
+			 * delayed in announcing the departing interface. */
+			eloop_event_delete(psp->psp_ctx->eloop, bpf->bpf_fd);
+			bpf_close(bpf);
+			psp->psp_bpf = NULL;
+			break;
+		}
+		if (len == 0)
 			break;
 		psm.ps_flags = bpf->bpf_flags;
 		len = ps_sendpsmdata(psp->psp_ctx, psp->psp_ctx->ps_data_fd,
@@ -104,6 +116,12 @@ ps_bpf_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 		/* IPC failure, we should not be processing any commands
 		 * at this point!/ */
 		errno = EINVAL;
+		return -1;
+	}
+
+	/* We might have had an earlier ENXIO error. */
+	if (psp->psp_bpf == NULL) {
+		errno = ENXIO;
 		return -1;
 	}
 

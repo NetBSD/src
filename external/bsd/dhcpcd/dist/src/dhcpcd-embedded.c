@@ -234,6 +234,7 @@ const char dhcpcd_embedded_conf[] =
 "embed uint16 country_code\n"
 "define 100 string posix_timezone\n"
 "define 101 string tzdb_timezone\n"
+"define 108 uint32 ipv6_only_preferred\n"
 "define 116 byte auto_configure\n"
 "define 117 array uint16 name_service_search\n"
 "define 118 ipaddress subnet_selection\n"

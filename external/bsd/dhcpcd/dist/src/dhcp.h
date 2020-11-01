@@ -116,6 +116,7 @@ enum DHO {
 	DHO_RAPIDCOMMIT            = 80,  /* RFC 4039 */
 	DHO_FQDN                   = 81,
 	DHO_AUTHENTICATION         = 90,  /* RFC 3118 */
+	DHO_IPV6_PREFERRED_ONLY    = 108, /* RFC 8925 */
 	DHO_AUTOCONFIGURE          = 116, /* RFC 2563 */
 	DHO_DNSSEARCH              = 119, /* RFC 3397 */
 	DHO_CSR                    = 121, /* RFC 3442 */
@@ -138,6 +139,8 @@ enum FQDN {
 	FQDN_PTR        = 0x20,
 	FQDN_BOTH       = 0x31
 };
+
+#define	MIN_V6ONLY_WAIT		300 /* seconds, RFC 8925 */
 
 /* Sizes for BOOTP options */
 #define	BOOTP_CHADDR_LEN	 16
