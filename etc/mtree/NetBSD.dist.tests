@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.181 2020/10/15 17:44:44 mgorny Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.182 2020/11/01 22:29:13 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -417,6 +417,7 @@
 ./usr/tests/usr.bin/config/support/arch/regress
 ./usr/tests/usr.bin/config/support/arch/regress/conf
 ./usr/tests/usr.bin/config/support/conf
+./usr/tests/usr.bin/col
 ./usr/tests/usr.bin/cpio
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
