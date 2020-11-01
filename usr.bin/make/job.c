@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.297 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.298 2020/11/01 16:57:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.297 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.298 2020/11/01 16:57:02 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -646,6 +646,34 @@ JobFindPid(int pid, JobState status, Boolean isJobs)
     return NULL;
 }
 
+/* Parse leading '@', '-' and '+', which control the exact execution mode. */
+static void
+ParseRunOptions(
+	char **pp,
+	Boolean *out_shutUp, Boolean *out_errOff, Boolean *out_runAlways)
+{
+    char *p = *pp;
+    *out_shutUp = FALSE;
+    *out_errOff = FALSE;
+    *out_runAlways = FALSE;
+
+    for (;;) {
+	if (*p == '@')
+	    *out_shutUp = !DEBUG(LOUD);
+	else if (*p == '-')
+	    *out_errOff = TRUE;
+	else if (*p == '+')
+	    *out_runAlways = TRUE;
+	else
+	    break;
+	p++;
+    }
+
+    pp_skip_whitespace(&p);
+
+    *pp = p;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * JobPrintCommand  --
@@ -674,11 +702,12 @@ JobPrintCommand(Job *job, char *cmd)
     Boolean noSpecials;		/* true if we shouldn't worry about
 				 * inserting special commands into
 				 * the input stream. */
-    Boolean shutUp = FALSE;	/* true if we put a no echo command
+    Boolean shutUp;		/* true if we put a no echo command
 				 * into the command file */
-    Boolean errOff = FALSE;	/* true if we turned error checking
+    Boolean errOff;		/* true if we turned error checking
 				 * off before printing the command
 				 * and need to turn it back on */
+    Boolean runAlways;
     const char *cmdTemplate;	/* Template to use when printing the
 				 * command */
     char *cmdStart;		/* Start of expanded command */
@@ -700,33 +729,17 @@ JobPrintCommand(Job *job, char *cmd)
 
     cmdTemplate = "%s\n";
 
-    /*
-     * Check for leading @' and -'s to control echoing and error checking.
-     */
-    while (*cmd == '@' || *cmd == '-' || (*cmd == '+')) {
-	switch (*cmd) {
-	case '@':
-	    shutUp = DEBUG(LOUD) ? FALSE : TRUE;
-	    break;
-	case '-':
-	    errOff = TRUE;
-	    break;
-	case '+':
-	    if (noSpecials) {
-		/*
-		 * We're not actually executing anything...
-		 * but this one needs to be - use compat mode just for it.
-		 */
-		Compat_RunCommand(cmdp, job->node);
-		free(cmdStart);
-		return;
-	    }
-	    break;
-	}
-	cmd++;
-    }
+    ParseRunOptions(&cmd, &shutUp, &errOff, &runAlways);
 
-    pp_skip_whitespace(&cmd);
+    if (runAlways && noSpecials) {
+	/*
+	 * We're not actually executing anything...
+	 * but this one needs to be - use compat mode just for it.
+	 */
+	Compat_RunCommand(cmdp, job->node);
+	free(cmdStart);
+	return;
+    }
 
     /*
      * If the shell doesn't have error control the alternate echo'ing will
