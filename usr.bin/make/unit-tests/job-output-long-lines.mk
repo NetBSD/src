@@ -1,4 +1,4 @@
-# $NetBSD: job-output-long-lines.mk,v 1.3 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: job-output-long-lines.mk,v 1.4 2020/11/01 17:29:13 rillig Exp $
 #
 # The jobs may produce long lines of output.  A practical case are the echoed
 # command lines from compiler invocations, with their many -D options.
@@ -17,16 +17,16 @@
 .MAKEFLAGS: -j2
 
 100:=	${:U1:S,1,2222222222,g:S,2,3333333333,g}
-10000:=	${100:S,3,4444444444,g:S,4,xxxxxxxxxx,g}
+5000:=	${100:S,3,4444444444,g:S,4,xxxxx,g}
 
 all: job-a job-b
 
 job-a:
-.for i in ${:U:range=100}
-	@echo ${10000:S,x,a,g}
+.for i in ${:U:range=20}
+	@echo ${5000:S,x,a,g}
 .endfor
 
 job-b:
-.for i in ${:U:range=100}
-	@echo ${10000:S,x,b,g}
+.for i in ${:U:range=20}
+	@echo ${5000:S,x,b,g}
 .endfor
