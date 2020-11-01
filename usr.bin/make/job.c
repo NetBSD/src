@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.300 2020/11/01 17:47:26 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.301 2020/11/01 17:58:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.300 2020/11/01 17:47:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.301 2020/11/01 17:58:17 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -2236,7 +2236,7 @@ static void JobSigReset(void)
 
 /* Find a shell in 'shells' given its name, or return NULL. */
 static Shell *
-JobMatchShell(const char *name)
+FindShellByName(const char *name)
 {
     Shell *sh = shells;
     const Shell *shellsEnd = sh + sizeof shells / sizeof shells[0];
@@ -2370,7 +2370,7 @@ Job_ParseShell(char *line)
     if (path == NULL) {
 	/*
 	 * If no path was given, the user wants one of the pre-defined shells,
-	 * yes? So we find the one s/he wants with the help of JobMatchShell
+	 * yes? So we find the one s/he wants with the help of FindShellByName
 	 * and set things up the right way. shellPath will be set up by
 	 * Shell_Init.
 	 */
@@ -2379,7 +2379,7 @@ Job_ParseShell(char *line)
 	    free(words);
 	    return FALSE;
 	} else {
-	    if ((sh = JobMatchShell(newShell.name)) == NULL) {
+	    if ((sh = FindShellByName(newShell.name)) == NULL) {
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				newShell.name);
 		    free(words);
@@ -2415,7 +2415,7 @@ Job_ParseShell(char *line)
 	    shellName = path;
 	}
 	if (!fullSpec) {
-	    if ((sh = JobMatchShell(shellName)) == NULL) {
+	    if ((sh = FindShellByName(shellName)) == NULL) {
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				shellName);
 		    free(words);
