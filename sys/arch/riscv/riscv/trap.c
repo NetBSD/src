@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.8 2020/11/01 20:56:24 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.9 2020/11/01 21:06:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,6 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 void
 cpu_ast(struct trapframe *tf)
 {
-	struct cpu_info * const ci = curcpu();
 
 	atomic_swap_uint(&curlwp->l_md.md_astpending, 0);
 
