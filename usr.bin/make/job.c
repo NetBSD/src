@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.299 2020/11/01 17:07:03 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.300 2020/11/01 17:47:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.299 2020/11/01 17:07:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.300 2020/11/01 17:47:26 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -731,7 +731,7 @@ JobPrintCommand(Job *job, char *cmd)
     char *cmdStart;		/* Start of expanded command */
     char *escCmd = NULL;	/* Command with quotes/backticks escaped */
 
-    noSpecials = NoExecute(job->node);
+    noSpecials = !GNode_ShouldExecute(job->node);
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
 	debug_printf(fmt, arg);			\
@@ -1142,12 +1142,12 @@ Job_Touch(GNode *gn, Boolean silent)
 	return;
     }
 
-    if (!silent || NoExecute(gn)) {
+    if (!silent || !GNode_ShouldExecute(gn)) {
 	(void)fprintf(stdout, "touch %s\n", gn->name);
 	(void)fflush(stdout);
     }
 
-    if (NoExecute(gn)) {
+    if (!GNode_ShouldExecute(gn)) {
 	return;
     }
 
@@ -1600,7 +1600,7 @@ JobStart(GNode *gn, int flags)
 	}
 
 	free(tfile);
-    } else if (NoExecute(gn)) {
+    } else if (!GNode_ShouldExecute(gn)) {
 	/*
 	 * Not executing anything -- just print all the commands to stdout
 	 * in one fell swoop. This will still set up job->tailCmds correctly.

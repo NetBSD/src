@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.178 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.179 2020/11/01 17:47:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -629,7 +629,7 @@ Boolean Main_SetObjdir(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 int mkTempFile(const char *, char **);
 int str2Lst_Append(StringList *, char *, const char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
-Boolean NoExecute(GNode *gn);
+Boolean GNode_ShouldExecute(GNode *gn);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
 static MAKE_ATTR_UNUSED Boolean
