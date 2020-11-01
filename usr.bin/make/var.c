@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.633 2020/11/01 12:34:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.634 2020/11/01 13:55:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.633 2020/11/01 12:34:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.634 2020/11/01 13:55:31 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2648,7 +2648,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
     return AMR_BAD;
 }
 
-/* :[#], :[1], etc. */
+/* :[#], :[1], :[-1..1], etc. */
 static ApplyModifierResult
 ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 {
