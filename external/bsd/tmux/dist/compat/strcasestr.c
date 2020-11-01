@@ -1,5 +1,5 @@
 /*	$OpenBSD: strcasestr.c,v 1.3 2006/03/31 05:34:55 deraadt Exp $	*/
-/*	NetBSD: strcasestr.c,v 1.2 2005/02/09 21:35:47 kleink Exp 	*/
+/*	$NetBSD: strcasestr.c,v 1.1.1.7 2020/11/01 14:52:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

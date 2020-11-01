@@ -100,7 +100,6 @@ void
 screen_write_start(struct screen_write_ctx *ctx, struct window_pane *wp,
     struct screen *s)
 {
-	char	tmp[32];
 	u_int	y;
 
 	memset(ctx, 0, sizeof *ctx);
@@ -119,12 +118,17 @@ screen_write_start(struct screen_write_ctx *ctx, struct window_pane *wp,
 	ctx->scrolled = 0;
 	ctx->bg = 8;
 
-	if (wp != NULL) {
-		snprintf(tmp, sizeof tmp, "pane %%%u (at %u,%u)", wp->id,
-		    wp->xoff, wp->yoff);
+	if (log_get_level() != 0) {
+		if (wp != NULL) {
+			log_debug("%s: size %ux%u, pane %%%u (at %u,%u)",
+			    __func__, screen_size_x(ctx->s),
+			    screen_size_y(ctx->s), wp->id, wp->xoff, wp->yoff);
+		} else {
+			log_debug("%s: size %ux%u, no pane",
+			    __func__, screen_size_x(ctx->s),
+			    screen_size_y(ctx->s));
+		}
 	}
-	log_debug("%s: size %ux%u, %s", __func__, screen_size_x(ctx->s),
-	    screen_size_y(ctx->s), wp == NULL ? "no pane" : tmp);
 }
 
 /* Finish writing. */
@@ -1234,7 +1238,6 @@ screen_write_collect_scroll(struct screen_write_ctx *ctx)
 	for (y = s->rupper; y < s->rlower; y++) {
 		cl = &ctx->list[y + 1];
 		TAILQ_CONCAT(&ctx->list[y].items, &cl->items, entry);
-		TAILQ_INIT(&cl->items);
 	}
 }
 
@@ -1323,8 +1326,7 @@ screen_write_collect_end(struct screen_write_ctx *ctx)
 		}
 	}
 
-	memcpy(&gc, &ci->gc, sizeof gc);
-	grid_view_set_cells(s->grid, s->cx, s->cy, &gc, ci->data, ci->used);
+	grid_view_set_cells(s->grid, s->cx, s->cy, &ci->gc, ci->data, ci->used);
 	screen_write_set_cursor(ctx, s->cx + ci->used, -1);
 
 	for (xx = s->cx; xx < screen_size_x(s); xx++) {
@@ -1348,8 +1350,7 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 	/*
 	 * Don't need to check that the attributes and whatnot are still the
 	 * same - input_parse will end the collection when anything that isn't
-	 * a plain character is encountered. Also nothing should make it here
-	 * that isn't a single ASCII character.
+	 * a plain character is encountered.
 	 */
 
 	collect = 1;
@@ -1635,7 +1636,8 @@ screen_write_overwrite(struct screen_write_ctx *ctx, struct grid_cell *gc,
 			grid_view_get_cell(gd, xx, s->cy, &tmp_gc);
 			if (~tmp_gc.flags & GRID_FLAG_PADDING)
 				break;
-			log_debug("%s: overwrite at %u,%u", __func__, xx, s->cy);
+			log_debug("%s: overwrite at %u,%u", __func__, xx,
+			    s->cy);
 			grid_view_set_cell(gd, xx, s->cy, &grid_default_cell);
 			done = 1;
 		}

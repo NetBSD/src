@@ -1,5 +1,5 @@
 /*	$OpenBSD: vis.h,v 1.15 2015/07/20 01:52:27 millert Exp $	*/
-/*	NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp 	*/
+/*	$NetBSD: vis.h,v 1.1.1.7 2020/11/01 14:52:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

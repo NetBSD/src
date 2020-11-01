@@ -53,7 +53,7 @@ cmdq_get(struct client *c)
 }
 
 /* Append an item. */
-void
+struct cmdq_item *
 cmdq_append(struct client *c, struct cmdq_item *item)
 {
 	struct cmdq_list	*queue = cmdq_get(c);
@@ -73,10 +73,11 @@ cmdq_append(struct client *c, struct cmdq_item *item)
 
 		item = next;
 	} while (item != NULL);
+	return (TAILQ_LAST(queue, cmdq_list));
 }
 
 /* Insert an item. */
-void
+struct cmdq_item *
 cmdq_insert_after(struct cmdq_item *after, struct cmdq_item *item)
 {
 	struct client		*c = after->client;
@@ -100,8 +101,8 @@ cmdq_insert_after(struct cmdq_item *after, struct cmdq_item *item)
 		after = item;
 		item = next;
 	} while (item != NULL);
+	return (after);
 }
-
 
 /* Insert a hook. */
 void
@@ -144,11 +145,10 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 
 		new_item = cmdq_get_command(cmdlist, fs, NULL, CMDQ_NOHOOKS);
 		cmdq_format(new_item, "hook", "%s", name);
-		if (item != NULL) {
-			cmdq_insert_after(item, new_item);
-			item = new_item;
-		} else
-			cmdq_append(NULL, new_item);
+		if (item != NULL)
+			item = cmdq_insert_after(item, new_item);
+		else
+			item = cmdq_append(NULL, new_item);
 
 		a = options_array_next(a);
 	}
@@ -476,13 +476,11 @@ void
 cmdq_guard(struct cmdq_item *item, const char *guard, int flags)
 {
 	struct client	*c = item->client;
+	long		 t = item->time;
+	u_int		 number = item->number;
 
-	if (c == NULL || !(c->flags & CLIENT_CONTROL))
-		return;
-
-	evbuffer_add_printf(c->stdout_data, "%%%s %ld %u %d\n", guard,
-	    (long)item->time, item->number, flags);
-	server_client_push_stdout(c);
+	if (c != NULL && (c->flags & CLIENT_CONTROL))
+		file_print(c, "%%%s %ld %u %d\n", guard, t, number, flags);
 }
 
 /* Show message from command. */
@@ -496,29 +494,29 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 	char				*tmp, *msg;
 
 	va_start(ap, fmt);
+	xvasprintf(&msg, fmt, ap);
+	va_end(ap);
+
+	log_debug("%s: %s", __func__, msg);
 
 	if (c == NULL)
 		/* nothing */;
 	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
 		if (~c->flags & CLIENT_UTF8) {
-			xvasprintf(&tmp, fmt, ap);
+			tmp = msg;
 			msg = utf8_sanitize(tmp);
 			free(tmp);
-			evbuffer_add(c->stdout_data, msg, strlen(msg));
-			free(msg);
-		} else
-			evbuffer_add_vprintf(c->stdout_data, fmt, ap);
-		evbuffer_add(c->stdout_data, "\n", 1);
-		server_client_push_stdout(c);
+		}
+		file_print(c, "%s\n", msg);
 	} else {
 		wp = c->session->curw->window->active;
 		wme = TAILQ_FIRST(&wp->modes);
 		if (wme == NULL || wme->mode != &window_view_mode)
 			window_pane_set_mode(wp, &window_view_mode, NULL, NULL);
-		window_copy_vadd(wp, fmt, ap);
+		window_copy_add(wp, "%s", msg);
 	}
 
-	va_end(ap);
+	free(msg);
 }
 
 /* Show error from command. */
@@ -529,11 +527,10 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 	struct cmd	*cmd = item->cmd;
 	va_list		 ap;
 	char		*msg;
-	size_t		 msglen;
 	char		*tmp;
 
 	va_start(ap, fmt);
-	msglen = xvasprintf(&msg, fmt, ap);
+	xvasprintf(&msg, fmt, ap);
 	va_end(ap);
 
 	log_debug("%s: %s", __func__, msg);
@@ -545,11 +542,11 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 			tmp = msg;
 			msg = utf8_sanitize(tmp);
 			free(tmp);
-			msglen = strlen(msg);
 		}
-		evbuffer_add(c->stderr_data, msg, msglen);
-		evbuffer_add(c->stderr_data, "\n", 1);
-		server_client_push_stderr(c);
+		if (c->flags & CLIENT_CONTROL)
+			file_print(c, "%s\n", msg);
+		else
+			file_error(c, "%s\n", msg);
 		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);

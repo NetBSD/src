@@ -175,15 +175,15 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	cmd-swap-window.$(OBJEXT) cmd-switch-client.$(OBJEXT) \
 	cmd-unbind-key.$(OBJEXT) cmd-wait-for.$(OBJEXT) cmd.$(OBJEXT) \
 	colour.$(OBJEXT) control-notify.$(OBJEXT) control.$(OBJEXT) \
-	environ.$(OBJEXT) format.$(OBJEXT) format-draw.$(OBJEXT) \
-	grid-view.$(OBJEXT) grid.$(OBJEXT) input-keys.$(OBJEXT) \
-	input.$(OBJEXT) job.$(OBJEXT) key-bindings.$(OBJEXT) \
-	key-string.$(OBJEXT) layout-custom.$(OBJEXT) \
-	layout-set.$(OBJEXT) layout.$(OBJEXT) log.$(OBJEXT) \
-	menu.$(OBJEXT) mode-tree.$(OBJEXT) names.$(OBJEXT) \
-	notify.$(OBJEXT) options-table.$(OBJEXT) options.$(OBJEXT) \
-	paste.$(OBJEXT) proc.$(OBJEXT) regsub.$(OBJEXT) \
-	resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
+	environ.$(OBJEXT) file.$(OBJEXT) format.$(OBJEXT) \
+	format-draw.$(OBJEXT) grid-view.$(OBJEXT) grid.$(OBJEXT) \
+	input-keys.$(OBJEXT) input.$(OBJEXT) job.$(OBJEXT) \
+	key-bindings.$(OBJEXT) key-string.$(OBJEXT) \
+	layout-custom.$(OBJEXT) layout-set.$(OBJEXT) layout.$(OBJEXT) \
+	log.$(OBJEXT) menu.$(OBJEXT) mode-tree.$(OBJEXT) \
+	names.$(OBJEXT) notify.$(OBJEXT) options-table.$(OBJEXT) \
+	options.$(OBJEXT) paste.$(OBJEXT) proc.$(OBJEXT) \
+	regsub.$(OBJEXT) resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
 	screen-write.$(OBJEXT) screen.$(OBJEXT) \
 	server-client.$(OBJEXT) server-fn.$(OBJEXT) server.$(OBJEXT) \
 	session.$(OBJEXT) spawn.$(OBJEXT) status.$(OBJEXT) \
@@ -238,8 +238,9 @@ am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
 am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
 YLWRAP = $(top_srcdir)/etc/ylwrap
-SOURCES = $(dist_tmux_SOURCES) $(nodist_tmux_SOURCES)
-DIST_SOURCES = $(dist_tmux_SOURCES)
+SOURCES = $(dist_tmux_SOURCES) $(nodist_tmux_SOURCES) \
+	$(dist_EXTRA_tmux_SOURCES)
+DIST_SOURCES = $(dist_tmux_SOURCES) $(dist_EXTRA_tmux_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -319,9 +320,10 @@ AM_CFLAGS = @AM_CFLAGS@ $(am__append_1) $(am__append_2) \
 
 # Preprocessor flags.
 AM_CPPFLAGS = @AM_CPPFLAGS@ @XOPEN_DEFINES@ \
-	-DTMUX_CONF="\"$(sysconfdir)/tmux.conf\"" $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_8) $(am__append_9)
+	-DTMUX_VERSION="\"@VERSION@\"" \
+	-DTMUX_CONF="\"$(sysconfdir)/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_8) $(am__append_9)
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AM_LDFLAGS = @AM_LDFLAGS@
 AUTOCONF = @AUTOCONF@
@@ -422,6 +424,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -434,9 +437,10 @@ CLEANFILES = tmux.1.mdoc tmux.1.man cmd-parse.c
 
 # Distribution tarball options.
 EXTRA_DIST = \
-	CHANGES README README.ja COPYING example_tmux.conf compat/*.[ch] \
+	CHANGES README README.ja COPYING example_tmux.conf \
 	osdep-*.c mdoc2man.awk tmux.1
 
+dist_EXTRA_tmux_SOURCES = compat/*.[ch]
 
 # Additional object files.
 LDADD = $(LIBOBJS)
@@ -516,6 +520,7 @@ dist_tmux_SOURCES = \
 	control-notify.c \
 	control.c \
 	environ.c \
+	file.c \
 	format.c \
 	format-draw.c \
 	grid-view.c \
@@ -741,6 +746,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control-notify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/environ.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format-draw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid-view.Po@am__quote@
