@@ -124,7 +124,7 @@ format_window_name(struct window *w)
 	const char		*fmt;
 	char			*name;
 
-	ft = format_create(NULL, FORMAT_WINDOW|w->id, 0);
+	ft = format_create(NULL, NULL, FORMAT_WINDOW|w->id, 0);
 	format_defaults_window(ft, w);
 	format_defaults_pane(ft, w->active);
 
@@ -151,7 +151,9 @@ parse_window_name(const char *in)
 
 	if (*name != '\0') {
 		ptr = name + strlen(name) - 1;
-		while (ptr > name && !isalnum((u_char)*ptr))
+		while (ptr > name &&
+		    !isalnum((u_char)*ptr) &&
+		    !ispunct((u_char)*ptr))
 			*ptr-- = '\0';
 	}
 

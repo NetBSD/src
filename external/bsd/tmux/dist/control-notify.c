@@ -28,18 +28,16 @@
 
 void
 control_notify_input(struct client *c, struct window_pane *wp,
-    struct evbuffer *input)
+    const u_char *buf, size_t len)
 {
-	u_char		*buf;
-	size_t		 len;
 	struct evbuffer *message;
 	u_int		 i;
 
 	if (c->session == NULL)
 	    return;
 
-	buf = EVBUFFER_DATA(input);
-	len = EVBUFFER_LENGTH(input);
+	if (c->flags & CLIENT_CONTROL_NOOUTPUT)
+		return;
 
 	/*
 	 * Only write input if the window pane is linked to a window belonging
@@ -47,6 +45,8 @@ control_notify_input(struct client *c, struct window_pane *wp,
 	 */
 	if (winlink_find_by_window(&c->session->windows, wp->window) != NULL) {
 		message = evbuffer_new();
+		if (message == NULL)
+			fatalx("out of memory");
 		evbuffer_add_printf(message, "%%output %%%u ", wp->id);
 		for (i = 0; i < len; i++) {
 			if (buf[i] < ' ' || buf[i] == '\\')
@@ -54,19 +54,33 @@ control_notify_input(struct client *c, struct window_pane *wp,
 			else
 			    evbuffer_add_printf(message, "%c", buf[i]);
 		}
-		control_write_buffer(c, message);
+		evbuffer_add(message, "", 1);
+		control_write(c, "%s", EVBUFFER_DATA(message));
 		evbuffer_free(message);
+	}
+}
+
+void
+control_notify_pane_mode_changed(int pane)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			continue;
+
+		control_write(c, "%%pane-mode-changed %%%u", pane);
 	}
 }
 
 void
 control_notify_window_layout_changed(struct window *w)
 {
-	struct client		*c;
-	struct session		*s;
-	struct winlink		*wl;
-	const char		*template;
-	char			*cp;
+	struct client	*c;
+	struct session	*s;
+	struct winlink	*wl;
+	const char	*template;
+	char		*cp;
 
 	template = "%layout-change #{window_id} #{window_layout} "
 	    "#{window_visible_layout} #{window_flags}";
@@ -93,6 +107,20 @@ control_notify_window_layout_changed(struct window *w)
 			control_write(c, "%s", cp);
 			free(cp);
 		}
+	}
+}
+
+void
+control_notify_window_pane_changed(struct window *w)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			continue;
+
+		control_write(c, "%%window-pane-changed @%u %%%u", w->id,
+		    w->active->id);
 	}
 }
 
@@ -154,15 +182,27 @@ control_notify_window_renamed(struct window *w)
 }
 
 void
-control_notify_client_session_changed(struct client *c)
+control_notify_client_session_changed(struct client *cc)
 {
+	struct client	*c;
 	struct session	*s;
 
-	if (!CONTROL_SHOULD_NOTIFY_CLIENT(c) || c->session == NULL)
+	if (cc->session == NULL)
 		return;
-	s = c->session;
+	s = cc->session;
 
-	control_write(c, "%%session-changed $%u %s", s->id, s->name);
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c) || c->session == NULL)
+			continue;
+
+		if (cc == c) {
+			control_write(c, "%%session-changed $%u %s", s->id,
+			    s->name);
+		} else {
+			control_write(c, "%%client-session-changed %s $%u %s",
+			    cc->name, s->id, s->name);
+		}
+	}
 }
 
 void
@@ -201,5 +241,19 @@ control_notify_session_closed(__unused struct session *s)
 			continue;
 
 		control_write(c, "%%sessions-changed");
+	}
+}
+
+void
+control_notify_session_window_changed(struct session *s)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			continue;
+
+		control_write(c, "%%session-window-changed $%u @%u", s->id,
+		    s->curw->window->id);
 	}
 }

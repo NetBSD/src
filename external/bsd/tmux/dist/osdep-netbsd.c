@@ -23,14 +23,17 @@
 
 #include <errno.h>
 #include <event.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "tmux.h"
+
 #define is_runnable(p) \
-        ((p)->p_stat == LSRUN || (p)->p_stat == SIDL)
+	((p)->p_stat == LSRUN || (p)->p_stat == SIDL)
 #define is_stopped(p) \
-        ((p)->p_stat == SSTOP || (p)->p_stat == SZOMB)
+	((p)->p_stat == SSTOP || (p)->p_stat == SZOMB)
 
 struct kinfo_proc2	*cmp_procs(struct kinfo_proc2 *, struct kinfo_proc2 *);
 char			*osdep_get_name(int, char *);
@@ -129,6 +132,37 @@ error:
 char *
 osdep_get_cwd(int fd)
 {
+	static char	target[PATH_MAX + 1];
+	pid_t		pgrp;
+#ifdef KERN_PROC_CWD
+	int		mib[4];
+	size_t		len;
+#else
+	char		*path;
+	ssize_t		n;
+#endif
+
+	if ((pgrp = tcgetpgrp(fd)) == -1)
+		return (NULL);
+
+#ifdef KERN_PROC_CWD
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC_ARGS;
+	mib[2] = pgrp;
+	mib[3] = KERN_PROC_CWD;
+	len = sizeof(target);
+	if (sysctl(mib, __arraycount(mib), target, &len, NULL, 0) == 0)
+		return (target);
+#else
+	xasprintf(&path, "/proc/%lld/cwd", (long long) pgrp);
+	n = readlink(path, target, sizeof(target) - 1);
+	free(path);
+	if (n > 0) {
+		target[n] = '\0';
+		return (target);
+	}
+#endif
+
 	return (NULL);
 }
 

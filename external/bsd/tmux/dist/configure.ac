@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT(tmux, 2.4)
+AC_INIT([tmux], 3.1c)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -28,6 +28,7 @@ AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_EGREP
 AC_PROG_INSTALL
+AC_PROG_YACC
 PKG_PROG_PKG_CONFIG
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -35,6 +36,7 @@ AC_USE_SYSTEM_EXTENSIONS
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir=/etc
 
 # Is this --enable-debug?
+case "x$VERSION" in xnext*) enable_debug=yes;; esac
 AC_ARG_ENABLE(
 	debug,
 	AC_HELP_STRING(--enable-debug, enable debug build flags),
@@ -103,10 +105,10 @@ AC_REPLACE_FUNCS([ \
 	closefrom \
 	explicit_bzero \
 	fgetln \
-	fparseln \
 	freezero \
 	getdtablecount \
 	getprogname \
+	memmem \
 	recallocarray \
 	reallocarray \
 	setenv \
@@ -122,6 +124,12 @@ AC_FUNC_STRNLEN
 
 # Look for clock_gettime. Must come before event_init.
 AC_SEARCH_LIBS(clock_gettime, rt)
+
+# Always use our getopt because 1) glibc's doesn't enforce argument order 2)
+# musl does not set optarg to NULL for flags without arguments (although it is
+# not required to, but it is helpful) 3) there are probably other weird
+# implementations.
+AC_LIBOBJ(getopt)
 
 # Look for libevent.
 PKG_CHECK_MODULES(
@@ -175,7 +183,8 @@ if test "x$found_ncurses" = xno; then
 	)
 fi
 if test "x$found_ncurses" = xyes; then
-	CPPFLAGS="$LIBNCURSES_CFLAGS $LIBTINFO_CFLAGS $CPPFLAGS"
+	AM_CFLAGS="$LIBNCURSES_CFLAGS $LIBTINFO_CFLAGS $AM_CFLAGS"
+	CFLAGS="$LIBNCURSES_CFLAGS $LIBTINFO_CFLAGS $CFLAGS"
 	LIBS="$LIBNCURSES_LIBS $LIBTINFO_LIBS $LIBS"
 else
 	# pkg-config didn't work, try ncurses.
@@ -283,6 +292,7 @@ if test "x$found_b64_ntop" = xno; then
 	AC_MSG_RESULT(no)
 
 	AC_MSG_CHECKING(for b64_ntop with -lresolv)
+	OLD_LIBS="$LIBS"
 	LIBS="$LIBS -lresolv"
 	AC_TRY_LINK(
 		[
@@ -295,6 +305,7 @@ if test "x$found_b64_ntop" = xno; then
 		found_b64_ntop=no
 	)
 	if test "x$found_b64_ntop" = xno; then
+		LIBS="$OLD_LIBS"
 		AC_MSG_RESULT(no)
 	fi
 fi
@@ -419,46 +430,21 @@ else
 	AC_LIBOBJ(unvis)
 fi
 
-# Look for getopt. glibc's getopt does not enforce argument order and the ways
-# of making it do so are stupid, so just use our own instead.
-AC_CHECK_FUNC(getopt, found_getopt=yes, found_getopt=no)
-if test "x$found_getopt" != xno; then
-	AC_MSG_CHECKING(if getopt is suitable)
-	AC_EGREP_CPP(
-		yes,
-		[
-			#include <features.h>
-			#ifdef __GLIBC__
-			yes
-			#endif
-		],
-		[
-			found_getopt=no
-			AC_MSG_RESULT(no)
-		],
-		AC_MSG_RESULT(yes))
-fi
-if test "x$found_getopt" != xno; then
-	AC_CHECK_DECLS(
-		[optarg, optind, optreset],
-		,
-		found_getopt=no,
-		[
-			#include <unistd.h>
-		])
-fi
-if test "x$found_getopt" != xno; then
-	AC_DEFINE(HAVE_GETOPT)
+# Look for fdforkpty and forkpty in libutil.
+AC_SEARCH_LIBS(fdforkpty, util, found_fdforkpty=yes, found_fdforkpty=no)
+if test "x$found_fdforkpty" = xyes; then
+	AC_DEFINE(HAVE_FDFORKPTY)
 else
-	AC_LIBOBJ(getopt)
+	AC_LIBOBJ(fdforkpty)
 fi
-
-# Look for forkpty in libutil. compat/forkpty-*.c is linked if not found.
 AC_SEARCH_LIBS(forkpty, util, found_forkpty=yes, found_forkpty=no)
 if test "x$found_forkpty" = xyes; then
 	AC_DEFINE(HAVE_FORKPTY)
 fi
 AM_CONDITIONAL(NEED_FORKPTY, test "x$found_forkpty" = xno)
+
+# Look for kinfo_getfile in libutil.
+AC_SEARCH_LIBS(kinfo_getfile, [util util-freebsd])
 
 # Look for a suitable queue.h.
 AC_CHECK_DECL(
@@ -555,8 +541,15 @@ case "$host_os" in
 		;;
 	*darwin*)
 		AC_MSG_RESULT(darwin)
-		AC_DEFINE(BROKEN_CMSG_FIRSTHDR)
 		PLATFORM=darwin
+		#
+		# OS X CMSG_FIRSTHDR is broken, so redefine it with a working
+		# one. daemon works but has some stupid side effects, so use
+		# our internal version which has a workaround.
+		#
+		AC_DEFINE(BROKEN_CMSG_FIRSTHDR)
+		AC_LIBOBJ(daemon)
+		AC_LIBOBJ(daemon-darwin)
 		;;
 	*dragonfly*)
 		AC_MSG_RESULT(dragonfly)
@@ -585,13 +578,22 @@ case "$host_os" in
 	*solaris*)
 		AC_MSG_RESULT(sunos)
 		PLATFORM=sunos
-		MANFORMAT=man
+		case `/usr/bin/nroff --version 2>&1` in
+			*GNU*)
+				# Solaris 11.4 and later use GNU groff.
+				MANFORMAT=mdoc
+				;;
+			*)
+				# Solaris 2.0 to 11.3 use AT&T nroff.
+				MANFORMAT=man
+				;;
+		esac
 		;;
 	*hpux*)
 		AC_MSG_RESULT(hpux)
 		PLATFORM=hpux
 		;;
-	*cygwin*)
+	*cygwin*|*msys*)
 		AC_MSG_RESULT(cygwin)
 		PLATFORM=cygwin
 		;;

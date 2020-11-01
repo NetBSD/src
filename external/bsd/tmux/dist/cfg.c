@@ -23,15 +23,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "tmux.h"
 
-static char	 *cfg_file;
-int		  cfg_finished;
-static char	**cfg_causes;
-static u_int	  cfg_ncauses;
-struct client	 *cfg_client;
+struct client		 *cfg_client;
+static char		 *cfg_file;
+int			  cfg_finished;
+static char		**cfg_causes;
+static u_int		  cfg_ncauses;
+static struct cmdq_item	 *cfg_item;
+
+static enum cmd_retval
+cfg_client_done(__unused struct cmdq_item *item, __unused void *data)
+{
+	if (!cfg_finished)
+		return (CMD_RETURN_WAIT);
+	return (CMD_RETURN_NORMAL);
+}
 
 static enum cmd_retval
 cfg_done(__unused struct cmdq_item *item, __unused void *data)
@@ -43,8 +51,11 @@ cfg_done(__unused struct cmdq_item *item, __unused void *data)
 	if (!RB_EMPTY(&sessions))
 		cfg_show_causes(RB_MIN(sessions, &sessions));
 
-	if (cfg_client != NULL)
-		server_client_unref(cfg_client);
+	if (cfg_item != NULL)
+		cmdq_continue(cfg_item);
+
+	status_prompt_load_history();
+
 	return (CMD_RETURN_NORMAL);
 }
 
@@ -55,116 +66,178 @@ set_cfg_file(const char *path)
 	cfg_file = xstrdup(path);
 }
 
+static char *
+expand_cfg_file(const char *path, const char *home)
+{
+	char			*expanded, *name;
+	const char		*end;
+	struct environ_entry	*value;
+
+	if (strncmp(path, "~/", 2) == 0) {
+		if (home == NULL)
+			return (NULL);
+		xasprintf(&expanded, "%s%s", home, path + 1);
+		return (expanded);
+	}
+
+	if (*path == '$') {
+		end = strchr(path, '/');
+		if (end == NULL)
+			name = xstrdup(path + 1);
+		else
+			name = xstrndup(path + 1, end - path - 1);
+		value = environ_find(global_environ, name);
+		free(name);
+		if (value == NULL)
+			return (NULL);
+		if (end == NULL)
+			end = "";
+		xasprintf(&expanded, "%s%s", value->value, end);
+		return (expanded);
+	}
+
+	return (xstrdup(path));
+}
+
 void
 start_cfg(void)
 {
-	const char	*home;
-	int		 quiet = 0;
+	const char	*home = find_home();
+	struct client	*c;
+	char		*path, *copy, *next, *expanded;
 
-	cfg_client = TAILQ_FIRST(&clients);
-	if (cfg_client != NULL)
-		cfg_client->references++;
-
-	load_cfg(TMUX_CONF, cfg_client, NULL, 1);
-
-	if (cfg_file == NULL && (home = find_home()) != NULL) {
-		xasprintf(&cfg_file, "%s/.tmux.conf", home);
-		quiet = 1;
+	/*
+	 * Configuration files are loaded without a client, so commands are run
+	 * in the global queue with item->client NULL.
+	 *
+	 * However, we must block the initial client (but just the initial
+	 * client) so that its command runs after the configuration is loaded.
+	 * Because start_cfg() is called so early, we can be sure the client's
+	 * command queue is currently empty and our callback will be at the
+	 * front - we need to get in before MSG_COMMAND.
+	 */
+	cfg_client = c = TAILQ_FIRST(&clients);
+	if (c != NULL) {
+		cfg_item = cmdq_get_callback(cfg_client_done, NULL);
+		cmdq_append(c, cfg_item);
 	}
-	if (cfg_file != NULL)
-		load_cfg(cfg_file, cfg_client, NULL, quiet);
 
-	cmdq_append(cfg_client, cmdq_get_callback(cfg_done, NULL));
+	if (cfg_file == NULL) {
+		path = copy = xstrdup(TMUX_CONF);
+		while ((next = strsep(&path, ":")) != NULL) {
+			expanded = expand_cfg_file(next, home);
+			if (expanded == NULL) {
+				log_debug("couldn't expand %s", next);
+				continue;
+			}
+			log_debug("expanded %s to %s", next, expanded);
+			load_cfg(expanded, c, NULL, CMD_PARSE_QUIET, NULL);
+			free(expanded);
+		}
+		free(copy);
+	} else
+		load_cfg(cfg_file, c, NULL, 0, NULL);
+
+	cmdq_append(NULL, cmdq_get_callback(cfg_done, NULL));
 }
 
 int
-load_cfg(const char *path, struct client *c, struct cmdq_item *item, int quiet)
+load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
+    struct cmdq_item **new_item)
 {
 	FILE			*f;
-	const char		 delim[3] = { '\\', '\\', '\0' };
-	u_int			 found = 0;
-	size_t			 line = 0;
-	char			*buf, *cause1, *p, *q, *s;
-	struct cmd_list		*cmdlist;
-	struct cmdq_item	*new_item;
-	int			 condition = 0;
-	struct format_tree	*ft;
+	struct cmd_parse_input	 pi;
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*new_item0;
+
+	if (new_item != NULL)
+		*new_item = NULL;
 
 	log_debug("loading %s", path);
 	if ((f = fopen(path, "rb")) == NULL) {
-		if (errno == ENOENT && quiet)
+		if (errno == ENOENT && (flags & CMD_PARSE_QUIET))
 			return (0);
 		cfg_add_cause("%s: %s", path, strerror(errno));
 		return (-1);
 	}
 
-	while ((buf = fparseln(f, NULL, &line, delim, 0)) != NULL) {
-		log_debug("%s: %s", path, buf);
+	memset(&pi, 0, sizeof pi);
+	pi.flags = flags;
+	pi.file = path;
+	pi.line = 1;
+	pi.item = item;
+	pi.c = c;
 
-		p = buf;
-		while (isspace((u_char)*p))
-			p++;
-		if (*p == '\0') {
-			free(buf);
-			continue;
-		}
-		q = p + strlen(p) - 1;
-		while (q != p && isspace((u_char)*q))
-			*q-- = '\0';
-
-		if (condition != 0 && strcmp(p, "%endif") == 0) {
-			condition = 0;
-			continue;
-		}
-		if (strncmp(p, "%if ", 4) == 0) {
-			if (condition != 0) {
-				cfg_add_cause("%s:%zu: nested %%if", path,
-				    line);
-				continue;
-			}
-			ft = format_create(NULL, FORMAT_NONE, FORMAT_NOJOBS);
-
-			s = p + 3;
-			while (isspace((u_char)*s))
-				s++;
-			s = format_expand(ft, s);
-			if (*s != '\0' && (s[0] != '0' || s[1] != '\0'))
-				condition = 1;
-			else
-				condition = -1;
-			free(s);
-
-			format_free(ft);
-			continue;
-		}
-		if (condition == -1)
-			continue;
-
-		cmdlist = cmd_string_parse(p, path, line, &cause1);
-		if (cmdlist == NULL) {
-			free(buf);
-			if (cause1 == NULL)
-				continue;
-			cfg_add_cause("%s:%zu: %s", path, line, cause1);
-			free(cause1);
-			continue;
-		}
-		free(buf);
-
-		if (cmdlist == NULL)
-			continue;
-		new_item = cmdq_get_command(cmdlist, NULL, NULL, 0);
-		if (item != NULL)
-			cmdq_insert_after(item, new_item);
-		else
-			cmdq_append(c, new_item);
-		cmd_list_free(cmdlist);
-
-		found++;
-	}
+	pr = cmd_parse_from_file(f, &pi);
 	fclose(f);
+	if (pr->status == CMD_PARSE_EMPTY)
+		return (0);
+	if (pr->status == CMD_PARSE_ERROR) {
+		cfg_add_cause("%s", pr->error);
+		free(pr->error);
+		return (-1);
+	}
+	if (flags & CMD_PARSE_PARSEONLY) {
+		cmd_list_free(pr->cmdlist);
+		return (0);
+	}
 
-	return (found);
+	new_item0 = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+	if (item != NULL)
+		new_item0 = cmdq_insert_after(item, new_item0);
+	else
+		new_item0 = cmdq_append(NULL, new_item0);
+	cmd_list_free(pr->cmdlist);
+
+	if (new_item != NULL)
+		*new_item = new_item0;
+	return (0);
+}
+
+int
+load_cfg_from_buffer(const void *buf, size_t len, const char *path,
+    struct client *c, struct cmdq_item *item, int flags,
+    struct cmdq_item **new_item)
+{
+	struct cmd_parse_input	 pi;
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*new_item0;
+
+	if (new_item != NULL)
+		*new_item = NULL;
+
+	log_debug("loading %s", path);
+
+	memset(&pi, 0, sizeof pi);
+	pi.flags = flags;
+	pi.file = path;
+	pi.line = 1;
+	pi.item = item;
+	pi.c = c;
+
+	pr = cmd_parse_from_buffer(buf, len, &pi);
+	if (pr->status == CMD_PARSE_EMPTY)
+		return (0);
+	if (pr->status == CMD_PARSE_ERROR) {
+		cfg_add_cause("%s", pr->error);
+		free(pr->error);
+		return (-1);
+	}
+	if (flags & CMD_PARSE_PARSEONLY) {
+		cmd_list_free(pr->cmdlist);
+		return (0);
+	}
+
+	new_item0 = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+	if (item != NULL)
+		new_item0 = cmdq_insert_after(item, new_item0);
+	else
+		new_item0 = cmdq_append(NULL, new_item0);
+	cmd_list_free(pr->cmdlist);
+
+	if (new_item != NULL)
+		*new_item = new_item0;
+	return (0);
 }
 
 void
@@ -200,15 +273,17 @@ cfg_print_causes(struct cmdq_item *item)
 void
 cfg_show_causes(struct session *s)
 {
-	struct window_pane	*wp;
-	u_int			 i;
+	struct window_pane		*wp;
+	struct window_mode_entry	*wme;
+	u_int				 i;
 
 	if (s == NULL || cfg_ncauses == 0)
 		return;
 	wp = s->curw->window->active;
 
-	window_pane_set_mode(wp, &window_copy_mode);
-	window_copy_init_for_output(wp);
+	wme = TAILQ_FIRST(&wp->modes);
+	if (wme == NULL || wme->mode != &window_view_mode)
+		window_pane_set_mode(wp, &window_view_mode, NULL, NULL);
 	for (i = 0; i < cfg_ncauses; i++) {
 		window_copy_add(wp, "%s", cfg_causes[i]);
 		free(cfg_causes[i]);

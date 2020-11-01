@@ -22,142 +22,375 @@
 
 #include "tmux.h"
 
-/*
- * Recalculate window and session sizes.
- *
- * Every session has the size of the smallest client it is attached to and
- * every window the size of the smallest session it is attached to.
- *
- * So, when a client is resized or a session attached to or detached from a
- * client, the window sizes must be recalculated. For each session, find the
- * smallest client it is attached to, and resize it to that size. Then for
- * every window, find the smallest session it is attached to, resize it to that
- * size and clear and redraw every client with it as the current window.
- *
- * This is quite inefficient - better/additional data structures are needed
- * to make it better.
- *
- * As a side effect, this function updates the SESSION_UNATTACHED flag. This
- * flag is necessary to make sure unattached sessions do not limit the size of
- * windows that are attached both to them and to other (attached) sessions.
- */
+void
+resize_window(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
+{
+	int	zoomed;
+
+	/* Check size limits. */
+	if (sx < WINDOW_MINIMUM)
+		sx = WINDOW_MINIMUM;
+	if (sx > WINDOW_MAXIMUM)
+		sx = WINDOW_MAXIMUM;
+	if (sy < WINDOW_MINIMUM)
+		sy = WINDOW_MINIMUM;
+	if (sy > WINDOW_MAXIMUM)
+		sy = WINDOW_MAXIMUM;
+
+	/* If the window is zoomed, unzoom. */
+	zoomed = w->flags & WINDOW_ZOOMED;
+	if (zoomed)
+		window_unzoom(w);
+
+	/* Resize the layout first. */
+	layout_resize(w, sx, sy);
+
+	/* Resize the window, it can be no smaller than the layout. */
+	if (sx < w->layout_root->sx)
+		sx = w->layout_root->sx;
+	if (sy < w->layout_root->sy)
+		sy = w->layout_root->sy;
+	window_resize(w, sx, sy, xpixel, ypixel);
+	log_debug("%s: @%u resized to %u,%u; layout %u,%u", __func__, w->id,
+	    sx, sy, w->layout_root->sx, w->layout_root->sy);
+
+	/* Restore the window zoom state. */
+	if (zoomed)
+		window_zoom(w->active);
+
+	tty_update_window_offset(w);
+	server_redraw_window(w);
+	notify_window("window-layout-changed", w);
+}
+
+static int
+ignore_client_size(struct client *c)
+{
+	struct client	*loop;
+
+	if (c->session == NULL)
+		return (1);
+	if (c->flags & CLIENT_NOSIZEFLAGS)
+		return (1);
+	if (c->flags & CLIENT_READONLY) {
+		/*
+		 * Ignore readonly clients if there are any attached clients
+		 * that aren't readonly.
+		 */
+		TAILQ_FOREACH (loop, &clients, entry) {
+			if (loop->session == NULL)
+				continue;
+			if (loop->flags & CLIENT_NOSIZEFLAGS)
+				continue;
+			if (~loop->flags & CLIENT_READONLY)
+				return (1);
+		}
+	}
+	if ((c->flags & CLIENT_CONTROL) && (~c->flags & CLIENT_SIZECHANGED))
+		return (1);
+	return (0);
+}
+
+void
+default_window_size(struct client *c, struct session *s, struct window *w,
+    u_int *sx, u_int *sy, u_int *xpixel, u_int *ypixel, int type)
+{
+	struct client	*loop;
+	u_int		 cx, cy, n;
+	const char	*value;
+
+	if (type == -1)
+		type = options_get_number(global_w_options, "window-size");
+	switch (type) {
+	case WINDOW_SIZE_LARGEST:
+		*sx = *sy = 0;
+		*xpixel = *ypixel = 0;
+		TAILQ_FOREACH(loop, &clients, entry) {
+			if (ignore_client_size(loop))
+				continue;
+			if (w != NULL && !session_has(loop->session, w))
+				continue;
+			if (w == NULL && loop->session != s)
+				continue;
+
+			cx = loop->tty.sx;
+			cy = loop->tty.sy - status_line_size(loop);
+
+			if (cx > *sx)
+				*sx = cx;
+			if (cy > *sy)
+				*sy = cy;
+
+			if (loop->tty.xpixel > *xpixel &&
+			    loop->tty.ypixel > *ypixel) {
+				*xpixel = loop->tty.xpixel;
+				*ypixel = loop->tty.ypixel;
+			}
+		}
+		if (*sx == 0 || *sy == 0)
+			goto manual;
+		break;
+	case WINDOW_SIZE_SMALLEST:
+		*sx = *sy = UINT_MAX;
+		*xpixel = *ypixel = 0;
+		TAILQ_FOREACH(loop, &clients, entry) {
+			if (ignore_client_size(loop))
+				continue;
+			if (w != NULL && !session_has(loop->session, w))
+				continue;
+			if (w == NULL && loop->session != s)
+				continue;
+
+			cx = loop->tty.sx;
+			cy = loop->tty.sy - status_line_size(loop);
+
+			if (cx < *sx)
+				*sx = cx;
+			if (cy < *sy)
+				*sy = cy;
+
+			if (loop->tty.xpixel > *xpixel &&
+			    loop->tty.ypixel > *ypixel) {
+				*xpixel = loop->tty.xpixel;
+				*ypixel = loop->tty.ypixel;
+			}
+		}
+		if (*sx == UINT_MAX || *sy == UINT_MAX)
+			goto manual;
+		break;
+	case WINDOW_SIZE_LATEST:
+		if (c != NULL && !ignore_client_size(c)) {
+			*sx = c->tty.sx;
+			*sy = c->tty.sy - status_line_size(c);
+			*xpixel = c->tty.xpixel;
+		        *ypixel = c->tty.ypixel;
+		} else {
+			if (w == NULL)
+				goto manual;
+			n = 0;
+			TAILQ_FOREACH(loop, &clients, entry) {
+				if (!ignore_client_size(loop) &&
+				    session_has(loop->session, w)) {
+					if (++n > 1)
+						break;
+				}
+			}
+			*sx = *sy = UINT_MAX;
+			*xpixel = *ypixel = 0;
+			TAILQ_FOREACH(loop, &clients, entry) {
+				if (ignore_client_size(loop))
+					continue;
+				if (n > 1 && loop != w->latest)
+					continue;
+				s = loop->session;
+
+				cx = loop->tty.sx;
+				cy = loop->tty.sy - status_line_size(loop);
+
+				if (cx < *sx)
+					*sx = cx;
+				if (cy < *sy)
+					*sy = cy;
+
+				if (loop->tty.xpixel > *xpixel &&
+				    loop->tty.ypixel > *ypixel) {
+					*xpixel = loop->tty.xpixel;
+					*ypixel = loop->tty.ypixel;
+				}
+			}
+			if (*sx == UINT_MAX || *sy == UINT_MAX)
+				goto manual;
+		}
+		break;
+	case WINDOW_SIZE_MANUAL:
+		goto manual;
+	}
+	goto done;
+
+manual:
+	value = options_get_string(s->options, "default-size");
+	if (sscanf(value, "%ux%u", sx, sy) != 2) {
+		*sx = 80;
+		*sy = 24;
+	}
+
+done:
+	if (*sx < WINDOW_MINIMUM)
+		*sx = WINDOW_MINIMUM;
+	if (*sx > WINDOW_MAXIMUM)
+		*sx = WINDOW_MAXIMUM;
+	if (*sy < WINDOW_MINIMUM)
+		*sy = WINDOW_MINIMUM;
+	if (*sy > WINDOW_MAXIMUM)
+		*sy = WINDOW_MAXIMUM;
+}
+
+void
+recalculate_size(struct window *w)
+{
+	struct session	*s;
+	struct client	*c;
+	u_int		 sx = 0, sy = 0, cx, cy, xpixel = 0, ypixel = 0, n;
+	int		 type, current, has, changed;
+
+	if (w->active == NULL)
+		return;
+	log_debug("%s: @%u is %u,%u", __func__, w->id, w->sx, w->sy);
+
+	type = options_get_number(w->options, "window-size");
+	current = options_get_number(w->options, "aggressive-resize");
+
+	changed = 1;
+	switch (type) {
+	case WINDOW_SIZE_LARGEST:
+		sx = sy = 0;
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (ignore_client_size(c))
+				continue;
+			s = c->session;
+
+			if (current)
+				has = (s->curw->window == w);
+			else
+				has = session_has(s, w);
+			if (!has)
+				continue;
+
+			cx = c->tty.sx;
+			cy = c->tty.sy - status_line_size(c);
+
+			if (cx > sx)
+				sx = cx;
+			if (cy > sy)
+				sy = cy;
+
+			if (c->tty.xpixel > xpixel && c->tty.ypixel > ypixel) {
+				xpixel = c->tty.xpixel;
+				ypixel = c->tty.ypixel;
+			}
+		}
+		if (sx == 0 || sy == 0)
+			changed = 0;
+		break;
+	case WINDOW_SIZE_SMALLEST:
+		sx = sy = UINT_MAX;
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (ignore_client_size(c))
+				continue;
+			s = c->session;
+
+			if (current)
+				has = (s->curw->window == w);
+			else
+				has = session_has(s, w);
+			if (!has)
+				continue;
+
+			cx = c->tty.sx;
+			cy = c->tty.sy - status_line_size(c);
+
+			if (cx < sx)
+				sx = cx;
+			if (cy < sy)
+				sy = cy;
+
+			if (c->tty.xpixel > xpixel && c->tty.ypixel > ypixel) {
+				xpixel = c->tty.xpixel;
+				ypixel = c->tty.ypixel;
+			}
+		}
+		if (sx == UINT_MAX || sy == UINT_MAX)
+			changed = 0;
+		break;
+	case WINDOW_SIZE_LATEST:
+		n = 0;
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (!ignore_client_size(c) &&
+			    session_has(c->session, w)) {
+				if (++n > 1)
+					break;
+			}
+		}
+		sx = sy = UINT_MAX;
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (ignore_client_size(c))
+				continue;
+			if (n > 1 && c != w->latest)
+				continue;
+			s = c->session;
+
+			if (current)
+				has = (s->curw->window == w);
+			else
+				has = session_has(s, w);
+			if (!has)
+				continue;
+
+			cx = c->tty.sx;
+			cy = c->tty.sy - status_line_size(c);
+
+			if (cx < sx)
+				sx = cx;
+			if (cy < sy)
+				sy = cy;
+
+			if (c->tty.xpixel > xpixel && c->tty.ypixel > ypixel) {
+				xpixel = c->tty.xpixel;
+				ypixel = c->tty.ypixel;
+			}
+		}
+		if (sx == UINT_MAX || sy == UINT_MAX)
+			changed = 0;
+		break;
+	case WINDOW_SIZE_MANUAL:
+		changed = 0;
+		break;
+	}
+	if (changed && w->sx == sx && w->sy == sy)
+		changed = 0;
+
+	if (!changed) {
+		tty_update_window_offset(w);
+		return;
+	}
+	log_debug("%s: @%u changed to %u,%u (%ux%u)", __func__, w->id, sx, sy,
+	    xpixel, ypixel);
+	resize_window(w, sx, sy, xpixel, ypixel);
+}
 
 void
 recalculate_sizes(void)
 {
-	struct session		*s;
-	struct client		*c;
-	struct window		*w;
-	struct window_pane	*wp;
-	u_int			 ssx, ssy, has, limit;
-	int			 flag, has_status, is_zoomed, forced;
+	struct session	*s;
+	struct client	*c;
+	struct window	*w;
 
+	/*
+	 * Clear attached count and update saved status line information for
+	 * each session.
+	 */
 	RB_FOREACH(s, sessions, &sessions) {
-		has_status = options_get_number(s->options, "status");
-
 		s->attached = 0;
-		ssx = ssy = UINT_MAX;
-		TAILQ_FOREACH(c, &clients, entry) {
-			if (c->flags & CLIENT_SUSPENDED)
-				continue;
-			if (c->session == s) {
-				if (c->tty.sx < ssx)
-					ssx = c->tty.sx;
-				if (has_status &&
-				    !(c->flags & CLIENT_CONTROL) &&
-				    c->tty.sy > 1 && c->tty.sy - 1 < ssy)
-					ssy = c->tty.sy - 1;
-				else if (c->tty.sy < ssy)
-					ssy = c->tty.sy;
-				s->attached++;
-			}
-		}
-		if (ssx == UINT_MAX || ssy == UINT_MAX) {
-			s->flags |= SESSION_UNATTACHED;
-			continue;
-		}
-		s->flags &= ~SESSION_UNATTACHED;
-
-		if (has_status && ssy == 0)
-			ssy = 1;
-
-		if (s->sx == ssx && s->sy == ssy)
-			continue;
-
-		log_debug("session $%u size %u,%u (was %u,%u)", s->id, ssx, ssy,
-		    s->sx, s->sy);
-
-		s->sx = ssx;
-		s->sy = ssy;
-
-		status_update_saved(s);
+		status_update_cache(s);
 	}
 
-	RB_FOREACH(w, windows, &windows) {
-		if (w->active == NULL)
+	/*
+	 * Increment attached count and check the status line size for each
+	 * client.
+	 */
+	TAILQ_FOREACH(c, &clients, entry) {
+		s = c->session;
+		if (s != NULL && !(c->flags & CLIENT_UNATTACHEDFLAGS))
+			s->attached++;
+		if (ignore_client_size(c))
 			continue;
-		flag = options_get_number(w->options, "aggressive-resize");
-
-		ssx = ssy = UINT_MAX;
-		RB_FOREACH(s, sessions, &sessions) {
-			if (s->flags & SESSION_UNATTACHED)
-				continue;
-			if (flag)
-				has = s->curw->window == w;
-			else
-				has = session_has(s, w);
-			if (has) {
-				if (s->sx < ssx)
-					ssx = s->sx;
-				if (s->sy < ssy)
-					ssy = s->sy;
-			}
-		}
-		if (ssx == UINT_MAX || ssy == UINT_MAX)
-			continue;
-
-		forced = 0;
-		limit = options_get_number(w->options, "force-width");
-		if (limit >= PANE_MINIMUM && ssx > limit) {
-			ssx = limit;
-			forced |= WINDOW_FORCEWIDTH;
-		}
-		limit = options_get_number(w->options, "force-height");
-		if (limit >= PANE_MINIMUM && ssy > limit) {
-			ssy = limit;
-			forced |= WINDOW_FORCEHEIGHT;
-		}
-
-		if (w->sx == ssx && w->sy == ssy)
-			continue;
-		log_debug("window @%u size %u,%u (was %u,%u)", w->id, ssx, ssy,
-		    w->sx, w->sy);
-
-		w->flags &= ~(WINDOW_FORCEWIDTH|WINDOW_FORCEHEIGHT);
-		w->flags |= forced;
-
-		is_zoomed = w->flags & WINDOW_ZOOMED;
-		if (is_zoomed)
-			window_unzoom(w);
-		layout_resize(w, ssx, ssy);
-		window_resize(w, ssx, ssy);
-		if (is_zoomed && window_pane_visible(w->active))
-			window_zoom(w->active);
-
-		/*
-		 * If the current pane is now not visible, move to the next
-		 * that is.
-		 */
-		wp = w->active;
-		while (!window_pane_visible(w->active)) {
-			w->active = TAILQ_PREV(w->active, window_panes, entry);
-			if (w->active == NULL)
-				w->active = TAILQ_LAST(&w->panes, window_panes);
-			if (w->active == wp)
-			       break;
-		}
-
-		server_redraw_window(w);
-		notify_window("window-layout-changed", w);
+		if (c->tty.sy <= s->statuslines || (c->flags & CLIENT_CONTROL))
+			c->flags |= CLIENT_STATUSOFF;
+		else
+			c->flags &= ~CLIENT_STATUSOFF;
 	}
+
+	/* Walk each window and adjust the size. */
+	RB_FOREACH(w, windows, &windows)
+		recalculate_size(w);
 }

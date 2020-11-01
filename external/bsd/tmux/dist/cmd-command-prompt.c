@@ -32,35 +32,33 @@
 static enum cmd_retval	cmd_command_prompt_exec(struct cmd *,
 			    struct cmdq_item *);
 
-static int	cmd_command_prompt_callback(void *, const char *, int);
+static int	cmd_command_prompt_callback(struct client *, void *,
+		    const char *, int);
 static void	cmd_command_prompt_free(void *);
 
 const struct cmd_entry cmd_command_prompt_entry = {
 	.name = "command-prompt",
 	.alias = NULL,
 
-	.args = { "1iI:Np:t:", 0, 1 },
-	.usage = "[-1Ni] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+	.args = { "1kiI:Np:t:", 0, 1 },
+	.usage = "[-1kiN] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
 		 "[template]",
-
-	.tflag = CMD_CLIENT,
 
 	.flags = 0,
 	.exec = cmd_command_prompt_exec
 };
 
 struct cmd_command_prompt_cdata {
-	struct client	*c;
-	int		 flags;
+	int	 flags;
 
-	char		*inputs;
-	char		*next_input;
+	char	*inputs;
+	char	*next_input;
 
-	char		*prompts;
-	char		*next_prompt;
+	char	*prompts;
+	char	*next_prompt;
 
-	char		*template;
-	int		 idx;
+	char	*template;
+	int	 idx;
 };
 
 static enum cmd_retval
@@ -69,15 +67,17 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 	struct args			*args = self->args;
 	const char			*inputs, *prompts;
 	struct cmd_command_prompt_cdata	*cdata;
-	struct client			*c = item->state.c;
+	struct client			*c;
 	char				*prompt, *ptr, *input = NULL;
 	size_t				 n;
+
+	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if (c->prompt_string != NULL)
 		return (CMD_RETURN_NORMAL);
 
 	cdata = xcalloc(1, sizeof *cdata);
-	cdata->c = c;
 
 	cdata->inputs = NULL;
 	cdata->next_input = NULL;
@@ -122,6 +122,8 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->flags |= PROMPT_NUMERIC;
 	else if (args_has(args, 'i'))
 		cdata->flags |= PROMPT_INCREMENTAL;
+	else if (args_has(args, 'k'))
+		cdata->flags |= PROMPT_KEY;
 	status_prompt_set(c, prompt, input, cmd_command_prompt_callback,
 	    cmd_command_prompt_free, cdata, cdata->flags);
 	free(prompt);
@@ -129,26 +131,15 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 	return (CMD_RETURN_NORMAL);
 }
 
-static enum cmd_retval
-cmd_command_prompt_error(struct cmdq_item *item, void *data)
-{
-	char	*error = data;
-
-	cmdq_error(item, "%s", error);
-	free(error);
-
-	return (CMD_RETURN_NORMAL);
-}
-
 static int
-cmd_command_prompt_callback(void *data, const char *s, int done)
+cmd_command_prompt_callback(struct client *c, void *data, const char *s,
+    int done)
 {
 	struct cmd_command_prompt_cdata	*cdata = data;
-	struct client			*c = cdata->c;
-	struct cmd_list			*cmdlist;
 	struct cmdq_item		*new_item;
-	char				*cause, *new_template, *prompt, *ptr;
+	char				*new_template, *prompt, *ptr;
 	char				*input = NULL;
+	struct cmd_parse_result		*pr;
 
 	if (s == NULL)
 		return (0);
@@ -175,24 +166,26 @@ cmd_command_prompt_callback(void *data, const char *s, int done)
 		return (1);
 	}
 
-	cmdlist = cmd_string_parse(new_template, NULL, 0, &cause);
-	if (cmdlist == NULL) {
-		if (cause != NULL) {
-			new_item = cmdq_get_callback(cmd_command_prompt_error,
-			    cause);
-		} else
-			new_item = NULL;
-	} else {
-		new_item = cmdq_get_command(cmdlist, NULL, NULL, 0);
-		cmd_list_free(cmdlist);
-	}
-
-	if (new_item != NULL)
+	pr = cmd_parse_from_string(new_template, NULL);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		new_item = NULL;
+		break;
+	case CMD_PARSE_ERROR:
+		new_item = cmdq_get_error(pr->error);
+		free(pr->error);
 		cmdq_append(c, new_item);
+		break;
+	case CMD_PARSE_SUCCESS:
+		new_item = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+		cmd_list_free(pr->cmdlist);
+		cmdq_append(c, new_item);
+		break;
+	}
 
 	if (!done)
 		free(new_template);
-	if (c->prompt_callbackfn != (void *)&cmd_command_prompt_callback)
+	if (c->prompt_inputcb != cmd_command_prompt_callback)
 		return (1);
 	return (0);
 }

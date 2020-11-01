@@ -1,4 +1,714 @@
-CHANGES FROM 2.3 to 2.4 20 April 2017
+CHANGED FROM 3.1b TO 3.1c
+
+* Fix a stack overflow on colon-separated CSI parsing.
+
+CHANGES FROM 3.1a TO 3.1b
+
+* Fix build on systems without sys/queue.h.
+
+* Fix crash when allow-rename is on and an empty name is set.
+
+CHANGES FROM 3.1 TO 3.1a
+
+* Do not close stdout prematurely in control mode since it is needed to print
+  exit messages. Prevents hanging when detaching with iTerm2.
+
+CHANGES FROM 3.0a TO 3.1
+
+* Only search the visible part of the history when marking (highlighting)
+  search terms. This is much faster than searching the whole history and solves
+  problems with large histories. The count of matches shown is now the visible
+  matches rather than all matches.
+
+* Search using regular expressions in copy mode. search-forward and
+  search-backward use regular expressions by default; the incremental versions
+  do not.
+
+* Turn off mouse mode 1003 as well as the rest when exiting.
+
+* Add selection_active format for when the selection is present but not moving
+  with the cursor.
+
+* Fix dragging with modifier keys, so binding keys such as C-MouseDrag1Pane and
+  C-MouseDragEnd1Pane now work.
+
+* Add -a to list-keys to also list keys without notes with -N.
+
+* Do not jump to next word end if already on a word end when selecting a word;
+  fixes select-word with single character words and vi(1) keys.
+
+* Fix top and bottom pane calculation with pane border status enabled.
+
+* Add support for adding a note to a key binding (with bind-key -N) and use
+  this to add descriptions to the default key bindings. A new -N flag to
+  list-keys shows key bindings with notes. Change the default ? binding to use
+  this to show a readable summary of keys. Also extend command-prompt to return
+  the name of the key pressed and add a default binding (/) to show the note
+  for the next key pressed.
+
+* Add support for the iTerm2 DSR 1337 sequence to get the terminal version.
+
+* Treat plausible but invalid keys (like C-BSpace) as literal like any other
+  unrecognised string passed to send-keys.
+
+* Detect iTerm2 and enable use of DECSLRM (much faster with horizontally split
+  windows).
+
+* Add -Z to default switch-client command in tree mode.
+
+* Add ~ to quoted characters for %%%.
+
+* Document client exit messages in the manual page.
+
+* Do not let read-only clients limit the size, unless all clients are
+  read-only.
+
+* Add a number of new formats to inspect what sessions and clients a window is
+  present or active in.
+
+* Change file reading and writing to go through the client if necessary. This
+  fixes commands like "tmux loadb /dev/fd/X". Also modify source-file to
+  support "-" for standard input, like load-buffer and save-buffer.
+
+* Add ~/.config/tmux/tmux.conf to the default search path for configuration
+  files.
+
+* Bump the escape sequence timeout to five seconds to allow for longer
+  legitimate sequences.
+
+* Make a best effort to set xpixel and ypixel for each pane and add formats for
+  them.
+
+* Add push-default to status-left and status-right in status-format[0].
+
+* Do not clear search marks on cursor movement with vi(1) keys.
+
+* Add p format modifier for padding to width and allow multiple substitutions
+  in a single format.
+
+* Add -f for full size to join-pane (like split-window).
+
+* Do not use bright when emulating 256 colours on an 8 colour terminal because
+  it is also bold on some terminals.
+
+* Make select-pane -P set window-active-style also to match previous behaviour.
+
+* Do not truncate list-keys output.
+
+* Turn automatic-rename back on if the \033k rename escape sequence is used
+  with an empty name.
+
+* Add support for percentage sizes for resize-pane ("-x 10%"). Also change
+  split-window and join-pane -l to accept similar percentages and deprecate the
+  -p flag.
+
+* Add -F flag to send-keys to expand formats in search-backward and forward
+  copy mode commands and copy_cursor_word and copy_cursor_line formats for word
+  and line at cursor in copy mode. Use for default # and * binding with vi(1)
+  keys.
+
+* Add formats for word and line at cursor position in copy mode.
+
+* Add formats for cursor and selection position in copy mode.
+
+* Support all the forms of RGB colour strings in OSC sequences rather than
+  requiring two digits.
+
+* Limit lazy resize to panes in attached sessions only.
+
+* Add an option to set the key sent by backspace for those whose system uses ^H
+  rather than ^?.
+
+* Change new-session -A without a session name (that is, no -s option also) to
+  attach to the best existing session like attach-session rather than a new
+  one.
+
+* Add a "latest" window-size option which tries to size windows based on the
+  most recently used client. This is now the default.
+
+* Add simple support for OSC 7 (result is available in the pane_path format).
+
+* Add push-default and pop-default for styles which change the colours and
+  attributes used for #[default]. These are used in status-format to restore
+  the behaviour of window-status-style being the default for
+  window-status-format.
+
+* Add window_marked_flag.
+
+* Add cursor-down-and-cancel in copy mode.
+
+* Default to previous search string for search-forward and search-backward.
+
+* Add -Z flag to rotate-window, select-pane, swap-pane, switch-client to
+  preserve zoomed state.
+
+* Add -N to capture-pane to preserve trailing spaces.
+
+* Add reverse sorting in tree, client and buffer modes.
+
+CHANGES FROM 3.0 TO 3.0a
+
+* Do not require REG_STARTEND.
+
+* Respawn panes or windows correctly if default-command is set.
+
+* Add missing option for after-kill-pane hook.
+
+* Fix for crash with a format variable that doesn't exist.
+
+* Do not truncate list-keys output on some platforms.
+
+* Do not crash when restoring a layout with only one pane.
+
+CHANGES FROM 2.9 TO 3.0
+
+* Workaround invalid layout strings generated by older tmux versions and add
+  some additional sanity checks
+
+* xterm 348 now disables margins when resized, so send DECLRMM again after
+  resize.
+
+* Add support for the SD (scroll down) escape sequence.
+
+* Expand arguments to C and s format modifiers to match the m modifier.
+
+* Add support for underscore colours (Setulc capability must be added with
+  terminal-overrides as described in tmux(1)).
+
+* Add a "fill" style attribute for the fill colour of the drawing area (where
+  appropriate).
+
+* New -H flag to send-keys to send literal keys.
+
+* Format variables for pane mouse modes (mouse_utf8_flag and mouse_sgr_flag)
+  and for origin mode (origin_flag).
+
+* Add -F to refresh-client for flags for control mode clients, only one flag
+  (no-output) supported at the moment.
+
+* Add a few vi(1) keys for menus.
+
+* Add pane options, set with set-option -p and displayed with show-options -p.
+  Pane options inherit from window options (so every pane option is also
+  a window option). The pane style is now configured by setting window-style
+  and window-active-style in the pane options; select-pane -P and -g now change
+  the option but are no longer documented.
+
+* Do not document set-window-option and show-window-options. set-option -w and
+  show-options -w should be used instead.
+
+* Add a -A flag to show-options to show parent options as well (they are marked
+  with a *).
+
+* Resize panes lazily - do not resize unless they are in an attached, active
+  window.
+
+* Add regular expression support for the format search, match and substitute
+  modifiers and make them able to ignore case. find-window now accepts -r to
+  use regular expressions.
+
+* Do not use $TMUX to find the session because for windows in multiple sessions
+  it is wrong as often as it is right, and for windows in one session it is
+  pointless. Instead use TMUX_PANE if it is present.
+
+* Do not always resize the window back to its original size after applying a
+  layout, keep it at the layout size until it must be resized (for example when
+  attached and window-size is not manual).
+
+* Add new-session -X and attach-session -x to send SIGHUP to parent when
+  detaching (like detach-client -P).
+
+* Support for octal escapes in strings (such as \007) and improve list-keys
+  output so it parses correctly if copied into a configuration file.
+
+* INCOMPATIBLE: Add a new {} syntax to the configuration file. This is a string
+  similar to single quotes but also includes newlines and allows commands that
+  take other commands as string arguments to be expressed more clearly and
+  without additional escaping.
+
+  A literal { and } or a string containing { or } must now be escaped or
+  quoted, for example '{' and '}' instead of { or }, or 'X#{foo}' instead of
+  X#{foo}.
+
+* New <, >, <= and >= comparison operators for formats.
+
+* Improve escaping of special characters in list-keys output.
+
+* INCOMPATIBLE: tmux's configuration parsing has changed to use yacc(1). There
+  is one incompatible change: a \ on its own must be escaped or quoted as
+  either \\ or '\' (the latter works on older tmux versions).
+
+  Entirely the same parser is now used for parsing the configuration file
+  and for string commands. This means that constructs previously only
+  available in .tmux.conf, such as %if, can now be used in string commands
+  (for example, those given to if-shell - not commands invoked from the
+  shell, they are still parsed by the shell itself).
+
+* Add support for the overline attribute (SGR 53). The Smol capability is
+  needed in terminal-overrides.
+
+* Add the ability to create simple menus. Introduces new command
+  display-menu. Default menus are bound to MouseDown3 on the status line;
+  MouseDown3 or M-MouseDown3 on panes; MouseDown3 in tree, client and
+  buffer modes; and C-b < and >.
+
+* Allow panes to be empty (no command). They can be created either by piping to
+  split-window -I, or by passing an empty command ('') to split-window. Output
+  can be sent to an existing empty window with display-message -I.
+
+* Add keys to jump between matching brackets (emacs C-M-f and C-M-b, vi %).
+
+* Add a -e flag to new-window, split-window, respawn-window, respawn-pane to
+  pass environment variables into the newly created process.
+
+* Hooks are now stored in the options tree as array options, allowing them to
+  have multiple separate commands. set-hook and show-hooks remain but
+  set-option and show-options can now also be used (show-options will only show
+  hooks if given the -H flag). Hooks with multiple commands are run in index
+  order.
+
+* Automatically scroll if dragging to create a selection with the mouse and the
+  cursor reaches the top or bottom line.
+
+* Add -no-clear variants of copy-selection and copy-pipe which do not clear the
+  selection after copying. Make copy-pipe clear the selection by default to be
+  consistent with copy-selection.
+
+* Add an argument to copy commands to set the prefix for the buffer name, this
+  (for example) allows buffers for different sessions to be named separately.
+
+* Update session activity on focus event.
+
+* Pass target from source-file into the config file parser so formats in %if
+  and %endif have access to more useful variables.
+
+* Add the ability to infer an option type (server, session, window) from its
+  name to show-options (it was already present in set-option).
+
+CHANGES FROM 2.9 TO 2.9a
+
+* Fix bugs in select-pane and the main-horizontal and main-vertical layouts.
+
+CHANGES FROM 2.8 TO 2.9
+
+* Attempt to preserve horizontal cursor position as well as vertical with
+  reflow.
+
+* Rewrite main-vertical and horizontal and change layouts to better handle the
+  case where all panes won't fit into the window size, reduce problems with
+  pane border status lines and fix other bugs mostly found by Thomas Sattler.
+
+* Add format variables for the default formats in the various modes
+  (tree_mode_format and so on) and add a -a flag to display-message to list
+  variables with values.
+
+* Add a -v flag to display-message to show verbose messages as the format is
+  parsed, this allows formats to be debugged
+
+* Add support for HPA (\033[`).
+
+* Add support for origin mode (\033[?6h).
+
+* No longer clear history on RIS.
+
+* Extend the #[] style syntax and use that together with previous format
+  changes to allow the status line to be entirely configured with a single
+  option.
+
+  Now that it is possible to configure their content, enable the existing code
+  that lets the status line be multiple lines in height. The status option can
+  now take a value of 2, 3, 4 or 5 (as well as the previous on or off) to
+  configure more than one line. The new status-format array option configures
+  the format of each line, the default just references the existing status-*
+  options, although some of the more obscure status options may be eliminated
+  in time.
+
+  Additions to the #[] syntax are: "align" to specify alignment (left, centre,
+  right), "list" for the window list and "range" to configure ranges of text
+  for the mouse bindings.
+
+  The "align" keyword can also be used to specify alignment of entries in tree
+  mode and the pane status lines.
+
+* Add E: and T: format modifiers to expand a format twice (useful to expand the
+  value of an option).
+
+* The individual -fg, -bg and -attr options have been removed; they
+  were superseded by -style options in tmux 1.9.
+
+* Allow more than one mode to be opened in a pane. Modes are kept on a stack
+  and retrieved if the same mode is entered again. Exiting the active mode goes
+  back to the previous one.
+
+* When showing command output in copy mode, call it view mode instead (affects
+  pane_mode format).
+
+* Add -b to display-panes like run-shell.
+
+* Handle UTF-8 in word-separators option.
+
+* New "terminal" colour allowing options to use the terminal default colour
+  rather than inheriting the default from a parent option.
+
+* Do not move the cursor in copy mode when the mouse wheel is used.
+
+* Use the same working directory rules for jobs as new windows rather than
+  always starting in the user's home.
+
+* Allow panes to be one line or column in size.
+
+* Go to last line when goto-line number is out of range in copy mode.
+
+* Yank previously cut text if any with C-y in the command prompt, only use the
+  buffer if no text has been cut.
+
+* Add q: format modifier to quote shell special characters.
+
+* Add StatusLeft and StatusRight mouse locations (keys such as
+  MouseDown1StatusLeft) for the status-left and status-right areas of the
+  status line.
+
+* Add -Z to find-window.
+
+* Support for windows larger than the client. This adds two new options,
+  window-size and default-size, and a new command, resize-window. The
+  force-width and force-height options and the session_width and session_height
+  formats have been removed.
+
+  The new window-size option tells tmux how to work out the size of windows:
+  largest means it picks the size of the largest session, smallest the smallest
+  session (similar to the old behaviour) and manual means that it does not
+  automatically resize windows. aggressive-resize modifies the choice of
+  session for largest and smallest as it did before.
+
+  If a window is in a session attached to a client that is too small, only part
+  of the window is shown. tmux attempts to keep the cursor visible, so the part
+  of the window displayed is changed as the cursor moves (with a small delay,
+  to try and avoid excess redrawing when applications redraw status lines or
+  similar that are not currently visible).
+
+  Drawing windows which are larger than the client is not as efficient as those
+  which fit, particularly when the cursor moves, so it is recommended to avoid
+  using this on slow machines or networks (set window-size to smallest or
+  manual).
+
+  The resize-window command can be used to resize a window manually. If it is
+  used, the window-size option is automatically set to manual for the window
+  (undo this with "setw -u window-size"). resize-window works in a similar way
+  to resize-pane (-U -D -L -R -x -y flags) but also has -a and -A flags. -a
+  sets the window to the size of the smallest client (what it would be if
+  window-size was smallest) and -A the largest.
+
+  For the same behaviour as force-width or force-height, use resize-window -x
+  or -y.
+
+  If the global window-size option is set to manual, the default-size option is
+  used for new windows. If -x or -y is used with new-session, that sets the
+  default-size option for the new session.
+
+  The maximum size of a window is 10000x10000. But expect applications to
+  complain and higher memory use if making a window that big. The minimum size
+  is the size required for the current layout including borders.
+
+  The refresh-client command can be used to pan around a window, -U -D -L -R
+  moves up, down, left or right and -c returns to automatic cursor
+  tracking. The position is reset when the current window is changed.
+
+CHANGES FROM 2.7 TO 2.8
+
+* Make display-panes block the client until a pane is chosen or it
+  times out.
+
+* Clear history on RIS like most other terminals do.
+
+* Add an "Any" key to run a command if a key is pressed that is not
+  bound in the current key table.
+
+* Expand formats in load-buffer and save-buffer.
+
+* Add a rectangle_toggle format.
+
+* Add set-hook -R to run a hook immediately.
+
+* Add README.ja.
+
+* Add pane focus hooks.
+
+* Allow any punctuation as separator for s/x/y not only /.
+
+* Improve resizing with the mouse (fix resizing the wrong pane in some
+  layouts, and allow resizing multiple panes at the same time).
+
+* Allow , and } to be escaped in formats as #, and #}.
+
+* Add KRB5CCNAME to update-environment.
+
+* Change meaning of -c to display-message so the client is used if it
+  matches the session given to -t.
+
+* Fixes to : form of SGR.
+
+* Add x and X to choose-tree to kill sessions, windows or panes.
+
+CHANGES FROM 2.6 TO 2.7
+
+* Remove EVENT_* variables from environment on platforms where tmux uses them
+  so they do not pass on to panes.
+
+* Fixes for hooks at server exit.
+
+* Remove SGR 10 (was equivalent to SGR 0 but no other terminal seems to do
+  this).
+
+* Expand formats in window and session names.
+
+* Add -Z flag to choose-tree, choose-client, choose-buffer to automatically
+  zoom the pane when the mode is entered and unzoom when it exits, assuming the
+  pane is not already zoomed. This is now part of the default key bindings.
+
+* Add C-g to exit modes with emacs keys.
+
+* Add exit-empty option to exit server if no sessions (defaults to on).
+
+* Show if a filter is present in choose modes.
+
+* Add pipe-pane -I to to connect stdin of the child process.
+
+* Performance improvements for reflow.
+
+* Use RGB terminfo(5) capability to detect RGB colour terminals (the existing
+  Tc extension remains unchanged).
+
+* Support for ISO colon-separated SGR sequences.
+
+* Add select-layout -E to spread panes out evenly (bound to E key).
+
+* Support wide characters properly when reflowing.
+
+* Pass PWD to new panes as a hint to shells, as well as calling chdir().
+
+* Performance improvements for the various choose modes.
+
+* Only show first member of session groups in tree mode (-G flag to choose-tree
+  to show all).
+
+* Support %else in config files to match %if; from Brad Town in GitHub issue
+  1071.
+
+* Fix "kind" terminfo(5) capability to be S-Down not S-Up.
+
+* Add a box around the preview label in tree mode.
+
+* Show exit status and time in the remain-on-exit pane text; from Timo
+  Boettcher in GitHub issue 1103.
+
+* Correctly use pane-base-index in tree mode.
+
+* Change the allow-rename option default to off.
+
+* Support for xterm(1) title stack escape sequences (GitHub issue 1075 from
+  Brad Town).
+
+* Correctly remove padding cells to fix a UTF-8 display problem (GitHub issue
+  1090).
+
+CHANGES FROM 2.5 TO 2.6, 05 October 2017
+
+* Add select-pane -T to set pane title.
+
+* Fix memory leak when lines with BCE are removed from history.
+
+* Fix (again) the "prefer unattached" behaviour of attach-session.
+
+* Reorder how keys are checked to allow keys to be specified that have a
+  leading escape. GitHub issue 1048.
+
+* Support REP escape sequence (\033[b).
+
+* Run alert hooks based on options rather than always, and allow further bells
+  even if there is an existing bell.
+
+* Add -d flag to display-panes to override display-panes-time.
+
+* Add selection_present format when in copy mode (allows key bindings that do
+  something different if there is a selection).
+
+* Add pane_at_left, pane_at_right, pane_at_top and pane_at_bottom formats.
+
+* Make bell, activity and silence alerting more consistent by: removing the
+  bell-on-alert option; adding activity-action and silence-action options with
+  the same possible values as the existing bell-action; adding a "both" value
+  for the visual-bell, visual-activity and visual-silence options to trigger
+  both a bell and a message.
+
+* Add a pane_pipe format to show if pipe-pane is active.
+
+* Block signals between forking and resetting signal handlers so that the
+  libevent signal handler doesn't get called in the child and incorrectly write
+  into the signal pipe that it still shares with the parent. GitHub issue 1001.
+
+* Allow punctuation in pane_current_command.
+
+* Add -c for respawn-pane and respawn-window.
+
+* Wait for any remaining data to flush when a pane is closed while pipe-pane is
+  in use.
+
+* Fix working out current client with no target. GitHub issue 995.
+
+* Try to fallback to C.UTF-8 as well as en_US.UTF-8 when looking for a UTF-8
+  locale.
+
+* Add user-keys option for user-defined key escape sequences (mapped to User0
+  to User999 keys).
+
+* Add pane-set-clipboard hook.
+
+* FAQ file has moved out of repository to online.
+
+* Fix problem with high CPU usage when a client dies unexpectedly. GitHub issue
+  941.
+
+* Do a dance on OS X 10.10 and above to return tmux to the user namespace,
+  allowing access to the clipboard.
+
+* Do not allow escape sequences which expect a specific terminator (APC, DSC,
+  OSC) to wait for forever - use a small timeout. This reduces the chance of
+  the pane locking up completely when sent garbage (cat /dev/random or
+  similar).
+
+* Support SIGUSR2 to toggle logging on a running server, also generate the
+  "out" log file with -vv not -vvvv.
+
+* Make set-clipboard a three state option: on (tmux both sends to outside
+  terminal and accepts from applications inside); external (tmux sends outside
+  but does not accept inside); and off.
+
+* Fix OSC 4 palette setting for bright foreground colours. GitHub issue 954.
+
+* Use setrgbf and setrgbb terminfo(5) capabilities to set RGB colours, if they
+  are available. (Tc is still supported as well.)
+
+* Fix redrawing panes when they are resized several times but end up with the
+  size unchanged (for example, splitw/resizep -Z/breakp).
+
+* Major rewrite of choose mode. Now includes preview, sorting, searching and
+  tagging; commands that can be executed directly from the mode (for example,
+  to delete one or more buffers); and filtering in tree mode.
+
+* choose-window and choose-session are now aliases of choose-tree (in the
+  command-alias option).
+
+* Support OSC 10 and OSC 11 to set foreground and background colours.
+
+* Check the U8 capability to determine whether to use UTF-8 line drawing
+  characters for ACS.
+
+* Some missing notifications for layout changes.
+
+* Control mode clients now do not affect session sizes until they issue
+  refresh-client -C. new-session -x and -y works with control clients even if
+  the session is not detached.
+
+* All new sessions that are unattached (whether with -d or started with no
+  terminal) are now created with size 80 x 24. Whether the status line is on or
+  off does not affect the size of new sessions until they are attached.
+
+* Expand formats in option names and add -F flag to expand them in option values.
+
+* Remember the search string for a pane even if copy mode is exited and entered
+  again.
+
+* Some further BCE fixes (scroll up, reverse index).
+
+* Improvements to how terminals are cleared (entirely or partially).
+
+CHANGES FROM 2.4 TO 2.5, 09 May 2017
+
+* Reset updated flag when restarting #() command so that new output is properly
+  recognised. GitHub issue 922.
+
+* Fix ECH with a background colour.
+
+* Do not rely on the terminal not moving the cursor after DL or EL.
+
+* Fix send-keys and send-prefix in copy-mode (so C-b C-b works). GitHub issue
+  905.
+
+* Set the current pane for rotate-window so it works in command sequences.
+
+* Add pane_mode format.
+
+* Differentiate M-Up from Escape+Up when possible (that is, in terminals with
+  xterm(1) style function keys). GitHub issue 907.
+
+* Add session_stack and window_stack_index formats.
+
+* Some new control mode notifications and corresponding hooks:
+  pane-mode-changed, window-pane-changed, client-session-changed,
+  session-window-changed.
+
+* Format pane_search_string for last search term while in copy mode (useful
+  with command-prompt -I).
+
+* Fix a problem with high CPU usage and multiple clients with #(). GitHub issue
+  889.
+
+* Fix UTF-8 combining characters in column 0.
+
+* Fix reference counting so that panes are properly destroyed and their
+  processes killed.
+
+* Clamp SU (CSI S) parameter to work around a bug in Konsole.
+
+* Tweak line wrapping in full width panes to play more nicely with terminal
+  copy and paste.
+
+* Fix when we emit SGR 0 in capture-pane -e.
+
+* Do not change TERM until after config file parsing has finished, so that
+  commands run inside the config file can use it to make decisions (typically
+  about default-terminal).
+
+* Make the initial client wait until config file parsing has finished to avoid
+  racing with commands.
+
+* Fix core when if-shell fails.
+
+* Only use ED to clear screen if the pane is at the bottom.
+
+* Fix multibyte UTF-8 output.
+
+* Code improvements around target (-t) resolution.
+
+* Change how the default target (for commands without -t) is managed across
+  command sequences: now it is set up at the start and commands are required
+  to update it if needed. Fixes binding command sequences to mouse keys.
+
+* Make if-shell from the config file work correctly.
+
+* Change to always check the root key table if no binding is found in the
+  current table (prefix table or copy-mode table or whatever). This means that
+  root key bindings will take effect even in copy mode, if not overridden by a
+  copy mode key binding.
+
+* Fix so that the history file works again.
+
+* Run config file without a client rather than using the first client, restores
+  previous behaviour.
+
+* If a #() command doesn't exit, continue to read from it and use its last full
+  line of output.
+
+* Handle slow terminals and fast output better: when the amount of data
+  outstanding gets too large, discard output until it is drained and we are
+  able to do a full redraw. Prevents tmux sitting on a huge buffer that the
+  terminal will take forever to consume.
+
+* Do not redraw a client unless we realistically think it can accept the data -
+  defer redraws until the client has nothing else waiting to write.
+
+CHANGES FROM 2.3 TO 2.4, 20 April 2017
 
 Incompatible Changes
 ====================
@@ -23,12 +733,12 @@ Incompatible Changes
     bind -Tcopy-mode C-Up send -X scroll-up
     bind -Tcopy-mode WheelUpPane send -N5 -X scroll-up
 
-  This changes allows the full command parser (including command sequences) and
+  These changes allows the full command parser (including command sequences) and
   command set to be used - for example, the normal command prompt with editing
   and history is now used for searching, jumping, and so on instead of a custom
   one. The default C-r binding is now:
 
-    bind -Tcopy-mode C-r command-prompt -p'search up' "send -X search-backward '%%'"
+    bind -Tcopy-mode C-r command-prompt -i -p'search up' "send -X search-backward-incremental '%%'"
 
   There are also some new commmands available with send -X, such as
   copy-pipe-and-cancel.
@@ -78,7 +788,7 @@ Normal Changes
   set -ag syntax should work without change).
 * There have been substantial performance improvements.
 
-CHANGES FROM 2.2 to 2.3 29 September 2016
+CHANGES FROM 2.2 TO 2.3, 29 September 2016
 
 Incompatible Changes
 ====================
@@ -99,7 +809,7 @@ Normal Changes
 * 'display-panes' can now accept a command to run, rather than always
   selecting the pane.
 
-CHANGES FROM 2.1 to 2.2 10 April 2016
+CHANGES FROM 2.1 TO 2.2, 10 April 2016
 
 Incompatible Changes
 ====================
@@ -164,8 +874,7 @@ Normal Changes
 * RGB (24bit) colour support.  The 'Tc' flag must be set in the external TERM
   entry (using terminal-overrides or a custom terminfo entry).
 
-
-CHANGES FROM 2.0 to 2.1 18 October 2015
+CHANGES FROM 2.0 TO 2.1, 18 October 2015
 
 Incompatible Changes
 ====================
@@ -216,7 +925,7 @@ Normal Changes
 * Copy mode is exited if the history is cleared whilst in copy-mode.
 * 'copy-mode' learned '-e' to exit copy-mode when scrolling to end.
 
-CHANGES FROM 1.9a to 2.0 6 March 2015
+CHANGES FROM 1.9a TO 2.0, 06 March 2015
 
 Incompatible Changes
 ====================
@@ -275,18 +984,18 @@ Normal Changes
 * 'split-window' and 'join-window' understand -b to create the pane to the left
   or above the target pane.
 
-CHANGES FROM 1.9 to 1.9a 22 February 2014
+CHANGES FROM 1.9 TO 1.9a, 22 February 2014
 
-NOTE:  This is a bug-fix release to address some important bugs which just
+NOTE: This is a bug-fix release to address some important bugs which just
 missed the 1.9 deadline, but were found afterwards.
 
 Normal Changes
 ==============
 
 * Fix crash due to uninitialized lastwp member of layout_cell
-* Fix -fg/-bg/-style with 256 colour terminals.  
+* Fix -fg/-bg/-style with 256 colour terminals.
 
-CHANGES FROM 1.8 to 1.9, 20 February 2014
+CHANGES FROM 1.8 TO 1.9, 20 February 2014
 
 NOTE:  This release has bumped the tmux protocol version.  It is therefore
 advised that the prior tmux server is restarted when this version of tmux is
@@ -341,7 +1050,7 @@ Normal Changes
 * tmux now supports 256 colours running under fbterm.
 * Many bug fixes!
 
-CHANGES FROM 1.7 to 1.8, 26 March 2013
+CHANGES FROM 1.7 TO 1.8, 26 March 2013
 
 Incompatible Changes
 ====================
@@ -392,7 +1101,7 @@ Normal Changes
 * Lots and lots of bug fixes, fixing memory-leaks, etc.
 * Various manpage improvements.
 
-CHANGES FROM 1.6 to 1.7, 13 October 2012
+CHANGES FROM 1.6 TO 1.7, 13 October 2012
 
 * tmux configuration files now support line-continuation with a "\" at the
   end of a line.
@@ -642,7 +1351,7 @@ CHANGES FROM 1.2 TO 1.3, 18 July 2010
 * Run job commands explicitly in the global environment (which can be modified
   with setenv -g), rather than with the environment tmux started with.
 * Use the machine's hostname as the default title, instead of an empty string.
-* Prevent double free if the window option remain-on-exit is set. 
+* Prevent double free if the window option remain-on-exit is set.
 * Key string conversions rewritten.
 * Mark zombie windows as dead in the choose-window list.
 * Tiled layout added.
@@ -744,7 +1453,7 @@ CHANGES FROM 1.0 TO 1.1, 05 November 2009
 * New lock-client (alias lockc), and lock-session (alias locks) commands to
   lock a particular client, or all clients attached to a session.
 * Support C-n/C-p/C-v/M-v with emacs keys in choice mode.
-* Use : for goto line rather than g in vi mode. 
+* Use : for goto line rather than g in vi mode.
 * Try to guess which client to use when no target client was specified. Finds
   the current session, and if only one client is present, use it. Otherwise,
   return the most recently used client.
@@ -783,7 +1492,7 @@ CHANGES FROM 1.0 TO 1.1, 05 November 2009
 * xterm-keys rewrite.
 * Additional code reduction, and bug fixes.
 
-CHANGES FROM 0.9 TO 1.0, 20 Sept 2009
+CHANGES FROM 0.9 TO 1.0, 20 September 2009
 
 * Option to alter the format of the window title set by tmux.
 * Backoff for a while after multiple incorrect password attempts.
@@ -875,7 +1584,7 @@ The list of older changes is below.
 
 * main-horizontal layout and main-pane-height option to match vertical.
 * New window option main-pane-width to set the width of the large left pane with
-  main-vertical (was left-vertical) layout. 
+  main-vertical (was left-vertical) layout.
 * Lots of layout cleanup. manual layout is now manual-vertical.
 
 16 May 2009

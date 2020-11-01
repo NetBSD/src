@@ -2,15 +2,18 @@
 
 # Obvious program stuff.
 bin_PROGRAMS = tmux
-CLEANFILES = tmux.1.mdoc tmux.1.man
+CLEANFILES = tmux.1.mdoc tmux.1.man cmd-parse.c
 
 # Distribution tarball options.
 EXTRA_DIST = \
-	CHANGES FAQ README TODO COPYING example_tmux.conf compat/*.[ch] \
+	CHANGES README README.ja COPYING example_tmux.conf \
 	osdep-*.c mdoc2man.awk tmux.1
+dist_EXTRA_tmux_SOURCES = compat/*.[ch]
 
 # Preprocessor flags.
-AM_CPPFLAGS += @XOPEN_DEFINES@ -DTMUX_CONF="\"$(sysconfdir)/tmux.conf\""
+AM_CPPFLAGS += @XOPEN_DEFINES@ \
+	-DTMUX_VERSION="\"@VERSION@\"" \
+	-DTMUX_CONF="\"$(sysconfdir)/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\""
 
 # Additional object files.
 LDADD = $(LIBOBJS)
@@ -66,13 +69,12 @@ dist_tmux_SOURCES = \
 	cmd-bind-key.c \
 	cmd-break-pane.c \
 	cmd-capture-pane.c \
-	cmd-choose-buffer.c \
-	cmd-choose-client.c \
 	cmd-choose-tree.c \
 	cmd-command-prompt.c \
 	cmd-confirm-before.c \
 	cmd-copy-mode.c \
 	cmd-detach-client.c \
+	cmd-display-menu.c \
 	cmd-display-message.c \
 	cmd-display-panes.c \
 	cmd-find-window.c \
@@ -89,12 +91,12 @@ dist_tmux_SOURCES = \
 	cmd-list-panes.c \
 	cmd-list-sessions.c \
 	cmd-list-windows.c \
-	cmd-list.c \
 	cmd-load-buffer.c \
 	cmd-lock-server.c \
 	cmd-move-window.c \
 	cmd-new-session.c \
 	cmd-new-window.c \
+	cmd-parse.y \
 	cmd-paste-buffer.c \
 	cmd-pipe-pane.c \
 	cmd-queue.c \
@@ -102,6 +104,7 @@ dist_tmux_SOURCES = \
 	cmd-rename-session.c \
 	cmd-rename-window.c \
 	cmd-resize-pane.c \
+	cmd-resize-window.c \
 	cmd-respawn-pane.c \
 	cmd-respawn-window.c \
 	cmd-rotate-window.c \
@@ -113,14 +116,12 @@ dist_tmux_SOURCES = \
 	cmd-send-keys.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
-	cmd-set-hook.c \
 	cmd-set-option.c \
 	cmd-show-environment.c \
 	cmd-show-messages.c \
 	cmd-show-options.c \
 	cmd-source-file.c \
 	cmd-split-window.c \
-	cmd-string.c \
 	cmd-swap-pane.c \
 	cmd-swap-window.c \
 	cmd-switch-client.c \
@@ -132,10 +133,11 @@ dist_tmux_SOURCES = \
 	control-notify.c \
 	control.c \
 	environ.c \
+	file.c \
 	format.c \
+	format-draw.c \
 	grid-view.c \
 	grid.c \
-	hooks.c \
 	input-keys.c \
 	input.c \
 	job.c \
@@ -145,13 +147,15 @@ dist_tmux_SOURCES = \
 	layout-set.c \
 	layout.c \
 	log.c \
+	menu.c \
+	mode-tree.c \
 	names.c \
 	notify.c \
 	options-table.c \
 	options.c \
 	paste.c \
 	proc.c \
-	pty.c \
+	regsub.c \
 	resize.c \
 	screen-redraw.c \
 	screen-write.c \
@@ -160,7 +164,7 @@ dist_tmux_SOURCES = \
 	server-fn.c \
 	server.c \
 	session.c \
-	signal.c \
+	spawn.c \
 	status.c \
 	style.c \
 	tmux.c \
@@ -170,9 +174,11 @@ dist_tmux_SOURCES = \
 	tty-term.c \
 	tty.c \
 	utf8.c \
-	window-choose.c \
+	window-buffer.c \
+	window-client.c \
 	window-clock.c \
 	window-copy.c \
+	window-tree.c \
 	window.c \
 	xmalloc.c \
 	xmalloc.h \
@@ -196,7 +202,7 @@ install-exec-hook:
 			>$(srcdir)/tmux.1.mdoc; \
 	else \
 		sed -e "s|@SYSCONFDIR@|$(sysconfdir)|g" $(srcdir)/tmux.1| \
-			$(AWK) -f$(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
+			$(AWK) -f $(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
 	fi
 	$(mkdir_p) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/tmux.1.@MANFORMAT@ \

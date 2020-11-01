@@ -174,22 +174,22 @@ environ_unset(struct environ *env, const char *name)
 void
 environ_update(struct options *oo, struct environ *src, struct environ *dst)
 {
-	struct environ_entry	*envent;
-	struct options_entry	*o;
-	u_int			 size, idx;
-	const char		*value;
+	struct environ_entry		*envent;
+	struct options_entry		*o;
+	struct options_array_item	*a;
+	union options_value		*ov;
 
 	o = options_get(oo, "update-environment");
-	if (o == NULL || options_array_size(o, &size) == -1)
+	if (o == NULL)
 		return;
-	for (idx = 0; idx < size; idx++) {
-		value = options_array_get(o, idx);
-		if (value == NULL)
-			continue;
-		if ((envent = environ_find(src, value)) == NULL)
-			environ_clear(dst, value);
+	a = options_array_first(o);
+	while (a != NULL) {
+		ov = options_array_item_value(a);
+		if ((envent = environ_find(src, ov->string)) == NULL)
+			environ_clear(dst, ov->string);
 		else
 			environ_set(dst, envent->name, "%s", envent->value);
+		a = options_array_next(a);
 	}
 }
 
@@ -208,9 +208,15 @@ environ_push(struct environ *env)
 
 /* Log the environment. */
 void
-environ_log(struct environ *env, const char *prefix)
+environ_log(struct environ *env, const char *fmt, ...)
 {
 	struct environ_entry	*envent;
+	va_list			 ap;
+	char			*prefix;
+
+	va_start(ap, fmt);
+	vasprintf(&prefix, fmt, ap);
+	va_end(ap);
 
 	RB_FOREACH(envent, environ, env) {
 		if (envent->value != NULL && *envent->name != '\0') {
@@ -218,11 +224,13 @@ environ_log(struct environ *env, const char *prefix)
 			    envent->value);
 		}
 	}
+
+	free(prefix);
 }
 
 /* Create initial environment for new child. */
 struct environ *
-environ_for_session(struct session *s)
+environ_for_session(struct session *s, int no_TERM)
 {
 	struct environ	*env;
 	const char	*value;
@@ -233,8 +241,10 @@ environ_for_session(struct session *s)
 	if (s != NULL)
 		environ_copy(s->environ, env);
 
-	value = options_get_string(global_options, "default-terminal");
-	environ_set(env, "TERM", "%s", value);
+	if (!no_TERM) {
+		value = options_get_string(global_options, "default-terminal");
+		environ_set(env, "TERM", "%s", value);
+	}
 
 	if (s != NULL)
 		idx = s->id;
