@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.90 2020/11/01 16:34:02 kim Exp $
+.\"	$NetBSD: find.1,v 1.91 2020/11/01 16:47:29 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -824,7 +824,7 @@ but do not print them.
 .It Li "find / \e( \-newer ttt \-or \-user wnj \e) \-ls \-exit 1"
 Same as above, but list the first file matching the criteria before exiting
 with a value of 1.
-.It Li "find . \-type f \-exec sh \-c 'file=\*[q]$1\*[q]; ...;' - {} \;"
+.It Li "find . \-type f \-exec sh \-c 'file=\*[q]$1\*[q]; ...;' - {} \e;"
 Perform an arbitrarily complex shell command for every file.
 .El
 .Sh SEE ALSO
