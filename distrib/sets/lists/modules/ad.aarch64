@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.7 2020/08/27 15:32:00 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.8 2020/11/01 18:51:34 pgoyette Exp $
 ./@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/bpfjit/bpfjit.kmod		modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod
@@ -31,6 +31,8 @@
 ./@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue/compat_netbsd32_mqueue.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_nfssrv		modules-base-kernel	kmod
