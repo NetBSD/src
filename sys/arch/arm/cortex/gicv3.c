@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.29 2020/11/01 11:17:20 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.30 2020/11/01 12:13:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.29 2020/11/01 11:17:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.30 2020/11/01 12:13:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -435,6 +435,7 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 		sgir |= ci->ci_gic_sgir;
 	}
 	icc_sgi1r_write(sgir);
+	isb();
 }
 
 static void
