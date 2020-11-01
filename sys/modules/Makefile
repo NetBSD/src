@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247 2020/10/14 10:26:59 ryo Exp $
+#	$NetBSD: Makefile,v 1.248 2020/11/01 18:51:02 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -298,6 +298,7 @@ SUBDIR+=	compat_netbsd32_40	compat_netbsd32_50
 SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
 SUBDIR+=	compat_netbsd32_90
 SUBDIR+=	compat_netbsd32_43
+SUBDIR+=	compat_netbsd32_coredump
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
