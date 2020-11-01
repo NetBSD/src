@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.51 2020/03/14 18:08:39 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.52 2020/11/01 20:58:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.51 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.52 2020/11/01 20:58:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -177,6 +177,16 @@ rump_scheduler_init(int numcpu)
 	}
 
 	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_SCHED);
+}
+
+void
+rump_schedlock_cv_signal(struct cpu_info *ci, struct rumpuser_cv *cv)
+{
+	struct rumpcpu *rcpu = cpuinfo_to_rumpcpu(ci);
+
+	rumpuser_mutex_enter_nowrap(rcpu->rcpu_mtx);
+	rumpuser_cv_signal(cv);
+	rumpuser_mutex_exit(rcpu->rcpu_mtx);
 }
 
 /*
