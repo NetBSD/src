@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.636 2020/11/01 18:45:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.637 2020/11/01 18:48:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.636 2020/11/01 18:45:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.637 2020/11/01 18:48:13 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2373,7 +2373,8 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
     for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
 	if (*p == '\\' &&
 	    (p[1] == ':' || p[1] == st->endc || p[1] == st->startc)) {
-	    copy = TRUE;
+	    if (!needSubst)
+		copy = TRUE;
 	    p++;
 	    continue;
 	}
