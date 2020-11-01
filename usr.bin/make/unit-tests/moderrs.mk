@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.18 2020/11/01 10:12:38 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.19 2020/11/01 10:46:34 rillig Exp $
 #
 # various modifier error tests
 
@@ -23,27 +23,27 @@ all:	mod-ifelse-parse
 all:	mod-remember-parse
 all:	mod-sysv-parse
 
-modunkn: print-name
+modunkn: print-header print-footer
 	@echo "Expect: Unknown modifier 'Z'"
 	@echo "VAR:Z=${VAR:Z}"
 
-modunknV: print-name
+modunknV: print-header print-footer
 	@echo "Expect: Unknown modifier 'Z'"
 	@echo "VAR:${MOD_UNKN}=${VAR:${MOD_UNKN}}"
 
-varterm: print-name
+varterm: print-header print-footer
 	@echo "Expect: Unclosed variable specification for VAR"
 	@echo VAR:S,V,v,=${VAR:S,V,v,
 
-vartermV: print-name
+vartermV: print-header print-footer
 	@echo "Expect: Unclosed variable specification for VAR"
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
-modtermV: print-name
+modtermV: print-header print-footer
 	@echo "Expect: Unfinished modifier for VAR (',' missing)"
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
-modloop: print-name
+modloop: print-header print-footer
 	@echo "Expect: 2 errors about missing @ delimiter"
 	@echo ${UNDEF:U1 2 3:@var}
 	@echo ${UNDEF:U1 2 3:@var@...}
@@ -55,11 +55,11 @@ modloop: print-name
 # braces must be balanced.
 # This is also contrary to the SysV modifier, where only the actually
 # used delimiter (either braces or parentheses) must be balanced.
-modloop-close: print-name
+modloop-close: print-header print-footer
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
-modwords: print-name
+modwords: print-header print-footer
 	@echo "Expect: 2 errors about missing ] delimiter"
 	@echo ${UNDEF:U1 2 3:[}
 	@echo ${UNDEF:U1 2 3:[#}
@@ -80,7 +80,7 @@ modwords: print-name
 	# which is empty.
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
-modexclam: print-name
+modexclam: print-header print-footer
 	@echo "Expect: 2 errors about missing ! delimiter"
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
@@ -89,7 +89,7 @@ modexclam: print-name
 	# and the above would have produced an "Unknown modifier '!'".
 	@echo ${!:L:!=exclam}
 
-mod-subst-delimiter: print-name
+mod-subst-delimiter: print-header print-footer
 	@echo ${VAR:S
 	@echo ${VAR:S,
 	@echo ${VAR:S,from
@@ -105,7 +105,7 @@ mod-subst-delimiter: print-name
 	@echo ${VAR:S,from,to,
 	@echo ${VAR:S,from,to,}
 
-mod-regex-delimiter: print-name
+mod-regex-delimiter: print-header print-footer
 	@echo ${VAR:C
 	@echo ${VAR:C,
 	@echo ${VAR:C,from
@@ -133,38 +133,40 @@ mod-regex-delimiter: print-name
 # mod-subst-chain).  Luckily the modifier :U does not make sense after :C,
 # therefore this case does not happen in practice.
 # The sub-modifier for the :C modifier would have to be chosen wisely.
-mod-regex-undefined-subexpression: print-name
+mod-regex-undefined-subexpression: print-header print-footer
 	@echo ${FIB:C,1(.*),one\1,}		# all ok
 	@echo ${FIB:C,1(.*)|2(.*),(\1)+(\2),:Q}	# no match for subexpression
 
-mod-ts-parse: print-name
+mod-ts-parse: print-header print-footer
 	@echo ${FIB:ts}
 	@echo ${FIB:ts\65}	# octal 065 == U+0035 == '5'
 	@echo ${FIB:ts\65oct}	# bad modifier
 	@echo ${FIB:tsxy}	# modifier too long
 
-mod-t-parse: print-name
+mod-t-parse: print-header print-footer
 	@echo ${FIB:t
 	@echo ${FIB:txy}
 	@echo ${FIB:t}
 	@echo ${FIB:t:M*}
 
-mod-ifelse-parse: print-name
+mod-ifelse-parse: print-header print-footer
 	@echo ${FIB:?
 	@echo ${FIB:?then
 	@echo ${FIB:?then:
 	@echo ${FIB:?then:else
 	@echo ${FIB:?then:else}
 
-mod-remember-parse: print-name
+mod-remember-parse: print-header print-footer
 	@echo ${FIB:_}		# ok
 	@echo ${FIB:__}		# modifier name too long
 
-mod-sysv-parse: print-name
+mod-sysv-parse: print-header print-footer
 	@echo ${FIB:3
 	@echo ${FIB:3=
 	@echo ${FIB:3=x3
 	@echo ${FIB:3=x3}	# ok
 
-print-name: .USEBEFORE
+print-header: .USEBEFORE
 	@echo $@:
+print-footer: .USE
+	@echo
