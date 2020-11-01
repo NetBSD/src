@@ -542,6 +542,19 @@ ps_mastersandbox(struct dhcpcd_ctx *ctx, const char *_pledge)
 	dropped = ps_dropprivs(ctx);
 	if (forked)
 		ctx->options |= DHCPCD_FORKED;
+
+	/*
+	 * If we don't have a root process, we cannot use syslog.
+	 * If it cannot be opened before chrooting then syslog(3) will fail.
+	 * openlog(3) does not return an error which doubly sucks.
+	 */
+	if (ctx->ps_root_fd == -1) {
+		unsigned int logopts = loggetopts();
+
+		logopts &= ~LOGERR_LOG;
+		logsetopts(logopts);
+	}
+
 	if (dropped == -1) {
 		logerr("%s: ps_dropprivs", __func__);
 		return -1;
