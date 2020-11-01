@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.354 2020/04/26 12:15:37 martin Exp $
+#	$NetBSD: BRANCHES,v 1.355 2020/11/01 15:41:56 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -722,6 +722,21 @@ Notes:		No longer active due to the lack of time. If you plan to
 		After the work is done, you are required to test the branch
 		(before the merge to -current) with an interop IPv6 test.
 		More info at: http://www.tahi.org/
+
+Branch:		thorpej-futex
+Description:	Overhaul of futex operations to fix thread priority issues
+Status:		Active
+Start Date:	Sun Nov 1 2020
+End Date:
+Base Tag:	thorpej-futex-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys src/tests/lib/libc/sys
+Note:		Normal futex operataions pass the test suite, but there are
+		issues with Linux compatibility currently, that need to be
+		addressed before merging.  Also includes new NetBSD extensions
+		to the futex interface to support reader/writer locks.  Those
+		changes can be discounted in favor of fixing the standard
+		futex operations with respect to Linux compatibility.
 
 Branch:  	wrstuden-fixsa
 Description:	Fix a number of issues present with Scheduler Activations.
