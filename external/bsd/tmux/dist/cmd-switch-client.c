@@ -34,12 +34,11 @@ const struct cmd_entry cmd_switch_client_entry = {
 	.name = "switch-client",
 	.alias = "switchc",
 
-	.args = { "lc:Enpt:rT:", 0, 0 },
-	.usage = "[-Elnpr] [-c target-client] [-t target-session] "
+	.args = { "lc:Enpt:rT:Z", 0, 0 },
+	.usage = "[-ElnprZ] [-c target-client] [-t target-session] "
 		 "[-T key-table]",
 
-	.cflag = CMD_CLIENT,
-	.tflag = CMD_SESSION_WITHPANE,
+	/* -t is special */
 
 	.flags = CMD_READONLY,
 	.exec = cmd_switch_client_exec
@@ -49,12 +48,33 @@ static enum cmd_retval
 cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct cmd_state	*state = &item->state;
-	struct client		*c = state->c;
-	struct session		*s = item->state.tflag.s;
+	const char		*tflag = args_get(args, 't');
+	enum cmd_find_type	 type;
+	int			 flags;
+	struct client		*c;
+	struct session		*s;
+	struct winlink		*wl;
+	struct window		*w;
 	struct window_pane	*wp;
 	const char		*tablename;
 	struct key_table	*table;
+
+	if ((c = cmd_find_client(item, args_get(args, 'c'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
+
+	if (tflag != NULL && tflag[strcspn(tflag, ":.%")] != '\0') {
+		type = CMD_FIND_PANE;
+		flags = 0;
+	} else {
+		type = CMD_FIND_SESSION;
+		flags = CMD_FIND_PREFER_UNATTACHED;
+	}
+	if (cmd_find_target(&item->target, item, tflag, type, flags) != 0)
+		return (CMD_RETURN_ERROR);
+	s = item->target.s;
+	wl = item->target.wl;
+	w = wl->window;
+	wp = item->target.wp;
 
 	if (args_has(args, 'r'))
 		c->flags ^= CLIENT_READONLY;
@@ -94,11 +114,17 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	} else {
 		if (item->client == NULL)
 			return (CMD_RETURN_NORMAL);
-		if (state->tflag.wl != NULL) {
-			wp = state->tflag.wp;
-			if (wp != NULL)
-				window_set_active_pane(wp->window, wp);
-			session_set_current(s, state->tflag.wl);
+		if (wl != NULL && wp != NULL) {
+			if (window_push_zoom(w, args_has(self->args, 'Z')))
+				server_redraw_window(w);
+			window_redraw_active_switch(w, wp);
+			window_set_active_pane(w, wp, 1);
+			if (window_pop_zoom(w))
+				server_redraw_window(w);
+		}
+		if (wl != NULL) {
+			session_set_current(s, wl);
+			cmd_find_from_session(&item->shared->current, s, 0);
 		}
 	}
 
@@ -108,16 +134,19 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	if (c->session != NULL && c->session != s)
 		c->last_session = c->session;
 	c->session = s;
-	if (!item->repeat)
+	if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 		server_client_set_key_table(c, NULL);
+	tty_update_client_offset(c);
 	status_timer_start(c);
+	notify_client("client-session-changed", c);
 	session_update_activity(s, NULL);
 	gettimeofday(&s->last_attached_time, NULL);
 
-	recalculate_sizes();
 	server_check_unattached();
 	server_redraw_client(c);
 	s->curw->flags &= ~WINLINK_ALERTFLAGS;
+	s->curw->window->latest = c;
+	recalculate_sizes();
 	alerts_check_session(s);
 
 	return (CMD_RETURN_NORMAL);

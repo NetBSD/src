@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -34,11 +35,11 @@ const struct cmd_entry cmd_join_pane_entry = {
 	.name = "join-pane",
 	.alias = "joinp",
 
-	.args = { "bdhvp:l:s:t:", 0, 0 },
-	.usage = "[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
+	.args = { "bdfhvp:l:s:t:", 0, 0 },
+	.usage = "[-bdfhv] [-l size] " CMD_SRCDST_PANE_USAGE,
 
-	.sflag = CMD_PANE_MARKED,
-	.tflag = CMD_PANE,
+	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = 0,
 	.exec = cmd_join_pane_exec
@@ -51,8 +52,8 @@ const struct cmd_entry cmd_move_pane_entry = {
 	.args = { "bdhvp:l:s:t:", 0, 0 },
 	.usage = "[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
 
-	.sflag = CMD_PANE,
-	.tflag = CMD_PANE,
+	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = 0,
 	.exec = cmd_join_pane_exec
@@ -62,30 +63,33 @@ static enum cmd_retval
 cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct cmd_find_state	*current = &item->shared->current;
 	struct session		*dst_s;
 	struct winlink		*src_wl, *dst_wl;
 	struct window		*src_w, *dst_w;
 	struct window_pane	*src_wp, *dst_wp;
-	char			*cause;
-	int			 size, percentage, dst_idx;
+	char			*cause, *copy;
+	const char		*errstr, *p;
+	size_t			 plen;
+	int			 size, percentage, dst_idx, not_same_window;
+	int			 flags;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
-	int			 not_same_window;
 
 	if (self->entry == &cmd_join_pane_entry)
 		not_same_window = 1;
 	else
 		not_same_window = 0;
 
-	dst_s = item->state.tflag.s;
-	dst_wl = item->state.tflag.wl;
-	dst_wp = item->state.tflag.wp;
+	dst_s = item->target.s;
+	dst_wl = item->target.wl;
+	dst_wp = item->target.wp;
 	dst_w = dst_wl->window;
 	dst_idx = dst_wl->idx;
 	server_unzoom_window(dst_w);
 
-	src_wl = item->state.sflag.wl;
-	src_wp = item->state.sflag.wp;
+	src_wl = item->source.wl;
+	src_wp = item->source.wp;
 	src_w = src_wl->window;
 	server_unzoom_window(src_w);
 
@@ -103,12 +107,28 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		type = LAYOUT_LEFTRIGHT;
 
 	size = -1;
-	if (args_has(args, 'l')) {
-		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
-		if (cause != NULL) {
-			cmdq_error(item, "size %s", cause);
-			free(cause);
-			return (CMD_RETURN_ERROR);
+	if ((p = args_get(args, 'l')) != NULL) {
+		plen = strlen(p);
+		if (p[plen - 1] == '%') {
+			copy = xstrdup(p);
+			copy[plen - 1] = '\0';
+			percentage = strtonum(copy, 0, INT_MAX, &errstr);
+			free(copy);
+			if (errstr != NULL) {
+				cmdq_error(item, "percentage %s", errstr);
+				return (CMD_RETURN_ERROR);
+			}
+			if (type == LAYOUT_TOPBOTTOM)
+				size = (dst_wp->sy * percentage) / 100;
+			else
+				size = (dst_wp->sx * percentage) / 100;
+		} else {
+			size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
+			if (cause != NULL) {
+				cmdq_error(item, "size %s", cause);
+				free(cause);
+				return (CMD_RETURN_ERROR);
+			}
 		}
 	} else if (args_has(args, 'p')) {
 		percentage = args_strtonum(args, 'p', 0, 100, &cause);
@@ -122,7 +142,14 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else
 			size = (dst_wp->sx * percentage) / 100;
 	}
-	lc = layout_split_pane(dst_wp, type, size, args_has(args, 'b'), 0);
+
+	flags = 0;
+	if (args_has(args, 'b'))
+		flags |= SPAWN_BEFORE;
+	if (args_has(args, 'f'))
+		flags |= SPAWN_FULLSIZE;
+
+	lc = layout_split_pane(dst_wp, type, size, flags);
 	if (lc == NULL) {
 		cmdq_error(item, "create pane failed: pane too small");
 		return (CMD_RETURN_ERROR);
@@ -134,6 +161,8 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
 	src_wp->window = dst_w;
+	options_set_parent(src_wp->options, dst_w->options);
+	src_wp->flags |= PANE_STYLECHANGED;
 	TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 	layout_assign_pane(lc, src_wp);
 
@@ -143,8 +172,9 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	server_redraw_window(dst_w);
 
 	if (!args_has(args, 'd')) {
-		window_set_active_pane(dst_w, src_wp);
+		window_set_active_pane(dst_w, src_wp, 1);
 		session_select(dst_s, dst_idx);
+		cmd_find_from_session(current, dst_s, 0);
 		server_redraw_session(dst_s);
 	} else
 		server_status_session(dst_s);

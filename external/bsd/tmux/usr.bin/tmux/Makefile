@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2017/04/23 18:22:36 christos Exp $
+# $NetBSD: Makefile,v 1.19.4.1 2020/11/01 18:08:00 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -22,13 +22,12 @@ cmd-attach-session.c \
 cmd-bind-key.c \
 cmd-break-pane.c \
 cmd-capture-pane.c \
-cmd-choose-buffer.c \
-cmd-choose-client.c \
 cmd-choose-tree.c \
 cmd-command-prompt.c \
 cmd-confirm-before.c \
 cmd-copy-mode.c \
 cmd-detach-client.c \
+cmd-display-menu.c \
 cmd-display-message.c \
 cmd-display-panes.c \
 cmd-find-window.c \
@@ -45,12 +44,12 @@ cmd-list-keys.c \
 cmd-list-panes.c \
 cmd-list-sessions.c \
 cmd-list-windows.c \
-cmd-list.c \
 cmd-load-buffer.c \
 cmd-lock-server.c \
 cmd-move-window.c \
 cmd-new-session.c \
 cmd-new-window.c \
+cmd-parse.y \
 cmd-paste-buffer.c \
 cmd-pipe-pane.c \
 cmd-queue.c \
@@ -58,6 +57,7 @@ cmd-refresh-client.c \
 cmd-rename-session.c \
 cmd-rename-window.c \
 cmd-resize-pane.c \
+cmd-resize-window.c \
 cmd-respawn-pane.c \
 cmd-respawn-window.c \
 cmd-rotate-window.c \
@@ -69,14 +69,12 @@ cmd-select-window.c \
 cmd-send-keys.c \
 cmd-set-buffer.c \
 cmd-set-environment.c \
-cmd-set-hook.c \
 cmd-set-option.c \
 cmd-show-environment.c \
 cmd-show-messages.c \
 cmd-show-options.c \
 cmd-source-file.c \
 cmd-split-window.c \
-cmd-string.c \
 cmd-swap-pane.c \
 cmd-swap-window.c \
 cmd-switch-client.c \
@@ -87,10 +85,11 @@ colour.c \
 control-notify.c \
 control.c \
 environ.c \
+file.c \
 format.c \
+format-draw.c \
 grid-view.c \
 grid.c \
-hooks.c \
 input-keys.c \
 input.c \
 job.c \
@@ -100,6 +99,8 @@ layout-custom.c \
 layout-set.c \
 layout.c \
 log.c \
+menu.c \
+mode-tree.c \
 names.c \
 notify.c \
 options-table.c \
@@ -107,7 +108,7 @@ options.c \
 osdep-netbsd.c \
 paste.c \
 proc.c \
-pty.c \
+regsub.c \
 resize.c \
 screen-redraw.c \
 screen-write.c \
@@ -116,7 +117,7 @@ server-client.c \
 server-fn.c \
 server.c \
 session.c \
-signal.c \
+spawn.c \
 status.c \
 style.c \
 tmux.c \
@@ -125,9 +126,11 @@ tty-keys.c \
 tty-term.c \
 tty.c \
 utf8.c \
-window-choose.c \
+window-buffer.c \
+window-client.c \
 window-clock.c \
 window-copy.c \
+window-tree.c \
 window.c \
 xmalloc.c \
 xterm-keys.c
@@ -138,6 +141,7 @@ CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 # Files in compat/
 SRCS+=		imsg-buffer.c
 SRCS+=		imsg.c
+SRCS+=		fdforkpty.c
 SRCS+=		freezero.c
 SRCS+=		explicit_bzero.c
 SRCS+=		recallocarray.c
@@ -155,12 +159,13 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 
 CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
--DHAVE_BITSTRING_H=1 \
 -DHAVE_B64_NTOP=1 \
+-DHAVE_BITSTRING_H=1 \
+-DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
 -DHAVE_CLOSEFROM=1 \
--DHAVE_DECL_OPTIND=1 \
--DHAVE_DECL_OPTRESET=1 \
+-DHAVE_CURSES_H=1 \
+-DHAVE_DAEMON=1 \
 -DHAVE_DIRENT_H=1 \
 -DHAVE_FCNTL_CLOSEM=1 \
 -DHAVE_FCNTL_H=1 \
@@ -171,7 +176,7 @@ CPPFLAGS+=	\
 -DHAVE_GETOPT=1 \
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
--DHAVE_INTTYPES_H=1 \
+-DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
 -DHAVE_PROC_PID=1 \
@@ -180,13 +185,15 @@ CPPFLAGS+=	\
 -DHAVE_SETENV=1 \
 -DHAVE_SETPROCTITLE=1 \
 -DHAVE_STDINT_H=1 \
--DHAVE_STDINT_H=1 \
 -DHAVE_STDLIB_H=1 \
 -DHAVE_STRCASESTR=1 \
 -DHAVE_STRINGS_H=1 \
 -DHAVE_STRING_H=1 \
 -DHAVE_STRLCAT=1 \
--DHAVE_STRLCPY= \
+-DHAVE_STRLCPY=1 \
+-DHAVE_STRNDUP=1 \
+-DHAVE_STRSEP=1 \
+-DHAVE_STRTONUM=1 \
 -DHAVE_SYSCONF=1 \
 -DHAVE_SYS_DIR_H=1 \
 -DHAVE_SYS_STAT_H=1 \
@@ -201,13 +208,13 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 2.4\" \
+-DPACKAGE_STRING=\"tmux\ 3.1c\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"2.4\" \
+-DPACKAGE_VERSION=\"3.1c\" \
 -DSTDC_HEADERS=1 \
--DTMUX_CONF="\"/etc/tmux.conf\"" \
--DVERSION=\"2.4\" \
+-DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
+-DTMUX_VERSION=\"3.1c\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_OPENBSD_SOURCE \
@@ -215,14 +222,10 @@ CPPFLAGS+=	\
 -D_TANDEM_SOURCE=1 \
 -D__EXTENSIONS__=1
 
-
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c += -Wno-format-nonliteral
-#COPTS.cmd-display-message.c += -Wno-format-nonliteral
-#COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
-#COPTS.server-client.c += -Wno-format-nonliteral
-#COPTS.status.c += -Wno-format-nonliteral
+COPTS.utempter.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -31,68 +31,162 @@
 
 static enum cmd_retval	cmd_source_file_exec(struct cmd *, struct cmdq_item *);
 
-static enum cmd_retval	cmd_source_file_done(struct cmdq_item *, void *);
-
 const struct cmd_entry cmd_source_file_entry = {
 	.name = "source-file",
 	.alias = "source",
 
-	.args = { "q", 1, 1 },
-	.usage = "[-q] path",
+	.args = { "nqv", 1, -1 },
+	.usage = "[-nqv] path ...",
 
 	.flags = 0,
 	.exec = cmd_source_file_exec
 };
 
-static enum cmd_retval
-cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
-{
-	struct args		*args = self->args;
-	int			 quiet = args_has(args, 'q');
-	struct client		*c = item->client;
-	struct cmdq_item	*new_item;
-	enum cmd_retval		 retval;
-	char			*pattern, *tmp;
-	const char		*path = args->argv[0];
-	glob_t			 g;
-	u_int			 i;
+struct cmd_source_file_data {
+	struct cmdq_item	 *item;
+	int			  flags;
 
-	if (*path == '/')
-		pattern = xstrdup(path);
-	else {
-		utf8_stravis(&tmp, server_client_get_cwd(c), VIS_GLOB);
-		xasprintf(&pattern, "%s/%s", tmp, path);
-		free(tmp);
-	}
-	log_debug("%s: %s", __func__, pattern);
+	struct cmdq_item	 *after;
+	enum cmd_retval		  retval;
 
-	retval = CMD_RETURN_NORMAL;
-	if (glob(pattern, 0, NULL, &g) != 0) {
-		if (!quiet || errno != ENOENT) {
-			cmdq_error(item, "%s: %s", path, strerror(errno));
-			retval = CMD_RETURN_ERROR;
-		}
-		free(pattern);
-		return (retval);
-	}
-	free(pattern);
-
-	for (i = 0; i < (u_int)g.gl_pathc; i++) {
-		if (load_cfg(g.gl_pathv[i], c, item, quiet) < 0)
-			retval = CMD_RETURN_ERROR;
-	}
-	if (cfg_finished) {
-		new_item = cmdq_get_callback(cmd_source_file_done, NULL);
-		cmdq_insert_after(item, new_item);
-	}
-
-	globfree(&g);
-	return (retval);
-}
+	u_int			  current;
+	char			**files;
+	u_int			  nfiles;
+};
 
 static enum cmd_retval
-cmd_source_file_done(struct cmdq_item *item, __unused void *data)
+cmd_source_file_complete_cb(struct cmdq_item *item, __unused void *data)
 {
 	cfg_print_causes(item);
 	return (CMD_RETURN_NORMAL);
+}
+
+static void
+cmd_source_file_complete(struct client *c, struct cmd_source_file_data *cdata)
+{
+	struct cmdq_item	*new_item;
+
+	if (cfg_finished) {
+		if (cdata->retval == CMD_RETURN_ERROR && c->session == NULL)
+			c->retval = 1;
+		new_item = cmdq_get_callback(cmd_source_file_complete_cb, NULL);
+		cmdq_insert_after(cdata->after, new_item);
+	}
+
+	free(cdata->files);
+	free(cdata);
+}
+
+static void
+cmd_source_file_done(struct client *c, const char *path, int error,
+    int closed, struct evbuffer *buffer, void *data)
+{
+	struct cmd_source_file_data	*cdata = data;
+	struct cmdq_item		*item = cdata->item;
+	void				*bdata = EVBUFFER_DATA(buffer);
+	size_t				 bsize = EVBUFFER_LENGTH(buffer);
+	u_int				 n;
+	struct cmdq_item		*new_item;
+
+	if (!closed)
+		return;
+
+	if (error != 0)
+		cmdq_error(item, "%s: %s", path, strerror(error));
+	else if (bsize != 0) {
+		if (load_cfg_from_buffer(bdata, bsize, path, c, cdata->after,
+		    cdata->flags, &new_item) < 0)
+			cdata->retval = CMD_RETURN_ERROR;
+		else if (new_item != NULL)
+			cdata->after = new_item;
+	}
+
+	n = ++cdata->current;
+	if (n < cdata->nfiles)
+		file_read(c, cdata->files[n], cmd_source_file_done, cdata);
+	else {
+		cmd_source_file_complete(c, cdata);
+		cmdq_continue(item);
+	}
+}
+
+static void
+cmd_source_file_add(struct cmd_source_file_data *cdata, const char *path)
+{
+	log_debug("%s: %s", __func__, path);
+	cdata->files = xreallocarray(cdata->files, cdata->nfiles + 1,
+	    sizeof *cdata->files);
+	cdata->files[cdata->nfiles++] = xstrdup(path);
+}
+
+static enum cmd_retval
+cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
+{
+	struct args			*args = self->args;
+	struct cmd_source_file_data	*cdata;
+	struct client			*c = item->client;
+	enum cmd_retval			 retval = CMD_RETURN_NORMAL;
+	char				*pattern, *cwd;
+	const char			*path, *error;
+	glob_t				 g;
+	int				 i, result;
+	u_int				 j;
+
+	cdata = xcalloc(1, sizeof *cdata);
+	cdata->item = item;
+
+	if (args_has(args, 'q'))
+		cdata->flags |= CMD_PARSE_QUIET;
+	if (args_has(args, 'n'))
+		cdata->flags |= CMD_PARSE_PARSEONLY;
+	if (args_has(args, 'v'))
+		cdata->flags |= CMD_PARSE_VERBOSE;
+
+	utf8_stravis(&cwd, server_client_get_cwd(c, NULL), VIS_GLOB);
+
+	for (i = 0; i < args->argc; i++) {
+		path = args->argv[i];
+		if (strcmp(path, "-") == 0) {
+			cmd_source_file_add(cdata, "-");
+			continue;
+		}
+
+		if (*path == '/')
+			pattern = xstrdup(path);
+		else
+			xasprintf(&pattern, "%s/%s", cwd, path);
+		log_debug("%s: %s", __func__, pattern);
+
+		if ((result = glob(pattern, 0, NULL, &g)) != 0) {
+			if (result != GLOB_NOMATCH ||
+			    (~cdata->flags & CMD_PARSE_QUIET)) {
+				if (result == GLOB_NOMATCH)
+					error = strerror(ENOENT);
+				else if (result == GLOB_NOSPACE)
+					error = strerror(ENOMEM);
+				else
+					error = strerror(EINVAL);
+				cmdq_error(item, "%s: %s", path, error);
+				retval = CMD_RETURN_ERROR;
+			}
+			free(pattern);
+			continue;
+		}
+		free(pattern);
+
+		for (j = 0; j < g.gl_pathc; j++)
+			cmd_source_file_add(cdata, g.gl_pathv[j]);
+	}
+
+	cdata->after = item;
+	cdata->retval = retval;
+
+	if (cdata->nfiles != 0) {
+		file_read(c, cdata->files[0], cmd_source_file_done, cdata);
+		retval = CMD_RETURN_WAIT;
+	} else
+		cmd_source_file_complete(c, cdata);
+
+	free(cwd);
+	return (retval);
 }

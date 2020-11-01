@@ -68,36 +68,36 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_CNORM] = { TTYCODE_STRING, "cnorm" },
 	[TTYC_COLORS] = { TTYCODE_NUMBER, "colors" },
 	[TTYC_CR] = { TTYCODE_STRING, "Cr" },
-	[TTYC_CS] = { TTYCODE_STRING, "Cs" },
 	[TTYC_CSR] = { TTYCODE_STRING, "csr" },
-	[TTYC_CUB] = { TTYCODE_STRING, "cub" },
+	[TTYC_CS] = { TTYCODE_STRING, "Cs" },
 	[TTYC_CUB1] = { TTYCODE_STRING, "cub1" },
-	[TTYC_CUD] = { TTYCODE_STRING, "cud" },
+	[TTYC_CUB] = { TTYCODE_STRING, "cub" },
 	[TTYC_CUD1] = { TTYCODE_STRING, "cud1" },
-	[TTYC_CUF] = { TTYCODE_STRING, "cuf" },
+	[TTYC_CUD] = { TTYCODE_STRING, "cud" },
 	[TTYC_CUF1] = { TTYCODE_STRING, "cuf1" },
+	[TTYC_CUF] = { TTYCODE_STRING, "cuf" },
 	[TTYC_CUP] = { TTYCODE_STRING, "cup" },
-	[TTYC_CUU] = { TTYCODE_STRING, "cuu" },
 	[TTYC_CUU1] = { TTYCODE_STRING, "cuu1" },
+	[TTYC_CUU] = { TTYCODE_STRING, "cuu" },
 	[TTYC_CVVIS] = { TTYCODE_STRING, "cvvis" },
-	[TTYC_DCH] = { TTYCODE_STRING, "dch" },
 	[TTYC_DCH1] = { TTYCODE_STRING, "dch1" },
+	[TTYC_DCH] = { TTYCODE_STRING, "dch" },
 	[TTYC_DIM] = { TTYCODE_STRING, "dim" },
-	[TTYC_DL] = { TTYCODE_STRING, "dl" },
 	[TTYC_DL1] = { TTYCODE_STRING, "dl1" },
+	[TTYC_DL] = { TTYCODE_STRING, "dl" },
 	[TTYC_E3] = { TTYCODE_STRING, "E3" },
 	[TTYC_ECH] = { TTYCODE_STRING, "ech" },
 	[TTYC_ED] = { TTYCODE_STRING, "ed" },
-	[TTYC_EL] = { TTYCODE_STRING, "el" },
 	[TTYC_EL1] = { TTYCODE_STRING, "el1" },
+	[TTYC_EL] = { TTYCODE_STRING, "el" },
 	[TTYC_ENACS] = { TTYCODE_STRING, "enacs" },
 	[TTYC_FSL] = { TTYCODE_STRING, "fsl" },
 	[TTYC_HOME] = { TTYCODE_STRING, "home" },
 	[TTYC_HPA] = { TTYCODE_STRING, "hpa" },
-	[TTYC_ICH] = { TTYCODE_STRING, "ich" },
 	[TTYC_ICH1] = { TTYCODE_STRING, "ich1" },
-	[TTYC_IL] = { TTYCODE_STRING, "il" },
+	[TTYC_ICH] = { TTYCODE_STRING, "ich" },
 	[TTYC_IL1] = { TTYCODE_STRING, "il1" },
+	[TTYC_IL] = { TTYCODE_STRING, "il" },
 	[TTYC_INDN] = { TTYCODE_STRING, "indn" },
 	[TTYC_INVIS] = { TTYCODE_STRING, "invis" },
 	[TTYC_KCBT] = { TTYCODE_STRING, "kcbt" },
@@ -112,20 +112,19 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KDC6] = { TTYCODE_STRING, "kDC6" },
 	[TTYC_KDC7] = { TTYCODE_STRING, "kDC7" },
 	[TTYC_KDCH1] = { TTYCODE_STRING, "kdch1" },
-	[TTYC_KDN2] = { TTYCODE_STRING, "kDN" },
+	[TTYC_KDN2] = { TTYCODE_STRING, "kDN" }, /* not kDN2 */
 	[TTYC_KDN3] = { TTYCODE_STRING, "kDN3" },
 	[TTYC_KDN4] = { TTYCODE_STRING, "kDN4" },
 	[TTYC_KDN5] = { TTYCODE_STRING, "kDN5" },
 	[TTYC_KDN6] = { TTYCODE_STRING, "kDN6" },
 	[TTYC_KDN7] = { TTYCODE_STRING, "kDN7" },
-	[TTYC_KEND] = { TTYCODE_STRING, "kend" },
 	[TTYC_KEND2] = { TTYCODE_STRING, "kEND" },
 	[TTYC_KEND3] = { TTYCODE_STRING, "kEND3" },
 	[TTYC_KEND4] = { TTYCODE_STRING, "kEND4" },
 	[TTYC_KEND5] = { TTYCODE_STRING, "kEND5" },
 	[TTYC_KEND6] = { TTYCODE_STRING, "kEND6" },
 	[TTYC_KEND7] = { TTYCODE_STRING, "kEND7" },
-	[TTYC_KF1] = { TTYCODE_STRING, "kf1" },
+	[TTYC_KEND] = { TTYCODE_STRING, "kend" },
 	[TTYC_KF10] = { TTYCODE_STRING, "kf10" },
 	[TTYC_KF11] = { TTYCODE_STRING, "kf11" },
 	[TTYC_KF12] = { TTYCODE_STRING, "kf12" },
@@ -136,7 +135,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KF17] = { TTYCODE_STRING, "kf17" },
 	[TTYC_KF18] = { TTYCODE_STRING, "kf18" },
 	[TTYC_KF19] = { TTYCODE_STRING, "kf19" },
-	[TTYC_KF2] = { TTYCODE_STRING, "kf2" },
+	[TTYC_KF1] = { TTYCODE_STRING, "kf1" },
 	[TTYC_KF20] = { TTYCODE_STRING, "kf20" },
 	[TTYC_KF21] = { TTYCODE_STRING, "kf21" },
 	[TTYC_KF22] = { TTYCODE_STRING, "kf22" },
@@ -147,7 +146,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KF27] = { TTYCODE_STRING, "kf27" },
 	[TTYC_KF28] = { TTYCODE_STRING, "kf28" },
 	[TTYC_KF29] = { TTYCODE_STRING, "kf29" },
-	[TTYC_KF3] = { TTYCODE_STRING, "kf3" },
+	[TTYC_KF2] = { TTYCODE_STRING, "kf2" },
 	[TTYC_KF30] = { TTYCODE_STRING, "kf30" },
 	[TTYC_KF31] = { TTYCODE_STRING, "kf31" },
 	[TTYC_KF32] = { TTYCODE_STRING, "kf32" },
@@ -158,7 +157,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KF37] = { TTYCODE_STRING, "kf37" },
 	[TTYC_KF38] = { TTYCODE_STRING, "kf38" },
 	[TTYC_KF39] = { TTYCODE_STRING, "kf39" },
-	[TTYC_KF4] = { TTYCODE_STRING, "kf4" },
+	[TTYC_KF3] = { TTYCODE_STRING, "kf3" },
 	[TTYC_KF40] = { TTYCODE_STRING, "kf40" },
 	[TTYC_KF41] = { TTYCODE_STRING, "kf41" },
 	[TTYC_KF42] = { TTYCODE_STRING, "kf42" },
@@ -169,7 +168,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KF47] = { TTYCODE_STRING, "kf47" },
 	[TTYC_KF48] = { TTYCODE_STRING, "kf48" },
 	[TTYC_KF49] = { TTYCODE_STRING, "kf49" },
-	[TTYC_KF5] = { TTYCODE_STRING, "kf5" },
+	[TTYC_KF4] = { TTYCODE_STRING, "kf4" },
 	[TTYC_KF50] = { TTYCODE_STRING, "kf50" },
 	[TTYC_KF51] = { TTYCODE_STRING, "kf51" },
 	[TTYC_KF52] = { TTYCODE_STRING, "kf52" },
@@ -180,11 +179,12 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KF57] = { TTYCODE_STRING, "kf57" },
 	[TTYC_KF58] = { TTYCODE_STRING, "kf58" },
 	[TTYC_KF59] = { TTYCODE_STRING, "kf59" },
-	[TTYC_KF6] = { TTYCODE_STRING, "kf6" },
+	[TTYC_KF5] = { TTYCODE_STRING, "kf5" },
 	[TTYC_KF60] = { TTYCODE_STRING, "kf60" },
 	[TTYC_KF61] = { TTYCODE_STRING, "kf61" },
 	[TTYC_KF62] = { TTYCODE_STRING, "kf62" },
 	[TTYC_KF63] = { TTYCODE_STRING, "kf63" },
+	[TTYC_KF6] = { TTYCODE_STRING, "kf6" },
 	[TTYC_KF7] = { TTYCODE_STRING, "kf7" },
 	[TTYC_KF8] = { TTYCODE_STRING, "kf8" },
 	[TTYC_KF9] = { TTYCODE_STRING, "kf9" },
@@ -202,6 +202,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KIC6] = { TTYCODE_STRING, "kIC6" },
 	[TTYC_KIC7] = { TTYCODE_STRING, "kIC7" },
 	[TTYC_KICH1] = { TTYCODE_STRING, "kich1" },
+	[TTYC_KIND] = { TTYCODE_STRING, "kind" },
 	[TTYC_KLFT2] = { TTYCODE_STRING, "kLFT" },
 	[TTYC_KLFT3] = { TTYCODE_STRING, "kLFT3" },
 	[TTYC_KLFT4] = { TTYCODE_STRING, "kLFT4" },
@@ -229,7 +230,8 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_KRIT5] = { TTYCODE_STRING, "kRIT5" },
 	[TTYC_KRIT6] = { TTYCODE_STRING, "kRIT6" },
 	[TTYC_KRIT7] = { TTYCODE_STRING, "kRIT7" },
-	[TTYC_KUP2] = { TTYCODE_STRING, "kUP" },
+	[TTYC_KRI] = { TTYCODE_STRING, "kri" },
+	[TTYC_KUP2] = { TTYCODE_STRING, "kUP" }, /* not kUP2 */
 	[TTYC_KUP3] = { TTYCODE_STRING, "kUP3" },
 	[TTYC_KUP4] = { TTYCODE_STRING, "kUP4" },
 	[TTYC_KUP5] = { TTYCODE_STRING, "kUP5" },
@@ -238,24 +240,32 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_MS] = { TTYCODE_STRING, "Ms" },
 	[TTYC_OP] = { TTYCODE_STRING, "op" },
 	[TTYC_REV] = { TTYCODE_STRING, "rev" },
+	[TTYC_RGB] = { TTYCODE_FLAG, "RGB" },
 	[TTYC_RI] = { TTYCODE_STRING, "ri" },
+	[TTYC_RIN] = { TTYCODE_STRING, "rin" },
 	[TTYC_RMACS] = { TTYCODE_STRING, "rmacs" },
 	[TTYC_RMCUP] = { TTYCODE_STRING, "rmcup" },
 	[TTYC_RMKX] = { TTYCODE_STRING, "rmkx" },
-	[TTYC_SE] = { TTYCODE_STRING, "Se" },
 	[TTYC_SETAB] = { TTYCODE_STRING, "setab" },
 	[TTYC_SETAF] = { TTYCODE_STRING, "setaf" },
+	[TTYC_SETRGBB] = { TTYCODE_STRING, "setrgbb" },
+	[TTYC_SETRGBF] = { TTYCODE_STRING, "setrgbf" },
+	[TTYC_SETULC] = { TTYCODE_STRING, "Setulc" },
+	[TTYC_SE] = { TTYCODE_STRING, "Se" },
 	[TTYC_SGR0] = { TTYCODE_STRING, "sgr0" },
 	[TTYC_SITM] = { TTYCODE_STRING, "sitm" },
 	[TTYC_SMACS] = { TTYCODE_STRING, "smacs" },
 	[TTYC_SMCUP] = { TTYCODE_STRING, "smcup" },
 	[TTYC_SMKX] = { TTYCODE_STRING, "smkx" },
+	[TTYC_SMOL] = { TTYCODE_STRING, "Smol" },
 	[TTYC_SMSO] = { TTYCODE_STRING, "smso" },
+	[TTYC_SMULX] = { TTYCODE_STRING, "Smulx" },
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
 	[TTYC_SMXX] =  { TTYCODE_STRING, "smxx" },
 	[TTYC_SS] = { TTYCODE_STRING, "Ss" },
 	[TTYC_TC] = { TTYCODE_FLAG, "Tc" },
 	[TTYC_TSL] = { TTYCODE_STRING, "tsl" },
+	[TTYC_U8] = { TTYCODE_NUMBER, "U8" },
 	[TTYC_VPA] = { TTYCODE_STRING, "vpa" },
 	[TTYC_XENL] = { TTYCODE_FLAG, "xenl" },
 	[TTYC_XT] = { TTYCODE_FLAG, "XT" },
@@ -271,7 +281,7 @@ static char *
 tty_term_strip(const char *s)
 {
 	const char     *ptr;
-	static char	buf[BUFSIZ];
+	static char	buf[8192];
 	size_t		len;
 
 	/* Ignore strings with no padding. */
@@ -296,25 +306,53 @@ tty_term_strip(const char *s)
 	return (xstrdup(buf));
 }
 
+static char *
+tty_term_override_next(const char *s, size_t *offset)
+{
+	static char	value[8192];
+	size_t		n = 0, at = *offset;
+
+	if (s[at] == '\0')
+		return (NULL);
+
+	while (s[at] != '\0') {
+		if (s[at] == ':') {
+			if (s[at + 1] == ':') {
+				value[n++] = ':';
+				at += 2;
+			} else
+				break;
+		} else {
+			value[n++] = s[at];
+			at++;
+		}
+		if (n == (sizeof value) - 1)
+			return (NULL);
+	}
+	if (s[at] != '\0')
+		*offset = at + 1;
+	else
+		*offset = at;
+	value[n] = '\0';
+	return (value);
+}
+
 static void
 tty_term_override(struct tty_term *term, const char *override)
 {
 	const struct tty_term_code_entry	*ent;
 	struct tty_code				*code;
-	char					*next, *s, *copy, *cp, *value;
+	size_t                                   offset = 0;
+	char					*cp, *value, *s;
 	const char				*errstr;
 	u_int					 i;
 	int					 n, remove;
 
-	copy = next = xstrdup(override);
-
-	s = strsep(&next, ":");
-	if (s == NULL || next == NULL || fnmatch(s, term->name, 0) != 0) {
-		free(copy);
+	s = tty_term_override_next(override, &offset);
+	if (s == NULL || fnmatch(s, term->name, 0) != 0)
 		return;
-	}
 
-	while ((s = strsep(&next, ":")) != NULL) {
+	while ((s = tty_term_override_next(override, &offset)) != NULL) {
 		if (*s == '\0')
 			continue;
 		value = NULL;
@@ -335,6 +373,8 @@ tty_term_override(struct tty_term *term, const char *override)
 
 		if (remove)
 			log_debug("%s override: %s@", term->name, s);
+		else if (*value == '\0')
+			log_debug("%s override: %s", term->name, s);
 		else
 			log_debug("%s override: %s=%s", term->name, s, value);
 
@@ -373,7 +413,6 @@ tty_term_override(struct tty_term *term, const char *override)
 
 		free(value);
 	}
-	free(s);
 }
 
 struct tty_term *
@@ -383,7 +422,9 @@ tty_term_find(char *name, int fd, char **cause)
 	const struct tty_term_code_entry	*ent;
 	struct tty_code				*code;
 	struct options_entry			*o;
-	u_int					 size, i;
+	struct options_array_item		*a;
+	union options_value			*ov;
+	u_int					 i;
 	int		 			 n, error;
 	const char				*s, *acs;
 
@@ -393,8 +434,8 @@ tty_term_find(char *name, int fd, char **cause)
 			return (term);
 		}
 	}
-
 	log_debug("new term: %s", name);
+
 	term = xmalloc(sizeof *term);
 	term->name = xstrdup(name);
 	term->references = 1;
@@ -458,12 +499,11 @@ tty_term_find(char *name, int fd, char **cause)
 
 	/* Apply terminal overrides. */
 	o = options_get_only(global_options, "terminal-overrides");
-	if (options_array_size(o, &size) != -1) {
-		for (i = 0; i < size; i++) {
-			s = options_array_get(o, i);
-			if (s != NULL)
-				tty_term_override(term, s);
-		}
+	a = options_array_first(o);
+	while (a != NULL) {
+		ov = options_array_item_value(a);
+		tty_term_override(term, ov->string);
+		a = options_array_next(a);
 	}
 
 	/* Delete curses data. */
@@ -488,9 +528,15 @@ tty_term_find(char *name, int fd, char **cause)
 		goto error;
 	}
 
-	/* Figure out if we have 256. */
-	if (tty_term_number(term, TTYC_COLORS) == 256)
+	/* Set flag if terminal has 256 colours. */
+	if (tty_term_number(term, TTYC_COLORS) >= 256)
 		term->flags |= TERM_256COLOURS;
+
+	/* Set flag if terminal has RGB colours. */
+	if ((tty_term_flag(term, TTYC_TC) || tty_term_has(term, TTYC_RGB)) ||
+	    (tty_term_has(term, TTYC_SETRGBF) &&
+	    tty_term_has(term, TTYC_SETRGBB)))
+		term->flags |= TERM_RGBCOLOURS;
 
 	/*
 	 * Terminals without xenl (eat newline glitch) wrap at at $COLUMNS - 1
@@ -503,7 +549,7 @@ tty_term_find(char *name, int fd, char **cause)
 	 * do the best possible.
 	 */
 	if (!tty_term_flag(term, TTYC_XENL))
-		term->flags |= TERM_EARLYWRAP;
+		term->flags |= TERM_NOXENL;
 
 	/* Generate ACS table. If none is present, use nearest ASCII. */
 	memset(term->acs, 0, sizeof term->acs);
@@ -525,6 +571,10 @@ tty_term_find(char *name, int fd, char **cause)
 		code->value.string = xstrdup("\007");
 		code->type = TTYCODE_STRING;
 	}
+
+	/* Log the capabilities. */
+	for (i = 0; i < tty_term_ncodes(); i++)
+		log_debug("%s%s", name, tty_term_describe(term, i));
 
 	return (term);
 
@@ -582,16 +632,23 @@ tty_term_string2(struct tty_term *term, enum tty_code_code code, int a, int b)
 }
 
 const char *
+tty_term_string3(struct tty_term *term, enum tty_code_code code, int a, int b,
+    int c)
+{
+	return (tparm(tty_term_string(term, code), a, b, c, 0, 0, 0, 0, 0, 0));
+}
+
+const char *
 tty_term_ptr1(struct tty_term *term, enum tty_code_code code, const void *a)
 {
-	return (tparm(tty_term_string(term, code), (intptr_t)a, 0, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm((const char *) tty_term_string(term, code), (long)a, 0, 0, 0, 0, 0, 0, 0, 0));
 }
 
 const char *
 tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a,
     const void *b)
 {
-	return (tparm(tty_term_string(term, code), (intptr_t)a, (intptr_t)b, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm((const char *) tty_term_string(term, code), (long)a, (long)b, 0, 0, 0, 0, 0, 0, 0));
 }
 
 int
@@ -627,7 +684,7 @@ tty_term_describe(struct tty_term *term, enum tty_code_code code)
 		break;
 	case TTYCODE_STRING:
 		strnvis(out, sizeof out, term->codes[code].value.string,
-		    VIS_OCTAL|VIS_TAB|VIS_NL);
+		    VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 		xsnprintf(s, sizeof s, "%4u: %s: (string) %s",
 		    code, tty_term_codes[code].name,
 		    out);

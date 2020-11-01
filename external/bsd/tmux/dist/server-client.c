@@ -33,7 +33,7 @@
 static void	server_client_free(int, short, void *);
 static void	server_client_check_focus(struct window_pane *);
 static void	server_client_check_resize(struct window_pane *);
-static key_code	server_client_check_mouse(struct client *);
+static key_code	server_client_check_mouse(struct client *, struct key_event *);
 static void	server_client_repeat_timer(int, short, void *);
 static void	server_client_click_timer(int, short, void *);
 static void	server_client_check_exit(struct client *);
@@ -41,50 +41,85 @@ static void	server_client_check_redraw(struct client *);
 static void	server_client_set_title(struct client *);
 static void	server_client_reset_state(struct client *);
 static int	server_client_assume_paste(struct session *);
+static void	server_client_clear_overlay(struct client *);
+static void	server_client_resize_event(int, short, void *);
 
 static void	server_client_dispatch(struct imsg *, void *);
 static void	server_client_dispatch_command(struct client *, struct imsg *);
 static void	server_client_dispatch_identify(struct client *, struct imsg *);
 static void	server_client_dispatch_shell(struct client *);
+static void	server_client_dispatch_write_ready(struct client *,
+		    struct imsg *);
+static void	server_client_dispatch_read_data(struct client *,
+		    struct imsg *);
+static void	server_client_dispatch_read_done(struct client *,
+		    struct imsg *);
 
-/* Idenfity mode callback. */
-static void
-server_client_callback_identify(__unused int fd, __unused short events, void *data)
+/* Number of attached clients. */
+u_int
+server_client_how_many(void)
 {
-	server_client_clear_identify(data, NULL);
+	struct client  	*c;
+	u_int		 n;
+
+	n = 0;
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL && (~c->flags & CLIENT_DETACHING))
+			n++;
+	}
+	return (n);
 }
 
-/* Set identify mode on client. */
+/* Overlay timer callback. */
+static void
+server_client_overlay_timer(__unused int fd, __unused short events, void *data)
+{
+	server_client_clear_overlay(data);
+}
+
+/* Set an overlay on client. */
 void
-server_client_set_identify(struct client *c)
+server_client_set_overlay(struct client *c, u_int delay, overlay_draw_cb drawcb,
+    overlay_key_cb keycb, overlay_free_cb freecb, void *data)
 {
 	struct timeval	tv;
-	int		delay;
 
-	delay = options_get_number(c->session->options, "display-panes-time");
+	if (c->overlay_draw != NULL)
+		server_client_clear_overlay(c);
+
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
-	if (event_initialized(&c->identify_timer))
-		evtimer_del(&c->identify_timer);
-	evtimer_set(&c->identify_timer, server_client_callback_identify, c);
-	evtimer_add(&c->identify_timer, &tv);
+	if (event_initialized(&c->overlay_timer))
+		evtimer_del(&c->overlay_timer);
+	evtimer_set(&c->overlay_timer, server_client_overlay_timer, c);
+	if (delay != 0)
+		evtimer_add(&c->overlay_timer, &tv);
 
-	c->flags |= CLIENT_IDENTIFY;
+	c->overlay_draw = drawcb;
+	c->overlay_key = keycb;
+	c->overlay_free = freecb;
+	c->overlay_data = data;
+
 	c->tty.flags |= (TTY_FREEZE|TTY_NOCURSOR);
 	server_redraw_client(c);
 }
 
-/* Clear identify mode on client. */
-void
-server_client_clear_identify(struct client *c, struct window_pane *wp)
+/* Clear overlay mode on client. */
+static void
+server_client_clear_overlay(struct client *c)
 {
-	if (~c->flags & CLIENT_IDENTIFY)
+	if (c->overlay_draw == NULL)
 		return;
-	c->flags &= ~CLIENT_IDENTIFY;
 
-	if (c->identify_callback != NULL)
-		c->identify_callback(c, wp);
+	if (event_initialized(&c->overlay_timer))
+		evtimer_del(&c->overlay_timer);
+
+	if (c->overlay_free != NULL)
+		c->overlay_free(c);
+
+	c->overlay_draw = NULL;
+	c->overlay_key = NULL;
 
 	c->tty.flags &= ~(TTY_FREEZE|TTY_NOCURSOR);
 	server_redraw_client(c);
@@ -136,15 +171,15 @@ server_client_get_key_table(struct client *c)
 	return (name);
 }
 
-/* Is this client using the default key table? */
-int
-server_client_is_default_key_table(struct client *c)
+/* Is this table the default key table? */
+static int
+server_client_is_default_key_table(struct client *c, struct key_table *table)
 {
-	return (strcmp(c->keytable->name, server_client_get_key_table(c)) == 0);
+	return (strcmp(table->name, server_client_get_key_table(c)) == 0);
 }
 
 /* Create a new client. */
-void
+struct client *
 server_client_create(int fd)
 {
 	struct client	*c;
@@ -166,19 +201,16 @@ server_client_create(int fd)
 
 	TAILQ_INIT(&c->queue);
 
-	c->stdin_data = evbuffer_new();
-	c->stdout_data = evbuffer_new();
-	c->stderr_data = evbuffer_new();
-
 	c->tty.fd = -1;
 	c->title = NULL;
 
 	c->session = NULL;
 	c->last_session = NULL;
+
 	c->tty.sx = 80;
 	c->tty.sy = 24;
 
-	screen_init(&c->status, c->tty.sx, 1, 0);
+	status_init(c);
 
 	c->message_string = NULL;
 	TAILQ_INIT(&c->message_log);
@@ -186,6 +218,8 @@ server_client_create(int fd)
 	c->prompt_string = NULL;
 	c->prompt_buffer = NULL;
 	c->prompt_index = 0;
+
+	RB_INIT(&c->files);
 
 	c->flags |= CLIENT_FOCUSED;
 
@@ -197,6 +231,7 @@ server_client_create(int fd)
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
 	log_debug("new client %p", c);
+	return (c);
 }
 
 /* Open client terminal if needed. */
@@ -227,15 +262,18 @@ void
 server_client_lost(struct client *c)
 {
 	struct message_entry	*msg, *msg1;
+	struct client_file	*cf;
 
 	c->flags |= CLIENT_DEAD;
 
-	server_client_clear_identify(c, NULL);
+	server_client_clear_overlay(c);
 	status_prompt_clear(c);
 	status_message_clear(c);
 
-	if (c->stdin_callback != NULL)
-		c->stdin_callback(c, 1, c->stdin_callback_data);
+	RB_FOREACH(cf, client_files, &c->files) {
+		cf->error = EINTR;
+		file_fire_done(cf);
+	}
 
 	TAILQ_REMOVE(&clients, c, entry);
 	log_debug("lost client %p", c);
@@ -249,14 +287,7 @@ server_client_lost(struct client *c)
 	free(c->ttyname);
 	free(c->term);
 
-	evbuffer_free(c->stdin_data);
-	evbuffer_free(c->stdout_data);
-	if (c->stderr_data != c->stdout_data)
-		evbuffer_free(c->stderr_data);
-
-	if (event_initialized(&c->status_timer))
-		evtimer_del(&c->status_timer);
-	screen_free(&c->status);
+	status_free(c);
 
 	free(c->title);
 	free(__UNCONST(c->cwd));
@@ -265,9 +296,6 @@ server_client_lost(struct client *c)
 	evtimer_del(&c->click_timer);
 
 	key_bindings_unref_table(c->keytable);
-
-	if (event_initialized(&c->identify_timer))
-		evtimer_del(&c->identify_timer);
 
 	free(c->message_string);
 	if (event_initialized(&c->message_timer))
@@ -278,9 +306,11 @@ server_client_lost(struct client *c)
 		free(msg);
 	}
 
+	free(c->prompt_saved);
 	free(c->prompt_string);
 	free(c->prompt_buffer);
 
+	format_lost_client(c);
 	environ_free(c->environ);
 
 	proc_remove_peer(c->peer);
@@ -323,17 +353,32 @@ server_client_free(__unused int fd, __unused short events, void *arg)
 	}
 }
 
+/* Suspend a client. */
+void
+server_client_suspend(struct client *c)
+{
+	struct session	*s = c->session;
+
+	if (s == NULL || (c->flags & CLIENT_DETACHING))
+		return;
+
+	tty_stop_tty(&c->tty);
+	c->flags |= CLIENT_SUSPENDED;
+	proc_send(c->peer, MSG_SUSPEND, -1, NULL, 0);
+}
+
 /* Detach a client. */
 void
 server_client_detach(struct client *c, enum msgtype msgtype)
 {
 	struct session	*s = c->session;
 
-	if (s == NULL)
+	if (s == NULL || (c->flags & CLIENT_DETACHING))
 		return;
 
+	c->flags |= CLIENT_DETACHING;
 	notify_client("client-detached", c);
-	proc_send_s(c->peer, msgtype, s->name);
+	proc_send(c->peer, msgtype, -1, s->name, strlen(s->name) + 1);
 }
 
 /* Execute command to replace a client. */
@@ -365,24 +410,35 @@ server_client_exec(struct client *c, const char *cmd)
 
 /* Check for mouse keys. */
 static key_code
-server_client_check_mouse(struct client *c)
+server_client_check_mouse(struct client *c, struct key_event *event)
 {
+	struct mouse_event	*m = &event->m;
 	struct session		*s = c->session;
-	struct mouse_event	*m = &c->tty.mouse;
-	struct window		*w;
+	struct winlink		*wl;
 	struct window_pane	*wp;
-	u_int			 x, y, b;
+	u_int			 x, y, b, sx, sy, px, py;
 	int			 flag;
 	key_code		 key;
 	struct timeval		 tv;
-	enum { NOTYPE, MOVE, DOWN, UP, DRAG, WHEEL, DOUBLE, TRIPLE } type;
-	enum { NOWHERE, PANE, STATUS, BORDER } where;
+	struct style_range	*sr;
+	enum { NOTYPE,
+	       MOVE,
+	       DOWN,
+	       UP,
+	       DRAG,
+	       WHEEL,
+	       DOUBLE,
+	       TRIPLE } type = NOTYPE;
+	enum { NOWHERE,
+	       PANE,
+	       STATUS,
+	       STATUS_LEFT,
+	       STATUS_RIGHT,
+	       STATUS_DEFAULT,
+	       BORDER } where = NOWHERE;
 
-	type = NOTYPE;
-	where = NOWHERE;
-
-	log_debug("mouse %02x at %u,%u (last %u,%u) (%d)", m->b, m->x, m->y,
-	    m->lx, m->ly, c->tty.mouse_drag_flag);
+	log_debug("%s mouse %02x at %u,%u (last %u,%u) (%d)", c->name, m->b,
+	    m->x, m->y, m->lx, m->ly, c->tty.mouse_drag_flag);
 
 	/* What type of event is this? */
 	if ((m->sgr_type != ' ' &&
@@ -399,6 +455,8 @@ server_client_check_mouse(struct client *c)
 		type = DRAG;
 		if (c->tty.mouse_drag_flag) {
 			x = m->x, y = m->y, b = m->b;
+			if (x == m->lx && y == m->ly)
+				return (KEYC_UNKNOWN);
 			log_debug("drag update at %u,%u", x, y);
 		} else {
 			x = m->lx, y = m->ly, b = m->lb;
@@ -455,48 +513,88 @@ have_event:
 	if (type == NOTYPE)
 		return (KEYC_UNKNOWN);
 
-	/* Always save the session. */
+	/* Save the session. */
 	m->s = s->id;
+	m->w = -1;
 
 	/* Is this on the status line? */
 	m->statusat = status_at_line(c);
-	if (m->statusat != -1 && y == (u_int)m->statusat) {
-		w = status_get_window_at(c, x);
-		if (w == NULL)
-			return (KEYC_UNKNOWN);
-		m->w = w->id;
-		where = STATUS;
-	} else
-		m->w = -1;
+	m->statuslines = status_line_size(c);
+	if (m->statusat != -1 &&
+	    y >= (u_int)m->statusat &&
+	    y < m->statusat + m->statuslines) {
+		sr = status_get_range(c, x, y - m->statusat);
+		if (sr == NULL) {
+			where = STATUS_DEFAULT;
+		} else {
+			switch (sr->type) {
+			case STYLE_RANGE_NONE:
+				return (KEYC_UNKNOWN);
+			case STYLE_RANGE_LEFT:
+				where = STATUS_LEFT;
+				break;
+			case STYLE_RANGE_RIGHT:
+				where = STATUS_RIGHT;
+				break;
+			case STYLE_RANGE_WINDOW:
+				wl = winlink_find_by_index(&s->windows,
+				    sr->argument);
+				if (wl == NULL)
+					return (KEYC_UNKNOWN);
+				m->w = wl->window->id;
+
+				where = STATUS;
+				break;
+			}
+		}
+	}
 
 	/* Not on status line. Adjust position and check for border or pane. */
 	if (where == NOWHERE) {
-		if (m->statusat == 0 && y > 0)
-			y--;
+		px = x;
+		if (m->statusat == 0 && y >= m->statuslines)
+			py = y - m->statuslines;
 		else if (m->statusat > 0 && y >= (u_int)m->statusat)
-			y = m->statusat - 1;
+			py = m->statusat - 1;
+		else
+			py = y;
 
-		TAILQ_FOREACH(wp, &s->curw->window->panes, entry) {
-			if ((wp->xoff + wp->sx == x &&
-			    wp->yoff <= 1 + y &&
-			    wp->yoff + wp->sy >= y) ||
-			    (wp->yoff + wp->sy == y &&
-			    wp->xoff <= 1 + x &&
-			    wp->xoff + wp->sx >= x))
-				break;
-		}
-		if (wp != NULL)
-			where = BORDER;
-		else {
-			wp = window_get_active_at(s->curw->window, x, y);
-			if (wp != NULL) {
-				where = PANE;
-				log_debug("mouse at %u,%u is on pane %%%u",
-				    x, y, wp->id);
+		tty_window_offset(&c->tty, &m->ox, &m->oy, &sx, &sy);
+		log_debug("mouse window @%u at %u,%u (%ux%u)",
+		    s->curw->window->id, m->ox, m->oy, sx, sy);
+		if (px > sx || py > sy)
+			return (KEYC_UNKNOWN);
+		px = px + m->ox;
+		py = py + m->oy;
+
+		/* Try the pane borders if not zoomed. */
+		if (~s->curw->window->flags & WINDOW_ZOOMED) {
+			TAILQ_FOREACH(wp, &s->curw->window->panes, entry) {
+				if ((wp->xoff + wp->sx == px &&
+				    wp->yoff <= 1 + py &&
+				    wp->yoff + wp->sy >= py) ||
+				    (wp->yoff + wp->sy == py &&
+				    wp->xoff <= 1 + px &&
+				    wp->xoff + wp->sx >= px))
+					break;
 			}
+			if (wp != NULL)
+				where = BORDER;
 		}
+
+		/* Otherwise try inside the pane. */
+		if (where == NOWHERE) {
+			wp = window_get_active_at(s->curw->window, px, py);
+			if (wp != NULL)
+				where = PANE;
+		}
+
 		if (where == NOWHERE)
 			return (KEYC_UNKNOWN);
+		if (where == PANE)
+			log_debug("mouse %u,%u on pane %%%u", x, y, wp->id);
+		else if (where == BORDER)
+			log_debug("mouse on pane %%%u border", wp->id);
 		m->wp = wp->id;
 		m->w = wp->window->id;
 	} else
@@ -520,6 +618,12 @@ have_event:
 				key = KEYC_MOUSEDRAGEND1_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDRAGEND1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND1_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND1_BORDER;
 			break;
@@ -528,6 +632,12 @@ have_event:
 				key = KEYC_MOUSEDRAGEND2_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDRAGEND2_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND2_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND2_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND2_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND2_BORDER;
 			break;
@@ -536,6 +646,12 @@ have_event:
 				key = KEYC_MOUSEDRAGEND3_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDRAGEND3_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND3_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND3_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND3_BORDER;
 			break;
@@ -544,8 +660,7 @@ have_event:
 			break;
 		}
 		c->tty.mouse_drag_flag = 0;
-
-		return (key);
+		goto out;
 	}
 
 	/* Convert to a key binding. */
@@ -558,6 +673,12 @@ have_event:
 			key = KEYC_MOUSEMOVE_PANE;
 		if (where == STATUS)
 			key = KEYC_MOUSEMOVE_STATUS;
+		if (where == STATUS_LEFT)
+			key = KEYC_MOUSEMOVE_STATUS_LEFT;
+		if (where == STATUS_RIGHT)
+			key = KEYC_MOUSEMOVE_STATUS_RIGHT;
+		if (where == STATUS_DEFAULT)
+			key = KEYC_MOUSEMOVE_STATUS_DEFAULT;
 		if (where == BORDER)
 			key = KEYC_MOUSEMOVE_BORDER;
 		break;
@@ -571,6 +692,12 @@ have_event:
 					key = KEYC_MOUSEDRAG1_PANE;
 				if (where == STATUS)
 					key = KEYC_MOUSEDRAG1_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG1_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG1_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG1_STATUS_DEFAULT;
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG1_BORDER;
 				break;
@@ -579,6 +706,12 @@ have_event:
 					key = KEYC_MOUSEDRAG2_PANE;
 				if (where == STATUS)
 					key = KEYC_MOUSEDRAG2_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG2_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG2_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG2_STATUS_DEFAULT;
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG2_BORDER;
 				break;
@@ -587,6 +720,12 @@ have_event:
 					key = KEYC_MOUSEDRAG3_PANE;
 				if (where == STATUS)
 					key = KEYC_MOUSEDRAG3_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG3_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG3_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG3_STATUS_DEFAULT;
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG3_BORDER;
 				break;
@@ -605,6 +744,12 @@ have_event:
 				key = KEYC_WHEELUP_PANE;
 			if (where == STATUS)
 				key = KEYC_WHEELUP_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_WHEELUP_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_WHEELUP_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_WHEELUP_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_WHEELUP_BORDER;
 		} else {
@@ -612,6 +757,12 @@ have_event:
 				key = KEYC_WHEELDOWN_PANE;
 			if (where == STATUS)
 				key = KEYC_WHEELDOWN_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_WHEELDOWN_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_WHEELDOWN_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_WHEELDOWN_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_WHEELDOWN_BORDER;
 		}
@@ -623,6 +774,12 @@ have_event:
 				key = KEYC_MOUSEUP1_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEUP1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP1_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEUP1_BORDER;
 			break;
@@ -631,6 +788,12 @@ have_event:
 				key = KEYC_MOUSEUP2_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEUP2_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP2_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP2_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP2_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEUP2_BORDER;
 			break;
@@ -639,6 +802,12 @@ have_event:
 				key = KEYC_MOUSEUP3_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEUP3_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP3_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP3_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEUP3_BORDER;
 			break;
@@ -651,6 +820,12 @@ have_event:
 				key = KEYC_MOUSEDOWN1_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDOWN1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN1_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN1_BORDER;
 			break;
@@ -659,6 +834,12 @@ have_event:
 				key = KEYC_MOUSEDOWN2_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDOWN2_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN2_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN2_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN2_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN2_BORDER;
 			break;
@@ -667,6 +848,12 @@ have_event:
 				key = KEYC_MOUSEDOWN3_PANE;
 			if (where == STATUS)
 				key = KEYC_MOUSEDOWN3_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN3_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN3_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN3_BORDER;
 			break;
@@ -679,6 +866,12 @@ have_event:
 				key = KEYC_DOUBLECLICK1_PANE;
 			if (where == STATUS)
 				key = KEYC_DOUBLECLICK1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK1_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK1_BORDER;
 			break;
@@ -687,6 +880,12 @@ have_event:
 				key = KEYC_DOUBLECLICK2_PANE;
 			if (where == STATUS)
 				key = KEYC_DOUBLECLICK2_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK2_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK2_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK2_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK2_BORDER;
 			break;
@@ -695,6 +894,12 @@ have_event:
 				key = KEYC_DOUBLECLICK3_PANE;
 			if (where == STATUS)
 				key = KEYC_DOUBLECLICK3_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK3_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK3_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK3_BORDER;
 			break;
@@ -707,6 +912,12 @@ have_event:
 				key = KEYC_TRIPLECLICK1_PANE;
 			if (where == STATUS)
 				key = KEYC_TRIPLECLICK1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK1_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK1_BORDER;
 			break;
@@ -715,6 +926,12 @@ have_event:
 				key = KEYC_TRIPLECLICK2_PANE;
 			if (where == STATUS)
 				key = KEYC_TRIPLECLICK2_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK2_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK2_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK2_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK2_BORDER;
 			break;
@@ -723,6 +940,12 @@ have_event:
 				key = KEYC_TRIPLECLICK3_PANE;
 			if (where == STATUS)
 				key = KEYC_TRIPLECLICK3_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK3_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK3_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK3_BORDER;
 			break;
@@ -732,6 +955,7 @@ have_event:
 	if (key == KEYC_UNKNOWN)
 		return (KEYC_UNKNOWN);
 
+out:
 	/* Apply modifiers if any. */
 	if (b & MOUSE_MASK_META)
 		key |= KEYC_ESCAPE;
@@ -740,6 +964,8 @@ have_event:
 	if (b & MOUSE_MASK_SHIFT)
 		key |= KEYC_SHIFT;
 
+	if (log_get_level() != 0)
+		log_debug("mouse key is %s", key_string_lookup_key (key));
 	return (key);
 }
 
@@ -767,63 +993,64 @@ server_client_assume_paste(struct session *s)
 	return (0);
 }
 
-/* Handle data key input from client. */
-void
-server_client_handle_key(struct client *c, key_code key)
+/* Has the latest client changed? */
+static void
+server_client_update_latest(struct client *c)
 {
-	struct mouse_event	*m = &c->tty.mouse;
-	struct session		*s = c->session;
-	struct window		*w;
-	struct window_pane	*wp;
-	struct timeval		 tv;
-	const char		*name;
-	struct key_table	*table;
-	struct key_binding	 bd_find, *bd;
-	int			 xtimeout;
-	struct cmd_find_state	 fs;
+	struct window	*w;
+
+	if (c->session == NULL)
+		return;
+	w = c->session->curw->window;
+
+	if (w->latest == c)
+		return;
+	w->latest = c;
+
+	if (options_get_number(w->options, "window-size") == WINDOW_SIZE_LATEST)
+		recalculate_size(w);
+}
+
+/*
+ * Handle data key input from client. This owns and can modify the key event it
+ * is given and is responsible for freeing it.
+ */
+static enum cmd_retval
+server_client_key_callback(struct cmdq_item *item, void *data)
+{
+	struct client			*c = item->client;
+	struct key_event		*event = data;
+	key_code			 key = event->key;
+	struct mouse_event		*m = &event->m;
+	struct session			*s = c->session;
+	struct winlink			*wl;
+	struct window_pane		*wp;
+	struct window_mode_entry	*wme;
+	struct timeval			 tv;
+	struct key_table		*table, *first;
+	struct key_binding		*bd;
+	int				 xtimeout, flags;
+	struct cmd_find_state		 fs;
+	key_code			 key0;
 
 	/* Check the client is good to accept input. */
-	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
-		return;
-	w = s->curw->window;
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
+		goto out;
+	wl = s->curw;
 
 	/* Update the activity timer. */
 	if (gettimeofday(&c->activity_time, NULL) != 0)
 		fatal("gettimeofday failed");
 	session_update_activity(s, &c->activity_time);
 
-	/* Number keys jump to pane in identify mode. */
-	if (c->flags & CLIENT_IDENTIFY && key >= '0' && key <= '9') {
-		if (c->flags & CLIENT_READONLY)
-			return;
-		window_unzoom(w);
-		wp = window_pane_at_index(w, key - '0');
-		if (wp != NULL && !window_pane_visible(wp))
-			wp = NULL;
-		server_client_clear_identify(c, wp);
-		return;
-	}
-
-	/* Handle status line. */
-	if (!(c->flags & CLIENT_READONLY)) {
-		status_message_clear(c);
-		server_client_clear_identify(c, NULL);
-	}
-	if (c->prompt_string != NULL) {
-		if (c->flags & CLIENT_READONLY)
-			return;
-		if (status_prompt_key(c, key) == 0)
-			return;
-	}
-
 	/* Check for mouse keys. */
 	m->valid = 0;
 	if (key == KEYC_MOUSE) {
 		if (c->flags & CLIENT_READONLY)
-			return;
-		key = server_client_check_mouse(c);
+			goto out;
+		key = server_client_check_mouse(c, event);
 		if (key == KEYC_UNKNOWN)
-			return;
+			goto out;
 
 		m->valid = 1;
 		m->key = key;
@@ -832,71 +1059,81 @@ server_client_handle_key(struct client *c, key_code key)
 		 * Mouse drag is in progress, so fire the callback (now that
 		 * the mouse event is valid).
 		 */
-		if (key == KEYC_DRAGGING) {
+		if ((key & KEYC_MASK_KEY) == KEYC_DRAGGING) {
 			c->tty.mouse_drag_update(c, m);
-			return;
+			goto out;
 		}
-	} else
-		m->valid = 0;
+	}
 
 	/* Find affected pane. */
-	if (KEYC_IS_MOUSE(key) && m->valid)
-		wp = cmd_mouse_pane(m, NULL, NULL);
-	else
-		wp = w->active;
+	if (!KEYC_IS_MOUSE(key) || cmd_find_from_mouse(&fs, m, 0) != 0)
+		cmd_find_from_session(&fs, s, 0);
+	wp = fs.wp;
 
 	/* Forward mouse keys if disabled. */
 	if (KEYC_IS_MOUSE(key) && !options_get_number(s->options, "mouse"))
-		goto forward;
+		goto forward_key;
 
 	/* Treat everything as a regular key when pasting is detected. */
 	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
-		goto forward;
+		goto forward_key;
 
-retry:
 	/*
 	 * Work out the current key table. If the pane is in a mode, use
 	 * the mode table instead of the default key table.
 	 */
-	name = NULL;
-	if (wp != NULL && wp->mode != NULL && wp->mode->key_table != NULL)
-		name = wp->mode->key_table(wp);
-	if (name == NULL || !server_client_is_default_key_table(c))
+	if (server_client_is_default_key_table(c, c->keytable) &&
+	    wp != NULL &&
+	    (wme = TAILQ_FIRST(&wp->modes)) != NULL &&
+	    wme->mode->key_table != NULL)
+		table = key_bindings_get_table(wme->mode->key_table(wme), 1);
+	else
 		table = c->keytable;
-	else
-		table = key_bindings_get_table(name, 1);
-	if (wp == NULL)
-		log_debug("key table %s (no pane)", table->name);
-	else
-		log_debug("key table %s (pane %%%u)", table->name, wp->id);
+	first = table;
 
+table_changed:
 	/*
 	 * The prefix always takes precedence and forces a switch to the prefix
 	 * table, unless we are already there.
 	 */
-	if ((key == (key_code)options_get_number(s->options, "prefix") ||
-	    key == (key_code)options_get_number(s->options, "prefix2")) &&
+	key0 = (key & ~KEYC_XTERM);
+	if ((key0 == (key_code)options_get_number(s->options, "prefix") ||
+	    key0 == (key_code)options_get_number(s->options, "prefix2")) &&
 	    strcmp(table->name, "prefix") != 0) {
 		server_client_set_key_table(c, "prefix");
 		server_status_client(c);
-		return;
+		goto out;
 	}
+	flags = c->flags;
+
+try_again:
+	/* Log key table. */
+	if (wp == NULL)
+		log_debug("key table %s (no pane)", table->name);
+	else
+		log_debug("key table %s (pane %%%u)", table->name, wp->id);
+	if (c->flags & CLIENT_REPEAT)
+		log_debug("currently repeating");
 
 	/* Try to see if there is a key binding in the current table. */
-	bd_find.key = key;
-	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
+	bd = key_bindings_get(table, key0);
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a
 		 * non-repeating binding was found, stop repeating and try
 		 * again in the root table.
 		 */
-		if ((c->flags & CLIENT_REPEAT) && !bd->can_repeat) {
+		if ((c->flags & CLIENT_REPEAT) &&
+		    (~bd->flags & KEY_BINDING_REPEAT)) {
+			log_debug("found in key table %s (not repeating)",
+			    table->name);
 			server_client_set_key_table(c, NULL);
+			first = table = c->keytable;
 			c->flags &= ~CLIENT_REPEAT;
 			server_status_client(c);
-			goto retry;
+			goto table_changed;
 		}
+		log_debug("found in key table %s", table->name);
 
 		/*
 		 * Take a reference to this table to make sure the key binding
@@ -909,7 +1146,7 @@ retry:
 		 * the client back to the root table.
 		 */
 		xtimeout = options_get_number(s->options, "repeat-time");
-		if (xtimeout != 0 && bd->can_repeat) {
+		if (xtimeout != 0 && (bd->flags & KEY_BINDING_REPEAT)) {
 			c->flags |= CLIENT_REPEAT;
 
 			tv.tv_sec = xtimeout / 1000;
@@ -922,49 +1159,101 @@ retry:
 		}
 		server_status_client(c);
 
-		/* Find default state if the pane is known. */
-		cmd_find_clear_state(&fs, NULL, 0);
-		if (wp != NULL) {
-			fs.s = s;
-			fs.wl = fs.s->curw;
-			fs.w = fs.wl->window;
-			fs.wp = wp;
-			cmd_find_log_state(__func__, &fs);
-
-			if (!cmd_find_valid_state(&fs))
-				fatalx("invalid key state");
-		}
-
-		/* Dispatch the key binding. */
-		key_bindings_dispatch(bd, c, m, &fs);
+		/* Execute the key binding. */
+		key_bindings_dispatch(bd, item, c, m, &fs);
 		key_bindings_unref_table(table);
-		return;
+		goto out;
 	}
 
 	/*
-	 * No match in this table. If repeating, switch the client back to the
-	 * root table and try again.
+	 * No match, try the ANY key.
 	 */
-	if (c->flags & CLIENT_REPEAT) {
+	if (key0 != KEYC_ANY) {
+		key0 = KEYC_ANY;
+		goto try_again;
+	}
+
+	/*
+	 * No match in this table. If not in the root table or if repeating,
+	 * switch the client back to the root table and try again.
+	 */
+	log_debug("not found in key table %s", table->name);
+	if (!server_client_is_default_key_table(c, table) ||
+	    (c->flags & CLIENT_REPEAT)) {
+		log_debug("trying in root table");
 		server_client_set_key_table(c, NULL);
+		table = c->keytable;
+		if (c->flags & CLIENT_REPEAT)
+			first = table;
 		c->flags &= ~CLIENT_REPEAT;
 		server_status_client(c);
-		goto retry;
+		goto table_changed;
 	}
 
-	/* If no match and we're not in the root table, that's it. */
-	if (name == NULL && !server_client_is_default_key_table(c)) {
-		log_debug("no key in key table %s", table->name);
+	/*
+	 * No match in the root table either. If this wasn't the first table
+	 * tried, don't pass the key to the pane.
+	 */
+	if (first != table && (~flags & CLIENT_REPEAT)) {
 		server_client_set_key_table(c, NULL);
 		server_status_client(c);
-		return;
+		goto out;
 	}
 
-forward:
+forward_key:
 	if (c->flags & CLIENT_READONLY)
-		return;
+		goto out;
 	if (wp != NULL)
-		window_pane_key(wp, c, s, key, m);
+		window_pane_key(wp, c, s, wl, key, m);
+
+out:
+	if (s != NULL)
+		server_client_update_latest(c);
+	free(event);
+	return (CMD_RETURN_NORMAL);
+}
+
+/* Handle a key event. */
+int
+server_client_handle_key(struct client *c, struct key_event *event)
+{
+	struct session		*s = c->session;
+	struct cmdq_item	*item;
+
+	/* Check the client is good to accept input. */
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
+		return (0);
+
+	/*
+	 * Key presses in overlay mode and the command prompt are a special
+	 * case. The queue might be blocked so they need to be processed
+	 * immediately rather than queued.
+	 */
+	if (~c->flags & CLIENT_READONLY) {
+		status_message_clear(c);
+		if (c->prompt_string != NULL) {
+			if (status_prompt_key(c, event->key) == 0)
+				return (0);
+		}
+		if (c->overlay_key != NULL) {
+			switch (c->overlay_key(c, event)) {
+			case 0:
+				return (0);
+			case 1:
+				server_client_clear_overlay(c);
+				return (0);
+			}
+		}
+		server_client_clear_overlay(c);
+	}
+
+	/*
+	 * Add the key to the queue so it happens after any commands queued by
+	 * previous keys.
+	 */
+	item = cmdq_get_callback(server_client_key_callback, event);
+	cmdq_append(c, item);
+	return (1);
 }
 
 /* Client functions that need to happen every loop. */
@@ -974,7 +1263,9 @@ server_client_loop(void)
 	struct client		*c;
 	struct window		*w;
 	struct window_pane	*wp;
-	int			 focus;
+	struct winlink		*wl;
+	struct session		*s;
+	int			 focus, attached, resize;
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		server_client_check_exit(c);
@@ -987,14 +1278,34 @@ server_client_loop(void)
 	/*
 	 * Any windows will have been redrawn as part of clients, so clear
 	 * their flags now. Also check pane focus and resize.
+	 *
+	 * As an optimization, panes in windows that are in an attached session
+	 * but not the current window are not resized (this reduces the amount
+	 * of work needed when, for example, resizing an X terminal a
+	 * lot). Windows in no attached session are resized immediately since
+	 * that is likely to have come from a command like split-window and be
+	 * what the user wanted.
 	 */
 	focus = options_get_number(global_options, "focus-events");
 	RB_FOREACH(w, windows, &windows) {
+		attached = resize = 0;
+		TAILQ_FOREACH(wl, &w->winlinks, wentry) {
+			s = wl->session;
+			if (s->attached != 0)
+				attached = 1;
+			if (s->attached != 0 && s->curw == wl) {
+				resize = 1;
+				break;
+			}
+		}
+		if (!attached)
+			resize = 1;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd != -1) {
 				if (focus)
 					server_client_check_focus(wp);
-				server_client_check_resize(wp);
+				if (resize)
+					server_client_check_resize(wp);
 			}
 			wp->flags &= ~PANE_REDRAW;
 		}
@@ -1002,66 +1313,101 @@ server_client_loop(void)
 	}
 }
 
+/* Check if we need to force a resize. */
+static int
+server_client_resize_force(struct window_pane *wp)
+{
+	struct timeval	tv = { .tv_usec = 100000 };
+
+	/*
+	 * If we are resizing to the same size as when we entered the loop
+	 * (that is, to the same size the application currently thinks it is),
+	 * tmux may have gone through several resizes internally and thrown
+	 * away parts of the screen. So we need the application to actually
+	 * redraw even though its final size has not changed.
+	 */
+
+	if (wp->flags & PANE_RESIZEFORCE) {
+		wp->flags &= ~PANE_RESIZEFORCE;
+		return (0);
+	}
+
+	if (wp->sx != wp->osx ||
+	    wp->sy != wp->osy ||
+	    wp->sx <= 1 ||
+	    wp->sy <= 1)
+		return (0);
+
+	log_debug("%s: %%%u forcing resize", __func__, wp->id);
+	window_pane_send_resize(wp, -1);
+
+	evtimer_add(&wp->resize_timer, &tv);
+	wp->flags |= PANE_RESIZEFORCE;
+	return (1);
+}
+
+/* Resize a pane. */
+static void
+server_client_resize_pane(struct window_pane *wp)
+{
+	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
+	window_pane_send_resize(wp, 0);
+
+	wp->flags &= ~PANE_RESIZE;
+
+	wp->osx = wp->sx;
+	wp->osy = wp->sy;
+}
+
+/* Start the resize timer. */
+static void
+server_client_start_resize_timer(struct window_pane *wp)
+{
+	struct timeval	tv = { .tv_usec = 250000 };
+
+	if (!evtimer_pending(&wp->resize_timer, NULL))
+		evtimer_add(&wp->resize_timer, &tv);
+}
+
 /* Resize timer event. */
 static void
 server_client_resize_event(__unused int fd, __unused short events, void *data)
 {
 	struct window_pane	*wp = data;
-	struct winsize		 ws;
 
 	evtimer_del(&wp->resize_timer);
 
-	if (!(wp->flags & PANE_RESIZE))
+	if (~wp->flags & PANE_RESIZE)
 		return;
+	log_debug("%s: %%%u timer fired (was%s resized)", __func__, wp->id,
+	    (wp->flags & PANE_RESIZED) ? "" : " not");
 
-	memset(&ws, 0, sizeof ws);
-	ws.ws_col = wp->sx;
-	ws.ws_row = wp->sy;
-
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1) {
-#ifdef __sun
-		/*
-		 * Some versions of Solaris apparently can return an error when
-		 * resizing; don't know why this happens, can't reproduce on
-		 * other platforms and ignoring it doesn't seem to cause any
-		 * issues.
-		 */
-		if (errno != EINVAL && errno != ENXIO)
-#endif
-		fatal("ioctl failed");
+	if (wp->saved_grid == NULL && (wp->flags & PANE_RESIZED)) {
+		log_debug("%s: %%%u deferring timer", __func__, wp->id);
+		server_client_start_resize_timer(wp);
+	} else if (!server_client_resize_force(wp)) {
+		log_debug("%s: %%%u resizing pane", __func__, wp->id);
+		server_client_resize_pane(wp);
 	}
-
-	wp->flags &= ~PANE_RESIZE;
+	wp->flags &= ~PANE_RESIZED;
 }
 
 /* Check if pane should be resized. */
 static void
 server_client_check_resize(struct window_pane *wp)
 {
-	struct timeval	 tv = { .tv_usec = 250000 };
-
-	if (!(wp->flags & PANE_RESIZE))
+	if (~wp->flags & PANE_RESIZE)
 		return;
 
 	if (!event_initialized(&wp->resize_timer))
 		evtimer_set(&wp->resize_timer, server_client_resize_event, wp);
 
-	/*
-	 * The first resize should happen immediately, so if the timer is not
-	 * running, do it now.
-	 */
-	if (!evtimer_pending(&wp->resize_timer, NULL))
-		server_client_resize_event(-1, 0, wp);
-
-	/*
-	 * If the pane is in the alternate screen, let the timer expire and
-	 * resize to give the application a chance to redraw. If not, keep
-	 * pushing the timer back.
-	 */
-	if (wp->saved_grid != NULL && evtimer_pending(&wp->resize_timer, NULL))
-		return;
-	evtimer_del(&wp->resize_timer);
-	evtimer_add(&wp->resize_timer, &tv);
+	if (!evtimer_pending(&wp->resize_timer, NULL)) {
+		log_debug("%s: %%%u starting timer", __func__, wp->id);
+		server_client_resize_pane(wp);
+		server_client_start_resize_timer(wp);
+	} else
+		log_debug("%s: %%%u timer running", __func__, wp->id);
 }
 
 /* Check whether pane should be focused. */
@@ -1074,10 +1420,6 @@ server_client_check_focus(struct window_pane *wp)
 	/* Do we need to push the focus state? */
 	push = wp->flags & PANE_FOCUSPUSH;
 	wp->flags &= ~PANE_FOCUSPUSH;
-
-	/* If we don't care about focus, forget it. */
-	if (!(wp->base.mode & MODE_FOCUSON))
-		return;
 
 	/* If we're not the active pane in our window, we're not focused. */
 	if (wp->window->active != wp)
@@ -1094,7 +1436,7 @@ server_client_check_focus(struct window_pane *wp)
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session == NULL || !(c->flags & CLIENT_FOCUSED))
 			continue;
-		if (c->session->flags & SESSION_UNATTACHED)
+		if (c->session->attached == 0)
 			continue;
 
 		if (c->session->curw->window == wp->window)
@@ -1102,14 +1444,21 @@ server_client_check_focus(struct window_pane *wp)
 	}
 
 not_focused:
-	if (push || (wp->flags & PANE_FOCUSED))
-		bufferevent_write(wp->event, "\033[O", 3);
+	if (push || (wp->flags & PANE_FOCUSED)) {
+		if (wp->base.mode & MODE_FOCUSON)
+			bufferevent_write(wp->event, "\033[O", 3);
+		notify_pane("pane-focus-out", wp);
+	}
 	wp->flags &= ~PANE_FOCUSED;
 	return;
 
 focused:
-	if (push || !(wp->flags & PANE_FOCUSED))
-		bufferevent_write(wp->event, "\033[I", 3);
+	if (push || !(wp->flags & PANE_FOCUSED)) {
+		if (wp->base.mode & MODE_FOCUSON)
+			bufferevent_write(wp->event, "\033[I", 3);
+		notify_pane("pane-focus-in", wp);
+		session_update_activity(c->session, NULL);
+	}
 	wp->flags |= PANE_FOCUSED;
 }
 
@@ -1129,27 +1478,39 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = w->active, *loop;
 	struct screen		*s = wp->screen;
 	struct options		*oo = c->session->options;
-	int			 status, mode, o;
+	int			 mode, cursor = 0;
+	u_int			 cx = 0, cy = 0, ox, oy, sx, sy;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
+	if (c->overlay_draw != NULL)
+		return;
+	mode = s->mode;
 
 	tty_region_off(&c->tty);
 	tty_margin_off(&c->tty);
 
-	status = options_get_number(oo, "status");
-	if (!window_pane_visible(wp) || wp->yoff + s->cy >= c->tty.sy - status)
-		tty_cursor(&c->tty, 0, 0);
-	else {
-		o = status && options_get_number(oo, "status-position") == 0;
-		tty_cursor(&c->tty, wp->xoff + s->cx, o + wp->yoff + s->cy);
+	/* Move cursor to pane cursor and offset. */
+	cursor = 0;
+	tty_window_offset(&c->tty, &ox, &oy, &sx, &sy);
+	if (wp->xoff + s->cx >= ox && wp->xoff + s->cx <= ox + sx &&
+	    wp->yoff + s->cy >= oy && wp->yoff + s->cy <= oy + sy) {
+		cursor = 1;
+
+		cx = wp->xoff + s->cx - ox;
+		cy = wp->yoff + s->cy - oy;
+
+		if (status_at_line(c) == 0)
+			cy += status_line_size(c);
 	}
+	if (!cursor)
+		mode &= ~MODE_CURSOR;
+	tty_cursor(&c->tty, cx, cy);
 
 	/*
 	 * Set mouse mode if requested. To support dragging, always use button
 	 * mode.
 	 */
-	mode = s->mode;
 	if (options_get_number(oo, "mouse")) {
 		mode &= ~ALL_MOUSE_MODES;
 		TAILQ_FOREACH(loop, &w->panes, entry) {
@@ -1195,18 +1556,30 @@ server_client_click_timer(__unused int fd, __unused short events, void *data)
 static void
 server_client_check_exit(struct client *c)
 {
-	if (!(c->flags & CLIENT_EXIT))
+	struct client_file	*cf;
+
+	if (~c->flags & CLIENT_EXIT)
+		return;
+	if (c->flags & CLIENT_EXITED)
 		return;
 
-	if (EVBUFFER_LENGTH(c->stdin_data) != 0)
-		return;
-	if (EVBUFFER_LENGTH(c->stdout_data) != 0)
-		return;
-	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
-		return;
+	RB_FOREACH(cf, client_files, &c->files) {
+		if (EVBUFFER_LENGTH(cf->buffer) != 0)
+			return;
+	}
 
+	if (c->flags & CLIENT_ATTACHED)
+		notify_client("client-detached", c);
 	proc_send(c->peer, MSG_EXIT, -1, &c->retval, sizeof c->retval);
-	c->flags &= ~CLIENT_EXIT;
+	c->flags |= CLIENT_EXITED;
+}
+
+/* Redraw timer callback. */
+static void
+server_client_redraw_timer(__unused int fd, __unused short events,
+    __unused void *data)
+{
+	log_debug("redraw timer fired");
 }
 
 /* Check for client redraws. */
@@ -1216,25 +1589,63 @@ server_client_check_redraw(struct client *c)
 	struct session		*s = c->session;
 	struct tty		*tty = &c->tty;
 	struct window_pane	*wp;
-	int		 	 flags, masked;
+	int			 needed, flags;
+	struct timeval		 tv = { .tv_usec = 1000 };
+	static struct event	 ev;
+	size_t			 left;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
-
-	if (c->flags & (CLIENT_REDRAW|CLIENT_STATUS)) {
-		if (options_get_number(s->options, "set-titles"))
-			server_client_set_title(c);
-		screen_redraw_update(c); /* will adjust flags */
+	if (c->flags & CLIENT_ALLREDRAWFLAGS) {
+		log_debug("%s: redraw%s%s%s%s", c->name,
+		    (c->flags & CLIENT_REDRAWWINDOW) ? " window" : "",
+		    (c->flags & CLIENT_REDRAWSTATUS) ? " status" : "",
+		    (c->flags & CLIENT_REDRAWBORDERS) ? " borders" : "",
+		    (c->flags & CLIENT_REDRAWOVERLAY) ? " overlay" : "");
 	}
 
-	flags = tty->flags & (TTY_FREEZE|TTY_NOCURSOR);
-	tty->flags = (tty->flags & ~TTY_FREEZE) | TTY_NOCURSOR;
+	/*
+	 * If there is outstanding data, defer the redraw until it has been
+	 * consumed. We can just add a timer to get out of the event loop and
+	 * end up back here.
+	 */
+	needed = 0;
+	if (c->flags & CLIENT_ALLREDRAWFLAGS)
+		needed = 1;
+	else {
+		TAILQ_FOREACH(wp, &c->session->curw->window->panes, entry) {
+			if (wp->flags & PANE_REDRAW) {
+				needed = 1;
+				break;
+			}
+		}
+	}
+	if (needed && (left = EVBUFFER_LENGTH(tty->out)) != 0) {
+		log_debug("%s: redraw deferred (%zu left)", c->name, left);
+		if (!evtimer_initialized(&ev))
+			evtimer_set(&ev, server_client_redraw_timer, NULL);
+		if (!evtimer_pending(&ev, NULL)) {
+			log_debug("redraw timer started");
+			evtimer_add(&ev, &tv);
+		}
 
-	if (c->flags & CLIENT_REDRAW) {
-		tty_update_mode(tty, tty->mode, NULL);
-		screen_redraw_screen(c, 1, 1, 1);
-		c->flags &= ~(CLIENT_STATUS|CLIENT_BORDERS);
-	} else {
+		/*
+		 * We may have got here for a single pane redraw, but force a
+		 * full redraw next time in case other panes have been updated.
+		 */
+		c->flags |= CLIENT_ALLREDRAWFLAGS;
+		return;
+	} else if (needed)
+		log_debug("%s: redraw needed", c->name);
+
+	flags = tty->flags & (TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR);
+	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE)) | TTY_NOCURSOR;
+
+	if (~c->flags & CLIENT_REDRAWWINDOW) {
+		/*
+		 * If not redrawing the entire window, check whether each pane
+		 * needs to be redrawn.
+		 */
 		TAILQ_FOREACH(wp, &c->session->curw->window->panes, entry) {
 			if (wp->flags & PANE_REDRAW) {
 				tty_update_mode(tty, tty->mode, NULL);
@@ -1243,21 +1654,26 @@ server_client_check_redraw(struct client *c)
 		}
 	}
 
-	masked = c->flags & (CLIENT_BORDERS|CLIENT_STATUS);
-	if (masked != 0)
-		tty_update_mode(tty, tty->mode, NULL);
-	if (masked == CLIENT_BORDERS)
-		screen_redraw_screen(c, 0, 0, 1);
-	else if (masked == CLIENT_STATUS)
-		screen_redraw_screen(c, 0, 1, 0);
-	else if (masked != 0)
-		screen_redraw_screen(c, 0, 1, 1);
+	if (c->flags & CLIENT_ALLREDRAWFLAGS) {
+		if (options_get_number(s->options, "set-titles"))
+			server_client_set_title(c);
+		screen_redraw_screen(c);
+	}
 
 	tty->flags = (tty->flags & ~(TTY_FREEZE|TTY_NOCURSOR)) | flags;
 	tty_update_mode(tty, tty->mode, NULL);
 
-	c->flags &= ~(CLIENT_REDRAW|CLIENT_BORDERS|CLIENT_STATUS|
-	    CLIENT_STATUSFORCE);
+	c->flags &= ~(CLIENT_ALLREDRAWFLAGS|CLIENT_STATUSFORCE);
+
+	if (needed) {
+		/*
+		 * We would have deferred the redraw unless the output buffer
+		 * was empty, so we can record how many bytes the redraw
+		 * generated.
+		 */
+		c->redraw = EVBUFFER_LENGTH(tty->out);
+		log_debug("%s: redraw added %zu bytes", c->name, c->redraw);
+	}
 }
 
 /* Set client title. */
@@ -1271,10 +1687,10 @@ server_client_set_title(struct client *c)
 
 	template = options_get_string(s->options, "set-titles-string");
 
-	ft = format_create(NULL, FORMAT_NONE, 0);
+	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
-	title = format_expand_time(ft, template, time(NULL));
+	title = format_expand_time(ft, template);
 	if (c->title == NULL || strcmp(title, c->title) != 0) {
 		free(c->title);
 		c->title = xstrdup(title);
@@ -1289,11 +1705,9 @@ server_client_set_title(struct client *c)
 static void
 server_client_dispatch(struct imsg *imsg, void *arg)
 {
-	struct client		*c = arg;
-	struct msg_stdin_data	 stdindata;
-	const char		*data;
-	ssize_t			 datalen;
-	struct session		*s;
+	struct client	*c = arg;
+	ssize_t		 datalen;
+	struct session	*s;
 
 	if (c->flags & CLIENT_DEAD)
 		return;
@@ -1303,7 +1717,6 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 		return;
 	}
 
-	data = imsg->data;
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 
 	switch (imsg->hdr.type) {
@@ -1320,32 +1733,17 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 	case MSG_COMMAND:
 		server_client_dispatch_command(c, imsg);
 		break;
-	case MSG_STDIN:
-		if (datalen != sizeof stdindata)
-			fatalx("bad MSG_STDIN size");
-		memcpy(&stdindata, data, sizeof stdindata);
-
-		if (c->stdin_callback == NULL)
-			break;
-		if (stdindata.size <= 0)
-			c->stdin_closed = 1;
-		else {
-			evbuffer_add(c->stdin_data, stdindata.data,
-			    stdindata.size);
-		}
-		c->stdin_callback(c, c->stdin_closed,
-		    c->stdin_callback_data);
-		break;
 	case MSG_RESIZE:
 		if (datalen != 0)
 			fatalx("bad MSG_RESIZE size");
 
 		if (c->flags & CLIENT_CONTROL)
 			break;
-		if (tty_resize(&c->tty)) {
-			recalculate_sizes();
-			server_redraw_client(c);
-		}
+		server_client_update_latest(c);
+		server_client_clear_overlay(c);
+		tty_resize(&c->tty);
+		recalculate_sizes();
+		server_redraw_client(c);
 		if (c->session != NULL)
 			notify_client("client-resized", c);
 		break;
@@ -1386,6 +1784,15 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 
 		server_client_dispatch_shell(c);
 		break;
+	case MSG_WRITE_READY:
+		server_client_dispatch_write_ready(c, imsg);
+		break;
+	case MSG_READ:
+		server_client_dispatch_read_data(c, imsg);
+		break;
+	case MSG_READ_DONE:
+		server_client_dispatch_read_done(c, imsg);
+		break;
 	}
 }
 
@@ -1400,28 +1807,19 @@ server_client_command_done(struct cmdq_item *item, __unused void *data)
 	return (CMD_RETURN_NORMAL);
 }
 
-/* Show an error message. */
-static enum cmd_retval
-server_client_command_error(struct cmdq_item *item, void *data)
-{
-	char	*error = data;
-
-	cmdq_error(item, "%s", error);
-	free(error);
-
-	return (CMD_RETURN_NORMAL);
-}
-
 /* Handle command message. */
 static void
 server_client_dispatch_command(struct client *c, struct imsg *imsg)
 {
-	struct msg_command_data	  data;
+	struct msg_command	  data;
 	char			 *buf;
 	size_t			  len;
-	struct cmd_list		 *cmdlist = NULL;
 	int			  argc;
 	char			**argv, *cause;
+	struct cmd_parse_result	 *pr;
+
+	if (c->flags & CLIENT_EXIT)
+		return;
 
 	if (imsg->hdr.len - IMSG_HEADER_SIZE < sizeof data)
 		fatalx("bad MSG_COMMAND size");
@@ -1444,22 +1842,30 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 		*argv = xstrdup("new-session");
 	}
 
-	if ((cmdlist = cmd_list_parse(argc, argv, NULL, 0, &cause)) == NULL) {
-		cmd_free_argv(argc, argv);
+	pr = cmd_parse_from_arguments(argc, argv, NULL);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		cause = xstrdup("empty command");
 		goto error;
+	case CMD_PARSE_ERROR:
+		cause = pr->error;
+		goto error;
+	case CMD_PARSE_SUCCESS:
+		break;
 	}
 	cmd_free_argv(argc, argv);
 
-	cmdq_append(c, cmdq_get_command(cmdlist, NULL, NULL, 0));
+	cmdq_append(c, cmdq_get_command(pr->cmdlist, NULL, NULL, 0));
 	cmdq_append(c, cmdq_get_callback(server_client_command_done, NULL));
-	cmd_list_free(cmdlist);
+
+	cmd_list_free(pr->cmdlist);
 	return;
 
 error:
-	cmdq_append(c, cmdq_get_callback(server_client_command_error, cause));
+	cmd_free_argv(argc, argv);
 
-	if (cmdlist != NULL)
-		cmd_list_free(cmdlist);
+	cmdq_append(c, cmdq_get_error(cause));
+	free(cause);
 
 	c->flags |= CLIENT_EXIT;
 }
@@ -1469,7 +1875,7 @@ static void
 server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 {
 	const char	*data, *home;
-	size_t	 	 datalen;
+	size_t		 datalen;
 	int		 flags;
 	char		*name;
 
@@ -1549,39 +1955,34 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 #endif
 
 	if (c->flags & CLIENT_CONTROL) {
-		c->stdin_callback = control_callback;
+		close(c->fd);
+		c->fd = -1;
 
-		evbuffer_free(c->stderr_data);
-		c->stderr_data = c->stdout_data;
-
-		if (c->flags & CLIENT_CONTROLCONTROL)
-			evbuffer_add_printf(c->stdout_data, "\033P1000p");
-		proc_send(c->peer, MSG_STDIN, -1, NULL, 0);
-
+		control_start(c);
 		c->tty.fd = -1;
-
-		close(c->fd);
-		c->fd = -1;
-
-		return;
+	} else if (c->fd != -1) {
+		if (tty_init(&c->tty, c, c->fd, c->term) != 0) {
+			close(c->fd);
+			c->fd = -1;
+		} else {
+			if (c->flags & CLIENT_UTF8)
+				c->tty.flags |= TTY_UTF8;
+			if (c->flags & CLIENT_256COLOURS)
+				c->tty.term_flags |= TERM_256COLOURS;
+			tty_resize(&c->tty);
+			c->flags |= CLIENT_TERMINAL;
+		}
 	}
 
-	if (c->fd == -1)
-		return;
-	if (tty_init(&c->tty, c, c->fd, c->term) != 0) {
-		close(c->fd);
-		c->fd = -1;
-		return;
-	}
-	if (c->flags & CLIENT_UTF8)
-		c->tty.flags |= TTY_UTF8;
-	if (c->flags & CLIENT_256COLOURS)
-		c->tty.term_flags |= TERM_256COLOURS;
-
-	tty_resize(&c->tty);
-
-	if (!(c->flags & CLIENT_CONTROL))
-		c->flags |= CLIENT_TERMINAL;
+	/*
+	 * If this is the first client that has finished identifying, load
+	 * configuration files.
+	 */
+	if ((~c->flags & CLIENT_EXIT) &&
+	    !cfg_finished &&
+	    c == TAILQ_FIRST(&clients) &&
+	    TAILQ_NEXT(c, entry) == NULL)
+		start_cfg();
 }
 
 /* Handle shell message. */
@@ -1593,96 +1994,74 @@ server_client_dispatch_shell(struct client *c)
 	shell = options_get_string(global_s_options, "default-shell");
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
-	proc_send_s(c->peer, MSG_SHELL, shell);
+	proc_send(c->peer, MSG_SHELL, -1, shell, strlen(shell) + 1);
 
 	proc_kill_peer(c->peer);
 }
 
-/* Event callback to push more stdout data if any left. */
+/* Handle write ready message. */
 static void
-server_client_stdout_cb(__unused int fd, __unused short events, void *arg)
+server_client_dispatch_write_ready(struct client *c, struct imsg *imsg)
 {
-	struct client	*c = arg;
+	struct msg_write_ready	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
 
-	if (~c->flags & CLIENT_DEAD)
-		server_client_push_stdout(c);
-	server_client_unref(c);
-}
-
-/* Push stdout to client if possible. */
-void
-server_client_push_stdout(struct client *c)
-{
-	struct msg_stdout_data data;
-	size_t                 sent, left;
-
-	left = EVBUFFER_LENGTH(c->stdout_data);
-	while (left != 0) {
-		sent = left;
-		if (sent > sizeof data.data)
-			sent = sizeof data.data;
-		memcpy(data.data, EVBUFFER_DATA(c->stdout_data), sent);
-		data.size = sent;
-
-		if (proc_send(c->peer, MSG_STDOUT, -1, &data, sizeof data) != 0)
-			break;
-		evbuffer_drain(c->stdout_data, sent);
-
-		left = EVBUFFER_LENGTH(c->stdout_data);
-		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
-		    sent, left);
-	}
-	if (left != 0) {
-		c->references++;
-		event_once(-1, EV_TIMEOUT, server_client_stdout_cb, c, NULL);
-		log_debug("%s: client %p, queued", __func__, c);
-	}
-}
-
-/* Event callback to push more stderr data if any left. */
-static void
-server_client_stderr_cb(__unused int fd, __unused short events, void *arg)
-{
-	struct client	*c = arg;
-
-	if (~c->flags & CLIENT_DEAD)
-		server_client_push_stderr(c);
-	server_client_unref(c);
-}
-
-/* Push stderr to client if possible. */
-void
-server_client_push_stderr(struct client *c)
-{
-	struct msg_stderr_data data;
-	size_t                 sent, left;
-
-	if (c->stderr_data == c->stdout_data) {
-		server_client_push_stdout(c);
+	if (msglen != sizeof *msg)
+		fatalx("bad MSG_WRITE_READY size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
 		return;
-	}
+	if (msg->error != 0) {
+		cf->error = msg->error;
+		file_fire_done(cf);
+	} else
+		file_push(cf);
+}
 
-	left = EVBUFFER_LENGTH(c->stderr_data);
-	while (left != 0) {
-		sent = left;
-		if (sent > sizeof data.data)
-			sent = sizeof data.data;
-		memcpy(data.data, EVBUFFER_DATA(c->stderr_data), sent);
-		data.size = sent;
+/* Handle read data message. */
+static void
+server_client_dispatch_read_data(struct client *c, struct imsg *imsg)
+{
+	struct msg_read_data	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
+	void			*bdata = msg + 1;
+	size_t			 bsize = msglen - sizeof *msg;
 
-		if (proc_send(c->peer, MSG_STDERR, -1, &data, sizeof data) != 0)
-			break;
-		evbuffer_drain(c->stderr_data, sent);
+	if (msglen < sizeof *msg)
+		fatalx("bad MSG_READ_DATA size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
+		return;
 
-		left = EVBUFFER_LENGTH(c->stderr_data);
-		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
-		    sent, left);
+	log_debug("%s: file %d read %zu bytes", c->name, cf->stream, bsize);
+	if (cf->error == 0) {
+		if (evbuffer_add(cf->buffer, bdata, bsize) != 0) {
+			cf->error = ENOMEM;
+			file_fire_done(cf);
+		} else
+			file_fire_read(cf);
 	}
-	if (left != 0) {
-		c->references++;
-		event_once(-1, EV_TIMEOUT, server_client_stderr_cb, c, NULL);
-		log_debug("%s: client %p, queued", __func__, c);
-	}
+}
+
+/* Handle read done message. */
+static void
+server_client_dispatch_read_done(struct client *c, struct imsg *imsg)
+{
+	struct msg_read_done	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
+
+	if (msglen != sizeof *msg)
+		fatalx("bad MSG_READ_DONE size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
+		return;
+
+	log_debug("%s: file %d read done", c->name, cf->stream);
+	cf->error = msg->error;
+	file_fire_done(cf);
 }
 
 /* Add to client message log. */
@@ -1718,29 +2097,19 @@ server_client_add_message(struct client *c, const char *fmt, ...)
 
 /* Get client working directory. */
 const char *
-server_client_get_cwd(struct client *c)
+server_client_get_cwd(struct client *c, struct session *s)
 {
-	struct session	*s;
+	const char	*home;
 
+	if (!cfg_finished && cfg_client != NULL)
+		return (cfg_client->cwd);
 	if (c != NULL && c->session == NULL && c->cwd != NULL)
 		return (c->cwd);
+	if (s != NULL && s->cwd != NULL)
+		return (s->cwd);
 	if (c != NULL && (s = c->session) != NULL && s->cwd != NULL)
 		return (s->cwd);
-	return (".");
-}
-
-/* Resolve an absolute path or relative to client working directory. */
-char *
-server_client_get_path(struct client *c, const char *file)
-{
-	char	*path, resolved[PATH_MAX];
-
-	if (*file == '/')
-		path = xstrdup(file);
-	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c), file);
-	if (realpath(path, resolved) == NULL)
-		return (path);
-	free(path);
-	return (xstrdup(resolved));
+	if ((home = find_home()) != NULL)
+		return (home);
+	return ("/");
 }

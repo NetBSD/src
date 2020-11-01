@@ -36,7 +36,7 @@ const struct cmd_entry cmd_rename_window_entry = {
 	.args = { "t:", 1, 1 },
 	.usage = CMD_TARGET_WINDOW_USAGE " new-name",
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_rename_window_exec
@@ -46,12 +46,17 @@ static enum cmd_retval
 cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
-	struct winlink	*wl = item->state.tflag.wl;
+	struct client	*c = cmd_find_client(item, NULL, 1);
+	struct session	*s = item->target.s;
+	struct winlink	*wl = item->target.wl;
+	char		*newname;
 
-	window_set_name(wl->window, args->argv[0]);
+	newname = format_single(item, args->argv[0], c, s, wl, NULL);
+	window_set_name(wl->window, newname);
 	options_set_number(wl->window->options, "automatic-rename", 0);
 
 	server_status_window(wl->window);
+	free(newname);
 
 	return (CMD_RETURN_NORMAL);
 }

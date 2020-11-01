@@ -35,40 +35,64 @@ struct notify_entry {
 };
 
 static void
-notify_hook(struct cmdq_item *item, struct notify_entry *ne)
+notify_hook_formats(struct cmdq_item *item, struct session *s, struct window *w,
+    int pane)
 {
-	struct cmd_find_state	 fs;
-	struct hook		*hook;
-	struct cmdq_item	*new_item;
-	struct session		*s = ne->session;
-	struct window		*w = ne->window;
+	if (s != NULL) {
+		cmdq_format(item, "hook_session", "$%u", s->id);
+		cmdq_format(item, "hook_session_name", "%s", s->name);
+	}
+	if (w != NULL) {
+		cmdq_format(item, "hook_window", "@%u", w->id);
+		cmdq_format(item, "hook_window_name", "%s", w->name);
+	}
+	if (pane != -1)
+		cmdq_format(item, "hook_pane", "%%%d", pane);
+}
 
-	cmd_find_clear_state(&fs, NULL, 0);
+static void
+notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
+{
+	struct cmd_find_state		 fs;
+	struct options			*oo;
+	struct cmdq_item		*new_item;
+	struct session			*s = ne->session;
+	struct window			*w = ne->window;
+	struct options_entry		*o;
+	struct options_array_item	*a;
+	struct cmd_list			*cmdlist;
+
+	log_debug("%s: %s", __func__, ne->name);
+
+	cmd_find_clear_state(&fs, 0);
 	if (cmd_find_empty_state(&ne->fs) || !cmd_find_valid_state(&ne->fs))
-		cmd_find_current(&fs, item, CMD_FIND_QUIET);
+		cmd_find_from_nothing(&fs, 0);
 	else
 		cmd_find_copy_state(&fs, &ne->fs);
 
-	hook = hooks_find(hooks_get(fs.s), ne->name);
-	if (hook == NULL)
+	if (fs.s == NULL)
+		oo = global_s_options;
+	else
+		oo = fs.s->options;
+	o = options_get(oo, ne->name);
+	if (o == NULL)
 		return;
-	log_debug("notify hook %s", ne->name);
 
-	new_item = cmdq_get_command(hook->cmdlist, &fs, NULL, CMDQ_NOHOOKS);
-	cmdq_format(new_item, "hook", "%s", ne->name);
+	a = options_array_first(o);
+	while (a != NULL) {
+		cmdlist = options_array_item_value(a)->cmdlist;
+		if (cmdlist == NULL) {
+			a = options_array_next(a);
+			continue;
+		}
 
-	if (s != NULL) {
-		cmdq_format(new_item, "hook_session", "$%u", s->id);
-		cmdq_format(new_item, "hook_session_name", "%s", s->name);
+		new_item = cmdq_get_command(cmdlist, &fs, NULL, CMDQ_NOHOOKS);
+		cmdq_format(new_item, "hook", "%s", ne->name);
+		notify_hook_formats(new_item, s, w, ne->pane);
+		item = cmdq_insert_after(item, new_item);
+
+		a = options_array_next(a);
 	}
-	if (w != NULL) {
-		cmdq_format(new_item, "hook_window", "@%u", w->id);
-		cmdq_format(new_item, "hook_window_name", "%s", w->name);
-	}
-	if (ne->pane != -1)
-		cmdq_format(new_item, "hook_pane", "%%%d", ne->pane);
-
-	cmdq_insert_after(item, new_item);
 }
 
 static enum cmd_retval
@@ -78,8 +102,12 @@ notify_callback(struct cmdq_item *item, void *data)
 
 	log_debug("%s: %s", __func__, ne->name);
 
+	if (strcmp(ne->name, "pane-mode-changed") == 0)
+		control_notify_pane_mode_changed(ne->pane);
 	if (strcmp(ne->name, "window-layout-changed") == 0)
 		control_notify_window_layout_changed(ne->window);
+	if (strcmp(ne->name, "window-pane-changed") == 0)
+		control_notify_window_pane_changed(ne->window);
 	if (strcmp(ne->name, "window-unlinked") == 0)
 		control_notify_window_unlinked(ne->session, ne->window);
 	if (strcmp(ne->name, "window-linked") == 0)
@@ -94,18 +122,20 @@ notify_callback(struct cmdq_item *item, void *data)
 		control_notify_session_created(ne->session);
 	if (strcmp(ne->name, "session-closed") == 0)
 		control_notify_session_closed(ne->session);
+	if (strcmp(ne->name, "session-window-changed") == 0)
+		control_notify_session_window_changed(ne->session);
 
-	notify_hook(item, ne);
+	notify_insert_hook(item, ne);
 
 	if (ne->client != NULL)
 		server_client_unref(ne->client);
 	if (ne->session != NULL)
-		session_unref(ne->session);
+		session_remove_ref(ne->session, __func__);
 	if (ne->window != NULL)
-		window_remove_ref(ne->window);
+		window_remove_ref(ne->window, __func__);
 
 	if (ne->fs.s != NULL)
-		session_unref(ne->fs.s);
+		session_remove_ref(ne->fs.s, __func__);
 
 	free(__UNCONST(ne->name));
 	free(ne);
@@ -135,26 +165,44 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
 	if (c != NULL)
 		c->references++;
 	if (s != NULL)
-		s->references++;
+		session_add_ref(s, __func__);
 	if (w != NULL)
-		w->references++;
+		window_add_ref(w, __func__);
 
 	cmd_find_copy_state(&ne->fs, fs);
-	if (ne->fs.s != NULL)
-		ne->fs.s->references++; /* cmd_find_valid_state need session */
+	if (ne->fs.s != NULL) /* cmd_find_valid_state needs session */
+		session_add_ref(ne->fs.s, __func__);
 
 	new_item = cmdq_get_callback(notify_callback, ne);
 	cmdq_append(NULL, new_item);
 }
 
 void
-notify_input(struct window_pane *wp, struct evbuffer *input)
+notify_hook(struct cmdq_item *item, const char *name)
+{
+	struct notify_entry	ne;
+
+	memset(&ne, 0, sizeof ne);
+
+	ne.name = name;
+	cmd_find_copy_state(&ne.fs, &item->target);
+
+	ne.client = item->client;
+	ne.session = item->target.s;
+	ne.window = item->target.w;
+	ne.pane = item->target.wp->id;
+
+	notify_insert_hook(item, &ne);
+}
+
+void
+notify_input(struct window_pane *wp, const u_char *buf, size_t len)
 {
 	struct client	*c;
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->flags & CLIENT_CONTROL)
-			control_notify_input(c, wp, input);
+			control_notify_input(c, wp, buf, len);
 	}
 }
 
@@ -163,10 +211,7 @@ notify_client(const char *name, struct client *c)
 {
 	struct cmd_find_state	fs;
 
-	if (c->session != NULL)
-		cmd_find_from_session(&fs, c->session);
-	else
-		cmd_find_current(&fs, NULL, CMD_FIND_QUIET);
+	cmd_find_from_client(&fs, c, 0);
 	notify_add(name, &fs, c, NULL, NULL, NULL);
 }
 
@@ -176,19 +221,19 @@ notify_session(const char *name, struct session *s)
 	struct cmd_find_state	fs;
 
 	if (session_alive(s))
-		cmd_find_from_session(&fs, s);
+		cmd_find_from_session(&fs, s, 0);
 	else
-		cmd_find_current(&fs, NULL, CMD_FIND_QUIET);
+		cmd_find_from_nothing(&fs, 0);
 	notify_add(name, &fs, NULL, s, NULL, NULL);
 }
 
 void
-notify_winlink(const char *name, struct session *s, struct winlink *wl)
+notify_winlink(const char *name, struct winlink *wl)
 {
 	struct cmd_find_state	fs;
 
-	cmd_find_from_winlink(&fs, s, wl);
-	notify_add(name, &fs, NULL, s, wl->window, NULL);
+	cmd_find_from_winlink(&fs, wl, 0);
+	notify_add(name, &fs, NULL, wl->session, wl->window, NULL);
 }
 
 void
@@ -196,7 +241,7 @@ notify_session_window(const char *name, struct session *s, struct window *w)
 {
 	struct cmd_find_state	fs;
 
-	cmd_find_from_session_window(&fs, s, w);
+	cmd_find_from_session_window(&fs, s, w, 0);
 	notify_add(name, &fs, NULL, s, w, NULL);
 }
 
@@ -205,7 +250,7 @@ notify_window(const char *name, struct window *w)
 {
 	struct cmd_find_state	fs;
 
-	cmd_find_from_window(&fs, w);
+	cmd_find_from_window(&fs, w, 0);
 	notify_add(name, &fs, NULL, NULL, w, NULL);
 }
 
@@ -214,6 +259,6 @@ notify_pane(const char *name, struct window_pane *wp)
 {
 	struct cmd_find_state	fs;
 
-	cmd_find_from_pane(&fs, wp);
+	cmd_find_from_pane(&fs, wp, 0);
 	notify_add(name, &fs, NULL, NULL, NULL, wp);
 }

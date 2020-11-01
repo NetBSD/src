@@ -30,10 +30,10 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.name = "copy-mode",
 	.alias = NULL,
 
-	.args = { "Met:u", 0, 0 },
-	.usage = "[-Mu] " CMD_TARGET_PANE_USAGE,
+	.args = { "eHMt:uq", 0, 0 },
+	.usage = "[-eHMuq] " CMD_TARGET_PANE_USAGE,
 
-	.tflag = CMD_PANE,
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_clock_mode_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_PANE_USAGE,
 
-	.tflag = CMD_PANE,
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
@@ -56,33 +56,33 @@ static enum cmd_retval
 cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct cmdq_shared	*shared = item->shared;
 	struct client		*c = item->client;
 	struct session		*s;
-	struct window_pane	*wp = item->state.tflag.wp;
+	struct window_pane	*wp = item->target.wp;
+
+	if (args_has(args, 'q')) {
+		window_pane_reset_mode_all(wp);
+		return (CMD_RETURN_NORMAL);
+	}
 
 	if (args_has(args, 'M')) {
-		if ((wp = cmd_mouse_pane(&item->mouse, &s, NULL)) == NULL)
+		if ((wp = cmd_mouse_pane(&shared->mouse, &s, NULL)) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
 	}
 
 	if (self->entry == &cmd_clock_mode_entry) {
-		window_pane_set_mode(wp, &window_clock_mode);
+		window_pane_set_mode(wp, &window_clock_mode, NULL, NULL);
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (wp->mode != &window_copy_mode) {
-		if (window_pane_set_mode(wp, &window_copy_mode) != 0)
-			return (CMD_RETURN_NORMAL);
-		window_copy_init_from_pane(wp, args_has(self->args, 'e'));
+	if (!window_pane_set_mode(wp, &window_copy_mode, NULL, args)) {
+		if (args_has(args, 'M'))
+			window_copy_start_drag(c, &shared->mouse);
 	}
-	if (args_has(args, 'M')) {
-		if (wp->mode != NULL && wp->mode != &window_copy_mode)
-			return (CMD_RETURN_NORMAL);
-		window_copy_start_drag(c, &item->mouse);
-	}
-	if (wp->mode == &window_copy_mode && args_has(self->args, 'u'))
+	if (args_has(self->args, 'u'))
 		window_copy_pageup(wp, 0);
 
 	return (CMD_RETURN_NORMAL);

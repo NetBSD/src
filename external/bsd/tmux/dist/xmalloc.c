@@ -71,6 +71,20 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	return new_ptr;
 }
 
+void *
+xrecallocarray(void *ptr, size_t oldnmemb, size_t nmemb, size_t size)
+{
+	void *new_ptr;
+
+	if (nmemb == 0 || size == 0)
+		fatalx("xrecallocarray: zero size");
+	new_ptr = recallocarray(ptr, oldnmemb, nmemb, size);
+	if (new_ptr == NULL)
+		fatalx("xrecallocarray: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
+	return new_ptr;
+}
+
 char *
 xstrdup(const char *str)
 {
@@ -111,7 +125,7 @@ xvasprintf(char **ret, const char *fmt, va_list ap)
 
 	i = vasprintf(ret, fmt, ap);
 
-	if (i < 0 || *ret == NULL)
+	if (i == -1)
 		fatalx("xasprintf: %s", strerror(errno));
 
 	return i;
