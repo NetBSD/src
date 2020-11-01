@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.27 2020/11/01 11:03:44 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.28 2020/11/01 11:04:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.27 2020/11/01 11:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.28 2020/11/01 11:04:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -723,7 +723,7 @@ gicv3_irq_handler(void *frame)
 		const int ipl = is->is_ipl;
 		if (__predict_false(ipl < ci->ci_cpl)) {
 			pic_do_pending_ints(I32_bit, ipl, frame);
-		} else {
+		} else if (ci->ci_cpl != ipl) {
 			gicv3_set_priority(pic, ipl);
 			ci->ci_cpl = ipl;
 		}
