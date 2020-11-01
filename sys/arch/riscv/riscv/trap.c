@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.7 2020/06/30 16:20:02 maxv Exp $");
+__RCSID("$NetBSD: trap.c,v 1.8 2020/11/01 20:56:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: trap.c,v 1.7 2020/06/30 16:20:02 maxv Exp $");
 
 static const char * const causenames[] = {
 	[CAUSE_MISALIGNED_FETCH] = "misaligned fetch",
-	[CAUSE_MISALIGNED_LOAD] = "mialigned load",
+	[CAUSE_MISALIGNED_LOAD] = "misaligned load",
 	[CAUSE_MISALIGNED_STORE] = "misaligned store",
 	[CAUSE_FAULT_FETCH] = "fetch",
 	[CAUSE_FAULT_LOAD] = "load",
