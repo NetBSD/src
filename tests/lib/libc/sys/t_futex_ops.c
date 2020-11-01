@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.5.2.1 2020/11/01 15:22:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.5.2.1 2020/11/01 15:22:58 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -78,6 +78,7 @@ struct lwp_data {
 	volatile int	*futex_ptr;
 	volatile int	*error_ptr;
 	int		block_val;
+	pri_t		rt_prio;
 
 	void		(*exit_func)(void);
 
@@ -100,6 +101,20 @@ static int *bs_addr = MAP_FAILED;
 static void *bs_source_buffer = NULL;
 static void *bs_verify_buffer = NULL;
 static long bs_pagesize;
+
+static int pri_min;
+static int pri_max;
+
+static void
+setup_rt_params(void)
+{
+	long pri;
+
+	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MIN)) != -1);
+	pri_min = (int)pri;
+	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MAX)) != -1);
+	pri_max = (int)pri;
+}
 
 static void
 create_lwp_waiter(struct lwp_data *d)
@@ -186,6 +201,23 @@ simple_test_waiter_lwp(void *arg)
 	atomic_dec_uint(&nlwps_running);
 
 	_lwp_exit();
+}
+
+static void
+rt_simple_test_waiter_lwp(void *arg)
+{
+	struct lwp_data *d = arg;
+	struct sched_param sp;
+	int policy;
+
+	d->threadid = _lwp_self();
+
+	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
+	policy = SCHED_RR;
+	sp.sched_priority = d->rt_prio;
+	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
+
+	simple_test_waiter_lwp(arg);
 }
 
 static bool
@@ -826,7 +858,7 @@ do_futex_requeue_test(int flags, int op)
 
 	/* Move all waiters from 0 to 1. */
 	ATF_REQUIRE(__futex(&futex_word, op | flags,
-			    0, NULL, &futex_word1, INT_MAX, good_val3) == 0);
+			    0, NULL, &futex_word1, INT_MAX, good_val3) == 4);
 
 	/*
 	 * FUTEX 0: 0 LWPs
@@ -847,7 +879,7 @@ do_futex_requeue_test(int flags, int op)
 
 	/* Wake one waiter on 1, move one waiter to 0. */
 	ATF_REQUIRE(__futex(&futex_word1, op | flags,
-			    1, NULL, &futex_word, 1, good_val3) == 1);
+			    1, NULL, &futex_word, 1, good_val3) == 2);
 
 	/*
 	 * FUTEX 0: 1 LWP
@@ -1335,59 +1367,19 @@ ATF_TC_CLEANUP(futex_wait_evil_unmapped_anon, tc)
 
 /*****************************************************************************/
 
-static int pri_min;
-static int pri_max;
-
-static void
-lowpri_simple_test_waiter_lwp(void *arg)
-{
-	struct lwp_data *d = arg;
-	struct sched_param sp;
-	int policy;
-
-	d->threadid = _lwp_self();
-
-	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
-	policy = SCHED_RR;
-	sp.sched_priority = pri_min;
-	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
-
-	simple_test_waiter_lwp(arg);
-}
-
-static void
-highpri_simple_test_waiter_lwp(void *arg)
-{
-	struct lwp_data *d = arg;
-	struct sched_param sp;
-	int policy;
-
-	d->threadid = _lwp_self();
-
-	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
-	policy = SCHED_RR;
-	sp.sched_priority = pri_max;
-	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
-
-	simple_test_waiter_lwp(arg);
-}
-
 static void
 do_test_wake_highest_pri(void)
 {
 	lwpid_t waiter;
 	int tries;
-	long pri;
 
-	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MIN)) != -1);
-	pri_min = (int)pri;
-	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MAX)) != -1);
-	pri_max = (int)pri;
+	setup_rt_params();
 
 	futex_word = 0;
 	membar_sync();
 
-	setup_lwp_context(&lwp_data[0], lowpri_simple_test_waiter_lwp);
+	setup_lwp_context(&lwp_data[0], rt_simple_test_waiter_lwp);
+	lwp_data[0].rt_prio = pri_min;
 	lwp_data[0].op_flags = FUTEX_PRIVATE_FLAG;
 	lwp_data[0].futex_error = -1;
 	lwp_data[0].futex_ptr = &futex_word;
@@ -1409,7 +1401,8 @@ do_test_wake_highest_pri(void)
 	/* Ensure it's blocked. */
 	ATF_REQUIRE(lwp_data[0].futex_error == -1);
 
-	setup_lwp_context(&lwp_data[1], highpri_simple_test_waiter_lwp);
+	setup_lwp_context(&lwp_data[1], rt_simple_test_waiter_lwp);
+	lwp_data[1].rt_prio = pri_max;
 	lwp_data[1].op_flags = FUTEX_PRIVATE_FLAG;
 	lwp_data[1].futex_error = -1;
 	lwp_data[1].futex_ptr = &futex_word;
@@ -1471,10 +1464,831 @@ ATF_TC_HEAD(futex_wake_highest_pri, tc)
 }
 ATF_TC_BODY(futex_wake_highest_pri, tc)
 {
-	atf_tc_expect_fail("PR kern/55230");
 	do_test_wake_highest_pri();
 }
 ATF_TC_CLEANUP(futex_wake_highest_pri, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_handoff_read(void)
+{
+	int i, tries;
+	int rv;
+
+	futex_word = FUTEX_WAITERS;
+	membar_sync();
+
+	for (i = 0; i < 3; i++) {
+		setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = FUTEX_RW_READER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+	}
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 3)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 3, "read-waiters failed to start");
+
+	/* Ensure they're all blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == -1);
+
+	/* Ensure a regular wake errors out. */
+	rv = __futex(&futex_word,
+		     FUTEX_WAKE | FUTEX_PRIVATE_FLAG, INT_MAX, NULL,
+		     NULL, 0, 0);
+	ATF_REQUIRE(rv == -1 && errno == EINVAL);
+
+	/*
+	 * Issue a hand-off.  It should wake all 3 readers and update
+	 * the futex word.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    FUTEX_WAITERS, NULL, NULL, 0, 0) == 3);
+	ATF_REQUIRE(futex_word == 3);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "read-waiters failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[0]);
+
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[1]);
+
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[2]);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_handoff_read);
+ATF_TC_HEAD(futex_rw_handoff_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests rwlock direct hand-off to readers");
+}
+ATF_TC_BODY(futex_rw_handoff_read, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_handoff_read();
+}
+ATF_TC_CLEANUP(futex_rw_handoff_read, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_handoff_write(void)
+{
+	unsigned int i, tries;
+	lwpid_t lid;
+
+	/*
+	 * The kernel should not care about the WRITE_WANTED bit, and
+	 * should use the contents of the sleepqs as the truth.
+	 */
+	futex_word = FUTEX_WAITERS;
+	membar_sync();
+
+	for (i = 0; i < 3; i++) {
+		setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = FUTEX_RW_WRITER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+
+		/*
+		 * Wait for each one to start in-turn, because we want
+		 * to know the order in which the LWPs block on the futex.
+		 */
+		for (tries = 0; tries < 5; tries++) {
+			membar_sync();
+			if (nlwps_running == i + 1)
+				break;
+			sleep(1);
+		}
+		membar_sync();
+	}
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 3, "write-waiters failed to start");
+
+	/* Ensure they're all blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == -1);
+
+	/*
+	 * Issue a hand-off for each waiter.  This should awaken one
+	 * at a time and update the futex word.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    FUTEX_WAITERS, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[1].lwpid);
+
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_WANTED) == 0);
+	ATF_REQUIRE((futex_word & FUTEX_WAITERS) == 0);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+
+	/*
+	 * Issue one final hand-off; it should result in a fully
+	 * released lock word.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE(futex_word == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "read-waiters failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[0]);
+
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[1]);
+
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[2]);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_handoff_write);
+ATF_TC_HEAD(futex_rw_handoff_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests rwlock direct hand-off to writers");
+}
+ATF_TC_BODY(futex_rw_handoff_write, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_handoff_write();
+}
+ATF_TC_CLEANUP(futex_rw_handoff_write, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_handoff_write_preferred(void)
+{
+	unsigned int i, tries;
+	lwpid_t lid;
+
+	/*
+	 * The kernel should not care about the WRITE_WANTED bit, and
+	 * should use the contents of the sleepqs as the truth.
+	 */
+	futex_word = FUTEX_WAITERS;
+	membar_sync();
+
+	for (i = 0; i < 2; i++) {
+		setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = FUTEX_RW_READER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+
+		/*
+		 * Wait for each one to start in-turn, because we want
+		 * to know the order in which the LWPs block on the futex.
+		 */
+		for (tries = 0; tries < 5; tries++) {
+			membar_sync();
+			if (nlwps_running == i + 1)
+				break;
+			sleep(1);
+		}
+		membar_sync();
+	}
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "read-waiters failed to start");
+
+	setup_lwp_context(&lwp_data[2], simple_test_waiter_lwp);
+	lwp_data[2].op_flags = FUTEX_PRIVATE_FLAG;
+	lwp_data[2].futex_error = -1;
+	lwp_data[2].futex_ptr = &futex_word;
+	lwp_data[2].block_val = futex_word;
+	lwp_data[2].bitset = FUTEX_RW_WRITER;
+	lwp_data[2].wait_op = FUTEX_NETBSD_RW_WAIT;
+	ATF_REQUIRE(_lwp_create(&lwp_data[2].context, 0,
+				&lwp_data[2].lwpid) == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 3)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 3, "write-waiter failed to start");
+
+	/* Ensure they're all blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == -1);
+
+	/*
+	 * Issue a hand-off.  It should select the writer despite
+	 * the fact that it is the most recent waiter.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    FUTEX_WAITERS, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_WANTED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+
+	/*
+	 * Issue another hand-off.  It should awaken both waiting
+	 * readers.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 2);
+	ATF_REQUIRE(futex_word == 2);
+
+	/*
+	 * Issue one final hand-off; it should result in a fully
+	 * released lock word.  Note that we don't have any
+	 * outstaning waiters waiting, and therefore there will
+	 * not be a kernel futex; this exercises a specific code
+	 * path in the kernel designed to handle this.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE(futex_word == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "read-waiters failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[0]);
+
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[1]);
+
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+	reap_lwp_waiter(&lwp_data[2]);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_handoff_write_preferred);
+ATF_TC_HEAD(futex_rw_handoff_write_preferred, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests that rwlock direct hand-off prefers writers");
+}
+ATF_TC_BODY(futex_rw_handoff_write_preferred, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_handoff_write_preferred();
+}
+ATF_TC_CLEANUP(futex_rw_handoff_write_preferred, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_handoff_write_locked_rt_reader_preferred(void)
+{
+	unsigned int i, tries;
+	lwpid_t lid;
+
+	setup_rt_params();
+
+	/*
+	 * We need to show the rwlock as write-locked to ensure
+	 * the rt read-waiter blocks.
+	 */
+	futex_word =
+	    FUTEX_WAITERS | FUTEX_RW_WRITE_WANTED | FUTEX_RW_WRITE_LOCKED;
+	membar_sync();
+
+	/*
+	 * Create LWPs in the following order:
+	 *
+	 *	0 - non-RT reader
+	 *	1 - RT reader
+	 *	2 - non-RT writer
+	 *
+	 * We expect them to be awakened in this order:
+	 *
+	 *	1 -> 2 -> 0
+	 */
+	for (i = 0; i < 3; i++) {
+		if (i == 1) {
+			setup_lwp_context(&lwp_data[i],
+			    rt_simple_test_waiter_lwp);
+			lwp_data[i].rt_prio = pri_min;
+		} else {
+			setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
+		}
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = i == 2 ? FUTEX_RW_WRITER : FUTEX_RW_READER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+
+		/*
+		 * Wait for each one to start in-turn, because we want
+		 * to know the order in which the LWPs block on the futex.
+		 */
+		for (tries = 0; tries < 5; tries++) {
+			membar_sync();
+			if (nlwps_running == i + 1)
+				break;
+			sleep(1);
+		}
+		membar_sync();
+	}
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 3, "waiters failed to start");
+
+	/* Ensure they're all blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == -1);
+
+	/*
+	 * Issue a hand-off.  It should select the RT reader, and should
+	 * indicate that there are still waiters, including a write-waiter.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_LOCKED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == 1);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[1].lwpid);
+
+	/*
+	 * Issue another hand-off.  It should awaken the writer and
+	 * indicate only readers waiting.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_WANTED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+
+	/*
+	 * Issue another hand-off.  It would awaken the non-rt
+	 * reader and indicate no waiters waiting.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word == 1);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+
+	/*
+	 * Issue one final hand-off; it should result in a fully
+	 * released lock word.  Note that we don't have any
+	 * outstaning waiters waiting, and therefore there will
+	 * not be a kernel futex; this exercises a specific code
+	 * path in the kernel designed to handle this.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE(futex_word == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "threads failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_handoff_write_locked_rt_reader_preferred);
+ATF_TC_HEAD(futex_rw_handoff_write_locked_rt_reader_preferred, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests that write-locked rwlock direct hand-off "
+	    "prefers rt readers over non-rt writers");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(futex_rw_handoff_write_locked_rt_reader_preferred, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_handoff_write_locked_rt_reader_preferred();
+}
+ATF_TC_CLEANUP(futex_rw_handoff_write_locked_rt_reader_preferred, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_wait_write_wanted_rt_reader_preferred(void)
+{
+	unsigned int i, tries;
+	lwpid_t lid;
+
+	setup_rt_params();
+
+	/*
+	 * The kernel should not care about the WRITE_WANTED bit, and
+	 * should use the contents of the sleepqs as the truth.
+	 */
+	futex_word = FUTEX_WAITERS;
+	membar_sync();
+
+	/*
+	 * Create LWPs in the following order:
+	 *
+	 *	0 - non-RT writer
+	 *	1 - non-RT reader
+	 *	2 - RT reader
+	 *
+	 * We expect:
+	 *
+	 * ==> non-RT reader blocks because WRITE_WANTED.
+	 * ==> RT reader does not block and acquires the read-lock.
+	 *
+	 * We then expect hand-offs to awaken the remaining waiters
+	 * in this order:
+	 *
+	 *	0 -> 1
+	 */
+	for (i = 0; i < 3; i++) {
+		if (i == 2) {
+			setup_lwp_context(&lwp_data[i],
+			    rt_simple_test_waiter_lwp);
+			lwp_data[i].rt_prio = pri_min;
+		} else {
+			setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
+		}
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = i == 0 ? FUTEX_RW_WRITER : FUTEX_RW_READER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+
+		/*
+		 * Wait for the first 2 to start in-turn, because we want
+		 * to know the order in which the LWPs block on the futex.
+		 */
+		for (tries = 0; i < 2 && tries < 5; tries++) {
+			membar_sync();
+			if (nlwps_running == i + 1)
+				break;
+			sleep(1);
+		}
+		membar_sync();
+	}
+
+	sleep(2);
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "waiters failed to start");
+
+	/* Ensure the first two are blocked and the 3rd one succeeded. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+
+	/*
+	 * Verify the locked-ness and waiter-status of the rwlock.
+	 * Also verify it was the expected LWP that made it through
+	 * the gate.
+	 */
+	ATF_REQUIRE(futex_word == (FUTEX_WAITERS | FUTEX_RW_WRITE_WANTED | 1));
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+
+	/*
+	 * Issue a hand-off.  It should awaken the writer and indicate only
+	 * readers waiting.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_WANTED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+
+	/*
+	 * Issue another hand-off.  It would awaken the non-rt
+	 * reader and indicate no waiters waiting.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word == 1);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[1].lwpid);
+
+	/*
+	 * Issue one final hand-off; it should result in a fully
+	 * released lock word.  Note that we don't have any
+	 * outstaning waiters waiting, and therefore there will
+	 * not be a kernel futex; this exercises a specific code
+	 * path in the kernel designed to handle this.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE(futex_word == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "threads failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_wait_write_wanted_rt_reader_preferred);
+ATF_TC_HEAD(futex_rw_wait_write_wanted_rt_reader_preferred, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests that a wait by a rt-reader acquires "
+	    "even if the rwlock is wanted by a non-rt writer");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(futex_rw_wait_write_wanted_rt_reader_preferred, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_wait_write_wanted_rt_reader_preferred();
+}
+ATF_TC_CLEANUP(futex_rw_wait_write_wanted_rt_reader_preferred, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
+static void
+do_test_rw_handoff_rt_prio_order(void)
+{
+	unsigned int i, tries;
+	lwpid_t lid;
+
+	setup_rt_params();
+
+	/*
+	 * We need to show the rwlock as write-locked to ensure
+	 * the rt read-waiter blocks.
+	 */
+	futex_word =
+	    FUTEX_WAITERS | FUTEX_RW_WRITE_WANTED | FUTEX_RW_WRITE_LOCKED;
+	membar_sync();
+
+	/*
+	 * Create LWPs in the following order:
+	 *
+	 *	0 - pri_min+0 writer
+	 *	1 - pri_min+1 reader
+	 *	2 - pri_min+2 writer
+	 *	3 - pri_min+3 reader
+	 *
+	 * We expect only one to be awakened at each hand-off and for them
+	 * to be awakened in this order:
+	 *
+	 *	3 -> 2 -> 1 -> 0
+	 */
+	for (i = 0; i < 4; i++) {
+		setup_lwp_context(&lwp_data[i], rt_simple_test_waiter_lwp);
+		lwp_data[i].rt_prio = pri_min + i;
+		lwp_data[i].op_flags = FUTEX_PRIVATE_FLAG;
+		lwp_data[i].futex_error = -1;
+		lwp_data[i].futex_ptr = &futex_word;
+		lwp_data[i].block_val = futex_word;
+		lwp_data[i].bitset = i & 1 ? FUTEX_RW_READER : FUTEX_RW_WRITER;
+		lwp_data[i].wait_op = FUTEX_NETBSD_RW_WAIT;
+		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
+					&lwp_data[i].lwpid) == 0);
+
+		/*
+		 * Wait for each one to start in-turn, because we want
+		 * to know the order in which the LWPs block on the futex.
+		 */
+		for (tries = 0; tries < 5; tries++) {
+			membar_sync();
+			if (nlwps_running == i + 1)
+				break;
+			sleep(1);
+		}
+		membar_sync();
+	}
+
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 4, "waiters failed to start");
+
+	/* Ensure they're all blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE(lwp_data[2].futex_error == -1);
+	ATF_REQUIRE(lwp_data[3].futex_error == -1);
+
+	/*
+	 * Issue a hand-off.  It should select the pri_min+3 reader, and should
+	 * indicate that there are still waiters, including a write-waiter.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_LOCKED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == 1);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[3].lwpid);
+
+	/*
+	 * Issue another hand-off.  It should awaken the pri_min+2 writer and
+	 * indicate that there are still waiters, including a write-waiter.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[2].lwpid);
+
+	/*
+	 * Issue another a hand-off.  It should select the pri_min+1 reader,
+	 * and should indicate that there are still waiters, including a
+	 * write-waiter.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_LOCKED) == 0);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_WANTED);
+	ATF_REQUIRE(futex_word & FUTEX_WAITERS);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == 1);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[1].lwpid);
+
+	/*
+	 * Issue another hand-off.  It should awaken the pri_min+0 writer and
+	 * indicate that there are no more waiters.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 1);
+	ATF_REQUIRE(futex_word & FUTEX_RW_WRITE_LOCKED);
+	ATF_REQUIRE((futex_word & FUTEX_RW_WRITE_WANTED) == 0);
+	ATF_REQUIRE((futex_word & FUTEX_WAITERS) == 0);
+	lid = futex_word & FUTEX_TID_MASK;
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+	ATF_REQUIRE(_lwp_wait(0, &lid) == 0);
+	ATF_REQUIRE(lid == lwp_data[0].lwpid);
+
+	/*
+	 * Issue one final hand-off; it should result in a fully
+	 * released lock word.  Note that we don't have any
+	 * outstaning waiters waiting, and therefore there will
+	 * not be a kernel futex; this exercises a specific code
+	 * path in the kernel designed to handle this.
+	 */
+	ATF_REQUIRE(__futex(&futex_word,
+			    FUTEX_NETBSD_RW_HANDOFF | FUTEX_PRIVATE_FLAG,
+			    futex_word, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE(futex_word == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "threads failed to exit");
+
+	/* Ensure they all exited error-free. */
+	ATF_REQUIRE(lwp_data[0].futex_error == 0);
+	ATF_REQUIRE(lwp_data[1].futex_error == 0);
+	ATF_REQUIRE(lwp_data[2].futex_error == 0);
+	ATF_REQUIRE(lwp_data[3].futex_error == 0);
+}
+
+ATF_TC_WITH_CLEANUP(futex_rw_handoff_rt_prio_order);
+ATF_TC_HEAD(futex_rw_handoff_rt_prio_order, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests that hand-off to mixed readers/writer occurs "
+	    "in strict priority order");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(futex_rw_handoff_rt_prio_order, tc)
+{
+	atf_tc_skip("futex_rw_handoff is currently broken");
+	do_test_rw_handoff_rt_prio_order();
+}
+ATF_TC_CLEANUP(futex_rw_handoff_rt_prio_order, tc)
 {
 	do_cleanup();
 }
@@ -1512,6 +2326,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, futex_wake_op_cmp);
 
 	ATF_TP_ADD_TC(tp, futex_wake_highest_pri);
+
+	ATF_TP_ADD_TC(tp, futex_rw_handoff_read);
+	ATF_TP_ADD_TC(tp, futex_rw_handoff_write);
+	ATF_TP_ADD_TC(tp, futex_rw_handoff_write_preferred);
+	ATF_TP_ADD_TC(tp, futex_rw_handoff_write_locked_rt_reader_preferred);
+	ATF_TP_ADD_TC(tp, futex_rw_wait_write_wanted_rt_reader_preferred);
+	ATF_TP_ADD_TC(tp, futex_rw_handoff_rt_prio_order);
 
 	return atf_no_error();
 }
