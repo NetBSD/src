@@ -1,13 +1,14 @@
+make: "varmod-range.mk" line 53: Invalid number: x}Rest" != "Rest"
+
+make: "varmod-range.mk" line 53: Malformed conditional ("${:U:range=x}Rest" != "Rest")
 make: Unknown modifier 'x'
-make: "varmod-range.mk" line 49: Malformed conditional ("${:U:range=x}Rest" != "Rest")
-make: Unknown modifier 'x'
-make: "varmod-range.mk" line 58: Malformed conditional ("${:U:range=0x0}Rest" != "Rest")
+make: "varmod-range.mk" line 62: Malformed conditional ("${:U:range=0x0}Rest" != "Rest")
 make: Unknown modifier 'r'
-make: "varmod-range.mk" line 74: Malformed conditional ("${a b c:L:rang}Rest" != "Rest")
+make: "varmod-range.mk" line 78: Malformed conditional ("${a b c:L:rang}Rest" != "Rest")
 make: Unknown modifier 'r'
-make: "varmod-range.mk" line 81: Malformed conditional ("${a b c:L:rango}Rest" != "Rest")
+make: "varmod-range.mk" line 85: Malformed conditional ("${a b c:L:rango}Rest" != "Rest")
 make: Unknown modifier 'r'
-make: "varmod-range.mk" line 88: Malformed conditional ("${a b c:L:ranger}Rest" != "Rest")
+make: "varmod-range.mk" line 92: Malformed conditional ("${a b c:L:ranger}Rest" != "Rest")
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

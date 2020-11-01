@@ -45,7 +45,8 @@ want: Unfinished modifier for UNDEF (']' missing)
 make: Unfinished modifier for UNDEF (']' missing)
 
 13=
-12345=ok
+make: Bad modifier `:[123451234512345123451234512345]' for UNDEF
+12345=S,^ok,:S,^3ok,}
 
 exclam:
 want: Unfinished modifier for VARNAME ('!' missing)

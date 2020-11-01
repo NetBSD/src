@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.5 2020/11/01 13:28:50 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.6 2020/11/01 14:36:25 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -102,6 +102,8 @@ WORDS=	one two three four five six
 
 # The value of the separator character must not be outside the value space
 # for an unsigned character though.
+#
+# Since 2020-11-01, these out-of-bounds values are rejected.
 .if ${WORDS:[1..3]:ts\400:tu}
 .  warning The separator \400 is accepted even though it is out of bounds.
 .else
@@ -114,6 +116,8 @@ WORDS=	one two three four five six
 .endif
 
 # The hexadecimal number must be in the range of an unsigned char.
+#
+# Since 2020-11-01, these out-of-bounds values are rejected.
 .if ${WORDS:[1..3]:ts\x100:tu}
 .  warning The separator \x100 is accepted even though it is out of bounds.
 .else

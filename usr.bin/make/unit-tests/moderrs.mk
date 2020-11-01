@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.23 2020/11/01 10:56:08 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.24 2020/11/01 14:36:25 rillig Exp $
 #
 # various modifier error tests
 
@@ -74,15 +74,21 @@ words: print-header print-footer
 
 	# Word index out of bounds.
 	#
-	# On LP64I32, strtol returns LONG_MAX,
-	# which is then truncated to int (undefined behavior),
-	# typically resulting in -1.
-	# This -1 is interpreted as "the last word".
+	# Until 2020-11-01, the behavior in this case depended upon the size
+	# of unsigned long.
 	#
-	# On ILP32, strtol returns LONG_MAX,
-	# which is a large number.
-	# This results in a range from LONG_MAX - 1 to 3,
-	# which is empty.
+	# On LP64I32, strtol returns LONG_MAX, which was then truncated to
+	# int (undefined behavior), typically resulting in -1.  This -1 was
+	# interpreted as "the last word".
+	#
+	# On ILP32, strtol returns LONG_MAX, which is a large number.  This
+	# resulted in a range from LONG_MAX - 1 to 3, which was empty.
+	#
+	# Since 2020-11-01, the numeric overflow is detected and generates an
+	# error.  In the remainder of the text, the '$,' is no longer parsed
+	# as part of a variable modifier, where it would have been interpreted
+	# as an anchor to the :S modifier, but as a normal variable named ','.
+	# That variable is undefined, resulting in an empty string.
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
 exclam: print-header print-footer
