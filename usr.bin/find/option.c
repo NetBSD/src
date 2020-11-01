@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.27 2016/06/13 00:04:40 pgoyette Exp $	*/
+/*	$NetBSD: option.c,v 1.28 2020/11/01 05:38:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.27 2016/06/13 00:04:40 pgoyette Exp $");
+__RCSID("$NetBSD: option.c,v 1.28 2020/11/01 05:38:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,8 @@ static OPTION const options[] = {
  */
 
 	{ "-nogroup",	N_NOGROUP,	c_nogroup,	0 },
+/* Alias for compatability with Gnu findutils */
+	{ "-not",	N_NOT,		c_not,		0 },
 	{ "-nouser",	N_NOUSER,	c_nouser,	0 },
 	{ "-o",		N_OR,		c_or,		0 },
 	{ "-ok",	N_OK,		c_exec,		1 },
