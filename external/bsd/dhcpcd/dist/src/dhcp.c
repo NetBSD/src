@@ -1520,21 +1520,15 @@ again:
 #endif
 }
 
-void
-dhcp_close(struct interface *ifp)
+static void
+dhcp_closebpf(struct interface *ifp)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 	struct dhcp_state *state = D_STATE(ifp);
 
-	if (state == NULL)
-		return;
-
 #ifdef PRIVSEP
-	if (IN_PRIVSEP_SE(ctx)) {
+	if (IN_PRIVSEP_SE(ctx))
 		ps_bpf_closebootp(ifp);
-		if (state->addr != NULL)
-			ps_inet_closebootp(state->addr);
-	}
 #endif
 
 	if (state->bpf != NULL) {
@@ -1542,11 +1536,38 @@ dhcp_close(struct interface *ifp)
 		bpf_close(state->bpf);
 		state->bpf = NULL;
 	}
+}
+
+static void
+dhcp_closeinet(struct interface *ifp)
+{
+	struct dhcpcd_ctx *ctx = ifp->ctx;
+	struct dhcp_state *state = D_STATE(ifp);
+
+#ifdef PRIVSEP
+	if (IN_PRIVSEP_SE(ctx)) {
+		if (state->addr != NULL)
+			ps_inet_closebootp(state->addr);
+	}
+#endif
+
 	if (state->udp_rfd != -1) {
 		eloop_event_delete(ctx->eloop, state->udp_rfd);
 		close(state->udp_rfd);
 		state->udp_rfd = -1;
 	}
+}
+
+void
+dhcp_close(struct interface *ifp)
+{
+	struct dhcp_state *state = D_STATE(ifp);
+
+	if (state == NULL)
+		return;
+
+	dhcp_closebpf(ifp);
+	dhcp_closeinet(ifp);
 
 	state->interval = 0;
 }
@@ -2061,12 +2082,14 @@ dhcp_addr_duplicated(struct interface *ifp, struct in_addr *ia)
 
 #ifdef ARP
 #ifdef KERNEL_RFC5227
+#ifdef ARPING
 static void
 dhcp_arp_announced(struct arp_state *state)
 {
 
 	arp_free(state);
 }
+#endif
 #else
 static void
 dhcp_arp_defend_failed(struct arp_state *astate)
@@ -2321,22 +2344,23 @@ dhcp_bind(struct interface *ifp)
 			logerr("dhcp_writefile: %s", state->leasefile);
 	}
 
+	old_state = state->added;
+
 	/* Close the BPF filter as we can now receive DHCP messages
 	 * on a UDP socket. */
-	old_state = state->added;
-	if (ctx->options & DHCPCD_MASTER ||
-	    state->old == NULL ||
-	    state->old->yiaddr != state->new->yiaddr || old_state & STATE_FAKE)
-		dhcp_close(ifp);
+	dhcp_closebpf(ifp);
 
+	/* Add the address */
 	ipv4_applyaddr(ifp);
 
 	/* If not in master mode, open an address specific socket. */
 	if (ctx->options & DHCPCD_MASTER ||
 	    (state->old != NULL &&
-	    state->old->yiaddr == state->new->yiaddr &&
-	    old_state & STATE_ADDED && !(old_state & STATE_FAKE)))
+	     state->old->yiaddr == state->new->yiaddr &&
+	     old_state & STATE_ADDED && !(old_state & STATE_FAKE)))
 		return;
+
+	dhcp_closeinet(ifp);
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(ctx)) {
@@ -2926,6 +2950,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	unsigned int i;
 	char *msg;
 	bool bootp_copied;
+	uint32_t v6only_time = 0;
+	bool use_v6only = false;
 #ifdef AUTH
 	const uint8_t *auth;
 	size_t auth_len;
@@ -3143,6 +3169,23 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		}
 	}
 
+	if (has_option_mask(ifo->requestmask, DHO_IPV6_PREFERRED_ONLY)) {
+		if (get_option_uint32(ifp->ctx, &v6only_time, bootp, bootp_len,
+		    DHO_IPV6_PREFERRED_ONLY) == 0 &&
+		    (state->state == DHS_DISCOVER || state->state == DHS_REBOOT))
+		{
+			char v6msg[128];
+
+			use_v6only = true;
+			if (v6only_time < MIN_V6ONLY_WAIT)
+				v6only_time = MIN_V6ONLY_WAIT;
+			snprintf(v6msg, sizeof(v6msg),
+			    "IPv6-Only Preferred received (%u seconds)",
+			    v6only_time);
+			LOGDHCP(LOG_INFO, v6msg);
+		}
+	}
+
 	/* DHCP Auto-Configure, RFC 2563 */
 	if (type == DHCP_OFFER && bootp->yiaddr == 0) {
 		LOGDHCP(LOG_WARNING, "no address given");
@@ -3177,9 +3220,19 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			}
 			eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 			eloop_timeout_add_sec(ifp->ctx->eloop,
-			    DHCP_MAX, dhcp_discover, ifp);
+			    use_v6only ? v6only_time : DHCP_MAX,
+			    dhcp_discover, ifp);
 		}
 #endif
+		return;
+	}
+
+	if (use_v6only) {
+		dhcp_drop(ifp, "EXPIRE");
+		dhcp_unlink(ifp->ctx, state->leasefile);
+		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop, v6only_time,
+		    dhcp_discover, ifp);
 		return;
 	}
 
