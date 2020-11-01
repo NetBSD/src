@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.88 2020/10/25 15:55:36 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.89 2020/11/01 18:51:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.88 2020/10/25 15:55:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.89 2020/11/01 18:51:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -143,7 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.88 2020/10/25 15:55:36 pgoye
 
 #include <machine/reg.h>
 
-#ifdef PTRACE
 # ifdef PTRACE_DEBUG
 #  define DPRINTF(a) uprintf a
 # else
@@ -1572,7 +1571,6 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 #endif
 	return 0;
 }
-#endif /* PTRACE */
 
 MODULE(MODULE_CLASS_EXEC, ptrace_common, NULL);
  

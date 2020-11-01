@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/10/19 19:33:02 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2020/11/01 18:51:03 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -6,19 +6,24 @@ KMOD=	coredump
 
 .PATH:	${S}/kern
 SRCS=	kern_core.c core_netbsd.c
-SRCS+=	${OBJECT_FMTS:S/^/core_/:S/$/.c/}
+
+# Include only the primary object format.  If both elf64 and elf32 are
+# supported, this will pick up elf64 and elf32 will be available in
+# the compat_netbsd32_coredump module
+
+.if ${OBJECT_FMTS:Melf64} != ""
+SRCS+=		core_elf64.c
+CPPFLAGS+=	-DEXEC_ELF64
+.elif ${OBJECT_FMTS:Melf32} != ""
+SRCS+=		core_elf32.c
+CPPFLAGS+=	-DEXEC_ELF32
+.endif
 
 .PATH:	${S}/uvm
 SRCS+=	uvm_coredump.c
 
 .include "../ptrace_common/machdep.mk"
 SRCS+=	core_machdep.c
-
-.include "${.CURDIR}/../../compat/netbsd32/netbsd32.mk"
-.if ${COMPAT_USE_NETBSD32} != "no"
-CPPFLAGS.core_elf32.c+=     -DCOMPAT_NETBSD32
-CPPFLAGS.kern_core.c+=     -DCOMPAT_NETBSD32
-.endif
 
 WARNS=	3
 
