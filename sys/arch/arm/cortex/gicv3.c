@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.31 2020/11/01 14:19:42 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.31 2020/11/01 14:19:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.31 2020/11/01 14:19:42 jmcneill Exp $");
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/vmem.h>
+#include <sys/atomic.h>
 
 #include <machine/cpufunc.h>
 
@@ -121,7 +122,7 @@ gicv3_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	const u_int group = irqbase / 32;
 
 	if (group == 0) {
-		sc->sc_enabled_sgippi |= mask;
+		atomic_or_32(&sc->sc_enabled_sgippi, mask);
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_ISENABLER0, mask);
 		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 			;
@@ -140,7 +141,7 @@ gicv3_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	const u_int group = irqbase / 32;
 
 	if (group == 0) {
-		sc->sc_enabled_sgippi &= ~mask;
+		atomic_and_32(&sc->sc_enabled_sgippi, ~mask);
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_ICENABLER0, mask);
 		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 			;
