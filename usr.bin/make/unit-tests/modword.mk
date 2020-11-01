@@ -1,4 +1,4 @@
-# $NetBSD: modword.mk,v 1.3 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: modword.mk,v 1.4 2020/11/01 13:55:31 rillig Exp $
 #
 # Test behaviour of new :[] modifier
 
@@ -22,7 +22,8 @@ mod-squarebrackets: mod-squarebrackets-0-star-at \
 	mod-squarebrackets-hash \
 	mod-squarebrackets-n \
 	mod-squarebrackets-start-end \
-	mod-squarebrackets-nested
+	mod-squarebrackets-nested \
+	mod-squarebrackets-space
 
 mod-squarebrackets-0-star-at:
 	@echo 'LIST:[]="${LIST:[]}" is an error'
@@ -92,6 +93,7 @@ mod-squarebrackets-n:
 	@echo 'LIST:[*]:C/ /,/:[2]="${LIST:[*]:C/ /,/:[2]}"'
 	@echo 'LIST:[*]:C/ /,/:[*]:[2]="${LIST:[*]:C/ /,/:[*]:[2]}"'
 	@echo 'LIST:[*]:C/ /,/:[@]:[2]="${LIST:[*]:C/ /,/:[@]:[2]}"'
+	@echo 'LONGLIST:[012..0x12]="${LONGLIST:[012..0x12]}"'
 
 mod-squarebrackets-start-end:
 	@echo 'LIST:[1.]="${LIST:[1.]}" is an error'
@@ -123,6 +125,12 @@ mod-squarebrackets-nested:
 	@echo 'LIST:[$${LONGLIST:[21]:S/2//}]="${LIST:[${LONGLIST:[21]:S/2//}]}"'
 	@echo 'LIST:[$${LIST:[#]}]="${LIST:[${LIST:[#]}]}"'
 	@echo 'LIST:[$${LIST:[$${HASH}]}]="${LIST:[${LIST:[${HASH}]}]}"'
+
+mod-squarebrackets-space:
+	# As of 2020-11-01, it is possible to have spaces before the numbers
+	# but not after them.  This is an unintended side-effect of using
+	# strtol for parsing the numbers.
+	@echo 'LIST:[  -1..   +3]="${LIST:[  -1..   +3]}"'
 
 mod-C-W:
 	@echo 'LIST:C/ /,/="${LIST:C/ /,/}"'
