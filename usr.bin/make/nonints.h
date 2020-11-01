@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.148 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.149 2020/11/01 00:24:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -147,6 +147,7 @@ void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_SetInput(const char *, int, int, NextBufProc, void *);
 GNodeList *Parse_MainName(void);
+int Parse_GetFatals(void);
 
 /* str.c */
 typedef struct Words {
