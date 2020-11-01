@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.21 2020/12/13 08:20:56 martin Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.17 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.21 2020/12/13 08:20:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.17 2010/03/05 14:00:17 jruoho Exp $");
 
 #include "opt_atppc.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.21 2020/12/13 08:20:56 martin Exp $
 #include <sys/termios.h>
 
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/atppcvar.h>
 
@@ -99,8 +98,10 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_io *io;
+	struct acpi_irq *irq;
 	struct acpi_drq *drq;
 	ACPI_STATUS rv;
+	int nirq;
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
 
@@ -118,6 +119,14 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to find i/o register resource\n");
 		goto out;
 	}
+
+	/* find our IRQ */
+	irq = acpi_res_irq(&res, 0);
+	if (irq == NULL) {
+		aprint_error_dev(sc->sc_dev, "unable to find irq resource\n");
+		goto out;
+	}
+	nirq = irq->ar_irq;
 
 	/* find our DRQ */
 	drq = acpi_res_drq(&res, 0);
@@ -141,13 +150,9 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	sc->sc_ieh = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
-	    IPL_TTY, false, atppcintr, self, device_xname(self));
-	if (sc->sc_ieh == NULL) {
-		aprint_error_dev(self, "unable to establish interrupt\n");
-		goto out;
-	}
+	sc->sc_ieh = isa_intr_establish(aa->aa_ic, nirq,
+	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
+	    IPL_TTY, atppcintr, sc->sc_dev);
 
 	/* setup DMA hooks */
 	if (atppc_isadma_setup(sc, asc->sc_ic, asc->sc_drq) == 0) {

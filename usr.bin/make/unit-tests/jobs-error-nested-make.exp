@@ -1,3 +1,0 @@
-make -f jobs-error-nested-make.mk nested
-false
-exit status 2

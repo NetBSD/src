@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.26 2020/11/20 18:37:30 thorpej Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.25 2019/11/10 21:16:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.26 2020/11/20 18:37:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.25 2019/11/10 21:16:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.26 2020/11/20 18:37:30 thorpej Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/uio.h>
 
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ sacc_intr_establish(sacc_chipset_tag_t *ic, int irq, int type, int level,
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
 	struct sacc_intrhand **p, *ih;
 
-	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (irq < 0 || irq > SACCIC_LEN ||
 	    !(type == IST_EDGE_RAISE || type == IST_EDGE_FALL))
@@ -186,7 +186,7 @@ sacc_intr_disestablish(sacc_chipset_tag_t *ic, void *arg)
 	sacc_intr_calculatemasks(sc);
 	splx(s);
 
-	kmem_free(ih, sizeof(*ih));
+	free(ih, M_DEVBUF);
 }
 
 static void

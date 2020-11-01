@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.38 2020/12/06 12:23:13 jmcneill Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.37 2019/08/11 06:46:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.38 2020/12/06 12:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.37 2019/08/11 06:46:35 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.38 2020/12/06 12:23:13 jmcneill Exp
 #include <sys/systm.h>
 
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_intr.h>
 
 #include <dev/isa/isareg.h>
 
@@ -66,7 +65,9 @@ static void	pckbc_acpi_attach(device_t, device_t, void *);
 struct pckbc_acpi_softc {
 	struct pckbc_softc sc_pckbc;
 
-	ACPI_HANDLE sc_handle;
+	isa_chipset_tag_t sc_ic;
+	int sc_irq;
+	int sc_ist;
 	pckbc_slot_t sc_slot;
 };
 
@@ -135,6 +136,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	sc->sc_dv = self;
+	psc->sc_ic = aa->aa_ic;
 
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd)) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
@@ -159,7 +161,8 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to find irq resource\n");
 		goto out;
 	}
-	psc->sc_handle = aa->aa_node->ad_handle;
+	psc->sc_irq = irq->ar_irq;
+	psc->sc_ist = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
 
 	if (psc->sc_slot == PCKBC_KBD_SLOT)
 		first = psc;
@@ -232,9 +235,9 @@ static void
 pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_acpi_softc *psc = NULL; /* XXX: gcc */
+	isa_chipset_tag_t ic = NULL;
 	void *rv = NULL;
-	ACPI_HANDLE handle;
-	char intr_name[64];
+	int irq = 0, ist = 0; /* XXX: gcc */
 	int i;
 
 	/*
@@ -243,25 +246,27 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
 		psc = device_lookup_private(&pckbc_cd, i);
 		if (psc && psc->sc_slot == slot) {
-			handle = psc->sc_handle;
+			irq = psc->sc_irq;
+			ist = psc->sc_ist;
+			ic = psc->sc_ic;
 			break;
 		}
 	}
 	if (i < pckbc_cd.cd_ndevs) {
-		snprintf(intr_name, sizeof(intr_name), "%s %s",
+		char intr_xname[64];
+		snprintf(intr_xname, sizeof(intr_xname), "%s %s",
 		    device_xname(psc->sc_pckbc.sc_dv), pckbc_slot_names[slot]);
 
-		rv = acpi_intr_establish(sc->sc_dv, (uint64_t)(uintptr_t)handle,
-		    IPL_TTY, false, pckbcintr, sc, intr_name);
+		rv = isa_intr_establish_xname(ic, irq, ist, IPL_TTY, pckbcintr,
+		    sc, intr_xname);
 	}
 	if (rv == NULL) {
 		aprint_error_dev(sc->sc_dv,
 		    "unable to establish interrupt for %s slot\n",
 		    pckbc_slot_names[slot]);
 	} else {
-		aprint_normal_dev(sc->sc_dv, "using %s for %s slot\n",
-		    acpi_intr_string(rv, intr_name, sizeof(intr_name)),
-		    pckbc_slot_names[slot]);
+		aprint_normal_dev(sc->sc_dv, "using irq %d for %s slot\n",
+		    irq, pckbc_slot_names[slot]);
 	}
 }
 

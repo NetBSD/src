@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.334 2020/06/11 19:20:45 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.334 2020/06/11 19:20:45 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2020/11/22 03:55:33 thorpej Exp $"
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -1249,14 +1249,6 @@ module_init_md(void)
 }
 #endif
 
-static size_t 
-_bus_dmamap_mapsize(int const nsegments)
-{       
-	KASSERT(nsegments > 0);
-	return sizeof(struct sparc_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -1268,6 +1260,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct sparc_bus_dmamap *map;
 	void *mapstore;
+	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -1281,10 +1274,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	mapsize = sizeof(struct sparc_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
+	memset(mapstore, 0, mapsize);
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -1308,7 +1304,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
+	free(map, M_DMAMAP);
 }
 
 /*
@@ -1375,8 +1371,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
 
-	if ((mlist = kmem_alloc(sizeof(*mlist),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
 	/*
@@ -1385,7 +1381,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error) {
-		kmem_free(mlist, sizeof(*mlist));
+		free(mlist, M_DEVBUF);
 		return (error);
 	}
 
@@ -1418,7 +1414,6 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 void
 _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
-	struct pglist *mlist = segs[0]._ds_mlist;
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
@@ -1426,8 +1421,8 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	/*
 	 * Return the list of pages back to the VM system.
 	 */
-	uvm_pglistfree(mlist);
-	kmem_free(mlist, sizeof(*mlist));
+	uvm_pglistfree(segs[0]._ds_mlist);
+	free(segs[0]._ds_mlist, M_DEVBUF);
 }
 
 /*
@@ -2798,7 +2793,8 @@ bus_space_tag_alloc(bus_space_tag_t parent, void *cookie)
 {
 	struct sparc_bus_space_tag *sbt;
 
-	sbt = kmem_zalloc(sizeof(*sbt), KM_SLEEP);
+	sbt = malloc(sizeof(struct sparc_bus_space_tag),
+		     M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (parent) {
 		memcpy(sbt, parent, sizeof(*sbt));
@@ -3016,7 +3012,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 {
 	struct intrhand *ih;
 
-	ih = kmem_alloc(sizeof(struct intrhand), KM_SLEEP);
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_WAITOK);
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	intr_establish(pil, level, ih, fastvec, false);

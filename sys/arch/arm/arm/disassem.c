@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.42 2020/12/01 02:48:28 rin Exp $	*/
+/*	$NetBSD: disassem.c,v 1.41 2019/10/24 18:34:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.42 2020/12/01 02:48:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.41 2019/10/24 18:34:22 christos Exp $");
 
 #include <sys/systm.h>
 
@@ -447,7 +447,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	fmt = 0;
 	matchp = 0;
 	insn = di->di_readword(loc);
-#ifdef _ARM_ARCH_BE8
+#if defined(__ARMEB__) && defined(CPU_ARMV7)
 	insn = bswap32(insn);
 #endif
 	char neonfmt = 'd';

@@ -1,9 +1,0 @@
-include window
-call OK mvwaddch $win1 2 3 `\001a` 
-call OK wrefresh $win1
-assign FILE "/tmp/getwin.win" 
-call OK putwin $win1 $FILE
-call win2 getwin $FILE
-check win2 NON_NULL
-call OK wrefresh $win2
-call `\001a` mvwinch $win2 2 3

@@ -1,2 +1,0 @@
-# Using "-n 1" allows GL #1795 to be reliably reproduced
--D dnstap-ns3 -X named.lock -m record,size,mctx -c named.conf -d 99 -g -U 4 -n 1

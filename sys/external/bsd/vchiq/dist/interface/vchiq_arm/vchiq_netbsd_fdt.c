@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.3 2020/12/01 04:19:04 rin Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.3 2020/12/01 04:19:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,16 +89,11 @@ vchiq_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = faa->faa_bst;
 	fsc->sc_phandle = phandle;
 
-#if BYTE_ORDER == BIG_ENDIAN
-	aprint_error_dev(sc->sc_dev, "not supported yet in big-endian mode\n");
-	return;
-#endif
-
 	bus_addr_t addr;
 	bus_size_t size;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't get register address\n");
+		aprint_error(": couldn't get register address\n");
 		return;
 	}
 

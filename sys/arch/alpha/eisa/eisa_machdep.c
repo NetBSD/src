@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.13 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.12 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.12 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <machine/intr.h>
@@ -157,7 +157,10 @@ eisa_parse_mem(struct ecu_func *ecuf, uint8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_MEM_ENTRY_CNT; i++) {
-		ecum = kmem_zalloc(sizeof(*ecum), KM_SLEEP);
+		ecum = malloc(sizeof(*ecum), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecum == NULL)
+			panic("%s: can't allocate memory for ecum", __func__);
+
 		ecum->ecum_mem.ecm_isram = dp[0] & 0x1;
 		ecum->ecum_mem.ecm_unitsize = dp[1] & 0x3;
 		ecum->ecum_mem.ecm_decode = (dp[1] >> 2) & 0x3;
@@ -188,7 +191,10 @@ eisa_parse_irq(struct ecu_func *ecuf, uint8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_IRQ_ENTRY_CNT; i++) {
-		ecui = kmem_zalloc(sizeof(*ecui), KM_SLEEP);
+		ecui = malloc(sizeof(*ecui), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecui == NULL)
+			panic("%s: can't allocate memory for ecui", __func__);
+
 		ecui->ecui_irq.eci_irq = dp[0] & 0xf;
 		ecui->ecui_irq.eci_ist = (dp[0] & 0x20) ? IST_LEVEL : IST_EDGE;
 		ecui->ecui_irq.eci_shared = (dp[0] & 0x40) ? 1 : 0;
@@ -213,7 +219,10 @@ eisa_parse_dma(struct ecu_func *ecuf, uint8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_DMA_ENTRY_CNT; i++) {
-		ecud = kmem_zalloc(sizeof(*ecud), KM_SLEEP);
+		ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecud == NULL)
+			panic("%s: can't allocate memory for ecud", __func__);
+
 		ecud->ecud_dma.ecd_drq = dp[0] & 0x7;
 		ecud->ecud_dma.ecd_shared = dp[0] & 0x40;
 		ecud->ecud_dma.ecd_size = (dp[1] >> 2) & 0x3;
@@ -239,7 +248,10 @@ eisa_parse_io(struct ecu_func *ecuf, uint8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_IO_ENTRY_CNT; i++) {
-		ecuio = kmem_zalloc(sizeof(*ecuio), KM_SLEEP);
+		ecuio = malloc(sizeof(*ecuio), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecuio == NULL)
+			panic("%s: can't allocate memory for ecuio", __func__);
+
 		ecuio->ecuio_io.ecio_addr = dp[1] | (dp[2] << 8);
 		ecuio->ecuio_io.ecio_size = (dp[0] & 0x1f) + 1;
 		ecuio->ecuio_io.ecio_shared = (dp[0] & 0x40) ? 1 : 0;
@@ -358,7 +370,11 @@ eisa_init(eisa_chipset_tag_t ec)
 			printf("SLOT %d: offset 0x%08x eisaid %s\n",
 			    i, offset, eisaid);
 #endif
-			ecud = kmem_zalloc(sizeof(*ecud), KM_SLEEP);
+			ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
+			if (ecud == NULL)
+				panic("%s: can't allocate memory for ecud",
+				    __func__);
+
 			SIMPLEQ_INIT(&ecud->ecud_funcs);
 
 			ecud->ecud_slot = i;
@@ -372,8 +388,12 @@ eisa_init(eisa_chipset_tag_t ec)
 	 * Now traverse the valid slots and read the info.
 	 */
 
-	cdata = kmem_zalloc(CBUFSIZE, KM_SLEEP);
-	data = kmem_zalloc(CBUFSIZE, KM_SLEEP);
+	cdata = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
+	if (cdata == NULL)
+		panic("%s: can't allocate memory for cdata", __func__);
+	data = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
+	if (data == NULL)
+		panic("%s: can't allocate memory for data", __func__);
 
 	SIMPLEQ_FOREACH(ecud, &ecu_data_list, ecud_list) {
 		cfgaddr = eisa_config_addr + ecud->ecud_offset;
@@ -481,7 +501,10 @@ eisa_init(eisa_chipset_tag_t ec)
 				continue;
 			}
 
-			ecuf = kmem_zalloc(sizeof(*ecuf), KM_SLEEP);
+			ecuf = malloc(sizeof(*ecuf), M_DEVBUF, M_WAITOK);
+			if (ecuf == NULL)
+				panic("%s: can't allocate memory for ecuf",
+				    __func__);
 			ecuf_init(ecuf);
 			ecuf->ecuf_funcno = func;
 			SIMPLEQ_INSERT_TAIL(&ecud->ecud_funcs, ecuf,
@@ -534,8 +557,8 @@ eisa_init(eisa_chipset_tag_t ec)
 		}
 	}
 
-	kmem_free(cdata, CBUFSIZE);
-	kmem_free(data, CBUFSIZE);
+	free(cdata, M_TEMP);
+	free(data, M_TEMP);
 }
 
 static struct ecu_data *

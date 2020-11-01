@@ -325,7 +325,6 @@ XfNamespaceLocateBegin (
     UINT32                  i;
     ACPI_NAMESPACE_NODE     *DeclarationParentMethod;
     ACPI_PARSE_OBJECT       *ReferenceParentMethod;
-    char                    *ExternalPath;
 
 
     ACPI_FUNCTION_TRACE_PTR (XfNamespaceLocateBegin, Op);
@@ -1157,15 +1156,7 @@ XfNamespaceLocateBegin (
         Op->Asl.Parent->Asl.ParseOpcode != PARSEOP_CONDREFOF &&
         !XfRefIsGuardedByIfCondRefOf (Node, Op))
     {
-        ExternalPath = AcpiNsGetNormalizedPathname (Node, TRUE);
-        sprintf (AslGbl_MsgBuffer, "full path of external object: %s",
-            ExternalPath);
-        AslDualParseOpError (ASL_ERROR, ASL_MSG_UNDEFINED_EXTERNAL, Op, NULL,
-            ASL_MSG_EXTERNAL_FOUND_HERE, Node->Op, AslGbl_MsgBuffer);
-        if (ExternalPath)
-        {
-            ACPI_FREE (ExternalPath);
-        }
+        AslError (ASL_ERROR, ASL_MSG_UNDEFINED_EXTERNAL, Op, NULL);
     }
 
     /* 5) Check for a connection object */

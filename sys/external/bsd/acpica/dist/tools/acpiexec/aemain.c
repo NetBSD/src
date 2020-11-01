@@ -531,7 +531,7 @@ main (
 
     /* Use a shorter timeout value for acpiexec */
 
-    AcpiGbl_MaxLoopIterations = 10;
+    AcpiGbl_MaxLoopIterations = 1;
 
     /* Initialize the AML debugger */
 

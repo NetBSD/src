@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_wep.c,v 1.13 2020/11/03 15:06:50 mlelstv Exp $	*/
+/*	$NetBSD: ieee80211_crypto_wep.c,v 1.12 2018/05/03 17:14:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.13 2020/11/03 15:06:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.12 2018/05/03 17:14:37 maxv Exp $");
 #endif
 
 /*
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.13 2020/11/03 15:06:50 ml
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/endian.h>
 
@@ -95,7 +95,7 @@ wep_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct wep_ctx *ctx;
 
-	ctx = kmem_intr_zalloc(sizeof(struct wep_ctx), KM_NOSLEEP);
+	ctx = malloc(sizeof(struct wep_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -111,7 +111,7 @@ wep_detach(struct ieee80211_key *k)
 {
 	struct wep_ctx *ctx = k->wk_private;
 
-	kmem_intr_free(ctx, sizeof(struct wep_ctx));
+	free(ctx, M_DEVBUF);
 }
 
 static int

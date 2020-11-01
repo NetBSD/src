@@ -1,7 +1,0 @@
-include start
-call OK mvaddchnstr 6 7 `\002A\002B\002C\002D\002E\002F\002G` 5
-call OK refresh
-compare mvaddchnstr.chk
-call OK mvaddchnstr 8 75 `\0041\0042\0043\0044\0045\0046\0047\0048\0049` 10
-call OK refresh
-compare mvaddchnstr2.chk

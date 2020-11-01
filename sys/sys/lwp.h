@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.212 2020/10/23 00:25:45 thorpej Exp $	*/
+/*	$NetBSD: lwp.h,v 1.212.2.1 2020/11/01 15:16:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -72,6 +72,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
  * S:	l_selcluster->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
+ * x:	special; see comments for field.
  *
  * Fields are clustered together by usage (to increase the likelihood
  * of cache hits) and by size (to reduce dead space in the structure).
@@ -79,6 +80,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 
 #include <sys/pcu.h>
 
+struct futex;
 struct lockdebug;
 struct sysent;
 
@@ -139,9 +141,19 @@ struct lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	bool		l_vforkwaiting;	/* a: vfork() waiting */
 
-	/* User-space synchronization. */
+	/*
+	 * User-space synchronization.
+	 *
+	 * Special locking considerations:
+	 *
+	 * l_futex and l_futex_wakesel are acccessed unlocked and private
+	 * to the LWP *unless* the LWP is present on a futex sleepq, in
+	 * which case they are protected by the lwp_lock (which will in
+	 * actuality be the futex sleepq lock).
+	 */
 	uintptr_t	l_robust_head;	/* !: list of robust futexes */
-	uint32_t	l___rsvd1;	/* reserved for future use */
+	struct futex	*l_futex;	/* x: futex we're waiting on */
+	uint32_t	l_futex_wakesel;/* x: futex wake selector */
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];

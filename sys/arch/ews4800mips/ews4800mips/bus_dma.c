@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 2020/11/21 17:09:34 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15 2015/06/23 21:00:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2020/11/21 17:09:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2015/06/23 21:00:23 matt Exp $");
 
 #define	_EWS4800MIPS_BUS_DMA_PRIVATE
 /* #define	BUS_DMA_DEBUG */
 
 #include <sys/param.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
@@ -71,14 +71,6 @@ struct ews4800mips_bus_dma_tag ews4800mips_default_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-static size_t
-_bus_dmamap_mapsize(int const nsegments)
-{
-	KASSERT(nsegments > 0);
-	return sizeof(struct ews4800mips_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -89,6 +81,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct ews4800mips_bus_dmamap *map;
 	void *mapstore;
+	size_t mapsize;
 
 	/*
 	 * Allcoate and initialize the DMA map.  The end of the map
@@ -102,10 +95,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	mapsize = sizeof(struct ews4800mips_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return ENOMEM;
 
+	memset(mapstore, 0, mapsize);
 	map = (struct ews4800mips_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -129,7 +125,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
+	free(map, M_DMAMAP);
 }
 
 

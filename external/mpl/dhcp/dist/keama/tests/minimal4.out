@@ -1,7 +1,0 @@
-{
-  # DHCPv4 minimal config
-  # empty configs are not accepted by Kea
-  "Dhcp4": {
-    "valid-lifetime": 1800
-  }
-}

@@ -11,4 +11,3 @@ buildprefix
 prefix
 
 makeoptions	x86emu	CPPFLAGS+="-I$S/../common/include"
-makeoptions	x86emu	"COPTS.x86emu.c"+="-fno-inline"

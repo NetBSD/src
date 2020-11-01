@@ -1,5 +1,3 @@
-/*	$NetBSD: db_machdep.c,v 1.6 2020/11/04 07:09:46 skrll Exp $	*/
-
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.6 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.4 2020/03/14 16:12:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -82,7 +80,7 @@ const struct db_variable db_regs[] = {
 	{ "pc", (void *)offsetof(struct trapframe, tf_pc), db_rw_ddbreg, NULL },
 	{ "status", (void *)offsetof(struct trapframe, tf_sr), db_rw_ddbreg, "i" },
 	{ "cause", (void *)offsetof(struct trapframe, tf_cause), db_rw_ddbreg, "i" },
-	{ "tval", (void *)offsetof(struct trapframe, tf_tval), db_rw_ddbreg, NULL },
+	{ "badaddr", (void *)offsetof(struct trapframe, tf_badaddr), db_rw_ddbreg, NULL },
 };
 const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 

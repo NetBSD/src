@@ -281,7 +281,6 @@ AcpiGetTableHeader (
     UINT32                  j;
     ACPI_TABLE_HEADER       *Header;
 
-
     /* Parameter validation */
 
     if (!Signature || !OutTableHeader)
@@ -372,7 +371,6 @@ AcpiGetTable (
     UINT32                  j;
     ACPI_STATUS             Status = AE_NOT_FOUND;
     ACPI_TABLE_DESC         *TableDesc;
-
 
     /* Parameter validation */
 

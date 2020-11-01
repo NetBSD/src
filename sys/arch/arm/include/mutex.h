@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.25 2020/12/01 14:53:47 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.23 2020/03/05 17:58:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * So, what we have done is implement simple mutexes using a compare-and-swap.
  * We support pre-ARMv6 by implementing CAS as a restartable atomic sequence
  * that is checked by the IRQ vector.
- *
+ * 
  */
 
 struct kmutex {
@@ -82,6 +82,10 @@ struct kmutex {
 
 #define	MUTEX_CAS(p, o, n)		\
     (atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
+#ifdef MULTIPROCESSOR
+#define	MUTEX_SMT_PAUSE()		__asm __volatile("wfe")
+#define	MUTEX_SMT_WAKE()		__asm __volatile("sev")
+#endif
 
 #endif	/* __MUTEX_PRIVATE */
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: riscv_machdep.c,v 1.13 2020/11/04 20:05:47 skrll Exp $	*/
-
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.13 2020/11/04 20:05:47 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.11 2020/06/11 19:20:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +122,7 @@ md_child_return(struct lwp *l)
 
 	tf->tf_a0 = 0;
 	tf->tf_a1 = 1;
-#ifdef FPE
 	tf->tf_sr &= ~SR_EF;		/* Disable FP as we can't be them. */
-#endif
 }
 
 void

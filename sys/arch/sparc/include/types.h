@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.70 2020/12/06 03:19:14 christos Exp $ */
+/*	$NetBSD: types.h,v 1.68 2020/05/17 06:30:44 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

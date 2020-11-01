@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.16 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.13 2020/09/20 15:30:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -35,16 +35,15 @@
 
 #include <aarch64/pmap.h>
 #include <aarch64/vmparam.h>
+#include <aarch64/cpufunc.h>
 #include <aarch64/armreg.h>
 #include <aarch64/machdep.h>
-
-#include <arm/cpufunc.h>
 
 #define __MD_VIRTUAL_SHIFT	48	/* 49bit address space, cut half */
 #define __MD_KERNMEM_BASE	0xFFFF000000000000 /* kern mem base address */
 
 #define __MD_SHADOW_SIZE	(1ULL << (__MD_VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
-#define KASAN_MD_SHADOW_START	(AARCH64_DIRECTMAP_END)
+#define KASAN_MD_SHADOW_START	(AARCH64_KSEG_END)
 #define KASAN_MD_SHADOW_END	(KASAN_MD_SHADOW_START + __MD_SHADOW_SIZE)
 
 static bool __md_early __read_mostly = true;
@@ -188,7 +187,7 @@ kasan_md_shadow_map_page(vaddr_t va)
 		pa = __md_palloc();
 		atomic_swap_64(&l3[idx], pa | L3_PAGE | LX_BLKPAG_UXN |
 		    LX_BLKPAG_PXN | LX_BLKPAG_AF | LX_BLKPAG_SH_IS |
-		    LX_BLKPAG_AP_RW | LX_BLKPAG_ATTR_NORMAL_WB);
+		    LX_BLKPAG_AP_RW);
 		aarch64_tlbi_by_va(va);
 	}
 }

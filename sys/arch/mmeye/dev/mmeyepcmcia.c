@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.23 2020/11/21 18:23:36 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.22 2012/10/27 17:18:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.23 2020/11/21 18:23:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.22 2012/10/27 17:18:03 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.23 2020/11/21 18:23:36 thorpej Exp
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/bus.h>
 
@@ -408,9 +408,9 @@ mmeyepcmcia_event_thread(void *arg)
 					break;
 				if (pe2->pe_type == MMEYEPCMCIA_EVENT_INSERTION) {
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					kmem_free(pe1, sizeof(*pe1));
+					free(pe1, M_TEMP);
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					kmem_free(pe2, sizeof(*pe2));
+					free(pe2, M_TEMP);
 				}
 			}
 			splx(s);
@@ -432,9 +432,9 @@ mmeyepcmcia_event_thread(void *arg)
 					break;
 				if (pe2->pe_type == MMEYEPCMCIA_EVENT_REMOVAL) {
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					kmem_free(pe1, sizeof(*pe1));
+					free(pe1, M_TEMP);
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					kmem_free(pe2, sizeof(*pe2));
+					free(pe2, M_TEMP);
 				}
 			}
 			splx(s);
@@ -447,7 +447,7 @@ mmeyepcmcia_event_thread(void *arg)
 			panic("mmeyepcmcia_event_thread: unknown event %d",
 			    pe->pe_type);
 		}
-		kmem_free(pe, sizeof(*pe));
+		free(pe, M_TEMP);
 	}
 
 	h->event_thread = NULL;
@@ -590,7 +590,7 @@ mmeyepcmcia_queue_event(struct mmeyepcmcia_handle *h, int event)
 	struct mmeyepcmcia_event *pe;
 	int s;
 
-	pe = kmem_intr_alloc(sizeof(*pe), KM_NOSLEEP);
+	pe = malloc(sizeof(*pe), M_TEMP, M_NOWAIT);
 	if (pe == NULL)
 		panic("mmeyepcmcia_queue_event: can't allocate event");
 

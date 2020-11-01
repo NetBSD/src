@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.11 2020/12/10 04:03:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.11 2020/12/10 04:03:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1813,7 +1813,7 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 	}
 
 	kcpuset_create(&affinity, false);
-	affinity_to = 0;
+	affinity_to = ((int)num <= ncpu) ? 1 : 0;
 	qid = 0;
 	for (vector = 1; vector < num; vector++) {
 		pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[vector],
@@ -1849,21 +1849,6 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 
 		qid++;
 		affinity_to = (affinity_to + 1) % ncpu;
-	}
-
-	vector = 0;
-	kcpuset_zero(affinity);
-	kcpuset_set(affinity, affinity_to);
-	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ihp[vector],
-	    intrbuf, sizeof(intrbuf));
-	error = interrupt_distribute(sc->sc_ihs[vector], affinity, NULL);
-	if (error == 0) {
-		IAVF_LOG(sc, LOG_INFO,
-		    "for Misc interrupt at %s, affinity to %d\n",
-		    intrstr, affinity_to);
-	} else {
-		IAVF_LOG(sc, LOG_INFO,
-		    "for MISC interrupt at %s\n", intrstr);
 	}
 
 	kcpuset_destroy(affinity);
@@ -3783,8 +3768,6 @@ iavf_aq_vc_opcode_str(const struct ixl_aq_desc *iaq)
 		return "EVENT";
 	case IAVF_VC_OP_CONFIG_RSS_KEY:
 		return "CONFIG_RSS_KEY";
-	case IAVF_VC_OP_CONFIG_RSS_LUT:
-		return "CONFIG_RSS_LUT";
 	case IAVF_VC_OP_GET_RSS_HENA_CAPS:
 		return "GET_RS_HENA_CAPS";
 	case IAVF_VC_OP_SET_RSS_HENA:
@@ -4181,6 +4164,7 @@ iavf_atq_poll(struct iavf_softc *sc, unsigned int tm)
 {
 	struct ixl_aq_desc *atq, *slot;
 	struct ixl_aq_desc iaq;
+	struct ixl_aq_buf *aqb;
 	unsigned int prod;
 	unsigned int t;
 	int dbg;
@@ -4209,6 +4193,13 @@ iavf_atq_poll(struct iavf_softc *sc, unsigned int tm)
 	memset(slot, 0, sizeof(*slot));
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREREAD);
+
+	aqb = iavf_aqb_get_locked(&sc->sc_atq_live);
+	if (aqb != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, IXL_AQB_MAP(aqb),
+		    0, IXL_AQB_LEN(aqb), BUS_DMASYNC_POSTWRITE);
+		/* no need to do iavf_aqb_put(&sc->sc_atq_idle, aqb) */
+	}
 
 	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
 		if (dbg >= 2) {
@@ -4295,18 +4286,6 @@ iavf_adminq_poll_locked(struct iavf_softc *sc,
 	iavf_atq_post(sc, iaq, aqb);
 
 	error = iavf_atq_poll(sc, retry);
-
-	/*
-	 * collect the aqb used in the current command and
-	 * added to sc_atq_live at iavf_atq_post(),
-	 * whether or not the command succeeded.
-	*/
-	if (aqb != NULL) {
-		(void)iavf_aqb_get_locked(&sc->sc_atq_live);
-		bus_dmamap_sync(sc->sc_dmat, IXL_AQB_MAP(aqb),
-		    0, IXL_AQB_LEN(aqb), BUS_DMASYNC_POSTWRITE);
-	}
-
 	if (error)
 		return error;
 
@@ -4769,9 +4748,9 @@ iavf_config_hena(struct iavf_softc *sc)
 
 	caps = IXL_AQB_KVA(aqb);
 	if (sc->sc_mac_type == I40E_MAC_X722_VF)
-		*caps = IXL_RSS_HENA_DEFAULT_X722;
-	else
 		*caps = IXL_RSS_HENA_DEFAULT_XL710;
+	else
+		*caps = IXL_RSS_HENA_DEFAULT_X722;
 
 	memset(&iaq, 0, sizeof(iaq));
 	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
@@ -4843,6 +4822,9 @@ iavf_config_rss_lut(struct iavf_softc *sc)
 	struct iavf_vc_rss_lut *rss_lut;
 	uint8_t *lut, v;
 	int rv, i;
+
+	mutex_enter(&sc->sc_adminq_lock);
+	mutex_exit(&sc->sc_adminq_lock);
 
 	aqb = iavf_aqb_get(sc, &sc->sc_atq_idle);
 	if (aqb == NULL)

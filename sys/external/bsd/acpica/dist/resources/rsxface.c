@@ -612,7 +612,6 @@ AcpiWalkResourceBuffer (
     ACPI_RESOURCE               *Resource;
     ACPI_RESOURCE               *ResourceEnd;
 
-
     ACPI_FUNCTION_TRACE (AcpiWalkResourceBuffer);
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: syscon.h,v 1.2 2020/12/11 09:40:28 skrll Exp $ */
+/* $NetBSD: syscon.h,v 1.1 2018/06/30 12:35:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_FDT_SYSCON_H_
-#define _DEV_FDT_SYSCON_H_
+#ifndef _FDT_SYSCON_H
+#define _FDT_SYSCON_H
 
 struct syscon {
 	void		*priv;
@@ -51,4 +51,4 @@ struct syscon {
 	(_syscon)->write_4((_syscon)->priv, (_reg), (_val))
 
 
-#endif /* _DEV_FDT_SYSCON_H_ */
+#endif /* !_FDT_SYSCON_H */

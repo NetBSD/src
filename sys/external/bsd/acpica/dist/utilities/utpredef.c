@@ -209,7 +209,7 @@ AcpiUtGetArgumentTypes (
 
 static const char   *UtExternalTypeNames[] = /* Indexed by ACPI_TYPE_* */
 {
-    ", Type_ANY",
+    ", UNSUPPORTED-TYPE",
     ", Integer",
     ", String",
     ", Buffer",
@@ -391,7 +391,7 @@ AcpiUtGetArgumentTypes (
     {
         ThisArgumentType = METHOD_GET_NEXT_TYPE (ArgumentTypes);
 
-        if (ThisArgumentType > METHOD_MAX_ARG_TYPE)
+        if (!ThisArgumentType || (ThisArgumentType > METHOD_MAX_ARG_TYPE))
         {
             printf ("**** Invalid argument type (%u) "
                 "in predefined info structure\n", ThisArgumentType);

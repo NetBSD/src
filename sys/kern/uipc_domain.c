@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.108 2020/11/06 14:50:13 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.107 2020/10/17 09:45:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.108 2020/11/06 14:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.107 2020/10/17 09:45:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -692,6 +692,7 @@ sysctl_net_setup(void)
 		       SYSCTL_DESCR("SOCK_DGRAM protocol control block list"),
 		       sysctl_unpcblist, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, SOCK_DGRAM, CTL_CREATE, CTL_EOL);
+	unp_sysctl_create(&domain_sysctllog);
 }
 
 void

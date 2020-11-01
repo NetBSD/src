@@ -106,7 +106,7 @@ AcpiNsCheckPackage (
     UINT32                      i;
 
 
-    ACPI_FUNCTION_TRACE (NsCheckPackage);
+    ACPI_FUNCTION_NAME (NsCheckPackage);
 
 
     /* The package info for this name is in the next table entry */
@@ -137,13 +137,13 @@ AcpiNsCheckPackage (
     {
         if (Package->RetInfo.Type == ACPI_PTYPE1_VAR)
         {
-            return_ACPI_STATUS (AE_OK);
+            return (AE_OK);
         }
 
         ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname, Info->NodeFlags,
             "Return Package has no elements (empty)"));
 
-        return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
+        return (AE_AML_OPERAND_VALUE);
     }
 
     /*
@@ -197,7 +197,7 @@ AcpiNsCheckPackage (
                 Package->RetInfo.ObjectType1, i);
             if (ACPI_FAILURE (Status))
             {
-                return_ACPI_STATUS (Status);
+                return (Status);
             }
 
             Elements++;
@@ -230,7 +230,7 @@ AcpiNsCheckPackage (
                     Package->RetInfo3.ObjectType[i], i);
                 if (ACPI_FAILURE (Status))
                 {
-                    return_ACPI_STATUS (Status);
+                    return (Status);
                 }
             }
             else
@@ -241,7 +241,7 @@ AcpiNsCheckPackage (
                     Package->RetInfo3.TailObjectType, i);
                 if (ACPI_FAILURE (Status))
                 {
-                    return_ACPI_STATUS (Status);
+                    return (Status);
                 }
             }
 
@@ -257,7 +257,7 @@ AcpiNsCheckPackage (
             Info, Elements, ACPI_RTYPE_INTEGER, 0);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            return (Status);
         }
 
         Elements++;
@@ -276,7 +276,7 @@ AcpiNsCheckPackage (
             Info, Elements, ACPI_RTYPE_INTEGER, 0);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            return (Status);
         }
 
         /*
@@ -320,7 +320,7 @@ AcpiNsCheckPackage (
                 Info, ReturnObject, ReturnObjectPtr);
             if (ACPI_FAILURE (Status))
             {
-                return_ACPI_STATUS (Status);
+                return (Status);
             }
 
             /* Update locals to point to the new package (of 1 element) */
@@ -358,7 +358,7 @@ AcpiNsCheckPackage (
                 Package->RetInfo.ObjectType1, 0);
             if (ACPI_FAILURE(Status))
             {
-                return_ACPI_STATUS (Status);
+                return (Status);
             }
 
             /* Validate length of the UUID buffer */
@@ -367,14 +367,14 @@ AcpiNsCheckPackage (
             {
                 ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname,
                     Info->NodeFlags, "Invalid length for UUID Buffer"));
-                return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
+                return (AE_AML_OPERAND_VALUE);
             }
 
             Status = AcpiNsCheckObjectType(Info, Elements + 1,
                 Package->RetInfo.ObjectType2, 0);
             if (ACPI_FAILURE(Status))
             {
-                return_ACPI_STATUS (Status);
+                return (Status);
             }
 
             Elements += 2;
@@ -390,10 +390,10 @@ AcpiNsCheckPackage (
             "Invalid internal return type in table entry: %X",
             Package->RetInfo.Type));
 
-        return_ACPI_STATUS (AE_AML_INTERNAL);
+        return (AE_AML_INTERNAL);
     }
 
-    return_ACPI_STATUS (Status);
+    return (Status);
 
 
 PackageTooSmall:
@@ -404,7 +404,7 @@ PackageTooSmall:
         "Return Package is too small - found %u elements, expected %u",
         Count, ExpectedCount));
 
-    return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
+    return (AE_AML_OPERAND_VALUE);
 }
 
 
@@ -757,8 +757,6 @@ AcpiNsCheckPackageElements (
     UINT32                      i;
 
 
-    ACPI_FUNCTION_TRACE (NsCheckPackageElements);
-
     /*
      * Up to two groups of package elements are supported by the data
      * structure. All elements in each group must be of the same type.
@@ -770,7 +768,7 @@ AcpiNsCheckPackageElements (
             Type1, i + StartIndex);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            return (Status);
         }
 
         ThisElement++;
@@ -782,11 +780,11 @@ AcpiNsCheckPackageElements (
             Type2, (i + Count1 + StartIndex));
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            return (Status);
         }
 
         ThisElement++;
     }
 
-    return_ACPI_STATUS (AE_OK);
+    return (AE_OK);
 }

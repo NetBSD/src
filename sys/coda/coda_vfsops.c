@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,11 +197,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      * fixed default size for the filename buffer.
      */
     /* Ensure that namei() doesn't run off the filename buffer */
-    if (*data_len < 1 || *data_len > PATH_MAX ||
-	strnlen(data, *data_len) >= *data_len) {
-	MARK_INT_FAIL(CODA_MOUNT_STATS);
-	return EINVAL;
-    }
+    ((char *)data)[*data_len - 1] = 0;
     error = namei_simple_kernel((char *)data, NSM_FOLLOW_NOEMULROOT,
 		&dvp);
 
@@ -392,7 +388,7 @@ coda_root(struct mount *vfsp, int lktype, struct vnode **vpp)
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
-	vn_lock(*vpp, lktype);
+	vn_lock(*vpp, LK_EXCLUSIVE);
 	MARK_INT_SAT(CODA_ROOT_STATS);
 	goto exit;
     } else if (error == ENODEV || error == EINTR) {
@@ -407,7 +403,7 @@ coda_root(struct mount *vfsp, int lktype, struct vnode **vpp)
 	 */
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
-	vn_lock(*vpp, lktype);
+	vn_lock(*vpp, LK_EXCLUSIVE);
 	MARK_INT_FAIL(CODA_ROOT_STATS);
 	error = 0;
 	goto exit;

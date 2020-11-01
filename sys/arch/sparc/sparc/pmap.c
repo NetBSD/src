@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.367 2020/03/14 14:05:43 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.367 2020/03/14 14:05:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -631,40 +631,42 @@ void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
 /*
  * SP versions of the tlb flush operations.
  *
- * Turn off traps to prevent register window overflows from writing
- * user windows to the wrong stack.  Cf. tlb_flush_page_real() &c.
+ * Turn off traps to prevent register window overflows
+ * from writing user windows to the wrong stack.
  */
 static void
 sp_tlb_flush(int va, int ctx, int lvl)
 {
-	int opsr, octx;
+	/*
+	 * XXX convert %o3 (oldpsr), %o4 (SRMMU_CXR) and %o5 (old context)
+	 * into generically named registers.  right now we're assuming that
+	 * gcc doesn't do anything funny with these registers.
+	 */
 
+	/* Traps off */
+	__asm("rd	%psr, %o3");
+	__asm("wr	%%o3, %0, %%psr" :: "n" (PSR_ET));
+
+	/* Save context */
+	__asm("mov	%0, %%o4" :: "n"(SRMMU_CXR));
+	__asm("lda	[%%o4]%0, %%o5" :: "n"(ASI_SRMMU));
+
+	/* Set new context and flush type bits */
 	va &= ~0xfff;
+	__asm("sta	%1, [%%o4]%0" :: "n"(ASI_SRMMU), "r"(ctx));
 	va |= lvl;
 
-	/*
-	 * Turn off traps.
-	 *
-	 * Like setpsr((opsr = getpsr()) & ~PSR_ET); but we can shave
-	 * off one instruction b/c we never disable traps recursively,
-	 * so we can use the xor done by wrpsr itself to clear the
-	 * bit.
-	 *
-	 * XXX: Add to asm.h?  We can use this in cache.c too.
-	 */
-	opsr = getpsr();	/* KDASSERT(opsr & PSR_ET); */
-	__asm volatile ("wr %0, %1, %%psr"
-			:: "r"(opsr), "n"(PSR_ET) : "memory");
-	__asm volatile ("nop; nop;nop");
+	/* Do the TLB flush */
+	__asm("sta	%%g0, [%1]%0" :: "n"(ASI_SRMMUFP), "r"(va));
 
-	octx = getcontext4m();	/* save context */
+	/* Restore context */
+	__asm("sta	%%o5, [%%o4]%0" :: "n"(ASI_SRMMU));
 
-	/* Do the TLB flush in "ctx" */
-	setcontext4m(ctx);
-	__asm volatile("sta %%g0, [%0]%1" :: "r"(va), "n"(ASI_SRMMUFP));
-
-	setcontext4m(octx);	/* restore context */
-	setpsr(opsr);		/* turn traps on again */
+	/* and turn traps on again */
+	__asm("wr	%o3, 0, %psr");
+	__asm("nop");
+	__asm("nop");
+	__asm("nop");
 }
 
 static inline void

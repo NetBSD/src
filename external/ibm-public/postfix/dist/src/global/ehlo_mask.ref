@@ -1,3 +1,0 @@
-starttls, 8bitmime, verp, etrn, etrn -> 0xd1 -> 8BITMIME ETRN VERP STARTTLS
-foobar, auth, pipelining, size, vrfy -> 0x2e -> AUTH PIPELINING SIZE VRFY
-xclient, xforward -> 0x300 -> XCLIENT XFORWARD

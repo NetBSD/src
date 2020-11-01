@@ -61,8 +61,7 @@
  *
  * RETURN:      Status
  *
- * DESCRIPTION: This routine returns the type associated with a particular
- *              handle
+ * DESCRIPTION: This routine returns the type associatd with a particular handle
  *
  ******************************************************************************/
 

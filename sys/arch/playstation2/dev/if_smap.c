@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.33 2020/11/21 17:46:08 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.32 2020/01/29 05:32:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.33 2020/11/21 17:46:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.32 2020/01/29 05:32:04 thorpej Exp $");
 
 #include "debug_playstation2.h"
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.33 2020/11/21 17:46:08 thorpej Exp $")
 #include <sys/ioctl.h>
 #include <sys/rndsource.h>
 #include <sys/socket.h>
-#include <sys/kmem.h>
 
 #include <playstation2/ee/eevar.h>
 
@@ -193,9 +192,10 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	smap_desc_init(sc);
 
 	/* allocate temporary buffer */
-	txbuf = kmem_alloc(ETHER_MAX_LEN - ETHER_CRC_LEN + SMAP_FIFO_ALIGN + 16,
-	    KM_SLEEP);
-	rxbuf = kmem_alloc(ETHER_MAX_LEN + SMAP_FIFO_ALIGN + 16, KM_SLEEP);
+	txbuf = malloc(ETHER_MAX_LEN - ETHER_CRC_LEN + SMAP_FIFO_ALIGN + 16,
+	    M_DEVBUF, M_WAITOK);
+	rxbuf = malloc(ETHER_MAX_LEN + SMAP_FIFO_ALIGN + 16,
+	    M_DEVBUF, M_WAITOK);
 	sc->tx_buf = (u_int32_t *)ROUND16((vaddr_t)txbuf);
 	sc->rx_buf = (u_int32_t *)ROUND16((vaddr_t)rxbuf);
 

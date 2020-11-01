@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $	*/
+/*	$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,12 +628,6 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 
 	KASSERT(nsid > 0);
 
-	ns = nvme_ns_get(sc, nsid);
-	KASSERT(ns);
-
-	if (ns->ident != NULL)
-		return 0;
-
 	ccb = nvme_ccb_get(sc->sc_admin_q, false);
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
@@ -671,6 +665,9 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	/* Convert data to host endian */
 	nvme_identify_namespace_swapbytes(identify);
 
+	ns = nvme_ns_get(sc, nsid);
+	KASSERT(ns);
+	KASSERT(ns->ident == NULL);
 	ns->ident = identify;
 
 done:
@@ -1380,7 +1377,7 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		if ((flags & NVME_CQE_PHASE) != q->q_cq_phase)
 			break;
 
-		ccb = &q->q_ccbs[lemtoh16(&cqe->cid)];
+		ccb = &q->q_ccbs[cqe->cid];
 
 		if (++q->q_cq_head >= q->q_entries) {
 			q->q_cq_head = 0;

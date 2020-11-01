@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.262 2020/12/11 05:01:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.258 2020/09/07 09:14:53 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -1136,7 +1136,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		goto err_late;
 
 	/* Tasklets for Link, SFP, Multispeed Fiber and Flow Director */
-	mutex_init(&(adapter)->admin_mtx, MUTEX_DEFAULT, IPL_NET);
 	snprintf(wqname, sizeof(wqname), "%s-admin", device_xname(dev));
 	error = workqueue_create(&adapter->admin_wq, wqname,
 	    ixgbe_handle_admin, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
@@ -1284,7 +1283,6 @@ err_out:
 	ixgbe_free_pci_resources(adapter);
 	if (adapter->mta != NULL)
 		free(adapter->mta, M_DEVBUF);
-	mutex_destroy(&(adapter)->admin_mtx); /* XXX appropriate order? */
 	IXGBE_CORE_LOCK_DESTROY(adapter);
 
 	return;
@@ -1540,13 +1538,10 @@ static void
 ixgbe_schedule_admin_tasklet(struct adapter *adapter)
 {
 
-	KASSERT(mutex_owned(&adapter->admin_mtx));
-
 	if (__predict_true(adapter->osdep.detaching == false)) {
-		if (adapter->admin_pending == 0)
+		if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->admin_wq,
 			    &adapter->admin_wc, NULL);
-		adapter->admin_pending = 1;
 	}
 }
 
@@ -1569,11 +1564,8 @@ ixgbe_config_link(struct adapter *adapter)
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
 		task_requests |= IXGBE_REQUEST_TASK_MOD;
-
-		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= task_requests;
+		atomic_or_32(&adapter->task_requests, task_requests);
 		ixgbe_schedule_admin_tasklet(adapter);
-		mutex_exit(&adapter->admin_mtx);
 	} else {
 		struct ifmedia	*ifm = &adapter->media;
 
@@ -3095,6 +3087,9 @@ ixgbe_msix_admin(void *arg)
 
 	++adapter->admin_irqev.ev_count;
 
+	/* Pause other interrupts */
+	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_OTHER);
+
 	/* First get the cause */
 	/*
 	 * The specifications of 82598, 82599, X540 and X550 say EICS register
@@ -3211,11 +3206,11 @@ ixgbe_msix_admin(void *arg)
 	if (task_requests != 0) {
 		/* Re-enabling other interrupts is done in the admin task */
 		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
-
-		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= task_requests;
+		atomic_or_32(&adapter->task_requests, task_requests);
 		ixgbe_schedule_admin_tasklet(adapter);
-		mutex_exit(&adapter->admin_mtx);
+	} else {
+		/* Re-enable other interrupts */
+		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
 	}
 
 	return 1;
@@ -3763,7 +3758,6 @@ ixgbe_detach(device_t dev, int flags)
 	ixgbe_free_queues(adapter);
 	free(adapter->mta, M_DEVBUF);
 
-	mutex_destroy(&adapter->admin_mtx); /* XXX appropriate order? */
 	IXGBE_CORE_LOCK_DESTROY(adapter);
 
 	return (0);
@@ -4528,10 +4522,9 @@ ixgbe_handle_timer(struct work *wk, void *context)
 				sched_mod_task = true;
 		}
 		if (sched_mod_task) {
-			mutex_enter(&adapter->admin_mtx);
-			adapter->task_requests |= IXGBE_REQUEST_TASK_MOD;
+			atomic_or_32(&adapter->task_requests,
+			    IXGBE_REQUEST_TASK_MOD);
 			ixgbe_schedule_admin_tasklet(adapter);
-			mutex_exit(&adapter->admin_mtx);
 		}
 	}
 
@@ -4740,11 +4733,8 @@ out:
 	 * MSF. At least, calling ixgbe_handle_msf on 82598 DA makes the link
 	 * flap because the function calls setup_link().
 	 */
-	if (hw->mac.type != ixgbe_mac_82598EB) {
-		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= IXGBE_REQUEST_TASK_MSF;
-		mutex_exit(&adapter->admin_mtx);
-	}
+	if (hw->mac.type != ixgbe_mac_82598EB)
+		atomic_or_32(&adapter->task_requests, IXGBE_REQUEST_TASK_MSF);
 
 	/*
 	 * Don't call ixgbe_schedule_admin_tasklet() because we are on
@@ -4803,13 +4793,8 @@ ixgbe_handle_admin(struct work *wk, void *context)
 {
 	struct adapter	*adapter = context;
 	struct ifnet	*ifp = adapter->ifp;
-	u32		task_requests;
-
-	mutex_enter(&adapter->admin_mtx);
-	adapter->admin_pending = 0;
-	task_requests = adapter->task_requests;
-	adapter->task_requests = 0;
-	mutex_exit(&adapter->admin_mtx);
+	struct ixgbe_hw	*hw = &adapter->hw;
+	u32		req;
 
 	/*
 	 * Hold the IFNET_LOCK across this entire call.  This will
@@ -4820,33 +4805,57 @@ ixgbe_handle_admin(struct work *wk, void *context)
 	 */
 	IFNET_LOCK(ifp);
 	IXGBE_CORE_LOCK(adapter);
-	if ((task_requests & IXGBE_REQUEST_TASK_LSC) != 0) {
-		ixgbe_handle_link(adapter);
-	}
-	if ((task_requests & IXGBE_REQUEST_TASK_MOD) != 0) {
-		ixgbe_handle_mod(adapter);
-	}
-	if ((task_requests & IXGBE_REQUEST_TASK_MSF) != 0) {
-		ixgbe_handle_msf(adapter);
-	}
-	if ((task_requests & IXGBE_REQUEST_TASK_PHY) != 0) {
-		ixgbe_handle_phy(adapter);
-	}
-	if ((task_requests & IXGBE_REQUEST_TASK_FDIR) != 0) {
-		ixgbe_reinit_fdir(adapter);
-	}
+	/*
+	 * Clear the admin_pending flag before reading task_requests to avoid
+	 * missfiring workqueue though setting task_request.
+	 * Hmm, ixgbe_schedule_admin_tasklet() can extra-fire though
+	 * task_requests are done by prior workqueue, but it is harmless.
+	 */
+	atomic_store_relaxed(&adapter->admin_pending, 0);
+	while ((req =
+		(adapter->task_requests & ~IXGBE_REQUEST_TASK_NEED_ACKINTR))
+	    != 0) {
+		if ((req & IXGBE_REQUEST_TASK_LSC) != 0) {
+			ixgbe_handle_link(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_LSC);
+		}
+		if ((req & IXGBE_REQUEST_TASK_MOD) != 0) {
+			ixgbe_handle_mod(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_MOD);
+		}
+		if ((req & IXGBE_REQUEST_TASK_MSF) != 0) {
+			ixgbe_handle_msf(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_MSF);
+		}
+		if ((req & IXGBE_REQUEST_TASK_PHY) != 0) {
+			ixgbe_handle_phy(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_PHY);
+		}
+		if ((req & IXGBE_REQUEST_TASK_FDIR) != 0) {
+			ixgbe_reinit_fdir(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_FDIR);
+		}
 #if 0 /* notyet */
-	if ((task_requests & IXGBE_REQUEST_TASK_MBX) != 0) {
-		ixgbe_handle_mbx(adapter);
-	}
+		if ((req & IXGBE_REQUEST_TASK_MBX) != 0) {
+			ixgbe_handle_mbx(adapter);
+			atomic_and_32(&adapter->task_requests,
+			    ~IXGBE_REQUEST_TASK_MBX);
+		}
 #endif
-	if ((task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
-		/*
-		 * XXX FIXME.
-		 * ixgbe_enable_intr() enables all interrupts. It might enable
-		 * an interrupt which should not be enabled.
-		 */
-		ixgbe_enable_intr(adapter);
+	}
+	if ((adapter->task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
+		atomic_and_32(&adapter->task_requests,
+		    ~IXGBE_REQUEST_TASK_NEED_ACKINTR);
+		if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
+			/* Re-enable other interrupts */
+			IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
+		} else
+			ixgbe_enable_intr(adapter);
 	}
 
 	IXGBE_CORE_UNLOCK(adapter);
@@ -5214,6 +5223,10 @@ ixgbe_legacy_irq(void *arg)
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 	}
 
+	/* Link status change */
+	if (eicr & IXGBE_EICR_LSC)
+		task_requests |= IXGBE_REQUEST_TASK_LSC;
+
 	if (ixgbe_is_sfp(hw)) {
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
@@ -5221,15 +5234,7 @@ ixgbe_legacy_irq(void *arg)
 		else
 			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
 
-		/*
-		 *  An interrupt might not arrive when a module is inserted.
-		 * When an link status change interrupt occurred and the driver
-		 * still regard SFP as unplugged, issue the module softint
-		 * and then issue LSC interrupt.
-		 */
-		if ((eicr & eicr_mask)
-		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
-			&& (eicr & IXGBE_EICR_LSC))) {
+		if (eicr & eicr_mask) {
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
 		}
@@ -5241,10 +5246,6 @@ ixgbe_legacy_irq(void *arg)
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
 	}
-
-	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC)
-		task_requests |= IXGBE_REQUEST_TASK_LSC;
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
@@ -5259,12 +5260,8 @@ ixgbe_legacy_irq(void *arg)
 	if (task_requests != 0) {
 		/* Re-enabling other interrupts is done in the admin task */
 		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
-
-		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= task_requests;
+		atomic_or_32(&adapter->task_requests, task_requests);
 		ixgbe_schedule_admin_tasklet(adapter);
-		mutex_exit(&adapter->admin_mtx);
-
 		reenable_intr = false;
 	}
 
@@ -5545,9 +5542,9 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		return (EINVAL);
 	}
 
-	if (advertise < 0x0 || advertise > 0x3f) {
+	if (advertise < 0x0 || advertise > 0x2f) {
 		device_printf(dev,
-		    "Invalid advertised speed; valid modes are 0x0 through 0x3f\n");
+		    "Invalid advertised speed; valid modes are 0x0 through 0x7\n");
 		return (EINVAL);
 	}
 

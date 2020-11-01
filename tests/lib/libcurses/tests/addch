@@ -1,6 +1,0 @@
-include start
-call OK addch `\001t`
-call OK refresh
-call OK mvaddch 5 3`\003e`
-call OK refresh
-compare addch.chk

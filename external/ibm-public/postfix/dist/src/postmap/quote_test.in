@@ -1,8 +1,0 @@
-echo '"aa bb" cc' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo '"dd ee ff' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo 'gg\ hh ii' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo '"gg\"hh" ii' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo '"jj@kk" ll' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo 'mm@nn@oo pp' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-echo '@oo pp' | ${VALGRIND} ./postmap -i quote_test_map || exit 1
-${VALGRIND} ./postmap -s quote_test_map | LC_ALL=C sort

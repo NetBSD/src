@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.54 2020/12/07 10:57:41 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.53 2011/11/15 07:43:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,10 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.54 2020/12/07 10:57:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.53 2011/11/15 07:43:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpufreq.h>
-#include <sys/cpu.h>
 #include <sys/kmem.h>
 
 #include <dev/acpi/acpireg.h>
@@ -516,7 +515,6 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 		switch (reg[i]->reg_spaceid) {
 
-		case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 		case ACPI_ADR_SPACE_SYSTEM_IO:
 
 			if (reg[i]->reg_addr == 0) {
@@ -811,6 +809,8 @@ acpicpu_pstate_get(void *aux, void *cpu_freq)
 	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 	uint32_t freq, i, val = 0;
+	uint64_t addr;
+	uint8_t width;
 	int rv;
 
 	sc = acpicpu_sc[ci->ci_acpiid];
@@ -849,10 +849,12 @@ acpicpu_pstate_get(void *aux, void *cpu_freq)
 
 		break;
 
-	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 	case ACPI_ADR_SPACE_SYSTEM_IO:
 
-		val = acpicpu_readreg(&sc->sc_pstate_status);
+		addr  = sc->sc_pstate_status.reg_addr;
+		width = sc->sc_pstate_status.reg_bitwidth;
+
+		(void)AcpiOsReadPort(addr, &val, width);
 
 		if (val == 0) {
 			rv = EIO;
@@ -907,6 +909,8 @@ acpicpu_pstate_set(void *aux, void *cpu_freq)
 	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 	uint32_t freq, i, val;
+	uint64_t addr;
+	uint8_t width;
 	int rv;
 
 	freq = *(uint32_t *)cpu_freq;
@@ -964,10 +968,15 @@ acpicpu_pstate_set(void *aux, void *cpu_freq)
 
 		break;
 
-	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 	case ACPI_ADR_SPACE_SYSTEM_IO:
 
-		acpicpu_writereg(&sc->sc_pstate_control, ps->ps_control);
+		addr  = sc->sc_pstate_control.reg_addr;
+		width = sc->sc_pstate_control.reg_bitwidth;
+
+		(void)AcpiOsWritePort(addr, ps->ps_control, width);
+
+		addr  = sc->sc_pstate_status.reg_addr;
+		width = sc->sc_pstate_status.reg_bitwidth;
 
 		/*
 		 * Some systems take longer to respond
@@ -975,7 +984,7 @@ acpicpu_pstate_set(void *aux, void *cpu_freq)
 		 */
 		for (i = val = 0; i < ACPICPU_P_STATE_RETRY; i++) {
 
-			val = acpicpu_readreg(&sc->sc_pstate_status);
+			(void)AcpiOsReadPort(addr, &val, width);
 
 			if (val == ps->ps_status)
 				break;

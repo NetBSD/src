@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.68 2020/07/08 12:14:19 fcambus Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.68 2020/07/08 12:14:19 fcambus Exp $");
 
 #include "opt_wsfont.h"
 
@@ -150,21 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $");
 #include <dev/wsfont/Go_Mono_12x23.h>
 #endif
 
-#ifdef FONT_SPLEEN5x8
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen5x8.h>
-#endif
-
-#ifdef FONT_SPLEEN6x12
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen6x12.h>
-#endif
-
-#ifdef FONT_SPLEEN8x16
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen8x16.h>
-#endif
-
 #ifdef FONT_SPLEEN12x24
 #define HAVE_FONT 1
 #include <dev/wsfont/spleen12x24.h>
@@ -180,9 +165,19 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $");
 #include <dev/wsfont/spleen32x64.h>
 #endif
 
-#ifdef FONT_LIBERATION_MONO12x21
+#ifdef FONT_SPLEEN5x8
 #define HAVE_FONT 1
-#include <dev/wsfont/Liberation_Mono_12x21.h>
+#include <dev/wsfont/spleen5x8.h>
+#endif
+
+#ifdef FONT_SPLEEN6x12
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen6x12.h>
+#endif
+
+#ifdef FONT_SPLEEN8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen8x16.h>
 #endif
 
 #ifdef FONT_BOLD16x32
@@ -288,15 +283,6 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_GO_MONO12x23
 	{ { NULL, NULL }, &Go_Mono_12x23, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-#ifdef FONT_SPLEEN5x8
-	{ { NULL, NULL }, &spleen5x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
-#endif
-#ifdef FONT_SPLEEN6x12
-	{ { NULL, NULL }, &spleen6x12, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
-#endif
-#ifdef FONT_SPLEEN8x16
-	{ { NULL, NULL }, &spleen8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
-#endif
 #ifdef FONT_SPLEEN12x24
 	{ { NULL, NULL }, &spleen12x24, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
@@ -306,8 +292,14 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_SPLEEN32x64
 	{ { NULL, NULL }, &spleen32x64, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-#ifdef FONT_LIBERATION_MONO12x21
-	{ { NULL, NULL }, &Liberation_Mono_12x21, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#ifdef FONT_SPLEEN5x8
+	{ { NULL, NULL }, &spleen5x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN6x12
+	{ { NULL, NULL }, &spleen6x12, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN8x16
+	{ { NULL, NULL }, &spleen8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };

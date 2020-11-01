@@ -1,4 +1,4 @@
-/* $NetBSD: wb_acpi.c,v 1.7 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: wb_acpi.c,v 1.5 2010/08/19 18:37:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.7 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.5 2010/08/19 18:37:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.7 2020/12/07 10:02:51 jmcneill Exp $")
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/w83l518dvar.h>
 #include <dev/ic/w83l518dreg.h>
@@ -129,9 +128,9 @@ wb_acpi_attach(device_t parent, device_t self, void *opaque)
 	}
 	sc->sc_ioh_length = io->ar_length;
 
-	sc->sc_ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
-	    IPL_SDMMC, false, wb_intr, &sc->sc_wb, device_xname(self));
+	sc->sc_ih = isa_intr_establish(sc->sc_ic, irq->ar_irq,
+	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
+	    IPL_SDMMC, wb_intr, &sc->sc_wb);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
@@ -168,7 +167,7 @@ wb_acpi_detach(device_t self, int flags)
 		return rv;
 
 	if (sc->sc_ih)
-		acpi_intr_disestablish(sc->sc_ih);
+		isa_intr_disestablish(sc->sc_ic, sc->sc_ih);
 
 	if (sc->sc_ioh_length > 0)
 		bus_space_unmap(sc->sc_wb.wb_iot, sc->sc_wb.wb_ioh,

@@ -91,7 +91,6 @@ AcpiOsCreateCache (
     }
 
     /* Populate the cache object and return it */
-
     memset (Cache, 0, sizeof (ACPI_MEMORY_LIST));
     Cache->ListName   = __UNCONST(CacheName);
     Cache->ObjectSize = ObjectSize;

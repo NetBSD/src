@@ -1,4 +1,0 @@
-include window
-call OK waddstr $win1 "abcde"
-call OK wrefresh $win1
-compare addstr.chk

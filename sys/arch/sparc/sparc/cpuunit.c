@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.16 2020/11/22 03:55:33 thorpej Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.15 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.16 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.15 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -99,7 +98,7 @@ cpuunit_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize the bus space tag we pass on to our children.
 	 */
-	sbt = sc->sc_bustag = kmem_alloc(sizeof(*sbt), KM_SLEEP);
+	sbt = sc->sc_bustag = malloc(sizeof(*sbt), M_DEVBUF, M_WAITOK);
 	memcpy(sbt, sc->sc_st, sizeof(*sbt));
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_st;

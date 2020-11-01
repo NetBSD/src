@@ -70,7 +70,6 @@ NoEcho('
 %type <n> RequiredTarget
 %type <n> SimpleName
 %type <n> StringData
-%type <n> StringLiteral
 %type <n> Target
 %type <n> Term
 %type <n> TermArg
