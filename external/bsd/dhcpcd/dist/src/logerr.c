@@ -47,11 +47,16 @@
 #undef LOGERR_TAG
 #endif
 
+/* syslog protocol is 1k message max, RFC 3164 section 4.1 */
+#define LOGERR_SYSLOGBUF	1024 + sizeof(int) + sizeof(pid_t)
+
 #define UNUSED(a)		(void)(a)
 
 struct logctx {
 	char		 log_buf[BUFSIZ];
 	unsigned int	 log_opts;
+	int		 log_fd;
+	pid_t		 log_pid;
 #ifndef SMALL
 	FILE		*log_file;
 #ifdef LOGERR_TAG
@@ -63,9 +68,11 @@ struct logctx {
 static struct logctx _logctx = {
 	/* syslog style, but without the hostname or tag. */
 	.log_opts = LOGERR_LOG | LOGERR_LOG_DATE | LOGERR_LOG_PID,
+	.log_fd = -1,
+	.log_pid = 0,
 };
 
-#if defined(LOGERR_TAG) && defined(__linux__)
+#if defined(__linux__)
 /* Poor man's getprogname(3). */
 static char *_logprog;
 static const char *
@@ -79,9 +86,12 @@ getprogname(void)
 		 * so zero the buffer. */
 		if ((_logprog = calloc(1, PATH_MAX + 1)) == NULL)
 			return NULL;
+		if (readlink("/proc/self/exe", _logprog, PATH_MAX + 1) == -1) {
+			free(_logprog);
+			_logprog = NULL;
+			return NULL;
+		}
 	}
-	if (readlink("/proc/self/exe", _logprog, PATH_MAX + 1) == -1)
-		return NULL;
 	if (_logprog[0] == '[')
 		return NULL;
 	p = strrchr(_logprog, '/');
@@ -147,7 +157,13 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 	log_pid = ((stream == stderr && ctx->log_opts & LOGERR_ERR_PID) ||
 	    (stream != stderr && ctx->log_opts & LOGERR_LOG_PID));
 	if (log_pid) {
-		if ((e = fprintf(stream, "[%d]", getpid())) == -1)
+		pid_t pid;
+
+		if (ctx->log_pid == 0)
+			pid = getpid();
+		else
+			pid = ctx->log_pid;
+		if ((e = fprintf(stream, "[%d]", pid)) == -1)
 			return -1;
 		len += e;
 	}
@@ -198,14 +214,27 @@ vlogmessage(int pri, const char *fmt, va_list args)
 	struct logctx *ctx = &_logctx;
 	int len = 0;
 
+	if (ctx->log_fd != -1) {
+		char buf[LOGERR_SYSLOGBUF];
+		pid_t pid;
+
+		memcpy(buf, &pri, sizeof(pri));
+		pid = getpid();
+		memcpy(buf + sizeof(pri), &pid, sizeof(pid));
+		len = vsnprintf(buf + sizeof(pri) + sizeof(pid),
+		    sizeof(buf) - sizeof(pri) - sizeof(pid),
+		    fmt, args);
+		if (len != -1)
+			len = (int)write(ctx->log_fd, buf,
+			    ((size_t)++len) + sizeof(pri) + sizeof(pid));
+		return len;
+	}
+
 	if (ctx->log_opts & LOGERR_ERR &&
 	    (pri <= LOG_ERR ||
 	    (!(ctx->log_opts & LOGERR_QUIET) && pri <= LOG_INFO) ||
 	    (ctx->log_opts & LOGERR_DEBUG && pri <= LOG_DEBUG)))
 		len = vlogprintf_r(ctx, stderr, fmt, args);
-
-	if (!(ctx->log_opts & LOGERR_LOG))
-		return len;
 
 #ifndef SMALL
 	if (ctx->log_file != NULL &&
@@ -213,7 +242,9 @@ vlogmessage(int pri, const char *fmt, va_list args)
 		len = vlogprintf_r(ctx, ctx->log_file, fmt, args);
 #endif
 
-	vsyslog(pri, fmt, args);
+	if (ctx->log_opts & LOGERR_LOG)
+		vsyslog(pri, fmt, args);
+
 	return len;
 }
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))
@@ -331,6 +362,54 @@ log_errx(const char *fmt, ...)
 	va_end(args);
 }
 
+int
+loggetfd(void)
+{
+	struct logctx *ctx = &_logctx;
+
+	return ctx->log_fd;
+}
+
+void
+logsetfd(int fd)
+{
+	struct logctx *ctx = &_logctx;
+
+	ctx->log_fd = fd;
+#ifndef SMALL
+	if (fd != -1 && ctx->log_file != NULL) {
+		fclose(ctx->log_file);
+		ctx->log_file = NULL;
+	}
+#endif
+}
+
+int
+logreadfd(int fd)
+{
+	struct logctx *ctx = &_logctx;
+	char buf[LOGERR_SYSLOGBUF];
+	int len, pri;
+
+	len = (int)read(fd, buf, sizeof(buf));
+	if (len == -1)
+		return -1;
+
+	/* Ensure we have pri, pid and a terminator */
+	if (len < (int)(sizeof(pri) + sizeof(pid_t) + 1) ||
+	    buf[len - 1] != '\0')
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	memcpy(&pri, buf, sizeof(pri));
+	memcpy(&ctx->log_pid, buf + sizeof(pri), sizeof(ctx->log_pid));
+	logmessage(pri, "%s", buf + sizeof(pri) + sizeof(ctx->log_pid));
+	ctx->log_pid = 0;
+	return len;
+}
+
 unsigned int
 loggetopts(void)
 {
@@ -373,15 +452,16 @@ logopen(const char *path)
 
 	(void)setvbuf(stderr, ctx->log_buf, _IOLBF, sizeof(ctx->log_buf));
 
-	if (!(ctx->log_opts & LOGERR_LOG))
-		return 1;
-
-#ifdef LOG_NDELAY
-	opts |= LOG_NDELAY;
+#ifndef SMALL
+	if (ctx->log_file != NULL) {
+		fclose(ctx->log_file);
+		ctx->log_file = NULL;
+	}
 #endif
+
 	if (ctx->log_opts & LOGERR_LOG_PID)
 		opts |= LOG_PID;
-	openlog(NULL, opts, LOGERR_SYSLOG_FACILITY);
+	openlog(getprogname(), opts, LOGERR_SYSLOG_FACILITY);
 	if (path == NULL)
 		return 1;
 
@@ -410,7 +490,7 @@ logclose(void)
 	fclose(ctx->log_file);
 	ctx->log_file = NULL;
 #endif
-#if defined(LOGERR_TAG) && defined(__linux__)
+#if defined(__linux__)
 	free(_logprog);
 #endif
 }
