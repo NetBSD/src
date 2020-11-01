@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2020/10/22 07:34:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2020/11/01 10:58:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2020/10/22 07:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2020/11/01 10:58:59 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1438,11 +1438,6 @@ pmap_activate(struct lwp *l)
 	KASSERT(pm->pm_l0table != NULL);
 
 	UVMHIST_LOG(pmaphist, "lwp=%p (pid=%d)", l, l->l_proc->p_pid, 0, 0);
-
-	/* Disable translation table walks using TTBR0 */
-	tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr | TCR_EPD0);
-	isb();
 
 	/* XXX: allocate asid, and regenerate if needed */
 	if (pm->pm_asid == -1)
