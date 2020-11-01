@@ -1,7 +1,8 @@
-# $NetBSD: moderrs.mk,v 1.19 2020/11/01 10:46:34 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.20 2020/11/01 10:50:22 rillig Exp $
 #
 # various modifier error tests
 
+'=		'\''
 VAR=		TheVariable
 # in case we have to change it ;-)
 MOD_UNKN=	Z
@@ -24,28 +25,29 @@ all:	mod-remember-parse
 all:	mod-sysv-parse
 
 modunkn: print-header print-footer
-	@echo "Expect: Unknown modifier 'Z'"
+	@echo 'want: Unknown modifier $'Z$''
 	@echo "VAR:Z=${VAR:Z}"
 
 modunknV: print-header print-footer
-	@echo "Expect: Unknown modifier 'Z'"
+	@echo 'want: Unknown modifier $'Z$''
 	@echo "VAR:${MOD_UNKN}=${VAR:${MOD_UNKN}}"
 
 varterm: print-header print-footer
-	@echo "Expect: Unclosed variable specification for VAR"
+	@echo 'want: Unclosed variable specification (expecting $'}$') for "VAR" (value "Thevariable") modifier S'
 	@echo VAR:S,V,v,=${VAR:S,V,v,
 
 vartermV: print-header print-footer
-	@echo "Expect: Unclosed variable specification for VAR"
+	@echo 'want: Unclosed variable specification after complex modifier (expecting $'}$') for VAR'
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 modtermV: print-header print-footer
-	@echo "Expect: Unfinished modifier for VAR (',' missing)"
+	@echo 'want: Unfinished modifier for VAR ($',$' missing)'
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
 modloop: print-header print-footer
-	@echo "Expect: 2 errors about missing @ delimiter"
+	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
 	@echo ${UNDEF:U1 2 3:@var}
+	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
 	@echo ${UNDEF:U1 2 3:@var@...}
 	@echo ${UNDEF:U1 2 3:@var@${var}@}
 
@@ -60,8 +62,9 @@ modloop-close: print-header print-footer
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
 modwords: print-header print-footer
-	@echo "Expect: 2 errors about missing ] delimiter"
+	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
 	@echo ${UNDEF:U1 2 3:[}
+	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
 	@echo ${UNDEF:U1 2 3:[#}
 
 	# out of bounds => empty
@@ -81,12 +84,13 @@ modwords: print-header print-footer
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
 modexclam: print-header print-footer
-	@echo "Expect: 2 errors about missing ! delimiter"
+	@echo 'want: Unfinished modifier for VARNAME ($'!$' missing)'
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
 	# fallback to the SysV substitution modifier.
 	# If there were a fallback, the output would be "exclam",
 	# and the above would have produced an "Unknown modifier '!'".
+	@echo 'want: Unfinished modifier for ! ($'!$' missing)'
 	@echo ${!:L:!=exclam}
 
 mod-subst-delimiter: print-header print-footer
