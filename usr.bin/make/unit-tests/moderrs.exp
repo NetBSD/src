@@ -57,59 +57,33 @@ make: Unfinished modifier for ! ('!' missing)
 
 mod-subst-delimiter:
 make: Missing delimiter for :S modifier
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
-TheVariable
-TheVariable
-make: Missing delimiter for :S modifier
 1:
 make: Unfinished modifier for VAR (',' missing)
 2:
 make: Unfinished modifier for VAR (',' missing)
 3:
 make: Unfinished modifier for VAR (',' missing)
-
+4:
 make: Unfinished modifier for VAR (',' missing)
-
+5:
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
-TheVariable
-TheVariable
+6: TheVariable
+7: TheVariable
 
 mod-regex-delimiter:
 make: Missing delimiter for :C modifier
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unfinished modifier for VAR (',' missing)
-
-make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
-TheVariable
-TheVariable
-make: Missing delimiter for :C modifier
 1:
 make: Unfinished modifier for VAR (',' missing)
 2:
 make: Unfinished modifier for VAR (',' missing)
 3:
 make: Unfinished modifier for VAR (',' missing)
-
+4:
 make: Unfinished modifier for VAR (',' missing)
-
+5:
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
-TheVariable
-TheVariable
+6: TheVariable
+7: TheVariable
 
 mod-regex-undefined-subexpression:
 one one 2 3 5 8 one3 2one 34

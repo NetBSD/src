@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.21 2020/11/01 10:52:09 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.22 2020/11/01 10:53:58 rillig Exp $
 #
 # various modifier error tests
 
@@ -96,36 +96,22 @@ exclam: print-header print-footer
 	@echo ${!:L:!=exclam}
 
 mod-subst-delimiter: print-header print-footer
-	@echo ${VAR:S
-	@echo ${VAR:S,
-	@echo ${VAR:S,from
-	@echo ${VAR:S,from,
-	@echo ${VAR:S,from,to
-	@echo ${VAR:S,from,to,
-	@echo ${VAR:S,from,to,}
 	@echo 1: ${VAR:S
 	@echo 2: ${VAR:S,
 	@echo 3: ${VAR:S,from
-	@echo ${VAR:S,from,
-	@echo ${VAR:S,from,to
-	@echo ${VAR:S,from,to,
-	@echo ${VAR:S,from,to,}
+	@echo 4: ${VAR:S,from,
+	@echo 5: ${VAR:S,from,to
+	@echo 6: ${VAR:S,from,to,
+	@echo 7: ${VAR:S,from,to,}
 
 mod-regex-delimiter: print-header print-footer
-	@echo ${VAR:C
-	@echo ${VAR:C,
-	@echo ${VAR:C,from
-	@echo ${VAR:C,from,
-	@echo ${VAR:C,from,to
-	@echo ${VAR:C,from,to,
-	@echo ${VAR:C,from,to,}
 	@echo 1: ${VAR:C
 	@echo 2: ${VAR:C,
 	@echo 3: ${VAR:C,from
-	@echo ${VAR:C,from,
-	@echo ${VAR:C,from,to
-	@echo ${VAR:C,from,to,
-	@echo ${VAR:C,from,to,}
+	@echo 4: ${VAR:C,from,
+	@echo 5: ${VAR:C,from,to
+	@echo 6: ${VAR:C,from,to,
+	@echo 7: ${VAR:C,from,to,}
 
 # In regular expressions with alternatives, not all capturing groups are
 # always set; some may be missing.  Warn about these.
