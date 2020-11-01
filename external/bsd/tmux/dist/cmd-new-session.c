@@ -94,25 +94,30 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 
-	if (args_has(args, 's')) {
-		newname = format_single(item, args_get(args, 's'), c, NULL,
-		    NULL, NULL);
+	tmp = args_get(args, 's');
+	if (tmp != NULL) {
+		newname = format_single(item, tmp, c, NULL, NULL, NULL);
 		if (!session_check_name(newname)) {
 			cmdq_error(item, "bad session name: %s", newname);
 			goto fail;
 		}
-		if ((as = session_find(newname)) != NULL) {
-			if (args_has(args, 'A')) {
-				retval = cmd_attach_session(item,
-				    newname, args_has(args, 'D'),
-				    args_has(args, 'X'), 0, NULL,
-				    args_has(args, 'E'));
-				free(newname);
-				return (retval);
-			}
-			cmdq_error(item, "duplicate session: %s", newname);
-			goto fail;
+	}
+	if (args_has(args, 'A')) {
+		if (newname != NULL)
+			as = session_find(newname);
+		else
+			as = item->target.s;
+		if (as != NULL) {
+			retval = cmd_attach_session(item, as->name,
+			    args_has(args, 'D'), args_has(args, 'X'), 0, NULL,
+			    args_has(args, 'E'));
+			free(newname);
+			return (retval);
 		}
+	}
+	if (newname != NULL && session_find(newname) != NULL) {
+		cmdq_error(item, "duplicate session: %s", newname);
+		goto fail;
 	}
 
 	/* Is this going to be part of a session group? */
@@ -259,6 +264,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
+	sc.c = c;
 
 	sc.name = args_get(args, 'n');
 	sc.argc = args->argc;
@@ -328,7 +334,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = NEW_SESSION_TEMPLATE;
-		cp = format_single(item, template, c, s, NULL, NULL);
+		cp = format_single(item, template, c, s, s->curw, NULL);
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}
