@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.632 2020/10/31 23:23:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.633 2020/11/01 12:34:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.632 2020/10/31 23:23:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.633 2020/11/01 12:34:45 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2114,7 +2114,8 @@ ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
     return AMR_OK;
 }
 
-static Boolean TryParseTime(const char **pp, time_t *out_time)
+static Boolean
+TryParseTime(const char **pp, time_t *out_time)
 {
     char *end;
     unsigned long n;
@@ -2720,8 +2721,8 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	goto bad_modifier;	/* Found junk instead of ".." */
 
     /*
-     * Now seldata is properly filled in, but we still have to check for 0 as
-     * a special case.
+     * Now first and last are properly filled in, but we still have to check
+     * for 0 as a special case.
      */
     if (first == 0 && last == 0) {
 	/* ":[0]" or perhaps ":[0..0]" */
@@ -2734,7 +2735,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
     if (first == 0 || last == 0)
 	goto bad_modifier;
 
-    /* Normal case: select the words described by seldata. */
+    /* Normal case: select the words described by first and last. */
     st->newVal = VarSelectWords(st->sep, st->oneBigWord, st->val, first, last);
 
 ok:
