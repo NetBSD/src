@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.4 2020/11/01 11:50:11 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.5 2020/11/01 13:28:50 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -120,19 +120,46 @@ WORDS=	one two three four five six
 .  warning The separator \x100 is accepted even though it is out of bounds.
 .endif
 
+# Negative numbers are not allowed for the separator character.
+.if ${WORDS:[1..3]:ts\-300:tu}
+.  warning The separator \-300 is accepted even though it is negative.
+.else
+.  warning The separator \-300 is accepted even though it is negative.
+.endif
+
+# The character number is interpreted as octal number by default.
+# The digit '8' is not an octal digit though.
+.if ${1 2 3:L:ts\8:tu}
+.  warning The separator \8 is accepted even though it is not octal.
+.else
+.  warning The separator \8 is accepted even though it is not octal.
+.endif
+
+# Trailing characters after the octal character number are rejected.
+.if ${1 2 3:L:ts\100L}
+.  warning The separator \100L is accepted even though it contains an 'L'.
+.else
+.  warning The separator \100L is accepted even though it contains an 'L'.
+.endif
+
+# Trailing characters after the hexadecimal character number are rejected.
+.if ${1 2 3:L:ts\x40g}
+.  warning The separator \x40g is accepted even though it contains a 'g'.
+.else
+.  warning The separator \x40g is accepted even though it contains a 'g'.
+.endif
+
+
 # In the :t modifier, the :t must be followed by any of A, l, s, u.
 .if ${WORDS:tx} != "anything"
 .  info This line is not reached because of the malformed condition.
 .  info If this line were reached, it would be visible in the -dcpv log.
 .endif
-.info Parsing continues here.
 
 # After the backslash, only n, t, an octal number, or x and a hexadecimal
 # number are allowed.
 .if ${WORDS:t\X} != "anything"
 .  info This line is not reached.
 .endif
-.info Parsing continues here.
 
 all:
-	@:;
