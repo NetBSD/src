@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.20 2020/10/19 19:33:02 christos Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.21 2020/11/01 18:51:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -280,6 +280,7 @@ struct coredump_hook_t coredump_hook;
 struct coredump_offset_hook_t coredump_offset_hook;
 struct coredump_write_hook_t coredump_write_hook;
 struct coredump_netbsd_hook_t coredump_netbsd_hook;
+struct coredump_netbsd32_hook_t coredump_netbsd32_hook;
 struct coredump_elf32_hook_t coredump_elf32_hook;
 struct coredump_elf64_hook_t coredump_elf64_hook;
 struct uvm_coredump_walkmap_hook_t uvm_coredump_walkmap_hook;
