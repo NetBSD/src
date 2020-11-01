@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.90 2020/09/26 17:49:50 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.91 2020/11/01 18:51:34 pgoyette Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -80,6 +80,8 @@
 ./@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue/compat_netbsd32_mqueue.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_nfssrv		modules-base-kernel	kmod
