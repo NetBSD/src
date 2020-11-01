@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.640 2020/11/01 22:48:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.641 2020/11/01 23:17:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.640 2020/11/01 22:48:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.641 2020/11/01 23:17:40 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3254,6 +3254,83 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
     }
 }
 
+static char *ApplyModifiers(const char **, char *, char, char, Var *,
+			    VarExprFlags *, GNode *, VarEvalFlags, void **);
+
+typedef enum ApplyModifiersIndirectResult {
+    AMIR_CONTINUE,
+    AMIR_APPLY_MODS,
+    AMIR_OUT
+} ApplyModifiersIndirectResult;
+
+/* While expanding a variable expression, expand and apply indirect
+ * modifiers. */
+static ApplyModifiersIndirectResult
+ApplyModifiersIndirect(
+	ApplyModifiersState *const st,
+	const char **inout_p,
+	void **const out_freeIt
+) {
+    const char *p = *inout_p;
+    const char *nested_p = p;
+    void *freeIt;
+    const char *rval;
+    char c;
+
+    (void)Var_Parse(&nested_p, st->ctxt, st->eflags, &rval, &freeIt);
+    /* TODO: handle errors */
+
+    /*
+     * If we have not parsed up to st->endc or ':', we are not
+     * interested.  This means the expression ${VAR:${M_1}${M_2}}
+     * is not accepted, but ${VAR:${M_1}:${M_2}} is.
+     */
+    if (rval[0] != '\0' &&
+	(c = *nested_p) != '\0' && c != ':' && c != st->endc) {
+	if (DEBUG(LINT))
+	    Parse_Error(PARSE_FATAL,
+			"Missing delimiter ':' after indirect modifier \"%.*s\"",
+			(int)(nested_p - p), p);
+
+	free(freeIt);
+	/* XXX: apply_mods doesn't sound like "not interested". */
+	/* XXX: Why is the indirect modifier parsed again by
+	 * apply_mods?  If any, p should be advanced to nested_p. */
+	return AMIR_APPLY_MODS;
+    }
+
+    VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
+	       rval, (int)(size_t)(nested_p - p), p);
+
+    p = nested_p;
+
+    if (rval[0] != '\0') {
+	const char *rval_pp = rval;
+	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
+				&st->exprFlags, st->ctxt, st->eflags, out_freeIt);
+	if (st->val == var_Error
+	    || (st->val == varUndefined && !(st->eflags & VARE_UNDEFERR))
+	    || *rval_pp != '\0') {
+	    free(freeIt);
+	    *inout_p = p;
+	    return AMIR_OUT;	/* error already reported */
+	}
+    }
+    free(freeIt);
+
+    if (*p == ':')
+	p++;
+    else if (*p == '\0' && st->endc != '\0') {
+	Error("Unclosed variable specification after complex "
+	      "modifier (expecting '%c') for %s", st->endc, st->v->name);
+	*inout_p = p;
+	return AMIR_OUT;
+    }
+
+    *inout_p = p;
+    return AMIR_CONTINUE;
+}
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
@@ -3287,64 +3364,13 @@ ApplyModifiers(
     while (*p != '\0' && *p != endc) {
 
 	if (*p == '$') {
-	    /*
-	     * We may have some complex modifiers in a variable.
-	     */
-	    const char *nested_p = p;
-	    void *freeIt;
-	    const char *rval;
-	    char c;
-
-	    (void)Var_Parse(&nested_p, st.ctxt, st.eflags, &rval, &freeIt);
-	    /* TODO: handle errors */
-
-	    /*
-	     * If we have not parsed up to st.endc or ':', we are not
-	     * interested.  This means the expression ${VAR:${M_1}${M_2}}
-	     * is not accepted, but ${VAR:${M_1}:${M_2}} is.
-	     */
-	    if (rval[0] != '\0' &&
-		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
-		if (DEBUG(LINT))
-		    Parse_Error(PARSE_FATAL,
-				"Missing delimiter ':' after indirect modifier \"%.*s\"",
-				(int)(nested_p - p), p);
-
-		free(freeIt);
-		/* XXX: apply_mods doesn't sound like "not interested". */
-		/* XXX: Why is the indirect modifier parsed again by
-		 * apply_mods?  If any, p should be advanced to nested_p. */
-		goto apply_mods;
-	    }
-
-	    VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
-		       rval, (int)(size_t)(nested_p - p), p);
-
-	    p = nested_p;
-
-	    if (rval[0] != '\0') {
-		const char *rval_pp = rval;
-		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
-					&st.exprFlags, ctxt, eflags, out_freeIt);
-		if (st.val == var_Error
-		    || (st.val == varUndefined && !(st.eflags & VARE_UNDEFERR))
-		    || *rval_pp != '\0') {
-		    free(freeIt);
-		    goto out;	/* error already reported */
-		}
-	    }
-	    free(freeIt);
-
-	    if (*p == ':')
-		p++;
-	    else if (*p == '\0' && endc != '\0') {
-		Error("Unclosed variable specification after complex "
-		      "modifier (expecting '%c') for %s", st.endc, st.v->name);
-		goto out;
-	    }
-	    continue;
+	    ApplyModifiersIndirectResult amir;
+	    amir = ApplyModifiersIndirect(&st, &p, out_freeIt);
+	    if (amir == AMIR_CONTINUE)
+		continue;
+	    if (amir == AMIR_OUT)
+	        goto out;
 	}
-    apply_mods:
 	st.newVal = var_Error;	/* default value, in case of errors */
 	mod = p;
 
