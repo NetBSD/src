@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.3 2020/10/23 08:41:00 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.4 2020/11/01 18:03:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -871,4 +871,148 @@ distrib/notes/common/main				(manually edited)
 	Remove 9.0 release dedication - new releases will not be 9.0 any more.
 	[martin]
 
+external/public-domain/tz/dist/Makefile         up to 1.1.1.29
+external/public-domain/tz/dist/NEWS             up to 1.1.1.32
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.22
+external/public-domain/tz/dist/asia             up to 1.1.1.27
+external/public-domain/tz/dist/europe           up to 1.1.1.29
+external/public-domain/tz/dist/version          up to 1.1.1.19
+doc/3RDPARTY					(apply patch)
 
+	Updated tzdata to 2020d.
+	[kre, ticket #1122]
+
+sys/kern/kern_time.c				1.206
+
+	Prevent the system clock from being set too low or high.
+	[nia, ticket #1124]
+
+external/bsd/tmux/dist/menu.c                   up to 1.2
+external/bsd/tmux/dist/etc/ylwrap               up to 1.1.1.1
+external/bsd/tmux/dist/cmd-resize-window.c      up to 1.2
+external/bsd/tmux/dist/regsub.c                 up to 1.3
+external/bsd/tmux/dist/cmd-parse.y              up to 1.3
+external/bsd/tmux/dist/spawn.c                  up to 1.3
+external/bsd/tmux/dist/file.c                   up to 1.1.1.1
+external/bsd/tmux/dist/format-draw.c            up to 1.1.1.3
+external/bsd/tmux/dist/cmd-display-menu.c       up to 1.1.1.1
+external/bsd/tmux/dist/compat/fparseln.c        delete
+external/bsd/tmux/dist/TODO                     delete
+external/bsd/tmux/dist/cmd-list.c               delete
+external/bsd/tmux/dist/cmd-set-hook.c           delete
+external/bsd/tmux/dist/cmd-string.c             delete
+external/bsd/tmux/dist/hooks.c                  delete
+external/bsd/tmux/dist/CHANGES                  up to 1.1.1.6
+external/bsd/tmux/dist/COPYING                  up to 1.1.1.2
+external/bsd/tmux/dist/Makefile.am              up to 1.1.1.6
+external/bsd/tmux/dist/Makefile.in              up to 1.1.1.6
+external/bsd/tmux/dist/README                   up to 1.1.1.4
+external/bsd/tmux/dist/aclocal.m4               up to 1.1.1.4
+external/bsd/tmux/dist/arguments.c              up to 1.1.1.9
+external/bsd/tmux/dist/attributes.c             up to 1.1.1.9
+external/bsd/tmux/dist/cfg.c                    up to 1.1.1.12
+external/bsd/tmux/dist/client.c                 up to 1.10
+external/bsd/tmux/dist/cmd-attach-session.c     up to 1.8
+external/bsd/tmux/dist/cmd-bind-key.c           up to 1.1.1.9
+external/bsd/tmux/dist/cmd-break-pane.c         up to 1.1.1.11
+external/bsd/tmux/dist/cmd-capture-pane.c       up to 1.8
+external/bsd/tmux/dist/cmd-choose-tree.c        up to 1.1.1.9
+external/bsd/tmux/dist/cmd-command-prompt.c     up to 1.1.1.10
+external/bsd/tmux/dist/cmd-confirm-before.c     up to 1.1.1.9
+external/bsd/tmux/dist/cmd-copy-mode.c          up to 1.1.1.11
+external/bsd/tmux/dist/cmd-display-message.c    up to 1.10
+external/bsd/tmux/dist/cmd-display-panes.c      up to 1.1.1.11
+external/bsd/tmux/dist/cmd-find-window.c        up to 1.1.1.10
+external/bsd/tmux/dist/cmd-find.c               up to 1.1.1.7
+external/bsd/tmux/dist/cmd-if-shell.c           up to 1.10
+external/bsd/tmux/dist/cmd-join-pane.c          up to 1.1.1.10
+external/bsd/tmux/dist/cmd-kill-pane.c          up to 1.1.1.10
+external/bsd/tmux/dist/cmd-kill-session.c       up to 1.1.1.9
+external/bsd/tmux/dist/cmd-list-keys.c          up to 1.1.1.11
+external/bsd/tmux/dist/cmd-list-sessions.c      up to 1.1.1.9
+external/bsd/tmux/dist/cmd-load-buffer.c        up to 1.9
+external/bsd/tmux/dist/cmd-new-session.c        up to 1.8
+external/bsd/tmux/dist/cmd-new-window.c         up to 1.8
+external/bsd/tmux/dist/cmd-pipe-pane.c          up to 1.1.1.10
+external/bsd/tmux/dist/cmd-queue.c              up to 1.6
+external/bsd/tmux/dist/cmd-refresh-client.c     up to 1.1.1.11
+external/bsd/tmux/dist/cmd-resize-pane.c        up to 1.1.1.12
+external/bsd/tmux/dist/cmd-respawn-pane.c       up to 1.1.1.9
+external/bsd/tmux/dist/cmd-respawn-window.c     up to 1.1.1.11
+external/bsd/tmux/dist/cmd-rotate-window.c      up to 1.1.1.10
+external/bsd/tmux/dist/cmd-run-shell.c          up to 1.1.1.11
+external/bsd/tmux/dist/cmd-save-buffer.c        up to 1.1.1.11
+external/bsd/tmux/dist/cmd-select-layout.c      up to 1.1.1.10
+external/bsd/tmux/dist/cmd-select-pane.c        up to 1.1.1.12
+external/bsd/tmux/dist/cmd-select-window.c      up to 1.1.1.9
+external/bsd/tmux/dist/cmd-send-keys.c          up to 1.10
+external/bsd/tmux/dist/cmd-set-option.c         up to 1.1.1.11
+external/bsd/tmux/dist/cmd-show-messages.c      up to 1.7
+external/bsd/tmux/dist/cmd-show-options.c       up to 1.3
+external/bsd/tmux/dist/cmd-source-file.c        up to 1.1.1.10
+external/bsd/tmux/dist/cmd-split-window.c       up to 1.9
+external/bsd/tmux/dist/cmd-swap-pane.c          up to 1.1.1.11
+external/bsd/tmux/dist/cmd-swap-window.c        up to 1.1.1.9
+external/bsd/tmux/dist/cmd-switch-client.c      up to 1.1.1.11
+external/bsd/tmux/dist/cmd-wait-for.c           up to 1.7
+external/bsd/tmux/dist/cmd.c                    up to 1.1.1.12
+external/bsd/tmux/dist/colour.c                 up to 1.9
+external/bsd/tmux/dist/compat.h                 up to 1.2
+external/bsd/tmux/dist/configure                up to 1.1.1.6
+external/bsd/tmux/dist/configure.ac             up to 1.1.1.6
+external/bsd/tmux/dist/control-notify.c         up to 1.1.1.8
+external/bsd/tmux/dist/control.c                up to 1.1.1.7
+external/bsd/tmux/dist/environ.c                up to 1.10
+external/bsd/tmux/dist/example_tmux.conf        up to 1.1.1.4
+external/bsd/tmux/dist/format.c                 up to 1.11
+external/bsd/tmux/dist/grid.c                   up to 1.10
+external/bsd/tmux/dist/input-keys.c             up to 1.10
+external/bsd/tmux/dist/input.c                  up to 1.14
+external/bsd/tmux/dist/job.c                    up to 1.11
+external/bsd/tmux/dist/key-bindings.c           up to 1.9
+external/bsd/tmux/dist/key-string.c             up to 1.1.1.12
+external/bsd/tmux/dist/layout-custom.c          up to 1.1.1.10
+external/bsd/tmux/dist/layout-set.c             up to 1.1.1.12
+external/bsd/tmux/dist/layout.c                 up to 1.1.1.10
+external/bsd/tmux/dist/log.c                    up to 1.14
+external/bsd/tmux/dist/mdoc2man.awk             up to 1.1.1.3
+external/bsd/tmux/dist/mode-tree.c              up to 1.6
+external/bsd/tmux/dist/notify.c                 up to 1.6
+external/bsd/tmux/dist/options-table.c          up to 1.1.1.11
+external/bsd/tmux/dist/options.c                up to 1.11
+external/bsd/tmux/dist/osdep-darwin.c           up to 1.1.1.9
+external/bsd/tmux/dist/osdep-freebsd.c          up to 1.1.1.8
+external/bsd/tmux/dist/osdep-netbsd.c           up to 1.1.1.9
+external/bsd/tmux/dist/paste.c                  up to 1.5
+external/bsd/tmux/dist/proc.c                   up to 1.5
+external/bsd/tmux/dist/resize.c                 up to 1.2
+external/bsd/tmux/dist/screen-redraw.c          up to 1.1.1.11
+external/bsd/tmux/dist/screen-write.c           up to 1.12
+external/bsd/tmux/dist/screen.c                 up to 1.11
+external/bsd/tmux/dist/server-client.c          up to 1.8
+external/bsd/tmux/dist/server-fn.c              up to 1.12
+external/bsd/tmux/dist/server.c                 up to 1.1.1.11
+external/bsd/tmux/dist/session.c                up to 1.12
+external/bsd/tmux/dist/status.c                 up to 1.10
+external/bsd/tmux/dist/style.c                  up to 1.4
+external/bsd/tmux/dist/tmux.1                   up to 1.13
+external/bsd/tmux/dist/tmux.c                   up to 1.11
+external/bsd/tmux/dist/tmux.h                   up to 1.16
+external/bsd/tmux/dist/tty-acs.c                up to 1.9
+external/bsd/tmux/dist/tty-keys.c               up to 1.14
+external/bsd/tmux/dist/tty-term.c               up to 1.13
+external/bsd/tmux/dist/tty.c                    up to 1.7
+external/bsd/tmux/dist/utf8.c                   up to 1.7
+external/bsd/tmux/dist/window-buffer.c          up to 1.6
+external/bsd/tmux/dist/window-client.c          up to 1.6
+external/bsd/tmux/dist/window-clock.c           up to 1.1.1.9
+external/bsd/tmux/dist/window-copy.c            up to 1.12
+external/bsd/tmux/dist/window-tree.c            up to 1.7
+external/bsd/tmux/dist/window.c                 up to 1.13
+external/bsd/tmux/dist/xmalloc.c                up to 1.1.1.9
+external/bsd/tmux/dist/xmalloc.h                up to 1.5
+external/bsd/tmux/usr.bin/tmux/Makefile         up to 1.25
+doc/3RDPARTY					(manually adjusted)
+
+	Update tmux to 3.1c.
+	[christos, ticket #1125]
