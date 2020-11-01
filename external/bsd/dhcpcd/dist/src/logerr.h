@@ -76,6 +76,11 @@ __printflike(2, 3) void logerrmessage(int pri, const char *fmt, ...);
 #define logerr(...)	log_err(__VA_ARGS__)
 #define logerrx(...)	log_errx(__VA_ARGS__)
 
+/* For logging in a chroot */
+int loggetfd(void);
+void logsetfd(int);
+int logreadfd(int);
+
 unsigned int loggetopts(void);
 void logsetopts(unsigned int);
 #define	LOGERR_DEBUG	(1U << 6)
@@ -97,8 +102,10 @@ void logsetopts(unsigned int);
 void logsettag(const char *);
 #endif
 
+/* Can be called more than once. */
 int logopen(const char *);
+
+/* Should only be called at program exit. */
 void logclose(void);
-int logreopen(void);
 
 #endif

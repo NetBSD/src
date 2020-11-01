@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 28, 2020
+.Dd October 25, 2020
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -606,18 +606,24 @@ Suppress any dhcpcd output to the console, except for errors.
 .It Ic reboot Ar seconds
 Allow
 .Ar reboot
-seconds before moving to the DISCOVER phase if we have an old lease to use
-and moving from DISCOVER to IPv4LL if no reply.
+seconds before moving to the DISCOVER phase if we have an old lease to use.
+Allow
+.Ar reboot
+seconds before starting fallback states from the DISCOVER phase.
+IPv4LL is started when the first
+.Ar reboot
+timeout is reached.
 The default is 5 seconds.
 A setting of 0 seconds causes
-.Nm dhcpcd
-to skip the REBOOT phase and go straight into DISCOVER.
+.Nm
+to skip the reboot phase and go straight into DISCOVER.
 This is desirable for mobile users because if you change from network A to
 network B and they use the same subnet and the address from network A isn't
 in use on network B, then the DHCP server will remain silent even if
 authoritative which means
 .Nm dhcpcd
 will timeout before moving back to the DISCOVER phase.
+This has no effect on DHCPv6 other than skipping the reboot phase.
 .It Ic release
 .Nm dhcpcd
 will release the lease prior to stopping the interface.

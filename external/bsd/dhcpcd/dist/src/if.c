@@ -198,10 +198,8 @@ if_is_link_up(const struct interface *ifp)
 {
 
 	return ifp->flags & IFF_UP &&
-	    (ifp->carrier == LINK_UP ||
-	     (ifp->carrier == LINK_UNKNOWN &&
-	      !(ifp->options == NULL ||
-	        ifp->options->options & DHCPCD_LINK)));
+	    (ifp->carrier != LINK_DOWN ||
+	     (ifp->options != NULL && !(ifp->options->options & DHCPCD_LINK)));
 }
 
 int
