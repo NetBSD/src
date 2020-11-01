@@ -14,7 +14,7 @@
 //              ori pk ru scc sy syr tel th tj tam ua uz
 
 // PC models
-! $pcmodels = pc101 pc102 pc104 pc105
+! $pcmodels = pc86 pc101 pc102 pc104 pc104alt pc105
 
 // Jolla devices and keyboards
 ! $jollamodels = jollasbj
@@ -24,9 +24,6 @@
 
 // Nokia devices and keyboards
 ! $nokiamodels = nokiasu8w nokiarx44 nokiarx51
-
-// PC geometries - they have special geometry but symbols are mostly pc105
-! $pcgeometries = latitude
 
 // TypeMatrix geometries
 ! $tmgeometries = tm2020 tm2030PS2 tm2030USB tm2030USB-102 tm2030USB-106
@@ -188,7 +185,6 @@
   omnikey101	=	northgate(omnikey101)
   sanwaskbkg3	=	sanwa(sanwaskbkg3)
  $pcmodels	=	pc(%m)
- $pcgeometries	=	pc(%m)
   everex	=	everex(STEPnote)
   thinkpad	=	thinkpad(intl)
   thinkpad60	=	thinkpad(60)
@@ -992,8 +988,24 @@
   de		neo_qwertz			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   de		neo_qwerty			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   jp        $sun_compat =   complete+japan(kana_lock)
+  de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		koy			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone_eszett_home			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwertz			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwerty			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  jp        $sun_compat =   complete+japan(kana_lock)
 
 ! layout[1]	variant[1]	=	compat
+  de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		koy			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone_eszett_home			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwertz			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwerty			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  jp       $sun_compat =   complete+japan(kana_lock)
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   de		koy			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
@@ -1012,6 +1024,14 @@
   de		neo_qwertz			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
   de		neo_qwerty			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
   jp       $sun_compat  =   +complete+japan(kana_lock):2
+  de		neo			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		adnw			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		koy			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		bone			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		bone_eszett_home			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		neo_qwertz			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		neo_qwerty			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  jp       $sun_compat  =   +complete+japan(kana_lock):2
 
 ! layout[3]	variant[3]	=	compat
   de		neo			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
@@ -1022,8 +1042,24 @@
   de		neo_qwertz			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
   de		neo_qwerty			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
   jp       $sun_compat  =   +complete+japan(kana_lock):3
+  de		neo			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		adnw			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		koy			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		bone			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		bone_eszett_home			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		neo_qwertz			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		neo_qwerty			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  jp       $sun_compat  =   +complete+japan(kana_lock):3
 
 ! layout[4]	variant[4]	=	compat
+  de		neo			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		adnw			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		koy			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		bone			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		bone_eszett_home			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		neo_qwertz			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		neo_qwerty			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  jp       $sun_compat  =   +complete+japan(kana_lock):4
   de		neo			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
   de		adnw			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
   de		koy			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
@@ -1052,24 +1088,30 @@
 ! layout	option	=	symbols
   $threelevellayouts	grp:alts_toggle = +level3(ralt_switch_for_alts_toggle)
   *			misc:typo 	= +typo(base)
+  *			misc:apl	= +apl(level3)
 
 ! layout[1]	option	=	symbols
   $threelevellayouts	grp:alts_toggle = +level3(ralt_switch_for_alts_toggle):1
   *			misc:typo 	= +typo(base):1
+  *			misc:apl	= +apl(level3):1
 
 ! layout[2]	option	=	symbols
   $threelevellayouts	grp:alts_toggle = +level3(ralt_switch_for_alts_toggle):2
   *			misc:typo 	= +typo(base):2
+  *			misc:apl	= +apl(level3):2
 
 ! layout[3]	option	=	symbols
   $threelevellayouts	grp:alts_toggle = +level3(ralt_switch_for_alts_toggle):3
   *			misc:typo 	= +typo(base):3
+  *			misc:apl	= +apl(level3):3
 
 ! layout[4]	option	=	symbols
   $threelevellayouts	grp:alts_toggle = +level3(ralt_switch_for_alts_toggle):4
   *			misc:typo 	= +typo(base):4
+  *			misc:apl	= +apl(level3):4
 
 ! option	=	symbols
+  grp:shift_toggle	=	+group(shifts_toggle)
   grp:shift_toggle	=	+group(shifts_toggle)
   altwin:menu		=	+altwin(menu)
   altwin:menu_win	=	+altwin(menu_win)
@@ -1207,6 +1249,14 @@
   nbsp:level4           =	+nbsp(level4)
   nbsp:level4n          =	+nbsp(level4n)
   nbsp:level4nl         =	+nbsp(level4nl)
+  nbsp:zwnj2            =	+nbsp(zwnj2)
+  nbsp:zwnj2zwj3        =	+nbsp(zwnj2zwj3)
+  nbsp:zwnj2zwj3nb4     =	+nbsp(zwnj2zwj3nb4)
+  nbsp:zwnj2nb3         =	+nbsp(zwnj2nb3)
+  nbsp:zwnj2nb3s        =	+nbsp(zwnj2nb3s)
+  nbsp:zwnj2nb3zwj4     =	+nbsp(zwnj2nb3zwj4)
+  nbsp:zwnj2nb3nnb4     =	+nbsp(zwnj2nb3nnb4)
+  nbsp:zwnj3zwj4        =	+nbsp(zwnj3zwj4)
   japan:nicola_f_bs     =	+jp(nicola_f_bs)
   japan:hztg_escape     =	+jp(hztg_escape)
   korean:ralt_hangul	=	+kr(ralt_hangul)
@@ -1238,6 +1288,7 @@
   shift:lshift_both_shiftlock        =       +shift(lshift_both_shiftlock)
   shift:rshift_both_shiftlock        =       +shift(rshift_both_shiftlock)
   solaris:sun_compat				 =		 +sun_vndr/solaris(sun_compat)
+  lv2:lsgt_switch                    =       +level2(lsgt_switch)
   lv3:caps_switch                    =       +level3(caps_switch)
   lv3:bksl_switch                    =       +level3(bksl_switch)
   lv3:lsgt_switch                    =       +level3(lsgt_switch)
