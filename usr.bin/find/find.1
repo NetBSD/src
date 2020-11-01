@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.89 2017/07/03 21:34:57 wiz Exp $
+.\"	$NetBSD: find.1,v 1.90 2020/11/01 16:34:02 kim Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -739,6 +739,7 @@ The operators are listed in order of decreasing precedence.
 This evaluates to true if the parenthesized expression evaluates to
 true.
 .It Cm \&! Ar expression
+.It Cm -not Ar expression
 This is the unary
 .Tn NOT
 operator.
@@ -846,7 +847,7 @@ utility syntax is a superset of the syntax specified by the
 .St -p1003.2
 standard.
 .Pp
-The options and the
+The options, the
 .Ic -amin ,
 .Ic -anewer ,
 .Ic -asince ,
@@ -873,7 +874,9 @@ The options and the
 .Ic -rm ,
 and
 .Ic -since
-primaries are extensions to
+primaries, and the
+.Ic -not
+operator are extensions to
 .St -p1003.2 .
 .Pp
 Historically, the
