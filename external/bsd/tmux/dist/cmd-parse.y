@@ -133,7 +133,12 @@ statements	: statement '\n'
 			free($2);
 		}
 
-statement	: condition
+statement	: /* empty */
+		{
+			$$ = xmalloc (sizeof *$$);
+			TAILQ_INIT($$);
+		}
+		| condition
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -143,11 +148,6 @@ statement	: condition
 				$$ = cmd_parse_new_commands();
 				cmd_parse_free_commands($1);
 			}
-		}
-		| assignment
-		{
-			$$ = xmalloc (sizeof *$$);
-			TAILQ_INIT($$);
 		}
 		| commands
 		{
@@ -176,26 +176,28 @@ expanded	: format
 			struct cmd_parse_input	*pi = ps->input;
 			struct format_tree	*ft;
 			struct client		*c = pi->c;
-			struct cmd_find_state	*fs;
+			struct cmd_find_state	*fsp;
+			struct cmd_find_state	 fs;
 			int			 flags = FORMAT_NOJOBS;
 
 			if (cmd_find_valid_state(&pi->fs))
-				fs = &pi->fs;
-			else
-				fs = NULL;
+				fsp = &pi->fs;
+			else {
+				cmd_find_from_client(&fs, c, 0);
+				fsp = &fs;
+			}
 			ft = format_create(NULL, pi->item, FORMAT_NONE, flags);
-			if (fs != NULL)
-				format_defaults(ft, c, fs->s, fs->wl, fs->wp);
-			else
-				format_defaults(ft, c, NULL, NULL, NULL);
+			format_defaults(ft, c, fsp->s, fsp->wl, fsp->wp);
 
 			$$ = format_expand(ft, $1);
 			format_free(ft);
 			free($1);
 		}
 
-assignment	: /* empty */
-		| EQUALS
+optional_assignment	: /* empty */
+			| assignment
+
+assignment	: EQUALS
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 			int			 flags = ps->input->flags;
@@ -339,7 +341,8 @@ commands	: command
 			struct cmd_parse_state	*ps = &parse_state;
 
 			$$ = cmd_parse_new_commands();
-			if (ps->scope == NULL || ps->scope->flag)
+			if ($1->name != NULL &&
+			    (ps->scope == NULL || ps->scope->flag))
 				TAILQ_INSERT_TAIL($$, $1, entry);
 			else
 				cmd_parse_free_command($1);
@@ -358,7 +361,8 @@ commands	: command
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 
-			if (ps->scope == NULL || ps->scope->flag) {
+			if ($3->name != NULL &&
+			    (ps->scope == NULL || ps->scope->flag)) {
 				$$ = $1;
 				TAILQ_INSERT_TAIL($$, $3, entry);
 			} else {
@@ -372,7 +376,15 @@ commands	: command
 			$$ = $1;
 		}
 
-command		: assignment TOKEN
+command		: assignment
+		{
+			struct cmd_parse_state	*ps = &parse_state;
+
+			$$ = xcalloc(1, sizeof *$$);
+			$$->name = NULL;
+			$$->line = ps->input->line;
+		}
+		| optional_assignment TOKEN
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -381,7 +393,7 @@ command		: assignment TOKEN
 			$$->line = ps->input->line;
 
 		}
-		| assignment TOKEN arguments
+		| optional_assignment TOKEN arguments
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -696,6 +708,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			pr.status = CMD_PARSE_ERROR;
 			pr.error = cmd_parse_get_error(pi->file, line, cause);
 			free(cause);
+			cmd_list_free(cmdlist);
 			goto out;
 		}
 		cmd_list_append(cmdlist, add);
@@ -745,6 +758,12 @@ cmd_parse_from_file(FILE *f, struct cmd_parse_input *pi)
 struct cmd_parse_result *
 cmd_parse_from_string(const char *s, struct cmd_parse_input *pi)
 {
+	return (cmd_parse_from_buffer(s, strlen(s), pi));
+}
+
+struct cmd_parse_result *
+cmd_parse_from_buffer(const void *buf, size_t len, struct cmd_parse_input *pi)
+{
 	static struct cmd_parse_result	 pr;
 	struct cmd_parse_input		 input;
 	struct cmd_parse_commands	*cmds;
@@ -756,14 +775,14 @@ cmd_parse_from_string(const char *s, struct cmd_parse_input *pi)
 	}
 	memset(&pr, 0, sizeof pr);
 
-	if (*s == '\0') {
+	if (len == 0) {
 		pr.status = CMD_PARSE_EMPTY;
 		pr.cmdlist = NULL;
 		pr.error = NULL;
 		return (&pr);
 	}
 
-	cmds = cmd_parse_do_buffer(s, strlen(s), pi, &cause);
+	cmds = cmd_parse_do_buffer(buf, len, pi, &cause);
 	if (cmds == NULL) {
 		pr.status = CMD_PARSE_ERROR;
 		pr.error = cause;

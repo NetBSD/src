@@ -230,7 +230,7 @@ recalculate_size(struct window *w)
 {
 	struct session	*s;
 	struct client	*c;
-	u_int		 sx, sy, cx, cy, xpixel = 0, ypixel = 0, n;
+	u_int		 sx = 0, sy = 0, cx, cy, xpixel = 0, ypixel = 0, n;
 	int		 type, current, has, changed;
 
 	if (w->active == NULL)
