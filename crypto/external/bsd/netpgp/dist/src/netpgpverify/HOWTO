@@ -1,0 +1,55 @@
+How to use ssh keys in PGP signatures
+=====================================
+
+1. generate a new ssh key pair
+
+	% ssh-keygen -t rsa -b 4096 -f sshtest-20140202
+	Generating public/private rsa key pair.
+	Enter passphrase (empty for no passphrase):
+	Enter same passphrase again:
+	Your identification has been saved in sshtest-20140202.
+	Your public key has been saved in sshtest-20140202.pub.
+	The key fingerprint is:
+	73:98:cf:3d:89:05:a1:6b:39:6b:24:f9:10:32:7a:05 agc@netbsd-001.cupertino.alistaircrooks.com
+	The key's randomart image is:
+	+--[ RSA 4096]----+
+	|    E     .      |
+	|     .   . .     |
+	|    o o . .      |
+	|   . + o = .     |
+	|  . . + S . .    |
+	|   .   * B + .   |
+	|        + + +    |
+	|       .     .   |
+	|                 |
+	+-----------------+
+	%
+
+2. sign newdata using netpgp
+
+	% netpgp -s -S sshtest-20140202 newdata
+	signature  4096/RSA (Encrypt or Sign) 1c5ef29143e3e3ae 2014-02-02
+	Key fingerprint: a4eb b577 ff2e f878 ea40 8c14 1c5e f291 43e3 e3ae
+	uid              netbsd-001.cupertino.alistaircrooks.com (sshtest-20140202.pub) <agc@netbsd-001.cupertino.alistaircrooks.com>
+	%
+
+3. verify signature on newdata
+
+	% ./netpgpverify -S sshtest-20140202.pub newdata.gpg
+	Good signature for newdata.gpg made Sun Feb  2 13:40:07 2014
+	signature     4096/RSA (Encrypt or Sign) 1c5ef29143e3e3ae 2014-02-02
+	fingerprint   a4eb b577 ff2e f878 ea40 8c14 1c5e f291 43e3 e3ae
+	uid           netbsd-001.cupertino.alistaircrooks.com (sshtest-20140202.pub) <agc@netbsd-001.cupertino.alistaircrooks.com>
+
+	%
+
+4. get the contents of the file (only if the signature verifies ok)
+
+	% ./netpgpverify -c cat -S sshtest-20140202.pub newdata.gpg
+	/*-
+	 * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+	 * All rights reserved.
+	 *
+	 * Redistribution and use in source and binary forms, with or without
+	 * modification, are permitted provided that the following conditions
+	 * are met:

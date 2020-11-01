@@ -40,7 +40,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "bzlib.h"
+#include "netpgpv-bzlib.h"
 #include "zlib.h"
 
 #include "array.h"
