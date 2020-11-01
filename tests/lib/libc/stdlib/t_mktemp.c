@@ -1,4 +1,4 @@
-/* $NetBSD: t_mktemp.c,v 1.2 2020/07/01 05:37:25 jruoho Exp $ */
+/* $NetBSD: t_mktemp.c,v 1.3 2020/11/01 18:19:54 gson Exp $ */
 
 /*-
  * Copyright (c) 2013, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mktemp.c,v 1.2 2020/07/01 05:37:25 jruoho Exp $");
+__RCSID("$NetBSD: t_mktemp.c,v 1.3 2020/11/01 18:19:54 gson Exp $");
 
 #include <sys/stat.h>
 
@@ -136,6 +136,7 @@ ATF_TC_HEAD(mkstemps_basic, tc)
 ATF_TC_BODY(mkstemps_basic, tc)
 {
 	char template[] = "/tmp/mktemp.XXXyyy";
+	char *suffix = strchr(template, 'y');
 	struct stat sa;
 	int fd;
 
@@ -145,10 +146,7 @@ ATF_TC_BODY(mkstemps_basic, tc)
 
 	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE(strncmp(template, "/tmp/mktemp.", 12) == 0);
-
-	char *str = strchr(template, 'y');
-
-	ATF_REQUIRE(strcmp(str, "yyy") == 0);
+	ATF_REQUIRE(strcmp(suffix, "yyy") == 0);
 	ATF_REQUIRE(write(fd, "X", 1) == 1);
 	ATF_REQUIRE(fstat(fd, &sa) == 0);
 	ATF_REQUIRE(check_mode(sa, 0600, 0) == 0);
@@ -227,6 +225,7 @@ ATF_TC_BODY(mkostemps_basic, tc)
 	};
 
 	char template[] = "/tmp/mktemp.XXXyyy";
+	char *suffix = strchr(template, 'y');
 	struct stat sa;
 	size_t i;
 	int fd;
@@ -239,10 +238,7 @@ ATF_TC_BODY(mkostemps_basic, tc)
 
 		ATF_REQUIRE(fd != -1);
 		ATF_REQUIRE(strncmp(template, "/tmp/mktemp.", 12) == 0);
-
-		char *str = strchr(template, 'y');
-
-		ATF_REQUIRE(strcmp(str, "yyy") == 0);
+		ATF_REQUIRE(strcmp(suffix, "yyy") == 0);
 		ATF_REQUIRE(write(fd, "X", 1) == 1);
 		ATF_REQUIRE(fstat(fd, &sa) == 0);
 		ATF_REQUIRE(check_mode(sa, 0600 | flags[i], 0) == 0);
