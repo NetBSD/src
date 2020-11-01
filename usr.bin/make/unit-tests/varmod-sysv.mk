@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.10 2020/11/01 22:10:57 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.11 2020/11/01 22:28:52 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -74,10 +74,17 @@
 .  error
 .endif
 
-# If the variable is empty, it is debatable whether it consists of a single
-# empty word, or no word at all.  The :from=to modifier treats it as no
-# word at all.
+# If the variable value is empty, it is debatable whether it consists of a
+# single empty word, or no word at all.  The :from=to modifier treats it as
+# no word at all.
 .if ${:L:=suffix} != ""
+.  error
+.endif
+
+# If the variable value is empty, it is debatable whether it consists of a
+# single empty word, or no word at all.  The :from=to modifier treats it as
+# no word at all.
+.if ${:L:%=suffix} != ""
 .  error
 .endif
 
