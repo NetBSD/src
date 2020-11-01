@@ -1,4 +1,4 @@
-/*	$NetBSD: sleeptab.h,v 1.1 2020/11/01 20:55:15 christos Exp $	*/
+/*	$NetBSD: sleeptab.h,v 1.2 2020/11/01 21:00:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -78,7 +78,7 @@ sleepq_hashlock(wchan_t wchan)
 	return mp;
 }
 
-#define sleepq_destroy(a)
+#define sleepq_destroy(a) __nothing
 
 #endif
 
