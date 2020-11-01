@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.298 2020/11/01 16:57:02 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.299 2020/11/01 17:07:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.298 2020/11/01 16:57:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.299 2020/11/01 17:07:03 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -674,6 +674,24 @@ ParseRunOptions(
     *pp = p;
 }
 
+/* Escape a string for a double-quoted string literal in sh, csh and ksh. */
+static char *
+EscapeShellDblQuot(const char *cmd)
+{
+    size_t i, j;
+
+    /* Worst that could happen is every char needs escaping. */
+    char *esc = bmake_malloc(strlen(cmd) * 2 + 1);
+    for (i = 0, j = 0; cmd[i] != '\0'; i++, j++) {
+	if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' || cmd[i] == '"')
+	    esc[j++] = '\\';
+	esc[j] = cmd[i];
+    }
+    esc[j] = '\0';
+
+    return esc;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * JobPrintCommand  --
@@ -747,19 +765,8 @@ JobPrintCommand(Job *job, char *cmd)
      * and this will need the characters '$ ` \ "' escaped
      */
 
-    if (!commandShell->hasErrCtl) {
-	int i, j;
-
-	/* Worst that could happen is every char needs escaping. */
-	escCmd = bmake_malloc((strlen(cmd) * 2) + 1);
-	for (i = 0, j = 0; cmd[i] != '\0'; i++, j++) {
-	    if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' ||
-		cmd[i] == '"')
-		escCmd[j++] = '\\';
-	    escCmd[j] = cmd[i];
-	}
-	escCmd[j] = '\0';
-    }
+    if (!commandShell->hasErrCtl)
+        escCmd = EscapeShellDblQuot(cmd);
 
     if (shutUp) {
 	if (!(job->flags & JOB_SILENT) && !noSpecials &&
