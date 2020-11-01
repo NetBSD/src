@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.15 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.16 2020/11/01 18:51:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,22 +45,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.15 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.16 2020/11/01 18:51:02 pgoyette Exp $");
 
+#include <sys/compat_stub.h>
+#include <sys/exec_elf.h>
 #include <sys/lwp.h>
+#include <sys/module.h>
+
+#define DEPS "compat_netbsd32,compat_netbsd32_ptrace,coredump"
+
+MODULE(MODULE_CLASS_MISC, compat_netbsd32_coredump, DEPS);
 
 #define	CORENAME(x)	__CONCAT(x,32)
 #define	COREINC		<compat/netbsd32/netbsd32.h>
 
-struct coredump_iostate;
-
-int	CORENAME(real_coredump_netbsd)(struct lwp *, struct coredump_iostate *);
-
 #include "../../kern/core_netbsd.c"
 
-int
-CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)     
+static int
+compat_netbsd32_coredump_modcmd(modcmd_t cmd, void *arg)
 {
-	return CORENAME(real_coredump_netbsd)(l, iocookie);
-}
 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		MODULE_HOOK_SET(coredump_netbsd32_hook, real_coredump_netbsd32);
+		MODULE_HOOK_SET(coredump_elf32_hook, real_coredump_elf32);
+		return 0;
+	case MODULE_CMD_FINI:
+		MODULE_HOOK_UNSET(coredump_netbsd32_hook);
+		MODULE_HOOK_UNSET(coredump_elf32_hook);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}

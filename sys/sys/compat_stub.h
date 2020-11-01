@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.24 2020/10/19 19:33:02 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.25 2020/11/01 18:51:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -376,6 +376,8 @@ MODULE_HOOK(coredump_offset_hook, off_t, (struct coredump_iostate *));
 MODULE_HOOK(coredump_write_hook, int,
     (struct coredump_iostate *, enum uio_seg, const void *, size_t));
 MODULE_HOOK(coredump_netbsd_hook, int,
+    (struct lwp *, struct coredump_iostate *));
+MODULE_HOOK(coredump_netbsd32_hook, int,
     (struct lwp *, struct coredump_iostate *));
 MODULE_HOOK(coredump_elf32_hook, int,
     (struct lwp *, struct coredump_iostate *));
