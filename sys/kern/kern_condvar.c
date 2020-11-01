@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.52 2020/05/11 03:59:33 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.53 2020/11/01 20:55:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.52 2020/05/11 03:59:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.53 2020/11/01 20:55:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ void
 cv_destroy(kcondvar_t *cv)
 {
 
+	sleepq_destroy(CV_SLEEPQ(cv));
 #ifdef DIAGNOSTIC
 	KASSERT(cv_is_valid(cv));
 	KASSERT(!cv_has_waiters(cv));
