@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.639 2020/11/01 22:12:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.640 2020/11/01 22:48:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.639 2020/11/01 22:12:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.640 2020/11/01 22:48:41 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2951,7 +2951,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
     const char *op = mod + 1;
 
     if (op[0] == '=')
-        goto ok;
+	goto ok;
     if ((op[0] == '!' || op[0] == '+' || op[0] == '?') && op[1] == '=')
 	goto ok;
     return AMR_UNKNOWN;		/* "::<unrecognised>" */
@@ -3105,15 +3105,12 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
     if (res != VPR_OK)
 	return AMR_CLEANUP;
 
+    /* The SysV modifier lasts until the end of the variable expression. */
     res = ParseModifierPart(pp, st->endc, st->eflags, st,
 			    &rhs, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
 
-    /*
-     * SYSV modifications happen through the whole
-     * string. Note the pattern is anchored at the end.
-     */
     (*pp)--;
     if (lhs[0] == '\0' && st->val[0] == '\0') {
 	st->newVal = st->val;	/* special case */
@@ -3261,17 +3258,18 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
 static char *
 ApplyModifiers(
     const char **pp,		/* the parsing position, updated upon return */
-    char *val,			/* the current value of the variable */
+    char *const val,		/* the current value of the expression */
     char const startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char const endc,		/* ')' or '}', or '\0' for indirect modifiers */
     Var * const v,
     VarExprFlags *exprFlags,
     GNode * const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
-    void ** const freePtr	/* free this after using the return value */
+    void ** const out_freeIt	/* free this after using the return value */
 ) {
     ApplyModifiersState st = {
-	startc, endc, v, ctxt, eflags, val,
+	startc, endc, v, ctxt, eflags,
+	val,			/* .val */
 	var_Error,		/* .newVal */
 	' ',			/* .sep */
 	FALSE,			/* .oneBigWord */
@@ -3327,7 +3325,7 @@ ApplyModifiers(
 	    if (rval[0] != '\0') {
 		const char *rval_pp = rval;
 		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
-					&st.exprFlags, ctxt, eflags, freePtr);
+					&st.exprFlags, ctxt, eflags, out_freeIt);
 		if (st.val == var_Error
 		    || (st.val == varUndefined && !(st.eflags & VARE_UNDEFERR))
 		    || *rval_pp != '\0') {
@@ -3377,14 +3375,14 @@ ApplyModifiers(
 	    LogAfterApply(&st, p, mod);
 
 	if (st.newVal != st.val) {
-	    if (*freePtr) {
+	    if (*out_freeIt) {
 		free(st.val);
-		*freePtr = NULL;
+		*out_freeIt = NULL;
 	    }
 	    st.val = st.newVal;
 	    if (st.val != var_Error && st.val != varUndefined &&
 		st.val != emptyString) {
-		*freePtr = st.val;
+		*out_freeIt = st.val;
 	    }
 	}
 	if (*p == '\0' && st.endc != '\0') {
@@ -3411,8 +3409,8 @@ bad_modifier:
 
 cleanup:
     *pp = p;
-    free(*freePtr);
-    *freePtr = NULL;
+    free(*out_freeIt);
+    *out_freeIt = NULL;
     *exprFlags = st.exprFlags;
     return var_Error;
 }
