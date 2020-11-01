@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.34 2020/11/21 17:54:48 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.33 2015/06/11 08:22:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.34 2020/11/21 17:54:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.33 2015/06/11 08:22:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -132,14 +132,6 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	return 0;
 }
 
-static size_t 
-_bus_dmamap_mapsize(int const nsegments)
-{ 
-	KASSERT(nsegments > 0); 
-	return sizeof(struct newsmips_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -150,6 +142,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct newsmips_bus_dmamap *map;
 	void *mapstore;
+	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -163,8 +156,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	mapsize = sizeof(struct newsmips_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)|M_ZERO)) == NULL)
 		return ENOMEM;
 
 	map = (struct newsmips_bus_dmamap *)mapstore;
@@ -190,7 +185,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
+	free(map, M_DMAMAP);
 }
 
 extern	paddr_t kvtophys(vaddr_t);		/* XXX */

@@ -1,5 +1,3 @@
-/*	$NetBSD: sdp24xx_start.S,v 1.7 2020/11/05 13:04:27 rin Exp $	*/
-
 /*
  * Machine dependent startup code for SDP2430 boards.
  * Based on omap_start.S
@@ -94,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/tisdp24xx/sdp24xx.h>  
 
-RCSID("$NetBSD: sdp24xx_start.S,v 1.7 2020/11/05 13:04:27 rin Exp $")
+RCSID("$NetBSD: sdp24xx_start.S,v 1.6 2011/06/30 20:09:28 wiz Exp $")
 
 #if 0
 #define Invalidate_I_cache(reg) \

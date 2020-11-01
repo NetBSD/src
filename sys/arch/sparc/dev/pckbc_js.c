@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.19 2012/10/13 17:58:54 jdc Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,13 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.19 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -194,7 +194,8 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 			return;
 		}
 
-		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
+		memset(t, 0, sizeof(struct pckbc_internal));
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

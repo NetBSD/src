@@ -1,4 +1,0 @@
-#	$NetBSD: list.pdisk,v 1.2 2013/03/24 19:18:37 christos Exp $
-
-PROG	pdisk
-SPECIAL pdisk   srcdir  external/bsd/pdisk/bin

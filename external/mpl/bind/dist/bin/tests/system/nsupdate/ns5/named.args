@@ -1,1 +1,0 @@
--D nsupdate-ns5 -m record,size,mctx -c named.conf -d 99 -X named.lock -g -U 4 -T fixedlocal

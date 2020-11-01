@@ -1,4 +1,0 @@
-# DHCPv6 minimal config
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;

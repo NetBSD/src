@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.71 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.70 2020/10/11 00:33:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.70 2020/10/11 00:33:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -59,14 +59,6 @@ extern paddr_t avail_start, avail_end;	/* from pmap.c */
 #define	DMA_COUNT_DECL(cnt)	_DMA_COUNT_DECL(dma_direct, cnt)
 #define	DMA_COUNT(cnt)		_DMA_COUNT(dma_direct, cnt)
 
-static size_t
-_bus_dmamap_mapsize(int const nsegments)
-{
-	KASSERT(nsegments > 0);
-	return sizeof(struct alpha_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -77,6 +69,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct alpha_bus_dmamap *map;
 	void *mapstore;
+	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -90,10 +83,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	mapsize = sizeof(struct alpha_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
+	memset(mapstore, 0, mapsize);
 	map = (struct alpha_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -120,7 +116,7 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
+	free(map, M_DMAMAP);
 }
 
 /*

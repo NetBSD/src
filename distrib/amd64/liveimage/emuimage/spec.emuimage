@@ -1,8 +1,0 @@
-# $NetBSD: spec.emuimage,v 1.1 2020/08/05 01:35:18 jmcneill Exp $
-./etc/rc.conf.d/dhcpcd			type=file mode=0644 uname=root gname=wheel
-./etc/rc.conf.d/ec2_init		type=file mode=0644 uname=root gname=wheel
-./etc/rc.conf.d/resize_disklabel	type=file mode=0644 uname=root gname=wheel
-./etc/rc.conf.d/resize_root		type=file mode=0644 uname=root gname=wheel
-./etc/rc.conf.d/sshd			type=file mode=0644 uname=root gname=wheel
-./etc/rc.d/ec2_init			type=file mode=0555 uname=root gname=wheel
-./etc/rc.d/resize_disklabel		type=file mode=0555 uname=root gname=wheel

@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.8 2020/11/07 10:48:17 skrll Exp $ */
+/* $NetBSD: reg.h,v 1.2 2015/03/27 06:57:21 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,18 +32,19 @@
 #ifndef _RISCV_REG_H_
 #define _RISCV_REG_H_
 
-// x0		= 0
-// x1		= ra		(return address)		  Caller
-// x2		= sp		(stack pointer)			  Callee
-// x3		= gp		(global pointer)
-// x4		= tp		(thread pointer)
-// x5 - x7	= t0 - t2	(temporary)			  Caller
-// x8		= s0/fp		(saved register / frame pointer)  Callee
-// x9		= s1		(saved register)		  Callee
-// x10 - x11	= a0 - a1	(arguments/return values)	  Caller
-// x12 - x17	= a2 - a7	(arguments)			  Caller
-// x18 - x27	= s2 - s11	(saved registers)		  Callee
-// x28 - x31	= t3 - r6	(temporaries)			  Caller
+// x0 = 0
+// x1 = ra (return address)
+// x2 = sp (stack pointer)
+// x3 = gp (global pointer)
+// x4 = tp (thread pointer)
+// x5-x7 = t0-t2 (temporary)
+// x8 = s0/fp (saved register / frame pointer)
+// x9 = s1 (saved register)
+// x10-x11 = a0-a1 (arguments/return values)
+// x12-x17 = a2-a7 (arguments)
+// x18-r27 = s2-s11 (saved registers)
+// x28-x31 = t3-r6 (temporaries)
+// x26-x30 = t0-t4 (temporary)
 
 struct reg {	// synced with register_t in <riscv/types.h>
 #ifdef _LP64
@@ -95,21 +96,21 @@ struct reg32 {	// synced with register_t in <riscv/types.h>
 #define _X_T5		_XREG(30)
 #define _X_T6		_XREG(31)
 
-// f0 - f7	= ft0 - ft7	(FP temporaries)		  Caller
+// f0-f7 = ft0-ft7 (FP temporaries)
 // following layout is similar to integer registers above
-// f8 - f9	= fs0 - fs1	(FP saved registers)		  Callee
-// f10 - f11	= fa0 - fa1	(FP arguments/return values)	  Caller
-// f12 - f17	= fa2 - fa7	(FP arguments)			  Caller
-// f18 - f27	= fs2 - fa11	(FP saved registers)		  Callee
-// f28 - f31	= ft8 - ft11	(FP temporaries)		  Caller
+// f8-f9 = fs0-fs1 (FP saved registers)
+// f10-f11 = fa0-fa1 (FP arguments/return values)
+// f12-f17 = fa2-fa7 (FP arguments)
+// f18-f27 = fs2-fa11 (FP saved registers)
+// f28-f31 = ft8-ft11 (FP temporaries)
 
 /*
  * This fragment is common to <riscv/mcontext.h> and <riscv/reg.h>
  */
 #ifndef _BSD_FPREG_T_
 union __fpreg {
-	__uint64_t u_u64;
-	double u_d;
+		__uint64_t u_u64;
+		double u_d;
 };
 #define _BSD_FPREG_T_	union __fpreg
 #endif

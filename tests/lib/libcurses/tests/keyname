@@ -1,9 +1,0 @@
-include start
-call "^C" keyname 0x03
-call "C" keyname 0x43
-call "^?" keyname 0x7f
-call "M-^C" keyname 0x83
-call "M-C" keyname "0xc3
-call "M-^?" keyname 0xff
-call "KEY_RIGHT" keyname $KEY_RIGHT
-call "UNKNOWN KEY" keyname 0x205

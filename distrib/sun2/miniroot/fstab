@@ -1,5 +1,0 @@
-#	$NetBSD: fstab,v 1.1 2002/04/26 03:49:06 lukem Exp $
-#
-/kern  /kern kernfs ro 0 0
-/kern/rootdev / ffs rw 1 1
-/kern/rootdev none swap sw 0 0

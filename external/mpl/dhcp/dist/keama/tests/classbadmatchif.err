@@ -1,7 +1,0 @@
-# bad (match if with a data expression) class declaration config
-
-# class declaration
-class "foobar" {
-    match if option server.duplicates;
-    default-lease-time 1800;
-}

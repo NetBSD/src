@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.18 2020/11/18 03:40:50 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.17 2019/11/10 21:16:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.18 2020/11/18 03:40:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17 2019/11/10 21:16:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 
@@ -76,7 +76,7 @@ isrlink(int (*func)(void *), void *arg, int ipl, int priority)
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("isrlink: bad ipl %d", ipl);
 
-	newisr = kmem_alloc(sizeof(*newisr), KM_SLEEP);
+	newisr = malloc(sizeof(struct isr), M_DEVBUF, M_WAITOK);
 	newisr->isr_func = func;
 	newisr->isr_arg = arg;
 	newisr->isr_ipl = ipl;
@@ -144,7 +144,7 @@ isrunlink(void *arg)
 	struct isr *isr = arg;
 
 	LIST_REMOVE(isr, isr_link);
-	kmem_free(isr, sizeof(*isr));
+	free(isr, M_DEVBUF);
 }
 #endif
 

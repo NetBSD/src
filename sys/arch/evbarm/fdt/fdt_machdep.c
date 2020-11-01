@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.83 2020/12/12 09:27:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.83 2020/12/12 09:27:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -89,10 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.83 2020/12/12 09:27:31 skrll Exp $
 #include <evbarm/include/autoconf.h>
 #include <evbarm/fdt/machdep.h>
 #include <evbarm/fdt/platform.h>
+#include <evbarm/fdt/fdt_memory.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdt_private.h>
-#include <dev/fdt/fdt_memory.h>
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
@@ -172,6 +172,81 @@ static struct consdev earlycons = {
 #define VPRINTF(...)	__nothing
 #endif
 
+/*
+ * Get all of physical memory, including holes.
+ */
+static void
+fdt_get_memory(uint64_t *pstart, uint64_t *pend)
+{
+	const int memory = OF_finddevice("/memory");
+	uint64_t cur_addr, cur_size;
+	int index;
+
+	/* Assume the first entry is the start of memory */
+	if (fdtbus_get_reg64(memory, 0, &cur_addr, &cur_size) != 0)
+		panic("Cannot determine memory size");
+
+	*pstart = cur_addr;
+	*pend = cur_addr + cur_size;
+
+	VPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+	    0, *pstart, *pend - *pstart);
+
+	for (index = 1;
+	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
+	     index++) {
+		VPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+		    index, cur_addr, cur_size);
+
+		if (cur_addr + cur_size > *pend)
+			*pend = cur_addr + cur_size;
+	}
+}
+
+void
+fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
+{
+	fdt_memory_remove_range(addr, size);
+}
+
+/*
+ * Exclude memory ranges from memory config from the device tree
+ */
+static void
+fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
+{
+	uint64_t lstart = 0, lend = 0;
+	uint64_t addr, size;
+	int index, error;
+
+	const int num = fdt_num_mem_rsv(fdtbus_get_data());
+	for (index = 0; index <= num; index++) {
+		error = fdt_get_mem_rsv(fdtbus_get_data(), index,
+		    &addr, &size);
+		if (error != 0)
+			continue;
+		if (lstart <= addr && addr <= lend) {
+			size -= (lend - addr);
+			addr = lend;
+		}
+		if (size == 0)
+			continue;
+		if (addr + size <= min_addr)
+			continue;
+		if (addr >= max_addr)
+			continue;
+		if (addr < min_addr) {
+			size -= (min_addr - addr);
+			addr = min_addr;
+		}
+		if (addr + size > max_addr)
+			size = max_addr - addr;
+		fdt_add_reserved_memory_range(addr, size);
+		lstart = addr;
+		lend = addr + size;
+	}
+}
+
 static void
 fdt_add_dram_blocks(const struct fdt_memory *m, void *arg)
 {
@@ -218,28 +293,29 @@ fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 #endif
 }
 
-
-static void
-fdt_print_memory(const struct fdt_memory *m, void *arg)
-{
-
-	VPRINTF("FDT /memory @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
-	    m->start, m->end - m->start);
-}
-
-
 /*
  * Define usable memory regions.
  */
 static void
 fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 {
+	const int memory = OF_finddevice("/memory");
 	BootConfig *bc = &bootconfig;
-
 	uint64_t addr, size;
 	int index;
 
-	fdt_memory_remove_reserved(mem_start, mem_end);
+	for (index = 0;
+	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
+	     index++) {
+		if (addr >= mem_end || size == 0)
+			continue;
+		if (addr + size > mem_end)
+			size = mem_end - addr;
+
+		fdt_memory_add_range(addr, size);
+	}
+
+	fdt_add_reserved_memory(mem_start, mem_end);
 
 	const uint64_t initrd_size =
 	    round_page(initrd_end) - trunc_page(initrd_start);
@@ -262,7 +338,7 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		for (index = 0;
 		     fdtbus_get_reg64(framebuffer, index, &addr, &size) == 0;
 		     index++) {
-			fdt_memory_remove_range(addr, size);
+			fdt_add_reserved_memory_range(addr, size);
 		}
 	}
 
@@ -416,43 +492,7 @@ fdt_setup_efirng(void)
 
 	rnd_attach_source(&efirng_source, "efirng", RND_TYPE_RNG,
 	    RND_FLAG_DEFAULT);
-
-	/*
-	 * We don't really have specific information about the physical
-	 * process underlying the data provided by the firmware via the
-	 * EFI RNG API, so the entropy estimate here is heuristic.
-	 * What efiboot provides us is up to 4096 bytes of data from
-	 * the EFI RNG API, although in principle it may return short.
-	 *
-	 * The UEFI Specification (2.8 Errata A, February 2020[1]) says
-	 *
-	 *	When a Deterministic Random Bit Generator (DRBG) is
-	 *	used on the output of a (raw) entropy source, its
-	 *	security level must be at least 256 bits.
-	 *
-	 * It's not entirely clear whether `it' refers to the DRBG or
-	 * the entropy source; if it refers to the DRBG, it's not
-	 * entirely clear how ANSI X9.31 3DES, one of the options for
-	 * DRBG in the UEFI spec, can provide a `256-bit security
-	 * level' because it has only 232 bits of inputs (three 56-bit
-	 * keys and one 64-bit block).  That said, even if it provides
-	 * only 232 bits of entropy, that's enough to prevent all
-	 * attacks and we probably get a few more bits from sampling
-	 * the clock anyway.
-	 *
-	 * In the event we get raw samples, e.g. the bits sampled by a
-	 * ring oscillator, we hope that the samples have at least half
-	 * a bit of entropy per bit of data -- and efiboot tries to
-	 * draw 4096 bytes to provide plenty of slop.  Hence we divide
-	 * the total number of bits by two and clamp at 256.  There are
-	 * ways this could go wrong, but on most machines it should
-	 * behave reasonably.
-	 *
-	 * [1] https://uefi.org/sites/default/files/resources/UEFI_Spec_2_8_A_Feb14.pdf
-	 */
-	rnd_add_data(&efirng_source, efirng, efirng_size,
-	    MIN(256, efirng_size*NBBY/2));
-
+	rnd_add_data(&efirng_source, efirng, efirng_size, 0);
 	explicit_memset(efirng, 0, efirng_size);
 	fdt_unmap_range(efirng, efirng_size);
 }
@@ -494,18 +534,17 @@ initarm(void *arg)
 
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
-	if (error != 0)
+	if (error == 0) {
+		/* If the DTB is too big, try to pack it in place first. */
+		if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
+			(void)fdt_pack(__UNCONST(fdt_addr_r));
+		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0)
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		fdtbus_init(fdt_data);
+	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
-
-	/* If the DTB is too big, try to pack it in place first. */
-	if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
-		(void)fdt_pack(__UNCONST(fdt_addr_r));
-
-	error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
-	if (error != 0)
-		panic("fdt_move failed: %s", fdt_strerror(error));
-
-	fdtbus_init(fdt_data);
+	}
 
 	/* Lookup platform specific backend */
 	plat = arm_fdt_platform();
@@ -530,7 +569,7 @@ initarm(void *arg)
 	 * l1pt VA is fine
 	 */
 
-	VPRINTF("devmap %p\n", plat->ap_devmap());
+	VPRINTF("devmap\n");
 	extern char ARM_BOOTSTRAP_LxPT[];
 	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, plat->ap_devmap());
 
@@ -581,17 +620,13 @@ initarm(void *arg)
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-	fdt_memory_get(&memory_start, &memory_end);
-
-	fdt_memory_foreach(fdt_print_memory, NULL);
+	fdt_get_memory(&memory_start, &memory_end);
 
 #if !defined(_LP64)
-	/* Cannot map memory above 4GB (remove last page as well) */
-	const uint64_t memory_limit = 0x100000000ULL - PAGE_SIZE;
-	if (memory_end > memory_limit) {
-		fdt_memory_remove_range(memory_limit , memory_end);
-		memory_end = memory_limit;
-	}
+	/* Cannot map memory above 4GB */
+	if (memory_end >= 0x100000000ULL)
+		memory_end = 0x100000000ULL - PAGE_SIZE;
+
 #endif
 	uint64_t memory_size = memory_end - memory_start;
 
@@ -606,7 +641,8 @@ initarm(void *arg)
 	fdt_probe_efirng(&efirng_start, &efirng_end);
 
 	/*
-	 * Populate bootconfig structure for the benefit of dodumpsys
+	 * Populate bootconfig structure for the benefit of
+	 * dodumpsys
 	 */
 	VPRINTF("%s: fdt_build_bootconfig\n", __func__);
 	fdt_build_bootconfig(memory_start, memory_end);

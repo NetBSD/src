@@ -1,1 +1,0 @@
--D delzone-ns2 -X named.lock -m record,size,mctx -c named.conf -g -U 4

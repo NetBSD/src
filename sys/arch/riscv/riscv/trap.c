@@ -1,5 +1,3 @@
-/*	$NetBSD: trap.c,v 1.14 2020/11/14 13:05:14 skrll Exp $	*/
-
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.14 2020/11/14 13:05:14 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.7 2020/06/30 16:20:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,24 +46,27 @@ __RCSID("$NetBSD: trap.c,v 1.14 2020/11/14 13:05:14 skrll Exp $");
 
 #include <riscv/locore.h>
 
-#define	INSTRUCTION_TRAP_MASK	(__BIT(CAUSE_ILLEGAL_INSTRUCTION))
+#define	INSTRUCTION_TRAP_MASK	(__BIT(CAUSE_PRIVILEGED_INSTRUCTION) \
+				|__BIT(CAUSE_ILLEGAL_INSTRUCTION))
 
-#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FETCH_ACCESS) \
-				|__BIT(CAUSE_LOAD_ACCESS) \
-				|__BIT(CAUSE_STORE_ACCESS))
+#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FAULT_FETCH) \
+				|__BIT(CAUSE_FAULT_LOAD) \
+				|__BIT(CAUSE_FAULT_STORE))
 
-#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_FETCH_MISALIGNED) \
-				|__BIT(CAUSE_LOAD_MISALIGNED) \
-				|__BIT(CAUSE_STORE_MISALIGNED))
+#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_MISALIGNED_FETCH) \
+				|__BIT(CAUSE_MISALIGNED_LOAD) \
+				|__BIT(CAUSE_MISALIGNED_STORE))
 
 static const char * const causenames[] = {
-	[CAUSE_FETCH_MISALIGNED] = "misaligned fetch",
-	[CAUSE_LOAD_MISALIGNED] = "misaligned load",
-	[CAUSE_STORE_MISALIGNED] = "misaligned store",
-	[CAUSE_FETCH_ACCESS] = "fetch",
-	[CAUSE_LOAD_ACCESS] = "load",
-	[CAUSE_STORE_ACCESS] = "store",
+	[CAUSE_MISALIGNED_FETCH] = "misaligned fetch",
+	[CAUSE_MISALIGNED_LOAD] = "mialigned load",
+	[CAUSE_MISALIGNED_STORE] = "misaligned store",
+	[CAUSE_FAULT_FETCH] = "fetch",
+	[CAUSE_FAULT_LOAD] = "load",
+	[CAUSE_FAULT_STORE] = "store",
+	[CAUSE_FP_DISABLED] = "fp disabled",
 	[CAUSE_ILLEGAL_INSTRUCTION] = "illegal instruction",
+	[CAUSE_PRIVILEGED_INSTRUCTION] = "privileged instruction",
 	[CAUSE_BREAKPOINT] = "breakpoint",
 };
 
@@ -167,32 +168,32 @@ dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 	    && causenames[tf->tf_cause] != NULL)
 		causestr = causenames[tf->tf_cause];
 	(*pr)("Trapframe @ %p "
-	    "(cause=%d (%s), status=%#x, pc=%#18" PRIxREGISTER
-	    ", va=%#" PRIxREGISTER "):\n",
-	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_tval);
-	(*pr)("ra =%#18" PRIxREGISTER ", sp =%#18" PRIxREGISTER
-	    ", gp =%#18" PRIxREGISTER ", tp =%#18" PRIxREGISTER "\n",
+	    "(cause=%d (%s), status=%#x, pc=%#16"PRIxREGISTER
+	    ", va=%#"PRIxREGISTER"):\n",
+	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_badaddr);
+	(*pr)("ra=%#16"PRIxREGISTER", sp=%#16"PRIxREGISTER
+	    ", gp=%#16"PRIxREGISTER", tp=%#16"PRIxREGISTER"\n",
 	    tf->tf_ra, tf->tf_sp, tf->tf_gp, tf->tf_tp);
-	(*pr)("s0 =%#18" PRIxREGISTER ", s1 =%#18" PRIxREGISTER
-	    ", s2 =%#18" PRIxREGISTER ", s3 =%#18" PRIxREGISTER "\n",
+	(*pr)("s0=%#16"PRIxREGISTER", s1=%#16"PRIxREGISTER
+	    ", s2=%#16"PRIxREGISTER", s3=%#16"PRIxREGISTER"\n",
 	    tf->tf_s0, tf->tf_s1, tf->tf_s2, tf->tf_s3);
-	(*pr)("s4 =%#18" PRIxREGISTER ", s5 =%#18" PRIxREGISTER
-	    ", s6 =%#18" PRIxREGISTER ", s7 =%#18" PRIxREGISTER "\n",
-	    tf->tf_s4, tf->tf_s5, tf->tf_s6, tf->tf_s7);
-	(*pr)("s8 =%#18" PRIxREGISTER ", s9 =%#18" PRIxREGISTER
-	    ", s10=%#18" PRIxREGISTER ", s11=%#18" PRIxREGISTER "\n",
+	(*pr)("s4=%#16"PRIxREGISTER", s5=%#16"PRIxREGISTER
+	    ", s5=%#16"PRIxREGISTER", s3=%#16"PRIxREGISTER"\n",
+	    tf->tf_s4, tf->tf_s5, tf->tf_s2, tf->tf_s3);
+	(*pr)("s8=%#16"PRIxREGISTER", s9=%#16"PRIxREGISTER
+	    ", s10=%#16"PRIxREGISTER", s11=%#16"PRIxREGISTER"\n",
 	    tf->tf_s8, tf->tf_s9, tf->tf_s10, tf->tf_s11);
-	(*pr)("a0 =%#18" PRIxREGISTER ", a1 =%#18" PRIxREGISTER
-	    ", a2 =%#18" PRIxREGISTER ", a3 =%#18" PRIxREGISTER "\n",
+	(*pr)("a0=%#16"PRIxREGISTER", a1=%#16"PRIxREGISTER
+	    ", a2=%#16"PRIxREGISTER", a3=%#16"PRIxREGISTER"\n",
 	    tf->tf_a0, tf->tf_a1, tf->tf_a2, tf->tf_a3);
-	(*pr)("a4 =%#18" PRIxREGISTER ", a5 =%#18" PRIxREGISTER
-	    ", a5 =%#18" PRIxREGISTER ", a7 =%#18" PRIxREGISTER "\n",
+	(*pr)("a4=%#16"PRIxREGISTER", a5=%#16"PRIxREGISTER
+	    ", a5=%#16"PRIxREGISTER", a7=%#16"PRIxREGISTER"\n",
 	    tf->tf_a4, tf->tf_a5, tf->tf_a6, tf->tf_a7);
-	(*pr)("t0 =%#18" PRIxREGISTER ", t1 =%#18" PRIxREGISTER
-	    ", t2 =%#18" PRIxREGISTER ", t3 =%#18" PRIxREGISTER "\n",
+	(*pr)("t0=%#16"PRIxREGISTER", t1=%#16"PRIxREGISTER
+	    ", t2=%#16"PRIxREGISTER", t3=%#16"PRIxREGISTER"\n",
 	    tf->tf_t0, tf->tf_t1, tf->tf_t2, tf->tf_t3);
-	(*pr)("t4 =%#18" PRIxREGISTER ", t5 =%#18" PRIxREGISTER
-	    ", t6 =%#18" PRIxREGISTER "\n",
+	(*pr)("t4=%#16"PRIxREGISTER", t5=%#16"PRIxREGISTER
+	    ", t6=%#16"PRIxREGISTER"\n",
 	    tf->tf_t4, tf->tf_t5, tf->tf_t6);
 }
 
@@ -219,11 +220,11 @@ cpu_trapsignal(struct trapframe *tf, ksiginfo_t *ksi)
 static inline vm_prot_t
 get_faulttype(register_t cause)
 {
-	if (cause == CAUSE_LOAD_ACCESS)
+	if (cause == CAUSE_FAULT_LOAD)
 		return VM_PROT_READ;
-	if (cause == CAUSE_STORE_ACCESS)
+	if (cause == CAUSE_FAULT_STORE)
 		return VM_PROT_READ | VM_PROT_WRITE;
-	KASSERT(cause == CAUSE_FETCH_ACCESS);
+	KASSERT(cause == CAUSE_FAULT_FETCH);
 	return VM_PROT_READ | VM_PROT_EXECUTE;
 }
 
@@ -255,12 +256,12 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 			attr |= VM_PAGEMD_REFERENCED;
 		}
 #if 0		/* XXX Outdated */
-		if (cause == CAUSE_STORE_ACCESS) {
+		if (cause == CAUSE_FAULT_STORE) {
 			if ((npte & PTE_NW) != 0) {
 				npte &= ~PTE_NW;
 				attr |= VM_PAGEMD_MODIFIED;
 			}
-		} else if (cause == CAUSE_FETCH_ACCESS) {
+		} else if (cause == CAUSE_FAULT_FETCH) {
 			if ((npte & PTE_NX) != 0) {
 				npte &= ~PTE_NX;
 				attr |= VM_PAGEMD_EXECPAGE;
@@ -283,10 +284,10 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 
 static bool
 trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
 {
 	struct proc * const p = curlwp->l_proc;
-	const intptr_t addr = trunc_page(tval);
+	const intptr_t addr = trunc_page(badaddr);
 
 	if (__predict_false(usertrap_p
 	    && (false
@@ -315,7 +316,7 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 		if (error) {
 			trap_ksi_init(ksi, SIGSEGV,
 			    error == EACCES ? SEGV_ACCERR : SEGV_MAPERR,
-			    (intptr_t)tval, cause);
+			    (intptr_t)badaddr, cause);
 			return false;
 		}
 		uvm_grow(p, addr);
@@ -346,33 +347,34 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 
 static bool
 trap_instruction(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
 {
+	const bool prvopc_p = (cause == CAUSE_PRIVILEGED_INSTRUCTION);
 	if (usertrap_p) {
-		trap_ksi_init(ksi, SIGILL, ILL_ILLOPC,
-		    (intptr_t)tval, cause);
+		trap_ksi_init(ksi, SIGILL, prvopc_p ? ILL_PRVOPC : ILL_ILLOPC,
+		    (intptr_t)badaddr, cause);
 	}
 	return false;
 }
 
 static bool
 trap_misalignment(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
 {
 	if (usertrap_p) {
 		trap_ksi_init(ksi, SIGBUS, BUS_ADRALN,
-		    (intptr_t)tval, cause);
+		    (intptr_t)badaddr, cause);
 	}
 	return false;
 }
 
 void
 cpu_trap(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t tval)
+    register_t cause, register_t badaddr)
 {
 	const u_int fault_mask = 1U << cause;
-	const intptr_t addr = tval;
-	const bool usertrap_p = (status & SR_SPP) == 0;
+	const intptr_t addr = badaddr;
+	const bool usertrap_p = (status & SR_PS) == 0;
 	bool ok = true;
 	ksiginfo_t ksi;
 
@@ -393,14 +395,12 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 	} else if (fault_mask & INSTRUCTION_TRAP_MASK) {
 		ok = trap_instruction(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
-#if 0
 	} else if (fault_mask && __BIT(CAUSE_FP_DISABLED)) {
 		if (!usertrap_p) {
 			panic("%s: fp used @ %#"PRIxREGISTER" in kernel!",
 			    __func__, tf->tf_pc);
 		}
 		fpu_load();
-#endif
 	} else if (fault_mask & MISALIGNED_TRAP_MASK) {
 		ok = trap_misalignment(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
@@ -422,6 +422,7 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 void
 cpu_ast(struct trapframe *tf)
 {
+	struct cpu_info * const ci = curcpu();
 
 	atomic_swap_uint(&curlwp->l_md.md_astpending, 0);
 

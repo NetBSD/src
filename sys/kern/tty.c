@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.295 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.294 2020/10/10 18:53:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.295 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.294 2020/10/10 18:53:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1469,7 +1469,7 @@ filt_ttyrdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	mutex_spin_enter(&tty_lock);
-	selremove_knote(&tp->t_rsel, kn);
+	SLIST_REMOVE(&tp->t_rsel.sel_klist, kn, knote, kn_selnext);
 	mutex_spin_exit(&tty_lock);
 }
 
@@ -1494,7 +1494,7 @@ filt_ttywdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	mutex_spin_enter(&tty_lock);
-	selremove_knote(&tp->t_wsel, kn);
+	SLIST_REMOVE(&tp->t_wsel.sel_klist, kn, knote, kn_selnext);
 	mutex_spin_exit(&tty_lock);
 }
 
@@ -1532,18 +1532,18 @@ int
 ttykqfilter(dev_t dev, struct knote *kn)
 {
 	struct tty	*tp;
-	struct selinfo	*sip;
+	struct klist	*klist;
 
 	if ((tp = cdev_tty(dev)) == NULL)
 		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		sip = &tp->t_rsel;
+		klist = &tp->t_rsel.sel_klist;
 		kn->kn_fop = &ttyread_filtops;
 		break;
 	case EVFILT_WRITE:
-		sip = &tp->t_wsel;
+		klist = &tp->t_wsel.sel_klist;
 		kn->kn_fop = &ttywrite_filtops;
 		break;
 	default:
@@ -1553,7 +1553,7 @@ ttykqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = tp;
 
 	mutex_spin_enter(&tty_lock);
-	selrecord_knote(sip, kn);
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mutex_spin_exit(&tty_lock);
 
 	return (0);

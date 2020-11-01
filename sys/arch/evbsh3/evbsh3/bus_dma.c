@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2020/11/21 16:21:24 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2015/01/22 03:43:24 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2020/11/21 16:21:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2015/01/22 03:43:24 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #define	_EVBSH3_BUS_DMA_PRIVATE
 #include <sys/bus.h>
@@ -69,14 +69,6 @@ struct _bus_dma_tag evbsh3_bus_dma = {
 	._dmamem_mmap = _bus_dmamem_mmap,
 };
 
-static size_t
-_bus_dmamap_mapsize(int const nsegments)
-{
-	KASSERT(nsegments > 0);
-	return sizeof(struct _bus_dmamap)
-		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}
-
 /*
  * Create a DMA map.
  */
@@ -86,6 +78,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	bus_dmamap_t map;
 	void *mapstore;
+	size_t mapsize;
 
 	DPRINTF(("%s: t = %p, size = %ld, nsegments = %d, maxsegsz = %ld,"
 		 " boundary = %ld, flags = %x\n",
@@ -101,8 +94,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * Preservation of ALLOCNOW notifies others that we've
 	 * reserved these resources, and they are not to be freed.
 	 */
-	mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-			  (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
+	mapsize = sizeof(struct _bus_dmamap)
+		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	mapstore = malloc(mapsize, M_DMAMAP, M_ZERO
+			  | ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK));
 	if (mapstore == NULL)
 		return ENOMEM;
 
@@ -131,7 +126,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 
 	DPRINTF(("%s: t = %p, map = %p\n", __func__, t, map));
 
-	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
+	free(map, M_DMAMAP);
 }
 
 static inline int

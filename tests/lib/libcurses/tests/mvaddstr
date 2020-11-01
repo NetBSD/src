@@ -1,7 +1,0 @@
-include start
-call OK mvaddstr 8 12 "DEADBEEF"
-call OK refresh
-compare mvaddstr.chk
-call OK mvaddstr 12 75 "BADCOFFEE"
-call OK refresh
-compare mvaddstr2.chk

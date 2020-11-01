@@ -1,5 +1,3 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.2 2020/11/04 07:09:46 skrll Exp $	*/
-
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: cpu_mainbus.c,v 1.2 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: cpu_mainbus.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

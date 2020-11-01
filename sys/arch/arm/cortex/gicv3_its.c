@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.30 2020/12/11 22:42:31 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.28 2020/09/24 08:50:09 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.30 2020/12/11 22:42:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.28 2020/09/24 08:50:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -118,9 +118,13 @@ gits_command(struct gicv3_its *its, const struct gicv3_its_command *cmd)
 	cwriter = gits_read_8(its, GITS_CWRITER);
 	woff = cwriter & GITS_CWRITER_Offset;
 
+#if _BYTE_ORDER == _BIG_ENDIAN
 	uint64_t *dw = (uint64_t *)(its->its_cmd.base + woff);
 	for (int i = 0; i < __arraycount(cmd->dw); i++)
 		dw[i] = htole64(cmd->dw[i]);
+#else
+	memcpy(its->its_cmd.base + woff, cmd->dw, sizeof(cmd->dw));
+#endif
 	bus_dmamap_sync(its->its_dmat, its->its_cmd.map, woff, sizeof(cmd->dw), BUS_DMASYNC_PREWRITE);
 
 	woff += sizeof(cmd->dw);
@@ -425,7 +429,6 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t ctl;
-	uint32_t val;
 	int off;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL))
@@ -436,9 +439,7 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO, (uint32_t)addr);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, (uint32_t)(addr >> 32));
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, lpi - its->its_pic->pic_irqbase);
-	val = bus_space_read_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL);
-	val &= ~PCI_MSIX_VECTCTL_MASK;                                          
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, val);
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, 0);
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
 	ctl |= PCI_MSIX_CTL_ENABLE;

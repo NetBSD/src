@@ -1,7 +1,0 @@
-# bad (no netmask) DHCPv4 subnet declaration config
-
-# DHCPv4 subnet declaration
-subnet 10.5.5.0/27 {
-     default-lease-time 1800;
-}
-

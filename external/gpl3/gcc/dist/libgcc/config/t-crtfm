@@ -1,2 +1,0 @@
-crtfastmath.o: $(srcdir)/config/$(cpu_type)/crtfastmath.c
-	$(gcc_compile) -c $<

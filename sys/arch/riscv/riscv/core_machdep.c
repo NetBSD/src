@@ -1,5 +1,3 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $	*/
-
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef CORENAME
-__RCSID("$NetBSD: core_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: core_machdep.c,v 1.3 2019/11/20 19:37:52 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -83,7 +81,7 @@ CORENAME(cpu_coredump)(struct lwp *l, struct coredump_iostate *iocookie,
 		cpustate.tf.tf_reg[i] = tf->tf_reg[i];
 	}
 	cpustate.tf.tf_pc = tf->tf_pc;
-	cpustate.tf.tf_tval = tf->tf_tval;
+	cpustate.tf.tf_badaddr = tf->tf_badaddr;
 	cpustate.tf.tf_cause = tf->tf_cause;
 	cpustate.tf.tf_sr = tf->tf_sr;
 	if (fpu_valid_p(l)) {

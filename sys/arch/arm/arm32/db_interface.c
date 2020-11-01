@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.63 2020/12/03 07:45:52 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2020/12/03 07:45:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,8 +172,10 @@ kdb_trap(int type, db_regs_t *regs)
 		if (is_mp_p && db_newcpu != NULL) {
 			db_onproc = db_newcpu;
 			db_newcpu = NULL;
-			dsb(ishst);
-			sev();
+#ifdef _ARM_ARCH_6
+			membar_producer();
+			__asm __volatile("sev; sev");
+#endif
 			continue;
 		}
 		break;
@@ -185,8 +187,9 @@ kdb_trap(int type, db_regs_t *regs)
 		 * the other CPUs to exit.
 		 */
 		db_onproc = NULL;
-		dsb(ishst);
-		sev();
+#ifdef _ARM_ARCH_6
+		__asm __volatile("sev; sev");
+#endif
 	}
 #endif
 
@@ -300,10 +303,10 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 void
 cpu_Debugger(void)
 {
-#ifdef _ARM_ARCH_BE8
-	__asm(".word	0xffffffe7");
-#else
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 	__asm(".word	0xe7ffffff");
+#else
+	__asm(".word	0xffffffe7");
 #endif
 }
 

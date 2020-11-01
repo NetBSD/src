@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -329,6 +329,7 @@ main(void)
 
 	/* Initialize lock caches. */
 	mutex_obj_init();
+	rw_obj_init();
 
 	/* Initialize radix trees (used by numerous subsystems). */
 	radix_tree_init();
@@ -432,6 +433,9 @@ main(void)
 	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
 
+	/* Initialize timekeeping. */
+	time_init();
+
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	sched_rqinit();
 	turnstile_init();
@@ -449,8 +453,8 @@ main(void)
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
 
-	/* Initialize timekeeping. */
-	time_init();
+	/* Initialize timekeeping, part 2. */
+	time_init2();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
@@ -482,22 +486,7 @@ main(void)
 	    10, VNODE_KMEM_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
-#endif /* NVNODE_IMPLICIT */
-#ifdef MAXFILES_IMPLICIT
-	/*
-	 * If maximum number of files is not explicitly defined in
-	 * kernel config, adjust the number so that it is somewhat
-	 * more reasonable on machines with larger memory sizes.
-	 * Arbitary numbers are 20,000 files for 16GB RAM or more
-	 * and 10,000 files for 1GB RAM or more.
-	 *
-	 * XXXtodo: adjust this and other values totally dynamically
-	 */
-	if (ctob((uint64_t)physmem) >= 16ULL * 1024 * 1024 * 1024)
-		maxfiles = MAX(maxfiles, 20000);
-	if (ctob((uint64_t)physmem) >= 1024 * 1024 * 1024)
-		maxfiles = MAX(maxfiles, 10000);
-#endif /* MAXFILES_IMPLICIT */
+#endif
 
 	/* Initialize fstrans. */
 	fstrans_init();

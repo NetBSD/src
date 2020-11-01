@@ -158,7 +158,7 @@
  *
  *****************************************************************************/
 
-/* Method info (in WALK_STATE), containing local variables and arguments */
+/* Method info (in WALK_STATE), containing local variables and argumetns */
 
 #define ACPI_METHOD_NUM_LOCALS          8
 #define ACPI_METHOD_MAX_LOCAL           7

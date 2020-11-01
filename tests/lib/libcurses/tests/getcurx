@@ -1,5 +1,0 @@
-include window
-call OK wmove $win1 3 4
-call 4 getcurx $win1
-call 3 getcury $win1
-call2 3 4 getyx $win1

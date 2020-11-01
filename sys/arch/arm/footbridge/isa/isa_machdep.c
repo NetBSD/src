@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.23 2020/11/20 18:03:53 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22 2019/11/10 21:16:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.23 2020/11/20 18:03:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.22 2019/11/10 21:16:23 chs Exp $");
 
 #include "opt_irqstats.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.23 2020/11/20 18:03:53 thorpej Exp
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
@@ -338,7 +338,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 #if 0
 	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);
 #endif
-	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
@@ -411,7 +411,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 
 	restore_interrupts(oldirqstate);
 
-	kmem_free(ih, sizeof(*ih));
+	free(ih, M_DEVBUF);
 
 	if (TAILQ_EMPTY(&(iq->iq_list)))
 		iq->iq_ist = IST_NONE;

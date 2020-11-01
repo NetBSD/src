@@ -1,2 +1,0 @@
-LIB2ADDEH = $(srcdir)/config/ia64/unwind-ia64.c $(srcdir)/unwind-sjlj.c \
-  $(srcdir)/unwind-c.c

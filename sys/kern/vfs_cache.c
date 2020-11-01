@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.149 2020/12/12 18:41:13 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.147 2020/06/04 03:08:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.149 2020/12/12 18:41:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.147 2020/06/04 03:08:33 riastradh Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -244,8 +244,7 @@ static kmutex_t cache_stat_lock __cacheline_aligned;
 #define	COUNT(f) do { \
 	lwp_t *l = curlwp; \
 	KPREEMPT_DISABLE(l); \
-	struct nchcpu *nchcpu = curcpu()->ci_data.cpu_nch; \
-	nchcpu->cur.f++; \
+	((struct nchstats_percpu *)curcpu()->ci_data.cpu_nch)->f++; \
 	KPREEMPT_ENABLE(l); \
 } while (/* CONSTCOND */ 0);
 
@@ -1107,7 +1106,8 @@ cache_cpu_init(struct cpu_info *ci)
 	void *p;
 	size_t sz;
 
-	sz = roundup2(sizeof(struct nchcpu), coherency_unit) + coherency_unit;
+	sz = roundup2(sizeof(struct nchstats_percpu), coherency_unit) +
+	    coherency_unit;
 	p = kmem_zalloc(sz, KM_SLEEP);
 	ci->ci_data.cpu_nch = (void *)roundup2((uintptr_t)p, coherency_unit);
 }

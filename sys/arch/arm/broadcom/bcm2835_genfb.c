@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.11 2020/12/01 04:17:10 rin Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,16 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.11 2020/12/01 04:17:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/bus.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/endian.h>
-#include <sys/kmem.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -97,9 +96,6 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wstype = WSDISPLAY_TYPE_VC4;
 	prop_dictionary_get_uint32(dict, "wsdisplay_type", &sc->sc_wstype);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
-#if BYTE_ORDER == BIG_ENDIAN
-	prop_dictionary_set_bool(dict, "is_swapped", true);
-#endif
 
 	genfb_init(&sc->sc_gen);
 

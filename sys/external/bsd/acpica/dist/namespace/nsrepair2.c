@@ -213,18 +213,16 @@ AcpiNsComplexRepairs (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE (NsComplexRepairs);
-
     /* Check if this name is in the list of repairable names */
 
     Predefined = AcpiNsMatchComplexRepair (Node);
     if (!Predefined)
     {
-        return_ACPI_STATUS (ValidateStatus);
+        return (ValidateStatus);
     }
 
     Status = Predefined->RepairFunction (Info, ReturnObjectPtr);
-    return_ACPI_STATUS (Status);
+    return (Status);
 }
 
 
@@ -420,21 +418,20 @@ AcpiNsRepair_CID (
     UINT16                  OriginalRefCount;
     UINT32                  i;
 
-    ACPI_FUNCTION_TRACE (NsRepair_CID);
 
     /* Check for _CID as a simple string */
 
     if (ReturnObject->Common.Type == ACPI_TYPE_STRING)
     {
         Status = AcpiNsRepair_HID (Info, ReturnObjectPtr);
-        return_ACPI_STATUS (Status);
+        return (Status);
     }
 
     /* Exit if not a Package */
 
     if (ReturnObject->Common.Type != ACPI_TYPE_PACKAGE)
     {
-        return_ACPI_STATUS (AE_OK);
+        return (AE_OK);
     }
 
     /* Examine each element of the _CID package */
@@ -448,7 +445,7 @@ AcpiNsRepair_CID (
         Status = AcpiNsRepair_HID (Info, ElementPtr);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            return (Status);
         }
 
         if (OriginalElement != *ElementPtr)
@@ -462,7 +459,7 @@ AcpiNsRepair_CID (
         ElementPtr++;
     }
 
-    return_ACPI_STATUS (AE_OK);
+    return (AE_OK);
 }
 
 
@@ -582,8 +579,9 @@ AcpiNsRepair_HID (
     ACPI_OPERAND_OBJECT     **ReturnObjectPtr)
 {
     ACPI_OPERAND_OBJECT     *ReturnObject = *ReturnObjectPtr;
-    char                    *Dest;
+    ACPI_OPERAND_OBJECT     *NewString;
     char                    *Source;
+    char                    *Dest;
 
 
     ACPI_FUNCTION_NAME (NsRepair_HID);
@@ -593,7 +591,7 @@ AcpiNsRepair_HID (
 
     if (ReturnObject->Common.Type != ACPI_TYPE_STRING)
     {
-        return_ACPI_STATUS (AE_OK);
+        return (AE_OK);
     }
 
     if (ReturnObject->String.Length == 0)
@@ -605,7 +603,15 @@ AcpiNsRepair_HID (
         /* Return AE_OK anyway, let driver handle it */
 
         Info->ReturnFlags |= ACPI_OBJECT_REPAIRED;
-        return_ACPI_STATUS (AE_OK);
+        return (AE_OK);
+    }
+
+    /* It is simplest to always create a new string object */
+
+    NewString = AcpiUtCreateStringObject (ReturnObject->String.Length);
+    if (!NewString)
+    {
+        return (AE_NO_MEMORY);
     }
 
     /*
@@ -618,7 +624,7 @@ AcpiNsRepair_HID (
     if (*Source == '*')
     {
         Source++;
-        ReturnObject->String.Length--;
+        NewString->String.Length--;
 
         ACPI_DEBUG_PRINT ((ACPI_DB_REPAIR,
             "%s: Removed invalid leading asterisk\n", Info->FullPathname));
@@ -632,13 +638,14 @@ AcpiNsRepair_HID (
      * "NNNN####" where N is an uppercase letter or decimal digit, and
      * # is a hex digit.
      */
-    for (Dest = ReturnObject->String.Pointer; *Source; Dest++, Source++)
+    for (Dest = NewString->String.Pointer; *Source; Dest++, Source++)
     {
         *Dest = (char) toupper ((int) *Source);
     }
-    ReturnObject->String.Pointer[ReturnObject->String.Length] = 0;
 
-    return_ACPI_STATUS (AE_OK);
+    AcpiUtRemoveReference (ReturnObject);
+    *ReturnObjectPtr = NewString;
+    return (AE_OK);
 }
 
 

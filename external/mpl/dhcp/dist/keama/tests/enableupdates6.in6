@@ -1,8 +1,0 @@
-# ddns-updates (aka enable-updates)
-
-ddns-updates on;
-
-# embedded
-class "foo" {
-    ddns-updates off;
-}

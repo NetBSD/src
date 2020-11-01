@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.10 2020/12/04 21:39:26 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.8 2020/02/13 00:42:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -60,11 +60,6 @@ struct gicv3_softc {
 	bus_space_handle_t	sc_bsh_d;	/* GICD */
 	bus_space_handle_t	*sc_bsh_r;	/* GICR */
 	u_int			sc_bsh_r_count;
-
-	u_int			sc_quirks;
-#define	GICV3_QUIRK_RK3399	__BIT(0)	/* Rockchip RK3399 GIC-500 */
-
-	uint32_t		sc_gicd_typer;
 
 	u_int			sc_priority_shift;
 	u_int			sc_pmr_shift;

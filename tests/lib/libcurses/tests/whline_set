@@ -1,8 +1,0 @@
-include window
-cchar ch 0x100 [0x3401]
-call OK wmove $win1 0 2
-call OK whline_set $win1 $ch 10
-call OK wrefresh $win1
-call OK mvwhline_set $win1 1 1 $ch 2
-call OK wrefresh $win1
-compare whline_set.chk

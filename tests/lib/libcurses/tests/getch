@@ -1,8 +1,0 @@
-include start
-input "i"
-call 105 getch
-
-input "j"
-call 106 mvgetch 2 3
-call OK refresh
-compare getch.chk

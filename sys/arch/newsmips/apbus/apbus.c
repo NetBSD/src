@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.27 2020/11/21 17:54:47 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.26 2019/11/10 21:16:31 chs Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.27 2020/11/21 17:54:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.26 2019/11/10 21:16:31 chs Exp $");
 
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
@@ -230,7 +230,7 @@ apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
 
 	ip = &apintr_tab[level];
 
-	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_mask = mask;
 	ih->ih_priority = priority;
 	ih->ih_func = func;
@@ -501,7 +501,7 @@ apbus_dmatag_init(struct apbus_attach_args *apa)
 {
 	struct newsmips_bus_dma_tag *dmat;
 
-	dmat = kmem_alloc(sizeof(*dmat), KM_SLEEP);
+	dmat = malloc(sizeof(*dmat), M_DEVBUF, M_WAITOK);
 	memcpy(dmat, &apbus_dma_tag, sizeof(*dmat));
 	dmat->_slotno = apa->apa_slotno;
 	dmat->_slotbaset = 0;

@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.11 2020/11/28 14:02:30 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.9 2019/07/16 14:41:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ initarm(void *arg)
 	if (set_cpufuncs())
 		panic("set_cpufuncs failed");
 
-	kern_vtopdiff = KERNEL_BASE - KERNEL_BASE_PHYS;
+	kern_vtopdiff = KERNEL_BASE + KERNEL_BASE_PHYS;
 
 	pmap_devmap_register(devmap);
 	consinit();
@@ -217,7 +217,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int cpu_reboot_called = 0;
 
 	boothowto |= howto;
-
+	
 	/*
 	 * If this is the first invocation of cpu_reboot() and the RB_NOSYNC
 	 * flag is not set in howto; sync and unmount the system disks by
@@ -351,7 +351,7 @@ power_vddio_from_dcdc(int target, int brownout)
 
         /* Enable PWDN_BRNOUT. */
         REG_WR(PWR_CTRL_C, HW_POWER_CTRL_VDDIO_BO_IRQ);
-
+        
         tmp_r = REG_RD(PWR_VDDIOCTRL);
         tmp_r |= HW_POWER_VDDIOCTRL_PWDN_BRNOUT;
         REG_WR(PWR_VDDIOCTRL, tmp_r);
@@ -391,7 +391,7 @@ void set_io_frac(unsigned int frac)
 {
         uint8_t *io_frac;
         uint32_t tmp_r;
-
+        
         io_frac = (uint8_t *)(CLKCTRL_FRAC);
         io_frac++; /* emi */
         io_frac++; /* pix */

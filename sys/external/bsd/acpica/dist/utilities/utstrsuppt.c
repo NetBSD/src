@@ -99,16 +99,10 @@ AcpiUtConvertOctalString (
 
     while (*String)
     {
-        /*
-         * Character must be ASCII 0-7, otherwise:
-         * 1) Runtime: terminate with no error, per the ACPI spec
-         * 2) Compiler: return an error
-         */
+        /* Character must be ASCII 0-7, otherwise terminate with no error */
+
         if (!(ACPI_IS_OCTAL_DIGIT (*String)))
         {
-#ifdef ACPI_ASL_COMPILER
-            Status = AE_BAD_OCTAL_CONSTANT;
-#endif
             break;
         }
 
@@ -161,16 +155,10 @@ AcpiUtConvertDecimalString (
 
     while (*String)
     {
-        /*
-         * Character must be ASCII 0-9, otherwise:
-         * 1) Runtime: terminate with no error, per the ACPI spec
-         * 2) Compiler: return an error
-         */
+        /* Character must be ASCII 0-9, otherwise terminate with no error */
+
         if (!isdigit (*String))
         {
-#ifdef ACPI_ASL_COMPILER
-            Status = AE_BAD_DECIMAL_CONSTANT;
-#endif
            break;
         }
 
@@ -223,16 +211,10 @@ AcpiUtConvertHexString (
 
     while (*String)
     {
-        /*
-         * Character must be ASCII A-F, a-f, or 0-9, otherwise:
-         * 1) Runtime: terminate with no error, per the ACPI spec
-         * 2) Compiler: return an error
-         */
+        /* Must be ASCII A-F, a-f, or 0-9, otherwise terminate with no error */
+
         if (!isxdigit (*String))
         {
-#ifdef ACPI_ASL_COMPILER
-            Status = AE_BAD_HEX_CONSTANT;
-#endif
             break;
         }
 

@@ -117,8 +117,7 @@ typedef enum
     AH_DISPLAY_DEVICE_IDS,
     AH_DISPLAY_UUIDS,
     AH_DISPLAY_TABLES,
-    AH_DISPLAY_DIRECTIVES,
-    AH_DECODE_ASL_EXCEPTION
+    AH_DISPLAY_DIRECTIVES
 
 } AH_OPTION_TYPES;
 
@@ -187,10 +186,6 @@ AhDecodeAmlOpcode (
 
 void
 AhDecodeException (
-    char                    *Name);
-
-void
-AhDecodeAslException (
     char                    *Name);
 
 void

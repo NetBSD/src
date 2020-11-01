@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.16 2020/12/01 02:48:29 rin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.15 2019/06/18 21:18:12 kamil Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <arm/cdefs.h>
 
 /*
  * arm-dependent ptrace definitions
@@ -69,17 +67,12 @@
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile ("udf #0" : : : "memory")
 
-#if defined(__ARMEL__) || defined(_ARM_ARCH_BE8)
+#ifdef __ARMEB__
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xfe, 0xde, 0xff, 0xe7 })
-#else
-#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xde, 0xfe })
-#endif
-
-#ifdef _ARM_ARCH_BE8
 #define PTRACE_BREAKPOINT_INSN	0xfedeffe7
 #else
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xde, 0xfe })
 #define PTRACE_BREAKPOINT_INSN	0xe7ffdefe
 #endif
-
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile (".word " ___STRING(PTRACE_BREAKPOINT_INSN) )
 #define PTRACE_BREAKPOINT_SIZE	4

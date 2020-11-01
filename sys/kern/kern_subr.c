@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.229 2020/11/21 08:10:27 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.228 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.229 2020/11/21 08:10:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.228 2020/01/01 22:57:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -445,20 +445,8 @@ setroot_ask(device_t bootdv, int bootpartition)
 		}
 	}
 
-	switch (device_class(rootdv)) {
-	case DV_IFNET:
-	case DV_DISK:
-		aprint_normal("root on %s", device_xname(rootdv));
-		if (DEV_USES_PARTITIONS(rootdv))
-			aprint_normal("%c", (int)DISKPART(rootdev) + 'a');
-		break;
-	default:
-		printf("can't determine root device\n");
-		return;
-	}
-
 	root_device = rootdv;
-	setroot_dump(rootdv, dumpdv);
+	setroot_dump(root_device, dumpdv);
 }
 
 /*

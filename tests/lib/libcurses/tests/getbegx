@@ -1,2 +1,0 @@
-include window
-call 5 getbegx $win1

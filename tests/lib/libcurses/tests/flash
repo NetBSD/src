@@ -1,3 +1,0 @@
-include start
-call OK flash
-compare flash.chk

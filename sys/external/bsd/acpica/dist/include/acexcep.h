@@ -76,12 +76,12 @@ typedef struct acpi_exception_info
 {
     const char                *Name;
 
-#if defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
+#ifdef ACPI_HELP_APP
     const char                *Description;
 #endif
 } ACPI_EXCEPTION_INFO;
 
-#if defined (ACPI_HELP_APP) || defined (ACPI_ASL_COMPILER)
+#ifdef ACPI_HELP_APP
 #define EXCEP_TXT(Name,Description)     {Name, Description}
 #else
 #define EXCEP_TXT(Name,Description)     {Name}

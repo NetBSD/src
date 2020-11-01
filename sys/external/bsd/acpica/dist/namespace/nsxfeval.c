@@ -94,7 +94,6 @@ AcpiEvaluateObjectTyped (
     ACPI_HANDLE             TargetHandle;
     char                    *FullPathname;
 
-
     ACPI_FUNCTION_TRACE (AcpiEvaluateObjectTyped);
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2020/11/21 15:26:53 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2019/11/10 21:16:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,12 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2020/11/21 15:26:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2019/11/10 21:16:25 chs Exp $");
 
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 
@@ -265,7 +265,7 @@ icu_intr_establish(int irq, int type, int ipl, int (*func)(void *), void *arg)
 		return NULL;
 	}
 
-	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -306,7 +306,7 @@ icu_intr_disestablish(void *cookie)
 			icu_set();
 		}
 		splx(s);
-		kmem_free(ih, sizeof(*ih));
+		free(ih, M_DEVBUF);
 	}
 }
 

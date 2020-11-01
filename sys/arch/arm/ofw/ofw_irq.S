@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.17 2020/11/21 19:57:35 skrll Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.15 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -56,11 +56,11 @@
  *
  * This function is called only on timer ticks, passed on to the
  * kernel from the OFW tick handler.
- *
+ * 
  * For now, I am trying to re-use as much of the code from the
  * IOMD interrupt-handler as possible.  In time, I will strip this
  * down to something OFW-specific.
- *
+ * 
  * Here's the original, IOMD-specific description:
  * This function reads the irq request bits in the IOMD registers
  * IRQRQA, IRQRQB and DMARQ
@@ -95,33 +95,32 @@ AST_ALIGNMENT_FAULT_LOCALS
  * Regsister usage
  *
  *  r4	- Address of cpu_info (on entry)
- *  r5  - Address of curlwp
+ *  r5  - Pointer to handler pointer list
  *  r6  - Address of current handler
  *  r7  - pspr mode (must be preserved)
  *  r8  - Current IRQ requests.
  *  r9  - Used to count through possible IRQ bits.
  *  r10 - Base address of IOMD
- *  r11  - Pointer to handler pointer list
  */
 
 ASENTRY_NP(irq_entry)
 	/*
 	 *  We come here following an OFW-handled timer tick.
-	 *
+	 *  
  	 *  We are in the SVC frame, and interrupts are disabled.
  	 *  The state of the interrupted context is partially in
  	 *  the registers and partially in the global storage area
  	 *  labeled ofw_ticktmp.  ofw_ticktmp is filled-in by the
  	 *  tick callback that is invoked by OFW on the way out of
  	 *  its interrupt handler.  ofw_ticktmp contains the following:
- 	 *
+ 	 *  
  	 *      pc			// interrupted instruction
  	 *      lr_usr
  	 *      sp_usr
  	 *      r1			// makes r1 available for scratch
  	 *      r0			// makes r0 available for scratch
  	 *      spsr_svc		// cpsr of interrupted context
- 	 *
+ 	 *  
  	 *  The prologue of this routine must re-construct the
  	 *  machine state that existed at the time OFW's interrupt-
  	 *  handler fielded the interrupt.  That allows us to use
@@ -178,7 +177,7 @@ ASENTRY_NP(irq_entry)
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 
- 	/*
+ 	/*  
  	 *  Stuff a bit-mask into r8 indicating which interrupts
  	 *  are pending.  In our case, that is just the timer0
  	 *  interrupt:  (1 << TIMER0).  The existing code will take
@@ -189,7 +188,7 @@ ofwtakeint:
 #ifdef EXEC_AOUT
 	ldr	r0, [sp]		/* Fetch SPSR */
 #endif
-	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
+	ENABLE_ALIGNMENT_FAULTS
 
 	mov	r8, #0x00000001		/* timer interrupt pending! */
 	mov	r8, r8, lsl #IRQ_TIMER0
@@ -225,21 +224,21 @@ ofwtakeint:
 	 */
 
 	mov	r9, #(NIPL - 1)
-	ldr	r11, Lspl_masks
+	ldr	r5, Lspl_masks
 
 Lfind_highest_ipl:
-	ldr	r2, [r11, r9, lsl #2]
+	ldr	r2, [r5, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
 	beq	Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
-	ldr	r2, [r11, r9, lsl #2]
+	ldr	r2, [r5, r9, lsl #2]
 	mvn	r2, r2
 	orr	r0, r0, r2
 
-	str	r0, [r1]
+	str	r0, [r1]	
 
 	ldr	r0, Lcurrent_spl_level
 	ldr	r1, [r4, #CI_CPL]
@@ -253,7 +252,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r11, Lirqhandlers
+	ldr	r5, Lirqhandlers
 	mov	r9, #0x00000001
 
 irqloop:
@@ -261,7 +260,7 @@ irqloop:
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
-	ldr	r6, [r11]		/* Get address of first handler structure */
+	ldr	r6, [r5]		/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
@@ -302,7 +301,7 @@ irqdone:
 	stmia   r3, {r1-r2}		/* store ev_count */
 
 nextirq:
-	add	r11, r11, #0x00000004	/* update pointer to handlers */
+	add	r5, r5, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
 	teq	r9, #(1 << 24)		/* done the last bit ? */
 	bne	irqloop			/* no - loop back. */
@@ -315,6 +314,8 @@ nextirq:
 	ldr	r1, Ldisabled_mask
 	str	r2, [r1]
 	bl	_C_LABEL(irq_setmasks)
+
+	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Kill IRQ's in preparation for exit */
 	mrs     r0, cpsr
@@ -347,7 +348,7 @@ Lirqhandlers:
 	.text
 	.global	_C_LABEL(dotickgrovelling)
 
-/*
+/* 
  *  Do magic to cause OFW to call our irq_entry
  *  routine when it returns from its tick-handling.
  *
@@ -361,16 +362,16 @@ Lirqhandlers:
  *
  *  r0 - base of saved OFW interrupt frame, which
  *       has the following format:
- *
+ *  
  *         pc			// interrupted instruction
  *         lr			// lr of interrupted context
  *         sp			// sp of interrupted context
  *         r12
  *         ...		// non-banked register values
- *         ...		//   of interrupted context
+ *         ...		//   of interrupted context        
  *         r0
  *         spsr		// psr of interrupted context
- *
+ *  
  */
 
 _C_LABEL(dotickgrovelling):
@@ -462,7 +463,7 @@ _C_LABEL(dotickgrovelling):
 
 	ldmfd	sp!, {r1-r5}
 	mov	pc, lr
-
+	
 
 	.bss
 	.align 0

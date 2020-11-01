@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.9 2020/10/19 15:07:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.9 2020/10/19 15:07:47 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -180,25 +180,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #define	DEPS	"ptrace_common"  
 
 MODULE(MODULE_CLASS_EXEC, ptrace, DEPS);
-
-static int
-ptrace_init(void)
-{ 
-	int error;
-
-	error = syscall_establish(&emul_netbsd, ptrace_syscalls);
-	return error;
-}       
- 
-static int     
-ptrace_fini(void)
-{
-	int error;
-
-	error = syscall_disestablish(&emul_netbsd, ptrace_syscalls);
-	return error;
-}
-
  
 static int
 ptrace_modcmd(modcmd_t cmd, void *arg)
@@ -207,10 +188,10 @@ ptrace_modcmd(modcmd_t cmd, void *arg)
  
 	switch (cmd) {
 	case MODULE_CMD_INIT: 
-		error = ptrace_init();
+		error = syscall_establish(&emul_netbsd, ptrace_syscalls);
 		break;
 	case MODULE_CMD_FINI:
-		error = ptrace_fini();
+		error = syscall_disestablish(&emul_netbsd, ptrace_syscalls);
 		break;
 	default:
 		error = ENOTTY;

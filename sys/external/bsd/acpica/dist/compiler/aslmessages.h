@@ -44,6 +44,7 @@
 #ifndef __ASLMESSAGES_H
 #define __ASLMESSAGES_H
 
+
 /* These values must match error type string tables in aslmessages.c */
 
 typedef enum
@@ -58,11 +59,8 @@ typedef enum
 
 } ASL_MESSAGE_TYPES;
 
-#define ASL_ERROR_LEVEL_LENGTH          8 /* Length of strings for types above */
 
-void
-AhDecodeAslException (
-    char                    *HexString);
+#define ASL_ERROR_LEVEL_LENGTH          8 /* Length of strings for types above */
 
 /*
  * Exception code blocks, 0 - 999
@@ -277,10 +275,6 @@ typedef enum
     ASL_MSG_DUPLICATE_EXTERN_MISMATCH,
     ASL_MSG_DUPLICATE_EXTERN_FOUND_HERE,
     ASL_MSG_CONDREF_NEEDS_EXTERNAL_DECL,
-    ASL_MSG_EXTERNAL_FOUND_HERE,
-    ASL_MSG_LOWER_CASE_NAMESEG,
-    ASL_MSG_LOWER_CASE_NAMEPATH,
-    ASL_MSG_UUID_NOT_FOUND,
 
 
     /* These messages are used by the Data Table compiler only */

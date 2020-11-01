@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.85 2020/12/13 05:47:08 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.85 2020/12/13 05:47:08 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1331,6 +1331,7 @@ audiodetach(device_t self, int flags)
 	 * that hold sc, and any new calls with files that were for sc will
 	 * fail.  Thus, we now have exclusive access to the softc.
 	 */
+	sc->sc_exlock = 1;
 
 	/*
 	 * Nuke all open instances.
@@ -1356,7 +1357,6 @@ audiodetach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	/* Free resources */
-	sc->sc_exlock = 1;
 	if (sc->sc_pmixer) {
 		audio_mixer_destroy(sc, sc->sc_pmixer);
 		kmem_free(sc->sc_pmixer, sizeof(*sc->sc_pmixer));
@@ -1873,7 +1873,7 @@ audiopoll(struct file *fp, int events)
 
 	sc = audio_file_enter(file, &sc_ref);
 	if (sc == NULL)
-		return POLLERR;
+		return EIO;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -2082,9 +2082,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	audio_file_t *af;
 	audio_ring_t *hwbuf;
 	bool fullduplex;
-	bool cred_held;
-	bool hw_opened;
-	bool rmixer_started;
 	int fd;
 	int error;
 
@@ -2095,11 +2092,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    ISDEVSOUND(dev) ? "sound" : "audio",
 	    flags, sc->sc_popens, sc->sc_ropens);
 
-	fp = NULL;
-	cred_held = false;
-	hw_opened = false;
-	rmixer_started = false;
-
 	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
@@ -2109,7 +2101,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		af->mode |= AUMODE_RECORD;
 	if (af->mode == 0) {
 		error = ENXIO;
-		goto bad;
+		goto bad1;
 	}
 
 	fullduplex = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
@@ -2125,7 +2117,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			if (sc->sc_ropens != 0) {
 				TRACE(1, "record track already exists");
 				error = ENODEV;
-				goto bad;
+				goto bad1;
 			}
 			/* Play takes precedence */
 			af->mode &= ~AUMODE_RECORD;
@@ -2134,7 +2126,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			if (sc->sc_popens != 0) {
 				TRACE(1, "play track already exists");
 				error = ENODEV;
-				goto bad;
+				goto bad1;
 			}
 		}
 	}
@@ -2181,14 +2173,13 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	}
 	error = audio_file_setinfo(sc, af, &ai);
 	if (error)
-		goto bad;
+		goto bad2;
 
 	if (sc->sc_popens + sc->sc_ropens == 0) {
 		/* First open */
 
 		sc->sc_cred = kauth_cred_get();
 		kauth_cred_hold(sc->sc_cred);
-		cred_held = true;
 
 		if (sc->hw_if->open) {
 			int hwflags;
@@ -2221,16 +2212,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad;
+				goto bad2;
 		}
-		/*
-		 * Regardless of whether we called hw_if->open (whether
-		 * hw_if->open exists) or not, we move to the Opened phase
-		 * here.  Therefore from this point, we have to call
-		 * hw_if->close (if exists) whenever abort.
-		 * Note that both of hw_if->{open,close} are optional.
-		 */
-		hw_opened = true;
 
 		/*
 		 * Set speaker mode when a half duplex.
@@ -2250,14 +2233,14 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 				mutex_exit(sc->sc_intr_lock);
 				mutex_exit(sc->sc_lock);
 				if (error)
-					goto bad;
+					goto bad3;
 			}
 		}
 	} else if (sc->sc_multiuser == false) {
 		uid_t euid = kauth_cred_geteuid(kauth_cred_get());
 		if (euid != 0 && euid != kauth_cred_geteuid(sc->sc_cred)) {
 			error = EPERM;
-			goto bad;
+			goto bad2;
 		}
 	}
 
@@ -2274,7 +2257,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad;
+				goto bad3;
 		}
 	}
 	/*
@@ -2293,24 +2276,18 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad;
+				goto bad3;
 		}
 
 		mutex_enter(sc->sc_lock);
 		audio_rmixer_start(sc);
 		mutex_exit(sc->sc_lock);
-		rmixer_started = true;
 	}
 
-	if (bellfile) {
-		*bellfile = af;
-	} else {
+	if (bellfile == NULL) {
 		error = fd_allocfile(&fp, &fd);
 		if (error)
-			goto bad;
-
-		error = fd_clone(fp, fd, flags, &audio_fileops, af);
-		KASSERTMSG(error == EMOVEFD, "error=%d", error);
+			goto bad3;
 	}
 
 	/*
@@ -2327,21 +2304,22 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	mutex_exit(sc->sc_intr_lock);
 	mutex_exit(sc->sc_lock);
 
+	if (bellfile) {
+		*bellfile = af;
+	} else {
+		error = fd_clone(fp, fd, flags, &audio_fileops, af);
+		KASSERTMSG(error == EMOVEFD, "error=%d", error);
+	}
+
 	TRACEF(3, af, "done");
 	return error;
 
-bad:
-	if (fp) {
-		fd_abort(curproc, fp, fd);
-	}
-
-	if (rmixer_started) {
-		mutex_enter(sc->sc_lock);
-		audio_rmixer_halt(sc);
-		mutex_exit(sc->sc_lock);
-	}
-
-	if (hw_opened) {
+	/*
+	 * Since track here is not yet linked to sc_files,
+	 * you can call track_destroy() without sc_intr_lock.
+	 */
+bad3:
+	if (sc->sc_popens + sc->sc_ropens == 0) {
 		if (sc->hw_if->close) {
 			mutex_enter(sc->sc_lock);
 			mutex_enter(sc->sc_intr_lock);
@@ -2350,14 +2328,7 @@ bad:
 			mutex_exit(sc->sc_lock);
 		}
 	}
-	if (cred_held) {
-		kauth_cred_free(sc->sc_cred);
-	}
-
-	/*
-	 * Since track here is not yet linked to sc_files,
-	 * you can call track_destroy() without sc_intr_lock.
-	 */
+bad2:
 	if (af->rtrack) {
 		audio_track_destroy(af->rtrack);
 		af->rtrack = NULL;
@@ -2366,7 +2337,7 @@ bad:
 		audio_track_destroy(af->ptrack);
 		af->ptrack = NULL;
 	}
-
+bad1:
 	kmem_free(af, sizeof(*af));
 	return error;
 }
@@ -2415,8 +2386,7 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 
 	/*
 	 * Acquire exlock to protect counters.
-	 * audio_exlock_enter() cannot be used here because we have to go
-	 * forward even if sc_dying is set.
+	 * Does not use audio_exlock_enter() due to sc_dying.
 	 */
 	while (__predict_false(sc->sc_exlock != 0)) {
 		error = cv_timedwait_sig(&sc->sc_exlockcv, sc->sc_lock,
@@ -2425,8 +2395,7 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 		if (error == EWOULDBLOCK) {
 			mutex_exit(sc->sc_lock);
 			device_printf(sc->sc_dev,
-			    "%s: cv_timedwait_sig failed %d\n",
-			    __func__, error);
+			    "%s: cv_timedwait_sig failed %d", __func__, error);
 			return error;
 		}
 	}
@@ -6154,8 +6123,8 @@ audio_softintr_wr(void *cookie)
 
 /*
  * Check (and convert) the format *p came from userland.
- * If successful, it writes back the converted format to *p if necessary and
- * returns 0.  Otherwise returns errno (*p may be changed even in this case).
+ * If successful, it writes back the converted format to *p if necessary
+ * and returns 0.  Otherwise returns errno (*p may change even this case).
  */
 static int
 audio_check_params(audio_format2_t *p)

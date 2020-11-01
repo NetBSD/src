@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.18 2020/11/21 19:52:56 skrll Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.16 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -100,11 +100,10 @@ AST_ALIGNMENT_FAULT_LOCALS
  * Register usage
  *
  *  r4  - Address of cpu_info
- *  r5  - Address of curlwp
+ *  r5  - Address of ffs table
  *  r6  - Address of current handler
  *  r7  - Pointer to handler pointer list
  *  r8  - Current IRQ requests.
- *  r9  - scratch
  *  r10 - Base address of IOMD
  *  r11 - IRQ requests still to service.
  */
@@ -119,7 +118,7 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
+	ENABLE_ALIGNMENT_FAULTS
 
 	str	r7, [sp, #TF_FILL]	/* save r7 */
 
@@ -200,7 +199,7 @@ Lfind_highest_ipl:
 	mvn	r2, r2
 	orr	r0, r0, r2
 
-	str	r0, [r1]
+	str	r0, [r1]	
 
 	ldr	r0, [r4, #CI_CPL]
 	str	r9, [r4, #CI_CPL]
@@ -213,45 +212,47 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	/*
+	ldr	r7, Lirqhandlers
+
+	/* 
 	 * take a copy of the IRQ request so that we can strip bits out of it
 	 * note that we only use 24 bits with iomd2 chips
 	 */
-	ldr	r7, Larm7500_ioc_found
-	ldr	r7, [r7]			/* get the flag      */
-	cmp	r7, #0
+	ldr	r5, Larm7500_ioc_found
+	ldr	r5, [r5]			/* get the flag      */
+	cmp	r5, #0
 	movne	r11, r8				/* ARM7500  -> copy all bits   */
 	biceq	r11, r8, #0xff000000		/* !ARM7500 -> only use 24 bit */
 
 	/* ffs routine to find first irq to service */
 	/* standard trick to isolate bottom bit in a0 or 0 if a0 = 0 on entry */
-	rsb	r7, r11, #0
-	ands	r10, r11, r7
+	rsb	r5, r11, #0
+	ands	r10, r11, r5
 
-	/*
+	/* 
 	 * now r10 has at most 1 set bit, call this X
 	 * if X = 0, branch to exit code
 	 */
 	beq	exitirq
 irqloop:
-	ldr	r6, Lirqhandlers
-	adr	r7, Lirq_ffs_table
+	adr	r5, Lirq_ffs_table
 	/*
 	 * at this point:
-	 * 	r6 = address of irq handlers table
-	 *	r7 = address of ffs table
+	 *	r5 = address of ffs table
+	 *	r7 = address of irq handlers table
 	 *	r8 = irq request
 	 *	r10 = bit of irq to be serviced
 	 *	r11 = bitmask of IRQ's to service
 	 */
+
 	/* find the set bit */
 	orr	r9, r10, r10, lsl #4	/* X * 0x11 */
 	orr	r9, r9, r9, lsl #6	/* X * 0x451 */
 	rsb	r9, r9, r9, lsl #16	/* X * 0x0450fbaf */
 	/* fetch the bit number */
-	ldrb	r9, [r7, r9, lsr #26 ]
+	ldrb	r9, [r5, r9, lsr #26 ]
 
-	/*
+	/* 
 	 * r9 = irq to service
 	 */
 
@@ -264,13 +265,13 @@ irqloop:
 	 *	- unsetting of the irq bit in r11
 	 *	- irq stats (if enabled) also get put in the mix
 	 */
-	ldr	r6, [r6, r9, lsl #2]	/* Get address of first handler structure */
+	ldr	r6, [r7, r9, lsl #2]	/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	adreq	lr, nextirq		/* return Address */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
-
+	
 	/* stat info C */
 	ldr	r1, [r4, #(CI_CC_NINTR)] /* Stat info B */
 	ldr	r2, [r4, #(CI_CC_NINTR+4)]
@@ -300,21 +301,20 @@ irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
-
 	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 	ldr	r6, [r6, #(IH_NEXT)]	/* fetch next handler */
-
+	
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
-
+	
 	/* if it was it'll just fall through this: */
 	teqne	r6, #0x00000000
 	bne	irqchainloop
 nextirq:
 	/* Check for next irq */
-	rsb	r7, r11, #0
-	ands	r10, r11, r7
+	rsb	r5, r11, #0
+	ands	r10, r11, r5
 	/* check if there are anymore irq's to service */
 	bne 	irqloop
 
@@ -325,6 +325,10 @@ exitirq:
 	str	r3, [r0]
 
 	bl	_C_LABEL(irq_setmasks)
+
+#if __HAVE_FAST_SOFTINTS
+	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr

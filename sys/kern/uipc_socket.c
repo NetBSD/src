@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.294 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.292 2020/10/17 09:06:15 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.294 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.292 2020/10/17 09:06:15 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1186,6 +1186,9 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			    MIN(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid > 0 && error == 0 && m);
+		/* We consumed the oob data, no more oobmark.  */
+		so->so_oobmark = 0;
+		so->so_state &= ~SS_RCVATMARK;
 bad:
 		if (m != NULL)
 			m_freem(m);
@@ -1562,8 +1565,6 @@ dontblock:
 				if (offset == so->so_oobmark)
 					break;
 			}
-		} else {
-			so->so_state &= ~SS_POLLRDBAND;
 		}
 		if (flags & MSG_EOR)
 			break;
@@ -2213,7 +2214,6 @@ void
 sohasoutofband(struct socket *so)
 {
 
-	so->so_state |= SS_POLLRDBAND;
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
 	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, NOTE_SUBMIT);
 }
@@ -2225,9 +2225,9 @@ filt_sordetach(struct knote *kn)
 
 	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
-	selremove_knote(&so->so_rcv.sb_sel, kn);
-	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))	/* XXX select/kqueue */
-		so->so_rcv.sb_flags &= ~SB_KNOTE;	/* XXX internals */
+	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
+		so->so_rcv.sb_flags &= ~SB_KNOTE;
 	sounlock(so);
 }
 
@@ -2264,9 +2264,9 @@ filt_sowdetach(struct knote *kn)
 
 	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
-	selremove_knote(&so->so_snd.sb_sel, kn);
-	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))	/* XXX select/kqueue */
-		so->so_snd.sb_flags &= ~SB_KNOTE;	/* XXX internals */
+	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
+		so->so_snd.sb_flags &= ~SB_KNOTE;
 	sounlock(so);
 }
 
@@ -2366,7 +2366,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		sounlock(so);
 		return EINVAL;
 	}
-	selrecord_knote(&sb->sb_sel, kn);
+	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
 	sounlock(so);
 	return 0;
@@ -2388,7 +2388,7 @@ sodopoll(struct socket *so, int events)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (events & (POLLPRI | POLLRDBAND))
-		if (so->so_state & SS_POLLRDBAND)
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
 			revents |= events & (POLLPRI | POLLRDBAND);
 
 	return revents;

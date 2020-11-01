@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.10 2020/11/04 20:05:47 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.5 2020/03/14 16:12:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #define FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
 #define FCSR_FRM_RUP	0b011	// Round UP (+infinity)
 #define FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
-#define FCSR_FRM_DYN	0b111	// Dynamic rounding
 #define FCSR_FFLAGS	__BITS(4,0)	// Sticky bits
 #define FCSR_NV		__BIT(4)	// iNValid operation
 #define FCSR_DZ		__BIT(3)	// Divide by Zero
@@ -102,77 +101,25 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
-/* Supervisor Status Register */
-#ifdef _LP64
-#define SR_WPRI		__BITS(62, 34) | __BITS(31,20) | __BIT(17) | \
-			    __BITS(12,9) | __BITS(7,6) | __BITS(3,2)
-#define SR_SD		__BIT(63)
-			/* Bits 62-34 are WPRI */
-#define SR_UXL		__BITS(33,32)
-#define  SR_UXL_32	1
-#define  SR_UXL_64	2
-#define  SR_UXL_128	3
-			/* Bits 31-20 are WPRI*/
-#else
-#define SR_WPRI		__BITS(30,20) | __BIT(17) | __BITS(12,9) | \
-			    __BITS(7,6) | __BITS(3,2)
-#define SR_SD		__BIT(31)
-			/* Bits 30-20 are WPRI*/
-#endif /* _LP64 */
-
-/* Both RV32 and RV64 have the bottom 20 bits shared */
-#define SR_MXR		__BIT(19)
-#define SR_SUM		__BIT(18)
-			/* Bit 17 is WPRI */
-#define SR_XS		__BITS(16,15)
-#define SR_FS		__BITS(14,13)
-#define  SR_FS_OFF	0
-#define  SR_FS_INITIAL	1
-#define  SR_FS_CLEAN	2
-#define  SR_FS_DIRTY	3
-
-			/* Bits 12-9 are WPRI */
-#define SR_SPP		__BIT(8)
-			/* Bits 7-6 are WPRI */
-#define SR_SPIE		__BIT(5)
-#define SR_UPIE		__BIT(4)
-			/* Bits 3-2 are WPRI */
-#define SR_SIE		__BIT(1)
-#define SR_UIE		__BIT(0)
-
-/* Supervisor interrupt registers */
-/* ... interupt pending register (sip) */
-			/* Bit (XLEN-1)-10 is WIRI */
-#define SIP_SEIP	__BIT(9)
-#define SIP_UEIP	__BIT(8)
-			/* Bit 7-6 is WIRI */
-#define SIP_STIP	__BIT(5)
-#define SIP_UTIP	__BIT(4)
-			/* Bit 3-2 is WIRI */
-#define SIP_SSIP	__BIT(1)
-#define SIP_USIP	__BIT(0)
-
-/* ... interupt-enable register (sie) */
-			/* Bit (XLEN-1) - 10 is WIRI */
-#define SIE_SEIE	__BIT(9)
-#define SIE_UEIE	__BIT(8)
-			/* Bit 7-6 is WIRI */
-#define SIE_STIE	__BIT(5)
-#define SIE_UTIE	__BIT(4)
-			/* Bit 3-2 is WIRI */
-#define SIE_SSIE	__BIT(1)
-#define SIE_USIE	__BIT(0)
-
-/* Mask for all interrupts */
-#define SIE_IM		(SIE_SEI|SIE_UEIE|SIE_STIE|SIE_UTIE|SIE_SSIE|SIE_USIE)
+// Status Register
+#define SR_IP		__BITS(31,24)	// Pending interrupts
+#define SR_IM		__BITS(23,16)	// Interrupt Mask
+#define SR_VM		__BIT(7)	// MMU On
+#define SR_S64		__BIT(6)	// RV64 supervisor mode
+#define SR_U64		__BIT(5)	// RV64 user mode
+#define SR_EF		__BIT(4)	// Enable Floating Point
+#define SR_PEI		__BIT(3)	// Previous EI setting
+#define SR_EI		__BIT(2)	// Enable interrupts
+#define SR_PS		__BIT(1)	// Previous (S) supervisor setting
+#define SR_S		__BIT(0)	// Supervisor
 
 #ifdef _LP64
-#define	SR_USER		(SR_UIE)
-#define	SR_USER32	(SR_USER)
-#define	SR_KERNEL	(SR_SIE | SR_UIE)
+#define	SR_USER		(SR_EI|SR_U64|SR_S64|SR_VM|SR_IM)
+#define	SR_USER32	(SR_USER & ~SR_U64)
+#define	SR_KERNEL	(SR_S|SR_EI|SR_U64|SR_S64|SR_VM)
 #else
-#define	SR_USER		(SR_UIE)
-#define	SR_KERNEL	(SR_SIE | SR_UIE)
+#define	SR_USER		(SR_EI|SR_VM|SR_IM)
+#define	SR_KERNEL	(SR_S|SR_EI|SR_VM)
 #endif
 
 static inline uint32_t
@@ -208,24 +155,18 @@ riscvreg_status_set(uint32_t __mask)
 }
 
 // Cause register
-#define CAUSE_FETCH_MISALIGNED		0
-#define CAUSE_FETCH_ACCESS		1
+#define CAUSE_MISALIGNED_FETCH		0
+#define CAUSE_FAULT_FETCH		1
 #define CAUSE_ILLEGAL_INSTRUCTION	2
-#define CAUSE_BREAKPOINT		3
-#define CAUSE_LOAD_MISALIGNED		4
-#define CAUSE_LOAD_ACCESS		5
-#define CAUSE_STORE_MISALIGNED		6
-#define CAUSE_STORE_ACCESS		7
+#define CAUSE_PRIVILEGED_INSTRUCTION	3
+#define CAUSE_MISALIGNED_LOAD		4
+#define CAUSE_FAULT_LOAD		5
+#define CAUSE_MISALIGNED_STORE		6
+#define CAUSE_FAULT_STORE		7
 #define CAUSE_SYSCALL			8
-#define CAUSE_USER_ECALL		8
-#define CAUSE_SUPERVISOR_ECALL		9
-/* 10 is reserved */
-#define CAUSE_MACHINE_ECALL		11
-#define CAUSE_FETCH_PAGE_FAULT		12
-#define CAUSE_LOAD_PAGE_FAULT		13
-/* 14 is Reserved */
-#define CAUSE_STORE_PAGE_FAULT		15
-/* >= 16 is reserved */
+#define CAUSE_BREAKPOINT		9
+#define CAUSE_FP_DISABLED		10
+#define CAUSE_ACCELERATOR_DISABLED	12
 
 static inline uint64_t
 riscvreg_cycle_read(void)
@@ -250,16 +191,13 @@ riscvreg_cycle_read(void)
 }
 
 #ifdef _LP64
-#define SATP_MODE		__BITS(63,60)
-#define  SATP_MODE_SV39		8
-#define  SATP_MODE_SV48		9
-#define SATP_ASID		__BITS(59,44)
-#define SATP_PPN		__BITS(43,0)
+#define SATP_MODE	__BITS(63,60)
+#define SATP_ASID	__BITS(59,44)
+#define SATP_PPN	__BITS(43,0)
 #else
-#define SATP_MODE		__BIT(31)
-#define  SATP_MODE_SV32		1
-#define SATP_ASID		__BITS(30,22)
-#define SATP_PPN		__BITS(21,0)
+#define SATP_MODE	__BIT(31)
+#define SATP_ASID	__BITS(30,22)
+#define SATP_PPN	__BITS(21,0)
 #endif
 
 static inline uint32_t

@@ -1,5 +1,0 @@
-syntax(2)
-test_suite('bind9')
-
-tap_test_program{name='duration_test'}
-tap_test_program{name='parser_test'}

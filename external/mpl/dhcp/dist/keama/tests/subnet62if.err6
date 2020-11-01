@@ -1,8 +1,0 @@
-# bad (2 interfaces) DHCPv6 subnet declaration config
-
-# DHCPv6 subnet declaration
-subnet6 2001::/64 {
-    interface "foo";
-    interface "bar";
-}
-

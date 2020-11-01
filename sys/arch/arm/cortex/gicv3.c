@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,11 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $");
 
 #define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
 #define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
-
-#define	GIC_SUPPORTS_1OFN(sc)		(((sc)->sc_gicd_typer & GICD_TYPER_No1N) == 0)
-
-#define	GIC_PRIO_SHIFT_NS		4
-#define	GIC_PRIO_SHIFT_S		3
+#define	IPL_TO_LPIPRIO(sc, ipl)		(((0xff - (ipl)) << 4) & 0xff)
 
 static struct gicv3_softc *gicv3_softc;
 
@@ -188,13 +184,11 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			gicr_write_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4), ipriority);
 		}
 	} else {
-		/*
-		 * If 1 of N SPI routing is supported, route MP-safe interrupts to all
-		 * participating PEs. Otherwise, just route to the primary PE.
-		 */
-		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc)) {
+		if (is->is_mpsafe) {
+			/* Route MP-safe interrupts to all participating PEs */
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
 		} else {
+			/* Route non-MP-safe interrupts to the primary PE only */
 			irouter = sc->sc_irouter[0];
 		}
 		gicd_write_8(sc, GICD_IROUTER(is->is_irq), irouter);
@@ -230,9 +224,7 @@ gicv3_dist_enable(struct gicv3_softc *sc)
 	u_int n;
 
 	/* Disable the distributor */
-	gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
-	gicd_ctrl &= ~(GICD_CTRL_EnableGrp1A | GICD_CTRL_ARE_NS);
-	gicd_write_4(sc, GICD_CTRL, gicd_ctrl);
+	gicd_write_4(sc, GICD_CTRL, 0);
 
 	/* Wait for register write to complete */
 	while (gicd_read_4(sc, GICD_CTRL) & GICD_CTRL_RWP)
@@ -376,9 +368,6 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 	uint32_t icc_sre, icc_ctlr, gicr_waker;
 
-	evcnt_attach_dynamic(&ci->ci_intr_preempt, EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "intr preempt");
-
 	ci->ci_gic_redist = gicv3_find_redist(sc);
 	ci->ci_gic_sgir = gicv3_sgir(sc);
 
@@ -486,13 +475,12 @@ gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
 		return EINVAL;
 
 	const int set = kcpuset_countset(affinity);
-	if (set == 1) {
-		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
-	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc)) {
+	if (set == ncpu)
 		irouter = GICD_IROUTER_Interrupt_Routing_mode;
-	} else {
+	else if (set == 1)
+		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
+	else
 		return EINVAL;
-	}
 
 	gicd_write_8(sc, GICD_IROUTER(irq), irouter);
 
@@ -552,7 +540,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 
-	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_PRIORITY(sc, is->is_ipl) | GIC_LPICONF_Res1;
+	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_LPIPRIO(sc, is->is_ipl) | GIC_LPICONF_Res1;
 
 	if (sc->sc_lpiconf_flush)
 		cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
@@ -746,14 +734,9 @@ gicv3_irq_handler(void *frame)
 			isb();
 		}
 
-		const int64_t nintr = ci->ci_data.cpu_nintr;
-
 		cpsie(I32_bit);
 		pic_dispatch(is, frame);
 		cpsid(I32_bit);
-
-		if (nintr != ci->ci_data.cpu_nintr)
-			ci->ci_intr_preempt.ev_count++;
 
 		if (!early_eoi) {
 			icc_eoi1r_write(iar);
@@ -764,67 +747,33 @@ gicv3_irq_handler(void *frame)
 	pic_do_pending_ints(I32_bit, oldipl, frame);
 }
 
-static bool
-gicv3_cpuif_is_nonsecure(struct gicv3_softc *sc)
+static int
+gicv3_detect_pmr_bits(struct gicv3_softc *sc)
 {
-	/*
-	 * Write 0 to bit7 and see if it sticks. This is only possible if
-	 * we have a non-secure view of the PMR register.
-	 */
 	const uint32_t opmr = icc_pmr_read();
-	icc_pmr_write(0);
+	icc_pmr_write(0xbf);
 	const uint32_t npmr = icc_pmr_read();
 	icc_pmr_write(opmr);
 
-	return (npmr & GICC_PMR_NONSECURE) == 0;
+	return NBBY - (ffs(npmr) - 1);
 }
 
-static bool
-gicv3_dist_is_nonsecure(struct gicv3_softc *sc)
+static int
+gicv3_detect_ipriority_bits(struct gicv3_softc *sc)
 {
-	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
+	const uint32_t oipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr | 0xff);
+	const uint32_t nipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr);
 
-	/*
-	 * If security is enabled, we have a non-secure view of the IPRIORITYRn
-	 * registers and LPI configuration priority fields.
-	 */
-	return (gicd_ctrl & GICD_CTRL_DS) == 0;
-}
-
-/*
- * Rockchip RK3399 provides a different view of int priority registers
- * depending on which firmware is in use. This is hard to detect in
- * a way that could possibly break other boards, so only do this
- * detection if we know we are on a RK3399 SoC.
- */
-static void
-gicv3_quirk_rockchip_rk3399(struct gicv3_softc *sc)
-{
-	/* Detect the number of supported PMR bits */
-	icc_pmr_write(0xff);
-	const uint8_t pmrbits = icc_pmr_read();
-
-	/* Detect the number of supported IPRIORITYRn bits */
-	const uint32_t oiprio = gicd_read_4(sc, GICD_IPRIORITYRn(8));
-	gicd_write_4(sc, GICD_IPRIORITYRn(8), oiprio | 0xff);
-	const uint8_t pribits = gicd_read_4(sc, GICD_IPRIORITYRn(8)) & 0xff;
-	gicd_write_4(sc, GICD_IPRIORITYRn(8), oiprio);
-
-	/*
-	 * If we see fewer PMR bits than IPRIORITYRn bits here, it means
-	 * we have a secure view of IPRIORITYRn (this is not supposed to
-	 * happen!). 
-	 */
-	if (pmrbits < pribits) {
-		aprint_verbose_dev(sc->sc_dev,
-		    "buggy RK3399 firmware detected; applying workaround\n");
-		sc->sc_priority_shift = GIC_PRIO_SHIFT_S;
-	}
+	return NBBY - (ffs(nipriorityr & 0xff) - 1);
 }
 
 int
 gicv3_init(struct gicv3_softc *sc)
 {
+	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
+	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
 	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -834,41 +783,34 @@ gicv3_init(struct gicv3_softc *sc)
 	for (n = 0; n < MAXCPUS; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
 
-	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
+	sc->sc_priority_shift = 4;
+	sc->sc_pmr_shift = 4;
 
-	/*
-	 * We don't always have a consistent view of priorities between the
-	 * CPU interface (ICC_PMR_EL1) and the GICD/GICR registers. Detect
-	 * if we are making secure or non-secure accesses to each, and adjust
-	 * the values that we write to each accordingly.
-	 */
-	const bool dist_ns = gicv3_dist_is_nonsecure(sc);
-	sc->sc_priority_shift = dist_ns ? GIC_PRIO_SHIFT_NS : GIC_PRIO_SHIFT_S;
-	const bool cpuif_ns = gicv3_cpuif_is_nonsecure(sc);
-	sc->sc_pmr_shift = cpuif_ns ? GIC_PRIO_SHIFT_NS : GIC_PRIO_SHIFT_S;
+	if ((gicd_ctrl & GICD_CTRL_DS) == 0) {
+		const int pmr_bits = gicv3_detect_pmr_bits(sc);
+		const int ipriority_bits = gicv3_detect_ipriority_bits(sc);
 
-	if ((sc->sc_quirks & GICV3_QUIRK_RK3399) != 0)
-		gicv3_quirk_rockchip_rk3399(sc);
+		if (ipriority_bits != pmr_bits)
+			--sc->sc_priority_shift;
 
-	aprint_verbose_dev(sc->sc_dev,
-	    "iidr 0x%08x, cpuif %ssecure, dist %ssecure, "
-	    "priority shift %d, pmr shift %d, quirks %#x\n",
-	    gicd_read_4(sc, GICD_IIDR),
-	    cpuif_ns ? "non-" : "",
-	    dist_ns ? "non-" : "",
-	    sc->sc_priority_shift,
-	    sc->sc_pmr_shift,
-	    sc->sc_quirks);
+		aprint_verbose_dev(sc->sc_dev, "%d pmr bits, %d ipriority bits\n",
+		    pmr_bits, ipriority_bits);
+	} else {
+		aprint_verbose_dev(sc->sc_dev, "security disabled\n");
+	}
+
+	aprint_verbose_dev(sc->sc_dev, "priority shift %d, pmr shift %d\n",
+	    sc->sc_priority_shift, sc->sc_pmr_shift);
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
-	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(sc->sc_gicd_typer);
+	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
 	snprintf(sc->sc_pic.pic_name, sizeof(sc->sc_pic.pic_name), "gicv3");
 #ifdef MULTIPROCESSOR
 	sc->sc_pic.pic_cpus = kcpuset_running;
 #endif
 	pic_add(&sc->sc_pic, 0);
 
-	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0) {
+	if ((gicd_typer & GICD_TYPER_LPIS) != 0) {
 		sc->sc_lpi.pic_ops = &gicv3_lpiops;
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
@@ -899,7 +841,7 @@ gicv3_init(struct gicv3_softc *sc)
 	gicv3_dist_enable(sc);
 
 	gicv3_cpu_init(&sc->sc_pic, curcpu());
-	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0)
+	if ((gicd_typer & GICD_TYPER_LPIS) != 0)
 		gicv3_lpi_cpu_init(&sc->sc_lpi, curcpu());
 
 #ifdef MULTIPROCESSOR

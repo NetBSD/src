@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.96 2020/11/15 14:01:06 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.95 2020/05/13 13:19:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.96 2020/11/15 14:01:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.95 2020/05/13 13:19:38 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -261,6 +261,7 @@ events_init(void)
 bool
 events_resume(void)
 {
+#ifdef XENPV
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
 
 	KASSERT(debug_port != -1);
@@ -275,6 +276,7 @@ events_resume(void)
 	evtsource[debug_port] = (void *)-1;
 	xen_atomic_set_bit(&curcpu()->ci_evtmask[0], debug_port);
 	hypervisor_unmask_event(debug_port);
+#endif /* XENPV */
 	x86_enable_intr();		/* at long last... */
 
 	return true;

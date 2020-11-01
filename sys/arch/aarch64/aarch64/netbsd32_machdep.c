@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.16 2020/10/15 23:10:06 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.16 2020/10/15 23:10:06 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -50,11 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17 2020/12/11 18:03:33 skrll 
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <aarch64/armreg.h>
+#include <aarch64/cpufunc.h>
 #include <aarch64/frame.h>
 #include <aarch64/machdep.h>
 #include <aarch64/userret.h>
-
-#include <arm/cpufunc.h>
 
 const char machine32[] = MACHINE;
 const char machine_arch32[] = MACHINE32_ARCH;

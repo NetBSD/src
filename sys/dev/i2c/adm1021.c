@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.21 2020/12/10 17:02:51 jdc Exp $ */
+/*	$NetBSD: adm1021.c,v 1.20 2020/08/21 20:44:38 macallan Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.21 2020/12/10 17:02:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.20 2020/08/21 20:44:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,6 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_sensor_attach(
 	    sc->sc_sme, &sc->sc_sensor[ADMTEMP_INT])) {
 		sysmon_envsys_destroy(sc->sc_sme);
-		sc->sc_sme = NULL;
 		aprint_error_dev(self,
 		    "unable to attach internal at sysmon\n");
 		return;
@@ -405,7 +404,6 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	    sysmon_envsys_sensor_attach(
 	    sc->sc_sme, &sc->sc_sensor[ADMTEMP_EXT])) {
 		sysmon_envsys_destroy(sc->sc_sme);
-		sc->sc_sme = NULL;
 		aprint_error_dev(self,
 		    "unable to attach external at sysmon\n");
 		return;
@@ -427,7 +425,6 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
-		sc->sc_sme = NULL;
 		return;
 	}
 }
@@ -440,10 +437,7 @@ admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	uint8_t cmd, xdata;
 	int8_t sdata;
 
-	if (iic_acquire_bus(sc->sc_tag, 0)) {
-		edata->state = ENVSYS_SINVALID;
-		return;
-	}
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (edata->sensor == ADMTEMP_INT)
 		cmd = ADM1021_INT_TEMP;
@@ -478,8 +472,7 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (edata->sensor == ADMTEMP_INT)
 		cmd = ADM1021_INT_HIGH_READ;
@@ -528,8 +521,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (edata->sensor == ADMTEMP_INT)
 		cmd = ADM1021_INT_HIGH_READ;
@@ -593,8 +585,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_WARNMAX | PROP_CRITMAX | PROP_WARNMIN);
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (edata->sensor == ADMTEMP_INT)
 		cmd = ADM1032_INT_THERM;
@@ -669,8 +660,7 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int tmp;
 	int8_t sdata;
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (*props & PROP_CRITMAX) {
 		if (edata->sensor == ADMTEMP_INT)
@@ -756,8 +746,7 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		ext11 = 1;
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (*props & PROP_CRITMAX) {
 		if (edata->sensor == ADMTEMP_INT)
@@ -814,8 +803,7 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		ext11 = 1;
 
-	if (iic_acquire_bus(sc->sc_tag, 0))
-		return;
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	if (*props & PROP_CRITMAX) {
 		if (edata->sensor == ADMTEMP_INT)

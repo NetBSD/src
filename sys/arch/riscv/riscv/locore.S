@@ -1,5 +1,4 @@
-/* $NetBSD: locore.S,v 1.20 2020/11/08 10:08:28 skrll Exp $ */
-
+/* $NetBSD: locore.S,v 1.13 2020/10/31 15:18:09 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +38,15 @@ ENTRY_NP(start)
 	// We get loaded and starting running at or near 0, not where we
 	// should be. We need to construct an initial PDETAB
 
+#ifdef _LP64
+	li	t0, SR_U64|SR_S64
+	li	t1, SR_IM|SR_VM|SR_EI
+	csrs	sstatus, t0
+#else
+	li	t1, SR_IM|SR_VM|SR_U64|SR_S64|R_EI
+#endif
+	csrc	sstatus, t1
+
 	li	s11, VM_MAX_KERNEL_ADDRESS
 	li	s10, PAGE_SIZE
 	li	s9, USPACE
@@ -60,14 +68,14 @@ ENTRY_NP(start)
 
 	add	s1, s1, s10		// PAGE_SIZE
 	addi	s1, s1, -1		//   -1 == PAGE_MASK
-	neg	a1, s10			// -PAGE_SIZE
+	neg	a1, a0			// -PAGE_SIZE
 	and	s1, s1, a1		// s1 is page aligned end of kernel
 					// s1 = uarea
 	add	s2, s1, s9		// s2 = first PDE page
 #ifdef _LP64
 	add	s3, s2, s10		// s3 = second PDE page (RV64 only)
 #else
-	mv	s3, s2
+	mv	s3, 22
 #endif
 	add	s4, s3, s10		// s4 = first kernel PTE page
 	add	s5, s1, s9		// s5 = kernel_end
@@ -77,7 +85,7 @@ ENTRY_NP(start)
 	// As a temporary hack, word 0 contains the amount of memory in MB
 	INT_L	a7, (zero)		// load memory size
 	slli	a7, a7, (20-PGSHIFT)	// convert MB to pages
-	PTR_LA	t0, physmem
+.L01:	PTR_LA	t0, physmem
 	INT_S	a7, (t0)		// store it in physmem
 
 	li	t4, PTE_V | PTE_SX | PTE_SW | PTE_SR | PTE_G
@@ -118,6 +126,10 @@ ENTRY_NP(start)
 	addi	a7, a7, -1		// count down segment
 	bgtz	a6, .Lfill		// loop if more
 #endif
+
+	csrw	sptbr, s1		// set the page table base
+	li	t0, SR_VM
+	csrs	sstatus, t0		// Enable VM
 
 	// We should have a VM so let's start using our real addresses
 	lui	t0, %hi(.Lmmu_on)	// load hi part of absolute address
@@ -173,7 +185,7 @@ ENTRY_NP(cpu_switchto)
 
 	REG_S	sp, L_MD_KTF(a0)	// record trapframe pointer
 
-	csrrci	t0, sstatus, SR_SIE	// # disable interrupts
+	csrrci	t0, sstatus, SR_EI	// # disable interrupts
 
 	mv	tp, a1			// # put the new lwp in thread pointer
 
@@ -262,20 +274,28 @@ ENTRY_NP(cpu_fast_switchto)
 	mv	s0, tp			// remember curlwp
 	mv	s1, sp			// remember kernel stack
 
-	csrrci	t0, sstatus, SR_SIE	// disable interrupts
+#if 0
+	csrrci	t0, sstatus, SR_EI	// disable interrupts
+#endif
 	PTR_L	t1, L_CPU(tp)		// get curcpu()
 
 	PTR_S	sp, L_MD_KTF(tp)	// save trapframe ptr in oldlwp
 	mv	tp, a0			// set thread pointer to newlwp
 	PTR_S	tp, CI_CURLWP(t1)	// update curlwp
 	PTR_L	sp, L_MD_KTF(tp)	// switch to its stack
+#if 0
 	csrw	sstatus, t0		// reenable interrupts
+#endif
 	call	_C_LABEL(softint_dispatch)
-	csrrci	t0, sstatus, SR_SIE	// disable interrupts
+#if 0
+	csrrci	t0, sstatus, SR_EI	// disable interrupts
+#endif
 	PTR_L	t1, L_CPU(tp)		// get curcpu() again
 	mv	tp, s0			// return to pinned lwp
 	PTR_S	tp, CI_CURLWP(t1)	// restore curlwp
+#if 0
 	csrw	sstatus, t0		// reeanble interrupts
+#endif
 	mv	sp, s1			// restore stack pointer
 
 	REG_L	ra, (TF_RA + CALLFRAME_RA)(sp)	// get return address
@@ -358,9 +378,9 @@ ENTRY_NP(cpu_exception_handler)
 
 	bltz	a3, intr_handler	// MSB is set if interrupt
 
-	// stval is only relavent for non-interrupts
-	csrr	a4, stval		// get stval
-	REG_S	a4, TF_TVAL(sp)
+	// badaddr is only relavent for non-interrupts
+	csrr	a4, sbadaddr		// get badaddr
+	REG_S	a4, TF_BADADDR(sp)
 
 	beqz	t1, trap_user		// this was a user trap
 	// This was a kernel exception
@@ -370,7 +390,7 @@ exception_kernexit:
 	// trap or interrupt).  Simply return the volatile registers and the
 	// exception PC and status, load the saved SP from the trapframe, and
 	// return from the exception
-	csrrci	zero, sstatus, SR_SIE	// disable interrupts
+	csrrci	zero, sstatus, SR_EI	// disable interrupts
 
 	REG_L	ra, TF_RA(sp)		// restore return address
 	REG_L	gp, TF_GP(sp)		// restore gp
@@ -413,7 +433,7 @@ trap_user:
 	REG_S	s10, TF_S10(sp)		// only save from userland
 	REG_S	s11, TF_S11(sp)		// only save from userland
 
-	csrsi	sstatus, SR_SIE		// reenable interrupts
+	csrsi	sstatus, SR_EI		// reenable interrupts
 
 	li	t0, CAUSE_SYSCALL	// let's see if this was a syscall
 	beq	a3, t0, trap_syscall	//   yes it was
@@ -422,7 +442,7 @@ trap_user:
 _C_LABEL(exception_userexit):
 	INT_L	t0, L_MD_ASTPENDING(tp)	// ast pending?
 	bnez	t0, trap_doast		//   yes, handle it.
-	csrrci	zero, sstatus, SR_SIE	// disable interrupts
+	csrrci	zero, sstatus, SR_EI	// disable interrupts
 	csrw	sscratch, tp		// show we are coming from userland
 	REG_L	tp, TF_TP(sp)		// only restore from userland
 	REG_L	s0, TF_S0(sp)		// only restore from userland
@@ -440,7 +460,7 @@ _C_LABEL(exception_userexit):
 	j	exception_kernexit
 
 trap_syscall:
-	PTR_LA	ra, exception_userexit
+.L0:	PTR_L	ra, exception_userexit
 	PTR_L	t0, L_PROC(tp)		// get proc struct
 	PTR_L	t0, P_MD_SYSCALL(t0)	// get syscall address from proc
 	jr	t0			// and jump to it

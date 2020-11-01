@@ -1,8 +1,0 @@
-include window
-call3 OK 0 0 wattr_get $win1
-call OK wattr_set $win1 ($REVERSE | $BOLD) 2
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD) 2 wattr_get $win1
-call 1 wunderscore $win1
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD | $UNDERSCORE) 2 wattr_get $win1
-call 1 wunderend $win1
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD) 2 wattr_get $win1

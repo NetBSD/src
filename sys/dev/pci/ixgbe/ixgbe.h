@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.73 2020/11/19 02:23:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.71 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -331,8 +331,8 @@ struct ix_queue {
 	struct evcnt     irqs;		/* Hardware interrupt */
 	struct evcnt     handleq;	/* software_interrupt */
 	struct evcnt     req;		/* deferred */
-	char             namebuf[32];	/* Name for sysctl */
-	char             evnamebuf[32];	/* Name for evcnt */
+	char             namebuf[32];
+	char             evnamebuf[32];
 
 	/* Lock for disabled_count and this queue's EIMS/EIMC bit */
 	kmutex_t         dc_mtx;
@@ -523,12 +523,6 @@ struct adapter {
 	struct work		admin_wc;
 	u_int			admin_pending;
 	volatile u32		task_requests;
-	kmutex_t		admin_mtx; /* lock for admin_pending, task_request */
-					   /*
-					    * Don't acquire this mutex while
-					    * holding rx_mtx or tx_mtx, and
-					    * vice versa.
-					    */
 
 	bool			txrx_use_workqueue;
 

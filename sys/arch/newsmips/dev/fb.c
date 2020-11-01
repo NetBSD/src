@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.27 2020/11/21 17:54:47 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.26 2014/01/31 15:43:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.27 2020/11/21 17:54:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.26 2014/01/31 15:43:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -146,7 +146,8 @@ fb_attach(device_t parent, device_t self, void *aux)
 		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_nscreens = 1;
 	} else {
-		dc = kmem_zalloc(sizeof(struct fb_devconfig), KM_SLEEP);
+		dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 
 		dc->dc_fbbase = NWB253_VRAM;
 		fb_common_init(dc);

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.30 2020/12/11 18:03:33 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.28 2020/10/22 07:31:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.30 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.28 2020/10/22 07:31:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.30 2020/12/11 18:03:33 skrll Exp $"
 #include <aarch64/armreg.h>
 #include <aarch64/locore.h>
 #include <aarch64/pmap.h>
-
-#include <arm/cpufunc.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
@@ -1052,8 +1050,8 @@ kdb_trap(int type, struct trapframe *tf)
 		if ((ncpu > 1) && (db_newcpu != NULL)) {
 			db_onproc = db_newcpu;
 			db_newcpu = NULL;
-			dsb(ishst);
-			sev();
+			membar_producer();
+			__asm __volatile ("sev; sev; sev");
 			continue;	/* redo DDB on new cpu */
 		}
 #endif /* MULTIPROCESSOR */
@@ -1064,8 +1062,8 @@ kdb_trap(int type, struct trapframe *tf)
 #ifdef MULTIPROCESSOR
 	if (ncpu > 1) {
 		db_onproc = NULL;
-		dsb(ishst);
-		sev();
+		membar_producer();
+		__asm __volatile ("sev; sev; sev");
 	}
 	db_trigger = NULL;
 	db_readytoswitch[ci->ci_index] = NULL;
