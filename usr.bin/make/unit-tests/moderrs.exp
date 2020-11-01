@@ -1,32 +1,33 @@
 modunkn:
-Expect: Unknown modifier 'Z'
+want: Unknown modifier 'Z'
 make: Unknown modifier 'Z'
 VAR:Z=
 
 modunknV:
-Expect: Unknown modifier 'Z'
+want: Unknown modifier 'Z'
 make: Unknown modifier 'Z'
 VAR:Z=
 
 varterm:
-Expect: Unclosed variable specification for VAR
+want: Unclosed variable specification (expecting '}') for "VAR" (value "Thevariable") modifier S
 make: Unclosed variable specification (expecting '}') for "VAR" (value "Thevariable") modifier S
 VAR:S,V,v,=Thevariable
 
 vartermV:
-Expect: Unclosed variable specification for VAR
+want: Unclosed variable specification after complex modifier (expecting '}') for VAR
 make: Unclosed variable specification after complex modifier (expecting '}') for VAR
 VAR:S,V,v,=Thevariable
 
 modtermV:
-Expect: Unfinished modifier for VAR (',' missing)
+want: Unfinished modifier for VAR (',' missing)
 make: Unfinished modifier for VAR (',' missing)
 VAR:S,V,v=
 
 modloop:
-Expect: 2 errors about missing @ delimiter
+want: Unfinished modifier for UNDEF ('@' missing)
 make: Unfinished modifier for UNDEF ('@' missing)
 
+want: Unfinished modifier for UNDEF ('@' missing)
 make: Unfinished modifier for UNDEF ('@' missing)
 
 1 2 3
@@ -37,18 +38,20 @@ make: Unclosed variable specification (expecting '}') for "UNDEF" (value "1}... 
 1}... 2}... 3}...
 
 modwords:
-Expect: 2 errors about missing ] delimiter
+want: Unfinished modifier for UNDEF (']' missing)
 make: Unfinished modifier for UNDEF (']' missing)
 
+want: Unfinished modifier for UNDEF (']' missing)
 make: Unfinished modifier for UNDEF (']' missing)
 
 13=
 12345=ok
 
 modexclam:
-Expect: 2 errors about missing ! delimiter
+want: Unfinished modifier for VARNAME ('!' missing)
 make: Unfinished modifier for VARNAME ('!' missing)
 
+want: Unfinished modifier for ! ('!' missing)
 make: Unfinished modifier for ! ('!' missing)
 
 
