@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.420 2020/10/31 21:09:22 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.421 2020/11/01 00:24:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.420 2020/10/31 21:09:22 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.421 2020/11/01 00:24:57 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -156,6 +156,7 @@ pid_t myPid;
 int makelevel;
 
 Boolean forceJobs = FALSE;
+static int errors = 0;
 
 extern SearchPath *parseIncPath;
 
@@ -1600,6 +1601,8 @@ main(int argc, char **argv)
 
 	CleanUp();
 
+	if (DEBUG(LINT) && (errors > 0 || Parse_GetFatals() > 0))
+	    return 2;		/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
 }
 
@@ -1825,6 +1828,7 @@ Error(const char *fmt, ...)
 			break;
 		err_file = stderr;
 	}
+	errors++;
 }
 
 /* Produce a Fatal error message, then exit immediately.
@@ -1889,11 +1893,11 @@ DieHorribly(void)
  * The program exits.
  * Errors is the number of errors encountered in Make_Make. */
 void
-Finish(int errors)
+Finish(int errs)
 {
 	if (dieQuietly(NULL, -1))
 		exit(2);
-	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
+	Fatal("%d error%s", errs, errs == 1 ? "" : "s");
 }
 
 /*
