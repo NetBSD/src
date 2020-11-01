@@ -55,4 +55,7 @@ lhs = ":", rhs = "::", op = !=
 make: "varmod-match-escape.mk" line 42: warning: XXX: Oops
 Global:.MAKEFLAGS =  -r -k -d cv -d
 Global:.MAKEFLAGS =  -r -k -d cv -d 0
-exit status 0
+make: "varmod-match-escape.mk" line 67: Dollar followed by nothing
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1

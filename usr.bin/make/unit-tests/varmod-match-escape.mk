@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match-escape.mk,v 1.4 2020/11/01 19:25:23 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.5 2020/11/01 19:49:28 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
@@ -43,6 +43,30 @@ VALUES=		: :: :\:
 .endif
 
 .MAKEFLAGS: -d0
+
+# XXX: As of 2020-11-01, unlike all other variable modifiers, a '$' in the
+# :M and :N modifiers is written as '$$', not as '\$'.  This is confusing,
+# undocumented and hopefully not used in practice.
+.if ${:U\$:M$$} != "\$"
+.  error
+.endif
+
+# XXX: As of 2020-11-01, unlike all other variable modifiers, '\$' is not
+# parsed as an escaped '$'.  Instead, ApplyModifier_Match first scans for
+# the ':' at the end of the modifier, which results in the pattern '\$'.
+# No unescaping takes place since the pattern neither contained '\:' nor
+# '\{' nor '\}'.  But the text is expanded, and a lonely '$' at the end
+# is silently discarded.  The resulting expanded pattern is thus '\', that
+# is a single backslash.
+.if ${:U\$:M\$} != ""
+.  error
+.endif
+
+# In lint mode, the case of a lonely '$' is covered with an error message.
+.MAKEFLAGS: -dL
+.if ${:U\$:M\$} != ""
+.  error
+.endif
 
 all:
 	@:;
