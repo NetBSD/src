@@ -42,9 +42,6 @@ struct input_key_ent {
 };
 
 static const struct input_key_ent input_keys[] = {
-	/* Backspace key. */
-	{ KEYC_BSPACE,		"\177",		0 },
-
 	/* Paste keys. */
 	{ KEYC_PASTE_START,	"\033[200~",	0 },
 	{ KEYC_PASTE_END,	"\033[201~",	0 },
@@ -152,14 +149,14 @@ input_split2(u_int c, u_char *dst)
 }
 
 /* Translate a key code into an output key sequence. */
-void
+int
 input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 {
 	const struct input_key_ent	*ike;
 	u_int				 i;
 	size_t				 dlen;
 	char				*out;
-	key_code			 justkey;
+	key_code			 justkey, newkey;
 	struct utf8_data		 ud;
 
 	log_debug("writing key 0x%llx (%s) to %%%u", key,
@@ -169,14 +166,22 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	if (KEYC_IS_MOUSE(key)) {
 		if (m != NULL && m->wp != -1 && (u_int)m->wp == wp->id)
 			input_key_mouse(wp, m);
-		return;
+		return (0);
 	}
 
 	/* Literal keys go as themselves (can't be more than eight bits). */
 	if (key & KEYC_LITERAL) {
 		ud.data[0] = (u_char)key;
 		bufferevent_write(wp->event, &ud.data[0], 1);
-		return;
+		return (0);
+	}
+
+	/* Is this backspace? */
+	if ((key & KEYC_MASK_KEY) == KEYC_BSPACE) {
+		newkey = options_get_number(global_options, "backspace");
+		if (newkey >= 0x7f)
+			newkey = '\177';
+		key = newkey|(key & KEYC_MASK_MOD);
 	}
 
 	/*
@@ -189,15 +194,15 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 			bufferevent_write(wp->event, "\033", 1);
 		ud.data[0] = justkey;
 		bufferevent_write(wp->event, &ud.data[0], 1);
-		return;
+		return (0);
 	}
 	if (justkey > 0x7f && justkey < KEYC_BASE) {
 		if (utf8_split(justkey, &ud) != UTF8_DONE)
-			return;
+			return (-1);
 		if (key & KEYC_ESCAPE)
 			bufferevent_write(wp->event, "\033", 1);
 		bufferevent_write(wp->event, ud.data, ud.size);
-		return;
+		return (0);
 	}
 
 	/*
@@ -208,7 +213,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 		if ((out = xterm_keys_lookup(key)) != NULL) {
 			bufferevent_write(wp->event, out, strlen(out));
 			free(out);
-			return;
+			return (0);
 		}
 	}
 	key &= ~KEYC_XTERM;
@@ -231,7 +236,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	}
 	if (i == nitems(input_keys)) {
 		log_debug("key 0x%llx missing", key);
-		return;
+		return (-1);
 	}
 	dlen = strlen(ike->data);
 	log_debug("found key 0x%llx: \"%s\"", key, ike->data);
@@ -240,6 +245,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	if (key & KEYC_ESCAPE)
 		bufferevent_write(wp->event, "\033", 1);
 	bufferevent_write(wp->event, ike->data, dlen);
+	return (0);
 }
 
 /* Translate mouse and output. */

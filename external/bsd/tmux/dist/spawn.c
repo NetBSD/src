@@ -78,12 +78,14 @@ spawn_log(const char *from, struct spawn_context *sc)
 struct winlink *
 spawn_window(struct spawn_context *sc, char **cause)
 {
+	struct cmdq_item	*item = sc->item;
+	struct client		*c = item->client;
 	struct session		*s = sc->s;
 	struct window		*w;
 	struct window_pane	*wp;
 	struct winlink		*wl;
 	int			 idx = sc->idx;
-	u_int			 sx, sy;
+	u_int			 sx, sy, xpixel, ypixel;
 
 	spawn_log(__func__, sc);
 
@@ -153,8 +155,9 @@ spawn_window(struct spawn_context *sc, char **cause)
 			xasprintf(cause, "couldn't add window %d", idx);
 			return (NULL);
 		}
-		default_window_size(s, NULL, &sx, &sy, -1);
-		if ((w = window_create(sx, sy)) == NULL) {
+		default_window_size(sc->c, s, NULL, &sx, &sy, &xpixel, &ypixel,
+		    -1);
+		if ((w = window_create(sx, sy, xpixel, ypixel)) == NULL) {
 			winlink_remove(&s->windows, sc->wl);
 			xasprintf(cause, "couldn't create window %d", idx);
 			return (NULL);
@@ -162,6 +165,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 		if (s->curw == NULL)
 			s->curw = sc->wl;
 		sc->wl->session = s;
+		w->latest = sc->c;
 		winlink_set_window(sc->wl, w);
 	} else
 		w = NULL;
@@ -178,7 +182,8 @@ spawn_window(struct spawn_context *sc, char **cause)
 	/* Set the name of the new window. */
 	if (~sc->flags & SPAWN_RESPAWN) {
 		if (sc->name != NULL) {
-			w->name = xstrdup(sc->name);
+			w->name = format_single(item, sc->name, c, s, NULL,
+			    NULL);
 			options_set_number(w->options, "automatic-rename", 0);
 		} else
 			w->name = xstrdup(default_window_name(w));
@@ -214,8 +219,20 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	u_int			  hlimit;
 	struct winsize		  ws;
 	sigset_t		  set, oldset;
+	key_code		  key;
 
 	spawn_log(__func__, sc);
+
+	/*
+	 * Work out the current working directory. If respawning, use
+	 * the pane's stored one unless specified.
+	 */
+	if (sc->cwd != NULL)
+		cwd = format_single(item, sc->cwd, c, item->target.s, NULL, NULL);
+	else if (~sc->flags & SPAWN_RESPAWN)
+		cwd = xstrdup(server_client_get_cwd(c, item->target.s));
+	else
+		cwd = NULL;
 
 	/*
 	 * If we are respawning then get rid of the old process. Otherwise
@@ -227,6 +244,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 			window_pane_index(sc->wp0, &idx);
 			xasprintf(cause, "pane %s:%d.%u still active",
 			    s->name, sc->wl->idx, idx);
+			free(cwd);
 			return (NULL);
 		}
 		if (sc->wp0->fd != -1) {
@@ -247,8 +265,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	}
 
 	/*
-	 * Now we have a pane with nothing running in it ready for the new
-	 * process. Work out the command and arguments.
+	 * Now we have a pane with nothing running in it ready for the new process.
+	 * Work out the command and arguments and store the working directory.
 	 */
 	if (sc->argc == 0 && (~sc->flags & SPAWN_RESPAWN)) {
 		cmd = options_get_string(s->options, "default-command");
@@ -263,6 +281,10 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		argc = sc->argc;
 		argv = sc->argv;
 	}
+	if (cwd != NULL) {
+		free(new_wp->cwd);
+		new_wp->cwd = cwd;
+	}
 
 	/*
 	 * Replace the stored arguments if there are new ones. If not, the
@@ -272,21 +294,6 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		cmd_free_argv(new_wp->argc, new_wp->argv);
 		new_wp->argc = argc;
 		new_wp->argv = cmd_copy_argv(argc, argv);
-	}
-
-	/*
-	 * Work out the current working directory. If respawning, use
-	 * the pane's stored one unless specified.
-	 */
-	if (sc->cwd != NULL)
-		cwd = format_single(item, sc->cwd, c, s, NULL, NULL);
-	else if (~sc->flags & SPAWN_RESPAWN)
-		cwd = xstrdup(server_client_get_cwd(c, s));
-	else
-		cwd = NULL;
-	if (cwd != NULL) {
-		free(new_wp->cwd);
-		new_wp->cwd = cwd;
 	}
 
 	/* Create an environment for this pane. */
@@ -334,6 +341,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = screen_size_x(&new_wp->base);
 	ws.ws_row = screen_size_y(&new_wp->base);
+	ws.ws_xpixel = w->xpixel * ws.ws_col;
+	ws.ws_ypixel = w->ypixel * ws.ws_row;
 
 	/* Block signals until fork has completed. */
 	sigfillset(&set);
@@ -375,13 +384,17 @@ spawn_pane(struct spawn_context *sc, char **cause)
 
 	/*
 	 * Update terminal escape characters from the session if available and
-	 * force VERASE to tmux's \177.
+	 * force VERASE to tmux's backspace.
 	 */
 	if (tcgetattr(STDIN_FILENO, &now) != 0)
 		_exit(1);
 	if (s->tio != NULL)
 		memcpy(now.c_cc, s->tio->c_cc, sizeof now.c_cc);
-	now.c_cc[VERASE] = '\177';
+	key = options_get_number(global_options, "backspace");
+	if (key >= 0x7f)
+		now.c_cc[VERASE] = '\177';
+	else
+		now.c_cc[VERASE] = key;
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &now) != 0)
 		_exit(1);
 
@@ -424,6 +437,15 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	_exit(1);
 
 complete:
+#ifdef HAVE_UTEMPTER
+	if (~new_wp->flags & PANE_EMPTY) {
+		xasprintf(&cp, "tmux(%lu).%%%u", (long)getpid(), new_wp->id);
+		utempter_add_record(new_wp->fd, cp);
+		kill(getpid(), SIGCHLD);
+		free(cp);
+	}
+#endif
+
 	new_wp->pipe_off = 0;
 	new_wp->flags &= ~PANE_EXITED;
 

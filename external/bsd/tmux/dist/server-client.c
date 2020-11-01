@@ -42,11 +42,18 @@ static void	server_client_set_title(struct client *);
 static void	server_client_reset_state(struct client *);
 static int	server_client_assume_paste(struct session *);
 static void	server_client_clear_overlay(struct client *);
+static void	server_client_resize_event(int, short, void *);
 
 static void	server_client_dispatch(struct imsg *, void *);
 static void	server_client_dispatch_command(struct client *, struct imsg *);
 static void	server_client_dispatch_identify(struct client *, struct imsg *);
 static void	server_client_dispatch_shell(struct client *);
+static void	server_client_dispatch_write_ready(struct client *,
+		    struct imsg *);
+static void	server_client_dispatch_read_data(struct client *,
+		    struct imsg *);
+static void	server_client_dispatch_read_done(struct client *,
+		    struct imsg *);
 
 /* Number of attached clients. */
 u_int
@@ -194,16 +201,6 @@ server_client_create(int fd)
 
 	TAILQ_INIT(&c->queue);
 
-	c->stdin_data = evbuffer_new();
-	if (c->stdin_data == NULL)
-		fatalx("out of memory");
-	c->stdout_data = evbuffer_new();
-	if (c->stdout_data == NULL)
-		fatalx("out of memory");
-	c->stderr_data = evbuffer_new();
-	if (c->stderr_data == NULL)
-		fatalx("out of memory");
-
 	c->tty.fd = -1;
 	c->title = NULL;
 
@@ -221,6 +218,8 @@ server_client_create(int fd)
 	c->prompt_string = NULL;
 	c->prompt_buffer = NULL;
 	c->prompt_index = 0;
+
+	RB_INIT(&c->files);
 
 	c->flags |= CLIENT_FOCUSED;
 
@@ -263,6 +262,7 @@ void
 server_client_lost(struct client *c)
 {
 	struct message_entry	*msg, *msg1;
+	struct client_file	*cf;
 
 	c->flags |= CLIENT_DEAD;
 
@@ -270,8 +270,10 @@ server_client_lost(struct client *c)
 	status_prompt_clear(c);
 	status_message_clear(c);
 
-	if (c->stdin_callback != NULL)
-		c->stdin_callback(c, 1, c->stdin_callback_data);
+	RB_FOREACH(cf, client_files, &c->files) {
+		cf->error = EINTR;
+		file_fire_done(cf);
+	}
 
 	TAILQ_REMOVE(&clients, c, entry);
 	log_debug("lost client %p", c);
@@ -284,11 +286,6 @@ server_client_lost(struct client *c)
 		tty_free(&c->tty);
 	free(c->ttyname);
 	free(c->term);
-
-	evbuffer_free(c->stdin_data);
-	evbuffer_free(c->stdout_data);
-	if (c->stderr_data != c->stdout_data)
-		evbuffer_free(c->stderr_data);
 
 	status_free(c);
 
@@ -540,7 +537,8 @@ have_event:
 				where = STATUS_RIGHT;
 				break;
 			case STYLE_RANGE_WINDOW:
-				wl = winlink_find_by_index(&s->windows, sr->argument);
+				wl = winlink_find_by_index(&s->windows,
+				    sr->argument);
 				if (wl == NULL)
 					return (KEYC_UNKNOWN);
 				m->w = wl->window->id;
@@ -662,8 +660,7 @@ have_event:
 			break;
 		}
 		c->tty.mouse_drag_flag = 0;
-
-		return (key);
+		goto out;
 	}
 
 	/* Convert to a key binding. */
@@ -958,6 +955,7 @@ have_event:
 	if (key == KEYC_UNKNOWN)
 		return (KEYC_UNKNOWN);
 
+out:
 	/* Apply modifiers if any. */
 	if (b & MOUSE_MASK_META)
 		key |= KEYC_ESCAPE;
@@ -966,6 +964,8 @@ have_event:
 	if (b & MOUSE_MASK_SHIFT)
 		key |= KEYC_SHIFT;
 
+	if (log_get_level() != 0)
+		log_debug("mouse key is %s", key_string_lookup_key (key));
 	return (key);
 }
 
@@ -993,6 +993,24 @@ server_client_assume_paste(struct session *s)
 	return (0);
 }
 
+/* Has the latest client changed? */
+static void
+server_client_update_latest(struct client *c)
+{
+	struct window	*w;
+
+	if (c->session == NULL)
+		return;
+	w = c->session->curw->window;
+
+	if (w->latest == c)
+		return;
+	w->latest = c;
+
+	if (options_get_number(w->options, "window-size") == WINDOW_SIZE_LATEST)
+		recalculate_size(w);
+}
+
 /*
  * Handle data key input from client. This owns and can modify the key event it
  * is given and is responsible for freeing it.
@@ -1016,7 +1034,7 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 	key_code			 key0;
 
 	/* Check the client is good to accept input. */
-	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		goto out;
 	wl = s->curw;
 
@@ -1041,7 +1059,7 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 		 * Mouse drag is in progress, so fire the callback (now that
 		 * the mouse event is valid).
 		 */
-		if (key == KEYC_DRAGGING) {
+		if ((key & KEYC_MASK_KEY) == KEYC_DRAGGING) {
 			c->tty.mouse_drag_update(c, m);
 			goto out;
 		}
@@ -1189,6 +1207,8 @@ forward_key:
 		window_pane_key(wp, c, s, wl, key, m);
 
 out:
+	if (s != NULL)
+		server_client_update_latest(c);
 	free(event);
 	return (CMD_RETURN_NORMAL);
 }
@@ -1201,7 +1221,7 @@ server_client_handle_key(struct client *c, struct key_event *event)
 	struct cmdq_item	*item;
 
 	/* Check the client is good to accept input. */
-	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		return (0);
 
 	/*
@@ -1245,7 +1265,7 @@ server_client_loop(void)
 	struct window_pane	*wp;
 	struct winlink		*wl;
 	struct session		*s;
-	int			 focus;
+	int			 focus, attached, resize;
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		server_client_check_exit(c);
@@ -1258,19 +1278,33 @@ server_client_loop(void)
 	/*
 	 * Any windows will have been redrawn as part of clients, so clear
 	 * their flags now. Also check pane focus and resize.
+	 *
+	 * As an optimization, panes in windows that are in an attached session
+	 * but not the current window are not resized (this reduces the amount
+	 * of work needed when, for example, resizing an X terminal a
+	 * lot). Windows in no attached session are resized immediately since
+	 * that is likely to have come from a command like split-window and be
+	 * what the user wanted.
 	 */
 	focus = options_get_number(global_options, "focus-events");
 	RB_FOREACH(w, windows, &windows) {
+		attached = resize = 0;
 		TAILQ_FOREACH(wl, &w->winlinks, wentry) {
 			s = wl->session;
-			if (s->attached != 0 && s->curw == wl)
+			if (s->attached != 0)
+				attached = 1;
+			if (s->attached != 0 && s->curw == wl) {
+				resize = 1;
 				break;
+			}
 		}
+		if (!attached)
+			resize = 1;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd != -1) {
 				if (focus)
 					server_client_check_focus(wp);
-				if (wl != NULL)
+				if (resize)
 					server_client_check_resize(wp);
 			}
 			wp->flags &= ~PANE_REDRAW;
@@ -1284,7 +1318,6 @@ static int
 server_client_resize_force(struct window_pane *wp)
 {
 	struct timeval	tv = { .tv_usec = 100000 };
-	struct winsize	ws;
 
 	/*
 	 * If we are resizing to the same size as when we entered the loop
@@ -1305,50 +1338,20 @@ server_client_resize_force(struct window_pane *wp)
 	    wp->sy <= 1)
 		return (0);
 
-	memset(&ws, 0, sizeof ws);
-	ws.ws_col = wp->sx;
-	ws.ws_row = wp->sy - 1;
-	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
-#ifdef __sun
-		if (errno != EINVAL && errno != ENXIO)
-#endif
-		fatal("ioctl failed");
 	log_debug("%s: %%%u forcing resize", __func__, wp->id);
+	window_pane_send_resize(wp, -1);
 
 	evtimer_add(&wp->resize_timer, &tv);
 	wp->flags |= PANE_RESIZEFORCE;
 	return (1);
 }
 
-/* Resize timer event. */
+/* Resize a pane. */
 static void
-server_client_resize_event(__unused int fd, __unused short events, void *data)
+server_client_resize_pane(struct window_pane *wp)
 {
-	struct window_pane	*wp = data;
-	struct winsize		 ws;
-
-	evtimer_del(&wp->resize_timer);
-
-	if (!(wp->flags & PANE_RESIZE))
-		return;
-	if (server_client_resize_force(wp))
-		return;
-
-	memset(&ws, 0, sizeof ws);
-	ws.ws_col = wp->sx;
-	ws.ws_row = wp->sy;
-	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
-#ifdef __sun
-		/*
-		 * Some versions of Solaris apparently can return an error when
-		 * resizing; don't know why this happens, can't reproduce on
-		 * other platforms and ignoring it doesn't seem to cause any
-		 * issues.
-		 */
-		if (errno != EINVAL && errno != ENXIO)
-#endif
-		fatal("ioctl failed");
 	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
+	window_pane_send_resize(wp, 0);
 
 	wp->flags &= ~PANE_RESIZE;
 
@@ -1356,35 +1359,55 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 	wp->osy = wp->sy;
 }
 
+/* Start the resize timer. */
+static void
+server_client_start_resize_timer(struct window_pane *wp)
+{
+	struct timeval	tv = { .tv_usec = 250000 };
+
+	if (!evtimer_pending(&wp->resize_timer, NULL))
+		evtimer_add(&wp->resize_timer, &tv);
+}
+
+/* Resize timer event. */
+static void
+server_client_resize_event(__unused int fd, __unused short events, void *data)
+{
+	struct window_pane	*wp = data;
+
+	evtimer_del(&wp->resize_timer);
+
+	if (~wp->flags & PANE_RESIZE)
+		return;
+	log_debug("%s: %%%u timer fired (was%s resized)", __func__, wp->id,
+	    (wp->flags & PANE_RESIZED) ? "" : " not");
+
+	if (wp->saved_grid == NULL && (wp->flags & PANE_RESIZED)) {
+		log_debug("%s: %%%u deferring timer", __func__, wp->id);
+		server_client_start_resize_timer(wp);
+	} else if (!server_client_resize_force(wp)) {
+		log_debug("%s: %%%u resizing pane", __func__, wp->id);
+		server_client_resize_pane(wp);
+	}
+	wp->flags &= ~PANE_RESIZED;
+}
+
 /* Check if pane should be resized. */
 static void
 server_client_check_resize(struct window_pane *wp)
 {
-	struct timeval	 tv = { .tv_usec = 250000 };
-
-	if (!(wp->flags & PANE_RESIZE))
+	if (~wp->flags & PANE_RESIZE)
 		return;
-	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, wp->sy);
 
 	if (!event_initialized(&wp->resize_timer))
 		evtimer_set(&wp->resize_timer, server_client_resize_event, wp);
 
-	/*
-	 * The first resize should happen immediately, so if the timer is not
-	 * running, do it now.
-	 */
-	if (!evtimer_pending(&wp->resize_timer, NULL))
-		server_client_resize_event(-1, 0, wp);
-
-	/*
-	 * If the pane is in the alternate screen, let the timer expire and
-	 * resize to give the application a chance to redraw. If not, keep
-	 * pushing the timer back.
-	 */
-	if (wp->saved_grid != NULL && evtimer_pending(&wp->resize_timer, NULL))
-		return;
-	evtimer_del(&wp->resize_timer);
-	evtimer_add(&wp->resize_timer, &tv);
+	if (!evtimer_pending(&wp->resize_timer, NULL)) {
+		log_debug("%s: %%%u starting timer", __func__, wp->id);
+		server_client_resize_pane(wp);
+		server_client_start_resize_timer(wp);
+	} else
+		log_debug("%s: %%%u timer running", __func__, wp->id);
 }
 
 /* Check whether pane should be focused. */
@@ -1533,17 +1556,17 @@ server_client_click_timer(__unused int fd, __unused short events, void *data)
 static void
 server_client_check_exit(struct client *c)
 {
+	struct client_file	*cf;
+
 	if (~c->flags & CLIENT_EXIT)
 		return;
 	if (c->flags & CLIENT_EXITED)
 		return;
 
-	if (EVBUFFER_LENGTH(c->stdin_data) != 0)
-		return;
-	if (EVBUFFER_LENGTH(c->stdout_data) != 0)
-		return;
-	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
-		return;
+	RB_FOREACH(cf, client_files, &c->files) {
+		if (EVBUFFER_LENGTH(cf->buffer) != 0)
+			return;
+	}
 
 	if (c->flags & CLIENT_ATTACHED)
 		notify_client("client-detached", c);
@@ -1554,7 +1577,7 @@ server_client_check_exit(struct client *c)
 /* Redraw timer callback. */
 static void
 server_client_redraw_timer(__unused int fd, __unused short events,
-    __unused void* data)
+    __unused void *data)
 {
 	log_debug("redraw timer fired");
 }
@@ -1682,11 +1705,9 @@ server_client_set_title(struct client *c)
 static void
 server_client_dispatch(struct imsg *imsg, void *arg)
 {
-	struct client		*c = arg;
-	struct msg_stdin_data	 stdindata;
-	const char		*data;
-	ssize_t			 datalen;
-	struct session		*s;
+	struct client	*c = arg;
+	ssize_t		 datalen;
+	struct session	*s;
 
 	if (c->flags & CLIENT_DEAD)
 		return;
@@ -1696,7 +1717,6 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 		return;
 	}
 
-	data = imsg->data;
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 
 	switch (imsg->hdr.type) {
@@ -1713,27 +1733,13 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 	case MSG_COMMAND:
 		server_client_dispatch_command(c, imsg);
 		break;
-	case MSG_STDIN:
-		if (datalen != sizeof stdindata)
-			fatalx("bad MSG_STDIN size");
-		memcpy(&stdindata, data, sizeof stdindata);
-
-		if (c->stdin_callback == NULL)
-			break;
-		if (stdindata.size <= 0)
-			c->stdin_closed = 1;
-		else {
-			evbuffer_add(c->stdin_data, stdindata.data,
-			    stdindata.size);
-		}
-		c->stdin_callback(c, c->stdin_closed, c->stdin_callback_data);
-		break;
 	case MSG_RESIZE:
 		if (datalen != 0)
 			fatalx("bad MSG_RESIZE size");
 
 		if (c->flags & CLIENT_CONTROL)
 			break;
+		server_client_update_latest(c);
 		server_client_clear_overlay(c);
 		tty_resize(&c->tty);
 		recalculate_sizes();
@@ -1778,6 +1784,15 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 
 		server_client_dispatch_shell(c);
 		break;
+	case MSG_WRITE_READY:
+		server_client_dispatch_write_ready(c, imsg);
+		break;
+	case MSG_READ:
+		server_client_dispatch_read_data(c, imsg);
+		break;
+	case MSG_READ_DONE:
+		server_client_dispatch_read_done(c, imsg);
+		break;
 	}
 }
 
@@ -1796,7 +1811,7 @@ server_client_command_done(struct cmdq_item *item, __unused void *data)
 static void
 server_client_dispatch_command(struct client *c, struct imsg *imsg)
 {
-	struct msg_command_data	  data;
+	struct msg_command	  data;
 	char			 *buf;
 	size_t			  len;
 	int			  argc;
@@ -1940,19 +1955,11 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 #endif
 
 	if (c->flags & CLIENT_CONTROL) {
-		c->stdin_callback = control_callback;
-
-		evbuffer_free(c->stderr_data);
-		c->stderr_data = c->stdout_data;
-
-		if (c->flags & CLIENT_CONTROLCONTROL)
-			evbuffer_add_printf(c->stdout_data, "\033P1000p");
-		proc_send(c->peer, MSG_STDIN, -1, NULL, 0);
-
-		c->tty.fd = -1;
-
 		close(c->fd);
 		c->fd = -1;
+
+		control_start(c);
+		c->tty.fd = -1;
 	} else if (c->fd != -1) {
 		if (tty_init(&c->tty, c, c->fd, c->term) != 0) {
 			close(c->fd);
@@ -1992,91 +1999,69 @@ server_client_dispatch_shell(struct client *c)
 	proc_kill_peer(c->peer);
 }
 
-/* Event callback to push more stdout data if any left. */
+/* Handle write ready message. */
 static void
-server_client_stdout_cb(__unused int fd, __unused short events, void *arg)
+server_client_dispatch_write_ready(struct client *c, struct imsg *imsg)
 {
-	struct client	*c = arg;
+	struct msg_write_ready	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
 
-	if (~c->flags & CLIENT_DEAD)
-		server_client_push_stdout(c);
-	server_client_unref(c);
-}
-
-/* Push stdout to client if possible. */
-void
-server_client_push_stdout(struct client *c)
-{
-	struct msg_stdout_data data;
-	size_t		       sent, left;
-
-	left = EVBUFFER_LENGTH(c->stdout_data);
-	while (left != 0) {
-		sent = left;
-		if (sent > sizeof data.data)
-			sent = sizeof data.data;
-		memcpy(data.data, EVBUFFER_DATA(c->stdout_data), sent);
-		data.size = sent;
-
-		if (proc_send(c->peer, MSG_STDOUT, -1, &data, sizeof data) != 0)
-			break;
-		evbuffer_drain(c->stdout_data, sent);
-
-		left = EVBUFFER_LENGTH(c->stdout_data);
-		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
-		    sent, left);
-	}
-	if (left != 0) {
-		c->references++;
-		event_once(-1, EV_TIMEOUT, server_client_stdout_cb, c, NULL);
-		log_debug("%s: client %p, queued", __func__, c);
-	}
-}
-
-/* Event callback to push more stderr data if any left. */
-static void
-server_client_stderr_cb(__unused int fd, __unused short events, void *arg)
-{
-	struct client	*c = arg;
-
-	if (~c->flags & CLIENT_DEAD)
-		server_client_push_stderr(c);
-	server_client_unref(c);
-}
-
-/* Push stderr to client if possible. */
-void
-server_client_push_stderr(struct client *c)
-{
-	struct msg_stderr_data data;
-	size_t		       sent, left;
-
-	if (c->stderr_data == c->stdout_data) {
-		server_client_push_stdout(c);
+	if (msglen != sizeof *msg)
+		fatalx("bad MSG_WRITE_READY size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
 		return;
-	}
+	if (msg->error != 0) {
+		cf->error = msg->error;
+		file_fire_done(cf);
+	} else
+		file_push(cf);
+}
 
-	left = EVBUFFER_LENGTH(c->stderr_data);
-	while (left != 0) {
-		sent = left;
-		if (sent > sizeof data.data)
-			sent = sizeof data.data;
-		memcpy(data.data, EVBUFFER_DATA(c->stderr_data), sent);
-		data.size = sent;
+/* Handle read data message. */
+static void
+server_client_dispatch_read_data(struct client *c, struct imsg *imsg)
+{
+	struct msg_read_data	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
+	void			*bdata = msg + 1;
+	size_t			 bsize = msglen - sizeof *msg;
 
-		if (proc_send(c->peer, MSG_STDERR, -1, &data, sizeof data) != 0)
-			break;
-		evbuffer_drain(c->stderr_data, sent);
+	if (msglen < sizeof *msg)
+		fatalx("bad MSG_READ_DATA size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
+		return;
 
-		left = EVBUFFER_LENGTH(c->stderr_data);
-		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
-		    sent, left);
+	log_debug("%s: file %d read %zu bytes", c->name, cf->stream, bsize);
+	if (cf->error == 0) {
+		if (evbuffer_add(cf->buffer, bdata, bsize) != 0) {
+			cf->error = ENOMEM;
+			file_fire_done(cf);
+		} else
+			file_fire_read(cf);
 	}
-	if (left != 0) {
-		c->references++;
-		event_once(-1, EV_TIMEOUT, server_client_stderr_cb, c, NULL);
-		log_debug("%s: client %p, queued", __func__, c);
-	}
+}
+
+/* Handle read done message. */
+static void
+server_client_dispatch_read_done(struct client *c, struct imsg *imsg)
+{
+	struct msg_read_done	*msg = imsg->data;
+	size_t			 msglen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	struct client_file	 find, *cf;
+
+	if (msglen != sizeof *msg)
+		fatalx("bad MSG_READ_DONE size");
+	find.stream = msg->stream;
+	if ((cf = RB_FIND(client_files, &c->files, &find)) == NULL)
+		return;
+
+	log_debug("%s: file %d read done", c->name, cf->stream);
+	cf->error = msg->error;
+	file_fire_done(cf);
 }
 
 /* Add to client message log. */
@@ -2127,20 +2112,4 @@ server_client_get_cwd(struct client *c, struct session *s)
 	if ((home = find_home()) != NULL)
 		return (home);
 	return ("/");
-}
-
-/* Resolve an absolute path or relative to client working directory. */
-char *
-server_client_get_path(struct client *c, const char *file)
-{
-	char	*path, resolved[PATH_MAX];
-
-	if (*file == '/')
-		path = xstrdup(file);
-	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c, NULL), file);
-	if (realpath(path, resolved) == NULL)
-		return (path);
-	free(path);
-	return (xstrdup(resolved));
 }

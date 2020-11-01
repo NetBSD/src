@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2020/01/06 21:03:24 christos Exp $
+# $NetBSD: Makefile,v 1.25 2020/11/01 15:16:05 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -85,6 +85,7 @@ colour.c \
 control-notify.c \
 control.c \
 environ.c \
+file.c \
 format.c \
 format-draw.c \
 grid-view.c \
@@ -160,13 +161,11 @@ CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
 -DHAVE_BITSTRING_H=1 \
+-DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
 -DHAVE_CLOSEFROM=1 \
 -DHAVE_CURSES_H=1 \
 -DHAVE_DAEMON=1 \
--DHAVE_DECL_OPTARG=1 \
--DHAVE_DECL_OPTIND=1 \
--DHAVE_DECL_OPTRESET=1 \
 -DHAVE_DIRENT_H=1 \
 -DHAVE_FCNTL_CLOSEM=1 \
 -DHAVE_FCNTL_H=1 \
@@ -209,13 +208,13 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.0a\" \
+-DPACKAGE_STRING=\"tmux\ 3.1c\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.0a\" \
+-DPACKAGE_VERSION=\"3.1c\" \
 -DSTDC_HEADERS=1 \
--DTMUX_CONF="\"/etc/tmux.conf\"" \
--DVERSION=\"3.0a\" \
+-DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
+-DTMUX_VERSION=\"3.1c\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_OPENBSD_SOURCE \

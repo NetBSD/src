@@ -306,12 +306,17 @@ window_update_activity(struct window *w)
 }
 
 struct window *
-window_create(u_int sx, u_int sy)
+window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 {
 	struct window	*w;
 
+	if (xpixel == 0)
+		xpixel = DEFAULT_XPIXEL;
+	if (ypixel == 0)
+		ypixel = DEFAULT_YPIXEL;
+
 	w = xcalloc(1, sizeof *w);
-	w->name = NULL;
+	w->name = xstrdup("");
 	w->flags = 0;
 
 	TAILQ_INIT(&w->panes);
@@ -322,6 +327,8 @@ window_create(u_int sx, u_int sy)
 
 	w->sx = sx;
 	w->sy = sy;
+	w->xpixel = xpixel;
+	w->ypixel = ypixel;
 
 	w->options = options_create(global_w_options);
 
@@ -408,11 +415,49 @@ window_set_name(struct window *w, const char *new_name)
 }
 
 void
-window_resize(struct window *w, u_int sx, u_int sy)
+window_resize(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
 {
-	log_debug("%s: @%u resize %ux%u", __func__, w->id, sx, sy);
+	if (xpixel == 0)
+		xpixel = DEFAULT_XPIXEL;
+	if (ypixel == 0)
+		ypixel = DEFAULT_YPIXEL;
+
+	log_debug("%s: @%u resize %ux%u (%ux%u)", __func__, w->id, sx, sy,
+	    xpixel == -1 ? w->xpixel : (u_int)xpixel,
+	    ypixel == -1 ? w->ypixel : (u_int)ypixel);
 	w->sx = sx;
 	w->sy = sy;
+	if (xpixel != -1)
+		w->xpixel = xpixel;
+	if (ypixel != -1)
+		w->ypixel = ypixel;
+}
+
+void
+window_pane_send_resize(struct window_pane *wp, int yadjust)
+{
+	struct window	*w = wp->window;
+	struct winsize	 ws;
+
+	if (wp->fd == -1)
+		return;
+
+	memset(&ws, 0, sizeof ws);
+	ws.ws_col = wp->sx;
+	ws.ws_row = wp->sy + yadjust;
+	ws.ws_xpixel = w->xpixel * ws.ws_col;
+	ws.ws_ypixel = w->ypixel * ws.ws_row;
+	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+#ifdef __sun
+		/*
+		 * Some versions of Solaris apparently can return an error when
+		 * resizing; don't know why this happens, can't reproduce on
+		 * other platforms and ignoring it doesn't seem to cause any
+		 * issues.
+		 */
+		if (errno != EINVAL && errno != ENXIO)
+#endif
+		fatal("ioctl failed");
 }
 
 int
@@ -503,31 +548,38 @@ window_get_active_at(struct window *w, u_int x, u_int y)
 struct window_pane *
 window_find_string(struct window *w, const char *s)
 {
-	u_int	x, y;
+	u_int	x, y, top = 0, bottom = w->sy - 1;
+	int	status;
 
 	x = w->sx / 2;
 	y = w->sy / 2;
 
+	status = options_get_number(w->options, "pane-border-status");
+	if (status == PANE_STATUS_TOP)
+		top++;
+	else if (status == PANE_STATUS_BOTTOM)
+		bottom--;
+
 	if (strcasecmp(s, "top") == 0)
-		y = 0;
+		y = top;
 	else if (strcasecmp(s, "bottom") == 0)
-		y = w->sy - 1;
+		y = bottom;
 	else if (strcasecmp(s, "left") == 0)
 		x = 0;
 	else if (strcasecmp(s, "right") == 0)
 		x = w->sx - 1;
 	else if (strcasecmp(s, "top-left") == 0) {
 		x = 0;
-		y = 0;
+		y = top;
 	} else if (strcasecmp(s, "top-right") == 0) {
 		x = w->sx - 1;
-		y = 0;
+		y = top;
 	} else if (strcasecmp(s, "bottom-left") == 0) {
 		x = 0;
-		y = w->sy - 1;
+		y = bottom;
 	} else if (strcasecmp(s, "bottom-right") == 0) {
 		x = w->sx - 1;
-		y = w->sy - 1;
+		y = bottom;
 	} else
 		return (NULL);
 
@@ -582,6 +634,28 @@ window_unzoom(struct window *w)
 	layout_fix_panes(w);
 	notify_window("window-layout-changed", w);
 
+	return (0);
+}
+
+int
+window_push_zoom(struct window *w, int flag)
+{
+	log_debug("%s: @%u %d", __func__, w->id,
+	    flag && (w->flags & WINDOW_ZOOMED));
+	if (flag && (w->flags & WINDOW_ZOOMED))
+		w->flags |= WINDOW_WASZOOMED;
+	else
+		w->flags &= ~WINDOW_WASZOOMED;
+	return (window_unzoom(w) == 0);
+}
+
+int
+window_pop_zoom(struct window *w)
+{
+	log_debug("%s: @%u %d", __func__, w->id,
+	    !!(w->flags & WINDOW_WASZOOMED));
+	if (w->flags & WINDOW_WASZOOMED)
+		return (window_zoom(w->active) == 0);
 	return (0);
 }
 
@@ -933,7 +1007,7 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (wme != NULL && wme->mode->resize != NULL)
 		wme->mode->resize(wme, sx, sy);
 
-	wp->flags |= PANE_RESIZE;
+	wp->flags |= (PANE_RESIZE|PANE_RESIZED);
 }
 
 /*
@@ -1173,7 +1247,7 @@ window_pane_reset_mode_all(struct window_pane *wp)
 		window_pane_reset_mode(wp);
 }
 
-void
+int
 window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
     struct winlink *wl, key_code key, struct mouse_event *m)
 {
@@ -1181,23 +1255,24 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 	struct window_pane		*wp2;
 
 	if (KEYC_IS_MOUSE(key) && m == NULL)
-		return;
+		return (-1);
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL) {
 		wp->modelast = time(NULL);
 		if (wme->mode->key != NULL)
 			wme->mode->key(wme, c, s, wl, (key & ~KEYC_XTERM), m);
-		return;
+		return (0);
 	}
 
 	if (wp->fd == -1 || wp->flags & PANE_INPUTOFF)
-		return;
+		return (0);
 
-	input_key(wp, key, m);
+	if (input_key(wp, key, m) != 0)
+		return (-1);
 
 	if (KEYC_IS_MOUSE(key))
-		return;
+		return (0);
 	if (options_get_number(wp->window->options, "synchronize-panes")) {
 		TAILQ_FOREACH(wp2, &wp->window->panes, entry) {
 			if (wp2 != wp &&
@@ -1208,6 +1283,7 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 				input_key(wp2, key, NULL);
 		}
 	}
+	return (0);
 }
 
 int
@@ -1542,31 +1618,28 @@ winlink_shuffle_up(struct session *s, struct winlink *wl)
 }
 
 static void
-window_pane_input_callback(struct client *c, int closed, void *data)
+window_pane_input_callback(struct client *c, __unused const char *path,
+    int error, int closed, struct evbuffer *buffer, void *data)
 {
 	struct window_pane_input_data	*cdata = data;
 	struct window_pane		*wp;
-	struct evbuffer			*evb = c->stdin_data;
-	u_char				*buf = EVBUFFER_DATA(evb);
-	size_t				 len = EVBUFFER_LENGTH(evb);
+	u_char				*buf = EVBUFFER_DATA(buffer);
+	size_t				 len = EVBUFFER_LENGTH(buffer);
 
 	wp = window_pane_find_by_id(cdata->wp);
-	if (wp == NULL || closed || c->flags & CLIENT_DEAD) {
+	if (wp == NULL || closed || error != 0 || c->flags & CLIENT_DEAD) {
 		if (wp == NULL)
 			c->flags |= CLIENT_EXIT;
-		evbuffer_drain(evb, len);
 
-		c->stdin_callback = NULL;
-		server_client_unref(c);
-
+		evbuffer_drain(buffer, len);
 		cmdq_continue(cdata->item);
-		free(cdata);
 
+		server_client_unref(c);
+		free(cdata);
 		return;
 	}
-
 	input_parse_buffer(wp, buf, len);
-	evbuffer_drain(evb, len);
+	evbuffer_drain(buffer, len);
 }
 
 int
@@ -1585,6 +1658,8 @@ window_pane_start_input(struct window_pane *wp, struct cmdq_item *item,
 	cdata->item = item;
 	cdata->wp = wp->id;
 
-	return (server_set_stdin_callback(c, window_pane_input_callback, cdata,
-	    cause));
+	c->references++;
+	file_read(c, "-", window_pane_input_callback, cdata);
+
+	return (0);
 }
