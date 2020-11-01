@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -55,10 +56,11 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*w = wl->window;
 	struct client		*c = item->client;
 	struct session		*s = item->target.s;
-	const char	       	*errstr;
-	char			*cause;
+	const char	       	*errstr, *p;
+	char			*cause, *copy;
 	u_int			 adjust;
-	int			 x, y;
+	int			 x, y, percentage;
+	size_t			 plen;
 
 	if (args_has(args, 'M')) {
 		if (cmd_mouse_window(&shared->mouse, &s) == NULL)
@@ -91,34 +93,69 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 		}
 	}
 
-	if (args_has(self->args, 'x')) {
-		x = args_strtonum(self->args, 'x', PANE_MINIMUM, INT_MAX,
-		    &cause);
-		if (cause != NULL) {
-			cmdq_error(item, "width %s", cause);
-			free(cause);
-			return (CMD_RETURN_ERROR);
+	if ((p = args_get(args, 'x')) != NULL) {
+		plen = strlen(p);
+		if (p[plen - 1] == '%') {
+			copy = xstrdup(p);
+			copy[plen - 1] = '\0';
+			percentage = strtonum(copy, 0, INT_MAX, &errstr);
+			free(copy);
+			if (errstr != NULL) {
+				cmdq_error(item, "width %s", errstr);
+				return (CMD_RETURN_ERROR);
+			}
+			x = (w->sx * percentage) / 100;
+			if (x < PANE_MINIMUM)
+				x = PANE_MINIMUM;
+			if (x > INT_MAX)
+				x = INT_MAX;
+		} else {
+			x = args_strtonum(args, 'x', PANE_MINIMUM, INT_MAX,
+			    &cause);
+			if (cause != NULL) {
+				cmdq_error(item, "width %s", cause);
+				free(cause);
+				return (CMD_RETURN_ERROR);
+			}
 		}
 		layout_resize_pane_to(wp, LAYOUT_LEFTRIGHT, x);
 	}
-	if (args_has(self->args, 'y')) {
-		y = args_strtonum(self->args, 'y', PANE_MINIMUM, INT_MAX,
-		    &cause);
-		if (cause != NULL) {
-			cmdq_error(item, "height %s", cause);
-			free(cause);
-			return (CMD_RETURN_ERROR);
+	if ((p = args_get(args, 'y')) != NULL) {
+		plen = strlen(p);
+		if (p[plen - 1] == '%') {
+			copy = xstrdup(p);
+			copy[plen - 1] = '\0';
+			percentage = strtonum(copy, 0, INT_MAX, &errstr);
+			free(copy);
+			if (errstr != NULL) {
+				cmdq_error(item, "height %s", errstr);
+				return (CMD_RETURN_ERROR);
+			}
+			y = (w->sy * percentage) / 100;
+			if (y < PANE_MINIMUM)
+				y = PANE_MINIMUM;
+			if (y > INT_MAX)
+				y = INT_MAX;
+		}
+		else {
+			y = args_strtonum(args, 'y', PANE_MINIMUM, INT_MAX,
+			    &cause);
+			if (cause != NULL) {
+				cmdq_error(item, "height %s", cause);
+				free(cause);
+				return (CMD_RETURN_ERROR);
+			}
 		}
 		layout_resize_pane_to(wp, LAYOUT_TOPBOTTOM, y);
 	}
 
-	if (args_has(self->args, 'L'))
+	if (args_has(args, 'L'))
 		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, -adjust, 1);
-	else if (args_has(self->args, 'R'))
+	else if (args_has(args, 'R'))
 		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, adjust, 1);
-	else if (args_has(self->args, 'U'))
+	else if (args_has(args, 'U'))
 		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, -adjust, 1);
-	else if (args_has(self->args, 'D'))
+	else if (args_has(args, 'D'))
 		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, adjust, 1);
 	server_redraw_window(wl->window);
 
@@ -145,14 +182,14 @@ cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 	}
 	w = wl->window;
 
-	y = m->y; x = m->x;
-	if (m->statusat == 0 && y > 0)
-		y--;
+	y = m->y + m->oy; x = m->x + m->ox;
+	if (m->statusat == 0 && y >= m->statuslines)
+		y -= m->statuslines;
 	else if (m->statusat > 0 && y >= (u_int)m->statusat)
 		y = m->statusat - 1;
-	ly = m->ly; lx = m->lx;
-	if (m->statusat == 0 && ly > 0)
-		ly--;
+	ly = m->ly + m->oy; lx = m->lx + m->ox;
+	if (m->statusat == 0 && ly >= m->statuslines)
+		ly -= m->statuslines;
 	else if (m->statusat > 0 && ly >= (u_int)m->statusat)
 		ly = m->statusat - 1;
 

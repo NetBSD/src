@@ -37,8 +37,8 @@ const struct cmd_entry cmd_attach_session_entry = {
 	.name = "attach-session",
 	.alias = "attach",
 
-	.args = { "c:dErt:", 0, 0 },
-	.usage = "[-dEr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
+	.args = { "c:dErt:x", 0, 0 },
+	.usage = "[-dErx] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
 
 	/* -t is special */
 
@@ -48,7 +48,7 @@ const struct cmd_entry cmd_attach_session_entry = {
 
 enum cmd_retval
 cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
-    int rflag, const char *cflag, int Eflag)
+    int xflag, int rflag, const char *cflag, int Eflag)
 {
 	struct cmd_find_state	*current = &item->shared->current;
 	enum cmd_find_type	 type;
@@ -58,6 +58,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 	struct winlink		*wl;
 	struct window_pane	*wp;
 	char			*cause;
+	enum msgtype		 msgtype;
 
 	if (RB_EMPTY(&sessions)) {
 		cmdq_error(item, "no sessions");
@@ -87,7 +88,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 
 	if (wl != NULL) {
 		if (wp != NULL)
-			window_set_active_pane(wp->window, wp);
+			window_set_active_pane(wp->window, wp, 1);
 		session_set_current(s, wl);
 		if (wp != NULL)
 			cmd_find_from_winlink_pane(current, wl, wp, 0);
@@ -102,11 +103,15 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 
 	c->last_session = c->session;
 	if (c->session != NULL) {
-		if (dflag) {
+		if (dflag || xflag) {
+			if (xflag)
+				msgtype = MSG_DETACHKILL;
+			else
+				msgtype = MSG_DETACH;
 			TAILQ_FOREACH(c_loop, &clients, entry) {
 				if (c_loop->session != s || c == c_loop)
 					continue;
-				server_client_detach(c_loop, MSG_DETACH);
+				server_client_detach(c_loop, msgtype);
 			}
 		}
 		if (!Eflag)
@@ -115,12 +120,14 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 		c->session = s;
 		if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 			server_client_set_key_table(c, NULL);
+		tty_update_client_offset(c);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+		s->curw->window->latest = c;
 	} else {
 		if (server_client_open(c, &cause) != 0) {
 			cmdq_error(item, "open terminal failed: %s", cause);
@@ -130,11 +137,15 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 		if (rflag)
 			c->flags |= CLIENT_READONLY;
 
-		if (dflag) {
+		if (dflag || xflag) {
+			if (xflag)
+				msgtype = MSG_DETACHKILL;
+			else
+				msgtype = MSG_DETACH;
 			TAILQ_FOREACH(c_loop, &clients, entry) {
 				if (c_loop->session != s || c == c_loop)
 					continue;
-				server_client_detach(c_loop, MSG_DETACH);
+				server_client_detach(c_loop, msgtype);
 			}
 		}
 		if (!Eflag)
@@ -142,12 +153,14 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 
 		c->session = s;
 		server_client_set_key_table(c, NULL);
+		tty_update_client_offset(c);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+		s->curw->window->latest = c;
 
 		if (~c->flags & CLIENT_CONTROL)
 			proc_send(c->peer, MSG_READY, -1, NULL, 0);
@@ -167,6 +180,6 @@ cmd_attach_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct args	*args = self->args;
 
 	return (cmd_attach_session(item, args_get(args, 't'),
-	    args_has(args, 'd'), args_has(args, 'r'), args_get(args, 'c'),
-	    args_has(args, 'E')));
+	    args_has(args, 'd'), args_has(args, 'x'), args_has(args, 'r'),
+	    args_get(args, 'c'), args_has(args, 'E')));
 }

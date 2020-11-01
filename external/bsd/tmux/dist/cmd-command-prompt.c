@@ -40,8 +40,8 @@ const struct cmd_entry cmd_command_prompt_entry = {
 	.name = "command-prompt",
 	.alias = NULL,
 
-	.args = { "1iI:Np:t:", 0, 1 },
-	.usage = "[-1Ni] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+	.args = { "1kiI:Np:t:", 0, 1 },
+	.usage = "[-1kiN] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
 		 "[template]",
 
 	.flags = 0,
@@ -122,20 +122,11 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->flags |= PROMPT_NUMERIC;
 	else if (args_has(args, 'i'))
 		cdata->flags |= PROMPT_INCREMENTAL;
+	else if (args_has(args, 'k'))
+		cdata->flags |= PROMPT_KEY;
 	status_prompt_set(c, prompt, input, cmd_command_prompt_callback,
 	    cmd_command_prompt_free, cdata, cdata->flags);
 	free(prompt);
-
-	return (CMD_RETURN_NORMAL);
-}
-
-static enum cmd_retval
-cmd_command_prompt_error(struct cmdq_item *item, void *data)
-{
-	char	*error = data;
-
-	cmdq_error(item, "%s", error);
-	free(error);
 
 	return (CMD_RETURN_NORMAL);
 }
@@ -145,10 +136,10 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
     int done)
 {
 	struct cmd_command_prompt_cdata	*cdata = data;
-	struct cmd_list			*cmdlist;
 	struct cmdq_item		*new_item;
-	char				*cause, *new_template, *prompt, *ptr;
+	char				*new_template, *prompt, *ptr;
 	char				*input = NULL;
+	struct cmd_parse_result		*pr;
 
 	if (s == NULL)
 		return (0);
@@ -175,20 +166,22 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
 		return (1);
 	}
 
-	cmdlist = cmd_string_parse(new_template, NULL, 0, &cause);
-	if (cmdlist == NULL) {
-		if (cause != NULL) {
-			new_item = cmdq_get_callback(cmd_command_prompt_error,
-			    cause);
-		} else
-			new_item = NULL;
-	} else {
-		new_item = cmdq_get_command(cmdlist, NULL, NULL, 0);
-		cmd_list_free(cmdlist);
-	}
-
-	if (new_item != NULL)
+	pr = cmd_parse_from_string(new_template, NULL);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		new_item = NULL;
+		break;
+	case CMD_PARSE_ERROR:
+		new_item = cmdq_get_error(pr->error);
+		free(pr->error);
 		cmdq_append(c, new_item);
+		break;
+	case CMD_PARSE_SUCCESS:
+		new_item = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+		cmd_list_free(pr->cmdlist);
+		cmdq_append(c, new_item);
+		break;
+	}
 
 	if (!done)
 		free(new_template);
