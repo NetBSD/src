@@ -159,7 +159,7 @@ key_string_get_modifiers(const char **string)
 key_code
 key_string_lookup_string(const char *string)
 {
-	static const char	*other = "!#()+,-.0123456789:;<=>?'\r\t";
+	static const char	*other = "!#()+,-.0123456789:;<=>'\r\t";
 	key_code		 key;
 	u_int			 u;
 	key_code		 modifiers;
@@ -196,7 +196,7 @@ key_string_lookup_string(const char *string)
 	/* Is this a standard ASCII key? */
 	if (string[1] == '\0' && (u_char)string[0] <= 127) {
 		key = (u_char)string[0];
-		if (key < 32 || key == 127)
+		if (key < 32)
 			return (KEYC_UNKNOWN);
 	} else {
 		/* Try as a UTF-8 key. */
@@ -226,6 +226,8 @@ key_string_lookup_string(const char *string)
 			key -= 64;
 		else if (key == 32)
 			key = 0;
+		else if (key == '?')
+			key = 127;
 		else if (key == 63)
 			key = KEYC_BSPACE;
 		else
@@ -240,49 +242,14 @@ key_string_lookup_string(const char *string)
 const char *
 key_string_lookup_key(key_code key)
 {
-	static char		out[32];
-	char			tmp[8];
-	u_int			i;
-	struct utf8_data	ud;
-	size_t			off;
+	static char		 out[32];
+	char			 tmp[8];
+	const char		*s;
+	u_int			 i;
+	struct utf8_data	 ud;
+	size_t			 off;
 
 	*out = '\0';
-
-	/* Handle no key. */
-	if (key == KEYC_NONE)
-		return ("None");
-
-	/* Handle special keys. */
-	if (key == KEYC_UNKNOWN)
-		return ("Unknown");
-	if (key == KEYC_ANY)
-		return ("Any");
-	if (key == KEYC_FOCUS_IN)
-		return ("FocusIn");
-	if (key == KEYC_FOCUS_OUT)
-		return ("FocusOut");
-	if (key == KEYC_PASTE_START)
-		return ("PasteStart");
-	if (key == KEYC_PASTE_END)
-		return ("PasteEnd");
-	if (key == KEYC_MOUSE)
-		return ("Mouse");
-	if (key == KEYC_DRAGGING)
-		return ("Dragging");
-	if (key == KEYC_MOUSEMOVE_PANE)
-		return ("MouseMovePane");
-	if (key == KEYC_MOUSEMOVE_STATUS)
-		return ("MouseMoveStatus");
-	if (key == KEYC_MOUSEMOVE_STATUS_LEFT)
-		return ("MouseMoveStatusLeft");
-	if (key == KEYC_MOUSEMOVE_STATUS_RIGHT)
-		return ("MouseMoveStatusRight");
-	if (key == KEYC_MOUSEMOVE_BORDER)
-		return ("MouseMoveBorder");
-	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {
-		snprintf(out, sizeof out, "User%u", (u_int)(key - KEYC_USER));
-		return (out);
-	}
 
 	/* Literal keys are themselves. */
 	if (key & KEYC_LITERAL) {
@@ -290,14 +257,9 @@ key_string_lookup_key(key_code key)
 		return (out);
 	}
 
-	/*
-	 * Special case: display C-@ as C-Space. Could do this below in
-	 * the (key >= 0 && key <= 32), but this way we let it be found
-	 * in key_string_table, for the unlikely chance that we might
-	 * change its name.
-	 */
+	/* Display C-@ as C-Space. */
 	if ((key & KEYC_MASK_KEY) == 0)
-	    key = ' ' | KEYC_CTRL | (key & KEYC_MASK_MOD);
+		key = ' ' | KEYC_CTRL | (key & KEYC_MASK_MOD);
 
 	/* Fill in the modifiers. */
 	if (key & KEYC_CTRL)
@@ -307,6 +269,69 @@ key_string_lookup_key(key_code key)
 	if (key & KEYC_SHIFT)
 		strlcat(out, "S-", sizeof out);
 	key &= KEYC_MASK_KEY;
+
+	/* Handle no key. */
+	if (key == KEYC_NONE)
+		return ("None");
+
+	/* Handle special keys. */
+	if (key == KEYC_UNKNOWN) {
+		s = "Unknown";
+		goto append;
+	}
+	if (key == KEYC_ANY) {
+		s = "Any";
+		goto append;
+	}
+	if (key == KEYC_FOCUS_IN) {
+		s = "FocusIn";
+		goto append;
+	}
+	if (key == KEYC_FOCUS_OUT) {
+		s = "FocusOut";
+		goto append;
+	}
+	if (key == KEYC_PASTE_START) {
+		s = "PasteStart";
+		goto append;
+	}
+	if (key == KEYC_PASTE_END) {
+		s = "PasteEnd";
+		goto append;
+	}
+	if (key == KEYC_MOUSE) {
+		s = "Mouse";
+		goto append;
+	}
+	if (key == KEYC_DRAGGING) {
+		s = "Dragging";
+		goto append;
+	}
+	if (key == KEYC_MOUSEMOVE_PANE) {
+		s = "MouseMovePane";
+		goto append;
+	}
+	if (key == KEYC_MOUSEMOVE_STATUS) {
+		s = "MouseMoveStatus";
+		goto append;
+	}
+	if (key == KEYC_MOUSEMOVE_STATUS_LEFT) {
+		s = "MouseMoveStatusLeft";
+		goto append;
+	}
+	if (key == KEYC_MOUSEMOVE_STATUS_RIGHT) {
+		s = "MouseMoveStatusRight";
+		goto append;
+	}
+	if (key == KEYC_MOUSEMOVE_BORDER) {
+		s = "MouseMoveBorder";
+		goto append;
+	}
+	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {
+		snprintf(tmp, sizeof tmp, "User%u", (u_int)(key - KEYC_USER));
+		strlcat(out, tmp, sizeof out);
+		return (out);
+	}
 
 	/* Try the key against the string table. */
 	for (i = 0; i < nitems(key_string_table); i++) {
@@ -329,7 +354,7 @@ key_string_lookup_key(key_code key)
 	}
 
 	/* Invalid keys are errors. */
-	if (key == 127 || key > 255) {
+	if (key > 255) {
 		snprintf(out, sizeof out, "Invalid#%llx", key);
 		return (out);
 	}
@@ -343,9 +368,15 @@ key_string_lookup_key(key_code key)
 	} else if (key >= 32 && key <= 126) {
 		tmp[0] = key;
 		tmp[1] = '\0';
-	} else if (key >= 128)
+	} else if (key == 127)
+		xsnprintf(tmp, sizeof tmp, "C-?");
+	else if (key >= 128)
 		xsnprintf(tmp, sizeof tmp, "\\%llo", key);
 
 	strlcat(out, tmp, sizeof out);
+	return (out);
+
+append:
+	strlcat(out, s, sizeof out);
 	return (out);
 }
