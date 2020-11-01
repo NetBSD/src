@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.9 2020/10/31 11:06:24 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.10 2020/11/01 22:10:57 rillig Exp $
 #
 # Tests for the ${VAR:from=to} variable modifier, which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -193,6 +193,25 @@
 # modifier, and using a :C modifier for the same task looks more complicated
 # in many cases.
 .if ${prefix-middle-suffix:L:prefix-%-suffix=p-%-s} != "p-middle-s"
+.  error
+.endif
+
+# This is not a SysV modifier since the nested variable expression expands
+# to an empty string.  The '=' in it should be irrelevant during parsing.
+# As of 2020-11-01, this seemingly correct modifier leads to a parse error.
+# XXX
+.if ${word203:L:from${:D=}to}
+.  error
+.endif
+
+# XXX: This specially constructed case demonstrates that the SysV modifier
+# lasts longer than expected.  The whole expression initially has the value
+# "fromto}...".  The next modifier is a SysV modifier.  ApplyModifier_SysV
+# parses the modifier as "from${:D=}to", ending at the '}'.  Next, the two
+# parts of the modifier are parsed using ParseModifierPart, which scans
+# differently, properly handling nested variable expressions.  The two parts
+# are now "fromto}..." and "replaced".
+.if "${:Ufromto\}...:from${:D=}to}...=replaced}" != "replaced"
 .  error
 .endif
 
