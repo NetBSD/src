@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.637 2020/11/01 18:48:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.638 2020/11/01 21:28:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.637 2020/11/01 18:48:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.638 2020/11/01 21:28:42 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2949,11 +2949,13 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 
     const char *mod = *pp;
     const char *op = mod + 1;
-    if (!(op[0] == '=' ||
-	  (op[1] == '=' &&
-	   (op[0] == '!' || op[0] == '+' || op[0] == '?'))))
-	return AMR_UNKNOWN;	/* "::<unrecognised>" */
 
+    if (op[0] == '=')
+        goto ok;
+    if ((op[0] == '!' || op[0] == '+' || op[0] == '?') && op[1] == '=')
+	goto ok;
+    return AMR_UNKNOWN;		/* "::<unrecognised>" */
+ok:
 
     if (st->v->name[0] == '\0') {
 	*pp = mod + 1;
