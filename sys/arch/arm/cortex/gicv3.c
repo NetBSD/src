@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.30 2020/11/01 12:13:21 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.31 2020/11/01 14:19:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.30 2020/11/01 12:13:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.31 2020/11/01 14:19:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -842,13 +842,6 @@ gicv3_init(struct gicv3_softc *sc)
 	gicv3_cpu_init(&sc->sc_pic, curcpu());
 	if ((gicd_typer & GICD_TYPER_LPIS) != 0)
 		gicv3_lpi_cpu_init(&sc->sc_lpi, curcpu());
-
-#ifdef __HAVE_PIC_FAST_SOFTINTS
-	intr_establish_xname(SOFTINT_BIO, IPL_SOFTBIO, IST_MPSAFE | IST_EDGE, pic_handle_softint, (void *)SOFTINT_BIO, "softint bio");
-	intr_establish_xname(SOFTINT_CLOCK, IPL_SOFTCLOCK, IST_MPSAFE | IST_EDGE, pic_handle_softint, (void *)SOFTINT_CLOCK, "softint clock");
-	intr_establish_xname(SOFTINT_NET, IPL_SOFTNET, IST_MPSAFE | IST_EDGE, pic_handle_softint, (void *)SOFTINT_NET, "softint net");
-	intr_establish_xname(SOFTINT_SERIAL, IPL_SOFTSERIAL, IST_MPSAFE | IST_EDGE, pic_handle_softint, (void *)SOFTINT_SERIAL, "softint serial");
-#endif
 
 #ifdef MULTIPROCESSOR
 	intr_establish_xname(IPI_AST, IPL_VM, IST_MPSAFE | IST_EDGE, pic_ipi_ast, (void *)-1, "IPI ast");
