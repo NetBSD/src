@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match-escape.mk,v 1.2 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.3 2020/11/01 19:02:22 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
@@ -10,11 +10,11 @@
 # their plain variants '{', '}' and ':'.  In the pattern matching from
 # Str_Match, only \*, \? or \[ would make a noticeable difference.
 SPECIALS=	\: : \\ * \*
-RELEVANT=	yes
+.MAKEFLAGS: -dv
 .if ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
 .  warning unexpected
 .endif
-RELEVANT=	no
+.MAKEFLAGS: -d0
 
 all:
 	@:;
