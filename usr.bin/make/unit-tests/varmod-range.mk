@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.6 2020/11/01 13:55:31 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.7 2020/11/01 14:36:25 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -43,9 +43,13 @@
 #.endif
 
 # The :range modifier requires a number as parameter.
-# As of 2020-11-01, the parser tries to read the 'x' as a number, fails and
-# stops there.  It then tries to parse the next modifier at that point,
-# which fails with the message "Unknown modifier".
+#
+# Until 2020-11-01, the parser tried to read the 'x' as a number, failed and
+# stopped there.  It then tried to parse the next modifier at that point,
+# which failed with the message "Unknown modifier".
+#
+# Since 2020-11-01, the parser issues a more precise "Invalid number" error
+# instead.
 .if "${:U:range=x}Rest" != "Rest"
 .  error
 .else
