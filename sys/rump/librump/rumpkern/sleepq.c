@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.20 2020/04/25 15:42:15 bouyer Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.21 2020/11/01 20:58:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.20 2020/04/25 15:42:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.21 2020/11/01 20:58:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -40,25 +40,20 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.20 2020/04/25 15:42:15 bouyer Exp $");
 #include <rump-sys/kern.h>
 
 syncobj_t sleep_syncobj;
-static kcondvar_t sq_cv;
-
-static int
-sqinit1(void)
-{
-
-	cv_init(&sq_cv, "sleepq");
-
-	return 0;
-}
 
 void
 sleepq_init(sleepq_t *sq)
 {
-	static ONCE_DECL(sqctl);
-
-	RUN_ONCE(&sqctl, sqinit1);
 
 	LIST_INIT(sq);
+	cv_init(&sq->sq_cv, "sleepq");
+}
+
+void
+sleepq_destroy(sleepq_t *sq)
+{
+
+	cv_destroy(&sq->sq_cv);
 }
 
 void
@@ -83,7 +78,7 @@ sleepq_block(int timo, bool catch)
 
 	while (l->l_wchan) {
 		l->l_mutex = mp; /* keep sleepq lock until woken up */
-		error = cv_timedwait(&sq_cv, mp, timo);
+		error = cv_timedwait(&l->l_sleepq->sq_cv, mp, timo);
 		if (error == EWOULDBLOCK || error == EINTR) {
 			if (l->l_wchan) {
 				LIST_REMOVE(l, l_sleepchain);
@@ -118,7 +113,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		}
 	}
 	if (found)
-		cv_broadcast(&sq_cv);
+		cv_broadcast(&sq->sq_cv);
 
 	mutex_spin_exit(mp);
 }
@@ -130,7 +125,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 	l->l_wchan = NULL;
 	l->l_wmesg = NULL;
 	LIST_REMOVE(l, l_sleepchain);
-	cv_broadcast(&sq_cv);
+	cv_broadcast(&l->l_sleepq->sq_cv);
 
 	if (cleanup) {
 		mutex_spin_exit(l->l_mutex);

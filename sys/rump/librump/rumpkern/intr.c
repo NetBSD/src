@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.55 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.56 2020/11/01 20:58:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.56 2020/11/01 20:58:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -464,7 +464,7 @@ rump_softint_run(struct cpu_info *ci)
 
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		if (!TAILQ_EMPTY(&si_lvl[i].si_pending))
-			rumpuser_cv_signal(si_lvl[i].si_cv);
+			rump_schedlock_cv_signal(ci, si_lvl[i].si_cv);
 	}
 }
 
