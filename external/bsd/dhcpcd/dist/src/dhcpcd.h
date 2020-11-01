@@ -199,6 +199,7 @@ struct dhcpcd_ctx {
 	struct passwd *ps_user;	/* struct passwd for privsep user */
 	pid_t ps_root_pid;
 	int ps_root_fd;		/* Privileged Actioneer commands */
+	int ps_log_fd;		/* chroot logging */
 	int ps_data_fd;		/* Data from root spawned processes */
 	struct eloop *ps_eloop;	/* eloop for polling root data */
 	struct ps_process_head ps_processes;	/* List of spawned processes */
