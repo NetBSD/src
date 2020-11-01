@@ -53,7 +53,7 @@ cmd_resize_window_exec(struct cmd *self, struct cmdq_item *item)
 	const char	       	*errstr;
 	char			*cause;
 	u_int			 adjust, sx, sy;
-	int			 xpixel = -1, ypixel = -1;
+	u_int			 xpixel = ~0, ypixel = ~0;
 
 	if (args->argc == 0)
 		adjust = 1;

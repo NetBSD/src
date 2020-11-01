@@ -72,6 +72,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
+	sc.c = c;
 
 	sc.name = args_get(args, 'n');
 	sc.argc = args->argc;
@@ -107,7 +108,8 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = NEW_WINDOW_TEMPLATE;
-		cp = format_single(item, template, c, s, new_wl, NULL);
+		cp = format_single(item, template, c, s, new_wl,
+		    new_wl->window->active);
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}
