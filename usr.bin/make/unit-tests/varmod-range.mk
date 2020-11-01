@@ -1,7 +1,10 @@
-# $NetBSD: varmod-range.mk,v 1.5 2020/11/01 13:10:22 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.6 2020/11/01 13:55:31 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
+#
+# See also:
+#	modword.mk
 
 # The :range modifier generates a sequence of integers, one number per
 # word of the variable expression's value.
