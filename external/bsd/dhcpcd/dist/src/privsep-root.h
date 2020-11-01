@@ -47,6 +47,7 @@ ssize_t ps_root_filemtime(struct dhcpcd_ctx *, const char *, time_t *);
 ssize_t ps_root_readfile(struct dhcpcd_ctx *, const char *, void *, size_t);
 ssize_t ps_root_writefile(struct dhcpcd_ctx *, const char *, mode_t,
     const void *, size_t);
+ssize_t ps_root_logreopen(struct dhcpcd_ctx *);
 ssize_t ps_root_script(struct dhcpcd_ctx *, const void *, size_t);
 int ps_root_getauthrdm(struct dhcpcd_ctx *, uint64_t *);
 #ifdef PRIVSEP_GETIFADDRS
