@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.197.4.3 2020/05/18 19:05:32 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.197.4.4 2020/11/01 17:26:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.197.4.3 2020/05/18 19:05:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.197.4.4 2020/11/01 17:26:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -137,6 +137,13 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 {
 	struct timespec delta, now;
 	int s;
+
+	/*
+	 * The time being set to an unreasonable value will cause
+	 * unreasonable system behaviour.
+	 */
+	if (ts->tv_sec < 0 || ts->tv_sec > (1LL << 36))
+		return (EINVAL);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	s = splclock();
