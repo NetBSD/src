@@ -52,6 +52,7 @@
 #define	PS_AUTH_MONORDM		0x0017
 #define	PS_CTL			0x0018
 #define	PS_CTL_EOF		0x0019
+#define	PS_LOGREOPEN		0x0020
 
 /* BSD Commands */
 #define	PS_IOCTLLINK		0x0101
