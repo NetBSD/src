@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.60 2020/10/26 07:16:41 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.61 2020/11/01 14:42:05 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.60 2020/10/26 07:16:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.61 2020/11/01 14:42:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -197,6 +197,7 @@ intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
 {
 	struct cpu_info * const ci = curcpu();
 	KASSERT(ipi < NIPI);
+	KASSERT(kcp == NULL || kcpuset_countset(kcp) == 1);
 	bool __diagused sent_p = false;
 	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const pic = pic_list[slot];
