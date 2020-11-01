@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.22 2020/11/01 10:53:58 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.23 2020/11/01 10:56:08 rillig Exp $
 #
 # various modifier error tests
 
@@ -28,11 +28,11 @@ all:	mod-sysv-parse
 
 mod-unknown-direct: print-header print-footer
 	@echo 'want: Unknown modifier $'Z$''
-	@echo "VAR:Z=${VAR:Z}"
+	@echo 'VAR:Z=before-${VAR:Z}-after'
 
 mod-unknown-indirect: print-header print-footer
 	@echo 'want: Unknown modifier $'Z$''
-	@echo "VAR:${MOD_UNKN}=${VAR:${MOD_UNKN}}"
+	@echo 'VAR:${MOD_UNKN}=before-${VAR:${MOD_UNKN}:inner}-after'
 
 unclosed-direct: print-header print-footer
 	@echo 'want: Unclosed variable specification (expecting $'}$') for "VAR" (value "Thevariable") modifier S'
@@ -124,7 +124,8 @@ mod-regex-delimiter: print-header print-footer
 # syntactical ambiguity since the :S and :C modifiers are open-ended (see
 # mod-subst-chain).  Luckily the modifier :U does not make sense after :C,
 # therefore this case does not happen in practice.
-# The sub-modifier for the :C modifier would have to be chosen wisely.
+# The sub-modifier for the :S and :C modifiers would have to be chosen
+# wisely, to not create ambiguities while parsing.
 mod-regex-undefined-subexpression: print-header print-footer
 	@echo ${FIB:C,1(.*),one\1,}		# all ok
 	@echo ${FIB:C,1(.*)|2(.*),(\1)+(\2),:Q}	# no match for subexpression

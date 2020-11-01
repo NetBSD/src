@@ -1,12 +1,12 @@
 mod-unknown-direct:
 want: Unknown modifier 'Z'
 make: Unknown modifier 'Z'
-VAR:Z=
+VAR:Z=before--after
 
 mod-unknown-indirect:
 want: Unknown modifier 'Z'
 make: Unknown modifier 'Z'
-VAR:Z=
+VAR:Z=before-inner}-after
 
 unclosed-direct:
 want: Unclosed variable specification (expecting '}') for "VAR" (value "Thevariable") modifier S
