@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.3 2020/08/31 19:58:21 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.4 2020/11/01 11:50:11 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -95,9 +95,29 @@ WORDS=	one two three four five six
 .  warning The separator \012 is not interpreted in octal ASCII.
 .endif
 
+# The octal number can have as many digits as it wants.
+.if ${WORDS:[1..2]:ts\000000000000000000000000012:tu} != "ONE${.newline}TWO"
+.  warning The separator \012 cannot have many leading zeroes.
+.endif
+
+# The value of the separator character must not be outside the value space
+# for an unsigned character though.
+.if ${WORDS:[1..3]:ts\400:tu}
+.  warning The separator \400 is accepted even though it is out of bounds.
+.else
+.  warning The separator \400 is accepted even though it is out of bounds.
+.endif
+
 # The separator can be given as hexadecimal number.
 .if ${WORDS:[1..3]:ts\xa:tu} != "ONE${.newline}TWO${.newline}THREE"
 .  warning The separator \xa is not interpreted in hexadecimal ASCII.
+.endif
+
+# The hexadecimal number must be in the range of an unsigned char.
+.if ${WORDS:[1..3]:ts\x100:tu}
+.  warning The separator \x100 is accepted even though it is out of bounds.
+.else
+.  warning The separator \x100 is accepted even though it is out of bounds.
 .endif
 
 # In the :t modifier, the :t must be followed by any of A, l, s, u.
