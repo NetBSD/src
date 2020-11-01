@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.9 2020/11/01 21:06:22 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.10 2020/11/01 21:09:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,27 +46,24 @@ __RCSID("$NetBSD: trap.c,v 1.9 2020/11/01 21:06:22 skrll Exp $");
 
 #include <riscv/locore.h>
 
-#define	INSTRUCTION_TRAP_MASK	(__BIT(CAUSE_PRIVILEGED_INSTRUCTION) \
-				|__BIT(CAUSE_ILLEGAL_INSTRUCTION))
+#define	INSTRUCTION_TRAP_MASK	(__BIT(CAUSE_ILLEGAL_INSTRUCTION))
 
-#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FAULT_FETCH) \
-				|__BIT(CAUSE_FAULT_LOAD) \
-				|__BIT(CAUSE_FAULT_STORE))
+#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FETCH_ACCESS) \
+				|__BIT(CAUSE_LOAD_ACCESS) \
+				|__BIT(CAUSE_STORE_ACCESS))
 
-#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_MISALIGNED_FETCH) \
-				|__BIT(CAUSE_MISALIGNED_LOAD) \
-				|__BIT(CAUSE_MISALIGNED_STORE))
+#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_FETCH_MISALIGNED) \
+				|__BIT(CAUSE_LOAD_MISALIGNED) \
+				|__BIT(CAUSE_STORE_MISALIGNED))
 
 static const char * const causenames[] = {
-	[CAUSE_MISALIGNED_FETCH] = "misaligned fetch",
-	[CAUSE_MISALIGNED_LOAD] = "misaligned load",
-	[CAUSE_MISALIGNED_STORE] = "misaligned store",
-	[CAUSE_FAULT_FETCH] = "fetch",
-	[CAUSE_FAULT_LOAD] = "load",
-	[CAUSE_FAULT_STORE] = "store",
-	[CAUSE_FP_DISABLED] = "fp disabled",
+	[CAUSE_FETCH_MISALIGNED] = "misaligned fetch",
+	[CAUSE_LOAD_MISALIGNED] = "misaligned load",
+	[CAUSE_STORE_MISALIGNED] = "misaligned store",
+	[CAUSE_FETCH_ACCESS] = "fetch",
+	[CAUSE_LOAD_ACCESS] = "load",
+	[CAUSE_STORE_ACCESS] = "store",
 	[CAUSE_ILLEGAL_INSTRUCTION] = "illegal instruction",
-	[CAUSE_PRIVILEGED_INSTRUCTION] = "privileged instruction",
 	[CAUSE_BREAKPOINT] = "breakpoint",
 };
 
@@ -220,11 +217,11 @@ cpu_trapsignal(struct trapframe *tf, ksiginfo_t *ksi)
 static inline vm_prot_t
 get_faulttype(register_t cause)
 {
-	if (cause == CAUSE_FAULT_LOAD)
+	if (cause == CAUSE_LOAD_ACCESS)
 		return VM_PROT_READ;
-	if (cause == CAUSE_FAULT_STORE)
+	if (cause == CAUSE_STORE_ACCESS)
 		return VM_PROT_READ | VM_PROT_WRITE;
-	KASSERT(cause == CAUSE_FAULT_FETCH);
+	KASSERT(cause == CAUSE_FETCH_ACCESS);
 	return VM_PROT_READ | VM_PROT_EXECUTE;
 }
 
@@ -256,12 +253,12 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 			attr |= VM_PAGEMD_REFERENCED;
 		}
 #if 0		/* XXX Outdated */
-		if (cause == CAUSE_FAULT_STORE) {
+		if (cause == CAUSE_STORE_ACCESS) {
 			if ((npte & PTE_NW) != 0) {
 				npte &= ~PTE_NW;
 				attr |= VM_PAGEMD_MODIFIED;
 			}
-		} else if (cause == CAUSE_FAULT_FETCH) {
+		} else if (cause == CAUSE_FETCH_ACCESS) {
 			if ((npte & PTE_NX) != 0) {
 				npte &= ~PTE_NX;
 				attr |= VM_PAGEMD_EXECPAGE;
@@ -349,9 +346,8 @@ static bool
 trap_instruction(struct trapframe *tf, register_t epc, register_t status,
     register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
 {
-	const bool prvopc_p = (cause == CAUSE_PRIVILEGED_INSTRUCTION);
 	if (usertrap_p) {
-		trap_ksi_init(ksi, SIGILL, prvopc_p ? ILL_PRVOPC : ILL_ILLOPC,
+		trap_ksi_init(ksi, SIGILL, ILL_ILLOPC,
 		    (intptr_t)badaddr, cause);
 	}
 	return false;
@@ -395,12 +391,14 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 	} else if (fault_mask & INSTRUCTION_TRAP_MASK) {
 		ok = trap_instruction(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
+#if 0
 	} else if (fault_mask && __BIT(CAUSE_FP_DISABLED)) {
 		if (!usertrap_p) {
 			panic("%s: fp used @ %#"PRIxREGISTER" in kernel!",
 			    __func__, tf->tf_pc);
 		}
 		fpu_load();
+#endif
 	} else if (fault_mask & MISALIGNED_TRAP_MASK) {
 		ok = trap_misalignment(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
