@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.26 2020/10/30 18:54:36 skrll Exp $ */
+/* $NetBSD: gicv3.c,v 1.27 2020/11/01 11:03:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.26 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.27 2020/11/01 11:03:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -419,38 +419,23 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 static void
 gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 {
-	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	uint64_t intid, aff, targets;
+	uint64_t sgir;
 
-	intid = __SHIFTIN(ipi, ICC_SGIR_EL1_INTID);
+	sgir = __SHIFTIN(ipi, ICC_SGIR_EL1_INTID);
 	if (kcp == NULL) {
 		/* Interrupts routed to all PEs, excluding "self" */
 		if (ncpu == 1)
 			return;
-		icc_sgi1r_write(intid | ICC_SGIR_EL1_IRM);
+		sgir |= ICC_SGIR_EL1_IRM;
 	} else {
-		/* Interrupts routed to specific PEs */
-		aff = 0;
-		targets = 0;
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			if (!kcpuset_isset(kcp, cpu_index(ci)))
-				continue;
-			if ((ci->ci_gic_sgir & ICC_SGIR_EL1_Aff) != aff) {
-				if (targets != 0) {
-					icc_sgi1r_write(intid | aff | targets);
-					isb();
-					targets = 0;
-				}
-				aff = (ci->ci_gic_sgir & ICC_SGIR_EL1_Aff);
-			}
-			targets |= (ci->ci_gic_sgir & ICC_SGIR_EL1_TargetList);
-		}
-		if (targets != 0) {
-			icc_sgi1r_write(intid | aff | targets);
-			isb();
-		}
+		/* Interrupt to exactly one PE */
+		ci = cpu_lookup(kcpuset_ffs(kcp) - 1);
+		if (ci == curcpu())
+			return;
+		sgir |= ci->ci_gic_sgir;
 	}
+	icc_sgi1r_write(sgir);
 }
 
 static void
