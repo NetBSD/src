@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.20 2020/11/01 10:50:22 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.21 2020/11/01 10:52:09 rillig Exp $
 #
 # various modifier error tests
 
@@ -11,10 +11,12 @@ MOD_S:=		${MOD_TERM},
 
 FIB=	1 1 2 3 5 8 13 21 34
 
-all:	modunkn modunknV varterm vartermV modtermV modloop
-all:	modloop-close
-all:	modwords
-all:	modexclam
+all:	mod-unknown-direct mod-unknown-indirect
+all:	unclosed-direct unclosed-indirect
+all:	unfinished-indirect unfinished-loop
+all:	loop-close
+all:	words
+all:	exclam
 all:	mod-subst-delimiter
 all:	mod-regex-delimiter
 all:	mod-regex-undefined-subexpression
@@ -24,27 +26,27 @@ all:	mod-ifelse-parse
 all:	mod-remember-parse
 all:	mod-sysv-parse
 
-modunkn: print-header print-footer
+mod-unknown-direct: print-header print-footer
 	@echo 'want: Unknown modifier $'Z$''
 	@echo "VAR:Z=${VAR:Z}"
 
-modunknV: print-header print-footer
+mod-unknown-indirect: print-header print-footer
 	@echo 'want: Unknown modifier $'Z$''
 	@echo "VAR:${MOD_UNKN}=${VAR:${MOD_UNKN}}"
 
-varterm: print-header print-footer
+unclosed-direct: print-header print-footer
 	@echo 'want: Unclosed variable specification (expecting $'}$') for "VAR" (value "Thevariable") modifier S'
 	@echo VAR:S,V,v,=${VAR:S,V,v,
 
-vartermV: print-header print-footer
+unclosed-indirect: print-header print-footer
 	@echo 'want: Unclosed variable specification after complex modifier (expecting $'}$') for VAR'
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
-modtermV: print-header print-footer
+unfinished-indirect: print-header print-footer
 	@echo 'want: Unfinished modifier for VAR ($',$' missing)'
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
-modloop: print-header print-footer
+unfinished-loop: print-header print-footer
 	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
 	@echo ${UNDEF:U1 2 3:@var}
 	@echo 'want: Unfinished modifier for UNDEF ($'@$' missing)'
@@ -57,11 +59,11 @@ modloop: print-header print-footer
 # braces must be balanced.
 # This is also contrary to the SysV modifier, where only the actually
 # used delimiter (either braces or parentheses) must be balanced.
-modloop-close: print-header print-footer
+loop-close: print-header print-footer
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
-modwords: print-header print-footer
+words: print-header print-footer
 	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
 	@echo ${UNDEF:U1 2 3:[}
 	@echo 'want: Unfinished modifier for UNDEF ($']$' missing)'
@@ -83,7 +85,7 @@ modwords: print-header print-footer
 	# which is empty.
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
-modexclam: print-header print-footer
+exclam: print-header print-footer
 	@echo 'want: Unfinished modifier for VARNAME ($'!$' missing)'
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
