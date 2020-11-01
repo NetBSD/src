@@ -21,6 +21,7 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 
+#include <fnmatch.h>
 #include <limits.h>
 #include <stdio.h>
 #include <termios.h>
@@ -61,12 +62,32 @@ void	warn(const char *, ...);
 void	warnx(const char *, ...);
 #endif
 
-#ifndef HAVE_PATHS_H
-#define	_PATH_BSHELL	"/bin/sh"
-#define	_PATH_TMP	"/tmp/"
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+
+#ifndef _PATH_BSHELL
+#define _PATH_BSHELL	"/bin/sh"
+#endif
+
+#ifndef _PATH_TMP
+#define _PATH_TMP	"/tmp/"
+#endif
+
+#ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL	"/dev/null"
+#endif
+
+#ifndef _PATH_TTY
 #define _PATH_TTY	"/dev/tty"
+#endif
+
+#ifndef _PATH_DEV
 #define _PATH_DEV	"/dev/"
+#endif
+
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH	"/usr/bin:/bin"
 #endif
 
 #ifndef __OpenBSD__
@@ -95,10 +116,6 @@ void	warnx(const char *, ...);
 #include <bitstring.h>
 #else
 #include "compat/bitstring.h"
-#endif
-
-#ifdef HAVE_PATHS_H
-#include <paths.h>
 #endif
 
 #ifdef HAVE_LIBUTIL_H
@@ -151,6 +168,14 @@ void	warnx(const char *, ...);
 
 #ifndef O_DIRECTORY
 #define O_DIRECTORY 0
+#endif
+
+#ifndef FNM_CASEFOLD
+#ifdef FNM_IGNORECASE
+#define FNM_CASEFOLD FNM_IGNORECASE
+#else
+#define FNM_CASEFOLD 0
+#endif
 #endif
 
 #ifndef INFTIM
@@ -312,10 +337,6 @@ int		 vasprintf(char **, const char *, va_list);
 char		*fgetln(FILE *, size_t *);
 #endif
 
-#ifndef HAVE_FPARSELN
-char		*fparseln(FILE *, size_t *, size_t *, const char *, int);
-#endif
-
 #ifndef HAVE_SETENV
 /* setenv.c */
 int		 setenv(const char *, const char *, int);
@@ -349,8 +370,8 @@ int		 utf8proc_mbtowc(wchar_t *, const char *, size_t);
 int		 utf8proc_wctomb(char *, wchar_t);
 #endif
 
-#ifndef HAVE_GETOPT
 /* getopt.c */
+#ifndef HAVE_BSD_GETOPT
 extern int	BSDopterr;
 extern int	BSDoptind;
 extern int	BSDoptopt;
