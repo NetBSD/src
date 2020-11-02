@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/11/02 04:48:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2020/11/02 06:25:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,11 +17,12 @@ SRCS= \
 SRCS+= \
 	dispatch_egl.c \
 	egl_generated_dispatch.c
-CPPFLAGS+=	-DENABLE_EGL=1
 EGL=1
 .else
 EGL=0
 .endif
+CPPFLAGS+=	-DPLATFORM_HAS_EGL=${EGL}
+CPPFLAGS+=	-DENABLE_EGL=${EGL}
 
 INCSDIR=${X11INCDIR}/epoxy
 INCS= \
