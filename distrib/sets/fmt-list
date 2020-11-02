@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: fmt-list,v 1.2 2020/09/08 19:11:30 rillig Exp $
+-- $NetBSD: fmt-list,v 1.3 2020/11/02 20:14:01 rillig Exp $
 
 --[[
 
@@ -411,7 +411,7 @@ local function format_list(fname, write_back)
     for _, err in ipairs(errors) do
       print(err)
     end
-    return
+    return false
   end
 
   normalize(entries)
@@ -419,18 +419,23 @@ local function format_list(fname, write_back)
   if write_back then
     write_list(fname, head, entries)
   end
+  return true
 end
 
 
 local function main(arg)
+  local seen_error = false
   local write_back = true
   for _, fname in ipairs(arg) do
     if fname == "-n" then
       write_back = false
     else
-      format_list(fname, write_back)
+      if not format_list(fname, write_back) then
+        seen_error = true
+      end
     end
   end
+  return not seen_error
 end
 
-main(arg)
+os.exit(main(arg))
