@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955 2020/11/01 22:31:28 christos Exp $
+# $NetBSD: mi,v 1.956 2020/11/02 00:29:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4590,6 +4590,7 @@
 ./usr/tests/usr.bin/col/rlf2.in					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col/rlf3.in					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col/t_col					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/config/t_config				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/Kyuafile				tests-usr.bin-tests	compattestfile,atf,kyua
