@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.306 2020/08/14 00:53:16 riastradh Exp $
+	$NetBSD: syscalls.master,v 1.307 2020/11/02 18:55:12 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -1011,7 +1011,7 @@
 481	STD		{ int|sys||wait6(idtype_t idtype, id_t id, \
 			    int *status, int options, struct wrusage *wru, \
 			    siginfo_t *info); }
-482	STD		{ int|sys||clock_getcpuclockid2(idtype_t idtype, \
+482	STD	RUMP	{ int|sys||clock_getcpuclockid2(idtype_t idtype, \
 			    id_t id, clockid_t *clock_id); }
 483	STD	RUMP	{ int|sys|90|getvfsstat(struct statvfs *buf, \
 			    size_t bufsize, int flags); }
