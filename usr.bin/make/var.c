@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.646 2020/11/02 17:55:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.647 2020/11/02 18:15:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.646 2020/11/02 17:55:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.647 2020/11/02 18:15:12 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3291,7 +3291,7 @@ ApplyModifiersIndirect(
 
 	free(mods_freeIt);
 	/* XXX: apply_mods doesn't sound like "not interested". */
-	/* XXX: Why is the indirect modifier parsed again by
+	/* XXX: Why is the indirect modifier parsed once more by
 	 * apply_mods?  If any, p should be advanced to nested_p. */
 	return AMIR_APPLY_MODS;
     }
