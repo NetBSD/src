@@ -1,0 +1,8 @@
+: undefined 
+make: Unclosed variable "UNCLOSED"
+: unclosed-variable 
+: unclosed-modifier 
+make: Unknown modifier 'Z'
+: unknown-modifier 
+: end
+exit status 2
