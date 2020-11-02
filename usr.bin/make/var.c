@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.650 2020/11/02 21:15:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.651 2020/11/02 21:24:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.650 2020/11/02 21:15:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.651 2020/11/02 21:24:23 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3437,6 +3437,7 @@ out:
     return st.val;
 
 bad_modifier:
+    /* XXX: The modifier end is only guessed. */
     Error("Bad modifier `:%.*s' for %s",
 	  (int)strcspn(mod, ":)}"), mod, st.v->name);
 
@@ -3527,12 +3528,12 @@ ParseVarname(const char **pp, char startc, char endc,
 
 	/* A variable inside a variable, expand. */
 	if (*p == '$') {
-	    void *freeIt;
-	    const char *rval;
-	    (void)Var_Parse(&p, ctxt, eflags, &rval, &freeIt);
+	    const char *nested_val;
+	    void *nested_val_freeIt;
+	    (void)Var_Parse(&p, ctxt, eflags, &nested_val, &nested_val_freeIt);
 	    /* TODO: handle errors */
-	    Buf_AddStr(&buf, rval);
-	    free(freeIt);
+	    Buf_AddStr(&buf, nested_val);
+	    free(nested_val_freeIt);
 	} else {
 	    Buf_AddByte(&buf, *p);
 	    p++;
