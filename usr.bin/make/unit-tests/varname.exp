@@ -1,1 +1,21 @@
-exit status 0
+Global:VAR{{{}}} = 3 braces
+Var_Parse: ${VAR{{{}}}}" != "3 braces" with VARE_WANTRES
+Global:VARNAME = VAR(((
+Var_Parse: ${VARNAME} with VARE_WANTRES
+Global:VAR((( = 3 open parentheses
+Var_Parse: ${VAR(((}}}}" != "3 open parentheses}}}" with VARE_WANTRES
+Var_Parse: ${VAR(((}=	try1 with VARE_UNDEFERR|VARE_WANTRES
+Global:.ALLTARGETS =  3
+Global:.ALLTARGETS =  3 open
+Global:.ALLTARGETS =  3 open parentheses=
+make: "varname.mk" line 27: Need an operator
+Var_Parse: ${VAR\(\(\(}=	try2 with VARE_UNDEFERR|VARE_WANTRES
+Global:.ALLTARGETS =  3 open parentheses= =
+make: "varname.mk" line 28: Need an operator
+Var_Parse: ${VAR\(\(\(}=	try3 with VARE_UNDEFERR|VARE_WANTRES
+make: "varname.mk" line 29: Need an operator
+Global:.MAKEFLAGS =  -r -k -d v -d
+Global:.MAKEFLAGS =  -r -k -d v -d 0
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
