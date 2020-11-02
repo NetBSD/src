@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.181 2020/11/01 19:02:22 rillig Exp $
+# $NetBSD: Makefile,v 1.182 2020/11/02 20:19:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -544,8 +544,11 @@ sync-mi:
 	cvs update "$$mi";						\
 	testsdir="usr.bin/make/unit-tests";				\
 	fmt="./usr/tests/$$testsdir/%s\ttests-usr.bin-tests\tcompattestfile,atf\\n"; \
-	(cd "$$testsdir" && ls *.exp *.mk) | xargs printf "$$fmt" >> "$$mi"; \
-	distrib/sets/fmt-list "$$mi";					\
+	cat "$$mi" > "$$mi.tmp";					\
+	(cd "$$testsdir" && ls *.exp *.mk) | xargs printf "$$fmt" >> "$$mi.tmp"; \
+	distrib/sets/fmt-list "$$mi.tmp";				\
+	echo $$?; \
+	mv "$$mi.tmp" "$$mi";						\
 	cvs diff "$$mi" || true
 
 .if exists(${TEST_MAKE})
