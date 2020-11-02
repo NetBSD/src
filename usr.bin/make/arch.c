@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.152 2020/11/02 18:24:42 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.153 2020/11/02 19:07:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.152 2020/11/02 18:24:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.153 2020/11/02 19:07:09 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -189,18 +189,18 @@ ArchFree(void *ap)
  *	on the given list.
  *
  * Input:
- *	linePtr		Pointer to start of specification
+ *	pp		Pointer to start of specification, updated
  *	nodeLst		Lst on which to place the nodes
  *	ctxt		Context in which to expand variables
  *
  * Results:
- *	TRUE if it was a valid specification. The linePtr is updated
+ *	TRUE if it was a valid specification. The pp is updated
  *	to point to the first non-space after the archive spec. The
  *	nodes for the members are placed on the given list.
  *-----------------------------------------------------------------------
  */
 Boolean
-Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
+Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 {
     char *cp;			/* Pointer into line */
     GNode *gn;			/* New node */
@@ -211,7 +211,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     Boolean subLibName;		/* TRUE if libName should have/had
 				 * variable substitution performed on it */
 
-    libName = *linePtr;
+    libName = *pp;
 
     subLibName = FALSE;
 
@@ -394,9 +394,9 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     free(libName_freeIt);
 
     cp++;			/* skip the ')' */
-    /* We promised that linePtr would be set up at the next non-space. */
+    /* We promised that pp would be set up at the next non-space. */
     pp_skip_whitespace(&cp);
-    *linePtr = cp;
+    *pp = cp;
     return TRUE;
 }
 
@@ -433,8 +433,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = lastSlash + 1;
 
     for (ln = archives->first; ln != NULL; ln = ln->next) {
-	const Arch *archPtr = ln->datum;
-	if (strcmp(archPtr->name, archive) == 0)
+	const Arch *a = ln->datum;
+	if (strcmp(a->name, archive) == 0)
 	    break;
     }
 
@@ -694,7 +694,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
  *	archive		Path to the archive
  *	member		Name of member. If it is a path, only the last
  *			component is used.
- *	arhPtr		Pointer to header structure to be filled in
+ *	out_arh		Archive header to be filled in
  *	mode		The mode for opening the stream
  *
  * Results:
@@ -704,7 +704,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
  *-----------------------------------------------------------------------
  */
 static FILE *
-ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
+ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	       const char *mode)
 {
     FILE *arch;			/* Stream to archive */
@@ -736,13 +736,13 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	member = lastSlash + 1;
 
     len = tlen = strlen(member);
-    if (len > sizeof(arhPtr->ar_name)) {
-	tlen = sizeof(arhPtr->ar_name);
+    if (len > sizeof(out_arh->ar_name)) {
+	tlen = sizeof(out_arh->ar_name);
     }
 
-    while (fread((char *)arhPtr, sizeof(struct ar_hdr), 1, arch) == 1) {
+    while (fread((char *)out_arh, sizeof(struct ar_hdr), 1, arch) == 1) {
 
-	if (strncmp(arhPtr->ar_fmag, ARFMAG, sizeof(arhPtr->ar_fmag)) != 0) {
+	if (strncmp(out_arh->ar_fmag, ARFMAG, sizeof(out_arh->ar_fmag)) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
 	     * and there's no way we can recover...
@@ -751,7 +751,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	    return NULL;
 	}
 
-	if (strncmp(member, arhPtr->ar_name, tlen) == 0) {
+	if (strncmp(member, out_arh->ar_name, tlen) == 0) {
 	    /*
 	     * If the member's name doesn't take up the entire 'name' field,
 	     * we have to be careful of matching prefixes. Names are space-
@@ -759,7 +759,8 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	     * of the matched string is anything but a space, this isn't the
 	     * member we sought.
 	     */
-	    if (tlen != sizeof arhPtr->ar_name && arhPtr->ar_name[tlen] != ' ')
+	    if (tlen != sizeof out_arh->ar_name &&
+		out_arh->ar_name[tlen] != ' ')
 		goto skip;
 
 	    /*
@@ -781,10 +782,10 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 	 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
 	 * first <namelen> bytes of the file
 	 */
-	if (strncmp(arhPtr->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-	    ch_isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1]))
+	if (strncmp(out_arh->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
+	    ch_isdigit(out_arh->ar_name[sizeof(AR_EFMT1) - 1]))
 	{
-	    int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1) - 1]);
+	    int elen = atoi(&out_arh->ar_name[sizeof(AR_EFMT1) - 1]);
 	    char ename[MAXPATHLEN + 1];
 
 	    if ((unsigned int)elen > MAXPATHLEN) {
@@ -823,8 +824,8 @@ skip:
 	 * extract the size of the file from the 'size' field of the
 	 * header and round it up during the seek.
 	 */
-	arhPtr->ar_size[sizeof(arhPtr->ar_size) - 1] = '\0';
-	size = (int)strtol(arhPtr->ar_size, NULL, 10);
+	out_arh->ar_size[sizeof(out_arh->ar_size) - 1] = '\0';
+	size = (int)strtol(out_arh->ar_size, NULL, 10);
 	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0) {
 	    fclose(arch);
 	    return NULL;
@@ -912,12 +913,12 @@ Arch_TouchLib(GNode *gn)
 time_t
 Arch_MTime(GNode *gn)
 {
-    struct ar_hdr *arhPtr;	/* Header of desired member */
+    struct ar_hdr *arh;		/* Header of desired member */
     time_t modTime;		/* Modification time as an integer */
 
-    arhPtr = ArchStatMember(GNode_VarArchive(gn), GNode_VarMember(gn), TRUE);
-    if (arhPtr != NULL) {
-	modTime = (time_t)strtol(arhPtr->ar_date, NULL, 10);
+    arh = ArchStatMember(GNode_VarArchive(gn), GNode_VarMember(gn), TRUE);
+    if (arh != NULL) {
+	modTime = (time_t)strtol(arh->ar_date, NULL, 10);
     } else {
 	modTime = 0;
     }
@@ -1042,13 +1043,13 @@ Arch_LibOODate(GNode *gn)
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
-	struct ar_hdr *arhPtr;	/* Header for __.SYMDEF */
+	struct ar_hdr *arh;	/* Header for __.SYMDEF */
 	int modTimeTOC;		/* The table-of-contents's mod time */
 
-	arhPtr = ArchStatMember(gn->path, RANLIBMAG, FALSE);
+	arh = ArchStatMember(gn->path, RANLIBMAG, FALSE);
 
-	if (arhPtr != NULL) {
-	    modTimeTOC = (int)strtol(arhPtr->ar_date, NULL, 10);
+	if (arh != NULL) {
+	    modTimeTOC = (int)strtol(arh->ar_date, NULL, 10);
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		debug_printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
