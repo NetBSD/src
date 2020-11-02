@@ -1,0 +1,167 @@
+'\" t
+.\"     Title: pam_u2f
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 11/01/2020
+.\"    Manual: PAM U2F Module Manual
+.\"    Source: pam-u2f
+.\"  Language: English
+.\"
+.TH "PAM_U2F" "8" "11/01/2020" "pam\-u2f" "PAM U2F Module Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+pam_u2f \- Module for U2F authentication
+.SH "SYNOPSIS"
+.sp
+\fBpam_u2f\fR [\&...]
+.SH "DESCRIPTION"
+.sp
+The module provides U2F authentication against Yubikeys and other compliant authenticators\&.
+.SH "OPTIONS"
+.PP
+\fBdebug\fR
+.RS 4
+Enables debug output
+.RE
+.PP
+\fBdebug_file\fR
+.RS 4
+Filename to write debugging messages to\&.
+\fBIf this file is missing, nothing will be logged\fR\&. This regular file
+\fBhas to be created by the user\fR
+or
+\fBmust exist and be a regular file\fR
+for anything getting logged to it\&. It is not created by pam\-u2f on purpose (for security considerations)\&. This filename may be alternatively set to "stderr" (default), "stdout", or "syslog"\&.
+.RE
+.PP
+\fBorigin\fR=\fIorigin\fR
+.RS 4
+Set the origin for the U2F authentication procedure\&. If no value is specified, the origin "pam://$HOSTNAME" is used\&.
+.RE
+.PP
+\fBappid\fR=\fIappid\fR
+.RS 4
+Set the application ID for the U2F authentication procedure\&. If no value is specified, the same value used for origin is taken ("pam://$HOSTNAME" if also origin is not specified)\&.
+.RE
+.PP
+\fBauthfile\fR=\fIfile\fR
+.RS 4
+Set the location of the file that holds the mappings of user names to keyHandles and user keys\&. The format is username:keyHandle1,public_key1:keyHandle2,public_key2:\&... the default location of the file is $XDG_CONFIG_HOME/Yubico/u2f_keys\&. If the environment variable is not set, $HOME/\&.config/Yubico/u2f_keys is used\&. An individual (per user) file may be configured relative to the users\*(Aq home dirs, i\&.e\&. "\&.ssh/u2f_keys"\&.
+.RE
+.PP
+\fBauthpending_file\fR=\fIfile\fR
+.RS 4
+Set the location of the file that is used for touch request notifications\&. This file will be opened when pam\-u2f starts waiting for a user to touch the device, and will be closed when it no longer waits for a touch\&. Use inotify to listen on these events, or a more high\-level tool like yubikey\-touch\-detector\&. Default value: /var/run/user/$UID/pam\-u2f\-authpending\&. Set an empty value in order to disable this functionality, like so: "authpending_file="\&.
+.RE
+.PP
+\fBnouserok\fR
+.RS 4
+Set to enable authentication attempts to succeed even if the user trying to authenticate is not found inside authfile or if authfile is missing/malformed\&.
+.RE
+.PP
+\fBopenasuser\fR
+.RS 4
+Setuid to the authenticating user when opening the authfile\&. Useful when the user\(cqs home is stored on an NFS volume mounted with the root_squash option (which maps root to nobody which will not be able to read the file)\&. Note that after release 1\&.0\&.8 this is done by default when no global authfile or XDG_CONFIG_HOME environment variable has been set\&.
+.RE
+.PP
+\fBalwaysok\fR
+.RS 4
+Set to enable all authentication attempts to succeed (aka presentation mode)\&.
+.RE
+.PP
+\fBmax_devices\fR=\fIn_devices\fR
+.RS 4
+Maximum number of devices allowed per user (default is 24)\&. Devices specified in the authentication file that exceed this value will be ignored\&.
+.RE
+.PP
+\fBinteractive\fR
+.RS 4
+Set to prompt a message and wait before testing the presence of a U2F device\&. Recommended if your device doesn\(cqt have tactile trigger\&.
+.RE
+.PP
+\fB[prompt=your prompt here]\fR
+.RS 4
+Set individual prompt message for interactive mode\&. Watch the square brackets around this parameter to get spaces correctly recognized by PAM\&.
+.RE
+.PP
+\fBmanual\fR
+.RS 4
+Set to drop to a manual console where challenges are printed on screen and response read from standard input\&. Useful for debugging and SSH sessions without U2F\-support from the SSH client/server\&. If enabled, interactive mode becomes redundant and has no effect\&.
+.RE
+.PP
+\fBcue\fR
+.RS 4
+Set to prompt a message to remind to touch the device\&.
+.RE
+.PP
+\fB[cue_prompt=your prompt here]\fR
+.RS 4
+Set individual prompt message for the cue option\&. Watch the square brackets around this parameter to get spaces correctly recognized by PAM\&.
+.RE
+.PP
+\fBnodetect\fR
+.RS 4
+Skip detecting if a suitable key is inserted before performing a full authentication\&. See
+\fBNOTES\fR
+below\&.
+.RE
+.PP
+\fBuserpresence\fR=\fIint\fR
+.RS 4
+If 1, require user presence during authentication\&. If 0, do not request user presence during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+.RE
+.PP
+\fBuserverification\fR=\fIint\fR
+.RS 4
+If 1, require user verification during authentication\&. If 0, do not request user verification during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+.RE
+.PP
+\fBpinverification\fR=\fIint\fR
+.RS 4
+If 1, require PIN verification during authentication\&. If 0, do not request PIN verification during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+.RE
+.SH "EXAMPLES"
+.sp
+auth sufficient pam_u2f\&.so debug origin=pam://$HOSTNAME appid=pam://$HOSTNAME
+.sp
+auth required pam_u2f\&.so origin=http://example\&.com appid=http://example\&.com authfile=/etc/yubikey_mappings
+.SH "CAVEATS"
+.sp
+By default the mapping file inside a home directory will be opened as the target user, whereas the central file will be opened as "root"\&. If the "XDG_CONFIG_HOME" variable is set, privileges will not be dropped unless the "openasuser" configuration setting is set\&.
+.sp
+Using pam\-u2f to secure the login to a computer while storing the mapping file in an encrypted home directory, will result in the impossibility of logging into the system\&. The partition is decrypted after login and the mapping file can not be accessed\&.
+.SH "NOTES"
+.sp
+The "nodetect" option should be used with caution\&. pam_u2f checks that a key configured for the user is inserted before performing the full tactile authentication\&. This detection is done by sending a "check\-only" authentication request to all inserted tokens to so see if at least one of them responds affirmatively to one or more of the keyhandles configured for the user\&. By doing this, pam_u2f can avoid emitting the "cue" prompt (if configured), which can cause some confusing UI issues if the cue is emitted followed by the underlying library immediately failing the tactile authentication\&. This option is also useful to avoid an unintended 1\-second delay prior to the tactile authentication caused by versions of libu2f\-host <= 1\&.1\&.5\&.
+.sp
+If pam_u2f is configured to "cue" and "nodetect", an attacker can determine that pam_u2f is part of the authentication stack by inserting any random U2F token and performing an authentication attempt\&. In this scenario, the attacker would see the cue message followed by an immediate failure, whereas with detection enabled, the U2F authentication will fail silently\&. Understand that an attacker could choose a U2F token that alerts him or her in some way to the "check\-only" authentication attempt, so this precaution only pushes the issue back a step\&.
+.sp
+In summary, the detection feature was added to avoid confusing UI issues and to prevent leaking information about the authentication stack in very specific scenario when "cue" is configured\&. The "nodetect" option was added to avoid buggy sleep behavior in older versions of libu2f\-host and for hypothetical tokens that do not tolerate the double authentication\&. Detection is performed, and likewise "nodetect" honored, regardless of whether "cue" is also specified\&.
+.SH "BUGS"
+.sp
+Report pam\-u2f bugs in the issue tracker: \m[blue]\fBhttps://github\&.com/Yubico/pam\-u2f/issues\fR\m[]
+.SH "SEE ALSO"
+.sp
+\fBpam\fR(7)
+.sp
+The pam\-u2f home page: \m[blue]\fBhttps://developers\&.yubico\&.com/pam\-u2f/\fR\m[]
+.sp
+YubiKeys can be obtained from Yubico: \m[blue]\fBhttp://www\&.yubico\&.com/\fR\m[]
