@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.648 2020/11/02 19:07:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.649 2020/11/02 20:48:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.648 2020/11/02 19:07:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.649 2020/11/02 20:48:36 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3357,6 +3357,13 @@ ApplyModifiers(
     assert(val != NULL);
 
     p = *pp;
+
+    if (*p == '\0' && endc != '\0') {
+	Error("Unclosed variable expression (expecting '%c') for \"%s\"",
+	      st.endc, st.v->name);
+	goto cleanup;
+    }
+
     while (*p != '\0' && *p != endc) {
 
 	if (*p == '$') {
