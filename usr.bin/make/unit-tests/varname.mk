@@ -1,4 +1,4 @@
-# $NetBSD: varname.mk,v 1.7 2020/11/02 22:44:29 rillig Exp $
+# $NetBSD: varname.mk,v 1.8 2020/11/02 22:59:48 rillig Exp $
 #
 # Tests for special variables, such as .MAKE or .PARSEDIR.
 # And for variable names in general.
@@ -28,8 +28,16 @@ ${VARNAME}=	3 open parentheses
 # balanced.  At the end of the line, there are still 3 levels open, which
 # means the variable name is not finished.
 ${:UVAR(((}=	try1
+# On the left-hand side of a variable assignments, the backslash is not parsed
+# as an escape character, therefore the parentheses still count to the nesting
+# level, which at the end of the line is still 3.  Therefore this is not a
+# variable assignment as well.
 ${:UVAR\(\(\(}=	try2
-${:UVAR\(\(\(}=	try3
+# To assign to a variable with an arbitrary name, the variable name has to
+# come from an external source, not the text that is parsed in the assignment
+# itself.  This is exactly the reason why further above, the indirect
+# ${VARNAME} works, while all other attempts fail.
+${VARNAME}=	try3
 
 .MAKEFLAGS: -d0
 
