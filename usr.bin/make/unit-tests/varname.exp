@@ -4,16 +4,21 @@ Global:VARNAME = VAR(((
 Var_Parse: ${VARNAME} with VARE_WANTRES
 Global:VAR((( = 3 open parentheses
 Var_Parse: ${VAR(((}}}}" != "3 open parentheses}}}" with VARE_WANTRES
-Var_Parse: ${VAR(((}=	try1 with VARE_UNDEFERR|VARE_WANTRES
-Global:.ALLTARGETS =  3
-Global:.ALLTARGETS =  3 open
-Global:.ALLTARGETS =  3 open parentheses=
+Var_Parse: ${:UVAR(((}=	try1 with VARE_UNDEFERR|VARE_WANTRES
+Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF)
+Result of ${:UVAR(((} is "VAR(((" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF|VEF_DEF)
+Global:.ALLTARGETS =  VAR(((=)
+No closing parenthesis in archive specification
+make: "varname.mk" line 26: Error in archive specification: "VAR"
+Var_Parse: ${:UVAR\(\(\(}=	try2 with VARE_UNDEFERR|VARE_WANTRES
+Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF)
+Result of ${:UVAR\(\(\(} is "VAR\(\(\(" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF|VEF_DEF)
+Global:.ALLTARGETS =  VAR(((=) VAR\(\(\(=
 make: "varname.mk" line 27: Need an operator
-Var_Parse: ${VAR\(\(\(}=	try2 with VARE_UNDEFERR|VARE_WANTRES
-Global:.ALLTARGETS =  3 open parentheses= =
+Var_Parse: ${:UVAR\(\(\(}=	try3 with VARE_UNDEFERR|VARE_WANTRES
+Applying ${:U...} to "" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF)
+Result of ${:UVAR\(\(\(} is "VAR\(\(\(" (VARE_UNDEFERR|VARE_WANTRES, none, VEF_UNDEF|VEF_DEF)
 make: "varname.mk" line 28: Need an operator
-Var_Parse: ${VAR\(\(\(}=	try3 with VARE_UNDEFERR|VARE_WANTRES
-make: "varname.mk" line 29: Need an operator
 Global:.MAKEFLAGS =  -r -k -d v -d
 Global:.MAKEFLAGS =  -r -k -d v -d 0
 make: Fatal errors encountered -- cannot continue
