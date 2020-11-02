@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.9 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.10 2020/11/02 18:58:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.9 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.10 2020/11/02 18:58:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
-		sgsize = min(sgsize, map->dm_maxsegsz);
+		sgsize = MIN(sgsize, map->dm_maxsegsz);
 
 		/*
 		 * Make sure we don't cross any boundaries.
