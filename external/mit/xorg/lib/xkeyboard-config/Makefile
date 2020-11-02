@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/03/11 06:25:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/11/02 00:25:46 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ NOOBJ=		# defined
 PKGCONFIG=	xkeyboard-config
 
 X11EXTRAMANTRANSFORMS+= \
-	__xkb_base__		${X11LIBDIR}/xkb
+	@xkb_base@		${X11LIBDIR}/xkb
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
