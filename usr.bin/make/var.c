@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.647 2020/11/02 18:15:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.648 2020/11/02 19:07:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.647 2020/11/02 18:15:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.648 2020/11/02 19:07:09 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3623,7 +3623,7 @@ ParseVarnameLong(
 
 	VarParseResult *out_FALSE_res,
 	const char **out_FALSE_val,
-	void **out_FALSE_freePtr,
+	void **out_FALSE_freeIt,
 
 	char *out_TRUE_endc,
 	const char **out_TRUE_p,
@@ -3699,7 +3699,7 @@ ParseVarnameLong(
 		char *pstr = bmake_strsedup(start, p);
 		free(varname);
 		*out_FALSE_res = VPR_OK;
-		*out_FALSE_freePtr = pstr;
+		*out_FALSE_freeIt = pstr;
 		*out_FALSE_val = pstr;
 		return FALSE;
 	    }
