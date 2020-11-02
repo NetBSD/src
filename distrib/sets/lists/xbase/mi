@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 2020/10/28 08:10:08 nia Exp $
+# $NetBSD: mi,v 1.161 2020/11/02 00:29:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -896,6 +896,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/dvorak			xbase-obsolete	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/dz			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ee			xbase-xkeyboard-config-lib	xorg
+./usr/X11R7/lib/X11/xkb/symbols/eg			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/el			xbase-obsolete	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/empty			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/en_US			xbase-obsolete	obsolete
