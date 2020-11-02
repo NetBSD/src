@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.644 2020/11/02 16:55:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.645 2020/11/02 17:00:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.644 2020/11/02 16:55:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.645 2020/11/02 17:00:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3264,11 +3264,11 @@ typedef enum ApplyModifiersIndirectResult {
 } ApplyModifiersIndirectResult;
 
 /* While expanding a variable expression, expand and apply indirect
- * modifiers. */
+ * modifiers such as in ${VAR:${M_indirect}}. */
 static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(
 	ApplyModifiersState *const st,
-	const char **inout_p,
+	const char **const inout_p,
 	void **const out_freeIt
 ) {
     const char *p = *inout_p;
@@ -3302,7 +3302,8 @@ ApplyModifiersIndirect(
     if (mods[0] != '\0') {
 	const char *rval_pp = mods;
 	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
-				&st->exprFlags, st->ctxt, st->eflags, out_freeIt);
+				 &st->exprFlags, st->ctxt, st->eflags,
+				 out_freeIt);
 	if (st->val == var_Error
 	    || (st->val == varUndefined && !(st->eflags & VARE_UNDEFERR))
 	    || *rval_pp != '\0') {
@@ -3329,15 +3330,15 @@ ApplyModifiersIndirect(
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
-    const char **pp,		/* the parsing position, updated upon return */
+    const char **const pp,	/* the parsing position, updated upon return */
     char *const val,		/* the current value of the expression */
     char const startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char const endc,		/* ')' or '}', or '\0' for indirect modifiers */
-    Var * const v,
-    VarExprFlags *exprFlags,
-    GNode * const ctxt,		/* for looking up and modifying variables */
+    Var *const v,
+    VarExprFlags *const exprFlags,
+    GNode *const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
-    void ** const out_freeIt	/* free this after using the return value */
+    void **const out_freeIt	/* free this after using the return value */
 ) {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
