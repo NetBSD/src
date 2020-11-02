@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.173 2020/10/30 20:30:44 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.174 2020/11/02 19:07:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.173 2020/10/30 20:30:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.174 2020/11/02 19:07:09 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -674,21 +674,21 @@ done:
 }
 
 static size_t
-ParseEmptyArg(const char **linePtr, Boolean doEval,
-	      const char *func MAKE_ATTR_UNUSED, char **argPtr)
+ParseEmptyArg(const char **pp, Boolean doEval,
+	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
 {
     void *val_freeIt;
     const char *val;
     size_t magic_res;
 
     /* We do all the work here and return the result as the length */
-    *argPtr = NULL;
+    *out_arg = NULL;
 
-    (*linePtr)--;		/* Make (*linePtr)[1] point to the '('. */
-    (void)Var_Parse(linePtr, VAR_CMDLINE, doEval ? VARE_WANTRES : 0,
+    (*pp)--;			/* Make (*pp)[1] point to the '('. */
+    (void)Var_Parse(pp, VAR_CMDLINE, doEval ? VARE_WANTRES : 0,
 		    &val, &val_freeIt);
     /* TODO: handle errors */
-    /* If successful, *linePtr points beyond the closing ')' now. */
+    /* If successful, *pp points beyond the closing ')' now. */
 
     if (val == var_Error) {
 	free(val_freeIt);
