@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.956 2020/11/02 00:29:49 mrg Exp $
+# $NetBSD: mi,v 1.957 2020/11/02 20:16:26 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4552,6 +4552,17 @@
 ./usr/tests/usr.bin/cmp/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/cmp/t_cmp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col						tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/Atffile					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/hlf.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/hlf2.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/nl.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/nl2.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/nl3.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/rlf.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/rlf2.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/rlf3.in					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/t_col					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
@@ -4578,19 +4589,7 @@
 ./usr/tests/usr.bin/config/support/conf			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/support/conf/Makefile.kern.inc	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/support/conf/files			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/config/t_confi	g			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col						tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/Atffile					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/hlf.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/hlf2.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/nl.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/nl2.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/nl3.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/rlf.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/rlf2.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/rlf3.in					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/col/t_col					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/config/t_config				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/config/t_config			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/Kyuafile				tests-usr.bin-tests	compattestfile,atf,kyua
