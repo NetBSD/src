@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.6 2020/11/01 21:09:48 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.7 2020/11/02 08:36:54 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -197,13 +197,13 @@ riscvreg_cycle_read(void)
 }
 
 #ifdef _LP64
-#define SATP_MODE	__BITS(63,60)
-#define SATP_ASID	__BITS(59,44)
-#define SATP_PPN	__BITS(43,0)
+#define SATP_MODE		__BITS(63,60)
+#define SATP_ASID		__BITS(59,44)
+#define SATP_PPN		__BITS(43,0)
 #else
-#define SATP_MODE	__BIT(31)
-#define SATP_ASID	__BITS(30,22)
-#define SATP_PPN	__BITS(21,0)
+#define SATP_MODE		__BIT(31)
+#define SATP_ASID		__BITS(30,22)
+#define SATP_PPN		__BITS(21,0)
 #endif
 
 static inline uint32_t
