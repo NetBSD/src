@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.651 2020/11/02 21:24:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.652 2020/11/02 21:34:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.651 2020/11/02 21:24:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.652 2020/11/02 21:34:40 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3544,7 +3544,7 @@ ParseVarname(const char **pp, char startc, char endc,
     return Buf_Destroy(&buf, FALSE);
 }
 
-static Boolean
+static VarParseResult
 ValidShortVarname(char varname, const char *start)
 {
     switch (varname) {
@@ -3555,11 +3555,11 @@ ValidShortVarname(char varname, const char *start)
     case '$':
 	break;			/* and continue below */
     default:
-	return TRUE;
+	return VPR_OK;
     }
 
     if (!DEBUG(LINT))
-	return FALSE;
+	return VPR_PARSE_SILENT;
 
     if (varname == '$')
 	Parse_Error(PARSE_FATAL,
@@ -3570,7 +3570,7 @@ ValidShortVarname(char varname, const char *start)
 	Parse_Error(PARSE_FATAL,
 		    "Invalid variable name '%c', at \"%s\"", varname, start);
 
-    return FALSE;
+    return VPR_PARSE_MSG;
 }
 
 /* Parse a single-character variable name such as $V or $@.
@@ -3587,6 +3587,7 @@ ParseVarnameShort(
 ) {
     char name[2];
     Var *v;
+    VarParseResult vpr;
 
     /*
      * If it's not bounded by braces of some sort, life is much simpler.
@@ -3594,10 +3595,11 @@ ParseVarnameShort(
      * value if it exists.
      */
 
-    if (!ValidShortVarname(startc, *pp)) {
+    vpr = ValidShortVarname(startc, *pp);
+    if (vpr != VPR_OK) {
 	(*pp)++;
 	*out_FALSE_val = var_Error;
-	*out_FALSE_res = VPR_PARSE_MSG;
+	*out_FALSE_res = vpr;
 	return FALSE;
     }
 
