@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.151 2020/10/31 18:41:07 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.152 2020/11/02 18:24:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.151 2020/10/31 18:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.152 2020/11/02 18:24:42 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -205,6 +205,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     char *cp;			/* Pointer into line */
     GNode *gn;			/* New node */
     char *libName;		/* Library-part of specification */
+    char *libName_freeIt = NULL;
     char *memName;		/* Member-part of specification */
     char saveChar;		/* Ending delimiter of member-name */
     Boolean subLibName;		/* TRUE if libName should have/had
@@ -225,6 +226,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	    const char *result;
 	    Boolean isError;
 
+	    /* XXX: is expanded twice: once here and once below */
 	    (void)Var_Parse(&nested_p, ctxt, VARE_UNDEFERR|VARE_WANTRES,
 			    &result, &result_freeIt);
 	    /* TODO: handle errors */
@@ -243,6 +245,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
     if (subLibName) {
 	(void)Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES, &libName);
 	/* TODO: handle errors */
+	libName_freeIt = libName;
     }
 
 
@@ -388,12 +391,7 @@ Arch_ParseArchive(char **linePtr, GNodeList *nodeLst, GNode *ctxt)
 	*cp = saveChar;
     }
 
-    /*
-     * If substituted libName, free it now, since we need it no longer.
-     */
-    if (subLibName) {
-	free(libName);
-    }
+    free(libName_freeIt);
 
     cp++;			/* skip the ')' */
     /* We promised that linePtr would be set up at the next non-space. */
