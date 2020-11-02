@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.649 2020/11/02 20:48:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.650 2020/11/02 21:15:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.649 2020/11/02 20:48:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.650 2020/11/02 21:15:00 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3391,6 +3391,9 @@ ApplyModifiers(
 
 	if (res == AMR_UNKNOWN) {
 	    Error("Unknown modifier '%c'", *mod);
+	    /* Guess the end of the current modifier.
+	     * XXX: Skipping the rest of the modifier hides errors and leads
+	     * to wrong results.  Parsing should rather stop here. */
 	    for (p++; *p != ':' && *p != st.endc && *p != '\0'; p++)
 		continue;
 	    st.newVal = var_Error;
