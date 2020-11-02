@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.643 2020/11/02 16:48:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.644 2020/11/02 16:55:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.643 2020/11/02 16:48:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.644 2020/11/02 16:55:18 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3272,11 +3272,10 @@ ApplyModifiersIndirect(
 	void **const out_freeIt
 ) {
     const char *p = *inout_p;
-    const char *nested_p = p;
     const char *mods;
     void *mods_freeIt;
 
-    (void)Var_Parse(&nested_p, st->ctxt, st->eflags, &mods, &mods_freeIt);
+    (void)Var_Parse(&p, st->ctxt, st->eflags, &mods, &mods_freeIt);
     /* TODO: handle errors */
 
     /*
@@ -3284,12 +3283,11 @@ ApplyModifiersIndirect(
      * interested.  This means the expression ${VAR:${M_1}${M_2}}
      * is not accepted, but ${VAR:${M_1}:${M_2}} is.
      */
-    if (mods[0] != '\0' &&
-	*nested_p != '\0' && *nested_p != ':' && *nested_p != st->endc) {
+    if (mods[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
 	if (DEBUG(LINT))
 	    Parse_Error(PARSE_FATAL,
 			"Missing delimiter ':' after indirect modifier \"%.*s\"",
-			(int)(nested_p - p), p);
+			(int)(p - *inout_p), *inout_p);
 
 	free(mods_freeIt);
 	/* XXX: apply_mods doesn't sound like "not interested". */
@@ -3299,9 +3297,7 @@ ApplyModifiersIndirect(
     }
 
     VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
-	       mods, (int)(size_t)(nested_p - p), p);
-
-    p = nested_p;
+	       mods, (int)(p - *inout_p), *inout_p);
 
     if (mods[0] != '\0') {
 	const char *rval_pp = mods;
