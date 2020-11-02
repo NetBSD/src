@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.645 2020/11/02 17:00:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.646 2020/11/02 17:55:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.645 2020/11/02 17:00:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.646 2020/11/02 17:55:26 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3417,6 +3417,7 @@ ApplyModifiers(
 	    Parse_Error(PARSE_FATAL,
 			"Missing delimiter ':' after modifier \"%.*s\"",
 			(int)(p - mod), mod);
+	    /* TODO: propagate parse error to the enclosing expression */
 	}
     }
 out:
