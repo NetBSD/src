@@ -1,4 +1,4 @@
-# $NetBSD: varname.mk,v 1.5 2020/11/02 22:16:24 rillig Exp $
+# $NetBSD: varname.mk,v 1.6 2020/11/02 22:29:48 rillig Exp $
 #
 # Tests for special variables, such as .MAKE or .PARSEDIR.
 # And for variable names in general.
@@ -23,10 +23,9 @@ ${VARNAME}=	3 open parentheses
 
 # In the above test, the variable name is constructed indirectly.  Neither
 # of the following expressions produces the intended effect.
-# TODO: explain what happens in the parser here.
-${VAR(((}=	try1
-${VAR\(\(\(}=	try2
-${VAR\(\(\(}=	try3
+${:UVAR(((}=	try1
+${:UVAR\(\(\(}=	try2
+${:UVAR\(\(\(}=	try3
 
 .MAKEFLAGS: -d0
 
