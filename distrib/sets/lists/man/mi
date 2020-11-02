@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1707 2020/10/27 08:57:10 ryo Exp $
+# $NetBSD: mi,v 1.1708 2020/11/02 06:40:11 khorben Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -421,6 +421,7 @@
 ./usr/share/man/cat1/openssl_x509v3_config.0	man-obsolete		obsolete
 ./usr/share/man/cat1/page.0			man-util-catman		.cat
 ./usr/share/man/cat1/pagesize.0			man-util-catman		.cat
+./usr/share/man/cat1/pamu2fcfg.0		man-util-catman		.cat
 ./usr/share/man/cat1/passwd.0			man-util-catman		.cat
 ./usr/share/man/cat1/paste.0			man-util-catman		.cat
 ./usr/share/man/cat1/patch.0			man-util-catman		.cat
@@ -2940,6 +2941,7 @@
 ./usr/share/man/cat8/pam_self.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_skey.0			man-sysutil-catman	skey,pam,.cat
 ./usr/share/man/cat8/pam_ssh.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_u2f.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/paxctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
@@ -3707,6 +3709,7 @@
 ./usr/share/man/html1/openssl_x509v3_config.html	man-obsolete	obsolete
 ./usr/share/man/html1/page.html			man-util-htmlman	html
 ./usr/share/man/html1/pagesize.html		man-util-htmlman	html
+./usr/share/man/html1/pamu2fcfg.html		man-util-htmlman	html
 ./usr/share/man/html1/passwd.html		man-util-htmlman	html
 ./usr/share/man/html1/paste.html		man-util-htmlman	html
 ./usr/share/man/html1/patch.html		man-util-htmlman	html
@@ -5933,6 +5936,7 @@
 ./usr/share/man/html8/pam_self.html		man-sysutil-htmlman	pam,html
 ./usr/share/man/html8/pam_skey.html		man-sysutil-htmlman	skey,pam,html
 ./usr/share/man/html8/pam_ssh.html		man-sysutil-htmlman	pam,html
+./usr/share/man/html8/pam_u2f.html		man-sysutil-htmlman	pam,html
 ./usr/share/man/html8/pam_unix.html		man-sysutil-htmlman	pam,html
 ./usr/share/man/html8/paxctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pcictl.html		man-sysutil-htmlman	html
@@ -6635,6 +6639,7 @@
 ./usr/share/man/man1/openssl_x509v3_config.1	man-obsolete		obsolete
 ./usr/share/man/man1/page.1			man-util-man		.man
 ./usr/share/man/man1/pagesize.1			man-util-man		.man
+./usr/share/man/man1/pamu2fcfg.1		man-util-man		.man
 ./usr/share/man/man1/passwd.1			man-util-man		.man
 ./usr/share/man/man1/paste.1			man-util-man		.man
 ./usr/share/man/man1/patch.1			man-util-man		.man
@@ -9154,6 +9159,7 @@
 ./usr/share/man/man8/pam_self.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_skey.8			man-sysutil-man		skey,.man,pam
 ./usr/share/man/man8/pam_ssh.8			man-sysutil-man		.man,pam
+./usr/share/man/man8/pam_u2f.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_unix.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/paxctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/pc532/MAKEDEV.8		man-obsolete		obsolete
