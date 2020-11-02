@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.642 2020/11/02 16:38:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.643 2020/11/02 16:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.642 2020/11/02 16:38:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.643 2020/11/02 16:48:49 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3273,10 +3273,10 @@ ApplyModifiersIndirect(
 ) {
     const char *p = *inout_p;
     const char *nested_p = p;
-    void *rval_freeIt;
-    const char *rval;
+    const char *mods;
+    void *mods_freeIt;
 
-    (void)Var_Parse(&nested_p, st->ctxt, st->eflags, &rval, &rval_freeIt);
+    (void)Var_Parse(&nested_p, st->ctxt, st->eflags, &mods, &mods_freeIt);
     /* TODO: handle errors */
 
     /*
@@ -3284,14 +3284,14 @@ ApplyModifiersIndirect(
      * interested.  This means the expression ${VAR:${M_1}${M_2}}
      * is not accepted, but ${VAR:${M_1}:${M_2}} is.
      */
-    if (rval[0] != '\0' &&
+    if (mods[0] != '\0' &&
 	*nested_p != '\0' && *nested_p != ':' && *nested_p != st->endc) {
 	if (DEBUG(LINT))
 	    Parse_Error(PARSE_FATAL,
 			"Missing delimiter ':' after indirect modifier \"%.*s\"",
 			(int)(nested_p - p), p);
 
-	free(rval_freeIt);
+	free(mods_freeIt);
 	/* XXX: apply_mods doesn't sound like "not interested". */
 	/* XXX: Why is the indirect modifier parsed again by
 	 * apply_mods?  If any, p should be advanced to nested_p. */
@@ -3299,23 +3299,23 @@ ApplyModifiersIndirect(
     }
 
     VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
-	       rval, (int)(size_t)(nested_p - p), p);
+	       mods, (int)(size_t)(nested_p - p), p);
 
     p = nested_p;
 
-    if (rval[0] != '\0') {
-	const char *rval_pp = rval;
+    if (mods[0] != '\0') {
+	const char *rval_pp = mods;
 	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
 				&st->exprFlags, st->ctxt, st->eflags, out_freeIt);
 	if (st->val == var_Error
 	    || (st->val == varUndefined && !(st->eflags & VARE_UNDEFERR))
 	    || *rval_pp != '\0') {
-	    free(rval_freeIt);
+	    free(mods_freeIt);
 	    *inout_p = p;
 	    return AMIR_OUT;	/* error already reported */
 	}
     }
-    free(rval_freeIt);
+    free(mods_freeIt);
 
     if (*p == ':')
 	p++;
