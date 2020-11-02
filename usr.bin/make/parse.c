@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.420 2020/11/01 00:24:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.421 2020/11/02 22:44:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.420 2020/11/01 00:24:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.421 2020/11/02 22:44:29 rillig Exp $");
 
 /* types and constants */
 
@@ -1850,6 +1850,8 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 #endif
 
     /* Scan for one of the assignment operators outside a variable expansion */
+    /* FIXME: undefined behavior. In unit-tests/varname.mk:try1, at the end
+     * of the loop, p already points to the next line. */
     while ((ch = *p++) != 0) {
 	if (ch == '(' || ch == '{') {
 	    level++;
