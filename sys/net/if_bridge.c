@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.176 2020/09/27 19:16:28 roy Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.177 2020/11/02 12:14:59 roy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.176 2020/09/27 19:16:28 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.177 2020/11/02 12:14:59 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,13 +904,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	PSLIST_ENTRY_INIT(bif, bif_next);
 	psref_target_init(&bif->bif_psref, bridge_psref_class);
 
-	/*
-	 * Pretend that the link is down for domains.
-	 * This will detach any addresses assigned to the interface.
-	 */
-	if (ifs->if_link_state != LINK_STATE_DOWN)
-		if_domain_link_state_change(ifs, LINK_STATE_DOWN);
-
 	BRIDGE_LOCK(sc);
 
 	ifs->if_bridge = sc;
@@ -927,13 +920,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		bstp_initialization(sc);
 	else
 		bstp_stop(sc);
-
-	/*
-	 * If the link was not initially down then mark any detached addresses
-	 * as tentative and start Duplicate Address Detection for them.
-	 */
-	if (ifs->if_link_state != LINK_STATE_DOWN)
-		if_domain_link_state_change(ifs, ifs->if_link_state);
 
 out:
 	if_put(ifs, &psref);
