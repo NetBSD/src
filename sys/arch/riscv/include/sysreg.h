@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.7 2020/11/02 08:36:54 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.8 2020/11/02 08:37:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -198,10 +198,13 @@ riscvreg_cycle_read(void)
 
 #ifdef _LP64
 #define SATP_MODE		__BITS(63,60)
+#define  SATP_MODE_SV39		8
+#define  SATP_MODE_SV48		9
 #define SATP_ASID		__BITS(59,44)
 #define SATP_PPN		__BITS(43,0)
 #else
 #define SATP_MODE		__BIT(31)
+#define  SATP_MODE_SV32		1
 #define SATP_ASID		__BITS(30,22)
 #define SATP_PPN		__BITS(21,0)
 #endif
