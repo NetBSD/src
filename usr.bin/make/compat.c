@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.173 2020/11/01 17:47:26 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.174 2020/11/02 20:50:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,15 +96,15 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.173 2020/11/01 17:47:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.174 2020/11/02 20:50:24 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
 static int compatSigno;
 
 /*
- * CompatDeleteTarget -- delete a failed, interrupted, or otherwise
- * duffed target if not inhibited by .PRECIOUS.
+ * CompatDeleteTarget -- delete the file of a failed, interrupted, or
+ * otherwise duffed target if not inhibited by .PRECIOUS.
  */
 static void
 CompatDeleteTarget(GNode *gn)
@@ -129,8 +129,6 @@ CompatDeleteTarget(GNode *gn)
 static void
 CompatInterrupt(int signo)
 {
-    GNode   *gn;
-
     CompatDeleteTarget(curTarg);
 
     if (curTarg != NULL && !Targ_Precious(curTarg)) {
@@ -138,7 +136,7 @@ CompatInterrupt(int signo)
 	 * Run .INTERRUPT only if hit with interrupt signal
 	 */
 	if (signo == SIGINT) {
-	    gn = Targ_FindNode(".INTERRUPT");
+	    GNode *gn = Targ_FindNode(".INTERRUPT");
 	    if (gn != NULL) {
 		Compat_Make(gn, gn);
 	    }
