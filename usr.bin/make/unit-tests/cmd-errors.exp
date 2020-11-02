@@ -1,5 +1,7 @@
 : undefined 
-: unclosed 
+make: Unclosed variable "UNCLOSED"
+: unclosed-variable 
+: unclosed-modifier 
 make: Unknown modifier 'Z'
 : unknown-modifier 
 : end
