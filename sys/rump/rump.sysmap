@@ -214,6 +214,7 @@
 477  sys_clock_nanosleep    clock_nanosleep    rump___sysimpl_clock_nanosleep
 479  sys_posix_fallocate    posix_fallocate    rump___sysimpl_posix_fallocate
 480  sys_fdiscard           fdiscard           rump___sysimpl_fdiscard
+482  sys_clock_getcpuclockid2 clock_getcpuclockid2 rump___sysimpl_clock_getcpuclockid2
 483  sys___getvfsstat90     __getvfsstat90     rump___sysimpl_getvfsstat90
 484  sys___statvfs190       __statvfs190       rump___sysimpl_statvfs190
 485  sys___fstatvfs190      __fstatvfs190      rump___sysimpl_fstatvfs190
