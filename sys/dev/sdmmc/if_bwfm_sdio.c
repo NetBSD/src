@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.23 2020/07/22 17:23:12 riastradh Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.24 2020/11/03 09:26:41 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1478,6 +1478,8 @@ bwfm_sdio_task1(struct bwfm_sdio_softc *sc)
 		DPRINTF(("%s: hostint 0x%" PRIx32 "\n", DEVNAME(sc), hostint));
 		bwfm_sdio_dev_write(sc, SDPCMD_TOSBMAILBOX,
 		    SDPCMD_TOSBMAILBOX_INT_ACK);
+		if (hostint & SDPCMD_TOHOSTMAILBOXDATA_FWHALT)
+			printf("%s: firmware halted\n", DEVNAME(sc));
 		if (hostint & SDPCMD_TOHOSTMAILBOXDATA_NAKHANDLED)
 			sc->sc_rxskip = false;
 		if (hostint & SDPCMD_TOHOSTMAILBOXDATA_DEVREADY ||
@@ -1726,6 +1728,8 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 
 		flen = hwhdr->frmlen - (sizeof(*hwhdr) + sizeof(*swhdr));
 		if (flen == 0) {
+			DPRINTF(("%s: empty payload (frmlen=%u)\n",
+			    DEVNAME(sc), hwhdr->frmlen));
 			nextlen = swhdr->nextlen << 4;
 			continue;
 		}
@@ -1794,11 +1798,10 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			}
 			m_adj(m, hoff);
 			/* don't pass empty packet to stack */
-			if (m->m_len == 0) {
+			if (m->m_len > 0)
+				bwfm_rx(&sc->sc_sc, m);
+			else
 				m_freem(m);
-				break;
-			}
-			bwfm_rx(&sc->sc_sc, m);
 			nextlen = swhdr->nextlen << 4;
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
