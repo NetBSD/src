@@ -37,6 +37,8 @@
 #include <interface/compat/vchi_bsd.h>
 #include <linux/list.h>
 
+#include <arm/cpufunc.h>
+
 #include "vchiq_cfg.h"
 
 #include "vchiq.h"
