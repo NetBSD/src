@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.5 2020/11/03 18:18:31 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
 
@@ -78,30 +78,41 @@ mod-subst-delimiter:
 	@echo ${:U1 2 3:S	2	two	:Q} horizontal tabulator
 	@echo ${:U1 2 3:S 2 two :Q} space
 	@echo ${:U1 2 3:S!2!two!:Q} exclamation mark
-	@echo ${:U1 2 3:S"2"two":Q} double quotes
+	@echo ${:U1 2 3:S"2"two":Q} quotation mark
 	# In shell command lines, the hash does not need to be escaped.
 	# It needs to be escaped in variable assignment lines though.
-	@echo ${:U1 2 3:S#2#two#:Q} hash
-	@echo ${:U1 2 3:S$2$two$:Q} dollar
-	@echo ${:U1 2 3:S%2%two%:Q} percent
+	@echo ${:U1 2 3:S#2#two#:Q} number sign
+	@echo ${:U1 2 3:S$2$two$:Q} dollar sign
+	@echo ${:U1 2 3:S%2%two%:Q} percent sign
+	@echo ${:U1 2 3:S&2&two&:Q} ampersand
 	@echo ${:U1 2 3:S'2'two':Q} apostrophe
-	@echo ${:U1 2 3:S(2(two(:Q} opening parenthesis
-	@echo ${:U1 2 3:S)2)two):Q} closing parenthesis
+	@echo ${:U1 2 3:S(2(two(:Q} left parenthesis
+	@echo ${:U1 2 3:S)2)two):Q} right parenthesis
+	@echo ${:U1 2 3:S*2*two*:Q} asterisk
+	@echo ${:U1 2 3:S+2+two+:Q} plus sign
+	@echo ${:U1 2 3:S,2,two,:Q} comma
+	@echo ${:U1 2 3:S-2-two-:Q} hyphen-minus
+	@echo ${:U1 2 3:S.2.two.:Q} full stop
+	@echo ${:U1 2 3:S/2/two/:Q} solidus
 	@echo ${:U1 2 3:S121two1:Q} digit
 	@echo ${:U1 2 3:S:2:two::Q} colon
-	@echo ${:U1 2 3:S<2<two<:Q} less than sign
-	@echo ${:U1 2 3:S=2=two=:Q} equal sign
-	@echo ${:U1 2 3:S>2>two>:Q} greater than sign
+	@echo ${:U1 2 3:S;2;two;:Q} semicolon
+	@echo ${:U1 2 3:S<2<two<:Q} less-than sign
+	@echo ${:U1 2 3:S=2=two=:Q} equals sign
+	@echo ${:U1 2 3:S>2>two>:Q} greater-than sign
 	@echo ${:U1 2 3:S?2?two?:Q} question mark
-	@echo ${:U1 2 3:S@2@two@:Q} at
-	@echo ${:U1 2 3:Sa2atwoa:Q} letter
-	@echo ${:U1 2 3:S[2[two[:Q} opening bracket
-	@echo ${:U1 2 3:S\2\two\:Q} backslash
-	@echo ${:U1 2 3:S]2]two]:Q} closing bracket
-	@echo ${:U1 2 3:S^2^two^:Q} caret
-	@echo ${:U1 2 3:S{2{two{:Q} opening brace
+	@echo ${:U1 2 3:S@2@two@:Q} commercial at
+	@echo ${:U1 2 3:SA2AtwoA:Q} capital letter
+	@echo ${:U1 2 3:S[2[two[:Q} left square bracket
+	@echo ${:U1 2 3:S\2\two\:Q} reverse solidus
+	@echo ${:U1 2 3:S]2]two]:Q} right square bracket
+	@echo ${:U1 2 3:S^2^two^:Q} circumflex accent
+	@echo ${:U1 2 3:S_2_two_:Q} low line
+	@echo ${:U1 2 3:S`2`two`:Q} grave accent
+	@echo ${:U1 2 3:Sa2atwoa:Q} small letter
+	@echo ${:U1 2 3:S{2{two{:Q} left curly bracket
 	@echo ${:U1 2 3:S|2|two|:Q} vertical line
-	@echo ${:U1 2 3:S}2}two}:Q} closing brace
+	@echo ${:U1 2 3:S}2}two}:Q} right curly bracket
 	@echo ${:U1 2 3:S~2~two~:Q} tilde
 
 # The :S and :C modifiers can be chained without a separating ':'.
