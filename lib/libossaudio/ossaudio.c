@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.60 2020/11/03 08:24:33 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.61 2020/11/03 09:36:12 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.60 2020/11/03 08:24:33 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.61 2020/11/03 09:36:12 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -528,6 +528,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
+		if (idata & AUDIO_PROP_CAPTURE)
+			idat |= DSP_CAP_INPUT;
+		if (idata & AUDIO_PROP_PLAYBACK)
+			idat |= DSP_CAP_OUTPUT;
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_SETTRIGGER:
