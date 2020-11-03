@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst.mk,v 1.5 2020/11/03 18:18:31 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.6 2020/11/03 18:21:36 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
 
@@ -132,7 +132,7 @@ mod-subst-chain:
 	# modifiers with the matching modifiers.
 	@echo ${:Uvalue:S,a,x,i}.
 
-# No matter how many dollar characters there are, they all get merged
+# No matter how many dollar signs there are, they all get merged
 # into a single dollar by the :S modifier.
 #
 # As of 2020-08-09, this is because ParseModifierPart sees a '$' and
@@ -156,7 +156,7 @@ mod-subst-dollar:
 	@echo $@:${:U40:S,^,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,:Q}:
 # This generates no dollar at all:
 	@echo $@:${:UU8:S,^,${:U$$$$$$$$},:Q}:
-# Here is an alternative way to generate dollar characters.
+# Here is an alternative way to generate dollar signs.
 # It's unexpectedly complicated though.
 	@echo $@:${:U:range=5:ts\x24:C,[0-9],,g:Q}:
 # In modifiers, dollars are escaped using the backslash, not using another
