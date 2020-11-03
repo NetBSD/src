@@ -1,4 +1,4 @@
-/*	$NetBSD: futex.h,v 1.4 2020/05/05 15:25:18 riastradh Exp $	*/
+/*	$NetBSD: futex.h,v 1.4.2.1 2020/11/03 16:05:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
@@ -86,6 +86,10 @@
 #define FUTEX_WAIT_REQUEUE_PI		 11
 #define FUTEX_CMP_REQUEUE_PI		 12
 
+/* These futex operations are NetBSD extensions. */
+#define FUTEX_NETBSD_RW_WAIT		 64
+#define FUTEX_NETBSD_RW_HANDOFF		 65
+
 #define FUTEX_PRIVATE_FLAG		__BIT(7)
 #define FUTEX_CLOCK_REALTIME		__BIT(8)
 
@@ -131,6 +135,18 @@
 #define FUTEX_TID_MASK		((int)__BITS(0,27))
 
 #define FUTEX_BITSET_MATCH_ANY  ((int)__BITS(0,31))
+
+/*
+ * The FUTEX_NETBSD_RW_WAIT and FUTEX_NETBSD_RW_HANDOFF operations
+ * define specific meanings for some of the futex word bits and val3.
+ *
+ * (futex & FUTEX_TID_MASK) is the owner in the write-locked case,
+ * and the count of readers in the read-locked case.
+ */
+#define FUTEX_RW_WRITE_LOCKED	FUTEX_SYNCOBJ_1
+#define FUTEX_RW_WRITE_WANTED	FUTEX_SYNCOBJ_0
+#define FUTEX_RW_READER		0
+#define FUTEX_RW_WRITER		1
 
 /*
  * The robust futex ABI consists of an array of 3 longwords, the address
