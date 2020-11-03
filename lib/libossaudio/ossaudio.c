@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.59 2020/10/30 21:44:49 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.60 2020/11/03 08:24:33 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.59 2020/10/30 21:44:49 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.60 2020/11/03 08:24:33 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -187,9 +187,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			INTARG = 192000;
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
-		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
 			return retval;
-		}
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
