@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.5 2020/10/31 12:34:03 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.6 2020/11/03 18:21:36 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -57,7 +57,7 @@ mod-loop-varname-dollar:
 	@echo $@:${1 2 3:L:@v$$@($v)@:Q}.
 	@echo $@:${1 2 3:L:@v$$$@($v)@:Q}.
 
-# Demonstrate that it is possible to generate dollar characters using the
+# Demonstrate that it is possible to generate dollar signs using the
 # :@ modifier.
 #
 # These are edge cases that could have resulted in a parse error as well
