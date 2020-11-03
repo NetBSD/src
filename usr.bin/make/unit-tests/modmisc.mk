@@ -1,4 +1,4 @@
-# $NetBSD: modmisc.mk,v 1.49 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: modmisc.mk,v 1.50 2020/11/03 18:42:33 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -48,9 +48,9 @@ emptyvar:
 	@echo @:${:@var@${var}@}
 
 # The :U modifier turns even the "" variable into something that has a value.
-# The resulting variable is empty, but is still considered to contain a
-# single empty word. This word can be accessed by the :S and :C modifiers,
-# but not by the :@ modifier since it explicitly skips empty words.
+# The value of the resulting expression is empty, but is still considered to
+# contain a single empty word. This word can be accessed by the :S and :C
+# modifiers, but not by the :@ modifier since it explicitly skips empty words.
 undefvar:
 	@echo S:${:U:S,^$,empty,}
 	@echo C:${:U:C,^$,empty,}
@@ -65,7 +65,7 @@ mod-break-many-words:
 	@echo $@: ${UNDEF:U:range=500:[#]}
 
 # To apply a modifier indirectly via another variable, the whole
-# modifier must be put into a single variable.
+# modifier must be put into a single variable expression.
 .if ${value:L:${:US}${:U,value,replacement,}} != "S,value,replacement,}"
 .  warning unexpected
 .endif
