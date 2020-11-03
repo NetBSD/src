@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.17 2020/10/11 16:22:02 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.18 2020/11/03 08:34:17 skrll Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
@@ -10,7 +10,8 @@
 #endif
 
 
-#if defined (__ARM_ARCH_8A__) || defined (__ARM_ARCH_8A)
+#if defined (__ARM_ARCH_8A__) || defined (__ARM_ARCH_8A) || \
+    __ARM_ARCH == 8
 	/* __ARM_ARCH_8A__ is a typo */
 #define _ARM_ARCH_8
 #endif
