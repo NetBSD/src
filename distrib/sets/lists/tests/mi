@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.959 2020/11/02 20:43:27 rillig Exp $
+# $NetBSD: mi,v 1.960 2020/11/03 17:17:31 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5059,8 +5059,8 @@
 ./usr/tests/usr.bin/make/unit-tests/directive-warning.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/directives.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/directives.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directives.exp				tests-obsolete		obsolete
+./usr/tests/usr.bin/make/unit-tests/directives.mk				tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/dollar.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dollar.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/doterror.exp				tests-usr.bin-tests	compattestfile,atf

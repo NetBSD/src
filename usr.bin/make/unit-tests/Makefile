@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.186 2020/11/02 21:53:28 rillig Exp $
+# $NetBSD: Makefile,v 1.187 2020/11/03 17:17:31 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -159,7 +159,6 @@ TESTS+=		directive-undef
 TESTS+=		directive-unexport
 TESTS+=		directive-unexport-env
 TESTS+=		directive-warning
-TESTS+=		directives
 TESTS+=		dollar
 TESTS+=		doterror
 TESTS+=		dotwait
