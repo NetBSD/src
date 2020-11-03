@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.8 2019/03/09 16:18:22 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.9 2020/11/03 22:21:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.8 2019/03/09 16:18:22 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.9 2020/11/03 22:21:43 christos Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -115,10 +115,18 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 			goto mal;
 		if ((dt = strtok(NULL, "/")) == NULL)
 			goto mal;
+		if (strcmp(dt, "dummy timestamp") == 0) {
+			warnx("Can't get timestamp from uncommitted file `%s'",
+			    ename);
+			if (!ignore)
+				exit(EXIT_FAILURE);
+			continue;
+		}
 		if ((p = strptime(dt, fmt, &tm)) == NULL || *p) {
 			warnx("Malformed time `%s' in `%s'", dt, ename);
 			if (!ignore)
 				exit(EXIT_FAILURE);
+			continue;
 		}
 		tm.tm_isdst = 0;	// We are in GMT anyway
 		if ((t = mktime(&tm)) == (time_t)-1)
@@ -132,6 +140,8 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 				printlat(lat);
 		}
 	}
+	if (ferror(fp))
+		err(EXIT_FAILURE, "Can't read `%s'", ename);
 
 	fclose(fp);
 	return;
