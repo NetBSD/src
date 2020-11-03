@@ -2185,7 +2185,7 @@ void	 file_fire_done(struct client_file *);
 void	 file_fire_read(struct client_file *);
 int	 file_can_print(struct client *);
 void printflike(2, 3) file_print(struct client *, const char *, ...);
-void 	 file_vprint(struct client *, const char *, va_list);
+void printflike(2, 0) file_vprint(struct client *, const char *, va_list);
 void 	 file_print_buffer(struct client *, void *, size_t);
 void printflike(2, 3) file_error(struct client *, const char *, ...);
 void	 file_write(struct client *, const char *, int, const void *, size_t,
