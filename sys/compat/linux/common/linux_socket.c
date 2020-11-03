@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.151 2020/10/24 09:01:56 mgorny Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.152 2020/11/03 22:08:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.151 2020/10/24 09:01:56 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.152 2020/11/03 22:08:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -861,11 +861,11 @@ linux_to_bsd_so_sockopt(int lopt)
 		return SO_DEBUG;
 	case LINUX_SO_REUSEADDR:
 		/*
-		 * Linux does not implement SO_REUSEPORT, but allows reuse of a
-		 * host:port pair through SO_REUSEADDR even if the address is not a
-		 * multicast-address.  Effectively, this means that we should use
-		 * SO_REUSEPORT to allow Linux applications to not exit with
-		 * EADDRINUSE
+		 * Linux does not implement SO_REUSEPORT, but allows reuse of
+		 * a host:port pair through SO_REUSEADDR even if the address
+		 * is not a multicast-address. Effectively, this means that we
+		 * should use SO_REUSEPORT to allow Linux applications to not
+		 * exit with EADDRINUSE
 		 */
 		return SO_REUSEPORT;
 	case LINUX_SO_TYPE:
@@ -880,20 +880,51 @@ linux_to_bsd_so_sockopt(int lopt)
 		return SO_SNDBUF;
 	case LINUX_SO_RCVBUF:
 		return SO_RCVBUF;
-	case LINUX_SO_SNDLOWAT:
-		return SO_SNDLOWAT;
-	case LINUX_SO_RCVLOWAT:
-		return SO_RCVLOWAT;
 	case LINUX_SO_KEEPALIVE:
 		return SO_KEEPALIVE;
 	case LINUX_SO_OOBINLINE:
 		return SO_OOBINLINE;
+	case LINUX_SO_NO_CHECK:
+	case LINUX_SO_PRIORITY:
+		return -1;
 	case LINUX_SO_LINGER:
 		return SO_LINGER;
+	case LINUX_SO_BSDCOMPAT:
+	case LINUX_SO_PASSCRED:
+	case LINUX_SO_PEERCRED:
+		return -1;
+	case LINUX_SO_RCVLOWAT:
+		return SO_RCVLOWAT;
+	case LINUX_SO_SNDLOWAT:
+		return SO_SNDLOWAT;
+	case LINUX_SO_RCVTIMEO:
+		return SO_RCVTIMEO;
+	case LINUX_SO_SNDTIMEO:
+		return SO_SNDTIMEO;
+	case LINUX_SO_SECURITY_AUTHENTICATION:
+	case LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT:
+	case LINUX_SO_SECURITY_ENCRYPTION_NETWORK:
+	case LINUX_SO_BINDTODEVICE:
+	case LINUX_SO_ATTACH_FILTER:
+	case LINUX_SO_DETACH_FILTER:
+	case LINUX_SO_PEERNAME:
+		return -1;
+	case LINUX_SO_TIMESTAMP:
+		return SO_TIMESTAMP;
 	case LINUX_SO_ACCEPTCONN:
-		return SO_ACCEPTCONN;
-	case LINUX_SO_PRIORITY:
-	case LINUX_SO_NO_CHECK:
+	case LINUX_SO_PEERSEC:
+	case LINUX_SO_SNDBUFFORCE:
+	case LINUX_SO_RCVBUFFORCE:
+	case LINUX_SO_PASSSEC:
+	case LINUX_SO_TIMESTAMPNS:
+	case LINUX_SO_MARK:
+	case LINUX_SO_TIMESTAMPING:
+	case LINUX_SO_PROTOCOL:
+	case LINUX_SO_DOMAIN:
+	case LINUX_SO_RXQ_OVFL:
+	case LINUX_SO_WIFI_STATUS:
+	case LINUX_SO_PEEK_OFF:
+	case LINUX_SO_NOFCS:
 	default:
 		return -1;
 	}
