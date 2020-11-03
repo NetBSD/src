@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.61 2020/11/03 09:36:12 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.62 2020/11/03 09:46:00 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.61 2020/11/03 09:36:12 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.62 2020/11/03 09:46:00 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -70,6 +70,8 @@ static struct audiodevinfo *getdevinfo(int);
 static int getaudiocount(void);
 static int getmixercount(void);
 static int getmixercontrolcount(int);
+
+static int getcaps(int, int *);
 
 static int getvol(u_int, u_char);
 static void setvol(int, int, bool);
@@ -126,7 +128,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	static int totalperrors = 0;
 	static int totalrerrors = 0;
 	oss_count_t osscount;
-	int idat, idata;
+	int idat;
 	int retval;
 
 	idat = 0;
@@ -520,19 +522,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		break;
 	case SNDCTL_DSP_GETCAPS:
-		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
+		retval = getcaps(fd, (int *)argp);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER;
-		if (idata & AUDIO_PROP_FULLDUPLEX)
-			idat |= DSP_CAP_DUPLEX;
-		if (idata & AUDIO_PROP_MMAP)
-			idat |= DSP_CAP_MMAP;
-		if (idata & AUDIO_PROP_CAPTURE)
-			idat |= DSP_CAP_INPUT;
-		if (idata & AUDIO_PROP_PLAYBACK)
-			idat |= DSP_CAP_OUTPUT;
-		INTARG = idat;
 		break;
 	case SNDCTL_DSP_SETTRIGGER:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -1018,7 +1010,6 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 	int newfd = -1, tmperrno;
 	int i, noffs;
 	int retval;
-	int props, caps;
 
 	/*
 	 * Note: it is difficult to translate the NetBSD concept of a "set"
@@ -1075,27 +1066,16 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 			errno = tmperrno;
 			return retval;
 		}
-		retval = ioctl(newfd, AUDIO_GETPROPS, &props);
-		if (retval < 0) {
+		if (getcaps(newfd, &tmpai->caps) < 0) {
 			tmperrno = errno;
 			close(newfd);
 			errno = tmperrno;
 			return retval;
 		}
-		caps = DSP_CAP_TRIGGER;
-		if (props & AUDIO_PROP_FULLDUPLEX)
-			caps |= DSP_CAP_DUPLEX;
-		if (props & AUDIO_PROP_MMAP)
-			caps |= DSP_CAP_MMAP;
-		if (props & AUDIO_PROP_CAPTURE)
-			caps |= PCM_CAP_INPUT;
-		if (props & AUDIO_PROP_PLAYBACK)
-			caps |= PCM_CAP_OUTPUT;
 		snprintf(tmpai->name, sizeof(tmpai->name),
 		    "%s %s", dev.name, dev.version);
 		tmpai->busy = 0;
 		tmpai->pid = -1;
-		tmpai->caps = caps;
 		ioctl(newfd, SNDCTL_DSP_GETFMTS, &tmpai->iformats);
 		tmpai->oformats = tmpai->iformats;
 		tmpai->magic = -1; /* reserved for "internal use" */
@@ -1573,6 +1553,29 @@ global_oss4_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	}
 	return retval;
+}
+
+static int
+getcaps(int fd, int *out)
+{
+	int props, caps;
+
+	if (ioctl(fd, AUDIO_GETPROPS, &props) < 0)
+		return -1;
+
+	caps = DSP_CAP_TRIGGER;
+
+	if (props & AUDIO_PROP_FULLDUPLEX)
+		caps |= DSP_CAP_DUPLEX;
+	if (props & AUDIO_PROP_MMAP)
+		caps |= DSP_CAP_MMAP;
+	if (props & AUDIO_PROP_CAPTURE)
+		caps |= PCM_CAP_INPUT;
+	if (props & AUDIO_PROP_PLAYBACK)
+		caps |= PCM_CAP_OUTPUT;
+
+	*out = caps;
+	return 0;
 }
 
 static int
