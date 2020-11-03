@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.18 2020/07/28 15:41:26 riastradh Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.19 2020/11/03 15:06:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.18 2020/07/28 15:41:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.19 2020/11/03 15:06:50 mlelstv Exp $");
 #endif
 
 /*
@@ -106,7 +106,7 @@ ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
-	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
+	ctx = kmem_intr_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -120,7 +120,7 @@ ccmp_detach(struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx = k->wk_private;
 
-	kmem_free(ctx, sizeof(*ctx));
+	kmem_intr_free(ctx, sizeof(*ctx));
 }
 
 static int
