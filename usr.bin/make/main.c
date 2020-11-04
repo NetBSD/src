@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.424 2020/11/04 13:22:15 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.425 2020/11/04 13:29:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.424 2020/11/04 13:22:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.425 2020/11/04 13:29:42 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -157,8 +157,6 @@ int makelevel;
 
 Boolean forceJobs = FALSE;
 static int errors = 0;
-
-extern SearchPath *parseIncPath;
 
 /*
  * For compatibility with the POSIX version of MAKEFLAGS that includes

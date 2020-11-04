@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.185 2020/11/04 13:22:15 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.186 2020/11/04 13:29:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -452,8 +452,13 @@ extern time_t	now;		/* The time at the start of this whole
  */
 extern Boolean preserveUndefined;
 
-extern SearchPath *sysIncPath;	/* The system include path. */
-extern SearchPath *defSysIncPath; /* The default system include path. */
+/* Used for .include "...". */
+extern SearchPath *parseIncPath;
+/* Used for .include <...>, for the built-in sys.mk and makefiles from the
+ * command line arguments. */
+extern SearchPath *sysIncPath;
+/* The default for sysIncPath. */
+extern SearchPath *defSysIncPath;
 
 extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
