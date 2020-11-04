@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2020/11/04 06:56:56 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.9 2020/11/04 07:51:08 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -107,8 +107,8 @@ define	TF_T5		offsetof(struct trapframe, tf_reg[_X_T5])
 define	TF_T6		offsetof(struct trapframe, tf_reg[_X_T6])
 define	TF_GP		offsetof(struct trapframe, tf_reg[_X_GP])
 define	TF_PC		offsetof(struct trapframe, tf_pc)
-define	TF_SCAUSE	offsetof(struct trapframe, tf_scause)
-define	TF_STVAL	offsetof(struct trapframe, tf_stval)
+define	TF_CAUSE	offsetof(struct trapframe, tf_cause)
+define	TF_TVA	L	offsetof(struct trapframe, tf_tval)
 define	TF_SR		offsetof(struct trapframe, tf_sr)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)
