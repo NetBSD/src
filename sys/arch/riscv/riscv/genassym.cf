@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2020/11/04 07:51:08 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.10 2020/11/04 20:05:47 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,14 @@ define	SR_SIE		SR_SIE
 
 define	CAUSE_SYSCALL	CAUSE_SYSCALL
 
+ifdef _LP64
+define	SATP_MODE_MASK	SATP_MODE
+define	SATP_MODE_SV39	__SHIFTIN(SATP_MODE_SV39, SATP_MODE)
+define	SATP_MODE_SV48	__SHIFTIN(SATP_MODE_SV48, SATP_MODE)
+else
+define	SATP_MODE_SV32	__SHIFTIN(SATP_MODE_SV32, SATP_MODE)
+endif
+
 define	IPL_HIGH	IPL_HIGH
 define	IPL_DDB		IPL_DDB
 define	IPL_SCHED	IPL_SCHED
@@ -108,7 +116,7 @@ define	TF_T6		offsetof(struct trapframe, tf_reg[_X_T6])
 define	TF_GP		offsetof(struct trapframe, tf_reg[_X_GP])
 define	TF_PC		offsetof(struct trapframe, tf_pc)
 define	TF_CAUSE	offsetof(struct trapframe, tf_cause)
-define	TF_TVA	L	offsetof(struct trapframe, tf_tval)
+define	TF_TVAL		offsetof(struct trapframe, tf_tval)
 define	TF_SR		offsetof(struct trapframe, tf_sr)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)
