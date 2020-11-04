@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.4 2020/11/01 18:03:21 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.5 2020/11/04 11:49:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1016,3 +1016,11 @@ doc/3RDPARTY					(manually adjusted)
 
 	Update tmux to 3.1c.
 	[christos, ticket #1125]
+
+sys/dev/pci/if_wm.c				1.694,1.695 (patch)
+sys/dev/pci/if_wmvar.h				1.47
+
+	PR 40981: avoid device timeouts with ihphy and atphy
+	(ICH*/PCH*, 82580 and I350).
+	[knakahara, ticket #1126]
+
