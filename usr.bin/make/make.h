@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.179 2020/11/01 17:47:26 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.180 2020/11/04 02:57:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -444,7 +444,11 @@ extern char	var_Error[];	/* Value returned by Var_Parse when an error
 extern time_t	now;		/* The time at the start of this whole
 				 * process */
 
-extern Boolean	oldVars;	/* Do old-style variable substitution */
+/* Do old-style variable substitution.
+ *
+ * The word "old" comes from 1993-03-21 or earlier, so it must be really old.
+ * TODO: But what does this "old-style" mean?  What effects does it have? */
+extern Boolean	oldVars;
 
 extern SearchPath *sysIncPath;	/* The system include path. */
 extern SearchPath *defSysIncPath; /* The default system include path. */
