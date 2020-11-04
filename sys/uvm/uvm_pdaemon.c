@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.130 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.131 2020/11/04 01:30:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.130 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.131 2020/11/04 01:30:19 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -99,8 +99,6 @@ UVMHIST_DEFINE(pdhist);
  */
 
 #define	UVMPD_NUMDIRTYREACTS	16
-
-#define	UVMPD_NUMTRYLOCKOWNER	128
 
 /*
  * local prototypes
@@ -377,6 +375,32 @@ uvm_pageout_done(int npages)
 	mutex_spin_exit(&uvmpd_lock);
 }
 
+static krwlock_t *
+uvmpd_page_owner_lock(struct vm_page *pg)
+{
+	struct uvm_object *uobj = pg->uobject;
+	struct vm_anon *anon = pg->uanon;
+	krwlock_t *slock;
+
+	KASSERT(mutex_owned(&pg->interlock));
+
+#ifdef DEBUG
+	if (uobj == (void *)0xdeadbeef || anon == (void *)0xdeadbeef) {
+		return NULL;
+	}
+#endif
+	if (uobj != NULL) {
+		slock = uobj->vmobjlock;
+		KASSERTMSG(slock != NULL, "pg %p uobj %p, NULL lock", pg, uobj);
+	} else if (anon != NULL) {
+		slock = anon->an_lock;
+		KASSERTMSG(slock != NULL, "pg %p anon %p, NULL lock", pg, anon);
+	} else {
+		slock = NULL;
+	}
+	return slock;
+}
+
 /*
  * uvmpd_trylockowner: trylock the page's owner.
  *
@@ -388,71 +412,59 @@ uvm_pageout_done(int npages)
 krwlock_t *
 uvmpd_trylockowner(struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
-	struct vm_anon *anon = pg->uanon;
-	int tries, count;
-	bool running;
-	krwlock_t *slock;
+	krwlock_t *slock, *heldslock;
 
 	KASSERT(mutex_owned(&pg->interlock));
 
-	if (uobj != NULL) {
-		slock = uobj->vmobjlock;
-		KASSERTMSG(slock != NULL, "pg %p uobj %p, NULL lock", pg, uobj);
-	} else if (anon != NULL) {
-		slock = anon->an_lock;
-		KASSERTMSG(slock != NULL, "pg %p anon %p, NULL lock", pg, anon);
-	} else {
+	slock = uvmpd_page_owner_lock(pg);
+	if (slock == NULL) {
 		/* Page may be in state of flux - ignore. */
 		mutex_exit(&pg->interlock);
 		return NULL;
 	}
 
-	/*
-	 * Now try to lock the objects.  We'll try hard, but don't really
-	 * plan on spending more than a millisecond or so here.
-	 */
-	tries = (curlwp == uvm.pagedaemon_lwp ? UVMPD_NUMTRYLOCKOWNER : 1);
-	for (;;) {
-		if (rw_tryenter(slock, RW_WRITER)) {
-			if (uobj == NULL) {
-				/*
-				 * set PG_ANON if it isn't set already.
-				 */
-				if ((pg->flags & PG_ANON) == 0) {
-					KASSERT(pg->loan_count > 0);
-					pg->loan_count--;
-					pg->flags |= PG_ANON;
-					/* anon now owns it */
-				}
-			}
-			mutex_exit(&pg->interlock);
-			return slock;
-		}
-		running = rw_owner_running(slock);
-		if (!running || --tries <= 0) {
-			break;
-		}
-		count = SPINLOCK_BACKOFF_MAX;
-		SPINLOCK_BACKOFF(count);
+	if (rw_tryenter(slock, RW_WRITER)) {
+		goto success;
 	}
 
 	/*
-	 * We didn't get the lock; chances are the very next page on the
-	 * queue also has the same lock, so if the lock owner is not running
-	 * take a breather and allow them to make progress.  There could be
-	 * only 1 CPU in the system, or the pagedaemon could have preempted
-	 * the owner in kernel, or any number of other things could be going
-	 * on.
+	 * The try-lock didn't work, so now do a blocking lock after
+	 * dropping the page interlock.  Prevent the owner lock from
+	 * being freed by taking a hold on it first.
 	 */
+
+	rw_obj_hold(slock);
 	mutex_exit(&pg->interlock);
-	if (curlwp == uvm.pagedaemon_lwp) {
-		if (!running) {
-			(void)kpause("pdpglock", false, 1, NULL);
-		}
-		uvmexp.pdbusy++;
+	rw_enter(slock, RW_WRITER);
+	heldslock = slock;
+
+	/*
+	 * Now we hold some owner lock.  Check if the lock we hold
+	 * is still the lock for the owner of the page.
+	 * If it is then return it, otherwise release it and return NULL.
+	 */
+
+	mutex_enter(&pg->interlock);
+	slock = uvmpd_page_owner_lock(pg);
+	if (heldslock != slock) {
+		rw_exit(heldslock);
+		slock = NULL;
 	}
-	return NULL;
+	rw_obj_free(heldslock);
+	if (slock != NULL) {
+success:
+		/*
+		 * Set PG_ANON if it isn't set already.
+		 */
+		if (pg->uobject == NULL && (pg->flags & PG_ANON) == 0) {
+			KASSERT(pg->loan_count > 0);
+			pg->loan_count--;
+			pg->flags |= PG_ANON;
+			/* anon now owns it */
+		}
+	}
+	mutex_exit(&pg->interlock);
+	return slock;
 }
 
 #if defined(VMSWAP)

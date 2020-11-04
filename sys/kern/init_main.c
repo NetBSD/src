@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.532 2020/11/04 01:30:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.532 2020/11/04 01:30:19 chs Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -329,7 +329,6 @@ main(void)
 
 	/* Initialize lock caches. */
 	mutex_obj_init();
-	rw_obj_init();
 
 	/* Initialize radix trees (used by numerous subsystems). */
 	radix_tree_init();
