@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.23 2020/10/27 15:28:01 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.24 2020/11/04 14:29:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -661,5 +661,3 @@ menu reedit, title MSG_reeditpart, y=-10;
 	    action  {((arg_rep_int*)arg)->rv = 2;};
 	option MSG_abort_installation,       exit,
 	    action  {((arg_rep_int*)arg)->rv = 0;};
-
-
