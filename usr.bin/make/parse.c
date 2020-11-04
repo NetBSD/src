@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.422 2020/11/02 22:50:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.423 2020/11/04 03:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.422 2020/11/02 22:50:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.423 2020/11/04 03:37:51 rillig Exp $");
 
 /* types and constants */
 
@@ -1919,20 +1919,9 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 {
     const char *avalue = uvalue;
     char *evalue;
-    /*
-     * Allow variables in the old value to be undefined, but leave their
-     * expressions alone -- this is done by forcing oldVars to be false.
-     * XXX: This can cause recursive variables, but that's not hard to do,
-     * and this allows someone to do something like
-     *
-     *  CFLAGS = $(.INCLUDES)
-     *  CFLAGS := -I.. $(CFLAGS)
-     *
-     * And not get an error.
-     */
-    Boolean oldOldVars = oldVars;
+    Boolean savedDiscardUndefined = discardUndefined;
 
-    oldVars = FALSE;
+    discardUndefined = FALSE;
 
     /*
      * make sure that we set the variable the first time to nothing
@@ -1943,7 +1932,7 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 
     (void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_ASSIGN, &evalue);
     /* TODO: handle errors */
-    oldVars = oldOldVars;
+    discardUndefined = savedDiscardUndefined;
     avalue = evalue;
     Var_Set(name, avalue, ctxt);
 

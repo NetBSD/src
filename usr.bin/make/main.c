@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.421 2020/11/01 00:24:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.422 2020/11/04 03:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.421 2020/11/01 00:24:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.422 2020/11/04 03:37:51 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -138,7 +138,7 @@ Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 static int		maxJobTokens;	/* -j argument */
 Boolean			enterFlagObj;	/* -w and objdir != srcdir */
 
-Boolean			oldVars;	/* variable substitution style */
+Boolean discardUndefined;
 static int jp_0 = -1, jp_1 = -1;	/* ends of parent job pipe */
 Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
@@ -640,7 +640,7 @@ rearg:
 		argc -= arginc;
 	}
 
-	oldVars = TRUE;
+	discardUndefined = TRUE;
 
 	/*
 	 * See if the rest of the arguments are variable assignments and

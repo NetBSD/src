@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.181 2020/11/04 03:13:46 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.182 2020/11/04 03:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -444,11 +444,19 @@ extern char	var_Error[];	/* Value returned by Var_Parse when an error
 extern time_t	now;		/* The time at the start of this whole
 				 * process */
 
-/* Do old-style variable substitution.
+/*
+ * If TRUE (default behavior), undefined subexpressions in a variable
+ * expression are discarded.  If FALSE (only in variable assignments using the
+ * ':=' assignment operator), they are preserved and possibly expanded later
+ * when the variable from the subexpression has been defined.
  *
- * The word "old" comes from 1993-03-21 or earlier, so it must be really old.
- * TODO: But what does this "old-style" mean?  What effects does it have? */
-extern Boolean	oldVars;
+ * Example for a ':=' assignment:
+ *	CFLAGS = $(.INCLUDES)
+ *	CFLAGS := -I.. $(CFLAGS)
+ *	# If .INCLUDES (an undocumented special variable, by the way) is
+ *	# still undefined, the updated CFLAGS becomes "-I.. $(.INCLUDES)".
+ */
+extern Boolean discardUndefined;
 
 extern SearchPath *sysIncPath;	/* The system include path. */
 extern SearchPath *defSysIncPath; /* The default system include path. */
