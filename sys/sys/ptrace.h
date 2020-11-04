@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.72 2020/10/20 20:28:55 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.73 2020/11/04 18:12:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -241,8 +241,8 @@ struct ptrace_methods {
 	int (*ptm_dodbregs)(struct lwp *, struct lwp *, struct uio *);
 };
 
-int	ptrace_init(void);
-int	ptrace_fini(void);
+int	ptrace_common_init(void);
+int	ptrace_common_fini(void);
 int	ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid);
 void	ptrace_hooks(void);
 

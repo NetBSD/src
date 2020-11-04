@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.89 2020/11/01 18:51:02 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.90 2020/11/04 18:12:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.89 2020/11/01 18:51:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.90 2020/11/04 18:12:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -293,7 +293,7 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 }
 
 int
-ptrace_init(void)
+ptrace_common_init(void)
 {
 
 #if 0
@@ -307,7 +307,7 @@ ptrace_init(void)
 }
 
 int
-ptrace_fini(void)
+ptrace_common_fini(void)
 {
 
 	kauth_unlisten_scope(ptrace_listener);
