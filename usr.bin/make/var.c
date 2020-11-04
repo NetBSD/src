@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.652 2020/11/02 21:34:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.653 2020/11/04 02:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.652 2020/11/02 21:34:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.653 2020/11/04 02:26:21 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -156,11 +156,6 @@ char var_Error[] = "";
  * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
  * be deferred until it is defined in an actual target. */
 static char varUndefined[] = "";
-
-/* Special return value for Var_Parse, just to avoid allocating empty strings.
- * In contrast to var_Error and varUndefined, this is not an error marker but
- * just an ordinary successful return value. */
-static char emptyString[] = "";
 
 /*
  * Traditionally this make consumed $$ during := like any other expansion.
@@ -2299,7 +2294,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
     if (st->eflags & VARE_WANTRES)
 	st->newVal = Cmd_Exec(cmd, &errfmt);
     else
-	st->newVal = emptyString;
+	st->newVal = bmake_strdup("");
     free(cmd);
 
     if (errfmt != NULL)
@@ -3014,7 +3009,7 @@ ok:
 	}
     }
     free(val);
-    st->newVal = emptyString;
+    st->newVal = bmake_strdup("");
     return AMR_OK;
 }
 
@@ -3138,7 +3133,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 	    if (errfmt)
 		Error(errfmt, st->val);
 	} else
-	    st->newVal = emptyString;
+	    st->newVal = bmake_strdup("");
 	*pp = p + 2;
 	return AMR_OK;
     } else
@@ -3412,10 +3407,8 @@ ApplyModifiers(
 		*out_freeIt = NULL;
 	    }
 	    st.val = st.newVal;
-	    if (st.val != var_Error && st.val != varUndefined &&
-		st.val != emptyString) {
+	    if (st.val != var_Error && st.val != varUndefined)
 		*out_freeIt = st.val;
-	    }
 	}
 	if (*p == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
