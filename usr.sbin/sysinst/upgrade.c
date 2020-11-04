@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.16 2020/02/06 19:50:04 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.17 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,7 +104,6 @@ do_upgrade(void)
 #endif
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
-	/* XXX pass install here too */
 	if (!md_update(&install))
 		goto free_install;
 

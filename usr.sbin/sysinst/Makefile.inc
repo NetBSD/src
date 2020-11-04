@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 2020/10/30 18:47:38 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2020/11/04 14:29:40 martin Exp $
 #
 # Makefile for sysinst
 
@@ -45,6 +45,11 @@ SRCS+=	mbr.c
 .endif
 .if ${NO_CLONES:Uno} == "yes"
 CPPFLAGS+=	-DNO_CLONES
+.endif
+
+.if ${CHECK_ENTROPY:Uyes} != "no"
+MENUS_MI+=	menus.entropy
+CPPFLAGS+=	-DCHECK_ENTROPY=1
 .endif
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
@@ -197,7 +202,11 @@ msgtouch: ${DISTRIBVERDEP}
 	touch ${.TARGET}
 
 .if !defined(NOPARTMAN)
-MSG_MD+=	msg.pm.${SYSINSTLANG}	
+MSG_MD+=	msg.pm.${SYSINSTLANG}
+.endif
+
+.if ${CHECK_ENTROPY:Uyes} != "no"
+MSG_MD+=	msg.entropy.${SYSINSTLANG}
 .endif
 
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch

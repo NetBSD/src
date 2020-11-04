@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.26 2020/10/27 15:28:01 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.27 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1247,21 +1247,10 @@ message pkgin_failed
 {Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
 message failed {Fehlgeschlagen}
-message notsupported {Operation wird nicht unterstützt!}
 message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
 message partman {Erweiterte Partitionierung}
-message edit_parts {Partitionen bearbeiten}
 message editpart {Partitionen bearbeiten}
-message switch_parts {Switch partitioning scheme}
-message fmtasraid {Als RAID Komponente formatieren}
-message fmtaslvm {Als LVM-PV formatieren}
-message encrypt {Verschlüsseln (CGD)}
 message setbootable {Boot-Flag}
-message erase {Safe Erase}
-message undo {Rückgängigmachen von Änderungen}
-message unconfig {Dekonfigurieren}
-message edit {Bearbeiten}
-message doumount {Force-umount}
 
 message fremove {ENTFERNEN}
 message remove {Entfernen}
