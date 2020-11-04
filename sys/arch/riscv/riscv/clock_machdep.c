@@ -1,3 +1,5 @@
+/*	$NetBSD: clock_machdep.c,v 1.3 2020/11/04 07:09:46 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.2 2020/11/01 21:01:49 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.3 2020/11/04 07:09:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
