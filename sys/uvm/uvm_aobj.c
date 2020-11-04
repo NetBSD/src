@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.151 2020/08/19 15:36:41 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.152 2020/11/04 01:30:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.151 2020/08/19 15:36:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.152 2020/11/04 01:30:19 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -416,7 +416,7 @@ struct uvm_object *
 uao_create(voff_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
-	static krwlock_t kernel_object_lock __cacheline_aligned;
+	static krwlock_t bootstrap_kernel_object_lock;
 	static int kobj_alloced __diagused = 0;
 	pgoff_t pages = round_page((uint64_t)size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
@@ -458,25 +458,30 @@ uao_create(voff_t size, int flags)
  	 * we are still booting we should be the only thread around.
  	 */
 
-	if (flags == 0 || (flags & UAO_FLAG_KERNSWAP) != 0) {
+	const int kernswap = (flags & UAO_FLAG_KERNSWAP) != 0;
+	if (flags == 0 || kernswap) {
 #if defined(VMSWAP)
-		const int kernswap = (flags & UAO_FLAG_KERNSWAP) != 0;
 
 		/* allocate hash table or array depending on object size */
 		if (UAO_USES_SWHASH(aobj)) {
 			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
-			    HASH_LIST, kernswap ? false : true,
-			    &aobj->u_swhashmask);
-			if (aobj->u_swhash == NULL)
-				panic("uao_create: hashinit swhash failed");
+			    HASH_LIST, true, &aobj->u_swhashmask);
 		} else {
 			aobj->u_swslots = kmem_zalloc(pages * sizeof(int),
-			    kernswap ? KM_NOSLEEP : KM_SLEEP);
-			if (aobj->u_swslots == NULL)
-				panic("uao_create: swslots allocation failed");
+			    KM_SLEEP);
 		}
 #endif /* defined(VMSWAP) */
 
+		/*
+		 * Replace kernel_object's temporary static lock with
+		 * a regular rw_obj.  We cannot use uvm_obj_setlock()
+		 * because that would try to free the old lock.
+		 */
+
+		if (kernswap) {
+			aobj->u_obj.vmobjlock = rw_obj_alloc();
+			rw_destroy(&bootstrap_kernel_object_lock);
+		}
 		if (flags) {
 			aobj->u_flags &= ~UAO_FLAG_NOSWAP; /* clear noswap */
 			return &aobj->u_obj;
@@ -490,9 +495,9 @@ uao_create(voff_t size, int flags)
 	const bool kernobj = (flags & UAO_FLAG_KERNOBJ) != 0;
 	uvm_obj_init(&aobj->u_obj, &aobj_pager, !kernobj, refs);
 	if (__predict_false(kernobj)) {
-		/* Initialisation only once, for UAO_FLAG_KERNOBJ. */
-		rw_init(&kernel_object_lock);
-		uvm_obj_setlock(&aobj->u_obj, &kernel_object_lock);
+		/* Use a temporary static lock for kernel_object. */
+		rw_init(&bootstrap_kernel_object_lock);
+		uvm_obj_setlock(&aobj->u_obj, &bootstrap_kernel_object_lock);
 	}
 
 	/*
