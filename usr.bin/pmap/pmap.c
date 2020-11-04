@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2020/03/22 14:41:32 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.56 2020/11/04 01:37:55 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.55 2020/03/22 14:41:32 ad Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.56 2020/11/04 01:37:55 chs Exp $");
 #endif
 
 #include <string.h>
@@ -483,9 +483,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
-		printf(A(vp) ?
-		       "%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02llu:%02llu %7llu - %s [%p]\n" :
-		       "%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02llu:%02llu %7llu - %s\n",
+		printf("%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02llu:%02llu %7llu - %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,
@@ -508,7 +506,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		       (unsigned long long)major(dev),
 		       (unsigned long long)minor(dev),
 		       (unsigned long long)inode,
-		       name, P(vp));
+		       name);
 	}
 
 	/* no access allowed, don't count space */

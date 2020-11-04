@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2020/03/22 14:41:32 ad Exp $ */
+/*	$NetBSD: main.c,v 1.29 2020/11/04 01:37:55 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.28 2020/03/22 14:41:32 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2020/11/04 01:37:55 chs Exp $");
 #endif
 
 #include <sys/param.h>
@@ -121,6 +121,7 @@ main(int argc, char *argv[])
 	struct kbit kbit, *vmspace;
 	u_long address;
 
+	uid = getuid();
 	egid = getegid();
 	if (setegid(getgid()) == -1)
 		err(1, "failed to reset privileges");
@@ -231,11 +232,12 @@ main(int argc, char *argv[])
 	    print_ddb == 0)
 		print_solaris = 1;
 
-	/* get privs back if it appears to be safe, otherwise toss them */
-	if (kernel == NULL && kmem == NULL && address == 0)
-		rc = setegid(egid);
-	else
-		rc = setgid(getgid());
+	if ((kernel != NULL || kmem != NULL || address != 0 ||
+	     print_ddb || debug) && uid != 0)
+		errx(1, "one or more options specified is restricted to root");
+
+	/* get privs back since it appears to be safe. */
+	rc = setegid(egid);
 	if (rc == -1)
 		err(1, "failed to reset privileges");
 
@@ -282,8 +284,6 @@ main(int argc, char *argv[])
 		}
 		exit(0);
 	}
-
-	uid = getuid();
 
 	do {
 		if (pid == -1) {
