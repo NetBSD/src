@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.62 2020/11/03 09:46:00 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.63 2020/11/04 22:59:24 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.62 2020/11/03 09:46:00 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.63 2020/11/04 22:59:24 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -146,8 +146,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_GETERROR:
 		tmperrinfo = (struct audio_errinfo *)argp;
-		if (tmperrinfo == NULL)
-			return EINVAL;
+		if (tmperrinfo == NULL) {
+			errno = EINVAL;
+			return -1;
+		}
 		memset(tmperrinfo, 0, sizeof(struct audio_errinfo));
 		if ((retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo)) < 0)
 			return retval;
@@ -413,8 +415,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	case SNDCTL_DSP_SETFRAGMENT:
 		AUDIO_INITINFO(&tmpinfo);
 		idat = INTARG;
-		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17)
-			return EINVAL;
+		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17) {
+			errno = EINVAL;
+			return -1;
+		}
 		tmpinfo.blocksize = 1 << (idat & 0xffff);
 		tmpinfo.hiwat = ((unsigned)idat >> 16) & 0x7fff;
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
@@ -613,8 +617,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = getvol(tmpinfo.record.gain, tmpinfo.record.balance);
 		break;
 	case SNDCTL_DSP_SKIP:
-	case SNDCTL_DSP_SILENCE:
-		return EINVAL;
+	case SNDCTL_DSP_SILENCE: 
+		errno = EINVAL;
+		return -1;
 	case SNDCTL_DSP_SETDUPLEX:
 		idat = 1;
 		retval = ioctl(fd, AUDIO_SETFD, &idat);
@@ -865,8 +870,10 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 		strlcpy(omi->name, adev.name, sizeof omi->name);
 		return 0;
 	case SOUND_MIXER_READ_RECSRC:
-		if (di->source == -1)
-			return EINVAL;
+		if (di->source == -1) {
+			errno = EINVAL;
+			return -1;
+		}
 		mc.dev = di->source;
 		if (di->caps & SOUND_CAP_EXCL_INPUT) {
 			mc.type = AUDIO_MIXER_ENUM;
@@ -900,8 +907,10 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SOUND_MIXER_WRITE_RECSRC:
 	case SOUND_MIXER_WRITE_R_RECSRC:
-		if (di->source == -1)
-			return EINVAL;
+		if (di->source == -1) {
+			errno = EINVAL;
+			return -1;
+		}
 		mc.dev = di->source;
 		idat = INTARG;
 		if (di->caps & SOUND_CAP_EXCL_INPUT) {
@@ -910,16 +919,20 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 				if (idat & (1 << i))
 					break;
 			if (i >= SOUND_MIXER_NRDEVICES ||
-			    di->devmap[i] == -1)
-				return EINVAL;
+			    di->devmap[i] == -1) {
+				errno = EINVAL;
+				return -1;
+			}
 			mc.un.ord = enum_to_ord(di, di->devmap[i]);
 		} else {
 			mc.type = AUDIO_MIXER_SET;
 			mc.un.mask = 0;
 			for(i = 0; i < SOUND_MIXER_NRDEVICES; i++) {
 				if (idat & (1 << i)) {
-					if (di->devmap[i] == -1)
-						return EINVAL;
+					if (di->devmap[i] == -1) {
+						errno = EINVAL;
+						return -1;
+					}
 					mc.un.mask |=
 					    enum_to_mask(di, di->devmap[i]);
 				}
@@ -930,8 +943,10 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 		if (MIXER_READ(SOUND_MIXER_FIRST) <= com &&
 		    com < MIXER_READ(SOUND_MIXER_NRDEVICES)) {
 			n = GET_DEV(com);
-			if (di->devmap[n] == -1)
-				return EINVAL;
+			if (di->devmap[n] == -1) {
+				errno = EINVAL;
+				return -1;
+			}
 			mc.dev = di->devmap[n];
 			mc.type = AUDIO_MIXER_VALUE;
 		    doread:
@@ -940,8 +955,10 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
 			if (retval < 0)
 				return retval;
-			if (mc.type != AUDIO_MIXER_VALUE)
-				return EINVAL;
+			if (mc.type != AUDIO_MIXER_VALUE) {
+				errno = EINVAL;
+				return -1;
+			}
 			if (mc.un.value.num_channels != 2) {
 				l = r =
 				    mc.un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -956,8 +973,10 @@ mixer_oss3_ioctl(int fd, unsigned long com, void *argp)
 			   (MIXER_WRITE(SOUND_MIXER_FIRST) <= com &&
 			   com < MIXER_WRITE(SOUND_MIXER_NRDEVICES))) {
 			n = GET_DEV(com);
-			if (di->devmap[n] == -1)
-				return EINVAL;
+			if (di->devmap[n] == -1) {
+				errno = EINVAL;
+				return -1;
+			}
 			idat = INTARG;
 			l = FROM_OSSVOL((u_int)idat & 0xff);
 			r = FROM_OSSVOL(((u_int)idat >> 8) & 0xff);
@@ -1114,8 +1133,10 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_CARDINFO:
 		cardinfo = (oss_card_info *)argp;
-		if (cardinfo == NULL)
-			return EINVAL;
+		if (cardinfo == NULL) {
+			errno = EINVAL;
+			return -1;
+		}
 		if (cardinfo->card != -1) {
 			snprintf(devname, sizeof(devname),
 			    "/dev/audio%d", cardinfo->card);
