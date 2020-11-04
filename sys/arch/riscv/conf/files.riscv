@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.6 2020/10/21 13:31:51 christos Exp $
+#	$NetBSD: files.riscv,v 1.7 2020/11/04 06:56:56 skrll Exp $
 #
 
 maxpartitions	16
@@ -14,7 +14,7 @@ file	arch/riscv/riscv/cpu_subr.c
 file	arch/riscv/riscv/db_disasm.c		ddb
 file	arch/riscv/riscv/db_trace.c		ddb
 file	arch/riscv/riscv/fixup.c
-file	arch/riscv/riscv/fpu.c
+file	arch/riscv/riscv/fpu.c			fpe
 file	arch/riscv/riscv/ipifuncs.c		multiprocessor
 file	arch/riscv/riscv/stubs.c
 file	arch/riscv/riscv/syscall.c		# syscall handler
