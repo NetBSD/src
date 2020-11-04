@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.5 2020/11/04 11:49:55 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.6 2020/11/04 13:27:40 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1023,4 +1023,11 @@ sys/dev/pci/if_wmvar.h				1.47
 	PR 40981: avoid device timeouts with ihphy and atphy
 	(ICH*/PCH*, 82580 and I350).
 	[knakahara, ticket #1126]
+
+usr.sbin/sysinst/mbr.c				1.37
+
+	Do not force alignment of the first partition by default
+	(which is treated special to skip the first track), unless
+	an existing partition table hints at it.
+	[martin, ticket #1119]
 
