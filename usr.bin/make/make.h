@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.180 2020/11/04 02:57:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.181 2020/11/04 03:13:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -171,7 +171,7 @@ typedef int Boolean;
 #include "buf.h"
 #include "make_malloc.h"
 
-typedef enum  {
+typedef enum GNodeMade {
     UNMADE,			/* Not examined yet */
     DEFERRED,			/* Examined once (building child) */
     REQUESTED,			/* on toBeMade list */
@@ -456,7 +456,7 @@ extern SearchPath *defSysIncPath; /* The default system include path. */
 extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
 extern char	*makeDependfile; /* .depend */
-extern char	**savedEnv;	 /* if we replaced environ this will be non-NULL */
+extern char	**savedEnv;	/* if we replaced environ this will be non-NULL */
 
 extern int	makelevel;
 
