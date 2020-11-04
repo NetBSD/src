@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.10 2020/11/04 19:03:17 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.10 2020/11/04 19:03:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -207,7 +207,7 @@ ptrace_modcmd(modcmd_t cmd, void *arg)
  
 	switch (cmd) {
 	case MODULE_CMD_INIT: 
-		error == ptrace_init();
+		error = ptrace_init();
 		break;
 	case MODULE_CMD_FINI:
 		error = ptrace_fini();
