@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2020/01/08 17:38:42 ad Exp $
+#	$NetBSD: genassym.cf,v 1.8 2020/11/04 06:56:56 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,17 +47,18 @@ include <uvm/uvm_extern.h>
 include <riscv/locore.h>
 include <riscv/sysreg.h>
 
-define	SR_IM		SR_IM
-define	SR_IM_LSHIFT	__SIZEOF_LONG__ * 8 - (ilog2(SR_IM) + 1)
-define	SR_IM_RSHIFT	ilog2(__LOWEST_SET_BIT(SR_IM))
-define	SR_VM		SR_VM
-define	SR_U64		SR_U64
-define	SR_S64		SR_S64
-define	SR_EF		SR_EF
-define	SR_PEI		SR_PEI
-define	SR_EI		SR_EI
-define	SR_PS		SR_PS
-define	SR_S		SR_S
+#define	SR_IM		SR_IM
+#define	SR_IM_LSHIFT	__SIZEOF_LONG__ * 8 - (ilog2(SR_IM) + 1)
+#define	SR_IM_RSHIFT	ilog2(__LOWEST_SET_BIT(SR_IM))
+#define	SR_VM		SR_VM
+#define	SR_U64		SR_U64
+#define	SR_S64		SR_S64
+#define	SR_EF		SR_EF
+#define	SR_PEI		SR_PEI
+#define	SR_EI		SR_EI
+#define	SR_PS		SR_PS
+#define	SR_S		SR_S
+define	SR_SIE		SR_SIE
 
 define	CAUSE_SYSCALL	CAUSE_SYSCALL
 
@@ -106,8 +107,8 @@ define	TF_T5		offsetof(struct trapframe, tf_reg[_X_T5])
 define	TF_T6		offsetof(struct trapframe, tf_reg[_X_T6])
 define	TF_GP		offsetof(struct trapframe, tf_reg[_X_GP])
 define	TF_PC		offsetof(struct trapframe, tf_pc)
-define	TF_CAUSE	offsetof(struct trapframe, tf_cause)
-define	TF_BADADDR	offsetof(struct trapframe, tf_badaddr)
+define	TF_SCAUSE	offsetof(struct trapframe, tf_scause)
+define	TF_STVAL	offsetof(struct trapframe, tf_stval)
 define	TF_SR		offsetof(struct trapframe, tf_sr)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)

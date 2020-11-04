@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.10 2020/11/01 21:09:48 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.11 2020/11/04 06:56:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 	(*pr)("Trapframe @ %p "
 	    "(cause=%d (%s), status=%#x, pc=%#16"PRIxREGISTER
 	    ", va=%#"PRIxREGISTER"):\n",
-	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_badaddr);
+	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_tval);
 	(*pr)("ra=%#16"PRIxREGISTER", sp=%#16"PRIxREGISTER
 	    ", gp=%#16"PRIxREGISTER", tp=%#16"PRIxREGISTER"\n",
 	    tf->tf_ra, tf->tf_sp, tf->tf_gp, tf->tf_tp);
@@ -281,10 +281,10 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 
 static bool
 trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
 {
 	struct proc * const p = curlwp->l_proc;
-	const intptr_t addr = trunc_page(badaddr);
+	const intptr_t addr = trunc_page(tval);
 
 	if (__predict_false(usertrap_p
 	    && (false
@@ -313,7 +313,7 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 		if (error) {
 			trap_ksi_init(ksi, SIGSEGV,
 			    error == EACCES ? SEGV_ACCERR : SEGV_MAPERR,
-			    (intptr_t)badaddr, cause);
+			    (intptr_t)tval, cause);
 			return false;
 		}
 		uvm_grow(p, addr);
@@ -344,32 +344,32 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 
 static bool
 trap_instruction(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
 {
 	if (usertrap_p) {
 		trap_ksi_init(ksi, SIGILL, ILL_ILLOPC,
-		    (intptr_t)badaddr, cause);
+		    (intptr_t)tval, cause);
 	}
 	return false;
 }
 
 static bool
 trap_misalignment(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t badaddr, bool usertrap_p, ksiginfo_t *ksi)
+    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
 {
 	if (usertrap_p) {
 		trap_ksi_init(ksi, SIGBUS, BUS_ADRALN,
-		    (intptr_t)badaddr, cause);
+		    (intptr_t)tval, cause);
 	}
 	return false;
 }
 
 void
 cpu_trap(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause, register_t badaddr)
+    register_t cause, register_t tval)
 {
 	const u_int fault_mask = 1U << cause;
-	const intptr_t addr = badaddr;
+	const intptr_t addr = tval;
 	const bool usertrap_p = (status & SR_PS) == 0;
 	bool ok = true;
 	ksiginfo_t ksi;
