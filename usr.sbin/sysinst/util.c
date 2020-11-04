@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.54 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.55 2020/11/04 16:26:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1192,7 +1192,7 @@ static bool
 entropy_get_file(bool use_netbsd_seed, char *path)
 {
 	static struct ftpinfo server = { .user = "ftp" };
-	char url[STRSIZE], tmpf[PATH_MAX], mountpt[PATH_MAX], *fn;
+	char url[STRSIZE], tmpf[PATH_MAX], mountpt[PATH_MAX];
 	const char *ftp_opt;
 	arg_rv arg;
 	int rv = 0;
@@ -1203,10 +1203,7 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 	path[0] = 0;
 	mountpt[0] = 0;
 
-	strcpy(tmpf, "/tmp/entr.XXXXXX");
-	fn = mktemp(tmpf);
-	if (fn == NULL)
-		return false;
+	sprintf(tmpf, "/tmp/entr.%06x", getpid());
 
 	msg_display(use_netbsd_seed ?
 	    MSG_entropy_seed_hdr : MSG_entropy_data_hdr);
@@ -1242,8 +1239,8 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 		}
 		rv = run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/usr/bin/ftp %s -o %s %s",
-		    ftp_opt, fn, url);
-		strcpy(path, fn);
+		    ftp_opt, tmpf, url);
+		strcpy(path, tmpf);
 		return rv == 0;
 	case 3:
 #ifndef DEBUG
@@ -1267,11 +1264,11 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 			    "mount -t nfs -r %s:/%s %s",
 			    nfs_host, nfs_dir, mountpt) == 0) {
 				run_program(RUN_SILENT,
-				    "cp %s %s", path, fn);
+				    "cp %s %s", path, tmpf);
 				run_program(RUN_SILENT,
 				    "umount %s", mountpt);
 				rmdir(mountpt);
-				strcpy(path, fn);
+				strcpy(path, tmpf);
 			}
 		}
 		break;
@@ -1292,11 +1289,11 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 			    "mount -t %s -r /dev/%s %s",
 			    localfs_fs, localfs_dev, mountpt) == 0) {
 				run_program(RUN_SILENT,
-				    "cp %s %s", path, fn);
+				    "cp %s %s", path, tmpf);
 				run_program(RUN_SILENT,
 				    "umount %s", mountpt);
 				rmdir(mountpt);
-				strcpy(path, fn);
+				strcpy(path, tmpf);
 			}
 		}
 		break;
@@ -2555,11 +2552,11 @@ may_swap_if_not_sdmmc(const char *disk)
 	command_dict = prop_dictionary_create();
 	args_dict = prop_dictionary_create();
 
-	string = prop_string_create_cstring_nocopy("get-properties");
+	string = prop_string_create_nocopy("get-properties");
 	prop_dictionary_set(command_dict, "drvctl-command", string);
 	prop_object_release(string);
 
-	string = prop_string_create_cstring(disk);
+	string = prop_string_create_copy(disk);
 	prop_dictionary_set(args_dict, "device-name", string);
 	prop_object_release(string);
 
@@ -2575,14 +2572,14 @@ may_swap_if_not_sdmmc(const char *disk)
 		return true;
 
 	number = prop_dictionary_get(results_dict, "drvctl-error");
-	if (prop_number_integer_value(number) == 0) {
+	if (prop_number_signed_value(number) == 0) {
 		data_dict = prop_dictionary_get(results_dict,
 		    "drvctl-result-data");
 		if (data_dict != NULL) {
 			string = prop_dictionary_get(data_dict,
 			    "device-parent");
 			if (string != NULL)
-				parent = prop_string_cstring_nocopy(string);
+				parent = prop_string_value(string);
 		}
 	}
 
