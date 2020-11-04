@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.645.2.8 2020/10/16 08:03:36 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.645.2.9 2020/11/04 11:48:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.8 2020/10/16 08:03:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.9 2020/11/04 11:48:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -375,7 +375,8 @@ struct wm_txqueue {
 	 * to manage Tx H/W queue's busy flag.
 	 */
 	int txq_flags;			/* flags for H/W queue, see below */
-#define	WM_TXQ_NO_SPACE	0x1
+#define	WM_TXQ_NO_SPACE		0x1
+#define	WM_TXQ_LINKDOWN_DISCARD	0x2
 
 	bool txq_stopping;
 
@@ -1031,6 +1032,9 @@ static void	wm_toggle_lanphypc_pch_lpt(struct wm_softc *);
 static int	wm_platform_pm_pch_lpt(struct wm_softc *, bool);
 static int	wm_pll_workaround_i210(struct wm_softc *);
 static void	wm_legacy_irq_quirk_spt(struct wm_softc *);
+static bool	wm_phy_need_linkdown_discard(struct wm_softc *);
+static void	wm_set_linkdown_discard(struct wm_softc *);
+static void	wm_clear_linkdown_discard(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -3077,6 +3081,9 @@ alloc_retry:
 
 	sc->sc_txrx_use_workqueue = false;
 
+	if (wm_phy_need_linkdown_discard(sc))
+		wm_set_linkdown_discard(sc);
+
 	wm_init_sysctls(sc);
 
 	if (pmf_device_register(self, wm_suspend, wm_resume))
@@ -3455,6 +3462,49 @@ out:
 	return rc;
 }
 
+static bool
+wm_phy_need_linkdown_discard(struct wm_softc *sc)
+{
+
+	switch(sc->sc_phytype) {
+	case WMPHY_82577: /* ihphy */
+	case WMPHY_82578: /* atphy */
+	case WMPHY_82579: /* ihphy */
+	case WMPHY_I217: /* ihphy */
+	case WMPHY_82580: /* ihphy */
+	case WMPHY_I350: /* ihphy */
+		return true;
+	default:
+		return false;
+	}
+}
+
+static void
+wm_set_linkdown_discard(struct wm_softc *sc)
+{
+
+	for (int i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_flags |= WM_TXQ_LINKDOWN_DISCARD;
+		mutex_exit(txq->txq_lock);
+	}
+}
+
+static void
+wm_clear_linkdown_discard(struct wm_softc *sc)
+{
+
+	for (int i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_flags &= ~WM_TXQ_LINKDOWN_DISCARD;
+		mutex_exit(txq->txq_lock);
+	}
+}
+
 /*
  * wm_ioctl:		[ifnet interface function]
  *
@@ -3498,6 +3548,12 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef WM_MPSAFE
 		splx(s);
 #endif
+		if (error == 0 && wm_phy_need_linkdown_discard(sc)) {
+			if (IFM_SUBTYPE(ifr->ifr_media) == IFM_NONE)
+				wm_set_linkdown_discard(sc);
+			else
+				wm_clear_linkdown_discard(sc);
+		}
 		break;
 	case SIOCINITIFADDR:
 		WM_CORE_LOCK(sc);
@@ -3512,8 +3568,17 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		WM_CORE_UNLOCK(sc);
+		if (((ifp->if_flags & IFF_UP) == 0) && wm_phy_need_linkdown_discard(sc))
+			wm_clear_linkdown_discard(sc);
 		/*FALLTHROUGH*/
 	default:
+		if (cmd == SIOCSIFFLAGS && wm_phy_need_linkdown_discard(sc)) {
+			if (((ifp->if_flags & IFF_UP) == 0) && ((ifr->ifr_flags & IFF_UP) != 0)) {
+				wm_clear_linkdown_discard(sc);
+			} else if (((ifp->if_flags & IFF_UP) != 0) && ((ifr->ifr_flags & IFF_UP) == 0)) {
+				wm_set_linkdown_discard(sc);
+			}
+		}
 #ifdef WM_MPSAFE
 		s = splnet();
 #endif
@@ -7627,6 +7692,16 @@ wm_select_txqueue(struct ifnet *ifp, struct mbuf *m)
 	return ((cpuid + ncpu - sc->sc_affinity_offset) % ncpu) % sc->sc_nqueues;
 }
 
+static inline bool
+wm_linkdown_discard(struct wm_txqueue *txq)
+{
+
+	if ((txq->txq_flags & WM_TXQ_LINKDOWN_DISCARD) != 0)
+		return true;
+
+	return false;
+}
+
 /*
  * wm_start:		[ifnet interface function]
  *
@@ -7720,6 +7795,23 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
+
+	if (__predict_false(wm_linkdown_discard(txq))) {
+		do {
+			if (is_transmit)
+				m0 = pcq_get(txq->txq_interq);
+			else
+				IFQ_DEQUEUE(&ifp->if_snd, m0);
+			/*
+			 * increment successed packet counter as in the case
+			 * which the packet is discarded by link down PHY.
+			 */
+			if (m0 != NULL)
+				ifp->if_opackets++;
+			m_freem(m0);
+		} while (m0 != NULL);
+		return;
+	}
 
 	/* Remember the previous number of free descriptors. */
 	ofree = txq->txq_free;
@@ -8329,6 +8421,23 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
+
+	if (__predict_false(wm_linkdown_discard(txq))) {
+		do {
+			if (is_transmit)
+				m0 = pcq_get(txq->txq_interq);
+			else
+				IFQ_DEQUEUE(&ifp->if_snd, m0);
+			/*
+			 * increment successed packet counter as in the case
+			 * which the packet is discarded by link down PHY.
+			 */
+			if (m0 != NULL)
+				ifp->if_opackets++;
+			m_freem(m0);
+		} while (m0 != NULL);
+		return;
+	}
 
 	sent = false;
 
@@ -9201,7 +9310,11 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 			device_xname(dev),
 			(status & STATUS_FD) ? "FDX" : "HDX"));
+		if (wm_phy_need_linkdown_discard(sc))
+			wm_clear_linkdown_discard(sc);
 	} else {
+		if (wm_phy_need_linkdown_discard(sc))
+			wm_set_linkdown_discard(sc);
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 			device_xname(dev)));
 	}
@@ -10251,8 +10364,11 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 				new_phytype = WMPHY_I217;
 				break;
 			case MII_MODEL_INTEL_I82580:
-			case MII_MODEL_INTEL_I350:
 				new_phytype = WMPHY_82580;
+				break;
+			case MII_MODEL_INTEL_I350:
+				new_phytype = WMPHY_I350;
+				break;
 				break;
 			default:
 				break;
