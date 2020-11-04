@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.8 2020/11/02 08:37:59 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.9 2020/11/04 06:56:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
 #define FCSR_FRM_RUP	0b011	// Round UP (+infinity)
 #define FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
+#define FCSR_FRM_DYN	0b111	// Dynamic rounding
 #define FCSR_FFLAGS	__BITS(4,0)	// Sticky bits
 #define FCSR_NV		__BIT(4)	// iNValid operation
 #define FCSR_DZ		__BIT(3)	// Divide by Zero
@@ -101,25 +102,77 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
-// Status Register
-#define SR_IP		__BITS(31,24)	// Pending interrupts
-#define SR_IM		__BITS(23,16)	// Interrupt Mask
-#define SR_VM		__BIT(7)	// MMU On
-#define SR_S64		__BIT(6)	// RV64 supervisor mode
-#define SR_U64		__BIT(5)	// RV64 user mode
-#define SR_EF		__BIT(4)	// Enable Floating Point
-#define SR_PEI		__BIT(3)	// Previous EI setting
-#define SR_EI		__BIT(2)	// Enable interrupts
-#define SR_PS		__BIT(1)	// Previous (S) supervisor setting
-#define SR_S		__BIT(0)	// Supervisor
+/* Supervisor Status Register */
+#ifdef _LP64
+#define SR_WPRI		__BITS(62, 34) | __BITS(31,20) | __BIT(17) | \
+			    __BITS(12,9) | __BITS(7,6) | __BITS(3,2)
+#define SR_SD		__BIT(63)
+			/* Bits 62-34 are WPRI */
+#define SR_UXL		__BITS(33,32)
+#define  SR_UXL_32	1
+#define  SR_UXL_64	2
+#define  SR_UXL_128	3
+			/* Bits 31-20 are WPRI*/
+#else
+#define SR_WPRI		__BITS(30,20) | __BIT(17) | __BITS(12,9) | \
+			    __BITS(7,6) | __BITS(3,2)
+#define SR_SD		__BIT(31)
+			/* Bits 30-20 are WPRI*/
+#endif /* _LP64 */
+
+/* Both RV32 and RV64 have the bottom 20 bits shared */
+#define SR_MXR		__BIT(19)
+#define SR_SUM		__BIT(18)
+			/* Bit 17 is WPRI */
+#define SR_XS		__BITS(16,15)
+#define SR_FS		__BITS(14,13)
+#define  SR_FS_OFF	0
+#define  SR_FS_INITIAL	1
+#define  SR_FS_CLEAN	2
+#define  SR_FS_DIRTY	3
+
+			/* Bits 12-9 are WPRI */
+#define SR_SPP		__BIT(8)
+			/* Bits 7-6 are WPRI */
+#define SR_SPIE		__BIT(5)
+#define SR_UPIE		__BIT(4)
+			/* Bits 3-2 are WPRI */
+#define SR_SIE		__BIT(1)
+#define SR_UIE		__BIT(0)
+
+/* Supervisor interrupt registers */
+/* ... interupt pending register (sip) */
+			/* Bit (XLEN-1)-10 is WIRI */
+#define SIP_SEIP	__BIT(9)
+#define SIP_UEIP	__BIT(8)
+			/* Bit 7-6 is WIRI */
+#define SIP_STIP	__BIT(5)
+#define SIP_UTIP	__BIT(4)
+			/* Bit 3-2 is WIRI */
+#define SIP_SSIP	__BIT(1)
+#define SIP_USIP	__BIT(0)
+
+/* ... interupt-enable register (sie) */
+			/* Bit (XLEN-1) - 10 is WIRI */
+#define SIE_SEIE	__BIT(9)
+#define SIE_UEIE	__BIT(8)
+			/* Bit 7-6 is WIRI */
+#define SIE_STIE	__BIT(5)
+#define SIE_UTIE	__BIT(4)
+			/* Bit 3-2 is WIRI */
+#define SIE_SSIE	__BIT(1)
+#define SIE_USIE	__BIT(0)
+
+/* Mask for all interrupts */
+#define SIE_IM		(SIE_SEI|SIE_UEIE|SIE_STIE|SIE_UTIE|SIE_SSIE|SIE_USIE)
 
 #ifdef _LP64
-#define	SR_USER		(SR_EI|SR_U64|SR_S64|SR_VM|SR_IM)
+#define	SR_USER		(SR_UIE | SR_U64 | SR_S64 | SR_IM)
 #define	SR_USER32	(SR_USER & ~SR_U64)
-#define	SR_KERNEL	(SR_S|SR_EI|SR_U64|SR_S64|SR_VM)
+#define	SR_KERNEL	(SR_S | SR_UIE | SR_U64 | SR_S64)
 #else
-#define	SR_USER		(SR_EI|SR_VM|SR_IM)
-#define	SR_KERNEL	(SR_S|SR_EI|SR_VM)
+#define	SR_USER		(SR_UIE||SR_IM)
+#define	SR_KERNEL	(SR_S|SR_UIE)
 #endif
 
 static inline uint32_t
