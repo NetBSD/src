@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.654 2020/11/04 02:53:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.655 2020/11/04 03:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.654 2020/11/04 02:53:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.655 2020/11/04 03:37:51 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3989,13 +3989,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	    /* TODO: handle errors */
 
 	    if (val == var_Error || val == varUndefined) {
-		/*
-		 * If performing old-time variable substitution, skip over
-		 * the variable and continue with the substitution. Otherwise,
-		 * store the dollar sign and advance str so we continue with
-		 * the string...
-		 */
-		if (oldVars) {
+		if (discardUndefined) {
 		    p = nested_p;
 		} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
 		    /*
