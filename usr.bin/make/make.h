@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.187 2020/11/04 13:31:58 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.188 2020/11/04 13:40:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -330,9 +330,6 @@ typedef struct GNode {
      * file.c has the node for file.o in this list. */
     GNodeList *implicitParents;
 
-    /* Other nodes of the same name, for the '::' operator. */
-    GNodeList *cohorts;
-
     /* The nodes that depend on this one, or in other words, the nodes for
      * which this is a source. */
     GNodeList *parents;
@@ -348,6 +345,8 @@ typedef struct GNode {
      * in the normal sense. */
     GNodeList *order_succ;
 
+    /* Other nodes of the same name, for the '::' dependency operator. */
+    GNodeList *cohorts;
     /* The "#n" suffix for this cohort, or "" for other nodes */
     char cohort_num[8];
     /* The number of unmade instances on the cohorts list */
@@ -373,20 +372,19 @@ typedef struct GNode {
      * but the Suff module) */
     struct Suff *suffix;
 
-    /* filename where the GNode got defined */
+    /* Filename where the GNode got defined */
     const char *fname;
-    /* line number where the GNode got defined */
+    /* Line number where the GNode got defined */
     int lineno;
 } GNode;
 
-/*
- * Error levels for parsing. PARSE_FATAL means the process cannot continue
- * once the top-level makefile has been parsed. PARSE_WARNING and PARSE_INFO
- * mean it can.
- */
+/* Error levels for diagnostics during parsing. */
 typedef enum ParseErrorLevel {
+    /* Exit when the current top-level makefile has been parsed completely. */
     PARSE_FATAL = 1,
+    /* Print "warning"; may be upgraded to fatal by the -w option. */
     PARSE_WARNING,
+    /* Informational, mainly used during development of makefiles. */
     PARSE_INFO
 } ParseErrorLevel;
 
