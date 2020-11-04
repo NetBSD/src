@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33.6.6 2020/08/05 17:22:46 martin Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.33.6.7 2020/11/04 11:51:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -197,9 +197,10 @@ typedef enum {
 	WMPHY_BM,	/* 82567: ICH8 ICH9 ICH10 */
 	WMPHY_82578,	/* 82578: PCH */
 	WMPHY_82577,	/* 82577: PCH (NOTE: functionality newer than 82578) */
-	WMPHY_82579,	/* 82579 : PCH2 */
+	WMPHY_82579,	/* 82579: PCH2 */
 	WMPHY_I217,	/* I217:  _LPT, I218: _LPT, I219: _SPT _CNP */
-	WMPHY_82580,	/* 82580: 82580 or I350 */
+	WMPHY_82580,	/* 82580 */
+	WMPHY_I350,	/* I350 */
 	WMPHY_VF,
 	WMPHY_I210	/* I210: I210 I211 */
 } wm_phy_type;
