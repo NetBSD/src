@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.47 2020/11/01 18:09:23 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.48 2020/11/04 11:52:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1305,3 +1305,12 @@ doc/3RDPARTY					(manually modified)
 
 	Update tmux to 3.1c.
 	[christos, ticket #1619]
+
+sys/dev/pci/if_wm.c				1.694,1.695 (patch)
+sys/dev/pci/if_wmvar.h				1.47
+
+	PR 40981: avoid device timeouts with ihphy and atphy
+	(ICH*/PCH*, 82580 and I350).
+	[knakahara, ticket #1620]
+
+
