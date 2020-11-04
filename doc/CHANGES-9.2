@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.6 2020/11/04 13:27:40 sborrill Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.7 2020/11/04 13:33:10 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1030,4 +1030,10 @@ usr.sbin/sysinst/mbr.c				1.37
 	(which is treated special to skip the first track), unless
 	an existing partition table hints at it.
 	[martin, ticket #1119]
+
+usr.sbin/sysinst/arch/i386/md.c			1.33
+
+	Do not force bootselector MBR code for installs with only a
+	single named partition.
+	[martin, ticket #1120]
 
