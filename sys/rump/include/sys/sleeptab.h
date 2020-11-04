@@ -1,4 +1,4 @@
-/*	$NetBSD: sleeptab.h,v 1.1 2020/11/01 20:58:38 christos Exp $	*/
+/*	$NetBSD: sleeptab.h,v 1.2 2020/11/04 19:27:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2020
@@ -35,6 +35,10 @@ struct sleepq {
 	kcondvar_t sq_cv;
 };
 
-void    sleepq_destroy(sleepq_t *); 
+void    sleepq_destroy(sleepq_t *);
+#ifdef LOCKDEBUG
+void	turnstile_print(volatile void *, void (*)(const char *, ...)
+    __printflike(1, 2));
+#endif
 
 #endif	/* _RUMP_SYS_SLEEPTAB_H_ */
