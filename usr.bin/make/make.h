@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.183 2020/11/04 04:49:32 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.184 2020/11/04 13:04:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -409,13 +409,6 @@ typedef enum CondEvalResult {
 #define PREFIX		"*"	/* Common prefix */
 #define ARCHIVE		"!"	/* Archive in "archive(member)" syntax */
 #define MEMBER		"%"	/* Member in "archive(member)" syntax */
-
-#define FTARGET		"@F"	/* file part of TARGET */
-#define DTARGET		"@D"	/* directory part of TARGET */
-#define FIMPSRC		"<F"	/* file part of IMPSRC */
-#define DIMPSRC		"<D"	/* directory part of IMPSRC */
-#define FPREFIX		"*F"	/* file part of PREFIX */
-#define DPREFIX		"*D"	/* directory part of PREFIX */
 
 /*
  * Global Variables
