@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15 2020/11/04 07:09:46 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.16 2020/11/04 20:05:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,15 +38,6 @@
 ENTRY_NP(start)
 	// We get loaded and starting running at or near 0, not where we
 	// should be. We need to construct an initial PDETAB
-
-#ifdef _LP64
-	li	t0, SR_U64|SR_S64
-	li	t1, SR_IM|SR_SIE
-	csrs	sstatus, t0
-#else
-	li	t1, SR_IM|SR_U64|SR_S64|SR_EI
-#endif
-	csrc	sstatus, t1
 
 	li	s11, VM_MAX_KERNEL_ADDRESS
 	li	s10, PAGE_SIZE
