@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.136 2020/10/31 12:04:24 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.137 2020/11/04 13:27:00 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -80,7 +80,6 @@ static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
 static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 
 extern Boolean forceJobs;
-extern Boolean comatMake;
 extern char    **environ;
 
 #define	MAKE_META_PREFIX	".MAKE.META.PREFIX"
