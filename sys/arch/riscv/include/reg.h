@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.2 2015/03/27 06:57:21 matt Exp $ */
+/* $NetBSD: reg.h,v 1.3 2020/11/04 06:24:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 // x12-x17 = a2-a7 (arguments)
 // x18-r27 = s2-s11 (saved registers)
 // x28-x31 = t3-r6 (temporaries)
-// x26-x30 = t0-t4 (temporary)
 
 struct reg {	// synced with register_t in <riscv/types.h>
 #ifdef _LP64
