@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.424 2020/11/04 04:49:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.425 2020/11/04 06:09:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.424 2020/11/04 04:49:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.425 2020/11/04 06:09:55 rillig Exp $");
 
 /* types and constants */
 
@@ -1850,7 +1850,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 
     /* Scan for one of the assignment operators outside a variable expansion */
     while (*p != '\0') {
-        char ch = *p++;
+	char ch = *p++;
 	if (ch == '(' || ch == '{') {
 	    level++;
 	    continue;
