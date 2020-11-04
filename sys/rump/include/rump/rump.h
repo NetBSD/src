@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.72 2020/06/14 23:38:25 kamil Exp $	*/
+/*	$NetBSD: rump.h,v 1.73 2020/11/04 22:06:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -118,6 +118,7 @@ void	rump_unschedule(void);
 void	rump_printevcnts(void);
 
 int	rump_daemonize_begin(void);
+int	rump_init_callback(void (*)(void));
 int	rump_init(void);
 int	rump_init_server(const char *);
 int	rump_daemonize_done(int);
