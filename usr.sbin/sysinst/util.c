@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.53 2020/10/30 18:47:38 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.54 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,10 @@
 #include "menu_defs.h"
 #ifdef MD_MAY_SWAP_TO
 #include <sys/drvctlio.h>
+#endif
+#ifdef CHECK_ENTROPY
+#include <sha2.h>
+#include <paths.h>
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
@@ -1107,6 +1111,271 @@ get_set_distinfo(int opt)
 	return NULL;
 }
 
+#ifdef CHECK_ENTROPY
+
+char entropy_file[PATH_MAX];
+
+/*
+ * Are we short of entropy?
+ */
+static size_t
+entropy_needed(void)
+{
+	int needed;
+	size_t len;
+
+	len = sizeof(needed);
+	if (sysctlbyname("kern.entropy.needed", &needed, &len, NULL, 0))
+		return 0;
+
+	if (needed < 0)
+		return 0;
+
+	return needed;
+}
+
+static void
+entropy_write_to_kernel(const uint8_t *data, size_t len)
+{
+	int fd;
+
+	fd = open(_PATH_RANDOM, O_RDWR, 0);
+	if (fd >= 0) {
+		write(fd, data, len);
+		close(fd);
+	}
+}
+
+static void
+entropy_add_manual(void)
+{
+	SHA256_CTX ctx;
+	char buf[256], line[25];
+	size_t line_no, l;
+	uint8_t digest[SHA256_DIGEST_LENGTH];
+	bool ok = false;
+
+	msg_display(MSG_entropy_enter_manual1);
+	msg_printf("\n\n");
+	msg_display_add(MSG_entropy_enter_manual2);
+	msg_printf("\n\n   dd if=/dev/random bs=32 count=16 | openssl base64\n\n");
+	msg_display_add(MSG_entropy_enter_manual3);
+	msg_printf("\n\n");
+	SHA256_Init(&ctx);
+	line_no = 1;
+	do {
+		sprintf(line, "%zu", line_no);
+		msg_prompt_win(line, -1, 15, 0, 0, "", buf, sizeof(buf));
+		l = strlen(buf);
+		if (l > 0)
+			SHA256_Update(&ctx, (const uint8_t*)buf, l);
+		line_no++;
+	} while(buf[0] != 0);
+	ok = ctx.bitcount >= 256;
+	SHA256_Final(digest, &ctx);
+
+	if (ok)
+		entropy_write_to_kernel(digest, sizeof digest);
+	else
+		hit_enter_to_continue(NULL, MSG_entropy_manual_not_enough);
+}
+
+/*
+ * Get a file by some means and return a (potentioally only
+ * temporary valid) path to the local copy.
+ * If mountpt is non empty, the caller should unmount that
+ * directory after processing the file.
+ * Return success if the file is available, or failure if
+ * the user canelled the request or network transfer failed.
+ */
+static bool
+entropy_get_file(bool use_netbsd_seed, char *path)
+{
+	static struct ftpinfo server = { .user = "ftp" };
+	char url[STRSIZE], tmpf[PATH_MAX], mountpt[PATH_MAX], *fn;
+	const char *ftp_opt;
+	arg_rv arg;
+	int rv = 0;
+	const char *file_desc = msg_string(use_netbsd_seed ?
+	    MSG_entropy_seed : MSG_entropy_data);
+	char *dir;
+
+	path[0] = 0;
+	mountpt[0] = 0;
+
+	strcpy(tmpf, "/tmp/entr.XXXXXX");
+	fn = mktemp(tmpf);
+	if (fn == NULL)
+		return false;
+
+	msg_display(use_netbsd_seed ?
+	    MSG_entropy_seed_hdr : MSG_entropy_data_hdr);
+	msg_printf("\n\n    %s\n\n",
+	    use_netbsd_seed ?
+	    "rndctl -S /tmp/entropy-file" :
+	    "dd if=/dev/random bs=32 count=1 of=/tmp/random.tmp");
+	strcpy(entropy_file, use_netbsd_seed ?
+	    "entropy-file" : "random.tmp");
+	process_menu(MENU_entropy_select_file, &rv);
+	switch (rv) {
+	case 1:
+	case 2:
+#ifndef DEBUG
+		if (!network_up)
+			config_network();
+#endif
+		server.xfer = rv == 1 ? XFER_HTTP : XFER_FTP;
+		arg.arg = &server;
+		arg.rv = -1;
+		msg_display_add_subst(MSG_entropy_via_download, 1, file_desc);
+		msg_printf("\n\n");
+		process_menu(MENU_entropy_ftpsource, &arg);
+		if (arg.rv == SET_RETRY)
+			return false;
+		make_url(url, &server, entropy_file);
+		if (server.xfer == XFER_FTP &&
+		    strcmp("ftp", server.user) == 0 && server.pass[0] == 0) {
+			/* do anon ftp */
+			ftp_opt = "-a ";
+		} else {
+			ftp_opt = "";
+		}
+		rv = run_program(RUN_DISPLAY | RUN_PROGRESS,
+		    "/usr/bin/ftp %s -o %s %s",
+		    ftp_opt, fn, url);
+		strcpy(path, fn);
+		return rv == 0;
+	case 3:
+#ifndef DEBUG
+		if (!network_up)
+			config_network();
+#endif
+		rv = -1;
+		msg_display_add_subst(MSG_entropy_via_nfs, 1, file_desc);
+		msg_printf("\n\n");
+		process_menu(MENU_entropy_nfssource, &rv);
+		if (rv == SET_RETRY)
+			return false;
+		if (nfs_host[0] != 0 && nfs_dir[0] != 0 &&
+		    entropy_file[0] != 0) {
+			strcpy(mountpt, "/tmp/ent-mnt.XXXXXX");
+			dir = mkdtemp(mountpt);
+			if (dir == NULL)
+				return false;
+			sprintf(path, "%s/%s", mountpt, entropy_file);
+			if (run_program(RUN_SILENT,
+			    "mount -t nfs -r %s:/%s %s",
+			    nfs_host, nfs_dir, mountpt) == 0) {
+				run_program(RUN_SILENT,
+				    "cp %s %s", path, fn);
+				run_program(RUN_SILENT,
+				    "umount %s", mountpt);
+				rmdir(mountpt);
+				strcpy(path, fn);
+			}
+		}
+		break;
+	case 4:
+		rv = -1;
+		/* Get device, filesystem, and filepath */
+		process_menu (MENU_entropy_localfs, &rv);
+		if (rv == SET_RETRY)
+			return false;
+		if (localfs_dev[0] != 0 && localfs_fs[0] != 0 &&
+		    entropy_file[0] != 0) {
+			strcpy(mountpt, "/tmp/ent-mnt.XXXXXX");
+			dir = mkdtemp(mountpt);
+			if (dir == NULL)
+				return false;
+			sprintf(path, "%s/%s", mountpt, entropy_file);
+			if (run_program(RUN_SILENT,
+			    "mount -t %s -r /dev/%s %s",
+			    localfs_fs, localfs_dev, mountpt) == 0) {
+				run_program(RUN_SILENT,
+				    "cp %s %s", path, fn);
+				run_program(RUN_SILENT,
+				    "umount %s", mountpt);
+				rmdir(mountpt);
+				strcpy(path, fn);
+			}
+		}
+		break;
+	}
+	return path[0] != 0;
+}
+
+static void
+entropy_add_bin_file(void)
+{
+	char fname[PATH_MAX];
+
+	if (!entropy_get_file(false, fname))
+		return;
+	if (access(fname, R_OK) == 0)
+		run_program(RUN_SILENT, "dd if=%s of=" _PATH_RANDOM,
+		    fname);
+}
+
+static void
+entropy_add_seed(void)
+{
+	char fname[PATH_MAX];
+
+	if (!entropy_get_file(true, fname))
+		return;
+	if (access(fname, R_OK) == 0)
+		run_program(RUN_SILENT, "rndctl -L %s", fname);
+}
+
+/*
+ * return true if we have enough entropy
+ */
+bool
+do_check_entropy(void)
+{
+	int rv;
+
+	if (entropy_needed() == 0)
+		return true;
+
+	for (;;) {
+		if (entropy_needed() == 0)
+			return true;
+
+		msg_clear();
+		rv = 0;
+		process_menu(MENU_not_enough_entropy, &rv);
+		switch (rv) {
+		case 0:
+			return false;
+		case 1:
+			entropy_add_manual();
+			break;
+		case 2:
+			entropy_add_seed();
+			break;
+		case 3:
+			entropy_add_bin_file();
+			break;
+		default:
+			/*
+			 * retry after small delay to give a new USB device
+			 * a chance to attach and do deliver some
+			 * entropy
+			 */
+			msg_display(".");
+			for (size_t i = 0; i < 10; i++) {
+				if (entropy_needed() == 0)
+					return true;
+				sleep(1);
+				msg_display_add(".");
+			}
+		}
+	}
+}
+#endif  
+
+
 
 /*
  * Get and unpack the distribution.
@@ -1246,7 +1515,14 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	if (set_status[SET_BASE] & SET_INSTALLED)
 		run_makedev();
 
-	if (!update) {
+	if (update) {
+#ifdef CHECK_ENTROPY
+		if (!do_check_entropy()) {
+			hit_enter_to_continue(NULL, MSG_abortupgr);
+			return 1;
+		}
+#endif
+	} else {
 		struct stat sb1, sb2;
 
 		if (stat(target_expand("/"), &sb1) == 0
@@ -1279,6 +1555,10 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Mounted dist dir? */
 	umount_mnt2();
+
+#ifdef CHECK_ENTROPY
+	entropy_loaded |= entropy_needed() == 0;
+#endif
 
 	/* Save entropy -- on some systems it's ~all we'll ever get */
 	if (!update || entropy_loaded)

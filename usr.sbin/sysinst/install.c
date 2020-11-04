@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.19 2020/10/14 13:20:27 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.20 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,6 +166,13 @@ do_install(void)
 	msg_display(MSG_installusure);
 	if (!ask_noyes(NULL))
 		return;
+#endif
+
+#ifdef CHECK_ENTROPY
+	if (!do_check_entropy()) {
+		hit_enter_to_continue(MSG_abort_installation, NULL);
+		return;
+	}
 #endif
 
 	memset(&install, 0, sizeof install);

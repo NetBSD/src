@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.28 2020/10/27 15:28:01 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.29 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1227,21 +1227,9 @@ paquetes binarios.  Por favor verifique el camino a los paquetes y
 reinténtelo de nuevo.}
 message failed {Error}
 
-message notsupported {Operación no admitida!}
 message askfsmountadv {Punto de montaje o 'raid' o 'CGD' o 'lvm'?}
 message partman {Partición extendida}
-message edit_parts {Editar particiones}
 message editpart {Editar particiones}
-message switch_parts {Switch partitioning scheme}
-message fmtasraid {Formato como RAID}
-message fmtaslvm {Formato como LVM PV}
-message encrypt {Cifrar (CGD)}
-message setbootable {La bandera de arranque}
-message erase {Borrado seguro}
-message undo {Deshacer los cambios}
-message unconfig {Desconfigurar}
-message edit {Editar}
-message doumount {Fuerza umount}
 
 message fremove {QUITAR}
 message remove {Quitar}
@@ -1535,4 +1523,3 @@ message clone_target_hdr
 message clone_target_disp		{cloned partition(s)}
 message clone_src_done
 {Source selection OK, proceed to target selection}
-
