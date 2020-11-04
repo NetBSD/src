@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2020/03/22 14:41:32 ad Exp $ */
+/*	$NetBSD: pmap.h,v 1.13 2020/11/04 01:37:55 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -98,8 +98,7 @@
 	((size_t)kvm_read((kd), (addr), (dst), (sz)) == (size_t)(sz))
 #define _KDEREF(kd, addr, dst, sz) do { \
 	if (!_KDEREFOK((kd), (addr), (dst), (sz))) \
-		errx(1, "trying to read %lu (%s) bytes from %lx: %s", \
-		    (unsigned long)(sz), #sz, (addr), kvm_geterr(kd)); \
+		errx(1, "reading from kmem failed: %s", kvm_geterr(kd)); \
 } while (0/*CONSTCOND*/)
 
 /* suck the data using the structure */
