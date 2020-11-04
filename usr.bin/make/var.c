@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.655 2020/11/04 03:37:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.656 2020/11/04 04:24:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.655 2020/11/04 03:37:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.656 2020/11/04 04:24:57 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2978,6 +2978,8 @@ ok:
     }
 
     delim = st->startc == '(' ? ')' : '}';
+    /* TODO: Add test for using the ::= modifier in a := assignment line.
+     * Probably st->eflags should be passed down without VARE_ASSIGN here. */
     res = ParseModifierPart(pp, delim, st->eflags, st, &val, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
