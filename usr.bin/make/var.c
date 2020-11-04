@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.653 2020/11/04 02:26:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.654 2020/11/04 02:53:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.653 2020/11/04 02:26:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.654 2020/11/04 02:53:18 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3299,9 +3299,8 @@ ApplyModifiersIndirect(
 	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
 				 &st->exprFlags, st->ctxt, st->eflags,
 				 out_freeIt);
-	if (st->val == var_Error
-	    || (st->val == varUndefined && !(st->eflags & VARE_UNDEFERR))
-	    || *rval_pp != '\0') {
+	if (st->val == var_Error || st->val == varUndefined ||
+	    *rval_pp != '\0') {
 	    free(mods_freeIt);
 	    *inout_p = p;
 	    return AMIR_OUT;	/* error already reported */
