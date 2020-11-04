@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/11/02 06:40:11 khorben Exp $
+# $NetBSD: Makefile,v 1.4 2020/11/04 13:46:46 khorben Exp $
 
 .include <bsd.own.mk>
 
@@ -21,5 +21,10 @@ COPTS.util.c += -Wno-error=stack-protector
 
 LDADD+=-lpam -lfido2 -lcbor -lusbhid -lcrypto -lm
 DPADD+=${LIBPAM} ${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBCRYPTO} ${LIBM}
+
+pamu2fcfg.1:
+	asciidoc -b docbook45 -d manpage -o pamu2fcfg.1.xml ../../dist/man/pamu2fcfg.1.txt
+	xsltproc --nonet --xinclude -o pamu2fcfg.1 'http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl' pamu2fcfg.1.xml
+	rm -f pamu2fcfg.1.xml
 
 .include <bsd.prog.mk>
