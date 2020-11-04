@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1708 2020/11/02 06:40:11 khorben Exp $
+# $NetBSD: mi,v 1.1709 2020/11/04 19:11:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -421,7 +421,7 @@
 ./usr/share/man/cat1/openssl_x509v3_config.0	man-obsolete		obsolete
 ./usr/share/man/cat1/page.0			man-util-catman		.cat
 ./usr/share/man/cat1/pagesize.0			man-util-catman		.cat
-./usr/share/man/cat1/pamu2fcfg.0		man-util-catman		.cat
+./usr/share/man/cat1/pamu2fcfg.0		man-util-catman		pam,.cat
 ./usr/share/man/cat1/passwd.0			man-util-catman		.cat
 ./usr/share/man/cat1/paste.0			man-util-catman		.cat
 ./usr/share/man/cat1/patch.0			man-util-catman		.cat
@@ -3709,7 +3709,7 @@
 ./usr/share/man/html1/openssl_x509v3_config.html	man-obsolete	obsolete
 ./usr/share/man/html1/page.html			man-util-htmlman	html
 ./usr/share/man/html1/pagesize.html		man-util-htmlman	html
-./usr/share/man/html1/pamu2fcfg.html		man-util-htmlman	html
+./usr/share/man/html1/pamu2fcfg.html		man-util-htmlman	pam,html
 ./usr/share/man/html1/passwd.html		man-util-htmlman	html
 ./usr/share/man/html1/paste.html		man-util-htmlman	html
 ./usr/share/man/html1/patch.html		man-util-htmlman	html
@@ -6639,7 +6639,7 @@
 ./usr/share/man/man1/openssl_x509v3_config.1	man-obsolete		obsolete
 ./usr/share/man/man1/page.1			man-util-man		.man
 ./usr/share/man/man1/pagesize.1			man-util-man		.man
-./usr/share/man/man1/pamu2fcfg.1		man-util-man		.man
+./usr/share/man/man1/pamu2fcfg.1		man-util-man		pam,.man
 ./usr/share/man/man1/passwd.1			man-util-man		.man
 ./usr/share/man/man1/paste.1			man-util-man		.man
 ./usr/share/man/man1/patch.1			man-util-man		.man
