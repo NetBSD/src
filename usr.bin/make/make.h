@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.186 2020/11/04 13:29:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.187 2020/11/04 13:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -460,10 +460,11 @@ extern SearchPath *sysIncPath;
 /* The default for sysIncPath. */
 extern SearchPath *defSysIncPath;
 
-extern char	curdir[];	/* Startup directory */
-extern char	*progname;	/* The program name */
-extern char	*makeDependfile; /* .depend */
-extern char	**savedEnv;	/* if we replaced environ this will be non-NULL */
+extern char curdir[];		/* Startup directory */
+extern char *progname;		/* The program name */
+extern char *makeDependfile;	/* .depend */
+/* If we replaced environ, this will be non-NULL. */
+extern char **savedEnv;
 
 extern int	makelevel;
 

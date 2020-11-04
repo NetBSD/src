@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.425 2020/11/04 06:09:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.426 2020/11/04 13:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.425 2020/11/04 06:09:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.426 2020/11/04 13:31:58 rillig Exp $");
 
 /* types and constants */
 
@@ -125,7 +125,7 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.425 2020/11/04 06:09:55 rillig Exp $");
  * Structure for a file being read ("included file")
  */
 typedef struct IFile {
-    char *fname;		/* name of file */
+    char *fname;		/* name of file (relative? absolute?) */
     Boolean fromForLoop;	/* simulated .include by the .for loop */
     int lineno;			/* current line number in file */
     int first_lineno;		/* line number of start of text */
