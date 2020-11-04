@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.3 2020/11/04 06:56:56 skrll Exp $ */
+/* $NetBSD: frame.h,v 1.4 2020/11/04 07:51:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
 
 struct trapframe {
 	struct reg tf_regs __aligned(8);
-	register_t tf_stval;		// supervisor trap value
-	register_t tf_sepc;		// supervisor exception program counter
-	register_t tf_scause;		// supervisor cause register
+	register_t tf_tval;		// supervisor trap value
+	register_t tf_pc;		// supervisor exception program counter
+	register_t tf_cause;		// supervisor cause register
 	register_t tf_sr;		// supervisor status register
 #define tf_reg		tf_regs.r_reg
 #define tf_a0		tf_reg[_X_A0]
