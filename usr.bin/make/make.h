@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.184 2020/11/04 13:04:56 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.185 2020/11/04 13:22:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -475,7 +475,7 @@ extern pid_t	myPid;
 #define	MAKE_EXPORTED	".MAKE.EXPORTED"   /* variables we export */
 #define	MAKE_MAKEFILES	".MAKE.MAKEFILES"  /* all makefiles already loaded */
 #define	MAKE_LEVEL	".MAKE.LEVEL"	   /* recursion level */
-#define MAKEFILE_PREFERENCE ".MAKE.MAKEFILE_PREFERENCE"
+#define MAKE_MAKEFILE_PREFERENCE ".MAKE.MAKEFILE_PREFERENCE"
 #define MAKE_DEPENDFILE	".MAKE.DEPENDFILE" /* .depend */
 #define MAKE_MODE	".MAKE.MODE"
 #ifndef MAKE_LEVEL_ENV
