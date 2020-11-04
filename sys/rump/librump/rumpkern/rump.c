@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.349 2020/06/11 00:33:30 kamil Exp $	*/
+/*	$NetBSD: rump.c,v 1.350 2020/11/04 22:06:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.349 2020/06/11 00:33:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.350 2020/11/04 22:06:39 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -218,7 +218,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 #endif /* RUMP_USE_CTOR */
 
 int
-rump_init(void)
+rump_init_callback(void (*cpuinit_callback) (void))
 {
 	char buf[256];
 	struct timespec bts;
@@ -231,7 +231,7 @@ rump_init(void)
 	if (rump_inited)
 		return 0;
 	else if (rump_inited == -1)
-		panic("rump_init: host process restart required");
+		panic("%s: host process restart required", __func__);
 	else
 		rump_inited = 1;
 
@@ -257,11 +257,12 @@ rump_init(void)
 	}
 
 	if (rumpuser_getparam(RUMPUSER_PARAM_NCPU, buf, sizeof(buf)) != 0)
-		panic("mandatory hypervisor configuration (NCPU) missing");
+		panic("%s: mandatory hypervisor configuration (NCPU) missing",
+		    __func__);
 	numcpu = strtoll(buf, NULL, 10);
 	if (numcpu < 1) {
-		panic("rump kernels are not lightweight enough for \"%d\" CPUs",
-		    numcpu);
+		panic("%s: rump kernels are not lightweight enough for %d CPUs",
+		    __func__, numcpu);
 	}
 
 	rump_thread_init();
@@ -393,6 +394,9 @@ rump_init(void)
 
 	mp_online = true;
 
+	if (cpuinit_callback)
+		(*cpuinit_callback)();
+
 	/* CPUs are up.  allow kernel threads to run */
 	rump_thread_allow(NULL);
 
@@ -415,7 +419,7 @@ rump_init(void)
 	if (rump_threads) {
 		if (kthread_create(PRI_PGDAEMON, KTHREAD_MPSAFE, NULL,
 		    uvm_pageout, NULL, &uvm.pagedaemon_lwp, "pdaemon") != 0)
-			panic("pagedaemon create failed");
+			panic("%s: pagedaemon create failed", __func__);
 	} else
 		uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
 
@@ -456,7 +460,9 @@ rump_init(void)
 
 	if (rumpuser_getparam(RUMPUSER_PARAM_HOSTNAME,
 	    hostname, MAXHOSTNAMELEN) != 0) {
-		panic("mandatory hypervisor configuration (HOSTNAME) missing");
+		panic(
+		    "%s: mandatory hypervisor configuration (HOSTNAME) missing",
+		    __func__);
 	}
 	hostnamelen = strlen(hostname);
 
@@ -474,7 +480,7 @@ rump_init(void)
 	initproc = proc_find_raw(1);
 	mutex_exit(&proc_lock);
 	if (initproc == NULL)
-		panic("where in the world is initproc?");
+		panic("%s: where in the world is initproc?", __func__);
 	strlcpy(initproc->p_comm, "rumplocal", sizeof(initproc->p_comm));
 
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
@@ -496,6 +502,13 @@ rump_init(void)
 
 	return 0;
 }
+
+int
+rump_init(void)
+{
+	return rump_init_callback(NULL);
+}
+
 /* historic compat */
 __strong_alias(rump__init,rump_init);
 
