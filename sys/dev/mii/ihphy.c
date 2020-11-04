@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.19 2020/11/04 09:15:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.19 2020/11/04 09:15:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,6 @@ ihphy_status(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & (BMCR_ISO | BMCR_PDOWN)) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;
 		return;
 	}
 
