@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.423 2020/11/04 04:49:32 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.424 2020/11/04 13:22:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.423 2020/11/04 04:49:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.424 2020/11/04 13:22:15 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1272,7 +1272,7 @@ ReadMakefiles(void)
 		}
 	} else {
 		char *p1;
-		(void)Var_Subst("${" MAKEFILE_PREFERENCE "}",
+		(void)Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
 				VAR_CMDLINE, VARE_WANTRES, &p1);
 		/* TODO: handle errors */
 		(void)str2Lst_Append(opts.makefiles, p1, NULL);
@@ -1395,7 +1395,7 @@ main(int argc, char **argv)
 #ifndef MAKEFILE_PREFERENCE_LIST
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
-	Var_Set(MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST,
+	Var_Set(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST,
 		VAR_GLOBAL);
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
