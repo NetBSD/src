@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.es,v 1.2 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: msg.pm.es,v 1.3 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,4 +151,17 @@ message lvmlv_mirrors_ask {Espejos?}
 message lvmlv_regsiz_ask {MirrorLogRegionSize?}
 message lvmlv_readahsect_ask {ReadAheadSectors?}
 message lvmlv_stripes_ask {Rayas?}
+
+message notsupported {Operación no admitida!}
+message edit_parts {Editar particiones}
+message switch_parts {Switch partitioning scheme}
+message fmtasraid {Formato como RAID}
+message fmtaslvm {Formato como LVM PV}
+message encrypt {Cifrar (CGD)}
+message setbootable {La bandera de arranque}
+message erase {Borrado seguro}
+message undo {Deshacer los cambios}
+message unconfig {Desconfigurar}
+message edit {Editar}
+message doumount {Fuerza umount}
 

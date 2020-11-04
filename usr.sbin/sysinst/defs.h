@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.68 2020/10/30 18:47:38 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.69 2020/11/04 14:29:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/disk.h>
+#include <limits.h>
 #include <uuid.h>
 
 const char *getfslabelname(uint, uint);
@@ -604,6 +605,7 @@ extern struct ftpinfo ftp, pkg, pkgsrc;
 extern int (*fetch_fn)(const char *);
 extern char nfs_host[STRSIZE];
 extern char nfs_dir[STRSIZE];
+extern char entropy_file[PATH_MAX];
 
 extern char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
 extern char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
@@ -888,6 +890,7 @@ bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
 bool	may_swap_if_not_sdmmc(const char*);
+bool	do_check_entropy(void);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)

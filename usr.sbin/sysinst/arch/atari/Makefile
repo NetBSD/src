@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/06/12 06:20:18 martin Exp $
+#	$NetBSD: Makefile,v 1.5 2020/11/04 14:29:40 martin Exp $
 #
 # Makefile for atari
 #
@@ -9,6 +9,7 @@ LANGUAGES=	en de
 CPPFLAGS+=	-DSUPPORT_8_3_SOURCE_FILESYSTEM
 
 .ifdef SMALLPROG
+CHECK_ENTROPY=	no	# do not check entropy/offer adding
 NOPARTMAN=	yes
 NO_GPT=		yes
 .endif
