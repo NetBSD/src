@@ -1,13 +1,13 @@
-# $NetBSD: cmdline-undefined.mk,v 1.1 2020/11/04 04:24:57 rillig Exp $
+# $NetBSD: cmdline-undefined.mk,v 1.2 2020/11/04 04:49:33 rillig Exp $
 #
 # Tests for undefined variable expressions in the command line.
 
 all:
-	# When the command line is parsed during the initial call of
-	# MainParseArgs, discardUndefined is still FALSE, therefore preserving
-	# undefined subexpressions.  This makes sense because at that early
-	# stage, almost no variables are defined.  On the other hand, the '='
-	# assignment operator does not expand its right-hand side anyway.
+	# When the command line is parsed, variable assignments using the
+	# '=' assignment operator do get their variable name expanded
+	# (which probably occurs rarely in practice, if at all), but their
+	# variable value is not expanded, as usual.
+	#
 	@echo 'The = assignment operator'
 	@${.MAKE} -f ${MAKEFILE} print-undefined \
 		CMDLINE='Undefined is $${UNDEFINED}.'

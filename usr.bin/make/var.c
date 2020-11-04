@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.656 2020/11/04 04:24:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.657 2020/11/04 04:49:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.656 2020/11/04 04:24:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.657 2020/11/04 04:49:32 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3991,9 +3991,14 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	    /* TODO: handle errors */
 
 	    if (val == var_Error || val == varUndefined) {
-		if (discardUndefined) {
+		if (!preserveUndefined) {
 		    p = nested_p;
 		} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
+		    /* XXX: This condition is wrong.  If val == var_Error,
+		     * this doesn't necessarily mean there was an undefined
+		     * variable.  It could equally well be a parse error; see
+		     * unit-tests/varmod-order.exp. */
+
 		    /*
 		     * If variable is undefined, complain and skip the
 		     * variable. The complaint will stop us from doing anything

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.182 2020/11/04 03:37:51 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.183 2020/11/04 04:49:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -445,10 +445,11 @@ extern time_t	now;		/* The time at the start of this whole
 				 * process */
 
 /*
- * If TRUE (default behavior), undefined subexpressions in a variable
- * expression are discarded.  If FALSE (only in variable assignments using the
- * ':=' assignment operator), they are preserved and possibly expanded later
- * when the variable from the subexpression has been defined.
+ * If FALSE (the default behavior), undefined subexpressions in a variable
+ * expression are discarded.  If TRUE (only during variable assignments using
+ * the ':=' assignment operator, in the top-level expansion), they are
+ * preserved and possibly expanded later when the variable from the
+ * subexpression has been defined.
  *
  * Example for a ':=' assignment:
  *	CFLAGS = $(.INCLUDES)
@@ -456,7 +457,7 @@ extern time_t	now;		/* The time at the start of this whole
  *	# If .INCLUDES (an undocumented special variable, by the way) is
  *	# still undefined, the updated CFLAGS becomes "-I.. $(.INCLUDES)".
  */
-extern Boolean discardUndefined;
+extern Boolean preserveUndefined;
 
 extern SearchPath *sysIncPath;	/* The system include path. */
 extern SearchPath *defSysIncPath; /* The default system include path. */
