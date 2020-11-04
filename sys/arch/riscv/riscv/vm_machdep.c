@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2020/11/04 20:04:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2020/11/04 20:04:01 skrll Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -91,7 +91,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	vaddr_t ua2 = uvm_lwp_getuarea(l2);
 	tf = (struct trapframe *)(ua2 + USPACE) - 1;
 	*tf = *l1->l_md.md_utf;
+#ifdef FPE
 	tf->tf_sr &= ~SR_EF;	/* floating point must be disabled */
+#endif
 
 	/* If specified, set a different user stack for a child. */
 	if (stack != NULL) {
@@ -114,12 +116,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_s0 = (intptr_t)func;			/* S0 */
 	tf->tf_s1 = (intptr_t)arg;			/* S1 */
 	tf->tf_ra = (intptr_t)cpu_lwp_trampoline;	/* RA */
-	l2->l_md.md_ktf = tf;					/* SP */
-	KASSERT(tf->tf_sr & SR_S);
-#ifdef _LP64
-	KASSERT(tf->tf_sr & SR_S64);
-#endif
-	KASSERT(tf->tf_sr & SR_EI);
+	l2->l_md.md_ktf = tf;				/* SP */
+	KASSERT(tf->tf_sr & SR_SIE);
 }
 
 /*

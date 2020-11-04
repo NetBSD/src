@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.9 2020/11/04 06:56:56 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.10 2020/11/04 20:05:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -167,12 +167,12 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define SIE_IM		(SIE_SEI|SIE_UEIE|SIE_STIE|SIE_UTIE|SIE_SSIE|SIE_USIE)
 
 #ifdef _LP64
-#define	SR_USER		(SR_UIE | SR_U64 | SR_S64 | SR_IM)
-#define	SR_USER32	(SR_USER & ~SR_U64)
-#define	SR_KERNEL	(SR_S | SR_UIE | SR_U64 | SR_S64)
+#define	SR_USER		(SR_UIE)
+#define	SR_USER32	(SR_USER)
+#define	SR_KERNEL	(SR_SIE | SR_UIE)
 #else
-#define	SR_USER		(SR_UIE||SR_IM)
-#define	SR_KERNEL	(SR_S|SR_UIE)
+#define	SR_USER		(SR_UIE)
+#define	SR_KERNEL	(SR_SIE | SR_UIE)
 #endif
 
 static inline uint32_t
