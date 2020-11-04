@@ -1,3 +1,5 @@
+/*	$NetBSD: riscv_machdep.c,v 1.12 2020/11/04 07:09:46 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +33,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.11 2020/06/11 19:20:45 ad Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.12 2020/11/04 07:09:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
