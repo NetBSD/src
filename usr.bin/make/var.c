@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.663 2020/11/05 20:50:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.664 2020/11/05 21:16:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.663 2020/11/05 20:50:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.664 2020/11/05 21:16:20 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3692,11 +3692,12 @@ EvalUndefined(
  * Return whether to continue parsing. */
 static Boolean
 ParseVarnameLong(
-	const char **pp,
+	const char *p,
 	char startc,
 	GNode *ctxt,
 	VarEvalFlags eflags,
 
+	const char **out_FALSE_pp,
 	VarParseResult *out_FALSE_res,
 	const char **out_FALSE_val,
 	void **out_FALSE_freeIt,
@@ -3715,10 +3716,10 @@ ParseVarnameLong(
     Boolean haveModifier;
     Boolean dynamic = FALSE;
 
-    const char *const start = *pp;
+    const char *const start = p;
     char endc = startc == '(' ? ')' : '}';
 
-    const char *p = start + 2;
+    p += 2;			/* skip "${" or "$(" or "y(" */
     varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
 
     if (*p == ':') {
@@ -3727,8 +3728,8 @@ ParseVarnameLong(
 	haveModifier = FALSE;
     } else {
 	Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
-	*pp = p;
 	free(varname);
+	*out_FALSE_pp = p;
 	*out_FALSE_val = var_Error;
 	*out_FALSE_res = VPR_PARSE_MSG;
 	return FALSE;
@@ -3750,7 +3751,7 @@ ParseVarnameLong(
 
 	if (!haveModifier) {
 	    p++;		/* skip endc */
-	    *pp = p;
+	    *out_FALSE_pp = p;
 	    *out_FALSE_res = EvalUndefined(dynamic, start, p, varname, eflags,
 					   out_FALSE_freeIt, out_FALSE_val);
 	    return FALSE;
@@ -3828,8 +3829,8 @@ VarParseResult
 Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	  const char **out_val, void **out_val_freeIt)
 {
-    const char *const start = *pp;
-    const char *p;
+    const char *p = *pp;
+    const char *const start = p;
     Boolean haveModifier;	/* TRUE if have modifiers for the variable */
     char startc;		/* Starting character if variable in parens
 				 * or braces */
@@ -3857,17 +3858,17 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
      * initialized. */
     endc = '\0';
 
-    startc = start[1];
+    startc = p[1];
     if (startc != '(' && startc != '{') {
 	VarParseResult res;
 	if (!ParseVarnameShort(startc, pp, ctxt, eflags, &res, out_val, &v))
 	    return res;
 	haveModifier = FALSE;
-	p = start + 1;
+	p++;
     } else {
 	VarParseResult res;
-	if (!ParseVarnameLong(pp, startc, ctxt, eflags,
-			      &res, out_val, out_val_freeIt,
+	if (!ParseVarnameLong(p, startc, ctxt, eflags,
+			      pp, &res, out_val, out_val_freeIt,
 			      &endc, &p, &v, &haveModifier, &extramodifiers,
 			      &dynamic, &exprFlags))
 	    return res;
