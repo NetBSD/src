@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.64 2020/10/06 21:51:33 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.65 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.64 2020/10/06 21:51:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.65 2020/11/05 17:27:16 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -26,7 +26,7 @@ strerror(int e)
 {
     static char buf[100];
     if (e < 0 || e >= sys_nerr) {
-	snprintf(buf, sizeof(buf), "Unknown error %d", e);
+	snprintf(buf, sizeof buf, "Unknown error %d", e);
 	return buf;
     }
     else

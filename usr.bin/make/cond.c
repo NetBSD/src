@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.174 2020/11/02 19:07:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.175 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.174 2020/11/02 19:07:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.175 2020/11/05 17:27:16 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1082,7 +1082,7 @@ Cond_EvalLine(const char *line)
     enum if_states state;
 
     if (!cond_state) {
-	cond_state = bmake_malloc(max_if_depth * sizeof(*cond_state));
+	cond_state = bmake_malloc(max_if_depth * sizeof *cond_state);
 	cond_state[0] = IF_ACTIVE;
     }
     /* skip leading character (the '.') and any whitespace */
@@ -1183,7 +1183,7 @@ Cond_EvalLine(const char *line)
 	     */
 	    max_if_depth += MAXIF_BUMP;
 	    cond_state = bmake_realloc(cond_state,
-				       max_if_depth * sizeof(*cond_state));
+				       max_if_depth * sizeof *cond_state);
 	}
 	state = cond_state[cond_depth];
 	cond_depth++;

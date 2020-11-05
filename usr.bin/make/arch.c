@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.153 2020/11/02 19:07:09 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.154 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.153 2020/11/02 19:07:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.154 2020/11/05 17:27:16 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -414,7 +414,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 static struct ar_hdr *
 ArchStatMember(const char *archive, const char *member, Boolean hash)
 {
-#define AR_MAX_NAME_LEN (sizeof(arh.ar_name) - 1)
+#define AR_MAX_NAME_LEN (sizeof arh.ar_name - 1)
     FILE *arch;			/* Stream to archive */
     size_t size;		/* Size of archive member */
     char magic[SARMAG];
@@ -496,15 +496,15 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	return NULL;
     }
 
-    ar = bmake_malloc(sizeof(Arch));
+    ar = bmake_malloc(sizeof *ar);
     ar->name = bmake_strdup(archive);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
     HashTable_Init(&ar->members);
     memName[AR_MAX_NAME_LEN] = '\0';
 
-    while (fread((char *)&arh, sizeof(struct ar_hdr), 1, arch) == 1) {
-	if (strncmp(arh.ar_fmag, ARFMAG, sizeof(arh.ar_fmag)) != 0) {
+    while (fread(&arh, sizeof arh, 1, arch) == 1) {
+	if (strncmp(arh.ar_fmag, ARFMAG, sizeof arh.ar_fmag) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
 	     * and there's no way we can recover...
@@ -519,10 +519,10 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	     * boundary, so we need to extract the size of the file from the
 	     * 'size' field of the header and round it up during the seek.
 	     */
-	    arh.ar_size[sizeof(arh.ar_size) - 1] = '\0';
+	    arh.ar_size[sizeof arh.ar_size - 1] = '\0';
 	    size = (size_t)strtol(arh.ar_size, NULL, 10);
 
-	    memcpy(memName, arh.ar_name, sizeof(arh.ar_name));
+	    memcpy(memName, arh.ar_name, sizeof arh.ar_name);
 	    nameend = memName + AR_MAX_NAME_LEN;
 	    while (*nameend == ' ') {
 		nameend--;
@@ -556,10 +556,10 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	     * BSD 4.4 extended AR format: #1/<namelen>, with name as the
 	     * first <namelen> bytes of the file
 	     */
-	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-		ch_isdigit(memName[sizeof(AR_EFMT1) - 1])) {
+	    if (strncmp(memName, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
+		ch_isdigit(memName[sizeof AR_EFMT1 - 1])) {
 
-		int elen = atoi(&memName[sizeof(AR_EFMT1) - 1]);
+		int elen = atoi(memName + sizeof AR_EFMT1 - 1);
 
 		if ((unsigned int)elen > MAXPATHLEN)
 		    goto badarch;
@@ -578,8 +578,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	    {
 		HashEntry *he;
 		he = HashTable_CreateEntry(&ar->members, memName, NULL);
-		HashEntry_Set(he, bmake_malloc(sizeof(struct ar_hdr)));
-		memcpy(HashEntry_Get(he), &arh, sizeof(struct ar_hdr));
+		HashEntry_Set(he, bmake_malloc(sizeof arh));
+		memcpy(HashEntry_Get(he), &arh, sizeof arh);
 	    }
 	}
 	if (fseek(arch, ((long)size + 1) & ~1, SEEK_CUR) != 0)
@@ -630,8 +630,8 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
     size_t entry;
     char *ptr, *eptr;
 
-    if (strncmp(name, ARLONGNAMES1, sizeof(ARLONGNAMES1) - 1) == 0 ||
-	strncmp(name, ARLONGNAMES2, sizeof(ARLONGNAMES2) - 1) == 0) {
+    if (strncmp(name, ARLONGNAMES1, sizeof ARLONGNAMES1 - 1) == 0 ||
+	strncmp(name, ARLONGNAMES2, sizeof ARLONGNAMES2 - 1) == 0) {
 
 	if (ar->fnametab != NULL) {
 	    DEBUG0(ARCH, "Attempted to redefine an SVR4 name table\n");
@@ -736,13 +736,13 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	member = lastSlash + 1;
 
     len = tlen = strlen(member);
-    if (len > sizeof(out_arh->ar_name)) {
-	tlen = sizeof(out_arh->ar_name);
+    if (len > sizeof out_arh->ar_name) {
+	tlen = sizeof out_arh->ar_name;
     }
 
-    while (fread((char *)out_arh, sizeof(struct ar_hdr), 1, arch) == 1) {
+    while (fread(out_arh, sizeof *out_arh, 1, arch) == 1) {
 
-	if (strncmp(out_arh->ar_fmag, ARFMAG, sizeof(out_arh->ar_fmag)) != 0) {
+	if (strncmp(out_arh->ar_fmag, ARFMAG, sizeof out_arh->ar_fmag) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
 	     * and there's no way we can recover...
@@ -770,7 +770,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	     * the file at the actual member, rather than its header, but
 	     * not here...
 	     */
-	    if (fseek(arch, -(long)sizeof(struct ar_hdr), SEEK_CUR) != 0) {
+	    if (fseek(arch, -(long)sizeof *out_arh, SEEK_CUR) != 0) {
 		fclose(arch);
 		return NULL;
 	    }
@@ -782,10 +782,10 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
 	 * first <namelen> bytes of the file
 	 */
-	if (strncmp(out_arh->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-	    ch_isdigit(out_arh->ar_name[sizeof(AR_EFMT1) - 1]))
+	if (strncmp(out_arh->ar_name, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
+	    ch_isdigit(out_arh->ar_name[sizeof AR_EFMT1 - 1]))
 	{
-	    int elen = atoi(&out_arh->ar_name[sizeof(AR_EFMT1) - 1]);
+	    int elen = atoi(&out_arh->ar_name[sizeof AR_EFMT1 - 1]);
 	    char ename[MAXPATHLEN + 1];
 
 	    if ((unsigned int)elen > MAXPATHLEN) {
@@ -824,7 +824,7 @@ skip:
 	 * extract the size of the file from the 'size' field of the
 	 * header and round it up during the seek.
 	 */
-	out_arh->ar_size[sizeof(out_arh->ar_size) - 1] = '\0';
+	out_arh->ar_size[sizeof out_arh->ar_size - 1] = '\0';
 	size = (int)strtol(out_arh->ar_size, NULL, 10);
 	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0) {
 	    fclose(arch);
@@ -864,10 +864,10 @@ Arch_Touch(GNode *gn)
     arch = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn),
 			  &arh, "r+");
 
-    snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long)now);
+    snprintf(arh.ar_date, sizeof arh.ar_date, "%-12ld", (long)now);
 
     if (arch != NULL) {
-	(void)fwrite((char *)&arh, sizeof(struct ar_hdr), 1, arch);
+	(void)fwrite(&arh, sizeof arh, 1, arch);
 	fclose(arch);
     }
 }
@@ -890,10 +890,10 @@ Arch_TouchLib(GNode *gn)
     struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
-    snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
+    snprintf(arh.ar_date, sizeof arh.ar_date, "%-12ld", (long) now);
 
     if (arch != NULL) {
-	(void)fwrite((char *)&arh, sizeof(struct ar_hdr), 1, arch);
+	(void)fwrite(&arh, sizeof arh, 1, arch);
 	fclose(arch);
 
 	times.actime = times.modtime = now;
