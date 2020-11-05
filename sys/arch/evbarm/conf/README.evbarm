@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.31 2020/05/24 07:17:34 skrll Exp $
+$NetBSD: README.evbarm,v 1.32 2020/11/05 13:04:05 rin Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ HAWK		2013/10/02	TI OMAP-L138 based Hawkboard
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
 IMX23_OLINUXINO	2012/11/20	Olimex iMX233 based OLinuXino boards
-IMX31LITE	2008/04/27	Freescale i.M31 DEV LITE KIT
+IMX31LITE	2008/04/27	Freescale i.MX31 DEV LITE KIT
 INTEGRATOR	2001/10/27	ARM Integrator board
 INTEGRATOR_CP	2013/02/19	ARM Integrator/CP board
 IQ31244		2003/05/14	Intel IQ31244 reference board
