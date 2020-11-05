@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.426 2020/11/04 13:31:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.427 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.426 2020/11/04 13:31:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.427 2020/11/05 17:27:16 rillig Exp $");
 
 /* types and constants */
 
@@ -360,7 +360,7 @@ loadedfile_create(const char *path)
 {
 	struct loadedfile *lf;
 
-	lf = bmake_malloc(sizeof(*lf));
+	lf = bmake_malloc(sizeof *lf);
 	lf->path = path == NULL ? "(stdin)" : path;
 	lf->buf = NULL;
 	lf->len = 0;
@@ -2064,7 +2064,7 @@ ParseMaybeSubMake(const char *cmd)
 	const char *name;
 	size_t len;
     } vals[] = {
-#define MKV(A)	{	A, sizeof(A) - 1	}
+#define MKV(A)	{	A, sizeof (A) - 1	}
 	MKV("${MAKE}"),
 	MKV("${.MAKE}"),
 	MKV("$(MAKE)"),

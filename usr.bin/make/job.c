@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.302 2020/11/01 18:45:49 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.303 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.302 2020/11/01 18:45:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.303 2020/11/05 17:27:16 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1442,7 +1442,7 @@ JobMakeArgv(Job *job, char **argv)
 	 * Bourne shell thinks its second argument is a file to source.
 	 * Grrrr. Note the ten-character limitation on the combined arguments.
 	 */
-	(void)snprintf(args, sizeof(args), "-%s%s",
+	(void)snprintf(args, sizeof args, "-%s%s",
 		      ((job->flags & JOB_IGNERR) ? "" :
 		       (commandShell->exit ? commandShell->exit : "")),
 		      ((job->flags & JOB_SILENT) ? "" :
@@ -2164,9 +2164,9 @@ Job_Init(void)
     JobCreatePipe(&childExitJob, 3);
 
     /* Preallocate enough for the maximum number of jobs.  */
-    fds = bmake_malloc(sizeof(*fds) *
+    fds = bmake_malloc(sizeof *fds *
 	(npseudojobs + (size_t)opts.maxJobs) * nfds_per_job());
-    jobfds = bmake_malloc(sizeof(*jobfds) *
+    jobfds = bmake_malloc(sizeof *jobfds *
 	(npseudojobs + (size_t)opts.maxJobs) * nfds_per_job());
 
     /* These are permanent entries and take slots 0 and 1 */
@@ -2311,7 +2311,7 @@ Job_ParseShell(char *line)
 
     free(shellArgv);
 
-    memset(&newShell, 0, sizeof(newShell));
+    memset(&newShell, 0, sizeof newShell);
 
     /*
      * Parse the specification by keyword
@@ -2423,7 +2423,7 @@ Job_ParseShell(char *line)
 	    }
 	    commandShell = sh;
 	} else {
-	    commandShell = bmake_malloc(sizeof(Shell));
+	    commandShell = bmake_malloc(sizeof *commandShell);
 	    *commandShell = newShell;
 	}
 	/* this will take care of shellErrFlag */
@@ -2699,7 +2699,7 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 
     JobCreatePipe(&tokenWaitJob, 15);
 
-    snprintf(jobarg, sizeof(jobarg), "%d,%d",
+    snprintf(jobarg, sizeof jobarg, "%d,%d",
 	    tokenWaitJob.inPipe, tokenWaitJob.outPipe);
 
     Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);

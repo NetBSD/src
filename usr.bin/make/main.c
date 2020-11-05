@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.425 2020/11/04 13:29:42 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.426 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.425 2020/11/04 13:29:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.426 2020/11/05 17:27:16 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -799,9 +799,9 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 	char dir[MAXPATHLEN];
 	char str[2 * MAXPATHLEN];
 	int len;
-	if (getcwd(dir, sizeof(dir)) == NULL)
+	if (getcwd(dir, sizeof dir) == NULL)
 		return;
-	len = snprintf(str, sizeof(str), "%s: Working in: %s\n", progname, dir);
+	len = snprintf(str, sizeof str, "%s: Working in: %s\n", progname, dir);
 	if (len > 0)
 		(void)write(STDERR_FILENO, str, (size_t)len);
 }
@@ -984,9 +984,9 @@ init_machine_arch(void)
 #ifdef MAKE_NATIVE
 	{
 		struct utsname utsname;
-		static char machine_arch_buf[sizeof(utsname.machine)];
+		static char machine_arch_buf[sizeof utsname.machine];
 		const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
-		size_t len = sizeof(machine_arch_buf);
+		size_t len = sizeof machine_arch_buf;
 
 		if (sysctl(mib, __arraycount(mib), machine_arch_buf,
 			&len, NULL, 0) < 0) {
@@ -1435,16 +1435,16 @@ main(int argc, char **argv)
 	    makelevel = ((ep = getenv(MAKE_LEVEL_ENV)) && *ep) ? atoi(ep) : 0;
 	    if (makelevel < 0)
 		makelevel = 0;
-	    snprintf(tmp, sizeof(tmp), "%d", makelevel);
+	    snprintf(tmp, sizeof tmp, "%d", makelevel);
 	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL);
-	    snprintf(tmp, sizeof(tmp), "%u", myPid);
+	    snprintf(tmp, sizeof tmp, "%u", myPid);
 	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
-	    snprintf(tmp, sizeof(tmp), "%u", getppid());
+	    snprintf(tmp, sizeof tmp, "%u", getppid());
 	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
-		snprintf(pn, sizeof(pn), "%s[%d]", progname, makelevel);
+		snprintf(pn, sizeof pn, "%s[%d]", progname, makelevel);
 		progname = bmake_strdup(pn);
 	}
 
@@ -1755,7 +1755,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	do {
 	    char   result[BUFSIZ];
-	    bytes_read = read(fds[0], result, sizeof(result));
+	    bytes_read = read(fds[0], result, sizeof result);
 	    if (bytes_read > 0)
 		Buf_AddBytes(&buf, result, (size_t)bytes_read);
 	}
@@ -2186,9 +2186,9 @@ mkTempFile(const char *pattern, char **out_fname)
     if (tmpdir == NULL)
 	tmpdir = getTmpdir();
     if (pattern[0] == '/') {
-	snprintf(tfile, sizeof(tfile), "%s", pattern);
+	snprintf(tfile, sizeof tfile, "%s", pattern);
     } else {
-	snprintf(tfile, sizeof(tfile), "%s%s", tmpdir, pattern);
+	snprintf(tfile, sizeof tfile, "%s%s", tmpdir, pattern);
     }
     if ((fd = mkstemp(tfile)) < 0)
 	Punt("Could not create temporary file %s: %s", tfile, strerror(errno));

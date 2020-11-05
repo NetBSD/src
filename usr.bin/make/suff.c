@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.230 2020/10/31 11:54:33 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.231 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.230 2020/10/31 11:54:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.231 2020/11/05 17:27:16 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -387,7 +387,7 @@ SuffInsert(SuffList *list, Suff *suff)
 static Suff *
 SuffNew(const char *name)
 {
-    Suff *s = bmake_malloc(sizeof(Suff));
+    Suff *s = bmake_malloc(sizeof *s);
 
     s->name = bmake_strdup(name);
     s->nameLen = strlen(s->name);
