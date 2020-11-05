@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.6 2020/10/16 16:17:23 roy Exp $
+#	$NetBSD: t_misc.sh,v 1.7 2020/11/05 20:03:56 martin Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -66,7 +66,7 @@ wg_rekey_body()
 	setup_common shmif0 inet $ip_local 24
 	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
-	$fconfig -w 10
+	$ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_PEER
 	setup_common shmif0 inet $ip_peer 24
