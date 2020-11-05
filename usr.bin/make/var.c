@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.662 2020/11/05 18:43:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.663 2020/11/05 20:50:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.662 2020/11/05 18:43:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.663 2020/11/05 20:50:13 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3648,6 +3648,44 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
     }
 }
 
+static VarParseResult
+EvalUndefined(
+	Boolean dynamic,
+	const char *start,
+	const char *p, char *varname,
+	VarEvalFlags eflags,
+	void **out_freeIt,
+	const char **out_val
+) {
+    if (dynamic) {
+	char *pstr = bmake_strsedup(start, p);
+	free(varname);
+	*out_freeIt = pstr;
+	*out_val = pstr;
+	return VPR_OK;
+    }
+
+    if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
+	DEBUG(LINT))
+    {
+	Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
+		    varname);
+	free(varname);
+	*out_val = var_Error;
+	return VPR_UNDEF_MSG;
+    }
+
+    if (eflags & VARE_UNDEFERR) {
+	free(varname);
+	*out_val = var_Error;
+	return VPR_UNDEF_SILENT;
+    }
+
+    free(varname);
+    *out_val = varUndefined;
+    return VPR_OK;
+}
+
 /* Parse a long variable name enclosed in braces or parentheses such as $(VAR)
  * or ${VAR}, up to the closing brace or parenthesis, or in the case of
  * ${VAR:Modifiers}, up to the ':' that starts the modifiers.
@@ -3713,36 +3751,8 @@ ParseVarnameLong(
 	if (!haveModifier) {
 	    p++;		/* skip endc */
 	    *pp = p;
-	    if (dynamic) {
-		char *pstr = bmake_strsedup(start, p);
-		free(varname);
-		*out_FALSE_res = VPR_OK;
-		*out_FALSE_freeIt = pstr;
-		*out_FALSE_val = pstr;
-		return FALSE;
-	    }
-
-	    if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
-		DEBUG(LINT))
-	    {
-		Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
-			    varname);
-		free(varname);
-		*out_FALSE_res = VPR_UNDEF_MSG;
-		*out_FALSE_val = var_Error;
-		return FALSE;
-	    }
-
-	    if (eflags & VARE_UNDEFERR) {
-		free(varname);
-		*out_FALSE_res = VPR_UNDEF_SILENT;
-		*out_FALSE_val = var_Error;
-		return FALSE;
-	    }
-
-	    free(varname);
-	    *out_FALSE_res = VPR_OK;
-	    *out_FALSE_val = varUndefined;
+	    *out_FALSE_res = EvalUndefined(dynamic, start, p, varname, eflags,
+					   out_FALSE_freeIt, out_FALSE_val);
 	    return FALSE;
 	}
 
