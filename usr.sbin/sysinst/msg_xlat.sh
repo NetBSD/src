@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.1 2014/07/26 19:30:44 dholland Exp $
+#	$NetBSD: msg_xlat.sh,v 1.2 2020/11/05 19:13:21 christos Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,10 +30,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+PROG=$(basename "$0")
 usage()
 {
-	echo "usage: msg_xlat.sh [-ci] [-d msg_defs.h] [-f fmt_count]" >&2
+	echo "Usage: $PROG [-ci] [-d msg_defs.h] [-f fmt_count]" >&2
 	exit 1
+}
+
+error() {
+	echo "$PROG: ERROR $@" >&2
 }
 
 count_fmtargs=
@@ -112,7 +117,7 @@ do
 		name="$2"
 		eval number=\$MSG_$name
 		[ -z "$number" ] && {
-			echo "ERROR: unknown message \"$name\"" >&2
+			error "unknown message \"$name\""
 			[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 			number=unknown
 		}
@@ -137,7 +142,7 @@ do
 	msg="${msg%z}"
 	eval old=\"\$MSGTEXT_$number\"
 	[ -n "$old" -a "$number" != unknown ] && {
-		echo "ERROR: Two translations for message \"$name\"" >&2
+		error "Two translations for message \"$name\""
 		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 	}
 	eval MSGTEXT_$number=\"\${msg}\"
@@ -156,7 +161,7 @@ do
 	}
 	eval count=\${count_$number:-unknown}
 	[ "$count" = $# ] || {
-		echo "ERROR: Wrong number of format specifiers in \"$sv_name\", got $#, expected $count" >&2
+		error "Wrong number of format specifiers in \"$sv_name\", got $#, expected $count"
 		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 	}
 done
@@ -177,7 +182,7 @@ while
 do
 	eval msg=\${MSGTEXT_$msgnum}
 	[ -z "$msg" ] && {
-		eval echo "ERROR: No translation for message \$MSGNUM_$msgnum" >&2
+		eval error "No translation for message \$MSGNUM_$msgnum"
 		printf '%-7d\0' 0
 		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 		continue
