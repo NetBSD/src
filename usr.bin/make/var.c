@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.659 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.660 2020/11/05 18:20:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.659 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.660 2020/11/05 18:20:23 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3935,20 +3935,17 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     return VPR_UNKNOWN;
 }
 
-/* Substitute for all variables in the given string in the given context.
- *
- * If eflags & VARE_WANTRES, any effects from the modifiers, such as ::=,
- * :sh or !cmd! take place.
+/* Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
+ * given string.
  *
  * Input:
- *	str		the string which to substitute
- *	ctxt		the context wherein to find variables
+ *	str		The string in which the variable expressions are
+ *			expanded.
+ *	ctxt		The context in which to start searching for
+ *			variables.  The other contexts are searched as well.
  *	eflags		VARE_UNDEFERR	if undefineds are an error
  *			VARE_WANTRES	if we actually want the result
  *			VARE_ASSIGN	if we are in a := assignment
- *
- * Results:
- *	The resulting string.
  */
 VarParseResult
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
