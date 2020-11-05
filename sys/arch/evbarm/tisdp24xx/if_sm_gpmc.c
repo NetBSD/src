@@ -1,3 +1,5 @@
+/*	$NetBSD: if_sm_gpmc.c,v 1.6 2020/11/05 13:04:27 rin Exp $	*/
+
 /* adapted from: */
 /*	NetBSD: if_sm_emifs.c,v 1.1.6.1 2007/02/24 19:03:14 snj Exp	*/
 
@@ -36,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.5 2012/10/27 17:17:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.6 2020/11/05 13:04:27 rin Exp $");
 
 #include "locators.h"
 
