@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.27 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.28 2020/11/05 11:10:11 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1250,7 +1250,6 @@ message failed {Fehlgeschlagen}
 message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
 message partman {Erweiterte Partitionierung}
 message editpart {Partitionen bearbeiten}
-message setbootable {Boot-Flag}
 
 message fremove {ENTFERNEN}
 message remove {Entfernen}

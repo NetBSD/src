@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.pl,v 1.3 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: msg.pm.pl,v 1.4 2020/11/05 11:10:11 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -158,7 +158,6 @@ message switch_parts {Switch partitioning scheme}
 message fmtasraid {Formatuj jako RAID}
 message fmtaslvm {Formatuj jak LVM PV}
 message encrypt {Szyfrowanie (CGD)}
-message setbootable {Rozruchowy}
 message erase {Bezpieczne kasowanie}
 message undo {Cofanie zmian}
 message unconfig {Cofnij konfiguracje}
