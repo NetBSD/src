@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.661 2020/11/05 18:26:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.662 2020/11/05 18:43:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.661 2020/11/05 18:26:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.662 2020/11/05 18:43:55 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3617,6 +3617,37 @@ ParseVarnameShort(
     return TRUE;
 }
 
+/* Find variables like @F or <D. */
+static Var *
+FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
+		   const char **out_extraModifiers)
+{
+    /* Only resolve these variables if ctxt is a "real" target. */
+    if (ctxt == VAR_CMDLINE || ctxt == VAR_GLOBAL)
+	return NULL;
+
+    if (namelen != 2)
+	return NULL;
+    if (varname[1] != 'F' && varname[1] != 'D')
+	return NULL;
+    if (strchr("@%?*!<>", varname[0]) == NULL)
+	return NULL;
+
+    {
+	char name[] = { varname[0], '\0' };
+	Var *v = VarFind(name, ctxt, 0);
+
+	if (v != NULL) {
+	    if (varname[1] == 'D') {
+		*out_extraModifiers = "H:";
+	    } else { /* F */
+		*out_extraModifiers = "T:";
+	    }
+	}
+	return v;
+    }
+}
+
 /* Parse a long variable name enclosed in braces or parentheses such as $(VAR)
  * or ${VAR}, up to the closing brace or parenthesis, or in the case of
  * ${VAR:Modifiers}, up to the ':' that starts the modifiers.
@@ -3670,28 +3701,8 @@ ParseVarnameLong(
     /* At this point, p points just after the variable name,
      * either at ':' or at endc. */
 
-    /*
-     * Check also for bogus D and F forms of local variables since we're
-     * in a local context and the name is the right length.
-     */
-    if (v == NULL && ctxt != VAR_CMDLINE && ctxt != VAR_GLOBAL &&
-	namelen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
-	strchr("@%?*!<>", varname[0]) != NULL)
-    {
-	/*
-	 * Well, it's local -- go look for it.
-	 */
-	char name[] = { varname[0], '\0' };
-	v = VarFind(name, ctxt, 0);
-
-	if (v != NULL) {
-	    if (varname[1] == 'D') {
-		*out_TRUE_extraModifiers = "H:";
-	    } else { /* F */
-		*out_TRUE_extraModifiers = "T:";
-	    }
-	}
-    }
+    if (v == NULL)
+	v = FindLocalLegacyVar(varname, namelen, ctxt, out_TRUE_extraModifiers);
 
     if (v == NULL) {
 	/* Defer expansion of dynamic variables if they appear in non-local
