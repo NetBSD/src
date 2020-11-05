@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.13.2.8 2020/10/15 19:36:50 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.13.2.9 2020/11/05 08:10:21 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -507,8 +507,12 @@ alle Pakete (volle Installation) zu installieren bzw. einen benutzer-
 definierten Satz auszuwählen.
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ *  $1 = URL protocol used		ftp
+ */
 message ftpsource
-{Dies sind die Daten zum Aufbau einer %s-Verbindung.
+{Dies sind die Daten zum Aufbau einer $1-Verbindung.
 Falls der Benutzer "ftp" ist, benötigen Sie kein Passwort.
 
 }
@@ -519,10 +523,13 @@ message email
 message dev
 {Laufwerk}
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message nfssource
 {Geben Sie den NFS-Server samt Verzeichnis an, auf dem die Distribution zu
 finden ist.
-(Das Verzeichnis muss .tgz Dateien enthalten und über NFS mountbar sein.)
+(Das Verzeichnis muss $0 Dateien enthalten und über NFS mountbar sein.)
 
 }
 
@@ -533,12 +540,27 @@ Verzeichnis der Diskette liegen.
 
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message cdromsource
 {Geben Sie das CD-Laufwerk und das entsprechende Verzeichnis an, in dem
 die Distribution zu finden ist.
-(Das Verzeichnis muss .tgz Dateien enthalten.)
+(Das Verzeichnis muss $0 Dateien enthalten.)
 
 }
+
+message No_cd_found
+{Kein CD Laufwerk enthält eine CD mit den Distributions-Dateien!  
+Geben Sie die korrekten Daten manuel ein, oder legen Sie eine CD
+ein und versuchen Sie es erneut. 
+}
+
+message abort_install
+{Installation abbrechen}
+
+message source_sel_retry
+{Zurück zur Quellauswahl}
 
 message Available_cds
 {Verfügbare CDs}
@@ -550,17 +572,23 @@ message cd_path_not_found
 {Die Installationsdateien wurden auf der ausgewählten CD nicht gefunden. Bitte
 prüfen Sie den Gerätenamen und Pfad der Installationsdateien.}
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message localfssource
 {Geben Sie das noch nicht gemountete lokale Gerät und dessen entsprechendes
 Verzeichnis an, in dem die Distribution zu finden ist.
-(Das Verzeichnis muss .tgz Dateien enthalten.)
+(Das Verzeichnis muss $0 Dateien enthalten.)
 
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message localdir
 {Geben Sie das Verzeichnis des bereits gemounteten lokalen Geräts an, in dem
 die Distribution zu finden ist.
-(Das Verzeichnis muss .tgz Dateien enthalten.)
+(Das Verzeichnis muss $0 Dateien enthalten.)
 
 }
 

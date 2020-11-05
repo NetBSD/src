@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.19.2.9 2020/10/15 19:36:51 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.19.2.10 2020/11/05 08:10:21 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -487,8 +487,12 @@ a core set (Minimal installation), all of them (Full installation), or a custom
 group of sets (Custom installation).
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ *  $1 = URL protocol used		ftp
+ */
 message ftpsource
-{The following are the %s site, directory, user, and password that
+{The following are the $1 site, directory, user, and password that
 will be used.  If "user" is "ftp", then the password is not needed.
 
 }
@@ -499,9 +503,12 @@ message email
 message dev
 {device}
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message nfssource
 {Enter the nfs host and server directory where the distribution is located. 
-Remember, the directory should contain the .tgz files and
+Remember, the directory should contain the $0 files and
 must be nfs mountable.
 
 }
@@ -512,12 +519,26 @@ file system.  The set files must be in the root directory of the floppies.
 
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
 the distribution is located. 
-Remember, the directory should contain the .tgz files.
+Remember, the directory should contain the $0 files.
 
 }
+
+message No_cd_found
+{Could not locate a CD medium in any drive with the distribution sets! 
+Enter the correct data manually, or insert a disk and retry. 
+}
+
+message abort_install
+{Cancel installation}
+
+message source_sel_retry
+{Back to source selection & retry}
 
 message Available_cds
 {Available CDs }
@@ -529,16 +550,22 @@ message cd_path_not_found
 {The installation sets have not been found at the default location on this
 CD.  Please check the device and path name.}
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message localfssource
 {Enter the unmounted local device and directory on that device where
 the distribution is located. 
-Remember, the directory should contain the .tgz files.
+Remember, the directory should contain the $0 files.
 
 }
 
+/* Called with: 			Example
+ *  $0 = sets suffix			.tgz
+ */
 message localdir
 {Enter the already-mounted local directory where the distribution is located. 
-Remember, the directory should contain the .tgz files.
+Remember, the directory should contain the $0 files.
 
 }
 

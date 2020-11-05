@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29.2.7 2020/10/15 19:36:50 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.29.2.8 2020/11/05 08:10:21 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -414,6 +414,8 @@ get_iso9660_volname(int dev, int sess, char *volname)
  * Local state while iterating CDs and collecting volumes
  */
 struct get_available_cds_state {
+	size_t num_mounted;
+	struct statvfs *mounted;
 	struct cd_info *info;
 	size_t count;
 };
@@ -425,14 +427,26 @@ static bool
 get_available_cds_helper(void *arg, const char *device)
 {
 	struct get_available_cds_state *state = arg;
-	char dname[16], volname[80];
+	char dname[16], tname[16], volname[80], *t;
 	struct disklabel label;
-	int part, dev, error, sess, ready;
+	int part, dev, error, sess, ready, tlen;
 
 	if (!is_cdrom_device(device, false))
 		return true;
 
 	sprintf(dname, "/dev/r%s%c", device, 'a'+RAW_PART);
+	tlen = sprintf(tname, "/dev/%s", device);
+
+	/* check if this is mounted already */
+	for (size_t i = 0; i < state->num_mounted; i++) {
+		if (strncmp(state->mounted[i].f_mntfromname, tname, tlen)
+		    == 0) {
+			t = state->mounted[i].f_mntfromname + tlen;
+			if (t[0] >= 'a' && t[0] <= 'z' && t[1] == 0)
+				return true;
+		}
+	}
+
 	dev = open(dname, O_RDONLY, 0);
 	if (dev == -1)
 		return true;
@@ -495,11 +509,23 @@ static int
 get_available_cds(void)
 {
 	struct get_available_cds_state data;
+	int n, m;
 
+	memset(&data, 0, sizeof data);
 	data.info = cds;
-	data.count = 0;
+
+	n = getvfsstat(NULL, 0, ST_NOWAIT);
+	if (n > 0) {
+		data.mounted = calloc(n, sizeof(*data.mounted));
+		m = getvfsstat(data.mounted, n*sizeof(*data.mounted),
+		    ST_NOWAIT);
+		assert(m >= 0 && m <= n);
+		data.num_mounted = m;
+	}
 
 	enumerate_disks(&data, get_available_cds_helper);
+
+	free(data.mounted);
 
 	return data.count;
 }
@@ -507,6 +533,11 @@ get_available_cds(void)
 static int
 cd_has_sets(void)
 {
+
+	/* sanity check */
+	if (cdrom_dev[0] == 0)
+		return 0;
+
 	/* Mount it */
 	if (run_program(RUN_SILENT, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
 	    cdrom_dev) != 0)
@@ -564,7 +595,6 @@ get_via_cdrom(void)
 	menu_ent cd_menu[MAX_CD_INFOS];
 	struct stat sb;
 	int rv, num_cds, menu_cd, i, selected_cd = 0;
-	bool silent = false;
 	int mib[2];
 	char rootdev[SSTRSIZE] = "";
 	size_t varlen;
@@ -584,7 +614,8 @@ get_via_cdrom(void)
 	memset(cd_menu, 0, sizeof(cd_menu));
 	num_cds = get_available_cds();
 	if (num_cds <= 0) {
-		silent = true;
+		msg_display(MSG_No_cd_found);
+		cdrom_dev[0] = 0;
 	} else if (num_cds == 1) {
 		/* single CD found, check for sets on it */
 		strcpy(cdrom_dev, cds[0].device_name);
@@ -611,9 +642,7 @@ get_via_cdrom(void)
 			return SET_OK;
 	}
 
-	if (silent)
-		msg_display("");
-	else {
+	if (num_cds >= 1 && mnt2_mounted) {
 		umount_mnt2();
 		hit_enter_to_continue(MSG_cd_path_not_found, NULL);
 	}
@@ -621,8 +650,8 @@ get_via_cdrom(void)
 	/* ask for paths on the CD */
 	rv = -1;
 	process_menu(MENU_cdromsource, &rv);
-	if (rv == SET_RETRY)
-		return SET_RETRY;
+	if (rv == SET_RETRY || rv == SET_ABANDON)
+		return rv;
 
 	if (cd_has_sets())
 		return SET_OK;
