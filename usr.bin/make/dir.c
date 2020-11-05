@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.193 2020/10/31 17:39:20 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.194 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.193 2020/10/31 17:39:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.194 2020/11/05 17:27:16 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -358,8 +358,8 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     if (entry == NULL)
 	entry = HashTable_CreateEntry(htp, pathname, NULL);
     if (HashEntry_Get(entry) == NULL) {
-	HashEntry_Set(entry, bmake_malloc(sizeof(*cst)));
-	memset(HashEntry_Get(entry), 0, sizeof(*cst));
+	HashEntry_Set(entry, bmake_malloc(sizeof *cst));
+	memset(HashEntry_Get(entry), 0, sizeof *cst);
     }
     cst = HashEntry_Get(entry);
     if (flags & CST_LSTAT) {
@@ -401,7 +401,7 @@ Dir_InitDir(const char *cdname)
 {
     Dir_InitCur(cdname);
 
-    dotLast = bmake_malloc(sizeof(CachedDir));
+    dotLast = bmake_malloc(sizeof *dotLast);
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = bmake_strdup(".DOTLAST");
@@ -1410,7 +1410,7 @@ Dir_AddDir(SearchPath *path, const char *name)
     DIR_DEBUG1("Caching %s ...", name);
 
     if ((d = opendir(name)) != NULL) {
-	dir = bmake_malloc(sizeof(CachedDir));
+	dir = bmake_malloc(sizeof *dir);
 	dir->name = bmake_strdup(name);
 	dir->hits = 0;
 	dir->refCount = 1;
