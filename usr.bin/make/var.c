@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.665 2020/11/05 23:24:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.666 2020/11/05 23:52:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.665 2020/11/05 23:24:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.666 2020/11/05 23:52:08 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3781,48 +3781,43 @@ ParseVarnameLong(
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Parse --
- *	Given the start of a variable expression (such as $v, $(VAR),
- *	${VAR:Mpattern}), extract the variable name, possibly some
- *	modifiers and find its value by applying the modifiers to the
- *	original value.
- *
- *	When parsing a condition in ParseEmptyArg, pp may also point to
- *	the "y" of "empty(VARNAME:Modifiers)", which is syntactically
- *	identical.
+/*
+ * Given the start of a variable expression (such as $v, $(VAR),
+ * ${VAR:Mpattern}), extract the variable name and value, and the modifiers,
+ * if any.  While doing that, apply the modifiers to the value of the
+ * expression, forming its final value.  A few of the modifiers such as :!cmd!
+ * or ::= have side effects.
  *
  * Input:
- *	str		The string to parse
- *	ctxt		The context for the variable
- *	flags		Select the exact details of parsing
- *	out_val_freeIt	Must be freed by the caller after using out_val
+ *	*pp		The string to parse.
+ *			When parsing a condition in ParseEmptyArg, it may also
+ *			point to the "y" of "empty(VARNAME:Modifiers)", which
+ *			is syntactically the same.
+ *	ctxt		The context for finding variables
+ *	eflags		Control the exact details of parsing
  *
- * Results:
- *	Returns the value of the variable expression, never NULL.
- *	Returns var_Error if there was a parse error and VARE_UNDEFERR was
- *	set.
- *	Returns varUndefined if there was an undefined variable and
- *	VARE_UNDEFERR was not set.
- *
- *	Parsing should continue at *pp.
- *	TODO: Document the value of *pp on parse errors.  It might be advanced
- *	by 0, or +1, or the index of the parse error, or the guessed end of the
- *	variable expression.
- *
- *	If var_Error is returned, a diagnostic may or may not have been
- *	printed. XXX: This is inconsistent.
- *
- *	If varUndefined is returned, a diagnostic may or may not have been
- *	printed. XXX: This is inconsistent.
- *
- *	After using the returned value, *out_val_freeIt must be freed,
- *	preferably using bmake_free since it is NULL in most cases.
- *
- * Side Effects:
- *	Any effects from the modifiers, such as :!cmd! or ::=value.
- *-----------------------------------------------------------------------
+ * Output:
+ *	*pp		The position where to continue parsing.
+ *			TODO: After a parse error, the value of *pp is
+ *			unspecified.  It may not have been updated at all,
+ *			point to some random character in the string, to the
+ *			location of the parse error, or at the end of the
+ *			string.
+ *	*out_val	The value of the variable expression, never NULL.
+ *	*out_val	var_Error if there was a parse error.
+ *	*out_val	var_Error if the base variable of the expression was
+ *			undefined, eflags contains VARE_UNDEFERR, and none of
+ *			the modifiers turned the undefined expression into a
+ *			defined expression.
+ *			XXX: It is not guaranteed that an error message has
+ *			been printed.
+ *	*out_val	varUndefined if the base variable of the expression
+ *			was undefined, eflags did not contain VARE_UNDEFERR,
+ *			and none of the modifiers turned the undefined
+ *			expression into a defined expression.
+ *			XXX: It is not guaranteed that an error message has
+ *			been printed.
+ *	*out_val_freeIt	Must be freed by the caller after using *out_val.
  */
 /* coverity[+alloc : arg-*4] */
 VarParseResult
