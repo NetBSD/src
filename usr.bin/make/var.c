@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.658 2020/11/05 15:04:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.659 2020/11/05 17:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.658 2020/11/05 15:04:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.659 2020/11/05 17:27:16 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -584,7 +584,7 @@ Var_ExportVars(void)
      * children see a correctly incremented value.
      */
     char tmp[BUFSIZ];
-    snprintf(tmp, sizeof(tmp), "%d", makelevel + 1);
+    snprintf(tmp, sizeof tmp, "%d", makelevel + 1);
     setenv(MAKE_LEVEL_ENV, tmp, 1);
 
     if (var_exportedVars == VAR_EXPORTED_NONE)
@@ -1488,7 +1488,7 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
     if (oneBigWord) {
 	/* fake what Str_Words() would do if there were only one word */
 	words.len = 1;
-	words.words = bmake_malloc((words.len + 1) * sizeof(char *));
+	words.words = bmake_malloc((words.len + 1) * sizeof(words.words[0]));
 	words.freeIt = bmake_strdup(str);
 	words.words[0] = words.freeIt;
 	words.words[1] = NULL;
@@ -1724,9 +1724,9 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
 	time(&tim);
     if (!*fmt)
 	fmt = "%c";
-    strftime(buf, sizeof(buf), fmt, zulu ? gmtime(&tim) : localtime(&tim));
+    strftime(buf, sizeof buf, fmt, zulu ? gmtime(&tim) : localtime(&tim));
 
-    buf[sizeof(buf) - 1] = '\0';
+    buf[sizeof buf - 1] = '\0';
     return bmake_strdup(buf);
 }
 
@@ -2829,7 +2829,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
     if (mod[1] == st->endc || mod[1] == ':') {
 	/* :O sorts ascending */
-	qsort(words.words, words.len, sizeof(char *), str_cmp_asc);
+	qsort(words.words, words.len, sizeof words.words[0], str_cmp_asc);
 
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
@@ -2837,7 +2837,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
 	if (mod[1] == 'r') {
 	    /* :Or sorts descending */
-	    qsort(words.words, words.len, sizeof(char *), str_cmp_desc);
+	    qsort(words.words, words.len, sizeof words.words[0], str_cmp_desc);
 
 	} else {
 	    /* :Ox shuffles
