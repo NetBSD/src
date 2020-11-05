@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.664 2020/11/05 21:16:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.665 2020/11/05 23:24:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.664 2020/11/05 21:16:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.665 2020/11/05 23:24:47 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3266,7 +3266,7 @@ static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(
 	ApplyModifiersState *const st,
 	const char **const inout_p,
-	void **const out_freeIt
+	void **const inout_freeIt
 ) {
     const char *p = *inout_p;
     const char *mods;
@@ -3300,7 +3300,7 @@ ApplyModifiersIndirect(
 	const char *rval_pp = mods;
 	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
 				 &st->exprFlags, st->ctxt, st->eflags,
-				 out_freeIt);
+				 inout_freeIt);
 	if (st->val == var_Error || st->val == varUndefined ||
 	    *rval_pp != '\0') {
 	    free(mods_freeIt);
@@ -3334,7 +3334,7 @@ ApplyModifiers(
     VarExprFlags *const exprFlags,
     GNode *const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
-    void **const out_freeIt	/* free this after using the return value */
+    void **const inout_freeIt	/* free this after using the return value */
 ) {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
@@ -3364,7 +3364,7 @@ ApplyModifiers(
 
 	if (*p == '$') {
 	    ApplyModifiersIndirectResult amir;
-	    amir = ApplyModifiersIndirect(&st, &p, out_freeIt);
+	    amir = ApplyModifiersIndirect(&st, &p, inout_freeIt);
 	    if (amir == AMIR_CONTINUE)
 		continue;
 	    if (amir == AMIR_OUT)
@@ -3403,13 +3403,13 @@ ApplyModifiers(
 	    LogAfterApply(&st, p, mod);
 
 	if (st.newVal != st.val) {
-	    if (*out_freeIt) {
+	    if (*inout_freeIt != NULL) {
 		free(st.val);
-		*out_freeIt = NULL;
+		*inout_freeIt = NULL;
 	    }
 	    st.val = st.newVal;
 	    if (st.val != var_Error && st.val != varUndefined)
-		*out_freeIt = st.val;
+		*inout_freeIt = st.val;
 	}
 	if (*p == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
@@ -3437,8 +3437,8 @@ bad_modifier:
 
 cleanup:
     *pp = p;
-    free(*out_freeIt);
-    *out_freeIt = NULL;
+    free(*inout_freeIt);
+    *inout_freeIt = NULL;
     *exprFlags = st.exprFlags;
     return var_Error;
 }
