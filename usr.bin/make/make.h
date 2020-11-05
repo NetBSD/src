@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.188 2020/11/04 13:40:20 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.189 2020/11/05 00:40:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -230,7 +230,7 @@ typedef enum GNodeType {
     /* Like .USE, only prepend commands */
     OP_USEBEFORE	= 1 << 13,
     /* The node is invisible to its parents. I.e. it doesn't show up in the
-     * parents' local variables. */
+     * parents' local variables (.IMPSRC, .ALLSRC). */
     OP_INVISIBLE	= 1 << 14,
     /* The node is exempt from normal 'main target' processing in parse.c */
     OP_NOTMAIN		= 1 << 15,
@@ -238,7 +238,10 @@ typedef enum GNodeType {
     OP_PHONY		= 1 << 16,
     /* Don't search for file in the path */
     OP_NOPATH		= 1 << 17,
-    /* .WAIT phony node */
+    /* In a dependency line "target: source1 .WAIT source2", source1 is made
+     * first, including its children.  Once that is finished, source2 is made,
+     * including its children.  The .WAIT keyword may appear more than once in
+     * a single dependency declaration. */
     OP_WAIT		= 1 << 18,
     /* .NOMETA do not create a .meta file */
     OP_NOMETA		= 1 << 19,
@@ -251,7 +254,7 @@ typedef enum GNodeType {
 
     /* Attributes applied by PMake */
 
-    /* The node is a transformation rule */
+    /* The node is a transformation rule, such as ".c.o". */
     OP_TRANSFORM	= 1 << 31,
     /* Target is a member of an archive */
     /* XXX: How does this differ from OP_ARCHV? */
