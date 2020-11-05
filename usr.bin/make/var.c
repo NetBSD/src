@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.657 2020/11/04 04:49:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.658 2020/11/05 15:04:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.657 2020/11/04 04:49:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.658 2020/11/05 15:04:51 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3936,9 +3936,6 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 }
 
 /* Substitute for all variables in the given string in the given context.
- *
- * If eflags & VARE_UNDEFERR, Parse_Error will be called when an undefined
- * variable is encountered.
  *
  * If eflags & VARE_WANTRES, any effects from the modifiers, such as ::=,
  * :sh or !cmd! take place.
