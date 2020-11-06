@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.154 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.155 2020/11/06 23:59:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.154 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.155 2020/11/06 23:59:21 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -930,7 +930,7 @@ Arch_MTime(GNode *gn)
 /* Given a non-existent archive member's node, get its modification time from
  * its archived form, if it exists. gn->mtime is filled in as well. */
 time_t
-Arch_MemMTime(GNode *gn)
+Arch_MemberMTime(GNode *gn)
 {
     GNodeListNode *ln;
 
