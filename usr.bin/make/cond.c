@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.176 2020/11/06 20:50:48 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.177 2020/11/06 22:39:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.176 2020/11/06 20:50:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.177 2020/11/06 22:39:10 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -223,9 +223,7 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	return 0;
     }
 
-    while (*p == ' ' || *p == '\t') {
-	p++;
-    }
+    cpp_skip_hspace(&p);
 
     Buf_Init(&argBuf, 16);
 
@@ -264,9 +262,7 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
     *out_arg = Buf_GetAll(&argBuf, &argLen);
     Buf_Destroy(&argBuf, FALSE);
 
-    while (*p == ' ' || *p == '\t') {
-	p++;
-    }
+    cpp_skip_hspace(&p);
 
     if (func != NULL && *p++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
@@ -811,9 +807,7 @@ CondParser_Token(CondParser *par, Boolean doEval)
 	return t;
     }
 
-    while (par->p[0] == ' ' || par->p[0] == '\t') {
-	par->p++;
-    }
+    cpp_skip_hspace(&par->p);
 
     switch (par->p[0]) {
 
@@ -1018,8 +1012,7 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 
     lhsStrict = strictLHS;
 
-    while (*cond == ' ' || *cond == '\t')
-	cond++;
+    cpp_skip_hspace(&cond);
 
     if (info == NULL && (info = dflt_info) == NULL) {
 	/* Scan for the entry for .if - it can't be first */
@@ -1094,9 +1087,8 @@ Cond_EvalLine(const char *line)
 	cond_state = bmake_malloc(max_if_depth * sizeof *cond_state);
 	cond_state[0] = IF_ACTIVE;
     }
-    /* skip leading character (the '.') and any whitespace */
-    for (line++; *line == ' ' || *line == '\t'; line++)
-	continue;
+    line++;		/* skip the leading '.' */
+    cpp_skip_hspace(&line);
 
     /* Find what type of if we're dealing with.  */
     if (line[0] == 'e') {
