@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.303 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.304 2020/11/06 21:20:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.303 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.304 2020/11/06 21:20:31 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1028,7 +1028,7 @@ JobFinish(Job *job, int status)
 		    meta_job_error(job, job->node, job->flags, WEXITSTATUS(status));
 		}
 #endif
-		if (!dieQuietly(job->node, -1))
+		if (!shouldDieQuietly(job->node, -1))
 		    (void)printf("*** [%s] Error code %d%s\n",
 				 job->node->name,
 				 WEXITSTATUS(status),
@@ -2767,7 +2767,7 @@ Job_TokenWithdraw(void)
 	/* And put the stopper back */
 	while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
 	    continue;
-	if (dieQuietly(NULL, 1))
+	if (shouldDieQuietly(NULL, 1))
 	    exit(2);
 	Fatal("A failure has been detected in another branch of the parallel make");
     }
