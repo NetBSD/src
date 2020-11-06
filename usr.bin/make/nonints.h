@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.149 2020/11/01 00:24:57 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.150 2020/11/06 23:11:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -116,8 +116,7 @@ void Finish(int) MAKE_ATTR_DEAD;
 int eunlink(const char *);
 void execDie(const char *, const char *);
 char *getTmpdir(void);
-Boolean s2Boolean(const char *, Boolean);
-Boolean getBoolean(const char *, Boolean);
+Boolean ParseBoolean(const char *, Boolean);
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
