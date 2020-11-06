@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.428 2020/11/06 21:01:43 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.429 2020/11/06 21:20:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.428 2020/11/06 21:01:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.429 2020/11/06 21:20:31 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1891,7 +1891,7 @@ DieHorribly(void)
 void
 Finish(int errs)
 {
-	if (dieQuietly(NULL, -1))
+	if (shouldDieQuietly(NULL, -1))
 		exit(2);
 	Fatal("%d error%s", errs, errs == 1 ? "" : "s");
 }
@@ -2042,11 +2042,10 @@ cached_realpath(const char *pathname, char *resolved)
 
 /*
  * Return true if we should die without noise.
- * For example our failing child was a sub-make
- * or failure happend elsewhere.
+ * For example our failing child was a sub-make or failure happened elsewhere.
  */
-int
-dieQuietly(GNode *gn, int bf)
+Boolean
+shouldDieQuietly(GNode *gn, int bf)
 {
     static int quietly = -1;
 
@@ -2056,7 +2055,7 @@ dieQuietly(GNode *gn, int bf)
 	else if (bf >= 0)
 	    quietly = bf;
 	else
-	    quietly = gn != NULL ? ((gn->type  & (OP_MAKE)) != 0) : 0;
+	    quietly = gn != NULL && (gn->type & OP_MAKE);
     }
     return quietly;
 }
@@ -2094,7 +2093,7 @@ PrintOnError(GNode *gn, const char *s)
     }
 
     /* we generally want to keep quiet if a sub-make died */
-    if (dieQuietly(gn, -1))
+    if (shouldDieQuietly(gn, -1))
 	return;
 
     if (s)
