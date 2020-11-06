@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.430 2020/11/06 23:04:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.431 2020/11/06 23:05:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.430 2020/11/06 23:04:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.431 2020/11/06 23:05:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1788,8 +1788,8 @@ bad:
 
 /* Print a printf-style error message.
  *
- * This error message has no consequences, in particular it does not affect
- * the exit status. */
+ * In default mode, this error message has no consequences, in particular it
+ * does not affect the exit status.  Only in lint mode (-dL) it does. */
 void
 Error(const char *fmt, ...)
 {
