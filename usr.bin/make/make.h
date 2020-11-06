@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.191 2020/11/06 20:24:08 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.192 2020/11/06 21:09:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -497,25 +497,24 @@ extern pid_t myPid;
 typedef enum DebugFlags {
     DEBUG_ARCH		= 1 << 0,
     DEBUG_COND		= 1 << 1,
-    DEBUG_DIR		= 1 << 2,
-    DEBUG_GRAPH1	= 1 << 3,
-    DEBUG_GRAPH2	= 1 << 4,
-    DEBUG_JOB		= 1 << 5,
-    DEBUG_MAKE		= 1 << 6,
-    DEBUG_SUFF		= 1 << 7,
-    DEBUG_TARG		= 1 << 8,
-    DEBUG_VAR		= 1 << 9,
-    DEBUG_FOR		= 1 << 10,
-    DEBUG_SHELL		= 1 << 11,
-    DEBUG_ERROR		= 1 << 12,
-    DEBUG_LOUD		= 1 << 13,
-    DEBUG_META		= 1 << 14,
-    DEBUG_HASH		= 1 << 15,
-
-    DEBUG_GRAPH3	= 1 << 16,
-    DEBUG_SCRIPT	= 1 << 17,
-    DEBUG_PARSE		= 1 << 18,
-    DEBUG_CWD		= 1 << 19,
+    DEBUG_CWD		= 1 << 2,
+    DEBUG_DIR		= 1 << 3,
+    DEBUG_ERROR		= 1 << 4,
+    DEBUG_GRAPH1	= 1 << 5,
+    DEBUG_GRAPH2	= 1 << 6,
+    DEBUG_GRAPH3	= 1 << 7,
+    DEBUG_HASH		= 1 << 8,
+    DEBUG_JOB		= 1 << 9,
+    DEBUG_LOUD		= 1 << 10,
+    DEBUG_MAKE		= 1 << 11,
+    DEBUG_META		= 1 << 12,
+    DEBUG_PARSE		= 1 << 13,
+    DEBUG_SCRIPT	= 1 << 14,
+    DEBUG_SHELL		= 1 << 15,
+    DEBUG_SUFF		= 1 << 16,
+    DEBUG_TARG		= 1 << 17,
+    DEBUG_VAR		= 1 << 18,
+    DEBUG_FOR		= 1 << 19,
 
     DEBUG_LINT		= 1 << 20
 } DebugFlags;
