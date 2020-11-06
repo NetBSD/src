@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.194 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.195 2020/11/06 23:59:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.194 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.195 2020/11/06 23:59:21 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1352,7 +1352,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
-	    return Arch_MemMTime(gn);
+	    return Arch_MemberMTime(gn);
 	} else {
 	    mst.mst_mtime = 0;
 	}
