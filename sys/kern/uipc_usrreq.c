@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.199 2020/08/26 22:54:30 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.200 2020/11/06 14:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.199 2020/08/26 22:54:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.200 2020/11/06 14:50:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -196,6 +196,8 @@ static kcondvar_t unp_thread_cv;
 static lwp_t *unp_thread_lwp;
 static SLIST_HEAD(,file) unp_thread_discard;
 static int unp_defer;
+static struct sysctllog *usrreq_sysctllog;
+static void unp_sysctl_create(void);
 
 /* Compat interface */
 
@@ -218,6 +220,8 @@ void
 uipc_init(void)
 {
 	int error;
+
+	unp_sysctl_create();
 
 	uipc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&unp_thread_cv, "unpgc");
@@ -1988,40 +1992,42 @@ unp_discard_later(file_t *fp)
 	mutex_exit(&filelist_lock);
 }
 
-void
-unp_sysctl_create(struct sysctllog **clog)
+static void
+unp_sysctl_create(void)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
+
+	KASSERT(usrreq_sysctllog == NULL);
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_LONG, "sendspace",
 		       SYSCTL_DESCR("Default stream send space"),
 		       NULL, 0, &unpst_sendspace, 0,
 		       CTL_NET, PF_LOCAL, SOCK_STREAM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_LONG, "recvspace",
 		       SYSCTL_DESCR("Default stream recv space"),
 		       NULL, 0, &unpst_recvspace, 0,
 		       CTL_NET, PF_LOCAL, SOCK_STREAM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_LONG, "sendspace",
 		       SYSCTL_DESCR("Default datagram send space"),
 		       NULL, 0, &unpdg_sendspace, 0,
 		       CTL_NET, PF_LOCAL, SOCK_DGRAM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_LONG, "recvspace",
 		       SYSCTL_DESCR("Default datagram recv space"),
 		       NULL, 0, &unpdg_recvspace, 0,
 		       CTL_NET, PF_LOCAL, SOCK_DGRAM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "inflight",
 		       SYSCTL_DESCR("File descriptors in flight"),
 		       NULL, 0, &unp_rights, 0,
 		       CTL_NET, PF_LOCAL, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&usrreq_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "deferred",
 		       SYSCTL_DESCR("File descriptors deferred for close"),
