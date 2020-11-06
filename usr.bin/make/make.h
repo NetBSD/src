@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.189 2020/11/05 00:40:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.190 2020/11/06 20:20:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -400,9 +400,7 @@ typedef enum CondEvalResult {
     COND_INVALID		/* Not a conditional statement */
 } CondEvalResult;
 
-/*
- * Definitions for the "local" variables. Used only for clarity.
- */
+/* Names of the variables that are "local" to a specific target. */
 #define TARGET		"@"	/* Target of dependency */
 #define OODATE		"?"	/* All out-of-date sources */
 #define ALLSRC		">"	/* All sources */
@@ -414,29 +412,30 @@ typedef enum CondEvalResult {
 /*
  * Global Variables
  */
-extern SearchPath *dirSearchPath;
-				/* The list of directories to search when
-				 * looking for targets */
-extern Boolean  allPrecious;	/* True if every target is precious */
-extern Boolean  deleteOnError;	/* True if failed targets should be deleted */
-extern Boolean	doing_depend;	/* TRUE if processing .depend */
 
-extern GNode    *DEFAULT;	/* .DEFAULT rule */
+/* True if every target is precious */
+extern Boolean allPrecious;
+/* True if failed targets should be deleted */
+extern Boolean deleteOnError;
+/* TRUE while processing .depend */
+extern Boolean doing_depend;
+/* .DEFAULT rule */
+extern GNode *DEFAULT;
 
-extern GNode	*VAR_INTERNAL;	/* Variables defined internally by make
-				 * which should not override those set by
-				 * makefiles.
-				 */
-extern GNode    *VAR_GLOBAL;	/* Variables defined in a global context, e.g
-				 * in the Makefile itself */
-extern GNode    *VAR_CMDLINE;	/* Variables defined on the command line */
-extern char	var_Error[];	/* Value returned by Var_Parse when an error
-				 * is encountered. It actually points to
-				 * an empty string, so naive callers needn't
-				 * worry about it. */
+/* Variables defined internally by make which should not override those set
+ * by makefiles. */
+extern GNode *VAR_INTERNAL;
+/* Variables defined in a global context, e.g in the Makefile itself. */
+extern GNode *VAR_GLOBAL;
+/* Variables defined on the command line. */
+extern GNode *VAR_CMDLINE;
 
-extern time_t	now;		/* The time at the start of this whole
-				 * process */
+/* Value returned by Var_Parse when an error is encountered. It actually
+ * points to an empty string, so naive callers needn't worry about it. */
+extern char var_Error[];
+
+/* The time at the start of this whole process */
+extern time_t now;
 
 /*
  * If FALSE (the default behavior), undefined subexpressions in a variable
@@ -453,6 +452,9 @@ extern time_t	now;		/* The time at the start of this whole
  */
 extern Boolean preserveUndefined;
 
+/* The list of directories to search when looking for targets (set by the
+ * special target .PATH). */
+extern SearchPath *dirSearchPath;
 /* Used for .include "...". */
 extern SearchPath *parseIncPath;
 /* Used for .include <...>, for the built-in sys.mk and makefiles from the
@@ -463,18 +465,18 @@ extern SearchPath *defSysIncPath;
 
 extern char curdir[];		/* Startup directory */
 extern char *progname;		/* The program name */
-extern char *makeDependfile;	/* .depend */
+extern char *makeDependfile;	/* Name of the .depend makefile */
 /* If we replaced environ, this will be non-NULL. */
 extern char **savedEnv;
 
-extern int	makelevel;
+extern int makelevel;
 
 /*
  * We cannot vfork() in a child of vfork().
  * Most systems do not enforce this but some do.
  */
 #define vFork() ((getpid() == myPid) ? vfork() : fork())
-extern pid_t	myPid;
+extern pid_t myPid;
 
 #define	MAKEFLAGS	".MAKEFLAGS"
 #define	MAKEOVERRIDES	".MAKEOVERRIDES"
