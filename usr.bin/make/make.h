@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.192 2020/11/06 21:09:06 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.193 2020/11/06 21:12:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -516,6 +516,10 @@ typedef enum DebugFlags {
     DEBUG_VAR		= 1 << 18,
     DEBUG_FOR		= 1 << 19,
 
+    /* Runs make in strict mode, with additional checks and better error
+     * handling.  This is not the default mode to preserve compatibility.
+     *
+     * XXX: This is not really a debug flag, it doesn't belong here. */
     DEBUG_LINT		= 1 << 20
 } DebugFlags;
 
