@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/11/16 23:27:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2020/11/06 15:35:33 christos Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -14,6 +14,7 @@ RUMP_COMPONENT=ioconf
 SRCS+=	ohci_pci.c ohci.c
 SRCS+=	uhci_pci.c uhci.c
 SRCS+=	ehci_pci.c ehci.c
+SRCS+=	xhci_pci.c xhci.c
 SRCS+=	usb_pci.c
 
 CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/../dev
