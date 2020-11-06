@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.194 2020/11/06 21:20:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.195 2020/11/06 22:37:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -706,20 +706,20 @@ GNode_VarMember(GNode *gn) { return Var_ValueDirect(MEMBER, gn); }
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
 
-static inline MAKE_ATTR_UNUSED Boolean ch_isalnum(char ch)
-{ return isalnum((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean ch_isalpha(char ch)
-{ return isalpha((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean ch_isdigit(char ch)
-{ return isdigit((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean ch_isspace(char ch)
-{ return isspace((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean ch_isupper(char ch)
-{ return isupper((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED char ch_tolower(char ch)
-{ return (char)tolower((unsigned char)ch); }
-static inline MAKE_ATTR_UNUSED char ch_toupper(char ch)
-{ return (char)toupper((unsigned char)ch); }
+static inline MAKE_ATTR_UNUSED Boolean
+ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
+static inline MAKE_ATTR_UNUSED Boolean
+ch_isalpha(char ch) { return isalpha((unsigned char)ch) != 0; }
+static inline MAKE_ATTR_UNUSED Boolean
+ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
+static inline MAKE_ATTR_UNUSED Boolean
+ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
+static inline MAKE_ATTR_UNUSED Boolean
+ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
+static inline MAKE_ATTR_UNUSED char
+ch_tolower(char ch) { return (char)tolower((unsigned char)ch); }
+static inline MAKE_ATTR_UNUSED char
+ch_toupper(char ch) { return (char)toupper((unsigned char)ch); }
 
 static inline MAKE_ATTR_UNUSED void
 cpp_skip_whitespace(const char **pp)
