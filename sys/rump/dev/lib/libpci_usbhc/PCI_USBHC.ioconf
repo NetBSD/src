@@ -1,4 +1,4 @@
-#	$NetBSD: PCI_USBHC.ioconf,v 1.1 2015/05/20 12:21:38 pooka Exp $
+#	$NetBSD: PCI_USBHC.ioconf,v 1.2 2020/11/06 15:35:33 christos Exp $
 #
 
 ioconf pci_usbhc
@@ -11,3 +11,4 @@ pseudo-root pci*
 ohci* at pci?
 uhci* at pci?
 ehci* at pci?
+xhci* at pci?
