@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.429 2020/11/06 21:20:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.430 2020/11/06 23:04:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.429 2020/11/06 21:20:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.430 2020/11/06 23:04:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1721,10 +1721,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
      */
     switch (cpid = vFork()) {
     case 0:
-	/*
-	 * Close input side of pipe
-	 */
-	(void)close(fds[0]);
+	(void)close(fds[0]);	/* Close input side of pipe */
 
 	/*
 	 * Duplicate the output stream to the shell's output, then
@@ -1745,36 +1742,26 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	goto bad;
 
     default:
-	/*
-	 * No need for the writing half
-	 */
-	(void)close(fds[1]);
+	(void)close(fds[1]);	/* No need for the writing half */
 
 	savederr = 0;
 	Buf_Init(&buf, 0);
 
 	do {
-	    char   result[BUFSIZ];
+	    char result[BUFSIZ];
 	    bytes_read = read(fds[0], result, sizeof result);
 	    if (bytes_read > 0)
 		Buf_AddBytes(&buf, result, (size_t)bytes_read);
-	}
-	while (bytes_read > 0 || (bytes_read == -1 && errno == EINTR));
+	} while (bytes_read > 0 || (bytes_read == -1 && errno == EINTR));
 	if (bytes_read == -1)
 	    savederr = errno;
 
-	/*
-	 * Close the input side of the pipe.
-	 */
-	(void)close(fds[0]);
+	(void)close(fds[0]);	/* Close the input side of the pipe. */
 
-	/*
-	 * Wait for the process to exit.
-	 */
-	while(((pid = waitpid(cpid, &status, 0)) != cpid) && (pid >= 0)) {
+	/* Wait for the process to exit. */
+	while((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
 	    JobReapChild(pid, status, FALSE);
-	    continue;
-	}
+
 	res_len = Buf_Len(&buf);
 	res = Buf_Destroy(&buf, FALSE);
 
