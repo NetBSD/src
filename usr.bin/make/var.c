@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.667 2020/11/06 00:05:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.668 2020/11/06 00:29:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.667 2020/11/06 00:05:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.668 2020/11/06 00:29:50 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3828,7 +3828,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 				 * result is just the expression, unaltered */
     const char *extramodifiers;
     Var *v;
-    char *nstr;
+    char *value;
     char eflags_str[VarEvalFlags_ToStringSize];
     VarExprFlags exprFlags = 0;
 
@@ -3863,25 +3863,19 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     if (v->flags & VAR_IN_USE)
 	Fatal("Variable %s is recursive.", v->name);
 
-    /*
-     * Before doing any modification, we have to make sure the value
-     * has been fully expanded. If it looks like recursion might be
-     * necessary (there's a dollar sign somewhere in the variable's value)
-     * we just call Var_Subst to do any other substitutions that are
-     * necessary. Note that the value returned by Var_Subst will have
-     * been dynamically-allocated, so it will need freeing when we
-     * return.
-     */
-    nstr = Buf_GetAll(&v->val, NULL);
-    if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES)) {
+    value = Buf_GetAll(&v->val, NULL);
+
+    /* Before applying any modifiers, expand any nested expressions from the
+     * variable value. */
+    if (strchr(value, '$') != NULL && (eflags & VARE_WANTRES)) {
 	VarEvalFlags nested_eflags = eflags;
 	if (DEBUG(LINT))
 	    nested_eflags &= ~(unsigned)VARE_UNDEFERR;
 	v->flags |= VAR_IN_USE;
-	(void)Var_Subst(nstr, ctxt, nested_eflags, &nstr);
+	(void)Var_Subst(value, ctxt, nested_eflags, &value);
 	v->flags &= ~(unsigned)VAR_IN_USE;
 	/* TODO: handle errors */
-	*out_val_freeIt = nstr;
+	*out_val_freeIt = value;
     }
 
     if (haveModifier || extramodifiers != NULL) {
@@ -3890,16 +3884,16 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	extraFree = NULL;
 	if (extramodifiers != NULL) {
 	    const char *em = extramodifiers;
-	    nstr = ApplyModifiers(&em, nstr, '\0', '\0',
-				  v, &exprFlags, ctxt, eflags, &extraFree);
+	    value = ApplyModifiers(&em, value, '\0', '\0',
+				   v, &exprFlags, ctxt, eflags, &extraFree);
 	}
 
 	if (haveModifier) {
 	    /* Skip initial colon. */
 	    p++;
 
-	    nstr = ApplyModifiers(&p, nstr, startc, endc,
-				  v, &exprFlags, ctxt, eflags, out_val_freeIt);
+	    value = ApplyModifiers(&p, value, startc, endc,
+				   v, &exprFlags, ctxt, eflags, out_val_freeIt);
 	    free(extraFree);
 	} else {
 	    *out_val_freeIt = extraFree;
@@ -3914,9 +3908,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     if (v->flags & VAR_FROM_ENV) {
 	/* Free the environment variable now since we own it,
 	 * but don't free the variable value if it will be returned. */
-	Boolean keepValue = nstr == Buf_GetAll(&v->val, NULL);
+	Boolean keepValue = value == Buf_GetAll(&v->val, NULL);
 	if (keepValue)
-	    *out_val_freeIt = nstr;
+	    *out_val_freeIt = value;
 	(void)VarFreeEnv(v, !keepValue);
 
     } else if (exprFlags & VEF_UNDEF) {
@@ -3926,20 +3920,20 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		*out_val_freeIt = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strsedup(start, p);
-		*out_val_freeIt = nstr;
+		value = bmake_strsedup(start, p);
+		*out_val_freeIt = value;
 	    } else {
 		/* The expression is still undefined, therefore discard the
 		 * actual value and return an error marker instead. */
-		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varUndefined;
+		value = (eflags & VARE_UNDEFERR) ? var_Error : varUndefined;
 	    }
 	}
-	if (nstr != Buf_GetAll(&v->val, NULL))
+	if (value != Buf_GetAll(&v->val, NULL))
 	    Buf_Destroy(&v->val, TRUE);
 	free(v->name_freeIt);
 	free(v);
     }
-    *out_val = nstr;
+    *out_val = value;
     return VPR_UNKNOWN;
 }
 
