@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.175 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.176 2020/11/06 20:50:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.175 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.176 2020/11/06 20:50:48 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -502,13 +502,15 @@ cleanup:
     return str;
 }
 
-/* The different forms of .if directives. */
-static const struct If {
+struct If {
     const char *form;		/* Form of if */
     size_t formlen;		/* Length of form */
     Boolean doNot;		/* TRUE if default function should be negated */
     Boolean (*defProc)(size_t, const char *); /* Default function to apply */
-} ifs[] = {
+};
+
+/* The different forms of .if directives. */
+static const struct If ifs[] = {
     { "def",   3, FALSE, FuncDefined },
     { "ndef",  4, TRUE,  FuncDefined },
     { "make",  4, FALSE, FuncMake },
@@ -516,6 +518,13 @@ static const struct If {
     { "",      0, FALSE, FuncDefined },
     { NULL,    0, FALSE, NULL }
 };
+
+static Boolean
+If_Eval(const struct If *if_info, const char *arg, size_t arglen)
+{
+    Boolean res = if_info->defProc(arglen, arg);
+    return (if_info->doNot ? !res : res) ? TOK_TRUE : TOK_FALSE;
+}
 
 /* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
  * ".if 0". */
@@ -537,7 +546,7 @@ EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
 	return lhs[0] != 0;
 
     /* Otherwise action default test ... */
-    return par->if_info->defProc(strlen(lhs), lhs) == !par->if_info->doNot;
+    return If_Eval(par->if_info, lhs, strlen(lhs));
 }
 
 /* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
@@ -785,7 +794,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
-    t = !doEval || par->if_info->defProc(arglen, arg) == !par->if_info->doNot;
+    t = !doEval || If_Eval(par->if_info, arg, arglen);
     free(arg);
     return t;
 }
