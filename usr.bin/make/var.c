@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.668 2020/11/06 00:29:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.669 2020/11/06 23:11:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.668 2020/11/06 00:29:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.669 2020/11/06 23:11:11 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -854,7 +854,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
     if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
-	save_dollars = s2Boolean(val, save_dollars);
+	save_dollars = ParseBoolean(val, save_dollars);
 
 out:
     free(name_freeIt);

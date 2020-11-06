@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.26 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.27 2020/11/06 23:11:11 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -87,7 +87,7 @@ VARNAME=	${VARNAME${:U1}}
 .if defined(VARNAME${:U2}) && !empty(VARNAME${:U2})
 .endif
 
-# begin .MAKE.SAVE_DOLLARS; see Var_Set_with_flags and s2Boolean.
+# begin .MAKE.SAVE_DOLLARS; see Var_Set_with_flags and ParseBoolean.
 SD_VALUES=	0 1 2 False True false true Yes No yes no On Off ON OFF on off
 SD_4_DOLLARS=	$$$$
 
