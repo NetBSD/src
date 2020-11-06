@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.431 2020/11/06 23:05:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.432 2020/11/06 23:11:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.431 2020/11/06 23:05:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.432 2020/11/06 23:11:11 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -863,6 +863,28 @@ PrintVar(const char *varname, Boolean expandVars)
 	}
 }
 
+/*
+ * Return a Boolean based on a variable.
+ *
+ * If the knob is not set, return the fallback.
+ * If set, anything that looks or smells like "No", "False", "Off", "0", etc.
+ * is FALSE, otherwise TRUE.
+ */
+static Boolean
+GetBooleanVar(const char *varname, Boolean fallback)
+{
+    char *expr = str_concat3("${", varname, ":U}");
+    char *value;
+    Boolean res;
+
+    (void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &value);
+    /* TODO: handle errors */
+    res = ParseBoolean(value, fallback);
+    free(value);
+    free(expr);
+    return res;
+}
+
 static void
 doPrintVars(void)
 {
@@ -874,7 +896,7 @@ doPrintVars(void)
 	else if (opts.debugVflag)
 		expandVars = FALSE;
 	else
-		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
+		expandVars = GetBooleanVar(".MAKE.EXPAND_VARIABLES", FALSE);
 
 	for (ln = opts.variables->first; ln != NULL; ln = ln->next) {
 		const char *varname = ln->datum;
@@ -2037,7 +2059,7 @@ shouldDieQuietly(GNode *gn, int bf)
     static int quietly = -1;
 
     if (quietly < 0) {
-	if (DEBUG(JOB) || !getBoolean(".MAKE.DIE_QUIETLY", TRUE))
+	if (DEBUG(JOB) || !GetBooleanVar(".MAKE.DIE_QUIETLY", TRUE))
 	    quietly = 0;
 	else if (bf >= 0)
 	    quietly = bf;
@@ -2192,7 +2214,7 @@ mkTempFile(const char *pattern, char **out_fname)
  * is FALSE, otherwise TRUE.
  */
 Boolean
-s2Boolean(const char *s, Boolean bf)
+ParseBoolean(const char *s, Boolean bf)
 {
     switch(s[0]) {
     case '\0':			/* not set - the default wins */
@@ -2210,26 +2232,4 @@ s2Boolean(const char *s, Boolean bf)
 	return TRUE;
     }
     return bf;
-}
-
-/*
- * Return a Boolean based on a variable.
- *
- * If the knob is not set, return the fallback.
- * If set, anything that looks or smells like "No", "False", "Off", "0", etc.
- * is FALSE, otherwise TRUE.
- */
-Boolean
-getBoolean(const char *varname, Boolean fallback)
-{
-    char *expr = str_concat3("${", varname, ":U}");
-    char *value;
-    Boolean res;
-
-    (void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &value);
-    /* TODO: handle errors */
-    res = s2Boolean(value, fallback);
-    free(value);
-    free(expr);
-    return res;
 }
