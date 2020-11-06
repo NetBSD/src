@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL.inc,v 1.4 2017/02/09 15:24:08 joerg Exp $
+# 	$NetBSD: INSTALL.inc,v 1.5 2020/11/06 18:36:34 martin Exp $
 
 # DEBUG options turned on:
 
@@ -17,5 +17,5 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The ramdisk size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/evbppc/ramdisk/ramdisk).
-options 	MEMORY_DISK_ROOT_SIZE=6560	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=7072	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
