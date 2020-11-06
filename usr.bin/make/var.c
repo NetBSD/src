@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.666 2020/11/05 23:52:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.667 2020/11/06 00:05:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.666 2020/11/05 23:52:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.667 2020/11/06 00:05:18 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3570,15 +3570,11 @@ ValidShortVarname(char varname, const char *start)
 /* Parse a single-character variable name such as $V or $@.
  * Return whether to continue parsing. */
 static Boolean
-ParseVarnameShort(
-	char startc,
-	const char **pp,
-	GNode *ctxt,
-	VarEvalFlags eflags,
-	VarParseResult *out_FALSE_res,
-	const char **out_FALSE_val,
-	Var **out_TRUE_var
-) {
+ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
+		  VarEvalFlags eflags,
+		  VarParseResult *out_FALSE_res, const char **out_FALSE_val,
+		  Var **out_TRUE_var)
+{
     char name[2];
     Var *v;
     VarParseResult vpr;
@@ -3649,14 +3645,10 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 }
 
 static VarParseResult
-EvalUndefined(
-	Boolean dynamic,
-	const char *start,
-	const char *p, char *varname,
-	VarEvalFlags eflags,
-	void **out_freeIt,
-	const char **out_val
-) {
+EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
+	      VarEvalFlags eflags,
+	      void **out_freeIt, const char **out_val)
+{
     if (dynamic) {
 	char *pstr = bmake_strsedup(start, p);
 	free(varname);
@@ -3668,8 +3660,7 @@ EvalUndefined(
     if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
 	DEBUG(LINT))
     {
-	Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
-		    varname);
+	Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", varname);
 	free(varname);
 	*out_val = var_Error;
 	return VPR_UNDEF_MSG;
