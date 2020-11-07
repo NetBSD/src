@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.307 2020/11/07 10:44:53 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.308 2020/11/07 13:53:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.307 2020/11/07 10:44:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.308 2020/11/07 13:53:12 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -736,8 +736,8 @@ JobPrintCommand(Job *job, char *cmd)
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
 	debug_printf(fmt, arg);			\
     }						\
-   (void)fprintf(job->cmdFILE, fmt, arg);	\
-   (void)fflush(job->cmdFILE);
+    (void)fprintf(job->cmdFILE, fmt, arg);	\
+    (void)fflush(job->cmdFILE);
 
     numCommands++;
 
@@ -770,8 +770,8 @@ JobPrintCommand(Job *job, char *cmd)
 
     if (shutUp) {
 	if (!(job->flags & JOB_SILENT) && !noSpecials &&
-	    commandShell->hasEchoCtl) {
-		DBPRINTF("%s\n", commandShell->echoOff);
+	    (commandShell->hasEchoCtl)) {
+	    DBPRINTF("%s\n", commandShell->echoOff);
 	} else {
 	    if (commandShell->hasErrCtl)
 		shutUp = FALSE;
@@ -790,16 +790,15 @@ JobPrintCommand(Job *job, char *cmd)
 		 * it already is?
 		 */
 		if (!(job->flags & JOB_SILENT) && !shutUp &&
-		    commandShell->hasEchoCtl) {
-			DBPRINTF("%s\n", commandShell->echoOff);
-			DBPRINTF("%s\n", commandShell->errOffOrExecIgnore);
-			DBPRINTF("%s\n", commandShell->echoOn);
+		    (commandShell->hasEchoCtl)) {
+		    DBPRINTF("%s\n", commandShell->echoOff);
+		    DBPRINTF("%s\n", commandShell->errOffOrExecIgnore);
+		    DBPRINTF("%s\n", commandShell->echoOn);
 		} else {
-			DBPRINTF("%s\n", commandShell->errOffOrExecIgnore);
+		    DBPRINTF("%s\n", commandShell->errOffOrExecIgnore);
 		}
 	    } else if (commandShell->errOffOrExecIgnore &&
-		       commandShell->errOffOrExecIgnore[0] != '\0')
-	    {
+		       commandShell->errOffOrExecIgnore[0] != '\0') {
 		/*
 		 * The shell has no error control, so we need to be
 		 * weird to get it to ignore any errors from the command.
@@ -811,15 +810,15 @@ JobPrintCommand(Job *job, char *cmd)
 		 */
 		job->flags |= JOB_IGNERR;
 		if (!(job->flags & JOB_SILENT) && !shutUp) {
-			if (commandShell->hasEchoCtl) {
-				DBPRINTF("%s\n", commandShell->echoOff);
-			}
-			DBPRINTF(commandShell->errOnOrEcho, escCmd);
-			shutUp = TRUE;
+		    if (commandShell->hasEchoCtl) {
+			DBPRINTF("%s\n", commandShell->echoOff);
+		    }
+		    DBPRINTF(commandShell->errOnOrEcho, escCmd);
+		    shutUp = TRUE;
 		} else {
-			if (!shutUp) {
-				DBPRINTF(commandShell->errOnOrEcho, escCmd);
-			}
+		    if (!shutUp) {
+			DBPRINTF(commandShell->errOnOrEcho, escCmd);
+		    }
 		}
 		cmdTemplate = commandShell->errOffOrExecIgnore;
 		/*
@@ -844,27 +843,27 @@ JobPrintCommand(Job *job, char *cmd)
 
 	if (!commandShell->hasErrCtl && commandShell->errExit &&
 	    commandShell->errExit[0] != '\0') {
-		if (!(job->flags & JOB_SILENT) && !shutUp) {
-			if (commandShell->hasEchoCtl) {
-				DBPRINTF("%s\n", commandShell->echoOff);
-			}
-			DBPRINTF(commandShell->errOnOrEcho, escCmd);
-			shutUp = TRUE;
+	    if (!(job->flags & JOB_SILENT) && !shutUp) {
+		if (commandShell->hasEchoCtl) {
+		    DBPRINTF("%s\n", commandShell->echoOff);
 		}
-		/* If it's a comment line or blank, treat as an ignored error */
-		if (escCmd[0] == commandShell->commentChar ||
-		    (escCmd[0] == '\0'))
-			cmdTemplate = commandShell->errOffOrExecIgnore;
-		else
-			cmdTemplate = commandShell->errExit;
-		errOff = FALSE;
+		DBPRINTF(commandShell->errOnOrEcho, escCmd);
+		shutUp = TRUE;
+	    }
+	    /* If it's a comment line or blank, treat as an ignored error */
+	    if (escCmd[0] == commandShell->commentChar ||
+		(escCmd[0] == '\0'))
+		cmdTemplate = commandShell->errOffOrExecIgnore;
+	    else
+		cmdTemplate = commandShell->errExit;
+	    errOff = FALSE;
 	}
     }
 
     if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 &&
 	!(job->flags & JOB_TRACED)) {
-	    DBPRINTF("set -%s\n", "x");
-	    job->flags |= JOB_TRACED;
+	DBPRINTF("set -%s\n", "x");
+	job->flags |= JOB_TRACED;
     }
 
     DBPRINTF(cmdTemplate, cmd);
@@ -876,7 +875,7 @@ JobPrintCommand(Job *job, char *cmd)
 	 * echoOff command. Otherwise we issue it and pretend it was on
 	 * for the whole command...
 	 */
-	if (!shutUp && !(job->flags & JOB_SILENT) && commandShell->hasEchoCtl){
+	if (!shutUp && !(job->flags & JOB_SILENT) && commandShell->hasEchoCtl) {
 	    DBPRINTF("%s\n", commandShell->echoOff);
 	    shutUp = TRUE;
 	}
