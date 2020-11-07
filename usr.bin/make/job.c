@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.308 2020/11/07 13:53:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.309 2020/11/07 20:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.308 2020/11/07 13:53:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.309 2020/11/07 20:03:56 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1491,7 +1491,7 @@ JobMakeArgv(Job *job, char **argv)
  *-----------------------------------------------------------------------
  */
 static JobStartResult
-JobStart(GNode *gn, int flags)
+JobStart(GNode *gn, JobFlags flags)
 {
     Job *job;			/* new job descriptor */
     char *argv[10];		/* Argument vector to shell */
@@ -1507,26 +1507,17 @@ JobStart(GNode *gn, int flags)
 	Punt("JobStart no job slots vacant");
 
     memset(job, 0, sizeof *job);
-    job->job_state = JOB_ST_SETUP;
-    if (gn->type & OP_SPECIAL)
-	flags |= JOB_SPECIAL;
-
     job->node = gn;
     job->tailCmds = NULL;
+    job->job_state = JOB_ST_SETUP;
 
-    /*
-     * Set the initial value of the flags for this job based on the global
-     * ones and the node's attributes... Any flags supplied by the caller
-     * are also added to the field.
-     */
-    job->flags = 0;
-    if (Targ_Ignore(gn)) {
-	job->flags |= JOB_IGNERR;
-    }
-    if (Targ_Silent(gn)) {
-	job->flags |= JOB_SILENT;
-    }
-    job->flags |= flags;
+    if (gn->type & OP_SPECIAL)
+	flags |= JOB_SPECIAL;
+    if (Targ_Ignore(gn))
+	flags |= JOB_IGNERR;
+    if (Targ_Silent(gn))
+	flags |= JOB_SILENT;
+    job->flags = flags;
 
     /*
      * Check the commands now so any attributes from .DEFAULT have a chance
@@ -2053,7 +2044,7 @@ Job_CatchOutput(void)
 void
 Job_Make(GNode *gn)
 {
-    (void)JobStart(gn, 0);
+    (void)JobStart(gn, JOB_NONE);
 }
 
 void
