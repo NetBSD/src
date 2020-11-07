@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.71 2020/11/07 10:16:19 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.72 2020/11/07 10:44:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.71 2020/11/07 10:16:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.72 2020/11/07 10:44:53 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -139,9 +139,8 @@ Str_Words(const char *str, Boolean expand)
 	char *word_end;
 	const char *str_p;
 
-	/* skip leading space chars. */
-	for (; *str == ' ' || *str == '\t'; ++str)
-		continue;
+	/* XXX: why only hspace, not whitespace? */
+	cpp_skip_hspace(&str);	/* skip leading space chars. */
 
 	/* words_buf holds the words, separated by '\0'. */
 	str_len = strlen(str);

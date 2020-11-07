@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.428 2020/11/07 10:16:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.429 2020/11/07 10:44:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.428 2020/11/07 10:16:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.429 2020/11/07 10:44:53 rillig Exp $");
 
 /* types and constants */
 
@@ -1834,9 +1834,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
     const char *firstSpace = NULL;
     int level = 0;
 
-    /* Skip to variable name */
-    while (*p == ' ' || *p == '\t')
-	p++;
+    cpp_skip_hspace(&p);	/* Skip to variable name */
 
     /* During parsing, the '+' of the '+=' operator is initially parsed
      * as part of the variable name.  It is later corrected, as is the ':sh'
@@ -2246,8 +2244,7 @@ ParseDoInclude(char *line)
     char *file = line + (silent ? 8 : 7);
 
     /* Skip to delimiter character so we know where to look */
-    while (*file == ' ' || *file == '\t')
-	file++;
+    pp_skip_hspace(&file);
 
     if (*file != '"' && *file != '<') {
 	Parse_Error(PARSE_FATAL,
@@ -2783,9 +2780,8 @@ ParseGetLine(int flags)
 	    continue;
 	}
 
-	/* Escaped '\n' replace following whitespace with a single ' ' */
-	while (ptr[0] == ' ' || ptr[0] == '\t')
-	    ptr++;
+	/* Escaped '\n' -- replace following whitespace with a single ' '. */
+	pp_skip_hspace(&ptr);
 	ch = ' ';
     }
 
