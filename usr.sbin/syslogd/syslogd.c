@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.133 2020/09/29 14:08:43 gson Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.134 2020/11/07 16:16:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.133 2020/09/29 14:08:43 gson Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.134 2020/11/07 16:16:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,8 @@ bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 * configurations (e.g. with SG="0").
 				 */
 char	appname[]   = "syslogd";/* the APPNAME for own messages */
-char   *include_pid = NULL;	/* include PID in own messages */
+char   *include_pid;		/* include PID in own messages */
+char	include_pid_buf[6];
 
 
 /* init and setup */
@@ -573,9 +574,8 @@ getgroup:
 #endif /* __NetBSD_Version__ */
 	}
 
-#define MAX_PID_LEN 5
-	include_pid = malloc(MAX_PID_LEN+1);
-	snprintf(include_pid, MAX_PID_LEN+1, "%d", getpid());
+	include_pid = include_pid_buf;
+	snprintf(include_pid_buf, sizeof(include_pid_buf), "%d", getpid());
 
 	/*
 	 * Create the global kernel event descriptor.
