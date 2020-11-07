@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.304 2020/11/06 21:20:31 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.305 2020/11/07 00:06:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.304 2020/11/06 21:20:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.305 2020/11/07 00:06:13 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -2077,7 +2077,7 @@ Shell_Init(void)
 #endif
 	shellPath = str_concat3(_PATH_DEFSHELLDIR, "/", shellName);
     }
-    Var_Set_with_flags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
+    Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
     if (commandShell->exit == NULL) {
 	commandShell->exit = "";
     }
