@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.670 2020/11/07 00:02:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.671 2020/11/07 00:06:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.670 2020/11/07 00:02:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.671 2020/11/07 00:06:13 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -767,8 +767,8 @@ Var_UnExport(const char *str)
 
 /* See Var_Set for documentation. */
 void
-Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
-		   VarSetFlags flags)
+Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
+		 VarSetFlags flags)
 {
     const char *unexpanded_name = name;
     char *name_freeIt = NULL;
@@ -889,7 +889,7 @@ out:
 void
 Var_Set(const char *name, const char *val, GNode *ctxt)
 {
-    Var_Set_with_flags(name, val, ctxt, 0);
+    Var_SetWithFlags(name, val, ctxt, 0);
 }
 
 /*-
@@ -1457,7 +1457,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	return;
 
     args = data;
-    Var_Set_with_flags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
+    Var_SetWithFlags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
     (void)Var_Subst(args->str, args->ctx, args->eflags, &s);
     /* TODO: handle errors */
 
