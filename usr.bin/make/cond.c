@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.181 2020/11/07 14:40:51 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.182 2020/11/07 20:11:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.181 2020/11/07 14:40:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.182 2020/11/07 20:11:32 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -519,7 +519,7 @@ static Boolean
 If_Eval(const struct If *if_info, const char *arg, size_t arglen)
 {
     Boolean res = if_info->defProc(arglen, arg);
-    return (if_info->doNot ? !res : res) ? TOK_TRUE : TOK_FALSE;
+    return if_info->doNot ? !res : res;
 }
 
 /* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
