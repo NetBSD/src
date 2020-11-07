@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.7 2020/11/07 10:47:35 skrll Exp $ */
+/* $NetBSD: reg.h,v 1.8 2020/11/07 10:48:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@ struct reg32 {	// synced with register_t in <riscv/types.h>
  */
 #ifndef _BSD_FPREG_T_
 union __fpreg {
-		__uint64_t u_u64;
-		double u_d;
+	__uint64_t u_u64;
+	double u_d;
 };
 #define _BSD_FPREG_T_	union __fpreg
 #endif
