@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.163 2020/11/07 13:09:13 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.164 2020/11/07 13:17:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.163 2020/11/07 13:09:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.164 2020/11/07 13:17:04 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -390,13 +390,13 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
  * Input:
  *	archive		Path to the archive
  *	member		Name of member; only its basename is used.
- *	hash		TRUE if archive should be hashed if not already so.
+ *	addToCache	TRUE if archive should be cached if not already so.
  *
  * Results:
- *	The ar_hdr for the member.
+ *	The ar_hdr for the member, or NULL.
  */
 static struct ar_hdr *
-ArchStatMember(const char *archive, const char *member, Boolean hash)
+ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 {
 #define AR_MAX_NAME_LEN (sizeof arh.ar_name - 1)
     FILE *arch;			/* Stream to archive */
@@ -444,7 +444,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	}
     }
 
-    if (!hash) {
+    if (!addToCache) {
 	/*
 	 * Caller doesn't want the thing hashed, just use ArchFindMember
 	 * to read the header for the member out and close down the stream
@@ -576,7 +576,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 
     /*
      * Now that the archive has been read and cached, we can look into
-     * the hash table to find the desired member's header.
+     * the addToCache table to find the desired member's header.
      */
     return HashTable_FindValue(&ar->members, member);
 
