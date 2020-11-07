@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.673 2020/11/07 14:11:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.674 2020/11/07 21:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.673 2020/11/07 14:11:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.674 2020/11/07 21:31:07 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -808,7 +808,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
      */
     v = VarFind(name, ctxt, FALSE);
     if (v == NULL) {
-	if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT)) {
+	if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
 	    /*
 	     * This var would normally prevent the same name being added
 	     * to VAR_GLOBAL, so delete it from there if needed.
@@ -837,7 +837,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
      * to the environment (as per POSIX standard)
      * Other than internals.
      */
-    if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
+    if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT) && name[0] != '.') {
 	if (v == NULL)
 	    v = VarFind(name, ctxt, FALSE); /* we just added it */
 	v->flags |= VAR_FROM_CMD;
@@ -889,7 +889,7 @@ out:
 void
 Var_Set(const char *name, const char *val, GNode *ctxt)
 {
-    Var_SetWithFlags(name, val, ctxt, 0);
+    Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 }
 
 /*-
@@ -1457,7 +1457,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	return;
 
     args = data;
-    Var_SetWithFlags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
+    Var_SetWithFlags(args->tvar, word, args->ctx, VAR_SET_NO_EXPORT);
     (void)Var_Subst(args->str, args->ctx, args->eflags, &s);
     /* TODO: handle errors */
 
