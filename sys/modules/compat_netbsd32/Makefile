@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2020/11/01 18:51:03 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.37 2020/11/07 21:42:32 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -62,7 +62,7 @@ SRCS+=	netbsd32_sigcode.S
 SRCS+=	netbsd32_machdep.c
 .endif
 
-.if ${MACHINE_ARCH} == "arm"
+.if !empty(MACHINE_ARCH:M*arm*)
 .PATH:	${S}/arch/arm/arm32
 SRCS+=	netbsd32_machdep.c
 .endif
