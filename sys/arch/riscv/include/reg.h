@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.6 2020/11/07 10:43:47 skrll Exp $ */
+/* $NetBSD: reg.h,v 1.7 2020/11/07 10:47:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -95,13 +95,13 @@ struct reg32 {	// synced with register_t in <riscv/types.h>
 #define _X_T5		_XREG(30)
 #define _X_T6		_XREG(31)
 
-// f0-f7 = ft0-ft7 (FP temporaries)
+// f0 - f7	= ft0 - ft7	(FP temporaries)		  Caller
 // following layout is similar to integer registers above
-// f8-f9 = fs0-fs1 (FP saved registers)
-// f10-f11 = fa0-fa1 (FP arguments/return values)
-// f12-f17 = fa2-fa7 (FP arguments)
-// f18-f27 = fs2-fa11 (FP saved registers)
-// f28-f31 = ft8-ft11 (FP temporaries)
+// f8 - f9	= fs0 - fs1	(FP saved registers)		  Callee
+// f10 - f11	= fa0 - fa1	(FP arguments/return values)	  Caller
+// f12 - f17	= fa2 - fa7	(FP arguments)			  Caller
+// f18 - f27	= fs2 - fa11	(FP saved registers)		  Callee
+// f28 - f31	= ft8 - ft11	(FP temporaries)		  Caller
 
 /*
  * This fragment is common to <riscv/mcontext.h> and <riscv/reg.h>
