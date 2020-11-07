@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.166 2020/11/07 13:24:06 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.167 2020/11/07 13:29:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.166 2020/11/07 13:24:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.167 2020/11/07 13:29:38 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -476,7 +476,7 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
      */
     if (fread(magic, SARMAG, 1, arch) != 1 ||
 	strncmp(magic, ARMAG, SARMAG) != 0) {
-	fclose(arch);
+	(void)fclose(arch);
 	return NULL;
     }
 
@@ -488,84 +488,81 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
     memName[AR_MAX_NAME_LEN] = '\0';
 
     while (fread(&arh, sizeof arh, 1, arch) == 1) {
-	if (strncmp(arh.ar_fmag, ARFMAG, sizeof arh.ar_fmag) != 0) {
-	    /*
-	     * The header is bogus, so the archive is bad
-	     * and there's no way we can recover...
-	     */
+	char *nameend;
+
+	/* If the header is bogus, there's no way we can recover. */
+	if (strncmp(arh.ar_fmag, ARFMAG, sizeof arh.ar_fmag) != 0)
 	    goto badarch;
-	} else {
-	    char *nameend;
 
-	    /*
-	     * We need to advance the stream's pointer to the start of the
-	     * next header. Files are padded with newlines to an even-byte
-	     * boundary, so we need to extract the size of the file from the
-	     * 'size' field of the header and round it up during the seek.
-	     */
-	    arh.ar_size[sizeof arh.ar_size - 1] = '\0';
-	    size = (size_t)strtol(arh.ar_size, NULL, 10);
+	/*
+	 * We need to advance the stream's pointer to the start of the
+	 * next header. Files are padded with newlines to an even-byte
+	 * boundary, so we need to extract the size of the file from the
+	 * 'size' field of the header and round it up during the seek.
+	 */
+	arh.ar_size[sizeof arh.ar_size - 1] = '\0';
+	size = (size_t)strtol(arh.ar_size, NULL, 10);
 
-	    memcpy(memName, arh.ar_name, sizeof arh.ar_name);
-	    nameend = memName + AR_MAX_NAME_LEN;
-	    while (*nameend == ' ') {
-		nameend--;
-	    }
-	    nameend[1] = '\0';
+	memcpy(memName, arh.ar_name, sizeof arh.ar_name);
+	nameend = memName + AR_MAX_NAME_LEN;
+	while (*nameend == ' ') {
+	    nameend--;
+	}
+	nameend[1] = '\0';
 
 #ifdef SVR4ARCHIVES
+	/*
+	 * svr4 names are slash terminated. Also svr4 extended AR format.
+	 */
+	if (memName[0] == '/') {
 	    /*
-	     * svr4 names are slash terminated. Also svr4 extended AR format.
+	     * svr4 magic mode; handle it
 	     */
-	    if (memName[0] == '/') {
-		/*
-		 * svr4 magic mode; handle it
-		 */
-		switch (ArchSVR4Entry(ar, memName, size, arch)) {
-		case -1:	/* Invalid data */
-		    goto badarch;
-		case 0:		/* List of files entry */
-		    continue;
-		default:	/* Got the entry */
-		    break;
-		}
-	    } else {
-		if (nameend[0] == '/')
-		    nameend[0] = '\0';
+	    switch (ArchSVR4Entry(ar, memName, size, arch)) {
+	    case -1:	/* Invalid data */
+		goto badarch;
+	    case 0:		/* List of files entry */
+		continue;
+	    default:	/* Got the entry */
+		break;
 	    }
+	} else {
+	    if (nameend[0] == '/')
+		nameend[0] = '\0';
+	}
 #endif
 
 #ifdef AR_EFMT1
-	    /*
-	     * BSD 4.4 extended AR format: #1/<namelen>, with name as the
-	     * first <namelen> bytes of the file
-	     */
-	    if (strncmp(memName, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
-		ch_isdigit(memName[sizeof AR_EFMT1 - 1])) {
+	/*
+	 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
+	 * first <namelen> bytes of the file
+	 */
+	if (strncmp(memName, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
+	    ch_isdigit(memName[sizeof AR_EFMT1 - 1])) {
 
-		int elen = atoi(memName + sizeof AR_EFMT1 - 1);
+	    int elen = atoi(memName + sizeof AR_EFMT1 - 1);
 
-		if ((unsigned int)elen > MAXPATHLEN)
-		    goto badarch;
-		if (fread(memName, (size_t)elen, 1, arch) != 1)
-		    goto badarch;
-		memName[elen] = '\0';
-		if (fseek(arch, -elen, SEEK_CUR) != 0)
-		    goto badarch;
-		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    debug_printf("ArchStat: Extended format entry for %s\n",
-				 memName);
-		}
-	    }
-#endif
-
-	    {
-		HashEntry *he;
-		he = HashTable_CreateEntry(&ar->members, memName, NULL);
-		HashEntry_Set(he, bmake_malloc(sizeof arh));
-		memcpy(HashEntry_Get(he), &arh, sizeof arh);
+	    if ((unsigned int)elen > MAXPATHLEN)
+		goto badarch;
+	    if (fread(memName, (size_t)elen, 1, arch) != 1)
+		goto badarch;
+	    memName[elen] = '\0';
+	    if (fseek(arch, -elen, SEEK_CUR) != 0)
+		goto badarch;
+	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
+		debug_printf("ArchStat: Extended format entry for %s\n",
+			     memName);
 	    }
 	}
+#endif
+
+	{
+	    HashEntry *he;
+	    he = HashTable_CreateEntry(&ar->members, memName, NULL);
+	    HashEntry_Set(he, bmake_malloc(sizeof arh));
+	    memcpy(HashEntry_Get(he), &arh, sizeof arh);
+	}
+
 	if (fseek(arch, ((long)size + 1) & ~1, SEEK_CUR) != 0)
 	    goto badarch;
     }
