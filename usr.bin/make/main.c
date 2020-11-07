@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.433 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.434 2020/11/07 10:25:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.433 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.434 2020/11/07 10:25:28 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1161,6 +1161,8 @@ InitVarMake(const char *argv0)
 	Var_Set(".MAKE", make, VAR_GLOBAL);
 }
 
+/* Add the directories from the colon-separated syspath to defSysIncPath.
+ * After returning, the contents of syspath is unspecified. */
 static void
 InitDefSysIncPath(char *syspath)
 {
@@ -1172,7 +1174,6 @@ InitDefSysIncPath(char *syspath)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	/* XXX: mismatch: the -m option sets sysIncPath, not syspath */
 	if (syspath == NULL || syspath[0] == '\0')
 		syspath = defsyspath;
 	else
