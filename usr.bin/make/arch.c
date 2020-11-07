@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.160 2020/11/07 12:54:44 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.161 2020/11/07 12:58:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.160 2020/11/07 12:54:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.161 2020/11/07 12:58:55 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -607,15 +607,15 @@ badarch:
  *-----------------------------------------------------------------------
  */
 static int
-ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
+ArchSVR4Entry(Arch *ar, char *inout_name, size_t size, FILE *arch)
 {
 #define ARLONGNAMES1 "//"
 #define ARLONGNAMES2 "/ARFILENAMES"
     size_t entry;
     char *ptr, *eptr;
 
-    if (strncmp(name, ARLONGNAMES1, sizeof ARLONGNAMES1 - 1) == 0 ||
-	strncmp(name, ARLONGNAMES2, sizeof ARLONGNAMES2 - 1) == 0) {
+    if (strncmp(inout_name, ARLONGNAMES1, sizeof ARLONGNAMES1 - 1) == 0 ||
+	strncmp(inout_name, ARLONGNAMES2, sizeof ARLONGNAMES2 - 1) == 0) {
 
 	if (ar->fnametab != NULL) {
 	    DEBUG0(ARCH, "Attempted to redefine an SVR4 name table\n");
@@ -644,23 +644,23 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	return 0;
     }
 
-    if (name[1] == ' ' || name[1] == '\0')
+    if (inout_name[1] == ' ' || inout_name[1] == '\0')
 	return 2;
 
-    entry = (size_t)strtol(&name[1], &eptr, 0);
-    if ((*eptr != ' ' && *eptr != '\0') || eptr == &name[1]) {
-	DEBUG1(ARCH, "Could not parse SVR4 name %s\n", name);
+    entry = (size_t)strtol(&inout_name[1], &eptr, 0);
+    if ((*eptr != ' ' && *eptr != '\0') || eptr == &inout_name[1]) {
+	DEBUG1(ARCH, "Could not parse SVR4 name %s\n", inout_name);
 	return 2;
     }
     if (entry >= ar->fnamesize) {
 	DEBUG2(ARCH, "SVR4 entry offset %s is greater than %lu\n",
-	       name, (unsigned long)ar->fnamesize);
+	       inout_name, (unsigned long)ar->fnamesize);
 	return 2;
     }
 
-    DEBUG2(ARCH, "Replaced %s with %s\n", name, &ar->fnametab[entry]);
+    DEBUG2(ARCH, "Replaced %s with %s\n", inout_name, &ar->fnametab[entry]);
 
-    snprintf(name, MAXPATHLEN + 1, "%s", &ar->fnametab[entry]);
+    snprintf(inout_name, MAXPATHLEN + 1, "%s", &ar->fnametab[entry]);
     return 1;
 }
 #endif
