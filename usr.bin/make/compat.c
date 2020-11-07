@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.178 2020/11/07 14:27:16 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.179 2020/11/07 14:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.178 2020/11/07 14:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.179 2020/11/07 14:32:12 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -467,16 +467,17 @@ MakeNodes(GNodeList *gnodes, GNode *pgn)
 void
 Compat_Make(GNode *gn, GNode *pgn)
 {
-    if (!shellName)		/* we came here from jobs */
+    if (shellName == NULL)	/* we came here from jobs */
 	Shell_Init();
+
     if (gn->made == UNMADE && (gn == pgn || !(pgn->type & OP_MADE))) {
 	/*
 	 * First mark ourselves to be made, then apply whatever transformations
 	 * the suffix module thinks are necessary. Once that's done, we can
 	 * descend and make all our children. If any of them has an error
-	 * but the -k flag was given, our 'make' field will be set FALSE again.
-	 * This is our signal to not attempt to do anything but abort our
-	 * parent as well.
+	 * but the -k flag was given, our 'make' field will be set to FALSE
+	 * again. This is our signal to not attempt to do anything but abort
+	 * our parent as well.
 	 */
 	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
