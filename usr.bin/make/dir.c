@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.195 2020/11/06 23:59:21 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.196 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.195 2020/11/06 23:59:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.196 2020/11/07 10:16:18 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -326,7 +326,7 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     struct cache_st *cst;
     int rc;
 
-    if (!pathname || !pathname[0])
+    if (pathname == NULL || pathname[0] == '\0')
 	return -1;
 
     entry = HashTable_FindEntry(htp, pathname);
@@ -1176,7 +1176,7 @@ Dir_FindFile(const char *name, SearchPath *path)
      * When searching for $(FILE), we will find it in $(INSTALLDIR)
      * b/c we added it here. This is not good...
      */
-#ifdef notdef
+#if 0
     if (base == trailing_dot) {
 	base = strrchr(name, '/');
 	base++;
@@ -1198,7 +1198,7 @@ Dir_FindFile(const char *name, SearchPath *path)
     } else {
 	return NULL;
     }
-#else /* !notdef */
+#else
     DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
 
     bigmisses++;
@@ -1208,7 +1208,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 
     DIR_DEBUG0("   failed. Returning NULL\n");
     return NULL;
-#endif /* notdef */
+#endif
 }
 
 

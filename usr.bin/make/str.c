@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.70 2020/10/24 20:51:49 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.71 2020/11/07 10:16:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.70 2020/10/24 20:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.71 2020/11/07 10:16:19 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -289,9 +289,9 @@ Str_Match(const char *str, const char *pat)
 		 * string. If, we succeeded.  If we're at the end of the
 		 * pattern but not at the end of the string, we failed.
 		 */
-		if (*pat == 0)
-			return *str == 0;
-		if (*str == 0 && *pat != '*')
+		if (*pat == '\0')
+			return *str == '\0';
+		if (*str == '\0' && *pat != '*')
 			return FALSE;
 
 		/*
@@ -302,9 +302,9 @@ Str_Match(const char *str, const char *pat)
 			pat++;
 			while (*pat == '*')
 				pat++;
-			if (*pat == 0)
+			if (*pat == '\0')
 				return TRUE;
-			while (*str != 0) {
+			while (*str != '\0') {
 				if (Str_Match(str, pat))
 					return TRUE;
 				str++;
@@ -327,7 +327,7 @@ Str_Match(const char *str, const char *pat)
 			pat += neg ? 2 : 1;
 
 			for (;;) {
-				if (*pat == ']' || *pat == 0) {
+				if (*pat == ']' || *pat == '\0') {
 					if (neg)
 						break;
 					return FALSE;
@@ -335,7 +335,7 @@ Str_Match(const char *str, const char *pat)
 				if (*pat == *str)
 					break;
 				if (pat[1] == '-') {
-					if (pat[2] == 0)
+					if (pat[2] == '\0')
 						return neg;
 					if (*pat <= *str && pat[2] >= *str)
 						break;
@@ -345,11 +345,11 @@ Str_Match(const char *str, const char *pat)
 				}
 				pat++;
 			}
-			if (neg && *pat != ']' && *pat != 0)
+			if (neg && *pat != ']' && *pat != '\0')
 				return FALSE;
-			while (*pat != ']' && *pat != 0)
+			while (*pat != ']' && *pat != '\0')
 				pat++;
-			if (*pat == 0)
+			if (*pat == '\0')
 				pat--;
 			goto thisCharOK;
 		}
@@ -360,7 +360,7 @@ Str_Match(const char *str, const char *pat)
 		 */
 		if (*pat == '\\') {
 			pat++;
-			if (*pat == 0)
+			if (*pat == '\0')
 				return FALSE;
 		}
 
