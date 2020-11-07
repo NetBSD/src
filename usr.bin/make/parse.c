@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.430 2020/11/07 22:25:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.431 2020/11/07 22:26:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.430 2020/11/07 22:25:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.431 2020/11/07 22:26:42 rillig Exp $");
 
 /* types and constants */
 
@@ -380,7 +380,6 @@ loadedfile_destroy(struct loadedfile *lf)
 	}
 	free(lf);
 }
-/* deleteme */
 
 /*
  * nextbuf() operation for loadedfile, as needed by the weird and twisted
@@ -428,9 +427,6 @@ load_getsize(int fd, size_t *ret)
 	*ret = (size_t)st.st_size;
 	return TRUE;
 }
-/* deleteme */
-/* deleteme */
-/* deleteme */
 
 static Boolean
 loadedfile_mmap(struct loadedfile *lf, int fd)
@@ -477,8 +473,6 @@ loadedfile_mmap(struct loadedfile *lf, int fd)
 
 	return TRUE;
 }
-/* deleteme */
-/* deleteme */
 
 /*
  * Read in a file.
@@ -611,9 +605,6 @@ ParseFindKeyword(const char *str)
 
     return -1;
 }
-/* deleteme */
-/* deleteme */
-/* deleteme */
 
 static void
 PrintLocation(FILE *f, const char *filename, size_t lineno)
@@ -976,7 +967,6 @@ ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
     else
 	LinkToTargets(gn, specType != SP_NOT);
 }
-/* deleteme */
 
 /* Given the name of a source in a dependency line, figure out if it is an
  * attribute (such as .SILENT) and apply it to the targets if it is. Else
@@ -1128,12 +1118,10 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	    *inout_paths = Lst_New();
 	Lst_Append(*inout_paths, dirSearchPath);
 	break;
-/* deleteme */
     case SP_MAIN:
 	if (!Lst_IsEmpty(opts.create))
 	    *inout_specType = SP_NOT;
 	break;
-/* deleteme */
     case SP_BEGIN:
     case SP_END:
     case SP_STALE:
@@ -1285,7 +1273,6 @@ ParseDoDependencyTargetExtraWarn(char **pp, const char *lstart)
 
     *pp = cp;
 }
-/* deleteme */
 
 static void
 ParseDoDependencyCheckSpec(ParseSpecial specType)
@@ -1543,7 +1530,6 @@ ParseDoDependencyTargets(char **inout_cp,
     *inout_line = line;
     return TRUE;
 }
-/* deleteme */
 
 static void
 ParseDoDependencySourcesSpecial(char *start, char *end,
@@ -2027,7 +2013,6 @@ VarAssignSpecial(const char *name, const char *avalue)
     else if (strcmp(name, MAKE_EXPORTED) == 0)
 	Var_Export(avalue, FALSE);
 }
-/* deleteme */
 
 /* Perform the variable variable assignment in the given context. */
 void
@@ -2232,8 +2217,6 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
     if (depinc)
 	doing_depend = depinc;	/* only turn it on */
 }
-/* deleteme */
-/* deleteme */
 
 static void
 ParseDoInclude(char *line)
@@ -2989,12 +2972,6 @@ FindSemicolon(char *p)
     }
     return p;
 }
-/* deleteme */
-/* deleteme */
-/* deleteme */
-/* deleteme */
-/* deleteme */
-/* deleteme */
 
 /* dependency	-> target... op [source...]
  * op		-> ':' | '::' | '!' */
