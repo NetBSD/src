@@ -1,0 +1,8 @@
+.BEGIN
+silent
+ignore
+true in ignore
+false in ignore
+*** [ignore] Error code 1 (ignored)
+.END
+exit status 0
