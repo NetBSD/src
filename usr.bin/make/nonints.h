@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.154 2020/11/07 10:16:19 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.155 2020/11/07 13:13:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -220,7 +220,10 @@ typedef enum VarEvalFlags {
     /* Expand and evaluate variables during parsing. */
     VARE_WANTRES	= 1 << 1,
     /* In an assignment using the ':=' operator, keep '$$' as '$$' instead
-     * of reducing it to a single '$'. */
+     * of reducing it to a single '$'.
+     *
+     * See also preserveUndefined, which preserves subexpressions based on
+     * undefined variables; maybe that can be converted to a flag as well. */
     VARE_ASSIGN		= 1 << 2
 } VarEvalFlags;
 
