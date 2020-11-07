@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.672 2020/11/07 10:16:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.673 2020/11/07 14:11:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.672 2020/11/07 10:16:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.673 2020/11/07 14:11:58 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -287,7 +287,7 @@ VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
     Var *var = bmake_malloc(sizeof *var);
     var->name = name;
     var->name_freeIt = name_freeIt;
-    Buf_Init(&var->val, value_len + 1);
+    Buf_InitSize(&var->val, value_len + 1);
     Buf_AddBytes(&var->val, value, value_len);
     var->flags = flags;
     return var;
@@ -1048,7 +1048,7 @@ typedef struct SepBuf {
 static void
 SepBuf_Init(SepBuf *buf, char sep)
 {
-    Buf_Init(&buf->buf, 32 /* bytes */);
+    Buf_InitSize(&buf->buf, 32);
     buf->needSep = FALSE;
     buf->sep = sep;
 }
@@ -1596,7 +1596,7 @@ Words_JoinFree(Words words)
     Buffer buf;
     size_t i;
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
 
     for (i = 0; i < words.len; i++) {
 	if (i != 0)
@@ -1633,7 +1633,7 @@ static char *
 VarQuote(const char *str, Boolean quoteDollar)
 {
     Buffer buf;
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
 
     for (; *str != '\0'; str++) {
 	if (*str == '\n') {
@@ -1883,7 +1883,7 @@ ParseModifierPart(
     Buffer buf;
     const char *p;
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
 
     /*
      * Skim through until the matching delimiter is found; pick up variable
@@ -2115,7 +2115,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    eflags |= VARE_WANTRES;
     }
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
     p = *pp + 1;
     while (*p != st->endc && *p != ':' && *p != '\0') {
 
@@ -2335,7 +2335,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 	Words_Free(words);
     }
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
 
     for (i = 0; i < n; i++) {
 	if (i != 0)
@@ -2741,7 +2741,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	    size_t ac = words.len;
 	    Words_Free(words);
 
-	    Buf_Init(&buf, 4);	/* 3 digits + '\0' is usually enough */
+	    Buf_InitSize(&buf, 4);	/* 3 digits + '\0' is usually enough */
 	    Buf_AddInt(&buf, (int)ac);
 	    st->newVal = Buf_Destroy(&buf, FALSE);
 	}
@@ -3507,7 +3507,7 @@ ParseVarname(const char **pp, char startc, char endc,
     const char *p = *pp;
     int depth = 1;
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
 
     while (*p != '\0') {
 	/* Track depth so we can spot parse errors. */
@@ -3959,7 +3959,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
      * to prevent a plethora of messages when recursing */
     static Boolean errorReported;
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
     errorReported = FALSE;
 
     while (*p != '\0') {

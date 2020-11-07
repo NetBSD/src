@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.178 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.179 2020/11/07 14:11:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.178 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.179 2020/11/07 14:11:58 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -225,7 +225,7 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 
     cpp_skip_hspace(&p);
 
-    Buf_Init(&argBuf, 16);
+    Buf_InitSize(&argBuf, 16);
 
     paren_depth = 0;
     for (;;) {
@@ -398,7 +398,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
     VarEvalFlags eflags;
     VarParseResult parseResult;
 
-    Buf_Init(&buf, 0);
+    Buf_Init(&buf);
     str = NULL;
     *out_freeIt = NULL;
     *out_quoted = qt = par->p[0] == '"';
