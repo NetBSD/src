@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.427 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.428 2020/11/07 10:16:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.427 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.428 2020/11/07 10:16:19 rillig Exp $");
 
 /* types and constants */
 
@@ -522,7 +522,7 @@ loadfile(const char *path, int fd)
 	lf->buf = bmake_malloc(lf->len);
 
 	bufpos = 0;
-	while (1) {
+	for (;;) {
 		assert(bufpos <= lf->len);
 		if (bufpos == lf->len) {
 			if (lf->len > SIZE_MAX/2) {
@@ -2502,7 +2502,7 @@ static void
 ParseTraditionalInclude(char *line)
 {
     char *cp;			/* current position in file spec */
-    int done = 0;
+    Boolean done = FALSE;
     int silent = line[0] != 'i';
     char *file = line + (silent ? 8 : 7);
     char *all_files;
@@ -2528,10 +2528,10 @@ ParseTraditionalInclude(char *line)
 	for (cp = file; *cp && !ch_isspace(*cp); cp++)
 	    continue;
 
-	if (*cp)
+	if (*cp != '\0')
 	    *cp = '\0';
 	else
-	    done = 1;
+	    done = TRUE;
 
 	Parse_include_file(file, FALSE, FALSE, silent);
     }
@@ -2659,11 +2659,11 @@ ParseGetLine(int flags)
 	    /* XXX: can buf_end ever be null? */
 	    if (cf->buf_end != NULL && ptr == cf->buf_end) {
 		/* end of buffer */
-		ch = 0;
+		ch = '\0';
 		break;
 	    }
 	    ch = *ptr;
-	    if (ch == 0 || (ch == '\\' && ptr[1] == 0)) {
+	    if (ch == '\0' || (ch == '\\' && ptr[1] == '\0')) {
 		/* XXX: can buf_end ever be null? */
 		if (cf->buf_end == NULL)
 		    /* End of string (aka for loop) data */
@@ -2719,7 +2719,7 @@ ParseGetLine(int flags)
 
 	/* Check we have a non-comment, non-blank line */
 	if (line_end == line || comment == line) {
-	    if (ch == 0)
+	    if (ch == '\0')
 		/* At end of file */
 		return NULL;
 	    /* Parse another line */
@@ -2727,7 +2727,7 @@ ParseGetLine(int flags)
 	}
 
 	/* We now have a line of data */
-	*line_end = 0;
+	*line_end = '\0';
 
 	if (flags & PARSE_RAW) {
 	    /* Leave '\' (etc) in line buffer (eg 'for' lines) */
@@ -2746,7 +2746,7 @@ ParseGetLine(int flags)
     /* Brutally ignore anything after a non-escaped '#' in non-commands */
     if (comment != NULL && line[0] != '\t') {
 	line_end = comment;
-	*line_end = 0;
+	*line_end = '\0';
     }
 
     /* If we didn't see a '\\' then the in-situ data is fine */
@@ -2759,13 +2759,13 @@ ParseGetLine(int flags)
     for (; ; *tp++ = ch) {
 	ch = *ptr++;
 	if (ch != '\\') {
-	    if (ch == 0)
+	    if (ch == '\0')
 		break;
 	    continue;
 	}
 
 	ch = *ptr++;
-	if (ch == 0) {
+	if (ch == '\0') {
 	    /* Delete '\\' at end of buffer */
 	    tp--;
 	    break;
@@ -2793,7 +2793,7 @@ ParseGetLine(int flags)
     while (tp > escaped && ch_isspace(tp[-1]))
 	tp--;
 
-    *tp = 0;
+    *tp = '\0';
     return line;
 }
 

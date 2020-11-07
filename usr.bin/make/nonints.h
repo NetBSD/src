@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.153 2020/11/07 00:06:13 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.154 2020/11/07 10:16:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -216,19 +216,21 @@ void Var_End(void);
 typedef enum VarEvalFlags {
     VARE_NONE		= 0,
     /* Treat undefined variables as errors. */
-    VARE_UNDEFERR	= 0x01,
+    VARE_UNDEFERR	= 1 << 0,
     /* Expand and evaluate variables during parsing. */
-    VARE_WANTRES	= 0x02,
+    VARE_WANTRES	= 1 << 1,
     /* In an assignment using the ':=' operator, keep '$$' as '$$' instead
      * of reducing it to a single '$'. */
-    VARE_ASSIGN		= 0x04
+    VARE_ASSIGN		= 1 << 2
 } VarEvalFlags;
 
 typedef enum VarSet_Flags {
-    VAR_NO_EXPORT	= 0x01,	/* do not export */
+    /* do not export */
+    VAR_NO_EXPORT	= 1 << 0,
+
     /* Make the variable read-only. No further modification is possible,
      * except for another call to Var_Set with the same flag. */
-    VAR_SET_READONLY	= 0x02
+    VAR_SET_READONLY	= 1 << 1
 } VarSetFlags;
 
 /* The state of error handling returned by Var_Parse.

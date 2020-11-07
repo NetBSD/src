@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.174 2020/11/02 20:50:24 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.175 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.174 2020/11/02 20:50:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.175 2020/11/07 10:16:18 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -201,7 +201,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
     (void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
     /* TODO: handle errors */
 
-    if (*cmdStart == '\0') {
+    if (cmdStart[0] == '\0') {
 	free(cmdStart);
 	return 0;
     }
@@ -243,7 +243,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
     /*
      * If we did not end up with a command, just skip it.
      */
-    if (!*cmd)
+    if (cmd[0] == '\0')
 	return 0;
 
 #if !defined(MAKE_NATIVE)
@@ -599,15 +599,14 @@ Compat_Make(GNode *gn, GNode *pgn)
 		pgn->flags &= ~(unsigned)REMAKE;
 		break;
 	    case MADE:
-		if ((gn->type & OP_EXEC) == 0) {
+		if (!(gn->type & OP_EXEC)) {
 		    pgn->flags |= CHILDMADE;
 		    Make_TimeStamp(pgn, gn);
 		}
 		break;
 	    case UPTODATE:
-		if ((gn->type & OP_EXEC) == 0) {
+		if (!(gn->type & OP_EXEC))
 		    Make_TimeStamp(pgn, gn);
-		}
 		break;
 	    default:
 		break;

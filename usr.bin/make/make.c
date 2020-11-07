@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.186 2020/11/01 17:47:26 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.187 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.186 2020/11/01 17:47:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.187 2020/11/07 10:16:18 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -212,7 +212,7 @@ Make_OODate(GNode *gn)
      * Certain types of targets needn't even be sought as their datedness
      * doesn't depend on their modification time...
      */
-    if ((gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC)) == 0) {
+    if (!(gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 	(void)Dir_MTime(gn, 1);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
@@ -346,7 +346,7 @@ MakeAddChild(void *gnp, void *lp)
     GNode *gn = gnp;
     GNodeList *l = lp;
 
-    if ((gn->flags & REMAKE) == 0 && !(gn->type & (OP_USE|OP_USEBEFORE))) {
+    if (!(gn->flags & REMAKE) && !(gn->type & (OP_USE|OP_USEBEFORE))) {
 	DEBUG2(MAKE, "MakeAddChild: need to examine %s%s\n",
 	       gn->name, gn->cohort_num);
 	Lst_Enqueue(l, gn);
@@ -394,9 +394,9 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
     GNodeListNode *ln;	/* An element in the children list */
 
 #ifdef DEBUG_SRC
-    if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
+    if (!(cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM))) {
 	debug_printf("Make_HandleUse: called for plain node %s\n", cgn->name);
-	return;
+	return;		/* XXX: debug mode should not affect control flow */
     }
 #endif
 
@@ -457,10 +457,10 @@ MakeHandleUse(GNode *cgn, GNode *pgn, GNodeListNode *ln)
 {
     Boolean unmarked;
 
-    unmarked = ((cgn->type & OP_MARK) == 0);
+    unmarked = !(cgn->type & OP_MARK);
     cgn->type |= OP_MARK;
 
-    if ((cgn->type & (OP_USE|OP_USEBEFORE)) == 0)
+    if (!(cgn->type & (OP_USE|OP_USEBEFORE)))
 	return;
 
     if (unmarked)
@@ -717,7 +717,7 @@ Make_Update(GNode *cgn)
 	    continue;
 	}
 	assert(pgn->order_pred != NULL);
-	if (Lst_ForEachUntil(pgn->order_pred, MakeCheckOrder, 0)) {
+	if (Lst_ForEachUntil(pgn->order_pred, MakeCheckOrder, NULL)) {
 	    /* A .ORDER rule stops us building this */
 	    continue;
 	}
@@ -771,7 +771,7 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 	return;
     cgn->type |= OP_MARK;
 
-    if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
+    if (!(cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE))) {
 	const char *child, *allsrc;
 
 	if (cgn->type & OP_ARCHV)
@@ -875,7 +875,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 
     /* If this node is on the RHS of a .ORDER, check LHSs. */
     assert(cn->order_pred);
-    if (Lst_ForEachUntil(cn->order_pred, MakeCheckOrder, 0)) {
+    if (Lst_ForEachUntil(cn->order_pred, MakeCheckOrder, NULL)) {
 	/* Can't build this (or anything else in this child list) yet */
 	cn->made = DEFERRED;
 	return 0;			/* but keep looking */
@@ -1169,7 +1169,7 @@ Make_ExpandUse(GNodeList *targs)
 	UnmarkChildren(gn);
 	HandleUseNodes(gn);
 
-	if ((gn->type & OP_MADE) == 0)
+	if (!(gn->type & OP_MADE))
 	    Suff_FindDeps(gn);
 	else {
 	    /* Pretend we made all this node's children */
@@ -1353,7 +1353,7 @@ Make_Run(GNodeList *targs)
 	MakePrintStatusList(targs, &errors);
 	if (DEBUG(MAKE)) {
 	    debug_printf("done: errors %d\n", errors);
-	    if (errors)
+	    if (errors != 0)
 		Targ_PrintGraph(4);
 	}
     }

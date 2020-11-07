@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.671 2020/11/07 00:06:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.672 2020/11/07 10:16:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.671 2020/11/07 00:06:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.672 2020/11/07 10:16:19 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -518,7 +518,7 @@ Var_Export1(const char *name, VarExportFlags flags)
     if (!MayExport(name))
 	return FALSE;
 
-    v = VarFind(name, VAR_GLOBAL, 0);
+    v = VarFind(name, VAR_GLOBAL, FALSE);
     if (v == NULL)
 	return FALSE;
 
@@ -728,7 +728,7 @@ Var_UnExport(const char *str)
 	Words words = Str_Words(varnames, FALSE);
 	for (i = 0; i < words.len; i++) {
 	    const char *varname = words.words[i];
-	    v = VarFind(varname, VAR_GLOBAL, 0);
+	    v = VarFind(varname, VAR_GLOBAL, FALSE);
 	    if (v == NULL) {
 		VAR_DEBUG1("Not unexporting \"%s\" (not found)\n", varname);
 		continue;
@@ -791,7 +791,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
     }
 
     if (ctxt == VAR_GLOBAL) {
-	v = VarFind(name, VAR_CMDLINE, 0);
+	v = VarFind(name, VAR_CMDLINE, FALSE);
 	if (v != NULL) {
 	    if (v->flags & VAR_FROM_CMD) {
 		VAR_DEBUG3("%s:%s = %s ignored!\n", ctxt->name, name, val);
@@ -806,7 +806,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
      * here will override anything in a lower context, so there's not much
      * point in searching them all just to save a bit of memory...
      */
-    v = VarFind(name, ctxt, 0);
+    v = VarFind(name, ctxt, FALSE);
     if (v == NULL) {
 	if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT)) {
 	    /*
@@ -839,7 +839,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
      */
     if (ctxt == VAR_CMDLINE && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
 	if (v == NULL)
-	    v = VarFind(name, ctxt, 0);	/* we just added it */
+	    v = VarFind(name, ctxt, FALSE); /* we just added it */
 	v->flags |= VAR_FROM_CMD;
 
 	/*
@@ -1341,9 +1341,9 @@ nosub:
 #ifndef NO_REGEX
 /* Print the error caused by a regcomp or regexec call. */
 static void
-VarREError(int reerr, regex_t *pat, const char *str)
+VarREError(int reerr, const regex_t *pat, const char *str)
 {
-    size_t errlen = regerror(reerr, pat, 0, 0);
+    size_t errlen = regerror(reerr, pat, NULL, 0);
     char *errbuf = bmake_malloc(errlen);
     regerror(reerr, pat, errbuf, errlen);
     Error("%s: %s", str, errbuf);
@@ -2959,7 +2959,7 @@ ok:
 
     v_ctxt = st->ctxt;		/* context where v belongs */
     if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
-	Var *gv = VarFind(st->v->name, st->ctxt, 0);
+	Var *gv = VarFind(st->v->name, st->ctxt, FALSE);
 	if (gv == NULL)
 	    v_ctxt = VAR_GLOBAL;
 	else
@@ -3631,7 +3631,7 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 
     {
 	char name[] = { varname[0], '\0' };
-	Var *v = VarFind(name, ctxt, 0);
+	Var *v = VarFind(name, ctxt, FALSE);
 
 	if (v != NULL) {
 	    if (varname[1] == 'D') {
