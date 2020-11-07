@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.168 2020/11/07 13:34:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.169 2020/11/07 13:39:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.168 2020/11/07 13:34:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.169 2020/11/07 13:39:41 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -548,10 +548,9 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 	    memName[elen] = '\0';
 	    if (fseek(arch, -elen, SEEK_CUR) != 0)
 		goto badarch;
-	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		debug_printf("ArchStat: Extended format entry for %s\n",
+	    if (DEBUG(ARCH) || DEBUG(MAKE))
+		debug_printf("ArchStatMember: Extended format entry for %s\n",
 			     memName);
-	    }
 	}
 #endif
 
@@ -793,9 +792,9 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 		return NULL;
 	    }
 	    ename[elen] = '\0';
-	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		debug_printf("ArchFind: Extended format entry for %s\n", ename);
-	    }
+	    if (DEBUG(ARCH) || DEBUG(MAKE))
+		debug_printf("ArchFindMember: Extended format entry for %s\n",
+			     ename);
 	    if (strncmp(ename, member, len) == 0) {
 		/* Found as extended name */
 		if (fseek(arch, -(long)sizeof(struct ar_hdr) - elen,
