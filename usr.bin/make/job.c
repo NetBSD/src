@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.309 2020/11/07 20:03:56 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.310 2020/11/07 21:24:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.309 2020/11/07 20:03:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.310 2020/11/07 21:24:33 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1959,7 +1959,7 @@ JobReapChild(pid_t pid, int status, Boolean isJobs)
 		(void)printf("*** [%s] Stopped -- signal %d\n",
 			     job->node->name, WSTOPSIG(status));
 	    }
-	    job->job_suspended = 1;
+	    job->suspended = TRUE;
 	}
 	(void)fflush(stdout);
 	return;
@@ -2568,13 +2568,13 @@ JobRestartJobs(void)
 
     for (job = job_table; job < job_table_end; job++) {
 	if (job->job_state == JOB_ST_RUNNING &&
-		(make_suspended || job->job_suspended)) {
+		(make_suspended || job->suspended)) {
 	    DEBUG1(JOB, "Restarting stopped job pid %d.\n", job->pid);
-	    if (job->job_suspended) {
+	    if (job->suspended) {
 		    (void)printf("*** [%s] Continued\n", job->node->name);
 		    (void)fflush(stdout);
 	    }
-	    job->job_suspended = 0;
+	    job->suspended = FALSE;
 	    if (KILLPG(job->pid, SIGCONT) != 0 && DEBUG(JOB)) {
 		debug_printf("Failed to send SIGCONT to %d\n", job->pid);
 	    }
