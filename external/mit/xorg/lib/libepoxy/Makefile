@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/11/02 06:25:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2020/11/07 18:12:16 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -40,8 +40,15 @@ PKGCONFIG_SED_FLAGS= \
 	-e "s,@DLOPEN_LIBS@,," \
 	-e "s,@epoxy_has_glx@,1," \
 	-e "s,@epoxy_has_egl@,${EGL}," \
-	-e "s,@epoxy_has_wgl@,0," \
+	-e "s,@epoxy_has_wgl@,0,"
+
+.if ${HAVE_XORG_GLAMOR} != "no"
+PKGCONFIG_SED_FLAGS+= \
 	-e "s,@GL_REQS@, gl egl,"
+.else
+PKGCONFIG_SED_FLAGS+= \
+	-e "s,@GL_REQS@, gl,"
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
