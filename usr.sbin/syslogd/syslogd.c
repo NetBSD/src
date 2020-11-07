@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.134 2020/11/07 16:16:33 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.135 2020/11/07 17:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.134 2020/11/07 16:16:33 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.135 2020/11/07 17:46:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 */
 char	appname[]   = "syslogd";/* the APPNAME for own messages */
 char   *include_pid;		/* include PID in own messages */
-char	include_pid_buf[6];
+char	include_pid_buf[11];
 
 
 /* init and setup */
