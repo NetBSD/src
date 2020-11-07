@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.59 2020/11/07 20:03:56 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.60 2020/11/07 21:24:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct pollfd;
 typedef enum JobState {
     JOB_ST_FREE =	0,	/* Job is available */
     JOB_ST_SETUP =	1,	/* Job is allocated but otherwise invalid */
+    /* XXX: What about the 2? */
     JOB_ST_RUNNING =	3,	/* Job is running, pid valid */
     JOB_ST_FINISHED =	4	/* Job is done (ie after SIGCHILD) */
 } JobState;
@@ -170,7 +171,7 @@ typedef struct Job {
 
     JobState job_state;		/* status of the job entry */
 
-    char job_suspended;
+    Boolean suspended;
 
     JobFlags flags;		/* Flags to control treatment of job */
 
