@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.167 2020/11/07 13:29:38 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.168 2020/11/07 13:34:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.167 2020/11/07 13:29:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.168 2020/11/07 13:34:46 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -505,9 +505,8 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 
 	memcpy(memName, arh.ar_name, sizeof arh.ar_name);
 	nameend = memName + AR_MAX_NAME_LEN;
-	while (*nameend == ' ') {
+	while (nameend > memName && *nameend == ' ')
 	    nameend--;
-	}
 	nameend[1] = '\0';
 
 #ifdef SVR4ARCHIVES
