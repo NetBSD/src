@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.179 2020/11/07 14:11:58 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.180 2020/11/07 14:37:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.179 2020/11/07 14:11:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.180 2020/11/07 14:37:30 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -162,7 +162,7 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
  *
  * TRUE when CondEvalExpression is called from Cond_EvalLine (.if etc)
  * FALSE when CondEvalExpression is called from ApplyModifier_IfElse
- * since lhs is already expanded and we cannot tell if
+ * since lhs is already expanded, and at that point we cannot tell if
  * it was a variable reference or not.
  */
 static Boolean lhsStrict;

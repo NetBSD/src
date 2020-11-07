@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.8 2020/09/23 08:11:28 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.9 2020/11/07 14:37:31 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -143,6 +143,13 @@ ${:U WORD }=	variable name with spaces
 
 # Now there is a variable named " WORD ", and it is not empty.
 .if empty ( WORD )
+.  error
+.endif
+
+# Parse error: missing closing parenthesis.
+.if empty(WORD
+.  error
+.else
 .  error
 .endif
 
