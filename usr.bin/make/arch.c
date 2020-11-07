@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.169 2020/11/07 13:39:41 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.170 2020/11/07 13:43:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.169 2020/11/07 13:39:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.170 2020/11/07 13:43:39 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -394,6 +394,8 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
  *
  * Results:
  *	The ar_hdr for the member, or NULL.
+ *
+ * See ArchFindMember for an almost identical copy of this code.
  */
 static struct ar_hdr *
 ArchStatMember(const char *archive, const char *member, Boolean addToCache)
@@ -702,6 +704,8 @@ ArchiveMember_HasName(const struct ar_hdr *hdr,
  *			member's struct ar_hdr, or NULL if the member doesn't
  *			exist.
  *	*out_arh	The current struct ar_hdr for member.
+ *
+ * See ArchStatMember for an almost identical copy of this code.
  */
 static FILE *
 ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
