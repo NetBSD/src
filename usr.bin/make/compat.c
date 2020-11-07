@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.175 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.176 2020/11/07 10:23:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.175 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.176 2020/11/07 10:23:20 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -573,7 +573,8 @@ Compat_Make(GNode *gn, GNode *pgn)
 	     * This is to keep its state from affecting that of its parent.
 	     */
 	    gn->made = MADE;
-	    pgn->flags |= Make_Recheck(gn) == 0 ? FORCE : 0;
+	    if (Make_Recheck(gn) == 0)
+		pgn->flags |= FORCE;
 	    if (!(gn->type & OP_EXEC)) {
 		pgn->flags |= CHILDMADE;
 		Make_TimeStamp(pgn, gn);
