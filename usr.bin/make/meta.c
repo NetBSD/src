@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.139 2020/11/07 10:16:19 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.140 2020/11/07 21:26:43 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -860,9 +860,11 @@ meta_cmd_finish(void *pbmp)
 	    error = x;
 	pbm->mon_fd = -1;
 	pbm->filemon = NULL;
-    } else
+	return error;
+    }
 #endif
-	fprintf(pbm->mfp, "\n");	/* ensure end with newline */
+
+    fprintf(pbm->mfp, "\n");	/* ensure end with newline */
     return error;
 }
 
