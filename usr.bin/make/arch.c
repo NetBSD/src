@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.158 2020/11/07 12:34:49 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.159 2020/11/07 12:47:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.158 2020/11/07 12:34:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.159 2020/11/07 12:47:16 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -689,7 +689,16 @@ ArchiveMember_HasName(const struct ar_hdr *hdr,
 	return namelen == ar_name_len;
 
     /* hdr->ar_name is space-padded to the right. */
-    return ar_name[namelen] == ' ';
+    if (ar_name[namelen] == ' ')
+	return TRUE;
+
+    /* In archives created by GNU binutils 2.27, the member names end with
+     * a slash. */
+    if (ar_name[namelen] == '/' &&
+	(namelen == ar_name_len || ar_name[namelen + 1] == ' '))
+	return TRUE;
+
+    return FALSE;
 }
 
 /* Locate a member of an archive, given the path of the archive and the path
@@ -755,6 +764,11 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	    fclose(arch);
 	    return NULL;
 	}
+
+	DEBUG5(ARCH, "Reading archive %s member %.*s mtime %.*s\n",
+	       archive,
+	       (int)sizeof out_arh->ar_name, out_arh->ar_name,
+	       (int)sizeof out_arh->ar_date, out_arh->ar_date);
 
 	if (ArchiveMember_HasName(out_arh, member, len)) {
 	    /*
@@ -845,45 +859,41 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 void
 Arch_Touch(GNode *gn)
 {
-    FILE *arch;
+    FILE *f;
     struct ar_hdr arh;
 
-    arch = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn),
-			  &arh, "r+");
+    f = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn), &arh, "r+");
+    if (f == NULL)
+	return;
 
-    snprintf(arh.ar_date, sizeof arh.ar_date, "%-12ld", (long)now);
-
-    if (arch != NULL) {
-	(void)fwrite(&arh, sizeof arh, 1, arch);
-	fclose(arch);
-    }
+    snprintf(arh.ar_date, sizeof arh.ar_date, "%-ld", (unsigned long)now);
+    (void)fwrite(&arh, sizeof arh, 1, f);
+    fclose(f);			/* TODO: handle errors */
 }
 
 /* Given a node which represents a library, touch the thing, making sure that
- * the table of contents also is touched.
+ * the table of contents is also touched.
  *
  * Both the modification time of the library and of the RANLIBMAG member are
  * set to 'now'. */
 void
-Arch_TouchLib(GNode *gn)
+Arch_TouchLib(GNode *gn MAKE_ATTR_UNUSED)
 {
 #ifdef RANLIBMAG
-    FILE *arch;
+    FILE *f;
     struct ar_hdr arh;		/* Header describing table of contents */
     struct utimbuf times;
 
-    arch = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
-    snprintf(arh.ar_date, sizeof arh.ar_date, "%-12ld", (long) now);
+    f = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
+    if (f == NULL)
+	return;
 
-    if (arch != NULL) {
-	(void)fwrite(&arh, sizeof arh, 1, arch);
-	fclose(arch);
+    snprintf(arh.ar_date, sizeof arh.ar_date, "%-ld", (unsigned long)now);
+    (void)fwrite(&arh, sizeof arh, 1, f);
+    fclose(f);			/* TODO: handle errors */
 
-	times.actime = times.modtime = now;
-	utime(gn->path, &times);
-    }
-#else
-    (void)gn;
+    times.actime = times.modtime = now;
+    utime(gn->path, &times);	/* TODO: handle errors */
 #endif
 }
 
