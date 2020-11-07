@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.34 2020/09/27 16:59:02 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.35 2020/11/07 14:11:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,8 @@ void Buf_AddStr(Buffer *, const char *);
 void Buf_AddInt(Buffer *, int);
 char *Buf_GetAll(Buffer *, size_t *);
 void Buf_Empty(Buffer *);
-void Buf_Init(Buffer *, size_t);
+void Buf_Init(Buffer *);
+void Buf_InitSize(Buffer *, size_t);
 char *Buf_Destroy(Buffer *, Boolean);
 char *Buf_DestroyCompact(Buffer *);
 

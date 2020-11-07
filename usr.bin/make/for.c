@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.113 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.114 2020/11/07 14:11:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.113 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.114 2020/11/07 14:11:58 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -191,11 +191,11 @@ For_Eval(const char *line)
      */
 
     f = bmake_malloc(sizeof *f);
-    Buf_Init(&f->body, 0);
+    Buf_Init(&f->body);
     Vector_Init(&f->vars, sizeof(ForVar));
     f->items.words = NULL;
     f->items.freeIt = NULL;
-    Buf_Init(&f->curBody, 0);
+    Buf_Init(&f->curBody);
     f->short_var = FALSE;
     f->sub_next = 0;
 

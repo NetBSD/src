@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.434 2020/11/07 10:25:28 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.435 2020/11/07 14:11:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.434 2020/11/07 10:25:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.435 2020/11/07 14:11:58 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1768,7 +1768,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	(void)close(fds[1]);	/* No need for the writing half */
 
 	savederr = 0;
-	Buf_Init(&buf, 0);
+	Buf_Init(&buf);
 
 	do {
 	    char result[BUFSIZ];
@@ -1950,7 +1950,7 @@ execDie(const char *af, const char *av)
 {
 	Buffer buf;
 
-	Buf_Init(&buf, 0);
+	Buf_Init(&buf);
 	Buf_AddStr(&buf, progname);
 	Buf_AddStr(&buf, ": ");
 	Buf_AddStr(&buf, af);
