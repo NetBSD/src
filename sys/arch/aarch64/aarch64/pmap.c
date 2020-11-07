@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2020/11/01 10:58:59 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2020/11/07 08:33:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2020/11/01 10:58:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/11/07 08:33:50 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -348,6 +348,7 @@ pmap_devmap_register(const struct pmap_devmap *table)
 void
 pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 {
+	bool done = false;
 	vaddr_t va;
 	int i;
 
@@ -375,8 +376,10 @@ pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 		    table[i].pd_size,
 		    table[i].pd_prot,
 		    table[i].pd_flags);
-		pmap_devmap_bootstrap_done = true;
+		done = true;
 	}
+	if (done)
+		pmap_devmap_bootstrap_done = true;
 }
 
 const struct pmap_devmap *
