@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.156 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.157 2020/11/07 11:36:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,26 +68,25 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * arch.c --
- *	Functions to manipulate libraries, archives and their members.
+/* Manipulate libraries, archives and their members.
  *
- *	Once again, cacheing/hashing comes into play in the manipulation
- * of archives. The first time an archive is referenced, all of its members'
- * headers are read and hashed and the archive closed again. All hashed
- * archives are kept on a list which is searched each time an archive member
- * is referenced.
+ * The first time an archive is referenced, all of its members' headers are
+ * read and cashed and the archive closed again.  All cashed archives are kept
+ * on a list which is searched each time an archive member is referenced.
  *
  * The interface to this module is:
+ *
+ *	Arch_Init	Initialize this module.
+ *
+ *	Arch_End	Clean up this module.
+ *
  *	Arch_ParseArchive
- *			Given an archive specification, return a list
- *			of GNode's, one for each member in the spec.
- *			FALSE is returned if the specification is
- *			invalid for some reason.
+ *			Parse an archive specification such as
+ *			"archive.a(member1 member2)".
  *
  *	Arch_Touch	Alter the modification time of the archive
  *			member described by the given node to be
- *			the current time.
+ *			the time when make was started.
  *
  *	Arch_TouchLib	Update the modification time of the library
  *			described by the given node. This is special
@@ -99,7 +98,8 @@
  *			placed in the member's GNode. Returns the
  *			modification time.
  *
- *	Arch_MemTime	Find the modification time of a member of
+ *	Arch_MemberMTime
+ *			Find the modification time of a member of
  *			an archive. Called when the member doesn't
  *			already exist. Looks in the archive for the
  *			modification time. Returns the modification
@@ -109,12 +109,7 @@
  *			library name in the GNode should be in
  *			-l<name> format.
  *
- *	Arch_LibOODate	Special function to decide if a library node
- *			is out-of-date.
- *
- *	Arch_Init	Initialize this module.
- *
- *	Arch_End	Clean up this module.
+ *	Arch_LibOODate	Decide if a library node is out-of-date.
  */
 
 #include <sys/types.h>
@@ -130,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.156 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.157 2020/11/07 11:36:49 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -181,23 +176,20 @@ ArchFree(void *ap)
 #endif
 
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_ParseArchive --
- *	Parse the archive specification in the given line and find/create
- *	the nodes for the specified archive members, placing their nodes
- *	on the given list.
+/*
+ * Parse an archive specification such as "archive.a(member1 member2.${EXT})",
+ * adding nodes for the expanded members to nodeLst.  Nodes are created as
+ * necessary.
  *
  * Input:
- *	pp		Pointer to start of specification, updated
- *	nodeLst		Lst on which to place the nodes
- *	ctxt		Context in which to expand variables
+ *	pp		The start of the specification.
+ *	nodeLst		The list on which to place the nodes.
+ *	ctxt		The context in which to expand variables.
  *
- * Results:
- *	TRUE if it was a valid specification. The pp is updated
- *	to point to the first non-space after the archive spec. The
- *	nodes for the members are placed on the given list.
- *-----------------------------------------------------------------------
+ * Output:
+ *	return		TRUE if it was a valid specification.
+ *	*pp		Points to the first non-space after the archive spec.
+ *	*nodeLst	Nodes for the members have been added.
  */
 Boolean
 Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
@@ -683,26 +675,21 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 #endif
 
 
-/*-
- *-----------------------------------------------------------------------
- * ArchFindMember --
- *	Locate a member of an archive, given the path of the archive and
- *	the path of the desired member. If the archive is to be modified,
- *	the mode should be "r+", if not, it should be "r".
- *	The passed struct ar_hdr structure is filled in.
+/* Locate a member of an archive, given the path of the archive and the path
+ * of the desired member.
  *
  * Input:
  *	archive		Path to the archive
  *	member		Name of member. If it is a path, only the last
  *			component is used.
  *	out_arh		Archive header to be filled in
- *	mode		The mode for opening the stream
+ *	mode		"r" for read-only access, "r+" for read-write access
  *
- * Results:
- *	An FILE *, opened for reading and writing, positioned at the
- *	start of the member's struct ar_hdr, or NULL if the member was
- *	nonexistent. The current struct ar_hdr for member.
- *-----------------------------------------------------------------------
+ * Output:
+ *	return		The archive file, positioned at the start of the
+ *			member's struct ar_hdr, or NULL if the member doesn't
+ *			exist.
+ *	*out_arh	The current struct ar_hdr for member.
  */
 static FILE *
 ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
@@ -841,26 +828,23 @@ skip:
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_Touch --
- *	Touch a member of an archive.
- *	The modification time of the entire archive is also changed.
- *	For a library, this could necessitate the re-ranlib'ing of the
- *	whole thing.
+/* Touch a member of an archive, on disk.
+ * The GNode's modification time is left as-is.
+ *
+ * The st_mtime of the entire archive is also changed.
+ * For a library, it may be required to run ranlib after this.
  *
  * Input:
  *	gn		Node of member to touch
  *
  * Results:
  *	The 'time' field of the member's header is updated.
- *-----------------------------------------------------------------------
  */
 void
 Arch_Touch(GNode *gn)
 {
-    FILE *arch;		/* Stream open to archive, positioned properly */
-    struct ar_hdr arh;	/* Current header describing member */
+    FILE *arch;
+    struct ar_hdr arh;
 
     arch = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn),
 			  &arh, "r+");
@@ -877,18 +861,14 @@ Arch_Touch(GNode *gn)
  * the table of contents also is touched.
  *
  * Both the modification time of the library and of the RANLIBMAG member are
- * set to 'now'.
- *
- * Input:
- *	gn		The node of the library to touch
- */
+ * set to 'now'. */
 void
 Arch_TouchLib(GNode *gn)
 {
 #ifdef RANLIBMAG
-    FILE *	    arch;	/* Stream open to archive */
-    struct ar_hdr   arh;	/* Header describing table of contents */
-    struct utimbuf  times;	/* Times for utime() call */
+    FILE *arch;
+    struct ar_hdr arh;		/* Header describing table of contents */
+    struct utimbuf times;
 
     arch = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
     snprintf(arh.ar_date, sizeof arh.ar_date, "%-12ld", (long) now);
@@ -905,17 +885,13 @@ Arch_TouchLib(GNode *gn)
 #endif
 }
 
-/* Return the modification time of a member of an archive. The mtime field
- * of the given node is filled in with the value returned by the function.
- *
- * Input:
- *	gn		Node describing archive member
- */
+/* Update the mtime of the GNode with the mtime from the archive member on
+ * disk (or in the cache). */
 time_t
 Arch_MTime(GNode *gn)
 {
-    struct ar_hdr *arh;		/* Header of desired member */
-    time_t modTime;		/* Modification time as an integer */
+    struct ar_hdr *arh;
+    time_t modTime;
 
     arh = ArchStatMember(GNode_VarArchive(gn), GNode_VarMember(gn), TRUE);
     if (arh != NULL) {
@@ -997,7 +973,7 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 
 /* Decide if a node with the OP_LIB attribute is out-of-date. Called from
  * Make_OODate to make its life easier.
- * The library will be hashed if it hasn't been already.
+ * The library is cached if it hasn't been already.
  *
  * There are several ways for a library to be out-of-date that are
  * not available to ordinary files. In addition, there are ways
