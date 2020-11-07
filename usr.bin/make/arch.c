@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.170 2020/11/07 13:43:39 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.171 2020/11/07 14:04:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.170 2020/11/07 13:43:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.171 2020/11/07 14:04:49 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -980,7 +980,9 @@ Arch_FindLib(GNode *gn, SearchPath *path)
  * There are several ways for a library to be out-of-date that are
  * not available to ordinary files. In addition, there are ways
  * that are open to regular files that are not available to
- * libraries. A library that is only used as a source is never
+ * libraries.
+ *
+ * A library that is only used as a source is never
  * considered out-of-date by itself. This does not preclude the
  * library's modification time from making its parent be out-of-date.
  * A library will be considered out-of-date for any of these reasons,
@@ -995,16 +997,10 @@ Arch_FindLib(GNode *gn, SearchPath *path)
  *
  *	The modification time of one of its sources is greater than the one
  *	of its RANLIBMAG member (i.e. its table of contents is out-of-date).
- *	We don't compare of the archive time vs. TOC time because they can be
+ *	We don't compare the archive time vs. TOC time because they can be
  *	too close. In my opinion we should not bother with the TOC at all
  *	since this is used by 'ar' rules that affect the data contents of the
  *	archive, not by ranlib rules, which affect the TOC.
- *
- * Input:
- *	gn		The library's graph node
- *
- * Results:
- *	TRUE if the library is out-of-date. FALSE otherwise.
  */
 Boolean
 Arch_LibOODate(GNode *gn)
@@ -1030,17 +1026,15 @@ Arch_LibOODate(GNode *gn)
 	if (arh != NULL) {
 	    modTimeTOC = (int)strtol(arh->ar_date, NULL, 10);
 
-	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		debug_printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
-	    }
-	    oodate = (gn->youngestChild == NULL || gn->youngestChild->mtime > modTimeTOC);
+	    if (DEBUG(ARCH) || DEBUG(MAKE))
+		debug_printf("%s modified %s...",
+			     RANLIBMAG, Targ_FmtTime(modTimeTOC));
+	    oodate = gn->youngestChild == NULL ||
+		     gn->youngestChild->mtime > modTimeTOC;
 	} else {
-	    /*
-	     * A library w/o a table of contents is out-of-date
-	     */
-	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		debug_printf("No t.o.c....");
-	    }
+	    /* A library without a table of contents is out-of-date. */
+	    if (DEBUG(ARCH) || DEBUG(MAKE))
+		debug_printf("no toc...");
 	    oodate = TRUE;
 	}
 #else
