@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.78 2020/11/07 08:28:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.77 2020/10/20 23:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.78 2020/11/07 08:28:15 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -569,7 +569,7 @@ initarm(void *arg)
 	 * l1pt VA is fine
 	 */
 
-	VPRINTF("devmap\n");
+	VPRINTF("devmap %p\n", plat->ap_devmap());
 	extern char ARM_BOOTSTRAP_LxPT[];
 	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, plat->ap_devmap());
 
