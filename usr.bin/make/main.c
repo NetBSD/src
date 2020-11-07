@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.432 2020/11/06 23:11:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.433 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.432 2020/11/06 23:11:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.433 2020/11/07 10:16:18 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -720,7 +720,7 @@ Main_SetObjdir(const char *fmt, ...)
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		/* if not .CURDIR it must be writable */
 		if ((strcmp(path, curdir) != 0 && access(path, W_OK) != 0) ||
-		    chdir(path)) {
+		    (chdir(path) != 0)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 				      path, strerror(errno));
 		} else {
@@ -1181,9 +1181,9 @@ InitDefSysIncPath(char *syspath)
 	for (start = syspath; *start != '\0'; start = cp) {
 		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 			continue;
-		if (*cp == ':') {
+		if (*cp == ':')
 			*cp++ = '\0';
-		}
+
 		/* look for magic parent directory search string */
 		if (strncmp(".../", start, 4) != 0) {
 			(void)Dir_AddDir(defSysIncPath, start);
@@ -1315,7 +1315,7 @@ CleanUp(void)
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
 
-	Trace_Log(MAKEEND, 0);
+	Trace_Log(MAKEEND, NULL);
 
 	if (enterFlagObj)
 		printf("%s: Leaving directory `%s'\n", progname, objdir);
@@ -1452,9 +1452,9 @@ main(int argc, char **argv)
 	 * Set some other useful macros
 	 */
 	{
-	    char tmp[64], *ep;
+	    char tmp[64], *ep = getenv(MAKE_LEVEL_ENV);
 
-	    makelevel = ((ep = getenv(MAKE_LEVEL_ENV)) && *ep) ? atoi(ep) : 0;
+	    makelevel = ep != NULL && ep[0] != '\0' ? atoi(ep) : 0;
 	    if (makelevel < 0)
 		makelevel = 0;
 	    snprintf(tmp, sizeof tmp, "%d", makelevel);
@@ -1858,7 +1858,7 @@ Fatal(const char *fmt, ...)
 
 	if (DEBUG(GRAPH2) || DEBUG(GRAPH3))
 		Targ_PrintGraph(2);
-	Trace_Log(MAKEERROR, 0);
+	Trace_Log(MAKEERROR, NULL);
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
@@ -1890,7 +1890,7 @@ DieHorribly(void)
 		Job_AbortAll();
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
-	Trace_Log(MAKEERROR, 0);
+	Trace_Log(MAKEERROR, NULL);
 	exit(2);		/* Not 1, so -q can distinguish error */
 }
 
@@ -2032,7 +2032,7 @@ cached_realpath(const char *pathname, char *resolved)
     const char *rp;
     void *freeIt;
 
-    if (!pathname || !pathname[0])
+    if (pathname == NULL || pathname[0] == '\0')
 	return NULL;
 
     cache = get_cached_realpaths();

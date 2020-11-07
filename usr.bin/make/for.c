@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.112 2020/10/31 18:41:07 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.113 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.112 2020/10/31 18:41:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.113 2020/11/07 10:16:18 rillig Exp $");
 
 /* The .for loop substitutes the items as ${:U<value>...}, which means
  * that characters that break this syntax must be backslash-escaped. */
@@ -302,7 +302,7 @@ for_var_len(const char *var)
     size_t len;
 
     var_start = *var;
-    if (var_start == 0)
+    if (var_start == '\0')
 	/* just escape the $ */
 	return 0;
 
@@ -315,7 +315,7 @@ for_var_len(const char *var)
 	return 1;
 
     depth = 1;
-    for (len = 1; (ch = var[len++]) != 0;) {
+    for (len = 1; (ch = var[len++]) != '\0';) {
 	if (ch == var_start)
 	    depth++;
 	else if (ch == var_end && --depth == 0)

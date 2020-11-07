@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.305 2020/11/07 00:06:13 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.306 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.305 2020/11/07 00:06:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.306 2020/11/07 10:16:18 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -852,8 +852,8 @@ JobPrintCommand(Job *job, char *cmd)
 			shutUp = TRUE;
 		}
 		/* If it's a comment line or blank, treat as an ignored error */
-		if ((escCmd[0] == commandShell->commentChar) ||
-		    (escCmd[0] == 0))
+		if (escCmd[0] == commandShell->commentChar ||
+		    (escCmd[0] == '\0'))
 			cmdTemplate = commandShell->errOffOrExecIgnore;
 		else
 			cmdTemplate = commandShell->errExit;
@@ -862,7 +862,7 @@ JobPrintCommand(Job *job, char *cmd)
     }
 
     if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 &&
-	(job->flags & JOB_TRACED) == 0) {
+	!(job->flags & JOB_TRACED)) {
 	    DBPRINTF("set -%s\n", "x");
 	    job->flags |= JOB_TRACED;
     }
@@ -901,7 +901,7 @@ JobPrintCommands(Job *job)
 
 	if (strcmp(cmd, "...") == 0) {
 	    job->node->type |= OP_SAVE_CMDS;
-	    if ((job->flags & JOB_IGNDOTS) == 0) {
+	    if (!(job->flags & JOB_IGNDOTS)) {
 		job->tailCmds = ln->next;
 		break;
 	    }
@@ -974,7 +974,7 @@ JobFinish(Job *job, int status)
 	   job->pid, job->node->name, status);
 
     if ((WIFEXITED(status) &&
-	 (((WEXITSTATUS(status) != 0) && !(job->flags & JOB_IGNERR)))) ||
+	 ((WEXITSTATUS(status) != 0 && !(job->flags & JOB_IGNERR)))) ||
 	WIFSIGNALED(status))
     {
 	/*
@@ -1077,13 +1077,13 @@ JobFinish(Job *job, int status)
 
     Trace_Log(JOBEND, job);
     if (!(job->flags & JOB_SPECIAL)) {
-	if ((status != 0) ||
-		(aborting == ABORT_ERROR) ||
-		(aborting == ABORT_INTERRUPT))
+	if (status != 0 ||
+	    (aborting == ABORT_ERROR) || aborting == ABORT_INTERRUPT)
 	    return_job_token = TRUE;
     }
 
-    if ((aborting != ABORT_ERROR) && (aborting != ABORT_INTERRUPT) && (status == 0)) {
+    if (aborting != ABORT_ERROR && aborting != ABORT_INTERRUPT &&
+	(status == 0)) {
 	/*
 	 * As long as we aren't aborting and the job didn't return a non-zero
 	 * status that we shouldn't ignore, we call Make_Update to update
@@ -1159,7 +1159,7 @@ Job_Touch(GNode *gn, Boolean silent)
 	const char *file = GNode_Path(gn);
 
 	times.actime = times.modtime = now;
-	if (utime(file, &times) < 0){
+	if (utime(file, &times) < 0) {
 	    streamID = open(file, O_RDWR | O_CREAT, 0666);
 
 	    if (streamID >= 0) {
@@ -1170,7 +1170,7 @@ Job_Touch(GNode *gn, Boolean silent)
 		 * modification time, then close the file.
 		 */
 		if (read(streamID, &c, 1) == 1) {
-		    (void)lseek(streamID, (off_t)0, SEEK_SET);
+		    (void)lseek(streamID, 0, SEEK_SET);
 		    while (write(streamID, &c, 1) == -1 && errno == EAGAIN)
 			continue;
 		}
@@ -1211,8 +1211,8 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
      * No commands. Look for .DEFAULT rule from which we might infer
      * commands
      */
-    if ((DEFAULT != NULL) && !Lst_IsEmpty(DEFAULT->commands) &&
-	(gn->type & OP_SPECIAL) == 0) {
+    if (DEFAULT != NULL && !Lst_IsEmpty(DEFAULT->commands) &&
+	!(gn->type & OP_SPECIAL)) {
 	/*
 	 * Make only looks for a .DEFAULT if the node was never the
 	 * target of an operator, so that's what we do too. If
@@ -1337,7 +1337,7 @@ JobExec(Job *job, char **argv)
 	    execDie("dup2", "job->cmdFILE");
 	if (fcntl(0, F_SETFD, 0) == -1)
 	    execDie("fcntl clear close-on-exec", "stdin");
-	if (lseek(0, (off_t)0, SEEK_SET) == -1)
+	if (lseek(0, 0, SEEK_SET) == -1)
 	    execDie("lseek to 0", "stdin");
 
 	if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
@@ -1682,7 +1682,7 @@ JobOutput(Job *job, char *cp, char *endp)
 {
     char *ecp;
 
-    if (commandShell->noPrint && commandShell->noPrint[0] != '\0') {
+    if (commandShell->noPrint != NULL && commandShell->noPrint[0] != '\0') {
 	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
@@ -1779,7 +1779,7 @@ end_loop:
      * output remaining in the buffer.
      * Also clear the 'finish' flag so we stop looping.
      */
-    if ((nr == 0) && (job->curPos != 0)) {
+    if (nr == 0 && job->curPos != 0) {
 	job->outBuf[job->curPos] = '\n';
 	nr = 1;
 	finish = FALSE;
@@ -2496,7 +2496,7 @@ JobInterrupt(int runINTERRUPT, int signo)
 	    JobRun(interrupt);
 	}
     }
-    Trace_Log(MAKEINTR, 0);
+    Trace_Log(MAKEINTR, NULL);
     exit(signo);
 }
 
@@ -2843,7 +2843,7 @@ emul_poll(struct pollfd *fd, int nfd, int timeout)
 	tvp = &tv;
     }
 
-    nselect = select(maxfd + 1, &rfds, &wfds, 0, tvp);
+    nselect = select(maxfd + 1, &rfds, &wfds, NULL, tvp);
 
     if (nselect <= 0)
 	return nselect;

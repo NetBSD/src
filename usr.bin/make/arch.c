@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.155 2020/11/06 23:59:21 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.156 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.155 2020/11/06 23:59:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.156 2020/11/07 10:16:18 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -335,7 +335,8 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 	     */
 	    buf = sacrifice = str_concat4(libName, "(", memName, ")");
 
-	    if (strchr(memName, '$') && strcmp(memName, oldMemName) == 0) {
+	    if (strchr(memName, '$') != NULL &&
+		strcmp(memName, oldMemName) == 0) {
 		/*
 		 * Must contain dynamic sources, so we can't deal with it now.
 		 * Just create an ARCHV node for the thing and let
@@ -490,8 +491,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * We use the ARMAG string to make sure this is an archive we
      * can handle...
      */
-    if ((fread(magic, SARMAG, 1, arch) != 1) ||
-	(strncmp(magic, ARMAG, SARMAG) != 0)) {
+    if (fread(magic, SARMAG, 1, arch) != 1 ||
+	strncmp(magic, ARMAG, SARMAG) != 0) {
 	fclose(arch);
 	return NULL;
     }
@@ -721,8 +722,8 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
      * We use the ARMAG string to make sure this is an archive we
      * can handle...
      */
-    if ((fread(magic, SARMAG, 1, arch) != 1) ||
-	(strncmp(magic, ARMAG, SARMAG) != 0)) {
+    if (fread(magic, SARMAG, 1, arch) != 1 ||
+	strncmp(magic, ARMAG, SARMAG) != 0) {
 	fclose(arch);
 	return NULL;
     }

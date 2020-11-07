@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.177 2020/11/06 22:39:10 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.178 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.177 2020/11/06 22:39:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.178 2020/11/07 10:16:18 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -230,7 +230,7 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
     paren_depth = 0;
     for (;;) {
 	char ch = *p;
-	if (ch == 0 || ch == ' ' || ch == '\t')
+	if (ch == '\0' || ch == ' ' || ch == '\t')
 	    break;
 	if ((ch == '&' || ch == '|') && paren_depth == 0)
 	    break;
@@ -381,13 +381,13 @@ is_separator(char ch)
  *
  * Results:
  *	Returns the string, absent any quotes, or NULL on error.
- *	Sets quoted if the string was quoted.
- *	Sets freeIt if needed.
+ *	Sets out_quoted if the string was quoted.
+ *	Sets out_freeIt.
  */
 /* coverity:[+alloc : arg-*4] */
 static const char *
 CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
-		  Boolean *quoted, void **freeIt)
+		  Boolean *out_quoted, void **out_freeIt)
 {
     Buffer buf;
     const char *str;
@@ -400,12 +400,12 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 
     Buf_Init(&buf, 0);
     str = NULL;
-    *freeIt = NULL;
-    *quoted = qt = par->p[0] == '"' ? 1 : 0;
+    *out_freeIt = NULL;
+    *out_quoted = qt = par->p[0] == '"';
     start = par->p;
     if (qt)
 	par->p++;
-    while (par->p[0] && str == NULL) {
+    while (par->p[0] != '\0' && str == NULL) {
 	switch (par->p[0]) {
 	case '\\':
 	    par->p++;
@@ -441,14 +441,14 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	    nested_p = par->p;
 	    atStart = nested_p == start;
 	    parseResult = Var_Parse(&nested_p, VAR_CMDLINE, eflags, &str,
-				    freeIt);
+				    out_freeIt);
 	    /* TODO: handle errors */
 	    if (str == var_Error) {
 		if (parseResult & VPR_ANY_MSG)
 		    par->printedError = TRUE;
-		if (*freeIt) {
-		    free(*freeIt);
-		    *freeIt = NULL;
+		if (*out_freeIt) {
+		    free(*out_freeIt);
+		    *out_freeIt = NULL;
 		}
 		/*
 		 * Even if !doEval, we still report syntax errors, which
@@ -469,18 +469,18 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		goto cleanup;
 
 	    Buf_AddStr(&buf, str);
-	    if (*freeIt) {
-		free(*freeIt);
-		*freeIt = NULL;
+	    if (*out_freeIt) {
+		free(*out_freeIt);
+		*out_freeIt = NULL;
 	    }
 	    str = NULL;		/* not finished yet */
 	    continue;
 	default:
 	    if (strictLHS && !qt && *start != '$' && !ch_isdigit(*start)) {
 		/* lhs must be quoted, a variable reference or number */
-		if (*freeIt) {
-		    free(*freeIt);
-		    *freeIt = NULL;
+		if (*out_freeIt) {
+		    free(*out_freeIt);
+		    *out_freeIt = NULL;
 		}
 		str = NULL;
 		goto cleanup;
@@ -491,8 +491,8 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	}
     }
 got_str:
-    *freeIt = Buf_GetAll(&buf, NULL);
-    str = *freeIt;
+    *out_freeIt = Buf_GetAll(&buf, NULL);
+    str = *out_freeIt;
 cleanup:
     Buf_Destroy(&buf, FALSE);
     return str;
@@ -539,7 +539,7 @@ EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
 
     /* For .if ${...} check for non-empty string (defProc is ifdef). */
     if (par->if_info->form[0] == '\0')
-	return lhs[0] != 0;
+	return lhs[0] != '\0';
 
     /* Otherwise action default test ... */
     return If_Eval(par->if_info, lhs, strlen(lhs));
@@ -766,7 +766,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
 
     /* Push anything numeric through the compare expression */
     cp = par->p;
-    if (ch_isdigit(cp[0]) || strchr("+-", cp[0]))
+    if (ch_isdigit(cp[0]) || strchr("+-", cp[0]) != NULL)
 	return CondParser_Comparison(par, doEval);
 
     /*
@@ -1017,7 +1017,7 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
     if (info == NULL && (info = dflt_info) == NULL) {
 	/* Scan for the entry for .if - it can't be first */
 	for (info = ifs;; info++)
-	    if (info->form[0] == 0)
+	    if (info->form[0] == '\0')
 		break;
 	dflt_info = info;
     }
@@ -1083,7 +1083,7 @@ Cond_EvalLine(const char *line)
     Boolean value;
     enum if_states state;
 
-    if (!cond_state) {
+    if (cond_state == NULL) {
 	cond_state = bmake_malloc(max_if_depth * sizeof *cond_state);
 	cond_state[0] = IF_ACTIVE;
     }
@@ -1139,8 +1139,7 @@ Cond_EvalLine(const char *line)
 	isElif = FALSE;
 
     if (line[0] != 'i' || line[1] != 'f')
-	/* Not an ifxxx or elifxxx line */
-	return COND_INVALID;
+	return COND_INVALID;	/* Not an ifxxx or elifxxx line */
 
     /*
      * Figure out what sort of conditional it is -- what its default
