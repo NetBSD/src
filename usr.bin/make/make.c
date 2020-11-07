@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.187 2020/11/07 10:16:18 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.188 2020/11/07 21:22:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.187 2020/11/07 10:16:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.188 2020/11/07 21:22:37 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -215,11 +215,10 @@ Make_OODate(GNode *gn)
     if (!(gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 	(void)Dir_MTime(gn, 1);
 	if (DEBUG(MAKE)) {
-	    if (gn->mtime != 0) {
+	    if (gn->mtime != 0)
 		debug_printf("modified %s...", Targ_FmtTime(gn->mtime));
-	    } else {
+	    else
 		debug_printf("non-existent...");
-	    }
 	}
     }
 
@@ -244,8 +243,7 @@ Make_OODate(GNode *gn)
 	 */
 	DEBUG0(MAKE, ".USE node...");
 	oodate = FALSE;
-    } else if ((gn->type & OP_LIB) &&
-	       ((gn->mtime==0) || Arch_IsLib(gn))) {
+    } else if ((gn->type & OP_LIB) && (gn->mtime == 0 || Arch_IsLib(gn))) {
 	DEBUG0(MAKE, "library...");
 
 	/*
@@ -1353,9 +1351,9 @@ Make_Run(GNodeList *targs)
 	MakePrintStatusList(targs, &errors);
 	if (DEBUG(MAKE)) {
 	    debug_printf("done: errors %d\n", errors);
-	    if (errors != 0)
+	    if (errors > 0)
 		Targ_PrintGraph(4);
 	}
     }
-    return errors != 0;
+    return errors > 0;
 }
