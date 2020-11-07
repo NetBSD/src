@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.184 2020/11/07 20:35:04 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.185 2020/11/07 20:39:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.184 2020/11/07 20:35:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.185 2020/11/07 20:39:56 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -622,43 +622,34 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 {
     Token t = TOK_ERROR;
     const char *lhs, *op, *rhs;
-    void *lhsFree, *rhsFree;
+    void *lhs_freeIt, *rhs_freeIt;
     Boolean lhsQuoted, rhsQuoted;
-
-    rhs = NULL;
-    lhsFree = rhsFree = NULL;
-    lhsQuoted = rhsQuoted = FALSE;
 
     /*
      * Parse the variable spec and skip over it, saving its
      * value in lhs.
      */
-    lhs = CondParser_String(par, doEval, lhsStrict, &lhsQuoted, &lhsFree);
-    if (!lhs)
-	goto done;
+    lhs = CondParser_String(par, doEval, lhsStrict, &lhsQuoted, &lhs_freeIt);
+    if (lhs == NULL)
+	goto done_lhs;
 
     CondParser_SkipWhitespace(par);
 
-    /*
-     * Make sure the operator is a valid one. If it isn't a
-     * known relational operator, pretend we got a
-     * != 0 comparison.
-     */
     op = par->p;
     switch (par->p[0]) {
     case '!':
     case '=':
     case '<':
     case '>':
-	if (par->p[1] == '=') {
+	if (par->p[1] == '=')
 	    par->p += 2;
-	} else {
+	else
 	    par->p++;
-	}
 	break;
     default:
-	t = doEval ? EvalNotEmpty(par, lhs, lhsQuoted) : TOK_FALSE;
-	goto done;
+	/* Unknown operator, compare against an empty string or 0. */
+	t = ToToken(doEval && EvalNotEmpty(par, lhs, lhsQuoted));
+	goto done_lhs;
     }
 
     CondParser_SkipWhitespace(par);
@@ -666,23 +657,24 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
     if (par->p[0] == '\0') {
 	Parse_Error(PARSE_WARNING, "Missing right-hand-side of operator");
 	/* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
-	goto done;
+	goto done_lhs;
     }
 
-    rhs = CondParser_String(par, doEval, FALSE, &rhsQuoted, &rhsFree);
+    rhs = CondParser_String(par, doEval, FALSE, &rhsQuoted, &rhs_freeIt);
     if (rhs == NULL)
-	goto done;
+	goto done_rhs;
 
     if (!doEval) {
 	t = TOK_FALSE;
-	goto done;
+	goto done_rhs;
     }
 
     t = EvalCompare(lhs, lhsQuoted, op, rhs, rhsQuoted);
 
-done:
-    free(lhsFree);
-    free(rhsFree);
+done_rhs:
+    free(rhs_freeIt);
+done_lhs:
+    free(lhs_freeIt);
     return t;
 }
 
