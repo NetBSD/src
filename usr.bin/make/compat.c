@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.177 2020/11/07 14:18:25 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.178 2020/11/07 14:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.177 2020/11/07 14:18:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.178 2020/11/07 14:27:16 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -278,9 +278,9 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
      * If we're not supposed to execute any commands, this is as far as
      * we go...
      */
-    if (!doIt && !GNode_ShouldExecute(gn)) {
+    if (!doIt && !GNode_ShouldExecute(gn))
 	return 0;
-    }
+
     DEBUG1(JOB, "Execute: '%s'\n", cmd);
 
     if (useShell) {
@@ -289,20 +289,13 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	 * because the command contains a "meta" character.
 	 */
 	static const char *shargv[5];
-	int shargc;
 
-	shargc = 0;
+	/* The following work for any of the builtin shell specs. */
+	int shargc = 0;
 	shargv[shargc++] = shellPath;
-	/*
-	 * The following work for any of the builtin shell specs.
-	 */
-	if (errCheck && shellErrFlag) {
+	if (errCheck && shellErrFlag)
 	    shargv[shargc++] = shellErrFlag;
-	}
-	if (DEBUG(SHELL))
-		shargv[shargc++] = "-xc";
-	else
-		shargv[shargc++] = "-c";
+	shargv[shargc++] = DEBUG(SHELL) ? "-xc" : "-c";
 	shargv[shargc++] = cmd;
 	shargv[shargc] = NULL;
 	av = shargv;
@@ -381,17 +374,19 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 #endif
 	if (status != 0) {
 	    if (DEBUG(ERROR)) {
-		const char *cp;
+		const char *p = cmd;
 		debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
 			     gn->name);
-		for (cp = cmd; *cp; ) {
-		    if (ch_isspace(*cp)) {
+
+		/* Replace runs of whitespace with a single space, to reduce
+		 * the amount of whitespace for multi-line command lines. */
+		while (*p != '\0') {
+		    if (ch_isspace(*p)) {
 			debug_printf(" ");
-			while (ch_isspace(*cp))
-			    cp++;
+			cpp_skip_whitespace(&p);
 		    } else {
-			debug_printf("%c", *cp);
-			cp++;
+			debug_printf("%c", *p);
+			p++;
 		    }
 		}
 		debug_printf("\n");
