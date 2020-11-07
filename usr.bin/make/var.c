@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.674 2020/11/07 21:31:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.675 2020/11/07 22:28:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.674 2020/11/07 21:31:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.675 2020/11/07 22:28:24 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -261,6 +261,7 @@ typedef enum VarExportedMode {
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
 typedef enum VarExportFlags {
+    VAR_EXPORT_NORMAL = 0,
     /*
      * We pass this to Var_Export when doing the initial export
      * or after updating an exported var.
@@ -597,7 +598,7 @@ Var_ExportVars(void)
 	HashIter_Init(&hi, &VAR_GLOBAL->context);
 	while (HashIter_Next(&hi) != NULL) {
 	    Var *var = hi.entry->value;
-	    Var_Export1(var->name, 0);
+	    Var_Export1(var->name, VAR_EXPORT_NORMAL);
 	}
 	return;
     }
@@ -609,7 +610,7 @@ Var_ExportVars(void)
 	size_t i;
 
 	for (i = 0; i < words.len; i++)
-	    Var_Export1(words.words[i], 0);
+	    Var_Export1(words.words[i], VAR_EXPORT_NORMAL);
 	Words_Free(words);
     }
     free(val);
