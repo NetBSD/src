@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.159 2020/11/07 12:47:16 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.160 2020/11/07 12:54:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,16 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.159 2020/11/07 12:47:16 rillig Exp $");
-
-#ifdef TARGET_MACHINE
-#undef MAKE_MACHINE
-#define MAKE_MACHINE TARGET_MACHINE
-#endif
-#ifdef TARGET_MACHINE_ARCH
-#undef MAKE_MACHINE_ARCH
-#define MAKE_MACHINE_ARCH TARGET_MACHINE_ARCH
-#endif
+MAKE_RCSID("$NetBSD: arch.c,v 1.160 2020/11/07 12:54:44 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
