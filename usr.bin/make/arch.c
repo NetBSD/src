@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.162 2020/11/07 13:03:58 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.163 2020/11/07 13:09:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.162 2020/11/07 13:03:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.163 2020/11/07 13:09:13 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -276,7 +276,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 	 * so it's better to return failure than allow such things to happen
 	 */
 	if (*cp == '\0') {
-	    printf("No closing parenthesis in archive specification\n");
+	    Parse_Error(PARSE_FATAL, "No closing parenthesis in archive specification");
 	    return FALSE;
 	}
 
