@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.669 2020/11/06 23:11:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.670 2020/11/07 00:02:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.669 2020/11/06 23:11:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.670 2020/11/07 00:02:54 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -434,7 +434,7 @@ VarFreeEnv(Var *v, Boolean freeValue)
 /* Add a new variable of the given name and value to the given context.
  * The name and val arguments are duplicated so they may safely be freed. */
 static void
-VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
+VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
     HashEntry *he = HashTable_CreateEntry(&ctxt->context, name, NULL);
     Var *v = VarNew(he->key /* aliased */, NULL, val,
@@ -768,7 +768,7 @@ Var_UnExport(const char *str)
 /* See Var_Set for documentation. */
 void
 Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
-		   VarSet_Flags flags)
+		   VarSetFlags flags)
 {
     const char *unexpanded_name = name;
     char *name_freeIt = NULL;

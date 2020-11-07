@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.151 2020/11/06 23:59:21 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.152 2020/11/07 00:02:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -229,7 +229,7 @@ typedef enum VarSet_Flags {
     /* Make the variable read-only. No further modification is possible,
      * except for another call to Var_Set with the same flag. */
     VAR_SET_READONLY	= 0x02
-} VarSet_Flags;
+} VarSetFlags;
 
 /* The state of error handling returned by Var_Parse.
  *
@@ -288,7 +288,7 @@ typedef enum VarParseResult {
 
 void Var_Delete(const char *, GNode *);
 void Var_Set(const char *, const char *, GNode *);
-void Var_Set_with_flags(const char *, const char *, GNode *, VarSet_Flags);
+void Var_Set_with_flags(const char *, const char *, GNode *, VarSetFlags);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 const char *Var_Value(const char *, GNode *, void **);
