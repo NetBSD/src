@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.196 2020/11/06 22:39:10 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.197 2020/11/07 10:44:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -739,6 +739,13 @@ static inline MAKE_ATTR_UNUSED void
 pp_skip_whitespace(char **pp)
 {
     while (ch_isspace(**pp))
+	(*pp)++;
+}
+
+static inline MAKE_ATTR_UNUSED void
+pp_skip_hspace(char **pp)
+{
+    while (**pp == ' ' || **pp == '\t')
 	(*pp)++;
 }
 

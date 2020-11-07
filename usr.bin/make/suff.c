@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.231 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.232 2020/11/07 10:44:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.231 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.232 2020/11/07 10:44:53 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1166,15 +1166,15 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 	    /*
 	     * Break the result into a vector of strings whose nodes
 	     * we can find, then add those nodes to the members list.
-	     * Unfortunately, we can't use brk_string b/c it
+	     * Unfortunately, we can't use brk_string because it
 	     * doesn't understand about variable specifications with
 	     * spaces in them...
 	     */
 	    char	    *start;
 	    char	    *initcp = cp;   /* For freeing... */
 
-	    for (start = cp; *start == ' ' || *start == '\t'; start++)
-		continue;
+	    start = cp;
+	    pp_skip_hspace(&start);
 	    cp = start;
 	    while (*cp != '\0') {
 		if (*cp == ' ' || *cp == '\t') {
@@ -1185,9 +1185,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 		    *cp++ = '\0';
 		    gn = Targ_GetNode(start);
 		    Lst_Append(members, gn);
-		    while (*cp == ' ' || *cp == '\t') {
-			cp++;
-		    }
+		    pp_skip_hspace(&cp);
 		    start = cp;		/* Continue at the next non-space. */
 		} else if (*cp == '$') {
 		    /*
