@@ -1,7 +1,7 @@
-# $NetBSD: archive-suffix.mk,v 1.1 2020/08/29 14:47:26 rillig Exp $
+# $NetBSD: archive-suffix.mk,v 1.2 2020/11/07 00:07:02 rillig Exp $
 #
 # Between 2020-08-23 and 2020-08-30, the below code produced an assertion
-# failure in Var_Set_with_flags, triggered by Compat_Make, when setting the
+# failure in Var_SetWithFlags, triggered by Compat_Make, when setting the
 # .IMPSRC of an archive node to its .TARGET.
 #
 # The code assumed that the .TARGET variable of every node would be set, but
