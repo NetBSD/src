@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.435 2020/11/07 14:11:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.436 2020/11/07 21:40:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.435 2020/11/07 14:11:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.436 2020/11/07 21:40:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1548,7 +1548,7 @@ main(int argc, char **argv)
 	if (!opts.noBuiltins)
 		ReadBuiltinRules();
 	ReadMakefiles();
-	
+
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || !opts.printVars) {
 	    /* ignore /dev/null and anything starting with "no" */
