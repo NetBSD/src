@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.65 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.66 2020/11/07 22:29:58 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.65 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.66 2020/11/07 22:29:58 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -371,14 +371,14 @@ vsnprintf(char *s, size_t n, const char *fmt, va_list args)
 	 * We cast to void * to make everyone happy.
 	 */
 	fakebuf._ptr = (void *)s;
-	fakebuf._cnt = n-1;
+	fakebuf._cnt = n - 1;
 	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);
 	fakebuf._cnt++;
 	putc('\0', &fakebuf);
-	if (fakebuf._cnt<0)
+	if (fakebuf._cnt < 0)
 	    fakebuf._cnt = 0;
-	return n-fakebuf._cnt-1;
+	return n - fakebuf._cnt - 1;
 #else
 	(void)vsprintf(s, fmt, args);
 	return strlen(s);
