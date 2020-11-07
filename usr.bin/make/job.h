@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.58 2020/10/26 21:34:10 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.59 2020/11/07 20:03:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,17 +125,18 @@ typedef enum JobState {
 } JobState;
 
 typedef enum JobFlags {
+    JOB_NONE	= 0,
     /* Ignore non-zero exits */
-    JOB_IGNERR =	0x001,
+    JOB_IGNERR	= 1 << 0,
     /* no output */
-    JOB_SILENT =	0x002,
+    JOB_SILENT	= 1 << 1,
     /* Target is a special one. i.e. run it locally
      * if we can't export it and maxLocal is 0 */
-    JOB_SPECIAL =	0x004,
+    JOB_SPECIAL	= 1 << 2,
     /* Ignore "..." lines when processing commands */
-    JOB_IGNDOTS	=	0x008,
+    JOB_IGNDOTS	= 1 << 3,
     /* we've sent 'set -x' */
-    JOB_TRACED =	0x400
+    JOB_TRACED	= 1 << 10
 } JobFlags;
 
 /* A Job manages the shell commands that are run to create a single target.
