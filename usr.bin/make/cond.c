@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.182 2020/11/07 20:11:32 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.183 2020/11/07 20:14:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.182 2020/11/07 20:11:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.183 2020/11/07 20:14:15 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -171,6 +171,12 @@ static int
 is_token(const char *str, const char *tok, size_t len)
 {
     return strncmp(str, tok, len) == 0 && !ch_isalpha(str[len]);
+}
+
+static Token
+ToToken(Boolean cond)
+{
+    return cond ? TOK_TRUE : TOK_FALSE;
 }
 
 /* Push back the most recent token read. We only need one level of this. */
@@ -524,7 +530,7 @@ If_Eval(const struct If *if_info, const char *arg, size_t arglen)
 
 /* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
  * ".if 0". */
-static Token
+static Boolean
 EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
 {
     double left;
@@ -558,18 +564,18 @@ EvalCompareNum(double lhs, const char *op, double rhs)
 	    /* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	    return TOK_ERROR;
 	}
-	return lhs != rhs;
+	return ToToken(lhs != rhs);
     case '=':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
 	    /* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	    return TOK_ERROR;
 	}
-	return lhs == rhs;
+	return ToToken(lhs == rhs);
     case '<':
-	return op[1] == '=' ? lhs <= rhs : lhs < rhs;
+	return ToToken(op[1] == '=' ? lhs <= rhs : lhs < rhs);
     case '>':
-	return op[1] == '=' ? lhs >= rhs : lhs > rhs;
+	return ToToken(op[1] == '=' ? lhs >= rhs : lhs > rhs);
     }
     return TOK_ERROR;
 }
@@ -585,7 +591,7 @@ EvalCompareStr(const char *lhs, const char *op, const char *rhs)
     }
 
     DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n", lhs, rhs, op);
-    return (*op == '=') == (strcmp(lhs, rhs) == 0);
+    return ToToken((*op == '=') == (strcmp(lhs, rhs) == 0));
 }
 
 /* Evaluate a comparison, such as "${VAR} == 12345". */
@@ -690,7 +696,7 @@ ParseEmptyArg(const char **pp, Boolean doEval,
     *out_arg = NULL;
 
     (*pp)--;			/* Make (*pp)[1] point to the '('. */
-    (void)Var_Parse(pp, VAR_CMDLINE, doEval ? VARE_WANTRES : 0,
+    (void)Var_Parse(pp, VAR_CMDLINE, doEval ? VARE_WANTRES : VARE_NONE,
 		    &val, &val_freeIt);
     /* TODO: handle errors */
     /* If successful, *pp points beyond the closing ')' now. */
@@ -1008,7 +1014,7 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 {
     static const struct If *dflt_info;
     CondParser par;
-    int rval;
+    CondEvalResult rval;
 
     lhsStrict = strictLHS;
 
