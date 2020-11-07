@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.157 2020/11/07 11:36:49 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.158 2020/11/07 12:34:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.157 2020/11/07 11:36:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.158 2020/11/07 12:34:49 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -675,6 +675,23 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 #endif
 
 
+static Boolean
+ArchiveMember_HasName(const struct ar_hdr *hdr,
+		      const char *name, size_t namelen)
+{
+    const size_t ar_name_len = sizeof hdr->ar_name;
+    const char *ar_name = hdr->ar_name;
+
+    if (strncmp(ar_name, name, namelen) != 0)
+	return FALSE;
+
+    if (namelen >= ar_name_len)
+	return namelen == ar_name_len;
+
+    /* hdr->ar_name is space-padded to the right. */
+    return ar_name[namelen] == ' ';
+}
+
 /* Locate a member of an archive, given the path of the archive and the path
  * of the desired member.
  *
@@ -739,24 +756,14 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	    return NULL;
 	}
 
-	if (strncmp(member, out_arh->ar_name, tlen) == 0) {
+	if (ArchiveMember_HasName(out_arh, member, len)) {
 	    /*
-	     * If the member's name doesn't take up the entire 'name' field,
-	     * we have to be careful of matching prefixes. Names are space-
-	     * padded to the right, so if the character in 'name' at the end
-	     * of the matched string is anything but a space, this isn't the
-	     * member we sought.
-	     */
-	    if (tlen != sizeof out_arh->ar_name &&
-		out_arh->ar_name[tlen] != ' ')
-		goto skip;
-
-	    /*
-	     * To make life easier, we reposition the file at the start
+	     * To make life easier for callers that want to update the
+	     * archive, we reposition the file at the start
 	     * of the header we just read before we return the stream.
 	     * In a more general situation, it might be better to leave
 	     * the file at the actual member, rather than its header, but
-	     * not here...
+	     * not here.
 	     */
 	    if (fseek(arch, -(long)sizeof *out_arh, SEEK_CUR) != 0) {
 		fclose(arch);
@@ -804,7 +811,6 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	}
 #endif
 
-skip:
 	/*
 	 * This isn't the member we're after, so we need to advance the
 	 * stream's pointer to the start of the next header. Files are
@@ -820,10 +826,6 @@ skip:
 	}
     }
 
-    /*
-     * We've looked everywhere, but the member is not to be found. Close the
-     * archive and return NULL -- an error.
-     */
     fclose(arch);
     return NULL;
 }
