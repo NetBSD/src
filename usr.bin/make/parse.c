@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.431 2020/11/07 22:26:42 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.432 2020/11/07 23:41:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.431 2020/11/07 22:26:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.432 2020/11/07 23:41:38 rillig Exp $");
 
 /* types and constants */
 
@@ -2031,36 +2031,41 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
 }
 
 
-/*
- * ParseMaybeSubMake --
- *	Scan the command string to see if it a possible submake node
- * Input:
- *	cmd		the command to scan
- * Results:
- *	TRUE if the command is possibly a submake, FALSE if not.
- */
+/* See if the command possibly calls a sub-make by using the variable
+ * expressions ${.MAKE}, ${MAKE} or the plain word "make". */
 static Boolean
-ParseMaybeSubMake(const char *cmd)
+MaybeSubMake(const char *cmd)
 {
-    size_t i;
-    static struct {
-	const char *name;
-	size_t len;
-    } vals[] = {
-#define MKV(A)	{	A, sizeof (A) - 1	}
-	MKV("${MAKE}"),
-	MKV("${.MAKE}"),
-	MKV("$(MAKE)"),
-	MKV("$(.MAKE)"),
-	MKV("make"),
-    };
-    for (i = 0; i < sizeof vals / sizeof vals[0]; i++) {
-	char *ptr;
-	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
+    const char *start;
+
+    for (start = cmd; *start != '\0'; start++) {
+	const char *p = start;
+	char endc;
+
+	/* XXX: What if progname != "make"? */
+	if (p[0] == 'm' && p[1] == 'a' && p[2] == 'k' && p[3] == 'e')
+	    if (start == cmd || !ch_isalnum(p[-1]))
+		if (!ch_isalnum(p[4]))
+		    return TRUE;
+
+	if (*p != '$')
 	    continue;
-	if ((ptr == cmd || !ch_isalnum(ptr[-1]))
-	    && !ch_isalnum(ptr[vals[i].len]))
-	    return TRUE;
+	p++;
+
+	if (*p == '{')
+	    endc = '}';
+	else if (*p == '(')
+	    endc = ')';
+	else
+	    continue;
+	p++;
+
+	if (*p == '.')		/* Accept either ${.MAKE} or ${MAKE}. */
+	    p++;
+
+	if (p[0] == 'M' && p[1] == 'A' && p[2] == 'K' && p[3] == 'E')
+	    if (p[4] == endc)
+		return TRUE;
     }
     return FALSE;
 }
@@ -2079,7 +2084,7 @@ ParseAddCmd(GNode *gn, char *cmd)
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
 	Lst_Append(gn->commands, cmd);
-	if (ParseMaybeSubMake(cmd))
+	if (MaybeSubMake(cmd))
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
