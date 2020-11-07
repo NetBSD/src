@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.165 2020/11/07 13:21:57 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.166 2020/11/07 13:24:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.165 2020/11/07 13:21:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.166 2020/11/07 13:24:06 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -446,9 +446,9 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 
     if (!addToCache) {
 	/*
-	 * Caller doesn't want the thing hashed, just use ArchFindMember
+	 * Caller doesn't want the thing cached, just use ArchFindMember
 	 * to read the header for the member out and close down the stream
-	 * again. Since the archive is not to be hashed, we assume there's
+	 * again. Since the archive is not to be cached, we assume there's
 	 * no need to allocate extra room for the header we're returning,
 	 * so just declare it static.
 	 */
