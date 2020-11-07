@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.138 2020/11/05 17:27:16 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.139 2020/11/07 10:16:19 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -92,7 +92,7 @@ extern char    **environ;
 #endif
 
 #if !defined(HAVE_STRSEP)
-# define strsep(s, d) stresep((s), (d), 0)
+# define strsep(s, d) stresep((s), (d), '\0')
 #endif
 
 /*
@@ -336,7 +336,7 @@ is_submake(void *cmdp, void *gnp)
 	cmd = mp;
     }
     cp2 = strstr(cmd, p_make);
-    if ((cp2)) {
+    if (cp2 != NULL) {
 	switch (cp2[p_len]) {
 	case '\0':
 	case ' ':
@@ -795,7 +795,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
     }
     getcwd(cwd, sizeof cwd);
     Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL);
-    if (pbm->meta_fname[0]) {
+    if (pbm->meta_fname[0] != '\0') {
 	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL);
     }
     meta_job_finish(job);
@@ -846,7 +846,7 @@ meta_cmd_finish(void *pbmp)
     int x;
 #endif
 
-    if (!pbm)
+    if (pbm == NULL)
 	pbm = &Mybm;
 
 #ifdef USE_FILEMON
@@ -1532,10 +1532,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (buf[x - 1] == '\n')
 			    buf[x - 1] = '\0';
 		    }
-		    if (p &&
+		    if (p != NULL &&
 			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
-			strcmp(p, cmd) != 0) {
+			(strcmp(p, cmd) != 0)) {
 			DEBUG4(META, "%s: %d: a build command has changed\n%s\nvs\n%s\n",
 			       fname, lineno, p, cmd);
 			if (!metaIgnoreCMDs)

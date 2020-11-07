@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.42 2020/10/24 20:51:49 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.43 2020/11/07 10:16:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.42 2020/10/24 20:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.43 2020/11/07 10:16:18 rillig Exp $");
 
 /* Make space in the buffer for adding a single byte. */
 void
@@ -160,7 +160,7 @@ Buf_Empty(Buffer *buf)
 void
 Buf_Init(Buffer *buf, size_t cap)
 {
-    if (cap <= 0)
+    if (cap == 0)
 	cap = 256;
     buf->cap = cap;
     buf->len = 0;
