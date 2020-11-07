@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.161 2020/11/07 12:58:55 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.162 2020/11/07 13:03:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.161 2020/11/07 12:58:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.162 2020/11/07 13:03:58 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -191,12 +191,12 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
     char *libName_freeIt = NULL;
     char *memName;		/* Member-part of specification */
     char saveChar;		/* Ending delimiter of member-name */
-    Boolean subLibName;		/* TRUE if libName should have/had
-				 * variable substitution performed on it */
+    Boolean expandLibName;	/* Whether the parsed libName contains
+				 * variable expressions that need to be
+				 * expanded */
 
     libName = *pp;
-
-    subLibName = FALSE;
+    expandLibName = FALSE;
 
     for (cp = libName; *cp != '(' && *cp != '\0';) {
 	if (*cp == '$') {
@@ -218,14 +218,14 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 	    if (isError)
 		return FALSE;
 
-	    subLibName = TRUE;
+	    expandLibName = TRUE;
 	    cp += nested_p - cp;
 	} else
 	    cp++;
     }
 
     *cp++ = '\0';
-    if (subLibName) {
+    if (expandLibName) {
 	(void)Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES, &libName);
 	/* TODO: handle errors */
 	libName_freeIt = libName;
