@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2020/10/30 08:41:58 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2020/11/08 21:56:47 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -45,8 +45,8 @@ CPPFLAGS+=	-DNO_IPV6
 # SQLite support.
 CPPFLAGS+=	-DHAS_SQLITE
 . if defined(PROG)
-DPADD+=		${LIBSQLITE3} ${LIBM}
-LDADD+=		-lsqlite3 -lm
+DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBPTHREAD}
+LDADD+=		-lsqlite3 -lm -lpthread
 .endif
 
 # LDAP support.
