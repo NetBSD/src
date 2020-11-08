@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.310 2020/11/07 21:24:33 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.311 2020/11/08 00:54:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.310 2020/11/07 21:24:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.311 2020/11/08 00:54:06 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1279,7 +1279,7 @@ JobExec(Job *job, char **argv)
     if (DEBUG(JOB)) {
 	int i;
 
-	debug_printf("Running %s %sly\n", job->node->name, "local");
+	debug_printf("Running %s\n", job->node->name);
 	debug_printf("\tCommand: ");
 	for (i = 0; argv[i] != NULL; i++) {
 	    debug_printf("%s ", argv[i]);
