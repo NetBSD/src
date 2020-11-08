@@ -1,4 +1,4 @@
-# $NetBSD: directive-ifmake.mk,v 1.5 2020/11/06 20:29:35 rillig Exp $
+# $NetBSD: directive-ifmake.mk,v 1.6 2020/11/08 22:45:51 rillig Exp $
 #
 # Tests for the .ifmake directive, which provides a shortcut for asking
 # whether a certain target is requested to be made from the command line.
@@ -49,6 +49,16 @@
 .  info Targets can even be added at parse time.
 .else
 .  info No, targets cannot be added at parse time anymore.
+.endif
+
+# Numbers are interpreted as numbers, no matter whether the directive is
+# a plain .if or an .ifmake.
+.ifmake 0
+.  error
+.endif
+.ifmake 1
+.else
+.  error
 .endif
 
 first second unmentioned late-target:
