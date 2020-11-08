@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.201 2020/11/08 09:34:55 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.202 2020/11/08 11:57:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.201 2020/11/08 09:34:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.202 2020/11/08 11:57:49 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -588,6 +588,9 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
     const char *dirName = dir->name;
     Boolean isDot = dirName[0] == '.' && dirName[1] == '\0';
     HashIter hi;
+
+    /* XXX: Iterating over all hash entries is inefficient.  If the pattern
+     * is a plain string without any wildcards, a direct lookup is faster. */
 
     HashIter_Init(&hi, &dir->files);
     while (HashIter_Next(&hi) != NULL) {
