@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.172 2020/11/08 08:33:07 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.173 2020/11/08 09:06:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,7 +98,7 @@
  *			placed in the member's GNode. Returns the
  *			modification time.
  *
- *	Arch_MemberMTime
+ *	Arch_UpdateMemberMTime
  *			Find the modification time of a member of
  *			an archive. Called when the member doesn't
  *			already exist. Looks in the archive for the
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.172 2020/11/08 08:33:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.173 2020/11/08 09:06:22 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -906,10 +906,10 @@ Arch_MTime(GNode *gn)
     return modTime;
 }
 
-/* Given a non-existent archive member's node, get its modification time from
- * its archived form, if it exists. gn->mtime is filled in as well. */
-time_t
-Arch_MemberMTime(GNode *gn)
+/* Given a non-existent archive member's node, update gn->mtime from its
+ * archived form, if it exists. */
+void
+Arch_UpdateMemberMTime(GNode *gn)
 {
     GNodeListNode *ln;
 
@@ -941,8 +941,6 @@ Arch_MemberMTime(GNode *gn)
 	    break;
 	}
     }
-
-    return gn->mtime;
 }
 
 /* Search for a library along the given search path.
