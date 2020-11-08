@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.437 2020/11/08 01:39:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.438 2020/11/08 01:40:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,31 +68,22 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * main.c --
- *	The main file for this entire program. Exit routines etc
- *	reside here.
+/* The main file for this entire program. Exit routines etc. reside here.
  *
  * Utility functions defined in this file:
- *	Main_ParseArgLine	Takes a line of arguments, breaks them and
- *				treats them as if they were given when first
- *				invoked. Used by the parse module to implement
- *				the .MFLAGS target.
  *
- *	Error			Print a tagged error message. The global
- *				MAKE variable must have been defined. This
- *				takes a format string and optional arguments
- *				for it.
+ *	Main_ParseArgLine	Parse and process command line arguments from
+ *				a single string.  Used to implement the
+ *				special targets .MFLAGS and .MAKEFLAGS.
  *
- *	Fatal			Print an error message and exit. Also takes
- *				a format string and arguments for it.
+ *	Error			Print a tagged error message.
  *
- *	Punt			Aborts all jobs and exits with a message. Also
- *				takes a format string and arguments for it.
+ *	Fatal			Print an error message and exit.
+ *
+ *	Punt			Abort all jobs and exit with a message.
  *
  *	Finish			Finish things up by printing the number of
- *				errors which occurred, as passed to it, and
- *				exiting.
+ *				errors which occurred, and exit.
  */
 
 #include <sys/types.h>
@@ -118,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.437 2020/11/08 01:39:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.438 2020/11/08 01:40:01 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
