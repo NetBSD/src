@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.413 2020/11/08 14:52:35 kamil Exp $
+#	$NetBSD: bsd.README,v 1.414 2020/11/08 15:19:18 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -350,9 +350,9 @@ MKMAN		If "no", don't build or install the man pages,
 		Default: yes
 
 MKMANDOC	If "yes", mandoc is built as tool and used to compile
-		catman or html pages.  A directory can be exempted by
-		defining NOMANDOC.  Individual man pages are exempted
-		if NOMANDOC.${target} is set to "yes".
+		html pages.  A directory can be exempted by defining NOMANDOC.
+		Individual man pages are exempted if NOMANDOC.${target} is set
+		to "yes".
 		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
@@ -459,8 +459,8 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 
 MKSHARE		If "no", act as "MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
-		I.e, don't build catman pages, documentation, Info
-		documentation, man pages, NLS files, ...
+		I.e, don't build documentation, Info documentation, man pages,
+		NLS files, ...
 		Default: yes
 
 MKSKEY		If "no", disables building of S/key authentication
@@ -717,7 +717,7 @@ BINMODE		Binary mode.  [555]
 
 NONBINMODE	Mode for non-executable files.  [444]
 
-MANDIR		Base path for manual installation.  [/usr/share/man/cat]
+MANDIR		Base path for manual installation.  [/usr/share/man]
 
 MANGRP		Manual group.  [wheel]
 
