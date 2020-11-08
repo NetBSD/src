@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2363 2020/10/31 22:43:01 uwe Exp $
+#	$NetBSD: mi,v 1.2364 2020/11/08 16:47:59 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -20199,15 +20199,15 @@
 ./usr/share/man/html9/pserialize_read_exit.html comp-sys-htmlman	html
 ./usr/share/man/html9/psignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pslist.html		comp-sys-htmlman	html
-./usr/share/man/html9/psref.html		comp-sys-catman		html
-./usr/share/man/html9/psref_acquire.html	comp-sys-catman		html
-./usr/share/man/html9/psref_class_create.html	comp-sys-catman		html
-./usr/share/man/html9/psref_class_destroy.html	comp-sys-catman		html
-./usr/share/man/html9/psref_copy.html		comp-sys-catman		html
-./usr/share/man/html9/psref_held.html		comp-sys-catman		html
-./usr/share/man/html9/psref_release.html	comp-sys-catman		html
-./usr/share/man/html9/psref_target_destroy.html	comp-sys-catman		html
-./usr/share/man/html9/psref_target_init.html	comp-sys-catman		html
+./usr/share/man/html9/psref.html		comp-sys-htmlman	html
+./usr/share/man/html9/psref_acquire.html	comp-sys-htmlman	html
+./usr/share/man/html9/psref_class_create.html	comp-sys-htmlman	html
+./usr/share/man/html9/psref_class_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/psref_copy.html		comp-sys-htmlman	html
+./usr/share/man/html9/psref_held.html		comp-sys-htmlman	html
+./usr/share/man/html9/psref_release.html	comp-sys-htmlman	html
+./usr/share/man/html9/psref_target_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/psref_target_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ptoa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/putiobuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/putter.html		comp-sys-htmlman	html
