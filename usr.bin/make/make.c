@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.192 2020/11/08 08:55:25 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.193 2020/11/08 09:06:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.192 2020/11/08 08:55:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.193 2020/11/08 09:06:23 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -553,6 +553,9 @@ Make_Recheck(GNode *gn)
 	       gn->name, Targ_FmtTime(gn->mtime));
     }
 #endif
+
+    /* XXX: The returned mtime may differ from gn->mtime.
+     * Intentionally? */
     return mtime;
 }
 
