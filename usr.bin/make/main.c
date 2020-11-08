@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.450 2020/11/08 13:05:03 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.451 2020/11/08 13:10:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.450 2020/11/08 13:05:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.451 2020/11/08 13:10:30 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -982,7 +982,7 @@ InitRandom(void)
 }
 
 static const char *
-init_machine(const struct utsname *utsname)
+InitVarMachine(const struct utsname *utsname)
 {
 	const char *machine = getenv("MACHINE");
 	if (machine != NULL)
@@ -1000,7 +1000,7 @@ init_machine(const struct utsname *utsname)
 }
 
 static const char *
-init_machine_arch(void)
+InitVarMachineArch(void)
 {
 	const char *env = getenv("MACHINE_ARCH");
 	if (env != NULL)
@@ -1370,8 +1370,8 @@ main_Init(int argc, char **argv)
 	 * Note that both MACHINE and MACHINE_ARCH are decided at
 	 * run-time.
 	 */
-	machine = init_machine(&utsname);
-	machine_arch = init_machine_arch();
+	machine = InitVarMachine(&utsname);
+	machine_arch = InitVarMachineArch();
 
 	myPid = getpid();	/* remember this for vFork() */
 
