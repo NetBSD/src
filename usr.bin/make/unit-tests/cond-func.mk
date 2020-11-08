@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.5 2020/11/08 21:33:05 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.6 2020/11/08 21:40:13 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -9,7 +9,12 @@
 DEF=			defined
 ${:UA B}=		variable name with spaces
 ${:UVAR(value)}=	variable name with parentheses
-${:UVAR{value}}=	variable name with braces
+${:UVAR{value}}=	variable name with balanced braces
+
+# Really strange variable names must be given indirectly via another variable,
+# so that no unbalanced braces appear in the top-level expression.
+VARNAME_UNBALANCED_BRACES=	VAR{{{value
+${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 
 .if !defined(DEF)
 .  error
@@ -56,6 +61,12 @@ ${:UVAR{value}}=	variable name with braces
 
 # Braces do not have any special meaning when parsing arguments.
 .if !defined(VAR{value})
+.  error
+.endif
+
+# Braces do not have any special meaning when parsing arguments.
+# They don't need to be balanced.
+.if !defined(VAR{{{value)
 .  error
 .endif
 
