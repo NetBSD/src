@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.439 2020/11/08 01:43:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.440 2020/11/08 01:52:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.439 2020/11/08 01:43:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.440 2020/11/08 01:52:24 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -215,7 +215,7 @@ parse_debug_option_F(const char *modules)
 	snprintf(fname + len - 2, 20, "%d", getpid());
 
     opts.debug_file = fopen(fname, mode);
-    if (!opts.debug_file) {
+    if (opts.debug_file == NULL) {
 	fprintf(stderr, "Cannot open debug file %s\n",
 		fname);
 	usage();
@@ -375,7 +375,8 @@ MainParseArgChdir(const char *argvalue)
 static void
 MainParseArgJobsInternal(const char *argvalue)
 {
-	if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
+	char end;
+	if (sscanf(argvalue, "%d,%d%c", &jp_0, &jp_1, &end) != 2) {
 		(void)fprintf(stderr,
 			      "%s: internal error -- J option malformed (%s)\n",
 			      progname, argvalue);
