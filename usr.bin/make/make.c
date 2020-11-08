@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.194 2020/11/08 09:34:55 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.195 2020/11/08 09:48:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.194 2020/11/08 09:34:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.195 2020/11/08 09:48:52 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -190,6 +190,23 @@ GNode_UpdateYoungestChild(GNode *gn, GNode *cgn)
 {
     if (gn->youngestChild == NULL || cgn->mtime > gn->youngestChild->mtime)
 	gn->youngestChild = cgn;
+}
+
+/*
+ * A node whose modification time is less than that of its
+ * youngest child or that has no children (youngestChild == NULL) and
+ * either doesn't exist (mtime == 0) and it isn't optional
+ * or was the object of a * :: operator is out-of-date.
+ * Why? Because that's the way Make does it.
+ */
+static Boolean
+IsOlderThanYoungestChild(GNode *gn)
+{
+    return (gn->youngestChild != NULL &&
+	    gn->mtime < gn->youngestChild->mtime) ||
+	   (gn->youngestChild == NULL &&
+	    ((gn->mtime == 0 && !(gn->type & OP_OPTIONAL))
+	     || gn->type & OP_DOUBLEDEP));
 }
 
 /* See if the node is out of date with respect to its sources.
@@ -275,19 +292,7 @@ GNode_IsOODate(GNode *gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if ((gn->youngestChild != NULL &&
-		gn->mtime < gn->youngestChild->mtime) ||
-	       (gn->youngestChild == NULL &&
-		((gn->mtime == 0 && !(gn->type & OP_OPTIONAL))
-		 || gn->type & OP_DOUBLEDEP)))
-    {
-	/*
-	 * A node whose modification time is less than that of its
-	 * youngest child or that has no children (youngestChild == NULL) and
-	 * either doesn't exist (mtime == 0) and it isn't optional
-	 * or was the object of a * :: operator is out-of-date.
-	 * Why? Because that's the way Make does it.
-	 */
+    } else if (IsOlderThanYoungestChild(gn)) {
 	if (DEBUG(MAKE)) {
 	    if (gn->youngestChild != NULL &&
 		gn->mtime < gn->youngestChild->mtime) {
