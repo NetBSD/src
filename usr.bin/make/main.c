@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.448 2020/11/08 12:40:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.449 2020/11/08 12:50:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.448 2020/11/08 12:40:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.449 2020/11/08 12:50:57 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1309,6 +1309,9 @@ ReadFirstDefaultMakefile(void)
 	free(prefs);
 }
 
+/* Initialize variables such as MAKE, MACHINE, .MAKEFLAGS.
+ * Initialize a few modules.
+ * Parse the arguments from MAKEFLAGS and the command line. */
 static void
 main_Init(int argc, char **argv)
 {
@@ -1494,6 +1497,8 @@ main_Init(int argc, char **argv)
 	InitDefSysIncPath(syspath);
 }
 
+/* Read the system makefile followed by either makefile, Makefile or the
+ * files given by the -f option. Exit on parse errors. */
 static void
 main_ReadFiles(void)
 {
@@ -1510,6 +1515,7 @@ main_ReadFiles(void)
 		ReadFirstDefaultMakefile();
 }
 
+/* Compute the dependency graph. */
 static void
 main_PrepareMaking(void)
 {
@@ -1574,6 +1580,9 @@ main_PrepareMaking(void)
 		Targ_PrintGraph(1);
 }
 
+/* Make the targets.
+ * If the -v or -V options are given, print variables instead.
+ * Return whether the targets are out-of-date. */
 static Boolean
 main_Run(void)
 {
@@ -1586,6 +1595,7 @@ main_Run(void)
 	}
 }
 
+/* Clean up after making the targets. */
 static void
 main_CleanUp(void)
 {
@@ -1619,6 +1629,7 @@ main_CleanUp(void)
 	Trace_End();
 }
 
+/* Determine the exit code. */
 static int
 main_Exit(Boolean outOfDate)
 {
@@ -1627,23 +1638,6 @@ main_Exit(Boolean outOfDate)
 	return outOfDate ? 1 : 0;
 }
 
-/*-
- * main --
- *	The main function, for obvious reasons. Initializes variables
- *	and a few modules, then parses the arguments give it in the
- *	environment and on the command line. Reads the system makefile
- *	followed by either Makefile, makefile or the file given by the
- *	-f argument. Sets the .MAKEFLAGS PMake variable based on all the
- *	flags it has received by then uses either the Make or the Compat
- *	module to create the initial list of targets.
- *
- * Results:
- *	If -q was given, exits -1 if anything was out-of-date. Else it exits
- *	0.
- *
- * Side Effects:
- *	The program exits when done. Targets are created. etc. etc. etc.
- */
 int
 main(int argc, char **argv)
 {
