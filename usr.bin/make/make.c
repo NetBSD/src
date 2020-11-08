@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.189 2020/11/08 08:26:22 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.190 2020/11/08 08:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -95,7 +95,7 @@
  *			sure that any variable that needs to exist
  *			at the very least has the empty value.
  *
- *	Make_OODate	Determine if a target is out-of-date.
+ *	GNode_IsOODate	Determine if a target is out-of-date.
  *
  *	Make_HandleUse	See if a child is a .USE node for a parent
  *			and perform the .USE actions if so.
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.189 2020/11/08 08:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.190 2020/11/08 08:33:07 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -204,7 +204,7 @@ GNode_UpdateYoungestChild(GNode *gn, GNode *cgn)
  * may be changed.
  */
 Boolean
-Make_OODate(GNode *gn)
+GNode_IsOODate(GNode *gn)
 {
     Boolean         oodate;
 
@@ -962,7 +962,7 @@ MakeStartJobs(void)
 	}
 
 	gn->made = BEINGMADE;
-	if (Make_OODate(gn)) {
+	if (GNode_IsOODate(gn)) {
 	    DEBUG0(MAKE, "out-of-date\n");
 	    if (opts.queryFlag) {
 		return TRUE;

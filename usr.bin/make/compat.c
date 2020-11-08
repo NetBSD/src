@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.180 2020/11/08 08:26:22 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.181 2020/11/08 08:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.180 2020/11/08 08:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.181 2020/11/08 08:33:07 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -497,10 +497,10 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * All the children were made ok. Now youngestChild->mtime contains the
 	 * modification time of the newest child, we need to find out if we
 	 * exist and when we were modified last. The criteria for datedness
-	 * are defined by the Make_OODate function.
+	 * are defined by GNode_IsOODate.
 	 */
 	DEBUG1(MAKE, "Examining %s...", gn->name);
-	if (!Make_OODate(gn)) {
+	if (!GNode_IsOODate(gn)) {
 	    gn->made = UPTODATE;
 	    DEBUG0(MAKE, "up-to-date.\n");
 	    goto cohorts;

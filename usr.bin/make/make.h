@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.199 2020/11/08 08:26:22 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.200 2020/11/08 08:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -324,7 +324,7 @@ typedef struct GNode {
     int unmade;			/* The number of unmade children */
 
     /* The modification time; 0 means the node does not have a corresponding
-     * file; see Make_OODate. */
+     * file; see GNode_IsOODate. */
     time_t mtime;
     struct GNode *youngestChild;
 
@@ -637,7 +637,7 @@ extern CmdOpts opts;
 #include "nonints.h"
 
 void GNode_UpdateYoungestChild(GNode *, GNode *);
-Boolean Make_OODate(GNode *);
+Boolean GNode_IsOODate(GNode *);
 void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);

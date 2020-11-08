@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.171 2020/11/07 14:04:49 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.172 2020/11/08 08:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.171 2020/11/07 14:04:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.172 2020/11/08 08:33:07 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -974,7 +974,7 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 }
 
 /* Decide if a node with the OP_LIB attribute is out-of-date. Called from
- * Make_OODate to make its life easier.
+ * GNode_IsOODate to make its life easier.
  * The library is cached if it hasn't been already.
  *
  * There are several ways for a library to be out-of-date that are
