@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.445 2020/11/08 12:02:16 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.446 2020/11/08 12:14:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.445 2020/11/08 12:02:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.446 2020/11/08 12:14:14 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -759,14 +759,6 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 	return TRUE;
 }
 
-/* Read and parse the makefile.
- * Return TRUE if reading the makefile succeeded. */
-static int
-ReadMakefileSucceeded(void *fname, void *unused)
-{
-	return ReadMakefile(fname) == 0;
-}
-
 int
 str2Lst_Append(StringList *lp, char *str, const char *sep)
 {
@@ -1297,7 +1289,9 @@ ReadAllMakefiles(StringList *makefiles)
 static void
 ReadFirstDefaultMakefile(void)
 {
+	StringListNode *ln;
 	char *prefs;
+
 	(void)Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
 			VAR_CMDLINE, VARE_WANTRES, &prefs);
 	/* TODO: handle errors */
@@ -1307,7 +1301,11 @@ ReadFirstDefaultMakefile(void)
 	 * also have different semantics in that only the first file that
 	 * is found is processed.  See ReadAllMakefiles. */
 	(void)str2Lst_Append(opts.makefiles, prefs, NULL);
-	(void)Lst_ForEachUntil(opts.makefiles, ReadMakefileSucceeded, NULL);
+
+	for (ln = opts.makefiles->first; ln != NULL; ln = ln->next)
+		if (ReadMakefile(ln->datum) == 0)
+			break;
+
 	free(prefs);
 }
 
