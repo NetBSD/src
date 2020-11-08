@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.200 2020/11/08 09:15:19 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.201 2020/11/08 09:34:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -100,9 +100,9 @@
  *			then all the directories above it in turn until
  *			the path is found or we reach the root ("/").
  *
- *	Dir_MTime	Return the modification time of a node. The file
- *			is searched for along the default search path.
- *			The path and mtime fields of the node are filled in.
+ *	Dir_UpdateMTime
+ *			Update the modification time and path of a node with
+ *			data from the file corresponding to the node.
  *
  *	Dir_AddDir	Add a directory to a search path.
  *
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.200 2020/11/08 09:15:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.201 2020/11/08 09:34:55 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -204,7 +204,7 @@ MAKE_RCSID("$NetBSD: dir.c,v 1.200 2020/11/08 09:15:19 rillig Exp $");
  * Given that an access() is essentially a stat() without the copyout() call,
  * and that the same filesystem overhead would have to be incurred in
  * Dir_MTime, it made sense to replace the access() with a stat() and record
- * the mtime in a cache for when Dir_MTime was actually called.
+ * the mtime in a cache for when Dir_UpdateMTime was actually called.
  */
 
 typedef List CachedDirList;
@@ -1276,26 +1276,12 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_MTime  --
- *	Find the modification time of the file described by gn along the
- *	search path dirSearchPath.
+/* Search gn along dirSearchPath and store its modification time in gn->mtime.
+ * If no file is found, store 0 instead.
  *
- * Input:
- *	gn		the file whose modification time is desired
- *
- * Results:
- *	The modification time or 0 if it doesn't exist
- *
- * Side Effects:
- *	The modification time is placed in the node's mtime slot.
- *	If the node didn't have a path entry before, and Dir_FindFile
- *	found one for it, the full name is placed in the path slot.
- *-----------------------------------------------------------------------
- */
-time_t
-Dir_MTime(GNode *gn, Boolean recheck)
+ * The found file is stored in gn->path, unless the node already had a path. */
+void
+Dir_UpdateMTime(GNode *gn, Boolean recheck)
 {
     char *fullName;		/* the full pathname of name */
     struct make_stat mst;	/* buffer for finding the mod time */
@@ -1303,11 +1289,15 @@ Dir_MTime(GNode *gn, Boolean recheck)
 
     if (gn->type & OP_ARCHV) {
 	Arch_UpdateMTime(gn);
-	return gn->mtime;
-    } else if (gn->type & OP_PHONY) {
+	return;
+    }
+
+    if (gn->type & OP_PHONY) {
 	gn->mtime = 0;
-	return 0;
-    } else if (gn->path == NULL) {
+	return;
+    }
+
+    if (gn->path == NULL) {
 	if (gn->type & OP_NOPATH)
 	    fullName = NULL;
 	else {
@@ -1356,7 +1346,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	    if (fullName != gn->path)
 		free(fullName);
 	    Arch_UpdateMemberMTime(gn);
-	    return gn->mtime;
+	    return;
 	}
 
 	mst.mst_mtime = 0;
@@ -1366,7 +1356,6 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	gn->path = fullName;
 
     gn->mtime = mst.mst_mtime;
-    return gn->mtime;
 }
 
 /* Read the list of filenames in the directory and store the result
