@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.438 2020/11/08 01:40:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.439 2020/11/08 01:43:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.438 2020/11/08 01:40:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.439 2020/11/08 01:43:58 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -151,7 +151,7 @@ static int errors = 0;
 
 /*
  * For compatibility with the POSIX version of MAKEFLAGS that includes
- * all the options with out -, convert flags to -f -l -a -g -s.
+ * all the options without '-', convert 'flags' to '-f -l -a -g -s'.
  */
 static char *
 explode(const char *flags)
@@ -341,12 +341,10 @@ is_relpath(const char *path)
 	cp = path;
 	while ((cp = strstr(cp, "/.")) != NULL) {
 		cp += 2;
+		if (*cp == '.')
+		    cp++;
 		if (cp[0] == '/' || cp[0] == '\0')
 			return TRUE;
-		else if (cp[0] == '.') {
-			if (cp[1] == '/' || cp[1] == '\0')
-				return TRUE;
-		}
 	}
 	return FALSE;
 }
