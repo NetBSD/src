@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.189 2020/11/08 22:22:03 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.190 2020/11/08 22:37:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.189 2020/11/08 22:22:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.190 2020/11/08 22:37:52 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -398,7 +398,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
     const char *str;
     Boolean atStart;
     const char *nested_p;
-    Boolean qt;
+    Boolean quoted;
     const char *start;
     VarEvalFlags eflags;
     VarParseResult parseResult;
@@ -406,9 +406,9 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
     Buf_Init(&buf);
     str = NULL;
     *out_freeIt = NULL;
-    *out_quoted = qt = par->p[0] == '"';
+    *out_quoted = quoted = par->p[0] == '"';
     start = par->p;
-    if (qt)
+    if (quoted)
 	par->p++;
     while (par->p[0] != '\0' && str == NULL) {
 	switch (par->p[0]) {
@@ -420,28 +420,28 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	    }
 	    continue;
 	case '"':
-	    if (qt) {
-		par->p++;	/* we don't want the quotes */
+	    if (quoted) {
+		par->p++;	/* skip the closing quote */
 		goto got_str;
 	    }
 	    Buf_AddByte(&buf, par->p[0]); /* likely? */
 	    par->p++;
 	    continue;
-	case ')':
+	case ')':		/* see is_separator */
 	case '!':
 	case '=':
 	case '>':
 	case '<':
 	case ' ':
 	case '\t':
-	    if (!qt)
+	    if (!quoted)
 		goto got_str;
 	    Buf_AddByte(&buf, par->p[0]);
 	    par->p++;
 	    continue;
 	case '$':
 	    /* if we are in quotes, an undefined variable is ok */
-	    eflags = doEval && !qt ? VARE_WANTRES | VARE_UNDEFERR :
+	    eflags = doEval && !quoted ? VARE_WANTRES | VARE_UNDEFERR :
 		     doEval ? VARE_WANTRES :
 		     VARE_NONE;
 
@@ -453,7 +453,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	    if (str == var_Error) {
 		if (parseResult & VPR_ANY_MSG)
 		    par->printedError = TRUE;
-		if (*out_freeIt) {
+		if (*out_freeIt != NULL) {
 		    free(*out_freeIt);
 		    *out_freeIt = NULL;
 		}
@@ -483,7 +483,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	    str = NULL;		/* not finished yet */
 	    continue;
 	default:
-	    if (strictLHS && !qt && *start != '$' && !ch_isdigit(*start)) {
+	    if (strictLHS && !quoted && *start != '$' && !ch_isdigit(*start)) {
 		/* lhs must be quoted, a variable reference or number */
 		if (*out_freeIt) {
 		    free(*out_freeIt);
