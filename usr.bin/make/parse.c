@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.433 2020/11/08 02:37:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.434 2020/11/08 15:07:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.433 2020/11/08 02:37:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.434 2020/11/08 15:07:37 rillig Exp $");
 
 /* types and constants */
 
@@ -2122,7 +2122,7 @@ Parse_AddIncludeDir(const char *dir)
  * the -I command line options.
  */
 static void
-Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
+Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 {
     struct loadedfile *lf;
     char *fullname;		/* full pathname of file */
@@ -2228,7 +2228,7 @@ ParseDoInclude(char *line)
 {
     char endc;			/* the character which ends the file spec */
     char *cp;			/* current position in file spec */
-    int silent = *line != 'i';
+    Boolean silent = *line != 'i';
     char *file = line + (silent ? 8 : 7);
 
     /* Skip to delimiter character so we know where to look */
@@ -2488,7 +2488,7 @@ ParseTraditionalInclude(char *line)
 {
     char *cp;			/* current position in file spec */
     Boolean done = FALSE;
-    int silent = line[0] != 'i';
+    Boolean silent = line[0] != 'i';
     char *file = line + (silent ? 8 : 7);
     char *all_files;
 

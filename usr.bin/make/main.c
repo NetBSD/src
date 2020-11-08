@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.453 2020/11/08 14:50:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.454 2020/11/08 15:07:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.453 2020/11/08 14:50:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.454 2020/11/08 15:07:37 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -785,7 +785,7 @@ str2Lst_Append(StringList *lp, char *str, const char *sep)
 	char *cp;
 	int n;
 
-	if (!sep)
+	if (sep == NULL)
 		sep = " \t";
 
 	for (n = 0, cp = strtok(str, sep); cp; cp = strtok(NULL, sep)) {
@@ -1678,12 +1678,12 @@ ReadMakefile(const char *fname)
 	int fd;
 	char *name, *path = NULL;
 
-	if (!strcmp(fname, "-")) {
+	if (strcmp(fname, "-") == 0) {
 		Parse_File(NULL /*stdin*/, -1);
 		Var_Set("MAKEFILE", "", VAR_INTERNAL);
 	} else {
 		/* if we've chdir'd, rebuild the path name */
-		if (strcmp(curdir, objdir) && *fname != '/') {
+		if (strcmp(curdir, objdir) != 0 && *fname != '/') {
 			path = str_concat3(curdir, "/", fname);
 			fd = open(path, O_RDONLY);
 			if (fd != -1) {
@@ -1706,12 +1706,12 @@ ReadMakefile(const char *fname)
 		}
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
-		if (!name) {
+		if (name == NULL) {
 			SearchPath *sysInc = Lst_IsEmpty(sysIncPath)
 					     ? defSysIncPath : sysIncPath;
 			name = Dir_FindFile(fname, sysInc);
 		}
-		if (!name || (fd = open(name, O_RDONLY)) == -1) {
+		if (name == NULL || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);
 			return -1;
@@ -2017,7 +2017,7 @@ static GNode *
 get_cached_realpaths(void)
 {
 
-	if (!cached_realpaths) {
+	if (cached_realpaths == NULL) {
 		cached_realpaths = Targ_NewGN("Realpath");
 #ifndef DEBUG_REALPATH_CACHE
 		cached_realpaths->flags = INTERNAL;
@@ -2183,7 +2183,7 @@ getTmpdir(void)
 {
 	static char *tmpdir = NULL;
 
-	if (!tmpdir) {
+	if (tmpdir == NULL) {
 		struct stat st;
 
 		/*

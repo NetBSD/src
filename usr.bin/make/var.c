@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.675 2020/11/07 22:28:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.676 2020/11/08 15:07:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.675 2020/11/07 22:28:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.676 2020/11/08 15:07:37 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1721,9 +1721,9 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
 {
     char buf[BUFSIZ];
 
-    if (!tim)
+    if (tim == 0)
 	time(&tim);
-    if (!*fmt)
+    if (*fmt == '\0')
 	fmt = "%c";
     strftime(buf, sizeof buf, fmt, zulu ? gmtime(&tim) : localtime(&tim));
 
