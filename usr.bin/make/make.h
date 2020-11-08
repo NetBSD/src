@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.203 2020/11/08 23:30:59 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.204 2020/11/08 23:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -496,6 +496,7 @@ extern pid_t myPid;
 #endif
 
 typedef enum DebugFlags {
+    DEBUG_NONE		= 0,
     DEBUG_ARCH		= 1 << 0,
     DEBUG_COND		= 1 << 1,
     DEBUG_CWD		= 1 << 2,
@@ -516,12 +517,7 @@ typedef enum DebugFlags {
     DEBUG_SUFF		= 1 << 17,
     DEBUG_TARG		= 1 << 18,
     DEBUG_VAR		= 1 << 19,
-
-    /* Runs make in strict mode, with additional checks and better error
-     * handling.  This is not the default mode to preserve compatibility.
-     *
-     * XXX: This is not really a debug flag, it doesn't belong here. */
-    DEBUG_LINT		= 1 << 20
+    DEBUG_ALL		= (1 << 20) - 1
 } DebugFlags;
 
 #define CONCAT(a,b)	a##b
@@ -571,6 +567,12 @@ typedef struct CmdOpts {
 
     /* -df: debug output is written here - default stderr */
     FILE *debug_file;
+
+    /* -dL: lint mode
+     *
+     * Runs make in strict mode, with additional checks and better error
+     * handling. */
+    Boolean lint;
 
     /* -dV: for the -V option, print unexpanded variable values */
     Boolean debugVflag;

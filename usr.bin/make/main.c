@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.454 2020/11/08 15:07:37 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.455 2020/11/08 23:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.454 2020/11/08 15:07:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.455 2020/11/08 23:38:02 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -250,10 +250,10 @@ parse_debug_options(const char *argvalue)
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
 		case '0':	/* undocumented, only intended for tests */
-			opts.debug &= DEBUG_LINT;
+			opts.debug = DEBUG_NONE;
 			break;
 		case 'A':
-			opts.debug = ~(0 | DEBUG_LINT);
+			opts.debug = DEBUG_ALL;
 			break;
 		case 'a':
 			opts.debug |= DEBUG_ARCH;
@@ -292,7 +292,7 @@ parse_debug_options(const char *argvalue)
 			opts.debug |= DEBUG_JOB;
 			break;
 		case 'L':
-			opts.debug |= DEBUG_LINT;
+			opts.lint = TRUE;
 			break;
 		case 'l':
 			opts.debug |= DEBUG_LOUD;
@@ -1124,6 +1124,7 @@ CmdOpts_Init(void)
 	opts.compatMake = FALSE;	/* No compat mode */
 	opts.debug = 0;			/* No debug verbosity, please. */
 	/* opts.debug_file has been initialized earlier */
+	opts.lint = FALSE;
 	opts.debugVflag = FALSE;
 	opts.checkEnvFirst = FALSE;
 	opts.makefiles = Lst_New();
@@ -1649,7 +1650,7 @@ main_CleanUp(void)
 static int
 main_Exit(Boolean outOfDate)
 {
-	if (DEBUG(LINT) && (errors > 0 || Parse_GetFatals() > 0))
+	if (opts.lint && (errors > 0 || Parse_GetFatals() > 0))
 		return 2;	/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
 }
