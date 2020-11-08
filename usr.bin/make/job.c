@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.311 2020/11/08 00:54:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.312 2020/11/08 01:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.311 2020/11/08 00:54:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.312 2020/11/08 01:00:25 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1272,7 +1272,7 @@ static void
 JobExec(Job *job, char **argv)
 {
     int cpid;			/* ID of new child */
-    sigset_t	  mask;
+    sigset_t mask;
 
     job->flags &= ~JOB_TRACED;
 
@@ -1340,13 +1340,13 @@ JobExec(Job *job, char **argv)
 	    execDie("lseek to 0", "stdin");
 
 	if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
-		/*
-		 * Pass job token pipe to submakes.
-		 */
-		if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1)
-		    execDie("clear close-on-exec", "tokenWaitJob.inPipe");
-		if (fcntl(tokenWaitJob.outPipe, F_SETFD, 0) == -1)
-		    execDie("clear close-on-exec", "tokenWaitJob.outPipe");
+	    /*
+	     * Pass job token pipe to submakes.
+	     */
+	    if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1)
+		execDie("clear close-on-exec", "tokenWaitJob.inPipe");
+	    if (fcntl(tokenWaitJob.outPipe, F_SETFD, 0) == -1)
+		execDie("clear close-on-exec", "tokenWaitJob.outPipe");
 	}
 
 	/*
