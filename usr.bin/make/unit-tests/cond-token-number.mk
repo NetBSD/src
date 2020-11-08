@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-number.mk,v 1.3 2020/09/14 06:22:59 rillig Exp $
+# $NetBSD: cond-token-number.mk,v 1.4 2020/11/08 22:28:05 rillig Exp $
 #
 # Tests for number tokens in .if conditions.
 
@@ -47,6 +47,22 @@
 # When the number comes from a variable expression though, it may be signed.
 # XXX: This is inconsistent.
 .if !${:U+1}
+.  error
+.endif
+
+# Hexadecimal numbers are accepted.
+.if 0x0
+.  error
+.endif
+.if 0x1
+.else
+.  error
+.endif
+
+# This is not a hexadecimal number, even though it has an x.
+# It is interpreted as a string instead, effectively meaning defined(3x4).
+.if 3x4
+.else
 .  error
 .endif
 
