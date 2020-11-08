@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2020/10/29 16:35:33 nia Exp $
+# $NetBSD: Makefile,v 1.12 2020/11/08 21:56:48 nia Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -8,8 +8,8 @@ SRCS=		sqlite3.c
 
 CFLAGS+=	-DNDEBUG
 
-LDADD+=		-lm
-DPADD+=		${LIBM}
+LDADD+=		-lm -lpthread
+DPADD+=		${LIBM} ${LIBPTHREAD}
 
 FILES+=			sqlite3.pc
 FILESOWN_sqlite3.pc=	${BINOWN}
