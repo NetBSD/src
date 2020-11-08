@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.447 2020/11/08 12:21:27 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.448 2020/11/08 12:40:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.447 2020/11/08 12:21:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.448 2020/11/08 12:40:04 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1310,59 +1310,8 @@ ReadFirstDefaultMakefile(void)
 }
 
 static void
-CleanUp(void)
+main_Init(int argc, char **argv)
 {
-#ifdef CLEANUP
-	Lst_Destroy(opts.variables, free);
-	Lst_Free(opts.makefiles);	/* don't free, may be used in GNodes */
-	Lst_Destroy(opts.create, free);
-#endif
-
-	/* print the graph now it's been processed if the user requested it */
-	if (DEBUG(GRAPH2))
-		Targ_PrintGraph(2);
-
-	Trace_Log(MAKEEND, NULL);
-
-	if (enterFlagObj)
-		printf("%s: Leaving directory `%s'\n", progname, objdir);
-	if (opts.enterFlag)
-		printf("%s: Leaving directory `%s'\n", progname, curdir);
-
-#ifdef USE_META
-	meta_finish();
-#endif
-	Suff_End();
-	Targ_End();
-	Arch_End();
-	Var_End();
-	Parse_End();
-	Dir_End();
-	Job_End();
-	Trace_End();
-}
-
-/*-
- * main --
- *	The main function, for obvious reasons. Initializes variables
- *	and a few modules, then parses the arguments give it in the
- *	environment and on the command line. Reads the system makefile
- *	followed by either Makefile, makefile or the file given by the
- *	-f argument. Sets the .MAKEFLAGS PMake variable based on all the
- *	flags it has received by then uses either the Make or the Compat
- *	module to create the initial list of targets.
- *
- * Results:
- *	If -q was given, exits -1 if anything was out-of-date. Else it exits
- *	0.
- *
- * Side Effects:
- *	The program exits when done. Targets are created. etc. etc. etc.
- */
-int
-main(int argc, char **argv)
-{
-	Boolean outOfDate;	/* FALSE if all targets up to date */
 	struct stat sa;
 	const char *machine;
 	const char *machine_arch;
@@ -1543,7 +1492,11 @@ main(int argc, char **argv)
 	InitVarTargets();
 
 	InitDefSysIncPath(syspath);
+}
 
+static void
+main_ReadFiles(void)
+{
 	/*
 	 * Read in the built-in rules first, followed by the specified
 	 * makefiles, or the default makefile and Makefile, in that order,
@@ -1555,7 +1508,11 @@ main(int argc, char **argv)
 		ReadAllMakefiles(opts.makefiles);
 	else
 		ReadFirstDefaultMakefile();
+}
 
+static void
+main_PrepareMaking(void)
+{
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
 		/* ignore /dev/null and anything starting with "no" */
@@ -1615,20 +1572,89 @@ main(int argc, char **argv)
 	/* print the initial graph, if the user requested it */
 	if (DEBUG(GRAPH1))
 		Targ_PrintGraph(1);
+}
 
+static Boolean
+main_Run(void)
+{
 	/* print the values of any variables requested by the user */
 	if (opts.printVars != PVM_NONE) {
 		doPrintVars();
-		outOfDate = FALSE;
+		return FALSE;
 	} else {
-		outOfDate = runTargets();
+		return runTargets();
 	}
+}
 
-	CleanUp();
+static void
+main_CleanUp(void)
+{
+#ifdef CLEANUP
+	Lst_Destroy(opts.variables, free);
+	Lst_Free(opts.makefiles);	/* don't free, may be used in GNodes */
+	Lst_Destroy(opts.create, free);
+#endif
 
+	/* print the graph now it's been processed if the user requested it */
+	if (DEBUG(GRAPH2))
+		Targ_PrintGraph(2);
+
+	Trace_Log(MAKEEND, NULL);
+
+	if (enterFlagObj)
+		printf("%s: Leaving directory `%s'\n", progname, objdir);
+	if (opts.enterFlag)
+		printf("%s: Leaving directory `%s'\n", progname, curdir);
+
+#ifdef USE_META
+	meta_finish();
+#endif
+	Suff_End();
+	Targ_End();
+	Arch_End();
+	Var_End();
+	Parse_End();
+	Dir_End();
+	Job_End();
+	Trace_End();
+}
+
+static int
+main_Exit(Boolean outOfDate)
+{
 	if (DEBUG(LINT) && (errors > 0 || Parse_GetFatals() > 0))
 		return 2;	/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
+}
+
+/*-
+ * main --
+ *	The main function, for obvious reasons. Initializes variables
+ *	and a few modules, then parses the arguments give it in the
+ *	environment and on the command line. Reads the system makefile
+ *	followed by either Makefile, makefile or the file given by the
+ *	-f argument. Sets the .MAKEFLAGS PMake variable based on all the
+ *	flags it has received by then uses either the Make or the Compat
+ *	module to create the initial list of targets.
+ *
+ * Results:
+ *	If -q was given, exits -1 if anything was out-of-date. Else it exits
+ *	0.
+ *
+ * Side Effects:
+ *	The program exits when done. Targets are created. etc. etc. etc.
+ */
+int
+main(int argc, char **argv)
+{
+	Boolean outOfDate;
+
+	main_Init(argc, argv);
+	main_ReadFiles();
+	main_PrepareMaking();
+	outOfDate = main_Run();
+	main_CleanUp();
+	return main_Exit(outOfDate);
 }
 
 /* Open and parse the given makefile, with all its side effects.
