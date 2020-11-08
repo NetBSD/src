@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.201 2020/11/08 10:33:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.202 2020/11/08 15:18:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -441,7 +441,7 @@ extern time_t now;
 /*
  * If FALSE (the default behavior), undefined subexpressions in a variable
  * expression are discarded.  If TRUE (only during variable assignments using
- * the ':=' assignment operator, in the top-level expansion), they are
+ * the ':=' assignment operator, no matter how deeply nested), they are
  * preserved and possibly expanded later when the variable from the
  * subexpression has been defined.
  *
