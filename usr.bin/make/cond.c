@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.190 2020/11/08 22:37:52 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.191 2020/11/08 22:41:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.190 2020/11/08 22:37:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.191 2020/11/08 22:41:40 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -532,24 +532,24 @@ If_Eval(const struct If *if_info, const char *arg, size_t arglen)
 /* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
  * ".if 0". */
 static Boolean
-EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
+EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
 {
     double left;
 
-    /* For .ifxxx "..." check for non-empty string. */
-    if (lhsQuoted)
-	return lhs[0] != '\0';
+    /* For .ifxxx "...", check for non-empty string. */
+    if (quoted)
+	return value[0] != '\0';
 
-    /* For .ifxxx <number> compare against zero */
-    if (TryParseNumber(lhs, &left))
+    /* For .ifxxx <number>, compare against zero */
+    if (TryParseNumber(value, &left))
 	return left != 0.0;
 
-    /* For .if ${...} check for non-empty string (defProc is ifdef). */
+    /* For .if ${...}, check for non-empty string (defProc is ifdef). */
     if (par->if_info->form[0] == '\0')
-	return lhs[0] != '\0';
+	return value[0] != '\0';
 
     /* Otherwise action default test ... */
-    return If_Eval(par->if_info, lhs, strlen(lhs));
+    return If_Eval(par->if_info, value, strlen(value));
 }
 
 /* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
