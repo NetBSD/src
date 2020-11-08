@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.188 2020/11/08 21:10:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.189 2020/11/08 22:22:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.188 2020/11/08 21:10:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.189 2020/11/08 22:22:03 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -336,40 +336,41 @@ FuncCommands(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
     return gn != NULL && GNode_IsTarget(gn) && !Lst_IsEmpty(gn->commands);
 }
 
-/*-
+/*
  * Convert the given number into a double.
  * We try a base 10 or 16 integer conversion first, if that fails
  * then we try a floating point conversion instead.
  *
  * Results:
- *	Sets 'value' to double value of string.
  *	Returns TRUE if the conversion succeeded.
+ *	Sets 'out_value' to the converted number.
  */
 static Boolean
-TryParseNumber(const char *str, double *value)
+TryParseNumber(const char *str, double *out_value)
 {
-    char *eptr, ech;
-    unsigned long l_val;
-    double d_val;
+    char *end;
+    unsigned long ul_val;
+    double dbl_val;
 
     errno = 0;
-    if (!*str) {
-	*value = 0.0;
+    if (str[0] == '\0') {	/* XXX: why is an empty string a number? */
+	*out_value = 0.0;
 	return TRUE;
     }
-    l_val = strtoul(str, &eptr, str[1] == 'x' ? 16 : 10);
-    ech = *eptr;
-    if (ech == '\0' && errno != ERANGE) {
-	d_val = str[0] == '-' ? -(double)-l_val : (double)l_val;
-    } else {
-	if (ech != '\0' && ech != '.' && ech != 'e' && ech != 'E')
-	    return FALSE;
-	d_val = strtod(str, &eptr);
-	if (*eptr)
-	    return FALSE;
+
+    ul_val = strtoul(str, &end, str[1] == 'x' ? 16 : 10);
+    if (*end == '\0' && errno != ERANGE) {
+	*out_value = str[0] == '-' ? -(double)-ul_val : (double)ul_val;
+	return TRUE;
     }
 
-    *value = d_val;
+    if (*end != '\0' && *end != '.' && *end != 'e' && *end != 'E')
+	return FALSE;		/* skip the expensive strtod call */
+    dbl_val = strtod(str, &end);
+    if (*end != '\0')
+	return FALSE;
+
+    *out_value = dbl_val;
     return TRUE;
 }
 
