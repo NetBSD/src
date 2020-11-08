@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.678 2020/11/08 18:13:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.679 2020/11/08 18:16:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.678 2020/11/08 18:13:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.679 2020/11/08 18:16:55 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -4019,7 +4019,11 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		Buf_AddByte(&buf, '$');
 	    Buf_AddByte(&buf, '$');
 	    p += 2;
-	} else if (*p != '$') {
+
+	} else if (p[0] == '$') {
+	    VarSubstNested(&p, &buf, ctxt, eflags, &errorReported);
+
+	} else {
 	    /*
 	     * Skip as many characters as possible -- either to the end of
 	     * the string or to the next dollar sign (variable expression).
@@ -4029,8 +4033,6 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	    for (p++; *p != '$' && *p != '\0'; p++)
 		continue;
 	    Buf_AddBytesBetween(&buf, plainStart, p);
-	} else {
-	    VarSubstNested(&p, &buf, ctxt, eflags, &errorReported);
 	}
     }
 
