@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.198 2020/11/08 10:40:07 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.199 2020/11/08 10:50:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.198 2020/11/08 10:40:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.199 2020/11/08 10:50:50 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -356,31 +356,18 @@ MakeAddChild(void *gnp, void *lp)
     return 0;
 }
 
-/* Find the pathname of a child that was already made.
- *
- * The path and mtime of the node and the youngestChild of the parent are
- * updated; the unmade children count of the parent is decremented.
- *
- * Input:
- *	gnp		the node to find
- */
-static int
-MakeFindChild(void *gnp, void *pgnp)
-{
-    GNode *gn = gnp;
-    GNode *pgn = pgnp;
-
-    Dir_UpdateMTime(gn, FALSE);
-    GNode_UpdateYoungestChild(pgn, gn);
-    pgn->unmade--;
-
-    return 0;
-}
-
 static void
-PretendAllChildrenAreMade(GNode *gn)
+PretendAllChildrenAreMade(GNode *pgn)
 {
-    Lst_ForEachUntil(gn->children, MakeFindChild, gn);
+    GNodeListNode *ln;
+
+    for (ln = pgn->children->first; ln != NULL; ln = ln->next) {
+	GNode *cgn = ln->datum;
+
+	Dir_UpdateMTime(cgn, FALSE);	/* cgn->path may get updated as well */
+	GNode_UpdateYoungestChild(pgn, cgn);
+	pgn->unmade--;
+    }
 }
 
 /* Called by Make_Run and SuffApplyTransform on the downward pass to handle
