@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $	*/
+/*	$NetBSD: acpi.c,v 1.286 2020/11/08 14:16:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.286 2020/11/08 14:16:59 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -166,9 +166,11 @@ static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
 	"ACPI0007",	/* ACPI CPUs do not attach to acpi(4) */
 	"PNP0000",	/* AT interrupt controller is handled internally */
+	"PNP0001",	/* EISA interrupt controller is handled internally */
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
+	"PNP0C02",	/* PnP motherboard resources */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
 #endif
 #if defined(x86_64)
