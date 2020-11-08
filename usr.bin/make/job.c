@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.313 2020/11/08 01:07:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.314 2020/11/08 01:16:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.313 2020/11/08 01:07:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.314 2020/11/08 01:16:04 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -900,12 +900,11 @@ JobPrintCommands(Job *job)
 
 	if (strcmp(cmd, "...") == 0) {
 	    job->node->type |= OP_SAVE_CMDS;
-	    if (!(job->flags & JOB_IGNDOTS)) {
-		job->tailCmds = ln->next;
-		break;
-	    }
-	} else
-	    JobPrintCommand(job, ln->datum);
+	    job->tailCmds = ln->next;
+	    break;
+	}
+
+	JobPrintCommand(job, ln->datum);
     }
 }
 
@@ -1473,7 +1472,6 @@ JobMakeArgv(Job *job, char **argv)
  * Input:
  *	gn		target to create
  *	flags		flags for the job to override normal ones.
- *			e.g. JOB_SPECIAL or JOB_IGNDOTS
  *	previous	The previous Job structure for this node, if any.
  *
  * Results:
@@ -1485,9 +1483,7 @@ JobMakeArgv(Job *job, char **argv)
  *	A new Job node is created and added to the list of running
  *	jobs. PMake is forked and a child shell created.
  *
- * NB: I'm fairly sure that this code is never called with JOB_SPECIAL set
- *     JOB_IGNDOTS is never set (dsl)
- *     Also the return value is ignored by everyone.
+ * NB: The return value is ignored by everyone.
  *-----------------------------------------------------------------------
  */
 static JobStartResult
