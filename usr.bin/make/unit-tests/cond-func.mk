@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.5 2020/11/08 21:33:05 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -64,6 +64,14 @@ ${:UVAR{value}}=	variable name with braces
 # allowed for the empty() function (see cond-func-empty.mk), therefore
 # they are typically omitted for the other functions as well.
 .if ! defined ( DEF )
+.  error
+.endif
+
+# The following condition is interpreted as defined(A) && defined(B).
+# In lack of a function call expression, each kind of .if directive has a
+# default function that is called when a bare word is parsed.  For the plain
+# .if directive, this function is defined(); see "struct If ifs" in cond.c.
+.if A&B
 .  error
 .endif
 
