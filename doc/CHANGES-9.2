@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.8 2020/11/05 08:11:37 sborrill Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.9 2020/11/08 08:40:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1057,4 +1057,9 @@ usr.sbin/sysinst/util.c				1.49-1.52
 	  manual override (so ISO images on USB sticks or Xen's xbd(4)
 	  work).
 	[martin, ticket #1121]
+
+sys/compat/linux/common/linux_socket.c		1.151
+
+	Fix compat with Linux programs that use longer namelen for sockets.
+	[kamil, ticket #1127]
 
