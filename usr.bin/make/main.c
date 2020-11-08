@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.449 2020/11/08 12:50:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.450 2020/11/08 13:05:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.449 2020/11/08 12:50:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.450 2020/11/08 13:05:03 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -135,7 +135,6 @@ Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static int		ReadMakefile(const char *);
-static void		usage(void) MAKE_ATTR_DEAD;
 static void		purge_cached_realpaths(void);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
@@ -179,6 +178,26 @@ explode(const char *flags)
     }
     *nf = '\0';
     return st;
+}
+
+/*
+ * usage --
+ *	exit with usage message
+ */
+MAKE_ATTR_DEAD static void
+usage(void)
+{
+	char *p;
+	if ((p = strchr(progname, '[')) != NULL)
+		*p = '\0';
+
+	(void)fprintf(stderr,
+"usage: %s [-BeikNnqrstWwX] \n"
+"            [-C directory] [-D variable] [-d flags] [-f makefile]\n"
+"            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n"
+"            [-V variable] [-v variable] [variable=value] [target ...]\n",
+		      progname);
+	exit(2);
 }
 
 static void
@@ -1990,26 +2009,6 @@ execDie(const char *af, const char *av)
 
 	Buf_Destroy(&buf, TRUE);
 	_exit(1);
-}
-
-/*
- * usage --
- *	exit with usage message
- */
-static void
-usage(void)
-{
-	char *p;
-	if ((p = strchr(progname, '[')) != NULL)
-		*p = '\0';
-
-	(void)fprintf(stderr,
-"usage: %s [-BeikNnqrstWwX] \n"
-"            [-C directory] [-D variable] [-d flags] [-f makefile]\n"
-"            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n"
-"            [-V variable] [-v variable] [variable=value] [target ...]\n",
-	    progname);
-	exit(2);
 }
 
 /*
