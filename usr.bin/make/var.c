@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.677 2020/11/08 16:58:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.678 2020/11/08 18:13:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.677 2020/11/08 16:58:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.678 2020/11/08 18:13:01 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3939,6 +3939,56 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     return VPR_UNKNOWN;
 }
 
+static void
+VarSubstNested(const char **const pp, Buffer *const buf, GNode *const ctxt,
+	       VarEvalFlags const eflags, Boolean *inout_errorReported)
+{
+    const char *p = *pp;
+    const char *nested_p = p;
+    void *freeIt;
+    const char *val;
+
+    (void)Var_Parse(&nested_p, ctxt, eflags, &val, &freeIt);
+    /* TODO: handle errors */
+
+    if (val == var_Error || val == varUndefined) {
+	if (!preserveUndefined) {
+	    p = nested_p;
+	} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
+	    /* XXX: This condition is wrong.  If val == var_Error,
+	     * this doesn't necessarily mean there was an undefined
+	     * variable.  It could equally well be a parse error; see
+	     * unit-tests/varmod-order.exp. */
+
+	    /*
+	     * If variable is undefined, complain and skip the
+	     * variable. The complaint will stop us from doing anything
+	     * when the file is parsed.
+	     */
+	    if (!*inout_errorReported) {
+		Parse_Error(PARSE_FATAL, "Undefined variable \"%.*s\"",
+			    (int)(size_t)(nested_p - p), p);
+	    }
+	    p = nested_p;
+	    *inout_errorReported = TRUE;
+	} else {
+	    /* Copy the initial '$' of the undefined expression,
+	     * thereby deferring expansion of the expression, but
+	     * expand nested expressions if already possible.
+	     * See unit-tests/varparse-undef-partial.mk. */
+	    Buf_AddByte(buf, *p);
+	    p++;
+	}
+    } else {
+	p = nested_p;
+	Buf_AddStr(buf, val);
+    }
+
+    free(freeIt);
+
+    *pp = p;
+}
+
 /* Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
  * given string.
  *
@@ -3980,46 +4030,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 		continue;
 	    Buf_AddBytesBetween(&buf, plainStart, p);
 	} else {
-	    const char *nested_p = p;
-	    void *freeIt;
-	    const char *val;
-	    (void)Var_Parse(&nested_p, ctxt, eflags, &val, &freeIt);
-	    /* TODO: handle errors */
-
-	    if (val == var_Error || val == varUndefined) {
-		if (!preserveUndefined) {
-		    p = nested_p;
-		} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
-		    /* XXX: This condition is wrong.  If val == var_Error,
-		     * this doesn't necessarily mean there was an undefined
-		     * variable.  It could equally well be a parse error; see
-		     * unit-tests/varmod-order.exp. */
-
-		    /*
-		     * If variable is undefined, complain and skip the
-		     * variable. The complaint will stop us from doing anything
-		     * when the file is parsed.
-		     */
-		    if (!errorReported) {
-			Parse_Error(PARSE_FATAL, "Undefined variable \"%.*s\"",
-				    (int)(size_t)(nested_p - p), p);
-		    }
-		    p = nested_p;
-		    errorReported = TRUE;
-		} else {
-		    /* Copy the initial '$' of the undefined expression,
-		     * thereby deferring expansion of the expression, but
-		     * expand nested expressions if already possible.
-		     * See unit-tests/varparse-undef-partial.mk. */
-		    Buf_AddByte(&buf, *p);
-		    p++;
-		}
-	    } else {
-		p = nested_p;
-		Buf_AddStr(&buf, val);
-	    }
-	    free(freeIt);
-	    freeIt = NULL;
+	    VarSubstNested(&p, &buf, ctxt, eflags, &errorReported);
 	}
     }
 
