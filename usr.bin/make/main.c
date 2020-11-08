@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.451 2020/11/08 13:10:30 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.452 2020/11/08 14:19:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.451 2020/11/08 13:10:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.452 2020/11/08 14:19:15 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1521,13 +1521,10 @@ main_Init(int argc, char **argv)
 static void
 main_ReadFiles(void)
 {
-	/*
-	 * Read in the built-in rules first, followed by the specified
-	 * makefiles, or the default makefile and Makefile, in that order,
-	 * if no makefiles were given on the command line.
-	 */
+
 	if (!opts.noBuiltins)
 		ReadBuiltinRules();
+
 	if (!Lst_IsEmpty(opts.makefiles))
 		ReadAllMakefiles(opts.makefiles);
 	else
