@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.140 2020/11/07 21:26:43 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.141 2020/11/08 15:07:37 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -324,7 +324,7 @@ is_submake(void *cmdp, void *gnp)
     char *cp2;
     int rc = 0;				/* keep looking */
 
-    if (!p_make) {
+    if (p_make == NULL) {
 	void *dontFreeIt;
 	p_make = Var_Value(".MAKE", gn, &dontFreeIt);
 	p_len = strlen(p_make);
@@ -779,7 +779,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
 
     if (job != NULL) {
 	pbm = &job->bm;
-	if (!gn)
+	if (gn == NULL)
 	    gn = job->node;
     } else {
 	pbm = &Mybm;
@@ -816,7 +816,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 	    static char *meta_prefix = NULL;
 	    static size_t meta_prefix_len;
 
-	    if (!meta_prefix) {
+	    if (meta_prefix == NULL) {
 		char *cp2;
 
 		(void)Var_Subst("${" MAKE_META_PREFIX "}",
@@ -938,7 +938,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		*bufp = buf = p;
 		*szp = bufsz = newsz;
 		/* fetch the rest */
-		if (!fgets(&buf[x], (int)bufsz - x, fp))
+		if (fgets(&buf[x], (int)bufsz - x, fp) == NULL)
 		    return x;		/* truncated! */
 		goto check_newline;
 	    }
@@ -1087,7 +1087,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     FILE *fp;
     Boolean needOODATE = FALSE;
     StringList *missingFiles;
-    int have_filemon = FALSE;
+    Boolean have_filemon = FALSE;
     void *objdir_freeIt;
 
     if (oodate)
@@ -1127,12 +1127,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 	StringListNode *cmdNode;
 	struct make_stat mst;
 
-	if (!buf) {
+	if (buf == NULL) {
 	    bufsz = 8 * BUFSIZ;
 	    buf = bmake_malloc(bufsz);
 	}
 
-	if (!cwdlen) {
+	if (cwdlen == 0) {
 	    if (getcwd(cwd, sizeof cwd) == NULL)
 		err(1, "Could not get current working directory");
 	    cwdlen = strlen(cwd);
@@ -1140,7 +1140,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	strlcpy(lcwd, cwd, sizeof lcwd);
 	strlcpy(latestdir, cwd, sizeof latestdir);
 
-	if (!tmpdir) {
+	if (tmpdir == NULL) {
 	    tmpdir = getTmpdir();
 	    tmplen = strlen(tmpdir);
 	}
@@ -1585,7 +1585,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    cp = NULL;		/* not in .CURDIR */
 		}
 	    }
-	    if (!cp) {
+	    if (cp == NULL) {
 		DEBUG1(META, "%s: required but missing\n", fname);
 		oodate = TRUE;
 		needOODATE = TRUE;	/* assume the worst */
