@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.434 2020/11/08 15:07:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.435 2020/11/08 16:58:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.434 2020/11/08 15:07:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.435 2020/11/08 16:58:33 rillig Exp $");
 
 /* types and constants */
 
@@ -1923,7 +1923,7 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
     if (!Var_Exists(name, ctxt))
 	Var_Set(name, "", ctxt);
 
-    (void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_ASSIGN, &evalue);
+    (void)Var_Subst(uvalue, ctxt, VARE_WANTRES|VARE_KEEP_DOLLAR, &evalue);
     /* TODO: handle errors */
     preserveUndefined = savedPreserveUndefined;
     avalue = evalue;
