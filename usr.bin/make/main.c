@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.436 2020/11/07 21:40:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.437 2020/11/08 01:39:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.436 2020/11/07 21:40:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.437 2020/11/08 01:39:24 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -489,7 +489,7 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'V':
 	case 'v':
-		opts.printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
+		opts.printVars = c == 'v' ? PVM_EXPANDED : PVM_UNEXPANDED;
 		Lst_Append(opts.variables, bmake_strdup(argvalue));
 		/* XXX: Why always -V? */
 		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
@@ -891,7 +891,7 @@ doPrintVars(void)
 	StringListNode *ln;
 	Boolean expandVars;
 
-	if (opts.printVars == EXPAND_VARS)
+	if (opts.printVars == PVM_EXPANDED)
 		expandVars = TRUE;
 	else if (opts.debugVflag)
 		expandVars = FALSE;
@@ -1131,7 +1131,7 @@ CmdOpts_Init(void)
 	opts.noBuiltins = FALSE;	/* Read the built-in rules */
 	opts.beSilent = FALSE;		/* Print commands as executed */
 	opts.touchFlag = FALSE;		/* Actually update targets */
-	opts.printVars = 0;
+	opts.printVars = PVM_NONE;
 	opts.variables = Lst_New();
 	opts.parseWarnFatal = FALSE;
 	opts.enterFlag = FALSE;
@@ -1550,7 +1550,7 @@ main(int argc, char **argv)
 	ReadMakefiles();
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
-	if (!opts.noBuiltins || !opts.printVars) {
+	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
 	    /* ignore /dev/null and anything starting with "no" */
 	    (void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
 			    VAR_CMDLINE, VARE_WANTRES, &makeDependfile);
@@ -1590,7 +1590,7 @@ main(int argc, char **argv)
 	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
 	       jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
 
-	if (!opts.printVars)
+	if (opts.printVars == PVM_NONE)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
 	InitVpath();
@@ -1611,7 +1611,7 @@ main(int argc, char **argv)
 		Targ_PrintGraph(1);
 
 	/* print the values of any variables requested by the user */
-	if (opts.printVars) {
+	if (opts.printVars != PVM_NONE) {
 		doPrintVars();
 		outOfDate = FALSE;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.197 2020/11/07 10:44:53 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.198 2020/11/08 01:39:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -554,8 +554,9 @@ void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
     else debug_printf(fmt, arg1, arg2, arg3, arg4, arg5)
 
 typedef enum PrintVarsMode {
-    COMPAT_VARS = 1,
-    EXPAND_VARS
+    PVM_NONE,
+    PVM_UNEXPANDED,
+    PVM_EXPANDED
 } PrintVarsMode;
 
 /* Command line options */
