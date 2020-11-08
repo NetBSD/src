@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.18 2020/11/08 08:11:15 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.19 2020/11/08 08:12:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ ENTRY_NP(start)
 #ifdef _LP64
 	add	s3, s2, s10		// s3 = second PDE page (RV64 only)
 #else
-	mv	s3, 22
+	mv	s3, s2
 #endif
 	add	s4, s3, s10		// s4 = first kernel PTE page
 	add	s5, s1, s9		// s5 = kernel_end
