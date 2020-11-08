@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.197 2020/11/08 10:33:47 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.198 2020/11/08 10:40:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.197 2020/11/08 10:33:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.198 2020/11/08 10:40:07 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -375,6 +375,12 @@ MakeFindChild(void *gnp, void *pgnp)
     pgn->unmade--;
 
     return 0;
+}
+
+static void
+PretendAllChildrenAreMade(GNode *gn)
+{
+    Lst_ForEachUntil(gn->children, MakeFindChild, gn);
 }
 
 /* Called by Make_Run and SuffApplyTransform on the downward pass to handle
@@ -1177,8 +1183,7 @@ Make_ExpandUse(GNodeList *targs)
 	if (!(gn->type & OP_MADE))
 	    Suff_FindDeps(gn);
 	else {
-	    /* Pretend we made all this node's children */
-	    Lst_ForEachUntil(gn->children, MakeFindChild, gn);
+	    PretendAllChildrenAreMade(gn);
 	    if (gn->unmade != 0)
 		    printf("Warning: %s%s still has %d unmade children\n",
 			    gn->name, gn->cohort_num, gn->unmade);
