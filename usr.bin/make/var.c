@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.680 2020/11/08 18:27:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.681 2020/11/08 19:24:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.680 2020/11/08 18:27:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.681 2020/11/08 19:24:19 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2068,13 +2068,12 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 {
     struct ModifyWord_LoopArgs args;
     char prev_sep;
-    VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
     VarParseResult res;
 
     args.ctx = st->ctxt;
 
     (*pp)++;			/* Skip the first '@' */
-    res = ParseModifierPart(pp, '@', eflags, st,
+    res = ParseModifierPart(pp, '@', VARE_NONE, st,
 			    &args.tvar, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
@@ -2086,12 +2085,12 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	return AMR_CLEANUP;
     }
 
-    res = ParseModifierPart(pp, '@', eflags, st,
+    res = ParseModifierPart(pp, '@', VARE_NONE, st,
 			    &args.str, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
 
-    args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
+    args.eflags = st->eflags & ~(unsigned)VARE_KEEP_DOLLAR;
     prev_sep = st->sep;
     st->sep = ' ';		/* XXX: should be st->sep for consistency */
     st->newVal = ModifyWords(st->val, ModifyWord_Loop, &args,
@@ -2110,11 +2109,10 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     Buffer buf;
     const char *p;
 
-    VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
-    if (st->eflags & VARE_WANTRES) {
+    VarEvalFlags eflags = VARE_NONE;
+    if (st->eflags & VARE_WANTRES)
 	if ((**pp == 'D') == !(st->exprFlags & VEF_UNDEF))
-	    eflags |= VARE_WANTRES;
-    }
+	    eflags = st->eflags;
 
     Buf_Init(&buf);
     p = *pp + 1;
@@ -2873,16 +2871,16 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
     VarParseResult res;
 
     Boolean value = FALSE;
-    VarEvalFlags then_eflags = st->eflags & ~(unsigned)VARE_WANTRES;
-    VarEvalFlags else_eflags = st->eflags & ~(unsigned)VARE_WANTRES;
+    VarEvalFlags then_eflags = VARE_NONE;
+    VarEvalFlags else_eflags = VARE_NONE;
 
     int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
     if (st->eflags & VARE_WANTRES) {
 	cond_rc = Cond_EvalCondition(st->v->name, &value);
 	if (cond_rc != COND_INVALID && value)
-	    then_eflags |= VARE_WANTRES;
+	    then_eflags = st->eflags;
 	if (cond_rc != COND_INVALID && !value)
-	    else_eflags |= VARE_WANTRES;
+	    else_eflags = st->eflags;
     }
 
     (*pp)++;			/* skip past the '?' */
