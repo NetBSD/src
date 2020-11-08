@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1231 2020/11/08 14:52:35 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1232 2020/11/08 14:55:25 kamil Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1273,7 +1273,7 @@ _MKVARS.no= \
 	MKARGON2 \
 	MKARZERO \
 	MKBSDGREP \
-	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
+	MKCOMPATTESTS MKCOMPATX11 MKCTF \
 	MKDEBUG MKDEBUGLIB MKDTB MKDTRACE \
 	MKEXTSRC \
 	MKFIRMWARE \
@@ -1350,7 +1350,6 @@ MKKYUA:=	no
 .endif
 
 .if ${MKMAN} == "no"
-MKCATPAGES:=	no
 MKHTML:=	no
 .endif
 
@@ -1374,7 +1373,6 @@ MKOBJDIRS:=	no
 .endif
 
 .if ${MKSHARE} == "no"
-MKCATPAGES:=	no
 MKDOC:=		no
 MKINFO:=	no
 MKHTML:=	no
