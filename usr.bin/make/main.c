@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.442 2020/11/08 02:05:34 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.443 2020/11/08 02:56:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.442 2020/11/08 02:05:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.443 2020/11/08 02:56:43 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1275,26 +1275,32 @@ InitVpath(void)
 }
 
 static void
-ReadMakefiles(void)
+ReadAllMakefiles(StringList *makefiles)
 {
-	if (opts.makefiles->first != NULL) {
-		StringListNode *ln;
+	StringListNode *ln;
 
-		for (ln = opts.makefiles->first; ln != NULL; ln = ln->next) {
-			if (ReadMakefile(ln->datum) != 0)
-				Fatal("%s: cannot open %s.",
-				      progname, (char *)ln->datum);
-		}
-	} else {
-		char *p1;
-		(void)Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
-				VAR_CMDLINE, VARE_WANTRES, &p1);
-		/* TODO: handle errors */
-		(void)str2Lst_Append(opts.makefiles, p1, NULL);
-		(void)Lst_ForEachUntil(opts.makefiles,
-				       ReadMakefileSucceeded, NULL);
-		free(p1);
+	for (ln = makefiles->first; ln != NULL; ln = ln->next) {
+		const char *fname = ln->datum;
+		if (ReadMakefile(fname) != 0)
+			Fatal("%s: cannot open %s.", progname, fname);
 	}
+}
+
+static void
+ReadFirstDefaultMakefile(void)
+{
+	char *prefs;
+	(void)Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
+			VAR_CMDLINE, VARE_WANTRES, &prefs);
+	/* TODO: handle errors */
+
+	/* XXX: This should use a local list instead of opts.makefiles
+	 * since these makefiles do not come from the command line.  They
+	 * also have different semantics in that only the first file that
+	 * is found is processed.  See ReadAllMakefiles. */
+	(void)str2Lst_Append(opts.makefiles, prefs, NULL);
+	(void)Lst_ForEachUntil(opts.makefiles, ReadMakefileSucceeded, NULL);
+	free(prefs);
 }
 
 static void
@@ -1541,7 +1547,10 @@ main(int argc, char **argv)
 	 */
 	if (!opts.noBuiltins)
 		ReadBuiltinRules();
-	ReadMakefiles();
+	if (!Lst_IsEmpty(opts.makefiles))
+		ReadAllMakefiles(opts.makefiles);
+	else
+		ReadFirstDefaultMakefile();
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
