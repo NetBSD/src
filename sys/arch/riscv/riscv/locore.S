@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.19 2020/11/08 08:12:17 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.20 2020/11/08 10:08:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ ENTRY_NP(start)
 
 	add	s1, s1, s10		// PAGE_SIZE
 	addi	s1, s1, -1		//   -1 == PAGE_MASK
-	neg	a1, a0			// -PAGE_SIZE
+	neg	a1, s10			// -PAGE_SIZE
 	and	s1, s1, a1		// s1 is page aligned end of kernel
 					// s1 = uarea
 	add	s2, s1, s9		// s2 = first PDE page
