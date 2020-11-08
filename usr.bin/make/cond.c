@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.196 2020/11/08 23:20:19 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.197 2020/11/08 23:54:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.196 2020/11/08 23:20:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.197 2020/11/08 23:54:28 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -836,15 +836,23 @@ CondParser_Token(CondParser *par, Boolean doEval)
 
     case '|':
 	par->p++;
-	if (par->p[0] == '|') {
+	if (par->p[0] == '|')
 	    par->p++;
+	else if (opts.lint) {
+	    Parse_Error(PARSE_FATAL, "Unknown operator '|'");
+	    par->printedError = TRUE;
+	    return TOK_ERROR;
 	}
 	return TOK_OR;
 
     case '&':
 	par->p++;
-	if (par->p[0] == '&') {
+	if (par->p[0] == '&')
 	    par->p++;
+	else if (opts.lint) {
+	    Parse_Error(PARSE_FATAL, "Unknown operator '&'");
+	    par->printedError = TRUE;
+	    return TOK_ERROR;
 	}
 	return TOK_AND;
 
