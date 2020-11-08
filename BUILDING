@@ -247,11 +247,6 @@ CONFIGURATION
 
                  Default: 2
 
-     MKCATPAGES  Can be set to "yes" or "no".  Indicates whether preformatted
-                 plaintext manual pages will be created during a build.
-
-                 Default: "no"
-
      MKCROSSGDB  Can be set to "yes" or "no".  Create a cross-gdb as a host
                  tool.
 
@@ -385,9 +380,8 @@ CONFIGURATION
 
      MKSHARE     Can be set to "yes" or "no".  Indicates whether files
                  destined to reside in DESTDIR/usr/share will be built and
-                 installed during a build.  If set to "no", then all of
-                 MKCATPAGES, MKDOC, MKINFO, MKMAN, and MKNLS will be set to
-                 "no" unconditionally.
+                 installed during a build.  If set to "no", then all of MKDOC,
+                 MKINFO, MKMAN, and MKNLS will be set to "no" unconditionally.
 
                  Default: "yes"
 
