@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.174 2020/11/08 09:15:19 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.175 2020/11/08 19:53:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.174 2020/11/08 09:15:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.175 2020/11/08 19:53:11 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -210,7 +210,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 	    Boolean isError;
 
 	    /* XXX: is expanded twice: once here and once below */
-	    (void)Var_Parse(&nested_p, ctxt, VARE_UNDEFERR|VARE_WANTRES,
+	    (void)Var_Parse(&nested_p, ctxt, VARE_WANTRES | VARE_UNDEFERR,
 			    &result, &result_freeIt);
 	    /* TODO: handle errors */
 	    isError = result == var_Error;
@@ -226,7 +226,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 
     *cp++ = '\0';
     if (expandLibName) {
-	(void)Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES, &libName);
+	(void)Var_Subst(libName, ctxt, VARE_WANTRES | VARE_UNDEFERR, &libName);
 	/* TODO: handle errors */
 	libName_freeIt = libName;
     }
@@ -254,7 +254,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 		Boolean isError;
 		const char *nested_p = cp;
 
-		(void)Var_Parse(&nested_p, ctxt, VARE_UNDEFERR|VARE_WANTRES,
+		(void)Var_Parse(&nested_p, ctxt, VARE_WANTRES | VARE_UNDEFERR,
 				&result, &freeIt);
 		/* TODO: handle errors */
 		isError = result == var_Error;
@@ -307,7 +307,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 	    char *sacrifice;
 	    char *oldMemName = memName;
 
-	    (void)Var_Subst(memName, ctxt, VARE_UNDEFERR|VARE_WANTRES,
+	    (void)Var_Subst(memName, ctxt, VARE_WANTRES | VARE_UNDEFERR,
 			    &memName);
 	    /* TODO: handle errors */
 

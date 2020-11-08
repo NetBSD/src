@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.435 2020/11/08 16:58:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.436 2020/11/08 19:53:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.435 2020/11/08 16:58:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.436 2020/11/08 19:53:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1063,8 +1063,8 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
 	    const char *nested_val;
 	    void *freeIt;
 
-	    (void)Var_Parse(&nested_p, VAR_CMDLINE, VARE_UNDEFERR|VARE_WANTRES,
-			    &nested_val, &freeIt);
+	    (void)Var_Parse(&nested_p, VAR_CMDLINE,
+			    VARE_WANTRES | VARE_UNDEFERR, &nested_val, &freeIt);
 	    /* TODO: handle errors */
 	    free(freeIt);
 	    cp += nested_p - cp;
@@ -1944,7 +1944,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
     cmd = uvalue;
     if (strchr(cmd, '$') != NULL) {
 	char *ecmd;
-	(void)Var_Subst(cmd, VAR_CMDLINE, VARE_UNDEFERR | VARE_WANTRES, &ecmd);
+	(void)Var_Subst(cmd, VAR_CMDLINE, VARE_WANTRES | VARE_UNDEFERR, &ecmd);
 	/* TODO: handle errors */
 	cmd = cmd_freeIt = ecmd;
     }
@@ -3032,7 +3032,7 @@ ParseDependency(char *line)
      * Var_Parse does not print any parse errors in such a case.
      * It simply returns the special empty string var_Error,
      * which cannot be detected in the result of Var_Subst. */
-    eflags = DEBUG(LINT) ? VARE_WANTRES : VARE_UNDEFERR | VARE_WANTRES;
+    eflags = DEBUG(LINT) ? VARE_WANTRES : VARE_WANTRES | VARE_UNDEFERR;
     (void)Var_Subst(line, VAR_CMDLINE, eflags, &expanded_line);
     /* TODO: handle errors */
 

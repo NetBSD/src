@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.234 2020/11/08 00:28:52 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.235 2020/11/08 19:53:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.234 2020/11/08 00:28:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.235 2020/11/08 19:53:11 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1132,7 +1132,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
     }
 
     SUFF_DEBUG1("Expanding \"%s\"...", cgn->name);
-    (void)Var_Subst(cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES, &cp);
+    (void)Var_Subst(cgn->name, pgn, VARE_WANTRES | VARE_UNDEFERR, &cp);
     /* TODO: handle errors */
 
     {
@@ -1183,7 +1183,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 
 		    /* XXX: Why VARE_WANTRES when the result is not used? */
 		    (void)Var_Parse(&nested_p, pgn,
-				    VARE_UNDEFERR|VARE_WANTRES,
+				    VARE_WANTRES | VARE_UNDEFERR,
 				    &junk, &freeIt);
 		    /* TODO: handle errors */
 		    if (junk == var_Error) {
