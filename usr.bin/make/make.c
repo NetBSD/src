@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.201 2020/11/08 11:25:26 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.202 2020/11/08 11:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.201 2020/11/08 11:25:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.202 2020/11/08 11:28:44 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -911,14 +911,14 @@ MakeBuildParent(void *v_pn, void *toBeMade_next)
 static Boolean
 MakeStartJobs(void)
 {
-    GNode	*gn;
-    int		have_token = 0;
+    GNode *gn;
+    Boolean have_token = FALSE;
 
     while (!Lst_IsEmpty(toBeMade)) {
 	/* Get token now to avoid cycling job-list when we only have 1 token */
 	if (!have_token && !Job_TokenWithdraw())
 	    break;
-	have_token = 1;
+	have_token = TRUE;
 
 	gn = Lst_Dequeue(toBeMade);
 	DEBUG2(MAKE, "Examining %s%s...\n", gn->name, gn->cohort_num);
@@ -957,7 +957,7 @@ MakeStartJobs(void)
 	    }
 	    Make_DoAllVar(gn);
 	    Job_Make(gn);
-	    have_token = 0;
+	    have_token = FALSE;
 	} else {
 	    DEBUG0(MAKE, "up-to-date\n");
 	    gn->made = UPTODATE;
