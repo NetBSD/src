@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.185 2020/11/07 20:39:56 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.186 2020/11/08 19:24:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.185 2020/11/07 20:39:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.186 2020/11/08 19:24:19 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -248,7 +248,8 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	     * though perhaps we should...
 	     */
 	    void *nestedVal_freeIt;
-	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
+	    VarEvalFlags eflags = doEval ? VARE_WANTRES | VARE_UNDEFERR
+					 : VARE_NONE;
 	    const char *nestedVal;
 	    (void)Var_Parse(&p, VAR_CMDLINE, eflags, &nestedVal,
 			    &nestedVal_freeIt);
