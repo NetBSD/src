@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.676 2020/11/08 15:07:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.677 2020/11/08 16:58:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.676 2020/11/08 15:07:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.677 2020/11/08 16:58:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -138,7 +138,7 @@ MAKE_RCSID("$NetBSD: var.c,v 1.676 2020/11/08 15:07:37 rillig Exp $");
 #define VAR_DEBUG4(fmt, arg1, arg2, arg3, arg4) DEBUG4(VAR, fmt, arg1, arg2, arg3, arg4)
 
 ENUM_FLAGS_RTTI_3(VarEvalFlags,
-		  VARE_UNDEFERR, VARE_WANTRES, VARE_ASSIGN);
+		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR);
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -1922,7 +1922,7 @@ ParseModifierPart(
 	    const char *nested_p = p;
 	    const char *nested_val;
 	    void *nested_val_freeIt;
-	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
+	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_KEEP_DOLLAR;
 
 	    (void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
 			    &nested_val, &nested_val_freeIt);
@@ -2980,7 +2980,8 @@ ok:
 
     delim = st->startc == '(' ? ')' : '}';
     /* TODO: Add test for using the ::= modifier in a := assignment line.
-     * Probably st->eflags should be passed down without VARE_ASSIGN here. */
+     * Probably st->eflags should be passed down without VARE_KEEP_DOLLAR
+     * here. */
     res = ParseModifierPart(pp, delim, st->eflags, st, &val, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
@@ -3946,9 +3947,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
  *			expanded.
  *	ctxt		The context in which to start searching for
  *			variables.  The other contexts are searched as well.
- *	eflags		VARE_UNDEFERR	if undefineds are an error
- *			VARE_WANTRES	if we actually want the result
- *			VARE_ASSIGN	if we are in a := assignment
+ *	eflags		Special effects during expansion.
  */
 VarParseResult
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
@@ -3966,7 +3965,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
     while (*p != '\0') {
 	if (p[0] == '$' && p[1] == '$') {
 	    /* A dollar sign may be escaped with another dollar sign. */
-	    if (save_dollars && (eflags & VARE_ASSIGN))
+	    if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
 		Buf_AddByte(&buf, '$');
 	    Buf_AddByte(&buf, '$');
 	    p += 2;
