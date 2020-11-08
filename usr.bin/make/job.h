@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.60 2020/11/07 21:24:33 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.61 2020/11/08 01:16:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,8 +134,6 @@ typedef enum JobFlags {
     /* Target is a special one. i.e. run it locally
      * if we can't export it and maxLocal is 0 */
     JOB_SPECIAL	= 1 << 2,
-    /* Ignore "..." lines when processing commands */
-    JOB_IGNDOTS	= 1 << 3,
     /* we've sent 'set -x' */
     JOB_TRACED	= 1 << 10
 } JobFlags;
