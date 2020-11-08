@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.3 2020/11/08 13:46:15 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.4 2020/11/08 14:00:52 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -7,7 +7,7 @@
 
 # XXX: edge case: When a variable name refers to an undefined variable, the
 # behavior differs between the '=' and the ':=' assignment operators.
-# This bug exists since at least 1993-03-21.
+# This bug exists since var.c 1.42 from 2000-05-11.
 #
 # The '=' operator expands the undefined variable to an empty string, thus
 # assigning to VAR_ASSIGN_.  In the name of variables to be set, it should
