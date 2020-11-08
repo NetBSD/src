@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.446 2020/11/08 12:14:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.447 2020/11/08 12:21:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.446 2020/11/08 12:14:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.447 2020/11/08 12:21:27 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1386,9 +1386,9 @@ main(int argc, char **argv)
 	UnlimitFiles();
 
 	if (uname(&utsname) == -1) {
-	    (void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
-		strerror(errno));
-	    exit(2);
+		(void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
+			      strerror(errno));
+		exit(2);
 	}
 
 	/*
@@ -1402,7 +1402,7 @@ main(int argc, char **argv)
 	machine = init_machine(&utsname);
 	machine_arch = init_machine_arch();
 
-	myPid = getpid();		/* remember this for vFork() */
+	myPid = getpid();	/* remember this for vFork() */
 
 	/*
 	 * Just in case MAKEOBJDIR wants us to do something tricky.
@@ -1427,8 +1427,8 @@ main(int argc, char **argv)
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
 	CmdOpts_Init();
-	allPrecious = FALSE;		/* Remove targets when interrupted */
-	deleteOnError = FALSE;		/* Historical default behavior */
+	allPrecious = FALSE;	/* Remove targets when interrupted */
+	deleteOnError = FALSE;	/* Historical default behavior */
 	jobsRunning = FALSE;
 
 	maxJobTokens = opts.maxJobs;
@@ -1455,21 +1455,19 @@ main(int argc, char **argv)
 	/* some makefiles need to know this */
 	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMDLINE);
 
-	/*
-	 * Set some other useful macros
-	 */
+	/* Set some other useful variables. */
 	{
-	    char tmp[64], *ep = getenv(MAKE_LEVEL_ENV);
+		char tmp[64], *ep = getenv(MAKE_LEVEL_ENV);
 
-	    makelevel = ep != NULL && ep[0] != '\0' ? atoi(ep) : 0;
-	    if (makelevel < 0)
-		makelevel = 0;
-	    snprintf(tmp, sizeof tmp, "%d", makelevel);
-	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL);
-	    snprintf(tmp, sizeof tmp, "%u", myPid);
-	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
-	    snprintf(tmp, sizeof tmp, "%u", getppid());
-	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
+		makelevel = ep != NULL && ep[0] != '\0' ? atoi(ep) : 0;
+		if (makelevel < 0)
+			makelevel = 0;
+		snprintf(tmp, sizeof tmp, "%d", makelevel);
+		Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL);
+		snprintf(tmp, sizeof tmp, "%u", myPid);
+		Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
+		snprintf(tmp, sizeof tmp, "%u", getppid());
+		Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
@@ -1489,9 +1487,9 @@ main(int argc, char **argv)
 	 */
 #ifdef POSIX
 	{
-	    char *p1 = explode(getenv("MAKEFLAGS"));
-	    Main_ParseArgLine(p1);
-	    free(p1);
+		char *p1 = explode(getenv("MAKEFLAGS"));
+		Main_ParseArgLine(p1);
+		free(p1);
 	}
 #else
 	Main_ParseArgLine(getenv("MAKE"));
@@ -1503,7 +1501,7 @@ main(int argc, char **argv)
 	 */
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: getcwd: %s.\n",
-		    progname, strerror(errno));
+			      progname, strerror(errno));
 		exit(2);
 	}
 
@@ -1516,9 +1514,9 @@ main(int argc, char **argv)
 	 * Verify that cwd is sane.
 	 */
 	if (stat(curdir, &sa) == -1) {
-	    (void)fprintf(stderr, "%s: %s: %s.\n",
-		 progname, curdir, strerror(errno));
-	    exit(2);
+		(void)fprintf(stderr, "%s: %s: %s.\n",
+			      progname, curdir, strerror(errno));
+		exit(2);
 	}
 
 #ifndef NO_PWD_OVERRIDE
@@ -1560,15 +1558,15 @@ main(int argc, char **argv)
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
-	    /* ignore /dev/null and anything starting with "no" */
-	    (void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
-			    VAR_CMDLINE, VARE_WANTRES, &makeDependfile);
-	    if (makeDependfile[0] != '\0') {
-		/* TODO: handle errors */
-		doing_depend = TRUE;
-		(void)ReadMakefile(makeDependfile);
-		doing_depend = FALSE;
-	    }
+		/* ignore /dev/null and anything starting with "no" */
+		(void)Var_Subst("${.MAKE.DEPENDFILE:N/dev/null:Nno*:T}",
+				VAR_CMDLINE, VARE_WANTRES, &makeDependfile);
+		if (makeDependfile[0] != '\0') {
+			/* TODO: handle errors */
+			doing_depend = TRUE;
+			(void)ReadMakefile(makeDependfile);
+			doing_depend = FALSE;
+		}
 	}
 
 	if (enterFlagObj)
@@ -1577,30 +1575,29 @@ main(int argc, char **argv)
 	MakeMode(NULL);
 
 	{
-	    void *freeIt;
-	    Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &freeIt),
-		       VAR_GLOBAL);
-	    bmake_free(freeIt);
+		void *freeIt;
+		Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &freeIt),
+			   VAR_GLOBAL);
+		bmake_free(freeIt);
 
 	}
 
 	InitMaxJobs();
 
 	/*
-	 * Be compatible if user did not specify -j and did not explicitly
-	 * turned compatibility on
+	 * Be compatible if the user did not specify -j and did not explicitly
+	 * turn compatibility on.
 	 */
-	if (!opts.compatMake && !forceJobs) {
-	    opts.compatMake = TRUE;
-	}
+	if (!opts.compatMake && !forceJobs)
+		opts.compatMake = TRUE;
 
 	if (!opts.compatMake)
-	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
+		Job_ServerStart(maxJobTokens, jp_0, jp_1);
 	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
 	       jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
 
 	if (opts.printVars == PVM_NONE)
-	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
+		Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
 	InitVpath();
 
@@ -1630,7 +1627,7 @@ main(int argc, char **argv)
 	CleanUp();
 
 	if (DEBUG(LINT) && (errors > 0 || Parse_GetFatals() > 0))
-	    return 2;		/* Not 1 so -q can distinguish error */
+		return 2;	/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
 }
 
