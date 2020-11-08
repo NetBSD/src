@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.81 2020/10/27 06:33:38 rin Exp $
+.\"	$NetBSD: mk.conf.5,v 1.82 2020/11/08 14:52:35 kamil Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -257,12 +257,6 @@ If
 .Xr pax 1
 based frontends are used.
 .DFLTy
-.
-.It Sy MKCATPAGES
-.YorN
-Indicates whether preformatted plaintext manual pages will be created
-and installed.
-.DFLTn
 .
 .It Sy MKCLEANSRC
 .YorN
@@ -579,7 +573,7 @@ Indicates whether manual pages will be installed.
 If
 .Dq no ,
 acts as
-.Sy MKCATPAGES=no MKHTML=no .
+.Sy MKHTML=no .
 .
 .It Sy MKMANZ
 .YorN
@@ -745,7 +739,7 @@ will be built and installed.
 If
 .Dq no ,
 acts as
-.Sy MKCATPAGES=no MKDOC=no MKINFO=no MKHTML=no MKMAN=no MKNLS=no .
+.Sy MKDOC=no MKINFO=no MKHTML=no MKMAN=no MKNLS=no .
 .
 .It Sy MKSKEY
 .YorN

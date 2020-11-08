@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.412 2020/10/16 06:55:36 nia Exp $
+#	$NetBSD: bsd.README,v 1.413 2020/11/08 14:52:35 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -129,9 +129,6 @@ MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd,
 MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
 		the pax frontends.
 		Default: yes
-
-MKCATPAGES	If "no", don't build or install the catman pages.
-		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
 		Default: yes on amd64/mips64/sparc64, no elsewhere.
@@ -348,8 +345,8 @@ MKLVM		If "no", don't build or install the logical volume manager
 		and device mapper tools and libraries
 		Default: yes
 
-MKMAN		If "no", don't build or install the man or catman pages,
-		and also acts as "MKCATPAGES=no MKHTML=no".
+MKMAN		If "no", don't build or install the man pages,
+		and also acts as "MKHTML=no".
 		Default: yes
 
 MKMANDOC	If "yes", mandoc is built as tool and used to compile
@@ -460,7 +457,7 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		depends on the compiler version and target CPU architecture.
 		Default: no
 
-MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
+MKSHARE		If "no", act as "MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
 		I.e, don't build catman pages, documentation, Info
 		documentation, man pages, NLS files, ...
@@ -729,8 +726,8 @@ MANOWN		Manual owner.  [root]
 MANMODE		Manual mode.  [${NONBINMODE}]
 
 MANINSTALL	Manual installation type.  Space separated list:
-			catinstall, htmlinstall, maninstall
-		Default value derived from MKCATPAGES and MKHTML.
+			htmlinstall, maninstall
+		Default value derived from MKHTML.
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -1461,8 +1458,6 @@ links.
 
 It has a three targets:
 
-	catinstall:
-		Install the preformatted manual pages and their links.
 	htmlinstall:
 		Install the HTML manual pages and their links.
 	maninstall:

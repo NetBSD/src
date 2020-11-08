@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1230 2020/11/05 13:03:31 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1231 2020/11/08 14:52:35 kamil Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1355,9 +1355,6 @@ MKHTML:=	no
 .endif
 
 _MANINSTALL=	maninstall
-.if ${MKCATPAGES} != "no"
-_MANINSTALL+=	catinstall
-.endif
 .if ${MKHTML} != "no"
 _MANINSTALL+=	htmlinstall
 .endif
