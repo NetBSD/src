@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.193 2020/11/08 09:06:23 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.194 2020/11/08 09:34:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.193 2020/11/08 09:06:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.194 2020/11/08 09:34:55 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -213,7 +213,7 @@ GNode_IsOODate(GNode *gn)
      * doesn't depend on their modification time...
      */
     if (!(gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
-	(void)Dir_MTime(gn, 1);
+	Dir_UpdateMTime(gn, TRUE);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0)
 		debug_printf("modified %s...", Targ_FmtTime(gn->mtime));
@@ -366,7 +366,7 @@ MakeFindChild(void *gnp, void *pgnp)
     GNode *gn = gnp;
     GNode *pgn = pgnp;
 
-    (void)Dir_MTime(gn, 0);
+    Dir_UpdateMTime(gn, FALSE);
     GNode_UpdateYoungestChild(pgn, gn);
     pgn->unmade--;
 
@@ -491,7 +491,10 @@ HandleUseNodes(GNode *gn)
 time_t
 Make_Recheck(GNode *gn)
 {
-    time_t mtime = Dir_MTime(gn, 1);
+    time_t mtime;
+
+    Dir_UpdateMTime(gn, TRUE);
+    mtime = gn->mtime;
 
 #ifndef RECHECK
     /*
@@ -531,7 +534,7 @@ Make_Recheck(GNode *gn)
      * using the same file from a common server), there are times
      * when the modification time of a file created on a remote
      * machine will not be modified before the local stat() implied by
-     * the Dir_MTime occurs, thus leading us to believe that the file
+     * the Dir_UpdateMTime occurs, thus leading us to believe that the file
      * is unchanged, wreaking havoc with files that depend on this one.
      *
      * I have decided it is better to make too much than to make too
@@ -1162,7 +1165,7 @@ Make_ExpandUse(GNodeList *targs)
 	    *eon = ')';
 	}
 
-	(void)Dir_MTime(gn, 0);
+	Dir_UpdateMTime(gn, FALSE);
 	Var_Set(TARGET, GNode_Path(gn), gn);
 	UnmarkChildren(gn);
 	HandleUseNodes(gn);
