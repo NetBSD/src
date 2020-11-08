@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.190 2020/11/08 08:33:07 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.191 2020/11/08 08:53:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.190 2020/11/08 08:33:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.191 2020/11/08 08:53:22 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -550,8 +550,7 @@ Make_Recheck(GNode *gn)
 	DEBUG2(MAKE, " recheck(%s): update time from %s to now\n",
 	       gn->name, Targ_FmtTime(gn->mtime));
 	gn->mtime = now;
-    }
-    else {
+    } else {
 	DEBUG2(MAKE, " recheck(%s): current update time: %s\n",
 	       gn->name, Targ_FmtTime(gn->mtime));
     }

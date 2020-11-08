@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.66 2020/11/07 22:29:58 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.67 2020/11/08 08:53:22 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.66 2020/11/07 22:29:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.67 2020/11/08 08:53:22 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -28,8 +28,7 @@ strerror(int e)
     if (e < 0 || e >= sys_nerr) {
 	snprintf(buf, sizeof buf, "Unknown error %d", e);
 	return buf;
-    }
-    else
+    } else
 	return sys_errlist[e];
 }
 #endif
@@ -291,8 +290,7 @@ getwd(char *pathname)
 	    for (d = readdir(dp); d != NULL; d = readdir(dp))
 		if (d->d_fileno == st_cur.st_ino)
 		    break;
-	}
-	else {
+	} else {
 	    /*
 	     * Parent has a different device. This is a mount point so we
 	     * need to stat every member
