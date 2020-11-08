@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.157 2020/11/08 09:06:23 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.158 2020/11/08 09:15:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -79,7 +79,7 @@ void Arch_End(void);
 Boolean Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
 void Arch_TouchLib(GNode *);
-time_t Arch_MTime(GNode *);
+void Arch_UpdateMTime(GNode *gn);
 void Arch_UpdateMemberMTime(GNode *gn);
 void Arch_FindLib(GNode *, SearchPath *);
 Boolean Arch_LibOODate(GNode *);
