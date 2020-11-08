@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.195 2020/11/08 09:48:52 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.196 2020/11/08 10:17:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.195 2020/11/08 09:48:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.196 2020/11/08 10:17:55 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -296,7 +296,7 @@ GNode_IsOODate(GNode *gn)
 	if (DEBUG(MAKE)) {
 	    if (gn->youngestChild != NULL &&
 		gn->mtime < gn->youngestChild->mtime) {
-		debug_printf("modified before source %s...",
+		debug_printf("modified before source \"%s\"...",
 			     GNode_Path(gn->youngestChild));
 	    } else if (gn->mtime == 0) {
 		debug_printf("non-existent and no sources...");
