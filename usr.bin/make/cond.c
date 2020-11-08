@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.195 2020/11/08 23:10:22 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.196 2020/11/08 23:20:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.195 2020/11/08 23:10:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.196 2020/11/08 23:20:19 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -718,10 +718,8 @@ FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
     return arglen == 1;
 }
 
-/* Parse a function call, a number, a variable expression or a string
- * literal. */
-static Token
-CondParser_LeafToken(CondParser *par, Boolean doEval)
+static Boolean
+CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 {
     static const struct fn_def {
 	const char *fn_name;
@@ -738,17 +736,15 @@ CondParser_LeafToken(CondParser *par, Boolean doEval)
 	{ NULL,       0, NULL, NULL },
     };
     const struct fn_def *fn_def;
-    Token t;
     char *arg = NULL;
     size_t arglen;
     const char *cp = par->p;
-    const char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
 	if (!is_token(cp, fn_def->fn_name, fn_def->fn_name_len))
 	    continue;
+
 	cp += fn_def->fn_name_len;
-	/* There can only be whitespace before the '(' */
 	cpp_skip_whitespace(&cp);
 	if (*cp != '(')
 	    break;
@@ -756,14 +752,32 @@ CondParser_LeafToken(CondParser *par, Boolean doEval)
 	arglen = fn_def->fn_parse(&cp, doEval, fn_def->fn_name, &arg);
 	if (arglen == 0 || arglen == (size_t)-1) {
 	    par->p = cp;
-	    return arglen == 0 ? TOK_FALSE : TOK_ERROR;
+	    *out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
+	    return TRUE;
 	}
 	/* Evaluate the argument using the required function. */
-	t = ToToken(!doEval || fn_def->fn_eval(arglen, arg));
+	*out_token = ToToken(!doEval || fn_def->fn_eval(arglen, arg));
 	free(arg);
 	par->p = cp;
-	return t;
+	return TRUE;
     }
+
+    return FALSE;
+}
+
+/* Parse a function call, a number, a variable expression or a string
+ * literal. */
+static Token
+CondParser_LeafToken(CondParser *par, Boolean doEval)
+{
+    Token t;
+    char *arg = NULL;
+    size_t arglen;
+    const char *cp = par->p;
+    const char *cp1;
+
+    if (CondParser_Func(par, doEval, &t))
+	return t;
 
     /* Push anything numeric through the compare expression */
     cp = par->p;
