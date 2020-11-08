@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.188 2020/11/07 21:22:37 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.189 2020/11/08 08:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -86,8 +86,9 @@
  *			place the parent on the toBeMade queue if it
  *			should be.
  *
- *	Make_TimeStamp	Function to set the parent's youngestChild field
- *			based on a child's modification time.
+ *	GNode_UpdateYoungestChild
+ *			Update the node's youngestChild field based on the
+ *			child's modification time.
  *
  *	Make_DoAllVar	Set up the various local variables for a
  *			target, including the .ALLSRC variable, making
@@ -107,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.188 2020/11/07 21:22:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.189 2020/11/08 08:26:22 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -185,11 +186,10 @@ GNode_ShouldExecute(GNode *gn)
 
 /* Update the youngest child of the node, according to the given child. */
 void
-Make_TimeStamp(GNode *pgn, GNode *cgn)
+GNode_UpdateYoungestChild(GNode *gn, GNode *cgn)
 {
-    if (pgn->youngestChild == NULL || cgn->mtime > pgn->youngestChild->mtime) {
-	pgn->youngestChild = cgn;
-    }
+    if (gn->youngestChild == NULL || cgn->mtime > gn->youngestChild->mtime)
+	gn->youngestChild = cgn;
 }
 
 /* See if the node is out of date with respect to its sources.
@@ -331,7 +331,7 @@ Make_OODate(GNode *gn)
     if (!oodate) {
 	GNodeListNode *ln;
 	for (ln = gn->parents->first; ln != NULL; ln = ln->next)
-	    Make_TimeStamp(ln->datum, gn);
+	    GNode_UpdateYoungestChild(ln->datum, gn);
     }
 
     return oodate;
@@ -367,7 +367,7 @@ MakeFindChild(void *gnp, void *pgnp)
     GNode *pgn = pgnp;
 
     (void)Dir_MTime(gn, 0);
-    Make_TimeStamp(pgn, gn);
+    GNode_UpdateYoungestChild(pgn, gn);
     pgn->unmade--;
 
     return 0;
@@ -672,10 +672,10 @@ Make_Update(GNode *cgn)
 	    continue;
 	}
 
-	if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
+	if (!(cgn->type & (OP_EXEC | OP_USE | OP_USEBEFORE))) {
 	    if (cgn->made == MADE)
 		pgn->flags |= CHILDMADE;
-	    (void)Make_TimeStamp(pgn, cgn);
+	    GNode_UpdateYoungestChild(pgn, cgn);
 	}
 
 	/*
