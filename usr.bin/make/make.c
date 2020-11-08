@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.200 2020/11/08 11:05:58 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.201 2020/11/08 11:25:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.200 2020/11/08 11:05:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.201 2020/11/08 11:25:26 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -118,7 +118,6 @@ static unsigned int checked = 1;
  * It is added to by Make_Update and subtracted from by MakeStartJobs */
 static GNodeList *toBeMade;
 
-static int MakeCheckOrder(void *, void *);
 static int MakeBuildParent(void *, void *);
 
 void
@@ -564,6 +563,25 @@ UpdateImplicitParentsVars(GNode *cgn, const char *cname)
     }
 }
 
+/* See if a .ORDER rule stops us from building this node. */
+static Boolean
+IsWaitingForOrder(GNode *gn)
+{
+    GNodeListNode *ln;
+
+    for (ln = gn->order_pred->first; ln != NULL; ln = ln->next) {
+	GNode *ogn = ln->datum;
+
+	if (ogn->made >= MADE || !(ogn->flags & REMAKE))
+	    continue;
+
+	DEBUG2(MAKE, "IsWaitingForOrder: Waiting for .ORDER node \"%s%s\"\n",
+	       ogn->name, ogn->cohort_num);
+	return TRUE;
+    }
+    return FALSE;
+}
+
 /* Perform update on the parents of a node. Used by JobFinish once
  * a node has been dealt with and by MakeStartJobs if it finds an
  * up-to-date node.
@@ -699,11 +717,10 @@ Make_Update(GNode *cgn)
 	    DEBUG0(MAKE, "- not deferred\n");
 	    continue;
 	}
-	assert(pgn->order_pred != NULL);
-	if (Lst_ForEachUntil(pgn->order_pred, MakeCheckOrder, NULL)) {
-	    /* A .ORDER rule stops us building this */
+
+	if (IsWaitingForOrder(pgn))
 	    continue;
-	}
+
 	if (DEBUG(MAKE)) {
 	    debug_printf("- %s%s made, schedule %s%s (made %d)\n",
 			 cgn->name, cgn->cohort_num,
@@ -834,19 +851,6 @@ Make_DoAllVar(GNode *gn)
 }
 
 static int
-MakeCheckOrder(void *v_bn, void *ignore MAKE_ATTR_UNUSED)
-{
-    GNode *bn = v_bn;
-
-    if (bn->made >= MADE || !(bn->flags & REMAKE))
-	return 0;
-
-    DEBUG2(MAKE, "MakeCheckOrder: Waiting for .ORDER node %s%s\n",
-	   bn->name, bn->cohort_num);
-    return 1;
-}
-
-static int
 MakeBuildChild(void *v_cn, void *toBeMade_next)
 {
     GNode *cn = v_cn;
@@ -857,8 +861,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 	return 0;
 
     /* If this node is on the RHS of a .ORDER, check LHSs. */
-    assert(cn->order_pred);
-    if (Lst_ForEachUntil(cn->order_pred, MakeCheckOrder, NULL)) {
+    if (IsWaitingForOrder(cn)) {
 	/* Can't build this (or anything else in this child list) yet */
 	cn->made = DEFERRED;
 	return 0;			/* but keep looking */
