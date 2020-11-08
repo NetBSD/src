@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.11 2020/10/30 14:53:31 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.12 2020/11/08 23:00:09 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -86,5 +86,18 @@
 # Adding a space at the beginning of the quoted variable expression works
 # though.
 .if ${:U word } != " ${:Uword} "
+.  error
+.endif
+
+# If at least one side of the comparison is a string literal, the string
+# comparison is performed.
+.if 12345 != "12345"
+.  error
+.endif
+
+# If at least one side of the comparison is a string literal, the string
+# comparison is performed.  The ".0" in the left-hand side makes the two
+# sides of the equation unequal.
+.if 12345.0 == "12345"
 .  error
 .endif
