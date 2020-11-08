@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.193 2020/11/08 23:05:47 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.194 2020/11/08 23:08:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.193 2020/11/08 23:05:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.194 2020/11/08 23:08:49 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -718,8 +718,10 @@ FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
     return arglen == 1;
 }
 
+/* Parse a function call, a number, a variable expression or a string
+ * literal. */
 static Token
-CondParser_Func(CondParser *par, Boolean doEval)
+CondParser_LeafToken(CondParser *par, Boolean doEval)
 {
     static const struct fn_def {
 	const char *fn_name;
@@ -846,7 +848,7 @@ CondParser_Token(CondParser *par, Boolean doEval)
 	return CondParser_Comparison(par, doEval);
 
     default:
-	return CondParser_Func(par, doEval);
+	return CondParser_LeafToken(par, doEval);
     }
 }
 
