@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.681 2020/11/08 19:24:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.682 2020/11/08 19:53:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.681 2020/11/08 19:24:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.682 2020/11/08 19:53:11 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2977,9 +2977,6 @@ ok:
     }
 
     delim = st->startc == '(' ? ')' : '}';
-    /* TODO: Add test for using the ::= modifier in a := assignment line.
-     * Probably st->eflags should be passed down without VARE_KEEP_DOLLAR
-     * here. */
     res = ParseModifierPart(pp, delim, st->eflags, st, &val, NULL, NULL, NULL);
     if (res != VPR_OK)
 	return AMR_CLEANUP;
@@ -3657,9 +3654,7 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 	return VPR_OK;
     }
 
-    if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
-	DEBUG(LINT))
-    {
+    if ((eflags & VARE_UNDEFERR) && DEBUG(LINT)) {
 	Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", varname);
 	free(varname);
 	*out_val = var_Error;
