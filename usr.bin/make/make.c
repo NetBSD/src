@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.199 2020/11/08 10:50:50 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.200 2020/11/08 11:05:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.199 2020/11/08 10:50:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.200 2020/11/08 11:05:58 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -339,21 +339,6 @@ GNode_IsOODate(GNode *gn)
     }
 
     return oodate;
-}
-
-/* Add the node to the list if it needs to be examined. */
-static int
-MakeAddChild(void *gnp, void *lp)
-{
-    GNode *gn = gnp;
-    GNodeList *l = lp;
-
-    if (!(gn->flags & REMAKE) && !(gn->type & (OP_USE|OP_USEBEFORE))) {
-	DEBUG2(MAKE, "MakeAddChild: need to examine %s%s\n",
-	       gn->name, gn->cohort_num);
-	Lst_Enqueue(l, gn);
-    }
-    return 0;
 }
 
 static void
@@ -1101,6 +1086,25 @@ MakePrintStatusList(GNodeList *gnodes, int *errors)
 	    break;
 }
 
+static void
+ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
+{
+    ListNode *ln;
+
+    for (ln = toBeExamined->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
+
+	if (gn->flags & REMAKE)
+	    continue;
+	if (gn->type & (OP_USE | OP_USEBEFORE))
+	    continue;
+
+	DEBUG2(MAKE, "ExamineLater: need to examine \"%s%s\"\n",
+	       gn->name, gn->cohort_num);
+	Lst_Enqueue(examine, gn);
+    }
+}
+
 /* Expand .USE nodes and create a new targets list.
  *
  * Input:
@@ -1177,7 +1181,7 @@ Make_ExpandUse(GNodeList *targs)
 	}
 
 	if (gn->unmade != 0)
-	    Lst_ForEachUntil(gn->children, MakeAddChild, examine);
+	    ExamineLater(examine, gn->children);
     }
 
     Lst_Free(examine);
