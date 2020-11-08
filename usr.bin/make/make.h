@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.202 2020/11/08 15:18:09 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.203 2020/11/08 23:30:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -501,21 +501,21 @@ typedef enum DebugFlags {
     DEBUG_CWD		= 1 << 2,
     DEBUG_DIR		= 1 << 3,
     DEBUG_ERROR		= 1 << 4,
-    DEBUG_GRAPH1	= 1 << 5,
-    DEBUG_GRAPH2	= 1 << 6,
-    DEBUG_GRAPH3	= 1 << 7,
-    DEBUG_HASH		= 1 << 8,
-    DEBUG_JOB		= 1 << 9,
-    DEBUG_LOUD		= 1 << 10,
-    DEBUG_MAKE		= 1 << 11,
-    DEBUG_META		= 1 << 12,
-    DEBUG_PARSE		= 1 << 13,
-    DEBUG_SCRIPT	= 1 << 14,
-    DEBUG_SHELL		= 1 << 15,
-    DEBUG_SUFF		= 1 << 16,
-    DEBUG_TARG		= 1 << 17,
-    DEBUG_VAR		= 1 << 18,
-    DEBUG_FOR		= 1 << 19,
+    DEBUG_FOR		= 1 << 5,
+    DEBUG_GRAPH1	= 1 << 6,
+    DEBUG_GRAPH2	= 1 << 7,
+    DEBUG_GRAPH3	= 1 << 8,
+    DEBUG_HASH		= 1 << 9,
+    DEBUG_JOB		= 1 << 10,
+    DEBUG_LOUD		= 1 << 11,
+    DEBUG_MAKE		= 1 << 12,
+    DEBUG_META		= 1 << 13,
+    DEBUG_PARSE		= 1 << 14,
+    DEBUG_SCRIPT	= 1 << 15,
+    DEBUG_SHELL		= 1 << 16,
+    DEBUG_SUFF		= 1 << 17,
+    DEBUG_TARG		= 1 << 18,
+    DEBUG_VAR		= 1 << 19,
 
     /* Runs make in strict mode, with additional checks and better error
      * handling.  This is not the default mode to preserve compatibility.
