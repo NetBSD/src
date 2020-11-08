@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.131 2020/10/13 01:59:32 thorpej Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.132 2020/11/08 14:52:35 kamil Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -360,7 +360,7 @@ either the process environment or the
 configuration file specified by
 .Sy MAKECONF .
 .
-.Bl -tag -width "MKCATPAGES"
+.Bl -tag -width "MKXXXXXXXX"
 .
 .It Sy BUILDID
 Identifier for the build.
@@ -499,12 +499,6 @@ flag.
 .El
 .DFLT
 2
-.
-.It Sy MKCATPAGES
-.YorN
-Indicates whether preformatted plaintext manual pages will be created
-during a build.
-.DFLTn
 .
 .It Sy MKCROSSGDB
 .YorN
@@ -698,7 +692,7 @@ will be built and installed during a build.
 If set to
 .Dq no ,
 then all of
-.Sy MKCATPAGES , MKDOC , MKINFO , MKMAN ,
+.Sy MKDOC , MKINFO , MKMAN ,
 and
 .Sy MKNLS
 will be set to
