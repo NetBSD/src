@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.135 2020/11/07 17:46:56 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.136 2020/11/08 01:12:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.135 2020/11/07 17:46:56 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.136 2020/11/08 01:12:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -3012,10 +3012,7 @@ die(int fd, short event, void *ev)
 	 */
 	if (finet) {
 		for (i = 0; i < finet->fd; i++) {
-			if (close(finet[i+1].fd) < 0) {
-				logerror("close() failed");
-				die(0, 0, NULL);
-			}
+			(void)close(finet[i+1].fd);
 			DEL_EVENT(finet[i+1].ev);
 			FREEPTR(finet[i+1].ev);
 		}
