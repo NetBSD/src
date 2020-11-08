@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.17 2020/11/04 20:54:20 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.18 2020/11/08 07:30:09 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.17 2020/11/04 20:54:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.18 2020/11/08 07:30:09 rin Exp $");
 
 #include <sys/compat_stub.h>
 #include <sys/exec_elf.h>
@@ -72,13 +72,13 @@ compat_netbsd32_coredump_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		MODULE_HOOK_SET(coredump_netbsd32_hook, real_coredump_netbsd32);
-#if defined(EXEC_ELF32) && defined(__LP64)
+#if defined(EXEC_ELF32) && defined(_LP64)
 		MODULE_HOOK_SET(coredump_elf32_hook, real_coredump_elf32);
 #endif
 		return 0;
 	case MODULE_CMD_FINI:
 		MODULE_HOOK_UNSET(coredump_netbsd32_hook);
-#if defined(EXEC_ELF32) && defined(__LP64)
+#if defined(EXEC_ELF32) && defined(_LP64)
 		MODULE_HOOK_UNSET(coredump_elf32_hook);
 #endif
 		return 0;
