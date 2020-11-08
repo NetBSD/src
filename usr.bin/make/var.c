@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.679 2020/11/08 18:16:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.680 2020/11/08 18:27:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.679 2020/11/08 18:16:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.680 2020/11/08 18:27:14 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3945,10 +3945,10 @@ VarSubstNested(const char **const pp, Buffer *const buf, GNode *const ctxt,
 {
     const char *p = *pp;
     const char *nested_p = p;
-    void *freeIt;
     const char *val;
+    void *val_freeIt;
 
-    (void)Var_Parse(&nested_p, ctxt, eflags, &val, &freeIt);
+    (void)Var_Parse(&nested_p, ctxt, eflags, &val, &val_freeIt);
     /* TODO: handle errors */
 
     if (val == var_Error || val == varUndefined) {
@@ -3984,7 +3984,7 @@ VarSubstNested(const char **const pp, Buffer *const buf, GNode *const ctxt,
 	Buf_AddStr(buf, val);
     }
 
-    free(freeIt);
+    free(val_freeIt);
 
     *pp = p;
 }
