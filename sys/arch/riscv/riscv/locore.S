@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.16 2020/11/04 20:05:47 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.17 2020/11/08 08:07:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -440,7 +440,7 @@ _C_LABEL(exception_userexit):
 	j	exception_kernexit
 
 trap_syscall:
-.L0:	PTR_L	ra, exception_userexit
+.L0:	PTR_LA	ra, exception_userexit
 	PTR_L	t0, L_PROC(tp)		// get proc struct
 	PTR_L	t0, P_MD_SYSCALL(t0)	// get syscall address from proc
 	jr	t0			// and jump to it
