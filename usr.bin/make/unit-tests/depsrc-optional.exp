@@ -1,8 +1,8 @@
 Make_ExpandUse: examine all
-MakeAddChild: need to examine important
+ExamineLater: need to examine "important"
 Make_ExpandUse: examine important
-MakeAddChild: need to examine optional
-MakeAddChild: need to examine optional-cohort
+ExamineLater: need to examine "optional"
+ExamineLater: need to examine "optional-cohort"
 Make_ExpandUse: examine optional
 Make_ExpandUse: examine optional-cohort
 Examining optional...non-existent...up-to-date.
