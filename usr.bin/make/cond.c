@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.192 2020/11/08 22:44:05 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.193 2020/11/08 23:05:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.192 2020/11/08 22:44:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.193 2020/11/08 23:05:47 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -757,7 +757,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
 	    return arglen == 0 ? TOK_FALSE : TOK_ERROR;
 	}
 	/* Evaluate the argument using the required function. */
-	t = !doEval || fn_def->fn_eval(arglen, arg);
+	t = ToToken(!doEval || fn_def->fn_eval(arglen, arg));
 	free(arg);
 	par->p = cp;
 	return t;
@@ -789,7 +789,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
-    t = !doEval || If_Eval(par->if_info, arg, arglen);
+    t = ToToken(!doEval || If_Eval(par->if_info, arg, arglen));
     free(arg);
     return t;
 }
