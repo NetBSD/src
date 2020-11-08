@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.202 2020/11/08 11:28:44 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.203 2020/11/08 11:37:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.202 2020/11/08 11:28:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.203 2020/11/08 11:37:46 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -1116,17 +1116,8 @@ ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
 void
 Make_ExpandUse(GNodeList *targs)
 {
-    GNodeList *examine;		/* List of targets to examine */
-
-    {
-	/* XXX: Why is it necessary to copy the list? There shouldn't be
-	 * any modifications to the list, at least the function name
-	 * ExpandUse doesn't suggest that. */
-	GNodeListNode *ln;
-	examine = Lst_New();
-	for (ln = targs->first; ln != NULL; ln = ln->next)
-	    Lst_Append(examine, ln->datum);
-    }
+    GNodeList *examine = Lst_New();	/* Queue of targets to examine */
+    Lst_AppendAll(examine, targs);
 
     /*
      * Make an initial downward pass over the graph, marking nodes to be made
