@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.233 2020/11/08 00:26:06 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.234 2020/11/08 00:28:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.233 2020/11/08 00:26:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.234 2020/11/08 00:28:52 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -191,7 +191,7 @@ typedef struct Src {
     Suff *suff;			/* The suffix on the file */
     struct Src *parent;		/* The Src for which this is a source */
     GNode *node;		/* The node describing the file */
-    int children;		/* Count of existing children (so we don't free
+    int numChildren;		/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
 #ifdef DEBUG_SRC
     SrcList *childrenList;
@@ -842,7 +842,7 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
     src->suff = suff;
     src->parent = parent;
     src->node = gn;
-    src->children = 0;
+    src->numChildren = 0;
 #ifdef DEBUG_SRC
     src->childrenList = Lst_New();
 #endif
@@ -852,11 +852,11 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
 
 static void
 SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
-	   const char *debug_tag)
+	   const char *debug_tag MAKE_ATTR_UNUSED)
 {
     Src *s2 = SrcNew(srcName, targ->pref, suff, targ, NULL);
     suff->refCount++;
-    targ->children++;
+    targ->numChildren++;
     Lst_Append(srcList, s2);
 #ifdef DEBUG_SRC
     Lst_Append(targ->childrenList, s2);
@@ -920,7 +920,7 @@ SuffRemoveSrc(SrcList *l)
     for (ln = l->first; ln != NULL; ln = ln->next) {
 	Src *src = ln->datum;
 
-	if (src->children == 0) {
+	if (src->numChildren == 0) {
 	    free(src->file);
 	    if (src->parent == NULL)
 		free(src->pref);
@@ -930,7 +930,7 @@ SuffRemoveSrc(SrcList *l)
 		if (ln2 != NULL)
 		    Lst_Remove(src->parent->childrenList, ln2);
 #endif
-		src->parent->children--;
+		src->parent->numChildren--;
 	    }
 #ifdef DEBUG_SRC
 	    debug_printf("free: list %p src %p children %d\n",
@@ -1085,7 +1085,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
      */
     ret = SrcNew(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
     suff->refCount++;
-    targ->children++;
+    targ->numChildren++;
 #ifdef DEBUG_SRC
     debug_printf("3 add targ %p ret %p\n", targ, ret);
     Lst_Append(targ->childrenList, ret);
