@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.314 2020/11/08 01:16:04 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.315 2020/11/08 09:34:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.314 2020/11/08 01:16:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.315 2020/11/08 09:34:55 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1225,7 +1225,8 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	return TRUE;
     }
 
-    if (Dir_MTime(gn, 0) != 0 || (gn->type & OP_SPECIAL))
+    Dir_UpdateMTime(gn, FALSE);
+    if (gn->mtime != 0 || (gn->type & OP_SPECIAL))
 	return TRUE;
 
     /*
