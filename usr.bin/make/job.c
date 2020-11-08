@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.312 2020/11/08 01:00:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.313 2020/11/08 01:07:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.312 2020/11/08 01:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.313 2020/11/08 01:07:00 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1533,7 +1533,7 @@ JobStart(GNode *gn, JobFlags flags)
      * we just set the file to be stdout. Cute, huh?
      */
     if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
-	    (!opts.noExecute && !opts.touchFlag)) {
+	(!opts.noExecute && !opts.touchFlag)) {
 	/*
 	 * tfile is the name of a file into which all shell commands are
 	 * put. It is removed before the child shell is executed, unless
@@ -1553,13 +1553,13 @@ JobStart(GNode *gn, JobFlags flags)
 	JobSigLock(&mask);
 	tfd = mkTempFile(TMPPAT, &tfile);
 	if (!DEBUG(SCRIPT))
-		(void)eunlink(tfile);
+	    (void)eunlink(tfile);
 	JobSigUnlock(&mask);
 
 	job->cmdFILE = fdopen(tfd, "w+");
-	if (job->cmdFILE == NULL) {
+	if (job->cmdFILE == NULL)
 	    Punt("Could not fdopen %s", tfile);
-	}
+
 	(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
 	/*
 	 * Send the commands to the command file, flush all its buffers then
@@ -1570,9 +1570,8 @@ JobStart(GNode *gn, JobFlags flags)
 #ifdef USE_META
 	if (useMeta) {
 	    meta_job_start(job, gn);
-	    if (Targ_Silent(gn)) {	/* might have changed */
+	    if (Targ_Silent(gn))	/* might have changed */
 		job->flags |= JOB_SILENT;
-	    }
 	}
 #endif
 	/*
@@ -1619,7 +1618,7 @@ JobStart(GNode *gn, JobFlags flags)
 	 * up the graph.
 	 */
 	job->cmdFILE = stdout;
-	Job_Touch(gn, job->flags&JOB_SILENT);
+	Job_Touch(gn, job->flags & JOB_SILENT);
 	noExec = TRUE;
     }
     /* Just in case it isn't already... */
@@ -1749,7 +1748,7 @@ end_loop:
     fbuf = FALSE;
 
     nRead = read(job->inPipe, &job->outBuf[job->curPos],
-		     JOB_BUFSIZE - job->curPos);
+		 JOB_BUFSIZE - job->curPos);
     if (nRead < 0) {
 	if (errno == EAGAIN)
 	    return;
