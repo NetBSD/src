@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.198 2020/11/08 01:39:24 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.199 2020/11/08 08:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -636,7 +636,7 @@ extern CmdOpts opts;
 
 #include "nonints.h"
 
-void Make_TimeStamp(GNode *, GNode *);
+void GNode_UpdateYoungestChild(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
 void Make_ExpandUse(GNodeList *);
 time_t Make_Recheck(GNode *);

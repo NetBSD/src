@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.179 2020/11/07 14:32:12 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.180 2020/11/08 08:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.179 2020/11/07 14:32:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.180 2020/11/08 08:26:22 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -570,7 +570,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 		pgn->flags |= FORCE;
 	    if (!(gn->type & OP_EXEC)) {
 		pgn->flags |= CHILDMADE;
-		Make_TimeStamp(pgn, gn);
+		GNode_UpdateYoungestChild(pgn, gn);
 	    }
 	} else if (opts.keepgoing) {
 	    pgn->flags &= ~(unsigned)REMAKE;
@@ -595,12 +595,12 @@ Compat_Make(GNode *gn, GNode *pgn)
 	    case MADE:
 		if (!(gn->type & OP_EXEC)) {
 		    pgn->flags |= CHILDMADE;
-		    Make_TimeStamp(pgn, gn);
+		    GNode_UpdateYoungestChild(pgn, gn);
 		}
 		break;
 	    case UPTODATE:
 		if (!(gn->type & OP_EXEC))
-		    Make_TimeStamp(pgn, gn);
+		    GNode_UpdateYoungestChild(pgn, gn);
 		break;
 	    default:
 		break;
