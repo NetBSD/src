@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.191 2020/11/08 08:53:22 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.192 2020/11/08 08:55:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.191 2020/11/08 08:53:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.192 2020/11/08 08:55:25 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -510,13 +510,11 @@ Make_Recheck(GNode *gn)
      * In this case, if the definitions produced by yacc haven't changed
      * from before, parse.h won't have been updated and gn->mtime will
      * reflect the current modification time for parse.h. This is
-     * something of a kludge, I admit, but it's a useful one..
-     * XXX: People like to use a rule like
+     * something of a kludge, I admit, but it's a useful one.
      *
-     * FRC:
-     *
-     * To force things that depend on FRC to be made, so we have to
-     * check for gn->children being empty as well...
+     * XXX: People like to use a rule like "FRC:" to force things that
+     * depend on FRC to be made, so we have to check for gn->children
+     * being empty as well.
      */
     if (!Lst_IsEmpty(gn->commands) || Lst_IsEmpty(gn->children)) {
 	gn->mtime = now;
@@ -541,8 +539,8 @@ Make_Recheck(GNode *gn)
      * -- ardeb 1/12/88
      */
     /*
-     * Christos, 4/9/92: If we are  saving commands pretend that
-     * the target is made now. Otherwise archives with ... rules
+     * Christos, 4/9/92: If we are saving commands, pretend that
+     * the target is made now. Otherwise archives with '...' rules
      * don't work!
      */
     if (!GNode_ShouldExecute(gn) || (gn->type & OP_SAVE_CMDS) ||
