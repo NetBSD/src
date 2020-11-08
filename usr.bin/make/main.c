@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.441 2020/11/08 01:56:54 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.442 2020/11/08 02:05:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.441 2020/11/08 01:56:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.442 2020/11/08 02:05:34 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -663,19 +663,21 @@ void
 Main_ParseArgLine(const char *line)
 {
 	Words words;
-	void *p1;
-	const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 	char *buf;
 
 	if (line == NULL)
 		return;
 	for (; *line == ' '; ++line)
 		continue;
-	if (!*line)
+	if (line[0] == '\0')
 		return;
 
-	buf = str_concat3(argv0, " ", line);
-	free(p1);
+	{
+		void *freeIt;
+		const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &freeIt);
+		buf = str_concat3(argv0, " ", line);
+		free(freeIt);
+	}
 
 	words = Str_Words(buf, TRUE);
 	if (words.words == NULL) {
