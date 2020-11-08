@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.17 2020/11/08 08:07:43 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.18 2020/11/08 08:11:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ ENTRY_NP(start)
 	// As a temporary hack, word 0 contains the amount of memory in MB
 	INT_L	a7, (zero)		// load memory size
 	slli	a7, a7, (20-PGSHIFT)	// convert MB to pages
-.L01:	PTR_LA	t0, physmem
+	PTR_LA	t0, physmem
 	INT_S	a7, (t0)		// store it in physmem
 
 	li	t4, PTE_V | PTE_SX | PTE_SW | PTE_SR | PTE_G
@@ -440,7 +440,7 @@ _C_LABEL(exception_userexit):
 	j	exception_kernexit
 
 trap_syscall:
-.L0:	PTR_LA	ra, exception_userexit
+	PTR_LA	ra, exception_userexit
 	PTR_L	t0, L_PROC(tp)		// get proc struct
 	PTR_L	t0, P_MD_SYSCALL(t0)	// get syscall address from proc
 	jr	t0			// and jump to it
