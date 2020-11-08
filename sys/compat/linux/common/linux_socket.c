@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.145.4.2 2020/07/17 15:24:48 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.145.4.3 2020/11/08 08:39:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.145.4.2 2020/07/17 15:24:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.145.4.3 2020/11/08 08:39:12 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1610,6 +1610,21 @@ linux_get_sa(struct lwp *l, int s, struct sockaddr_big *sb,
 		}
 		namelen = sizeof(struct sockaddr_in6);
 		sin6->sin6_scope_id = 0;
+	}
+
+	/*
+	 * Linux is less strict than NetBSD and permits namelen to be larger
+	 * than valid struct sockaddr_in*.  If this is the case, truncate
+	 * the value to the correct size, so that NetBSD networking does not
+	 * return an error.
+	 */
+	switch (bdom) {
+	case AF_INET:
+		namelen = MIN(namelen, sizeof(struct sockaddr_in));
+		break;
+	case AF_INET6:
+		namelen = MIN(namelen, sizeof(struct sockaddr_in6));
+		break;
 	}
 
 	sb->sb_family = bdom;
