@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.200 2020/11/08 08:33:07 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.201 2020/11/08 10:33:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -199,7 +199,8 @@ typedef enum GNodeType {
     OP_FORCE		= 1 << 1,
     /* The dependency operator '::' behaves like ':', except that it allows
      * multiple dependency groups to be defined.  Each of these groups is
-     * executed on its own, independently from the others. */
+     * executed on its own, independently from the others.  Each individual
+     * dependency group is called a cohort. */
     OP_DOUBLEDEP	= 1 << 2,
 
     /* Matches the dependency operators ':', '!' and '::'. */

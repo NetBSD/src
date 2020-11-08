@@ -6,8 +6,8 @@ MakeAddChild: need to examine optional-cohort
 Make_ExpandUse: examine optional
 Make_ExpandUse: examine optional-cohort
 Examining optional...non-existent...up-to-date.
-Examining optional-cohort...non-existent...non-existent and no sources...out-of-date.
-: This is not executed.
+Examining optional-cohort...non-existent...:: operator and no sources...out-of-date.
+: A leaf node using '::' is considered out-of-date.
  recheck(optional-cohort): update time from  0:00:00 Jan 01, 1970 to now
 Examining important...non-existent...modified before source "optional-cohort"...out-of-date.
 : important is made.

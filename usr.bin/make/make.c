@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.196 2020/11/08 10:17:55 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.197 2020/11/08 10:33:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.196 2020/11/08 10:17:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.197 2020/11/08 10:33:47 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -192,21 +192,31 @@ GNode_UpdateYoungestChild(GNode *gn, GNode *cgn)
 	gn->youngestChild = cgn;
 }
 
-/*
- * A node whose modification time is less than that of its
- * youngest child or that has no children (youngestChild == NULL) and
- * either doesn't exist (mtime == 0) and it isn't optional
- * or was the object of a * :: operator is out-of-date.
- * Why? Because that's the way Make does it.
- */
 static Boolean
-IsOlderThanYoungestChild(GNode *gn)
+IsOODateRegular(GNode *gn)
 {
-    return (gn->youngestChild != NULL &&
-	    gn->mtime < gn->youngestChild->mtime) ||
-	   (gn->youngestChild == NULL &&
-	    ((gn->mtime == 0 && !(gn->type & OP_OPTIONAL))
-	     || gn->type & OP_DOUBLEDEP));
+    /* These rules are inherited from the original Make. */
+
+    if (gn->youngestChild != NULL) {
+	if (gn->mtime < gn->youngestChild->mtime) {
+	    DEBUG1(MAKE, "modified before source \"%s\"...",
+		   GNode_Path(gn->youngestChild));
+	    return TRUE;
+	}
+	return FALSE;
+    }
+
+    if (gn->mtime == 0 && !(gn->type & OP_OPTIONAL)) {
+	DEBUG0(MAKE, "non-existent and no sources...");
+	return TRUE;
+    }
+
+    if (gn->type & OP_DOUBLEDEP) {
+	DEBUG0(MAKE, ":: operator and no sources...");
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* See if the node is out of date with respect to its sources.
@@ -292,18 +302,7 @@ GNode_IsOODate(GNode *gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if (IsOlderThanYoungestChild(gn)) {
-	if (DEBUG(MAKE)) {
-	    if (gn->youngestChild != NULL &&
-		gn->mtime < gn->youngestChild->mtime) {
-		debug_printf("modified before source \"%s\"...",
-			     GNode_Path(gn->youngestChild));
-	    } else if (gn->mtime == 0) {
-		debug_printf("non-existent and no sources...");
-	    } else {
-		debug_printf(":: operator and no sources...");
-	    }
-	}
+    } else if (IsOODateRegular(gn)) {
 	oodate = TRUE;
     } else {
 	/*
