@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.192 2020/11/08 23:54:28 rillig Exp $
+# $NetBSD: Makefile,v 1.193 2020/11/09 19:12:52 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -386,6 +386,7 @@ ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
 ENV.varmod-localtime+=	TZ=Europe/Berlin
+ENV.depsrc-optional+=   TZ=UTC
 
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
