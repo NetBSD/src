@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.9 2020/11/08 08:40:01 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.10 2020/11/09 11:48:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1062,4 +1062,9 @@ sys/compat/linux/common/linux_socket.c		1.151
 
 	Fix compat with Linux programs that use longer namelen for sockets.
 	[kamil, ticket #1127]
+
+sys/arch/aarch64/aarch64/pmapboot.c		1.11
+
+	Fix coalescing contiguous TLB entries.
+	[skrll, ticket #1128]
 
