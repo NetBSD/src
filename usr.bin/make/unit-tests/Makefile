@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.194 2020/11/09 20:39:46 rillig Exp $
+# $NetBSD: Makefile,v 1.195 2020/11/09 20:50:56 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -392,19 +392,7 @@ ENV.varmod-localtime+=	TZ=Europe/Berlin
 # settings FLAGS.test=-dv here, since that is closer to the test code.
 FLAGS.cond-func-make=	via-cmdline
 FLAGS.directive-ifmake=	first second
-FLAGS.doterror=		# none
-FLAGS.envfirst=		-e
-FLAGS.export=		# none
-FLAGS.opt-ignore=	-i
-FLAGS.opt-keep-going=	-k
-FLAGS.opt-no-action=	-n
-FLAGS.opt-query=	-q
-FLAGS.opt-var-expanded=	-v VAR -v VALUE
-FLAGS.opt-var-literal=	-V VAR -V VALUE
-FLAGS.opt-warnings-as-errors= -W
-FLAGS.order=		-j1
-FLAGS.recursive=	-dL
-FLAGS.sh-leading-plus=	-n
+FLAGS.doterror=		# none, especially not -k
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra postprocessing.
