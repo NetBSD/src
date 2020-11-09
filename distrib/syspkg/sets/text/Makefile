@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/06/30 03:37:42 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2020/11/09 12:12:17 kamil Exp $
 
 SUBDIR+=text-groff-bin
-SUBDIR+=text-groff-catman
 SUBDIR+=text-groff-font
 SUBDIR+=text-groff-man
 SUBDIR+=text-groff-share

@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2004/06/30 03:37:43 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2020/11/09 12:12:09 kamil Exp $
 
 SUBDIR+=games-games-bin
-SUBDIR+=games-games-catman
 SUBDIR+=games-games-man
 SUBDIR+=games-games-root
 SUBDIR+=games-games-share
 SUBDIR+=games-utils-bin
-SUBDIR+=games-utils-catman
 SUBDIR+=games-utils-man
 SUBDIR+=games-utils-share
 
