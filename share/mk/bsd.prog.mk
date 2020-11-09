@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.334 2020/11/09 10:19:18 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.335 2020/11/09 16:15:05 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -39,19 +39,15 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core .gdbinit
 CLEANFILES+=strings
 .c.o:
 	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
-.if defined(CTFCONVERT)
-	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
-.endif
+	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
 	@rm -f x.c
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@${MV} x.c x.cc
-	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
-.if defined(CTFCONVERT)
-	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
-.endif
+	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
 	@rm -f x.cc
 .endif
 
