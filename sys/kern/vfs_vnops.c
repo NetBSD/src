@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.213 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.214 2020/11/09 18:09:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.213 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.214 2020/11/09 18:09:02 chs Exp $");
 
 #include "veriexec.h"
 
@@ -757,7 +757,10 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 			if (*(daddr_t *)data < 0)
 				return (EINVAL);
 			block = (daddr_t *)data;
-			return (VOP_BMAP(vp, *block, NULL, block, NULL));
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+			error = VOP_BMAP(vp, *block, NULL, block, NULL);
+			VOP_UNLOCK(vp);
+			return error;
 		}
 		if (com == OFIOGETBMAP) {
 			daddr_t ibn, obn;
@@ -765,7 +768,9 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 			if (*(int32_t *)data < 0)
 				return (EINVAL);
 			ibn = (daddr_t)*(int32_t *)data;
+			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_BMAP(vp, ibn, NULL, &obn, NULL);
+			VOP_UNLOCK(vp);
 			*(int32_t *)data = (int32_t)obn;
 			return error;
 		}
