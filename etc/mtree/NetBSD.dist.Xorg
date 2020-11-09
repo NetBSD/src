@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.26 2020/01/19 00:58:14 jmcneill Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.27 2020/11/09 01:07:04 kamil Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -155,13 +155,6 @@
 ./usr/X11R7/lib/xorg
 ./usr/X11R7/libexec
 ./usr/X11R7/man
-./usr/X11R7/man/cat1
-./usr/X11R7/man/cat3
-./usr/X11R7/man/cat4
-./usr/X11R7/man/cat4/evbarm
-./usr/X11R7/man/cat4/x86
-./usr/X11R7/man/cat5
-./usr/X11R7/man/cat7
 ./usr/X11R7/man/html1
 ./usr/X11R7/man/html3
 ./usr/X11R7/man/html4
