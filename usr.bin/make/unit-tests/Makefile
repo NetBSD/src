@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.193 2020/11/09 19:12:52 sjg Exp $
+# $NetBSD: Makefile,v 1.194 2020/11/09 20:39:46 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -377,16 +377,15 @@ TESTS+=		varparse-errors
 TESTS+=		varparse-mod
 TESTS+=		varparse-undef-partial
 TESTS+=		varquote
-TESTS+=		varshell
 
 # Additional environment variables for some of the tests.
 # The base environment is -i PATH="$PATH".
+ENV.depsrc-optional+=   TZ=UTC
 ENV.envfirst=		FROM_ENV=value-from-env
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
 ENV.varmod-localtime+=	TZ=Europe/Berlin
-ENV.depsrc-optional+=   TZ=UTC
 
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
@@ -431,11 +430,11 @@ SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: sh\) -q,\1,'
+SED_CMDS.var-op-shell+=	-e 's,^${.SHELL:T}: ,,'
+SED_CMDS.var-op-shell+=	-e '/command/s,No such.*,not found,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
-SED_CMDS.varshell+=	-e 's,^${.SHELL:T}: ,,'
-SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
 SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
