@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.4 2020/09/12 17:47:24 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.5 2020/11/09 00:07:06 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -30,6 +30,9 @@
 # the '#' specially, even though at this point, there should be no need for
 # comment handling anymore.  The comments are supposed to be stripped off
 # in a very early parsing phase.
+#
+# See https://gnats.netbsd.org/19596 for example makefiles demonstrating the
+# original problems.  This workaround is probably not needed anymore.
 #
 # XXX: Missing error message for the malformed condition. The right-hand
 # side is double-quotes, backslash, backslash.
