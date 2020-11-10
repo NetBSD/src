@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.11 2020/11/10 21:40:07 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.11 2020/11/10 21:40:07 rin Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $");
 
 #include <compat/common/compat_util.h>
 #include <sys/exec_elf.h>			/* mandatory */
-
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32_exec.h>
-#endif
 
 #include <arm/locore.h>
 
@@ -60,11 +55,7 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	const Elf_Ehdr * const eh = eh0;
 	const bool elf_aapcs_p =
 	    (eh->e_flags & EF_ARM_EABIMASK) >= EF_ARM_EABI_VER4;
-#ifdef COMPAT_NETBSD32
-	const bool netbsd32_p = (epp->ep_esch->es_emul == &emul_netbsd32);
-#else
-	const bool netbsd32_p = false;
-#endif
+	const bool netbsd32_p = (epp->ep_esch->es_emul != &emul_netbsd);
 #ifdef __ARM_EABI__
 	const bool aapcs_p = true;
 #else
