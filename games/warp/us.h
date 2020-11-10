@@ -37,7 +37,7 @@ EXT int damage INIT(0);
 EXT int olddamage INIT(-1);
 
 #ifdef DOINIT
-char *dammess[MAXDAMAGE] = {
+const char *dammess[MAXDAMAGE] = {
     "WARP",
     "IMPULSE",
     "PHASERS",
@@ -54,8 +54,8 @@ extern char *dammess[];
 extern char damflag[];
 #endif
 
-void do_direction();
-void ctrl_direction();
-void shift_direction();
-void get_commands();
-void us_init();
+void us_init(void);
+void do_direction(int, int);
+void ctrl_direction(int, int);
+void shift_direction(int, int);
+void get_commands(bool *);

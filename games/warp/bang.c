@@ -26,17 +26,15 @@
 #include "bang.h"
 
 void
-bang_init()
+bang_init(void)
 {
     ;
 }
 
 void
-make_plink(y,x)
-Reg1 int x;
-Reg2 int y;
+make_plink(int x, int y)
 {
-    Reg3 OBJECT *obj;
+    OBJECT *obj;
 
     move(y+1,x*2,0);
     beg_qwrite();
@@ -57,11 +55,7 @@ Reg2 int y;
 }
 
 void
-make_blast(y,x,mass,size)
-Reg1 int x;
-Reg2 int y;
-int size;
-long mass;
+make_blast(int x, int y, int size, long mass)
 {
     bangy[nxtbang] = y;
     bangx[nxtbang] = x;
@@ -77,7 +71,7 @@ long mass;
 	return;
     }
     else if (mass >= 0) {
-	Reg3 OBJECT *obj;
+	OBJECT *obj;
 
 	move(y+1,x*2,0);
 	beg_qwrite();
@@ -107,15 +101,15 @@ long mass;
 }
 
 void
-do_bangs()
+do_bangs(void)
 {
-    Reg1 int x;
-    Reg2 int y;
-    Reg3 int i;
-    Reg4 int j;
-    Reg7 int k;
-    Reg5 int lastxy;
-    Reg6 OBJECT *obj;
+    int x;
+    int y;
+    int i;
+    int j;
+    int k;
+    int lastxy;
+    OBJECT *obj;
 
     /* read blast list and update blast array */
     assert(nxtbang >= 0 && nxtbang <= XSIZE * YSIZE);
@@ -131,7 +125,7 @@ do_bangs()
 	    yblasted[yy[j] = (y+YSIZE00) % YSIZE] |= 1;
 	    xblasted[xx[j] = (x+XSIZE00) % XSIZE] |= 1;
 	}
-	blasted = TRUE;
+	blasted = true;
 	for (y=lastxy;y>=0;--y) {
 	    for (x=lastxy;x>=0;--x) {
 		if (lastxy > 2) {

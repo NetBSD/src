@@ -9,5 +9,5 @@
 EXT int finish INIT(0);
 EXT int timer;
 
-void play();
-void play_init();
+void play_init(void);
+void play(void);

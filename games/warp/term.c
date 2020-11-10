@@ -26,11 +26,11 @@
 #include "INTERN.h"
 #include "term.h"
 
-int typeahead = FALSE;
+int typeahead = false;
 
 char tcarea[TCSIZE];	/* area for "compiled" termcap strings */
 
-/* guarantee capability pointer != Nullch */
+/* guarantee capability pointer != NULL */
 /* (I believe terminfo will ignore the &tmpaddr argument.) */
 
 #define Tgetstr(key) ((tstr = tgetstr(key,&tmpaddr)) ? tstr : nullstr)
@@ -55,17 +55,17 @@ struct keymap {
 
 typedef struct keymap KEYMAP;
 
-KEYMAP *topmap INIT(Null(KEYMAP*));
+KEYMAP *topmap INIT(NULL);
 
-void mac_init();
-KEYMAP *newkeymap();
-void pushstring();
+void mac_init(char *);
+static KEYMAP *newkeymap(void);
+void pushstring(char *);
 #endif
 
 /* terminal initialization */
 
 void
-term_init()
+term_init(void)
 {
     savetty();				/* remember current tty state */
 
@@ -112,12 +112,10 @@ term_init()
 /* set terminal characteristics */
 
 void
-term_set(tcbuf)
-char *tcbuf;		/* temp area for "uncompiled" termcap entry */
+term_set(char *tcbuf) /* temp area for "uncompiled" termcap entry */
 {
     char *tmpaddr;			/* must not be register */
-    Reg1 char *tstr;
-    char *tgetstr();
+    char *tstr;
     char *s;
     int retval;
 
@@ -155,7 +153,7 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
 	if (BC == nullstr) 		/* terminfo grok's 'bs' but not 'bc' */
 	    BC = Tgetstr("le");
     } else
-	BC = "\b";			/* make a backspace handy */
+	BC = __UNCONST("\b");		/* make a backspace handy */
     UP = Tgetstr("up");			/* move up a line */
     ND = Tgetstr("nd");			/* non-destructive move cursor right */
     DO = Tgetstr("do");			/* move cursor down */
@@ -189,15 +187,16 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
     XN = tgetflag("xn");		/* then eats next newline? */
     VB = Tgetstr("vb");
     if (!*VB)
-	VB = "\007";
+	VB = __UNCONST("\007");
     CR = Tgetstr("cr");
     if (!*CR) {
 	if (tgetflag("nc") && *UP) {
-	    CR = safemalloc((MEM_SIZE)strlen(UP)+2);
-	    Sprintf(CR,"%s\r",UP);
+	    size_t l = strlen(UP) + 2;
+	    CR = safemalloc(l);
+	    snprintf(CR, l, "%s\r",UP);
 	}
 	else
-	    CR = "\r";
+	    CR = __UNCONST("\r");
     }
     if (LINES <= 0)
 	LINES = 24;
@@ -240,7 +239,7 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
     }
 
     if (!*DO) {				/* not defined? */
-	myDO = DO = "\n";		/* assume a newline */
+	myDO = DO = __UNCONST("\n");		/* assume a newline */
 	DOsize = 1;
     }
     else {
@@ -257,7 +256,7 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
 	}
     }
     if (debugging)
-	Fgets(cmbuffer,(sizeof cmbuffer),stdin);
+	fgets(cmbuffer,(sizeof cmbuffer),stdin);
 
     CMsize = comp_tc(cmbuffer,tgoto(CM,20,20),0);
     if (PC != '\0') {
@@ -273,13 +272,13 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
 		      ospeed == B600 ? 30 :
 	      /* speed is 300 (?) */   15;
 
-    gfillen = ospeed >= B9600 ? (sizeof filler) :
+    gfillen = ospeed >= B9600 ? (int /*XXX: speed_t*/)(sizeof filler) :
 	      ospeed == B4800 ? 13 :
 	      ospeed == B2400 ? 7 :
 	      ospeed == B1200 ? 4 :
-				1+BCsize;
+				(1+BCsize);
     if (ospeed < B2400)
-	lowspeed = TRUE;
+	lowspeed = true;
 
     strcpy(term,ttyname(2));
 
@@ -300,34 +299,30 @@ char *tcbuf;		/* temp area for "uncompiled" termcap entry */
 
 #ifdef PUSHBACK
 void
-mac_init(tcbuf)
-char *tcbuf;
+mac_init(char *tcbuf)
 {
     char tmpbuf[1024];
 
     tmpfp = fopen(filexp(getval("WARPMACRO",WARPMACRO)),"r");
-    if (tmpfp != Nullfp) {
-	while (fgets(tcbuf,1024,tmpfp) != Nullch) {
+    if (tmpfp != NULL) {
+	while (fgets(tcbuf,1024,tmpfp) != NULL) {
 	    mac_line(tcbuf,tmpbuf,(sizeof tmpbuf));
 	}
-	Fclose(tmpfp);
+	fclose(tmpfp);
     }
 }
 
 void
-mac_line(line,tmpbuf,tbsize)
-char *line;
-char *tmpbuf;
-int tbsize;
+mac_line(char *line, char *tmpbuf, size_t tbsize)
 {
-    Reg1 char *s;
-    Reg2 char *m;
-    Reg3 KEYMAP *curmap;
-    Reg4 int ch;
-    Reg5 int garbage = 0;
-    static char override[] = "\r\nkeymap overrides string\r\n";
+    char *s;
+    char *m;
+    KEYMAP *curmap;
+    int ch;
+    int garbage = 0;
+    static const char override[] = "\r\nkeymap overrides string\r\n";
 
-    if (topmap == Null(KEYMAP*))
+    if (topmap == NULL)
 	topmap = newkeymap();
     if (*line == '#' || *line == '\n')
 	return;
@@ -339,7 +334,7 @@ int tbsize;
     while (*m == ' ' || *m == '\t') m++;
     for (s=tmpbuf,curmap=topmap; *s; s++) {
 	ch = *s & 0177;
-	if (s[1] == '+' && isdigit(s[2])) {
+	if (s[1] == '+' && isdigit((unsigned char)s[2])) {
 	    s += 2;
 	    garbage = (*s & KM_GMASK) << KM_GSHIFT;
 	}
@@ -349,10 +344,10 @@ int tbsize;
 	    if ((curmap->km_type[ch] & KM_TMASK) == KM_STRING) {
 		puts(override);
 		free(curmap->km_ptr[ch].km_str);
-		curmap->km_ptr[ch].km_str = Nullch;
+		curmap->km_ptr[ch].km_str = NULL;
 	    }
 	    curmap->km_type[ch] = KM_KEYMAP + garbage;
-	    if (curmap->km_ptr[ch].km_km == Null(KEYMAP*))
+	    if (curmap->km_ptr[ch].km_km == NULL)
 		curmap->km_ptr[ch].km_km = newkeymap();
 	    curmap = curmap->km_ptr[ch].km_km;
 	}
@@ -367,11 +362,11 @@ int tbsize;
     }
 }
 
-KEYMAP*
-newkeymap()
+static KEYMAP*
+newkeymap(void)
 {
-    Reg1 int i;
-    Reg2 KEYMAP *map;
+    int i;
+    KEYMAP *map;
 
 #ifndef lint
     map = (KEYMAP*)safemalloc(sizeof(KEYMAP));
@@ -379,7 +374,7 @@ newkeymap()
     map = Null(KEYMAP*);
 #endif /* lint */
     for (i=127; i>=0; --i) {
-	map->km_ptr[i].km_km = Null(KEYMAP*);
+	map->km_ptr[i].km_km = NULL;
 	map->km_type[i] = KM_NOTHIN;
     }
     return map;
@@ -390,9 +385,7 @@ newkeymap()
 /* print out a file, stopping at form feeds */
 
 void
-page(filename,num)
-char *filename;
-bool num;
+page(const char *filename, size_t num)
 {
     int linenum = 1;
 
@@ -401,7 +394,7 @@ bool num;
 	while (fgets(spbuf,(sizeof spbuf),tmpfp) != NULL) {
 	    if (*spbuf == '\f') {
 		printf("[Type anything to continue] ");
-		Fflush(stdout);
+		fflush(stdout);
 		getcmd(spbuf);
 		printf("\r\n");
 		if (*spbuf == INTRCH)
@@ -416,19 +409,17 @@ bool num;
 		    printf("%s\r",spbuf);
 	    }
 	}
-	Fclose(tmpfp);
+	fclose(tmpfp);
     }
 }
 
 void
-move(y, x, chadd)
-int y, x;
-int chadd;
+move(int y, int x, int chadd)
 {
-    Reg1 int ydist;
-    Reg2 int xdist;
-    Reg3 int i;
-    Reg4 char *s;
+    int ydist;
+    int xdist;
+    int i;
+    char *s;
 
     ydist = y - real_y;
     xdist = x - real_x;
@@ -466,9 +457,7 @@ int chadd;
 }
 
 void
-do_tc(s,l)
-char *s;
-int l;
+do_tc(const char *s, int l)
 {
     beg_qwrite();
     tputs(s,l,cmstore);
@@ -476,10 +465,7 @@ int l;
 }
 
 int
-comp_tc(dest,s,l)
-char *dest;
-char *s;
-int l;
+comp_tc(char *dest, const char *s, int l)
 {
     maxcmstring = dest;
     tputs(s,l,cmstore);
@@ -487,7 +473,7 @@ int l;
 }
 
 void
-helper()
+helper(void)
 {
     clear();
     mvaddstr(0,4,"h or 4          left");
@@ -514,7 +500,7 @@ helper()
     mvaddstr(21,4,"Q       exit this game.");
     mvaddstr(22,4,"");
     mvaddstr(23,4,"                   [Hit space to continue]");
-    Fflush(stdout);
+    fflush(stdout);
     do {
 	getcmd(spbuf);
     } while (*spbuf != ' ');
@@ -523,25 +509,25 @@ helper()
 }
 
 void
-rewrite()
+rewrite(void)
 {
-    Reg1 int x;
-    Reg2 int y;
-    Reg3 OBJECT *obj;
+    int x;
+    int y;
+    OBJECT *obj;
 
     clear();
     for (y=0; y<YSIZE; y++) {
 	for (x=0; x<XSIZE; x++) {
 	    if (numamoebas && amb[y][x] != ' ')
 		mvaddc(y+1,x*2,amb[y][x]);
-	    if (obj=occupant[y][x]) {
+	    if ((obj = occupant[y][x]) != NULL) {
 		if (obj->image != ' ')
 		    mvaddc(y+1,x*2,obj->image);
 	    }
 	}
     }
-    Sprintf(spbuf,
-    "%-4s E: %4d %2d B: %5d %3d Enemies: %-3d Stars: %-3d Stardate%5d.%1d %9ld",
+    snprintf(spbuf, sizeof(spbuf),
+     "%-4s E: %4d %2d B: %5d %3d Enemies: %-3d Stars: %-3d Stardate%5d.%1d %9ld",
 	"   ", 0, 0, 0, 0, 0, 0, timer/10+smarts*100, timer%10, 0L);
     mvaddstr(0,0,spbuf);
     oldeenergy = oldbenergy = oldcurscore =
@@ -557,16 +543,16 @@ rewrite()
 }
 
 int
-cmstore(ch)
-Reg1 int ch;
+cmstore(int ch)
 {
     *maxcmstring++ = ch;
+    return 0;
 }
 
 /* discard any characters typed ahead */
 
 void
-eat_typeahead()
+eat_typeahead(void)
 {
 #ifdef PUSHBACK
     if (!typeahead && nextin==nextout)	/* cancel only keyboard stuff */
@@ -576,7 +562,7 @@ eat_typeahead()
     {
 #ifdef PENDING
 	while (input_pending())
-	    Read_tty(buf,sizeof(buf));
+	    read_tty(buf,sizeof(buf));
 #else /* this is probably v7, with no rdchk() */
 	ioctl(_tty_ch,TIOCSETP,&_tty);
 #endif
@@ -584,10 +570,10 @@ eat_typeahead()
 }
 
 void
-settle_down()
+settle_down(void)
 {
     dingaling();
-    Fflush(stdout);
+    fflush(stdout);
     sleep(1);
 #ifdef PUSHBACK
     nextout = nextin;			/* empty circlebuf */
@@ -599,13 +585,8 @@ settle_down()
 /* read a character from the terminal, with multi-character pushback */
 
 int
-read_tty(addr,size)
-char *addr;
-int size;	/* ignored for now */
+read_tty(char *addr, ssize_t size)	/* ignored for now */
 {
-#ifdef lint
-    size = size;
-#endif
     if (nextout != nextin) {
 	*addr = circlebuf[nextout++];
 	nextout %= PUSHSIZE;
@@ -633,8 +614,8 @@ int size;	/* ignored for now */
 int
 circfill()
 {
-    Reg1 int howmany;
-    Reg2 int i;
+    int howmany;
+    int i;
 
     assert (nextin == nextout);
     howmany = read(devtty,circlebuf+nextin,metakey?1:PUSHSIZE-nextin);
@@ -658,8 +639,7 @@ circfill()
 #endif /* PENDING */
 
 void
-pushchar(ch)
-char ch;
+pushchar(int ch)
 {
     nextout--;
     if (nextout < 0)
@@ -682,7 +662,7 @@ int size;
 {
     if (is_input) {
 	*addr = pending_ch;
-	is_input = FALSE;
+	is_input = false;
 	return 1;
     }
     else {
@@ -692,7 +672,7 @@ int size;
 	if (metakey) {
 	    if (*addr & 0200) {
 		pending_ch = *addr & 0177;
-		is_input = TRUE;
+		is_input = true;
 		*addr = '\001';
 	    }
 	}
@@ -705,9 +685,7 @@ int size;
 #endif /* PUSHBACK */
 
 int
-read_nd(buff, siz)
-char *buff;
-int siz;
+read_nd(char *buff, size_t siz)
 {
     if (!input_pending())
 	return 0;
@@ -719,24 +697,24 @@ int siz;
 /* get a character into a buffer */
 
 void
-getcmd(whatbuf)
-Reg3 char *whatbuf;
+getcmd(char *wbuf)
 {
 #ifdef PUSHBACK
-    Reg1 KEYMAP *curmap;
-    Reg2 int i;
+    KEYMAP *curmap;
+    int i;
     bool no_macros; 
     int times = 0;			/* loop detector */
     char scrchar;
+    unsigned char *whatbuf = (void *)wbuf;
 
 tryagain:
     curmap = topmap;
 /*    no_macros = (whatbuf != buf && nextin == nextout);  */
-    no_macros = FALSE;
+    no_macros = false;
 #endif
     for (;;) {
 	errno = 0;
-	if (read_tty(whatbuf,1) < 0 && !errno)
+	if (read_tty(wbuf,1) < 0 && !errno)
 	    errno = EINTR;
 #ifdef read_tty
 	if (metakey) {
@@ -756,10 +734,10 @@ tryagain:
 	    *whatbuf &= 0177;
 	    goto got_canonical;
 	}
-	if (curmap == Null(KEYMAP*))
+	if (curmap == NULL)
 	    goto got_canonical;
 	for (i = (curmap->km_type[*whatbuf] >> KM_GSHIFT) & KM_GMASK; i; --i){
-	    Read_tty(&scrchar,1);
+	    read_tty(&scrchar,1);
 	}
 	switch (curmap->km_type[*whatbuf] & KM_TMASK) {
 	case KM_NOTHIN:			/* no entry? */
@@ -769,7 +747,7 @@ tryagain:
 	    goto tryagain;
 	case KM_KEYMAP:			/* another keymap? */
 	    curmap = curmap->km_ptr[*whatbuf].km_km;
-	    assert(curmap != Null(KEYMAP*));
+	    assert(curmap != NULL);
 	    break;
 	case KM_STRING:			/* a string? */
 	    pushstring(curmap->km_ptr[*whatbuf].km_str);
@@ -777,7 +755,7 @@ tryagain:
 		fputs("\r\nmacro loop?\r\n",stdout);
 		settle_down();
 	    }
-	    no_macros = FALSE;
+	    no_macros = false;
 	    goto tryagain;
 	}
 #else
@@ -791,20 +769,19 @@ got_canonical:
     if (*whatbuf == '\r')
 	*whatbuf = '\n';
 #endif
-    if (whatbuf == buf)
+    if (wbuf == buf)
 	whatbuf[1] = FINISHCMD;		/* tell finish_command to work */
 }
 
 #ifdef PUSHBACK
 void
-pushstring(str)
-char *str;
+pushstring(char *str)
 {
-    Reg1 int i;
+    int i;
     char tmpbuf[PUSHSIZE];
-    Reg2 char *s = tmpbuf;
+    char *s = tmpbuf;
 
-    assert(str != Nullch);
+    assert(str != NULL);
     interp(s,PUSHSIZE,str);
     for (i = strlen(s)-1; i >= 0; --i) {
 	s[i] ^= 0200; 

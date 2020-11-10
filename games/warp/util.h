@@ -15,7 +15,7 @@
 #if RANDBITS == 15	/* 15 bits of rand()? */
 #define RANDRAND 268435456.0 /* that's 2**28 */
 #define HALFRAND 0x4000 /* that's 2**14 */
-int rand();
+int rand(void);
 #define myrand() (rand()&32767)
 #define rand_mod(m) ((int)((double)myrand() / 32768.0 * ((double)(m))))
 /* pick number in 0..m-1 */
@@ -50,10 +50,6 @@ long rand();
 EXT struct timeb timebuf;
 #define roundsleep(x) (ftime(&timebuf),sleep(timebuf.millitm > 500?x+1:x))
 
-void movc3();
-void no_can_do();
-int exdis();
-
 #define waiting 0
 
 #ifdef NOTDEF
@@ -69,16 +65,17 @@ EXT int len_last_line_got INIT(0);
 #define MD_FILE 1
 #endif
 
-void util_init();
-char	*safemalloc();
-char	*safecpy();
-char	*cpytill();
-char	*instr();
+void util_init(void);
+void movc3(int, char *, char *);
+void no_can_do(const char *);
+int exdis(int);
+void *safemalloc(size_t size);
+char *safecpy(char *, const char *, size_t);
+char *cpytill(char *, const char *, int);
+char *instr(const char *, const char *);
 #ifdef SETUIDGID
-    int		eaccess();
+int eaccess(const char *, mode_t);
 #endif
-char	*getwd();
-void	cat();
-void	prexit();
-char	*savestr();
-char	*getval();
+void prexit(const char *);
+char *savestr(const char *);
+char *getval(const char *, const char *);

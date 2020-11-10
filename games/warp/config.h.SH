@@ -38,9 +38,9 @@ cat <<!GROK!THIS! >config.h
 #$d_eunice	VMS		/**/
 
 /* CHARSPRINTF:
- *	This symbol is defined if this system declares "char *sprintf()" in
- *	stdio.h.  The trend seems to be to declare it as "int sprintf()".  It
- *	is up to the package author to declare sprintf correctly based on the
+ *	This symbol is defined if this system declares "char *snprintf()" in
+ *	stdio.h.  The trend seems to be to declare it as "int snprintf()".  It
+ *	is up to the package author to declare snprintf correctly based on the
  *	symbol.
  */
 #$d_charsprf	CHARSPRINTF 	/**/
@@ -219,15 +219,15 @@ cat <<!GROK!THIS! >config.h
  *	function parameters.  Do not use Reg<n> more than once per routine.
  */
 
-#define Reg1 $reg1		/**/
-#define Reg2 $reg2		/**/
-#define Reg3 $reg3		/**/
-#define Reg4 $reg4		/**/
-#define Reg5 $reg5		/**/
-#define Reg6 $reg6		/**/
-#define Reg7 $reg7		/**/
-#define Reg8 $reg8		/**/
-#define Reg9 $reg9		/**/
+#define $reg1		/**/
+#define $reg2		/**/
+#define $reg3		/**/
+#define $reg4		/**/
+#define $reg5		/**/
+#define $reg6		/**/
+#define $reg7		/**/
+#define $reg8		/**/
+#define $reg9		/**/
 #define Reg10 $reg10		/**/
 #define Reg11 $reg11		/**/
 #define Reg12 $reg12		/**/

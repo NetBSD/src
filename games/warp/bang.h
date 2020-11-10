@@ -24,7 +24,7 @@ EXT int yy[MAXBDIST];
 EXT int nxtbang;
 EXT bool banging;
 
-void make_plink();
-void make_blast();
-void do_bangs();
-void bang_init();
+void bang_init(void);
+void make_plink(int, int);
+void make_blast(int, int, int, long);
+void do_bangs(void);

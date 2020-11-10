@@ -35,20 +35,20 @@
 #include "them.h"
 
 void
-them_init()
+them_init(void)
 {
     ;
 }
 
 void
-their_smarts()
+their_smarts(void)
 {
-    Reg1 OBJECT *curkl;
-    Reg2 OBJECT *obj;
-    Reg3 int prob;
-    Reg4 int count;
-    Reg5 int y;
-    Reg6 int x;
+    OBJECT *curkl;
+    OBJECT *obj = NULL;
+    int prob;
+    int count;
+    int y = 0;
+    int x = 0;
 
     if (numcrushes && (obj=movers)->type == Crusher) {
 	if (numamoebas) {
@@ -303,7 +303,7 @@ their_smarts()
 			fire_torp(curkl,yyy,xxx);
 	}
 	else if (curkl->image == 'T' && (curkl->velx || curkl->vely)) {
-	    Make_object(Web,
+	    make_object(Web,
             curkl->vely?
 	     (curkl->velx?
 	      (curkl->velx==curkl->vely?
@@ -319,7 +319,7 @@ their_smarts()
 	    curkl->posy,curkl->posx,0,0,32767L,32767L,&root);
 	    if (obj && obj->type == Web) {
 		unmake_object(obj);
-		occupant[y][x] = Null(OBJECT*);
+		occupant[y][x] = NULL;
 	    }
 	}
     }
@@ -332,16 +332,11 @@ their_smarts()
 }
 
 void
-modify_amoeba(y,x,where,ch,quant)
-Reg1 int y;
-Reg2 int x;
-int where;
-Reg6 int ch;
-Reg7 int quant;
+modify_amoeba(int y, int x, int where, int ch, int quant)
 {
-    Reg3 int dy;
-    Reg4 int dx;
-    Reg5 int count = 15;
+    int dy;
+    int dx;
+    int count = 15;
 
     if (!numamoebas)
 	return;
@@ -393,7 +388,7 @@ Reg7 int quant;
 		ambsize++;
 		yblasted[y] |= 2;
 		xblasted[x] |= 2;
-		blasted = TRUE;
+		blasted = true;
 	    }
 	    else
 		ambsize--;

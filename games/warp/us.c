@@ -28,23 +28,22 @@
 #include "us.h"
 
 void
-us_init()
+us_init(void)
 {
     ;
 }
 
 void
-do_direction(dy,dx)
-int dy, dx;
+do_direction(int dy, int dx)
 {
-    Reg1 int decr;
-    Reg2 OBJECT *obj;
+    int decr;
+    OBJECT *obj;
 
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
 	    
-	    cloaked = FALSE;
+	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {
 		setimage(ent, ch);
@@ -107,14 +106,13 @@ int dy, dx;
 }
 
 void
-ctrl_direction(dy,dx)
-int dy, dx;
+ctrl_direction(int dy, int dx)
 {
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
 	    
-	    cloaked = FALSE;
+	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {
 		setimage(ent, ch);
@@ -133,14 +131,13 @@ int dy, dx;
 }
 
 void
-shift_direction(dy,dx)
-int dy, dx;
+shift_direction(int dy, int dx)
 {
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
 	    
-	    cloaked = FALSE;
+	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {
 		setimage(ent, ch);
@@ -159,22 +156,21 @@ int dy, dx;
 }
 
 void
-get_commands(done)
-bool *done;
+get_commands(bool *done)
 {
     static char ch[80];
-    Reg1 int i;
-    Reg2 int count;
-    Reg3 bool ctrla = FALSE;
+    int i;
+    int count;
+    bool ctrla = false;
     char numdestructs = 0, numzaps = 0;
 
 top:
-    while (count = read_nd(ch,(sizeof ch))) {
+    while ((count = read_nd(ch,(sizeof ch)))) {
 	for (i=0; i<count; i++) {
 	    if (ch[i] == 'Q') {
-		bombed_out = TRUE;
-		*done = TRUE;
-		keepgoing = FALSE;
+		bombed_out = true;
+		*done = true;
+		keepgoing = false;
 		return;
 	    }
 	    if (ch[i] == 'q' || ch[i] == BREAKCH || ch[i] == INTRCH) {
@@ -187,8 +183,8 @@ top:
 			getcmd(&ch[i]);
 		    } while (ch[i] != 'y' && ch[i] != 'n');
 		    if (ch[i] == 'y') {
-			bombed_out = TRUE;
-			*done = TRUE;
+			bombed_out = true;
+			*done = true;
 			return;
 		    }
 		    else {
@@ -242,7 +238,7 @@ top:
 		case 'r':
 		    rewrite();
 		    roundsleep(3);
-		    ctrla = FALSE;
+		    ctrla = false;
 		    goto top;
 		case 'w':
 		    clear();
@@ -250,20 +246,20 @@ top:
 			sleep(1);
 		    rewrite();
 		    roundsleep(3);
-		    ctrla = FALSE;
+		    ctrla = false;
 		    goto top;
 #ifdef SIGTSTP
 		case 'z':
 		    clear();
 		    mytstp();
 		    sleep(4);
-		    ctrla = FALSE;
+		    ctrla = false;
 		    goto top;
 #endif
 		default:
 		    break;
 		}
-		ctrla = FALSE;
+		ctrla = false;
 	    }
 	    else {
 		switch (ch[i]) {
@@ -303,14 +299,14 @@ top:
 		    if (ent) {
 			status = entmode;
 		    }
-		    cloaking=FALSE;
-		    cloaked=FALSE;
+		    cloaking=false;
+		    cloaked=false;
 		    break;
 		case 'c':
 		    if (ent) {
 			status = entmode;
 			if (ent->energy >= 250)
-			    cloaking = TRUE;
+			    cloaking = true;
 		    }
 		    break;
 		case 'z':
@@ -347,7 +343,7 @@ top:
 		    break;
 		case 'd':
 		    if ((!damage || !damflag[NODESTRUCT]) && (base||ent)) {
-			Reg4 OBJECT *obj;
+			OBJECT *obj;
 			int x, y;
 
 			if (ent && !rand_mod(200)) {
@@ -363,7 +359,7 @@ top:
 				     += 1;
 				yblasted[y] |= 1;
 				xblasted[x] |= 1;
-				blasted = TRUE;
+				blasted = true;
 				obj->mass = (massacre?3000:4000);
 			    }
 			}
@@ -371,7 +367,7 @@ top:
 		    break;
 		case 's':
 		    if ((!damage || !damflag[NODESTRUCT]) && (base||ent)) {
-			Reg4 OBJECT *obj;
+			OBJECT *obj;
 			if (ent && !rand_mod(200)) {
 			    damage++;
 			    damflag[NODESTRUCT] = rand_mod(smarts+10)+2;
@@ -386,7 +382,7 @@ top:
 		    }
 		    break;
 		case '\001':
-		    ctrla = TRUE;
+		    ctrla = true;
 		    break;
 		case '\002':
 		case '\003':
@@ -415,7 +411,7 @@ top:
 		case '\032':
 		    ch[i] += 96;
 		    i--;
-		    ctrla = TRUE;
+		    ctrla = true;
 		    break;
 		case '\033':
 		    tractor = 0;

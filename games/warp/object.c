@@ -12,20 +12,16 @@
 #include "object.h"
 
 void
-object_init()
+object_init(void)
 {
     ;
 }
 
 OBJECT *
-make_object(typ, img, py, px, vy, vx, energ, mas, where)
-char typ;
-char img;
-int px, py, vx, vy;
-long energ, mas;
-OBJECT *where;
+make_object(char typ, char img, int px, int py, int vx, int vy, long energ,
+    long mas, OBJECT *where)
 {
-    Reg1 OBJECT *obj;
+    OBJECT *obj;
 
     if (free_root.next == &free_root)
 #ifndef lint
@@ -60,8 +56,7 @@ OBJECT *where;
 }
 
 void
-unmake_object(curobj)
-Reg1 OBJECT *curobj;
+unmake_object(OBJECT *curobj)
 {
     curobj->prev->next = curobj->next;
     curobj->next->prev = curobj->prev;
@@ -72,8 +67,7 @@ Reg1 OBJECT *curobj;
 }
 
 void
-free_object(curobj)
-Reg1 OBJECT *curobj;
+free_object(OBJECT *curobj)
 {
     curobj->next = free_root.next;
     curobj->prev = &free_root;

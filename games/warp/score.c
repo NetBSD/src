@@ -29,10 +29,10 @@
 #include "score.h"
 
 void
-score_init()
+score_init(void)
 {
-    Reg1 char *s;
-    Reg2 int i;
+    char *s;
+    int i;
     FILE *savfil;
 
 #if 0
@@ -65,7 +65,7 @@ score_init()
     if (scorespec)
 	wscore();
 
-    Sprintf(savefilename, "save.%s", logname);
+    snprintf(savefilename, sizeof(savefilename), "save.%s", logname);
 
     savfil = experimenting ? NULL : fopen(savefilename,"r");
     if (savfil != NULL && fgets(spbuf,100,savfil) != NULL) {
@@ -89,7 +89,7 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 "last wave over.\r\n\n");
 		printf(
 "                      [type anything to continue]");
-		Fflush(stdout);
+		fflush(stdout);
 		eat_typeahead();
 		getcmd(tmpbuf);
 		if (*tmpbuf == INTRCH)
@@ -109,7 +109,7 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 		}
 		printf("   2) Let me terminate the other game\r\n\n");
 		printf("What do you want to do? ");
-		Fflush(stdout);
+		fflush(stdout);
 		eat_typeahead();
 		getcmd(tmpbuf);
 		printf("\r\n");
@@ -122,7 +122,7 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 		}
 		printf(
 "Ok, hang on a few moments \r\n");
-		Fclose(savfil);
+		fclose(savfil);
 		if (kill(processnum, SIGQUIT)) {
 		    printf("Unable to kill process #%d!\r\n",processnum);
 		    roundsleep(2);
@@ -138,11 +138,11 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 					/* (warp ignores SIGINT) */
 			    break;
 		    }
-		    didkill++;
+		    didkill = true;
 		}
 		savfil = fopen(savefilename,"r");
 		if (savfil != NULL) {
-		    Fgets(spbuf,100,savfil);
+		    fgets(spbuf,100,savfil);
 		}
 	    }
 	}
@@ -170,35 +170,35 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 	tholspec   = (spbuf[46] == 't');
 	lowspeed   = (spbuf[47] == 'l') || lowspeed;
 	amoebaspec = (spbuf[48] == '&');
-	Fclose(savfil);
+	fclose(savfil);
     }
 
     if (!ismarts) {
 	ismarts = 1;
 	clear();
-	page(NEWSFILE,FALSE);
+	page(NEWSFILE,false);
 	if (smarts) {
 	    printf("\r\nSaved game: SCORE DIFF CUMDIFF ENTERPRISES BASES WAVE");
 	    printf("\r\n          %7ld  %2d   %4d        %1d        %1d   %3d",
 		totalscore,smarts,cumsmarts,numents,numbases,wave);
 	}
 	printf("\r\nWould you like instructions? ");
-	Fflush(stdout);
+	fflush(stdout);
 	eat_typeahead();
 	getcmd(buf);
 	printf("\r\n");
 	if (*buf == INTRCH)
 	    finalize(0);
 	if (*buf == 'Y' || *buf == 'y') {
-	    page(HELPFILE,FALSE);
+	    page(HELPFILE,false);
 	    printf("\r\nWould you like to play easy games for a while? ");
-	    Fflush(stdout);
+	    fflush(stdout);
 	    eat_typeahead();
 	    getcmd(buf);
 	    printf("\r\n");
 	    if (*buf == 'Y' || *buf == 'y') {
-		beginner = TRUE;
-		lowspeed = TRUE;
+		beginner = true;
+		lowspeed = true;
 	    }
 	}
     }
@@ -207,32 +207,32 @@ That process does not seem to exist anymore, so you'll have to start the\r\n");
 }
 
 void
-wscore()
+wscore(void)
 {
     clear();
     printf("                             TOP WARPISTS\r\n\n");
     printf("RANK  WHO                     AKA        SCORE DIFF  CUMDIFF  WHEN\r\n");
-    page(SCOREBOARD,TRUE);
+    page(SCOREBOARD,true);
     printf("                     [Type anything to continue]");
-    Fflush(stdout);
+    fflush(stdout);
     getcmd(spbuf);
     if (*spbuf == INTRCH)
 	finalize(0);
     clear();
     printf("                        TOP LOW-SPEED WARPISTS\r\n\n");
     printf("RANK  WHO                     AKA        SCORE DIFF  CUMDIFF  WHEN\r\n");
-    page(LSCOREBOARD,TRUE);
+    page(LSCOREBOARD,true);
     printf("                     [Type anything to continue]");
-    Fflush(stdout);
+    fflush(stdout);
     getcmd(spbuf);
     if (*spbuf == INTRCH)
 	finalize(0);
     clear();
     printf("                          TOP FUNNY WARPISTS\r\n\n");
     printf("RANK  WHO                     AKA        SCORE DIFF  CUMDIFF  WHEN\r\n");
-    page(FSCOREBOARD,TRUE);
+    page(FSCOREBOARD,true);
     printf("                     [Type anything to continue]");
-    Fflush(stdout);
+    fflush(stdout);
     getcmd(spbuf);
     if (*spbuf == INTRCH)
 	finalize(0);
@@ -240,33 +240,33 @@ wscore()
     printf("          GAMES SAVED OR IN PROGRESS\r\n\n");
     printf("WHO           SCORE  DF   CDF  E  B  WV  FLAGS\r\n");
     resetty();
-    Sprintf(spbuf,"/bin/cat %ssave.*",SAVEDIR);
+    snprintf(spbuf, sizeof(spbuf), "/bin/cat %ssave.*",SAVEDIR);
 #ifndef lint
-    execl("/bin/sh", "sh", "-c", spbuf, 0);
+    execl("/bin/sh", "sh", "-c", spbuf, NULL);
 #endif
     finalize(1);
 }
 
 
 void
-display_status()
+display_status(void)
 {
-    Reg1 int tmp;
-    static char *status_names[] = {"Impl", "Warp", "Base", "****" };
+    int tmp;
+    static const char *status_names[] = {"Impl", "Warp", "Base", "****" };
 
     if (oldstatus != status) {
-	Sprintf(spbuf,"%-4s",status_names[status]);
+	snprintf(spbuf, sizeof(spbuf), "%-4s",status_names[status]);
 	mvaddstr(0,0, spbuf);
 	oldstatus = status;
     }
     if (ent) {
 	if (ent->energy != oldeenergy) {
 	    oldeenergy = ent->energy;
-	    Sprintf(spbuf,"%4ld",oldeenergy);
+	    snprintf(spbuf, sizeof(spbuf), "%4ld",oldeenergy);
 	    mvaddstr(0,8, spbuf);
 	}
 	if (etorp != oldetorp) {
-	    Sprintf(spbuf,"%2d",etorp);
+	    snprintf(spbuf, sizeof(spbuf), "%2d",etorp);
 	    mvaddstr(0,13, spbuf);
 	    oldetorp = etorp;
 	}
@@ -281,11 +281,11 @@ display_status()
     if (base) {
 	if (base->energy != oldbenergy) {
 	    oldbenergy = base->energy;
-	    Sprintf(spbuf,"%5ld",oldbenergy);
+	    snprintf(spbuf, sizeof(spbuf), "%5ld",oldbenergy);
 	    mvaddstr(0,19, spbuf);
 	}
 	if (btorp != oldbtorp) {
-	    Sprintf(spbuf,"%3d",btorp);
+	    snprintf(spbuf, sizeof(spbuf), "%3d",btorp);
 	    mvaddstr(0,25, spbuf);
 	    oldbtorp = btorp;
 	}
@@ -308,7 +308,7 @@ display_status()
 	if (!--damflag[dam]) {
 	    olddamage = damage;
 	    damage--;
-	    Sprintf(spbuf,"%s OK ***       ",dammess[dam]);
+	    snprintf(spbuf, sizeof(spbuf), "%s OK ***       ",dammess[dam]);
 	    spbuf[15] = '\0';
 	    mvaddstr(0,46,spbuf);
 	}
@@ -317,13 +317,13 @@ display_status()
 	    tmp = (34 - damflag[dam]) * 3 - rand_mod(3);
 	    if (tmp < 0)
 		tmp = 0;
-	    Sprintf(spbuf,"%d%% %s ***       ",tmp,dammess[dam]);
+	    snprintf(spbuf, sizeof(spbuf), "%d%% %s ***       ",tmp,dammess[dam]);
 	    spbuf[15] = '\0';
 	    mvaddstr(0,46,spbuf);
 	}
 	else if (dam != lastdam || !olddamage) {
 	    olddamage = damage;
-	    Sprintf(spbuf,"NO %s ***       ",dammess[dam]);
+	    snprintf(spbuf, sizeof(spbuf), "NO %s ***       ",dammess[dam]);
 	    spbuf[15] = '\0';
 	    mvaddstr(0,46,spbuf);
 	}
@@ -334,56 +334,52 @@ display_status()
 		status = entmode = 0;
 	}
 	tmp = damflag[dam] * damage;
-	Sprintf(spbuf,"%3d.%1d ETR",tmp/10,tmp%10);
+	snprintf(spbuf, sizeof(spbuf), "%3d.%1d ETR",tmp/10,tmp%10);
 	mvaddstr(0,69,spbuf);
 	lastdam = dam;
     }
     else {
 	if (olddamage) {
-	    Sprintf(spbuf,"Stars: %-3d Stardate",numstars);
+	    snprintf(spbuf, sizeof(spbuf), "Stars: %-3d Stardate",numstars);
 	    mvaddstr(0,42,spbuf);
 	    lastdam = -1;
 	    olddamage = 0;
 	    oldcurscore = -1;
 	}
 	else if (numstars != oldstrs) {
-	    Sprintf(spbuf,"%-3d",numstars);
+	    snprintf(spbuf, sizeof(spbuf), "%-3d",numstars);
 	    mvaddstr(0,49, spbuf);
 	}
 	oldstrs = numstars;
     }
     if (numenemies != oldenemies) {
-	Sprintf(spbuf,"%-3d",numenemies);
+	snprintf(spbuf, sizeof(spbuf), "%-3d",numenemies);
 	mvaddstr(0,38, spbuf);
 	oldenemies = numenemies;
     }
-    if (tmp = timer%10) {
-	Sprintf(spbuf,"%1d",tmp);
+    if ((tmp = timer%10) != 0) {
+	snprintf(spbuf, sizeof(spbuf), "%1d",tmp);
 	mvaddstr(0,67, spbuf);
     }
     else {
-	Sprintf(spbuf,"%5d.%1d",timer/10+smarts*100,tmp);
+	snprintf(spbuf, sizeof(spbuf), "%5d.%1d",timer/10+smarts*100,tmp);
 	mvaddstr(0,61, spbuf);
     }
     if ((!damage || !damflag[dam]) && curscore != oldcurscore) {
-	Sprintf(spbuf,"%9ld",curscore);
+	snprintf(spbuf, sizeof(spbuf), "%9ld",curscore);
 	mvaddstr(0,69, spbuf);
 	oldcurscore = curscore;
     }
 }
 
 void
-wavescore()
+wavescore(void)
 {
     double power, effectscore, starscore, pi_over_2;
     long bonuses;
     long tmp;
     FILE *mapfp;
     int row;
-    double pow();
-#ifndef lint
-    double atan2();
-#endif
 
     clear();
     if (curscore > possiblescore)
@@ -402,99 +398,95 @@ wavescore()
 	    power += (350.0 - (double)inumstars) * ((double)inumenemies - 5.0);
     if (inumstars > 850 && inumenemies > 2)
 	    power += ((double)inumstars - 850.0) * ((double)inumenemies - 2.0);
-#ifndef lint
     effectscore = ((double)curscore / possiblescore) *
 	atan2(power, (double) timer + 1.0) / pi_over_2;
-#else
-    effectscore = pi_over_2;
-#endif
     if (inumstars)
 	starscore = (double) numstars / (double) inumstars;
     else
 	starscore = 1.0;
     wave++;
-    Sprintf(spbuf,"Wave = %d, Difficulty = %d, cumulative difficulty = %d",
+    snprintf(spbuf, sizeof(spbuf), "Wave = %d, Difficulty = %d, cumulative difficulty = %d",
 	 wave, smarts, cumsmarts);
     mvaddstr(1, 13+(smarts<10), spbuf);
     mvaddstr( 4, 68, " BONUS");
-    Sprintf(spbuf,"Efficiency rating:       %1.8f (diff=%0.2f,time=%d)",
+    snprintf(spbuf, sizeof(spbuf), "Efficiency rating:       %1.8f (diff=%0.2f,time=%d)",
 	 effectscore, power, timer + 1);
     mvaddstr( 5,5, spbuf);
     if (effectscore < 0.8)
 	bonuses = tmp = 0;
     else
 	bonuses = tmp = (long) ((effectscore-0.8) * smarts * 1000);
-    Sprintf(spbuf, "%6ld", tmp);
+    snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
     mvaddstr( 5, 68, spbuf);
-    Sprintf(spbuf,"Star save ratio:         %1.8f (%d/%d)",
+    snprintf(spbuf, sizeof(spbuf), "Star save ratio:         %1.8f (%d/%d)",
 	starscore, numstars, inumstars);
     mvaddstr( 6,5, spbuf);
 #ifndef lint
     bonuses += tmp = (long) (((double)curscore / possiblescore) *
 	(starscore*starscore) * smarts * 20);
 #endif
-    Sprintf(spbuf, "%6ld", tmp);
+    snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
     mvaddstr( 6, 68, spbuf);
     row = 7;
     if (inuminhab != numinhab) {
-	Sprintf(spbuf, "Inhabited stars depopulated:  %5d", inuminhab-numinhab);
+	snprintf(spbuf, sizeof(spbuf), "Inhabited stars depopulated:  %5d", inuminhab-numinhab);
 	mvaddstr(row,5, spbuf);
 	bonuses += tmp = (long) (inuminhab-numinhab) * -500;
-	Sprintf(spbuf, "%6ld", tmp);
+	snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
 	mvaddstr(row, 68, spbuf);
 	row++;
     }
     if (inumfriends != numfriends) {
-	Sprintf(spbuf, "Friendly craft destroyed:     %5d",
+	snprintf(spbuf, sizeof(spbuf), "Friendly craft destroyed:     %5d",
 	    inumfriends-numfriends);
 	mvaddstr(row,5, spbuf);
 	bonuses += tmp = (long) (inumfriends-numfriends) * -250;
-	Sprintf(spbuf, "%6ld", tmp);
+	snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
 	mvaddstr(row, 68, spbuf);
 	row++;
     }
     if (deadmudds) {
 	mvaddstr(row,5,"For destroying Harry Mudd:");
 	bonuses += tmp = (long) rand_mod(deadmudds * 20 + 1) - deadmudds*10;
-	Sprintf(spbuf, "%6ld", tmp);
+	snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
 	mvaddstr(row, 68, spbuf);
 	row++;
     }
     if (bombed_out) {
 	mvaddstr(row,5, "For running away from reality:");
 	bonuses += tmp = (long) -possiblescore/2;
-	Sprintf(spbuf, "%6ld", tmp);
+	snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
 	mvaddstr(row, 68,  spbuf);
 	row++;
     }
     if (row < 9)
 	row++;
-    Sprintf(spbuf, "Enterprise: %-9s%5d remaining",
+    snprintf(spbuf, sizeof(spbuf), "Enterprise: %-9s%5d remaining",
 	!ient?"":ent?"saved":"destroyed", numents);
     mvaddstr(row,5, spbuf);
     bonuses += tmp = ent && !bombed_out ? (smarts+1)*15 : 0;
-    Sprintf(spbuf, "%6ld", tmp);
+    snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
     mvaddstr(row, 68, spbuf);
     row++;
-    Sprintf(spbuf, "Base: %-9s      %5d remaining",
+    snprintf(spbuf, sizeof(spbuf), "Base: %-9s      %5d remaining",
 	!ibase?"":base?"saved":"destroyed", numbases);
     mvaddstr(row,5, spbuf);
     bonuses += tmp = base && !bombed_out ? (smarts+1)*10 : 0;
-    Sprintf(spbuf, "%6ld", tmp);
+    snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
     mvaddstr(row, 68,  spbuf);
     if (beginner) {
 	mvaddstr(13+(row>11),19, "(Special games count only a tenth as much)");
 	curscore /= 10;
 	bonuses /= 10;
     }
-    Sprintf(spbuf, "Previous point total:%10ld",lastscore);
+    snprintf(spbuf, sizeof(spbuf), "Previous point total:%10ld",lastscore);
     mvaddstr(15,24, spbuf);
-    Sprintf(spbuf, "Points this round:   %10ld",curscore);
+    snprintf(spbuf, sizeof(spbuf), "Points this round:   %10ld",curscore);
     mvaddstr(16,24, spbuf);
-    Sprintf(spbuf, "Bonuses:             %10ld",bonuses);
+    snprintf(spbuf, sizeof(spbuf), "Bonuses:             %10ld",bonuses);
     mvaddstr(17,24, spbuf);
     totalscore = lastscore + curscore + bonuses;
-    Sprintf(spbuf, "New point total:     %10ld",totalscore);
+    snprintf(spbuf, sizeof(spbuf), "New point total:     %10ld",totalscore);
     mvaddstr(18,24, spbuf);
     if (lastscore / ENTBOUNDARY < totalscore / ENTBOUNDARY) {
 	mvaddstr(row-1,42,"+ 1 new");
@@ -515,9 +507,9 @@ wavescore()
 	numbases--;
     }
     if (starscore < 0.8 && inumstars > 200 && numstars > 50) {
-	Sprintf(spbuf, "smap.%d",rand_mod(MAPS-PERMMAPS)+PERMMAPS);
-	if ((mapfp = fopen(spbuf,"w")) != NULL) {
-	    Reg1 OBJECT *obj;
+	snprintf(spbuf, sizeof(spbuf), "smap.%d",rand_mod(MAPS-PERMMAPS)+PERMMAPS);
+	if ((mapfp = fopen(spbuf, "w")) != NULL) {
+	    OBJECT *obj;
 
 	    fprintf(mapfp,"%d\n",numstars);
 	    for (obj = root.next; obj != &root; obj = obj->next) {
@@ -525,20 +517,20 @@ wavescore()
 		    fprintf(mapfp,"%d %d\n",obj->posy,obj->posx);
 		}
 	    }
-	    Fclose(mapfp);
+	    fclose(mapfp);
 	}
     }
 }
 
 void
-score()
+score(void)
 {
     char tmp, *retval, cdate[30];
-    Reg1 FILE *logfd;
-    Reg2 FILE *outfd;
-    Reg3 int i;
+    FILE *logfd;
+    FILE *outfd;
+    int i;
     time_t nowtime;
-    char *scoreboard;
+    const char *scoreboard;
 
     for (i=0; link(LOGFILE, LOCKFILE) == -1 && i<10; i++)
 	sleep(1);
@@ -548,7 +540,7 @@ score()
 	fprintf(logfd,
 	    "%-24s%-9s%7ld%c%2d %4d %s",
 	    realname, logname, totalscore, c,smarts, cumsmarts, cdate);
-	Fclose(logfd);
+	fclose(logfd);
     }
     strcpy(cdate+11,cdate+20);
     if (beginner)
@@ -559,7 +551,7 @@ score()
 	scoreboard = SCOREBOARD;
     if (eaccess(scoreboard,0)) {
 	if ((logfd = fopen(scoreboard,"w")) != NULL)
-	    Fclose(logfd);
+	    fclose(logfd);
     }
     if ((logfd = fopen(scoreboard,"r")) != NULL &&
 	(outfd = fopen(TMPSCOREBOARD,"w")) != NULL) {
@@ -576,14 +568,14 @@ score()
 	}
 	if (i == 100) {
 	    mvaddstr(20,21, "You did not better your previous score");
-	    Fclose(outfd);
+	    fclose(outfd);
 	    unlink(TMPSCOREBOARD);
 	}
 	else if (i < 20) {
 	    fprintf(outfd, "%-24s%-8s%8ld%c %2d    %4d    %s",
 		realname, logname, totalscore, c,smarts, cumsmarts, cdate);
 	    i++;
-	    Sprintf(spbuf, "    Congratulations--you've placed %d%s",
+	    snprintf(spbuf, sizeof(spbuf), "    Congratulations--you've placed %d%s",
 	      i, i==1?"st":(i==2?"nd":(i==3?"rd":"th")));
 	    if (retval != NULL) {
 		if (strnNE(buf+COMPOFF,COMPNAME,COMPLEN)) {
@@ -591,7 +583,7 @@ score()
 		    i++;
 		}
 		else
-		    strcpy(spbuf,"Congratulations--you've bettered your score");
+		    strcpy(spbuf, "Congratulations--you've bettered your score");
 		while (i<20) {
 		    if (fgets(buf, 100, logfd) == NULL)
 			break;
@@ -602,8 +594,8 @@ score()
 		}
 	    }
 	    mvaddstr(20,19, spbuf);
-	    Fclose(logfd);
-	    Fclose(outfd);
+	    fclose(logfd);
+	    fclose(outfd);
 	    while (unlink(scoreboard) == 0)
 		;
 	    link(TMPSCOREBOARD,scoreboard);
@@ -612,11 +604,11 @@ score()
 	}
 	else {
 	    mvaddstr(20,22,"You did not place within the top 20");
-	    Fclose(outfd);
+	    fclose(outfd);
 	}
     }
     else {
-	Sprintf(spbuf,"(Cannot access %s file, error %d)",
+	snprintf(spbuf, sizeof(spbuf), "(Cannot access %s file, error %d)",
 	    (logfd==NULL?"log":"tmp"),errno);
 	mvaddstr(20,22,spbuf);
     }
@@ -625,7 +617,7 @@ score()
     mvaddstr(23,11,
 	"[Hit space for scoreboard, 'r' for new game, 'q' to quit]");
     unlink(LOCKFILE);
-    Fflush(stdout);
+    fflush(stdout);
     eat_typeahead();
     do {
 	getcmd(&tmp);
@@ -633,7 +625,7 @@ score()
     if (index("qQr",tmp)) {
 	justonemoretime = (tmp == 'r');
 	if (logfd != NULL)
-	    Fclose(logfd);
+	    fclose(logfd);
     }
     else {
 	clear();
@@ -650,10 +642,10 @@ score()
 		if (fgets(buf, 100, logfd) == NULL)
 		    break;
 		buf[strlen(buf)-1] = '\0';
-		Sprintf(spbuf, " %2d   %s", i, buf);
+		snprintf(spbuf, sizeof(spbuf), " %2d   %s", i, buf);
 		mvaddstr(i+2,0, spbuf);
 	    }
-	    Fclose(logfd);
+	    fclose(logfd);
 	}
 	roundsleep(1);
 	mvaddstr(23,25,"Would you like to play again?");
@@ -662,24 +654,24 @@ score()
 	    getcmd(&tmp);
 	} while (tmp != INTRCH && tmp != BREAKCH && !index("nNyY \n\r",tmp));
 	if (tmp == 'n' || tmp == 'N' || tmp == INTRCH || tmp == BREAKCH)
-	    justonemoretime = FALSE;
+	    justonemoretime = false;
     }
 
     smarts = ismarts;
     totalscore = cumsmarts = wave = 0;
     numents = 5;
     numbases = 3;
-    apolspec = FALSE;
-    beginner   = FALSE;
-    crushspec  = FALSE;
-    gornspec   = FALSE;
+    apolspec = false;
+    beginner   = false;
+    crushspec  = false;
+    gornspec   = false;
     massacre   = (ismarts >= 40);
-    romspec    = FALSE;
-    tholspec   = FALSE;
+    romspec    = false;
+    tholspec   = false;
 }
 
 void
-save_game()
+save_game(void)
 {
     FILE *savfil;
 
@@ -690,7 +682,7 @@ save_game()
 	printf("Cannot save game\r\n");
 	finalize(1);
     }
-    fprintf(savfil, "%-8s %10ld, %2d,%5d,%2d,%2d,%3d %c%c%c%c%c%c%c%c\n",
+    fprintf(savfil, "%-8s %10ld, %2d,%5d,%2d,%2d,%3d %c%c%c%c%c%c%c%c%c\n",
 	logname, totalscore, smarts, cumsmarts, numents, numbases, wave,
 	apolspec ? 'a' : ' ',
 	beginner   ? 'b' : ' ',
@@ -702,7 +694,7 @@ save_game()
 	lowspeed   ? 'l' : ' ',
 	amoebaspec ? '&' : ' '
     );
-    Fclose(savfil);
+    fclose(savfil);
     resetty();
     if (panic)
 	finalize(0);

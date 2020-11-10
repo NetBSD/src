@@ -15,8 +15,8 @@ EXT OBJECT *isatorp[2][3][3];
 
 EXT int aretorps;
 
-void fire_torp();
-void attack();
-void fire_phaser();
-int tract();
-void weapon_init();
+void weapon_init(void);
+void fire_torp(OBJECT *, int, int);
+void attack(OBJECT *);
+void fire_phaser(OBJECT *, int, int);
+int tract(OBJECT *, int, int, int);

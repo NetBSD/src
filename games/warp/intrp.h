@@ -9,15 +9,14 @@
  * 
  */
 
-EXT char *origdir INIT(Nullch);		/* cwd when warp invoked */
-EXT char *homedir INIT(Nullch);		/* login directory */
-EXT char *dotdir INIT(Nullch);		/* where . files go */
-EXT char *logname INIT(Nullch);		/* login id */
+EXT char *origdir INIT(NULL);		/* cwd when warp invoked */
+EXT char *homedir INIT(NULL);		/* login directory */
+EXT char *dotdir INIT(NULL);		/* where . files go */
+EXT char *logname INIT(NULL);		/* login id */
 EXT char *hostname;	/* host name */
-EXT char *realname INIT(Nullch);	/* real name from /etc/passwd */
+EXT char *realname INIT(NULL);	/* real name from /etc/passwd */
 
-void    intrp_init();
-char	*filexp();
-char	*dointerp();
-void	interp();
-char	*getrealname();
+void intrp_init(char *);
+char *filexp(const char *);
+void interp(char *, size_t, const char *);
+char *dointerp(char *, size_t, const char *, const char *);

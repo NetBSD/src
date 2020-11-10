@@ -22,23 +22,18 @@
 #include "util.h"
 
 void
-util_init()
+util_init(void)
 {
     ;
 }
 
 void
-movc3(len,src,dest)
+movc3(int len, char *src, char *dest)
 #ifdef vax
-char *dest, *src;
-int len;
 {
     asm("movc3 4(ap),*8(ap),*12(ap)");
 }
 #else
-Reg1 char *dest;
-Reg2 char *src;
-Reg3 int len;
 {
     if (dest <= src) {
 	for (; len; len--) {
@@ -56,20 +51,16 @@ Reg3 int len;
 #endif
 
 void
-no_can_do(what)
-char *what;
+no_can_do(const char *what)
 {
     fprintf(stderr,"Sorry, your terminal is too %s to play warp.\r\n",what);
     finalize(1);
 }
 
 int
-exdis(maxnum)
-int maxnum;
+exdis(int maxnum)
 {
     double temp, temp2;
-    double exp();
-    double log();
 
     temp = (double) maxnum;
 #ifndef lint
@@ -92,34 +83,32 @@ static char nomem[] = "warp: out of memory!\r\n";
 
 /* paranoid version of malloc */
 
-char *
-safemalloc(size)
-MEM_SIZE size;
+void *
+safemalloc(size_t size)
 {
     char *ptr;
 
     ptr = malloc(size?size:1);	/* malloc(0) is NASTY on our system */
-    if (ptr != Nullch)
+    if (ptr != NULL)
 	return ptr;
     else {
 	fputs(nomem,stdout);
 	sig_catcher(0);
     }
     /*NOTREACHED*/
+    return NULL;
 }
 
 /* safe version of string copy */
 
 char *
-safecpy(to,from,len)
-char *to;
-Reg2 char *from;
-Reg1 int len;
+safecpy(char *to, const char *from, size_t len)
 {
-    Reg3 char *dest = to;
+    char *dest = to;
 
-    if (from != Nullch) 
-	for (len--; len && (*dest++ = *from++); len--) ;
+    if (from != NULL) 
+	for (len--; len && (*dest++ = *from++); len--) 
+	    continue;
     *dest = '\0';
     return to;
 }
@@ -127,10 +116,7 @@ Reg1 int len;
 /* copy a string up to some (non-backslashed) delimiter, if any */
 
 char *
-cpytill(to,from,delim)
-Reg2 char *to;
-Reg1 char *from;
-Reg3 int delim;
+cpytill(char *to, const char *from, int delim)
 {
     for (; *from; from++,to++) {
 	if (*from == '\\' && from[1] == delim)
@@ -140,42 +126,40 @@ Reg3 int delim;
 	*to = *from;
     }
     *to = '\0';
-    return from;
+    return __UNCONST(from);
 }
 
 /* return ptr to little string in big string, NULL if not found */
 
 char *
-instr(big, little)
-char *big, *little;
+instr(const char *big, const char *little)
 
 {
-    Reg3 char *t;
-    Reg1 char *s;
-    Reg2 char *x;
+    const char *t;
+    const char *s;
+    const char *x;
 
     for (t = big; *t; t++) {
 	for (x=t,s=little; *s; x++,s++) {
 	    if (!*x)
-		return Nullch;
+		return NULL;
 	    if (*s != *x)
 		break;
 	}
 	if (!*s)
-	    return t;
+	    return __UNCONST(t);
     }
-    return Nullch;
+    return NULL;
 }
 
 /* effective access */
 
 #ifdef SETUIDGID
 int
-eaccess(filename, mod)
-char *filename;
-int mod;
+eaccess(const char *filename, mode_t mod)
 {
-    int protection, euid;
+    mode_t protection;
+    uid_t euid;
     
     mod &= 7;				/* remove extraneous garbage */
     if (stat(filename, &filestat) < 0)
@@ -194,132 +178,30 @@ int mod;
 }
 #endif
 
-/*
- * Get working directory
- */
-
-#ifdef GETWD
-#define	dot	"."
-#define	dotdot	".."
-
-static	char	*name;
-
-static	DIR	*dirp;
-static	int	off;
-static	struct	stat	d, dd;
-static	struct	direct	*dir;
-
-char *
-getwd(np)
-char *np;
-{
-	long rdev, rino;
-
-	*np++ = '/';
-	*np = 0;
-	name = np;
-	off = -1;
-	stat("/", &d);
-	rdev = d.st_dev;
-	rino = d.st_ino;
-	for (;;) {
-		stat(dot, &d);
-		if (d.st_ino==rino && d.st_dev==rdev)
-			goto done;
-		if ((dirp = opendir(dotdot)) == Null(DIR *))
-			prexit("getwd: cannot open ..\r\n");
-		stat(dotdot, &dd);
-		chdir(dotdot);
-		if(d.st_dev == dd.st_dev) {
-			if(d.st_ino == dd.st_ino)
-				goto done;
-			do
-				if ((dir = readdir(dirp)) == Null(struct direct *))
-					prexit("getwd: read error in ..\r\n");
-			while (dir->d_ino != d.st_ino);
-		}
-		else do {
-				if ((dir = readdir(dirp)) == Null(struct direct *))
-					prexit("getwd: read error in ..\r\n");
-				stat(dir->d_name, &dd);
-			} while(dd.st_ino != d.st_ino || dd.st_dev != d.st_dev);
-		cat();
-		closedir(dirp);
-	}
-done:
-	name--;
-	if (chdir(name) < 0) {
-		printf("getwd: can't cd back to %s\r\n",name);
-		sig_catcher(0);
-	}
-	return (name);
-}
-
 void
-cat()
-{
-	Reg1 int i;
-	Reg2 int j;
-
-	i = -1;
-	while (dir->d_name[++i] != 0);
-	if ((off+i+2) > 1024-1)
-		return;
-	for(j=off+1; j>=0; --j)
-		name[j+i+1] = name[j];
-	if (off >= 0)
-		name[i] = '/';
-	off=i+off+1;
-	name[off] = 0;
-	for(--i; i>=0; --i)
-		name[i] = dir->d_name[i];
-}
-
-void
-prexit(cp)
-char *cp;
+prexit(const char *cp)
 {
 	write(2, cp, strlen(cp));
 	sig_catcher(0);
 }
-#else
-char *
-getwd(np)			/* shorter but slower */
-char *np;
-{
-    FILE *popen();
-    FILE *pipefp = popen("/bin/pwd","r");
-
-    if (pipefp == Nullfp) {
-	printf("Can't run /bin/pwd\r\n");
-	finalize(1);
-    }
-    Fgets(np,512,pipefp);
-    np[strlen(np)-1] = '\0';	/* wipe out newline */
-    pclose(pipefp);
-    return np;
-}
-#endif
 
 /* copy a string to a safe spot */
 
 char *
-savestr(str)
-char *str;
+savestr(const char *str)
 {
-    Reg1 char *newaddr = safemalloc((MEM_SIZE)(strlen(str)+1));
+    char *newaddr = safemalloc((size_t)(strlen(str)+1));
 
-    strcpy(newaddr,str);
+    strcpy(newaddr, str);
     return newaddr;
 }
 
 char *
-getval(nam,def)
-char *nam,*def;
+getval(const char *nam, const char *def)
 {
-    char *val;
+    const char *val;
 
-    if ((val = getenv(nam)) == Nullch || !*val)
+    if ((val = getenv(nam)) == NULL || !*val)
 	val = def;
-    return val;
+    return __UNCONST(val);
 }

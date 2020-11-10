@@ -12,11 +12,11 @@
 #include "config.h"
 
 int
-main()
+main(void)
 {
     char screen[23][90], buf[10];
-    Reg1 int y;
-    Reg2 int x;
+    int y;
+    int x;
     int tmpy, tmpx;
 
     for (x=0; x<79; x++)
@@ -45,7 +45,7 @@ main()
 	}
     }
     else {
-	Reg3 int numstars = 0;
+	int numstars = 0;
 
 	for (y=1; y<23; y++) {
 	    for (x=0; x<79; x++)

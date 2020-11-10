@@ -6,4 +6,4 @@
  * 
  */
 
-void initialize();
+void initialize(void);
