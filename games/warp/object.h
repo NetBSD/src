@@ -22,12 +22,8 @@
 #define Crusher 7
 
 typedef struct object {
-    char posx, posy;
-#ifdef SIGNEDCHAR
-    char velx, vely;
-#else
+    short posx, posy;
     short velx, vely;
-#endif
     struct object *next, *prev, *contend;
     long energy;
     long mass;
@@ -64,8 +60,7 @@ EXT OBJECT *nuke;
 
 EXT OBJECT *occupant[YSIZE][XSIZE];
 
-OBJECT *make_object();
-
-void unmake_object();
-void free_object();
-void object_init();
+void object_init(void);
+OBJECT *make_object(char, char, int, int, int, int, long, long, OBJECT *);
+void unmake_object(OBJECT *);
+void free_object(OBJECT *);

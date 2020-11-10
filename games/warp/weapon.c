@@ -27,18 +27,15 @@
 #include "weapon.h"
 
 void
-weapon_init()
+weapon_init(void)
 {
     ;
 }
 
 void
-fire_torp(from, ydir, xdir)
-Reg1 OBJECT *from;
-Reg3 int ydir;
-Reg4 int xdir;
+fire_torp(OBJECT *from, int ydir, int xdir)
 {
-    Reg2 OBJECT *to;
+    OBJECT *to;
 
     if (from->type == Enemy ||
        (from == ent && etorp > 0) ||
@@ -101,18 +98,17 @@ Reg4 int xdir;
 }
 
 void
-attack(attackee)
-Reg7 OBJECT *attackee;
+attack(OBJECT *attackee)
 {
-    Reg1 int dx;
-    Reg2 int dy;
-    Reg3 int curx;
-    Reg4 int cury;
-    Reg5 int prob;
-    Reg6 OBJECT *obj;
-    Reg8 bool torps;
-    Reg9 bool webnear = FALSE;
-    Reg10 bool thru_stars;
+    int dx;
+    int dy;
+    int curx;
+    int cury;
+    int prob;
+    OBJECT *obj;
+    bool torps;
+    bool webnear = false;
+    bool thru_stars;
     int nukey;
     int nukex;
     int nukedist;
@@ -129,22 +125,22 @@ Reg7 OBJECT *attackee;
 		if (dx||dy) {
 		    cury = attackee->posy;
 		    curx = attackee->posx;
-		    torps = thru_stars = FALSE;
+		    torps = thru_stars = false;
 		    if (massacre || madgorns || !rand_mod(53-super) )
 			webnear += rand_mod(2);
 		    else
-			webnear = FALSE;
+			webnear = false;
 		    for (prob = scandist;prob;prob--) {
 			cury = (cury + dy + YSIZE00) % YSIZE;
 			curx = (curx + dx + XSIZE00) % XSIZE;
-			if (obj = occupant[cury][curx]) {
+			if ((obj = occupant[cury][curx]) != NULL) {
 			    switch (obj->image) {
 			    case 'P': case 'K': case 'R': case ' ':
 		pot_shot:
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/40+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
 				if (rand_mod(51 - sm50) <= prob) {
 				    switch (obj->strategy||thru_stars?0:
@@ -213,7 +209,7 @@ Reg7 OBJECT *attackee;
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/40+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				    goto bombout;
 				}
 				if (obj->strategy) {
@@ -223,7 +219,7 @@ Reg7 OBJECT *attackee;
 				    }
 				    obj->strategy += (!torps && deados > 10);
 				    if (obj->strategy > 4)
-					madgorns = TRUE;
+					madgorns = true;
 				    if (!torps && obj->strategy > 5) {
 					do {
 					    fire_phaser(obj, -dy, -dx);
@@ -249,7 +245,7 @@ Reg7 OBJECT *attackee;
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/40+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
 				if (thru_stars)
 				    goto bombout;
@@ -273,7 +269,7 @@ Reg7 OBJECT *attackee;
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/40+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				    if (rand_mod(2))
 					goto pot_shot;
 				}
@@ -290,45 +286,45 @@ Reg7 OBJECT *attackee;
 					    == attackee->posx &&
 					 (obj->posy + obj->vely + YSIZE00)%YSIZE
 					    == attackee->posy ) {
-					    Tract(nuke,dy,dx,-1);
+					    tract(nuke,dy,dx,-1);
 					}
 					else
 					    while (!rand_mod(82-sm80))
-						Tract(nuke,dy,dx,-1);
+						tract(nuke,dy,dx,-1);
 				    }
 				    else if (smarts > 60 ||
 				      rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/20+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
-				torps = FALSE;
-				thru_stars = FALSE;
+				torps = false;
+				thru_stars = false;
 				break;
 			    case '|': case '-': case '/': case '\\':
 				if (thru_stars)
 				    goto bombout;
 				webnear = (scandist-prob < 3);
-				torps = FALSE;
+				torps = false;
 				break;
 			    case 'x':
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/20+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
 				if (thru_stars)
 				    goto bombout;
-				torps = TRUE;
+				torps = true;
 				break;
 			    case 'o': case 'O': case '0':
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/20+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
 				if (thru_stars)
 				    goto bombout;
-				torps = TRUE;
+				torps = true;
 				if (rand_mod(99+3*scandist) < smarts+3*prob) {
 				    obj->vely = -dy + attackee->vely;
 				    obj->velx = -dx + attackee->velx;
@@ -344,14 +340,14 @@ Reg7 OBJECT *attackee;
 				}
 				if (obj->image != '0')
 				    break;
-			    /* DROP THROUGH! */
+			    /*FALLTHROUGH*/
 			    case 'X':
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/20+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
-				torps = TRUE;
+				torps = true;
 				if (thru_stars)
 				    goto bombout;
 				if (prob == scandist) {
@@ -362,13 +358,13 @@ Reg7 OBJECT *attackee;
 				      += (obj->image == '0' ? 2000 : 200);
 				    yblasted[y] |= 1;
 				    xblasted[x] |= 1;
-				    blasted = TRUE;
+				    blasted = true;
 				}
 				break;
 			    case 'A':
 				if (attackee != nuke) {
 				    if (scandist-prob>1 && !rand_mod(51-super))
-					Tract(obj,-dy,-dx,1);
+					tract(obj,-dy,-dx,1);
 				}
 				/* FALL THROUGH */
 			    case '*': case '@':
@@ -382,19 +378,20 @@ Reg7 OBJECT *attackee;
 					if (smarts > 55 && scandist-prob > 8) {
 					    if (rand_mod(30+scandist-prob) <
 					      rand_mod(smarts/20+1))
-						Tract(nuke,dy,dx,1);
+						tract(nuke,dy,dx,1);
 					}
 				    }
 				    else if (obj->vely || obj->velx) {
-					Tract(nuke,dy,dx,1); /* for looks */
+					tract(nuke,dy,dx,1); /* for looks */
 					obj->vely = obj->velx = 0;
 				    }
 				}
-				if (!thru_stars)
+				if (!thru_stars) {
 				    if (rand_mod(97-sm95))
 					goto bombout;
 				    else
-					thru_stars = TRUE;
+					thru_stars = true;
+				}
 				break;
 			    case '<': case '>':
 				if (attackee == nuke) {
@@ -402,7 +399,7 @@ Reg7 OBJECT *attackee;
 				      rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/20+1) ) {
 					nuke->mass += 10000;
-					Tract(nuke,dy,dx,-1);
+					tract(nuke,dy,dx,-1);
 					nuke->mass -= 10000;
 				    }
 				}
@@ -411,7 +408,7 @@ Reg7 OBJECT *attackee;
 				if (attackee == nuke) {
 				    if (rand_mod(2+scandist-prob) <
 				      rand_mod(smarts/40+1))
-					Tract(nuke,dy,dx,rand_mod(3)?1:-1);
+					tract(nuke,dy,dx,rand_mod(3)?1:-1);
 				}
 				goto bombout;
 			    default:
@@ -438,15 +435,12 @@ bombout:            ; /* end of loop */
 }
 
 void
-fire_phaser(obj, dy, dx)
-Reg7 OBJECT *obj;
-Reg5 int dy;
-Reg6 int dx;
+fire_phaser(OBJECT *obj, int dy, int dx)
 {
-    Reg1 int y;
-    Reg2 int x;
-    Reg3 int skipping;
-    Reg4 int size=5000;
+    int y;
+    int x;
+    int skipping;
+    int size=5000;
     int decr = 50, oldy, oldx;
     static char curchar[] = "@* ";
 
@@ -595,24 +589,20 @@ Reg6 int dx;
 		    blast[y][x] += size*smarts/25;
 		yblasted[y] |= 1;
 		xblasted[x] |= 1;
-		blasted = TRUE;
+		blasted = true;
 	    }
 	}
     }
 }
 
 int
-tract(obj, dy, dx, to_or_fro)
-Reg7 OBJECT *obj;
-Reg4 int dy;
-Reg5 int dx;
-int to_or_fro;
+tract(OBJECT *obj, int dy, int dx, int to_or_fro)
 {
-    Reg1 int y;
-    Reg2 int x;
-    Reg3 int size=10;
+    int y;
+    int x;
+    int size=10;
     static char ch;
-    Reg6 OBJECT *tractee;
+    OBJECT *tractee;
 
     if (!dy)
 	ch = '|';

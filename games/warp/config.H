@@ -67,15 +67,15 @@
 
 /* How many register declarations are paid attention to? */
 
-#define Reg1 register		/**/
-#define Reg2 register		/**/
-#define Reg3 register		/**/
-#define Reg4 register		/**/
-#define Reg5 register		/**/
-#define Reg6 register		/**/
-#define Reg7 		/**/
-#define Reg8 		/**/
-#define Reg9 		/**/
+#define register		/**/
+#define register		/**/
+#define register		/**/
+#define register		/**/
+#define register		/**/
+#define register		/**/
+#define 		/**/
+#define 		/**/
+#define 		/**/
 #define Reg10 		/**/
 #define Reg11 		/**/
 #define Reg12 		/**/

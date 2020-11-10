@@ -133,13 +133,9 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
 #include "weapon.h"
 
 int
-main(argc,argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
     char tmp, *s, *tcbuf;
-
-    int i;
 
     FILE *savfil;
 
@@ -159,7 +155,6 @@ char *argv[];
     exit(1);
 #endif
 #endif
-rand_ok:
 
 #ifdef lint  /* to suppress "defined but never used" */
 # ifdef SIGTSTP
@@ -174,22 +169,22 @@ rand_ok:
 	for (s = argv[0]+1; *s != '\0'; s++)
 	    switch (*s) {
 	    case '&':
-		amoebaspec = TRUE;
-		beginner = TRUE;
+		amoebaspec = true;
+		beginner = true;
 		break;
 	    case 'A':
-		apolspec = TRUE;
-		beginner = TRUE;
+		apolspec = true;
+		beginner = true;
 		break;
 	    case 'b':
-		beginner = TRUE;
+		beginner = true;
 		break;
 	    case 'C':
-		crushspec = TRUE;
-		beginner = TRUE;
+		crushspec = true;
+		beginner = true;
 		break;
 	    case 'D':
-		debugging = TRUE;
+		debugging = true;
 #ifdef DEBUGGING
 		debug = atoi(++s);
 #endif
@@ -204,49 +199,49 @@ rand_ok:
 		if (ismarts > 99)
 		    ismarts = 99;
 		if (ismarts > 40)
-		    beginner = TRUE;
+		    beginner = true;
 		s += strlen(s)-1;
 		break;
 	    case 'E':
-		klingspec = TRUE;
-		beginner = TRUE;
+		klingspec = true;
+		beginner = true;
 		s++;
 		if (*s == '=') s++;
 		inumenemies = atoi(s);
 		s += strlen(s)-1;
 		break;
 	    case 'F':
-		friendspec = TRUE;
-		beginner = TRUE;
+		friendspec = true;
+		beginner = true;
 		s++;
 		if (*s == '=') s++;
 		inumfriends = atoi(s);
 		s += strlen(s)-1;
 		break;
 	    case 'G':
-		gornspec = TRUE;
-		beginner = TRUE;
+		gornspec = true;
+		beginner = true;
 		break;
 	    case 'l':
-		lowspeed = TRUE;
+		lowspeed = true;
 		break;
 	    case 'm':
-		metakey = TRUE;
+		metakey = true;
 		break;
 	    case 'M':
-		massacre = TRUE;
+		massacre = true;
 		break;
 	    case 'P':
-		piratespec = TRUE;
-		beginner = TRUE;
+		piratespec = true;
+		beginner = true;
 		s++;
 		if (*s == '=') s++;
 		inumpirates = atoi(s);
 		s += strlen(s)-1;
 		break;
 	    case 'S':
-		prespec = TRUE;
-		beginner = TRUE;
+		prespec = true;
+		beginner = true;
 		s++;
 		if (*s == '=') s++;
 		if (*s)
@@ -256,26 +251,26 @@ rand_ok:
 		s += strlen(s)-1;
 		break;
 	    case 'R':
-		romspec = TRUE;
-		beginner = TRUE;
+		romspec = true;
+		beginner = true;
 		break;
 	    case '*':
-		starspec = TRUE;
-		beginner = TRUE;
+		starspec = true;
+		beginner = true;
 		s++;
 		if (*s == '=') s++;
 		inumstars = atoi(s);
 		s += strlen(s)-1;
 		break;
 	    case 's':
-		scorespec = TRUE;
+		scorespec = true;
 		break;
 	    case 'T':
-		tholspec = TRUE;
-		beginner = TRUE;
+		tholspec = true;
+		beginner = true;
 		break;
 	    case 'x':
-		experimenting = TRUE;
+		experimenting = true;
 		break;
 	    case 'v':
 		version();
@@ -303,7 +298,7 @@ rand_ok:
     intrp_init(tcbuf);
 
     if (chdir(warplib) < 0)
-	fprintf(stderr,nocd,warplib);
+	fprintf(stderr,NOCD,warplib);
 
     term_init();
 
@@ -326,7 +321,7 @@ rand_ok:
     srand(getpid());
 
     do {
-	for (keepgoing = TRUE;;) {
+	for (keepgoing = true;;) {
 	    if (!experimenting) {
 		if ((savfil = fopen(savefilename,"w")) == NULL) {
 		    resetty();
@@ -349,7 +344,7 @@ rand_ok:
 		);
 		fprintf(savfil,"         running on %s, process #%d\n",
 		    term+5,getpid());
-		Fclose(savfil);
+		fclose(savfil);
 	    }
 
 	    lastscore = totalscore;
@@ -358,7 +353,7 @@ rand_ok:
 	    cumsmarts += smarts;
 	    wavescore();
 	    if (numents<=0 && numbases<=0)
-		keepgoing = FALSE;
+		keepgoing = false;
 	  if (!keepgoing) break;
 	    do {
 		if (experimenting) {
@@ -370,7 +365,7 @@ rand_ok:
 		      "[Hit space to continue, 's' to save, 'q' to quit]");
 		}
 		sleep(1);
-		Fflush(stdout);
+		fflush(stdout);
 		eat_typeahead();
 		getcmd(&tmp);
 		if (tmp == BREAKCH || tmp == INTRCH) {
