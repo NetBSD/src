@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.11 2020/11/07 08:48:11 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.12 2020/11/10 07:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.11 2020/11/07 08:48:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.12 2020/11/10 07:51:19 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -70,7 +70,7 @@ pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
  * 'clrprot' specified by bit of VM_PROT_{READ,WRITE,EXECUTE}
  * will be dropped from a pte entry.
  *
- * require KSEG(cached) mappings because TLB entries are already cached on.
+ * require direct (cached) mappings because TLB entries are already cached on.
  */
 int
 pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
