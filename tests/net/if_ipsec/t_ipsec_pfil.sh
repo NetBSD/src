@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_pfil.sh,v 1.1 2019/01/17 02:49:11 knakahara Exp $
+#	$NetBSD: t_ipsec_pfil.sh,v 1.1.6.1 2020/11/10 11:44:22 martin Exp $
 #
 # Copyright (c) 2019 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -115,8 +115,8 @@ setup_if_ipsec_sa()
 	atf_check -s exit:0 test "X$outunique" != "X"
 
 	cat > $tmpfile <<-EOF
-	add $dst $src $proto $inid -u $inunique $algo_args;
-	add $src $dst $proto $outid -u $outunique $algo_args;
+	add $dst $src $proto $inid -u $inunique -m transport $algo_args;
+	add $src $dst $proto $outid -u $outunique -m transport $algo_args;
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile

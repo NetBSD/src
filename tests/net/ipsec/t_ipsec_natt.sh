@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.2 2018/11/22 04:51:41 knakahara Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.2.2.1 2020/11/10 11:44:22 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ BUS_REMOTE=./bus_ipsec_natt_remote
 BUS_GLOBAL=./bus_ipsec_natt_global
 
 DEBUG=${DEBUG:-false}
-HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 
 setup_servers_ipv4()
 {
@@ -325,10 +324,10 @@ test_ipsec_natt_transport_ipv4()
 	export RUMP_SERVER=$SOCK_NAT
 	$DEBUG && $HIJACKING_NPF npfctl list
 	#          10.0.1.2:4500    20.0.0.2:4500  via shmif1:9696
-	port=$($HIJACKING_NPF npfctl list | awk -F 'shmif1:' '/4500/ {print $2;}')
+	port=$(get_natt_port $ip_local $ip_nat_remote)
 	$DEBUG && echo port=$port
 	if [ -z "$port" ]; then
-		atf_fail "Failed to get a traslated port on NAPT"
+		atf_fail "Failed to get a translated port on NAPT"
 	fi
 
 	# Create ESP-UDP IPsec connections
