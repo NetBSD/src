@@ -1,6 +1,7 @@
 This package contains manual page sources for the groff family of text
-formatters. The online manual pages for groff contain information about
-the following groff-related utilities:
+formatters. As described in the DESCR file for text-groff-catman, the
+online manual pages for groff contain information about the following
+groff-related utilities:
 
 	grog - grog reads files and guesses which of the groff(1) options
 	-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for

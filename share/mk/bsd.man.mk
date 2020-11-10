@@ -1,10 +1,10 @@
-#	$NetBSD: bsd.man.mk,v 1.121 2020/11/08 14:52:35 kamil Exp $
+#	$NetBSD: bsd.man.mk,v 1.122 2020/11/10 21:47:49 kamil Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		maninstall manpages manlinks
+.PHONY:		catinstall maninstall catpages manpages catlinks manlinks
 .PHONY:		htmlinstall htmlpages htmllinks
 .PHONY:		lintmanpages
 realinstall:	${MANINSTALL}
@@ -28,6 +28,17 @@ TMACDEPDIR?=	/usr/share/tmac
 .endif
 
 HTMLDIR?=	${DESTDIR}${MANDIR}
+.if ${MKMANDOC} == yes && !defined(NOMANDOC)
+CATDEPS?=
+.else
+CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
+		${TMACDEPDIR}/doc.tmac \
+		${TMACDEPDIR}/mdoc/doc-common \
+		${TMACDEPDIR}/mdoc/doc-ditroff \
+		${TMACDEPDIR}/mdoc/doc-nroff \
+		${TMACDEPDIR}/mdoc/doc-syms
+.endif
+MANTARGET?=	cat
 
 MAN?=
 MLINKS?=
@@ -120,6 +131,74 @@ manlinks::	${_t}
 .endfor
 .endif # ${MKMAN} != "no"
 
+##### Build and install rules (plaintext pages)
+
+.if (${MKCATPAGES} != "no") && (${MKMAN} != "no")
+catinstall:	catpages catlinks
+catpages::	# ensure target exists
+CATPAGES=	${MAN:C/\.(${_MSECTIONREGEX})\$/.cat\1${MANSUFFIX}/}
+
+realall:	${CATPAGES}
+.NOPATH:	${CATPAGES}
+.SUFFIXES:	${_MSECTIONS:@N@.cat$N${MANSUFFIX}@}
+.MADE:	${CATDEPS}
+
+${_MSECTIONS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
+	${_MKTARGET_FORMAT}
+.if ${MKMANDOC} == yes && !defined(NOMANDOC)
+	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
+		${TOOL_MANDOC_ASCII} ${.IMPSRC} ${MANCOMPRESS} \
+		    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}; \
+	else \
+		${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+		    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}; \
+	fi
+.elif defined(USETBL)
+	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
+.else
+	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
+.endif
+
+.for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
+_F:=		${DESTDIR}${MANDIR}/${F:T:E}${MANSUBDIR}/${F:R}.0${MANSUFFIX}
+
+.if ${MKUPDATE} == "no"
+${_F}!		${F}${MANSUFFIX} __installpage		# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
+${_F}:		${F}${MANSUFFIX} __installpage		# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
+.endif
+.endif
+
+catpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.endfor
+
+catlinks::						# link install
+
+.for _src _dst in ${MLINKS}
+_l:=${DESTDIR}${MANDIR}/cat${_src:T:E}${MANSUBDIR}/${_src:R}.0${MANSUFFIX}
+_t:=${DESTDIR}${MANDIR}/cat${_dst:T:E}${MANSUBDIR}/${_dst:R}.0${MANSUFFIX}
+
+# Handle case conflicts carefully, when _dst occurs
+# more than once after case flattening
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
+${_t}!		${_l} __linkinstallpage
+.else
+${_t}:		${_l} __linkinstallpage
+.endif
+
+catlinks::	${_t}
+.PRECIOUS:	${_t}
+.endfor
+.endif # (${MKCATPAGES} != "no") && (${MKMAN} != "no")
+
 ##### Build and install rules (HTML pages)
 
 .if (${MKHTML} != "no") && (${MKMAN} != "no")		# {
@@ -197,13 +276,17 @@ htmllinks::	${_t}
 .undef _F
 
 .if !empty(MAN) && (${MKMAN} != "no")
+.if (${MKCATPAGES} != "no")
+CLEANDIRFILES+= ${CATPAGES}
+.endif
 .if !empty(MANSUFFIX)
-CLEANDIRFILES+= ${MANPAGES}
+CLEANDIRFILES+= ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
 .endif
 .if ${MKHTML} != "no"
 CLEANDIRFILES+= ${HTMLPAGES}
 .endif
 .endif
+# (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
 .if !empty(MANPAGES)
 lintmanpages: ${MANPAGES}
@@ -224,4 +307,4 @@ describe:
 .include <bsd.sys.mk>
 .include <bsd.clean.mk>
 
-${TARGETS} maninstall htmlinstall: # ensure existence
+${TARGETS} catinstall maninstall htmlinstall: # ensure existence
