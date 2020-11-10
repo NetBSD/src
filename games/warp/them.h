@@ -6,6 +6,6 @@
  * 
  */
 
-void their_smarts();
-void modify_amoeba();
-void them_init();
+void them_init(void);
+void their_smarts(void);
+void modify_amoeba(int, int, int, int, int);

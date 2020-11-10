@@ -23,7 +23,7 @@
 #include "sig.h"
 
 void
-sig_init()
+sig_init(void)
 {
 #ifdef lint
     ;
@@ -72,7 +72,7 @@ cont_catcher(int x)
 #endif
 
 void
-mytstp()
+mytstp(void)
 {
     resetty();
 #ifdef SIGTSTP
@@ -94,8 +94,7 @@ mytstp()
 }
 
 void					/* very much void */
-finalize(status)
-int status;
+finalize(int status)
 {
     if (bizarre)
 	resetty();
@@ -113,7 +112,7 @@ void
 sig_catcher(int signo)
 {
 #ifdef VERBOSE
-    static char *signame[] = {
+    static const char *signame[] = {
 	"",
 	"HUP",
 	"INT",
@@ -180,7 +179,7 @@ sig_catcher(int signo)
 	totalscore -= possiblescore / 2;
     }
     save_game();
-    if (signo != SIGHUP && signo != SIGQUIT)
+    if (signo != SIGHUP && signo != SIGQUIT) {
 #ifdef VERBOSE
 	IF(verbose)
 	    printf("\r\nCaught %s%s--%s\r\n",
@@ -189,8 +188,9 @@ sig_catcher(int signo)
 	ELSE
 #endif
 #ifdef TERSE
-	    printf("\r\nSignal %d--bye bye\r\n",signo);
+	    printf("\r\nsignal %d--bye bye\r\n",signo);
 #endif
+    }
     switch (signo) {
     case SIGBUS:
     case SIGILL:

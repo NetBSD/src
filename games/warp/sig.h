@@ -6,11 +6,12 @@
  * 
  */
 
-void sig_catcher(int);
+void sig_init(void);
+void mytstp(void);
+void finalize(int status);
+void sig_catcher(int signo);
 #ifdef SIGTSTP
-void cont_catcher(int);
-void stop_catcher(int);
+void cont_catcher(int x);
+void stop_catcher(int sig);
 #endif
-void mytstp();
-void sig_init();
-void finalize();
+void sig_catcher(int);

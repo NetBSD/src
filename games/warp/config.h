@@ -3,7 +3,7 @@
  *	to find out if there is input pending on an IO channel.  Generally
  *	the routine is used only if FIONREAD and O_NDELAY aren't available.
  */
-#/*undef	RDCHK		/**/
+#undef	RDCHK		/**/
 
 /* SCOREFULL:
  *	This symbol, if defined, indicates that any scoreboard kept by the
@@ -11,7 +11,7 @@
  *	to the user's login name.  If the user can change his full name he
  *	can enter multiple scores if this is defined.
  */
-#/*undef	SCOREFULL	/**/
+#undef	SCOREFULL	/**/
 
 /* SIGNEDCHAR:
  *	This symbol, if defined, indicates that characters are a signed type.
@@ -25,7 +25,7 @@
  *	termio.h rather than sgtty.h.  There are also differences in the
  *	ioctl() calls that depend on the value of this symbol.
  */
-#/*undef	TERMIO		/**/
+#undef	TERMIO		/**/
 
 /* USENDIR:
  *	This symbol, if defined, indicates that the program should compile
@@ -35,15 +35,15 @@
  *	This symbol, if defined, indicates that the program should include the
  *	system's version of ndir.h, rather than the one with this package.
  */
-#/*undef	USENDIR		/**/
-#/*undef	LIBNDIR		/**/
+#undef	USENDIR		/**/
+#undef	LIBNDIR		/**/
 #define LIBNDIR
 
 /* WHOAMI:
  *	This symbol, if defined, indicates that the program may include
  *	whoami.h.
  */
-#/*undef	WHOAMI		/**/
+#undef	WHOAMI		/**/
 
 /* HOSTNAME:
  *	This symbol contains name of the host the program is going to run on.
@@ -77,7 +77,7 @@
  */
 #define	PASSNAMES /*  (undef to take name from ~/.fullname) */
 #define	BERKNAMES /* (that is, ":name,stuff:") */
-#/*undef	USGNAMES  /* (that is, ":stuff-name(stuff):") */
+#undef	USGNAMES  /* (that is, ":stuff-name(stuff):") */
 
 /* PREFSHELL:
  *	This symbol contains the full name of the preferred user shell on this
@@ -90,32 +90,6 @@
  *	function produces.  Usual values are 15, 16, and 31.
  */
 #define RANDBITS 15		/**/
-
-/* Reg1:
- *	This symbol, along with Reg2, Reg3, etc. is either the word "register"
- *	or null, depending on whether the C compiler pays attention to this
- *	many register declarations.  The intent is that you don't have to
- *	order your register declarations in the order of importance, so you
- *	can freely declare register variables in sub-blocks of code and as
- *	function parameters.  Do not use Reg<n> more than once per routine.
- */
-
-#define Reg1 register		/**/
-#define Reg2 register		/**/
-#define Reg3 register		/**/
-#define Reg4 		/**/
-#define Reg5 		/**/
-#define Reg6 		/**/
-#define Reg7 		/**/
-#define Reg8 		/**/
-#define Reg9 		/**/
-#define Reg10 		/**/
-#define Reg11 		/**/
-#define Reg12 		/**/
-#define Reg13 		/**/
-#define Reg14 		/**/
-#define Reg15 		/**/
-#define Reg16 		/**/
 
 /* ROOTID:
  *	This symbol contains the uid of root, normally 0.
