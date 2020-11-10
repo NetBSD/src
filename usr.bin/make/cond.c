@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.202 2020/11/10 20:52:28 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.203 2020/11/10 22:25:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.202 2020/11/10 20:52:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.203 2020/11/10 22:25:38 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -448,6 +448,8 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		if (parseResult & VPR_ANY_MSG)
 		    par->printedError = TRUE;
 		if (*out_freeIt != NULL) {
+		    /* XXX: Can there be any situation in which a returned
+		     * var_Error requires freeIt? */
 		    free(*out_freeIt);
 		    *out_freeIt = NULL;
 		}
@@ -479,10 +481,6 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	default:
 	    if (strictLHS && !quoted && *start != '$' && !ch_isdigit(*start)) {
 		/* lhs must be quoted, a variable reference or number */
-		if (*out_freeIt) {
-		    free(*out_freeIt);
-		    *out_freeIt = NULL;
-		}
 		str = NULL;
 		goto cleanup;
 	    }
