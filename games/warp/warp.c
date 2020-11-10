@@ -325,7 +325,7 @@ main(int argc, char *argv[])
 	    if (!experimenting) {
 		if ((savfil = fopen(savefilename,"w")) == NULL) {
 		    resetty();
-		    printf("Can't open savefile\r\n");
+		    printf("Can't open savefile `%s'\r\n", savefilename);
 		    finalize(1);
 		}
 		fprintf(savfil,
