@@ -1,4 +1,4 @@
-char rcsid[] = "@(#)$Header: /cvsroot/src/games/warp/warp.c,v 1.1 2020/11/09 23:37:05 kamil Exp $";
+char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
 
 /*	warp -- a real-time space war program
  *	author: Larry Wall
@@ -21,25 +21,7 @@ char rcsid[] = "@(#)$Header: /cvsroot/src/games/warp/warp.c,v 1.1 2020/11/09 23:
  *	   5.2  05/12/83	VAX -> vax, ifdef'ed a SIGCONT
  *	   5.3  05/24/83	RCS
  *
- * $Log: warp.c,v $
- * Revision 1.1  2020/11/09 23:37:05  kamil
- * Add Warp Kit, Version 7.0 by Larry Wall
- *
- * Warp is a real-time space war game that doesn't get boring very quickly.
- * Read warp.doc and the manual page for more information.
- *
- * games/warp originally distributed with 4.3BSD-Reno, is back to the BSD
- * world via NetBSD. Its remnants were still mentioned in games/Makefile.
- *
- * Larry Wall, the original author and the copyright holder, generously
- * donated the game and copyright to The NetBSD Foundation, Inc.
- *
- * Import the game sources as-is from 4.3BSD-Reno, with the cession
- * of the copyright and license to BSD-2-clause NetBSD-style.
- *
- * Signed-off-by: Larry Wall <larry@wall.org>
- * Signed-off-by: Kamil Rytarowski <kamil@netbsd.org>
- *
+ * Log:	warp.c,v
  * Revision 7.0.1.3  86/12/12  17:07:44  lwall
  * Baseline for net release.
  * 
