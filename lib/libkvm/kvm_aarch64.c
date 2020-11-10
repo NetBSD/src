@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.9 2019/09/12 10:18:50 mlelstv Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.10 2020/11/10 19:14:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.9 2019/09/12 10:18:50 mlelstv Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.10 2020/11/10 19:14:11 skrll Exp $");
 
 /*ARGSUSED*/
 void
@@ -73,7 +73,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
                 return(0);
         }
 
-	if ((va & AARCH64_KSEG_MASK) != AARCH64_KSEG_START) {
+	if ((va & AARCH64_DIRECTMAP_MASK) != AARCH64_DIRECTMAP_START) {
 		/*
 		 * Bogus address (not in KV space): punt.
 		 */
