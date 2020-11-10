@@ -257,6 +257,21 @@ getout:
 }
 #endif
 
+static char *mygets(char *str, size_t n)
+{
+    char *ret;
+    size_t last;
+
+    if ((ret = fgets(str, n, stdin)) != NULL) {
+        last = strlen(str) - 1;
+
+        if (str[last] == '\n')
+            str[last] = '\0';
+    }
+
+    return ret;
+}
+
 /* interpret interpolations */
 
 char *
@@ -367,7 +382,7 @@ char *stoppers;
 		    pattern = dointerp(scrbuf,(sizeof scrbuf),pattern+1,"\"");
 		    fputs(scrbuf,stdout);
 		    resetty();
-		    gets(scrbuf);
+		    mygets(scrbuf, sizeof(scrbuf));
 		    crmode();
 		    raw();
 		    noecho();

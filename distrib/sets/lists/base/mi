@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1268 2020/11/09 01:05:51 kamil Exp $
+# $NetBSD: mi,v 1.1269 2020/11/10 08:49:08 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2366,6 +2366,7 @@
 ./usr/share/games/fortune			base-games-share
 ./usr/share/games/larn				base-games-share
 ./usr/share/games/quiz.db			base-games-share
+./usr/share/games/warp				base-games-share
 ./usr/share/gdb					base-util-share
 ./usr/share/gdb/syscalls			base-util-share
 ./usr/share/gnats				base-gnats-share

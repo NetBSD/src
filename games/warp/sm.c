@@ -8,8 +8,10 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "config.h"
 
+int
 main()
 {
     char screen[23][90], buf[10];
