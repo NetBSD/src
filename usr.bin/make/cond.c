@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.201 2020/11/10 20:44:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.202 2020/11/10 20:52:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.201 2020/11/10 20:44:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.202 2020/11/10 20:52:28 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1170,7 +1170,7 @@ Cond_EvalLine(const char *line)
     for (ifp = ifs;; ifp++) {
 	if (ifp->form == NULL)
 	    return COND_INVALID;
-	if (is_token(ifp->form, line, ifp->formlen)) {
+	if (is_token(line, ifp->form, ifp->formlen)) {
 	    line += ifp->formlen;
 	    break;
 	}

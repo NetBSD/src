@@ -1,4 +1,4 @@
-# $NetBSD: directive-if.mk,v 1.3 2020/11/10 20:44:18 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.4 2020/11/10 20:52:28 rillig Exp $
 #
 # Tests for the .if directive.
 
@@ -19,14 +19,21 @@
 # There is no '.ifx'.
 #
 # The commit from 2005-05-01 intended to detect this situation, but it failed
-# to do this since the call to is_token has its arguments switched.  They are
-# expected as (str, token, token_len) but are actually passed as (token, str,
+# to do this since the call to is_token had its arguments switched.  They were
+# expected as (str, token, token_len) but were actually passed as (token, str,
 # token_len).  This made is_token return true even if the directive was
-# directly followed by alphanumerical characters.
+# directly followed by alphanumerical characters, which was wrong.  The
+# typical cases produced an error message such as "Malformed conditional
+# (x 123)", while the intended error message was "Unknown directive".
 #
 # Back at that time, the commits only modified the main code but did not add
 # the corresponding unit tests.  This allowed the bug to hide for more than
 # 15 years.
+#
+# Since 2020-11-10, the correct error message is produced.  The '.ifx' is no
+# longer interpreted as a variant of '.if', therefore the '.error' and '.else'
+# are interpreted as ordinary directives, producing the error messages
+# "if-less else" and "if-less endif".
 .ifx 123
 .  error
 .else
