@@ -138,8 +138,6 @@ play(void)
 			possiblescore += 5000;
 		    }
 		    if (apolloflag & 2) {
-/*###141 [cc] warning: array subscript has type 'char' [-Wchar-subscripts]%%%*/
-/*###141 [cc] warning: array subscript has type 'char' [-Wchar-subscripts]%%%*/
 			if (blast[realapollo->posy][realapollo->posx] <= 32000)
 			    bvely = bvelx = 0;
 			realapollo->energy = 32000;
