@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.199 2020/11/10 07:40:30 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.200 2020/11/10 08:02:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.199 2020/11/10 07:40:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.200 2020/11/10 08:02:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -677,6 +677,8 @@ done_lhs:
     return t;
 }
 
+/* The argument to empty() is a variable name, optionally followed by
+ * variable modifiers. */
 static size_t
 ParseEmptyArg(const char **pp, Boolean doEval,
 	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
@@ -755,6 +757,7 @@ CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 	    *out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
 	    return TRUE;
 	}
+
 	/* Evaluate the argument using the required function. */
 	*out_token = ToToken(!doEval || fn->fn_eval(arglen, arg));
 	free(arg);
