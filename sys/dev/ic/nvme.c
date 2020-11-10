@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $	*/
+/*	$NetBSD: nvme.c,v 1.52 2020/11/10 07:39:12 rin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.51 2020/09/24 09:59:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.52 2020/11/10 07:39:12 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,7 +1377,7 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		if ((flags & NVME_CQE_PHASE) != q->q_cq_phase)
 			break;
 
-		ccb = &q->q_ccbs[cqe->cid];
+		ccb = &q->q_ccbs[lemtoh16(&cqe->cid)];
 
 		if (++q->q_cq_head >= q->q_entries) {
 			q->q_cq_head = 0;
