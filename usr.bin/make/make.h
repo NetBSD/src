@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.204 2020/11/08 23:38:02 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.205 2020/11/10 00:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,6 +129,8 @@
 #else
 #define MAKE_ATTR_PRINTFLIKE(fmtarg, firstvararg)	/* delete */
 #endif
+
+#define MAKE_INLINE static inline MAKE_ATTR_UNUSED
 
 /*
  * A boolean type is defined as an integer, not an enum, for historic reasons.
@@ -657,31 +659,31 @@ void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 Boolean GNode_ShouldExecute(GNode *gn);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
-static MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 GNode_IsTarget(const GNode *gn)
 {
     return (gn->type & OP_OPMASK) != 0;
 }
 
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_Path(const GNode *gn)
 {
     return gn->path != NULL ? gn->path : gn->name;
 }
 
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarTarget(GNode *gn) { return Var_ValueDirect(TARGET, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarOodate(GNode *gn) { return Var_ValueDirect(OODATE, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarAllsrc(GNode *gn) { return Var_ValueDirect(ALLSRC, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarImpsrc(GNode *gn) { return Var_ValueDirect(IMPSRC, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarPrefix(GNode *gn) { return Var_ValueDirect(PREFIX, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarArchive(GNode *gn) { return Var_ValueDirect(ARCHIVE, gn); }
-static MAKE_ATTR_UNUSED const char *
+MAKE_INLINE const char *
 GNode_VarMember(GNode *gn) { return Var_ValueDirect(MEMBER, gn); }
 
 #ifdef __GNUC__
@@ -710,43 +712,43 @@ GNode_VarMember(GNode *gn) { return Var_ValueDirect(MEMBER, gn); }
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
 
-static inline MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 ch_isalpha(char ch) { return isalpha((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED Boolean
+MAKE_INLINE Boolean
 ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
-static inline MAKE_ATTR_UNUSED char
+MAKE_INLINE char
 ch_tolower(char ch) { return (char)tolower((unsigned char)ch); }
-static inline MAKE_ATTR_UNUSED char
+MAKE_INLINE char
 ch_toupper(char ch) { return (char)toupper((unsigned char)ch); }
 
-static inline MAKE_ATTR_UNUSED void
+MAKE_INLINE void
 cpp_skip_whitespace(const char **pp)
 {
     while (ch_isspace(**pp))
 	(*pp)++;
 }
 
-static inline MAKE_ATTR_UNUSED void
+MAKE_INLINE void
 cpp_skip_hspace(const char **pp)
 {
     while (**pp == ' ' || **pp == '\t')
 	(*pp)++;
 }
 
-static inline MAKE_ATTR_UNUSED void
+MAKE_INLINE void
 pp_skip_whitespace(char **pp)
 {
     while (ch_isspace(**pp))
 	(*pp)++;
 }
 
-static inline MAKE_ATTR_UNUSED void
+MAKE_INLINE void
 pp_skip_hspace(char **pp)
 {
     while (**pp == ' ' || **pp == '\t')

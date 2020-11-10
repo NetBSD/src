@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.683 2020/11/08 23:38:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.684 2020/11/10 00:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.683 2020/11/08 23:38:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.684 2020/11/10 00:32:12 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1985,7 +1985,7 @@ ParseModifierPart(
 }
 
 /* Test whether mod starts with modname, followed by a delimiter. */
-static Boolean
+MAKE_INLINE Boolean
 ModMatch(const char *mod, const char *modname, char endc)
 {
     size_t n = strlen(modname);
@@ -1994,7 +1994,7 @@ ModMatch(const char *mod, const char *modname, char endc)
 }
 
 /* Test whether mod starts with modname, followed by a delimiter or '='. */
-static inline Boolean
+MAKE_INLINE Boolean
 ModMatchEq(const char *mod, const char *modname, char endc)
 {
     size_t n = strlen(modname);
