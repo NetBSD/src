@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.56 2019/10/18 04:09:02 msaitoh Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.56 2019/10/18 04:09:02 msaitoh Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1295,7 +1295,7 @@ cd9660_rrip_move_directory(iso9660_disk *diskStructure, cd9660node *dir)
 		return NULL;
 
 	diskStructure->rock_ridge_move_count++;
-	snprintf(newname, sizeof(newname), "%08i",
+	snprintf(newname, sizeof(newname), "%08u",
 	    diskStructure->rock_ridge_move_count);
 
 	/* Point to old parent */
