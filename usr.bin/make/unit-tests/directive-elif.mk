@@ -1,4 +1,4 @@
-# $NetBSD: directive-elif.mk,v 1.3 2020/11/03 17:17:31 rillig Exp $
+# $NetBSD: directive-elif.mk,v 1.4 2020/11/10 22:23:37 rillig Exp $
 #
 # Tests for the .elif directive.
 
@@ -58,6 +58,15 @@
 .  info 2-elsif
 .else
 .  info else
+.endif
+
+# Expect: "if-less elif"
+.elif 0
+
+.if 1
+.else
+# Expect: "warning: if-less elif"
+.elif
 .endif
 
 all:

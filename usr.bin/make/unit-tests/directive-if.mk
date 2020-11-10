@@ -1,4 +1,4 @@
-# $NetBSD: directive-if.mk,v 1.4 2020/11/10 20:52:28 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.5 2020/11/10 22:23:37 rillig Exp $
 #
 # Tests for the .if directive.
 
@@ -43,6 +43,16 @@
 # Missing condition.
 .if
 .  error
+.else
+.  error
+.endif
+
+# A plain word must not start with a '"'.  It may contain a embedded quotes
+# though, which are kept.  The quotes need not be balanced.  The next space
+# ends the word, and the remaining " || 1" is parsed as "or true".
+.if ${:Uplain"""""} == plain""""" || 1
+.  info Quotes in plain words are probably a mistake.
+# XXX: Accepting quotes in plain words is probably a mistake as well.
 .else
 .  error
 .endif
