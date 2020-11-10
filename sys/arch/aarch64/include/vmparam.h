@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.16 2020/10/06 13:42:03 christos Exp $ */
+/* $NetBSD: vmparam.h,v 1.17 2020/11/10 07:51:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
 
 /*
  * kernel virtual space layout:
- *   0xffff_0000_0000_0000  -   64T  KSEG(direct mapping)
+ *   0xffff_0000_0000_0000  -   64T  direct mapping
  *   0xffff_4000_0000_0000  -   32T  (KASAN SHADOW MAP)
  *   0xffff_6000_0000_0000  -   32T  (not used)
  *   0xffff_8000_0000_0000  -    1G  EFI_RUNTIME
@@ -168,13 +168,13 @@
  * Since we have the address space, we map all of physical memory (RAM)
  * using block page table entries.
  */
-#define AARCH64_KSEG_MASK	((vaddr_t) 0xffff000000000000L)
-#define AARCH64_KSEG_SIZE	(1UL << 46)	/* 64TB */
-#define AARCH64_KSEG_START	AARCH64_KSEG_MASK
-#define AARCH64_KSEG_END	(AARCH64_KSEG_START + AARCH64_KSEG_SIZE)
-#define AARCH64_KVA_P(va)	(((vaddr_t) (va) & AARCH64_KSEG_MASK) != 0)
-#define AARCH64_PA_TO_KVA(pa)	((vaddr_t) ((pa) | AARCH64_KSEG_START))
-#define AARCH64_KVA_TO_PA(va)	((paddr_t) ((va) & ~AARCH64_KSEG_MASK))
+#define AARCH64_DIRECTMAP_MASK	((vaddr_t) 0xffff000000000000L)
+#define AARCH64_DIRECTMAP_SIZE	(1UL << 46)	/* 64TB */
+#define AARCH64_DIRECTMAP_START	AARCH64_DIRECTMAP_MASK
+#define AARCH64_DIRECTMAP_END	(AARCH64_DIRECTMAP_START + AARCH64_DIRECTMAP_SIZE)
+#define AARCH64_KVA_P(va)	(((vaddr_t) (va) & AARCH64_DIRECTMAP_MASK) != 0)
+#define AARCH64_PA_TO_KVA(pa)	((vaddr_t) ((pa) | AARCH64_DIRECTMAP_START))
+#define AARCH64_KVA_TO_PA(va)	((paddr_t) ((va) & ~AARCH64_DIRECTMAP_MASK))
 
 /* */
 #define VM_PHYSSEG_MAX		64              /* XXX */

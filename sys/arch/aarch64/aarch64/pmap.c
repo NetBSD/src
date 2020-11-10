@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2020/11/07 08:33:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2020/11/10 07:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/11/07 08:33:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2020/11/10 07:51:19 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -282,8 +282,8 @@ phys_to_pp(paddr_t pa)
 
 #define IN_RANGE(va,sta,end)	(((sta) <= (va)) && ((va) < (end)))
 
-#define IN_KSEG_ADDR(va)	\
-	IN_RANGE((va), AARCH64_KSEG_START, AARCH64_KSEG_END)
+#define IN_DIRECTMAP_ADDR(va)	\
+	IN_RANGE((va), AARCH64_DIRECTMAP_START, AARCH64_DIRECTMAP_END)
 
 #ifdef MODULAR
 #define IN_MODULE_VA(va)	IN_RANGE((va), module_start, module_end)
@@ -631,7 +631,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 		PMAP_COUNT(pdp_alloc);
 		PMAP_PAGE_INIT(VM_PAGE_TO_PP(pg));
 	} else {
-		/* uvm_pageboot_alloc() returns AARCH64 KSEG address */
+		/* uvm_pageboot_alloc() returns AARCH64 direct mapping address */
 		pg = NULL;
 		pa = AARCH64_KVA_TO_PA(
 		    uvm_pageboot_alloc(Ln_TABLE_SIZE));
@@ -790,10 +790,10 @@ pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
 			/* kernel text/data/bss are definitely linear mapped */
 			pa = KERN_VTOPHYS(va);
 			goto mapped;
-		} else if (IN_KSEG_ADDR(va)) {
+		} else if (IN_DIRECTMAP_ADDR(va)) {
 			/*
-			 * also KSEG is linear mapped, but areas that have no
-			 * physical memory haven't been mapped.
+			 * also direct mapping is linear mapped, but areas that
+			 * have no physical memory haven't been mapped.
 			 * fast lookup by using the S1E1R/PAR_EL1 registers.
 			 */
 			register_t s = daif_disable(DAIF_I|DAIF_F);
@@ -1261,7 +1261,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	KDASSERT((va & PGOFSET) == 0);
 	KDASSERT((size & PGOFSET) == 0);
 
-	KDASSERT(!IN_KSEG_ADDR(va));
+	KDASSERT(!IN_DIRECTMAP_ADDR(va));
 	KDASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	_pmap_remove(kpm, va, va + size, true, NULL);
@@ -1319,7 +1319,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	    pm, sva, eva, prot);
 
 	KASSERT_PM_ADDR(pm, sva);
-	KASSERT(!IN_KSEG_ADDR(sva));
+	KASSERT(!IN_DIRECTMAP_ADDR(sva));
 
 	/* PROT_EXEC requires implicit PROT_READ */
 	if (prot & VM_PROT_EXECUTE)
@@ -1766,7 +1766,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	    va, pa, prot, flags);
 
 	KASSERT_PM_ADDR(pm, va);
-	KASSERT(!IN_KSEG_ADDR(va));
+	KASSERT(!IN_DIRECTMAP_ADDR(va));
 
 #ifdef PMAPCOUNTERS
 	PMAP_COUNT(mappings);
@@ -2115,7 +2115,7 @@ pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	struct pv_entry *pv, *pvtmp;
 
 	KASSERT_PM_ADDR(pm, sva);
-	KASSERT(!IN_KSEG_ADDR(sva));
+	KASSERT(!IN_DIRECTMAP_ADDR(sva));
 
 	pm_lock(pm);
 	_pmap_remove(pm, sva, eva, false, &pvtofree);
@@ -2263,7 +2263,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	PMAP_COUNT(unwire);
 
 	KASSERT_PM_ADDR(pm, va);
-	KASSERT(!IN_KSEG_ADDR(va));
+	KASSERT(!IN_DIRECTMAP_ADDR(va));
 
 	pm_lock(pm);
 	ptep = _pmap_pte_lookup_l3(pm, va);

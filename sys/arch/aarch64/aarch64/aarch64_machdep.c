@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.53 2020/10/22 07:31:15 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.54 2020/11/10 07:51:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.53 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.54 2020/11/10 07:51:19 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -150,8 +150,8 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	vaddr_t data_start = (vaddr_t)__data_start;
 	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
-	/* add KSEG mappings of whole memory */
-	const pt_entry_t ksegattr =
+	/* add direct mappings of whole memory */
+	const pt_entry_t dmattr =
 	    LX_BLKPAG_ATTR_NORMAL_WB |
 	    LX_BLKPAG_AP_RW |
 	    LX_BLKPAG_PXN |
@@ -164,7 +164,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
 
 		pmapboot_enter_range(AARCH64_PA_TO_KVA(start), start,
-		    end - start, ksegattr, printf);
+		    end - start, dmattr, printf);
 	}
 	aarch64_dcache_wbinv_all();
 
@@ -216,7 +216,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
  *
  *               0xffff_bfff_ffff_ffff  End of direct mapped
  *               0xffff_0000_0000_0000  Start of direct mapped
- *                                      = AARCH64_KSEG_START
+ *                                      = AARCH64_DIRECTMAP_START
  *
  * Hole:         0xfffe_ffff_ffff_ffff
  *               0x0001_0000_0000_0000
@@ -605,9 +605,9 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		*handled = true;
 		if ((v < data_start) && (prot & VM_PROT_WRITE))
 			return EFAULT;
-	} else if (IN_RANGE(v, AARCH64_KSEG_START, AARCH64_KSEG_END)) {
+	} else if (IN_RANGE(v, AARCH64_DIRECTMAP_START, AARCH64_DIRECTMAP_END)) {
 		/*
-		 * if defined PMAP_MAP_POOLPAGE, direct mapped address (KSEG)
+		 * if defined PMAP_MAP_POOLPAGE, direct mapped address
 		 * will be appeared as kvm(3) address.
 		 */
 		paddr_t pa = AARCH64_KVA_TO_PA(v);

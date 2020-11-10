@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.13 2020/09/20 15:30:11 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.14 2020/11/10 07:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -43,7 +43,7 @@
 #define __MD_KERNMEM_BASE	0xFFFF000000000000 /* kern mem base address */
 
 #define __MD_SHADOW_SIZE	(1ULL << (__MD_VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
-#define KASAN_MD_SHADOW_START	(AARCH64_KSEG_END)
+#define KASAN_MD_SHADOW_START	(AARCH64_DIRECTMAP_END)
 #define KASAN_MD_SHADOW_END	(KASAN_MD_SHADOW_START + __MD_SHADOW_SIZE)
 
 static bool __md_early __read_mostly = true;
