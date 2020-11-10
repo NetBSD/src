@@ -6,9 +6,10 @@
  * 
  */
 
-void bounce();
-void move_universe();
-int lookaround();
-int lookfor();
-OBJECT *lookimg();
-void move_init();
+void move_init(void);
+void bounce(OBJECT *);
+void move_universe(void);
+int lookaround(int, int, char);
+int lookfor(int, int, char);
+OBJECT *lookimg(int, int, char);
+
