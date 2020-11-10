@@ -29,11 +29,6 @@ util_init(void)
 
 void
 movc3(int len, char *src, char *dest)
-#ifdef vax
-{
-    asm("movc3 4(ap),*8(ap),*12(ap)");
-}
-#else
 {
     if (dest <= src) {
 	for (; len; len--) {
@@ -48,7 +43,6 @@ movc3(int len, char *src, char *dest)
 	}
     }
 }
-#endif
 
 void
 no_can_do(const char *what)
