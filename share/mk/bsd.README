@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.414 2020/11/08 15:19:18 kamil Exp $
+#	$NetBSD: bsd.README,v 1.415 2020/11/10 21:47:49 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -129,6 +129,9 @@ MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd,
 MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
 		the pax frontends.
 		Default: yes
+
+MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
 		Default: yes on amd64/mips64/sparc64, no elsewhere.
@@ -345,14 +348,14 @@ MKLVM		If "no", don't build or install the logical volume manager
 		and device mapper tools and libraries
 		Default: yes
 
-MKMAN		If "no", don't build or install the man pages,
-		and also acts as "MKHTML=no".
+MKMAN		If "no", don't build or install the man or catman pages,
+		and also acts as "MKCATPAGES=no MKHTML=no".
 		Default: yes
 
 MKMANDOC	If "yes", mandoc is built as tool and used to compile
-		html pages.  A directory can be exempted by defining NOMANDOC.
-		Individual man pages are exempted if NOMANDOC.${target} is set
-		to "yes".
+		catman or html pages.  A directory can be exempted by
+		defining NOMANDOC.  Individual man pages are exempted
+		if NOMANDOC.${target} is set to "yes".
 		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
@@ -457,10 +460,10 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		depends on the compiler version and target CPU architecture.
 		Default: no
 
-MKSHARE		If "no", act as "MKDOC=no MKHTML=no MKINFO=no
+MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
-		I.e, don't build documentation, Info documentation, man pages,
-		NLS files, ...
+		I.e, don't build catman pages, documentation, Info
+		documentation, man pages, NLS files, ...
 		Default: yes
 
 MKSKEY		If "no", disables building of S/key authentication
@@ -717,7 +720,7 @@ BINMODE		Binary mode.  [555]
 
 NONBINMODE	Mode for non-executable files.  [444]
 
-MANDIR		Base path for manual installation.  [/usr/share/man]
+MANDIR		Base path for manual installation.  [/usr/share/man/cat]
 
 MANGRP		Manual group.  [wheel]
 
@@ -726,8 +729,8 @@ MANOWN		Manual owner.  [root]
 MANMODE		Manual mode.  [${NONBINMODE}]
 
 MANINSTALL	Manual installation type.  Space separated list:
-			htmlinstall, maninstall
-		Default value derived from MKHTML.
+			catinstall, htmlinstall, maninstall
+		Default value derived from MKCATPAGES and MKHTML.
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -1458,6 +1461,8 @@ links.
 
 It has a three targets:
 
+	catinstall:
+		Install the preformatted manual pages and their links.
 	htmlinstall:
 		Install the HTML manual pages and their links.
 	maninstall:

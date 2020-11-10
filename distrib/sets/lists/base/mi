@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1269 2020/11/10 08:49:08 kamil Exp $
+# $NetBSD: mi,v 1.1270 2020/11/10 21:47:40 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4462,137 +4462,137 @@
 ./usr/share/lua/5.3				base-sys-root
 ./usr/share/man					base-man-share
 ./usr/share/man/COPYRIGHT			base-obsolete		obsolete
-./usr/share/man/cat1				base-obsolete		obsolete
-./usr/share/man/cat1/atari			base-obsolete		obsolete
-./usr/share/man/cat1/hp300			base-obsolete		obsolete
-./usr/share/man/cat1/x68k			base-obsolete		obsolete
-./usr/share/man/cat2				base-obsolete		obsolete
-./usr/share/man/cat3				base-obsolete		obsolete
+./usr/share/man/cat1				base-man-share
+./usr/share/man/cat1/atari			base-man-share
+./usr/share/man/cat1/hp300			base-man-share
+./usr/share/man/cat1/x68k			base-man-share
+./usr/share/man/cat2				base-man-share
+./usr/share/man/cat3				base-man-share
 ./usr/share/man/cat3/atari			base-obsolete		obsolete
 ./usr/share/man/cat3f				base-obsolete		obsolete
-./usr/share/man/cat3lua				base-obsolete		obsolete
-./usr/share/man/cat4				base-obsolete		obsolete
+./usr/share/man/cat3lua				base-man-share
+./usr/share/man/cat4				base-man-share
 ./usr/share/man/cat4/acorn26			base-obsolete		obsolete
-./usr/share/man/cat4/acorn32			base-obsolete		obsolete
-./usr/share/man/cat4/alpha			base-obsolete		obsolete
-./usr/share/man/cat4/amiga			base-obsolete		obsolete
-./usr/share/man/cat4/arc			base-obsolete		obsolete
+./usr/share/man/cat4/acorn32			base-man-share
+./usr/share/man/cat4/alpha			base-man-share
+./usr/share/man/cat4/amiga			base-man-share
+./usr/share/man/cat4/arc			base-man-share
 ./usr/share/man/cat4/arm26			base-obsolete		obsolete
 ./usr/share/man/cat4/arm32			base-obsolete		obsolete
-./usr/share/man/cat4/atari			base-obsolete		obsolete
-./usr/share/man/cat4/cobalt			base-obsolete		obsolete
-./usr/share/man/cat4/dreamcast			base-obsolete		obsolete
-./usr/share/man/cat4/emips			base-obsolete		obsolete
-./usr/share/man/cat4/evbarm			base-obsolete		obsolete
-./usr/share/man/cat4/evbmips			base-obsolete		obsolete
-./usr/share/man/cat4/evbppc			base-obsolete		obsolete
-./usr/share/man/cat4/hp300			base-obsolete		obsolete
+./usr/share/man/cat4/atari			base-man-share
+./usr/share/man/cat4/cobalt			base-man-share
+./usr/share/man/cat4/dreamcast			base-man-share
+./usr/share/man/cat4/emips			base-man-share
+./usr/share/man/cat4/evbarm			base-man-share
+./usr/share/man/cat4/evbmips			base-man-share
+./usr/share/man/cat4/evbppc			base-man-share
+./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-obsolete		obsolete
-./usr/share/man/cat4/hpcarm			base-obsolete		obsolete
-./usr/share/man/cat4/hpcmips			base-obsolete		obsolete
-./usr/share/man/cat4/hpcsh			base-obsolete		obsolete
-./usr/share/man/cat4/hppa			base-obsolete		obsolete
-./usr/share/man/cat4/i386			base-obsolete		obsolete
-./usr/share/man/cat4/mac68k			base-obsolete		obsolete
-./usr/share/man/cat4/macppc			base-obsolete		obsolete
-./usr/share/man/cat4/mvme68k			base-obsolete		obsolete
+./usr/share/man/cat4/hpcarm			base-man-share
+./usr/share/man/cat4/hpcmips			base-man-share
+./usr/share/man/cat4/hpcsh			base-man-share
+./usr/share/man/cat4/hppa			base-man-share
+./usr/share/man/cat4/i386			base-man-share
+./usr/share/man/cat4/mac68k			base-man-share
+./usr/share/man/cat4/macppc			base-man-share
+./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-obsolete		obsolete
-./usr/share/man/cat4/pmax			base-obsolete		obsolete
+./usr/share/man/cat4/pmax			base-man-share
 ./usr/share/man/cat4/pmppc			base-obsolete		obsolete
-./usr/share/man/cat4/prep			base-obsolete		obsolete
-./usr/share/man/cat4/sandpoint			base-obsolete		obsolete
-./usr/share/man/cat4/sgimips			base-obsolete		obsolete
-./usr/share/man/cat4/sparc			base-obsolete		obsolete
-./usr/share/man/cat4/sparc64			base-obsolete		obsolete
-./usr/share/man/cat4/sun2			base-obsolete		obsolete
-./usr/share/man/cat4/sun3			base-obsolete		obsolete
+./usr/share/man/cat4/prep			base-man-share
+./usr/share/man/cat4/sandpoint			base-man-share
+./usr/share/man/cat4/sgimips			base-man-share
+./usr/share/man/cat4/sparc			base-man-share
+./usr/share/man/cat4/sparc64			base-man-share
+./usr/share/man/cat4/sun2			base-man-share
+./usr/share/man/cat4/sun3			base-man-share
 ./usr/share/man/cat4/tahoe			base-obsolete		obsolete
-./usr/share/man/cat4/vax			base-obsolete		obsolete
-./usr/share/man/cat4/x68k			base-obsolete		obsolete
-./usr/share/man/cat4/x86			base-obsolete		obsolete
-./usr/share/man/cat5				base-obsolete		obsolete
-./usr/share/man/cat6				base-obsolete		obsolete
-./usr/share/man/cat7				base-obsolete		obsolete
-./usr/share/man/cat8				base-obsolete		obsolete
+./usr/share/man/cat4/vax			base-man-share
+./usr/share/man/cat4/x68k			base-man-share
+./usr/share/man/cat4/x86			base-man-share
+./usr/share/man/cat5				base-man-share
+./usr/share/man/cat6				base-man-share
+./usr/share/man/cat7				base-man-share
+./usr/share/man/cat8				base-man-share
 ./usr/share/man/cat8/acorn26			base-obsolete		obsolete
-./usr/share/man/cat8/acorn32			base-obsolete		obsolete
-./usr/share/man/cat8/algor			base-obsolete		obsolete
-./usr/share/man/cat8/alpha			base-obsolete		obsolete
-./usr/share/man/cat8/amd64			base-obsolete		obsolete
-./usr/share/man/cat8/amiga			base-obsolete		obsolete
-./usr/share/man/cat8/arc			base-obsolete		obsolete
+./usr/share/man/cat8/acorn32			base-man-share
+./usr/share/man/cat8/algor			base-man-share
+./usr/share/man/cat8/alpha			base-man-share
+./usr/share/man/cat8/amd64			base-man-share
+./usr/share/man/cat8/amiga			base-man-share
+./usr/share/man/cat8/arc			base-man-share
 ./usr/share/man/cat8/arm26			base-obsolete		obsolete
 ./usr/share/man/cat8/arm32			base-obsolete		obsolete
-./usr/share/man/cat8/atari			base-obsolete		obsolete
-./usr/share/man/cat8/bebox			base-obsolete		obsolete
-./usr/share/man/cat8/cats			base-obsolete		obsolete
-./usr/share/man/cat8/cesfic			base-obsolete		obsolete
-./usr/share/man/cat8/cobalt			base-obsolete		obsolete
-./usr/share/man/cat8/dreamcast			base-obsolete		obsolete
-./usr/share/man/cat8/emips			base-obsolete		obsolete
-./usr/share/man/cat8/evbarm			base-obsolete		obsolete
-./usr/share/man/cat8/evbmips			base-obsolete		obsolete
-./usr/share/man/cat8/evbppc			base-obsolete		obsolete
-./usr/share/man/cat8/evbsh3			base-obsolete		obsolete
+./usr/share/man/cat8/atari			base-man-share
+./usr/share/man/cat8/bebox			base-man-share
+./usr/share/man/cat8/cats			base-man-share
+./usr/share/man/cat8/cesfic			base-man-share
+./usr/share/man/cat8/cobalt			base-man-share
+./usr/share/man/cat8/dreamcast			base-man-share
+./usr/share/man/cat8/emips			base-man-share
+./usr/share/man/cat8/evbarm			base-man-share
+./usr/share/man/cat8/evbmips			base-man-share
+./usr/share/man/cat8/evbppc			base-man-share
+./usr/share/man/cat8/evbsh3			base-man-share
 ./usr/share/man/cat8/evbsh5			base-obsolete		obsolete
-./usr/share/man/cat8/hp300			base-obsolete		obsolete
+./usr/share/man/cat8/hp300			base-man-share
 ./usr/share/man/cat8/hp700			base-obsolete		obsolete
-./usr/share/man/cat8/hpcarm			base-obsolete		obsolete
-./usr/share/man/cat8/hpcmips			base-obsolete		obsolete
-./usr/share/man/cat8/hpcsh			base-obsolete		obsolete
-./usr/share/man/cat8/hppa			base-obsolete		obsolete
-./usr/share/man/cat8/i386			base-obsolete		obsolete
-./usr/share/man/cat8/ibmnws			base-obsolete		obsolete
-./usr/share/man/cat8/luna68k			base-obsolete		obsolete
-./usr/share/man/cat8/mac68k			base-obsolete		obsolete
-./usr/share/man/cat8/macppc			base-obsolete		obsolete
-./usr/share/man/cat8/mipsco			base-obsolete		obsolete
-./usr/share/man/cat8/mmeye			base-obsolete		obsolete
-./usr/share/man/cat8/mvme68k			base-obsolete		obsolete
-./usr/share/man/cat8/mvmeppc			base-obsolete		obsolete
-./usr/share/man/cat8/netwinder			base-obsolete		obsolete
-./usr/share/man/cat8/news68k			base-obsolete		obsolete
-./usr/share/man/cat8/newsmips			base-obsolete		obsolete
-./usr/share/man/cat8/next68k			base-obsolete		obsolete
-./usr/share/man/cat8/ofppc			base-obsolete		obsolete
+./usr/share/man/cat8/hpcarm			base-man-share
+./usr/share/man/cat8/hpcmips			base-man-share
+./usr/share/man/cat8/hpcsh			base-man-share
+./usr/share/man/cat8/hppa			base-man-share
+./usr/share/man/cat8/i386			base-man-share
+./usr/share/man/cat8/ibmnws			base-man-share
+./usr/share/man/cat8/luna68k			base-man-share
+./usr/share/man/cat8/mac68k			base-man-share
+./usr/share/man/cat8/macppc			base-man-share
+./usr/share/man/cat8/mipsco			base-man-share
+./usr/share/man/cat8/mmeye			base-man-share
+./usr/share/man/cat8/mvme68k			base-man-share
+./usr/share/man/cat8/mvmeppc			base-man-share
+./usr/share/man/cat8/netwinder			base-man-share
+./usr/share/man/cat8/news68k			base-man-share
+./usr/share/man/cat8/newsmips			base-man-share
+./usr/share/man/cat8/next68k			base-man-share
+./usr/share/man/cat8/ofppc			base-man-share
 ./usr/share/man/cat8/pc532			base-obsolete		obsolete
-./usr/share/man/cat8/playstation2		base-obsolete		obsolete
-./usr/share/man/cat8/pmax			base-obsolete		obsolete
+./usr/share/man/cat8/playstation2		base-man-share
+./usr/share/man/cat8/pmax			base-man-share
 ./usr/share/man/cat8/pmppc			base-obsolete		obsolete
-./usr/share/man/cat8/prep			base-obsolete		obsolete
-./usr/share/man/cat8/sandpoint			base-obsolete		obsolete
-./usr/share/man/cat8/sbmips			base-obsolete		obsolete
-./usr/share/man/cat8/sgimips			base-obsolete		obsolete
-./usr/share/man/cat8/shark			base-obsolete		obsolete
-./usr/share/man/cat8/sparc			base-obsolete		obsolete
-./usr/share/man/cat8/sparc64			base-obsolete		obsolete
-./usr/share/man/cat8/sun2			base-obsolete		obsolete
-./usr/share/man/cat8/sun3			base-obsolete		obsolete
+./usr/share/man/cat8/prep			base-man-share
+./usr/share/man/cat8/sandpoint			base-man-share
+./usr/share/man/cat8/sbmips			base-man-share
+./usr/share/man/cat8/sgimips			base-man-share
+./usr/share/man/cat8/shark			base-man-share
+./usr/share/man/cat8/sparc			base-man-share
+./usr/share/man/cat8/sparc64			base-man-share
+./usr/share/man/cat8/sun2			base-man-share
+./usr/share/man/cat8/sun3			base-man-share
 ./usr/share/man/cat8/tahoe			base-obsolete		obsolete
-./usr/share/man/cat8/vax			base-obsolete		obsolete
+./usr/share/man/cat8/vax			base-man-share
 ./usr/share/man/cat8/walnut			base-obsolete		obsolete
-./usr/share/man/cat8/x68k			base-obsolete		obsolete
-./usr/share/man/cat8/x86			base-obsolete		obsolete
+./usr/share/man/cat8/x68k			base-man-share
+./usr/share/man/cat8/x86			base-man-share
 ./usr/share/man/cat8/x86_64			base-obsolete		obsolete
-./usr/share/man/cat9				base-obsolete		obsolete
+./usr/share/man/cat9				base-man-share
 ./usr/share/man/cat9/acorn26			base-obsolete		obsolete
-./usr/share/man/cat9/alpha			base-obsolete		obsolete
-./usr/share/man/cat9/amiga			base-obsolete		obsolete
+./usr/share/man/cat9/alpha			base-man-share
+./usr/share/man/cat9/amiga			base-man-share
 ./usr/share/man/cat9/arm26			base-obsolete		obsolete
 ./usr/share/man/cat9/arm32			base-obsolete		obsolete
-./usr/share/man/cat9/atari			base-obsolete		obsolete
-./usr/share/man/cat9/emips			base-obsolete		obsolete
-./usr/share/man/cat9/hp300			base-obsolete		obsolete
-./usr/share/man/cat9/i386			base-obsolete		obsolete
-./usr/share/man/cat9/mac68k			base-obsolete		obsolete
+./usr/share/man/cat9/atari			base-man-share
+./usr/share/man/cat9/emips			base-man-share
+./usr/share/man/cat9/hp300			base-man-share
+./usr/share/man/cat9/i386			base-man-share
+./usr/share/man/cat9/mac68k			base-man-share
 ./usr/share/man/cat9/pc532			base-obsolete		obsolete
-./usr/share/man/cat9/pmax			base-obsolete		obsolete
-./usr/share/man/cat9/sparc			base-obsolete		obsolete
-./usr/share/man/cat9/sun3			base-obsolete		obsolete
-./usr/share/man/cat9/vax			base-obsolete		obsolete
-./usr/share/man/cat9/x68k			base-obsolete		obsolete
-./usr/share/man/cat9/x86			base-obsolete		obsolete
-./usr/share/man/cat9lua				base-obsolete		obsolete
+./usr/share/man/cat9/pmax			base-man-share
+./usr/share/man/cat9/sparc			base-man-share
+./usr/share/man/cat9/sun3			base-man-share
+./usr/share/man/cat9/vax			base-man-share
+./usr/share/man/cat9/x68k			base-man-share
+./usr/share/man/cat9/x86			base-man-share
+./usr/share/man/cat9lua				base-man-share
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
