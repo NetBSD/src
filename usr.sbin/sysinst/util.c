@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.55 2020/11/04 16:26:35 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.56 2020/11/10 09:14:01 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1181,12 +1181,12 @@ entropy_add_manual(void)
 }
 
 /*
- * Get a file by some means and return a (potentioally only
+ * Get a file by some means and return a (potentially only
  * temporary valid) path to the local copy.
- * If mountpt is non empty, the caller should unmount that
+ * If mountpt is nonempty, the caller should unmount that
  * directory after processing the file.
  * Return success if the file is available, or failure if
- * the user canelled the request or network transfer failed.
+ * the user cancelled the request or network transfer failed.
  */
 static bool
 entropy_get_file(bool use_netbsd_seed, char *path)
