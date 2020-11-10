@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.37 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: RB800,v 1.38 2020/11/10 11:19:57 rin Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.37 $"
+ident 		"RB800-$Revision: 1.38 $"
 
 maxusers	32
 
@@ -189,6 +189,13 @@ ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb?
 
 alc*		at pci? dev ? function ?
+
+# NVM Express controllers and devices
+nvme*		at pci? dev ? function ?
+ld*		at nvme? nsid ?
+
+ahcisata*	at pci? dev ? function ?	# AHCI SATA controllers
+atabus* 	at ahcisata? channel ?
 
 #ehci*		at pci? dev ? function ?
 #ohci*		at pci? dev ? function ?
