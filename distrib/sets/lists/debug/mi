@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.342 2020/10/18 10:10:18 rin Exp $
+# $NetBSD: mi,v 1.343 2020/11/10 08:49:09 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -939,6 +939,7 @@
 ./usr/libdata/debug/usr/games/tetris.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/trek.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/unstr.debug	comp-utils-debug	debug
+./usr/libdata/debug/usr/games/warp.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug

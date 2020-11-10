@@ -35,6 +35,7 @@ score_init()
     Reg2 int i;
     FILE *savfil;
 
+#if 0
     if (stat(SAVEDIR,&filestat)) {
 	printf("Cannot access %s\r\n",SAVEDIR);
 	finalize(1);
@@ -47,6 +48,7 @@ score_init()
 	printf("%s is not protected correctly (must be u+rw o+rx).\r\n",SAVEDIR);
 	finalize(1);
     }
+#endif
     
 #ifdef SCOREFULL
     interp(longlognam, sizeof longlognam, "%N");
@@ -535,12 +537,12 @@ score()
     Reg1 FILE *logfd;
     Reg2 FILE *outfd;
     Reg3 int i;
-    long nowtime, time();
+    time_t nowtime;
     char *scoreboard;
 
     for (i=0; link(LOGFILE, LOCKFILE) == -1 && i<10; i++)
 	sleep(1);
-    nowtime = time((long *)0);
+    nowtime = time(NULL);
     strcpy(cdate,ctime(&nowtime));
     if ((logfd = fopen(LOGFILE,"a")) != NULL) {
 	fprintf(logfd,

@@ -10,6 +10,8 @@
 #include "INTERN.h"
 #include "version.h"
 
+#include <stdio.h>
+
 /* Print out the version number. */
 
 void

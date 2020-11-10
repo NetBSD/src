@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.57 2020/11/09 01:05:51 kamil Exp $
+# $NetBSD: mi,v 1.58 2020/11/10 08:49:09 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,6 +89,7 @@
 ./usr/games/trek				games-games-bin
 ./usr/games/unstr				games-utils-bin
 ./usr/games/wargames				games-games-bin
+./usr/games/warp				games-games-bin
 ./usr/games/worm				games-games-bin
 ./usr/games/worms				games-games-bin
 ./usr/games/wtf					games-utils-bin
@@ -254,6 +255,17 @@
 ./usr/share/man/cat8/dm.0			games-obsolete	obsolete
 ./usr/share/man/cat8/strfile.0			games-obsolete	obsolete
 ./usr/share/man/cat8/unstr.0			games-obsolete	obsolete
+./usr/share/games/warp/README			games-games-share	share
+./usr/share/games/warp/smap.0			games-games-share	share
+./usr/share/games/warp/smap.1			games-games-share	share
+./usr/share/games/warp/smap.2			games-games-share	share
+./usr/share/games/warp/smap.3			games-games-share	share
+./usr/share/games/warp/smap.4			games-games-share	share
+./usr/share/games/warp/smap.5			games-games-share	share
+./usr/share/games/warp/smap.6			games-games-share	share
+./usr/share/games/warp/smap.7			games-games-share	share
+./usr/share/games/warp/warp.doc			games-games-share	share
+./usr/share/games/warp/warp.news		games-games-share	share
 ./usr/share/man/html5/dm.conf.html		games-games-htmlman	html
 ./usr/share/man/html6/adventure.html		games-games-htmlman	html
 ./usr/share/man/html6/arithmetic.html		games-games-htmlman	html
@@ -302,6 +314,7 @@
 ./usr/share/man/html6/tetris.html		games-games-htmlman	html
 ./usr/share/man/html6/trek.html			games-games-htmlman	html
 ./usr/share/man/html6/wargames.html		games-games-htmlman	html
+./usr/share/man/html6/warp.html			games-games-htmlman	html
 ./usr/share/man/html6/worm.html			games-games-htmlman	html
 ./usr/share/man/html6/worms.html		games-games-htmlman	html
 ./usr/share/man/html6/wtf.html			games-utils-htmlman	html
@@ -358,6 +371,7 @@
 ./usr/share/man/man6/tetris.6			games-games-man		.man
 ./usr/share/man/man6/trek.6			games-games-man		.man
 ./usr/share/man/man6/wargames.6			games-games-man		.man
+./usr/share/man/man6/warp.6			games-games-man		.man
 ./usr/share/man/man6/worm.6			games-games-man		.man
 ./usr/share/man/man6/worms.6			games-games-man		.man
 ./usr/share/man/man6/wtf.6			games-utils-man		.man

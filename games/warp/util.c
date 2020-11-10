@@ -97,7 +97,6 @@ safemalloc(size)
 MEM_SIZE size;
 {
     char *ptr;
-    char *malloc();
 
     ptr = malloc(size?size:1);	/* malloc(0) is NASTY on our system */
     if (ptr != Nullch)
