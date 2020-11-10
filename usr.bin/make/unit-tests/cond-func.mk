@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.6 2020/11/08 21:40:13 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.7 2020/11/10 19:36:50 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -83,6 +83,44 @@ ${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 # default function that is called when a bare word is parsed.  For the plain
 # .if directive, this function is defined(); see "struct If ifs" in cond.c.
 .if A&B
+.  error
+.endif
+
+.if defined()
+.  error
+.else
+.  info The empty variable is never defined.
+.endif
+
+# The plain word 'defined' is interpreted as '!empty(defined)'.
+# That variable is not defined (yet).
+.if defined
+.  error
+.else
+.  info A plain function name is parsed as !empty(...).
+.endif
+
+# If a variable named 'defined' is actually defined and not empty, the plain
+# symbol 'defined' evaluates to true.
+defined=	non-empty
+.if defined
+.  info A plain function name is parsed as !empty(...).
+.else
+.  error
+.endif
+
+# A plain symbol name may start with one of the function names, in this case
+# 'defined'.
+.if defined-var
+.  error
+.else
+.  info Symbols may start with a function name.
+.endif
+
+defined-var=	non-empty
+.if defined-var
+.  info Symbols may start with a function name.
+.else
 .  error
 .endif
 
