@@ -1,24 +1,6 @@
-/* $Header: /cvsroot/src/games/warp/sig.c,v 1.1 2020/11/09 23:37:05 kamil Exp $ */
+/* Header: /usr/src/games/warp/RCS/sig.c,v 1.1 87/07/03 01:47:11 games Exp */
 
-/* $Log: sig.c,v $
-/* Revision 1.1  2020/11/09 23:37:05  kamil
-/* Add Warp Kit, Version 7.0 by Larry Wall
-/*
-/* Warp is a real-time space war game that doesn't get boring very quickly.
-/* Read warp.doc and the manual page for more information.
-/*
-/* games/warp originally distributed with 4.3BSD-Reno, is back to the BSD
-/* world via NetBSD. Its remnants were still mentioned in games/Makefile.
-/*
-/* Larry Wall, the original author and the copyright holder, generously
-/* donated the game and copyright to The NetBSD Foundation, Inc.
-/*
-/* Import the game sources as-is from 4.3BSD-Reno, with the cession
-/* of the copyright and license to BSD-2-clause NetBSD-style.
-/*
-/* Signed-off-by: Larry Wall <larry@wall.org>
-/* Signed-off-by: Kamil Rytarowski <kamil@netbsd.org>
-/*
+/* Log:	sig.c,v
  * Revision 7.0.1.1a  87/07/03  01:47:11  games
  * Changed sigsetmask to use sigmask instead of calculating it (incorrectly)
  * by hand.
