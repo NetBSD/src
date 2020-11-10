@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.198 2020/11/09 00:07:06 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.199 2020/11/10 07:40:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.198 2020/11/09 00:07:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.199 2020/11/10 07:40:30 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -726,37 +726,37 @@ CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 	size_t fn_name_len;
 	size_t (*fn_parse)(const char **, Boolean, const char *, char **);
 	Boolean (*fn_eval)(size_t, const char *);
-    } fn_defs[] = {
+    } fns[] = {
 	{ "defined",  7, ParseFuncArg,  FuncDefined },
 	{ "make",     4, ParseFuncArg,  FuncMake },
 	{ "exists",   6, ParseFuncArg,  FuncExists },
 	{ "empty",    5, ParseEmptyArg, FuncEmpty },
 	{ "target",   6, ParseFuncArg,  FuncTarget },
-	{ "commands", 8, ParseFuncArg,  FuncCommands },
-	{ NULL,       0, NULL, NULL },
+	{ "commands", 8, ParseFuncArg,  FuncCommands }
     };
-    const struct fn_def *fn_def;
+    const struct fn_def *fn;
     char *arg = NULL;
     size_t arglen;
     const char *cp = par->p;
+    const struct fn_def *fns_end = fns + sizeof fns / sizeof fns[0];
 
-    for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
-	if (!is_token(cp, fn_def->fn_name, fn_def->fn_name_len))
+    for (fn = fns; fn != fns_end; fn++) {
+	if (!is_token(cp, fn->fn_name, fn->fn_name_len))
 	    continue;
 
-	cp += fn_def->fn_name_len;
+	cp += fn->fn_name_len;
 	cpp_skip_whitespace(&cp);
 	if (*cp != '(')
 	    break;
 
-	arglen = fn_def->fn_parse(&cp, doEval, fn_def->fn_name, &arg);
+	arglen = fn->fn_parse(&cp, doEval, fn->fn_name, &arg);
 	if (arglen == 0 || arglen == (size_t)-1) {
 	    par->p = cp;
 	    *out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
 	    return TRUE;
 	}
 	/* Evaluate the argument using the required function. */
-	*out_token = ToToken(!doEval || fn_def->fn_eval(arglen, arg));
+	*out_token = ToToken(!doEval || fn->fn_eval(arglen, arg));
 	free(arg);
 	par->p = cp;
 	return TRUE;
