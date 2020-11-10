@@ -556,9 +556,9 @@ rewrite()
     display_status();
 }
 
-char
+int
 cmstore(ch)
-Reg1 char ch;
+Reg1 int ch;
 {
     *maxcmstring++ = ch;
 }

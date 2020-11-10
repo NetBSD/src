@@ -54,7 +54,7 @@ void movc3();
 void no_can_do();
 int exdis();
 
-EXT bool waiting INIT(FALSE);		/* are we waiting for subprocess (in doshell)? */
+#define waiting 0
 
 #ifdef NOTDEF
 EXT int len_last_line_got INIT(0);

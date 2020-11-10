@@ -58,7 +58,7 @@ sig_init()
 
 #ifdef SIGTSTP
 void
-cont_catcher()
+cont_catcher(int x)
 {
 #ifndef lint
     sigset(SIGCONT,cont_catcher);
@@ -110,7 +110,7 @@ int status;
 /* come here on signal other than interrupt, stop, or cont */
 
 void
-sig_catcher(signo)
+sig_catcher(int signo)
 {
 #ifdef VERBOSE
     static char *signame[] = {
@@ -204,7 +204,7 @@ sig_catcher(signo)
 /* come here on stop signal */
 
 void
-stop_catcher()
+stop_catcher(int sig)
 {
     if (!waiting) {
 	resetty();			/* this is the point of all this */
