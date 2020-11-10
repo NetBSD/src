@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2020/11/09 01:05:52 kamil Exp $
+# $NetBSD: mi,v 1.46 2020/11/10 21:47:41 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,10 +23,10 @@
 ./usr/X11R7/lib/modules/dri/swrast_dri.so.0		xserver-MesaLib-drivers	xorg
 ./usr/X11R7/lib/modules/libglamoregl.so			xserver-xorg-server-drivers	xorg,xorg_glamor
 ./usr/X11R7/lib/modules/libglamoregl.so.0		xserver-xorg-server-drivers	xorg,xorg_glamor
-./usr/X11R7/man/cat1/Xmark.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat1/Xnest.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat1/Xserver.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat1/Xvfb.0				xserver-obsolete	obsolete
+./usr/X11R7/man/cat1/Xmark.0				xserver-x11perf-catman	.cat,xorg
+./usr/X11R7/man/cat1/Xnest.0				xserver-xorg-server-catman	.cat,xorg
+./usr/X11R7/man/cat1/Xserver.0				xserver-xorg-server-catman	.cat,xorg
+./usr/X11R7/man/cat1/Xvfb.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat5/SecurityPolicy.0			xserver-obsolete	obsolete
 ./usr/X11R7/man/html1/Xmark.html			xserver-x11perf-htmlman	html,xorg
 ./usr/X11R7/man/html1/Xnest.html			xserver-xorg-server-htmlman	html,xorg
