@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1232 2020/11/08 14:55:25 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1233 2020/11/10 21:47:49 kamil Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1273,7 +1273,7 @@ _MKVARS.no= \
 	MKARGON2 \
 	MKARZERO \
 	MKBSDGREP \
-	MKCOMPATTESTS MKCOMPATX11 MKCTF \
+	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
 	MKDEBUG MKDEBUGLIB MKDTB MKDTRACE \
 	MKEXTSRC \
 	MKFIRMWARE \
@@ -1350,10 +1350,14 @@ MKKYUA:=	no
 .endif
 
 .if ${MKMAN} == "no"
+MKCATPAGES:=	no
 MKHTML:=	no
 .endif
 
 _MANINSTALL=	maninstall
+.if ${MKCATPAGES} != "no"
+_MANINSTALL+=	catinstall
+.endif
 .if ${MKHTML} != "no"
 _MANINSTALL+=	htmlinstall
 .endif
@@ -1373,6 +1377,7 @@ MKOBJDIRS:=	no
 .endif
 
 .if ${MKSHARE} == "no"
+MKCATPAGES:=	no
 MKDOC:=		no
 MKINFO:=	no
 MKHTML:=	no

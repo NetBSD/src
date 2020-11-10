@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.194 2020/11/08 14:52:35 kamil Exp $
+#	$NetBSD: sets.subr,v 1.195 2020/11/10 21:47:40 kamil Exp $
 #
 
 #
@@ -192,7 +192,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.194 2020/11/08 14:52:35 kamil Exp $
+# 	# $NetBSD: sets.subr,v 1.195 2020/11/10 21:47:40 kamil Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -249,6 +249,9 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #
 #	endian=<n>		<n> = value of ${TARGET_ENDIANNESS}
 #
+#
+#	.cat			if ${MKMANZ} != "no" && ${MKCATPAGES} != "no"
+#				  automatically append ".gz" to the filename
 #
 #	.man			if ${MKMANZ} != "no" && ${MKMAN} != "no"
 #				  automatically append ".gz" to the filename
@@ -351,6 +354,8 @@ list_set_files()
 			if ("uefi" in wanted) {
 				wanted["uefi=" "'"${HAVE_UEFI}"'"] = 1
 			}
+			if (("man" in wanted) && ("catpages" in wanted))
+				wanted[".cat"] = 1
 			if (("man" in wanted) && ("manpages" in wanted))
 				wanted[".man"] = 1
 			if ("endian" in wanted)

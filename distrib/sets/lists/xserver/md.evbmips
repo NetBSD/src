@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.15 2020/11/09 01:05:52 kamil Exp $
+# $NetBSD: md.evbmips,v 1.16 2020/11/10 21:47:41 kamil Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -81,18 +81,18 @@
 ./usr/X11R7/lib/modules/libxaa.so.0			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/libxaa_pic.a			xserver-obsolete	xorg,picinstall,obsolete
 ./usr/X11R7/lib/xorg/protocol.txt			xserver-xorg-server-lib	xorg
-./usr/X11R7/man/cat1/Xorg.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat1/cvt.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat1/gtf.0				xserver-obsolete	obsolete
+./usr/X11R7/man/cat1/Xorg.0				xserver-xorg-server-catman	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				xserver-xorg-server-catman	.cat,xorg
+./usr/X11R7/man/cat1/gtf.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xorgconfig.0			xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/exa.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/kbd.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/mousedrv.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/siliconmotion.0			xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/sis.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/ws.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/wsfb.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat5/xorg.conf.0			xserver-obsolete	obsolete
+./usr/X11R7/man/cat4/exa.0				xserver-xf86-video-exa-catman	.cat,xorg
+./usr/X11R7/man/cat4/kbd.0				xserver-xf86-input-keyboard-catman	.cat,xorg
+./usr/X11R7/man/cat4/mousedrv.0				xserver-xf86-input-mouse-catman	.cat,xorg
+./usr/X11R7/man/cat4/siliconmotion.0			xserver-xf86-video-siliconmotion-catman	.cat,xorg
+./usr/X11R7/man/cat4/sis.0				xserver-xf86-video-sis-catman	.cat,xorg
+./usr/X11R7/man/cat4/ws.0				xserver-xf86-input-ws-catman	.cat,xorg
+./usr/X11R7/man/cat4/wsfb.0				xserver-xf86-video-wsfb-catman	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0			xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/cvt.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/gtf.html				xserver-xorg-server-htmlman	html,xorg
