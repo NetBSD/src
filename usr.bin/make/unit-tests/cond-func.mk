@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.7 2020/11/10 19:36:50 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.8 2020/11/10 20:44:18 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -120,6 +120,13 @@ defined=	non-empty
 defined-var=	non-empty
 .if defined-var
 .  info Symbols may start with a function name.
+.else
+.  error
+.endif
+
+# Missing closing parenthesis when parsing the function argument.
+.if defined(
+.  error
 .else
 .  error
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.200 2020/11/10 08:02:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.201 2020/11/10 20:44:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.200 2020/11/10 08:02:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.201 2020/11/10 20:44:18 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -219,14 +219,8 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	p++;			/* Skip opening '(' - verified by caller */
 
     if (*p == '\0') {
-	/*
-	 * No arguments whatsoever. Because 'make' and 'defined' aren't really
-	 * "reserved words", we don't print a message. I think this is better
-	 * than hitting the user with a warning message every time s/he uses
-	 * the word 'make' or 'defined' at the beginning of a symbol...
-	 */
-	*out_arg = NULL;
-	return 0;
+	*out_arg = NULL;	/* Missing closing parenthesis: */
+	return 0;		/* .if defined( */
     }
 
     cpp_skip_hspace(&p);
