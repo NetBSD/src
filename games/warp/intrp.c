@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/src/games/warp/intrp.c,v 1.1 2020/11/09 23:37:05 kamil Exp $
+/* Header: /usr/src/games/warp/RCS/intrp.c,v 1.2 87/07/03 00:56:37 games Exp
  *
  * Revision 7.0.1.2  86/12/12  16:59:04  lwall
  * Baseline for net release.
