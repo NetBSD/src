@@ -145,5 +145,4 @@
 #endif
 
 /* warp private library, may use ~ expansion, %x and %l */
-#define PRIVLIB "/usr/games/lib/warp"		/**/
-
+#define PRIVLIB "/usr/share/games/warp"		/**/

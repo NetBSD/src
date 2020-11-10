@@ -12,6 +12,16 @@
  * 
  */
 
+#ifndef TERM_H
+#define TERM_H
+
+#include "util.h"
+
+/* Compat with old termios. */
+#ifndef ECHO
+#define ECHO 8
+#endif
+
 /* warp will still work without the following, but may get ahead at low speed */
 #ifdef TIOCOUTQ		/* chars left in output queue */
 #define output_pending() (ioctl(1, TIOCOUTQ, &iocount),iocount)
@@ -110,7 +120,7 @@ EXT char INTRCH INIT('\03');
 #		endif /* lint */
 #	    else /* RDCHK */
 #		ifndef O_NDELAY	/* assert O_NDELAY */
-		    ??? PENDING isn't defined correctly in warp.h
+		    ??? PENDING is not defined correctly in warp.h
 #		endif
 		EXT int devtty INIT(0);
 #		ifndef lint
@@ -121,7 +131,7 @@ EXT char INTRCH INIT('\03');
 #	    endif /* RDCHK */
 #	endif /* FIONREAD */
 #   else /* PENDING */
-	??? warp won't work without PENDING
+	??? warp will not work without PENDING
 #	ifndef lint
 #	    define input_pending() (nextin!=nextout)
 #	else
@@ -149,7 +159,7 @@ EXT char INTRCH INIT('\03');
 #		endif /* lint */
 #	    else /* RDCHK */
 #		ifndef O_NDELAY	/* assert O_NDELAY */
-		    ??? PENDING isn't defined correctly in warp.h
+		    ??? PENDING is not defined correctly in warp.h
 #		endif
 		EXT int devtty INIT(0);
 		EXT bool is_input INIT(FALSE);
@@ -163,7 +173,7 @@ EXT char INTRCH INIT('\03');
 #	    endif /* RDCHK */
 #	endif /* FIONREAD */
 #   else /* PENDING */
-	??? warp won't work without PENDING
+	??? warp will not work without PENDING
 #	define read_tty(addr,size) read(0,addr,size)
 #	define input_pending() (FALSE)
 #   endif /* PENDING */
@@ -278,7 +288,6 @@ EXT char KILLCH;		/* line delete character */
 #define standout() do_tc(SO,1)
 #define un_standout() do_tc(SE,1)
 #define up_line() do_tc(UP,1)
-#define carriage_return() do_tc(CR,1)
 #define dingaling() do_tc(VB,1)
 #else
   ????????		/* up to you */
@@ -305,4 +314,6 @@ void do_tc();
 int comp_tc();
 void helper();
 void rewrite();
-char cmstore();
+int cmstore(int);
+
+#endif
