@@ -1,7 +1,11 @@
 make: "directive-if.mk" line 10: 0 evaluates to false.
 make: "directive-if.mk" line 14: 1 evaluates to true.
-make: "directive-if.mk" line 30: Malformed conditional (x 123)
-make: "directive-if.mk" line 37: Malformed conditional ()
+make: "directive-if.mk" line 37: Unknown directive "ifx"
+make: "directive-if.mk" line 38: Unknown directive "error"
+make: "directive-if.mk" line 39: if-less else
+make: "directive-if.mk" line 40: Unknown directive "error"
+make: "directive-if.mk" line 41: if-less endif
+make: "directive-if.mk" line 44: Malformed conditional ()
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
