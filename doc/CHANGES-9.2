@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.10 2020/11/09 11:48:11 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.11 2020/11/10 11:45:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1067,4 +1067,14 @@ sys/arch/aarch64/aarch64/pmapboot.c		1.11
 
 	Fix coalescing contiguous TLB entries.
 	[skrll, ticket #1128]
+
+tests/net/if_ipsec/t_ipsec.sh			1.11
+tests/net/if_ipsec/t_ipsec_natt.sh		1.4,1.5
+tests/net/if_ipsec/t_ipsec_pfil.sh		1.3
+tests/net/ipsec/common.sh			1.8
+tests/net/ipsec/t_ipsec_natt.sh			1.4,1.5
+
+	Refactor a little and follow new format of "npfctl list".
+	Fix minor bugs.
+	[knakahara, ticket #1129]
 
