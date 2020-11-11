@@ -87,16 +87,16 @@ cat <<!GROK!THIS! >config.h
  */
 #$d_havetlib	HAVETERMLIB	/**/
 
-/* index:
- *	This preprocessor symbol is defined, along with rindex, if the system
+/* strchr:
+ *	This preprocessor symbol is defined, along with strrchr, if the system
  *	uses the strchr and strrchr routines instead.
  */
-/* rindex:
- *	This preprocessor symbol is defined, along with index, if the system
+/* strrchr:
+ *	This preprocessor symbol is defined, along with strchr, if the system
  *	uses the strchr and strrchr routines instead.
  */
-#$d_index	index strchr	/* cultural */
-#$d_index	rindex strrchr	/*  differences? */
+#$d_strchr	strchr strchr	/* cultural */
+#$d_strchr	strrchr strrchr	/*  differences? */
 
 /* IOCTL:
  *	This symbol, if defined, indicates that sys/ioctl.h exists and should

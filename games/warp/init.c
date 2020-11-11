@@ -246,11 +246,9 @@ stars_again:
 		x = rand_mod(XSIZE);	/* pick from 0..39, uniform */
 		break;
 	    case 1: case 2: case 3:
-#ifndef lint
 		x = (int)((((double)(myrand()-HALFRAND)) *
 		           ((double)(myrand()-HALFRAND))/RANDRAND)
 			  * 20.0) + xoff;	/* pick from -20..20, clumped */
-#endif
 		break;
 	    case 4:
 		if (fscanf(mapfp,"%d %d\n",&ypred,&xpred) == EOF)
@@ -271,11 +269,9 @@ stars_again:
 		y = rand_mod(YSIZE);
 		break;
 	    case 1:
-#ifndef lint
 		y = (int)((((double)(myrand()-HALFRAND)) *
 		           ((double)(myrand()-HALFRAND))/RANDRAND)
 			  * 12.0) + yoff;	/* pick from -12..12, clumped */
-#endif
 		break;
 	    case 2:
 #ifndef lint
@@ -492,7 +488,7 @@ stars_again:
 
 	    dist = rand_mod(20);
 	    ch = let[dist];
-	}		/* grr, venix doesn't like indexing into string */
+	}		/* grr, venix doesn't like strchring into string */
 	obj = make_object(Enemy,ch,y,x,0,0,
 	    e + rand_mod(super*200+2),e/4,&root);
 	if (numpirates-- > 0) {

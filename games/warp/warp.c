@@ -155,23 +155,6 @@ main(int argc, char *argv[])
 
     FILE *savfil;
 
-#if RANDBITS > 16
-    for (i=100; i; i--)
-	if (rand() >= 65536)
-	    goto rand_ok;
-    printf("Recompile with RANDBITS = 15 or 16.\n");
-    exit(1);
-#else
-#if RANDBITS > 15
-    for (i=100; i; i--) {
-	if (rand() >= 32768)
-	    goto rand_ok;
-    }
-    printf("Recompile with RANDBITS = 15.\n");
-    exit(1);
-#endif
-#endif
-
 #ifdef lint  /* to suppress "defined but never used" */
 # ifdef SIGTSTP
     (void)stop_catcher();
@@ -334,7 +317,7 @@ main(int argc, char *argv[])
 	roundsleep(1);
     }
 
-    srand(getpid());
+    srandom(getpid());
 
     do {
 	for (keepgoing = true;;) {
@@ -395,7 +378,7 @@ main(int argc, char *argv[])
 		    else
 			tmp = 1;
 		}
-	    } while (tmp != INTRCH && tmp != BREAKCH && !index(" qQs",tmp));
+	    } while (tmp != INTRCH && tmp != BREAKCH && !strchr(" qQs",tmp));
 	  if (tmp != ' ' && tmp != 's') break;
 	    if (!beginner && smarts < 20)
 		smarts += 4;
