@@ -26,7 +26,7 @@ EXT long oldeenergy;
 EXT long oldbenergy;
 EXT long oldcurscore;
 
-EXT char savefilename[40];
+EXT char savefilename[512];
 
 #ifdef SCOREFULL
 #define COMPOFF 0
