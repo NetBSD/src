@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2020/11/11 19:54:53 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/11/11 20:04:02 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	warp
-DBG=-g
+#DBG=-g
 
 SRCS=	bang.c init.c intrp.c move.c object.c play.c score.c sig.c term.c \
 	them.c us.c util.c version.c warp.c weapon.c
