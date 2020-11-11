@@ -43,7 +43,7 @@
  * access.)
  */
 
-#define SAVEDIR "/var/games"
+#define SAVEDIR "/var/games/warp"
 #define NEWSFILE "warp.news"
 #define HELPFILE "warp.doc"
 #define LOCKFILE ".warp.lock"

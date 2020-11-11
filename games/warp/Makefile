@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/11/10 08:49:08 kamil Exp $
+#	$NetBSD: Makefile,v 1.3 2020/11/11 17:11:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,9 @@ CLEANFILES+=warp.6
 HIDEGAME=hidegame
 SETGIDGAME=yes
 MAN=	warp.6
+
+BINGRP= games
+BINMODE=2555
 
 warp.6:
 	${_MKTARGET_CREATE}

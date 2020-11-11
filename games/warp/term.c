@@ -69,8 +69,8 @@ term_init(void)
 {
     savetty();				/* remember current tty state */
 
-#ifdef TERMIO
-    ospeed = _tty.c_cflag & CBAUD;	/* for tputs() */
+#if defined(TERMIO) || defined(TERMIOS)
+    ospeed = cfgetospeed(&_tty);
     ERASECH = _tty.c_cc[VERASE];	/* for finish_command() */
     KILLCH = _tty.c_cc[VKILL];		/* for finish_command() */
 #else
@@ -265,19 +265,19 @@ term_set(char *tcbuf) /* temp area for "uncompiled" termcap entry */
 	for (p=filler+(sizeof filler)-1;!*p;--p)
 	    *p = PC;
     }
-    charsperhalfsec = ospeed >= B9600 ? 480 :
-		      ospeed == B4800 ? 240 :
-		      ospeed == B2400 ? 120 :
-		      ospeed == B1200 ? 60 :
-		      ospeed == B600 ? 30 :
-	      /* speed is 300 (?) */   15;
+    charsperhalfsec = (speed_t)ospeed >= B9600 ? (speed_t)480 :
+		      (speed_t)ospeed == B4800 ? (speed_t)240 :
+		      (speed_t)ospeed == B2400 ? (speed_t)120 :
+		      (speed_t)ospeed == B1200 ? (speed_t)60 :
+		      (speed_t)ospeed == B600 ? (speed_t)30 :
+	      /* speed is 300 (?) */   (speed_t)15;
 
-    gfillen = ospeed >= B9600 ? (int /*XXX: speed_t*/)(sizeof filler) :
-	      ospeed == B4800 ? 13 :
-	      ospeed == B2400 ? 7 :
-	      ospeed == B1200 ? 4 :
-				(1+BCsize);
-    if (ospeed < B2400)
+    gfillen = (speed_t)ospeed >= B9600 ? (speed_t)(sizeof filler) :
+	      (speed_t)ospeed == B4800 ? (speed_t)13 :
+	      (speed_t)ospeed == B2400 ? (speed_t)7 :
+	      (speed_t)ospeed == B1200 ? (speed_t)4 :
+				(speed_t)(1+BCsize);
+    if ((speed_t)ospeed < B2400)
 	lowspeed = true;
 
     strcpy(term,ttyname(2));
@@ -767,7 +767,7 @@ tryagain:
     }
 
 got_canonical:
-#ifndef TERMIO
+#if !defined(TERMIO) && !defined(TERMIOS)
     if (*whatbuf == '\r')
 	*whatbuf = '\n';
 #endif

@@ -568,7 +568,7 @@ getrealname(uid_t uid)
 	if (fork())
 	    wait(0);
 	else {
-	    setuid(getuid());
+	    setgid(getgid());
 	    if ((tmpfp = fopen(filexp(FULLNAMEFILE),"w")) == NULL)
 		exit(1);
 	    fprintf(tmpfp, "%s\n", buf);
