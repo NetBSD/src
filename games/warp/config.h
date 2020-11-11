@@ -20,12 +20,12 @@
  */
 #define	SIGNEDCHAR	/**/
 
-/* TERMIO:
+/* TERMIOS:
  *	This symbol, if defined, indicates that the program should include
  *	termio.h rather than sgtty.h.  There are also differences in the
  *	ioctl() calls that depend on the value of this symbol.
  */
-#undef	TERMIO		/**/
+#define	TERMIOS		/**/
 
 /* USENDIR:
  *	This symbol, if defined, indicates that the program should compile

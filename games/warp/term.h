@@ -181,9 +181,16 @@ EXT char INTRCH INIT('\03');
 
 /* stuff wanted by terminal mode diddling routines */
 
-#ifdef TERMIO
+#ifdef TERMIOS
+EXT struct termios _tty, _oldtty;
+#elif defined(TERMIO)
+typedef int speed_t;
 EXT struct termio _tty, _oldtty;
+#define tcsetattr(fd, how, ti) ioctl(fd, how, ti)
+#define tcgetattr(fd, ti) ioctl(fd, TCGETA, ti)
+#define cfgetospeed(ti) ((ti)->c_cflag & CBAUD)
 #else
+typedef int speed_t;
 EXT struct sgttyb _tty;
 EXT int _res_flg INIT(0);
 #endif
@@ -193,18 +200,18 @@ EXT bool bizarre INIT(false);			/* do we need to restore terminal? */
 
 /* terminal mode diddling routines */
 
-#ifdef TERMIO
+#if defined(TERMIO) || defined(TERMIOS)
   
-#define raw() ((bizarre=1),_tty.c_lflag &=~ISIG,_tty.c_cc[VMIN] = 1,ioctl(_tty_ch,TCSETAF,&_tty))
-#define noraw() ((bizarre=1),_tty.c_lflag |= ISIG,_tty.c_cc[VEOF] = CEOF,ioctl(_tty_ch,TCSETAF,&_tty))
-#define crmode() ((bizarre=1),_tty.c_lflag &=~ICANON,_tty.c_cc[VMIN] = 1,ioctl(_tty_ch,TCSETAF,&_tty))
-#define nocrmode() ((bizarre=1),_tty.c_lflag |= ICANON,_tty.c_cc[VEOF] = CEOF,ioctl(_tty_ch,TCSETAF,&_tty))
-#define echo()	 ((bizarre=1),_tty.c_lflag |= ECHO, ioctl(_tty_ch, TCSETAW, &_tty))
-#define noecho() ((bizarre=1),_tty.c_lflag &=~ECHO, ioctl(_tty_ch, TCSETAW, &_tty))
-#define nl()	 ((bizarre=1),_tty.c_iflag |= ICRNL,_tty.c_oflag |= ONLCR,ioctl(_tty_ch, TCSETAW, &_tty))
-#define nonl()	 ((bizarre=1),_tty.c_iflag &=~ICRNL,_tty.c_oflag &=~ONLCR,ioctl(_tty_ch, TCSETAW, &_tty))
-#define	savetty() (ioctl(_tty_ch, TCGETA, &_oldtty),ioctl(_tty_ch, TCGETA, &_tty))
-#define	resetty() ((bizarre=0),ioctl(_tty_ch, TCSETAF, &_oldtty))
+#define raw() ((bizarre=1),_tty.c_lflag &=~ISIG,_tty.c_cc[VMIN] = 1,tcsetattr(_tty_ch,TCSAFLUSH,&_tty))
+#define noraw() ((bizarre=1),_tty.c_lflag |= ISIG,_tty.c_cc[VEOF] = CEOF,tcsetattr(_tty_ch,TCSAFLUSH,&_tty))
+#define crmode() ((bizarre=1),_tty.c_lflag &=~ICANON,_tty.c_cc[VMIN] = 1,tcsetattr(_tty_ch,TCSAFLUSH,&_tty))
+#define nocrmode() ((bizarre=1),_tty.c_lflag |= ICANON,_tty.c_cc[VEOF] = CEOF,tcsetattr(_tty_ch,TCSAFLUSH,&_tty))
+#define echo()	 ((bizarre=1),_tty.c_lflag |= ECHO, tcsetattr(_tty_ch, TCSANOW, &_tty))
+#define noecho() ((bizarre=1),_tty.c_lflag &=~ECHO, tcsetattr(_tty_ch, TCSANOW, &_tty))
+#define nl()	 ((bizarre=1),_tty.c_iflag |= ICRNL,_tty.c_oflag |= ONLCR,tcsetattr(_tty_ch, TCSANOW, &_tty))
+#define nonl()	 ((bizarre=1),_tty.c_iflag &=~ICRNL,_tty.c_oflag &=~ONLCR,tcsetattr(_tty_ch, TCSANOW, &_tty))
+#define	savetty() (tcgetattr(_tty_ch, &_oldtty),tcgetattr(_tty_ch, &_tty))
+#define	resetty() ((bizarre=0),tcsetattr(_tty_ch, TCSAFLUSH, &_oldtty))
 #define unflush_output()
 
 #else
