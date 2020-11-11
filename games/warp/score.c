@@ -35,20 +35,18 @@ score_init(void)
     int i;
     FILE *savfil;
 
-#if 0
     if (stat(SAVEDIR,&filestat)) {
 	printf("Cannot access %s\r\n",SAVEDIR);
 	finalize(1);
     }
-    if (filestat.st_uid != geteuid()) {
-	printf("Warp will not run right without being setuid.\r\n");
+    if (filestat.st_gid != getegid()) {
+	printf("Warp will not run right without being setgid.\r\n");
 	finalize(1);
     }
     if ((filestat.st_mode & 0605) != 0605) {
 	printf("%s is not protected correctly (must be u+rw o+rx).\r\n",SAVEDIR);
 	finalize(1);
     }
-#endif
     
 #ifdef SCOREFULL
     interp(longlognam, sizeof longlognam, "%N");
@@ -241,9 +239,7 @@ wscore(void)
     printf("WHO           SCORE  DF   CDF  E  B  WV  FLAGS\r\n");
     resetty();
     snprintf(spbuf, sizeof(spbuf), "/bin/cat %ssave.*",SAVEDIR);
-#ifndef lint
     execl("/bin/sh", "sh", "-c", spbuf, NULL);
-#endif
     finalize(1);
 }
 
@@ -421,10 +417,8 @@ wavescore(void)
     snprintf(spbuf, sizeof(spbuf), "Star save ratio:         %1.8f (%d/%d)",
 	starscore, numstars, inumstars);
     mvaddstr( 6,5, spbuf);
-#ifndef lint
     bonuses += tmp = (long) (((double)curscore / possiblescore) *
 	(starscore*starscore) * smarts * 20);
-#endif
     snprintf(spbuf, sizeof(spbuf), "%6ld", tmp);
     mvaddstr( 6, 68, spbuf);
     row = 7;
