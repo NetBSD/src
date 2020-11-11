@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.3 2020/11/11 17:11:19 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/11/11 19:54:53 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	warp
+DBG=-g
 
 SRCS=	bang.c init.c intrp.c move.c object.c play.c score.c sig.c term.c \
 	them.c us.c util.c version.c warp.c weapon.c
 
-DPADD=	${LIBTERMLIB} ${LIBM} ${LIBCOMPAT}
-LDADD=	-ltermlib -lm -lcompat
+DPADD=	${LIBTERMLIB} ${LIBM}
+LDADD=	-ltermlib -lm
 
 CPPFLAGS+=-DHAVETERMLIB
 
@@ -17,9 +18,6 @@ CLEANFILES+=warp.6
 HIDEGAME=hidegame
 SETGIDGAME=yes
 MAN=	warp.6
-
-BINGRP= games
-BINMODE=2555
 
 warp.6:
 	${_MKTARGET_CREATE}
@@ -68,15 +66,5 @@ FILES=smap.0 smap.1 smap.2 smap.3 smap.4 smap.5 smap.6 smap.7
 FILES+=warp.doc warp.news README
 FILESDIR=/usr/share/games/warp
 .endif
-
-CFLAGS+= -Wno-error=old-style-definition -Wno-error=strict-prototypes
-CFLAGS+= -Wno-error=comment -Wno-error=maybe-uninitialized
-CFLAGS+= -Wno-error=discarded-qualifiers -Wno-error=dangling-else
-CFLAGS+= -Wno-error=char-subscripts -Wno-error=parentheses
-CFLAGS+= -Wno-error=unused-value -Wno-error=format-extra-args
-CFLAGS+= -Wno-error=format-overflow= -Wno-error=builtin-declaration-mismatch
-CFLAGS+= -Wno-error=format= -Wno-error=sign-compare -Wno-error=return-type
-CFLAGS+= -Wno-error=unused-label -Wno-error=unused-variable
-CFLAGS+= -Wno-error=format-nonliteral -Wno-error=implicit-fallthrough=
 
 .include <bsd.prog.mk>
