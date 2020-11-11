@@ -39,7 +39,7 @@ score_init(void)
 	printf("Cannot access %s\r\n",SAVEDIR);
 	finalize(1);
     }
-    if (filestat.st_gid != getegid()) {
+    if (filestat.st_gid != getegid() && geteuid() != 0) {
 	printf("Warp will not run right without being setgid.\r\n");
 	finalize(1);
     }
@@ -63,7 +63,8 @@ score_init(void)
     if (scorespec)
 	wscore();
 
-    snprintf(savefilename, sizeof(savefilename), "save.%s", logname);
+    snprintf(savefilename, sizeof(savefilename), "%s/save.%s",
+	SAVEDIR, logname);
 
     savfil = experimenting ? NULL : fopen(savefilename,"r");
     if (savfil != NULL && fgets(spbuf,100,savfil) != NULL) {
@@ -75,7 +76,7 @@ score_init(void)
 
 	    tmpbuf[strlen(tmpbuf)-1] = '\0';
 	    printf("You seem to have left a game %s.\r\n",tmpbuf+9);
-	    s = index(tmpbuf+9, ',');
+	    s = strchr(tmpbuf+9, ',');
 	    *s = '\0';
 	    processnum = atoi(s+11);
 	    if (kill(processnum, SIGINT)) {
@@ -615,8 +616,8 @@ score(void)
     eat_typeahead();
     do {
 	getcmd(&tmp);
-    } while (tmp != INTRCH && tmp != BREAKCH && !index(" rqQ",tmp));
-    if (index("qQr",tmp)) {
+    } while (tmp != INTRCH && tmp != BREAKCH && !strchr(" rqQ",tmp));
+    if (strchr("qQr",tmp)) {
 	justonemoretime = (tmp == 'r');
 	if (logfd != NULL)
 	    fclose(logfd);
@@ -646,7 +647,7 @@ score(void)
 	eat_typeahead();
 	do {
 	    getcmd(&tmp);
-	} while (tmp != INTRCH && tmp != BREAKCH && !index("nNyY \n\r",tmp));
+	} while (tmp != INTRCH && tmp != BREAKCH && !strchr("nNyY \n\r",tmp));
 	if (tmp == 'n' || tmp == 'N' || tmp == INTRCH || tmp == BREAKCH)
 	    justonemoretime = false;
     }
@@ -672,8 +673,9 @@ save_game(void)
     if (experimenting)
 	return;
     if ((savfil = fopen(savefilename,"w")) == NULL) {
+	int e = errno;
 	resetty();
-	printf("Cannot save game\r\n");
+	printf("Cannot save game in %s (%s)\r\n", savefilename, strerror(e));
 	finalize(1);
     }
     fprintf(savfil, "%-8s %10ld, %2d,%5d,%2d,%2d,%3d %c%c%c%c%c%c%c%c%c\n",

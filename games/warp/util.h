@@ -6,49 +6,19 @@
  * 
  */
 
-#if RANDBITS < 15 || defined(lint)
-#define rand_mod(m) getpid()
-#define RANDRAND 0.0
-#define HALFRAND 0
-#define myrand() getpid()
-#else
-#if RANDBITS == 15	/* 15 bits of rand()? */
-#define RANDRAND 268435456.0 /* that's 2**28 */
-#define HALFRAND 0x4000 /* that's 2**14 */
-int rand(void);
-#define myrand() (rand()&32767)
-#define rand_mod(m) ((int)((double)myrand() / 32768.0 * ((double)(m))))
-/* pick number in 0..m-1 */
-
-#else
-
-#if RANDBITS < 31	/* 16 bits of rand()? */
-#define RANDRAND 1073741824.0 /* that's 2**30 */
-#define HALFRAND 0x8000 /* that's 2**15 */
-unsigned rand();
-#define myrand() (rand()&65535)
-#define rand_mod(m) ((int)((double)myrand() / 65536.0 * ((double)(m))))
-/* pick number in 0..m-1 */
-
-#else		/* assume 31 bits */
 #define RANDRAND 1152921504606846976.0 /* that's 2**60 */
 #define HALFRAND 0x40000000 /* that's 2**30 */
-long rand();
-#define myrand() rand()
+#define myrand() (int)random()
 #define rand_mod(m) ((myrand() / 37) % (m)) /* pick number in 0..m-1 */
 /*
  * The reason for the /37 above is that our random number generator yields
  * successive evens and odds, for some reason.  This makes strange star maps.
  */
-#endif
-#endif
-#endif
-
 
     /* we get fractions of seconds from calling ftime on timebuf */
 
-EXT struct timeb timebuf;
-#define roundsleep(x) (ftime(&timebuf),sleep(timebuf.millitm > 500?x+1:x))
+EXT struct timespec timebuf;
+#define roundsleep(x) (clock_gettime(CLOCK_REALTIME, &timebuf),sleep(timebuf.tv_nsec > 5000000000 ?x+1:x))
 
 #define waiting 0
 

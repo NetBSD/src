@@ -85,12 +85,6 @@
  */
 #define PREFSHELL "/bin/csh"		/**/
 
-/* RANDBITS:
- *	This symbol contains the number of bits of random number the rand()
- *	function produces.  Usual values are 15, 16, and 31.
- */
-#define RANDBITS 15		/**/
-
 /* ROOTID:
  *	This symbol contains the uid of root, normally 0.
  */

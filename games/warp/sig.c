@@ -25,9 +25,6 @@
 void
 sig_init(void)
 {
-#ifdef lint
-    ;
-#else
     sigignore(SIGINT);  /* for inquiry of existence via kill call */
 #ifdef SIGTTOU
     sigignore(SIGTTOU);
@@ -38,8 +35,10 @@ sig_init(void)
 	sigset(SIGQUIT, sig_catcher);
 	sigset(SIGILL, sig_catcher);
 	sigset(SIGFPE, sig_catcher);
+#if 0
 	sigset(SIGBUS, sig_catcher);
 	sigset(SIGSEGV, sig_catcher);
+#endif
 	sigset(SIGSYS, sig_catcher);
 	sigset(SIGTERM, sig_catcher);
     }
@@ -53,7 +52,6 @@ sig_init(void)
     sigset(SIGTSTP, stop_catcher);
     sigset(SIGSTOP, stop_catcher);
 #endif
-#endif /* lint */
 }
 
 #ifdef SIGTSTP

@@ -67,7 +67,7 @@ intrp_init(char *tcbuf)
 
     gethostname(buf,sizeof buf);
     hostname = savestr(buf);
-    if (index(hostname,'.'))
+    if (strchr(hostname,'.'))
 	hostname = savestr(hostname);
     else {
 	char hname[128];
@@ -191,7 +191,7 @@ static char *
 skipinterp(const char *pattern, const char *stoppers)
 {
 
-    while (*pattern && (!stoppers || !index(stoppers,*pattern))) {
+    while (*pattern && (!stoppers || !strchr(stoppers,*pattern))) {
 #ifdef DEBUGGING
 	if (debug & 8)
 	    printf("skipinterp till %s at %s\r\n",stoppers?stoppers:"",pattern);
@@ -276,7 +276,7 @@ dointerp(char *dest, size_t destsize, const char *pattern, const char *stoppers)
     bool lastcomp = false;
     int metabit = 0;
 
-    while (*pattern && (!stoppers || !index(stoppers,*pattern))) {
+    while (*pattern && (!stoppers || !strchr(stoppers,*pattern))) {
 #ifdef DEBUGGING
 	if (debug & 8)
 	    printf("dointerp till %s at %s\r\n",stoppers?stoppers:"",pattern);
@@ -294,7 +294,7 @@ dointerp(char *dest, size_t destsize, const char *pattern, const char *stoppers)
 		    break;
 		case '{':
 		    pattern = cpytill(scrbuf,pattern+1,'}');
-		    if ((s = index(scrbuf,'-')) != NULL)
+		    if ((s = strchr(scrbuf,'-')) != NULL)
 			*s++ = '\0';
 		    else
 			s = nullstr;
@@ -424,7 +424,7 @@ dointerp(char *dest, size_t destsize, const char *pattern, const char *stoppers)
 		    safecpy(scrbuf,s,(sizeof scrbuf));
 		    s = scrbuf;
 		}
-		if (upper || !(t=rindex(s,'/')))
+		if (upper || !(t=strrchr(s,'/')))
 		    t = s;
 		while (*t && !isalpha((unsigned char)*t)) {
 		    t++;
@@ -531,9 +531,9 @@ getrealname(uid_t uid)
 #ifdef BERKJUNK
     while (*s && !isalnum(*s) && *s != '&') s++;
 #endif
-    if ((c = index(s, ',')) != NULL)
+    if ((c = strchr(s, ',')) != NULL)
 	*c = '\0';
-    if ((c = index(s, ';')) != NULL)
+    if ((c = strchr(s, ';')) != NULL)
 	*c = '\0';
     s = cpytill(buf,s,'&');
     if (*s == '&') {			/* whoever thought this one up was */
@@ -544,9 +544,9 @@ getrealname(uid_t uid)
 	    *c = toupper((unsigned char)*c);		/* gack and double gack */
     }
 #else
-    if ((c = index(s, '(')) != NULL)
+    if ((c = strchr(s, '(')) != NULL)
 	*c = '\0';
-    if ((c = index(s, '-')) != NULL)
+    if ((c = strchr(s, '-')) != NULL)
 	s = c;
     strcpy(buf,tmpbuf);
 #endif

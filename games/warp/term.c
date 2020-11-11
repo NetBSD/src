@@ -286,8 +286,8 @@ term_set(char *tcbuf) /* temp area for "uncompiled" termcap entry */
 	no_can_do("dumb");
     if (!scorespec && (LINES < 24 || COLS < 80))
 	no_can_do("puny");
-    if (LINES > 25)
-	no_can_do("humongus");
+//    if (LINES > 25)
+//	no_can_do("humongous");
 
     crmode();
     raw();
