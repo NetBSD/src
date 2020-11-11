@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.228 2020/11/10 21:47:49 kamil Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.229 2020/11/11 19:56:09 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1338,6 +1338,7 @@
 ./var/games/larn		uname=games gname=games mode=0775
 ./var/games/phantasia		uname=games gname=games mode=0775
 ./var/games/sail		uname=games gname=games mode=0775
+./var/games/warp		uname=games gname=games mode=0775
 ./var/heimdal
 ./var/log
 ./var/log/rdist
