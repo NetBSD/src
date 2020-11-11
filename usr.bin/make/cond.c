@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.204 2020/11/11 07:13:42 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.205 2020/11/11 07:34:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.204 2020/11/11 07:13:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.205 2020/11/11 07:34:55 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -536,7 +536,10 @@ EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
     if (TryParseNumber(value, &num))
 	return num != 0.0;
 
-    /* For .if ${...}, check for non-empty string. */
+    /* For .if ${...}, check for non-empty string.  This is different from
+     * the evaluation function from that .if variant, which would test
+     * whether a variable of the given name were defined. */
+    /* XXX: Whitespace should count as empty, just as in ParseEmptyArg. */
     if (par->if_info->form[0] == '\0')
 	return value[0] != '\0';
 
