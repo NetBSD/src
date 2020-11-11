@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.203 2020/11/10 22:25:38 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.204 2020/11/11 07:13:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.203 2020/11/10 22:25:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.204 2020/11/11 07:13:42 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -536,11 +536,11 @@ EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
     if (TryParseNumber(value, &num))
 	return num != 0.0;
 
-    /* For .if ${...}, check for non-empty string (defProc is ifdef). */
+    /* For .if ${...}, check for non-empty string. */
     if (par->if_info->form[0] == '\0')
 	return value[0] != '\0';
 
-    /* Otherwise action default test ... */
+    /* For the other variants of .ifxxx ${...}, use its default function. */
     return If_Eval(par->if_info, value, strlen(value));
 }
 
