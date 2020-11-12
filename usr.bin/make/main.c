@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.455 2020/11/08 23:38:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.456 2020/11/12 23:35:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.455 2020/11/08 23:38:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.456 2020/11/12 23:35:21 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -710,7 +710,7 @@ Main_ParseArgLine(const char *line)
 }
 
 Boolean
-Main_SetObjdir(const char *fmt, ...)
+Main_SetObjdir(Boolean writable, const char *fmt, ...)
 {
 	struct stat sb;
 	char *path;
@@ -730,8 +730,7 @@ Main_SetObjdir(const char *fmt, ...)
 
 	/* look for the directory and try to chdir there */
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-		/* if not .CURDIR it must be writable */
-		if ((strcmp(path, curdir) != 0 && access(path, W_OK) != 0) ||
+		if ((writable && access(path, W_OK) != 0) ||
 		    (chdir(path) != 0)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 			    path, strerror(errno));
@@ -751,7 +750,7 @@ Main_SetObjdir(const char *fmt, ...)
 }
 
 static Boolean
-Main_SetVarObjdir(const char *var, const char *suffix)
+Main_SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 {
 	void *path_freeIt;
 	const char *path = Var_Value(var, VAR_CMDLINE, &path_freeIt);
@@ -772,7 +771,7 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 		xpath = xpath_freeIt;
 	}
 
-	(void)Main_SetObjdir("%s%s", xpath, suffix);
+	(void)Main_SetObjdir(writable, "%s%s", xpath, suffix);
 
 	bmake_free(xpath_freeIt);
 	bmake_free(path_freeIt);
@@ -1093,15 +1092,18 @@ ignore_pwd:
 static void
 InitObjdir(const char *machine, const char *machine_arch)
 {
-	Dir_InitDir(curdir);
-	(void)Main_SetObjdir("%s", curdir);
+	Boolean writable;
 
-	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX", curdir) &&
-	    !Main_SetVarObjdir("MAKEOBJDIR", "") &&
-	    !Main_SetObjdir("%s.%s-%s", _PATH_OBJDIR, machine, machine_arch) &&
-	    !Main_SetObjdir("%s.%s", _PATH_OBJDIR, machine) &&
-	    !Main_SetObjdir("%s", _PATH_OBJDIR))
-		(void)Main_SetObjdir("%s%s", _PATH_OBJDIRPREFIX, curdir);
+	Dir_InitDir(curdir);
+	writable = GetBooleanVar("MAKE_OBJDIR_CHECK_WRITABLE", TRUE);
+	(void)Main_SetObjdir(FALSE, "%s", curdir);
+
+	if (!Main_SetVarObjdir(writable, "MAKEOBJDIRPREFIX", curdir) &&
+	    !Main_SetVarObjdir(writable, "MAKEOBJDIR", "") &&
+	    !Main_SetObjdir(writable, "%s.%s-%s", _PATH_OBJDIR, machine, machine_arch) &&
+	    !Main_SetObjdir(writable, "%s.%s", _PATH_OBJDIR, machine) &&
+	    !Main_SetObjdir(writable, "%s", _PATH_OBJDIR))
+		(void)Main_SetObjdir(writable, "%s%s", _PATH_OBJDIRPREFIX, curdir);
 }
 
 /* get rid of resource limit on file descriptors */
