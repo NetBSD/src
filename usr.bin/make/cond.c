@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.207 2020/11/12 20:01:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.208 2020/11/12 20:06:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.207 2020/11/12 20:01:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.208 2020/11/12 20:06:37 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -513,6 +513,7 @@ static const struct If ifs[] = {
     { "",      0, FALSE, FuncDefined },
     { NULL,    0, FALSE, NULL }
 };
+enum { PLAIN_IF_INDEX = 4 };
 
 static Boolean
 If_Eval(const struct If *if_info, const char *arg, size_t arglen)
@@ -1028,7 +1029,6 @@ static CondEvalResult
 CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 		    Boolean eprint, Boolean strictLHS)
 {
-    static const struct If *dflt_info;
     CondParser par;
     CondEvalResult rval;
 
@@ -1036,16 +1036,7 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 
     cpp_skip_hspace(&cond);
 
-    if (info == NULL && (info = dflt_info) == NULL) {
-	/* Scan for the entry for .if - it can't be first */
-	for (info = ifs;; info++)
-	    if (info->form[0] == '\0')
-		break;
-	dflt_info = info;
-    }
-    assert(info != NULL);
-
-    par.if_info = info;
+    par.if_info = info != NULL ? info : ifs + PLAIN_IF_INDEX;
     par.p = cond;
     par.curr = TOK_NONE;
     par.printedError = FALSE;
