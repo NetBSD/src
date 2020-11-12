@@ -1,4 +1,4 @@
-/*	$NetBSD: getrrsetbyname.c,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: getrrsetbyname.c,v 1.6 2020/11/12 19:43:18 christos Exp $	*/
 /* $OpenBSD: getrrsetbyname.c,v 1.10 2005/03/30 02:58:28 tedu Exp $ */
 
 /*
@@ -47,7 +47,7 @@
 /* OPENBSD ORIGINAL: lib/libc/net/getrrsetbyname.c */
 
 #include "includes.h"
-__RCSID("$NetBSD: getrrsetbyname.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: getrrsetbyname.c,v 1.6 2020/11/12 19:43:18 christos Exp $");
 
 #ifndef HAVE_GETRRSETBYNAME
 
@@ -189,8 +189,9 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
     unsigned int rdtype, unsigned int flags,
     struct rrsetinfo **res)
 {
-	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
+	struct __res_state *_resp;
 	int result;
+	unsigned long options;
 	struct rrsetinfo *rrset = NULL;
 	struct dns_response *response = NULL;
 	struct dns_rr *rr;
@@ -201,27 +202,33 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 
 	/* check for invalid class and type */
 	if (rdclass > 0xffff || rdtype > 0xffff) {
-		result = ERRSET_INVAL;
-		goto fail;
+		return ERRSET_INVAL;
 	}
 
 	/* don't allow queries of class or type ANY */
 	if (rdclass == 0xff || rdtype == 0xff) {
-		result = ERRSET_INVAL;
-		goto fail;
+		return ERRSET_INVAL;
 	}
 
 	/* don't allow flags yet, unimplemented */
 	if (flags) {
-		result = ERRSET_INVAL;
-		goto fail;
+		return ERRSET_INVAL;
 	}
 
+#ifndef __NetBSD__
+	_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	/* initialize resolver */
 	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		result = ERRSET_FAIL;
 		goto fail;
 	}
+#else
+	_resp = __res_get_state();
+	if (_resp == NULL) {
+		return ERRSET_FAIL;
+	}
+#endif
+	options = _resp->options;
 
 #ifdef DEBUG
 	_resp->options |= RES_DEBUG;
@@ -234,8 +241,8 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 #endif /* RES_USE_DNSEC */
 
 	/* make query */
-	length = res_query(hostname, (signed int) rdclass, (signed int) rdtype,
-	    answer, sizeof(answer));
+	length = res_nquery(_resp, hostname, (signed int) rdclass,
+	    (signed int) rdtype, answer, sizeof(answer));
 	if (length < 0) {
 		switch(h_errno) {
 		case HOST_NOT_FOUND:
@@ -335,9 +342,17 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	free_dns_response(response);
 
 	*res = rrset;
+	_resp->options = options;
+#ifdef __NetBSD__
+	__res_put_state(_resp);
+#endif
 	return (ERRSET_SUCCESS);
 
 fail:
+	_resp->options = options;
+#ifdef __NetBSD__
+	__res_put_state(_resp);
+#endif
 	if (rrset != NULL)
 		freerrset(rrset);
 	if (response != NULL)
@@ -466,7 +481,7 @@ parse_dns_qsection(const u_char *answer, int size, const u_char **cp, int count)
 
 		/* name */
 		length = dn_expand(answer, answer + size, *cp, name,
-		    sizeof(name));
+		    (int)sizeof(name));
 		if (length < 0) {
 			free_dns_query(head);
 			return (NULL);
@@ -513,7 +528,7 @@ parse_dns_rrsection(const u_char *answer, int size, const u_char **cp,
 
 		/* name */
 		length = dn_expand(answer, answer + size, *cp, name,
-		    sizeof(name));
+		    (int)sizeof(name));
 		if (length < 0) {
 			free_dns_rr(head);
 			return (NULL);
