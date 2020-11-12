@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.11 2020/11/10 21:40:07 rin Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.12 2020/11/12 01:03:22 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.11 2020/11/10 21:40:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.12 2020/11/12 01:03:22 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -55,7 +55,11 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	const Elf_Ehdr * const eh = eh0;
 	const bool elf_aapcs_p =
 	    (eh->e_flags & EF_ARM_EABIMASK) >= EF_ARM_EABI_VER4;
+#if defined(COMPAT_NETBSD32) || defined(MODULAR)
 	const bool netbsd32_p = (epp->ep_esch->es_emul != &emul_netbsd);
+#else
+	const bool netbsd32_p = false;
+#endif
 #ifdef __ARM_EABI__
 	const bool aapcs_p = true;
 #else
