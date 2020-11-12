@@ -1,4 +1,4 @@
-# $NetBSD: directive-if.mk,v 1.5 2020/11/10 22:23:37 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.6 2020/11/12 19:46:36 rillig Exp $
 #
 # Tests for the .if directive.
 
@@ -53,6 +53,24 @@
 .if ${:Uplain"""""} == plain""""" || 1
 .  info Quotes in plain words are probably a mistake.
 # XXX: Accepting quotes in plain words is probably a mistake as well.
+.else
+.  error
+.endif
+
+.if0
+.  error
+.else
+.  info Don't do this, always put a space after a directive.
+.endif
+
+.if${:U-3}
+.  info Don't do this, always put a space after a directive.
+.else
+.  error
+.endif
+
+.if${:U-3}>-4
+.  info Don't do this, always put a space around comparison operators.
 .else
 .  error
 .endif

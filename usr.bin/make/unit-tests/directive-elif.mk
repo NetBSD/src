@@ -1,4 +1,4 @@
-# $NetBSD: directive-elif.mk,v 1.5 2020/11/12 19:45:24 rillig Exp $
+# $NetBSD: directive-elif.mk,v 1.6 2020/11/12 19:46:36 rillig Exp $
 #
 # Tests for the .elif directive.
 
@@ -67,24 +67,6 @@
 .else
 # Expect: "warning: if-less elif"
 .elif
-.endif
-
-.if0
-.  error
-.else
-.  info Don't do this, always put a space after a directive.
-.endif
-
-.if${:U-3}
-.  info Don't do this, always put a space after a directive.
-.else
-.  error
-.endif
-
-.if${:U-3}>-4
-.  info Don't do this, always put a space around comparison operators.
-.else
-.  error
 .endif
 
 all:
