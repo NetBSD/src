@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2020/10/11 17:49:07 nia Exp $
+# $NetBSD: mi,v 1.45 2020/11/12 22:28:02 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3799,6 +3799,18 @@
 ./usr/X11R7/lib/X11/fonts/75dpi/timR24-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/timR24-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/timR24.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationMono-Bold.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationMono-BoldItalic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationMono-Italic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationMono-Regular.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSans-Bold.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSans-BoldItalic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSans-Italic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSans-Regular.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSerif-Bold.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSerif-BoldItalic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSerif-Italic.ttf	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/TTF/LiberationSerif-Regular.ttf	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/TTF/Vera.ttf			xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/TTF/VeraBI.ttf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/TTF/VeraBd.ttf		xfont	share,xorg,x11fonts
