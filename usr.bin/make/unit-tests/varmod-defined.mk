@@ -1,7 +1,9 @@
-# $NetBSD: varmod-defined.mk,v 1.8 2020/11/08 20:29:13 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.9 2020/11/12 00:40:55 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
+
+.MAKE.SAVE_DOLLARS=	yes
 
 DEF=	defined
 .undef UNDEF
