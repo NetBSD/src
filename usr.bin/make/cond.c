@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.209 2020/11/12 20:16:20 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.210 2020/11/12 22:27:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.209 2020/11/12 20:16:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.210 2020/11/12 22:27:55 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1101,7 +1101,7 @@ Cond_EvalLine(const char *const line)
 	 * that no other '.else' may follow. */
 	ELSE_ACTIVE,
 
-	/* None of the previous <cond> evaluated to TRUE.  Still searching
+	/* All of the previous <cond> evaluated to FALSE.  Still searching
 	 * for an '.elif' or an 'else' that evaluates to TRUE. */
 	SEARCH_FOR_ELIF,
 
