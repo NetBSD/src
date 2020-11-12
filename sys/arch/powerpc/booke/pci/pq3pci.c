@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.26 2020/11/12 00:37:51 rin Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.27 2020/11/12 00:44:22 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.26 2020/11/12 00:37:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.27 2020/11/12 00:44:22 rin Exp $");
 
 #include "locators.h"
 
@@ -1196,7 +1196,6 @@ pq3pci_msi_claim(pci_intr_handle_t handle)
 	KASSERT(msig != NULL);
 	struct pq3pci_msihand * const msih = &msig->msig_ihands[irq & 31];
 	mutex_spin_enter(&msig->msig_lock);
-	KASSERT(msig->msig_free_mask & irq_mask);
 	msig->msig_free_mask ^= irq_mask;
 	mutex_spin_exit(&msig->msig_lock);
 	return msih;
