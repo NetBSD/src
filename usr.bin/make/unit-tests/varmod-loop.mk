@@ -1,6 +1,8 @@
-# $NetBSD: varmod-loop.mk,v 1.7 2020/11/08 18:05:32 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.8 2020/11/12 00:40:55 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
+
+.MAKE.SAVE_DOLLARS=	yes
 
 all: mod-loop-varname
 all: mod-loop-resolve
