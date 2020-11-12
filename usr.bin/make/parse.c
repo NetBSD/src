@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.437 2020/11/08 23:38:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.438 2020/11/12 23:35:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.437 2020/11/08 23:38:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.438 2020/11/12 23:35:21 sjg Exp $");
 
 /* types and constants */
 
@@ -1429,7 +1429,7 @@ ParseDoDependencySourceSpecial(ParseSpecial specType, char *word,
 	Suff_SetNull(word);
 	break;
     case SP_OBJDIR:
-	Main_SetObjdir("%s", word);
+	Main_SetObjdir(FALSE, "%s", word);
 	break;
     default:
 	break;
