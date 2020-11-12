@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.208 2020/11/12 20:06:37 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.209 2020/11/12 20:16:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,7 +72,8 @@
 /* Handling of conditionals in a makefile.
  *
  * Interface:
- *	Cond_EvalLine	Evaluate the conditional.
+ *	Cond_EvalLine   Evaluate the conditional directive, such as
+ *			'.if <cond>', '.elifnmake <cond>', '.else', '.endif'.
  *
  *	Cond_EvalCondition
  *			Evaluate the conditional, which is either the argument
@@ -93,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.208 2020/11/12 20:06:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.209 2020/11/12 20:16:20 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1057,7 +1058,7 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
 	return CondEvalExpression(NULL, cond, out_value, FALSE, FALSE);
 }
 
-/* Evaluate the conditional directive in the passed line, which is one of:
+/* Evaluate the conditional directive in the line, which is one of:
  *
  *	.if <cond>
  *	.ifmake <cond>
@@ -1087,7 +1088,7 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
  *			or because the condition could not be evaluated
  */
 CondEvalResult
-Cond_EvalLine(const char *line)
+Cond_EvalLine(const char *const line)
 {
     typedef enum IfState {
 
@@ -1121,18 +1122,19 @@ Cond_EvalLine(const char *line)
     Boolean isElif;
     Boolean value;
     IfState state;
+    const char *p = line;
 
     if (cond_states == NULL) {
 	cond_states = bmake_malloc(cond_states_cap * sizeof *cond_states);
 	cond_states[0] = IF_ACTIVE;
     }
-    line++;		/* skip the leading '.' */
-    cpp_skip_hspace(&line);
+    p++;		/* skip the leading '.' */
+    cpp_skip_hspace(&p);
 
     /* Find what type of if we're dealing with.  */
-    if (line[0] == 'e') {
-	if (line[1] != 'l') {
-	    if (!is_token(line + 1, "ndif", 4)) { /* It is an '.endif'. */
+    if (p[0] == 'e') {
+	if (p[1] != 'l') {
+	    if (!is_token(p + 1, "ndif", 4)) { /* It is an '.endif'. */
 		/* TODO: check for extraneous <cond> */
 		return COND_INVALID;
 	    }
@@ -1148,8 +1150,8 @@ Cond_EvalLine(const char *line)
 	}
 
 	/* Quite likely this is 'else' or 'elif' */
-	line += 2;
-	if (is_token(line, "se", 2)) {	/* It is an 'else'. */
+	p += 2;
+	if (is_token(p, "se", 2)) {	/* It is an 'else'. */
 
 	    /* TODO: check for extraneous <cond> */
 
@@ -1181,7 +1183,7 @@ Cond_EvalLine(const char *line)
     } else
 	isElif = FALSE;
 
-    if (line[0] != 'i' || line[1] != 'f') {
+    if (p[0] != 'i' || p[1] != 'f') {
 	/* TODO: Add error message about unknown directive.
 	 * See directive-elif.mk:23 */
 	return COND_INVALID;	/* Not an ifxxx or elifxxx line */
@@ -1191,7 +1193,7 @@ Cond_EvalLine(const char *line)
      * Figure out what sort of conditional it is -- what its default
      * function is, etc. -- by looking in the table of valid "ifs"
      */
-    line += 2;
+    p += 2;
     for (ifp = ifs;; ifp++) {
 	if (ifp->form == NULL) {
 	    /* TODO: Add error message about unknown directive,
@@ -1200,8 +1202,8 @@ Cond_EvalLine(const char *line)
 	     * Example: .elifx 123 */
 	    return COND_INVALID;
 	}
-	if (is_token(line, ifp->form, ifp->formlen)) {
-	    line += ifp->formlen;
+	if (is_token(p, ifp->form, ifp->formlen)) {
+	    p += ifp->formlen;
 	    break;
 	}
     }
@@ -1246,7 +1248,7 @@ Cond_EvalLine(const char *line)
     }
 
     /* And evaluate the conditional expression */
-    if (CondEvalExpression(ifp, line, &value, TRUE, TRUE) == COND_INVALID) {
+    if (CondEvalExpression(ifp, p, &value, TRUE, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
 	cond_states[cond_depth] = SKIP_TO_ELSE;
