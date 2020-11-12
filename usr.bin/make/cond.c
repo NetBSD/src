@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.206 2020/11/12 08:12:07 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.207 2020/11/12 20:01:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.206 2020/11/12 08:12:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.207 2020/11/12 20:01:27 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1067,6 +1067,7 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
 }
 
 /* Evaluate the conditional directive in the passed line, which is one of:
+ *
  *	.if <cond>
  *	.ifmake <cond>
  *	.ifnmake <cond>
@@ -1079,14 +1080,16 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
  *	.elifndef <cond>
  *	.else
  *	.endif
- * In this line, <cond> consists of &&, ||, !, function(arg), comparisons
- * and parenthetical groupings thereof.
+ *
+ * In these directives, <cond> consists of &&, ||, !, function(arg),
+ * comparisons, expressions, bare words, numbers and strings, and
+ * parenthetical groupings thereof.
  *
  * Results:
- *	COND_PARSE	to continue parsing the lines after the conditional
- *			(when .if or .else returns TRUE)
+ *	COND_PARSE	to continue parsing the lines that follow the
+ *			conditional (when <cond> evaluates to TRUE)
  *	COND_SKIP	to skip the lines after the conditional
- *			(when .if or .elif returns FALSE, or when a previous
+ *			(when <cond> evaluates to FALSE, or when a previous
  *			branch has already been taken)
  *	COND_INVALID	if the conditional was not valid, either because of
  *			a syntax error or because some variable was undefined
@@ -1095,18 +1098,31 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
 CondEvalResult
 Cond_EvalLine(const char *line)
 {
-    /*
-     * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
-     * to detect spurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF),
-     * otherwise .else could be treated as '.elif 1'.
-     */
     typedef enum IfState {
-	IF_ACTIVE,		/* .if or .elif part active */
-	ELSE_ACTIVE,		/* .else part active */
-	SEARCH_FOR_ELIF,	/* searching for .elif/else to execute */
-	SKIP_TO_ELSE,		/* has been true, but not seen '.else' */
-	SKIP_TO_ENDIF		/* nothing else to execute */
+
+	/* The previous <cond> evaluated to TRUE.  The lines following this
+	 * condition are interpreted. */
+	IF_ACTIVE,
+
+	/* The previous '.else' evaluated to TRUE.  The lines following this
+	 * condition are interpreted.  The only difference to IF_ACTIVE is
+	 * that no other '.else' may follow. */
+	ELSE_ACTIVE,
+
+	/* None of the previous <cond> evaluated to TRUE.  Still searching
+	 * for an '.elif' or an 'else' that evaluates to TRUE. */
+	SEARCH_FOR_ELIF,
+
+	/* One of the previous <cond> evaluated to TRUE.  There was no '.else'
+	 * yet. */
+	SKIP_TO_ELSE,
+
+	/* One of the previous <cond> evaluated to TRUE, and '.else' was
+	 * already seen.  No other '.else' may follow. */
+	SKIP_TO_ENDIF
+
     } IfState;
+
     static enum IfState *cond_states = NULL;
     static unsigned int cond_states_cap = 128;
 
