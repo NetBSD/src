@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.4 2020/09/24 16:15:49 ryo Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.5 2020/11/12 11:28:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: bus_space_asm_generic.S,v 1.4 2020/09/24 16:15:49 ryo Exp $")
+RCSID("$NetBSD: bus_space_asm_generic.S,v 1.5 2020/11/12 11:28:39 jmcneill Exp $")
 
 .macro generate_bsfunc funcname, dsbop
 /* uint8_t {funcname}_bs_r_1(x0:tag, x1:addr, x2:offset) */
@@ -83,7 +83,7 @@ ENTRY_NP(\funcname\()_bs_r_2_swap)
 END(\funcname\()_bs_r_2_swap)
 
 
-/* uint32_t {funcname}_bs_r_4_swap(x0:tag, x2:addr, x3:offset) */
+/* uint32_t {funcname}_bs_r_4_swap(x0:tag, x1:addr, x2:offset) */
 ENTRY_NP(\funcname\()_bs_r_4_swap)
 	\dsbop
 	ldr	w8, [x0, #BS_STRIDE]
