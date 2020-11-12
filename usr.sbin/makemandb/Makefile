@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2020/11/09 10:19:41 martin Exp $
+# $NetBSD: Makefile,v 1.12 2020/11/12 17:53:43 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,8 @@ LDADD.makemandb+= 	-L${MDOCMLOBJDIR} -lmandoc -larchive -lbz2 -llzma -lz
 LDADD.makemandb+=	-lcrypto
 DPADD.makemandb+=	${LIBCRYPTO}
 
-DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBPTHREAD} ${LIBZ} ${LIBTERMLIB} ${LIBUTIL}
-LDADD+=		-lsqlite3 -lm -lz -ltermlib -lutil -lpthread
+DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBTERMLIB} ${LIBUTIL}
+LDADD+=		-lsqlite3 -lm -lz -ltermlib -lutil
 
 stopwords.c: stopwords.txt
 	( set -e; ${TOOL_NBPERF} -n stopwords_hash -s -p ${.ALLSRC};	\
