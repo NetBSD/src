@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.25 2020/07/07 03:38:48 thorpej Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.26 2020/11/12 00:37:51 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.25 2020/07/07 03:38:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.26 2020/11/12 00:37:51 rin Exp $");
 
 #include "locators.h"
 
@@ -1753,6 +1753,7 @@ pq3pci_pci_chipset_init(struct pq3pci_softc *sc)
 	pc->pc_intr_type = pq3pci_intr_type;
 	pc->pc_intr_alloc = pq3pci_intr_alloc;
 	pc->pc_intr_release = pq3pci_intr_release;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
 	pc->pc_intx_alloc = genppc_pci_intx_alloc;
 
 	pc->pc_msi_v = sc;
