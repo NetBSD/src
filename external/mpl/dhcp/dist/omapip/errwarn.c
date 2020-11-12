@@ -1,4 +1,4 @@
-/*	$NetBSD: errwarn.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: errwarn.c,v 1.4 2020/11/12 22:11:03 christos Exp $	*/
 
 /* errwarn.c
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: errwarn.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: errwarn.c,v 1.4 2020/11/12 22:11:03 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -50,14 +50,14 @@ int log_perror = 1;
 void (*log_cleanup) (void);
 
 #define CVT_BUF_MAX 1023
-static char mbuf [CVT_BUF_MAX + 1];
-static char fbuf [CVT_BUF_MAX + 1];
 
 /* Log an error message, then exit... */
 
 void log_fatal (const char * fmt, ... )
 {
   va_list list;
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
 
   do_percentm (fbuf, sizeof fbuf, fmt);
 
@@ -96,6 +96,8 @@ void log_fatal (const char * fmt, ... )
 
 int log_error (const char * fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
   do_percentm (fbuf, sizeof fbuf, fmt);
@@ -123,6 +125,8 @@ int log_error (const char * fmt, ...)
 
 int log_info (const char *fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
   do_percentm (fbuf, sizeof fbuf, fmt);
@@ -150,6 +154,8 @@ int log_info (const char *fmt, ...)
 
 int log_debug (const char *fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
   do_percentm (fbuf, sizeof fbuf, fmt);
