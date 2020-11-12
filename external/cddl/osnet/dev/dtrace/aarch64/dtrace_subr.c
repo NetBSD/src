@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.3 2020/02/12 06:05:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.4 2020/11/12 02:15:56 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
 
-	(*func)(0, (uintptr_t)AARCH64_KSEG_START);
+	(*func)(0, (uintptr_t)AARCH64_DIRECTMAP_START);
 	(*func)((uintptr_t)VM_KERNEL_IO_ADDRESS, ~(uintptr_t)0);
 }
 
