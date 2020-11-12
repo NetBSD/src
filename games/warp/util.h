@@ -17,7 +17,7 @@
 
     /* we get fractions of seconds from calling ftime on timebuf */
 
-EXT struct timespec timebuf;
+extern struct timespec timebuf;
 #define roundsleep(x) (clock_gettime(CLOCK_REALTIME, &timebuf),sleep(timebuf.tv_nsec > 5000000000 ?x+1:x))
 
 #define waiting 0
@@ -37,7 +37,7 @@ EXT int len_last_line_got INIT(0);
 
 void util_init(void);
 void movc3(int, char *, char *);
-void no_can_do(const char *);
+__dead void no_can_do(const char *);
 int exdis(int);
 void *safemalloc(size_t size);
 char *safecpy(char *, const char *, size_t);
@@ -46,6 +46,6 @@ char *instr(const char *, const char *);
 #ifdef SETUIDGID
 int eaccess(const char *, mode_t);
 #endif
-void prexit(const char *);
+__dead void prexit(const char *);
 char *savestr(const char *);
 char *getval(const char *, const char *);

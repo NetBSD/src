@@ -21,6 +21,8 @@
 #include "INTERN.h"
 #include "util.h"
 
+struct timespec timebuf;
+
 void
 util_init(void)
 {

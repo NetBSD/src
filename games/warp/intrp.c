@@ -32,7 +32,7 @@ static char *getrealname(uid_t);
 static char *skipinterp(const char *, const char *);
 #endif
 
-static void abort_interp(void);
+__dead static void abort_interp(void);
 
 void
 intrp_init(char *tcbuf)
