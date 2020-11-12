@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.163 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.164 2020/11/12 13:13:45 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.163 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.164 2020/11/12 13:13:45 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -225,6 +225,8 @@ static int tbf_dq_sel(struct vif *, struct ip *);
 static void tbf_send_packet(struct vif *, struct mbuf *);
 static void tbf_update_tokens(struct vif *);
 static int priority(struct vif *, struct ip *);
+static int ip_mforward_real(struct mbuf *, struct ifnet *);
+
 
 /*
  * Bandwidth monitoring
@@ -1268,6 +1270,34 @@ socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 int
 ip_mforward(struct mbuf *m, struct ifnet *ifp)
 {
+	int rc;
+	/*
+	 * save csum_flags to uphold the 
+	 * "unscathed" guarantee.
+	 * ip_output() relies on that and
+	 * without it we send out
+	 * multicast packets with an invalid
+	 * checksum
+	 *
+	 * see PR kern/55779
+	 */
+	int csum_flags = m->m_pkthdr.csum_flags;
+
+	/*
+	 * Temporarily clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
+
+	rc = ip_mforward_real(m, ifp);
+
+	m->m_pkthdr.csum_flags = csum_flags;
+
+	return rc;
+}
+
+static int
+ip_mforward_real(struct mbuf *m, struct ifnet *ifp)
+{
 	struct ip *ip = mtod(m, struct ip *);
 	struct mfc *rt;
 	static int srctun = 0;
@@ -1303,11 +1333,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			    ntohl(ip->ip_src.s_addr));
 		return EOPNOTSUPP;
 	}
-
-	/*
-	 * Clear any in-bound checksum flags for this packet.
-	 */
-	m->m_pkthdr.csum_flags = 0;
 
 	/*
 	 * Don't forward a packet with time-to-live of zero or one,
