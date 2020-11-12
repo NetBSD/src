@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2752 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2753 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -299,3 +299,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata updated to 2020d  [kre 20201022]
 	dhcpcd: Update to version 9.3.1 [roy 20201101]
 	tmux(1): Imported 3.1c. [christos 20201101]
+	kernel: Better default for kern.maxfiles for systems with
+		larger RAM [simonb 20201112]
