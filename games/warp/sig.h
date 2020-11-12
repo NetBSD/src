@@ -8,8 +8,8 @@
 
 void sig_init(void);
 void mytstp(void);
-void finalize(int status);
-void sig_catcher(int signo);
+__dead void finalize(int status);
+__dead void sig_catcher(int signo);
 #ifdef SIGTSTP
 void cont_catcher(int x);
 void stop_catcher(int sig);
