@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.335 2020/11/09 16:15:05 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.336 2020/11/12 17:53:43 nia Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -222,11 +222,11 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 LIBKRB5_LDADD+= -lkrb5 -lcom_err \
 	-lhx509 -lcrypto -lasn1 \
 	-lwind -lheimbase -lcom_err -lroken \
-	-lsqlite3 -lpthread -lm -lcrypt -lutil
+	-lsqlite3 -lm -lcrypt -lutil
 LIBKRB5_DPADD+= ${LIBKRB5} ${LIBCOM_ERR} \
 	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBWIND} ${LIBHEIMBASE} ${LIBCOM_ERR} ${LIBROKEN} \
-	${LIBSQLITE3} ${LIBM} ${LIPPTHREAD} ${LIBCRYPT}  ${LIBUTIL}
+	${LIBSQLITE3} ${LIBM} ${LIBCRYPT} ${LIBUTIL}
 .endif
 
 # PAM applications, if linked statically, need more libraries
@@ -235,10 +235,10 @@ PAM_STATIC_LDADD+= -lssh
 PAM_STATIC_DPADD+= ${LIBSSH}
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
-	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lpthread -lm
+	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lm
 PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBWIND} ${LIBASN1} \
 	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO} ${LIBSQLITE3} \
-	${LIBPTHREAD} ${LIBM}
+	${LIBM}
 .endif
 .if (${MKSKEY} != "no")
 PAM_STATIC_LDADD+= -lskey

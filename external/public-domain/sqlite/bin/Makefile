@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.7 2020/11/08 21:56:48 nia Exp $
+# $NetBSD: Makefile,v 1.8 2020/11/12 17:53:43 nia Exp $
 
 PROG=		sqlite3
 
 SRCS=		shell.c
 
-DPADD+=		${LIBSQLITE3} ${LIBEDIT} ${LIBTERIMINFO} ${LIBM} ${LIBPTHREAD}
-LDADD+=		-lsqlite3 -ledit -lterminfo -lpthread -lm
+DPADD+=		${LIBSQLITE3} ${LIBEDIT} ${LIBTERIMINFO} ${LIBM}
+LDADD+=		-lsqlite3 -ledit -lterminfo -lm
 
 BINDIR=		/usr/bin
 
