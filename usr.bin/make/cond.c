@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.205 2020/11/11 07:34:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.206 2020/11/12 08:12:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.205 2020/11/11 07:34:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.206 2020/11/12 08:12:07 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1058,22 +1058,29 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
     return rval;
 }
 
+/* Evaluate a condition in a :? modifier, such as
+ * ${"${VAR}" == value:?yes:no}. */
 CondEvalResult
 Cond_EvalCondition(const char *cond, Boolean *out_value)
 {
 	return CondEvalExpression(NULL, cond, out_value, FALSE, FALSE);
 }
 
-/* Evaluate the conditional in the passed line. The line looks like this:
- *	.<cond-type> <expr>
- * In this line, <cond-type> is any of if, ifmake, ifnmake, ifdef, ifndef,
- * elif, elifmake, elifnmake, elifdef, elifndef.
- * In this line, <expr> consists of &&, ||, !, function(arg), comparisons
+/* Evaluate the conditional directive in the passed line, which is one of:
+ *	.if <cond>
+ *	.ifmake <cond>
+ *	.ifnmake <cond>
+ *	.ifdef <cond>
+ *	.ifndef <cond>
+ *	.elif <cond>
+ *	.elifmake <cond>
+ *	.elifnmake <cond>
+ *	.elifdef <cond>
+ *	.elifndef <cond>
+ *	.else
+ *	.endif
+ * In this line, <cond> consists of &&, ||, !, function(arg), comparisons
  * and parenthetical groupings thereof.
- *
- * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
- * to detect spurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF),
- * otherwise .else could be treated as '.elif 1'.
  *
  * Results:
  *	COND_PARSE	to continue parsing the lines after the conditional
@@ -1088,26 +1095,29 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
 CondEvalResult
 Cond_EvalLine(const char *line)
 {
-    enum { MAXIF = 128 };	/* maximum depth of .if'ing */
-    enum { MAXIF_BUMP = 32 };	/* how much to grow by */
-    enum if_states {
+    /*
+     * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
+     * to detect spurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF),
+     * otherwise .else could be treated as '.elif 1'.
+     */
+    typedef enum IfState {
 	IF_ACTIVE,		/* .if or .elif part active */
 	ELSE_ACTIVE,		/* .else part active */
 	SEARCH_FOR_ELIF,	/* searching for .elif/else to execute */
 	SKIP_TO_ELSE,		/* has been true, but not seen '.else' */
 	SKIP_TO_ENDIF		/* nothing else to execute */
-    };
-    static enum if_states *cond_state = NULL;
-    static unsigned int max_if_depth = MAXIF;
+    } IfState;
+    static enum IfState *cond_states = NULL;
+    static unsigned int cond_states_cap = 128;
 
     const struct If *ifp;
     Boolean isElif;
     Boolean value;
-    enum if_states state;
+    IfState state;
 
-    if (cond_state == NULL) {
-	cond_state = bmake_malloc(max_if_depth * sizeof *cond_state);
-	cond_state[0] = IF_ACTIVE;
+    if (cond_states == NULL) {
+	cond_states = bmake_malloc(cond_states_cap * sizeof *cond_states);
+	cond_states[0] = IF_ACTIVE;
     }
     line++;		/* skip the leading '.' */
     cpp_skip_hspace(&line);
@@ -1115,8 +1125,10 @@ Cond_EvalLine(const char *line)
     /* Find what type of if we're dealing with.  */
     if (line[0] == 'e') {
 	if (line[1] != 'l') {
-	    if (!is_token(line + 1, "ndif", 4))
+	    if (!is_token(line + 1, "ndif", 4)) { /* It is an '.endif'. */
+		/* TODO: check for extraneous <cond> */
 		return COND_INVALID;
+	    }
 	    /* End of conditional section */
 	    if (cond_depth == cond_min_depth) {
 		Parse_Error(PARSE_FATAL, "if-less endif");
@@ -1124,20 +1136,22 @@ Cond_EvalLine(const char *line)
 	    }
 	    /* Return state for previous conditional */
 	    cond_depth--;
-	    return cond_state[cond_depth] <= ELSE_ACTIVE
+	    return cond_states[cond_depth] <= ELSE_ACTIVE
 		   ? COND_PARSE : COND_SKIP;
 	}
 
 	/* Quite likely this is 'else' or 'elif' */
 	line += 2;
-	if (is_token(line, "se", 2)) {
-	    /* It is else... */
+	if (is_token(line, "se", 2)) {	/* It is an 'else'. */
+
+	    /* TODO: check for extraneous <cond> */
+
 	    if (cond_depth == cond_min_depth) {
 		Parse_Error(PARSE_FATAL, "if-less else");
 		return COND_PARSE;
 	    }
 
-	    state = cond_state[cond_depth];
+	    state = cond_states[cond_depth];
 	    switch (state) {
 	    case SEARCH_FOR_ELIF:
 		state = ELSE_ACTIVE;
@@ -1152,7 +1166,7 @@ Cond_EvalLine(const char *line)
 		state = SKIP_TO_ENDIF;
 		break;
 	    }
-	    cond_state[cond_depth] = state;
+	    cond_states[cond_depth] = state;
 	    return state <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
 	}
 	/* Assume for now it is an elif */
@@ -1160,8 +1174,11 @@ Cond_EvalLine(const char *line)
     } else
 	isElif = FALSE;
 
-    if (line[0] != 'i' || line[1] != 'f')
+    if (line[0] != 'i' || line[1] != 'f') {
+	/* TODO: Add error message about unknown directive.
+	 * See directive-elif.mk:23 */
 	return COND_INVALID;	/* Not an ifxxx or elifxxx line */
+    }
 
     /*
      * Figure out what sort of conditional it is -- what its default
@@ -1169,8 +1186,13 @@ Cond_EvalLine(const char *line)
      */
     line += 2;
     for (ifp = ifs;; ifp++) {
-	if (ifp->form == NULL)
+	if (ifp->form == NULL) {
+	    /* TODO: Add error message about unknown directive,
+	     * since there is no other known directive that starts with 'el'
+	     * or 'if'.
+	     * Example: .elifx 123 */
 	    return COND_INVALID;
+	}
 	if (is_token(line, ifp->form, ifp->formlen)) {
 	    line += ifp->formlen;
 	    break;
@@ -1184,34 +1206,34 @@ Cond_EvalLine(const char *line)
 	    Parse_Error(PARSE_FATAL, "if-less elif");
 	    return COND_PARSE;
 	}
-	state = cond_state[cond_depth];
+	state = cond_states[cond_depth];
 	if (state == SKIP_TO_ENDIF || state == ELSE_ACTIVE) {
 	    Parse_Error(PARSE_WARNING, "extra elif");
-	    cond_state[cond_depth] = SKIP_TO_ENDIF;
+	    cond_states[cond_depth] = SKIP_TO_ENDIF;
 	    return COND_SKIP;
 	}
 	if (state != SEARCH_FOR_ELIF) {
 	    /* Either just finished the 'true' block, or already SKIP_TO_ELSE */
-	    cond_state[cond_depth] = SKIP_TO_ELSE;
+	    cond_states[cond_depth] = SKIP_TO_ELSE;
 	    return COND_SKIP;
 	}
     } else {
 	/* Normal .if */
-	if (cond_depth + 1 >= max_if_depth) {
+	if (cond_depth + 1 >= cond_states_cap) {
 	    /*
 	     * This is rare, but not impossible.
 	     * In meta mode, dirdeps.mk (only runs at level 0)
 	     * can need more than the default.
 	     */
-	    max_if_depth += MAXIF_BUMP;
-	    cond_state = bmake_realloc(cond_state,
-				       max_if_depth * sizeof *cond_state);
+	    cond_states_cap += 32;
+	    cond_states = bmake_realloc(cond_states,
+					cond_states_cap * sizeof *cond_states);
 	}
-	state = cond_state[cond_depth];
+	state = cond_states[cond_depth];
 	cond_depth++;
 	if (state > ELSE_ACTIVE) {
 	    /* If we aren't parsing the data, treat as always false */
-	    cond_state[cond_depth] = SKIP_TO_ELSE;
+	    cond_states[cond_depth] = SKIP_TO_ELSE;
 	    return COND_SKIP;
 	}
     }
@@ -1220,15 +1242,15 @@ Cond_EvalLine(const char *line)
     if (CondEvalExpression(ifp, line, &value, TRUE, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
-	cond_state[cond_depth] = SKIP_TO_ELSE;
+	cond_states[cond_depth] = SKIP_TO_ELSE;
 	return COND_SKIP;
     }
 
     if (!value) {
-	cond_state[cond_depth] = SEARCH_FOR_ELIF;
+	cond_states[cond_depth] = SEARCH_FOR_ELIF;
 	return COND_SKIP;
     }
-    cond_state[cond_depth] = IF_ACTIVE;
+    cond_states[cond_depth] = IF_ACTIVE;
     return COND_PARSE;
 }
 
