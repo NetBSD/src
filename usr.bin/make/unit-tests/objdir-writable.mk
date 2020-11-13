@@ -1,4 +1,4 @@
-# $NetBSD: objdir-writable.mk,v 1.2 2020/11/12 23:53:17 sjg Exp $
+# $NetBSD: objdir-writable.mk,v 1.3 2020/11/13 09:01:59 rillig Exp $
 
 # test checking for writable objdir
 
@@ -22,6 +22,6 @@ ro-objdir:
 	@MAKEOBJDIR=${RO_OBJDIR} ${.MAKE} -r -f /dev/null -C /tmp -V .OBJDIR MAKE_OBJDIR_CHECK_WRITABLE=no
 
 explicit-objdir:
-	@MAKEOBJDIR=/tmp ${.MAKE} -r -f ${MAKEFILE} -C /tmp do-objdir -V .OBJDIR
+	@MAKEOBJDIR=/tmp ${.MAKE} -r -f ${MAKEFILE:tA} -C /tmp do-objdir -V .OBJDIR
 .endif
 
