@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.967 2020/11/10 22:23:37 rillig Exp $
+# $NetBSD: mi,v 1.968 2020/11/13 17:19:06 sjg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5127,6 +5127,8 @@
 ./usr/tests/usr.bin/make/unit-tests/modts.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modword.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modword.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/objdir-writable.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/objdir-writable.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-backwards.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-backwards.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-chdir.exp				tests-usr.bin-tests	compattestfile,atf
