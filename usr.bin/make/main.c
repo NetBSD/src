@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.456 2020/11/12 23:35:21 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.457 2020/11/13 08:21:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.456 2020/11/12 23:35:21 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.457 2020/11/13 08:21:37 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1022,16 +1022,12 @@ InitVarMachineArch(void)
 
 		return machine_arch_buf;
 	}
-#else
-#ifndef MACHINE_ARCH
-#ifdef MAKE_MACHINE_ARCH
+#elif defined(MACHINE_ARCH)
+	return MACHINE_ARCH;
+#elif defined(MAKE_MACHINE_ARCH)
 	return MAKE_MACHINE_ARCH;
 #else
 	return "unknown";
-#endif
-#else
-	return MACHINE_ARCH;
-#endif
 #endif
 }
 
