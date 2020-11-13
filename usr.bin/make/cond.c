@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.212 2020/11/13 07:35:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.213 2020/11/13 07:52:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.212 2020/11/13 07:35:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.213 2020/11/13 07:52:03 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1092,26 +1092,18 @@ Cond_EvalLine(const char *const line)
 {
     typedef enum IfState {
 
-	/* The previous <cond> evaluated to TRUE.  The lines following this
-	 * condition are interpreted. */
-	IF_ACTIVE,
+	/* None of the previous <cond> evaluated to TRUE. */
+	IFS_INITIAL	= 0,
 
-	/* The previous '.else' evaluated to TRUE.  The lines following this
-	 * condition are interpreted.  The only difference to IF_ACTIVE is
-	 * that no other '.else' may follow. */
-	ELSE_ACTIVE,
+	/* The previous <cond> evaluated to TRUE.
+	 * The lines following this condition are interpreted. */
+	IFS_ACTIVE	= 1 << 0,
 
-	/* All of the previous <cond> evaluated to FALSE.  Still searching
-	 * for an '.elif' or an 'else' that evaluates to TRUE. */
-	SEARCH_FOR_ELIF,
+	/* The previous directive was an '.else'. */
+	IFS_SEEN_ELSE	= 1 << 1,
 
-	/* One of the previous <cond> evaluated to TRUE.  There was no '.else'
-	 * yet. */
-	SKIP_TO_ELSE,
-
-	/* One of the previous <cond> evaluated to TRUE, and '.else' was
-	 * already seen.  No other '.else' may follow. */
-	SKIP_TO_ENDIF
+	/* One of the previous <cond> evaluated to TRUE. */
+	IFS_WAS_ACTIVE	= 1 << 2
 
     } IfState;
 
@@ -1126,7 +1118,7 @@ Cond_EvalLine(const char *const line)
 
     if (cond_states == NULL) {
 	cond_states = bmake_malloc(cond_states_cap * sizeof *cond_states);
-	cond_states[0] = IF_ACTIVE;
+	cond_states[0] = IFS_ACTIVE;
     }
 
     p++;		/* skip the leading '.' */
@@ -1136,8 +1128,8 @@ Cond_EvalLine(const char *const line)
     if (p[0] == 'e') {
 	if (p[1] != 'l') {
 	    if (!is_token(p + 1, "ndif", 4)) {
-	        /* Unknown directive.  It might still be a transformation
-	         * rule like '.elisp.scm', therefore no error message here. */
+		/* Unknown directive.  It might still be a transformation
+		 * rule like '.elisp.scm', therefore no error message here. */
 		return COND_INVALID;
 	    }
 
@@ -1151,7 +1143,7 @@ Cond_EvalLine(const char *const line)
 
 	    /* Return state for previous conditional */
 	    cond_depth--;
-	    return cond_states[cond_depth] <= ELSE_ACTIVE
+	    return cond_states[cond_depth] & IFS_ACTIVE
 		   ? COND_PARSE : COND_SKIP;
 	}
 
@@ -1167,15 +1159,16 @@ Cond_EvalLine(const char *const line)
 	    }
 
 	    state = cond_states[cond_depth];
-	    if (state == SEARCH_FOR_ELIF) {
-	        state = ELSE_ACTIVE;
+	    if (state == IFS_INITIAL) {
+		state = IFS_ACTIVE | IFS_SEEN_ELSE;
 	    } else {
-	        if (state == ELSE_ACTIVE || state == SKIP_TO_ENDIF)
+		if (state & IFS_SEEN_ELSE)
 		    Parse_Error(PARSE_WARNING, "extra else");
-	        state = SKIP_TO_ENDIF;
+		state = IFS_WAS_ACTIVE | IFS_SEEN_ELSE;
 	    }
 	    cond_states[cond_depth] = state;
-	    return state <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
+
+	    return state & IFS_ACTIVE ? COND_PARSE : COND_SKIP;
 	}
 	/* Assume for now it is an elif */
 	isElif = TRUE;
@@ -1215,14 +1208,13 @@ Cond_EvalLine(const char *const line)
 	    return COND_PARSE;
 	}
 	state = cond_states[cond_depth];
-	if (state == SKIP_TO_ENDIF || state == ELSE_ACTIVE) {
+	if (state & IFS_SEEN_ELSE) {
 	    Parse_Error(PARSE_WARNING, "extra elif");
-	    cond_states[cond_depth] = SKIP_TO_ENDIF;
+	    cond_states[cond_depth] = IFS_WAS_ACTIVE | IFS_SEEN_ELSE;
 	    return COND_SKIP;
 	}
-	if (state != SEARCH_FOR_ELIF) {
-	    /* Either just finished the 'true' block, or already SKIP_TO_ELSE */
-	    cond_states[cond_depth] = SKIP_TO_ELSE;
+	if (state != IFS_INITIAL) {
+	    cond_states[cond_depth] = IFS_WAS_ACTIVE;
 	    return COND_SKIP;
 	}
     } else {
@@ -1239,9 +1231,9 @@ Cond_EvalLine(const char *const line)
 	}
 	state = cond_states[cond_depth];
 	cond_depth++;
-	if (state > ELSE_ACTIVE) {
+	if (!(state & IFS_ACTIVE)) {
 	    /* If we aren't parsing the data, treat as always false */
-	    cond_states[cond_depth] = SKIP_TO_ELSE;
+	    cond_states[cond_depth] = IFS_WAS_ACTIVE;
 	    return COND_SKIP;
 	}
     }
@@ -1250,15 +1242,16 @@ Cond_EvalLine(const char *const line)
     if (CondEvalExpression(ifp, p, &value, TRUE, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
-	cond_states[cond_depth] = SKIP_TO_ELSE;
+	/* XXX: An extra '.else' is not detected in this case. */
+	cond_states[cond_depth] = IFS_WAS_ACTIVE;
 	return COND_SKIP;
     }
 
     if (!value) {
-	cond_states[cond_depth] = SEARCH_FOR_ELIF;
+	cond_states[cond_depth] = IFS_INITIAL;
 	return COND_SKIP;
     }
-    cond_states[cond_depth] = IF_ACTIVE;
+    cond_states[cond_depth] = IFS_ACTIVE;
     return COND_PARSE;
 }
 
