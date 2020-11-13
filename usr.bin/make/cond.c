@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.210 2020/11/12 22:27:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.211 2020/11/13 06:19:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.210 2020/11/12 22:27:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.211 2020/11/13 06:19:27 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1128,21 +1128,27 @@ Cond_EvalLine(const char *const line)
 	cond_states = bmake_malloc(cond_states_cap * sizeof *cond_states);
 	cond_states[0] = IF_ACTIVE;
     }
+
     p++;		/* skip the leading '.' */
     cpp_skip_hspace(&p);
 
-    /* Find what type of if we're dealing with.  */
+    /* Parse the name of the directive, such as 'if', 'elif', 'endif'. */
     if (p[0] == 'e') {
 	if (p[1] != 'l') {
-	    if (!is_token(p + 1, "ndif", 4)) { /* It is an '.endif'. */
-		/* TODO: check for extraneous <cond> */
+	    if (!is_token(p + 1, "ndif", 4)) {
+	        /* Unknown directive.  It might still be a transformation
+	         * rule like '.elisp.scm', therefore no error message here. */
 		return COND_INVALID;
 	    }
-	    /* End of conditional section */
+
+	    /* It is an '.endif'. */
+	    /* TODO: check for extraneous <cond> */
+
 	    if (cond_depth == cond_min_depth) {
 		Parse_Error(PARSE_FATAL, "if-less endif");
 		return COND_PARSE;
 	    }
+
 	    /* Return state for previous conditional */
 	    cond_depth--;
 	    return cond_states[cond_depth] <= ELSE_ACTIVE
@@ -1184,8 +1190,8 @@ Cond_EvalLine(const char *const line)
 	isElif = FALSE;
 
     if (p[0] != 'i' || p[1] != 'f') {
-	/* TODO: Add error message about unknown directive.
-	 * See directive-elif.mk:23 */
+	/* Unknown directive.  It might still be a transformation rule like
+	 * '.elisp.scm', therefore no error message here. */
 	return COND_INVALID;	/* Not an ifxxx or elifxxx line */
     }
 
