@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.258 2020/09/07 09:14:53 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.259 2020/11/13 05:53:36 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5542,9 +5542,9 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		return (EINVAL);
 	}
 
-	if (advertise < 0x0 || advertise > 0x2f) {
+	if (advertise < 0x0 || advertise > 0x3f) {
 		device_printf(dev,
-		    "Invalid advertised speed; valid modes are 0x0 through 0x7\n");
+		    "Invalid advertised speed; valid modes are 0x0 through 0x3f\n");
 		return (EINVAL);
 	}
 
