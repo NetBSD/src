@@ -1,6 +1,8 @@
-# $NetBSD: directive-else.mk,v 1.5 2020/11/13 08:35:34 rillig Exp $
+# $NetBSD: directive-else.mk,v 1.6 2020/11/13 09:01:59 rillig Exp $
 #
 # Tests for the .else directive.
+
+.MAKEFLAGS: -dL			# To enable the check for ".else <cond>"
 
 # The .else directive does not take any arguments.
 # As of 2020-08-29, make doesn't warn about this.
