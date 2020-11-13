@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.211 2020/11/13 06:19:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.212 2020/11/13 07:35:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.211 2020/11/13 06:19:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.212 2020/11/13 07:35:27 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1167,19 +1167,12 @@ Cond_EvalLine(const char *const line)
 	    }
 
 	    state = cond_states[cond_depth];
-	    switch (state) {
-	    case SEARCH_FOR_ELIF:
-		state = ELSE_ACTIVE;
-		break;
-	    case ELSE_ACTIVE:
-	    case SKIP_TO_ENDIF:
-		Parse_Error(PARSE_WARNING, "extra else");
-		/* FALLTHROUGH */
-	    default:
-	    case IF_ACTIVE:
-	    case SKIP_TO_ELSE:
-		state = SKIP_TO_ENDIF;
-		break;
+	    if (state == SEARCH_FOR_ELIF) {
+	        state = ELSE_ACTIVE;
+	    } else {
+	        if (state == ELSE_ACTIVE || state == SKIP_TO_ENDIF)
+		    Parse_Error(PARSE_WARNING, "extra else");
+	        state = SKIP_TO_ENDIF;
 	    }
 	    cond_states[cond_depth] = state;
 	    return state <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
