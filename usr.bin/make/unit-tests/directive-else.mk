@@ -1,4 +1,4 @@
-# $NetBSD: directive-else.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: directive-else.mk,v 1.5 2020/11/13 08:35:34 rillig Exp $
 #
 # Tests for the .else directive.
 
@@ -26,6 +26,18 @@
 .  info ok
 .else
 .  info After an extra .else, everything is skipped.
+.endif
+
+# An .else may have a comment.  This comment does not count as an argument,
+# therefore no parse error.
+.if 0
+.else # comment
+.endif
+
+# A variable expression does count as an argument, even if it is empty.
+# XXX: This should be a parse error.
+.if 0
+.else ${:U}
 .endif
 
 all:
