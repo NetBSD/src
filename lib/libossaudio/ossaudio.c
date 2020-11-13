@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.63 2020/11/04 22:59:24 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.64 2020/11/13 09:02:39 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.63 2020/11/04 22:59:24 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.64 2020/11/13 09:02:39 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -184,7 +184,26 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_SPEED:
 		AUDIO_INITINFO(&tmpinfo);
-		/* Conform to kernel limits. */
+		/*
+		 * In Solaris, 0 is used a special value to query the
+		 * current rate. This seems useful to support.
+		 */
+		if (INTARG == 0) {
+			retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
+			if (retval < 0)
+				return retval;
+			INTARG = (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.sample_rate :
+			    hwfmt.play.sample_rate;
+		}
+		/*
+		 * Conform to kernel limits.
+		 * NetBSD will reject unsupported sample rates, but OSS
+		 * applications need to be able to negotiate a supported one.
+		 */
 		if (INTARG < 1000)
 			INTARG = 1000;
 		if (INTARG > 192000)
@@ -1707,6 +1726,8 @@ setvol(int fd, int volume, bool record)
  * When this happens, we use the current hardware settings. This is just in
  * case an application is abusing SNDCTL_DSP_CHANNELS - OSSv4 always sets and
  * returns a reasonable value, even if it wasn't what the user requested.
+ *
+ * Solaris guarantees this behaviour if nchannels = 0.
  *
  * XXX: If a device is opened for both playback and recording, and supports
  * fewer channels for recording than playback, applications that do both will
