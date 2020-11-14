@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.199 2020/11/14 15:35:20 rillig Exp $
+# $NetBSD: Makefile,v 1.200 2020/11/14 18:07:26 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -507,6 +507,8 @@ MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
 # always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
+_SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}[][0-9]* warning,make warning,'
+_SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 # replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
 # strip ${.CURDIR}/ from the output
