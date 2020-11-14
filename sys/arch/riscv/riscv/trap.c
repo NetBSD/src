@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2020/11/04 20:04:01 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 2020/11/14 13:05:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.13 2020/11/04 20:04:01 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.14 2020/11/14 13:05:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,32 +167,32 @@ dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 	    && causenames[tf->tf_cause] != NULL)
 		causestr = causenames[tf->tf_cause];
 	(*pr)("Trapframe @ %p "
-	    "(cause=%d (%s), status=%#x, pc=%#16"PRIxREGISTER
-	    ", va=%#"PRIxREGISTER"):\n",
+	    "(cause=%d (%s), status=%#x, pc=%#18" PRIxREGISTER
+	    ", va=%#" PRIxREGISTER "):\n",
 	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_tval);
-	(*pr)("ra=%#16"PRIxREGISTER", sp=%#16"PRIxREGISTER
-	    ", gp=%#16"PRIxREGISTER", tp=%#16"PRIxREGISTER"\n",
+	(*pr)("ra =%#18" PRIxREGISTER ", sp =%#18" PRIxREGISTER
+	    ", gp =%#18" PRIxREGISTER ", tp =%#18" PRIxREGISTER "\n",
 	    tf->tf_ra, tf->tf_sp, tf->tf_gp, tf->tf_tp);
-	(*pr)("s0=%#16"PRIxREGISTER", s1=%#16"PRIxREGISTER
-	    ", s2=%#16"PRIxREGISTER", s3=%#16"PRIxREGISTER"\n",
+	(*pr)("s0 =%#18" PRIxREGISTER ", s1 =%#18" PRIxREGISTER
+	    ", s2 =%#18" PRIxREGISTER ", s3 =%#18" PRIxREGISTER "\n",
 	    tf->tf_s0, tf->tf_s1, tf->tf_s2, tf->tf_s3);
-	(*pr)("s4=%#16"PRIxREGISTER", s5=%#16"PRIxREGISTER
-	    ", s5=%#16"PRIxREGISTER", s3=%#16"PRIxREGISTER"\n",
-	    tf->tf_s4, tf->tf_s5, tf->tf_s2, tf->tf_s3);
-	(*pr)("s8=%#16"PRIxREGISTER", s9=%#16"PRIxREGISTER
-	    ", s10=%#16"PRIxREGISTER", s11=%#16"PRIxREGISTER"\n",
+	(*pr)("s4 =%#18" PRIxREGISTER ", s5 =%#18" PRIxREGISTER
+	    ", s6 =%#18" PRIxREGISTER ", s7 =%#18" PRIxREGISTER "\n",
+	    tf->tf_s4, tf->tf_s5, tf->tf_s6, tf->tf_s7);
+	(*pr)("s8 =%#18" PRIxREGISTER ", s9 =%#18" PRIxREGISTER
+	    ", s10=%#18" PRIxREGISTER ", s11=%#18" PRIxREGISTER "\n",
 	    tf->tf_s8, tf->tf_s9, tf->tf_s10, tf->tf_s11);
-	(*pr)("a0=%#16"PRIxREGISTER", a1=%#16"PRIxREGISTER
-	    ", a2=%#16"PRIxREGISTER", a3=%#16"PRIxREGISTER"\n",
+	(*pr)("a0 =%#18" PRIxREGISTER ", a1 =%#18" PRIxREGISTER
+	    ", a2 =%#18" PRIxREGISTER ", a3 =%#18" PRIxREGISTER "\n",
 	    tf->tf_a0, tf->tf_a1, tf->tf_a2, tf->tf_a3);
-	(*pr)("a4=%#16"PRIxREGISTER", a5=%#16"PRIxREGISTER
-	    ", a5=%#16"PRIxREGISTER", a7=%#16"PRIxREGISTER"\n",
+	(*pr)("a4 =%#18" PRIxREGISTER ", a5 =%#18" PRIxREGISTER
+	    ", a5 =%#18" PRIxREGISTER ", a7 =%#18" PRIxREGISTER "\n",
 	    tf->tf_a4, tf->tf_a5, tf->tf_a6, tf->tf_a7);
-	(*pr)("t0=%#16"PRIxREGISTER", t1=%#16"PRIxREGISTER
-	    ", t2=%#16"PRIxREGISTER", t3=%#16"PRIxREGISTER"\n",
+	(*pr)("t0 =%#18" PRIxREGISTER ", t1 =%#18" PRIxREGISTER
+	    ", t2 =%#18" PRIxREGISTER ", t3 =%#18" PRIxREGISTER "\n",
 	    tf->tf_t0, tf->tf_t1, tf->tf_t2, tf->tf_t3);
-	(*pr)("t4=%#16"PRIxREGISTER", t5=%#16"PRIxREGISTER
-	    ", t6=%#16"PRIxREGISTER"\n",
+	(*pr)("t4 =%#18" PRIxREGISTER ", t5 =%#18" PRIxREGISTER
+	    ", t6 =%#18" PRIxREGISTER "\n",
 	    tf->tf_t4, tf->tf_t5, tf->tf_t6);
 }
 
