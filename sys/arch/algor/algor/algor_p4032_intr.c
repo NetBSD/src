@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.26 2019/11/10 21:16:21 chs Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.27 2020/11/14 02:23:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.26 2019/11/10 21:16:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.27 2020/11/14 02:23:04 thorpej Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.26 2019/11/10 21:16:21 chs Ex
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 
@@ -352,7 +352,7 @@ algor_p4032_intr_establish(int irq, int (*func)(void *), void *arg)
 
 	KASSERT(irq == irqmap->irqidx);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = 0;
@@ -408,7 +408,7 @@ algor_p4032_intr_disestablish(void *cookie)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 void
