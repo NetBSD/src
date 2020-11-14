@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.324 2020/11/14 16:44:04 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.325 2020/11/14 17:04:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.324 2020/11/14 16:44:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.325 2020/11/14 17:04:01 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1239,9 +1239,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 
 /* Execute the shell for the given job.
  *
- * A shell is executed, its output is altered and the Job structure added
- * to the job table.
- */
+ * See Job_CatchOutput for handling the output of the shell. */
 static void
 JobExec(Job *job, char **argv)
 {
@@ -1604,11 +1602,9 @@ JobStart(GNode *gn, JobFlags flags)
 	/*
 	 * Unlink and close the command file if we opened one
 	 */
-	if (job->cmdFILE != stdout) {
-	    if (job->cmdFILE != NULL) {
-		(void)fclose(job->cmdFILE);
-		job->cmdFILE = NULL;
-	    }
+	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
+	    (void)fclose(job->cmdFILE);
+	    job->cmdFILE = NULL;
 	}
 
 	/*
@@ -1675,34 +1671,20 @@ JobOutput(Job *job, char *cp, char *endp)
     return cp;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobDoOutput  --
- *	This function is called at different times depending on
- *	whether the user has specified that output is to be collected
- *	via pipes or temporary files. In the former case, we are called
- *	whenever there is something to read on the pipe. We collect more
- *	output from the given job and store it in the job's outBuf. If
- *	this makes up a line, we print it tagged by the job's identifier,
- *	as necessary.
- *	If output has been collected in a temporary file, we open the
- *	file and read it line by line, transferring it to our own
- *	output channel until the file is empty. At which point we
- *	remove the temporary file.
- *	In both cases, however, we keep our figurative eye out for the
- *	'noPrint' line for the shell from which the output came. If
- *	we recognize a line, we don't print it. If the command is not
- *	alone on the line (the character after it is not \0 or \n), we
- *	do print whatever follows it.
+/*
+ * This function is called whenever there is something to read on the pipe.
+ * We collect more output from the given job and store it in the job's
+ * outBuf. If this makes up a line, we print it tagged by the job's
+ * identifier, as necessary.
+ *
+ * In the output of the shell, the 'noPrint' lines are removed. If the
+ * command is not alone on the line (the character after it is not \0 or
+ * \n), we do print whatever follows it.
  *
  * Input:
  *	job		the job whose output needs printing
  *	finish		TRUE if this is the last time we'll be called
  *			for this job
- *
- * Side Effects:
- *	curPos may be shifted as may the contents of outBuf.
- *-----------------------------------------------------------------------
  */
 static void
 JobDoOutput(Job *job, Boolean finish)
@@ -1717,7 +1699,7 @@ JobDoOutput(Job *job, Boolean finish)
     /*
      * Read as many bytes as will fit in the buffer.
      */
-end_loop:
+again:
     gotNL = FALSE;
     fbuf = FALSE;
 
@@ -1835,7 +1817,7 @@ end_loop:
 	 * we do get an EOF, finish will be set FALSE and we'll fall
 	 * through and out.
 	 */
-	goto end_loop;
+	goto again;
     }
 }
 
