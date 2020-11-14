@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.181 2020/11/08 08:33:07 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.182 2020/11/14 14:16:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.181 2020/11/08 08:33:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.182 2020/11/14 14:16:01 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -561,8 +561,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	if (gn->made != ERROR) {
 	    /*
 	     * If the node was made successfully, mark it so, update
-	     * its modification time and timestamp all its parents. Note
-	     * that for .ZEROTIME targets, the timestamping isn't done.
+	     * its modification time and timestamp all its parents.
 	     * This is to keep its state from affecting that of its parent.
 	     */
 	    gn->made = MADE;
