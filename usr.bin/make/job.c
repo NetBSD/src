@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.323 2020/11/14 15:58:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.324 2020/11/14 16:44:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.323 2020/11/14 15:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.324 2020/11/14 16:44:04 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1637,36 +1637,39 @@ JobStart(GNode *gn, JobFlags flags)
     return JOB_RUNNING;
 }
 
+/* Print the output of the shell command, skipping the noPrint command of
+ * the shell, if any. */
 static char *
 JobOutput(Job *job, char *cp, char *endp)
 {
     char *ecp;
 
-    if (commandShell->noPrint != NULL && commandShell->noPrint[0] != '\0') {
-	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
-	    if (cp != ecp) {
-		*ecp = '\0';
-		/*
-		 * The only way there wouldn't be a newline after
-		 * this line is if it were the last in the buffer.
-		 * however, since the non-printable comes after it,
-		 * there must be a newline, so we don't print one.
-		 */
-		(void)fprintf(stdout, "%s", cp);
-		(void)fflush(stdout);
-	    }
-	    cp = ecp + commandShell->noPrintLen;
-	    if (cp != endp) {
-		/*
-		 * Still more to print, look again after skipping
-		 * the whitespace following the non-printable
-		 * command....
-		 */
-		cp++;
-		pp_skip_whitespace(&cp);
-	    } else {
-		return cp;
-	    }
+    if (commandShell->noPrint == NULL || commandShell->noPrint[0] == '\0')
+	return cp;
+
+    while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
+	if (ecp != cp) {
+	    *ecp = '\0';
+	    /*
+	     * The only way there wouldn't be a newline after
+	     * this line is if it were the last in the buffer.
+	     * however, since the non-printable comes after it,
+	     * there must be a newline, so we don't print one.
+	     */
+	    (void)fprintf(stdout, "%s", cp);
+	    (void)fflush(stdout);
+	}
+	cp = ecp + commandShell->noPrintLen;
+	if (cp != endp) {
+	    /*
+	     * Still more to print, look again after skipping
+	     * the whitespace following the non-printable
+	     * command....
+	     */
+	    cp++;
+	    pp_skip_whitespace(&cp);
+	} else {
+	    return cp;
 	}
     }
     return cp;
