@@ -40,7 +40,8 @@ static void
 add_prefix_map (file_prefix_map *&maps, const char *arg, const char *opt)
 {
   file_prefix_map *map;
-  const char *p;
+  const char *p, *old;
+  size_t oldlen;
 
   /* Note: looking for the last '='. The thinking is we can control the paths
      inside our projects but not where the users build them.  */
@@ -50,9 +51,28 @@ add_prefix_map (file_prefix_map *&maps, const char *arg, const char *opt)
       error ("invalid argument %qs to %qs", arg, opt);
       return;
     }
+  if (*arg == '$')
+    {
+      char *env = xstrndup (arg + 1, p - (arg + 1));
+      old = getenv(env);
+      if (!old)
+	{
+	  warning (0, "environment variable %qs not set in argument to "
+		   "%s", env, opt);
+	  free(env);
+	  return;
+	}
+      oldlen = strlen(old);
+      free(env);
+    }
+  else
+    {
+      old = xstrndup (arg, p - arg);
+      oldlen = p - arg;
+    }
   map = XNEW (file_prefix_map);
-  map->old_prefix = xstrndup (arg, p - arg);
-  map->old_len = p - arg;
+  map->old_prefix = old;
+  map->old_len = oldlen;
   p++;
   map->new_prefix = xstrdup (p);
   map->new_len = strlen (p);
