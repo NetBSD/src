@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.439 2020/11/14 15:58:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.440 2020/11/14 16:09:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.439 2020/11/14 15:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.440 2020/11/14 16:09:08 rillig Exp $");
 
 /* types and constants */
 
@@ -1075,38 +1075,7 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
     *pp = cp;
 }
 
-/*
- * Certain special targets have special semantics:
- *	.PATH		Have to set the dirSearchPath
- *			variable too
- *	.MAIN		Its sources are only used if
- *			nothing has been specified to
- *			create.
- *	.DEFAULT	Need to create a node to hang
- *			commands on, but we don't want
- *			it in the graph, nor do we want
- *			it to be the Main Target, so we
- *			create it, set OP_NOTMAIN and
- *			add it to the list, setting
- *			defaultNode to the new node for
- *			later use. We claim the node is
- *			A transformation rule to make
- *			life easier later, when we'll
- *			use Make_HandleUse to actually
- *			apply the .DEFAULT commands.
- *	.PHONY		The list of targets
- *	.NOPATH		Don't search for file in the path
- *	.STALE
- *	.BEGIN
- *	.END
- *	.ERROR
- *	.DELETE_ON_ERROR
- *	.INTERRUPT	Are not to be considered the
- *			main target.
- *	.NOTPARALLEL	Make only one target at a time.
- *	.SINGLESHELL	Create a shell for each command.
- *	.ORDER		Must set initial predecessor to NULL
- */
+/* Handle special targets like .PATH, .DEFAULT, .BEGIN, .ORDER. */
 static void
 ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 			       const char *line,
@@ -1119,6 +1088,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	Lst_Append(*inout_paths, dirSearchPath);
 	break;
     case SP_MAIN:
+	/* Allow targets from the command line to override the .MAIN node. */
 	if (!Lst_IsEmpty(opts.create))
 	    *inout_specType = SP_NOT;
 	break;
@@ -1135,6 +1105,11 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	break;
     }
     case SP_DEFAULT: {
+	/* Need to create a node to hang commands on, but we don't want it
+	 * in the graph, nor do we want it to be the Main Target. We claim
+	 * the node is a transformation rule to make life easier later,
+	 * when we'll use Make_HandleUse to actually apply the .DEFAULT
+	 * commands. */
 	GNode *gn = Targ_NewGN(".DEFAULT");
 	gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 	Lst_Append(targets, gn);
