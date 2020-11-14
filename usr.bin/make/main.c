@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.463 2020/11/14 18:07:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.464 2020/11/14 18:14:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.463 2020/11/14 18:07:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.464 2020/11/14 18:14:34 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1189,14 +1189,14 @@ InitDefSysIncPath(char *syspath)
 			*cp++ = '\0';
 
 		/* look for magic parent directory search string */
-		if (strncmp(".../", start, 4) != 0) {
-			(void)Dir_AddDir(defSysIncPath, start);
-		} else {
+		if (strncmp(start, ".../", 4) == 0) {
 			char *dir = Dir_FindHereOrAbove(curdir, start + 4);
 			if (dir != NULL) {
 				(void)Dir_AddDir(defSysIncPath, dir);
 				free(dir);
 			}
+		} else {
+			(void)Dir_AddDir(defSysIncPath, start);
 		}
 	}
 
