@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.316 2020/11/08 15:07:37 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.317 2020/11/14 12:38:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.316 2020/11/08 15:07:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.317 2020/11/14 12:38:06 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -430,7 +430,7 @@ job_table_dump(const char *where)
     debug_printf("job table @ %s\n", where);
     for (job = job_table; job < job_table_end; job++) {
 	debug_printf("job %d, status %d, flags %d, pid %d\n",
-	    (int)(job - job_table), job->job_state, job->flags, job->pid);
+		     (int)(job - job_table), job->status, job->flags, job->pid);
     }
 }
 
@@ -526,7 +526,7 @@ JobCondPassSig(int signo)
     DEBUG1(JOB, "JobCondPassSig(%d) called.\n", signo);
 
     for (job = job_table; job < job_table_end; job++) {
-	if (job->job_state != JOB_ST_RUNNING)
+	if (job->status != JOB_ST_RUNNING)
 	    continue;
 	DEBUG2(JOB, "JobCondPassSig passing signal %d to child %d.\n",
 	       signo, job->pid);
@@ -633,12 +633,12 @@ JobPassSig_suspend(int signo)
 }
 
 static Job *
-JobFindPid(int pid, JobState status, Boolean isJobs)
+JobFindPid(int pid, JobStatus status, Boolean isJobs)
 {
     Job *job;
 
     for (job = job_table; job < job_table_end; job++) {
-	if ((job->job_state == status) && job->pid == pid)
+	if (job->status == status && job->pid == pid)
 	    return job;
     }
     if (DEBUG(JOB) && isJobs)
@@ -1092,10 +1092,10 @@ JobFinish(Job *job, int status)
 	if (!(job->flags & JOB_SPECIAL))
 	    return_job_token = TRUE;
 	Make_Update(job->node);
-	job->job_state = JOB_ST_FREE;
+	job->status = JOB_ST_FREE;
     } else if (status != 0) {
 	errors++;
-	job->job_state = JOB_ST_FREE;
+	job->status = JOB_ST_FREE;
     }
 
     /*
@@ -1302,7 +1302,7 @@ JobExec(Job *job, char **argv)
     JobSigLock(&mask);
 
     /* Pre-emptively mark job running, pid still zero though */
-    job->job_state = JOB_ST_RUNNING;
+    job->status = JOB_ST_RUNNING;
 
     cpid = vFork();
     if (cpid == -1)
@@ -1497,7 +1497,7 @@ JobStart(GNode *gn, JobFlags flags)
     int tfd;			/* File descriptor to the temp file */
 
     for (job = job_table; job < job_table_end; job++) {
-	if (job->job_state == JOB_ST_FREE)
+	if (job->status == JOB_ST_FREE)
 	    break;
     }
     if (job >= job_table_end)
@@ -1506,7 +1506,7 @@ JobStart(GNode *gn, JobFlags flags)
     memset(job, 0, sizeof *job);
     job->node = gn;
     job->tailCmds = NULL;
-    job->job_state = JOB_ST_SETUP;
+    job->status = JOB_ST_SETUP;
 
     if (gn->type & OP_SPECIAL)
 	flags |= JOB_SPECIAL;
@@ -1646,7 +1646,7 @@ JobStart(GNode *gn, JobFlags flags)
 	    job->node->made = MADE;
 	    Make_Update(job->node);
 	}
-	job->job_state = JOB_ST_FREE;
+	job->status = JOB_ST_FREE;
 	return cmdsOK ? JOB_FINISHED : JOB_ERROR;
     }
 
@@ -1961,7 +1961,7 @@ JobReapChild(pid_t pid, int status, Boolean isJobs)
 	return;
     }
 
-    job->job_state = JOB_ST_FINISHED;
+    job->status = JOB_ST_FINISHED;
     job->exit_status = status;
 
     JobFinish(job, status);
@@ -2016,7 +2016,7 @@ Job_CatchOutput(void)
 	if (!fds[i].revents)
 	    continue;
 	job = jobfds[i];
-	if (job->job_state == JOB_ST_RUNNING)
+	if (job->status == JOB_ST_RUNNING)
 	    JobDoOutput(job, FALSE);
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 	/*
@@ -2458,7 +2458,7 @@ JobInterrupt(int runINTERRUPT, int signo)
     JobSigLock(&mask);
 
     for (job = job_table; job < job_table_end; job++) {
-	if (job->job_state != JOB_ST_RUNNING)
+	if (job->status != JOB_ST_RUNNING)
 	    continue;
 
 	gn = job->node;
@@ -2537,7 +2537,7 @@ Job_AbortAll(void)
 
     if (jobTokensRunning) {
 	for (job = job_table; job < job_table_end; job++) {
-	    if (job->job_state != JOB_ST_RUNNING)
+	    if (job->status != JOB_ST_RUNNING)
 		continue;
 	    /*
 	     * kill the child process with increasingly drastic signals to make
@@ -2563,8 +2563,8 @@ JobRestartJobs(void)
     Job *job;
 
     for (job = job_table; job < job_table_end; job++) {
-	if (job->job_state == JOB_ST_RUNNING &&
-		(make_suspended || job->suspended)) {
+	if (job->status == JOB_ST_RUNNING &&
+	    (make_suspended || job->suspended)) {
 	    DEBUG1(JOB, "Restarting stopped job pid %d.\n", job->pid);
 	    if (job->suspended) {
 		    (void)printf("*** [%s] Continued\n", job->node->name);
@@ -2575,7 +2575,7 @@ JobRestartJobs(void)
 		debug_printf("Failed to send SIGCONT to %d\n", job->pid);
 	    }
 	}
-	if (job->job_state == JOB_ST_FINISHED)
+	if (job->status == JOB_ST_FINISHED)
 	    /* Job exit deferred after calling waitpid() in a signal handler */
 	    JobFinish(job, job->exit_status);
     }
