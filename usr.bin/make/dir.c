@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.209 2020/11/14 19:36:31 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.210 2020/11/14 21:29:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.209 2020/11/14 19:36:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.210 2020/11/14 21:29:44 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -253,12 +253,10 @@ OpenDirs_Find(OpenDirs *odirs, const char *name)
 static void
 OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
 {
-    HashEntry *he = HashTable_FindEntry(&odirs->table, cdir->name);
-    if (he != NULL)
+    if (HashTable_FindEntry(&odirs->table, cdir->name) != NULL)
 	return;
-    he = HashTable_CreateEntry(&odirs->table, cdir->name, NULL);
     Lst_Append(odirs->list, cdir);
-    HashEntry_Set(he, odirs->list->last);
+    HashTable_Set(&odirs->table, cdir->name, odirs->list->last);
 }
 
 static void
@@ -313,7 +311,6 @@ cached_stats(const char *pathname, struct cached_stat *out_cst,
 	     CachedStatsFlags flags)
 {
     HashTable *tbl = flags & CST_LSTAT ? &lmtimes : &mtimes;
-    HashEntry *entry;
     struct stat sys_st;
     struct cached_stat *cst;
     int rc;
@@ -321,11 +318,8 @@ cached_stats(const char *pathname, struct cached_stat *out_cst,
     if (pathname == NULL || pathname[0] == '\0')
 	return -1;		/* This can happen in meta mode. */
 
-    entry = HashTable_FindEntry(tbl, pathname);
-
-    if (entry != NULL && !(flags & CST_UPDATE)) {
-	cst = HashEntry_Get(entry);
-
+    cst = HashTable_FindValue(tbl, pathname);
+    if (cst != NULL && !(flags & CST_UPDATE)) {
 	*out_cst = *cst;
 	DIR_DEBUG2("Using cached time %s for %s\n",
 		   Targ_FmtTime(cst->cst_mtime), pathname);
@@ -339,13 +333,9 @@ cached_stats(const char *pathname, struct cached_stat *out_cst,
     if (sys_st.st_mtime == 0)
 	sys_st.st_mtime = 1;	/* avoid confusion with missing file */
 
-    if (entry != NULL)
-	cst = entry->value;
-    else {
-	entry = HashTable_CreateEntry(tbl, pathname, NULL);
+    if (cst == NULL) {
 	cst = bmake_malloc(sizeof *cst);
-	memset(cst, 0, sizeof *cst);
-	HashEntry_Set(entry, cst);
+	HashTable_Set(tbl, pathname, cst);
     }
 
     cst->cst_mtime = sys_st.st_mtime;
