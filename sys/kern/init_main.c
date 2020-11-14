@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: init_main.c,v 1.504.2.1 2020/11/14 15:36:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.504.2.1 2020/11/14 15:36:11 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -469,7 +469,22 @@ main(void)
 	    10, VNODE_KMEM_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
-#endif
+#endif /* NVNODE_IMPLICIT */
+#ifdef MAXFILES_IMPLICIT
+	/*
+	 * If maximum number of files is not explicitly defined in
+	 * kernel config, adjust the number so that it is somewhat
+	 * more reasonable on machines with larger memory sizes.
+	 * Arbitary numbers are 20,000 files for 16GB RAM or more
+	 * and 10,000 files for 1GB RAM or more.
+	 *
+	 * XXXtodo: adjust this and other values totally dynamically
+	 */
+	if (ctob((uint64_t)physmem) >= 16ULL * 1024 * 1024 * 1024)
+		maxfiles = MAX(maxfiles, 20000);
+	if (ctob((uint64_t)physmem) >= 1024 * 1024 * 1024)
+		maxfiles = MAX(maxfiles, 10000);
+#endif /* MAXFILES_IMPLICIT */
 
 	/* Initialize fstrans. */
 	fstrans_init();
