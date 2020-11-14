@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.318 2020/11/14 13:07:39 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.319 2020/11/14 13:27:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.318 2020/11/14 13:07:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.319 2020/11/14 13:27:01 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -169,7 +169,7 @@ MAKE_RCSID("$NetBSD: job.c,v 1.318 2020/11/14 13:07:39 rillig Exp $");
  * status. Finally errExit is a printf template for running the command and
  * causing the shell to exit on error. If any of these strings are empty when
  * hasErrCtl is FALSE, the command will be executed anyway as is, and if it
- * causes an error, so be it. Any templates setup to echo the command will
+ * causes an error, so be it. Any templates set up to echo the command will
  * escape any '$ ` \ "' characters in the command string to avoid common
  * problems with echo "%s\n" as a template.
  *
@@ -846,7 +846,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 	/*
 	 * If errors are being checked and the shell doesn't have error control
-	 * but does supply an errExit template, then setup commands to run
+	 * but does supply an errExit template, then set up commands to run
 	 * through it.
 	 */
 
@@ -1513,7 +1513,7 @@ JobStart(GNode *gn, JobFlags flags)
     memset(job, 0, sizeof *job);
     job->node = gn;
     job->tailCmds = NULL;
-    job->status = JOB_ST_SETUP;
+    job->status = JOB_ST_SET_UP;
 
     if (gn->type & OP_SPECIAL)
 	flags |= JOB_SPECIAL;
