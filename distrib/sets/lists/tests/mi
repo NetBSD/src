@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.968 2020/11/13 17:19:06 sjg Exp $
+# $NetBSD: mi,v 1.969 2020/11/14 15:35:20 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5213,6 +5213,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-raw.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-silent.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-silent.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-touch-jobs.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-touch-jobs.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-touch.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-touch.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-tracefile.exp				tests-usr.bin-tests	compattestfile,atf
