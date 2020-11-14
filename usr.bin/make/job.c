@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.321 2020/11/14 14:16:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.322 2020/11/14 15:47:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.321 2020/11/14 14:16:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.322 2020/11/14 15:47:35 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1107,9 +1107,9 @@ TouchRegular(GNode *gn)
 
     fd = open(file, O_RDWR | O_CREAT, 0666);
     if (fd < 0) {
-	(void)fprintf(stdout, "*** couldn't touch %s: %s",
+	(void)fprintf(stderr, "*** couldn't touch %s: %s\n",
 		      file, strerror(errno));
-	(void)fflush(stdout);
+	(void)fflush(stderr);
 	return;                /* XXX: What about propagating the error? */
     }
 
