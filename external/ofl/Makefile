@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2020/11/13 09:56:53 maya Exp $
+#	$NetBSD: Makefile,v 1.4 2020/11/14 04:32:44 mrg Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKX11} != "no"
+.if ${MKX11} != "no" && ${MKX11FONTS} != "no"
 SUBDIR+=	font-liberation-ttf
 .endif
 
