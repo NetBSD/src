@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.98 2020/11/14 09:11:55 mlelstv Exp $ */
+/* $NetBSD: envstat.c,v 1.99 2020/11/14 12:36:49 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.98 2020/11/14 09:11:55 mlelstv Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.99 2020/11/14 12:36:49 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -109,6 +109,7 @@ static bool 		statistics;
 static u_int		header_passes;
 
 static int 		parse_dictionary(int);
+static int		add_sensors(prop_dictionary_t, prop_dictionary_t, const char *, const char *);
 static int 		send_dictionary(FILE *);
 static int 		find_sensors(prop_array_t, const char *, dvprops_t);
 static void 		print_sensors(void);
@@ -218,6 +219,61 @@ int main(int argc, char **argv)
 						  &dict);
 		if (rval)
 			errx(EXIT_FAILURE, "%s", strerror(rval));
+
+		if (mydevname || sensors) {
+			prop_dictionary_t ndict;
+
+			ndict = prop_dictionary_create();
+			if (ndict == NULL)
+				err(EXIT_FAILURE, "prop_dictionary_create");
+
+			if (mydevname) {
+				if (add_sensors(ndict, dict, mydevname, NULL))
+					err(EXIT_FAILURE, "add_sensors");
+			}
+			if (sensors) {
+				char *dvstring, *sstring, *p, *last, *s;
+				unsigned count = 0;
+
+				s = strdup(sensors);
+				if (s == NULL)
+					err(EXIT_FAILURE, "strdup");
+
+				for ((p = strtok_r(s, ",", &last)); p;
+				     (p = strtok_r(NULL, ",", &last))) {
+					/* get device name */
+					dvstring = strtok(p, ":");
+					if (dvstring == NULL)
+						errx(EXIT_FAILURE, "missing device name");
+
+					/* get sensor description */
+					sstring = strtok(NULL, ":");
+					if (sstring == NULL)
+						errx(EXIT_FAILURE, "missing sensor description");
+
+					if (add_sensors(ndict, dict, dvstring, sstring))
+						err(EXIT_FAILURE, "add_sensors");
+
+					++count;
+				}
+				free(s);
+
+				/* in case we asked for a single sensor
+				 * show only the sensor dictionary
+				 */
+				if (count == 1) {
+					prop_object_t obj, obj2;
+
+					obj = prop_dictionary_get(ndict, dvstring);
+					obj2 = prop_array_get(obj, 0);
+					prop_object_release(ndict);
+					ndict = obj2;
+				}
+			}
+
+			prop_object_release(dict);
+			dict = ndict;
+		}
 
 		if (argc > 0) {
 			for (; argc > 0; ++argv, --argc)
@@ -347,6 +403,92 @@ find_stats_sensor(const char *desc)
 	SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
 
 	return stats;
+}
+
+static int
+add_sensors(prop_dictionary_t ndict, prop_dictionary_t dict, const char *dev, const char *sensor)
+{
+	prop_object_iterator_t iter, iter2;
+	prop_object_t obj, obj2, desc;
+	prop_array_t array, narray;
+	prop_dictionary_t sdict;
+	const char *dnp;
+	unsigned int capacity = 1;
+	uint64_t dummy;
+	bool found = false;
+
+	if (prop_dictionary_count(dict) == 0)
+		return 0;
+
+	narray = prop_dictionary_get(ndict, dev);
+	if (narray)
+		found = true;
+	else {
+		narray = prop_array_create_with_capacity(capacity);
+		if (!narray)
+			return -1;
+		if (!prop_dictionary_set(ndict, dev, narray)) {
+			prop_object_release(narray);
+			return -1;
+		}
+	}
+
+	iter = prop_dictionary_iterator(dict);
+	if (iter == NULL)
+		goto fail;
+	while ((obj = prop_object_iterator_next(iter)) != NULL) {
+		array = prop_dictionary_get_keysym(dict, obj);
+		if (prop_object_type(array) != PROP_TYPE_ARRAY)
+			break;
+
+		dnp = prop_dictionary_keysym_value(obj);
+		if (strcmp(dev, dnp))
+			continue;
+		found = true;
+
+		iter2 = prop_array_iterator(array);
+		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
+			obj2 = prop_dictionary_get(obj, "device-properties");
+			if (obj2) {
+				if (!prop_dictionary_get_uint64(obj2,
+				    "refresh-timeout", &dummy))
+					continue;
+			}
+
+			if (sensor) {
+				desc = prop_dictionary_get(obj, "description");
+				if (desc == NULL)
+					continue;
+
+				if (!prop_string_equals_string(desc, sensor))
+					continue;
+			}
+
+			if (!prop_array_ensure_capacity(narray, capacity))
+				goto fail;
+
+			sdict = prop_dictionary_copy(obj);
+			if (sdict == NULL)
+				goto fail;
+			prop_array_add(narray, sdict);
+			++capacity;
+		}
+		prop_object_iterator_release(iter2);
+	}
+	prop_object_iterator_release(iter);
+
+	/* drop key and array when device wasn't found */
+	if (!found) {
+		prop_dictionary_remove(ndict, dev);
+		prop_object_release(narray);
+	}
+
+	return 0;
+
+fail:
+	prop_dictionary_remove(ndict, dev);
+	prop_object_release(narray);
+	return -1;
 }
 
 static int
@@ -1099,10 +1241,13 @@ do {									\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-DfIklrSTx] ", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-DfIklrST] ", getprogname());
 	(void)fprintf(stderr, "[-c file] [-d device] [-i interval] ");
 	(void)fprintf(stderr, "[-s device:sensor,...] [-w width]\n");
-	(void)fprintf(stderr, "       %s -x [property]", getprogname());
+	(void)fprintf(stderr, "       %s ", getprogname());
+	(void)fprintf(stderr, "[-d device] ");
+	(void)fprintf(stderr, "[-s device:sensor,...] ");
+	(void)fprintf(stderr, "-x [property]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

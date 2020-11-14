@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.63 2020/11/14 09:11:55 mlelstv Exp $
+.\"	$NetBSD: envstat.8,v 1.64 2020/11/14 12:36:49 mlelstv Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,12 +35,16 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl DfIklSTWx
+.Op Fl DfIklSTW
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
 .Op Fl s Ar "device:sensor,..."
 .Op Fl w Ar width
+.Nm
+.Fl x
+.Op Fl d Ar device
+.Op Fl s Ar "device:sensor,..."
 .Op Ar property...
 .Sh DESCRIPTION
 .Nm
@@ -143,6 +147,12 @@ and sensors.
 If
 .Ar property
 is specified, the value of that property is printed.
+The property list can be filtered with the 
+.Fl d or
+.Fl s
+options. If
+.Fl s is used with only a single sensor, only the properties
+of this sensor are returned, not a list of sensors.
 .El
 .Sh UNITS
 The display mode may show some values with abbreviated units;
@@ -205,10 +215,22 @@ To display statistics for all sensors and ignoring sensors with
 invalid states every second:
 .Pp
 .Dl $ envstat -ITi1
+.Pp
+To return a single temperature value:
+.Pp
+.Dl $ envstat -s vcmbox0:temperature -x /cur-value
+.Pp
+To return values of multiple temperature sensors from a single device
+.Pp
+.Dl $ envstat -s 'thinkpad0:temperature 0,thinkpad0:temperature 1' -x /thinkpad0/0/cur-value /thinkpad0/1/cur-value
+.Pp
+To return values of temperature sensors from multiple devices:
+.Pp
+.Dl $ envstat -s 'coretemp0:cpu0 temperature,coretemp1:cpu 2 temperature' -x /coretemp0/0/cur-value /coretemp1/0/cur-value
 .Sh SEE ALSO
 .Xr units 1 ,
 .Xr proplib 3 ,
-.Xr acpiacad 4 ,
+.r acpiacad 4 ,
 .Xr acpibat 4 ,
 .Xr acpitz 4 ,
 .Xr admtemp 4 ,
