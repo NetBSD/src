@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.205 2020/11/14 06:15:11 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.206 2020/11/14 11:22:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.205 2020/11/14 06:15:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.206 2020/11/14 11:22:17 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -273,7 +273,7 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
     Lst_Remove(odirs->list, ln);
 }
 
-static OpenDirs openDirs;	/* the list of all open directories */
+static OpenDirs openDirs;	/* all cached directories */
 
 /*
  * Variables for gathering statistics on the efficiency of the caching
@@ -305,12 +305,11 @@ static HashTable lmtimes;	/* same as mtimes but for lstat */
  * mtime and mode are all we care about.
  */
 struct cache_st {
-    time_t lmtime;		/* lstat */
+    time_t lmtime;		/* lstat; XXX: is probably redundant */
     time_t mtime;		/* stat */
     mode_t mode;
 };
 
-/* minimize changes below */
 typedef enum CachedStatsFlags {
     CST_NONE	= 0,
     CST_LSTAT	= 1 << 0,	/* call lstat(2) instead of stat(2) */
@@ -319,7 +318,7 @@ typedef enum CachedStatsFlags {
 
 /* Returns 0 and the result of stat(2) or lstat(2) in *mst, or -1 on error. */
 static int
-cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
+cached_stats(HashTable *tbl, const char *pathname, struct make_stat *mst,
 	     CachedStatsFlags flags)
 {
     HashEntry *entry;
@@ -328,20 +327,24 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     int rc;
 
     if (pathname == NULL || pathname[0] == '\0')
-	return -1;
+	return -1;		/* This can happen in meta mode. */
 
-    entry = HashTable_FindEntry(htp, pathname);
+    entry = HashTable_FindEntry(tbl, pathname);
 
-    if (entry && !(flags & CST_UPDATE)) {
+    if (entry != NULL && !(flags & CST_UPDATE)) {
 	cst = HashEntry_Get(entry);
 
 	mst->mst_mode = cst->mode;
 	mst->mst_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
-	if (mst->mst_mtime) {
+	/* XXX: Checking for mst_mtime != 0 is probably redundant since
+	 * nonexistent files are not cached. */
+	if (mst->mst_mtime != 0) {
 	    DIR_DEBUG2("Using cached time %s for %s\n",
 		       Targ_FmtTime(mst->mst_mtime), pathname);
 	    return 0;
 	}
+	/* Continue with the normal lookup to see whether the file has been
+	 * created in the meantime. */
     }
 
     rc = (flags & CST_LSTAT)
@@ -356,13 +359,14 @@ cached_stats(HashTable *htp, const char *pathname, struct make_stat *mst,
     mst->mst_mode = sys_st.st_mode;
     mst->mst_mtime = sys_st.st_mtime;
 
-    if (entry == NULL)
-	entry = HashTable_CreateEntry(htp, pathname, NULL);
-    if (HashEntry_Get(entry) == NULL) {
-	HashEntry_Set(entry, bmake_malloc(sizeof *cst));
-	memset(HashEntry_Get(entry), 0, sizeof *cst);
+    if (entry != NULL)
+	cst = entry->value;
+    else {
+	entry = HashTable_CreateEntry(tbl, pathname, NULL);
+	cst = bmake_malloc(sizeof *cst);
+	memset(cst, 0, sizeof *cst);
+	HashEntry_Set(entry, cst);
     }
-    cst = HashEntry_Get(entry);
     if (flags & CST_LSTAT) {
 	cst->lmtime = sys_st.st_mtime;
     } else {
