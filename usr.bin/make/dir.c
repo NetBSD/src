@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.202 2020/11/08 11:57:49 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.203 2020/11/14 06:08:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.202 2020/11/08 11:57:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.203 2020/11/14 06:08:24 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -417,23 +417,31 @@ Dir_InitCur(const char *cdname)
 {
     CachedDir *dir;
 
-    if (cdname != NULL) {
+    if (cdname == NULL)
+	return;
+
+    /*
+     * Our build directory is not the same as our source directory.
+     * Keep this one around too.
+     */
+    dir = Dir_AddDir(NULL, cdname);
+    if (dir == NULL)
+	return;
+
+    /* XXX: Reference counting is wrong here.
+     * If this function is called repeatedly with the same directory name,
+     * its reference count increases each time even though the number of
+     * actual references stays the same. */
+
+    dir->refCount++;
+    if (cur != NULL && cur != dir) {
 	/*
-	 * Our build directory is not the same as our source directory.
-	 * Keep this one around too.
+	 * We've been here before, clean up.
 	 */
-	if ((dir = Dir_AddDir(NULL, cdname))) {
-	    dir->refCount++;
-	    if (cur && cur != dir) {
-		/*
-		 * We've been here before, clean up.
-		 */
-		cur->refCount--;
-		Dir_Destroy(cur);
-	    }
-	    cur = dir;
-	}
+	cur->refCount--;
+	Dir_Destroy(cur);
     }
+    cur = dir;
 }
 
 /* (Re)initialize "dot" (current/object directory) path hash.
@@ -1383,6 +1391,7 @@ Dir_AddDir(SearchPath *path, const char *name)
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
 	SearchPathNode *ln;
 
+	/* XXX: Linear search gets slow with thousands of entries. */
 	for (ln = path->first; ln != NULL; ln = ln->next) {
 	    CachedDir *pathDir = ln->datum;
 	    if (strcmp(pathDir->name, name) == 0)
