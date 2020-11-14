@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.20 2018/04/19 21:50:07 christos Exp $ */
+/* $NetBSD: coda.h,v 1.21 2020/11/14 11:42:56 hannken Exp $ */
 
 /*
 
@@ -59,6 +59,10 @@ Mellon the rights to redistribute these changes without encumbrance.
 
 #ifndef CODA_MAXSYMLINKS
 #define CODA_MAXSYMLINKS 10
+#endif
+
+#ifndef CODA_DIRBLKSIZ
+#define CODA_DIRBLKSIZ 0x1000
 #endif
 
 #if defined(DJGPP) || defined(__CYGWIN32__)
@@ -169,7 +173,7 @@ struct venus_dirent {
 #ifndef _VENUS_DIRENT_T_
 #define _VENUS_DIRENT_T_ 1
 struct venus_dirent {
-        unsigned long	d_fileno;		/* file number of entry */
+        unsigned int	d_fileno;		/* file number of entry */
         unsigned short	d_reclen;		/* length of this record */
         unsigned char 	d_type;			/* file type, see below */
         unsigned char	d_namlen;		/* length of string in d_name */

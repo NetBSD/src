@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.113 2020/11/14 11:42:05 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.114 2020/11/14 11:42:56 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.113 2020/11/14 11:42:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.114 2020/11/14 11:42:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.113 2020/11/14 11:42:05 hannken Exp
 #include <sys/select.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/dirent.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -1528,70 +1529,143 @@ int
 coda_readdir(void *v)
 {
 /* true args */
-    struct vop_readdir_args *ap = v;
-    vnode_t *vp = ap->a_vp;
-    struct cnode *cp = VTOC(vp);
-    struct uio *uiop = ap->a_uio;
-    kauth_cred_t cred = ap->a_cred;
-    int *eofflag = ap->a_eofflag;
-    off_t **cookies = ap->a_cookies;
-    int *ncookies = ap->a_ncookies;
+	struct vop_readdir_args *ap = v;
+	vnode_t *vp = ap->a_vp;
+	struct cnode *cp = VTOC(vp);
+	struct uio *uiop = ap->a_uio;
+	kauth_cred_t cred = ap->a_cred;
+	int *eofflag = ap->a_eofflag;
 /* upcall decl */
 /* locals */
-    int error = 0;
-    enum vtype saved_type;
+	size_t initial_resid = uiop->uio_resid;
+	int error = 0;
+	int opened_internally = 0;
+	int ncookies;
+	char *buf;
+	struct vnode *cvp;
+	struct dirent *dirp;
 
-    MARK_ENTRY(CODA_READDIR_STATS);
+	MARK_ENTRY(CODA_READDIR_STATS);
 
-    CODADEBUG(CODA_READDIR, myprintf(("%s: (%p, %lu, %lld)\n", __func__,
-	uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid,
-	(long long) uiop->uio_offset)); )
+	CODADEBUG(CODA_READDIR, myprintf(("%s: (%p, %lu, %lld)\n", __func__,
+	    uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid,
+	    (long long) uiop->uio_offset)); )
 
-    /* Check for readdir of control object. */
-    if (IS_CTL_VP(vp)) {
-	MARK_INT_FAIL(CODA_READDIR_STATS);
-	return(ENOENT);
-    }
-
-    {
-	/* Redirect the request to UFS. */
+	/* Check for readdir of control object. */
+	if (IS_CTL_VP(vp)) {
+		MARK_INT_FAIL(CODA_READDIR_STATS);
+		return ENOENT;
+	}
 
 	/* If directory is not already open do an "internal open" on it. */
-	int opened_internally = 0;
 	if (cp->c_ovp == NULL) {
-	    opened_internally = 1;
-	    MARK_INT_GEN(CODA_OPEN_STATS);
-	    error = VOP_OPEN(vp, FREAD, cred);
+		opened_internally = 1;
+		MARK_INT_GEN(CODA_OPEN_STATS);
+		error = VOP_OPEN(vp, FREAD, cred);
 #ifdef	CODA_VERBOSE
-	    printf("%s: Internally Opening %p\n", __func__, vp);
+		printf("%s: Internally Opening %p\n", __func__, vp);
 #endif
-	    if (error) return(error);
-	} else
-	    vp = cp->c_ovp;
+		if (error)
+			return error;
+		KASSERT(cp->c_ovp != NULL);
+	}
+	cvp = cp->c_ovp;
 
-	/* Have UFS handle the call. */
 	CODADEBUG(CODA_READDIR, myprintf(("%s: fid = %s, refcnt = %d\n",
-	    __func__, coda_f2s(&cp->c_fid), vrefcnt(vp))); )
-	saved_type = vp->v_type;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	vp->v_type = VDIR; /* pretend the container file is a dir */
-	error = VOP_READDIR(vp, uiop, cred, eofflag, cookies, ncookies);
-	vp->v_type = saved_type;
-	VOP_UNLOCK(vp);
+	    __func__, coda_f2s(&cp->c_fid), vrefcnt(cvp))); )
 
+	if (ap->a_ncookies) {
+		ncookies = ap->a_uio->uio_resid / _DIRENT_RECLEN(dirp, 1);
+		*ap->a_ncookies = 0;
+		*ap->a_cookies = malloc(ncookies * sizeof (off_t),
+		    M_TEMP, M_WAITOK);
+	}
+	buf = kmem_alloc(CODA_DIRBLKSIZ, KM_SLEEP);
+	dirp = kmem_alloc(sizeof(*dirp), KM_SLEEP);
+	vn_lock(cvp, LK_EXCLUSIVE | LK_RETRY);
+
+	while (error == 0) {
+		size_t resid = 0;
+		char *dp, *ep;
+
+		if (!ALIGNED_POINTER(uiop->uio_offset, uint32_t)) {
+			error = EINVAL;
+			break;
+		}
+		error = vn_rdwr(UIO_READ, cvp, buf,
+		    CODA_DIRBLKSIZ, uiop->uio_offset,
+		    UIO_SYSSPACE, IO_NODELOCKED, cred, &resid, curlwp);
+		if (error || resid == CODA_DIRBLKSIZ)
+			break;
+		for (dp = buf, ep = dp + CODA_DIRBLKSIZ - resid; dp < ep; ) {
+			off_t off;
+			struct venus_dirent *vd = (struct venus_dirent *)dp;
+
+			if (!ALIGNED_POINTER(vd, uint32_t) ||
+			    !ALIGNED_POINTER(vd->d_reclen, uint32_t) ||
+			    vd->d_reclen == 0) {
+				error = EINVAL;
+				break;
+			}
+			if (dp + vd->d_reclen > ep) {
+				error = ENAMETOOLONG;
+				break;
+			}
+			if (vd->d_namlen == 0) {
+				uiop->uio_offset += vd->d_reclen;
+				dp += vd->d_reclen;
+				continue;
+			}
+
+			dirp->d_fileno = vd->d_fileno;
+			dirp->d_type = vd->d_type;
+			dirp->d_namlen = vd->d_namlen;
+			dirp->d_reclen = _DIRENT_SIZE(dirp);
+			strlcpy(dirp->d_name, vd->d_name, dirp->d_namlen + 1);
+
+			if (uiop->uio_resid < dirp->d_reclen) {
+				error = ENAMETOOLONG;
+				break;
+			}
+
+			off = uiop->uio_offset;
+			error = uiomove(dirp, dirp->d_reclen, uiop);
+			uiop->uio_offset = off;
+			if (error)
+				break;
+
+			uiop->uio_offset += vd->d_reclen;
+			dp += vd->d_reclen;
+			if (ap->a_ncookies)
+				(*ap->a_cookies)[(*ap->a_ncookies)++] =
+				    uiop->uio_offset;
+		}
+	}
+
+	VOP_UNLOCK(cvp);
+	kmem_free(dirp, sizeof(*dirp));
+	kmem_free(buf, CODA_DIRBLKSIZ);
+	if (eofflag && error == 0)
+		*eofflag = 1;
+	if (uiop->uio_resid < initial_resid && error == ENAMETOOLONG)
+		error = 0;
+	if (ap->a_ncookies && error) {
+		free(*ap->a_cookies, M_TEMP);
+		*ap->a_ncookies = 0;
+		*ap->a_cookies = NULL;
+	}
 	if (error)
-	    MARK_INT_FAIL(CODA_READDIR_STATS);
+		MARK_INT_FAIL(CODA_READDIR_STATS);
 	else
-	    MARK_INT_SAT(CODA_READDIR_STATS);
+		MARK_INT_SAT(CODA_READDIR_STATS);
 
 	/* Do an "internal close" if necessary. */
 	if (opened_internally) {
-	    MARK_INT_GEN(CODA_CLOSE_STATS);
-	    (void)VOP_CLOSE(vp, FREAD, cred);
+		MARK_INT_GEN(CODA_CLOSE_STATS);
+		(void)VOP_CLOSE(vp, FREAD, cred);
 	}
-    }
 
-    return(error);
+	return error;
 }
 
 /*
