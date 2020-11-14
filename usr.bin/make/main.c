@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.460 2020/11/14 17:29:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.461 2020/11/14 17:39:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.460 2020/11/14 17:29:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.461 2020/11/14 17:39:14 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -750,7 +750,7 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 }
 
 static Boolean
-Main_SetVarObjdir(Boolean writable, const char *var, const char *suffix)
+SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 {
 	void *path_freeIt;
 	const char *path = Var_Value(var, VAR_CMDLINE, &path_freeIt);
@@ -1092,8 +1092,8 @@ InitObjdir(const char *machine, const char *machine_arch)
 	writable = GetBooleanVar("MAKE_OBJDIR_CHECK_WRITABLE", TRUE);
 	(void)Main_SetObjdir(FALSE, "%s", curdir);
 
-	if (!Main_SetVarObjdir(writable, "MAKEOBJDIRPREFIX", curdir) &&
-	    !Main_SetVarObjdir(writable, "MAKEOBJDIR", "") &&
+	if (!SetVarObjdir(writable, "MAKEOBJDIRPREFIX", curdir) &&
+	    !SetVarObjdir(writable, "MAKEOBJDIR", "") &&
 	    !Main_SetObjdir(writable, "%s.%s-%s", _PATH_OBJDIR, machine, machine_arch) &&
 	    !Main_SetObjdir(writable, "%s.%s", _PATH_OBJDIR, machine) &&
 	    !Main_SetObjdir(writable, "%s", _PATH_OBJDIR))
