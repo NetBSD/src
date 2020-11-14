@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.206 2020/11/12 23:35:21 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.207 2020/11/14 15:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -423,7 +423,7 @@ extern Boolean deleteOnError;
 /* TRUE while processing .depend */
 extern Boolean doing_depend;
 /* .DEFAULT rule */
-extern GNode *DEFAULT;
+extern GNode *defaultNode;
 
 /* Variables defined internally by make which should not override those set
  * by makefiles. */
