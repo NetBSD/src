@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.32 2020/11/10 00:32:12 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.33 2020/11/14 21:29:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -122,6 +122,7 @@ void *HashTable_FindValue(HashTable *, const char *);
 unsigned int Hash_Hash(const char *);
 void *HashTable_FindValueHash(HashTable *, const char *, unsigned int);
 HashEntry *HashTable_CreateEntry(HashTable *, const char *, Boolean *);
+HashEntry *HashTable_Set(HashTable *, const char *, void *);
 void HashTable_DeleteEntry(HashTable *, HashEntry *);
 void HashTable_DebugStats(HashTable *, const char *);
 
