@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.322 2020/11/14 15:47:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.323 2020/11/14 15:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.322 2020/11/14 15:47:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.323 2020/11/14 15:58:01 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1182,20 +1182,19 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 
     /*
      * No commands. Look for .DEFAULT rule from which we might infer
-     * commands
+     * commands.
      */
-    if (DEFAULT != NULL && !Lst_IsEmpty(DEFAULT->commands) &&
+    if (defaultNode != NULL && !Lst_IsEmpty(defaultNode->commands) &&
 	!(gn->type & OP_SPECIAL)) {
 	/*
-	 * Make only looks for a .DEFAULT if the node was never the
-	 * target of an operator, so that's what we do too. If
-	 * a .DEFAULT was given, we substitute its commands for gn's
-	 * commands and set the IMPSRC variable to be the target's name
-	 * The DEFAULT node acts like a transformation rule, in that
+	 * The traditional Make only looks for a .DEFAULT if the node was
+	 * never the target of an operator, so that's what we do too.
+	 *
+	 * The .DEFAULT node acts like a transformation rule, in that
 	 * gn also inherits any attributes or sources attached to
 	 * .DEFAULT itself.
 	 */
-	Make_HandleUse(DEFAULT, gn);
+	Make_HandleUse(defaultNode, gn);
 	Var_Set(IMPSRC, GNode_VarTarget(gn), gn);
 	return TRUE;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.458 2020/11/13 19:45:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.459 2020/11/14 15:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.458 2020/11/13 19:45:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.459 2020/11/14 15:58:01 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -122,7 +122,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 
 CmdOpts opts;
 time_t now;			/* Time at start of make */
-GNode *DEFAULT;			/* .DEFAULT node */
+GNode *defaultNode;		/* .DEFAULT node */
 Boolean allPrecious;		/* .PRECIOUS given on line by itself */
 Boolean deleteOnError;		/* .DELETE_ON_ERROR: set */
 
@@ -1504,7 +1504,7 @@ main_Init(int argc, char **argv)
 	Suff_Init();
 	Trace_Init(tracefile);
 
-	DEFAULT = NULL;
+	defaultNode = NULL;
 	(void)time(&now);
 
 	Trace_Log(MAKESTART, NULL);

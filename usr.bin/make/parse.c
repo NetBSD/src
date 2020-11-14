@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.438 2020/11/12 23:35:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.439 2020/11/14 15:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.438 2020/11/12 23:35:21 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.439 2020/11/14 15:58:01 rillig Exp $");
 
 /* types and constants */
 
@@ -1088,7 +1088,7 @@ ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
  *			it to be the Main Target, so we
  *			create it, set OP_NOTMAIN and
  *			add it to the list, setting
- *			DEFAULT to the new node for
+ *			defaultNode to the new node for
  *			later use. We claim the node is
  *			A transformation rule to make
  *			life easier later, when we'll
@@ -1138,7 +1138,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	GNode *gn = Targ_NewGN(".DEFAULT");
 	gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 	Lst_Append(targets, gn);
-	DEFAULT = gn;
+	defaultNode = gn;
 	break;
     }
     case SP_DELETE_ON_ERROR:
