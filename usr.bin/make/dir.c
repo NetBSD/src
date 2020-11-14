@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.203 2020/11/14 06:08:24 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.203 2020/11/14 06:08:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -276,7 +276,7 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
 static OpenDirs openDirs;	/* the list of all open directories */
 
 /*
- * Variables for gathering statistics on the efficiency of the cashing
+ * Variables for gathering statistics on the efficiency of the caching
  * mechanism.
  */
 static int hits;		/* Found in directory cache */

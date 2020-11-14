@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.175 2020/11/08 19:53:11 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.176 2020/11/14 06:10:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 /* Manipulate libraries, archives and their members.
  *
  * The first time an archive is referenced, all of its members' headers are
- * read and cashed and the archive closed again.  All cashed archives are kept
+ * read and cached and the archive closed again.  All cached archives are kept
  * on a list which is searched each time an archive member is referenced.
  *
  * The interface to this module is:
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.175 2020/11/08 19:53:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.176 2020/11/14 06:10:28 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
