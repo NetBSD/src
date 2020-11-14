@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.48 2020/11/04 11:52:47 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.49 2020/11/14 12:59:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1313,4 +1313,9 @@ sys/dev/pci/if_wmvar.h				1.47
 	(ICH*/PCH*, 82580 and I350).
 	[knakahara, ticket #1620]
 
+sys/coda/coda.h					1.21 (patch)
+sys/coda/coda_vnops.c				1.114 (patch)
+
+	PR 55775: fix coda_readdir() to directly process the container file.
+	[hannken, ticket #1622]
 
