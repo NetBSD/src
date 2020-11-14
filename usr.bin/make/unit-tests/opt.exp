@@ -1,5 +1,5 @@
 make -:
-usage: make [-BeikNnqrstWwX] 
+usage: make [-BeikNnqrstWwX]
             [-C directory] [-D variable] [-d flags] [-f makefile]
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]
             [-V variable] [-v variable] [variable=value] [target ...]
@@ -10,7 +10,7 @@ make: don't know how to make -f (continuing)
 `/dev/null' is up to date.
 
 make -?
-usage: make [-BeikNnqrstWwX] 
+usage: make [-BeikNnqrstWwX]
             [-C directory] [-D variable] [-d flags] [-f makefile]
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]
             [-V variable] [-v variable] [variable=value] [target ...]
