@@ -1,8 +1,8 @@
-# $NetBSD: opt-touch.mk,v 1.3 2020/11/14 13:59:58 rillig Exp $
+# $NetBSD: opt-touch.mk,v 1.4 2020/11/14 14:13:09 rillig Exp $
 #
 # Tests for the -t command line option.
 
-.MAKEFLAGS: -t opt-touch-phony opt-touch-join opt-touch-use
+.MAKEFLAGS: -t opt-touch-phony opt-touch-join opt-touch-use opt-touch-make
 
 opt-touch-phony: .PHONY
 	: Making $@.
@@ -12,6 +12,9 @@ opt-touch-join: .JOIN
 
 opt-touch-use: .USE
 	: Making use of $@.
+
+opt-touch-make: .MAKE
+	: Making $@.
 
 .END:
 	@files=$$(ls opt-touch-* 2>/dev/null | grep -v -e '\.' -e '\*'); \
