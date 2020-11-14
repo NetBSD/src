@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.11 2020/11/10 11:45:35 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.12 2020/11/14 13:03:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1077,4 +1077,10 @@ tests/net/ipsec/t_ipsec_natt.sh			1.4,1.5
 	Refactor a little and follow new format of "npfctl list".
 	Fix minor bugs.
 	[knakahara, ticket #1129]
+
+sys/coda/coda.h					1.21 (patch)
+sys/coda/coda_vnops.c				1.114 (patch)
+
+	PR 55775: fix coda_readdir() to directly process the container file.
+	[hannken, ticket #1131]
 
