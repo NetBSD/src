@@ -1,11 +1,27 @@
-# $NetBSD: opt-chdir.mk,v 1.3 2020/11/14 22:17:29 rillig Exp $
+# $NetBSD: opt-chdir.mk,v 1.4 2020/11/14 22:39:14 rillig Exp $
 #
 # Tests for the -C command line option, which changes the directory at the
 # beginning.
 #
-# This option is available since 2009-08-27.
+# This option has been available since 2009-08-27.
 
-# TODO: Implementation
+.MAKEFLAGS: -d0			# switch stdout to line-buffered
 
-all:
-	@:;
+all: chdir-filename-too-long
+all: chdir-root
+all: chdir-nonexistent
+
+# Try to overflow the internal buffer for .CURDIR, which is curdir.
+chdir-filename-too-long: .PHONY .IGNORE
+	# 5000 slashes, separated by dots: /./././.../././
+	@${MAKE} -C ${:U:range=5000:@@/@:ts.}
+
+# Changing to another directory is possible via the command line.
+# In this test, it is the root directory since almost any other directory
+# is not guaranteed to exist on every platform.
+chdir-root: .PHONY .IGNORE
+	@${MAKE} -C / -V 'cwd: $${.CURDIR}'
+
+# Trying to change to a nonexistent directory exits immediately.
+chdir-nonexistent: .PHONY .IGNORE
+	@${MAKE} -C /nonexistent
