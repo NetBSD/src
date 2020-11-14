@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.465 2020/11/14 18:36:27 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.466 2020/11/14 21:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.465 2020/11/14 18:36:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.466 2020/11/14 21:55:22 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -187,16 +187,14 @@ explode(const char *flags)
 MAKE_ATTR_DEAD static void
 usage(void)
 {
-	char *p;
-	if ((p = strchr(progname, '[')) != NULL)
-		*p = '\0';
+	size_t prognameLen = strcspn(progname, "[");
 
 	(void)fprintf(stderr,
-"usage: %s [-BeikNnqrstWwX] \n"
+"usage: %.*s [-BeikNnqrstWwX] \n"
 "            [-C directory] [-D variable] [-d flags] [-f makefile]\n"
 "            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n"
 "            [-V variable] [-v variable] [variable=value] [target ...]\n",
-	    progname);
+	    (int)prognameLen, progname);
 	exit(2);
 }
 
