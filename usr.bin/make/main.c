@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.464 2020/11/14 18:14:34 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.465 2020/11/14 18:36:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.464 2020/11/14 18:14:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.465 2020/11/14 18:36:27 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1596,12 +1596,12 @@ main_PrepareMaking(void)
 
 /* Make the targets.
  * If the -v or -V options are given, print variables instead.
- * Return whether the targets are out-of-date. */
+ * Return whether any of the targets is out-of-date. */
 static Boolean
 main_Run(void)
 {
-	/* print the values of any variables requested by the user */
 	if (opts.printVars != PVM_NONE) {
+		/* print the values of any variables requested by the user */
 		doPrintVars();
 		return FALSE;
 	} else {
@@ -1877,19 +1877,21 @@ Error(const char *fmt, ...)
 	errors++;
 }
 
-/* Produce a Fatal error message, then exit immediately.
+/* Wait for any running jobs to finish, then produce an error message,
+ * finally exit immediately.
  *
- * If jobs are running, wait for them to finish. */
+ * Exiting immediately differs from Parse_Error, which exits only after the
+ * current top-level makefile has been parsed completely. */
 void
 Fatal(const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, fmt);
 	if (jobsRunning)
 		Job_Wait();
 
 	(void)fflush(stdout);
+	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
