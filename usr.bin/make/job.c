@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.319 2020/11/14 13:27:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.320 2020/11/14 13:45:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.319 2020/11/14 13:27:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.320 2020/11/14 13:45:34 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -720,7 +720,7 @@ JobPrintln(Job *job, const char *line)
  *	If the command is just "..." we take all future commands for this
  *	job to be commands to be executed once the entire graph has been
  *	made and return non-zero to signal that the end of the commands
- *	was reached. These commands are later attached to the postCommands
+ *	was reached. These commands are later attached to the .END
  *	node and executed by Job_End when all things are done.
  *
  * Side Effects:
@@ -936,7 +936,7 @@ JobSaveCommands(Job *job)
 
 /* Called to close both input and output pipes when a job is finished. */
 static void
-JobClose(Job *job)
+JobClosePipes(Job *job)
 {
     clearfd(job);
     (void)close(job->outPipe);
@@ -947,28 +947,17 @@ JobClose(Job *job)
     job->inPipe = -1;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobFinish  --
- *	Do final processing for the given job including updating
- *	parents and starting new jobs as available/necessary. Note
- *	that we pay no attention to the JOB_IGNERR flag here.
- *	This is because when we're called because of a noexecute flag
- *	or something, jstat.w_status is 0 and when called from
- *	Job_CatchChildren, the status is zeroed if it s/b ignored.
+/* Do final processing for the given job including updating parent nodes and
+ * starting new jobs as available/necessary.
+ *
+ * Deferred commands for the job are placed on the .END node.
+ *
+ * If there was a serious error (errors != 0; not an ignored one), no more
+ * jobs will be started.
  *
  * Input:
  *	job		job to finish
  *	status		sub-why job went away
- *
- * Side Effects:
- *	Final commands for the job are placed on postCommands.
- *
- *	If we got an error and are aborting (aborting == ABORT_ERROR) and
- *	the job list is now empty, we are done for the day.
- *	If we recognized an error (errors !=0), we set the aborting flag
- *	to ABORT_ERROR so no more jobs will be started.
- *-----------------------------------------------------------------------
  */
 static void
 JobFinish(Job *job, int status)
@@ -990,7 +979,7 @@ JobFinish(Job *job, int status)
 	 * cases, finish out the job's output before printing the exit
 	 * status...
 	 */
-	JobClose(job);
+	JobClosePipes(job);
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 	   (void)fclose(job->cmdFILE);
 	   job->cmdFILE = NULL;
@@ -999,19 +988,11 @@ JobFinish(Job *job, int status)
     } else if (WIFEXITED(status)) {
 	/*
 	 * Deal with ignored errors in -B mode. We need to print a message
-	 * telling of the ignored error as well as setting status.w_status
-	 * to 0 so the next command gets run. To do this, we set done to be
-	 * TRUE if in -B mode and the job exited non-zero.
+	 * telling of the ignored error as well as to run the next command.
+	 *
 	 */
 	done = WEXITSTATUS(status) != 0;
-	/*
-	 * Old comment said: "Note we don't
-	 * want to close down any of the streams until we know we're at the
-	 * end."
-	 * But we do. Otherwise when are we going to print the rest of the
-	 * stuff?
-	 */
-	JobClose(job);
+	JobClosePipes(job);
     } else {
 	/*
 	 * No need to close things down or anything.
