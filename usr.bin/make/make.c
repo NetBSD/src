@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.203 2020/11/08 11:37:46 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.204 2020/11/14 14:57:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.203 2020/11/08 11:37:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.204 2020/11/14 14:57:05 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -648,11 +648,11 @@ Make_Update(GNode *cgn)
     for (ln = parents->first; ln != NULL; ln = ln->next) {
 	GNode *pgn = ln->datum;
 
-	if (DEBUG(MAKE))
-	    debug_printf("inspect parent %s%s: flags %x, "
-			 "type %x, made %d, unmade %d ",
-			 pgn->name, pgn->cohort_num, pgn->flags,
-			 pgn->type, pgn->made, pgn->unmade - 1);
+	if (DEBUG(MAKE)) {
+	    debug_printf("inspect parent %s%s: ", pgn->name, pgn->cohort_num);
+	    GNode_FprintDetails(opts.debug_file, "", pgn, "");
+	    debug_printf("unmade %d ", pgn->unmade - 1);
+	}
 
 	if (!(pgn->flags & REMAKE)) {
 	    /* This parent isn't needed */
@@ -855,8 +855,11 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 {
     GNode *cn = v_cn;
 
-    DEBUG4(MAKE, "MakeBuildChild: inspect %s%s, made %d, type %x\n",
-	   cn->name, cn->cohort_num, cn->made, cn->type);
+    if (DEBUG(MAKE)) {
+	debug_printf("MakeBuildChild: inspect %s%s, ",
+	       cn->name, cn->cohort_num);
+	GNode_FprintDetails(opts.debug_file, "", cn, "\n");
+    }
     if (cn->made > DEFERRED)
 	return 0;
 
