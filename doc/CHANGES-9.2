@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.12 2020/11/14 13:03:10 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.13 2020/11/14 15:38:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1083,4 +1083,15 @@ sys/coda/coda_vnops.c				1.114 (patch)
 
 	PR 55775: fix coda_readdir() to directly process the container file.
 	[hannken, ticket #1131]
+
+sys/conf/param.c				1.69
+sys/kern/init_main.c				1.533
+sys/sys/param.h					1.679
+
+	Set a better default for MAXFILES on larger RAM machines if not
+	otherwise specified the kernel config file.  Arbitary numbers are
+	20,000 files for 16GB RAM or more and 10,000 files for 1GB RAM or
+	more.
+	[fair, ticket #1130]
+
 
