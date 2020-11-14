@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.468 2020/11/14 22:19:13 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.469 2020/11/14 23:03:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.468 2020/11/14 22:19:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.469 2020/11/14 23:03:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -135,7 +135,7 @@ Boolean doing_depend;		/* Set while reading .depend */
 static Boolean jobsRunning;	/* TRUE if the jobs might be running */
 static const char *tracefile;
 static int ReadMakefile(const char *);
-static void purge_cached_realpaths(void);
+static void purge_relative_cached_realpaths(void);
 
 static Boolean ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1]; /* where we chdir'ed to */
@@ -147,6 +147,7 @@ int makelevel;
 
 Boolean forceJobs = FALSE;
 static int errors = 0;
+static HashTable cached_realpaths;
 
 /*
  * For compatibility with the POSIX version of MAKEFLAGS that includes
@@ -737,7 +738,7 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
-			purge_cached_realpaths();
+			purge_relative_cached_realpaths();
 			rc = TRUE;
 			if (opts.enterFlag && strcmp(objdir, curdir) != 0)
 				enterFlagObj = TRUE;
@@ -1340,6 +1341,8 @@ main_Init(int argc, char **argv)
 
 	/* default to writing debug to stderr */
 	opts.debug_file = stderr;
+
+	HashTable_Init(&cached_realpaths);
 
 #ifdef SIGINFO
 	(void)bmake_signal(SIGINFO, siginfo);
@@ -2006,42 +2009,22 @@ execDie(const char *af, const char *av)
 	_exit(1);
 }
 
-/*
- * realpath(3) can get expensive, cache results...
- */
-static GNode *cached_realpaths = NULL;
-
-static GNode *
-get_cached_realpaths(void)
-{
-
-	if (cached_realpaths == NULL) {
-		cached_realpaths = Targ_NewGN("Realpath");
-#ifndef DEBUG_REALPATH_CACHE
-		cached_realpaths->flags = INTERNAL;
-#endif
-	}
-
-	return cached_realpaths;
-}
-
 /* purge any relative paths */
 static void
-purge_cached_realpaths(void)
+purge_relative_cached_realpaths(void)
 {
-	GNode *cache = get_cached_realpaths();
 	HashEntry *he, *nhe;
 	HashIter hi;
 
-	HashIter_Init(&hi, &cache->context);
+	HashIter_Init(&hi, &cached_realpaths);
 	he = HashIter_Next(&hi);
 	while (he != NULL) {
 		nhe = HashIter_Next(&hi);
 		if (he->key[0] != '/') {
-			if (DEBUG(DIR))
-				fprintf(stderr, "cached_realpath: purging %s\n",
-				    he->key);
-			HashTable_DeleteEntry(&cache->context, he);
+			DEBUG1(DIR, "cached_realpath: purging %s\n", he->key);
+			HashTable_DeleteEntry(&cached_realpaths, he);
+			/* XXX: What about the allocated he->value? Either
+			 * free them or document why they cannot be freed. */
 		}
 		he = nhe;
 	}
@@ -2050,25 +2033,28 @@ purge_cached_realpaths(void)
 char *
 cached_realpath(const char *pathname, char *resolved)
 {
-	GNode *cache;
 	const char *rp;
-	void *freeIt;
 
 	if (pathname == NULL || pathname[0] == '\0')
 		return NULL;
 
-	cache = get_cached_realpaths();
-
-	if ((rp = Var_Value(pathname, cache, &freeIt)) != NULL) {
+	rp = HashTable_FindValue(&cached_realpaths, pathname);
+	if (rp != NULL) {
 		/* a hit */
 		strncpy(resolved, rp, MAXPATHLEN);
 		resolved[MAXPATHLEN - 1] = '\0';
-	} else if ((rp = realpath(pathname, resolved)) != NULL) {
-		Var_Set(pathname, rp, cache);
-	} /* else should we negative-cache? */
+		return resolved;
+	}
 
-	bmake_free(freeIt);
-	return rp ? resolved : NULL;
+	rp = realpath(pathname, resolved);
+	if (rp != NULL) {
+		HashTable_Set(&cached_realpaths, pathname, bmake_strdup(rp));
+		DEBUG2(DIR, "cached_realpath: %s -> %s\n", pathname, rp);
+		return resolved;
+	}
+
+	/* should we negative-cache? */
+	return NULL;
 }
 
 /*
