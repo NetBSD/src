@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.62 2020/11/14 12:38:06 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.63 2020/11/14 13:27:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -119,7 +119,7 @@ struct pollfd;
 
 typedef enum JobStatus {
     JOB_ST_FREE =	0,	/* Job is available */
-    JOB_ST_SETUP =	1,	/* Job is allocated but otherwise invalid */
+    JOB_ST_SET_UP =	1,	/* Job is allocated but otherwise invalid */
     /* XXX: What about the 2? */
     JOB_ST_RUNNING =	3,	/* Job is running, pid valid */
     JOB_ST_FINISHED =	4	/* Job is done (ie after SIGCHILD) */
