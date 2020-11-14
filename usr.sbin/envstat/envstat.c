@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.97 2020/06/07 00:51:48 thorpej Exp $ */
+/* $NetBSD: envstat.c,v 1.98 2020/11/14 09:11:55 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.97 2020/06/07 00:51:48 thorpej Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.98 2020/11/14 09:11:55 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	if (argc > 0 && (flags & ENVSYS_XFLAG) == 0)
 		usage();
 
 	/* Check if we want to make statistics */
@@ -219,7 +219,11 @@ int main(int argc, char **argv)
 		if (rval)
 			errx(EXIT_FAILURE, "%s", strerror(rval));
 
-		config_dict_dump(dict);
+		if (argc > 0) {
+			for (; argc > 0; ++argv, --argc)
+				config_dict_extract(dict, *argv, true);
+		} else
+			config_dict_dump(dict);
 
 	/* Remove all properties set in dictionary */
 	} else if (flags & ENVSYS_SFLAG) {
@@ -1098,6 +1102,7 @@ usage(void)
 	(void)fprintf(stderr, "Usage: %s [-DfIklrSTx] ", getprogname());
 	(void)fprintf(stderr, "[-c file] [-d device] [-i interval] ");
 	(void)fprintf(stderr, "[-s device:sensor,...] [-w width]\n");
+	(void)fprintf(stderr, "       %s -x [property]", getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
