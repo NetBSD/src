@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.320 2020/11/14 13:45:34 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.321 2020/11/14 14:16:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.320 2020/11/14 13:45:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.321 2020/11/14 14:16:01 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1051,11 +1051,9 @@ JobFinish(Job *job, int status)
 
 #ifdef USE_META
     if (useMeta) {
-	int x;
-
-	if ((x = meta_job_finish(job)) != 0 && status == 0) {
-	    status = x;
-	}
+	int meta_status = meta_job_finish(job);
+	if (meta_status != 0 && status == 0)
+	    status = meta_status;
     }
 #endif
 
@@ -1086,27 +1084,44 @@ JobFinish(Job *job, int status)
 	job->status = JOB_ST_FREE;
     }
 
-    /*
-     * Set aborting if any error.
-     */
-    if (errors && !opts.keepgoing && (aborting != ABORT_INTERRUPT)) {
-	/*
-	 * If we found any errors in this batch of children and the -k flag
-	 * wasn't given, we set the aborting flag so no more jobs get
-	 * started.
-	 */
-	aborting = ABORT_ERROR;
-    }
+    if (errors > 0 && !opts.keepgoing && aborting != ABORT_INTERRUPT)
+	aborting = ABORT_ERROR;	/* Prevent more jobs from getting started. */
 
     if (return_job_token)
 	Job_TokenReturn();
 
-    if (aborting == ABORT_ERROR && jobTokensRunning == 0) {
-	/*
-	 * If we are aborting and the job table is now empty, we finish.
-	 */
+    if (aborting == ABORT_ERROR && jobTokensRunning == 0)
 	Finish(errors);
+}
+
+static void
+TouchRegular(GNode *gn)
+{
+    const char *file = GNode_Path(gn);
+    struct utimbuf times = { now, now };
+    int fd;
+    char c;
+
+    if (utime(file, &times) >= 0)
+	return;
+
+    fd = open(file, O_RDWR | O_CREAT, 0666);
+    if (fd < 0) {
+	(void)fprintf(stdout, "*** couldn't touch %s: %s",
+		      file, strerror(errno));
+	(void)fflush(stdout);
+	return;                /* XXX: What about propagating the error? */
     }
+
+    /* Last resort: update the file's time stamps in the traditional way.
+     * XXX: This doesn't work for empty files, which are sometimes used
+     * as marker files. */
+    if (read(fd, &c, 1) == 1) {
+	(void)lseek(fd, 0, SEEK_SET);
+	while (write(fd, &c, 1) == -1 && errno == EAGAIN)
+	    continue;
+    }
+    (void)close(fd);		/* XXX: What about propagating the error? */
 }
 
 /* Touch the given target. Called by JobStart when the -t flag was given.
@@ -1116,15 +1131,9 @@ JobFinish(Job *job, int status)
 void
 Job_Touch(GNode *gn, Boolean silent)
 {
-    int streamID;		/* ID of stream opened to do the touch */
-    struct utimbuf times;	/* Times for utime() call */
-
     if (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC|OP_OPTIONAL|
 	OP_SPECIAL|OP_PHONY)) {
-	/*
-	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
-	 * and, as such, shouldn't really be created.
-	 */
+	/* These are "virtual" targets and should not really be created. */
 	return;
     }
 
@@ -1133,42 +1142,20 @@ Job_Touch(GNode *gn, Boolean silent)
 	(void)fflush(stdout);
     }
 
-    if (!GNode_ShouldExecute(gn)) {
+    if (!GNode_ShouldExecute(gn))
 	return;
-    }
 
     if (gn->type & OP_ARCHV) {
 	Arch_Touch(gn);
-    } else if (gn->type & OP_LIB) {
-	Arch_TouchLib(gn);
-    } else {
-	const char *file = GNode_Path(gn);
-
-	times.actime = times.modtime = now;
-	if (utime(file, &times) < 0) {
-	    streamID = open(file, O_RDWR | O_CREAT, 0666);
-
-	    if (streamID >= 0) {
-		char	c;
-
-		/*
-		 * Read and write a byte to the file to change the
-		 * modification time, then close the file.
-		 */
-		if (read(streamID, &c, 1) == 1) {
-		    (void)lseek(streamID, 0, SEEK_SET);
-		    while (write(streamID, &c, 1) == -1 && errno == EAGAIN)
-			continue;
-		}
-
-		(void)close(streamID);
-	    } else {
-		(void)fprintf(stdout, "*** couldn't touch %s: %s",
-			       file, strerror(errno));
-		(void)fflush(stdout);
-	    }
-	}
+	return;
     }
+
+    if (gn->type & OP_LIB) {
+	Arch_TouchLib(gn);
+	return;
+    }
+
+    TouchRegular(gn);
 }
 
 /* Make sure the given node has all the commands it needs.
