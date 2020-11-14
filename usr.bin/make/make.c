@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.204 2020/11/14 14:57:05 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.205 2020/11/14 15:03:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.204 2020/11/14 14:57:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.205 2020/11/14 15:03:37 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked = 1;
@@ -651,7 +651,7 @@ Make_Update(GNode *cgn)
 	if (DEBUG(MAKE)) {
 	    debug_printf("inspect parent %s%s: ", pgn->name, pgn->cohort_num);
 	    GNode_FprintDetails(opts.debug_file, "", pgn, "");
-	    debug_printf("unmade %d ", pgn->unmade - 1);
+	    debug_printf(", unmade %d ", pgn->unmade - 1);
 	}
 
 	if (!(pgn->flags & REMAKE)) {
