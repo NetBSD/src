@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.88 2020/11/14 11:41:29 hannken Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.88 2020/11/14 11:41:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ coda_root(struct mount *vfsp, int lktype, struct vnode **vpp)
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
-	vn_lock(*vpp, LK_EXCLUSIVE);
+	vn_lock(*vpp, lktype);
 	MARK_INT_SAT(CODA_ROOT_STATS);
 	goto exit;
     } else if (error == ENODEV || error == EINTR) {
@@ -403,7 +403,7 @@ coda_root(struct mount *vfsp, int lktype, struct vnode **vpp)
 	 */
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
-	vn_lock(*vpp, LK_EXCLUSIVE);
+	vn_lock(*vpp, lktype);
 	MARK_INT_FAIL(CODA_ROOT_STATS);
 	error = 0;
 	goto exit;
