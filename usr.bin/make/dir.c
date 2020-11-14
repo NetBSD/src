@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.205 2020/11/14 06:15:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.205 2020/11/14 06:15:11 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -168,9 +168,9 @@ MAKE_RCSID("$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $");
  *	the process too much, it could severely affect the amount of
  *	parallelism available as each directory open would take another file
  *	descriptor out of play for handling I/O for another job. Given that
- *	it is only recently that UNIX OS's have taken to allowing more than
- *	20 or 32 file descriptors for a process, this doesn't seem acceptable
- *	to me.
+ *	it is only recently (as of 1993 or earlier) that UNIX OS's have taken
+ *	to allowing more than 20 or 32 file descriptors for a process, this
+ *	doesn't seem acceptable to me.
  *
  * 3)	record the mtime of the directory in the CachedDir structure and
  *	verify the directory hasn't changed since the contents were cached.
@@ -184,11 +184,11 @@ MAKE_RCSID("$NetBSD: dir.c,v 1.204 2020/11/14 06:10:28 rillig Exp $");
  *	resort to using stat in its place.
  *
  * An additional thing to consider is that pmake is used primarily to create
- * C programs and until recently pcc-based compilers refused to allow you to
- * specify where the resulting object file should be placed. This forced all
- * objects to be created in the current directory. This isn't meant as a full
- * excuse, just an explanation of some of the reasons for the caching used
- * here.
+ * C programs and until recently (as of 1993 or earlier) pcc-based compilers
+ * refused to allow you to specify where the resulting object file should be
+ * placed. This forced all objects to be created in the current directory.
+ * This isn't meant as a full excuse, just an explanation of some of the
+ * reasons for the caching used here.
  *
  * One more note: the location of a target's file is only performed on the
  * downward traversal of the graph and then only for terminal nodes in the
