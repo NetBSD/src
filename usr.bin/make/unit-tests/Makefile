@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.198 2020/11/12 23:35:21 sjg Exp $
+# $NetBSD: Makefile,v 1.199 2020/11/14 15:35:20 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -232,6 +232,7 @@ TESTS+=		opt-query
 TESTS+=		opt-raw
 TESTS+=		opt-silent
 TESTS+=		opt-touch
+TESTS+=		opt-touch-jobs
 TESTS+=		opt-tracefile
 TESTS+=		opt-var-expanded
 TESTS+=		opt-var-literal
