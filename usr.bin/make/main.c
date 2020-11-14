@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.461 2020/11/14 17:39:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.462 2020/11/14 17:39:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.461 2020/11/14 17:39:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.462 2020/11/14 17:39:59 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -778,14 +778,15 @@ SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 	return TRUE;
 }
 
+/* Splits str into words, adding them to the list.
+ * The string must be kept alive as long as the list. */
 int
-str2Lst_Append(StringList *lp, char *str, const char *sep)
+str2Lst_Append(StringList *lp, char *str)
 {
 	char *cp;
 	int n;
 
-	if (sep == NULL)
-		sep = " \t";
+	const char *sep = " \t";
 
 	for (n = 0, cp = strtok(str, sep); cp; cp = strtok(NULL, sep)) {
 		Lst_Append(lp, cp);
@@ -1318,7 +1319,7 @@ ReadFirstDefaultMakefile(void)
 	 * since these makefiles do not come from the command line.  They
 	 * also have different semantics in that only the first file that
 	 * is found is processed.  See ReadAllMakefiles. */
-	(void)str2Lst_Append(opts.makefiles, prefs, NULL);
+	(void)str2Lst_Append(opts.makefiles, prefs);
 
 	for (ln = opts.makefiles->first; ln != NULL; ln = ln->next)
 		if (ReadMakefile(ln->datum) == 0)
