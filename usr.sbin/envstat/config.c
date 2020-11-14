@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.13 2020/06/07 00:51:48 thorpej Exp $	*/
+/* 	$NetBSD: config.c,v 1.14 2020/11/14 09:11:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,9 +27,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.13 2020/06/07 00:51:48 thorpej Exp $");
+__RCSID("$NetBSD: config.c,v 1.14 2020/11/14 09:11:55 mlelstv Exp $");
 #endif /* not lint */
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -134,7 +136,7 @@ config_dict_mark(void)
 }
 
 /*
- * Only used for debugging purposses.
+ * Show raw data
  */
 void
 config_dict_dump(prop_dictionary_t d)
@@ -144,6 +146,81 @@ config_dict_dump(prop_dictionary_t d)
 	buf = prop_dictionary_externalize(d);
 	(void)printf("%s", buf);
 	free(buf);
+}
+
+static void
+display_object(prop_object_t obj, bool nflag)
+{
+	char *xml;
+	prop_object_t next_obj;
+	prop_object_iterator_t iter;
+
+	if (obj == NULL)
+		exit(EXIT_FAILURE);
+	switch (prop_object_type(obj)) {
+	case PROP_TYPE_BOOL:
+		printf("%s\n", prop_bool_true(obj) ? "true" : "false");
+		break;
+	case PROP_TYPE_NUMBER:
+		printf("%" PRId64 "\n", prop_number_signed_value(obj));
+		break;
+	case PROP_TYPE_STRING:
+		printf("%s\n", prop_string_value(obj));
+		break;
+	case PROP_TYPE_DICTIONARY:
+		xml = prop_dictionary_externalize(obj);
+		printf("%s", xml);
+		free(xml);
+		break;
+	case PROP_TYPE_ARRAY:
+		iter = prop_array_iterator(obj);
+		if (!nflag)
+			printf("Array:\n");
+		while ((next_obj = prop_object_iterator_next(iter)) != NULL)
+			display_object(next_obj, nflag);
+		break;
+	default:
+		errx(EXIT_FAILURE, "Unhandled type %d", prop_object_type(obj));
+	}
+}
+
+void
+config_dict_extract(prop_dictionary_t dict, const char *prop, bool nflag)
+{
+	char *s, *p, *cur, *ep = NULL;
+	prop_object_t obj;
+	unsigned long ind;
+
+	obj = dict;
+	cur = NULL;
+	s = strdup(prop);
+	p = strtok_r(s, "/", &ep);
+	while (p) {
+		cur = p;
+		p = strtok_r(NULL, "/", &ep);
+
+		switch (prop_object_type(obj)) {
+		case PROP_TYPE_DICTIONARY:
+			obj = prop_dictionary_get(obj, cur);
+			if (obj == NULL)
+				exit(EXIT_FAILURE);
+			break;
+		case PROP_TYPE_ARRAY:
+			ind = strtoul(cur, NULL, 0);
+			obj = prop_array_get(obj, ind);
+			if (obj == NULL)
+				exit(EXIT_FAILURE);
+			break;
+		default:
+			errx(EXIT_FAILURE, "Select neither dict nor array with"
+			" `%s'", cur);
+		}
+	}
+
+	if (obj != NULL && cur != NULL)
+		display_object(obj, nflag);
+
+	free(s);
 }
 
 /*

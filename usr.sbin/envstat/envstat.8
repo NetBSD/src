@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.62 2014/05/18 11:46:24 kardel Exp $
+.\"	$NetBSD: envstat.8,v 1.63 2020/11/14 09:11:55 mlelstv Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Op Fl i Ar interval
 .Op Fl s Ar "device:sensor,..."
 .Op Fl w Ar width
+.Op Ar property...
 .Sh DESCRIPTION
 .Nm
 is a utility that handles various aspects of the sensors
@@ -139,6 +140,9 @@ Shows the raw XML property list used by the
 .Xr sysmon_envsys 9
 framework that contains details about all registered devices
 and sensors.
+If
+.Ar property
+is specified, the value of that property is printed.
 .El
 .Sh UNITS
 The display mode may show some values with abbreviated units;

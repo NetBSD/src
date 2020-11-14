@@ -1,4 +1,4 @@
-/* 	$NetBSD: envstat.h,v 1.3 2020/06/07 00:51:48 thorpej Exp $	*/
+/* 	$NetBSD: envstat.h,v 1.4 2020/11/14 09:11:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -47,6 +47,7 @@ void config_dict_add_prop(const char *, char *);
 void config_dict_adddev_prop(const char *, const char *, int);
 void config_dict_destroy(prop_dictionary_t);
 void config_dict_dump(prop_dictionary_t);
+void config_dict_extract(prop_dictionary_t, const char *, bool);
 void config_dict_fulldump(void);
 void config_dict_mark(void);
 prop_dictionary_t config_dict_parsed(void);
