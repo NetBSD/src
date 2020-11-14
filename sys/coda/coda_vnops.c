@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.112 2020/05/16 18:31:48 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.113 2020/11/14 11:42:05 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.112 2020/05/16 18:31:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.113 2020/11/14 11:42:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_strategy_desc, coda_strategy },	/* strategy */
     { &vop_print_desc, coda_vop_error },	/* print */
     { &vop_islocked_desc, coda_islocked },	/* islocked */
-    { &vop_pathconf_desc, coda_vop_error },	/* pathconf */
+    { &vop_pathconf_desc, coda_pathconf },	/* pathconf */
     { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
     { &vop_seek_desc, genfs_seek },		/* seek */
@@ -1737,6 +1737,18 @@ coda_islocked(void *v)
     ENTRY;
 
     return genfs_islocked(v);
+}
+
+int
+coda_pathconf(void *v)
+{
+	struct vop_pathconf_args *ap = v;
+
+	switch (ap->a_name) {
+	default:
+		return EINVAL;
+	}
+	/* NOTREACHED */
 }
 
 /*
