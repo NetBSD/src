@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.684 2020/11/10 00:32:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.685 2020/11/14 21:29:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.684 2020/11/10 00:32:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.685 2020/11/14 21:29:44 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -953,8 +953,6 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 		   ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
 	if (v->flags & VAR_FROM_ENV) {
-	    HashEntry *h;
-
 	    /*
 	     * If the original variable came from the environment, we
 	     * have to install it in the global context (we could place
@@ -962,8 +960,9 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	     * export other variables...)
 	     */
 	    v->flags &= ~(unsigned)VAR_FROM_ENV;
-	    h = HashTable_CreateEntry(&ctxt->context, name, NULL);
-	    HashEntry_Set(h, v);
+	    /* This is the only place where a variable is created whose
+	     * v->name is not the same as ctxt->context->key. */
+	    HashTable_Set(&ctxt->context, name, v);
 	}
     }
     free(name_freeIt);
