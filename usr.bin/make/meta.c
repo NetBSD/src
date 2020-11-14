@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.142 2020/11/14 17:39:59 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.143 2020/11/14 19:24:24 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -410,7 +410,7 @@ static Boolean
 meta_needed(GNode *gn, const char *dname, const char *tname,
 	     char *objdir, int verbose)
 {
-    struct make_stat mst;
+    struct cached_stat cst;
 
     if (verbose)
 	verbose = DEBUG(META);
@@ -441,7 +441,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* The object directory may not exist. Check it.. */
-    if (cached_stat(dname, &mst) != 0) {
+    if (cached_stat(dname, &cst) != 0) {
 	if (verbose)
 	    debug_printf("Skipping meta for %s: no .OBJDIR\n", gn->name);
 	return FALSE;
@@ -1125,7 +1125,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	int pid;
 	int x;
 	StringListNode *cmdNode;
-	struct make_stat mst;
+	struct cached_stat cst;
 
 	if (buf == NULL) {
 	    bufsz = 8 * BUFSIZ;
@@ -1382,8 +1382,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((strstr("tmp", p)))
 			break;
 
-		    if ((link_src != NULL && cached_lstat(p, &mst) < 0) ||
-			(link_src == NULL && cached_stat(p, &mst) < 0)) {
+		    if ((link_src != NULL && cached_lstat(p, &cst) < 0) ||
+			(link_src == NULL && cached_stat(p, &cst) < 0)) {
 			if (!meta_ignore(gn, p))
 			    append_if_new(missingFiles, p);
 		    }
@@ -1443,7 +1443,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    DEBUG3(META, "%s: %d: looking for: %s\n",
 				   fname, lineno, *sdp);
 #endif
-			    if (cached_stat(*sdp, &mst) == 0) {
+			    if (cached_stat(*sdp, &cst) == 0) {
 				found = 1;
 				p = *sdp;
 			    }
@@ -1453,12 +1453,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    DEBUG3(META, "%s: %d: found: %s\n",
 				   fname, lineno, p);
 #endif
-			    if (!S_ISDIR(mst.mst_mode) &&
-				mst.mst_mtime > gn->mtime) {
+			    if (!S_ISDIR(cst.cst_mode) &&
+				cst.cst_mtime > gn->mtime) {
 				DEBUG3(META, "%s: %d: file '%s' is newer than the target...\n",
 				       fname, lineno, p);
 				oodate = TRUE;
-			    } else if (S_ISDIR(mst.mst_mode)) {
+			    } else if (S_ISDIR(cst.cst_mode)) {
 				/* Update the latest directory. */
 				cached_realpath(p, latestdir);
 			    }

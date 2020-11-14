@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.207 2020/11/14 11:51:58 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.208 2020/11/14 19:24:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.207 2020/11/14 11:51:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.208 2020/11/14 19:24:24 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -300,31 +300,22 @@ static HashTable mtimes;
 
 static HashTable lmtimes;	/* same as mtimes but for lstat */
 
-/*
- * We use stat(2) a lot, cache the results.
- * mtime and mode are all we care about.
- */
-struct cache_st {
-    time_t lmtime;		/* lstat; XXX: is probably redundant */
-    time_t mtime;		/* stat */
-    mode_t mode;
-};
-
 typedef enum CachedStatsFlags {
     CST_NONE	= 0,
     CST_LSTAT	= 1 << 0,	/* call lstat(2) instead of stat(2) */
     CST_UPDATE	= 1 << 1	/* ignore existing cached entry */
 } CachedStatsFlags;
 
-/* Returns 0 and the result of stat(2) or lstat(2) in *mst, or -1 on error. */
+/* Returns 0 and the result of stat(2) or lstat(2) in *out_cst,
+ * or -1 on error. */
 static int
-cached_stats(const char *pathname, struct make_stat *mst,
+cached_stats(const char *pathname, struct cached_stat *out_cst,
 	     CachedStatsFlags flags)
 {
     HashTable *tbl = flags & CST_LSTAT ? &lmtimes : &mtimes;
     HashEntry *entry;
     struct stat sys_st;
-    struct cache_st *cst;
+    struct cached_stat *cst;
     int rc;
 
     if (pathname == NULL || pathname[0] == '\0')
@@ -335,30 +326,18 @@ cached_stats(const char *pathname, struct make_stat *mst,
     if (entry != NULL && !(flags & CST_UPDATE)) {
 	cst = HashEntry_Get(entry);
 
-	mst->mst_mode = cst->mode;
-	mst->mst_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
-	/* XXX: Checking for mst_mtime != 0 is probably redundant since
-	 * nonexistent files are not cached. */
-	if (mst->mst_mtime != 0) {
-	    DIR_DEBUG2("Using cached time %s for %s\n",
-		       Targ_FmtTime(mst->mst_mtime), pathname);
-	    return 0;
-	}
-	/* Continue with the normal lookup to see whether the file has been
-	 * created in the meantime. */
+	*out_cst = *cst;
+	DIR_DEBUG2("Using cached time %s for %s\n",
+		   Targ_FmtTime(cst->cst_mtime), pathname);
+	return 0;
     }
 
-    rc = (flags & CST_LSTAT)
-	 ? lstat(pathname, &sys_st)
-	 : stat(pathname, &sys_st);
+    rc = (flags & CST_LSTAT ? lstat : stat)(pathname, &sys_st);
     if (rc == -1)
-	return -1;
+	return -1;		/* don't cache negative lookups */
 
     if (sys_st.st_mtime == 0)
 	sys_st.st_mtime = 1;	/* avoid confusion with missing file */
-
-    mst->mst_mode = sys_st.st_mode;
-    mst->mst_mtime = sys_st.st_mtime;
 
     if (entry != NULL)
 	cst = entry->value;
@@ -368,12 +347,11 @@ cached_stats(const char *pathname, struct make_stat *mst,
 	memset(cst, 0, sizeof *cst);
 	HashEntry_Set(entry, cst);
     }
-    if (flags & CST_LSTAT) {
-	cst->lmtime = sys_st.st_mtime;
-    } else {
-	cst->mtime = sys_st.st_mtime;
-    }
-    cst->mode = sys_st.st_mode;
+
+    cst->cst_mtime = sys_st.st_mtime;
+    cst->cst_mode = sys_st.st_mode;
+
+    *out_cst = *cst;
     DIR_DEBUG2("   Caching %s for %s\n",
 	       Targ_FmtTime(sys_st.st_mtime), pathname);
 
@@ -381,15 +359,15 @@ cached_stats(const char *pathname, struct make_stat *mst,
 }
 
 int
-cached_stat(const char *pathname, struct make_stat *st)
+cached_stat(const char *pathname, struct cached_stat *cst)
 {
-    return cached_stats(pathname, st, CST_NONE);
+    return cached_stats(pathname, cst, CST_NONE);
 }
 
 int
-cached_lstat(const char *pathname, struct make_stat *st)
+cached_lstat(const char *pathname, struct cached_stat *cst)
 {
-    return cached_stats(pathname, st, CST_LSTAT);
+    return cached_stats(pathname, cst, CST_LSTAT);
 }
 
 /* Initialize the directories module. */
@@ -896,13 +874,13 @@ DirLookup(CachedDir *dir, const char *base)
 static char *
 DirLookupSubdir(CachedDir *dir, const char *name)
 {
-    struct make_stat mst;
+    struct cached_stat cst;
     char *file = dir == dot ? bmake_strdup(name)
 			    : str_concat3(dir->name, "/", name);
 
     DIR_DEBUG1("checking %s ...\n", file);
 
-    if (cached_stat(file, &mst) == 0) {
+    if (cached_stat(file, &cst) == 0) {
 	nearmisses++;
 	return file;
     }
@@ -991,7 +969,7 @@ Dir_FindFile(const char *name, SearchPath *path)
     const char *base;		/* Terminal name of file */
     Boolean hasLastDot = FALSE;	/* true if we should search dot last */
     Boolean hasSlash;		/* true if 'name' contains a / */
-    struct make_stat mst;	/* Buffer for stat, if necessary */
+    struct cached_stat cst;	/* Buffer for stat, if necessary */
     const char *trailing_dot = ".";
 
     /*
@@ -1219,7 +1197,7 @@ Dir_FindFile(const char *name, SearchPath *path)
     DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
 
     bigmisses++;
-    if (cached_stat(name, &mst) == 0) {
+    if (cached_stat(name, &cst) == 0) {
 	return bmake_strdup(name);
     }
 
@@ -1242,7 +1220,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 char *
 Dir_FindHereOrAbove(const char *here, const char *search_path)
 {
-    struct make_stat mst;
+    struct cached_stat cst;
     char *dirbase, *dirbase_end;
     char *try, *try_end;
 
@@ -1255,12 +1233,12 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
 
 	/* try and stat(2) it ... */
 	try = str_concat3(dirbase, "/", search_path);
-	if (cached_stat(try, &mst) != -1) {
+	if (cached_stat(try, &cst) != -1) {
 	    /*
 	     * success!  if we found a file, chop off
 	     * the filename so we return a directory.
 	     */
-	    if ((mst.mst_mode & S_IFMT) != S_IFDIR) {
+	    if ((cst.cst_mode & S_IFMT) != S_IFDIR) {
 		try_end = try + strlen(try);
 		while (try_end > try && *try_end != '/')
 		    try_end--;
@@ -1299,8 +1277,8 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
 void
 Dir_UpdateMTime(GNode *gn, Boolean recheck)
 {
-    char *fullName;		/* the full pathname of name */
-    struct make_stat mst;	/* buffer for finding the mod time */
+    char *fullName;
+    struct cached_stat cst;
     CachedStatsFlags flags;
 
     if (gn->type & OP_ARCHV) {
@@ -1357,7 +1335,7 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 	fullName = bmake_strdup(gn->name);
 
     flags = recheck ? CST_UPDATE : CST_NONE;
-    if (cached_stats(fullName, &mst, flags) < 0) {
+    if (cached_stats(fullName, &cst, flags) < 0) {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
@@ -1365,13 +1343,13 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 	    return;
 	}
 
-	mst.mst_mtime = 0;
+	cst.cst_mtime = 0;
     }
 
     if (fullName != NULL && gn->path == NULL)
 	gn->path = fullName;
 
-    gn->mtime = mst.mst_mtime;
+    gn->mtime = cst.cst_mtime;
 }
 
 /* Read the list of filenames in the directory and store the result

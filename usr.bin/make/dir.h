@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.33 2020/11/08 09:34:55 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.34 2020/11/14 19:24:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -112,12 +112,12 @@ void Dir_Destroy(void *);
 SearchPath *Dir_CopyDirSearchPath(void);
 
 /* Stripped-down variant of struct stat. */
-struct make_stat {
-    time_t mst_mtime;
-    mode_t mst_mode;
+struct cached_stat {
+    time_t cst_mtime;
+    mode_t cst_mode;
 };
 
-int cached_lstat(const char *, struct make_stat *);
-int cached_stat(const char *, struct make_stat *);
+int cached_lstat(const char *, struct cached_stat *);
+int cached_stat(const char *, struct cached_stat *);
 
 #endif /* MAKE_DIR_H */
