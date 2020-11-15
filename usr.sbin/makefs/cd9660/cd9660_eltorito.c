@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.23 2018/03/28 06:48:55 nonaka Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.24 2020/11/15 00:18:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.23 2018/03/28 06:48:55 nonaka Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.24 2020/11/15 00:18:48 jmcneill Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -109,9 +109,11 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 	else if (strcmp(sysname, "macppc") == 0 ||
 	         strcmp(sysname, "mac68k") == 0)
 		new_image->system = ET_SYS_MAC;
+	else if (strcmp(sysname, "efi") == 0)
+		new_image->system = ET_SYS_EFI;
 	else {
 		warnx("boot disk system must be "
-		      "i386, powerpc, macppc, or mac68k");
+		      "i386, powerpc, macppc, mac68k, or efi");
 		free(temp);
 		free(new_image);
 		return 0;
@@ -363,6 +365,7 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head, *efi_head,
 		*valid_entry, *default_entry, *temp, *head, **headp, *next;
 	struct cd9660_boot_image *tmp_disk;
+	u_char system;
 
 	headp = NULL;
 	x86_head = mac_head = ppc_head = efi_head = NULL;
@@ -377,9 +380,16 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	cd9660_bothendian_dword(first_sector,
 		diskStructure->boot_descriptor->boot_catalog_pointer);
 
+	/*
+	 * Use system type of default image for validation entry. Fallback to
+	 * X86 system type if not found.
+	 */
+	system = default_boot_image != NULL ? default_boot_image->system :
+					      ET_SYS_X86; 
+
 	/* Step 1: Generate boot catalog */
 	/* Step 1a: Validation entry */
-	valid_entry = cd9660_boot_setup_validation_entry(ET_SYS_X86);
+	valid_entry = cd9660_boot_setup_validation_entry(system);
 	if (valid_entry == NULL)
 		return -1;
 
