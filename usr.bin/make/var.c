@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.686 2020/11/15 18:32:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.687 2020/11/15 18:33:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.686 2020/11/15 18:32:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.687 2020/11/15 18:33:41 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1730,9 +1730,14 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
     return bmake_strdup(buf);
 }
 
-/* The ApplyModifier functions all work in the same way.  They get the
- * current parsing position (pp) and parse the modifier from there.  The
- * modifier typically lasts until the next ':', or a closing '}' or ')'
+/*
+ * The ApplyModifier functions take an expression that is being evaluated.
+ * Their task is to apply a single modifier to the expression.
+ * To do this, they parse the modifier and its parameters from pp and apply
+ * the parsed modifier to the current value of the expression, generating a
+ * new value from it.
+ *
+ * The modifier typically lasts until the next ':', or a closing '}' or ')'
  * (taken from st->endc), or the end of the string (parse error).
  *
  * The high-level behavior of these functions is:
@@ -1745,7 +1750,11 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  *
  * If parsing succeeds, the parsing position *pp is updated to point to the
  * first character following the modifier, which typically is either ':' or
- * st->endc.
+ * st->endc.  The modifier doesn't have to check for this delimiter character,
+ * this is done by ApplyModifiers.
+ *
+ * XXX: As of 2020-11-15, some modifiers such as :S, :C, :P, :L do not
+ * need to be followed by a ':' or endc; this was an unintended mistake.
  *
  * If parsing fails because of a missing delimiter (as in the :S, :C or :@
  * modifiers), return AMR_CLEANUP.
@@ -1754,8 +1763,8 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * try the SysV modifier ${VAR:from=to} as fallback.  This should only be
  * done as long as there have been no side effects from evaluating nested
  * variables, to avoid evaluating them more than once.  In this case, the
- * parsing position must not be updated.  (XXX: Why not? The original parsing
- * position is well-known in ApplyModifiers.)
+ * parsing position may or may not be updated.  (XXX: Why not? The original
+ * parsing position is well-known in ApplyModifiers.)
  *
  * If parsing fails and the SysV modifier ${VAR:from=to} should not be used
  * as a fallback, either issue an error message using Error or Parse_Error
@@ -2096,6 +2105,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
     st->newVal = ModifyWords(st->val, ModifyWord_Loop, &args,
 			     st->oneBigWord, st->sep);
     st->sep = prev_sep;
+    /* XXX: Consider restoring the previous variable instead of deleting. */
     Var_Delete(args.tvar, st->ctxt);
     free(args.tvar);
     free(args.str);
@@ -2117,6 +2127,10 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     Buf_Init(&buf);
     p = *pp + 1;
     while (*p != st->endc && *p != ':' && *p != '\0') {
+
+	/* XXX: This code is similar to the one in Var_Parse.
+	 * See if the code can be merged.
+	 * See also ApplyModifier_Match. */
 
 	/* Escaped delimiter or other special character */
 	if (*p == '\\') {
@@ -2360,8 +2374,11 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
     /*
      * In the loop below, ignore ':' unless we are at (or back to) the
      * original brace level.
-     * XXX This will likely not work right if $() and ${} are intermixed.
+     * XXX: This will likely not work right if $() and ${} are intermixed.
      */
+    /* XXX: This code is similar to the one in Var_Parse.
+     * See if the code can be merged.
+     * See also ApplyModifier_Defined. */
     int nest = 0;
     const char *p;
     for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
@@ -3859,6 +3876,13 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     if (v->flags & VAR_IN_USE)
 	Fatal("Variable %s is recursive.", v->name);
 
+    /* XXX: This assignment creates an alias to the current value of the
+     * variable.  This means that as long as the value of the expression stays
+     * the same, the value of the variable must not change.
+     * Using the '::=' modifier, it could be possible to do exactly this.
+     * At the bottom of this function, the resulting value is compared to the
+     * then-current value of the variable.  This might also invoke undefined
+     * behavior. */
     value = Buf_GetAll(&v->val, NULL);
 
     /* Before applying any modifiers, expand any nested expressions from the
@@ -3911,6 +3935,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 
     } else if (exprFlags & VEF_UNDEF) {
 	if (!(exprFlags & VEF_DEF)) {
+	    /* TODO: Use a local variable instead of out_val_freeIt.
+	     * Variables named out_* must only be written to. */
 	    if (*out_val_freeIt != NULL) {
 		free(*out_val_freeIt);
 		*out_val_freeIt = NULL;
@@ -3921,7 +3947,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    } else {
 		/* The expression is still undefined, therefore discard the
 		 * actual value and return an error marker instead. */
-		value = (eflags & VARE_UNDEFERR) ? var_Error : varUndefined;
+		value = eflags & VARE_UNDEFERR ? var_Error : varUndefined;
 	    }
 	}
 	if (value != Buf_GetAll(&v->val, NULL))
@@ -4001,6 +4027,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 
     /* Set true if an error has already been reported,
      * to prevent a plethora of messages when recursing */
+    /* XXX: Why is the 'static' necessary here? */
     static Boolean errorReported;
 
     Buf_Init(&buf);
