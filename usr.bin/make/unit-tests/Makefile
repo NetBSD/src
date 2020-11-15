@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.201 2020/11/15 20:20:58 rillig Exp $
+# $NetBSD: Makefile,v 1.202 2020/11/15 20:50:46 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -423,7 +423,7 @@ ENV.varname-vpath+=	VPATH=varname-vpath.dir:varname-vpath.dir2
 FLAGS.cond-func-make=	via-cmdline
 FLAGS.directive-ifmake=	first second
 FLAGS.doterror=		# none, especially not -k
-FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
+FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
 SED_CMDS.job-output-long-lines= \
