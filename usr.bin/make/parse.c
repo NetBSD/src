@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.440 2020/11/14 16:09:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.441 2020/11/15 12:02:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.440 2020/11/14 16:09:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.441 2020/11/15 12:02:44 rillig Exp $");
 
 /* types and constants */
 
@@ -348,6 +348,7 @@ static const struct {
 /* file loader */
 
 struct loadedfile {
+	/* XXX: What is the lifetime of this path? Who manages the memory? */
 	const char *path;		/* name, for error reports */
 	char *buf;			/* contents buffer */
 	size_t len;			/* length of contents */
@@ -355,6 +356,7 @@ struct loadedfile {
 	Boolean used;			/* XXX: have we used the data yet */
 };
 
+/* XXX: What is the lifetime of the path? Who manages the memory? */
 static struct loadedfile *
 loadedfile_create(const char *path)
 {
@@ -607,14 +609,14 @@ ParseFindKeyword(const char *str)
 }
 
 static void
-PrintLocation(FILE *f, const char *filename, size_t lineno)
+PrintLocation(FILE *f, const char *fname, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN+1];
 	const char *dir, *base;
 	void *dir_freeIt, *base_freeIt;
 
-	if (*filename == '/' || strcmp(filename, "(stdin)") == 0) {
-		(void)fprintf(f, "\"%s\" line %zu: ", filename, lineno);
+	if (*fname == '/' || strcmp(fname, "(stdin)") == 0) {
+		(void)fprintf(f, "\"%s\" line %zu: ", fname, lineno);
 		return;
 	}
 
@@ -629,8 +631,8 @@ PrintLocation(FILE *f, const char *filename, size_t lineno)
 
 	base = Var_Value(".PARSEFILE", VAR_GLOBAL, &base_freeIt);
 	if (base == NULL) {
-		const char *slash = strrchr(filename, '/');
-		base = slash != NULL ? slash + 1 : filename;
+		const char *slash = strrchr(fname, '/');
+		base = slash != NULL ? slash + 1 : fname;
 	}
 
 	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, base, lineno);
@@ -638,21 +640,16 @@ PrintLocation(FILE *f, const char *filename, size_t lineno)
 	bmake_free(dir_freeIt);
 }
 
-/* Print a parse error message, including location information.
- *
- * Increment "fatals" if the level is PARSE_FATAL, and continue parsing
- * until the end of the current top-level makefile, then exit (see
- * Parse_File). */
 static void
-ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno,
+ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 		    ParseErrorLevel type, const char *fmt, va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
 	(void)fprintf(f, "%s: ", progname);
 
-	if (cfname != NULL)
-		PrintLocation(f, cfname, clineno);
+	if (fname != NULL)
+		PrintLocation(f, fname, lineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
@@ -670,26 +667,28 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno,
 }
 
 static void
-ParseErrorInternal(const char *cfname, size_t clineno, ParseErrorLevel type,
-		   const char *fmt, ...)
+ParseErrorInternal(const char *fname, size_t lineno,
+		   ParseErrorLevel type, const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, fmt);
 	(void)fflush(stdout);
-	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
+	va_start(ap, fmt);
+	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stderr && opts.debug_file != stdout) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(opts.debug_file, cfname, clineno, type,
+		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
 				    fmt, ap);
 		va_end(ap);
 	}
 }
 
-/* External interface to ParseErrorInternal; uses the default filename and
- * line number.
+/* Print a parse error message, including location information.
+ *
+ * If the level is PARSE_FATAL, continue parsing until the end of the
+ * current top-level makefile, then exit (see Parse_File).
  *
  * Fmt is given without a trailing newline. */
 void
@@ -722,12 +721,8 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 }
 
 
-/* Parse a .info .warning or .error directive.
- *
- * The input is the line minus the ".".  We substitute variables, print the
- * message and exit(1) (for .error) or just print a warning if the directive
- * is malformed.
- */
+/* Parse and handle a .info, .warning or .error directive.
+ * For an .error directive, immediately exit. */
 static Boolean
 ParseMessage(const char *directive)
 {
@@ -806,9 +801,12 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 
     if (op == OP_DOUBLEDEP && (gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 	/*
-	 * If the node was the object of a :: operator, we need to create a
-	 * new instance of it for the children and commands on this dependency
-	 * line. The new instance is placed on the 'cohorts' list of the
+	 * If the node was of the left-hand side of a '::' operator, we need
+	 * to create a new instance of it for the children and commands on
+	 * this dependency line since each of these dependency groups has its
+	 * own attributes and commands, separate from the others.
+	 *
+	 * The new instance is placed on the 'cohorts' list of the
 	 * initial one (note the initial one is not on its own cohorts list)
 	 * and the new instance is linked to all parents of the initial
 	 * instance.
@@ -840,7 +838,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
     } else {
 	/*
 	 * We don't want to nuke any previous flags (whatever they were) so we
-	 * just OR the new operator into the old
+	 * just OR the new operator into the old.
 	 */
 	gn->type |= op;
     }
@@ -876,11 +874,12 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 		/*
 		 * We add a .WAIT node in the dependency list.
 		 * After any dynamic dependencies (and filename globbing)
-		 * have happened, it is given a dependency on the each
-		 * previous child back to and previous .WAIT node.
+		 * have happened, it is given a dependency on each
+		 * previous child, back until the previous .WAIT node.
 		 * The next child won't be scheduled until the .WAIT node
 		 * is built.
-		 * We give each .WAIT node a unique name (mainly for diag).
+		 * We give each .WAIT node a unique name (mainly for
+		 * diagnostics).
 		 */
 		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
 		gn = Targ_NewInternalNode(wait_src);
@@ -899,12 +898,13 @@ static void
 ParseDoSrcMain(const char *src)
 {
     /*
-     * If we have noted the existence of a .MAIN, it means we need
-     * to add the sources of said target to the list of things
-     * to create. The string 'src' is likely to be free, so we
-     * must make a new copy of it. Note that this will only be
-     * invoked if the user didn't specify a target on the command
-     * line. This is to allow #ifmake's to succeed, or something...
+     * In a line like ".MAIN: source1 source2", it means we need to add
+     * the sources of said target to the list of things to create.
+     *
+     * Note that this will only be invoked if the user didn't specify a
+     * target on the command line. This is to allow .ifmake to succeed.
+     *
+     * XXX: Double-check all of the above comment.
      */
     Lst_Append(opts.create, bmake_strdup(src));
     /*
@@ -962,7 +962,7 @@ ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
     gn = Targ_GetNode(src);
     if (doing_depend)
 	ParseMark(gn);
-    if (tOp)
+    if (tOp != OP_NONE)
 	gn->type |= tOp;
     else
 	LinkToTargets(gn, specType != SP_NOT);
@@ -1255,7 +1255,8 @@ ParseDoDependencyCheckSpec(ParseSpecial specType)
     switch (specType) {
     default:
 	Parse_Error(PARSE_WARNING,
-		    "Special and mundane targets don't mix. Mundane ones ignored");
+		    "Special and mundane targets don't mix. "
+		    "Mundane ones ignored");
 	break;
     case SP_DEFAULT:
     case SP_STALE:
@@ -1264,13 +1265,11 @@ ParseDoDependencyCheckSpec(ParseSpecial specType)
     case SP_ERROR:
     case SP_INTERRUPT:
 	/*
-	 * These four create nodes on which to hang commands, so
-	 * targets shouldn't be empty...
+	 * These create nodes on which to hang commands, so targets
+	 * shouldn't be empty...
 	 */
     case SP_NOT:
-	/*
-	 * Nothing special here -- targets can be empty if it wants.
-	 */
+	/* Nothing special here -- targets can be empty if it wants. */
 	break;
     }
 }
@@ -1588,9 +1587,8 @@ ParseDoDependencySourcesMundane(char *start, char *end,
  *
  * The sources are parsed in much the same way as the targets, except
  * that they are expanded using the wildcarding scheme of the C-Shell,
- * and all instances of the resulting words in the list of all targets
- * are found. Each of the resulting nodes is then linked to each of the
- * targets as one of its children.
+ * and a target is created for each expanded word. Each of the resulting
+ * nodes is then linked to each of the targets as one of its children.
  *
  * Certain targets and sources such as .PHONY or .PRECIOUS are handled
  * specially. These are the ones detailed by the specType variable.
@@ -1600,6 +1598,8 @@ ParseDoDependencySourcesMundane(char *start, char *end,
  * Suff_IsTransform. If it is a transformation rule, its node is gotten
  * from the suffix module via Suff_AddTransform rather than the standard
  * Targ_FindNode in the target module.
+ *
+ * Upon return, the value of the line is unspecified.
  */
 static void
 ParseDoDependency(char *line)
@@ -1608,7 +1608,7 @@ ParseDoDependency(char *line)
     GNodeType op;		/* the operator on the line */
     SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
-    int tOp;			/* operator from special target */
+    GNodeType tOp;		/* operator from special target */
     StringList *curTargs;	/* target names to be found and added
 				 * to the targets list */
     char *lstart = line;
@@ -1621,7 +1621,7 @@ ParseDoDependency(char *line)
     ParseSpecial specType = SP_NOT;
 
     DEBUG1(PARSE, "ParseDoDependency(%s)\n", line);
-    tOp = 0;
+    tOp = OP_NONE;
 
     paths = NULL;
 
@@ -1634,9 +1634,8 @@ ParseDoDependency(char *line)
 				  curTargs))
 	goto out;
 
-    /*
-     * Don't need the list of target names anymore...
-     */
+    /* Don't need the list of target names anymore.
+     * The targets themselves are now in the global variable 'targets'. */
     Lst_Free(curTargs);
     curTargs = NULL;
 
@@ -1663,7 +1662,7 @@ ParseDoDependency(char *line)
      * end of the string if not.
      */
     pp_skip_whitespace(&cp);
-    line = cp;
+    line = cp;			/* XXX: 'line' is an inappropriate name */
 
     /*
      * Several special targets take different actions if present with no
@@ -1695,9 +1694,7 @@ ParseDoDependency(char *line)
 	*line = '\0';
     }
 
-    /*
-     * NOW GO FOR THE SOURCES
-     */
+    /* Now go for the sources. */
     if (specType == SP_SUFFIXES || specType == SP_PATH ||
 	specType == SP_INCLUDES || specType == SP_LIBS ||
 	specType == SP_NULL || specType == SP_OBJDIR)
@@ -2089,12 +2086,14 @@ Parse_AddIncludeDir(const char *dir)
     (void)Dir_AddDir(parseIncPath, dir);
 }
 
-/* Push to another file.
+/* Handle one of the .[-ds]include directives by remembering the current file
+ * and pushing the included file on the stack.  After the included file has
+ * finished, parsing continues with the including file; see Parse_SetInput
+ * and ParseEOF.
  *
- * The input is the line minus the '.'. A file spec is a string enclosed in
- * <> or "". The <> file is looked for only in sysIncPath. The "" file is
- * first searched in the parsedir and then in the directories specified by
- * the -I command line options.
+ * System includes are looked up in sysIncPath, any other includes are looked
+ * up in the parsedir and then in the directories specified by the -I command
+ * line options.
  */
 static void
 Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
@@ -2102,36 +2101,31 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
     struct loadedfile *lf;
     char *fullname;		/* full pathname of file */
     char *newName;
-    char *prefEnd, *incdir;
+    char *slash, *incdir;
     int fd;
     int i;
 
-    /*
-     * Now we know the file's name and its search path, we attempt to
-     * find the durn thing. A return of NULL indicates the file don't
-     * exist.
-     */
     fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
 
     if (fullname == NULL && !isSystem) {
 	/*
-	 * Include files contained in double-quotes are first searched for
+	 * Include files contained in double-quotes are first searched
 	 * relative to the including file's location. We don't want to
 	 * cd there, of course, so we just tack on the old file's
 	 * leading path components and call Dir_FindFile to see if
-	 * we can locate the beast.
+	 * we can locate the file.
 	 */
 
 	incdir = bmake_strdup(CurFile()->fname);
-	prefEnd = strrchr(incdir, '/');
-	if (prefEnd != NULL) {
-	    *prefEnd = '\0';
+	slash = strrchr(incdir, '/');
+	if (slash != NULL) {
+	    *slash = '\0';
 	    /* Now do lexical processing of leading "../" on the filename */
 	    for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
-		prefEnd = strrchr(incdir + 1, '/');
-		if (prefEnd == NULL || strcmp(prefEnd, "/..") == 0)
+		slash = strrchr(incdir + 1, '/');
+		if (slash == NULL || strcmp(slash, "/..") == 0)
 		    break;
-		*prefEnd = '\0';
+		*slash = '\0';
 	    }
 	    newName = str_concat3(incdir, "/", file + i);
 	    fullname = Dir_FindFile(newName, parseIncPath);
@@ -2148,7 +2142,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 	     * then on the .PATH search path, if not found in a -I directory.
 	     * If we have a suffix specific path we should use that.
 	     */
-	    char *suff;
+	    const char *suff;
 	    SearchPath *suffPath = NULL;
 
 	    if ((suff = strrchr(file, '.'))) {
@@ -2231,16 +2225,15 @@ ParseDoInclude(char *line)
 
     if (*cp != endc) {
 	Parse_Error(PARSE_FATAL,
-		    "Unclosed %cinclude filename. '%c' expected",
-		    '.', endc);
+		    "Unclosed .include filename. '%c' expected", endc);
 	return;
     }
 
     *cp = '\0';
 
     /*
-     * Substitute for any variables in the file name before trying to
-     * find the thing.
+     * Substitute for any variables in the filename before trying to
+     * find the file.
      */
     (void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
     /* TODO: handle errors */
@@ -2335,6 +2328,7 @@ StrContainsWord(const char *str, const char *word)
 
 /* XXX: Searching through a set of words with this linear search is
  * inefficient for variables that contain thousands of words. */
+/* XXX: The paths in this list don't seem to be normalized in any way. */
 static Boolean
 VarContainsWord(const char *varname, const char *word)
 {
@@ -2346,7 +2340,10 @@ VarContainsWord(const char *varname, const char *word)
 }
 
 /* Track the makefiles we read - so makefiles can set dependencies on them.
- * Avoid adding anything more than once. */
+ * Avoid adding anything more than once.
+ *
+ * Time complexity: O(n) per call, in total O(n^2), where n is the number
+ * of makefiles that have been loaded. */
 static void
 ParseTrackInput(const char *name)
 {
@@ -2355,7 +2352,7 @@ ParseTrackInput(const char *name)
 }
 
 
-/* Start Parsing from the given source.
+/* Start parsing from the given source.
  *
  * The given file is added to the includes stack. */
 void
@@ -2383,13 +2380,6 @@ Parse_SetInput(const char *name, int line, int fd,
 	return;
 
     curFile = Vector_Push(&includes);
-
-    /*
-     * Once the previous state has been saved, we can get down to reading
-     * the new file. We set up the name of the file to be the absolute
-     * name of the include file so error messages refer to the right
-     * place.
-     */
     curFile->fname = bmake_strdup(name);
     curFile->fromForLoop = fromForLoop;
     curFile->lineno = line;
@@ -2534,8 +2524,8 @@ ParseGmakeExport(char *line)
 #endif
 
 /* Called when EOF is reached in the current file. If we were reading an
- * include file, the includes stack is popped and things set up to go back
- * to reading the previous file at the previous location.
+ * include file or a .for loop, the includes stack is popped and things set
+ * up to go back to reading the previous file at the previous location.
  *
  * Results:
  *	TRUE to continue parsing, i.e. it had only reached the end of an
@@ -2555,7 +2545,7 @@ ParseEOF(void)
     ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
     curFile->buf_ptr = ptr;
     curFile->buf_freeIt = ptr;
-    curFile->buf_end = ptr + len;
+    curFile->buf_end = ptr + len; /* XXX: undefined behavior if ptr == NULL */
     curFile->lineno = curFile->first_lineno;
     if (ptr != NULL)
 	return TRUE;		/* Iterate again */
@@ -2590,11 +2580,14 @@ ParseEOF(void)
     return TRUE;
 }
 
-#define PARSE_RAW 1
-#define PARSE_SKIP 2
+typedef enum GetLineMode {
+    PARSE_NORMAL,
+    PARSE_RAW,
+    PARSE_SKIP
+} GetLineMode;
 
 static char *
-ParseGetLine(int flags)
+ParseGetLine(GetLineMode mode)
 {
     IFile *cf = CurFile();
     char *ptr;
@@ -2637,6 +2630,7 @@ ParseGetLine(int flags)
 			break;
 		    }
 		}
+		/* XXX: Can cf->nextbuf ever be NULL? */
 		if (cf->nextbuf != NULL) {
 		    /*
 		     * End of this buffer; return EOF and outer logic
@@ -2687,12 +2681,12 @@ ParseGetLine(int flags)
 	/* We now have a line of data */
 	*line_end = '\0';
 
-	if (flags & PARSE_RAW) {
+	if (mode == PARSE_RAW) {
 	    /* Leave '\' (etc) in line buffer (eg 'for' lines) */
 	    return line;
 	}
 
-	if (flags & PARSE_SKIP) {
+	if (mode == PARSE_SKIP) {
 	    /* Completely ignore non-directives */
 	    if (line[0] != '.')
 		continue;
@@ -2757,10 +2751,7 @@ ParseGetLine(int flags)
 /* Read an entire line from the input file. Called only by Parse_File.
  *
  * Results:
- *	A line without its newline.
- *
- * Side Effects:
- *	Only those associated with reading a character
+ *	A line without its newline and without any trailing whitespace.
  */
 static char *
 ParseReadLine(void)
@@ -2770,7 +2761,7 @@ ParseReadLine(void)
     int rval;
 
     for (;;) {
-	line = ParseGetLine(0);
+	line = ParseGetLine(PARSE_NORMAL);
 	if (line == NULL)
 	    return NULL;
 
@@ -2878,10 +2869,11 @@ ParseDirective(char *line)
 
     if (*line == '.') {
 	/*
-	 * Lines that begin with the special character may be
-	 * include or undef directives.
-	 * On the other hand they can be suffix rules (.c.o: ...)
-	 * or just dependencies for filenames that start '.'.
+	 * Lines that begin with '.' can be pretty much anything:
+	 *	- directives like '.include' or '.if',
+	 *	- suffix rules like '.c.o:',
+	 *	- dependencies for filenames that start with '.',
+	 *	- variable assignments like '.tmp=value'.
 	 */
 	cp = line + 1;
 	pp_skip_whitespace(&cp);
@@ -2989,7 +2981,7 @@ ParseDependency(char *line)
      *
      * Parsing the line first would also prevent that targets
      * generated from variable expressions are interpreted as the
-     * dependency operator, such as in "target${:U:} middle: source",
+     * dependency operator, such as in "target${:U\:} middle: source",
      * in which the middle is interpreted as a source, not a target.
      */
 
@@ -2997,7 +2989,7 @@ ParseDependency(char *line)
      * dependency lines.
      *
      * Ideally, only the right-hand side would allow undefined
-     * variables since it is common to have no dependencies.
+     * variables since it is common to have optional dependencies.
      * Having undefined variables on the left-hand side is more
      * unusual though.  Since both sides are expanded in a single
      * pass, there is not much choice what to do here.
@@ -3063,8 +3055,8 @@ ParseLine(char *line)
     ParseDependency(line);
 }
 
-/* Parse a top-level makefile into its component parts, incorporating them
- * into the global dependency graph.
+/* Parse a top-level makefile, incorporating its content into the global
+ * dependency graph.
  *
  * Input:
  *	name		The name of the file being read
@@ -3079,7 +3071,6 @@ Parse_File(const char *name, int fd)
     lf = loadfile(name, fd);
 
     assert(targets == NULL);
-    fatals = 0;
 
     if (name == NULL)
 	name = "(stdin)";
@@ -3140,19 +3131,9 @@ Parse_End(void)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Parse_MainName --
- *	Return a Lst of the main target to create for main()'s sake. If
- *	no such target exists, we Punt with an obnoxious error message.
- *
- * Results:
- *	A Lst of the single node to create.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
+/*
+ * Return a list containing the single main target to create.
+ * If no such target exists, we Punt with an obnoxious error message.
  */
 GNodeList *
 Parse_MainName(void)
@@ -3169,7 +3150,9 @@ Parse_MainName(void)
 	Lst_AppendAll(mainList, mainNode->cohorts);
     } else
 	Lst_Append(mainList, mainNode);
+
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
+
     return mainList;
 }
 

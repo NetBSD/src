@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.72 2020/11/07 10:44:53 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.73 2020/11/15 12:02:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.72 2020/11/07 10:44:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.73 2020/11/15 12:02:44 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -116,15 +116,13 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
 }
 
 /* Fracture a string into an array of words (as delineated by tabs or spaces)
- * taking quotation marks into account.  Leading tabs/spaces are ignored.
+ * taking quotation marks into account.
  *
  * If expand is TRUE, quotes are removed and escape sequences such as \r, \t,
- * etc... are expanded. In this case, the return value is NULL on parse
- * errors.
+ * etc... are expanded. In this case, return NULL on parse errors.
  *
- * Returns the fractured words, which must be freed later using Words_Free.
- * If expand was TRUE and there was a parse error, words is NULL, and in that
- * case, nothing needs to be freed.
+ * Returns the fractured words, which must be freed later using Words_Free,
+ * unless the returned Words.words was NULL.
  */
 Words
 Str_Words(const char *str, Boolean expand)
@@ -263,21 +261,15 @@ Str_Words(const char *str, Boolean expand)
 		*word_end++ = ch;
 	}
 done:
-	words[words_len] = NULL;
+	words[words_len] = NULL;	/* useful for argv */
 	return (Words){ words, words_len, words_buf };
 }
 
 /*
  * Str_Match -- Test if a string matches a pattern like "*.[ch]".
+ * The following special characters are known *?\[] (as in fnmatch(3)).
  *
- * XXX this function does not detect or report malformed patterns.
- *
- * Results:
- *	Non-zero is returned if string matches the pattern, 0 otherwise. The
- *	matching operation permits the following special characters in the
- *	pattern: *?\[] (as in fnmatch(3)).
- *
- * Side effects: None.
+ * XXX: this function does not detect or report malformed patterns.
  */
 Boolean
 Str_Match(const char *str, const char *pat)
@@ -285,7 +277,7 @@ Str_Match(const char *str, const char *pat)
 	for (;;) {
 		/*
 		 * See if we're at the end of both the pattern and the
-		 * string. If, we succeeded.  If we're at the end of the
+		 * string. If so, we succeeded.  If we're at the end of the
 		 * pattern but not at the end of the string, we failed.
 		 */
 		if (*pat == '\0')
@@ -331,6 +323,9 @@ Str_Match(const char *str, const char *pat)
 						break;
 					return FALSE;
 				}
+				/* XXX: This naive comparison makes the parser
+				 * for the pattern dependent on the actual of
+				 * the string.  This is unpredictable. */
 				if (*pat == *str)
 					break;
 				if (pat[1] == '-') {
