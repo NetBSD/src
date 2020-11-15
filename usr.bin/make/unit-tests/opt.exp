@@ -1,3 +1,6 @@
+make -V MAKEFLAGS
+ -r -k -d 0 
+
 make -:
 usage: make [-BeikNnqrSstWwX]
             [-C directory] [-D variable] [-d flags] [-f makefile]
