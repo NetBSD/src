@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.470 2020/11/15 08:10:15 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.471 2020/11/15 08:12:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.470 2020/11/15 08:10:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.471 2020/11/15 08:12:35 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -334,9 +334,10 @@ parse_debug_options(const char *argvalue)
 			usage();
 		}
 	}
-	opts.debug = debug;
 
 debug_setbuf:
+	opts.debug = debug;
+
 	/*
 	 * Make the debug_file unbuffered, and make
 	 * stdout line buffered (unless debugfile == stdout).
