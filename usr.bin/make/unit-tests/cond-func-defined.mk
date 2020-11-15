@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-defined.mk,v 1.6 2020/11/07 14:40:51 rillig Exp $
+# $NetBSD: cond-func-defined.mk,v 1.7 2020/11/15 14:07:53 rillig Exp $
 #
 # Tests for the defined() function in .if conditions.
 
@@ -35,6 +35,18 @@ ${:UA B}=	variable name with spaces
 .else
 .  error
 .endif
+
+# Variables from .for loops are not defined.
+# See directive-for.mk for more details.
+.for var in value
+.  if defined(var)
+.    error
+.  else
+.    info In .for loops, variable expressions for the loop variables are
+.    info substituted at evaluation time.  There is no actual variable
+.    info involved, even if it feels like it.
+.  endif
+.endfor
 
 all:
 	@:;
