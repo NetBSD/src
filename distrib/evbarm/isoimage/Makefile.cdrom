@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.1 2020/10/11 14:24:50 jmcneill Exp $
+# $NetBSD: Makefile.cdrom,v 1.2 2020/11/15 00:19:17 jmcneill Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -13,7 +13,7 @@ MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
-CDMAKEFSOPTIONS= bootimage=i386;${EFIBOOTIMG},platformid=efi,no-emul-boot
+CDMAKEFSOPTIONS= bootimage=efi;${EFIBOOTIMG},platformid=efi,no-emul-boot
 CDRELEASE_NOISOS=	true
 CD_SETS=	
 
