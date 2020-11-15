@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.473 2020/11/15 09:38:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.474 2020/11/15 09:54:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.473 2020/11/15 09:38:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.474 2020/11/15 09:54:16 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2225,27 +2225,19 @@ mkTempFile(const char *pattern, char **out_fname)
 }
 
 /*
- * Convert a string representation of a boolean.
- * Anything that looks like "No", "False", "Off", "0" etc,
- * is FALSE, otherwise TRUE.
+ * Convert a string representation of a boolean into a boolean value.
+ * Anything that looks like "No", "False", "Off", "0" etc. is FALSE,
+ * the empty string is the fallback, everything else is TRUE.
  */
 Boolean
-ParseBoolean(const char *s, Boolean bf)
+ParseBoolean(const char *s, Boolean fallback)
 {
-	switch (s[0]) {
-	case '\0':		/* not set - the default wins */
-		break;
-	case '0':
-	case 'F':
-	case 'f':
-	case 'N':
-	case 'n':
+	char ch = ch_tolower(s[0]);
+	if (ch == '\0')
+		return fallback;
+	if (ch == '0' || ch == 'f' || ch == 'n')
 		return FALSE;
-	case 'O':
-	case 'o':
-		return s[1] != 'F' && s[1] != 'f';
-	default:
-		return TRUE;
-	}
-	return bf;
+	if (ch == 'o')
+		return ch_tolower(s[1]) != 'f';
+	return TRUE;
 }
