@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.182 2020/11/14 14:16:01 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.183 2020/11/15 22:31:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.182 2020/11/14 14:16:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.183 2020/11/15 22:31:03 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -511,9 +511,8 @@ Compat_Make(GNode *gn, GNode *pgn)
 	 * If the user is just seeing if something is out-of-date, exit now
 	 * to tell him/her "yes".
 	 */
-	if (opts.queryFlag) {
+	if (opts.queryFlag)
 	    exit(1);
-	}
 
 	/*
 	 * We need to be re-made. We also have to make sure we've got a $?
