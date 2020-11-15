@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.8 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.9 2020/11/15 14:04:26 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -76,6 +76,22 @@
 
 # Just in case that parsing should ever stop on the first error.
 .info Parsing continues until here.
+
+# Demonstration that '&&' has higher precedence than '||'.
+.info A B C   =>   (A || B) && C   A || B && C   A || (B && C)
+.for a in 0 1
+.  for b in 0 1
+.    for c in 0 1
+.      for r1 in ${ ($a || $b) && $c :?1:0}
+.        for r2 in ${ $a || $b && $c :?1:0}
+.          for r3 in ${ $a || ($b && $c) :?1:0}
+.            info $a $b $c   =>   ${r1}               ${r2}             ${r3}
+.          endfor
+.        endfor
+.      endfor
+.    endfor
+.  endfor
+.endfor
 
 all:
 	@:;
