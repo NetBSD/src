@@ -1,4 +1,4 @@
-# $NetBSD: opt.mk,v 1.3 2020/11/14 17:33:51 rillig Exp $
+# $NetBSD: opt.mk,v 1.4 2020/11/15 06:06:19 sjg Exp $
 #
 # Tests for the command line options.
 
@@ -14,9 +14,9 @@ all: .IGNORE
 	@echo
 
 	# See whether a '--' stops handling of command line options, like in
-	# standard getopt programs.  Yes, it does, and it treats the '-f' as
-	# a target to be created.
-	${MAKE} -- -VAR=value -f /dev/null
+	# standard getopt programs.  Yes, it does, and it treats the
+	# second '-f' as a target to be created.
+	${MAKE} -r -f /dev/null -- -VAR=value -f /dev/null
 	@echo
 
 	# This is the normal way to print the usage of a command.
