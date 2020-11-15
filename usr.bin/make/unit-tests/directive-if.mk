@@ -1,6 +1,9 @@
-# $NetBSD: directive-if.mk,v 1.6 2020/11/12 19:46:36 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.7 2020/11/15 20:20:58 rillig Exp $
 #
 # Tests for the .if directive.
+#
+# See also:
+#	cond-*.mk
 
 # TODO: Implementation
 
