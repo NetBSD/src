@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.472 2020/11/15 09:33:50 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.473 2020/11/15 09:38:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.472 2020/11/15 09:33:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.473 2020/11/15 09:38:44 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2174,21 +2174,19 @@ char *
 getTmpdir(void)
 {
 	static char *tmpdir = NULL;
+	struct stat st;
 
-	if (tmpdir == NULL) {
-		struct stat st;
+	if (tmpdir != NULL)
+		return tmpdir;
 
-		/*
-		 * Honor $TMPDIR but only if it is valid.
-		 * Ensure it ends with /.
-		 */
-		(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP "}/", VAR_GLOBAL,
-		    VARE_WANTRES, &tmpdir);
-		/* TODO: handle errors */
-		if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {
-			free(tmpdir);
-			tmpdir = bmake_strdup(_PATH_TMP);
-		}
+	/* Honor $TMPDIR but only if it is valid. Ensure it ends with '/'. */
+	(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP "}/",
+	    VAR_GLOBAL, VARE_WANTRES, &tmpdir);
+	/* TODO: handle errors */
+
+	if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {
+		free(tmpdir);
+		tmpdir = bmake_strdup(_PATH_TMP);
 	}
 	return tmpdir;
 }
