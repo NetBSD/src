@@ -1,6 +1,8 @@
-# $NetBSD: cond-token-number.mk,v 1.4 2020/11/08 22:28:05 rillig Exp $
+# $NetBSD: cond-token-number.mk,v 1.5 2020/11/15 14:58:14 rillig Exp $
 #
 # Tests for number tokens in .if conditions.
+#
+# TODO: Add introduction.
 
 .if 0
 .  error
@@ -12,6 +14,8 @@
 # See the ch_isdigit call in CondParser_String.
 .if -0
 .  error
+.else
+.  error
 .endif
 
 # Even though +0 is a number and would be accepted by strtod, it is not
@@ -19,6 +23,8 @@
 #
 # See the ch_isdigit call in CondParser_String.
 .if +0
+.  error
+.else
 .  error
 .endif
 
@@ -28,6 +34,8 @@
 # See the ch_isdigit call in CondParser_String.
 .if !-1
 .  error
+.else
+.  error
 .endif
 
 # Even though +1 is a number and would be accepted by strtod, it is not
@@ -35,6 +43,8 @@
 #
 # See the ch_isdigit call in CondParser_String.
 .if !+1
+.  error
+.else
 .  error
 .endif
 
