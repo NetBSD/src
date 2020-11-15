@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.471 2020/11/15 08:12:35 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.472 2020/11/15 09:33:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.471 2020/11/15 08:12:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.472 2020/11/15 09:33:50 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2100,12 +2100,12 @@ SetErrorVars(GNode *gn)
 	}
 }
 
+/* Print some helpful information in case of an error.
+ * The caller should exit soon after calling this function. */
 void
-PrintOnError(GNode *gn, const char *s)
+PrintOnError(GNode *gn, const char *msg)
 {
-	static GNode *en = NULL;
-	const char *expr;
-	char *cp;
+	static GNode *errorNode = NULL;
 
 	if (DEBUG(HASH)) {
 		Targ_Stats();
@@ -2116,29 +2116,34 @@ PrintOnError(GNode *gn, const char *s)
 	if (shouldDieQuietly(gn, -1))
 		return;
 
-	if (s)
-		printf("%s", s);
-
+	if (msg != NULL)
+		printf("%s", msg);
 	printf("\n%s: stopped in %s\n", progname, curdir);
 
-	if (en)
+	if (errorNode != NULL)
 		return;		/* we've been here! */
-	if (gn)
+
+	if (gn != NULL)
 		SetErrorVars(gn);
-	expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
-	(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
-	/* TODO: handle errors */
-	printf("%s", cp);
-	free(cp);
+
+	{
+		char *errorVarsValues;
+		(void)Var_Subst("${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
+				VAR_GLOBAL, VARE_WANTRES, &errorVarsValues);
+		/* TODO: handle errors */
+		printf("%s", errorVarsValues);
+		free(errorVarsValues);
+	}
+
 	fflush(stdout);
 
 	/*
 	 * Finally, see if there is a .ERROR target, and run it if so.
 	 */
-	en = Targ_FindNode(".ERROR");
-	if (en) {
-		en->type |= OP_SPECIAL;
-		Compat_Make(en, en);
+	errorNode = Targ_FindNode(".ERROR");
+	if (errorNode != NULL) {
+		errorNode->type |= OP_SPECIAL;
+		Compat_Make(errorNode, errorNode);
 	}
 }
 
