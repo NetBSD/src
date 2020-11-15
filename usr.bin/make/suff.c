@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.235 2020/11/08 19:53:11 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.236 2020/11/15 22:31:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.235 2020/11/08 19:53:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.236 2020/11/15 22:31:03 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1793,9 +1793,8 @@ sfnd_abort:
      * If the suffix indicates that the target is a library, mark that in
      * the node's type field.
      */
-    if (targ->suff->flags & SUFF_LIBRARY) {
+    if (targ->suff->flags & SUFF_LIBRARY)
 	gn->type |= OP_LIB;
-    }
 
     /*
      * Check for overriding transformation rule implied by sources
