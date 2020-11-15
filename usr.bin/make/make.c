@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.206 2020/11/15 09:57:05 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.207 2020/11/15 10:11:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,23 +68,17 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * make.c --
- *	The functions which perform the examination of targets and
- *	their suitability for creation
+/* Examination of targets and their suitability for creation.
  *
  * Interface:
- *	Make_Run	Initialize things for the module and recreate
- *			whatever needs recreating. Returns TRUE if
- *			work was (or would have been) done and FALSE
- *			otherwise.
+ *	Make_Run	Initialize things for the module. Returns TRUE if
+ *			work was (or would have been) done.
  *
- *	Make_Update	Update all parents of a given child. Performs
- *			various bookkeeping chores like the updating
+ *	Make_Update	After a target is made, update all its parents.
+ *			Perform various bookkeeping chores like the updating
  *			of the youngestChild field of the parent, filling
- *			of the IMPSRC context variable, etc. It will
- *			place the parent on the toBeMade queue if it
- *			should be.
+ *			of the IMPSRC context variable, etc. Place the parent
+ *			on the toBeMade queue if it should be.
  *
  *	GNode_UpdateYoungestChild
  *			Update the node's youngestChild field based on the
@@ -108,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.206 2020/11/15 09:57:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.207 2020/11/15 10:11:26 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -798,9 +792,9 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 	     * the start of the make. This is to keep pmake from getting
 	     * confused if something else updates the parent after the
 	     * make starts (shouldn't happen, I know, but sometimes it
-	     * does). In such a case, if we've updated the kid, the parent
+	     * does). In such a case, if we've updated the child, the parent
 	     * is likely to have a modification time later than that of
-	     * the kid and anything that relies on the OODATE variable will
+	     * the child and anything that relies on the OODATE variable will
 	     * be hosed.
 	     *
 	     * XXX: This will cause all made children to go in the OODATE
@@ -838,12 +832,10 @@ Make_DoAllVar(GNode *gn)
     for (ln = gn->children->first; ln != NULL; ln = ln->next)
 	MakeAddAllSrc(ln->datum, gn);
 
-    if (!Var_Exists(OODATE, gn)) {
+    if (!Var_Exists(OODATE, gn))
 	Var_Set(OODATE, "", gn);
-    }
-    if (!Var_Exists(ALLSRC, gn)) {
+    if (!Var_Exists(ALLSRC, gn))
 	Var_Set(ALLSRC, "", gn);
-    }
 
     if (gn->type & OP_JOIN)
 	Var_Set(TARGET, GNode_VarAllsrc(gn), gn);
@@ -888,7 +880,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
     return cn->type & OP_WAIT && cn->unmade > 0;
 }
 
-/* When a .ORDER LHS node completes we do this on each RHS */
+/* When a .ORDER LHS node completes, we do this on each RHS. */
 static int
 MakeBuildParent(void *v_pn, void *toBeMade_next)
 {
@@ -907,9 +899,9 @@ MakeBuildParent(void *v_pn, void *toBeMade_next)
 
 /* Start as many jobs as possible, taking them from the toBeMade queue.
  *
- * If the query flag was given to pmake, no job will be started,
+ * If the -q option was given, no job will be started,
  * but as soon as an out-of-date target is found, this function
- * returns TRUE. At all other times, this function returns FALSE.
+ * returns TRUE. In all other cases, this function returns FALSE.
  */
 static Boolean
 MakeStartJobs(void)
@@ -955,9 +947,8 @@ MakeStartJobs(void)
 	gn->made = BEINGMADE;
 	if (GNode_IsOODate(gn)) {
 	    DEBUG0(MAKE, "out-of-date\n");
-	    if (opts.queryFlag) {
+	    if (opts.queryFlag)
 		return TRUE;
-	    }
 	    Make_DoAllVar(gn);
 	    Job_Make(gn);
 	    have_token = FALSE;
@@ -983,6 +974,7 @@ MakeStartJobs(void)
     return FALSE;
 }
 
+/* Print the status of a .ORDER node. */
 static void
 MakePrintStatusOrderNode(GNode *ogn, GNode *gn)
 {
@@ -1063,7 +1055,7 @@ MakePrintStatus(GNode *gn, int *errors)
      * print out the cycle by recursing on its children.
      */
     if (!(gn->flags & CYCLE)) {
-	/* Fist time we've seen this node, check all children */
+	/* First time we've seen this node, check all children */
 	gn->flags |= CYCLE;
 	MakePrintStatusList(gn->children, errors);
 	/* Mark that this node needn't be processed again */
@@ -1150,9 +1142,8 @@ Make_ExpandUse(GNodeList *targs)
 	 * expansions.
 	 */
 	if (gn->type & OP_ARCHV) {
-	    char *eoa, *eon;
-	    eoa = strchr(gn->name, '(');
-	    eon = strchr(gn->name, ')');
+	    char *eoa = strchr(gn->name, '(');
+	    char *eon = strchr(gn->name, ')');
 	    if (eoa == NULL || eon == NULL)
 		continue;
 	    *eoa = '\0';
@@ -1173,8 +1164,8 @@ Make_ExpandUse(GNodeList *targs)
 	else {
 	    PretendAllChildrenAreMade(gn);
 	    if (gn->unmade != 0)
-		    printf("Warning: %s%s still has %d unmade children\n",
-			    gn->name, gn->cohort_num, gn->unmade);
+		printf("Warning: %s%s still has %d unmade children\n",
+		       gn->name, gn->cohort_num, gn->unmade);
 	}
 
 	if (gn->unmade != 0)
