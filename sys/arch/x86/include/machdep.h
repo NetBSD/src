@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.10 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: machdep.h,v 1.11 2020/11/15 13:59:42 bouyer Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,7 +53,6 @@ void	x86_cpu_idle_set(void (*)(void), const char *, bool);
 
 extern u_long x86_rtclock_tval;
 extern void (*x86_initclock_func)(void);
-extern void (*x86_cpu_initclock_func)(void);
 
 void x86_dummy_initclock(void);
 
