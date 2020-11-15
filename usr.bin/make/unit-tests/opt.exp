@@ -5,7 +5,7 @@ usage: make [-BeikNnqrSstWwX]
             [-V variable] [-v variable] [variable=value] [target ...]
 *** Error code 2 (ignored)
 
-make -- -VAR=value -f /dev/null
+make -r -f /dev/null -- -VAR=value -f /dev/null
 make: don't know how to make -f (continuing)
 `/dev/null' is up to date.
 
