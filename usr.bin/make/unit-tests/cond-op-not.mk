@@ -1,4 +1,4 @@
-# $NetBSD: cond-op-not.mk,v 1.5 2020/11/15 14:14:24 rillig Exp $
+# $NetBSD: cond-op-not.mk,v 1.6 2020/11/15 14:58:14 rillig Exp $
 #
 # Tests for the ! operator in .if conditions, which negates its argument.
 
@@ -18,7 +18,9 @@
 .  error
 .endif
 
-# The '==' binds more tightly than '!'.
+# The operator '==' binds more tightly than '!'.
+# This is unusual since most other programming languages define the precedence
+# to be the other way round.
 .if !${:Uexpression} == "expression"
 .  error
 .endif
