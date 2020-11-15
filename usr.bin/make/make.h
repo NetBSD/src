@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.208 2020/11/14 17:39:59 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.209 2020/11/15 12:02:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -193,6 +193,8 @@ typedef enum GNodeMade {
  *
  * Some of the OP_ constants can be combined, others cannot. */
 typedef enum GNodeType {
+    OP_NONE		= 0,
+
     /* The dependency operator ':' is the most common one.  The commands of
      * this node are executed if any child is out-of-date. */
     OP_DEPENDS		= 1 << 0,
