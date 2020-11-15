@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.12 2020/11/08 23:00:09 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.13 2020/11/15 14:07:53 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -19,9 +19,14 @@
 .  error
 .endif
 
-# The left-hand side of the comparison requires a defined variable.
-# The variable named "" is not defined, but applying the :U modifier to it
-# makes it "kind of defined" (see VAR_KEEP).  Therefore it is ok here.
+# The left-hand side of the comparison requires that any variable expression
+# is defined.
+#
+# The variable named "" is never defined, nevertheless it can be used as a
+# starting point for variable expressions.  Applying the :U modifier to such
+# an undefined expression turns it into a defined expression.
+#
+# See ApplyModifier_Defined and VEF_DEF.
 .if ${:Ustr} != "str"
 .  error
 .endif
@@ -33,8 +38,10 @@
 .endif
 
 # It is not possible to concatenate two string literals to form a single
-# string.
+# string.  In C, Python and the shell this is possible, but not in make.
 .if "string" != "str""ing"
+.  error
+.else
 .  error
 .endif
 
