@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.205 2020/11/14 15:03:37 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.206 2020/11/15 09:57:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,10 +108,10 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.205 2020/11/14 15:03:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.206 2020/11/15 09:57:05 rillig Exp $");
 
 /* Sequence # to detect recursion. */
-static unsigned int checked = 1;
+static unsigned int checked_seqno = 1;
 
 /* The current fringe of the graph.
  * These are nodes which await examination by MakeOODate.
@@ -611,7 +611,7 @@ Make_Update(GNode *cgn)
     GNode	*centurion;
 
     /* It is save to re-examine any nodes again */
-    checked++;
+    checked_seqno++;
 
     cname = GNode_VarTarget(cgn);
 
@@ -932,13 +932,13 @@ MakeStartJobs(void)
 	    make_abort(gn, __LINE__);
 	}
 
-	if (gn->checked_seqno == checked) {
+	if (gn->checked_seqno == checked_seqno) {
 	    /* We've already looked at this node since a job finished... */
 	    DEBUG2(MAKE, "already checked %s%s\n", gn->name, gn->cohort_num);
 	    gn->made = DEFERRED;
 	    continue;
 	}
-	gn->checked_seqno = checked;
+	gn->checked_seqno = checked_seqno;
 
 	if (gn->unmade != 0) {
 	    /*
