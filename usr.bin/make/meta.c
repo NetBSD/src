@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.143 2020/11/14 19:24:24 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.144 2020/11/15 12:02:44 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1379,6 +1379,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			break;
 
 		    /* ignore anything containing the string "tmp" */
+		    /* XXX: The arguments to strstr must be swapped. */
 		    if ((strstr("tmp", p)))
 			break;
 
