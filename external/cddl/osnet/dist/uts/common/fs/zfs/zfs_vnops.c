@@ -6049,20 +6049,13 @@ zfs_netbsd_getpages(void *v)
 			    PAGE_SIZE, va, DMU_READ_PREFETCH);
 			zfs_unmap_page(pg, va);
 
-			rw_enter(rw, RW_WRITER);
 			if (err != 0) {
-				for (i = 0; i < npages; i++) {
-					pg = ap->a_m[i];
-					if ((pg->flags & PG_FAKE) != 0) {
-						uvm_pagefree(pg);
-					} else {
-						uvm_page_unbusy(&pg, 1);
-					}
-				}
+				uvm_aio_aiodone_pages(ap->a_m, npages, false, err);
 				memset(ap->a_m, 0, sizeof(ap->a_m[0]) *
 				    npages);
 				break;
 			}
+			rw_enter(rw, RW_WRITER);
 			pg->flags &= ~(PG_FAKE);
 		}
 
@@ -6089,14 +6082,13 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	voff_t		len, klen;
 	int		err;
 
-	bool async = (flags & PGO_SYNCIO) == 0;
 	bool *cleanedp;
 	struct uvm_object *uobj = &vp->v_uobj;
 	krwlock_t *rw = uobj->vmobjlock;
 
 	if (zp->z_sa_hdl == NULL) {
 		err = 0;
-		goto out_unbusy;
+		goto out;
 	}
 
 	/*
@@ -6170,12 +6162,8 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	}
 	dmu_tx_commit(tx);
 
-out_unbusy:
-	rw_enter(rw, RW_WRITER);
-	uvm_page_unbusy(pp, count);
-	rw_exit(rw);
-
 out:
+	uvm_aio_aiodone_pages(pp, count, true, err);
 	return (err);
 }
 
