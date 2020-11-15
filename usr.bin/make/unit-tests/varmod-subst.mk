@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst.mk,v 1.6 2020/11/03 18:21:36 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.7 2020/11/15 20:20:58 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
 
@@ -8,55 +8,72 @@ all: mod-subst-chain
 all: mod-subst-dollar
 
 WORDS=		sequences of letters
+
 .if ${WORDS:S,,,} != ${WORDS}
 .  warning The empty pattern matches something.
 .endif
+
 .if ${WORDS:S,e,*,1} != "s*quences of letters"
 .  warning The :S modifier flag '1' is not applied exactly once.
 .endif
+
 .if ${WORDS:S,f,*,1} != "sequences o* letters"
 .  warning The :S modifier flag '1' is only applied to the first word,\
 	 not to the first occurrence.
 .endif
+
 .if ${WORDS:S,e,*,} != "s*quences of l*tters"
 .  warning The :S modifier does not replace every first match per word.
 .endif
+
 .if ${WORDS:S,e,*,g} != "s*qu*nc*s of l*tt*rs"
 .  warning The :S modifier flag 'g' does not replace every occurrence.
 .endif
+
 .if ${WORDS:S,^sequ,occurr,} != "occurrences of letters"
 .  warning The :S modifier fails for a short match anchored at the start.
 .endif
+
 .if ${WORDS:S,^of,with,} != "sequences with letters"
 .  warning The :S modifier fails for an exact match anchored at the start.
 .endif
+
 .if ${WORDS:S,^office,does not match,} != ${WORDS}
 .  warning The :S modifier matches a too long pattern anchored at the start.
 .endif
+
 .if ${WORDS:S,f$,r,} != "sequences or letters"
 .  warning The :S modifier fails for a short match anchored at the end.
 .endif
+
 .if ${WORDS:S,s$,,} != "sequence of letter"
 .  warning The :S modifier fails to replace one occurrence per word.
 .endif
+
 .if ${WORDS:S,of$,,} != "sequences letters"
 .  warning The :S modifier fails for an exact match anchored at the end.
 .endif
+
 .if ${WORDS:S,eof$,,} != ${WORDS}
 .  warning The :S modifier matches a too long pattern anchored at the end.
 .endif
+
 .if ${WORDS:S,^of$,,} != "sequences letters"
 .  warning The :S modifier does not match a word anchored at both ends.
 .endif
+
 .if ${WORDS:S,^o$,,} != ${WORDS}
 .  warning The :S modifier matches a prefix anchored at both ends.
 .endif
+
 .if ${WORDS:S,^f$,,} != ${WORDS}
 .  warning The :S modifier matches a suffix anchored at both ends.
 .endif
+
 .if ${WORDS:S,^eof$,,} != ${WORDS}
 .  warning The :S modifier matches a too long prefix anchored at both ends.
 .endif
+
 .if ${WORDS:S,^office$,,} != ${WORDS}
 .  warning The :S modifier matches a too long suffix anchored at both ends.
 .endif

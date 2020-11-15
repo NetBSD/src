@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.200 2020/11/14 18:07:26 rillig Exp $
+# $NetBSD: Makefile,v 1.201 2020/11/15 20:20:58 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -380,6 +380,26 @@ TESTS+=		varparse-errors
 TESTS+=		varparse-mod
 TESTS+=		varparse-undef-partial
 TESTS+=		varquote
+
+# Ideas for more tests:
+#	char-0020-space.mk
+#	char-005C-backslash.mk
+#	escape-cond-str.mk
+#	escape-cond-func-arg.mk
+#	escape-cond-func-arg.mk
+#	escape-varmod.mk
+#	escape-varmod-define.mk
+#	escape-varmod-match.mk
+#	escape-varname.mk
+#	escape-varassign-varname.mk
+#	escape-varassign-varname-cmdline.mk
+#	escape-varassign-value.mk
+#	escape-varassign-value-cmdline.mk
+#	escape-dependency-source.mk
+#	escape-dependency-target.mk
+#	escape-for-varname.mk
+#	escape-for-item.mk
+#	posix-*.mk (see posix.mk and posix1.mk)
 
 .if ${.OBJDIR} != ${.CURDIR}
 RO_OBJDIR:=	${.OBJDIR}/roobj

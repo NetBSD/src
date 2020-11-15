@@ -1,7 +1,10 @@
-# $NetBSD: directive-ifmake.mk,v 1.7 2020/11/11 07:13:42 rillig Exp $
+# $NetBSD: directive-ifmake.mk,v 1.8 2020/11/15 20:20:58 rillig Exp $
 #
 # Tests for the .ifmake directive, which provides a shortcut for asking
 # whether a certain target is requested to be made from the command line.
+#
+# TODO: Describe why the shortcut may be useful (if it's useful at all),
+# instead of sticking to the simple '.if' only.
 
 # The targets 'first' and 'second' are passed in on the command line.
 
@@ -22,7 +25,10 @@
 .endif
 
 # See if the exclamation mark really means "not", or if it is just part of
-# the target name.
+# the target name.  Since it means 'not', the two exclamation marks are
+# effectively ignored, and 'first' is indeed a requested target.  If the
+# exclamation mark were part of the name instead, the name would be '!!first',
+# and such a target was not requested to be made.
 .ifmake !!first
 .  info ok: double negation works
 .else
