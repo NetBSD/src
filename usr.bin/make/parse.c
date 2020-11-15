@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.441 2020/11/15 12:02:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.442 2020/11/15 22:31:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.441 2020/11/15 12:02:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.442 2020/11/15 22:31:03 rillig Exp $");
 
 /* types and constants */
 
@@ -865,7 +865,7 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
     if (*src == '.' && ch_isupper(src[1])) {
 	int keywd = ParseFindKeyword(src);
 	if (keywd != -1) {
-	    int op = parseKeywords[keywd].op;
+	    GNodeType op = parseKeywords[keywd].op;
 	    if (op != 0) {
 		ApplyDependencyOperator(op);
 		return TRUE;
@@ -1673,7 +1673,7 @@ ParseDoDependency(char *line)
      *	a .SILENT line creates silence when making all targets
      *	a .PATH removes all directories from the search path(s).
      */
-    if (!*line) {
+    if (line[0] == '\0') {
 	ParseDoDependencySourcesEmpty(specType, paths);
     } else if (specType == SP_MFLAGS) {
 	/*
