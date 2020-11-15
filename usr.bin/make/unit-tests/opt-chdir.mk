@@ -1,4 +1,4 @@
-# $NetBSD: opt-chdir.mk,v 1.4 2020/11/14 22:39:14 rillig Exp $
+# $NetBSD: opt-chdir.mk,v 1.5 2020/11/15 05:43:56 sjg Exp $
 #
 # Tests for the -C command line option, which changes the directory at the
 # beginning.
@@ -20,7 +20,7 @@ chdir-filename-too-long: .PHONY .IGNORE
 # In this test, it is the root directory since almost any other directory
 # is not guaranteed to exist on every platform.
 chdir-root: .PHONY .IGNORE
-	@${MAKE} -C / -V 'cwd: $${.CURDIR}'
+	@MAKE_OBJDIR_CHECK_WRITABLE=no ${MAKE} -C / -V 'cwd: $${.CURDIR}'
 
 # Trying to change to a nonexistent directory exits immediately.
 chdir-nonexistent: .PHONY .IGNORE
