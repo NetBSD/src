@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.469 2020/11/14 23:03:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.470 2020/11/15 08:10:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.469 2020/11/14 23:03:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.470 2020/11/15 08:10:15 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -245,83 +245,84 @@ static void
 parse_debug_options(const char *argvalue)
 {
 	const char *modules;
+	DebugFlags debug = opts.debug;
 
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
 		case '0':	/* undocumented, only intended for tests */
-			opts.debug = DEBUG_NONE;
+			debug = DEBUG_NONE;
 			break;
 		case 'A':
-			opts.debug = DEBUG_ALL;
+			debug = DEBUG_ALL;
 			break;
 		case 'a':
-			opts.debug |= DEBUG_ARCH;
+			debug |= DEBUG_ARCH;
 			break;
 		case 'C':
-			opts.debug |= DEBUG_CWD;
+			debug |= DEBUG_CWD;
 			break;
 		case 'c':
-			opts.debug |= DEBUG_COND;
+			debug |= DEBUG_COND;
 			break;
 		case 'd':
-			opts.debug |= DEBUG_DIR;
+			debug |= DEBUG_DIR;
 			break;
 		case 'e':
-			opts.debug |= DEBUG_ERROR;
+			debug |= DEBUG_ERROR;
 			break;
 		case 'f':
-			opts.debug |= DEBUG_FOR;
+			debug |= DEBUG_FOR;
 			break;
 		case 'g':
 			if (modules[1] == '1') {
-				opts.debug |= DEBUG_GRAPH1;
+				debug |= DEBUG_GRAPH1;
 				++modules;
 			} else if (modules[1] == '2') {
-				opts.debug |= DEBUG_GRAPH2;
+				debug |= DEBUG_GRAPH2;
 				++modules;
 			} else if (modules[1] == '3') {
-				opts.debug |= DEBUG_GRAPH3;
+				debug |= DEBUG_GRAPH3;
 				++modules;
 			}
 			break;
 		case 'h':
-			opts.debug |= DEBUG_HASH;
+			debug |= DEBUG_HASH;
 			break;
 		case 'j':
-			opts.debug |= DEBUG_JOB;
+			debug |= DEBUG_JOB;
 			break;
 		case 'L':
 			opts.lint = TRUE;
 			break;
 		case 'l':
-			opts.debug |= DEBUG_LOUD;
+			debug |= DEBUG_LOUD;
 			break;
 		case 'M':
-			opts.debug |= DEBUG_META;
+			debug |= DEBUG_META;
 			break;
 		case 'm':
-			opts.debug |= DEBUG_MAKE;
+			debug |= DEBUG_MAKE;
 			break;
 		case 'n':
-			opts.debug |= DEBUG_SCRIPT;
+			debug |= DEBUG_SCRIPT;
 			break;
 		case 'p':
-			opts.debug |= DEBUG_PARSE;
+			debug |= DEBUG_PARSE;
 			break;
 		case 's':
-			opts.debug |= DEBUG_SUFF;
+			debug |= DEBUG_SUFF;
 			break;
 		case 't':
-			opts.debug |= DEBUG_TARG;
+			debug |= DEBUG_TARG;
 			break;
 		case 'V':
 			opts.debugVflag = TRUE;
 			break;
 		case 'v':
-			opts.debug |= DEBUG_VAR;
+			debug |= DEBUG_VAR;
 			break;
 		case 'x':
-			opts.debug |= DEBUG_SHELL;
+			debug |= DEBUG_SHELL;
 			break;
 		case 'F':
 			parse_debug_option_F(modules + 1);
@@ -333,6 +334,7 @@ parse_debug_options(const char *argvalue)
 			usage();
 		}
 	}
+	opts.debug = debug;
 
 debug_setbuf:
 	/*
