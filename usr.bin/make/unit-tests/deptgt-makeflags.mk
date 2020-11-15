@@ -1,7 +1,10 @@
-# $NetBSD: deptgt-makeflags.mk,v 1.5 2020/11/08 02:31:24 rillig Exp $
+# $NetBSD: deptgt-makeflags.mk,v 1.6 2020/11/15 20:20:58 rillig Exp $
 #
 # Tests for the special target .MAKEFLAGS in dependency declarations,
 # which adds command line options later, at parse time.
+#
+# In these unit tests, it is often used to temporarily toggle the debug log
+# during parsing.
 
 # The -D option sets a variable in the "Global" scope and thus can be
 # undefined later.

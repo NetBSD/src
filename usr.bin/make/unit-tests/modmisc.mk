@@ -1,4 +1,4 @@
-# $NetBSD: modmisc.mk,v 1.50 2020/11/03 18:42:33 rillig Exp $
+# $NetBSD: modmisc.mk,v 1.51 2020/11/15 20:20:58 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -60,7 +60,7 @@ undefvar:
 mod-quote:
 	@echo $@: new${.newline:Q}${.newline:Q}line
 
-# Cover the bmake_realloc in brk_string.
+# Cover the bmake_realloc in Str_Words.
 mod-break-many-words:
 	@echo $@: ${UNDEF:U:range=500:[#]}
 
