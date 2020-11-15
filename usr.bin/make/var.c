@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.685 2020/11/14 21:29:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.686 2020/11/15 18:32:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.685 2020/11/14 21:29:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.686 2020/11/15 18:32:29 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1773,7 +1773,7 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  * during parsing though.
  *
  * Evaluating the modifier usually takes the current value of the variable
- * expression from st->val, or the variable name from st->v->name and stores
+ * expression from st->val, or the variable name from st->var->name and stores
  * the result in st->newVal.
  *
  * If evaluating fails (as of 2020-08-23), an error message is printed using
@@ -1806,7 +1806,7 @@ ENUM_FLAGS_RTTI_2(VarExprFlags,
 typedef struct ApplyModifiersState {
     const char startc;		/* '\0' or '{' or '(' */
     const char endc;		/* '\0' or '}' or ')' */
-    Var * const v;
+    Var * const var;
     GNode * const ctxt;
     const VarEvalFlags eflags;
 
@@ -1969,7 +1969,8 @@ ParseModifierPart(
 
     if (*p != delim) {
 	*pp = p;
-	Error("Unfinished modifier for %s ('%c' missing)", st->v->name, delim);
+	Error("Unfinished modifier for %s ('%c' missing)",
+	      st->var->name, delim);
 	*out_part = NULL;
 	return VPR_PARSE_MSG;
     }
@@ -2080,7 +2081,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
-		    st->v->name, args.tvar);
+		    st->var->name, args.tvar);
 	return AMR_CLEANUP;
     }
 
@@ -2162,7 +2163,7 @@ static ApplyModifierResult
 ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
 {
     ApplyModifiersState_Define(st);
-    st->newVal = bmake_strdup(st->v->name);
+    st->newVal = bmake_strdup(st->var->name);
     (*pp)++;
     return AMR_OK;
 }
@@ -2257,17 +2258,17 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 
     ApplyModifiersState_Define(st);
 
-    gn = Targ_FindNode(st->v->name);
+    gn = Targ_FindNode(st->var->name);
     if (gn == NULL || gn->type & OP_NOPATH) {
 	path = NULL;
     } else if (gn->path != NULL) {
 	path = bmake_strdup(gn->path);
     } else {
 	SearchPath *searchPath = Suff_FindPath(gn);
-	path = Dir_FindFile(st->v->name, searchPath);
+	path = Dir_FindFile(st->var->name, searchPath);
     }
     if (path == NULL)
-	path = bmake_strdup(st->v->name);
+	path = bmake_strdup(st->var->name);
     st->newVal = path;
 
     (*pp)++;
@@ -2413,7 +2414,8 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	free(old_pattern);
     }
 
-    VAR_DEBUG3("Pattern[%s] for [%s] is [%s]\n", st->v->name, st->val, pattern);
+    VAR_DEBUG3("Pattern[%s] for [%s] is [%s]\n",
+	       st->var->name, st->val, pattern);
 
     callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
     st->newVal = ModifyWords(st->val, callback, pattern,
@@ -2875,7 +2877,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 
     int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
     if (st->eflags & VARE_WANTRES) {
-	cond_rc = Cond_EvalCondition(st->v->name, &value);
+	cond_rc = Cond_EvalCondition(st->var->name, &value);
 	if (cond_rc != COND_INVALID && value)
 	    then_eflags = st->eflags;
 	if (cond_rc != COND_INVALID && !value)
@@ -2896,7 +2898,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
     (*pp)--;
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
-	      st->v->name, st->v->name, then_expr, else_expr);
+	      st->var->name, st->var->name, then_expr, else_expr);
 	return AMR_CLEANUP;
     }
 
@@ -2950,14 +2952,14 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
     return AMR_UNKNOWN;		/* "::<unrecognised>" */
 ok:
 
-    if (st->v->name[0] == '\0') {
+    if (st->var->name[0] == '\0') {
 	*pp = mod + 1;
 	return AMR_BAD;
     }
 
     v_ctxt = st->ctxt;		/* context where v belongs */
     if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
-	Var *gv = VarFind(st->v->name, st->ctxt, FALSE);
+	Var *gv = VarFind(st->var->name, st->ctxt, FALSE);
 	if (gv == NULL)
 	    v_ctxt = VAR_GLOBAL;
 	else
@@ -2985,7 +2987,7 @@ ok:
     if (st->eflags & VARE_WANTRES) {
 	switch (op[0]) {
 	case '+':
-	    Var_Append(st->v->name, val, v_ctxt);
+	    Var_Append(st->var->name, val, v_ctxt);
 	    break;
 	case '!': {
 	    const char *errfmt;
@@ -2993,7 +2995,7 @@ ok:
 	    if (errfmt)
 		Error(errfmt, val);
 	    else
-		Var_Set(st->v->name, cmd_output, v_ctxt);
+		Var_Set(st->var->name, cmd_output, v_ctxt);
 	    free(cmd_output);
 	    break;
 	}
@@ -3002,7 +3004,7 @@ ok:
 		break;
 	    /* FALLTHROUGH */
 	default:
-	    Var_Set(st->v->name, val, v_ctxt);
+	    Var_Set(st->var->name, val, v_ctxt);
 	    break;
 	}
     }
@@ -3151,11 +3153,11 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, const char endc)
     /* At this point, only the first character of the modifier can
      * be used since the end of the modifier is not yet known. */
     debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-		 st->v->name, mod[0], is_single_char ? "" : "...", st->val,
+		 st->var->name, mod[0], is_single_char ? "" : "...", st->val,
 		 Enum_FlagsToString(eflags_str, sizeof eflags_str,
 				    st->eflags, VarEvalFlags_ToStringSpecs),
 		 Enum_FlagsToString(vflags_str, sizeof vflags_str,
-				    st->v->flags, VarFlags_ToStringSpecs),
+				    st->var->flags, VarFlags_ToStringSpecs),
 		 Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
 				    st->exprFlags,
 				    VarExprFlags_ToStringSpecs));
@@ -3171,11 +3173,11 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
     const char *newVal = st->newVal == var_Error ? "error" : st->newVal;
 
     debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-		 st->v->name, (int)(p - mod), mod, quot, newVal, quot,
+		 st->var->name, (int)(p - mod), mod, quot, newVal, quot,
 		 Enum_FlagsToString(eflags_str, sizeof eflags_str,
 				    st->eflags, VarEvalFlags_ToStringSpecs),
 		 Enum_FlagsToString(vflags_str, sizeof vflags_str,
-				    st->v->flags, VarFlags_ToStringSpecs),
+				    st->var->flags, VarFlags_ToStringSpecs),
 		 Enum_FlagsToString(exprflags_str, sizeof exprflags_str,
 				    st->exprFlags,
 				    VarExprFlags_ToStringSpecs));
@@ -3294,7 +3296,7 @@ ApplyModifiersIndirect(
 
     if (mods[0] != '\0') {
 	const char *rval_pp = mods;
-	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->v,
+	st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0', st->var,
 				 &st->exprFlags, st->ctxt, st->eflags,
 				 inout_freeIt);
 	if (st->val == var_Error || st->val == varUndefined ||
@@ -3310,7 +3312,7 @@ ApplyModifiersIndirect(
 	p++;
     else if (*p == '\0' && st->endc != '\0') {
 	Error("Unclosed variable specification after complex "
-	      "modifier (expecting '%c') for %s", st->endc, st->v->name);
+	      "modifier (expecting '%c') for %s", st->endc, st->var->name);
 	*inout_p = p;
 	return AMIR_OUT;
     }
@@ -3352,7 +3354,7 @@ ApplyModifiers(
 
     if (*p == '\0' && endc != '\0') {
 	Error("Unclosed variable expression (expecting '%c') for \"%s\"",
-	      st.endc, st.v->name);
+	      st.endc, st.var->name);
 	goto cleanup;
     }
 
@@ -3410,7 +3412,7 @@ ApplyModifiers(
 	if (*p == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
 		  "for \"%s\" (value \"%s\") modifier %c",
-		  st.endc, st.v->name, st.val, *mod);
+		  st.endc, st.var->name, st.val, *mod);
 	} else if (*p == ':') {
 	    p++;
 	} else if (opts.lint && *p != '\0' && *p != endc) {
@@ -3429,7 +3431,7 @@ out:
 bad_modifier:
     /* XXX: The modifier end is only guessed. */
     Error("Bad modifier `:%.*s' for %s",
-	  (int)strcspn(mod, ":)}"), mod, st.v->name);
+	  (int)strcspn(mod, ":)}"), mod, st.var->name);
 
 cleanup:
     *pp = p;
