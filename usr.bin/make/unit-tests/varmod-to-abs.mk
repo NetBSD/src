@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-abs.mk,v 1.4 2020/11/14 23:03:08 rillig Exp $
+# $NetBSD: varmod-to-abs.mk,v 1.5 2020/11/15 05:48:17 rillig Exp $
 #
 # Tests for the :tA variable modifier, which returns the absolute path for
 # each of the words in the variable value.
@@ -20,7 +20,7 @@ does-not-exist.c=	/dev/null
 
 # The output of the following line is modified by the global _SED_CMDS in
 # unit-tests/Makefile.  See the .rawout file for the truth.
-.info ${MAKEFILE:S,^,./,:tA}
+.info ${MAKEFILE:tA}
 
 .MAKEFLAGS: -d0
 
