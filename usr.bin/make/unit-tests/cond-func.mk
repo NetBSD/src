@@ -1,10 +1,12 @@
-# $NetBSD: cond-func.mk,v 1.8 2020/11/10 20:44:18 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.9 2020/11/15 14:07:53 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
 #
 # The below test uses the function defined(...) since it has no side-effects,
-# the other functions (except empty(...)) would work equally well.
+# the other functions (except empty(...)) would work equally well.  The
+# function empty is special because it uses a different parsing algorithm for
+# its argument.
 
 DEF=			defined
 ${:UA B}=		variable name with spaces
