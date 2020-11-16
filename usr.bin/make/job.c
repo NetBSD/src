@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.325 2020/11/14 17:04:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.326 2020/11/16 18:28:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.325 2020/11/14 17:04:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.326 2020/11/16 18:28:27 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1964,7 +1964,7 @@ Job_CatchOutput(void)
 	default:
 	    abort();
 	}
-	--nready;
+	nready--;
     }
 
     Job_CatchChildren();
