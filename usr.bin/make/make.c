@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.208 2020/11/16 21:39:22 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.209 2020/11/16 22:31:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.208 2020/11/16 21:39:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.209 2020/11/16 22:31:42 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -279,7 +279,7 @@ GNode_IsOODate(GNode *gn)
 	 */
 	DEBUG0(MAKE, ".JOIN node...");
 	DEBUG1(MAKE, "source %smade...", gn->flags & CHILDMADE ? "" : "not ");
-	oodate = (gn->flags & CHILDMADE) ? TRUE : FALSE;
+	oodate = (gn->flags & CHILDMADE) != 0;
     } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
 	/*
 	 * A node which is the object of the force (!) operator or which has
@@ -309,7 +309,7 @@ GNode_IsOODate(GNode *gn)
 	    if (gn->flags & FORCE)
 		debug_printf("non existing child...");
 	}
-	oodate = (gn->flags & FORCE) ? TRUE : FALSE;
+	oodate = (gn->flags & FORCE) != 0;
     }
 
 #ifdef USE_META
