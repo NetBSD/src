@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2018/04/01 04:35:01 ryo Exp $
+#	$NetBSD: Makefile,v 1.20 2020/11/16 11:38:29 rin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,7 +28,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
 
-.if !empty(MACHINE_ARCH:Maarch64)
+.if !empty(MACHINE_ARCH:Maarch64*)
 UBOOT_IMAGE_ARCH=	arm64
 .else
 UBOOT_IMAGE_ARCH=	arm
