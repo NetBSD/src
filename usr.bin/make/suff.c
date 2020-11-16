@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.239 2020/11/16 18:38:49 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.240 2020/11/16 18:41:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.239 2020/11/16 18:38:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.240 2020/11/16 18:41:41 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -747,14 +747,12 @@ Suff_DoPaths(void)
 	Suff *s = ln->datum;
 	if (!Lst_IsEmpty(s->searchPath)) {
 #ifdef INCLUDES
-	    if (s->flags & SUFF_INCLUDE) {
+	    if (s->flags & SUFF_INCLUDE)
 		Dir_Concat(inIncludes, s->searchPath);
-	    }
 #endif
 #ifdef LIBRARIES
-	    if (s->flags & SUFF_LIBRARY) {
+	    if (s->flags & SUFF_LIBRARY)
 		Dir_Concat(inLibs, s->searchPath);
-	    }
 #endif
 	    Dir_Concat(s->searchPath, dirSearchPath);
 	} else {
@@ -1493,9 +1491,8 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * the user needn't provide a transformation from the member to the
      * archive.
      */
-    if (!GNode_IsTarget(gn)) {
+    if (!GNode_IsTarget(gn))
 	gn->type |= OP_DEPENDS;
-    }
 
     /*
      * Flag the member as such so we remember to look in the archive for
@@ -1697,11 +1694,10 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	     * No known transformations -- use the first suffix found
 	     * for setting the local variables.
 	     */
-	    if (!Lst_IsEmpty(targs)) {
+	    if (targs->first != NULL)
 		targ = targs->first->datum;
-	    } else {
+	    else
 		targ = NULL;
-	    }
 	} else {
 	    /*
 	     * Work up the transformation path to find the suffix of the
@@ -1714,7 +1710,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 
     Var_Set(TARGET, GNode_Path(gn), gn);
 
-    pref = (targ != NULL) ? targ->pref : gn->name;
+    pref = targ != NULL ? targ->pref : gn->name;
     Var_Set(PREFIX, pref, gn);
 
     /*
@@ -1756,9 +1752,8 @@ sfnd_abort:
 	     * up to, but not including, the parent node.
 	     */
 	    while (bottom != NULL && bottom->parent != NULL) {
-		if (Lst_FindDatum(slst, bottom) == NULL) {
+		if (Lst_FindDatum(slst, bottom) == NULL)
 		    Lst_Append(slst, bottom);
-		}
 		bottom = bottom->parent;
 	    }
 	    bottom = src;
@@ -1784,9 +1779,8 @@ sfnd_abort:
      * transformation rule. Also, the unmade field of gn is incremented.
      * Etc.
      */
-    if (bottom->node == NULL) {
+    if (bottom->node == NULL)
 	bottom->node = Targ_GetNode(bottom->file);
-    }
 
     for (src = bottom; src->parent != NULL; src = src->parent) {
 	targ = src->parent;
@@ -1796,9 +1790,8 @@ sfnd_abort:
 	src->node->suffix = src->suff;
 	src->node->suffix->refCount++;
 
-	if (targ->node == NULL) {
+	if (targ->node == NULL)
 	    targ->node = Targ_GetNode(targ->file);
-	}
 
 	SuffApplyTransform(targ->node, src->node,
 			   targ->suff, src->suff);
@@ -1931,9 +1924,8 @@ Suff_SetNull(const char *name)
 	return;
     }
 
-    if (suffNull != NULL) {
+    if (suffNull != NULL)
 	suffNull->flags &= ~(unsigned)SUFF_NULL;
-    }
     s->flags |= SUFF_NULL;
     /*
      * XXX: Here's where the transformation mangling would take place
