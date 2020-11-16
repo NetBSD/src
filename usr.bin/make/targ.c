@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.133 2020/11/16 21:59:08 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.134 2020/11/16 22:27:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.133 2020/11/16 21:59:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.134 2020/11/16 22:27:03 rillig Exp $");
 
 /* All target nodes found so far, but not the source nodes. */
 static GNodeList *allTargets;
@@ -193,21 +193,21 @@ GNode_New(const char *name)
     gn->uname = NULL;
     gn->path = NULL;
     gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : 0;
-    gn->unmade = 0;
-    gn->unmade_cohorts = 0;
-    gn->cohort_num[0] = '\0';
-    gn->centurion = NULL;
-    gn->made = UNMADE;
     gn->flags = 0;
-    gn->checked_seqno = 0;
+    gn->made = UNMADE;
+    gn->unmade = 0;
     gn->mtime = 0;
     gn->youngestChild = NULL;
     gn->implicitParents = Lst_New();
-    gn->cohorts = Lst_New();
     gn->parents = Lst_New();
     gn->children = Lst_New();
     gn->order_pred = Lst_New();
     gn->order_succ = Lst_New();
+    gn->cohorts = Lst_New();
+    gn->cohort_num[0] = '\0';
+    gn->unmade_cohorts = 0;
+    gn->centurion = NULL;
+    gn->checked_seqno = 0;
     HashTable_Init(&gn->context);
     gn->commands = Lst_New();
     gn->suffix = NULL;
@@ -230,17 +230,22 @@ GNode_Free(void *gnp)
     free(gn->name);
     free(gn->uname);
     free(gn->path);
-
-    Lst_Free(gn->implicitParents);
-    Lst_Free(gn->cohorts);
-    Lst_Free(gn->parents);
-    Lst_Free(gn->children);
-    Lst_Free(gn->order_succ);
-    Lst_Free(gn->order_pred);
-    HashTable_Done(&gn->context);
-    Lst_Free(gn->commands);
-
-    /* XXX: does gn->suffix need to be freed? It is reference-counted. */
+    /* gn->youngestChild is not owned by this node. */
+    Lst_Free(gn->implicitParents); /* ... but not the nodes themselves, */
+    Lst_Free(gn->parents);	/* as they are not owned by this node. */
+    Lst_Free(gn->children);	/* likewise */
+    Lst_Free(gn->order_pred);	/* likewise */
+    Lst_Free(gn->order_succ);	/* likewise */
+    Lst_Free(gn->cohorts);	/* likewise */
+    HashTable_Done(&gn->context); /* ... but not the variables themselves,
+				 * even though they are owned by this node.
+				 * XXX: they should probably be freed. */
+    Lst_Free(gn->commands);	/* ... but not the commands themselves,
+				 * as they may be shared with other nodes. */
+    /* gn->suffix is not owned by this node. */
+    /* XXX: gn->suffix should be unreferenced here.  This requires a thorough
+     * check that the reference counting is done correctly in all places,
+     * otherwise a suffix might be freed too early. */
 
     free(gn);
 }
