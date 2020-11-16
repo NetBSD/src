@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.238 2020/11/16 18:34:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.239 2020/11/16 18:38:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.238 2020/11/16 18:34:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.239 2020/11/16 18:38:49 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -215,7 +215,7 @@ SuffStrIsPrefix(const char *pref, const char *str)
 	str++;
     }
 
-    return *pref ? NULL : str;
+    return *pref != '\0' ? NULL : str;
 }
 
 /*
@@ -304,7 +304,7 @@ SuffFree(void *sp)
 
 #if 0
     /* We don't delete suffixes in order, so we cannot use this */
-    if (suff->refCount)
+    if (suff->refCount != 0)
 	Punt("Internal error deleting suffix `%s' with refcount = %d",
 	     suff->name, suff->refCount);
 #endif
@@ -1755,7 +1755,7 @@ sfnd_abort:
 	     * Free up all the Src structures in the transformation path
 	     * up to, but not including, the parent node.
 	     */
-	    while (bottom && bottom->parent != NULL) {
+	    while (bottom != NULL && bottom->parent != NULL) {
 		if (Lst_FindDatum(slst, bottom) == NULL) {
 		    Lst_Append(slst, bottom);
 		}
@@ -1820,7 +1820,7 @@ sfnd_abort:
 	}
     }
 
-    if (gn->suffix)
+    if (gn->suffix != NULL)
 	gn->suffix->refCount--;
     gn->suffix = src->suff;
     gn->suffix->refCount++;
@@ -1830,7 +1830,7 @@ sfnd_abort:
      * two lists.
      */
 sfnd_return:
-    if (bottom)
+    if (bottom != NULL)
 	if (Lst_FindDatum(slst, bottom) == NULL)
 	    Lst_Append(slst, bottom);
 
