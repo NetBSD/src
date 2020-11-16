@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.132 2020/11/16 21:53:10 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.133 2020/11/16 21:59:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,16 +119,15 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.132 2020/11/16 21:53:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.133 2020/11/16 21:59:08 rillig Exp $");
 
-static GNodeList *allTargets;	/* the list of all targets found so far */
-static HashTable targets;	/* a hash table of same */
-
-#ifdef CLEANUP
-static GNodeList *allGNs;	/* List of all the GNodes */
-#endif
+/* All target nodes found so far, but not the source nodes. */
+static GNodeList *allTargets;
+static HashTable allTargetsByName;
 
 #ifdef CLEANUP
+static GNodeList *allNodes;
+
 static void GNode_Free(void *);
 #endif
 
@@ -136,9 +135,9 @@ void
 Targ_Init(void)
 {
     allTargets = Lst_New();
-    HashTable_Init(&targets);
+    HashTable_Init(&allTargetsByName);
 #ifdef CLEANUP
-    allGNs = Lst_New();
+    allNodes = Lst_New();
 #endif
 }
 
@@ -148,15 +147,15 @@ Targ_End(void)
     Targ_Stats();
 #ifdef CLEANUP
     Lst_Free(allTargets);
-    HashTable_Done(&targets);
-    Lst_Destroy(allGNs, GNode_Free);
+    HashTable_Done(&allTargetsByName);
+    Lst_Destroy(allNodes, GNode_Free);
 #endif
 }
 
 void
 Targ_Stats(void)
 {
-    HashTable_DebugStats(&targets, "targets");
+    HashTable_DebugStats(&allTargetsByName, "targets");
 }
 
 /*
@@ -216,7 +215,7 @@ GNode_New(const char *name)
     gn->lineno = 0;
 
 #ifdef CLEANUP
-    Lst_Append(allGNs, gn);
+    Lst_Append(allNodes, gn);
 #endif
 
     return gn;
@@ -251,7 +250,7 @@ GNode_Free(void *gnp)
 GNode *
 Targ_FindNode(const char *name)
 {
-    return HashTable_FindValue(&targets, name);
+    return HashTable_FindValue(&allTargetsByName, name);
 }
 
 /* Get the existing global node, or create it. */
@@ -259,7 +258,7 @@ GNode *
 Targ_GetNode(const char *name)
 {
     Boolean isNew;
-    HashEntry *he = HashTable_CreateEntry(&targets, name, &isNew);
+    HashEntry *he = HashTable_CreateEntry(&allTargetsByName, name, &isNew);
     if (!isNew)
 	return HashEntry_Get(he);
 
