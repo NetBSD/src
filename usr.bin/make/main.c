@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.474 2020/11/15 09:54:16 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.475 2020/11/16 18:28:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.474 2020/11/15 09:54:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.475 2020/11/16 18:28:27 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -276,13 +276,13 @@ parse_debug_options(const char *argvalue)
 		case 'g':
 			if (modules[1] == '1') {
 				debug |= DEBUG_GRAPH1;
-				++modules;
+				modules++;
 			} else if (modules[1] == '2') {
 				debug |= DEBUG_GRAPH2;
-				++modules;
+				modules++;
 			} else if (modules[1] == '3') {
 				debug |= DEBUG_GRAPH3;
-				++modules;
+				modules++;
 			}
 			break;
 		case 'h':
@@ -607,8 +607,8 @@ rearg:
 		arginc = 0;
 		if (inOption) {
 			if (c == '\0') {
-				++argv;
-				--argc;
+				argv++;
+				argc--;
 				inOption = FALSE;
 				continue;
 			}
