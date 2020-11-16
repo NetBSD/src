@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.241 2020/11/16 18:45:44 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.242 2020/11/16 18:47:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.241 2020/11/16 18:45:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.242 2020/11/16 18:47:03 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1164,7 +1164,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 		    }
 
 		    free(freeIt);
-		} else if (*cp == '\\' && cp[1] != '\0') {
+		} else if (cp[0] == '\\' && cp[1] != '\0') {
 		    /*
 		     * Escaped something -- skip over it
 		     */
@@ -1320,7 +1320,7 @@ Suff_FindPath(GNode* gn)
 static Boolean
 SuffApplyTransform(GNode *tgn, GNode *sgn, Suff *tsuff, Suff *ssuff)
 {
-    GNodeListNode *ln, *nln;    /* General node */
+    GNodeListNode *ln;
     char *tname;		/* Name of transformation rule */
     GNode *gn;			/* Node for same */
 
@@ -1350,12 +1350,14 @@ SuffApplyTransform(GNode *tgn, GNode *sgn, Suff *tsuff, Suff *ssuff)
     ln = tgn->children->last;
 
     /* Apply the rule. */
-    (void)Make_HandleUse(gn, tgn);
+    Make_HandleUse(gn, tgn);
 
     /* Deal with wildcards and variables in any acquired sources. */
-    for (ln = ln != NULL ? ln->next : NULL; ln != NULL; ln = nln) {
-	nln = ln->next;
+    ln = ln != NULL ? ln->next : NULL;
+    while (ln != NULL) {
+	GNodeListNode *nln = ln->next;
 	SuffExpandChildren(ln, tgn);
+	ln = nln;
     }
 
     /*
@@ -1485,7 +1487,8 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * Replace the opening and closing parens now we've no need of the separate
      * pieces.
      */
-    *eoarch = '('; *eoname = ')';
+    *eoarch = '(';
+    *eoname = ')';
 
     /*
      * Pretend gn appeared to the left of a dependency operator so
@@ -1807,9 +1810,7 @@ sfnd_abort:
 	     * node, so all we need to do is set the standard variables.
 	     */
 	    targ->node->type |= OP_DEPS_FOUND;
-
 	    Var_Set(PREFIX, targ->pref, targ->node);
-
 	    Var_Set(TARGET, targ->node->name, targ->node);
 	}
     }
@@ -1824,9 +1825,8 @@ sfnd_abort:
      * two lists.
      */
 sfnd_return:
-    if (bottom != NULL)
-	if (Lst_FindDatum(slst, bottom) == NULL)
-	    Lst_Append(slst, bottom);
+    if (bottom != NULL && Lst_FindDatum(slst, bottom) == NULL)
+	Lst_Append(slst, bottom);
 
     while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
 	continue;
