@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.130 2020/11/16 21:44:29 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.131 2020/11/16 21:48:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.130 2020/11/16 21:44:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.131 2020/11/16 21:48:18 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 static HashTable targets;	/* a hash table of same */
@@ -304,22 +304,23 @@ Targ_FindList(StringList *names)
 
 /* Return true if should ignore errors when creating gn. */
 Boolean
-Targ_Ignore(GNode *gn)
+Targ_Ignore(const GNode *gn)
 {
     return opts.ignoreErrors || gn->type & OP_IGNORE;
 }
 
 /* Return true if be silent when creating gn. */
 Boolean
-Targ_Silent(GNode *gn)
+Targ_Silent(const GNode *gn)
 {
     return opts.beSilent || gn->type & OP_SILENT;
 }
 
 /* See if the given target is precious. */
 Boolean
-Targ_Precious(GNode *gn)
+Targ_Precious(const GNode *gn)
 {
+    /* XXX: Why are '::' targets precious? */
     return allPrecious || gn->type & (OP_PRECIOUS | OP_DOUBLEDEP);
 }
 
