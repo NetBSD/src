@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.246 2020/11/16 23:23:57 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.247 2020/11/16 23:27:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.246 2020/11/16 23:23:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.247 2020/11/16 23:27:41 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -278,7 +278,7 @@ FindTransformByName(const char *name)
 }
 
 static void
-SuffUnRef(SuffList *list, Suff *suff)
+SuffList_Unref(SuffList *list, Suff *suff)
 {
     SuffListNode *ln = Lst_FindDatum(list, suff);
     if (ln != NULL) {
@@ -317,12 +317,12 @@ SuffFree(void *sp)
 
 /* Remove the suffix from the list, and free if it is otherwise unused. */
 static void
-SuffRemove(SuffList *list, Suff *suff)
+SuffList_Remove(SuffList *list, Suff *suff)
 {
-    SuffUnRef(list, suff);
+    SuffList_Unref(list, suff);
     if (suff->refCount == 0) {
 	/* XXX: can lead to suff->refCount == -1 */
-	SuffUnRef(sufflist, suff);
+	SuffList_Unref(sufflist, suff);
 	SuffFree(suff);
     }
 }
@@ -552,14 +552,17 @@ Suff_EndTransform(GNode *gn)
 	 */
 	if (SuffParseTransform(gn->name, &srcSuff, &targSuff)) {
 
-	    /* Remember parents since srcSuff could be deleted in SuffRemove */
+	    /*
+	     * Remember parents since srcSuff could be deleted in
+	     * SuffList_Remove
+	     */
 	    SuffList *srcSuffParents = srcSuff->parents;
 
 	    SUFF_DEBUG2("deleting transformation from `%s' to `%s'\n",
 			srcSuff->name, targSuff->name);
 
-	    SuffRemove(targSuff->children, srcSuff);
-	    SuffRemove(srcSuffParents, targSuff);
+	    SuffList_Remove(targSuff->children, srcSuff);
+	    SuffList_Remove(srcSuffParents, targSuff);
 	}
     } else if (gn->type & OP_TRANSFORM) {
 	SUFF_DEBUG1("transformation %s complete\n", gn->name);
