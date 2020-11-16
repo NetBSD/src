@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.236 2020/11/15 22:31:03 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.237 2020/11/16 16:15:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -129,7 +129,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.236 2020/11/15 22:31:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.237 2020/11/16 16:15:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -179,7 +179,12 @@ typedef struct Suff {
 				 * and several other places */
     SuffList	 *parents;	/* Suffixes we have a transformation to */
     SuffList	 *children;	/* Suffixes we have a transformation from */
-    SuffListList *ref;		/* Lists in which this suffix is referenced */
+
+    /* Lists in which this suffix is referenced.
+     * XXX: These lists are used nowhere, they are just appended to, for no
+     * apparent reason.  They do have the side effect of increasing refCount
+     * though. */
+    SuffListList *ref;
 } Suff;
 
 /*
