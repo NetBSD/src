@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.134 2020/11/16 22:27:03 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.135 2020/11/16 22:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.134 2020/11/16 22:27:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.135 2020/11/16 22:28:44 rillig Exp $");
 
 /* All target nodes found so far, but not the source nodes. */
 static GNodeList *allTargets;
@@ -480,12 +480,12 @@ Targ_PrintNode(GNode *gn, int pass)
 	    debug_printf("# *** MAIN TARGET ***\n");
 	}
 	if (pass >= 2) {
-	    if (gn->unmade) {
+	    if (gn->unmade > 0) {
 		debug_printf("# %d unmade children\n", gn->unmade);
 	    } else {
 		debug_printf("# No unmade children\n");
 	    }
-	    if (! (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
+	    if (!(gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 		if (gn->mtime != 0) {
 		    debug_printf("# last modified %s: %s\n",
 			    Targ_FmtTime(gn->mtime),
@@ -553,16 +553,23 @@ Targ_PrintGraph(int pass)
 {
     debug_printf("#*** Input graph:\n");
     Targ_PrintNodes(allTargets, pass);
-    debug_printf("\n\n");
-    debug_printf("#\n#   Files that are only sources:\n");
+    debug_printf("\n");
+    debug_printf("\n");
+
+    debug_printf("#\n");
+    debug_printf("#   Files that are only sources:\n");
     PrintOnlySources();
+
     debug_printf("#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
+
     debug_printf("#*** Command-line Variables:\n");
     Var_Dump(VAR_CMDLINE);
+
     debug_printf("\n");
     Dir_PrintDirectories();
     debug_printf("\n");
+
     Suff_PrintAll();
 }
 
