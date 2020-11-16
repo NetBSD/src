@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.242 2020/11/16 18:47:03 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.243 2020/11/16 18:49:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,14 +114,11 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.242 2020/11/16 18:47:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.243 2020/11/16 18:49:54 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
 #define SUFF_DEBUG2(fmt, arg1, arg2) DEBUG2(SUFF, fmt, arg1, arg2)
-#define SUFF_DEBUG3(fmt, arg1, arg2, arg3) DEBUG3(SUFF, fmt, arg1, arg2, arg3)
-#define SUFF_DEBUG4(fmt, arg1, arg2, arg3, arg4) \
-	DEBUG4(SUFF, fmt, arg1, arg2, arg3, arg4)
 
 typedef List SuffList;
 typedef ListNode SuffListNode;
@@ -351,8 +348,8 @@ SuffInsert(SuffList *list, Suff *suff)
 	suff->refCount++;
 	Lst_Append(suff->ref, list);
     } else if (listSuff->sNum != suff->sNum) {
-	SUFF_DEBUG4("inserting \"%s\" (%d) before \"%s\" (%d)\n",
-		    suff->name, suff->sNum, listSuff->name, listSuff->sNum);
+	    DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
+		   suff->name, suff->sNum, listSuff->name, listSuff->sNum);
 	Lst_InsertBefore(list, ln, suff);
 	suff->refCount++;
 	Lst_Append(suff->ref, list);
@@ -1343,7 +1340,7 @@ SuffApplyTransform(GNode *tgn, GNode *sgn, Suff *tsuff, Suff *ssuff)
 	return FALSE;
     }
 
-    SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n",
+    DEBUG3(SUFF,"\tapplying %s -> %s to \"%s\"\n",
 		ssuff->name, tsuff->name, tgn->name);
 
     /* Record last child; Make_HandleUse may add child nodes. */
