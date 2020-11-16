@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.645.2.9 2020/11/04 11:48:26 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.645.2.10 2020/11/16 18:21:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.9 2020/11/04 11:48:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.10 2020/11/16 18:21:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8875,9 +8875,11 @@ wm_rxdesc_get_status(struct wm_rxqueue *rxq, int idx)
 	struct wm_softc *sc = rxq->rxq_sc;
 
 	if (sc->sc_type == WM_T_82574)
-		return EXTRXC_STATUS(rxq->rxq_ext_descs[idx].erx_ctx.erxc_err_stat);
+		return EXTRXC_STATUS(
+		    le32toh(rxq->rxq_ext_descs[idx].erx_ctx.erxc_err_stat));
 	else if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
-		return NQRXC_STATUS(rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_err_stat);
+		return NQRXC_STATUS(
+		    le32toh(rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_err_stat));
 	else
 		return rxq->rxq_descs[idx].wrx_status;
 }
@@ -8888,9 +8890,11 @@ wm_rxdesc_get_errors(struct wm_rxqueue *rxq, int idx)
 	struct wm_softc *sc = rxq->rxq_sc;
 
 	if (sc->sc_type == WM_T_82574)
-		return EXTRXC_ERROR(rxq->rxq_ext_descs[idx].erx_ctx.erxc_err_stat);
+		return EXTRXC_ERROR(
+		    le32toh(rxq->rxq_ext_descs[idx].erx_ctx.erxc_err_stat));
 	else if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
-		return NQRXC_ERROR(rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_err_stat);
+		return NQRXC_ERROR(
+		    le32toh(rxq->rxq_nq_descs[idx].nqrx_ctx.nrxc_err_stat));
 	else
 		return rxq->rxq_descs[idx].wrx_errors;
 }
