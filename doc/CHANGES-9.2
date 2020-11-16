@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.13 2020/11/14 15:38:43 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.14 2020/11/16 18:29:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1094,4 +1094,8 @@ sys/sys/param.h					1.679
 	more.
 	[fair, ticket #1130]
 
+sys/dev/pci/if_wm.c				1.696
+
+	wm(4): fix support for 82574 and later cards on big endian machines.
+	[rin, ticket #1133]
 
