@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67 2020/11/08 08:53:22 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.68 2020/11/16 18:29:49 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.67 2020/11/08 08:53:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.68 2020/11/16 18:29:49 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -97,7 +97,7 @@ setenv(const char *name, const char *value, int rewrite)
 	}
 
 	if (*value == '=')			/* no `=' in value */
-		++value;
+		value++;
 	l_value = strlen(value);
 
 	/* find if already exists */
