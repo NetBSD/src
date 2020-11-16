@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.207 2020/11/15 10:11:26 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.208 2020/11/16 21:39:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.207 2020/11/15 10:11:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.208 2020/11/16 21:39:22 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1207,7 +1207,7 @@ Make_ProcessWait(GNodeList *targs)
      * Perhaps this should be done earlier...
      */
 
-    pgn = Targ_NewGN(".MAIN");
+    pgn = GNode_New(".MAIN");
     pgn->flags = REMAKE;
     pgn->type = OP_PHONY | OP_DEPENDS;
     /* Get it displayed in the diag dumps */

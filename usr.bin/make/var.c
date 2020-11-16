@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.687 2020/11/15 18:33:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.688 2020/11/16 21:39:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.687 2020/11/15 18:33:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.688 2020/11/16 21:39:22 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -4065,9 +4065,9 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 void
 Var_Init(void)
 {
-    VAR_INTERNAL = Targ_NewGN("Internal");
-    VAR_GLOBAL = Targ_NewGN("Global");
-    VAR_CMDLINE = Targ_NewGN("Command");
+    VAR_INTERNAL = GNode_New("Internal");
+    VAR_GLOBAL = GNode_New("Global");
+    VAR_CMDLINE = GNode_New("Command");
 }
 
 /* Clean up the variables module. */

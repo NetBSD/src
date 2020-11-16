@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.442 2020/11/15 22:31:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.443 2020/11/16 21:39:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.442 2020/11/15 22:31:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.443 2020/11/16 21:39:22 rillig Exp $");
 
 /* types and constants */
 
@@ -1110,7 +1110,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	 * the node is a transformation rule to make life easier later,
 	 * when we'll use Make_HandleUse to actually apply the .DEFAULT
 	 * commands. */
-	GNode *gn = Targ_NewGN(".DEFAULT");
+	GNode *gn = GNode_New(".DEFAULT");
 	gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 	Lst_Append(targets, gn);
 	defaultNode = gn;
