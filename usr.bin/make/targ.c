@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.131 2020/11/16 21:48:18 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.132 2020/11/16 21:53:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,15 +68,13 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * targ.c --
- *	Functions for maintaining the Lst allTargets. Target nodes are
- *	kept in two structures: a Lst and a hash table.
+/*
+ * Maintaining the targets and sources, which are both implemented as GNode.
  *
  * Interface:
- *	Targ_Init	Initialization procedure.
+ *	Targ_Init	Initialize the module.
  *
- *	Targ_End	Clean up the module
+ *	Targ_End	Clean up the module.
  *
  *	Targ_List	Return the list of all targets so far.
  *
@@ -121,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.131 2020/11/16 21:48:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.132 2020/11/16 21:53:10 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 static HashTable targets;	/* a hash table of same */
@@ -161,18 +159,30 @@ Targ_Stats(void)
     HashTable_DebugStats(&targets, "targets");
 }
 
-/* Return the list of all targets. */
+/*
+ * Return the list of all targets, which are all nodes that appear on the
+ * left-hand side of a dependency declaration such as "target: source".
+ * The returned list does not contain pure sources.
+ */
 GNodeList *
 Targ_List(void)
 {
     return allTargets;
 }
 
-/* Create and initialize a new graph node. The gnode is added to the list of
- * all gnodes.
+/* Create a new graph node, but don't register it anywhere.
  *
- * Input:
- *	name		the name of the node, such as "clean", "src.c", ".END"
+ * Graph nodes that appear on the left-hand side of a dependency line such
+ * as "target: source" are called targets.  XXX: In some cases (like the
+ * .ALLTARGETS variable), all nodes are called targets as well, even if they
+ * never appear on the left-hand side.  This is a mistake.
+ *
+ * Typical names for graph nodes are:
+ *	"src.c" (an ordinary file)
+ *	"clean" (a .PHONY target)
+ *	".END" (a special hook target)
+ *	"-lm" (a library)
+ *	"libc.a(isspace.o)" (an archive member)
  */
 GNode *
 GNode_New(const char *name)
@@ -260,10 +270,12 @@ Targ_GetNode(const char *name)
     }
 }
 
-/* Create a node, register it in .ALLTARGETS but don't store it in the
+/*
+ * Create a node, register it in .ALLTARGETS but don't store it in the
  * table of global nodes.  This means it cannot be found by name.
  *
- * This is used for internal nodes, such as cohorts or .WAIT nodes. */
+ * This is used for internal nodes, such as cohorts or .WAIT nodes.
+ */
 GNode *
 Targ_NewInternalNode(const char *name)
 {
@@ -275,8 +287,10 @@ Targ_NewInternalNode(const char *name)
     return gn;
 }
 
-/* Return the .END node, which contains the commands to be executed when
- * everything else is done. */
+/*
+ * Return the .END node, which contains the commands to be run when
+ * everything else has been made.
+ */
 GNode *Targ_GetEndNode(void)
 {
     /* Save the node locally to avoid having to search for it all the time. */
@@ -324,12 +338,13 @@ Targ_Precious(const GNode *gn)
     return allPrecious || gn->type & (OP_PRECIOUS | OP_DOUBLEDEP);
 }
 
-/******************* DEBUG INFO PRINTING ****************/
+/*
+ * The main target to be made; only for debugging output.
+ * See mainNode in parse.c for the definitive source.
+ */
+static GNode *mainTarg;
 
-static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
-
-/* Set our idea of the main target we'll be creating. Used for debugging
- * output. */
+/* Remember the main target to make; only used for debugging. */
 void
 Targ_SetMain(GNode *gn)
 {
@@ -547,7 +562,7 @@ Targ_PrintGraph(int pass)
     Suff_PrintAll();
 }
 
-/* Propagate some type information to cohort nodes (those from the ::
+/* Propagate some type information to cohort nodes (those from the '::'
  * dependency operator).
  *
  * Should be called after the makefiles are parsed but before any action is
