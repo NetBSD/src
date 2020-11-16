@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.127 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.128 2020/11/16 21:39:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -80,7 +80,7 @@
  *
  *	Targ_List	Return the list of all targets so far.
  *
- *	Targ_NewGN	Create a new GNode for the passed target
+ *	GNode_New	Create a new GNode for the passed target
  *			(string). The node is *not* placed in the
  *			hash table, though all its fields are
  *			initialized.
@@ -121,7 +121,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.127 2020/11/05 17:27:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.128 2020/11/16 21:39:22 rillig Exp $");
 
 static GNodeList *allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
@@ -172,7 +172,7 @@ Targ_List(void)
  *	name		the name of the node, such as "clean", "src.c", ".END"
  */
 GNode *
-Targ_NewGN(const char *name)
+GNode_New(const char *name)
 {
     GNode *gn;
 
@@ -266,7 +266,7 @@ Targ_GetNode(const char *name)
 GNode *
 Targ_NewInternalNode(const char *name)
 {
-    GNode *gn = Targ_NewGN(name);
+    GNode *gn = GNode_New(name);
     Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
     Lst_Append(allTargets, gn);
     if (doing_depend)
