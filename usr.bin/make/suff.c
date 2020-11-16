@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.240 2020/11/16 18:41:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.241 2020/11/16 18:45:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.240 2020/11/16 18:41:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.241 2020/11/16 18:45:44 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -874,12 +874,12 @@ SuffAddSources(Suff *suff, SrcList *srcList, Src *targ)
 
 /* Add all the children of targ to the list. */
 static void
-SuffAddLevel(SrcList *l, Src *targ)
+SuffAddLevel(SrcList *srcs, Src *targ)
 {
     SrcListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
 	Suff *childSuff = ln->datum;
-	SuffAddSources(childSuff, l, targ);
+	SuffAddSources(childSuff, srcs, targ);
     }
 }
 
@@ -1228,7 +1228,7 @@ static void
 SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 {
     GNode *cgn = cln->datum;
-    StringList *explist;
+    StringList *expansions;
 
     if (!Dir_HasWildcards(cgn->name))
 	return;
@@ -1236,15 +1236,15 @@ SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
     /*
      * Expand the word along the chosen path
      */
-    explist = Lst_New();
-    Dir_Expand(cgn->name, Suff_FindPath(cgn), explist);
+    expansions = Lst_New();
+    Dir_Expand(cgn->name, Suff_FindPath(cgn), expansions);
 
-    while (!Lst_IsEmpty(explist)) {
+    while (!Lst_IsEmpty(expansions)) {
 	GNode	*gn;
 	/*
 	 * Fetch next expansion off the list and find its GNode
 	 */
-	char *cp = Lst_Dequeue(explist);
+	char *cp = Lst_Dequeue(expansions);
 
 	SUFF_DEBUG1("%s...", cp);
 	gn = Targ_GetNode(cp);
@@ -1255,7 +1255,7 @@ SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 	pgn->unmade++;
     }
 
-    Lst_Free(explist);
+    Lst_Free(expansions);
 
     SUFF_DEBUG0("\n");
 
@@ -1318,7 +1318,7 @@ Suff_FindPath(GNode* gn)
  *	TRUE if successful, FALSE if not.
  */
 static Boolean
-SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
+SuffApplyTransform(GNode *tgn, GNode *sgn, Suff *tsuff, Suff *ssuff)
 {
     GNodeListNode *ln, *nln;    /* General node */
     char *tname;		/* Name of transformation rule */
@@ -1327,14 +1327,14 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Form the proper links between the target and source.
      */
-    Lst_Append(tGn->children, sGn);
-    Lst_Append(sGn->parents, tGn);
-    tGn->unmade++;
+    Lst_Append(tgn->children, sgn);
+    Lst_Append(sgn->parents, tgn);
+    tgn->unmade++;
 
     /*
      * Locate the transformation rule itself
      */
-    tname = str_concat2(s->name, t->name);
+    tname = str_concat2(ssuff->name, tsuff->name);
     gn = FindTransformByName(tname);
     free(tname);
 
@@ -1343,25 +1343,26 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 	return FALSE;
     }
 
-    SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
+    SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n",
+		ssuff->name, tsuff->name, tgn->name);
 
     /* Record last child; Make_HandleUse may add child nodes. */
-    ln = tGn->children->last;
+    ln = tgn->children->last;
 
     /* Apply the rule. */
-    (void)Make_HandleUse(gn, tGn);
+    (void)Make_HandleUse(gn, tgn);
 
     /* Deal with wildcards and variables in any acquired sources. */
     for (ln = ln != NULL ? ln->next : NULL; ln != NULL; ln = nln) {
 	nln = ln->next;
-	SuffExpandChildren(ln, tGn);
+	SuffExpandChildren(ln, tgn);
     }
 
     /*
      * Keep track of another parent to which this node is transformed so
      * the .IMPSRC variable can be set correctly for the parent.
      */
-    Lst_Append(sGn->implicitParents, tGn);
+    Lst_Append(sgn->implicitParents, tgn);
 
     return TRUE;
 }
@@ -1917,8 +1918,8 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 void
 Suff_SetNull(const char *name)
 {
-    Suff *s = FindSuffByName(name);
-    if (s == NULL) {
+    Suff *suff = FindSuffByName(name);
+    if (suff == NULL) {
 	Parse_Error(PARSE_WARNING, "Desired null suffix %s not defined.",
 		    name);
 	return;
@@ -1926,11 +1927,11 @@ Suff_SetNull(const char *name)
 
     if (suffNull != NULL)
 	suffNull->flags &= ~(unsigned)SUFF_NULL;
-    s->flags |= SUFF_NULL;
+    suff->flags |= SUFF_NULL;
     /*
      * XXX: Here's where the transformation mangling would take place
      */
-    suffNull = s;
+    suffNull = suff;
 }
 
 /* Initialize the suffixes module. */
