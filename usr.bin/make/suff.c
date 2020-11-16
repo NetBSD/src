@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.243 2020/11/16 18:49:54 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.244 2020/11/16 21:39:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.243 2020/11/16 18:49:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.244 2020/11/16 21:39:22 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -486,7 +486,7 @@ Suff_AddTransform(const char *name)
 	 * Make a new graph node for the transformation. It will be filled in
 	 * by the Parse module.
 	 */
-	gn = Targ_NewGN(name);
+	gn = GNode_New(name);
 	Lst_Append(transforms, gn);
     } else {
 	/*
