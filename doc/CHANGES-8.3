@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.49 2020/11/14 12:59:56 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.50 2020/11/16 18:20:30 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1318,4 +1318,9 @@ sys/coda/coda_vnops.c				1.114 (patch)
 
 	PR 55775: fix coda_readdir() to directly process the container file.
 	[hannken, ticket #1622]
+
+sys/dev/pci/if_wm.c				1.696
+
+	wm(4): fix support for 82574 and later cards on big endian machines.
+	[rin, ticket #1623]
 
