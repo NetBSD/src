@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/06/02 14:27:32 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.7 2020/11/16 11:38:29 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,10 +6,10 @@ INSTIMGBASE=	NetBSD-${DISTRIBVER}-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
 
 INSTIMAGEMB?=	1550			# for all installation binaries
 
-.if ${MACHINE_ARCH} == "aarch64"
+.if !empty(MACHINE_ARCH:Maarch64*)
 EFIBOOT=		${WORKDIR}/usr/mdec/bootaa64.efi
 KERN_SET=		kern-GENERIC64
-.elif ${MACHINE_ARCH} == "earmv7hf"
+.elif !empty(MACHINE_ARCH:Mearmv7hf*)
 EFIBOOT+=		${WORKDIR}/usr/mdec/bootarm.efi
 KERN_SET=		kern-GENERIC
 .endif
