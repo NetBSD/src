@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.245 2020/11/16 22:31:42 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.246 2020/11/16 23:23:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.245 2020/11/16 22:31:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.246 2020/11/16 23:23:57 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -330,7 +330,7 @@ SuffRemove(SuffList *list, Suff *suff)
 /* Insert the suffix into the list, keeping the list ordered by suffix
  * number. */
 static void
-SuffInsert(SuffList *list, Suff *suff)
+SuffList_Insert(SuffList *list, Suff *suff)
 {
     SuffListNode *ln;
     Suff *listSuff = NULL;
@@ -356,6 +356,13 @@ SuffInsert(SuffList *list, Suff *suff)
     } else {
 	SUFF_DEBUG2("\"%s\" (%d) is already there\n", suff->name, suff->sNum);
     }
+}
+
+static void
+SuffRelate(Suff *srcSuff, Suff *targSuff)
+{
+    SuffList_Insert(targSuff->children, srcSuff);
+    SuffList_Insert(srcSuff->parents, targSuff);
 }
 
 static Suff *
@@ -514,8 +521,7 @@ Suff_AddTransform(const char *name)
      */
     SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
 		srcSuff->name, targSuff->name);
-    SuffInsert(targSuff->children, srcSuff);
-    SuffInsert(srcSuff->parents, targSuff);
+    SuffRelate(srcSuff, targSuff);
 
     return gn;
 }
@@ -588,8 +594,7 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
 	Suff *to = FindSuffByName(toName);
 	if (to != NULL) {
 	    /* Link in and return, since it can't be anything else. */
-	    SuffInsert(to->children, suff);
-	    SuffInsert(suff->parents, to);
+	    SuffRelate(suff, to);
 	    return;
 	}
     }
@@ -600,12 +605,8 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
     toName = SuffSuffGetSuffix(suff, nameLen, name + nameLen);
     if (toName != NULL) {
 	Suff *from = FindSuffByNameLen(name, (size_t)(toName - name));
-
-	if (from != NULL) {
-	    /* establish the proper relationship */
-	    SuffInsert(suff->children, from);
-	    SuffInsert(from->parents, suff);
-	}
+	if (from != NULL)
+	    SuffRelate(from, suff);
     }
 }
 
@@ -652,8 +653,7 @@ SuffScanTargets(GNode *target, GNode **inout_main, Suff *gs_s, Boolean *gs_r)
 	 */
 	SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
 		    srcSuff->name, targSuff->name);
-	SuffInsert(targSuff->children, srcSuff);
-	SuffInsert(srcSuff->parents, targSuff);
+	SuffRelate(srcSuff, targSuff);
     }
     return FALSE;
 }
