@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.132 2020/07/22 01:24:40 msaitoh Exp $	*/
+/*	$NetBSD: ath.c,v 1.133 2020/11/16 00:12:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.132 2020/07/22 01:24:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.133 2020/11/16 00:12:13 msaitoh Exp $");
 #endif
 
 /*
@@ -4551,7 +4551,7 @@ ath_dfswait(void *arg)
 
 /*
  * Set/change channels.  If the channel is really being changed,
- * it's done by reseting the chip.  To accomplish this we must
+ * it's done by resetting the chip.  To accomplish this we must
  * first cleanup any pending DMA, then restart stuff after a la
  * ath_init.
  */
@@ -5226,7 +5226,7 @@ ath_setcurmode(struct ath_softc *sc, enum ieee80211_phymode mode)
 	/* XXX layering violation */
 	sc->sc_mcastrix = ath_tx_findrix(rt, sc->sc_ic.ic_mcast_rate);
 	sc->sc_mcastrate = sc->sc_ic.ic_mcast_rate;
-	/* NB: caller is responsible for reseting rate control state */
+	/* NB: caller is responsible for resetting rate control state */
 #undef N
 }
 
