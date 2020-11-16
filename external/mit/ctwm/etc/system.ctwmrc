@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.9 2020/10/12 15:24:16 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.10 2020/11/16 14:12:46 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -195,6 +195,21 @@ WorkSpaces
     "3"    { "lavender" "black" "darkslateblue" "white" }
     "4"    { "lavender" "black" "darkslateblue" "white" }
     "5"    { "lavender" "black" "darkslateblue" "white" }
+}
+
+Cursors
+{
+  Frame    "left_ptr"
+  Title    "left_ptr"
+  Icon     "left_ptr"
+  IconMgr  "left_ptr"
+  Move     "fleur"
+  Resize   "fleur"
+  Menu     "left_ptr"
+  Button   "hand2"
+  Wait     "watch"
+  Select   "dot"
+  Destroy  "pirate"
 }
 
 Color
