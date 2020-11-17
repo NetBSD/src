@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/01/27 05:12:30 kre Exp $
+#	$NetBSD: Makefile,v 1.10 2020/11/17 10:47:17 rin Exp $
 
 .PATH:	${.CURDIR}/arch
 
@@ -10,7 +10,7 @@ SRCS=	tprof.c tprof_analyze.c
 SRCS+=	tprof_x86.c
 .elif	!empty(MACHINE_ARCH:M*armv7*)
 SRCS+=	tprof_armv7.c
-.elif	${MACHINE_ARCH} == "aarch64"
+.elif	!empty(MACHINE_ARCH:Maarch64*)
 SRCS+=	tprof_armv8.c
 .else
 SRCS+=	tprof_noarch.c
