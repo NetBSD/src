@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1233 2020/11/10 21:47:49 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1234 2020/11/17 10:49:41 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1495,7 +1495,7 @@ ${var}?= no
 .if ${USE_PIGZGZIP} == "no" && \
 		(${MACHINE} == "amd64" || \
 		 ${MACHINE} == "sparc64" || \
-		 ${MACHINE_ARCH} == "aarch64")
+		 ${MACHINE_CPU} == "aarch64")
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
