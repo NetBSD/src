@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.30 2018/06/18 18:33:31 christos Exp $
+ * $NetBSD: pch.c,v 1.31 2020/11/17 20:49:12 rhialto Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.30 2018/06/18 18:33:31 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.31 2020/11/17 20:49:12 rhialto Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -556,16 +556,11 @@ another_hunk(void)
 			ret = pgets(buf, buf_len, pfp);
 			p_input_line++;
 			if (ret == NULL) {
-				if (p_max - p_end < 4) {
-					/* assume blank lines got chopped */
-					strlcpy(buf, "  \n", buf_len);
-				} else {
-					if (repl_beginning && repl_could_be_missing) {
-						repl_missing = true;
-						goto hunk_done;
-					}
-					fatal("unexpected end of file in patch\n");
+				if (repl_beginning && repl_could_be_missing) {
+					repl_missing = true;
+					goto hunk_done;
 				}
+				fatal("unexpected end of file in patch\n");
 			}
 			p_end++;
 			if (p_end >= hunkmax)
