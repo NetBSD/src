@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.203 2020/11/16 15:12:16 rillig Exp $
+# $NetBSD: Makefile,v 1.204 2020/11/17 20:19:24 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -450,7 +450,7 @@ SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: sh\) -q,\1,'
-SED_CMDS.var-op-shell+=	-e 's,^${.SHELL:T}: ,,'
+SED_CMDS.var-op-shell+=	-e 's,^${.SHELL:T}: [ 0-9:]*,,'
 SED_CMDS.var-op-shell+=	-e '/command/s,No such.*,not found,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
