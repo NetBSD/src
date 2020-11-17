@@ -172,7 +172,7 @@ EOF
   fi
   ;;
 
-arm*-*-* | aarch64-*-*)
+arm*-*-* | aarch64*-*-*)
   cpu_code=`sed -n 's/^CPU part.*\(0x.*\)$/\1/p' /proc/cpuinfo 2>/dev/null | sort -r | head -n 1 2>/dev/null`
   cpu_implementer=`sed -n 's/^CPU implementer.*\(0x.*\)$/\1/p' /proc/cpuinfo 2>/dev/null | head -n 1 2>/dev/null`
   case "${cpu_implementer}_${cpu_code}" in
