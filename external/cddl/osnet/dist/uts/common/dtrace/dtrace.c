@@ -13840,7 +13840,6 @@ doferr:
 	return (NULL);
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-	printf("dtrace: XXX %s not implemented (name=%s)\n", __func__, name);
 	return (NULL);
 #endif /* __NetBSD__ */
 }
