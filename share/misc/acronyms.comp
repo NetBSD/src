@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.315 2020/11/05 18:05:06 dholland Exp $
+$NetBSD: acronyms.comp,v 1.316 2020/11/17 19:56:42 maya Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -62,6 +62,7 @@ AO	analog output
 AOC	add-on card
 AOL	Alert-on-LAN
 AOS	add or subtract
+AOT	ahead of time
 AP	access point
 AP	application processor
 APFS	Apple file system
