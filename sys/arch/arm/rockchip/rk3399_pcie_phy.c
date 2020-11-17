@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3399_pcie_phy.c,v 1.2 2020/06/17 06:51:08 thorpej Exp $	*/
+/*	$NetBSD: rk3399_pcie_phy.c,v 1.3 2020/11/17 18:01:09 ryo Exp $	*/
 /*	$OpenBSD: rkpcie.c,v 1.6 2018/08/28 09:33:18 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.2 2020/06/17 06:51:08 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie_phy.c,v 1.3 2020/11/17 18:01:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static void rkpciephy_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rkpciephy, sizeof(struct rkpciephy_softc),
         rkpciephy_match, rkpciephy_attach, NULL, NULL);
 
-const char * const compatible[] = {
+static const char * const compatible[] = {
 	"rockchip,rk3399-pcie-phy",
 	NULL
 };
