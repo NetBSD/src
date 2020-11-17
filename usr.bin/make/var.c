@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.688 2020/11/16 21:39:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.689 2020/11/17 20:11:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.688 2020/11/16 21:39:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.689 2020/11/17 20:11:02 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2308,10 +2308,9 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 	st->newVal = Cmd_Exec(cmd, &errfmt);
     else
 	st->newVal = bmake_strdup("");
-    free(cmd);
-
     if (errfmt != NULL)
-	Error(errfmt, st->val);	/* XXX: why still return AMR_OK? */
+	Error(errfmt, cmd);	/* XXX: why still return AMR_OK? */
+    free(cmd);
 
     ApplyModifiersState_Define(st);
     return AMR_OK;
