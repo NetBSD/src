@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: util.c,v 1.32 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/util.c,v 1.9 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: util.c,v 1.28 2018/06/18 18:33:31 christos Exp $
+ * $NetBSD: util.c,v 1.29 2020/11/17 20:49:12 rhialto Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.28 2018/06/18 18:33:31 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.29 2020/11/17 20:49:12 rhialto Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -417,7 +417,7 @@ checked_in(char *file)
 void
 version(void)
 {
-	printf("Patch version 2.0-12u8-NetBSD\n");
+	printf("Patch version 2.0-12u9-NetBSD\n");
 	my_exit(EXIT_SUCCESS);
 }
 
