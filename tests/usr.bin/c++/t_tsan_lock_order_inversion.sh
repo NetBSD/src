@@ -85,6 +85,7 @@ EOF
 }
 
 lock_order_inversion_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.cc << EOF
 #include <pthread.h>
 

@@ -99,6 +99,7 @@ EOF
 }
 
 vptr_race_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.cc << EOF
 #include <pthread.h>
 pthread_barrier_t barrier;
