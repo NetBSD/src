@@ -85,6 +85,7 @@ EOF
 }
 
 signal_errno_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.c << EOF
 #include <pthread.h>
 #include <signal.h>

@@ -85,6 +85,7 @@ EOF
 }
 
 thread_leak_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.c << EOF
 #include <pthread.h>
 #include <unistd.h>

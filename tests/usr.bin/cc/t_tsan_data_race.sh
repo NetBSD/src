@@ -79,6 +79,7 @@ EOF
 }
 
 data_race_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.c << EOF
 #include <pthread.h>
 int GlobalData; pthread_barrier_t barrier;

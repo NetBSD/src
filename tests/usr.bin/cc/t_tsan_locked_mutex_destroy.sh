@@ -88,6 +88,7 @@ EOF
 }
 
 locked_mutex_destroy_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.c << EOF
 #include <pthread.h>
 #include <stdlib.h>

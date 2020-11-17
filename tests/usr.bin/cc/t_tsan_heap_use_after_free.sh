@@ -88,6 +88,7 @@ EOF
 }
 
 heap_use_after_free_profile_body(){
+	atf_expect_fail "PR toolchain/55760"
 	cat > test.c << EOF
 #include <pthread.h>
 #include <stdlib.h>
