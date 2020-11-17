@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.161 2020/10/05 08:38:17 roy Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.162 2020/11/17 03:22:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -199,7 +199,6 @@ struct socket {
 #define	SS_RESTARTSYS		0x100	/* restart blocked system calls */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
-#define	SS_ASYNC		0x100	/* async i/o notify */
 #define	SS_MORETOCOME		0x400	/*
 					 * hint from sosend to lower layer;
 					 * more data coming
