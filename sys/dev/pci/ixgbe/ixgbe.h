@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.71 2020/08/31 11:19:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.72 2020/11/17 04:50:29 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -523,6 +523,12 @@ struct adapter {
 	struct work		admin_wc;
 	u_int			admin_pending;
 	volatile u32		task_requests;
+	kmutex_t		admin_mtx; /* lock for admin_pending, task_request */
+					   /*
+					    * Don't acquire this mutex while
+					    * holding rx_mtx or tx_mtx, and
+					    * vice versa.
+					    */
 
 	bool			txrx_use_workqueue;
 
