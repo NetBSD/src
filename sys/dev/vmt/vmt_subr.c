@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.1 2020/10/27 08:57:11 ryo Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.2 2020/11/17 17:59:31 ryo Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -165,7 +165,7 @@ vmt_common_attach(struct vmt_softc *sc)
 		uuid.node[5] = u;
 
 		uuid_snprintf(sc->sc_uuid, sizeof(sc->sc_uuid), &uuid);
-		device_printf(sc->sc_dev, "UUID: %s\n", sc->sc_uuid);
+		aprint_verbose_dev(sc->sc_dev, "UUID: %s\n", sc->sc_uuid);
 	}
 
 	callout_init(&sc->sc_tick, 0);
