@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.45 2020/07/07 03:38:45 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.46 2020/11/18 02:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.45 2020/07/07 03:38:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.46 2020/11/18 02:14:13 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.45 2020/07/07 03:38:45 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
@@ -416,7 +416,7 @@ necpb_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	if (ih >= 4)
 		panic("%s: bogus handle", __func__);
 
-	n = malloc(sizeof(struct necpb_intrhand), M_DEVBUF, M_WAITOK);
+	n = kmem_alloc(sizeof(*n), KM_SLEEP);
 	n->ih_func = func;
 	n->ih_arg = arg;
 	n->ih_next = NULL;
@@ -470,7 +470,7 @@ necpb_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 	evcnt_detach(&n->ih_evcnt);
 
-	free(n, M_DEVBUF);
+	kmem_free(n, sizeof(*n));
 }
 
 /*

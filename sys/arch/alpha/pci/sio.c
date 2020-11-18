@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.53 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.54 2020/11/18 02:04:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,13 +63,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.53 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.54 2020/11/18 02:04:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/intr.h>
 #include <sys/bus.h>
@@ -254,8 +254,7 @@ sio_bridge_callback(device_t self)
 		break;
 #endif
 	default:
-		sc->sc_ic = malloc(sizeof(*sc->sc_ic), M_DEVBUF, M_WAITOK);
-		memset(sc->sc_ic, 0, sizeof(*sc->sc_ic));
+		sc->sc_ic = kmem_zalloc(sizeof(*sc->sc_ic), KM_SLEEP);
 	}
 
 	sc->sc_ic->ic_v = NULL;

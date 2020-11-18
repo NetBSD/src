@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.22 2020/10/11 00:33:30 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.23 2020/11/18 02:04:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.22 2020/10/11 00:33:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.23 2020/11/18 02:04:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ tc_dma_init_3000_500(int nslots)
 
 	/* Allocate per-slot DMA info. */
 	sisize = nslots * sizeof(struct tc_dma_slot_info);
-	tc_dma_slot_info = malloc(sisize, M_DEVBUF, M_WAITOK | M_ZERO);
+	tc_dma_slot_info = kmem_zalloc(sisize, KM_SLEEP);
 
 	/* Default all slots to direct-mapped. */
 	for (i = 0; i < nslots; i++)

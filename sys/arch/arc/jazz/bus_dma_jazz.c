@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.17 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.18 2020/11/18 02:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -51,13 +51,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.17 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.18 2020/11/18 02:14:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -171,8 +172,8 @@ jazz_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		return _bus_dmamap_create(t, size, nsegments, maxsegsz,
 		    boundary, flags, dmamp);
 
-	tlbmap = malloc(sizeof(struct jazz_tlbmap), M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	tlbmap = kmem_alloc(sizeof(struct jazz_tlbmap),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 	if (tlbmap == NULL)
 		return ENOMEM;
 
@@ -180,7 +181,7 @@ jazz_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	tlbmap->ptebase =
 	    jazz_dmatlb_alloc(npte, boundary, flags, &tlbmap->vaddr);
 	if (tlbmap->ptebase == NULL) {
-		free(tlbmap, M_DMAMAP);
+		kmem_free(tlbmap, sizeof(struct jazz_tlbmap));
 		return ENOMEM;
 	}
 
@@ -188,7 +189,7 @@ jazz_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    flags, dmamp);
 	if (error != 0) {
 		jazz_dmatlb_free(tlbmap->vaddr, npte);
-		free(tlbmap, M_DMAMAP);
+		kmem_free(tlbmap, sizeof(struct jazz_tlbmap));
 		return error;
 	}
 	map = *dmamp;
@@ -213,7 +214,7 @@ jazz_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 		npte = jazz_dma_page_round(map->dm_maxsegsz) /
 		    JAZZ_DMA_PAGE_SIZE + 1;
 		jazz_dmatlb_free(tlbmap->vaddr, npte);
-		free(tlbmap, M_DMAMAP);
+		kmem_free(tlbmap, sizeof(struct jazz_tlbmap));
 	}
 
 	_bus_dmamap_destroy(t, map);
