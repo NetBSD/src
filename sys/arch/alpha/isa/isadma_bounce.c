@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.13 2016/02/29 15:28:35 christos Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.14 2020/11/18 02:04:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.13 2016/02/29 15:28:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.14 2020/11/18 02:04:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -91,28 +91,19 @@ int	isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
 void	isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 /*
- * Create an ISA DMA map.
+ * Returns true if the system memory configuration exceeds the
+ * capabilities of ISA DMA.
  */
-int
-isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
-    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
+static bool
+isadma_bounce_check_range(bus_dma_tag_t const t)
 {
-	struct isadma_bounce_cookie *cookie;
-	bus_dmamap_t map;
-	int error, cookieflags;
-	void *cookiestore;
-	size_t cookiesize;
+	return avail_end > (t->_wbase + t->_wsize);
+}
 
-	/* Call common function to create the basic map. */
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
-	    flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-	map->_dm_cookie = NULL;
-
-	cookiesize = sizeof(*cookie);
+static int
+isadma_bounce_cookieflags(bus_dma_tag_t const t, bus_dmamap_t const map)
+{
+	int cookieflags = 0;
 
 	/*
 	 * ISA only has 24-bits of address space.  This means
@@ -133,42 +124,97 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * the caller can't handle that many segments (e.g. the
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
-	cookieflags = 0;
-	if (avail_end > (t->_wbase + t->_wsize) ||
+	if (isadma_bounce_check_range(t) ||
 	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
+	}
+	return cookieflags;
+}
+
+static size_t
+isadma_bounce_cookiesize(bus_dmamap_t const map, int cookieflags)
+{
+	size_t cookiesize = sizeof(struct isadma_bounce_cookie);
+
+	if (cookieflags & ID_MIGHT_NEED_BOUNCE) {
 		cookiesize += (sizeof(bus_dma_segment_t) *
 		    (map->_dm_segcnt - 1));
 	}
+	return cookiesize;
+}
+
+static int
+isadma_bounce_cookie_alloc(bus_dma_tag_t const t, bus_dmamap_t const map,
+    int const flags)
+{
+	struct isadma_bounce_cookie *cookie;
+	int cookieflags = isadma_bounce_cookieflags(t, map);
+
+	if ((cookie = kmem_zalloc(isadma_bounce_cookiesize(map, cookieflags),
+	     (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL) {
+		return ENOMEM;
+	}
+
+	cookie->id_flags = cookieflags;
+	map->_dm_cookie = cookie;
+
+	return 0;
+}
+
+static void
+isadma_bounce_cookie_free(bus_dmamap_t const map)
+{
+	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
+
+	if (cookie != NULL) {
+		kmem_free(map->_dm_cookie,
+		    isadma_bounce_cookiesize(map, cookie->id_flags));
+		map->_dm_cookie = NULL;
+	}
+}
+
+/*
+ * Create an ISA DMA map.
+ */
+int
+isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
+{
+	struct isadma_bounce_cookie *cookie;
+	bus_dmamap_t map;
+	int error;
+
+	/* Call common function to create the basic map. */
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
+	    flags, dmamp);
+	if (error)
+		return (error);
+
+	map = *dmamp;
+	map->_dm_cookie = NULL;
 
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
-		error = ENOMEM;
+	if ((error = isadma_bounce_cookie_alloc(t, map, flags)) != 0) {
 		goto out;
 	}
-	memset(cookiestore, 0, cookiesize);
-	cookie = (struct isadma_bounce_cookie *)cookiestore;
-	cookie->id_flags = cookieflags;
-	map->_dm_cookie = cookie;
+	cookie = map->_dm_cookie;
 
-	if (cookieflags & ID_MIGHT_NEED_BOUNCE) {
+	if (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) {
 		/*
 		 * Allocate the bounce pages now if the caller
 		 * wishes us to do so.
 		 */
-		if ((flags & BUS_DMA_ALLOCNOW) == 0)
-			goto out;
-
-		error = isadma_bounce_alloc_bouncebuf(t, map, size, flags);
+		if (flags & BUS_DMA_ALLOCNOW) {
+			error = isadma_bounce_alloc_bouncebuf(t, map, size,
+			    flags);
+		}
 	}
 
  out:
 	if (error) {
-		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DMAMAP);
+		isadma_bounce_cookie_free(map);
 		_bus_dmamap_destroy(t, map);
 	}
 	return (error);
@@ -188,7 +234,7 @@ isadma_bounce_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		isadma_bounce_free_bouncebuf(t, map);
 
-	free(cookie, M_DMAMAP);
+	isadma_bounce_cookie_free(map);
 	_bus_dmamap_destroy(t, map);
 }
 

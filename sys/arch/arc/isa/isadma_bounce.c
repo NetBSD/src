@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.15 2016/02/26 18:14:38 christos Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.16 2020/11/18 02:14:13 thorpej Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -33,13 +33,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.15 2016/02/26 18:14:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.16 2020/11/18 02:14:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -108,6 +108,89 @@ static int isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
 	    bus_size_t, int);
 static void isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
+/*
+ * Returns true if the system memory configuration exceeds the
+ * capabilities of ISA DMA.
+ */
+static bool
+isadma_bounce_check_range(bus_dma_tag_t const t)
+{
+	return pmap_limits.avail_end > ISA_DMA_BOUNCE_THRESHOLD;
+}
+
+static int
+isadma_bounce_cookieflags(bus_dma_tag_t const t, bus_dmamap_t const map)
+{
+	int cookieflags = 0;
+
+	/*
+	 * ISA only has 24-bits of address space.  This means
+	 * we can't DMA to pages over 16M.  In order to DMA to
+	 * arbitrary buffers, we use "bounce buffers" - pages
+	 * in memory below the 16M boundary.  On DMA reads,
+	 * DMA happens to the bounce buffers, and is copied into
+	 * the caller's buffer.  On writes, data is copied into
+	 * but bounce buffer, and the DMA happens from those
+	 * pages.  To software using the DMA mapping interface,
+	 * this looks simply like a data cache.
+	 *
+	 * If we have more than 16M of RAM in the system, we may
+	 * need bounce buffers.  We check and remember that here.
+	 *
+	 * ...or, there is an opposite case.  The most segments
+	 * a transfer will require is (maxxfer / PAGE_SIZE) + 1.  If
+	 * the caller can't handle that many segments (e.g. the
+	 * ISA DMA controller), we may have to bounce it as well.
+	 */
+	if (isadma_bounce_check_range(t) ||
+	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
+		cookieflags |= ID_MIGHT_NEED_BOUNCE;
+	}
+	return cookieflags;
+}
+
+static size_t
+isadma_bounce_cookiesize(bus_dmamap_t const map, int cookieflags)
+{
+	size_t cookiesize = sizeof(struct isadma_bounce_cookie);
+
+	if (cookieflags & ID_MIGHT_NEED_BOUNCE) {
+		cookiesize += (sizeof(bus_dma_segment_t) *
+		    (map->_dm_segcnt - 1));
+	}
+	return cookiesize;
+}
+
+static int
+isadma_bounce_cookie_alloc(bus_dma_tag_t const t, bus_dmamap_t const map,
+    int const flags)
+{        
+	struct isadma_bounce_cookie *cookie;
+	int cookieflags = isadma_bounce_cookieflags(t, map);
+
+	if ((cookie = kmem_zalloc(isadma_bounce_cookiesize(map, cookieflags),
+	     (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL) {
+		return ENOMEM;
+	}
+
+	cookie->id_flags = cookieflags;
+	map->_dm_cookie = cookie;
+
+	return 0;
+}
+
+static void
+isadma_bounce_cookie_free(bus_dmamap_t const map)
+{        
+	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
+
+	if (cookie != NULL) {
+		kmem_free(map->_dm_cookie,
+		    isadma_bounce_cookiesize(map, cookie->id_flags));
+		map->_dm_cookie = NULL;
+	}
+}
+
 void
 isadma_bounce_tag_init(bus_dma_tag_t t)
 {
@@ -137,9 +220,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct isadma_bounce_cookie *cookie;
 	bus_dmamap_t map;
-	int error, cookieflags;
-	void *cookiestore;
-	size_t cookiesize;
+	int error;
 
 	/* Call common function to create the basic map. */
 	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
@@ -150,63 +231,28 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = *dmamp;
 	map->_dm_cookie = NULL;
 
-	cookiesize = sizeof(*cookie);
-
-	/*
-	 * ISA only has 24-bits of address space.  This means
-	 * we can't DMA to pages over 16M.  In order to DMA to
-	 * arbitrary buffers, we use "bounce buffers" - pages
-	 * in memory below the 16M boundary.  On DMA reads,
-	 * DMA happens to the bounce buffers, and is copied into
-	 * the caller's buffer.  On writes, data is copied into
-	 * but bounce buffer, and the DMA happens from those
-	 * pages.  To software using the DMA mapping interface,
-	 * this looks simply like a data cache.
-	 *
-	 * If we have more than 16M of RAM in the system, we may
-	 * need bounce buffers.  We check and remember that here.
-	 *
-	 * ...or, there is an opposite case.  The most segments
-	 * a transfer will require is (maxxfer / PAGE_SIZE) + 1.  If
-	 * the caller can't handle that many segments (e.g. the
-	 * ISA DMA controller), we may have to bounce it as well.
-	 */
-	cookieflags = 0;
-	if (pmap_limits.avail_end > ISA_DMA_BOUNCE_THRESHOLD ||
-	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
-		cookieflags |= ID_MIGHT_NEED_BOUNCE;
-		cookiesize += (sizeof(bus_dma_segment_t) *
-		    (map->_dm_segcnt - 1));
-	}
-
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
-		error = ENOMEM;
+	if ((error = isadma_bounce_cookie_alloc(t, map, flags)) != 0) {
 		goto out;
 	}
-	memset(cookiestore, 0, cookiesize);
-	cookie = (struct isadma_bounce_cookie *)cookiestore;
-	cookie->id_flags = cookieflags;
-	map->_dm_cookie = cookie;
+	cookie = map->_dm_cookie;
 
-	if (cookieflags & ID_MIGHT_NEED_BOUNCE) {
+	if (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) {
 		/*
 		 * Allocate the bounce pages now if the caller
 		 * wishes us to do so.
 		 */
-		if ((flags & BUS_DMA_ALLOCNOW) == 0)
-			goto out;
-
-		error = isadma_bounce_alloc_bouncebuf(t, map, size, flags);
+		if (flags & BUS_DMA_ALLOCNOW) {
+			error = isadma_bounce_alloc_bouncebuf(t, map, size,
+			    flags);
+		}
 	}
 
  out:
 	if (error) {
-		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DMAMAP);
+		isadma_bounce_cookie_free(map);
 		_bus_dmamap_destroy(t, map);
 	}
 	return error;
@@ -226,7 +272,7 @@ isadma_bounce_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		isadma_bounce_free_bouncebuf(t, map);
 
-	free(cookie, M_DMAMAP);
+	isadma_bounce_cookie_free(map);
 	_bus_dmamap_destroy(t, map);
 }
 
