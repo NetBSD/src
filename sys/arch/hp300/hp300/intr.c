@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43 2019/11/10 21:16:27 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.44 2020/11/18 02:22:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43 2019/11/10 21:16:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.44 2020/11/18 02:22:16 thorpej Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
@@ -108,7 +108,7 @@ intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("intr_establish: bad ipl %d", ipl);
 
-	newih = malloc(sizeof(struct hp300_intrhand), M_DEVBUF, M_WAITOK);
+	newih = kmem_alloc(sizeof(*newih), KM_SLEEP);
 	newih->ih_fn = func;
 	newih->ih_arg = arg;
 	newih->ih_ipl = ipl;
@@ -168,7 +168,7 @@ intr_disestablish(void *arg)
 	struct hp300_intrhand *ih = arg;
 
 	LIST_REMOVE(ih, ih_q);
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 /*

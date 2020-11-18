@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.107 2019/11/10 21:16:27 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.108 2020/11/18 02:22:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.107 2019/11/10 21:16:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108 2020/11/18 02:22:16 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.107 2019/11/10 21:16:27 chs Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
@@ -395,7 +395,7 @@ device_register(device_t dev, void *aux)
 	 * we can mount as root.
 	 */
 
-	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_WAITOK | M_ZERO);
+	dd = kmem_zalloc(sizeof(*dd), KM_SLEEP);
 	dd->dd_dev = dev;
 
 	/*
@@ -439,7 +439,7 @@ device_register(device_t dev, void *aux)
 	/*
 	 * Didn't need the dev_data.
 	 */
-	free(dd, M_DEVBUF);
+	kmem_free(dd, sizeof(*dd));
 	return;
 
  linkup:
@@ -677,7 +677,7 @@ setbootdev(void)
 	for (dd = LIST_FIRST(&dev_data_list); dd != NULL; ) {
 		cdd = dd;
 		dd = LIST_NEXT(dd, dd_list);
-		free(cdd, M_DEVBUF);
+		kmem_free(cdd, sizeof(*cdd));
 	}
 }
 
