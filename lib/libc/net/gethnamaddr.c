@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.92 2015/09/22 16:16:02 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.93 2020/11/18 12:49:52 is Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.92 2015/09/22 16:16:02 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.93 2020/11/18 12:49:52 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -358,7 +358,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			continue;
 		}
 		if (type != qtype) {
-			if (type != T_KEY && type != T_SIG)
+			if (type != T_KEY && type != T_SIG && type != T_DNAME)
 				syslog(LOG_NOTICE|LOG_AUTH,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
 				       qname, p_class(C_IN), p_type(qtype),
