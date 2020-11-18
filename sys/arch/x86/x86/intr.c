@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.152 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: intr.c,v 1.153 2020/11/18 16:36:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.152 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.153 2020/11/18 16:36:43 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -450,16 +450,20 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		slot = pin;
 	} else {
 		int start = 0;
+		int max = MAX_INTR_SOURCES;
 		slot = -1;
 
 		/* avoid reserved slots for legacy interrupts. */
 		if (CPU_IS_PRIMARY(ci) && msipic_is_msi_pic(pic))
 			start = NUM_LEGACY_IRQS;
+		/* don't step over Xen's slots */
+		if (vm_guest == VM_GUEST_XENPVH)
+			max = SIR_XENIPL_VM; 
 		/*
 		 * intr_allocate_slot has checked for an existing mapping.
 		 * Now look for a free slot.
 		 */
-		for (i = start; i < MAX_INTR_SOURCES ; i++) {
+		for (i = start; i < max ; i++) {
 			if (ci->ci_isources[i] == NULL) {
 				slot = i;
 				break;
