@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.40 2019/11/10 21:16:27 chs Exp $	*/
+/*	$NetBSD: hpib.c,v 1.41 2020/11/18 02:22:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,12 +65,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.40 2019/11/10 21:16:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41 2020/11/18 02:22:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 
 #include <hp300/dev/dmavar.h>
@@ -161,7 +161,7 @@ hpibbusattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize the DMA queue entry.
 	 */
-	sc->sc_dq = malloc(sizeof(struct dmaqueue), M_DEVBUF, M_WAITOK);
+	sc->sc_dq = kmem_alloc(sizeof(struct dmaqueue), KM_SLEEP);
 	sc->sc_dq->dq_softc = sc;
 	sc->sc_dq->dq_start = hpibstart;
 	sc->sc_dq->dq_done = hpibdone;

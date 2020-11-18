@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.47 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: ppi.c,v 1.48 2020/11/18 02:22:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.47 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.48 2020/11/18 02:22:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.47 2018/09/03 16:29:24 riastradh Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 
@@ -299,7 +299,7 @@ ppirw(dev_t dev, struct uio *uio)
 	int s, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
-	int buflen, ctlr, slave;
+	int ctlr, slave;
 	char *buf;
 
 	if (uio->uio_resid == 0)
@@ -314,8 +314,8 @@ ppirw(dev_t dev, struct uio *uio)
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
-	buflen = uimin(sc->sc_burst, uio->uio_resid);
-	buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
+	const int buflen = uimin(sc->sc_burst, uio->uio_resid);
+	buf = kmem_alloc(buflen, KM_SLEEP);
 	sc->sc_flags |= PPIF_UIO;
 	if (sc->sc_timo > 0) {
 		sc->sc_flags |= PPIF_TIMO;
@@ -442,7 +442,7 @@ again:
 			       len-cnt);
 #endif
 	}
-	free(buf, M_DEVBUF);
+	kmem_free(buf, buflen);
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
 		printf("ppirw: return %d, resid %d\n", error, uio->uio_resid);
