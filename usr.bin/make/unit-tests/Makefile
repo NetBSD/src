@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.205 2020/11/17 20:27:35 rillig Exp $
+# $NetBSD: Makefile,v 1.206 2020/11/18 01:12:00 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -427,6 +427,15 @@ FLAGS.doterror=		# none, especially not -k
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
+SED_CMDS.export= \
+       -e '/^[^=_A-Za-z0-9]*=/d'
+# these all share the same requirement
+.for t in export-all export-env
+SED_CMDS.$t= ${SED_CMDS.export}
+.endfor
+SED_CMDS.directive-export-gmake= \
+	${:D dash is a pain } \
+	-e /non-zero/d
 SED_CMDS.job-output-long-lines= \
 	${:D Job separators on their own line are ok. } \
 	-e '/^--- job-[ab] ---$$/d' \
@@ -451,7 +460,10 @@ SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: sh\) -q,\1,'
 SED_CMDS.var-op-shell+=	-e 's,^${.SHELL:T}: [ 0-9:]*,,'
-SED_CMDS.var-op-shell+=	-e '/command/s,No such.*,not found,'
+SED_CMDS.var-op-shell+=	-e '/command/{ s,^[1-9]: ,,;s,No such.*,not found,; }'
+SED_CMDS.vardebug= \
+	${:D canonicalize .SHELL } \
+	-e 's,${.SHELL},/bin/sh,'
 SED_CMDS.vardebug+=	-e 's,${.SHELL},</path/to/shell>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
