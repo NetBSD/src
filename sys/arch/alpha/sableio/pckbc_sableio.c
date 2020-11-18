@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.14 2020/11/18 02:04:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.13 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.14 2020/11/18 02:04:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/intr.h>
@@ -112,8 +112,7 @@ pckbc_sableio_attach(device_t parent, device_t self, void *aux)
 				  1, 0, &ioh_c) != 0)
 			panic("pckbc_sableio_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		memset(t, 0, sizeof(struct pckbc_internal));
+		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
 		t->t_iot = sa->sa_iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

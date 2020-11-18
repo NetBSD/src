@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.50 2019/11/10 21:16:22 chs Exp $	*/
+/*	$NetBSD: isabus.c,v 1.51 2020/11/18 02:14:13 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.50 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.51 2020/11/18 02:14:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.50 2019/11/10 21:16:22 chs Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
@@ -340,7 +340,7 @@ isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	struct isa_intrhand **p, *q, *ih;
 	static struct isa_intrhand fakehand = {NULL, fakeintr};
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.27 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.28 2020/11/18 02:04:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.27 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28 2020/11/18 02:04:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
@@ -209,9 +209,7 @@ dwlpx_dma_init(struct dwlpx_config *ccp)
 	 *	Window base: 1GB
 	 *	SGVA base: 0
 	 */
-#define EXNAMELEN 16
-	exname = malloc(EXNAMELEN, M_DEVBUF, M_WAITOK);
-	snprintf(exname, EXNAMELEN, "%s_sgmap_a",
+	exname = kmem_asprintf("%s_sgmap_a",
 	    device_xname(ccp->cc_sc->dwlpx_dev));
 	alpha_sgmap_init(t, &ccp->cc_sgmap, exname, DWLPx_SG_MAPPED_BASE,
 	    0, DWLPx_SG_MAPPED_SIZE(lim), sizeof(uint32_t),

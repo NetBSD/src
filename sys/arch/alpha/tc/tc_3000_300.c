@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.37 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.38 2020/11/18 02:04:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.37 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.38 2020/11/18 02:04:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/cpu.h>
 
 #include <machine/autoconf.h>
@@ -108,12 +108,10 @@ tc_3000_300_intr_setup(void)
 	 * Set up interrupt handlers.
 	 */
 	for (i = 0; i < TC_3000_300_NCOOKIES; i++) {
-		static const size_t len = 12;
 	        tc_3000_300_intr[i].tci_func = tc_3000_300_intrnull;
 	        tc_3000_300_intr[i].tci_arg = (void *)i;
 		
-		cp = malloc(len, M_DEVBUF, M_WAITOK);
-		snprintf(cp, len, "slot %lu", i);
+		cp = kmem_asprintf("slot %lu", i);
 		evcnt_attach_dynamic(&tc_3000_300_intr[i].tci_evcnt,
 		    EVCNT_TYPE_INTR, NULL, "tc", cp);
 	}
