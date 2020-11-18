@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.7 2020/06/28 02:16:19 gutteridge Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.8 2020/11/18 12:49:52 is Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -210,6 +210,7 @@ typedef struct {
 #define T_ATMA		ns_t_atma
 #define T_NAPTR		ns_t_naptr
 #define T_A6		ns_t_a6
+#define T_DNAME		ns_t_dname
 #define	T_TSIG		ns_t_tsig
 #define	T_IXFR		ns_t_ixfr
 #define T_AXFR		ns_t_axfr

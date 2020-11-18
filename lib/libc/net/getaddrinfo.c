@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.119 2018/12/13 04:41:41 dholland Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.120 2020/11/18 12:49:52 is Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.119 2018/12/13 04:41:41 dholland Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.120 2020/11/18 12:49:52 is Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1821,7 +1821,7 @@ getanswer(res_state res, const querybuf *answer, int anslen, const char *qname,
 				continue;
 			}
 		} else if (type != qtype) {
-			if (type != T_KEY && type != T_SIG) {
+			if (type != T_KEY && type != T_SIG && type != T_DNAME) {
 				struct syslog_data sd = SYSLOG_DATA_INIT;
 				syslog_r(LOG_NOTICE|LOG_AUTH, &sd,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
