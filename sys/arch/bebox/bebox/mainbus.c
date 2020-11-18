@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2020/07/07 03:38:46 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33 2020/11/18 03:46:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2020/11/18 03:46:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <sys/bus.h>
@@ -123,12 +123,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 
 #if NPCI > 0
-	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
-	    M_WAITOK);
+	genppc_pct = kmem_alloc(sizeof(struct genppc_pci_chipset), KM_SLEEP);
 	bebox_pci_get_chipset_tag(genppc_pct);
 
-	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-	    M_DEVBUF, M_WAITOK);
+	pbi = kmem_alloc(sizeof(struct genppc_pci_chipset_businfo), KM_SLEEP);
 	pbi->pbi_properties = prop_dictionary_create();
         KASSERT(pbi->pbi_properties != NULL);
 
