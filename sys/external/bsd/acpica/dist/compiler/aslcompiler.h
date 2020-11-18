@@ -1170,7 +1170,6 @@ UtEndEvent (
     UINT8                   Event);
 
 void
-
 UtDisplaySummary (
     UINT32                  FileId);
 

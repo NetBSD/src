@@ -1028,6 +1028,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_METHODS:
+
         Status = AcpiDbDisplayObjects (__UNCONST("METHOD"), AcpiGbl_DbArgs[1]);
         break;
 
