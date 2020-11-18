@@ -1,4 +1,4 @@
-make -V MAKEFLAGS
+make -r -f /dev/null -V MAKEFLAGS
  -r -k -d 0 
 
 make -:
