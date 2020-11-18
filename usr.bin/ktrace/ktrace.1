@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.45 2020/03/29 17:50:23 sevan Exp $
+.\"	$NetBSD: ktrace.1,v 1.46 2020/11/18 20:00:15 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,10 @@ Clear the trace points associated with the specified file or processes.
 .It Fl d
 Descendants; perform the operation for all current children of the
 designated processes.
+.It Fl e Ar emulation
+If an emulation of a process is unknown,
+interpret system call maps assuming the named emulation instead of
+default "netbsd".
 .It Fl f Ar trfile
 Log trace records to
 .Ar trfile
@@ -160,10 +164,10 @@ readable format to standard out.
 Enable (disable) tracing on the indicated process id (only one
 .Fl p
 flag is permitted).
-.It Fl s
-Write to the trace file with synchronized I/O.
 .It Fl R
 Display relative time stamps to output.
+.It Fl s
+Write to the trace file with synchronized I/O.
 .It Fl T
 Same as the
 .Fl R
@@ -205,14 +209,6 @@ trace the default set of trace points (c, e, i, n, s, u)
 .It Cm -
 do not trace following trace points
 .El
-.It Fl e Ar emulation
-If an emulation of a process is unknown,
-interpret system call maps assuming the named emulation instead of
-default "netbsd".
-.It Ar command
-Execute
-.Ar command
-with the specified trace flags.
 .It Fl v Ar version
 Determines the
 .Ar version
@@ -220,6 +216,10 @@ of the file generated.
 Version 0 is the compatible ktrace format, and
 version 1 is the new format with lwp IDs and nanosecond (instead of
 microsecond) timestamps.
+.It Ar command
+Execute
+.Ar command
+with the specified trace flags.
 .El
 .Pp
 The
