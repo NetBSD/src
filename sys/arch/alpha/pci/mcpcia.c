@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.29 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: mcpcia.c,v 1.30 2020/11/18 02:04:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.29 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.30 2020/11/18 02:04:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
@@ -150,9 +150,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	    ma->ma_gid == mcpcia_console_configuration.cc_gid)
 		ccp = &mcpcia_console_configuration;
 	else {
-		ccp = malloc(sizeof(struct mcpcia_config), M_DEVBUF, M_WAITOK);
-		memset(ccp, 0, sizeof(struct mcpcia_config));
-
+		ccp = kmem_zalloc(sizeof(struct mcpcia_config), KM_SLEEP);
 		ccp->cc_mid = ma->ma_mid;
 		ccp->cc_gid = ma->ma_gid;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.18 2008/03/15 13:23:24 cube Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.19 2020/11/18 02:14:13 thorpej Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.18 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.19 2020/11/18 02:14:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
@@ -144,8 +144,8 @@ pckbc_jazzio_attach(device_t parent, device_t self, void *aux)
 		    bus_space_map(iot, PICA_KBCMDP, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		t = kmem_zalloc(sizeof(struct pckbc_internal),
+		    KM_SLEEP);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
