@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2019/11/10 21:16:25 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 2020/11/18 03:40:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2019/11/10 21:16:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21 2020/11/18 03:40:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2019/11/10 21:16:25 chs Exp $");
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
@@ -123,8 +123,7 @@ zs_config(struct zsc_softc *zsc, char *base)
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE) {
 			cs = &zs_conschan_store;
 		} else {
-			cs = malloc(sizeof(struct zs_chanstate),
-				    M_DEVBUF, M_WAITOK | M_ZERO);
+			cs = kmem_zalloc(sizeof(*cs), KM_SLEEP);
 			if(channel==0){
 				cs->cs_reg_csr  = base + 7;
 				cs->cs_reg_data = base + 15;
