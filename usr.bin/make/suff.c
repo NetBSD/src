@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.249 2020/11/19 14:42:33 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.250 2020/11/19 21:27:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.249 2020/11/19 14:42:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.250 2020/11/19 21:27:29 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -130,7 +130,10 @@ static SuffList *sufflist;	/* List of suffixes */
 #ifdef CLEANUP
 static SuffList *suffClean;	/* List of suffixes to be cleaned */
 #endif
-static SrcList *srclist;	/* List of sources */
+
+/* XXX: What exactly is this variable used for? */
+/* XXX: Does it really have to be a global variable? */
+static SrcList *srclist;
 
 /* List of transformation rules, such as ".c.o" */
 static GNodeList *transforms;
