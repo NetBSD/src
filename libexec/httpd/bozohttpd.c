@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.123 2020/10/15 04:21:53 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.124 2020/11/19 10:45:36 hannken Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -907,7 +907,7 @@ mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 	 *
 	 * we use the write offset in all writes
 	 */
-	mappedoffset = first_byte_pos & ~(httpd->page_size - 1);
+	mappedoffset = first_byte_pos & ~((off_t)httpd->page_size - 1);
 	mappedsz = (size_t)
 		(first_byte_pos - mappedoffset + sz + httpd->page_size - 1) &
 		~(httpd->page_size - 1);
