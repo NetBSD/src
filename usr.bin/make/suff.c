@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.247 2020/11/16 23:27:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.248 2020/11/19 14:32:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.247 2020/11/16 23:27:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.248 2020/11/19 14:32:25 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -912,7 +912,7 @@ SuffRemoveSrc(SrcList *l)
 	    }
 #ifdef DEBUG_SRC
 	    debug_printf("free: list %p src %p children %d\n",
-			 l, src, src->children);
+			 l, src, src->numChildren);
 	    Lst_Free(src->childrenList);
 #endif
 	    Lst_Remove(l, ln);
@@ -922,7 +922,7 @@ SuffRemoveSrc(SrcList *l)
 #ifdef DEBUG_SRC
 	else {
 	    debug_printf("keep: list %p src %p children %d:",
-			 l, src, src->children);
+			 l, src, src->numChildren);
 	    SrcList_PrintAddrs(src->childrenList);
 	}
 #endif
