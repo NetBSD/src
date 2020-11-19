@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.248 2020/11/19 14:32:25 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.249 2020/11/19 14:42:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.248 2020/11/19 14:32:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.249 2020/11/19 14:42:33 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -398,7 +398,7 @@ Suff_ClearSuffixes(void)
 #endif
     sufflist = Lst_New();
     sNum = 0;
-    if (suffNull)
+    if (suffNull != NULL)
 	SuffFree(suffNull);
     emptySuff = suffNull = SuffNew("");
 
@@ -1961,7 +1961,7 @@ Suff_End(void)
 #ifdef CLEANUP
     Lst_Destroy(sufflist, SuffFree);
     Lst_Destroy(suffClean, SuffFree);
-    if (suffNull)
+    if (suffNull != NULL)
 	SuffFree(suffNull);
     Lst_Free(srclist);
     Lst_Free(transforms);
