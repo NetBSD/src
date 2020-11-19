@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.50 2020/11/16 18:20:30 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.51 2020/11/19 11:28:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1323,4 +1323,9 @@ sys/dev/pci/if_wm.c				1.696
 
 	wm(4): fix support for 82574 and later cards on big endian machines.
 	[rin, ticket #1623]
+
+libexec/httpd/bozohttpd.c			1.124
+
+	Fix httpd serving files greater than 4GB on 32bit archs.
+	[hannken, ticket #1624]
 
