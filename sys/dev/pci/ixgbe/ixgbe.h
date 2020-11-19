@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.72 2020/11/17 04:50:29 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.73 2020/11/19 02:23:24 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -331,8 +331,8 @@ struct ix_queue {
 	struct evcnt     irqs;		/* Hardware interrupt */
 	struct evcnt     handleq;	/* software_interrupt */
 	struct evcnt     req;		/* deferred */
-	char             namebuf[32];
-	char             evnamebuf[32];
+	char             namebuf[32];	/* Name for sysctl */
+	char             evnamebuf[32];	/* Name for evcnt */
 
 	/* Lock for disabled_count and this queue's EIMS/EIMC bit */
 	kmutex_t         dc_mtx;
