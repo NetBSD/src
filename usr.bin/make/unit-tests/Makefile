@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.207 2020/11/18 04:10:34 sjg Exp $
+# $NetBSD: Makefile,v 1.208 2020/11/19 21:35:46 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -433,9 +433,6 @@ SED_CMDS.export= \
 .for t in export-all export-env
 SED_CMDS.$t= ${SED_CMDS.export}
 .endfor
-SED_CMDS.directive-export-gmake= \
-	${:D dash is a pain } \
-	-e /non-zero/d
 SED_CMDS.job-output-long-lines= \
 	${:D Job separators on their own line are ok. } \
 	-e '/^--- job-[ab] ---$$/d' \
