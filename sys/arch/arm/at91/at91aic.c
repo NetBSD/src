@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.11 2014/03/26 08:51:59 christos Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.11 2014/03/26 08:51:59 christos Exp $	*/
+/*	$Id: at91aic.c,v 1.12 2020/11/20 18:03:52 thorpej Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.12 2020/11/20 18:03:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/termios.h>
 
 #include <uvm/uvm_extern.h>
@@ -307,7 +307,7 @@ at91aic_intr_establish(int irq, int ipl, int type, int (*ih_func)(void *), void 
 		panic("intr_establish: interrupt type %d is invalid", type);
 	}
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	if (ih == NULL)
 		return (NULL);
 
@@ -338,7 +338,7 @@ at91aic_intr_establish(int irq, int ipl, int type, int (*ih_func)(void *), void 
 		}
 #endif
 	} else {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(*ih));
 		ih = NULL;
 	}
 
