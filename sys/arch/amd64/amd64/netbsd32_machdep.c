@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.136 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.137 2020/11/20 17:44:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.136 2020/04/25 15:26:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.137 2020/11/20 17:44:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.136 2020/04/25 15:26:16 bouye
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -632,14 +632,16 @@ x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
 	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
-	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_WAITOK);
+	const size_t alloc_size = sizeof(*descv) * ua.num;
+
+	descv = kmem_alloc(alloc_size, KM_SLEEP);
 	error = copyin((void *)(uintptr_t)ua32.desc, descv,
 	    sizeof(*descv) * ua.num);
 	if (error == 0)
 		error = x86_set_ldt1(l, &ua, descv);
 	*retval = ua.start;
 
-	free(descv, M_TEMP);
+	kmem_free(descv, alloc_size);
 	return error;
 }
 
@@ -660,14 +662,16 @@ x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
 	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
-	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	const size_t alloc_size = ua.num * sizeof(union descriptor);
+
+	cp = kmem_alloc(alloc_size, KM_SLEEP);
 	error = x86_get_ldt1(l, &ua, cp);
 	*retval = ua.num;
 	if (error == 0)
 		error = copyout(cp, (void *)(uintptr_t)ua32.desc,
 		    ua.num * sizeof(*cp));
 
-	free(cp, M_TEMP);
+	kmem_free(cp, alloc_size);
 	return error;
 }
 #endif
