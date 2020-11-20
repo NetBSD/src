@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.57 2019/11/10 21:16:24 chs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.58 2020/11/20 18:37:30 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.57 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.58 2020/11/20 18:37:30 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_console.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.57 2019/11/10 21:16:24 chs Exp $");
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -311,7 +311,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 	tp->t_hwiflow = sacomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(SACOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(SACOM_RING_SIZE << 1, KM_SLEEP);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = SACOM_RING_SIZE;
 	sc->sc_ebuf = sc->sc_rbuf + (SACOM_RING_SIZE << 1);
@@ -377,7 +377,7 @@ sacom_detach(device_t dev, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
+	kmem_free(sc->sc_rbuf, SACOM_RING_SIZE << 1);
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
