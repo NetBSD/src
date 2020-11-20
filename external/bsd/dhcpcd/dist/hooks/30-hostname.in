@@ -153,6 +153,6 @@ BOUND6|RENEW6|REBIND6|REBOOT6|INFORM6)
 	;;
 esac
 
-if $if_up && [ "$reason" != ROUTERADVERT ]; then
+if $if_configured && $if_up && [ "$reason" != ROUTERADVERT ]; then
 	set_hostname
 fi
