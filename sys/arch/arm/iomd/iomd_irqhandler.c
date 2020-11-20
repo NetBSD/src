@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.23 2019/11/10 21:16:23 chs Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.24 2020/11/20 18:18:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.23 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.24 2020/11/20 18:18:51 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <arm/cpufunc.h>
 #include <arm/iomd/iomdreg.h>
@@ -346,7 +346,7 @@ intr_claim(int irq, int level, const char *name, int (*ih_func)(void *),
 {
 	irqhandler_t *ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_level = level;
 	ih->ih_name = name;
 	ih->ih_func = ih_func;
@@ -354,7 +354,7 @@ intr_claim(int irq, int level, const char *name, int (*ih_func)(void *),
 	ih->ih_flags = 0;
 
 	if (irq_claim(irq, ih) != 0) {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(*ih));
 		return NULL;
 	}
 	return ih;
@@ -367,7 +367,7 @@ intr_release(void *arg)
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
 	if (irq_release(ih->ih_num, ih) == 0) {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(*ih));
 		return 0 ;
 	}
 	return 1;
