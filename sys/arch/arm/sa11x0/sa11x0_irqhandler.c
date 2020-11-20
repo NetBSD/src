@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.19 2019/11/10 21:16:24 chs Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.20 2020/11/20 18:37:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.19 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.20 2020/11/20 18:37:30 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.19 2019/11/10 21:16:24 chs E
 #include <sys/syslog.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -167,7 +167,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	struct irqhandler **p, *q, *ih;
 	static struct irqhandler fakehand = {fakeintr};
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 
 	if (irq < 0 || irq >= ICU_LEN || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
@@ -249,7 +249,7 @@ sa11x0_intr_disestablish(sa11x0_chipset_tag_t ic, void *arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 
 	intr_calculatemasks();
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
