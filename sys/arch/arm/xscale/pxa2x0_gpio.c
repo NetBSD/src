@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.18 2019/11/10 21:16:24 chs Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.19 2020/11/20 18:49:45 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.18 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.19 2020/11/20 18:49:45 thorpej Exp $");
 
 #include "gpio.h"
 #include "opt_pxa2x0_gpio.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.18 2019/11/10 21:16:24 chs Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/intr.h>
 #include <sys/bus.h>
@@ -280,7 +280,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (sc->sc_handlers[gpio] != NULL)
 		panic("pxa2x0_gpio_intr_establish: illegal shared interrupt");
 
-	gh = malloc(sizeof(struct gpio_irq_handler), M_DEVBUF, M_WAITOK);
+	gh = kmem_alloc(sizeof(*gh), KM_SLEEP);
 	gh->gh_func = func;
 	gh->gh_arg = arg;
 	gh->gh_spl = spl;
@@ -365,7 +365,7 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 #endif
 	}
 
-	free(gh, M_DEVBUF);
+	kmem_free(gh, sizeof(*gh));
 }
 
 static int

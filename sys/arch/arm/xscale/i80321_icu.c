@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.25 2019/11/10 21:16:24 chs Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.26 2020/11/20 18:49:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.25 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.26 2020/11/20 18:49:45 thorpej Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.25 2019/11/10 21:16:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -309,7 +309,7 @@ i80321_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	if (irq < 0 || irq > NIRQ)
 		panic("i80321_intr_establish: IRQ %d out of range", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
