@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.25 2020/05/20 09:18:25 hkenken Exp $ */
+/* $NetBSD: imxuart.c,v 1.26 2020/11/20 18:16:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.25 2020/05/20 09:18:25 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.26 2020/11/20 18:16:40 thorpej Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -148,7 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.25 2020/05/20 09:18:25 hkenken Exp $")
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -354,8 +354,8 @@ imxuart_attach_subr(struct imxuart_softc *sc)
 	tp->t_hwiflow = imxuhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(sizeof (*sc->sc_rbuf) * imxuart_rbuf_size,
-	    M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(sizeof (*sc->sc_rbuf) * imxuart_rbuf_size,
+	    KM_SLEEP);
 	sc->sc_rbuf_size = imxuart_rbuf_size;
 	sc->sc_rbuf_in = sc->sc_rbuf_out = 0;
 	sc->sc_txfifo_len = 32;
@@ -542,7 +542,7 @@ imxuart_detach(device_t self, int flags)
 	}
 
 	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
+	kmem_free(sc->sc_rbuf, sizeof(*sc->sc_rbuf) * sc->sc_rbuf_size);
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_sdhc.c,v 1.1 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_sdhc.c,v 1.2 2020/11/20 18:26:26 thorpej Exp $	*/
 /*
  * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_sdhc.c,v 1.1 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_sdhc.c,v 1.2 2020/11/20 18:26:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/marvell/marvellreg.h>
@@ -75,7 +75,7 @@ mvsoc_sdhc_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc_dev = self;
-	sc->sc_host = malloc(sizeof(*sc->sc_host), M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_host = kmem_zalloc(sizeof(*sc->sc_host), KM_SLEEP);
 	sc->sc_dmat = mva->mva_dmat;
 	/* Must require the DMA.  This sdhc can't 32bit access to SDHC_DATA. */
 	sc->sc_flags = SDHC_FLAG_USE_DMA;

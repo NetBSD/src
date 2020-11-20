@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.48 2019/11/10 21:16:24 chs Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.49 2020/11/20 18:26:26 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.48 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.49 2020/11/20 18:26:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.48 2019/11/10 21:16:24 chs Exp $")
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -212,7 +212,7 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 	tp->t_hwiflow = ixpcomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(IXPCOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(IXPCOM_RING_SIZE << 1, KM_SLEEP);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = IXPCOM_RING_SIZE;
 	sc->sc_ebuf = sc->sc_rbuf + (IXPCOM_RING_SIZE << 1);
