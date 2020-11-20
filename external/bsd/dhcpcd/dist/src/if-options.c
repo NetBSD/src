@@ -165,6 +165,8 @@ const struct option cf_options[] = {
 	{"inactive",        no_argument,       NULL, O_INACTIVE},
 	{"mudurl",          required_argument, NULL, O_MUDURL},
 	{"link_rcvbuf",     required_argument, NULL, O_LINK_RCVBUF},
+	{"configure",       no_argument,       NULL, O_CONFIGURE},
+	{"noconfigure",     no_argument,       NULL, O_NOCONFIGURE},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -782,6 +784,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'o':
 		ARG_REQUIRED;
+		if (ctx->options & DHCPCD_PRINT_PIDFILE)
+			break;
 		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
@@ -794,6 +798,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_REJECT:
 		ARG_REQUIRED;
+		if (ctx->options & DHCPCD_PRINT_PIDFILE)
+			break;
 		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, reject, arg, 1) != 0 ||
@@ -1057,6 +1063,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'O':
 		ARG_REQUIRED;
+		if (ctx->options & DHCPCD_PRINT_PIDFILE)
+			break;
 		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
@@ -1069,6 +1077,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'Q':
 		ARG_REQUIRED;
+		if (ctx->options & DHCPCD_PRINT_PIDFILE)
+			break;
 		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, require, arg, 1) != 0 ||
@@ -1307,6 +1317,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_DESTINATION:
 		ARG_REQUIRED;
+		if (ctx->options & DHCPCD_PRINT_PIDFILE)
+			break;
 		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl,
@@ -2234,6 +2246,12 @@ invalid_token:
 		}
 #endif
 		break;
+	case O_CONFIGURE:
+		ifo->options |= DHCPCD_CONFIGURE;
+		break;
+	case O_NOCONFIGURE:
+		ifo->options &= ~DHCPCD_CONFIGURE;
+		break;
 	default:
 		return 0;
 	}
@@ -2269,7 +2287,8 @@ parse_config_line(struct dhcpcd_ctx *ctx, const char *ifname,
 		    ldop, edop);
 	}
 
-	logerrx("unknown option: %s", opt);
+	if (!(ctx->options & DHCPCD_PRINT_PIDFILE))
+		logerrx("unknown option: %s", opt);
 	return -1;
 }
 
@@ -2352,7 +2371,8 @@ read_config(struct dhcpcd_ctx *ctx,
 	if ((ifo = default_config(ctx)) == NULL)
 		return NULL;
 	if (default_options == 0) {
-		default_options |= DHCPCD_DAEMONISE | DHCPCD_GATEWAY;
+		default_options |= DHCPCD_DAEMONISE |
+			DHCPCD_CONFIGURE | DHCPCD_GATEWAY;
 #ifdef INET
 		skip = socket(PF_INET, SOCK_DGRAM, 0);
 		if (skip != -1) {

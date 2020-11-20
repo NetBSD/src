@@ -163,12 +163,13 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 #endif
 	}
 
+#define DHC_NOCHKIO	(DHCPCD_STARTED | DHCPCD_DAEMONISE)
 	/* Prohibit writing to files.
 	 * Obviously this won't work if we are using a logfile
 	 * or redirecting stderr to a file. */
-	if (ctx->logfile == NULL &&
-	    (ctx->options & DHCPCD_STARTED ||
-	     !ctx->stderr_valid || isatty(STDERR_FILENO) == 1))
+	if ((ctx->options & DHC_NOCHKIO) == DHC_NOCHKIO ||
+	    (ctx->logfile == NULL &&
+	    (!ctx->stderr_valid || isatty(STDERR_FILENO) == 1)))
 	{
 		if (setrlimit(RLIMIT_FSIZE, &rzero) == -1)
 			logerr("setrlimit RLIMIT_FSIZE");
@@ -362,7 +363,7 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		return pid;
 	}
 
-	ctx->options |= DHCPCD_UNPRIV | DHCPCD_FORKED;
+	ctx->options |= DHCPCD_FORKED;
 	if (ctx->fork_fd != -1) {
 		close(ctx->fork_fd);
 		ctx->fork_fd = -1;

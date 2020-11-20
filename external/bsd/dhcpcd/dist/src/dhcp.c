@@ -2346,6 +2346,24 @@ dhcp_bind(struct interface *ifp)
 
 	old_state = state->added;
 
+	if (!(ifo->options & DHCPCD_CONFIGURE)) {
+		struct ipv4_addr *ia;
+
+		script_runreason(ifp, state->reason);
+		dhcpcd_daemonise(ifp->ctx);
+
+		/* We we are not configuring the address, we need to keep
+		 * the BPF socket open if the address does not exist. */
+		ia = ipv4_iffindaddr(ifp, &state->lease.addr, NULL);
+		if (ia != NULL) {
+			state->addr = ia;
+			state->added = STATE_ADDED;
+			dhcp_closebpf(ifp);
+			goto openudp;
+		}
+		return;
+	}
+
 	/* Close the BPF filter as we can now receive DHCP messages
 	 * on a UDP socket. */
 	dhcp_closebpf(ifp);
@@ -2353,6 +2371,7 @@ dhcp_bind(struct interface *ifp)
 	/* Add the address */
 	ipv4_applyaddr(ifp);
 
+openudp:
 	/* If not in master mode, open an address specific socket. */
 	if (ctx->options & DHCPCD_MASTER ||
 	    (state->old != NULL &&
@@ -2361,7 +2380,6 @@ dhcp_bind(struct interface *ifp)
 		return;
 
 	dhcp_closeinet(ifp);
-
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(ctx)) {
 		if (ps_inet_openbootp(state->addr) == -1)
@@ -2805,7 +2823,13 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	state->new = NULL;
 	state->new_len = 0;
 	state->reason = reason;
-	ipv4_applyaddr(ifp);
+	if (ifp->options->options & DHCPCD_CONFIGURE)
+		ipv4_applyaddr(ifp);
+	else {
+		state->addr = NULL;
+		state->added = 0;
+		script_runreason(ifp, state->reason);
+	}
 	free(state->old);
 	state->old = NULL;
 	state->old_len = 0;
@@ -4219,6 +4243,20 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 #endif
 
 	ifo = ifp->options;
+
+#ifdef PRIVSEP
+	if (IN_PRIVSEP_SE(ifp->ctx) &&
+	    !(ifp->ctx->options & (DHCPCD_MASTER | DHCPCD_CONFIGURE)) &&
+	    IN_ARE_ADDR_EQUAL(&state->lease.addr, &ia->addr))
+	{
+		state->addr = ia;
+		state->added = STATE_ADDED;
+		dhcp_closebpf(ifp);
+		if (ps_inet_openbootp(ia) == -1)
+		    logerr(__func__);
+	}
+#endif
+
 	if (ifo->options & DHCPCD_INFORM) {
 		if (state->state != DHS_INFORM)
 			dhcp_inform(ifp);
