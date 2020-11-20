@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.3 2019/11/10 21:16:24 chs Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.4 2020/11/20 18:51:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.3 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.4 2020/11/20 18:51:31 thorpej Exp $");
 
 #include "opt_zynq.h"
 #include "opt_zynquart.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.3 2019/11/10 21:16:24 chs Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -422,8 +422,8 @@ zynquart_attach_common(device_t parent, device_t self,
 	tp->t_hwiflow = zynquarthwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(sizeof (*sc->sc_rbuf) * zynquart_rbuf_size,
-	    M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(sizeof (*sc->sc_rbuf) * zynquart_rbuf_size,
+	    KM_SLEEP);
 	sc->sc_rbuf_size = zynquart_rbuf_size;
 	sc->sc_rbuf_in = sc->sc_rbuf_out = 0;
 	sc->sc_txfifo_len = 64;
@@ -553,7 +553,7 @@ zynquart_detach(device_t self, int flags)
 	}
 
 	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
+	kmem_free(sc->sc_rbuf, sizeof(*sc->sc_rbuf) * sc->sc_rbuf_size);
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
