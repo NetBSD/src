@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.29 2014/10/25 10:58:12 skrll Exp $ */
+/* $NetBSD: podulebus.c,v 1.30 2020/11/20 17:38:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,12 +43,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.29 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.30 2020/11/20 17:38:05 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>
@@ -561,7 +561,7 @@ podulebus_shift_tag(bus_space_tag_t tag, u_int shift, bus_space_tag_t *tagp)
 	 */
 
 	/* XXX never freed, but podules are never detached anyway. */
-        *tagp = malloc(sizeof(struct bus_space), M_DEVBUF, M_WAITOK);
+        *tagp = kmem_alloc(sizeof(struct bus_space), KM_SLEEP);
 	**tagp = *tag;
 	(*tagp)->bs_cookie = (void *)shift;
 }
