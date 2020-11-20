@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.38 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.39 2020/11/20 18:03:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.38 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.39 2020/11/20 18:03:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.38 2014/07/25 08:10:32 dholland
 #include <sys/conf.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/termios.h>
 #include <sys/kauth.h>
 #include <sys/bus.h>
@@ -239,8 +239,8 @@ fcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!(tp = sc->sc_tty))
 		sc->sc_tty = tp = tty_alloc();
 	if (!sc->sc_rxbuffer[0]) {
-		sc->sc_rxbuffer[0] = malloc(RX_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
-		sc->sc_rxbuffer[1] = malloc(RX_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
+		sc->sc_rxbuffer[0] = kmem_alloc(RX_BUFFER_SIZE, KM_SLEEP);
+		sc->sc_rxbuffer[1] = kmem_alloc(RX_BUFFER_SIZE, KM_SLEEP);
 		sc->sc_rxpos = 0;
 		sc->sc_rxcur = 0;
 		sc->sc_rxbuf = sc->sc_rxbuffer[sc->sc_rxcur];
@@ -295,8 +295,8 @@ fcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_rxbuffer[0] == NULL)
 		panic("fcomclose: rx buffers not allocated");
 #endif	/* DIAGNOSTIC */
-	free(sc->sc_rxbuffer[0], M_DEVBUF);
-	free(sc->sc_rxbuffer[1], M_DEVBUF);
+	kmem_free(sc->sc_rxbuffer[0], RX_BUFFER_SIZE);
+	kmem_free(sc->sc_rxbuffer[1], RX_BUFFER_SIZE);
 	sc->sc_rxbuffer[0] = NULL;
 	sc->sc_rxbuffer[1] = NULL;
 

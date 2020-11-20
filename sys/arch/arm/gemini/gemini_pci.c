@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.22 2020/07/07 03:38:45 thorpej Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.23 2020/11/20 18:10:07 thorpej Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.22 2020/07/07 03:38:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.23 2020/11/20 18:10:07 thorpej Exp $");
 
 #include "opt_gemini.h"
 #include "opt_pci.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.22 2020/07/07 03:38:45 thorpej Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -116,7 +116,7 @@ gemini_pci_intrq_insert(void *ih, int (*func)(void *), void *arg)
 {
 	struct gemini_pci_intrq *iqp;
 
-        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_WAITOK|M_ZERO);
+        iqp = kmem_zalloc(sizeof(*iqp), KM_SLEEP);
         iqp->iq_func = func;
         iqp->iq_arg = arg;
         iqp->iq_ih = ih;
@@ -134,7 +134,7 @@ gemini_pci_intrq_remove(void *cookie)
 		if ((void *)iqp == cookie) {
 			SIMPLEQ_REMOVE(&gemini_pci_intrq,
 				iqp, gemini_pci_intrq, iq_q);
-			free(iqp, M_DEVBUF);
+			kmem_free(iqp, sizeof(*iqp));
 			return;
 		}
 	}
