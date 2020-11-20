@@ -713,6 +713,8 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 #endif
 
 	RB_TREE_FOREACH_SAFE(rt, &routes, rtn) {
+		if (!(rt->rt_ifp->options->options & DHCPCD_CONFIGURE))
+			continue;
 #ifdef BSD
 		if (rt_is_default(rt) &&
 		    if_missfilter(rt->rt_ifp, &rt->rt_gateway) == -1)
@@ -770,7 +772,6 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 			rt_free(rt);
 		}
 	}
-
 
 getfail:
 	rt_headclear(&routes, AF_UNSPEC);
