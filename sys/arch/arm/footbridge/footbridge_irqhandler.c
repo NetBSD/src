@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.26 2019/11/10 21:16:23 chs Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.27 2020/11/20 18:03:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,13 +40,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.26 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.27 2020/11/20 18:03:52 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
@@ -227,7 +227,7 @@ footbridge_intr_claim(int irq, int ipl, const char *name, int (*func)(void *), v
 	if (irq < 0 || irq > NIRQ)
 		panic("footbridge_intr_establish: IRQ %d out of range", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;

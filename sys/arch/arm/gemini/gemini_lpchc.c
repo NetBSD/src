@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_lpchc.c,v 1.4 2019/11/10 21:16:23 chs Exp $	*/
+/*	$NetBSD: gemini_lpchc.c,v 1.5 2020/11/20 18:10:07 thorpej Exp $	*/
 
 /*
  * GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.4 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.5 2020/11/20 18:10:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -15,7 +15,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.4 2019/11/10 21:16:23 chs Exp $")
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 
@@ -94,7 +94,7 @@ gemini_lpchc_intrq_insert(gemini_lpchc_softc_t *sc, int (*func)(void *),
 {
 	gemini_lpchc_intrq_t *iqp;
 
-        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_WAITOK|M_ZERO);
+        iqp = kmem_zalloc(sizeof(*iqp), KM_SLEEP);
         iqp->iq_func = func;
         iqp->iq_arg = arg;
         iqp->iq_bit = bit;
@@ -113,7 +113,7 @@ gemini_lpchc_intrq_remove(gemini_lpchc_softc_t *sc, void *cookie)
 		if ((void *)iqp == cookie) {
 			SIMPLEQ_REMOVE(&sc->sc_intrq,
 				iqp, gemini_lpchc_intrq, iq_q);
-			free(iqp, M_DEVBUF);
+			kmem_free(iqp, sizeof(*iqp));
 			return;
 		}
 	}
