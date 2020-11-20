@@ -33,7 +33,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 
 #include <sys/mutex.h>
@@ -276,7 +276,7 @@ dmac_xfer_t
 s3c2440_dmac_allocate_xfer(void) {
 	struct dmac_xfer_state *dxs;
 
-	dxs = malloc(sizeof(struct dmac_xfer_state), M_DEVBUF, M_WAITOK);
+	dxs = kmem_alloc(sizeof(struct dmac_xfer_state), KM_SLEEP);
 
 	dxs->dxs_xfer.dx_done = NULL;
 	dxs->dxs_xfer.dx_sync_bus = DMAC_SYNC_BUS_AUTO;
@@ -288,7 +288,7 @@ s3c2440_dmac_allocate_xfer(void) {
 
 void
 s3c2440_dmac_free_xfer(dmac_xfer_t dx) {
-	free(dx, M_DEVBUF);
+	kmem_free(dx, sizeof(struct dmac_xfer_state));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.14 2019/11/10 21:16:24 chs Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.15 2020/11/20 18:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.14 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.15 2020/11/20 18:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>			/* for cold */
 
 #include <uvm/uvm_extern.h>
@@ -338,7 +338,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 		return NULL;
 	}
 
-	scr = malloc(sizeof *scr, M_DEVBUF, M_ZERO | M_WAITOK);
+	scr = kmem_zalloc(sizeof *scr, KM_SLEEP);
 	scr->nsegs = 0;
 	scr->depth = depth;
 	scr->stride = virtual_width * depth / 8;
@@ -392,7 +392,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 			bus_dmamem_unmap(sc->dma_tag, scr->buf_va, size);
 		if (scr->nsegs)
 			bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
-		free(scr, M_DEVBUF);
+		kmem_free(scr, sizeof(*scr));
 	}
 	return NULL;
 }
@@ -608,7 +608,7 @@ s3c24x0_lcd_free_screen(void *v, void *cookie)
 	if (scr->nsegs > 0)
 		bus_dmamem_free(sc->dma_tag, scr->segs, scr->nsegs);
 
-	free(scr, M_DEVBUF);
+	kmem_free(scr, sizeof(*scr));
 }
 
 int

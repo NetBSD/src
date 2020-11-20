@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.29 2020/07/07 03:38:46 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.30 2020/11/20 18:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.29 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.30 2020/11/20 18:34:45 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.29 2020/07/07 03:38:46 thorpej Exp
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -517,7 +517,7 @@ s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 	    "func=%p, arg=%p, xname=%s)\n", pcv, ih, level, func, arg, xname);
 #endif
 
-	handler = malloc(sizeof *handler, M_DEVBUF, M_WAITOK);
+	handler = kmem_alloc(sizeof *handler, KM_SLEEP);
 	handler->func = func;
 	handler->arg = arg;
 	handler->level = level;
