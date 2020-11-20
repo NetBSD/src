@@ -2877,6 +2877,8 @@ dhcp6_delegate_prefix(struct interface *ifp)
 	TAILQ_FOREACH(ifd, ifp->ctx->ifaces, next) {
 		if (!ifd->active)
 			continue;
+		if (!(ifd->options->options & DHCPCD_CONFIGURE))
+			continue;
 		k = 0;
 		carrier_warned = false;
 		TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -2969,6 +2971,10 @@ dhcp6_find_delegates(struct interface *ifp)
 	struct if_ia *ia;
 	struct if_sla *sla;
 	struct interface *ifd;
+
+	if (ifp->options != NULL &&
+	    !(ifp->options->options & DHCPCD_CONFIGURE))
+		return 0;
 
 	k = 0;
 	TAILQ_FOREACH(ifd, ifp->ctx->ifaces, next) {
@@ -3195,9 +3201,11 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    state->expire, dhcp6_startexpire, ifp);
 
-		ipv6_addaddrs(&state->addrs);
-		if (!timedout)
-			dhcp6_deprecateaddrs(&state->addrs);
+		if (ifp->options->options & DHCPCD_CONFIGURE) {
+			ipv6_addaddrs(&state->addrs);
+			if (!timedout)
+				dhcp6_deprecateaddrs(&state->addrs);
+		}
 
 		if (state->state == DH6S_INFORMED)
 			logmessage(loglevel, "%s: refresh in %"PRIu32" seconds",

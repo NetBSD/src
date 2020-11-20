@@ -228,6 +228,8 @@ ipv4ll_not_found(struct interface *ifp)
 #endif
 		loginfox("%s: using IPv4LL address %s",
 		  ifp->name, inet_ntoa(state->pickedaddr));
+	if (!(ifp->options->options & DHCPCD_CONFIGURE))
+		goto run;
 	if (ia == NULL) {
 		if (ifp->ctx->options & DHCPCD_TEST)
 			goto test;
@@ -252,6 +254,7 @@ test:
 		return;
 	}
 	rt_build(ifp->ctx, AF_INET);
+run:
 	astate = arp_announceaddr(ifp->ctx, &ia->addr);
 	if (astate != NULL)
 		astate->announced_cb = ipv4ll_announced_arp;
@@ -281,7 +284,8 @@ ipv4ll_defend_failed(struct interface *ifp)
 	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
 	ipv4ll_freearp(ifp);
-	ipv4_deladdr(state->addr, 1);
+	if (ifp->options->options & DHCPCD_CONFIGURE)
+		ipv4_deladdr(state->addr, 1);
 	state->addr = NULL;
 	rt_build(ifp->ctx, AF_INET);
 	script_runreason(ifp, "IPV4LL");
@@ -373,7 +377,8 @@ ipv4ll_start(void *arg)
 	if (ia != NULL && ia->addr_flags & IN_IFF_DUPLICATED) {
 		state->pickedaddr = ia->addr; /* So it's not picked again. */
 		repick = true;
-		ipv4_deladdr(ia, 0);
+		if (ifp->options->options & DHCPCD_CONFIGURE)
+			ipv4_deladdr(ia, 0);
 		ia = NULL;
 	}
 #endif
@@ -431,7 +436,8 @@ ipv4ll_drop(struct interface *ifp)
 
 	state = IPV4LL_STATE(ifp);
 	if (state && state->addr != NULL) {
-		ipv4_deladdr(state->addr, 1);
+		if (ifp->options->options & DHCPCD_CONFIGURE)
+			ipv4_deladdr(state->addr, 1);
 		state->addr = NULL;
 		dropped = true;
 	}
@@ -442,7 +448,8 @@ ipv4ll_drop(struct interface *ifp)
 
 		TAILQ_FOREACH_SAFE(ia, &istate->addrs, next, ian) {
 			if (IN_LINKLOCAL(ntohl(ia->addr.s_addr))) {
-				ipv4_deladdr(ia, 0);
+				if (ifp->options->options & DHCPCD_CONFIGURE)
+					ipv4_deladdr(ia, 0);
 				dropped = true;
 			}
 		}
@@ -534,7 +541,8 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	else if (ia->addr_flags & IN_IFF_DUPLICATED) {
 		logerrx("%s: DAD detected %s", ifp->name, ia->saddr);
 		ipv4ll_freearp(ifp);
-		ipv4_deladdr(ia, 1);
+		if (ifp->options->options & DHCPCD_CONFIGURE)
+			ipv4_deladdr(ia, 1);
 		state->addr = NULL;
 		rt_build(ifp->ctx, AF_INET);
 		ipv4ll_found(ifp);

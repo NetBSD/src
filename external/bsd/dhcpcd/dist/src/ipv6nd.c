@@ -1494,13 +1494,18 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 		script_runreason(ifp, "TEST");
 		goto handle_flag;
 	}
+
+	if (!(ifp->options->options & DHCPCD_CONFIGURE))
+		goto run;
+
 	ipv6nd_applyra(ifp);
 	ipv6_addaddrs(&rap->addrs);
 #ifdef IPV6_MANAGETEMPADDR
 	ipv6_addtempaddrs(ifp, &rap->acquired);
 #endif
-
 	rt_build(ifp->ctx, AF_INET6);
+
+run:
 	ipv6nd_scriptrun(rap);
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);

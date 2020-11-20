@@ -91,7 +91,7 @@
 #define DHCPCD_IPV6RS			(1ULL << 31)
 #define DHCPCD_IPV6RA_REQRDNSS		(1ULL << 32)
 #define DHCPCD_PRIVSEP			(1ULL << 33)
-#define DHCPCD_UNPRIV			(1ULL << 34)
+#define DHCPCD_CONFIGURE		(1ULL << 34)
 #define DHCPCD_IPV4			(1ULL << 35)
 #define DHCPCD_FORKED			(1ULL << 36)
 #define DHCPCD_IPV6			(1ULL << 37)
@@ -180,6 +180,8 @@
 #define O_INACTIVE		O_BASE + 47
 #define O_MUDURL		O_BASE + 48
 #define O_MSUSERCLASS		O_BASE + 49
+#define O_CONFIGURE		O_BASE + 50
+#define O_NOCONFIGURE		O_BASE + 51
 
 extern const struct option cf_options[];
 

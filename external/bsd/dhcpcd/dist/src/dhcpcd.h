@@ -180,6 +180,7 @@ struct dhcpcd_ctx {
 	int control_unpriv_fd;
 	struct fd_list_head control_fds;
 	char control_sock[sizeof(CONTROLSOCKET) + IF_NAMESIZE];
+	char control_sock_unpriv[sizeof(CONTROLSOCKET) + IF_NAMESIZE + 7];
 	gid_t control_group;
 
 	/* DHCP Enterprise options, RFC3925 */
