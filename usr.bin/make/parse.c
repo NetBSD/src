@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.444 2020/11/20 00:24:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.445 2020/11/20 20:01:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.444 2020/11/20 00:24:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.445 2020/11/20 20:01:16 rillig Exp $");
 
 /* types and constants */
 
@@ -1042,9 +1042,9 @@ ParseErrorNoDependency(const char *lstart)
 }
 
 static void
-ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
+ParseDependencyTargetWord(const char **pp, const char *lstart)
 {
-    /*const*/ char *cp = *pp;
+    const char *cp = *pp;
 
     while (*cp != '\0') {
 	if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' || *cp == '(') &&
@@ -1422,6 +1422,7 @@ ParseDoDependencyTargets(char **inout_cp,
     char *cp = *inout_cp;
     char *tgt = *inout_line;
     char savec;
+    const char *p;
 
     for (;;) {
 	/*
@@ -1431,7 +1432,9 @@ ParseDoDependencyTargets(char **inout_cp,
 
 	/* Find the end of the next word. */
 	cp = tgt;
-	ParseDependencyTargetWord(&cp, lstart);
+	p = cp;
+	ParseDependencyTargetWord(&p, lstart);
+	cp += p - cp;
 
 	/*
 	 * If the word is followed by a left parenthesis, it's the
