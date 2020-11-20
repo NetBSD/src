@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.25 2019/11/10 21:16:23 chs Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.26 2020/11/20 18:03:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.25 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.26 2020/11/20 18:03:52 thorpej Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.25 2019/11/10 21:16:23 chs Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/termios.h>
 #include <sys/lwp.h>
 
@@ -287,7 +287,7 @@ ep93xx_intr_establish(int irq, int ipl, int (*ih_func)(void *), void *arg)
 	if (ipl < 0 || ipl > NIPL)
 		panic("ep93xx_intr_establish: IPL %d out of range", ipl);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = ih_func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -314,6 +314,8 @@ ep93xx_intr_disestablish(void *cookie)
 	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
 	ep93xx_intr_calculate_masks();
 	restore_interrupts(oldirqstate);
+
+	kmem_free(ih, sizeof(*ih));
 }
 
 void

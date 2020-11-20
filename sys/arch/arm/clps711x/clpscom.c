@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.8 2019/11/10 21:16:23 chs Exp $      */
+/*      $NetBSD: clpscom.c,v 1.9 2020/11/20 18:03:52 thorpej Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.8 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.9 2020/11/20 18:03:52 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.8 2019/11/10 21:16:23 chs Exp $");
 #include <sys/intr.h>
 #include <sys/kauth.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
 #include <sys/tty.h>
@@ -222,7 +222,7 @@ clpscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tty->t_hwiflow = clpscom_hwiflow;
 
 	sc->sc_tbc = 0;
-	sc->sc_rbuf = malloc(CLPSCOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(CLPSCOM_RING_SIZE << 1, KM_SLEEP);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = CLPSCOM_RING_SIZE;
 

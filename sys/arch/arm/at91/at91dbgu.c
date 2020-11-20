@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.17 2019/12/15 16:48:25 tsutsui Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.17 2019/12/15 16:48:25 tsutsui Exp $ */
+/*	$Id: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $ */
 
 /*
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.17 2019/12/15 16:48:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.17 2019/12/15 16:48:25 tsutsui Exp $"
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -249,7 +249,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = at91dbgu_hwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(AT91DBGU_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(AT91DBGU_RING_SIZE << 1, KM_SLEEP);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = AT91DBGU_RING_SIZE;
 	sc->sc_ebuf = sc->sc_rbuf + (AT91DBGU_RING_SIZE << 1);
