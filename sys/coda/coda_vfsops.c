@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.88 2020/11/14 11:41:29 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.88 2020/11/14 11:41:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,11 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      * fixed default size for the filename buffer.
      */
     /* Ensure that namei() doesn't run off the filename buffer */
-    ((char *)data)[*data_len - 1] = 0;
+    if (*data_len < 1 || *data_len > PATH_MAX ||
+	strnlen(data, *data_len) >= *data_len) {
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
+	return EINVAL;
+    }
     error = namei_simple_kernel((char *)data, NSM_FOLLOW_NOEMULROOT,
 		&dvp);
 
