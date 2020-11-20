@@ -350,6 +350,9 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	}
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE && protocol != PROTO_LINK)
 		goto dumplease;
+	if (efprintf(fp, "if_configured=%s",
+	    ifo->options & DHCPCD_CONFIGURE ? "true" : "false") == -1)
+		goto eexit;
 	if (efprintf(fp, "ifcarrier=%s",
 	    ifp->carrier == LINK_UNKNOWN ? "unknown" :
 	    ifp->carrier == LINK_UP ? "up" : "down") == -1)
