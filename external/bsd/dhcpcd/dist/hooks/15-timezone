@@ -42,6 +42,6 @@ BOUND6|RENEW6|REBIND6|REBOOT6|INFORM6)
 	;;
 esac
 
-if $if_up; then
+if $if_configured && $if_up; then
  	set_zoneinfo
 fi
