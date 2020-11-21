@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.269 2020/11/21 19:18:24 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.270 2020/11/21 19:21:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.269 2020/11/21 19:18:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.270 2020/11/21 19:21:49 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -140,14 +140,14 @@ static GNodeList *transforms;
 
 static int sNum = 0;		/* Counter for assigning suffix numbers */
 
-typedef enum SuffFlags {
+typedef enum SuffixFlags {
     SUFF_INCLUDE	= 0x01,	/* One which is #include'd */
     SUFF_LIBRARY	= 0x02,	/* One which contains a library */
     SUFF_NULL		= 0x04	/* The empty suffix */
     /* XXX: Why is SUFF_NULL needed? Wouldn't nameLen == 0 mean the same? */
-} SuffFlags;
+} SuffixFlags;
 
-ENUM_FLAGS_RTTI_3(SuffFlags,
+ENUM_FLAGS_RTTI_3(SuffixFlags,
 		  SUFF_INCLUDE, SUFF_LIBRARY, SUFF_NULL);
 
 typedef List SuffixListList;
@@ -158,7 +158,7 @@ typedef struct Suffix {
     /* Length of the name, to avoid strlen calls */
     size_t nameLen;
     /* Type of suffix */
-    SuffFlags flags;
+    SuffixFlags flags;
     /* The path along which files of this suffix may be found */
     SearchPath *searchPath;
     /* The suffix number; TODO: document the purpose of this number */
@@ -2011,11 +2011,12 @@ PrintSuff(Suffix *suff)
     debug_printf("# \"%s\" (num %d, ref %d)",
 		 suff->name, suff->sNum, suff->refCount);
     if (suff->flags != 0) {
-	char flags_buf[SuffFlags_ToStringSize];
+	char flags_buf[SuffixFlags_ToStringSize];
 
 	debug_printf(" (%s)",
 		     Enum_FlagsToString(flags_buf, sizeof flags_buf,
-					suff->flags, SuffFlags_ToStringSpecs));
+					suff->flags,
+					SuffixFlags_ToStringSpecs));
     }
     debug_printf("\n");
 
