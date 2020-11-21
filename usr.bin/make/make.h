@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.211 2020/11/21 18:41:57 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.212 2020/11/21 19:15:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -378,7 +378,7 @@ typedef struct GNode {
 
     /* Suffix for the node (determined by Suff_FindDeps and opaque to everyone
      * but the Suff module) */
-    struct Suff *suffix;
+    struct Suffix *suffix;
 
     /* Filename where the GNode got defined */
     /* XXX: What is the lifetime of this string? */
