@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.273 2020/11/21 20:04:10 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.274 2020/11/21 20:12:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.273 2020/11/21 20:04:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.274 2020/11/21 20:12:08 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -212,7 +212,6 @@ static Suffix *emptySuff;
 
 
 static void SuffFindDeps(GNode *, SrcList *);
-static void SuffExpandWildcards(GNodeListNode *, GNode *);
 
 static Suffix *
 Suffix_Ref(Suffix *suff)
@@ -1124,6 +1123,50 @@ SuffFindCmds(Src *targ, SrcList *slst)
     return ret;
 }
 
+static void
+SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
+{
+    GNode *cgn = cln->datum;
+    StringList *expansions;
+
+    if (!Dir_HasWildcards(cgn->name))
+	return;
+
+    /*
+     * Expand the word along the chosen path
+     */
+    expansions = Lst_New();
+    Dir_Expand(cgn->name, Suff_FindPath(cgn), expansions);
+
+    while (!Lst_IsEmpty(expansions)) {
+	GNode	*gn;
+	/*
+	 * Fetch next expansion off the list and find its GNode
+	 */
+	char *cp = Lst_Dequeue(expansions);
+
+	SUFF_DEBUG1("%s...", cp);
+	gn = Targ_GetNode(cp);
+
+	/* Add gn to the parents child list before the original child */
+	Lst_InsertBefore(pgn->children, cln, gn);
+	Lst_Append(gn->parents, pgn);
+	pgn->unmade++;
+    }
+
+    Lst_Free(expansions);
+
+    SUFF_DEBUG0("\n");
+
+    /*
+     * Now the source is expanded, remove it from the list of children to
+     * keep it from being processed.
+     */
+    pgn->unmade--;
+    Lst_Remove(pgn->children, cln);
+    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
+}
+
 /* Expand the names of any children of a given node that contain variable
  * expressions or file wildcards into actual targets.
  *
@@ -1267,50 +1310,6 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 	 */
 	free(cp);
     }
-
-    SUFF_DEBUG0("\n");
-
-    /*
-     * Now the source is expanded, remove it from the list of children to
-     * keep it from being processed.
-     */
-    pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
-}
-
-static void
-SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
-{
-    GNode *cgn = cln->datum;
-    StringList *expansions;
-
-    if (!Dir_HasWildcards(cgn->name))
-	return;
-
-    /*
-     * Expand the word along the chosen path
-     */
-    expansions = Lst_New();
-    Dir_Expand(cgn->name, Suff_FindPath(cgn), expansions);
-
-    while (!Lst_IsEmpty(expansions)) {
-	GNode	*gn;
-	/*
-	 * Fetch next expansion off the list and find its GNode
-	 */
-	char *cp = Lst_Dequeue(expansions);
-
-	SUFF_DEBUG1("%s...", cp);
-	gn = Targ_GetNode(cp);
-
-	/* Add gn to the parents child list before the original child */
-	Lst_InsertBefore(pgn->children, cln, gn);
-	Lst_Append(gn->parents, pgn);
-	pgn->unmade++;
-    }
-
-    Lst_Free(expansions);
 
     SUFF_DEBUG0("\n");
 
