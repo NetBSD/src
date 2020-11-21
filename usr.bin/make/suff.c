@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.272 2020/11/21 19:40:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.273 2020/11/21 20:04:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.272 2020/11/21 19:40:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.273 2020/11/21 20:04:10 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -152,6 +152,10 @@ ENUM_FLAGS_RTTI_3(SuffixFlags,
 
 typedef List SuffixListList;
 
+/*
+ * A suffix such as ".c" or ".o" that is used in suffix transformation rules
+ * such as ".c.o:".
+ */
 typedef struct Suffix {
     /* The suffix itself, such as ".c" */
     char *name;
@@ -178,7 +182,13 @@ typedef struct Suffix {
 } Suffix;
 
 /*
- * Structure used in the search for implied sources.
+ * A candidate when searching for implied sources.
+ *
+ * For example, when "src.o" is to be made, a typical candidate is "src.c"
+ * via the transformation rule ".c.o".  If that doesn't exist, maybe there is
+ * another transformation rule ".pas.c" that would make "src.pas" an indirect
+ * candidate as well.  The first such chain that leads to an existing file or
+ * node is finally made.
  */
 typedef struct Src {
     char *file;			/* The file to look for */
@@ -192,6 +202,7 @@ typedef struct Src {
     SrcList *childrenList;
 #endif
 } Src;
+
 
 /* TODO: Document the difference between nullSuff and emptySuff. */
 /* The NULL suffix for this run */
