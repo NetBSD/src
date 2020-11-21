@@ -1,4 +1,4 @@
-/* $NetBSD: qv.c,v 1.35 2020/06/14 01:40:06 chs Exp $ */
+/* $NetBSD: qv.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $ */
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -31,7 +31,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.35 2020/06/14 01:40:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.35 2020/06/14 01:40:06 chs Exp $");
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>		/***/
 #include <sys/time.h>
 #include <sys/bus.h>
@@ -900,7 +900,7 @@ qv_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
         struct qv_softc *sc = device_private(v);
         struct qv_screen *ss;
 
-	ss = malloc(sizeof(struct qv_screen), M_DEVBUF, M_WAITOK|M_ZERO);
+	ss = kmem_zalloc(sizeof(struct qv_screen), KM_SLEEP);
 	ss->ss_sc = sc;
 	ss->ss_type = type;
 	*cookiep = ss;
@@ -916,7 +916,7 @@ void
 qv_free_screen(void *v, void *cookie)
 {
         printf("qv_free_screen: %p\n", cookie);
-        free(cookie, M_DEVBUF);
+        kmem_free(cookie, sizeof(struct qv_screen));
 }
 
 /*
