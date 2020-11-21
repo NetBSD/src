@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.26 2019/11/10 21:16:26 chs Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.27 2020/11/21 15:36:36 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.26 2019/11/10 21:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.27 2020/11/21 15:36:36 thorpej Exp $");
 
 #define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 
@@ -206,7 +206,7 @@ evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 	struct evbmips_intrhand *ih;
 	int s;
 	
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 
@@ -241,7 +241,7 @@ evbmips_intr_disestablish(void *arg)
 	
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 void

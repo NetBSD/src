@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_elb.c,v 1.7 2011/07/01 19:02:32 dyoung Exp $	*/
+/*	$NetBSD: pckbc_elb.c,v 1.8 2020/11/21 15:42:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.7 2011/07/01 19:02:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.8 2020/11/21 15:42:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 
@@ -88,8 +88,7 @@ pckbc_elb_attach(device_t parent, device_t self, void *aux)
 		t = &pckbc_consdata;
 		pckbc_console_attached = 1;
 	} else {
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		memset(t, 0, sizeof(struct pckbc_internal));
+		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
 	}
 
 	t->t_iot = eaa->elb_bt;
