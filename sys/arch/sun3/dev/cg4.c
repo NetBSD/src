@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.41 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: cg4.c,v 1.42 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,14 +55,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.41 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.42 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -573,7 +573,7 @@ cg4b_init(struct cg4_softc *sc)
 	int i;
 
 	/* Need a buffer for colormap format translation. */
-	btcm = malloc(sizeof(*btcm), M_DEVBUF, M_WAITOK);
+	btcm = kmem_alloc(sizeof(*btcm), KM_SLEEP);
 	sc->sc_btcm = btcm;
 
 	/*

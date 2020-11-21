@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.14 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.15 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,13 +59,13 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.14 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.15 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
@@ -164,9 +164,7 @@ sunsc_mbmem_attach(device_t parent, device_t self, void *args)
 	
 	/* Allocate DMA handles. */
 	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
-	sc->sc_dma_handles = malloc(i, M_DEVBUF, M_WAITOK);
-	if (sc->sc_dma_handles == NULL)
-		panic("sc: DMA handles malloc failed");
+	sc->sc_dma_handles = kmem_alloc(i, KM_SLEEP);
 	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
 		if (bus_dmamap_create(sc->sunscpal_dmat, SUNSCPAL_MAX_DMA_LEN,
 		    1, SUNSCPAL_MAX_DMA_LEN,

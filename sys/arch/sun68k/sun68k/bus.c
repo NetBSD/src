@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.23 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: bus.c,v 1.24 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,13 +153,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.24 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */ 
@@ -174,6 +174,14 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.23 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include <sun68k/sun68k/control.h>
 
+static size_t
+_bus_dmamap_mapsize(int const nsegments)
+{
+	KASSERT(nsegments > 0);
+	return sizeof(struct sun68k_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+}
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -184,7 +192,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct sun68k_bus_dmamap *map;
 	void *mapstore;
-	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -198,13 +205,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct sun68k_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return (ENOMEM);
 
-	memset(mapstore, 0, mapsize);
 	map = (struct sun68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -234,7 +238,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (map->dm_mapsize != 0)
 		bus_dmamap_unload(t, map);
 
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 /*
@@ -257,8 +261,8 @@ extern	paddr_t avail_end;
 	low = avail_start;
 	high = avail_end;
 
-	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((mlist = kmem_alloc(sizeof(*mlist),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return (ENOMEM);
 
 	/*
@@ -267,7 +271,7 @@ extern	paddr_t avail_end;
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error) {
-		free(mlist, M_DEVBUF);
+		kmem_free(mlist, sizeof(*mlist));
 		return (error);
 	}
 
@@ -300,6 +304,7 @@ extern	paddr_t avail_end;
 void 
 _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
+	struct pglist *mlist = segs[0]._ds_mlist;
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
@@ -307,8 +312,8 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	/*
 	 * Return the list of physical pages back to the VM system.
 	 */
-	uvm_pglistfree(segs[0]._ds_mlist);
-	free(segs[0]._ds_mlist, M_DEVBUF);
+	uvm_pglistfree(mlist);
+	kmem_free(mlist, sizeof(*mlist));
 }
 
 /*

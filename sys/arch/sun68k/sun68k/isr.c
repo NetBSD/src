@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.25 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: isr.c,v 1.26 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
@@ -147,7 +147,7 @@ isr_add_autovect(isr_func_t handler, void *arg, int level)
 
 	if ((level < 0) || (level >= NUM_LEVELS))
 		panic("isr_add: bad level=%d", level);
-	new_isr = malloc(sizeof(struct isr), M_DEVBUF, M_WAITOK);
+	new_isr = kmem_alloc(sizeof(struct isr), KM_SLEEP);
 	new_isr->isr_intr = handler;
 	new_isr->isr_arg = arg;
 	new_isr->isr_ipl = level;

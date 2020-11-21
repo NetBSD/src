@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.16 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.17 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.16 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.17 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 
 #include <sys/proc.h>
@@ -268,8 +268,7 @@ sun68k_vme_intr_map(void *cookie, int level, int vec, vme_intr_handle_t *ihp)
 {
 	struct sun68k_vme_intr_handle *svih;
 
-	svih = malloc(sizeof(struct sun68k_vme_intr_handle),
-	    M_DEVBUF, M_WAITOK);
+	svih = kmem_alloc(sizeof(struct sun68k_vme_intr_handle), KM_SLEEP);
 	svih->pri = level;
 	svih->vec = vec;
 	*ihp = svih;
