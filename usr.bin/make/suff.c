@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.267 2020/11/21 19:02:58 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.268 2020/11/21 19:15:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.267 2020/11/21 19:02:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.268 2020/11/21 19:15:06 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -152,7 +152,7 @@ ENUM_FLAGS_RTTI_3(SuffFlags,
 
 typedef List SuffListList;
 
-typedef struct Suff {
+typedef struct Suffix {
     /* The suffix itself, such as ".c" */
     char *name;
     /* Length of the name, to avoid strlen calls */
@@ -175,7 +175,7 @@ typedef struct Suff {
      * apparent reason.  They do have the side effect of increasing refCount
      * though. */
     SuffListList *ref;
-} Suff;
+} Suffix;
 
 /*
  * Structure used in the search for implied sources.
@@ -183,7 +183,7 @@ typedef struct Suff {
 typedef struct Src {
     char *file;			/* The file to look for */
     char *pref;			/* Prefix from which file was formed */
-    Suff *suff;			/* The suffix on the file */
+    Suffix *suff;			/* The suffix on the file */
     struct Src *parent;		/* The Src for which this is a source */
     GNode *node;		/* The node describing the file */
     int numChildren;		/* Count of existing children (so we don't free
@@ -195,24 +195,24 @@ typedef struct Src {
 
 /* TODO: Document the difference between nullSuff and emptySuff. */
 /* The NULL suffix for this run */
-static Suff *nullSuff;
+static Suffix *nullSuff;
 /* The empty suffix required for POSIX single-suffix transformation rules */
-static Suff *emptySuff;
+static Suffix *emptySuff;
 
 
 static void SuffFindDeps(GNode *, SrcList *);
 static void SuffExpandWildcards(GNodeListNode *, GNode *);
 
-static Suff *
-SuffRef(Suff *suff)
+static Suffix *
+SuffRef(Suffix *suff)
 {
     suff->refCount++;
     return suff;
 }
 
-/* Change the value of a Suff variable, adjusting the reference counts. */
+/* Change the value of a Suffix variable, adjusting the reference counts. */
 static void
-SuffReassign(Suff **var, Suff *suff)
+SuffReassign(Suffix **var, Suffix *suff)
 {
     if (*var != NULL)
 	(*var)->refCount--;
@@ -220,9 +220,9 @@ SuffReassign(Suff **var, Suff *suff)
     suff->refCount++;
 }
 
-/* Set a Suff variable to NULL, adjusting the reference count. */
+/* Set a Suffix variable to NULL, adjusting the reference count. */
 static void
-SuffUnassign(Suff **var)
+SuffUnassign(Suffix **var)
 {
     if (*var != NULL)
 	(*var)->refCount--;
@@ -249,7 +249,7 @@ SuffStrIsPrefix(const char *pref, const char *str)
  * Return NULL if it ain't, pointer to the start of suffix in name if it is.
  */
 static const char *
-SuffSuffGetSuffix(const Suff *suff, size_t nameLen, const char *nameEnd)
+SuffSuffGetSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
     const char *p1;		/* Pointer into suffix name */
     const char *p2;		/* Pointer into string being examined */
@@ -270,25 +270,25 @@ SuffSuffGetSuffix(const Suff *suff, size_t nameLen, const char *nameEnd)
 }
 
 static Boolean
-SuffSuffIsSuffix(const Suff *suff, size_t nameLen, const char *nameEnd)
+SuffSuffIsSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
     return SuffSuffGetSuffix(suff, nameLen, nameEnd) != NULL;
 }
 
-static Suff *
+static Suffix *
 FindSuffByNameLen(const char *name, size_t nameLen)
 {
     SuffListNode *ln;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *suff = ln->datum;
+	Suffix *suff = ln->datum;
 	if (suff->nameLen == nameLen && memcmp(suff->name, name, nameLen) == 0)
 	    return suff;
     }
     return NULL;
 }
 
-static Suff *
+static Suffix *
 FindSuffByName(const char *name)
 {
     return FindSuffByNameLen(name, strlen(name));
@@ -307,7 +307,7 @@ FindTransformByName(const char *name)
 }
 
 static void
-SuffList_Unref(SuffList *list, Suff *suff)
+SuffList_Unref(SuffList *list, Suffix *suff)
 {
     SuffListNode *ln = Lst_FindDatum(list, suff);
     if (ln != NULL) {
@@ -320,7 +320,7 @@ SuffList_Unref(SuffList *list, Suff *suff)
 static void
 SuffFree(void *sp)
 {
-    Suff *suff = sp;
+    Suffix *suff = sp;
 
     if (suff == nullSuff)
 	nullSuff = NULL;
@@ -346,7 +346,7 @@ SuffFree(void *sp)
 
 /* Remove the suffix from the list, and free if it is otherwise unused. */
 static void
-SuffList_Remove(SuffList *list, Suff *suff)
+SuffList_Remove(SuffList *list, Suffix *suff)
 {
     SuffList_Unref(list, suff);
     if (suff->refCount == 0) {
@@ -360,10 +360,10 @@ SuffList_Remove(SuffList *list, Suff *suff)
 /* Insert the suffix into the list, keeping the list ordered by suffix
  * number. */
 static void
-SuffList_Insert(SuffList *list, Suff *suff)
+SuffList_Insert(SuffList *list, Suffix *suff)
 {
     SuffListNode *ln;
-    Suff *listSuff = NULL;
+    Suffix *listSuff = NULL;
 
     for (ln = list->first; ln != NULL; ln = ln->next) {
 	listSuff = ln->datum;
@@ -387,16 +387,16 @@ SuffList_Insert(SuffList *list, Suff *suff)
 }
 
 static void
-SuffRelate(Suff *srcSuff, Suff *targSuff)
+SuffRelate(Suffix *srcSuff, Suffix *targSuff)
 {
     SuffList_Insert(targSuff->children, srcSuff);
     SuffList_Insert(srcSuff->parents, targSuff);
 }
 
-static Suff *
+static Suffix *
 SuffNew(const char *name)
 {
-    Suff *suff = bmake_malloc(sizeof *suff);
+    Suffix *suff = bmake_malloc(sizeof *suff);
 
     suff->name = bmake_strdup(name);
     suff->nameLen = strlen(suff->name);
@@ -442,10 +442,10 @@ Suff_ClearSuffixes(void)
  * Return TRUE if the string is a valid transformation.
  */
 static Boolean
-SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
+SuffParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 {
     SuffListNode *ln;
-    Suff *singleSrc = NULL;
+    Suffix *singleSrc = NULL;
 
     /*
      * Loop looking first for a suffix that matches the start of the
@@ -454,7 +454,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
      * parsed the string.
      */
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *src = ln->datum;
+	Suffix *src = ln->datum;
 
 	if (SuffStrIsPrefix(src->name, str) == NULL)
 	    continue;
@@ -462,7 +462,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 	if (str[src->nameLen] == '\0') {
 	    singleSrc = src;
 	} else {
-	    Suff *targ = FindSuffByName(str + src->nameLen);
+	    Suffix *targ = FindSuffByName(str + src->nameLen);
 	    if (targ != NULL) {
 		*out_src = src;
 		*out_targ = targ;
@@ -494,7 +494,7 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 Boolean
 Suff_IsTransform(const char *str)
 {
-    Suff *src, *targ;
+    Suffix *src, *targ;
 
     return SuffParseTransform(str, &src, &targ);
 }
@@ -513,8 +513,8 @@ Suff_IsTransform(const char *str)
 GNode *
 Suff_AddTransform(const char *name)
 {
-    Suff *srcSuff;
-    Suff *targSuff;
+    Suffix *srcSuff;
+    Suffix *targSuff;
 
     GNode *gn = FindTransformByName(name);
     if (gn == NULL) {
@@ -567,7 +567,7 @@ Suff_AddTransform(const char *name)
 void
 Suff_EndTransform(GNode *gn)
 {
-    Suff *srcSuff, *targSuff;
+    Suffix *srcSuff, *targSuff;
     SuffList *srcSuffParents;
 
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
@@ -611,7 +611,7 @@ Suff_EndTransform(GNode *gn)
  *	suff		Suffix to rebuild
  */
 static void
-SuffRebuildGraph(GNode *transform, Suff *suff)
+SuffRebuildGraph(GNode *transform, Suffix *suff)
 {
     const char *name = transform->name;
     size_t nameLen = strlen(name);
@@ -622,7 +622,7 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
      */
     toName = SuffStrIsPrefix(suff->name, name);
     if (toName != NULL) {
-	Suff *to = FindSuffByName(toName);
+	Suffix *to = FindSuffByName(toName);
 	if (to != NULL) {
 	    /* Link in and return, since it can't be anything else. */
 	    SuffRelate(suff, to);
@@ -635,7 +635,7 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
      */
     toName = SuffSuffGetSuffix(suff, nameLen, name + nameLen);
     if (toName != NULL) {
-	Suff *from = FindSuffByNameLen(name, (size_t)(toName - name));
+	Suffix *from = FindSuffByNameLen(name, (size_t)(toName - name));
 	if (from != NULL)
 	    SuffRelate(from, suff);
     }
@@ -652,10 +652,10 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
  *	TRUE iff a new main target has been selected.
  */
 static Boolean
-SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff,
+SuffUpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 		 Boolean *inout_removedMain)
 {
-    Suff *srcSuff, *targSuff;
+    Suffix *srcSuff, *targSuff;
     char *ptr;
 
     if (*inout_main == NULL && *inout_removedMain &&
@@ -713,7 +713,7 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff,
  * This is ugly, but other makes treat all targets that start with a '.' as
  * suffix rules. */
 static void
-UpdateTargets(GNode **inout_main, Suff *suff)
+UpdateTargets(GNode **inout_main, Suffix *suff)
 {
     Boolean r = FALSE;
     GNodeListNode *ln;
@@ -727,7 +727,7 @@ UpdateTargets(GNode **inout_main, Suff *suff)
 /* Add the suffix to the end of the list of known suffixes.
  * Should we restructure the suffix graph? Make doesn't...
  *
- * A GNode is created for the suffix and a Suff structure is created and
+ * A GNode is created for the suffix and a Suffix structure is created and
  * added to the suffixes list unless the suffix was already known.
  * The mainNode passed can be modified if a target mutated into a
  * transform and that target happened to be the main target.
@@ -740,7 +740,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 {
     GNodeListNode *ln;
 
-    Suff *suff = FindSuffByName(name);
+    Suffix *suff = FindSuffByName(name);
     if (suff != NULL)
 	return;
 
@@ -762,7 +762,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 SearchPath *
 Suff_GetPath(const char *sname)
 {
-    Suff *suff = FindSuffByName(sname);
+    Suffix *suff = FindSuffByName(sname);
     return suff != NULL ? suff->searchPath : NULL;
 }
 
@@ -791,7 +791,7 @@ Suff_DoPaths(void)
     inLibs = Lst_New();
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *suff = ln->datum;
+	Suffix *suff = ln->datum;
 	if (!Lst_IsEmpty(suff->searchPath)) {
 #ifdef INCLUDES
 	    if (suff->flags & SUFF_INCLUDE)
@@ -828,7 +828,7 @@ Suff_DoPaths(void)
 void
 Suff_AddInclude(const char *sname)
 {
-    Suff *suff = FindSuffByName(sname);
+    Suffix *suff = FindSuffByName(sname);
     if (suff != NULL)
 	suff->flags |= SUFF_INCLUDE;
 }
@@ -844,7 +844,7 @@ Suff_AddInclude(const char *sname)
 void
 Suff_AddLib(const char *sname)
 {
-    Suff *suff = FindSuffByName(sname);
+    Suffix *suff = FindSuffByName(sname);
     if (suff != NULL)
 	suff->flags |= SUFF_LIBRARY;
 }
@@ -863,7 +863,7 @@ SrcList_PrintAddrs(SrcList *srcList)
 #endif
 
 static Src *
-SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
+SrcNew(char *name, char *pref, Suffix *suff, Src *parent, GNode *gn)
 {
     Src *src = bmake_malloc(sizeof *src);
 
@@ -881,7 +881,7 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
 }
 
 static void
-SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suff *suff,
+SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suffix *suff,
 	    const char *debug_tag)
 {
     Src *src = SrcNew(srcName, targ->pref, suff, targ, NULL);
@@ -905,7 +905,7 @@ SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suff *suff,
  *	targ		parent for the new Src
  */
 static void
-SuffAddSources(Suff *suff, SrcList *srcList, Src *targ)
+SuffAddSources(Suffix *suff, SrcList *srcList, Src *targ)
 {
     if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
 	/*
@@ -924,7 +924,7 @@ SuffAddLevel(SrcList *srcs, Src *targ)
 {
     SrcListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
-	Suff *childSuff = ln->datum;
+	Suffix *childSuff = ln->datum;
 	SuffAddSources(childSuff, srcs, targ);
     }
 }
@@ -1041,7 +1041,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
     GNode *tgn;			/* Target GNode */
     GNode *sgn;			/* Source GNode */
     size_t prefLen;		/* The length of the defined prefix */
-    Suff *suff;			/* Suffix on matching beastie */
+    Suffix *suff;		/* Suffix on matching beastie */
     Src *ret;			/* Return value */
     char *cp;
 
@@ -1321,7 +1321,7 @@ SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
 SearchPath *
 Suff_FindPath(GNode* gn)
 {
-    Suff *suff = gn->suffix;
+    Suffix *suff = gn->suffix;
 
     if (suff == NULL) {
 	char *name = gn->name;
@@ -1357,7 +1357,7 @@ Suff_FindPath(GNode* gn)
  *	TRUE if successful, FALSE if not.
  */
 static Boolean
-SuffApplyTransform(GNode *tgn, GNode *sgn, Suff *tsuff, Suff *ssuff)
+SuffApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 {
     GNodeListNode *ln;
     char *tname;		/* Name of transformation rule */
@@ -1424,7 +1424,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
     char *eoname;		/* End of member portion */
     GNode *mem;			/* Node for member */
     SuffListNode *ln, *nln;	/* Next suffix node to check */
-    Suff *ms;			/* Suffix descriptor for member */
+    Suffix *ms;			/* Suffix descriptor for member */
     char *name;			/* Start of member's name */
 
     /*
@@ -1514,7 +1514,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	    /*
 	     * Got one -- apply it
 	     */
-	    Suff *suff = ln->datum;
+	    Suffix *suff = ln->datum;
 	    if (!SuffApplyTransform(gn, mem, suff, ms)) {
 		SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
 			    ms->name, suff->name);
@@ -1554,7 +1554,7 @@ SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
     char *pref;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *suff = ln->datum;
+	Suffix *suff = ln->datum;
 	if (!SuffSuffIsSuffix(suff, nameLen, name + nameLen))
 	    continue;
 
@@ -1911,7 +1911,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	 * set the TARGET variable to the node's name in order to give it a
 	 * value).
 	 */
-	Suff *suff = FindSuffByName(LIBSUFF);
+	Suffix *suff = FindSuffByName(LIBSUFF);
 	if (suff != NULL) {
 	    SuffReassign(&gn->suffix, suff);
 	    Arch_FindLib(gn, suff->searchPath);
@@ -1941,7 +1941,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 void
 Suff_SetNull(const char *name)
 {
-    Suff *suff = FindSuffByName(name);
+    Suffix *suff = FindSuffByName(name);
     if (suff == NULL) {
 	Parse_Error(PARSE_WARNING, "Desired null suffix %s not defined.",
 		    name);
@@ -1999,14 +1999,14 @@ PrintSuffNames(const char *prefix, SuffList *suffs)
 
     debug_printf("#\t%s: ", prefix);
     for (ln = suffs->first; ln != NULL; ln = ln->next) {
-	Suff *suff = ln->datum;
+	Suffix *suff = ln->datum;
 	debug_printf("%s ", suff->name);
     }
     debug_printf("\n");
 }
 
 static void
-PrintSuff(Suff *suff)
+PrintSuff(Suffix *suff)
 {
     debug_printf("# \"%s\" (num %d, ref %d)",
 		 suff->name, suff->sNum, suff->refCount);
