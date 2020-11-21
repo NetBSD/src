@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.30 2019/11/10 21:16:31 chs Exp $ */
+/*	$NetBSD: isr.c,v 1.31 2020/11/21 17:49:20 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -41,11 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.30 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.31 2020/11/21 17:49:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vmmeter.h>
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -117,7 +117,7 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
 		panic("isrlink_autovec: bad ipl %d", ipl);
 #endif
 
-	newisr = malloc(sizeof(struct isr_autovec), M_DEVBUF, M_WAITOK);
+	newisr = kmem_alloc(sizeof(*newisr), KM_SLEEP);
 	newisr->isr_func = func;
 	newisr->isr_arg = arg;
 	newisr->isr_ipl = ipl;
