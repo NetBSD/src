@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.211 2020/11/19 23:50:26 rillig Exp $
+# $NetBSD: Makefile,v 1.212 2020/11/21 10:32:42 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -263,6 +263,7 @@ TESTS+=		shell-sh
 TESTS+=		suff-add-later
 TESTS+=		suff-clear-regular
 TESTS+=		suff-clear-single
+TESTS+=		suff-incomplete
 TESTS+=		suff-lookup
 TESTS+=		suff-main
 TESTS+=		suff-rebuild
