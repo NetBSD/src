@@ -18,7 +18,7 @@
     /* we get fractions of seconds from calling ftime on timebuf */
 
 extern struct timespec timebuf;
-#define roundsleep(x) (clock_gettime(CLOCK_REALTIME, &timebuf),sleep(timebuf.tv_nsec > 5000000000 ?x+1:x))
+#define roundsleep(x) (clock_gettime(CLOCK_REALTIME, &timebuf),sleep(timebuf.tv_nsec > (500 * 1000 * 1000) ?x+1:x))
 
 #define waiting 0
 
