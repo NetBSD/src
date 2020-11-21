@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.22 2019/11/12 13:17:44 msaitoh Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.23 2020/11/21 17:49:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.22 2019/11/12 13:17:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.23 2020/11/21 17:49:20 thorpej Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.22 2019/11/12 13:17:44 msaitoh Exp
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -251,8 +251,8 @@ nextdisplay_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dc = &nextdisplay_console_dc;
 		sc->nscreens = 1;
 	} else {
-		sc->sc_dc = (struct nextdisplay_config *)
-				malloc(sizeof(struct nextdisplay_config), M_DEVBUF, M_WAITOK);
+		sc->sc_dc = kmem_alloc(sizeof(struct nextdisplay_config),
+		    KM_SLEEP);
 		nextdisplay_init(sc->sc_dc, iscolor);
 	}
 
