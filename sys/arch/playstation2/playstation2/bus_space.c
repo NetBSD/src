@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2014/07/04 07:51:14 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2020/11/21 17:46:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2014/07/04 07:51:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2020/11/21 17:46:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 
 #define _PLAYSTATION2_BUS_SPACE_PRIVATE
@@ -151,11 +151,9 @@ bus_space_create(bus_space_tag_t t, const char *name,
 {
 	struct playstation2_bus_space *pbs = (void *)__UNCONST(t);
 
-	if (pbs == 0)
-		pbs = malloc(sizeof(*pbs), M_DEVBUF, M_NOWAIT);
+	if (pbs == NULL)
+		pbs = kmem_zalloc(sizeof(*pbs), KM_NOSLEEP);
 	KDASSERT(pbs);
-
-	memset(pbs, 0, sizeof(*pbs));
 
 	/* set default method */
 	*pbs = _default_bus_space;
@@ -185,7 +183,7 @@ bus_space_destroy(bus_space_tag_t t)
 	if (ex != 0)
 		extent_destroy(ex);
 
-	free(pbs, M_DEVBUF);
+	kmem_free(pbs, sizeof(*pbs));
 }
 
 void
