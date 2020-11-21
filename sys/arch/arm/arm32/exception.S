@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.25 2019/08/11 06:49:31 skrll Exp $	*/
+/*	$NetBSD: exception.S,v 1.26 2020/11/21 19:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.25 2019/08/11 06:49:31 skrll Exp $")
+	RCSID("$NetBSD: exception.S,v 1.26 2020/11/21 19:46:13 skrll Exp $")
 
 	.text
 	.align	0
@@ -80,7 +80,7 @@ ASEND(reset_entry)
  */
 ARM_ASENTRY_NP(swi_entry)
 	PUSHFRAME
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	mov	r0, sp			/* Pass the frame to any function */
 	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
@@ -111,7 +111,7 @@ ARM_ASENTRY_NP(prefetch_abort_entry)
 	clrex
 #endif
 	PUSHFRAMEINSVC
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	ldr	r1, .Lprefetch_abort_handler_address
 	adr	lr, .Lexception_exit
@@ -158,7 +158,7 @@ ASENTRY_NP(data_abort_entry)
 #endif
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
 					/* to SVC32 mode */
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	ldr	r1, .Ldata_abort_handler_address
 	adr	lr, .Lexception_exit
@@ -261,7 +261,7 @@ ENTRY_NP(undefinedinstruction_bounce)
 	PUSHXXXREGSANDSWITCH
 	PUSHDTRACEGAP
 	PUSHTRAPFRAME(r2)
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	mov	r0, sp
 	adr	lr, .Lexception_exit
