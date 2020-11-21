@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.252 2020/11/21 08:23:36 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.253 2020/11/21 09:16:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.252 2020/11/21 08:23:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.253 2020/11/21 09:16:44 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -541,35 +541,35 @@ Suff_AddTransform(const char *name)
 void
 Suff_EndTransform(GNode *gn)
 {
+    Suff *srcSuff, *targSuff;
+    SuffList *srcSuffParents;
+
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
 	gn = gn->cohorts->last->datum;
 
-    if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
-	Lst_IsEmpty(gn->children))
-    {
-	Suff *srcSuff, *targSuff;
+    if (!(gn->type & OP_TRANSFORM))
+	return;
 
-	/*
-	 * SuffParseTransform() may fail for special rules which are not
-	 * actual transformation rules. (e.g. .DEFAULT)
-	 */
-	if (SuffParseTransform(gn->name, &srcSuff, &targSuff)) {
-
-	    /*
-	     * Remember parents since srcSuff could be deleted in
-	     * SuffList_Remove
-	     */
-	    SuffList *srcSuffParents = srcSuff->parents;
-
-	    SUFF_DEBUG2("deleting transformation from `%s' to `%s'\n",
-			srcSuff->name, targSuff->name);
-
-	    SuffList_Remove(targSuff->children, srcSuff);
-	    SuffList_Remove(srcSuffParents, targSuff);
-	}
-    } else if (gn->type & OP_TRANSFORM) {
+    if (!Lst_IsEmpty(gn->commands) || !Lst_IsEmpty(gn->children)) {
 	SUFF_DEBUG1("transformation %s complete\n", gn->name);
+	return;
     }
+
+    /*
+     * SuffParseTransform() may fail for special rules which are not
+     * actual transformation rules. (e.g. .DEFAULT)
+     */
+    if (!SuffParseTransform(gn->name, &srcSuff, &targSuff))
+	return;
+
+    /* Remember parents since srcSuff could be deleted in SuffList_Remove. */
+    srcSuffParents = srcSuff->parents;
+
+    SUFF_DEBUG2("deleting transformation from `%s' to `%s'\n",
+		srcSuff->name, targSuff->name);
+
+    SuffList_Remove(targSuff->children, srcSuff);
+    SuffList_Remove(srcSuffParents, targSuff);
 }
 
 /* Called from Suff_AddSuffix to search through the list of
