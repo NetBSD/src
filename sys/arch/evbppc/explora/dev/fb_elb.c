@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.13 2011/07/01 19:02:32 dyoung Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.14 2020/11/21 15:42:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.13 2011/07/01 19:02:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.14 2020/11/21 15:42:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -143,8 +143,7 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_fb = &console_dev;
 		sc->sc_fb->fb_ri.ri_flg &= ~RI_NO_AUTO;
 	} else {
-		sc->sc_fb = malloc(sizeof(struct fb_dev), M_DEVBUF, M_WAITOK);
-		memset(sc->sc_fb, 0, sizeof(struct fb_dev));
+		sc->sc_fb = kmem_zalloc(sizeof(struct fb_dev), KM_SLEEP);
 	}
 
 	sc->sc_fb->fb_iot = eaa->elb_bt;

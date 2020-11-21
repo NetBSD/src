@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.9 2019/11/10 21:16:26 chs Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.10 2020/11/21 15:36:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.9 2019/11/10 21:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.10 2020/11/21 15:36:36 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.9 2019/11/10 21:16:26 chs Exp $");
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>
@@ -239,7 +239,7 @@ evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 
 	KASSERT(irq == irqmap->irqidx);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK|M_ZERO);
+	ih = kmem_zalloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -290,7 +290,7 @@ evbmips_intr_disestablish(void *cookie)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 void
