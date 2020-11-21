@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2019/11/10 21:16:30 chs Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.17 2020/11/21 18:28:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2020/11/21 18:28:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 
 #include <machine/sysconf.h>
@@ -179,7 +179,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level, int (*ih
 {
 	struct mipsco_intrhand *ih;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 	ih->ih_fun = ih_fun;
 	ih->ih_arg  = ih_arg;
 	LIST_INSERT_HEAD(&ic->intr_q, ih, ih_q);
@@ -192,7 +192,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *cookie)
 	struct mipsco_intrhand *ih = cookie;
 
 	LIST_REMOVE(ih, ih_q);
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 int
