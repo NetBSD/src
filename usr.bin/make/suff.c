@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.253 2020/11/21 09:16:44 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.254 2020/11/21 09:19:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.253 2020/11/21 09:16:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.254 2020/11/21 09:19:46 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -562,12 +562,11 @@ Suff_EndTransform(GNode *gn)
     if (!SuffParseTransform(gn->name, &srcSuff, &targSuff))
 	return;
 
-    /* Remember parents since srcSuff could be deleted in SuffList_Remove. */
-    srcSuffParents = srcSuff->parents;
-
-    SUFF_DEBUG2("deleting transformation from `%s' to `%s'\n",
+    SUFF_DEBUG2("deleting incomplete transformation from `%s' to `%s'\n",
 		srcSuff->name, targSuff->name);
 
+    /* Remember parents since srcSuff could be deleted in SuffList_Remove. */
+    srcSuffParents = srcSuff->parents;
     SuffList_Remove(targSuff->children, srcSuff);
     SuffList_Remove(srcSuffParents, targSuff);
 }
