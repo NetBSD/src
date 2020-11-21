@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.36 2019/11/10 21:16:28 chs Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.37 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.36 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.37 2020/11/21 21:23:48 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.36 2019/11/10 21:16:28 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/cpu.h>
 
@@ -507,7 +507,7 @@ tx39_irqhigh_establish(tx_chipset_tag_t tc, int set, int bit, int pri,
 	/*
 	 *	Add new entry to `pri' priority
 	 */
-	he = malloc(sizeof(struct txintr_high_entry), M_DEVBUF, M_WAITOK | M_ZERO);
+	he = kmem_zalloc(sizeof(*he), KM_SLEEP);
 	he->he_set = set;
 	he->he_mask= (1 << bit);
 	he->he_fun = ih_fun;
@@ -532,7 +532,7 @@ tx39_irqhigh_disestablish(tx_chipset_tag_t tc, int set, int bit, int pri)
 	TAILQ_FOREACH(he, &sc->sc_he_head[pri], he_link) {
 		if (he->he_set == set && he->he_mask == (1 << bit)) {
 			TAILQ_REMOVE(&sc->sc_he_head[pri], he, he_link);
-			free(he, M_DEVBUF);
+			kmem_free(he, sizeof(*he));
 			break;
 		}
 	}
@@ -627,7 +627,7 @@ tx39_poll_establish(tx_chipset_tag_t tc, int interval, int level,
 	int s;
 	void *ret;
 	
-	p = malloc(sizeof(*p), M_DEVBUF, M_WAITOK | M_ZERO);
+	p = kmem_zalloc(sizeof(*p), KM_SLEEP);
 	p->p_fun = ih_fun;
 	p->p_arg = ih_arg;
 	p->p_cnt = interval;
@@ -644,7 +644,7 @@ tx39_poll_establish(tx_chipset_tag_t tc, int interval, int level,
 			printf("tx39_poll_establish: can't hook\n");
 
 			splx(s);
-			free(p, M_DEVBUF);
+			kmem_free(p, sizeof(*p));
 			return (0);
 		}
 	}
@@ -672,7 +672,7 @@ tx39_poll_disestablish(tx_chipset_tag_t tc, void *arg)
 	TAILQ_FOREACH(p, &sc->sc_p_head, p_link) {
 		if (p->p_desc == desc) {
 			TAILQ_REMOVE(&sc->sc_p_head, p, p_link);
-			free(p, M_DEVBUF);
+			kmem_free(p, sizeof(*p));
 			break;
 		}
 	}
@@ -709,7 +709,7 @@ tx39_poll_intr(void *arg)
 
  disestablish:
 	TAILQ_REMOVE(&sc->sc_p_head, p, p_link);
-	free(p, M_DEVBUF);
+	kmem_free(p, sizeof(*p));
 	if (TAILQ_EMPTY(&sc->sc_p_head)) {
 		sc->sc_polling = 0;
 		tx_intr_disestablish(sc->sc_tc, sc->sc_poll_ih);

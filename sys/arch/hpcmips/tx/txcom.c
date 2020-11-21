@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.49 2014/11/15 19:20:01 christos Exp $ */
+/*	$NetBSD: txcom.c,v 1.50 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.49 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.50 2020/11/21 21:23:48 thorpej Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.49 2014/11/15 19:20:01 christos Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <sys/proc.h> /* tsleep/wakeup */
@@ -215,12 +215,8 @@ txcom_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		sc->sc_chip = &txcom_chip;
 	} else {
-		if (!(sc->sc_chip = malloc(sizeof(struct txcom_chip),
-		    M_DEVBUF, M_WAITOK))) {
-			printf(": can't allocate chip\n");
-			return;
-		}
-		memset(sc->sc_chip, 0, sizeof(struct txcom_chip));
+		sc->sc_chip = kmem_zalloc(sizeof(struct txcom_chip),
+		    KM_SLEEP);
 	}
 
 	chip = sc->sc_chip;
@@ -233,11 +229,7 @@ txcom_attach(device_t parent, device_t self, void *aux)
 	if (!console)
 		txcom_reset(chip);
 
-	if (!(sc->sc_rbuf = malloc(TXCOM_RING_SIZE, M_DEVBUF, M_WAITOK))) {
-		printf(": can't allocate buffer.\n");
-		return;
-	}
-	memset(sc->sc_rbuf, 0, TXCOM_RING_SIZE);
+	sc->sc_rbuf = kmem_zalloc(TXCOM_RING_SIZE, KM_SLEEP);
 
 	tp = tty_alloc();
 	tp->t_oproc = txcomstart;

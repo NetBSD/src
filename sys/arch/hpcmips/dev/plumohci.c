@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.15 2016/04/23 10:15:29 skrll Exp $ */
+/*	$NetBSD: plumohci.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.15 2016/04/23 10:15:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.15 2016/04/23 10:15:29 skrll Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/kmem.h>
 
 /* busdma */
 #include <sys/mbuf.h>
@@ -247,7 +248,7 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 
 	pmap_extract(pmap_kernel(), (vaddr_t)caddr, &paddr);
 
-	ps = malloc(sizeof(struct plumohci_shm), M_DEVBUF, M_NOWAIT);
+	ps = kmem_intr_alloc(sizeof(struct plumohci_shm), KM_NOSLEEP);
 	if (ps == 0)
 		return 1;
 
@@ -276,7 +277,7 @@ __plumohci_dmamem_free(bus_dma_tag_t tx, bus_dma_segment_t *segs, int nsegs)
 		if (ps->ps_paddr == segs[0].ds_addr) {
 			bus_space_free(sc->sc.iot, ps->ps_bsh, ps->ps_size);
 			LIST_REMOVE(ps, ps_link);
-			free(ps, M_DEVBUF);
+			kmem_intr_free(ps, sizeof(*ps));
 
 			return;
 		}

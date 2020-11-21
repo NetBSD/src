@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.12 2019/11/10 21:16:28 chs Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.13 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.12 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.13 2020/11/21 21:23:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -262,7 +262,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 			sc->sc_block_size = block_size;
 	}
 	
-	sc->sc_buf = malloc(sc->sc_block_size, M_DEVBUF, M_WAITOK);
+	sc->sc_buf = kmem_alloc(sc->sc_block_size, KM_SLEEP);
 
 	sc->sc_write_buffer_size
 		= 1 << (sc->sc_cfi_raw[CFI_MAX_WBUF_SIZE_REG0]
