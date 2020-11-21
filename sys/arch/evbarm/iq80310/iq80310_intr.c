@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.35 2019/11/10 21:16:26 chs Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.36 2020/11/21 15:30:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.35 2019/11/10 21:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.36 2020/11/21 15:30:07 thorpej Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.35 2019/11/10 21:16:26 chs Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>
@@ -373,7 +373,7 @@ iq80310_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	if (irq < 0 || irq > NIRQ)
 		panic("iq80310_intr_establish: IRQ %d out of range", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
