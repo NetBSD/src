@@ -1,5 +1,5 @@
-: from nothing to a
-: from a to b
-: from b to c
-: from c to nothing
+: Making suff-rebuild-example.a out of nothing.
+: Making suff-rebuild-example.b from suff-rebuild-example.a.
+: Making suff-rebuild-example.c from suff-rebuild-example.b.
+: Making suff-rebuild-example from suff-rebuild-example.c.
 exit status 0
