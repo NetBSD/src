@@ -1,4 +1,4 @@
-# $NetBSD: suff-rebuild.mk,v 1.5 2020/11/21 11:55:57 rillig Exp $
+# $NetBSD: suff-rebuild.mk,v 1.6 2020/11/21 12:01:16 rillig Exp $
 #
 # Demonstrates what happens to transformation rules (called inference rules
 # by POSIX) when all suffixes are deleted.
@@ -28,6 +28,15 @@ suff-rebuild-example.a:
 # As of 2020-09-25, uncommenting the following line results in the error
 # message "don't know how to make suff-rebuild-example" though.
 #
+# If this is a bug, the actual cause is probably that when a suffix
+# transformation rule is defined, it is not added to the global list of
+# targets, see Suff_EndTransform.  Later, UpdateTargets iterates over exactly
+# this global list of targets though.
+#
+# If UpdateTargets were to iterate over 'transforms' as well, it still
+# wouldn't work because the condition 'ptr == target->name' skips these
+# transformation rules.
+
 #.SUFFIXES:
 
 # Add the suffixes back.  It should not matter that the order of the suffixes
