@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.79 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: xy.c,v 1.80 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.79 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80 2020/11/21 00:27:52 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.79 2019/11/10 21:16:33 chs Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -390,8 +390,8 @@ xycattach(device_t parent, device_t self, void *aux)
 	xyc->iopbase = tmp;
 	xyc->dvmaiopb =
 	    (struct xy_iopb *)dvma_kvtopa(xyc->iopbase, xyc->bustype);
-	xyc->reqs = malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	xyc->reqs = kmem_zalloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
+	    KM_SLEEP);
 
 	/*
 	 * init iorq to iopb pointers, and non-zero fields in the
