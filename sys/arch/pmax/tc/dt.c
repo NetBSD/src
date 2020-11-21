@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.13 2019/11/10 21:16:31 chs Exp $	*/
+/*	$NetBSD: dt.c,v 1.14 2020/11/21 16:07:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.13 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.14 2020/11/21 16:07:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.13 2019/11/10 21:16:31 chs Exp $");
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/intr.h>
 
 #include <dev/dec/lk201.h>
@@ -215,11 +215,11 @@ dt_attach(device_t parent, device_t self, void *aux)
 
 	dt_cninit();
 
-	msg = malloc(sizeof(*msg) * DT_BUF_CNT, M_DEVBUF, M_WAITOK);
+	msg = kmem_alloc(sizeof(*msg) * DT_BUF_CNT, KM_SLEEP);
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, dt_dispatch, sc);
 	if (sc->sc_sih == NULL) {
 		printf("%s: memory exhausted\n", device_xname(self));
-		free(msg, M_DEVBUF);
+		kmem_free(msg, sizeof(*msg) * DT_BUF_CNT);
 		return;
 	}
 

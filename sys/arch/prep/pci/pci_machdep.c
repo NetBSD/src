@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.43 2019/11/10 21:16:31 chs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.44 2020/11/21 15:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2020/11/21 15:59:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2019/11/10 21:16:31 chs Exp $")
 #include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -323,8 +323,8 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	 */
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
-		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-		    M_DEVBUF, M_WAITOK);
+		pbi = kmem_alloc(sizeof(struct genppc_pci_chipset_businfo),
+		    KM_SLEEP);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
 		setup_pciintr_map(pbi, bus, dev, func);

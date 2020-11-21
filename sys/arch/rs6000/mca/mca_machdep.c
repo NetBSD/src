@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.5 2020/11/21 15:52:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.5 2020/11/21 15:52:32 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
@@ -381,8 +381,8 @@ mca_dmamap_create(bus_dma_tag_t t, bus_size_t size, int flags,
 		/*
 		 * Allocate our cookie if not yet done.
 		 */
-		cookie = malloc(sizeof(struct rs6000_dma_cookie), M_DMAMAP,
-		    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO);
+		cookie = kmem_zalloc(sizeof(struct rs6000_dma_cookie),
+		    ((flags & BUS_DMA_NOWAIT) ? KM_SLEEP : KM_NOSLEEP));
 		if (cookie == NULL) {
 			
 			return ENOMEM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.21 2019/11/10 21:16:31 chs Exp $	*/
+/*	$NetBSD: gten.c,v 1.22 2020/11/21 15:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.21 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.22 2020/11/21 15:59:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.21 2019/11/10 21:16:31 chs Exp $");
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -139,8 +139,8 @@ gten_attach(device_t parent, device_t self, void *aux)
 		gt->gt_ri = &gten_console_ri;
 		gt->gt_nscreens = 1;
 	} else {
-		gt->gt_ri = malloc(sizeof(*gt->gt_ri),
-			M_DEVBUF, M_WAITOK|M_ZERO);
+		gt->gt_ri = kmem_zalloc(sizeof(*gt->gt_ri),
+			KM_SLEEP);
 #if 0
 		error = pci_mapreg_map(pa, 0x14, 
 			PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,

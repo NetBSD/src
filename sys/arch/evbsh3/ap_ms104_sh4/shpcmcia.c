@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcmcia.c,v 1.4 2012/10/27 17:17:51 chs Exp $	*/
+/*	$NetBSD: shpcmcia.c,v 1.5 2020/11/21 16:21:24 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.4 2012/10/27 17:17:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.5 2020/11/21 16:21:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
@@ -400,9 +400,9 @@ shpcmcia_event_thread(void *arg)
 					break;
 				if (pe2->pe_type == SHPCMCIA_EVENT_INSERT) {
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					free(pe1, M_TEMP);
+					kmem_free(pe1, sizeof(*pe1));
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					free(pe2, M_TEMP);
+					kmem_free(pe2, sizeof(*pe2));
 				}
 			}
 			splx(s);
@@ -425,9 +425,9 @@ shpcmcia_event_thread(void *arg)
 					break;
 				if (pe2->pe_type == SHPCMCIA_EVENT_REMOVE) {
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					free(pe1, M_TEMP);
+					kmem_free(pe1, sizeof(*pe1));
 					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-					free(pe2, M_TEMP);
+					kmem_free(pe2, sizeof(*pe2));
 				}
 			}
 			splx(s);
@@ -441,7 +441,7 @@ shpcmcia_event_thread(void *arg)
 			panic("shpcmcia_event_thread: unknown event %d",
 			    pe->pe_type);
 		}
-		free(pe, M_TEMP);
+		kmem_free(pe, sizeof(*pe));
 	}
 
 	h->event_thread = NULL;
@@ -458,7 +458,7 @@ shpcmcia_queue_event(struct shpcmcia_handle *h, int event)
 	struct shpcmcia_event *pe;
 	int s;
 
-	pe = malloc(sizeof(*pe), M_TEMP, M_NOWAIT);
+	pe = kmem_intr_alloc(sizeof(*pe), KM_NOSLEEP);
 	if (pe == NULL)
 		panic("shpcmcia_queue_event: can't allocate event");
 
