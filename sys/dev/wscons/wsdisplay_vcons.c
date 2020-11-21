@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.40 2019/07/31 14:29:54 rin Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.41 2020/11/21 11:23:22 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.40 2019/07/31 14:29:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.41 2020/11/21 11:23:22 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	vd->wanted = NULL;
 	vd->currenttype = def;
 	vd->defaulttype = def;
-	callout_init(&vd->switch_callout, 0);
+	callout_init(&vd->switch_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&vd->switch_callout, vcons_do_switch, vd);
 #ifdef VCONS_DRAW_INTR
 	vd->cells = 0;
