@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.5 2019/11/10 21:16:31 chs Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.6 2020/11/21 17:48:26 thorpej Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.5 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.6 2020/11/21 17:48:26 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.5 2019/11/10 21:16:31 chs Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <sys/bus.h>
@@ -275,8 +275,8 @@ gtpci_md_attach_hook(device_t parent, device_t self,
 		/* Setup interrupts for PCI bus */
 		struct genppc_pci_chipset_businfo *pbi;
 
-		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-		    M_DEVBUF, M_WAITOK);
+		pbi = kmem_alloc(sizeof(struct genppc_pci_chipset_businfo),
+		    KM_SLEEP);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
 		SIMPLEQ_INIT(&genppc_gtpci1_chipset.pc_pbi);

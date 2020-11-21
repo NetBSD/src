@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.17 2020/07/07 03:38:47 thorpej Exp $ */
+/* $NetBSD: ofwpci.c,v 1.18 2020/11/21 17:48:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.17 2020/07/07 03:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.18 2020/11/21 17:48:26 thorpej Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
@@ -195,8 +195,7 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	pc->pc_iot = &sc->sc_iot;
 	pc->pc_memt = &sc->sc_memt;
 
-	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-	    M_DEVBUF, M_WAITOK);
+	pbi = kmem_alloc(sizeof(struct genppc_pci_chipset_businfo), KM_SLEEP);
 	pbi->pbi_properties = prop_dictionary_create();
 	KASSERT(pbi->pbi_properties != NULL);
 	SIMPLEQ_INIT(&pc->pc_pbi);

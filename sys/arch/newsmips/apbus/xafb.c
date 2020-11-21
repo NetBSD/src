@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.18 2016/07/21 19:49:58 christos Exp $	*/
+/*	$NetBSD: xafb.c,v 1.19 2020/11/21 17:54:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,13 +29,13 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.18 2016/07/21 19:49:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.19 2020/11/21 17:54:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -157,8 +157,7 @@ xafb_attach(device_t parent, device_t self, void *aux)
 		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_nscreens = 1;
 	} else {
-		dc = malloc(sizeof(struct xafb_devconfig), M_DEVBUF,
-		    M_WAITOK|M_ZERO);
+		dc = kmem_zalloc(sizeof(struct xafb_devconfig), KM_SLEEP);
 		dc->dc_fbpaddr = (paddr_t)0x10000000;
 		dc->dc_fbbase = (void *)MIPS_PHYS_TO_KSEG1(dc->dc_fbpaddr);
 		dc->dc_reg = (void *)(apa->apa_hwbase + 0x3000);
