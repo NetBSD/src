@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.11 2020/11/21 17:09:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -59,10 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.11 2020/11/21 17:09:34 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -220,8 +220,8 @@ ewskbd_zsc_attach(device_t parent, device_t self, void *aux)
 	} else {
 		wskaa.console = 0;
 
-		sc->sc_dc = malloc(sizeof(struct ewskbd_devconfig), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		sc->sc_dc = kmem_zalloc(sizeof(struct ewskbd_devconfig),
+		    KM_SLEEP);
 		if (sc->sc_dc == NULL) {
 			printf(": can't allocate memory\n");
 			return;

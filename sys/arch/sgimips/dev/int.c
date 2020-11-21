@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.31 2020/05/29 12:30:40 rin Exp $	*/
+/*	$NetBSD: int.c,v 1.32 2020/11/21 17:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.31 2020/05/29 12:30:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.32 2020/11/21 17:18:31 thorpej Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.31 2020/05/29 12:30:40 rin Exp $");
 #include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/ic/i8253reg.h>
 #include <machine/sysconf.h>
@@ -368,7 +368,7 @@ int1_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	} else {
 		struct sgimips_intrhand *n, *ih;
 
-		ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+		ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 		ih->ih_fun = handler;
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;
@@ -407,7 +407,7 @@ int2_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	} else {
 		struct sgimips_intrhand *n, *ih;
 
-		ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+		ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 		ih->ih_fun = handler;
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;
