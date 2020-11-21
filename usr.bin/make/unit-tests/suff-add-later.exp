@@ -1,6 +1,9 @@
+Adding suffix ".c"
+Adding suffix ".d"
 defining transformation from `.c' to `.d'
 inserting ".c" (1) at end of list
 inserting ".d" (2) at end of list
+Adding suffix ".e"
 defining transformation from `.d' to `.e'
 inserting ".d" (2) at end of list
 inserting ".e" (3) at end of list
