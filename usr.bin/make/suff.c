@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.260 2020/11/21 13:16:37 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.261 2020/11/21 13:20:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.260 2020/11/21 13:16:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.261 2020/11/21 13:20:12 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -374,14 +374,12 @@ SuffList_Insert(SuffList *list, Suff *suff)
     if (ln == NULL) {
 	SUFF_DEBUG2("inserting \"%s\" (%d) at end of list\n",
 		    suff->name, suff->sNum);
-	Lst_Append(list, suff);
-	suff->refCount++;
+	Lst_Append(list, SuffRef(suff));
 	Lst_Append(suff->ref, list);
     } else if (listSuff->sNum != suff->sNum) {
 	    DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
 		   suff->name, suff->sNum, listSuff->name, listSuff->sNum);
-	Lst_InsertBefore(list, ln, suff);
-	suff->refCount++;
+	Lst_InsertBefore(list, ln, SuffRef(suff));
 	Lst_Append(suff->ref, list);
     } else {
 	SUFF_DEBUG2("\"%s\" (%d) is already there\n", suff->name, suff->sNum);
