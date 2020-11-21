@@ -1,5 +1,6 @@
 ParseReadLine (9): '.SUFFIXES:'
 ParseDoDependency(.SUFFIXES:)
+Clearing all suffixes
 ParseReadLine (11): '.SUFFIXES: .a .b .c'
 ParseDoDependency(.SUFFIXES: .a .b .c)
 Adding suffix ".a"
