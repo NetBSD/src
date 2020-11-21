@@ -24,6 +24,7 @@ defining transformation from `.dead-end' to `.short'
 inserting ".dead-end" (6) at end of list
 inserting ".short" (4) at end of list
 transformation .dead-end.short complete
+Clearing all suffixes
 Adding suffix ".c"
 Adding suffix ".cc"
 Adding suffix ".ccc"

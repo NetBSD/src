@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.256 2020/11/21 09:53:40 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.257 2020/11/21 10:36:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.256 2020/11/21 09:53:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.257 2020/11/21 10:36:01 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -326,6 +326,7 @@ SuffList_Remove(SuffList *list, Suff *suff)
     if (suff->refCount == 0) {
 	/* XXX: can lead to suff->refCount == -1 */
 	SuffList_Unref(sufflist, suff);
+	DEBUG1(SUFF, "Removing suffix \"%s\"\n", suff->name);
 	SuffFree(suff);
     }
 }
@@ -399,6 +400,7 @@ Suff_ClearSuffixes(void)
 #ifdef CLEANUP
     Lst_MoveAll(suffClean, sufflist);
 #endif
+    DEBUG0(SUFF, "Clearing all suffixes\n");
     sufflist = Lst_New();
     sNum = 0;
     if (suffNull != NULL)
