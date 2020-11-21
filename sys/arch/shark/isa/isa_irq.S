@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.17 2018/01/30 19:22:28 skrll Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.18 2020/11/21 19:58:11 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -113,8 +113,8 @@
 /*
  * Register usage
  *
- *  r5  - Pointer to handler pointer list
  *  r6  - Address of current handler
+ *  r7  - Pointer to handler pointer list
  *  r8  - Current IRQ requests.
  *  r9  - Used to count through possible IRQ bits.
  *  r10 - Base address of IOMD
@@ -125,7 +125,7 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS		/* cpuinfo is in r4 after execution */
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	/* Load r8 with the ISA 8259 irqs */
 	/* r8 <- irq's pending [15:0] */
@@ -183,17 +183,17 @@ ASENTRY_NP(irq_entry)
 	 */
 
 	mov	r9, #(NIPL - 1)
-	ldr	r5, .Lspl_masks
+	ldr	r7, .Lspl_masks
 
 .Lfind_highest_ipl:
-	ldr	r2, [r5, r9, lsl #2]
+	ldr	r2, [r7, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
 	beq	.Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
-	ldr	r2, [r5, r9, lsl #2]
+	ldr	r2, [r7, r9, lsl #2]
 	mvn	r2, r2
 	orr	r0, r0, r2
 
@@ -210,7 +210,7 @@ ASENTRY_NP(irq_entry)
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r5, .Lirqhandlers
+	ldr	r7, .Lirqhandlers
 	mov	r9, #0x00000001
 
 irqloop:
@@ -218,7 +218,7 @@ irqloop:
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
-	ldr	r6, [r5]		/* Get address of first handler structure */
+	ldr	r6, [r7]		/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
@@ -255,7 +255,7 @@ irqdone:
 	stmia   r3, {r1-r2}		/* store ev_count */
 
 nextirq:
-	add	r5, r5, #0x00000004	/* update pointer to handlers */
+	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
 	teq	r9, #(1 << 16)		/* done the last bit ? */
 	bne	irqloop			/* no - loop back. */
@@ -268,10 +268,6 @@ nextirq:
 	ldr	r1, .Ldisabled_mask
 	str	r2, [r1]
 	bl	_C_LABEL(irq_setmasks)
-
-#ifdef __HAVE_FAST_SOFTINTS
-	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
-#endif
 
 	/* Kill IRQ's in preparation for exit */
 	mrs     r0, cpsr
