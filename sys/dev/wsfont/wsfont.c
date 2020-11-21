@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.69 2020/11/13 01:03:39 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.70 2020/11/21 22:59:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.69 2020/11/13 01:03:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.70 2020/11/21 22:59:18 rin Exp $");
 
 #include "opt_wsfont.h"
 
@@ -150,21 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.69 2020/11/13 01:03:39 macallan Exp $")
 #include <dev/wsfont/Go_Mono_12x23.h>
 #endif
 
-#ifdef FONT_SPLEEN12x24
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen12x24.h>
-#endif
-
-#ifdef FONT_SPLEEN16x32
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen16x32.h>
-#endif
-
-#ifdef FONT_SPLEEN32x64
-#define HAVE_FONT 1
-#include <dev/wsfont/spleen32x64.h>
-#endif
-
 #ifdef FONT_SPLEEN5x8
 #define HAVE_FONT 1
 #include <dev/wsfont/spleen5x8.h>
@@ -178,6 +163,21 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.69 2020/11/13 01:03:39 macallan Exp $")
 #ifdef FONT_SPLEEN8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/spleen8x16.h>
+#endif
+
+#ifdef FONT_SPLEEN12x24
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen12x24.h>
+#endif
+
+#ifdef FONT_SPLEEN16x32
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen16x32.h>
+#endif
+
+#ifdef FONT_SPLEEN32x64
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen32x64.h>
 #endif
 
 #ifdef FONT_LIBERATION_MONO12x21
