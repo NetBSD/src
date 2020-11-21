@@ -1,4 +1,4 @@
-/* $NetBSD: mcadma_machdep.c,v 1.3 2011/07/18 17:26:56 dyoung Exp $ */
+/* $NetBSD: mcadma_machdep.c,v 1.4 2020/11/21 15:52:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcadma_machdep.c,v 1.3 2011/07/18 17:26:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcadma_machdep.c,v 1.4 2020/11/21 15:52:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -116,8 +116,8 @@ _mca_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int flags,
 		/*
  		 * Allocate our cookie if not yet done.
 		 */
-		cookie = malloc(sizeof(struct rs6000_dma_cookie), M_DMAMAP,
-		    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO);
+		cookie = kmem_zalloc(sizeof(struct rs6000_dma_cookie),
+		    ((flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP));
 		if (cookie == NULL) {
 
 			return ENOMEM;
@@ -143,7 +143,7 @@ _mca_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct rs6000_dma_cookie *cookie = map->_dm_cookie;
 
-	free(cookie, M_DMAMAP);
+	kmem_free(cookie, sizeof(struct rs6000_dma_cookie));
 	_bus_dmamap_destroy(t, map);
 }
 
