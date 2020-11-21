@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.138 2020/11/21 11:59:22 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.139 2020/11/21 18:41:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.138 2020/11/21 11:59:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.139 2020/11/21 18:41:57 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -211,7 +211,7 @@ GNode_New(const char *name)
     gn->unmade_cohorts = 0;
     gn->centurion = NULL;
     gn->checked_seqno = 0;
-    HashTable_Init(&gn->context);
+    HashTable_Init(&gn->vars);
     gn->commands = Lst_New();
     gn->suffix = NULL;
     gn->fname = NULL;
@@ -240,7 +240,7 @@ GNode_Free(void *gnp)
     Lst_Free(gn->order_pred);	/* likewise */
     Lst_Free(gn->order_succ);	/* likewise */
     Lst_Free(gn->cohorts);	/* likewise */
-    HashTable_Done(&gn->context); /* Do not free the variables themselves,
+    HashTable_Done(&gn->vars);	/* Do not free the variables themselves,
 				 * even though they are owned by this node.
 				 * XXX: they should probably be freed. */
     Lst_Free(gn->commands);	/* Do not free the commands themselves,

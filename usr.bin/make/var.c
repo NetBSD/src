@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.692 2020/11/21 15:32:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.693 2020/11/21 18:41:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.692 2020/11/21 15:32:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.693 2020/11/21 18:41:57 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -342,7 +342,7 @@ CanonicalVarname(const char *name)
 static Var *
 GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
 {
-    return HashTable_FindValueHash(&ctxt->context, varname, hash);
+    return HashTable_FindValueHash(&ctxt->vars, varname, hash);
 }
 
 /* Find the variable in the context, and maybe in other contexts as well.
@@ -437,7 +437,7 @@ VarFreeEnv(Var *v, Boolean freeValue)
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
-    HashEntry *he = HashTable_CreateEntry(&ctxt->context, name, NULL);
+    HashEntry *he = HashTable_CreateEntry(&ctxt->vars, name, NULL);
     Var *v = VarNew(he->key /* aliased */, NULL, val,
 		    flags & VAR_SET_READONLY ? VAR_READONLY : 0);
     HashEntry_Set(he, v);
@@ -459,7 +459,7 @@ Var_Delete(const char *name, GNode *ctxt)
 	/* TODO: handle errors */
 	name = name_freeIt;
     }
-    he = HashTable_FindEntry(&ctxt->context, name);
+    he = HashTable_FindEntry(&ctxt->vars, name);
     VAR_DEBUG3("%s:delete %s%s\n",
 	       ctxt->name, name, he != NULL ? "" : " (not found)");
     free(name_freeIt);
@@ -471,7 +471,7 @@ Var_Delete(const char *name, GNode *ctxt)
 	if (strcmp(v->name, MAKE_EXPORTED) == 0)
 	    var_exportedVars = VAR_EXPORTED_NONE;
 	assert(v->name_freeIt == NULL);
-	HashTable_DeleteEntry(&ctxt->context, he);
+	HashTable_DeleteEntry(&ctxt->vars, he);
 	Buf_Destroy(&v->val, TRUE);
 	free(v);
     }
@@ -595,7 +595,7 @@ Var_ExportVars(void)
 	HashIter hi;
 
 	/* Ouch! Exporting all variables at once is crazy... */
-	HashIter_Init(&hi, &VAR_GLOBAL->context);
+	HashIter_Init(&hi, &VAR_GLOBAL->vars);
 	while (HashIter_Next(&hi) != NULL) {
 	    Var *var = hi.entry->value;
 	    Var_Export1(var->name, VAR_EXPORT_NORMAL);
@@ -962,7 +962,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	    v->flags &= ~(unsigned)VAR_FROM_ENV;
 	    /* This is the only place where a variable is created whose
 	     * v->name is not the same as ctxt->context->key. */
-	    HashTable_Set(&ctxt->context, name, v);
+	    HashTable_Set(&ctxt->vars, name, v);
 	}
     }
     free(name_freeIt);
@@ -4084,7 +4084,7 @@ Var_End(void)
 void
 Var_Stats(void)
 {
-    HashTable_DebugStats(&VAR_GLOBAL->context, "VAR_GLOBAL");
+    HashTable_DebugStats(&VAR_GLOBAL->vars, "VAR_GLOBAL");
 }
 
 /* Print all variables in a context, sorted by name. */
@@ -4098,7 +4098,7 @@ Var_Dump(GNode *ctxt)
 
     Vector_Init(&vec, sizeof(const char *));
 
-    HashIter_Init(&hi, &ctxt->context);
+    HashIter_Init(&hi, &ctxt->vars);
     while (HashIter_Next(&hi) != NULL)
 	*(const char **)Vector_Push(&vec) = hi.entry->key;
     varnames = vec.items;
@@ -4107,7 +4107,7 @@ Var_Dump(GNode *ctxt)
 
     for (i = 0; i < vec.len; i++) {
 	const char *varname = varnames[i];
-	Var *var = HashTable_FindValue(&ctxt->context, varname);
+	Var *var = HashTable_FindValue(&ctxt->vars, varname);
 	debug_printf("%-16s = %s\n", varname, Buf_GetAll(&var->val, NULL));
     }
 
