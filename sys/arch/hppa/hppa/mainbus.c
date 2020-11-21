@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2020/10/16 17:50:44 macallan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2020/11/21 21:01:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2020/10/16 17:50:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2020/11/21 21:01:16 thorpej Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2020/10/16 17:50:44 macallan Exp $")
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_page.h>
 #include <uvm/uvm.h>
@@ -729,6 +730,14 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	mbus_cp_1,  mbus_cp_2, mbus_cp_4, mbus_cp_8
 };
 
+static size_t
+_bus_dmamap_mapsize(int const nsegments)
+{
+	KASSERT(nsegments > 0);
+	return sizeof(struct hppa_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+}
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific DMA map
  * creation functions.
@@ -738,7 +747,6 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
     bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct hppa_bus_dmamap *map;
-	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map is a
@@ -752,14 +760,11 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence the
 	 * (nsegments - 1).
 	 */
-	mapsize = sizeof(struct hppa_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	map = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	map = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 	if (!map)
 		return ENOMEM;
 
-	memset(map, 0, mapsize);
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
@@ -786,7 +791,7 @@ mbus_dmamap_destroy(void *v, bus_dmamap_t map)
 	if (map->dm_mapsize != 0)
 		mbus_dmamap_unload(v, map);
 
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 /*
@@ -1067,8 +1072,8 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	low = 0;
 	high = ((flags & BUS_DMA_24BIT) ? (1 << 24) : 0) - 1;
 
-	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((mlist = kmem_alloc(sizeof(*mlist),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return ENOMEM;
 
 	/*
@@ -1083,7 +1088,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		DPRINTF(("%s: uvm_pglistalloc(%lx, %lx, %lx, 0, 0, %p, %d, %0x)"
 		    " failed", __func__, size, low, high, mlist, nsegs,
 		    (flags & BUS_DMA_NOWAIT) == 0));
-		free(mlist, M_DEVBUF);
+		kmem_free(mlist, sizeof(*mlist));
 		return error;
 	}
 
@@ -1095,7 +1100,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		if (pa != pa_next) {
 			if (++seg >= nsegs) {
 				uvm_pglistfree(mlist);
-				free(mlist, M_DEVBUF);
+				kmem_free(mlist, sizeof(*mlist));
 				return ENOMEM;
 			}
 			segs[seg].ds_addr = pa;
@@ -1136,7 +1141,7 @@ mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 		return;
 
 	uvm_pglistfree(mlist);
-	free(mlist, M_DEVBUF);
+	kmem_free(mlist, sizeof(*mlist));
 }
 
 /*
