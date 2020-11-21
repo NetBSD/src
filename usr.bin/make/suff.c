@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.277 2020/11/21 20:55:45 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.278 2020/11/21 22:00:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.277 2020/11/21 20:55:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.278 2020/11/21 22:00:34 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -386,8 +386,8 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 	Lst_Append(list, Suffix_Ref(suff));
 	Lst_Append(suff->ref, list);
     } else if (listSuff->sNum != suff->sNum) {
-	    DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
-		   suff->name, suff->sNum, listSuff->name, listSuff->sNum);
+	DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
+	       suff->name, suff->sNum, listSuff->name, listSuff->sNum);
 	Lst_InsertBefore(list, ln, Suffix_Ref(suff));
 	Lst_Append(suff->ref, list);
     } else {
