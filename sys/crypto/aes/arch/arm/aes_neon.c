@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: aes_neon.c,v 1.6 2020/11/21 08:09:21 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.6 2020/11/21 08:09:21 rin Exp $");
 
 #include <sys/types.h>
 
@@ -196,11 +196,13 @@ inv	= VQ_N_U8(0x80,0x01,0x08,0x0D,0x0F,0x06,0x05,0x0E,
 inva	= VQ_N_U8(0x80,0x07,0x0B,0x0F,0x06,0x0A,0x04,0x01,
 	    0x09,0x08,0x05,0x02,0x0C,0x0E,0x0D,0x03);
 
+#ifdef __aarch64__
 static inline uint8x16_t
 loadroundkey(const void *rkp)
 {
 	return vld1q_u8(rkp);
 }
+#endif
 
 static inline void
 storeroundkey(void *rkp, uint8x16_t rk)
