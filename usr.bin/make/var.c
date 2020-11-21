@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.690 2020/11/21 15:02:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.691 2020/11/21 15:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.690 2020/11/21 15:02:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.691 2020/11/21 15:28:44 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3661,13 +3661,13 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 static VarParseResult
 EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 	      VarEvalFlags eflags,
-	      void **out_freeIt, const char **out_val)
+	      const char **out_val, void **out_freeIt)
 {
     if (dynamic) {
 	char *pstr = bmake_strsedup(start, p);
 	free(varname);
-	*out_freeIt = pstr;
 	*out_val = pstr;
+	*out_freeIt = pstr;
 	return VPR_OK;
     }
 
@@ -3756,7 +3756,7 @@ ParseVarnameLong(
 	    p++;		/* skip endc */
 	    *out_FALSE_pp = p;
 	    *out_FALSE_res = EvalUndefined(dynamic, start, p, varname, eflags,
-					   out_FALSE_freeIt, out_FALSE_val);
+					   out_FALSE_val, out_FALSE_freeIt);
 	    return FALSE;
 	}
 
