@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.15 2014/03/24 20:01:03 christos Exp $ */
+/* $NetBSD: nextkbd.c,v 1.16 2020/11/21 17:49:20 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.15 2014/03/24 20:01:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.16 2020/11/21 17:49:20 thorpej Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.15 2014/03/24 20:01:03 christos Exp $"
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
@@ -152,10 +152,9 @@ nextkbd_attach(device_t parent, device_t self, void *aux)
 	if (isconsole) {
 		sc->id = &nextkbd_consdata;
 	} else {
-		sc->id = malloc(sizeof(struct nextkbd_internal), 
-				M_DEVBUF, M_WAITOK);
+		sc->id = kmem_zalloc(sizeof(struct nextkbd_internal), 
+				KM_SLEEP);
 
-		memset(sc->id, 0, sizeof(struct nextkbd_internal));
 		sc->id->iot = ia->ia_bst;
 		if (bus_space_map(sc->id->iot, NEXT_P_MON,
 				sizeof(struct mon_regs),
