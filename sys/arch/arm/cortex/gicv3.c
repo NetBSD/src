@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.33 2020/11/21 11:44:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.32 2020/11/01 14:30:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.33 2020/11/21 11:44:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -367,6 +367,9 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 	uint32_t icc_sre, icc_ctlr, gicr_waker;
+
+	evcnt_attach_dynamic(&ci->ci_intr_preempt, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "intr preempt");
 
 	ci->ci_gic_redist = gicv3_find_redist(sc);
 	ci->ci_gic_sgir = gicv3_sgir(sc);
@@ -734,9 +737,14 @@ gicv3_irq_handler(void *frame)
 			isb();
 		}
 
+		const int64_t nintr = ci->ci_data.cpu_nintr;
+
 		cpsie(I32_bit);
 		pic_dispatch(is, frame);
 		cpsid(I32_bit);
+
+		if (nintr != ci->ci_data.cpu_nintr)
+			ci->ci_intr_preempt.ev_count++;
 
 		if (!early_eoi) {
 			icc_eoi1r_write(iar);

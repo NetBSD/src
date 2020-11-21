@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.28 2020/10/01 06:40:16 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.29 2020/11/21 11:43:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ struct cpu_info {
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
 	struct evcnt ci_uct_trap;
+	struct evcnt ci_intr_preempt;
 
 	/* FDT or similar supplied "cpu capacity" */
 	uint32_t ci_capacity_dmips_mhz;
