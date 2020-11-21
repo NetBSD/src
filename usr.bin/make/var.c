@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.691 2020/11/21 15:28:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.692 2020/11/21 15:32:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.691 2020/11/21 15:28:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.692 2020/11/21 15:32:52 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -3925,12 +3925,17 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     *pp = p;
 
     if (v->flags & VAR_FROM_ENV) {
-	/* Free the environment variable now since we own it,
-	 * but don't free the variable value if it will be returned. */
-	Boolean keepValue = value == Buf_GetAll(&v->val, NULL);
-	if (keepValue)
-	    *out_val_freeIt = value;
-	(void)VarFreeEnv(v, !keepValue);
+	/* Free the environment variable now since we own it. */
+
+	char *varValue = Buf_Destroy(&v->val, FALSE);
+	if (value == varValue) {
+	    /* Don't free the variable value since it will be returned. */
+	    *out_val_freeIt = varValue;
+	} else
+	    free(varValue);
+
+	free(v->name_freeIt);
+	free(v);
 
     } else if (exprFlags & VEF_UNDEF) {
 	if (!(exprFlags & VEF_DEF)) {
