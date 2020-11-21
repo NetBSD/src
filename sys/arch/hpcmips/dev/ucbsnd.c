@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.25 2016/12/17 03:46:52 riastradh Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.26 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.25 2016/12/17 03:46:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.26 2020/11/21 21:23:48 thorpej Exp $");
 
 #include "opt_use_poll.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
@@ -658,7 +658,7 @@ ringbuf_allocate(struct ring_buf *rb, size_t blksize, int maxblk)
 	rb->rb_blksize = blksize;
 	rb->rb_maxblks = maxblk;
 #if notyet
-	rb->rb_buf = (u_int32_t)malloc(rb->rb_bufsize, M_DEVBUF, M_WAITOK);
+	rb->rb_buf = (u_int32_t)kmem_alloc(rb->rb_bufsize, KM_SLEEP);
 #else
 	rb->rb_buf = (u_int32_t)dmabuf_static;
 #endif
@@ -668,8 +668,7 @@ ringbuf_allocate(struct ring_buf *rb, size_t blksize, int maxblk)
 	}
 	memset((char*)rb->rb_buf, 0, rb->rb_bufsize);
 #if notyet
-	rb->rb_bufcnt = malloc(rb->rb_maxblks * sizeof(size_t), M_DEVBUF,
-	    M_WAITOK);
+	rb->rb_bufcnt = kmem_alloc(rb->rb_maxblks * sizeof(size_t), KM_SLEEP);
 #else
 	rb->rb_bufcnt = dmabufcnt_static;
 #endif
@@ -688,8 +687,8 @@ void
 ringbuf_deallocate(struct ring_buf *rb)
 {
 #if notyet
-	free((void*)rb->rb_buf, M_DEVBUF);
-	free(rb->rb_bufcnt, M_DEVBUF);
+	kmem_free((void*)rb->rb_buf, rb->rb_bufsize);
+	kmem_free(rb->rb_bufcnt, rb->rb_maxblks * sizeof(size_t));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.39 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40 2020/11/21 21:23:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2015/06/11 08:22:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2020/11/21 21:23:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 #include <mips/cache.h>
@@ -77,6 +78,15 @@ struct bus_dma_tag_hpcmips hpcmips_default_bus_dma_tag = {
 	NULL,
 };
 
+static size_t
+_bus_dmamap_mapsize(int const nsegments)
+{ 
+	KASSERT(nsegments > 0);
+	return sizeof(struct bus_dmamap_hpcmips) +
+	    sizeof(struct bus_dma_segment_hpcmips) * (nsegments - 1) +
+	    sizeof(bus_dma_segment_t) * nsegments;
+}
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -87,7 +97,6 @@ _hpcmips_bd_map_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct bus_dmamap_hpcmips *map;
 	void *mapstore;
-	size_t mapsize;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -98,14 +107,10 @@ _hpcmips_bd_map_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * of ALLOCNOW notifies others that we've reserved these resources,
 	 * and they are not to be freed.
 	 */
-	mapsize = sizeof(struct bus_dmamap_hpcmips) +
-	    sizeof(struct bus_dma_segment_hpcmips) * (nsegments - 1) +
-	    sizeof(bus_dma_segment_t) * nsegments;
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return (ENOMEM);
 
-	memset(mapstore, 0, mapsize);
 	map = (struct bus_dmamap_hpcmips *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -128,10 +133,12 @@ _hpcmips_bd_map_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  * DMA map destruction functions.
  */
 void
-_hpcmips_bd_map_destroy(bus_dma_tag_t t, bus_dmamap_t map)
+_hpcmips_bd_map_destroy(bus_dma_tag_t t, bus_dmamap_t bdm)
 {
+	struct bus_dmamap_hpcmips *map =
+	    container_of(bdm, struct bus_dmamap_hpcmips, bdm);
 
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 /*

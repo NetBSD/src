@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.43 2019/11/10 21:16:28 chs Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.44 2020/11/21 21:23:48 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.43 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.44 2020/11/21 21:23:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 
@@ -534,7 +534,7 @@ vrgiu_intr_establish(
 
 	s = splhigh();
 
-	ih = malloc(sizeof(struct vrgiu_intr_entry), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	DPRINTF(DEBUG_INTR, ("%s: port %d ", device_xname(sc->sc_dev), port));
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
@@ -625,7 +625,7 @@ vrgiu_intr_disestablish(hpcio_chip_t hc, void *arg)
 	TAILQ_FOREACH(ih, &sc->sc_intr_head[port], ih_link) {
 		if (ih == ihe) {
 			TAILQ_REMOVE(&sc->sc_intr_head[port], ih, ih_link);
-			free(ih, M_DEVBUF);
+			kmem_free(ih, sizeof(*ih));
 			if (TAILQ_EMPTY(&sc->sc_intr_head[port])) {
 				/* Disable interrupt */
 #ifdef WINCE_DEFAULT_SETTING

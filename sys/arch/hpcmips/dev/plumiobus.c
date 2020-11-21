@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.15 2019/11/10 21:16:28 chs Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.15 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $");
 
 #define PLUMIOBUSDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -172,7 +172,7 @@ __plumiobus_subregion(bus_space_tag_t t, bus_addr_t ofs, bus_size_t size)
 {
 	struct hpcmips_bus_space *hbs;
 	
-	hbs = malloc(sizeof(*hbs), M_DEVBUF, M_WAITOK);
+	hbs = kmem_alloc(sizeof(*hbs), KM_SLEEP);
 	*hbs = *t;
 	hbs->t_base += ofs;
 	hbs->t_size = size;

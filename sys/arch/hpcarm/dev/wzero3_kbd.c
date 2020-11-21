@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.9 2019/11/10 21:16:27 chs Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.10 2020/11/21 21:25:33 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.9 2019/11/10 21:16:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.10 2020/11/21 21:25:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/callout.h>
 #include <sys/bus.h>
 
@@ -288,10 +288,8 @@ wzero3kbd_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_okeystat = malloc(sc->sc_nrow * sc->sc_ncolumn, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	sc->sc_keystat = malloc(sc->sc_nrow * sc->sc_ncolumn, M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	sc->sc_okeystat = kmem_zalloc(sc->sc_nrow * sc->sc_ncolumn, KM_SLEEP);
+	sc->sc_keystat = kmem_zalloc(sc->sc_nrow * sc->sc_ncolumn, KM_SLEEP);
 
 	sc->sc_if.hii_ctx = sc;
 	sc->sc_if.hii_establish = wzero3kbd_input_establish;
