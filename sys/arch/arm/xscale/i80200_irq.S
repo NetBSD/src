@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.18 2018/07/12 10:46:42 maxv Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.19 2020/11/21 19:55:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	/*
 	 * Note that we have entered the IRQ handler.  We are
@@ -78,7 +78,7 @@ ASENTRY_NP(irq_entry)
 	/*
 	 * Get the interrupt status into a callee-save register.
 	 */
-	mrc	p13, 0, r5, c4, c0, 0
+	mrc	p13, 0, r6, c4, c0, 0
 
 	/*
 	 * XXX - any need to handle BMU interrupts?
@@ -91,7 +91,7 @@ ASENTRY_NP(irq_entry)
 	 * interrupts disabled, and will return with interrupts
 	 * disabled.
 	 */
-	tst	r5, #(INTSRC_II)
+	tst	r6, #(INTSRC_II)
 	beq	.Lextirq_return		/* no external IRQ pending */
 	ldr	r1, .Lintr_dispatch
 	mov	r0, sp
