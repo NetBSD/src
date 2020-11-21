@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.259 2020/11/21 13:11:13 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.260 2020/11/21 13:16:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.259 2020/11/21 13:11:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.260 2020/11/21 13:16:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -202,6 +202,13 @@ static Suff *emptySuff;
 
 static void SuffFindDeps(GNode *, SrcList *);
 static void SuffExpandWildcards(GNodeListNode *, GNode *);
+
+static Suff *
+SuffRef(Suff *suff)
+{
+    suff->refCount++;
+    return suff;
+}
 
 /* Change the value of a Suff variable, adjusting the reference counts. */
 static void
@@ -856,7 +863,7 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
 
     src->file = name;
     src->pref = pref;
-    src->suff = suff;
+    src->suff = SuffRef(suff);
     src->parent = parent;
     src->node = gn;
     src->numChildren = 0;
@@ -872,7 +879,6 @@ SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
 	   const char *debug_tag MAKE_ATTR_UNUSED)
 {
     Src *s2 = SrcNew(srcName, targ->pref, suff, targ, NULL);
-    suff->refCount++;
     targ->numChildren++;
     Lst_Append(srcList, s2);
 #ifdef DEBUG_SRC
@@ -1086,7 +1092,6 @@ SuffFindCmds(Src *targ, SrcList *slst)
      * again (ick)), and return the new structure.
      */
     ret = SrcNew(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
-    suff->refCount++;
     targ->numChildren++;
 #ifdef DEBUG_SRC
     debug_printf("3 add targ %p ret %p\n", targ, ret);
@@ -1555,7 +1560,6 @@ SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
 
 	pref = bmake_strldup(name, (size_t)(nameLen - suff->nameLen));
 	targ = SrcNew(bmake_strdup(gn->name), pref, suff, NULL, gn);
-	suff->refCount++;
 
 	/*
 	 * Add nodes from which the target can be made
@@ -1582,7 +1586,6 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
 
     targ = SrcNew(bmake_strdup(gn->name), bmake_strdup(sopref),
 		  suffNull, NULL, gn);
-    targ->suff->refCount++;
 
     /*
      * Only use the default suffix rules if we don't have commands
