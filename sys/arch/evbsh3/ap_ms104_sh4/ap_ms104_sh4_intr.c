@@ -1,4 +1,4 @@
-/*	$NetBSD: ap_ms104_sh4_intr.c,v 1.3 2019/11/10 21:16:27 chs Exp $	*/
+/*	$NetBSD: ap_ms104_sh4_intr.c,v 1.4 2020/11/21 16:21:24 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,12 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ap_ms104_sh4_intr.c,v 1.3 2019/11/10 21:16:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ap_ms104_sh4_intr.c,v 1.4 2020/11/21 16:21:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 
 #include <sh3/devreg.h>
@@ -102,7 +102,7 @@ extintr_establish(int irq, int trigger, int level,
 
 	KDASSERT(irq >= 1 && irq <= 14);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 
 	s = _cpu_intr_suspend();
 
@@ -223,7 +223,7 @@ extintr_disestablish(void *cookie)
 
 	evcnt_detach(&ih->ih_evcnt);
 
-	free((void *)ih, M_DEVBUF);
+	kmem_free((void *)ih, sizeof(*ih));
 
 	if (--eih->eih_nih == 0) {
 		uint8_t reg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_iocc.c,v 1.5 2019/11/10 21:16:32 chs Exp $	*/
+/*	$NetBSD: pic_iocc.c,v 1.6 2020/11/21 15:52:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.5 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.6 2020/11/21 15:52:32 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
 
@@ -59,7 +59,7 @@ setup_iocc(void)
 	struct pic_ops *pic;
 	int i;
 
-	pic = malloc(sizeof(struct pic_ops), M_DEVBUF, M_WAITOK);
+	pic = kmem_alloc(sizeof(struct pic_ops), KM_SLEEP);
 	pic->pic_numintrs = 16;
 	pic->pic_cookie = (void *)NULL;
 	pic->pic_enable_irq = iocc_enable_irq;
