@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $	 */
+/* $NetBSD: grtwo.c,v 1.16 2020/11/21 17:18:31 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,12 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.16 2020/11/21 17:18:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/sysconf.h>
 
@@ -507,10 +507,8 @@ grtwo_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dc = &grtwo_console_dc;
 	} else {
 		wa.console = 0;
-		sc->sc_dc = malloc(sizeof(struct grtwo_devconfig),
-				   M_DEVBUF, M_WAITOK | M_ZERO);
-		if (sc->sc_dc == NULL)
-			panic("grtwo_attach: out of memory");
+		sc->sc_dc = kmem_zalloc(sizeof(struct grtwo_devconfig),
+				   KM_SLEEP);
 
 		grtwo_attach_common(sc->sc_dc, ga);
 	}
