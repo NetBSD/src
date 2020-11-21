@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.262 2020/11/21 17:18:36 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.263 2020/11/21 18:06:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.262 2020/11/21 17:18:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.263 2020/11/21 18:06:09 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -667,17 +667,23 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
 	return FALSE;
 
     /*
-     * XXX: What is the purpose of the 'ptr == target->name' condition here?
-     * In suff-rebuild.mk in the line '.SUFFIXES: .c .b .a', it prevents the
-     * rule '.b.c' from being added again during Suff_AddSuffix(".b").
-     */
-    /*
      * XXX: What about a transformation ".cpp.c"?  If ".c" is added as a new
      * suffix, it seems wrong that this transformation would be skipped just
      * because ".c" happens to be a prefix of ".cpp".
      */
-    if ((ptr = strstr(target->name, suff->name)) == NULL ||
-	ptr == target->name)
+    ptr = strstr(target->name, suff->name);
+    if (ptr == NULL)
+	return FALSE;
+
+    /*
+     * XXX: In suff-rebuild.mk, in the line '.SUFFIXES: .c .b .a', this
+     * condition prevents the rule '.b.c' from being added again during
+     * Suff_AddSuffix(".b").
+     *
+     * XXX: Removing this paragraph makes suff-add-later.mk use massive
+     * amounts of memory.
+     */
+    if (ptr == target->name)
 	return FALSE;
 
     if (SuffParseTransform(target->name, &srcSuff, &targSuff)) {
