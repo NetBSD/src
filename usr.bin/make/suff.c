@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.258 2020/11/21 12:01:16 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.259 2020/11/21 13:11:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.258 2020/11/21 12:01:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.259 2020/11/21 13:11:13 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -202,6 +202,25 @@ static Suff *emptySuff;
 
 static void SuffFindDeps(GNode *, SrcList *);
 static void SuffExpandWildcards(GNodeListNode *, GNode *);
+
+/* Change the value of a Suff variable, adjusting the reference counts. */
+static void
+SuffReassign(Suff **var, Suff *suff)
+{
+    if (*var != NULL)
+	(*var)->refCount--;
+    *var = suff;
+    suff->refCount++;
+}
+
+/* Set a Suff variable to NULL, adjusting the reference count. */
+static void
+SuffUnassign(Suff **var)
+{
+    if (*var != NULL)
+	(*var)->refCount--;
+    *var = NULL;
+}
 
 /*
  * See if pref is a prefix of str.
@@ -1612,10 +1631,7 @@ SuffFindNormalDepsPath(GNode *gn, Src *targ)
 	char savec;
 	char *ptr;
 
-	if (gn->suffix)
-	    gn->suffix->refCount--;
-	gn->suffix = targ->suff;
-	gn->suffix->refCount++;
+	SuffReassign(&gn->suffix, targ->suff);
 
 	savec = gn->path[savep];
 	gn->path[savep] = '\0';
@@ -1632,9 +1648,7 @@ SuffFindNormalDepsPath(GNode *gn, Src *targ)
 	char *ptr;
 
 	/* The .PREFIX gets the full path if the target has no known suffix. */
-	if (gn->suffix)
-	    gn->suffix->refCount--;
-	gn->suffix = NULL;
+	SuffUnassign(&gn->suffix);
 
 	if ((ptr = strrchr(gn->path, '/')) != NULL)
 	    ptr++;
@@ -1804,10 +1818,7 @@ sfnd_abort:
     for (src = bottom; src->parent != NULL; src = src->parent) {
 	targ = src->parent;
 
-	if (src->node->suffix)
-	    src->node->suffix->refCount--;
-	src->node->suffix = src->suff;
-	src->node->suffix->refCount++;
+	SuffReassign(&src->node->suffix, src->suff);
 
 	if (targ->node == NULL)
 	    targ->node = Targ_GetNode(targ->file);
@@ -1830,10 +1841,7 @@ sfnd_abort:
 	}
     }
 
-    if (gn->suffix != NULL)
-	gn->suffix->refCount--;
-    gn->suffix = src->suff;
-    gn->suffix->refCount++;
+    SuffReassign(&gn->suffix, src->suff);
 
     /*
      * Nuke the transformation path and the Src structures left over in the
@@ -1901,14 +1909,11 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	 * value).
 	 */
 	Suff *suff = FindSuffByName(LIBSUFF);
-	if (gn->suffix)
-	    gn->suffix->refCount--;
 	if (suff != NULL) {
-	    gn->suffix = suff;
-	    gn->suffix->refCount++;
+	    SuffReassign(&gn->suffix, suff);
 	    Arch_FindLib(gn, suff->searchPath);
 	} else {
-	    gn->suffix = NULL;
+	    SuffUnassign(&gn->suffix);
 	    Var_Set(TARGET, gn->name, gn);
 	}
 	/*
