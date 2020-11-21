@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.58 2019/03/14 23:49:38 thorpej Exp $ */
+/*	$NetBSD: smg.c,v 1.59 2020/11/21 22:37:11 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.58 2019/03/14 23:49:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.59 2020/11/21 22:37:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,7 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.58 2019/03/14 23:49:38 thorpej Exp $");
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/time.h>
 
 #include <machine/vsbus.h>
@@ -532,7 +532,7 @@ int
 smg_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *defattrp)
 {
-	*cookiep = malloc(sizeof(struct smg_screen), M_DEVBUF, M_WAITOK|M_ZERO);
+	*cookiep = kmem_zalloc(sizeof(struct smg_screen), KM_SLEEP);
 	*curxp = *curyp = *defattrp = 0;
 	return 0;
 }

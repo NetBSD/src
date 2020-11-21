@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.35 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.35 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/xcall.h>
 #include <sys/ipi.h>
@@ -68,7 +68,7 @@ cpu_boot_secondary_processors(void)
 	while ((q = SIMPLEQ_FIRST(&cpuq))) {
 		SIMPLEQ_REMOVE_HEAD(&cpuq, cq_q);
 		(*mp_dep_call->cpu_startslave)(q->cq_ci);
-		free(q, M_TEMP);
+		kmem_free(q, sizeof(*q));
 	}
 }
 
@@ -86,7 +86,7 @@ cpu_slavesetup(device_t self, int slotid)
 
 	KASSERT(device_private(self) == NULL);
 
-	ci = malloc(sizeof(*ci), M_DEVBUF, M_ZERO|M_WAITOK);
+	ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
 	self->dv_private = ci;
 	ci->ci_dev = self;
 	ci->ci_slotid = slotid;
@@ -104,7 +104,7 @@ cpu_slavesetup(device_t self, int slotid)
 	ci->ci_istack = istackbase + PAGE_SIZE;
 	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);
 
-	cq = malloc(sizeof(*cq), M_TEMP, M_WAITOK|M_ZERO);
+	cq = kmem_zalloc(sizeof(*cq), KM_SLEEP);
 	cq->cq_ci = ci;
 	cq->cq_dev = ci->ci_dev;
 	SIMPLEQ_INSERT_TAIL(&cpuq, cq, cq_q);

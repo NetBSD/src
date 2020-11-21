@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.4 2018/06/06 01:49:08 maya Exp $ */
+/*	$NetBSD: lcg.c,v 1.5 2020/11/21 22:37:11 thorpej Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.4 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.5 2020/11/21 22:37:11 thorpej Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.4 2018/06/06 01:49:08 maya Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/time.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -789,7 +789,7 @@ lcg_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	int i;
 	struct lcg_screen *ss;
 
-	*cookiep = malloc(sizeof(struct lcg_screen), M_DEVBUF, M_WAITOK);
+	*cookiep = kmem_alloc(sizeof(struct lcg_screen), KM_SLEEP);
 	bzero(*cookiep, sizeof(struct lcg_screen));
 	*curxp = *curyp = 0;
 	*defattrp = (LCG_BG_COLOR << 4) | LCG_FG_COLOR;
