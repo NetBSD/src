@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.689 2020/11/17 20:11:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.690 2020/11/21 15:02:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.689 2020/11/17 20:11:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.690 2020/11/21 15:02:52 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -4022,26 +4022,26 @@ VarParseResult
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 {
     const char *p = str;
-    Buffer buf;			/* Buffer for forming things */
+    Buffer res;
 
     /* Set true if an error has already been reported,
      * to prevent a plethora of messages when recursing */
     /* XXX: Why is the 'static' necessary here? */
     static Boolean errorReported;
 
-    Buf_Init(&buf);
+    Buf_Init(&res);
     errorReported = FALSE;
 
     while (*p != '\0') {
 	if (p[0] == '$' && p[1] == '$') {
 	    /* A dollar sign may be escaped with another dollar sign. */
 	    if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
-		Buf_AddByte(&buf, '$');
-	    Buf_AddByte(&buf, '$');
+		Buf_AddByte(&res, '$');
+	    Buf_AddByte(&res, '$');
 	    p += 2;
 
 	} else if (p[0] == '$') {
-	    VarSubstNested(&p, &buf, ctxt, eflags, &errorReported);
+	    VarSubstNested(&p, &res, ctxt, eflags, &errorReported);
 
 	} else {
 	    /*
@@ -4052,11 +4052,11 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 
 	    for (p++; *p != '$' && *p != '\0'; p++)
 		continue;
-	    Buf_AddBytesBetween(&buf, plainStart, p);
+	    Buf_AddBytesBetween(&res, plainStart, p);
 	}
     }
 
-    *out_res = Buf_DestroyCompact(&buf);
+    *out_res = Buf_DestroyCompact(&res);
     return VPR_OK;
 }
 
