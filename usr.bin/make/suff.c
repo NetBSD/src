@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.255 2020/11/21 09:51:00 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.256 2020/11/21 09:53:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.255 2020/11/21 09:51:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.256 2020/11/21 09:53:40 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -702,6 +702,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 
     suff = SuffNew(name);
     Lst_Append(sufflist, suff);
+    DEBUG1(SUFF, "Adding suffix \"%s\"\n", suff->name);
 
     UpdateTargets(inout_main, suff);
 

@@ -1,3 +1,9 @@
+Adding suffix ".c"
+Adding suffix ".cc"
+Adding suffix ".ccc"
+Adding suffix ".short"
+Adding suffix ".sho"
+Adding suffix ".dead-end"
 defining transformation from `.ccc' to `.cc'
 inserting ".ccc" (3) at end of list
 inserting ".cc" (2) at end of list
@@ -18,14 +24,20 @@ defining transformation from `.dead-end' to `.short'
 inserting ".dead-end" (6) at end of list
 inserting ".short" (4) at end of list
 transformation .dead-end.short complete
+Adding suffix ".c"
+Adding suffix ".cc"
+Adding suffix ".ccc"
 inserting ".ccc" (3) at end of list
 inserting ".cc" (2) at end of list
 inserting ".c" (1) at end of list
 inserting ".ccc" (3) at end of list
+Adding suffix ".short"
 inserting ".short" (4) at end of list
 inserting ".c" (1) at end of list
+Adding suffix ".sho"
 inserting ".sho" (5) at end of list
 inserting ".c" (1) at end of list
+Adding suffix ".dead-end"
 inserting ".dead-end" (6) at end of list
 inserting ".short" (4) at end of list
 Wildcard expanding "all"...
