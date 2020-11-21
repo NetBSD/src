@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.33 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.34 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.33 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.34 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
@@ -105,7 +105,7 @@ eeprom_attach(device_t parent, device_t self, void *args)
 		panic("%s: can't map va", __func__);
 
 	/* Keep a "soft" copy of the EEPROM to make access simpler. */
-	eeprom_copy = malloc(ee_size, M_DEVBUF, M_WAITOK);
+	eeprom_copy = kmem_alloc(ee_size, KM_SLEEP);
 
 	/*
 	 * On the 3/80, do not touch the last 40 bytes!

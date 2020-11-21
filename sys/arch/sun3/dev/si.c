@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.63 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: si.c,v 1.64 2020/11/21 00:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,13 +70,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.63 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.64 2020/11/21 00:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
@@ -164,10 +164,7 @@ si_attach(struct si_softc *sc)
 	 * Allocate DMA handles.
 	 */
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
-	sc->sc_dma = (struct si_dma_handle *)
-		malloc(i, M_DEVBUF, M_WAITOK);
-	if (sc->sc_dma == NULL)
-		panic("si: dvma_malloc failed");
+	sc->sc_dma = kmem_alloc(i, KM_SLEEP);
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
