@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.257 2020/11/21 10:36:01 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.258 2020/11/21 12:01:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.257 2020/11/21 10:36:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.258 2020/11/21 12:01:16 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -642,6 +642,16 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
     if (target->type == OP_TRANSFORM)
 	return FALSE;
 
+    /*
+     * XXX: What is the purpose of the 'ptr == target->name' condition here?
+     * In suff-rebuild.mk in the line '.SUFFIXES: .c .b .a', it prevents the
+     * rule '.b.c' from being added again during Suff_AddSuffix(".b").
+     */
+    /*
+     * XXX: What about a transformation ".cpp.c"?  If ".c" is added as a new
+     * suffix, it seems wrong that this transformation would be skipped just
+     * because ".c" happens to be a prefix of ".cpp".
+     */
     if ((ptr = strstr(target->name, suff->name)) == NULL ||
 	ptr == target->name)
 	return FALSE;

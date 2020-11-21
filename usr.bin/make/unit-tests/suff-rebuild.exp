@@ -30,7 +30,7 @@ defining transformation from `.c' to `'
 inserting ".c" (3) at end of list
 inserting "" (0) at end of list
 ParseReadLine (22): '	: Making ${.TARGET} from ${.IMPSRC}.'
-ParseReadLine (35): '.SUFFIXES: .c .b .a'
+ParseReadLine (44): '.SUFFIXES: .c .b .a'
 transformation .c complete
 ParseDoDependency(.SUFFIXES: .c .b .a)
 Adding ".END" to all targets.
