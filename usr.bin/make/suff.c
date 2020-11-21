@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.274 2020/11/21 20:12:08 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.275 2020/11/21 20:16:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.274 2020/11/21 20:12:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.275 2020/11/21 20:16:14 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -210,8 +210,6 @@ static Suffix *nullSuff;
 /* The empty suffix required for POSIX single-suffix transformation rules */
 static Suffix *emptySuff;
 
-
-static void SuffFindDeps(GNode *, SrcList *);
 
 static Suffix *
 Suffix_Ref(Suffix *suff)
@@ -1423,6 +1421,8 @@ SuffApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
     return TRUE;
 }
 
+
+static void SuffFindDeps(GNode *, SrcList *);
 
 /* Locate dependencies for an OP_ARCHV node.
  *
