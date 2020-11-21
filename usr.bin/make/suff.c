@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.265 2020/11/21 18:12:55 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.266 2020/11/21 18:28:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.265 2020/11/21 18:12:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.266 2020/11/21 18:28:34 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -884,13 +884,13 @@ static void
 SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suff *suff,
 	    const char *debug_tag)
 {
-    Src *s2 = SrcNew(srcName, targ->pref, suff, targ, NULL);
+    Src *src = SrcNew(srcName, targ->pref, suff, targ, NULL);
     targ->numChildren++;
-    Lst_Append(srcList, s2);
+    Lst_Append(srcList, src);
 #ifdef DEBUG_SRC
-    Lst_Append(targ->childrenList, s2);
+    Lst_Append(targ->childrenList, src);
     debug_printf("%s add suff %p src %p to list %p:",
-		 debug_tag, targ, s2, srcList);
+		 debug_tag, targ, src, srcList);
     SrcList_PrintAddrs(srcList);
 #endif
 }
