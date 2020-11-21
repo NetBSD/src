@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.251 2020/11/21 08:01:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.252 2020/11/21 08:23:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.251 2020/11/21 08:01:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.252 2020/11/21 08:23:36 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -627,7 +627,7 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
  *	TRUE iff a new main target has been selected.
  */
 static Boolean
-SuffScanTargets(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
+SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
 {
     Suff *srcSuff, *targSuff;
     char *ptr;
@@ -676,7 +676,7 @@ UpdateTargets(GNode **inout_main, Suff *s)
     GNodeListNode *ln;
     for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
-	if (SuffScanTargets(gn, inout_main, s, &r))
+	if (SuffUpdateTarget(gn, inout_main, s, &r))
 	    break;
     }
 }
