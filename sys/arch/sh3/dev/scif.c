@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.67 2019/11/10 21:16:32 chs Exp $ */
+/*	$NetBSD: scif.c,v 1.68 2020/11/21 17:25:52 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.67 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.68 2020/11/21 17:25:52 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.67 2019/11/10 21:16:32 chs Exp $");
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kgdb.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
@@ -497,7 +497,7 @@ scif_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = NULL;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(scif_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(scif_rbuf_size << 1, KM_SLEEP);
 	sc->sc_ebuf = sc->sc_rbuf + (scif_rbuf_size << 1);
 
 	tty_attach(tp);

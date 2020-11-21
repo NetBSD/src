@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.19 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.20 2020/11/21 17:22:03 thorpej Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.19 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.20 2020/11/21 17:22:03 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
@@ -29,7 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.19 2019/11/10 21:16:34 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -283,10 +283,10 @@ zkbd_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_okeystate = kmem_zalloc(sc->sc_nsense * sc->sc_nstrobe,
+	    KM_SLEEP);
+	sc->sc_keystate = kmem_zalloc(sc->sc_nsense * sc->sc_nstrobe,
+	    KM_SLEEP);
 
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: w100.c,v 1.2 2019/11/10 21:16:34 chs Exp $ */
+/* $NetBSD: w100.c,v 1.3 2020/11/21 17:22:03 thorpej Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -28,13 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w100.c,v 1.2 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w100.c,v 1.3 2020/11/21 17:22:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>			/* for cold */
 
 #include <uvm/uvm_extern.h>
@@ -235,7 +235,7 @@ w100_new_screen(struct w100_softc *sc, int depth, struct w100_screen **scrpp)
 	struct w100_screen *scr = NULL;
 	int error = 0;
 
-	scr = malloc(sizeof(*scr), M_DEVBUF, M_WAITOK | M_ZERO);
+	scr = kmem_zalloc(sizeof(*scr), KM_SLEEP);
 	scr->buf_va = (u_char *)bus_space_vaddr(sc->iot, sc->ioh_vram);
 	scr->depth = depth;
 
