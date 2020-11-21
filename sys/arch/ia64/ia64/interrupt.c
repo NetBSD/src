@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.10 2019/11/10 21:16:28 chs Exp $ */
+/* $NetBSD: interrupt.c,v 1.11 2020/11/21 20:50:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2020/11/21 20:50:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2019/11/10 21:16:28 chs Exp $");
 #include <sys/evcnt.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/sched.h>
 
 #include <machine/clock.h>
@@ -293,7 +293,7 @@ intr_establish(int irq, int type, int level, int (*func)(void *), void *arg)
 
 	i = ia64_intrs[vector];
 	if (i == NULL) {
-		i = malloc(sizeof(struct ia64_intr), M_DEVBUF, M_WAITOK);
+		i = kmem_alloc(sizeof(struct ia64_intr), KM_SLEEP);
 		i->irq = irq;
 		i->sapic = sa;
 		i->type = type;
@@ -309,7 +309,7 @@ intr_establish(int irq, int type, int level, int (*func)(void *), void *arg)
 		if (i->type != type)
 			return NULL;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
@@ -334,10 +334,10 @@ intr_disestablish(void *cookie)
 
 		ia64_intrs[vector] = NULL;
 		evcnt_detach(&i->evcnt);
-		free(i, M_DEVBUF);
+		kmem_free(i, sizeof(*i));
 	}
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 static int
