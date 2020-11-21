@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.136 2020/11/21 10:50:39 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.137 2020/11/21 10:56:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.136 2020/11/21 10:50:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.137 2020/11/21 10:56:17 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -234,16 +234,16 @@ GNode_Free(void *gnp)
     free(gn->uname);
     free(gn->path);
     /* gn->youngestChild is not owned by this node. */
-    Lst_Free(gn->implicitParents); /* ... but not the nodes themselves, */
+    Lst_Free(gn->implicitParents); /* Do not free the nodes themselves, */
     Lst_Free(gn->parents);	/* as they are not owned by this node. */
     Lst_Free(gn->children);	/* likewise */
     Lst_Free(gn->order_pred);	/* likewise */
     Lst_Free(gn->order_succ);	/* likewise */
     Lst_Free(gn->cohorts);	/* likewise */
-    HashTable_Done(&gn->context); /* ... but not the variables themselves,
+    HashTable_Done(&gn->context); /* Do not free the variables themselves,
 				 * even though they are owned by this node.
 				 * XXX: they should probably be freed. */
-    Lst_Free(gn->commands);	/* ... but not the commands themselves,
+    Lst_Free(gn->commands);	/* Do not free the commands themselves,
 				 * as they may be shared with other nodes. */
     /* gn->suffix is not owned by this node. */
     /* XXX: gn->suffix should be unreferenced here.  This requires a thorough
