@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.17 2020/11/21 21:25:33 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.18 2020/11/21 21:27:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.17 2020/11/21 21:25:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.18 2020/11/21 21:27:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ softintr_free(void *arg)
 {
 	struct softintr_handler *sh = arg;
 
-	free(sh, sizeof(*sh));
+	kmem_free(sh, sizeof(*sh));
 }
 
 void
