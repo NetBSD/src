@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.209 2020/11/16 22:31:42 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.210 2020/11/21 10:51:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.209 2020/11/16 22:31:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.210 2020/11/21 10:51:26 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -373,14 +373,14 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
     }
 #endif
 
-    if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
-	    if (cgn->type & OP_USEBEFORE) {
-		/* .USEBEFORE */
-		Lst_PrependAll(pgn->commands, cgn->commands);
-	    } else {
-		/* .USE, or target has no commands */
-		Lst_AppendAll(pgn->commands, cgn->commands);
-	    }
+    if ((cgn->type & (OP_USE | OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
+	if (cgn->type & OP_USEBEFORE) {
+	    /* .USEBEFORE */
+	    Lst_PrependAll(pgn->commands, cgn->commands);
+	} else {
+	    /* .USE, or target has no commands */
+	    Lst_AppendAll(pgn->commands, cgn->commands);
+	}
     }
 
     for (ln = cgn->children->first; ln != NULL; ln = ln->next) {
