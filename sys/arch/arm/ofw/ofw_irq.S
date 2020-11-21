@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.16 2020/11/21 09:36:27 skrll Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.17 2020/11/21 19:57:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -95,12 +95,13 @@ AST_ALIGNMENT_FAULT_LOCALS
  * Regsister usage
  *
  *  r4	- Address of cpu_info (on entry)
- *  r5  - Pointer to handler pointer list
+ *  r5  - Address of curlwp
  *  r6  - Address of current handler
  *  r7  - pspr mode (must be preserved)
  *  r8  - Current IRQ requests.
  *  r9  - Used to count through possible IRQ bits.
  *  r10 - Base address of IOMD
+ *  r11  - Pointer to handler pointer list
  */
 
 ASENTRY_NP(irq_entry)
@@ -188,7 +189,7 @@ ofwtakeint:
 #ifdef EXEC_AOUT
 	ldr	r0, [sp]		/* Fetch SPSR */
 #endif
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 	mov	r8, #0x00000001		/* timer interrupt pending! */
 	mov	r8, r8, lsl #IRQ_TIMER0
@@ -224,17 +225,17 @@ ofwtakeint:
 	 */
 
 	mov	r9, #(NIPL - 1)
-	ldr	r5, Lspl_masks
+	ldr	r11, Lspl_masks
 
 Lfind_highest_ipl:
-	ldr	r2, [r5, r9, lsl #2]
+	ldr	r2, [r11, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
 	beq	Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
-	ldr	r2, [r5, r9, lsl #2]
+	ldr	r2, [r11, r9, lsl #2]
 	mvn	r2, r2
 	orr	r0, r0, r2
 
@@ -252,7 +253,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r5, Lirqhandlers
+	ldr	r11, Lirqhandlers
 	mov	r9, #0x00000001
 
 irqloop:
@@ -260,7 +261,7 @@ irqloop:
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
-	ldr	r6, [r5]		/* Get address of first handler structure */
+	ldr	r6, [r11]		/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
@@ -301,7 +302,7 @@ irqdone:
 	stmia   r3, {r1-r2}		/* store ev_count */
 
 nextirq:
-	add	r5, r5, #0x00000004	/* update pointer to handlers */
+	add	r11, r11, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
 	teq	r9, #(1 << 24)		/* done the last bit ? */
 	bne	irqloop			/* no - loop back. */
@@ -314,8 +315,6 @@ nextirq:
 	ldr	r1, Ldisabled_mask
 	str	r2, [r1]
 	bl	_C_LABEL(irq_setmasks)
-
-	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Kill IRQ's in preparation for exit */
 	mrs     r0, cpsr
