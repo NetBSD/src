@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.280 2020/11/21 23:25:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.281 2020/11/21 23:51:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.280 2020/11/21 23:25:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.281 2020/11/21 23:51:28 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -238,7 +238,7 @@ Suffix_Unassign(Suffix **var)
  * Return NULL if it ain't, pointer to character in str after prefix if so.
  */
 static const char *
-SuffStrIsPrefix(const char *pref, const char *str)
+StrIsPrefix(const char *pref, const char *str)
 {
     while (*str && *pref == *str) {
 	pref++;
@@ -392,7 +392,7 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 }
 
 static void
-SuffRelate(Suffix *srcSuff, Suffix *targSuff)
+Relate(Suffix *srcSuff, Suffix *targSuff)
 {
     SuffixList_Insert(targSuff->children, srcSuff);
     SuffixList_Insert(srcSuff->parents, targSuff);
@@ -447,7 +447,7 @@ Suff_ClearSuffixes(void)
  * Return TRUE if the string is a valid transformation.
  */
 static Boolean
-SuffParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
+ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 {
     SuffixListNode *ln;
     Suffix *singleSrc = NULL;
@@ -461,7 +461,7 @@ SuffParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
 	Suffix *src = ln->datum;
 
-	if (SuffStrIsPrefix(src->name, str) == NULL)
+	if (StrIsPrefix(src->name, str) == NULL)
 	    continue;
 
 	if (str[src->nameLen] == '\0') {
@@ -501,7 +501,7 @@ Suff_IsTransform(const char *str)
 {
     Suffix *src, *targ;
 
-    return SuffParseTransform(str, &src, &targ);
+    return ParseTransform(str, &src, &targ);
 }
 
 /* Add the transformation rule to the list of rules and place the
@@ -545,7 +545,7 @@ Suff_AddTransform(const char *name)
     gn->type = OP_TRANSFORM;
 
     {
-	Boolean ok = SuffParseTransform(name, &srcSuff, &targSuff);
+	Boolean ok = ParseTransform(name, &srcSuff, &targSuff);
 	assert(ok);
 	(void)ok;
     }
@@ -555,7 +555,7 @@ Suff_AddTransform(const char *name)
      */
     SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
 		srcSuff->name, targSuff->name);
-    SuffRelate(srcSuff, targSuff);
+    Relate(srcSuff, targSuff);
 
     return gn;
 }
@@ -590,7 +590,7 @@ Suff_EndTransform(GNode *gn)
      * SuffParseTransform() may fail for special rules which are not
      * actual transformation rules. (e.g. .DEFAULT)
      */
-    if (!SuffParseTransform(gn->name, &srcSuff, &targSuff))
+    if (!ParseTransform(gn->name, &srcSuff, &targSuff))
 	return;
 
     SUFF_DEBUG2("deleting incomplete transformation from `%s' to `%s'\n",
@@ -616,7 +616,7 @@ Suff_EndTransform(GNode *gn)
  *	suff		Suffix to rebuild
  */
 static void
-SuffRebuildGraph(GNode *transform, Suffix *suff)
+RebuildGraph(GNode *transform, Suffix *suff)
 {
     const char *name = transform->name;
     size_t nameLen = strlen(name);
@@ -625,12 +625,12 @@ SuffRebuildGraph(GNode *transform, Suffix *suff)
     /*
      * First see if it is a transformation from this suffix.
      */
-    toName = SuffStrIsPrefix(suff->name, name);
+    toName = StrIsPrefix(suff->name, name);
     if (toName != NULL) {
 	Suffix *to = FindSuffixByName(toName);
 	if (to != NULL) {
 	    /* Link in and return, since it can't be anything else. */
-	    SuffRelate(suff, to);
+	    Relate(suff, to);
 	    return;
 	}
     }
@@ -642,7 +642,7 @@ SuffRebuildGraph(GNode *transform, Suffix *suff)
     if (toName != NULL) {
 	Suffix *from = FindSuffixByNameLen(name, (size_t)(toName - name));
 	if (from != NULL)
-	    SuffRelate(from, suff);
+	    Relate(from, suff);
     }
 }
 
@@ -657,7 +657,7 @@ SuffRebuildGraph(GNode *transform, Suffix *suff)
  *	TRUE iff a new main target has been selected.
  */
 static Boolean
-SuffUpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
+UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 		 Boolean *inout_removedMain)
 {
     Suffix *srcSuff, *targSuff;
@@ -693,7 +693,7 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
     if (ptr == target->name)
 	return FALSE;
 
-    if (SuffParseTransform(target->name, &srcSuff, &targSuff)) {
+    if (ParseTransform(target->name, &srcSuff, &targSuff)) {
 	if (*inout_main == target) {
 	    *inout_removedMain = TRUE;
 	    *inout_main = NULL;
@@ -707,7 +707,7 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 	 */
 	SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
 		    srcSuff->name, targSuff->name);
-	SuffRelate(srcSuff, targSuff);
+	Relate(srcSuff, targSuff);
     }
     return FALSE;
 }
@@ -724,7 +724,7 @@ UpdateTargets(GNode **inout_main, Suffix *suff)
     GNodeListNode *ln;
     for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
-	if (SuffUpdateTarget(gn, inout_main, suff, &r))
+	if (UpdateTarget(gn, inout_main, suff, &r))
 	    break;
     }
 }
@@ -760,7 +760,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
      * XXX: Only do this after a Suff_ClearSuffixes?
      */
     for (ln = transforms->first; ln != NULL; ln = ln->next)
-	SuffRebuildGraph(ln->datum, suff);
+	RebuildGraph(ln->datum, suff);
 }
 
 /* Return the search path for the given suffix, or NULL. */
@@ -910,7 +910,7 @@ SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suffix *suff,
  *	targ		parent for the new Src
  */
 static void
-SuffAddSources(Suffix *suff, SrcList *srcList, Src *targ)
+AddSources(Suffix *suff, SrcList *srcList, Src *targ)
 {
     if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
 	/*
@@ -925,19 +925,19 @@ SuffAddSources(Suffix *suff, SrcList *srcList, Src *targ)
 
 /* Add all the children of targ to the list. */
 static void
-SuffAddLevel(SrcList *srcs, Src *targ)
+AddLevel(SrcList *srcs, Src *targ)
 {
     SrcListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
 	Suffix *childSuff = ln->datum;
-	SuffAddSources(childSuff, srcs, targ);
+	AddSources(childSuff, srcs, targ);
     }
 }
 
 /* Free the first Src in the list that is not referenced anymore.
  * Return whether a Src was removed. */
 static Boolean
-SuffRemoveSrc(SrcList *srcs)
+RemoveSrc(SrcList *srcs)
 {
     SrcListNode *ln;
 
@@ -984,7 +984,7 @@ SuffRemoveSrc(SrcList *srcs)
 
 /* Find the first existing file/target in srcs. */
 static Src *
-SuffFindThem(SrcList *srcs, SrcList *slst)
+FindThem(SrcList *srcs, SrcList *slst)
 {
     Src *retsrc = NULL;
 
@@ -1019,7 +1019,7 @@ SuffFindThem(SrcList *srcs, SrcList *slst)
 
 	SUFF_DEBUG0("not there\n");
 
-	SuffAddLevel(srcs, src);
+	AddLevel(srcs, src);
 	Lst_Append(slst, src);
     }
 
@@ -1040,7 +1040,7 @@ SuffFindThem(SrcList *srcs, SrcList *slst)
  *	The Src of the "winning" child, or NULL.
  */
 static Src *
-SuffFindCmds(Src *targ, SrcList *slst)
+FindCmds(Src *targ, SrcList *slst)
 {
     GNodeListNode *gln;
     GNode *tgn;			/* Target GNode */
@@ -1112,7 +1112,7 @@ SuffFindCmds(Src *targ, SrcList *slst)
 }
 
 static void
-SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
+ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 {
     GNode *cgn = cln->datum;
     StringList *expansions;
@@ -1166,7 +1166,7 @@ SuffExpandWildcards(GNodeListNode *cln, GNode *pgn)
  *	pgn		Parent node being processed
  */
 static void
-SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
+ExpandChildren(GNodeListNode *cln, GNode *pgn)
 {
     GNode *cgn = cln->datum;
     GNode *gn;			/* New source 8) */
@@ -1187,7 +1187,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
      * the children list.
      */
     if (strchr(cgn->name, '$') == NULL) {
-	SuffExpandWildcards(cln, pgn);
+	ExpandWildcards(cln, pgn);
 	return;
     }
 
@@ -1289,7 +1289,7 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 	    Lst_Append(gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
-	    SuffExpandWildcards(cln->prev, pgn);
+	    ExpandWildcards(cln->prev, pgn);
 	}
 	Lst_Free(members);
 
@@ -1360,7 +1360,7 @@ Suff_FindPath(GNode* gn)
  *	TRUE if successful, FALSE if not.
  */
 static Boolean
-SuffApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
+ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 {
     GNodeListNode *ln;
     char *tname;		/* Name of transformation rule */
@@ -1398,7 +1398,7 @@ SuffApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
     ln = ln != NULL ? ln->next : NULL;
     while (ln != NULL) {
 	GNodeListNode *nln = ln->next;
-	SuffExpandChildren(ln, tgn);
+	ExpandChildren(ln, tgn);
 	ln = nln;
     }
 
@@ -1412,7 +1412,7 @@ SuffApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 }
 
 
-static void SuffFindDeps(GNode *, SrcList *);
+static void FindDeps(GNode *, SrcList *);
 
 /* Locate dependencies for an OP_ARCHV node.
  *
@@ -1423,7 +1423,7 @@ static void SuffFindDeps(GNode *, SrcList *);
  *	Same as Suff_FindDeps
  */
 static void
-SuffFindArchiveDeps(GNode *gn, SrcList *slst)
+FindDepsArchive(GNode *gn, SrcList *slst)
 {
     char *eoarch;		/* End of archive portion */
     char *eoname;		/* End of member portion */
@@ -1459,7 +1459,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      * suffix list, backtracking for each one...
      */
     mem = Targ_GetNode(name);
-    SuffFindDeps(mem, slst);
+    FindDeps(mem, slst);
 
     /*
      * Create the link between the two nodes right off
@@ -1498,7 +1498,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
      */
     for (ln = gn->children->first; ln != NULL; ln = nln) {
 	nln = ln->next;
-	SuffExpandChildren(ln, gn);
+	ExpandChildren(ln, gn);
     }
 
     if (ms != NULL) {
@@ -1520,7 +1520,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 	     * Got one -- apply it
 	     */
 	    Suffix *suff = ln->datum;
-	    if (!SuffApplyTransform(gn, mem, suff, ms)) {
+	    if (!ApplyTransform(gn, mem, suff, ms)) {
 		SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
 			    ms->name, suff->name);
 	    }
@@ -1551,8 +1551,8 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
 }
 
 static void
-SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
-			SrcList *srcs, SrcList *targs)
+FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
+		     SrcList *srcs, SrcList *targs)
 {
     SuffixListNode *ln;
     Src *targ;
@@ -1569,7 +1569,7 @@ SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
 	/*
 	 * Add nodes from which the target can be made
 	 */
-	SuffAddLevel(srcs, targ);
+	AddLevel(srcs, targ);
 
 	/*
 	 * Record the target so we can nuke it
@@ -1579,8 +1579,8 @@ SuffFindNormalDepsKnown(const char *name, size_t nameLen, GNode *gn,
 }
 
 static void
-SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
-			  SrcList *srcs, SrcList *targs)
+FindDepsRegularUnknown(GNode *gn, const char *sopref,
+		       SrcList *srcs, SrcList *targs)
 {
     Src *targ;
 
@@ -1599,7 +1599,7 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
      * don't do this anymore.
      */
     if (Lst_IsEmpty(gn->commands))
-	SuffAddLevel(srcs, targ);
+	AddLevel(srcs, targ);
     else {
 	SUFF_DEBUG0("not ");
     }
@@ -1616,7 +1616,7 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
  * children or commands) as the old pmake did.
  */
 static void
-SuffFindNormalDepsPath(GNode *gn, Src *targ)
+FindDepsRegularPath(GNode *gn, Src *targ)
 {
     if (gn->type & (OP_PHONY | OP_NOPATH))
 	return;
@@ -1676,7 +1676,7 @@ SuffFindNormalDepsPath(GNode *gn, Src *targ)
  *	Same as Suff_FindDeps
  */
 static void
-SuffFindNormalDeps(GNode *gn, SrcList *slst)
+FindDepsRegular(GNode *gn, SrcList *slst)
 {
     SrcList *srcs;		/* List of sources at which to look */
     SrcList *targs;		/* List of targets to which things can be
@@ -1719,16 +1719,16 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 
     if (!(gn->type & OP_PHONY)) {
 
-	SuffFindNormalDepsKnown(name, nameLen, gn, srcs, targs);
+	FindDepsRegularKnown(name, nameLen, gn, srcs, targs);
 
 	/* Handle target of unknown suffix... */
-	SuffFindNormalDepsUnknown(gn, name, srcs, targs);
+	FindDepsRegularUnknown(gn, name, srcs, targs);
 
 	/*
 	 * Using the list of possible sources built up from the target
 	 * suffix(es), try and find an existing file/target that matches.
 	 */
-	bottom = SuffFindThem(srcs, slst);
+	bottom = FindThem(srcs, slst);
 
 	if (bottom == NULL) {
 	    /*
@@ -1762,7 +1762,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	SuffixListNode *ln, *nln;
 	for (ln = gn->children->first; ln != NULL; ln = nln) {
 	    nln = ln->next;
-	    SuffExpandChildren(ln, gn);
+	    ExpandChildren(ln, gn);
 	}
     }
 
@@ -1770,7 +1770,7 @@ SuffFindNormalDeps(GNode *gn, SrcList *slst)
 	SUFF_DEBUG1("\tNo valid suffix on %s\n", gn->name);
 
 sfnd_abort:
-	SuffFindNormalDepsPath(gn, targ);
+	FindDepsRegularPath(gn, targ);
 	goto sfnd_return;
     }
 
@@ -1785,7 +1785,7 @@ sfnd_abort:
      * Check for overriding transformation rule implied by sources
      */
     if (!Lst_IsEmpty(gn->children)) {
-	src = SuffFindCmds(targ, slst);
+	src = FindCmds(targ, slst);
 
 	if (src != NULL) {
 	    /*
@@ -1831,7 +1831,7 @@ sfnd_abort:
 	if (targ->node == NULL)
 	    targ->node = Targ_GetNode(targ->file);
 
-	SuffApplyTransform(targ->node, src->node,
+	ApplyTransform(targ->node, src->node,
 			   targ->suff, src->suff);
 
 	if (targ->node != gn) {
@@ -1859,7 +1859,7 @@ sfnd_return:
     if (bottom != NULL && Lst_FindDatum(slst, bottom) == NULL)
 	Lst_Append(slst, bottom);
 
-    while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
+    while (RemoveSrc(srcs) || RemoveSrc(targs))
 	continue;
 
     Lst_MoveAll(slst, srcs);
@@ -1886,9 +1886,9 @@ Suff_FindDeps(GNode *gn)
 {
     SrcList *srcs = Lst_New();
 
-    SuffFindDeps(gn, srcs);
+    FindDeps(gn, srcs);
 
-    while (SuffRemoveSrc(srcs))
+    while (RemoveSrc(srcs))
 	continue;
 
     assert(Lst_IsEmpty(srcs));
@@ -1896,7 +1896,7 @@ Suff_FindDeps(GNode *gn)
 }
 
 static void
-SuffFindDeps(GNode *gn, SrcList *slst)
+FindDeps(GNode *gn, SrcList *slst)
 {
     if (gn->type & OP_DEPS_FOUND)
 	return;
@@ -1911,7 +1911,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
     SUFF_DEBUG1("SuffFindDeps (%s)\n", gn->name);
 
     if (gn->type & OP_ARCHV) {
-	SuffFindArchiveDeps(gn, slst);
+	FindDepsArchive(gn, slst);
     } else if (gn->type & OP_LIB) {
 	/*
 	 * If the node is a library, it is the arch module's job to find it
@@ -1936,7 +1936,7 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	 */
 	Var_Set(PREFIX, "", gn);
     } else {
-	SuffFindNormalDeps(gn, slst);
+	FindDepsRegular(gn, slst);
     }
 }
 
