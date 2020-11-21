@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pbus.c,v 1.4 2008/03/15 13:23:24 cube Exp $	*/
+/*	$NetBSD: pckbc_pbus.c,v 1.5 2020/11/21 15:42:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,13 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.4 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.5 2020/11/21 15:42:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h> 
+#include <sys/kmem.h> 
 
 #include <machine/intr.h>
 #include <machine/walnut.h>
@@ -114,8 +114,7 @@ pckbc_pbus_attach(device_t parent, device_t self, void *aux)
 		    bus_space_map(iot, addr + KEY_MOUSE_CMD, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		memset(t, 0, sizeof(struct pckbc_internal));
+		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
