@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.212 2020/11/21 10:32:42 rillig Exp $
+# $NetBSD: Makefile,v 1.213 2020/11/21 17:44:40 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -516,6 +516,11 @@ LANG=		C
 
 MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
 
+.if ${:!uname -s!} == "NetBSD"
+LIMIT_RESOURCES?=	ulimit -v 200000
+.endif
+LIMIT_RESOURCES?=	:
+
 # Each test is run in a sub-make, to keep the tests for interfering with
 # each other, and because they use different environment variables and
 # command line options.
@@ -523,6 +528,7 @@ MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
 .mk.rawout:
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
+	${LIMIT_RESOURCES}; \
 	cd ${.OBJDIR}; \
 	env -i PATH="$$PATH" ${MAKE_TEST_ENV} ${ENV.${.PREFIX:T}} \
 	  ${TEST_MAKE} \
