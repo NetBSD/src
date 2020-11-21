@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.264 2020/11/21 18:09:13 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.265 2020/11/21 18:12:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.264 2020/11/21 18:09:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.265 2020/11/21 18:12:55 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -881,8 +881,8 @@ SrcNew(char *name, char *pref, Suff *suff, Src *parent, GNode *gn)
 }
 
 static void
-SuffAddSrc(Suff *suff, SrcList *srcList, Src *targ, char *srcName,
-	   const char *debug_tag MAKE_ATTR_UNUSED)
+SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suff *suff,
+	    const char *debug_tag)
 {
     Src *s2 = SrcNew(srcName, targ->pref, suff, targ, NULL);
     targ->numChildren++;
@@ -913,9 +913,9 @@ SuffAddSources(Suff *suff, SrcList *srcList, Src *targ)
 	 * structure for a file with no suffix attached. Two birds, and all
 	 * that...
 	 */
-	SuffAddSrc(suff, srcList, targ, bmake_strdup(targ->pref), "1");
+	SrcList_Add(srcList, bmake_strdup(targ->pref), targ, suff, "1");
     }
-    SuffAddSrc(suff, srcList, targ, str_concat2(targ->pref, suff->name), "2");
+    SrcList_Add(srcList, str_concat2(targ->pref, suff->name), targ, suff, "2");
 }
 
 /* Add all the children of targ to the list. */
