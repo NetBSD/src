@@ -1,9 +1,11 @@
-# $NetBSD: suff-rebuild.mk,v 1.4 2020/11/21 08:51:57 rillig Exp $
+# $NetBSD: suff-rebuild.mk,v 1.5 2020/11/21 11:55:57 rillig Exp $
 #
 # Demonstrates what happens to transformation rules (called inference rules
 # by POSIX) when all suffixes are deleted.
 
 all: suff-rebuild-example
+
+.MAKEFLAGS: -dpst
 
 .SUFFIXES:
 
