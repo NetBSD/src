@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.135 2020/11/16 22:28:44 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.136 2020/11/21 10:50:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,9 +119,12 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.135 2020/11/16 22:28:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.136 2020/11/21 10:50:39 rillig Exp $");
 
-/* All target nodes found so far, but not the source nodes. */
+/*
+ * All target nodes that appeared on the left-hand side of one of the
+ * dependency operators ':', '::', '!'.
+ */
 static GNodeList *allTargets;
 static HashTable allTargetsByName;
 
