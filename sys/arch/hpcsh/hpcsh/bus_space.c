@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.19 2012/01/27 18:52:57 para Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20 2020/11/21 21:07:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19 2012/01/27 18:52:57 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2020/11/21 21:07:38 thorpej Exp $");
 
 #include "debug_hpcsh.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 #include <sys/bus.h>
 
@@ -141,7 +141,7 @@ bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 {
 
 	if (hbs == NULL) {
-		hbs = malloc(sizeof(*hbs), M_DEVBUF, M_NOWAIT | M_ZERO);
+		hbs = kmem_zalloc(sizeof(*hbs), KM_SLEEP);
 		hbs->hbs_flags = HBS_FLAGS_ALLOCATED;
 	} else
 		memset(hbs, 0, sizeof(*hbs));
@@ -176,7 +176,7 @@ bus_space_destroy(bus_space_tag_t t)
 		extent_destroy(ex);
 
 	if (hbs->hbs_flags & HBS_FLAGS_ALLOCATED)
-		free(hbs, M_DEVBUF);
+		kmem_free(hbs, sizeof(*hbs));
 }
 
 /* default bus_space tag */
