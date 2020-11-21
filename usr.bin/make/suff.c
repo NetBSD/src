@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.276 2020/11/21 20:20:31 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.277 2020/11/21 20:55:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.276 2020/11/21 20:20:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.277 2020/11/21 20:55:45 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -130,10 +130,6 @@ static SuffixList *sufflist;	/* List of suffixes */
 #ifdef CLEANUP
 static SuffixList *suffClean;	/* List of suffixes to be cleaned */
 #endif
-
-/* XXX: What exactly is this variable used for? */
-/* XXX: Does it really have to be a global variable? */
-static SrcList *srclist;
 
 /* List of transformation rules, such as ".c.o" */
 static GNodeList *transforms;
@@ -1894,11 +1890,15 @@ sfnd_return:
 void
 Suff_FindDeps(GNode *gn)
 {
+    SrcList *srcs = Lst_New();
 
-    SuffFindDeps(gn, srclist);
+    SuffFindDeps(gn, srcs);
 
-    while (SuffRemoveSrc(srclist))
+    while (SuffRemoveSrc(srcs))
 	continue;
+
+    assert(Lst_IsEmpty(srcs));
+    Lst_Free(srcs);
 }
 
 static void
@@ -1981,7 +1981,6 @@ Suff_Init(void)
     suffClean = Lst_New();
     sufflist = Lst_New();
 #endif
-    srclist = Lst_New();
     transforms = Lst_New();
 
     /*
@@ -2002,7 +2001,6 @@ Suff_End(void)
     Lst_Destroy(suffClean, SuffFree);
     if (nullSuff != NULL)
 	SuffFree(nullSuff);
-    Lst_Free(srclist);
     Lst_Free(transforms);
 #endif
 }
