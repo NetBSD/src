@@ -1,4 +1,4 @@
-# $NetBSD: suff-rebuild.mk,v 1.3 2020/11/21 08:23:36 rillig Exp $
+# $NetBSD: suff-rebuild.mk,v 1.4 2020/11/21 08:51:57 rillig Exp $
 #
 # Demonstrates what happens to transformation rules (called inference rules
 # by POSIX) when all suffixes are deleted.
@@ -10,14 +10,14 @@ all: suff-rebuild-example
 .SUFFIXES: .a .b .c
 
 suff-rebuild-example.a:
-	: from nothing to a
+	: Making ${.TARGET} out of nothing.
 
 .a.b:
-	: from a to b
+	: Making ${.TARGET} from ${.IMPSRC}.
 .b.c:
-	: from b to c
+	: Making ${.TARGET} from ${.IMPSRC}.
 .c:
-	: from c to nothing
+	: Making ${.TARGET} from ${.IMPSRC}.
 
 # XXX: At a quick glance, the code in SuffUpdateTarget looks as if it were
 # possible to delete the suffixes in the middle of the makefile, add back
