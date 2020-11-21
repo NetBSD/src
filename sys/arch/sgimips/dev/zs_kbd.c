@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.10 2012/10/29 12:51:38 chs Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.11 2020/11/21 17:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.10 2012/10/29 12:51:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.11 2020/11/21 17:18:31 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -213,10 +213,8 @@ zskbd_attach(device_t parent, device_t self, void *aux)
 	} else {
 		wskaa.console = 0;
 
-		sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
-		    M_WAITOK);
-		if (sc->sc_dc == NULL)
-			panic("zskbd out of memory");
+		sc->sc_dc = kmem_alloc(sizeof(struct zskbd_devconfig),
+		    KM_SLEEP);
 
 		sc->sc_dc->enabled = 0;
 	}

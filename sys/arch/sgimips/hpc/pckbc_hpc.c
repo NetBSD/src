@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.10 2015/02/18 16:47:58 macallan Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.11 2020/11/21 17:18:31 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.10 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.11 2020/11/21 17:18:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
@@ -109,8 +109,7 @@ pckbc_hpc_attach(device_t parent, device_t self, void *aux)
 					haa->ha_devoff + KBCMDP, 1, &ioh_c))
 			panic("pckbc_hpc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		t = kmem_zalloc(sizeof(struct pckbc_internal), KM_SLEEP);
 		t->t_iot = hpc_memt;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
