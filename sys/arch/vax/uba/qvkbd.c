@@ -1,4 +1,4 @@
-/*	$NetBSD: qvkbd.c,v 1.2 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: qvkbd.c,v 1.3 2020/11/21 22:37:11 thorpej Exp $	*/
 
 /* Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from dzkbd.c
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$$");
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/intr.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -171,8 +171,7 @@ qvkbd_attach(device_t parent, device_t self, void *aux)
 	if (isconsole) {
 		qvi = &qvkbd_console_internal;
 	} else {
-		qvi = malloc(sizeof(struct qvkbd_internal),
-				       M_DEVBUF, M_WAITOK);
+		qvi = kmem_alloc(sizeof(struct qvkbd_internal), KM_SLEEP);
 		qvi->qvi_ks.attmt.sendchar = qvkbd_sendchar;
 		qvi->qvi_ks.attmt.cookie = ls;
 	}
