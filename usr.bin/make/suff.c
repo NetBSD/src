@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.250 2020/11/19 21:27:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.251 2020/11/21 08:01:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.250 2020/11/19 21:27:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.251 2020/11/21 08:01:20 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -627,12 +627,12 @@ SuffRebuildGraph(GNode *transform, Suff *suff)
  *	TRUE iff a new main target has been selected.
  */
 static Boolean
-SuffScanTargets(GNode *target, GNode **inout_main, Suff *gs_s, Boolean *gs_r)
+SuffScanTargets(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
 {
     Suff *srcSuff, *targSuff;
     char *ptr;
 
-    if (*inout_main == NULL && *gs_r && !(target->type & OP_NOTARGET)) {
+    if (*inout_main == NULL && *r && !(target->type & OP_NOTARGET)) {
 	*inout_main = target;
 	Targ_SetMain(target);
 	return TRUE;
@@ -641,13 +641,13 @@ SuffScanTargets(GNode *target, GNode **inout_main, Suff *gs_s, Boolean *gs_r)
     if (target->type == OP_TRANSFORM)
 	return FALSE;
 
-    if ((ptr = strstr(target->name, gs_s->name)) == NULL ||
+    if ((ptr = strstr(target->name, suff->name)) == NULL ||
 	ptr == target->name)
 	return FALSE;
 
     if (SuffParseTransform(target->name, &srcSuff, &targSuff)) {
 	if (*inout_main == target) {
-	    *gs_r = TRUE;
+	    *r = TRUE;
 	    *inout_main = NULL;
 	    Targ_SetMain(NULL);
 	}
