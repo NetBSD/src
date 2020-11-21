@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.18 2013/12/02 18:36:11 joerg Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.19 2020/11/21 09:36:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -291,7 +291,7 @@ Lirqhandlers:
 #ifdef IRQSTATS
 	.global _C_LABEL(intrnames), _C_LABEL(eintrnames)
 	.global _C_LABEL(eintrcnt)
-_C_LABEL(intrnames): 
+_C_LABEL(intrnames):
 _C_LABEL(eintrnames):
 _C_LABEL(eintrcnt):
 

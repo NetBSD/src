@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.16 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.17 2020/11/21 09:36:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -199,7 +199,7 @@ Lfind_highest_ipl:
 	mvn	r2, r2
 	orr	r0, r0, r2
 
-	str	r0, [r1]	
+	str	r0, [r1]
 
 	ldr	r0, [r4, #CI_CPL]
 	str	r9, [r4, #CI_CPL]
@@ -214,7 +214,7 @@ Lfind_highest_ipl:
 
 	ldr	r7, Lirqhandlers
 
-	/* 
+	/*
 	 * take a copy of the IRQ request so that we can strip bits out of it
 	 * note that we only use 24 bits with iomd2 chips
 	 */
@@ -229,7 +229,7 @@ Lfind_highest_ipl:
 	rsb	r5, r11, #0
 	ands	r10, r11, r5
 
-	/* 
+	/*
 	 * now r10 has at most 1 set bit, call this X
 	 * if X = 0, branch to exit code
 	 */
@@ -252,7 +252,7 @@ irqloop:
 	/* fetch the bit number */
 	ldrb	r9, [r5, r9, lsr #26 ]
 
-	/* 
+	/*
 	 * r9 = irq to service
 	 */
 
@@ -271,7 +271,7 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	adreq	lr, nextirq		/* return Address */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
-	
+
 	/* stat info C */
 	ldr	r1, [r4, #(CI_CC_NINTR)] /* Stat info B */
 	ldr	r2, [r4, #(CI_CC_NINTR+4)]
@@ -305,9 +305,9 @@ irqchainloop:
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 	ldr	r6, [r6, #(IH_NEXT)]	/* fetch next handler */
-	
+
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
-	
+
 	/* if it was it'll just fall through this: */
 	teqne	r6, #0x00000000
 	bne	irqchainloop
