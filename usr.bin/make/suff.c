@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.266 2020/11/21 18:28:34 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.267 2020/11/21 19:02:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.266 2020/11/21 18:28:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.267 2020/11/21 19:02:58 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -193,9 +193,9 @@ typedef struct Src {
 #endif
 } Src;
 
-/* TODO: Document the difference between suffNull and emptySuff. */
+/* TODO: Document the difference between nullSuff and emptySuff. */
 /* The NULL suffix for this run */
-static Suff *suffNull;
+static Suff *nullSuff;
 /* The empty suffix required for POSIX single-suffix transformation rules */
 static Suff *emptySuff;
 
@@ -322,8 +322,8 @@ SuffFree(void *sp)
 {
     Suff *suff = sp;
 
-    if (suff == suffNull)
-	suffNull = NULL;
+    if (suff == nullSuff)
+	nullSuff = NULL;
 
     if (suff == emptySuff)
 	emptySuff = NULL;
@@ -427,12 +427,12 @@ Suff_ClearSuffixes(void)
     DEBUG0(SUFF, "Clearing all suffixes\n");
     sufflist = Lst_New();
     sNum = 0;
-    if (suffNull != NULL)
-	SuffFree(suffNull);
-    emptySuff = suffNull = SuffNew("");
+    if (nullSuff != NULL)
+	SuffFree(nullSuff);
+    emptySuff = nullSuff = SuffNew("");
 
-    Dir_Concat(suffNull->searchPath, dirSearchPath);
-    suffNull->flags = SUFF_NULL;
+    Dir_Concat(nullSuff->searchPath, dirSearchPath);
+    nullSuff->flags = SUFF_NULL;
 }
 
 /* Parse a transformation string such as ".c.o" to find its two component
@@ -479,10 +479,10 @@ SuffParseTransform(const char *str, Suff **out_src, Suff **out_targ)
 	 * find a double rule over a singleton, hence we leave this
 	 * check until the end.
 	 *
-	 * XXX: Use emptySuff over suffNull?
+	 * XXX: Use emptySuff over nullSuff?
 	 */
 	*out_src = singleSrc;
-	*out_targ = suffNull;
+	*out_targ = nullSuff;
 	return TRUE;
     }
     return FALSE;
@@ -1472,7 +1472,7 @@ SuffFindArchiveDeps(GNode *gn, SrcList *slst)
     ms = mem->suffix;
     if (ms == NULL) {		/* Didn't know what it was. */
 	SUFF_DEBUG0("using null suffix\n");
-	ms = suffNull;
+	ms = nullSuff;
     }
 
 
@@ -1579,13 +1579,13 @@ SuffFindNormalDepsUnknown(GNode *gn, const char *sopref,
 {
     Src *targ;
 
-    if (!Lst_IsEmpty(targs) || suffNull == NULL)
+    if (!Lst_IsEmpty(targs) || nullSuff == NULL)
 	return;
 
     SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 
     targ = SrcNew(bmake_strdup(gn->name), bmake_strdup(sopref),
-		  suffNull, NULL, gn);
+		  nullSuff, NULL, gn);
 
     /*
      * Only use the default suffix rules if we don't have commands
@@ -1948,13 +1948,13 @@ Suff_SetNull(const char *name)
 	return;
     }
 
-    if (suffNull != NULL)
-	suffNull->flags &= ~(unsigned)SUFF_NULL;
+    if (nullSuff != NULL)
+	nullSuff->flags &= ~(unsigned)SUFF_NULL;
     suff->flags |= SUFF_NULL;
     /*
      * XXX: Here's where the transformation mangling would take place
      */
-    suffNull = suff;
+    nullSuff = suff;
 }
 
 /* Initialize the suffixes module. */
@@ -1984,8 +1984,8 @@ Suff_End(void)
 #ifdef CLEANUP
     Lst_Destroy(sufflist, SuffFree);
     Lst_Destroy(suffClean, SuffFree);
-    if (suffNull != NULL)
-	SuffFree(suffNull);
+    if (nullSuff != NULL)
+	SuffFree(nullSuff);
     Lst_Free(srclist);
     Lst_Free(transforms);
 #endif
