@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.213 2020/11/21 17:44:40 rillig Exp $
+# $NetBSD: Makefile,v 1.214 2020/11/21 21:41:27 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -472,8 +472,7 @@ SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
 
 # Some tests need an additional round of postprocessing.
-POSTPROC.deptgt-suffixes= \
-			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
+POSTPROC.deptgt-suffixes= awk '/^\#\*\*\* Suffixes/,/^never-stop/'
 POSTPROC.gnode-submake=	awk '/Input graph/, /^$$/'
 POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 
