@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.254 2020/11/21 09:19:46 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.255 2020/11/21 09:51:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.254 2020/11/21 09:19:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.255 2020/11/21 09:51:00 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -223,24 +223,24 @@ SuffStrIsPrefix(const char *pref, const char *str)
  * Return NULL if it ain't, pointer to the start of suffix in name if it is.
  */
 static const char *
-SuffSuffGetSuffix(const Suff *s, size_t nameLen, const char *nameEnd)
+SuffSuffGetSuffix(const Suff *suff, size_t nameLen, const char *nameEnd)
 {
     const char *p1;		/* Pointer into suffix name */
     const char *p2;		/* Pointer into string being examined */
 
-    if (nameLen < s->nameLen)
+    if (nameLen < suff->nameLen)
 	return NULL;		/* this string is shorter than the suffix */
 
-    p1 = s->name + s->nameLen;
+    p1 = suff->name + suff->nameLen;
     p2 = nameEnd;
 
-    while (p1 >= s->name && *p1 == *p2) {
+    while (p1 >= suff->name && *p1 == *p2) {
 	p1--;
 	p2--;
     }
 
     /* XXX: s->name - 1 invokes undefined behavior */
-    return p1 == s->name - 1 ? p2 + 1 : NULL;
+    return p1 == suff->name - 1 ? p2 + 1 : NULL;
 }
 
 static Boolean
@@ -669,13 +669,13 @@ SuffUpdateTarget(GNode *target, GNode **inout_main, Suff *suff, Boolean *r)
  * This is ugly, but other makes treat all targets that start with a '.' as
  * suffix rules. */
 static void
-UpdateTargets(GNode **inout_main, Suff *s)
+UpdateTargets(GNode **inout_main, Suff *suff)
 {
     Boolean r = FALSE;
     GNodeListNode *ln;
     for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
-	if (SuffUpdateTarget(gn, inout_main, s, &r))
+	if (SuffUpdateTarget(gn, inout_main, suff, &r))
 	    break;
     }
 }
@@ -696,29 +696,29 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 {
     GNodeListNode *ln;
 
-    Suff *s = FindSuffByName(name);
-    if (s != NULL)
+    Suff *suff = FindSuffByName(name);
+    if (suff != NULL)
 	return;
 
-    s = SuffNew(name);
-    Lst_Append(sufflist, s);
+    suff = SuffNew(name);
+    Lst_Append(sufflist, suff);
 
-    UpdateTargets(inout_main, s);
+    UpdateTargets(inout_main, suff);
 
     /*
      * Look for any existing transformations from or to this suffix.
      * XXX: Only do this after a Suff_ClearSuffixes?
      */
     for (ln = transforms->first; ln != NULL; ln = ln->next)
-	SuffRebuildGraph(ln->datum, s);
+	SuffRebuildGraph(ln->datum, suff);
 }
 
 /* Return the search path for the given suffix, or NULL. */
 SearchPath *
 Suff_GetPath(const char *sname)
 {
-    Suff *s = FindSuffByName(sname);
-    return s != NULL ? s->searchPath : NULL;
+    Suff *suff = FindSuffByName(sname);
+    return suff != NULL ? suff->searchPath : NULL;
 }
 
 /*
@@ -746,20 +746,20 @@ Suff_DoPaths(void)
     inLibs = Lst_New();
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
-	Suff *s = ln->datum;
-	if (!Lst_IsEmpty(s->searchPath)) {
+	Suff *suff = ln->datum;
+	if (!Lst_IsEmpty(suff->searchPath)) {
 #ifdef INCLUDES
-	    if (s->flags & SUFF_INCLUDE)
-		Dir_Concat(inIncludes, s->searchPath);
+	    if (suff->flags & SUFF_INCLUDE)
+		Dir_Concat(inIncludes, suff->searchPath);
 #endif
 #ifdef LIBRARIES
-	    if (s->flags & SUFF_LIBRARY)
-		Dir_Concat(inLibs, s->searchPath);
+	    if (suff->flags & SUFF_LIBRARY)
+		Dir_Concat(inLibs, suff->searchPath);
 #endif
-	    Dir_Concat(s->searchPath, dirSearchPath);
+	    Dir_Concat(suff->searchPath, dirSearchPath);
 	} else {
-	    Lst_Destroy(s->searchPath, Dir_Destroy);
-	    s->searchPath = Dir_CopyDirSearchPath();
+	    Lst_Destroy(suff->searchPath, Dir_Destroy);
+	    suff->searchPath = Dir_CopyDirSearchPath();
 	}
     }
 
@@ -1887,13 +1887,13 @@ SuffFindDeps(GNode *gn, SrcList *slst)
 	 * set the TARGET variable to the node's name in order to give it a
 	 * value).
 	 */
-	Suff *s = FindSuffByName(LIBSUFF);
+	Suff *suff = FindSuffByName(LIBSUFF);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
-	if (s != NULL) {
-	    gn->suffix = s;
+	if (suff != NULL) {
+	    gn->suffix = suff;
 	    gn->suffix->refCount++;
-	    Arch_FindLib(gn, s->searchPath);
+	    Arch_FindLib(gn, suff->searchPath);
 	} else {
 	    gn->suffix = NULL;
 	    Var_Set(TARGET, gn->name, gn);
