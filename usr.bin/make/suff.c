@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.261 2020/11/21 13:20:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.262 2020/11/21 17:18:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.261 2020/11/21 13:20:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.262 2020/11/21 17:18:36 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1178,18 +1178,12 @@ SuffExpandChildren(GNodeListNode *cln, GNode *pgn)
 		    pp_skip_hspace(&cp);
 		    start = cp;		/* Continue at the next non-space. */
 		} else if (*cp == '$') {
-		    /*
-		     * Start of a variable spec -- contact variable module
-		     * to find the end so we can skip over it.
-		     */
+		    /* Skip over the variable expression. */
 		    const char *nested_p = cp;
 		    const char	*junk;
 		    void	*freeIt;
 
-		    /* XXX: Why VARE_WANTRES when the result is not used? */
-		    (void)Var_Parse(&nested_p, pgn,
-				    VARE_WANTRES | VARE_UNDEFERR,
-				    &junk, &freeIt);
+		    (void)Var_Parse(&nested_p, pgn, VARE_NONE, &junk, &freeIt);
 		    /* TODO: handle errors */
 		    if (junk == var_Error) {
 			Parse_Error(PARSE_FATAL,
