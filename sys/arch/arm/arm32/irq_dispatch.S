@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.16 2015/06/02 14:06:16 matt Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.17 2020/11/21 19:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -95,7 +95,7 @@ ARM_ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS		/* finishes with curcpu() in r4 */
+	ENABLE_ALIGNMENT_FAULTS		/* puts cur{cpu,lwp} in r4/r5 */
 
 #ifdef _ARM_ARCH_7
 	clrex				/* force all strex to fail */
@@ -108,7 +108,8 @@ ARM_ASENTRY_NP(irq_entry)
 	 * callee-saved regs here.  We use the following registers, which
 	 * we expect to persist:
 	 *
-	 *	r4	address of current cpu_info
+	 *	r4	address of current cpu_info (curcpu)
+	 *      r5	address of current lwp (curlwp)
 	 *	r6	old value of `ci_intr_depth'
 	 */
 	ldr	r6, [r4, #CI_INTR_DEPTH]
