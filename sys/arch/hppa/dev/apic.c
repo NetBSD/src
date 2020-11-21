@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.3 2019/11/10 21:16:28 chs Exp $	*/
+/*	$NetBSD: apic.c,v 1.4 2020/11/21 21:01:16 thorpej Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
@@ -22,7 +22,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/pdc.h>
@@ -109,8 +109,7 @@ apic_attach(struct elroy_softc *sc)
 	aprint_normal(" APIC ver %x, %d pins",
 	    data & APIC_VERSION_MASK, sc->sc_nints);
 
-	sc->sc_irq = malloc(sc->sc_nints * sizeof(int), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	sc->sc_irq = kmem_zalloc(sc->sc_nints * sizeof(int), KM_SLEEP);
 
 	apic_get_int_tbl(sc);
 
@@ -171,8 +170,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	if (irq <= 0 || irq > 31)
 		return NULL;
 
-	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_WAITOK);
-	cnt = malloc(sizeof(struct evcnt), M_DEVBUF, M_WAITOK);
+	aiv = kmem_alloc(sizeof(struct apic_iv), KM_SLEEP);
+	cnt = kmem_alloc(sizeof(struct evcnt), KM_SLEEP);
 	aiv->sc = sc;
 	aiv->ih = ih;
 	aiv->handler = handler;
@@ -184,8 +183,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	if (biv == NULL) {
 		iv = hppa_intr_establish(pri, apic_intr, aiv, &ci->ci_ir, irq);
 		if (iv == NULL) {
-			free(aiv, M_DEVBUF);
-			free(cnt, M_DEVBUF);
+			kmem_free(aiv, sizeof(*aiv));
+			kmem_free(cnt, sizeof(*cnt));
 
 			return NULL;
 		}
@@ -267,7 +266,7 @@ apic_get_int_tbl(struct elroy_softc *sc)
 
 	size = nentries * sizeof(struct pdc_pat_pci_rt);
 	sc->sc_int_tbl_sz = nentries;
-	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_WAITOK);
+	sc->sc_int_tbl = kmem_alloc(size, KM_SLEEP);
 
 	pdcproc_pci_gettable(nentries, size, sc->sc_int_tbl);
 }
