@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.103 2020/08/15 13:33:54 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.104 2020/11/21 19:44:52 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.103 2020/08/15 13:33:54 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.104 2020/11/21 19:44:52 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -324,7 +324,8 @@ ENTRY_NP(lwp_trampoline)
 	GET_CPSR(r0)
 	CPSID_I(r0, r0)			/* Kill irq's */
 
-	GET_CURCPU(r4)			/* for DO_AST */
+	/* for DO_AST */
+	GET_CURX(r4, r5)		/* r4 = curcpu, r5 = curlwp */
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAME
 
