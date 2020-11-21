@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.28 2017/07/03 21:30:59 wiz Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.29 2020/11/21 11:41:54 kim Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -51,12 +51,18 @@ Lines beginning with a hash
 .Pq Sq #
 are comments and will be ignored.
 .Pp
-Some keywords can be present multiple times in the file to define additional
+The
+.Dq Ic banner ,
+.Dq Ic load ,
+.Dq Ic menu ,
+and
+.Dq Ic userconf
+keywords can be present multiple times in the file to define additional
 items.
-Such keywords are noted below.
+See the description for each keyword for guidance and limitations on
+using multiple entries.
 .Bl -tag -width timeout
 .It Sy banner
-(may be present multiple times)
 The text from banner lines is displayed instead of the standard welcome text
 by the boot loader.
 Up to 10 lines can be defined.
@@ -101,7 +107,6 @@ If that file does not exist, it will then attempt to load
 .Pa /<name> .
 May be used as many times as needed.
 .It Sy menu
-(may be present multiple times)
 Used to define a menu item to be displayed to the end-user at boot time
 which allows a series of boot commands to be run without further typing.
 The value consists of the required menu text, followed by a colon
@@ -160,6 +165,7 @@ time limit for the user to choose an option.
 Passes a
 .Xr userconf 4
 command to the kernel at boot time.
+May be used as many times as needed.
 .El
 .Sh EXAMPLES
 Here is an example
@@ -182,7 +188,9 @@ menu=Go to command line (advanced users only):prompt
 clear=1
 timeout=-1
 default=1
-userconf=disable ehci*
+userconf=disable i915drmkms*
+userconf=disable nouveau*
+userconf=disable radeon*
 # Always load ramdisk module
 load=/miniroot.kmod
 .Ed
