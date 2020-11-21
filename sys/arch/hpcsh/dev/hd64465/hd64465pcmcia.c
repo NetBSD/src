@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.32 2012/10/29 13:46:26 chs Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.33 2020/11/21 21:07:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.32 2012/10/29 13:46:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.33 2020/11/21 21:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/boot_flag.h>
 #include <sys/bus.h>
@@ -536,10 +536,9 @@ hd64465pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 	struct hd64465pcmcia_window_cookie *cookie;
 	bus_addr_t ofs;
 
-	cookie = malloc(sizeof(struct hd64465pcmcia_window_cookie),
-	    M_DEVBUF, M_NOWAIT);
+	cookie = kmem_zalloc(sizeof(struct hd64465pcmcia_window_cookie),
+	    KM_SLEEP);
 	KASSERT(cookie);
-	memset(cookie, 0, sizeof(struct hd64465pcmcia_window_cookie));
 
 	/* Address */
 	if ((kind & ~PCMCIA_WIDTH_MEM_MASK) == PCMCIA_MEM_ATTR) {
@@ -574,7 +573,7 @@ hd64465pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 	return (0);
  bad:
 	DPRINTF("%#lx-%#lx map failed.\n", card_addr, size);
-	free(cookie, M_DEVBUF);
+	kmem_free(cookie, sizeof(*cookie));
 
 	return (1);
 }
@@ -588,7 +587,7 @@ hd64465pcmcia_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 		bus_space_unmap(cookie->wc_tag, cookie->wc_handle,
 		    cookie->wc_size);
 	DPRINTF("%#lx-%#x\n", cookie->wc_handle, cookie->wc_size);
-	free(cookie, M_DEVBUF);
+	kmem_free(cookie, sizeof(*cookie));
 }
 
 int
