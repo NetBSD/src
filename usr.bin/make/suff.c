@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.271 2020/11/21 19:33:38 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.272 2020/11/21 19:40:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.271 2020/11/21 19:33:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.272 2020/11/21 19:40:19 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -183,7 +183,7 @@ typedef struct Suffix {
 typedef struct Src {
     char *file;			/* The file to look for */
     char *pref;			/* Prefix from which file was formed */
-    Suffix *suff;			/* The suffix on the file */
+    Suffix *suff;		/* The suffix on the file */
     struct Src *parent;		/* The Src for which this is a source */
     GNode *node;		/* The node describing the file */
     int numChildren;		/* Count of existing children (so we don't free
@@ -245,8 +245,8 @@ SuffStrIsPrefix(const char *pref, const char *str)
 }
 
 /*
- * See if suff is a suffix of name.
- * Return NULL if it ain't, pointer to the start of suffix in name if it is.
+ * See if suff is a suffix of name, and if so, return a pointer to the suffix
+ * in the given name, thereby marking the point where the prefix ends.
  */
 static const char *
 Suffix_GetSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
