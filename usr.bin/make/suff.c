@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.275 2020/11/21 20:16:14 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.276 2020/11/21 20:20:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.275 2020/11/21 20:16:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.276 2020/11/21 20:20:31 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -945,16 +945,16 @@ SuffAddLevel(SrcList *srcs, Src *targ)
 /* Free the first Src in the list that is not referenced anymore.
  * Return whether a Src was removed. */
 static Boolean
-SuffRemoveSrc(SrcList *l)
+SuffRemoveSrc(SrcList *srcs)
 {
     SrcListNode *ln;
 
 #ifdef DEBUG_SRC
-    debug_printf("cleaning list %p:", l);
-    SrcList_PrintAddrs(l);
+    debug_printf("cleaning list %p:", srcs);
+    SrcList_PrintAddrs(srcs);
 #endif
 
-    for (ln = l->first; ln != NULL; ln = ln->next) {
+    for (ln = srcs->first; ln != NULL; ln = ln->next) {
 	Src *src = ln->datum;
 
 	if (src->numChildren == 0) {
@@ -971,17 +971,17 @@ SuffRemoveSrc(SrcList *l)
 	    }
 #ifdef DEBUG_SRC
 	    debug_printf("free: list %p src %p children %d\n",
-			 l, src, src->numChildren);
+			 srcs, src, src->numChildren);
 	    Lst_Free(src->childrenList);
 #endif
-	    Lst_Remove(l, ln);
+	    Lst_Remove(srcs, ln);
 	    free(src);
 	    return TRUE;
 	}
 #ifdef DEBUG_SRC
 	else {
 	    debug_printf("keep: list %p src %p children %d:",
-			 l, src, src->numChildren);
+			 srcs, src, src->numChildren);
 	    SrcList_PrintAddrs(src->childrenList);
 	}
 #endif
@@ -1896,6 +1896,7 @@ Suff_FindDeps(GNode *gn)
 {
 
     SuffFindDeps(gn, srclist);
+
     while (SuffRemoveSrc(srclist))
 	continue;
 }
