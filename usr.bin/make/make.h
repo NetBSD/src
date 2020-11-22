@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.212 2020/11/21 19:15:06 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.213 2020/11/22 10:48:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -260,29 +260,29 @@ typedef enum GNodeType {
     /* Attributes applied by PMake */
 
     /* The node is a transformation rule, such as ".c.o". */
-    OP_TRANSFORM	= 1 << 31,
+    OP_TRANSFORM	= 1 << 30,
     /* Target is a member of an archive */
     /* XXX: How does this differ from OP_ARCHV? */
-    OP_MEMBER		= 1 << 30,
+    OP_MEMBER		= 1 << 29,
     /* The node is a library,
      * its name has the form "-l<libname>" */
-    OP_LIB		= 1 << 29,
+    OP_LIB		= 1 << 28,
     /* The node is an archive member,
      * its name has the form "archive(member)" */
     /* XXX: How does this differ from OP_MEMBER? */
-    OP_ARCHV		= 1 << 28,
+    OP_ARCHV		= 1 << 27,
     /* Target has all the commands it should. Used when parsing to catch
      * multiple command groups for a target.  Only applies to the dependency
      * operators ':' and '!', but not to '::'. */
-    OP_HAS_COMMANDS	= 1 << 27,
+    OP_HAS_COMMANDS	= 1 << 26,
     /* The special command "..." has been seen. All further commands from
      * this node will be saved on the .END node instead, to be executed at
      * the very end. */
-    OP_SAVE_CMDS	= 1 << 26,
+    OP_SAVE_CMDS	= 1 << 25,
     /* Already processed by Suff_FindDeps */
-    OP_DEPS_FOUND	= 1 << 25,
+    OP_DEPS_FOUND	= 1 << 24,
     /* Node found while expanding .ALLSRC */
-    OP_MARK		= 1 << 24,
+    OP_MARK		= 1 << 23,
 
     OP_NOTARGET		= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
