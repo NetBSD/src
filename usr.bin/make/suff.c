@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.296 2020/11/22 12:00:27 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.297 2020/11/22 12:05:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.296 2020/11/22 12:00:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.297 2020/11/22 12:05:20 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -191,8 +191,7 @@ typedef struct Candidate {
     char *file;
     /* The prefix from which file was formed.
      * Its memory is shared among all candidates. */
-    /* XXX: rename to prefix */
-    char *pref;
+    char *prefix;
     /* The suffix on the file. */
     Suffix *suff;
 
@@ -897,13 +896,13 @@ CandidateList_PrintAddrs(CandidateList *list)
 #endif
 
 static Candidate *
-Candidate_New(char *name, char *pref, Suffix *suff, Candidate *parent,
+Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
 	      GNode *gn)
 {
     Candidate *cand = bmake_malloc(sizeof *cand);
 
     cand->file = name;
-    cand->pref = pref;
+    cand->prefix = prefix;
     cand->suff = Suffix_Ref(suff);
     cand->parent = parent;
     cand->node = gn;
@@ -920,7 +919,7 @@ static void
 CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 		  Suffix *suff, const char *debug_tag)
 {
-    Candidate *cand = Candidate_New(srcName, targ->pref, suff, targ, NULL);
+    Candidate *cand = Candidate_New(srcName, targ->prefix, suff, targ, NULL);
     targ->numChildren++;
     Lst_Append(list, cand);
 
@@ -946,11 +945,11 @@ CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
 	     * If the suffix has been marked as the NULL suffix, also
 	     * create a candidate for a file with no suffix attached.
 	     */
-	    CandidateList_Add(list, bmake_strdup(cand->pref),
+	    CandidateList_Add(list, bmake_strdup(cand->prefix),
 		       cand, suff, "1");
 	}
 
-	CandidateList_Add(list, str_concat2(cand->pref, suff->name),
+	CandidateList_Add(list, str_concat2(cand->prefix, suff->name),
 			  cand, suff, "2");
     }
 }
@@ -973,7 +972,7 @@ RemoveCandidate(CandidateList *srcs)
 	if (src->numChildren == 0) {
 	    free(src->file);
 	    if (src->parent == NULL)
-		free(src->pref);
+		free(src->prefix);
 	    else {
 #ifdef DEBUG_SRC
 	        /* XXX: Lst_RemoveDatum */
@@ -1070,7 +1069,7 @@ FindCmds(Candidate *targ, CandidateList *slst)
     char *cp;
 
     tgn = targ->node;
-    prefLen = strlen(targ->pref);
+    prefLen = strlen(targ->prefix);
 
     for (gln = tgn->children->first; gln != NULL; gln = gln->next) {
 	sgn = gln->datum;
@@ -1092,7 +1091,7 @@ FindCmds(Candidate *targ, CandidateList *slst)
 	} else {
 	    cp++;
 	}
-	if (strncmp(cp, targ->pref, prefLen) != 0)
+	if (strncmp(cp, targ->prefix, prefLen) != 0)
 	    continue;
 	/* The node matches the prefix ok, see if it has a known suffix. */
 	suff = FindSuffixByName(cp + prefLen);
@@ -1113,7 +1112,7 @@ FindCmds(Candidate *targ, CandidateList *slst)
     if (gln == NULL)
 	return NULL;
 
-    ret = Candidate_New(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
+    ret = Candidate_New(bmake_strdup(sgn->name), targ->prefix, suff, targ, sgn);
     targ->numChildren++;
 #ifdef DEBUG_SRC
     debug_printf("3 add targ %p ret %p\n", targ, ret);
@@ -1702,10 +1701,9 @@ FindDepsRegular(GNode *gn, CandidateList *slst)
     CandidateList *srcs;	/* List of sources at which to look */
     CandidateList *targs;	/* List of targets to which things can be
 				 * transformed. They all have the same file,
-				 * but different suff and pref fields */
+				 * but different suff and prefix fields */
     Candidate *bottom;		/* Start of found transformation path */
     Candidate *src;
-    char *pref;			/* Prefix to use */
     Candidate *targ;
 
     const char *name = gn->name;
@@ -1771,9 +1769,7 @@ FindDepsRegular(GNode *gn, CandidateList *slst)
     }
 
     Var_Set(TARGET, GNode_Path(gn), gn);
-
-    pref = targ != NULL ? targ->pref : gn->name;
-    Var_Set(PREFIX, pref, gn);
+    Var_Set(PREFIX, targ != NULL ? targ->prefix : gn->name, gn);
 
     /*
      * Now we've got the important local variables set, expand any sources
@@ -1865,7 +1861,7 @@ sfnd_abort:
 	     * node, so all we need to do is set the standard variables.
 	     */
 	    targ->node->type |= OP_DEPS_FOUND;
-	    Var_Set(PREFIX, targ->pref, targ->node);
+	    Var_Set(PREFIX, targ->prefix, targ->node);
 	    Var_Set(TARGET, targ->node->name, targ->node);
 	}
     }
