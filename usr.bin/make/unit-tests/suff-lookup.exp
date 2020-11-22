@@ -42,11 +42,11 @@ Adding suffix ".dead-end"
 inserting ".dead-end" (6) at end of list
 inserting ".short" (4) at end of list
 Wildcard expanding "all"...
-SuffFindDeps (all)
+SuffFindDeps "all"
 	No known suffix on all. Using .NULL suffix
 adding suffix rules
 Wildcard expanding "suff-lookup.cc"...suffix is ".cc"...
-SuffFindDeps (suff-lookup.cc)
+SuffFindDeps "suff-lookup.cc"
 	trying suff-lookup.ccc...not there
 	trying suff-lookup.c...not there
 	trying suff-lookup.short...not there
@@ -57,14 +57,14 @@ SuffFindDeps (suff-lookup.cc)
 suffix is ".ccc"...
 suffix is ".c"...
 suffix is ".sho"...
-SuffFindDeps (suff-lookup.sho)
+SuffFindDeps "suff-lookup.sho"
 suffix is ".sho"...
 : 'Making suff-lookup.sho out of nothing.'
 : 'Making suff-lookup.c from suff-lookup.sho.'
 : 'Making suff-lookup.ccc from suff-lookup.c.'
 : 'Making suff-lookup.cc from suff-lookup.ccc.'
 Wildcard expanding "all"...
-SuffFindDeps (.END)
+SuffFindDeps ".END"
 	No known suffix on .END. Using .NULL suffix
 adding suffix rules
 Wildcard expanding ".END"...

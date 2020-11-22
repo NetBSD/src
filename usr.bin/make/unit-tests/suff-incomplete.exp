@@ -26,16 +26,16 @@ ParseDoDependency(.DEFAULT:)
 ParseReadLine (24): '	: Making ${.TARGET} from ${.IMPSRC} all ${.ALLSRC} by default.'
 transformation .DEFAULT complete
 Wildcard expanding "all"...
-SuffFindDeps (all)
+SuffFindDeps "all"
 	No known suffix on all. Using .NULL suffix
 adding suffix rules
 Wildcard expanding "suff-incomplete.c"...suffix is ".c"...
-SuffFindDeps (suff-incomplete.c)
+SuffFindDeps "suff-incomplete.c"
 	trying suff-incomplete.a...not there
 Wildcard expanding "suff-incomplete.c"...suffix is ".c"...
 : Making suff-incomplete.c from suff-incomplete.c all  by default.
 Wildcard expanding "all"...
-SuffFindDeps (.END)
+SuffFindDeps ".END"
 	No known suffix on .END. Using .NULL suffix
 adding suffix rules
 Wildcard expanding ".END"...
