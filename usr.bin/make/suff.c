@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.298 2020/11/22 17:20:15 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.299 2020/11/22 18:13:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.298 2020/11/22 17:20:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.299 2020/11/22 18:13:52 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -751,11 +751,12 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 static void
 UpdateTargets(GNode **inout_main, Suffix *suff)
 {
-    Boolean r = FALSE;
+    Boolean removedMain = FALSE;
     GNodeListNode *ln;
+
     for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
-	if (UpdateTarget(gn, inout_main, suff, &r))
+	if (UpdateTarget(gn, inout_main, suff, &removedMain))
 	    break;
     }
 }
