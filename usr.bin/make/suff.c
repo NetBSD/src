@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.291 2020/11/22 11:15:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.292 2020/11/22 11:26:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.291 2020/11/22 11:15:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.292 2020/11/22 11:26:50 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -238,7 +238,7 @@ Suffix_Unassign(Suffix **var)
  * Return NULL if it ain't, pointer to character in str after prefix if so.
  */
 static const char *
-StrIsPrefix(const char *pref, const char *str)
+StrTrimPrefix(const char *pref, const char *str)
 {
     while (*str && *pref == *str) {
 	pref++;
@@ -462,7 +462,7 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
 	Suffix *src = ln->datum;
 
-	if (StrIsPrefix(src->name, str) == NULL)
+	if (StrTrimPrefix(src->name, str) == NULL)
 	    continue;
 
 	if (str[src->nameLen] == '\0') {
@@ -627,7 +627,7 @@ RebuildGraph(GNode *transform, Suffix *suff)
     /*
      * First see if it is a transformation from this suffix.
      */
-    toName = StrIsPrefix(suff->name, name);
+    toName = StrTrimPrefix(suff->name, name);
     if (toName != NULL) {
 	Suffix *to = FindSuffixByName(toName);
 	if (to != NULL) {
