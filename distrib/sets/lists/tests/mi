@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.971 2020/11/21 10:32:42 rillig Exp $
+# $NetBSD: mi,v 1.972 2020/11/22 19:37:27 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4851,6 +4851,8 @@
 ./usr/tests/usr.bin/make/unit-tests/cond-func-empty.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-exists.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-exists.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-func-make-main.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-func-make-main.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-make.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-make.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-target.exp			tests-usr.bin-tests	compattestfile,atf
