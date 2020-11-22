@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.284 2020/11/22 09:48:58 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.285 2020/11/22 09:56:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.284 2020/11/22 09:48:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.285 2020/11/22 09:56:01 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -828,34 +828,30 @@ Suff_DoPaths(void)
     Lst_Destroy(inLibs, Dir_Destroy);
 }
 
-/* Add the given suffix as a type of file which gets included.
- * Called from the parse module when a .INCLUDES line is parsed.
- * The suffix must have already been defined.
- * The SUFF_INCLUDE bit is set in the suffix's flags field.
- *
- * Input:
- *	sname		Name of the suffix to mark
+/*
+ * Add the given suffix as a type of file which gets included.
+ * Called when a '.INCLUDES: .h' line is parsed.
+ * To have an effect, the suffix must already exist.
+ * This affects the magic variable '.INCLUDES'.
  */
 void
-Suff_AddInclude(const char *sname)
+Suff_AddInclude(const char *suffName)
 {
-    Suffix *suff = FindSuffixByName(sname);
+    Suffix *suff = FindSuffixByName(suffName);
     if (suff != NULL)
 	suff->flags |= SUFF_INCLUDE;
 }
 
-/* Add the given suffix as a type of file which is a library.
- * Called from the parse module when parsing a .LIBS line.
- * The suffix must have been defined via .SUFFIXES before this is called.
- * The SUFF_LIBRARY bit is set in the suffix's flags field.
- *
- * Input:
- *	sname		Name of the suffix to mark
+/*
+ * Add the given suffix as a type of file which is a library.
+ * Called when a '.LIBS: .a' line is parsed.
+ * To have an effect, the suffix must already exist.
+ * This affects the magic variable '.LIBS'.
  */
 void
-Suff_AddLib(const char *sname)
+Suff_AddLib(const char *suffName)
 {
-    Suffix *suff = FindSuffixByName(sname);
+    Suffix *suff = FindSuffixByName(suffName);
     if (suff != NULL)
 	suff->flags |= SUFF_LIBRARY;
 }
