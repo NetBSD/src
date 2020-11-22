@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.446 2020/11/22 19:14:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.447 2020/11/22 20:29:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.446 2020/11/22 19:14:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.447 2020/11/22 20:29:53 rillig Exp $");
 
 /* types and constants */
 
@@ -1006,6 +1006,7 @@ FindMainTarget(void)
     for (ln = targets->first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
 	if (!(gn->type & OP_NOTARGET)) {
+	    DEBUG1(MAKE, "Setting main node to \"%s\"\n", gn->name);
 	    mainNode = gn;
 	    Targ_SetMain(gn);
 	    return;
