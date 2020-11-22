@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.287 2020/11/22 10:22:23 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.288 2020/11/22 10:24:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.287 2020/11/22 10:22:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.288 2020/11/22 10:24:52 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -450,7 +450,7 @@ static Boolean
 ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 {
     SuffixListNode *ln;
-    Suffix *singleSrc = NULL;
+    Suffix *single = NULL;
 
     /*
      * Loop looking first for a suffix that matches the start of the
@@ -465,7 +465,7 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 	    continue;
 
 	if (str[src->nameLen] == '\0') {
-	    singleSrc = src;
+	    single = src;
 	} else {
 	    Suffix *targ = FindSuffixByName(str + src->nameLen);
 	    if (targ != NULL) {
@@ -476,7 +476,7 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 	}
     }
 
-    if (singleSrc != NULL) {
+    if (single != NULL) {
 	/*
 	 * There was a suffix that encompassed the entire string, so we
 	 * assume it was a transformation to the null suffix (thank you
@@ -487,7 +487,7 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 	 *
 	 * XXX: Use emptySuff over nullSuff?
 	 */
-	*out_src = singleSrc;
+	*out_src = single;
 	*out_targ = nullSuff;
 	return TRUE;
     }
@@ -933,7 +933,7 @@ CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
 /* Free the first candidate in the list that is not referenced anymore.
  * Return whether a candidate was removed. */
 static Boolean
-RemoveSrc(CandidateList *srcs)
+RemoveCandidate(CandidateList *srcs)
 {
     CandidateListNode *ln;
 
@@ -1844,7 +1844,7 @@ sfnd_return:
     if (bottom != NULL && Lst_FindDatum(slst, bottom) == NULL)
 	Lst_Append(slst, bottom);
 
-    while (RemoveSrc(srcs) || RemoveSrc(targs))
+    while (RemoveCandidate(srcs) || RemoveCandidate(targs))
 	continue;
 
     Lst_MoveAll(slst, srcs);
@@ -1873,7 +1873,7 @@ Suff_FindDeps(GNode *gn)
 
     FindDeps(gn, srcs);
 
-    while (RemoveSrc(srcs))
+    while (RemoveCandidate(srcs))
 	continue;
 
     assert(Lst_IsEmpty(srcs));
