@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.288 2020/11/22 10:24:52 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.289 2020/11/22 10:27:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.288 2020/11/22 10:24:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.289 2020/11/22 10:27:56 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -673,6 +673,10 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 	 * The main task of this function is to turn ordinary nodes into
 	 * transformations, no matter whether or not a new .MAIN node
 	 * has been found.
+	 */
+	/*
+	 * XXX: Even when changing this to FALSE, none of the existing unit
+	 * tests fails.
 	 */
 	return TRUE;
     }
