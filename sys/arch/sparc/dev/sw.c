@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.24 2019/11/10 21:16:32 chs Exp $	*/
+/*	$NetBSD: sw.c,v 1.25 2020/11/22 03:55:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.24 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.25 2020/11/22 03:55:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.24 2019/11/10 21:16:32 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -334,7 +334,7 @@ sw_attach(device_t parent, device_t self, void *aux)
 	 * Allocate DMA handles.
 	 */
 	i = SCI_OPENINGS * sizeof(struct sw_dma_handle);
-	sc->sc_dma = malloc(i, M_DEVBUF, M_WAITOK);
+	sc->sc_dma = kmem_alloc(i, KM_SLEEP);
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
