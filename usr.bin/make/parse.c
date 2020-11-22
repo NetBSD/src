@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.447 2020/11/22 20:29:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.448 2020/11/22 20:36:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.447 2020/11/22 20:29:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.448 2020/11/22 20:36:17 rillig Exp $");
 
 /* types and constants */
 
@@ -902,9 +902,10 @@ ParseDoSrcMain(const char *src)
      * the sources of said target to the list of things to create.
      *
      * Note that this will only be invoked if the user didn't specify a
-     * target on the command line. This is to allow .ifmake to succeed.
+     * target on the command line and the .MAIN occurs for the first time.
      *
-     * XXX: Double-check all of the above comment.
+     * See ParseDoDependencyTargetSpecial, branch SP_MAIN.
+     * See unit-tests/cond-func-make-main.mk.
      */
     Lst_Append(opts.create, bmake_strdup(src));
     /*

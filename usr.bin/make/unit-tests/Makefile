@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.217 2020/11/22 19:37:27 rillig Exp $
+# $NetBSD: Makefile,v 1.218 2020/11/22 20:36:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -267,6 +267,7 @@ TESTS+=		suff-clear-single
 TESTS+=		suff-incomplete
 TESTS+=		suff-lookup
 TESTS+=		suff-main
+TESTS+=		suff-main-several
 TESTS+=		suff-rebuild
 TESTS+=		suff-self
 TESTS+=		suff-transform-endless
@@ -454,6 +455,7 @@ SED_CMDS.opt-debug-jobs+=	-e 's,Command: ${.SHELL:T},Command: <shell>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: <shell>\) -q,\1,'
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
+SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
 SED_CMDS.var-op-shell+=	\
 	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
 	-e '/command/s,No such.*,not found,'
@@ -471,6 +473,8 @@ SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
 POSTPROC.deptgt-suffixes= awk '/^\#\*\*\* Suffixes/,/^never-stop/'
 POSTPROC.gnode-submake=	awk '/Input graph/, /^$$/'
 POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
+# The directory cache contains the hard-coded '/usr/share/mk'.
+POSTPROC.suff-main-several=	awk '/Directory Cache/,/^$$/ { next } { print }'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
 export-all.rawout: export.mk
