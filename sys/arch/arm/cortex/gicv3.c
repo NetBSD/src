@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.33 2020/11/21 11:44:00 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.34 2020/11/22 20:17:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.33 2020/11/21 11:44:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.34 2020/11/22 20:17:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -755,26 +755,37 @@ gicv3_irq_handler(void *frame)
 	pic_do_pending_ints(I32_bit, oldipl, frame);
 }
 
-static int
-gicv3_detect_pmr_bits(struct gicv3_softc *sc)
+static bool
+gicv3_access_is_secure(struct gicv3_softc *sc)
+{
+	const uint32_t octlr = gicd_read_4(sc, GICD_CTRL);
+	gicd_write_4(sc, GICD_CTRL, octlr ^ GICD_CTRL_EnableGrp1S);
+	const uint32_t nctlr = gicd_read_4(sc, GICD_CTRL);
+	gicd_write_4(sc, GICD_CTRL, octlr);
+
+	return nctlr != octlr;
+}
+
+static uint8_t
+gicv3_get_pmr_bits(struct gicv3_softc *sc)
 {
 	const uint32_t opmr = icc_pmr_read();
-	icc_pmr_write(0xbf);
+	icc_pmr_write(0xff);
 	const uint32_t npmr = icc_pmr_read();
 	icc_pmr_write(opmr);
 
-	return NBBY - (ffs(npmr) - 1);
+	return npmr;
 }
 
-static int
-gicv3_detect_ipriority_bits(struct gicv3_softc *sc)
+static uint8_t
+gicv3_get_ipriority_bits(struct gicv3_softc *sc)
 {
 	const uint32_t oipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
 	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr | 0xff);
 	const uint32_t nipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
 	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr);
 
-	return NBBY - (ffs(nipriorityr & 0xff) - 1);
+	return nipriorityr & 0xff;
 }
 
 int
@@ -782,6 +793,7 @@ gicv3_init(struct gicv3_softc *sc)
 {
 	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
 	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
+	const bool access_s = gicv3_access_is_secure(sc);
 	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -794,21 +806,41 @@ gicv3_init(struct gicv3_softc *sc)
 	sc->sc_priority_shift = 4;
 	sc->sc_pmr_shift = 4;
 
+	uint8_t pmr_mask = gicv3_get_pmr_bits(sc);
+	uint8_t ipriority_mask = gicv3_get_ipriority_bits(sc);
+
 	if ((gicd_ctrl & GICD_CTRL_DS) == 0) {
-		const int pmr_bits = gicv3_detect_pmr_bits(sc);
-		const int ipriority_bits = gicv3_detect_ipriority_bits(sc);
-
-		if (ipriority_bits != pmr_bits)
-			--sc->sc_priority_shift;
-
-		aprint_verbose_dev(sc->sc_dev, "%d pmr bits, %d ipriority bits\n",
-		    pmr_bits, ipriority_bits);
+		if (access_s) {
+			/*
+			 * Security is enabled and we appear to have secure access
+			 * to GIC registers. This is not normal, but has been observed
+			 * on Rockchip RK3399. To make things worse, with Rockchip
+			 * TF-A the views of PMR and IPRIORITYRn are different, so we
+			 * need to compensate for this by shifting writes to
+			 * IPRIORITYRn right one. Mainline TF-A does not seem to have
+			 * this problem, so detect it by comparing the number of
+			 * writable bits in the PMR and IPRIORITYRn registers.
+			 */
+			if (pmr_mask < ipriority_mask) {
+				--sc->sc_priority_shift;
+			}
+		}
 	} else {
-		aprint_verbose_dev(sc->sc_dev, "security disabled\n");
+		/*
+		 * Security is disabled. QEMU 5.1 reports different views of
+		 * PMR and IPRIORIRYRn here.
+		 */
+		if (pmr_mask == 0xff && ipriority_mask == 0xff) {
+			--sc->sc_priority_shift;
+		}
 	}
 
-	aprint_verbose_dev(sc->sc_dev, "priority shift %d, pmr shift %d\n",
-	    sc->sc_priority_shift, sc->sc_pmr_shift);
+	aprint_verbose_dev(sc->sc_dev,
+	    "security %sabled%s, priority shift %d (0x%02x), pmr shift %d (0x%02x)\n",
+	    (gicd_ctrl & GICD_CTRL_DS) != 0 ? "dis" : "en",
+	    access_s ? ", secure access" : "",
+	    sc->sc_priority_shift, ipriority_mask,
+	    sc->sc_pmr_shift, pmr_mask);
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
