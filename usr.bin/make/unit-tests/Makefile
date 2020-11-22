@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.218 2020/11/22 20:36:17 rillig Exp $
+# $NetBSD: Makefile,v 1.219 2020/11/22 23:45:20 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -270,6 +270,7 @@ TESTS+=		suff-main
 TESTS+=		suff-main-several
 TESTS+=		suff-rebuild
 TESTS+=		suff-self
+TESTS+=		suff-transform-debug
 TESTS+=		suff-transform-endless
 TESTS+=		suff-transform-expand
 TESTS+=		suff-transform-select
@@ -446,7 +447,6 @@ SED_CMDS.job-output-long-lines= \
 	-e '/^bb*--- job-a ---$$/d'
 SED_CMDS.objdir-writable=	-e 's,${RO_OBJDIR},OBJDIR/roobj,g'
 SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
-SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
 SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
 SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
@@ -454,8 +454,10 @@ SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Command: ${.SHELL:T},Command: <shell>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: <shell>\) -q,\1,'
+SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
+SED_CMDS.suff-transform-debug+=	${STD_SED_CMDS.dg1}
 SED_CMDS.var-op-shell+=	\
 	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
 	-e '/command/s,No such.*,not found,'
@@ -474,7 +476,8 @@ POSTPROC.deptgt-suffixes= awk '/^\#\*\*\* Suffixes/,/^never-stop/'
 POSTPROC.gnode-submake=	awk '/Input graph/, /^$$/'
 POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 # The directory cache contains the hard-coded '/usr/share/mk'.
-POSTPROC.suff-main-several=	awk '/Directory Cache/,/^$$/ { next } { print }'
+POSTPROC.suff-main-several=	${STD_POSTPROC.dg1}
+POSTPROC.suff-transform-debug=	${STD_POSTPROC.dg1}
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
 export-all.rawout: export.mk
@@ -491,6 +494,7 @@ STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MACHINE[_ARCH]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
+STD_POSTPROC.dg1=	awk '/Directory Cache/,/^$$/ { next } { print }'
 
 # End of the configuration helpers section.
 
