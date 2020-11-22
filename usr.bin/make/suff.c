@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.290 2020/11/22 11:11:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.291 2020/11/22 11:15:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.290 2020/11/22 11:11:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.291 2020/11/22 11:15:43 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -257,12 +257,13 @@ Suffix_GetSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
     size_t suffLen = suff->nameLen;
     const char *suffInName;
+    size_t i;
 
     if (nameLen < suffLen)
 	return NULL;
 
     suffInName = nameEnd - suffLen;
-    for (size_t i = 0; i < suffLen; i++) {
+    for (i = 0; i < suffLen; i++) {
 	if (suff->name[i] != suffInName[i])
 	    return NULL;
     }
