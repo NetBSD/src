@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.973 2020/11/22 20:36:17 rillig Exp $
+# $NetBSD: mi,v 1.974 2020/11/22 23:45:20 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5293,6 +5293,8 @@
 ./usr/tests/usr.bin/make/unit-tests/suff-rebuild.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-self.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-self.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-transform-debug.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-transform-debug.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-endless.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-endless.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-expand.exp			tests-usr.bin-tests	compattestfile,atf
