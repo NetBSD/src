@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.125 2020/03/22 21:21:07 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.126 2020/11/22 03:55:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.125 2020/03/22 21:21:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.126 2020/11/22 03:55:33 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.125 2020/03/22 21:21:07 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/atomic.h>
@@ -798,7 +798,7 @@ sparc_softintr_establish(int level, void (*fun)(void *), void *arg)
 		}
 	}
 
-	sic = malloc(sizeof(*sic), M_DEVBUF, 0);
+	sic = kmem_alloc(sizeof(*sic), KM_SLEEP);
 	sic->sic_pil = pil;
 	sic->sic_pilreq = pilreq;
 	ih = &sic->sic_hand;
@@ -843,7 +843,7 @@ sparc_softintr_disestablish(void *cookie)
 	struct softintr_cookie *sic = cookie;
 
 	ih_remove(&sintrhand[sic->sic_pil], &sic->sic_hand);
-	free(cookie, M_DEVBUF);
+	kmem_free(sic, sizeof(*sic));
 }
 
 #if 0
