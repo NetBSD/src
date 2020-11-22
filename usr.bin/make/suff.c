@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.285 2020/11/22 09:56:01 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.286 2020/11/22 10:11:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.285 2020/11/22 09:56:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.286 2020/11/22 10:11:23 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -906,32 +906,26 @@ CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 #endif
 }
 
-/*
- * Add a new candidate to the list, formed from the candidate's prefix and
- * the suffix.
- */
-/* XXX: reorder parameters */
+/* Add all candidates to the list that can be formed by applying a suffix to
+ * the candidate. */
 static void
-AddSources(Suffix *suff, CandidateList *list, Candidate *targ)
+CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
 {
-    if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
-	/*
-	 * If the suffix has been marked as the NULL suffix, also create a
-	 * candidate for a file with no suffix attached.
-	 */
-	CandidateList_Add(list, bmake_strdup(targ->pref), targ, suff, "1");
-    }
-    CandidateList_Add(list, str_concat2(targ->pref, suff->name), targ, suff, "2");
-}
+    SuffixListNode *ln;
+    for (ln = cand->suff->children->first; ln != NULL; ln = ln->next) {
+	Suffix *suff = ln->datum;
 
-/* Add all the children of targ to the list. */
-static void
-AddLevel(CandidateList *srcs, Candidate *targ)
-{
-    CandidateListNode *ln;
-    for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
-	Suffix *childSuff = ln->datum;
-	AddSources(childSuff, srcs, targ);
+	if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
+	    /*
+	     * If the suffix has been marked as the NULL suffix, also
+	     * create a candidate for a file with no suffix attached.
+	     */
+	    CandidateList_Add(list, bmake_strdup(cand->pref),
+		       cand, suff, "1");
+	}
+
+	CandidateList_Add(list, str_concat2(cand->pref, suff->name),
+			  cand, suff, "2");
     }
 }
 
@@ -1023,7 +1017,7 @@ FindThem(CandidateList *srcs, CandidateList *slst)
 
 	SUFF_DEBUG0("not there\n");
 
-	AddLevel(srcs, src);
+	CandidateList_AddCandidatesFor(srcs, src);
 	Lst_Append(slst, src);
     }
 
@@ -1559,10 +1553,7 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 	pref = bmake_strldup(name, (size_t)(nameLen - suff->nameLen));
 	targ = Candidate_New(bmake_strdup(gn->name), pref, suff, NULL, gn);
 
-	/*
-	 * Add nodes from which the target can be made
-	 */
-	AddLevel(srcs, targ);
+	CandidateList_AddCandidatesFor(srcs, targ);
 
 	/*
 	 * Record the target so we can nuke it
@@ -1592,7 +1583,7 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
      * don't do this anymore.
      */
     if (Lst_IsEmpty(gn->commands))
-	AddLevel(srcs, targ);
+	CandidateList_AddCandidatesFor(srcs, targ);
     else {
 	SUFF_DEBUG0("not ");
     }
