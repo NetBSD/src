@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.18 2019/11/10 21:16:32 chs Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.19 2020/11/22 03:57:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.18 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.19 2020/11/22 03:57:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/bus.h>
 #include <uvm/uvm.h>
@@ -229,8 +229,8 @@ igsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dc = &igsfb_console_dc;
 	} else {
 		isconsole = 0;
-		sc->sc_dc = malloc(sizeof(struct igsfb_devconfig),
-				   M_DEVBUF, M_WAITOK | M_ZERO);
+		sc->sc_dc = kmem_zalloc(sizeof(struct igsfb_devconfig),
+				   KM_SLEEP);
 		if (OF_getprop(oba->oba_phandle, "reg",
 			       regs, sizeof(regs)) <= 0)
 		{

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.103 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: clock.c,v 1.104 2020/11/22 03:55:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.103 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.104 2020/11/22 03:55:33 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.103 2011/07/01 18:51:51 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
 
@@ -244,11 +244,7 @@ eeprom_uio(struct uio *uio)
 	 * this, we byte-by-byte copy the eeprom contents into a
 	 * temporary buffer.
 	 */
-	buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
-	if (buf == NULL) {
-		error = EAGAIN;
-		goto out;
-	}
+	buf = kmem_alloc(EEPROM_SIZE, KM_SLEEP);
 
 	if (uio->uio_rw == UIO_READ)
 		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)
@@ -261,8 +257,7 @@ eeprom_uio(struct uio *uio)
 		error = eeprom_update(buf, off, cnt);
 
  out:
-	if (buf)
-		free(buf, M_DEVBUF);
+	kmem_free(buf, EEPROM_SIZE);
 	eeprom_give();
 	return (error);
 #else /* ! SUN4 */

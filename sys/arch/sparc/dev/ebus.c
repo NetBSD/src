@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.37 2019/11/10 21:16:32 chs Exp $ */
+/*	$NetBSD: ebus.c,v 1.38 2020/11/22 03:55:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.37 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.38 2020/11/22 03:55:33 thorpej Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -56,6 +56,7 @@ int ebus_debug = 0;
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 
@@ -421,8 +422,7 @@ ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 {
 	bus_dma_tag_t dt;
 
-	dt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_WAITOK | M_ZERO);
+	dt = kmem_zalloc(sizeof(*dt), KM_SLEEP);
 	dt->_cookie = sc;
 #define PCOPY(x)	dt->x = pdt->x
 	PCOPY(_dmamap_create);
