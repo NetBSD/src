@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.282 2020/11/22 09:30:22 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.283 2020/11/22 09:46:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.282 2020/11/22 09:30:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.283 2020/11/22 09:46:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -123,8 +123,8 @@ MAKE_RCSID("$NetBSD: suff.c,v 1.282 2020/11/22 09:30:22 rillig Exp $");
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
 
-typedef List SrcList;		/* XXX: rename to CandidateList */
-typedef ListNode SrcListNode;	/* XXX: rename to CandidateListNode */
+typedef List CandidateList;
+typedef ListNode CandidateListNode;
 
 static SuffixList *sufflist;	/* List of suffixes */
 #ifdef CLEANUP
@@ -195,7 +195,7 @@ typedef struct Candidate {
     int numChildren;		/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
 #ifdef DEBUG_SRC
-    SrcList *childrenList;
+    CandidateList *childrenList;
 #endif
 } Candidate;
 
@@ -858,10 +858,11 @@ Suff_AddLib(const char *sname)
 
 #ifdef DEBUG_SRC
 static void
-SrcList_PrintAddrs(SrcList *srcList)
+CandidateList_PrintAddrs(CandidateList *list)
 {
-    SrcListNode *ln;
-    for (ln = srcList->first; ln != NULL; ln = ln->next)
+    CandidateListNode *ln;
+
+    for (ln = list->first; ln != NULL; ln = ln->next)
 	debug_printf(" %p", ln->datum);
     debug_printf("\n");
 }
@@ -886,18 +887,20 @@ Candidate_New(char *name, char *pref, Suffix *suff, Candidate *parent,
     return cand;
 }
 
+/* Add a new candidate to the list. */
 static void
-SrcList_Add(SrcList *srcList, char *srcName, Candidate *targ, Suffix *suff,
-	    const char *debug_tag)
+CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
+		  Suffix *suff, const char *debug_tag)
 {
-    Candidate *src = Candidate_New(srcName, targ->pref, suff, targ, NULL);
+    Candidate *cand = Candidate_New(srcName, targ->pref, suff, targ, NULL);
     targ->numChildren++;
-    Lst_Append(srcList, src);
+    Lst_Append(list, cand);
+
 #ifdef DEBUG_SRC
-    Lst_Append(targ->childrenList, src);
-    debug_printf("%s add suff %p src %p to list %p:",
-		 debug_tag, targ, src, srcList);
-    SrcList_PrintAddrs(srcList);
+    Lst_Append(targ->childrenList, cand);
+    debug_printf("%s add suff %p candidate %p to list %p:",
+		 debug_tag, targ, cand, list);
+    CandidateList_PrintAddrs(list);
 #endif
 }
 
@@ -905,24 +908,25 @@ SrcList_Add(SrcList *srcList, char *srcName, Candidate *targ, Suffix *suff,
  * Add a new candidate to the list, formed from the candidate's prefix and
  * the suffix.
  */
+/* XXX: reorder parameters */
 static void
-AddSources(Suffix *suff, SrcList *srcList, Candidate *targ)
+AddSources(Suffix *suff, CandidateList *list, Candidate *targ)
 {
     if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
 	/*
 	 * If the suffix has been marked as the NULL suffix, also create a
 	 * candidate for a file with no suffix attached.
 	 */
-	SrcList_Add(srcList, bmake_strdup(targ->pref), targ, suff, "1");
+	CandidateList_Add(list, bmake_strdup(targ->pref), targ, suff, "1");
     }
-    SrcList_Add(srcList, str_concat2(targ->pref, suff->name), targ, suff, "2");
+    CandidateList_Add(list, str_concat2(targ->pref, suff->name), targ, suff, "2");
 }
 
 /* Add all the children of targ to the list. */
 static void
-AddLevel(SrcList *srcs, Candidate *targ)
+AddLevel(CandidateList *srcs, Candidate *targ)
 {
-    SrcListNode *ln;
+    CandidateListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
 	Suffix *childSuff = ln->datum;
 	AddSources(childSuff, srcs, targ);
@@ -932,13 +936,13 @@ AddLevel(SrcList *srcs, Candidate *targ)
 /* Free the first candidate in the list that is not referenced anymore.
  * Return whether a candidate was removed. */
 static Boolean
-RemoveSrc(SrcList *srcs)
+RemoveSrc(CandidateList *srcs)
 {
-    SrcListNode *ln;
+    CandidateListNode *ln;
 
 #ifdef DEBUG_SRC
     debug_printf("cleaning list %p:", srcs);
-    SrcList_PrintAddrs(srcs);
+    CandidateList_PrintAddrs(srcs);
 #endif
 
     for (ln = srcs->first; ln != NULL; ln = ln->next) {
@@ -950,7 +954,9 @@ RemoveSrc(SrcList *srcs)
 		free(src->pref);
 	    else {
 #ifdef DEBUG_SRC
-		SrcListNode *ln2 = Lst_FindDatum(src->parent->childrenList, src);
+	        /* XXX: Lst_RemoveDatum */
+		CandidateListNode *ln2;
+		ln2 = Lst_FindDatum(src->parent->childrenList, src);
 		if (ln2 != NULL)
 		    Lst_Remove(src->parent->childrenList, ln2);
 #endif
@@ -969,7 +975,7 @@ RemoveSrc(SrcList *srcs)
 	else {
 	    debug_printf("keep: list %p src %p children %d:",
 			 srcs, src, src->numChildren);
-	    SrcList_PrintAddrs(src->childrenList);
+	    CandidateList_PrintAddrs(src->childrenList);
 	}
 #endif
     }
@@ -978,8 +984,9 @@ RemoveSrc(SrcList *srcs)
 }
 
 /* Find the first existing file/target in srcs. */
+/* XXX: The parameter names are too similar. */
 static Candidate *
-FindThem(SrcList *srcs, SrcList *slst)
+FindThem(CandidateList *srcs, CandidateList *slst)
 {
     Candidate *retsrc = NULL;
 
@@ -1030,7 +1037,7 @@ FindThem(SrcList *srcs, SrcList *slst)
  * for it and returned.
  */
 static Candidate *
-FindCmds(Candidate *targ, SrcList *slst)
+FindCmds(Candidate *targ, CandidateList *slst)
 {
     GNodeListNode *gln;
     GNode *tgn;			/* Target GNode */
@@ -1396,7 +1403,7 @@ ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 }
 
 
-static void FindDeps(GNode *, SrcList *);
+static void FindDeps(GNode *, CandidateList *);
 
 /* Locate dependencies for an OP_ARCHV node.
  *
@@ -1407,7 +1414,7 @@ static void FindDeps(GNode *, SrcList *);
  *	Same as Suff_FindDeps
  */
 static void
-FindDepsArchive(GNode *gn, SrcList *slst)
+FindDepsArchive(GNode *gn, CandidateList *slst)
 {
     char *eoarch;		/* End of archive portion */
     char *eoname;		/* End of member portion */
@@ -1536,7 +1543,7 @@ FindDepsArchive(GNode *gn, SrcList *slst)
 
 static void
 FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
-		     SrcList *srcs, SrcList *targs)
+		     CandidateList *srcs, CandidateList *targs)
 {
     SuffixListNode *ln;
     Candidate *targ;
@@ -1564,7 +1571,7 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 
 static void
 FindDepsRegularUnknown(GNode *gn, const char *sopref,
-		       SrcList *srcs, SrcList *targs)
+		       CandidateList *srcs, CandidateList *targs)
 {
     Candidate *targ;
 
@@ -1660,10 +1667,10 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
  *	Same as Suff_FindDeps
  */
 static void
-FindDepsRegular(GNode *gn, SrcList *slst)
+FindDepsRegular(GNode *gn, CandidateList *slst)
 {
-    SrcList *srcs;		/* List of sources at which to look */
-    SrcList *targs;		/* List of targets to which things can be
+    CandidateList *srcs;	/* List of sources at which to look */
+    CandidateList *targs;	/* List of targets to which things can be
 				 * transformed. They all have the same file,
 				 * but different suff and pref fields */
     Candidate *bottom;		/* Start of found transformation path */
@@ -1868,7 +1875,7 @@ sfnd_return:
 void
 Suff_FindDeps(GNode *gn)
 {
-    SrcList *srcs = Lst_New();
+    CandidateList *srcs = Lst_New();
 
     FindDeps(gn, srcs);
 
@@ -1880,7 +1887,7 @@ Suff_FindDeps(GNode *gn)
 }
 
 static void
-FindDeps(GNode *gn, SrcList *slst)
+FindDeps(GNode *gn, CandidateList *slst)
 {
     if (gn->type & OP_DEPS_FOUND)
 	return;
