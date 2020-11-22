@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.214 2020/11/21 21:41:27 rillig Exp $
+# $NetBSD: Makefile,v 1.215 2020/11/22 18:25:43 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -445,12 +445,9 @@ SED_CMDS.job-output-long-lines= \
 	${:D marker should always be at the beginning of the line. } \
 	-e '/^aa*--- job-b ---$$/d' \
 	-e '/^bb*--- job-a ---$$/d'
-SED_CMDS.objdir-writable= -e 's,${RO_OBJDIR},OBJDIR/roobj,g'
-SED_CMDS.opt-debug-graph1= \
-			-e 's,${.CURDIR},CURDIR,'
-SED_CMDS.opt-debug-graph1+= \
-			-e '/Global Variables:/,/Suffixes:/d'
-SED_CMDS.sh-dots=	-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
+SED_CMDS.objdir-writable=	-e 's,${RO_OBJDIR},OBJDIR/roobj,g'
+SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
+SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
 SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
 SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
@@ -458,6 +455,7 @@ SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Command: ${.SHELL:T},Command: <shell>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: <shell>\) -q,\1,'
+SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.var-op-shell+=	\
 	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
 	-e '/command/s,No such.*,not found,'
@@ -482,6 +480,17 @@ unexport.rawout: export.mk
 unexport-env.rawout: export.mk
 
 # End of the configuration section.
+
+# Some standard sed commands, to be used in the SED_CMDS above.
+
+# Omit details from the output of the -dg1 option such as process IDs.
+STD_SED_CMDS.dg1=	-e 's,${.CURDIR},<curdir>,'
+STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
+STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
+STD_SED_CMDS.dg1+=	-e 's,^\(MACHINE[_ARCH]* *=\) .*,\1 <details omitted>,'
+STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
+
+# End of the configuration helpers section.
 
 .MAIN: all
 
