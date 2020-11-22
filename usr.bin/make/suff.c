@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.302 2020/11/22 22:27:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.303 2020/11/22 22:58:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.302 2020/11/22 22:27:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.303 2020/11/22 22:58:43 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -898,6 +898,41 @@ Suff_AddLib(const char *suffName)
 
 	  /********** Implicit Source Search Functions *********/
 
+static void
+CandidateSearcher_Init(CandidateSearcher *cs)
+{
+    cs->list = Lst_New();
+}
+
+static void
+CandidateSearcher_Done(CandidateSearcher *cs)
+{
+    Lst_Free(cs->list);
+}
+
+static void
+CandidateSearcher_Add(CandidateSearcher *cs, Candidate *cand)
+{
+    /* TODO: filter duplicates */
+    Lst_Append(cs->list, cand);
+}
+
+static void
+CandidateSearcher_AddIfNew(CandidateSearcher *cs, Candidate *cand)
+{
+    /* TODO: filter duplicates */
+    if (Lst_FindDatum(cs->list, cand) == NULL)
+	Lst_Append(cs->list, cand);
+}
+
+static void
+CandidateSearcher_MoveAll(CandidateSearcher *cs, CandidateList *list)
+{
+    /* TODO: filter duplicates */
+    Lst_MoveAll(cs->list, list);
+}
+
+
 #ifdef DEBUG_SRC
 static void
 CandidateList_PrintAddrs(CandidateList *list)
@@ -1061,7 +1096,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 	SUFF_DEBUG0("not there\n");
 
 	CandidateList_AddCandidatesFor(srcs, src);
-	Lst_Append(cs->list, src);
+	CandidateSearcher_Add(cs, src);
     }
 
     if (retsrc) {
@@ -1137,7 +1172,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 		 targ, targ->file, ret, ret->file);
     Lst_Append(targ->childrenList, ret);
 #endif
-    Lst_Append(cs->list, ret);
+    CandidateSearcher_Add(cs, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
     return ret;
 }
@@ -1861,8 +1896,7 @@ sfnd_abort:
 	     * up to but not including the parent node.
 	     */
 	    while (bottom != NULL && bottom->parent != NULL) {
-		if (Lst_FindDatum(cs->list, bottom) == NULL)
-		    Lst_Append(cs->list, bottom);
+		CandidateSearcher_AddIfNew(cs, bottom);
 		bottom = bottom->parent;
 	    }
 	    bottom = src;
@@ -1924,14 +1958,22 @@ sfnd_abort:
      * two lists.
      */
 sfnd_return:
-    if (bottom != NULL && Lst_FindDatum(cs->list, bottom) == NULL)
-	Lst_Append(cs->list, bottom);
+    if (bottom != NULL)
+	CandidateSearcher_AddIfNew(cs, bottom);
 
     while (RemoveCandidate(srcs) || RemoveCandidate(targs))
 	continue;
 
-    Lst_MoveAll(cs->list, srcs);
-    Lst_MoveAll(cs->list, targs);
+    CandidateSearcher_MoveAll(cs, srcs);
+    CandidateSearcher_MoveAll(cs, targs);
+}
+
+static void
+CandidateSearcher_CleanUp(CandidateSearcher *cs)
+{
+    while (RemoveCandidate(cs->list))
+	continue;
+    assert(Lst_IsEmpty(cs->list));
 }
 
 
@@ -1952,15 +1994,14 @@ sfnd_return:
 void
 Suff_FindDeps(GNode *gn)
 {
-    CandidateSearcher cs = { Lst_New() };
+    CandidateSearcher cs;
+
+    CandidateSearcher_Init(&cs);
 
     FindDeps(gn, &cs);
 
-    while (RemoveCandidate(cs.list))
-	continue;
-
-    assert(Lst_IsEmpty(cs.list));
-    Lst_Free(cs.list);
+    CandidateSearcher_CleanUp(&cs);
+    CandidateSearcher_Done(&cs);
 }
 
 static void
