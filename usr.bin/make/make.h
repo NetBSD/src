@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.213 2020/11/22 10:48:11 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.214 2020/11/22 21:34:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -279,7 +279,8 @@ typedef enum GNodeType {
      * this node will be saved on the .END node instead, to be executed at
      * the very end. */
     OP_SAVE_CMDS	= 1 << 25,
-    /* Already processed by Suff_FindDeps */
+    /* Already processed by Suff_FindDeps, to find dependencies from suffix
+     * transformation rules. */
     OP_DEPS_FOUND	= 1 << 24,
     /* Node found while expanding .ALLSRC */
     OP_MARK		= 1 << 23,

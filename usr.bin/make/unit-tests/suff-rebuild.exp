@@ -35,14 +35,14 @@ transformation .c complete
 ParseDoDependency(.SUFFIXES: .c .b .a)
 Adding ".END" to all targets.
 Wildcard expanding "all"...
-SuffFindDeps (all)
+SuffFindDeps "all"
 	No known suffix on all. Using .NULL suffix
 adding suffix rules
 	trying all.c...not there
 	trying all.b...not there
 	trying all.a...not there
 Wildcard expanding "suff-rebuild-example"...
-SuffFindDeps (suff-rebuild-example)
+SuffFindDeps "suff-rebuild-example"
 	No known suffix on suff-rebuild-example. Using .NULL suffix
 adding suffix rules
 	trying suff-rebuild-example.c...not there
@@ -56,14 +56,14 @@ Adding "suff-rebuild-example.c" to all targets.
 suffix is ".c"...
 suffix is ".b"...
 suffix is ".a"...
-SuffFindDeps (suff-rebuild-example.a)
+SuffFindDeps "suff-rebuild-example.a"
 suffix is ".a"...
 : Making suff-rebuild-example.a out of nothing.
 : Making suff-rebuild-example.b from suff-rebuild-example.a.
 : Making suff-rebuild-example.c from suff-rebuild-example.b.
 : Making suff-rebuild-example from suff-rebuild-example.c.
 Wildcard expanding "all"...
-SuffFindDeps (.END)
+SuffFindDeps ".END"
 	No known suffix on .END. Using .NULL suffix
 adding suffix rules
 	trying .END.c...not there
