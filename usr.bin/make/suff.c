@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.300 2020/11/22 20:29:53 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.301 2020/11/22 21:34:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.300 2020/11/22 20:29:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.301 2020/11/22 21:34:34 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -893,8 +893,10 @@ CandidateList_PrintAddrs(CandidateList *list)
 {
     CandidateListNode *ln;
 
-    for (ln = list->first; ln != NULL; ln = ln->next)
-	debug_printf(" %p", ln->datum);
+    for (ln = list->first; ln != NULL; ln = ln->next) {
+	Candidate *cand = ln->datum;
+	debug_printf(" %p:%s", cand, cand->file);
+    }
     debug_printf("\n");
 }
 #endif
@@ -929,8 +931,8 @@ CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 
 #ifdef DEBUG_SRC
     Lst_Append(targ->childrenList, cand);
-    debug_printf("%s add suff %p candidate %p to list %p:",
-		 debug_tag, targ, cand, list);
+    debug_printf("%s add suff %p:%s candidate %p:%s to list %p:",
+		 debug_tag, targ, targ->file, cand, cand->file, list);
     CandidateList_PrintAddrs(list);
 #endif
 }
@@ -988,8 +990,8 @@ RemoveCandidate(CandidateList *srcs)
 		src->parent->numChildren--;
 	    }
 #ifdef DEBUG_SRC
-	    debug_printf("free: list %p src %p children %d\n",
-			 srcs, src, src->numChildren);
+	    debug_printf("free: list %p src %p:%s children %d\n",
+			 srcs, src, src->file, src->numChildren);
 	    Lst_Free(src->childrenList);
 #endif
 	    Lst_Remove(srcs, ln);
@@ -998,8 +1000,8 @@ RemoveCandidate(CandidateList *srcs)
 	}
 #ifdef DEBUG_SRC
 	else {
-	    debug_printf("keep: list %p src %p children %d:",
-			 srcs, src, src->numChildren);
+	    debug_printf("keep: list %p src %p:%s children %d:",
+			 srcs, src, src->file, src->numChildren);
 	    CandidateList_PrintAddrs(src->childrenList);
 	}
 #endif
@@ -1026,7 +1028,8 @@ FindThem(CandidateList *srcs, CandidateList *slst)
 	 */
 	if (Targ_FindNode(src->file) != NULL) {
 #ifdef DEBUG_SRC
-	    debug_printf("remove from list %p src %p\n", srcs, src);
+	    debug_printf("remove from list %p src %p:%s\n",
+			 srcs, src, src->file);
 #endif
 	    retsrc = src;
 	    break;
@@ -1037,7 +1040,8 @@ FindThem(CandidateList *srcs, CandidateList *slst)
 	    if (file != NULL) {
 		retsrc = src;
 #ifdef DEBUG_SRC
-		debug_printf("remove from list %p src %p\n", srcs, src);
+		debug_printf("remove from list %p src %p:%s\n",
+			     srcs, src, src->file);
 #endif
 		free(file);
 		break;
@@ -1119,7 +1123,8 @@ FindCmds(Candidate *targ, CandidateList *slst)
     ret = Candidate_New(bmake_strdup(sgn->name), targ->prefix, suff, targ, sgn);
     targ->numChildren++;
 #ifdef DEBUG_SRC
-    debug_printf("3 add targ %p ret %p\n", targ, ret);
+    debug_printf("3 add targ %p:%s ret %p:%s\n",
+		 targ, targ->file, ret, ret->file);
     Lst_Append(targ->childrenList, ret);
 #endif
     Lst_Append(slst, ret);
@@ -1741,6 +1746,10 @@ FindDepsRegular(GNode *gn, CandidateList *slst)
     const char *name = gn->name;
     size_t nameLen = strlen(name);
 
+#ifdef DEBUG_SRC
+    DEBUG1(SUFF, "FindDepsRegular \"%s\"\n", gn->name);
+#endif
+
     /*
      * Begin at the beginning...
      */
@@ -1918,9 +1927,9 @@ sfnd_return:
 
 /* Find implicit sources for the target.
  *
- * Nodes are added to the graph below the passed-in node. The nodes are
- * marked to have their IMPSRC variable filled in. The PREFIX variable is set
- * for the given node and all its implied children.
+ * Nodes are added to the graph as children of the passed-in node. The nodes
+ * are marked to have their IMPSRC variable filled in. The PREFIX variable
+ * is set for the given node and all its implied children.
  *
  * The path found by this target is the shortest path in the transformation
  * graph, which may pass through non-existent targets, to an existing target.
@@ -1957,7 +1966,7 @@ FindDeps(GNode *gn, CandidateList *slst)
     Var_Set(TARGET, GNode_Path(gn), gn);
     Var_Set(PREFIX, gn->name, gn);
 
-    SUFF_DEBUG1("SuffFindDeps (%s)\n", gn->name);
+    SUFF_DEBUG1("SuffFindDeps \"%s\"\n", gn->name);
 
     if (gn->type & OP_ARCHV)
 	FindDepsArchive(gn, slst);
