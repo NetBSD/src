@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.286 2020/11/22 10:11:23 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.287 2020/11/22 10:22:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.286 2020/11/22 10:11:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.287 2020/11/22 10:22:23 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -478,11 +478,12 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 
     if (singleSrc != NULL) {
 	/*
-	 * Not so fast Mr. Smith! There was a suffix that encompassed
-	 * the entire string, so we assume it was a transformation
-	 * to the null suffix (thank you POSIX). We still prefer to
-	 * find a double rule over a singleton, hence we leave this
-	 * check until the end.
+	 * There was a suffix that encompassed the entire string, so we
+	 * assume it was a transformation to the null suffix (thank you
+	 * POSIX; search for "single suffix" or "single-suffix").
+	 *
+	 * We still prefer to find a double rule over a singleton,
+	 * hence we leave this check until the end.
 	 *
 	 * XXX: Use emptySuff over nullSuff?
 	 */
