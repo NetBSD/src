@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.445 2020/11/20 20:01:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.446 2020/11/22 19:14:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.445 2020/11/20 20:01:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.446 2020/11/22 19:14:24 rillig Exp $");
 
 /* types and constants */
 
@@ -1462,7 +1462,7 @@ ParseDoDependencyTargets(char **inout_cp,
 	    continue;
 	}
 
-	if (!*cp) {
+	if (*cp == '\0') {
 	    ParseErrorNoDependency(lstart);
 	    return FALSE;
 	}
