@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.215 2020/11/22 18:25:43 rillig Exp $
+# $NetBSD: Makefile,v 1.216 2020/11/22 18:44:10 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -428,12 +428,9 @@ FLAGS.doterror=		# none, especially not -k
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
-SED_CMDS.export= \
-	-e '/^[^=_A-Za-z0-9]*=/d'
-# these all share the same requirement
-.for t in export-all export-env
-SED_CMDS.$t= ${SED_CMDS.export}
-.endfor
+SED_CMDS.export=	-e '/^[^=_A-Za-z0-9]*=/d'
+SED_CMDS.export-all=	${SED_CMDS.export}
+SED_CMDS.export-env=	${SED_CMDS.export}
 SED_CMDS.job-output-long-lines= \
 	${:D Job separators on their own line are ok. } \
 	-e '/^--- job-[ab] ---$$/d' \
