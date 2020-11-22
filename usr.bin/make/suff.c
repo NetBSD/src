@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.281 2020/11/21 23:51:28 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.282 2020/11/22 09:30:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.281 2020/11/21 23:51:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.282 2020/11/22 09:30:22 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -123,8 +123,8 @@ MAKE_RCSID("$NetBSD: suff.c,v 1.281 2020/11/21 23:51:28 rillig Exp $");
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
 
-typedef List SrcList;
-typedef ListNode SrcListNode;
+typedef List SrcList;		/* XXX: rename to CandidateList */
+typedef ListNode SrcListNode;	/* XXX: rename to CandidateListNode */
 
 static SuffixList *sufflist;	/* List of suffixes */
 #ifdef CLEANUP
@@ -184,20 +184,20 @@ typedef struct Suffix {
  * via the transformation rule ".c.o".  If that doesn't exist, maybe there is
  * another transformation rule ".pas.c" that would make "src.pas" an indirect
  * candidate as well.  The first such chain that leads to an existing file or
- * node is finally made.
+ * node is finally chosen to be made.
  */
-typedef struct Src {
+typedef struct Candidate {
     char *file;			/* The file to look for */
     char *pref;			/* Prefix from which file was formed */
     Suffix *suff;		/* The suffix on the file */
-    struct Src *parent;		/* The Src for which this is a source */
+    struct Candidate *parent;	/* The candidate for which this is a source */
     GNode *node;		/* The node describing the file */
     int numChildren;		/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
 #ifdef DEBUG_SRC
     SrcList *childrenList;
 #endif
-} Src;
+} Candidate;
 
 
 /* TODO: Document the difference between nullSuff and emptySuff. */
@@ -867,29 +867,30 @@ SrcList_PrintAddrs(SrcList *srcList)
 }
 #endif
 
-static Src *
-SrcNew(char *name, char *pref, Suffix *suff, Src *parent, GNode *gn)
+static Candidate *
+Candidate_New(char *name, char *pref, Suffix *suff, Candidate *parent,
+	      GNode *gn)
 {
-    Src *src = bmake_malloc(sizeof *src);
+    Candidate *cand = bmake_malloc(sizeof *cand);
 
-    src->file = name;
-    src->pref = pref;
-    src->suff = Suffix_Ref(suff);
-    src->parent = parent;
-    src->node = gn;
-    src->numChildren = 0;
+    cand->file = name;
+    cand->pref = pref;
+    cand->suff = Suffix_Ref(suff);
+    cand->parent = parent;
+    cand->node = gn;
+    cand->numChildren = 0;
 #ifdef DEBUG_SRC
-    src->childrenList = Lst_New();
+    cand->childrenList = Lst_New();
 #endif
 
-    return src;
+    return cand;
 }
 
 static void
-SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suffix *suff,
+SrcList_Add(SrcList *srcList, char *srcName, Candidate *targ, Suffix *suff,
 	    const char *debug_tag)
 {
-    Src *src = SrcNew(srcName, targ->pref, suff, targ, NULL);
+    Candidate *src = Candidate_New(srcName, targ->pref, suff, targ, NULL);
     targ->numChildren++;
     Lst_Append(srcList, src);
 #ifdef DEBUG_SRC
@@ -900,23 +901,17 @@ SrcList_Add(SrcList *srcList, char *srcName, Src *targ, Suffix *suff,
 #endif
 }
 
-/* Add a suffix as a Src structure to the given list with its parent
- * being the given Src structure. If the suffix is the null suffix,
- * the prefix is used unaltered as the filename in the Src structure.
- *
- * Input:
- *	suff		suffix for which to create a Src structure
- *	srcList		list for the new Src
- *	targ		parent for the new Src
+/*
+ * Add a new candidate to the list, formed from the candidate's prefix and
+ * the suffix.
  */
 static void
-AddSources(Suffix *suff, SrcList *srcList, Src *targ)
+AddSources(Suffix *suff, SrcList *srcList, Candidate *targ)
 {
     if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
 	/*
-	 * If the suffix has been marked as the NULL suffix, also create a Src
-	 * structure for a file with no suffix attached. Two birds, and all
-	 * that...
+	 * If the suffix has been marked as the NULL suffix, also create a
+	 * candidate for a file with no suffix attached.
 	 */
 	SrcList_Add(srcList, bmake_strdup(targ->pref), targ, suff, "1");
     }
@@ -925,7 +920,7 @@ AddSources(Suffix *suff, SrcList *srcList, Src *targ)
 
 /* Add all the children of targ to the list. */
 static void
-AddLevel(SrcList *srcs, Src *targ)
+AddLevel(SrcList *srcs, Candidate *targ)
 {
     SrcListNode *ln;
     for (ln = targ->suff->children->first; ln != NULL; ln = ln->next) {
@@ -934,8 +929,8 @@ AddLevel(SrcList *srcs, Src *targ)
     }
 }
 
-/* Free the first Src in the list that is not referenced anymore.
- * Return whether a Src was removed. */
+/* Free the first candidate in the list that is not referenced anymore.
+ * Return whether a candidate was removed. */
 static Boolean
 RemoveSrc(SrcList *srcs)
 {
@@ -947,7 +942,7 @@ RemoveSrc(SrcList *srcs)
 #endif
 
     for (ln = srcs->first; ln != NULL; ln = ln->next) {
-	Src *src = ln->datum;
+	Candidate *src = ln->datum;
 
 	if (src->numChildren == 0) {
 	    free(src->file);
@@ -983,13 +978,13 @@ RemoveSrc(SrcList *srcs)
 }
 
 /* Find the first existing file/target in srcs. */
-static Src *
+static Candidate *
 FindThem(SrcList *srcs, SrcList *slst)
 {
-    Src *retsrc = NULL;
+    Candidate *retsrc = NULL;
 
     while (!Lst_IsEmpty(srcs)) {
-	Src *src = Lst_Dequeue(srcs);
+	Candidate *src = Lst_Dequeue(srcs);
 
 	SUFF_DEBUG1("\ttrying %s...", src->file);
 
@@ -1029,25 +1024,20 @@ FindThem(SrcList *srcs, SrcList *slst)
     return retsrc;
 }
 
-/* See if any of the children of the target in the Src structure is one from
- * which the target can be transformed. If there is one, a Src structure is
- * put together for it and returned.
- *
- * Input:
- *	targ		Src to play with
- *
- * Results:
- *	The Src of the "winning" child, or NULL.
+/*
+ * See if any of the children of the candidate's GNode is one from which the
+ * target can be transformed. If there is one, a candidate is put together
+ * for it and returned.
  */
-static Src *
-FindCmds(Src *targ, SrcList *slst)
+static Candidate *
+FindCmds(Candidate *targ, SrcList *slst)
 {
     GNodeListNode *gln;
     GNode *tgn;			/* Target GNode */
     GNode *sgn;			/* Source GNode */
     size_t prefLen;		/* The length of the defined prefix */
     Suffix *suff;		/* Suffix on matching beastie */
-    Src *ret;			/* Return value */
+    Candidate *ret;		/* Return value */
     char *cp;
 
     tgn = targ->node;
@@ -1094,13 +1084,7 @@ FindCmds(Src *targ, SrcList *slst)
     if (gln == NULL)
 	return NULL;
 
-    /*
-     * Hot Damn! Create a new Src structure to describe
-     * this transformation (making sure to duplicate the
-     * source node's name so Suff_FindDeps can free it
-     * again (ick)), and return the new structure.
-     */
-    ret = SrcNew(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
+    ret = Candidate_New(bmake_strdup(sgn->name), targ->pref, suff, targ, sgn);
     targ->numChildren++;
 #ifdef DEBUG_SRC
     debug_printf("3 add targ %p ret %p\n", targ, ret);
@@ -1555,7 +1539,7 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 		     SrcList *srcs, SrcList *targs)
 {
     SuffixListNode *ln;
-    Src *targ;
+    Candidate *targ;
     char *pref;
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
@@ -1564,7 +1548,7 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 	    continue;
 
 	pref = bmake_strldup(name, (size_t)(nameLen - suff->nameLen));
-	targ = SrcNew(bmake_strdup(gn->name), pref, suff, NULL, gn);
+	targ = Candidate_New(bmake_strdup(gn->name), pref, suff, NULL, gn);
 
 	/*
 	 * Add nodes from which the target can be made
@@ -1582,14 +1566,14 @@ static void
 FindDepsRegularUnknown(GNode *gn, const char *sopref,
 		       SrcList *srcs, SrcList *targs)
 {
-    Src *targ;
+    Candidate *targ;
 
     if (!Lst_IsEmpty(targs) || nullSuff == NULL)
 	return;
 
     SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 
-    targ = SrcNew(bmake_strdup(gn->name), bmake_strdup(sopref),
+    targ = Candidate_New(bmake_strdup(gn->name), bmake_strdup(sopref),
 		  nullSuff, NULL, gn);
 
     /*
@@ -1616,7 +1600,7 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
  * children or commands) as the old pmake did.
  */
 static void
-FindDepsRegularPath(GNode *gn, Src *targ)
+FindDepsRegularPath(GNode *gn, Candidate *targ)
 {
     if (gn->type & (OP_PHONY | OP_NOPATH))
 	return;
@@ -1682,10 +1666,10 @@ FindDepsRegular(GNode *gn, SrcList *slst)
     SrcList *targs;		/* List of targets to which things can be
 				 * transformed. They all have the same file,
 				 * but different suff and pref fields */
-    Src *bottom;		/* Start of found transformation path */
-    Src *src;			/* General Src pointer */
+    Candidate *bottom;		/* Start of found transformation path */
+    Candidate *src;
     char *pref;			/* Prefix to use */
-    Src *targ;			/* General Src target pointer */
+    Candidate *targ;
 
     const char *name = gn->name;
     size_t nameLen = strlen(name);
@@ -1789,8 +1773,8 @@ sfnd_abort:
 
 	if (src != NULL) {
 	    /*
-	     * Free up all the Src structures in the transformation path
-	     * up to, but not including, the parent node.
+	     * Free up all the candidates in the transformation path,
+	     * up to but not including the parent node.
 	     */
 	    while (bottom != NULL && bottom->parent != NULL) {
 		if (Lst_FindDatum(slst, bottom) == NULL)
@@ -1809,16 +1793,16 @@ sfnd_abort:
     }
 
     /*
-     * We now have a list of Src structures headed by 'bottom' and linked via
+     * We now have a list of candidates headed by 'bottom' and linked via
      * their 'parent' pointers. What we do next is create links between
      * source and target nodes (which may or may not have been created)
-     * and set the necessary local variables in each target. The
-     * commands for each target are set from the commands of the
+     * and set the necessary local variables in each target.
+     *
+     * The commands for each target are set from the commands of the
      * transformation rule used to get from the src suffix to the targ
      * suffix. Note that this causes the commands list of the original
-     * node, gn, to be replaced by the commands of the final
-     * transformation rule. Also, the unmade field of gn is incremented.
-     * Etc.
+     * node, gn, to be replaced with the commands of the final
+     * transformation rule.
      */
     if (bottom->node == NULL)
 	bottom->node = Targ_GetNode(bottom->file);
@@ -1852,7 +1836,7 @@ sfnd_abort:
     Suffix_Reassign(&gn->suffix, src->suff);
 
     /*
-     * Nuke the transformation path and the Src structures left over in the
+     * Nuke the transformation path and the candidates left over in the
      * two lists.
      */
 sfnd_return:
