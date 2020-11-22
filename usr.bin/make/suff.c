@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.293 2020/11/22 11:30:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.294 2020/11/22 11:46:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.293 2020/11/22 11:30:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.294 2020/11/22 11:46:49 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1312,6 +1312,17 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
     Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
 }
 
+static void
+ExpandAllChildren(GNode *gn)
+{
+    GNodeListNode *ln, *nln;
+
+    for (ln = gn->children->first; ln != NULL; ln = nln) {
+	nln = ln->next;
+	ExpandChildren(ln, gn);
+    }
+}
+
 /* Find a path along which to expand the node.
  *
  * If the node has a known suffix, use that path.
@@ -1430,7 +1441,6 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
     char *eoarch;		/* End of archive portion */
     char *eoname;		/* End of member portion */
     GNode *mem;			/* Node for member */
-    SuffixListNode *ln, *nln;	/* Next suffix node to check */
     Suffix *ms;			/* Suffix descriptor for member */
     char *name;			/* Start of member's name */
 
@@ -1498,10 +1508,7 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    for (ln = gn->children->first; ln != NULL; ln = nln) {
-	nln = ln->next;
-	ExpandChildren(ln, gn);
-    }
+    ExpandAllChildren(gn);
 
     if (ms != NULL) {
 	/*
@@ -1511,6 +1518,7 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
 	 * member's suffix may be transformed...
 	 */
 	size_t nameLen = (size_t)(eoarch - gn->name);
+	SuffixListNode *ln;
 
 	/* Use first matching suffix... */
 	for (ln = ms->parents->first; ln != NULL; ln = ln->next)
