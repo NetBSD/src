@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.19 2011/07/18 00:31:13 mrg Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.19 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -95,8 +96,7 @@ bootbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize the bus space tag we pass on to our children.
 	 */
-	sc->sc_bustag = malloc(sizeof(*sc->sc_bustag), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	sc->sc_bustag = kmem_zalloc(sizeof(*sc->sc_bustag), KM_SLEEP);
 	sc->sc_bustag->cookie = sc;
 	sc->sc_bustag->parent = sc->sc_st;
 	sc->sc_bustag->sparc_bus_map = sc->sc_st->sparc_bus_map;
