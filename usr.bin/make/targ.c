@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.139 2020/11/21 18:41:57 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.140 2020/11/22 20:01:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.139 2020/11/21 18:41:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.140 2020/11/22 20:01:46 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -398,6 +398,8 @@ Targ_FmtTime(time_t tm)
     struct tm *parts;
     static char buf[128];
 
+    /* TODO: Add special case for 0, which often means ENOENT, to make it
+     * independent from time zones. */
     parts = localtime(&tm);
     (void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
     return buf;
