@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.11 2019/05/02 23:07:40 jmcneill Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.12 2020/11/22 19:53:47 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,6 +144,7 @@
 #define	GICD_CTRL_E1NWF			__BIT(7)	// GICv3
 #define	GICD_CTRL_DS			__BIT(6)	// GICv3
 #define	GICD_CTRL_ARE_NS		__BIT(4)	// GICv3
+#define	GICD_CTRL_EnableGrp1S		__BIT(2)	// Secure only
 #define	GICD_CTRL_EnableGrp1A		__BIT(1)	// GICv3
 #define	GICD_CTRL_Enable		__BIT(0)
 
