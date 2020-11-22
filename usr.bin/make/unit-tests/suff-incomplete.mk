@@ -1,4 +1,4 @@
-# $NetBSD: suff-incomplete.mk,v 1.1 2020/11/21 10:32:42 rillig Exp $
+# $NetBSD: suff-incomplete.mk,v 1.2 2020/11/22 11:05:49 rillig Exp $
 #
 # Tests incomplete transformation rules, which are ignored.
 
@@ -23,8 +23,9 @@ all: suff-incomplete.c
 .DEFAULT:
 	: Making ${.TARGET} from ${.IMPSRC} all ${.ALLSRC} by default.
 
-# XXX: The debug log says "transformation .DEFAULT complete", which is wrong.
-# .DEFAULT is not a transformation.
+# The debug log says "transformation .DEFAULT complete", which seems wrong
+# on the first sight.  It is intentionally done though, in the call to
+# GNode_New(".DEFAULT").
 
 # XXX: The output of this test says "Making suff-incomplete.c from
 # suff-incomplete.c".  It doesn't make sense to make something out of itself.
