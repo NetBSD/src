@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.292 2020/11/22 11:26:50 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.293 2020/11/22 11:30:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.292 2020/11/22 11:26:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.293 2020/11/22 11:30:02 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -249,31 +249,40 @@ StrTrimPrefix(const char *pref, const char *str)
 }
 
 /*
- * See if suff is a suffix of name, and if so, return a pointer to the suffix
- * in the given name, thereby marking the point where the prefix ends.
+ * See if suff is a suffix of str, and if so, return the pointer to the suffix
+ * in str, which at the same time marks the end of the prefix.
  */
 static const char *
-Suffix_GetSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
+StrTrimSuffix(const char *str, size_t strLen, const char *suff, size_t suffLen)
 {
-    size_t suffLen = suff->nameLen;
-    const char *suffInName;
+    const char *suffInStr;
     size_t i;
 
-    if (nameLen < suffLen)
+    if (strLen < suffLen)
 	return NULL;
 
-    suffInName = nameEnd - suffLen;
-    for (i = 0; i < suffLen; i++) {
-	if (suff->name[i] != suffInName[i])
+    suffInStr = str + strLen - suffLen;
+    for (i = 0; i < suffLen; i++)
+	if (suff[i] != suffInStr[i])
 	    return NULL;
-    }
-    return suffInName;
+
+    return suffInStr;
+}
+
+/*
+ * See if suff is a suffix of name, and if so, return the end of the prefix
+ * in name.
+ */
+static const char *
+Suffix_TrimSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
+{
+    return StrTrimSuffix(nameEnd - nameLen, nameLen, suff->name, suff->nameLen);
 }
 
 static Boolean
 Suffix_IsSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
-    return Suffix_GetSuffix(suff, nameLen, nameEnd) != NULL;
+    return Suffix_TrimSuffix(suff, nameLen, nameEnd) != NULL;
 }
 
 static Suffix *
@@ -640,7 +649,7 @@ RebuildGraph(GNode *transform, Suffix *suff)
     /*
      * Not from, maybe to?
      */
-    toName = Suffix_GetSuffix(suff, nameLen, name + nameLen);
+    toName = Suffix_TrimSuffix(suff, nameLen, name + nameLen);
     if (toName != NULL) {
 	Suffix *from = FindSuffixByNameLen(name, (size_t)(toName - name));
 	if (from != NULL)
