@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.295 2020/11/22 11:50:31 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.296 2020/11/22 12:00:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.295 2020/11/22 11:50:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.296 2020/11/22 12:00:27 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -187,13 +187,24 @@ typedef struct Suffix {
  * node is finally chosen to be made.
  */
 typedef struct Candidate {
-    char *file;			/* The file to look for */
-    char *pref;			/* Prefix from which file was formed */
-    Suffix *suff;		/* The suffix on the file */
-    struct Candidate *parent;	/* The candidate for which this is a source */
-    GNode *node;		/* The node describing the file */
-    int numChildren;		/* Count of existing children (so we don't free
-				 * this thing too early or never nuke it) */
+    /* The file or node to look for. */
+    char *file;
+    /* The prefix from which file was formed.
+     * Its memory is shared among all candidates. */
+    /* XXX: rename to prefix */
+    char *pref;
+    /* The suffix on the file. */
+    Suffix *suff;
+
+    /* The candidate that can be made from this,
+     * or NULL for the top-level candidate. */
+    struct Candidate *parent;
+    /* The node describing the file. */
+    GNode *node;
+
+    /* Count of existing children, only used for memory management, so we
+     * don't free this candidate too early or too late. */
+    int numChildren;
 #ifdef DEBUG_SRC
     CandidateList *childrenList;
 #endif
