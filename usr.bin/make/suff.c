@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.301 2020/11/22 21:34:34 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.302 2020/11/22 22:27:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.301 2020/11/22 21:34:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.302 2020/11/22 22:27:19 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -208,6 +208,17 @@ typedef struct Candidate {
     CandidateList *childrenList;
 #endif
 } Candidate;
+
+typedef struct CandidateSearcher {
+
+    CandidateList *list;
+
+    /*
+     * TODO: Add HashSet for seen entries, to avoid endless loops such as
+     * in suff-transform-endless.mk.
+     */
+
+} CandidateSearcher;
 
 
 /* TODO: Document the difference between nullSuff and emptySuff. */
@@ -1011,9 +1022,8 @@ RemoveCandidate(CandidateList *srcs)
 }
 
 /* Find the first existing file/target in srcs. */
-/* XXX: The parameter names are too similar. */
 static Candidate *
-FindThem(CandidateList *srcs, CandidateList *slst)
+FindThem(CandidateList *srcs, CandidateSearcher *cs)
 {
     Candidate *retsrc = NULL;
 
@@ -1051,7 +1061,7 @@ FindThem(CandidateList *srcs, CandidateList *slst)
 	SUFF_DEBUG0("not there\n");
 
 	CandidateList_AddCandidatesFor(srcs, src);
-	Lst_Append(slst, src);
+	Lst_Append(cs->list, src);
     }
 
     if (retsrc) {
@@ -1066,7 +1076,7 @@ FindThem(CandidateList *srcs, CandidateList *slst)
  * for it and returned.
  */
 static Candidate *
-FindCmds(Candidate *targ, CandidateList *slst)
+FindCmds(Candidate *targ, CandidateSearcher *cs)
 {
     GNodeListNode *gln;
     GNode *tgn;			/* Target GNode */
@@ -1127,7 +1137,7 @@ FindCmds(Candidate *targ, CandidateList *slst)
 		 targ, targ->file, ret, ret->file);
     Lst_Append(targ->childrenList, ret);
 #endif
-    Lst_Append(slst, ret);
+    Lst_Append(cs->list, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
     return ret;
 }
@@ -1471,7 +1481,7 @@ ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
     }
 }
 
-static void FindDeps(GNode *, CandidateList *);
+static void FindDeps(GNode *, CandidateSearcher *);
 
 /* Locate dependencies for an OP_ARCHV node.
  *
@@ -1482,7 +1492,7 @@ static void FindDeps(GNode *, CandidateList *);
  *	Same as Suff_FindDeps
  */
 static void
-FindDepsArchive(GNode *gn, CandidateList *slst)
+FindDepsArchive(GNode *gn, CandidateSearcher *cs)
 {
     char *eoarch;		/* End of archive portion */
     char *eoname;		/* End of member portion */
@@ -1517,7 +1527,7 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
      * suffix list, backtracking for each one...
      */
     mem = Targ_GetNode(name);
-    FindDeps(mem, slst);
+    FindDeps(mem, cs);
 
     /*
      * Create the link between the two nodes right off
@@ -1733,7 +1743,7 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
  *	Same as Suff_FindDeps
  */
 static void
-FindDepsRegular(GNode *gn, CandidateList *slst)
+FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 {
     CandidateList *srcs;	/* List of sources at which to look */
     CandidateList *targs;	/* List of targets to which things can be
@@ -1788,7 +1798,7 @@ FindDepsRegular(GNode *gn, CandidateList *slst)
 	 * Using the list of possible sources built up from the target
 	 * suffix(es), try and find an existing file/target that matches.
 	 */
-	bottom = FindThem(srcs, slst);
+	bottom = FindThem(srcs, cs);
 
 	if (bottom == NULL) {
 	    /*
@@ -1843,7 +1853,7 @@ sfnd_abort:
      * Check for overriding transformation rule implied by sources
      */
     if (!Lst_IsEmpty(gn->children)) {
-	src = FindCmds(targ, slst);
+	src = FindCmds(targ, cs);
 
 	if (src != NULL) {
 	    /*
@@ -1851,8 +1861,8 @@ sfnd_abort:
 	     * up to but not including the parent node.
 	     */
 	    while (bottom != NULL && bottom->parent != NULL) {
-		if (Lst_FindDatum(slst, bottom) == NULL)
-		    Lst_Append(slst, bottom);
+		if (Lst_FindDatum(cs->list, bottom) == NULL)
+		    Lst_Append(cs->list, bottom);
 		bottom = bottom->parent;
 	    }
 	    bottom = src;
@@ -1914,14 +1924,14 @@ sfnd_abort:
      * two lists.
      */
 sfnd_return:
-    if (bottom != NULL && Lst_FindDatum(slst, bottom) == NULL)
-	Lst_Append(slst, bottom);
+    if (bottom != NULL && Lst_FindDatum(cs->list, bottom) == NULL)
+	Lst_Append(cs->list, bottom);
 
     while (RemoveCandidate(srcs) || RemoveCandidate(targs))
 	continue;
 
-    Lst_MoveAll(slst, srcs);
-    Lst_MoveAll(slst, targs);
+    Lst_MoveAll(cs->list, srcs);
+    Lst_MoveAll(cs->list, targs);
 }
 
 
@@ -1942,19 +1952,19 @@ sfnd_return:
 void
 Suff_FindDeps(GNode *gn)
 {
-    CandidateList *srcs = Lst_New();
+    CandidateSearcher cs = { Lst_New() };
 
-    FindDeps(gn, srcs);
+    FindDeps(gn, &cs);
 
-    while (RemoveCandidate(srcs))
+    while (RemoveCandidate(cs.list))
 	continue;
 
-    assert(Lst_IsEmpty(srcs));
-    Lst_Free(srcs);
+    assert(Lst_IsEmpty(cs.list));
+    Lst_Free(cs.list);
 }
 
 static void
-FindDeps(GNode *gn, CandidateList *slst)
+FindDeps(GNode *gn, CandidateSearcher *cs)
 {
     if (gn->type & OP_DEPS_FOUND)
 	return;
@@ -1969,11 +1979,11 @@ FindDeps(GNode *gn, CandidateList *slst)
     SUFF_DEBUG1("SuffFindDeps \"%s\"\n", gn->name);
 
     if (gn->type & OP_ARCHV)
-	FindDepsArchive(gn, slst);
+	FindDepsArchive(gn, cs);
     else if (gn->type & OP_LIB)
 	FindDepsLib(gn);
     else
-	FindDepsRegular(gn, slst);
+	FindDepsRegular(gn, cs);
 }
 
 /* Define which suffix is the null suffix.
