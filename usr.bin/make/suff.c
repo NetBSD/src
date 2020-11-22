@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.297 2020/11/22 12:05:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.298 2020/11/22 17:20:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.297 2020/11/22 12:05:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.298 2020/11/22 17:20:15 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1573,6 +1573,34 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
     mem->type |= OP_MEMBER | OP_JOIN | OP_MADE;
 }
 
+/*
+ * If the node is a library, it is the arch module's job to find it
+ * and set the TARGET variable accordingly. We merely provide the
+ * search path, assuming all libraries end in ".a" (if the suffix
+ * hasn't been defined, there's nothing we can do for it, so we just
+ * set the TARGET variable to the node's name in order to give it a
+ * value).
+ */
+static void
+FindDepsLib(GNode *gn)
+{
+    Suffix *suff = FindSuffixByName(LIBSUFF);
+    if (suff != NULL) {
+	Suffix_Reassign(&gn->suffix, suff);
+	Arch_FindLib(gn, suff->searchPath);
+    } else {
+	Suffix_Unassign(&gn->suffix);
+	Var_Set(TARGET, gn->name, gn);
+    }
+
+    /*
+     * Because a library (-lfoo) target doesn't follow the standard
+     * filesystem conventions, we don't set the regular variables for
+     * the thing. .PREFIX is simply made empty.
+     */
+    Var_Set(PREFIX, "", gn);
+}
+
 static void
 FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 		     CandidateList *srcs, CandidateList *targs)
@@ -1927,34 +1955,12 @@ FindDeps(GNode *gn, CandidateList *slst)
 
     SUFF_DEBUG1("SuffFindDeps (%s)\n", gn->name);
 
-    if (gn->type & OP_ARCHV) {
+    if (gn->type & OP_ARCHV)
 	FindDepsArchive(gn, slst);
-    } else if (gn->type & OP_LIB) {
-	/*
-	 * If the node is a library, it is the arch module's job to find it
-	 * and set the TARGET variable accordingly. We merely provide the
-	 * search path, assuming all libraries end in ".a" (if the suffix
-	 * hasn't been defined, there's nothing we can do for it, so we just
-	 * set the TARGET variable to the node's name in order to give it a
-	 * value).
-	 */
-	Suffix *suff = FindSuffixByName(LIBSUFF);
-	if (suff != NULL) {
-	    Suffix_Reassign(&gn->suffix, suff);
-	    Arch_FindLib(gn, suff->searchPath);
-	} else {
-	    Suffix_Unassign(&gn->suffix);
-	    Var_Set(TARGET, gn->name, gn);
-	}
-	/*
-	 * Because a library (-lfoo) target doesn't follow the standard
-	 * filesystem conventions, we don't set the regular variables for
-	 * the thing. .PREFIX is simply made empty...
-	 */
-	Var_Set(PREFIX, "", gn);
-    } else {
+    else if (gn->type & OP_LIB)
+	FindDepsLib(gn);
+    else
 	FindDepsRegular(gn, slst);
-    }
 }
 
 /* Define which suffix is the null suffix.
