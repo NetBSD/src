@@ -1,4 +1,4 @@
-# $NetBSD: suff-transform-endless.mk,v 1.1 2020/10/20 20:36:53 rillig Exp $
+# $NetBSD: suff-transform-endless.mk,v 1.2 2020/11/22 21:37:09 rillig Exp $
 
 # https://gnats.netbsd.org/49086, issue 6:
 # Transformation search can end up in an infinite loop.
@@ -16,7 +16,7 @@ all: issue6.f
 .SUFFIXES: .c .d .e .f
 
 .e .e.f .f.e:
-	: 'Making ${.TARGET} out of nothing.'
+	: 'Making ${.TARGET} from ${.IMPSRC}.'
 
 # XXX: As of 2020-10-20, the result is unexpected.
 # XXX: .d.c is not a transformation rule.
