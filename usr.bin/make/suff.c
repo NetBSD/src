@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.294 2020/11/22 11:46:49 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.295 2020/11/22 11:50:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.294 2020/11/22 11:46:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.295 2020/11/22 11:50:31 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1424,6 +1424,33 @@ ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
     return TRUE;
 }
 
+/*
+ * Member has a known suffix, so look for a transformation rule from
+ * it to a possible suffix of the archive.
+ *
+ * Rather than searching through the entire list, we just look at
+ * suffixes to which the member's suffix may be transformed.
+ */
+static void
+ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
+{
+    GNodeListNode *ln;
+    size_t nameLen = (size_t)(eoarch - gn->name);
+
+    /* Use first matching suffix... */
+    for (ln = memSuff->parents->first; ln != NULL; ln = ln->next)
+	if (Suffix_IsSuffix(ln->datum, nameLen, eoarch))
+	    break;
+
+    if (ln != NULL) {
+	/* Got one -- apply it */
+	Suffix *suff = ln->datum;
+	if (!ApplyTransform(gn, mem, suff, memSuff)) {
+	    SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
+			memSuff->name, suff->name);
+	}
+    }
+}
 
 static void FindDeps(GNode *, CandidateList *);
 
@@ -1441,8 +1468,8 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
     char *eoarch;		/* End of archive portion */
     char *eoname;		/* End of member portion */
     GNode *mem;			/* Node for member */
-    Suffix *ms;			/* Suffix descriptor for member */
-    char *name;			/* Start of member's name */
+    Suffix *memSuff;
+    const char *name;		/* Start of member's name */
 
     /*
      * The node is an archive(member) pair. so we must find a
@@ -1486,10 +1513,10 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
     Var_Set(PREFIX, GNode_VarPrefix(mem), gn);
     Var_Set(TARGET, GNode_VarTarget(mem), gn);
 
-    ms = mem->suffix;
-    if (ms == NULL) {		/* Didn't know what it was. */
+    memSuff = mem->suffix;
+    if (memSuff == NULL) {	/* Didn't know what it was. */
 	SUFF_DEBUG0("using null suffix\n");
-	ms = nullSuff;
+	memSuff = nullSuff;
     }
 
 
@@ -1510,32 +1537,8 @@ FindDepsArchive(GNode *gn, CandidateList *slst)
      */
     ExpandAllChildren(gn);
 
-    if (ms != NULL) {
-	/*
-	 * Member has a known suffix, so look for a transformation rule from
-	 * it to a possible suffix of the archive. Rather than searching
-	 * through the entire list, we just look at suffixes to which the
-	 * member's suffix may be transformed...
-	 */
-	size_t nameLen = (size_t)(eoarch - gn->name);
-	SuffixListNode *ln;
-
-	/* Use first matching suffix... */
-	for (ln = ms->parents->first; ln != NULL; ln = ln->next)
-	    if (Suffix_IsSuffix(ln->datum, nameLen, eoarch))
-		break;
-
-	if (ln != NULL) {
-	    /*
-	     * Got one -- apply it
-	     */
-	    Suffix *suff = ln->datum;
-	    if (!ApplyTransform(gn, mem, suff, ms)) {
-		SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
-			    ms->name, suff->name);
-	    }
-	}
-    }
+    if (memSuff != NULL)
+	ExpandMember(gn, eoarch, mem, memSuff);
 
     /*
      * Replace the opening and closing parens now we've no need of the separate
