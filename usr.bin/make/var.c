@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.694 2020/11/23 20:52:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.695 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.694 2020/11/23 20:52:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.695 2020/11/23 23:41:11 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -695,7 +695,7 @@ Var_UnExport(const char *str)
 	    /* we have been here before! */
 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
 	} else {
-	    if (savedEnv) {
+	    if (savedEnv != NULL) {
 		free(savedEnv);
 		savedEnv = NULL;
 	    }
@@ -2558,7 +2558,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 
     error = regcomp(&args.re, re, REG_EXTENDED);
     free(re);
-    if (error) {
+    if (error != 0) {
 	VarREError(error, &args.re, "Regex compilation error");
 	free(args.replace);
 	return AMR_CLEANUP;
@@ -3007,7 +3007,7 @@ ok:
 	case '!': {
 	    const char *errfmt;
 	    char *cmd_output = Cmd_Exec(val, &errfmt);
-	    if (errfmt)
+	    if (errfmt != NULL)
 		Error(errfmt, val);
 	    else
 		Var_Set(st->var->name, cmd_output, v_ctxt);
@@ -3145,7 +3145,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 	if (st->eflags & VARE_WANTRES) {
 	    const char *errfmt;
 	    st->newVal = Cmd_Exec(st->val, &errfmt);
-	    if (errfmt)
+	    if (errfmt != NULL)
 		Error(errfmt, st->val);
 	} else
 	    st->newVal = bmake_strdup("");

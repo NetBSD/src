@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.69 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.70 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.69 2020/11/23 20:41:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.70 2020/11/23 23:41:11 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -162,7 +162,7 @@ strrcpy(char *ptr, char *str)
 {
     int len = strlen(str);
 
-    while (len)
+    while (len != 0)
 	*--ptr = str[--len];
 
     return ptr;

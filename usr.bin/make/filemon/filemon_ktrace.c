@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.5 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.6 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ filemon_closefd(struct filemon *F)
 	F->out = NULL;
 
 	/* Set errno and return -1 if anything went wrong.  */
-	if (error) {
+	if (error != 0) {
 		errno = error;
 		return -1;
 	}
@@ -373,7 +373,7 @@ filemon_close(struct filemon *F)
 	free(F);
 
 	/* Set errno and return -1 if anything went wrong.  */
-	if (error) {
+	if (error != 0) {
 		errno = error;
 		return -1;
 	}

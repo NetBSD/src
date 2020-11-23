@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.221 2020/11/23 23:00:36 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.222 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.221 2020/11/23 23:00:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.222 2020/11/23 23:41:11 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -447,7 +447,7 @@ void
 Dir_End(void)
 {
 #ifdef CLEANUP
-	if (cur) {
+	if (cur != NULL) {
 		cur->refCount--;
 		Dir_Destroy(cur);
 	}
@@ -484,9 +484,9 @@ Dir_SetPATH(void)
 	}
 
 	if (!hasLastDot) {
-		if (dot)
+		if (dot != NULL)
 			Var_Append(".PATH", dot->name, VAR_GLOBAL);
-		if (cur)
+		if (cur != NULL)
 			Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 
@@ -500,9 +500,9 @@ Dir_SetPATH(void)
 	}
 
 	if (hasLastDot) {
-		if (dot)
+		if (dot != NULL)
 			Var_Append(".PATH", dot->name, VAR_GLOBAL);
-		if (cur)
+		if (cur != NULL)
 			Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 }
@@ -992,7 +992,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * slash in it (the name, I mean)
 	 */
 	base = strrchr(name, '/');
-	if (base) {
+	if (base != NULL) {
 		hasSlash = TRUE;
 		base++;
 	} else {
@@ -1086,7 +1086,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		DIR_DEBUG0("   Trying subdirectories...\n");
 
 		if (!hasLastDot) {
-			if (dot) {
+			if (dot != NULL) {
 				checkedDot = TRUE;
 				if ((file = DirLookupSubdir(dot, name)) != NULL)
 					return file;

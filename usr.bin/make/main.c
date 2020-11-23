@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.477 2020/11/23 20:52:59 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.478 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.477 2020/11/23 20:52:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.478 2020/11/23 23:41:11 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2214,7 +2214,7 @@ mkTempFile(const char *pattern, char **out_fname)
 	if ((fd = mkstemp(tfile)) < 0)
 		Punt("Could not create temporary file %s: %s", tfile,
 		    strerror(errno));
-	if (out_fname) {
+	if (out_fname != NULL) {
 		*out_fname = bmake_strdup(tfile);
 	} else {
 		unlink(
