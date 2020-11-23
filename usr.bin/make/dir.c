@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.219 2020/11/23 22:31:04 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.220 2020/11/23 22:57:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.219 2020/11/23 22:31:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.220 2020/11/23 22:57:56 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1291,49 +1291,57 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
 	return NULL;
 }
 
+/*
+ * This is an implied source, and it may have moved,
+ * see if we can find it via the current .PATH
+ */
+static char *
+ResolveMovedDepends(GNode *gn)
+{
+    char *fullName;
+
+    char *base = strrchr(gn->name, '/');
+    if (base == NULL)
+	return NULL;
+    base++;
+
+    fullName = Dir_FindFile(base, Suff_FindPath(gn));
+    if (fullName == NULL)
+	return NULL;
+
+    /*
+     * Put the found file in gn->path so that we give that to the compiler.
+     */
+    /*
+     * XXX: Better just reset gn->path to NULL; updating it is already done
+     * by Dir_UpdateMTime.
+     */
+    gn->path = bmake_strdup(fullName);
+    if (!Job_RunTarget(".STALE", gn->fname))
+	fprintf(stdout,		/* XXX: Why stdout? */
+		"%s: %s, %d: ignoring stale %s for %s, found %s\n",
+		progname, gn->fname, gn->lineno,
+		makeDependfile, gn->name, fullName);
+
+    return fullName;
+}
+
 static char *
 ResolveFullName(GNode *gn)
 {
     char *fullName;
 
-    if (gn->path == NULL) {
-	if (gn->type & OP_NOPATH)
-	    fullName = NULL;
-	else {
-	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
-	    if (fullName == NULL && gn->flags & FROM_DEPEND &&
-		!Lst_IsEmpty(gn->implicitParents)) {
-		char *cp;
+    fullName = gn->path;
+    if (fullName == NULL && !(gn->type & OP_NOPATH)) {
 
-		cp = strrchr(gn->name, '/');
-		if (cp) {
-		    /*
-		     * This is an implied source, and it may have moved,
-		     * see if we can find it via the current .PATH
-		     */
-		    cp++;
+	fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
 
-		    fullName = Dir_FindFile(cp, Suff_FindPath(gn));
-		    if (fullName) {
-			/*
-			 * Put the found file in gn->path
-			 * so that we give that to the compiler.
-			 */
-			gn->path = bmake_strdup(fullName);
-			if (!Job_RunTarget(".STALE", gn->fname))
-			    fprintf(stdout,
-				    "%s: %s, %d: ignoring stale %s for %s, "
-				    "found %s\n", progname, gn->fname,
-				    gn->lineno,
-				    makeDependfile, gn->name, fullName);
-		    }
-		}
-	    }
-	    DIR_DEBUG2("Found '%s' as '%s'\n",
-		       gn->name, fullName ? fullName : "(not found)");
-	}
-    } else {
-	fullName = gn->path;
+	if (fullName == NULL && gn->flags & FROM_DEPEND &&
+	    !Lst_IsEmpty(gn->implicitParents))
+	    fullName = ResolveMovedDepends(gn);
+
+	DIR_DEBUG2("Found '%s' as '%s'\n",
+		   gn->name, fullName ? fullName : "(not found)");
     }
 
     if (fullName == NULL)
