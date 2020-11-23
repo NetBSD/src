@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.4 2020/11/05 17:27:16 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.5 2020/11/23 20:41:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -90,9 +90,9 @@ static filemon_syscall_t *const filemon_syscalls[] = {
 };
 
 struct filemon {
-	int			ktrfd; /* kernel writes ktrace events here */
-	FILE			*in;   /* we read ktrace events from here */
-	FILE			*out;  /* we write filemon events to here */
+	int			ktrfd;	/* kernel writes ktrace events here */
+	FILE			*in;	/* we read ktrace events from here */
+	FILE			*out;	/* we write filemon events to here */
 	rb_tree_t		active;
 	pid_t			child;
 
