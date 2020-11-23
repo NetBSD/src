@@ -1,4 +1,4 @@
-# $NetBSD: suff-transform-endless.mk,v 1.3 2020/11/23 14:13:39 rillig Exp $
+# $NetBSD: suff-transform-endless.mk,v 1.4 2020/11/23 14:47:12 rillig Exp $
 
 # https://gnats.netbsd.org/49086, issue 6:
 # Transformation search can end up in an infinite loop.
@@ -35,4 +35,5 @@ all: issue6.f
 # XXX: Found 'all' as '(not found)'
 # XXX: trying all.e, all.e, all.f, all.e, all.e, repeatedly.
 #.MAKEFLAGS: -dg1
-.error prevent endless loop
+
+# Before 24-11-2020, resolving all.e ran into an endless loop.
