@@ -1,4 +1,23 @@
-make: "suff-transform-endless.mk" line 36: prevent endless loop
+Adding suffix ".c"
+Adding suffix ".d"
+defining transformation from `.c' to `.d'
+inserting ".c" (1) at end of list
+inserting ".d" (2) at end of list
+Adding suffix ".e"
+defining transformation from `.d' to `.e'
+inserting ".d" (2) at end of list
+inserting ".e" (3) at end of list
+Adding suffix ".f"
+defining transformation from `.e' to `'
+inserting ".e" (3) at end of list
+inserting "" (0) at end of list
+defining transformation from `.e' to `.f'
+inserting ".e" (3) at end of list
+inserting ".f" (4) at end of list
+defining transformation from `.f' to `.e'
+inserting ".f" (4) at end of list
+inserting ".e" (3) at end of list
+make: "suff-transform-endless.mk" line 38: prevent endless loop
 
 make: stopped in unit-tests
 exit status 1
