@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.10 2020/11/23 06:46:38 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,15 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.9 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.10 2020/11/23 06:46:38 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
 
