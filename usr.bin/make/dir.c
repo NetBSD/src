@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.214 2020/11/23 20:52:59 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.215 2020/11/23 21:45:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.214 2020/11/23 20:52:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.215 2020/11/23 21:45:30 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -772,74 +772,86 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
     cp = strchr(word, '{');
     if (cp != NULL) {
 	DirExpandCurly(word, cp, path, expansions);
-    } else {
-	cp = strchr(word, '/');
-	if (cp != NULL) {
-	    /*
-	     * The thing has a directory component -- find the first wildcard
-	     * in the string.
-	     */
-	    for (cp = word; *cp != '\0'; cp++) {
-		if (*cp == '?' || *cp == '[' || *cp == '*') {
-		    break;
-		}
-	    }
+	goto done;
+    }
 
-	    if (*cp != '\0') {
-		/*
-		 * Back up to the start of the component
-		 */
-		while (cp > word && *cp != '/') {
-		    cp--;
-		}
-		if (cp != word) {
-		    char *prefix = bmake_strsedup(word, cp + 1);
-		    /*
-		     * If the glob isn't in the first component, try and find
-		     * all the components up to the one with a wildcard.
-		     */
-		    char *dirpath = Dir_FindFile(prefix, path);
-		    free(prefix);
-		    /*
-		     * dirpath is null if can't find the leading component
-		     * XXX: Dir_FindFile won't find internal components.
-		     * i.e. if the path contains ../Etc/Object and we're
-		     * looking for Etc, it won't be found. Ah well.
-		     * Probably not important.
-		     */
-		    if (dirpath != NULL) {
-			char *dp = &dirpath[strlen(dirpath) - 1];
-			if (*dp == '/')
-			    *dp = '\0';
-			path = Lst_New();
-			(void)Dir_AddDir(path, dirpath);
-			DirExpandPath(cp + 1, path, expansions);
-			Lst_Free(path);
-		    }
-		} else {
-		    /*
-		     * Start the search from the local directory
-		     */
-		    DirExpandPath(word, path, expansions);
-		}
-	    } else {
-		/*
-		 * Return the file -- this should never happen.
-		 */
-		DirExpandPath(word, path, expansions);
-	    }
-	} else {
-	    /*
-	     * First the files in dot
-	     */
-	    DirMatchFiles(word, dot, expansions);
+    /* At this point, the word does not contain '{'. */
 
-	    /*
-	     * Then the files in every other directory on the path.
-	     */
-	    DirExpandPath(word, path, expansions);
+    cp = strchr(word, '/');
+    if (cp == NULL) {
+	/* The word has no directory component. */
+	/* First the files in dot. */
+	DirMatchFiles(word, dot, expansions);
+
+	/* Then the files in every other directory on the path. */
+	DirExpandPath(word, path, expansions);
+	goto done;
+    }
+
+    /* At this point, the word has a directory component. */
+
+    /* Find the first wildcard in the string. */
+    for (cp = word; *cp != '\0'; cp++)
+	if (*cp == '?' || *cp == '[' || *cp == '*')
+	    break;
+
+    if (*cp == '\0') {
+	/*
+	* No directory component and no wildcard at all -- this should
+	 * never happen as in such a simple case there is no need to
+	 * expand anything.
+	 */
+	DirExpandPath(word, path, expansions);
+	goto done;
+    }
+
+    /* Back up to the start of the component containing the wildcard. */
+    /* XXX: This handles '///' and '/' differently. */
+    while (cp > word && *cp != '/')
+	cp--;
+
+    if (cp == word) {
+	/* The first component contains the wildcard. */
+	/* Start the search from the local directory */
+	DirExpandPath(word, path, expansions);
+	goto done;
+    }
+
+    {
+	char *prefix = bmake_strsedup(word, cp + 1);
+	/*
+	 * The wildcard isn't in the first component.
+	 * Find all the components up to the one with the wildcard.
+	 */
+	/*
+	 * XXX: Check the "the directory is added to the path" part.
+	 * It is probably surprising that the directory before a wildcard
+	 * gets added to the path.
+	 */
+	char *dirpath = Dir_FindFile(prefix, path);
+	free(prefix);
+
+	/*
+	 * dirpath is null if can't find the leading component
+	 * XXX: Dir_FindFile won't find internal components.
+	 * i.e. if the path contains ../Etc/Object and we're
+	 * looking for Etc, it won't be found. Ah well.
+	 * Probably not important.
+	 * XXX: Check whether the above comment is still true.
+	 */
+	if (dirpath != NULL) {
+	    char *dp = &dirpath[strlen(dirpath) - 1];
+	    if (*dp == '/')
+		*dp = '\0';
+
+	    path = Lst_New();
+	    (void)Dir_AddDir(path, dirpath);
+	    DirExpandPath(cp + 1, path, expansions);
+	    Lst_Free(path);
 	}
     }
+
+done:
     if (DEBUG(DIR))
 	PrintExpansions(expansions);
 }
@@ -1349,19 +1361,22 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 }
 
 /* Read the list of filenames in the directory and store the result
- * in openDirectories.
+ * in openDirs.
  *
  * If a path is given, append the directory to that path.
  *
  * Input:
  *	path		The path to which the directory should be
- *			added, or NULL to only add the directory to
- *			openDirectories
+ *			added, or NULL to only add the directory to openDirs
  *	name		The name of the directory to add.
  *			The name is not normalized in any way.
  */
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
+/*
+ * XXX: Maybe return const CachedDir, as a hint that the return value must
+ * not be freed since it is owned by openDirs.
+ */
 {
 	CachedDir *dir = NULL;	/* the added directory */
 	DIR *d;
