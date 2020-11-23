@@ -1,4 +1,4 @@
-/* $NetBSD: rpi_vcmbox.c,v 1.5 2018/12/08 06:53:11 mlelstv Exp $ */
+/* $NetBSD: rpi_vcmbox.c,v 1.6 2020/11/23 06:29:54 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,15 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.5 2018/12/08 06:53:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.6 2020/11/23 06:29:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/systm.h>
 #include <sys/sysctl.h>
 
 #include <dev/sysmon/sysmonvar.h>
