@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.218 2020/11/23 22:14:54 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.219 2020/11/23 22:31:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.218 2020/11/23 22:14:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.219 2020/11/23 22:31:04 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1291,25 +1291,10 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
 	return NULL;
 }
 
-/* Search gn along dirSearchPath and store its modification time in gn->mtime.
- * If no file is found, store 0 instead.
- *
- * The found file is stored in gn->path, unless the node already had a path. */
-void
-Dir_UpdateMTime(GNode *gn, Boolean recheck)
+static char *
+ResolveFullName(GNode *gn)
 {
     char *fullName;
-    struct cached_stat cst;
-
-    if (gn->type & OP_ARCHV) {
-	Arch_UpdateMTime(gn);
-	return;
-    }
-
-    if (gn->type & OP_PHONY) {
-	gn->mtime = 0;
-	return;
-    }
 
     if (gn->path == NULL) {
 	if (gn->type & OP_NOPATH)
@@ -1354,6 +1339,33 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
     if (fullName == NULL)
 	fullName = bmake_strdup(gn->name);
 
+    /* XXX: Is every piece of memory freed as it should? */
+
+    return fullName;
+}
+
+/* Search gn along dirSearchPath and store its modification time in gn->mtime.
+ * If no file is found, store 0 instead.
+ *
+ * The found file is stored in gn->path, unless the node already had a path. */
+void
+Dir_UpdateMTime(GNode *gn, Boolean recheck)
+{
+    char *fullName;
+    struct cached_stat cst;
+
+    if (gn->type & OP_ARCHV) {
+	Arch_UpdateMTime(gn);
+	return;
+    }
+
+    if (gn->type & OP_PHONY) {
+	gn->mtime = 0;
+	return;
+    }
+
+    fullName = ResolveFullName(gn);
+
     if (cached_stats(fullName, &cst, recheck ? CST_UPDATE : CST_NONE) < 0) {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
@@ -1367,6 +1379,7 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 
     if (fullName != NULL && gn->path == NULL)
 	gn->path = fullName;
+    /* XXX: else free(fullName)? */
 
     gn->mtime = cst.cst_mtime;
 }
