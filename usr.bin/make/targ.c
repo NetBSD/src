@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.140 2020/11/22 20:01:46 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.141 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.140 2020/11/22 20:01:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.141 2020/11/23 23:41:11 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -416,7 +416,7 @@ Targ_PrintType(int type)
 
     type &= ~OP_OPMASK;
 
-    while (type) {
+    while (type != 0) {
 	tbit = 1 << (ffs(type) - 1);
 	type &= ~tbit;
 

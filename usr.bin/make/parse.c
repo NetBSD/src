@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.450 2020/11/23 20:52:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.451 2020/11/23 23:41:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.450 2020/11/23 20:52:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.451 2020/11/23 23:41:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1705,7 +1705,7 @@ ParseDoDependency(char *line)
 	specType == SP_NULL || specType == SP_OBJDIR)
     {
 	ParseDoDependencySourcesSpecial(line, cp, specType, paths);
-	if (paths) {
+	if (paths != NULL) {
 	    Lst_Free(paths);
 	    paths = NULL;
 	}
@@ -1930,7 +1930,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
     Var_Set(name, cmdOut, ctxt);
     *out_avalue = *out_avalue_freeIt = cmdOut;
 
-    if (errfmt)
+    if (errfmt != NULL)
 	Parse_Error(PARSE_WARNING, errfmt, cmd);
 
     free(cmd_freeIt);
