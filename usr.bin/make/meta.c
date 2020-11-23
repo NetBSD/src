@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.147 2020/11/23 23:41:11 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.148 2020/11/23 23:44:03 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -413,7 +413,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     struct cached_stat cst;
 
     if (verbose)
-	verbose = DEBUG(META);
+	verbose = DEBUG(META) != 0;
 
     /* This may be a phony node which we don't want meta data for... */
     /* Skip .meta for .BEGIN, .END, .ERROR etc as well. */
@@ -934,14 +934,12 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		return x;		/* truncated */
 	    DEBUG2(META, "growing buffer %zu -> %zu\n", bufsz, newsz);
 	    p = bmake_realloc(buf, newsz);
-	    if (p) {
-		*bufp = buf = p;
-		*szp = bufsz = newsz;
-		/* fetch the rest */
-		if (fgets(&buf[x], (int)bufsz - x, fp) == NULL)
-		    return x;		/* truncated! */
-		goto check_newline;
-	    }
+	    *bufp = buf = p;
+	    *szp = bufsz = newsz;
+	    /* fetch the rest */
+	    if (fgets(&buf[x], (int)bufsz - x, fp) == NULL)
+		return x;		/* truncated! */
+	    goto check_newline;
 	}
     }
     return 0;
