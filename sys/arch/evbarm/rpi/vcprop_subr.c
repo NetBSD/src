@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop_subr.c,v 1.6 2020/07/04 15:14:56 skrll Exp $	*/
+/*	$NetBSD: vcprop_subr.c,v 1.7 2020/11/23 06:29:54 rin Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael Lorenz
@@ -30,8 +30,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
