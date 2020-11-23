@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.213 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.214 2020/11/23 20:52:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.213 2020/11/23 20:41:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.214 2020/11/23 20:52:59 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -770,16 +770,16 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
     DIR_DEBUG1("Expanding \"%s\"... ", word);
 
     cp = strchr(word, '{');
-    if (cp) {
+    if (cp != NULL) {
 	DirExpandCurly(word, cp, path, expansions);
     } else {
 	cp = strchr(word, '/');
-	if (cp) {
+	if (cp != NULL) {
 	    /*
 	     * The thing has a directory component -- find the first wildcard
 	     * in the string.
 	     */
-	    for (cp = word; *cp; cp++) {
+	    for (cp = word; *cp != '\0'; cp++) {
 		if (*cp == '?' || *cp == '[' || *cp == '*') {
 		    break;
 		}

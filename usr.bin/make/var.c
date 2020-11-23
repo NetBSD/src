@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.693 2020/11/21 18:41:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.694 2020/11/23 20:52:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.693 2020/11/21 18:41:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.694 2020/11/23 20:52:59 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -605,7 +605,7 @@ Var_ExportVars(void)
 
     (void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES, &val);
     /* TODO: handle errors */
-    if (*val) {
+    if (val[0] != '\0') {
 	Words words = Str_Words(val, FALSE);
 	size_t i;
 
@@ -1420,12 +1420,11 @@ tryagain:
 		SepBuf_AddBytes(buf, wp, 1);
 		wp++;
 	    }
-	    if (*wp)
+	    if (*wp != '\0')
 		goto tryagain;
 	}
-	if (*wp) {
+	if (*wp != '\0')
 	    SepBuf_AddStr(buf, wp);
-	}
 	break;
     default:
 	VarREError(xrv, &args->re, "Unexpected regex error");

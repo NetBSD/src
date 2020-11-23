@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.449 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.450 2020/11/23 20:52:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.449 2020/11/23 20:41:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.450 2020/11/23 20:52:59 rillig Exp $");
 
 /* types and constants */
 
@@ -1516,8 +1516,8 @@ ParseDoDependencySourcesSpecial(char *start, char *end,
 {
     char savec;
 
-    while (*start) {
-	while (*end && !ch_isspace(*end))
+    while (*start != '\0') {
+	while (*end != '\0' && !ch_isspace(*end))
 	    end++;
 	savec = *end;
 	*end = '\0';
@@ -1540,7 +1540,7 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 	 * specifications (i.e. things with left parentheses in them)
 	 * and handle them accordingly.
 	 */
-	for (; *end && !ch_isspace(*end); end++) {
+	for (; *end != '\0' && !ch_isspace(*end); end++) {
 	    if (*end == '(' && end > start && end[-1] != '$') {
 		/*
 		 * Only stop for a left parenthesis if it isn't at the
@@ -1567,7 +1567,7 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 	    Lst_Free(sources);
 	    end = start;
 	} else {
-	    if (*end) {
+	    if (*end != '\0') {
 		*end = '\0';
 		end++;
 	    }
@@ -2480,7 +2480,7 @@ ParseTraditionalInclude(char *line)
 
     for (file = all_files; !done; file = cp + 1) {
 	/* Skip to end of line or next whitespace */
-	for (cp = file; *cp && !ch_isspace(*cp); cp++)
+	for (cp = file; *cp != '\0' && !ch_isspace(*cp); cp++)
 	    continue;
 
 	if (*cp != '\0')
