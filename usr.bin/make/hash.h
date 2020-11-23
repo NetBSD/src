@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.33 2020/11/14 21:29:44 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.34 2020/11/23 17:59:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,40 +79,40 @@
 
 /* A single key-value entry in the hash table. */
 typedef struct HashEntry {
-    struct HashEntry *next;	/* Used to link together all the entries
+	struct HashEntry *next;	/* Used to link together all the entries
 				 * associated with the same bucket. */
-    void *value;
-    unsigned int key_hash;	/* hash value of the key */
-    char key[1];		/* key string, variable length */
+	void *value;
+	unsigned int key_hash;	/* hash value of the key */
+	char key[1];		/* key string, variable length */
 } HashEntry;
 
 /* The hash table containing the entries. */
 typedef struct HashTable {
-    HashEntry **buckets;	/* Pointers to HashEntry, one
+	HashEntry **buckets;	/* Pointers to HashEntry, one
 				 * for each bucket in the table. */
-    unsigned int bucketsSize;
-    unsigned int numEntries;	/* Number of entries in the table. */
-    unsigned int bucketsMask;	/* Used to select the bucket for a hash. */
-    unsigned int maxchain;	/* max length of chain detected */
+	unsigned int bucketsSize;
+	unsigned int numEntries; /* Number of entries in the table. */
+	unsigned int bucketsMask; /* Used to select the bucket for a hash. */
+	unsigned int maxchain;	/* max length of chain detected */
 } HashTable;
 
 /* State of an iteration over all entries in a table. */
 typedef struct HashIter {
-    HashTable *table;		/* Table being searched. */
-    unsigned int nextBucket;	/* Next bucket to check (after current). */
-    HashEntry *entry;		/* Next entry to check in current bucket. */
+	HashTable *table;	/* Table being searched. */
+	unsigned int nextBucket; /* Next bucket to check (after current). */
+	HashEntry *entry;	/* Next entry to check in current bucket. */
 } HashIter;
 
 MAKE_INLINE void *
 HashEntry_Get(HashEntry *h)
 {
-    return h->value;
+	return h->value;
 }
 
 MAKE_INLINE void
 HashEntry_Set(HashEntry *h, void *datum)
 {
-    h->value = datum;
+	h->value = datum;
 }
 
 void HashTable_Init(HashTable *);
