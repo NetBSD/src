@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.42 2020/11/23 06:21:07 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.43 2020/11/23 06:24:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.42 2020/11/23 06:21:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.43 2020/11/23 06:24:35 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.42 2020/11/23 06:21:07 rin Ex
 #define RPI_CPU_MAX	4
 
 void bcm2835_platform_early_putchar(char c);
+void bcm2835_aux_platform_early_putchar(char c);
 void bcm2836_platform_early_putchar(char c);
 void bcm2837_platform_early_putchar(char c);
 void bcm2711_platform_early_putchar(char c);
@@ -1365,6 +1366,15 @@ bcm2835_platform_early_putchar(char c)
 	vaddr_t va = BCM2835_IOPHYSTOVIRT(pa);
 
 	bcm283x_platform_early_putchar(va, pa, c);
+}
+
+void __noasan
+bcm2835_aux_platform_early_putchar(char c)
+{
+	paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_AUX_UART_BASE);
+	vaddr_t va = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_aux_platform_early_putchar(va, pa, c);
 }
 
 void __noasan
