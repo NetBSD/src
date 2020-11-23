@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.17 2019/12/30 15:58:12 skrll Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.18 2020/11/23 06:29:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -130,12 +130,12 @@ struct vcprop_tag_fwrev {
 struct vcprop_tag_boardmodel {
 	struct vcprop_tag tag;
 	uint32_t model;
-} ;
+};
 
 struct vcprop_tag_boardrev {
 	struct vcprop_tag tag;
 	uint32_t rev;
-} ;
+};
 
 #define	VCPROP_REV_PCBREV	__BITS(3,0)
 #define	VCPROP_REV_MODEL	__BITS(11,4)
