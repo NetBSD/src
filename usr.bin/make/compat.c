@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.184 2020/11/23 19:14:24 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.185 2020/11/23 19:27:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.184 2020/11/23 19:14:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.185 2020/11/23 19:27:20 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -461,6 +461,147 @@ MakeNodes(GNodeList *gnodes, GNode *pgn)
     }
 }
 
+static Boolean
+MakeUnmade(GNode *const gn, GNode *const pgn)
+{
+	/*
+	 * First mark ourselves to be made, then apply whatever transformations
+	 * the suffix module thinks are necessary. Once that's done, we can
+	 * descend and make all our children. If any of them has an error
+	 * but the -k flag was given, our 'make' field will be set to FALSE
+	 * again. This is our signal to not attempt to do anything but abort
+	 * our parent as well.
+	 */
+	gn->flags |= REMAKE;
+	gn->made = BEINGMADE;
+	if (!(gn->type & OP_MADE))
+		Suff_FindDeps(gn);
+	MakeNodes(gn->children, gn);
+	if (!(gn->flags & REMAKE)) {
+		gn->made = ABORTED;
+		pgn->flags &= ~(unsigned)REMAKE;
+		return FALSE;
+	}
+
+	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL)
+		Var_Set(IMPSRC, GNode_VarTarget(gn), pgn);
+
+	/*
+	 * All the children were made ok. Now youngestChild->mtime contains the
+	 * modification time of the newest child, we need to find out if we
+	 * exist and when we were modified last. The criteria for datedness
+	 * are defined by GNode_IsOODate.
+	 */
+	DEBUG1(MAKE, "Examining %s...", gn->name);
+	if (!GNode_IsOODate(gn)) {
+		gn->made = UPTODATE;
+		DEBUG0(MAKE, "up-to-date.\n");
+		return FALSE;
+	} else
+		DEBUG0(MAKE, "out-of-date.\n");
+
+	/*
+	 * If the user is just seeing if something is out-of-date, exit now
+	 * to tell him/her "yes".
+	 */
+	if (opts.queryFlag)
+		exit(1);
+
+	/*
+	 * We need to be re-made. We also have to make sure we've got a $?
+	 * variable. To be nice, we also define the $> variable using
+	 * Make_DoAllVar().
+	 */
+	Make_DoAllVar(gn);
+
+	/*
+	 * Alter our type to tell if errors should be ignored or things
+	 * should not be printed so CompatRunCommand knows what to do.
+	 */
+	if (Targ_Ignore(gn))
+		gn->type |= OP_IGNORE;
+	if (Targ_Silent(gn))
+		gn->type |= OP_SILENT;
+
+	if (Job_CheckCommands(gn, Fatal)) {
+		/*
+		 * Our commands are ok, but we still have to worry about
+		 * the -t flag.
+		 */
+		if (!opts.touchFlag || (gn->type & OP_MAKE)) {
+			curTarg = gn;
+#ifdef USE_META
+			if (useMeta && GNode_ShouldExecute(gn)) {
+				meta_job_start(NULL, gn);
+			}
+#endif
+			RunCommands(gn);
+			curTarg = NULL;
+		} else {
+			Job_Touch(gn, (gn->type & OP_SILENT) != 0);
+		}
+	} else {
+		gn->made = ERROR;
+	}
+#ifdef USE_META
+	if (useMeta && GNode_ShouldExecute(gn)) {
+		if (meta_job_finish(NULL) != 0)
+			gn->made = ERROR;
+	}
+#endif
+
+	if (gn->made != ERROR) {
+		/*
+		 * If the node was made successfully, mark it so, update
+		 * its modification time and timestamp all its parents.
+		 * This is to keep its state from affecting that of its parent.
+		 */
+		gn->made = MADE;
+		if (Make_Recheck(gn) == 0)
+			pgn->flags |= FORCE;
+		if (!(gn->type & OP_EXEC)) {
+			pgn->flags |= CHILDMADE;
+			GNode_UpdateYoungestChild(pgn, gn);
+		}
+	} else if (opts.keepgoing) {
+		pgn->flags &= ~(unsigned)REMAKE;
+	} else {
+		PrintOnError(gn, "\nStop.");
+		exit(1);
+	}
+	return TRUE;
+}
+
+static void
+MakeOther(GNode *gn, GNode *pgn)
+{
+
+	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
+		const char *target = GNode_VarTarget(gn);
+		Var_Set(IMPSRC, target != NULL ? target : "", pgn);
+	}
+
+	switch(gn->made) {
+	case BEINGMADE:
+		Error("Graph cycles through %s", gn->name);
+		gn->made = ERROR;
+		pgn->flags &= ~(unsigned)REMAKE;
+		break;
+	case MADE:
+		if (!(gn->type & OP_EXEC)) {
+			pgn->flags |= CHILDMADE;
+			GNode_UpdateYoungestChild(pgn, gn);
+		}
+		break;
+	case UPTODATE:
+		if (!(gn->type & OP_EXEC))
+			GNode_UpdateYoungestChild(pgn, gn);
+		break;
+	default:
+		break;
+	}
+}
+
 /* Make a target.
  *
  * If an error is detected and not being ignored, the process exits.
@@ -476,138 +617,13 @@ Compat_Make(GNode *gn, GNode *pgn)
 	Shell_Init();
 
     if (gn->made == UNMADE && (gn == pgn || !(pgn->type & OP_MADE))) {
-	/*
-	 * First mark ourselves to be made, then apply whatever transformations
-	 * the suffix module thinks are necessary. Once that's done, we can
-	 * descend and make all our children. If any of them has an error
-	 * but the -k flag was given, our 'make' field will be set to FALSE
-	 * again. This is our signal to not attempt to do anything but abort
-	 * our parent as well.
-	 */
-	gn->flags |= REMAKE;
-	gn->made = BEINGMADE;
-	if (!(gn->type & OP_MADE))
-	    Suff_FindDeps(gn);
-	MakeNodes(gn->children, gn);
-	if (!(gn->flags & REMAKE)) {
-	    gn->made = ABORTED;
-	    pgn->flags &= ~(unsigned)REMAKE;
+	if (!MakeUnmade(gn, pgn))
 	    goto cohorts;
-	}
-
-	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL)
-	    Var_Set(IMPSRC, GNode_VarTarget(gn), pgn);
-
-	/*
-	 * All the children were made ok. Now youngestChild->mtime contains the
-	 * modification time of the newest child, we need to find out if we
-	 * exist and when we were modified last. The criteria for datedness
-	 * are defined by GNode_IsOODate.
-	 */
-	DEBUG1(MAKE, "Examining %s...", gn->name);
-	if (!GNode_IsOODate(gn)) {
-	    gn->made = UPTODATE;
-	    DEBUG0(MAKE, "up-to-date.\n");
-	    goto cohorts;
-	} else
-	    DEBUG0(MAKE, "out-of-date.\n");
-
-	/*
-	 * If the user is just seeing if something is out-of-date, exit now
-	 * to tell him/her "yes".
-	 */
-	if (opts.queryFlag)
-	    exit(1);
-
-	/*
-	 * We need to be re-made. We also have to make sure we've got a $?
-	 * variable. To be nice, we also define the $> variable using
-	 * Make_DoAllVar().
-	 */
-	Make_DoAllVar(gn);
-
-	/*
-	 * Alter our type to tell if errors should be ignored or things
-	 * should not be printed so CompatRunCommand knows what to do.
-	 */
-	if (Targ_Ignore(gn))
-	    gn->type |= OP_IGNORE;
-	if (Targ_Silent(gn))
-	    gn->type |= OP_SILENT;
-
-	if (Job_CheckCommands(gn, Fatal)) {
-	    /*
-	     * Our commands are ok, but we still have to worry about the -t
-	     * flag...
-	     */
-	    if (!opts.touchFlag || (gn->type & OP_MAKE)) {
-		curTarg = gn;
-#ifdef USE_META
-		if (useMeta && GNode_ShouldExecute(gn)) {
-		    meta_job_start(NULL, gn);
-		}
-#endif
-		RunCommands(gn);
-		curTarg = NULL;
-	    } else {
-		Job_Touch(gn, (gn->type & OP_SILENT) != 0);
-	    }
-	} else {
-	    gn->made = ERROR;
-	}
-#ifdef USE_META
-	if (useMeta && GNode_ShouldExecute(gn)) {
-	    if (meta_job_finish(NULL) != 0)
-		gn->made = ERROR;
-	}
-#endif
-
-	if (gn->made != ERROR) {
-	    /*
-	     * If the node was made successfully, mark it so, update
-	     * its modification time and timestamp all its parents.
-	     * This is to keep its state from affecting that of its parent.
-	     */
-	    gn->made = MADE;
-	    if (Make_Recheck(gn) == 0)
-		pgn->flags |= FORCE;
-	    if (!(gn->type & OP_EXEC)) {
-		pgn->flags |= CHILDMADE;
-		GNode_UpdateYoungestChild(pgn, gn);
-	    }
-	} else if (opts.keepgoing) {
-	    pgn->flags &= ~(unsigned)REMAKE;
-	} else {
-	    PrintOnError(gn, "\nStop.");
-	    exit(1);
-	}
     } else if (gn->made == ERROR) {
 	/* Already had an error when making this. Tell the parent to abort. */
 	pgn->flags &= ~(unsigned)REMAKE;
     } else {
-	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
-	    const char *target = GNode_VarTarget(gn);
-	    Var_Set(IMPSRC, target != NULL ? target : "", pgn);
-	}
-	switch(gn->made) {
-	    case BEINGMADE:
-		Error("Graph cycles through %s", gn->name);
-		gn->made = ERROR;
-		pgn->flags &= ~(unsigned)REMAKE;
-		break;
-	    case MADE:
-		if (!(gn->type & OP_EXEC)) {
-		    pgn->flags |= CHILDMADE;
-		    GNode_UpdateYoungestChild(pgn, gn);
-		}
-		break;
-	    case UPTODATE:
-		if (!(gn->type & OP_EXEC))
-		    GNode_UpdateYoungestChild(pgn, gn);
-		break;
-	    default:
-		break;
-	}
+    	MakeOther(gn, pgn);
     }
 
 cohorts:
