@@ -1,4 +1,4 @@
-# $NetBSD: suff-transform-select.mk,v 1.2 2020/11/23 14:13:39 rillig Exp $
+# $NetBSD: suff-transform-select.mk,v 1.3 2020/11/23 14:47:12 rillig Exp $
 #
 # https://gnats.netbsd.org/49086, issue 10:
 # Explicit dependencies affect transformation rule selection.
@@ -27,4 +27,5 @@ issue10.d issue10.f:
 
 # XXX: see suff-bug-endless, which must be fixed first.
 #.MAKEFLAGS: -dg1
-.error prevent endless loop
+
+# Before 24-11-2020, resolving all.e ran into an endless loop.
