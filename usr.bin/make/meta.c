@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.145 2020/11/23 20:41:20 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.146 2020/11/23 20:52:59 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -491,7 +491,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	/* Describe the target we are building */
 	(void)Var_Subst("${" MAKE_META_PREFIX "}", gn, VARE_WANTRES, &mp);
 	/* TODO: handle errors */
-	if (*mp)
+	if (mp[0] != '\0')
 	    fprintf(stdout, "%s\n", mp);
 	free(mp);
     }
@@ -995,7 +995,7 @@ meta_ignore(GNode *gn, const char *p)
 	expr = "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}";
 	(void)Var_Subst(expr, gn, VARE_WANTRES, &pm);
 	/* TODO: handle errors */
-	if (*pm) {
+	if (pm[0] != '\0') {
 #ifdef DEBUG_META_MODE
 	    DEBUG1(META, "meta_oodate: ignoring pattern: %s\n", p);
 #endif
