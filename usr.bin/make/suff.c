@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.304 2020/11/23 13:52:27 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.305 2020/11/23 14:04:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.304 2020/11/23 13:52:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.305 2020/11/23 14:04:28 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1060,7 +1060,6 @@ RemoveCandidate(CandidateList *srcs)
 static Candidate *
 FindThem(CandidateList *srcs, CandidateSearcher *cs)
 {
-    Candidate *retsrc = NULL;
 
     while (!Lst_IsEmpty(srcs)) {
 	Candidate *src = Lst_Dequeue(srcs);
@@ -1075,16 +1074,16 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 	 * graph for it or the file actually exists.
 	 */
 	if (Targ_FindNode(src->file) != NULL) {
-	    retsrc = src;
-	    break;
+	    SUFF_DEBUG0("got it\n");
+	    return src;
 	}
 
 	{
 	    char *file = Dir_FindFile(src->file, src->suff->searchPath);
 	    if (file != NULL) {
-		retsrc = src;
 		free(file);
-		break;
+		SUFF_DEBUG0("got it\n");
+		return src;
 	    }
 	}
 
@@ -1094,10 +1093,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 	CandidateSearcher_Add(cs, src);
     }
 
-    if (retsrc) {
-	SUFF_DEBUG0("got it\n");
-    }
-    return retsrc;
+    return NULL;
 }
 
 /*
