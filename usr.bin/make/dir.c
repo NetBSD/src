@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.217 2020/11/23 22:05:58 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.218 2020/11/23 22:14:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.217 2020/11/23 22:05:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.218 2020/11/23 22:14:54 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -790,7 +790,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 
 	/* At this point, the word has a directory component. */
 
-	/* Find the first wildcard in the string. */
+	/* Find the first wildcard in the word. */
 	for (cp = word; *cp != '\0'; cp++)
 		if (*cp == '?' || *cp == '[' || *cp == '*')
 			break;
@@ -828,6 +828,11 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 		 * It is probably surprising that the directory before a
 		 * wildcard gets added to the path.
 		 */
+		/*
+		 * XXX: Only the first match of the prefix in the path is
+		 * taken, any others are ignored.  The expectation may be
+		 * that the pattern is expanded in the whole path.
+		 */
 		char *dirpath = Dir_FindFile(prefix, path);
 		free(prefix);
 
@@ -840,14 +845,17 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 		 * XXX: Check whether the above comment is still true.
 		 */
 		if (dirpath != NULL) {
-			char *dp = &dirpath[strlen(dirpath) - 1];
-			if (*dp == '/')
-				*dp = '\0';
+			SearchPath *partPath;
 
-			path = Lst_New();
-			(void)Dir_AddDir(path, dirpath);
-			DirExpandPath(cp + 1, path, expansions);
-			Lst_Free(path);
+			char *end = &dirpath[strlen(dirpath) - 1];
+			/* XXX: What about multiple trailing slashes? */
+			if (*end == '/')
+				*end = '\0';
+
+			partPath = Lst_New();
+			(void)Dir_AddDir(partPath, dirpath);
+			DirExpandPath(cp + 1, partPath, expansions);
+			Lst_Free(partPath);
 		}
 	}
 
