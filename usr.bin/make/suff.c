@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.307 2020/11/23 18:07:10 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.308 2020/11/23 20:41:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.307 2020/11/23 18:07:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.308 2020/11/23 20:41:20 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1271,7 +1271,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	     * on the Arch module to find the nodes for us, expanding
 	     * variables in the parent's context.
 	     */
-	    char	*sacrifice = cp;
+	    char *sacrifice = cp;
 
 	    (void)Arch_ParseArchive(&sacrifice, members, pgn);
 	} else {
@@ -1282,8 +1282,8 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	     * doesn't understand about variable specifications with
 	     * spaces in them...
 	     */
-	    char	    *start;
-	    char	    *initcp = cp;   /* For freeing... */
+	    char *start;
+	    char *initcp = cp;	/* For freeing... */
 
 	    start = cp;
 	    pp_skip_hspace(&start);

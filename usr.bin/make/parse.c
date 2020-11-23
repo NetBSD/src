@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.448 2020/11/22 20:36:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.449 2020/11/23 20:41:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.448 2020/11/22 20:36:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.449 2020/11/23 20:41:20 rillig Exp $");
 
 /* types and constants */
 
@@ -2788,7 +2788,7 @@ ParseReadLine(void)
 	    continue;
 	case COND_PARSE:
 	    continue;
-	case COND_INVALID:    /* Not a conditional line */
+	case COND_INVALID:	/* Not a conditional line */
 	    /* Check for .for loops */
 	    rval = For_Eval(line);
 	    if (rval == 0)

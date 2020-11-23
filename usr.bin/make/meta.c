@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.144 2020/11/15 12:02:44 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.145 2020/11/23 20:41:20 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -75,7 +75,7 @@ static Boolean metaEnv = FALSE;		/* don't save env unless asked */
 static Boolean metaVerbose = FALSE;
 static Boolean metaIgnoreCMDs = FALSE;	/* ignore CMDs in .meta files */
 static Boolean metaIgnorePatterns = FALSE; /* do we need to do pattern matches */
-static Boolean metaIgnoreFilter = FALSE;   /* do we have more complex filtering? */
+static Boolean metaIgnoreFilter = FALSE; /* do we have more complex filtering? */
 static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
 static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 
@@ -1420,7 +1420,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    sdirs[sdx++] = p; /* done */
 			} else {
 			    if (strcmp(".", p) == 0)
-				continue;  /* no point */
+				continue; /* no point */
 
 			    /* Check vs latestdir */
 			    snprintf(fname1, sizeof fname1, "%s/%s", latestdir, p);
