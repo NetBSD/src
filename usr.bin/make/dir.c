@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.220 2020/11/23 22:57:56 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.221 2020/11/23 23:00:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.220 2020/11/23 22:57:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.221 2020/11/23 23:00:36 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1298,58 +1298,58 @@ Dir_FindHereOrAbove(const char *here, const char *search_path)
 static char *
 ResolveMovedDepends(GNode *gn)
 {
-    char *fullName;
+	char *fullName;
 
-    char *base = strrchr(gn->name, '/');
-    if (base == NULL)
-	return NULL;
-    base++;
+	char *base = strrchr(gn->name, '/');
+	if (base == NULL)
+		return NULL;
+	base++;
 
-    fullName = Dir_FindFile(base, Suff_FindPath(gn));
-    if (fullName == NULL)
-	return NULL;
+	fullName = Dir_FindFile(base, Suff_FindPath(gn));
+	if (fullName == NULL)
+		return NULL;
 
-    /*
-     * Put the found file in gn->path so that we give that to the compiler.
-     */
-    /*
-     * XXX: Better just reset gn->path to NULL; updating it is already done
-     * by Dir_UpdateMTime.
-     */
-    gn->path = bmake_strdup(fullName);
-    if (!Job_RunTarget(".STALE", gn->fname))
-	fprintf(stdout,		/* XXX: Why stdout? */
-		"%s: %s, %d: ignoring stale %s for %s, found %s\n",
-		progname, gn->fname, gn->lineno,
-		makeDependfile, gn->name, fullName);
+	/*
+	 * Put the found file in gn->path so that we give that to the compiler.
+	 */
+	/*
+	 * XXX: Better just reset gn->path to NULL; updating it is already done
+	 * by Dir_UpdateMTime.
+	 */
+	gn->path = bmake_strdup(fullName);
+	if (!Job_RunTarget(".STALE", gn->fname))
+		fprintf(stdout,	/* XXX: Why stdout? */
+			"%s: %s, %d: ignoring stale %s for %s, found %s\n",
+			progname, gn->fname, gn->lineno,
+			makeDependfile, gn->name, fullName);
 
-    return fullName;
+	return fullName;
 }
 
 static char *
 ResolveFullName(GNode *gn)
 {
-    char *fullName;
+	char *fullName;
 
-    fullName = gn->path;
-    if (fullName == NULL && !(gn->type & OP_NOPATH)) {
+	fullName = gn->path;
+	if (fullName == NULL && !(gn->type & OP_NOPATH)) {
 
-	fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
+		fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
 
-	if (fullName == NULL && gn->flags & FROM_DEPEND &&
-	    !Lst_IsEmpty(gn->implicitParents))
-	    fullName = ResolveMovedDepends(gn);
+		if (fullName == NULL && gn->flags & FROM_DEPEND &&
+		    !Lst_IsEmpty(gn->implicitParents))
+			fullName = ResolveMovedDepends(gn);
 
-	DIR_DEBUG2("Found '%s' as '%s'\n",
-		   gn->name, fullName ? fullName : "(not found)");
-    }
+		DIR_DEBUG2("Found '%s' as '%s'\n",
+			   gn->name, fullName ? fullName : "(not found)");
+	}
 
-    if (fullName == NULL)
-	fullName = bmake_strdup(gn->name);
+	if (fullName == NULL)
+		fullName = bmake_strdup(gn->name);
 
-    /* XXX: Is every piece of memory freed as it should? */
+	/* XXX: Is every piece of memory freed as it should? */
 
-    return fullName;
+	return fullName;
 }
 
 /* Search gn along dirSearchPath and store its modification time in gn->mtime.
@@ -1359,37 +1359,37 @@ ResolveFullName(GNode *gn)
 void
 Dir_UpdateMTime(GNode *gn, Boolean recheck)
 {
-    char *fullName;
-    struct cached_stat cst;
+	char *fullName;
+	struct cached_stat cst;
 
-    if (gn->type & OP_ARCHV) {
-	Arch_UpdateMTime(gn);
-	return;
-    }
-
-    if (gn->type & OP_PHONY) {
-	gn->mtime = 0;
-	return;
-    }
-
-    fullName = ResolveFullName(gn);
-
-    if (cached_stats(fullName, &cst, recheck ? CST_UPDATE : CST_NONE) < 0) {
-	if (gn->type & OP_MEMBER) {
-	    if (fullName != gn->path)
-		free(fullName);
-	    Arch_UpdateMemberMTime(gn);
-	    return;
+	if (gn->type & OP_ARCHV) {
+		Arch_UpdateMTime(gn);
+		return;
 	}
 
-	cst.cst_mtime = 0;
-    }
+	if (gn->type & OP_PHONY) {
+		gn->mtime = 0;
+		return;
+	}
 
-    if (fullName != NULL && gn->path == NULL)
-	gn->path = fullName;
-    /* XXX: else free(fullName)? */
+	fullName = ResolveFullName(gn);
 
-    gn->mtime = cst.cst_mtime;
+	if (cached_stats(fullName, &cst, recheck ? CST_UPDATE : CST_NONE) < 0) {
+		if (gn->type & OP_MEMBER) {
+			if (fullName != gn->path)
+				free(fullName);
+			Arch_UpdateMemberMTime(gn);
+			return;
+		}
+
+		cst.cst_mtime = 0;
+	}
+
+	if (fullName != NULL && gn->path == NULL)
+		gn->path = fullName;
+	/* XXX: else free(fullName)? */
+
+	gn->mtime = cst.cst_mtime;
 }
 
 /* Read the list of filenames in the directory and store the result
