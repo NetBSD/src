@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.227 2020/10/17 08:50:38 mlelstv Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.228 2020/11/23 00:52:53 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.227 2020/10/17 08:50:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.228 2020/11/23 00:52:53 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1095,8 +1095,10 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 
 	m->m_len = 1;
 	*mtod(m, char *) = tp->t_iobc;
-	if ((flags & MSG_PEEK) == 0)
+	if ((flags & MSG_PEEK) == 0) {
 		tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
+		so->so_state &= ~SS_POLLRDBAND;
+	}
 
 	tcp_debug_trace(so, tp, ostate, PRU_RCVOOB);
 	splx(s);
