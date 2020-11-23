@@ -41,13 +41,6 @@ MFLAGS           =   -r -k -d g1
 #*** Command-line Variables:
 .MAKE.LEVEL.ENV  = MAKELEVEL
 
-#*** Directory Cache:
-# Stats: 0 hits 2 misses 0 near misses 0 losers (0%)
-# directory            referenced	hits
-# <curdir>          2	   0
-# .                             2	   0
-# /usr/share/mk                 1	   0
-
 #*** Suffixes:
 #*** Transformations:
 exit status 0
