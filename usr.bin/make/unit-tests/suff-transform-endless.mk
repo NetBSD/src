@@ -1,4 +1,4 @@
-# $NetBSD: suff-transform-endless.mk,v 1.2 2020/11/22 21:37:09 rillig Exp $
+# $NetBSD: suff-transform-endless.mk,v 1.3 2020/11/23 14:13:39 rillig Exp $
 
 # https://gnats.netbsd.org/49086, issue 6:
 # Transformation search can end up in an infinite loop.
@@ -7,6 +7,8 @@
 # this should fail.  The bug is that because rules .e.f, .d.e and .e.d
 # exist, make would try to make .f from .e and then infinitely try
 # to do .e from .d and vice versa.
+
+.MAKEFLAGS: -ds
 
 all: issue6.f
 
