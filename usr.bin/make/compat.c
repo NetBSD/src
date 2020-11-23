@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.183 2020/11/15 22:31:03 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.184 2020/11/23 19:14:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.183 2020/11/15 22:31:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.184 2020/11/23 19:14:24 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -157,6 +157,27 @@ CompatInterrupt(int signo)
 	bmake_signal(signo, SIG_DFL);
 	kill(myPid, signo);
     }
+}
+
+static void
+DebugFailedTarget(const char *cmd, GNode *gn)
+{
+	const char *p = cmd;
+	debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
+		     gn->name);
+
+	/* Replace runs of whitespace with a single space, to reduce
+	 * the amount of whitespace for multi-line command lines. */
+	while (*p != '\0') {
+		if (ch_isspace(*p)) {
+			debug_printf(" ");
+			cpp_skip_whitespace(&p);
+		} else {
+			debug_printf("%c", *p);
+			p++;
+		}
+	}
+	debug_printf("\n");
 }
 
 /* Execute the next command for a target. If the command returns an error,
@@ -373,24 +394,8 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	}
 #endif
 	if (status != 0) {
-	    if (DEBUG(ERROR)) {
-		const char *p = cmd;
-		debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
-			     gn->name);
-
-		/* Replace runs of whitespace with a single space, to reduce
-		 * the amount of whitespace for multi-line command lines. */
-		while (*p != '\0') {
-		    if (ch_isspace(*p)) {
-			debug_printf(" ");
-			cpp_skip_whitespace(&p);
-		    } else {
-			debug_printf("%c", *p);
-			p++;
-		    }
-		}
-		debug_printf("\n");
-	    }
+	    if (DEBUG(ERROR))
+		    DebugFailedTarget(cmd, gn);
 	    printf("*** Error code %d", status);
 	}
     } else {
