@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.306 2020/11/23 14:47:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.307 2020/11/23 18:07:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.306 2020/11/23 14:47:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.307 2020/11/23 18:07:10 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1060,9 +1060,9 @@ RemoveCandidate(CandidateList *srcs)
 static Candidate *
 FindThem(CandidateList *srcs, CandidateSearcher *cs)
 {
-    HashTable seen;
+    HashSet seen;
 
-    HashTable_Init(&seen);
+    HashSet_Init(&seen);
 
     while (!Lst_IsEmpty(srcs)) {
 	Candidate *src = Lst_Dequeue(srcs);
@@ -1078,7 +1078,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 	 */
 	if (Targ_FindNode(src->file) != NULL) {
 	found:
-	    HashTable_Done(&seen);
+	    HashSet_Done(&seen);
 	    SUFF_DEBUG0("got it\n");
 	    return src;
 	}
@@ -1093,22 +1093,16 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 
 	SUFF_DEBUG0("not there\n");
 
-	{
-	    Boolean isNew;
-
-	    HashTable_CreateEntry(&seen, src->file, &isNew);
-	    if (isNew)
-		CandidateList_AddCandidatesFor(srcs, src);
-	    else {
-		DEBUG1(SUFF, "FindThem: skipping duplicate \"%s\"\n",
-		       src->file);
-	    }
+	if (HashSet_Add(&seen, src->file))
+	    CandidateList_AddCandidatesFor(srcs, src);
+	else {
+	    SUFF_DEBUG1("FindThem: skipping duplicate \"%s\"\n", src->file);
 	}
 
 	CandidateSearcher_Add(cs, src);
     }
 
-    HashTable_Done(&seen);
+    HashSet_Done(&seen);
     return NULL;
 }
 

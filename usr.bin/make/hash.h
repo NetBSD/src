@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.34 2020/11/23 17:59:21 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.35 2020/11/23 18:07:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -103,6 +103,11 @@ typedef struct HashIter {
 	HashEntry *entry;	/* Next entry to check in current bucket. */
 } HashIter;
 
+/* A set of strings. */
+typedef struct HashSet {
+	HashTable tbl;
+} HashSet;
+
 MAKE_INLINE void *
 HashEntry_Get(HashEntry *h)
 {
@@ -128,5 +133,32 @@ void HashTable_DebugStats(HashTable *, const char *);
 
 void HashIter_Init(HashIter *, HashTable *);
 HashEntry *HashIter_Next(HashIter *);
+
+MAKE_INLINE void
+HashSet_Init(HashSet *set)
+{
+	HashTable_Init(&set->tbl);
+}
+
+MAKE_INLINE void
+HashSet_Done(HashSet *set)
+{
+	HashTable_Done(&set->tbl);
+}
+
+MAKE_INLINE Boolean
+HashSet_Add(HashSet *set, const char *key)
+{
+	Boolean isNew;
+
+	(void)HashTable_CreateEntry(&set->tbl, key, &isNew);
+	return isNew;
+}
+
+MAKE_INLINE Boolean
+HashSet_Contains(HashSet *set, const char *key)
+{
+	return HashTable_FindEntry(&set->tbl, key) != NULL;
+}
 
 #endif /* MAKE_HASH_H */
