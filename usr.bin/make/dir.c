@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.216 2020/11/23 21:48:42 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.217 2020/11/23 22:05:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.216 2020/11/23 21:48:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.217 2020/11/23 22:05:58 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -972,7 +972,6 @@ DirFindDot(const char *name, const char *base)
 char *
 Dir_FindFile(const char *name, SearchPath *path)
 {
-	SearchPathNode *ln;
 	char *file;		/* the current filename to check */
 	const char *base;	/* Terminal name of file */
 	Boolean hasLastDot = FALSE; /* true if we should search dot last */
@@ -1001,8 +1000,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return NULL;
 	}
 
-	if ((ln = path->first) != NULL) {
-		CachedDir *dir = ln->datum;
+	if (path->first != NULL) {
+		CachedDir *dir = path->first->datum;
 		if (dir == dotLast) {
 			hasLastDot = TRUE;
 			DIR_DEBUG0("[dot last]...");
@@ -1016,6 +1015,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * of each of the directories on the search path.
 	 */
 	if (!hasSlash || (base - name == 2 && *name == '.')) {
+		SearchPathNode *ln;
+
 		/*
 		 * We look through all the directories on the path seeking one
 		 * which contains the final component of the given name.  If
@@ -1033,7 +1034,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		if (!hasLastDot && (file = DirFindDot(name, base)) != NULL)
 			return file;
 
-		for (; ln != NULL; ln = ln->next) {
+		for (ln = path->first; ln != NULL; ln = ln->next) {
 			CachedDir *dir = ln->datum;
 			if (dir == dotLast)
 				continue;
@@ -1071,6 +1072,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	}
 
 	if (name[0] != '/') {
+		SearchPathNode *ln;
 		Boolean checkedDot = FALSE;
 
 		DIR_DEBUG0("   Trying subdirectories...\n");
@@ -1118,6 +1120,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		}
 
 	} else { /* name[0] == '/' */
+		SearchPathNode *ln;
 
 		/*
 		 * For absolute names, compare directory path prefix against
@@ -1182,25 +1185,25 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * b/c we added it here. This is not good...
 	 */
 #if 0
-	if (base == trailing_dot) {
-		base = strrchr(name, '/');
-		base++;
-	}
-	base[-1] = '\0';
-	(void)Dir_AddDir(path, name);
-	base[-1] = '/';
+	{
+		CachedDir *dir;
+		char *prefix;
 
-	bigmisses++;
-	ln = Lst_Last(path);
-	if (ln == NULL) {
-		return NULL;
-	} else {
-		dir = LstNode_Datum(ln);
-	}
+		if (base == trailing_dot) {
+			base = strrchr(name, '/');
+			base++;
+		}
+		prefix = bmake_strsedup(name, base - 1);
+		(void)Dir_AddDir(path, prefix);
+		free(prefix);
 
-	if (Hash_FindEntry(&dir->files, base) != NULL) {
-		return bmake_strdup(name);
-	} else {
+		bigmisses++;
+		if (path->last == NULL)
+			return NULL;
+
+		dir = path->last->datum;
+		if (HashSet_Contains(&dir->files, base))
+			return bmake_strdup(name);
 		return NULL;
 	}
 #else
