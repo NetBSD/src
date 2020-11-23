@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.210 2020/11/14 21:29:44 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.211 2020/11/23 18:24:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.210 2020/11/14 21:29:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.211 2020/11/23 18:24:05 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -379,7 +379,7 @@ Dir_InitDir(const char *cdname)
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = bmake_strdup(".DOTLAST");
-    HashTable_Init(&dotLast->files);
+    HashSet_Init(&dotLast->files);
 }
 
 /*
@@ -573,7 +573,7 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
     /* XXX: Iterating over all hash entries is inefficient.  If the pattern
      * is a plain string without any wildcards, a direct lookup is faster. */
 
-    HashIter_Init(&hi, &dir->files);
+    HashIter_InitSet(&hi, &dir->files);
     while (HashIter_Next(&hi) != NULL) {
 	const char *base = hi.entry->key;
 
@@ -848,7 +848,7 @@ DirLookup(CachedDir *dir, const char *base)
 
     DIR_DEBUG1("   %s ...\n", dir->name);
 
-    if (HashTable_FindEntry(&dir->files, base) == NULL)
+    if (!HashSet_Contains(&dir->files, base))
 	return NULL;
 
     file = str_concat3(dir->name, "/", base);
@@ -901,7 +901,7 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
     if (*dnp != '\0' || np != cp - 1)
 	return NULL;
 
-    if (HashTable_FindEntry(&dir->files, cp) == NULL) {
+    if (!HashSet_Contains(&dir->files, cp)) {
 	DIR_DEBUG0("   must be here but isn't -- returning\n");
 	return bmake_strdup("");	/* to terminate the search */
     }
@@ -918,14 +918,14 @@ static char *
 DirFindDot(const char *name, const char *base)
 {
 
-    if (HashTable_FindEntry(&dot->files, base) != NULL) {
+    if (HashSet_Contains(&dot->files, base)) {
 	DIR_DEBUG0("   in '.'\n");
 	hits++;
 	dot->hits++;
 	return bmake_strdup(name);
     }
 
-    if (cur != NULL && HashTable_FindEntry(&cur->files, base) != NULL) {
+    if (cur != NULL && HashSet_Contains(&cur->files, base)) {
 	DIR_DEBUG1("   in ${.CURDIR} = %s\n", cur->name);
 	hits++;
 	cur->hits++;
@@ -1390,7 +1390,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 	dir->name = bmake_strdup(name);
 	dir->hits = 0;
 	dir->refCount = 1;
-	HashTable_Init(&dir->files);
+	HashSet_Init(&dir->files);
 
 	while ((dp = readdir(d)) != NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
@@ -1403,7 +1403,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 		continue;
 	    }
 #endif /* sun && d_ino */
-	    (void)HashTable_CreateEntry(&dir->files, dp->d_name, NULL);
+	    (void)HashSet_Add(&dir->files, dp->d_name);
 	}
 	(void)closedir(d);
 	OpenDirs_Add(&openDirs, dir);
@@ -1485,7 +1485,7 @@ Dir_Destroy(void *dirp)
     if (dir->refCount == 0) {
 	OpenDirs_Remove(&openDirs, dir->name);
 
-	HashTable_Done(&dir->files);
+	HashSet_Done(&dir->files);
 	free(dir->name);
 	free(dir);
     }
