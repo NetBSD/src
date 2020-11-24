@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.188 2020/11/24 15:59:18 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.189 2020/11/24 16:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.188 2020/11/24 15:59:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.189 2020/11/24 16:28:44 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -615,6 +615,15 @@ MakeOther(GNode *gn, GNode *pgn)
  * Input:
  *	gn		The node to make
  *	pgn		Parent to abort if necessary
+ *
+ * Output:
+ *	gn->made
+ *		UPTODATE	gn was already up-to-date.
+ *		MADE		gn was recreated successfully.
+ *		ERROR		An error occurred while gn was being created,
+ *				either due to missing commands or in -k mode.
+ *		ABORTED		gn was not remade because one of its
+ *				dependencies could not be made due to errors.
  */
 void
 Compat_Make(GNode *gn, GNode *pgn)
@@ -648,7 +657,7 @@ void
 Compat_Run(GNodeList *targs)
 {
 	GNode *gn = NULL;	/* Current root target */
-	int errors;		/* Number of targets not remade due to errors */
+	int indirectErrors;	/* Number of targets not remade due to errors */
 
 	if (!shellName)
 		Shell_Init();
@@ -688,17 +697,7 @@ Compat_Run(GNodeList *targs)
 	 */
 	Make_ExpandUse(targs);
 
-	/*
-	 * For each entry in the list of targets to create, call Compat_Make
-	 * on it to create the thing. Compat_Make will leave the 'made' field
-	 * of gn in one of several states:
-	 *	    UPTODATE	gn was already up-to-date
-	 *	    MADE	gn was recreated successfully
-	 *	    ERROR	An error occurred while gn was being created
-	 *	    ABORTED	gn was not remade because one of its inferiors
-	 *			could not be made due to errors.
-	 */
-	errors = 0;
+	indirectErrors = 0;
 	while (!Lst_IsEmpty(targs)) {
 		gn = Lst_Dequeue(targs);
 		Compat_Make(gn, gn);
@@ -708,14 +707,14 @@ Compat_Run(GNodeList *targs)
 		} else if (gn->made == ABORTED) {
 			printf("`%s' not remade because of errors.\n",
 			       gn->name);
-			errors++;
+			indirectErrors++;
 		}
 	}
 
 	/*
 	 * If the user has defined a .END target, run its commands.
 	 */
-	if (errors == 0) {
+	if (indirectErrors == 0) {
 		GNode *endNode = Targ_GetEndNode();
 		Compat_Make(endNode, endNode);
 		if (gn->made == ERROR || endNode->made == ERROR) {
