@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.189 2020/11/24 16:28:44 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.190 2020/11/24 17:42:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.189 2020/11/24 16:28:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.190 2020/11/24 17:42:31 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -470,6 +470,9 @@ MakeNodes(GNodeList *gnodes, GNode *pgn)
 static Boolean
 MakeUnmade(GNode *const gn, GNode *const pgn)
 {
+
+	assert(gn->made == UNMADE);
+
 	/*
 	 * First mark ourselves to be made, then apply whatever transformations
 	 * the suffix module thinks are necessary. Once that's done, we can
@@ -480,9 +483,12 @@ MakeUnmade(GNode *const gn, GNode *const pgn)
 	 */
 	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
+
 	if (!(gn->type & OP_MADE))
 		Suff_FindDeps(gn);
+
 	MakeNodes(gn->children, gn);
+
 	if (!(gn->flags & REMAKE)) {
 		gn->made = ABORTED;
 		pgn->flags &= ~(unsigned)REMAKE;
@@ -503,20 +509,19 @@ MakeUnmade(GNode *const gn, GNode *const pgn)
 		gn->made = UPTODATE;
 		DEBUG0(MAKE, "up-to-date.\n");
 		return FALSE;
-	} else
-		DEBUG0(MAKE, "out-of-date.\n");
+	}
 
 	/*
 	 * If the user is just seeing if something is out-of-date, exit now
 	 * to tell him/her "yes".
 	 */
+	DEBUG0(MAKE, "out-of-date.\n");
 	if (opts.queryFlag)
 		exit(1);
 
 	/*
-	 * We need to be re-made. We also have to make sure we've got a $?
-	 * variable. To be nice, we also define the $> variable using
-	 * Make_DoAllVar().
+	 * We need to be re-made.
+	 * Ensure that $? (.OODATE) and $> (.ALLSRC) are both set.
 	 */
 	Make_DoAllVar(gn);
 
