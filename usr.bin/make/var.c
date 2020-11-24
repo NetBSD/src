@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.695 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.696 2020/11/24 21:42:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.695 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.696 2020/11/24 21:42:28 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2952,7 +2952,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 {
-    GNode *v_ctxt;
+    GNode *ctxt;
     char delim;
     char *val;
     VarParseResult res;
@@ -2972,11 +2972,11 @@ ok:
 	return AMR_BAD;
     }
 
-    v_ctxt = st->ctxt;		/* context where v belongs */
+	ctxt = st->ctxt;		/* context where v belongs */
     if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
 	Var *gv = VarFind(st->var->name, st->ctxt, FALSE);
 	if (gv == NULL)
-	    v_ctxt = VAR_GLOBAL;
+		ctxt = VAR_GLOBAL;
 	else
 	    VarFreeEnv(gv, TRUE);
     }
@@ -3002,7 +3002,7 @@ ok:
     if (st->eflags & VARE_WANTRES) {
 	switch (op[0]) {
 	case '+':
-	    Var_Append(st->var->name, val, v_ctxt);
+	    Var_Append(st->var->name, val, ctxt);
 	    break;
 	case '!': {
 	    const char *errfmt;
@@ -3010,7 +3010,7 @@ ok:
 	    if (errfmt != NULL)
 		Error(errfmt, val);
 	    else
-		Var_Set(st->var->name, cmd_output, v_ctxt);
+		Var_Set(st->var->name, cmd_output, ctxt);
 	    free(cmd_output);
 	    break;
 	}
@@ -3019,7 +3019,7 @@ ok:
 		break;
 	    /* FALLTHROUGH */
 	default:
-	    Var_Set(st->var->name, val, v_ctxt);
+	    Var_Set(st->var->name, val, ctxt);
 	    break;
 	}
     }
