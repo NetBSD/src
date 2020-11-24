@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.211 2020/11/24 19:33:13 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.212 2020/11/24 22:32:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.211 2020/11/24 19:33:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.212 2020/11/24 22:32:18 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -871,8 +871,13 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
     else
 	Lst_InsertBefore(toBeMade, toBeMade_next, cn);
 
-    if (cn->unmade_cohorts != 0)
-	Lst_ForEachUntil(cn->cohorts, MakeBuildChild, toBeMade_next);
+    if (cn->unmade_cohorts != 0) {
+	ListNode *ln;
+
+	for (ln = cn->cohorts->first; ln != NULL; ln = ln->next)
+	    if (MakeBuildChild(ln->datum, toBeMade_next) != 0)
+		break;
+    }
 
     /*
      * If this node is a .WAIT node with unmade children
