@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.60 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.61 2020/11/24 16:38:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.60 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.61 2020/11/24 16:38:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,8 +456,6 @@ ptyfs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
-		if (ptyfs->ptyfs_type == PTYFSroot)
-			return EPERM;
 		error = ptyfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return error;
@@ -492,8 +490,6 @@ ptyfs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
-		if (ptyfs->ptyfs_type == PTYFSroot)
-			return EPERM;
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0 &&
 		    (vap->va_mode &
 		    (S_IXUSR|S_IWUSR|S_IXGRP|S_IWGRP|S_IXOTH|S_IWOTH)))
