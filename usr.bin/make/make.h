@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.217 2020/11/24 18:17:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.218 2020/11/24 19:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -197,11 +197,14 @@ typedef enum GNodeMade {
     /* The node has been examined but is not yet ready since its
      * dependencies have to be made first. */
     DEFERRED,
+
     /* The node is on the toBeMade list. */
     REQUESTED,
+
     /* The node is already being made.
      * Trying to build a node in this state indicates a cycle in the graph. */
     BEINGMADE,
+
     /* Was out-of-date and has been made. */
     MADE,
     /* Was already up-to-date, does not need to be made. */
@@ -699,6 +702,24 @@ MAKE_INLINE const char *
 GNode_Path(const GNode *gn)
 {
     return gn->path != NULL ? gn->path : gn->name;
+}
+
+MAKE_INLINE Boolean
+GNode_IsWaitingFor(const GNode *gn)
+{
+	return (gn->flags & REMAKE) && gn->made <= REQUESTED;
+}
+
+MAKE_INLINE Boolean
+GNode_IsReady(const GNode *gn)
+{
+	return gn->made > DEFERRED;
+}
+
+MAKE_INLINE Boolean
+GNode_IsDone(const GNode *gn)
+{
+	return gn->made >= MADE;
 }
 
 MAKE_INLINE Boolean
