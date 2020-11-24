@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.78 2020/11/07 08:28:15 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.79 2020/11/24 06:36:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.78 2020/11/07 08:28:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.79 2020/11/24 06:36:36 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -534,17 +534,17 @@ initarm(void *arg)
 
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
-	if (error == 0) {
-		/* If the DTB is too big, try to pack it in place first. */
-		if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
-			(void)fdt_pack(__UNCONST(fdt_addr_r));
-		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
-		if (error != 0)
-			panic("fdt_move failed: %s", fdt_strerror(error));
-		fdtbus_init(fdt_data);
-	} else {
+	if (error != 0)
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
-	}
+
+	/* If the DTB is too big, try to pack it in place first. */
+	if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
+		(void)fdt_pack(__UNCONST(fdt_addr_r));
+	error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
+	if (error != 0)
+		panic("fdt_move failed: %s", fdt_strerror(error));
+
+	fdtbus_init(fdt_data);
 
 	/* Lookup platform specific backend */
 	plat = arm_fdt_platform();
