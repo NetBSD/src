@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.34 2020/11/22 20:17:39 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.35 2020/11/24 23:31:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.34 2020/11/22 20:17:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.35 2020/11/24 23:31:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.34 2020/11/22 20:17:39 jmcneill Exp $");
 
 #define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
 #define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
-#define	IPL_TO_LPIPRIO(sc, ipl)		(((0xff - (ipl)) << 4) & 0xff)
+
+#define	GIC_PRIO_SHIFT_NS		4
+#define	GIC_PRIO_SHIFT_S		3
 
 static struct gicv3_softc *gicv3_softc;
 
@@ -224,7 +226,9 @@ gicv3_dist_enable(struct gicv3_softc *sc)
 	u_int n;
 
 	/* Disable the distributor */
-	gicd_write_4(sc, GICD_CTRL, 0);
+	gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
+	gicd_ctrl &= ~(GICD_CTRL_EnableGrp1A | GICD_CTRL_ARE_NS);
+	gicd_write_4(sc, GICD_CTRL, gicd_ctrl);
 
 	/* Wait for register write to complete */
 	while (gicd_read_4(sc, GICD_CTRL) & GICD_CTRL_RWP)
@@ -543,7 +547,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 
-	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_LPIPRIO(sc, is->is_ipl) | GIC_LPICONF_Res1;
+	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_PRIORITY(sc, is->is_ipl) | GIC_LPICONF_Res1;
 
 	if (sc->sc_lpiconf_flush)
 		cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
@@ -756,44 +760,67 @@ gicv3_irq_handler(void *frame)
 }
 
 static bool
-gicv3_access_is_secure(struct gicv3_softc *sc)
+gicv3_cpuif_is_nonsecure(struct gicv3_softc *sc)
 {
-	const uint32_t octlr = gicd_read_4(sc, GICD_CTRL);
-	gicd_write_4(sc, GICD_CTRL, octlr ^ GICD_CTRL_EnableGrp1S);
-	const uint32_t nctlr = gicd_read_4(sc, GICD_CTRL);
-	gicd_write_4(sc, GICD_CTRL, octlr);
-
-	return nctlr != octlr;
-}
-
-static uint8_t
-gicv3_get_pmr_bits(struct gicv3_softc *sc)
-{
+	/*
+	 * Write 0 to bit7 and see if it sticks. This is only possible if
+	 * we have a non-secure view of the PMR register.
+	 */
 	const uint32_t opmr = icc_pmr_read();
-	icc_pmr_write(0xff);
+	icc_pmr_write(0);
 	const uint32_t npmr = icc_pmr_read();
 	icc_pmr_write(opmr);
 
-	return npmr;
+	return (npmr & GICC_PMR_NONSECURE) == 0;
 }
 
-static uint8_t
-gicv3_get_ipriority_bits(struct gicv3_softc *sc)
+static bool
+gicv3_dist_is_nonsecure(struct gicv3_softc *sc)
 {
-	const uint32_t oipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
-	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr | 0xff);
-	const uint32_t nipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
-	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr);
+	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
 
-	return nipriorityr & 0xff;
+	/*
+	 * If security is enabled, we have a non-secure view of the IPRIORITYRn
+	 * registers and LPI configuration priority fields.
+	 */
+	return (gicd_ctrl & GICD_CTRL_DS) == 0;
+}
+
+/*
+ * Rockchip RK3399 provides a different view of int priority registers
+ * depending on which firmware is in use. This is hard to detect in
+ * a way that could possibly break other boards, so only do this
+ * detection if we know we are on a RK3399 SoC.
+ */
+static void
+gicv3_quirk_rockchip_rk3399(struct gicv3_softc *sc)
+{
+	/* Detect the number of supported PMR bits */
+	icc_pmr_write(0xff);
+	const uint8_t pmrbits = icc_pmr_read();
+
+	/* Detect the number of supported IPRIORITYRn bits */
+	const uint32_t oiprio = gicd_read_4(sc, GICD_IPRIORITYRn(8));
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oiprio | 0xff);
+	const uint8_t pribits = gicd_read_4(sc, GICD_IPRIORITYRn(8)) & 0xff;
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oiprio);
+
+	/*
+	 * If we see fewer PMR bits than IPRIORITYRn bits here, it means
+	 * we have a secure view of IPRIORITYRn (this is not supposed to
+	 * happen!). 
+	 */
+	if (pmrbits < pribits) {
+		aprint_verbose_dev(sc->sc_dev,
+		    "buggy RK3399 firmware detected; applying workaround\n");
+		sc->sc_priority_shift = GIC_PRIO_SHIFT_S;
+	}
 }
 
 int
 gicv3_init(struct gicv3_softc *sc)
 {
 	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
-	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
-	const bool access_s = gicv3_access_is_secure(sc);
 	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -803,44 +830,29 @@ gicv3_init(struct gicv3_softc *sc)
 	for (n = 0; n < MAXCPUS; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
 
-	sc->sc_priority_shift = 4;
-	sc->sc_pmr_shift = 4;
+	/*
+	 * We don't alwayst have a consistent view of priorities between the
+	 * CPU interface (ICC_PMR_EL1) and the GICD/GICR registers. Detect
+	 * if we are making secure or non-secure accesses to each, and adjust
+	 * the values that we write to each accordingly.
+	 */
+	const bool dist_ns = gicv3_dist_is_nonsecure(sc);
+	sc->sc_priority_shift = dist_ns ? GIC_PRIO_SHIFT_NS : GIC_PRIO_SHIFT_S;
+	const bool cpuif_ns = gicv3_cpuif_is_nonsecure(sc);
+	sc->sc_pmr_shift = cpuif_ns ? GIC_PRIO_SHIFT_NS : GIC_PRIO_SHIFT_S;
 
-	uint8_t pmr_mask = gicv3_get_pmr_bits(sc);
-	uint8_t ipriority_mask = gicv3_get_ipriority_bits(sc);
-
-	if ((gicd_ctrl & GICD_CTRL_DS) == 0) {
-		if (access_s) {
-			/*
-			 * Security is enabled and we appear to have secure access
-			 * to GIC registers. This is not normal, but has been observed
-			 * on Rockchip RK3399. To make things worse, with Rockchip
-			 * TF-A the views of PMR and IPRIORITYRn are different, so we
-			 * need to compensate for this by shifting writes to
-			 * IPRIORITYRn right one. Mainline TF-A does not seem to have
-			 * this problem, so detect it by comparing the number of
-			 * writable bits in the PMR and IPRIORITYRn registers.
-			 */
-			if (pmr_mask < ipriority_mask) {
-				--sc->sc_priority_shift;
-			}
-		}
-	} else {
-		/*
-		 * Security is disabled. QEMU 5.1 reports different views of
-		 * PMR and IPRIORIRYRn here.
-		 */
-		if (pmr_mask == 0xff && ipriority_mask == 0xff) {
-			--sc->sc_priority_shift;
-		}
-	}
+	if ((sc->sc_quirks & GICV3_QUIRK_RK3399) != 0)
+		gicv3_quirk_rockchip_rk3399(sc);
 
 	aprint_verbose_dev(sc->sc_dev,
-	    "security %sabled%s, priority shift %d (0x%02x), pmr shift %d (0x%02x)\n",
-	    (gicd_ctrl & GICD_CTRL_DS) != 0 ? "dis" : "en",
-	    access_s ? ", secure access" : "",
-	    sc->sc_priority_shift, ipriority_mask,
-	    sc->sc_pmr_shift, pmr_mask);
+	    "iidr 0x%08x, cpuif %ssecure, dist %ssecure, "
+	    "priority shift %d, pmr shift %d, quirks %#x\n",
+	    gicd_read_4(sc, GICD_IIDR),
+	    cpuif_ns ? "non-" : "",
+	    dist_ns ? "non-" : "",
+	    sc->sc_priority_shift,
+	    sc->sc_pmr_shift,
+	    sc->sc_quirks);
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
