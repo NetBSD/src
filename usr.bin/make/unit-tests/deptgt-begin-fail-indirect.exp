@@ -1,4 +1,6 @@
 false
 *** Error code 1 (continuing)
-: This is not made.
-exit status 0
+
+Stop.
+make: stopped in unit-tests
+exit status 1
