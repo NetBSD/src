@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.977 2020/11/24 17:59:42 rillig Exp $
+# $NetBSD: mi,v 1.978 2020/11/24 19:02:59 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4955,6 +4955,10 @@
 ./usr/tests/usr.bin/make/unit-tests/depsrc-wait.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-begin-fail-indirect.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-begin-fail-indirect.mk		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-begin-fail.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-begin-fail.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-begin.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-begin.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-default.exp				tests-usr.bin-tests	compattestfile,atf

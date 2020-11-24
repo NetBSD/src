@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.223 2020/11/24 17:59:42 rillig Exp $
+# $NetBSD: Makefile,v 1.224 2020/11/24 19:02:59 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -109,6 +109,8 @@ TESTS+=		depsrc-usebefore-double-colon
 TESTS+=		depsrc-wait
 TESTS+=		deptgt
 TESTS+=		deptgt-begin
+TESTS+=		deptgt-begin-fail
+TESTS+=		deptgt-begin-fail-indirect
 TESTS+=		deptgt-default
 TESTS+=		deptgt-delete_on_error
 TESTS+=		deptgt-end
