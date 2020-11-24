@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.213 2020/11/24 22:45:24 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.214 2020/11/24 22:50:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.213 2020/11/24 22:45:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.214 2020/11/24 22:50:38 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -844,9 +844,8 @@ Make_DoAllVar(GNode *gn)
 
 /* XXX: Replace void pointers in parameters with proper types. */
 static int
-MakeBuildChild(void *v_cn, void *toBeMade_next)
+MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 {
-    GNode *cn = v_cn;
 
     if (DEBUG(MAKE)) {
 	debug_printf("MakeBuildChild: inspect %s%s, ",
@@ -866,16 +865,16 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
     DEBUG2(MAKE, "MakeBuildChild: schedule %s%s\n", cn->name, cn->cohort_num);
 
     cn->made = REQUESTED;
-    if (toBeMade_next == NULL)
+    if (toBeMadeNext == NULL)
 	Lst_Append(toBeMade, cn);
     else
-	Lst_InsertBefore(toBeMade, toBeMade_next, cn);
+	Lst_InsertBefore(toBeMade, toBeMadeNext, cn);
 
     if (cn->unmade_cohorts != 0) {
 	ListNode *ln;
 
 	for (ln = cn->cohorts->first; ln != NULL; ln = ln->next)
-	    if (MakeBuildChild(ln->datum, toBeMade_next) != 0)
+	    if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
 		break;
     }
 
@@ -888,14 +887,14 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 
 /* When a .ORDER LHS node completes, we do this on each RHS. */
 static int
-MakeBuildParent(void *v_pn, void *toBeMade_next)
+MakeBuildParent(void *v_pn, void *toBeMadeNext)
 {
     GNode *pn = v_pn;
 
     if (pn->made != DEFERRED)
 	return 0;
 
-    if (MakeBuildChild(pn, toBeMade_next) == 0) {
+    if (MakeBuildChild(pn, toBeMadeNext) == 0) {
 	/* Mark so that when this node is built we reschedule its parents */
 	pn->flags |= DONE_ORDER;
     }
@@ -947,11 +946,11 @@ MakeStartJobs(void)
 	    gn->made = DEFERRED;
 
 	    {
-		GNodeListNode *firstToBeMade = toBeMade->first;
+		GNodeListNode *toBeMadeNext = toBeMade->first;
 		GNodeListNode *ln;
 
 		for (ln = gn->children->first; ln != NULL; ln = ln->next)
-		    if (MakeBuildChild(ln->datum, firstToBeMade) != 0)
+		    if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
 			break;
 	    }
 
