@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.215 2020/11/24 22:55:24 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.216 2020/11/24 22:58:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.215 2020/11/24 22:55:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.216 2020/11/24 22:58:54 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -112,7 +112,6 @@ static unsigned int checked_seqno = 1;
  * It is added to by Make_Update and subtracted from by MakeStartJobs */
 static GNodeList *toBeMade;
 
-static int MakeBuildParent(void *, void *);
 
 void
 debug_printf(const char *fmt, ...)
@@ -576,6 +575,8 @@ IsWaitingForOrder(GNode *gn)
     return FALSE;
 }
 
+static int MakeBuildParent(GNode *, GNodeListNode *);
+
 static void
 ScheduleOrderSuccessors(GNode *gn)
 {
@@ -853,7 +854,6 @@ Make_DoAllVar(GNode *gn)
     gn->flags |= DONE_ALLSRC;
 }
 
-/* XXX: Replace void pointers in parameters with proper types. */
 static int
 MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 {
@@ -898,10 +898,8 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 
 /* When a .ORDER LHS node completes, we do this on each RHS. */
 static int
-MakeBuildParent(void *v_pn, void *toBeMadeNext)
+MakeBuildParent(GNode *pn, GNodeListNode *toBeMadeNext)
 {
-    GNode *pn = v_pn;
-
     if (pn->made != DEFERRED)
 	return 0;
 
