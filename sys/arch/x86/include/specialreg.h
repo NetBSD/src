@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.175 2020/09/07 13:19:20 jakllsch Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.176 2020/11/24 00:46:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -395,9 +395,12 @@
  *	%ebx: Feature bits.
  *	%ecx: Feature bits.
  *	%edx: Feature bits.
+ *
+ * %ecx == 1: Structure Extendede Feature Enumeration Sub-leaf
+ *	%eax: See below.
  */
 
-/* %ebx */
+/* %ecx = 0, %ebx */
 #define CPUID_SEF_FSGSBASE	__BIT(0)  /* {RD,WR}{FS,GS}BASE */
 #define CPUID_SEF_TSC_ADJUST	__BIT(1)  /* IA32_TSC_ADJUST MSR support */
 #define CPUID_SEF_SGX		__BIT(2)  /* Software Guard Extensions */
@@ -441,7 +444,7 @@
 	"\31" "CLWB"	"\32" "PT"	"\33" "AVX512PF" "\34" "AVX512ER" \
 	"\35" "AVX512CD""\36" "SHA"	"\37" "AVX512BW" "\40" "AVX512VL"
 
-/* %ecx */
+/* %ecx = 0, %ecx */
 #define CPUID_SEF_PREFETCHWT1	__BIT(0)  /* PREFETCHWT1 instruction */
 #define CPUID_SEF_AVX512_VBMI	__BIT(1)  /* AVX-512 Vector Byte Manipulation */
 #define CPUID_SEF_UMIP		__BIT(2)  /* User-Mode Instruction prevention */
@@ -459,6 +462,7 @@
 #define CPUID_SEF_LA57		__BIT(16) /* 57bit linear addr & 5LVL paging */
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
+#define CPUID_SEF_KL		__BIT(23) /* Key Locker */
 #define CPUID_SEF_CLDEMOTE	__BIT(25) /* Cache line demote */
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
@@ -471,12 +475,11 @@
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
 	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
 	"b\20LA57\0"							\
-	"f\21\5MAWAU\0"							\
-					"b\26RDPID\0"			\
+	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	\
 			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
 	"b\34MOVDIR64B\0"		"b\36SGXLC\0"	"b\37PKS\0"
 
-/* %edx */
+/* %ecx = 0, %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOV */
@@ -505,6 +508,10 @@
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
 
+/* %ecx = 1, %eax */
+#define CPUID_SEF_AVX512_BF16	__BIT(5)
+#define CPUID_SEF1_FLAGS_A	"\20" \
+				"\6" "AVX512_BF16"
 /*
  * Intel CPUID Architectural Performance Monitoring Fn0000000a
  *
