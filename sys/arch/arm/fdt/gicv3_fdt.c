@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.8 2019/07/19 12:14:15 hkenken Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.9 2020/11/24 23:31:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.8 2019/07/19 12:14:15 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.9 2020/11/24 23:31:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,6 +105,15 @@ struct gicv3_fdt_softc {
 	struct gicv3_fdt_irq	*sc_irq[GICV3_MAXIRQ];
 };
 
+struct gicv3_fdt_quirk {
+	const char		*compat;
+	u_int			quirks;
+};
+
+static const struct gicv3_fdt_quirk gicv3_fdt_quirks[] = {
+	{ "rockchip,rk3399",	GICV3_QUIRK_RK3399 },
+};
+
 CFATTACH_DECL_NEW(gicv3_fdt, sizeof(struct gicv3_fdt_softc),
 	gicv3_fdt_match, gicv3_fdt_attach, NULL, NULL);
 
@@ -127,7 +136,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	struct gicv3_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	int error;
+	int error, n;
 
 	error = fdtbus_register_interrupt_controller(self, phandle,
 	    &gicv3_fdt_funcs);
@@ -151,6 +160,14 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_debug_dev(self, "%d redistributors\n", sc->sc_gic.sc_bsh_r_count);
+
+	/* Apply quirks */
+	for (n = 0; n < __arraycount(gicv3_fdt_quirks); n++) {
+		const char *compat[] = { gicv3_fdt_quirks[n].compat, NULL };
+		if (of_match_compatible(OF_finddevice("/"), compat)) {
+			sc->sc_gic.sc_quirks |= gicv3_fdt_quirks[n].quirks;
+		}
+	}
 
 	error = gicv3_init(&sc->sc_gic);
 	if (error) {
