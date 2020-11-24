@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.215 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.216 2020/11/24 17:42:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -173,18 +173,43 @@ typedef int Boolean;
 #include "buf.h"
 #include "make_malloc.h"
 
+/*
+ * The typical flow of states is:
+ *
+ * The direct successful path:
+ * UNMADE -> BEINGMADE -> MADE.
+ *
+ * The direct error path:
+ * UNMADE -> BEINGMADE -> ERROR.
+ *
+ * The successful path when dependencies need to be made first:
+ * UNMADE -> DEFERRED -> REQUESTED -> BEINGMADE -> MADE.
+ *
+ * A node that has dependencies, and one of the dependencies cannot be made:
+ * UNMADE -> DEFERRED -> ABORTED.
+ *
+ * A node that turns out to be up-to-date:
+ * UNMADE -> BEINGMADE -> UPTODATE.
+ */
 typedef enum GNodeMade {
-    UNMADE,			/* Not examined yet */
-    DEFERRED,			/* Examined once (building child) */
-    REQUESTED,			/* on toBeMade list */
-    BEINGMADE,			/* Target is already being made.
-				 * Indicates a cycle in the graph. */
-    MADE,			/* Was out-of-date and has been made */
-    UPTODATE,			/* Was already up-to-date */
-    ERROR,			/* An error occurred while it was being
-				 * made (used only in compat mode) */
-    ABORTED			/* The target was aborted due to an error
-				 * making an inferior (compat). */
+    /* Not examined yet. */
+    UNMADE,
+    /* The node has been examined but is not yet ready since its
+     * dependencies have to be made first. */
+    DEFERRED,
+    /* The node is on the toBeMade list. */
+    REQUESTED,
+    /* The node is already being made.
+     * Trying to build a node in this state indicates a cycle in the graph. */
+    BEINGMADE,
+    /* Was out-of-date and has been made. */
+    MADE,
+    /* Was already up-to-date, does not need to be made. */
+    UPTODATE,
+    /* An error occurred while it was being made (used only in compat mode). */
+    ERROR,
+    /* The target was aborted due to an error making a dependency (compat). */
+    ABORTED
 } GNodeMade;
 
 /* The OP_ constants are used when parsing a dependency line as a way of
