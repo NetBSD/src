@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.478 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.479 2020/11/24 19:52:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.478 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.479 2020/11/24 19:52:06 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1821,8 +1821,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		if (bytes_read == -1)
 			savederr = errno;
 
-		(void)close(
-		    fds[0]);	/* Close the input side of the pipe. */
+		(void)close(fds[0]);	/* Close the input side of the pipe. */
 
 		/* Wait for the process to exit. */
 		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
@@ -2217,8 +2216,7 @@ mkTempFile(const char *pattern, char **out_fname)
 	if (out_fname != NULL) {
 		*out_fname = bmake_strdup(tfile);
 	} else {
-		unlink(
-		    tfile);	/* we just want the descriptor */
+		unlink(tfile);	/* we just want the descriptor */
 	}
 	return fd;
 }
