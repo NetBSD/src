@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.214 2020/11/24 22:50:38 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.215 2020/11/24 22:55:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.214 2020/11/24 22:50:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.215 2020/11/24 22:55:24 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -576,6 +576,17 @@ IsWaitingForOrder(GNode *gn)
     return FALSE;
 }
 
+static void
+ScheduleOrderSuccessors(GNode *gn)
+{
+	GNodeListNode *toBeMadeNext = toBeMade->first;
+	GNodeListNode *ln;
+
+	for (ln = gn->order_succ->first; ln != NULL; ln = ln->next)
+		if (MakeBuildParent(ln->datum, toBeMadeNext) != 0)
+			break;
+}
+
 /* Perform update on the parents of a node. Used by JobFinish once
  * a node has been dealt with and by MakeStartJobs if it finds an
  * up-to-date node.
@@ -636,7 +647,7 @@ Make_Update(GNode *cgn)
     parents = centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
-    Lst_ForEachUntil(centurion->order_succ, MakeBuildParent, toBeMade->first);
+    ScheduleOrderSuccessors(centurion);
 
     /* Now mark all the parents as having one less unmade child */
     for (ln = parents->first; ln != NULL; ln = ln->next) {
