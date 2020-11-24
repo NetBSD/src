@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.222 2020/11/24 15:36:51 rillig Exp $
+# $NetBSD: Makefile,v 1.223 2020/11/24 17:59:42 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -113,6 +113,7 @@ TESTS+=		deptgt-default
 TESTS+=		deptgt-delete_on_error
 TESTS+=		deptgt-end
 TESTS+=		deptgt-end-fail
+TESTS+=		deptgt-end-fail-indirect
 TESTS+=		deptgt-end-jobs
 TESTS+=		deptgt-error
 TESTS+=		deptgt-ignore
