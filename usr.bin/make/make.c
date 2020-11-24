@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.210 2020/11/21 10:51:26 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.211 2020/11/24 19:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.210 2020/11/21 10:51:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.211 2020/11/24 19:33:13 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -566,7 +566,7 @@ IsWaitingForOrder(GNode *gn)
     for (ln = gn->order_pred->first; ln != NULL; ln = ln->next) {
 	GNode *ogn = ln->datum;
 
-	if (ogn->made >= MADE || !(ogn->flags & REMAKE))
+	if (GNode_IsDone(ogn) || !(ogn->flags & REMAKE))
 	    continue;
 
 	DEBUG2(MAKE, "IsWaitingForOrder: Waiting for .ORDER node \"%s%s\"\n",
@@ -679,7 +679,7 @@ Make_Update(GNode *cgn)
 	 * A parent must wait for the completion of all instances
 	 * of a `::' dependency.
 	 */
-	if (centurion->unmade_cohorts != 0 || centurion->made < MADE) {
+	if (centurion->unmade_cohorts != 0 || !GNode_IsDone(centurion)) {
 	    DEBUG2(MAKE, "- centurion made %d, %d unmade cohorts\n",
 		   centurion->made, centurion->unmade_cohorts);
 	    continue;
@@ -842,6 +842,7 @@ Make_DoAllVar(GNode *gn)
     gn->flags |= DONE_ALLSRC;
 }
 
+/* XXX: Replace void pointers in parameters with proper types. */
 static int
 MakeBuildChild(void *v_cn, void *toBeMade_next)
 {
@@ -852,7 +853,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 	       cn->name, cn->cohort_num);
 	GNode_FprintDetails(opts.debug_file, "", cn, "\n");
     }
-    if (cn->made > DEFERRED)
+    if (GNode_IsReady(cn))
 	return 0;
 
     /* If this node is on the RHS of a .ORDER, check LHSs. */
@@ -919,6 +920,7 @@ MakeStartJobs(void)
 	DEBUG2(MAKE, "Examining %s%s...\n", gn->name, gn->cohort_num);
 
 	if (gn->made != REQUESTED) {
+	    /* XXX: Replace %d with string representation; see made_name. */
 	    DEBUG1(MAKE, "state %d\n", gn->made);
 
 	    make_abort(gn, __LINE__);
@@ -978,8 +980,7 @@ MakeStartJobs(void)
 static void
 MakePrintStatusOrderNode(GNode *ogn, GNode *gn)
 {
-    if (!(ogn->flags & REMAKE) || ogn->made > REQUESTED)
-	/* not waiting for this one */
+    if (!GNode_IsWaitingFor(ogn))
 	return;
 
     printf("    `%s%s' has .ORDER dependency against %s%s ",
