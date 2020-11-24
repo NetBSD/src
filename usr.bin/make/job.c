@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.328 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.329 2020/11/24 18:17:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.328 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.329 2020/11/24 18:17:45 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1843,6 +1843,7 @@ JobRun(GNode *targ)
     }
 #else
     Compat_Make(targ, targ);
+    /* XXX: Replace with GNode_IsError(gn) */
     if (targ->made == ERROR) {
 	PrintOnError(targ, "\n\nStop.");
 	exit(1);
@@ -2739,6 +2740,7 @@ Job_RunTarget(const char *target, const char *fname) {
 	Var_Set(ALLSRC, fname, gn);
 
     JobRun(gn);
+    /* XXX: Replace with GNode_IsError(gn) */
     if (gn->made == ERROR) {
 	PrintOnError(gn, "\n\nStop.");
 	exit(1);

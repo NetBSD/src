@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.216 2020/11/24 17:42:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.217 2020/11/24 18:17:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -699,6 +699,12 @@ MAKE_INLINE const char *
 GNode_Path(const GNode *gn)
 {
     return gn->path != NULL ? gn->path : gn->name;
+}
+
+MAKE_INLINE Boolean
+GNode_IsError(const GNode *gn)
+{
+	return gn->made == ERROR || gn->made == ABORTED;
 }
 
 MAKE_INLINE const char *
