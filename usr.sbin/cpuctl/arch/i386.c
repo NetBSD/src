@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.114 2020/09/05 07:45:44 maxv Exp $	*/
+/*	$NetBSD: i386.c,v 1.115 2020/11/24 00:48:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.114 2020/09/05 07:45:44 maxv Exp $");
+__RCSID("$NetBSD: i386.c,v 1.115 2020/11/24 00:48:39 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -351,6 +351,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x7e] = "10th gen Core (Ice Lake)",
 				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
 				[0x86] = "Atom (Tremont)",
+				[0x8c] = "11th gen Core (Tiger Lake)",
+				[0x8d] = "11th gen Core (Tiger Lake)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 				[0xa5] = "10th gen Core (Comet Lake)",
@@ -2250,19 +2252,25 @@ identifycpu(int fd, const char *cpuname)
 		x86_cpuid(7, descs);
 		aprint_verbose("%s: SEF highest subleaf %08x\n",
 		    cpuname, descs[0]);
+		if (descs[0] >= 1) {
+			x86_cpuid2(7, 1, descs);
+			print_bits(cpuname, "SEF-subleaf1-eax",
+			    CPUID_SEF1_FLAGS_A, descs[0]);
+		}
 	}
 
-	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD)) {
 		if (ci->ci_max_ext_cpuid >= 0x80000007)
 			powernow_probe(ci);
 
-	if (cpu_vendor == CPUVENDOR_AMD) {
 		if (ci->ci_max_ext_cpuid >= 0x80000008) {
 			x86_cpuid(0x80000008, descs);
 			print_bits(cpuname, "AMD Extended features",
 			    CPUID_CAPEX_FLAGS, descs[1]);
 		}
+	}
 
+	if (cpu_vendor == CPUVENDOR_AMD) {
 		if ((ci->ci_max_ext_cpuid >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
