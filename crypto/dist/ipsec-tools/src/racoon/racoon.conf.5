@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.68 2018/10/13 15:38:28 maxv Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.69 2020/11/25 18:11:00 bouyer Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 13, 2018
+.Dd November 25, 2020
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -1349,6 +1349,14 @@ The default is
 The port that the ldap server is configured to listen on.
 The default is
 .Ic 389 .
+.It Ic uri Ar (ldapuri) ;
+URI(s) referring to the ldap server(s); a list of URI, separated by
+whitespace or commas.
+It takes precedence over
+.Ic host/port .
+.It Ic timeout Ar (number) ;
+network timeout connecting to the ldap server(s).
+The default is the default connect timeout from the underlying protocol.
 .It Ic tls (on | off) ;
 Use TLS with the ldap server.
 The default is
@@ -1393,6 +1401,9 @@ The default value is
 The attribute used to specify group membership in an ldap directory.
 The default value is
 .Ic member .
+.It Ic debug Ar (number) ;
+Set ldap debug level.
+The default value is 0.
 .El
 .El
 .Ss Radius configuration settings
