@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.25 2020/04/04 16:06:12 jdolecek Exp $
+#	$NetBSD: majors.dreamcast,v 1.26 2020/11/25 15:31:15 tsutsui Exp $
 #
 # Device majors for dreamcast
 #
@@ -58,6 +58,7 @@ device-major	mlcd		char 63			mlcd
 device-major	ksyms		char 64			ksyms
 device-major	wsfont		char 65			wsfont
 #device-major	obsolete	char 66			obsolete (opencrypto)
+device-major	ld		char 67  block 22	ld
 
 #device-major	obsolete	char 98			obsolete (nsmb)
 
