@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.18 2019/11/24 11:10:12 skrll Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.19 2020/11/25 20:59:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.18 2019/11/24 11:10:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.19 2020/11/25 20:59:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -227,8 +227,8 @@ gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 		aprint_error_dev(sc->sc_gicdev, "failed to initialize GICv2m\n");
 	} else {
 		aprint_normal_dev(sc->sc_gicdev, "GICv2m @ %#" PRIx64
-		    ", SPIs %u-%u\n", frame->frame_reg,
-		    frame->frame_base, frame->frame_base + frame->frame_count);
+		    ", SPIs %u-%u\n", frame->frame_reg, frame->frame_base,
+		    frame->frame_base + frame->frame_count - 1);
 	}
 }
 #endif
