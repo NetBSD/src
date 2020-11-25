@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.194 2020/11/25 09:18:45 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.195 2020/11/25 09:21:53 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.194 2020/11/25 09:18:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.195 2020/11/25 09:21:53 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -316,6 +316,8 @@ static void sppp_open_event(const struct cp *, struct sppp *);
 static void sppp_close_event(const struct cp *, struct sppp *);
 static void sppp_to_event(const struct cp *, struct sppp *);
 static void sppp_rcr_event(const struct cp *, struct sppp *);
+static void sppp_rca_event(const struct cp *, struct sppp *);
+static void sppp_rcn_event(const struct cp *, struct sppp *);
 
 static void sppp_null(struct sppp *);
 static void sppp_sca_scn(const struct cp *, struct sppp *);
@@ -1542,40 +1544,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
-		switch (sp->scp[cp->protoidx].state) {
-		case STATE_CLOSED:
-		case STATE_STOPPED:
-			sppp_cp_send(sp, cp->proto, TERM_ACK, h->ident, 0, 0);
-			break;
-		case STATE_CLOSING:
-		case STATE_STOPPING:
-			break;
-		case STATE_REQ_SENT:
-			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
-			sppp_cp_change_state(cp, sp, STATE_ACK_RCVD);
-			break;
-		case STATE_OPENED:
-			(cp->tld)(sp);
-			/* fall through */
-		case STATE_ACK_RCVD:
-			(cp->scr)(sp);
-			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
-			break;
-		case STATE_ACK_SENT:
-			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
-			sppp_cp_change_state(cp, sp, STATE_OPENED);
-			if (debug)
-				log(LOG_DEBUG, "%s: %s tlu\n",
-				       ifp->if_xname, cp->name);
-			(cp->tlu)(sp);
-			break;
-		default:
-			printf("%s: %s illegal %s in state %s\n",
-			       ifp->if_xname, cp->name,
-			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->scp[cp->protoidx].state));
-			if_statinc(ifp, if_ierrors);
-		}
+		sppp_rca_event(cp, sp);
 		break;
 	case CONF_NAK:
 	case CONF_REJ:
@@ -1592,33 +1561,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		else /* CONF_REJ */
 			(cp->RCN_rej)(sp, h, len);
 
-		switch (sp->scp[cp->protoidx].state) {
-		case STATE_CLOSED:
-		case STATE_STOPPED:
-			sppp_cp_send(sp, cp->proto, TERM_ACK, h->ident, 0, 0);
-			break;
-		case STATE_REQ_SENT:
-		case STATE_ACK_SENT:
-			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
-			(cp->scr)(sp);
-			break;
-		case STATE_OPENED:
-			(cp->tld)(sp);
-			/* fall through */
-		case STATE_ACK_RCVD:
-			sppp_cp_change_state(cp, sp, STATE_ACK_SENT);
-			(cp->scr)(sp);
-			break;
-		case STATE_CLOSING:
-		case STATE_STOPPING:
-			break;
-		default:
-			printf("%s: %s illegal %s in state %s\n",
-			       ifp->if_xname, cp->name,
-			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->scp[cp->protoidx].state));
-			if_statinc(ifp, if_ierrors);
-		}
+		sppp_rcn_event(cp, sp);
 		break;
 
 	case TERM_REQ:
@@ -2166,6 +2109,81 @@ sppp_rcr_event(const struct cp *cp, struct sppp *sp)
 			    sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
+	}
+}
+
+static void
+sppp_rca_event(const struct cp *cp, struct sppp *sp)
+{
+	STDDCL;
+
+	switch (sp->scp[cp->protoidx].state) {
+	case STATE_CLOSED:
+	case STATE_STOPPED:
+		sppp_cp_send(sp, cp->proto, TERM_ACK,
+		    sp->scp[cp->protoidx].rconfid, 0, 0);
+		break;
+	case STATE_CLOSING:
+	case STATE_STOPPING:
+		break;
+	case STATE_REQ_SENT:
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
+		sppp_cp_change_state(cp, sp, STATE_ACK_RCVD);
+		break;
+	case STATE_OPENED:
+		(cp->tld)(sp);
+		/* fall through */
+	case STATE_ACK_RCVD:
+		(cp->scr)(sp);
+		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
+		break;
+	case STATE_ACK_SENT:
+		sppp_cp_change_state(cp, sp, STATE_OPENED);
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
+		if (debug)
+			log(LOG_DEBUG, "%s: %s tlu\n",
+			       ifp->if_xname, cp->name);
+		(cp->tlu)(sp);
+		break;
+	default:
+		printf("%s: %s illegal RCA in state %s\n",
+		       ifp->if_xname, cp->name,
+		       sppp_state_name(sp->scp[cp->protoidx].state));
+		if_statinc(ifp, if_ierrors);
+	}
+}
+
+static void
+sppp_rcn_event(const struct cp *cp, struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+
+	switch (sp->scp[cp->protoidx].state) {
+	case STATE_CLOSED:
+	case STATE_STOPPED:
+		sppp_cp_send(sp, cp->proto, TERM_ACK,
+		    sp->scp[cp->protoidx].rconfid, 0, 0);
+		break;
+	case STATE_REQ_SENT:
+	case STATE_ACK_SENT:
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
+		(cp->scr)(sp);
+		break;
+	case STATE_OPENED:
+		(cp->tld)(sp);
+		/* fall through */
+	case STATE_ACK_RCVD:
+		sppp_cp_change_state(cp, sp, STATE_ACK_SENT);
+		(cp->scr)(sp);
+		break;
+	case STATE_CLOSING:
+	case STATE_STOPPING:
+		break;
+	default:
+		printf("%s: %s illegal RCN in state %s\n",
+		       ifp->if_xname, cp->name,
+		       sppp_state_name(sp->scp[cp->protoidx].state));
+		if_statinc(ifp, if_ierrors);
 	}
 }
 
