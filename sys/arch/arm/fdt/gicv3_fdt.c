@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.9 2020/11/24 23:31:55 jmcneill Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.10 2020/11/25 21:02:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.9 2020/11/24 23:31:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.10 2020/11/25 21:02:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.9 2020/11/24 23:31:55 jmcneill Exp $
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gicv3_its.h>
 #include <arm/cortex/gic_reg.h>
+#include <arm/cortex/gic_v2m.h>
 
 #define	GICV3_MAXIRQ	1020
 
@@ -62,6 +63,7 @@ static void	gicv3_fdt_attach(device_t, device_t, void *);
 
 static int	gicv3_fdt_map_registers(struct gicv3_fdt_softc *);
 #if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
+static void	gicv3_fdt_attach_mbi(struct gicv3_fdt_softc *);
 static void	gicv3_fdt_attach_its(struct gicv3_fdt_softc *, bus_space_tag_t, int);
 #endif
 
@@ -176,12 +178,18 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
-	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-		const char * const its_compat[] = { "arm,gic-v3-its", NULL };
-		if (of_match_compatible(child, its_compat))
-			gicv3_fdt_attach_its(sc, faa->faa_bst, child);
+	if (of_hasprop(phandle, "msi-controller")) {
+		/* Message Based Interrupts */
+		gicv3_fdt_attach_mbi(sc);
+	} else {
+		/* Interrupt Translation Services */
+		for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+			if (!fdtbus_status_okay(child))
+				continue;
+			const char * const its_compat[] = { "arm,gic-v3-its", NULL };
+			if (of_match_compatible(child, its_compat))
+				gicv3_fdt_attach_its(sc, faa->faa_bst, child);
+		}
 	}
 #endif
 
@@ -256,6 +264,52 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 }
 
 #if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
+static void
+gicv3_fdt_attach_mbi(struct gicv3_fdt_softc *sc)
+{
+	struct gic_v2m_frame *frame;
+	const u_int *ranges;
+	bus_addr_t addr;
+	int len, frame_count;
+
+	if (of_hasprop(sc->sc_phandle, "mbi-alias")) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "'mbi-alias' property not supported\n");
+		return;
+	}
+
+	if (fdtbus_get_reg(sc->sc_phandle, 0, &addr, NULL) != 0)
+		return;
+
+	ranges = fdtbus_get_prop(sc->sc_phandle, "mbi-ranges", &len);
+	if (ranges == NULL) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "missing 'mbi-ranges' property\n");
+		return;
+	}
+
+	frame_count = 0;
+	while (len >= 8) {
+		const u_int base_spi = be32dec(&ranges[0]);
+		const u_int num_spis = be32dec(&ranges[1]);
+
+		frame = kmem_zalloc(sizeof(*frame), KM_SLEEP);
+		frame->frame_reg = addr;
+		frame->frame_pic = pic_list[0];
+		frame->frame_base = base_spi;
+		frame->frame_count = num_spis;
+
+		if (gic_v2m_init(frame, sc->sc_gic.sc_dev, frame_count++) != 0) {
+			aprint_error_dev(sc->sc_gic.sc_dev, "failed to initialize MBI frame\n");
+		} else {
+			aprint_normal_dev(sc->sc_gic.sc_dev, "MBI frame @ %#" PRIx64
+			    ", SPIs %u-%u\n", frame->frame_reg,
+			    frame->frame_base, frame->frame_base + frame->frame_count - 1);
+		}
+
+		ranges += 2;
+		len -= 8;
+	}
+}
+
 static void
 gicv3_fdt_attach_its(struct gicv3_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 {
