@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.210 2020/11/25 10:23:33 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.211 2020/11/25 10:25:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.210 2020/11/25 10:23:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.211 2020/11/25 10:25:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -6271,33 +6271,6 @@ sppp_ifdown(struct sppp *sp, void *xcp __unused)
 	SPPP_LOCK(sp, RW_WRITER);
 }
 
-/*
- * This file is large.  Tell emacs to highlight it nevertheless.
- *
- * Local Variables:
- * hilit-auto-highlight-maxout: 120000
- * End:
- */
-
-/*
- * Module glue
- */
-MODULE(MODULE_CLASS_MISC, sppp_subr, NULL);
- 
-static int
-sppp_subr_modcmd(modcmd_t cmd, void *arg)
-{
-        switch (cmd) {
-        case MODULE_CMD_INIT:
-        case MODULE_CMD_FINI:
-                return 0;
-        case MODULE_CMD_STAT:
-        case MODULE_CMD_AUTOUNLOAD:
-        default:
-                return ENOTTY;
-        }
-}
-
 static void
 sppp_notify_up(struct sppp *sp)
 {
@@ -6444,4 +6417,32 @@ sppp_wq_wait(struct workqueue *wq, struct sppp_work *work)
 
 	atomic_swap_uint(&work->state, SPPP_WK_UNAVAIL);
 	workqueue_wait(wq, &work->work);
+}
+
+/*
+ * This file is large.  Tell emacs to highlight it nevertheless.
+ *
+ * Local Variables:
+ * hilit-auto-highlight-maxout: 120000
+ * End:
+ */
+
+/*
+ * Module glue
+ */
+MODULE(MODULE_CLASS_MISC, sppp_subr, NULL);
+
+static int
+sppp_subr_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		return ENOTTY;
+	}
 }
