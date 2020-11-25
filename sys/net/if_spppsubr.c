@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.205 2020/11/25 10:03:38 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.206 2020/11/25 10:05:40 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.205 2020/11/25 10:03:38 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.206 2020/11/25 10:05:40 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.205 2020/11/25 10:03:38 yamaguchi 
 #include "opt_compat_netbsd.h"
 #include "opt_net_mpsafe.h"
 #endif
-
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -461,7 +460,6 @@ static void sppp_notify_con_wlocked(struct sppp *);
 static void sppp_notify_con(struct sppp *);
 
 static void sppp_notify_chg_wlocked(struct sppp *);
-
 
 /* our control protocol descriptors */
 static const struct cp lcp = {
@@ -1289,7 +1287,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
-
 /*
  * Cisco framing implementation.
  */
@@ -1502,7 +1499,6 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	if_statadd(ifp, if_obytes, m->m_pkthdr.len + sp->pp_framebytes);
 	IF_ENQUEUE(&sp->pp_cpq, m);
 
-
 	if (! (ifp->if_flags & IFF_OACTIVE)) {
 		SPPP_UNLOCK(sp);
 		if_start_lock(ifp);
@@ -1549,7 +1545,6 @@ sppp_cp_to_chap(void *xsp)
 
 	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_to);
 }
-
 
 static void
 sppp_cp_init(const struct cp *cp, struct sppp *sp)
@@ -1855,7 +1850,6 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	SPPP_UNLOCK(sp);
 }
 
-
 /*
  * The generic part of all Up/Down/Open/Close/TO event handlers.
  * Basically, the state transition handling in the automaton.
@@ -1935,7 +1929,6 @@ sppp_down_event(struct sppp *sp, void *xcp)
 	}
 }
 
-
 static void
 sppp_open_event(struct sppp *sp, void *xcp)
 {
@@ -1977,7 +1970,6 @@ sppp_open_event(struct sppp *sp, void *xcp)
 		break;
 	}
 }
-
 
 static void
 sppp_close_event(struct sppp *sp, void *xcp)
@@ -3790,7 +3782,6 @@ sppp_ipcp_scr(struct sppp *sp)
 	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->scp[IDX_IPCP].confid, i, &opt);
 }
 
-
 /*
  *--------------------------------------------------------------------------*
  *                                                                          *
@@ -4324,7 +4315,6 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 }
 #endif /*INET6*/
-
 
 /*
  *--------------------------------------------------------------------------*
@@ -5272,7 +5262,6 @@ sppp_keepalive(void *dummy)
 			continue;
 		}
 
-
 		/* No keepalive in PPP mode if LCP not opened yet. */
 		if (! (sp->pp_flags & PP_CISCO) &&
 		    sp->pp_phase < SPPP_PHASE_AUTHENTICATE) {
@@ -5759,7 +5748,6 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 			cfg->myname_length = 0;
 		    } else {
 			len = sp->myauth.name_len + 1;
-
 
 			if (cfg->myname_length < len) {
 				SPPP_UNLOCK(sp);
