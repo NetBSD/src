@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.206 2020/11/25 10:05:40 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.207 2020/11/25 10:08:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.206 2020/11/25 10:05:40 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.207 2020/11/25 10:08:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1717,6 +1717,18 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rtr);
 		break;
 	case TERM_ACK:
+		if (h->ident != sp->scp[cp->protoidx].confid &&
+		    h->ident != sp->scp[cp->protoidx].seq) {
+			if (debug)
+				addlog("%s: %s id mismatch "
+				    "0x%x != 0x%x and 0x%x != %0lx\n",
+				    ifp->if_xname, cp->name,
+				    h->ident, sp->scp[cp->protoidx].confid,
+				    h->ident, sp->scp[cp->protoidx].seq);
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
 		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rta);
 		break;
 	case CODE_REJ:
