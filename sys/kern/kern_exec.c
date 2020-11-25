@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.502 2020/10/06 13:38:00 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.503 2020/11/25 21:08:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.502 2020/10/06 13:38:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.503 2020/11/25 21:08:59 wiz Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -498,10 +498,12 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 			}
 
 			/* check limits */
+#ifdef DIAGNOSTIC
+#define LMSG "%s: rejecting due to %s limit (%ju > %ju)\n"
+#endif
 #ifdef MAXTSIZ
 			if (epp->ep_tsize > MAXTSIZ) {
 #ifdef DIAGNOSTIC
-#define LMSG "%s: rejecting due to %s limit (%ju > %ju)\n"
 				printf(LMSG, __func__, "text",
 				    (uintmax_t)epp->ep_tsize,
 				    (uintmax_t)MAXTSIZ);
