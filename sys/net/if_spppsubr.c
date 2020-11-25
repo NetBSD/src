@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.201 2020/11/25 09:46:05 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.202 2020/11/25 09:55:01 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.201 2020/11/25 09:46:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.202 2020/11/25 09:55:01 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -101,9 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.201 2020/11/25 09:46:05 yamaguchi 
 #define DEFAULT_MAXALIVECNT    		3	/* max. missed alive packets */
 #define	DEFAULT_NORECV_TIME		15	/* before we get worried */
 #define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
-
-#define FAILMSG "Failed..."
-#define SUCCMSG "Welcome!"
 
 /*
  * Interface flags that can be set in an ifconfig command.
@@ -249,11 +246,11 @@ struct cp {
 	void	(*RCN_rej)(struct sppp *, struct lcp_header *, int);
 	void	(*RCN_nak)(struct sppp *, struct lcp_header *, int);
 	/* actions */
-	void	(*tlu)(struct sppp *sp);
-	void	(*tld)(struct sppp *sp);
-	void	(*tls)(struct sppp *sp);
-	void	(*tlf)(struct sppp *sp);
-	void	(*scr)(struct sppp *sp);
+	void	(*tlu)(struct sppp *);
+	void	(*tld)(struct sppp *);
+	void	(*tls)(const struct cp *, struct sppp *);
+	void	(*tlf)(const struct cp *, struct sppp *);
+	void	(*scr)(struct sppp *);
 	void	(*scan)(const struct cp *, struct sppp *);
 };
 
@@ -335,7 +332,8 @@ static void sppp_cp_to_ipv6cp(void *);
 static void sppp_auth_send(const struct cp *, struct sppp *,
 			    unsigned int, unsigned int, ...);
 static int sppp_auth_role(const struct cp *, struct sppp *);
-static void sppp_auth_to_event(const struct cp *, struct sppp *);
+static void sppp_auth_to_event(struct sppp *, void *);
+static void sppp_auth_sca_scn(const struct cp *, struct sppp *);
 
 static void sppp_up_event(struct sppp *, void *);
 static void sppp_down_event(struct sppp *, void *);
@@ -350,6 +348,8 @@ static void sppp_rta_event(struct sppp *, void *);
 static void sppp_rxj_event(struct sppp *, void *);
 
 static void sppp_null(struct sppp *);
+static void sppp_tls(const struct cp *, struct sppp *);
+static void sppp_tlf(const struct cp *, struct sppp *);
 static void sppp_sca_scn(const struct cp *, struct sppp *);
 static void sppp_ifdown(struct sppp *, void *);
 
@@ -357,76 +357,45 @@ static void sppp_lcp_init(struct sppp *);
 static void sppp_lcp_up(struct sppp *, void *);
 static void sppp_lcp_down(struct sppp *, void *);
 static void sppp_lcp_open(struct sppp *, void *);
-static void sppp_lcp_close(struct sppp *, void *);
-static void sppp_lcp_TO(struct sppp *, void *);
 static int sppp_lcp_RCR(struct sppp *, struct lcp_header *, int);
 static void sppp_lcp_RCN_rej(struct sppp *, struct lcp_header *, int);
 static void sppp_lcp_RCN_nak(struct sppp *, struct lcp_header *, int);
 static void sppp_lcp_tlu(struct sppp *);
 static void sppp_lcp_tld(struct sppp *);
-static void sppp_lcp_tls(struct sppp *);
-static void sppp_lcp_tlf(struct sppp *);
+static void sppp_lcp_tls(const struct cp *, struct sppp *);
+static void sppp_lcp_tlf(const struct cp *, struct sppp *);
 static void sppp_lcp_scr(struct sppp *);
 static void sppp_lcp_check_and_close(struct sppp *);
-static int sppp_ncp_check(struct sppp *);
-static int sppp_auth_check(struct sppp *);
+static int sppp_cp_check(struct sppp *, u_char);
 
 static void sppp_ipcp_init(struct sppp *);
-static void sppp_ipcp_up(struct sppp *, void *);
-static void sppp_ipcp_down(struct sppp *, void *);
 static void sppp_ipcp_open(struct sppp *, void *);
 static void sppp_ipcp_close(struct sppp *, void *);
-static void sppp_ipcp_TO(struct sppp *, void *);
 static int sppp_ipcp_RCR(struct sppp *, struct lcp_header *, int);
 static void sppp_ipcp_RCN_rej(struct sppp *, struct lcp_header *, int);
 static void sppp_ipcp_RCN_nak(struct sppp *, struct lcp_header *, int);
 static void sppp_ipcp_tlu(struct sppp *);
-static void sppp_ipcp_tld(struct sppp *);
-static void sppp_ipcp_tls(struct sppp *);
-static void sppp_ipcp_tlf(struct sppp *);
 static void sppp_ipcp_scr(struct sppp *);
 
 static void sppp_ipv6cp_init(struct sppp *);
-static void sppp_ipv6cp_up(struct sppp *, void *);
-static void sppp_ipv6cp_down(struct sppp *, void *);
 static void sppp_ipv6cp_open(struct sppp *, void *);
-static void sppp_ipv6cp_close(struct sppp *, void *);
-static void sppp_ipv6cp_TO(struct sppp *, void *);
 static int sppp_ipv6cp_RCR(struct sppp *, struct lcp_header *, int);
 static void sppp_ipv6cp_RCN_rej(struct sppp *, struct lcp_header *, int);
 static void sppp_ipv6cp_RCN_nak(struct sppp *, struct lcp_header *, int);
 static void sppp_ipv6cp_tlu(struct sppp *);
-static void sppp_ipv6cp_tld(struct sppp *);
-static void sppp_ipv6cp_tls(struct sppp *);
-static void sppp_ipv6cp_tlf(struct sppp *);
 static void sppp_ipv6cp_scr(struct sppp *);
 
 static void sppp_pap_input(struct sppp *, struct mbuf *);
 static void sppp_pap_init(struct sppp *);
-static void sppp_pap_up(struct sppp *, void *);
-static void sppp_pap_down(struct sppp *, void *);
-static void sppp_pap_open(struct sppp *, void *);
-static void sppp_pap_close(struct sppp *, void *);
-static void sppp_pap_TO(struct sppp *, void *);
-static void sppp_pap_tls(struct sppp *);
-static void sppp_pap_tlf(struct sppp *);
 static void sppp_pap_tlu(struct sppp *);
 static void sppp_pap_scr(struct sppp *);
 static void sppp_pap_scr(struct sppp *);
-static void sppp_pap_scan(const struct cp *, struct sppp *);
 
 static void sppp_chap_input(struct sppp *, struct mbuf *);
 static void sppp_chap_init(struct sppp *);
-static void sppp_chap_up(struct sppp *, void *);
-static void sppp_chap_down(struct sppp *, void *);
 static void sppp_chap_open(struct sppp *, void *);
-static void sppp_chap_close(struct sppp *, void *);
-static void sppp_chap_TO(struct sppp *, void *);
 static void sppp_chap_tlu(struct sppp *);
-static void sppp_chap_tls(struct sppp *);
-static void sppp_chap_tlf(struct sppp *);
 static void sppp_chap_scr(struct sppp *);
-static void sppp_chap_scan(const struct cp *, struct sppp *);
 static void sppp_chap_rcv_challenge_event(struct sppp *, void *);
 
 static const char *sppp_auth_type_name(u_short, u_char);
@@ -478,8 +447,8 @@ static void sppp_notify_chg_wlocked(struct sppp *);
 /* our control protocol descriptors */
 static const struct cp lcp = {
 	PPP_LCP, IDX_LCP, CP_LCP, "lcp",
-	sppp_lcp_up, sppp_lcp_down, sppp_lcp_open, sppp_lcp_close,
-	sppp_lcp_TO, sppp_lcp_RCR, sppp_lcp_RCN_rej, sppp_lcp_RCN_nak,
+	sppp_lcp_up, sppp_lcp_down, sppp_lcp_open, sppp_close_event,
+	sppp_to_event, sppp_lcp_RCR, sppp_lcp_RCN_rej, sppp_lcp_RCN_nak,
 	sppp_lcp_tlu, sppp_lcp_tld, sppp_lcp_tls, sppp_lcp_tlf,
 	sppp_lcp_scr, sppp_sca_scn
 };
@@ -492,9 +461,9 @@ static const struct cp ipcp = {
 	0,
 #endif
 	"ipcp",
-	sppp_ipcp_up, sppp_ipcp_down, sppp_ipcp_open, sppp_ipcp_close,
-	sppp_ipcp_TO, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
-	sppp_ipcp_tlu, sppp_ipcp_tld, sppp_ipcp_tls, sppp_ipcp_tlf,
+	sppp_up_event, sppp_down_event, sppp_ipcp_open, sppp_ipcp_close,
+	sppp_to_event, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
+	sppp_ipcp_tlu, sppp_null, sppp_tls, sppp_tlf,
 	sppp_ipcp_scr, sppp_sca_scn
 };
 
@@ -506,26 +475,26 @@ static const struct cp ipv6cp = {
 	0,
 #endif
 	"ipv6cp",
-	sppp_ipv6cp_up, sppp_ipv6cp_down, sppp_ipv6cp_open, sppp_ipv6cp_close,
-	sppp_ipv6cp_TO, sppp_ipv6cp_RCR, sppp_ipv6cp_RCN_rej, sppp_ipv6cp_RCN_nak,
-	sppp_ipv6cp_tlu, sppp_ipv6cp_tld, sppp_ipv6cp_tls, sppp_ipv6cp_tlf,
+	sppp_up_event, sppp_down_event, sppp_ipv6cp_open, sppp_close_event,
+	sppp_to_event, sppp_ipv6cp_RCR, sppp_ipv6cp_RCN_rej, sppp_ipv6cp_RCN_nak,
+	sppp_ipv6cp_tlu, sppp_null, sppp_tls, sppp_tlf,
 	sppp_ipv6cp_scr, sppp_sca_scn
 };
 
 static const struct cp pap = {
 	PPP_PAP, IDX_PAP, CP_AUTH, "pap",
-	sppp_pap_up, sppp_pap_down, sppp_pap_open, sppp_pap_close,
-	sppp_pap_TO, 0, 0, 0,
-	sppp_pap_tlu, sppp_null, sppp_pap_tls, sppp_pap_tlf,
-	sppp_pap_scr, sppp_pap_scan
+	sppp_up_event, sppp_down_event, sppp_open_event, sppp_close_event,
+	sppp_to_event, 0, 0, 0,
+	sppp_pap_tlu, sppp_null, sppp_tls, sppp_tlf,
+	sppp_pap_scr, sppp_auth_sca_scn
 };
 
 static const struct cp chap = {
 	PPP_CHAP, IDX_CHAP, CP_AUTH, "chap",
-	sppp_chap_up, sppp_chap_down, sppp_chap_open, sppp_chap_close,
-	sppp_chap_TO, 0, 0, 0,
-	sppp_chap_tlu, sppp_null, sppp_chap_tls, sppp_chap_tlf,
-	sppp_chap_scr, sppp_chap_scan
+	sppp_up_event, sppp_down_event, sppp_chap_open, sppp_close_event,
+	sppp_auth_to_event, 0, 0, 0,
+	sppp_chap_tlu, sppp_null, sppp_tls, sppp_tlf,
+	sppp_chap_scr, sppp_auth_sca_scn
 };
 
 static const struct cp *cps[IDX_COUNT] = {
@@ -1163,7 +1132,7 @@ sppp_dequeue(struct ifnet *ifp)
 	 */
 	IF_DEQUEUE(&sp->pp_cpq, m);
 	if (m == NULL &&
-	    (sppp_ncp_check(sp) || (sp->pp_flags & PP_CISCO) != 0)) {
+	    (sppp_cp_check(sp, CP_NCP) || (sp->pp_flags & PP_CISCO) != 0)) {
 		IF_DEQUEUE(&sp->pp_fastq, m);
 		if (m == NULL)
 			IFQ_DEQUEUE(&sp->pp_if.if_snd, m);
@@ -1665,7 +1634,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (rv < 0) {
 			/* fatal error, shut down */
 			(cp->tld)(sp);
-			sppp_lcp_tlf(sp);
+			lcp.tlf(&lcp, sp);
 			SPPP_UNLOCK(sp);
 			return;
 		}
@@ -1900,7 +1869,7 @@ sppp_down_event(struct sppp *sp, void *xcp)
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
 		break;
 	case STATE_STOPPED:
-		(cp->tls)(sp);
+		(cp->tls)(cp, sp);
 		/* fall through */
 	case STATE_STOPPING:
 	case STATE_REQ_SENT:
@@ -1940,7 +1909,7 @@ sppp_open_event(struct sppp *sp, void *xcp)
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_INITIAL:
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
-		(cp->tls)(sp);
+		(cp->tls)(cp, sp);
 		break;
 	case STATE_STARTING:
 		break;
@@ -1987,7 +1956,7 @@ sppp_close_event(struct sppp *sp, void *xcp)
 		break;
 	case STATE_STARTING:
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
-		(cp->tlf)(sp);
+		(cp->tlf)(cp, sp);
 		break;
 	case STATE_STOPPED:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
@@ -2033,17 +2002,17 @@ sppp_to_event(struct sppp *sp, void *xcp)
 		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
-			(cp->tlf)(sp);
+			(cp->tlf)(cp, sp);
 			break;
 		case STATE_STOPPING:
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
-			(cp->tlf)(sp);
+			(cp->tlf)(cp, sp);
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
-			(cp->tlf)(sp);
+			(cp->tlf)(cp, sp);
 			break;
 		}
 	else
@@ -2315,11 +2284,11 @@ sppp_rta_event(struct sppp *sp, void *xcp)
 		break;
 	case STATE_CLOSING:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
-		(cp->tlf)(sp);
+		(cp->tlf)(cp, sp);
 		break;
 	case STATE_STOPPING:
 		sppp_cp_change_state(cp, sp, STATE_STOPPED);
-		(cp->tlf)(sp);
+		(cp->tlf)(cp, sp);
 		break;
 	case STATE_ACK_RCVD:
 		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
@@ -2470,10 +2439,13 @@ sppp_lcp_up(struct sppp *sp, void *xcp)
 static void
 sppp_lcp_down(struct sppp *sp, void *xcp)
 {
+	const struct cp *cp = xcp;
+	int pidx;
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	pidx = cp->protoidx;
 	sppp_down_event(sp, xcp);
 
 	/*
@@ -2500,12 +2472,11 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 			    "%s: Down event (carrier loss)\n",
 			    ifp->if_xname);
 	}
-	sp->scp[IDX_LCP].fail_counter = 0;
+	sp->scp[pidx].fail_counter = 0;
 	sp->pp_flags &= ~PP_CALLIN;
-	if (sp->scp[IDX_LCP].state != STATE_INITIAL)
+	if (sp->scp[pidx].state != STATE_INITIAL)
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 	ifp->if_flags &= ~IFF_RUNNING;
-
 }
 
 static void
@@ -2532,21 +2503,6 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 		sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
 	sp->pp_flags &= ~PP_NEEDAUTH;
 	sppp_open_event(sp, xcp);
-}
-
-static void
-sppp_lcp_close(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_close_event(sp, xcp);
-}
-
-static void
-sppp_lcp_TO(struct sppp *sp, void *xcp)
-{
-
-	sppp_to_event(sp, xcp);
 }
 
 /*
@@ -3149,7 +3105,7 @@ sppp_lcp_tld(struct sppp *sp)
 }
 
 static void
-sppp_lcp_tls(struct sppp *sp)
+sppp_lcp_tls(const struct cp *cp __unused, struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -3171,7 +3127,7 @@ sppp_lcp_tls(struct sppp *sp)
 }
 
 static void
-sppp_lcp_tlf(struct sppp *sp)
+sppp_lcp_tlf(const struct cp *cp __unused, struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -3226,24 +3182,14 @@ sppp_lcp_scr(struct sppp *sp)
 /*
  * Check the open NCPs, return true if at least one NCP is open.
  */
+
 static int
-sppp_ncp_check(struct sppp *sp)
+sppp_cp_check(struct sppp *sp, u_char cp_flags)
 {
 	int i, mask;
 
 	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if ((sp->lcp.protos & mask) && (cps[i])->flags & CP_NCP)
-			return 1;
-	return 0;
-}
-
-static int
-sppp_auth_check(struct sppp *sp)
-{
-	int i, mask;
-
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if ((sp->lcp.protos & mask) && (cps[i])->flags & CP_AUTH)
+		if ((sp->lcp.protos & mask) && (cps[i])->flags & cp_flags)
 			return 1;
 	return 0;
 }
@@ -3264,31 +3210,14 @@ sppp_lcp_check_and_close(struct sppp *sp)
 	}
 
 	if (sp->pp_phase == SPPP_PHASE_AUTHENTICATE &&
-	    sppp_auth_check(sp))
+	    sppp_cp_check(sp, CP_AUTH))
 		return;
 
 	if (sp->pp_phase >= SPPP_PHASE_NETWORK &&
-	    sppp_ncp_check(sp))
+	    sppp_cp_check(sp, CP_NCP))
 		return;
 
 	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-}
-
-static void
-sppp_lcp_uls(const struct cp *cp, struct sppp *sp)
-{
-
-	sp->lcp.protos |= (1 << cp->protoidx);
-	if (sp->scp[IDX_LCP].state == STATE_OPENED)
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_up);
-}
-
-static void
-sppp_lcp_ulf(const struct cp *cp, struct sppp *sp)
-{
-
-	sp->lcp.protos &= ~(1 << cp->protoidx);
-	sppp_lcp_check_and_close(sp);
 }
 
 /*
@@ -3322,20 +3251,6 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.update_addrs_q = pcq_create(IPCP_UPDATE_LIMIT, KM_SLEEP);
 
 	sp->ipcp.update_addrs_enqueued = 0;
-}
-
-static void
-sppp_ipcp_up(struct sppp *sp, void *xcp)
-{
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_up_event(sp, xcp);
-}
-
-static void
-sppp_ipcp_down(struct sppp *sp, void *xcp)
-{
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_down_event(sp, xcp);
 }
 
 static void
@@ -3403,13 +3318,6 @@ sppp_ipcp_close(struct sppp *sp, void *xcp)
 		 */
 		sppp_clear_ip_addrs(sp);
 #endif
-}
-
-static void
-sppp_ipcp_TO(struct sppp *sp, void *xcp)
-{
-
-	sppp_to_event(sp, xcp);
 }
 
 /*
@@ -3802,29 +3710,6 @@ sppp_ipcp_tlu(struct sppp *sp)
 }
 
 static void
-sppp_ipcp_tld(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipcp_tls(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_uls(&ipcp, sp);
-}
-
-static void
-sppp_ipcp_tlf(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_ulf(&ipcp, sp);
-}
-
-static void
 sppp_ipcp_scr(struct sppp *sp)
 {
 	uint8_t opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
@@ -3908,22 +3793,6 @@ sppp_ipv6cp_init(struct sppp *sp)
 }
 
 static void
-sppp_ipv6cp_up(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_up_event(sp, xcp);
-}
-
-static void
-sppp_ipv6cp_down(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_down_event(sp, xcp);
-}
-
-static void
 sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 {
 	STDDCL;
@@ -3955,21 +3824,6 @@ sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 	sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
 	sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 	sppp_open_event(sp, xcp);
-}
-
-static void
-sppp_ipv6cp_close(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_close_event(sp, xcp);
-}
-
-static void
-sppp_ipv6cp_TO(struct sppp *sp, void *xcp)
-{
-
-	sppp_to_event(sp, xcp);
 }
 
 /*
@@ -4369,29 +4223,6 @@ sppp_ipv6cp_tlu(struct sppp *sp)
 }
 
 static void
-sppp_ipv6cp_tld(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_tls(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_uls(&ipv6cp, sp);
-}
-
-static void
-sppp_ipv6cp_tlf(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_ulf(&ipv6cp, sp);
-}
-
-static void
 sppp_ipv6cp_scr(struct sppp *sp)
 {
 	char opt[10 /* ifid */ + 4 /* compression, minimum */];
@@ -4430,35 +4261,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 }
 
 static void
-sppp_ipv6cp_up(struct sppp *sp, void *xcp __unused)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_down(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_open(struct sppp *sp, void *xcp __unused)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_close(struct sppp *sp, void *xcp __unused)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_TO(struct sppp *sp, void *xcp __unused)
+sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -4491,27 +4294,6 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h,
 
 static void
 sppp_ipv6cp_tlu(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_tld(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_tls(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-}
-
-static void
-sppp_ipv6cp_tlf(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -4861,22 +4643,6 @@ sppp_chap_init(struct sppp *sp)
 }
 
 static void
-sppp_chap_up(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_up_event(sp, xcp);
-}
-
-static void
-sppp_chap_down(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_down_event(sp, xcp);
-}
-
-static void
 sppp_chap_open(struct sppp *sp, void *xcp)
 {
 
@@ -4887,22 +4653,6 @@ sppp_chap_open(struct sppp *sp, void *xcp)
 	sp->chap.rechallenging = false;
 	sp->chap.response_rcvd = false;
 	sppp_open_event(sp, xcp);
-}
-
-static void
-sppp_chap_close(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_close_event(sp, xcp);
-}
-
-static void
-sppp_chap_TO(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_auth_to_event(xcp, sp);
 }
 
 static void
@@ -4953,27 +4703,6 @@ sppp_chap_tlu(struct sppp *sp)
 }
 
 static void
-sppp_chap_tls(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_uls(&chap, sp);
-}
-
-static void
-sppp_chap_tlf(struct sppp *sp)
-{
-	STDDCL;
-
-	KASSERT(SPPP_WLOCKED(sp));
-
-	if (debug)
-		log(LOG_DEBUG, "%s: chap tlf\n", ifp->if_xname);
-
-	sppp_lcp_ulf(&chap, sp);
-}
-
-static void
 sppp_chap_scr(struct sppp *sp)
 {
 	uint32_t *ch;
@@ -5008,39 +4737,6 @@ sppp_chap_scr(struct sppp *sp)
 		    sizeof(dsize), (const char *)&dsize,
 		    sp->chap.digest_len, sp->chap.digest,
 		    sp->myauth.name_len, sp->myauth.name, 0);
-	}
-}
-
-static void
-sppp_chap_scan(const struct cp *cp __unused, struct sppp *sp)
-{
-	u_char type, rconfid, mlen;
-	const char *msg;
-
-	if (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_SERV))
-		return;
-
-	rconfid = sp->scp[IDX_CHAP].rconfid;
-	if (sp->scp[IDX_CHAP].rcr_type == CONF_ACK) {
-		type = CHAP_SUCCESS;
-		msg = SUCCMSG;
-		mlen = sizeof(SUCCMSG) - 1;
-	} else {
-		type = CHAP_FAILURE;
-		msg = FAILMSG;
-		mlen = sizeof(FAILMSG) - 1;
-	}
-
-	sppp_auth_send(&chap, sp, type, rconfid,
-	   mlen, (const u_char *)msg, 0);
-	sp->chap.response_rcvd = true;
-
-	if (type == CHAP_SUCCESS) {
-		sp->pp_auth_failures = 0;
-	} else {
-		sp->pp_auth_failures++;
-		/* shutdown LCP if auth failed */
-		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 	}
 }
 
@@ -5276,58 +4972,6 @@ sppp_pap_init(struct sppp *sp)
 }
 
 static void
-sppp_pap_up(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_up_event(sp, xcp);
-}
-
-static void
-sppp_pap_down(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_down_event(sp, xcp);
-}
-
-static void
-sppp_pap_open(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_open_event(sp, xcp);
-}
-
-static void
-sppp_pap_close(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_close_event(sp, xcp);
-}
-
-static void
-sppp_pap_tls(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_lcp_uls(&pap, sp);
-}
-
-static void
-sppp_pap_tlf(struct sppp *sp)
-{
-	STDDCL;
-
-	KASSERT(SPPP_WLOCKED(sp));
-
-	if (debug)
-		log(LOG_DEBUG, "%s: pap tlf\n", ifp->if_xname);
-	sppp_lcp_ulf(&pap, sp);
-}
-
-static void
 sppp_pap_tlu(struct sppp *sp)
 {
 	STDDCL;
@@ -5343,19 +4987,8 @@ sppp_pap_tlu(struct sppp *sp)
 	sp->pp_auth_failures = 0;
 	splx(x);
 
-	sppp_phase_network(sp);
-}
-
-/*
- * That's the timeout routine if we are authenticator.  Since the
- * authenticator is basically passive in PAP, we can't do much here.
- */
-static void
-sppp_pap_TO(struct sppp *sp, void *xcp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-	sppp_auth_to_event(xcp, sp);
+	if (sp->pp_phase < SPPP_PHASE_NETWORK)
+		sppp_phase_network(sp);
 }
 
 static void
@@ -5383,38 +5016,6 @@ sppp_pap_scr(struct sppp *sp)
 			    pwdlen, sp->myauth.secret,
 			    0);
 		}
-	}
-}
-
-static void
-sppp_pap_scan(const struct cp *cp __unused, struct sppp *sp)
-{
-	u_char type, rconfid, mlen;
-	const char *msg;
-
-	if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_SERV))
-		return;
-
-	rconfid = sp->scp[IDX_PAP].rconfid;
-	if (sp->scp[IDX_PAP].rcr_type == CONF_ACK) {
-		type = PAP_ACK;
-		msg = SUCCMSG;
-		mlen = sizeof(SUCCMSG) - 1;
-	} else {
-		type = PAP_NAK;
-		msg = FAILMSG;
-		mlen = sizeof(FAILMSG) - 1;
-	}
-
-	sppp_auth_send(&pap, sp, type, rconfid,
-	   mlen, (const u_char *)msg, 0);
-
-	if (type == PAP_ACK) {
-		sp->pp_auth_failures = 0;
-	} else {
-		sp->pp_auth_failures++;
-		/* shutdown LCP if auth failed */
-		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 	}
 }
 
@@ -5539,11 +5140,12 @@ sppp_auth_role(const struct cp *cp, struct sppp *sp)
 }
 
 static void
-sppp_auth_to_event(const struct cp *cp, struct sppp *sp)
+sppp_auth_to_event(struct sppp *sp, void *xcp)
 {
-	STDDCL;
+	const struct cp *cp = xcp;
 	bool override;
 	int state;
+	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -5579,8 +5181,43 @@ sppp_auth_to_event(const struct cp *cp, struct sppp *sp)
 			    sp->scp[cp->protoidx].rst_counter);
 		sp->scp[cp->protoidx].rst_counter--;
 	} else {
-		sppp_to_event(sp, __UNCONST(cp));
+		sppp_to_event(sp, xcp);
 	}
+}
+
+static void
+sppp_auth_sca_scn(const struct cp *cp, struct sppp *sp)
+{
+	static const char *succmsg = "Welcome!";
+	static const char *failmsg = "Failed...";
+	const char *msg;
+	u_char type, rconfid, mlen;
+
+	KASSERT(SPPP_WLOCKED(sp));
+
+	if (!ISSET(sppp_auth_role(cp, sp), SPPP_AUTH_SERV))
+		return;
+
+	rconfid = sp->scp[cp->protoidx].rconfid;
+
+	if (sp->scp[cp->protoidx].rcr_type == CONF_ACK) {
+		type = cp->proto == PPP_CHAP ? CHAP_SUCCESS : PAP_ACK;
+		msg = succmsg;
+		mlen = sizeof(succmsg) - 1;
+
+		sp->pp_auth_failures = 0;
+	} else {
+		type = cp->proto == PPP_CHAP ? CHAP_FAILURE : PAP_NAK;
+		msg = failmsg;
+		mlen = sizeof(failmsg) - 1;
+
+		/* shutdown LCP if auth failed */
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+		sp->pp_auth_failures++;
+	}
+
+	sppp_auth_send(cp, sp, type, rconfid,
+	   mlen, (const u_char *)msg, 0);
 }
 
 /*
@@ -6288,7 +5925,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 
 		SPPP_LOCK(sp, RW_READER);
 		status->phase = sp->pp_phase;
-		status->ncpup = sppp_ncp_check(sp);
+		status->ncpup = sppp_cp_check(sp, CP_NCP);
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
@@ -6398,7 +6035,6 @@ static void
 sppp_phase_network(struct sppp *sp)
 {
 	int i;
-	uint32_t mask;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -6408,17 +6044,7 @@ sppp_phase_network(struct sppp *sp)
 	for (i = 0; i < IDX_COUNT; i++)
 		if ((cps[i])->flags & CP_NCP)
 			sppp_wq_add(sp->wq_cp, &sp->scp[i].work_open);
-
-	/* Send Up events to all NCPs. */
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_NCP)) {
-			sppp_wq_add(sp->wq_cp, &sp->scp[i].work_up);
-		}
-
-	/* if no NCP is starting, all this was in vain, close down */
-	sppp_lcp_check_and_close(sp);
 }
-
 
 static const char *
 sppp_cp_type_name(u_char type)
@@ -6614,6 +6240,41 @@ static void
 sppp_null(struct sppp *unused)
 {
 	/* do just nothing */
+}
+
+static void
+sppp_tls(const struct cp *cp, struct sppp *sp)
+{
+
+	/* notify lcp that is lower layer */
+	sp->lcp.protos |= (1 << cp->protoidx);
+
+	if (sp->scp[IDX_LCP].state == STATE_OPENED)
+		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_up);
+}
+
+static void
+sppp_tlf(const struct cp *cp, struct sppp *sp)
+{
+	STDDCL;
+
+	if (debug)
+		log(LOG_DEBUG, "%s: %s tlf\n", ifp->if_xname, cp->name);
+
+	/* notify lcp that is lower layer */
+	sp->lcp.protos &= ~(1 << cp->protoidx);
+
+	/* cleanup */
+	if (sp->scp[cp->protoidx].rcr_buf != NULL) {
+		kmem_free(sp->scp[cp->protoidx].rcr_buf,
+		    sp->scp[cp->protoidx].rcr_blen);
+	}
+
+	sp->scp[cp->protoidx].rcr_buf = NULL;
+	sp->scp[cp->protoidx].rcr_blen = 0;
+	sp->scp[cp->protoidx].rcr_rlen = 0;
+
+	sppp_lcp_check_and_close(sp);
 }
 
 static void
