@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.213 2020/11/25 10:30:51 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.214 2020/11/25 10:44:53 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.213 2020/11/25 10:30:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.214 2020/11/25 10:44:53 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1869,6 +1869,7 @@ sppp_up_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	if ((cp->flags & CP_AUTH) != 0 &&
 	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
@@ -1902,6 +1903,7 @@ sppp_down_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	if ((cp->flags & CP_AUTH) != 0 &&
 	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
@@ -1944,6 +1946,7 @@ sppp_open_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	if ((cp->flags & CP_AUTH) != 0 &&
 	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
@@ -1986,6 +1989,7 @@ sppp_close_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	if ((cp->flags & CP_AUTH) != 0 &&
 	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
@@ -2035,6 +2039,7 @@ sppp_to_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	s = splnet();
 
@@ -2096,6 +2101,8 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 	void *buf;
 	size_t blen;
 	STDDCL;
+
+	KASSERT(!cpu_softintr_p());
 
 	type = sp->scp[cp->protoidx].rcr_type;
 	buf = sp->scp[cp->protoidx].rcr_buf;
@@ -2202,6 +2209,8 @@ sppp_rca_event(struct sppp *sp, void *xcp)
 	const struct cp *cp = xcp;
 	STDDCL;
 
+	KASSERT(!cpu_softintr_p());
+
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
@@ -2246,6 +2255,8 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 	const struct cp *cp = xcp;
 	struct ifnet *ifp = &sp->pp_if;
 
+	KASSERT(!cpu_softintr_p());
+
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
@@ -2282,6 +2293,8 @@ sppp_rtr_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
 	STDDCL;
+
+	KASSERT(!cpu_softintr_p());
 
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_ACK_RCVD:
@@ -2323,6 +2336,8 @@ sppp_rta_event(struct sppp *sp, void *xcp)
 	const struct cp *cp = xcp;
 	struct ifnet *ifp = &sp->pp_if;
 
+	KASSERT(!cpu_softintr_p());
+
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
@@ -2358,6 +2373,8 @@ sppp_rxj_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
 	struct ifnet *ifp = &sp->pp_if;
+
+	KASSERT(!cpu_softintr_p());
 
 	/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
 	switch (sp->scp[cp->protoidx].state) {
@@ -2485,6 +2502,7 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	pidx = cp->protoidx;
 	sppp_down_event(sp, xcp);
@@ -2536,6 +2554,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	sp->lcp.reestablish = false;
 
@@ -3300,6 +3319,7 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 	uint32_t myaddr, hisaddr;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
@@ -3360,6 +3380,7 @@ sppp_ipcp_close(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	sppp_close_event(sp, xcp);
 
@@ -3850,6 +3871,7 @@ sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 	struct in6_addr myaddr, hisaddr;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 #ifdef IPV6CP_MYIFID_DYN
 	sp->ipv6cp.flags &= ~(IPV6CP_MYIFID_SEEN|IPV6CP_MYIFID_DYN);
@@ -4795,6 +4817,8 @@ sppp_chap_rcv_challenge_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
 
+	KASSERT(!cpu_softintr_p());
+
 	sp->chap.rechallenging = false;
 
 	switch (sp->scp[IDX_CHAP].state) {
@@ -5193,6 +5217,7 @@ sppp_auth_to_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+	KASSERT(!cpu_softintr_p());
 
 	override = false;
 	state = sp->scp[cp->protoidx].state;
