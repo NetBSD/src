@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.199 2020/11/25 09:38:39 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.200 2020/11/25 09:41:20 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.199 2020/11/25 09:38:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.200 2020/11/25 09:41:20 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -998,10 +998,6 @@ sppp_attach(struct ifnet *ifp)
 	if (! spppq_lock)
 		spppq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
-	/* Insert new entry into the keepalive list. */
-	sp->pp_next = spppq;
-	spppq = sp;
-
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	sp->pp_fastq.ifq_maxlen = 32;
@@ -1039,6 +1035,12 @@ sppp_attach(struct ifnet *ifp)
 	sppp_pap_init(sp);
 	sppp_chap_init(sp);
 	SPPP_UNLOCK(sp);
+
+	SPPPQ_LOCK();
+	/* Insert new entry into the keepalive list. */
+	sp->pp_next = spppq;
+	spppq = sp;
+	SPPPQ_UNLOCK();
 }
 
 void
