@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.37 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.38 2020/11/25 10:57:11 kardel Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -683,10 +683,14 @@ kernel_sync()
 
 #elif defined(USE_ROUTE)
 
+#ifdef RT_ROUNDUP
+#define SAROUNDUP(X)   RT_ROUNDUP(((struct sockaddr *)(X))->sa_len)
+#else
 #define ROUNDUP(a) \
   ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
 #define SAROUNDUP(X)   ROUNDUP(((struct sockaddr *)(X))->sa_len)
+#endif
+
 
 static size_t
 parse_address(caddr_t start, caddr_t end, struct sockaddr_storage *dest)
