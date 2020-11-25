@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.157 2020/11/25 10:39:47 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.158 2020/11/25 10:42:35 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.157 2020/11/25 10:39:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.158 2020/11/25 10:42:35 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1006,6 +1006,8 @@ breakbreak:;
 			goto done;
 
 		pppoe_clear_softc(sc, "received PADT");
+		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING)
+			callout_schedule(&sc->sc_timeout, PPPOE_RECON_FAST);
 		PPPOE_UNLOCK(sc);
 		break;
 
