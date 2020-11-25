@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.25 2016/01/23 15:41:47 christos Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.26 2020/11/25 10:32:54 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.25 2016/01/23 15:41:47 christos Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.26 2020/11/25 10:32:54 yamaguchi Exp $");
 #endif
 
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: pppoectl.c,v 1.25 2016/01/23 15:41:47 christos Exp $");
 #include <net/if.h>
 #include <net/if_sppp.h>
 #include <net/if_pppoe.h>
+#include <arpa/inet.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,10 +57,25 @@ __dead static void print_error(const char *ifname, int error, const char * str);
 static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 	int lcp_timeout, time_t idle_timeout, int authfailures, 
 	int max_auth_failures, u_int maxalive, time_t max_noreceive);
+static void print_dns(const char *ifname, int dns1, int dns2, int s, int tabs);
+static void print_stats(const char *ifname, int s, int dump);
 static const char *phase_name(int phase);
 static const char *proto_name(int proto);
 static const char *authflags(int flags);
+static const char *pppoe_state_name(int state);
+static const char *ppp_state_name(int state);
 static void pppoectl_argument(char *arg);
+
+#define	ISSET(x, a)	((x) & (a))
+#define PPPOECTL_IOCTL(_ifname, _s, _cmd, _st)	do {	\
+	int __e;					\
+	memset((_st), 0, sizeof(*(_st)));		\
+	strncpy((_st)->ifname, (_ifname),		\
+	    sizeof((_st)->ifname));			\
+	__e = ioctl((_s), (_cmd), (_st));		\
+	if (__e != 0)					\
+		print_error((_ifname), __e, #_cmd);	\
+} while (0)
 
 static int hz = 0;
 
@@ -174,59 +190,13 @@ main(int argc, char **argv)
 	}
 
 	if (dns1 || dns2) {
-		/* print DNS addresses */
-		int e;
-		struct spppdnsaddrs addrs;
-		memset(&addrs, 0, sizeof addrs);
-		strncpy(addrs.ifname, ifname, sizeof addrs.ifname);
-		e = ioctl(s, SPPPGETDNSADDRS, &addrs);
-		if (e) 
-			print_error(ifname, e, "SPPPGETDNSADDRS");
-		if (dns1)
-			printf("%d.%d.%d.%d\n",
-				(addrs.dns[0] >> 24) & 0xff,
-				(addrs.dns[0] >> 16) & 0xff,
-				(addrs.dns[0] >> 8) & 0xff,
-				addrs.dns[0] & 0xff);
-		if (dns2)
-			printf("%d.%d.%d.%d\n",
-				(addrs.dns[1] >> 24) & 0xff,
-				(addrs.dns[1] >> 16) & 0xff,
-				(addrs.dns[1] >> 8) & 0xff,
-				addrs.dns[1] & 0xff);
+		print_dns(ifname, dns1, dns2, s, 0);
 	}
 
 	if (dump) {
-		/* dump PPPoE session state */
-		struct pppoeconnectionstate state;
-		int e;
-		
-		memset(&state, 0, sizeof state);
-		strncpy(state.ifname, ifname, sizeof state.ifname);
-		e = ioctl(s, PPPOEGETSESSION, &state);
-		if (e) 
-			print_error(ifname, e, "PPPOEGETSESSION");
-
-		printf("%s:\tstate = ", ifname);
-		switch(state.state) {
-		case PPPOE_STATE_INITIAL:
-			printf("initial\n"); break;
-		case PPPOE_STATE_PADI_SENT:
-			printf("PADI sent\n"); break;
-		case PPPOE_STATE_PADR_SENT:
-			printf("PADR sent\n"); break;
-		case PPPOE_STATE_SESSION:
-			printf("session\n"); break;
-		case PPPOE_STATE_CLOSING:
-			printf("closing\n"); break;
-		}
-		printf("\tSession ID: 0x%x\n", state.session_id);
-		printf("\tPADI retries: %d\n", state.padi_retry_no);
-		printf("\tPADR retries: %d\n", state.padr_retry_no);
-		
+		print_stats(ifname, s, dump);
 		return 0;
 	}
-
 
 	memset(&spr, 0, sizeof spr);
 	strncpy(spr.ifname, ifname, sizeof spr.ifname);
@@ -570,6 +540,110 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 #endif
 }
 
+static void
+print_dns(const char *ifname, int dns1, int dns2, int s, int tabs)
+{
+	int i;
+	struct spppdnsaddrs addrs;
+
+	if (!dns1 && !dns2)
+		return;
+
+	PPPOECTL_IOCTL(ifname, s, SPPPGETDNSADDRS, &addrs);
+	if (dns1) {
+		for (i = 0; i < tabs; i++)
+			printf("\t");
+		if (tabs > 0)
+			printf("primary dns address ");
+		printf("%d.%d.%d.%d\n",
+		       (addrs.dns[0] >> 24) & 0xff,
+		       (addrs.dns[0] >> 16) & 0xff,
+		       (addrs.dns[0] >> 8) & 0xff,
+		       addrs.dns[0] & 0xff);
+	}
+	if (dns2) {
+		for (i = 0; i < tabs; i++)
+			printf("\t");
+		if (tabs > 0)
+			printf("secondary dns address ");
+		printf("%d.%d.%d.%d\n",
+		       (addrs.dns[1] >> 24) & 0xff,
+		       (addrs.dns[1] >> 16) & 0xff,
+		       (addrs.dns[1] >> 8) & 0xff,
+		       addrs.dns[1] & 0xff);
+	}
+}
+
+static void
+print_stats(const char *ifname, int s, int dump)
+{
+	struct pppoeconnectionstate state;
+	struct sppplcpstatus lcpst;
+	struct spppipcpstatus ipcpst;
+	struct spppipv6cpstatus ipv6cpst;
+	struct in_addr addr;
+
+	PPPOECTL_IOCTL(ifname, s, PPPOEGETSESSION, &state);
+
+	/* dump PPPoE session state */
+	printf("%s:\t%s %s\n", ifname,
+	    dump > 1 ? "PPPoE state:" : "state =",
+	    pppoe_state_name(state.state));
+	printf("\tSession ID: 0x%x\n", state.session_id);
+	printf("\tPADI retries: %d\n", state.padi_retry_no);
+	printf("\tPADR retries: %d\n", state.padr_retry_no);
+
+	if (dump > 1) {
+		PPPOECTL_IOCTL(ifname, s, SPPPGETLCPSTATUS, &lcpst);
+		PPPOECTL_IOCTL(ifname, s, SPPPGETIPCPSTATUS, &ipcpst);
+		PPPOECTL_IOCTL(ifname, s, SPPPGETIPV6CPSTATUS, &ipv6cpst);
+
+		printf("\tLCP state: %s\n",
+		    ppp_state_name(lcpst.state));
+		printf("\tIPCP state: %s\n",
+		    ppp_state_name(ipcpst.state));
+		printf("\tIPv6CP state: %s\n",
+		    ppp_state_name(ipv6cpst.state));
+
+		if (lcpst.state == SPPP_STATE_OPENED) {
+			printf("\tLCP negotiated options:\n");
+			printf("\t\tmru %lu\n", lcpst.mru);
+			printf("\t\tmagic number 0x%lx\n",
+			    lcpst.magic);
+		}
+
+		if (ipcpst.state == SPPP_STATE_OPENED) {
+			addr.s_addr = ipcpst.myaddr;
+
+			printf("\tIPCP negotiated options:\n");
+			printf("\t\taddress %s\n", inet_ntoa(addr));
+			print_dns(ifname,
+			    ISSET(ipcpst.opts, SPPP_IPCP_OPT_PRIMDNS),
+			    ISSET(ipcpst.opts, SPPP_IPCP_OPT_SECDNS),
+			    s, 2);
+		}
+
+		if (ipv6cpst.state == SPPP_STATE_OPENED) {
+			printf("\tIPv6CP negotiated options:\n");
+			if (ISSET(ipv6cpst.opts, SPPP_IPV6CP_OPT_COMPRESSION))
+				printf("\t\tcompression\n");
+			if (ISSET(ipv6cpst.opts, SPPP_IPV6CP_OPT_IFID)) {
+				printf("\t\tifid: "
+				    "my_ifid=0x%02x%02x%02x%02x%02x%02x%02x%02x, "
+				    "his_ifid=0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+				ipv6cpst.my_ifid[0], ipv6cpst.my_ifid[1],
+				ipv6cpst.my_ifid[2], ipv6cpst.my_ifid[3],
+				ipv6cpst.my_ifid[4], ipv6cpst.my_ifid[5],
+				ipv6cpst.my_ifid[6], ipv6cpst.my_ifid[7],
+				ipv6cpst.his_ifid[0], ipv6cpst.his_ifid[1],
+				ipv6cpst.his_ifid[2], ipv6cpst.his_ifid[3],
+				ipv6cpst.his_ifid[4], ipv6cpst.his_ifid[5],
+				ipv6cpst.his_ifid[6], ipv6cpst.his_ifid[7]);
+			}
+		}
+	}
+}
+
 static const char *
 phase_name(int phase)
 {
@@ -608,6 +682,45 @@ authflags(int flags)
 	return buf;
 }
 
+static const char *
+pppoe_state_name(int state)
+{
+
+	switch(state) {
+	case PPPOE_STATE_INITIAL:
+		return "initial";
+	case PPPOE_STATE_PADI_SENT:
+		return "PADI sent";
+	case PPPOE_STATE_PADR_SENT:
+		return "PADR sent";
+	case PPPOE_STATE_SESSION:
+		return "session";
+	case PPPOE_STATE_CLOSING:
+		return "closing";
+	}
+
+	return "unknown";
+}
+static const char *
+ppp_state_name(int state)
+{
+
+	switch (state) {
+	case SPPP_STATE_INITIAL:	return "initial";
+	case SPPP_STATE_STARTING:	return "starting";
+	case SPPP_STATE_CLOSED:		return "closed";
+	case SPPP_STATE_STOPPED:	return "stopped";
+	case SPPP_STATE_CLOSING:	return "closing";
+	case SPPP_STATE_STOPPING:	return "stopping";
+	case SPPP_STATE_REQ_SENT:	return "req-sent";
+	case SPPP_STATE_ACK_RCVD:	return "ack-rcvd";
+	case SPPP_STATE_ACK_SENT:	return "ack-sent";
+	case SPPP_STATE_OPENED:		return "opened";
+	}
+
+	return "unknown";
+}
+
 static void
 print_error(const char *ifname, int error, const char * str)
 {
@@ -617,5 +730,3 @@ print_error(const char *ifname, int error, const char * str)
 		fprintf(stderr, "%s: %s: %s\n", ifname, str, strerror(error));
 	exit(EX_DATAERR);
 }
-
-
