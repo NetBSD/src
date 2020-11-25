@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.212 2020/11/25 10:27:18 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.213 2020/11/25 10:30:51 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.212 2020/11/25 10:27:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.213 2020/11/25 10:30:51 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -185,17 +185,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.212 2020/11/25 10:27:18 yamaguchi 
 #define CISCO_ADDR_REPLY	1	/* Cisco address reply */
 #define CISCO_KEEPALIVE_REQ	2	/* Cisco keepalive request */
 
-/* states are named and numbered according to RFC 1661 */
-#define STATE_INITIAL	0
-#define STATE_STARTING	1
-#define STATE_CLOSED	2
-#define STATE_STOPPED	3
-#define STATE_CLOSING	4
-#define STATE_STOPPING	5
-#define STATE_REQ_SENT	6
-#define STATE_ACK_RCVD	7
-#define STATE_ACK_SENT	8
-#define STATE_OPENED	9
+enum {
+	STATE_INITIAL = SPPP_STATE_INITIAL,
+	STATE_STARTING = SPPP_STATE_STARTING,
+	STATE_CLOSED = SPPP_STATE_CLOSED,
+	STATE_STOPPED = SPPP_STATE_STOPPED,
+	STATE_CLOSING = SPPP_STATE_CLOSING,
+	STATE_STOPPING = SPPP_STATE_STOPPING,
+	STATE_REQ_SENT = SPPP_STATE_REQ_SENT,
+	STATE_ACK_RCVD = SPPP_STATE_ACK_RCVD,
+	STATE_ACK_SENT = SPPP_STATE_ACK_SENT,
+	STATE_OPENED = SPPP_STATE_OPENED,
+};
 
 enum cp_rcr_type {
 	CP_RCR_NONE = 0,	/* initial value */
@@ -1268,6 +1269,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case __SPPPGETIDLETO50:
 	case __SPPPGETKEEPALIVE50:
 #endif /* COMPAT_50 || MODULAR */
+	case SPPPGETLCPSTATUS:
+	case SPPPGETIPCPSTATUS:
+	case SPPPGETIPV6CPSTATUS:
 		error = sppp_params(sp, cmd, data);
 		break;
 
@@ -2420,7 +2424,7 @@ sppp_lcp_init(struct sppp *sp)
 
 	sppp_cp_init(&lcp, sp);
 
-	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
+	SET(sp->lcp.opts, SPPP_LCP_OPT_MAGIC);
 	sp->lcp.magic = 0;
 	sp->lcp.protos = 0;
 	sp->lcp.max_terminate = 2;
@@ -2537,7 +2541,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
-		sp->lcp.opts |= (1 << LCP_OPT_MRU);
+		SET(sp->lcp.opts, SPPP_LCP_OPT_MRU);
 	} else
 		sp->lcp.mru = PP_MTU;
 	sp->lcp.their_mru = PP_MTU;
@@ -2546,9 +2550,9 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	 * If we are authenticator, negotiate LCP_AUTH
 	 */
 	if (sp->hisauth.proto != 0)
-		sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
+		SET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 	else
-		sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
+		CLR(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 	sp->pp_flags &= ~PP_NEEDAUTH;
 	sppp_open_event(sp, xcp);
 }
@@ -2925,7 +2929,7 @@ sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 		switch (p[0]) {
 		case LCP_OPT_MAGIC:
 			/* Magic number -- can't use it, use 0 */
-			sp->lcp.opts &= ~(1 << LCP_OPT_MAGIC);
+			CLR(sp->lcp.opts, SPPP_LCP_OPT_MAGIC);
 			sp->lcp.magic = 0;
 			break;
 		case LCP_OPT_MRU:
@@ -2940,7 +2944,7 @@ sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 				    "%ld bytes. Defaulting to %d bytes\n",
 				    ifp->if_xname, sp->lcp.mru, PP_MTU);
 			}
-			sp->lcp.opts &= ~(1 << LCP_OPT_MRU);
+			CLR(sp->lcp.opts, SPPP_LCP_OPT_MRU);
 			sp->lcp.mru = PP_MTU;
 			break;
 		case LCP_OPT_AUTH_PROTO:
@@ -2954,7 +2958,7 @@ sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 				if (debug)
 					addlog(" [don't insist on auth "
 					       "for callout]");
-				sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
+				CLR(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 				break;
 			}
 			if (debug)
@@ -3007,7 +3011,7 @@ sppp_lcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 		switch (p[0]) {
 		case LCP_OPT_MAGIC:
 			/* Magic number -- renegotiate */
-			if ((sp->lcp.opts & (1 << LCP_OPT_MAGIC)) &&
+			if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_MAGIC) &&
 			    len >= 6 && l == 6) {
 				magic = (uint32_t)p[2] << 24 |
 					(uint32_t)p[3] << 16 | p[4] << 8 | p[5];
@@ -3040,7 +3044,7 @@ sppp_lcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 				if (mru < PPP_MINMRU || mru > sp->pp_if.if_mtu)
 					mru = sp->pp_if.if_mtu;
 				sp->lcp.mru = mru;
-				sp->lcp.opts |= (1 << LCP_OPT_MRU);
+				SET(sp->lcp.opts, SPPP_LCP_OPT_MRU);
 			}
 			break;
 		case LCP_OPT_AUTH_PROTO:
@@ -3077,7 +3081,7 @@ sppp_lcp_tlu(struct sppp *sp)
 		SPPP_LOCK(sp, RW_WRITER);
 	}
 
-	if ((sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0 ||
+	if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO) ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)
 		sppp_change_phase(sp, SPPP_PHASE_AUTHENTICATE);
 	else
@@ -3195,7 +3199,7 @@ sppp_lcp_scr(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
+	if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
 			sp->lcp.magic = cprng_fast32();
 		opt[i++] = LCP_OPT_MAGIC;
@@ -3206,14 +3210,14 @@ sppp_lcp_scr(struct sppp *sp)
 		opt[i++] = sp->lcp.magic;
 	}
 
-	if (sp->lcp.opts & (1 << LCP_OPT_MRU)) {
+	if (ISSET(sp->lcp.opts,SPPP_LCP_OPT_MRU)) {
 		opt[i++] = LCP_OPT_MRU;
 		opt[i++] = 4;
 		opt[i++] = sp->lcp.mru >> 8;
 		opt[i++] = sp->lcp.mru;
 	}
 
-	if (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) {
+	if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO)) {
 		authproto = sp->hisauth.proto;
 		opt[i++] = LCP_OPT_AUTH_PROTO;
 		opt[i++] = authproto == PPP_CHAP? 5: 4;
@@ -3327,7 +3331,7 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 		 * negotiate my address.
 		 */
 		sp->ipcp.flags |= IPCP_MYADDR_DYN;
-		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
+		SET(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS);
 	}
 	if (hisaddr == 1) {
 		/*
@@ -3335,6 +3339,18 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 		 * remote has no valid address, we need to get one assigned.
 		 */
 		sp->ipcp.flags |= IPCP_HISADDR_DYN;
+	}
+
+	if (sp->query_dns & 1) {
+		SET(sp->ipcp.opts, SPPP_IPCP_OPT_PRIMDNS);
+	} else {
+		CLR(sp->ipcp.opts, SPPP_IPCP_OPT_PRIMDNS);
+	}
+
+	if (sp->query_dns & 2) {
+		SET(sp->ipcp.opts, SPPP_IPCP_OPT_SECDNS);
+	} else {
+		CLR(sp->ipcp.opts, SPPP_IPCP_OPT_SECDNS);
 	}
 	sppp_open_event(sp, xcp);
 }
@@ -3624,13 +3640,20 @@ sppp_ipcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 			 * Peer doesn't grok address option.  This is
 			 * bad.  XXX  Should we better give up here?
 			 */
-			sp->ipcp.opts &= ~(1 << IPCP_OPT_ADDRESS);
+			CLR(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS);
 			break;
 #ifdef notyet
 		case IPCP_OPT_COMPRESS:
-			sp->ipcp.opts &= ~(1 << IPCP_OPT_COMPRESS);
+			CLR(sp->ipcp.opts, SPPP_IPCP_OPT_COMPRESS);
 			break;
 #endif
+		case IPCP_OPT_PRIMDNS:
+			CLR(sp->ipcp.opts, SPPP_IPCP_OPT_PRIMDNS);
+			break;
+
+		case IPCP_OPT_SECDNS:
+			CLR(sp->ipcp.opts, SPPP_IPCP_OPT_SECDNS);
+			break;
 		}
 	}
 	if (debug)
@@ -3684,7 +3707,7 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 			if (len >= 6 && l == 6) {
 				wantaddr = p[2] << 24 | p[3] << 16 |
 					p[4] << 8 | p[5];
-				sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
+				SET(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS);
 				if (debug)
 					addlog(" [wantaddr %s]",
 					       sppp_dotted_quad(wantaddr));
@@ -3704,14 +3727,16 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 			break;
 
 		case IPCP_OPT_PRIMDNS:
-			if (len >= 6 && l == 6) {
+			if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_PRIMDNS) &&
+			    len >= 6 && l == 6) {
 				sp->dns_addrs[0] = p[2] << 24 | p[3] << 16 |
 					p[4] << 8 | p[5];
 			}
 			break;
 
 		case IPCP_OPT_SECDNS:
-			if (len >= 6 && l == 6) {
+			if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_SECDNS) &&
+			    len >= 6 && l == 6) {
 				sp->dns_addrs[1] = p[2] << 24 | p[3] << 16 |
 					p[4] << 8 | p[5];
 			}
@@ -3751,7 +3776,7 @@ sppp_ipcp_scr(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 #ifdef notyet
-	if (sp->ipcp.opts & (1 << IPCP_OPT_COMPRESSION)) {
+	if (ISSET(sp->ipcp.opts,SPPP_IPCP_OPT_COMPRESSION)) {
 		opt[i++] = IPCP_OPT_COMPRESSION;
 		opt[i++] = 6;
 		opt[i++] = 0;	/* VJ header compression */
@@ -3762,7 +3787,7 @@ sppp_ipcp_scr(struct sppp *sp)
 #endif
 
 #ifdef INET
-	if (sp->ipcp.opts & (1 << IPCP_OPT_ADDRESS)) {
+	if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS)) {
 		if (sp->ipcp.flags & IPCP_MYADDR_SEEN)
 			ouraddr = sp->ipcp.req_myaddr;	/* not sure if this can ever happen */
 		else
@@ -3776,7 +3801,7 @@ sppp_ipcp_scr(struct sppp *sp)
 	}
 #endif
 
-	if (sp->query_dns & 1) {
+	if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_PRIMDNS)) {
 		opt[i++] = IPCP_OPT_PRIMDNS;
 		opt[i++] = 6;
 		opt[i++] = sp->dns_addrs[0] >> 24;
@@ -3784,7 +3809,7 @@ sppp_ipcp_scr(struct sppp *sp)
 		opt[i++] = sp->dns_addrs[0] >> 8;
 		opt[i++] = sp->dns_addrs[0];
 	}
-	if (sp->query_dns & 2) {
+	if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_SECDNS)) {
 		opt[i++] = IPCP_OPT_SECDNS;
 		opt[i++] = 6;
 		opt[i++] = sp->dns_addrs[1] >> 24;
@@ -3848,7 +3873,7 @@ sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 	}
 
 	sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
-	sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
+	SET(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_IFID);
 	sppp_open_event(sp, xcp);
 }
 
@@ -3991,6 +4016,11 @@ sppp_ipv6cp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 			if (!collision && !nohisaddr) {
 				/* no collision, hisaddr known - Conf-Ack */
 				type = CP_RCR_ACK;
+				memcpy(sp->ipv6cp.my_ifid, &myaddr.s6_addr[8],
+				    sizeof(sp->ipv6cp.my_ifid));
+				memcpy(sp->ipv6cp.his_ifid,
+				    &desiredaddr.s6_addr[8],
+				    sizeof(sp->ipv6cp.my_ifid));
 
 				if (debug) {
 					addlog(" %s [%s]",
@@ -4112,11 +4142,11 @@ sppp_ipv6cp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 			 * Peer doesn't grok address option.  This is
 			 * bad.  XXX  Should we better give up here?
 			 */
-			sp->ipv6cp.opts &= ~(1 << IPV6CP_OPT_IFID);
+			CLR(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_IFID);
 			break;
 #ifdef notyet
 		case IPV6CP_OPT_COMPRESS:
-			sp->ipv6cp.opts &= ~(1 << IPV6CP_OPT_COMPRESS);
+			CLR(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_COMPRESS);
 			break;
 #endif
 		}
@@ -4179,7 +4209,7 @@ sppp_ipv6cp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 			(void)in6_setscope(&suggestaddr, &sp->pp_if, NULL);
 			memcpy(&suggestaddr.s6_addr[8], &p[2], 8);
 
-			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
+			SET(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_IFID);
 			if (debug)
 				addlog(" [suggestaddr %s]",
 				       IN6_PRINT(ip6buf, &suggestaddr));
@@ -4255,7 +4285,7 @@ sppp_ipv6cp_scr(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_IFID)) {
+	if (ISSET(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_IFID)) {
 		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
 		opt[i++] = IPV6CP_OPT_IFID;
 		opt[i++] = 10;
@@ -4264,7 +4294,7 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	}
 
 #ifdef notyet
-	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_COMPRESSION)) {
+	if (ISSET(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_COMPRESSION)) {
 		opt[i++] = IPV6CP_OPT_COMPRESSION;
 		opt[i++] = 4;
 		opt[i++] = 0;	/* TBD */
@@ -5145,7 +5175,7 @@ sppp_auth_role(const struct cp *cp, struct sppp *sp)
 	role = SPPP_AUTH_NOROLE;
 
 	if (sp->hisauth.proto == cp->proto &&
-	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0)
+	    ISSET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO))
 		SET(role, SPPP_AUTH_SERV);
 
 	if (sp->myauth.proto == cp->proto)
@@ -5846,9 +5876,9 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->pp_auth_failures = 0;
 		if (sp->hisauth.proto != 0)
-		    sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
+			SET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 		else
-		    sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
+			CLR(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 
 		SPPP_UNLOCK(sp);
 	    }
@@ -5975,6 +6005,51 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		SPPP_LOCK(sp, RW_WRITER);
 		sp->pp_maxalive = settings->maxalive;
 		sp->pp_max_noreceive = settings->max_noreceive;
+		SPPP_UNLOCK(sp);
+	    }
+	    break;
+	case SPPPGETLCPSTATUS:
+	    {
+		struct sppplcpstatus *status =
+		    (struct sppplcpstatus *)data;
+
+		SPPP_LOCK(sp, RW_READER);
+		status->state = sp->scp[IDX_LCP].state;
+		status->opts = sp->lcp.opts;
+		status->magic = sp->lcp.magic;
+		status->mru = sp->lcp.mru;
+		SPPP_UNLOCK(sp);
+	    }
+	    break;
+	case SPPPGETIPCPSTATUS:
+	    {
+		struct spppipcpstatus *status =
+		    (struct spppipcpstatus *)data;
+		u_int32_t myaddr;
+
+		SPPP_LOCK(sp, RW_READER);
+		status->state = sp->scp[IDX_IPCP].state;
+		status->opts = sp->ipcp.opts;
+#ifdef INET
+		sppp_get_ip_addrs(sp, &myaddr, 0, 0);
+#else
+		myaddr = 0;
+#endif
+		status->myaddr = ntohl(myaddr);
+		SPPP_UNLOCK(sp);
+	    }
+	    break;
+	case SPPPGETIPV6CPSTATUS:
+	    {
+		struct spppipv6cpstatus *status =
+		    (struct spppipv6cpstatus *)data;
+
+		SPPP_LOCK(sp, RW_READER);
+		status->state = sp->scp[IDX_IPV6CP].state;
+		memcpy(status->my_ifid, sp->ipv6cp.my_ifid,
+		    sizeof(status->my_ifid));
+		memcpy(status->his_ifid, sp->ipv6cp.his_ifid,
+		    sizeof(status->his_ifid));
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
