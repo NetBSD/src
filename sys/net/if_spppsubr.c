@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.209 2020/11/25 10:18:49 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.210 2020/11/25 10:23:33 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.209 2020/11/25 10:18:49 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.210 2020/11/25 10:23:33 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3243,6 +3243,7 @@ sppp_lcp_check_and_close(struct sppp *sp)
 		return;
 
 	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 }
 
 /*
