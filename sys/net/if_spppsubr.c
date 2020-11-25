@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.208 2020/11/25 10:12:03 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.209 2020/11/25 10:18:49 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.208 2020/11/25 10:12:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.209 2020/11/25 10:18:49 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.208 2020/11/25 10:12:03 yamaguchi 
 #include <sys/workqueue.h>
 #include <sys/atomic.h>
 #include <sys/compat_stub.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -2466,10 +2467,6 @@ sppp_lcp_up(struct sppp *sp, void *xcp)
 			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_open);
 		} else if (debug)
 			addlog("\n");
-	} else if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0 &&
-		   (sp->scp[IDX_LCP].state == STATE_INITIAL)) {
-			ifp->if_flags |= IFF_RUNNING;
-			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_open);
 	}
 
 	sppp_up_event(sp, xcp);
@@ -2510,12 +2507,13 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 			log(LOG_DEBUG,
 			    "%s: Down event (carrier loss)\n",
 			    ifp->if_xname);
+
+		sp->pp_flags &= ~PP_CALLIN;
+		if (sp->scp[pidx].state != STATE_INITIAL)
+			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_close);
+		ifp->if_flags &= ~IFF_RUNNING;
 	}
 	sp->scp[pidx].fail_counter = 0;
-	sp->pp_flags &= ~PP_CALLIN;
-	if (sp->scp[pidx].state != STATE_INITIAL)
-		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static void

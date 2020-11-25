@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.153 2020/09/25 06:22:33 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.154 2020/11/25 10:18:49 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.153 2020/09/25 06:22:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.154 2020/11/25 10:18:49 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1886,9 +1886,16 @@ pppoe_tlf(struct sppp *sp)
 	PPPOE_LOCK(sc, RW_WRITER);
 
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
+		callout_stop(&sc->sc_timeout);
+		sc->sc_state = PPPOE_STATE_INITIAL;
+		sc->sc_padi_retried = 0;
+		sc->sc_padr_retried = 0;
+		memcpy(&sc->sc_dest, etherbroadcastaddr,
+		    sizeof(sc->sc_dest));
 		PPPOE_UNLOCK(sc);
 		return;
 	}
+
 	/*
 	 * Do not call pppoe_disconnect here, the upper layer state
 	 * machine gets confused by this. We must return from this
