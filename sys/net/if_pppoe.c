@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.154 2020/11/25 10:18:49 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.155 2020/11/25 10:37:04 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.154 2020/11/25 10:18:49 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.155 2020/11/25 10:37:04 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1317,7 +1317,6 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		PPPOE_LOCK(sc, RW_WRITER);
 
 		if ((ifr->ifr_flags & IFF_UP) == 0
-		     && sc->sc_state >= PPPOE_STATE_PADI_SENT
 		     && sc->sc_state < PPPOE_STATE_SESSION) {
 			callout_stop(&sc->sc_timeout);
 			sc->sc_state = PPPOE_STATE_INITIAL;
