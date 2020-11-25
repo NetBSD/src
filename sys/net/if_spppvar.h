@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.26 2020/11/25 09:18:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.27 2020/11/25 09:35:23 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -28,6 +28,17 @@
 
 #include <sys/workqueue.h>
 #include <sys/pcq.h>
+struct sppp;
+
+struct sppp_work {
+	struct work	 work;
+	void		*arg;
+	void		(*func)(struct sppp *, void *);
+	unsigned int	 state;
+#define SPPP_WK_FREE	0
+#define SPPP_WK_BUSY	1
+#define SPPP_WK_UNAVAIL	2
+};
 
 #define IDX_LCP 0		/* idx into state table */
 
@@ -46,6 +57,7 @@ struct slcp {
 	/* multilink variables */
 	u_long	mrru;		/* our   max received reconstructed unit */
 	u_long	their_mrru;	/* their max receive dreconstructed unit */
+	bool	reestablish;	/* reestablish after the next down event */
 };
 
 #define IDX_IPCP 1		/* idx into state table */
@@ -100,6 +112,18 @@ struct sppp_cp {
 	void		*rcr_buf;
 	size_t		 rcr_blen;
 	int		 rcr_rlen;
+
+	struct sppp_work	 work_up;
+	struct sppp_work	 work_down;
+	struct sppp_work	 work_open;
+	struct sppp_work	 work_close;
+	struct sppp_work	 work_to;
+	struct sppp_work	 work_rcr;
+	struct sppp_work	 work_rca;
+	struct sppp_work	 work_rcn;
+	struct sppp_work	 work_rtr;
+	struct sppp_work	 work_rta;
+	struct sppp_work	 work_rxj;
 };
 
 struct sppp {
@@ -135,6 +159,7 @@ struct sppp {
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
 #endif
+	struct workqueue *wq_cp;
 	struct sppp_cp scp[IDX_COUNT];
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
