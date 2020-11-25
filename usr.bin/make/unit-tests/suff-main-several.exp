@@ -85,6 +85,7 @@ ParseDoDependency(.MAKEFLAGS: -d0 -dg1)
 .LIBS            = 
 .MAKE            = <details omitted>
 .MAKE.DEPENDFILE = <details omitted>
+.MAKE.GID        = <details omitted>
 .MAKE.LEVEL      = <details omitted>
 .MAKE.MAKEFILES  = <details omitted>
 .MAKE.MAKEFILE_PREFERENCE = <details omitted>
@@ -92,6 +93,7 @@ ParseDoDependency(.MAKEFLAGS: -d0 -dg1)
 .MAKE.PATH_FILEMON = <details omitted>
 .MAKE.PID        = <details omitted>
 .MAKE.PPID       = <details omitted>
+.MAKE.UID        = <details omitted>
 .MAKEFLAGS       =  -r -k -d mps -d 0 -d g1
 .MAKEOVERRIDES   = 
 .OBJDIR          = <curdir>
