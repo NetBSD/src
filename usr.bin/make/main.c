@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.479 2020/11/24 19:52:06 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.480 2020/11/25 00:50:44 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.479 2020/11/24 19:52:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.480 2020/11/25 00:50:44 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1442,6 +1442,10 @@ main_Init(int argc, char **argv)
 		Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
 		snprintf(tmp, sizeof tmp, "%u", getppid());
 		Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
+		snprintf(tmp, sizeof tmp, "%u", getuid());
+		Var_Set(".MAKE.UID", tmp, VAR_GLOBAL);
+		snprintf(tmp, sizeof tmp, "%u", getgid());
+		Var_Set(".MAKE.GID", tmp, VAR_GLOBAL);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
