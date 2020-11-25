@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.27 2020/11/25 09:35:23 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.28 2020/11/25 09:38:39 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -160,6 +160,7 @@ struct sppp {
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
 #endif
 	struct workqueue *wq_cp;
+	struct sppp_work work_ifdown;
 	struct sppp_cp scp[IDX_COUNT];
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
