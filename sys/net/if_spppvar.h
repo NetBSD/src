@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.28 2020/11/25 09:38:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.29 2020/11/25 09:46:05 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -91,7 +91,17 @@ struct sauth {
 	char	*secret;		/* secret password */
 	u_char	name_len;		/* no need to have a bigger size */
 	u_char	secret_len;		/* because proto gives size in a byte */
-	char	challenge[16];		/* random challenge [don't change size! it's really hardcoded!] */
+};
+
+struct schap {
+	char	 challenge[16];		/* random challenge
+					   [don't change size! it's really hardcoded!] */
+	char	 digest[16];
+	u_char	 digest_len;
+	bool	 rechallenging;		/* sent challenge after open */
+	bool	 response_rcvd;		/* receive response, stop sending challenge */
+
+	struct sppp_work	 work_challenge_rcvd;
 };
 
 #define IDX_PAP		3
@@ -151,10 +161,6 @@ struct sppp {
 	krwlock_t	pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
-#if defined(__NetBSD__)
-	struct	callout ch[IDX_COUNT];	/* per-proto and if callouts */
-	struct	callout pap_my_to_ch;	/* PAP needs one more... */
-#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
@@ -167,6 +173,7 @@ struct sppp {
 	struct sipcp ipv6cp;		/* IPv6CP params */
 	struct sauth myauth;		/* auth params, i'm peer */
 	struct sauth hisauth;		/* auth params, i'm authenticator */
+	struct schap chap;		/* CHAP params */
 	/*
 	 * These functions are filled in by sppp_attach(), and are
 	 * expected to be used by the lower layer (hardware) drivers
