@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.200 2020/11/25 09:41:20 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.201 2020/11/25 09:46:05 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.200 2020/11/25 09:41:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.201 2020/11/25 09:46:05 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -101,6 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.200 2020/11/25 09:41:20 yamaguchi 
 #define DEFAULT_MAXALIVECNT    		3	/* max. missed alive packets */
 #define	DEFAULT_NORECV_TIME		15	/* before we get worried */
 #define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
+
+#define FAILMSG "Failed..."
+#define SUCCMSG "Welcome!"
 
 /*
  * Interface flags that can be set in an ifconfig command.
@@ -254,6 +257,12 @@ struct cp {
 	void	(*scan)(const struct cp *, struct sppp *);
 };
 
+enum auth_role {
+	SPPP_AUTH_NOROLE = 0,
+	SPPP_AUTH_SERV = __BIT(0),
+	SPPP_AUTH_PEER = __BIT(1),
+};
+
 static struct sppp *spppq;
 static kmutex_t *spppq_lock = NULL;
 static callout_t keepalive_ch;
@@ -325,6 +334,8 @@ static void sppp_cp_to_ipcp(void *);
 static void sppp_cp_to_ipv6cp(void *);
 static void sppp_auth_send(const struct cp *, struct sppp *,
 			    unsigned int, unsigned int, ...);
+static int sppp_auth_role(const struct cp *, struct sppp *);
+static void sppp_auth_to_event(const struct cp *, struct sppp *);
 
 static void sppp_up_event(struct sppp *, void *);
 static void sppp_down_event(struct sppp *, void *);
@@ -337,7 +348,6 @@ static void sppp_rcn_event(struct sppp *, void *);
 static void sppp_rtr_event(struct sppp *, void *);
 static void sppp_rta_event(struct sppp *, void *);
 static void sppp_rxj_event(struct sppp *, void *);
-static void sppp_null_event(struct sppp *, void *);
 
 static void sppp_null(struct sppp *);
 static void sppp_sca_scn(const struct cp *, struct sppp *);
@@ -359,6 +369,7 @@ static void sppp_lcp_tlf(struct sppp *);
 static void sppp_lcp_scr(struct sppp *);
 static void sppp_lcp_check_and_close(struct sppp *);
 static int sppp_ncp_check(struct sppp *);
+static int sppp_auth_check(struct sppp *);
 
 static void sppp_ipcp_init(struct sppp *);
 static void sppp_ipcp_up(struct sppp *, void *);
@@ -392,22 +403,31 @@ static void sppp_ipv6cp_scr(struct sppp *);
 
 static void sppp_pap_input(struct sppp *, struct mbuf *);
 static void sppp_pap_init(struct sppp *);
+static void sppp_pap_up(struct sppp *, void *);
+static void sppp_pap_down(struct sppp *, void *);
 static void sppp_pap_open(struct sppp *, void *);
 static void sppp_pap_close(struct sppp *, void *);
-static void sppp_pap_TO(void *);
-static void sppp_pap_my_TO(void *);
+static void sppp_pap_TO(struct sppp *, void *);
+static void sppp_pap_tls(struct sppp *);
+static void sppp_pap_tlf(struct sppp *);
 static void sppp_pap_tlu(struct sppp *);
-static void sppp_pap_tld(struct sppp *);
 static void sppp_pap_scr(struct sppp *);
+static void sppp_pap_scr(struct sppp *);
+static void sppp_pap_scan(const struct cp *, struct sppp *);
 
 static void sppp_chap_input(struct sppp *, struct mbuf *);
 static void sppp_chap_init(struct sppp *);
+static void sppp_chap_up(struct sppp *, void *);
+static void sppp_chap_down(struct sppp *, void *);
 static void sppp_chap_open(struct sppp *, void *);
 static void sppp_chap_close(struct sppp *, void *);
-static void sppp_chap_TO(void *);
+static void sppp_chap_TO(struct sppp *, void *);
 static void sppp_chap_tlu(struct sppp *);
-static void sppp_chap_tld(struct sppp *);
+static void sppp_chap_tls(struct sppp *);
+static void sppp_chap_tlf(struct sppp *);
 static void sppp_chap_scr(struct sppp *);
+static void sppp_chap_scan(const struct cp *, struct sppp *);
+static void sppp_chap_rcv_challenge_event(struct sppp *, void *);
 
 static const char *sppp_auth_type_name(u_short, u_char);
 static const char *sppp_cp_type_name(u_char);
@@ -494,18 +514,18 @@ static const struct cp ipv6cp = {
 
 static const struct cp pap = {
 	PPP_PAP, IDX_PAP, CP_AUTH, "pap",
-	sppp_null_event, sppp_null_event, sppp_pap_open, sppp_pap_close,
-	sppp_null_event, 0, 0, 0,
-	sppp_pap_tlu, sppp_pap_tld, sppp_null, sppp_null,
-	sppp_pap_scr, 0
+	sppp_pap_up, sppp_pap_down, sppp_pap_open, sppp_pap_close,
+	sppp_pap_TO, 0, 0, 0,
+	sppp_pap_tlu, sppp_null, sppp_pap_tls, sppp_pap_tlf,
+	sppp_pap_scr, sppp_pap_scan
 };
 
 static const struct cp chap = {
 	PPP_CHAP, IDX_CHAP, CP_AUTH, "chap",
-	sppp_null_event, sppp_null_event, sppp_chap_open, sppp_chap_close,
-	sppp_null_event, 0, 0, 0,
-	sppp_chap_tlu, sppp_chap_tld, sppp_null, sppp_null,
-	sppp_chap_scr, 0
+	sppp_chap_up, sppp_chap_down, sppp_chap_open, sppp_chap_close,
+	sppp_chap_TO, 0, 0, 0,
+	sppp_chap_tlu, sppp_null, sppp_chap_tls, sppp_chap_tlf,
+	sppp_chap_scr, sppp_chap_scan
 };
 
 static const struct cp *cps[IDX_COUNT] = {
@@ -1074,13 +1094,12 @@ sppp_detach(struct ifnet *ifp)
 
 	sppp_cp_fini(&lcp, sp);
 	sppp_cp_fini(&ipcp, sp);
-	callout_stop(&sp->scp[IDX_PAP].ch);
-	callout_stop(&sp->scp[IDX_CHAP].ch);
+	sppp_cp_fini(&pap, sp);
+	sppp_cp_fini(&chap, sp);
 #ifdef INET6
 	sppp_cp_fini(&ipv6cp, sp);
 #endif
 	sppp_wq_destroy(sp, sp->wq_cp);
-	callout_stop(&sp->pap_my_to_ch);
 
 	/* free authentication info */
 	if (sp->myauth.name) free(sp->myauth.name, M_DEVBUF);
@@ -1523,6 +1542,23 @@ sppp_cp_to_ipv6cp(void *xsp)
 }
 
 static void
+sppp_cp_to_pap(void *xsp)
+{
+	struct sppp *sp = xsp;
+
+	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_to);
+}
+
+static void
+sppp_cp_to_chap(void *xsp)
+{
+	struct sppp *sp = xsp;
+
+	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_to);
+}
+
+
+static void
 sppp_cp_init(const struct cp *cp, struct sppp *sp)
 {
 	struct sppp_cp *scp;
@@ -1531,6 +1567,8 @@ sppp_cp_init(const struct cp *cp, struct sppp *sp)
 		[IDX_LCP] = sppp_cp_to_lcp,
 		[IDX_IPCP] = sppp_cp_to_ipcp,
 		[IDX_IPV6CP] = sppp_cp_to_ipv6cp,
+		[IDX_PAP] = sppp_cp_to_pap,
+		[IDX_CHAP] = sppp_cp_to_chap,
 	};
 
 	scp = &sp->scp[cp->protoidx];
@@ -1814,6 +1852,10 @@ sppp_up_event(struct sppp *sp, void *xcp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	if ((cp->flags & CP_AUTH) != 0 &&
+	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
+		return;
+
 	if (debug)
 		log(LOG_DEBUG, "%s: %s up(%s)\n",
 		    ifp->if_xname, cp->name,
@@ -1842,6 +1884,10 @@ sppp_down_event(struct sppp *sp, void *xcp)
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
+
+	if ((cp->flags & CP_AUTH) != 0 &&
+	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
+		return;
 
 	if (debug)
 		log(LOG_DEBUG, "%s: %s down(%s)\n",
@@ -1882,6 +1928,10 @@ sppp_open_event(struct sppp *sp, void *xcp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	if ((cp->flags & CP_AUTH) != 0 &&
+	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
+		return;
+
 	if (debug)
 		log(LOG_DEBUG, "%s: %s open(%s)\n",
 		    ifp->if_xname, cp->name,
@@ -1921,6 +1971,10 @@ sppp_close_event(struct sppp *sp, void *xcp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	if ((cp->flags & CP_AUTH) != 0 &&
+	    sppp_auth_role(cp, sp) == SPPP_AUTH_NOROLE)
+		return;
+
 	if (debug)
 		log(LOG_DEBUG, "%s: %s close(%s)\n",
 		    ifp->if_xname, cp->name,
@@ -1948,8 +2002,10 @@ sppp_close_event(struct sppp *sp, void *xcp)
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
 		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_terminate;
-		sppp_cp_send(sp, cp->proto, TERM_REQ,
-		    ++sp->scp[cp->protoidx].seq, 0, 0);
+		if ((cp->flags & CP_AUTH) == 0) {
+			sppp_cp_send(sp, cp->proto, TERM_REQ,
+			    ++sp->scp[cp->protoidx].seq, 0, 0);
+		}
 		sppp_cp_change_state(cp, sp, STATE_CLOSING);
 		break;
 	}
@@ -1976,21 +2032,18 @@ sppp_to_event(struct sppp *sp, void *xcp)
 		/* TO- event */
 		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
-			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
-			sppp_lcp_check_and_close(sp);
+			(cp->tlf)(sp);
 			break;
 		case STATE_STOPPING:
-			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
-			sppp_lcp_check_and_close(sp);
+			(cp->tlf)(sp);
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
-			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_STOPPED);
-			sppp_lcp_check_and_close(sp);
+			(cp->tlf)(sp);
 			break;
 		}
 	else
@@ -1998,8 +2051,10 @@ sppp_to_event(struct sppp *sp, void *xcp)
 		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
 		case STATE_STOPPING:
-			sppp_cp_send(sp, cp->proto, TERM_REQ,
-			    ++sp->scp[cp->protoidx].seq, 0, 0);
+			if ((cp->flags & CP_AUTH) == 0) {
+				sppp_cp_send(sp, cp->proto, TERM_REQ,
+				    ++sp->scp[cp->protoidx].seq, 0, 0);
+			}
 			callout_schedule(&sp->scp[cp->protoidx].ch, sp->lcp.timeout);
 			break;
 		case STATE_REQ_SENT:
@@ -2067,8 +2122,10 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 			}
 			break;
 		case STATE_CLOSED:
-			sppp_cp_send(sp, cp->proto, TERM_ACK,
-			    sp->scp[cp->protoidx].rconfid, 0, 0);
+			if ((cp->flags & CP_AUTH) == 0) {
+				sppp_cp_send(sp, cp->proto, TERM_ACK,
+				    sp->scp[cp->protoidx].rconfid, 0, 0);
+			}
 			break;
 		default:
 			printf("%s: %s illegal RCR+ in state %s\n",
@@ -2109,8 +2166,10 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 			break;
 		case STATE_CLOSED:
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
-			sppp_cp_send(sp, cp->proto, TERM_ACK,
-			    sp->scp[cp->protoidx].rconfid, 0, 0);
+			if ((cp->flags & CP_AUTH) == 0) {
+				sppp_cp_send(sp, cp->proto, TERM_ACK,
+				    sp->scp[cp->protoidx].rconfid, 0, 0);
+			}
 			break;
 		default:
 			printf("%s: %s illegal RCR- in state %s\n",
@@ -2130,8 +2189,10 @@ sppp_rca_event(struct sppp *sp, void *xcp)
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
-		sppp_cp_send(sp, cp->proto, TERM_ACK,
-		    sp->scp[cp->protoidx].rconfid, 0, 0);
+		if ((cp->flags & CP_AUTH) == 0) {
+			sppp_cp_send(sp, cp->proto, TERM_ACK,
+			    sp->scp[cp->protoidx].rconfid, 0, 0);
+		}
 		break;
 	case STATE_CLOSING:
 	case STATE_STOPPING:
@@ -2172,8 +2233,10 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
-		sppp_cp_send(sp, cp->proto, TERM_ACK,
-		    sp->scp[cp->protoidx].rconfid, 0, 0);
+		if ((cp->flags & CP_AUTH) == 0) {
+			sppp_cp_send(sp, cp->proto, TERM_ACK,
+			    sp->scp[cp->protoidx].rconfid, 0, 0);
+		}
 		break;
 	case STATE_REQ_SENT:
 	case STATE_ACK_SENT:
@@ -2232,8 +2295,10 @@ sppp_rtr_event(struct sppp *sp, void *xcp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s send terminate-ack\n",
 		    ifp->if_xname, cp->name);
-	sppp_cp_send(sp, cp->proto, TERM_ACK,
-	    sp->scp[cp->protoidx].rseq, 0, 0);
+	if ((cp->flags & CP_AUTH) == 0) {
+		sppp_cp_send(sp, cp->proto, TERM_ACK,
+		    sp->scp[cp->protoidx].rseq, 0, 0);
+	}
 }
 
 static void
@@ -2249,14 +2314,12 @@ sppp_rta_event(struct sppp *sp, void *xcp)
 	case STATE_ACK_SENT:
 		break;
 	case STATE_CLOSING:
-		(cp->tlf)(sp);
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
-		sppp_lcp_check_and_close(sp);
+		(cp->tlf)(sp);
 		break;
 	case STATE_STOPPING:
-		(cp->tlf)(sp);
 		sppp_cp_change_state(cp, sp, STATE_STOPPED);
-		sppp_lcp_check_and_close(sp);
+		(cp->tlf)(sp);
 		break;
 	case STATE_ACK_RCVD:
 		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
@@ -3005,7 +3068,6 @@ sppp_lcp_tlu(struct sppp *sp)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	int i;
-	uint32_t mask;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -3037,38 +3099,32 @@ sppp_lcp_tlu(struct sppp *sp)
 	 * don't do anything when they get an Open event.
 	 */
 	for (i = 0; i < IDX_COUNT; i++)
-		if ((cps[i])->flags & CP_AUTH)
-			(cps[i])->Open(sp, __UNCONST(&cps[i]));
+		if ((cps[i])->flags & CP_AUTH) {
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[(cps[i])->protoidx].work_open);
+		}
 
 	if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 		/* Notify all NCPs. */
 		for (i = 0; i < IDX_COUNT; i++)
-			if ((cps[i])->flags & CP_NCP)
-				(cps[i])->Open(sp, __UNCONST(&cps[i]));
-	}
-
-	/* Send Up events to all started protos. */
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1) {
-		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_LCP) == 0) {
-			(cps[i])->Up(sp, __UNCONST(&cps[i]));
-		}
+			if ((cps[i])->flags & CP_NCP) {
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[(cps[i])->protoidx].work_open);
+			}
 	}
 
 	/* notify low-level driver of state change */
 	sppp_notify_chg_wlocked(sp);
-
-	if (sp->pp_phase == SPPP_PHASE_NETWORK)
-		/* if no NCP is starting, close down */
-		sppp_lcp_check_and_close(sp);
 }
 
 static void
 sppp_lcp_tld(struct sppp *sp)
 {
-	int i;
-	uint32_t mask;
+	int i, pi, phase;
 
 	KASSERT(SPPP_WLOCKED(sp));
+
+	phase = sp->pp_phase;
 
 	sppp_change_phase(sp, SPPP_PHASE_TERMINATE);
 
@@ -3078,10 +3134,16 @@ sppp_lcp_tld(struct sppp *sp)
 	 * ``a flurry of terminate-request packets'', as the RFC
 	 * describes it.
 	 */
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1) {
-		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_LCP) == 0) {
-			(cps[i])->Down(sp, __UNCONST(&cps[i]));
-			(cps[i])->Close(sp,__UNCONST(&cps[i]));
+	for (i = 0; i < IDX_COUNT; i++) {
+		pi = (cps[i])->protoidx;
+		if (((cps[i])->flags & CP_LCP) == 0) {
+			/* skip if ncp was not started */
+			if (phase != SPPP_PHASE_NETWORK &&
+			    ((cps[i])->flags & CP_NCP) != 0)
+				continue;
+
+			sppp_wq_add(sp->wq_cp, &sp->scp[pi].work_down);
+			sppp_wq_add(sp->wq_cp, &sp->scp[pi].work_close);
 		}
 	}
 }
@@ -3091,7 +3153,6 @@ sppp_lcp_tls(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-
 
 	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
 		printf("%s: authentication failed %d times, not retrying again\n",
@@ -3176,6 +3237,17 @@ sppp_ncp_check(struct sppp *sp)
 	return 0;
 }
 
+static int
+sppp_auth_check(struct sppp *sp)
+{
+	int i, mask;
+
+	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
+		if ((sp->lcp.protos & mask) && (cps[i])->flags & CP_AUTH)
+			return 1;
+	return 0;
+}
+
 /*
  * Re-check the open NCPs and see if we should terminate the link.
  * Called by the NCPs during their tlf action handling.
@@ -3186,15 +3258,38 @@ sppp_lcp_check_and_close(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->pp_phase < SPPP_PHASE_NETWORK)
+	if (sp->pp_phase < SPPP_PHASE_AUTHENTICATE) {
 		/* don't bother, we are already going down */
 		return;
+	}
 
-	if (sppp_ncp_check(sp))
+	if (sp->pp_phase == SPPP_PHASE_AUTHENTICATE &&
+	    sppp_auth_check(sp))
 		return;
+
+	if (sp->pp_phase >= SPPP_PHASE_NETWORK &&
+	    sppp_ncp_check(sp))
+		return;
+
 	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 }
 
+static void
+sppp_lcp_uls(const struct cp *cp, struct sppp *sp)
+{
+
+	sp->lcp.protos |= (1 << cp->protoidx);
+	if (sp->scp[IDX_LCP].state == STATE_OPENED)
+		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_up);
+}
+
+static void
+sppp_lcp_ulf(const struct cp *cp, struct sppp *sp)
+{
+
+	sp->lcp.protos &= ~(1 << cp->protoidx);
+	sppp_lcp_check_and_close(sp);
+}
 
 /*
  *--------------------------------------------------------------------------*
@@ -3718,8 +3813,7 @@ sppp_ipcp_tls(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	/* indicate to LCP that it must stay alive */
-	sp->lcp.protos |= (1 << IDX_IPCP);
+	sppp_lcp_uls(&ipcp, sp);
 }
 
 static void
@@ -3727,9 +3821,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	/* we no longer need LCP */
-	sp->lcp.protos &= ~(1 << IDX_IPCP);
+	sppp_lcp_ulf(&ipcp, sp);
 }
 
 static void
@@ -4288,8 +4380,7 @@ sppp_ipv6cp_tls(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	/* indicate to LCP that it must stay alive */
-	sp->lcp.protos |= (1 << IDX_IPV6CP);
+	sppp_lcp_uls(&ipv6cp, sp);
 }
 
 static void
@@ -4297,8 +4388,7 @@ sppp_ipv6cp_tlf(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	/* we no longer need LCP */
-	sp->lcp.protos &= ~(1 << IDX_IPV6CP);
+	sppp_lcp_ulf(&ipv6cp, sp);
 }
 
 static void
@@ -4443,82 +4533,21 @@ sppp_ipv6cp_scr(struct sppp *sp)
  *                                                                          *
  *--------------------------------------------------------------------------*
  */
-
 /*
- * The authentication protocols don't employ a full-fledged state machine as
- * the control protocols do, since they do have Open and Close events, but
- * not Up and Down, nor are they explicitly terminated.  Also, use of the
- * authentication protocols may be different in both directions (this makes
- * sense, think of a machine that never accepts incoming calls but only
- * calls out, it doesn't require the called party to authenticate itself).
+ * The authentication protocols is implemented on the state machine for
+ * control protocols. And it uses following actions and events.
  *
- * Our state machine for the local authentication protocol (we are requesting
- * the peer to authenticate) looks like:
- *
- *						    RCA-
- *	      +--------------------------------------------+
- *	      V					    scn,tld|
- *	  +--------+			       Close   +---------+ RCA+
- *	  |	   |<----------------------------------|	 |------+
- *   +--->| Closed |				TO*    | Opened	 | sca	|
- *   |	  |	   |-----+		       +-------|	 |<-----+
- *   |	  +--------+ irc |		       |       +---------+
- *   |	    ^		 |		       |	   ^
- *   |	    |		 |		       |	   |
- *   |	    |		 |		       |	   |
- *   |	 TO-|		 |		       |	   |
- *   |	    |tld  TO+	 V		       |	   |
- *   |	    |	+------->+		       |	   |
- *   |	    |	|	 |		       |	   |
- *   |	  +--------+	 V		       |	   |
- *   |	  |	   |<----+<--------------------+	   |
- *   |	  | Req-   | scr				   |
- *   |	  | Sent   |					   |
- *   |	  |	   |					   |
- *   |	  +--------+					   |
- *   | RCA- |	| RCA+					   |
- *   +------+	+------------------------------------------+
- *   scn,tld	  sca,irc,ict,tlu
- *
- *
- *   with:
- *
- *	Open:	LCP reached authentication phase
- *	Close:	LCP reached terminate phase
- *
- *	RCA+:	received reply (pap-req, chap-response), acceptable
- *	RCN:	received reply (pap-req, chap-response), not acceptable
- *	TO+:	timeout with restart counter >= 0
- *	TO-:	timeout with restart counter < 0
- *	TO*:	reschedule timeout for CHAP
- *
- *	scr:	send request packet (none for PAP, chap-challenge)
- *	sca:	send ack packet (pap-ack, chap-success)
- *	scn:	send nak packet (pap-nak, chap-failure)
- *	ict:	initialize re-challenge timer (CHAP only)
- *
- *	tlu:	this-layer-up, LCP reaches network phase
- *	tld:	this-layer-down, LCP enters terminate phase
- *
- * Note that in CHAP mode, after sending a new challenge, while the state
- * automaton falls back into Req-Sent state, it doesn't signal a tld
- * event to LCP, so LCP remains in network phase.  Only after not getting
- * any response (or after getting an unacceptable response), CHAP closes,
- * causing LCP to enter terminate phase.
- *
- * With PAP, there is no initial request that can be sent.  The peer is
- * expected to send one based on the successful negotiation of PAP as
- * the authentication protocol during the LCP option negotiation.
- *
- * Incoming authentication protocol requests (remote requests
- * authentication, we are peer) don't employ a state machine at all,
- * they are simply answered.  Some peers [Ascend P50 firmware rev
- * 4.50] react allergically when sending IPCP/IPv6CP requests while they are
- * still in authentication phase (thereby violating the standard that
- * demands that these NCP packets are to be discarded), so we keep
- * track of the peer demanding us to authenticate, and only proceed to
- * phase network once we've seen a positive acknowledge for the
- * authentication.
+ * Actions:
+ *    - scr: send CHAP_CHALLENGE and CHAP_RESPONSE
+ *    - sca: send CHAP_SUCCESS
+ *    - scn: send CHAP_FAILURE and shutdown lcp
+ * Events:
+ *    - RCR+: receive CHAP_RESPONSE containing correct digest
+ *    - RCR-: receive CHAP_RESPONSE containing wrong digest
+ *    - RCA: receive CHAP_SUCCESS
+ *    - RCN: (this event is unused)
+ *    - TO+: re-send CHAP_CHALLENGE and CHAP_RESPONSE
+ *    - TO-: this layer finish
  */
 
 /*
@@ -4530,7 +4559,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct lcp_header *h;
 	int len, x;
-	u_char *value, *name, digest[sizeof(sp->myauth.challenge)], dsize;
+	u_char *value, *name, digest[sizeof(sp->chap.challenge)];
 	int value_len, name_len;
 	MD5_CTX ctx;
 
@@ -4595,15 +4624,11 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->myauth.secret, sp->myauth.secret_len);
 		MD5Update(&ctx, value, value_len);
-		MD5Final(digest, &ctx);
-		dsize = sizeof digest;
+		MD5Final(sp->chap.digest, &ctx);
+		sp->chap.digest_len = sizeof(sp->chap.digest);
+		sp->scp[IDX_CHAP].rconfid = h->ident;
 
-		sppp_auth_send(&chap, sp, CHAP_RESPONSE, h->ident,
-			       sizeof dsize, (const char *)&dsize,
-			       sizeof digest, digest,
-			       sp->myauth.name_len,
-			       sp->myauth.name,
-			       0);
+		sppp_wq_add(sp->wq_cp, &sp->chap.work_challenge_rcvd);
 		break;
 
 	case CHAP_SUCCESS:
@@ -4616,25 +4641,66 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			}
 			addlog("\n");
 		}
+
+		if (h->ident != sp->scp[IDX_CHAP].rconfid) {
+			if (debug) {
+				log(LOG_DEBUG, "%s: %s id mismatch 0x%x != 0x%x\n",
+				       ifp->if_xname, chap.name,
+				       h->ident, sp->scp[IDX_CHAP].rconfid);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
+		if (sp->chap.digest_len == 0) {
+			if (debug) {
+				log(LOG_DEBUG,
+				    "%s: receive CHAP success without challenge\n",
+				    ifp->if_xname);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
 		x = splnet();
 		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
-		if (sp->myauth.proto == PPP_CHAP &&
-		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
-		    (sp->lcp.protos & (1 << IDX_CHAP)) == 0) {
-			/*
-			 * We are authenticator for CHAP but didn't
-			 * complete yet.  Leave it to tlu to proceed
-			 * to network phase.
-			 */
-			splx(x);
-			break;
-		}
 		splx(x);
-		sppp_phase_network(sp);
+		memset(sp->chap.digest, 0, sizeof(sp->chap.digest));
+		sp->chap.digest_len = 0;
+
+		if (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_SERV)) {
+			/*
+			 * we are not authenticator for CHAP,
+			 * generate a dummy RCR+ event without CHAP_RESPONSE
+			 */
+			sp->scp[IDX_CHAP].rcr_type = CONF_ACK;
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rcr);
+		}
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rca);
 		break;
 
 	case CHAP_FAILURE:
+		if (h->ident != sp->scp[IDX_CHAP].rconfid) {
+			if (debug) {
+				log(LOG_DEBUG, "%s: %s id mismatch 0x%x != 0x%x\n",
+				       ifp->if_xname, chap.name,
+				       h->ident, sp->scp[IDX_CHAP].rconfid);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
+		if (sp->chap.digest_len == 0) {
+			if (debug) {
+				log(LOG_DEBUG,
+				    "%s: receive CHAP failure without challenge\n",
+				    ifp->if_xname);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
 		x = splnet();
 		sp->pp_auth_failures++;
 		splx(x);
@@ -4649,14 +4715,21 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		} else
 			log(LOG_INFO, "%s: chap failure\n",
 			    ifp->if_xname);
-		/* await LCP shutdown by authenticator */
+
+		memset(sp->chap.digest, 0, sizeof(sp->chap.digest));
+		sp->chap.digest_len = 0;
+		/*
+		 * await LCP shutdown by authenticator,
+		 * so we don't have to enqueue sc->scp[IDX_CHAP].work_rcn
+		 */
 		break;
 
 	/* response is my authproto */
 	case CHAP_RESPONSE:
-		if (sp->hisauth.secret == NULL) {
+		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
 			/* can't do anything useful */
-			printf("%s: chap input without his secret being set\n",
+			printf("%s: chap response"
+			    " without his name and his secret being set\n",
 			    ifp->if_xname);
 		    break;
 		}
@@ -4687,7 +4760,10 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 				    ifp->if_xname,
 				    h->ident, sp->scp[IDX_CHAP].confid);
 			break;
+		} else {
+			sp->scp[IDX_CHAP].rconfid = h->ident;
 		}
+
 		if (sp->hisauth.name != NULL &&
 		    (name_len != sp->hisauth.name_len
 		    || memcmp(name, sp->hisauth.name, name_len) != 0)) {
@@ -4698,8 +4774,13 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string(sp->hisauth.name,
 					  sp->hisauth.name_len);
 			addlog("\n");
-		    goto chap_failure;
+
+			/* generate RCR- event */
+			sp->scp[IDX_CHAP].rcr_type = CONF_NAK;
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rcr);
+			break;
 		}
+
 		if (debug) {
 			log(LOG_DEBUG, "%s: chap input(%s) "
 			    "<%s id=0x%x len=%d name=",
@@ -4712,48 +4793,37 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_bytes(value, value_len);
 			addlog(">\n");
 		}
-		if (value_len != sizeof(sp->hisauth.challenge)) {
+
+		if (value_len == sizeof(sp->chap.challenge) &&
+		    value_len == sizeof(sp->chap.digest)) {
+			MD5Init(&ctx);
+			MD5Update(&ctx, &h->ident, 1);
+			MD5Update(&ctx, sp->hisauth.secret, sp->hisauth.secret_len);
+			MD5Update(&ctx, sp->chap.challenge, sizeof(sp->chap.challenge));
+			MD5Final(digest, &ctx);
+
+			if (memcmp(digest, value, value_len) == 0) {
+				sp->scp[IDX_CHAP].rcr_type = CONF_ACK;
+				if (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_PEER) ||
+				    sp->chap.rechallenging) {
+					/* generate a dummy RCA event*/
+					sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rca);
+				}
+			} else {
+				sp->scp[IDX_CHAP].rcr_type = CONF_NAK;
+			}
+		} else {
 			if (debug)
 				log(LOG_DEBUG,
 				    "%s: chap bad hash value length: "
 				    "%d bytes, should be %zu\n",
 				    ifp->if_xname, value_len,
-				    sizeof(sp->hisauth.challenge));
-			goto chap_failure;
+				    sizeof(sp->chap.challenge));
+
+			sp->scp[IDX_CHAP].rcr_type = CONF_NAK;
 		}
 
-		MD5Init(&ctx);
-		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->hisauth.secret, sp->hisauth.secret_len);
-		MD5Update(&ctx, sp->hisauth.challenge, sizeof(sp->hisauth.challenge));
-		MD5Final(digest, &ctx);
-
-#define FAILMSG "Failed..."
-#define SUCCMSG "Welcome!"
-
-		if (value_len != sizeof digest ||
-		    memcmp(digest, value, value_len) != 0) {
-chap_failure:
-			KASSERT(SPPP_WLOCKED(sp));
-			/* action scn, tld */
-			sp->pp_auth_failures++;
-			sppp_auth_send(&chap, sp, CHAP_FAILURE, h->ident,
-				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
-				       0);
-			chap.tld(sp);
-			break;
-		}
-		sp->pp_auth_failures = 0;
-		/* action sca, perhaps tlu */
-		if (sp->scp[IDX_CHAP].state == STATE_REQ_SENT ||
-		    sp->scp[IDX_CHAP].state == STATE_OPENED)
-			sppp_auth_send(&chap, sp, CHAP_SUCCESS, h->ident,
-				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
-				       0);
-		if (sp->scp[IDX_CHAP].state == STATE_REQ_SENT) {
-			sppp_cp_change_state(&chap, sp, STATE_OPENED);
-			chap.tlu(sp);
-		}
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rcr);
 		break;
 
 	default:
@@ -4781,81 +4851,58 @@ sppp_chap_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	/* Chap doesn't have STATE_INITIAL at all. */
-	sp->scp[IDX_CHAP].state = STATE_CLOSED;
+	sp->scp[IDX_CHAP].state = STATE_INITIAL;
 	sp->scp[IDX_CHAP].fail_counter = 0;
 	sp->scp[IDX_CHAP].seq = 0;
 	sp->scp[IDX_CHAP].rseq = 0;
-	callout_init(&sp->scp[IDX_CHAP].ch, CALLOUT_MPSAFE);
-	callout_setfunc(&sp->scp[IDX_CHAP].ch,
-	    sppp_chap_TO, sp);
+	SPPP_WQ_SET(&sp->chap.work_challenge_rcvd,
+	    sppp_chap_rcv_challenge_event, &chap);
+	sppp_cp_init(&chap, sp);
 }
 
 static void
-sppp_chap_open(struct sppp *sp, void *xcp __unused)
+sppp_chap_up(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	if (sp->hisauth.proto == PPP_CHAP &&
-	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
-		/* we are authenticator for CHAP, start it */
-		chap.scr(sp);
-		sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
-		sppp_cp_change_state(&chap, sp, STATE_REQ_SENT);
-	}
-	/* nothing to be done if we are peer, await a challenge */
+	sppp_up_event(sp, xcp);
 }
 
 static void
-sppp_chap_close(struct sppp *sp, void *xcp __unused)
+sppp_chap_down(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	if (sp->scp[IDX_CHAP].state != STATE_CLOSED)
-		sppp_cp_change_state(&chap, sp, STATE_CLOSED);
+	sppp_down_event(sp, xcp);
 }
 
 static void
-sppp_chap_TO(void *cookie)
+sppp_chap_open(struct sppp *sp, void *xcp)
 {
-	struct sppp *sp = (struct sppp *)cookie;
-	STDDCL;
-	int s;
 
-	s = splnet();
+	KASSERT(SPPP_WLOCKED(sp));
 
-	SPPP_LOCK(sp, RW_WRITER);
+	memset(sp->chap.digest, 0, sizeof(sp->chap.digest));
+	sp->chap.digest_len = 0;
+	sp->chap.rechallenging = false;
+	sp->chap.response_rcvd = false;
+	sppp_open_event(sp, xcp);
+}
 
-	if (debug)
-		log(LOG_DEBUG, "%s: chap TO(%s) rst_counter = %d\n",
-		    ifp->if_xname,
-		    sppp_state_name(sp->scp[IDX_CHAP].state),
-		    sp->scp[IDX_CHAP].rst_counter);
+static void
+sppp_chap_close(struct sppp *sp, void *xcp)
+{
 
-	if (--sp->scp[IDX_CHAP].rst_counter < 0)
-		/* TO- event */
-		switch (sp->scp[IDX_CHAP].state) {
-		case STATE_REQ_SENT:
-			chap.tld(sp);
-			sppp_cp_change_state(&chap, sp, STATE_CLOSED);
-			break;
-		}
-	else
-		/* TO+ (or TO*) event */
-		switch (sp->scp[IDX_CHAP].state) {
-		case STATE_OPENED:
-			/* TO* event */
-			sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
-			/* fall through */
-		case STATE_REQ_SENT:
-			chap.scr(sp);
-			/* sppp_cp_change_state() will restart the timer */
-			sppp_cp_change_state(&chap, sp, STATE_REQ_SENT);
-			break;
-		}
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_close_event(sp, xcp);
+}
 
-	SPPP_UNLOCK(sp);
-	splx(s);
+static void
+sppp_chap_TO(struct sppp *sp, void *xcp)
+{
+
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_auth_to_event(xcp, sp);
 }
 
 static void
@@ -4868,6 +4915,12 @@ sppp_chap_tlu(struct sppp *sp)
 
 	i = 0;
 	sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
+	x = splnet();
+	sp->pp_auth_failures = 0;
+	splx(x);
+
+	log(LOG_DEBUG, "%s: chap %s", ifp->if_xname,
+	    sp->pp_phase == SPPP_PHASE_NETWORK ? "reconfirmed" : "tlu");
 
 	/*
 	 * Some broken CHAP implementations (Conware CoNet, firmware
@@ -4875,42 +4928,21 @@ sppp_chap_tlu(struct sppp *sp)
 	 * initial challenge-response exchange has taken place.
 	 * Provide for an option to avoid rechallenges.
 	 */
-	if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0) {
+	if (ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_SERV) &&
+	    (sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0) {
 		/*
 		 * Compute the re-challenge timeout.  This will yield
 		 * a number between 300 and 810 seconds.
 		 */
 		i = 300 + ((unsigned)(cprng_fast32() & 0xff00) >> 7);
-
 		callout_schedule(&sp->scp[IDX_CHAP].ch, i * hz);
+
+		if (debug) {
+			addlog(", next rechallenge in %d seconds", i);
+		}
 	}
 
-	if (debug) {
-		log(LOG_DEBUG,
-		    "%s: chap %s, ",
-		    ifp->if_xname,
-		    sp->pp_phase == SPPP_PHASE_NETWORK? "reconfirmed": "tlu");
-		if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0)
-			addlog("next re-challenge in %d seconds\n", i);
-		else
-			addlog("re-challenging suppressed\n");
-	}
-
-	x = splnet();
-	sp->pp_auth_failures = 0;
-	/* indicate to LCP that we need to be closed down */
-	sp->lcp.protos |= (1 << IDX_CHAP);
-
-	if (sp->pp_flags & PP_NEEDAUTH) {
-		/*
-		 * Remote is authenticator, but his auth proto didn't
-		 * complete yet.  Defer the transition to network
-		 * phase.
-		 */
-		splx(x);
-		return;
-	}
-	splx(x);
+	addlog("\n");
 
 	/*
 	 * If we are already in phase network, we are done here.  This
@@ -4921,45 +4953,114 @@ sppp_chap_tlu(struct sppp *sp)
 }
 
 static void
-sppp_chap_tld(struct sppp *sp)
+sppp_chap_tls(struct sppp *sp)
+{
+
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_lcp_uls(&chap, sp);
+}
+
+static void
+sppp_chap_tlf(struct sppp *sp)
 {
 	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
 	if (debug)
-		log(LOG_DEBUG, "%s: chap tld\n", ifp->if_xname);
-	callout_stop(&sp->scp[IDX_CHAP].ch);
-	sp->lcp.protos &= ~(1 << IDX_CHAP);
+		log(LOG_DEBUG, "%s: chap tlf\n", ifp->if_xname);
 
-	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+	sppp_lcp_ulf(&chap, sp);
 }
 
 static void
 sppp_chap_scr(struct sppp *sp)
 {
 	uint32_t *ch;
-	u_char clen = 4 * sizeof(uint32_t);
+	u_char clen, dsize;
+	int role;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->hisauth.name == NULL) {
-	    /* can't do anything useful */
-	    printf("%s: chap starting without his name being set\n",
-	    	sp->pp_if.if_xname);
-	    return;
+	role = sppp_auth_role(&chap, sp);
+
+	if (ISSET(role, SPPP_AUTH_SERV) &&
+	    !sp->chap.response_rcvd) {
+		/* we are authenticator for CHAP, send challenge */
+		ch = (uint32_t *)sp->chap.challenge;
+		clen = sizeof(sp->chap.challenge);
+		/* Compute random challenge. */
+		cprng_strong(kern_cprng, ch, clen, 0);
+
+		sp->scp[IDX_CHAP].confid = ++sp->scp[IDX_CHAP].seq;
+		sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->scp[IDX_CHAP].confid,
+		    sizeof(clen), (const char *)&clen,
+		    sizeof(sp->chap.challenge), sp->chap.challenge,
+		    0);
 	}
 
-	/* Compute random challenge. */
-	ch = (uint32_t *)sp->hisauth.challenge;
-	cprng_strong(kern_cprng, ch, clen, 0);
+	if (ISSET(role, SPPP_AUTH_PEER) &&
+	    sp->chap.digest_len > 0) {
+		/* we are peer for CHAP, send response */
+		dsize = sp->chap.digest_len;
 
-	sp->scp[IDX_CHAP].confid = ++sp->scp[IDX_CHAP].seq;
+		sppp_auth_send(&chap, sp, CHAP_RESPONSE, sp->scp[IDX_CHAP].rconfid,
+		    sizeof(dsize), (const char *)&dsize,
+		    sp->chap.digest_len, sp->chap.digest,
+		    sp->myauth.name_len, sp->myauth.name, 0);
+	}
+}
 
-	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->scp[IDX_CHAP].confid,
-		       sizeof clen, (const char *)&clen,
-		       sizeof(sp->hisauth.challenge), sp->hisauth.challenge,
-		       0);
+static void
+sppp_chap_scan(const struct cp *cp __unused, struct sppp *sp)
+{
+	u_char type, rconfid, mlen;
+	const char *msg;
+
+	if (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_SERV))
+		return;
+
+	rconfid = sp->scp[IDX_CHAP].rconfid;
+	if (sp->scp[IDX_CHAP].rcr_type == CONF_ACK) {
+		type = CHAP_SUCCESS;
+		msg = SUCCMSG;
+		mlen = sizeof(SUCCMSG) - 1;
+	} else {
+		type = CHAP_FAILURE;
+		msg = FAILMSG;
+		mlen = sizeof(FAILMSG) - 1;
+	}
+
+	sppp_auth_send(&chap, sp, type, rconfid,
+	   mlen, (const u_char *)msg, 0);
+	sp->chap.response_rcvd = true;
+
+	if (type == CHAP_SUCCESS) {
+		sp->pp_auth_failures = 0;
+	} else {
+		sp->pp_auth_failures++;
+		/* shutdown LCP if auth failed */
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+	}
+}
+
+static void
+sppp_chap_rcv_challenge_event(struct sppp *sp, void *xcp)
+{
+	const struct cp *cp = xcp;
+
+	sp->chap.rechallenging = false;
+
+	switch (sp->scp[IDX_CHAP].state) {
+	case STATE_REQ_SENT:
+		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
+		cp->scr(sp);
+		break;
+	case STATE_OPENED:
+		sppp_cp_change_state(cp, sp, STATE_ACK_SENT);
+		cp->scr(sp);
+		break;
+	}
 }
 
 /*
@@ -4970,10 +5071,18 @@ sppp_chap_scr(struct sppp *sp)
  *--------------------------------------------------------------------------*
  */
 /*
- * For PAP, we need to keep a little state also if we are the peer, not the
- * authenticator.  This is since we don't get a request to authenticate, but
- * have to repeatedly authenticate ourself until we got a response (or the
- * retry counter is expired).
+ * PAP uses following actions and events.
+ * Actions:
+ *    - scr: send PAP_REQ
+ *    - sca: send PAP_ACK
+ *    - scn: send PAP_NAK
+ * Events:
+ *    - RCR+: receive PAP_REQ containing correct username and password
+ *    - RCR-: receive PAP_REQ containing wrong username and password
+ *    - RCA: receive PAP_ACK
+ *    - RCN: (this event is unused)
+ *    - TO+: re-send PAP_REQ
+ *    - TO-: this layer finish
  */
 
 /*
@@ -4984,7 +5093,6 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct lcp_header *h;
 	int len, x;
-	u_char mlen;
 	char *name, *secret;
 	int name_len, secret_len;
 
@@ -5013,8 +5121,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	case PAP_REQ:
 		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
 			/* can't do anything useful */
-			printf("%s: "
-			    "pap request without his name and his secret being set\n",
+			printf("%s: pap request"
+			    " without his name and his secret being set\n",
 			    ifp->if_xname);
 			break;
 		}
@@ -5048,38 +5156,27 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string((char *)secret, secret_len);
 			addlog(">\n");
 		}
-		if (name_len != sp->hisauth.name_len ||
-		    secret_len != sp->hisauth.secret_len ||
-		    memcmp(name, sp->hisauth.name, name_len) != 0 ||
-		    memcmp(secret, sp->hisauth.secret, secret_len) != 0) {
-			/* action scn, tld */
-			sp->pp_auth_failures++;
-			mlen = sizeof(FAILMSG) - 1;
-			sppp_auth_send(&pap, sp, PAP_NAK, h->ident,
-				       sizeof mlen, (const char *)&mlen,
-				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
-				       0);
-			pap.tld(sp);
-			break;
+
+		sp->scp[IDX_PAP].rconfid = h->ident;
+
+		if (name_len == sp->hisauth.name_len &&
+		    memcmp(name, sp->hisauth.name, name_len) == 0 &&
+		    secret_len == sp->hisauth.secret_len &&
+		    memcmp(secret, sp->hisauth.secret, secret_len) == 0) {
+			sp->scp[IDX_PAP].rcr_type = CONF_ACK;
+			if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_PEER)) {
+				/* generate a dummy RCA event*/
+				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rca);
+			}
+		} else {
+			sp->scp[IDX_PAP].rcr_type = CONF_NAK;
 		}
-		/* action sca, perhaps tlu */
-		if (sp->scp[IDX_PAP].state == STATE_REQ_SENT ||
-		    sp->scp[IDX_PAP].state == STATE_OPENED) {
-			mlen = sizeof(SUCCMSG) - 1;
-			sppp_auth_send(&pap, sp, PAP_ACK, h->ident,
-				       sizeof mlen, (const char *)&mlen,
-				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
-				       0);
-		}
-		if (sp->scp[IDX_PAP].state == STATE_REQ_SENT) {
-			sppp_cp_change_state(&pap, sp, STATE_OPENED);
-			pap.tlu(sp);
-		}
+
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rcr);
 		break;
 
 	/* ack and nak are his authproto */
 	case PAP_ACK:
-		callout_stop(&sp->pap_my_to_ch);
 		if (debug) {
 			log(LOG_DEBUG, "%s: pap success",
 			    ifp->if_xname);
@@ -5091,27 +5188,32 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			}
 			addlog("\n");
 		}
+
+		if (h->ident != sp->scp[IDX_PAP].confid) {
+			if (debug) {
+				log(LOG_DEBUG, "%s: %s id mismatch 0x%x != 0x%x\n",
+				       ifp->if_xname, pap.name,
+				       h->ident, sp->scp[IDX_PAP].rconfid);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
 		x = splnet();
 		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
-		if (sp->myauth.proto == PPP_PAP &&
-		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
-		    (sp->lcp.protos & (1 << IDX_PAP)) == 0) {
-			/*
-			 * We are authenticator for PAP but didn't
-			 * complete yet.  Leave it to tlu to proceed
-			 * to network phase.
-			 */
-			splx(x);
-			break;
-		}
 		splx(x);
-		sppp_phase_network(sp);
+
+		/* we are not authenticator, generate a dummy RCR+ event */
+		if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_SERV)) {
+			sp->scp[IDX_PAP].rcr_type = CONF_ACK;
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rcr);
+		}
+
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rca);
 		break;
 
 	case PAP_NAK:
-		callout_stop(&sp->pap_my_to_ch);
-		sp->pp_auth_failures++;
 		if (debug) {
 			log(LOG_INFO, "%s: pap failure",
 			    ifp->if_xname);
@@ -5125,7 +5227,22 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		} else
 			log(LOG_INFO, "%s: pap failure\n",
 			    ifp->if_xname);
-		/* await LCP shutdown by authenticator */
+
+		if (h->ident != sp->scp[IDX_PAP].confid) {
+			if (debug) {
+				log(LOG_DEBUG, "%s: %s id mismatch 0x%x != 0x%x\n",
+				       ifp->if_xname, pap.name,
+				       h->ident, sp->scp[IDX_PAP].rconfid);
+			}
+			if_statinc(ifp, if_ierrors);
+			break;
+		}
+
+		sp->pp_auth_failures++;
+		/*
+		 * await LCP shutdown by authenticator,
+		 * so we don't have to enqueue sc->scp[IDX_PAP].work_rcn
+		 */
 		break;
 
 	default:
@@ -5151,107 +5268,63 @@ sppp_pap_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	/* PAP doesn't have STATE_INITIAL at all. */
-	sp->scp[IDX_PAP].state = STATE_CLOSED;
+	sp->scp[IDX_PAP].state = STATE_INITIAL;
 	sp->scp[IDX_PAP].fail_counter = 0;
 	sp->scp[IDX_PAP].seq = 0;
 	sp->scp[IDX_PAP].rseq = 0;
-	callout_init(&sp->scp[IDX_PAP].ch, CALLOUT_MPSAFE);
-	callout_setfunc(&sp->scp[IDX_PAP].ch,
-	    sppp_pap_TO, sp);
-	callout_init(&sp->pap_my_to_ch, CALLOUT_MPSAFE);
+	sppp_cp_init(&pap, sp);
 }
 
 static void
-sppp_pap_open(struct sppp *sp, void *xcp __unused)
+sppp_pap_up(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	if (sp->hisauth.proto == PPP_PAP &&
-	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
-		/* we are authenticator for PAP, start our timer */
-		sp->scp[IDX_PAP].rst_counter = sp->lcp.max_configure;
-		sppp_cp_change_state(&pap, sp, STATE_REQ_SENT);
-	}
-	if (sp->myauth.proto == PPP_PAP) {
-		/* we are peer, send a request, and start a timer */
-		pap.scr(sp);
-		callout_reset(&sp->pap_my_to_ch, sp->lcp.timeout,
-		    sppp_pap_my_TO, sp);
-	}
+	sppp_up_event(sp, xcp);
 }
 
 static void
-sppp_pap_close(struct sppp *sp, void *xcp __unused)
+sppp_pap_down(struct sppp *sp, void *xcp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	if (sp->scp[IDX_PAP].state != STATE_CLOSED)
-		sppp_cp_change_state(&pap, sp, STATE_CLOSED);
+	sppp_down_event(sp, xcp);
 }
 
-/*
- * That's the timeout routine if we are authenticator.  Since the
- * authenticator is basically passive in PAP, we can't do much here.
- */
 static void
-sppp_pap_TO(void *cookie)
+sppp_pap_open(struct sppp *sp, void *xcp)
 {
-	struct sppp *sp = (struct sppp *)cookie;
-	STDDCL;
-	int s;
 
-	s = splnet();
-	SPPP_LOCK(sp, RW_WRITER);
-
-	if (debug)
-		log(LOG_DEBUG, "%s: pap TO(%s) rst_counter = %d\n",
-		    ifp->if_xname,
-		    sppp_state_name(sp->scp[IDX_PAP].state),
-		    sp->scp[IDX_PAP].rst_counter);
-
-	if (--sp->scp[IDX_PAP].rst_counter < 0)
-		/* TO- event */
-		switch (sp->scp[IDX_PAP].state) {
-		case STATE_REQ_SENT:
-			pap.tld(sp);
-			sppp_cp_change_state(&pap, sp, STATE_CLOSED);
-			break;
-		}
-	else
-		/* TO+ event, not very much we could do */
-		switch (sp->scp[IDX_PAP].state) {
-		case STATE_REQ_SENT:
-			/* sppp_cp_change_state() will restart the timer */
-			sppp_cp_change_state(&pap, sp, STATE_REQ_SENT);
-			break;
-		}
-
-	SPPP_UNLOCK(sp);
-	splx(s);
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_open_event(sp, xcp);
 }
 
-/*
- * That's the timeout handler if we are peer.  Since the peer is active,
- * we need to retransmit our PAP request since it is apparently lost.
- * XXX We should impose a max counter.
- */
 static void
-sppp_pap_my_TO(void *cookie)
+sppp_pap_close(struct sppp *sp, void *xcp)
 {
-	struct sppp *sp = (struct sppp *)cookie;
+
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_close_event(sp, xcp);
+}
+
+static void
+sppp_pap_tls(struct sppp *sp)
+{
+
+	KASSERT(SPPP_WLOCKED(sp));
+	sppp_lcp_uls(&pap, sp);
+}
+
+static void
+sppp_pap_tlf(struct sppp *sp)
+{
 	STDDCL;
 
-	SPPP_LOCK(sp, RW_WRITER);
+	KASSERT(SPPP_WLOCKED(sp));
+
 	if (debug)
-		log(LOG_DEBUG, "%s: pap peer TO\n",
-		    ifp->if_xname);
-
-	pap.scr(sp);
-
-	SPPP_UNLOCK(sp);
+		log(LOG_DEBUG, "%s: pap tlf\n", ifp->if_xname);
+	sppp_lcp_ulf(&pap, sp);
 }
 
 static void
@@ -5259,8 +5332,6 @@ sppp_pap_tlu(struct sppp *sp)
 {
 	STDDCL;
 	int x;
-
-	KASSERT(SPPP_WLOCKED(sp));
 
 	sp->scp[IDX_PAP].rst_counter = sp->lcp.max_configure;
 
@@ -5270,36 +5341,21 @@ sppp_pap_tlu(struct sppp *sp)
 
 	x = splnet();
 	sp->pp_auth_failures = 0;
-	/* indicate to LCP that we need to be closed down */
-	sp->lcp.protos |= (1 << IDX_PAP);
-
-	if (sp->pp_flags & PP_NEEDAUTH) {
-		/*
-		 * Remote is authenticator, but his auth proto didn't
-		 * complete yet.  Defer the transition to network
-		 * phase.
-		 */
-		splx(x);
-		return;
-	}
 	splx(x);
+
 	sppp_phase_network(sp);
 }
 
+/*
+ * That's the timeout routine if we are authenticator.  Since the
+ * authenticator is basically passive in PAP, we can't do much here.
+ */
 static void
-sppp_pap_tld(struct sppp *sp)
+sppp_pap_TO(struct sppp *sp, void *xcp)
 {
-	STDDCL;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	if (debug)
-		log(LOG_DEBUG, "%s: pap tld\n", ifp->if_xname);
-	callout_stop(&sp->scp[IDX_PAP].ch);
-	callout_stop(&sp->pap_my_to_ch);
-	sp->lcp.protos &= ~(1 << IDX_PAP);
-
-	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+	sppp_auth_to_event(xcp, sp);
 }
 
 static void
@@ -5309,23 +5365,57 @@ sppp_pap_scr(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-	    /* can't do anything useful */
-	    printf("%s: pap starting without my name and secret being set\n",
-	    	sp->pp_if.if_xname);
-	    return;
+	if (ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_PEER) &&
+	    sp->scp[IDX_PAP].state != STATE_ACK_RCVD) {
+		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
+			log(LOG_DEBUG, "%s: couldn't send PAP_REQ "
+			    "because of no name or no secret\n",
+			    sp->pp_if.if_xname);
+		} else {
+			sp->scp[IDX_PAP].confid = ++sp->scp[IDX_PAP].seq;
+			pwdlen = sp->myauth.secret_len;
+			idlen = sp->myauth.name_len;
+
+			sppp_auth_send(&pap, sp, PAP_REQ, sp->scp[IDX_PAP].confid,
+			    sizeof idlen, (const char *)&idlen,
+			    idlen, sp->myauth.name,
+			    sizeof pwdlen, (const char *)&pwdlen,
+			    pwdlen, sp->myauth.secret,
+			    0);
+		}
+	}
+}
+
+static void
+sppp_pap_scan(const struct cp *cp __unused, struct sppp *sp)
+{
+	u_char type, rconfid, mlen;
+	const char *msg;
+
+	if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_SERV))
+		return;
+
+	rconfid = sp->scp[IDX_PAP].rconfid;
+	if (sp->scp[IDX_PAP].rcr_type == CONF_ACK) {
+		type = PAP_ACK;
+		msg = SUCCMSG;
+		mlen = sizeof(SUCCMSG) - 1;
+	} else {
+		type = PAP_NAK;
+		msg = FAILMSG;
+		mlen = sizeof(FAILMSG) - 1;
 	}
 
-	sp->scp[IDX_PAP].confid = ++sp->scp[IDX_PAP].seq;
-	pwdlen = sp->myauth.secret_len;
-	idlen = sp->myauth.name_len;
+	sppp_auth_send(&pap, sp, type, rconfid,
+	   mlen, (const u_char *)msg, 0);
 
-	sppp_auth_send(&pap, sp, PAP_REQ, sp->scp[IDX_PAP].confid,
-		       sizeof idlen, (const char *)&idlen,
-		       idlen, sp->myauth.name,
-		       sizeof pwdlen, (const char *)&pwdlen,
-		       pwdlen, sp->myauth.secret,
-		       0);
+	if (type == PAP_ACK) {
+		sp->pp_auth_failures = 0;
+	} else {
+		sp->pp_auth_failures++;
+		/* shutdown LCP if auth failed */
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+	}
 }
 
 /*
@@ -5428,6 +5518,68 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		SPPP_UNLOCK(sp);
 		if_start_lock(ifp);
 		SPPP_LOCK(sp, RW_WRITER);
+	}
+}
+
+static int
+sppp_auth_role(const struct cp *cp, struct sppp *sp)
+{
+	int role;
+
+	role = SPPP_AUTH_NOROLE;
+
+	if (sp->hisauth.proto == cp->proto &&
+	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0)
+		SET(role, SPPP_AUTH_SERV);
+
+	if (sp->myauth.proto == cp->proto)
+		SET(role, SPPP_AUTH_PEER);
+
+	return role;
+}
+
+static void
+sppp_auth_to_event(const struct cp *cp, struct sppp *sp)
+{
+	STDDCL;
+	bool override;
+	int state;
+
+	KASSERT(SPPP_WLOCKED(sp));
+
+	override = false;
+	state = sp->scp[cp->protoidx].state;
+
+	if (sp->scp[cp->protoidx].rst_counter > 0) {
+		/* override TO+ event */
+		switch (state) {
+		case STATE_OPENED:
+			if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0) {
+				override = true;
+				sp->chap.rechallenging = true;
+				sp->chap.response_rcvd = false;
+				sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
+				cp->scr(sp);
+			}
+			break;
+
+		case STATE_ACK_RCVD:
+			override = true;
+			cp->scr(sp);
+			callout_schedule(&sp->scp[cp->protoidx].ch, sp->lcp.timeout);
+			break;
+		}
+	}
+
+	if (override) {
+		if (debug)
+			log(LOG_DEBUG, "%s: %s TO(%s) rst_counter = %d\n",
+			    ifp->if_xname, cp->name,
+			    sppp_state_name(state),
+			    sp->scp[cp->protoidx].rst_counter);
+		sp->scp[cp->protoidx].rst_counter--;
+	} else {
+		sppp_to_event(sp, __UNCONST(cp));
 	}
 }
 
@@ -6255,12 +6407,12 @@ sppp_phase_network(struct sppp *sp)
 	/* Notify NCPs now. */
 	for (i = 0; i < IDX_COUNT; i++)
 		if ((cps[i])->flags & CP_NCP)
-			(cps[i])->Open(sp, __UNCONST(&cps[i]));
+			sppp_wq_add(sp->wq_cp, &sp->scp[i].work_open);
 
 	/* Send Up events to all NCPs. */
 	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
 		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_NCP)) {
-			(cps[i])->Up(sp, __UNCONST(&cps[i]));
+			sppp_wq_add(sp->wq_cp, &sp->scp[i].work_up);
 		}
 
 	/* if no NCP is starting, all this was in vain, close down */
@@ -6460,12 +6612,6 @@ sppp_dotted_quad(uint32_t addr)
 /* a dummy, used to drop uninteresting events */
 static void
 sppp_null(struct sppp *unused)
-{
-	/* do just nothing */
-}
-
-static void
-sppp_null_event(struct sppp *unused0 __unused, void *unused1 __unused)
 {
 	/* do just nothing */
 }
