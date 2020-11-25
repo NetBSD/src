@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.196 2020/11/25 09:26:34 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.197 2020/11/25 09:30:49 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.196 2020/11/25 09:26:34 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.197 2020/11/25 09:30:49 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -320,6 +320,7 @@ static void sppp_rca_event(const struct cp *, struct sppp *);
 static void sppp_rcn_event(const struct cp *, struct sppp *);
 static void sppp_rtr_event(const struct cp *, struct sppp *);
 static void sppp_rta_event(const struct cp *, struct sppp *);
+static void sppp_rxj_event(const struct cp *, struct sppp *);
 
 static void sppp_null(struct sppp *);
 static void sppp_sca_scn(const struct cp *, struct sppp *);
@@ -1580,25 +1581,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		    "danger will robinson\n",
 		    ifp->if_xname, cp->name,
 		    sppp_cp_type_name(h->type));
-		switch (sp->scp[cp->protoidx].state) {
-		case STATE_CLOSED:
-		case STATE_STOPPED:
-		case STATE_REQ_SENT:
-		case STATE_ACK_SENT:
-		case STATE_CLOSING:
-		case STATE_STOPPING:
-		case STATE_OPENED:
-			break;
-		case STATE_ACK_RCVD:
-			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
-			break;
-		default:
-			printf("%s: %s illegal %s in state %s\n",
-			       ifp->if_xname, cp->name,
-			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->scp[cp->protoidx].state));
-			if_statinc(ifp, if_ierrors);
-		}
+		sppp_rxj_event(cp, sp);
 		break;
 	case PROTO_REJ:
 	    {
@@ -1637,27 +1620,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				break;
 			}
 		}
-
-		/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
-		switch (sp->scp[cp->protoidx].state) {
-		case STATE_CLOSED:
-		case STATE_STOPPED:
-		case STATE_REQ_SENT:
-		case STATE_ACK_SENT:
-		case STATE_CLOSING:
-		case STATE_STOPPING:
-		case STATE_OPENED:
-			break;
-		case STATE_ACK_RCVD:
-			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
-			break;
-		default:
-			printf("%s: %s illegal %s in state %s\n",
-			       ifp->if_xname, cp->name,
-			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->scp[cp->protoidx].state));
-			if_statinc(ifp, if_ierrors);
-		}
+		sppp_rxj_event(cp, sp);
 		break;
 	    }
 	case DISC_REQ:
@@ -2200,6 +2163,32 @@ sppp_rta_event(const struct cp *cp, struct sppp *sp)
 		break;
 	default:
 		printf("%s: %s illegal RTA in state %s\n",
+		       ifp->if_xname, cp->name,
+		       sppp_state_name(sp->scp[cp->protoidx].state));
+		if_statinc(ifp, if_ierrors);
+	}
+}
+
+static void
+sppp_rxj_event(const struct cp *cp, struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+
+	/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
+	switch (sp->scp[cp->protoidx].state) {
+	case STATE_CLOSED:
+	case STATE_STOPPED:
+	case STATE_REQ_SENT:
+	case STATE_ACK_SENT:
+	case STATE_CLOSING:
+	case STATE_STOPPING:
+	case STATE_OPENED:
+		break;
+	case STATE_ACK_RCVD:
+		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
+		break;
+	default:
+		printf("%s: %s illegal RXJ- in state %s\n",
 		       ifp->if_xname, cp->name,
 		       sppp_state_name(sp->scp[cp->protoidx].state));
 		if_statinc(ifp, if_ierrors);
