@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.30 2020/11/25 10:12:03 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.31 2020/11/25 10:27:18 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -58,6 +58,7 @@ struct slcp {
 	u_long	mrru;		/* our   max received reconstructed unit */
 	u_long	their_mrru;	/* their max receive dreconstructed unit */
 	bool	reestablish;	/* reestablish after the next down event */
+	bool	tlf_sent;	/* call lower layer's tlf before a down event */
 };
 
 #define IDX_IPCP 1		/* idx into state table */
