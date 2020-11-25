@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.23 2020/09/25 06:15:30 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.24 2020/11/25 10:35:07 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -113,14 +113,18 @@ setup()
 	unset RUMP_SERVER
 }
 
-wait_for_session_established()
+wait_for_opened()
 {
-	local dontfail=$1
+	local cp=$1
+	local dontfail=$2
 	local n=$WAITTIME
 
 	for i in $(seq $n); do
-		$HIJACKING pppoectl -d pppoe0 |grep -q "state = session"
-		[ $? = 0 ] && return
+		$HIJACKING pppoectl -dd pppoe0 | grep -q "$cp state: opened"
+		if [ $? = 0 ]; then
+			rump.ifconfig -w 10
+			return
+		fi
 		sleep 1
 	done
 
@@ -135,12 +139,10 @@ wait_for_disconnected()
 	local n=$WAITTIME
 
 	for i in $(seq $n); do
-		$HIJACKING pppoectl -d pppoe0 | grep -q "state = initial"
-		[ $? = 0 ] && return
-		# If PPPoE client is disconnected by PPPoE server and then
-		# the client kicks callout of pppoe_timeout(), the client
-		# state is changed to PPPOE_STATE_PADI_SENT while padi retrying.
-		$HIJACKING pppoectl -d pppoe0 | grep -q "state = PADI sent"
+		# If PPPoE client is disconnected by PPPoE server, then
+		# the LCP state will of the client is in a starting to send PADI.
+		$HIJACKING pppoectl -dd pppoe0 | grep -q \
+		    -e "LCP state: initial" -e "LCP state: starting"
 		[ $? = 0 ] && return
 
 		sleep 1
@@ -154,6 +156,7 @@ wait_for_disconnected()
 run_test()
 {
 	local auth=$1
+	local cp="IPCP"
 	setup
 
 	# As pppoe client doesn't support rechallenge yet.
@@ -180,7 +183,7 @@ run_test()
 	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	unset RUMP_SERVER
 
@@ -198,7 +201,7 @@ run_test()
 	# test for reconnecting
 	atf_check -s exit:0 -x "env RUMP_SERVER=$SERVER rump.ifconfig pppoe0 up"
 	export RUMP_SERVER=$CLIENT
-	wait_for_session_established
+	wait_for_opened $cp
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	unset RUMP_SERVER
 
@@ -217,7 +220,7 @@ run_test()
 	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 -x rump.ifconfig pppoe0 up
-	wait_for_session_established
+	wait_for_opened $cp
 	$DEBUG && rump.ifconfig pppoe0
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
@@ -240,7 +243,7 @@ run_test()
 				    'max-auth-failure=1'"
 	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
-	wait_for_session_established dontfail
+	wait_for_opened $cp dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	atf_check -s exit:0 -o match:'DETACHED' rump.ifconfig pppoe0
@@ -290,6 +293,7 @@ pppoe_chap_cleanup()
 run_test6()
 {
 	local auth=$1
+	local cp="IPv6CP"
 	setup "inet=false"
 
 	# As pppoe client doesn't support rechallenge yet.
@@ -318,7 +322,7 @@ run_test6()
 	atf_check -s exit:0 rump.ifconfig pppoe0 inet6 $CLIENT_IP6/64 down
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 	export RUMP_SERVER=$SERVER
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
@@ -341,7 +345,7 @@ run_test6()
 	# test for reconnecting
 	export RUMP_SERVER=$SERVER
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
-	wait_for_session_established
+	wait_for_opened $cp
 	atf_check -s exit:0 rump.ifconfig -w 10
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	$DEBUG && rump.ifconfig pppoe0
@@ -366,7 +370,7 @@ run_test6()
 	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
-	wait_for_session_established
+	wait_for_opened $cp
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig pppoe0
@@ -391,7 +395,7 @@ run_test6()
 				    'max-auth-failure=1'"
 	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
-	wait_for_session_established dontfail
+	wait_for_opened $cp dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
 	atf_check -s exit:0 -o match:'DETACHED' rump.ifconfig pppoe0
@@ -483,6 +487,7 @@ pppoe_params_head()
 pppoe_params_body()
 {
 	local dumpcmd
+	local cp="LCP"
 
 	dumpcmd="shmif_dumpbus -p - ${BUS}"
 	dumpcmd="${dumpcmd} | tcpdump -n -e -r -"
@@ -502,7 +507,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -520,7 +525,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -534,7 +539,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST1 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -559,7 +564,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -577,7 +582,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -a \"\" -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	atf_check -s exit:0 -o match:'\[AC-Name\]' -e ignore \
@@ -600,7 +605,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -618,7 +623,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST1 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -645,7 +650,7 @@ pppoe_params_body()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -674,7 +679,7 @@ pppoe_params_body()
 	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST3 -s SNAME-TEST3 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -693,7 +698,7 @@ pppoe_params_body()
 	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST4 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
@@ -714,7 +719,7 @@ pppoe_params_body()
 	    "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST6 pppoe0"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
-	wait_for_session_established
+	wait_for_opened $cp
 	unset RUMP_SERVER
 
 	$DEBUG && dump_bus
