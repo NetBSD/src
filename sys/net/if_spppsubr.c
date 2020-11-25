@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.207 2020/11/25 10:08:22 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.208 2020/11/25 10:12:03 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.207 2020/11/25 10:08:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.208 2020/11/25 10:12:03 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -430,11 +430,8 @@ static const char *sppp_state_name(int);
 static int sppp_params(struct sppp *, u_long, void *);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *, uint32_t *, uint32_t *, uint32_t *);
-static void sppp_set_ip_addrs_work(struct work *, struct sppp *);
 static void sppp_set_ip_addrs(struct sppp *);
-static void sppp_clear_ip_addrs_work(struct work *, struct sppp *);
 static void sppp_clear_ip_addrs(struct sppp *);
-static void sppp_update_ip_addrs_work(struct work *, void *);
 #endif
 static void sppp_keepalive(void *);
 static void sppp_phase_network(struct sppp *);
@@ -1076,12 +1073,6 @@ sppp_detach(struct ifnet *ifp)
 	}
 
 	SPPP_LOCK(sp, RW_WRITER);
-
-	/* to avoid workqueue enqueued */
-	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1);
-	workqueue_wait(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk);
-	workqueue_destroy(sp->ipcp.update_addrs_wq);
-	pcq_destroy(sp->ipcp.update_addrs_q);
 
 	sppp_cp_fini(&lcp, sp);
 	sppp_cp_fini(&ipcp, sp);
@@ -3267,7 +3258,6 @@ sppp_lcp_check_and_close(struct sppp *sp)
 static void
 sppp_ipcp_init(struct sppp *sp)
 {
-	int error;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -3275,15 +3265,6 @@ sppp_ipcp_init(struct sppp *sp)
 
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
-
-	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_addr",
-	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
-	if (error)
-		panic("%s: update_addrs workqueue_create failed (%d)\n",
-		    __func__, error);
-	sp->ipcp.update_addrs_q = pcq_create(IPCP_UPDATE_LIMIT, KM_SLEEP);
-
-	sp->ipcp.update_addrs_enqueued = 0;
 }
 
 static void
@@ -5382,7 +5363,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
+sppp_set_ip_addrs(struct sppp *sp)
 {
 	STDDCL;
 	struct ifaddr *ifa;
@@ -5460,28 +5441,11 @@ sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 	sppp_notify_con(sp);
 }
 
-static void
-sppp_set_ip_addrs(struct sppp *sp)
-{
-	struct ifnet *ifp = &sp->pp_if;
-
-	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_SET_ADDRS)) {
-		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
-		    ifp->if_xname);
-		return;
-	}
-
-	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
-		return;
-
-	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
-}
-
 /*
  * Clear IP addresses.  Must be called at splnet.
  */
 static void
-sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
+sppp_clear_ip_addrs(struct sppp *sp)
 {
 	STDDCL;
 	struct ifaddr *ifa;
@@ -5541,41 +5505,6 @@ sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 	}
 
 	IFNET_UNLOCK(ifp);
-}
-
-static void
-sppp_clear_ip_addrs(struct sppp *sp)
-{
-	struct ifnet *ifp = &sp->pp_if;
-
-	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_CLEAR_ADDRS)) {
-		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
-		    ifp->if_xname);
-		return;
-	}
-
-	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
-		return;
-
-	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
-}
-
-static void
-sppp_update_ip_addrs_work(struct work *wk, void *arg)
-{
-	struct sppp *sp = arg;
-	void *work;
-
-	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 0);
-
-	while ((work = pcq_get(sp->ipcp.update_addrs_q)) != NULL) {
-		int update = (intptr_t)work;
-
-		if (update == IPCP_SET_ADDRS)
-			sppp_set_ip_addrs_work(wk, sp);
-		else if (update == IPCP_CLEAR_ADDRS)
-			sppp_clear_ip_addrs_work(wk, sp);
-	}
 }
 #endif
 
