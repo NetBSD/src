@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_div.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $ */
+/* $NetBSD: imx_ccm_div.c,v 1.2 2020/11/25 05:18:39 ryo Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.2 2020/11/25 05:18:39 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,7 +97,7 @@ imx_ccm_div_set_rate(struct imx_ccm_softc *sc,
 		} else {
 			if (abs(diff) < abs(best_diff)) {
 				best_n = n;
-				best_diff = diff;
+				best_diff = abs(diff);
 			}
 		}
 	}
