@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.32 2020/11/25 16:42:53 bouyer Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.33 2020/11/25 18:11:00 bouyer Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -803,6 +803,8 @@ xauth_ldap_init_conf(void)
 	int error = -1;
 
 	xauth_ldap_config.pver = 3;
+	xauth_ldap_config.debug = 0;
+	xauth_ldap_config.timeout = -1;
 	xauth_ldap_config.uri = NULL;
 	xauth_ldap_config.host = NULL;
 	xauth_ldap_config.port = LDAP_PORT;
@@ -896,7 +898,7 @@ xauth_login_ldap(iph1, usr, pwd)
 	atlist[2] = NULL;
 
 	if (xauth_ldap_config.uri != NULL) {
-		tmplen = strlen(xauth_ldap_config.host->v);
+		tmplen = strlen(xauth_ldap_config.uri->v);
 		init = racoon_malloc(tmplen);
 		if (init == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -918,6 +920,9 @@ xauth_login_ldap(iph1, usr, pwd)
 			xauth_ldap_config.host->v,
 			xauth_ldap_config.port );
 	}
+	/* initialize the debug level */
+	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &xauth_ldap_config.debug);
+	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &xauth_ldap_config.debug);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "ldap URI: %s\n", init);
 	/* initialize the ldap handle */
@@ -933,12 +938,26 @@ xauth_login_ldap(iph1, usr, pwd)
 	if ((res = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION,
 		&xauth_ldap_config.pver)) != LDAP_OPT_SUCCESS) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"LDAP_OPT_PROTOCOL_VERSION %s failed: %s\n",
+			"LDAP_OPT_PROTOCOL_VERSION %d failed: %s\n",
 			xauth_ldap_config.pver,
 			ldap_err2string(res));
 		goto ldap_end;
 	}
-		
+
+	if (xauth_ldap_config.timeout > 0) {
+		static struct timeval timeout;
+		timeout.tv_sec = xauth_ldap_config.timeout;
+		timeout.tv_usec = 0;
+		if ((res = ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT,
+			(void *)&timeout)) != LDAP_OPT_SUCCESS) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"LDAP_OPT_NETWORK_TIMEOUT %d failed: %s\n",
+				xauth_ldap_config.timeout,
+				ldap_err2string(res));
+			goto ldap_end;
+		}
+	}
+
 	/* Enable TLS */
 	if (xauth_ldap_config.tls) {
 		res = ldap_start_tls_s(ld, NULL, NULL);
