@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.198 2020/11/25 09:35:23 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.199 2020/11/25 09:38:39 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.198 2020/11/25 09:35:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.199 2020/11/25 09:38:39 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -341,6 +341,7 @@ static void sppp_null_event(struct sppp *, void *);
 
 static void sppp_null(struct sppp *);
 static void sppp_sca_scn(const struct cp *, struct sppp *);
+static void sppp_ifdown(struct sppp *, void *);
 
 static void sppp_lcp_init(struct sppp *);
 static void sppp_lcp_up(struct sppp *, void *);
@@ -1016,6 +1017,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = sppp_notify_up;
 	sp->pp_down = sppp_notify_down;
+	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
 
@@ -5486,11 +5488,7 @@ sppp_keepalive(void *dummy)
 
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
-			SPPP_UNLOCK(sp);
-			if_down (ifp);
-			SPPP_LOCK(sp, RW_WRITER);
-
-			IF_PURGE(&sp->pp_cpq);
+			sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
 
 			if (! (sp->pp_flags & PP_CISCO)) {
 				printf("%s: LCP keepalive timed out, going to restart the connection\n",
@@ -6498,6 +6496,17 @@ sppp_sca_scn(const struct cp *cp, struct sppp *sp)
 		kmem_free(buf, blen);
 	}
 }
+
+static void
+sppp_ifdown(struct sppp *sp, void *xcp __unused)
+{
+
+	SPPP_UNLOCK(sp);
+	if_down(&sp->pp_if);
+	IF_PURGE(&sp->pp_cpq);
+	SPPP_LOCK(sp, RW_WRITER);
+}
+
 /*
  * This file is large.  Tell emacs to highlight it nevertheless.
  *
