@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.191 2020/11/25 09:09:24 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.192 2020/11/25 09:12:50 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.191 2020/11/25 09:09:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.192 2020/11/25 09:12:50 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -626,12 +626,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	switch (protocol) {
 	default:
-		if (sp->state[IDX_LCP] == STATE_OPENED) {
+		if (sp->scp[IDX_LCP].state == STATE_OPENED) {
 			uint16_t prot = htons(protocol);
 
 			SPPP_UPGRADE(sp);
 			sppp_cp_send(sp, PPP_LCP, PROTO_REJ,
-			    ++sp->pp_seq[IDX_LCP], m->m_pkthdr.len + 2,
+			    ++sp->scp[IDX_LCP].seq, m->m_pkthdr.len + 2,
 			    &prot);
 			SPPP_DOWNGRADE(sp);
 		}
@@ -669,7 +669,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return;
 	case PPP_IP:
-		if (sp->state[IDX_IPCP] == STATE_OPENED) {
+		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip_pktq;
 		}
@@ -685,7 +685,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 
 	case PPP_IPV6:
-		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
+		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip6_pktq;
 		}
@@ -888,7 +888,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			protocol = htons(PPP_IP);
-			if (sp->state[IDX_IPCP] != STATE_OPENED)
+			if (sp->scp[IDX_IPCP].state != STATE_OPENED)
 				error = ENETDOWN;
 		}
 		break;
@@ -908,7 +908,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			protocol = htons(PPP_IPV6);
-			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
+			if (sp->scp[IDX_IPV6CP].state != STATE_OPENED)
 				error = ENETDOWN;
 		}
 		break;
@@ -995,13 +995,11 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_maxalive = DEFAULT_MAXALIVECNT;
 	sp->pp_max_noreceive = DEFAULT_NORECV_TIME;
 	sp->pp_idle_timeout = 0;
-	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
-	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
-	sp->pp_auth_failures = 0;
 	sp->pp_max_auth_fail = DEFAULT_MAX_AUTH_FAILURES;
 	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = sppp_notify_up;
 	sp->pp_down = sppp_notify_down;
+	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
 
 	if_alloc_sadl(ifp);
@@ -1049,12 +1047,12 @@ sppp_detach(struct ifnet *ifp)
 	workqueue_destroy(sp->ipcp.update_addrs_wq);
 	pcq_destroy(sp->ipcp.update_addrs_q);
 
-	callout_stop(&sp->ch[IDX_LCP]);
-	callout_stop(&sp->ch[IDX_IPCP]);
-	callout_stop(&sp->ch[IDX_PAP]);
-	callout_stop(&sp->ch[IDX_CHAP]);
+	callout_stop(&sp->scp[IDX_LCP].ch);
+	callout_stop(&sp->scp[IDX_IPCP].ch);
+	callout_stop(&sp->scp[IDX_PAP].ch);
+	callout_stop(&sp->scp[IDX_CHAP].ch);
 #ifdef INET6
-	callout_stop(&sp->ch[IDX_IPV6CP]);
+	callout_stop(&sp->scp[IDX_IPV6CP].ch);
 #endif
 	callout_stop(&sp->pap_my_to_ch);
 
@@ -1296,8 +1294,8 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		break;
 	case CISCO_KEEPALIVE_REQ:
 		sp->pp_alivecnt = 0;
-		sp->pp_rseq[IDX_LCP] = ntohl(h->par1);
-		if (sp->pp_seq[IDX_LCP] == sp->pp_rseq[IDX_LCP]) {
+		sp->scp[IDX_LCP].rseq = ntohl(h->par1);
+		if (sp->scp[IDX_LCP].seq == sp->scp[IDX_LCP].rseq) {
 			/* Local and remote sequence numbers are equal.
 			 * Probably, the line is in loopback mode. */
 			if (sp->pp_loopcnt >= LOOPALIVECNT) {
@@ -1315,7 +1313,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
-			sp->pp_seq[IDX_LCP] = cprng_fast32();
+			sp->scp[IDX_LCP].seq = cprng_fast32();
 			break;
 		}
 		sp->pp_loopcnt = 0;
@@ -1500,7 +1498,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		log(LOG_DEBUG,
 		    "%s: %s input(%s): <%s id=0x%x len=%d",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]),
+		    sppp_state_name(sp->scp[cp->protoidx].state),
 		    sppp_cp_type_name(h->type), h->ident, printlen);
 		if (len < printlen)
 			printlen = len;
@@ -1522,7 +1520,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			break;
 		}
 		/* handle states where RCR doesn't get a SCA/SCN */
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
 		case STATE_STOPPING:
 			SPPP_UNLOCK(sp);
@@ -1541,7 +1539,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			SPPP_UNLOCK(sp);
 			return;
 		}
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_OPENED:
 			(cp->tld)(sp);
 			(cp->scr)(sp);
@@ -1552,7 +1550,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 					     STATE_ACK_SENT: STATE_REQ_SENT);
 			break;
 		case STATE_STOPPED:
-			sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 			(cp->scr)(sp);
 			sppp_cp_change_state(cp, sp, rv?
 					     STATE_ACK_SENT: STATE_REQ_SENT);
@@ -1572,20 +1570,20 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case CONF_ACK:
-		if (h->ident != sp->confid[cp->protoidx]) {
+		if (h->ident != sp->scp[cp->protoidx].confid) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
-				       h->ident, sp->confid[cp->protoidx]);
+				       h->ident, sp->scp[cp->protoidx].confid);
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 			sppp_cp_send(sp, cp->proto, TERM_ACK, h->ident, 0, 0);
@@ -1594,7 +1592,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		case STATE_STOPPING:
 			break;
 		case STATE_REQ_SENT:
-			sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 			sppp_cp_change_state(cp, sp, STATE_ACK_RCVD);
 			break;
 		case STATE_OPENED:
@@ -1605,7 +1603,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
 			break;
 		case STATE_ACK_SENT:
-			sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 			sppp_cp_change_state(cp, sp, STATE_OPENED);
 			if (debug)
 				log(LOG_DEBUG, "%s: %s tlu\n",
@@ -1616,17 +1614,17 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case CONF_NAK:
 	case CONF_REJ:
-		if (h->ident != sp->confid[cp->protoidx]) {
+		if (h->ident != sp->scp[cp->protoidx].confid) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
-				       h->ident, sp->confid[cp->protoidx]);
+				       h->ident, sp->scp[cp->protoidx].confid);
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
@@ -1635,14 +1633,14 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		else /* CONF_REJ */
 			(cp->RCN_rej)(sp, h, len);
 
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 			sppp_cp_send(sp, cp->proto, TERM_ACK, h->ident, 0, 0);
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_SENT:
-			sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+			sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 			(cp->scr)(sp);
 			break;
 		case STATE_OPENED:
@@ -1659,13 +1657,13 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
 
 	case TERM_REQ:
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
 			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
@@ -1684,19 +1682,19 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			break;
 		case STATE_OPENED:
 			(cp->tld)(sp);
-			sp->rst_counter[cp->protoidx] = 0;
+			sp->scp[cp->protoidx].rst_counter = 0;
 			sppp_cp_change_state(cp, sp, STATE_STOPPING);
 			goto sta;
 		default:
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case TERM_ACK:
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 		case STATE_REQ_SENT:
@@ -1724,7 +1722,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
@@ -1735,7 +1733,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		    "danger will robinson\n",
 		    ifp->if_xname, cp->name,
 		    sppp_cp_type_name(h->type));
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 		case STATE_REQ_SENT:
@@ -1751,7 +1749,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
@@ -1780,21 +1778,21 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			    ifp->if_xname, cp->name, catastrophic ? '-' : '+',
 			    sppp_cp_type_name(h->type), proto,
 			    upper ? upper->name : "unknown",
-			    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
+			    upper ? sppp_state_name(sp->scp[upper->protoidx].state) : "?");
 
 		/*
 		 * if we got RXJ+ against conf-req, the peer does not implement
 		 * this particular protocol type.  terminate the protocol.
 		 */
 		if (upper && !catastrophic) {
-			if (sp->state[upper->protoidx] == STATE_REQ_SENT) {
+			if (sp->scp[upper->protoidx].state == STATE_REQ_SENT) {
 				upper->Close(sp);
 				break;
 			}
 		}
 
 		/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
 		case STATE_REQ_SENT:
@@ -1810,7 +1808,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
-			       sppp_state_name(sp->state[cp->protoidx]));
+			       sppp_state_name(sp->scp[cp->protoidx].state));
 			if_statinc(ifp, if_ierrors);
 		}
 		break;
@@ -1823,7 +1821,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	case ECHO_REQ:
 		if (cp->proto != PPP_LCP)
 			goto illegal;
-		if (sp->state[cp->protoidx] != STATE_OPENED) {
+		if (sp->scp[cp->protoidx].state != STATE_OPENED) {
 			if (debug)
 				addlog("%s: lcp echo req but lcp closed\n",
 				       ifp->if_xname);
@@ -1889,7 +1887,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			addlog("%s: %s send code-rej for 0x%x\n",
 			       ifp->if_xname, cp->name, h->type);
 		sppp_cp_send(sp, cp->proto, CODE_REJ,
-		    ++sp->pp_seq[cp->protoidx], m->m_pkthdr.len, h);
+		    ++sp->scp[cp->protoidx].seq, m->m_pkthdr.len, h);
 		if_statinc(ifp, if_ierrors);
 	}
 
@@ -1911,21 +1909,21 @@ sppp_up_event(const struct cp *cp, struct sppp *sp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s up(%s)\n",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]));
+		    sppp_state_name(sp->scp[cp->protoidx].state));
 
-	switch (sp->state[cp->protoidx]) {
+	switch (sp->scp[cp->protoidx].state) {
 	case STATE_INITIAL:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
 		break;
 	case STATE_STARTING:
-		sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 		(cp->scr)(sp);
 		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
 		break;
 	default:
 		printf("%s: %s illegal up in state %s\n",
 		       ifp->if_xname, cp->name,
-		       sppp_state_name(sp->state[cp->protoidx]));
+		       sppp_state_name(sp->scp[cp->protoidx].state));
 	}
 }
 
@@ -1939,9 +1937,9 @@ sppp_down_event(const struct cp *cp, struct sppp *sp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s down(%s)\n",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]));
+		    sppp_state_name(sp->scp[cp->protoidx].state));
 
-	switch (sp->state[cp->protoidx]) {
+	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
 	case STATE_CLOSING:
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
@@ -1962,7 +1960,7 @@ sppp_down_event(const struct cp *cp, struct sppp *sp)
 	default:
 		printf("%s: %s illegal down in state %s\n",
 		       ifp->if_xname, cp->name,
-		       sppp_state_name(sp->state[cp->protoidx]));
+		       sppp_state_name(sp->scp[cp->protoidx].state));
 	}
 }
 
@@ -1977,9 +1975,9 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s open(%s)\n",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]));
+		    sppp_state_name(sp->scp[cp->protoidx].state));
 
-	switch (sp->state[cp->protoidx]) {
+	switch (sp->scp[cp->protoidx].state) {
 	case STATE_INITIAL:
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
 		(cp->tls)(sp);
@@ -1987,7 +1985,7 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 	case STATE_STARTING:
 		break;
 	case STATE_CLOSED:
-		sp->rst_counter[cp->protoidx] = sp->lcp.max_configure;
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
 		(cp->scr)(sp);
 		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
 		break;
@@ -2015,9 +2013,9 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s close(%s)\n",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]));
+		    sppp_state_name(sp->scp[cp->protoidx].state));
 
-	switch (sp->state[cp->protoidx]) {
+	switch (sp->scp[cp->protoidx].state) {
 	case STATE_INITIAL:
 	case STATE_CLOSED:
 	case STATE_CLOSING:
@@ -2038,9 +2036,9 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	case STATE_REQ_SENT:
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
-		sp->rst_counter[cp->protoidx] = sp->lcp.max_terminate;
+		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_terminate;
 		sppp_cp_send(sp, cp->proto, TERM_REQ,
-		    ++sp->pp_seq[cp->protoidx], 0, 0);
+		    ++sp->scp[cp->protoidx].seq, 0, 0);
 		sppp_cp_change_state(cp, sp, STATE_CLOSING);
 		break;
 	}
@@ -2059,12 +2057,12 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 	if (debug)
 		log(LOG_DEBUG, "%s: %s TO(%s) rst_counter = %d\n",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->state[cp->protoidx]),
-		    sp->rst_counter[cp->protoidx]);
+		    sppp_state_name(sp->scp[cp->protoidx].state),
+		    sp->scp[cp->protoidx].rst_counter);
 
-	if (--sp->rst_counter[cp->protoidx] < 0)
+	if (--sp->scp[cp->protoidx].rst_counter < 0)
 		/* TO- event */
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
 			(cp->tlf)(sp);
 			sppp_cp_change_state(cp, sp, STATE_CLOSED);
@@ -2085,12 +2083,12 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 		}
 	else
 		/* TO+ event */
-		switch (sp->state[cp->protoidx]) {
+		switch (sp->scp[cp->protoidx].state) {
 		case STATE_CLOSING:
 		case STATE_STOPPING:
 			sppp_cp_send(sp, cp->proto, TERM_REQ,
-			    ++sp->pp_seq[cp->protoidx], 0, 0);
-			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+			    ++sp->scp[cp->protoidx].seq, 0, 0);
+			callout_reset(&sp->scp[cp->protoidx].ch, sp->lcp.timeout,
 			    cp->TO, sp);
 			break;
 		case STATE_REQ_SENT:
@@ -2101,7 +2099,7 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 			break;
 		case STATE_ACK_SENT:
 			(cp->scr)(sp);
-			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+			callout_reset(&sp->scp[cp->protoidx].ch, sp->lcp.timeout,
 			    cp->TO, sp);
 			break;
 		}
@@ -2119,8 +2117,8 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	sp->state[cp->protoidx] = newstate;
-	callout_stop(&sp->ch[cp->protoidx]);
+	sp->scp[cp->protoidx].state = newstate;
+	callout_stop(&sp->scp[cp->protoidx].ch);
 	switch (newstate) {
 	case STATE_INITIAL:
 	case STATE_STARTING:
@@ -2133,7 +2131,7 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 	case STATE_REQ_SENT:
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
-		callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+		callout_reset(&sp->scp[cp->protoidx].ch, sp->lcp.timeout,
 		    cp->TO, sp);
 		break;
 	}
@@ -2154,10 +2152,10 @@ sppp_lcp_init(struct sppp *sp)
 
 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
 	sp->lcp.magic = 0;
-	sp->state[IDX_LCP] = STATE_INITIAL;
-	sp->fail_counter[IDX_LCP] = 0;
-	sp->pp_seq[IDX_LCP] = 0;
-	sp->pp_rseq[IDX_LCP] = 0;
+	sp->scp[IDX_LCP].state = STATE_INITIAL;
+	sp->scp[IDX_LCP].fail_counter = 0;
+	sp->scp[IDX_LCP].seq = 0;
+	sp->scp[IDX_LCP].rseq = 0;
 	sp->lcp.protos = 0;
 
 	/*
@@ -2171,7 +2169,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-	callout_init(&sp->ch[IDX_LCP], CALLOUT_MPSAFE);
+	callout_init(&sp->scp[IDX_LCP].ch, CALLOUT_MPSAFE);
 }
 
 static void
@@ -2194,7 +2192,7 @@ sppp_lcp_up(struct sppp *sp)
 			log(LOG_DEBUG,
 			    "%s: Up event", ifp->if_xname);
 		ifp->if_flags |= IFF_RUNNING;
-		if (sp->state[IDX_LCP] == STATE_INITIAL) {
+		if (sp->scp[IDX_LCP].state == STATE_INITIAL) {
 			if (debug)
 				addlog("(incoming call)\n");
 			sp->pp_flags |= PP_CALLIN;
@@ -2202,7 +2200,7 @@ sppp_lcp_up(struct sppp *sp)
 		} else if (debug)
 			addlog("\n");
 	} else if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0 &&
-		   (sp->state[IDX_LCP] == STATE_INITIAL)) {
+		   (sp->scp[IDX_LCP].state == STATE_INITIAL)) {
 			ifp->if_flags |= IFF_RUNNING;
 			lcp.Open(sp);
 	}
@@ -2240,9 +2238,9 @@ sppp_lcp_down(struct sppp *sp)
 			    "%s: Down event (carrier loss)\n",
 			    ifp->if_xname);
 	}
-	sp->fail_counter[IDX_LCP] = 0;
+	sp->scp[IDX_LCP].fail_counter = 0;
 	sp->pp_flags &= ~PP_CALLIN;
-	if (sp->state[IDX_LCP] != STATE_INITIAL)
+	if (sp->scp[IDX_LCP].state != STATE_INITIAL)
 		lcp.Close(sp);
 	ifp->if_flags &= ~IFF_RUNNING;
 }
@@ -2563,7 +2561,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		rlen += l;
 	}
 	if (rlen) {
-		if (++sp->fail_counter[IDX_LCP] >= sp->lcp.max_failure) {
+		if (++sp->scp[IDX_LCP].fail_counter >= sp->lcp.max_failure) {
 			if (debug)
 				addlog(" max_failure (%d) exceeded, "
 				       "send conf-rej\n",
@@ -2578,7 +2576,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	} else {
 		if (debug)
 			addlog(" send conf-ack\n");
-		sp->fail_counter[IDX_LCP] = 0;
+		sp->scp[IDX_LCP].fail_counter = 0;
 		sp->pp_loopcnt = 0;
 		sppp_cp_send(sp, PPP_LCP, CONF_ACK, h->ident, origlen, h + 1);
 	}
@@ -2925,8 +2923,8 @@ sppp_lcp_scr(struct sppp *sp)
 			opt[i++] = CHAP_MD5;
 	}
 
-	sp->confid[IDX_LCP] = ++sp->pp_seq[IDX_LCP];
-	sppp_cp_send(sp, PPP_LCP, CONF_REQ, sp->confid[IDX_LCP], i, &opt);
+	sp->scp[IDX_LCP].confid = ++sp->scp[IDX_LCP].seq;
+	sppp_cp_send(sp, PPP_LCP, CONF_REQ, sp->scp[IDX_LCP].confid, i, &opt);
 }
 
 /*
@@ -2980,11 +2978,11 @@ sppp_ipcp_init(struct sppp *sp)
 
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
-	sp->state[IDX_IPCP] = STATE_INITIAL;
-	sp->fail_counter[IDX_IPCP] = 0;
-	sp->pp_seq[IDX_IPCP] = 0;
-	sp->pp_rseq[IDX_IPCP] = 0;
-	callout_init(&sp->ch[IDX_IPCP], CALLOUT_MPSAFE);
+	sp->scp[IDX_IPCP].state = STATE_INITIAL;
+	sp->scp[IDX_IPCP].fail_counter = 0;
+	sp->scp[IDX_IPCP].seq = 0;
+	sp->scp[IDX_IPCP].rseq = 0;
+	callout_init(&sp->scp[IDX_IPCP].ch, CALLOUT_MPSAFE);
 
 	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_addr",
 	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
@@ -3517,8 +3515,8 @@ sppp_ipcp_scr(struct sppp *sp)
 		opt[i++] = sp->dns_addrs[1];
 	}
 
-	sp->confid[IDX_IPCP] = ++sp->pp_seq[IDX_IPCP];
-	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->confid[IDX_IPCP], i, &opt);
+	sp->scp[IDX_IPCP].confid = ++sp->scp[IDX_IPCP].seq;
+	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->scp[IDX_IPCP].confid, i, &opt);
 }
 
 
@@ -3539,11 +3537,11 @@ sppp_ipv6cp_init(struct sppp *sp)
 
 	sp->ipv6cp.opts = 0;
 	sp->ipv6cp.flags = 0;
-	sp->state[IDX_IPV6CP] = STATE_INITIAL;
-	sp->fail_counter[IDX_IPV6CP] = 0;
-	sp->pp_seq[IDX_IPV6CP] = 0;
-	sp->pp_rseq[IDX_IPV6CP] = 0;
-	callout_init(&sp->ch[IDX_IPV6CP], CALLOUT_MPSAFE);
+	sp->scp[IDX_IPV6CP].state = STATE_INITIAL;
+	sp->scp[IDX_IPV6CP].fail_counter = 0;
+	sp->scp[IDX_IPV6CP].seq = 0;
+	sp->scp[IDX_IPV6CP].rseq = 0;
+	callout_init(&sp->scp[IDX_IPV6CP].ch, CALLOUT_MPSAFE);
 }
 
 static void
@@ -4022,8 +4020,8 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	}
 #endif
 
-	sp->confid[IDX_IPV6CP] = ++sp->pp_seq[IDX_IPV6CP];
-	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, &opt);
+	sp->scp[IDX_IPV6CP].confid = ++sp->scp[IDX_IPV6CP].seq;
+	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->scp[IDX_IPV6CP].confid, i, &opt);
 }
 #else /*INET6*/
 static void
@@ -4374,13 +4372,13 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			}
 			break;
 		}
-		if (h->ident != sp->confid[IDX_CHAP]) {
+		if (h->ident != sp->scp[IDX_CHAP].confid) {
 			if (debug)
 				log(LOG_DEBUG,
 				    "%s: chap dropping response for old ID "
 				    "(got %d, expected %d)\n",
 				    ifp->if_xname,
-				    h->ident, sp->confid[IDX_CHAP]);
+				    h->ident, sp->scp[IDX_CHAP].confid);
 			break;
 		}
 		if (sp->hisauth.name != NULL &&
@@ -4399,7 +4397,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			log(LOG_DEBUG, "%s: chap input(%s) "
 			    "<%s id=0x%x len=%d name=",
 			    ifp->if_xname,
-			    sppp_state_name(sp->state[IDX_CHAP]),
+			    sppp_state_name(sp->scp[IDX_CHAP].state),
 			    sppp_auth_type_name(PPP_CHAP, h->type),
 			    h->ident, ntohs(h->len));
 			sppp_print_string((char *)name, name_len);
@@ -4440,12 +4438,12 @@ chap_failure:
 		}
 		sp->pp_auth_failures = 0;
 		/* action sca, perhaps tlu */
-		if (sp->state[IDX_CHAP] == STATE_REQ_SENT ||
-		    sp->state[IDX_CHAP] == STATE_OPENED)
+		if (sp->scp[IDX_CHAP].state == STATE_REQ_SENT ||
+		    sp->scp[IDX_CHAP].state == STATE_OPENED)
 			sppp_auth_send(&chap, sp, CHAP_SUCCESS, h->ident,
 				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
 				       0);
-		if (sp->state[IDX_CHAP] == STATE_REQ_SENT) {
+		if (sp->scp[IDX_CHAP].state == STATE_REQ_SENT) {
 			sppp_cp_change_state(&chap, sp, STATE_OPENED);
 			chap.tlu(sp);
 		}
@@ -4457,7 +4455,7 @@ chap_failure:
 			log(LOG_DEBUG, "%s: chap unknown input(%s) "
 			    "<0x%x id=0x%xh len=%d",
 			    ifp->if_xname,
-			    sppp_state_name(sp->state[IDX_CHAP]),
+			    sppp_state_name(sp->scp[IDX_CHAP].state),
 			    h->type, h->ident, ntohs(h->len));
 			if (len > 4)
 				sppp_print_bytes((u_char *)(h + 1), len - 4);
@@ -4477,11 +4475,11 @@ sppp_chap_init(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 	/* Chap doesn't have STATE_INITIAL at all. */
-	sp->state[IDX_CHAP] = STATE_CLOSED;
-	sp->fail_counter[IDX_CHAP] = 0;
-	sp->pp_seq[IDX_CHAP] = 0;
-	sp->pp_rseq[IDX_CHAP] = 0;
-	callout_init(&sp->ch[IDX_CHAP], CALLOUT_MPSAFE);
+	sp->scp[IDX_CHAP].state = STATE_CLOSED;
+	sp->scp[IDX_CHAP].fail_counter = 0;
+	sp->scp[IDX_CHAP].seq = 0;
+	sp->scp[IDX_CHAP].rseq = 0;
+	callout_init(&sp->scp[IDX_CHAP].ch, CALLOUT_MPSAFE);
 }
 
 static void
@@ -4493,7 +4491,7 @@ sppp_chap_open(struct sppp *sp)
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for CHAP, start it */
 		chap.scr(sp);
-		sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
+		sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
 		sppp_cp_change_state(&chap, sp, STATE_REQ_SENT);
 	}
 	/* nothing to be done if we are peer, await a challenge */
@@ -4504,7 +4502,7 @@ sppp_chap_close(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-	if (sp->state[IDX_CHAP] != STATE_CLOSED)
+	if (sp->scp[IDX_CHAP].state != STATE_CLOSED)
 		sppp_cp_change_state(&chap, sp, STATE_CLOSED);
 }
 
@@ -4522,12 +4520,12 @@ sppp_chap_TO(void *cookie)
 	if (debug)
 		log(LOG_DEBUG, "%s: chap TO(%s) rst_counter = %d\n",
 		    ifp->if_xname,
-		    sppp_state_name(sp->state[IDX_CHAP]),
-		    sp->rst_counter[IDX_CHAP]);
+		    sppp_state_name(sp->scp[IDX_CHAP].state),
+		    sp->scp[IDX_CHAP].rst_counter);
 
-	if (--sp->rst_counter[IDX_CHAP] < 0)
+	if (--sp->scp[IDX_CHAP].rst_counter < 0)
 		/* TO- event */
-		switch (sp->state[IDX_CHAP]) {
+		switch (sp->scp[IDX_CHAP].state) {
 		case STATE_REQ_SENT:
 			chap.tld(sp);
 			sppp_cp_change_state(&chap, sp, STATE_CLOSED);
@@ -4535,10 +4533,10 @@ sppp_chap_TO(void *cookie)
 		}
 	else
 		/* TO+ (or TO*) event */
-		switch (sp->state[IDX_CHAP]) {
+		switch (sp->scp[IDX_CHAP].state) {
 		case STATE_OPENED:
 			/* TO* event */
-			sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
+			sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
 			/* fall through */
 		case STATE_REQ_SENT:
 			chap.scr(sp);
@@ -4560,7 +4558,7 @@ sppp_chap_tlu(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 	i = 0;
-	sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
+	sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
 
 	/*
 	 * Some broken CHAP implementations (Conware CoNet, firmware
@@ -4575,7 +4573,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 */
 		i = 300 + ((unsigned)(cprng_fast32() & 0xff00) >> 7);
 
-		callout_reset(&sp->ch[IDX_CHAP], i * hz, chap.TO, sp);
+		callout_reset(&sp->scp[IDX_CHAP].ch, i * hz, chap.TO, sp);
 	}
 
 	if (debug) {
@@ -4622,7 +4620,7 @@ sppp_chap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, "%s: chap tld\n", ifp->if_xname);
-	callout_stop(&sp->ch[IDX_CHAP]);
+	callout_stop(&sp->scp[IDX_CHAP].ch);
 	sp->lcp.protos &= ~(1 << IDX_CHAP);
 
 	lcp.Close(sp);
@@ -4647,9 +4645,9 @@ sppp_chap_scr(struct sppp *sp)
 	ch = (uint32_t *)sp->hisauth.challenge;
 	cprng_strong(kern_cprng, ch, clen, 0);
 
-	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
+	sp->scp[IDX_CHAP].confid = ++sp->scp[IDX_CHAP].seq;
 
-	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
+	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->scp[IDX_CHAP].confid,
 		       sizeof clen, (const char *)&clen,
 		       sizeof(sp->hisauth.challenge), sp->hisauth.challenge,
 		       0);
@@ -4733,7 +4731,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			log(LOG_DEBUG, "%s: pap input(%s) "
 			    "<%s id=0x%x len=%d name=",
 			    ifp->if_xname,
-			    sppp_state_name(sp->state[IDX_PAP]),
+			    sppp_state_name(sp->scp[IDX_PAP].state),
 			    sppp_auth_type_name(PPP_PAP, h->type),
 			    h->ident, ntohs(h->len));
 			sppp_print_string((char *)name, name_len);
@@ -4756,15 +4754,15 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			break;
 		}
 		/* action sca, perhaps tlu */
-		if (sp->state[IDX_PAP] == STATE_REQ_SENT ||
-		    sp->state[IDX_PAP] == STATE_OPENED) {
+		if (sp->scp[IDX_PAP].state == STATE_REQ_SENT ||
+		    sp->scp[IDX_PAP].state == STATE_OPENED) {
 			mlen = sizeof(SUCCMSG) - 1;
 			sppp_auth_send(&pap, sp, PAP_ACK, h->ident,
 				       sizeof mlen, (const char *)&mlen,
 				       sizeof(SUCCMSG) - 1, (const u_char *)SUCCMSG,
 				       0);
 		}
-		if (sp->state[IDX_PAP] == STATE_REQ_SENT) {
+		if (sp->scp[IDX_PAP].state == STATE_REQ_SENT) {
 			sppp_cp_change_state(&pap, sp, STATE_OPENED);
 			pap.tlu(sp);
 		}
@@ -4845,11 +4843,11 @@ sppp_pap_init(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 	/* PAP doesn't have STATE_INITIAL at all. */
-	sp->state[IDX_PAP] = STATE_CLOSED;
-	sp->fail_counter[IDX_PAP] = 0;
-	sp->pp_seq[IDX_PAP] = 0;
-	sp->pp_rseq[IDX_PAP] = 0;
-	callout_init(&sp->ch[IDX_PAP], CALLOUT_MPSAFE);
+	sp->scp[IDX_PAP].state = STATE_CLOSED;
+	sp->scp[IDX_PAP].fail_counter = 0;
+	sp->scp[IDX_PAP].seq = 0;
+	sp->scp[IDX_PAP].rseq = 0;
+	callout_init(&sp->scp[IDX_PAP].ch, CALLOUT_MPSAFE);
 	callout_init(&sp->pap_my_to_ch, CALLOUT_MPSAFE);
 }
 
@@ -4862,7 +4860,7 @@ sppp_pap_open(struct sppp *sp)
 	if (sp->hisauth.proto == PPP_PAP &&
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for PAP, start our timer */
-		sp->rst_counter[IDX_PAP] = sp->lcp.max_configure;
+		sp->scp[IDX_PAP].rst_counter = sp->lcp.max_configure;
 		sppp_cp_change_state(&pap, sp, STATE_REQ_SENT);
 	}
 	if (sp->myauth.proto == PPP_PAP) {
@@ -4879,7 +4877,7 @@ sppp_pap_close(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->state[IDX_PAP] != STATE_CLOSED)
+	if (sp->scp[IDX_PAP].state != STATE_CLOSED)
 		sppp_cp_change_state(&pap, sp, STATE_CLOSED);
 }
 
@@ -4900,12 +4898,12 @@ sppp_pap_TO(void *cookie)
 	if (debug)
 		log(LOG_DEBUG, "%s: pap TO(%s) rst_counter = %d\n",
 		    ifp->if_xname,
-		    sppp_state_name(sp->state[IDX_PAP]),
-		    sp->rst_counter[IDX_PAP]);
+		    sppp_state_name(sp->scp[IDX_PAP].state),
+		    sp->scp[IDX_PAP].rst_counter);
 
-	if (--sp->rst_counter[IDX_PAP] < 0)
+	if (--sp->scp[IDX_PAP].rst_counter < 0)
 		/* TO- event */
-		switch (sp->state[IDX_PAP]) {
+		switch (sp->scp[IDX_PAP].state) {
 		case STATE_REQ_SENT:
 			pap.tld(sp);
 			sppp_cp_change_state(&pap, sp, STATE_CLOSED);
@@ -4913,7 +4911,7 @@ sppp_pap_TO(void *cookie)
 		}
 	else
 		/* TO+ event, not very much we could do */
-		switch (sp->state[IDX_PAP]) {
+		switch (sp->scp[IDX_PAP].state) {
 		case STATE_REQ_SENT:
 			/* sppp_cp_change_state() will restart the timer */
 			sppp_cp_change_state(&pap, sp, STATE_REQ_SENT);
@@ -4953,7 +4951,7 @@ sppp_pap_tlu(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	sp->rst_counter[IDX_PAP] = sp->lcp.max_configure;
+	sp->scp[IDX_PAP].rst_counter = sp->lcp.max_configure;
 
 	if (debug)
 		log(LOG_DEBUG, "%s: %s tlu\n",
@@ -4986,7 +4984,7 @@ sppp_pap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, "%s: pap tld\n", ifp->if_xname);
-	callout_stop(&sp->ch[IDX_PAP]);
+	callout_stop(&sp->scp[IDX_PAP].ch);
 	callout_stop(&sp->pap_my_to_ch);
 	sp->lcp.protos &= ~(1 << IDX_PAP);
 
@@ -5007,11 +5005,11 @@ sppp_pap_scr(struct sppp *sp)
 	    return;
 	}
 
-	sp->confid[IDX_PAP] = ++sp->pp_seq[IDX_PAP];
+	sp->scp[IDX_PAP].confid = ++sp->scp[IDX_PAP].seq;
 	pwdlen = sp->myauth.secret_len;
 	idlen = sp->myauth.name_len;
 
-	sppp_auth_send(&pap, sp, PAP_REQ, sp->confid[IDX_PAP],
+	sppp_auth_send(&pap, sp, PAP_REQ, sp->scp[IDX_PAP].confid,
 		       sizeof idlen, (const char *)&idlen,
 		       idlen, sp->myauth.name,
 		       sizeof pwdlen, (const char *)&pwdlen,
@@ -5210,10 +5208,10 @@ sppp_keepalive(void *dummy)
 			++sp->pp_alivecnt;
 		if (sp->pp_flags & PP_CISCO)
 			sppp_cisco_send(sp, CISCO_KEEPALIVE_REQ,
-			    ++sp->pp_seq[IDX_LCP], sp->pp_rseq[IDX_LCP]);
+			    ++sp->scp[IDX_LCP].seq, sp->scp[IDX_LCP].rseq);
 		else if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			int32_t nmagic = htonl(sp->lcp.magic);
-			sp->lcp.echoid = ++sp->pp_seq[IDX_LCP];
+			sp->lcp.echoid = ++sp->scp[IDX_LCP].seq;
 			sppp_cp_send(sp, PPP_LCP, ECHO_REQ,
 				sp->lcp.echoid, 4, &nmagic);
 		}
