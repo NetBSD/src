@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.292 2020/11/14 22:19:13 rillig Exp $
+.\"	$NetBSD: make.1,v 1.293 2020/11/25 00:50:44 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 14, 2020
+.Dd November 24, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1018,6 +1018,12 @@ If set to false,
 becomes
 .Ql $
 per normal evaluation rules.
+.It Va .MAKE.UID
+The user-id running
+.Nm .
+.It Va .MAKE.GID
+The group-id running
+.Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm

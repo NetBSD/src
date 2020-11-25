@@ -11,6 +11,7 @@
 .LIBS            = 
 .MAKE            = <details omitted>
 .MAKE.DEPENDFILE = <details omitted>
+.MAKE.GID        = <details omitted>
 .MAKE.LEVEL      = <details omitted>
 .MAKE.MAKEFILES  = <details omitted>
 .MAKE.MAKEFILE_PREFERENCE = <details omitted>
@@ -18,6 +19,7 @@
 .MAKE.PATH_FILEMON = <details omitted>
 .MAKE.PID        = <details omitted>
 .MAKE.PPID       = <details omitted>
+.MAKE.UID        = <details omitted>
 .MAKEFLAGS       =  -r -k -d g1
 .MAKEOVERRIDES   = 
 .OBJDIR          = <curdir>

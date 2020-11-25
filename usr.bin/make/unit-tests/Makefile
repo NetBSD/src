@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.225 2020/11/25 00:32:18 sjg Exp $
+# $NetBSD: Makefile,v 1.226 2020/11/25 00:50:44 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -193,7 +193,7 @@ TESTS+=		modmatch
 TESTS+=		modmisc
 TESTS+=		modts
 TESTS+=		modword
-.if ${id -u:L:sh} > 0
+.if ${.MAKE.UID:U0} > 0
 TESTS+=		objdir-writable
 .endif
 TESTS+=		opt
