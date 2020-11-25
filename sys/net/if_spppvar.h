@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.25 2020/11/25 09:12:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.26 2020/11/25 09:18:45 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -91,10 +91,15 @@ struct sppp_cp {
 	u_long		 seq;		/* local sequence number */
 	u_long		 rseq;		/* remote sequence number */
 	int		 state;		/* state machine */
-	u_char		 confid;	/* id of last configuration request */
+	u_char		 confid;	/* local id of last configuration request */
+	u_char		 rconfid;	/* remote id of last configuration request */
 	int		 rst_counter;	/* restart counter */
 	int		 fail_counter;	/* negotiation failure counter */
 	struct callout	 ch;		/* per-proto and if callouts */
+	u_char		 rcr_type;
+	void		*rcr_buf;
+	size_t		 rcr_blen;
+	int		 rcr_rlen;
 };
 
 struct sppp {
