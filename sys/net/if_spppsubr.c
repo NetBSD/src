@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.203 2020/11/25 09:57:26 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.204 2020/11/25 09:59:52 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.203 2020/11/25 09:57:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.204 2020/11/25 09:59:52 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1541,6 +1541,10 @@ sppp_cp_init(const struct cp *cp, struct sppp *sp)
 	};
 
 	scp = &sp->scp[cp->protoidx];
+	scp->state = STATE_INITIAL;
+	scp->fail_counter = 0;
+	scp->seq = 0;
+	scp->rseq = 0;
 
 	SPPP_WQ_SET(&scp->work_up, cp->Up, cp);
 	SPPP_WQ_SET(&scp->work_down, cp->Down,  cp);
@@ -2375,13 +2379,14 @@ sppp_lcp_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	sppp_cp_init(&lcp, sp);
+
 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
 	sp->lcp.magic = 0;
-	sp->scp[IDX_LCP].state = STATE_INITIAL;
-	sp->scp[IDX_LCP].fail_counter = 0;
-	sp->scp[IDX_LCP].seq = 0;
-	sp->scp[IDX_LCP].rseq = 0;
 	sp->lcp.protos = 0;
+	sp->lcp.max_terminate = 2;
+	sp->lcp.max_configure = 10;
+	sp->lcp.max_failure = 10;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2391,10 +2396,6 @@ sppp_lcp_init(struct sppp *sp)
 	 * relevant for all control protocols, not just LCP only.
 	 */
 	sp->lcp.timeout = 1 * hz;
-	sp->lcp.max_terminate = 2;
-	sp->lcp.max_configure = 10;
-	sp->lcp.max_failure = 10;
-	sppp_cp_init(&lcp, sp);
 }
 
 static void
@@ -3230,13 +3231,10 @@ sppp_ipcp_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	sppp_cp_init(&ipcp, sp);
+
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
-	sp->scp[IDX_IPCP].state = STATE_INITIAL;
-	sp->scp[IDX_IPCP].fail_counter = 0;
-	sp->scp[IDX_IPCP].seq = 0;
-	sp->scp[IDX_IPCP].rseq = 0;
-	sppp_cp_init(&ipcp, sp);
 
 	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_addr",
 	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
@@ -3778,13 +3776,10 @@ sppp_ipv6cp_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	sppp_cp_init(&ipv6cp, sp);
+
 	sp->ipv6cp.opts = 0;
 	sp->ipv6cp.flags = 0;
-	sp->scp[IDX_IPV6CP].state = STATE_INITIAL;
-	sp->scp[IDX_IPV6CP].fail_counter = 0;
-	sp->scp[IDX_IPV6CP].seq = 0;
-	sp->scp[IDX_IPV6CP].rseq = 0;
-	sppp_cp_init(&ipv6cp, sp);
 }
 
 static void
@@ -4628,13 +4623,10 @@ sppp_chap_init(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	sp->scp[IDX_CHAP].state = STATE_INITIAL;
-	sp->scp[IDX_CHAP].fail_counter = 0;
-	sp->scp[IDX_CHAP].seq = 0;
-	sp->scp[IDX_CHAP].rseq = 0;
+	sppp_cp_init(&chap, sp);
+
 	SPPP_WQ_SET(&sp->chap.work_challenge_rcvd,
 	    sppp_chap_rcv_challenge_event, &chap);
-	sppp_cp_init(&chap, sp);
 }
 
 static void
@@ -4958,11 +4950,6 @@ sppp_pap_init(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	sp->scp[IDX_PAP].state = STATE_INITIAL;
-	sp->scp[IDX_PAP].fail_counter = 0;
-	sp->scp[IDX_PAP].seq = 0;
-	sp->scp[IDX_PAP].rseq = 0;
 	sppp_cp_init(&pap, sp);
 }
 
