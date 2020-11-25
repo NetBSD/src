@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.211 2020/11/25 10:25:22 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.212 2020/11/25 10:27:18 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.211 2020/11/25 10:25:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.212 2020/11/25 10:27:18 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2426,6 +2426,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
+	sp->lcp.tlf_sent = false;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2483,6 +2484,16 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 
 	pidx = cp->protoidx;
 	sppp_down_event(sp, xcp);
+
+	/*
+	 * We need to do tls to restart when a down event is caused
+	 * by the last tlf.
+	 */
+	if (sp->scp[pidx].state == STATE_STARTING &&
+	    sp->lcp.tlf_sent) {
+		cp->tls(cp, sp);
+		sp->lcp.tlf_sent = false;
+	}
 
 	/*
 	 * If this is neither a dial-on-demand nor a passive
@@ -3149,6 +3160,7 @@ sppp_lcp_tls(const struct cp *cp __unused, struct sppp *sp)
 
 	/* Notify lower layer if desired. */
 	sppp_notify_tls_wlocked(sp);
+	sp->lcp.tlf_sent = false;
 }
 
 static void
@@ -3161,6 +3173,17 @@ sppp_lcp_tlf(const struct cp *cp __unused, struct sppp *sp)
 
 	/* Notify lower layer if desired. */
 	sppp_notify_tlf_wlocked(sp);
+
+	switch (sp->scp[IDX_LCP].state) {
+	case STATE_CLOSED:
+	case STATE_STOPPED:
+		sp->lcp.tlf_sent = true;
+		break;
+	case STATE_INITIAL:
+	default:
+		/* just in case */
+		sp->lcp.tlf_sent = false;
+	}
 }
 
 static void
