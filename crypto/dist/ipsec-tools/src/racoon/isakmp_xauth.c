@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.30 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.31 2020/11/25 16:41:39 bouyer Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -917,9 +917,15 @@ xauth_login_ldap(iph1, usr, pwd)
 	}
 
 	/* initialize the protocol version */
-	ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION,
-		&xauth_ldap_config.pver);
-
+	if ((res = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION,
+		&xauth_ldap_config.pver)) != LDAP_OPT_SUCCESS) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"LDAP_OPT_PROTOCOL_VERSION %s failed: %s\n",
+			xauth_ldap_config.pver,
+			ldap_err2string(res));
+		goto ldap_end;
+	}
+		
 	/* Enable TLS */
 	if (xauth_ldap_config.tls) {
 		res = ldap_start_tls_s(ld, NULL, NULL);
@@ -943,13 +949,15 @@ xauth_login_ldap(iph1, usr, pwd)
 		cred.bv_val = xauth_ldap_config.bind_pw->v;
 		cred.bv_len = strlen( cred.bv_val );
 		res = ldap_sasl_bind_s(ld,
-			xauth_ldap_config.bind_dn->v, NULL, &cred,
+			xauth_ldap_config.bind_dn->v, LDAP_SASL_SIMPLE, &cred,
 			NULL, NULL, NULL);
 	}
 	else
 	{
+		cred.bv_val = NULL;
+		cred.bv_len = 0;
 		res = ldap_sasl_bind_s(ld,
-			NULL, NULL, NULL,
+			NULL, LDAP_SASL_SIMPLE, &cred,
 			NULL, NULL, NULL);
 	}
 	
