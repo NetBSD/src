@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.24 2020/10/05 16:11:25 roy Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.25 2020/11/25 09:12:50 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -87,6 +87,16 @@ struct sauth {
 
 #define IDX_COUNT (IDX_CHAP + 1) /* bump this when adding cp's! */
 
+struct sppp_cp {
+	u_long		 seq;		/* local sequence number */
+	u_long		 rseq;		/* remote sequence number */
+	int		 state;		/* state machine */
+	u_char		 confid;	/* id of last configuration request */
+	int		 rst_counter;	/* restart counter */
+	int		 fail_counter;	/* negotiation failure counter */
+	struct callout	 ch;		/* per-proto and if callouts */
+};
+
 struct sppp {
 	/* NB: pp_if _must_ be first */
 	struct  ifnet pp_if;    /* network interface data */
@@ -98,8 +108,6 @@ struct sppp {
 	u_int   pp_alivecnt;    /* keepalive packets counter */
 	u_int   pp_loopcnt;     /* loopback detection counter */
 	u_int	pp_maxalive;	/* number or echo req. w/o reply */
-	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
-	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
 	uint64_t	pp_saved_mtu;	/* saved MTU value */
 	time_t	pp_last_receive;	/* peer's last "sign of life" */
 	time_t	pp_max_noreceive;	/* seconds since last receive before
@@ -114,10 +122,6 @@ struct sppp {
 	krwlock_t	pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
-	int	state[IDX_COUNT];	/* state machine */
-	u_char  confid[IDX_COUNT];	/* id of last configuration request */
-	int	rst_counter[IDX_COUNT];	/* restart counter */
-	int	fail_counter[IDX_COUNT]; /* negotiation failure counter */
 #if defined(__NetBSD__)
 	struct	callout ch[IDX_COUNT];	/* per-proto and if callouts */
 	struct	callout pap_my_to_ch;	/* PAP needs one more... */
@@ -126,6 +130,7 @@ struct sppp {
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
 #endif
+	struct sppp_cp scp[IDX_COUNT];
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
 	struct sipcp ipv6cp;		/* IPv6CP params */
