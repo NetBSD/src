@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.31 2020/11/25 10:27:18 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.32 2020/11/25 10:30:51 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -78,6 +78,9 @@ struct sipcp {
 	uint32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
 	uint32_t req_hisaddr;	/* remote address requested */
 	uint32_t req_myaddr;	/* local address requested */
+
+	uint8_t my_ifid[8];	/* IPv6CP my ifid*/
+	uint8_t his_ifid[8];	/* IPv6CP his ifid*/
 };
 
 struct sauth {
