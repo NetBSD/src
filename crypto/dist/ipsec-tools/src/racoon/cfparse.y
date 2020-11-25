@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.51 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.52 2020/11/25 16:42:53 bouyer Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -296,7 +296,7 @@ static const char error_message_dpd_not_compiled_in[] = "DPD support not compile
 	/* listen */
 %token LISTEN X_ISAKMP X_ISAKMP_NATT X_ADMIN STRICT_ADDRESS ADMINSOCK DISABLED
 	/* ldap config */
-%token LDAPCFG LDAP_HOST LDAP_PORT LDAP_TLS LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
+%token LDAPCFG LDAP_URI LDAP_HOST LDAP_PORT LDAP_TLS LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
 %token LDAP_ATTR_USER LDAP_ATTR_ADDR LDAP_ATTR_MASK LDAP_ATTR_GROUP LDAP_ATTR_MEMBER
 	/* radius config */
 %token RADCFG RAD_AUTH RAD_ACCT RAD_TIMEOUT RAD_RETRIES
@@ -771,6 +771,19 @@ ldapcfg_stmt
 			xauth_ldap_config.pver = $2;
 #endif
 #endif
+		}
+		EOS
+	|	LDAP_URI QUOTEDSTRING
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBLDAP
+			if (xauth_ldap_config.uri != NULL)
+				vfree(xauth_ldap_config.uri);
+
+			xauth_ldap_config.uri = vdup($2);
+#endif
+#endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_HOST QUOTEDSTRING
