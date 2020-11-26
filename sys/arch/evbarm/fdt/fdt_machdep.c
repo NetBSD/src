@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.80 2020/11/26 08:29:17 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.81 2020/11/26 08:37:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.80 2020/11/26 08:29:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.81 2020/11/26 08:37:54 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -623,10 +623,10 @@ initarm(void *arg)
 	fdt_get_memory(&memory_start, &memory_end);
 
 #if !defined(_LP64)
-	/* Cannot map memory above 4GB */
-	if (memory_end >= 0x100000000ULL)
-		memory_end = 0x100000000ULL - PAGE_SIZE;
-
+	/* Cannot map memory above 4GB (remove last page as well) */
+	const uint64_t memory_limit = 0x100000000ULL - PAGE_SIZE;
+	if (memory_end > memory_limit)
+		memory_end = memory_limit;
 #endif
 	uint64_t memory_size = memory_end - memory_start;
 
