@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.31 2019/07/16 14:41:45 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.32 2020/11/26 12:56:34 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.31 2019/07/16 14:41:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.32 2020/11/26 12:56:34 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -485,7 +485,7 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 
-#if defined(MEMORY_DISK_DYNAMIC) 
+#if defined(MEMORY_DISK_DYNAMIC)
 	/* Ramdisk */
 	{
 		.pd_va = _A(GEMINI_RAMDISK_VBASE),
@@ -493,7 +493,7 @@ static const struct pmap_devmap devmap[] = {
 		.pd_size = _S(GEMINI_RAMDISK_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
-	}, 
+	},
 #endif
 
 	{0}	/* list terminator */
@@ -799,7 +799,7 @@ consinit(void)
 			panic("Serial console can not be initialized.");
 }
 
-#elif CONSADDR==0x478003f8 
+#elif CONSADDR==0x478003f8
 # include <arm/gemini/gemini_lpcvar.h>
 /*
  * console initialization for lpc com console

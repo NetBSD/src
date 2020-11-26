@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrl.c,v 1.2 2019/10/18 04:09:01 msaitoh Exp $ */
+/* $Id: imx23_pinctrl.c,v 1.3 2020/11/26 12:56:34 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ pinctrl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
-	
+
 	if (pinctrl_attached) {
 		aprint_error_dev(sc->sc_dev, "already attached\n");
 		return;
@@ -428,7 +428,7 @@ pinctrl_attach(device_t parent, device_t self, void *aux)
 	gpiobus_aa.gba_pins = sc->pins;
 
 	config_found_ia(self, "gpiobus", &gpiobus_aa, gpiobus_print);
-	
+
 	return;
 }
 
@@ -439,7 +439,7 @@ pinctrl_activate(device_t self, enum devact act)
 	return EOPNOTSUPP;
 }
 
-static void    
+static void
 pinctrl_init(struct pinctrl_softc *sc)
 {
 	_sc = sc;
@@ -499,7 +499,7 @@ pinctrl_reset(struct pinctrl_softc *sc)
  * MAXI boards. We configure this pin to logic 1.
  */
 void
-pinctrl_en_usb(void)    
+pinctrl_en_usb(void)
 {
 	struct pinctrl_softc *sc = _sc;
 
@@ -537,7 +537,7 @@ pinctrl_gp_pin_read(void *cookie, int pin)
 		value = 1;
 	else
 		value = 0;
-	
+
 	return value;
 }
 

@@ -1,4 +1,4 @@
-# $Id: files.imx23,v 1.4 2015/01/10 12:18:09 jmcneill Exp $
+# $Id: files.imx23,v 1.5 2020/11/26 12:56:34 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
@@ -85,7 +85,7 @@ file	arch/arm/imx/imx23_usb.c	imxusbc
 attach	ehci at imxusbc with imxehci
 file	arch/arm/imx/imxusb.c		imxehci
 
-# RTC 
+# RTC
 device rtc
 attach rtc at apbx
 file arch/arm/imx/imx23_rtc.c		rtc
