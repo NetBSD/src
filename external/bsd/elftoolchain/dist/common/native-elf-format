@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Id: native-elf-format 3293 2016-01-07 19:26:27Z emaste 
+# Id: native-elf-format 3893 2020-11-20 17:11:04Z jkoshy
 #
 # Find the native ELF format for a host platform by compiling a
 # test object and examining the resulting object.
@@ -9,7 +9,7 @@
 # information statically at compile time.
 
 program=`basename $0`
-tmp_c=`mktemp -u nefXXXXXX`.c
+tmp_c=`mktemp ${MAKEOBJDIRPREFIX+"-p ${MAKEOBJDIRPREFIX}"} -u nefXXXXXX`.c
 tmp_o=`echo ${tmp_c} | sed -e 's/.c$/.o/'`
 
 trap "rm -f ${tmp_c} ${tmp_o}"	0 1 2 3 15
@@ -35,8 +35,12 @@ $1 ~ "Machine:" {
             elfarch = "EM_386";
         } else if (match($0, "MIPS")) {
             elfarch = "EM_MIPS";
-        } else if (match($0, ".*[xX]86-64")) {
+        } else if (match($0, ".*[xX]86[-_]64")) {
             elfarch = "EM_X86_64";
+        } else if (match($0, "PowerPC64")) {
+            elfarch = "EM_PPC64";
+	} else if (match($0, "ARM")) {
+	    elfarch = "EM_ARM";
         } else {
             elfarch = "unknown";
         }
