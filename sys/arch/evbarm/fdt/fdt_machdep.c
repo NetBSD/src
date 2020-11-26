@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.79 2020/11/24 06:36:36 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.80 2020/11/26 08:29:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.79 2020/11/24 06:36:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.80 2020/11/26 08:29:17 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -641,8 +641,7 @@ initarm(void *arg)
 	fdt_probe_efirng(&efirng_start, &efirng_end);
 
 	/*
-	 * Populate bootconfig structure for the benefit of
-	 * dodumpsys
+	 * Populate bootconfig structure for the benefit of dodumpsys
 	 */
 	VPRINTF("%s: fdt_build_bootconfig\n", __func__);
 	fdt_build_bootconfig(memory_start, memory_end);
