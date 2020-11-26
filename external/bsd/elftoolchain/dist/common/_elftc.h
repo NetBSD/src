@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.6 2020/11/21 21:04:25 jkoshy Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.7 2020/11/26 21:01:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: _elftc.h,v 1.6 2020/11/21 21:04:25 jkoshy Exp $
+ * Id: _elftc.h 3894 2020-11-20 18:02:53Z jkoshy
  */
 
 /**
