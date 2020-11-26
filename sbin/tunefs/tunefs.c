@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.53 2020/08/08 11:44:55 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.54 2020/11/26 02:06:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.53 2020/08/08 11:44:55 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.54 2020/11/26 02:06:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 				    "exclusive", name);
 			} else {
 				sblock.fs_flags |= FS_POSIX1EACLS;
-				printf("%s set", name);
+				printf("%s set\n", name);
 			}
 		} else if (strcmp(pvalue, "disable") == 0) {
 			if ((~sblock.fs_flags & FS_POSIX1EACLS) ==
@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 				    name);
 			} else {
 				sblock.fs_flags &= ~FS_POSIX1EACLS;
-				printf("%s cleared", name);
+				printf("%s cleared\n", name);
 			}
 		}
 	}
