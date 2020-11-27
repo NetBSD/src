@@ -1,4 +1,4 @@
-# $NetBSD: depsrc-meta.mk,v 1.3 2020/11/27 08:36:11 rillig Exp $
+# $NetBSD: depsrc-meta.mk,v 1.4 2020/11/27 08:39:07 rillig Exp $
 #
 # Tests for the special source .META in dependency declarations.
 
@@ -20,6 +20,7 @@ depsrc-meta-target: .META
 check-results:
 	@echo 'Targets from meta mode:'
 	@awk '/^TARGET/ { print "| " $$0 }' depsrc-meta-target.meta
+	@rm depsrc-meta-target.meta
 
 .else
 
