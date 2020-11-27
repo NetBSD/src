@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.33 2014/10/15 15:00:03 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.34 2020/11/27 14:43:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.33 2014/10/15 15:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.34 2020/11/27 14:43:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ptyfs_get_node(ptyfstype type, int pty)
 	pp = malloc(sizeof(struct ptyfsnode), M_TEMP, M_WAITOK);
 	pp->ptyfs_pty = pty;
 	pp->ptyfs_type = type;
-	pp->ptyfs_fileno = PTYFS_FILENO(pty, type);
+	pp->ptyfs_fileno = PTYFS_FILENO(type, pty);
 	if (pp->ptyfs_type == PTYFSroot)
 		pp->ptyfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
 		    S_IROTH|S_IXOTH;
