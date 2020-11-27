@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.61 2020/11/24 16:38:31 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.62 2020/11/27 14:43:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.61 2020/11/24 16:38:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.62 2020/11/27 14:43:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,7 +715,7 @@ ptyfs_readdir(void *v)
 
 	for (; i < 2; i++) {
 		/* `.' and/or `..' */
-		dp->d_fileno = PTYFS_FILENO(0, PTYFSroot);
+		dp->d_fileno = PTYFS_FILENO(PTYFSroot, 0);
 		dp->d_namlen = i + 1;
 		(void)memcpy(dp->d_name, "..", dp->d_namlen);
 		dp->d_name[i + 1] = '\0';
@@ -731,7 +731,7 @@ ptyfs_readdir(void *v)
 		n = ptyfs_next_active(vp->v_mount, i - 2);
 		if (n < 0)
 			break;
-		dp->d_fileno = PTYFS_FILENO(n, PTYFSpts);
+		dp->d_fileno = PTYFS_FILENO(PTYFSpts, n);
 		dp->d_namlen = snprintf(dp->d_name, sizeof(dp->d_name),
 		    "%lld", (long long)(n));
 		dp->d_type = DT_CHR;
