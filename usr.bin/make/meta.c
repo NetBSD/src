@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.148 2020/11/23 23:44:03 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.149 2020/11/27 08:07:26 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -312,17 +312,15 @@ meta_name(char *mname, size_t mnamelen,
  * Return true if running ${.MAKE}
  * Bypassed if target is flagged .MAKE
  */
-static int
-is_submake(void *cmdp, void *gnp)
+static Boolean
+is_submake(const char *cmd, GNode *gn)
 {
     static const char *p_make = NULL;
     static size_t p_len;
-    char  *cmd = cmdp;
-    GNode *gn = gnp;
     char *mp = NULL;
     char *cp;
     char *cp2;
-    int rc = 0;				/* keep looking */
+    Boolean rc = FALSE;
 
     if (p_make == NULL) {
 	void *dontFreeIt;
@@ -342,23 +340,34 @@ is_submake(void *cmdp, void *gnp)
 	case ' ':
 	case '\t':
 	case '\n':
-	    rc = 1;
+	    rc = TRUE;
 	    break;
 	}
-	if (cp2 > cmd && rc > 0) {
+	if (cp2 > cmd && rc) {
 	    switch (cp2[-1]) {
 	    case ' ':
 	    case '\t':
 	    case '\n':
 		break;
 	    default:
-		rc = 0;			/* no match */
+		rc = FALSE;		/* no match */
 		break;
 	    }
 	}
     }
     free(mp);
     return rc;
+}
+
+static Boolean
+any_is_submake(GNode *gn)
+{
+    StringListNode *ln;
+
+    for (ln = gn->commands->first; ln != NULL; ln = ln->next)
+	if (is_submake(ln->datum, gn))
+	    return TRUE;
+    return FALSE;
 }
 
 typedef struct meta_file_s {
@@ -434,7 +443,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
     if ((gn->type & (OP_META|OP_SUBMAKE)) == OP_SUBMAKE) {
 	/* OP_SUBMAKE is a bit too aggressive */
-	if (Lst_ForEachUntil(gn->commands, is_submake, gn)) {
+	if (any_is_submake(gn)) {
 	    DEBUG1(META, "Skipping meta for %s: .SUBMAKE\n", gn->name);
 	    return FALSE;
 	}
@@ -945,15 +954,23 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
     return 0;
 }
 
-/* Lst_ForEachUntil wants 1 to stop search */
-static int
-prefix_match(void *p, void *q)
+static Boolean
+prefix_match(const char *prefix, const char *path)
 {
-    const char *prefix = p;
-    const char *path = q;
     size_t n = strlen(prefix);
 
     return strncmp(path, prefix, n) == 0;
+}
+
+static Boolean
+has_any_prefix(const char *path, StringList *prefixes)
+{
+    StringListNode *ln;
+
+    for (ln = prefixes->first; ln != NULL; ln = ln->next)
+	if (prefix_match(ln->datum, path))
+	    return TRUE;
+    return FALSE;
 }
 
 /* See if the path equals prefix or starts with "prefix/". */
@@ -977,7 +994,7 @@ meta_ignore(GNode *gn, const char *p)
 
     if (*p == '/') {
 	cached_realpath(p, fname); /* clean it up */
-	if (Lst_ForEachUntil(metaIgnorePaths, prefix_match, fname)) {
+	if (has_any_prefix(fname, metaIgnorePaths)) {
 #ifdef DEBUG_META_MODE
 	    DEBUG1(META, "meta_oodate: ignoring path: %s\n", p);
 #endif
@@ -1369,7 +1386,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (strncmp(p, cwd, cwdlen) == 0)
 			break;
 
-		    if (!Lst_ForEachUntil(metaBailiwick, prefix_match, p))
+		    if (!has_any_prefix(p, metaBailiwick))
 			break;
 
 		    /* tmpdir might be within */
