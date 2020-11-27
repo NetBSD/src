@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.93 2020/11/24 19:46:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.94 2020/11/27 08:07:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.93 2020/11/24 19:46:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.94 2020/11/27 08:07:26 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -196,20 +196,6 @@ Lst_FindDatum(List *list, const void *datum)
 			return ln;
 
 	return NULL;
-}
-
-int
-Lst_ForEachUntil(List *list, LstActionUntilProc proc, void *procData)
-{
-	ListNode *ln;
-	int result = 0;
-
-	for (ln = list->first; ln != NULL; ln = ln->next) {
-		result = proc(ln->datum, procData);
-		if (result != 0)
-			break;
-	}
-	return result;
 }
 
 /* Move all nodes from src to the end of dst.
