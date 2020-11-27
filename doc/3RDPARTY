@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1761 2020/11/20 13:33:07 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1762 2020/11/27 17:01:18 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,12 +41,12 @@
 #
 
 Package:	acpica
-Version:	20200717
-Current Vers:	20200717
+Version:	20201113
+Current Vers:	20201113
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2020-08-02
+Date:		2020-11-27
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho
