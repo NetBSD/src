@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.214 2020/11/25 10:44:53 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.214 2020/11/25 10:44:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3327,7 +3327,9 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 	memset(&sp->dns_addrs, 0, sizeof sp->dns_addrs);
 
 #ifdef INET
+	kpreempt_disable();
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
+	kpreempt_enable();
 #else
 	myaddr = hisaddr = 0;
 #endif
@@ -3809,10 +3811,13 @@ sppp_ipcp_scr(struct sppp *sp)
 
 #ifdef INET
 	if (ISSET(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS)) {
-		if (sp->ipcp.flags & IPCP_MYADDR_SEEN)
+		if (sp->ipcp.flags & IPCP_MYADDR_SEEN) {
 			ouraddr = sp->ipcp.req_myaddr;	/* not sure if this can ever happen */
-		else
+		} else {
+			kpreempt_disable();
 			sppp_get_ip_addrs(sp, &ouraddr, 0, 0);
+			kpreempt_enable();
+		}
 		opt[i++] = IPCP_OPT_ADDRESS;
 		opt[i++] = 6;
 		opt[i++] = ouraddr >> 24;
@@ -3879,7 +3884,9 @@ sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 	sp->ipv6cp.flags &= ~IPV6CP_MYIFID_SEEN;
 #endif
 
+	kpreempt_disable();
 	sppp_get_ip6_addrs(sp, &myaddr, &hisaddr, 0);
+	kpreempt_enable();
 	/*
 	 * If we don't have our address, this probably means our
 	 * interface doesn't want to talk IPv6 at all.  (This could
@@ -4308,7 +4315,10 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 	if (ISSET(sp->ipv6cp.opts, SPPP_IPV6CP_OPT_IFID)) {
+		kpreempt_disable();
 		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
+		kpreempt_enable();
+
 		opt[i++] = IPV6CP_OPT_IFID;
 		opt[i++] = 10;
 		memcpy(&opt[i], &ouraddr.s6_addr[8], 8);
@@ -6056,7 +6066,9 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		status->state = sp->scp[IDX_IPCP].state;
 		status->opts = sp->ipcp.opts;
 #ifdef INET
+		kpreempt_disable();
 		sppp_get_ip_addrs(sp, &myaddr, 0, 0);
+		kpreempt_enable();
 #else
 		myaddr = 0;
 #endif
