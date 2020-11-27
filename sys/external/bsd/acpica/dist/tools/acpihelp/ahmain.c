@@ -52,7 +52,7 @@ AhDisplayUsage (
     void);
 
 #define AH_UTILITY_NAME             "ACPI Help Utility"
-#define AH_SUPPORTED_OPTIONS        "adeghikmopstuv^"
+#define AH_SUPPORTED_OPTIONS        "adeghikmopstuvx^"
 
 
 #if defined ACPI_OPTION
@@ -89,6 +89,7 @@ AhDisplayUsage (
     ACPI_USAGE_TEXT ("\nACPI Values:\n");
     ACPI_OPTION ("-e [HexValue]",           "Decode ACPICA exception code");
     ACPI_OPTION ("-o [HexValue]",           "Decode hex AML opcode");
+    ACPI_OPTION ("-x [HexValue]",           "Decode iASL exception code");
 
     ACPI_USAGE_TEXT ("\nASL Names and Symbols (ACPI Source Language):\n");
     ACPI_OPTION ("-k [Name/Prefix | *]",    "Display ASL non-operator keyword(s)");
@@ -201,6 +202,11 @@ main (
         DecodeType = AH_DISPLAY_UUIDS;
         break;
 
+    case 'x':
+
+        DecodeType = AH_DECODE_ASL_EXCEPTION;
+        break;
+
     case 'v': /* -v: (Version): signon already emitted, just exit */
 
         switch (AcpiGbl_Optarg[0])
@@ -292,6 +298,11 @@ main (
     case AH_DISPLAY_DIRECTIVES:
 
         AhDisplayDirectives ();
+        break;
+
+    case AH_DECODE_ASL_EXCEPTION:
+
+        AhDecodeAslException (Name);
         break;
 
    default:
