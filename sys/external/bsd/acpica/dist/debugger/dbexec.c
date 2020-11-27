@@ -144,7 +144,8 @@ AcpiDbDeleteObjects (
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute a control method.
+ * DESCRIPTION: Execute a control method. Used to evaluate objects via the
+ *              "EXECUTE" or "EVALUATE" commands.
  *
  ******************************************************************************/
 
@@ -396,11 +397,12 @@ AcpiDbExecutionWalk (
 
     Status = AcpiEvaluateObject (Node, NULL, NULL, &ReturnObj);
 
+    AcpiGbl_MethodExecuting = FALSE;
+
     AcpiOsPrintf ("Evaluation of [%4.4s] returned %s\n",
         AcpiUtGetNodeName (Node),
         AcpiFormatException (Status));
 
-    AcpiGbl_MethodExecuting = FALSE;
     return (AE_OK);
 }
 
@@ -417,7 +419,8 @@ AcpiDbExecutionWalk (
  * RETURN:      None
  *
  * DESCRIPTION: Execute a control method. Name is relative to the current
- *              scope.
+ *              scope. Function used for the "EXECUTE", "EVALUATE", and
+ *              "ALL" commands
  *
  ******************************************************************************/
 
@@ -461,6 +464,12 @@ AcpiDbExecute (
         return;
     }
 
+    if ((Flags & EX_ALL) && (strlen (Name) > 4))
+    {
+        AcpiOsPrintf ("Input name (%s) must be a 4-char NameSeg\n", Name);
+        return;
+    }
+
     NameString = ACPI_ALLOCATE (strlen (Name) + 1);
     if (!NameString)
     {
@@ -480,13 +489,27 @@ AcpiDbExecute (
         return;
     }
 
-    AcpiGbl_DbMethodInfo.Name = NameString;
-    AcpiGbl_DbMethodInfo.Args = Args;
-    AcpiGbl_DbMethodInfo.Types = Types;
-    AcpiGbl_DbMethodInfo.Flags = Flags;
+    /* Command (ALL <nameseg>) to execute all methods of a particular name */
 
-    ReturnObj.Pointer = NULL;
-    ReturnObj.Length = ACPI_ALLOCATE_BUFFER;
+    else if (Flags & EX_ALL)
+    {
+        AcpiGbl_DbMethodInfo.Name = NameString;
+        ReturnObj.Pointer = NULL;
+        ReturnObj.Length = ACPI_ALLOCATE_BUFFER;
+        AcpiDbEvaluateAll (NameString);
+        ACPI_FREE (NameString);
+        return;
+    }
+    else
+    {
+        AcpiGbl_DbMethodInfo.Name = NameString;
+        AcpiGbl_DbMethodInfo.Args = Args;
+        AcpiGbl_DbMethodInfo.Types = Types;
+        AcpiGbl_DbMethodInfo.Flags = Flags;
+
+        ReturnObj.Pointer = NULL;
+        ReturnObj.Length = ACPI_ALLOCATE_BUFFER;
+    }
 
     Status = AcpiDbExecuteSetup (&AcpiGbl_DbMethodInfo);
     if (ACPI_FAILURE (Status))
@@ -547,6 +570,7 @@ AcpiDbExecute (
                 (UINT32) ReturnObj.Length);
 
             AcpiDbDumpExternalObject (ReturnObj.Pointer, 1);
+            AcpiOsPrintf ("\n");
 
             /* Dump a _PLD buffer if present */
 

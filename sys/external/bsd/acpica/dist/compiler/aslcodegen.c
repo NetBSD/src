@@ -592,7 +592,7 @@ CgUpdateHeader (
 
     Checksum = (UINT8) (0 - Sum);
 
-    /* Re-write the the checksum byte */
+    /* Re-write the checksum byte */
 
     FlSeekFile (ASL_FILE_AML_OUTPUT, Op->Asl.FinalAmlOffset +
         ACPI_OFFSET (ACPI_TABLE_HEADER, Checksum));
