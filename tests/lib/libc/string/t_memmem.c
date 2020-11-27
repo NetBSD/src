@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memmem.c,v 1.5 2020/11/27 15:37:06 gson Exp $ */
+/*	$NetBSD: t_memmem.c,v 1.6 2020/11/27 16:50:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -105,11 +105,12 @@ ATF_TC_BODY(memmem_oob, tc)
 {
 	static const char str[] = "abcde";
 	size_t pg = getpagesize();
-	char *src = mmap(NULL, pg, PROT_READ|PROT_WRITE,
+	char *src = mmap(NULL, 2 * pg, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 	ATF_CHECK(src != MAP_FAILED);
 	char *guard = mmap(src + pg, pg,
 	    PROT_NONE, MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, (off_t)0);
+printf("%p\n", guard);
 	for (size_t i = 2; i < 5; i++) {
 		char *search = src + pg - i;
 		char match[sizeof(str)];
