@@ -63,12 +63,17 @@ const AH_UUID  Gbl_AcpiUuids[] =
     {"PCI Host Bridge Device",      UUID_PCI_HOST_BRIDGE},
     {"HID I2C Device",              UUID_I2C_DEVICE},
     {"Power Button Device",         UUID_POWER_BUTTON},
+    {"Memory Device",               UUID_MEMORY_DEVICE},
+    {"Generic Buttons Device",      UUID_GENERIC_BUTTONS_DEVICE},
+    {"NVDIMM Root Device",          UUID_NVDIMM_ROOT_DEVICE},
+    {"Control Method Battery",      UUID_CONTROL_METHOD_BATTERY},
 
     {"[Interfaces]",                NULL},
     {"Device Labeling Interface",   UUID_DEVICE_LABELING},
     {"Physical Presence Interface", UUID_PHYSICAL_PRESENCE},
 
     {"[Non-volatile DIMM and NFIT table]",       NULL},
+    {"NVDIMM Device",               UUID_NFIT_DIMM},
     {"Volatile Memory Region",      UUID_VOLATILE_MEMORY},
     {"Persistent Memory Region",    UUID_PERSISTENT_MEMORY},
     {"NVDIMM Control Region",       UUID_CONTROL_REGION},
@@ -77,6 +82,10 @@ const AH_UUID  Gbl_AcpiUuids[] =
     {"Volatile Virtual CD",         UUID_VOLATILE_VIRTUAL_CD},
     {"Persistent Virtual Disk",     UUID_PERSISTENT_VIRTUAL_DISK},
     {"Persistent Virtual CD",       UUID_PERSISTENT_VIRTUAL_CD},
+    {"Microsoft NVDIMM Command set",UUID_NFIT_DIMM_N_MSFT},
+    {"HP NDIMM HPE1",               UUID_NFIT_DIMM_N_HPE1},
+    {"HP NDIMM HPE2",               UUID_NFIT_DIMM_N_HPE2},
+    {"Virtual NVDIMM",              UUID_NFIT_DIMM_N_HYPERV},
 
     {"[Processor Properties]",      NULL},
     {"Cache Properties",            UUID_CACHE_PROPERTIES},
@@ -88,7 +97,9 @@ const AH_UUID  Gbl_AcpiUuids[] =
     {"Battery Thermal Limit",       UUID_BATTERY_THERMAL_LIMIT},
     {"Thermal Extensions",          UUID_THERMAL_EXTENSIONS},
     {"Device Properties for _DSD",  UUID_DEVICE_PROPERTIES},
-
+    {"Device Graphs for _DSD",      UUID_DEVICE_GRAPHS},
+    {"Hierarchical Data Extension", UUID_HIERARCHICAL_DATA_EXTENSION},
+    {"ARM Coresight Graph",         UUID_CORESIGHT_GRAPH},
     {NULL, NULL}
 };
 
