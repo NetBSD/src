@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.86 2020/11/24 19:46:29 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.87 2020/11/27 08:07:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -104,8 +104,6 @@ struct List {
 
 /* Free the datum of a node, called before freeing the node itself. */
 typedef void LstFreeProc(void *);
-/* An action for Lst_ForEachUntil and Lst_ForEachUntilConcurrent. */
-typedef int LstActionUntilProc(void *datum, void *args);
 
 /* Create or destroy a list */
 
@@ -145,14 +143,6 @@ void Lst_MoveAll(List *, List *);
 void LstNode_Set(ListNode *, void *);
 /* Set the value of the node to NULL. Having NULL in a list is unusual. */
 void LstNode_SetNull(ListNode *);
-
-/* Iterating over a list, using a callback function */
-
-/* Run the action for each datum of the list, until the action returns
- * non-zero.
- *
- * During this iteration, the list must not be modified structurally. */
-int Lst_ForEachUntil(List *, LstActionUntilProc, void *);
 
 /* Using the list as a queue */
 

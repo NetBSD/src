@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.217 2020/11/24 23:13:09 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.218 2020/11/27 08:07:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.217 2020/11/24 23:13:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.218 2020/11/27 08:07:26 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1032,9 +1032,9 @@ MakePrintStatusOrder(GNode *gn)
 
 static void MakePrintStatusList(GNodeList *, int *);
 
-/* Print the status of a top-level node, viz. it being up-to-date already
+/*
+ * Print the status of a top-level node, viz. it being up-to-date already
  * or not created due to an error in a lower level.
- * Callback function for Make_Run via Lst_ForEachUntil.
  */
 static Boolean
 MakePrintStatus(GNode *gn, int *errors)
