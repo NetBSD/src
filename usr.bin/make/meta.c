@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.149 2020/11/27 08:07:26 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.150 2020/11/27 08:18:14 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -370,32 +370,27 @@ any_is_submake(GNode *gn)
     return FALSE;
 }
 
-typedef struct meta_file_s {
-    FILE *fp;
-    GNode *gn;
-} meta_file_t;
-
 static void
-printCMD(const char *cmd, meta_file_t *mfp)
+printCMD(const char *cmd, FILE *fp, GNode *gn)
 {
     char *cmd_freeIt = NULL;
 
     if (strchr(cmd, '$')) {
-	(void)Var_Subst(cmd, mfp->gn, VARE_WANTRES, &cmd_freeIt);
+	(void)Var_Subst(cmd, gn, VARE_WANTRES, &cmd_freeIt);
 	/* TODO: handle errors */
 	cmd = cmd_freeIt;
     }
-    fprintf(mfp->fp, "CMD %s\n", cmd);
+    fprintf(fp, "CMD %s\n", cmd);
     free(cmd_freeIt);
 }
 
 static void
-printCMDs(GNode *gn, meta_file_t *mf)
+printCMDs(GNode *gn, FILE *fp)
 {
     GNodeListNode *ln;
 
     for (ln = gn->commands->first; ln != NULL; ln = ln->next)
-	printCMD(ln->datum, mf);
+	printCMD(ln->datum, fp, gn);
 }
 
 /*
@@ -474,7 +469,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
 static FILE *
 meta_create(BuildMon *pbm, GNode *gn)
 {
-    meta_file_t mf;
+    FILE *fp;
     char buf[MAXPATHLEN];
     char objdir[MAXPATHLEN];
     char **ptr;
@@ -484,7 +479,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     const char *cp;
     void *objdir_freeIt;
 
-    mf.fp = NULL;
+    fp = NULL;
 
     dname = Var_Value(".OBJDIR", gn, &objdir_freeIt);
     tname = GNode_VarTarget(gn);
@@ -524,28 +519,26 @@ meta_create(BuildMon *pbm, GNode *gn)
     DEBUG1(META, "meta_create: %s\n", fname);
 #endif
 
-    if ((mf.fp = fopen(fname, "w")) == NULL)
+    if ((fp = fopen(fname, "w")) == NULL)
 	err(1, "Could not open meta file '%s'", fname);
 
-    fprintf(mf.fp, "# Meta data file %s\n", fname);
+    fprintf(fp, "# Meta data file %s\n", fname);
 
-    mf.gn = gn;
+    printCMDs(gn, fp);
 
-    printCMDs(gn, &mf);
-
-    fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof buf));
-    fprintf(mf.fp, "TARGET %s\n", tname);
+    fprintf(fp, "CWD %s\n", getcwd(buf, sizeof buf));
+    fprintf(fp, "TARGET %s\n", tname);
     cp = GNode_VarOodate(gn);
     if (cp && *cp) {
-	    fprintf(mf.fp, "OODATE %s\n", cp);
+	fprintf(fp, "OODATE %s\n", cp);
     }
     if (metaEnv) {
 	for (ptr = environ; *ptr != NULL; ptr++)
-	    fprintf(mf.fp, "ENV %s\n", *ptr);
+	    fprintf(fp, "ENV %s\n", *ptr);
     }
 
-    fprintf(mf.fp, "-- command output --\n");
-    fflush(mf.fp);
+    fprintf(fp, "-- command output --\n");
+    fflush(fp);
 
     Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
     Var_Append(".MAKE.META.CREATED", fname, VAR_GLOBAL);
@@ -557,7 +550,7 @@ meta_create(BuildMon *pbm, GNode *gn)
  out:
     bmake_free(objdir_freeIt);
 
-    return mf.fp;
+    return fp;
 }
 
 static Boolean
