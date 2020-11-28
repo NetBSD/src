@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.226 2020/11/28 22:59:53 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.227 2020/11/28 23:22:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.226 2020/11/28 22:59:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.227 2020/11/28 23:22:14 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -218,14 +218,14 @@ SearchPath *dirSearchPath;	/* main search path */
 
 /* A list of cached directories, with fast lookup by directory name. */
 typedef struct OpenDirs {
-	CachedDirList *list;
+	CachedDirList list;
 	HashTable /* of CachedDirListNode */ table;
 } OpenDirs;
 
 static void
 OpenDirs_Init(OpenDirs *odirs)
 {
-	odirs->list = Lst_New();
+	Lst_Init(&odirs->list);
 	HashTable_Init(&odirs->table);
 }
 
@@ -235,14 +235,14 @@ static void Dir_Destroy(CachedDir *);
 static void
 OpenDirs_Done(OpenDirs *odirs)
 {
-	CachedDirListNode *ln = odirs->list->first;
+	CachedDirListNode *ln = odirs->list.first;
 	while (ln != NULL) {
 		CachedDirListNode *next = ln->next;
 		CachedDir *dir = ln->datum;
 		Dir_Destroy(dir);	/* removes the dir from odirs->list */
 		ln = next;
 	}
-	Lst_Free(odirs->list);
+	Lst_Done(&odirs->list);
 	HashTable_Done(&odirs->table);
 }
 #endif
@@ -259,8 +259,8 @@ OpenDirs_Add(OpenDirs *odirs, CachedDir *cdir)
 {
 	if (HashTable_FindEntry(&odirs->table, cdir->name) != NULL)
 		return;
-	Lst_Append(odirs->list, cdir);
-	HashTable_Set(&odirs->table, cdir->name, odirs->list->last);
+	Lst_Append(&odirs->list, cdir);
+	HashTable_Set(&odirs->table, cdir->name, odirs->list.last);
 }
 
 static void
@@ -272,7 +272,7 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
 		return;
 	ln = HashEntry_Get(he);
 	HashTable_DeleteEntry(&odirs->table, he);
-	Lst_Remove(odirs->list, ln);
+	Lst_Remove(&odirs->list, ln);
 }
 
 static OpenDirs openDirs;	/* all cached directories */
@@ -1610,7 +1610,7 @@ Dir_PrintDirectories(void)
 	    percentage(hits, hits + bigmisses + nearmisses));
 	debug_printf("# %-20s referenced\thits\n", "directory");
 
-	for (ln = openDirs.list->first; ln != NULL; ln = ln->next) {
+	for (ln = openDirs.list.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		debug_printf("# %-20s %10d\t%4d\n",
 			     dir->name, dir->refCount, dir->hits);
