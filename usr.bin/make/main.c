@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.481 2020/11/28 08:40:05 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.482 2020/11/28 10:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.481 2020/11/28 08:40:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.482 2020/11/28 10:00:25 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1753,7 +1753,7 @@ char *
 Cmd_Exec(const char *cmd, const char **errfmt)
 {
 	const char *args[4];	/* Args for invoking the shell */
-	int fds[2];		/* Pipe streams */
+	int pipefds[2];
 	int cpid;		/* Child PID */
 	int pid;		/* PID from wait() */
 	int status;		/* command exit status */
@@ -1779,7 +1779,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	/*
 	 * Open a pipe for fetching its output
 	 */
-	if (pipe(fds) == -1) {
+	if (pipe(pipefds) == -1) {
 		*errfmt = "Couldn't create pipe for \"%s\"";
 		goto bad;
 	}
@@ -1789,15 +1789,15 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	 */
 	switch (cpid = vFork()) {
 	case 0:
-		(void)close(fds[0]);	/* Close input side of pipe */
+		(void)close(pipefds[0]); /* Close input side of pipe */
 
 		/*
 		 * Duplicate the output stream to the shell's output, then
 		 * shut the extra thing down. Note we don't fetch the error
 		 * stream...why not? Why?
 		 */
-		(void)dup2(fds[1], 1);
-		(void)close(fds[1]);
+		(void)dup2(pipefds[1], 1);
+		(void)close(pipefds[1]);
 
 		Var_ExportVars();
 
@@ -1810,14 +1810,14 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		goto bad;
 
 	default:
-		(void)close(fds[1]);	/* No need for the writing half */
+		(void)close(pipefds[1]); /* No need for the writing half */
 
 		savederr = 0;
 		Buf_Init(&buf);
 
 		do {
 			char result[BUFSIZ];
-			bytes_read = read(fds[0], result, sizeof result);
+			bytes_read = read(pipefds[0], result, sizeof result);
 			if (bytes_read > 0)
 				Buf_AddBytes(&buf, result, (size_t)bytes_read);
 		} while (bytes_read > 0 ||
@@ -1825,7 +1825,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		if (bytes_read == -1)
 			savederr = errno;
 
-		(void)close(fds[0]);	/* Close the input side of the pipe. */
+		(void)close(pipefds[0]); /* Close the input side of the pipe. */
 
 		/* Wait for the process to exit. */
 		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
