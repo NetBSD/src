@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.480 2020/11/25 00:50:44 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.481 2020/11/28 08:40:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.480 2020/11/25 00:50:44 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.481 2020/11/28 08:40:05 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -146,7 +146,7 @@ pid_t myPid;
 int makelevel;
 
 Boolean forceJobs = FALSE;
-static int errors = 0;
+static int main_errors = 0;
 static HashTable cached_realpaths;
 
 /*
@@ -1654,7 +1654,7 @@ main_CleanUp(void)
 static int
 main_Exit(Boolean outOfDate)
 {
-	if (opts.lint && (errors > 0 || Parse_GetFatals() > 0))
+	if (opts.lint && (main_errors > 0 || Parse_GetFatals() > 0))
 		return 2;	/* Not 1 so -q can distinguish error */
 	return outOfDate ? 1 : 0;
 }
@@ -1880,7 +1880,7 @@ Error(const char *fmt, ...)
 			break;
 		err_file = stderr;
 	}
-	errors++;
+	main_errors++;
 }
 
 /* Wait for any running jobs to finish, then produce an error message,
