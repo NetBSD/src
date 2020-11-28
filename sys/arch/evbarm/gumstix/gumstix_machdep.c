@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.69 2020/10/30 18:54:37 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.70 2020/11/28 14:33:56 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -540,25 +540,16 @@ gumstix_mpstart(void)
 	dsb(sy);
 	__asm __volatile("sev" ::: "memory");
 
-	for (int loop = 0; loop < 16; loop++) {
-		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
-		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+	u_int i;
+	for (i = 0x10000000; i > 0; i--) {
+		if (cpu_hatched_p(cpuindex))
 			break;
-		int timo = 1500000;
-		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
-			if (--timo == 0)
-				break;
-	}
-	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if (cpu_hatched_p(i)) {
-			printf("%s: warning: cpu%zu failed to hatch\n",
-			    __func__, i);
-		}
 	}
 
-	VPRINTF(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
+	if (i == 0) {
+		aprint_error("cpu%d: WARNING: AP failed to start\n",
+		    cpuindex);
+	}
 #endif
 }
 
