@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.22 2019/07/16 14:41:48 skrll Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.23 2020/11/28 14:35:53 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.22 2019/07/16 14:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.23 2020/11/28 14:35:53 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -182,15 +182,8 @@ extern char _end[];
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
-/*
- * Macros to translate between physical and virtual for a subset of the
- * kernel address space.  *Not* for general use.
- */
 #define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE))
+u_long kern_vtopdiff = 0;
 
 /* Prototypes */
 
@@ -361,6 +354,8 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
+
+	kern_vtopdiff = KERNEL_BASE - KERNEL_BASE_PHYS;
 
 	/*
 	 * Set up the variables that define the availability of physical
@@ -800,16 +795,16 @@ setup_real_page_tables(void)
 	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
 	    (int)physmem);
 	printf(mem_fmt, "text section",
-	       KERN_VTOPHYS(KERNEL_BASE), KERN_VTOPHYS(etext-1),
+	       KERN_VTOPHYS(KERNEL_BASE), KERN_VTOPHYS((vaddr_t)etext-1),
 	       (vaddr_t)KERNEL_BASE, (vaddr_t)etext-1,
 	       (int)(textsize / PAGE_SIZE));
 	printf(mem_fmt, "data section",
-	       KERN_VTOPHYS(__data_start), KERN_VTOPHYS(_edata),
+	       KERN_VTOPHYS((vaddr_t)__data_start), KERN_VTOPHYS((vaddr_t)_edata),
 	       (vaddr_t)__data_start, (vaddr_t)_edata,
 	       (int)((round_page((vaddr_t)_edata)
 		      - trunc_page((vaddr_t)__data_start)) / PAGE_SIZE));
 	printf(mem_fmt, "bss section",
-	       KERN_VTOPHYS(__bss_start), KERN_VTOPHYS(__bss_end__),
+	       KERN_VTOPHYS((vaddr_t)__bss_start), KERN_VTOPHYS((vaddr_t)__bss_end__),
 	       (vaddr_t)__bss_start, (vaddr_t)__bss_end__,
 	       (int)((round_page((vaddr_t)__bss_end__)
 		      - trunc_page((vaddr_t)__bss_start)) / PAGE_SIZE));
