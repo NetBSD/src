@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.696 2020/11/24 21:42:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.697 2020/11/28 10:07:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.696 2020/11/24 21:42:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.697 2020/11/28 10:07:26 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1126,9 +1126,9 @@ ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 static void
 ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-    const char *dot = strrchr(word, '.');
-    if (dot != NULL)
-	SepBuf_AddStr(buf, dot + 1);
+    const char *lastDot = strrchr(word, '.');
+    if (lastDot != NULL)
+	SepBuf_AddStr(buf, lastDot + 1);
 }
 
 /* Callback for ModifyWords to implement the :R modifier.
