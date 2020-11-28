@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.225 2020/11/28 22:56:01 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.226 2020/11/28 22:59:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.225 2020/11/28 22:56:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.226 2020/11/28 22:59:53 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -229,7 +229,7 @@ OpenDirs_Init(OpenDirs *odirs)
 	HashTable_Init(&odirs->table);
 }
 
-static void Dir_Destroy(void *);
+static void Dir_Destroy(CachedDir *);
 
 #ifdef CLEANUP
 static void
@@ -1537,9 +1537,8 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
  *	dirp		The directory descriptor to nuke
  */
 static void
-Dir_Destroy(void *dirp)
+Dir_Destroy(CachedDir *dir)
 {
-	CachedDir *dir = dirp;
 	dir->refCount--;
 
 	if (dir->refCount == 0) {
