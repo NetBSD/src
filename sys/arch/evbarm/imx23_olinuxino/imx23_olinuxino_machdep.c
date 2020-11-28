@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.10 2020/11/26 12:56:34 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.11 2020/11/28 14:02:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ initarm(void *arg)
 	if (set_cpufuncs())
 		panic("set_cpufuncs failed");
 
-	kern_vtopdiff = KERNEL_BASE + KERNEL_BASE_PHYS;
+	kern_vtopdiff = KERNEL_BASE - KERNEL_BASE_PHYS;
 
 	pmap_devmap_register(devmap);
 	consinit();

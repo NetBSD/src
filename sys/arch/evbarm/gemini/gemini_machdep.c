@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.32 2020/11/26 12:56:34 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.33 2020/11/28 14:02:30 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.32 2020/11/26 12:56:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.33 2020/11/28 14:02:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -630,7 +630,7 @@ initarm(void *arg)
 	bootconfig.dram[0].address = physical_start;
 	bootconfig.dram[0].pages = physmem;
 
-	kern_vtopdiff = KERNEL_BASE + GEMINI_DRAM_BASE;
+	kern_vtopdiff = KERNEL_BASE - GEMINI_DRAM_BASE;
 
 	/*
 	 * Our kernel is at the beginning of memory, so set our free space to
