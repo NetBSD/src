@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.455 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.456 2020/11/28 19:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.455 2020/11/28 19:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.456 2020/11/28 19:16:53 rillig Exp $");
 
 /* types and constants */
 
@@ -927,8 +927,8 @@ ParseDoSrcOrder(const char *src)
     if (doing_depend)
 	ParseMark(gn);
     if (order_pred != NULL) {
-	Lst_Append(order_pred->order_succ, gn);
-	Lst_Append(gn->order_pred, order_pred);
+	Lst_Append(&order_pred->order_succ, gn);
+	Lst_Append(&gn->order_pred, order_pred);
 	if (DEBUG(PARSE)) {
 	    debug_printf("# %s: added Order dependency %s - %s\n",
 			 __func__, order_pred->name, gn->name);

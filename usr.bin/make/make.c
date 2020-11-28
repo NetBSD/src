@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.220 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.221 2020/11/28 19:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.220 2020/11/28 19:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.221 2020/11/28 19:16:53 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -566,7 +566,7 @@ IsWaitingForOrder(GNode *gn)
 {
 	GNodeListNode *ln;
 
-	for (ln = gn->order_pred->first; ln != NULL; ln = ln->next) {
+	for (ln = gn->order_pred.first; ln != NULL; ln = ln->next) {
 		GNode *ogn = ln->datum;
 
 		if (GNode_IsDone(ogn) || !(ogn->flags & REMAKE))
@@ -588,7 +588,7 @@ ScheduleOrderSuccessors(GNode *gn)
 	GNodeListNode *toBeMadeNext = toBeMade->first;
 	GNodeListNode *ln;
 
-	for (ln = gn->order_succ->first; ln != NULL; ln = ln->next)
+	for (ln = gn->order_succ.first; ln != NULL; ln = ln->next)
 		if (MakeBuildParent(ln->datum, toBeMadeNext) != 0)
 			break;
 }
@@ -1026,7 +1026,7 @@ static void
 MakePrintStatusOrder(GNode *gn)
 {
 	GNodeListNode *ln;
-	for (ln = gn->order_pred->first; ln != NULL; ln = ln->next)
+	for (ln = gn->order_pred.first; ln != NULL; ln = ln->next)
 		MakePrintStatusOrderNode(ln->datum, gn);
 }
 
