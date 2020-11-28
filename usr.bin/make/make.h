@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.225 2020/11/28 19:22:32 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.226 2020/11/28 23:32:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -635,7 +635,7 @@ typedef struct CmdOpts {
 	Boolean checkEnvFirst;
 
 	/* -f: the makefiles to read */
-	StringList *makefiles;
+	StringList makefiles;
 
 	/* -i: if true, ignore all errors from shell commands */
 	Boolean ignoreErrors;
