@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.180 2020/11/28 19:26:10 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.181 2020/11/28 23:13:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.180 2020/11/28 19:26:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.181 2020/11/28 23:13:28 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -344,11 +344,11 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 			free(buf);
 
 		} else if (Dir_HasWildcards(memName)) {
-			StringList *members = Lst_New();
-			Dir_Expand(memName, dirSearchPath, members);
+			StringList members = LST_INIT;
+			Dir_Expand(memName, dirSearchPath, &members);
 
-			while (!Lst_IsEmpty(members)) {
-				char *member = Lst_Dequeue(members);
+			while (!Lst_IsEmpty(&members)) {
+				char *member = Lst_Dequeue(&members);
 				char *fullname = str_concat4(libName, "(",
 							     member, ")");
 				free(member);
@@ -359,7 +359,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 				gn->type |= OP_ARCHV;
 				Lst_Append(nodeLst, gn);
 			}
-			Lst_Free(members);
+			Lst_Done(&members);
 
 		} else {
 			char *fullname = str_concat4(libName, "(", memName,
