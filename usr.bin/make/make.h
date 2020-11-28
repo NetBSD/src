@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.226 2020/11/28 23:32:22 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.227 2020/11/28 23:35:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -671,7 +671,7 @@ typedef struct CmdOpts {
 	/* -[Vv]: print expanded or unexpanded selected variables */
 	PrintVarsMode printVars;
 	/* -[Vv]: the variables to print */
-	StringList *variables;
+	StringList variables;
 
 	/* -W: if true, makefile parsing warnings are treated as errors */
 	Boolean parseWarnFatal;

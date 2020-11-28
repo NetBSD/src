@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.484 2020/11/28 23:32:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.485 2020/11/28 23:35:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.484 2020/11/28 23:32:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.485 2020/11/28 23:35:44 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -500,7 +500,7 @@ MainParseArg(char c, const char *argvalue)
 	case 'V':
 	case 'v':
 		opts.printVars = c == 'v' ? PVM_EXPANDED : PVM_UNEXPANDED;
-		Lst_Append(opts.variables, bmake_strdup(argvalue));
+		Lst_Append(&opts.variables, bmake_strdup(argvalue));
 		/* XXX: Why always -V? */
 		Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 		Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
@@ -904,7 +904,7 @@ doPrintVars(void)
 	else
 		expandVars = GetBooleanVar(".MAKE.EXPAND_VARIABLES", FALSE);
 
-	for (ln = opts.variables->first; ln != NULL; ln = ln->next) {
+	for (ln = opts.variables.first; ln != NULL; ln = ln->next) {
 		const char *varname = ln->datum;
 		PrintVar(varname, expandVars);
 	}
@@ -1137,7 +1137,7 @@ CmdOpts_Init(void)
 	opts.beSilent = FALSE;		/* Print commands as executed */
 	opts.touchFlag = FALSE;		/* Actually update targets */
 	opts.printVars = PVM_NONE;
-	opts.variables = Lst_New();
+	Lst_Init(&opts.variables);
 	opts.parseWarnFatal = FALSE;
 	opts.enterFlag = FALSE;
 	opts.varNoExportEnv = FALSE;
@@ -1621,7 +1621,7 @@ static void
 main_CleanUp(void)
 {
 #ifdef CLEANUP
-	Lst_Destroy(opts.variables, free);
+	Lst_DoneCall(&opts.variables, free);
 	/*
 	 * Don't free the actual strings from opts.makefiles, they may be
 	 * used in GNodes.
