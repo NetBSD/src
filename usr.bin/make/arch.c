@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.179 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.180 2020/11/28 19:26:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,12 +125,12 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.179 2020/11/28 19:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.180 2020/11/28 19:26:10 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
 
-static ArchList *archives;	/* The archives we've already examined */
+static ArchList archives;	/* The archives we've already examined */
 
 typedef struct Arch {
 	char *name;		/* Name of archive */
@@ -426,7 +426,7 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 	if (lastSlash != NULL)
 		member = lastSlash + 1;
 
-	for (ln = archives->first; ln != NULL; ln = ln->next) {
+	for (ln = archives.first; ln != NULL; ln = ln->next) {
 		const Arch *a = ln->datum;
 		if (strcmp(a->name, archive) == 0)
 			break;
@@ -579,7 +579,7 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 
 	fclose(arch);
 
-	Lst_Append(archives, ar);
+	Lst_Append(&archives, ar);
 
 	/*
 	 * Now that the archive has been read and cached, we can look into
@@ -1063,7 +1063,7 @@ Arch_LibOODate(GNode *gn)
 void
 Arch_Init(void)
 {
-	archives = Lst_New();
+	Lst_Init(&archives);
 }
 
 /* Clean up the archives module. */
@@ -1071,7 +1071,7 @@ void
 Arch_End(void)
 {
 #ifdef CLEANUP
-	Lst_Destroy(archives, ArchFree);
+	Lst_DoneCall(&archives, ArchFree);
 #endif
 }
 

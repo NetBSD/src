@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.95 2020/11/28 18:55:52 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.96 2020/11/28 19:26:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.95 2020/11/28 18:55:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.96 2020/11/28 19:26:10 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -68,6 +68,18 @@ Lst_Done(List *list)
 	}
 }
 
+void
+Lst_DoneCall(List *list, LstFreeProc freeProc)
+{
+	ListNode *ln, *next;
+
+	for (ln = list->first; ln != NULL; ln = next) {
+		next = ln->next;
+		freeProc(ln->datum);
+		free(ln);
+	}
+}
+
 /* Free a list and all its nodes. The node data are not freed though. */
 void
 Lst_Free(List *list)
@@ -82,14 +94,7 @@ Lst_Free(List *list)
 void
 Lst_Destroy(List *list, LstFreeProc freeProc)
 {
-	ListNode *ln, *next;
-
-	for (ln = list->first; ln != NULL; ln = next) {
-		next = ln->next;
-		freeProc(ln->datum);
-		free(ln);
-	}
-
+	Lst_DoneCall(list, freeProc);
 	free(list);
 }
 
