@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.35 2020/11/23 18:24:05 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.36 2020/11/28 22:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -102,11 +102,11 @@ char *Dir_FindFile(const char *, SearchPath *);
 char *Dir_FindHereOrAbove(const char *, const char *);
 void Dir_UpdateMTime(GNode *, Boolean);
 CachedDir *Dir_AddDir(SearchPath *, const char *);
-char *Dir_MakeFlags(const char *, SearchPath *);
-void Dir_ClearPath(SearchPath *);
-void Dir_Concat(SearchPath *, SearchPath *);
+char *SearchPath_ToFlags(const char *, SearchPath *);
+void SearchPath_Clear(SearchPath *);
+void SearchPath_AddAll(SearchPath *, SearchPath *);
 void Dir_PrintDirectories(void);
-void Dir_PrintPath(SearchPath *);
+void SearchPath_Print(SearchPath *);
 void Dir_Destroy(void *);
 SearchPath *Dir_CopyDirSearchPath(void);
 

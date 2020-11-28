@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.313 2020/11/28 19:22:32 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.314 2020/11/28 22:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.313 2020/11/28 19:22:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.314 2020/11/28 22:13:56 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -467,7 +467,7 @@ Suff_ClearSuffixes(void)
 	SuffFree(nullSuff);
     emptySuff = nullSuff = Suffix_New("");
 
-    Dir_Concat(nullSuff->searchPath, dirSearchPath);
+    SearchPath_AddAll(nullSuff->searchPath, dirSearchPath);
     nullSuff->flags = SUFF_NULL;
 }
 
@@ -834,7 +834,7 @@ void
 Suff_DoPaths(void)
 {
     SuffixListNode *ln;
-    char *ptr;
+    char *flags;
     SearchPath *inIncludes; /* Cumulative .INCLUDES path */
     SearchPath *inLibs;	    /* Cumulative .LIBS path */
 
@@ -846,23 +846,26 @@ Suff_DoPaths(void)
 	if (!Lst_IsEmpty(suff->searchPath)) {
 #ifdef INCLUDES
 	    if (suff->flags & SUFF_INCLUDE)
-		Dir_Concat(inIncludes, suff->searchPath);
+		SearchPath_AddAll(inIncludes, suff->searchPath);
 #endif
 #ifdef LIBRARIES
 	    if (suff->flags & SUFF_LIBRARY)
-		Dir_Concat(inLibs, suff->searchPath);
+		SearchPath_AddAll(inLibs, suff->searchPath);
 #endif
-	    Dir_Concat(suff->searchPath, dirSearchPath);
+	    SearchPath_AddAll(suff->searchPath, dirSearchPath);
 	} else {
 	    Lst_Destroy(suff->searchPath, Dir_Destroy);
 	    suff->searchPath = Dir_CopyDirSearchPath();
 	}
     }
 
-    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
-    free(ptr);
-    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", inLibs), VAR_GLOBAL);
-    free(ptr);
+    flags = SearchPath_ToFlags("-I", inIncludes);
+    Var_Set(".INCLUDES", flags, VAR_GLOBAL);
+    free(flags);
+
+    flags = SearchPath_ToFlags("-L", inLibs);
+    Var_Set(".LIBS", flags, VAR_GLOBAL);
+    free(flags);
 
     Lst_Destroy(inIncludes, Dir_Destroy);
     Lst_Destroy(inLibs, Dir_Destroy);
@@ -2120,7 +2123,7 @@ Suffix_Print(Suffix *suff)
     PrintSuffNames("From", suff->children);
 
     debug_printf("#\tSearch Path: ");
-    Dir_PrintPath(suff->searchPath);
+    SearchPath_Print(suff->searchPath);
     debug_printf("\n");
 }
 
