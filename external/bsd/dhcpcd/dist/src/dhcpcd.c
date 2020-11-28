@@ -841,13 +841,17 @@ dhcpcd_initduid(struct dhcpcd_ctx *ctx, struct interface *ifp)
 {
 	char buf[DUID_LEN * 3];
 
-	if (ctx->duid != NULL)
+	if (ctx->duid != NULL) {
+		if (ifp == NULL)
+			goto log;
 		return;
+	}
 
 	duid_init(ctx, ifp);
 	if (ctx->duid == NULL)
 		return;
 
+log:
 	loginfox("DUID %s",
 	    hwaddr_ntoa(ctx->duid, ctx->duid_len, buf, sizeof(buf)));
 }
@@ -991,17 +995,20 @@ void
 dhcpcd_activateinterface(struct interface *ifp, unsigned long long options)
 {
 
-	if (!ifp->active) {
-		ifp->active = IF_ACTIVE;
-		dhcpcd_initstate2(ifp, options);
-		/* It's possible we might not have been able to load
-		 * a config. */
-		if (ifp->active) {
-			configure_interface1(ifp);
-			run_preinit(ifp);
-			dhcpcd_prestartinterface(ifp);
-		}
-	}
+	if (ifp->active)
+		return;
+
+	ifp->active = IF_ACTIVE;
+	dhcpcd_initstate2(ifp, options);
+
+	/* It's possible we might not have been able to load
+	 * a config. */
+	if (!ifp->active)
+		return;
+
+	configure_interface1(ifp);
+	run_preinit(ifp);
+	dhcpcd_prestartinterface(ifp);
 }
 
 int
@@ -1880,6 +1887,7 @@ main(int argc, char **argv, char **envp)
 		logopts |= LOGERR_ERR;
 
 	i = 0;
+
 	while ((opt = getopt_long(argc, argv,
 	    ctx.options & DHCPCD_PRINT_PIDFILE ? NOERR_IF_OPTS : IF_OPTS,
 	    cf_options, &oi)) != -1)
@@ -1954,6 +1962,9 @@ main(int argc, char **argv, char **envp)
 		}
 	}
 
+	if (optind != argc - 1)
+		ctx.options |= DHCPCD_MASTER;
+
 	logsetopts(logopts);
 	logopen(ctx.logfile);
 
@@ -1970,6 +1981,7 @@ main(int argc, char **argv, char **envp)
 			goto printpidfile;
 		goto exit_failure;
 	}
+
 	opt = add_options(&ctx, NULL, ifo, argc, argv);
 	if (opt != 1) {
 		if (ctx.options & DHCPCD_PRINT_PIDFILE)
@@ -2010,6 +2022,7 @@ main(int argc, char **argv, char **envp)
 		goto exit_success;
 	}
 	ctx.options |= ifo->options;
+
 	if (i == 1 || i == 3) {
 		if (i == 1)
 			ctx.options |= DHCPCD_TEST;
@@ -2527,7 +2540,7 @@ exit_failure:
 	i = EXIT_FAILURE;
 
 exit1:
-	if (control_stop(&ctx) == -1)
+	if (!(ctx.options & DHCPCD_TEST) && control_stop(&ctx) == -1)
 		logerr("%s: control_stop", __func__);
 	if (ifaddrs != NULL) {
 #ifdef PRIVSEP_GETIFADDRS
