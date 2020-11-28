@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.224 2020/11/28 19:20:03 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.225 2020/11/28 19:22:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -383,7 +383,7 @@ typedef struct GNode {
 	/* The GNodes for which this node is an implied source. May be empty.
 	 * For example, when there is an inference rule for .c.o, the node for
 	 * file.c has the node for file.o in this list. */
-	GNodeList *implicitParents;
+	GNodeList implicitParents;
 
 	/* The nodes that depend on this one, or in other words, the nodes for
 	 * which this is a source. */

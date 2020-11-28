@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.145 2020/11/28 19:20:04 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.146 2020/11/28 19:22:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.145 2020/11/28 19:20:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.146 2020/11/28 19:22:32 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -201,7 +201,7 @@ GNode_New(const char *name)
     gn->unmade = 0;
     gn->mtime = 0;
     gn->youngestChild = NULL;
-    gn->implicitParents = Lst_New();
+    Lst_Init(&gn->implicitParents);
     Lst_Init(&gn->parents);
     Lst_Init(&gn->children);
     Lst_Init(&gn->order_pred);
@@ -234,7 +234,7 @@ GNode_Free(void *gnp)
     free(gn->uname);
     free(gn->path);
     /* gn->youngestChild is not owned by this node. */
-    Lst_Free(gn->implicitParents); /* Do not free the nodes themselves, */
+    Lst_Done(&gn->implicitParents); /* Do not free the nodes themselves, */
     Lst_Done(&gn->parents);	/* as they are not owned by this node. */
     Lst_Done(&gn->children);	/* likewise */
     Lst_Done(&gn->order_pred);	/* likewise */
@@ -503,7 +503,7 @@ Targ_PrintNode(GNode *gn, int pass)
 		    debug_printf("# unmade\n");
 		}
 	    }
-	    PrintNodeNamesLine("implicit parents", gn->implicitParents);
+	    PrintNodeNamesLine("implicit parents", &gn->implicitParents);
 	} else {
 	    if (gn->unmade)
 		debug_printf("# %d unmade children\n", gn->unmade);
