@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.459 2020/11/28 22:56:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.460 2020/11/28 23:39:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.459 2020/11/28 22:56:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.460 2020/11/28 23:39:58 rillig Exp $");
 
 /* types and constants */
 
@@ -907,7 +907,7 @@ ParseDoSrcMain(const char *src)
      * See ParseDoDependencyTargetSpecial, branch SP_MAIN.
      * See unit-tests/cond-func-make-main.mk.
      */
-    Lst_Append(opts.create, bmake_strdup(src));
+    Lst_Append(&opts.create, bmake_strdup(src));
     /*
      * Add the name to the .TARGETS variable as well, so the user can
      * employ that, if desired.
@@ -1091,7 +1091,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
 	break;
     case SP_MAIN:
 	/* Allow targets from the command line to override the .MAIN node. */
-	if (!Lst_IsEmpty(opts.create))
+	if (!Lst_IsEmpty(&opts.create))
 	    *inout_specType = SP_NOT;
 	break;
     case SP_BEGIN:
