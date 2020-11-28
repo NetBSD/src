@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.220 2020/11/28 09:45:01 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.221 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -421,7 +421,7 @@ typedef struct GNode {
 	HashTable /* of Var pointer */ vars;
 
 	/* The commands to be given to a shell to create this target. */
-	StringList *commands;
+	StringList commands;
 
 	/* Suffix for the node (determined by Suff_FindDeps and opaque to
 	 * everyone but the Suff module) */

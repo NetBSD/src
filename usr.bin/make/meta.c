@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.152 2020/11/28 10:28:53 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.153 2020/11/28 18:55:52 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -364,7 +364,7 @@ any_is_submake(GNode *gn)
 {
     StringListNode *ln;
 
-    for (ln = gn->commands->first; ln != NULL; ln = ln->next)
+    for (ln = gn->commands.first; ln != NULL; ln = ln->next)
 	if (is_submake(ln->datum, gn))
 	    return TRUE;
     return FALSE;
@@ -389,7 +389,7 @@ printCMDs(GNode *gn, FILE *fp)
 {
     GNodeListNode *ln;
 
-    for (ln = gn->commands->first; ln != NULL; ln = ln->next)
+    for (ln = gn->commands.first; ln != NULL; ln = ln->next)
 	printCMD(ln->datum, fp, gn);
 }
 
@@ -431,7 +431,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* Check if there are no commands to execute. */
-    if (Lst_IsEmpty(gn->commands)) {
+    if (Lst_IsEmpty(&gn->commands)) {
 	if (verbose)
 	    debug_printf("Skipping meta for %s: no commands\n", gn->name);
 	return FALSE;
@@ -1156,7 +1156,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
 
-	cmdNode = gn->commands->first;
+	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
 	    lineno++;
 	    if (buf[x - 1] == '\n')
