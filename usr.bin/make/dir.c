@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.222 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.223 2020/11/28 19:22:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.222 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.223 2020/11/28 19:22:32 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1337,7 +1337,7 @@ ResolveFullName(GNode *gn)
 		fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
 
 		if (fullName == NULL && gn->flags & FROM_DEPEND &&
-		    !Lst_IsEmpty(gn->implicitParents))
+		    !Lst_IsEmpty(&gn->implicitParents))
 			fullName = ResolveMovedDepends(gn);
 
 		DIR_DEBUG2("Found '%s' as '%s'\n",
