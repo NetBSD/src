@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.457 2020/11/28 19:20:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.458 2020/11/28 22:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.457 2020/11/28 19:20:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.458 2020/11/28 22:13:56 rillig Exp $");
 
 /* types and constants */
 
@@ -1312,7 +1312,7 @@ ClearPaths(SearchPathList *paths)
     if (paths != NULL) {
 	SearchPathListNode *ln;
 	for (ln = paths->first; ln != NULL; ln = ln->next)
-	    Dir_ClearPath(ln->datum);
+	    SearchPath_Clear(ln->datum);
     }
 
     Dir_SetPATH();
