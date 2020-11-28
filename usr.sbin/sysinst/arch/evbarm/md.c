@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2020/10/14 15:09:10 martin Exp $ */
+/*	$NetBSD: md.c,v 1.20 2020/11/28 13:05:58 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,6 +86,7 @@ md_init_set_status(int flags)
 	 * we will extract kernel variants piecewise manually
 	 * later, just fetch the kernel set, do not unpack it.
 	 */
+	set_kernel_set(SET_KERNEL_1);
 	set_noextract_set(SET_KERNEL_1);
 }
 
