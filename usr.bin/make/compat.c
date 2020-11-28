@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.195 2020/11/28 19:20:03 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.196 2020/11/28 19:22:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.195 2020/11/28 19:20:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.196 2020/11/28 19:22:32 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -495,7 +495,7 @@ MakeUnmade(GNode *const gn, GNode *const pgn)
 		return FALSE;
 	}
 
-	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL)
+	if (Lst_FindDatum(&gn->implicitParents, pgn) != NULL)
 		Var_Set(IMPSRC, GNode_VarTarget(gn), pgn);
 
 	/*
@@ -587,7 +587,7 @@ static void
 MakeOther(GNode *gn, GNode *pgn)
 {
 
-	if (Lst_FindDatum(gn->implicitParents, pgn) != NULL) {
+	if (Lst_FindDatum(&gn->implicitParents, pgn) != NULL) {
 		const char *target = GNode_VarTarget(gn);
 		Var_Set(IMPSRC, target != NULL ? target : "", pgn);
 	}
