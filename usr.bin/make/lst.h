@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.88 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.89 2020/11/28 19:26:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -111,6 +111,8 @@ typedef void LstFreeProc(void *);
 List *Lst_New(void);
 /* Free the list nodes, but not the list itself. */
 void Lst_Done(List *);
+/* Free the list nodes, freeing the node data using the given function. */
+void Lst_DoneCall(List *, LstFreeProc);
 /* Free the list, leaving the node data unmodified. */
 void Lst_Free(List *);
 /* Free the list, freeing the node data using the given function. */
