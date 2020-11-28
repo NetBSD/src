@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.219 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.220 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.219 2020/11/28 18:55:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.220 2020/11/28 19:12:28 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -329,7 +329,7 @@ GNode_IsOODate(GNode *gn)
      */
     if (!oodate) {
 	GNodeListNode *ln;
-	for (ln = gn->parents->first; ln != NULL; ln = ln->next)
+	for (ln = gn->parents.first; ln != NULL; ln = ln->next)
 	    GNode_UpdateYoungestChild(ln->datum, gn);
     }
 
@@ -341,7 +341,7 @@ PretendAllChildrenAreMade(GNode *pgn)
 {
 	GNodeListNode *ln;
 
-	for (ln = pgn->children->first; ln != NULL; ln = ln->next) {
+	for (ln = pgn->children.first; ln != NULL; ln = ln->next) {
 		GNode *cgn = ln->datum;
 
 		/* This may also update cgn->path. */
@@ -386,7 +386,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	}
     }
 
-    for (ln = cgn->children->first; ln != NULL; ln = ln->next) {
+    for (ln = cgn->children.first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
 
 	/*
@@ -409,8 +409,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 		gn = tgn;
 	}
 
-	Lst_Append(pgn->children, gn);
-	Lst_Append(gn->parents, pgn);
+	Lst_Append(&pgn->children, gn);
+	Lst_Append(&gn->parents, pgn);
 	pgn->unmade++;
     }
 
@@ -449,7 +449,7 @@ MakeHandleUse(GNode *cgn, GNode *pgn, GNodeListNode *ln)
      * children the parent has. This is used by Make_Run to decide
      * whether to queue the parent or examine its children...
      */
-    Lst_Remove(pgn->children, ln);
+    Lst_Remove(&pgn->children, ln);
     pgn->unmade--;
 }
 
@@ -457,7 +457,7 @@ static void
 HandleUseNodes(GNode *gn)
 {
 	GNodeListNode *ln, *nln;
-	for (ln = gn->children->first; ln != NULL; ln = nln) {
+	for (ln = gn->children.first; ln != NULL; ln = nln) {
 		nln = ln->next;
 		MakeHandleUse(ln->datum, gn, ln);
 	}
@@ -642,7 +642,7 @@ Make_Update(GNode *cgn)
      * which is where all parents are linked.
      */
     if ((centurion = cgn->centurion) != NULL) {
-	if (!Lst_IsEmpty(cgn->parents))
+	if (!Lst_IsEmpty(&cgn->parents))
 		Punt("%s%s: cohort has parents", cgn->name, cgn->cohort_num);
 	centurion->unmade_cohorts--;
 	if (centurion->unmade_cohorts < 0)
@@ -650,7 +650,7 @@ Make_Update(GNode *cgn)
     } else {
 	centurion = cgn;
     }
-    parents = centurion->parents;
+    parents = &centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
     ScheduleOrderSuccessors(centurion);
@@ -751,7 +751,7 @@ UnmarkChildren(GNode *gn)
 {
 	GNodeListNode *ln;
 
-	for (ln = gn->children->first; ln != NULL; ln = ln->next) {
+	for (ln = gn->children.first; ln != NULL; ln = ln->next) {
 		GNode *child = ln->datum;
 		child->type &= ~OP_MARK;
 	}
@@ -846,7 +846,7 @@ Make_DoAllVar(GNode *gn)
 		return;
 
 	UnmarkChildren(gn);
-	for (ln = gn->children->first; ln != NULL; ln = ln->next)
+	for (ln = gn->children.first; ln != NULL; ln = ln->next)
 		MakeAddAllSrc(ln->datum, gn);
 
 	if (!Var_Exists(OODATE, gn))
@@ -964,7 +964,7 @@ MakeStartJobs(void)
 		GNodeListNode *toBeMadeNext = toBeMade->first;
 		GNodeListNode *ln;
 
-		for (ln = gn->children->first; ln != NULL; ln = ln->next)
+		for (ln = gn->children.first; ln != NULL; ln = ln->next)
 		    if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
 			break;
 	    }
@@ -1086,7 +1086,7 @@ MakePrintStatus(GNode *gn, int *errors)
     if (!(gn->flags & CYCLE)) {
 	/* First time we've seen this node, check all children */
 	gn->flags |= CYCLE;
-	MakePrintStatusList(gn->children, errors);
+	MakePrintStatusList(&gn->children, errors);
 	/* Mark that this node needn't be processed again */
 	gn->flags |= DONECYCLE;
 	return FALSE;
@@ -1100,7 +1100,7 @@ MakePrintStatus(GNode *gn, int *errors)
 	return TRUE;
 
     /* Reporting for our children will give the rest of the loop */
-    MakePrintStatusList(gn->children, errors);
+    MakePrintStatusList(&gn->children, errors);
     return FALSE;
 }
 
@@ -1199,7 +1199,7 @@ Make_ExpandUse(GNodeList *targs)
 	}
 
 	if (gn->unmade != 0)
-	    ExamineLater(examine, gn->children);
+	    ExamineLater(examine, &gn->children);
     }
 
     Lst_Free(examine);
@@ -1217,9 +1217,9 @@ add_wait_dependency(GNodeListNode *owln, GNode *wn)
 		    cn->name, cn->cohort_num, wn->name);
 
 		/* XXX: This pattern should be factored out, it repeats often */
-		Lst_Append(wn->children, cn);
+		Lst_Append(&wn->children, cn);
 		wn->unmade++;
-		Lst_Append(cn->parents, wn);
+		Lst_Append(&cn->parents, wn);
 	}
 }
 
@@ -1248,8 +1248,8 @@ Make_ProcessWait(GNodeList *targs)
 	for (ln = targs->first; ln != NULL; ln = ln->next) {
 	    GNode *cgn = ln->datum;
 
-	    Lst_Append(pgn->children, cgn);
-	    Lst_Append(cgn->parents, pgn);
+	    Lst_Append(&pgn->children, cgn);
+	    Lst_Append(&cgn->parents, pgn);
 	    pgn->unmade++;
 	}
     }
@@ -1274,8 +1274,8 @@ Make_ProcessWait(GNodeList *targs)
 	if (pgn->type & OP_DOUBLEDEP)
 	    Lst_PrependAll(examine, pgn->cohorts);
 
-	owln = pgn->children->first;
-	for (ln = pgn->children->first; ln != NULL; ln = ln->next) {
+	owln = pgn->children.first;
+	for (ln = pgn->children.first; ln != NULL; ln = ln->next) {
 	    GNode *cgn = ln->datum;
 	    if (cgn->type & OP_WAIT) {
 		add_wait_dependency(owln, cgn);

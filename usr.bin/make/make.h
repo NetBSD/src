@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.221 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.222 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -387,9 +387,9 @@ typedef struct GNode {
 
 	/* The nodes that depend on this one, or in other words, the nodes for
 	 * which this is a source. */
-	GNodeList *parents;
+	GNodeList parents;
 	/* The nodes on which this one depends. */
-	GNodeList *children;
+	GNodeList children;
 
 	/* .ORDER nodes we need made. The nodes that must be made (if they're
 	 * made) before this node can be made, but that do not enter into the
