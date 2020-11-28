@@ -215,7 +215,11 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 		return (SET_ERROR(error));
 	}
 	if (vp->v_type != VBLK) {
+#ifdef __NetBSD__
+		vn_close(vp, FREAD|FWRITE, kcred);
+#else
 		vrele(vp);
+#endif
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
 		return (SET_ERROR(EINVAL));
 	}
@@ -247,7 +251,11 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	error = workqueue_create(&dvd->vd_wq, "vdevsync",
 	    vdev_disk_flush, dvd, PRI_NONE, IPL_NONE, WQ_MPSAFE);
 	if (error != 0) {
+#ifdef __NetBSD__
+		vn_close(vp, FREAD|FWRITE, kcred);
+#else
 		vrele(vp);
+#endif
 		return (SET_ERROR(error));
 	}
 
