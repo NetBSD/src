@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.223 2020/11/28 19:22:32 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.224 2020/11/28 22:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -106,7 +106,8 @@
  *
  *	Dir_AddDir	Add a directory to a search path.
  *
- *	Dir_MakeFlags	Given a search path and a command flag, create
+ *	SearchPath_ToFlags
+ *			Given a search path and a command flag, create
  *			a string with each of the directories in the path
  *			preceded by the command flag and all of them
  *			separated by a space.
@@ -116,7 +117,8 @@
  *			as the element is no longer referenced by any other
  *			search path.
  *
- *	Dir_ClearPath	Resets a search path to the empty list.
+ *	SearchPath_Clear
+ *			Resets a search path to the empty list.
  *
  * For debugging:
  *	Dir_PrintDirectories
@@ -134,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.223 2020/11/28 19:22:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.224 2020/11/28 22:13:56 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -455,7 +457,7 @@ Dir_End(void)
 	dotLast->refCount--;
 	Dir_Destroy(dotLast);
 	Dir_Destroy(dot);
-	Dir_ClearPath(dirSearchPath);
+	SearchPath_Clear(dirSearchPath);
 	Lst_Free(dirSearchPath);
 	OpenDirs_Done(&openDirs);
 	HashTable_Done(&mtimes);
@@ -1485,7 +1487,7 @@ Dir_CopyDirSearchPath(void)
 
 /*-
  *-----------------------------------------------------------------------
- * Dir_MakeFlags --
+ * SearchPath_ToFlags --
  *	Make a string by taking all the directories in the given search
  *	path and preceding them by the given flag. Used by the suffix
  *	module to create variables for compilers based on suffix search
@@ -1505,7 +1507,7 @@ Dir_CopyDirSearchPath(void)
  *-----------------------------------------------------------------------
  */
 char *
-Dir_MakeFlags(const char *flag, SearchPath *path)
+SearchPath_ToFlags(const char *flag, SearchPath *path)
 {
 	Buffer buf;
 	SearchPathNode *ln;
@@ -1548,7 +1550,7 @@ Dir_Destroy(void *dirp)
 /* Clear out all elements from the given search path.
  * The path is set to the empty list but is not destroyed. */
 void
-Dir_ClearPath(SearchPath *path)
+SearchPath_Clear(SearchPath *path)
 {
 	while (!Lst_IsEmpty(path)) {
 		CachedDir *dir = Lst_Dequeue(path);
@@ -1560,7 +1562,7 @@ Dir_ClearPath(SearchPath *path)
 /* Concatenate two paths, adding the second to the end of the first,
  * skipping duplicates. */
 void
-Dir_Concat(SearchPath *dst, SearchPath *src)
+SearchPath_AddAll(SearchPath *dst, SearchPath *src)
 {
 	SearchPathNode *ln;
 
@@ -1600,7 +1602,7 @@ Dir_PrintDirectories(void)
 }
 
 void
-Dir_PrintPath(SearchPath *path)
+SearchPath_Print(SearchPath *path)
 {
 	SearchPathNode *node;
 	for (node = path->first; node != NULL; node = node->next) {
