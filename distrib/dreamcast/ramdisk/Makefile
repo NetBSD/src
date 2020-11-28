@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/12/29 18:26:17 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2020/11/28 05:16:06 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,8 @@ IMAGESIZE=	1440k
 MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
-DBG=		-Os
+DBG=		-Os -fno-unwind-tables
+DBG+=		-DNDEBUG		# to remove assert(3) macro
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list # ${DISTRIBDIR}/common/list.sysinst
