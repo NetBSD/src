@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.24 2020/10/30 18:54:37 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.25 2020/11/28 14:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.24 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.25 2020/11/28 14:33:56 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -245,25 +245,20 @@ bcm53xx_mpstart(void)
 	dsb(sy);
 	__asm __volatile("sev" ::: "memory");
 
-	for (int loop = 0; loop < 16; loop++) {
-		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
-		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
-			break;
-		int timo = 1500000;
-		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
-			if (--timo == 0)
-				break;
-	}
-	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if (cpu_hatched_p(i)) {)
-			printf("%s: warning: cpu%zu failed to hatch\n",
-			    __func__, i);
-		}
-	}
+	/* Bitmask of CPUs (non-BP) to start */
+	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
+		u_int i ;
+		for (i = 1500000; i > 0; i--) {
+                        if (cpu_hatched_p(cpuindex))
+                                break;
+                }
 
-	VPRINTF(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
+                if (i == 0) {
+                        ret++;
+                        aprint_error("cpu%d: WARNING: AP failed to start\n",
+                            cpuindex);
+                }
+        }
 #endif /* MULTIPROCESSOR */
 }
 
