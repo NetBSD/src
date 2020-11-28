@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.698 2020/11/28 10:09:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.699 2020/11/28 16:36:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.698 2020/11/28 10:09:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.699 2020/11/28 16:36:19 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -512,7 +512,7 @@ MayExport(const char *name)
 static Boolean
 Var_Export1(const char *name, VarExportFlags flags)
 {
-    VarExportFlags parent = flags & VAR_EXPORT_PARENT;
+    Boolean parent = (flags & VAR_EXPORT_PARENT) != 0;
     Var *v;
     char *val;
 
