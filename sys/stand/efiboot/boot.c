@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 2020/10/11 14:03:33 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.29 2020/11/28 14:02:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -347,6 +347,7 @@ command_version(char *arg)
 	efi_fdt_show();
 	efi_acpi_show();
 	efi_rng_show();
+	efi_md_show();
 }
 
 void
