@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.330 2020/11/28 08:31:41 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.331 2020/11/28 08:40:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.330 2020/11/28 08:31:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.331 2020/11/28 08:40:05 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -215,7 +215,7 @@ typedef struct Shell {
 /*
  * error handling variables
  */
-static int errors = 0;		/* number of errors reported */
+static int job_errors = 0;	/* number of errors reported */
 typedef enum AbortReason {	/* why is the make aborting? */
     ABORT_NONE,
     ABORT_ERROR,		/* Because of an error */
@@ -952,7 +952,7 @@ JobClosePipes(Job *job)
  *
  * Deferred commands for the job are placed on the .END node.
  *
- * If there was a serious error (errors != 0; not an ignored one), no more
+ * If there was a serious error (job_errors != 0; not an ignored one), no more
  * jobs will be started.
  *
  * Input:
@@ -1080,18 +1080,18 @@ JobFinish(Job *job, int status)
 	Make_Update(job->node);
 	job->status = JOB_ST_FREE;
     } else if (status != 0) {
-	errors++;
+	job_errors++;
 	job->status = JOB_ST_FREE;
     }
 
-    if (errors > 0 && !opts.keepgoing && aborting != ABORT_INTERRUPT)
+    if (job_errors > 0 && !opts.keepgoing && aborting != ABORT_INTERRUPT)
 	aborting = ABORT_ERROR;	/* Prevent more jobs from getting started. */
 
     if (return_job_token)
 	Job_TokenReturn();
 
     if (aborting == ABORT_ERROR && jobTokensRunning == 0)
-	Finish(errors);
+	Finish(job_errors);
 }
 
 static void
@@ -2082,7 +2082,7 @@ Job_Init(void)
     wantToken =	0;
 
     aborting = ABORT_NONE;
-    errors = 0;
+    job_errors = 0;
 
     lastNode = NULL;
 
@@ -2452,13 +2452,13 @@ Job_Finish(void)
 {
     GNode *endNode = Targ_GetEndNode();
     if (!Lst_IsEmpty(endNode->commands) || !Lst_IsEmpty(endNode->children)) {
-	if (errors != 0) {
+	if (job_errors != 0) {
 	    Error("Errors reported so .END ignored");
 	} else {
 	    JobRun(endNode);
 	}
     }
-    return errors;
+    return job_errors;
 }
 
 /* Clean up any memory used by the jobs module. */
