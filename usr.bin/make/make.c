@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.223 2020/11/28 19:22:32 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.224 2020/11/28 23:45:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.223 2020/11/28 19:22:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.224 2020/11/28 23:45:25 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1141,8 +1141,8 @@ ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
 void
 Make_ExpandUse(GNodeList *targs)
 {
-    GNodeList *examine = Lst_New();	/* Queue of targets to examine */
-    Lst_AppendAll(examine, targs);
+    GNodeList examine = LST_INIT;	/* Queue of targets to examine */
+    Lst_AppendAll(&examine, targs);
 
     /*
      * Make an initial downward pass over the graph, marking nodes to be made
@@ -1152,8 +1152,8 @@ Make_ExpandUse(GNodeList *targs)
      * be looked at in a minute, otherwise we add its children to our queue
      * and go on about our business.
      */
-    while (!Lst_IsEmpty(examine)) {
-	GNode *gn = Lst_Dequeue(examine);
+    while (!Lst_IsEmpty(&examine)) {
+	GNode *gn = Lst_Dequeue(&examine);
 
 	if (gn->flags & REMAKE)
 	    /* We've looked at this one already */
@@ -1163,7 +1163,7 @@ Make_ExpandUse(GNodeList *targs)
 	       gn->name, gn->cohort_num);
 
 	if (gn->type & OP_DOUBLEDEP)
-	    Lst_PrependAll(examine, &gn->cohorts);
+	    Lst_PrependAll(&examine, &gn->cohorts);
 
 	/*
 	 * Apply any .USE rules before looking for implicit dependencies
@@ -1199,10 +1199,10 @@ Make_ExpandUse(GNodeList *targs)
 	}
 
 	if (gn->unmade != 0)
-	    ExamineLater(examine, &gn->children);
+	    ExamineLater(&examine, &gn->children);
     }
 
-    Lst_Free(examine);
+    Lst_Done(&examine);
 }
 
 /* Make the .WAIT node depend on the previous children */
