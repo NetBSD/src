@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.178 2020/11/23 19:02:54 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.179 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.178 2020/11/23 19:02:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.179 2020/11/28 19:12:28 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -925,7 +925,7 @@ Arch_UpdateMemberMTime(GNode *gn)
 {
 	GNodeListNode *ln;
 
-	for (ln = gn->parents->first; ln != NULL; ln = ln->next) {
+	for (ln = gn->parents.first; ln != NULL; ln = ln->next) {
 		GNode *pgn = ln->datum;
 
 		if (pgn->type & OP_ARCHV) {
@@ -1021,9 +1021,9 @@ Arch_LibOODate(GNode *gn)
 
 	if (gn->type & OP_PHONY) {
 		oodate = TRUE;
-	} else if (!GNode_IsTarget(gn) && Lst_IsEmpty(gn->children)) {
+	} else if (!GNode_IsTarget(gn) && Lst_IsEmpty(&gn->children)) {
 		oodate = FALSE;
-	} else if ((!Lst_IsEmpty(gn->children) && gn->youngestChild == NULL) ||
+	} else if ((!Lst_IsEmpty(&gn->children) && gn->youngestChild == NULL) ||
 		   (gn->mtime > now) ||
 		   (gn->youngestChild != NULL &&
 		    gn->mtime < gn->youngestChild->mtime)) {

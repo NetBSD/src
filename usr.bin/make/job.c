@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.332 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.333 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.332 2020/11/28 18:55:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.333 2020/11/28 19:12:28 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1177,7 +1177,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	return TRUE;
     if (!Lst_IsEmpty(&gn->commands))
 	return TRUE;
-    if ((gn->type & OP_LIB) && !Lst_IsEmpty(gn->children))
+    if ((gn->type & OP_LIB) && !Lst_IsEmpty(&gn->children))
 	return TRUE;
 
     /*
@@ -2451,7 +2451,7 @@ int
 Job_Finish(void)
 {
     GNode *endNode = Targ_GetEndNode();
-    if (!Lst_IsEmpty(&endNode->commands) || !Lst_IsEmpty(endNode->children)) {
+    if (!Lst_IsEmpty(&endNode->commands) || !Lst_IsEmpty(&endNode->children)) {
 	if (job_errors != 0) {
 	    Error("Errors reported so .END ignored");
 	} else {
