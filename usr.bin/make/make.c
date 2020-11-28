@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.224 2020/11/28 23:45:25 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.225 2020/11/28 23:48:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.224 2020/11/28 23:45:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.225 2020/11/28 23:48:36 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1229,7 +1229,7 @@ Make_ProcessWait(GNodeList *targs)
 {
     GNode  *pgn;		/* 'parent' node we are examining */
     GNodeListNode *owln;	/* Previous .WAIT node */
-    GNodeList *examine;		/* List of targets to examine */
+    GNodeList examine;		/* List of targets to examine */
 
     /*
      * We need all the nodes to have a common parent in order for the
@@ -1257,13 +1257,13 @@ Make_ProcessWait(GNodeList *targs)
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);
 
-    examine = Lst_New();
-    Lst_Append(examine, pgn);
+    Lst_Init(&examine);
+    Lst_Append(&examine, pgn);
 
-    while (!Lst_IsEmpty(examine)) {
+    while (!Lst_IsEmpty(&examine)) {
 	GNodeListNode *ln;
 
-	pgn = Lst_Dequeue(examine);
+	pgn = Lst_Dequeue(&examine);
 
 	/* We only want to process each child-list once */
 	if (pgn->flags & DONE_WAIT)
@@ -1272,7 +1272,7 @@ Make_ProcessWait(GNodeList *targs)
 	DEBUG1(MAKE, "Make_ProcessWait: examine %s\n", pgn->name);
 
 	if (pgn->type & OP_DOUBLEDEP)
-	    Lst_PrependAll(examine, &pgn->cohorts);
+	    Lst_PrependAll(&examine, &pgn->cohorts);
 
 	owln = pgn->children.first;
 	for (ln = pgn->children.first; ln != NULL; ln = ln->next) {
@@ -1281,12 +1281,12 @@ Make_ProcessWait(GNodeList *targs)
 		add_wait_dependency(owln, cgn);
 		owln = ln;
 	    } else {
-		Lst_Append(examine, cgn);
+		Lst_Append(&examine, cgn);
 	    }
 	}
     }
 
-    Lst_Free(examine);
+    Lst_Done(&examine);
 }
 
 /*-
