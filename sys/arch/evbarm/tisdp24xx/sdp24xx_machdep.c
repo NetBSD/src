@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.25 2019/07/16 14:41:48 skrll Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.26 2020/11/28 14:02:30 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.25 2019/07/16 14:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.26 2020/11/28 14:02:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -213,7 +213,7 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 #define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
 
 #if 0
-u_long kern_vtopdiff = KERNEL_BASE + KERNEL_BASE_PHYS;
+u_long kern_vtopdiff = KERNEL_BASE - KERNEL_BASE_PHYS;
 #else
 u_long kern_vtopdiff = 0;
 #endif
