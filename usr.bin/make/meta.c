@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.151 2020/11/28 10:25:45 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.152 2020/11/28 10:28:53 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -412,7 +412,7 @@ printCMDs(GNode *gn, FILE *fp)
  */
 static Boolean
 meta_needed(GNode *gn, const char *dname, const char *tname,
-	     char *objdir, Boolean verbose)
+	    char *objdir_realpath, Boolean verbose)
 {
     struct cached_stat cst;
 
@@ -452,8 +452,8 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* make sure these are canonical */
-    if (cached_realpath(dname, objdir))
-	dname = objdir;
+    if (cached_realpath(dname, objdir_realpath))
+	dname = objdir_realpath;
 
     /* If we aren't in the object directory, don't create a meta file. */
     if (!metaCurdirOk && strcmp(curdir, dname) == 0) {
@@ -471,7 +471,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 {
     FILE *fp;
     char buf[MAXPATHLEN];
-    char objdir[MAXPATHLEN];
+    char objdir_realpath[MAXPATHLEN];
     char **ptr;
     const char *dname;
     const char *tname;
@@ -484,10 +484,10 @@ meta_create(BuildMon *pbm, GNode *gn)
     dname = Var_Value(".OBJDIR", gn, &dname_freeIt);
     tname = GNode_VarTarget(gn);
 
-    /* if this succeeds objdir is realpath of dname */
-    if (!meta_needed(gn, dname, tname, objdir, TRUE))
+    /* if this succeeds objdir_realpath is realpath of dname */
+    if (!meta_needed(gn, dname, tname, objdir_realpath, TRUE))
 	goto out;
-    dname = objdir;
+    dname = objdir_realpath;
 
     if (metaVerbose) {
 	char *mp;
@@ -513,7 +513,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	goto out;
 
     fname = meta_name(pbm->meta_fname, sizeof pbm->meta_fname,
-		      dname, tname, objdir);
+		      dname, tname, objdir_realpath);
 
 #ifdef DEBUG_META_MODE
     DEBUG1(META, "meta_create: %s\n", fname);
