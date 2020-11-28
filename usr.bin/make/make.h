@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.223 2020/11/28 19:16:53 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.224 2020/11/28 19:20:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -401,7 +401,7 @@ typedef struct GNode {
 	GNodeList order_succ;
 
 	/* Other nodes of the same name, for the '::' dependency operator. */
-	GNodeList *cohorts;
+	GNodeList cohorts;
 	/* The "#n" suffix for this cohort, or "" for other nodes */
 	char cohort_num[8];
 	/* The number of unmade instances on the cohorts list */

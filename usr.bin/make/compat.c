@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.194 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.195 2020/11/28 19:20:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.194 2020/11/28 19:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.195 2020/11/28 19:20:03 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -652,7 +652,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 	}
 
 cohorts:
-	MakeNodes(gn->cohorts, pgn);
+	MakeNodes(&gn->cohorts, pgn);
 }
 
 /* Initialize this module and start making.

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.456 2020/11/28 19:16:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.457 2020/11/28 19:20:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.456 2020/11/28 19:16:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.457 2020/11/28 19:20:03 rillig Exp $");
 
 /* types and constants */
 
@@ -758,8 +758,8 @@ ParseMessage(const char *directive)
 static void
 LinkSource(GNode *pgn, GNode *cgn, Boolean isSpecial)
 {
-    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
-	pgn = pgn->cohorts->last->datum;
+    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(&pgn->cohorts))
+	pgn = pgn->cohorts.last->datum;
 
     Lst_Append(&pgn->children, cgn);
     pgn->unmade++;
@@ -830,7 +830,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	 * traversals will no longer see this node anyway. -mycroft)
 	 */
 	cohort->type = op | OP_INVISIBLE;
-	Lst_Append(gn->cohorts, cohort);
+	Lst_Append(&gn->cohorts, cohort);
 	cohort->centurion = gn;
 	gn->unmade_cohorts++;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
@@ -2055,8 +2055,8 @@ static void
 ParseAddCmd(GNode *gn, char *cmd)
 {
     /* Add to last (ie current) cohort for :: targets */
-    if ((gn->type & OP_DOUBLEDEP) && gn->cohorts->last != NULL)
-	gn = gn->cohorts->last->datum;
+    if ((gn->type & OP_DOUBLEDEP) && gn->cohorts.last != NULL)
+	gn = gn->cohorts.last->datum;
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
@@ -3152,7 +3152,7 @@ Parse_MainName(void)
 
     if (mainNode->type & OP_DOUBLEDEP) {
 	Lst_Append(mainList, mainNode);
-	Lst_AppendAll(mainList, mainNode->cohorts);
+	Lst_AppendAll(mainList, &mainNode->cohorts);
     } else
 	Lst_Append(mainList, mainNode);
 
