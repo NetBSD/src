@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.18 2019/02/06 11:58:30 rin Exp $
+# $Id: IMX23_OLINUXINO,v 1.19 2020/11/28 14:38:50 skrll Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -39,8 +39,8 @@ ld*		at sdmmc?
 digctl0		at apbh? addr 0x8001C000 size 0x2000 irq -1
 
 # PIN control
-pinctrl0	at apbh? addr 0x80018000 size 0x2000 irq -1
-gpio*           at pinctrl?
+imxpctl0	at apbh? addr 0x80018000 size 0x2000 irq -1
+gpio*           at imxpctl?
 
 # APBX bus
 apbx0		at mainbus? base 0x80040000 size 0x40000

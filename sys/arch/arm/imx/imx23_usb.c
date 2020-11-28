@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.2 2019/07/24 11:20:55 hkenken Exp $ */
+/* $Id: imx23_usb.c,v 1.3 2020/11/28 14:38:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ imx23_usb_attach(device_t parent, device_t self, void *aux)
 	clkctrl_en_usb();
 
 	/* Enable external USB chip. */
-	pinctrl_en_usb();
+	imx23_pinctrl_en_usb();
 
 	/* USB clock on. */
 	digctl_usb_clkgate(0);
