@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.144 2020/11/28 19:16:53 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.145 2020/11/28 19:20:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.144 2020/11/28 19:16:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.145 2020/11/28 19:20:04 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -206,7 +206,7 @@ GNode_New(const char *name)
     Lst_Init(&gn->children);
     Lst_Init(&gn->order_pred);
     Lst_Init(&gn->order_succ);
-    gn->cohorts = Lst_New();
+    Lst_Init(&gn->cohorts);
     gn->cohort_num[0] = '\0';
     gn->unmade_cohorts = 0;
     gn->centurion = NULL;
@@ -239,7 +239,7 @@ GNode_Free(void *gnp)
     Lst_Done(&gn->children);	/* likewise */
     Lst_Done(&gn->order_pred);	/* likewise */
     Lst_Done(&gn->order_succ);	/* likewise */
-    Lst_Free(gn->cohorts);	/* likewise */
+    Lst_Done(&gn->cohorts);	/* likewise */
     HashTable_Done(&gn->vars);	/* Do not free the variables themselves,
 				 * even though they are owned by this node.
 				 * XXX: they should probably be freed. */
@@ -519,7 +519,7 @@ Targ_PrintNode(GNode *gn, int pass)
 	Targ_PrintCmds(gn);
 	debug_printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Targ_PrintNodes(gn->cohorts, pass);
+	    Targ_PrintNodes(&gn->cohorts, pass);
 	}
     }
 }
@@ -596,7 +596,7 @@ Targ_Propagate(void)
 	if (!(type & OP_DOUBLEDEP))
 	    continue;
 
-	for (cln = gn->cohorts->first; cln != NULL; cln = cln->next) {
+	for (cln = gn->cohorts.first; cln != NULL; cln = cln->next) {
 	    GNode *cohort = cln->datum;
 
 	    cohort->type |= type & ~OP_OPMASK;

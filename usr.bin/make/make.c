@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.221 2020/11/28 19:16:53 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.222 2020/11/28 19:20:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.221 2020/11/28 19:16:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.222 2020/11/28 19:20:03 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -890,7 +890,7 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 	if (cn->unmade_cohorts != 0) {
 		ListNode *ln;
 
-		for (ln = cn->cohorts->first; ln != NULL; ln = ln->next)
+		for (ln = cn->cohorts.first; ln != NULL; ln = ln->next)
 			if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
 				break;
 	}
@@ -1163,7 +1163,7 @@ Make_ExpandUse(GNodeList *targs)
 	       gn->name, gn->cohort_num);
 
 	if (gn->type & OP_DOUBLEDEP)
-	    Lst_PrependAll(examine, gn->cohorts);
+	    Lst_PrependAll(examine, &gn->cohorts);
 
 	/*
 	 * Apply any .USE rules before looking for implicit dependencies
@@ -1272,7 +1272,7 @@ Make_ProcessWait(GNodeList *targs)
 	DEBUG1(MAKE, "Make_ProcessWait: examine %s\n", pgn->name);
 
 	if (pgn->type & OP_DOUBLEDEP)
-	    Lst_PrependAll(examine, pgn->cohorts);
+	    Lst_PrependAll(examine, &pgn->cohorts);
 
 	owln = pgn->children.first;
 	for (ln = pgn->children.first; ln != NULL; ln = ln->next) {
