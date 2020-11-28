@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.451 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.452 2020/11/28 10:05:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.451 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.452 2020/11/28 10:05:49 rillig Exp $");
 
 /* types and constants */
 
@@ -594,15 +594,15 @@ ParseFindKeyword(const char *str)
     int end = sizeof parseKeywords / sizeof parseKeywords[0] - 1;
 
     do {
-	int cur = start + (end - start) / 2;
-	int diff = strcmp(str, parseKeywords[cur].name);
+	int curr = start + (end - start) / 2;
+	int diff = strcmp(str, parseKeywords[curr].name);
 
 	if (diff == 0)
-	    return cur;
+	    return curr;
 	if (diff < 0)
-	    end = cur - 1;
+	    end = curr - 1;
 	else
-	    start = cur + 1;
+	    start = curr + 1;
     } while (start <= end);
 
     return -1;
