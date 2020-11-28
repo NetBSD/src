@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.150 2020/11/27 08:18:14 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.151 2020/11/28 10:25:45 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -477,11 +477,11 @@ meta_create(BuildMon *pbm, GNode *gn)
     const char *tname;
     char *fname;
     const char *cp;
-    void *objdir_freeIt;
+    void *dname_freeIt;
 
     fp = NULL;
 
-    dname = Var_Value(".OBJDIR", gn, &objdir_freeIt);
+    dname = Var_Value(".OBJDIR", gn, &dname_freeIt);
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds objdir is realpath of dname */
@@ -548,7 +548,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	    gn->type |= OP_SILENT;
     }
  out:
-    bmake_free(objdir_freeIt);
+    bmake_free(dname_freeIt);
 
     return fp;
 }
