@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.309 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.310 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.309 2020/11/28 18:55:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.310 2020/11/28 19:12:28 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -569,9 +569,9 @@ Suff_AddTransform(const char *name)
 	 * attached to several different transformations.
 	 */
 	Lst_Done(&gn->commands);
-	Lst_Free(gn->children);
 	Lst_Init(&gn->commands);
-	gn->children = Lst_New();
+	Lst_Done(&gn->children);
+	Lst_Init(&gn->children);
     }
 
     gn->type = OP_TRANSFORM;
@@ -613,7 +613,7 @@ Suff_EndTransform(GNode *gn)
     if (!(gn->type & OP_TRANSFORM))
 	return;
 
-    if (!Lst_IsEmpty(&gn->commands) || !Lst_IsEmpty(gn->children)) {
+    if (!Lst_IsEmpty(&gn->commands) || !Lst_IsEmpty(&gn->children)) {
 	SUFF_DEBUG1("transformation %s complete\n", gn->name);
 	return;
     }
@@ -744,8 +744,8 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 	    *inout_main = NULL;
 	    Targ_SetMain(NULL);
 	}
-	Lst_Free(target->children);
-	target->children = Lst_New();
+	Lst_Done(&target->children);
+	Lst_Init(&target->children);
 	target->type = OP_TRANSFORM;
 	/*
 	 * link the two together in the proper relationship and order
@@ -1125,7 +1125,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
     tgn = targ->node;
     prefLen = strlen(targ->prefix);
 
-    for (gln = tgn->children->first; gln != NULL; gln = gln->next) {
+    for (gln = tgn->children.first; gln != NULL; gln = gln->next) {
 	sgn = gln->datum;
 
 	if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(&tgn->commands)) {
@@ -1204,8 +1204,8 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 	gn = Targ_GetNode(cp);
 
 	/* Add gn to the parents child list before the original child */
-	Lst_InsertBefore(pgn->children, cln, gn);
-	Lst_Append(gn->parents, pgn);
+	Lst_InsertBefore(&pgn->children, cln, gn);
+	Lst_Append(&gn->parents, pgn);
 	pgn->unmade++;
     }
 
@@ -1218,8 +1218,8 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
      * keep it from being processed.
      */
     pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
+    Lst_Remove(&pgn->children, cln);
+    Lst_Remove(&cgn->parents, Lst_FindDatum(&cgn->parents, pgn));
 }
 
 /* Expand the names of any children of a given node that contain variable
@@ -1352,8 +1352,8 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 
 	    SUFF_DEBUG1("%s...", gn->name);
 	    /* Add gn to the parents child list before the original child */
-	    Lst_InsertBefore(pgn->children, cln, gn);
-	    Lst_Append(gn->parents, pgn);
+	    Lst_InsertBefore(&pgn->children, cln, gn);
+	    Lst_Append(&gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
 	    ExpandWildcards(cln->prev, pgn);
@@ -1373,8 +1373,8 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
      * keep it from being processed.
      */
     pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
+    Lst_Remove(&pgn->children, cln);
+    Lst_Remove(&cgn->parents, Lst_FindDatum(&cgn->parents, pgn));
 }
 
 static void
@@ -1382,7 +1382,7 @@ ExpandAllChildren(GNode *gn)
 {
     GNodeListNode *ln, *nln;
 
-    for (ln = gn->children->first; ln != NULL; ln = nln) {
+    for (ln = gn->children.first; ln != NULL; ln = nln) {
 	nln = ln->next;
 	ExpandChildren(ln, gn);
     }
@@ -1447,8 +1447,8 @@ ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
     /*
      * Form the proper links between the target and source.
      */
-    Lst_Append(tgn->children, sgn);
-    Lst_Append(sgn->parents, tgn);
+    Lst_Append(&tgn->children, sgn);
+    Lst_Append(&sgn->parents, tgn);
     tgn->unmade++;
 
     /*
@@ -1467,7 +1467,7 @@ ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 		ssuff->name, tsuff->name, tgn->name);
 
     /* Record last child; Make_HandleUse may add child nodes. */
-    ln = tgn->children->last;
+    ln = tgn->children.last;
 
     /* Apply the rule. */
     Make_HandleUse(gn, tgn);
@@ -1568,8 +1568,8 @@ FindDepsArchive(GNode *gn, CandidateSearcher *cs)
     /*
      * Create the link between the two nodes right off
      */
-    Lst_Append(gn->children, mem);
-    Lst_Append(mem->parents, gn);
+    Lst_Append(&gn->children, mem);
+    Lst_Append(&mem->parents, gn);
     gn->unmade++;
 
     /*
@@ -1864,7 +1864,7 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
      */
     {
 	GNodeListNode *ln, *nln;
-	for (ln = gn->children->first; ln != NULL; ln = nln) {
+	for (ln = gn->children.first; ln != NULL; ln = nln) {
 	    nln = ln->next;
 	    ExpandChildren(ln, gn);
 	}
@@ -1888,7 +1888,7 @@ sfnd_abort:
     /*
      * Check for overriding transformation rule implied by sources
      */
-    if (!Lst_IsEmpty(gn->children)) {
+    if (!Lst_IsEmpty(&gn->children)) {
 	src = FindCmds(targ, cs);
 
 	if (src != NULL) {

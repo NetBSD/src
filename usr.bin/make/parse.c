@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.454 2020/11/28 18:55:52 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.455 2020/11/28 19:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.454 2020/11/28 18:55:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.455 2020/11/28 19:12:28 rillig Exp $");
 
 /* types and constants */
 
@@ -761,12 +761,12 @@ LinkSource(GNode *pgn, GNode *cgn, Boolean isSpecial)
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
 	pgn = pgn->cohorts->last->datum;
 
-    Lst_Append(pgn->children, cgn);
+    Lst_Append(&pgn->children, cgn);
     pgn->unmade++;
 
     /* Special targets like .END don't need any children. */
     if (!isSpecial)
-	Lst_Append(cgn->parents, pgn);
+	Lst_Append(&cgn->parents, pgn);
 
     if (DEBUG(PARSE)) {
 	debug_printf("# %s: added child %s - %s\n",
