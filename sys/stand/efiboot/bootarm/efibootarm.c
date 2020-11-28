@@ -1,4 +1,4 @@
-/* $NetBSD: efibootarm.c,v 1.2 2019/03/30 17:41:13 jmcneill Exp $ */
+/* $NetBSD: efibootarm.c,v 1.3 2020/11/28 14:02:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -57,4 +57,9 @@ efi_boot_kernel(u_long marks[MARK_MAX])
 	armv7_icache_inv_all();
 
 	armv7_exec_kernel((register_t)marks[MARK_ENTRY], (register_t)efi_fdt_data());
+}
+
+void
+efi_md_show(void)
+{
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.2 2018/09/07 17:30:32 jmcneill Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.3 2020/11/28 14:02:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -59,4 +59,21 @@ efi_boot_kernel(u_long marks[MARK_MAX])
 	aarch64_icache_inv_all();
 
 	aarch64_exec_kernel((paddr_t)marks[MARK_ENTRY], (paddr_t)efi_fdt_data());
+}
+
+/*
+ * Returns the current exception level.
+ */
+static u_int
+efi_aarch64_current_el(void)
+{
+	uint64_t el;
+	__asm __volatile ("mrs %0, CurrentEL" : "=r" (el));
+	return (el >> 2) & 0x3;
+}
+
+void
+efi_md_show(void)
+{
+	printf("Current Exception Level: EL%u\n", efi_aarch64_current_el());
 }
