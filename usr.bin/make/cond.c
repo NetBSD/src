@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.217 2020/11/23 20:52:59 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.218 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.217 2020/11/23 20:52:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.218 2020/11/28 18:55:52 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -335,7 +335,7 @@ static Boolean
 FuncCommands(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
 	GNode *gn = Targ_FindNode(arg);
-	return gn != NULL && GNode_IsTarget(gn) && !Lst_IsEmpty(gn->commands);
+	return gn != NULL && GNode_IsTarget(gn) && !Lst_IsEmpty(&gn->commands);
 }
 
 /*

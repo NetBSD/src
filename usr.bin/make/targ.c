@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.141 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.142 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.141 2020/11/23 23:41:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.142 2020/11/28 18:55:52 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -212,7 +212,7 @@ GNode_New(const char *name)
     gn->centurion = NULL;
     gn->checked_seqno = 0;
     HashTable_Init(&gn->vars);
-    gn->commands = Lst_New();
+    Lst_Init(&gn->commands);
     gn->suffix = NULL;
     gn->fname = NULL;
     gn->lineno = 0;
@@ -243,7 +243,7 @@ GNode_Free(void *gnp)
     HashTable_Done(&gn->vars);	/* Do not free the variables themselves,
 				 * even though they are owned by this node.
 				 * XXX: they should probably be freed. */
-    Lst_Free(gn->commands);	/* Do not free the commands themselves,
+    Lst_Done(&gn->commands);	/* Do not free the commands themselves,
 				 * as they may be shared with other nodes. */
     /* gn->suffix is not owned by this node. */
     /* XXX: gn->suffix should be unreferenced here.  This requires a thorough
@@ -384,7 +384,7 @@ void
 Targ_PrintCmds(GNode *gn)
 {
     StringListNode *ln;
-    for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+    for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 	const char *cmd = ln->datum;
 	debug_printf("\t%s\n", cmd);
     }
