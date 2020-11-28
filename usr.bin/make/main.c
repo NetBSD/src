@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.486 2020/11/28 23:39:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.487 2020/11/28 23:43:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.486 2020/11/28 23:39:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.487 2020/11/28 23:43:14 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1210,25 +1210,25 @@ static void
 ReadBuiltinRules(void)
 {
 	StringListNode *ln;
-	StringList *sysMkPath = Lst_New();
+	StringList sysMkPath = LST_INIT;
 
 	Dir_Expand(_PATH_DEFSYSMK,
 	    Lst_IsEmpty(sysIncPath) ? defSysIncPath : sysIncPath,
-	    sysMkPath);
-	if (Lst_IsEmpty(sysMkPath))
+	    &sysMkPath);
+	if (Lst_IsEmpty(&sysMkPath))
 		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);
 
-	for (ln = sysMkPath->first; ln != NULL; ln = ln->next)
+	for (ln = sysMkPath.first; ln != NULL; ln = ln->next)
 		if (ReadMakefile(ln->datum) == 0)
 			break;
 
 	if (ln == NULL)
 		Fatal("%s: cannot open %s.",
-		    progname, (const char *)sysMkPath->first->datum);
+		    progname, (const char *)sysMkPath.first->datum);
 
 	/* Free the list but not the actual filenames since these may still
 	 * be used in GNodes. */
-	Lst_Free(sysMkPath);
+	Lst_Done(&sysMkPath);
 }
 
 static void
