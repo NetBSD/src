@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.453 2020/11/28 16:34:13 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.454 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.453 2020/11/28 16:34:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.454 2020/11/28 18:55:52 rillig Exp $");
 
 /* types and constants */
 
@@ -2060,7 +2060,7 @@ ParseAddCmd(GNode *gn, char *cmd)
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
-	Lst_Append(gn->commands, cmd);
+	Lst_Append(&gn->commands, cmd);
 	if (MaybeSubMake(cmd))
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
@@ -2832,7 +2832,7 @@ FinishDependencyGroup(void)
 
 	/* Mark the target as already having commands if it does, to
 	 * keep from having shell commands on multiple dependency lines. */
-	if (!Lst_IsEmpty(gn->commands))
+	if (!Lst_IsEmpty(&gn->commands))
 	    gn->type |= OP_HAS_COMMANDS;
     }
 

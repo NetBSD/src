@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.308 2020/11/23 20:41:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.309 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.308 2020/11/23 20:41:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.309 2020/11/28 18:55:52 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -568,9 +568,9 @@ Suff_AddTransform(const char *name)
 	 * free the commands themselves, because a given command can be
 	 * attached to several different transformations.
 	 */
-	Lst_Free(gn->commands);
+	Lst_Done(&gn->commands);
 	Lst_Free(gn->children);
-	gn->commands = Lst_New();
+	Lst_Init(&gn->commands);
 	gn->children = Lst_New();
     }
 
@@ -613,7 +613,7 @@ Suff_EndTransform(GNode *gn)
     if (!(gn->type & OP_TRANSFORM))
 	return;
 
-    if (!Lst_IsEmpty(gn->commands) || !Lst_IsEmpty(gn->children)) {
+    if (!Lst_IsEmpty(&gn->commands) || !Lst_IsEmpty(gn->children)) {
 	SUFF_DEBUG1("transformation %s complete\n", gn->name);
 	return;
     }
@@ -1128,7 +1128,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
     for (gln = tgn->children->first; gln != NULL; gln = gln->next) {
 	sgn = gln->datum;
 
-	if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(tgn->commands)) {
+	if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(&tgn->commands)) {
 	    /*
 	     * We haven't looked to see if .OPTIONAL files exist yet, so
 	     * don't use one as the implicit source.
@@ -1701,7 +1701,7 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
      * not define suffix rules if the gnode had children but we
      * don't do this anymore.
      */
-    if (Lst_IsEmpty(gn->commands))
+    if (Lst_IsEmpty(&gn->commands))
 	CandidateList_AddCandidatesFor(srcs, targ);
     else {
 	SUFF_DEBUG0("not ");

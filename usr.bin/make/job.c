@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.331 2020/11/28 08:40:05 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.332 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.331 2020/11/28 08:40:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.332 2020/11/28 18:55:52 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -902,7 +902,7 @@ JobPrintCommands(Job *job)
 {
     StringListNode *ln;
 
-    for (ln = job->node->commands->first; ln != NULL; ln = ln->next) {
+    for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
 	const char *cmd = ln->datum;
 
 	if (strcmp(cmd, "...") == 0) {
@@ -929,7 +929,7 @@ JobSaveCommands(Job *job)
 	 * expand the other variables as well; see deptgt-end.mk. */
 	(void)Var_Subst(cmd, job->node, VARE_WANTRES, &expanded_cmd);
 	/* TODO: handle errors */
-	Lst_Append(Targ_GetEndNode()->commands, expanded_cmd);
+	Lst_Append(&Targ_GetEndNode()->commands, expanded_cmd);
     }
 }
 
@@ -1175,7 +1175,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 {
     if (GNode_IsTarget(gn))
 	return TRUE;
-    if (!Lst_IsEmpty(gn->commands))
+    if (!Lst_IsEmpty(&gn->commands))
 	return TRUE;
     if ((gn->type & OP_LIB) && !Lst_IsEmpty(gn->children))
 	return TRUE;
@@ -1184,7 +1184,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
      * No commands. Look for .DEFAULT rule from which we might infer
      * commands.
      */
-    if (defaultNode != NULL && !Lst_IsEmpty(defaultNode->commands) &&
+    if (defaultNode != NULL && !Lst_IsEmpty(&defaultNode->commands) &&
 	!(gn->type & OP_SPECIAL)) {
 	/*
 	 * The traditional Make only looks for a .DEFAULT if the node was
@@ -2451,7 +2451,7 @@ int
 Job_Finish(void)
 {
     GNode *endNode = Targ_GetEndNode();
-    if (!Lst_IsEmpty(endNode->commands) || !Lst_IsEmpty(endNode->children)) {
+    if (!Lst_IsEmpty(&endNode->commands) || !Lst_IsEmpty(endNode->children)) {
 	if (job_errors != 0) {
 	    Error("Errors reported so .END ignored");
 	} else {

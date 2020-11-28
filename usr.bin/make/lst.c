@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.94 2020/11/27 08:07:26 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.95 2020/11/28 18:55:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.94 2020/11/27 08:07:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.95 2020/11/28 18:55:52 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -53,16 +53,12 @@ List *
 Lst_New(void)
 {
 	List *list = bmake_malloc(sizeof *list);
-
-	list->first = NULL;
-	list->last = NULL;
-
+	Lst_Init(list);
 	return list;
 }
 
-/* Free a list and all its nodes. The node data are not freed though. */
 void
-Lst_Free(List *list)
+Lst_Done(List *list)
 {
 	ListNode *ln, *next;
 
@@ -70,7 +66,14 @@ Lst_Free(List *list)
 		next = ln->next;
 		free(ln);
 	}
+}
 
+/* Free a list and all its nodes. The node data are not freed though. */
+void
+Lst_Free(List *list)
+{
+
+	Lst_Done(list);
 	free(list);
 }
 
