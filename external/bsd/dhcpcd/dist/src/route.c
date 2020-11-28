@@ -713,7 +713,10 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 #endif
 
 	RB_TREE_FOREACH_SAFE(rt, &routes, rtn) {
-		if (!(rt->rt_ifp->options->options & DHCPCD_CONFIGURE))
+		if (rt->rt_ifp->active) {
+			if (!(rt->rt_ifp->options->options & DHCPCD_CONFIGURE))
+				continue;
+		} else if (!(ctx->options & DHCPCD_CONFIGURE))
 			continue;
 #ifdef BSD
 		if (rt_is_default(rt) &&

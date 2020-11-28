@@ -728,7 +728,7 @@ ipv4_daddaddr(struct interface *ifp, const struct dhcp_lease *lease)
 	return 0;
 }
 
-void
+struct ipv4_addr *
 ipv4_applyaddr(void *arg)
 {
 	struct interface *ifp = arg;
@@ -738,7 +738,7 @@ ipv4_applyaddr(void *arg)
 	struct ipv4_addr *ia;
 
 	if (state == NULL)
-		return;
+		return NULL;
 
 	lease = &state->lease;
 	if (state->new == NULL) {
@@ -757,7 +757,7 @@ ipv4_applyaddr(void *arg)
 			script_runreason(ifp, state->reason);
 		} else
 			rt_build(ifp->ctx, AF_INET);
-		return;
+		return NULL;
 	}
 
 	ia = ipv4_iffindaddr(ifp, &lease->addr, NULL);
@@ -783,22 +783,22 @@ ipv4_applyaddr(void *arg)
 #endif
 #ifndef IP_LIFETIME
 		if (ipv4_daddaddr(ifp, lease) == -1 && errno != EEXIST)
-			return;
+			return NULL;
 #endif
 	}
 #ifdef IP_LIFETIME
 	if (ipv4_daddaddr(ifp, lease) == -1 && errno != EEXIST)
-		return;
+		return NULL;
 #endif
 
 	ia = ipv4_iffindaddr(ifp, &lease->addr, NULL);
 	if (ia == NULL) {
 		logerrx("%s: added address vanished", ifp->name);
-		return;
+		return NULL;
 	}
 #if defined(ARP) && defined(IN_IFF_NOTUSEABLE)
 	if (ia->addr_flags & IN_IFF_NOTUSEABLE)
-		return;
+		return NULL;
 #endif
 
 	/* Delete the old address if different */
@@ -820,6 +820,7 @@ ipv4_applyaddr(void *arg)
 		script_runreason(ifp, state->reason);
 		dhcpcd_daemonise(ifp->ctx);
 	}
+	return ia;
 }
 
 void
