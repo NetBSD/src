@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.452 2020/11/28 10:05:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.453 2020/11/28 16:34:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.452 2020/11/28 10:05:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.453 2020/11/28 16:34:13 rillig Exp $");
 
 /* types and constants */
 
@@ -727,8 +727,8 @@ static Boolean
 ParseMessage(const char *directive)
 {
     const char *p = directive;
-    int mtype = *p == 'i' ? PARSE_INFO :
-		*p == 'w' ? PARSE_WARNING : PARSE_FATAL;
+    ParseErrorLevel mtype = *p == 'i' ? PARSE_INFO :
+			    *p == 'w' ? PARSE_WARNING : PARSE_FATAL;
     char *arg;
 
     while (ch_isalpha(*p))
