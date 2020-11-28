@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.458 2020/11/28 22:13:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.459 2020/11/28 22:56:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.458 2020/11/28 22:13:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.459 2020/11/28 22:56:01 rillig Exp $");
 
 /* types and constants */
 
@@ -1205,11 +1205,11 @@ ParseDoDependencyTargetMundane(char *line, StringList *curTargs)
 	 * use Dir_Destroy in the destruction of the path as the
 	 * Dir module could have added a directory to the path...
 	 */
-	SearchPath *emptyPath = Lst_New();
+	SearchPath *emptyPath = SearchPath_New();
 
 	Dir_Expand(line, emptyPath, curTargs);
 
-	Lst_Destroy(emptyPath, Dir_Destroy);
+	SearchPath_Free(emptyPath);
     } else {
 	/*
 	 * No wildcards, but we want to avoid code duplication,
@@ -3111,9 +3111,9 @@ void
 Parse_Init(void)
 {
     mainNode = NULL;
-    parseIncPath = Lst_New();
-    sysIncPath = Lst_New();
-    defSysIncPath = Lst_New();
+    parseIncPath = SearchPath_New();
+    sysIncPath = SearchPath_New();
+    defSysIncPath = SearchPath_New();
     Vector_Init(&includes, sizeof(IFile));
 #ifdef CLEANUP
     targCmds = Lst_New();
@@ -3127,9 +3127,9 @@ Parse_End(void)
 #ifdef CLEANUP
     Lst_Destroy(targCmds, free);
     assert(targets == NULL);
-    Lst_Destroy(defSysIncPath, Dir_Destroy);
-    Lst_Destroy(sysIncPath, Dir_Destroy);
-    Lst_Destroy(parseIncPath, Dir_Destroy);
+    SearchPath_Free(defSysIncPath);
+    SearchPath_Free(sysIncPath);
+    SearchPath_Free(parseIncPath);
     assert(includes.len == 0);
     Vector_Done(&includes);
 #endif
