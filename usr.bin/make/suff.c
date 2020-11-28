@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.314 2020/11/28 22:13:56 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.315 2020/11/28 22:56:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.314 2020/11/28 22:13:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.315 2020/11/28 22:56:01 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -368,7 +368,7 @@ Suffix_Free(Suffix *suff)
     Lst_Free(suff->ref);
     Lst_Free(suff->children);
     Lst_Free(suff->parents);
-    Lst_Destroy(suff->searchPath, Dir_Destroy);
+    SearchPath_Free(suff->searchPath);
 
     free(suff->name);
     free(suff);
@@ -436,7 +436,7 @@ Suffix_New(const char *name)
 
     suff->name = bmake_strdup(name);
     suff->nameLen = strlen(suff->name);
-    suff->searchPath = Lst_New();
+    suff->searchPath = SearchPath_New();
     suff->children = Lst_New();
     suff->parents = Lst_New();
     suff->ref = Lst_New();
@@ -835,11 +835,8 @@ Suff_DoPaths(void)
 {
     SuffixListNode *ln;
     char *flags;
-    SearchPath *inIncludes; /* Cumulative .INCLUDES path */
-    SearchPath *inLibs;	    /* Cumulative .LIBS path */
-
-    inIncludes = Lst_New();
-    inLibs = Lst_New();
+    SearchPath *inIncludes = SearchPath_New();	/* Cumulative .INCLUDES path */
+    SearchPath *inLibs = SearchPath_New();	/* Cumulative .LIBS path */
 
     for (ln = sufflist->first; ln != NULL; ln = ln->next) {
 	Suffix *suff = ln->datum;
@@ -854,7 +851,7 @@ Suff_DoPaths(void)
 #endif
 	    SearchPath_AddAll(suff->searchPath, dirSearchPath);
 	} else {
-	    Lst_Destroy(suff->searchPath, Dir_Destroy);
+	    SearchPath_Free(suff->searchPath);
 	    suff->searchPath = Dir_CopyDirSearchPath();
 	}
     }
@@ -867,8 +864,8 @@ Suff_DoPaths(void)
     Var_Set(".LIBS", flags, VAR_GLOBAL);
     free(flags);
 
-    Lst_Destroy(inIncludes, Dir_Destroy);
-    Lst_Destroy(inLibs, Dir_Destroy);
+    SearchPath_Free(inIncludes);
+    SearchPath_Free(inLibs);
 }
 
 /*
