@@ -2364,12 +2364,20 @@ dhcp_bind(struct interface *ifp)
 		return;
 	}
 
+	/* Add the address */
+	if (ipv4_applyaddr(ifp) == NULL) {
+		/* There was an error adding the address.
+		 * If we are in oneshot, exit with a failure. */
+		if (ctx->options & DHCPCD_ONESHOT) {
+			loginfox("exiting due to oneshot");
+			eloop_exit(ctx->eloop, EXIT_FAILURE);
+		}
+		return;
+	}
+
 	/* Close the BPF filter as we can now receive DHCP messages
 	 * on a UDP socket. */
 	dhcp_closebpf(ifp);
-
-	/* Add the address */
-	ipv4_applyaddr(ifp);
 
 openudp:
 	/* If not in master mode, open an address specific socket. */

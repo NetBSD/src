@@ -135,7 +135,7 @@ int ipv4_deladdr(struct ipv4_addr *, int);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *,
     uint32_t, uint32_t);
-void ipv4_applyaddr(void *);
+struct ipv4_addr *ipv4_applyaddr(void *);
 
 struct ipv4_addr *ipv4_iffindaddr(struct interface *,
     const struct in_addr *, const struct in_addr *);

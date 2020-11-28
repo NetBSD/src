@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 3, 2020
+.Dd November 25, 2020
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -264,18 +264,29 @@ Use this
 .Ar script
 instead of the default
 .Pa @SCRIPT@ .
-.It Fl D , Fl Fl duid
+.It Fl D , Fl Fl duid Op Ar ll | lt | uuid | value
 Use a DHCP Unique Identifier.
 If a system UUID is available, that will be used to create a DUID-UUID,
 otheriwse if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
+The DUID type can be hinted as an optional parameter if the file
+.Pa @DBDIR@/duid
+does not exist.
+If not
+.Va ll ,
+.Va lt
+or
+.Va uuid
+then
+.Va value
+will be converted from 00:11:22:33 format.
 This, plus the IAID will be used as the
 .Fl I , Fl Fl clientid .
 The DUID generated will be held in
 .Pa @DBDIR@/duid
 and should not be copied to other hosts.
-This file also takes precedence over the above rules.
+This file also takes precedence over the above rules except for setting a value.
 .It Fl d , Fl Fl debug
 Echo debug messages to the stderr and syslog.
 .It Fl E , Fl Fl lastlease
@@ -747,7 +758,7 @@ This is the default behaviour and sets
 .Ev if_configured=true .
 .It Fl Fl noconfigure
 .Nm
-will not configure the system add all.
+will not configure the system at all.
 This is only of use if the
 .Fl Fl script
 that
