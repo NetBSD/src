@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.89 2020/11/28 19:26:10 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.90 2020/11/28 23:13:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -117,6 +117,8 @@ void Lst_DoneCall(List *, LstFreeProc);
 void Lst_Free(List *);
 /* Free the list, freeing the node data using the given function. */
 void Lst_Destroy(List *, LstFreeProc);
+
+#define LST_INIT { NULL, NULL }
 
 /* Initialize a list, without memory allocation. */
 MAKE_INLINE void
