@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.225 2020/11/28 23:48:36 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.226 2020/11/28 23:50:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.225 2020/11/28 23:48:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.226 2020/11/28 23:50:58 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -110,7 +110,7 @@ static unsigned int checked_seqno = 1;
 /* The current fringe of the graph.
  * These are nodes which await examination by MakeOODate.
  * It is added to by Make_Update and subtracted from by MakeStartJobs */
-static GNodeList *toBeMade;
+static GNodeList toBeMade = LST_INIT;
 
 
 void
@@ -129,7 +129,7 @@ make_abort(GNode *gn, int line)
 
 	debug_printf("make_abort from line %d\n", line);
 	Targ_PrintNode(gn, 2);
-	Targ_PrintNodes(toBeMade, 2);
+	Targ_PrintNodes(&toBeMade, 2);
 	Targ_PrintGraph(3);
 	abort();
 }
@@ -585,7 +585,7 @@ static int MakeBuildParent(GNode *, GNodeListNode *);
 static void
 ScheduleOrderSuccessors(GNode *gn)
 {
-	GNodeListNode *toBeMadeNext = toBeMade->first;
+	GNodeListNode *toBeMadeNext = toBeMade.first;
 	GNodeListNode *ln;
 
 	for (ln = gn->order_succ.first; ln != NULL; ln = ln->next)
@@ -740,7 +740,7 @@ Make_Update(GNode *cgn)
 	}
 	/* Ok, we can schedule the parent again */
 	pgn->made = REQUESTED;
-	Lst_Enqueue(toBeMade, pgn);
+	Lst_Enqueue(&toBeMade, pgn);
     }
 
     UpdateImplicitParentsVars(cgn, cname);
@@ -883,9 +883,9 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 
 	cn->made = REQUESTED;
 	if (toBeMadeNext == NULL)
-		Lst_Append(toBeMade, cn);
+		Lst_Append(&toBeMade, cn);
 	else
-		Lst_InsertBefore(toBeMade, toBeMadeNext, cn);
+		Lst_InsertBefore(&toBeMade, toBeMadeNext, cn);
 
 	if (cn->unmade_cohorts != 0) {
 		ListNode *ln;
@@ -929,13 +929,13 @@ MakeStartJobs(void)
     GNode *gn;
     Boolean have_token = FALSE;
 
-    while (!Lst_IsEmpty(toBeMade)) {
+    while (!Lst_IsEmpty(&toBeMade)) {
 	/* Get token now to avoid cycling job-list when we only have 1 token */
 	if (!have_token && !Job_TokenWithdraw())
 	    break;
 	have_token = TRUE;
 
-	gn = Lst_Dequeue(toBeMade);
+	gn = Lst_Dequeue(&toBeMade);
 	DEBUG2(MAKE, "Examining %s%s...\n", gn->name, gn->cohort_num);
 
 	if (gn->made != REQUESTED) {
@@ -961,7 +961,7 @@ MakeStartJobs(void)
 	    gn->made = DEFERRED;
 
 	    {
-		GNodeListNode *toBeMadeNext = toBeMade->first;
+		GNodeListNode *toBeMadeNext = toBeMade.first;
 		GNodeListNode *ln;
 
 		for (ln = gn->children.first; ln != NULL; ln = ln->next)
@@ -1319,7 +1319,7 @@ Make_Run(GNodeList *targs)
     int errors;			/* Number of errors the Job module reports */
 
     /* Start trying to make the current targets... */
-    toBeMade = Lst_New();
+    Lst_Init(&toBeMade);
 
     Make_ExpandUse(targs);
     Make_ProcessWait(targs);
@@ -1356,7 +1356,7 @@ Make_Run(GNodeList *targs)
      * Note that the Job module will exit if there were any errors unless the
      * keepgoing flag was given.
      */
-    while (!Lst_IsEmpty(toBeMade) || jobTokensRunning > 0) {
+    while (!Lst_IsEmpty(&toBeMade) || jobTokensRunning > 0) {
 	Job_CatchOutput();
 	(void)MakeStartJobs();
     }
