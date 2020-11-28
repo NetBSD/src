@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.482 2020/11/28 10:00:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.483 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.482 2020/11/28 10:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.483 2020/11/28 18:55:52 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2093,7 +2093,7 @@ SetErrorVars(GNode *gn)
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 
-	for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
 
 		if (cmd == NULL)

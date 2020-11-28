@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.192 2020/11/24 19:04:42 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.193 2020/11/28 18:55:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.192 2020/11/24 19:04:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.193 2020/11/28 18:55:52 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -218,7 +218,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	 * for delayed commands, run in parallel mode, using the same shell
 	 * command line more than once; see JobPrintCommand.
 	 * TODO: write a unit-test to protect against this potential bug. */
-	cmdNode = Lst_FindDatum(gn->commands, cmd);
+	cmdNode = Lst_FindDatum(&gn->commands, cmd);
 	(void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
 	/* TODO: handle errors */
 
@@ -232,7 +232,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	if (gn->type & OP_SAVE_CMDS) {
 		GNode *endNode = Targ_GetEndNode();
 		if (gn != endNode) {
-			Lst_Append(endNode->commands, cmdStart);
+			Lst_Append(&endNode->commands, cmdStart);
 			return 0;
 		}
 	}
@@ -449,7 +449,7 @@ RunCommands(GNode *gn)
 {
 	StringListNode *ln;
 
-	for (ln = gn->commands->first; ln != NULL; ln = ln->next) {
+	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
 		if (Compat_RunCommand(cmd, gn) != 0)
 			break;
