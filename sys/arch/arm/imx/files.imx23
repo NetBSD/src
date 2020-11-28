@@ -1,4 +1,4 @@
-# $Id: files.imx23,v 1.5 2020/11/26 12:56:34 skrll Exp $
+# $Id: files.imx23,v 1.6 2020/11/28 14:38:50 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
@@ -67,9 +67,9 @@ attach	digctl at apbh
 file	arch/arm/imx/imx23_digctl.c	digctl
 
 # PIN Control
-device	pinctrl: gpiobus
-attach	pinctrl at apbh
-file	arch/arm/imx/imx23_pinctrl.c	pinctrl
+device	imxpctl: gpiobus
+attach	imxpctl at apbh with imx23_pinctrl
+file	arch/arm/imx/imx23_pinctrl.c	imx23_pinctrl
 
 # Clock Control
 device	clkctrl
