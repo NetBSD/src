@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.224 2020/11/28 22:13:56 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.225 2020/11/28 22:56:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.224 2020/11/28 22:13:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.225 2020/11/28 22:56:01 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -228,6 +228,8 @@ OpenDirs_Init(OpenDirs *odirs)
 	odirs->list = Lst_New();
 	HashTable_Init(&odirs->table);
 }
+
+static void Dir_Destroy(void *);
 
 #ifdef CLEANUP
 static void
@@ -366,7 +368,7 @@ cached_lstat(const char *pathname, struct cached_stat *cst)
 void
 Dir_Init(void)
 {
-	dirSearchPath = Lst_New();
+	dirSearchPath = SearchPath_New();
 	OpenDirs_Init(&openDirs);
 	HashTable_Init(&mtimes);
 	HashTable_Init(&lmtimes);
@@ -854,10 +856,12 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 			if (*end == '/')
 				*end = '\0';
 
-			partPath = Lst_New();
+			partPath = SearchPath_New();
 			(void)Dir_AddDir(partPath, dirpath);
 			DirExpandPath(cp + 1, partPath, expansions);
 			Lst_Free(partPath);
+			/* XXX: Should the dirs in partPath be freed here?
+			 * It's not obvious whether to free them or not. */
 		}
 	}
 
@@ -1475,7 +1479,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 SearchPath *
 Dir_CopyDirSearchPath(void)
 {
-	SearchPath *path = Lst_New();
+	SearchPath *path = SearchPath_New();
 	SearchPathNode *ln;
 	for (ln = dirSearchPath->first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
@@ -1532,7 +1536,7 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
  * Input:
  *	dirp		The directory descriptor to nuke
  */
-void
+static void
 Dir_Destroy(void *dirp)
 {
 	CachedDir *dir = dirp;
@@ -1545,6 +1549,19 @@ Dir_Destroy(void *dirp)
 		free(dir->name);
 		free(dir);
 	}
+}
+
+/* Free the search path and all directories mentioned in it. */
+void
+SearchPath_Free(SearchPath *path)
+{
+	SearchPathNode *ln;
+
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+		CachedDir *dir = ln->datum;
+		Dir_Destroy(dir);
+	}
+	Lst_Free(path);
 }
 
 /* Clear out all elements from the given search path.
