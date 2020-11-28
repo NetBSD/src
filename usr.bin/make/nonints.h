@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.162 2020/11/16 21:48:18 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.163 2020/11/28 22:56:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -95,6 +95,14 @@ CondEvalResult Cond_EvalCondition(const char *, Boolean *);
 CondEvalResult Cond_EvalLine(const char *);
 void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void);
+
+/* dir.c; see also dir.h */
+
+MAKE_INLINE SearchPath *
+SearchPath_New(void)
+{ return Lst_New(); }
+
+void SearchPath_Free(SearchPath *);
 
 /* for.c */
 int For_Eval(const char *);
