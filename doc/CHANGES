@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2755 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2756 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -301,5 +301,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tmux(1): Imported 3.1c. [christos 20201101]
 	kernel: Better default for kern.maxfiles for systems with
 		larger RAM [simonb 20201112]
-	dhcpcd: Update to version 9.3.3 [roy 20201120]
 	acpi(4): Updated ACPICA to 20201113. [christos 20201127]
+	dhcpcd: Update to version 9.3.4 [roy 20201128]
