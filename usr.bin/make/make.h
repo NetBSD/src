@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.222 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.223 2020/11/28 19:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -394,11 +394,11 @@ typedef struct GNode {
 	/* .ORDER nodes we need made. The nodes that must be made (if they're
 	 * made) before this node can be made, but that do not enter into the
 	 * datedness of this node. */
-	GNodeList *order_pred;
+	GNodeList order_pred;
 	/* .ORDER nodes who need us. The nodes that must be made (if they're
 	 * made at all) after this node is made, but that do not depend on
 	 * this node, in the normal sense. */
-	GNodeList *order_succ;
+	GNodeList order_succ;
 
 	/* Other nodes of the same name, for the '::' dependency operator. */
 	GNodeList *cohorts;

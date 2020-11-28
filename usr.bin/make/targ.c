@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.143 2020/11/28 19:12:28 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.144 2020/11/28 19:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.143 2020/11/28 19:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.144 2020/11/28 19:16:53 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -204,8 +204,8 @@ GNode_New(const char *name)
     gn->implicitParents = Lst_New();
     Lst_Init(&gn->parents);
     Lst_Init(&gn->children);
-    gn->order_pred = Lst_New();
-    gn->order_succ = Lst_New();
+    Lst_Init(&gn->order_pred);
+    Lst_Init(&gn->order_succ);
     gn->cohorts = Lst_New();
     gn->cohort_num[0] = '\0';
     gn->unmade_cohorts = 0;
@@ -237,8 +237,8 @@ GNode_Free(void *gnp)
     Lst_Free(gn->implicitParents); /* Do not free the nodes themselves, */
     Lst_Done(&gn->parents);	/* as they are not owned by this node. */
     Lst_Done(&gn->children);	/* likewise */
-    Lst_Free(gn->order_pred);	/* likewise */
-    Lst_Free(gn->order_succ);	/* likewise */
+    Lst_Done(&gn->order_pred);	/* likewise */
+    Lst_Done(&gn->order_succ);	/* likewise */
     Lst_Free(gn->cohorts);	/* likewise */
     HashTable_Done(&gn->vars);	/* Do not free the variables themselves,
 				 * even though they are owned by this node.
@@ -509,8 +509,8 @@ Targ_PrintNode(GNode *gn, int pass)
 		debug_printf("# %d unmade children\n", gn->unmade);
 	}
 	PrintNodeNamesLine("parents", &gn->parents);
-	PrintNodeNamesLine("order_pred", gn->order_pred);
-	PrintNodeNamesLine("order_succ", gn->order_succ);
+	PrintNodeNamesLine("order_pred", &gn->order_pred);
+	PrintNodeNamesLine("order_succ", &gn->order_succ);
 
 	debug_printf("%-16s%s", gn->name, GNode_OpName(gn));
 	Targ_PrintType(gn->type);
