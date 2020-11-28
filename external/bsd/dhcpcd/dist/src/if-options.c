@@ -134,9 +134,9 @@ const struct option cf_options[] = {
 	{"noipv6",          no_argument,       NULL, O_NOIPV6},
 	{"noalias",         no_argument,       NULL, O_NOALIAS},
 	{"iaid",            required_argument, NULL, O_IAID},
-	{"ia_na",           no_argument,       NULL, O_IA_NA},
-	{"ia_ta",           no_argument,       NULL, O_IA_TA},
-	{"ia_pd",           no_argument,       NULL, O_IA_PD},
+	{"ia_na",           optional_argument, NULL, O_IA_NA},
+	{"ia_ta",           optional_argument, NULL, O_IA_TA},
+	{"ia_pd",           optional_argument, NULL, O_IA_PD},
 	{"hostname_short",  no_argument,       NULL, O_HOSTNAME_SHORT},
 	{"dev",             required_argument, NULL, O_DEV},
 	{"nodev",           no_argument,       NULL, O_NODEV},
@@ -1002,8 +1002,16 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		else if (strcmp(arg, "uuid") == 0)
 			ctx->duid_type = DUID_UUID;
 		else {
-			logwarnx("%s: invalid duid type", arg);
-			ctx->duid_type = DUID_DEFAULT;
+			dl = hwaddr_aton(NULL, arg);
+			if (dl != 0) {
+				no = realloc(ctx->duid, dl);
+				if (no == NULL)
+					logerrx(__func__);
+				else {
+					ctx->duid = no;
+					ctx->duid_len = hwaddr_aton(no, arg);
+				}
+			}
 		}
 		break;
 	case 'E':
@@ -1344,7 +1352,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 #endif
 	case O_IAID:
 		ARG_REQUIRED;
-		if (!IN_CONFIG_BLOCK(ifo)) {
+		if (ctx->options & DHCPCD_MASTER && !IN_CONFIG_BLOCK(ifo)) {
 			logerrx("IAID must belong in an interface block");
 			return -1;
 		}
@@ -1386,7 +1394,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			logwarnx("%s: IA_PD not compiled in", ifname);
 			return -1;
 #else
-			if (!IN_CONFIG_BLOCK(ifo)) {
+			if (ctx->options & DHCPCD_MASTER &&
+			    !IN_CONFIG_BLOCK(ifo))
+			{
 				logerrx("IA PD must belong in an "
 				    "interface block");
 				return -1;
@@ -1394,7 +1404,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			i = D6_OPTION_IA_PD;
 #endif
 		}
-		if (!IN_CONFIG_BLOCK(ifo) && arg) {
+		if (ctx->options & DHCPCD_MASTER &&
+		    !IN_CONFIG_BLOCK(ifo) && arg)
+		{
 			logerrx("IA with IAID must belong in an "
 			    "interface block");
 			return -1;
@@ -2343,6 +2355,8 @@ default_config(struct dhcpcd_ctx *ctx)
 #endif
 
 	/* Inherit some global defaults */
+	if (ctx->options & DHCPCD_CONFIGURE)
+		ifo->options |= DHCPCD_CONFIGURE;
 	if (ctx->options & DHCPCD_PERSISTENT)
 		ifo->options |= DHCPCD_PERSISTENT;
 	if (ctx->options & DHCPCD_SLAACPRIVATE)
@@ -2371,8 +2385,8 @@ read_config(struct dhcpcd_ctx *ctx,
 	if ((ifo = default_config(ctx)) == NULL)
 		return NULL;
 	if (default_options == 0) {
-		default_options |= DHCPCD_DAEMONISE |
-			DHCPCD_CONFIGURE | DHCPCD_GATEWAY;
+		default_options |= DHCPCD_CONFIGURE | DHCPCD_DAEMONISE |
+		    DHCPCD_GATEWAY;
 #ifdef INET
 		skip = socket(PF_INET, SOCK_DGRAM, 0);
 		if (skip != -1) {
