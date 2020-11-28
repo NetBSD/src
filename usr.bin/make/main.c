@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.485 2020/11/28 23:35:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.486 2020/11/28 23:39:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.485 2020/11/28 23:35:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.486 2020/11/28 23:39:58 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -664,7 +664,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (argv[1][0] == '-' && !dashDash)
 				goto rearg;
-			Lst_Append(opts.create, bmake_strdup(argv[1]));
+			Lst_Append(&opts.create, bmake_strdup(argv[1]));
 		}
 	}
 
@@ -922,10 +922,10 @@ runTargets(void)
 	 * we consult the parsing module to find the main target(s)
 	 * to create.
 	 */
-	if (Lst_IsEmpty(opts.create))
+	if (Lst_IsEmpty(&opts.create))
 		targs = Parse_MainName();
 	else
-		targs = Targ_FindList(opts.create);
+		targs = Targ_FindList(&opts.create);
 
 	if (!opts.compatMake) {
 		/*
@@ -964,12 +964,12 @@ InitVarTargets(void)
 {
 	StringListNode *ln;
 
-	if (Lst_IsEmpty(opts.create)) {
+	if (Lst_IsEmpty(&opts.create)) {
 		Var_Set(".TARGETS", "", VAR_GLOBAL);
 		return;
 	}
 
-	for (ln = opts.create->first; ln != NULL; ln = ln->next) {
+	for (ln = opts.create.first; ln != NULL; ln = ln->next) {
 		char *name = ln->datum;
 		Var_Append(".TARGETS", name, VAR_GLOBAL);
 	}
@@ -1141,7 +1141,7 @@ CmdOpts_Init(void)
 	opts.parseWarnFatal = FALSE;
 	opts.enterFlag = FALSE;
 	opts.varNoExportEnv = FALSE;
-	opts.create = Lst_New();
+	Lst_Init(&opts.create);
 }
 
 /* Initialize MAKE and .MAKE to the path of the executable, so that it can be
@@ -1627,7 +1627,7 @@ main_CleanUp(void)
 	 * used in GNodes.
 	 */
 	Lst_Done(&opts.makefiles);
-	Lst_Destroy(opts.create, free);
+	Lst_Destroy(&opts.create, free);
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
