@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.320 2020/11/29 01:19:11 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.321 2020/11/29 01:24:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.320 2020/11/29 01:19:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.321 2020/11/29 01:24:18 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -128,11 +128,11 @@ typedef ListNode CandidateListNode;
 
 static SuffixList sufflist = LST_INIT;	/* List of suffixes */
 #ifdef CLEANUP
-static SuffixList *suffClean;	/* List of suffixes to be cleaned */
+static SuffixList suffClean = LST_INIT;	/* List of suffixes to be cleaned */
 #endif
 
 /* List of transformation rules, such as ".c.o" */
-static GNodeList *transforms;
+static GNodeList transforms = LST_INIT;
 
 static int sNum = 0;		/* Counter for assigning suffix numbers */
 
@@ -329,7 +329,7 @@ static GNode *
 FindTransformByName(const char *name)
 {
     GNodeListNode *ln;
-    for (ln = transforms->first; ln != NULL; ln = ln->next) {
+    for (ln = transforms.first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
 	if (strcmp(gn->name, name) == 0)
 	    return gn;
@@ -458,7 +458,7 @@ void
 Suff_ClearSuffixes(void)
 {
 #ifdef CLEANUP
-    Lst_MoveAll(suffClean, &sufflist);
+    Lst_MoveAll(&suffClean, &sufflist);
 #endif
     DEBUG0(SUFF, "Clearing all suffixes\n");
     Lst_Init(&sufflist);
@@ -560,7 +560,7 @@ Suff_AddTransform(const char *name)
 	 * by the Parse module.
 	 */
 	gn = GNode_New(name);
-	Lst_Append(transforms, gn);
+	Lst_Append(&transforms, gn);
     } else {
 	/*
 	 * New specification for transformation rule. Just nuke the old list
@@ -805,7 +805,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
      * Look for any existing transformations from or to this suffix.
      * XXX: Only do this after a Suff_ClearSuffixes?
      */
-    for (ln = transforms->first; ln != NULL; ln = ln->next)
+    for (ln = transforms.first; ln != NULL; ln = ln->next)
 	RebuildGraph(ln->datum, suff);
 }
 
@@ -2054,11 +2054,6 @@ Suff_SetNull(const char *name)
 void
 Suff_Init(void)
 {
-#ifdef CLEANUP
-    suffClean = Lst_New();
-#endif
-    transforms = Lst_New();
-
     /*
      * Create null suffix for single-suffix rules (POSIX). The thing doesn't
      * actually go on the suffix list or everyone will think that's its
@@ -2074,10 +2069,10 @@ Suff_End(void)
 {
 #ifdef CLEANUP
     Lst_DoneCall(&sufflist, SuffFree);
-    Lst_Destroy(suffClean, SuffFree);
+    Lst_DoneCall(&suffClean, SuffFree);
     if (nullSuff != NULL)
 	SuffFree(nullSuff);
-    Lst_Free(transforms);
+    Lst_Done(&transforms);
 #endif
 }
 
@@ -2141,7 +2136,7 @@ Suff_PrintAll(void)
     debug_printf("#*** Transformations:\n");
     {
 	GNodeListNode *ln;
-	for (ln = transforms->first; ln != NULL; ln = ln->next)
+	for (ln = transforms.first; ln != NULL; ln = ln->next)
 	    PrintTransformation(ln->datum);
     }
 }
