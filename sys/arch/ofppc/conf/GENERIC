@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2020/09/27 13:48:53 roy Exp $
+# $NetBSD: GENERIC,v 1.174 2020/11/29 12:38:44 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 maxusers	32
 
@@ -60,6 +60,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	TRAP_PANICWAIT
+options 	MSGBUFSIZE=32768
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
