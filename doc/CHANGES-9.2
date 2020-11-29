@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.15 2020/11/19 11:26:10 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.16 2020/11/29 11:41:49 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1103,4 +1103,29 @@ libexec/httpd/bozohttpd.c			1.124
 
 	Fix httpd serving files greater than 4GB on 32bit archs.
 	[hannken, ticket #1134]
+
+include/arpa/nameser_compat.h			1.8
+lib/libc/net/getaddrinfo.c			1.120
+lib/libc/net/gethnamaddr.c			1.93
+
+	Don't complain about additional DNAME records received when resolving
+	A or AAAA.
+	[is, ticket #1135]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_sprite.c 1.11
+
+	PR 55555: wait without interrupts.
+	[maya, ticket #1136]
+
+usr.sbin/sysinst/arch/evbarm/md.c		1.20
+
+	Make sure the kernel set is selected, even if extracting parts of it
+	manually.
+	[jmcneill, ticket #1137]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.19
+
+	Use vn_close to release the vnodes in the error handling blocks, since
+	the vnodes were opened for writing.
+	[yhardy, ticket #1138]
 
