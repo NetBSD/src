@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.154 2020/11/29 09:27:40 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.155 2020/11/29 21:28:06 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -51,9 +51,9 @@
 #endif
 
 static BuildMon Mybm;			/* for compat */
-static StringList *metaBailiwick;	/* our scope of control */
+static StringList metaBailiwick = LST_INIT; /* our scope of control */
 static char *metaBailiwickStr;		/* string storage for the list */
-static StringList *metaIgnorePaths;	/* paths we deliberately ignore */
+static StringList metaIgnorePaths = LST_INIT; /* paths we deliberately ignore */
 static char *metaIgnorePathsStr;	/* string storage for the list */
 
 #ifndef MAKE_META_IGNORE_PATHS
@@ -631,21 +631,19 @@ meta_mode_init(const char *make_mode)
     /*
      * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
      */
-    metaBailiwick = Lst_New();
     (void)Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
 		    VAR_GLOBAL, VARE_WANTRES, &metaBailiwickStr);
     /* TODO: handle errors */
-    str2Lst_Append(metaBailiwick, metaBailiwickStr);
+    str2Lst_Append(&metaBailiwick, metaBailiwickStr);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
-    metaIgnorePaths = Lst_New();
     Var_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
     (void)Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
 		    VAR_GLOBAL, VARE_WANTRES, &metaIgnorePathsStr);
     /* TODO: handle errors */
-    str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr);
+    str2Lst_Append(&metaIgnorePaths, metaIgnorePathsStr);
 
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
@@ -896,11 +894,9 @@ meta_job_finish(Job *job)
 void
 meta_finish(void)
 {
-    if (metaBailiwick != NULL)
-	Lst_Free(metaBailiwick);
+    Lst_Done(&metaBailiwick);
     free(metaBailiwickStr);
-    if (metaIgnorePaths != NULL)
-	Lst_Free(metaIgnorePaths);
+    Lst_Done(&metaIgnorePaths);
     free(metaIgnorePathsStr);
 }
 
@@ -987,7 +983,7 @@ meta_ignore(GNode *gn, const char *p)
 
     if (*p == '/') {
 	cached_realpath(p, fname); /* clean it up */
-	if (has_any_prefix(fname, metaIgnorePaths)) {
+	if (has_any_prefix(fname, &metaIgnorePaths)) {
 #ifdef DEBUG_META_MODE
 	    DEBUG1(META, "meta_oodate: ignoring path: %s\n", p);
 #endif
@@ -1372,14 +1368,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (*p != '/')
 			break;
 
-		    if (Lst_IsEmpty(metaBailiwick))
+		    if (Lst_IsEmpty(&metaBailiwick))
 			break;
 
 		    /* ignore cwd - normal dependencies handle those */
 		    if (strncmp(p, cwd, cwdlen) == 0)
 			break;
 
-		    if (!has_any_prefix(p, metaBailiwick))
+		    if (!has_any_prefix(p, &metaBailiwick))
 			break;
 
 		    /* tmpdir might be within */
