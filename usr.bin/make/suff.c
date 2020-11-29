@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.316 2020/11/29 00:54:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.317 2020/11/29 01:10:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.316 2020/11/29 00:54:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.317 2020/11/29 01:10:08 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -205,7 +205,7 @@ typedef struct Candidate {
      * don't free this candidate too early or too late. */
     int numChildren;
 #ifdef DEBUG_SRC
-    CandidateList *childrenList;
+    CandidateList childrenList;
 #endif
 } Candidate;
 
@@ -960,7 +960,7 @@ Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
     cand->node = gn;
     cand->numChildren = 0;
 #ifdef DEBUG_SRC
-    cand->childrenList = Lst_New();
+    Lst_Init(&cand->childrenList);
 #endif
 
     return cand;
@@ -976,7 +976,7 @@ CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
     Lst_Append(list, cand);
 
 #ifdef DEBUG_SRC
-    Lst_Append(targ->childrenList, cand);
+    Lst_Append(&targ->childrenList, cand);
     debug_printf("%s add suff %p:%s candidate %p:%s to list %p:",
 		 debug_tag, targ, targ->file, cand, cand->file, list);
     CandidateList_PrintAddrs(list);
@@ -1029,16 +1029,16 @@ RemoveCandidate(CandidateList *srcs)
 #ifdef DEBUG_SRC
 	        /* XXX: Lst_RemoveDatum */
 		CandidateListNode *ln2;
-		ln2 = Lst_FindDatum(src->parent->childrenList, src);
+		ln2 = Lst_FindDatum(&src->parent->childrenList, src);
 		if (ln2 != NULL)
-		    Lst_Remove(src->parent->childrenList, ln2);
+		    Lst_Remove(&src->parent->childrenList, ln2);
 #endif
 		src->parent->numChildren--;
 	    }
 #ifdef DEBUG_SRC
 	    debug_printf("free: list %p src %p:%s children %d\n",
 			 srcs, src, src->file, src->numChildren);
-	    Lst_Free(src->childrenList);
+	    Lst_Done(&src->childrenList);
 #endif
 	    Lst_Remove(srcs, ln);
 	    free(src);
@@ -1048,7 +1048,7 @@ RemoveCandidate(CandidateList *srcs)
 	else {
 	    debug_printf("keep: list %p src %p:%s children %d:",
 			 srcs, src, src->file, src->numChildren);
-	    CandidateList_PrintAddrs(src->childrenList);
+	    CandidateList_PrintAddrs(&src->childrenList);
 	}
 #endif
     }
@@ -1171,7 +1171,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 #ifdef DEBUG_SRC
     debug_printf("3 add targ %p:%s ret %p:%s\n",
 		 targ, targ->file, ret, ret->file);
-    Lst_Append(targ->childrenList, ret);
+    Lst_Append(&targ->childrenList, ret);
 #endif
     CandidateSearcher_Add(cs, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
