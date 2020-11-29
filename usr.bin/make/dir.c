@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.240 2020/11/29 16:37:10 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.241 2020/11/29 18:49:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.240 2020/11/29 16:37:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.241 2020/11/29 18:49:36 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -299,6 +299,10 @@ CachedDir_New(const char *name)
 	dir->hits = 0;
 	HashSet_Init(&dir->files);
 
+#ifdef DEBUG_REFCNT
+	DEBUG2(DIR, "CachedDir %p new  for \"%s\"\n", dir, dir->name);
+#endif
+
 	return dir;
 }
 
@@ -306,39 +310,37 @@ static CachedDir *
 CachedDir_Ref(CachedDir *dir)
 {
 	dir->refCount++;
-	DEBUG2(DIR, "CachedDir refCount++ to %d for \"%s\"\n",
-	    dir->refCount, dir->name);
+
+#ifdef DEBUG_REFCNT
+	DEBUG3(DIR, "CachedDir %p ++ %d for \"%s\"\n",
+	    dir, dir->refCount, dir->name);
+#endif
+
 	return dir;
-}
-
-/* Free a cached directory with reference count 0. */
-static void
-CachedDir_Free0(CachedDir *dir)
-{
-
-	OpenDirs_Remove(&openDirs, dir->name);
-
-	free(dir->name);
-	HashSet_Done(&dir->files);
-	free(dir);
 }
 
 static void
 CachedDir_Unref(CachedDir *dir)
 {
 	dir->refCount--;
-	DEBUG2(DIR, "CachedDir refCount-- to %d for \"%s\"\n",
-	    dir->refCount, dir->name);
-}
 
-/* Nuke a directory descriptor, if it is no longer used. */
-static void
-CachedDir_Destroy(CachedDir *dir)
-{
-	CachedDir_Unref(dir);
+#ifdef DEBUG_REFCNT
+	DEBUG3(DIR, "CachedDir %p -- %d for \"%s\"\n",
+	    dir, dir->refCount, dir->name);
+#endif
 
-	if (dir->refCount == 0)
-		CachedDir_Free0(dir);
+	if (dir->refCount > 0)
+		return;
+
+#ifdef DEBUG_REFCNT
+	DEBUG2(DIR, "CachedDir %p free for \"%s\"\n", dir, dir->name);
+#endif
+
+	OpenDirs_Remove(&openDirs, dir->name);
+
+	free(dir->name);
+	HashSet_Done(&dir->files);
+	free(dir);
 }
 
 /* Update the value of the CachedDir variable, updating the reference counts. */
@@ -352,7 +354,7 @@ CachedDir_Assign(CachedDir **var, CachedDir *dir)
 	if (dir != NULL)
 		CachedDir_Ref(dir);
 	if (prev != NULL)
-		CachedDir_Destroy(prev);
+		CachedDir_Unref(prev);
 }
 
 static void
@@ -374,7 +376,7 @@ OpenDirs_Done(OpenDirs *odirs)
 		CachedDir *dir = ln->datum;
 		DIR_DEBUG2("OpenDirs_Done: refCount %d for \"%s\"\n",
 		    dir->refCount, dir->name);
-		CachedDir_Destroy(dir);	/* removes the dir from odirs->list */
+		CachedDir_Unref(dir);	/* removes the dir from odirs->list */
 		ln = next;
 	}
 	Lst_Done(&odirs->list);
@@ -502,11 +504,7 @@ Dir_InitCur(const char *cdname)
 	if (dir == NULL)
 		return;
 
-	if (cur != NULL && cur != dir) {
-		CachedDir_Unref(cur);	/* XXX: why unref twice? */
-		CachedDir_Destroy(cur);
-	}
-	cur = CachedDir_Ref(dir);
+	CachedDir_Assign(&cur, dir);
 }
 
 /* (Re)initialize "dot" (current/object directory) path hash.
@@ -514,31 +512,16 @@ Dir_InitCur(const char *cdname)
 void
 Dir_InitDot(void)
 {
-	if (dot != NULL) {
-		/* Remove old entry from openDirs, but do not destroy. */
-		/* XXX: Why not destroy? It's reference-counted after all. */
-		OpenDirs_Remove(&openDirs, dot->name);
-	}
+	CachedDir *dir;
 
-	/* XXX: Before assigning to the global variable, refCount++. */
-	dot = Dir_AddDir(NULL, ".");
-
-	if (dot == NULL) {
+	dir = Dir_AddDir(NULL, ".");
+	if (dir == NULL) {
 		Error("Cannot open `.' (%s)", strerror(errno));
 		exit(1);
 	}
 
-	/*
-	 * We always need to have dot around, so we increment its reference
-	 * count to make sure it's not destroyed.
-	 */
-	/*
-	 * XXX: This is just the normal reference counting.  Why is the above
-	 * comment so long?  And why doesn't the normal reference counting
-	 * suffice?  This sounds like someone misunderstood reference counting
-	 * here.
-	 */
-	CachedDir_Ref(dot);
+	CachedDir_Assign(&dot, dir);
+
 	Dir_SetPATH();		/* initialize */
 }
 
@@ -547,13 +530,9 @@ void
 Dir_End(void)
 {
 #ifdef CLEANUP
-	if (cur != NULL) {
-		CachedDir_Unref(cur);	/* XXX: why unref twice? */
-		CachedDir_Destroy(cur);
-	}
+	CachedDir_Assign(&cur, NULL);
+	CachedDir_Assign(&dot, NULL);
 	CachedDir_Assign(&dotLast, NULL);
-	CachedDir_Unref(dot);		/* XXX: why unref twice? */
-	CachedDir_Destroy(dot);
 	SearchPath_Clear(&dirSearchPath);
 	OpenDirs_Done(&openDirs);
 	HashTable_Done(&mtimes);
@@ -953,9 +932,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 			partPath = SearchPath_New();
 			(void)Dir_AddDir(partPath, dirpath);
 			DirExpandPath(cp + 1, partPath, expansions);
-			Lst_Free(partPath);
-			/* XXX: Should the dirs in partPath be freed here?
-			 * It's not obvious whether to free them or not. */
+			SearchPath_Free(partPath);
 		}
 	}
 
@@ -1514,7 +1491,6 @@ CacheNewDir(const char *name, SearchPath *path)
 	DIR_DEBUG1("Caching %s ...\n", name);
 
 	dir = CachedDir_New(name);
-	CachedDir_Ref(dir);	/* XXX: why here already? */
 
 	while ((dp = readdir(d)) != NULL) {
 
@@ -1534,7 +1510,7 @@ CacheNewDir(const char *name, SearchPath *path)
 
 	OpenDirs_Add(&openDirs, dir);
 	if (path != NULL)
-		Lst_Append(path, dir);
+		Lst_Append(path, CachedDir_Ref(dir));
 
 	DIR_DEBUG1("Caching %s done\n", name);
 	return dir;
@@ -1565,8 +1541,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 				return pathDir;
 		}
 
-		CachedDir_Ref(dotLast);
-		Lst_Prepend(path, dotLast);
+		Lst_Prepend(path, CachedDir_Ref(dotLast));
 	}
 
 	if (path != NULL) {
@@ -1644,7 +1619,7 @@ SearchPath_Free(SearchPath *path)
 
 	for (ln = path->first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		CachedDir_Destroy(dir);
+		CachedDir_Unref(dir);
 	}
 	Lst_Free(path);
 }
@@ -1656,7 +1631,7 @@ SearchPath_Clear(SearchPath *path)
 {
 	while (!Lst_IsEmpty(path)) {
 		CachedDir *dir = Lst_Dequeue(path);
-		CachedDir_Destroy(dir);
+		CachedDir_Unref(dir);
 	}
 }
 
