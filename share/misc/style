@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.59 2020/08/02 01:36:46 riastradh Exp $ */
+/* $NetBSD: style,v 1.60 2020/11/29 09:15:33 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.59 2020/08/02 01:36:46 riastradh Exp $");
+__RCSID("$NetBSD: style,v 1.60 2020/11/29 09:15:33 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -86,7 +86,7 @@ __RCSID("$NetBSD: style,v 1.59 2020/08/02 01:36:46 riastradh Exp $");
 
 /*
  * If it's a network program, put the network include files next.
- * Group the includes files by subdirectory.
+ * Group the include files by subdirectory.
  */
 #include <net/if.h>
 #include <net/if_dl.h>
