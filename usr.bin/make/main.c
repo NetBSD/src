@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.487 2020/11/28 23:43:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.488 2020/11/29 00:04:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.487 2020/11/28 23:43:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.488 2020/11/29 00:04:22 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -913,7 +913,7 @@ doPrintVars(void)
 static Boolean
 runTargets(void)
 {
-	GNodeList *targs;	/* target nodes to create */
+	GNodeList targs = LST_INIT;	/* target nodes to create */
 	Boolean outOfDate;	/* FALSE if all targets up to date */
 
 	/*
@@ -923,9 +923,9 @@ runTargets(void)
 	 * to create.
 	 */
 	if (Lst_IsEmpty(&opts.create))
-		targs = Parse_MainName();
+		Parse_MainName(&targs);
 	else
-		targs = Targ_FindList(&opts.create);
+		Targ_FindList(&targs, &opts.create);
 
 	if (!opts.compatMake) {
 		/*
@@ -941,16 +941,16 @@ runTargets(void)
 		}
 
 		/* Traverse the graph, checking on all the targets */
-		outOfDate = Make_Run(targs);
+		outOfDate = Make_Run(&targs);
 	} else {
 		/*
 		 * Compat_Init will take care of creating all the
 		 * targets as well as initializing the module.
 		 */
-		Compat_Run(targs);
+		Compat_Run(&targs);
 		outOfDate = FALSE;
 	}
-	Lst_Free(targs);
+	Lst_Done(&targs);	/* Don't free the nodes. */
 	return outOfDate;
 }
 
