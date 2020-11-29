@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.462 2020/11/29 01:35:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.463 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.462 2020/11/29 01:35:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.463 2020/11/29 01:40:26 rillig Exp $");
 
 /* types and constants */
 
@@ -1087,7 +1087,7 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
     case SP_PATH:
 	if (*inout_paths == NULL)
 	    *inout_paths = Lst_New();
-	Lst_Append(*inout_paths, dirSearchPath);
+	Lst_Append(*inout_paths, &dirSearchPath);
 	break;
     case SP_MAIN:
 	/* Allow targets from the command line to override the .MAIN node. */
@@ -2132,7 +2132,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 	    newName = str_concat3(incdir, "/", file + i);
 	    fullname = Dir_FindFile(newName, parseIncPath);
 	    if (fullname == NULL)
-		fullname = Dir_FindFile(newName, dirSearchPath);
+		fullname = Dir_FindFile(newName, &dirSearchPath);
 	    free(newName);
 	}
 	free(incdir);
@@ -2155,7 +2155,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 	    if (fullname == NULL) {
 		fullname = Dir_FindFile(file, parseIncPath);
 		if (fullname == NULL)
-		    fullname = Dir_FindFile(file, dirSearchPath);
+		    fullname = Dir_FindFile(file, &dirSearchPath);
 	    }
 	}
     }
