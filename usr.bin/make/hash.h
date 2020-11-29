@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.36 2020/11/23 18:24:05 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.37 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,8 +74,8 @@
 
 /* Hash tables with strings as keys and arbitrary pointers as values. */
 
-#ifndef	MAKE_HASH_H
-#define	MAKE_HASH_H
+#ifndef MAKE_HASH_H
+#define MAKE_HASH_H
 
 /* A single key-value entry in the hash table. */
 typedef struct HashEntry {
