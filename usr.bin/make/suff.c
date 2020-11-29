@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.318 2020/11/29 01:12:45 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.319 2020/11/29 01:16:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.318 2020/11/29 01:12:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.319 2020/11/29 01:16:37 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1263,7 +1263,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
     /* TODO: handle errors */
 
     {
-	GNodeList *members = Lst_New();
+	GNodeList members = LST_INIT;
 
 	if (cgn->type & OP_ARCHV) {
 	    /*
@@ -1273,7 +1273,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	     */
 	    char *sacrifice = cp;
 
-	    (void)Arch_ParseArchive(&sacrifice, members, pgn);
+	    (void)Arch_ParseArchive(&sacrifice, &members, pgn);
 	} else {
 	    /*
 	     * Break the result into a vector of strings whose nodes
@@ -1296,7 +1296,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		     */
 		    *cp++ = '\0';
 		    gn = Targ_GetNode(start);
-		    Lst_Append(members, gn);
+		    Lst_Append(&members, gn);
 		    pp_skip_hspace(&cp);
 		    start = cp;		/* Continue at the next non-space. */
 		} else if (*cp == '$') {
@@ -1335,7 +1335,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		 * Stuff left over -- add it to the list too
 		 */
 		gn = Targ_GetNode(start);
-		Lst_Append(members, gn);
+		Lst_Append(&members, gn);
 	    }
 	    /*
 	     * Point cp back at the beginning again so the variable value
@@ -1347,8 +1347,8 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	/*
 	 * Add all elements of the members list to the parent node.
 	 */
-	while(!Lst_IsEmpty(members)) {
-	    gn = Lst_Dequeue(members);
+	while(!Lst_IsEmpty(&members)) {
+	    gn = Lst_Dequeue(&members);
 
 	    SUFF_DEBUG1("%s...", gn->name);
 	    /* Add gn to the parents child list before the original child */
@@ -1358,7 +1358,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	    /* Expand wildcards on new node */
 	    ExpandWildcards(cln->prev, pgn);
 	}
-	Lst_Free(members);
+	Lst_Done(&members);
 
 	/*
 	 * Free the result
