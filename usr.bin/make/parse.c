@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.461 2020/11/29 00:04:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.462 2020/11/29 01:35:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.461 2020/11/29 00:04:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.462 2020/11/29 01:35:33 rillig Exp $");
 
 /* types and constants */
 
@@ -1553,18 +1553,18 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 	}
 
 	if (*end == '(') {
-	    GNodeList *sources = Lst_New();
-	    if (!Arch_ParseArchive(&start, sources, VAR_CMDLINE)) {
+	    GNodeList sources = LST_INIT;
+	    if (!Arch_ParseArchive(&start, &sources, VAR_CMDLINE)) {
 		Parse_Error(PARSE_FATAL,
 			    "Error in source archive spec \"%s\"", start);
 		return FALSE;
 	    }
 
-	    while (!Lst_IsEmpty(sources)) {
-		GNode *gn = Lst_Dequeue(sources);
+	    while (!Lst_IsEmpty(&sources)) {
+		GNode *gn = Lst_Dequeue(&sources);
 		ParseDoSrc(tOp, gn->name, specType);
 	    }
-	    Lst_Free(sources);
+	    Lst_Done(&sources);
 	    end = start;
 	} else {
 	    if (*end != '\0') {
@@ -1614,8 +1614,8 @@ ParseDoDependency(char *line)
     SearchPathList *paths;	/* search paths to alter when parsing
 				 * a list of .PATH targets */
     GNodeType tOp;		/* operator from special target */
-    StringList *curTargs;	/* target names to be found and added
-				 * to the targets list */
+    /* target names to be found and added to the targets list */
+    StringList curTargs = LST_INIT;
     char *lstart = line;
 
     /*
@@ -1630,19 +1630,17 @@ ParseDoDependency(char *line)
 
     paths = NULL;
 
-    curTargs = Lst_New();
-
     /*
      * First, grind through the targets.
      */
     if (!ParseDoDependencyTargets(&cp, &line, lstart, &specType, &tOp, &paths,
-				  curTargs))
+				  &curTargs))
 	goto out;
 
     /* Don't need the list of target names anymore.
      * The targets themselves are now in the global variable 'targets'. */
-    Lst_Free(curTargs);
-    curTargs = NULL;
+    Lst_Done(&curTargs);
+    Lst_Init(&curTargs);
 
     if (!Lst_IsEmpty(targets))
 	ParseDoDependencyCheckSpec(specType);
@@ -1722,8 +1720,7 @@ ParseDoDependency(char *line)
 out:
     if (paths != NULL)
 	Lst_Free(paths);
-    if (curTargs != NULL)
-	Lst_Free(curTargs);
+    Lst_Done(&curTargs);
 }
 
 typedef struct VarAssignParsed {
