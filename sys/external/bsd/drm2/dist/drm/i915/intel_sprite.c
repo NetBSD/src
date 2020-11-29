@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.9.4.1 2020/11/29 11:34:04 martin Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -32,7 +32,7 @@
  * support.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.9.4.1 2020/11/29 11:34:04 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -124,7 +124,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	trace_i915_pipe_update_start(crtc);
 
 #ifdef __NetBSD__
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, wq, &dev->vbl_lock, timeout,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, wq, &dev->vbl_lock, timeout,
 	    (scanline = intel_get_crtc_scanline(crtc),
 		scanline < min || scanline > max));
 	if (ret <= 0)
