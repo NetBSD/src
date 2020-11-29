@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.229 2020/11/29 08:48:24 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.230 2020/11/29 09:38:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.229 2020/11/29 08:48:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.230 2020/11/29 09:38:04 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -255,7 +255,7 @@ OpenDirs_Init(OpenDirs *odirs)
 	HashTable_Init(&odirs->table);
 }
 
-static void Dir_Destroy(CachedDir *);
+static void CachedDir_Destroy(CachedDir *);
 
 #ifdef CLEANUP
 static void
@@ -265,7 +265,7 @@ OpenDirs_Done(OpenDirs *odirs)
 	while (ln != NULL) {
 		CachedDirListNode *next = ln->next;
 		CachedDir *dir = ln->datum;
-		Dir_Destroy(dir);	/* removes the dir from odirs->list */
+		CachedDir_Destroy(dir);	/* removes the dir from odirs->list */
 		ln = next;
 	}
 	Lst_Done(&odirs->list);
@@ -441,7 +441,7 @@ Dir_InitCur(const char *cdname)
 		 * We've been here before, clean up.
 		 */
 		cur->refCount--;
-		Dir_Destroy(cur);
+		CachedDir_Destroy(cur);
 	}
 	cur = dir;
 }
@@ -478,12 +478,12 @@ Dir_End(void)
 #ifdef CLEANUP
 	if (cur != NULL) {
 		cur->refCount--;
-		Dir_Destroy(cur);
+		CachedDir_Destroy(cur);
 	}
 	dot->refCount--;
 	dotLast->refCount--;
-	Dir_Destroy(dotLast);
-	Dir_Destroy(dot);
+	CachedDir_Destroy(dotLast);
+	CachedDir_Destroy(dot);
 	SearchPath_Clear(&dirSearchPath);
 	OpenDirs_Done(&openDirs);
 	HashTable_Done(&mtimes);
@@ -1561,7 +1561,7 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
  *	dirp		The directory descriptor to nuke
  */
 static void
-Dir_Destroy(CachedDir *dir)
+CachedDir_Destroy(CachedDir *dir)
 {
 	dir->refCount--;
 
@@ -1582,7 +1582,7 @@ SearchPath_Free(SearchPath *path)
 
 	for (ln = path->first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		Dir_Destroy(dir);
+		CachedDir_Destroy(dir);
 	}
 	Lst_Free(path);
 }
@@ -1594,7 +1594,7 @@ SearchPath_Clear(SearchPath *path)
 {
 	while (!Lst_IsEmpty(path)) {
 		CachedDir *dir = Lst_Dequeue(path);
-		Dir_Destroy(dir);
+		CachedDir_Destroy(dir);
 	}
 }
 
