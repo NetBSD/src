@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.460 2020/11/28 23:39:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.461 2020/11/29 00:04:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.460 2020/11/28 23:39:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.461 2020/11/29 00:04:22 rillig Exp $");
 
 /* types and constants */
 
@@ -208,7 +208,7 @@ static GNodeList *targets;
  * with duplicates.  Kept in a separate list since the commands from .USE or
  * .USEBEFORE nodes are shared with other GNodes, thereby giving up the
  * easily understandable ownership over the allocated strings. */
-static StringList *targCmds;
+static StringList targCmds = LST_INIT;
 #endif
 
 /*
@@ -2862,7 +2862,7 @@ ParseLine_ShellCommand(const char *p)
 	    ParseAddCmd(gn, cmd);
 	}
 #ifdef CLEANUP
-	Lst_Append(targCmds, cmd);
+	Lst_Append(&targCmds, cmd);
 #endif
     }
 }
@@ -3115,9 +3115,6 @@ Parse_Init(void)
     sysIncPath = SearchPath_New();
     defSysIncPath = SearchPath_New();
     Vector_Init(&includes, sizeof(IFile));
-#ifdef CLEANUP
-    targCmds = Lst_New();
-#endif
 }
 
 /* Clean up the parsing module. */
@@ -3125,7 +3122,7 @@ void
 Parse_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(targCmds, free);
+    Lst_DoneCall(&targCmds, free);
     assert(targets == NULL);
     SearchPath_Free(defSysIncPath);
     SearchPath_Free(sysIncPath);
@@ -3140,13 +3137,9 @@ Parse_End(void)
  * Return a list containing the single main target to create.
  * If no such target exists, we Punt with an obnoxious error message.
  */
-GNodeList *
-Parse_MainName(void)
+void
+Parse_MainName(GNodeList *mainList)
 {
-    GNodeList *mainList;
-
-    mainList = Lst_New();
-
     if (mainNode == NULL)
 	Punt("no target to make.");
 
@@ -3157,8 +3150,6 @@ Parse_MainName(void)
 	Lst_Append(mainList, mainNode);
 
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
-
-    return mainList;
 }
 
 int
