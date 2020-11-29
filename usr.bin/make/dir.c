@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.238 2020/11/29 15:58:37 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.239 2020/11/29 16:04:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.238 2020/11/29 15:58:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.239 2020/11/29 16:04:34 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -286,7 +286,6 @@ static HashTable mtimes;
 static HashTable lmtimes;	/* same as mtimes but for lstat */
 
 
-static void CachedDir_Destroy(CachedDir *);
 static void OpenDirs_Remove(OpenDirs *, const char *);
 
 
@@ -330,6 +329,16 @@ CachedDir_Unref(CachedDir *dir)
 	dir->refCount--;
 	DEBUG2(DIR, "CachedDir refCount-- to %d for \"%s\"\n",
 	    dir->refCount, dir->name);
+}
+
+/* Nuke a directory descriptor, if it is no longer used. */
+static void
+CachedDir_Destroy(CachedDir *dir)
+{
+	CachedDir_Unref(dir);
+
+	if (dir->refCount == 0)
+		CachedDir_Free0(dir);
 }
 
 static void
@@ -1612,16 +1621,6 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
 	}
 
 	return Buf_Destroy(&buf, FALSE);
-}
-
-/* Nuke a directory descriptor, if it is no longer used. */
-static void
-CachedDir_Destroy(CachedDir *dir)
-{
-	CachedDir_Unref(dir);
-
-	if (dir->refCount == 0)
-		CachedDir_Free0(dir);
 }
 
 /* Free the search path and all directories mentioned in it. */
