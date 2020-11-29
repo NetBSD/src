@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.96 2020/11/28 19:26:10 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.97 2020/11/29 00:54:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.96 2020/11/28 19:26:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.97 2020/11/29 00:54:43 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -207,7 +207,7 @@ Lst_FindDatum(List *list, const void *datum)
 }
 
 /* Move all nodes from src to the end of dst.
- * The source list is destroyed and freed. */
+ * The source list becomes empty but is not freed. */
 void
 Lst_MoveAll(List *dst, List *src)
 {
@@ -220,7 +220,6 @@ Lst_MoveAll(List *dst, List *src)
 
 		dst->last = src->last;
 	}
-	free(src);
 }
 
 /* Copy the element data from src to the start of dst. */
