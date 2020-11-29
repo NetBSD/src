@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.163 2020/11/28 22:56:01 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.164 2020/11/29 00:04:22 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -153,7 +153,7 @@ void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_SetInput(const char *, int, int, NextBufProc, void *);
-GNodeList *Parse_MainName(void);
+void Parse_MainName(GNodeList *);
 int Parse_GetFatals(void);
 
 /* str.c */
@@ -204,7 +204,7 @@ GNode *Targ_FindNode(const char *);
 GNode *Targ_GetNode(const char *);
 GNode *Targ_NewInternalNode(const char *);
 GNode *Targ_GetEndNode(void);
-GNodeList *Targ_FindList(StringList *);
+void Targ_FindList(GNodeList *, StringList *);
 Boolean Targ_Ignore(const GNode *);
 Boolean Targ_Silent(const GNode *);
 Boolean Targ_Precious(const GNode *);
