@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.234 2020/11/29 11:17:41 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.235 2020/11/29 12:30:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.234 2020/11/29 11:17:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.235 2020/11/29 12:30:40 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1463,6 +1463,54 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 	gn->mtime = cst.cst_mtime;
 }
 
+/*
+ * Read the directory and add it to the cache in openDirs, even if it is
+ * already there.  If a path is given, add the directory to that path as
+ * well.
+ *
+ * XXX: Why is it added to openDirs unconditionally?
+ */
+static CachedDir *
+CacheNewDir(const char *name, SearchPath *path)
+{
+	CachedDir *dir = NULL;
+	DIR *d;
+	struct dirent *dp;
+
+	if ((d = opendir(name)) == NULL) {
+		DIR_DEBUG1("Caching %s ... not found\n", name);
+		return dir;
+	}
+
+	DIR_DEBUG1("Caching %s ...\n", name);
+
+	dir = CachedDir_New(name);
+	CachedDir_Ref(dir);	/* XXX: why here already? */
+
+	while ((dp = readdir(d)) != NULL) {
+
+#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
+		/*
+		 * The sun directory library doesn't check for a 0 inode
+		 * (0-inode slots just take up space), so we have to do
+		 * it ourselves.
+		 */
+		if (dp->d_fileno == 0)
+			continue;
+#endif /* sun && d_ino */
+
+		(void)HashSet_Add(&dir->files, dp->d_name);
+	}
+	(void)closedir(d);
+
+	OpenDirs_Add(&openDirs, dir);
+	if (path != NULL)
+		Lst_Append(path, dir);
+
+	DIR_DEBUG1("Caching %s done\n", name);
+	return dir;
+}
+
 /* Read the list of filenames in the directory and store the result
  * in openDirs.
  *
@@ -1477,9 +1525,6 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
 {
-	CachedDir *dir = NULL;	/* the added directory */
-	DIR *d;
-	struct dirent *dp;
 
 	if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
 		SearchPathNode *ln;
@@ -1495,40 +1540,16 @@ Dir_AddDir(SearchPath *path, const char *name)
 		Lst_Prepend(path, dotLast);
 	}
 
-	if (path != NULL)
-		dir = OpenDirs_Find(&openDirs, name);
-	if (dir != NULL) {
-		if (Lst_FindDatum(path, dir) == NULL)
-			Lst_Append(path, CachedDir_Ref(dir));
-		return dir;
-	}
-
-	DIR_DEBUG1("Caching %s ...\n", name);
-
-	if ((d = opendir(name)) != NULL) {
-		dir = CachedDir_New(name);
-		CachedDir_Ref(dir);	/* XXX: why here already? */
-
-		while ((dp = readdir(d)) != NULL) {
-#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
-			/*
-			 * The sun directory library doesn't check for a 0 inode
-			 * (0-inode slots just take up space), so we have to do
-			 * it ourselves.
-			 */
-			if (dp->d_fileno == 0)
-				continue;
-#endif /* sun && d_ino */
-			(void)HashSet_Add(&dir->files, dp->d_name);
+	if (path != NULL) {
+		CachedDir *dir = OpenDirs_Find(&openDirs, name);
+		if (dir != NULL) {
+			if (Lst_FindDatum(path, dir) == NULL)
+				Lst_Append(path, CachedDir_Ref(dir));
+			return dir;
 		}
-		(void)closedir(d);
-
-		OpenDirs_Add(&openDirs, dir);
-		if (path != NULL)
-			Lst_Append(path, dir);
 	}
-	DIR_DEBUG1("Caching %s done\n", name);
-	return dir;
+
+	return CacheNewDir(name, path);
 }
 
 /* Return a copy of dirSearchPath, incrementing the reference counts for
