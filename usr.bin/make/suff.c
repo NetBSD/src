@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.322 2020/11/29 01:30:38 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.323 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.322 2020/11/29 01:30:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.323 2020/11/29 01:40:26 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -467,7 +467,7 @@ Suff_ClearSuffixes(void)
 	SuffFree(nullSuff);
     emptySuff = nullSuff = Suffix_New("");
 
-    SearchPath_AddAll(nullSuff->searchPath, dirSearchPath);
+    SearchPath_AddAll(nullSuff->searchPath, &dirSearchPath);
     nullSuff->flags = SUFF_NULL;
 }
 
@@ -849,7 +849,7 @@ Suff_DoPaths(void)
 	    if (suff->flags & SUFF_LIBRARY)
 		SearchPath_AddAll(inLibs, suff->searchPath);
 #endif
-	    SearchPath_AddAll(suff->searchPath, dirSearchPath);
+	    SearchPath_AddAll(suff->searchPath, &dirSearchPath);
 	} else {
 	    SearchPath_Free(suff->searchPath);
 	    suff->searchPath = Dir_CopyDirSearchPath();
@@ -1423,7 +1423,7 @@ Suff_FindPath(GNode* gn)
 	return suff->searchPath;
     } else {
 	SUFF_DEBUG0("\n");
-	return dirSearchPath;	/* Use default search path */
+	return &dirSearchPath;	/* Use default search path */
     }
 }
 
@@ -1726,7 +1726,7 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 
     free(gn->path);
     gn->path = Dir_FindFile(gn->name,
-			    (targ == NULL ? dirSearchPath :
+			    (targ == NULL ? &dirSearchPath :
 			     targ->suff->searchPath));
     if (gn->path == NULL)
 	return;
