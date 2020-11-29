@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.147 2020/11/29 00:04:22 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.148 2020/11/29 01:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
  *
  * Debugging:
  *	Targ_PrintGraph
- *			Print out the entire graphm all variables and
+ *			Print out the entire graph, all variables and
  *			statistics for the directory cache. Should print
  *			something for suffixes, too, but...
  */
@@ -119,17 +119,17 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.147 2020/11/29 00:04:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.148 2020/11/29 01:05:08 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
  * dependency operators ':', '::', '!'.
  */
-static GNodeList *allTargets;
+static GNodeList allTargets = LST_INIT;
 static HashTable allTargetsByName;
 
 #ifdef CLEANUP
-static GNodeList *allNodes;
+static GNodeList allNodes = LST_INIT;
 
 static void GNode_Free(void *);
 #endif
@@ -137,11 +137,7 @@ static void GNode_Free(void *);
 void
 Targ_Init(void)
 {
-    allTargets = Lst_New();
     HashTable_Init(&allTargetsByName);
-#ifdef CLEANUP
-    allNodes = Lst_New();
-#endif
 }
 
 void
@@ -149,9 +145,9 @@ Targ_End(void)
 {
     Targ_Stats();
 #ifdef CLEANUP
-    Lst_Free(allTargets);
+    Lst_Done(&allTargets);
     HashTable_Done(&allTargetsByName);
-    Lst_Destroy(allNodes, GNode_Free);
+    Lst_DoneCall(&allNodes, GNode_Free);
 #endif
 }
 
@@ -169,7 +165,7 @@ Targ_Stats(void)
 GNodeList *
 Targ_List(void)
 {
-    return allTargets;
+    return &allTargets;
 }
 
 /* Create a new graph node, but don't register it anywhere.
@@ -218,7 +214,7 @@ GNode_New(const char *name)
     gn->lineno = 0;
 
 #ifdef CLEANUP
-    Lst_Append(allNodes, gn);
+    Lst_Append(&allNodes, gn);
 #endif
 
     return gn;
@@ -288,7 +284,7 @@ Targ_NewInternalNode(const char *name)
 {
     GNode *gn = GNode_New(name);
     Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
-    Lst_Append(allTargets, gn);
+    Lst_Append(&allTargets, gn);
     DEBUG1(TARG, "Adding \"%s\" to all targets.\n", gn->name);
     if (doing_depend)
 	gn->flags |= FROM_DEPEND;
@@ -536,7 +532,7 @@ PrintOnlySources(void)
 {
     GNodeListNode *ln;
 
-    for (ln = allTargets->first; ln != NULL; ln = ln->next) {
+    for (ln = allTargets.first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
 	if (GNode_IsTarget(gn))
 	    continue;
@@ -556,7 +552,7 @@ void
 Targ_PrintGraph(int pass)
 {
     debug_printf("#*** Input graph:\n");
-    Targ_PrintNodes(allTargets, pass);
+    Targ_PrintNodes(&allTargets, pass);
     debug_printf("\n");
     debug_printf("\n");
 
@@ -587,7 +583,7 @@ Targ_Propagate(void)
 {
     GNodeListNode *ln, *cln;
 
-    for (ln = allTargets->first; ln != NULL; ln = ln->next) {
+    for (ln = allTargets.first; ln != NULL; ln = ln->next) {
 	GNode *gn = ln->datum;
 	GNodeType type = gn->type;
 
