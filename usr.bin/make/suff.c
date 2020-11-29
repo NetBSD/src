@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.317 2020/11/29 01:10:08 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.318 2020/11/29 01:12:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.317 2020/11/29 01:10:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.318 2020/11/29 01:12:45 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -211,7 +211,7 @@ typedef struct Candidate {
 
 typedef struct CandidateSearcher {
 
-    CandidateList *list;
+    CandidateList list;
 
     /*
      * TODO: Add HashSet for seen entries, to avoid endless loops such as
@@ -901,35 +901,35 @@ Suff_AddLib(const char *suffName)
 static void
 CandidateSearcher_Init(CandidateSearcher *cs)
 {
-    cs->list = Lst_New();
+    Lst_Init(&cs->list);
 }
 
 static void
 CandidateSearcher_Done(CandidateSearcher *cs)
 {
-    Lst_Free(cs->list);
+    Lst_Done(&cs->list);
 }
 
 static void
 CandidateSearcher_Add(CandidateSearcher *cs, Candidate *cand)
 {
     /* TODO: filter duplicates */
-    Lst_Append(cs->list, cand);
+    Lst_Append(&cs->list, cand);
 }
 
 static void
 CandidateSearcher_AddIfNew(CandidateSearcher *cs, Candidate *cand)
 {
     /* TODO: filter duplicates */
-    if (Lst_FindDatum(cs->list, cand) == NULL)
-	Lst_Append(cs->list, cand);
+    if (Lst_FindDatum(&cs->list, cand) == NULL)
+	Lst_Append(&cs->list, cand);
 }
 
 static void
 CandidateSearcher_MoveAll(CandidateSearcher *cs, CandidateList *list)
 {
     /* TODO: filter duplicates */
-    Lst_MoveAll(cs->list, list);
+    Lst_MoveAll(&cs->list, list);
 }
 
 
@@ -1967,9 +1967,9 @@ sfnd_return:
 static void
 CandidateSearcher_CleanUp(CandidateSearcher *cs)
 {
-    while (RemoveCandidate(cs->list))
+    while (RemoveCandidate(&cs->list))
 	continue;
-    assert(Lst_IsEmpty(cs->list));
+    assert(Lst_IsEmpty(&cs->list));
 }
 
 
