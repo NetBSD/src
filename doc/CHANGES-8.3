@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.51 2020/11/19 11:28:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.52 2020/11/29 11:20:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1328,4 +1328,12 @@ libexec/httpd/bozohttpd.c			1.124
 
 	Fix httpd serving files greater than 4GB on 32bit archs.
 	[hannken, ticket #1624]
+
+include/arpa/nameser_compat.h			1.8
+lib/libc/net/getaddrinfo.c			1.120
+lib/libc/net/gethnamaddr.c			1.93
+
+	Don't complain about additional DNAME records received when resolving
+	A or AAAA.
+	[is, ticket #1625]
 
