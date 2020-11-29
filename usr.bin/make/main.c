@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.488 2020/11/29 00:04:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.489 2020/11/29 00:42:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.488 2020/11/29 00:04:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.489 2020/11/29 00:42:01 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1627,7 +1627,7 @@ main_CleanUp(void)
 	 * used in GNodes.
 	 */
 	Lst_Done(&opts.makefiles);
-	Lst_Destroy(&opts.create, free);
+	Lst_DoneCall(&opts.create, free);
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
