@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.153 2020/11/28 18:55:52 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.154 2020/11/29 09:27:40 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -82,7 +82,7 @@ static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 extern Boolean forceJobs;
 extern char    **environ;
 
-#define	MAKE_META_PREFIX	".MAKE.META.PREFIX"
+#define MAKE_META_PREFIX	".MAKE.META.PREFIX"
 
 #ifndef N2U
 # define N2U(n, u)   (((n) + ((u) - 1)) / (u))
@@ -1712,4 +1712,4 @@ meta_compat_parent(pid_t child)
     }
 }
 
-#endif	/* USE_META */
+#endif /* USE_META */

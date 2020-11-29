@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.38 2020/11/29 08:48:24 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.39 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,8 +72,8 @@
  *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
  */
 
-#ifndef	MAKE_DIR_H
-#define	MAKE_DIR_H
+#ifndef MAKE_DIR_H
+#define MAKE_DIR_H
 
 typedef struct CachedDir CachedDir;
 
@@ -98,8 +98,8 @@ SearchPath *Dir_CopyDirSearchPath(void);
 
 /* Stripped-down variant of struct stat. */
 struct cached_stat {
-    time_t cst_mtime;
-    mode_t cst_mode;
+	time_t cst_mtime;
+	mode_t cst_mode;
 };
 
 int cached_lstat(const char *, struct cached_stat *);
