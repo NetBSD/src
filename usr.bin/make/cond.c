@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.219 2020/11/28 23:39:58 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.220 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.219 2020/11/28 23:39:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.220 2020/11/29 01:40:26 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -313,7 +313,7 @@ FuncExists(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 	Boolean result;
 	char *path;
 
-	path = Dir_FindFile(arg, dirSearchPath);
+	path = Dir_FindFile(arg, &dirSearchPath);
 	DEBUG2(COND, "exists(%s) result is \"%s\"\n",
 	       arg, path != NULL ? path : "");
 	result = path != NULL;

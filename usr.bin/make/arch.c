@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.181 2020/11/28 23:13:28 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.182 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.181 2020/11/28 23:13:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.182 2020/11/29 01:40:26 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -345,7 +345,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 
 		} else if (Dir_HasWildcards(memName)) {
 			StringList members = LST_INIT;
-			Dir_Expand(memName, dirSearchPath, &members);
+			Dir_Expand(memName, &dirSearchPath, &members);
 
 			while (!Lst_IsEmpty(&members)) {
 				char *member = Lst_Dequeue(&members);

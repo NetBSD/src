@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.228 2020/11/28 23:39:58 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.229 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -508,7 +508,7 @@ extern Boolean preserveUndefined;
 
 /* The list of directories to search when looking for targets (set by the
  * special target .PATH). */
-extern SearchPath *dirSearchPath;
+extern SearchPath dirSearchPath;
 /* Used for .include "...". */
 extern SearchPath *parseIncPath;
 /* Used for .include <...>, for the built-in sys.mk and makefiles from the

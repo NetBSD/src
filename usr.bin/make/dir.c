@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.227 2020/11/28 23:22:14 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.228 2020/11/29 01:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.227 2020/11/28 23:22:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.228 2020/11/29 01:40:26 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -214,7 +214,7 @@ typedef ListNode CachedDirListNode;
 
 typedef ListNode SearchPathNode;
 
-SearchPath *dirSearchPath;	/* main search path */
+SearchPath dirSearchPath = LST_INIT;	/* main search path */
 
 /* A list of cached directories, with fast lookup by directory name. */
 typedef struct OpenDirs {
@@ -368,7 +368,6 @@ cached_lstat(const char *pathname, struct cached_stat *cst)
 void
 Dir_Init(void)
 {
-	dirSearchPath = SearchPath_New();
 	OpenDirs_Init(&openDirs);
 	HashTable_Init(&mtimes);
 	HashTable_Init(&lmtimes);
@@ -459,8 +458,7 @@ Dir_End(void)
 	dotLast->refCount--;
 	Dir_Destroy(dotLast);
 	Dir_Destroy(dot);
-	SearchPath_Clear(dirSearchPath);
-	Lst_Free(dirSearchPath);
+	SearchPath_Clear(&dirSearchPath);
 	OpenDirs_Done(&openDirs);
 	HashTable_Done(&mtimes);
 #endif
@@ -479,7 +477,7 @@ Dir_SetPATH(void)
 
 	Var_Delete(".PATH", VAR_GLOBAL);
 
-	if ((ln = dirSearchPath->first) != NULL) {
+	if ((ln = dirSearchPath.first) != NULL) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast) {
 			hasLastDot = TRUE;
@@ -494,7 +492,7 @@ Dir_SetPATH(void)
 			Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 
-	for (ln = dirSearchPath->first; ln != NULL; ln = ln->next) {
+	for (ln = dirSearchPath.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast)
 			continue;
@@ -1481,7 +1479,7 @@ Dir_CopyDirSearchPath(void)
 {
 	SearchPath *path = SearchPath_New();
 	SearchPathNode *ln;
-	for (ln = dirSearchPath->first; ln != NULL; ln = ln->next) {
+	for (ln = dirSearchPath.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		dir->refCount++;
 		Lst_Append(path, dir);
