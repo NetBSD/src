@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.321 2020/11/29 01:24:18 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.322 2020/11/29 01:30:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.321 2020/11/29 01:24:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.322 2020/11/29 01:30:38 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -166,15 +166,15 @@ typedef struct Suffix {
     /* Reference count of list membership and several other places */
     int refCount;
     /* Suffixes we have a transformation to */
-    SuffixList *parents;
+    SuffixList parents;
     /* Suffixes we have a transformation from */
-    SuffixList *children;
+    SuffixList children;
 
     /* Lists in which this suffix is referenced.
      * XXX: These lists are used nowhere, they are just appended to, for no
      * apparent reason.  They do have the side effect of increasing refCount
      * though. */
-    SuffixListList *ref;
+    SuffixListList ref;
 } Suffix;
 
 /*
@@ -365,9 +365,9 @@ Suffix_Free(Suffix *suff)
 	     suff->name, suff->refCount);
 #endif
 
-    Lst_Free(suff->ref);
-    Lst_Free(suff->children);
-    Lst_Free(suff->parents);
+    Lst_Done(&suff->ref);
+    Lst_Done(&suff->children);
+    Lst_Done(&suff->parents);
     SearchPath_Free(suff->searchPath);
 
     free(suff->name);
@@ -411,12 +411,12 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 	SUFF_DEBUG2("inserting \"%s\" (%d) at end of list\n",
 		    suff->name, suff->sNum);
 	Lst_Append(list, Suffix_Ref(suff));
-	Lst_Append(suff->ref, list);
+	Lst_Append(&suff->ref, list);
     } else if (listSuff->sNum != suff->sNum) {
 	DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
 	       suff->name, suff->sNum, listSuff->name, listSuff->sNum);
 	Lst_InsertBefore(list, ln, Suffix_Ref(suff));
-	Lst_Append(suff->ref, list);
+	Lst_Append(&suff->ref, list);
     } else {
 	SUFF_DEBUG2("\"%s\" (%d) is already there\n", suff->name, suff->sNum);
     }
@@ -425,8 +425,8 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 static void
 Relate(Suffix *srcSuff, Suffix *targSuff)
 {
-    SuffixList_Insert(targSuff->children, srcSuff);
-    SuffixList_Insert(srcSuff->parents, targSuff);
+    SuffixList_Insert(&targSuff->children, srcSuff);
+    SuffixList_Insert(&srcSuff->parents, targSuff);
 }
 
 static Suffix *
@@ -437,9 +437,9 @@ Suffix_New(const char *name)
     suff->name = bmake_strdup(name);
     suff->nameLen = strlen(suff->name);
     suff->searchPath = SearchPath_New();
-    suff->children = Lst_New();
-    suff->parents = Lst_New();
-    suff->ref = Lst_New();
+    Lst_Init(&suff->children);
+    Lst_Init(&suff->parents);
+    Lst_Init(&suff->ref);
     suff->sNum = sNum++;
     suff->flags = 0;
     suff->refCount = 1; /* XXX: why 1? It's not assigned anywhere yet. */
@@ -629,8 +629,8 @@ Suff_EndTransform(GNode *gn)
 		srcSuff->name, targSuff->name);
 
     /* Remember parents since srcSuff could be deleted in SuffixList_Remove. */
-    srcSuffParents = srcSuff->parents;
-    SuffixList_Remove(targSuff->children, srcSuff);
+    srcSuffParents = &srcSuff->parents;
+    SuffixList_Remove(&targSuff->children, srcSuff);
     SuffixList_Remove(srcSuffParents, targSuff);
 }
 
@@ -989,7 +989,7 @@ static void
 CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
 {
     SuffixListNode *ln;
-    for (ln = cand->suff->children->first; ln != NULL; ln = ln->next) {
+    for (ln = cand->suff->children.first; ln != NULL; ln = ln->next) {
 	Suffix *suff = ln->datum;
 
 	if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
@@ -1159,7 +1159,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 	 * XXX: Handle multi-stage transformations here, too.
 	 */
 
-	if (Lst_FindDatum(suff->parents, targ->suff) != NULL)
+	if (Lst_FindDatum(&suff->parents, targ->suff) != NULL)
 	    break;
     }
 
@@ -1503,7 +1503,7 @@ ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
     size_t nameLen = (size_t)(eoarch - gn->name);
 
     /* Use first matching suffix... */
-    for (ln = memSuff->parents->first; ln != NULL; ln = ln->next)
+    for (ln = memSuff->parents.first; ln != NULL; ln = ln->next)
 	if (Suffix_IsSuffix(ln->datum, nameLen, eoarch))
 	    break;
 
@@ -2105,8 +2105,8 @@ Suffix_Print(Suffix *suff)
     }
     debug_printf("\n");
 
-    PrintSuffNames("To", suff->parents);
-    PrintSuffNames("From", suff->children);
+    PrintSuffNames("To", &suff->parents);
+    PrintSuffNames("From", &suff->children);
 
     debug_printf("#\tSearch Path: ");
     SearchPath_Print(suff->searchPath);
