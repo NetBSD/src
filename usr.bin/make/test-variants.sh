@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.6 2020/11/20 00:24:21 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.7 2020/11/29 21:27:08 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -70,6 +70,8 @@ testcase USE_FILEMON="ktrace"
 testcase USE_META="no"
 
 testcase USER_CPPFLAGS="-DCLEANUP"
+
+testcase USER_CPPFLAGS="-DDEBUG_REFCNT"
 
 testcase USER_CPPFLAGS="-DDEBUG_HASH_LOOKUP"
 
