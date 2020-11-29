@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.241 2020/11/29 18:49:36 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.242 2020/11/29 21:50:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.241 2020/11/29 18:49:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.242 2020/11/29 21:50:50 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -269,8 +269,8 @@ static int misses;		/* Sad, but not evil misses */
 static int nearmisses;		/* Found under search path */
 static int bigmisses;		/* Sought by itself */
 
-static CachedDir *dot;		/* contents of current directory */
-static CachedDir *cur;		/* contents of current directory, if not dot */
+static CachedDir *dot = NULL;	/* contents of current directory */
+static CachedDir *cur = NULL;	/* contents of current directory, if not dot */
 /* A fake path entry indicating we need to look for '.' last. */
 static CachedDir *dotLast = NULL;
 
@@ -1470,11 +1470,8 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
 }
 
 /*
- * Read the directory and add it to the cache in openDirs, even if it is
- * already there.  If a path is given, add the directory to that path as
- * well.
- *
- * XXX: Why is it added to openDirs unconditionally?
+ * Read the directory and add it to the cache in openDirs.
+ * If a path is given, add the directory to that path as well.
  */
 static CachedDir *
 CacheNewDir(const char *name, SearchPath *path)
@@ -1526,6 +1523,12 @@ CacheNewDir(const char *name, SearchPath *path)
  *			added, or NULL to only add the directory to openDirs
  *	name		The name of the directory to add.
  *			The name is not normalized in any way.
+ * Output:
+ *	result		If no path is given and the directory exists, the
+ *			returned CachedDir has a reference count of 0.  It
+ *			must either be assigned to a variable using
+ *			CachedDir_Assign or be appended to a SearchPath using
+ *			Lst_Append and CachedDir_Ref.
  */
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
@@ -1545,6 +1548,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 	}
 
 	if (path != NULL) {
+		/* XXX: Why is OpenDirs only checked if path != NULL? */
 		CachedDir *dir = OpenDirs_Find(&openDirs, name);
 		if (dir != NULL) {
 			if (Lst_FindDatum(path, dir) == NULL)
