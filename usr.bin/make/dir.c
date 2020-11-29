@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.236 2020/11/29 14:29:19 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.237 2020/11/29 15:14:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.236 2020/11/29 14:29:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.237 2020/11/29 15:14:32 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -467,20 +467,11 @@ Dir_InitCur(const char *cdname)
 	if (dir == NULL)
 		return;
 
-	/* XXX: Reference counting is wrong here.
-	 * If this function is called repeatedly with the same directory name,
-	 * its reference count increases each time even though the number of
-	 * actual references stays the same. */
-
-	CachedDir_Ref(dir);	/* XXX: This can be expressed clearer. */
 	if (cur != NULL && cur != dir) {
-		/*
-		 * We've been here before, clean up.
-		 */
 		CachedDir_Unref(cur);	/* XXX: why unref twice? */
 		CachedDir_Destroy(cur);
 	}
-	cur = dir;
+	cur = CachedDir_Ref(dir);
 }
 
 /* (Re)initialize "dot" (current/object directory) path hash.
