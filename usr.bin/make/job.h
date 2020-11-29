@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.63 2020/11/14 13:27:01 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.64 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -97,8 +97,8 @@ struct emul_pollfd {
     short revents;
 };
 
-#define	POLLIN		0x0001
-#define	POLLOUT		0x0004
+#define POLLIN		0x0001
+#define POLLOUT		0x0004
 
 int
 emul_poll(struct pollfd *fd, int nfd, int timeout);

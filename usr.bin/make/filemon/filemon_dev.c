@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_dev.c,v 1.5 2020/11/23 23:41:11 rillig Exp $	*/
+/*	$NetBSD: filemon_dev.c,v 1.6 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #ifndef _PATH_FILEMON
-#define	_PATH_FILEMON	"/dev/filemon"
+#define _PATH_FILEMON	"/dev/filemon"
 #endif
 
 struct filemon {

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.25 2020/10/19 23:43:55 rillig Exp $	*/
+/*	$NetBSD: config.h,v 1.26 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -104,7 +104,7 @@
  *	Is the suffix used to denote libraries and is used by the Suff module
  *	to find the search path on which to seek any -l<xx> targets.
  */
-#define	LIBSUFF	".a"
+#define LIBSUFF	".a"
 
 /*
  * RECHECK
@@ -119,7 +119,7 @@
  *	On systems that don't have this problem, you should define this.
  *	Under NFS you probably should not, unless you aren't exporting jobs.
  */
-#define	RECHECK
+#define RECHECK
 
 /*
  * POSIX

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.229 2020/11/29 01:40:26 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.230 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,25 +102,25 @@
 #endif
 
 #if defined(__GNUC__)
-#define	MAKE_GNUC_PREREQ(x, y)						\
+#define MAKE_GNUC_PREREQ(x, y)						\
 	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
 	 (__GNUC__ > (x)))
 #else /* defined(__GNUC__) */
-#define	MAKE_GNUC_PREREQ(x, y)	0
+#define MAKE_GNUC_PREREQ(x, y)	0
 #endif /* defined(__GNUC__) */
 
 #if MAKE_GNUC_PREREQ(2, 7)
-#define	MAKE_ATTR_UNUSED	__attribute__((__unused__))
+#define MAKE_ATTR_UNUSED	__attribute__((__unused__))
 #else
-#define	MAKE_ATTR_UNUSED	/* delete */
+#define MAKE_ATTR_UNUSED	/* delete */
 #endif
 
 #if MAKE_GNUC_PREREQ(2, 5)
-#define	MAKE_ATTR_DEAD		__attribute__((__noreturn__))
+#define MAKE_ATTR_DEAD		__attribute__((__noreturn__))
 #elif defined(__GNUC__)
-#define	MAKE_ATTR_DEAD		__volatile
+#define MAKE_ATTR_DEAD		__volatile
 #else
-#define	MAKE_ATTR_DEAD		/* delete */
+#define MAKE_ATTR_DEAD		/* delete */
 #endif
 
 #if MAKE_GNUC_PREREQ(2, 7)

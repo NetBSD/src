@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.7 2020/11/28 16:31:34 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.8 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	_KERNTYPES		/* register_t */
+#define _KERNTYPES		/* register_t */
 
 #include "filemon.h"
 
