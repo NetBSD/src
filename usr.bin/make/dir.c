@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.231 2020/11/29 09:42:54 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.232 2020/11/29 09:51:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.231 2020/11/29 09:42:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.232 2020/11/29 09:51:39 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -209,10 +209,6 @@ MAKE_RCSID("$NetBSD: dir.c,v 1.231 2020/11/29 09:42:54 rillig Exp $");
  * the mtime in a cache for when Dir_UpdateMTime was actually called.
  */
 
-typedef List CachedDirList;
-typedef ListNode CachedDirListNode;
-
-typedef ListNode SearchPathNode;
 
 /* A cache for the filenames in a directory. */
 struct CachedDir {
@@ -240,7 +236,10 @@ struct CachedDir {
 	HashSet files;
 };
 
-SearchPath dirSearchPath = LST_INIT;	/* main search path */
+typedef List CachedDirList;
+typedef ListNode CachedDirListNode;
+
+typedef ListNode SearchPathNode;
 
 /* A list of cached directories, with fast lookup by directory name. */
 typedef struct OpenDirs {
@@ -248,14 +247,52 @@ typedef struct OpenDirs {
 	HashTable /* of CachedDirListNode */ table;
 } OpenDirs;
 
+typedef enum CachedStatsFlags {
+	CST_NONE	= 0,
+	CST_LSTAT	= 1 << 0,	/* call lstat(2) instead of stat(2) */
+	CST_UPDATE	= 1 << 1	/* ignore existing cached entry */
+} CachedStatsFlags;
+
+
+SearchPath dirSearchPath = LST_INIT;	/* main search path */
+
+static OpenDirs openDirs;	/* all cached directories */
+
+/*
+ * Variables for gathering statistics on the efficiency of the caching
+ * mechanism.
+ */
+static int hits;		/* Found in directory cache */
+static int misses;		/* Sad, but not evil misses */
+static int nearmisses;		/* Found under search path */
+static int bigmisses;		/* Sought by itself */
+
+static CachedDir *dot;		/* contents of current directory */
+static CachedDir *cur;		/* contents of current directory, if not dot */
+static CachedDir *dotLast;	/* a fake path entry indicating we need to
+				 * look for . last */
+
+/* Results of doing a last-resort stat in Dir_FindFile -- if we have to go to
+ * the system to find the file, we might as well have its mtime on record.
+ *
+ * XXX: If this is done way early, there's a chance other rules will have
+ * already updated the file, in which case we'll update it again. Generally,
+ * there won't be two rules to update a single file, so this should be ok,
+ * but... */
+static HashTable mtimes;
+
+static HashTable lmtimes;	/* same as mtimes but for lstat */
+
+
+static void CachedDir_Destroy(CachedDir *);
+
+
 static void
 OpenDirs_Init(OpenDirs *odirs)
 {
 	Lst_Init(&odirs->list);
 	HashTable_Init(&odirs->table);
 }
-
-static void CachedDir_Destroy(CachedDir *);
 
 #ifdef CLEANUP
 static void
@@ -300,39 +337,6 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
 	HashTable_DeleteEntry(&odirs->table, he);
 	Lst_Remove(&odirs->list, ln);
 }
-
-static OpenDirs openDirs;	/* all cached directories */
-
-/*
- * Variables for gathering statistics on the efficiency of the caching
- * mechanism.
- */
-static int hits;		/* Found in directory cache */
-static int misses;		/* Sad, but not evil misses */
-static int nearmisses;		/* Found under search path */
-static int bigmisses;		/* Sought by itself */
-
-static CachedDir *dot;		/* contents of current directory */
-static CachedDir *cur;		/* contents of current directory, if not dot */
-static CachedDir *dotLast;	/* a fake path entry indicating we need to
-				 * look for . last */
-
-/* Results of doing a last-resort stat in Dir_FindFile -- if we have to go to
- * the system to find the file, we might as well have its mtime on record.
- *
- * XXX: If this is done way early, there's a chance other rules will have
- * already updated the file, in which case we'll update it again. Generally,
- * there won't be two rules to update a single file, so this should be ok,
- * but... */
-static HashTable mtimes;
-
-static HashTable lmtimes;	/* same as mtimes but for lstat */
-
-typedef enum CachedStatsFlags {
-	CST_NONE	= 0,
-	CST_LSTAT	= 1 << 0,	/* call lstat(2) instead of stat(2) */
-	CST_UPDATE	= 1 << 1	/* ignore existing cached entry */
-} CachedStatsFlags;
 
 /* Returns 0 and the result of stat(2) or lstat(2) in *out_cst,
  * or -1 on error. */
