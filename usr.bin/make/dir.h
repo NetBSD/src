@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.37 2020/11/28 22:56:01 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.38 2020/11/29 08:48:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,21 +75,7 @@
 #ifndef	MAKE_DIR_H
 #define	MAKE_DIR_H
 
-/* A cache for the filenames in a directory. */
-typedef struct CachedDir {
-    char *name;			/* Name of directory, either absolute or
-				 * relative to the current directory.
-				 * The name is not normalized in any way,
-				 * that is, "." and "./." are different.
-				 *
-				 * Not sure what happens when .CURDIR is
-				 * assigned a new value; see Parse_DoVar. */
-    int refCount;		/* Number of SearchPaths with this directory */
-    /* TODO: Log the reference counting; see Dir_Expand, partPath. */
-    int hits;			/* The number of times a file in this
-				 * directory has been found */
-    HashSet files;		/* The files in the directory. */
-} CachedDir;
+typedef struct CachedDir CachedDir;
 
 void Dir_Init(void);
 void Dir_InitDir(const char *);
