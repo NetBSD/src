@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.232 2020/11/29 09:51:39 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.233 2020/11/29 10:57:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.232 2020/11/29 09:51:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.233 2020/11/29 10:57:16 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -223,9 +223,10 @@ struct CachedDir {
 	char *name;
 
 	/*
-	 * The number of SearchPaths with this directory.
+	 * The number of SearchPaths that refer to this directory.
+	 * Plus the number of global variables that refer to this directory.
 	 *
-	 * TODO: Log the reference counting; see Dir_Expand, partPath.
+	 * TODO: Check the reference counting; see Dir_Expand, partPath.
 	 */
 	int refCount;
 
@@ -286,6 +287,37 @@ static HashTable lmtimes;	/* same as mtimes but for lstat */
 
 static void CachedDir_Destroy(CachedDir *);
 
+
+static CachedDir *
+CachedDir_New(const char *name)
+{
+	CachedDir *dir = bmake_malloc(sizeof *dir);
+
+	dir->name = bmake_strdup(name);
+	dir->refCount = 0;
+	dir->hits = 0;
+	HashSet_Init(&dir->files);
+
+	return dir;
+}
+
+static CachedDir *
+CachedDir_Ref(CachedDir *dir)
+{
+	dir->refCount++;
+	DEBUG2(DIR, "CachedDir refCount++ to %d for \"%s\"\n",
+	    dir->refCount, dir->name);
+	return dir;
+}
+
+static CachedDir *
+CachedDir_Unref(CachedDir *dir)
+{
+	dir->refCount--;
+	DEBUG2(DIR, "CachedDir refCount-- to %d for \"%s\"\n",
+	    dir->refCount, dir->name);
+	return dir;
+}
 
 static void
 OpenDirs_Init(OpenDirs *odirs)
@@ -408,11 +440,7 @@ Dir_InitDir(const char *cdname)
 {
 	Dir_InitCur(cdname);
 
-	dotLast = bmake_malloc(sizeof *dotLast);
-	dotLast->refCount = 1;
-	dotLast->hits = 0;
-	dotLast->name = bmake_strdup(".DOTLAST");
-	HashSet_Init(&dotLast->files);
+	dotLast = CachedDir_Ref(CachedDir_New(".DOTLAST"));
 }
 
 /*
@@ -439,27 +467,29 @@ Dir_InitCur(const char *cdname)
 	 * its reference count increases each time even though the number of
 	 * actual references stays the same. */
 
-	dir->refCount++;
+	CachedDir_Ref(dir);	/* XXX: This can be expressed clearer. */
 	if (cur != NULL && cur != dir) {
 		/*
 		 * We've been here before, clean up.
 		 */
-		cur->refCount--;
+		CachedDir_Unref(cur);	/* XXX: why unref twice? */
 		CachedDir_Destroy(cur);
 	}
 	cur = dir;
 }
 
 /* (Re)initialize "dot" (current/object directory) path hash.
- * Some directories may be opened. */
+ * Some directories may be cached. */
 void
 Dir_InitDot(void)
 {
 	if (dot != NULL) {
 		/* Remove old entry from openDirs, but do not destroy. */
+		/* XXX: Why not destroy? It's reference-counted after all. */
 		OpenDirs_Remove(&openDirs, dot->name);
 	}
 
+	/* XXX: Before assigning to the global variable, refCount++. */
 	dot = Dir_AddDir(NULL, ".");
 
 	if (dot == NULL) {
@@ -471,7 +501,13 @@ Dir_InitDot(void)
 	 * We always need to have dot around, so we increment its reference
 	 * count to make sure it's not destroyed.
 	 */
-	dot->refCount++;
+	/*
+	 * XXX: This is just the normal reference counting.  Why is the above
+	 * comment so long?  And why doesn't the normal reference counting
+	 * suffice?  This sounds like someone misunderstood reference counting
+	 * here.
+	 */
+	CachedDir_Ref(dot);
 	Dir_SetPATH();		/* initialize */
 }
 
@@ -481,12 +517,12 @@ Dir_End(void)
 {
 #ifdef CLEANUP
 	if (cur != NULL) {
-		cur->refCount--;
+		CachedDir_Unref(cur);	/* XXX: why unref twice? */
 		CachedDir_Destroy(cur);
 	}
-	dot->refCount--;
-	dotLast->refCount--;
+	CachedDir_Unref(dotLast);	/* XXX: why unref twice? */
 	CachedDir_Destroy(dotLast);
+	CachedDir_Unref(dot);		/* XXX: why unref twice? */
 	CachedDir_Destroy(dot);
 	SearchPath_Clear(&dirSearchPath);
 	OpenDirs_Done(&openDirs);
@@ -1454,28 +1490,23 @@ Dir_AddDir(SearchPath *path, const char *name)
 				return pathDir;
 		}
 
-		dotLast->refCount++;
+		CachedDir_Ref(dotLast);
 		Lst_Prepend(path, dotLast);
 	}
 
 	if (path != NULL)
 		dir = OpenDirs_Find(&openDirs, name);
 	if (dir != NULL) {
-		if (Lst_FindDatum(path, dir) == NULL) {
-			dir->refCount++;
-			Lst_Append(path, dir);
-		}
+		if (Lst_FindDatum(path, dir) == NULL)
+			Lst_Append(path, CachedDir_Ref(dir));
 		return dir;
 	}
 
-	DIR_DEBUG1("Caching %s ...", name);
+	DIR_DEBUG1("Caching %s ...\n", name);
 
 	if ((d = opendir(name)) != NULL) {
-		dir = bmake_malloc(sizeof *dir);
-		dir->name = bmake_strdup(name);
-		dir->hits = 0;
-		dir->refCount = 1;
-		HashSet_Init(&dir->files);
+		dir = CachedDir_New(name);
+		CachedDir_Ref(dir);	/* XXX: why here already? */
 
 		while ((dp = readdir(d)) != NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
@@ -1494,7 +1525,7 @@ Dir_AddDir(SearchPath *path, const char *name)
 		if (path != NULL)
 			Lst_Append(path, dir);
 	}
-	DIR_DEBUG0("done\n");
+	DIR_DEBUG1("Caching %s done\n", name);
 	return dir;
 }
 
@@ -1507,8 +1538,7 @@ Dir_CopyDirSearchPath(void)
 	SearchPathNode *ln;
 	for (ln = dirSearchPath.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		dir->refCount++;
-		Lst_Append(path, dir);
+		Lst_Append(path, CachedDir_Ref(dir));
 	}
 	return path;
 }
@@ -1558,7 +1588,7 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
 static void
 CachedDir_Destroy(CachedDir *dir)
 {
-	dir->refCount--;
+	CachedDir_Unref(dir);
 
 	if (dir->refCount == 0) {
 		OpenDirs_Remove(&openDirs, dir->name);
@@ -1603,10 +1633,8 @@ SearchPath_AddAll(SearchPath *dst, SearchPath *src)
 
 	for (ln = src->first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		if (Lst_FindDatum(dst, dir) == NULL) {
-			dir->refCount++;
-			Lst_Append(dst, dir);
-		}
+		if (Lst_FindDatum(dst, dir) == NULL)
+			Lst_Append(dst, CachedDir_Ref(dir));
 	}
 }
 
