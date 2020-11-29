@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.239 2020/11/29 16:04:34 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.240 2020/11/29 16:37:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.239 2020/11/29 16:04:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.240 2020/11/29 16:37:10 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -271,8 +271,8 @@ static int bigmisses;		/* Sought by itself */
 
 static CachedDir *dot;		/* contents of current directory */
 static CachedDir *cur;		/* contents of current directory, if not dot */
-static CachedDir *dotLast;	/* a fake path entry indicating we need to
-				 * look for . last */
+/* A fake path entry indicating we need to look for '.' last. */
+static CachedDir *dotLast = NULL;
 
 /* Results of doing a last-resort stat in Dir_FindFile -- if we have to go to
  * the system to find the file, we might as well have its mtime on record.
@@ -339,6 +339,20 @@ CachedDir_Destroy(CachedDir *dir)
 
 	if (dir->refCount == 0)
 		CachedDir_Free0(dir);
+}
+
+/* Update the value of the CachedDir variable, updating the reference counts. */
+static void
+CachedDir_Assign(CachedDir **var, CachedDir *dir)
+{
+	CachedDir *prev;
+
+	prev = *var;
+	*var = dir;
+	if (dir != NULL)
+		CachedDir_Ref(dir);
+	if (prev != NULL)
+		CachedDir_Destroy(prev);
 }
 
 static void
@@ -466,7 +480,7 @@ Dir_InitDir(const char *cdname)
 {
 	Dir_InitCur(cdname);
 
-	dotLast = CachedDir_Ref(CachedDir_New(".DOTLAST"));
+	CachedDir_Assign(&dotLast, CachedDir_New(".DOTLAST"));
 }
 
 /*
@@ -537,8 +551,7 @@ Dir_End(void)
 		CachedDir_Unref(cur);	/* XXX: why unref twice? */
 		CachedDir_Destroy(cur);
 	}
-	CachedDir_Unref(dotLast);	/* XXX: why unref twice? */
-	CachedDir_Destroy(dotLast);
+	CachedDir_Assign(&dotLast, NULL);
 	CachedDir_Unref(dot);		/* XXX: why unref twice? */
 	CachedDir_Destroy(dot);
 	SearchPath_Clear(&dirSearchPath);
