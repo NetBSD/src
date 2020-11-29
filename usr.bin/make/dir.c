@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.230 2020/11/29 09:38:04 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.231 2020/11/29 09:42:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.230 2020/11/29 09:38:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.231 2020/11/29 09:42:54 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1435,10 +1435,6 @@ Dir_UpdateMTime(GNode *gn, Boolean recheck)
  */
 CachedDir *
 Dir_AddDir(SearchPath *path, const char *name)
-/*
- * XXX: Maybe return const CachedDir, as a hint that the return value must
- * not be freed since it is owned by openDirs.
- */
 {
 	CachedDir *dir = NULL;	/* the added directory */
 	DIR *d;
@@ -1554,12 +1550,7 @@ SearchPath_ToFlags(const char *flag, SearchPath *path)
 	return Buf_Destroy(&buf, FALSE);
 }
 
-/* Nuke a directory descriptor, if possible. Callback procedure for the
- * suffixes module when destroying a search path.
- *
- * Input:
- *	dirp		The directory descriptor to nuke
- */
+/* Nuke a directory descriptor, if it is no longer used. */
 static void
 CachedDir_Destroy(CachedDir *dir)
 {
