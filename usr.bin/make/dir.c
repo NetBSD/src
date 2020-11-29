@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.228 2020/11/29 01:40:26 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.229 2020/11/29 08:48:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.228 2020/11/29 01:40:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.229 2020/11/29 08:48:24 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -213,6 +213,32 @@ typedef List CachedDirList;
 typedef ListNode CachedDirListNode;
 
 typedef ListNode SearchPathNode;
+
+/* A cache for the filenames in a directory. */
+struct CachedDir {
+	/*
+	 * Name of directory, either absolute or relative to the current
+	 * directory. The name is not normalized in any way, that is, "."
+	 * and "./." are different.
+	 *
+	 * Not sure what happens when .CURDIR is assigned a new value; see
+	 * Parse_DoVar.
+	 */
+	char *name;
+
+	/*
+	 * The number of SearchPaths with this directory.
+	 *
+	 * TODO: Log the reference counting; see Dir_Expand, partPath.
+	 */
+	int refCount;
+
+	/* The number of times a file in this directory has been found. */
+	int hits;
+
+	/* The names of the files in the directory. */
+	HashSet files;
+};
 
 SearchPath dirSearchPath = LST_INIT;	/* main search path */
 
