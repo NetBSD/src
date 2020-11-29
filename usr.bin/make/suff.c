@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.319 2020/11/29 01:16:37 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.320 2020/11/29 01:19:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.319 2020/11/29 01:16:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.320 2020/11/29 01:19:11 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1182,7 +1182,7 @@ static void
 ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 {
     GNode *cgn = cln->datum;
-    StringList *expansions;
+    StringList expansions;
 
     if (!Dir_HasWildcards(cgn->name))
 	return;
@@ -1190,15 +1190,15 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
     /*
      * Expand the word along the chosen path
      */
-    expansions = Lst_New();
-    Dir_Expand(cgn->name, Suff_FindPath(cgn), expansions);
+    Lst_Init(&expansions);
+    Dir_Expand(cgn->name, Suff_FindPath(cgn), &expansions);
 
-    while (!Lst_IsEmpty(expansions)) {
+    while (!Lst_IsEmpty(&expansions)) {
 	GNode	*gn;
 	/*
 	 * Fetch next expansion off the list and find its GNode
 	 */
-	char *cp = Lst_Dequeue(expansions);
+	char *cp = Lst_Dequeue(&expansions);
 
 	SUFF_DEBUG1("%s...", cp);
 	gn = Targ_GetNode(cp);
@@ -1209,7 +1209,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 	pgn->unmade++;
     }
 
-    Lst_Free(expansions);
+    Lst_Done(&expansions);
 
     SUFF_DEBUG0("\n");
 
