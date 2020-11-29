@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.155 2020/11/29 21:28:06 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.156 2020/11/29 21:31:55 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1090,7 +1090,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     static size_t tmplen = 0;
     FILE *fp;
     Boolean needOODATE = FALSE;
-    StringList *missingFiles;
+    StringList missingFiles;
     Boolean have_filemon = FALSE;
     void *objdir_freeIt;
 
@@ -1105,7 +1105,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	goto oodate_out;
     dname = fname3;
 
-    missingFiles = Lst_New();
+    Lst_Init(&missingFiles);
 
     /*
      * We need to check if the target is out-of-date. This includes
@@ -1319,12 +1319,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 		case 'D':		/* unlink */
 		    if (*p == '/') {
 			/* remove any missingFiles entries that match p */
-			StringListNode *ln = missingFiles->first;
+			StringListNode *ln = missingFiles.first;
 			while (ln != NULL) {
 			    StringListNode *next = ln->next;
 			    if (path_starts_with(ln->datum, p)) {
 				free(ln->datum);
-				Lst_Remove(missingFiles, ln);
+				Lst_Remove(&missingFiles, ln);
 			    }
 			    ln = next;
 			}
@@ -1390,7 +1390,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((link_src != NULL && cached_lstat(p, &cst) < 0) ||
 			(link_src == NULL && cached_stat(p, &cst) < 0)) {
 			if (!meta_ignore(gn, p))
-			    append_if_new(missingFiles, p);
+			    append_if_new(&missingFiles, p);
 		    }
 		    break;
 		check_link_src:
@@ -1473,7 +1473,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
-			    append_if_new(missingFiles, p);
+			    append_if_new(&missingFiles, p);
 			}
 		    }
 		    if (buf[0] == 'E') {
@@ -1571,9 +1571,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	fclose(fp);
-	if (!Lst_IsEmpty(missingFiles)) {
+	if (!Lst_IsEmpty(&missingFiles)) {
 	    DEBUG2(META, "%s: missing files: %s...\n",
-		   fname, (char *)missingFiles->first->datum);
+		   fname, (char *)missingFiles.first->datum);
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {
@@ -1598,7 +1598,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
     }
 
-    Lst_Destroy(missingFiles, free);
+    Lst_DoneCall(&missingFiles, free);
 
     if (oodate && needOODATE) {
 	/*
