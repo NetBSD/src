@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.315 2020/11/28 22:56:01 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.316 2020/11/29 00:54:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.315 2020/11/28 22:56:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.316 2020/11/29 00:54:43 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -126,7 +126,7 @@ typedef ListNode SuffixListNode;
 typedef List CandidateList;
 typedef ListNode CandidateListNode;
 
-static SuffixList *sufflist;	/* List of suffixes */
+static SuffixList sufflist = LST_INIT;	/* List of suffixes */
 #ifdef CLEANUP
 static SuffixList *suffClean;	/* List of suffixes to be cleaned */
 #endif
@@ -311,7 +311,7 @@ FindSuffixByNameLen(const char *name, size_t nameLen)
 {
     SuffixListNode *ln;
 
-    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+    for (ln = sufflist.first; ln != NULL; ln = ln->next) {
 	Suffix *suff = ln->datum;
 	if (suff->nameLen == nameLen && memcmp(suff->name, name, nameLen) == 0)
 	    return suff;
@@ -387,7 +387,7 @@ SuffixList_Remove(SuffixList *list, Suffix *suff)
     SuffixList_Unref(list, suff);
     if (suff->refCount == 0) {
 	/* XXX: can lead to suff->refCount == -1 */
-	SuffixList_Unref(sufflist, suff);
+	SuffixList_Unref(&sufflist, suff);
 	DEBUG1(SUFF, "Removing suffix \"%s\"\n", suff->name);
 	SuffFree(suff);
     }
@@ -458,10 +458,10 @@ void
 Suff_ClearSuffixes(void)
 {
 #ifdef CLEANUP
-    Lst_MoveAll(suffClean, sufflist);
+    Lst_MoveAll(suffClean, &sufflist);
 #endif
     DEBUG0(SUFF, "Clearing all suffixes\n");
-    sufflist = Lst_New();
+    Lst_Init(&sufflist);
     sNum = 0;
     if (nullSuff != NULL)
 	SuffFree(nullSuff);
@@ -489,7 +489,7 @@ ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
      * we can find two that meet these criteria, we've successfully
      * parsed the string.
      */
-    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+    for (ln = sufflist.first; ln != NULL; ln = ln->next) {
 	Suffix *src = ln->datum;
 
 	if (StrTrimPrefix(src->name, str) == NULL)
@@ -796,7 +796,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 	return;
 
     suff = Suffix_New(name);
-    Lst_Append(sufflist, suff);
+    Lst_Append(&sufflist, suff);
     DEBUG1(SUFF, "Adding suffix \"%s\"\n", suff->name);
 
     UpdateTargets(inout_main, suff);
@@ -838,7 +838,7 @@ Suff_DoPaths(void)
     SearchPath *inIncludes = SearchPath_New();	/* Cumulative .INCLUDES path */
     SearchPath *inLibs = SearchPath_New();	/* Cumulative .LIBS path */
 
-    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+    for (ln = sufflist.first; ln != NULL; ln = ln->next) {
 	Suffix *suff = ln->datum;
 	if (!Lst_IsEmpty(suff->searchPath)) {
 #ifdef INCLUDES
@@ -1408,7 +1408,7 @@ Suff_FindPath(GNode* gn)
 	char *name = gn->name;
 	size_t nameLen = strlen(gn->name);
 	SuffixListNode *ln;
-	for (ln = sufflist->first; ln != NULL; ln = ln->next)
+	for (ln = sufflist.first; ln != NULL; ln = ln->next)
 	    if (Suffix_IsSuffix(ln->datum, nameLen, name + nameLen))
 		break;
 
@@ -1664,7 +1664,7 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
     Candidate *targ;
     char *pref;
 
-    for (ln = sufflist->first; ln != NULL; ln = ln->next) {
+    for (ln = sufflist.first; ln != NULL; ln = ln->next) {
 	Suffix *suff = ln->datum;
 	if (!Suffix_IsSuffix(suff, nameLen, name + nameLen))
 	    continue;
@@ -1781,10 +1781,11 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 static void
 FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 {
-    CandidateList *srcs;	/* List of sources at which to look */
-    CandidateList *targs;	/* List of targets to which things can be
-				 * transformed. They all have the same file,
-				 * but different suff and prefix fields */
+    /* List of sources at which to look */
+    CandidateList srcs = LST_INIT;
+    /* List of targets to which things can be transformed.
+     * They all have the same file, but different suff and prefix fields. */
+    CandidateList targs = LST_INIT;
     Candidate *bottom;		/* Start of found transformation path */
     Candidate *src;
     Candidate *targ;
@@ -1795,12 +1796,6 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 #ifdef DEBUG_SRC
     DEBUG1(SUFF, "FindDepsRegular \"%s\"\n", gn->name);
 #endif
-
-    /*
-     * Begin at the beginning...
-     */
-    srcs = Lst_New();
-    targs = Lst_New();
 
     /*
      * We're caught in a catch-22 here. On the one hand, we want to use any
@@ -1825,24 +1820,24 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 
     if (!(gn->type & OP_PHONY)) {
 
-	FindDepsRegularKnown(name, nameLen, gn, srcs, targs);
+	FindDepsRegularKnown(name, nameLen, gn, &srcs, &targs);
 
 	/* Handle target of unknown suffix... */
-	FindDepsRegularUnknown(gn, name, srcs, targs);
+	FindDepsRegularUnknown(gn, name, &srcs, &targs);
 
 	/*
 	 * Using the list of possible sources built up from the target
 	 * suffix(es), try and find an existing file/target that matches.
 	 */
-	bottom = FindThem(srcs, cs);
+	bottom = FindThem(&srcs, cs);
 
 	if (bottom == NULL) {
 	    /*
 	     * No known transformations -- use the first suffix found
 	     * for setting the local variables.
 	     */
-	    if (targs->first != NULL)
-		targ = targs->first->datum;
+	    if (targs.first != NULL)
+		targ = targs.first->datum;
 	    else
 		targ = NULL;
 	} else {
@@ -1962,11 +1957,11 @@ sfnd_return:
     if (bottom != NULL)
 	CandidateSearcher_AddIfNew(cs, bottom);
 
-    while (RemoveCandidate(srcs) || RemoveCandidate(targs))
+    while (RemoveCandidate(&srcs) || RemoveCandidate(&targs))
 	continue;
 
-    CandidateSearcher_MoveAll(cs, srcs);
-    CandidateSearcher_MoveAll(cs, targs);
+    CandidateSearcher_MoveAll(cs, &srcs);
+    CandidateSearcher_MoveAll(cs, &targs);
 }
 
 static void
@@ -2061,7 +2056,6 @@ Suff_Init(void)
 {
 #ifdef CLEANUP
     suffClean = Lst_New();
-    sufflist = Lst_New();
 #endif
     transforms = Lst_New();
 
@@ -2079,7 +2073,7 @@ void
 Suff_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(sufflist, SuffFree);
+    Lst_DoneCall(&sufflist, SuffFree);
     Lst_Destroy(suffClean, SuffFree);
     if (nullSuff != NULL)
 	SuffFree(nullSuff);
@@ -2140,7 +2134,7 @@ Suff_PrintAll(void)
     debug_printf("#*** Suffixes:\n");
     {
 	SuffixListNode *ln;
-	for (ln = sufflist->first; ln != NULL; ln = ln->next)
+	for (ln = sufflist.first; ln != NULL; ln = ln->next)
 	    Suffix_Print(ln->datum);
     }
 
