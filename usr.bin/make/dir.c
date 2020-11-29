@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.237 2020/11/29 15:14:32 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.238 2020/11/29 15:58:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.237 2020/11/29 15:14:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.238 2020/11/29 15:58:37 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -287,6 +287,7 @@ static HashTable lmtimes;	/* same as mtimes but for lstat */
 
 
 static void CachedDir_Destroy(CachedDir *);
+static void OpenDirs_Remove(OpenDirs *, const char *);
 
 
 static CachedDir *
@@ -311,13 +312,24 @@ CachedDir_Ref(CachedDir *dir)
 	return dir;
 }
 
-static CachedDir *
+/* Free a cached directory with reference count 0. */
+static void
+CachedDir_Free0(CachedDir *dir)
+{
+
+	OpenDirs_Remove(&openDirs, dir->name);
+
+	free(dir->name);
+	HashSet_Done(&dir->files);
+	free(dir);
+}
+
+static void
 CachedDir_Unref(CachedDir *dir)
 {
 	dir->refCount--;
 	DEBUG2(DIR, "CachedDir refCount-- to %d for \"%s\"\n",
 	    dir->refCount, dir->name);
-	return dir;
 }
 
 static void
@@ -1608,13 +1620,8 @@ CachedDir_Destroy(CachedDir *dir)
 {
 	CachedDir_Unref(dir);
 
-	if (dir->refCount == 0) {
-		OpenDirs_Remove(&openDirs, dir->name);
-
-		HashSet_Done(&dir->files);
-		free(dir->name);
-		free(dir);
-	}
+	if (dir->refCount == 0)
+		CachedDir_Free0(dir);
 }
 
 /* Free the search path and all directories mentioned in it. */
