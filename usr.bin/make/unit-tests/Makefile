@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.227 2020/11/29 10:57:16 rillig Exp $
+# $NetBSD: Makefile,v 1.228 2020/11/29 14:29:19 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -439,6 +439,7 @@ FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
 SED_CMDS.dir=		${:D remove output from -DCLEANUP mode }
+SED_CMDS.dir+=		-e '/^OpenDirs_Done:/d'
 SED_CMDS.dir+=		-e '/^CachedDir refCount/d'
 SED_CMDS.export=	-e '/^[^=_A-Za-z0-9]*=/d'
 SED_CMDS.export-all=	${SED_CMDS.export}
