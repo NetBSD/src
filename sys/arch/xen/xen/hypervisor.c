@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.89 2020/09/15 10:58:02 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.90 2020/11/30 17:06:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.89 2020/09/15 10:58:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.90 2020/11/30 17:06:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,7 +682,9 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 	}
 #endif
-#if defined(XENPV) && defined(DOM0OPS)
+
+#if defined(DOM0OPS)
+#if defined(XENPV)
 #if NPCI > 0
 #if NACPICA > 0
 	if (acpi_present) {
@@ -743,11 +745,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* NISA */
 #endif /* NPCI */
+#endif /* XENPV */
 
 	if (xendomain_is_privileged()) {
 		xenprivcmd_init();
 	}
-#endif /* XENPV && DOM0OPS */
+#endif /* DOM0OPS */
 
 	hypervisor_machdep_attach();
 
