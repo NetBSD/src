@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.229 2020/11/29 18:49:36 rillig Exp $
+# $NetBSD: Makefile,v 1.230 2020/11/30 18:32:49 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -188,6 +188,7 @@ TESTS+=		job-flags
 TESTS+=		job-output-long-lines
 TESTS+=		lint
 TESTS+=		make-exported
+TESTS+=		meta-cmd-cmp
 TESTS+=		moderrs
 TESTS+=		modmatch
 TESTS+=		modmisc
