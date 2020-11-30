@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.59 2020/05/26 10:37:25 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.60 2020/11/30 17:06:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.59 2020/05/26 10:37:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.60 2020/11/30 17:06:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.59 2020/05/26 10:37:25 bouyer Exp $");
 #include <xen/hypervisor.h>
 #include <xen/xen.h>
 #include <xen/xenio.h>
+#include <xen/xenpmap.h>
 #include <xen/granttables.h>
 
 #define	PRIVCMD_MODE	(S_IRUSR)
@@ -741,6 +742,10 @@ privcmd_ioctl(void *v)
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
 #endif /* __i386__ */
 #if defined(__x86_64__)
+#ifndef XENPV
+		/* hypervisor can't access user memory if SMAP is enabled */
+		smap_disable();
+#endif
 		{
 		long i1, i2, i3;
 		__asm volatile (
@@ -758,6 +763,9 @@ privcmd_ioctl(void *v)
 			  "g" (hc->arg[4])
 			: "r8", "r10", "memory" );
 		}
+#ifndef XENPV
+		smap_enable();
+#endif
 #endif /* __x86_64__ */
 		if (ap->a_command == IOCTL_PRIVCMD_HYPERCALL) {
 			if (error >= 0) {
@@ -915,6 +923,12 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			continue;
 		switch(pobj->type) {
 		case PTYPE_PRIVCMD:
+		{
+			u_int pm_flags = PMAP_CANFAIL | ufi->entry->protection;
+#ifdef XENPV
+			if (pobj->u.pc.no_translate)
+				pm_flags |= PMAP_MD_XEN_NOTR;
+#endif
 			if (pobj->u.pc.maddr[maddr_i] == INVALID_PAGE) {
 				/* This has already been flagged as error. */
 				error = EFAULT;
@@ -922,9 +936,7 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			}
 			error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
 			    pobj->u.pc.maddr[maddr_i], 0,
-			    ufi->entry->protection,
-			    PMAP_CANFAIL | ufi->entry->protection |
-			    (pobj->u.pc.no_translate ? PMAP_MD_XEN_NOTR : 0),
+			    ufi->entry->protection, pm_flags,
 			    pobj->u.pc.domid);
 			if (error == ENOMEM) {
 				goto out;
@@ -934,6 +946,7 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 				error = EFAULT;
 			}
 			break;
+		}
 		case PTYPE_GNTDEV_REF:
 		{
 			struct pmap *pmap = ufi->orig_map->pmap;

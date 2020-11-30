@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.60 2020/05/07 19:52:50 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.61 2020/11/30 17:06:02 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.60 2020/05/07 19:52:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.61 2020/11/30 17:06:02 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -46,7 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.60 2020/05/07 19:52:50 bouyer Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/intr.h>
+#ifdef XENPV
 #include <xen/xenpmap.h>
+#endif
 #include <xen/xenio.h>
 #include <xen/xenio3.h>
 #include <xen/xen.h>
@@ -164,6 +168,13 @@ void
 xenevtattach(int n)
 {
 	int level = IPL_HIGH;
+
+	if (!xendomain_is_privileged())
+		return;
+#ifndef XENPV
+	if (vm_guest != VM_GUEST_XENPVH)
+		return;
+#endif
 
 	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
 	STAILQ_INIT(&devevent_pending);

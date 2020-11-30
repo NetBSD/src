@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.407 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.408 2020/11/30 17:06:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.407 2020/09/06 02:18:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.408 2020/11/30 17:06:02 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -175,6 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.407 2020/09/06 02:18:53 riastradh Exp $")
 #ifdef XEN
 #include <xen/include/public/xen.h>
 #include <xen/hypervisor.h>
+#include <xen/xenpmap.h>
 #endif
 
 /*
@@ -5233,7 +5234,9 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	idx = (va - pgnt->pd_gnt_sva) / PAGE_SIZE;
 	op = &pgnt->pd_gnt_ops[idx];
 
+#ifdef XENPV /* XXX */
 	op->host_addr = xpmap_ptetomach(ptep);
+#endif
 	op->dev_bus_addr = 0;
 	op->status = GNTST_general_error;
 	ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, 1);
@@ -5354,7 +5357,9 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			KASSERT(pmap_valid_entry(ptes[pl1_i(va)]));
 			unmap_op.handle = op->handle;
 			unmap_op.dev_bus_addr = 0;
+#ifdef XENPV /* XXX */
 			unmap_op.host_addr = xpmap_ptetomach(&ptes[pl1_i(va)]);
+#endif
 			ret = HYPERVISOR_grant_table_op(
 			    GNTTABOP_unmap_grant_ref, &unmap_op, 1);
 			if (ret) {
