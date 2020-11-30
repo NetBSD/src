@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.64 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.65 2020/11/30 17:02:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -166,6 +166,16 @@ ENTRY(x86_write_flags)
 END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
+
+ENTRY(smap_enable)
+	SMAP_ENABLE
+	ret
+END(smap_enable)
+
+ENTRY(smap_disable)
+	SMAP_DISABLE
+	ret
+END(smap_disable)
 
 /*
  * %rdi = name
