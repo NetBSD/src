@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.230 2020/11/30 18:32:49 sjg Exp $
+# $NetBSD: Makefile,v 1.231 2020/11/30 21:10:15 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -473,9 +473,15 @@ SED_CMDS.var-op-shell+=	\
 	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
 	-e '/command/s,No such.*,not found,'
 SED_CMDS.vardebug+=	-e 's,${.SHELL},</path/to/shell>,'
+SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
+SED_CMDS.varmod-gmtime+=	-e 's,Tue Jan 19 03:14:08 2038,<normalized>,'
+SED_CMDS.varmod-gmtime+=	${:D FreeBSD i386 still has 32-bit time_t. }
+SED_CMDS.varmod-gmtime+=	-e 's,Fri Dec 13 20:45:52 1901,<normalized>,'
+SED_CMDS.varmod-localtime+=	-e 's,Tue Jan 19 04:14:08 2038,<normalized>,'
+SED_CMDS.varmod-localtime+=	${:D FreeBSD i386 still has 32-bit time_t. }
+SED_CMDS.varmod-localtime+=	-e 's,Fri Dec 13 21:45:52 1901,<normalized>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
-SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
 SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'

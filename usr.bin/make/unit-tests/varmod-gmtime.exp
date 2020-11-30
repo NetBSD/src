@@ -17,7 +17,7 @@ make: Invalid time value:  1}.
 : 0 becomes ok.
 : 1 becomes Thu Jan  1 00:00:01 1970.
 : INT32_MAX becomes Tue Jan 19 03:14:07 2038.
-: INT32_MAX + 1 becomes Tue Jan 19 03:14:08 2038.
+: INT32_MAX + 1 becomes <normalized>.
 make: Invalid time value: 10000000000000000000000000000000}.
 
 : overflow becomes mtime=10000000000000000000000000000000}.
