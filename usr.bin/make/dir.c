@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.243 2020/11/30 18:49:58 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.244 2020/11/30 20:17:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.243 2020/11/30 18:49:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.244 2020/11/30 20:17:00 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -267,8 +267,10 @@ static int misses;		/* Sad, but not evil misses */
 static int nearmisses;		/* Found under search path */
 static int bigmisses;		/* Sought by itself */
 
-static CachedDir *dot = NULL;	/* contents of current directory */
-static CachedDir *cur = NULL;	/* contents of current directory, if not dot */
+/* The cached contents of ".", the relative current directory. */
+static CachedDir *dot = NULL;
+/* The cached contents of the absolute current directory. */
+static CachedDir *cur = NULL;
 /* A fake path entry indicating we need to look for '.' last. */
 static CachedDir *dotLast = NULL;
 
@@ -1067,7 +1069,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * Find the final component of the name and note whether it has a
 	 * slash in it (the name, I mean)
 	 */
-	base = strrchr(name, '/');
+	base = strrchr(name, '/'); /* XXX: confusing variable name */
 	if (base != NULL) {
 		hasSlash = TRUE;
 		base++;
