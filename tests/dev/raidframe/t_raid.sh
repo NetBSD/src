@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.14 2019/07/10 06:10:54 martin Exp $
+#	$NetBSD: t_raid.sh,v 1.15 2020/11/30 05:33:32 msaitoh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -151,7 +151,7 @@ raid1_compfail_body()
 
 	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
-	# check if we we get what we wrote
+	# check if we get what we wrote
 	atf_check -s exit:0 -o file:testfile -e ignore \
 	    rump.dd if=${rawraid} count=4
 }
@@ -239,7 +239,7 @@ raid1_normal_body()
 
         atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
-        # check if we we get what we wrote
+        # check if we get what we wrote
         atf_check -s exit:0 -o file:testfile -e ignore \
             rump.dd if=${rawraid} count=4
 
@@ -290,7 +290,7 @@ raid5_compfail_body()
 
 	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
-	# check if we we get what we wrote
+	# check if we get what we wrote
 	atf_check -s exit:0 -o file:testfile -e ignore \
 	    rump.dd if=${rawraid} count=4
 }
@@ -340,7 +340,7 @@ raid5_normal_body()
 
         atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
-        # check if we we get what we wrote
+        # check if we get what we wrote
         atf_check -s exit:0 -o file:testfile -e ignore \
             rump.dd if=${rawraid} count=4
 }
