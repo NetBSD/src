@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.244 2020/11/30 20:17:00 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.245 2020/11/30 20:25:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.244 2020/11/30 20:17:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.245 2020/11/30 20:25:37 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1059,24 +1059,14 @@ char *
 Dir_FindFile(const char *name, SearchPath *path)
 {
 	char *file;		/* the current filename to check */
-	const char *base;	/* Terminal name of file */
-	Boolean hasLastDot = FALSE; /* true if we should search dot last */
-	Boolean hasSlash;	/* true if 'name' contains a / */
+	const char *lastSlash;	/* the last slash in name */
+	const char *base;	/* basename(name) */
+	Boolean seenDotLast = FALSE; /* true if we should search dot last */
 	struct cached_stat cst;	/* Buffer for stat, if necessary */
 	const char *trailing_dot = ".";
 
-	/*
-	 * Find the final component of the name and note whether it has a
-	 * slash in it (the name, I mean)
-	 */
-	base = strrchr(name, '/'); /* XXX: confusing variable name */
-	if (base != NULL) {
-		hasSlash = TRUE;
-		base++;
-	} else {
-		hasSlash = FALSE;
-		base = name;
-	}
+	lastSlash = strrchr(name, '/');
+	base = lastSlash != NULL ? lastSlash + 1 : name;
 
 	DIR_DEBUG1("Searching for %s ...", name);
 
@@ -1089,7 +1079,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	if (path->first != NULL) {
 		CachedDir *dir = path->first->datum;
 		if (dir == dotLast) {
-			hasLastDot = TRUE;
+			seenDotLast = TRUE;
 			DIR_DEBUG0("[dot last]...");
 		}
 	}
@@ -1100,7 +1090,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * directory component is exactly `./', consult the cached contents
 	 * of each of the directories on the search path.
 	 */
-	if (!hasSlash || (base - name == 2 && *name == '.')) {
+	if (lastSlash == NULL || (base - name == 2 && *name == '.')) {
 		SearchPathNode *ln;
 
 		/*
@@ -1117,7 +1107,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		 * This is so there are no conflicts between what the user
 		 * specifies (fish.c) and what pmake finds (./fish.c).
 		 */
-		if (!hasLastDot && (file = DirFindDot(name, base)) != NULL)
+		if (!seenDotLast && (file = DirFindDot(name, base)) != NULL)
 			return file;
 
 		for (ln = path->first; ln != NULL; ln = ln->next) {
@@ -1128,7 +1118,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 				return file;
 		}
 
-		if (hasLastDot && (file = DirFindDot(name, base)) != NULL)
+		if (seenDotLast && (file = DirFindDot(name, base)) != NULL)
 			return file;
 	}
 
@@ -1146,7 +1136,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * end).]
 	 * This phase is only performed if the file is *not* absolute.
 	 */
-	if (!hasSlash) {
+	if (lastSlash == NULL) {
 		DIR_DEBUG0("   failed.\n");
 		misses++;
 		return NULL;
@@ -1163,7 +1153,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 
 		DIR_DEBUG0("   Trying subdirectories...\n");
 
-		if (!hasLastDot) {
+		if (!seenDotLast) {
 			if (dot != NULL) {
 				checkedDot = TRUE;
 				if ((file = DirLookupSubdir(dot, name)) != NULL)
@@ -1186,7 +1176,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 				return file;
 		}
 
-		if (hasLastDot) {
+		if (seenDotLast) {
 			if (dot && !checkedDot) {
 				checkedDot = TRUE;
 				if ((file = DirLookupSubdir(dot, name)) != NULL)
@@ -1220,7 +1210,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		 */
 		DIR_DEBUG0("   Trying exact path matches...\n");
 
-		if (!hasLastDot && cur &&
+		if (!seenDotLast && cur &&
 		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 			if (file[0] == '\0') {
 				free(file);
@@ -1242,7 +1232,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 			}
 		}
 
-		if (hasLastDot && cur &&
+		if (seenDotLast && cur &&
 		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 			if (file[0] == '\0') {
 				free(file);
