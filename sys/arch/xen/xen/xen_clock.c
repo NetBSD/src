@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.7 2020/05/22 17:44:05 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.8 2020/11/30 17:05:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.7 2020/05/22 17:44:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.8 2020/11/30 17:05:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -278,7 +278,7 @@ xen_vcputime_systime_ns(void)
 		 * run behind Xen's idea of it, and pretend it hadn't.
 		 */
 #if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
-		printf("xen cpu tsc %"PRIu64
+		device_printf(ci->ci_dev, "xen cpu tsc %"PRIu64
 		    " ran backwards from timestamp %"PRIu64
 		    " by %"PRIu64"\n",
 		    tsc, tsc_timestamp, tsc_timestamp - tsc);
@@ -302,7 +302,7 @@ xen_vcputime_systime_ns(void)
 	 */
 	if (__predict_false((int64_t)delta_ns < 0)) {
 #if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
-		printf("xen tsc delta in ns went negative: %"PRId64"\n",
+		device_printf(ci->ci_dev, "xen tsc delta in ns went negative: %"PRId64"\n",
 		    delta_ns);
 #endif
 		ci->ci_xen_tsc_delta_negative_evcnt.ev_count++;
@@ -693,7 +693,7 @@ again:
 	now = xen_vcputime_systime_ns();
 	if (now < last) {
 #if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
-		printf("xen systime ran backwards in hardclock %"PRIu64"ns\n",
+		device_printf(ci->ci_dev, "xen systime ran backwards in hardclock %"PRIu64"ns\n",
 		    last - now);
 #endif
 		ci->ci_xen_systime_backwards_hardclock_evcnt.ev_count++;
