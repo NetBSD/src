@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.260 2020/11/17 04:50:29 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.261 2020/11/30 07:53:42 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5220,10 +5220,6 @@ ixgbe_legacy_irq(void *arg)
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 	}
 
-	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC)
-		task_requests |= IXGBE_REQUEST_TASK_LSC;
-
 	if (ixgbe_is_sfp(hw)) {
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
@@ -5231,7 +5227,15 @@ ixgbe_legacy_irq(void *arg)
 		else
 			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
 
-		if (eicr & eicr_mask) {
+		/*
+		 *  An interrupt might not arrive when a module is inserted.
+		 * When an link status change interrupt occurred and the driver
+		 * still regard SFP as unplugged, issue the module softint
+		 * and then issue LSC interrupt.
+		 */
+		if ((eicr & eicr_mask)
+		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
+			&& (eicr & IXGBE_EICR_LSC))) {
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
 		}
@@ -5243,6 +5247,10 @@ ixgbe_legacy_irq(void *arg)
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
 	}
+
+	/* Link status change */
+	if (eicr & IXGBE_EICR_LSC)
+		task_requests |= IXGBE_REQUEST_TASK_LSC;
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
