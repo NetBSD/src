@@ -1,4 +1,4 @@
-/*	$NetBSD: uthash.h,v 1.3 2020/11/18 22:23:05 jkoshy Exp $	*/
+/*	$NetBSD: uthash.h,v 1.4 2020/11/30 22:26:30 jkoshy Exp $	*/
 
 /*
 Copyright (c) 2003-2018, Troy D. Hanson     http://troydhanson.github.com/uthash/
@@ -75,6 +75,8 @@ typedef unsigned int uint32_t;
 typedef unsigned char uint8_t;
 #endif
 #elif defined(__GNUC__) && !defined(__VXWORKS__)
+#include <stdint.h>
+#elif defined(__lint__)
 #include <stdint.h>
 #else
 typedef unsigned int uint32_t;
