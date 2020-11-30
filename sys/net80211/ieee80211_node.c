@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.80 2020/02/24 12:20:30 rin Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.80 2020/02/24 12:20:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1381,7 +1381,7 @@ ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Do node discovery in adhoc mode on receipt of a beacon
  * or probe response frame.  Note that for the driver's
- * benefit we we treat this like an association so the
+ * benefit we treat this like an association so the
  * driver has an opportunity to setup its private state.
  */
 struct ieee80211_node *

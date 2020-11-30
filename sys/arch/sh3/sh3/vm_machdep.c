@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -340,7 +340,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * the pmap_extract().
 	 *
 	 * no need to flush TLB since we expect nothing to be mapped
-	 * where we we just allocated (TLB will be flushed when our
+	 * where we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);

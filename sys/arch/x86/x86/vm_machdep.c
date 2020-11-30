@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 2020/07/03 16:17:24 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 2020/11/30 05:33:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2020/07/03 16:17:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2020/11/30 05:33:32 msaitoh Exp $");
 
 #include "opt_mtrr.h"
 
@@ -312,7 +312,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * the pmap_extract().
 	 *
 	 * no need to flush TLB since we expect nothing to be mapped
-	 * where we we just allocated (TLB will be flushed when our
+	 * where we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
 	while (len) {
