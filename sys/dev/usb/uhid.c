@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.115 2020/11/29 22:54:51 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.116 2020/11/30 00:48:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.115 2020/11/29 22:54:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.116 2020/11/30 00:48:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,6 @@ const struct cdevsw uhid_cdevsw = {
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int);
-Static void uhid_softintr(void *);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *, int);
@@ -180,7 +179,6 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
-	sc->sc_sih = softint_establish(SOFTINT_CLOCK, uhid_softintr, sc);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
@@ -277,7 +275,6 @@ uhid_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_detach_cv);
 	mutex_destroy(&sc->sc_lock);
 	seldestroy(&sc->sc_rsel);
-	softint_disestablish(sc->sc_sih);
 
 	return 0;
 }
@@ -304,24 +301,16 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 	DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 	cv_broadcast(&sc->sc_cv);
 	selnotify(&sc->sc_rsel, 0, NOTE_SUBMIT);
-	if (sc->sc_async != NULL) {
-		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
-		softint_schedule(sc->sc_sih);
+	if (atomic_load_relaxed(&sc->sc_async) != NULL) {
+		mutex_enter(&proc_lock);
+		if (sc->sc_async != NULL) {
+			DPRINTFN(3, ("uhid_intr: sending SIGIO to %jd\n",
+				(intmax_t)sc->sc_async->p_pid));
+			psignal(sc->sc_async, SIGIO);
+		}
+		mutex_exit(&proc_lock);
 	}
 	mutex_exit(&sc->sc_lock);
-}
-
-void
-uhid_softintr(void *cookie)
-{
-	struct uhid_softc *sc;
-
-	sc = cookie;
-
-	mutex_enter(&proc_lock);
-	if (sc->sc_async != NULL)
-		 psignal(sc->sc_async, SIGIO);
-	mutex_exit(&proc_lock);
 }
 
 static int
@@ -367,7 +356,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* Paranoia: reset SIGIO before enabling interrputs.  */
 	mutex_enter(&proc_lock);
-	sc->sc_async = NULL;
+	atomic_store_relaxed(&sc->sc_async, NULL);
 	mutex_exit(&proc_lock);
 
 	/* Open the uhidev -- after this point we can get interrupts.  */
@@ -390,7 +379,7 @@ fail2: __unused
 	uhidev_close(&sc->sc_hdev);
 fail1:	selnotify(&sc->sc_rsel, POLLHUP, 0);
 	mutex_enter(&proc_lock);
-	sc->sc_async = NULL;
+	atomic_store_relaxed(&sc->sc_async, NULL);
 	mutex_exit(&proc_lock);
 	if (sc->sc_osize > 0) {
 		kmem_free(sc->sc_obuf, sc->sc_osize);
@@ -429,7 +418,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* Reset SIGIO.  */
 	mutex_enter(&proc_lock);
-	sc->sc_async = NULL;
+	atomic_store_relaxed(&sc->sc_async, NULL);
 	mutex_exit(&proc_lock);
 
 	/* Free the buffer and queue.  */
@@ -644,10 +633,10 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 				mutex_exit(&proc_lock);
 				return EBUSY;
 			}
-			sc->sc_async = l->l_proc;
+			atomic_store_relaxed(&sc->sc_async, l->l_proc);
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
-			sc->sc_async = NULL;
+			atomic_store_relaxed(&sc->sc_async, NULL);
 		mutex_exit(&proc_lock);
 		break;
 
