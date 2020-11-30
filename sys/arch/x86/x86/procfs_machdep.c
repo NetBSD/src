@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.39 2020/04/25 15:26:18 bouyer Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.40 2020/11/30 00:04:02 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.39 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.40 2020/11/30 00:04:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (9) Intel-defined: 00000007 ebx */
-	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
+	"fsgsbase", "tsc_adjust", "sgx", "bmi1", "hle", "avx2", NULL, "smep",
 	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", "rdt_a",
 	"avx512f", "avx512dq", "rdseed", "adx",
 	"smap", "avx512ifma", NULL, "clflushopt",
@@ -179,7 +179,7 @@ static const char * const x86_features[][32] = {
 	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
 	"avx512_bitalg", "tme", "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
-	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, NULL, NULL},
+	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, "sgx_lc", NULL},
 
 	{ /* (17) 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
@@ -189,8 +189,8 @@ static const char * const x86_features[][32] = {
 
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", "fsrm", NULL, NULL, NULL,
-	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
+	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, "serialize", NULL,
+	"tsxldtrk", NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
 };
