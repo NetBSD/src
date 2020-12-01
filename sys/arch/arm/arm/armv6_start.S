@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.31 2020/12/01 02:46:19 rin Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.32 2020/12/01 08:35:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -96,15 +96,14 @@
 ENTRY_NP(generic_start)
 
 #if defined(__ARMEB__)
-#  if defined(_ARM_ARCH_7)
-	setend	be			/* force big endian */
-#  else /* _ARM_ARCH_6 */
+#if defined(_ARM_ARCH_6)
 	/* Make sure U bit is always set with E bit in SCTLR. */
 	mrc	p15, 0, R_TMP1, c1, c0, 0
 	orr	R_TMP1, R_TMP1, #CPU_CONTROL_UNAL_ENABLE
 	mcr     p15, 0, R_TMP1, c1, c0, 0
-	setend	be
-#  endif
+#endif
+
+	setend	be			/* force big endian */
 #endif
 
 	/* disable IRQs/FIQs. */
