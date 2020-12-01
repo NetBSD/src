@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.14 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.15 2020/12/01 02:43:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.14 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.15 2020/12/01 02:43:14 rin Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -209,7 +209,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	return -1;
 }
 
-#if __ARMEB__
+#ifdef _ARM_ARCH_BE8
 
 enum be8_magic_sym_type {
 	Other, ArmStart, ThumbStart, DataStart
@@ -400,8 +400,8 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
 
 	if (load) {
-#if __ARMEB__
-		if (CPU_IS_ARMV7_P() && base == (void*)ko->ko_text_address)
+#ifdef _ARM_ARCH_BE8
+		if (base == (void*)ko->ko_text_address)
 			kobj_be8_fixup(ko);
 #endif
 #ifndef _RUMPKERNEL

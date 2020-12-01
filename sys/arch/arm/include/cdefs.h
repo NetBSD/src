@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.18 2020/11/03 08:34:17 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.19 2020/12/01 02:43:14 rin Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
@@ -53,6 +53,10 @@
      (defined (_ARM_ARCH_6) || defined (__ARM_ARCH_5TE__) || \
       defined (__ARM_ARCH_5TEJ__)))
 #define	_ARM_ARCH_DWORD_OK
+#endif
+
+#if defined (__ARMEB__) && defined (_ARM_ARCH_6)
+#define	_ARM_ARCH_BE8
 #endif
 
 #if defined(__ARM_PCS_AAPCS64)

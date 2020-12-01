@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.138 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.139 2020/12/01 02:43:14 rin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.138 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.139 2020/12/01 02:43:14 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -348,10 +348,9 @@ cpu_startup(void)
 	memset(tf, 0, sizeof(*tf));
 	lwp_settrapframe(l, tf);
 
-#if defined(__ARMEB__)
-	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
-#else
  	tf->tf_spsr = PSR_USR32_MODE;
+#ifdef _ARM_ARCH_BE8
+	tf->tf_spsr |= PSR_E_BIT;
 #endif
 
 	cpu_startup_hook();
@@ -538,7 +537,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "printfataltraps", NULL,
 		       NULL, 0, &cpu_printfataltraps, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	cpu_unaligned_sigbus = !CPU_IS_ARMV6_P() && !CPU_IS_ARMV7_P();
+	cpu_unaligned_sigbus =
+#if defined(__ARMEL__)
+	    !CPU_IS_ARMV6_P() && !CPU_IS_ARMV7_P();
+#elif defined(_ARM_ARCH_BE8)
+	    0;
+#else
+	    1;
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "unaligned_sigbus",
