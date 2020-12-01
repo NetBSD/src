@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_acpi.c,v 1.2 2020/02/22 19:37:31 jmcneill Exp $ */
+/* $NetBSD: vchiq_netbsd_acpi.c,v 1.3 2020/12/01 04:19:04 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_acpi.c,v 1.2 2020/02/22 19:37:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_acpi.c,v 1.3 2020/12/01 04:19:04 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,11 @@ vchiq_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
 	asc->sc_handle = aa->aa_node->ad_handle;
+
+#if BYTE_ORDER == BIG_ENDIAN
+	aprint_error_dev(sc->sc_dev, "not supported yet in big-endian mode\n");
+	return;
+#endif
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
