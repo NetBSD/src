@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.44 2020/12/01 04:14:31 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.45 2020/12/01 04:16:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.44 2020/12/01 04:14:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.45 2020/12/01 04:16:18 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1347,12 +1347,12 @@ bcm283x_platform_early_putchar(vaddr_t va, paddr_t pa, char c)
 		(volatile uint32_t *)va :
 		(volatile uint32_t *)pa;
 
-	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFF) != 0)
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFF) != 0)
 		continue;
 
-	uartaddr[PL01XCOM_DR / 4] = c;
+	uartaddr[PL01XCOM_DR / 4] = htole32(c);
 
-	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFE) == 0)
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
 		continue;
 }
 
@@ -1364,10 +1364,10 @@ bcm283x_aux_platform_early_putchar(vaddr_t va, paddr_t pa, char c)
 		(volatile uint32_t *)va :
 		(volatile uint32_t *)pa;
 
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
 		continue;
 
-	uartaddr[com_data] = c;
+	uartaddr[com_data] = htole32(c);
 }
 
 void __noasan
