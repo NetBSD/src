@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.18 2020/11/23 06:29:32 rin Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.19 2020/12/01 04:14:31 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #define	_EVBARM_RPI_VCPROP_H_
 
 #include "opt_vcprop.h"
+
+#include <sys/endian.h>
 
 struct vcprop_tag {
 	uint32_t vpt_tag;
@@ -368,21 +370,21 @@ static inline bool
 vcprop_buffer_success_p(struct vcprop_buffer_hdr *vpbh)
 {
 
-	return (vpbh->vpb_rcode & VCPROP_REQ_SUCCESS);
+	return le32toh(vpbh->vpb_rcode) & VCPROP_REQ_SUCCESS;
 }
 
 static inline bool
 vcprop_tag_success_p(struct vcprop_tag *vpbt)
 {
 
-	return (vpbt->vpt_rcode & VCPROPTAG_RESPONSE);
+	return le32toh(vpbt->vpt_rcode) & VCPROPTAG_RESPONSE;
 }
 
 static inline size_t
 vcprop_tag_resplen(struct vcprop_tag *vpbt)
 {
 
-	return (vpbt->vpt_rcode & ~VCPROPTAG_RESPONSE);
+	return le32toh(vpbt->vpt_rcode) & ~VCPROPTAG_RESPONSE;
 }
 
 #endif	/* _EVBARM_RPI_VCPROP_H_ */
