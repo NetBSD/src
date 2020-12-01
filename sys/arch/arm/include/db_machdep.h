@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.27 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.28 2020/12/01 02:48:29 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
+#include <arm/cdefs.h>
 #include <machine/frame.h>
 #include <machine/trap.h>
 
@@ -70,7 +71,11 @@ extern db_regs_t *ddb_regp;
 #define BKPT_INST	(GDB5_BREAKPOINT)
 #endif
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
+#ifdef __ARM_ARCH_BE8
+#define	BKPT_SET(inst, addr)	(bswap32(BKPT_INST))
+#else
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
+#endif
 
 /*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)*/
 

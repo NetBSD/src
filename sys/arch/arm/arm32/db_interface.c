@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.62 2020/12/01 02:48:29 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2020/12/01 02:48:29 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,10 +303,10 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 void
 cpu_Debugger(void)
 {
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	__asm(".word	0xe7ffffff");
-#else
+#ifdef _ARM_ARCH_BE8
 	__asm(".word	0xffffffe7");
+#else
+	__asm(".word	0xe7ffffff");
 #endif
 }
 
