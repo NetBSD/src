@@ -1,4 +1,4 @@
-/* $NetBSD: rpi_vcmbox.c,v 1.6 2020/11/23 06:29:54 rin Exp $ */
+/* $NetBSD: rpi_vcmbox.c,v 1.7 2020/12/01 04:14:31 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.6 2020/11/23 06:29:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.7 2020/12/01 04:14:31 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -67,15 +68,15 @@ struct vcmbox_clockrate_request {
 #define VCMBOX_INIT_REQUEST(req)					\
 	do {								\
 		memset(&(req), 0, sizeof((req)));			\
-		(req).vb_hdr.vpb_len = sizeof((req));			\
-		(req).vb_hdr.vpb_rcode = VCPROP_PROCESS_REQUEST;	\
-		(req).end.vpt_tag = VCPROPTAG_NULL;			\
+		(req).vb_hdr.vpb_len = htole32(sizeof((req)));		\
+		(req).vb_hdr.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST);\
+		(req).end.vpt_tag = htole32(VCPROPTAG_NULL);		\
 	} while (0)
 #define VCMBOX_INIT_TAG(s, t)						\
 	do {								\
-		(s).tag.vpt_tag = (t);					\
-		(s).tag.vpt_rcode = VCPROPTAG_REQUEST;			\
-		(s).tag.vpt_len = VCPROPTAG_LEN(s);			\
+		(s).tag.vpt_tag = htole32(t);				\
+		(s).tag.vpt_rcode = htole32(VCPROPTAG_REQUEST);		\
+		(s).tag.vpt_len = htole32(VCPROPTAG_LEN(s));		\
 	} while (0)
 
 struct vcmbox_softc {
@@ -168,7 +169,7 @@ vcmbox_read_temp(struct vcmbox_softc *sc, uint32_t tag, int id, uint32_t *val)
 
 	VCMBOX_INIT_REQUEST(vb);
 	VCMBOX_INIT_TAG(vb.vbt_temp, tag);
-	vb.vbt_temp.id = id;
+	vb.vbt_temp.id = htole32(id);
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb, sizeof(vb), &res);
 	if (error)
 		return error;
@@ -176,7 +177,7 @@ vcmbox_read_temp(struct vcmbox_softc *sc, uint32_t tag, int id, uint32_t *val)
 	    !vcprop_tag_success_p(&vb.vbt_temp.tag)) {
 		return EIO;
 	}
-	*val = vb.vbt_temp.value;
+	*val = le32toh(vb.vbt_temp.value);
 
 	return 0;
 }
@@ -191,7 +192,7 @@ vcmbox_read_clockrate(struct vcmbox_softc *sc, uint32_t tag, int id,
 
 	VCMBOX_INIT_REQUEST(vb);
 	VCMBOX_INIT_TAG(vb.vbt_clockrate, tag);
-	vb.vbt_clockrate.id = id;
+	vb.vbt_clockrate.id = htole32(id);
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb, sizeof(vb), &res);
 	if (error)
 		return error;
@@ -199,7 +200,7 @@ vcmbox_read_clockrate(struct vcmbox_softc *sc, uint32_t tag, int id,
 	    !vcprop_tag_success_p(&vb.vbt_clockrate.tag)) {
 		return EIO;
 	}
-	*val = vb.vbt_clockrate.rate;
+	*val = le32toh(vb.vbt_clockrate.rate);
 
 	return 0;
 }
@@ -214,8 +215,8 @@ vcmbox_write_clockrate(struct vcmbox_softc *sc, uint32_t tag, int id,
 
 	VCMBOX_INIT_REQUEST(vb);
 	VCMBOX_INIT_TAG(vb.vbt_clockrate, tag);
-	vb.vbt_clockrate.id = id;
-	vb.vbt_clockrate.rate = val;
+	vb.vbt_clockrate.id = htole32(id);
+	vb.vbt_clockrate.rate = htole32(val);
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb, sizeof(vb), &res);
 	if (error)
 		return error;
