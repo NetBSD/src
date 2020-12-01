@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2758 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2759 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -307,3 +307,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Support Raspberry Pi 0-3 in big-endian mode. All devices
 		except for vchiq(4) and vcaudio(4) are supported. Pi 3 is
 		capable to run both in aarch64eb and earmv7{,hf}eb modes.
+		[rin 20201201]
