@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.13 2020/11/30 18:20:20 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.14 2020/12/01 19:33:50 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -132,7 +132,7 @@ x=	Ok
 .else
 x=	Fail
 .endif
-x!=	echo 'defined(V42) && ${V42} > 0: $x' >&2; echo
+x!=	echo 'defined(V42) && $${V42} > 0: $x' >&2; echo
 
 # With cond.c 1.76 from 2020-07-03, the following condition triggered a
 # warning: "String comparison operator should be either == or !=".
@@ -155,14 +155,14 @@ x=	Ok
 # above.  This is a crucial detail since without quotes, the variable
 # expression ${iV2} evaluates to "${V66}", and with quotes, it evaluates to ""
 # since undefined variables are allowed and expand to an empty string.
-x!=	echo 'defined(V66) && ( "${iV2}" < ${V42} ): $x' >&2; echo
+x!=	echo 'defined(V66) && ( "$${iV2}" < $${V42} ): $x' >&2; echo
 
 .if 1 || ${iV1} < ${V42}
 x=	Ok
 .else
 x=	Fail
 .endif
-x!=	echo '1 || ${iV1} < ${V42}: $x' >&2; echo
+x!=	echo '1 || $${iV1} < $${V42}: $x' >&2; echo
 
 # With cond.c 1.76 from 2020-07-03, the following condition triggered a
 # warning: "String comparison operator should be either == or !=".
@@ -181,7 +181,7 @@ x=	Ok
 .else
 x=	Fail
 .endif
-x!=	echo '1 || ${iV2:U2} < ${V42}: $x' >&2; echo
+x!=	echo '1 || $${iV2:U2} < $${V42}: $x' >&2; echo
 
 # the same expressions are fine when the lhs is expanded
 # ${iV1} expands to 42
@@ -190,7 +190,7 @@ x=	Ok
 .else
 x=	Fail
 .endif
-x!=	echo '0 || ${iV1} <= ${V42}: $x' >&2; echo
+x!=	echo '0 || $${iV1} <= $${V42}: $x' >&2; echo
 
 # ${iV2:U2} expands to 2
 .if 0 || ${iV2:U2} < ${V42}
@@ -198,7 +198,7 @@ x=	Ok
 .else
 x=	Fail
 .endif
-x!=	echo '0 || ${iV2:U2} < ${V42}: $x' >&2; echo
+x!=	echo '0 || $${iV2:U2} < $${V42}: $x' >&2; echo
 
 # TODO: Has this always worked?  There may have been a time, maybe around
 # 2000, when make would complain about the "Malformed conditional" because
