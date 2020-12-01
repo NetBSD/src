@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.39 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.40 2020/12/01 19:28:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -78,7 +78,6 @@
 typedef struct CachedDir CachedDir;
 
 void Dir_Init(void);
-void Dir_InitDir(const char *);
 void Dir_InitCur(const char *);
 void Dir_InitDot(void);
 void Dir_End(void);
