@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.5 2020/07/26 07:48:07 simonb Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.6 2020/12/01 08:39:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.5 2020/07/26 07:48:07 simonb Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.6 2020/12/01 08:39:39 skrll Exp $");
 
 #include "assym.h"
 
@@ -50,7 +50,7 @@ RCSID("$NetBSD: rmixl_spl.S,v 1.5 2020/07/26 07:48:07 simonb Exp $");
 
 	.set noreorder
 
-/* 
+/*
  * Array of mask of bits to set in the EIMR when we go to a
  * given hardware interrupt priority level.
  * The softint bits in [IPL_NONE] and [IPL_SOFTCLOCK] should stay constant
