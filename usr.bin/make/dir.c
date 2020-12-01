@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.246 2020/12/01 19:28:32 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.247 2020/12/01 20:47:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.246 2020/12/01 19:28:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.247 2020/12/01 20:47:52 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -542,19 +542,19 @@ void
 Dir_SetPATH(void)
 {
 	CachedDirListNode *ln;
-	Boolean hasLastDot = FALSE;	/* true if we should search dot last */
+	Boolean seenDotLast = FALSE;	/* true if we should search '.' last */
 
 	Var_Delete(".PATH", VAR_GLOBAL);
 
 	if ((ln = dirSearchPath.first) != NULL) {
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast) {
-			hasLastDot = TRUE;
+			seenDotLast = TRUE;
 			Var_Append(".PATH", dotLast->name, VAR_GLOBAL);
 		}
 	}
 
-	if (!hasLastDot) {
+	if (!seenDotLast) {
 		if (dot != NULL)
 			Var_Append(".PATH", dot->name, VAR_GLOBAL);
 		if (cur != NULL)
@@ -565,12 +565,12 @@ Dir_SetPATH(void)
 		CachedDir *dir = ln->datum;
 		if (dir == dotLast)
 			continue;
-		if (dir == dot && hasLastDot)
+		if (dir == dot && seenDotLast)
 			continue;
 		Var_Append(".PATH", dir->name, VAR_GLOBAL);
 	}
 
-	if (hasLastDot) {
+	if (seenDotLast) {
 		if (dot != NULL)
 			Var_Append(".PATH", dot->name, VAR_GLOBAL);
 		if (cur != NULL)
