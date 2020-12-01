@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.23 2020/03/05 17:58:08 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.24 2020/12/01 14:52:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * So, what we have done is implement simple mutexes using a compare-and-swap.
  * We support pre-ARMv6 by implementing CAS as a restartable atomic sequence
  * that is checked by the IRQ vector.
- * 
+ *
  */
 
 struct kmutex {
