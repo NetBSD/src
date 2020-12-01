@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.12 2020/11/12 01:03:22 rin Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.13 2020/12/01 02:43:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.12 2020/11/12 01:03:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.13 2020/12/01 02:43:13 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -72,8 +72,11 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	 * If the BE-8 model is supported, CPSR[7] will be clear.
 	 * If the BE-32 model is supported, CPSR[7] will be set.
 	 */
-	register_t ctl = armreg_sctlr_read();
-	if (((ctl & CPU_CONTROL_BEND_ENABLE) != 0) == be8_p)
+#ifdef _ARM_ARCH_BE8
+	if (!be8_p)
+#else
+	if (be8_p)
+#endif
 		return ENOEXEC;
 #endif /* __ARMEB__ */
 
@@ -111,7 +114,14 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	 * If we are AAPCS (EABI) and armv6/armv7, we want alignment faults
 	 * to be off.
 	 */
-	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P())) {
+#if defined(__ARMEL__)
+	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P()))
+#elif defined(_ARM_ARCH_BE8)
+	if (aapcs_p)
+#else
+	if (false /* CONSTCOND */)
+#endif
+	{
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 	} else {
 		l->l_md.md_flags &= ~MDLWP_NOALIGNFLT;
