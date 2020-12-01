@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2757 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2758 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -304,3 +304,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpi(4): Updated ACPICA to 20201113. [christos 20201127]
 	dhcpcd: Update to version 9.3.4 [roy 20201128]
 	arm: Switch earmv6{,hf}eb to BE8. [rin 20201201]
+	evbarm: Support Raspberry Pi 0-3 in big-endian mode. All devices
+		except for vchiq(4) and vcaudio(4) are supported. Pi 3 is
+		capable to run both in aarch64eb and earmv7{,hf}eb modes.
