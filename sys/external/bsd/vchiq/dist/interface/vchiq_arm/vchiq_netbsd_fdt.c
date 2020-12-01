@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.2 2020/12/01 03:28:08 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.2 2020/12/01 03:28:08 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ vchiq_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get register address\n");
+		aprint_error_dev(sc->sc_dev, "couldn't get register address\n");
 		return;
 	}
 
