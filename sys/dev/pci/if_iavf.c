@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.7 2020/12/01 04:39:03 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.6 2020/09/17 06:34:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.7 2020/12/01 04:39:03 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4164,7 +4164,6 @@ iavf_atq_poll(struct iavf_softc *sc, unsigned int tm)
 {
 	struct ixl_aq_desc *atq, *slot;
 	struct ixl_aq_desc iaq;
-	struct ixl_aq_buf *aqb;
 	unsigned int prod;
 	unsigned int t;
 	int dbg;
@@ -4193,13 +4192,6 @@ iavf_atq_poll(struct iavf_softc *sc, unsigned int tm)
 	memset(slot, 0, sizeof(*slot));
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREREAD);
-
-	aqb = iavf_aqb_get_locked(&sc->sc_atq_live);
-	if (aqb != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, IXL_AQB_MAP(aqb),
-		    0, IXL_AQB_LEN(aqb), BUS_DMASYNC_POSTWRITE);
-		/* no need to do iavf_aqb_put(&sc->sc_atq_idle, aqb) */
-	}
 
 	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
 		if (dbg >= 2) {
@@ -4286,6 +4278,18 @@ iavf_adminq_poll_locked(struct iavf_softc *sc,
 	iavf_atq_post(sc, iaq, aqb);
 
 	error = iavf_atq_poll(sc, retry);
+
+	/*
+	 * collect the aqb used in the current command and
+	 * added to sc_atq_live at iavf_atq_post(),
+	 * whether or not the command succeeded.
+	*/
+	if (aqb != NULL) {
+		(void)iavf_aqb_get_locked(&sc->sc_atq_live);
+		bus_dmamap_sync(sc->sc_dmat, IXL_AQB_MAP(aqb),
+		    0, IXL_AQB_LEN(aqb), BUS_DMASYNC_POSTWRITE);
+	}
+
 	if (error)
 		return error;
 
