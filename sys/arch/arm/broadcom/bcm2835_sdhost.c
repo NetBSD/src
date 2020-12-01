@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.5 2020/05/31 23:52:19 thorpej Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.6 2020/12/01 04:15:04 rin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.5 2020/05/31 23:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.6 2020/12/01 04:15:04 rin Exp $");
 
 #include "bcmdmac.h"
 
@@ -397,6 +397,7 @@ sdhost_dma_transfer(struct sdhost_softc *sc, struct sdmmc_command *cmd)
 			    sc->sc_dmamap->dm_segs[0].ds_addr +
 			    sizeof(struct bcm_dmac_conblk) * (seg+1);
 		}
+		bcm_dmac_swap_conblk(&sc->sc_cblk[seg]);
 		sc->sc_cblk[seg].cb_padding[0] = 0;
 		sc->sc_cblk[seg].cb_padding[1] = 0;
 	}
