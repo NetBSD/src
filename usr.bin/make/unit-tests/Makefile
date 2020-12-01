@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.231 2020/11/30 21:10:15 rillig Exp $
+# $NetBSD: Makefile,v 1.232 2020/12/01 17:50:04 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -186,6 +186,9 @@ TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		job-flags
 TESTS+=		job-output-long-lines
+TESTS+=		jobs-error-indirect
+TESTS+=		jobs-error-nested
+TESTS+=		jobs-error-nested-make
 TESTS+=		lint
 TESTS+=		make-exported
 TESTS+=		meta-cmd-cmp
@@ -433,10 +436,13 @@ ENV.varname-vpath+=	VPATH=varname-vpath.dir:varname-vpath.dir2
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
 # settings FLAGS.test=-dv here, since that is closer to the test code.
-FLAGS.cond-func-make=	via-cmdline
-FLAGS.directive-ifmake=	first second
-FLAGS.doterror=		# none, especially not -k
-FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmdline-plain'
+FLAGS.cond-func-make=		via-cmdline
+FLAGS.directive-ifmake=		first second
+FLAGS.doterror=			# none, especially not -k
+FLAGS.jobs-error-indirect=	# none, especially not -k
+FLAGS.jobs-error-nested=	# none, especially not -k
+FLAGS.jobs-error-nested-make=	# none, especially not -k
+FLAGS.varname-empty=		-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
 SED_CMDS.dir=		${:D remove output from -DCLEANUP mode }
