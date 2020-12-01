@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 2014/03/15 05:54:20 ozaki-r Exp $	*/
+/*	$NetBSD: trap.h,v 1.10 2020/12/01 02:48:29 rin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -38,6 +38,8 @@
  * Various trap definitions
  */
 
+#include <arm/cdefs.h>
+
 /*
  * Instructions used for breakpoints.
  *
@@ -70,7 +72,11 @@
 #define DTRACE_BREAKPOINT_MASK	0xfffffff0
 #define DTRACE_IS_BREAKPOINT(insn)	((insn & DTRACE_BREAKPOINT_MASK) == DTRACE_BREAKPOINT)
 
+#ifdef _ARM_ARCH_BE8
+#define KBPT_ASM		".word 0xfedeffe7"
+#else
 #define KBPT_ASM		".word 0xe7ffdefe"
+#endif
 
 #define USER_BREAKPOINT		GDB_BREAKPOINT
 
