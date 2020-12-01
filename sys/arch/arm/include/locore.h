@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.34 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.35 2020/12/01 02:48:29 rin Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -202,7 +202,7 @@ read_insn(vaddr_t va, bool user_p)
 	} else {
 		insn = *(const uint32_t *)va;
 	}
-#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+#ifdef _ARM_ARCH_BE8
 	insn = bswap32(insn);
 #endif
 	return insn;
@@ -232,7 +232,7 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	} else {
 		insn = *(const uint16_t *)va;
 	}
-#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+#ifdef _ARM_ARCH_BE8
 	insn = bswap16(insn);
 #endif
 	return insn;
