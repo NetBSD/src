@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.14 2020/12/01 19:33:50 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.15 2020/12/01 19:37:23 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -200,9 +200,10 @@ x=	Fail
 .endif
 x!=	echo '0 || $${iV2:U2} < $${V42}: $x' >&2; echo
 
-# TODO: Has this always worked?  There may have been a time, maybe around
-# 2000, when make would complain about the "Malformed conditional" because
-# UNDEF is not defined.
+# The right-hand side of the '&&' is irrelevant since the left-hand side
+# already evaluates to false.  Before cond.c 1.79 from 2020-07-09, it was
+# expanded nevertheless, although with a small modification:  undefined
+# variables may be used in these expressions without generating an error.
 .if defined(UNDEF) && ${UNDEF} != "undefined"
 .  error
 .endif
