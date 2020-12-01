@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.24 2020/12/01 14:52:36 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.25 2020/12/01 14:53:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -82,10 +82,6 @@ struct kmutex {
 
 #define	MUTEX_CAS(p, o, n)		\
     (atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
-#ifdef MULTIPROCESSOR
-#define	MUTEX_SMT_PAUSE()		__asm __volatile("wfe")
-#define	MUTEX_SMT_WAKE()		__asm __volatile("sev")
-#endif
 
 #endif	/* __MUTEX_PRIVATE */
 
