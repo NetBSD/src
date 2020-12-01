@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.43 2020/11/23 06:24:35 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.44 2020/12/01 04:14:31 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.43 2020/11/23 06:24:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.44 2020/12/01 04:14:31 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.43 2020/11/23 06:24:35 rin Ex
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/kmem.h>
 #include <sys/termios.h>
 
@@ -349,27 +350,28 @@ static struct {
 	struct vcprop_tag end;
 } vb_uart __cacheline_aligned = {
 	.vb_hdr = {
-		.vpb_len = sizeof(vb_uart),
-		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		.vpb_len = htole32(sizeof(vb_uart)),
+		.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST),
 	},
 	.vbt_uartclockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_uartclockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len =
+			    htole32(VCPROPTAG_LEN(vb_uart.vbt_uartclockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_UART
+		.id = htole32(VCPROP_CLK_UART)
 	},
 	.vbt_vpuclockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_vpuclockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_uart.vbt_vpuclockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_CORE
+		.id = htole32(VCPROP_CLK_CORE)
 	},
 	.end = {
-		.vpt_tag = VCPROPTAG_NULL
+		.vpt_tag = htole32(VCPROPTAG_NULL)
 	}
 };
 
@@ -390,99 +392,100 @@ static struct {
 	struct vcprop_tag end;
 } vb __cacheline_aligned = {
 	.vb_hdr = {
-		.vpb_len = sizeof(vb),
-		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		.vpb_len = htole32(sizeof(vb)),
+		.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST),
 	},
 	.vbt_fwrev = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_FIRMWAREREV,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_fwrev),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_FIRMWAREREV),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_fwrev)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_boardmodel = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_BOARDMODEL,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_boardmodel),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_BOARDMODEL),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_boardmodel)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_boardrev = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_boardrev),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_BOARDREVISION),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_boardrev)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_macaddr = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_MACADDRESS,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_macaddr),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_MACADDRESS),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_macaddr)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_memory = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_ARMMEMORY,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_memory),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_ARMMEMORY),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_memory)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_serial = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_BOARDSERIAL,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_serial),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_BOARDSERIAL),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_serial)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_dmachan = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_DMACHAN,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_dmachan),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_DMACHAN),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_dmachan)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_cmdline = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CMDLINE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_cmdline),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CMDLINE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_cmdline)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
 	},
 	.vbt_emmcclockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_emmcclockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_emmcclockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_EMMC
+		.id = htole32(VCPROP_CLK_EMMC)
 	},
 	.vbt_armclockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_armclockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_armclockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_ARM
+		.id = htole32(VCPROP_CLK_ARM)
 	},
 	.vbt_vpuclockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_vpuclockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb.vbt_vpuclockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_CORE
+		.id = htole32(VCPROP_CLK_CORE)
 	},
 	.vbt_emmc2clockrate = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_emmc2clockrate),
-			.vpt_rcode = VCPROPTAG_REQUEST
+			.vpt_tag = htole32(VCPROPTAG_GET_CLOCKRATE),
+			.vpt_len =
+			    htole32(VCPROPTAG_LEN(vb.vbt_emmc2clockrate)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST)
 		},
-		.id = VCPROP_CLK_EMMC2
+		.id = htole32(VCPROP_CLK_EMMC2)
 	},
 	.end = {
-		.vpt_tag = VCPROPTAG_NULL
+		.vpt_tag = htole32(VCPROPTAG_NULL)
 	}
 };
 
@@ -493,19 +496,19 @@ static struct {
 	struct vcprop_tag end;
 } vb_edid __cacheline_aligned = {
 	.vb_hdr = {
-		.vpb_len = sizeof(vb_edid),
-		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		.vpb_len = htole32(sizeof(vb_edid)),
+		.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST),
 	},
 	.vbt_edid = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_EDID_BLOCK,
-			.vpt_len = VCPROPTAG_LEN(vb_edid.vbt_edid),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_GET_EDID_BLOCK),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_edid.vbt_edid)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.blockno = 0,
+		.blockno = htole32(0),
 	},
 	.end = {
-		.vpt_tag = VCPROPTAG_NULL
+		.vpt_tag = htole32(VCPROPTAG_NULL)
 	}
 };
 
@@ -521,68 +524,69 @@ static struct {
 	struct vcprop_tag end;
 } vb_setfb __cacheline_aligned = {
 	.vb_hdr = {
-		.vpb_len = sizeof(vb_setfb),
-		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		.vpb_len = htole32(sizeof(vb_setfb)),
+		.vpb_rcode = htole32(VCPROP_PROCESS_REQUEST),
 	},
 	.vbt_res = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_RES,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_res),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_SET_FB_RES),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_res)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.width = 0,
-		.height = 0,
+		.width = htole32(0),
+		.height = htole32(0),
 	},
 	.vbt_vres = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_VRES,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_vres),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_SET_FB_VRES),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_vres)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.width = 0,
-		.height = 0,
+		.width = htole32(0),
+		.height = htole32(0),
 	},
 	.vbt_depth = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_DEPTH,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_depth),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_SET_FB_DEPTH),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_depth)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.bpp = 32,
+		.bpp = htole32(32),
 	},
 	.vbt_alpha = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_ALPHA_MODE,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_alpha),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_SET_FB_ALPHA_MODE),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_alpha)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.state = VCPROP_ALPHA_IGNORED,
+		.state = htole32(VCPROP_ALPHA_IGNORED),
 	},
 	.vbt_allocbuf = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_ALLOCATE_BUFFER,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_allocbuf),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_ALLOCATE_BUFFER),
+			.vpt_len =
+			    htole32(VCPROPTAG_LEN(vb_setfb.vbt_allocbuf)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.address = PAGE_SIZE,	/* alignment */
+		.address = htole32(PAGE_SIZE),	/* alignment */
 	},
 	.vbt_blank = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_BLANK_SCREEN,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_blank),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_BLANK_SCREEN),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_blank)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
-		.state = VCPROP_BLANK_OFF,
+		.state = htole32(VCPROP_BLANK_OFF),
 	},
 	.vbt_pitch = {
 		.tag = {
-			.vpt_tag = VCPROPTAG_GET_FB_PITCH,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pitch),
-			.vpt_rcode = VCPROPTAG_REQUEST,
+			.vpt_tag = htole32(VCPROPTAG_GET_FB_PITCH),
+			.vpt_len = htole32(VCPROPTAG_LEN(vb_setfb.vbt_pitch)),
+			.vpt_rcode = htole32(VCPROPTAG_REQUEST),
 		},
 	},
 	.end = {
-		.vpt_tag = VCPROPTAG_NULL,
+		.vpt_tag = htole32(VCPROPTAG_NULL),
 	},
 };
 
@@ -606,7 +610,7 @@ bcm283x_clk_get_rate_uart(void)
 {
 
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
-		return vb_uart.vbt_uartclockrate.rate;
+		return le32toh(vb_uart.vbt_uartclockrate.rate);
 	return 0;
 }
 
@@ -615,8 +619,8 @@ bcm283x_clk_get_rate_vpu(void)
 {
 
 	if (vcprop_tag_success_p(&vb.vbt_vpuclockrate.tag) &&
-	    vb.vbt_vpuclockrate.rate > 0) {
-		return vb.vbt_vpuclockrate.rate;
+	    vb.vbt_vpuclockrate.rate != 0) {
+		return le32toh(vb.vbt_vpuclockrate.rate);
 	}
 	return 0;
 }
@@ -626,8 +630,8 @@ bcm283x_clk_get_rate_emmc(void)
 {
 
 	if (vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
-	    vb.vbt_emmcclockrate.rate > 0) {
-		return vb.vbt_emmcclockrate.rate;
+	    vb.vbt_emmcclockrate.rate != 0) {
+		return le32toh(vb.vbt_emmcclockrate.rate);
 	}
 	return 0;
 }
@@ -637,8 +641,8 @@ bcm283x_clk_get_rate_emmc2(void)
 {
 
 	if (vcprop_tag_success_p(&vb.vbt_emmc2clockrate.tag) &&
-	    vb.vbt_emmc2clockrate.rate > 0) {
-		return vb.vbt_emmc2clockrate.rate;
+	    vb.vbt_emmc2clockrate.rate != 0) {
+		return le32toh(vb.vbt_emmc2clockrate.rate);
 	}
 	return 0;
 }
@@ -663,9 +667,9 @@ bcm283x_uartinit(bus_space_tag_t iot, bus_space_handle_t ioh)
 	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
 
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
-		uart_clk = vb_uart.vbt_uartclockrate.rate;
+		uart_clk = le32toh(vb_uart.vbt_uartclockrate.rate);
 	if (vcprop_tag_success_p(&vb_uart.vbt_vpuclockrate.tag))
-		core_clk = vb_uart.vbt_vpuclockrate.rate;
+		core_clk = le32toh(vb_uart.vbt_vpuclockrate.rate);
 }
 
 #if defined(SOC_BCM2835)
@@ -758,16 +762,19 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 		bootconfig.dramblocks = 0;
 
 		for (int i = 0; i < n && i < DRAM_BLOCKS; i++) {
-			bootconfig.dram[i].address = vptp_mem->mem[i].base;
-			bootconfig.dram[i].pages = atop(vptp_mem->mem[i].size);
+			bootconfig.dram[i].address =
+			    le32toh(vptp_mem->mem[i].base);
+			bootconfig.dram[i].pages =
+			    atop(le32toh(vptp_mem->mem[i].size));
 			bootconfig.dramblocks++;
 
-			bcm283x_memorysize += vptp_mem->mem[i].size;
+			bcm283x_memorysize += le32toh(vptp_mem->mem[i].size);
 		}
 	}
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
-		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
+		curcpu()->ci_data.cpu_cc_freq =
+		    le32toh(vb.vbt_armclockrate.rate);
 
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_memory.tag))
@@ -775,34 +782,34 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 		    bcm283x_memorysize);
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		printf("%s: arm clock    %d\n", __func__,
-		    vb.vbt_armclockrate.rate);
+		    le32toh(vb.vbt_armclockrate.rate));
 	if (vcprop_tag_success_p(&vb.vbt_vpuclockrate.tag))
 		printf("%s: vpu clock    %d\n", __func__,
-		    vb.vbt_vpuclockrate.rate);
+		    le32toh(vb.vbt_vpuclockrate.rate));
 	if (vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag))
 		printf("%s: emmc clock   %d\n", __func__,
-		    vb.vbt_emmcclockrate.rate);
+		    le32toh(vb.vbt_emmcclockrate.rate));
 	if (vcprop_tag_success_p(&vb.vbt_emmc2clockrate.tag))
 		printf("%s: emmc2 clock  %d\n", __func__,
-		    vb.vbt_emmcclockrate.rate);
+		    le32toh(vb.vbt_emmcclockrate.rate));
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
 		printf("%s: firmware rev %x\n", __func__,
-		    vb.vbt_fwrev.rev);
+		    le32toh(vb.vbt_fwrev.rev));
 	if (vcprop_tag_success_p(&vb.vbt_boardmodel.tag))
 		printf("%s: board model  %x\n", __func__,
-		    vb.vbt_boardmodel.model);
+		    le32toh(vb.vbt_boardmodel.model));
 	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
 		printf("%s: mac-address  %" PRIx64 "\n", __func__,
-		    vb.vbt_macaddr.addr);
+		    le64toh(vb.vbt_macaddr.addr));
 	if (vcprop_tag_success_p(&vb.vbt_boardrev.tag))
 		printf("%s: board rev    %x\n", __func__,
-		    vb.vbt_boardrev.rev);
+		    le32toh(vb.vbt_boardrev.rev));
 	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
 		printf("%s: board serial %" PRIx64 "\n", __func__,
-		    vb.vbt_serial.sn);
+		    le64toh(vb.vbt_serial.sn));
 	if (vcprop_tag_success_p(&vb.vbt_dmachan.tag))
 		printf("%s: DMA channel mask 0x%08x\n", __func__,
-		    vb.vbt_dmachan.mask);
+		    le32toh(vb.vbt_dmachan.mask));
 
 	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
 		printf("%s: cmdline      %s\n", __func__,
@@ -955,10 +962,10 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		height = RPI_FB_HEIGHT;
 	}
 
-	vb_setfb.vbt_res.width = width;
-	vb_setfb.vbt_res.height = height;
-	vb_setfb.vbt_vres.width = width;
-	vb_setfb.vbt_vres.height = height;
+	vb_setfb.vbt_res.width = htole32(width);
+	vb_setfb.vbt_res.height = htole32(height);
+	vb_setfb.vbt_vres.width = htole32(width);
+	vb_setfb.vbt_vres.height = htole32(height);
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_setfb,
 	    sizeof(vb_setfb), &res);
 	if (error) {
@@ -979,15 +986,16 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: addr = 0x%x size = %d\n", __func__,
-	    vb_setfb.vbt_allocbuf.address,
-	    vb_setfb.vbt_allocbuf.size);
-	printf("%s: depth = %d\n", __func__, vb_setfb.vbt_depth.bpp);
+	    le32toh(vb_setfb.vbt_allocbuf.address),
+	    le32toh(vb_setfb.vbt_allocbuf.size));
+	printf("%s: depth = %d\n", __func__, le32toh(vb_setfb.vbt_depth.bpp));
 	printf("%s: pitch = %d\n", __func__,
-	    vb_setfb.vbt_pitch.linebytes);
+	    le32toh(vb_setfb.vbt_pitch.linebytes));
 	printf("%s: width = %d height = %d\n", __func__,
-	    vb_setfb.vbt_res.width, vb_setfb.vbt_res.height);
+	    le32toh(vb_setfb.vbt_res.width), le32toh(vb_setfb.vbt_res.height));
 	printf("%s: vwidth = %d vheight = %d\n", __func__,
-	    vb_setfb.vbt_vres.width, vb_setfb.vbt_vres.height);
+	    le32toh(vb_setfb.vbt_vres.width),
+	    le32toh(vb_setfb.vbt_vres.height));
 #endif
 
 	if (vb_setfb.vbt_allocbuf.address == 0 ||
@@ -1002,13 +1010,16 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		return false;
 	}
 
-	prop_dictionary_set_uint32(dict, "width", vb_setfb.vbt_res.width);
-	prop_dictionary_set_uint32(dict, "height", vb_setfb.vbt_res.height);
-	prop_dictionary_set_uint8(dict, "depth", vb_setfb.vbt_depth.bpp);
+	prop_dictionary_set_uint32(dict, "width",
+	    le32toh(vb_setfb.vbt_res.width));
+	prop_dictionary_set_uint32(dict, "height",
+	    le32toh(vb_setfb.vbt_res.height));
+	prop_dictionary_set_uint8(dict, "depth",
+	    le32toh(vb_setfb.vbt_depth.bpp));
 	prop_dictionary_set_uint16(dict, "linebytes",
-	    vb_setfb.vbt_pitch.linebytes);
+	    le32toh(vb_setfb.vbt_pitch.linebytes));
 	prop_dictionary_set_uint32(dict, "address",
-	    vb_setfb.vbt_allocbuf.address);
+	    le32toh(vb_setfb.vbt_allocbuf.address));
 
 	/*
 	 * Old firmware uses BGR. New firmware uses RGB. The get and set
@@ -1414,7 +1425,7 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
 		prop_dictionary_set_uint32(dict,
-		    "chanmask", vb.vbt_dmachan.mask);
+		    "chanmask", le32toh(vb.vbt_dmachan.mask));
 	}
 #if NSDHC > 0
 	if (booted_device == NULL &&
@@ -1428,13 +1439,11 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 	     device_is_a(dev, "mue") ||
 	     device_is_a(dev, "genet")) &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
+		const uint64_t addr = le64toh(vb.vbt_macaddr.addr);
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
-		     (vb.vbt_macaddr.addr >> 0) & 0xff,
-		     (vb.vbt_macaddr.addr >> 8) & 0xff,
-		     (vb.vbt_macaddr.addr >> 16) & 0xff,
-		     (vb.vbt_macaddr.addr >> 24) & 0xff,
-		     (vb.vbt_macaddr.addr >> 32) & 0xff,
-		     (vb.vbt_macaddr.addr >> 40) & 0xff
+		     (addr >> 0)  & 0xff, (addr >> 8)  & 0xff,
+		     (addr >> 16) & 0xff, (addr >> 24) & 0xff,
+		     (addr >> 32) & 0xff, (addr >> 40) & 0xff
 		};
 
 		prop_dictionary_set_data(dict, "mac-address", enaddr,
