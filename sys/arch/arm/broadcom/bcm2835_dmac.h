@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.h,v 1.4 2015/08/09 13:06:44 mlelstv Exp $ */
+/* $NetBSD: bcm2835_dmac.h,v 1.5 2020/12/01 04:15:04 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef BCM2835_DMAC_H
 #define BCM2835_DMAC_H
+
+#include <sys/endian.h>
 
 #define DMAC_CS(n)		(0x00 + (0x100 * (n)))
 #define  DMAC_CS_RESET		__BIT(31)
@@ -62,6 +64,9 @@
 #define  DMAC_DEBUG_FIFO_ERROR	__BIT(1)
 #define  DMAC_DEBUG_READ_LAST_NOT_SET_ERROR __BIT(0)
 
+/*
+ * Byte-order is little endain.
+ */
 struct bcm_dmac_conblk {
 	uint32_t	cb_ti;
 #define DMAC_TI_NO_WIDE_BURSTS	__BIT(26)
@@ -108,5 +113,16 @@ void bcm_dmac_set_conblk_addr(struct bcm_dmac_channel *, bus_addr_t);
 int bcm_dmac_transfer(struct bcm_dmac_channel *);
 void bcm_dmac_halt(struct bcm_dmac_channel *);
 
+static inline void
+bcm_dmac_swap_conblk(struct bcm_dmac_conblk *conblk)
+{
+
+	HTOLE32(conblk->cb_ti);
+	HTOLE32(conblk->cb_source_ad);
+	HTOLE32(conblk->cb_dest_ad);
+	HTOLE32(conblk->cb_txfr_len);
+	HTOLE32(conblk->cb_stride);
+	HTOLE32(conblk->cb_nextconbk);
+}
 
 #endif /* !BCM2835_DMAC_H */

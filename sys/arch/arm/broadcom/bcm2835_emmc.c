@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.38 2020/08/28 13:13:55 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.39 2020/12/01 04:15:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.38 2020/08/28 13:13:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.39 2020/12/01 04:15:04 rin Exp $");
 
 #include "bcmdmac.h"
 
@@ -327,6 +327,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			    sc->sc_dmamap->dm_segs[0].ds_addr +
 			    sizeof(struct bcm_dmac_conblk) * (seg+1);
 		}
+		bcm_dmac_swap_conblk(&sc->sc_cblk[seg]);
 		sc->sc_cblk[seg].cb_padding[0] = 0;
 		sc->sc_cblk[seg].cb_padding[1] = 0;
 	}
