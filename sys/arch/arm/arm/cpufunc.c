@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.178 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.179 2020/12/01 02:46:19 rin Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.178 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.179 2020/12/01 02:46:19 rin Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -2769,6 +2769,11 @@ arm11_setup(char *args)
 #endif
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    /* | CPU_CONTROL_BPRD_ENABLE */;
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_EX_BEND;
+#endif
+
 	int cpuctrlmask = cpuctrl
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
@@ -2779,10 +2784,6 @@ arm11_setup(char *args)
 #endif
 
 	cpuctrl = parse_cpu_options(args, arm11_options, cpuctrl);
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 #ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
@@ -2818,6 +2819,11 @@ arm11mpcore_setup(char *args)
 	    | CPU_CONTROL_XP_ENABLE
 #endif
 	    | CPU_CONTROL_BPRD_ENABLE ;
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_EX_BEND;
+#endif
+
 	int cpuctrlmask = cpuctrl
 	    | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_VECRELOC;
@@ -3057,6 +3063,10 @@ arm11x6_setup(char *args)
 #endif
 		CPU_CONTROL_IC_ENABLE;
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_EX_BEND;
+#endif
+
 	/*
 	 * "write as existing" bits
 	 * inverse of this is mask
@@ -3074,10 +3084,6 @@ arm11x6_setup(char *args)
 #endif
 
 	cpuctrl = parse_cpu_options(args, arm11_options, cpuctrl);
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 #ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
