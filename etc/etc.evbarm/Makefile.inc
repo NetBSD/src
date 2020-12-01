@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.121 2020/10/02 17:27:12 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.122 2020/12/01 04:20:21 rin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -24,6 +24,11 @@ KERNEL_SETS.armv4+=		IXM1200
 
 EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
+
+EVBARM_BOARDS.armv6+=		RPI
+EVBARM_BOARDS.armv6hf+=	 	RPI
+KERNEL_SETS.armv6+=		RPI2
+KERNEL_SETS.armv6hf+=	 	RPI2
 
 KERNEL_SETS.armv7+=		GENERIC
 KERNEL_SETS.armv7hf+=		GENERIC
