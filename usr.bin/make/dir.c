@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.245 2020/11/30 20:25:37 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.246 2020/12/01 19:28:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.245 2020/11/30 20:25:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.246 2020/12/01 19:28:32 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -475,13 +475,6 @@ Dir_Init(void)
 	OpenDirs_Init(&openDirs);
 	HashTable_Init(&mtimes);
 	HashTable_Init(&lmtimes);
-}
-
-void
-Dir_InitDir(const char *cdname)
-{
-	Dir_InitCur(cdname);
-
 	CachedDir_Assign(&dotLast, CachedDir_New(".DOTLAST"));
 }
 
