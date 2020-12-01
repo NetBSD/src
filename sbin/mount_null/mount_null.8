@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.21 2005/01/31 05:19:19 erh Exp $
+.\"	$NetBSD: mount_null.8,v 1.22 2020/12/01 02:43:18 pgoyette Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"     @(#)mount_null.8	8.6 (Berkeley) 5/1/95
 .\"
 .\"
-.Dd May 1, 1995
+.Dd November 30, 2020
 .Dt MOUNT_NULL 8
 .Os
 .Sh NAME
@@ -140,7 +140,9 @@ are not bypassed.
 .Em vop_getattr
 must change the fsid being returned.
 .Em vop_inactive
-and vop_reclaim are not bypassed so that
+and
+.Em vop_reclaim
+are not bypassed so that
 they can handle freeing null-layer specific data.
 .Em vop_print
 is not bypassed to avoid excessive debugging
