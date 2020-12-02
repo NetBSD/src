@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1763 2020/11/28 14:29:25 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1764 2020/12/02 14:09:18 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1193,10 +1193,10 @@ reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
 Version:	20190405
-Current Vers:	20190405
+Current Vers:	20201202
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
-Date:		2019-01-09
+Date:		2020-12-02
 Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
