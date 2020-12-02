@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.126 2019/12/06 14:43:30 riastradh Exp $
+#	$NetBSD: security,v 1.127 2020/12/02 14:18:13 wiz Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -991,7 +991,7 @@ if checkyesno check_pkgs && have_pkgs; then
 	pkgs=$work_dir/pkgs
 	migrate_file "$backup_dir/pkgs" "$pkgs"
 	pkg_dbdir=$(${pkg_admin} config-var PKG_DBDIR)
-	: ${pkg_dbdir:=/var/db/pkg}
+	: ${pkg_dbdir:=/usr/pkg/pkgdb}
 	(	cd $pkg_dbdir
 		$pkg_info | sort
 		echo ""
