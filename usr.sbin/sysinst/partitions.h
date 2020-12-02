@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.20 2020/11/06 12:23:10 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.21 2020/12/02 14:20:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ enum part_type {
  * purposes. The internal details may be richer and the *pointer* value
  * is the unique token - that is: the partitioning scheme will hand out
  * pointers to internal data and recognize the exact partition type details
- * by pointer comparision.
+ * by pointer comparison.
  */
 struct part_type_desc {
 	enum part_type generic_ptype;	/* what this maps to in generic terms */
