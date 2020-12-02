@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.3 2020/12/02 13:53:50 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.3 2020/12/02 13:53:50 wiz Exp $");
 
 /*-
  * Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
@@ -70,11 +70,8 @@ __RCSID("$NetBSD: pkgdb.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
  * Where we put logging information by default if PKG_DBDIR is unset.
  */
 #ifndef DEF_LOG_DIR
-#define DEF_LOG_DIR		"/var/db/pkg"
+#define DEF_LOG_DIR		PREFIX "/pkgdb"
 #endif
-
-/* just in case we change the environment variable name */
-#define PKG_DBDIR		"PKG_DBDIR"
 
 static DB   *pkgdbp;
 static char pkgdb_dir_default[] = DEF_LOG_DIR;
@@ -303,8 +300,21 @@ pkgdb_refcount_dir(void)
 const char *
 pkgdb_get_dir(void)
 {
+	/* Except for the return at this end, this code is for
+	   migration from the previous location /var/db/pkg to the new
+	   default (December 2020). */
 
-	return pkgdb_dir;
+	struct stat sb;
+	if (strcmp(pkgdb_dir, DEF_LOG_DIR) == 0 &&
+	    stat(pkgdb_dir, &sb) == -1 && errno == ENOENT &&
+	    stat("/var/db/pkg", &sb) == 0) {
+		errx(EXIT_FAILURE,
+		     "The default PKG_DBDIR has changed, but this installation still uses the old one.\n"
+		     "Please move the database and re-run this command:\n"
+		     "\tmv /var/db/pkg " DEF_LOG_DIR);
+	}
+
+        return pkgdb_dir;
 }
 
 /*

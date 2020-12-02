@@ -1,4 +1,4 @@
-/*	$NetBSD: iterate.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: iterate.c,v 1.3 2020/12/02 13:53:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -43,6 +43,34 @@
 #endif
 
 #include "lib.h"
+
+/*
+ * We define a couple of different caches to hold frequently accessed data.
+ *
+ * Firstly, we cache the results of readdir() on the package database directory
+ * when using iterate_pkg_db_cached().  This helps a lot during recursive calls
+ * and avoids exponential system calls, but is not suitable for situations
+ * where the database directory may be updated, for example during installs.
+ * In those situations the regular iterate_pkg_db() must be used.
+ *
+ * Secondly, we have a cache for matches of pattern lookups, avoiding expensive
+ * pkg_match() calls each time.
+ */
+struct pkg_db_list {
+	char *pkgname;
+	SLIST_ENTRY(pkg_db_list) entries;
+};
+SLIST_HEAD(pkg_db_list_head, pkg_db_list);
+
+struct pkg_match_list {
+	char *pattern;
+	char *pkgname;
+	SLIST_ENTRY(pkg_match_list) entries;
+};
+SLIST_HEAD(pkg_match_list_head, pkg_match_list);
+
+static struct pkg_db_list_head pkg_list_cache;
+static struct pkg_match_list_head pkg_match_cache[PKG_HASH_SIZE];
 
 /*
  * Generic iteration function:
@@ -167,6 +195,72 @@ iterate_pkg_db(int (*matchiter)(const char *, void *), void *cookie)
 	return retval;
 }
 
+struct pkg_db_iter_arg {
+	struct pkg_db_list_head head;
+	struct pkg_db_list *list;
+};
+
+static const char *
+pkg_db_iter_cached(void *cookie)
+{
+	struct pkg_db_iter_arg *arg = cookie;
+
+	if (arg->list == NULL)
+		arg->list = SLIST_FIRST(&arg->head);
+	else
+		arg->list = SLIST_NEXT(arg->list, entries);
+
+	if (arg->list != NULL)
+		return arg->list->pkgname;
+
+	return NULL;
+}
+
+/*
+ * Call matchiter for every installed package, using cached data to
+ * significantly increase performance during recursive calls.
+ *
+ * This is not suitable for every situation, for example when finding new
+ * matches after package installation/removal.  In those situations the
+ * regular iterate_pkg_db() must be used.
+ */
+static int
+iterate_pkg_db_cached(int (*matchiter)(const char *, void *), void *cookie)
+{
+	DIR *dirp;
+	struct pkg_db_iter_arg arg;
+	struct pkg_db_list *pkg;
+	const char *pkgdir;
+	int retval;
+
+	if (SLIST_EMPTY(&pkg_list_cache)) {
+		SLIST_INIT(&pkg_list_cache);
+
+		if ((dirp = opendir(pkgdb_get_dir())) == NULL) {
+			if (errno == ENOENT)
+				return 0; /* Empty pkgdb */
+			return -1;
+		}
+
+		while ((pkgdir = pkg_db_iter(dirp)) != NULL) {
+			pkg = xmalloc(sizeof(struct pkg_db_list));
+			pkg->pkgname = xstrdup(pkgdir);
+			SLIST_INSERT_HEAD(&pkg_list_cache, pkg, entries);
+		}
+
+		if (closedir(dirp) == -1)
+			return -1;
+	}
+
+	arg.head = pkg_list_cache;
+	arg.list = NULL;
+
+	retval = iterate_pkg_generic_src(matchiter, cookie,
+	    pkg_db_iter_cached, &arg);
+
+	return retval;
+}
+
 static int
 match_by_basename(const char *pkg, void *cookie)
 {
@@ -189,7 +283,7 @@ match_by_pattern(const char *pkg, void *cookie)
 {
 	const char *pattern = cookie;
 
-	return pkg_match(pattern, pkg);	
+	return pkg_match(pattern, pkg);
 }
 
 struct add_matching_arg {
@@ -287,18 +381,53 @@ match_best_installed(const char *pkg, void *cookie)
 /*
  * Returns a copy of the name of best matching package.
  * If no package matched the pattern or an error occured, return NULL.
+ *
+ * If use_cached is set, return a cached match entry if it exists, and also use
+ * the iterate_pkg_db cache, otherwise clear any matching cache entry and use
+ * regular iterate_pkg_db().
  */
 char *
-find_best_matching_installed_pkg(const char *pattern)
+find_best_matching_installed_pkg(const char *pattern, int use_cached)
 {
 	struct best_installed_match_arg arg;
+	struct pkg_match_list *pkg;
+	int idx = PKG_HASH_ENTRY(pattern), rv;
+
+	if (pattern == NULL)
+		return NULL;
+
+	SLIST_FOREACH(pkg, &pkg_match_cache[idx], entries) {
+		if (strcmp(pattern, pkg->pattern) == 0) {
+			if (use_cached)
+				return xstrdup(pkg->pkgname);
+			SLIST_REMOVE(&pkg_match_cache[idx], pkg,
+			    pkg_match_list, entries);
+			free(pkg->pattern);
+			free(pkg->pkgname);
+			free(pkg);
+			break;
+		}
+	}
 
 	arg.pattern = pattern;
 	arg.best_current_match = NULL;
 
-	if (iterate_pkg_db(match_best_installed, &arg) == -1) {
+	if (use_cached)
+		rv = iterate_pkg_db_cached(match_best_installed, &arg);
+	else
+		rv = iterate_pkg_db(match_best_installed, &arg);
+
+	if (rv == -1) {
 		warnx("could not process pkgdb");
 		return NULL;
+	}
+
+	if (arg.best_current_match != NULL) {
+		pkg = xmalloc(sizeof(struct pkg_match_list));
+		pkg->pattern = xstrdup(pattern);
+		pkg->pkgname = xstrdup(arg.best_current_match);
+		SLIST_INSERT_HEAD(&pkg_match_cache[idx],
+		    pkg, entries);
 	}
 
 	return arg.best_current_match;
@@ -317,7 +446,7 @@ match_and_call(const char *pkg, void *cookie)
 
 	if (pkg_match(arg->pattern, pkg) == 1) {
 		return (*arg->call_fn)(pkg, arg->cookie);
-	} else 
+	} else
 		return 0;
 }
 
@@ -460,7 +589,7 @@ match_file_and_call(const char *filename, void *cookie)
 
 	if (ret == 1)
 		return (*arg->call_fn)(filename, arg->cookie);
-	else 
+	else
 		return 0;
 }
 
