@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.29 2020/11/25 10:30:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.30 2020/12/02 14:20:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct sppplcpcfg {
 
 /*
  * Don't change the order of this.  Ordering the phases this way allows
- * for a comparision of ``pp_phase >= PHASE_AUTHENTICATE'' in order to
+ * for a comparison of ``pp_phase >= PHASE_AUTHENTICATE'' in order to
  * know whether LCP is up.
  */
 #define	SPPP_PHASE_DEAD		0
