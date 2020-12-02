@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.30 2020/10/13 17:26:28 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.31 2020/12/02 14:20:20 wiz Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.30 2020/10/13 17:26:28 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.31 2020/12/02 14:20:20 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1871,7 +1871,7 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset,
 }
 
 /*
- * strip trailing / to avoid confusion in path comparisions later
+ * strip trailing / to avoid confusion in path comparisons later
  */
 void
 canonicalize_last_mounted(char *path)

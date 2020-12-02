@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.24 2020/06/19 16:30:31 tsutsui Exp $	*/
+/*	$NetBSD: pram.c,v 1.25 2020/12/02 14:20:20 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.24 2020/06/19 16:30:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.25 2020/12/02 14:20:20 wiz Exp $");
 
 #include "opt_adb.h"
 
@@ -129,7 +129,7 @@ pram_readtime(void)
 
 #ifdef MRG_ADB
 	if (0 == jClkNoMem)
-		timedata = 0;	/* cause comparision of MacOS boottime */
+		timedata = 0;	/* cause comparison of MacOS boottime */
 				/* and PRAM time to fail */
 	else
 #endif

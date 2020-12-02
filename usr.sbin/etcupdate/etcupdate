@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.60 2016/01/03 08:44:59 martin Exp $
+# $NetBSD: etcupdate,v 1.61 2020/12/02 14:20:20 wiz Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -649,7 +649,7 @@ if ! ${CONTINUE}; then
 		echo ""
 	fi
 
-	# Ignore the following files during comparision
+	# Ignore the following files during comparison
 	rm -f "${TEMPROOT}"/etc/passwd
 	rm -f "${TEMPROOT}"/etc/pwd.db
 	rm -f "${TEMPROOT}"/etc/spwd.db
@@ -674,7 +674,7 @@ if ! ${CONTINUE}; then
 	done
 fi
 
-# Start the comparision
+# Start the comparison
 echo "*** Checking for added/modified files"
 init_diff_extra_options
 exec 3<&0

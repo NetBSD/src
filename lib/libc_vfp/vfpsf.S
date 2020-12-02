@@ -30,7 +30,7 @@
 #include <arm/asm.h>
 #include <arm/vfpreg.h>
 
-RCSID("$NetBSD: vfpsf.S,v 1.4 2018/07/19 19:35:02 joerg Exp $")
+RCSID("$NetBSD: vfpsf.S,v 1.5 2020/12/02 14:20:20 wiz Exp $")
 
 /*
  * This file provides softfloat compatible routines which use VFP instructions
@@ -139,7 +139,7 @@ ENTRY(__floatunsisf)
 END(__floatunsisf)
 
 /*
- * Effect of a floating point comparision on the condition flags.
+ * Effect of a floating point comparison on the condition flags.
  *      N Z C V
  * EQ = 0 1 1 0
  * LT = 1 0 0 0
