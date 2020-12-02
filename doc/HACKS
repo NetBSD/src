@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.214 2020/10/08 08:31:37 rin Exp $
+# $NetBSD: HACKS,v 1.215 2020/12/02 14:20:19 wiz Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -300,7 +300,7 @@ file	usr.sbin/rbootd/Makefile	: 1.10
 file	usr.sbin/rpc.pcnfsd/Makefile	: 1.17
 file	usr.sbin/tcpdump/Makefile	: 1.42
 descr
-	GCC 4.1 warns on pointer sign comparision/assignments and lots of
+	GCC 4.1 warns on pointer sign comparison/assignments and lots of
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
 kcah

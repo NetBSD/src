@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.20 2019/06/11 12:48:30 skrll Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.21 2020/12/02 14:20:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.20 2019/06/11 12:48:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.21 2020/12/02 14:20:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,7 +189,7 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	a9tmr_global_write(sc, TMR_GBL_AUTOINC, sc->sc_autoinc);
 
 	/*
-	 * To update the compare register we have to disable comparisions first.
+	 * To update the compare register we have to disable comparisons first.
 	 */
 	uint32_t ctl = a9tmr_global_read(sc, TMR_GBL_CTL);
 	if (ctl & TMR_GBL_CTL_CMP_ENABLE) {
