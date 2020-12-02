@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.3 2020/12/02 13:53:50 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.3 2020/12/02 13:53:50 wiz Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -68,7 +68,7 @@ register_depends(package_t *plist, char *deps, int build_only)
 		cp = strsep(&deps, " \t\n");
 		if (*cp) {
 			char *best_installed;
-			best_installed = find_best_matching_installed_pkg(cp);
+			best_installed = find_best_matching_installed_pkg(cp, 1);
 			if (best_installed != NULL) {
 				add_plist(plist, PLIST_BLDDEP, best_installed);
 				if (Verbose && !PlistOnly && build_only)

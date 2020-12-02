@@ -1,4 +1,4 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.3 2018/03/25 04:04:36 sevan Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.4 2020/12/02 13:53:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.3 2018/03/25 04:04:36 sevan Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.4 2020/12/02 13:53:50 wiz Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -77,6 +77,7 @@ static const char pgp_msg_end[] = "-----BEGIN PGP SIGNATURE-----\n";
 static const char pkcs7_begin[] = "-----BEGIN PKCS7-----\n";
 static const char pkcs7_end[] = "-----END PKCS7-----\n";
 
+#ifndef BOOTSTRAP
 static struct archive *
 prepare_raw_file(void)
 {
@@ -90,6 +91,7 @@ prepare_raw_file(void)
 	archive_read_support_format_raw(a);
 	return a;
 }
+#endif
 
 static void
 verify_signature_pkcs7(const char *input)

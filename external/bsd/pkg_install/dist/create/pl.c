@@ -1,4 +1,4 @@
-/*	$NetBSD: pl.c,v 1.3 2020/01/12 21:31:03 christos Exp $	*/
+/*	$NetBSD: pl.c,v 1.4 2020/12/02 13:53:50 wiz Exp $	*/
 
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 #endif
 #endif
-__RCSID("$NetBSD: pl.c,v 1.3 2020/01/12 21:31:03 christos Exp $");
+__RCSID("$NetBSD: pl.c,v 1.4 2020/12/02 13:53:50 wiz Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
