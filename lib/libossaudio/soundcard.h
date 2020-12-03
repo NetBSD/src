@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.32 2020/11/03 09:33:53 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.33 2020/12/03 22:10:21 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -357,6 +357,21 @@ typedef struct buffmem_desc {
 #define SNDCTL_DSP_GETERROR		_IOR ('P',34, struct audio_errinfo)
 #define SNDCTL_DSP_CURRENT_IPTR		_IOR ('P',35, oss_count_t)
 #define SNDCTL_DSP_CURRENT_OPTR		_IOR ('P',36, oss_count_t)
+
+#define SNDCTL_DSP_GET_CHNORDER		_IOR ('P',42, unsigned long long)
+#define SNDCTL_DSP_SET_CHNORDER		_IOWR ('P',42, unsigned long long)
+
+#define CHID_UNDEF	0
+#define CHID_L		1
+#define CHID_R		2
+#define CHID_C		3
+#define CHID_LFE	4
+#define CHID_LS		5
+#define CHID_RS		6
+#define CHID_LR		7
+#define CHID_RR		8
+#define CHNORDER_UNDEF	0x0000000000000000ULL
+#define CHNORDER_NORMAL	0x0000000087654321ULL
 
 typedef struct {
 	long long samples;
