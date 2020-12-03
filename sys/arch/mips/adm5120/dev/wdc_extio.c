@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.11 2019/09/09 22:01:23 jdolecek Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.12 2020/12/03 08:48:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.11 2019/09/09 22:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.12 2020/12/03 08:48:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -245,10 +245,7 @@ wdc_extio_match(device_t parent, cfdata_t cf, void *aux)
 
 	WDC_EXTIO_DPRINTF("%s: enter\n", __func__);
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
+#if 0
 	wdc.datain_pio = wdc_extio_datain;
 	wdc.dataout_pio = wdc_extio_dataout;
 	if (cf->cf_flags != -1) {
@@ -257,6 +254,7 @@ wdc_extio_match(device_t parent, cfdata_t cf, void *aux)
 		wdc.cap |= cf->cf_flags &
 		    (WDC_CAPABILITY_PREATA|WDC_CAPABILITY_NO_EXTRA_RESETS);
 	}
+#endif
 
 	if (wdc_extio_map(ea, &wdr, &gpio, &pm) == -1)
 		return 0;
