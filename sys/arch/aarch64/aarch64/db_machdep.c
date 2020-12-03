@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.28 2020/10/22 07:31:15 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.29 2020/12/03 07:45:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.28 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.29 2020/12/03 07:45:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -1050,8 +1050,8 @@ kdb_trap(int type, struct trapframe *tf)
 		if ((ncpu > 1) && (db_newcpu != NULL)) {
 			db_onproc = db_newcpu;
 			db_newcpu = NULL;
-			membar_producer();
-			__asm __volatile ("sev; sev; sev");
+			dsb(ishst);
+			sev();
 			continue;	/* redo DDB on new cpu */
 		}
 #endif /* MULTIPROCESSOR */
@@ -1062,8 +1062,8 @@ kdb_trap(int type, struct trapframe *tf)
 #ifdef MULTIPROCESSOR
 	if (ncpu > 1) {
 		db_onproc = NULL;
-		membar_producer();
-		__asm __volatile ("sev; sev; sev");
+		dsb(ishst);
+		sev();
 	}
 	db_trigger = NULL;
 	db_readytoswitch[ci->ci_index] = NULL;
