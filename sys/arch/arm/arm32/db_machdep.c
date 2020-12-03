@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.37 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.38 2020/12/03 10:23:45 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.37 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.38 2020/12/03 10:23:45 rin Exp $");
 
 #include <sys/param.h>
 
@@ -220,6 +220,7 @@ db_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	cpu_reset_address();
 }
 
+#ifdef _ARM_ARCH_7
 static void
 tlb_print_common_header(const char *str)
 {
@@ -405,7 +406,6 @@ tlb_lookup_tlbinfo(void)
 	return NULL;
 }
 
-#ifdef _ARM_ARCH_7
 void
 db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
