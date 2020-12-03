@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.8 2020/02/15 08:16:10 skrll Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.9 2020/12/03 07:45:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.8 2020/02/15 08:16:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.9 2020/12/03 07:45:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,7 +113,7 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		__asm __volatile("sev" ::: "memory");
+		sev();
 
 		for (u_int i = 0x10000000; i > 0; i--) {
 			if (cpu_hatched_p(cpuindex))

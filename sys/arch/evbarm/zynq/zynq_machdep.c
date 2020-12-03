@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.15 2020/11/28 14:33:57 skrll Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.16 2020/12/03 07:45:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.15 2020/11/28 14:33:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.16 2020/12/03 07:45:53 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -221,7 +221,7 @@ zynq_mpstart(void)
 	bus_space_unmap(bst, bsh, ZYNQ7000_CPU1_ENTRY_SZ);
 
 	dsb(sy);
-	__asm __volatile("sev" ::: "memory");
+	sev();
 
 	u_int cpuindex = 1;
 	u_int i;

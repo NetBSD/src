@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.70 2020/11/28 14:33:56 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.71 2020/12/03 07:45:53 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -538,7 +538,7 @@ gumstix_mpstart(void)
 	}
 
 	dsb(sy);
-	__asm __volatile("sev" ::: "memory");
+	sev();
 
 	u_int i;
 	for (i = 0x10000000; i > 0; i--) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.2 2020/11/30 21:06:56 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.3 2020/12/03 07:45:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.2 2020/11/30 21:06:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2020/12/03 07:45:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -89,7 +89,7 @@ cpu_boot_secondary_processors(void)
 		atomic_or_ulong(&arm_cpu_mbox[n], arm_cpu_hatched[n]);
 
 	dsb(ishst);
-	__asm __volatile ("sev");
+	sev();
 
 	/* wait all cpus have done cpu_hatch() */
 	for (cpuno = 1; cpuno < ncpu; cpuno++) {
@@ -140,7 +140,7 @@ cpu_clr_mbox(int cpuindex)
 	atomic_and_ulong(&arm_cpu_mbox[off], ~bit);
 	membar_producer();
 	dsb(ishst);
-	__asm __volatile("sev");
+	sev();
 }
 
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.37 2020/11/25 19:50:06 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.38 2020/12/03 07:45:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.37 2020/11/25 19:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.38 2020/12/03 07:45:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -270,7 +270,7 @@ arm_fdt_cpu_mpstart(void)
 		}
 
 		/* Wake up AP in case firmware has placed it in WFE state */
-		__asm __volatile("sev" ::: "memory");
+		sev();
 
 		/* Wait for AP to start */
 		for (i = 0x10000000; i > 0; i--) {
