@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.85 2020/10/30 18:54:37 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.86 2020/12/03 07:45:52 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.85 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.86 2020/12/03 07:45:52 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -488,7 +488,7 @@ beagle_mpstart(void)
 
 
 	dsb(sy);
-	__asm __volatile("sev" ::: "memory");
+	sev();
 
 	u_int hatched = 0;
 	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
