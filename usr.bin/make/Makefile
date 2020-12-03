@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2020/10/25 13:25:19 rillig Exp $
+#	$NetBSD: Makefile,v 1.107 2020/12/03 18:43:02 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -43,6 +43,13 @@ USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 GCOV?=		gcov
 COPTS+=		--coverage -O0 -ggdb
+GCOV_PERL=	if (/^File '(\S+)'/) {
+GCOV_PERL+=		$$file = $$1; $$func = "";
+GCOV_PERL+=	} elsif (/^Function '(\S+)'/) {
+GCOV_PERL+=		$$func = $$1;
+GCOV_PERL+=	} elsif (/^Lines executed:(\d+\.\d+)% of (\d+)/) {
+GCOV_PERL+=		printf("%6.2f  %5d   %s%s\n", $$1, $$2, $$file, $$func);
+GCOV_PERL+=	}
 LDADD+=		--coverage
 .endif
 CLEANFILES+=	*.gcda *.gcno *.gcov
@@ -170,8 +177,8 @@ test: .MAKE
 	cd ${.CURDIR}/unit-tests \
 	&& MAKEFLAGS= ${TEST_MAKE} -r -m / TEST_MAKE=${TEST_MAKE} ${TESTS:DTESTS=${TESTS:Q}} ${.TARGET}
 .if ${USE_COVERAGE} == yes
-	${GCOV} ${GCOV_OPTS} ${SRCS}
-	sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
+	@${GCOV} ${GCOV_OPTS} ${SRCS} | perl -ne ${GCOV_PERL:Q} | sort -nr
+	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
 .endif
 
 accept sync-mi: .MAKE
