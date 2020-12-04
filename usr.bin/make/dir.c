@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.248 2020/12/04 14:28:50 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.249 2020/12/04 14:39:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.248 2020/12/04 14:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.249 2020/12/04 14:39:56 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1667,9 +1667,10 @@ Dir_PrintDirectories(void)
 void
 SearchPath_Print(SearchPath *path)
 {
-	SearchPathNode *node;
-	for (node = path->first; node != NULL; node = node->next) {
-		const CachedDir *dir = node->datum;
+	SearchPathNode *ln;
+
+	for (ln = path->first; ln != NULL; ln = ln->next) {
+		const CachedDir *dir = ln->datum;
 		debug_printf("%s ", dir->name);
 	}
 }
