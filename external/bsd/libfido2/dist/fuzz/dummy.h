@@ -7,7 +7,11 @@
 #ifndef _DUMMY_H
 #define _DUMMY_H
 
+#include <stdint.h>
+
 const char dummy_name[] = "finger1";
+const char dummy_pin1[] = "skepp cg0u3;Y..";
+const char dummy_pin2[] = "bastilha 6rJrfQZI.";
 const char dummy_pin[] = "9}4gT:8d=A37Dh}U";
 const char dummy_rp_id[] = "localhost";
 const char dummy_rp_name[] = "sweet home localhost";
@@ -15,8 +19,6 @@ const char dummy_user_icon[] = "an icon";
 const char dummy_user_name[] = "john smith";
 const char dummy_user_nick[] = "jsmith";
 const uint8_t dummy_id[] = { 0x5e, 0xd2 };
-const char dummy_pin1[] = "skepp cg0u3;Y..";
-const char dummy_pin2[] = "bastilha 6rJrfQZI.";
 
 const uint8_t dummy_user_id[] = {
 	0x78, 0x1c, 0x78, 0x60, 0xad, 0x88, 0xd2, 0x63,
