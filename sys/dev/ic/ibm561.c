@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.13 2020/06/24 20:17:55 jdolecek Exp $ */
+/* $NetBSD: ibm561.c,v 1.14 2020/12/04 00:38:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.13 2020/06/24 20:17:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.14 2020/12/04 00:38:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ic/ibm561reg.h>
@@ -141,7 +141,7 @@ ibm561_register(
 {
 	struct ibm561data *data;
 
-	data = malloc(sizeof *data, M_DEVBUF, M_WAITOK|M_ZERO);
+	data = kmem_zalloc(sizeof *data, KM_SLEEP);
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;
 	data->ramdac_wr = wr;
@@ -255,26 +255,30 @@ ibm561_set_cmap(struct ramdac_cookie *rc, struct wsdisplay_cmap *cmapp)
 {
 	struct ibm561data *data = (struct ibm561data *)rc;
 	u_int count, index;
-	uint8_t r[IBM561_NCMAP_ENTRIES];
-	uint8_t g[IBM561_NCMAP_ENTRIES];
-	uint8_t b[IBM561_NCMAP_ENTRIES];
+	uint8_t *cmap_entries, *r, *g, *b;
 	int s, error;
 
 	if (cmapp->index >= IBM561_NCMAP_ENTRIES ||
 	    cmapp->count > IBM561_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 
+	cmap_entries = kmem_alloc(IBM561_NCMAP_ENTRIES * 3, KM_SLEEP);
+	r = &cmap_entries[0 * IBM561_NCMAP_ENTRIES];
+	g = &cmap_entries[1 * IBM561_NCMAP_ENTRIES];
+	b = &cmap_entries[2 * IBM561_NCMAP_ENTRIES];
+
 	index = cmapp->index;
 	count = cmapp->count;
 	error = copyin(cmapp->red, &r[index], count);
 	if (error)
-		return error;
+		goto out;
 	error = copyin(cmapp->green, &g[index], count);
 	if (error)
-		return error;
+		goto out;
 	error = copyin(cmapp->blue, &b[index], count);
 	if (error)
-		return error;
+		goto out;
+
 	s = spltty();
 	memcpy(&data->cmap_r[index], &r[index], count);
 	memcpy(&data->cmap_g[index], &g[index], count);
@@ -282,7 +286,10 @@ ibm561_set_cmap(struct ramdac_cookie *rc, struct wsdisplay_cmap *cmapp)
 	data->changed |= CHANGED_CMAP;
 	data->ramdac_sched_update(data->cookie, ibm561_update);
 	splx(s);
-	return (0);
+
+ out:
+	kmem_free(cmap_entries, IBM561_NCMAP_ENTRIES * 3);
+	return (error);
 }
 
 int
