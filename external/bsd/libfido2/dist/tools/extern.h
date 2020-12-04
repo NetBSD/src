@@ -32,9 +32,11 @@ EC_KEY *read_ec_pubkey(const char *);
 fido_dev_t *open_dev(const char *);
 FILE *open_read(const char *);
 FILE *open_write(const char *);
+const char *cose_string(int);
+const char *prot_string(int);
 int assert_get(int, char **);
 int assert_verify(int, char **);
-int base64_decode(char *, void **, size_t *);
+int base64_decode(const char *, void **, size_t *);
 int base64_encode(const void *, size_t, char **);
 int base64_read(FILE *, struct blob *);
 int bio_delete(fido_dev_t *, char *, char *);
@@ -42,6 +44,7 @@ int bio_enroll(char *);
 void bio_info(fido_dev_t *);
 int bio_list(char *);
 int bio_set_name(char *, char *, char *);
+int cose_type(const char *, int *);
 int cred_make(int, char **);
 int cred_verify(int, char **);
 int credman_delete_rk(fido_dev_t *, const char *, char *);
@@ -66,5 +69,6 @@ void print_cred(FILE *, int, const fido_cred_t *);
 void read_pin(const char *, char *, size_t);
 void usage(void);
 void xxd(const void *, size_t);
+int base10(const char *);
 
 #endif /* _EXTERN_H_ */

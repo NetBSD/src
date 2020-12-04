@@ -90,4 +90,6 @@ int timingsafe_bcmp(const void *, const void *, size_t);
 ssize_t getline(char **, size_t *, FILE *);
 #endif
 
+#include "time.h"
+
 #endif /* !_OPENBSD_COMPAT_H */
