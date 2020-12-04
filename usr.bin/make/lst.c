@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.97 2020/11/29 00:54:43 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.98 2020/12/04 14:39:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.97 2020/11/29 00:54:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.98 2020/12/04 14:39:56 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -226,20 +226,20 @@ Lst_MoveAll(List *dst, List *src)
 void
 Lst_PrependAll(List *dst, List *src)
 {
-	ListNode *node;
+	ListNode *ln;
 
-	for (node = src->last; node != NULL; node = node->prev)
-		Lst_Prepend(dst, node->datum);
+	for (ln = src->last; ln != NULL; ln = ln->prev)
+		Lst_Prepend(dst, ln->datum);
 }
 
 /* Copy the element data from src to the end of dst. */
 void
 Lst_AppendAll(List *dst, List *src)
 {
-	ListNode *node;
+	ListNode *ln;
 
-	for (node = src->first; node != NULL; node = node->next)
-		Lst_Append(dst, node->datum);
+	for (ln = src->first; ln != NULL; ln = ln->next)
+		Lst_Append(dst, ln->datum);
 }
 
 /*
