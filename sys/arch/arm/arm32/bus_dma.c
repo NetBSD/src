@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.124 2020/10/24 14:51:59 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.125 2020/12/04 07:11:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.124 2020/10/24 14:51:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.125 2020/12/04 07:11:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1135,6 +1135,29 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	/* Skip cache frobbing if mapping was COHERENT */
 	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			STAT_INCR(sync_prereadwrite);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+			STAT_INCR(sync_preread);
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			STAT_INCR(sync_prewrite);
+			break;
+
+		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+			STAT_INCR(sync_postreadwrite);
+			break;
+
+		case BUS_DMASYNC_POSTREAD:
+			STAT_INCR(sync_postread);
+			break;
+
+		/* BUS_DMASYNC_POSTWRITE was aleady handled as a fastpath */
+		}
 		/*
 		 * Drain the write buffer of DMA operators.
 		 * 1) when cpu->device (prewrite)
