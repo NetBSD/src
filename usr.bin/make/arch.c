@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.183 2020/12/04 14:39:56 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.184 2020/12/04 14:51:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.183 2020/12/04 14:39:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.184 2020/12/04 14:51:46 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -304,9 +304,9 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 		 * thing would be taken care of later.
 		 */
 		if (doSubst) {
-			char *buf;
-			char *sacrifice;
-			char *oldMemName = memName;
+			char *fullName;
+			char *p;
+			char *unexpandedMemName = memName;
 
 			(void)Var_Subst(memName, ctxt,
 					VARE_WANTRES | VARE_UNDEFERR,
@@ -317,27 +317,29 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 			 * Now form an archive spec and recurse to deal with
 			 * nested variables and multi-word variable values.
 			 */
-			sacrifice = str_concat4(libName, "(", memName, ")");
-			buf = sacrifice;
+			fullName = str_concat4(libName, "(", memName, ")");
+			p = fullName;
 
 			if (strchr(memName, '$') != NULL &&
-			    strcmp(memName, oldMemName) == 0) {
+			    strcmp(memName, unexpandedMemName) == 0) {
 				/*
 				 * Must contain dynamic sources, so we can't
 				 * deal with it now. Just create an ARCHV node
 				 * for the thing and let SuffExpandChildren
 				 * handle it.
 				 */
-				gn = Targ_GetNode(buf);
+				gn = Targ_GetNode(fullName);
 				gn->type |= OP_ARCHV;
 				Lst_Append(gns, gn);
 
-			} else if (!Arch_ParseArchive(&sacrifice, gns, ctxt)) {
+			} else if (!Arch_ParseArchive(&p, gns, ctxt)) {
 				/* Error in nested call. */
-				free(buf);
+				free(fullName);
+				/* XXX: does unexpandedMemName leak? */
 				return FALSE;
 			}
-			free(buf);
+			free(fullName);
+			/* XXX: does unexpandedMemName leak? */
 
 		} else if (Dir_HasWildcards(memName)) {
 			StringList members = LST_INIT;
