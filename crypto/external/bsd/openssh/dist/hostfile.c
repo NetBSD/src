@@ -1,5 +1,6 @@
-/*	$NetBSD: hostfile.c,v 1.17 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.79 2020/03/06 18:25:12 markus Exp $ */
+/*	$NetBSD: hostfile.c,v 1.18 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.82 2020/06/26 05:42:16 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.17 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.18 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -59,6 +60,7 @@ __RCSID("$NetBSD: hostfile.c,v 1.17 2020/05/28 17:05:49 christos Exp $");
 #include "hostfile.h"
 #include "log.h"
 #include "misc.h"
+#include "pathnames.h"
 #include "ssherr.h"
 #include "digest.h"
 #include "hmac.h"
@@ -408,6 +410,18 @@ lookup_key_in_hostkeys_by_type(struct hostkeys *hostkeys, int keytype,
 	    found) == HOST_FOUND);
 }
 
+int
+lookup_marker_in_hostkeys(struct hostkeys *hostkeys, int want_marker)
+{
+	u_int i;
+
+	for (i = 0; i < hostkeys->num_entries; i++) {
+		if (hostkeys->entries[i].marker == (HostkeyMarker)want_marker)
+			return 1;
+	}
+	return 0;
+}
+
 static int
 write_host_entry(FILE *f, const char *host, const char *ip,
     const struct sshkey *key, int store_hash)
@@ -440,6 +454,39 @@ write_host_entry(FILE *f, const char *host, const char *ip,
 }
 
 /*
+ * Create user ~/.ssh directory if it doesn't exist and we want to write to it.
+ * If notify is set, a message will be emitted if the directory is created.
+ */
+void
+hostfile_create_user_ssh_dir(const char *filename, int notify)
+{
+	char *dotsshdir = NULL, *p;
+	size_t len;
+	struct stat st;
+
+	if ((p = strrchr(filename, '/')) == NULL)
+		return;
+	len = p - filename;
+	dotsshdir = tilde_expand_filename("~/" _PATH_SSH_USER_DIR, getuid());
+	if (strlen(dotsshdir) > len || strncmp(filename, dotsshdir, len) != 0)
+		goto out; /* not ~/.ssh prefixed */
+	if (stat(dotsshdir, &st) == 0)
+		goto out; /* dir already exists */
+	else if (errno != ENOENT)
+		error("Could not stat %s: %s", dotsshdir, strerror(errno));
+	else {
+		if (mkdir(dotsshdir, 0700) == -1)
+			error("Could not create directory '%.200s' (%s).",
+			    dotsshdir, strerror(errno));
+		else if (notify)
+			logit("Created directory '%s'.", dotsshdir);
+	}
+ out:
+	free(dotsshdir);
+}
+
+
+/*
  * Appends an entry to the host file.  Returns false if the entry could not
  * be appended.
  */
@@ -452,6 +499,7 @@ add_host_to_hostfile(const char *filename, const char *host,
 
 	if (key == NULL)
 		return 1;	/* XXX ? */
+	hostfile_create_user_ssh_dir(filename, 0);
 	f = fopen(filename, "a");
 	if (!f)
 		return 0;

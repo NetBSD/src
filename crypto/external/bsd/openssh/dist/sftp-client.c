@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-client.c,v 1.24 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.135 2019/10/04 04:31:59 djm Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.25 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.136 2020/05/15 03:57:33 djm Exp $ */
+
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.24 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.25 2020/12/04 18:42:50 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -1407,7 +1408,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 					    (unsigned long long)offset,
 					    num_req);
 					max_req = 1;
-				} else if (max_req <= conn->num_requests) {
+				} else if (max_req < conn->num_requests) {
 					++max_req;
 				}
 			}
