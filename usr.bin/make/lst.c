@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.99 2020/12/04 20:08:07 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.100 2020/12/04 20:11:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.99 2020/12/04 20:08:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.100 2020/12/04 20:11:48 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -240,17 +240,6 @@ Lst_AppendAll(List *dst, List *src)
 
 	for (ln = src->first; ln != NULL; ln = ln->next)
 		Lst_Append(dst, ln->datum);
-}
-
-/*
- * for using the list as a queue
- */
-
-/* Add the datum to the tail of the given list. */
-void
-Lst_Enqueue(List *list, void *datum)
-{
-	Lst_Append(list, datum);
 }
 
 /* Remove and return the datum at the head of the given list. */

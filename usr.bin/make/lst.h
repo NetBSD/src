@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.91 2020/12/04 20:08:07 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.92 2020/12/04 20:11:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -161,7 +161,11 @@ void LstNode_SetNull(ListNode *);
 /* Using the list as a queue */
 
 /* Add a datum at the tail of the queue. */
-void Lst_Enqueue(List *, void *);
+MAKE_INLINE void
+Lst_Enqueue(List *list, void *datum) {
+	Lst_Append(list, datum);
+}
+
 /* Remove the head node of the queue and return its datum. */
 void *Lst_Dequeue(List *);
 
