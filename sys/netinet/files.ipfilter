@@ -1,4 +1,4 @@
-#	$NetBSD: files.ipfilter,v 1.15 2012/03/23 21:30:18 christos Exp $
+#	$NetBSD: files.ipfilter,v 1.16 2020/12/04 00:44:39 thorpej Exp $
 
 defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
 defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK
@@ -41,3 +41,4 @@ file	external/bsd/ipf/netinet/ip_fil_compat.c	ipfilter & ipfilter_compat
 file	external/bsd/ipf/netinet/radix_ipf.c		ipfilter
 
 makeoptions	ipfilter	CPPFLAGS+="-I$S/external/bsd/ipf"
+makeoptions	ipfilter	"CWARNFLAGS.ip_sync.c"+="-Wno-error"
