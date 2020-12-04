@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.247 2020/12/01 20:47:52 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.248 2020/12/04 14:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.247 2020/12/01 20:47:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.248 2020/12/04 14:28:50 rillig Exp $");
 
 #define DIR_DEBUG0(text) DEBUG0(DIR, text)
 #define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
@@ -1655,12 +1655,12 @@ Dir_PrintDirectories(void)
 	    "# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
 	    hits, misses, nearmisses, bigmisses,
 	    percentage(hits, hits + bigmisses + nearmisses));
-	debug_printf("# %-20s referenced\thits\n", "directory");
+	debug_printf("#  refs  hits  directory\n");
 
 	for (ln = openDirs.list.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
-		debug_printf("# %-20s %10d\t%4d\n",
-			     dir->name, dir->refCount, dir->hits);
+		debug_printf("#  %4d  %4d  %s\n",
+		    dir->refCount, dir->hits, dir->name);
 	}
 }
 
