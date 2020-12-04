@@ -175,16 +175,8 @@ assert_verify(int argc, char **argv)
 
 	in_f = open_read(in_path);
 
-	if (argc > 1) {
-		if (strcmp(argv[1], "es256") == 0)
-			type = COSE_ES256;
-		else if (strcmp(argv[1], "rs256") == 0)
-			type = COSE_RS256;
-		else if (strcmp(argv[1], "eddsa") == 0)
-			type = COSE_EDDSA;
-		else
-			errx(1, "unknown type %s", argv[1]);
-	}
+	if (argc > 1 && cose_type(argv[1], &type) < 0)
+		errx(1, "unknown type %s", argv[1]);
 
 	fido_init((flags & FLAG_DEBUG) ? FIDO_DEBUG : 0);
 

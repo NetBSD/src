@@ -7,7 +7,6 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-#include <fido.h>
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
@@ -62,7 +61,7 @@ fail:
 }
 
 int
-base64_decode(char *in, void **ptr, size_t *len)
+base64_decode(const char *in, void **ptr, size_t *len)
 {
 	BIO    *bio_mem = NULL;
 	BIO    *bio_b64 = NULL;
@@ -78,7 +77,7 @@ base64_decode(char *in, void **ptr, size_t *len)
 
 	if ((bio_b64 = BIO_new(BIO_f_base64())) == NULL)
 		goto fail;
-	if ((bio_mem = BIO_new_mem_buf((void *)in, -1)) == NULL)
+	if ((bio_mem = BIO_new_mem_buf((const void *)in, -1)) == NULL)
 		goto fail;
 
 	BIO_set_flags(bio_b64, BIO_FLAGS_BASE64_NO_NL);

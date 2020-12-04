@@ -175,12 +175,15 @@ typedef struct fido_byte_array {
 } fido_byte_array_t;
 
 typedef struct fido_cbor_info {
-	fido_str_array_t  versions;   /* supported versions: fido2|u2f */
-	fido_str_array_t  extensions; /* list of supported extensions */
-	unsigned char     aaguid[16]; /* aaguid */
-	fido_opt_array_t  options;    /* list of supported options */
-	uint64_t          maxmsgsiz;  /* maximum message size */
-	fido_byte_array_t protocols;  /* supported pin protocols */
+	fido_str_array_t  versions;      /* supported versions: fido2|u2f */
+	fido_str_array_t  extensions;    /* list of supported extensions */
+	unsigned char     aaguid[16];    /* aaguid */
+	fido_opt_array_t  options;       /* list of supported options */
+	uint64_t          maxmsgsiz;     /* maximum message size */
+	fido_byte_array_t protocols;     /* supported pin protocols */
+	uint64_t          maxcredcntlst; /* max number of credentials in list */
+	uint64_t          maxcredidlen;  /* max credential ID length */
+	uint64_t          fwversion;     /* firmware version */
 } fido_cbor_info_t;
 
 typedef struct fido_dev_info {
@@ -212,6 +215,10 @@ typedef struct fido_dev {
 	char                 *path;      /* device path */
 	void                 *io_handle; /* abstract i/o handle */
 	fido_dev_io_t         io;        /* i/o functions */
+	bool                  io_own;    /* device has own io/transport */
+	size_t                rx_len;    /* length of HID input reports */
+	size_t                tx_len;    /* length of HID output reports */
+	int                   flags;     /* internal flags; see FIDO_DEV_* */
 	fido_dev_transport_t  transport; /* transport functions */
 } fido_dev_t;
 

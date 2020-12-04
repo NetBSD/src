@@ -14,17 +14,12 @@
 #include <unistd.h>
 #endif
 
-#include "../openbsd-compat/openbsd-compat.h"
-
 #include "fido.h"
 #include "fido/es256.h"
 #include "fido/rs256.h"
 #include "fido/eddsa.h"
 #include "extern.h"
-
-#ifdef SIGNAL_EXAMPLE
-extern volatile sig_atomic_t got_signal;
-#endif
+#include "../openbsd-compat/openbsd-compat.h"
 
 static const unsigned char cdh[32] = {
 	0xec, 0x8d, 0x8f, 0x78, 0x42, 0x4a, 0x2b, 0xb7,
@@ -188,13 +183,15 @@ main(int argc, char **argv)
 			break;
 		case 'T':
 #ifndef SIGNAL_EXAMPLE
+			(void)seconds;
 			errx(1, "-T not supported");
-#endif
+#else
 			if (base10(optarg, &seconds) < 0)
 				errx(1, "base10: %s", optarg);
 			if (seconds <= 0 || seconds > 30)
 				errx(1, "-T: %s must be in (0,30]", optarg);
 			break;
+#endif
 		case 'a':
 			if (read_blob(optarg, &body, &len) < 0)
 				errx(1, "read_blob: %s", optarg);
@@ -311,6 +308,10 @@ main(int argc, char **argv)
 	if (fido_assert_count(assert) != 1)
 		errx(1, "fido_assert_count: %d signatures returned",
 		    (int)fido_assert_count(assert));
+
+	/* when verifying, pin implies uv */
+	if (pin)
+		uv = true;
 
 	verify_assert(type, fido_assert_authdata_ptr(assert, 0),
 	    fido_assert_authdata_len(assert, 0), fido_assert_sig_ptr(assert, 0),

@@ -19,27 +19,17 @@
 
 #include "../openbsd-compat/openbsd-compat.h"
 
-#define TAG_PIN			0x01
-#define TAG_NAME		0x02
-#define TAG_SEED		0x03
-#define TAG_ID			0x04
-#define TAG_INFO_WIRE_DATA	0x05
-#define TAG_ENROLL_WIRE_DATA	0x06
-#define TAG_LIST_WIRE_DATA	0x07
-#define TAG_SET_NAME_WIRE_DATA	0x08
-#define TAG_REMOVE_WIRE_DATA	0x09
-
 /* Parameter set defining a FIDO2 credential management operation. */
 struct param {
-	char		pin[MAXSTR];
-	char		name[MAXSTR];
-	int		seed;
-	struct blob	id;
-	struct blob	info_wire_data;
-	struct blob	enroll_wire_data;
-	struct blob	list_wire_data;
-	struct blob	set_name_wire_data;
-	struct blob	remove_wire_data;
+	char pin[MAXSTR];
+	char name[MAXSTR];
+	int seed;
+	struct blob id;
+	struct blob info_wire_data;
+	struct blob enroll_wire_data;
+	struct blob list_wire_data;
+	struct blob set_name_wire_data;
+	struct blob remove_wire_data;
 };
 
 /*
@@ -100,58 +90,141 @@ static const uint8_t dummy_remove_wire_data[] = {
 	WIREDATA_CTAP_CBOR_STATUS,
 };
 
-int    LLVMFuzzerTestOneInput(const uint8_t *, size_t);
-size_t LLVMFuzzerCustomMutator(uint8_t *, size_t, size_t, unsigned int);
-
-static int
-unpack(const uint8_t *ptr, size_t len, struct param *p) NO_MSAN
+struct param *
+unpack(const uint8_t *ptr, size_t len)
 {
-	uint8_t **pp = (void *)&ptr;
+	cbor_item_t *item = NULL, **v;
+	struct cbor_load_result cbor;
+	struct param *p;
+	int ok = -1;
 
-	if (unpack_string(TAG_PIN, pp, &len, p->pin) < 0 ||
-	    unpack_string(TAG_NAME, pp, &len, p->name) < 0 ||
-	    unpack_int(TAG_SEED, pp, &len, &p->seed) < 0 ||
-	    unpack_blob(TAG_ID, pp, &len, &p->id) < 0 ||
-	    unpack_blob(TAG_INFO_WIRE_DATA, pp, &len, &p->info_wire_data) < 0 ||
-	    unpack_blob(TAG_ENROLL_WIRE_DATA, pp, &len, &p->enroll_wire_data) < 0 ||
-	    unpack_blob(TAG_LIST_WIRE_DATA, pp, &len, &p->list_wire_data) < 0 ||
-	    unpack_blob(TAG_SET_NAME_WIRE_DATA, pp, &len, &p->set_name_wire_data) < 0 ||
-	    unpack_blob(TAG_REMOVE_WIRE_DATA, pp, &len, &p->remove_wire_data) < 0)
-		return (-1);
+	if ((p = calloc(1, sizeof(*p))) == NULL ||
+	    (item = cbor_load(ptr, len, &cbor)) == NULL ||
+	    cbor.read != len ||
+	    cbor_isa_array(item) == false ||
+	    cbor_array_is_definite(item) == false ||
+	    cbor_array_size(item) != 9 ||
+	    (v = cbor_array_handle(item)) == NULL)
+		goto fail;
 
-	return (0);
+	if (unpack_int(v[0], &p->seed) < 0 ||
+	    unpack_string(v[1], p->pin) < 0 ||
+	    unpack_string(v[2], p->name) < 0 ||
+	    unpack_blob(v[3], &p->id) < 0 ||
+	    unpack_blob(v[4], &p->info_wire_data) < 0 ||
+	    unpack_blob(v[5], &p->enroll_wire_data) < 0 ||
+	    unpack_blob(v[6], &p->list_wire_data) < 0 ||
+	    unpack_blob(v[7], &p->set_name_wire_data) < 0 ||
+	    unpack_blob(v[8], &p->remove_wire_data) < 0)
+		goto fail;
+
+	ok = 0;
+fail:
+	if (ok < 0) {
+		free(p);
+		p = NULL;
+	}
+
+	if (item)
+		cbor_decref(&item);
+
+	return p;
 }
 
-static size_t
+size_t
 pack(uint8_t *ptr, size_t len, const struct param *p)
 {
-	const size_t max = len;
+	cbor_item_t *argv[9], *array = NULL;
+	size_t cbor_alloc_len, cbor_len = 0;
+	unsigned char *cbor = NULL;
 
-	if (pack_string(TAG_PIN, &ptr, &len, p->pin) < 0 ||
-	    pack_string(TAG_NAME, &ptr, &len, p->name) < 0 ||
-	    pack_int(TAG_SEED, &ptr, &len, p->seed) < 0 ||
-	    pack_blob(TAG_ID, &ptr, &len, &p->id) < 0 ||
-	    pack_blob(TAG_INFO_WIRE_DATA, &ptr, &len, &p->info_wire_data) < 0 ||
-	    pack_blob(TAG_ENROLL_WIRE_DATA, &ptr, &len, &p->enroll_wire_data) < 0 ||
-	    pack_blob(TAG_LIST_WIRE_DATA, &ptr, &len, &p->list_wire_data) < 0 ||
-	    pack_blob(TAG_SET_NAME_WIRE_DATA, &ptr, &len, &p->set_name_wire_data) < 0 ||
-	    pack_blob(TAG_REMOVE_WIRE_DATA, &ptr, &len, &p->remove_wire_data) < 0)
-		return (0);
+	memset(argv, 0, sizeof(argv));
 
-	return (max - len);
+	if ((array = cbor_new_definite_array(9)) == NULL ||
+	    (argv[0] = pack_int(p->seed)) == NULL ||
+	    (argv[1] = pack_string(p->pin)) == NULL ||
+	    (argv[2] = pack_string(p->name)) == NULL ||
+	    (argv[3] = pack_blob(&p->id)) == NULL ||
+	    (argv[4] = pack_blob(&p->info_wire_data)) == NULL ||
+	    (argv[5] = pack_blob(&p->enroll_wire_data)) == NULL ||
+	    (argv[6] = pack_blob(&p->list_wire_data)) == NULL ||
+	    (argv[7] = pack_blob(&p->set_name_wire_data)) == NULL ||
+	    (argv[8] = pack_blob(&p->remove_wire_data)) == NULL)
+		goto fail;
+
+	for (size_t i = 0; i < 9; i++)
+		if (cbor_array_push(array, argv[i]) == false)
+			goto fail;
+
+	if ((cbor_len = cbor_serialize_alloc(array, &cbor,
+	    &cbor_alloc_len)) > len) {
+		cbor_len = 0;
+		goto fail;
+	}
+
+	memcpy(ptr, cbor, cbor_len);
+fail:
+	for (size_t i = 0; i < 9; i++)
+		if (argv[i])
+			cbor_decref(&argv[i]);
+
+	if (array)
+		cbor_decref(&array);
+
+	free(cbor);
+
+	return cbor_len;
 }
 
-static size_t
-input_len(int max)
+size_t
+pack_dummy(uint8_t *ptr, size_t len)
 {
-	return (2 * len_string(max) + len_int() + 6 * len_blob(max));
+	struct param dummy;
+	uint8_t	blob[4096];
+	size_t blob_len;
+
+	memset(&dummy, 0, sizeof(dummy));
+
+	strlcpy(dummy.pin, dummy_pin, sizeof(dummy.pin));
+	strlcpy(dummy.name, dummy_name, sizeof(dummy.name));
+
+	dummy.info_wire_data.len = sizeof(dummy_info_wire_data);
+	dummy.enroll_wire_data.len = sizeof(dummy_enroll_wire_data);
+	dummy.list_wire_data.len = sizeof(dummy_list_wire_data);
+	dummy.set_name_wire_data.len = sizeof(dummy_set_name_wire_data);
+	dummy.remove_wire_data.len = sizeof(dummy_remove_wire_data);
+	dummy.id.len = sizeof(dummy_id);
+
+	memcpy(&dummy.info_wire_data.body, &dummy_info_wire_data,
+	    dummy.info_wire_data.len);
+	memcpy(&dummy.enroll_wire_data.body, &dummy_enroll_wire_data,
+	    dummy.enroll_wire_data.len);
+	memcpy(&dummy.list_wire_data.body, &dummy_list_wire_data,
+	    dummy.list_wire_data.len);
+	memcpy(&dummy.set_name_wire_data.body, &dummy_set_name_wire_data,
+	    dummy.set_name_wire_data.len);
+	memcpy(&dummy.remove_wire_data.body, &dummy_remove_wire_data,
+	    dummy.remove_wire_data.len);
+	memcpy(&dummy.id.body, &dummy_id, dummy.id.len);
+
+	assert((blob_len = pack(blob, sizeof(blob), &dummy)) != 0);
+
+	if (blob_len > len) {
+		memcpy(ptr, blob, len);
+		return len;
+	}
+
+	memcpy(ptr, blob, blob_len);
+
+	return blob_len;
 }
 
 static fido_dev_t *
-prepare_dev()
+prepare_dev(void)
 {
-	fido_dev_t	*dev;
-	fido_dev_io_t	 io;
+	fido_dev_t *dev;
+	fido_dev_io_t io;
+	bool x;
 
 	memset(&io, 0, sizeof(io));
 
@@ -163,26 +236,35 @@ prepare_dev()
 	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
 	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
 		fido_dev_free(&dev);
-		return (NULL);
+		return NULL;
 	}
 
-	return (dev);
+	x = fido_dev_is_fido2(dev);
+	consume(&x, sizeof(x));
+	x = fido_dev_supports_pin(dev);
+	consume(&x, sizeof(x));
+	x = fido_dev_has_pin(dev);
+	consume(&x, sizeof(x));
+
+	return dev;
 }
 
 static void
-get_info(struct param *p)
+get_info(const struct param *p)
 {
 	fido_dev_t *dev = NULL;
 	fido_bio_info_t *i = NULL;
 	uint8_t type;
 	uint8_t max_samples;
+	int r;
 
 	set_wire_data(p->info_wire_data.body, p->info_wire_data.len);
 
 	if ((dev = prepare_dev()) == NULL || (i = fido_bio_info_new()) == NULL)
 		goto done;
 
-	fido_bio_dev_get_info(dev, i);
+	r = fido_bio_dev_get_info(dev, i);
+	consume_str(fido_strerr(r));
 
 	type = fido_bio_info_type(i);
 	max_samples = fido_bio_info_max_samples(i);
@@ -217,7 +299,7 @@ consume_enroll(fido_bio_enroll_t *e)
 }
 
 static void
-enroll(struct param *p)
+enroll(const struct param *p)
 {
 	fido_dev_t *dev = NULL;
 	fido_bio_template_t *t = NULL;
@@ -252,7 +334,7 @@ done:
 }
 
 static void
-list(struct param *p)
+list(const struct param *p)
 {
 	fido_dev_t *dev = NULL;
 	fido_bio_template_array_t *ta = NULL;
@@ -280,7 +362,7 @@ done:
 }
 
 static void
-set_name(struct param *p)
+set_name(const struct param *p)
 {
 	fido_dev_t *dev = NULL;
 	fido_bio_template_t *t = NULL;
@@ -306,10 +388,11 @@ done:
 }
 
 static void
-del(struct param *p)
+del(const struct param *p)
 {
 	fido_dev_t *dev = NULL;
 	fido_bio_template_t *t = NULL;
+	int r;
 
 	set_wire_data(p->remove_wire_data.body, p->remove_wire_data.len);
 
@@ -317,8 +400,9 @@ del(struct param *p)
 	    (t = fido_bio_template_new()) == NULL)
 		goto done;
 
-	fido_bio_template_set_id(t, p->id.body, p->id.len);
+	r = fido_bio_template_set_id(t, p->id.body, p->id.len);
 	consume_template(t);
+	consume_str(fido_strerr(r));
 
 	fido_bio_dev_enroll_remove(dev, t, p->pin);
 
@@ -330,106 +414,37 @@ done:
 	fido_bio_template_free(&t);
 }
 
-int
-LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+void
+test(const struct param *p)
 {
-	struct param p;
-
-	memset(&p, 0, sizeof(p));
-
-	if (size < input_len(GETLEN_MIN) || size > input_len(GETLEN_MAX) ||
-	    unpack(data, size, &p) < 0)
-		return (0);
-
-	prng_init((unsigned int)p.seed);
-
+	prng_init((unsigned int)p->seed);
 	fido_init(FIDO_DEBUG);
 	fido_set_log_handler(consume_str);
 
-	get_info(&p);
-	enroll(&p);
-	list(&p);
-	set_name(&p);
-	del(&p);
-
-	return (0);
+	get_info(p);
+	enroll(p);
+	list(p);
+	set_name(p);
+	del(p);
 }
 
-static size_t
-pack_dummy(uint8_t *ptr, size_t len)
+void
+mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 {
-	struct param	dummy;
-	uint8_t		blob[32768];
-	size_t		blob_len;
+	if (flags & MUTATE_SEED)
+		p->seed = (int)seed;
 
-	memset(&dummy, 0, sizeof(dummy));
-
-	strlcpy(dummy.pin, dummy_pin, sizeof(dummy.pin));
-	strlcpy(dummy.name, dummy_name, sizeof(dummy.name));
-
-	dummy.info_wire_data.len = sizeof(dummy_info_wire_data);
-	dummy.enroll_wire_data.len = sizeof(dummy_enroll_wire_data);
-	dummy.list_wire_data.len = sizeof(dummy_list_wire_data);
-	dummy.set_name_wire_data.len = sizeof(dummy_set_name_wire_data);
-	dummy.remove_wire_data.len = sizeof(dummy_remove_wire_data);
-	dummy.id.len = sizeof(dummy_id);
-
-	memcpy(&dummy.info_wire_data.body, &dummy_info_wire_data,
-	    dummy.info_wire_data.len);
-	memcpy(&dummy.enroll_wire_data.body, &dummy_enroll_wire_data,
-	    dummy.enroll_wire_data.len);
-	memcpy(&dummy.list_wire_data.body, &dummy_list_wire_data,
-	    dummy.list_wire_data.len);
-	memcpy(&dummy.set_name_wire_data.body, &dummy_set_name_wire_data,
-	    dummy.set_name_wire_data.len);
-	memcpy(&dummy.remove_wire_data.body, &dummy_remove_wire_data,
-	    dummy.remove_wire_data.len);
-	memcpy(&dummy.id.body, &dummy_id, dummy.id.len);
-
-	blob_len = pack(blob, sizeof(blob), &dummy);
-	assert(blob_len != 0);
-
-	if (blob_len > len) {
-		memcpy(ptr, blob, len);
-		return (len);
+	if (flags & MUTATE_PARAM) {
+		mutate_blob(&p->id);
+		mutate_string(p->pin);
+		mutate_string(p->name);
 	}
 
-	memcpy(ptr, blob, blob_len);
-
-	return (blob_len);
-}
-
-size_t
-LLVMFuzzerCustomMutator(uint8_t *data, size_t size, size_t maxsize,
-    unsigned int seed) NO_MSAN
-{
-	struct param	p;
-	uint8_t		blob[16384];
-	size_t		blob_len;
-
-	memset(&p, 0, sizeof(p));
-
-	if (unpack(data, size, &p) < 0)
-		return (pack_dummy(data, maxsize));
-
-	p.seed = (int)seed;
-
-	mutate_blob(&p.id);
-	mutate_blob(&p.info_wire_data);
-	mutate_blob(&p.enroll_wire_data);
-	mutate_blob(&p.list_wire_data);
-	mutate_blob(&p.set_name_wire_data);
-	mutate_blob(&p.remove_wire_data);
-
-	mutate_string(p.pin);
-	mutate_string(p.name);
-
-	blob_len = pack(blob, sizeof(blob), &p);
-
-	if (blob_len == 0 || blob_len > maxsize)
-		return (0);
-
-	memcpy(data, blob, blob_len);
-
-	return (blob_len);
+	if (flags & MUTATE_WIREDATA) {
+		mutate_blob(&p->info_wire_data);
+		mutate_blob(&p->enroll_wire_data);
+		mutate_blob(&p->list_wire_data);
+		mutate_blob(&p->set_name_wire_data);
+		mutate_blob(&p->remove_wire_data);
+	}
 }

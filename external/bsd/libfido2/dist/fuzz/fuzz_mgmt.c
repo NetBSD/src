@@ -17,24 +17,15 @@
 
 #include "../openbsd-compat/openbsd-compat.h"
 
-#define TAG_PIN1			0x01
-#define TAG_PIN2			0x02
-#define TAG_RESET_WIRE_DATA		0x03
-#define TAG_INFO_WIRE_DATA		0x04
-#define TAG_SET_PIN_WIRE_DATA		0x05
-#define TAG_CHANGE_PIN_WIRE_DATA	0x06
-#define TAG_RETRY_WIRE_DATA		0x07
-#define TAG_SEED			0x08
-
 struct param {
-	char		pin1[MAXSTR];
-	char		pin2[MAXSTR];
-	struct blob	reset_wire_data;
-	struct blob	info_wire_data;
-	struct blob	set_pin_wire_data;
-	struct blob	change_pin_wire_data;
-	struct blob	retry_wire_data;
-	int		seed;
+	char pin1[MAXSTR];
+	char pin2[MAXSTR];
+	struct blob reset_wire_data;
+	struct blob info_wire_data;
+	struct blob set_pin_wire_data;
+	struct blob change_pin_wire_data;
+	struct blob retry_wire_data;
+	int seed;
 };
 
 static const uint8_t dummy_reset_wire_data[] = {
@@ -72,56 +63,136 @@ static const uint8_t dummy_retry_wire_data[] = {
 	WIREDATA_CTAP_CBOR_RETRIES,
 };
 
-int    LLVMFuzzerTestOneInput(const uint8_t *, size_t);
-size_t LLVMFuzzerCustomMutator(uint8_t *, size_t, size_t, unsigned int);
-
-static int
-unpack(const uint8_t *ptr, size_t len, struct param *p) NO_MSAN
+struct param *
+unpack(const uint8_t *ptr, size_t len)
 {
-	uint8_t **pp = (void *)&ptr;
+	cbor_item_t *item = NULL, **v;
+	struct cbor_load_result cbor;
+	struct param *p;
+	int ok = -1;
 
-	if (unpack_string(TAG_PIN1, pp, &len, p->pin1) < 0 ||
-	    unpack_string(TAG_PIN2, pp, &len, p->pin2) < 0 ||
-	    unpack_blob(TAG_RESET_WIRE_DATA, pp, &len, &p->reset_wire_data) < 0 ||
-	    unpack_blob(TAG_INFO_WIRE_DATA, pp, &len, &p->info_wire_data) < 0 ||
-	    unpack_blob(TAG_SET_PIN_WIRE_DATA, pp, &len, &p->set_pin_wire_data) < 0 ||
-	    unpack_blob(TAG_CHANGE_PIN_WIRE_DATA, pp, &len, &p->change_pin_wire_data) < 0 ||
-	    unpack_blob(TAG_RETRY_WIRE_DATA, pp, &len, &p->retry_wire_data) < 0 ||
-	    unpack_int(TAG_SEED, pp, &len, &p->seed) < 0)
-		return (-1);
+	if ((p = calloc(1, sizeof(*p))) == NULL ||
+	    (item = cbor_load(ptr, len, &cbor)) == NULL ||
+	    cbor.read != len ||
+	    cbor_isa_array(item) == false ||
+	    cbor_array_is_definite(item) == false ||
+	    cbor_array_size(item) != 8 ||
+	    (v = cbor_array_handle(item)) == NULL)
+		goto fail;
 
-	return (0);
+	if (unpack_int(v[0], &p->seed) < 0 ||
+	    unpack_string(v[1], p->pin1) < 0 ||
+	    unpack_string(v[2], p->pin2) < 0 ||
+	    unpack_blob(v[3], &p->reset_wire_data) < 0 ||
+	    unpack_blob(v[4], &p->info_wire_data) < 0 ||
+	    unpack_blob(v[5], &p->set_pin_wire_data) < 0 ||
+	    unpack_blob(v[6], &p->change_pin_wire_data) < 0 ||
+	    unpack_blob(v[7], &p->retry_wire_data) < 0)
+		goto fail;
+
+	ok = 0;
+fail:
+	if (ok < 0) {
+		free(p);
+		p = NULL;
+	}
+
+	if (item)
+		cbor_decref(&item);
+
+	return p;
 }
 
-static size_t
+size_t
 pack(uint8_t *ptr, size_t len, const struct param *p)
 {
-	const size_t max = len;
+	cbor_item_t *argv[8], *array = NULL;
+	size_t cbor_alloc_len, cbor_len = 0;
+	unsigned char *cbor = NULL;
 
-	if (pack_string(TAG_PIN1, &ptr, &len, p->pin1) < 0 ||
-	    pack_string(TAG_PIN2, &ptr, &len, p->pin2) < 0 ||
-	    pack_blob(TAG_RESET_WIRE_DATA, &ptr, &len, &p->reset_wire_data) < 0 ||
-	    pack_blob(TAG_INFO_WIRE_DATA, &ptr, &len, &p->info_wire_data) < 0 ||
-	    pack_blob(TAG_SET_PIN_WIRE_DATA, &ptr, &len, &p->set_pin_wire_data) < 0 ||
-	    pack_blob(TAG_CHANGE_PIN_WIRE_DATA, &ptr, &len, &p->change_pin_wire_data) < 0 ||
-	    pack_blob(TAG_RETRY_WIRE_DATA, &ptr, &len, &p->retry_wire_data) < 0 ||
-	    pack_int(TAG_SEED, &ptr, &len, p->seed) < 0)
-		return (0);
+	memset(argv, 0, sizeof(argv));
 
-	return (max - len);
+	if ((array = cbor_new_definite_array(8)) == NULL ||
+	    (argv[0] = pack_int(p->seed)) == NULL ||
+	    (argv[1] = pack_string(p->pin1)) == NULL ||
+	    (argv[2] = pack_string(p->pin2)) == NULL ||
+	    (argv[3] = pack_blob(&p->reset_wire_data)) == NULL ||
+	    (argv[4] = pack_blob(&p->info_wire_data)) == NULL ||
+	    (argv[5] = pack_blob(&p->set_pin_wire_data)) == NULL ||
+	    (argv[6] = pack_blob(&p->change_pin_wire_data)) == NULL ||
+	    (argv[7] = pack_blob(&p->retry_wire_data)) == NULL)
+		goto fail;
+
+	for (size_t i = 0; i < 8; i++)
+		if (cbor_array_push(array, argv[i]) == false)
+			goto fail;
+
+	if ((cbor_len = cbor_serialize_alloc(array, &cbor,
+	    &cbor_alloc_len)) > len) {
+		cbor_len = 0;
+		goto fail;
+	}
+
+	memcpy(ptr, cbor, cbor_len);
+fail:
+	for (size_t i = 0; i < 8; i++)
+		if (argv[i])
+			cbor_decref(&argv[i]);
+
+	if (array)
+		cbor_decref(&array);
+
+	free(cbor);
+
+	return cbor_len;
 }
 
-static size_t
-input_len(int max)
+size_t
+pack_dummy(uint8_t *ptr, size_t len)
 {
-	return (2 * len_string(max) + 5 * len_blob(max) + len_int());
+	struct param dummy;
+	uint8_t blob[4096];
+	size_t blob_len;
+
+	memset(&dummy, 0, sizeof(dummy));
+
+	strlcpy(dummy.pin1, dummy_pin1, sizeof(dummy.pin1));
+	strlcpy(dummy.pin2, dummy_pin2, sizeof(dummy.pin2));
+
+	dummy.reset_wire_data.len = sizeof(dummy_reset_wire_data);
+	dummy.info_wire_data.len = sizeof(dummy_info_wire_data);
+	dummy.set_pin_wire_data.len = sizeof(dummy_set_pin_wire_data);
+	dummy.change_pin_wire_data.len = sizeof(dummy_change_pin_wire_data);
+	dummy.retry_wire_data.len = sizeof(dummy_retry_wire_data);
+
+	memcpy(&dummy.reset_wire_data.body, &dummy_reset_wire_data,
+	    dummy.reset_wire_data.len);
+	memcpy(&dummy.info_wire_data.body, &dummy_info_wire_data,
+	    dummy.info_wire_data.len);
+	memcpy(&dummy.set_pin_wire_data.body, &dummy_set_pin_wire_data,
+	    dummy.set_pin_wire_data.len);
+	memcpy(&dummy.change_pin_wire_data.body, &dummy_change_pin_wire_data,
+	    dummy.change_pin_wire_data.len);
+	memcpy(&dummy.retry_wire_data.body, &dummy_retry_wire_data,
+	    dummy.retry_wire_data.len);
+
+	assert((blob_len = pack(blob, sizeof(blob), &dummy)) != 0);
+
+	if (blob_len > len) {
+		memcpy(ptr, blob, len);
+		return len;
+	}
+
+	memcpy(ptr, blob, blob_len);
+
+	return blob_len;
 }
 
 static fido_dev_t *
-prepare_dev()
+prepare_dev(void)
 {
-	fido_dev_t	*dev;
-	fido_dev_io_t	 io;
+	fido_dev_t *dev;
+	fido_dev_io_t io;
 
 	memset(&io, 0, sizeof(io));
 
@@ -133,14 +204,14 @@ prepare_dev()
 	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
 	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
 		fido_dev_free(&dev);
-		return (NULL);
+		return NULL;
 	}
 
-	return (dev);
+	return dev;
 }
 
 static void
-dev_reset(struct param *p)
+dev_reset(const struct param *p)
 {
 	fido_dev_t *dev;
 
@@ -155,16 +226,12 @@ dev_reset(struct param *p)
 }
 
 static void
-dev_get_cbor_info(struct param *p)
+dev_get_cbor_info(const struct param *p)
 {
 	fido_dev_t *dev;
 	fido_cbor_info_t *ci;
 	uint64_t n;
-	uint8_t proto;
-	uint8_t major;
-	uint8_t minor;
-	uint8_t build;
-	uint8_t flags;
+	uint8_t proto, major, minor, build, flags;
 
 	set_wire_data(p->info_wire_data.body, p->info_wire_data.len);
 
@@ -192,6 +259,7 @@ dev_get_cbor_info(struct param *p)
 		char * const *sa = fido_cbor_info_versions_ptr(ci);
 		consume(sa[i], strlen(sa[i]));
 	}
+
 	for (size_t i = 0; i < fido_cbor_info_extensions_len(ci); i++) {
 		char * const *sa = fido_cbor_info_extensions_ptr(ci);
 		consume(sa[i], strlen(sa[i]));
@@ -207,6 +275,15 @@ dev_get_cbor_info(struct param *p)
 	n = fido_cbor_info_maxmsgsiz(ci);
 	consume(&n, sizeof(n));
 
+	n = fido_cbor_info_maxcredcntlst(ci);
+	consume(&n, sizeof(n));
+
+	n = fido_cbor_info_maxcredidlen(ci);
+	consume(&n, sizeof(n));
+
+	n = fido_cbor_info_fwversion(ci);
+	consume(&n, sizeof(n));
+
 	consume(fido_cbor_info_aaguid_ptr(ci), fido_cbor_info_aaguid_len(ci));
 	consume(fido_cbor_info_protocols_ptr(ci),
 	    fido_cbor_info_protocols_len(ci));
@@ -219,7 +296,7 @@ out:
 }
 
 static void
-dev_set_pin(struct param *p)
+dev_set_pin(const struct param *p)
 {
 	fido_dev_t *dev;
 
@@ -234,7 +311,7 @@ dev_set_pin(struct param *p)
 }
 
 static void
-dev_change_pin(struct param *p)
+dev_change_pin(const struct param *p)
 {
 	fido_dev_t *dev;
 
@@ -249,10 +326,10 @@ dev_change_pin(struct param *p)
 }
 
 static void
-dev_get_retry_count(struct param *p)
+dev_get_retry_count(const struct param *p)
 {
 	fido_dev_t *dev;
-	int n;
+	int n = 0;
 
 	set_wire_data(p->retry_wire_data.body, p->retry_wire_data.len);
 
@@ -265,103 +342,36 @@ dev_get_retry_count(struct param *p)
 	fido_dev_free(&dev);
 }
 
-int
-LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+void
+test(const struct param *p)
 {
-	struct param p;
-
-	memset(&p, 0, sizeof(p));
-
-	if (size < input_len(GETLEN_MIN) || size > input_len(GETLEN_MAX) ||
-	    unpack(data, size, &p) < 0)
-		return (0);
-
-	prng_init((unsigned int)p.seed);
-
+	prng_init((unsigned int)p->seed);
 	fido_init(FIDO_DEBUG);
 	fido_set_log_handler(consume_str);
 
-	dev_reset(&p);
-	dev_get_cbor_info(&p);
-	dev_set_pin(&p);
-	dev_change_pin(&p);
-	dev_get_retry_count(&p);
-
-	return (0);
+	dev_reset(p);
+	dev_get_cbor_info(p);
+	dev_set_pin(p);
+	dev_change_pin(p);
+	dev_get_retry_count(p);
 }
 
-static size_t
-pack_dummy(uint8_t *ptr, size_t len)
+void
+mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 {
-	struct param	dummy;
-	uint8_t		blob[16384];
-	size_t		blob_len;
+	if (flags & MUTATE_SEED)
+		p->seed = (int)seed;
 
-	memset(&dummy, 0, sizeof(dummy));
-
-	strlcpy(dummy.pin1, dummy_pin1, sizeof(dummy.pin1));
-	strlcpy(dummy.pin2, dummy_pin2, sizeof(dummy.pin2));
-
-	dummy.reset_wire_data.len = sizeof(dummy_reset_wire_data);
-	dummy.info_wire_data.len = sizeof(dummy_info_wire_data);
-	dummy.set_pin_wire_data.len = sizeof(dummy_set_pin_wire_data);
-	dummy.change_pin_wire_data.len = sizeof(dummy_change_pin_wire_data);
-	dummy.retry_wire_data.len = sizeof(dummy_retry_wire_data);
-
-	memcpy(&dummy.reset_wire_data.body, &dummy_reset_wire_data,
-	    dummy.reset_wire_data.len);
-	memcpy(&dummy.info_wire_data.body, &dummy_info_wire_data,
-	    dummy.info_wire_data.len);
-	memcpy(&dummy.set_pin_wire_data.body, &dummy_set_pin_wire_data,
-	    dummy.set_pin_wire_data.len);
-	memcpy(&dummy.change_pin_wire_data.body, &dummy_change_pin_wire_data,
-	    dummy.change_pin_wire_data.len);
-	memcpy(&dummy.retry_wire_data.body, &dummy_retry_wire_data,
-	    dummy.retry_wire_data.len);
-
-	blob_len = pack(blob, sizeof(blob), &dummy);
-	assert(blob_len != 0);
-
-	if (blob_len > len) {
-		memcpy(ptr, blob, len);
-		return (len);
+	if (flags & MUTATE_PARAM) {
+		mutate_string(p->pin1);
+		mutate_string(p->pin2);
 	}
 
-	memcpy(ptr, blob, blob_len);
-
-	return (blob_len);
-}
-
-size_t
-LLVMFuzzerCustomMutator(uint8_t *data, size_t size, size_t maxsize,
-    unsigned int seed)
-{
-	struct param	p;
-	uint8_t		blob[16384];
-	size_t		blob_len;
-
-	memset(&p, 0, sizeof(p));
-
-	if (unpack(data, size, &p) < 0)
-		return (pack_dummy(data, maxsize));
-
-	p.seed = (int)seed;
-
-	mutate_string(p.pin1);
-	mutate_string(p.pin2);
-
-	mutate_blob(&p.reset_wire_data);
-	mutate_blob(&p.info_wire_data);
-	mutate_blob(&p.set_pin_wire_data);
-	mutate_blob(&p.change_pin_wire_data);
-	mutate_blob(&p.retry_wire_data);
-
-	blob_len = pack(blob, sizeof(blob), &p);
-
-	if (blob_len == 0 || blob_len > maxsize)
-		return (0);
-
-	memcpy(data, blob, blob_len);
-
-	return (blob_len);
+	if (flags & MUTATE_WIREDATA) {
+		mutate_blob(&p->reset_wire_data);
+		mutate_blob(&p->info_wire_data);
+		mutate_blob(&p->set_pin_wire_data);
+		mutate_blob(&p->change_pin_wire_data);
+		mutate_blob(&p->retry_wire_data);
+	}
 }

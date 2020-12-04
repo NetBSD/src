@@ -77,5 +77,14 @@ The following examples are provided:
 - retries <device>
 	Get the number of PIN attempts left on <device> before lockout.
 
+- select
+
+	Enumerates available FIDO devices and, if more than one is present,
+	simultaneously requests touch on all of them, printing information
+	about the device touched.
+
 Debugging is possible through the use of the FIDO_DEBUG environment variable.
 If set, libfido2 will produce a log of its transactions with the authenticator.
+
+Additionally, an example of a WebAuthn client using libfido2 is available at
+https://github.com/martelletto/fido2-webauthn-client.

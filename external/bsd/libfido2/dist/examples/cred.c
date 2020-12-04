@@ -16,14 +16,9 @@
 #include <unistd.h>
 #endif
 
-#include "../openbsd-compat/openbsd-compat.h"
-
 #include "fido.h"
 #include "extern.h"
-
-#ifdef SIGNAL_EXAMPLE
-extern volatile sig_atomic_t got_signal;
-#endif
+#include "../openbsd-compat/openbsd-compat.h"
 
 static const unsigned char cdh[32] = {
 	0xf9, 0x64, 0x57, 0xe7, 0x2d, 0x97, 0xf6, 0xbb,
@@ -192,13 +187,15 @@ main(int argc, char **argv)
 			break;
 		case 'T':
 #ifndef SIGNAL_EXAMPLE
+			(void)seconds;
 			errx(1, "-T not supported");
-#endif
+#else
 			if (base10(optarg, &seconds) < 0)
 				errx(1, "base10: %s", optarg);
 			if (seconds <= 0 || seconds > 30)
 				errx(1, "-T: %s must be in (0,30]", optarg);
 			break;
+#endif
 		case 'e':
 			if (read_blob(optarg, &body, &len) < 0)
 				errx(1, "read_blob: %s", optarg);
@@ -317,6 +314,10 @@ main(int argc, char **argv)
 		errx(1, "fido_dev_close: %s (0x%x)", fido_strerr(r), r);
 
 	fido_dev_free(&dev);
+
+	/* when verifying, pin implies uv */
+	if (pin)
+		uv = true;
 
 	verify_cred(type, fido_cred_fmt(cred), fido_cred_authdata_ptr(cred),
 	    fido_cred_authdata_len(cred), fido_cred_x5c_ptr(cred),

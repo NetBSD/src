@@ -16,7 +16,9 @@
 #include <fido/rs256.h>
 #include <fido/eddsa.h>
 
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +78,25 @@ open_read(const char *file)
 		err(1, "fdopen %s", file);
 
 	return (f);
+}
+
+int
+base10(const char *str)
+{
+	char *ep;
+	long long ll;
+
+	ll = strtoll(str, &ep, 10);
+	if (str == ep || *ep != '\0')
+		return (-1);
+	else if (ll == LLONG_MIN && errno == ERANGE)
+		return (-1);
+	else if (ll == LLONG_MAX && errno == ERANGE)
+		return (-1);
+	else if (ll < 0 || ll > INT_MAX)
+		return (-1);
+
+	return ((int)ll);
 }
 
 void
@@ -361,4 +382,51 @@ print_cred(FILE *out_f, int type, const fido_cred_t *cred)
 	}
 
 	free(id);
+}
+
+int
+cose_type(const char *str, int *type)
+{
+	if (strcmp(str, "es256") == 0)
+		*type = COSE_ES256;
+	else if (strcmp(str, "rs256") == 0)
+		*type = COSE_RS256;
+	else if (strcmp(str, "eddsa") == 0)
+		*type = COSE_EDDSA;
+	else {
+		*type = 0;
+		return (-1);
+	}
+
+	return (0);
+}
+
+const char *
+cose_string(int type)
+{
+	switch (type) {
+	case COSE_EDDSA:
+		return ("eddsa");
+	case COSE_ES256:
+		return ("es256");
+	case COSE_RS256:
+		return ("rs256");
+	default:
+		return ("unknown");
+	}
+}
+
+const char *
+prot_string(int prot)
+{
+	switch (prot) {
+	case FIDO_CRED_PROT_UV_OPTIONAL:
+		return ("uvopt");
+	case FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID:
+		return ("uvopt+id");
+	case FIDO_CRED_PROT_UV_REQUIRED:
+		return ("uvreq");
+	default:
+		return ("unknown");
+	}
 }

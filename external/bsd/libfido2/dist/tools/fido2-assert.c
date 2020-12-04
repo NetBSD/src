@@ -11,10 +11,10 @@
  * $ echo relying party >> assert_param
  * $ head -1 cred >> assert_param # credential id
  * $ tail -n +2 cred > pubkey # credential pubkey
- * $ fido2-assert -G -i assert_param /dev/hidraw5 | fido2-assert -V pubkey rs256 
+ * $ fido2-assert -G -i assert_param /dev/hidraw5 | fido2-assert -V pubkey rs256
  *
  * See blurb in fido2-cred.c on how to obtain cred.
- */ 
+ */
 
 #include <fido.h>
 #include <stdio.h>
@@ -28,7 +28,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-"usage: fido2-assert -G [-dhpruv] [-i input_file] [-o output_file] device\n"
+"usage: fido2-assert -G [-dhpruv] [-t option] [-i input_file] [-o output_file] device\n"
 "       fido2-assert -V [-dhpv] [-i input_file] key_file [type]\n"
 	);
 

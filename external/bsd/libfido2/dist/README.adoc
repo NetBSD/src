@@ -1,8 +1,10 @@
 == libfido2
 
-image:https://api.travis-ci.org/Yubico/libfido2.svg?branch=master["Build Status (Travis)", link="https://travis-ci.org/Yubico/libfido2"]
-image:https://github.com/yubico/libfido2/workflows/windows/badge.svg["windows build status (github actions)", link="https://github.com/Yubico/libfido2/actions"]
-image:https://img.shields.io/badge/license-BSD-blue.svg["License", link="https://raw.githubusercontent.com/Yubico/libfido2/master/LICENSE"]
+image:https://github.com/yubico/libfido2/workflows/linux/badge.svg["Linux Build Status (github actions)", link="https://github.com/Yubico/libfido2/actions"]
+image:https://github.com/yubico/libfido2/workflows/macos/badge.svg["macOS Build Status (github actions)", link="https://github.com/Yubico/libfido2/actions"]
+image:https://github.com/yubico/libfido2/workflows/windows/badge.svg["Windows Build Status (github actions)", link="https://github.com/Yubico/libfido2/actions"]
+image:https://github.com/yubico/libfido2/workflows/fuzzer/badge.svg["Fuzz Status (github actions)", link="https://github.com/Yubico/libfido2/actions"]
+image:https://oss-fuzz-build-logs.storage.googleapis.com/badges/libfido2.svg["Fuzz Status (oss-fuzz)", link="https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:libfido2"]
 
 *libfido2* provides library functionality and command-line tools to
 communicate with a FIDO device over USB, and to verify attestation and
@@ -14,7 +16,7 @@ For usage, see the `examples/` directory.
 
 === License
 
-*libfido2* is licensed under the BSD 2-clause license.  See the _LICENSE_
+*libfido2* is licensed under the BSD 2-clause license. See the LICENSE
 file for the full license text.
 
 === Supported Platforms
@@ -31,15 +33,26 @@ is also available.
 
 ==== Releases
 
-The current release of *libfido2* is 1.3.1. Please consult Yubico's
+The current release of *libfido2* is 1.5.0. Please consult Yubico's
 https://developers.yubico.com/libfido2/Releases[release page] for source
 and binary releases.
 
-==== Ubuntu
+==== Ubuntu 20.04 (Focal)
 
+  $ sudo apt install libfido2-1
+  $ sudo apt install libfido2-dev
+  $ sudo apt install libfido2-doc
+
+==== Ubuntu 18.04 (Bionic) and 16.04 (Xenial)
+
+  $ sudo apt install software-properties-common
   $ sudo apt-add-repository ppa:yubico/stable
   $ sudo apt update
   $ sudo apt install libfido2-dev
+
+==== MacOS
+
+  $ brew install libfido2
 
 Or from source, on UNIX-like systems:
 
@@ -47,16 +60,16 @@ Or from source, on UNIX-like systems:
   $ make -C build
   $ sudo make -C build install
 
-Depending on the platform, the PKG_CONFIG_PATH environment variable may need to
-be set.
+Depending on the platform,
+https://www.freedesktop.org/wiki/Software/pkg-config/[pkg-config] may need to
+be installed, or the PKG_CONFIG_PATH environment variable set.
 
 *libfido2* depends on https://github.com/pjk/libcbor[libcbor] and
-https://github.com/libressl-portable/portable[LibreSSL] (alternatively,
-https://www.openssl.org[OpenSSL] may be used). On Linux, libudev (part of
+https://www.openssl.org[OpenSSL]. On Linux, libudev (part of
 https://www.freedesktop.org/wiki/Software/systemd[systemd]) is also required.
 
 For complete, OS-specific installation instructions, please refer to the
-`.travis/` (Linux, MacOS) and `windows/` directories.
+`.actions/` (Linux, MacOS) and `windows/` directories.
 
 On Linux, you will need to add a udev rule to be able to access the FIDO
 device, or run as root. For example, the udev rule may contain the following:

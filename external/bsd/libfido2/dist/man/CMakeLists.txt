@@ -3,12 +3,10 @@
 # license that can be found in the LICENSE file.
 
 find_program(MANDOC_PATH mandoc)
-message(STATUS "MANDOC_PATH: ${MANDOC_PATH}")
+find_program(GZIP_PATH gzip)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	find_program(GZIP_PATH gzip)
-	message(STATUS "GZIP_PATH: ${GZIP_PATH}")
-endif()
+message(STATUS "MANDOC_PATH: ${MANDOC_PATH}")
+message(STATUS "GZIP_PATH: ${GZIP_PATH}")
 
 list(APPEND MAN_SOURCES
 	eddsa_pk_new.3
@@ -32,6 +30,7 @@ list(APPEND MAN_SOURCES
 	fido_cred_set_authdata.3
 	fido_cred_verify.3
 	fido_dev_get_assert.3
+	fido_dev_get_touch_begin.3
 	fido_dev_info_manifest.3
 	fido_dev_make_cred.3
 	fido_dev_open.3
@@ -54,9 +53,13 @@ list(APPEND MAN_ALIAS
 	fido_assert_new fido_assert_clientdata_hash_len
 	fido_assert_new fido_assert_clientdata_hash_ptr
 	fido_assert_new fido_assert_count
+	fido_assert_new fido_assert_flags
 	fido_assert_new fido_assert_free
 	fido_assert_new fido_assert_hmac_secret_len
 	fido_assert_new fido_assert_hmac_secret_ptr
+	fido_assert_new fido_assert_id_len
+	fido_assert_new fido_assert_id_ptr
+	fido_assert_new fido_assert_rp_id
 	fido_assert_new fido_assert_sigcount
 	fido_assert_new fido_assert_sig_len
 	fido_assert_new fido_assert_sig_ptr
@@ -95,33 +98,46 @@ list(APPEND MAN_ALIAS
 	fido_bio_template fido_bio_template_new
 	fido_bio_template fido_bio_template_set_id
 	fido_bio_template fido_bio_template_set_name
-	fido_cbor_info_new fido_cbor_info_aaguid_len 
-	fido_cbor_info_new fido_cbor_info_aaguid_ptr 
-	fido_cbor_info_new fido_cbor_info_extensions_len 
-	fido_cbor_info_new fido_cbor_info_extensions_ptr 
-	fido_cbor_info_new fido_cbor_info_free 
+	fido_cbor_info_new fido_cbor_info_aaguid_len
+	fido_cbor_info_new fido_cbor_info_aaguid_ptr
+	fido_cbor_info_new fido_cbor_info_extensions_len
+	fido_cbor_info_new fido_cbor_info_extensions_ptr
+	fido_cbor_info_new fido_cbor_info_free
 	fido_cbor_info_new fido_cbor_info_maxmsgsiz
-	fido_cbor_info_new fido_cbor_info_options_len 
-	fido_cbor_info_new fido_cbor_info_options_name_ptr 
-	fido_cbor_info_new fido_cbor_info_options_value_ptr 
-	fido_cbor_info_new fido_cbor_info_protocols_len 
-	fido_cbor_info_new fido_cbor_info_protocols_ptr 
-	fido_cbor_info_new fido_cbor_info_versions_len 
-	fido_cbor_info_new fido_cbor_info_versions_ptr 
-	fido_cbor_info_new fido_dev_get_cbor_info 
+	fido_cbor_info_new fido_cbor_info_maxcredcntlst;
+	fido_cbor_info_new fido_cbor_info_maxcredidlen;
+	fido_cbor_info_new fido_cbor_info_fwversion
+	fido_cbor_info_new fido_cbor_info_options_len
+	fido_cbor_info_new fido_cbor_info_options_name_ptr
+	fido_cbor_info_new fido_cbor_info_options_value_ptr
+	fido_cbor_info_new fido_cbor_info_protocols_len
+	fido_cbor_info_new fido_cbor_info_protocols_ptr
+	fido_cbor_info_new fido_cbor_info_versions_len
+	fido_cbor_info_new fido_cbor_info_versions_ptr
+	fido_cbor_info_new fido_dev_get_cbor_info
 	fido_cred_new fido_cred_authdata_len
 	fido_cred_new fido_cred_authdata_ptr
 	fido_cred_new fido_cred_clientdata_hash_len
 	fido_cred_new fido_cred_clientdata_hash_ptr
+	fido_cred_new fido_cred_display_name
+	fido_cred_new fido_cred_flags
 	fido_cred_new fido_cred_fmt
 	fido_cred_new fido_cred_free
 	fido_cred_new fido_cred_id_len
 	fido_cred_new fido_cred_id_ptr
+	fido_cred_new fido_cred_aaguid_len
+	fido_cred_new fido_cred_aaguid_ptr
 	fido_cred_new fido_cred_prot
 	fido_cred_new fido_cred_pubkey_len
 	fido_cred_new fido_cred_pubkey_ptr
+	fido_cred_new fido_cred_rp_id
+	fido_cred_new fido_cred_rp_name
 	fido_cred_new fido_cred_sig_len
 	fido_cred_new fido_cred_sig_ptr
+	fido_cred_new fido_cred_type
+	fido_cred_new fido_cred_user_name
+	fido_cred_new fido_cred_user_id_len
+	fido_cred_new fido_cred_user_id_ptr
 	fido_cred_new fido_cred_x5c_len
 	fido_cred_new fido_cred_x5c_ptr
 	fido_credman_metadata_new fido_credman_del_dev_rk
@@ -170,6 +186,8 @@ list(APPEND MAN_ALIAS
 	fido_dev_open fido_dev_force_u2f
 	fido_dev_open fido_dev_free
 	fido_dev_open fido_dev_is_fido2
+	fido_dev_open fido_dev_supports_cred_prot
+	fido_dev_open fido_dev_supports_pin
 	fido_dev_open fido_dev_major
 	fido_dev_open fido_dev_minor
 	fido_dev_open fido_dev_new
@@ -223,7 +241,7 @@ endforeach()
 # man_gzip
 foreach(f ${MAN_SOURCES})
 	add_custom_command(OUTPUT ${f}.gz
-		COMMAND gzip -c ${f} > ${f}.gz
+		COMMAND gzip -cn ${f} > ${f}.gz
 		DEPENDS ${f})
 	list(APPEND GZ_FILES ${f}.gz)
 endforeach()

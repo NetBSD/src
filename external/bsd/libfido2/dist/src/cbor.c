@@ -386,7 +386,7 @@ cbor_flatten_vector(cbor_item_t *argv[], size_t argc)
 		return (NULL);
 
 	for (i = 0; i < argc; i++)
-		if (cbor_add_arg(map, i + 1, argv[i]) < 0)
+		if (cbor_add_arg(map, (uint8_t)(i + 1), argv[i]) < 0)
 			break;
 
 	if (i != argc) {
@@ -583,7 +583,9 @@ cbor_encode_extensions(const fido_cred_ext_t *ext)
 		}
 	}
 	if (ext->mask & FIDO_EXT_CRED_PROTECT) {
-		if (cbor_add_uint8(item, "credProtect", ext->prot) < 0) {
+		if (ext->prot < 0 || ext->prot > UINT8_MAX ||
+		    cbor_add_uint8(item, "credProtect",
+		    (uint8_t)ext->prot) < 0) {
 			cbor_decref(&item);
 			return (NULL);
 		}
@@ -634,7 +636,7 @@ cbor_encode_pin_auth(const fido_blob_t *hmac_key, const fido_blob_t *data)
 	unsigned int	 dgst_len;
 
 	if ((md = EVP_sha256()) == NULL || HMAC(md, hmac_key->ptr,
-	    (int)hmac_key->len, data->ptr, (int)data->len, dgst,
+	    (int)hmac_key->len, data->ptr, data->len, dgst,
 	    &dgst_len) == NULL || dgst_len != SHA256_DIGEST_LENGTH)
 		return (NULL);
 
@@ -696,7 +698,6 @@ cbor_encode_change_pin_auth(const fido_blob_t *key, const fido_blob_t *new_pin,
 	fido_blob_t	*npe = NULL; /* new pin, encrypted */
 	fido_blob_t	*ph = NULL;  /* pin hash */
 	fido_blob_t	*phe = NULL; /* pin hash, encrypted */
-	int		 ok = -1;
 
 	if ((npe = fido_blob_new()) == NULL ||
 	    (ph = fido_blob_new()) == NULL ||
@@ -735,8 +736,8 @@ cbor_encode_change_pin_auth(const fido_blob_t *key, const fido_blob_t *new_pin,
 	if ((ctx = HMAC_CTX_new()) == NULL ||
 	    (md = EVP_sha256())  == NULL ||
 	    HMAC_Init_ex(ctx, key->ptr, (int)key->len, md, NULL) == 0 ||
-	    HMAC_Update(ctx, npe->ptr, (int)npe->len) == 0 ||
-	    HMAC_Update(ctx, phe->ptr, (int)phe->len) == 0 ||
+	    HMAC_Update(ctx, npe->ptr, npe->len) == 0 ||
+	    HMAC_Update(ctx, phe->ptr, phe->len) == 0 ||
 	    HMAC_Final(ctx, dgst, &dgst_len) == 0 || dgst_len != 32) {
 		fido_log_debug("%s: HMAC", __func__);
 		goto fail;
@@ -748,7 +749,6 @@ cbor_encode_change_pin_auth(const fido_blob_t *key, const fido_blob_t *new_pin,
 		goto fail;
 	}
 
-	ok = 0;
 fail:
 	fido_blob_free(&npe);
 	fido_blob_free(&ph);
@@ -758,13 +758,6 @@ fail:
 	if (ctx != NULL)
 		HMAC_CTX_free(ctx);
 #endif
-
-	if (ok < 0) {
-		if (item != NULL) {
-			cbor_decref(&item);
-			item = NULL;
-		}
-	}
 
 	return (item);
 }
@@ -787,7 +780,7 @@ cbor_encode_set_pin_auth(const fido_blob_t *key, const fido_blob_t *pin)
 	}
 
 	if ((md = EVP_sha256()) == NULL || key->len != 32 || HMAC(md, key->ptr,
-	    (int)key->len, pe->ptr, (int)pe->len, dgst, &dgst_len) == NULL ||
+	    (int)key->len, pe->ptr, pe->len, dgst, &dgst_len) == NULL ||
 	    dgst_len != SHA256_DIGEST_LENGTH) {
 		fido_log_debug("%s: HMAC", __func__);
 		goto fail;
@@ -1292,7 +1285,7 @@ cbor_decode_cred_authdata(const cbor_item_t *item, int cose_alg,
 	}
 
 	if (authdata_ext != NULL) {
-		if ((authdata->flags & CTAP_AUTHDATA_EXT_DATA) != 0 && 
+		if ((authdata->flags & CTAP_AUTHDATA_EXT_DATA) != 0 &&
 		    decode_extensions(&buf, &len, authdata_ext) < 0)
 			return (-1);
 	}

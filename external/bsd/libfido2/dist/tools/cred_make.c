@@ -130,11 +130,16 @@ cred_make(int argc, char **argv)
 	FILE *out_f = NULL;
 	int type = COSE_ES256;
 	int flags = 0;
+	int cred_protect = -1;
 	int ch;
 	int r;
 
-	while ((ch = getopt(argc, argv, "dhi:o:qruv")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dhi:o:qruv")) != -1) {
 		switch (ch) {
+		case 'c':
+			if ((cred_protect = base10(optarg)) < 0)
+				errx(1, "-c: invalid argument '%s'", optarg);
+			break;
 		case 'd':
 			flags |= FLAG_DEBUG;
 			break;
@@ -173,16 +178,8 @@ cred_make(int argc, char **argv)
 	in_f = open_read(in_path);
 	out_f = open_write(out_path);
 
-	if (argc > 1) {
-		if (strcmp(argv[1], "es256") == 0)
-			type = COSE_ES256;
-		else if (strcmp(argv[1], "rs256") == 0)
-			type = COSE_RS256;
-		else if (strcmp(argv[1], "eddsa") == 0)
-			type = COSE_EDDSA;
-		else
-			errx(1, "unknown type %s", argv[1]);
-	}
+	if (argc > 1 && cose_type(argv[1], &type) < 0)
+		errx(1, "unknown type %s", argv[1]);
 
 	fido_init((flags & FLAG_DEBUG) ? FIDO_DEBUG : 0);
 
@@ -191,6 +188,13 @@ cred_make(int argc, char **argv)
 	dev = open_dev(argv[0]);
 	if (flags & FLAG_U2F)
 		fido_dev_force_u2f(dev);
+
+	if (cred_protect > 0) {
+		r = fido_cred_set_prot(cred, cred_protect);
+		if (r != FIDO_OK) {
+			errx(1, "fido_cred_set_prot: %s", fido_strerr(r));
+		}
+	}
 
 	r = fido_dev_make_cred(dev, cred, NULL);
 	if (r == FIDO_ERR_PIN_REQUIRED && !(flags & FLAG_QUIET)) {

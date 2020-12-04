@@ -313,7 +313,7 @@ fido_dev_get_assert(fido_dev_t *dev, fido_assert_t *assert, const char *pin)
 			goto fail;
 		}
 	}
- 
+
 	r = fido_dev_get_assert_wait(dev, assert, pk, ecdh, pin, -1);
 	if (r == FIDO_OK && assert->ext & FIDO_EXT_HMAC_SECRET)
 		if (decrypt_hmac_secrets(assert, ecdh) < 0) {
