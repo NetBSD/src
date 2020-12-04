@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.98 2020/12/04 14:39:56 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.99 2020/12/04 20:08:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,7 +34,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.98 2020/12/04 14:39:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.99 2020/12/04 20:08:07 rillig Exp $");
 
 static ListNode *
 LstNodeNew(ListNode *prev, ListNode *next, void *datum)
@@ -293,10 +293,4 @@ Vector_Pop(Vector *v)
 	assert(v->len > 0);
 	v->len--;
 	return Vector_Get(v, v->len);
-}
-
-void
-Vector_Done(Vector *v)
-{
-	free(v->items);
 }
