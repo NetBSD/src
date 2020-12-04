@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.18 2020/08/03 06:30:00 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19 2020/12/04 08:29:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -191,7 +191,7 @@ aarch64_addressspace(vaddr_t va)
 {
 	uint64_t addrtop, tbi;
 
-	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	addrtop = va & AARCH64_ADDRTOP_TAG;
 	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
 	if (reg_tcr_el1_read() & tbi) {
 		if (addrtop == 0) {
@@ -206,7 +206,7 @@ aarch64_addressspace(vaddr_t va)
 		return AARCH64_ADDRSPACE_UPPER;
 	}
 
-	addrtop = (uint64_t)va & AARCH64_ADDRTOP_MSB;
+	addrtop = va & AARCH64_ADDRTOP_MSB;
 	if (addrtop == 0) {
 		/* lower address, and TBI0 disabled */
 		if ((va & AARCH64_ADDRESS_TAGPAC_MASK) != 0)
@@ -224,15 +224,15 @@ aarch64_untag_address(vaddr_t va)
 {
 	uint64_t addrtop, tbi;
 
-	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	addrtop = va & AARCH64_ADDRTOP_TAG;
 	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
 	if (reg_tcr_el1_read() & tbi) {
 		if (addrtop == 0) {
 			/* lower address, and TBI0 enabled */
-			return (uint64_t)va & ~AARCH64_ADDRESS_TAG_MASK;
+			return va & ~AARCH64_ADDRESS_TAG_MASK;
 		}
 		/* upper address, and TBI1 enabled */
-		return (uint64_t)va | AARCH64_ADDRESS_TAG_MASK;
+		return va | AARCH64_ADDRESS_TAG_MASK;
 	}
 
 	/* TBI[01] is disabled, nothing to do */
