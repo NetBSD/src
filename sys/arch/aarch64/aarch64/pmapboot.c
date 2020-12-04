@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.12 2020/11/10 07:51:19 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.13 2020/12/04 08:24:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.12 2020/11/10 07:51:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.13 2020/12/04 08:24:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.12 2020/11/10 07:51:19 skrll Exp $");
 #include <sys/types.h>
 
 #include <uvm/uvm.h>
+
+#include <arm/cpufunc.h>
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpufunc.h>
@@ -434,6 +436,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			break;
 		}
 	}
+
+	dsb(ish);
 
 	return nskip;
 }
