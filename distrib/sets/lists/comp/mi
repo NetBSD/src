@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2366 2020/11/10 21:47:40 kamil Exp $
+#	$NetBSD: mi,v 1.2367 2020/12/04 18:27:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7185,6 +7185,7 @@
 ./usr/share/man/cat3/fido_cred_verify.0			man-util-catman	.cat
 ./usr/share/man/cat3/fido_credman_metadata_new.0	man-util-catman	.cat
 ./usr/share/man/cat3/fido_dev_get_assert.0		man-util-catman	.cat
+./usr/share/man/cat3/fido_dev_get_touch_begin.0		man-util-catman	.cat
 ./usr/share/man/cat3/fido_dev_info_manifest.0		man-util-catman	.cat
 ./usr/share/man/cat3/fido_dev_make_cred.0		man-util-catman	.cat
 ./usr/share/man/cat3/fido_dev_open.0			man-util-catman	.cat
@@ -15439,6 +15440,7 @@
 ./usr/share/man/html3/fido_cred_verify.html		man-util-htmlman	html
 ./usr/share/man/html3/fido_credman_metadata_new.html	man-util-htmlman	html
 ./usr/share/man/html3/fido_dev_get_assert.html		man-util-htmlman	html
+./usr/share/man/html3/fido_dev_get_touch_begin.html	man-util-htmlman	html
 ./usr/share/man/html3/fido_dev_info_manifest.html	man-util-htmlman	html
 ./usr/share/man/html3/fido_dev_make_cred.html		man-util-htmlman	html
 ./usr/share/man/html3/fido_dev_open.html		man-util-htmlman	html
@@ -23630,6 +23632,7 @@
 ./usr/share/man/man3/fido_cred_verify.3			man-util-man	.man
 ./usr/share/man/man3/fido_credman_metadata_new.3	man-util-man	.man
 ./usr/share/man/man3/fido_dev_get_assert.3		man-util-man	.man
+./usr/share/man/man3/fido_dev_get_touch_begin.3		man-util-man	.man
 ./usr/share/man/man3/fido_dev_info_manifest.3		man-util-man	.man
 ./usr/share/man/man3/fido_dev_make_cred.3		man-util-man	.man
 ./usr/share/man/man3/fido_dev_open.3			man-util-man	.man
