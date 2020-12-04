@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.699 2020/11/28 16:36:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.700 2020/12/04 22:35:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.699 2020/11/28 16:36:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.700 2020/12/04 22:35:40 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -669,6 +669,34 @@ Var_Export(const char *str, Boolean isExport)
 
 extern char **environ;
 
+static void
+UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
+{
+	Var *v = VarFind(varname, VAR_GLOBAL, FALSE);
+	if (v == NULL) {
+		VAR_DEBUG1("Not unexporting \"%s\" (not found)\n", varname);
+		return;
+	}
+
+	VAR_DEBUG1("Unexporting \"%s\"\n", varname);
+	if (!unexport_env && (v->flags & VAR_EXPORTED) &&
+	    !(v->flags & VAR_REEXPORT))
+		unsetenv(v->name);
+	v->flags &= ~(unsigned)(VAR_EXPORTED | VAR_REEXPORT);
+
+	/* If we are unexporting a list, remove each one from .MAKE.EXPORTED. */
+	if (adjust) {
+		/* XXX: v->name is injected without escaping it */
+		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
+		char *cp;
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
+		/* TODO: handle errors */
+		Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
+		free(cp);
+		free(expr);
+	}
+}
+
 /*
  * This is called when .unexport[-env] is seen.
  *
@@ -723,40 +751,12 @@ Var_UnExport(const char *str)
     }
 
     {
-	Var *v;
 	size_t i;
 
 	Words words = Str_Words(varnames, FALSE);
 	for (i = 0; i < words.len; i++) {
 	    const char *varname = words.words[i];
-	    v = VarFind(varname, VAR_GLOBAL, FALSE);
-	    if (v == NULL) {
-		VAR_DEBUG1("Not unexporting \"%s\" (not found)\n", varname);
-		continue;
-	    }
-
-	    VAR_DEBUG1("Unexporting \"%s\"\n", varname);
-	    if (!unexport_env && (v->flags & VAR_EXPORTED) &&
-		!(v->flags & VAR_REEXPORT))
-		unsetenv(v->name);
-	    v->flags &= ~(unsigned)(VAR_EXPORTED | VAR_REEXPORT);
-
-	    /*
-	     * If we are unexporting a list,
-	     * remove each one from .MAKE.EXPORTED.
-	     * If we are removing them all,
-	     * just delete .MAKE.EXPORTED below.
-	     */
-	    if (varnames == str) {
-		/* XXX: v->name is injected without escaping it */
-		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
-		char *cp;
-		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
-		/* TODO: handle errors */
-		Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
-		free(cp);
-		free(expr);
-	    }
+	    UnexportVar(varname, unexport_env, varnames == str);
 	}
 	Words_Free(words);
 	if (varnames != str) {
