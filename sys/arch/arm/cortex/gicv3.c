@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.35 2020/11/24 23:31:56 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.36 2020/12/04 21:39:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.35 2020/11/24 23:31:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.36 2020/12/04 21:39:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.35 2020/11/24 23:31:56 jmcneill Exp $");
 
 #define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
 #define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
+
+#define	GIC_SUPPORTS_1OFN(sc)		(((sc)->sc_gicd_typer & GICD_TYPER_No1N) == 0)
 
 #define	GIC_PRIO_SHIFT_NS		4
 #define	GIC_PRIO_SHIFT_S		3
@@ -186,11 +188,13 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			gicr_write_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4), ipriority);
 		}
 	} else {
-		if (is->is_mpsafe) {
-			/* Route MP-safe interrupts to all participating PEs */
+		/*
+		 * If 1 of N SPI routing is supported, route MP-safe interrupts to all
+		 * participating PEs. Otherwise, just route to the primary PE.
+		 */
+		if (is->is_mpsafe && GIC_SUPPORTS_1OFN(sc)) {
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
 		} else {
-			/* Route non-MP-safe interrupts to the primary PE only */
 			irouter = sc->sc_irouter[0];
 		}
 		gicd_write_8(sc, GICD_IROUTER(is->is_irq), irouter);
@@ -482,12 +486,13 @@ gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
 		return EINVAL;
 
 	const int set = kcpuset_countset(affinity);
-	if (set == ncpu)
-		irouter = GICD_IROUTER_Interrupt_Routing_mode;
-	else if (set == 1)
+	if (set == 1) {
 		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
-	else
+	} else if (set == ncpu && GIC_SUPPORTS_1OFN(sc)) {
+		irouter = GICD_IROUTER_Interrupt_Routing_mode;
+	} else {
 		return EINVAL;
+	}
 
 	gicd_write_8(sc, GICD_IROUTER(irq), irouter);
 
@@ -820,7 +825,6 @@ gicv3_quirk_rockchip_rk3399(struct gicv3_softc *sc)
 int
 gicv3_init(struct gicv3_softc *sc)
 {
-	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
 	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -829,6 +833,8 @@ gicv3_init(struct gicv3_softc *sc)
 
 	for (n = 0; n < MAXCPUS; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
+
+	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
 
 	/*
 	 * We don't alwayst have a consistent view of priorities between the
@@ -855,14 +861,14 @@ gicv3_init(struct gicv3_softc *sc)
 	    sc->sc_quirks);
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
-	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
+	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(sc->sc_gicd_typer);
 	snprintf(sc->sc_pic.pic_name, sizeof(sc->sc_pic.pic_name), "gicv3");
 #ifdef MULTIPROCESSOR
 	sc->sc_pic.pic_cpus = kcpuset_running;
 #endif
 	pic_add(&sc->sc_pic, 0);
 
-	if ((gicd_typer & GICD_TYPER_LPIS) != 0) {
+	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0) {
 		sc->sc_lpi.pic_ops = &gicv3_lpiops;
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
@@ -893,7 +899,7 @@ gicv3_init(struct gicv3_softc *sc)
 	gicv3_dist_enable(sc);
 
 	gicv3_cpu_init(&sc->sc_pic, curcpu());
-	if ((gicd_typer & GICD_TYPER_LPIS) != 0)
+	if ((sc->sc_gicd_typer & GICD_TYPER_LPIS) != 0)
 		gicv3_lpi_cpu_init(&sc->sc_lpi, curcpu());
 
 #ifdef MULTIPROCESSOR
