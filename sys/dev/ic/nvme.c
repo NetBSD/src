@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.52 2020/11/10 07:39:12 rin Exp $	*/
+/*	$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.52 2020/11/10 07:39:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,12 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 
 	KASSERT(nsid > 0);
 
+	ns = nvme_ns_get(sc, nsid);
+	KASSERT(ns);
+
+	if (ns->ident != NULL)
+		return 0;
+
 	ccb = nvme_ccb_get(sc->sc_admin_q, false);
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
@@ -665,9 +671,6 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	/* Convert data to host endian */
 	nvme_identify_namespace_swapbytes(identify);
 
-	ns = nvme_ns_get(sc, nsid);
-	KASSERT(ns);
-	KASSERT(ns->ident == NULL);
 	ns->ident = identify;
 
 done:
