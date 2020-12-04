@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2020/03/03 00:14:17 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/12/04 18:27:44 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@ NOLINT=
 
 .PATH: ${DIST}/src ${DIST}/man ${DIST}/openbsd-compat
 
-CPPFLAGS+= -DHAVE_ARC4RANDOM_BUF -D_FIDO_INTERNAL -I${DIST}/src
+CPPFLAGS+= -D_FIDO_INTERNAL -I${DIST}/src
 
 LDADD+=-lusbhid -lcbor
 DPADD+=${LIBUSBHID} ${LIBCBOR}
@@ -77,6 +77,7 @@ fido_cred_set_authdata.3 \
 fido_cred_verify.3 \
 fido_credman_metadata_new.3 \
 fido_dev_get_assert.3 \
+fido_dev_get_touch_begin.3 \
 fido_dev_info_manifest.3 \
 fido_dev_make_cred.3 \
 fido_dev_open.3 \
@@ -87,7 +88,7 @@ fido_strerr.3 \
 rs256_pk_new.3
 
 SHLIB_MAJOR=2
-SHLIB_MINOR=0
+SHLIB_MINOR=1
 
 .SUFFIXES: .in
 .in:
