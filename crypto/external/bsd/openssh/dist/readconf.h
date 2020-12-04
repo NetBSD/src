@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.24 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.133 2020/04/03 02:27:12 dtucker Exp $ */
+/*	$NetBSD: readconf.h,v 1.25 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.134 2020/08/11 09:49:57 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -112,6 +112,7 @@ typedef struct {
 	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
 
 	int	add_keys_to_agent;
+	int	add_keys_to_agent_lifespan;
 	char   *identity_agent;		/* Optional path to ssh-agent socket */
 
 	/* Local TCP/IP forward requests. */

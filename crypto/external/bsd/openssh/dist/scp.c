@@ -1,5 +1,6 @@
-/*	$NetBSD: scp.c,v 1.27 2020/05/29 12:14:49 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.210 2020/05/06 20:57:38 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.28 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.212 2020/08/03 02:43:41 djm Exp $ */
+
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.27 2020/05/29 12:14:49 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.28 2020/12/04 18:42:50 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -364,9 +365,11 @@ typedef struct {
 BUF *allocbuf(BUF *, int, int);
 __dead static void lostconn(int);
 int okname(char *);
-void run_err(const char *,...) __printflike(1, 2);
-void run_err(const char *,...) __printflike(1, 2);
-int note_err(const char *,...) __printflike(1, 2);
+void run_err(const char *,...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
+int note_err(const char *,...)
+    __attribute__((__format__ (printf, 1, 2)));
 void verifydir(char *);
 
 struct passwd *pwd;
@@ -410,7 +413,6 @@ main(int argc, char **argv)
 	args.list = remote_remote_args.list = NULL;
 	addargs(&args, "%s", ssh_program);
 	addargs(&args, "-x");
-	addargs(&args, "-oForwardAgent=no");
 	addargs(&args, "-oPermitLocalCommand=no");
 	addargs(&args, "-oClearAllForwardings=yes");
 	addargs(&args, "-oRemoteCommand=none");
@@ -418,7 +420,7 @@ main(int argc, char **argv)
 
 	fflag = Tflag = tflag = 0;
 	while ((ch = getopt(argc, argv,
-	    "dfl:prtTvBCc:i:P:q12346S:o:F:J:")) != -1) {
+	    "12346ABCTdfpqrtvF:J:P:S:c:i:l:o:")) != -1) {
 		switch (ch) {
 		/* User-visible flags. */
 		case '1':
@@ -427,6 +429,7 @@ main(int argc, char **argv)
 		case '2':
 			/* Ignored */
 			break;
+		case 'A':
 		case '4':
 		case '6':
 		case 'C':
@@ -504,6 +507,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	/* Do this last because we want the user to be able to override it */
+	addargs(&args, "-oForwardAgent=no");
 
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		fatal("unknown user %u", (u_int) userid);
@@ -1573,7 +1579,7 @@ void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "usage: scp [-346BCpqrTv] [-c cipher] [-F ssh_config] [-i identity_file]\n"
+	    "usage: scp [-346ABCpqrTv] [-c cipher] [-F ssh_config] [-i identity_file]\n"
 	    "            [-J destination] [-l limit] [-o ssh_option] [-P port]\n"
 	    "            [-S program] source ... target\n");
 	exit(1);

@@ -1,5 +1,6 @@
-/*	$NetBSD: kexdh.c,v 1.8 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kexdh.c,v 1.32 2019/01/21 10:40:11 djm Exp $ */
+/*	$NetBSD: kexdh.c,v 1.9 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: kexdh.c,v 1.33 2020/05/08 05:13:14 djm Exp $ */
+
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdh.c,v 1.8 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: kexdh.c,v 1.9 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -38,6 +39,7 @@ __RCSID("$NetBSD: kexdh.c,v 1.8 2019/04/20 17:16:40 christos Exp $");
 #include "digest.h"
 #include "ssherr.h"
 #include "dh.h"
+#include "log.h"
 
 int
 kex_dh_keygen(struct kex *kex)

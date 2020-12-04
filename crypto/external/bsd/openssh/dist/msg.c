@@ -1,5 +1,5 @@
-/*	$NetBSD: msg.c,v 1.9 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: msg.c,v 1.18 2020/01/22 04:49:16 djm Exp $ */
+/*	$NetBSD: msg.c,v 1.10 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: msg.c,v 1.19 2020/06/24 15:08:53 markus Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.9 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.10 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -80,7 +80,7 @@ ssh_msg_recv(int fd, struct sshbuf *m)
 		return (-1);
 	}
 	msg_len = get_u32(buf);
-	if (msg_len > 256 * 1024) {
+	if (msg_len > sshbuf_max_size(m)) {
 		error("%s: read: bad msg_len %u", __func__, msg_len);
 		return (-1);
 	}

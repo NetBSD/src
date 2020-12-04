@@ -1,5 +1,6 @@
-/*	$NetBSD: mux.c,v 1.26 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.82 2020/04/30 17:12:20 markus Exp $ */
+/*	$NetBSD: mux.c,v 1.27 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.83 2020/07/05 23:59:45 djm Exp $ */
+
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -19,7 +20,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.26 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.27 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -177,7 +178,7 @@ static const struct {
 	{ 0, NULL }
 };
 
-/* Cleanup callback fired on closure of mux slave _session_ channel */
+/* Cleanup callback fired on closure of mux client _session_ channel */
 /* ARGSUSED */
 static void
 mux_master_session_cleanup_cb(struct ssh *ssh, int cid, void *unused)
@@ -199,7 +200,7 @@ mux_master_session_cleanup_cb(struct ssh *ssh, int cid, void *unused)
 	channel_cancel_cleanup(ssh, c->self);
 }
 
-/* Cleanup callback fired on closure of mux slave _control_ channel */
+/* Cleanup callback fired on closure of mux client _control_ channel */
 /* ARGSUSED */
 static void
 mux_master_control_cleanup_cb(struct ssh *ssh, int cid, void *unused)
@@ -277,7 +278,7 @@ mux_master_process_hello(struct ssh *ssh, u_int rid,
 		    "(expected %u)", __func__, ver, SSHMUX_VER);
 		return -1;
 	}
-	debug2("%s: channel %d slave version %u", __func__, c->self, ver);
+	debug2("%s: channel %d client version %u", __func__, c->self, ver);
 
 	/* No extensions are presently defined */
 	while (sshbuf_len(m) > 0) {
@@ -391,7 +392,7 @@ mux_master_process_new_session(struct ssh *ssh, u_int rid,
 	/* Gather fds from client */
 	for(i = 0; i < 3; i++) {
 		if ((new_fd[i] = mm_receive_fd(c->sock)) == -1) {
-			error("%s: failed to receive fd %d from slave",
+			error("%s: failed to receive fd %d from client",
 			    __func__, i);
 			for (j = 0; j < i; j++)
 				close(new_fd[j]);
@@ -984,7 +985,7 @@ mux_master_process_stdio_fwd(struct ssh *ssh, u_int rid,
 	/* Gather fds from client */
 	for(i = 0; i < 2; i++) {
 		if ((new_fd[i] = mm_receive_fd(c->sock)) == -1) {
-			error("%s: failed to receive fd %d from slave",
+			error("%s: failed to receive fd %d from client",
 			    __func__, i);
 			for (j = 0; j < i; j++)
 				close(new_fd[j]);
@@ -1144,7 +1145,7 @@ mux_master_process_proxy(struct ssh *ssh, u_int rid,
 	return 0;
 }
 
-/* Channel callbacks fired on read/write from mux slave fd */
+/* Channel callbacks fired on read/write from mux client fd */
 static int
 mux_master_read_cb(struct ssh *ssh, Channel *c)
 {
