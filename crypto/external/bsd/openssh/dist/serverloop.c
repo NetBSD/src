@@ -1,5 +1,6 @@
-/*	$NetBSD: serverloop.c,v 1.27 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.222 2020/01/30 07:21:38 djm Exp $ */
+/*	$NetBSD: serverloop.c,v 1.28 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.223 2020/07/03 06:29:57 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.27 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.28 2020/12/04 18:42:50 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -270,6 +271,8 @@ wait_until_can_do_something(struct ssh *ssh,
 			max_time_ms = keepalive_ms;
 			client_alive_scheduled = 1;
 		}
+		if (last_client_time == 0)
+			last_client_time = monotime();
 	}
 
 #if 0

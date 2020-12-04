@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: log.c,v 1.51 2018/07/27 12:03:17 markus Exp $ */
+/*	$NetBSD: log.c,v 1.21 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.52 2020/07/03 06:46:41 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: log.c,v 1.21 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -341,6 +341,14 @@ void
 log_redirect_stderr_to(const char *logfile)
 {
 	int fd;
+
+	if (logfile == NULL) {
+		if (log_stderr_fd != STDERR_FILENO) {
+			close(log_stderr_fd);
+			log_stderr_fd = STDERR_FILENO;
+		}
+		return;
+	}
 
 	if ((fd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600)) == -1) {
 		fprintf(stderr, "Couldn't open logfile %s: %s\n", logfile,

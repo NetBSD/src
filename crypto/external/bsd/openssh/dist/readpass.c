@@ -1,5 +1,6 @@
-/*	$NetBSD: readpass.c,v 1.14 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.61 2020/01/23 07:10:22 dtucker Exp $ */
+/*	$NetBSD: readpass.c,v 1.15 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: readpass.c,v 1.63 2020/08/11 09:45:54 djm Exp $ */
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.14 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.15 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -123,12 +124,26 @@ char *
 read_passphrase(const char *prompt, int flags)
 {
 	char cr = '\r', *ret, buf[1024];
-	const char *askpass = NULL;
-	int rppflags, use_askpass = 0, ttyfd;
-	const char *askpass_hint = NULL;
+	int rppflags, ttyfd, use_askpass = 0, allow_askpass = 0;
+	const char *askpass_hint = NULL, *askpass = NULL;
+	const char *s;
+
+	if ((s = getenv("DISPLAY")) != NULL)
+		allow_askpass = *s != '\0';
+	if ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) != NULL) {
+		if (strcasecmp(s, "force") == 0) {
+			use_askpass = 1;
+			allow_askpass = 1;
+		} else if (strcasecmp(s, "prefer") == 0)
+			use_askpass = allow_askpass;
+		else if (strcasecmp(s, "never") == 0)
+			allow_askpass = 0;
+	}
 
 	rppflags = (flags & RP_ECHO) ? RPP_ECHO_ON : RPP_ECHO_OFF;
-	if (flags & RP_USE_ASKPASS)
+	if (use_askpass)
+		debug("%s: requested to askpass", __func__);
+	else if (flags & RP_USE_ASKPASS)
 		use_askpass = 1;
 	else if (flags & RP_ALLOW_STDIN) {
 		if (!isatty(STDIN_FILENO)) {
@@ -154,10 +169,10 @@ read_passphrase(const char *prompt, int flags)
 		}
 	}
 
-	if ((flags & RP_USE_ASKPASS) && getenv("DISPLAY") == NULL)
+	if ((flags & RP_USE_ASKPASS) && !allow_askpass)
 		return (flags & RP_ALLOW_EOF) ? NULL : xstrdup("");
 
-	if (use_askpass && getenv("DISPLAY")) {
+	if (use_askpass && allow_askpass) {
 		if (getenv(SSH_ASKPASS_ENV))
 			askpass = getenv(SSH_ASKPASS_ENV);
 		else
@@ -221,8 +236,8 @@ notify_start(int force_askpass, const char *fmt, ...)
 	int devnull;
 	pid_t pid;
 	void (*osigchld)(int);
-	const char *askpass;
-	struct notifier_ctx *ret;
+	const char *askpass, *s;
+	struct notifier_ctx *ret = NULL;
 
 	va_start(args, fmt);
 	xvasprintf(&prompt, fmt, args);
@@ -234,15 +249,19 @@ notify_start(int force_askpass, const char *fmt, ...)
 		(void)write(STDERR_FILENO, "\r", 1);
 		(void)write(STDERR_FILENO, prompt, strlen(prompt));
 		(void)write(STDERR_FILENO, "\r\n", 2);
-		free(prompt);
-		return NULL;
+		goto out;
 	}
 	if ((askpass = getenv("SSH_ASKPASS")) == NULL)
 		askpass = _PATH_SSH_ASKPASS_DEFAULT;
-	if (getenv("DISPLAY") == NULL || *askpass == '\0') {
-		debug3("%s: cannot notify", __func__);
-		free(prompt);
-		return NULL;
+	if (*askpass == '\0') {
+		debug3("%s: cannot notify: no askpass", __func__);
+		goto out;
+	}
+	if (getenv("DISPLAY") == NULL &&
+	    ((s = getenv(SSH_ASKPASS_REQUIRE_ENV)) == NULL ||
+	    strcmp(s, "force") != 0)) {
+		debug3("%s: cannot notify: no display", __func__);
+		goto out;
 	}
 	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
 	if ((pid = fork()) == -1) {
@@ -270,6 +289,7 @@ notify_start(int force_askpass, const char *fmt, ...)
 	}
 	ret->pid = pid;
 	ret->osigchld = osigchld;
+ out:
 	free(prompt);
 	return ret;
 }

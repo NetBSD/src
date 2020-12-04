@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.22 2020/02/27 00:24:40 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.23 2020/12/04 18:42:50 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.312 2020/01/25 06:03:10 djm Exp $
-.Dd January 25 2020
+.\" $OpenBSD: sshd.8,v 1.313 2020/08/27 01:07:10 djm Exp $
+.Dd August 27 2020
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -602,6 +602,13 @@ option.
 .It Cm no-touch-required
 Do not require demonstration of user presence
 for signatures made using this key.
+This option only makes sense for the FIDO authenticator algorithms
+.Cm ecdsa-sk
+and
+.Cm ed25519-sk .
+.It Cm verify-required
+Require that signatures made using this key attest that they verified
+the user, e.g. via a PIN.
 This option only makes sense for the FIDO authenticator algorithms
 .Cm ecdsa-sk
 and
