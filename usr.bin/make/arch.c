@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.182 2020/11/29 01:40:26 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.183 2020/12/04 14:39:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.182 2020/11/29 01:40:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.183 2020/12/04 14:39:56 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -169,21 +169,20 @@ ArchFree(void *ap)
 
 /*
  * Parse an archive specification such as "archive.a(member1 member2.${EXT})",
- * adding nodes for the expanded members to nodeLst.  Nodes are created as
+ * adding nodes for the expanded members to gns.  Nodes are created as
  * necessary.
  *
  * Input:
  *	pp		The start of the specification.
- *	nodeLst		The list on which to place the nodes.
+ *	gns		The list on which to place the nodes.
  *	ctxt		The context in which to expand variables.
  *
  * Output:
  *	return		TRUE if it was a valid specification.
  *	*pp		Points to the first non-space after the archive spec.
- *	*nodeLst	Nodes for the members have been added.
  */
 Boolean
-Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
+Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 {
 	char *cp;		/* Pointer into line */
 	GNode *gn;		/* New node */
@@ -317,8 +316,6 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 			/*
 			 * Now form an archive spec and recurse to deal with
 			 * nested variables and multi-word variable values.
-			 * The results are just placed at the end of the
-			 * nodeLst we're returning.
 			 */
 			sacrifice = str_concat4(libName, "(", memName, ")");
 			buf = sacrifice;
@@ -333,10 +330,9 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 				 */
 				gn = Targ_GetNode(buf);
 				gn->type |= OP_ARCHV;
-				Lst_Append(nodeLst, gn);
+				Lst_Append(gns, gn);
 
-			} else if (!Arch_ParseArchive(&sacrifice, nodeLst,
-						      ctxt)) {
+			} else if (!Arch_ParseArchive(&sacrifice, gns, ctxt)) {
 				/* Error in nested call. */
 				free(buf);
 				return FALSE;
@@ -357,7 +353,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 				free(fullname);
 
 				gn->type |= OP_ARCHV;
-				Lst_Append(nodeLst, gn);
+				Lst_Append(gns, gn);
 			}
 			Lst_Done(&members);
 
@@ -375,7 +371,7 @@ Arch_ParseArchive(char **pp, GNodeList *nodeLst, GNode *ctxt)
 			 * we place it on the end of the provided list.
 			 */
 			gn->type |= OP_ARCHV;
-			Lst_Append(nodeLst, gn);
+			Lst_Append(gns, gn);
 		}
 		if (doSubst)
 			free(memName);

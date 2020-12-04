@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.334 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.335 2020/12/04 14:39:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.334 2020/11/29 09:27:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.335 2020/12/04 14:39:56 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -919,10 +919,10 @@ JobPrintCommands(Job *job)
 static void
 JobSaveCommands(Job *job)
 {
-    StringListNode *node;
+    StringListNode *ln;
 
-    for (node = job->tailCmds; node != NULL; node = node->next) {
-	const char *cmd = node->datum;
+    for (ln = job->tailCmds; ln != NULL; ln = ln->next) {
+	const char *cmd = ln->datum;
 	char *expanded_cmd;
 	/* XXX: This Var_Subst is only intended to expand the dynamic
 	 * variables such as .TARGET, .IMPSRC.  It is not intended to

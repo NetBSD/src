@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.148 2020/11/29 01:05:08 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.149 2020/12/04 14:39:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.148 2020/11/29 01:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.149 2020/12/04 14:39:56 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -306,19 +306,23 @@ GNode *Targ_GetEndNode(void)
     return endNode;
 }
 
-/* Return the named nodes, creating them as necessary. */
+/* Add the named nodes to the list, creating them as necessary. */
 void
-Targ_FindList(GNodeList *nodes, StringList *names)
+Targ_FindList(GNodeList *gns, StringList *names)
 {
     StringListNode *ln;
+
     for (ln = names->first; ln != NULL; ln = ln->next) {
 	const char *name = ln->datum;
 	GNode *gn = Targ_GetNode(name);
-	Lst_Append(nodes, gn);
+	Lst_Append(gns, gn);
     }
 }
 
-/* Return true if should ignore errors when creating gn. */
+/*
+ * Return true if errors from shell commands should be ignored when
+ * creating gn.
+ */
 Boolean
 Targ_Ignore(const GNode *gn)
 {
@@ -356,10 +360,10 @@ Targ_SetMain(GNode *gn)
 static void
 PrintNodeNames(GNodeList *gnodes)
 {
-    GNodeListNode *node;
+    GNodeListNode *ln;
 
-    for (node = gnodes->first; node != NULL; node = node->next) {
-	GNode *gn = node->datum;
+    for (ln = gnodes->first; ln != NULL; ln = ln->next) {
+	GNode *gn = ln->datum;
 	debug_printf(" %s%s", gn->name, gn->cohort_num);
     }
 }
