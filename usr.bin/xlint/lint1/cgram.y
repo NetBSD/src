@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.105 2020/09/18 14:19:08 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.106 2020/12/04 17:56:04 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.105 2020/09/18 14:19:08 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.106 2020/12/04 17:56:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -543,6 +543,7 @@ type_attribute_spec:
 	| T_AT_BOUNDED T_LPARN type_attribute_bounded_type
 	  T_COMMA constant T_COMMA constant T_RPARN
 	| T_AT_SENTINEL T_LPARN constant T_RPARN
+	| T_AT_SENTINEL
 	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
 	| T_AT_NONNULL T_LPARN constant T_RPARN
 	| T_AT_MODE T_LPARN T_NAME T_RPARN
