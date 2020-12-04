@@ -8,21 +8,14 @@
  * Perform a factory reset on a given authenticator.
  */
 
-#include <openssl/ec.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../openbsd-compat/openbsd-compat.h"
-
 #include "fido.h"
 #include "extern.h"
-
-#ifdef SIGNAL_EXAMPLE
-extern volatile sig_atomic_t got_signal;
-#endif
+#include "../openbsd-compat/openbsd-compat.h"
 
 int
 main(int argc, char **argv)

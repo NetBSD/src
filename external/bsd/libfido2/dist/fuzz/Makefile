@@ -2,10 +2,10 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-IMAGE		:= libfido2-coverage:1.3.0
+IMAGE		:= libfido2-coverage:1.5.0
 RUNNER		:= libfido2-runner
-PROFDATA	:= llvm-profdata-9
-COV		:= llvm-cov-9
+PROFDATA	:= llvm-profdata-10
+COV		:= llvm-cov-10
 TARGETS		:= fuzz_assert fuzz_bio fuzz_cred fuzz_credman fuzz_mgmt
 CORPORA		:= $(foreach f,${TARGETS},${f}/corpus)
 MINIFY		:= $(foreach f,${TARGETS},/minify/${f}/corpus)
@@ -26,16 +26,16 @@ sync: run
 	docker exec ${RUNNER} make -C libfido2/build
 
 corpus: sync
-	docker exec ${RUNNER} /bin/bash -c 'cd /libfido2/fuzz && rm -rf ${TARGETS}'
+	docker exec ${RUNNER} /bin/sh -c 'cd /libfido2/fuzz && rm -rf ${TARGETS}'
 	docker exec ${RUNNER} tar Czxf /libfido2/fuzz /libfido2/fuzz/corpus.tgz
 
 ${TARGETS}: corpus sync
 	docker exec -e LLVM_PROFILE_FILE=/profraw/$@ ${RUNNER} \
-		/bin/bash -c 'rm -f /profraw/$@ && /libfido2/build/fuzz/$@ \
+		/bin/sh -c 'rm -f /profraw/$@ && /libfido2/build/fuzz/$@ \
 		-runs=1 /libfido2/fuzz/$@'
 
 ${MINIFY}: /minify/%/corpus: %
-	docker exec ${RUNNER} /bin/bash -c 'rm -rf $@ && mkdir -p $@ && \
+	docker exec ${RUNNER} /bin/sh -c 'rm -rf $@ && mkdir -p $@ && \
 		/libfido2/build/fuzz/$< -use_value_profile=1 -merge=1 $@ \
 		/libfido2/fuzz/$</corpus'
 
@@ -43,11 +43,11 @@ corpus.tgz-: ${MINIFY}
 	docker exec -i ${RUNNER} tar Czcf /minify - ${TARGETS} > $@
 
 profdata: run
-	docker exec ${RUNNER} /bin/bash -c 'rm -f /$@ && ${PROFDATA} \
+	docker exec ${RUNNER} /bin/sh -c 'rm -f /$@ && ${PROFDATA} \
 		merge -sparse profraw/* -o $@'
 
 report.tgz: profdata
-	docker exec ${RUNNER} /bin/bash -c 'rm -rf /report && mkdir /report && \
+	docker exec ${RUNNER} /bin/sh -c 'rm -rf /report && mkdir /report && \
 		${COV} show -format=html -tab-size=8 -instr-profile=/$< \
 		-output-dir=/report /libfido2/build/src/libfido2.so'
 	docker exec -i ${RUNNER} tar Czcf / - report > $@
@@ -57,12 +57,12 @@ summary.txt: profdata
 		/libfido2/build/src/libfido2.so -instr-profile=/$< > $@
 
 functions.txt: profdata
-	docker exec ${RUNNER} /bin/bash -c '${COV} report -use-color=false \
+	docker exec ${RUNNER} /bin/sh -c '${COV} report -use-color=false \
 		-show-functions -instr-profile=/$< \
 		/libfido2/build/src/libfido2.so /libfido2/src/*.[ch]' > $@
 
 clean: run
-	docker exec ${RUNNER} /bin/bash -c 'rm -rf /profraw /profdata && \
+	docker exec ${RUNNER} /bin/sh -c 'rm -rf /profraw /profdata && \
 		make -C /libfido2/build clean'
 	-docker stop ${RUNNER}
 	rm -rf ${TARGETS}

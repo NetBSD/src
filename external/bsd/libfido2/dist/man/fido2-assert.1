@@ -12,6 +12,7 @@
 .Nm
 .Fl G
 .Op Fl dhpruv
+.Op Fl t Ar option
 .Op Fl i Ar input_file
 .Op Fl o Ar output_file
 .Ar device
@@ -110,6 +111,29 @@ is specified,
 .Nm
 will not expect a credential id in its input, and may output
 multiple assertions.
+.It Fl t Ar option
+Toggles a key/value
+.Ar option ,
+where
+.Ar option
+is a string of the form
+.Dq key=value .
+The options supported at present are:
+.Bl -tag -width Ds
+.It Cm up Ns = Ns Ar true|false
+Asks the authenticator for user presence to be enabled or disabled.
+.It Cm uv Ns = Ns Ar true|false
+Asks the authenticator for user verification to be enabled or
+disabled.
+.It Cm pin Ns = Ns Ar true|false
+Tells
+.Nm
+whether to prompt for a PIN and request user verification.
+.El
+.Pp
+The
+.Fl t
+option may be specified multiple times.
 .It Fl u
 Obtain an assertion using U2F.
 By default,
@@ -119,6 +143,10 @@ U2F otherwise.
 .It Fl v
 If obtaining an assertion, prompt the user for a PIN and request
 user verification from the authenticator.
+If verifying an assertion, check whether the user verification bit
+was signed by the authenticator.
+.El
+.Pp
 If a
 .Em tty
 is available,
@@ -127,9 +155,6 @@ will use it to obtain the PIN.
 Otherwise,
 .Em stdin
 is used.
-If verifying an assertion, check whether the user verification bit
-was signed by the authenticator.
-.El
 .Sh INPUT FORMAT
 The input of
 .Nm
@@ -140,7 +165,7 @@ When obtaining an assertion,
 .Nm
 expects its input to consist of:
 .Pp
-.Bl -enum -offset indent -compact                                   
+.Bl -enum -offset indent -compact
 .It
 client data hash (base64 blob);
 .It
