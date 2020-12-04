@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.18 2018/02/14 16:07:55 maya Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.19 2020/12/04 00:41:10 thorpej Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.18 2018/02/14 16:07:55 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.19 2020/12/04 00:41:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1786,7 +1786,7 @@ pfr_fix_anchor(char *anchor)
 		off = 1;
 		while (*++path == '/')
 			off++;
-		bcopy(path, anchor, siz - off);
+		memmove(anchor, path, siz - off);
 		memset(anchor + siz - off, 0, off);
 	}
 	if (anchor[siz - 1])
