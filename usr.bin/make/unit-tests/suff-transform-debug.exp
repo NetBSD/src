@@ -34,6 +34,13 @@ MFLAGS           =   -r -k -d g1
 #*** Command-line Variables:
 .MAKE.LEVEL.ENV  = MAKELEVEL
 
+#*** Directory Cache:
+# Stats: 0 hits 2 misses 0 near misses 0 losers (0%)
+#  refs  hits  directory
+#     1     0  <curdir>
+#     1     0  .
+#     1     0  <defsyspath>
+
 #*** Suffixes:
 # ".a" (num 1, ref 2)
 #	To: 
