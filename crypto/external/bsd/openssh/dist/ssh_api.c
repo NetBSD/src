@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh_api.c,v 1.10 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: ssh_api.c,v 1.19 2019/10/31 21:23:19 djm Exp $ */
+/*	$NetBSD: ssh_api.c,v 1.11 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: ssh_api.c,v 1.21 2020/08/27 01:06:18 djm Exp $ */
+
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.10 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.11 2020/12/04 18:42:50 christos Exp $");
 
 #include <sys/types.h>
 
@@ -54,7 +55,7 @@ int	_ssh_host_key_sign(struct ssh *, struct sshkey *, struct sshkey *,
  */
 int	use_privsep = 0;
 int	mm_sshkey_sign(struct sshkey *, u_char **, u_int *,
-    const u_char *, u_int, const char *, const char *, u_int);
+    const u_char *, u_int, const char *, const char *, const char *, u_int);
 
 #ifdef WITH_OPENSSL
 DH	*mm_choose_dh(int, int, int);
@@ -66,8 +67,8 @@ u_int session_id2_len = 0;
 
 int
 mm_sshkey_sign(struct sshkey *key, u_char **sigp, u_int *lenp,
-    const u_char *data, u_int datalen, const char *alg, const char *sk_provider,
-    u_int compat)
+    const u_char *data, u_int datalen, const char *alg,
+    const char *sk_provider, const char *sk_pin, u_int compat)
 {
 	return (-1);
 }
@@ -150,7 +151,6 @@ ssh_free(struct ssh *ssh)
 {
 	struct key_entry *k;
 
-	ssh_packet_close(ssh);
 	/*
 	 * we've only created the public keys variants in case we
 	 * are a acting as a server.
@@ -165,8 +165,7 @@ ssh_free(struct ssh *ssh)
 		TAILQ_REMOVE(&ssh->private_keys, k, next);
 		free(k);
 	}
-	if (ssh->kex)
-		kex_free(ssh->kex);
+	ssh_packet_close(ssh);
 	free(ssh);
 }
 
@@ -567,5 +566,5 @@ _ssh_host_key_sign(struct ssh *ssh, struct sshkey *privkey,
     const u_char *data, size_t dlen, const char *alg)
 {
 	return sshkey_sign(privkey, signature, slen, data, dlen,
-	    alg, NULL, ssh->compat);
+	    alg, NULL, NULL, ssh->compat);
 }

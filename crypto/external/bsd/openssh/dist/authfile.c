@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.24 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.140 2020/04/17 07:15:11 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.25 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.141 2020/06/18 23:33:38 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.24 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.25 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -260,7 +260,7 @@ int
 sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 {
 	char *pubfile = NULL;
-	int r;
+	int r, oerrno;
 
 	if (keyp != NULL)
 		*keyp = NULL;
@@ -280,8 +280,14 @@ sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 	if ((r = sshkey_load_pubkey_from_private(filename, keyp)) == 0)
 		goto out;
 
+	/* Pretend we couldn't find the key */
+	r = SSH_ERR_SYSTEM_ERROR;
+	errno = ENOENT;
+
  out:
+	oerrno = errno;
 	free(pubfile);
+	errno = oerrno;
 	return r;
 }
 

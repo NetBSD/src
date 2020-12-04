@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.29 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.344 2020/04/24 02:19:40 dtucker Exp $ */
+/*	$NetBSD: clientloop.c,v 1.30 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.346 2020/09/16 03:07:31 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.29 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.30 2020/12/04 18:42:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -159,6 +159,7 @@ static int connection_out;	/* Connection to server (output). */
 static int need_rekeying;	/* Set to non-zero if rekeying is requested. */
 static int session_closed;	/* In SSH2: login session closed. */
 static u_int x11_refuse_time;	/* If >0, refuse x11 opens after this time. */
+static time_t server_alive_time;	/* Time to do server_alive_check */
 
 static void client_init_dispatch(struct ssh *ssh);
 int	session_ident = -1;
@@ -464,6 +465,13 @@ client_global_request_reply(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 static void
+schedule_server_alive_check(void)
+{
+	if (options.server_alive_interval > 0)
+		server_alive_time = monotime() + options.server_alive_interval;
+}
+
+static void
 server_alive_check(struct ssh *ssh)
 {
 	int r;
@@ -479,6 +487,7 @@ server_alive_check(struct ssh *ssh)
 		fatal("%s: send packet: %s", __func__, ssh_err(r));
 	/* Insert an empty placeholder to maintain ordering */
 	client_register_global_confirm(NULL, NULL);
+	schedule_server_alive_check();
 }
 
 /*
@@ -492,7 +501,7 @@ client_wait_until_can_do_something(struct ssh *ssh,
 {
 	struct timeval tv, *tvp;
 	int timeout_secs;
-	time_t minwait_secs = 0, server_alive_time = 0, now = monotime();
+	time_t minwait_secs = 0, now = monotime();
 	int r, ret;
 
 	/* Add any selections by the channel mechanism. */
@@ -521,10 +530,8 @@ client_wait_until_can_do_something(struct ssh *ssh,
 	 */
 
 	timeout_secs = INT_MAX; /* we use INT_MAX to mean no timeout */
-	if (options.server_alive_interval > 0) {
-		timeout_secs = options.server_alive_interval;
-		server_alive_time = now + options.server_alive_interval;
-	}
+	if (options.server_alive_interval > 0)
+		timeout_secs = MAXIMUM(server_alive_time - now, 0);
 	if (options.rekey_interval > 0 && !rekeying)
 		timeout_secs = MINIMUM(timeout_secs,
 		    ssh_packet_get_rekey_timeout(ssh));
@@ -554,7 +561,6 @@ client_wait_until_can_do_something(struct ssh *ssh,
 		 */
 		memset(*readsetp, 0, *nallocp);
 		memset(*writesetp, 0, *nallocp);
-
 		if (errno == EINTR)
 			return;
 		/* Note: we might still have data in the buffers. */
@@ -562,15 +568,14 @@ client_wait_until_can_do_something(struct ssh *ssh,
 		    "select: %s\r\n", strerror(errno))) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 		quit_pending = 1;
-	} else if (ret == 0) {
+	} else if (options.server_alive_interval > 0 && !FD_ISSET(connection_in,
+	     *readsetp) && monotime() >= server_alive_time)
 		/*
-		 * Timeout.  Could have been either keepalive or rekeying.
-		 * Keepalive we check here, rekeying is checked in clientloop.
+		 * ServerAlive check is needed. We can't rely on the select
+		 * timing out since traffic on the client side such as port
+		 * forwards can keep waking it up.
 		 */
-		if (server_alive_time != 0 && server_alive_time <= monotime())
-			server_alive_check(ssh);
-	}
-
+		server_alive_check(ssh);
 }
 
 static void
@@ -610,6 +615,7 @@ client_process_net_input(struct ssh *ssh, fd_set *readset)
 	 * the packet subsystem.
 	 */
 	if (FD_ISSET(connection_in, readset)) {
+		schedule_server_alive_check();
 		/* Read as much as possible. */
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
@@ -1229,7 +1235,6 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	int r, max_fd = 0, max_fd2 = 0, len;
 	u_int64_t ibytes, obytes;
 	u_int nalloc = 0;
-	char buf[100];
 
 	debug("Entering interactive session.");
 
@@ -1312,6 +1317,8 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		channel_register_cleanup(ssh, session_ident,
 		    client_channel_closed, 0);
 	}
+
+	schedule_server_alive_check();
 
 	/* Main loop of the client for the interactive session mode. */
 	while (!quit_pending) {
@@ -1458,7 +1465,6 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	}
 
 	/* Clear and free any buffers. */
-	explicit_bzero(buf, sizeof(buf));
 	sshbuf_free(stderr_buffer);
 
 	/* Report bytes transferred, and transfer rates. */

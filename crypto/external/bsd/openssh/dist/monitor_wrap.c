@@ -1,5 +1,6 @@
-/*	$NetBSD: monitor_wrap.c,v 1.27 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.117 2019/12/15 18:57:30 djm Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.28 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.118 2020/08/27 01:06:18 djm Exp $ */
+
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.27 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.28 2020/12/04 18:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -220,7 +221,7 @@ mm_choose_dh(int min, int nbits, int max)
 int
 mm_sshkey_sign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, const char *hostkey_alg,
-    const char *sk_provider, u_int compat)
+    const char *sk_provider, const char *sk_pin, u_int compat)
 {
 	struct kex *kex = *pmonitor->m_pkex;
 	struct sshbuf *m;

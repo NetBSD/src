@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: hostfile.h,v 1.24 2015/02/16 22:08:57 djm Exp $ */
+/*	$NetBSD: hostfile.h,v 1.10 2020/12/04 18:42:50 christos Exp $	*/
+/* $OpenBSD: hostfile.h,v 1.26 2020/06/26 05:02:03 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,6 +40,7 @@ HostStatus check_key_in_hostkeys(struct hostkeys *, struct sshkey *,
     const struct hostkey_entry **);
 int	 lookup_key_in_hostkeys_by_type(struct hostkeys *, int,
     const struct hostkey_entry **);
+int	 lookup_marker_in_hostkeys(struct hostkeys *, int);
 
 int	 hostfile_read_key(char **, u_int *, struct sshkey *);
 int	 add_host_to_hostfile(const char *, const char *,
@@ -105,5 +106,7 @@ typedef int hostkeys_foreach_fn(struct hostkey_foreach_line *l, void *ctx);
 /* Iterate over a hostkeys file */
 int hostkeys_foreach(const char *path, hostkeys_foreach_fn *callback, void *ctx,
     const char *host, const char *ip, u_int options);
+
+void hostfile_create_user_ssh_dir(const char *, int);
 
 #endif
