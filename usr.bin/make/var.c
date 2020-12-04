@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.700 2020/12/04 22:35:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.701 2020/12/04 22:47:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.700 2020/12/04 22:35:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.701 2020/12/04 22:47:57 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -670,6 +670,32 @@ Var_Export(const char *str, Boolean isExport)
 extern char **environ;
 
 static void
+UnexportEnv(void)
+{
+	const char *cp;
+	char **newenv;
+
+	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
+	if (environ == savedEnv) {
+		/* we have been here before! */
+		newenv = bmake_realloc(environ, 2 * sizeof(char *));
+	} else {
+		if (savedEnv != NULL) {
+			free(savedEnv);
+			savedEnv = NULL;
+		}
+		newenv = bmake_malloc(2 * sizeof(char *));
+	}
+
+	/* Note: we cannot safely free() the original environ. */
+	environ = savedEnv = newenv;
+	newenv[0] = NULL;
+	newenv[1] = NULL;
+	if (cp && *cp)
+		setenv(MAKE_LEVEL_ENV, cp, 1);
+}
+
+static void
 UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 {
 	Var *v = VarFind(varname, VAR_GLOBAL, FALSE);
@@ -715,27 +741,7 @@ Var_UnExport(const char *str)
     str += strlen("unexport");
     unexport_env = strncmp(str, "-env", 4) == 0;
     if (unexport_env) {
-	const char *cp;
-	char **newenv;
-
-	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
-	if (environ == savedEnv) {
-	    /* we have been here before! */
-	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
-	} else {
-	    if (savedEnv != NULL) {
-		free(savedEnv);
-		savedEnv = NULL;
-	    }
-	    newenv = bmake_malloc(2 * sizeof(char *));
-	}
-
-	/* Note: we cannot safely free() the original environ. */
-	environ = savedEnv = newenv;
-	newenv[0] = NULL;
-	newenv[1] = NULL;
-	if (cp && *cp)
-	    setenv(MAKE_LEVEL_ENV, cp, 1);
+    	UnexportEnv();
     } else {
 	cpp_skip_whitespace(&str);
 	if (str[0] != '\0')
