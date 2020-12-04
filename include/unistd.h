@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.159 2020/09/22 21:37:47 nia Exp $	*/
+/*	$NetBSD: unistd.h,v 1.160 2020/12/04 20:39:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -102,9 +102,9 @@ char	*cuserid(char *);	/* obsolete */
 #endif /* __CUSERID_DECLARED */
 int	 dup(int);
 int	 dup2(int, int);
-int	 execl(const char *, const char *, ...);
+int	 execl(const char *, const char *, ...) __null__sentinel;
 int	 execle(const char *, const char *, ...);
-int	 execlp(const char *, const char *, ...);
+int	 execlp(const char *, const char *, ...) __null_sentinel;
 int	 execv(const char *, char * const *);
 int	 execve(const char *, char * const *, char * const *);
 int	 execvp(const char *, char * const *);
