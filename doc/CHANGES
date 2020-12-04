@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2760 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2761 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -310,3 +310,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20201201]
 	pkg_install(8): Updated to 20201202. This changes the default database
 		location from /var/db/pkg to /usr/pkg/pkgdb. [wiz 20201202]
+	libfido2: Update for OpenSSH 8.4 support [christos 20201204]
