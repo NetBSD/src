@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.90 2020/11/28 23:13:28 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.91 2020/12/04 20:08:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -187,6 +187,10 @@ Vector_Get(Vector *v, size_t i)
 
 void *Vector_Push(Vector *);
 void *Vector_Pop(Vector *);
-void Vector_Done(Vector *);
+
+MAKE_INLINE void
+Vector_Done(Vector *v) {
+	free(v->items);
+}
 
 #endif /* MAKE_LST_H */
