@@ -27,6 +27,7 @@ int write_rsa_pubkey(const char *, const void *, size_t);
 int write_eddsa_pubkey(const char *, const void *, size_t);
 #ifdef SIGNAL_EXAMPLE
 void prepare_signal_handler(int);
+extern volatile sig_atomic_t got_signal;
 #endif
 
 #endif /* _EXTERN_H_ */

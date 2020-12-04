@@ -12,6 +12,7 @@
 .Nm
 .Fl M
 .Op Fl dhqruv
+.Op Fl c Ar cred_protect
 .Op Fl i Ar input_file
 .Op Fl o Ar output_file
 .Ar device
@@ -19,6 +20,7 @@
 .Nm
 .Fl V
 .Op Fl dhv
+.Op Fl c Ar cred_protect
 .Op Fl i Ar input_file
 .Op Fl o Ar output_file
 .Op Ar type
@@ -89,6 +91,12 @@ to make a new credential on
 Tells
 .Nm
 to verify a credential.
+.It Fl c Ar cred_protect
+If making a credential, set the credential's protection level to
+.Ar cred_protect .
+If verifying a credential, check whether the credential's protection
+level was signed by the authenticator as
+.Ar cred_protect .
 .It Fl d
 Causes
 .Nm

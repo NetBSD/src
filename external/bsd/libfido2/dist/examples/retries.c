@@ -8,15 +8,12 @@
  * Get an authenticator's number of PIN attempts left.
  */
 
-#include <openssl/ec.h>
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../openbsd-compat/openbsd-compat.h"
-
 #include "fido.h"
+#include "../openbsd-compat/openbsd-compat.h"
 
 int
 main(int argc, char **argv)
