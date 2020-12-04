@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.9 2020/11/24 23:31:56 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.10 2020/12/04 21:39:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -63,6 +63,8 @@ struct gicv3_softc {
 
 	u_int			sc_quirks;
 #define	GICV3_QUIRK_RK3399	__BIT(0)	/* Rockchip RK3399 GIC-500 */
+
+	uint32_t		sc_gicd_typer;
 
 	u_int			sc_priority_shift;
 	u_int			sc_pmr_shift;
