@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.463 2020/11/29 01:40:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.464 2020/12/04 20:23:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.463 2020/11/29 01:40:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.464 2020/12/04 20:23:33 rillig Exp $");
 
 /* types and constants */
 
@@ -856,7 +856,7 @@ ApplyDependencyOperator(GNodeType op)
 }
 
 static Boolean
-ParseDoSrcKeyword(const char *src, ParseSpecial specType)
+ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
 {
     static int wait_number = 0;
     char wait_src[16];
@@ -895,7 +895,7 @@ ParseDoSrcKeyword(const char *src, ParseSpecial specType)
 }
 
 static void
-ParseDoSrcMain(const char *src)
+ParseDependencySourceMain(const char *src)
 {
     /*
      * In a line like ".MAIN: source1 source2", it means we need to add
@@ -916,7 +916,7 @@ ParseDoSrcMain(const char *src)
 }
 
 static void
-ParseDoSrcOrder(const char *src)
+ParseDependencySourceOrder(const char *src)
 {
     GNode *gn;
     /*
@@ -943,7 +943,8 @@ ParseDoSrcOrder(const char *src)
 }
 
 static void
-ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
+ParseDependencySourceOther(const char *src, GNodeType tOp,
+			   ParseSpecial specType)
 {
     GNode *gn;
 
@@ -980,17 +981,17 @@ ParseDoSrcOther(const char *src, GNodeType tOp, ParseSpecial specType)
  *	src		name of the source to handle
  */
 static void
-ParseDoSrc(GNodeType tOp, const char *src, ParseSpecial specType)
+ParseDependencySource(GNodeType tOp, const char *src, ParseSpecial specType)
 {
-    if (ParseDoSrcKeyword(src, specType))
+    if (ParseDependencySourceKeyword(src, specType))
 	return;
 
     if (specType == SP_MAIN)
-	ParseDoSrcMain(src);
+	ParseDependencySourceMain(src);
     else if (specType == SP_ORDER)
-	ParseDoSrcOrder(src);
+	ParseDependencySourceOrder(src);
     else
-	ParseDoSrcOther(src, tOp, specType);
+	ParseDependencySourceOther(src, tOp, specType);
 }
 
 /* If we have yet to decide on a main target to make, in the absence of any
@@ -1562,7 +1563,7 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 
 	    while (!Lst_IsEmpty(&sources)) {
 		GNode *gn = Lst_Dequeue(&sources);
-		ParseDoSrc(tOp, gn->name, specType);
+		ParseDependencySource(tOp, gn->name, specType);
 	    }
 	    Lst_Done(&sources);
 	    end = start;
@@ -1572,7 +1573,7 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 		end++;
 	    }
 
-	    ParseDoSrc(tOp, start, specType);
+	    ParseDependencySource(tOp, start, specType);
 	}
 	pp_skip_whitespace(&end);
 	start = end;
