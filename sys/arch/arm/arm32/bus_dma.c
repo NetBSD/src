@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.125 2020/12/04 07:11:35 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.126 2020/12/04 07:12:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.125 2020/12/04 07:11:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.126 2020/12/04 07:12:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -883,6 +883,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 		cpu_dcache_inv_range(va, len);
 		cpu_sdcache_inv_range(va, pa, len);
 		break;
+
 	case BUS_DMASYNC_POSTREAD:
 		STAT_INCR(sync_postread);
 		cpu_dcache_inv_range(va, len);
@@ -1049,7 +1050,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync: mix PRE and POST");
+		panic("%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
 	    "offset %lu mapsize %lu",
@@ -1110,24 +1111,28 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		case _BUS_DMA_BUFTYPE_LINEAR:
 			memcpy(dataptr, cookie->id_origlinearbuf + offset, len);
 			break;
+
 		case _BUS_DMA_BUFTYPE_MBUF:
 			m_copydata(cookie->id_origmbuf, offset, len, dataptr);
 			break;
+
 		case _BUS_DMA_BUFTYPE_UIO:
-			_bus_dma_uiomove(dataptr, cookie->id_origuio, len, UIO_WRITE);
+			_bus_dma_uiomove(dataptr, cookie->id_origuio, len,
+			    UIO_WRITE);
 			break;
+
 #ifdef DIAGNOSTIC
 		case _BUS_DMA_BUFTYPE_RAW:
-			panic("_bus_dmamap_sync(pre): _BUS_DMA_BUFTYPE_RAW");
+			panic("%s:(pre): _BUS_DMA_BUFTYPE_RAW", __func__);
 			break;
 
 		case _BUS_DMA_BUFTYPE_INVALID:
-			panic("_bus_dmamap_sync(pre): _BUS_DMA_BUFTYPE_INVALID");
+			panic("%s(pre): _BUS_DMA_BUFTYPE_INVALID", __func__);
 			break;
 
 		default:
-			panic("_bus_dmamap_sync(pre): map %p: unknown buffer type %d\n",
-			    map, map->_dm_buftype);
+			panic("%s(pre): map %p: unknown buffer type %d\n",
+			    __func__, map, map->_dm_buftype);
 			break;
 #endif /* DIAGNOSTIC */
 		}
@@ -1207,12 +1212,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case _BUS_DMA_BUFTYPE_INVALID:
-		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_INVALID");
+		panic("%s: _BUS_DMA_BUFTYPE_INVALID", __func__);
 		break;
 
 	default:
-		panic("_bus_dmamap_sync: map %p: unknown buffer type %d\n",
-		    map, map->_dm_buftype);
+		panic("%s: map %p: unknown buffer type %d\n", __func__, map,
+		    map->_dm_buftype);
 	}
 
 	/* Drain the write buffer. */
@@ -1241,17 +1246,18 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	case _BUS_DMA_BUFTYPE_UIO:
 		_bus_dma_uiomove(dataptr, cookie->id_origuio, len, UIO_READ);
 		break;
+
 #ifdef DIAGNOSTIC
 	case _BUS_DMA_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync(post): _BUS_DMA_BUFTYPE_RAW");
+		panic("%s(post): _BUS_DMA_BUFTYPE_RAW", __func__);
 		break;
 
 	case _BUS_DMA_BUFTYPE_INVALID:
-		panic("_bus_dmamap_sync(post): _BUS_DMA_BUFTYPE_INVALID");
+		panic("%s(post): _BUS_DMA_BUFTYPE_INVALID", __func__);
 		break;
 
 	default:
-		panic("_bus_dmamap_sync(post): map %p: unknown buffer type %d\n",
+		panic("%s(post): map %p: unknown buffer type %d\n", __func__,
 		    map, map->_dm_buftype);
 		break;
 #endif
