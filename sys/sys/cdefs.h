@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.154 2020/04/22 09:23:21 rin Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.155 2020/12/04 20:38:44 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -268,6 +268,12 @@
 #define	__always_inline	__attribute__((__always_inline__))
 #else
 #define	__always_inline	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 0) || defined(__lint__)
+#define	__null_sentinel	__attribute__((__sentinel__))
+#else
+#define	__null_sentinel	/* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 1) || defined(__lint__)
