@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.234 2020/12/01 22:16:36 rillig Exp $
+# $NetBSD: Makefile,v 1.235 2020/12/04 14:28:50 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -497,12 +497,9 @@ SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
 
 # Some tests need an additional round of postprocessing.
-POSTPROC.deptgt-suffixes= awk '/^\#\*\*\* Suffixes/,/^never-stop/'
-POSTPROC.gnode-submake=	awk '/Input graph/, /^$$/'
-POSTPROC.opt-debug-graph1=	${STD_POSTPROC.dg1}
-POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
-POSTPROC.suff-main-several=	${STD_POSTPROC.dg1}
-POSTPROC.suff-transform-debug=	${STD_POSTPROC.dg1}
+POSTPROC.deptgt-suffixes=	awk '/^\#\*\*\* Suffixes/,/^never-stop/'
+POSTPROC.gnode-submake=		awk '/Input graph/, /^$$/'
+POSTPROC.varname-empty=		${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
 export-all.rawout: export.mk
@@ -514,15 +511,12 @@ unexport-env.rawout: export.mk
 # Some standard sed commands, to be used in the SED_CMDS above.
 
 # Omit details from the output of the -dg1 option such as process IDs.
-STD_SED_CMDS.dg1=	-e 's,${.CURDIR},<curdir>,'
+STD_SED_CMDS.dg1=	-e 's,${.CURDIR}$$,<curdir>,'
+STD_SED_CMDS.dg1+=	-e 's,  ${DEFSYSPATH:U/usr/share/mk}$$,  <defsyspath>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MACHINE[_ARCH]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
-
-# The layout of the lines in the directory cache vary depending on the path
-# length, which cannot be predicted.  Therefore omit these lines.
-STD_POSTPROC.dg1=	awk '/Directory Cache/,/^$$/ { next } { print }'
 
 # End of the configuration helpers section.
 
