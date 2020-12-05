@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.53 2020/01/19 00:57:00 kre Exp $
+#	$NetBSD: install.sub,v 1.54 2020/12/05 18:24:10 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,7 @@ ROOTDISK=""				# filled in below
 VERSION=89936
 export VERSION
 
-ALLSETS="base comp etc games man misc rescue text"	# default install sets
+ALLSETS="base comp etc games man misc modules rescue text"	# default install sets
 UPGRSETS="base comp games man misc text"		# default upgrade sets
 THESETS=						# one of the above
 
