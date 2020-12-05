@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.6 2020/12/05 18:16:11 tsutsui Exp $
+#	$NetBSD: install.md,v 1.7 2020/12/05 18:27:39 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,6 +81,11 @@ md_get_ifdevs() {
 	# return available network interfaces
 	mi_filter_dmesg | awk -F : '/^ae[0-9]*:/ { print $1; }' | sort -u
 	mi_filter_dmesg | awk -F : '/^sn[0-9]*:/ { print $1; }' | sort -u
+}
+
+md_get_partition_range() {
+	# return an expression describing the valid partition id's
+	echo '[a-h]'
 }
 
 md_installboot() {
