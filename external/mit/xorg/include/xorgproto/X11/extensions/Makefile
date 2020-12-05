@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/02/23 09:10:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2020/12/05 21:36:21 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,6 @@ INCS=	EVI.h \
 	XKBsrv.h \
 	XKBstr.h \
 	XResproto.h \
-	Xeviestr.h \
 	Xv.h \
 	XvMC.h \
 	XvMCproto.h \
