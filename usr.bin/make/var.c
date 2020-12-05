@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.701 2020/12/04 22:47:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.702 2020/12/05 13:01:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.701 2020/12/04 22:47:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.702 2020/12/05 13:01:33 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -1195,7 +1195,7 @@ SysVMatch(const char *word, const char *pattern,
     percent = strchr(p, '%');
     if (percent != NULL) {	/* ${VAR:...%...=...} */
 	*out_hasPercent = TRUE;
-	if (*w == '\0')
+	if (w[0] == '\0')
 	    return NULL;	/* empty word does not match pattern */
 
 	/* check that the prefix matches */
