@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.13 2020/12/05 22:49:50 christos Exp $	*/
 
 /*	$OpenBSD: proc.h,v 1.4 2009/12/29 13:11:40 jsing Exp $ */
 
@@ -44,7 +44,7 @@ struct mdlwp {
 	volatile int	md_astpending;		/* AST pending for this LWP */
 	int		md_flags;		/* machine-dependent flags */
 
-	vaddr_t		md_bpva;
+	__vaddr_t	md_bpva;
 	unsigned int	md_bpsave[2];
 };
 
