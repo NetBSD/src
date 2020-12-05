@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.3 2020/12/02 13:53:50 wiz Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.4 2020/12/05 16:21:26 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.3 2020/12/02 13:53:50 wiz Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.4 2020/12/05 16:21:26 wiz Exp $");
 
 /*-
  * Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
@@ -310,8 +310,9 @@ pkgdb_get_dir(void)
 	    stat("/var/db/pkg", &sb) == 0) {
 		errx(EXIT_FAILURE,
 		     "The default PKG_DBDIR has changed, but this installation still uses the old one.\n"
-		     "Please move the database and re-run this command:\n"
-		     "\tmv /var/db/pkg " DEF_LOG_DIR);
+		     "Please move the databases and re-run this command:\n"
+		     "\tmv /var/db/pkg " DEF_LOG_DIR "\n"
+		     "\tmv /var/db/pkg.refcount " DEF_LOG_DIR ".refcount");
 	}
 
         return pkgdb_dir;
