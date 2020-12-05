@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
