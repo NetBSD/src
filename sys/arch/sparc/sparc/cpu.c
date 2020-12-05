@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.256 2020/06/13 20:01:27 ad Exp $ */
+/*	$NetBSD: cpu.c,v 1.257 2020/12/05 08:04:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.256 2020/06/13 20:01:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.257 2020/12/05 08:04:51 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.256 2020/06/13 20:01:27 ad Exp $");
 #include <sys/xcall.h>
 #include <sys/ipi.h>
 #include <sys/cpu.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/kmem.h>
 
@@ -486,6 +487,11 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 
 #if defined(MULTIPROCESSOR)
 	if (cpu_attach_count > 1) {
+		if ((boothowto & RB_MD1) != 0) {
+			aprint_naive("\n");
+			aprint_normal(": multiprocessor boot disabled\n");
+			return;
+		}
 		cpu_attach_non_boot(sc, cpi, node);
 		cpu_init_evcnt(cpi);
 		cpu_setup_sysctl(sc);
