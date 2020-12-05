@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.156 2020/11/29 21:31:55 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.157 2020/12/05 17:46:41 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -411,7 +411,7 @@ printCMDs(GNode *gn, FILE *fp)
  * Do we need/want a .meta file ?
  */
 static Boolean
-meta_needed(GNode *gn, const char *dname, const char *tname,
+meta_needed(GNode *gn, const char *dname,
 	    char *objdir_realpath, Boolean verbose)
 {
     struct cached_stat cst;
@@ -485,7 +485,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds objdir_realpath is realpath of dname */
-    if (!meta_needed(gn, dname, tname, objdir_realpath, TRUE))
+    if (!meta_needed(gn, dname, objdir_realpath, TRUE))
 	goto out;
     dname = objdir_realpath;
 
@@ -1101,7 +1101,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     tname = GNode_VarTarget(gn);
 
     /* if this succeeds fname3 is realpath of dname */
-    if (!meta_needed(gn, dname, tname, fname3, FALSE))
+    if (!meta_needed(gn, dname, fname3, FALSE))
 	goto oodate_out;
     dname = fname3;
 
