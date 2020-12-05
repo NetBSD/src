@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.95 2019/09/25 15:51:37 maya Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.96 2020/12/05 17:33:53 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,13 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.95 2019/09/25 15:51:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.96 2020/12/05 17:33:53 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
 #include <sys/scsiio.h>
-
-#include <sys/timevar.h>
 
 /*
  * Set a timeout for the watchdogging of a command.

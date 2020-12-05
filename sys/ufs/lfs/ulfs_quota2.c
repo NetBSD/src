@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.32 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.33 2020/12/05 17:40:00 thorpej Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.32 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.33 2020/12/05 17:40:00 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.32 2020/01/17 20:08:10 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
-#include <sys/timevar.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
