@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.11 2020/10/31 13:17:34 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.12 2020/12/05 15:08:21 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.11 2020/10/31 13:17:34 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.12 2020/12/05 15:08:21 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,10 +99,28 @@ static int
 ecadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	struct ecadc_softc sc;
 	int match_result;
+	u_int8_t junk;
 
-	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
-		return match_result;
+	if (!iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return 0;
+
+	/* Try a read so that we don't match on optional components */
+	if (match_result) {
+		sc.sc_tag = ia->ia_tag;
+		sc.sc_addr = ia->ia_addr;
+
+		iic_acquire_bus(sc.sc_tag, 0);
+		if (iic_exec(sc.sc_tag, I2C_OP_READ_WITH_STOP, sc.sc_addr,
+		    NULL, 0, &junk, 1, 0)) {
+			iic_release_bus(sc.sc_tag, 0);
+			return 0;
+		} else {
+			iic_release_bus(sc.sc_tag, 0);
+			return match_result;
+		}
+	}
 
 	/* This driver is direct-config only. */
 
