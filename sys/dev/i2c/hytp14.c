@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.9 2019/10/08 21:16:11 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.10 2020/12/05 14:50:33 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ hytp14_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach sensor\n");
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			return;
 		}
 	}
