@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.335 2020/12/04 14:39:56 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.336 2020/12/05 17:44:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.335 2020/12/04 14:39:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.336 2020/12/05 17:44:22 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1636,7 +1636,7 @@ JobStart(GNode *gn, JobFlags flags)
 /* Print the output of the shell command, skipping the noPrint command of
  * the shell, if any. */
 static char *
-JobOutput(Job *job, char *cp, char *endp)
+JobOutput(char *cp, char *endp)
 {
     char *ecp;
 
@@ -1774,7 +1774,7 @@ again:
 	if (i >= job->curPos) {
 	    char *cp;
 
-	    cp = JobOutput(job, job->outBuf, &job->outBuf[i]);
+	    cp = JobOutput(job->outBuf, &job->outBuf[i]);
 
 	    /*
 	     * There's still more in that thar buffer. This time, though,
