@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.6 2020/12/05 18:16:11 tsutsui Exp $
+#	$NetBSD: install.md,v 1.7 2020/12/05 18:52:06 tsutsui Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the NetBSD/sun3 ${VERSION} installation program."
+		echo "Welcome to the NetBSD/${MACHINE} ${RELEASE} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put NetBSD on your disk,
@@ -157,7 +157,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the NetBSD/sun3 ${VERSION} upgrade program."
+		echo "Welcome to the NetBSD/${MACHINE} ${RELEASE} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your NetBSD system in a

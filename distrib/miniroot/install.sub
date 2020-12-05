@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.56 2020/12/05 18:33:47 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.57 2020/12/05 18:52:06 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,8 +32,12 @@
 #	NetBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=89936
+MACHINE=				# filled by distrib/miniroot/list
+export MACHINE
+VERSION=100				# updated by distrib/miniroot/list
 export VERSION
+RELEASE=10.0				# updated by distrib/miniroot/list
+export RELEASE
 
 ALLSETS="base comp etc games man misc modules rescue text"	# default install sets
 UPGRSETS="base comp games man misc text"		# default upgrade sets

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.35 2011/06/19 06:48:07 tsutsui Exp $
+#	$NetBSD: list,v 1.36 2020/12/05 18:52:06 tsutsui Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin
 
@@ -71,5 +71,5 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 # and the installation scripts
 COPY	${CURDIR}/install.sh		install		555
 COPY	${CURDIR}/upgrade.sh		upgrade		555
-CMD	sed "/^VERSION=/s/=.*/=${DISTRIBREV}/" < ${CURDIR}/install.sub > install.sub
+CMD	sed -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" -e "/^RELEASE=/s/=.*/=${DISTRIBVER}/" -e "/^MACHINE=/s/=.*/=${MACHINE}/" < ${CURDIR}/install.sub > install.sub
 MTREE	./install.sub	type=file uname=root gname=wheel mode=0444

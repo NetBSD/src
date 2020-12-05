@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.7 2020/12/05 18:27:39 tsutsui Exp $
+#	$NetBSD: install.md,v 1.8 2020/12/05 18:52:06 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,7 +127,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the NetBSD/mac68k ${VERSION} installation program."
+	echo	"Welcome to the NetBSD/${MACHINE} ${RELEASE} installation program."
 	cat << \__welcome_banner_1
 
 This program is designed to help you install NetBSD on your system in a

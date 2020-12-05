@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.19 2020/12/05 18:27:39 tsutsui Exp $
+#	$NetBSD: install.md,v 1.20 2020/12/05 18:52:06 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -475,7 +475,7 @@ __md_copy_kernel_1
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the NetBSD/hp300 ${VERSION} installation program."
+	echo	"Welcome to the NetBSD/${MACHINE} ${RELEASE} installation program."
 	cat << \__welcome_banner_1
 
 This program is designed to help you install NetBSD on your system in a
