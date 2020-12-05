@@ -1,3 +1,5 @@
+/* $NetBSD: pcf8574.c,v 1.3 2020/12/05 14:48:09 jdc Exp $ */
+
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2 2020/10/31 14:39:31 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.3 2020/12/05 14:48:09 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +108,21 @@ static int
 pcf8574_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	struct pcf8574_softc sc;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
-		return match_result;
+	if (!iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return 0;
+
+	/* Try a read so that we don't match on optional components */
+	if (match_result) {
+		sc.sc_tag = ia->ia_tag;
+		sc.sc_addr = ia->ia_addr;
+		if (pcf8574_read(&sc, &sc.sc_state))
+			return 0;
+		else
+			return 1;
+	}
 
 	/* We don't support indirect matches */
 	return 0;
@@ -190,6 +203,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			    &sc->sc_sensor[i])) {
 				sysmon_envsys_destroy(sc->sc_sme);
+				sc->sc_sme = NULL;
 				aprint_error_dev(self,
 				    "unable to attach pin %d at sysmon\n", i);
 				return;
@@ -208,6 +222,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "unable to register with sysmon\n");
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			return;
 		}
 	}
@@ -219,8 +234,10 @@ pcf8574_detach(device_t self, int flags)
 	struct pcf8574_softc *sc = device_private(self);
 	int i;
 
-	if (sc->sc_sme != NULL)
+	if (sc->sc_sme != NULL) {
 		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
 
 	for (i = 0; i < sc->sc_nleds; i++)
 		led_detach(sc->sc_leds[i].led);
