@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.466 2020/12/05 18:38:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.467 2020/12/05 19:03:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.466 2020/12/05 18:38:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.467 2020/12/05 19:03:45 rillig Exp $");
 
 /* types and constants */
 
@@ -855,12 +855,33 @@ ApplyDependencyOperator(GNodeType op)
 	    break;
 }
 
+/*
+ * We add a .WAIT node in the dependency list. After any dynamic dependencies
+ * (and filename globbing) have happened, it is given a dependency on each
+ * previous child, back until the previous .WAIT node. The next child won't
+ * be scheduled until the .WAIT node is built.
+ *
+ * We give each .WAIT node a unique name (mainly for diagnostics).
+ */
+static void
+ParseDependencySourceWait(Boolean isSpecial)
+{
+	static int wait_number = 0;
+	char wait_src[16];
+	GNode *gn;
+
+	snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
+	gn = Targ_NewInternalNode(wait_src);
+	if (doing_depend)
+		ParseMark(gn);
+	gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
+	LinkToTargets(gn, isSpecial);
+
+}
+
 static Boolean
 ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
 {
-    static int wait_number = 0;
-    char wait_src[16];
-    GNode *gn;
 
     if (*src == '.' && ch_isupper(src[1])) {
 	int keywd = ParseFindKeyword(src);
@@ -871,22 +892,7 @@ ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
 		return TRUE;
 	    }
 	    if (parseKeywords[keywd].spec == SP_WAIT) {
-		/*
-		 * We add a .WAIT node in the dependency list.
-		 * After any dynamic dependencies (and filename globbing)
-		 * have happened, it is given a dependency on each
-		 * previous child, back until the previous .WAIT node.
-		 * The next child won't be scheduled until the .WAIT node
-		 * is built.
-		 * We give each .WAIT node a unique name (mainly for
-		 * diagnostics).
-		 */
-		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
-		gn = Targ_NewInternalNode(wait_src);
-		if (doing_depend)
-		    ParseMark(gn);
-		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		LinkToTargets(gn, specType != SP_NOT);
+	    	ParseDependencySourceWait(specType != SP_NOT);
 		return TRUE;
 	    }
 	}
