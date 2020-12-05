@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.467 2020/12/05 19:03:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.468 2020/12/05 19:06:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.467 2020/12/05 19:03:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.468 2020/12/05 19:06:51 rillig Exp $");
 
 /* types and constants */
 
@@ -882,22 +882,26 @@ ParseDependencySourceWait(Boolean isSpecial)
 static Boolean
 ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
 {
+	int keywd;
+	GNodeType op;
 
-    if (*src == '.' && ch_isupper(src[1])) {
-	int keywd = ParseFindKeyword(src);
-	if (keywd != -1) {
-	    GNodeType op = parseKeywords[keywd].op;
-	    if (op != 0) {
+	if (*src != '.' || !ch_isupper(src[1]))
+		return FALSE;
+
+	keywd = ParseFindKeyword(src);
+	if (keywd == -1)
+		return FALSE;
+
+	op = parseKeywords[keywd].op;
+	if (op != OP_NONE) {
 		ApplyDependencyOperator(op);
 		return TRUE;
-	    }
-	    if (parseKeywords[keywd].spec == SP_WAIT) {
-	    	ParseDependencySourceWait(specType != SP_NOT);
-		return TRUE;
-	    }
 	}
-    }
-    return FALSE;
+	if (parseKeywords[keywd].spec == SP_WAIT) {
+		ParseDependencySourceWait(specType != SP_NOT);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 static void
