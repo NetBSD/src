@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.184 2020/12/04 14:51:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.185 2020/12/05 17:17:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.184 2020/12/04 14:51:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.185 2020/12/05 17:17:37 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -723,7 +723,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	FILE *arch;		/* Stream to archive */
 	int size;		/* Size of archive member */
 	char magic[SARMAG];
-	size_t len, tlen;
+	size_t len;
 	const char *lastSlash;
 
 	arch = fopen(archive, mode);
@@ -748,10 +748,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	if (lastSlash != NULL)
 		member = lastSlash + 1;
 
-	len = tlen = strlen(member);
-	if (len > sizeof out_arh->ar_name) {
-		tlen = sizeof out_arh->ar_name;
-	}
+	len = strlen(member);
 
 	while (fread(out_arh, sizeof *out_arh, 1, arch) == 1) {
 
