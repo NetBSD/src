@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.10 2020/02/21 00:26:23 joerg Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.11 2020/12/05 17:40:00 thorpej Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.10 2020/02/21 00:26:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.11 2020/12/05 17:40:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.10 2020/02/21 00:26:23 joerg 
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
-#include <sys/timevar.h>
 
 #include <dev/keylock.h>
 

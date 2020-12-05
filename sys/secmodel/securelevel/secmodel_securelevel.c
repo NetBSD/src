@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.36 2020/05/28 23:17:25 riastradh Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.37 2020/12/05 17:33:53 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.36 2020/05/28 23:17:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.37 2020/12/05 17:33:53 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.36 2020/05/28 23:17:25 ri
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/module.h>
-#include <sys/timevar.h>
 
 #include <miscfs/specfs/specdev.h>
 
