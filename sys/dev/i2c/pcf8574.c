@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.3 2020/12/05 14:48:09 jdc Exp $ */
+/* $NetBSD: pcf8574.c,v 1.4 2020/12/05 15:02:29 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.3 2020/12/05 14:48:09 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.4 2020/12/05 15:02:29 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ pcf8574_match(device_t parent, cfdata_t cf, void *aux)
 		if (pcf8574_read(&sc, &sc.sc_state))
 			return 0;
 		else
-			return 1;
+			return match_result;
 	}
 
 	/* We don't support indirect matches */
