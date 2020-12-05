@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.5 2019/02/03 12:18:21 mrg Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.6 2020/12/05 14:50:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.5 2019/02/03 12:18:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.6 2020/12/05 14:50:33 jdc Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -718,6 +718,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 		if (error) {
 			aprint_error_dev(self,
 			    "Unable to attach sensor %d: %d\n", i, error);
+			sc->sc_sme = NULL;
 			goto out;
 		}
 	}
