@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.336 2020/12/05 17:44:22 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.337 2020/12/05 18:15:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.336 2020/12/05 17:44:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.337 2020/12/05 18:15:40 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -1689,7 +1689,7 @@ JobOutput(char *cp, char *endp)
 static void
 JobDoOutput(Job *job, Boolean finish)
 {
-    Boolean gotNL = FALSE;	/* true if got a newline */
+    Boolean gotNL;		/* true if got a newline */
     Boolean fbuf;		/* true if our buffer filled up */
     size_t nr;			/* number of bytes read */
     size_t i;			/* auxiliary index into outBuf */

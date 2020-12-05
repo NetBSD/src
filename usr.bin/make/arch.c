@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.185 2020/12/05 17:17:37 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.186 2020/12/05 18:15:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.185 2020/12/05 17:17:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.186 2020/12/05 18:15:40 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -444,7 +444,6 @@ ArchStatMember(const char *archive, const char *member, Boolean addToCache)
 			size_t len = strlen(member);
 
 			if (len > AR_MAX_NAME_LEN) {
-				len = AR_MAX_NAME_LEN;
 				snprintf(copy, sizeof copy, "%s", member);
 				hdr = HashTable_FindValue(&ar->members, copy);
 			}

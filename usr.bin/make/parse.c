@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.464 2020/12/04 20:23:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.465 2020/12/05 18:15:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.464 2020/12/04 20:23:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.465 2020/12/05 18:15:40 rillig Exp $");
 
 /* types and constants */
 
@@ -1422,7 +1422,7 @@ ParseDoDependencyTargets(char **inout_cp,
 			 SearchPathList **inout_paths,
 			 StringList *curTargs)
 {
-    char *cp = *inout_cp;
+    char *cp;
     char *tgt = *inout_line;
     char savec;
     const char *p;
@@ -1876,7 +1876,7 @@ static void
 VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 		    const char **out_avalue, void **out_avalue_freeIt)
 {
-    const char *avalue = uvalue;
+    const char *avalue;
     char *evalue;
     Boolean savedPreserveUndefined = preserveUndefined;
 

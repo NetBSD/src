@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.705 2020/12/05 15:31:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.706 2020/12/05 18:15:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.705 2020/12/05 15:31:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.706 2020/12/05 18:15:40 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2492,7 +2492,6 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 			*dst = *src;
 		}
 		*dst = '\0';
-		endpat = dst;
 	} else {
 		pattern = bmake_strsedup(mod + 1, endpat);
 	}
