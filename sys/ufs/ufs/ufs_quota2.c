@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.42 2017/03/01 10:42:45 hannken Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.43 2020/12/05 17:33:54 thorpej Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.42 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.43 2020/12/05 17:33:54 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.42 2017/03/01 10:42:45 hannken Exp 
 #include <sys/wapbl.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
-#include <sys/timevar.h>
 
 #include <ufs/ufs/quota2.h>
 #include <ufs/ufs/inode.h>
