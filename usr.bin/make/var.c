@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.703 2020/12/05 14:28:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.704 2020/12/05 14:55:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.703 2020/12/05 14:28:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.704 2020/12/05 14:55:17 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -800,96 +800,97 @@ void
 Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		 VarSetFlags flags)
 {
-    const char *unexpanded_name = name;
-    char *name_freeIt = NULL;
-    Var *v;
+	const char *unexpanded_name = name;
+	char *name_freeIt = NULL;
+	Var *v;
 
-    assert(val != NULL);
+	assert(val != NULL);
 
-    if (strchr(name, '$') != NULL) {
-	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
-	/* TODO: handle errors */
-	name = name_freeIt;
-    }
-
-    if (name[0] == '\0') {
-	VAR_DEBUG2("Var_Set(\"%s\", \"%s\", ...) "
-		   "name expands to empty string - ignored\n",
-		   unexpanded_name, val);
-	free(name_freeIt);
-	return;
-    }
-
-    if (ctxt == VAR_GLOBAL) {
-	v = VarFind(name, VAR_CMDLINE, FALSE);
-	if (v != NULL) {
-	    if (v->flags & VAR_FROM_CMD) {
-		VAR_DEBUG3("%s:%s = %s ignored!\n", ctxt->name, name, val);
-		goto out;
-	    }
-	    VarFreeEnv(v, TRUE);
+	if (strchr(name, '$') != NULL) {
+		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+		/* TODO: handle errors */
+		name = name_freeIt;
 	}
-    }
 
-    /*
-     * We only look for a variable in the given context since anything set
-     * here will override anything in a lower context, so there's not much
-     * point in searching them all just to save a bit of memory...
-     */
-    v = VarFind(name, ctxt, FALSE);
-    if (v == NULL) {
-	if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
-	    /*
-	     * This var would normally prevent the same name being added
-	     * to VAR_GLOBAL, so delete it from there if needed.
-	     * Otherwise -V name may show the wrong value.
-	     */
-	    /* XXX: name is expanded for the second time */
-	    Var_Delete(name, VAR_GLOBAL);
+	if (name[0] == '\0') {
+		VAR_DEBUG2("Var_Set(\"%s\", \"%s\", ...) "
+			   "name expands to empty string - ignored\n",
+		    unexpanded_name, val);
+		free(name_freeIt);
+		return;
 	}
-	VarAdd(name, val, ctxt, flags);
-    } else {
-	if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
-	    VAR_DEBUG3("%s:%s = %s ignored (read-only)\n",
-		       ctxt->name, name, val);
-	    goto out;
-	}
-	Buf_Empty(&v->val);
-	Buf_AddStr(&v->val, val);
 
-	VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
-	if (v->flags & VAR_EXPORTED) {
-	    Var_Export1(name, VAR_EXPORT_PARENT);
+	if (ctxt == VAR_GLOBAL) {
+		v = VarFind(name, VAR_CMDLINE, FALSE);
+		if (v != NULL) {
+			if (v->flags & VAR_FROM_CMD) {
+				VAR_DEBUG3("%s:%s = %s ignored!\n",
+				    ctxt->name, name, val);
+				goto out;
+			}
+			VarFreeEnv(v, TRUE);
+		}
 	}
-    }
-    /*
-     * Any variables given on the command line are automatically exported
-     * to the environment (as per POSIX standard)
-     * Other than internals.
-     */
-    if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT) && name[0] != '.') {
-	if (v == NULL)
-	    v = VarFind(name, ctxt, FALSE); /* we just added it */
-	v->flags |= VAR_FROM_CMD;
 
 	/*
-	 * If requested, don't export these in the environment
-	 * individually.  We still put them in MAKEOVERRIDES so
-	 * that the command-line settings continue to override
-	 * Makefile settings.
+	 * We only look for a variable in the given context since anything set
+	 * here will override anything in a lower context, so there's not much
+	 * point in searching them all just to save a bit of memory...
 	 */
-	if (!opts.varNoExportEnv)
-	    setenv(name, val, 1);
+	v = VarFind(name, ctxt, FALSE);
+	if (v == NULL) {
+		if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
+			/*
+			 * This var would normally prevent the same name being
+			 * added to VAR_GLOBAL, so delete it from there if
+			 * needed. Otherwise -V name may show the wrong value.
+			 */
+			/* XXX: name is expanded for the second time */
+			Var_Delete(name, VAR_GLOBAL);
+		}
+		VarAdd(name, val, ctxt, flags);
+	} else {
+		if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
+			VAR_DEBUG3("%s:%s = %s ignored (read-only)\n",
+			    ctxt->name, name, val);
+			goto out;
+		}
+		Buf_Empty(&v->val);
+		Buf_AddStr(&v->val, val);
 
-	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
-    }
-    if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
-	save_dollars = ParseBoolean(val, save_dollars);
+		VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
+		if (v->flags & VAR_EXPORTED)
+			Var_Export1(name, VAR_EXPORT_PARENT);
+	}
+	/*
+	 * Any variables given on the command line are automatically exported
+	 * to the environment (as per POSIX standard)
+	 * Other than internals.
+	 */
+	if (ctxt == VAR_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
+	    name[0] != '.') {
+		if (v == NULL)
+			v = VarFind(name, ctxt, FALSE); /* we just added it */
+		v->flags |= VAR_FROM_CMD;
+
+		/*
+		 * If requested, don't export these in the environment
+		 * individually.  We still put them in MAKEOVERRIDES so
+		 * that the command-line settings continue to override
+		 * Makefile settings.
+		 */
+		if (!opts.varNoExportEnv)
+			setenv(name, val, 1);
+
+		Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
+	}
+	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
+		save_dollars = ParseBoolean(val, save_dollars);
 
 out:
-    free(name_freeIt);
-    if (v != NULL)
-	VarFreeEnv(v, TRUE);
+	free(name_freeIt);
+	if (v != NULL)
+		VarFreeEnv(v, TRUE);
 }
 
 /*-
@@ -948,53 +949,57 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 void
 Var_Append(const char *name, const char *val, GNode *ctxt)
 {
-    char *name_freeIt = NULL;
-    Var *v;
+	char *name_freeIt = NULL;
+	Var *v;
 
-    assert(val != NULL);
+	assert(val != NULL);
 
-    if (strchr(name, '$') != NULL) {
-	const char *unexpanded_name = name;
-	(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
-	/* TODO: handle errors */
-	name = name_freeIt;
-	if (name[0] == '\0') {
-	    VAR_DEBUG2("Var_Append(\"%s\", \"%s\", ...) "
-		       "name expands to empty string - ignored\n",
-		       unexpanded_name, val);
-	    free(name_freeIt);
-	    return;
+	if (strchr(name, '$') != NULL) {
+		const char *unexpanded_name = name;
+		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+		/* TODO: handle errors */
+		name = name_freeIt;
+		if (name[0] == '\0') {
+			VAR_DEBUG2("Var_Append(\"%s\", \"%s\", ...) "
+				   "name expands to empty string - ignored\n",
+			    unexpanded_name, val);
+			free(name_freeIt);
+			return;
+		}
 	}
-    }
 
-    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
+	v = VarFind(name, ctxt, ctxt == VAR_GLOBAL);
 
-    if (v == NULL) {
-	/* XXX: name is expanded for the second time */
-	Var_Set(name, val, ctxt);
-    } else if (v->flags & VAR_READONLY) {
-	VAR_DEBUG1("Ignoring append to %s since it is read-only\n", name);
-    } else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
-	Buf_AddByte(&v->val, ' ');
-	Buf_AddStr(&v->val, val);
+	if (v == NULL) {
+		/* XXX: name is expanded for the second time */
+		Var_Set(name, val, ctxt);
+	} else if (v->flags & VAR_READONLY) {
+		VAR_DEBUG1("Ignoring append to %s since it is read-only\n",
+		    name);
+	} else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
+		Buf_AddByte(&v->val, ' ');
+		Buf_AddStr(&v->val, val);
 
-	VAR_DEBUG3("%s:%s = %s\n",
-		   ctxt->name, name, Buf_GetAll(&v->val, NULL));
+		VAR_DEBUG3("%s:%s = %s\n",
+		    ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
-	if (v->flags & VAR_FROM_ENV) {
-	    /*
-	     * If the original variable came from the environment, we
-	     * have to install it in the global context (we could place
-	     * it in the environment, but then we should provide a way to
-	     * export other variables...)
-	     */
-	    v->flags &= ~(unsigned)VAR_FROM_ENV;
-	    /* This is the only place where a variable is created whose
-	     * v->name is not the same as ctxt->context->key. */
-	    HashTable_Set(&ctxt->vars, name, v);
+		if (v->flags & VAR_FROM_ENV) {
+			/*
+			 * If the original variable came from the environment,
+			 * we have to install it in the global context (we
+			 * could place it in the environment, but then we
+			 * should provide a way to export other variables...)
+			 */
+			v->flags &= ~(unsigned)VAR_FROM_ENV;
+			/*
+			 * This is the only place where a variable is
+			 * created whose v->name is not the same as
+			 * ctxt->context->key.
+			 */
+			HashTable_Set(&ctxt->vars, name, v);
+		}
 	}
-    }
-    free(name_freeIt);
+	free(name_freeIt);
 }
 
 /* See if the given variable exists, in the given context or in other
@@ -1397,77 +1402,80 @@ struct ModifyWord_SubstRegexArgs {
 static void
 ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 {
-    struct ModifyWord_SubstRegexArgs *args = data;
-    int xrv;
-    const char *wp = word;
-    char *rp;
-    int flags = 0;
-    regmatch_t m[10];
+	struct ModifyWord_SubstRegexArgs *args = data;
+	int xrv;
+	const char *wp = word;
+	char *rp;
+	int flags = 0;
+	regmatch_t m[10];
 
-    if ((args->pflags & VARP_SUB_ONE) && args->matched)
-	goto nosub;
+	if ((args->pflags & VARP_SUB_ONE) && args->matched)
+		goto nosub;
 
 tryagain:
-    xrv = regexec(&args->re, wp, args->nsub, m, flags);
+	xrv = regexec(&args->re, wp, args->nsub, m, flags);
 
-    switch (xrv) {
-    case 0:
-	args->matched = TRUE;
-	SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
+	switch (xrv) {
+	case 0:
+		args->matched = TRUE;
+		SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
 
-	for (rp = args->replace; *rp; rp++) {
-	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
-		SepBuf_AddBytes(buf, rp + 1, 1);
-		rp++;
-		continue;
-	    }
+		for (rp = args->replace; *rp; rp++) {
+			if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
+				SepBuf_AddBytes(buf, rp + 1, 1);
+				rp++;
+				continue;
+			}
 
-	    if (*rp == '&') {
-		SepBuf_AddBytesBetween(buf, wp + m[0].rm_so, wp + m[0].rm_eo);
-		continue;
-	    }
+			if (*rp == '&') {
+				SepBuf_AddBytesBetween(buf,
+				    wp + m[0].rm_so, wp + m[0].rm_eo);
+				continue;
+			}
 
-	    if (*rp != '\\' || !ch_isdigit(rp[1])) {
-		SepBuf_AddBytes(buf, rp, 1);
-		continue;
-	    }
+			if (*rp != '\\' || !ch_isdigit(rp[1])) {
+				SepBuf_AddBytes(buf, rp, 1);
+				continue;
+			}
 
-	    {			/* \0 to \9 backreference */
-		size_t n = (size_t)(rp[1] - '0');
-		rp++;
+			{	/* \0 to \9 backreference */
+				size_t n = (size_t)(rp[1] - '0');
+				rp++;
 
-		if (n >= args->nsub) {
-		    Error("No subexpression \\%zu", n);
-		} else if (m[n].rm_so == -1) {
-		    Error("No match for subexpression \\%zu", n);
-		} else {
-		    SepBuf_AddBytesBetween(buf, wp + m[n].rm_so,
-					   wp + m[n].rm_eo);
+				if (n >= args->nsub) {
+					Error("No subexpression \\%zu", n);
+				} else if (m[n].rm_so == -1) {
+					Error(
+					    "No match for subexpression \\%zu",
+					    n);
+				} else {
+					SepBuf_AddBytesBetween(buf,
+					    wp + m[n].rm_so, wp + m[n].rm_eo);
+				}
+			}
 		}
-	    }
-	}
 
-	wp += m[0].rm_eo;
-	if (args->pflags & VARP_SUB_GLOBAL) {
-	    flags |= REG_NOTBOL;
-	    if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
-		SepBuf_AddBytes(buf, wp, 1);
-		wp++;
-	    }
-	    if (*wp != '\0')
-		goto tryagain;
+		wp += m[0].rm_eo;
+		if (args->pflags & VARP_SUB_GLOBAL) {
+			flags |= REG_NOTBOL;
+			if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
+				SepBuf_AddBytes(buf, wp, 1);
+				wp++;
+			}
+			if (*wp != '\0')
+				goto tryagain;
+		}
+		if (*wp != '\0')
+			SepBuf_AddStr(buf, wp);
+		break;
+	default:
+		VarREError(xrv, &args->re, "Unexpected regex error");
+		/* FALLTHROUGH */
+	case REG_NOMATCH:
+	nosub:
+		SepBuf_AddStr(buf, wp);
+		break;
 	}
-	if (*wp != '\0')
-	    SepBuf_AddStr(buf, wp);
-	break;
-    default:
-	VarREError(xrv, &args->re, "Unexpected regex error");
-	/* FALLTHROUGH */
-    case REG_NOMATCH:
-    nosub:
-	SepBuf_AddStr(buf, wp);
-	break;
-    }
 }
 #endif
 
@@ -1943,109 +1951,114 @@ ParseModifierPart(
     /* For the second part of the :S modifier, allow ampersands to be
      * escaped and replace unescaped ampersands with subst->lhs. */
     struct ModifyWord_SubstArgs *subst
-) {
-    Buffer buf;
-    const char *p;
+)
+{
+	Buffer buf;
+	const char *p;
 
-    Buf_Init(&buf);
+	Buf_Init(&buf);
 
-    /*
-     * Skim through until the matching delimiter is found; pick up variable
-     * expressions on the way.
-     */
-    p = *pp;
-    while (*p != '\0' && *p != delim) {
-	const char *varstart;
+	/*
+	 * Skim through until the matching delimiter is found; pick up
+	 * variable expressions on the way.
+	 */
+	p = *pp;
+	while (*p != '\0' && *p != delim) {
+		const char *varstart;
 
-	if (IsEscapedModifierPart(p, delim, subst)) {
-	    Buf_AddByte(&buf, p[1]);
-	    p += 2;
-	    continue;
-	}
-
-	if (*p != '$') {	/* Unescaped, simple text */
-	    if (subst != NULL && *p == '&')
-		Buf_AddBytes(&buf, subst->lhs, subst->lhsLen);
-	    else
-		Buf_AddByte(&buf, *p);
-	    p++;
-	    continue;
-	}
-
-	if (p[1] == delim) {	/* Unescaped $ at end of pattern */
-	    if (out_pflags != NULL)
-		*out_pflags |= VARP_ANCHOR_END;
-	    else
-		Buf_AddByte(&buf, *p);
-	    p++;
-	    continue;
-	}
-
-	if (eflags & VARE_WANTRES) {	/* Nested variable, evaluated */
-	    const char *nested_p = p;
-	    const char *nested_val;
-	    void *nested_val_freeIt;
-	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_KEEP_DOLLAR;
-
-	    (void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
-			    &nested_val, &nested_val_freeIt);
-	    /* TODO: handle errors */
-	    Buf_AddStr(&buf, nested_val);
-	    free(nested_val_freeIt);
-	    p += nested_p - p;
-	    continue;
-	}
-
-	/* XXX: This whole block is very similar to Var_Parse without
-	 * VARE_WANTRES.  There may be subtle edge cases though that are
-	 * not yet covered in the unit tests and that are parsed differently,
-	 * depending on whether they are evaluated or not.
-	 *
-	 * This subtle difference is not documented in the manual page,
-	 * neither is the difference between parsing :D and :M documented.
-	 * No code should ever depend on these details, but who knows. */
-
-	varstart = p;		/* Nested variable, only parsed */
-	if (p[1] == '(' || p[1] == '{') {
-	    /*
-	     * Find the end of this variable reference
-	     * and suck it in without further ado.
-	     * It will be interpreted later.
-	     */
-	    char startc = p[1];
-	    int endc = startc == '(' ? ')' : '}';
-	    int depth = 1;
-
-	    for (p += 2; *p != '\0' && depth > 0; p++) {
-		if (p[-1] != '\\') {
-		    if (*p == startc)
-			depth++;
-		    if (*p == endc)
-			depth--;
+		if (IsEscapedModifierPart(p, delim, subst)) {
+			Buf_AddByte(&buf, p[1]);
+			p += 2;
+			continue;
 		}
-	    }
-	    Buf_AddBytesBetween(&buf, varstart, p);
-	} else {
-	    Buf_AddByte(&buf, *varstart);
-	    p++;
+
+		if (*p != '$') {	/* Unescaped, simple text */
+			if (subst != NULL && *p == '&')
+				Buf_AddBytes(&buf, subst->lhs, subst->lhsLen);
+			else
+				Buf_AddByte(&buf, *p);
+			p++;
+			continue;
+		}
+
+		if (p[1] == delim) {	/* Unescaped $ at end of pattern */
+			if (out_pflags != NULL)
+				*out_pflags |= VARP_ANCHOR_END;
+			else
+				Buf_AddByte(&buf, *p);
+			p++;
+			continue;
+		}
+
+		if (eflags & VARE_WANTRES) { /* Nested variable, evaluated */
+			const char *nested_p = p;
+			const char *nested_val;
+			void *nested_val_freeIt;
+			VarEvalFlags nested_eflags =
+			    eflags & ~(unsigned)VARE_KEEP_DOLLAR;
+
+			(void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
+			    &nested_val, &nested_val_freeIt);
+			/* TODO: handle errors */
+			Buf_AddStr(&buf, nested_val);
+			free(nested_val_freeIt);
+			p += nested_p - p;
+			continue;
+		}
+
+		/* XXX: This whole block is very similar to Var_Parse without
+		 * VARE_WANTRES.  There may be subtle edge cases though that
+		 * are not yet covered in the unit tests and that are parsed
+		 * differently, depending on whether they are evaluated or
+		 * not.
+		 *
+		 * This subtle difference is not documented in the manual
+		 * page, neither is the difference between parsing :D and
+		 * :M documented. No code should ever depend on these
+		 * details, but who knows.
+		 */
+
+		varstart = p;                /* Nested variable, only parsed */
+		if (p[1] == '(' || p[1] == '{') {
+			/*
+			 * Find the end of this variable reference
+			 * and suck it in without further ado.
+			 * It will be interpreted later.
+			 */
+			char startc = p[1];
+			int endc = startc == '(' ? ')' : '}';
+			int depth = 1;
+
+			for (p += 2; *p != '\0' && depth > 0; p++) {
+				if (p[-1] != '\\') {
+					if (*p == startc)
+						depth++;
+					if (*p == endc)
+						depth--;
+				}
+			}
+			Buf_AddBytesBetween(&buf, varstart, p);
+		} else {
+			Buf_AddByte(&buf, *varstart);
+			p++;
+		}
 	}
-    }
 
-    if (*p != delim) {
-	*pp = p;
-	Error("Unfinished modifier for %s ('%c' missing)",
-	      st->var->name, delim);
-	*out_part = NULL;
-	return VPR_PARSE_MSG;
-    }
+	if (*p != delim) {
+		*pp = p;
+		Error("Unfinished modifier for %s ('%c' missing)",
+		    st->var->name, delim);
+		*out_part = NULL;
+		return VPR_PARSE_MSG;
+	}
 
-    *pp = ++p;
-    if (out_length != NULL)
-	*out_length = Buf_Len(&buf);
+	*pp = ++p;
+	if (out_length != NULL)
+		*out_length = Buf_Len(&buf);
 
-    *out_part = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG1("Modifier part: \"%s\"\n", *out_part);
-    return VPR_OK;
+	*out_part = Buf_Destroy(&buf, FALSE);
+	VAR_DEBUG1("Modifier part: \"%s\"\n", *out_part);
+	return VPR_OK;
 }
 
 /* Test whether mod starts with modname, followed by a delimiter. */
