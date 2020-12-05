@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.235 2020/12/04 14:28:50 rillig Exp $
+# $NetBSD: Makefile,v 1.236 2020/12/05 03:42:15 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -552,7 +552,7 @@ LANG=		C
 
 MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
 
-.if ${:!uname -s!} == "NetBSD"
+.if ${.MAKE.OS:U${uname -s:L:sh}} == "NetBSD"
 LIMIT_RESOURCES?=	ulimit -v 200000
 .endif
 LIMIT_RESOURCES?=	:
