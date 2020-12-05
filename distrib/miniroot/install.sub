@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.57 2020/12/05 18:52:06 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.58 2020/12/05 18:57:21 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -682,6 +682,10 @@ You will be asked to enter the name of the directory that contains the
 installation sets. When you enter a '?' you will see a listing of the
 current directory on the server.
 __install_ftp_2
+	echo ""
+	echo "The default installation directory in the official ftp server is:"
+	echo "/pub/NetBSD/NetBSD-${RELEASE}/${MACHINE}/binary/sets"
+
 	_sets=""
 	while [ -z "$_sets" ]
 	do
