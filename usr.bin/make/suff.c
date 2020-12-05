@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.324 2020/12/05 16:59:47 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.325 2020/12/05 17:12:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.324 2020/12/05 16:59:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.325 2020/12/05 17:12:02 rillig Exp $");
 
 #define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
 #define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
@@ -1278,6 +1278,74 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 }
 
 /*
+ * Break the result into a vector of strings whose nodes we can find, then
+ * add those nodes to the members list.
+ *
+ * Unfortunately, we can't use Str_Words because it doesn't understand about
+ * variable specifications with spaces in them.
+ */
+static void
+ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
+{
+	char *start;
+
+	pp_skip_hspace(&cp);
+	start = cp;
+	while (*cp != '\0') {
+		if (*cp == ' ' || *cp == '\t') {
+			GNode *gn;
+			/*
+			 * White-space -- terminate element, find the node,
+			 * add it, skip any further spaces.
+			 */
+			*cp++ = '\0';
+			gn = Targ_GetNode(start);
+			Lst_Append(members, gn);
+			pp_skip_hspace(&cp);
+			/* Continue at the next non-space. */
+			start = cp;
+		} else if (*cp == '$') {
+			/* Skip over the variable expression. */
+			const char *nested_p = cp;
+			const char *junk;
+			void *freeIt;
+
+			(void)Var_Parse(&nested_p, pgn,
+			    VARE_NONE, &junk, &freeIt);
+			/* TODO: handle errors */
+			if (junk == var_Error) {
+				Parse_Error(PARSE_FATAL,
+				    "Malformed variable expression at \"%s\"",
+				    cp);
+				cp++;
+			} else {
+				cp += nested_p - cp;
+			}
+
+			free(freeIt);
+		} else if (cp[0] == '\\' && cp[1] != '\0') {
+			/* Escaped something -- skip over it. */
+			/*
+			 * XXX: In other places, escaping at this syntactical
+			 * position is done by a '$', not a '\'.  The '\' is
+			 * only used in variable modifiers.
+			 */
+			cp += 2;
+		} else {
+			cp++;
+		}
+	}
+
+	if (cp != start) {
+		/*
+		 * Stuff left over -- add it to the list too
+		 */
+		GNode *gn = Targ_GetNode(start);
+		Lst_Append(members, gn);
+	}
+}
+
+/*
  * Expand the names of any children of a given node that contain variable
  * expressions or file wildcards into actual targets.
  *
@@ -1326,87 +1394,10 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 			 * call on the Arch module to find the nodes for us,
 			 * expanding variables in the parent's context.
 			 */
-			char *sacrifice = cp;
-
-			(void)Arch_ParseArchive(&sacrifice, &members, pgn);
+			char *p = cp;
+			(void)Arch_ParseArchive(&p, &members, pgn);
 		} else {
-			/*
-			 * Break the result into a vector of strings whose
-			 * nodes we can find, then add those nodes to the
-			 * members list.
-			 *
-			 * Unfortunately, we can't use Str_Words because it
-			 * doesn't understand about variable specifications
-			 * with spaces in them.
-			 */
-			char *start;
-			char *initcp = cp;	/* For freeing... */
-
-			start = cp;
-			pp_skip_hspace(&start);
-			cp = start;
-			while (*cp != '\0') {
-				if (*cp == ' ' || *cp == '\t') {
-					GNode *gn;
-					/*
-					 * White-space -- terminate element,
-					 * find the node, add it, skip any
-					 * further spaces.
-					 */
-					*cp++ = '\0';
-					gn = Targ_GetNode(start);
-					Lst_Append(&members, gn);
-					pp_skip_hspace(&cp);
-					/* Continue at the next non-space. */
-					start = cp;
-				} else if (*cp == '$') {
-					/* Skip over the variable expression. */
-					const char *nested_p = cp;
-					const char *junk;
-					void *freeIt;
-
-					(void)Var_Parse(&nested_p, pgn,
-					    VARE_NONE, &junk, &freeIt);
-					/* TODO: handle errors */
-					if (junk == var_Error) {
-						Parse_Error(PARSE_FATAL,
-						    "Malformed variable "
-						    "expression at \"%s\"",
-						    cp);
-						cp++;
-					} else {
-						cp += nested_p - cp;
-					}
-
-					free(freeIt);
-				} else if (cp[0] == '\\' && cp[1] != '\0') {
-					/*
-					 * Escaped something -- skip over it
-					 */
-					/*
-					 * XXX: In other places, escaping at
-					 * this syntactical position is done
-					 * by a '$', not a '\'.  The '\' is
-					 * only used in variable modifiers.
-					 */
-					cp += 2;
-				} else {
-					cp++;
-				}
-			}
-
-			if (cp != start) {
-				/*
-				 * Stuff left over -- add it to the list too
-				 */
-				GNode *gn = Targ_GetNode(start);
-				Lst_Append(&members, gn);
-			}
-			/*
-			 * Point cp back at the beginning again so the
-			 * variable value can be freed.
-			 */
-			cp = initcp;
+			ExpandChildrenRegular(cp, pgn, &members);
 		}
 
 		/*
