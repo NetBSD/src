@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.24 2020/03/07 23:20:19 tnn Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.25 2020/12/05 17:42:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.24 2020/03/07 23:20:19 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.25 2020/12/05 17:42:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.24 2020/03/07 23:20:19 tnn Exp $
 #include <sys/lwp.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/timevar.h>
 #include <sys/socketvar.h>
 
 #include <net/if.h>
