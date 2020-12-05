@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
@@ -52,7 +51,7 @@ public:
   const struct target_desc *read_description () override;
 };
 
-static arm_nbsd_nat_target the_arm_nbsd_nat_target;
+static arm_netbsd_nat_target the_arm_netbsd_nat_target;
 
 /* Determine if PT_GETREGS fetches REGNUM.  */
 
@@ -71,8 +70,6 @@ getfpregs_supplies (int regnum)
   return ((regnum >= ARM_D0_REGNUM && regnum <= ARM_D31_REGNUM)
 	  || regnum == ARM_FPSCR_REGNUM);
 }
-
-extern int arm_apcs_32;
 
 static int
 armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
@@ -142,18 +139,16 @@ fetch_register (struct regcache *regcache, int regno)
   pid_t pid = ptid.pid ();
   int lwp = ptid.lwp ();
   int ret;
-  int lwp = regcache->ptid ().lwp ();
 
   ret = ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, lwp);
+		(PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     {
       warning (_("unable to fetch general register"));
       return;
     }
-  arm_nbsd_supply_gregset (nullptr, regcache, regno, &inferior_registers,
-			   sizeof (inferior_registers));
+  arm_nbsd_supply_gregset (nullptr, regcache, regno, &regs, sizeof (regs));
 }
 
 static void
@@ -229,15 +224,14 @@ static void
 store_register (const struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct reg inferior_registers;
-  int lwp = regcache->ptid ().lwp ();
+  struct reg regs;
   int ret;
   ptid_t ptid = regcache->ptid ();
   pid_t pid = ptid.pid ();
   int lwp = ptid.lwp ();
 
   ret = ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, lwp);
+		(PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     {
@@ -291,7 +285,7 @@ store_register (const struct regcache *regcache, int regno)
     }
 
   ret = ptrace (PT_SETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, lwp);
+		(PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -301,7 +295,7 @@ static void
 store_regs (const struct regcache *regcache)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct reg inferior_registers;
+  struct reg regs;
   int lwp = regcache->ptid ().lwp ();
   int ret;
   int regno;
@@ -333,7 +327,7 @@ store_regs (const struct regcache *regcache)
     }
 
   ret = ptrace (PT_SETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, lwp);
+		(PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -438,5 +432,6 @@ _initialize_arm_netbsd_nat ()
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (armnbsd_supply_pcb);
 
+/*###436 [cc] note: suggested alternative: 'the_arm_nbsd_nat_target'%%%*/
   add_inf_child_target (&the_arm_netbsd_nat_target);
 }
