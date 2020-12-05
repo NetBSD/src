@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.54 2020/12/05 18:24:10 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.55 2020/12/05 18:29:50 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1611,6 +1611,6 @@ mi_filter_msgbuf() {
 
 mi_filter_dmesg() {
 	# Remove timestemps, sort.
-	dmesg | awk '{ h=$0; gsub("^\[[0-9. ]*\] ", "", h); print h; }' \
+	dmesg | awk '{ h=$0; gsub("^[[0-9. ]*] ", "", h); print h; }' \
 	    | sort -u
 }
