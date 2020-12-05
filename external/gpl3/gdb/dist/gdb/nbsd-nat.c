@@ -458,6 +458,7 @@ nbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
   return true;
 }
 
+#ifdef PT_STEP
 /* Resume execution of a specified PTID, that points to a process or a thread
    within a process.  If one thread is specified, all other threads are
    suspended.  If STEP is nonzero, single-step it.  If SIGNAL is nonzero,
@@ -520,6 +521,7 @@ nbsd_resume(nbsd_nat_target *target, ptid_t ptid, int step,
   if (ptrace (request, ptid.pid (), (void *)1, gdb_signal_to_host (signal)) == -1)
     perror_with_name (("ptrace"));
 }
+#endif
 
 /* Resume execution of thread PTID, or all threads of all inferiors
    if PTID is -1.  If STEP is nonzero, single-step it.  If SIGNAL is nonzero,
@@ -528,6 +530,7 @@ nbsd_resume(nbsd_nat_target *target, ptid_t ptid, int step,
 void
 nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 {
+#ifdef PT_STEP
   if (minus_one_ptid != ptid)
     nbsd_resume (this, ptid, step, signal);
   else
@@ -535,6 +538,11 @@ nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
       for (inferior *inf : all_non_exited_inferiors (this))
 	nbsd_resume (this, ptid_t (inf->pid, 0, 0), step, signal);
     }
+#else
+    if (ptid.pid () == -1)
+      ptid = inferior_ptid;
+    inf_ptrace_target::resume (ptid, step, signal); 
+#endif
 }
 
 /* Implement a safe wrapper around waitpid().  */
