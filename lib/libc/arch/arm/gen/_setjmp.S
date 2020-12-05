@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.16 2013/11/30 20:20:42 joerg Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.17 2020/12/05 11:18:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -87,9 +87,9 @@ ENTRY(_setjmp)
 	adds	r0, r0, #(_JB_REG_R4 * 4)
 	/* Store integer registers */
 #if !defined(__thumb__) || defined(_ARCH_ARCH_T2)
-        stmia	r0, {r4-r14}
+	stmia	r0, {r4-r14}
 #else
-        stmia	r0!, {r4-r7}
+	stmia	r0!, {r4-r7}
 	mov	r1, r8
 	mov	r2, r9
 	mov	r3, r10
@@ -102,8 +102,8 @@ ENTRY(_setjmp)
 	stmia	r0!, {r2-r3}
 #endif
 
-        movs	r0, #0
-        RET
+	movs	r0, #0
+	RET
 
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
 	.align	0
@@ -139,9 +139,9 @@ ENTRY(_longjmp)
 #endif /* __ARM_EABI__ && (_ARM_ARCH_T2 || !__thumb__) */
 
 	adds	r0, r0, #(_JB_REG_R4 * 4)
-       	/* Restore integer registers */
+	/* Restore integer registers */
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
-        ldmia	r0!, {r4-r12}
+	ldmia	r0!, {r4-r12}
 #else
 	ldmia	r0!, {r4-r7}
 	ldmia	r0!, {r2-r3}
