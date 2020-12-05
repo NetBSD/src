@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.230 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.231 2020/12/05 18:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -322,6 +322,7 @@ typedef enum GNodeType {
 } GNodeType;
 
 typedef enum GNodeFlags {
+	GNF_NONE	= 0,
 	/* this target needs to be (re)made */
 	REMAKE		= 0x0001,
 	/* children of this target were made */
