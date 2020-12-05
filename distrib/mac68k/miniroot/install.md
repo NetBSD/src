@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.5 2019/04/10 14:52:53 christos Exp $
+#	$NetBSD: install.md,v 1.6 2020/12/05 18:16:11 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS=""
+MDSETS="kern-GENERIC xbase xcomp xetc xfont xserver"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
