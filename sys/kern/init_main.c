@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.533 2020/11/12 07:44:01 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.533 2020/11/12 07:44:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.534 2020/12/05 18:17:01 thorpej Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -432,9 +432,6 @@ main(void)
 	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
 
-	/* Initialize timekeeping. */
-	time_init();
-
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	sched_rqinit();
 	turnstile_init();
@@ -452,8 +449,8 @@ main(void)
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
 
-	/* Initialize timekeeping, part 2. */
-	time_init2();
+	/* Initialize timekeeping. */
+	time_init();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

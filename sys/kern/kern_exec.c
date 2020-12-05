@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.503 2020/11/25 21:08:59 wiz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.504 2020/12/05 18:17:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.503 2020/11/25 21:08:59 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.504 2020/12/05 18:17:01 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1209,7 +1209,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		lwp_ctl_exit();
 
 	/* Remove POSIX timers */
-	timers_free(p, TIMERS_POSIX);
+	ptimers_free(p, TIMERS_POSIX);
 
 	/* Set the PaX flags. */
 	pax_set_flags(epp, p);
