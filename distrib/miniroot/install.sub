@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.55 2020/12/05 18:29:50 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.56 2020/12/05 18:33:47 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -713,7 +713,7 @@ __install_ftp_2
 		if [ $resp = '?' ]; then
 			sh /tmp/ftp-dir.sh
 		else
-			_sets=$(sh /tmp/ftp-dir.sh | sh /tmp/fname_filter.sh)
+			_sets=$(sh /tmp/ftp-dir.sh | sort -u | sh /tmp/fname_filter.sh)
 		fi
 	done
 	rm -f /tmp/ftp-dir.sh /tmp/fname_filter.sh
