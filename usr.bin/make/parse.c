@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.465 2020/12/05 18:15:40 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.466 2020/12/05 18:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.465 2020/12/05 18:15:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.466 2020/12/05 18:38:02 rillig Exp $");
 
 /* types and constants */
 
@@ -299,50 +299,50 @@ static const struct {
     ParseSpecial  spec;		/* Type when used as a target */
     GNodeType	  op;		/* Operator when used as a source */
 } parseKeywords[] = {
-    { ".BEGIN",		SP_BEGIN,	0 },
-    { ".DEFAULT",	SP_DEFAULT,	0 },
-    { ".DELETE_ON_ERROR", SP_DELETE_ON_ERROR, 0 },
-    { ".END",		SP_END,		0 },
-    { ".ERROR",		SP_ERROR,	0 },
+    { ".BEGIN",		SP_BEGIN,	OP_NONE },
+    { ".DEFAULT",	SP_DEFAULT,	OP_NONE },
+    { ".DELETE_ON_ERROR", SP_DELETE_ON_ERROR, OP_NONE },
+    { ".END",		SP_END,		OP_NONE },
+    { ".ERROR",		SP_ERROR,	OP_NONE },
     { ".EXEC",		SP_ATTRIBUTE,	OP_EXEC },
     { ".IGNORE",	SP_IGNORE,	OP_IGNORE },
-    { ".INCLUDES",	SP_INCLUDES,	0 },
-    { ".INTERRUPT",	SP_INTERRUPT,	0 },
+    { ".INCLUDES",	SP_INCLUDES,	OP_NONE },
+    { ".INTERRUPT",	SP_INTERRUPT,	OP_NONE },
     { ".INVISIBLE",	SP_ATTRIBUTE,	OP_INVISIBLE },
     { ".JOIN",		SP_ATTRIBUTE,	OP_JOIN },
-    { ".LIBS",		SP_LIBS,	0 },
+    { ".LIBS",		SP_LIBS,	OP_NONE },
     { ".MADE",		SP_ATTRIBUTE,	OP_MADE },
-    { ".MAIN",		SP_MAIN,	0 },
+    { ".MAIN",		SP_MAIN,	OP_NONE },
     { ".MAKE",		SP_ATTRIBUTE,	OP_MAKE },
-    { ".MAKEFLAGS",	SP_MFLAGS,	0 },
+    { ".MAKEFLAGS",	SP_MFLAGS,	OP_NONE },
     { ".META",		SP_META,	OP_META },
-    { ".MFLAGS",	SP_MFLAGS,	0 },
+    { ".MFLAGS",	SP_MFLAGS,	OP_NONE },
     { ".NOMETA",	SP_NOMETA,	OP_NOMETA },
     { ".NOMETA_CMP",	SP_NOMETA_CMP,	OP_NOMETA_CMP },
     { ".NOPATH",	SP_NOPATH,	OP_NOPATH },
     { ".NOTMAIN",	SP_ATTRIBUTE,	OP_NOTMAIN },
-    { ".NOTPARALLEL",	SP_NOTPARALLEL,	0 },
-    { ".NO_PARALLEL",	SP_NOTPARALLEL,	0 },
-    { ".NULL",		SP_NULL,	0 },
-    { ".OBJDIR",	SP_OBJDIR,	0 },
+    { ".NOTPARALLEL",	SP_NOTPARALLEL,	OP_NONE },
+    { ".NO_PARALLEL",	SP_NOTPARALLEL,	OP_NONE },
+    { ".NULL",		SP_NULL,	OP_NONE },
+    { ".OBJDIR",	SP_OBJDIR,	OP_NONE },
     { ".OPTIONAL",	SP_ATTRIBUTE,	OP_OPTIONAL },
-    { ".ORDER",		SP_ORDER,	0 },
-    { ".PARALLEL",	SP_PARALLEL,	0 },
-    { ".PATH",		SP_PATH,	0 },
+    { ".ORDER",		SP_ORDER,	OP_NONE },
+    { ".PARALLEL",	SP_PARALLEL,	OP_NONE },
+    { ".PATH",		SP_PATH,	OP_NONE },
     { ".PHONY",		SP_PHONY,	OP_PHONY },
 #ifdef POSIX
-    { ".POSIX",		SP_POSIX,	0 },
+    { ".POSIX",		SP_POSIX,	OP_NONE },
 #endif
     { ".PRECIOUS",	SP_PRECIOUS,	OP_PRECIOUS },
     { ".RECURSIVE",	SP_ATTRIBUTE,	OP_MAKE },
-    { ".SHELL",		SP_SHELL,	0 },
+    { ".SHELL",		SP_SHELL,	OP_NONE },
     { ".SILENT",	SP_SILENT,	OP_SILENT },
-    { ".SINGLESHELL",	SP_SINGLESHELL,	0 },
-    { ".STALE",		SP_STALE,	0 },
-    { ".SUFFIXES",	SP_SUFFIXES,	0 },
+    { ".SINGLESHELL",	SP_SINGLESHELL,	OP_NONE },
+    { ".STALE",		SP_STALE,	OP_NONE },
+    { ".SUFFIXES",	SP_SUFFIXES,	OP_NONE },
     { ".USE",		SP_ATTRIBUTE,	OP_USE },
     { ".USEBEFORE",	SP_ATTRIBUTE,	OP_USEBEFORE },
-    { ".WAIT",		SP_WAIT,	0 },
+    { ".WAIT",		SP_WAIT,	OP_NONE },
 };
 
 /* file loader */

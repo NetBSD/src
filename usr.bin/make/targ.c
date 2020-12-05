@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.151 2020/12/05 15:57:02 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.152 2020/12/05 18:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.151 2020/12/05 15:57:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.152 2020/12/05 18:38:02 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -192,8 +192,8 @@ GNode_New(const char *name)
 	gn->name = bmake_strdup(name);
 	gn->uname = NULL;
 	gn->path = NULL;
-	gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : 0;
-	gn->flags = 0;
+	gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : OP_NONE;
+	gn->flags = GNF_NONE;
 	gn->made = UNMADE;
 	gn->unmade = 0;
 	gn->mtime = 0;
