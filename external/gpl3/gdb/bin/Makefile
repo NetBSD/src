@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/09 01:59:31 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2020/12/05 21:27:06 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,9 @@ SUBDIR+=  gdb
 SUBDIR+= gdbtui
 .endif
 
-#SUBDIR+= gdbserver
+.if ${MACHINE} == "amd64"
+SUBDIR+= gdbserver
+.endif
 
 .if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
     ${MACHINE_ARCH} == powerpc64
