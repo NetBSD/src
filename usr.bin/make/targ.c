@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.150 2020/12/05 15:35:34 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.151 2020/12/05 15:57:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.150 2020/12/05 15:35:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.151 2020/12/05 15:57:02 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -444,9 +444,6 @@ Targ_PrintType(int type)
 {
 	int tbit;
 
-#define PRINTBIT(attr) case CONCAT(OP_,attr): debug_printf(" ." #attr); break
-#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))debug_printf(" ." #attr); break
-
 	type &= ~OP_OPMASK;
 
 	while (type != 0) {
@@ -454,22 +451,25 @@ Targ_PrintType(int type)
 		type &= ~tbit;
 
 		switch (tbit) {
-		PRINTBIT(OPTIONAL);
-		PRINTBIT(USE);
-		PRINTBIT(EXEC);
-		PRINTBIT(IGNORE);
-		PRINTBIT(PRECIOUS);
-		PRINTBIT(SILENT);
-		PRINTBIT(MAKE);
-		PRINTBIT(JOIN);
-		PRINTBIT(INVISIBLE);
-		PRINTBIT(NOTMAIN);
-		PRINTDBIT(LIB);
-		/*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-		case OP_MEMBER: if (DEBUG(TARG))debug_printf(" .MEMBER"); break;
-		PRINTDBIT(ARCHV);
-		PRINTDBIT(MADE);
-		PRINTDBIT(PHONY);
+#define PRINTBIT(bit, name) case bit: debug_printf(" " name); break
+#define PRINTDBIT(bit, attr) case bit: if (DEBUG(TARG)) debug_printf(" " attr); break
+		PRINTBIT(OP_OPTIONAL, ".OPTIONAL");
+		PRINTBIT(OP_USE, ".USE");
+		PRINTBIT(OP_EXEC, ".EXEC");
+		PRINTBIT(OP_IGNORE, ".IGNORE");
+		PRINTBIT(OP_PRECIOUS, ".PRECIOUS");
+		PRINTBIT(OP_SILENT, ".SILENT");
+		PRINTBIT(OP_MAKE, ".MAKE");
+		PRINTBIT(OP_JOIN, ".JOIN");
+		PRINTBIT(OP_INVISIBLE, ".INVISIBLE");
+		PRINTBIT(OP_NOTMAIN, ".NOTMAIN");
+		PRINTDBIT(OP_LIB, ".LIB");
+		PRINTDBIT(OP_MEMBER, ".MEMBER");
+		PRINTDBIT(OP_ARCHV, ".ARCHV");
+		PRINTDBIT(OP_MADE, ".MADE");
+		PRINTDBIT(OP_PHONY, ".PHONY");
+#undef PRINTBIT
+#undef PRINTDBIT
 		}
 	}
 }
