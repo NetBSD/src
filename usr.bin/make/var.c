@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.704 2020/12/05 14:55:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.705 2020/12/05 15:31:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.704 2020/12/05 14:55:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.705 2020/12/05 15:31:18 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -2006,7 +2006,8 @@ ParseModifierPart(
 			continue;
 		}
 
-		/* XXX: This whole block is very similar to Var_Parse without
+		/*
+		 * XXX: This whole block is very similar to Var_Parse without
 		 * VARE_WANTRES.  There may be subtle edge cases though that
 		 * are not yet covered in the unit tests and that are parsed
 		 * differently, depending on whether they are evaluated or
@@ -2018,7 +2019,7 @@ ParseModifierPart(
 		 * details, but who knows.
 		 */
 
-		varstart = p;                /* Nested variable, only parsed */
+		varstart = p;	/* Nested variable, only parsed */
 		if (p[1] == '(' || p[1] == '{') {
 			/*
 			 * Find the end of this variable reference
@@ -2912,49 +2913,48 @@ str_cmp_desc(const void *a, const void *b)
 	return strcmp(*(const char *const *)b, *(const char *const *)a);
 }
 
+static void
+ShuffleStrings(char **strs, size_t n)
+{
+	size_t i;
+
+	for (i = n - 1; i > 0; i--) {
+		size_t rndidx = (size_t)random() % (i + 1);
+		char *t = strs[i];
+		strs[i] = strs[rndidx];
+		strs[rndidx] = t;
+	}
+}
+
 /* :O (order ascending) or :Or (order descending) or :Ox (shuffle) */
 static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 {
-    const char *mod = (*pp)++;	/* skip past the 'O' in any case */
+	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 
-    Words words = Str_Words(st->val, FALSE);
+	Words words = Str_Words(st->val, FALSE);
 
-    if (mod[1] == st->endc || mod[1] == ':') {
-	/* :O sorts ascending */
-	qsort(words.words, words.len, sizeof words.words[0], str_cmp_asc);
+	if (mod[1] == st->endc || mod[1] == ':') {
+		/* :O sorts ascending */
+		qsort(words.words, words.len, sizeof words.words[0],
+		    str_cmp_asc);
 
-    } else if ((mod[1] == 'r' || mod[1] == 'x') &&
-	       (mod[2] == st->endc || mod[2] == ':')) {
-	(*pp)++;
+	} else if ((mod[1] == 'r' || mod[1] == 'x') &&
+		   (mod[2] == st->endc || mod[2] == ':')) {
+		(*pp)++;
 
-	if (mod[1] == 'r') {
-	    /* :Or sorts descending */
-	    qsort(words.words, words.len, sizeof words.words[0], str_cmp_desc);
-
+		if (mod[1] == 'r') {	/* :Or sorts descending */
+			qsort(words.words, words.len, sizeof words.words[0],
+			    str_cmp_desc);
+		} else
+			ShuffleStrings(words.words, words.len);
 	} else {
-	    /* :Ox shuffles
-	     *
-	     * We will use [ac..2] range for mod factors. This will produce
-	     * random numbers in [(ac-1)..0] interval, and minimal
-	     * reasonable value for mod factor is 2 (the mod 1 will produce
-	     * 0 with probability 1).
-	     */
-	    size_t i;
-	    for (i = words.len - 1; i > 0; i--) {
-		size_t rndidx = (size_t)random() % (i + 1);
-		char *t = words.words[i];
-		words.words[i] = words.words[rndidx];
-		words.words[rndidx] = t;
-	    }
+		Words_Free(words);
+		return AMR_BAD;
 	}
-    } else {
-	Words_Free(words);
-	return AMR_BAD;
-    }
 
-    st->newVal = Words_JoinFree(words);
-    return AMR_OK;
+	st->newVal = Words_JoinFree(words);
+	return AMR_OK;
 }
 
 /* :? then : else */
