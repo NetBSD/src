@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.142 2020/10/11 18:39:09 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.143 2020/12/05 18:17:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.142 2020/10/11 18:39:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.143 2020/12/05 18:17:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -238,7 +238,7 @@ hardclock(struct clockframe *frame)
 	ci = curcpu();
 	l = ci->ci_onproc;
 
-	timer_tick(l, CLKF_USERMODE(frame));
+	ptimer_tick(l, CLKF_USERMODE(frame));
 
 	/*
 	 * If no separate statistics clock is available, run it from here.

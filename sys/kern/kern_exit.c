@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.290 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.291 2020/12/05 18:17:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.290 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.291 2020/12/05 18:17:01 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -288,7 +288,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 
 	DPRINTF(("%s: %d.%d exiting.\n", __func__, p->p_pid, l->l_lid));
 
-	timers_free(p, TIMERS_ALL);
+	ptimers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
 	ras_purgeall();
 #endif

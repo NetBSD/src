@@ -1,7 +1,7 @@
-/*	$NetBSD: timevar.h,v 1.44 2020/05/11 03:59:33 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.45 2020/12/05 18:17:01 thorpej Exp $	*/
 
 /*
- *  Copyright (c) 2005, 2008, The NetBSD Foundation.
+ *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -65,33 +65,79 @@
 #include <sys/signal.h>
 #include <sys/systm.h>
 
+struct itimer;
+TAILQ_HEAD(itqueue, itimer);
+LIST_HEAD(itlist, itimer);
+
+/*
+ * Interval timer operations vector.
+ *
+ * Required fields:
+ *
+ *	- ito_queue: The queue onto which an itimer is added when it
+ *	  fires.
+ *
+ *	- ito_sihp: A pointer to a software interrupt handle that is
+ *	  scheduled to run when an itimer is added to ito_queue.
+ *
+ *	- ito_fire: A function to be called when the itimer fires.
+ *	  The timer implementation should perform whatever processing
+ *	  is necessary for that timer type and then call itimer_fire().
+ *
+ * Optional fields:
+ *
+ *	- ito_realtime_changed: A function that is called when the system
+ *	  time (CLOCK_REALTIME) is called.
+ */
+struct itimer_ops {
+	struct itqueue *ito_queue;
+	void	**ito_sihp;
+	void	(*ito_fire)(struct itimer *);
+	void	(*ito_realtime_changed)(struct itimer *);
+};
+
+/*
+ * Common interval timer data.
+ */
+struct itimer {
+	union {
+		struct {
+			callout_t		it_ch;
+			LIST_ENTRY(itimer)	it_rtchgq;
+		} it_real;
+		struct {
+			struct itlist		*it_vlist;
+			LIST_ENTRY(itimer)	it_list;
+			bool			it_active;
+		} it_virtual;
+	};
+	const struct itimer_ops *it_ops;
+	TAILQ_ENTRY(itimer) it_chain;
+	struct itimerspec it_time;
+	clockid_t it_clockid;
+	int	it_overruns;	/* Overruns currently accumulating */
+	bool	it_queued;
+	bool	it_dying;
+};
+
+#define	it_ch		it_real.it_ch
+#define	it_rtchgq	it_real.it_rtchgq
+
+#define	it_vlist	it_virtual.it_vlist
+#define	it_list		it_virtual.it_list
+#define	it_active	it_virtual.it_active
+
 /*
  * Structure used to manage timers in a process.
  */
-struct 	ptimer {
-	union {
-		callout_t	pt_ch;
-		struct {
-			LIST_ENTRY(ptimer)	pt_list;
-			int	pt_active;
-		} pt_nonreal;
-	} pt_data;
-	struct	sigevent pt_ev;
-	struct	itimerspec pt_time;
-	struct	ksiginfo pt_info;
-	int	pt_overruns;	/* Overruns currently accumulating */
-	int	pt_poverruns;	/* Overruns associated w/ a delivery */
-	int	pt_type;
-	int	pt_entry;
-	int	pt_queued;
-	bool	pt_dying;
-	struct proc *pt_proc;
-	TAILQ_ENTRY(ptimer) pt_chain;
-};
+struct ptimer {
+	struct itimer pt_itimer;/* common interval timer data */
 
-#define pt_ch	pt_data.pt_ch
-#define pt_list	pt_data.pt_nonreal.pt_list
-#define pt_active	pt_data.pt_nonreal.pt_active
+	struct	sigevent pt_ev;	/* event notification info */
+	int	pt_poverruns;	/* Overruns associated w/ a delivery */
+	int	pt_entry;	/* slot in proc's timer table */
+	struct proc *pt_proc;	/* associated process */
+};
 
 #define	TIMER_MIN	4	/* [0..3] are reserved for setitimer(2) */
 				/* REAL=0,VIRTUAL=1,PROF=2,MONOTONIC=3 */
@@ -99,12 +145,10 @@ struct 	ptimer {
 #define	TIMERS_ALL	0
 #define	TIMERS_POSIX	1
 
-LIST_HEAD(ptlist, ptimer);
-
-struct	ptimers {
-	struct ptlist pts_virtual;
-	struct ptlist pts_prof;
-	struct ptimer *pts_timers[TIMER_MAX];
+struct ptimers {
+	struct itlist pts_virtual;
+	struct itlist pts_prof;
+	struct itimer *pts_timers[TIMER_MAX];
 };
 
 /*
@@ -170,7 +214,6 @@ int	itimerfix(struct timeval *);
 int	itimespecfix(struct timespec *);
 int	ppsratecheck(struct timeval *, int *, int);
 int	ratecheck(struct timeval *, const struct timeval *);
-void	realtimerexpire(void *);
 int	settime(struct proc *p, struct timespec *);
 int	nanosleep1(struct lwp *, clockid_t, int, struct timespec *,
 	    struct timespec *);
@@ -178,19 +221,22 @@ int	settimeofday1(const struct timeval *, bool,
 	    const void *, struct lwp *, bool);
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
 	    struct lwp *);
-void	timer_gettime(struct ptimer *, struct itimerspec *);
-int	timer_settime(struct ptimer *);
-struct	ptimers *timers_alloc(struct proc *);
-void	timers_free(struct proc *, int);
-void	timer_tick(struct lwp *, bool);
 int	tstohz(const struct timespec *);
 int	tvtohz(const struct timeval *);
 int	inittimeleft(struct timespec *, struct timespec *);
 int	gettimeleft(struct timespec *, struct timespec *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
-void	time_init2(void);
 bool	time_wraps(struct timespec *, struct timespec *);
+
+void	itimer_lock(void);
+void	itimer_unlock(void);
+int	itimer_settime(struct itimer *);
+void	itimer_gettime(const struct itimer *, struct itimerspec *);
+void	itimer_fire(struct itimer *);
+
+void	ptimer_tick(struct lwp *, bool);
+void	ptimers_free(struct proc *, int);
 
 extern volatile time_t time_second;	/* current second in the epoch */
 extern volatile time_t time_uptime;	/* system uptime in seconds */
