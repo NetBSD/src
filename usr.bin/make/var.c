@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.706 2020/12/05 18:15:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.707 2020/12/05 18:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.706 2020/12/05 18:15:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.707 2020/12/05 18:38:02 rillig Exp $");
 
 #define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
 #define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
@@ -188,6 +188,7 @@ GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
 
 typedef enum VarFlags {
+	VAR_NONE	= 0,
 
 	/*
 	 * The variable's value is currently being used by Var_Parse or
@@ -290,6 +291,7 @@ typedef enum VarExportFlags {
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef enum VarPatternFlags {
+	VARP_NONE		= 0,
 	/* Replace as often as possible ('g') */
 	VARP_SUB_GLOBAL		= 1 << 0,
 	/* Replace only once ('1') */
@@ -461,7 +463,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&ctxt->vars, name, NULL);
 	Var *v = VarNew(he->key /* aliased */, NULL, val,
-	    flags & VAR_SET_READONLY ? VAR_READONLY : 0);
+	    flags & VAR_SET_READONLY ? VAR_READONLY : VAR_NONE);
 	HashEntry_Set(he, v);
 	if (!(ctxt->flags & INTERNAL)) {
 		VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
@@ -659,7 +661,7 @@ Var_Export(const char *str, Boolean isExport)
 
 	if (isExport && strncmp(str, "-env", 4) == 0) {
 		str += 4;
-		flags = 0;
+		flags = VAR_EXPORT_NORMAL;
 	} else if (isExport && strncmp(str, "-literal", 8) == 0) {
 		str += 8;
 		flags = VAR_EXPORT_LITERAL;
@@ -1844,6 +1846,7 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  */
 
 typedef enum VarExprFlags {
+	VEF_NONE	= 0,
 	/* The variable expression is based on an undefined variable. */
 	VEF_UNDEF = 0x01,
 	/*
@@ -2531,7 +2534,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 
 	*pp += 2;
 
-	args.pflags = 0;
+	args.pflags = VARP_NONE;
 	args.matched = FALSE;
 
 	/*
@@ -2612,7 +2615,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 	}
 
-	args.pflags = 0;
+	args.pflags = VARP_NONE;
 	args.matched = FALSE;
 	oneBigWord = st->oneBigWord;
 	for (;; (*pp)++) {
@@ -3872,7 +3875,7 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		v = VarNew(varname, varname, "", 0);
+		v = VarNew(varname, varname, "", VAR_NONE);
 		*out_TRUE_exprFlags = VEF_UNDEF;
 	} else
 		free(varname);
@@ -3946,7 +3949,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	Var *v;
 	char *value;
 	char eflags_str[VarEvalFlags_ToStringSize];
-	VarExprFlags exprFlags = 0;
+	VarExprFlags exprFlags = VEF_NONE;
 
 	VAR_DEBUG2("Var_Parse: %s with %s\n", start,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
