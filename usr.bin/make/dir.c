@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.249 2020/12/04 14:39:56 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.250 2020/12/06 10:49:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,11 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.249 2020/12/04 14:39:56 rillig Exp $");
-
-#define DIR_DEBUG0(text) DEBUG0(DIR, text)
-#define DIR_DEBUG1(fmt, arg1) DEBUG1(DIR, fmt, arg1)
-#define DIR_DEBUG2(fmt, arg1, arg2) DEBUG2(DIR, fmt, arg1, arg2)
+MAKE_RCSID("$NetBSD: dir.c,v 1.250 2020/12/06 10:49:02 rillig Exp $");
 
 /* A search path is a list of CachedDir structures. A CachedDir has in it the
  * name of the directory and the names of all the files in the directory.
@@ -369,12 +365,12 @@ static void
 OpenDirs_Done(OpenDirs *odirs)
 {
 	CachedDirListNode *ln = odirs->list.first;
-	DIR_DEBUG1("OpenDirs_Done: %u entries to remove\n",
+	DEBUG1(DIR, "OpenDirs_Done: %u entries to remove\n",
 	    odirs->table.numEntries);
 	while (ln != NULL) {
 		CachedDirListNode *next = ln->next;
 		CachedDir *dir = ln->datum;
-		DIR_DEBUG2("OpenDirs_Done: refCount %d for \"%s\"\n",
+		DEBUG2(DIR, "OpenDirs_Done: refCount %d for \"%s\"\n",
 		    dir->refCount, dir->name);
 		CachedDir_Unref(dir);	/* removes the dir from odirs->list */
 		ln = next;
@@ -429,8 +425,8 @@ cached_stats(const char *pathname, struct cached_stat *out_cst,
 	cst = HashTable_FindValue(tbl, pathname);
 	if (cst != NULL && !(flags & CST_UPDATE)) {
 		*out_cst = *cst;
-		DIR_DEBUG2("Using cached time %s for %s\n",
-			   Targ_FmtTime(cst->cst_mtime), pathname);
+		DEBUG2(DIR, "Using cached time %s for %s\n",
+		    Targ_FmtTime(cst->cst_mtime), pathname);
 		return 0;
 	}
 
@@ -450,8 +446,8 @@ cached_stats(const char *pathname, struct cached_stat *out_cst,
 	cst->cst_mode = sys_st.st_mode;
 
 	*out_cst = *cst;
-	DIR_DEBUG2("   Caching %s for %s\n",
-		   Targ_FmtTime(sys_st.st_mtime), pathname);
+	DEBUG2(DIR, "   Caching %s for %s\n",
+	    Targ_FmtTime(sys_st.st_mtime), pathname);
 
 	return 0;
 }
@@ -838,7 +834,7 @@ Dir_Expand(const char *word, SearchPath *path, StringList *expansions)
 	assert(path != NULL);
 	assert(expansions != NULL);
 
-	DIR_DEBUG1("Expanding \"%s\"... ", word);
+	DEBUG1(DIR, "Expanding \"%s\"... ", word);
 
 	cp = strchr(word, '{');
 	if (cp != NULL) {
@@ -942,13 +938,13 @@ DirLookup(CachedDir *dir, const char *base)
 {
 	char *file;		/* the current filename to check */
 
-	DIR_DEBUG1("   %s ...\n", dir->name);
+	DEBUG1(DIR, "   %s ...\n", dir->name);
 
 	if (!HashSet_Contains(&dir->files, base))
 		return NULL;
 
 	file = str_concat3(dir->name, "/", base);
-	DIR_DEBUG1("   returning %s\n", file);
+	DEBUG1(DIR, "   returning %s\n", file);
 	dir->hits++;
 	hits++;
 	return file;
@@ -964,7 +960,7 @@ DirLookupSubdir(CachedDir *dir, const char *name)
 	char *file = dir == dot ? bmake_strdup(name)
 				: str_concat3(dir->name, "/", name);
 
-	DIR_DEBUG1("checking %s ...\n", file);
+	DEBUG1(DIR, "checking %s ...\n", file);
 
 	if (cached_stat(file, &cst) == 0) {
 		nearmisses++;
@@ -984,7 +980,7 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
 	const char *dnp;	/* pointer into dir->name */
 	const char *np;		/* pointer into name */
 
-	DIR_DEBUG1("   %s ...\n", dir->name);
+	DEBUG1(DIR, "   %s ...\n", dir->name);
 
 	/*
 	 * If the file has a leading path component and that component
@@ -999,13 +995,13 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
 		return NULL;
 
 	if (!HashSet_Contains(&dir->files, cp)) {
-		DIR_DEBUG0("   must be here but isn't -- returning\n");
+		DEBUG0(DIR, "   must be here but isn't -- returning\n");
 		return bmake_strdup("");	/* to terminate the search */
 	}
 
 	dir->hits++;
 	hits++;
-	DIR_DEBUG1("   returning %s\n", name);
+	DEBUG1(DIR, "   returning %s\n", name);
 	return bmake_strdup(name);
 }
 
@@ -1016,14 +1012,14 @@ DirFindDot(const char *name, const char *base)
 {
 
 	if (HashSet_Contains(&dot->files, base)) {
-		DIR_DEBUG0("   in '.'\n");
+		DEBUG0(DIR, "   in '.'\n");
 		hits++;
 		dot->hits++;
 		return bmake_strdup(name);
 	}
 
 	if (cur != NULL && HashSet_Contains(&cur->files, base)) {
-		DIR_DEBUG1("   in ${.CURDIR} = %s\n", cur->name);
+		DEBUG1(DIR, "   in ${.CURDIR} = %s\n", cur->name);
 		hits++;
 		cur->hits++;
 		return str_concat3(cur->name, "/", base);
@@ -1061,10 +1057,10 @@ Dir_FindFile(const char *name, SearchPath *path)
 	lastSlash = strrchr(name, '/');
 	base = lastSlash != NULL ? lastSlash + 1 : name;
 
-	DIR_DEBUG1("Searching for %s ...", name);
+	DEBUG1(DIR, "Searching for %s ...", name);
 
 	if (path == NULL) {
-		DIR_DEBUG0("couldn't open path, file not found\n");
+		DEBUG0(DIR, "couldn't open path, file not found\n");
 		misses++;
 		return NULL;
 	}
@@ -1073,10 +1069,10 @@ Dir_FindFile(const char *name, SearchPath *path)
 		CachedDir *dir = path->first->datum;
 		if (dir == dotLast) {
 			seenDotLast = TRUE;
-			DIR_DEBUG0("[dot last]...");
+			DEBUG0(DIR, "[dot last]...");
 		}
 	}
-	DIR_DEBUG0("\n");
+	DEBUG0(DIR, "\n");
 
 	/*
 	 * If there's no leading directory components or if the leading
@@ -1130,7 +1126,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * This phase is only performed if the file is *not* absolute.
 	 */
 	if (lastSlash == NULL) {
-		DIR_DEBUG0("   failed.\n");
+		DEBUG0(DIR, "   failed.\n");
 		misses++;
 		return NULL;
 	}
@@ -1144,7 +1140,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		SearchPathNode *ln;
 		Boolean checkedDot = FALSE;
 
-		DIR_DEBUG0("   Trying subdirectories...\n");
+		DEBUG0(DIR, "   Trying subdirectories...\n");
 
 		if (!seenDotLast) {
 			if (dot != NULL) {
@@ -1184,7 +1180,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 			 * Already checked by the given name, since . was in
 			 * the path, so no point in proceeding.
 			 */
-			DIR_DEBUG0("   Checked . already, returning NULL\n");
+			DEBUG0(DIR, "   Checked . already, returning NULL\n");
 			return NULL;
 		}
 
@@ -1201,7 +1197,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		 * This is signified by DirLookupAbs() returning an empty
 		 * string.
 		 */
-		DIR_DEBUG0("   Trying exact path matches...\n");
+		DEBUG0(DIR, "   Trying exact path matches...\n");
 
 		if (!seenDotLast && cur &&
 		    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
@@ -1276,14 +1272,14 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return NULL;
 	}
 #else
-	DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
+	DEBUG1(DIR, "   Looking for \"%s\" ...\n", name);
 
 	bigmisses++;
 	if (cached_stat(name, &cst) == 0) {
 		return bmake_strdup(name);
 	}
 
-	DIR_DEBUG0("   failed. Returning NULL\n");
+	DEBUG0(DIR, "   failed. Returning NULL\n");
 	return NULL;
 #endif
 }
@@ -1401,7 +1397,7 @@ ResolveFullName(GNode *gn)
 		    !Lst_IsEmpty(&gn->implicitParents))
 			fullName = ResolveMovedDepends(gn);
 
-		DIR_DEBUG2("Found '%s' as '%s'\n",
+		DEBUG2(DIR, "Found '%s' as '%s'\n",
 			   gn->name, fullName ? fullName : "(not found)");
 	}
 
@@ -1465,11 +1461,11 @@ CacheNewDir(const char *name, SearchPath *path)
 	struct dirent *dp;
 
 	if ((d = opendir(name)) == NULL) {
-		DIR_DEBUG1("Caching %s ... not found\n", name);
+		DEBUG1(DIR, "Caching %s ... not found\n", name);
 		return dir;
 	}
 
-	DIR_DEBUG1("Caching %s ...\n", name);
+	DEBUG1(DIR, "Caching %s ...\n", name);
 
 	dir = CachedDir_New(name);
 
@@ -1493,7 +1489,7 @@ CacheNewDir(const char *name, SearchPath *path)
 	if (path != NULL)
 		Lst_Append(path, CachedDir_Ref(dir));
 
-	DIR_DEBUG1("Caching %s done\n", name);
+	DEBUG1(DIR, "Caching %s done\n", name);
 	return dir;
 }
 

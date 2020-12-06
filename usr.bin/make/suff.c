@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.326 2020/12/05 18:38:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.327 2020/12/06 10:49:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,11 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.326 2020/12/05 18:38:02 rillig Exp $");
-
-#define SUFF_DEBUG0(text) DEBUG0(SUFF, text)
-#define SUFF_DEBUG1(fmt, arg1) DEBUG1(SUFF, fmt, arg1)
-#define SUFF_DEBUG2(fmt, arg1, arg2) DEBUG2(SUFF, fmt, arg1, arg2)
+MAKE_RCSID("$NetBSD: suff.c,v 1.327 2020/12/06 10:49:02 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -442,7 +438,7 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 	}
 
 	if (ln == NULL) {
-		SUFF_DEBUG2("inserting \"%s\" (%d) at end of list\n",
+		DEBUG2(SUFF, "inserting \"%s\" (%d) at end of list\n",
 		    suff->name, suff->sNum);
 		Lst_Append(list, Suffix_Ref(suff));
 		Lst_Append(&suff->ref, list);
@@ -452,7 +448,7 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 		Lst_InsertBefore(list, ln, Suffix_Ref(suff));
 		Lst_Append(&suff->ref, list);
 	} else {
-		SUFF_DEBUG2("\"%s\" (%d) is already there\n",
+		DEBUG2(SUFF, "\"%s\" (%d) is already there\n",
 		    suff->name, suff->sNum);
 	}
 }
@@ -622,7 +618,7 @@ Suff_AddTransform(const char *name)
 	}
 
 	/* Link the two together in the proper relationship and order. */
-	SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
+	DEBUG2(SUFF, "defining transformation from `%s' to `%s'\n",
 	    srcSuff->name, targSuff->name);
 	Relate(srcSuff, targSuff);
 
@@ -652,7 +648,7 @@ Suff_EndTransform(GNode *gn)
 		return;
 
 	if (!Lst_IsEmpty(&gn->commands) || !Lst_IsEmpty(&gn->children)) {
-		SUFF_DEBUG1("transformation %s complete\n", gn->name);
+		DEBUG1(SUFF, "transformation %s complete\n", gn->name);
 		return;
 	}
 
@@ -663,7 +659,7 @@ Suff_EndTransform(GNode *gn)
 	if (!ParseTransform(gn->name, &srcSuff, &targSuff))
 		return;
 
-	SUFF_DEBUG2("deleting incomplete transformation from `%s' to `%s'\n",
+	DEBUG2(SUFF, "deleting incomplete transformation from `%s' to `%s'\n",
 	    srcSuff->name, targSuff->name);
 
 	/*
@@ -790,7 +786,7 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 		/*
 		 * Link the two together in the proper relationship and order.
 		 */
-		SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
+		DEBUG2(SUFF, "defining transformation from `%s' to `%s'\n",
 		    srcSuff->name, targSuff->name);
 		Relate(srcSuff, targSuff);
 	}
@@ -1123,7 +1119,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 		debug_printf("remove from list %p src %p:%s\n",
 		    srcs, src, src->file);
 #endif
-		SUFF_DEBUG1("\ttrying %s...", src->file);
+		DEBUG1(SUFF, "\ttrying %s...", src->file);
 
 		/*
 		 * A file is considered to exist if either a node exists in the
@@ -1132,7 +1128,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 		if (Targ_FindNode(src->file) != NULL) {
 		found:
 			HashSet_Done(&seen);
-			SUFF_DEBUG0("got it\n");
+			DEBUG0(SUFF, "got it\n");
 			return src;
 		}
 
@@ -1145,12 +1141,12 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 			}
 		}
 
-		SUFF_DEBUG0("not there\n");
+		DEBUG0(SUFF, "not there\n");
 
 		if (HashSet_Add(&seen, src->file))
 			CandidateList_AddCandidatesFor(srcs, src);
 		else {
-			SUFF_DEBUG1("FindThem: skipping duplicate \"%s\"\n",
+			DEBUG1(SUFF, "FindThem: skipping duplicate \"%s\"\n",
 			    src->file);
 		}
 
@@ -1230,7 +1226,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 	Lst_Append(&targ->childrenList, ret);
 #endif
 	CandidateSearcher_Add(cs, ret);
-	SUFF_DEBUG1("\tusing existing source %s\n", sgn->name);
+	DEBUG1(SUFF, "\tusing existing source %s\n", sgn->name);
 	return ret;
 }
 
@@ -1256,7 +1252,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 		 */
 		char *cp = Lst_Dequeue(&expansions);
 
-		SUFF_DEBUG1("%s...", cp);
+		DEBUG1(SUFF, "%s...", cp);
 		gn = Targ_GetNode(cp);
 
 		/* Add gn to the parents child list before the original child */
@@ -1267,7 +1263,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 
 	Lst_Done(&expansions);
 
-	SUFF_DEBUG0("\n");
+	DEBUG0(SUFF, "\n");
 
 	/*
 	 * Now the source is expanded, remove it from the list of children to
@@ -1382,7 +1378,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		return;
 	}
 
-	SUFF_DEBUG1("Expanding \"%s\"...", cgn->name);
+	DEBUG1(SUFF, "Expanding \"%s\"...", cgn->name);
 	(void)Var_Subst(cgn->name, pgn, VARE_WANTRES | VARE_UNDEFERR, &cp);
 	/* TODO: handle errors */
 
@@ -1407,7 +1403,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		while (!Lst_IsEmpty(&members)) {
 			GNode *gn = Lst_Dequeue(&members);
 
-			SUFF_DEBUG1("%s...", gn->name);
+			DEBUG1(SUFF, "%s...", gn->name);
 			/*
 			 * Add gn to the parents child list before the
 			 * original child.
@@ -1423,7 +1419,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		free(cp);
 	}
 
-	SUFF_DEBUG0("\n");
+	DEBUG0(SUFF, "\n");
 
 	/*
 	 * Now the source is expanded, remove it from the list of children to
@@ -1470,7 +1466,7 @@ Suff_FindPath(GNode *gn)
 			if (Suffix_IsSuffix(ln->datum, nameLen, name + nameLen))
 				break;
 
-		SUFF_DEBUG1("Wildcard expanding \"%s\"...", gn->name);
+		DEBUG1(SUFF, "Wildcard expanding \"%s\"...", gn->name);
 		if (ln != NULL)
 			suff = ln->datum;
 		/*
@@ -1480,10 +1476,10 @@ Suff_FindPath(GNode *gn)
 	}
 
 	if (suff != NULL) {
-		SUFF_DEBUG1("suffix is \"%s\"...\n", suff->name);
+		DEBUG1(SUFF, "suffix is \"%s\"...\n", suff->name);
 		return suff->searchPath;
 	} else {
-		SUFF_DEBUG0("\n");
+		DEBUG0(SUFF, "\n");
 		return &dirSearchPath;	/* Use default search path */
 	}
 }
@@ -1567,7 +1563,7 @@ ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
 		/* Got one -- apply it */
 		Suffix *suff = ln->datum;
 		if (!ApplyTransform(gn, mem, suff, memSuff)) {
-			SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
+			DEBUG2(SUFF, "\tNo transformation from %s -> %s\n",
 			    memSuff->name, suff->name);
 		}
 	}
@@ -1632,7 +1628,7 @@ FindDepsArchive(GNode *gn, CandidateSearcher *cs)
 
 	memSuff = mem->suffix;
 	if (memSuff == NULL) {	/* Didn't know what it was. */
-		SUFF_DEBUG0("using null suffix\n");
+		DEBUG0(SUFF, "using null suffix\n");
 		memSuff = nullSuff;
 	}
 
@@ -1736,7 +1732,7 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
 	if (!Lst_IsEmpty(targs) || nullSuff == NULL)
 		return;
 
-	SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
+	DEBUG1(SUFF, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 
 	targ = Candidate_New(bmake_strdup(gn->name), bmake_strdup(sopref),
 	    nullSuff, NULL, gn);
@@ -1750,10 +1746,10 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
 	if (Lst_IsEmpty(&gn->commands))
 		CandidateList_AddCandidatesFor(srcs, targ);
 	else {
-		SUFF_DEBUG0("not ");
+		DEBUG0(SUFF, "not ");
 	}
 
-	SUFF_DEBUG0("adding suffix rules\n");
+	DEBUG0(SUFF, "adding suffix rules\n");
 
 	Lst_Append(targs, targ);
 }
@@ -1921,7 +1917,7 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 	}
 
 	if (targ == NULL) {
-		SUFF_DEBUG1("\tNo valid suffix on %s\n", gn->name);
+		DEBUG1(SUFF, "\tNo valid suffix on %s\n", gn->name);
 
 	sfnd_abort:
 		FindDepsRegularPath(gn, targ);
@@ -2065,7 +2061,7 @@ FindDeps(GNode *gn, CandidateSearcher *cs)
 	Var_Set(TARGET, GNode_Path(gn), gn);
 	Var_Set(PREFIX, gn->name, gn);
 
-	SUFF_DEBUG1("SuffFindDeps \"%s\"\n", gn->name);
+	DEBUG1(SUFF, "SuffFindDeps \"%s\"\n", gn->name);
 
 	if (gn->type & OP_ARCHV)
 		FindDepsArchive(gn, cs);
