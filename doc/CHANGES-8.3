@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.52 2020/11/29 11:20:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.53 2020/12/06 10:28:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1336,4 +1336,12 @@ lib/libc/net/gethnamaddr.c			1.93
 	Don't complain about additional DNAME records received when resolving
 	A or AAAA.
 	[is, ticket #1625]
+
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
+    
+	Apply upstream patches for:
+	 * CVE-2020-14360 / ZDI CAN 11572 XkbSetMap Out-Of-Bounds Access
+	 * CVE-2020-25712 / ZDI-CAN-11839 XkbSetDeviceInfo Heap-based Buffer
+	   Overflow
+	[mrg, ticket #1627]
 
