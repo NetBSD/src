@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.207 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.208 2020/12/06 13:45:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.207 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.208 2020/12/06 13:45:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1243,10 +1243,10 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 
 	switch (id) {
 	case CLOCK_VIRTUAL:
-		itl = &pt->pt_proc->p_timers->pts_virtual;
+		itl = &pts->pts_virtual;
 		break;
 	case CLOCK_PROF:
-		itl = &pt->pt_proc->p_timers->pts_prof;
+		itl = &pts->pts_prof;
 		break;
 	default:
 		itl = NULL;
@@ -1642,11 +1642,11 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 			pt->pt_ev.sigev_signo = SIGALRM;
 			break;
 		case ITIMER_VIRTUAL:
-			itl = &pt->pt_proc->p_timers->pts_virtual;
+			itl = &pts->pts_virtual;
 			pt->pt_ev.sigev_signo = SIGVTALRM;
 			break;
 		case ITIMER_PROF:
-			itl = &pt->pt_proc->p_timers->pts_prof;
+			itl = &pts->pts_prof;
 			pt->pt_ev.sigev_signo = SIGPROF;
 			break;
 		}
