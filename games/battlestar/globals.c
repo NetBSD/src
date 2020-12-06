@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.19 2003/08/07 09:37:02 agc Exp $	*/
+/*	$NetBSD: globals.c,v 1.20 2020/12/06 11:35:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.19 2003/08/07 09:37:02 agc Exp $");
+__RCSID("$NetBSD: globals.c,v 1.20 2020/12/06 11:35:27 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,7 +67,8 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"A dead woodsman has fallen here. He was savagely murdered.",
 	"A heavy wooden mallet lies nearby.",
 	"There is a laser pistol here.",
-	"A flower-like young goddess is bathing in the hot mineral pools. She is \nwatching you, but continues to steep and sing softly.",
+	"A flower-like young goddess is bathing in the hot mineral pools. She "
+		"is \nwatching you, but continues to steep and sing softly.",
 	"The goddess is reclining on a bed of ferns and studying you intently.",
 	"There is a grenade here.",
 	"There is a length of heavy chain here.",
@@ -78,7 +79,8 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"A long, sharp halberd is propped up here.",
 	"There is a compass here.",
 	"Wreckage and smoldering debris from a crash litter the ground here.",
-	"A woodland Elf armed with a shield and deadly halberd lunges toward you!",
+	"A woodland Elf armed with a shield and deadly halberd lunges toward "
+		"you!",
 	"I think I hear footsteps behind us.",
 	"There are a few coins here.",
 	"There are some matches here.",
@@ -91,15 +93,28 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a sparkling diamond ring here.",
 	"There is a colorful pink potion in a small crystal vial here.",
 	"A gold bracelet is on the ground here.",
-	"A swarthy woman with stern features pulls you aside from the crowd,\n'I must talk to you -- but not here.  Meet me at midnight in the gardens.'",
-	"The swarthy woman has been awaiting you anxiously. 'I must warn you that the\nIsland has anticipated your Quest.  You will not be welcomed. The Darkness is\nstrong where you must search.  Seek not the shadows save only at night, for\nthen are they the weakest.  In the mountains far from here a canyon winds\nwith ferns and streams and forgotten vines.  There you must go. Take this\nrope.'",
-	"Out from the shadows a figure leaps!  His black cape swirls around, and he\nholds a laser sword at your chest.  'So, you have come to fulfill the Quest.\nHa! Your weapons are no match for me!'",
-	"An old-timer with one eye missing and no money for a drink sits at the bar.",
+	"A swarthy woman with stern features pulls you aside from the crowd,\n"
+		"'I must talk to you -- but not here.  "
+		"Meet me at midnight in the gardens.'",
+	"The swarthy woman has been awaiting you anxiously. 'I must warn you "
+		"that the\nIsland has anticipated your Quest.  You will not be "
+		"welcomed. The Darkness is\nstrong where you must search.  Seek"
+		" not the shadows save only at night, for\nthen are they the "
+		"weakest.  In the mountains far from here a canyon winds\nwith "
+		"ferns and streams and forgotten vines.  There you must go. "
+		"Take this\nrope.'",
+	"Out from the shadows a figure leaps!  His black cape swirls around,"
+		" and he\nholds a laser sword at your chest.  'So, you have"
+		" come to fulfill the Quest.\nHa! Your weapons are no match for"
+		" me!'",
+	"An old-timer with one eye missing and no money for a drink sits at the"
+		" bar.",
 	"You are flying through an asteroid field!",
 	"A planet is nearby.",
 	"The ground is charred here.",
 	"There is a thermonuclear warhead here.",
-	"The fragile, beautiful young goddess lies here.  You murdered her horribly.",
+	"The fragile, beautiful young goddess lies here.  You murdered her "
+		"horribly.",
 	"The old-timer is lying here.  He is dead.",
 	"The native girl's body is lying here.",
 	"A native girl is sitting here.",
