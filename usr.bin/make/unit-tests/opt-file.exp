@@ -1,2 +1,5 @@
 value
+make: "(stdin)" line 1: warning: Zero byte read from file, skipping rest of line.
+va
+VALUE2
 exit status 0
