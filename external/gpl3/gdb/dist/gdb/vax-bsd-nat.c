@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -59,7 +58,7 @@ static void
 vaxbsd_collect_gregset (const struct regcache *regcache,
 			void *gregs, int regnum)
 {
-  gdb_byte *regs = (void *)gregs;
+  gdb_byte *regs = (gdb_byte *)gregs;
   int i;
 
   for (i = 0; i <= VAX_NUM_REGS; i++)
