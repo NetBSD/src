@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.72 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: types.h,v 1.73 2020/12/06 03:46:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -64,6 +64,11 @@ typedef	__fpregister64_t	__fpregister_t;
  * the rest of the operating system as possible.
  */
 
+#ifdef _LP64
+typedef __uint64_t	__vaddr_t;
+#else
+typedef __uint32_t	__vaddr_t;
+#endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
