@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/09/17 20:26:22 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2020/12/06 03:28:26 christos Exp $
 NOCTF=
 .include "../Makefile.inc"
 
@@ -84,8 +84,8 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil
-DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil -lpthread
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL} ${LIBPTHREAD}
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
