@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.5 2020/12/06 20:07:25 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.6 2020/12/06 20:33:44 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -49,15 +49,19 @@ file-ending-in-backslash: .PHONY
 #	make: stopped in .
 #	exit status 2
 #
-#	2014:
+#	2014 to 2020-12-06:
 #	make: "zero-byte.in" line 1: warning: Zero byte read from file, skipping rest of line.
 #	exit status 0
 #
-# XXX: It would be safer to just quit parsing in such a situation.
+#	Since 2020-12-07:
+#	make: "zero-byte.in" line 1: Zero byte read from file
+#	make: Fatal errors encountered -- cannot continue
+#	make: stopped in .
+#	exit status 1
 file-containing-null-byte: .PHONY
 	@printf '%s\n' 'VAR=value' 'VAR2=VALUE2' \
 	| tr 'l' '\0' \
 	| ${MAKE} -r -f - -v VAR -v VAR2
 
 all:
-	@:;
+	: Making ${.TARGET}
