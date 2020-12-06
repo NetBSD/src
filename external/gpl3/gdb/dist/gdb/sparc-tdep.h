@@ -255,9 +255,6 @@ extern const struct sparc_gregmap sparc32nbsd_gregmap;
 extern CORE_ADDR sparcnbsd_step_trap (struct frame_info *frame,
 				      unsigned long insn);
 
-extern void sparc32nbsd_init_abi (struct gdbarch_info info,
-				  struct gdbarch *gdbarch);
-
 extern struct trad_frame_saved_reg *
   sparc32nbsd_sigcontext_saved_regs (struct frame_info *next_frame);
 
