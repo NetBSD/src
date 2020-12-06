@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.82 2020/01/17 17:06:32 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.83 2020/12/06 11:38:28 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -382,8 +382,6 @@ struct acpi_quirk {
 #define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
 int	acpi_find_quirks(void);
-int	acpi_quirks_osi_add(const char *);
-int	acpi_quirks_osi_del(const char *);
 
 #ifdef ACPI_DEBUG
 void	acpi_debug_init(void);
