@@ -20,7 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include "defs.h"
 
 #include <sys/types.h>
@@ -32,8 +31,6 @@
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
-
-#include "common/gdb_assert.h"
 
 #include "nbsd-nat.h"
 #include "ppc-tdep.h"
