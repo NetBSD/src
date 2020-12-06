@@ -29,6 +29,7 @@
 
 #include "ppc-tdep.h"
 #include "nbsd-tdep.h"
+#include "ppc-nbsd-tdep.h"
 #include "ppc-tdep.h"
 #include "solib-svr4.h"
 
