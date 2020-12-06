@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.709 2020/12/06 13:51:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.710 2020/12/06 14:20:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,126 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.709 2020/12/06 13:51:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.710 2020/12/06 14:20:20 rillig Exp $");
+
+
+typedef enum VarFlags {
+	VAR_NONE	= 0,
+
+	/*
+	 * The variable's value is currently being used by Var_Parse or
+	 * Var_Subst.  This marker is used to avoid endless recursion.
+	 */
+	VAR_IN_USE = 0x01,
+
+	/*
+	 * The variable comes from the environment.
+	 * These variables are not registered in any GNode, therefore they
+	 * must be freed as soon as they are not used anymore.
+	 */
+	VAR_FROM_ENV = 0x02,
+
+	/*
+	 * The variable is exported to the environment, to be used by child
+	 * processes.
+	 */
+	VAR_EXPORTED = 0x10,
+
+	/*
+	 * At the point where this variable was exported, it contained an
+	 * unresolved reference to another variable.  Before any child
+	 * process is started, it needs to be exported again, in the hope
+	 * that the referenced variable can then be resolved.
+	 */
+	VAR_REEXPORT = 0x20,
+
+	/* The variable came from the command line. */
+	VAR_FROM_CMD = 0x40,
+
+	/*
+	 * The variable value cannot be changed anymore, and the variable
+	 * cannot be deleted.  Any attempts to do so are silently ignored,
+	 * they are logged with -dv though.
+	 */
+	VAR_READONLY = 0x80
+} VarFlags;
+
+/* Variables are defined using one of the VAR=value assignments.  Their
+ * value can be queried by expressions such as $V, ${VAR}, or with modifiers
+ * such as ${VAR:S,from,to,g:Q}.
+ *
+ * There are 3 kinds of variables: context variables, environment variables,
+ * undefined variables.
+ *
+ * Context variables are stored in a GNode.context.  The only way to undefine
+ * a context variable is using the .undef directive.  In particular, it must
+ * not be possible to undefine a variable during the evaluation of an
+ * expression, or Var.name might point nowhere.
+ *
+ * Environment variables are temporary.  They are returned by VarFind, and
+ * after using them, they must be freed using VarFreeEnv.
+ *
+ * Undefined variables occur during evaluation of variable expressions such
+ * as ${UNDEF:Ufallback} in Var_Parse and ApplyModifiers.
+ */
+typedef struct Var {
+	/*
+	 * The name of the variable, once set, doesn't change anymore.
+	 * For context variables, it aliases the corresponding HashEntry name.
+	 * For environment and undefined variables, it is allocated.
+	 */
+	const char *name;
+	void *name_freeIt;
+
+	/* The unexpanded value of the variable. */
+	Buffer val;
+	/* Miscellaneous status flags. */
+	VarFlags flags;
+} Var;
+
+typedef enum VarExportFlags {
+	VAR_EXPORT_NORMAL = 0,
+	/*
+	 * We pass this to Var_Export when doing the initial export
+	 * or after updating an exported var.
+	 */
+	VAR_EXPORT_PARENT = 0x01,
+	/*
+	 * We pass this to Var_Export1 to tell it to leave the value alone.
+	 */
+	VAR_EXPORT_LITERAL = 0x02
+} VarExportFlags;
+
+/*
+ * Exporting vars is expensive so skip it if we can
+ */
+typedef enum VarExportedMode {
+	VAR_EXPORTED_NONE,
+	VAR_EXPORTED_SOME,
+	VAR_EXPORTED_ALL
+} VarExportedMode;
+
+/* Flags for pattern matching in the :S and :C modifiers */
+typedef enum VarPatternFlags {
+	VARP_NONE		= 0,
+	/* Replace as often as possible ('g') */
+	VARP_SUB_GLOBAL		= 1 << 0,
+	/* Replace only once ('1') */
+	VARP_SUB_ONE		= 1 << 1,
+	/* Match at start of word ('^') */
+	VARP_ANCHOR_START	= 1 << 2,
+	/* Match at end of word ('$') */
+	VARP_ANCHOR_END		= 1 << 3
+} VarPatternFlags;
+
+/* SepBuf is a string being built from words, interleaved with separators. */
+typedef struct SepBuf {
+	Buffer buf;
+	Boolean needSep;
+	/* Usually ' ', but see the ':ts' modifier. */
+	char sep;
+} SepBuf;
+
 
 ENUM_FLAGS_RTTI_3(VarEvalFlags,
 		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR);
@@ -182,120 +301,11 @@ GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMDLINE;	/* variables defined on the command-line */
 
-typedef enum VarFlags {
-	VAR_NONE	= 0,
-
-	/*
-	 * The variable's value is currently being used by Var_Parse or
-	 * Var_Subst.  This marker is used to avoid endless recursion.
-	 */
-	VAR_IN_USE = 0x01,
-
-	/*
-	 * The variable comes from the environment.
-	 * These variables are not registered in any GNode, therefore they
-	 * must be freed as soon as they are not used anymore.
-	 */
-	VAR_FROM_ENV = 0x02,
-
-	/*
-	 * The variable is exported to the environment, to be used by child
-	 * processes.
-	 */
-	VAR_EXPORTED = 0x10,
-
-	/*
-	 * At the point where this variable was exported, it contained an
-	 * unresolved reference to another variable.  Before any child
-	 * process is started, it needs to be exported again, in the hope
-	 * that the referenced variable can then be resolved.
-	 */
-	VAR_REEXPORT = 0x20,
-
-	/* The variable came from the command line. */
-	VAR_FROM_CMD = 0x40,
-
-	/*
-	 * The variable value cannot be changed anymore, and the variable
-	 * cannot be deleted.  Any attempts to do so are silently ignored,
-	 * they are logged with -dv though.
-	 */
-	VAR_READONLY = 0x80
-} VarFlags;
-
 ENUM_FLAGS_RTTI_6(VarFlags,
 		  VAR_IN_USE, VAR_FROM_ENV,
 		  VAR_EXPORTED, VAR_REEXPORT, VAR_FROM_CMD, VAR_READONLY);
 
-/* Variables are defined using one of the VAR=value assignments.  Their
- * value can be queried by expressions such as $V, ${VAR}, or with modifiers
- * such as ${VAR:S,from,to,g:Q}.
- *
- * There are 3 kinds of variables: context variables, environment variables,
- * undefined variables.
- *
- * Context variables are stored in a GNode.context.  The only way to undefine
- * a context variable is using the .undef directive.  In particular, it must
- * not be possible to undefine a variable during the evaluation of an
- * expression, or Var.name might point nowhere.
- *
- * Environment variables are temporary.  They are returned by VarFind, and
- * after using them, they must be freed using VarFreeEnv.
- *
- * Undefined variables occur during evaluation of variable expressions such
- * as ${UNDEF:Ufallback} in Var_Parse and ApplyModifiers.
- */
-typedef struct Var {
-	/*
-	 * The name of the variable, once set, doesn't change anymore.
-	 * For context variables, it aliases the corresponding HashEntry name.
-	 * For environment and undefined variables, it is allocated.
-	 */
-	const char *name;
-	void *name_freeIt;
-
-	/* The unexpanded value of the variable. */
-	Buffer val;
-	/* Miscellaneous status flags. */
-	VarFlags flags;
-} Var;
-
-/*
- * Exporting vars is expensive so skip it if we can
- */
-typedef enum VarExportedMode {
-	VAR_EXPORTED_NONE,
-	VAR_EXPORTED_SOME,
-	VAR_EXPORTED_ALL
-} VarExportedMode;
-
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
-
-typedef enum VarExportFlags {
-	VAR_EXPORT_NORMAL = 0,
-	/*
-	 * We pass this to Var_Export when doing the initial export
-	 * or after updating an exported var.
-	 */
-	VAR_EXPORT_PARENT = 0x01,
-	/*
-	 * We pass this to Var_Export1 to tell it to leave the value alone.
-	 */
-	VAR_EXPORT_LITERAL = 0x02
-} VarExportFlags;
-
-/* Flags for pattern matching in the :S and :C modifiers */
-typedef enum VarPatternFlags {
-	VARP_NONE		= 0,
-	/* Replace as often as possible ('g') */
-	VARP_SUB_GLOBAL		= 1 << 0,
-	/* Replace only once ('1') */
-	VARP_SUB_ONE		= 1 << 1,
-	/* Match at start of word ('^') */
-	VARP_ANCHOR_START	= 1 << 2,
-	/* Match at end of word ('$') */
-	VARP_ANCHOR_END		= 1 << 3
-} VarPatternFlags;
 
 static Var *
 VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
@@ -1067,14 +1077,6 @@ Var_ValueDirect(const char *name, GNode *ctxt)
 	return v != NULL ? Buf_GetAll(&v->val, NULL) : NULL;
 }
 
-
-/* SepBuf is a string being built from words, interleaved with separators. */
-typedef struct SepBuf {
-	Buffer buf;
-	Boolean needSep;
-	/* Usually ' ', but see the ':ts' modifier. */
-	char sep;
-} SepBuf;
 
 static void
 SepBuf_Init(SepBuf *buf, char sep)
