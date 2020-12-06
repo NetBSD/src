@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2020/12/03 18:43:02 rillig Exp $
+#	$NetBSD: Makefile,v 1.108 2020/12/06 12:54:32 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -126,13 +126,18 @@ SUBDIR+=	unit-tests
 ${SRCS:M*.c:.c=.o}: ${HDRS}
 CLEANFILES+=	*.o
 
+COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.job.c+=	-Wno-format-nonliteral
+COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.parse.c+=	-Wno-format-nonliteral
+COPTS.var.c+=	-Wno-format-nonliteral
+
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
 
 CPPFLAGS+=	-DMAKE_NATIVE
-COPTS.job.c+=	-Wno-format-nonliteral
-COPTS.parse.c+=	-Wno-format-nonliteral
-COPTS.var.c+=	-Wno-format-nonliteral
 
 .if ${USE_GCC10} == "yes"
 GCC10BASE?=	/usr/pkg/gcc10
@@ -158,11 +163,6 @@ CPPFLAGS+=	-DUSE_EMALLOC
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
 .endif
-
-COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 COPTS+=		-Wdeclaration-after-statement
 
