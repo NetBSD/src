@@ -1,4 +1,4 @@
-/* $NetBSD: mpu_acpi.c,v 1.13 2011/12/09 08:56:54 mrg Exp $ */
+/* $NetBSD: mpu_acpi.c,v 1.14 2020/12/06 12:23:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.13 2011/12/09 08:56:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.14 2020/12/06 12:23:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/mpuvar.h>
 
@@ -87,7 +88,6 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_io *io;
-	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 
 	/* parse resources */
@@ -104,13 +104,6 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	/* find our IRQ */
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(self, "unable to find irq resource\n");
-		goto out;
-	}
-
 	sc->iot = aa->aa_iot;
 	if (bus_space_map(sc->iot, io->ar_base, io->ar_length, 0, &sc->ioh)) {
 		aprint_error_dev(self, "can't map i/o space\n");
@@ -123,9 +116,12 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&asc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	mpu_attach(sc);
 
-	sc->arg = isa_intr_establish(aa->aa_ic, irq->ar_irq,
-	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_AUDIO, mpu_intr, sc);
+	sc->arg = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_AUDIO, true, mpu_intr, sc, device_xname(self));
+	if (sc->arg == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		goto out;
+	}
 
  out:
 	acpi_resource_cleanup(&res);

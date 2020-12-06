@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_acpi.c,v 1.2 2018/10/21 11:09:20 jmcneill Exp $ */
+/* $NetBSD: amdccp_acpi.c,v 1.3 2020/12/06 12:23:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.2 2018/10/21 11:09:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.3 2020/12/06 12:23:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.2 2018/10/21 11:09:20 jmcneill Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/amdccpvar.h>
 
@@ -68,9 +69,6 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
-#if notyet
-	struct acpi_irq *irq;
-#endif
 	ACPI_STATUS rv;
 #if notyet
 	void *ih;
@@ -89,23 +87,16 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-#if notyet
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(self, "couldn't find irq resource\n");
-		goto done;
-	}
-
-#endif
 	sc->sc_bst = aa->aa_memt;
-	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0, &sc->sc_bsh) != 0) {
+	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
+	    &sc->sc_bsh) != 0) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		goto done;
 	}
 
 #if notyet
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_VM, type | IST_MPSAFE, amdccp_intr, sc);
+	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_VM, true, amdccp_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;
