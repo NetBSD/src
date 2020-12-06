@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.197 2020/12/06 22:49:40 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.198 2020/12/06 23:02:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.197 2020/12/06 22:49:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.198 2020/12/06 23:02:56 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -664,8 +664,9 @@ void
 Compat_Run(GNodeList *targs)
 {
 	GNode *gn = NULL;	/* Current root target */
-	int indirectErrors;	/* Number of targets not remade due to errors */
-	Boolean seenError;
+	Boolean mainError;
+	Boolean mainDepError;
+	Boolean endError;
 
 	if (!shellName)
 		Shell_Init();
@@ -705,7 +706,7 @@ Compat_Run(GNodeList *targs)
 	 */
 	Make_ExpandUse(targs);
 
-	indirectErrors = 0;
+	mainDepError = FALSE;
 	while (!Lst_IsEmpty(targs)) {
 		gn = Lst_Dequeue(targs);
 		Compat_Make(gn, gn);
@@ -715,21 +716,28 @@ Compat_Run(GNodeList *targs)
 		} else if (gn->made == ABORTED) {
 			printf("`%s' not remade because of errors.\n",
 			       gn->name);
-			indirectErrors++;
+			mainDepError = TRUE;
 		}
 	}
 
 	/*
+	 * XXX: what about multiple main targets if the first few fail but
+	 * the last one succeeds?  This should not count as overall success.
+	 */
+	mainError = GNode_IsError(gn);
+
+	/*
 	 * If the user has defined a .END target, run its commands.
 	 */
-	seenError = indirectErrors > 0;
-	if (!seenError) {
+	if (!mainDepError) {
 		GNode *endNode = Targ_GetEndNode();
 		Compat_Make(endNode, endNode);
-		seenError = GNode_IsError(gn) || GNode_IsError(endNode);
-		if (seenError) {
-			PrintOnError(gn, "\nStop.");
-			exit(1);
-		}
+		endError = GNode_IsError(endNode);
+	} else
+		endError = FALSE;
+
+	if (!mainDepError && (mainError || endError)) {
+		PrintOnError(gn, "\nStop.");
+		exit(1);
 	}
 }
