@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $ */
+/* $NetBSD: acpi_user.c,v 1.6 2020/12/06 02:57:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $");
+__RCSID("$NetBSD: acpi_user.c,v 1.6 2020/12/06 02:57:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $");
 #include <sys/sysctl.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +49,7 @@ __RCSID("$NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $");
 
 static char	machdep_acpi_root[] = "hw.acpi.root";
 static int      acpi_mem_fd = -1;
+static bool	acpi_mem_mmap = false;
 
 struct acpi_user_mapping {
 	LIST_ENTRY(acpi_user_mapping) link;
@@ -61,13 +63,46 @@ static LIST_HEAD(acpi_user_mapping_list, acpi_user_mapping) maplist;
 static void
 acpi_user_init(void)
 {
+	int saved_errno, use_devmem;
+	const char *s;
 
 	if (acpi_mem_fd == -1) {
-		acpi_mem_fd = open("/dev/mem", O_RDONLY);
-		if (acpi_mem_fd == -1)
-			err(EXIT_FAILURE, "opening /dev/mem");
+		s = getenv("ACPIDUMP_USE_DEVMEM");
+		use_devmem = s != NULL && *s == '1';
+		if (!use_devmem) {
+			acpi_mem_fd = open("/dev/acpi", O_RDONLY);
+		}
+		if (acpi_mem_fd == -1) {
+			saved_errno = errno;
+			acpi_mem_fd = open("/dev/mem", O_RDONLY);
+			if (acpi_mem_fd == -1) {
+				errno = saved_errno;
+			} else {
+				acpi_mem_mmap = true;
+			}
+		}
+		if (acpi_mem_fd == -1) {
+			err(EXIT_FAILURE, "opening /dev/acpi");
+		}
 		LIST_INIT(&maplist);
 	}
+}
+
+static void *
+acpi_user_read_table(vm_offset_t pa, size_t psize)
+{
+	void *data;
+	ssize_t len;
+
+	data = calloc(1, psize);
+	if (!data)
+		errx(EXIT_FAILURE, "out of memory");
+
+	len = pread(acpi_mem_fd, data, psize, pa);
+	if (len == -1)
+		errx(EXIT_FAILURE, "can't read table");
+
+	return data;
 }
 
 static struct acpi_user_mapping *
@@ -82,16 +117,22 @@ acpi_user_find_mapping(vm_offset_t pa, size_t size)
 	}
 
 	/* Then create a new one */
-	size = round_page(pa + size) - trunc_page(pa);
-	pa = trunc_page(pa);
+	if (acpi_mem_mmap) {
+		size = round_page(pa + size) - trunc_page(pa);
+		pa = trunc_page(pa);
+	}
 	map = malloc(sizeof(struct acpi_user_mapping));
 	if (!map)
 		errx(EXIT_FAILURE, "out of memory");
 	map->pa = pa;
-	map->va = mmap(0, size, PROT_READ, MAP_SHARED, acpi_mem_fd, pa);
+	if (acpi_mem_mmap) {
+		map->va = mmap(0, size, PROT_READ, MAP_SHARED, acpi_mem_fd, pa);
+		if ((intptr_t) map->va == -1)
+			err(EXIT_FAILURE, "can't map address");
+	} else {
+		map->va = acpi_user_read_table(pa, size);
+	}
 	map->size = size;
-	if ((intptr_t) map->va == -1)
-		err(EXIT_FAILURE, "can't map address");
 	LIST_INSERT_HEAD(&maplist, map, link);
 
 	return map;
