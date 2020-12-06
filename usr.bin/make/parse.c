@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.470 2020/12/06 18:37:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.471 2020/12/06 20:09:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.470 2020/12/06 18:37:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.471 2020/12/06 20:09:01 rillig Exp $");
 
 /* types and constants */
 
@@ -137,8 +137,10 @@ typedef struct IFile {
 	char *buf_ptr;		/* next char to be read */
 	char *buf_end;
 
-	char *(*nextbuf)(void *, size_t *); /* Function to get more data */
-	void *nextbuf_arg;	/* Opaque arg for nextbuf() */
+	/* Function to read more data, with a single opaque argument. */
+	ReadMoreProc readMore;
+	void *readMoreArg;
+
 	struct loadedfile *lf;	/* loadedfile object, if any */
 } IFile;
 
@@ -384,11 +386,11 @@ loadedfile_destroy(struct loadedfile *lf)
 }
 
 /*
- * nextbuf() operation for loadedfile, as needed by the weird and twisted
- * logic below. Once that's cleaned up, we can get rid of lf->used...
+ * readMore() operation for loadedfile, as needed by the weird and twisted
+ * logic below. Once that's cleaned up, we can get rid of lf->used.
  */
 static char *
-loadedfile_nextbuf(void *x, size_t *len)
+loadedfile_readMore(void *x, size_t *len)
 {
 	struct loadedfile *lf = x;
 
@@ -2254,7 +2256,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 	lf = loadfile(fullname, fd);
 
 	/* Start reading from this file next */
-	Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
+	Parse_SetInput(fullname, 0, -1, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
@@ -2432,7 +2434,7 @@ ParseTrackInput(const char *name)
  */
 void
 Parse_SetInput(const char *name, int line, int fd,
-	       char *(*nextbuf)(void *, size_t *), void *arg)
+	       ReadMoreProc readMore, void *readMoreArg)
 {
 	IFile *curFile;
 	char *buf;
@@ -2445,14 +2447,14 @@ Parse_SetInput(const char *name, int line, int fd,
 		ParseTrackInput(name);
 
 	if (DEBUG(PARSE)) {
-		const char *caller = nextbuf == loadedfile_nextbuf
+		const char *caller = readMore == loadedfile_readMore
 		    ? "loadedfile" : "other";
 		debug_printf(
-		    "%s: file %s, line %d, fd %d, nextbuf %s, arg %p\n",
-		    __func__, name, line, fd, caller, arg);
+		    "%s: file %s, line %d, fd %d, readMore %s, readMoreArg %p\n",
+		    __func__, name, line, fd, caller, readMoreArg);
 	}
 
-	if (fd == -1 && nextbuf == NULL)
+	if (fd == -1 && readMore == NULL)
 		/* sanity */
 		return;
 
@@ -2461,15 +2463,15 @@ Parse_SetInput(const char *name, int line, int fd,
 	curFile->fromForLoop = fromForLoop;
 	curFile->lineno = line;
 	curFile->first_lineno = line;
-	curFile->nextbuf = nextbuf;
-	curFile->nextbuf_arg = arg;
+	curFile->readMore = readMore;
+	curFile->readMoreArg = readMoreArg;
 	curFile->lf = NULL;
 	curFile->depending = doing_depend;	/* restore this on EOF */
 
-	assert(nextbuf != NULL);
+	assert(readMore != NULL);
 
 	/* Get first block of input data */
-	buf = curFile->nextbuf(curFile->nextbuf_arg, &len);
+	buf = curFile->readMore(curFile->readMoreArg, &len);
 	if (buf == NULL) {
 		/* Was all a waste of time ... */
 		if (curFile->fname)
@@ -2616,11 +2618,11 @@ ParseEOF(void)
 	size_t len;
 	IFile *curFile = CurFile();
 
-	assert(curFile->nextbuf != NULL);
+	assert(curFile->readMore != NULL);
 
 	doing_depend = curFile->depending;	/* restore this */
 	/* get next input buffer, if any */
-	ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
+	ptr = curFile->readMore(curFile->readMoreArg, &len);
 	curFile->buf_ptr = ptr;
 	curFile->buf_freeIt = ptr;
 	curFile->buf_end = ptr == NULL ? NULL : ptr + len;
@@ -2711,8 +2713,8 @@ ParseGetLine(GetLineMode mode)
 						break;
 					}
 				}
-				/* XXX: Can cf->nextbuf ever be NULL? */
-				if (cf->nextbuf != NULL) {
+				/* XXX: Can cf->readMore ever be NULL? */
+				if (cf->readMore != NULL) {
 					/*
 					 * End of this buffer; return EOF and
 					 * outer logic will get the next one.
@@ -3187,7 +3189,7 @@ Parse_File(const char *name, int fd)
 	if (name == NULL)
 		name = "(stdin)";
 
-	Parse_SetInput(name, 0, -1, loadedfile_nextbuf, lf);
+	Parse_SetInput(name, 0, -1, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 
 	do {
