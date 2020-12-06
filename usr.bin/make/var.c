@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.713 2020/12/06 16:24:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.714 2020/12/06 17:22:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.713 2020/12/06 16:24:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.714 2020/12/06 17:22:44 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -725,7 +725,7 @@ Var_Export(const char *str, Boolean isExport)
 extern char **environ;
 
 static void
-UnexportEnv(void)
+ClearEnv(void)
 {
 	const char *cp;
 	char **newenv;
@@ -748,6 +748,39 @@ UnexportEnv(void)
 	newenv[1] = NULL;
 	if (cp && *cp)
 		setenv(MAKE_LEVEL_ENV, cp, 1);
+}
+
+static void
+GetVarnamesToUnexport(const char *str,
+		      const char **out_args, FStr *out_varnames,
+		      UnexportWhat *out_what)
+{
+	UnexportWhat what;
+	FStr varnames = FSTR_INIT;
+
+	str += strlen("unexport");
+	if (strncmp(str, "-env", 4) == 0) {
+		ClearEnv();
+		what = UNEXPORT_ENV;
+	} else {
+		cpp_skip_whitespace(&str);
+		what = str[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
+		if (what == UNEXPORT_NAMED)
+			FStr_Assign(&varnames, str, NULL);
+	}
+	*out_args = str;
+
+	if (what != UNEXPORT_NAMED) {
+		char *expanded;
+		/* Using .MAKE.EXPORTED */
+		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
+		    VARE_WANTRES, &expanded);
+		/* TODO: handle errors */
+		FStr_Assign(&varnames, expanded, expanded);
+	}
+
+	*out_varnames = varnames;
+	*out_what = what;
 }
 
 static void
@@ -788,27 +821,10 @@ void
 Var_UnExport(const char *str)
 {
 	UnexportWhat what;
-	FStr varnames = FSTR_INIT;
+	FStr varnames;
+	const char *args;
 
-	str += strlen("unexport");
-	if (strncmp(str, "-env", 4) == 0) {
-		UnexportEnv();
-		what = UNEXPORT_ENV;
-	} else {
-		cpp_skip_whitespace(&str);
-		what = str[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
-		if (what == UNEXPORT_NAMED)
-			FStr_Assign(&varnames, str, NULL);
-	}
-
-	if (what != UNEXPORT_NAMED) {
-		char *expanded;
-		/* Using .MAKE.EXPORTED */
-		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
-		    VARE_WANTRES, &expanded);
-		/* TODO: handle errors */
-		FStr_Assign(&varnames, expanded, expanded);
-	}
+	GetVarnamesToUnexport(str, &args, &varnames, &what);
 
 	{
 		size_t i;
@@ -819,7 +835,7 @@ Var_UnExport(const char *str)
 			UnexportVar(varname, what);
 		}
 		Words_Free(words);
-		if (varnames.str != str)
+		if (varnames.str != args)
 			Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
 	}
 
