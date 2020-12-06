@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.12 2020/12/05 15:08:21 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.13 2020/12/06 10:06:15 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.12 2020/12/05 15:08:21 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.13 2020/12/06 10:06:15 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,28 +99,10 @@ static int
 ecadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	struct ecadc_softc sc;
 	int match_result;
-	u_int8_t junk;
 
-	if (!iic_use_direct_match(ia, cf, compat_data, &match_result))
-		return 0;
-
-	/* Try a read so that we don't match on optional components */
-	if (match_result) {
-		sc.sc_tag = ia->ia_tag;
-		sc.sc_addr = ia->ia_addr;
-
-		iic_acquire_bus(sc.sc_tag, 0);
-		if (iic_exec(sc.sc_tag, I2C_OP_READ_WITH_STOP, sc.sc_addr,
-		    NULL, 0, &junk, 1, 0)) {
-			iic_release_bus(sc.sc_tag, 0);
-			return 0;
-		} else {
-			iic_release_bus(sc.sc_tag, 0);
-			return match_result;
-		}
-	}
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return match_result;
 
 	/* This driver is direct-config only. */
 
@@ -232,10 +214,10 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
-	/* Try a read now, so we can fail if it doesn't work */
+	/* Try a read now, so we can fail if this component isn't present */
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 	    NULL, 0, junk, sc->sc_nchan + 1, 0)) {
-		aprint_error(": read failed\n");
+		aprint_normal(": read failed\n");
 		iic_release_bus(sc->sc_tag, 0);
 		return;
 	}
@@ -259,6 +241,7 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "error %d registering with sysmon\n",
 			error);
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		return;
 	}
 	
@@ -296,7 +279,8 @@ ecadc_refresh(struct sysmon_envsys *sme, envsys_data_t *sensor)
 	u_int8_t ctrl = PCF8591_CTRL_CH0 | PCF8591_CTRL_AUTOINC |
 	    PCF8591_CTRL_OSCILLATOR;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0))
+		return;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
 	    &ctrl, 1, NULL, 0, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
@@ -386,7 +370,12 @@ ecadc_set_fan_speed(struct ecadc_softc *sc, u_int8_t chan, u_int8_t val)
 	int ret;
 
 	ctrl |= chan;
-	iic_acquire_bus(sc->sc_tag, 0);
+	ret = iic_acquire_bus(sc->sc_tag, 0);
+	if (ret) {
+		aprint_error_dev(sc->sc_dev,
+		    "error acquiring i2c bus (ch %d)\n", chan);
+		return ret;
+	}
 	ret = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
 	    &ctrl, 1, &val, 1, 0);
 	if (ret)
