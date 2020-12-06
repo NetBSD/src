@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.469 2020/12/05 19:46:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.470 2020/12/06 18:37:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.469 2020/12/05 19:46:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.470 2020/12/06 18:37:04 rillig Exp $");
 
 /* types and constants */
 
@@ -2623,7 +2623,7 @@ ParseEOF(void)
 	ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
 	curFile->buf_ptr = ptr;
 	curFile->buf_freeIt = ptr;
-	curFile->buf_end = ptr + len; /* XXX: undefined behavior if ptr == NULL */
+	curFile->buf_end = ptr == NULL ? NULL : ptr + len;
 	curFile->lineno = curFile->first_lineno;
 	if (ptr != NULL)
 		return TRUE;	/* Iterate again */
