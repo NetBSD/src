@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.6 2020/12/06 20:33:44 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.7 2020/12/06 20:55:30 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -12,9 +12,28 @@ all: file-containing-null-byte
 #
 # In the unlikely case where a file ends in a backslash instead of a newline,
 # that backslash is trimmed.  See ParseGetLine.
+#
+# make-2014.01.01.00.00.00 invoked undefined behavior, reading text from
+# outside of the file buffer.
+#
+#	printf '%s' 'VAR=value\' \
+#	| MALLOC_OPTIONS=JA make-2014.01.01.00.00.00 -r -f - -V VAR -dA 2>&1 \
+#	| less
+#
+# The debug output shows how make happily uses freshly allocated memory (the
+# <A5>) and already freed memory ('Z').
+#
+#	ParseReadLine (1): 'VAR=value\<A5><A5><A5><A5><A5><A5>'
+#	Global:VAR = value\<A5><A5><A5><A5><A5><A5>value\<A5><A5><A5><A5><A5><A5>
+#	ParseReadLine (2): 'alue\<A5><A5><A5><A5><A5><A5>'
+#	ParseDoDependency(alue\<A5><A5><A5><A5><A5><A5>)
+#	make-2014.01.01.00.00.00: "(stdin)" line 2: Need an operator
+#	ParseReadLine (3): '<A5><A5><A5>ZZZZZZZZZZZZZZZZ'
+#	ParseDoDependency(<A5><A5><A5>ZZZZZZZZZZZZZZZZ)
+#
 file-ending-in-backslash: .PHONY
 	@printf '%s' 'VAR=value\' \
-	| ${MAKE} -r -f - -v VAR
+	| ${MAKE} -r -f - -V VAR
 
 # If a file contains null bytes, the rest of the line is skipped, and parsing
 # continues in the next line.  Throughout the history of make, the behavior
@@ -61,7 +80,7 @@ file-ending-in-backslash: .PHONY
 file-containing-null-byte: .PHONY
 	@printf '%s\n' 'VAR=value' 'VAR2=VALUE2' \
 	| tr 'l' '\0' \
-	| ${MAKE} -r -f - -v VAR -v VAR2
+	| ${MAKE} -r -f - -V VAR -V VAR2
 
 all:
 	: Making ${.TARGET}
