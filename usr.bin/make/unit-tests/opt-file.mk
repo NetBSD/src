@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.4 2020/12/06 19:18:26 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.5 2020/12/06 20:07:25 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -17,7 +17,41 @@ file-ending-in-backslash: .PHONY
 	| ${MAKE} -r -f - -v VAR
 
 # If a file contains null bytes, the rest of the line is skipped, and parsing
-# continues in the next line.
+# continues in the next line.  Throughout the history of make, the behavior
+# has changed several times, sometimes knowingly, sometimes by accident.
+#
+#	echo 'VAR=value' | tr 'l' '\0' > zero-byte.in
+#	printf '%s\n' 'all:' ': VAR=${VAR:Q}' >> zero-byte.in
+#
+#	for year in $(seq 2003 2020); do
+#	  echo $year:
+#	  make-$year.01.01.00.00.00 -r -f zero-byte.in
+#	  echo "exit status $?"
+#	  echo
+#	done 2>&1 \
+#	| sed "s,$PWD/,.,"
+#
+# This program generated the following output:
+#
+#	2003 to 2007:
+#	exit status 0
+#
+#	2008 to 2010:
+#	make: "zero-byte.in" line 1: Zero byte read from file
+#	make: Fatal errors encountered -- cannot continue
+#
+#	make: stopped in .
+#	exit status 1
+#
+#	2011 to 2013:
+#	make: no target to make.
+#
+#	make: stopped in .
+#	exit status 2
+#
+#	2014:
+#	make: "zero-byte.in" line 1: warning: Zero byte read from file, skipping rest of line.
+#	exit status 0
 #
 # XXX: It would be safer to just quit parsing in such a situation.
 file-containing-null-byte: .PHONY
