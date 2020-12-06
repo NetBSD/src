@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.164 2020/11/29 00:04:22 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.165 2020/12/06 20:09:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -145,14 +145,14 @@ typedef struct VarAssign {
     const char *value;		/* unexpanded */
 } VarAssign;
 
-typedef char *(*NextBufProc)(void *, size_t *);
+typedef char *(*ReadMoreProc)(void *, size_t *);
 
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 Boolean Parse_IsVar(const char *, VarAssign *out_var);
 void Parse_DoVar(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_SetInput(const char *, int, int, NextBufProc, void *);
+void Parse_SetInput(const char *, int, int, ReadMoreProc, void *);
 void Parse_MainName(GNodeList *);
 int Parse_GetFatals(void);
 
