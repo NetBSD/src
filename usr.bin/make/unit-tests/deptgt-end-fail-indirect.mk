@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-end-fail-indirect.mk,v 1.1 2020/11/24 17:59:42 rillig Exp $
+# $NetBSD: deptgt-end-fail-indirect.mk,v 1.2 2020/12/06 21:22:04 rillig Exp $
 #
 # Tests for an error in a dependency of the .END node.
 #
@@ -10,6 +10,7 @@ all:
 	: $@
 
 .END: failing
+	: Making ${.TARGET} from ${.ALLSRC}.
 
 failing: .PHONY
 	false
