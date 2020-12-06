@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.4 2020/12/05 15:02:29 jdc Exp $ */
+/* $NetBSD: pcf8574.c,v 1.5 2020/12/06 10:09:36 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.4 2020/12/05 15:02:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.5 2020/12/06 10:09:36 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,21 +108,10 @@ static int
 pcf8574_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	struct pcf8574_softc sc;
 	int match_result;
 
-	if (!iic_use_direct_match(ia, cf, compat_data, &match_result))
-		return 0;
-
-	/* Try a read so that we don't match on optional components */
-	if (match_result) {
-		sc.sc_tag = ia->ia_tag;
-		sc.sc_addr = ia->ia_addr;
-		if (pcf8574_read(&sc, &sc.sc_state))
-			return 0;
-		else
-			return match_result;
-	}
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return match_result;
 
 	/* We don't support indirect matches */
 	return 0;
@@ -153,7 +142,11 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_mask = 0xff;
 
-	pcf8574_read(sc, &sc->sc_state);
+	/* Try a read, and fail if this component isn't present */
+	if (pcf8574_read(sc, &sc->sc_state)) {
+		aprint_normal(": read failed\n");
+		return;
+	}
 
 #ifdef PCF8574_DEBUG
 	aprint_normal(": GPIO: state = 0x%02x\n", sc->sc_state);
