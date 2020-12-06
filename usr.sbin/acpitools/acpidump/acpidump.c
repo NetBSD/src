@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.c,v 1.7 2017/08/04 06:30:36 msaitoh Exp $ */
+/* $NetBSD: acpidump.c,v 1.8 2020/12/06 02:57:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpidump.c,v 1.7 2017/08/04 06:30:36 msaitoh Exp $");
+__RCSID("$NetBSD: acpidump.c,v 1.8 2020/12/06 02:57:30 jmcneill Exp $");
 
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	/* Get input either from file or /dev/mem */
+	/* Get input either from file or /dev/acpi */
 	if (dsdt_input_file != NULL) {
 		if (dflag == 0 && tflag == 0) {
 			warnx("Need to specify -d or -t with DSDT input file");
@@ -118,11 +118,11 @@ main(int argc, char *argv[])
 		rsdt = dsdt_load_file(dsdt_input_file);
 	} else {
 		if (vflag)
-			warnx("loading RSD PTR from /dev/mem");
+			warnx("loading RSD PTR from /dev/acpi");
 		rsdt = sdt_load_devmem();
 	}
 
-	/* Display misc. SDT tables (only available when using /dev/mem) */
+	/* Display misc. SDT tables (only available when using /dev/acpi) */
 	if (tflag) {
 		if (vflag)
 			warnx("printing various SDT tables");

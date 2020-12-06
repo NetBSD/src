@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.221 2020/07/26 15:47:27 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.222 2020/12/06 02:57:29 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2241,6 +2241,10 @@ xmm[0-9])
 	mkdev xmm${unit}/rpc c %wwanc_chr% $(($unit * 65536 + 1))
 	mkdev ttyXMM${unit}0 c %wwanc_chr% $(($unit * 65536 + 2))
 	mkdev ttyXMM${unit}1 c %wwanc_chr% $(($unit * 65536 + 4))
+	;;
+
+acpi)
+	mkdev acpi c %acpi_chr% 0
 	;;
 
 midevend)
