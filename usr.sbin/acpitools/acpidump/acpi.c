@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.46 2019/06/22 12:39:40 maxv Exp $ */
+/* $NetBSD: acpi.c,v 1.47 2020/12/06 18:38:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.46 2019/06/22 12:39:40 maxv Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.47 2020/12/06 18:38:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -836,7 +836,7 @@ acpi_handle_fadt(ACPI_TABLE_HEADER *sdp)
 	if (acpi_select_address(fadt->Facs, fadt->XFacs) == 0) {
 		if ((fadt->Flags & ACPI_FADT_HW_REDUCED) == 0)
 			errx(EXIT_FAILURE, "Missing FACS and HW_REDUCED_ACPI flag not set in FADT");
-	} else {
+	} else if ((fadt->Flags & ACPI_FADT_HW_REDUCED) == 0) {
 		facs = (ACPI_TABLE_FACS *)acpi_map_sdt(
 			acpi_select_address(fadt->Facs, fadt->XFacs));
 		if (memcmp(facs->Signature, ACPI_SIG_FACS, 4) != 0 || facs->Length < 64)
