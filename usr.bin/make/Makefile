@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108 2020/12/06 12:54:32 rillig Exp $
+#	$NetBSD: Makefile,v 1.109 2020/12/06 13:29:34 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -134,26 +134,23 @@ COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.parse.c+=	-Wno-format-nonliteral
 COPTS.var.c+=	-Wno-format-nonliteral
 
-.include <bsd.prog.mk>
-.include <bsd.subdir.mk>
-
 CPPFLAGS+=	-DMAKE_NATIVE
 
 .if ${USE_GCC10} == "yes"
 GCC10BASE?=	/usr/pkg/gcc10
-CC=		${GCC10BASE}/bin/gcc
+LATE_CC=	${GCC10BASE}/bin/gcc
 GCOV=		${GCC10BASE}/bin/gcov
 .endif
 
 .if ${USE_GCC9} == "yes"
 GCC9BASE?=	/usr/pkg/gcc9
-CC=		${GCC9BASE}/bin/gcc
+LATE_CC=	${GCC9BASE}/bin/gcc
 GCOV=		${GCC9BASE}/bin/gcov
 .endif
 
 .if ${USE_GCC8} == "yes"
 GCC8BASE?=	/usr/pkg/gcc8
-CC=		${GCC8BASE}/bin/gcc
+LATE_CC=	${GCC8BASE}/bin/gcc
 GCOV=		${GCC8BASE}/bin/gcov
 .endif
 
@@ -165,11 +162,6 @@ DPADD+=		${LIBUTIL}
 .endif
 
 COPTS+=		-Wdeclaration-after-statement
-
-# For -DCLEANUP and similar feature toggles.
-CPPFLAGS+=	${USER_CPPFLAGS}
-# For overriding -std=gnu99 or similar options.
-CFLAGS+=	${USER_CFLAGS}
 
 # A simple unit-test driver to help catch regressions
 TEST_MAKE ?= ${.OBJDIR}/${PROG:T}
@@ -197,3 +189,14 @@ retest:
 	${COMPILE.c:S,^-c$,-E,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
 .c.casm:
 	${COMPILE.c:S,^-c$,-S,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
+
+.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
+
+# For -DCLEANUP and similar feature toggles.
+CPPFLAGS+=	${USER_CPPFLAGS}
+# For overriding -std=gnu99 or similar options.
+CFLAGS+=	${USER_CFLAGS}
+.if defined(LATE_CC)
+CC=		${LATE_CC}
+.endif
