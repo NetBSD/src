@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.19 2011/01/14 02:06:31 rmind Exp $ */
+/*	$NetBSD: proc.h,v 1.20 2020/12/06 02:23:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ struct mdlwp {
 };
 
 struct mdproc {
-	void	(*md_syscall)(register_t, struct trapframe *, register_t);
+	void	(*md_syscall)(__register_t, struct trapframe *, __register_t);
 	u_long	md_flags;
 };
 
