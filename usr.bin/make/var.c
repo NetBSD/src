@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.707 2020/12/05 18:38:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.708 2020/12/06 10:49:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,12 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.707 2020/12/05 18:38:02 rillig Exp $");
-
-#define VAR_DEBUG1(fmt, arg1) DEBUG1(VAR, fmt, arg1)
-#define VAR_DEBUG2(fmt, arg1, arg2) DEBUG2(VAR, fmt, arg1, arg2)
-#define VAR_DEBUG3(fmt, arg1, arg2, arg3) DEBUG3(VAR, fmt, arg1, arg2, arg3)
-#define VAR_DEBUG4(fmt, arg1, arg2, arg3, arg4) DEBUG4(VAR, fmt, arg1, arg2, arg3, arg4)
+MAKE_RCSID("$NetBSD: var.c,v 1.708 2020/12/06 10:49:02 rillig Exp $");
 
 ENUM_FLAGS_RTTI_3(VarEvalFlags,
 		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR);
@@ -465,9 +460,8 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 	Var *v = VarNew(he->key /* aliased */, NULL, val,
 	    flags & VAR_SET_READONLY ? VAR_READONLY : VAR_NONE);
 	HashEntry_Set(he, v);
-	if (!(ctxt->flags & INTERNAL)) {
-		VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
-	}
+	if (!(ctxt->flags & INTERNAL))
+		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 }
 
 /* Remove a variable from a context, freeing all related memory as well.
@@ -484,7 +478,7 @@ Var_Delete(const char *name, GNode *ctxt)
 		name = name_freeIt;
 	}
 	he = HashTable_FindEntry(&ctxt->vars, name);
-	VAR_DEBUG3("%s:delete %s%s\n",
+	DEBUG3(VAR, "%s:delete %s%s\n",
 	    ctxt->name, name, he != NULL ? "" : " (not found)");
 	free(name_freeIt);
 
@@ -725,11 +719,11 @@ UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 {
 	Var *v = VarFind(varname, VAR_GLOBAL, FALSE);
 	if (v == NULL) {
-		VAR_DEBUG1("Not unexporting \"%s\" (not found)\n", varname);
+		DEBUG1(VAR, "Not unexporting \"%s\" (not found)\n", varname);
 		return;
 	}
 
-	VAR_DEBUG1("Unexporting \"%s\"\n", varname);
+	DEBUG1(VAR, "Unexporting \"%s\"\n", varname);
 	if (!unexport_env && (v->flags & VAR_EXPORTED) &&
 	    !(v->flags & VAR_REEXPORT))
 		unsetenv(v->name);
@@ -815,8 +809,8 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	}
 
 	if (name[0] == '\0') {
-		VAR_DEBUG2("Var_Set(\"%s\", \"%s\", ...) "
-			   "name expands to empty string - ignored\n",
+		DEBUG2(VAR, "Var_Set(\"%s\", \"%s\", ...) "
+			    "name expands to empty string - ignored\n",
 		    unexpanded_name, val);
 		free(name_freeIt);
 		return;
@@ -826,7 +820,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		v = VarFind(name, VAR_CMDLINE, FALSE);
 		if (v != NULL) {
 			if (v->flags & VAR_FROM_CMD) {
-				VAR_DEBUG3("%s:%s = %s ignored!\n",
+				DEBUG3(VAR, "%s:%s = %s ignored!\n",
 				    ctxt->name, name, val);
 				goto out;
 			}
@@ -853,14 +847,14 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		VarAdd(name, val, ctxt, flags);
 	} else {
 		if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
-			VAR_DEBUG3("%s:%s = %s ignored (read-only)\n",
+			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
 			    ctxt->name, name, val);
 			goto out;
 		}
 		Buf_Empty(&v->val);
 		Buf_AddStr(&v->val, val);
 
-		VAR_DEBUG3("%s:%s = %s\n", ctxt->name, name, val);
+		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 		if (v->flags & VAR_EXPORTED)
 			Var_Export1(name, VAR_EXPORT_PARENT);
 	}
@@ -962,8 +956,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 		/* TODO: handle errors */
 		name = name_freeIt;
 		if (name[0] == '\0') {
-			VAR_DEBUG2("Var_Append(\"%s\", \"%s\", ...) "
-				   "name expands to empty string - ignored\n",
+			DEBUG2(VAR, "Var_Append(\"%s\", \"%s\", ...) "
+				    "name expands to empty string - ignored\n",
 			    unexpanded_name, val);
 			free(name_freeIt);
 			return;
@@ -976,13 +970,13 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 		/* XXX: name is expanded for the second time */
 		Var_Set(name, val, ctxt);
 	} else if (v->flags & VAR_READONLY) {
-		VAR_DEBUG1("Ignoring append to %s since it is read-only\n",
+		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
 		    name);
 	} else if (ctxt == VAR_CMDLINE || !(v->flags & VAR_FROM_CMD)) {
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
 
-		VAR_DEBUG3("%s:%s = %s\n",
+		DEBUG3(VAR, "%s:%s = %s\n",
 		    ctxt->name, name, Buf_GetAll(&v->val, NULL));
 
 		if (v->flags & VAR_FROM_ENV) {
@@ -1184,7 +1178,7 @@ static void
 ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 {
 	const char *pattern = data;
-	VAR_DEBUG2("VarMatch [%s] [%s]\n", word, pattern);
+	DEBUG2(VAR, "VarMatch [%s] [%s]\n", word, pattern);
 	if (Str_Match(word, pattern))
 		SepBuf_AddStr(buf, word);
 }
@@ -1504,8 +1498,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	(void)Var_Subst(args->str, args->ctx, args->eflags, &s);
 	/* TODO: handle errors */
 
-	VAR_DEBUG4("ModifyWord_Loop: "
-		   "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
+	DEBUG4(VAR, "ModifyWord_Loop: "
+		    "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
 	    word, args->tvar, args->str, s);
 
 	if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
@@ -1618,7 +1612,7 @@ ModifyWords(const char *str,
 
 	words = Str_Words(str, FALSE);
 
-	VAR_DEBUG2("ModifyWords: split \"%s\" into %zu words\n",
+	DEBUG2(VAR, "ModifyWords: split \"%s\" into %zu words\n",
 	    str, words.len);
 
 	for (i = 0; i < words.len; i++) {
@@ -2061,7 +2055,7 @@ ParseModifierPart(
 		*out_length = Buf_Len(&buf);
 
 	*out_part = Buf_Destroy(&buf, FALSE);
-	VAR_DEBUG1("Modifier part: \"%s\"\n", *out_part);
+	DEBUG1(VAR, "Modifier part: \"%s\"\n", *out_part);
 	return VPR_OK;
 }
 
@@ -2506,7 +2500,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 		free(old_pattern);
 	}
 
-	VAR_DEBUG3("Pattern[%s] for [%s] is [%s]\n",
+	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
 	    st->var->name, st->val, pattern);
 
 	callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
@@ -3389,7 +3383,7 @@ ApplyModifiersIndirect(
 		return AMIR_APPLY_MODS;
 	}
 
-	VAR_DEBUG3("Indirect modifier \"%s\" from \"%.*s\"\n",
+	DEBUG3(VAR, "Indirect modifier \"%s\" from \"%.*s\"\n",
 	    mods, (int)(p - *inout_p), *inout_p);
 
 	if (mods[0] != '\0') {
@@ -3951,7 +3945,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	char eflags_str[VarEvalFlags_ToStringSize];
 	VarExprFlags exprFlags = VEF_NONE;
 
-	VAR_DEBUG2("Var_Parse: %s with %s\n", start,
+	DEBUG2(VAR, "Var_Parse: %s with %s\n", start,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
 		VarEvalFlags_ToStringSpecs));
 
