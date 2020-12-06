@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.16 2020/11/29 11:41:49 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.17 2020/12/06 10:31:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1128,4 +1128,18 @@ external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.19
 	Use vn_close to release the vnodes in the error handling blocks, since
 	the vnodes were opened for writing.
 	[yhardy, ticket #1138]
+
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
+
+	Apply upstream patches for:
+	 * CVE-2020-14360 / ZDI CAN 11572 XkbSetMap Out-Of-Bounds Access
+	 * CVE-2020-25712 / ZDI-CAN-11839 XkbSetDeviceInfo Heap-based Buffer
+	   Overflow
+	[mrg, ticket #1141]
+
+sbin/dump/dump.h				1.59
+sbin/dump/main.c				1.78
+
+	PR 55834: fix status updates for files larger than 2TiB.
+	[kre, ticket #1139]
 
