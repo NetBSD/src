@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.715 2020/12/06 17:27:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.716 2020/12/06 17:35:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.715 2020/12/06 17:27:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.716 2020/12/06 17:35:51 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -810,6 +810,22 @@ UnexportVar(const char *varname, UnexportWhat what)
 	}
 }
 
+static void
+UnexportVars(FStr *varnames, UnexportWhat what)
+{
+	size_t i;
+
+	Words words = Str_Words(varnames->str, FALSE);
+	for (i = 0; i < words.len; i++) {
+		const char *varname = words.words[i];
+		UnexportVar(varname, what);
+	}
+	Words_Free(words);
+
+	if (what != UNEXPORT_NAMED)
+		Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
+}
+
 /*
  * This is called when .unexport[-env] is seen.
  *
@@ -822,21 +838,7 @@ Var_UnExport(const char *str)
 	FStr varnames;
 
 	GetVarnamesToUnexport(str, &varnames, &what);
-
-	{
-		size_t i;
-
-		Words words = Str_Words(varnames.str, FALSE);
-		for (i = 0; i < words.len; i++) {
-			const char *varname = words.words[i];
-			UnexportVar(varname, what);
-		}
-		Words_Free(words);
-
-		if (what != UNEXPORT_NAMED)
-			Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
-	}
-
+	UnexportVars(&varnames, what);
 	FStr_Done(&varnames);
 }
 
