@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.716 2020/12/06 17:35:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.717 2020/12/06 17:41:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.716 2020/12/06 17:35:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.717 2020/12/06 17:41:52 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -758,10 +758,9 @@ GetVarnamesToUnexport(const char *str,
 	FStr varnames = FSTR_INIT;
 
 	str += strlen("unexport");
-	if (strncmp(str, "-env", 4) == 0) {
-		ClearEnv();
+	if (strncmp(str, "-env", 4) == 0)
 		what = UNEXPORT_ENV;
-	} else {
+	else {
 		cpp_skip_whitespace(&str);
 		what = str[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
 		if (what == UNEXPORT_NAMED)
@@ -814,8 +813,12 @@ static void
 UnexportVars(FStr *varnames, UnexportWhat what)
 {
 	size_t i;
+	Words words;
 
-	Words words = Str_Words(varnames->str, FALSE);
+	if (what == UNEXPORT_ENV)
+		ClearEnv();
+
+	words = Str_Words(varnames->str, FALSE);
 	for (i = 0; i < words.len; i++) {
 		const char *varname = words.words[i];
 		UnexportVar(varname, what);
