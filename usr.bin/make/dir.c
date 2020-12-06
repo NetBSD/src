@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.250 2020/12/06 10:49:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.251 2020/12/06 18:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.250 2020/12/06 10:49:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.251 2020/12/06 18:13:17 rillig Exp $");
 
 /* A search path is a list of CachedDir structures. A CachedDir has in it the
  * name of the directory and the names of all the files in the directory.
@@ -1554,26 +1554,19 @@ Dir_CopyDirSearchPath(void)
 	return path;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SearchPath_ToFlags --
- *	Make a string by taking all the directories in the given search
- *	path and preceding them by the given flag. Used by the suffix
- *	module to create variables for compilers based on suffix search
- *	paths.
+/*
+ * Make a string by taking all the directories in the given search path and
+ * preceding them by the given flag. Used by the suffix module to create
+ * variables for compilers based on suffix search paths.
  *
  * Input:
  *	flag		flag which should precede each directory
  *	path		list of directories
  *
  * Results:
- *	The string mentioned above. Note that there is no space between
- *	the given flag and each directory. The empty string is returned if
- *	Things don't go well.
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
+ *	The string mentioned above. Note that there is no space between the
+ *	given flag and each directory. The empty string is returned if things
+ *	don't go well.
  */
 char *
 SearchPath_ToFlags(const char *flag, SearchPath *path)

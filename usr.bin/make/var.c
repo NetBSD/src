@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.717 2020/12/06 17:41:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.718 2020/12/06 18:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.717 2020/12/06 17:41:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.718 2020/12/06 18:13:17 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -943,13 +943,11 @@ out:
 		VarFreeEnv(v, TRUE);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Set --
- *	Set the variable name to the value val in the given context.
+/*
+ * Set the variable name to the value val in the given context.
  *
- *	If the variable doesn't yet exist, it is created.
- *	Otherwise the new value overwrites and replaces the old value.
+ * If the variable doesn't yet exist, it is created.
+ * Otherwise the new value overwrites and replaces the old value.
  *
  * Input:
  *	name		name of the variable to set, is expanded once
@@ -965,7 +963,6 @@ out:
  *	set, say, $(@) or $(<).
  *	If the context is VAR_GLOBAL though, we check if the variable
  *	was set in VAR_CMDLINE from the command line and skip it if so.
- *-----------------------------------------------------------------------
  */
 void
 Var_Set(const char *name, const char *val, GNode *ctxt)
@@ -973,14 +970,12 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 	Var_SetWithFlags(name, val, ctxt, VAR_SET_NONE);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Append --
- *	The variable of the given name has the given value appended to it in
- *	the given context.
+/*
+ * The variable of the given name has the given value appended to it in the
+ * given context.
  *
- *	If the variable doesn't exist, it is created. Otherwise the strings
- *	are concatenated, with a space in between.
+ * If the variable doesn't exist, it is created. Otherwise the strings are
+ * concatenated, with a space in between.
  *
  * Input:
  *	name		name of the variable to modify, is expanded once
@@ -994,7 +989,6 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  *	an actual target, it will only search that context since only
  *	a local variable could be being appended to. This is actually
  *	a big win and must be tolerated.
- *-----------------------------------------------------------------------
  */
 void
 Var_Append(const char *name, const char *val, GNode *ctxt)
@@ -1080,11 +1074,9 @@ Var_Exists(const char *name, GNode *ctxt)
 	return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Value --
- *	Return the unexpanded value of the given variable in the given
- *	context, or the usual contexts.
+/*
+ * Return the unexpanded value of the given variable in the given context,
+ * or the usual contexts.
  *
  * Input:
  *	name		name to find, is not expanded any further
@@ -1094,7 +1086,6 @@ Var_Exists(const char *name, GNode *ctxt)
  *	The value if the variable exists, NULL if it doesn't.
  *	If the returned value is not NULL, the caller must free
  *	out_freeIt when the returned value is no longer needed.
- *-----------------------------------------------------------------------
  */
 const char *
 Var_Value(const char *name, GNode *ctxt, void **out_freeIt)
@@ -1628,7 +1619,8 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 	SepBuf_AddStr(buf, word);
 }
 
-/* Modify each of the words of the passed string using the given function.
+/*
+ * Modify each of the words of the passed string using the given function.
  *
  * Input:
  *	str		String whose words should be modified
@@ -1637,7 +1629,6 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
  *
  * Results:
  *	A string of all the words modified appropriately.
- *-----------------------------------------------------------------------
  */
 static char *
 ModifyWords(const char *str,
