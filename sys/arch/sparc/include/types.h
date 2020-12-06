@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.68 2020/05/17 06:30:44 martin Exp $ */
+/*	$NetBSD: types.h,v 1.69 2020/12/06 02:23:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,9 +57,10 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
+typedef unsigned long int	__register_t;
 /* The following are unsigned to prevent annoying sign extended pointers. */
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
-typedef unsigned long int	register_t;
+typedef __register_t		register_t;
 #define	PRIxREGISTER		"lx"
 typedef unsigned int		register32_t;
 #define	PRIxREGISTER32		"x"
