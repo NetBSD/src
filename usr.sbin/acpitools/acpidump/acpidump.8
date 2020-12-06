@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidump.8,v 1.16 2019/06/22 12:39:40 maxv Exp $
+.\" $NetBSD: acpidump.8,v 1.17 2020/12/06 02:57:30 jmcneill Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
@@ -30,7 +30,7 @@
 .\"
 .\" $FreeBSD: head/usr.sbin/acpi/acpidump/acpidump.8 267668 2014-06-20 09:57:27Z bapt $
 .\"
-.Dd June 22, 2019
+.Dd December 4, 2020
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ When
 is invoked without the
 .Fl f
 option, it will read ACPI tables from physical memory via
-.Pa /dev/mem .
+.Pa /dev/acpi .
 First it searches for the RSDP
 (Root System Description Pointer),
 which has the signature
@@ -173,8 +173,8 @@ Dump the contents of the various fixed tables listed above.
 Enable verbose messages.
 .El
 .Sh FILES
-.Bl -tag -width /dev/mem
-.It Pa /dev/mem
+.Bl -tag -width /dev/acpi
+.It Pa /dev/acpi
 .El
 .Sh EXAMPLES
 If a developer requests a copy of your ASL, please use the following
