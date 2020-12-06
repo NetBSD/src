@@ -30,8 +30,6 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
-#include "common/gdb_assert.h"
-
 #include "solib-svr4.h"
 
 #include "sh-tdep.h"

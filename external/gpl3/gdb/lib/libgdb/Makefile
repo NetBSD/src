@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2020/10/08 08:32:57 rin Exp $
+#	$NetBSD: Makefile,v 1.29 2020/12/06 04:08:53 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -67,6 +67,12 @@ ada-exp.c: ada-lex.c
 COPTS.expr.c+=	-O0
 # GCC 9.3 miscompile this with -O2 for earmv5hf{,eb}.
 COPTS.loc.c+=	-O0
+. endif
+.endif
+
+.if ${MACHINE} == "vax"
+. if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8
+COPTS.read.c+=	-O0
 . endif
 .endif
 
