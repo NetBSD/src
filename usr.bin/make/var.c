@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.712 2020/12/06 15:40:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.713 2020/12/06 16:24:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.712 2020/12/06 15:40:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.713 2020/12/06 16:24:30 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -232,6 +232,12 @@ typedef enum VarExportedMode {
 	VAR_EXPORTED_SOME,
 	VAR_EXPORTED_ALL
 } VarExportedMode;
+
+typedef enum UnexportWhat {
+	UNEXPORT_NAMED,
+	UNEXPORT_ALL,
+	UNEXPORT_ENV
+} UnexportWhat;
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef enum VarPatternFlags {
@@ -745,7 +751,7 @@ UnexportEnv(void)
 }
 
 static void
-UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
+UnexportVar(const char *varname, UnexportWhat what)
 {
 	Var *v = VarFind(varname, VAR_GLOBAL, FALSE);
 	if (v == NULL) {
@@ -754,13 +760,13 @@ UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 	}
 
 	DEBUG1(VAR, "Unexporting \"%s\"\n", varname);
-	if (!unexport_env && (v->flags & VAR_EXPORTED) &&
-	    !(v->flags & VAR_REEXPORT))
+	if (what != UNEXPORT_ENV &&
+	    (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
 		unsetenv(v->name.str);
 	v->flags &= ~(unsigned)(VAR_EXPORTED | VAR_REEXPORT);
 
-	/* If we are unexporting a list, remove each one from .MAKE.EXPORTED. */
-	if (adjust) {
+	if (what == UNEXPORT_NAMED) {
+		/* Remove the variable names from .MAKE.EXPORTED. */
 		/* XXX: v->name is injected without escaping it */
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N",
 		    v->name.str, "}");
@@ -781,20 +787,21 @@ UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 void
 Var_UnExport(const char *str)
 {
+	UnexportWhat what;
 	FStr varnames = FSTR_INIT;
-	Boolean unexport_env;
 
 	str += strlen("unexport");
-	unexport_env = strncmp(str, "-env", 4) == 0;
-	if (unexport_env) {
+	if (strncmp(str, "-env", 4) == 0) {
 		UnexportEnv();
+		what = UNEXPORT_ENV;
 	} else {
 		cpp_skip_whitespace(&str);
-		if (str[0] != '\0')
+		what = str[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
+		if (what == UNEXPORT_NAMED)
 			FStr_Assign(&varnames, str, NULL);
 	}
 
-	if (varnames.str == NULL) {
+	if (what != UNEXPORT_NAMED) {
 		char *expanded;
 		/* Using .MAKE.EXPORTED */
 		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
@@ -809,7 +816,7 @@ Var_UnExport(const char *str)
 		Words words = Str_Words(varnames.str, FALSE);
 		for (i = 0; i < words.len; i++) {
 			const char *varname = words.words[i];
-			UnexportVar(varname, unexport_env, varnames.str == str);
+			UnexportVar(varname, what);
 		}
 		Words_Free(words);
 		if (varnames.str != str)
