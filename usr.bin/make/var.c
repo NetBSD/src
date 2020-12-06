@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.711 2020/12/06 14:50:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.712 2020/12/06 15:40:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.711 2020/12/06 14:50:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.712 2020/12/06 15:40:46 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -310,6 +310,16 @@ ENUM_FLAGS_RTTI_6(VarFlags,
 		  VAR_EXPORTED, VAR_REEXPORT, VAR_FROM_CMD, VAR_READONLY);
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
+
+#define FSTR_INIT { NULL, NULL }
+
+static void
+FStr_Assign(FStr *fstr, const char *str, void *freeIt)
+{
+	free(fstr->freeIt);
+	fstr->str = str;
+	fstr->freeIt = freeIt;
+}
 
 static void
 FStr_Done(FStr *fstr)
@@ -771,12 +781,8 @@ UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 void
 Var_UnExport(const char *str)
 {
-	const char *varnames;
-	char *varnames_freeIt;
+	FStr varnames = FSTR_INIT;
 	Boolean unexport_env;
-
-	varnames = NULL;
-	varnames_freeIt = NULL;
 
 	str += strlen("unexport");
 	unexport_env = strncmp(str, "-env", 4) == 0;
@@ -785,31 +791,32 @@ Var_UnExport(const char *str)
 	} else {
 		cpp_skip_whitespace(&str);
 		if (str[0] != '\0')
-			varnames = str;
+			FStr_Assign(&varnames, str, NULL);
 	}
 
-	if (varnames == NULL) {
+	if (varnames.str == NULL) {
+		char *expanded;
 		/* Using .MAKE.EXPORTED */
 		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
-		    VARE_WANTRES, &varnames_freeIt);
+		    VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		varnames = varnames_freeIt;
+		FStr_Assign(&varnames, expanded, expanded);
 	}
 
 	{
 		size_t i;
 
-		Words words = Str_Words(varnames, FALSE);
+		Words words = Str_Words(varnames.str, FALSE);
 		for (i = 0; i < words.len; i++) {
 			const char *varname = words.words[i];
-			UnexportVar(varname, unexport_env, varnames == str);
+			UnexportVar(varname, unexport_env, varnames.str == str);
 		}
 		Words_Free(words);
-		if (varnames != str) {
+		if (varnames.str != str)
 			Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
-			free(varnames_freeIt);
-		}
 	}
+
+	FStr_Done(&varnames);
 }
 
 /* See Var_Set for documentation. */
