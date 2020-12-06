@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.710 2020/12/06 14:20:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.711 2020/12/06 14:50:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,8 +130,13 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.710 2020/12/06 14:20:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.711 2020/12/06 14:50:09 rillig Exp $");
 
+/* A string that may need to be freed after use. */
+typedef struct FStr {
+	const char *str;
+	void *freeIt;
+} FStr;
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -198,8 +203,7 @@ typedef struct Var {
 	 * For context variables, it aliases the corresponding HashEntry name.
 	 * For environment and undefined variables, it is allocated.
 	 */
-	const char *name;
-	void *name_freeIt;
+	FStr name;
 
 	/* The unexpanded value of the variable. */
 	Buffer val;
@@ -307,13 +311,19 @@ ENUM_FLAGS_RTTI_6(VarFlags,
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
+static void
+FStr_Done(FStr *fstr)
+{
+	free(fstr->freeIt);
+}
+
 static Var *
 VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
 {
 	size_t value_len = strlen(value);
 	Var *var = bmake_malloc(sizeof *var);
-	var->name = name;
-	var->name_freeIt = name_freeIt;
+	var->name.str = name;
+	var->name.freeIt = name_freeIt;
 	Buf_InitSize(&var->val, value_len + 1);
 	Buf_AddBytes(&var->val, value, value_len);
 	var->flags = flags;
@@ -455,7 +465,7 @@ VarFreeEnv(Var *v, Boolean freeValue)
 	if (!(v->flags & VAR_FROM_ENV))
 		return FALSE;
 
-	free(v->name_freeIt);
+	FStr_Done(&v->name);
 	Buf_Destroy(&v->val, freeValue);
 	free(v);
 	return TRUE;
@@ -495,10 +505,10 @@ Var_Delete(const char *name, GNode *ctxt)
 	if (he != NULL) {
 		Var *v = HashEntry_Get(he);
 		if (v->flags & VAR_EXPORTED)
-			unsetenv(v->name);
-		if (strcmp(v->name, MAKE_EXPORTED) == 0)
+			unsetenv(v->name.str);
+		if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
 			var_exportedVars = VAR_EXPORTED_NONE;
-		assert(v->name_freeIt == NULL);
+		assert(v->name.freeIt == NULL);
 		HashTable_DeleteEntry(&ctxt->vars, he);
 		Buf_Destroy(&v->val, TRUE);
 		free(v);
@@ -625,7 +635,7 @@ Var_ExportVars(void)
 		HashIter_Init(&hi, &VAR_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
-			Var_Export1(var->name, VAR_EXPORT_NORMAL);
+			Var_Export1(var->name.str, VAR_EXPORT_NORMAL);
 		}
 		return;
 	}
@@ -736,13 +746,14 @@ UnexportVar(const char *varname, Boolean unexport_env, Boolean adjust)
 	DEBUG1(VAR, "Unexporting \"%s\"\n", varname);
 	if (!unexport_env && (v->flags & VAR_EXPORTED) &&
 	    !(v->flags & VAR_REEXPORT))
-		unsetenv(v->name);
+		unsetenv(v->name.str);
 	v->flags &= ~(unsigned)(VAR_EXPORTED | VAR_REEXPORT);
 
 	/* If we are unexporting a list, remove each one from .MAKE.EXPORTED. */
 	if (adjust) {
 		/* XXX: v->name is injected without escaping it */
-		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
+		char *expr = str_concat3("${" MAKE_EXPORTED ":N",
+		    v->name.str, "}");
 		char *cp;
 		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &cp);
 		/* TODO: handle errors */
@@ -2047,7 +2058,7 @@ ParseModifierPart(
 	if (*p != delim) {
 		*pp = p;
 		Error("Unfinished modifier for %s ('%c' missing)",
-		    st->var->name, delim);
+		    st->var->name.str, delim);
 		*out_part = NULL;
 		return VPR_PARSE_MSG;
 	}
@@ -2158,7 +2169,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
-		    st->var->name, args.tvar);
+		    st->var->name.str, args.tvar);
 		return AMR_CLEANUP;
 	}
 
@@ -2246,7 +2257,7 @@ static ApplyModifierResult
 ApplyModifier_Literal(const char **pp, ApplyModifiersState *st)
 {
 	ApplyModifiersState_Define(st);
-	st->newVal = bmake_strdup(st->var->name);
+	st->newVal = bmake_strdup(st->var->name.str);
 	(*pp)++;
 	return AMR_OK;
 }
@@ -2343,17 +2354,17 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 
 	ApplyModifiersState_Define(st);
 
-	gn = Targ_FindNode(st->var->name);
+	gn = Targ_FindNode(st->var->name.str);
 	if (gn == NULL || gn->type & OP_NOPATH) {
 		path = NULL;
 	} else if (gn->path != NULL) {
 		path = bmake_strdup(gn->path);
 	} else {
 		SearchPath *searchPath = Suff_FindPath(gn);
-		path = Dir_FindFile(st->var->name, searchPath);
+		path = Dir_FindFile(st->var->name.str, searchPath);
 	}
 	if (path == NULL)
-		path = bmake_strdup(st->var->name);
+		path = bmake_strdup(st->var->name.str);
 	st->newVal = path;
 
 	(*pp)++;
@@ -2503,7 +2514,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	}
 
 	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
-	    st->var->name, st->val, pattern);
+	    st->var->name.str, st->val, pattern);
 
 	callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
 	st->newVal = ModifyWords(st->val, callback, pattern,
@@ -2968,7 +2979,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 
 	int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
 	if (st->eflags & VARE_WANTRES) {
-		cond_rc = Cond_EvalCondition(st->var->name, &value);
+		cond_rc = Cond_EvalCondition(st->var->name.str, &value);
 		if (cond_rc != COND_INVALID && value)
 			then_eflags = st->eflags;
 		if (cond_rc != COND_INVALID && !value)
@@ -2989,7 +3000,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 	(*pp)--;
 	if (cond_rc == COND_INVALID) {
 		Error("Bad conditional expression `%s' in %s?%s:%s",
-		    st->var->name, st->var->name, then_expr, else_expr);
+		    st->var->name.str, st->var->name.str, then_expr, else_expr);
 		return AMR_CLEANUP;
 	}
 
@@ -3043,14 +3054,14 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	return AMR_UNKNOWN;	/* "::<unrecognised>" */
 ok:
 
-	if (st->var->name[0] == '\0') {
+	if (st->var->name.str[0] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;
 	}
 
 	ctxt = st->ctxt;	/* context where v belongs */
 	if (!(st->exprFlags & VEF_UNDEF) && st->ctxt != VAR_GLOBAL) {
-		Var *gv = VarFind(st->var->name, st->ctxt, FALSE);
+		Var *gv = VarFind(st->var->name.str, st->ctxt, FALSE);
 		if (gv == NULL)
 			ctxt = VAR_GLOBAL;
 		else
@@ -3079,7 +3090,7 @@ ok:
 	if (st->eflags & VARE_WANTRES) {
 		switch (op[0]) {
 		case '+':
-			Var_Append(st->var->name, val, ctxt);
+			Var_Append(st->var->name.str, val, ctxt);
 			break;
 		case '!': {
 			const char *errfmt;
@@ -3087,7 +3098,7 @@ ok:
 			if (errfmt != NULL)
 				Error(errfmt, val);
 			else
-				Var_Set(st->var->name, cmd_output, ctxt);
+				Var_Set(st->var->name.str, cmd_output, ctxt);
 			free(cmd_output);
 			break;
 		}
@@ -3096,7 +3107,7 @@ ok:
 				break;
 			/* FALLTHROUGH */
 		default:
-			Var_Set(st->var->name, val, ctxt);
+			Var_Set(st->var->name.str, val, ctxt);
 			break;
 		}
 	}
@@ -3245,7 +3256,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, const char endc)
 	/* At this point, only the first character of the modifier can
 	 * be used since the end of the modifier is not yet known. */
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-	    st->var->name, mod[0], is_single_char ? "" : "...", st->val,
+	    st->var->name.str, mod[0], is_single_char ? "" : "...", st->val,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
 		st->eflags, VarEvalFlags_ToStringSpecs),
 	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
@@ -3265,7 +3276,7 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 	const char *newVal = st->newVal == var_Error ? "error" : st->newVal;
 
 	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s, %s)\n",
-	    st->var->name, (int)(p - mod), mod, quot, newVal, quot,
+	    st->var->name.str, (int)(p - mod), mod, quot, newVal, quot,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
 		st->eflags, VarEvalFlags_ToStringSpecs),
 	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
@@ -3407,7 +3418,7 @@ ApplyModifiersIndirect(
 	else if (*p == '\0' && st->endc != '\0') {
 		Error("Unclosed variable specification after complex "
 		      "modifier (expecting '%c') for %s",
-		    st->endc, st->var->name);
+		    st->endc, st->var->name.str);
 		*inout_p = p;
 		return AMIR_OUT;
 	}
@@ -3451,7 +3462,7 @@ ApplyModifiers(
 	if (*p == '\0' && endc != '\0') {
 		Error(
 		    "Unclosed variable expression (expecting '%c') for \"%s\"",
-		    st.endc, st.var->name);
+		    st.endc, st.var->name.str);
 		goto cleanup;
 	}
 
@@ -3513,7 +3524,7 @@ ApplyModifiers(
 			Error(
 			    "Unclosed variable specification (expecting '%c') "
 			    "for \"%s\" (value \"%s\") modifier %c",
-			    st.endc, st.var->name, st.val, *mod);
+			    st.endc, st.var->name.str, st.val, *mod);
 		} else if (*p == ':') {
 			p++;
 		} else if (opts.lint && *p != '\0' && *p != endc) {
@@ -3535,7 +3546,7 @@ out:
 bad_modifier:
 	/* XXX: The modifier end is only guessed. */
 	Error("Bad modifier `:%.*s' for %s",
-	    (int)strcspn(mod, ":)}"), mod, st.var->name);
+	    (int)strcspn(mod, ":)}"), mod, st.var->name.str);
 
 cleanup:
 	*pp = p;
@@ -3894,7 +3905,7 @@ FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
 	else
 		free(varValue);
 
-	free(v->name_freeIt);
+	FStr_Done(&v->name);
 	free(v);
 }
 
@@ -3993,7 +4004,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	}
 
 	if (v->flags & VAR_IN_USE)
-		Fatal("Variable %s is recursive.", v->name);
+		Fatal("Variable %s is recursive.", v->name.str);
 
 	/*
 	 * XXX: This assignment creates an alias to the current value of the
@@ -4077,7 +4088,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		}
 		if (value != Buf_GetAll(&v->val, NULL))
 			Buf_Destroy(&v->val, TRUE);
-		free(v->name_freeIt);
+		FStr_Done(&v->name);
 		free(v);
 	}
 	*out_val = value;
