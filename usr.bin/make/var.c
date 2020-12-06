@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.708 2020/12/06 10:49:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.709 2020/12/06 13:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.708 2020/12/06 10:49:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.709 2020/12/06 13:51:06 rillig Exp $");
 
 ENUM_FLAGS_RTTI_3(VarEvalFlags,
 		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR);
@@ -3882,6 +3882,20 @@ ParseVarnameLong(
 	return TRUE;
 }
 
+/* Free the environment variable now since we own it. */
+static void
+FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
+{
+	char *varValue = Buf_Destroy(&v->val, FALSE);
+	if (value == varValue)
+		*out_val_freeIt = varValue;
+	else
+		free(varValue);
+
+	free(v->name_freeIt);
+	free(v);
+}
+
 /*
  * Given the start of a variable expression (such as $v, $(VAR),
  * ${VAR:Mpattern}), extract the variable name and value, and the modifiers,
@@ -4033,16 +4047,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	*pp = p;
 
 	if (v->flags & VAR_FROM_ENV) {
-		/* Free the environment variable now since we own it. */
-
-		char *varValue = Buf_Destroy(&v->val, FALSE);
-		if (value == varValue)
-			*out_val_freeIt = varValue;
-		else
-			free(varValue);
-
-		free(v->name_freeIt);
-		free(v);
+		FreeEnvVar(out_val_freeIt, v, value);
 
 	} else if (exprFlags & VEF_UNDEF) {
 		if (!(exprFlags & VEF_DEF)) {
