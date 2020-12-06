@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.32 2020/09/04 08:17:53 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.33 2020/12/06 03:46:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ struct trapframe;
 
 struct mdlwp {
 	struct trapframe *md_utf;	/* trapframe from userspace */
-	vaddr_t	md_ss_addr;		/* single step address for ptrace */
+	__vaddr_t md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile int md_astpending;	/* AST pending on return to userland */
 	int	md_upte[UPAGES_MAX];	/* ptes for mapping u page */
@@ -57,7 +57,7 @@ struct mdlwp {
 
 struct mdproc {
 					/* syscall entry for this process */
-	void	(*md_syscall)(struct lwp *, u_int, u_int, vaddr_t);
+	void	(*md_syscall)(struct lwp *, u_int, u_int, __vaddr_t);
 	int	md_abi;			/* which ABI is this process using? */
 };
 
