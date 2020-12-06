@@ -2,7 +2,7 @@
 /* Generated from: NetBSD: mknative-gdb,v 1.15 2020/12/05 21:27:31 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-#include "common/version.h"
-const char version[] = "8.3";
+#include "gdbsupport/version.h"
+const char version[] = "11.0.50.20200914-git";
 const char host_name[] = "powerpc--netbsd";
 const char target_name[] = "powerpc--netbsd";
