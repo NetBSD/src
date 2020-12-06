@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.21 2020/04/22 23:36:26 joerg Exp $	*/
+/*	$NetBSD: back.h,v 1.22 2020/12/06 11:41:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,7 +46,12 @@
 #define rnum(r)	(random()%r)
 #define D0	dice[0]
 #define D1	dice[1]
-#define mswap(m) {(m)->D0 ^= (m)->D1; (m)->D1 ^= (m)->D0; (m)->D0 ^= (m)->D1; (m)->d0 = 1-(m)->d0;}
+#define mswap(m) { \
+	(m)->D0 ^= (m)->D1;  \
+	(m)->D1 ^= (m)->D0;  \
+	(m)->D0 ^= (m)->D1;  \
+	(m)->d0 = 1-(m)->d0; \
+}
 
 struct move {
 	int	dice[2];	/* value of dice */
@@ -121,7 +126,7 @@ extern	char	cin[100];	/* input line of current move
 extern	const char	*const color[];
 				/* colors as strings */
 extern	const char	*const *colorptr;	/* color of current player */
-extern	const char	*const *Colorptr;	/* color of current player, capitalized */
+extern	const char	*const *Colorptr;	/* ditto, capitalized */
 extern	int	colen;		/* length of color of current player */
 
 extern int buffnum;
