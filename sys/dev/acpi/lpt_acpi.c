@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.20 2018/06/24 12:25:33 jdolecek Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.21 2020/12/06 12:23:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.20 2018/06/24 12:25:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.21 2020/12/06 12:23:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.20 2018/06/24 12:25:33 jdolecek Exp $
 #include <sys/systm.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/lptvar.h>
 
@@ -83,7 +84,6 @@ lpt_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_io *io;
-	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 
 	sc->sc_dev = self;
@@ -105,13 +105,6 @@ lpt_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	/* find our IRQ */
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(self, "unable to find irq resource\n");
-		goto out;
-	}
-
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &sc->sc_ioh)) {
@@ -121,9 +114,12 @@ lpt_acpi_attach(device_t parent, device_t self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	sc->sc_ih = isa_intr_establish_xname(aa->aa_ic, irq->ar_irq,
-	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_TTY, lptintr, sc, device_xname(self));
+	sc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_TTY, false, lptintr, sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		goto out;
+	}
 
  out:
 	acpi_resource_cleanup(&res);
