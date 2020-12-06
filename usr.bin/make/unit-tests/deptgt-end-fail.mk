@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-end-fail.mk,v 1.2 2020/11/24 17:59:42 rillig Exp $
+# $NetBSD: deptgt-end-fail.mk,v 1.3 2020/12/06 21:22:04 rillig Exp $
 #
 # Tests for an error in the .END node.
 #
@@ -10,4 +10,5 @@ all:
 	: $@
 
 .END:
+	: Making ${.TARGET} out of nothing.
 	false
