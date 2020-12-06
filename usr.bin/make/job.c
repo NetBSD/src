@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.337 2020/12/05 18:15:40 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.338 2020/12/06 18:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.337 2020/12/05 18:15:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.338 2020/12/06 18:13:17 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -708,26 +708,23 @@ JobPrintln(Job *job, const char *line)
     JobPrintf(job, "%s\n", line);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobPrintCommand  --
- *	Put out another command for the given job. If the command starts
- *	with an @ or a - we process it specially. In the former case,
- *	so long as the -s and -n flags weren't given to make, we stick
- *	a shell-specific echoOff command in the script. In the latter,
- *	we ignore errors for the entire job, unless the shell has error
- *	control.
- *	If the command is just "..." we take all future commands for this
- *	job to be commands to be executed once the entire graph has been
- *	made and return non-zero to signal that the end of the commands
- *	was reached. These commands are later attached to the .END
- *	node and executed by Job_End when all things are done.
+/*
+ * Put out another command for the given job. If the command starts with an
+ * '@' or a '-' we process it specially. In the former case, so long as the
+ * -s and -n flags weren't given to make, we stick a shell-specific echoOff
+ * command in the script. In the latter, we ignore errors for the entire job,
+ * unless the shell has error control.
+ *
+ * If the command is just "..." we take all future commands for this job to
+ * be commands to be executed once the entire graph has been made and return
+ * non-zero to signal that the end of the commands was reached. These commands
+ * are later attached to the .END node and executed by Job_End when all things
+ * are done.
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
  *	the JOB_IGNERR flag is set in the job descriptor.
  *	numCommands is incremented if the command is actually printed.
- *-----------------------------------------------------------------------
  */
 static void
 JobPrintCommand(Job *job, char *cmd)
@@ -1436,11 +1433,9 @@ JobMakeArgv(Job *job, char **argv)
     argv[argc] = NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobStart  --
- *	Start a target-creation process going for the target described
- *	by the graph node gn.
+/*
+ * Start a target-creation process going for the target described by the
+ * graph node gn.
  *
  * Input:
  *	gn		target to create
@@ -1457,7 +1452,6 @@ JobMakeArgv(Job *job, char **argv)
  *	jobs. PMake is forked and a child shell created.
  *
  * NB: The return value is ignored by everyone.
- *-----------------------------------------------------------------------
  */
 static JobStartResult
 JobStart(GNode *gn, JobFlags flags)
@@ -2192,11 +2186,9 @@ FindShellByName(const char *name)
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_ParseShell --
- *	Parse a shell specification and set up commandShell, shellPath
- *	and shellName appropriately.
+/*
+ * Parse a shell specification and set up commandShell, shellPath and
+ * shellName appropriately.
  *
  * Input:
  *	line		The shell spec
@@ -2236,8 +2228,6 @@ FindShellByName(const char *name)
  *			is TRUE or template of command to execute a
  *			command so as to ignore any errors it returns if
  *			hasErrCtl is FALSE.
- *
- *-----------------------------------------------------------------------
  */
 Boolean
 Job_ParseShell(char *line)

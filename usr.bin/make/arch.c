@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.186 2020/12/05 18:15:40 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.187 2020/12/06 18:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.186 2020/12/05 18:15:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.187 2020/12/06 18:13:17 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -593,22 +593,18 @@ badarch:
 }
 
 #ifdef SVR4ARCHIVES
-/*-
- *-----------------------------------------------------------------------
- * ArchSVR4Entry --
- *	Parse an SVR4 style entry that begins with a slash.
- *	If it is "//", then load the table of filenames
- *	If it is "/<offset>", then try to substitute the long file name
- *	from offset of a table previously read.
- *	If a table is read, the file pointer is moved to the next archive
- *	member.
+/*
+ * Parse an SVR4 style entry that begins with a slash.
+ * If it is "//", then load the table of filenames.
+ * If it is "/<offset>", then try to substitute the long file name
+ * from offset of a table previously read.
+ * If a table is read, the file pointer is moved to the next archive member.
  *
  * Results:
  *	-1: Bad data in archive
  *	 0: A table was loaded from the file
  *	 1: Name was successfully substituted from table
  *	 2: Name was not successfully substituted from table
- *-----------------------------------------------------------------------
  */
 static int
 ArchSVR4Entry(Arch *ar, char *inout_name, size_t size, FILE *arch)

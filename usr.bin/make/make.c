@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.226 2020/11/28 23:50:58 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.227 2020/12/06 18:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.226 2020/11/28 23:50:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.227 2020/12/06 18:13:17 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1289,17 +1289,14 @@ Make_ProcessWait(GNodeList *targs)
     Lst_Done(&examine);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_Run --
- *	Initialize the nodes to remake and the list of nodes which are
- *	ready to be made by doing a breadth-first traversal of the graph
- *	starting from the nodes in the given list. Once this traversal
- *	is finished, all the 'leaves' of the graph are in the toBeMade
- *	queue.
- *	Using this queue and the Job module, work back up the graph,
- *	calling on MakeStartJobs to keep the job table as full as
- *	possible.
+/*
+ * Initialize the nodes to remake and the list of nodes which are ready to
+ * be made by doing a breadth-first traversal of the graph starting from the
+ * nodes in the given list. Once this traversal is finished, all the 'leaves'
+ * of the graph are in the toBeMade queue.
+ *
+ * Using this queue and the Job module, work back up the graph, calling on
+ * MakeStartJobs to keep the job table as full as possible.
  *
  * Input:
  *	targs		the initial list of targets
@@ -1311,7 +1308,6 @@ Make_ProcessWait(GNodeList *targs)
  *	The make field of all nodes involved in the creation of the given
  *	targets is set to 1. The toBeMade list is set to contain all the
  *	'leaves' of these subgraphs.
- *-----------------------------------------------------------------------
  */
 Boolean
 Make_Run(GNodeList *targs)
