@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.471 2020/12/06 20:09:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.472 2020/12/06 20:33:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.471 2020/12/06 20:09:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.472 2020/12/06 20:33:44 rillig Exp $");
 
 /* types and constants */
 
@@ -2687,41 +2687,15 @@ ParseGetLine(GetLineMode mode)
 		escaped = NULL;
 		comment = NULL;
 		for (;;) {
-			/* XXX: can buf_end ever be null? */
-			if (cf->buf_end != NULL && ptr == cf->buf_end) {
+			if (ptr == cf->buf_end) {
 				/* end of buffer */
 				ch = '\0';
 				break;
 			}
 			ch = *ptr;
-			if (ch == '\0' || (ch == '\\' && ptr[1] == '\0')) {
-
-				/* XXX: can buf_end ever be null? */
-				if (cf->buf_end == NULL)
-					/* End of string (aka for loop) data */
-					break;
-
-				/* see if there is more we can parse */
-				while (ptr++ < cf->buf_end) {
-					if ((ch = *ptr) == '\n') {
-						if (ptr > line &&
-						    ptr[-1] == '\\')
-							continue;
-						Parse_Error(PARSE_WARNING,
-						    "Zero byte read from file, "
-						    "skipping rest of line.");
-						break;
-					}
-				}
-				/* XXX: Can cf->readMore ever be NULL? */
-				if (cf->readMore != NULL) {
-					/*
-					 * End of this buffer; return EOF and
-					 * outer logic will get the next one.
-					 * (eww)
-					 */
-					break;
-				}
+			if (ch == '\0' ||
+			    (ch == '\\' && ptr + 1 < cf->buf_end &&
+			     ptr[1] == '\0')) {
 				Parse_Error(PARSE_FATAL,
 				    "Zero byte read from file");
 				return NULL;
