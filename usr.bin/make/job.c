@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.342 2020/12/07 23:53:09 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.343 2020/12/07 23:59:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.342 2020/12/07 23:53:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.343 2020/12/07 23:59:59 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -626,8 +626,7 @@ JobPassSig_suspend(int signo)
 	act.sa_flags = 0;
 	(void)sigaction(signo, &act, NULL);
 
-	if (DEBUG(JOB))
-		debug_printf("JobPassSig passing signal %d to self.\n", signo);
+	DEBUG1(JOB, "JobPassSig passing signal %d to self.\n", signo);
 
 	(void)kill(getpid(), signo);
 
@@ -719,8 +718,7 @@ EscapeShellDblQuot(const char *cmd)
 static void
 JobPrintf(Job *job, const char *fmt, const char *arg)
 {
-	if (DEBUG(JOB))
-		debug_printf(fmt, arg);
+	DEBUG1(JOB, fmt, arg);
 
 	(void)fprintf(job->cmdFILE, fmt, arg);
 	(void)fflush(job->cmdFILE);
