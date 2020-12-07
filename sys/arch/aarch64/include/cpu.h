@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.29 2020/11/21 11:43:59 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.30 2020/12/07 10:56:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct cpu_info {
 	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
 
 	/* ACPI */
-	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
+	uint32_t ci_acpiid;	/* ACPI Processor Unique ID */
 
 	struct aarch64_sysctl_cpu_id ci_id;
 
