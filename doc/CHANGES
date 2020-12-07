@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2763 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2764 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -313,3 +313,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libfido2: Update to 1.5.0 for OpenSSH 8.4 support [christos 20201204]
 	OpenSSH: Import 8.4. [christos 20201204]
 	pkg_install: Updated to 20201205. [wiz 20201205]
+	acpicpu(4): Add support for Arm CPUs. [jmcneill 20201207]
