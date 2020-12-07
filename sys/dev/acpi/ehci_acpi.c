@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.3 2018/11/16 23:18:17 jmcneill Exp $ */
+/* $NetBSD: ehci_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.3 2018/11/16 23:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,7 +131,8 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	EOWRITE4(sc, EHCI_USBINTR, 0);
 
-	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_USB, true, ehci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
