@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.44 2012/04/27 04:38:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.45 2020/12/07 10:57:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -259,17 +259,97 @@ struct cpu_info *acpicpu_md_match(device_t, cfdata_t, void *);
 struct cpu_info *acpicpu_md_attach(device_t, device_t, void *);
 
 uint32_t	 acpicpu_md_flags(void);
-void		 acpicpu_md_quirk_c1e(void);
 int		 acpicpu_md_cstate_start(struct acpicpu_softc *);
 int		 acpicpu_md_cstate_stop(void);
 void		 acpicpu_md_cstate_enter(int, int);
 int		 acpicpu_md_pstate_start(struct acpicpu_softc *);
 int		 acpicpu_md_pstate_stop(void);
 int		 acpicpu_md_pstate_init(struct acpicpu_softc *);
-uint8_t		 acpicpu_md_pstate_hwf(struct cpu_info *);
 int		 acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		 acpicpu_md_pstate_set(struct acpicpu_pstate *);
 int		 acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
 int		 acpicpu_md_tstate_set(struct acpicpu_tstate *);
+
+#if defined(__i386__) || defined(__x86_64__)
+void		 acpicpu_md_quirk_c1e(void);
+uint8_t		 acpicpu_md_pstate_hwf(struct cpu_info *);
+#endif
+
+/*
+ * acpicpu_readreg --
+ *
+ * 	Read data from an I/O or memory address defined by 'reg'. The data
+ * 	returned is shifted out and masked based on the bit offset and
+ * 	width defined by the 'reg' parameter.
+ *
+ */
+static inline uint32_t
+acpicpu_readreg(struct acpicpu_reg *reg)
+{
+	union {
+		uint64_t u64;
+		uint32_t u32;
+	} val;
+
+	KASSERT(reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_IO ||
+		reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_MEMORY);
+
+	const uint64_t reg_mask =
+	    __BITS(reg->reg_bitoffset + reg->reg_bitwidth - 1,
+		   reg->reg_bitoffset);
+
+	val.u64 = 0;
+	if (reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_IO) {
+		AcpiOsReadPort(reg->reg_addr, &val.u32,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	} else {
+		AcpiOsReadMemory(reg->reg_addr, &val.u64,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	}
+
+	return (uint32_t)__SHIFTOUT(val.u64, reg_mask);
+}
+
+/*
+ * acpicpu_writereg --
+ *
+ * 	Write data to an I/O or memory address defined by 'reg'. The register
+ * 	is updated using a read-modify-write cycle and is shifted in based on
+ * 	the bit offset and width defined by the 'reg' parameter.
+ *
+ */
+static inline void
+acpicpu_writereg(struct acpicpu_reg *reg, uint32_t newval)
+{
+	union {
+		uint64_t u64;
+		uint32_t u32;
+	} val;
+
+	KASSERT(reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_IO ||
+		reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_MEMORY);
+
+	const uint64_t reg_mask =
+	    __BITS(reg->reg_bitoffset + reg->reg_bitwidth - 1,
+		   reg->reg_bitoffset);
+
+	val.u64 = 0;
+	if (reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_IO) {
+		AcpiOsReadPort(reg->reg_addr, &val.u32,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	} else {
+		AcpiOsReadMemory(reg->reg_addr, &val.u64,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	}
+	val.u64 &= ~reg_mask;
+	val.u64 |= __SHIFTIN(newval, reg_mask);
+	if (reg->reg_spaceid == ACPI_ADR_SPACE_SYSTEM_IO) {
+		AcpiOsWritePort(reg->reg_addr, val.u32,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	} else {
+		AcpiOsWriteMemory(reg->reg_addr, val.u64,
+		    ACPI_ACCESS_BIT_WIDTH(reg->reg_accesssize));
+	}
+}
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_CPU_H */

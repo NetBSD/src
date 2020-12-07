@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.52 2020/03/16 21:20:09 pgoyette Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.53 2020/12/07 10:57:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.52 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.53 2020/12/07 10:57:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,7 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.52 2020/03/16 21:20:09 pgoyette Exp $
 #include <dev/acpi/acpi_cpu.h>
 
 #include <machine/acpi_machdep.h>
+
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/cpuvar.h>
+#endif
 
 #define _COMPONENT	  ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	  ("acpi_cpu")
@@ -171,7 +174,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	rv = acpicpu_object(sc->sc_node->ad_handle, &sc->sc_object);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv) && rv != AE_TYPE)
 		aprint_verbose_dev(self, "failed to obtain CPU object\n");
 
 	acpicpu_count++;
@@ -187,7 +190,9 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node->ad_device = self;
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
+#if defined(__i386__) || defined(__x86_64__)
 	acpicpu_cstate_attach(self);
+#endif
 	acpicpu_pstate_attach(self);
 	acpicpu_tstate_attach(self);
 
@@ -365,9 +370,15 @@ fail:
 static ACPI_STATUS
 acpicpu_object(ACPI_HANDLE hdl, struct acpicpu_object *ao)
 {
+	ACPI_OBJECT_TYPE typ;
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
+
+	rv = AcpiGetType(hdl, &typ);
+	if (typ != ACPI_TYPE_PROCESSOR) {
+		return AE_TYPE;
+	}
 
 	rv = acpi_eval_struct(hdl, NULL, &buf);
 
@@ -832,6 +843,8 @@ acpicpu_debug_print_method_c(uint8_t val)
 static const char *
 acpicpu_debug_print_method_pt(uint8_t val)
 {
+	if (val == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		return "MMIO";
 
 	if (val == ACPI_ADR_SPACE_SYSTEM_IO)
 		return "I/O";
