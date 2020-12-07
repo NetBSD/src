@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.17 2020/12/06 10:31:48 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.18 2020/12/07 20:22:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1143,3 +1143,26 @@ sbin/dump/main.c				1.78
 	PR 55834: fix status updates for files larger than 2TiB.
 	[kre, ticket #1139]
 
+xsrc/external/mit/xorg-server.old/dist/xkb/xkb.c	1.2
+
+	Apply upstream patches for:
+	 * CVE-2020-14360 / ZDI CAN 11572 XkbSetMap Out-Of-Bounds Access
+	 * CVE-2020-25712 / ZDI-CAN-11839 XkbSetDeviceInfo Heap-based Buffer
+	   Overflow
+	[mrg, ticket #1142]
+
+sys/netinet/ip_mroute.c				1.164
+
+	PR 55779: restore non-desctructive guarantee of ip_mforward() mbuf
+	argument.
+	[kardel, ticket #1143]
+
+sys/dev/ic/nvme.c				1.53
+
+	PR 55839: avoid mulitple bus rescans when loading the module.
+	[kardel, ticket #1144]
+
+xsrc/external/mit/libX11/dist/modules/im/ximcp/imRmAttr.c    (patch)
+
+	PR 55640: fix off by one in X Input Method.
+	[maya, ticket #1145]
