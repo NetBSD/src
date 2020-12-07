@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.338 2020/12/06 18:13:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.339 2020/12/07 22:47:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.338 2020/12/06 18:13:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.339 2020/12/07 22:47:03 rillig Exp $");
 
 /* A shell defines how the commands are run.  All commands for a target are
  * written into a single file, which is then given to the shell to execute
@@ -391,7 +391,7 @@ static int readyfd(Job *);
 
 static GNode *lastNode;		/* The node for which output was most recently
 				 * produced. */
-static char *targPrefix = NULL; /* What we print at the start of TARG_FMT */
+static char *targPrefix = NULL; /* To identify a job change in the output. */
 static Job tokenWaitJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
@@ -400,17 +400,19 @@ static Job childExitJob;	/* child exit pseudo-job */
 
 enum { npseudojobs = 2 };	/* number of pseudo-jobs */
 
-#define TARG_FMT  "%s %s ---\n" /* Default format */
-#define MESSAGE(fp, gn) \
-	if (opts.maxJobs != 1 && targPrefix && *targPrefix) \
-	    (void)fprintf(fp, TARG_FMT, targPrefix, gn->name)
-
 static sigset_t caught_signals;	/* Set of signals we handle */
 
 static void JobDoOutput(Job *, Boolean);
 static void JobInterrupt(int, int) MAKE_ATTR_DEAD;
 static void JobRestartJobs(void);
 static void JobSigReset(void);
+
+static void
+Message(GNode *gn)
+{
+	if (opts.maxJobs != 1 && targPrefix != NULL && targPrefix[0] != '\0')
+		(void)fprintf(stdout, "%s %s ---\n", targPrefix, gn->name);
+}
 
 static unsigned
 nfds_per_job(void)
@@ -1003,7 +1005,7 @@ JobFinish(Job *job, int status)
 		   job->pid, job->node->name);
 	    if (WEXITSTATUS(status) != 0) {
 		if (job->node != lastNode) {
-		    MESSAGE(stdout, job->node);
+		    Message(job->node);
 		    lastNode = job->node;
 		}
 #ifdef USE_META
@@ -1026,7 +1028,7 @@ JobFinish(Job *job, int status)
 		}
 	    } else if (DEBUG(JOB)) {
 		if (job->node != lastNode) {
-		    MESSAGE(stdout, job->node);
+		    Message(job->node);
 		    lastNode = job->node;
 		}
 		(void)printf("*** [%s] Completed successfully\n",
@@ -1034,7 +1036,7 @@ JobFinish(Job *job, int status)
 	    }
 	} else {
 	    if (job->node != lastNode) {
-		MESSAGE(stdout, job->node);
+		Message(job->node);
 		lastNode = job->node;
 	    }
 	    (void)printf("*** [%s] Signal %d\n",
@@ -1263,7 +1265,7 @@ JobExec(Job *job, char **argv)
      * provide that feedback, even if nothing follows it.
      */
     if ((lastNode != job->node) && !(job->flags & JOB_SILENT)) {
-	MESSAGE(stdout, job->node);
+	Message(job->node);
 	lastNode = job->node;
     }
 
@@ -1558,7 +1560,7 @@ JobStart(GNode *gn, JobFlags flags)
 	 * in one fell swoop. This will still set up job->tailCmds correctly.
 	 */
 	if (lastNode != gn) {
-	    MESSAGE(stdout, gn);
+	    Message(gn);
 	    lastNode = gn;
 	}
 	job->cmdFILE = stdout;
@@ -1777,7 +1779,7 @@ again:
 	     */
 	    if (*cp != '\0') {
 		if (!opts.beSilent && job->node != lastNode) {
-		    MESSAGE(stdout, job->node);
+		    Message(job->node);
 		    lastNode = job->node;
 		}
 #ifdef USE_META
