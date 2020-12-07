@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.202 2020/12/07 01:10:03 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.203 2020/12/07 01:32:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.202 2020/12/07 01:10:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.203 2020/12/07 01:32:04 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -721,6 +721,7 @@ Compat_Run(GNodeList *targs)
 	/*
 	 * XXX: what about multiple main targets if the first few fail but
 	 * the last one succeeds?  This should not count as overall success.
+	 * See opt-keep-going-multiple.mk.
 	 */
 	if (GNode_IsError(gn))
 		seenError = TRUE;
