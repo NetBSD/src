@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984 2020/12/07 07:51:25 rillig Exp $
+# $NetBSD: mi,v 1.985 2020/12/07 21:35:43 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5263,8 +5263,8 @@
 ./usr/tests/usr.bin/make/unit-tests/posix.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/posix1.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/posix1.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/qequals.exp					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/qequals.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/qequals.exp					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/qequals.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/recursive.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/recursive.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/sh-dots.exp					tests-usr.bin-tests	compattestfile,atf
