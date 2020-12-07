@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.286 2020/11/08 14:16:59 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.287 2020/12/07 10:57:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.286 2020/11/08 14:16:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.287 2020/12/07 10:57:41 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -178,7 +178,6 @@ static const char * const acpi_ignored_ids[] = {
 #endif
 #if defined(__aarch64__)
 	"ACPI0004",	/* ACPI module devices are handled internally */
-	"ACPI0007",	/* ACPI CPUs are attached via MADT GICC subtables */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
 #endif
 	NULL
