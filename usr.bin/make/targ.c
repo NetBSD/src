@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.153 2020/12/06 10:49:02 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.154 2020/12/07 23:59:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.153 2020/12/06 10:49:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.154 2020/12/07 23:59:59 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -452,7 +452,7 @@ Targ_PrintType(int type)
 
 		switch (tbit) {
 #define PRINTBIT(bit, attr) case bit: debug_printf(" " attr); break
-#define PRINTDBIT(bit, attr) case bit: if (DEBUG(TARG)) debug_printf(" " attr); break
+#define PRINTDBIT(bit, attr) case bit: DEBUG0(TARG, " " attr); break
 		PRINTBIT(OP_OPTIONAL, ".OPTIONAL");
 		PRINTBIT(OP_USE, ".USE");
 		PRINTBIT(OP_EXEC, ".EXEC");
