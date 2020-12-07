@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-end-fail.mk,v 1.5 2020/12/07 00:53:30 rillig Exp $
+# $NetBSD: deptgt-end-fail.mk,v 1.6 2020/12/07 01:04:07 rillig Exp $
 #
 # Tests for an errors in the main target, its dependencies,
 # the .END node and its dependencies.
@@ -63,5 +63,7 @@ end-dep:
 # because of errors.", followed by "exit status 0", which contradicted
 # each other.
 
-# XXX: As of 2020-12-06, '.END' is made if 'all' fails, but if a dependency
-# of 'all' fails, it is skipped.  This is inconsistent.
+# Until 2020-12-07, '.END' was even made if 'all' failed, but if a dependency
+# of 'all' failed, it was skipped.  This inconsistency was not needed for
+# anything and thus has been dropped.  To run some commands on error, use the
+# .ERROR target instead, see deptgt-error.mk.
