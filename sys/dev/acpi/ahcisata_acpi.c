@@ -1,4 +1,4 @@
-/* $NetBSD: ahcisata_acpi.c,v 1.5 2020/04/15 19:26:51 jmcneill Exp $ */
+/* $NetBSD: ahcisata_acpi.c,v 1.6 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.5 2020/04/15 19:26:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.6 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,8 @@ ahcisata_acpi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = aa->aa_dmat;
 	}
 
-	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_BIO, false, ahci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");

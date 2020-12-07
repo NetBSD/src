@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.44 2020/12/06 12:23:13 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.45 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.44 2020/12/06 12:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.45 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -181,7 +181,8 @@ fdc_acpi_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_BIO, false, fdcintr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
