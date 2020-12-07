@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.62 2020/06/04 03:14:36 riastradh Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.63 2020/12/07 10:57:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.62 2020/06/04 03:14:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.63 2020/12/07 10:57:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -160,7 +160,6 @@ acpicpu_cstate_callback(void *aux)
 static ACPI_STATUS
 acpicpu_cstate_cst(struct acpicpu_softc *sc)
 {
-	struct acpicpu_cstate *cs = sc->sc_cstate;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
@@ -208,7 +207,7 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 	/*
 	 * All x86 processors should support C1 (a.k.a. HALT).
 	 */
-	cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+	sc->sc_cstate[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
 
 	CTASSERT(ACPI_STATE_C0 == 0 && ACPI_STATE_C1 == 1);
 	CTASSERT(ACPI_STATE_C2 == 2 && ACPI_STATE_C3 == 3);
@@ -661,7 +660,11 @@ acpicpu_cstate_idle(void)
 	if (__predict_false(sc == NULL))
 		return;
 
+#if defined(__i386__) || defined(__x86_64__)
 	KASSERT(ci->ci_ilevel == IPL_NONE);
+#elif defined(__aarch64__)
+	KASSERT(ci->ci_cpl == IPL_NONE);
+#endif
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
@@ -673,11 +676,13 @@ acpicpu_cstate_idle(void)
 	state = acpicpu_cstate_latency(sc);
 	mutex_exit(&sc->sc_mtx);
 
+#if defined(__i386__) || defined(__x86_64__)
 	/*
 	 * Apply AMD C1E quirk.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_C_C1E) != 0)
 		acpicpu_md_quirk_c1e();
+#endif
 
 	/*
 	 * Check for bus master activity. Note that particularly usb(4)

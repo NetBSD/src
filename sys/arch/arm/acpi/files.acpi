@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.11 2020/10/10 15:25:31 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.12 2020/12/07 10:57:41 jmcneill Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -39,6 +39,14 @@ file	arch/arm/acpi/sbsawdt_acpi.c		sbsawdt_acpi
 
 attach	plcom at acpinodebus with plcom_acpi
 file	arch/arm/acpi/plcom_acpi.c		plcom_acpi
+
+device	acpicpu: acpi
+attach	acpicpu at acpinodebus
+file	dev/acpi/acpi_cpu.c			acpicpu
+file	dev/acpi/acpi_cpu_cstate.c		acpicpu
+file	dev/acpi/acpi_cpu_pstate.c		acpicpu
+file	dev/acpi/acpi_cpu_tstate.c		acpicpu
+file	arch/arm/acpi/acpi_cpu_md.c		acpicpu
 
 device	acpipchb: pcibus
 attach	acpipchb at acpinodebus
