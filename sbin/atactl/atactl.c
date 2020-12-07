@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.83 2019/05/30 21:32:08 mlelstv Exp $	*/
+/*	$NetBSD: atactl.c,v 1.84 2020/12/07 10:36:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.83 2019/05/30 21:32:08 mlelstv Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.84 2020/12/07 10:36:19 mrg Exp $");
 #endif
 
 
@@ -418,7 +418,7 @@ static const struct attr_table micron_smart_names[] = {
 	{ 189,          "Factory bad block count", NULL },
 	{ 197,		"Current pending ECC count", NULL },
 	{ 198,		"SMART offline scan uncorrectable error count", NULL },
-	{ 202,		"Percent lifetime remaining", NULL },
+	{ 202,		"Percent lifetime used", NULL },
 	{ 206,		"Write error rate", NULL },
 	{ 247,		"Number of NAND pages of data written by the host", NULL },
 	{ 248,		"Number of NAND pages written by the FTL", NULL },
