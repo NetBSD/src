@@ -1,4 +1,4 @@
-/* $NetBSD: mpu_acpi.c,v 1.14 2020/12/06 12:23:13 jmcneill Exp $ */
+/* $NetBSD: mpu_acpi.c,v 1.15 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.14 2020/12/06 12:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.15 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,8 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&asc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	mpu_attach(sc);
 
-	sc->arg = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	sc->arg = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_AUDIO, true, mpu_intr, sc, device_xname(self));
 	if (sc->arg == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt\n");

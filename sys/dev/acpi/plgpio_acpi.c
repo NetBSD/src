@@ -1,4 +1,4 @@
-/* $NetBSD: plgpio_acpi.c,v 1.5 2018/11/23 14:08:40 jmcneill Exp $ */
+/* $NetBSD: plgpio_acpi.c,v 1.6 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.5 2018/11/23 14:08:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.6 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,7 +131,8 @@ plgpio_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	ih = acpi_intr_establish(self, (uint64_t)asc->sc_handle,
+	ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)asc->sc_handle,
 	    IPL_VM, false, plgpio_acpi_intr, asc, device_xname(self));
 	if (ih == NULL)
 		aprint_error_dev(self, "couldn't establish interrupt\n");

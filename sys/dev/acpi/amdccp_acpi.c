@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_acpi.c,v 1.3 2020/12/06 12:23:13 jmcneill Exp $ */
+/* $NetBSD: amdccp_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.3 2020/12/06 12:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,8 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if notyet
-	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_VM, true, amdccp_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");

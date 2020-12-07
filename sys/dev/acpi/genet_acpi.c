@@ -1,4 +1,4 @@
-/* $NetBSD: genet_acpi.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
+/* $NetBSD: genet_acpi.c,v 1.3 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.3 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,7 +144,7 @@ genet_acpi_attach(device_t parent, device_t self, void *aux)
 	if (genet_attach(sc) != 0)
 		goto done;
 
-        ih = acpi_intr_establish(self, (uint64_t)handle, IPL_NET,
+        ih = acpi_intr_establish(self, (uint64_t)(uintptr_t)handle, IPL_NET,
 	    GENET_INTR_MPSAFE, genet_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");

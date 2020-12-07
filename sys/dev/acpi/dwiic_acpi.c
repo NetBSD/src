@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.3 2019/09/23 08:50:52 jmcneill Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.3 2019/09/23 08:50:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,8 @@ dwiic_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_VM, true, dwiic_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");

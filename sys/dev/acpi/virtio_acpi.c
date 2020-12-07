@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.3 2020/10/24 07:21:01 skrll Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.3 2020/10/24 07:21:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.4 2020/12/07 10:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,7 +174,8 @@ virtio_acpi_setup_interrupts(struct virtio_mmio_softc *msc)
 	struct virtio_acpi_softc * const sc = (struct virtio_acpi_softc *)msc;
 	struct virtio_softc * const vsc = &msc->sc_sc;
 
-	msc->sc_ih = acpi_intr_establish(vsc->sc_dev, (uint64_t)sc->sc_handle,
+	msc->sc_ih = acpi_intr_establish(vsc->sc_dev,
+	    (uint64_t)(uintptr_t)sc->sc_handle,
             IPL_VM, false, virtio_mmio_intr, msc, device_xname(vsc->sc_dev));
 	if (msc->sc_ih == NULL) {
 		aprint_error_dev(vsc->sc_dev, "couldn't install interrupt handler\n");
