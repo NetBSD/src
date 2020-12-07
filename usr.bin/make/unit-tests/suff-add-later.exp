@@ -15,4 +15,7 @@ make: don't know how to make issue5c (continuing)
 make: don't know how to make issue5d.e (continuing)
 make: don't know how to make issue5e.d (continuing)
 `all' not remade because of errors.
-exit status 0
+
+Stop.
+make: stopped in unit-tests
+exit status 1

@@ -40,4 +40,7 @@ SuffFindDeps "issue6.f"
 suffix is ".e"...
 make: Graph cycles through issue6.f
 `all' not remade because of errors.
-exit status 0
+
+Stop.
+make: stopped in unit-tests
+exit status 1

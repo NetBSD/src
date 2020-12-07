@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-end-fail.mk,v 1.4 2020/12/06 22:36:58 rillig Exp $
+# $NetBSD: deptgt-end-fail.mk,v 1.5 2020/12/07 00:53:30 rillig Exp $
 #
 # Tests for an errors in the main target, its dependencies,
 # the .END node and its dependencies.
@@ -59,8 +59,9 @@ end-dep:
 
 .endif
 
-# XXX: As of 2020-12-06, several of the test cases printed "`all' not remade
-# because of errors.", followed by "exit status 0".  This doesn't match.
+# Until 2020-12-07, several of the test cases printed "`all' not remade
+# because of errors.", followed by "exit status 0", which contradicted
+# each other.
 
 # XXX: As of 2020-12-06, '.END' is made if 'all' fails, but if a dependency
 # of 'all' fails, it is skipped.  This is inconsistent.
