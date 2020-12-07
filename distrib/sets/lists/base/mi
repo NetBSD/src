@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158.2.6 2019/01/02 15:48:00 martin Exp $
+# $NetBSD: mi,v 1.1158.2.7 2020/12/07 19:52:52 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5426,6 +5426,7 @@
 ./usr/share/zoneinfo/America/North_Dakota/Beulah	base-sys-share	share
 ./usr/share/zoneinfo/America/North_Dakota/Center	base-sys-share	share
 ./usr/share/zoneinfo/America/North_Dakota/New_Salem	base-sys-share	share
+./usr/share/zoneinfo/America/Nuuk		base-sys-share		share
 ./usr/share/zoneinfo/America/Ojinaga		base-sys-share		share
 ./usr/share/zoneinfo/America/Panama		base-sys-share		share
 ./usr/share/zoneinfo/America/Pangnirtung	base-sys-share		share
@@ -5918,7 +5919,7 @@
 ./usr/share/zoneinfo/US/Michigan		base-sys-share		share
 ./usr/share/zoneinfo/US/Mountain		base-sys-share		share
 ./usr/share/zoneinfo/US/Pacific			base-sys-share		share
-./usr/share/zoneinfo/US/Pacific-New		base-sys-share		share
+./usr/share/zoneinfo/US/Pacific-New		base-obsolete		obsolete
 ./usr/share/zoneinfo/US/Samoa			base-sys-share		share
 ./usr/share/zoneinfo/UTC			base-sys-share		share
 ./usr/share/zoneinfo/Universal			base-sys-share		share
