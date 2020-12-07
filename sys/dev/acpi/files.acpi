@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.116 2020/12/06 02:57:30 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.117 2020/12/07 10:57:41 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -100,6 +100,11 @@ file	dev/acpi/acpi_tz.c		acpitz
 device	acpiwdrt: sysmon_wdog
 attach	acpiwdrt at acpiwdrtbus
 file	dev/acpi/acpi_wdrt.c		acpiwdrt
+
+# ACPI Processor Container Device
+device	acpipcd
+attach	acpipcd at acpinodebus
+file	dev/acpi/acpi_pcd.c		acpipcd
 
 # Serial interface
 attach	com at acpinodebus with com_acpi
