@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.718 2020/12/06 18:13:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.719 2020/12/07 01:50:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.718 2020/12/06 18:13:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.719 2020/12/07 01:50:19 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -219,7 +219,7 @@ typedef enum VarExportFlags {
 	 */
 	VAR_EXPORT_PARENT = 0x01,
 	/*
-	 * We pass this to Var_Export1 to tell it to leave the value alone.
+	 * We pass this to ExportVar to tell it to leave the value alone.
 	 */
 	VAR_EXPORT_LITERAL = 0x02
 } VarExportFlags;
@@ -565,7 +565,7 @@ MayExport(const char *name)
  * We only manipulate flags of vars if 'parent' is set.
  */
 static Boolean
-Var_Export1(const char *name, VarExportFlags flags)
+ExportVar(const char *name, VarExportFlags flags)
 {
 	Boolean parent = (flags & VAR_EXPORT_PARENT) != 0;
 	Var *v;
@@ -651,7 +651,7 @@ Var_ExportVars(void)
 		HashIter_Init(&hi, &VAR_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
-			Var_Export1(var->name.str, VAR_EXPORT_NORMAL);
+			ExportVar(var->name.str, VAR_EXPORT_NORMAL);
 		}
 		return;
 	}
@@ -664,7 +664,7 @@ Var_ExportVars(void)
 		size_t i;
 
 		for (i = 0; i < words.len; i++)
-			Var_Export1(words.words[i], VAR_EXPORT_NORMAL);
+			ExportVar(words.words[i], VAR_EXPORT_NORMAL);
 		Words_Free(words);
 	}
 	free(val);
@@ -707,7 +707,7 @@ Var_Export(const char *str, Boolean isExport)
 		size_t i;
 		for (i = 0; i < words.len; i++) {
 			const char *name = words.words[i];
-			if (Var_Export1(name, flags)) {
+			if (ExportVar(name, flags)) {
 				if (var_exportedVars == VAR_EXPORTED_NONE)
 					var_exportedVars = VAR_EXPORTED_SOME;
 				if (isExport && (flags & VAR_EXPORT_PARENT)) {
@@ -910,7 +910,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 
 		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 		if (v->flags & VAR_EXPORTED)
-			Var_Export1(name, VAR_EXPORT_PARENT);
+			ExportVar(name, VAR_EXPORT_PARENT);
 	}
 	/*
 	 * Any variables given on the command line are automatically exported
