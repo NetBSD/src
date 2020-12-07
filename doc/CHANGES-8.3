@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.53 2020/12/06 10:28:28 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.54 2020/12/07 20:24:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1345,3 +1345,74 @@ xsrc/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
 	   Overflow
 	[mrg, ticket #1627]
 
+xsrc/external/mit/xorg-server.old/dist/xkb/xkb.c	1.2
+
+	Apply upstream patches for:
+	 * CVE-2020-14360 / ZDI CAN 11572 XkbSetMap Out-Of-Bounds Access
+	 * CVE-2020-25712 / ZDI-CAN-11839 XkbSetDeviceInfo Heap-based Buffer
+	   Overflow
+	[mrg, ticket #1628]
+
+bin/sh/exec.c					1.54
+
+	PR bin/55526: fix "command foo" when a function "foo" exists.
+	[kre, ticket #1629]
+
+sbin/dump/dump.h				1.59
+sbin/dump/main.c				1.78
+
+	PR 55834: fix status updates for files larger than 2TiB.
+	[kre, ticket #1630]
+
+external/public-domain/tz/dist/systemv          delete
+external/public-domain/tz/dist/pacificnew       delete
+external/public-domain/tz/dist/yearistype.sh    delete
+external/public-domain/tz/dist/Makefile         up to 1.1.1.29
+external/public-domain/tz/dist/NEWS             up to 1.1.1.32
+external/public-domain/tz/dist/README           up to 1.1.1.9
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.22
+external/public-domain/tz/dist/africa           up to 1.1.1.23
+external/public-domain/tz/dist/antarctica       up to 1.1.1.13
+external/public-domain/tz/dist/asia             up to 1.1.1.27
+external/public-domain/tz/dist/australasia      up to 1.1.1.20
+external/public-domain/tz/dist/backward         up to 1.1.1.11
+external/public-domain/tz/dist/backzone         up to 1.1.1.19
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.10
+external/public-domain/tz/dist/etcetera         up to 1.1.1.4
+external/public-domain/tz/dist/europe           up to 1.1.1.29
+external/public-domain/tz/dist/factory          up to 1.1.1.4
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.6
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.14
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.16
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.11
+external/public-domain/tz/dist/northamerica     up to 1.1.1.26
+external/public-domain/tz/dist/southamerica     up to 1.1.1.17
+external/public-domain/tz/dist/theory.html      up to 1.1.1.11
+external/public-domain/tz/dist/version          up to 1.1.1.19
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.5
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.7
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.18
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.20
+external/public-domain/tz/dist/zoneinfo2tdf.pl  up to 1.1.1.4
+distrib/sets/lists/base/mi			(apply patch)
+doc/3RDPARTY					(apply patch)
+external/public-domain/tz/share/zoneinfo/Makefile	(apply patch)
+
+	Update timezone data to 2020d.
+	[kre, ticket #1631]
+
+sys/netinet/ip_mroute.c				1.164 (patch)
+
+	PR 55779: restore non-desctructive guarantee of ip_mforward() mbuf
+	argument.
+	[kardel, ticket #1632]
+
+sys/dev/ic/nvme.c				1.53
+
+	PR 55839: avoid mulitple bus rescans when loading the module.
+	[kardel, ticket #1633]
+
+xsrc/external/mit/libX11/dist/modules/im/ximcp/imRmAttr.c    (patch)
+
+	PR 55640: fix off by one in X Input Method.
+	[maya, ticket #1634]
