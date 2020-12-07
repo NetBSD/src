@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.208 2020/12/06 13:45:58 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.209 2020/12/07 03:01:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.208 2020/12/06 13:45:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.209 2020/12/07 03:01:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1649,6 +1649,8 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 			itl = &pts->pts_prof;
 			pt->pt_ev.sigev_signo = SIGPROF;
 			break;
+		default:
+			panic("%s: can't happen %d", __func__, which);
 		}
 		itimer_init(it, &ptimer_itimer_ops, which, itl);
 		pt->pt_proc = p;
