@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.341 2020/12/07 23:48:04 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.342 2020/12/07 23:53:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.341 2020/12/07 23:48:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.342 2020/12/07 23:53:09 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2120,6 +2120,15 @@ Job_SetPrefix(void)
 	/* TODO: handle errors */
 }
 
+static void
+AddSig(int sig, SignalProc handler)
+{
+	if (bmake_signal(sig, SIG_IGN) != SIG_IGN) {
+		sigaddset(&caught_signals, sig);
+		(void)bmake_signal(sig, handler);
+	}
+}
+
 /* Initialize the process module. */
 void
 Job_Init(void)
@@ -2174,20 +2183,14 @@ Job_Init(void)
 	(void)bmake_signal(SIGCHLD, JobChildSig);
 	sigaddset(&caught_signals, SIGCHLD);
 
-#define ADDSIG(s, h)					\
-	if (bmake_signal(s, SIG_IGN) != SIG_IGN) {	\
-		sigaddset(&caught_signals, s);		\
-		(void)bmake_signal(s, h);		\
-	}
-
 	/*
 	 * Catch the four signals that POSIX specifies if they aren't ignored.
 	 * JobPassSig will take care of calling JobInterrupt if appropriate.
 	 */
-	ADDSIG(SIGINT, JobPassSig_int)
-	ADDSIG(SIGHUP, JobPassSig_term)
-	ADDSIG(SIGTERM, JobPassSig_term)
-	ADDSIG(SIGQUIT, JobPassSig_term)
+	AddSig(SIGINT, JobPassSig_int);
+	AddSig(SIGHUP, JobPassSig_term);
+	AddSig(SIGTERM, JobPassSig_term);
+	AddSig(SIGQUIT, JobPassSig_term);
 
 	/*
 	 * There are additional signals that need to be caught and passed if
@@ -2195,12 +2198,11 @@ Job_Init(void)
 	 * we're giving each job its own process group (since then it won't get
 	 * signals from the terminal driver as we own the terminal)
 	 */
-	ADDSIG(SIGTSTP, JobPassSig_suspend)
-	ADDSIG(SIGTTOU, JobPassSig_suspend)
-	ADDSIG(SIGTTIN, JobPassSig_suspend)
-	ADDSIG(SIGWINCH, JobCondPassSig)
-	ADDSIG(SIGCONT, JobContinueSig)
-#undef ADDSIG
+	AddSig(SIGTSTP, JobPassSig_suspend);
+	AddSig(SIGTTOU, JobPassSig_suspend);
+	AddSig(SIGTTIN, JobPassSig_suspend);
+	AddSig(SIGWINCH, JobCondPassSig);
+	AddSig(SIGCONT, JobContinueSig);
 
 	(void)Job_RunTarget(".BEGIN", NULL);
 	/* Create the .END node now, even though no code in the unit tests
@@ -2208,23 +2210,24 @@ Job_Init(void)
 	(void)Targ_GetEndNode();
 }
 
+static void
+DelSig(int sig)
+{
+	if (sigismember(&caught_signals, sig))
+		(void)bmake_signal(sig, SIG_DFL);
+}
+
 static void JobSigReset(void)
 {
-#define DELSIG(s)					\
-	if (sigismember(&caught_signals, s)) {		\
-		(void)bmake_signal(s, SIG_DFL);		\
-	}
-
-	DELSIG(SIGINT)
-	DELSIG(SIGHUP)
-	DELSIG(SIGQUIT)
-	DELSIG(SIGTERM)
-	DELSIG(SIGTSTP)
-	DELSIG(SIGTTOU)
-	DELSIG(SIGTTIN)
-	DELSIG(SIGWINCH)
-	DELSIG(SIGCONT)
-#undef DELSIG
+	DelSig(SIGINT);
+	DelSig(SIGHUP);
+	DelSig(SIGQUIT);
+	DelSig(SIGTERM);
+	DelSig(SIGTSTP);
+	DelSig(SIGTTOU);
+	DelSig(SIGTTIN);
+	DelSig(SIGWINCH);
+	DelSig(SIGCONT);
 	(void)bmake_signal(SIGCHLD, SIG_DFL);
 }
 
