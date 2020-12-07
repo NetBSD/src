@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.203 2020/12/07 01:32:04 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.204 2020/12/07 01:35:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.203 2020/12/07 01:32:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.204 2020/12/07 01:35:33 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -714,21 +714,12 @@ Compat_Run(GNodeList *targs)
 		} else if (gn->made == ABORTED) {
 			printf("`%s' not remade because of errors.\n",
 			       gn->name);
-			seenError = TRUE;
 		}
+		if (GNode_IsError(gn))
+			seenError = TRUE;
 	}
 
-	/*
-	 * XXX: what about multiple main targets if the first few fail but
-	 * the last one succeeds?  This should not count as overall success.
-	 * See opt-keep-going-multiple.mk.
-	 */
-	if (GNode_IsError(gn))
-		seenError = TRUE;
-
-	/*
-	 * If the user has defined a .END target, run its commands.
-	 */
+	/* If the user has defined a .END target, run its commands. */
 	if (!seenError) {
 		GNode *endNode = Targ_GetEndNode();
 		Compat_Make(endNode, endNode);
