@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/12/05 21:27:06 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2020/12/07 08:24:09 rin Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -20,10 +20,10 @@ GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 SRCS=		${GSRCS:.lo=.c}
 
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c elf64-aarch64.c \
+		elf32-ia64.c elf64-ia64.c elf64-aarch64.c elf32-aarch64.c \
 		peigen.c pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c elf64-aarch64.c \
+		elf32-ia64.c elf64-ia64.c elf64-aarch64.c elf32-aarch64.c \
 		peigen.c pex64igen.c
 
 .PATH: ${DIST}/bfd
