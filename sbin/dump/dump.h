@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $	*/
+/*	$NetBSD: dump.h,v 1.54.8.2 2020/12/07 19:35:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -134,7 +134,7 @@ int	unlimited;	/* if set, write to end of medium */
 extern int	density;	/* density in 0.1" units */
 extern int	notify;		/* notify operator flag */
 extern int	timestamp;	/* timestamp messages */
-extern int	blockswritten;	/* number of blocks written on current tape */
+extern u_int64_t	blockswritten;	/* blocks written on current tape */
 extern int	tapeno;		/* current tape number */
 extern int	is_ufs2;
 

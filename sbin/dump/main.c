@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73.8.1 2019/03/29 19:43:28 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.73.8.2 2020/12/07 19:35:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73.8.1 2019/03/29 19:43:28 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.8.2 2020/12/07 19:35:50 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: main.c,v 1.73.8.1 2019/03/29 19:43:28 martin Exp $");
 
 int	timestamp;		/* print message timestamps */
 int	notify;			/* notify operator flag */
-int	blockswritten;		/* number of blocks written on current tape */
+u_int64_t	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;			/* current tape number */
 int	density;		/* density in bytes/0.1" */
 int	ntrec = NTREC;		/* # tape blocks in each tape record */
