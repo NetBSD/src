@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.328 2020/12/07 01:24:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.329 2020/12/07 01:27:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.328 2020/12/07 01:24:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.329 2020/12/07 01:27:08 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1068,7 +1068,6 @@ RemoveCandidate(CandidateList *srcs)
 		Candidate *src = ln->datum;
 
 		if (src->numChildren == 0) {
-			free(src->file);
 			if (src->parent == NULL)
 				free(src->prefix);
 			else {
