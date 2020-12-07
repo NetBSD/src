@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.13 2020/12/06 10:06:15 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.14 2020/12/07 13:24:15 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.13 2020/12/06 10:06:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.14 2020/12/07 13:24:15 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,6 +33,12 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.13 2020/12/06 10:06:15 jdc Exp
 
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>
+
+#ifdef ECADC_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF if (0) printf
+#endif
 
 /* Translation tables contain 254 entries */
 #define XLATE_SIZE		256
@@ -126,6 +132,7 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nchan = 0;
 	sc->sc_hastimer = 0;
 
+	DPRINTF("\n");
 	if ((len = OF_getprop(node, "thermisters", term,
 	    sizeof(term))) < 0) {
 		aprint_error(": couldn't find \"thermisters\" property\n");
@@ -170,15 +177,25 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 		sensor->state = ENVSYS_SINVALID;
 		strlcpy(sensor->desc, desc, sizeof(sensor->desc));
 
-		if (strncmp(desc, "CPU", 3) == 0)
+		if (strncmp(desc, "CPU", 3) == 0) {
 			sc->sc_channels[sc->sc_nchan].chan_xlate =
 			    sc->sc_cpu_xlate;
-		else if (strncmp(desc, "PS", 2) == 0)
+			DPRINTF("%s: "
+			    "added %s sensor (chan %d) with cpu_xlate\n",
+			    device_xname(sc->sc_dev), desc, chan);
+		} else if (strncmp(desc, "PS", 2) == 0) {
 			sc->sc_channels[sc->sc_nchan].chan_xlate =
 			    sc->sc_ps_xlate;
-		else
+			DPRINTF("%s: "
+			    "added %s sensor (chan %d) with ps_xlate\n",
+			    device_xname(sc->sc_dev), desc, chan);
+		} else {
 			sc->sc_channels[sc->sc_nchan].chan_factor =
 			    (1000000 * num) / den;
+			DPRINTF("%s: "
+			    "added %s sensor (chan %d) without xlate\n",
+			    device_xname(sc->sc_dev), desc, chan);
+		}
 		sc->sc_channels[sc->sc_nchan].chan_min =
 		    273150000 + 1000000 * minv;
 		sc->sc_channels[sc->sc_nchan].chan_warn =
@@ -204,6 +221,10 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 		sensor->state = ENVSYS_SINVALID;
 		strlcpy(sensor->desc, "CPUFAN", sizeof(sensor->desc));
 		sc->sc_channels[sc->sc_nchan].chan_xlate = sc->sc_cpu_fan_spd;
+		DPRINTF("%s: "
+		    "added CPUFAN sensor (chan %d) with cpu-fan xlate\n",
+		    device_xname(sc->sc_dev),
+		    sc->sc_channels[sc->sc_nchan].chan_num);
 		sc->sc_nchan++;
 
 		sc->sc_hastimer = 1;
@@ -312,9 +333,21 @@ ecadc_refresh(struct sysmon_envsys *sme, envsys_data_t *sensor)
 				temp &= ~0xff;
 				temp += data[1 + chp->chan_num];
 				chp->chan_sensor.value_cur = temp;
-			} else
+				DPRINTF("%s: xlate %s sensor = %d"
+				    " (0x%x > 0x%x)\n",
+				    device_xname(sc->sc_dev),
+				    chp->chan_sensor.desc, temp,
+				    data[1 + chp->chan_num],
+				    chp->chan_xlate[data[1 + chp->chan_num]]);
+			} else {
 				chp->chan_sensor.value_cur = 273150000 +
 				    chp->chan_factor * data[1 + chp->chan_num];
+				DPRINTF("%s: read %s sensor = %d (0x%x)\n",
+				    device_xname(sc->sc_dev),
+				    chp->chan_sensor.desc,
+				    chp->chan_sensor.value_cur,
+				    data[1 + chp->chan_num]);
+			}
 			chp->chan_sensor.flags |= ENVSYS_FMONLIMITS;
 		}
 		if (chp->chan_type == PCF8591_CPU_FAN_CTRL ||
@@ -382,8 +415,8 @@ ecadc_set_fan_speed(struct ecadc_softc *sc, u_int8_t chan, u_int8_t val)
 		aprint_error_dev(sc->sc_dev,
 		    "error changing fan speed (ch %d)\n", chan);
 	else
-		aprint_debug_dev(sc->sc_dev,
-		    "changed fan speed (ch %d) to 0x%x\n", chan, val);
+		DPRINTF("%s changed fan speed (ch %d) to 0x%x\n",
+		    device_xname(sc->sc_dev), chan, val);
 	iic_release_bus(sc->sc_tag, 0);
 	return ret;
 }
