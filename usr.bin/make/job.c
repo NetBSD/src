@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.348 2020/12/08 20:04:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.349 2020/12/08 20:10:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.348 2020/12/08 20:04:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.349 2020/12/08 20:10:24 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -224,6 +224,12 @@ typedef struct RunFlags {
 	Boolean silent;
 
 	Boolean always;
+
+	/*
+	 * true if we turned error checking off before printing the command
+	 * and need to turn it back on
+	 */
+	Boolean ignerr;
 } RunFlags;
 
 /*
@@ -677,18 +683,18 @@ JobFindPid(int pid, JobStatus status, Boolean isJobs)
 
 /* Parse leading '@', '-' and '+', which control the exact execution mode. */
 static void
-ParseRunOptions(char **pp, RunFlags *out_runFlags, Boolean *out_errOff)
+ParseRunOptions(char **pp, RunFlags *out_runFlags)
 {
 	char *p = *pp;
 	out_runFlags->silent = FALSE;
-	*out_errOff = FALSE;
+	out_runFlags->ignerr = FALSE;
 	out_runFlags->always = FALSE;
 
 	for (;;) {
 		if (*p == '@')
 			out_runFlags->silent = !DEBUG(LOUD);
 		else if (*p == '-')
-			*out_errOff = TRUE;
+			out_runFlags->ignerr = TRUE;
 		else if (*p == '+')
 			out_runFlags->always = TRUE;
 		else
@@ -762,7 +768,7 @@ JobPrintSpecialsErrCtl(Job *job, Boolean silent)
  */
 static void
 JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
-			const char **inout_cmdTemplate, Boolean *out_errOff)
+			const char **inout_cmdTemplate)
 {
 	job->flags |= JOB_IGNERR;
 
@@ -781,25 +787,24 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 	 * The error ignoration (hee hee) is already taken care of by the
 	 * errOffOrExecIgnore template, so pretend error checking is still on.
 	 */
-	*out_errOff = FALSE;
+	inout_runFlags->ignerr = FALSE;
 }
 
 static void
 JobPrintSpecials(Job *const job, const char *const escCmd,
 		 Boolean const noSpecials, RunFlags *const inout_runFlags,
-		 const char **const inout_cmdTemplate,
-		 Boolean *const inout_errOff)
+		 const char **const inout_cmdTemplate)
 {
 	if (noSpecials)
-		*inout_errOff = FALSE;
+		inout_runFlags->ignerr = FALSE;
 	else if (commandShell->hasErrCtl)
 		JobPrintSpecialsErrCtl(job, inout_runFlags->silent);
 	else if (commandShell->errOffOrExecIgnore != NULL &&
 		 commandShell->errOffOrExecIgnore[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, inout_runFlags, escCmd,
-		    inout_cmdTemplate, inout_errOff);
+		    inout_cmdTemplate);
 	} else
-		*inout_errOff = FALSE;
+		inout_runFlags->ignerr = FALSE;
 }
 
 /*
@@ -831,11 +836,6 @@ JobPrintCommand(Job *job, char *cmd)
 	Boolean noSpecials;
 
 	RunFlags runFlags;
-	/*
-	 * true if we turned error checking off before printing the command
-	 * and need to turn it back on
-	 */
-	Boolean errOff;
 	/* Template to use when printing the command */
 	const char *cmdTemplate;
 	char *cmdStart;		/* Start of expanded command */
@@ -851,7 +851,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&cmd, &runFlags, &errOff);
+	ParseRunOptions(&cmd, &runFlags);
 
 	if (runFlags.always && noSpecials) {
 		/*
@@ -882,9 +882,9 @@ JobPrintCommand(Job *job, char *cmd)
 		}
 	}
 
-	if (errOff) {
+	if (runFlags.ignerr) {
 		JobPrintSpecials(job, escCmd, noSpecials, &runFlags,
-		    &cmdTemplate, &errOff);
+		    &cmdTemplate);
 	} else {
 
 		/*
@@ -911,7 +911,7 @@ JobPrintCommand(Job *job, char *cmd)
 				cmdTemplate = commandShell->errOffOrExecIgnore;
 			else
 				cmdTemplate = commandShell->errExit;
-			errOff = FALSE;
+			runFlags.ignerr = FALSE;
 		}
 	}
 
@@ -924,7 +924,7 @@ JobPrintCommand(Job *job, char *cmd)
 	JobPrintf(job, cmdTemplate, cmd);
 	free(cmdStart);
 	free(escCmd);
-	if (errOff) {
+	if (runFlags.ignerr) {
 		/*
 		 * If echoing is already off, there's no point in issuing the
 		 * echoOff command. Otherwise we issue it and pretend it was on
