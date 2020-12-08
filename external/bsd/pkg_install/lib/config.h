@@ -115,6 +115,7 @@
 /* Defined when to retain only the numeric OS version */
 /* #undef NUMERIC_VERSION_ONLY */
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "joerg@NetBSD.org"
 
@@ -132,6 +133,7 @@
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "20090911"
+#endif
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4

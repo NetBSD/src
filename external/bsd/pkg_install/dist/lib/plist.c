@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.2.4.1 2020/12/08 18:48:58 martin Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: plist.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: plist.c,v 1.2.4.1 2020/12/08 18:48:58 martin Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -627,8 +627,10 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
 						}
 						buf[SymlinkHeaderLen + cc] = 0x0;
 						if (strcmp(buf, p->next->name) != 0) {
-							if ((cc = readlink(&buf[SymlinkHeaderLen], &buf[SymlinkHeaderLen],
-								  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							char    tmp2[MaxPathSize];
+
+							if ((cc = readlink(&buf[SymlinkHeaderLen], tmp2,
+								  sizeof(tmp2))) < 0) {
 								printf("symlink %s is not same as recorded value, %s: %s\n",
 								    buf, Force ? "deleting anyway" : "not deleting", tmp);
 								if (!Force) {
@@ -636,6 +638,7 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
 									goto pkgdb_cleanup;
 								}
 							}
+							memcpy(&buf[SymlinkHeaderLen], tmp2, cc);
 							buf[SymlinkHeaderLen + cc] = 0x0;
 							if (strcmp(buf, p->next->name) != 0) {
 								printf("symlink %s is not same as recorded value, %s: %s\n",
@@ -697,7 +700,7 @@ delete_with_parents(const char *fname, Boolean ign_err, Boolean ign_nonempty)
 
 	if (remove(fname)) {
 		if (!ign_err && (!ign_nonempty || errno != ENOTEMPTY))
-			warnx("Couldn't remove %s", fname);
+			warn("Couldn't remove %s", fname);
 		return 0;
 	}
 	cp = xstrdup(fname);
