@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vm.c,v 1.4 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_vm.c,v 1.5 2020/12/08 17:52:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ ATF_TC_HEAD(busypage, tc)
 ATF_TC_BODY(busypage, tc)
 {
 
+	atf_tc_expect_fail("test bug: unbusies an uninitialized page");
 	rump_init();
 
 	rump_schedule();
