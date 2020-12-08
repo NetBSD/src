@@ -1,5 +1,8 @@
-/*	$NetBSD: check.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: check.c,v 1.2.4.1 2020/12/08 18:48:58 martin Exp $	*/
 
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#else
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +10,8 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: check.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+#endif
+__RCSID("$NetBSD: check.c,v 1.2.4.1 2020/12/08 18:48:58 martin Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -77,7 +81,7 @@ __RCSID("$NetBSD: check.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 static int checkpattern_fn(const char *, void *);
 
 /*
- * Assumes CWD is in /var/db/pkg/<pkg>!
+ * Assumes CWD is in the database directory ($PREFIX/pkgdb/<pkg>)!
  */
 static void 
 check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)

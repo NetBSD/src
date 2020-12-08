@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2011/09/16 16:41:20 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.4.34.1 2020/12/08 18:48:58 martin Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 
@@ -11,3 +11,11 @@ CPPFLAGS+=-DSYSCONFDIR='"/etc"'
 
 WARNS=	4
 CWARNFLAGS+=	-Wno-missing-noreturn
+
+.include <bsd.own.mk>
+
+# show_version() does not return
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
+COPTS.main.c+=		-Wno-error=implicit-fallthrough
+COPTS.pkg_delete.c+=	-Wno-error=implicit-fallthrough
+.endif
