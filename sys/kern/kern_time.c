@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.209 2020/12/07 03:01:15 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.210 2020/12/08 04:09:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.209 2020/12/07 03:01:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.210 2020/12/08 04:09:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -79,12 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.209 2020/12/07 03:01:15 christos Exp
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 
-static kmutex_t	itimer_mutex __cacheline_aligned;
+kmutex_t	itimer_mutex __cacheline_aligned;	/* XXX static */
 static struct itlist itimer_realtime_changed_notify;
 
 static void	ptimer_intr(void *);
 static void	*ptimer_sih __read_mostly;
-static struct itqueue ptimer_queue;
+static TAILQ_HEAD(, ptimer) ptimer_queue;
 
 #define	CLOCK_VIRTUAL_P(clockid)	\
 	((clockid) == CLOCK_VIRTUAL || (clockid) == CLOCK_PROF)
@@ -165,7 +165,7 @@ itimer_unlock(void)
  *	Check that the interval timer lock is held for diagnostic
  *	assertions.
  */
-static inline bool __diagused
+inline bool __diagused
 itimer_lock_held(void)
 {
 	return mutex_owned(&itimer_mutex);
@@ -652,7 +652,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
  *
  *	Initialize the common data for an interval timer.
  */
-static void
+void
 itimer_init(struct itimer * const it, const struct itimer_ops * const ops,
     clockid_t const id, struct itlist * const itl)
 {
@@ -664,7 +664,6 @@ itimer_init(struct itimer * const it, const struct itimer_ops * const ops,
 	it->it_ops = ops;
 	it->it_clockid = id;
 	it->it_overruns = 0;
-	it->it_queued = false;
 	it->it_dying = false;
 	if (!CLOCK_VIRTUAL_P(id)) {
 		KASSERT(itl == NULL);
@@ -681,14 +680,13 @@ itimer_init(struct itimer * const it, const struct itimer_ops * const ops,
 }
 
 /*
- * itimer_fini:
+ * itimer_poison:
  *
- *	Release resources used by an interval timer.
- *
- *	N.B. itimer_lock must be held on entry, and is released on exit.
+ *	Poison an interval timer, preventing it from being scheduled
+ *	or processed, in preparation for freeing the timer.
  */
-static void
-itimer_fini(struct itimer * const it)
+void
+itimer_poison(struct itimer * const it)
 {
 
 	KASSERT(itimer_lock_held());
@@ -710,14 +708,22 @@ itimer_fini(struct itimer * const it)
 			LIST_REMOVE(it, it_rtchgq);
 		}
 	}
+}
 
-	/* Remove it from the queue to be signalled.  */
-	if (it->it_queued) {
-		TAILQ_REMOVE(it->it_ops->ito_queue, it, it_chain);
-		it->it_queued = false;
-	}
+/*
+ * itimer_fini:
+ *
+ *	Release resources used by an interval timer.
+ *
+ *	N.B. itimer_lock must be held on entry, and is released on exit.
+ */
+void
+itimer_fini(struct itimer * const it)
+{
 
-	/* All done with the global state.  */
+	KASSERT(itimer_lock_held());
+
+	/* All done with the global state. */
 	itimer_unlock();
 
 	/* Destroy the callout, if needed. */
@@ -774,25 +780,6 @@ itimer_decr(struct itimer *it, int nsec)
 	} else
 		itp->it_value.tv_nsec = 0;		/* sec is already 0 */
 	return true;
-}
-
-/*
- * itimer_fire:
- *
- *	An interval timer has fired.  Enqueue it for processing, if
- *	needed.
- */
-void
-itimer_fire(struct itimer * const it)
-{
-
-	KASSERT(itimer_lock_held());
-
-	if (!it->it_queued) {
-		TAILQ_INSERT_TAIL(it->it_ops->ito_queue, it, it_chain);
-		it->it_queued = true;
-		softint_schedule(*it->it_ops->ito_sihp);
-	}
 }
 
 static void itimer_callout(void *);
@@ -1024,6 +1011,18 @@ ptimer_free(struct ptimers *pts, int index)
 	it = pts->pts_timers[index];
 	pt = container_of(it, struct ptimer, pt_itimer);
 	pts->pts_timers[index] = NULL;
+	itimer_poison(it);
+
+	/*
+	 * Remove it from the queue to be signalled.  Must be done
+	 * after itimer is poisoned, because we may have had to wait
+	 * for the callout to complete.
+	 */
+	if (pt->pt_queued) {
+		TAILQ_REMOVE(&ptimer_queue, pt, pt_chain);
+		pt->pt_queued = false;
+	}
+
 	itimer_fini(it);	/* releases itimer_lock */
 	kmem_free(pt, sizeof(*pt));
 }
@@ -1150,16 +1149,19 @@ ptimer_fire(struct itimer *it)
 	if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL) {
 		return;
 	}
-	itimer_fire(it);
+
+	if (!pt->pt_queued) {
+		TAILQ_INSERT_TAIL(&ptimer_queue, pt, pt_chain);
+		pt->pt_queued = true;
+		softint_schedule(ptimer_sih);
+	}
 }
 
 /*
  * Operations vector for per-process timers (BSD and POSIX).
  */
 static const struct itimer_ops ptimer_itimer_ops = {
-	.ito_queue = &ptimer_queue,
-	.ito_sihp = &ptimer_sih,
-	.ito_fire = &ptimer_fire,
+	.ito_fire = ptimer_fire,
 };
 
 /*
@@ -1256,6 +1258,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_proc = p;
 	pt->pt_poverruns = 0;
 	pt->pt_entry = timerid;
+	pt->pt_queued = false;
 
 	pts->pts_timers[timerid] = &pt->pt_itimer;
 	itimer_unlock();
@@ -1740,13 +1743,12 @@ ptimer_intr(void *cookie)
 	
 	mutex_enter(&proc_lock);
 	itimer_lock();
-	while ((it = TAILQ_FIRST(&ptimer_queue)) != NULL) {
-		TAILQ_REMOVE(&ptimer_queue, it, it_chain);
-		KASSERT(it->it_ops->ito_queue == &ptimer_queue);
-		KASSERT(it->it_queued);
-		it->it_queued = false;
+	while ((pt = TAILQ_FIRST(&ptimer_queue)) != NULL) {
+		it = &pt->pt_itimer;
 
-		pt = container_of(it, struct ptimer, pt_itimer);
+		TAILQ_REMOVE(&ptimer_queue, pt, pt_chain);
+		KASSERT(pt->pt_queued);
+		pt->pt_queued = false;
 
 		p = pt->pt_proc;
 		if (p->p_timers == NULL) {
