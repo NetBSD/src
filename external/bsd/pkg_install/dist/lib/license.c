@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.8.2.1 2019/10/21 20:09:22 martin Exp $	*/
+/*	$NetBSD: license.c,v 1.8.2.2 2020/12/08 18:45:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -46,6 +46,7 @@
 #define	HASH_SIZE	521
 
 const char *default_acceptable_licenses =
+    "afl-3.0 "
     "apache-1.1 apache-2.0 "
     "arphic-public "
     "artistic artistic-2.0 "
