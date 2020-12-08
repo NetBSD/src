@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.346 2020/12/08 00:50:04 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.347 2020/12/08 19:58:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.346 2020/12/08 00:50:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.347 2020/12/08 19:58:20 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -218,6 +218,11 @@ typedef struct Shell {
 	const char *echo;	/* echo commands */
 	const char *exit;	/* exit on error */
 } Shell;
+
+typedef struct RunFlags {
+	/* true if we put a no echo command into the command file */
+	Boolean silent;
+} RunFlags;
 
 /*
  * error handling variables
@@ -671,17 +676,17 @@ JobFindPid(int pid, JobStatus status, Boolean isJobs)
 /* Parse leading '@', '-' and '+', which control the exact execution mode. */
 static void
 ParseRunOptions(char **pp,
-		Boolean *out_shutUp, Boolean *out_errOff,
+		RunFlags *out_runFlags, Boolean *out_errOff,
 		Boolean *out_runAlways)
 {
 	char *p = *pp;
-	*out_shutUp = FALSE;
+	out_runFlags->silent = FALSE;
 	*out_errOff = FALSE;
 	*out_runAlways = FALSE;
 
 	for (;;) {
 		if (*p == '@')
-			*out_shutUp = !DEBUG(LOUD);
+			out_runFlags->silent = !DEBUG(LOUD);
 		else if (*p == '-')
 			*out_errOff = TRUE;
 		else if (*p == '+')
@@ -756,18 +761,18 @@ JobPrintSpecialsErrCtl(Job *job, Boolean shutUp)
  * Set cmdTemplate to use the weirdness instead of the simple "%s\n" template.
  */
 static void
-JobPrintSpecialsEchoCtl(Job *job, Boolean *inout_shutUp, const char *escCmd,
+JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 			const char **inout_cmdTemplate, Boolean *out_errOff)
 {
 	job->flags |= JOB_IGNERR;
 
-	if (!(job->flags & JOB_SILENT) && !*inout_shutUp) {
+	if (!(job->flags & JOB_SILENT) && !inout_runFlags->silent) {
 		if (commandShell->hasEchoCtl)
 			JobPrintln(job, commandShell->echoOff);
 		JobPrintf(job, commandShell->errOnOrEcho, escCmd);
-		*inout_shutUp = TRUE;
+		inout_runFlags->silent = TRUE;
 	} else {
-		if (!*inout_shutUp)
+		if (!inout_runFlags->silent)
 			JobPrintf(job, commandShell->errOnOrEcho, escCmd);
 	}
 	*inout_cmdTemplate = commandShell->errOffOrExecIgnore;
@@ -781,17 +786,17 @@ JobPrintSpecialsEchoCtl(Job *job, Boolean *inout_shutUp, const char *escCmd,
 
 static void
 JobPrintSpecials(Job *const job, const char *const escCmd,
-		 Boolean const noSpecials, Boolean *const inout_shutUp,
+		 Boolean const noSpecials, RunFlags *const inout_runFlags,
 		 const char **const inout_cmdTemplate,
 		 Boolean *const inout_errOff)
 {
 	if (noSpecials)
 		*inout_errOff = FALSE;
 	else if (commandShell->hasErrCtl)
-		JobPrintSpecialsErrCtl(job, *inout_shutUp);
+		JobPrintSpecialsErrCtl(job, inout_runFlags->silent);
 	else if (commandShell->errOffOrExecIgnore != NULL &&
 		 commandShell->errOffOrExecIgnore[0] != '\0') {
-		JobPrintSpecialsEchoCtl(job, inout_shutUp, escCmd,
+		JobPrintSpecialsEchoCtl(job, inout_runFlags, escCmd,
 		    inout_cmdTemplate, inout_errOff);
 	} else
 		*inout_errOff = FALSE;
@@ -824,8 +829,8 @@ JobPrintCommand(Job *job, char *cmd)
 	 * the input stream.
 	 */
 	Boolean noSpecials;
-	/* true if we put a no echo command into the command file */
-	Boolean shutUp;
+
+	RunFlags runFlags;
 	/*
 	 * true if we turned error checking off before printing the command
 	 * and need to turn it back on
@@ -847,7 +852,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&cmd, &shutUp, &errOff, &runAlways);
+	ParseRunOptions(&cmd, &runFlags, &errOff, &runAlways);
 
 	if (runAlways && noSpecials) {
 		/*
@@ -868,19 +873,19 @@ JobPrintCommand(Job *job, char *cmd)
 	if (!commandShell->hasErrCtl)
 		escCmd = EscapeShellDblQuot(cmd);
 
-	if (shutUp) {
+	if (runFlags.silent) {
 		if (!(job->flags & JOB_SILENT) && !noSpecials &&
 		    commandShell->hasEchoCtl) {
 			JobPrintln(job, commandShell->echoOff);
 		} else {
 			if (commandShell->hasErrCtl)
-				shutUp = FALSE;
+				runFlags.silent = FALSE;
 		}
 	}
 
 	if (errOff) {
-		JobPrintSpecials(job, escCmd, noSpecials, &shutUp, &cmdTemplate,
-		    &errOff);
+		JobPrintSpecials(job, escCmd, noSpecials, &runFlags,
+		    &cmdTemplate, &errOff);
 	} else {
 
 		/*
@@ -891,12 +896,12 @@ JobPrintCommand(Job *job, char *cmd)
 
 		if (!commandShell->hasErrCtl && commandShell->errExit &&
 		    commandShell->errExit[0] != '\0') {
-			if (!(job->flags & JOB_SILENT) && !shutUp) {
+			if (!(job->flags & JOB_SILENT) && !runFlags.silent) {
 				if (commandShell->hasEchoCtl)
 					JobPrintln(job, commandShell->echoOff);
 				JobPrintf(job, commandShell->errOnOrEcho,
 				    escCmd);
-				shutUp = TRUE;
+				runFlags.silent = TRUE;
 			}
 			/*
 			 * If it's a comment line or blank, treat as an
@@ -926,14 +931,14 @@ JobPrintCommand(Job *job, char *cmd)
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (!shutUp && !(job->flags & JOB_SILENT) &&
+		if (!runFlags.silent && !(job->flags & JOB_SILENT) &&
 		    commandShell->hasEchoCtl) {
 			JobPrintln(job, commandShell->echoOff);
-			shutUp = TRUE;
+			runFlags.silent = TRUE;
 		}
 		JobPrintln(job, commandShell->errOnOrEcho);
 	}
-	if (shutUp && commandShell->hasEchoCtl)
+	if (runFlags.silent && commandShell->hasEchoCtl)
 		JobPrintln(job, commandShell->echoOn);
 }
 
