@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.344 2020/12/08 00:09:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.345 2020/12/08 00:23:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.344 2020/12/08 00:09:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.345 2020/12/08 00:23:30 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -730,6 +730,78 @@ JobPrintln(Job *job, const char *line)
 	JobPrintf(job, "%s\n", line);
 }
 
+static void
+JobPrintSpecials(Job *const job, const char *const escCmd,
+		 Boolean const noSpecials, Boolean *const inout_shutUp,
+		 const char **const inout_cmdTemplate,
+		 Boolean *const inout_errOff)
+{
+	if (!noSpecials) {
+		if (commandShell->hasErrCtl) {
+			/*
+			 * we don't want the error-control commands
+			 * showing up either, so we turn off echoing
+			 * while executing them. We could put another
+			 * field in the shell structure to tell
+			 * JobDoOutput to look for this string too,
+			 * but why make it any more complex than
+			 * it already is?
+			 */
+			if (!(job->flags & JOB_SILENT) && !*inout_shutUp &&
+			    (commandShell->hasEchoCtl)) {
+				JobPrintln(job, commandShell->echoOff);
+				JobPrintln(job,
+				    commandShell->errOffOrExecIgnore);
+				JobPrintln(job, commandShell->echoOn);
+			} else {
+				JobPrintln(job,
+				    commandShell->errOffOrExecIgnore);
+			}
+		} else if (commandShell->errOffOrExecIgnore &&
+			   commandShell->errOffOrExecIgnore[0] !=
+			   '\0') {
+			/*
+			 * The shell has no error control, so we need
+			 * to be weird to get it to ignore any errors
+			 * from the command. If echoing is turned on,
+			 * we turn it off and use the errOnOrEcho
+			 * template to echo the command. Leave echoing
+			 * off so the user doesn't see the weirdness
+			 * we go through to ignore errors. Set
+			 * cmdTemplate to use the weirdness instead
+			 * of the simple "%s\n" template.
+			 */
+			job->flags |= JOB_IGNERR;
+			if (!(job->flags & JOB_SILENT) && !*inout_shutUp) {
+				if (commandShell->hasEchoCtl) {
+					JobPrintln(job,
+					    commandShell->echoOff);
+				}
+				JobPrintf(job,
+				    commandShell->errOnOrEcho, escCmd);
+				*inout_shutUp = TRUE;
+			} else {
+				if (!*inout_shutUp)
+					JobPrintf(job,
+					    commandShell->errOnOrEcho,
+					    escCmd);
+			}
+			*inout_cmdTemplate = commandShell->errOffOrExecIgnore;
+			/*
+			 * The error ignoration (hee hee) is already
+			 * taken care of by the errOffOrExecIgnore
+			 * template, so pretend error checking is
+			 * still on.
+			 */
+			*inout_errOff = FALSE;
+		} else {
+			*inout_errOff = FALSE;
+		}
+	} else {
+		*inout_errOff = FALSE;
+	}
+}
+
 /*
  * Put out another command for the given job. If the command starts with an
  * '@' or a '-' we process it specially. In the former case, so long as the
@@ -803,7 +875,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 	if (shutUp) {
 		if (!(job->flags & JOB_SILENT) && !noSpecials &&
-		    (commandShell->hasEchoCtl)) {
+		    commandShell->hasEchoCtl) {
 			JobPrintln(job, commandShell->echoOff);
 		} else {
 			if (commandShell->hasErrCtl)
@@ -812,70 +884,8 @@ JobPrintCommand(Job *job, char *cmd)
 	}
 
 	if (errOff) {
-		if (!noSpecials) {
-			if (commandShell->hasErrCtl) {
-				/*
-				 * we don't want the error-control commands
-				 * showing up either, so we turn off echoing
-				 * while executing them. We could put another
-				 * field in the shell structure to tell
-				 * JobDoOutput to look for this string too,
-				 * but why make it any more complex than
-				 * it already is?
-				 */
-				if (!(job->flags & JOB_SILENT) && !shutUp &&
-				    (commandShell->hasEchoCtl)) {
-					JobPrintln(job, commandShell->echoOff);
-					JobPrintln(job,
-					    commandShell->errOffOrExecIgnore);
-					JobPrintln(job, commandShell->echoOn);
-				} else {
-					JobPrintln(job,
-					    commandShell->errOffOrExecIgnore);
-				}
-			} else if (commandShell->errOffOrExecIgnore &&
-				   commandShell->errOffOrExecIgnore[0] !=
-				   '\0') {
-				/*
-				 * The shell has no error control, so we need
-				 * to be weird to get it to ignore any errors
-				 * from the command. If echoing is turned on,
-				 * we turn it off and use the errOnOrEcho
-				 * template to echo the command. Leave echoing
-				 * off so the user doesn't see the weirdness
-				 * we go through to ignore errors. Set
-				 * cmdTemplate to use the weirdness instead
-				 * of the simple "%s\n" template.
-				 */
-				job->flags |= JOB_IGNERR;
-				if (!(job->flags & JOB_SILENT) && !shutUp) {
-					if (commandShell->hasEchoCtl) {
-						JobPrintln(job,
-						    commandShell->echoOff);
-					}
-					JobPrintf(job,
-					    commandShell->errOnOrEcho, escCmd);
-					shutUp = TRUE;
-				} else {
-					if (!shutUp)
-						JobPrintf(job,
-						    commandShell->errOnOrEcho,
-						    escCmd);
-				}
-				cmdTemplate = commandShell->errOffOrExecIgnore;
-				/*
-				 * The error ignoration (hee hee) is already
-				 * taken care of by the errOffOrExecIgnore
-				 * template, so pretend error checking is
-				 * still on.
-				 */
-				errOff = FALSE;
-			} else {
-				errOff = FALSE;
-			}
-		} else {
-			errOff = FALSE;
-		}
+		JobPrintSpecials(job, escCmd, noSpecials, &shutUp, &cmdTemplate,
+		    &errOff);
 	} else {
 
 		/*
