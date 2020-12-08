@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.6 2018/03/25 04:04:36 sevan Exp $	*/
+/*	$NetBSD: perform.c,v 1.6.4.1 2020/12/08 18:45:58 martin Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.6 2018/03/25 04:04:36 sevan Exp $");
+__RCSID("$NetBSD: perform.c,v 1.6.4.1 2020/12/08 18:45:58 martin Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -450,7 +450,7 @@ check_other_installed(struct pkg_task *pkg)
 		return -1;
 	}
 	*iter = '\0';
-	pkg->other_version = find_best_matching_installed_pkg(pkgbase);
+	pkg->other_version = find_best_matching_installed_pkg(pkgbase, 0);
 	free(pkgbase);
 	if (pkg->other_version == NULL)
 		return 0;
@@ -505,10 +505,12 @@ check_other_installed(struct pkg_task *pkg)
 				continue;
 			if (pkg_match(p->name, pkg->pkgname) == 1)
 				continue; /* Both match, ok. */
-			warnx("Dependency of %s fulfilled by %s, but not by %s",
-			    iter, pkg->other_version, pkg->pkgname);
-			if (!ForceDepending)
+			if (!ForceDepending) {
+				warnx("Dependency of %s fulfilled by %s, "
+				    "but not by %s", iter, pkg->other_version,
+				    pkg->pkgname);
 				status = -1;
+			}
 			break;
 		}
 		free_plist(&plist);		
@@ -979,7 +981,8 @@ run_install_script(struct pkg_task *pkg, const char *argument)
 	setenv(PKG_REFCOUNT_DBDIR_VNAME, config_pkg_refcount_dbdir, 1);
 
 	if (Verbose)
-		printf("Running install with PRE-INSTALL for %s.\n", pkg->pkgname);
+		printf("Running install with %s for %s.\n", argument,
+		    pkg->pkgname);
 	if (Fake)
 		return 0;
 
@@ -1102,6 +1105,40 @@ check_implicit_conflict(struct pkg_task *pkg)
 	return status;
 }
 
+/*
+ * Install a required dependency and verify its installation.
+ */
+static int
+install_depend_pkg(const char *dep)
+{
+	/* XXX check cyclic dependencies? */
+	if (Fake || NoRecord) {
+		if (!Force) {
+			warnx("Missing dependency %s\n", dep);
+			return 1;
+		}
+		warnx("Missing dependency %s, continuing", dep);
+	}
+
+	if (pkg_do(dep, 1, 0)) {
+		if (!ForceDepends) {
+			warnx("Can't install dependency %s", dep);
+			return 1;
+		}
+		warnx("Can't install dependency %s, continuing", dep);
+	}
+
+	if (find_best_matching_installed_pkg(dep, 0) == NULL) {
+		if (!ForceDepends) {
+			warnx("Just installed dependency %s disappeared", dep);
+			return 1;
+		}
+		warnx("Missing dependency %s ignored", dep);
+	}
+
+	return 0;
+}
+
 static int
 check_dependencies(struct pkg_task *pkg)
 {
@@ -1112,6 +1149,9 @@ check_dependencies(struct pkg_task *pkg)
 
 	status = 0;
 
+	/*
+	 * Recursively handle dependencies, installing as required.
+	 */
 	for (p = pkg->plist.head; p != NULL; p = p->next) {
 		if (p->type == PLIST_IGNORE) {
 			p = p->next;
@@ -1119,43 +1159,27 @@ check_dependencies(struct pkg_task *pkg)
 		} else if (p->type != PLIST_PKGDEP)
 			continue;
 
-		best_installed = find_best_matching_installed_pkg(p->name);
-
-		if (best_installed == NULL) {
-			/* XXX check cyclic dependencies? */
-			if (Fake || NoRecord) {
-				if (!Force) {
-					warnx("Missing dependency %s\n",
-					     p->name);
-					status = -1;
-					break;
-				}
-				warnx("Missing dependency %s, continuing",
-				    p->name);
-				continue;
-			}
-			if (pkg_do(p->name, 1, 0)) {
-				if (ForceDepends) {
-					warnx("Can't install dependency %s, "
-					    "continuing", p->name);
-					continue;
-				} else {
-					warnx("Can't install dependency %s",
-					    p->name);
-					status = -1;
-					break;
-				}
-			}
-			best_installed = find_best_matching_installed_pkg(p->name);
-			if (best_installed == NULL && ForceDepends) {
-				warnx("Missing dependency %s ignored", p->name);
-				continue;
-			} else if (best_installed == NULL) {
-				warnx("Just installed dependency %s disappeared", p->name);
+		if (find_best_matching_installed_pkg(p->name, 0) == NULL) {
+			if (install_depend_pkg(p->name) != 0) {
 				status = -1;
 				break;
 			}
 		}
+	}
+
+	/*
+	 * Now that all dependencies have been processed we can find the best
+	 * matches for pkg_register_depends() to store in our +REQUIRED_BY.
+	 */
+	for (p = pkg->plist.head; p != NULL; p = p->next) {
+		if (p->type == PLIST_IGNORE) {
+			p = p->next;
+			continue;
+		} else if (p->type != PLIST_PKGDEP)
+			continue;
+
+		best_installed = find_best_matching_installed_pkg(p->name, 0);
+
 		for (i = 0; i < pkg->dep_length; ++i) {
 			if (strcmp(best_installed, pkg->dependencies[i]) == 0)
 				break;

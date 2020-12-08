@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.2.14.1 2020/12/08 18:45:58 martin Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.2.14.1 2020/12/08 18:45:58 martin Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -566,13 +566,13 @@ CheckForBestPkg(const char *pkgname)
 {
 	char *pattern, *best_match;
 
-	best_match = find_best_matching_installed_pkg(pkgname);
+	best_match = find_best_matching_installed_pkg(pkgname, 1);
 	if (best_match == NULL) {
 		if (ispkgpattern(pkgname))
 			return 1;
 
 		pattern = xasprintf("%s-[0-9]*", pkgname);
-		best_match = find_best_matching_installed_pkg(pattern);
+		best_match = find_best_matching_installed_pkg(pattern, 1);
 		free(pattern);
 	}
 
