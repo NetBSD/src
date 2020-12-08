@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.347 2020/12/08 19:58:20 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.348 2020/12/08 20:04:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.347 2020/12/08 19:58:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.348 2020/12/08 20:04:17 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -222,6 +222,8 @@ typedef struct Shell {
 typedef struct RunFlags {
 	/* true if we put a no echo command into the command file */
 	Boolean silent;
+
+	Boolean always;
 } RunFlags;
 
 /*
@@ -675,14 +677,12 @@ JobFindPid(int pid, JobStatus status, Boolean isJobs)
 
 /* Parse leading '@', '-' and '+', which control the exact execution mode. */
 static void
-ParseRunOptions(char **pp,
-		RunFlags *out_runFlags, Boolean *out_errOff,
-		Boolean *out_runAlways)
+ParseRunOptions(char **pp, RunFlags *out_runFlags, Boolean *out_errOff)
 {
 	char *p = *pp;
 	out_runFlags->silent = FALSE;
 	*out_errOff = FALSE;
-	*out_runAlways = FALSE;
+	out_runFlags->always = FALSE;
 
 	for (;;) {
 		if (*p == '@')
@@ -690,7 +690,7 @@ ParseRunOptions(char **pp,
 		else if (*p == '-')
 			*out_errOff = TRUE;
 		else if (*p == '+')
-			*out_runAlways = TRUE;
+			out_runFlags->always = TRUE;
 		else
 			break;
 		p++;
@@ -742,9 +742,9 @@ JobPrintln(Job *job, const char *line)
  * it any more complex than it already is?
  */
 static void
-JobPrintSpecialsErrCtl(Job *job, Boolean shutUp)
+JobPrintSpecialsErrCtl(Job *job, Boolean silent)
 {
-	if (!(job->flags & JOB_SILENT) && !shutUp && commandShell->hasEchoCtl) {
+	if (!(job->flags & JOB_SILENT) && !silent && commandShell->hasEchoCtl) {
 		JobPrintln(job, commandShell->echoOff);
 		JobPrintln(job, commandShell->errOffOrExecIgnore);
 		JobPrintln(job, commandShell->echoOn);
@@ -836,7 +836,6 @@ JobPrintCommand(Job *job, char *cmd)
 	 * and need to turn it back on
 	 */
 	Boolean errOff;
-	Boolean runAlways;
 	/* Template to use when printing the command */
 	const char *cmdTemplate;
 	char *cmdStart;		/* Start of expanded command */
@@ -852,9 +851,9 @@ JobPrintCommand(Job *job, char *cmd)
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&cmd, &runFlags, &errOff, &runAlways);
+	ParseRunOptions(&cmd, &runFlags, &errOff);
 
-	if (runAlways && noSpecials) {
+	if (runFlags.always && noSpecials) {
 		/*
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
