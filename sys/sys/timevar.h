@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.45 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: timevar.h,v 1.46 2020/12/08 04:09:38 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 struct itimer;
-TAILQ_HEAD(itqueue, itimer);
 LIST_HEAD(itlist, itimer);
 
 /*
@@ -74,15 +74,9 @@ LIST_HEAD(itlist, itimer);
  *
  * Required fields:
  *
- *	- ito_queue: The queue onto which an itimer is added when it
- *	  fires.
- *
- *	- ito_sihp: A pointer to a software interrupt handle that is
- *	  scheduled to run when an itimer is added to ito_queue.
- *
  *	- ito_fire: A function to be called when the itimer fires.
  *	  The timer implementation should perform whatever processing
- *	  is necessary for that timer type and then call itimer_fire().
+ *	  is necessary for that timer type.
  *
  * Optional fields:
  *
@@ -90,8 +84,6 @@ LIST_HEAD(itlist, itimer);
  *	  time (CLOCK_REALTIME) is called.
  */
 struct itimer_ops {
-	struct itqueue *ito_queue;
-	void	**ito_sihp;
 	void	(*ito_fire)(struct itimer *);
 	void	(*ito_realtime_changed)(struct itimer *);
 };
@@ -112,11 +104,9 @@ struct itimer {
 		} it_virtual;
 	};
 	const struct itimer_ops *it_ops;
-	TAILQ_ENTRY(itimer) it_chain;
 	struct itimerspec it_time;
 	clockid_t it_clockid;
 	int	it_overruns;	/* Overruns currently accumulating */
-	bool	it_queued;
 	bool	it_dying;
 };
 
@@ -133,10 +123,12 @@ struct itimer {
 struct ptimer {
 	struct itimer pt_itimer;/* common interval timer data */
 
+	TAILQ_ENTRY(ptimer) pt_chain; /* link in signalling queue */
 	struct	sigevent pt_ev;	/* event notification info */
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_entry;	/* slot in proc's timer table */
 	struct proc *pt_proc;	/* associated process */
+	bool	pt_queued;	/* true if linked into signalling queue */
 };
 
 #define	TIMER_MIN	4	/* [0..3] are reserved for setitimer(2) */
@@ -150,6 +142,8 @@ struct ptimers {
 	struct itlist pts_prof;
 	struct itimer *pts_timers[TIMER_MAX];
 };
+
+extern kmutex_t	itimer_mutex;	/* XXX */
 
 /*
  * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
@@ -229,11 +223,16 @@ void	timerupcall(struct lwp *);
 void	time_init(void);
 bool	time_wraps(struct timespec *, struct timespec *);
 
+void	itimer_init(struct itimer *, const struct itimer_ops *,
+	    clockid_t, struct itlist *);
+void	itimer_poison(struct itimer *);
+void	itimer_fini(struct itimer *);
+
 void	itimer_lock(void);
 void	itimer_unlock(void);
+bool	itimer_lock_held(void);		/* for diagnostic assertions only */
 int	itimer_settime(struct itimer *);
 void	itimer_gettime(const struct itimer *, struct itimerspec *);
-void	itimer_fire(struct itimer *);
 
 void	ptimer_tick(struct lwp *, bool);
 void	ptimers_free(struct proc *, int);
