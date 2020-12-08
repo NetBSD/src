@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.350 2020/12/08 20:17:18 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.351 2020/12/08 21:34:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.350 2020/12/08 20:17:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.351 2020/12/08 21:34:49 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -792,10 +792,10 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 
 static void
 JobPrintSpecials(Job *const job, const char *const escCmd,
-		 Boolean const noSpecials, RunFlags *const inout_runFlags,
+		 Boolean const run, RunFlags *const inout_runFlags,
 		 const char **const inout_cmdTemplate)
 {
-	if (noSpecials)
+	if (!run)
 		inout_runFlags->ignerr = FALSE;
 	else if (commandShell->hasErrCtl)
 		JobPrintSpecialsErrCtl(job, inout_runFlags->echo);
@@ -829,11 +829,8 @@ static void
 JobPrintCommand(Job *job, char *cmd)
 {
 	const char *const cmdp = cmd;
-	/*
-	 * true if we shouldn't worry about inserting special commands into
-	 * the input stream.
-	 */
-	Boolean noSpecials;
+
+	Boolean run;
 
 	RunFlags runFlags;
 	/* Template to use when printing the command */
@@ -841,7 +838,7 @@ JobPrintCommand(Job *job, char *cmd)
 	char *cmdStart;		/* Start of expanded command */
 	char *escCmd = NULL;	/* Command with quotes/backticks escaped */
 
-	noSpecials = !GNode_ShouldExecute(job->node);
+	run = GNode_ShouldExecute(job->node);
 
 	numCommands++;
 
@@ -853,7 +850,8 @@ JobPrintCommand(Job *job, char *cmd)
 
 	ParseRunOptions(&cmd, &runFlags);
 
-	if (runFlags.always && noSpecials) {
+	/* The '+' command flag overrides the -n or -N options. */
+	if (runFlags.always && !run) {
 		/*
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
@@ -873,7 +871,7 @@ JobPrintCommand(Job *job, char *cmd)
 		escCmd = EscapeShellDblQuot(cmd);
 
 	if (!runFlags.echo) {
-		if (!(job->flags & JOB_SILENT) && !noSpecials &&
+		if (!(job->flags & JOB_SILENT) && run &&
 		    commandShell->hasEchoCtl) {
 			JobPrintln(job, commandShell->echoOff);
 		} else {
@@ -883,8 +881,7 @@ JobPrintCommand(Job *job, char *cmd)
 	}
 
 	if (runFlags.ignerr) {
-		JobPrintSpecials(job, escCmd, noSpecials, &runFlags,
-		    &cmdTemplate);
+		JobPrintSpecials(job, escCmd, run, &runFlags, &cmdTemplate);
 	} else {
 
 		/*
