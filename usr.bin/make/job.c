@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.343 2020/12/07 23:59:59 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.344 2020/12/08 00:09:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.343 2020/12/07 23:59:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.344 2020/12/08 00:09:51 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2047,25 +2047,28 @@ Job_Make(GNode *gn)
 	(void)JobStart(gn, JOB_NONE);
 }
 
+static void
+InitShellNameAndPath(void)
+{
+	shellName = commandShell->name;
+
+#ifdef DEFSHELL_CUSTOM
+	if (shellName[0] == '/') {
+		shellPath = shellName;
+		shellName = strrchr(shellPath, '/') + 1;
+		return;
+	}
+#endif
+
+	shellPath = str_concat3(_PATH_DEFSHELLDIR, "/", shellName);
+}
+
 void
 Shell_Init(void)
 {
-	if (shellPath == NULL) {
-		/*
-		 * We are using the default shell, which may be an absolute
-		 * path if DEFSHELL_CUSTOM is defined.
-		 */
-		shellName = commandShell->name;
-#ifdef DEFSHELL_CUSTOM
-		if (*shellName == '/') {
-			shellPath = shellName;
-			shellName = strrchr(shellPath, '/');
-			shellName++;
-		} else /* XXX: else #endif breaks automatic formatting. */
-#endif
-		shellPath = str_concat3(_PATH_DEFSHELLDIR, "/",
-		    shellName);
-	}
+	if (shellPath == NULL)
+		InitShellNameAndPath();
+
 	Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
 	if (commandShell->exit == NULL) {
 		commandShell->exit = "";
