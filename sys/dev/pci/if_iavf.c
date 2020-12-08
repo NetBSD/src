@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.7 2020/12/01 04:39:03 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.8 2020/12/08 07:53:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.7 2020/12/01 04:39:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.8 2020/12/08 07:53:20 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1813,7 +1813,7 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 	}
 
 	kcpuset_create(&affinity, false);
-	affinity_to = ((int)num <= ncpu) ? 1 : 0;
+	affinity_to = 0;
 	qid = 0;
 	for (vector = 1; vector < num; vector++) {
 		pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[vector],
@@ -1849,6 +1849,21 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 
 		qid++;
 		affinity_to = (affinity_to + 1) % ncpu;
+	}
+
+	vector = 0;
+	kcpuset_zero(affinity);
+	kcpuset_set(affinity, affinity_to);
+	intrstr = pci_intr_string(pa->pa_pc, sc->sc_ihp[vector],
+	    intrbuf, sizeof(intrbuf));
+	error = interrupt_distribute(sc->sc_ihs[vector], affinity, NULL);
+	if (error == 0) {
+		IAVF_LOG(sc, LOG_INFO,
+		    "for Misc interrupt at %s, affinity to %d\n",
+		    intrstr, affinity_to);
+	} else {
+		IAVF_LOG(sc, LOG_INFO,
+		    "for MISC interrupt at %s\n", intrstr);
 	}
 
 	kcpuset_destroy(affinity);
