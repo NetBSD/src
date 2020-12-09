@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.80 2020/12/09 04:24:08 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.81 2020/12/09 04:30:39 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.80 2020/12/09 04:24:08 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.81 2020/12/09 04:30:39 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2082,6 +2082,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	audio_file_t *af;
 	audio_ring_t *hwbuf;
 	bool fullduplex;
+	bool cred_held;
+	bool hw_opened;
 	bool rmixer_started;
 	int fd;
 	int error;
@@ -2093,6 +2095,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    ISDEVSOUND(dev) ? "sound" : "audio",
 	    flags, sc->sc_popens, sc->sc_ropens);
 
+	fp = NULL;
+	cred_held = false;
+	hw_opened = false;
 	rmixer_started = false;
 
 	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
@@ -2104,7 +2109,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		af->mode |= AUMODE_RECORD;
 	if (af->mode == 0) {
 		error = ENXIO;
-		goto bad1;
+		goto bad;
 	}
 
 	fullduplex = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
@@ -2120,7 +2125,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			if (sc->sc_ropens != 0) {
 				TRACE(1, "record track already exists");
 				error = ENODEV;
-				goto bad1;
+				goto bad;
 			}
 			/* Play takes precedence */
 			af->mode &= ~AUMODE_RECORD;
@@ -2129,7 +2134,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			if (sc->sc_popens != 0) {
 				TRACE(1, "play track already exists");
 				error = ENODEV;
-				goto bad1;
+				goto bad;
 			}
 		}
 	}
@@ -2176,13 +2181,14 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	}
 	error = audio_file_setinfo(sc, af, &ai);
 	if (error)
-		goto bad2;
+		goto bad;
 
 	if (sc->sc_popens + sc->sc_ropens == 0) {
 		/* First open */
 
 		sc->sc_cred = kauth_cred_get();
 		kauth_cred_hold(sc->sc_cred);
+		cred_held = true;
 
 		if (sc->hw_if->open) {
 			int hwflags;
@@ -2215,8 +2221,16 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad2;
+				goto bad;
 		}
+		/*
+		 * Regardless of whether we called hw_if->open (whether
+		 * hw_if->open exists) or not, we move to the Opened phase
+		 * here.  Therefore from this point, we have to call
+		 * hw_if->close (if exists) whenever abort.
+		 * Note that both of hw_if->{open,close} are optional.
+		 */
+		hw_opened = true;
 
 		/*
 		 * Set speaker mode when a half duplex.
@@ -2236,14 +2250,14 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 				mutex_exit(sc->sc_intr_lock);
 				mutex_exit(sc->sc_lock);
 				if (error)
-					goto bad3;
+					goto bad;
 			}
 		}
 	} else if (sc->sc_multiuser == false) {
 		uid_t euid = kauth_cred_geteuid(kauth_cred_get());
 		if (euid != 0 && euid != kauth_cred_geteuid(sc->sc_cred)) {
 			error = EPERM;
-			goto bad2;
+			goto bad;
 		}
 	}
 
@@ -2260,7 +2274,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad3;
+				goto bad;
 		}
 	}
 	/*
@@ -2279,7 +2293,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			mutex_exit(sc->sc_intr_lock);
 			mutex_exit(sc->sc_lock);
 			if (error)
-				goto bad3;
+				goto bad;
 		}
 
 		mutex_enter(sc->sc_lock);
@@ -2288,10 +2302,15 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		rmixer_started = true;
 	}
 
-	if (bellfile == NULL) {
+	if (bellfile) {
+		*bellfile = af;
+	} else {
 		error = fd_allocfile(&fp, &fd);
 		if (error)
-			goto bad4;
+			goto bad;
+
+		error = fd_clone(fp, fd, flags, &audio_fileops, af);
+		KASSERTMSG(error == EMOVEFD, "error=%d", error);
 	}
 
 	/*
@@ -2308,24 +2327,21 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	mutex_exit(sc->sc_intr_lock);
 	mutex_exit(sc->sc_lock);
 
-	if (bellfile) {
-		*bellfile = af;
-	} else {
-		error = fd_clone(fp, fd, flags, &audio_fileops, af);
-		KASSERTMSG(error == EMOVEFD, "error=%d", error);
-	}
-
 	TRACEF(3, af, "done");
 	return error;
 
-bad4:
+bad:
+	if (fp) {
+		fd_abort(curproc, fp, fd);
+	}
+
 	if (rmixer_started) {
 		mutex_enter(sc->sc_lock);
 		audio_rmixer_halt(sc);
 		mutex_exit(sc->sc_lock);
 	}
-bad3:
-	if (sc->sc_popens + sc->sc_ropens == 0) {
+
+	if (hw_opened) {
 		if (sc->hw_if->close) {
 			mutex_enter(sc->sc_lock);
 			mutex_enter(sc->sc_intr_lock);
@@ -2334,7 +2350,10 @@ bad3:
 			mutex_exit(sc->sc_lock);
 		}
 	}
-bad2:
+	if (cred_held) {
+		kauth_cred_free(sc->sc_cred);
+	}
+
 	/*
 	 * Since track here is not yet linked to sc_files,
 	 * you can call track_destroy() without sc_intr_lock.
@@ -2347,7 +2366,7 @@ bad2:
 		audio_track_destroy(af->ptrack);
 		af->ptrack = NULL;
 	}
-bad1:
+
 	kmem_free(af, sizeof(*af));
 	return error;
 }
