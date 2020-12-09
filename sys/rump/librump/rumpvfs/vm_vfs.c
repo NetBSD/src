@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.40 2020/10/22 03:05:17 chs Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.41 2020/12/09 00:03:32 chs Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.40 2020/10/22 03:05:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.41 2020/12/09 00:03:32 chs Exp $");
 
 #include <sys/param.h>
 
@@ -48,6 +48,16 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		pg = pgs[i];
 		KASSERT((pg->flags & PG_PAGEOUT) == 0 ||
 			(pg->flags & PG_FAKE) == 0);
+
+		if (pg->flags & PG_FAKE) {
+			KASSERT(!write);
+			pg->flags &= ~PG_FAKE;
+			KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
+			uvm_pagelock(pg);
+			uvm_pageenqueue(pg);
+			uvm_pageunlock(pg);
+		}
+
 	}
 	uvm_page_unbusy(pgs, npages);
 	rw_exit(uobj->vmobjlock);
