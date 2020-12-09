@@ -1,0 +1,15 @@
+# .echoOff
+# .errOnOrEcho
+echo "false regular"
+# .errExit
+{ false regular 
+} || exit $?
+# .echoOn
+# .errExit
+{ : silent 
+} || exit $?
+# .echoOn
+false ignore-errors
+echo run despite the -n option
+run despite the -n option
+exit status 0
