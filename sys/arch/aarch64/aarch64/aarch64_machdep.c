@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.54 2020/11/10 07:51:19 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.55 2020/12/09 08:51:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.54 2020/11/10 07:51:19 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.55 2020/12/09 08:51:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -166,7 +166,6 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 		pmapboot_enter_range(AARCH64_PA_TO_KVA(start), start,
 		    end - start, dmattr, printf);
 	}
-	aarch64_dcache_wbinv_all();
 
 	/* Disable translation table walks using TTBR0 */
 	uint64_t tcr = reg_tcr_el1_read();
