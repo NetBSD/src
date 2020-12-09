@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.1 2020/12/09 00:25:00 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.2 2020/12/09 00:43:48 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -6,6 +6,8 @@
 # The format of the output differs from the output of only the -n option,
 # without the -j.  This is because all this code is implemented twice, once
 # in compat.c and once in job.c.
+#
+# See opt-jobs.mk for the corresponding tests without the -n option.
 
 .MAKEFLAGS: -j1 -n
 
@@ -28,7 +30,18 @@
 	ignore="\# .errOffOrExecIgnore\n""%s\n" \
 	errout="\# .errExit\n""{ %s \n} || exit $$?\n"
 
-all:
+SILENT.no=	# none
+SILENT.yes=	@
+ALWAYS.no=	# none
+ALWAYS.yes=	+
+IGNERR.no=	true
+IGNERR.yes=	-false
+
+all: documented combined
+.ORDER: documented combined
+
+# Explain the most basic cases in detail.
+documented: .PHONY
 	# The following command is regular, it is printed twice:
 	# - first using the template shell.errOnOrEcho,
 	# - then using the template shell.errExit.
@@ -49,7 +62,22 @@ all:
 	# '!silent' in Compat_RunCommand.
 	+echo run despite the -n option
 
-	# TODO: test all 8 combinations of '-', '+', '@'.
-	# TODO: for each of the above test, test '-true' and '-false'.
-	# The code with its many branches feels like a big mess.
-	# See opt-jobs.mk for the corresponding tests without the -n option.
+	@+echo
+
+# Test all combinations of the 3 RunFlags.
+#
+# TODO: Closely inspect the output whether it makes sense.
+# XXX: The output should not contain the 'echo silent=...' lines.
+combined:
+	@+echo 'begin $@'
+	@+echo
+.for silent in no yes
+.  for always in no yes
+.    for ignerr in no yes
+	@+echo silent=${silent} always=${always} ignerr=${ignerr}
+	${SILENT.${silent}}${ALWAYS.${always}}${IGNERR.${ignerr}}
+	@+echo
+.    endfor
+.  endfor
+.endfor
+	@+echo 'end $@'
