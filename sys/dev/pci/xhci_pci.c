@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.25 2020/10/27 13:50:57 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.26 2020/12/09 14:21:09 jakllsch Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.25 2020/10/27 13:50:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.26 2020/12/09 14:21:09 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -222,7 +222,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	    xhci_intr, sc, device_xname(sc->sc_dev));
 	if (psc->sc_ih == NULL) {
 		pci_intr_release(pc, psc->sc_pihp, 1);
-		psc->sc_ih = NULL;
+		psc->sc_pihp = NULL;
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
