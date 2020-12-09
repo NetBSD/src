@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.242 2020/12/09 07:57:52 rillig Exp $
+# $NetBSD: Makefile,v 1.243 2020/12/09 08:18:35 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -476,10 +476,8 @@ SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Command: ${.SHELL:T},Command: <shell>,'
 # The "-q" may be there or not, see jobs.c, variable shells.
 SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: <shell>\) -q,\1,'
-SED_CMDS.opt-no-action-runflags= \
-	-e '/^echo hide-from-output/d' \
-	-e 's,hide-from-output ,,' \
-	-e 's,hide-from-output,,'
+SED_CMDS.opt-jobs-no-action=	${STD_SED_CMDS.hide-from-output}
+SED_CMDS.opt-no-action-runflags= ${STD_SED_CMDS.hide-from-output}
 # For Compat_RunCommand, useShell == FALSE.
 SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == TRUE.
@@ -528,6 +526,13 @@ STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MACHINE[_ARCH]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
+
+# Reduce the noise for tests running with the -n option, since there is no
+# other way to suppress the echoing of the commands.
+STD_SED_CMDS.hide-from-output= \
+	-e '/^echo hide-from-output/d' \
+	-e 's,hide-from-output ,,' \
+	-e 's,hide-from-output,,'
 
 # End of the configuration helpers section.
 
