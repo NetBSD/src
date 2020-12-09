@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.7 2013/08/19 03:44:47 matt Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.8 2020/12/09 02:46:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,21 +40,21 @@ ENTRY(FUNC)
 #ifdef _ARM_ARCH_6
 	rev	r0, r0
 #elif !defined(__thumb__)
-	eor	r1, r0, r0, ror #16	/* 4.3.2.1 -> 42.31.42.31 */
-	bic	r1, r1, #0x00FF0000	/* 42.31.42.31 -> 42.0.42.31 */
-	mov	r0, r0, ror #8		/* 4.3.2.1 -> 1.4.3.2 */
-	eor	r0, r0, r1, lsr #8	/* 1.4.3.2 ^ 0.42.0.42 -> 1.2.3.4 */
+	eor	r1, r0, r0, ror #16	/* d.c.b.a -> db.ca.db.ca */
+	bic	r1, r1, #0x00FF0000	/* db.ca.db.ca -> db.0.db.ca */
+	mov	r0, r0, ror #8		/* d.c.b.a -> a.d.c.b */
+	eor	r0, r0, r1, lsr #8	/* a.d.c.b ^ 0.db.0.db -> a.b.c.d */
 #else
 	movs	r3, #16
-	lsls	r1, r0, #8		/* 4.3.2.1 -> 3.2.1.0 /*
-	lsrs	r0, r0, #8		/* 4.3.2.1 -> 0.4.3.2 */
-	rors	r1, r3			/* 3.2.1.0 -> 1.0.3.2 */
-	rors	r0, r3			/* 0.4.3.2 -> 3.2.0.4 */
-	lsrs	r1, r1, #8		/* 1.0.3.2 -> 0.1.0.3 */
-	lsls	r1, r1, #8		/* 0.1.0.3 -> 1.0.3.0 */
-	lsls	r0, r0, #8		/* 3.2.0.4 -> 2.0.4.0 */
-	lsrs	r0, r0, #8		/* 2.0.4.0 -> 0.2.0.4 */
-	orrs	r0, r0, r1		/* 1.0.3.0 | 0.2.0.4 -> 1.2.3.4 */
+	lsls	r1, r0, #8		/* d.c.b.a -> c.b.a.0 /*
+	lsrs	r0, r0, #8		/* d.c.b.a -> 0.d.c.b */
+	rors	r1, r3			/* c.b.a.0 -> a.0.c.b */
+	rors	r0, r3			/* 0.d.c.b -> c.b.0.d */
+	lsrs	r1, r1, #8		/* a.0.c.b -> 0.a.0.c */
+	lsls	r1, r1, #8		/* 0.a.0.c -> a.0.c.0 */
+	lsls	r0, r0, #8		/* c.b.0.d -> b.0.d.0 */
+	lsrs	r0, r0, #8		/* b.0.d.0 -> 0.b.0.d */
+	orrs	r0, r0, r1		/* a.0.c.0 | 0.b.0.d -> a.b.c.d */
 #endif
 	RET
 END(FUNC)
