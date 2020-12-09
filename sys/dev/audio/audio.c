@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.80 2020/12/09 04:24:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.80 2020/12/09 04:24:08 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2082,6 +2082,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	audio_file_t *af;
 	audio_ring_t *hwbuf;
 	bool fullduplex;
+	bool rmixer_started;
 	int fd;
 	int error;
 
@@ -2091,6 +2092,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    (audiodebug >= 3) ? "start " : "",
 	    ISDEVSOUND(dev) ? "sound" : "audio",
 	    flags, sc->sc_popens, sc->sc_ropens);
+
+	rmixer_started = false;
 
 	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
 	af->sc = sc;
@@ -2282,12 +2285,13 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		mutex_enter(sc->sc_lock);
 		audio_rmixer_start(sc);
 		mutex_exit(sc->sc_lock);
+		rmixer_started = true;
 	}
 
 	if (bellfile == NULL) {
 		error = fd_allocfile(&fp, &fd);
 		if (error)
-			goto bad3;
+			goto bad4;
 	}
 
 	/*
@@ -2314,10 +2318,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	TRACEF(3, af, "done");
 	return error;
 
-	/*
-	 * Since track here is not yet linked to sc_files,
-	 * you can call track_destroy() without sc_intr_lock.
-	 */
+bad4:
+	if (rmixer_started) {
+		mutex_enter(sc->sc_lock);
+		audio_rmixer_halt(sc);
+		mutex_exit(sc->sc_lock);
+	}
 bad3:
 	if (sc->sc_popens + sc->sc_ropens == 0) {
 		if (sc->hw_if->close) {
@@ -2329,6 +2335,10 @@ bad3:
 		}
 	}
 bad2:
+	/*
+	 * Since track here is not yet linked to sc_files,
+	 * you can call track_destroy() without sc_intr_lock.
+	 */
 	if (af->rtrack) {
 		audio_track_destroy(af->rtrack);
 		af->rtrack = NULL;
