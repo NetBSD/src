@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.20 2018/06/01 21:22:43 mrg Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.21 2020/12/09 15:28:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -46,7 +46,6 @@ typedef struct {
 
 #include <arm/mutex.h>
 #endif
-#include <sys/param.h>
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 
