@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.6 2020/12/09 08:18:35 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.7 2020/12/09 08:20:56 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -34,11 +34,13 @@
 	ignore="\# .errOffOrExecIgnore\n""%s\n" \
 	errout="\# .errExit\n""{ %s \n} || exit $$?\n"
 
-all: documented combined
-.ORDER: documented combined
+all: explained combined
+.ORDER: explained combined
 
 # Explain the most basic cases in detail.
-documented: .PHONY
+explained: .PHONY
+	@+echo hide-from-output 'begin explain'
+
 	# The following command is regular, it is printed twice:
 	# - first using the template shell.errOnOrEcho,
 	# - then using the template shell.errExit.
@@ -59,7 +61,8 @@ documented: .PHONY
 	# '!silent' in Compat_RunCommand.
 	+echo run despite the -n option
 
-	@+echo
+	@+echo hide-from-output 'end explain'
+	@+echo hide-from-output
 
 
 # Test all combinations of the 3 RunFlags.
