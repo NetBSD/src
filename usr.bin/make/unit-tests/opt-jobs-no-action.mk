@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.3 2020/12/09 07:24:52 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.4 2020/12/09 07:57:52 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -7,7 +7,11 @@
 # without the -j.  This is because all this code is implemented twice, once
 # in compat.c and once in job.c.
 #
-# See opt-jobs.mk for the corresponding tests without the -n option.
+# See also:
+#	opt-jobs.mk
+#		The corresponding tests without the -n option
+#	opt-no-action-combined.mk
+#		The corresponding tests without the -j option
 
 .MAKEFLAGS: -j1 -n
 
@@ -61,7 +65,6 @@ documented: .PHONY
 # Test all combinations of the 3 RunFlags.
 #
 # TODO: Closely inspect the output whether it makes sense.
-# XXX: The output should not contain the 'echo silent=...' lines.
 # XXX: silent=no always=no ignerr={no,yes} should be almost the same.
 #
 SILENT.no=	# none
