@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.2 2020/12/09 00:43:48 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.3 2020/12/09 07:24:52 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -30,13 +30,6 @@
 	ignore="\# .errOffOrExecIgnore\n""%s\n" \
 	errout="\# .errExit\n""{ %s \n} || exit $$?\n"
 
-SILENT.no=	# none
-SILENT.yes=	@
-ALWAYS.no=	# none
-ALWAYS.yes=	+
-IGNERR.no=	true
-IGNERR.yes=	-false
-
 all: documented combined
 .ORDER: documented combined
 
@@ -64,10 +57,20 @@ documented: .PHONY
 
 	@+echo
 
+
 # Test all combinations of the 3 RunFlags.
 #
 # TODO: Closely inspect the output whether it makes sense.
 # XXX: The output should not contain the 'echo silent=...' lines.
+# XXX: silent=no always=no ignerr={no,yes} should be almost the same.
+#
+SILENT.no=	# none
+SILENT.yes=	@
+ALWAYS.no=	# none
+ALWAYS.yes=	+
+IGNERR.no=	echo running
+IGNERR.yes=	-echo running; false
+#
 combined:
 	@+echo 'begin $@'
 	@+echo
