@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.61 2020/03/15 07:56:19 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.62 2020/12/09 07:10:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ typedef struct ohci_soft_td {
 	ohci_td_t td;
 	struct ohci_soft_td *nexttd;	/* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext;	/* next in done list */
+	struct ohci_soft_td **held;	/* where the ref to this std is held */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
@@ -68,6 +69,7 @@ typedef struct ohci_soft_itd {
 	ohci_itd_t itd;
 	struct ohci_soft_itd *nextitd;	/* mirrors nexttd in ITD */
 	struct ohci_soft_itd *dnext;	/* next in done list */
+	struct ohci_soft_itd **held;	/* where the ref to this sitd is held */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
@@ -108,6 +110,8 @@ typedef struct ohci_softc {
 	LIST_HEAD(, ohci_soft_td)  sc_hash_tds[OHCI_HASH_SIZE];
 	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
 
+	TAILQ_HEAD(, ohci_xfer)	sc_abortingxfers;
+
 	int sc_noport;
 
 	int sc_endian;
@@ -117,6 +121,8 @@ typedef struct ohci_softc {
 
 	int sc_flags;
 #define OHCIF_SUPERIO		0x0001
+
+	kcondvar_t sc_abort_cv;
 
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
@@ -139,6 +145,9 @@ typedef struct ohci_softc {
 
 struct ohci_xfer {
 	struct usbd_xfer xfer;
+	uint32_t ox_abintrs;
+	TAILQ_ENTRY(ohci_xfer) ox_abnext;
+
 	/* ctrl */
 	ohci_soft_td_t *ox_setup;
 	ohci_soft_td_t *ox_stat;
