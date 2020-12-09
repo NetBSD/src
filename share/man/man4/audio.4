@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.103 2020/03/28 05:47:41 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.104 2020/12/09 05:48:56 isaki Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,8 +85,6 @@ are identical.
 .Pp
 On a full-duplex device, reads and writes may operate concurrently
 without interference.
-If a full-duplex capable audio device is opened for both reading and writing
-it will start in play mode but not start in record mode.
 .Pp
 On a half-duplex device, if there are any recording descriptors already,
 opening with write mode will fail.
