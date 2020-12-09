@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.368 2020/12/09 04:02:20 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.368 2020/12/09 04:02:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2020/12/09 11:35:44 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -653,7 +653,8 @@ sp_tlb_flush(int va, int ctx, int lvl)
 	 * XXX: Add to asm.h?  We can use this in cache.c too.
 	 */
 	opsr = getpsr();	/* KDASSERT(opsr & PSR_ET); */
-	__asm volatile ("wr %0, %1, %%psr" :: "r"(opsr), "n"(PSR_ET));
+	__asm volatile ("wr %0, %1, %%psr"
+			:: "r"(opsr), "n"(PSR_ET) : "memory");
 	__asm volatile ("nop; nop;nop");
 
 	octx = getcontext4m();	/* save context */
