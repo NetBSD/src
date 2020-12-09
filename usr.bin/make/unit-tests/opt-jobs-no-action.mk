@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.5 2020/12/09 08:15:45 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.6 2020/12/09 08:18:35 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -77,8 +77,8 @@ IGNERR.yes=	-echo running; false
 combined: combined-begin
 
 combined-begin: .PHONY
-	@+echo 'begin combined'
-	@+echo
+	@+echo hide-from-output 'begin combined'
+	@+echo hide-from-output
 
 .for silent in no yes
 .  for always in no yes
@@ -86,9 +86,9 @@ combined-begin: .PHONY
 .      for target in combined-silent-${silent}-always-${always}-ignerr-${ignerr}
 combined: .WAIT ${target} .WAIT
 ${target}: .PHONY
-	@+echo silent=${silent} always=${always} ignerr=${ignerr}
+	@+echo hide-from-output silent=${silent} always=${always} ignerr=${ignerr}
 	${SILENT.${silent}}${ALWAYS.${always}}${IGNERR.${ignerr}}
-	@+echo
+	@+echo hide-from-output
 .      endfor
 .    endfor
 .  endfor
@@ -96,4 +96,4 @@ ${target}: .PHONY
 
 combined: combined-end
 combined-end: .PHONY
-	@+echo 'end combined'
+	@+echo hide-from-output 'end combined'
