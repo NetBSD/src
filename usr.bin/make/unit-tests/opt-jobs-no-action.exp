@@ -1,3 +1,4 @@
+begin explain
 # .echoOff
 # .errOnOrEcho
 echo "false regular"
@@ -12,7 +13,7 @@ echo "false regular"
 false ignore-errors
 echo run despite the -n option
 run despite the -n option
-echo
+end explain
 
 begin combined
 
