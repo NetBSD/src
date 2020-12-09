@@ -12,4 +12,64 @@ echo "false regular"
 false ignore-errors
 echo run despite the -n option
 run despite the -n option
+echo
+
+echo 'begin combined'
+begin combined
+echo
+
+echo silent=no always=no ignerr=no
+silent=no always=no ignerr=no
+# .echoOff
+# .errOnOrEcho
+echo "true"
+# .errExit
+{ true 
+} || exit $?
+# .echoOn
+echo
+
+echo silent=no always=no ignerr=yes
+silent=no always=no ignerr=yes
+false
+echo
+
+echo silent=no always=yes ignerr=no
+silent=no always=yes ignerr=no
+true
+echo
+
+echo silent=no always=yes ignerr=yes
+silent=no always=yes ignerr=yes
+false
+*** Error code 1 (ignored)
+echo
+
+echo silent=yes always=no ignerr=no
+silent=yes always=no ignerr=no
+# .errExit
+{ true 
+} || exit $?
+# .echoOn
+echo
+
+echo silent=yes always=no ignerr=yes
+silent=yes always=no ignerr=yes
+false
+# .echoOn
+echo
+
+echo silent=yes always=yes ignerr=no
+silent=yes always=yes ignerr=no
+true
+echo
+
+echo silent=yes always=yes ignerr=yes
+silent=yes always=yes ignerr=yes
+false
+*** Error code 1 (ignored)
+echo
+
+echo 'end combined'
+end combined
 exit status 0
