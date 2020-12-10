@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.351 2020/12/08 21:34:49 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.352 2020/12/10 20:10:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.351 2020/12/08 21:34:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.352 2020/12/10 20:10:03 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1634,7 +1634,7 @@ JobStart(GNode *gn, JobFlags flags)
 		 * good -- it does no harm to keep working up the graph.
 		 */
 		job->cmdFILE = stdout;
-		Job_Touch(gn, job->flags & JOB_SILENT);
+		Job_Touch(gn, (job->flags & JOB_SILENT) != 0);
 		noExec = TRUE;
 	}
 	/* Just in case it isn't already... */
