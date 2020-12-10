@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.362 2020/12/10 23:12:59 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.363 2020/12/10 23:36:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.362 2020/12/10 23:12:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.363 2020/12/10 23:36:20 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -830,32 +830,31 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
  * XXX: Why ignore errors for the entire job?
  * XXX: Even ignore errors for the commands before this command?
  *
- * If the command is just "...", all further commands for this job will be
- * executed once the entire graph has been made. These commands are later
- * attached to the .END node and executed by Job_End when all things are done.
+ * If the command is just "...", all further commands of this job are skipped
+ * for now.  They are attached to the .END node and will be run by Job_Finish
+ * after all other targets have been made.
  */
 static void
-JobPrintCommand(Job *job, char *cmd)
+JobPrintCommand(Job *job, const char * const ucmd)
 {
-	const char *const cmdp = cmd;
-
 	Boolean run;
 
 	CommandFlags cmdFlags;
-	/* Template to use when printing the command */
+	/* Template for printing a command to the shell file */
 	const char *cmdTemplate;
-	char *cmdStart;		/* Start of expanded command */
-	char *escCmd = NULL;	/* Command with quotes/backticks escaped */
+	char *xcmd;		/* The expanded command */
+	char *xcmdStart;
+	char *escCmd;		/* xcmd escaped to be used in double quotes */
 
 	run = GNode_ShouldExecute(job->node);
 
-	Var_Subst(cmd, job->node, VARE_WANTRES, &cmd);
+	Var_Subst(ucmd, job->node, VARE_WANTRES, &xcmd);
 	/* TODO: handle errors */
-	cmdStart = cmd;
+	xcmdStart = xcmd;
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&cmd, &cmdFlags);
+	ParseRunOptions(&xcmd, &cmdFlags);
 
 	/* The '+' command flag overrides the -n or -N options. */
 	if (cmdFlags.always && !run) {
@@ -863,19 +862,17 @@ JobPrintCommand(Job *job, char *cmd)
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
 		 */
-		Compat_RunCommand(cmdp, job->node);
-		free(cmdStart);
+		Compat_RunCommand(ucmd, job->node);
+		free(xcmdStart);
 		return;
 	}
 
 	/*
-	 * If the shell doesn't have error control the alternate echo'ing will
-	 * be done (to avoid showing additional error checking code)
-	 * and this will need the characters '$ ` \ "' escaped
+	 * If the shell doesn't have error control, the alternate echoing
+	 * will be done (to avoid showing additional error checking code)
+	 * and this needs some characters escaped.
 	 */
-
-	if (!shell->hasErrCtl)
-		escCmd = EscapeShellDblQuot(cmd);
+	escCmd = shell->hasErrCtl ? NULL : EscapeShellDblQuot(xcmd);
 
 	if (!cmdFlags.echo) {
 		if (job->echo && run && shell->hasEchoCtl) {
@@ -922,8 +919,8 @@ JobPrintCommand(Job *job, char *cmd)
 		job->xtraced = TRUE;
 	}
 
-	JobPrintf(job, cmdTemplate, cmd);
-	free(cmdStart);
+	JobPrintf(job, cmdTemplate, xcmd);
+	free(xcmdStart);
 	free(escCmd);
 	if (cmdFlags.ignerr) {
 		/*
