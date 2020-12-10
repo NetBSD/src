@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.360 2020/12/10 22:45:30 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.361 2020/12/10 23:03:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.360 2020/12/10 22:45:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.361 2020/12/10 23:03:00 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1499,6 +1499,65 @@ JobMakeArgv(Job *job, char **argv)
 	argv[argc] = NULL;
 }
 
+static void
+JobOpenTmpFile(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
+{
+	/*
+	 * tfile is the name of a file into which all shell commands
+	 * are put. It is removed before the child shell is executed,
+	 * unless DEBUG(SCRIPT) is set.
+	 */
+	char *tfile;
+	sigset_t mask;
+	int tfd;		/* File descriptor to the temp file */
+
+	/*
+	 * We're serious here, but if the commands were bogus, we're
+	 * also dead...
+	 */
+	if (!cmdsOK) {
+		PrintOnError(gn, NULL); /* provide some clue */
+		DieHorribly();
+	}
+
+	JobSigLock(&mask);
+	tfd = mkTempFile(TMPPAT, &tfile);
+	if (!DEBUG(SCRIPT))
+		(void)eunlink(tfile);
+	JobSigUnlock(&mask);
+
+	job->cmdFILE = fdopen(tfd, "w+");
+	if (job->cmdFILE == NULL)
+		Punt("Could not fdopen %s", tfile);
+
+	(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
+	/*
+	 * Send the commands to the command file, flush all its
+	 * buffers then rewind and remove the thing.
+	 */
+	*out_run = TRUE;
+
+#ifdef USE_META
+	if (useMeta) {
+		meta_job_start(job, gn);
+		if (Targ_Silent(gn)) /* might have changed */
+			job->echo = FALSE;
+	}
+#endif
+	/* We can do all the commands at once. hooray for sanity */
+	numCommands = 0;
+	JobPrintCommands(job);
+
+	/*
+	 * If we didn't print out any commands to the shell script,
+	 * there's no point in executing the shell.
+	 */
+	if (numCommands == 0)
+		*out_run = FALSE;
+
+	free(tfile);
+}
+
 /*
  * Start a target-creation process going for the target described by the
  * graph node gn.
@@ -1526,7 +1585,6 @@ JobStart(GNode *gn, Boolean special)
 	char *argv[10];		/* Argument vector to shell */
 	Boolean cmdsOK;		/* true if the nodes commands were all right */
 	Boolean run;
-	int tfd;		/* File descriptor to the temp file */
 
 	for (job = job_table; job < job_table_end; job++) {
 		if (job->status == JOB_ST_FREE)
@@ -1560,58 +1618,7 @@ JobStart(GNode *gn, Boolean special)
 	 */
 	if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
-		/*
-		 * tfile is the name of a file into which all shell commands
-		 * are put. It is removed before the child shell is executed,
-		 * unless DEBUG(SCRIPT) is set.
-		 */
-		char *tfile;
-		sigset_t mask;
-		/*
-		 * We're serious here, but if the commands were bogus, we're
-		 * also dead...
-		 */
-		if (!cmdsOK) {
-			PrintOnError(gn, NULL); /* provide some clue */
-			DieHorribly();
-		}
-
-		JobSigLock(&mask);
-		tfd = mkTempFile(TMPPAT, &tfile);
-		if (!DEBUG(SCRIPT))
-			(void)eunlink(tfile);
-		JobSigUnlock(&mask);
-
-		job->cmdFILE = fdopen(tfd, "w+");
-		if (job->cmdFILE == NULL)
-			Punt("Could not fdopen %s", tfile);
-
-		(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
-		/*
-		 * Send the commands to the command file, flush all its
-		 * buffers then rewind and remove the thing.
-		 */
-		run = TRUE;
-
-#ifdef USE_META
-		if (useMeta) {
-			meta_job_start(job, gn);
-			if (Targ_Silent(gn)) /* might have changed */
-				job->echo = FALSE;
-		}
-#endif
-		/* We can do all the commands at once. hooray for sanity */
-		numCommands = 0;
-		JobPrintCommands(job);
-
-		/*
-		 * If we didn't print out any commands to the shell script,
-		 * there's no point in executing the shell.
-		 */
-		if (numCommands == 0)
-			run = FALSE;
-
-		free(tfile);
+		JobOpenTmpFile(job, gn, cmdsOK, &run);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
 		 * Not executing anything -- just print all the commands to
