@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.357 2020/12/10 21:41:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.358 2020/12/10 22:17:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.357 2020/12/10 21:41:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.358 2020/12/10 22:17:37 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -198,8 +198,8 @@ typedef struct Shell {
 
 	Boolean hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
-	/* XXX: split into errOn and echoCmd */
-	const char *errOnOrEcho; /* template to turn on error checking */
+	const char *errOn;	/* template to turn on error checking */
+	const char *echoCmd;
 	/*
 	 * template to turn off error checking
 	 * XXX: split into errOff and execIgnore
@@ -307,7 +307,8 @@ static Shell shells[] = {
 	"",			/* .noPrint */
 	0,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
-	"echo \"%s\"\n",	/* .errOnOrEcho */
+	"",			/* .errOn */
+	"echo \"%s\"\n",	/* .echoCmd */
 	"%s\n",			/* .errOffOrExecIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
@@ -328,7 +329,8 @@ static Shell shells[] = {
 	"",			/* .noPrint */
 	0,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
-	"echo \"%s\"\n",	/* .errOnOrEcho */
+	"",			/* .errOn */
+	"echo \"%s\"\n",	/* .echoCmd */
 	"%s\n",			/* .errOffOrExecIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
@@ -351,7 +353,8 @@ static Shell shells[] = {
 	"set +v",		/* .noPrint */
 	6,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
-	"echo \"%s\"\n",	/* .errOnOrEcho */
+	"",			/* .errOn */
+	"echo \"%s\"\n",	/* .echoCmd */
 	"%s\n",			/* .errOffOrExecIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
@@ -372,7 +375,8 @@ static Shell shells[] = {
 	"unset verbose",	/* .noPrint */
 	13,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
-	"echo \"%s\"\n",	/* .errOnOrEcho */
+	"",			/* .errOn */
+	"echo \"%s\"\n",	/* .echoCmd */
 	/* XXX: Mismatch between errOn and execIgnore */
 	"csh -c \"%s || exit 0\"\n", /* .errOffOrExecIgnore */
 	"",			/* .errExit */
@@ -787,11 +791,11 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 	if (job->echo && inout_runFlags->echo) {
 		if (shell->hasEchoCtl)
 			JobPrintln(job, shell->echoOff);
-		JobPrintf(job, shell->errOnOrEcho, escCmd);
+		JobPrintf(job, shell->echoCmd, escCmd);
 		inout_runFlags->echo = FALSE;
 	} else {
 		if (inout_runFlags->echo)
-			JobPrintf(job, shell->errOnOrEcho, escCmd);
+			JobPrintf(job, shell->echoCmd, escCmd);
 	}
 	*inout_cmdTemplate = shell->errOffOrExecIgnore;
 
@@ -820,22 +824,19 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
 }
 
 /*
- * Put out another command for the given job. If the command starts with an
- * '@' or a '-' we process it specially. In the former case, so long as the
- * -s and -n flags weren't given to make, we stick a shell-specific echoOff
- * command in the script. In the latter, we ignore errors for the entire job,
- * unless the shell has error control.
+ * Put out another command for the given job.
  *
- * If the command is just "..." we take all future commands for this job to
- * be commands to be executed once the entire graph has been made and return
- * non-zero to signal that the end of the commands was reached. These commands
- * are later attached to the .END node and executed by Job_End when all things
- * are done.
+ * If the command starts with '@' and neither the -s nor the -n flag was
+ * given to make, we stick a shell-specific echoOff command in the script.
  *
- * Side Effects:
- *	If the command begins with a '-' and the shell has no error control,
- *	the JOB_IGNERR flag is set in the job descriptor.
- *	numCommands is incremented if the command is actually printed.
+ * If the command starts with '-' and the shell has no error control (none
+ * of the predefined shells has that), we ignore errors for the entire job.
+ * XXX: Why ignore errors for the entire job?
+ * XXX: Even ignore errors for the commands before this command?
+ *
+ * If the command is just "...", all further commands for this job will be
+ * executed once the entire graph has been made. These commands are later
+ * attached to the .END node and executed by Job_End when all things are done.
  */
 static void
 JobPrintCommand(Job *job, char *cmd)
@@ -906,8 +907,7 @@ JobPrintCommand(Job *job, char *cmd)
 			if (job->echo && runFlags.echo) {
 				if (shell->hasEchoCtl)
 					JobPrintln(job, shell->echoOff);
-				JobPrintf(job, shell->errOnOrEcho,
-				    escCmd);
+				JobPrintf(job, shell->echoCmd, escCmd);
 				runFlags.echo = FALSE;
 			}
 			/*
@@ -941,7 +941,7 @@ JobPrintCommand(Job *job, char *cmd)
 			JobPrintln(job, shell->echoOff);
 			runFlags.echo = FALSE;
 		}
-		JobPrintln(job, shell->errOnOrEcho);
+		JobPrintln(job, shell->errOn);
 	}
 	if (!runFlags.echo && shell->hasEchoCtl)
 		JobPrintln(job, shell->echoOn);
@@ -2351,7 +2351,10 @@ Job_ParseShell(char *line)
 			} else if (strncmp(arg, "newline=", 8) == 0) {
 				newShell.newline = arg + 8;
 			} else if (strncmp(arg, "check=", 6) == 0) {
-				newShell.errOnOrEcho = arg + 6;
+				newShell.errOn = arg + 6;
+				/* Before 2020-12-10, these two variables
+				 * used to be a single variable. */
+				newShell.echoCmd = arg + 6;
 			} else if (strncmp(arg, "ignore=", 7) == 0) {
 				newShell.errOffOrExecIgnore = arg + 7;
 			} else if (strncmp(arg, "errout=", 7) == 0) {
@@ -2439,8 +2442,8 @@ Job_ParseShell(char *line)
 		shell->hasEchoCtl = TRUE;
 
 	if (!shell->hasErrCtl) {
-		if (shell->errOnOrEcho == NULL)
-			shell->errOnOrEcho = "";
+		if (shell->echoCmd == NULL)
+			shell->echoCmd = "";
 		if (shell->errOffOrExecIgnore == NULL)
 			shell->errOffOrExecIgnore = "%s\n";
 	}
