@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_scan.sh,v 1.5 2020/06/27 04:15:17 jruoho Exp $
+# $NetBSD: t_repeated_scan.sh,v 1.6 2020/12/10 08:16:59 mrg Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,11 @@ repeated_scan_head() {
 }
 
 repeated_scan_body() {
+
+	if ! [ $(atf_config_get "run_unsafe" "no") = "yes" ]
+	then
+		atf_skip "can disrupt networking; also PR port-evbarm/55521"
+	fi
 
 	# Even though this should amount to a "few minutes",
 	# try to still avoid stalling any automated test runs.
