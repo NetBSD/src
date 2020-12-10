@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_mtu.sh,v 1.1 2020/06/30 11:48:20 jruoho Exp $
+# $NetBSD: t_repeated_mtu.sh,v 1.2 2020/12/10 08:16:59 mrg Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,11 @@ repeated_mtu_head() {
 }
 
 repeated_mtu_body() {
+
+	if ! [ $(atf_config_get "run_unsafe" "no") = "yes" ]
+	then
+		atf_skip "can disrupt networking; also PR port-evbarm/55521"
+	fi
 
 	# This sequence covers both valid and invalid MTUs; we are
 	# only interested in testing that the system does not hang.
