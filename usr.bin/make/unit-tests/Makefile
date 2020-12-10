@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.243 2020/12/09 08:18:35 rillig Exp $
+# $NetBSD: Makefile,v 1.244 2020/12/10 17:06:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -262,6 +262,7 @@ TESTS+=		# posix1	# broken by reverting POSIX changes
 TESTS+=		recursive
 TESTS+=		sh
 TESTS+=		sh-dots
+TESTS+=		sh-flags
 TESTS+=		sh-jobs
 TESTS+=		sh-jobs-error
 TESTS+=		sh-leading-at
@@ -483,6 +484,7 @@ SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == TRUE.
 SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)) failed (.*)$$,<not found: \1>,'
 SED_CMDS.sh-dots+=		-e 's,^\(\*\*\* Error code \)[1-9][0-9]*,\1<nonzero>,'
+SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
 SED_CMDS.suff-transform-debug+=	${STD_SED_CMDS.dg1}
