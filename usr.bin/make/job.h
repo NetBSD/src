@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.64 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.65 2020/12/10 20:49:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,17 +125,16 @@ typedef enum JobStatus {
     JOB_ST_FINISHED =	4	/* Job is done (ie after SIGCHILD) */
 } JobStatus;
 
-typedef enum JobFlags {
-    JOB_NONE	= 0,
+typedef struct JobFlags {
     /* Ignore non-zero exits */
-    JOB_IGNERR	= 1 << 0,
+    Boolean ignerr;
     /* no output */
-    JOB_SILENT	= 1 << 1,
+    Boolean silent;
     /* Target is a special one. i.e. run it locally
      * if we can't export it and maxLocal is 0 */
-    JOB_SPECIAL	= 1 << 2,
+    Boolean special;
     /* we've sent 'set -x' */
-    JOB_TRACED	= 1 << 10
+    Boolean xtraced;
 } JobFlags;
 
 /* A Job manages the shell commands that are run to create a single target.
@@ -211,5 +210,6 @@ Boolean Job_TokenWithdraw(void);
 void Job_ServerStart(int, int, int);
 void Job_SetPrefix(void);
 Boolean Job_RunTarget(const char *, const char *);
+void Job_FlagsToString(char *, size_t, const JobFlags *);
 
 #endif /* MAKE_JOB_H */
