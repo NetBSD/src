@@ -1,4 +1,4 @@
-# $NetBSD: sh-flags.mk,v 1.1 2020/12/10 17:06:13 rillig Exp $
+# $NetBSD: sh-flags.mk,v 1.2 2020/12/10 17:55:30 rillig Exp $
 #
 # Tests for the effective RunFlags of a shell command (run/skip, echo/silent,
 # error check, trace), which are controlled by 12 different switches.  These
@@ -81,12 +81,9 @@ ${target}: .PHONY
 .endfor
 .endif
 
-SILENT.no=	# none
 SILENT.yes=	@
-ALWAYS.no=	# none
 ALWAYS.yes=	+
-IGNERR.no=	echo running
-IGNERR.yes=	-echo running; false
+IGNERR.yes=	-
 
 .if defined(OPT_TARGET)
 .for tgt-always in no yes
@@ -106,6 +103,7 @@ target+=	${letter.ignerr.${cmd-ignerr}:U_}
 target+=	${letter.silent.${cmd-silent}:U_}
 
 .for target in ${target:ts}
+
 ${OPT_TARGET}: .WAIT ${target} .WAIT
 .if ${tgt-always} == yes
 ${target}: .MAKE
@@ -116,10 +114,18 @@ ${target}: .IGNORE
 .if ${tgt-silent} == yes
 ${target}: .SILENT
 .endif
+
+RUNFLAGS.${target}=	${SILENT.${cmd-silent}}${ALWAYS.${cmd-always}}${IGNERR.${cmd-ignerr}}
+.if ${OPT_TARGET:M*i*} || ${tgt-ignerr} == yes || ${cmd-ignerr} == yes
+CMD.${target}=		echo running; false
+.else
+CMD.${target}=		echo running
+.endif
+
 ${target}: .PHONY
-	@+echo hide-from-output ${target}
-	${SILENT.${cmd-silent}}${ALWAYS.${cmd-always}}${IGNERR.${cmd-ignerr}}
 	@+echo hide-from-output
+	@+echo hide-from-output ${target}
+	${RUNFLAGS.${target}} ${CMD.${target}}
 .endfor
 
 .endfor
