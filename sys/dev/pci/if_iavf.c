@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.10 2020/12/10 04:00:11 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.11 2020/12/10 04:03:00 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.10 2020/12/10 04:00:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.11 2020/12/10 04:03:00 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3783,6 +3783,8 @@ iavf_aq_vc_opcode_str(const struct ixl_aq_desc *iaq)
 		return "EVENT";
 	case IAVF_VC_OP_CONFIG_RSS_KEY:
 		return "CONFIG_RSS_KEY";
+	case IAVF_VC_OP_CONFIG_RSS_LUT:
+		return "CONFIG_RSS_LUT";
 	case IAVF_VC_OP_GET_RSS_HENA_CAPS:
 		return "GET_RS_HENA_CAPS";
 	case IAVF_VC_OP_SET_RSS_HENA:
