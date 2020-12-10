@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.355 2020/12/10 21:09:58 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.356 2020/12/10 21:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.355 2020/12/10 21:09:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.356 2020/12/10 21:33:25 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -452,13 +452,13 @@ nfds_per_job(void)
 }
 
 void
-Job_FlagsToString(char *buf, size_t bufsize, const JobFlags *flags)
+Job_FlagsToString(const Job *job, char *buf, size_t bufsize)
 {
 	snprintf(buf, bufsize, "%c%c%c%c",
-	    flags->ignerr ? 'i' : '-',
-	    flags->silent ? 's' : '-',
-	    flags->special ? 'S' : '-',
-	    flags->xtraced ? 'x' : '-');
+	    job->ignerr ? 'i' : '-',
+	    job->silent ? 's' : '-',
+	    job->special ? 'S' : '-',
+	    job->xtraced ? 'x' : '-');
 }
 
 static void
@@ -469,7 +469,7 @@ job_table_dump(const char *where)
 
 	debug_printf("job table @ %s\n", where);
 	for (job = job_table; job < job_table_end; job++) {
-		Job_FlagsToString(flags, sizeof flags, &job->flags);
+		Job_FlagsToString(job, flags, sizeof flags);
 		debug_printf("job %d, status %d, flags %s, pid %d\n",
 		    (int)(job - job_table), job->status, flags, job->pid);
 	}
@@ -762,7 +762,7 @@ JobPrintln(Job *job, const char *line)
 static void
 JobPrintSpecialsErrCtl(Job *job, Boolean echo)
 {
-	if (!job->flags.silent && echo && shell->hasEchoCtl) {
+	if (!job->silent && echo && shell->hasEchoCtl) {
 		JobPrintln(job, shell->echoOff);
 		JobPrintln(job, shell->errOffOrExecIgnore);
 		JobPrintln(job, shell->echoOn);
@@ -782,9 +782,9 @@ static void
 JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 			const char **inout_cmdTemplate)
 {
-	job->flags.ignerr = TRUE;
+	job->ignerr = TRUE;
 
-	if (!job->flags.silent && inout_runFlags->echo) {
+	if (!job->silent && inout_runFlags->echo) {
 		if (shell->hasEchoCtl)
 			JobPrintln(job, shell->echoOff);
 		JobPrintf(job, shell->errOnOrEcho, escCmd);
@@ -883,7 +883,7 @@ JobPrintCommand(Job *job, char *cmd)
 		escCmd = EscapeShellDblQuot(cmd);
 
 	if (!runFlags.echo) {
-		if (!job->flags.silent && run && shell->hasEchoCtl) {
+		if (!job->silent && run && shell->hasEchoCtl) {
 			JobPrintln(job, shell->echoOff);
 		} else {
 			if (shell->hasErrCtl)
@@ -903,7 +903,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 		if (!shell->hasErrCtl && shell->errExit &&
 		    shell->errExit[0] != '\0') {
-			if (!job->flags.silent && runFlags.echo) {
+			if (!job->silent && runFlags.echo) {
 				if (shell->hasEchoCtl)
 					JobPrintln(job, shell->echoOff);
 				JobPrintf(job, shell->errOnOrEcho,
@@ -923,10 +923,9 @@ JobPrintCommand(Job *job, char *cmd)
 		}
 	}
 
-	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 &&
-	    !job->flags.xtraced) {
+	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 && !job->xtraced) {
 		JobPrintln(job, "set -x");
-		job->flags.xtraced = TRUE;
+		job->xtraced = TRUE;
 	}
 
 	JobPrintf(job, cmdTemplate, cmd);
@@ -938,7 +937,7 @@ JobPrintCommand(Job *job, char *cmd)
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (runFlags.echo && !job->flags.silent && shell->hasEchoCtl) {
+		if (runFlags.echo && !job->silent && shell->hasEchoCtl) {
 			JobPrintln(job, shell->echoOff);
 			runFlags.echo = FALSE;
 		}
@@ -1026,7 +1025,7 @@ JobFinish(Job *job, int status)
 	    job->pid, job->node->name, status);
 
 	if ((WIFEXITED(status) &&
-	     ((WEXITSTATUS(status) != 0 && !job->flags.ignerr))) ||
+	     ((WEXITSTATUS(status) != 0 && !job->ignerr))) ||
 	    WIFSIGNALED(status)) {
 		/*
 		 * If it exited non-zero and either we're doing things our
@@ -1066,8 +1065,7 @@ JobFinish(Job *job, int status)
 #ifdef USE_META
 				if (useMeta) {
 					meta_job_error(job, job->node,
-					    job->flags.ignerr,
-					    WEXITSTATUS(status));
+					    job->ignerr, WEXITSTATUS(status));
 				}
 #endif
 				if (!shouldDieQuietly(job->node, -1))
@@ -1075,9 +1073,8 @@ JobFinish(Job *job, int status)
 					    "*** [%s] Error code %d%s\n",
 					    job->node->name,
 					    WEXITSTATUS(status),
-					    job->flags.ignerr
-						? " (ignored)" : "");
-				if (job->flags.ignerr) {
+					    job->ignerr ? " (ignored)" : "");
+				if (job->ignerr) {
 					status = 0;
 				} else {
 					if (deleteOnError) {
@@ -1113,7 +1110,7 @@ JobFinish(Job *job, int status)
 	return_job_token = FALSE;
 
 	Trace_Log(JOBEND, job);
-	if (!job->flags.special) {
+	if (!job->special) {
 		if (status != 0 ||
 		    (aborting == ABORT_ERROR) || aborting == ABORT_INTERRUPT)
 			return_job_token = TRUE;
@@ -1128,7 +1125,7 @@ JobFinish(Job *job, int status)
 		 */
 		JobSaveCommands(job);
 		job->node->made = MADE;
-		if (!job->flags.special)
+		if (!job->special)
 			return_job_token = TRUE;
 		Make_Update(job->node);
 		job->status = JOB_ST_FREE;
@@ -1307,7 +1304,7 @@ JobExec(Job *job, char **argv)
 	int cpid;		/* ID of new child */
 	sigset_t mask;
 
-	job->flags.xtraced = FALSE;
+	job->xtraced = FALSE;
 
 	if (DEBUG(JOB)) {
 		int i;
@@ -1326,7 +1323,7 @@ JobExec(Job *job, char **argv)
 	 * banner with their name in it never appears). This is an attempt to
 	 * provide that feedback, even if nothing follows it.
 	 */
-	if (!job->flags.silent)
+	if (!job->silent)
 		SwitchOutputTo(job->node);
 
 	/* No interruptions until this job is on the `jobs' list */
@@ -1480,9 +1477,9 @@ JobMakeArgv(Job *job, char **argv)
 		 * practically relevant.
 		 */
 		(void)snprintf(args, sizeof args, "-%s%s",
-		    (job->flags.ignerr ? "" :
+		    (job->ignerr ? "" :
 			(shell->exit ? shell->exit : "")),
-		    (job->flags.silent ? "" :
+		    (job->silent ? "" :
 			(shell->echo ? shell->echo : "")));
 
 		if (args[1]) {
@@ -1490,11 +1487,11 @@ JobMakeArgv(Job *job, char **argv)
 			argc++;
 		}
 	} else {
-		if (!job->flags.ignerr && shell->exit) {
+		if (!job->ignerr && shell->exit) {
 			argv[argc] = UNCONST(shell->exit);
 			argc++;
 		}
-		if (!job->flags.silent && shell->echo) {
+		if (!job->silent && shell->echo) {
 			argv[argc] = UNCONST(shell->echo);
 			argc++;
 		}
@@ -1543,10 +1540,10 @@ JobStart(GNode *gn, Boolean special)
 	job->tailCmds = NULL;
 	job->status = JOB_ST_SET_UP;
 
-	job->flags.special = special || (gn->type & OP_SPECIAL);
-	job->flags.ignerr = Targ_Ignore(gn);
-	job->flags.silent = Targ_Silent(gn);
-	job->flags.xtraced = FALSE;
+	job->special = special || (gn->type & OP_SPECIAL);
+	job->ignerr = Targ_Ignore(gn);
+	job->silent = Targ_Silent(gn);
+	job->xtraced = FALSE;
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a
@@ -1600,7 +1597,7 @@ JobStart(GNode *gn, Boolean special)
 		if (useMeta) {
 			meta_job_start(job, gn);
 			if (Targ_Silent(gn)) /* might have changed */
-				job->flags.silent = TRUE;
+				job->silent = TRUE;
 		}
 #endif
 		/* We can do all the commands at once. hooray for sanity */
@@ -1641,7 +1638,7 @@ JobStart(GNode *gn, Boolean special)
 		 * good -- it does no harm to keep working up the graph.
 		 */
 		job->cmdFILE = stdout;
-		Job_Touch(gn, job->flags.silent);
+		Job_Touch(gn, job->silent);
 		run = FALSE;
 	}
 	/* Just in case it isn't already... */
@@ -1649,7 +1646,7 @@ JobStart(GNode *gn, Boolean special)
 
 	/* If we're not supposed to execute a shell, don't. */
 	if (!run) {
-		if (!job->flags.special)
+		if (!job->special)
 			Job_TokenReturn();
 		/* Unlink and close the command file if we opened one */
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
