@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.7 2020/12/10 16:36:47 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.8 2020/12/10 16:47:42 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -99,6 +99,11 @@ COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 # the '$' of the intended '${VAR}' escapes from the parser in form of the
 # expression ${:U\$}.  Because of this escaping, the variable "name" and thus
 # the condition ends up as "${VAR} == value", just as intended.
+#
+# This hack does not work for variables from .for loops since these are
+# expanded at parse time to their corresponding ${:Uvalue} expressions.
+# Making the '$' of the '${VAR}' expression indirect hides this expression
+# from the parser of the .for loop body.  See SubstVarLong.
 .MAKEFLAGS: -dc
 VAR=	value
 .if ${ ${:U\$}{VAR} == value :?ok:bad} != "ok"
