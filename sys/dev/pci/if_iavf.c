@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.9 2020/12/10 03:58:35 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.10 2020/12/10 04:00:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.9 2020/12/10 03:58:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.10 2020/12/10 04:00:11 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4841,9 +4841,6 @@ iavf_config_rss_lut(struct iavf_softc *sc)
 	struct iavf_vc_rss_lut *rss_lut;
 	uint8_t *lut, v;
 	int rv, i;
-
-	mutex_enter(&sc->sc_adminq_lock);
-	mutex_exit(&sc->sc_adminq_lock);
 
 	aqb = iavf_aqb_get(sc, &sc->sc_atq_idle);
 	if (aqb == NULL)
