@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.65 2020/12/10 20:49:11 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.66 2020/12/10 21:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,18 +125,6 @@ typedef enum JobStatus {
     JOB_ST_FINISHED =	4	/* Job is done (ie after SIGCHILD) */
 } JobStatus;
 
-typedef struct JobFlags {
-    /* Ignore non-zero exits */
-    Boolean ignerr;
-    /* no output */
-    Boolean silent;
-    /* Target is a special one. i.e. run it locally
-     * if we can't export it and maxLocal is 0 */
-    Boolean special;
-    /* we've sent 'set -x' */
-    Boolean xtraced;
-} JobFlags;
-
 /* A Job manages the shell commands that are run to create a single target.
  * Each job is run in a separate subprocess by a shell.  Several jobs can run
  * in parallel.
@@ -170,7 +158,14 @@ typedef struct Job {
 
     Boolean suspended;
 
-    JobFlags flags;		/* Flags to control treatment of job */
+    /* Ignore non-zero exits */
+    Boolean ignerr;
+    /* no output */
+    Boolean silent;
+    /* Target is a special one. */
+    Boolean special;
+    /* we've sent 'set -x' */
+    Boolean xtraced;
 
     int inPipe;			/* Pipe for reading output from job */
     int outPipe;		/* Pipe for writing control commands */
@@ -210,6 +205,6 @@ Boolean Job_TokenWithdraw(void);
 void Job_ServerStart(int, int, int);
 void Job_SetPrefix(void);
 Boolean Job_RunTarget(const char *, const char *);
-void Job_FlagsToString(char *, size_t, const JobFlags *);
+void Job_FlagsToString(const Job *, char *, size_t);
 
 #endif /* MAKE_JOB_H */

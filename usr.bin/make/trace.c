@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.22 2020/12/10 20:49:11 rillig Exp $	*/
+/*	$NetBSD: trace.c,v 1.23 2020/12/10 21:33:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include "job.h"
 #include "trace.h"
 
-MAKE_RCSID("$NetBSD: trace.c,v 1.22 2020/12/10 20:49:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: trace.c,v 1.23 2020/12/10 21:33:25 rillig Exp $");
 
 static FILE *trfile;
 static pid_t trpid;
@@ -94,7 +94,7 @@ Trace_Log(TrEvent event, Job *job)
 	if (job != NULL) {
 		char flags[5];
 
-		Job_FlagsToString(flags, sizeof flags, &job->flags);
+		Job_FlagsToString(job, flags, sizeof flags);
 		fprintf(trfile, " %s %d %s %x", job->node->name,
 		    job->pid, flags, job->node->type);
 	}
