@@ -458,7 +458,7 @@ nbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
   return true;
 }
 
-#ifdef PT_STEP
+#if defined(PT_STEP) && !defined(__arm__)
 /* Resume execution of a specified PTID, that points to a process or a thread
    within a process.  If one thread is specified, all other threads are
    suspended.  If STEP is nonzero, single-step it.  If SIGNAL is nonzero,
@@ -530,7 +530,7 @@ nbsd_resume(nbsd_nat_target *target, ptid_t ptid, int step,
 void
 nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 {
-#ifdef PT_STEP
+#if defined(PT_STEP) && !defined(__arm__)
   if (minus_one_ptid != ptid)
     nbsd_resume (this, ptid, step, signal);
   else
