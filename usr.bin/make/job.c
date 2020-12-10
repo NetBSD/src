@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.359 2020/12/10 22:34:39 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.360 2020/12/10 22:45:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.359 2020/12/10 22:34:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.360 2020/12/10 22:45:30 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -216,10 +216,11 @@ typedef struct Shell {
 	const char *exit;	/* exit on error */
 } Shell;
 
-typedef struct RunFlags {
+typedef struct CommandFlags {
 	/* Whether to echo the command before running it. */
 	Boolean echo;
 
+	/* Run the command even in -n or -N mode. */
 	Boolean always;
 
 	/*
@@ -227,7 +228,7 @@ typedef struct RunFlags {
 	 * and need to turn it back on
 	 */
 	Boolean ignerr;
-} RunFlags;
+} CommandFlags;
 
 /*
  * error handling variables
@@ -699,20 +700,20 @@ JobFindPid(int pid, JobStatus status, Boolean isJobs)
 
 /* Parse leading '@', '-' and '+', which control the exact execution mode. */
 static void
-ParseRunOptions(char **pp, RunFlags *out_runFlags)
+ParseRunOptions(char **pp, CommandFlags *out_cmdFlags)
 {
 	char *p = *pp;
-	out_runFlags->echo = TRUE;
-	out_runFlags->ignerr = FALSE;
-	out_runFlags->always = FALSE;
+	out_cmdFlags->echo = TRUE;
+	out_cmdFlags->ignerr = FALSE;
+	out_cmdFlags->always = FALSE;
 
 	for (;;) {
 		if (*p == '@')
-			out_runFlags->echo = DEBUG(LOUD);
+			out_cmdFlags->echo = DEBUG(LOUD);
 		else if (*p == '-')
-			out_runFlags->ignerr = TRUE;
+			out_cmdFlags->ignerr = TRUE;
 		else if (*p == '+')
-			out_runFlags->always = TRUE;
+			out_cmdFlags->always = TRUE;
 		else
 			break;
 		p++;
@@ -783,18 +784,18 @@ JobPrintSpecialsErrCtl(Job *job, Boolean cmdEcho)
  * Set cmdTemplate to use the weirdness instead of the simple "%s\n" template.
  */
 static void
-JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
-			const char **inout_cmdTemplate)
+JobPrintSpecialsEchoCtl(Job *job, CommandFlags *inout_cmdFlags,
+			const char *escCmd, const char **inout_cmdTemplate)
 {
 	job->ignerr = TRUE;
 
-	if (job->echo && inout_runFlags->echo) {
+	if (job->echo && inout_cmdFlags->echo) {
 		if (shell->hasEchoCtl)
 			JobPrintln(job, shell->echoOff);
 		JobPrintf(job, shell->echoCmd, escCmd);
-		inout_runFlags->echo = FALSE;
+		inout_cmdFlags->echo = FALSE;
 	} else {
-		if (inout_runFlags->echo)
+		if (inout_cmdFlags->echo)
 			JobPrintf(job, shell->echoCmd, escCmd);
 	}
 	*inout_cmdTemplate = shell->execIgnore;
@@ -803,23 +804,23 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 	 * The error ignoration (hee hee) is already taken care of by the
 	 * errOffOrExecIgnore template, so pretend error checking is still on.
 	 */
-	inout_runFlags->ignerr = FALSE;
+	inout_cmdFlags->ignerr = FALSE;
 }
 
 static void
 JobPrintSpecials(Job *const job, const char *const escCmd,
-		 Boolean const run, RunFlags *const inout_runFlags,
+		 Boolean const run, CommandFlags *const inout_cmdFlags,
 		 const char **const inout_cmdTemplate)
 {
 	if (!run)
-		inout_runFlags->ignerr = FALSE;
+		inout_cmdFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
-		JobPrintSpecialsErrCtl(job, inout_runFlags->echo);
+		JobPrintSpecialsErrCtl(job, inout_cmdFlags->echo);
 	else if (shell->execIgnore != NULL && shell->execIgnore[0] != '\0') {
-		JobPrintSpecialsEchoCtl(job, inout_runFlags, escCmd,
+		JobPrintSpecialsEchoCtl(job, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
-		inout_runFlags->ignerr = FALSE;
+		inout_cmdFlags->ignerr = FALSE;
 }
 
 /*
@@ -844,7 +845,7 @@ JobPrintCommand(Job *job, char *cmd)
 
 	Boolean run;
 
-	RunFlags runFlags;
+	CommandFlags cmdFlags;
 	/* Template to use when printing the command */
 	const char *cmdTemplate;
 	char *cmdStart;		/* Start of expanded command */
@@ -860,10 +861,10 @@ JobPrintCommand(Job *job, char *cmd)
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&cmd, &runFlags);
+	ParseRunOptions(&cmd, &cmdFlags);
 
 	/* The '+' command flag overrides the -n or -N options. */
-	if (runFlags.always && !run) {
+	if (cmdFlags.always && !run) {
 		/*
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
@@ -882,17 +883,17 @@ JobPrintCommand(Job *job, char *cmd)
 	if (!shell->hasErrCtl)
 		escCmd = EscapeShellDblQuot(cmd);
 
-	if (!runFlags.echo) {
+	if (!cmdFlags.echo) {
 		if (job->echo && run && shell->hasEchoCtl) {
 			JobPrintln(job, shell->echoOff);
 		} else {
 			if (shell->hasErrCtl)
-				runFlags.echo = TRUE;
+				cmdFlags.echo = TRUE;
 		}
 	}
 
-	if (runFlags.ignerr) {
-		JobPrintSpecials(job, escCmd, run, &runFlags, &cmdTemplate);
+	if (cmdFlags.ignerr) {
+		JobPrintSpecials(job, escCmd, run, &cmdFlags, &cmdTemplate);
 	} else {
 
 		/*
@@ -903,11 +904,11 @@ JobPrintCommand(Job *job, char *cmd)
 
 		if (!shell->hasErrCtl && shell->errExit &&
 		    shell->errExit[0] != '\0') {
-			if (job->echo && runFlags.echo) {
+			if (job->echo && cmdFlags.echo) {
 				if (shell->hasEchoCtl)
 					JobPrintln(job, shell->echoOff);
 				JobPrintf(job, shell->echoCmd, escCmd);
-				runFlags.echo = FALSE;
+				cmdFlags.echo = FALSE;
 			}
 			/*
 			 * If it's a comment line or blank, treat as an
@@ -918,7 +919,7 @@ JobPrintCommand(Job *job, char *cmd)
 				cmdTemplate = shell->execIgnore;
 			else
 				cmdTemplate = shell->errExit;
-			runFlags.ignerr = FALSE;
+			cmdFlags.ignerr = FALSE;
 		}
 	}
 
@@ -930,19 +931,19 @@ JobPrintCommand(Job *job, char *cmd)
 	JobPrintf(job, cmdTemplate, cmd);
 	free(cmdStart);
 	free(escCmd);
-	if (runFlags.ignerr) {
+	if (cmdFlags.ignerr) {
 		/*
 		 * If echoing is already off, there's no point in issuing the
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (runFlags.echo && job->echo && shell->hasEchoCtl) {
+		if (cmdFlags.echo && job->echo && shell->hasEchoCtl) {
 			JobPrintln(job, shell->echoOff);
-			runFlags.echo = FALSE;
+			cmdFlags.echo = FALSE;
 		}
 		JobPrintln(job, shell->errOn);
 	}
-	if (!runFlags.echo && shell->hasEchoCtl)
+	if (!cmdFlags.echo && shell->hasEchoCtl)
 		JobPrintln(job, shell->echoOn);
 }
 
