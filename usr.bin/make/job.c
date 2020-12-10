@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.354 2020/12/10 20:49:11 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.355 2020/12/10 21:09:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.354 2020/12/10 20:49:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.355 2020/12/10 21:09:58 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -385,7 +385,7 @@ static Shell shells[] = {
 
 /* This is the shell to which we pass all commands in the Makefile.
  * It is set by the Job_ParseShell function. */
-static Shell *commandShell = &shells[DEFSHELL_INDEX];
+static Shell *shell = &shells[DEFSHELL_INDEX];
 const char *shellPath = NULL;	/* full pathname of executable image */
 const char *shellName = NULL;	/* last component of shellPath */
 char *shellErrFlag = NULL;
@@ -762,12 +762,12 @@ JobPrintln(Job *job, const char *line)
 static void
 JobPrintSpecialsErrCtl(Job *job, Boolean echo)
 {
-	if (!job->flags.silent && echo && commandShell->hasEchoCtl) {
-		JobPrintln(job, commandShell->echoOff);
-		JobPrintln(job, commandShell->errOffOrExecIgnore);
-		JobPrintln(job, commandShell->echoOn);
+	if (!job->flags.silent && echo && shell->hasEchoCtl) {
+		JobPrintln(job, shell->echoOff);
+		JobPrintln(job, shell->errOffOrExecIgnore);
+		JobPrintln(job, shell->echoOn);
 	} else {
-		JobPrintln(job, commandShell->errOffOrExecIgnore);
+		JobPrintln(job, shell->errOffOrExecIgnore);
 	}
 }
 
@@ -785,15 +785,15 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 	job->flags.ignerr = TRUE;
 
 	if (!job->flags.silent && inout_runFlags->echo) {
-		if (commandShell->hasEchoCtl)
-			JobPrintln(job, commandShell->echoOff);
-		JobPrintf(job, commandShell->errOnOrEcho, escCmd);
+		if (shell->hasEchoCtl)
+			JobPrintln(job, shell->echoOff);
+		JobPrintf(job, shell->errOnOrEcho, escCmd);
 		inout_runFlags->echo = FALSE;
 	} else {
 		if (inout_runFlags->echo)
-			JobPrintf(job, commandShell->errOnOrEcho, escCmd);
+			JobPrintf(job, shell->errOnOrEcho, escCmd);
 	}
-	*inout_cmdTemplate = commandShell->errOffOrExecIgnore;
+	*inout_cmdTemplate = shell->errOffOrExecIgnore;
 
 	/*
 	 * The error ignoration (hee hee) is already taken care of by the
@@ -809,10 +809,10 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
 {
 	if (!run)
 		inout_runFlags->ignerr = FALSE;
-	else if (commandShell->hasErrCtl)
+	else if (shell->hasErrCtl)
 		JobPrintSpecialsErrCtl(job, inout_runFlags->echo);
-	else if (commandShell->errOffOrExecIgnore != NULL &&
-		 commandShell->errOffOrExecIgnore[0] != '\0') {
+	else if (shell->errOffOrExecIgnore != NULL &&
+		 shell->errOffOrExecIgnore[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, inout_runFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
@@ -879,14 +879,14 @@ JobPrintCommand(Job *job, char *cmd)
 	 * and this will need the characters '$ ` \ "' escaped
 	 */
 
-	if (!commandShell->hasErrCtl)
+	if (!shell->hasErrCtl)
 		escCmd = EscapeShellDblQuot(cmd);
 
 	if (!runFlags.echo) {
-		if (!job->flags.silent && run && commandShell->hasEchoCtl) {
-			JobPrintln(job, commandShell->echoOff);
+		if (!job->flags.silent && run && shell->hasEchoCtl) {
+			JobPrintln(job, shell->echoOff);
 		} else {
-			if (commandShell->hasErrCtl)
+			if (shell->hasErrCtl)
 				runFlags.echo = TRUE;
 		}
 	}
@@ -901,12 +901,12 @@ JobPrintCommand(Job *job, char *cmd)
 		 * set up commands to run through it.
 		 */
 
-		if (!commandShell->hasErrCtl && commandShell->errExit &&
-		    commandShell->errExit[0] != '\0') {
+		if (!shell->hasErrCtl && shell->errExit &&
+		    shell->errExit[0] != '\0') {
 			if (!job->flags.silent && runFlags.echo) {
-				if (commandShell->hasEchoCtl)
-					JobPrintln(job, commandShell->echoOff);
-				JobPrintf(job, commandShell->errOnOrEcho,
+				if (shell->hasEchoCtl)
+					JobPrintln(job, shell->echoOff);
+				JobPrintf(job, shell->errOnOrEcho,
 				    escCmd);
 				runFlags.echo = FALSE;
 			}
@@ -914,11 +914,11 @@ JobPrintCommand(Job *job, char *cmd)
 			 * If it's a comment line or blank, treat as an
 			 * ignored error.
 			 */
-			if (escCmd[0] == commandShell->commentChar ||
+			if (escCmd[0] == shell->commentChar ||
 			    (escCmd[0] == '\0'))
-				cmdTemplate = commandShell->errOffOrExecIgnore;
+				cmdTemplate = shell->errOffOrExecIgnore;
 			else
-				cmdTemplate = commandShell->errExit;
+				cmdTemplate = shell->errExit;
 			runFlags.ignerr = FALSE;
 		}
 	}
@@ -938,15 +938,14 @@ JobPrintCommand(Job *job, char *cmd)
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (runFlags.echo && !job->flags.silent &&
-		    commandShell->hasEchoCtl) {
-			JobPrintln(job, commandShell->echoOff);
+		if (runFlags.echo && !job->flags.silent && shell->hasEchoCtl) {
+			JobPrintln(job, shell->echoOff);
 			runFlags.echo = FALSE;
 		}
-		JobPrintln(job, commandShell->errOnOrEcho);
+		JobPrintln(job, shell->errOnOrEcho);
 	}
-	if (!runFlags.echo && commandShell->hasEchoCtl)
-		JobPrintln(job, commandShell->echoOn);
+	if (!runFlags.echo && shell->hasEchoCtl)
+		JobPrintln(job, shell->echoOn);
 }
 
 /*
@@ -1468,8 +1467,8 @@ JobMakeArgv(Job *job, char **argv)
 	argv[0] = UNCONST(shellName);
 	argc = 1;
 
-	if ((commandShell->exit && commandShell->exit[0] != '-') ||
-	    (commandShell->echo && commandShell->echo[0] != '-')) {
+	if ((shell->exit && shell->exit[0] != '-') ||
+	    (shell->echo && shell->echo[0] != '-')) {
 		/*
 		 * At least one of the flags doesn't have a minus before it,
 		 * so merge them together. Have to do this because the Bourne
@@ -1482,21 +1481,21 @@ JobMakeArgv(Job *job, char **argv)
 		 */
 		(void)snprintf(args, sizeof args, "-%s%s",
 		    (job->flags.ignerr ? "" :
-			(commandShell->exit ? commandShell->exit : "")),
+			(shell->exit ? shell->exit : "")),
 		    (job->flags.silent ? "" :
-			(commandShell->echo ? commandShell->echo : "")));
+			(shell->echo ? shell->echo : "")));
 
 		if (args[1]) {
 			argv[argc] = args;
 			argc++;
 		}
 	} else {
-		if (!job->flags.ignerr && commandShell->exit) {
-			argv[argc] = UNCONST(commandShell->exit);
+		if (!job->flags.ignerr && shell->exit) {
+			argv[argc] = UNCONST(shell->exit);
 			argc++;
 		}
-		if (!job->flags.silent && commandShell->echo) {
-			argv[argc] = UNCONST(commandShell->echo);
+		if (!job->flags.silent && shell->echo) {
+			argv[argc] = UNCONST(shell->echo);
 			argc++;
 		}
 	}
@@ -1693,10 +1692,10 @@ JobOutput(char *cp, char *endp)
 {
 	char *ecp;
 
-	if (commandShell->noPrint == NULL || commandShell->noPrint[0] == '\0')
+	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
 		return cp;
 
-	while ((ecp = strstr(cp, commandShell->noPrint)) != NULL) {
+	while ((ecp = strstr(cp, shell->noPrint)) != NULL) {
 		if (ecp != cp) {
 			*ecp = '\0';
 			/*
@@ -1708,7 +1707,7 @@ JobOutput(char *cp, char *endp)
 			(void)fprintf(stdout, "%s", cp);
 			(void)fflush(stdout);
 		}
-		cp = ecp + commandShell->noPrintLen;
+		cp = ecp + shell->noPrintLen;
 		if (cp != endp) {
 			/*
 			 * Still more to print, look again after skipping
@@ -2064,7 +2063,7 @@ Job_Make(GNode *gn)
 static void
 InitShellNameAndPath(void)
 {
-	shellName = commandShell->name;
+	shellName = shell->name;
 
 #ifdef DEFSHELL_CUSTOM
 	if (shellName[0] == '/') {
@@ -2084,26 +2083,22 @@ Shell_Init(void)
 		InitShellNameAndPath();
 
 	Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
-	if (commandShell->exit == NULL) {
-		commandShell->exit = "";
-	}
-	if (commandShell->echo == NULL) {
-		commandShell->echo = "";
-	}
-	if (commandShell->hasErrCtl && commandShell->exit[0] != '\0') {
+	if (shell->exit == NULL)
+		shell->exit = "";
+	if (shell->echo == NULL)
+		shell->echo = "";
+	if (shell->hasErrCtl && shell->exit[0] != '\0') {
 		if (shellErrFlag &&
-		    strcmp(commandShell->exit, &shellErrFlag[1]) != 0) {
+		    strcmp(shell->exit, &shellErrFlag[1]) != 0) {
 			free(shellErrFlag);
 			shellErrFlag = NULL;
 		}
 		if (shellErrFlag == NULL) {
-			size_t n = strlen(commandShell->exit) + 2;
+			size_t n = strlen(shell->exit) + 2;
 
 			shellErrFlag = bmake_malloc(n);
-			if (shellErrFlag != NULL) {
-				snprintf(shellErrFlag, n, "-%s",
-				    commandShell->exit);
-			}
+			if (shellErrFlag != NULL)
+				snprintf(shellErrFlag, n, "-%s", shell->exit);
 		}
 	} else if (shellErrFlag != NULL) {
 		free(shellErrFlag);
@@ -2118,7 +2113,7 @@ Shell_Init(void)
 const char *
 Shell_GetNewline(void)
 {
-	return commandShell->newline;
+	return shell->newline;
 }
 
 void
@@ -2261,7 +2256,7 @@ FindShellByName(const char *name)
 }
 
 /*
- * Parse a shell specification and set up commandShell, shellPath and
+ * Parse a shell specification and set up 'shell', shellPath and
  * shellName appropriately.
  *
  * Input:
@@ -2271,9 +2266,9 @@ FindShellByName(const char *name)
  *	FALSE if the specification was incorrect.
  *
  * Side Effects:
- *	commandShell points to a Shell structure (either predefined or
+ *	'shell' points to a Shell structure (either predefined or
  *	created from the shell spec), shellPath is the full path of the
- *	shell described by commandShell, while shellName is just the
+ *	shell described by 'shell', while shellName is just the
  *	final component of shellPath.
  *
  * Notes:
@@ -2395,7 +2390,7 @@ Job_ParseShell(char *line)
 				free(words);
 				return FALSE;
 			}
-			commandShell = sh;
+			shell = sh;
 			shellName = newShell.name;
 			if (shellPath != NULL) {
 				/*
@@ -2434,26 +2429,23 @@ Job_ParseShell(char *line)
 				free(words);
 				return FALSE;
 			}
-			commandShell = sh;
+			shell = sh;
 		} else {
-			commandShell = bmake_malloc(sizeof *commandShell);
-			*commandShell = newShell;
+			shell = bmake_malloc(sizeof *shell);
+			*shell = newShell;
 		}
 		/* this will take care of shellErrFlag */
 		Shell_Init();
 	}
 
-	if (commandShell->echoOn && commandShell->echoOff) {
-		commandShell->hasEchoCtl = TRUE;
-	}
+	if (shell->echoOn && shell->echoOff)
+		shell->hasEchoCtl = TRUE;
 
-	if (!commandShell->hasErrCtl) {
-		if (commandShell->errOnOrEcho == NULL) {
-			commandShell->errOnOrEcho = "";
-		}
-		if (commandShell->errOffOrExecIgnore == NULL) {
-			commandShell->errOffOrExecIgnore = "%s\n";
-		}
+	if (!shell->hasErrCtl) {
+		if (shell->errOnOrEcho == NULL)
+			shell->errOnOrEcho = "";
+		if (shell->errOffOrExecIgnore == NULL)
+			shell->errOffOrExecIgnore = "%s\n";
 	}
 
 	/*
