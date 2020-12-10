@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.352 2020/12/10 20:10:03 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.353 2020/12/10 20:14:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.352 2020/12/10 20:10:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.353 2020/12/10 20:14:35 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1517,7 +1517,7 @@ JobStart(GNode *gn, JobFlags flags)
 	Job *job;		/* new job descriptor */
 	char *argv[10];		/* Argument vector to shell */
 	Boolean cmdsOK;		/* true if the nodes commands were all right */
-	Boolean noExec;		/* Set true if we decide not to run the job */
+	Boolean run;
 	int tfd;		/* File descriptor to the temp file */
 
 	for (job = job_table; job < job_table_end; job++) {
@@ -1586,7 +1586,7 @@ JobStart(GNode *gn, JobFlags flags)
 		 * Send the commands to the command file, flush all its
 		 * buffers then rewind and remove the thing.
 		 */
-		noExec = FALSE;
+		run = TRUE;
 
 #ifdef USE_META
 		if (useMeta) {
@@ -1601,11 +1601,10 @@ JobStart(GNode *gn, JobFlags flags)
 
 		/*
 		 * If we didn't print out any commands to the shell script,
-		 * there's not much point in executing the shell, is there?
+		 * there's no point in executing the shell.
 		 */
-		if (numCommands == 0) {
-			noExec = TRUE;
-		}
+		if (numCommands == 0)
+			run = FALSE;
 
 		free(tfile);
 	} else if (!GNode_ShouldExecute(gn)) {
@@ -1625,7 +1624,7 @@ JobStart(GNode *gn, JobFlags flags)
 		if (cmdsOK)
 			JobPrintCommands(job);
 		/* Don't execute the shell, thank you. */
-		noExec = TRUE;
+		run = FALSE;
 	} else {
 		/*
 		 * Just touch the target and note that no shell should be
@@ -1635,13 +1634,13 @@ JobStart(GNode *gn, JobFlags flags)
 		 */
 		job->cmdFILE = stdout;
 		Job_Touch(gn, (job->flags & JOB_SILENT) != 0);
-		noExec = TRUE;
+		run = FALSE;
 	}
 	/* Just in case it isn't already... */
 	(void)fflush(job->cmdFILE);
 
 	/* If we're not supposed to execute a shell, don't. */
-	if (noExec) {
+	if (!run) {
 		if (!(job->flags & JOB_SPECIAL))
 			Job_TokenReturn();
 		/* Unlink and close the command file if we opened one */
