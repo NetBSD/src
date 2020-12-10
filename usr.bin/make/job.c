@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.358 2020/12/10 22:17:37 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.359 2020/12/10 22:34:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.358 2020/12/10 22:17:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.359 2020/12/10 22:34:39 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -198,13 +198,10 @@ typedef struct Shell {
 
 	Boolean hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
-	const char *errOn;	/* template to turn on error checking */
-	const char *echoCmd;
-	/*
-	 * template to turn off error checking
-	 * XXX: split into errOff and execIgnore
-	 */
-	const char *errOffOrExecIgnore;
+	const char *errOn;	/* command to turn on error checking */
+	const char *errOff;	/* command to turn off error checking */
+	const char *echoCmd;	/* template to echo a command */
+	const char *execIgnore;	/* template to run a command with ignerr */
 	const char *errExit;	/* template to use for testing exit code */
 
 	/* string literal that results in a newline character when it appears
@@ -308,8 +305,9 @@ static Shell shells[] = {
 	0,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
+	"",			/* .errOff */
 	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .errOffOrExecIgnore */
+	"%s\n",			/* .execIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
@@ -330,8 +328,9 @@ static Shell shells[] = {
 	0,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
+	"",			/* .errOff */
 	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .errOffOrExecIgnore */
+	"%s\n",			/* .execIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar*/
@@ -354,8 +353,9 @@ static Shell shells[] = {
 	6,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
+	"",			/* .errOff */
 	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .errOffOrExecIgnore */
+	"%s\n",			/* .execIgnore */
 	"{ %s \n} || exit $?\n", /* .errExit */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
@@ -376,9 +376,9 @@ static Shell shells[] = {
 	13,			/* .noPrintLen */
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
+	"",			/* .errOff */
 	"echo \"%s\"\n",	/* .echoCmd */
-	/* XXX: Mismatch between errOn and execIgnore */
-	"csh -c \"%s || exit 0\"\n", /* .errOffOrExecIgnore */
+	"csh -c \"%s || exit 0\"\n", /* .execIgnore */
 	"",			/* .errExit */
 	"'\\\n'",		/* .newline */
 	'#',			/* .commentChar */
@@ -768,10 +768,10 @@ JobPrintSpecialsErrCtl(Job *job, Boolean cmdEcho)
 {
 	if (job->echo && cmdEcho && shell->hasEchoCtl) {
 		JobPrintln(job, shell->echoOff);
-		JobPrintln(job, shell->errOffOrExecIgnore);
+		JobPrintln(job, shell->errOff);
 		JobPrintln(job, shell->echoOn);
 	} else {
-		JobPrintln(job, shell->errOffOrExecIgnore);
+		JobPrintln(job, shell->errOff);
 	}
 }
 
@@ -797,7 +797,7 @@ JobPrintSpecialsEchoCtl(Job *job, RunFlags *inout_runFlags, const char *escCmd,
 		if (inout_runFlags->echo)
 			JobPrintf(job, shell->echoCmd, escCmd);
 	}
-	*inout_cmdTemplate = shell->errOffOrExecIgnore;
+	*inout_cmdTemplate = shell->execIgnore;
 
 	/*
 	 * The error ignoration (hee hee) is already taken care of by the
@@ -815,8 +815,7 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
 		inout_runFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
 		JobPrintSpecialsErrCtl(job, inout_runFlags->echo);
-	else if (shell->errOffOrExecIgnore != NULL &&
-		 shell->errOffOrExecIgnore[0] != '\0') {
+	else if (shell->execIgnore != NULL && shell->execIgnore[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, inout_runFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
@@ -916,7 +915,7 @@ JobPrintCommand(Job *job, char *cmd)
 			 */
 			if (escCmd[0] == shell->commentChar ||
 			    (escCmd[0] == '\0'))
-				cmdTemplate = shell->errOffOrExecIgnore;
+				cmdTemplate = shell->execIgnore;
 			else
 				cmdTemplate = shell->errExit;
 			runFlags.ignerr = FALSE;
@@ -2351,12 +2350,15 @@ Job_ParseShell(char *line)
 			} else if (strncmp(arg, "newline=", 8) == 0) {
 				newShell.newline = arg + 8;
 			} else if (strncmp(arg, "check=", 6) == 0) {
-				newShell.errOn = arg + 6;
 				/* Before 2020-12-10, these two variables
-				 * used to be a single variable. */
+				 * had been a single variable. */
+				newShell.errOn = arg + 6;
 				newShell.echoCmd = arg + 6;
 			} else if (strncmp(arg, "ignore=", 7) == 0) {
-				newShell.errOffOrExecIgnore = arg + 7;
+				/* Before 2020-12-10, these two variables
+				 * had been a single variable. */
+				newShell.errOff = arg + 7;
+				newShell.execIgnore = arg + 7;
 			} else if (strncmp(arg, "errout=", 7) == 0) {
 				newShell.errExit = arg + 7;
 			} else if (strncmp(arg, "comment=", 8) == 0) {
@@ -2444,8 +2446,8 @@ Job_ParseShell(char *line)
 	if (!shell->hasErrCtl) {
 		if (shell->echoCmd == NULL)
 			shell->echoCmd = "";
-		if (shell->errOffOrExecIgnore == NULL)
-			shell->errOffOrExecIgnore = "%s\n";
+		if (shell->execIgnore == NULL)
+			shell->execIgnore = "%s\n";
 	}
 
 	/*
