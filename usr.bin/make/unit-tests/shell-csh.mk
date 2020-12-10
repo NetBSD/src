@@ -1,4 +1,4 @@
-# $NetBSD: shell-csh.mk,v 1.5 2020/10/19 19:14:11 rillig Exp $
+# $NetBSD: shell-csh.mk,v 1.6 2020/12/10 21:09:58 rillig Exp $
 #
 # Tests for using a C shell for running the commands.
 
@@ -11,7 +11,7 @@ CSH!=	which csh || true
 .SHELL: name="csh" path="${CSH}"
 .endif
 
-# In parallel mode, the commandShell->noPrint command is filtered from
+# In parallel mode, the shell->noPrint command is filtered from
 # the output, rather naively (in JobOutput).
 #
 # Until 2020-10-03, the output in parallel mode was garbled because
