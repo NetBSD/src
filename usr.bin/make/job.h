@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.66 2020/12/10 21:33:25 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.67 2020/12/10 21:41:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -160,8 +160,8 @@ typedef struct Job {
 
     /* Ignore non-zero exits */
     Boolean ignerr;
-    /* no output */
-    Boolean silent;
+    /* Output the command before or instead of running it. */
+    Boolean echo;
     /* Target is a special one. */
     Boolean special;
     /* we've sent 'set -x' */
