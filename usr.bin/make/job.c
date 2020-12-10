@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.361 2020/12/10 23:03:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.362 2020/12/10 23:12:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.361 2020/12/10 23:03:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.362 2020/12/10 23:12:59 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -247,10 +247,6 @@ static AbortReason aborting = ABORT_NONE;
  * this tracks the number of tokens currently "out" to build jobs.
  */
 int jobTokensRunning = 0;
-
-/* The number of commands actually printed to the shell commands file for
- * the current job.  Should this number be 0, no shell will be executed. */
-static int numCommands;
 
 typedef enum JobStartResult {
 	JOB_RUNNING,		/* Job is running */
@@ -853,8 +849,6 @@ JobPrintCommand(Job *job, char *cmd)
 
 	run = GNode_ShouldExecute(job->node);
 
-	numCommands++;
-
 	Var_Subst(cmd, job->node, VARE_WANTRES, &cmd);
 	/* TODO: handle errors */
 	cmdStart = cmd;
@@ -952,11 +946,14 @@ JobPrintCommand(Job *job, char *cmd)
  *
  * The special command "..." stops printing and saves the remaining commands
  * to be executed later.
+ *
+ * Return whether at least one command was written to the shell file.
  */
-static void
+static Boolean
 JobPrintCommands(Job *job)
 {
 	StringListNode *ln;
+	Boolean seen = FALSE;
 
 	for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
@@ -968,7 +965,10 @@ JobPrintCommands(Job *job)
 		}
 
 		JobPrintCommand(job, ln->datum);
+		seen = TRUE;
 	}
+
+	return seen;
 }
 
 /* Save the delayed commands, to be executed when everything else is done. */
@@ -1544,15 +1544,9 @@ JobOpenTmpFile(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 			job->echo = FALSE;
 	}
 #endif
-	/* We can do all the commands at once. hooray for sanity */
-	numCommands = 0;
-	JobPrintCommands(job);
 
-	/*
-	 * If we didn't print out any commands to the shell script,
-	 * there's no point in executing the shell.
-	 */
-	if (numCommands == 0)
+	/* We can do all the commands at once. hooray for sanity */
+	if (!JobPrintCommands(job))
 		*out_run = FALSE;
 
 	free(tfile);
