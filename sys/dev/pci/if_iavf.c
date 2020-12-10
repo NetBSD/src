@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.8 2020/12/08 07:53:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.9 2020/12/10 03:58:35 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.8 2020/12/08 07:53:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.9 2020/12/10 03:58:35 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4767,9 +4767,9 @@ iavf_config_hena(struct iavf_softc *sc)
 
 	caps = IXL_AQB_KVA(aqb);
 	if (sc->sc_mac_type == I40E_MAC_X722_VF)
-		*caps = IXL_RSS_HENA_DEFAULT_XL710;
-	else
 		*caps = IXL_RSS_HENA_DEFAULT_X722;
+	else
+		*caps = IXL_RSS_HENA_DEFAULT_XL710;
 
 	memset(&iaq, 0, sizeof(iaq));
 	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
