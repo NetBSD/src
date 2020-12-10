@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.157 2020/12/05 17:46:41 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.158 2020/12/10 20:49:11 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -772,7 +772,7 @@ meta_job_event(Job *job)
 }
 
 void
-meta_job_error(Job *job, GNode *gn, int flags, int status)
+meta_job_error(Job *job, GNode *gn, Boolean ignerr, int status)
 {
     char cwd[MAXPATHLEN];
     BuildMon *pbm;
@@ -786,9 +786,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
     }
     if (pbm->mfp != NULL) {
 	fprintf(pbm->mfp, "\n*** Error code %d%s\n",
-		status,
-		(flags & JOB_IGNERR) ?
-		"(ignored)" : "");
+		status, ignerr ? "(ignored)" : "");
     }
     if (gn != NULL) {
 	Var_Set(".ERROR_TARGET", GNode_Path(gn), VAR_GLOBAL);
