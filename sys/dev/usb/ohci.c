@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.312 2020/12/10 20:48:33 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.313 2020/12/10 20:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.312 2020/12/10 20:48:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.313 2020/12/10 20:50:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -612,7 +612,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 
 	usb_syncmem(dma, 0, len,
 	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
- 	const uint32_t tdflags = HTOO32(
+	const uint32_t tdflags = HTOO32(
 	    OHCI_TD_SET_DP(rd ? OHCI_TD_DP_IN : OHCI_TD_DP_OUT) |
 	    OHCI_TD_SET_CC(OHCI_TD_NOCC) |
 	    OHCI_TD_SET_TOGGLE(OHCI_TD_TOGGLE_CARRY) |
