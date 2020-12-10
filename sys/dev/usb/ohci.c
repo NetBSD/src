@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.311 2020/12/09 07:10:01 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.312 2020/12/10 20:48:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.311 2020/12/09 07:10:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.312 2020/12/10 20:48:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2386,7 +2386,7 @@ ohci_abortx(struct usbd_xfer *xfer)
 		std->held = p->held;
 		std->xfer = xfer;
 		p->held = NULL;
- 	}
+	}
 	/* Zap headp register if hardware pointed inside the xfer. */
 	if (hit) {
 		DPRINTFN(1, "set hd=0x%08jx, tl=0x%08jx",  (int)p->physaddr,
