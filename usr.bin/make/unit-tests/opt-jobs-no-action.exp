@@ -1,12 +1,12 @@
 begin explain
 # .echoOff
-# .errOnOrEcho
+# .echoTmpl
 echo "false regular"
-# .errExit
+# .runChkTmpl
 { false regular 
 } || exit $?
 # .echoOn
-# .errExit
+# .runChkTmpl
 { : silent 
 } || exit $?
 # .echoOn
@@ -19,9 +19,9 @@ begin combined
 
 silent=no always=no ignerr=no
 # .echoOff
-# .errOnOrEcho
+# .echoTmpl
 echo "echo running"
-# .errExit
+# .runChkTmpl
 { echo running 
 } || exit $?
 # .echoOn
@@ -39,7 +39,7 @@ running
 *** Error code 1 (ignored)
 
 silent=yes always=no ignerr=no
-# .errExit
+# .runChkTmpl
 { echo running 
 } || exit $?
 # .echoOn

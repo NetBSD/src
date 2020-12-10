@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-no-action.mk,v 1.7 2020/12/09 08:20:56 rillig Exp $
+# $NetBSD: opt-jobs-no-action.mk,v 1.8 2020/12/10 23:54:41 rillig Exp $
 #
 # Tests for the combination of the options -j and -n, which prints the
 # commands instead of actually running them.
@@ -30,9 +30,9 @@
 	quiet="\# .echoOff" \
 	echo="\# .echoOn" \
 	filter="\# .noPrint\n" \
-	check="\# .errOnOrEcho\n""echo \"%s\"\n" \
-	ignore="\# .errOffOrExecIgnore\n""%s\n" \
-	errout="\# .errExit\n""{ %s \n} || exit $$?\n"
+	check="\# .echoTmpl\n""echo \"%s\"\n" \
+	ignore="\# .runIgnTmpl\n""%s\n" \
+	errout="\# .runChkTmpl\n""{ %s \n} || exit $$?\n"
 
 all: explained combined
 .ORDER: explained combined
@@ -42,17 +42,17 @@ explained: .PHONY
 	@+echo hide-from-output 'begin explain'
 
 	# The following command is regular, it is printed twice:
-	# - first using the template shell.errOnOrEcho,
-	# - then using the template shell.errExit.
+	# - first using the template shell.echoTmpl,
+	# - then using the template shell.runChkTmpl.
 	false regular
 
 	# The following command is silent, it is printed once, using the
-	# template shell.errExit.
+	# template shell.runChkTmpl.
 	@: silent
 
 	# The following command ignores errors, it is printed once, using
 	# the default template for cmdTemplate, which is "%s\n".
-	# XXX: Why is it not printed using shell.errOnOrEcho as well?
+	# XXX: Why is it not printed using shell.echoTmpl as well?
 	# XXX: The '-' should not influence the echoing of the command.
 	-false ignore-errors
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.363 2020/12/10 23:36:20 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.364 2020/12/10 23:54:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.363 2020/12/10 23:36:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.364 2020/12/10 23:54:41 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -162,12 +162,12 @@ MAKE_RCSID("$NetBSD: job.c,v 1.363 2020/12/10 23:36:20 rillig Exp $");
  * it is filtered out using noPrint and noPrintLen.
  *
  * The error checking for individual commands is controlled using hasErrCtl,
- * errOnOrEcho, errOffOrExecIgnore and errExit.
+ * errOn, errOff and runChkTmpl.
  *
- * If a shell doesn't have error control, errOnOrEcho becomes a printf template
- * for echoing the command, should echoing be on; errOffOrExecIgnore becomes
+ * If a shell doesn't have error control, echoTmpl becomes a printf template
+ * for echoing the command, should echoing be on; runIgnTmpl becomes
  * another printf template for executing the command while ignoring the return
- * status. Finally errExit is a printf template for running the command and
+ * status. Finally runChkTmpl is a printf template for running the command and
  * causing the shell to exit on error. If any of these strings are empty when
  * hasErrCtl is FALSE, the command will be executed anyway as is, and if it
  * causes an error, so be it. Any templates set up to echo the command will
@@ -200,9 +200,12 @@ typedef struct Shell {
 				 * individual commands */
 	const char *errOn;	/* command to turn on error checking */
 	const char *errOff;	/* command to turn off error checking */
-	const char *echoCmd;	/* template to echo a command */
-	const char *execIgnore;	/* template to run a command with ignerr */
-	const char *errExit;	/* template to use for testing exit code */
+
+	const char *echoTmpl;	/* template to echo a command */
+	const char *runIgnTmpl;	/* template to run a command
+				 * without error checking */
+	const char *runChkTmpl;	/* template to run a command
+				 * with error checking */
 
 	/* string literal that results in a newline character when it appears
 	 * outside of any 'quote' or "quote" characters */
@@ -303,9 +306,9 @@ static Shell shells[] = {
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
 	"",			/* .errOff */
-	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .execIgnore */
-	"{ %s \n} || exit $?\n", /* .errExit */
+	"echo \"%s\"\n",	/* .echoTmpl */
+	"%s\n",			/* .runIgnTmpl */
+	"{ %s \n} || exit $?\n", /* .runChkTmpl */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
 	"",			/* .echo */
@@ -326,9 +329,9 @@ static Shell shells[] = {
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
 	"",			/* .errOff */
-	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .execIgnore */
-	"{ %s \n} || exit $?\n", /* .errExit */
+	"echo \"%s\"\n",	/* .echoTmpl */
+	"%s\n",			/* .runIgnTmpl */
+	"{ %s \n} || exit $?\n", /* .runChkTmpl */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar*/
 #if defined(MAKE_NATIVE) && defined(__NetBSD__)
@@ -351,9 +354,9 @@ static Shell shells[] = {
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
 	"",			/* .errOff */
-	"echo \"%s\"\n",	/* .echoCmd */
-	"%s\n",			/* .execIgnore */
-	"{ %s \n} || exit $?\n", /* .errExit */
+	"echo \"%s\"\n",	/* .echoTmpl */
+	"%s\n",			/* .runIgnTmpl */
+	"{ %s \n} || exit $?\n", /* .runChkTmpl */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
 	"v",			/* .echo */
@@ -374,9 +377,9 @@ static Shell shells[] = {
 	FALSE,			/* .hasErrCtl */
 	"",			/* .errOn */
 	"",			/* .errOff */
-	"echo \"%s\"\n",	/* .echoCmd */
-	"csh -c \"%s || exit 0\"\n", /* .execIgnore */
-	"",			/* .errExit */
+	"echo \"%s\"\n",	/* .echoTmpl */
+	"csh -c \"%s || exit 0\"\n", /* .runIgnTmpl */
+	"",			/* .runChkTmpl */
 	"'\\\n'",		/* .newline */
 	'#',			/* .commentChar */
 	"v",			/* .echo */
@@ -775,7 +778,7 @@ JobPrintSpecialsErrCtl(Job *job, Boolean cmdEcho)
 /*
  * The shell has no error control, so we need to be weird to get it to
  * ignore any errors from the command. If echoing is turned on, we turn it
- * off and use the errOnOrEcho template to echo the command. Leave echoing
+ * off and use the echoTmpl template to echo the command. Leave echoing
  * off so the user doesn't see the weirdness we go through to ignore errors.
  * Set cmdTemplate to use the weirdness instead of the simple "%s\n" template.
  */
@@ -788,17 +791,18 @@ JobPrintSpecialsEchoCtl(Job *job, CommandFlags *inout_cmdFlags,
 	if (job->echo && inout_cmdFlags->echo) {
 		if (shell->hasEchoCtl)
 			JobPrintln(job, shell->echoOff);
-		JobPrintf(job, shell->echoCmd, escCmd);
+		JobPrintf(job, shell->echoTmpl, escCmd);
 		inout_cmdFlags->echo = FALSE;
 	} else {
 		if (inout_cmdFlags->echo)
-			JobPrintf(job, shell->echoCmd, escCmd);
+			JobPrintf(job, shell->echoTmpl, escCmd);
 	}
-	*inout_cmdTemplate = shell->execIgnore;
+	*inout_cmdTemplate = shell->runIgnTmpl;
 
 	/*
-	 * The error ignoration (hee hee) is already taken care of by the
-	 * errOffOrExecIgnore template, so pretend error checking is still on.
+	 * The template runIgnTmpl already takes care of ignoring errors,
+	 * so pretend error checking is still on.
+	 * XXX: What effects does this have, and why is it necessary?
 	 */
 	inout_cmdFlags->ignerr = FALSE;
 }
@@ -812,7 +816,7 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
 		inout_cmdFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
 		JobPrintSpecialsErrCtl(job, inout_cmdFlags->echo);
-	else if (shell->execIgnore != NULL && shell->execIgnore[0] != '\0') {
+	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
@@ -889,16 +893,16 @@ JobPrintCommand(Job *job, const char * const ucmd)
 
 		/*
 		 * If errors are being checked and the shell doesn't have
-		 * error control but does supply an errExit template, then
+		 * error control but does supply an runChkTmpl template, then
 		 * set up commands to run through it.
 		 */
 
-		if (!shell->hasErrCtl && shell->errExit &&
-		    shell->errExit[0] != '\0') {
+		if (!shell->hasErrCtl && shell->runChkTmpl &&
+		    shell->runChkTmpl[0] != '\0') {
 			if (job->echo && cmdFlags.echo) {
 				if (shell->hasEchoCtl)
 					JobPrintln(job, shell->echoOff);
-				JobPrintf(job, shell->echoCmd, escCmd);
+				JobPrintf(job, shell->echoTmpl, escCmd);
 				cmdFlags.echo = FALSE;
 			}
 			/*
@@ -907,9 +911,9 @@ JobPrintCommand(Job *job, const char * const ucmd)
 			 */
 			if (escCmd[0] == shell->commentChar ||
 			    (escCmd[0] == '\0'))
-				cmdTemplate = shell->execIgnore;
+				cmdTemplate = shell->runIgnTmpl;
 			else
-				cmdTemplate = shell->errExit;
+				cmdTemplate = shell->runChkTmpl;
 			cmdFlags.ignerr = FALSE;
 		}
 	}
@@ -2352,14 +2356,14 @@ Job_ParseShell(char *line)
 				/* Before 2020-12-10, these two variables
 				 * had been a single variable. */
 				newShell.errOn = arg + 6;
-				newShell.echoCmd = arg + 6;
+				newShell.echoTmpl = arg + 6;
 			} else if (strncmp(arg, "ignore=", 7) == 0) {
 				/* Before 2020-12-10, these two variables
 				 * had been a single variable. */
 				newShell.errOff = arg + 7;
-				newShell.execIgnore = arg + 7;
+				newShell.runIgnTmpl = arg + 7;
 			} else if (strncmp(arg, "errout=", 7) == 0) {
-				newShell.errExit = arg + 7;
+				newShell.runChkTmpl = arg + 7;
 			} else if (strncmp(arg, "comment=", 8) == 0) {
 				newShell.commentChar = arg[8];
 			} else {
@@ -2443,10 +2447,10 @@ Job_ParseShell(char *line)
 		shell->hasEchoCtl = TRUE;
 
 	if (!shell->hasErrCtl) {
-		if (shell->echoCmd == NULL)
-			shell->echoCmd = "";
-		if (shell->execIgnore == NULL)
-			shell->execIgnore = "%s\n";
+		if (shell->echoTmpl == NULL)
+			shell->echoTmpl = "";
+		if (shell->runIgnTmpl == NULL)
+			shell->runIgnTmpl = "%s\n";
 	}
 
 	/*
