@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.261 2020/11/30 07:53:42 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.262 2020/12/11 05:01:19 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3095,9 +3095,6 @@ ixgbe_msix_admin(void *arg)
 
 	++adapter->admin_irqev.ev_count;
 
-	/* Pause other interrupts */
-	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_OTHER);
-
 	/* First get the cause */
 	/*
 	 * The specifications of 82598, 82599, X540 and X550 say EICS register
@@ -3219,9 +3216,6 @@ ixgbe_msix_admin(void *arg)
 		adapter->task_requests |= task_requests;
 		ixgbe_schedule_admin_tasklet(adapter);
 		mutex_exit(&adapter->admin_mtx);
-	} else {
-		/* Re-enable other interrupts */
-		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
 	}
 
 	return 1;
@@ -4809,7 +4803,6 @@ ixgbe_handle_admin(struct work *wk, void *context)
 {
 	struct adapter	*adapter = context;
 	struct ifnet	*ifp = adapter->ifp;
-	struct ixgbe_hw	*hw = &adapter->hw;
 	u32		task_requests;
 
 	mutex_enter(&adapter->admin_mtx);
@@ -4848,11 +4841,12 @@ ixgbe_handle_admin(struct work *wk, void *context)
 	}
 #endif
 	if ((task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
-		if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
-			/* Re-enable other interrupts */
-			IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
-		} else
-			ixgbe_enable_intr(adapter);
+		/*
+		 * XXX FIXME.
+		 * ixgbe_enable_intr() enables all interrupts. It might enable
+		 * an interrupt which should not be enabled.
+		 */
+		ixgbe_enable_intr(adapter);
 	}
 
 	IXGBE_CORE_UNLOCK(adapter);
