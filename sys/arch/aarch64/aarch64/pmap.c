@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2020/11/10 07:51:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2020/11/10 07:51:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2020/12/11 18:03:33 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -51,13 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2020/11/10 07:51:19 skrll Exp $");
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
 #include <aarch64/armreg.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/locore.h>
 #include <aarch64/machdep.h>
 #ifdef DDB
 #include <aarch64/db_machdep.h>
 #include <ddb/db_access.h>
 #endif
+
+#include <arm/cpufunc.h>
 
 //#define PMAP_PV_DEBUG
 

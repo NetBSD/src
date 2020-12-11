@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $ */
+/* $NetBSD: db_disasm.c,v 1.11 2020/12/11 18:03:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11 2020/12/11 18:03:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -41,9 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $");
 #include <ddb/db_access.h>
 #include <ddb/db_user.h>
 
-#include <aarch64/cpufunc.h>
 #include <aarch64/machdep.h>
 #include <arch/aarch64/aarch64/disasm.h>
+
+#include <arm/cpufunc.h>
 
 static uint32_t
 db_disasm_readword(uintptr_t address)

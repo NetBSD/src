@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64_reboot.c,v 1.3 2018/11/09 04:05:27 mrg Exp $	*/
+/*	$NetBSD: aarch64_reboot.c,v 1.4 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.3 2018/11/09 04:05:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.4 2020/12/11 18:03:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.3 2018/11/09 04:05:27 mrg Exp $
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>
 #include <aarch64/locore.h>
-#include <aarch64/cpufunc.h>
+
+#include <arm/cpufunc.h>
 
 void (*cpu_reset_address0)(void);
 void (*cpu_reset_address)(void);
