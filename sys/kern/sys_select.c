@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.54 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.55 2020/12/11 01:25:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.54 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.55 2020/12/11 01:25:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,6 +665,28 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 		sip->sel_collision |= sc->sc_mask;
 		KASSERT(sip->sel_cluster != NULL);
 	}
+}
+
+/*
+ * Record a knote.
+ *
+ * The caller holds the same lock as for selrecord().
+ */
+void
+selrecord_knote(struct selinfo *sip, struct knote *kn)
+{
+	SLIST_INSERT_HEAD(&sip->sel_klist, kn, kn_selnext);
+}
+
+/*
+ * Remove a knote.
+ *
+ * The caller holds the same lock as for selrecord().
+ */
+void
+selremove_knote(struct selinfo *sip, struct knote *kn)
+{
+	SLIST_REMOVE(&sip->sel_klist, kn, knote, kn_selnext);
 }
 
 /*
