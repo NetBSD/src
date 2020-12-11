@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.232 2020/12/06 10:33:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.233 2020/12/11 23:00:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -640,8 +640,8 @@ typedef struct CmdOpts {
 	 * this is coordinated with the submakes */
 	int maxJobs;
 
-	/* -k: if true, continue on unaffected portions of the graph when an
-	 * error occurs in one portion */
+	/* -k: if true and an error occurs while making a node, continue
+	 * making nodes that do not depend on the erroneous node */
 	Boolean keepgoing;
 
 	/* -N: execute no commands from the targets */
