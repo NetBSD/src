@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.365 2020/12/11 00:22:23 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.366 2020/12/11 00:29:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.365 2020/12/11 00:22:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.366 2020/12/11 00:29:01 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -212,11 +212,8 @@ typedef struct Shell {
 	const char *newline;
 	char commentChar;	/* character used by shell for comment lines */
 
-	/*
-	 * command-line flags
-	 */
-	const char *echo;	/* echo commands */
-	const char *exit;	/* exit on error */
+	const char *echoFlag;	/* shell flag to echo commands */
+	const char *exitFlag;	/* shell flag to exit on error */
 } Shell;
 
 typedef struct CommandFlags {
@@ -1465,8 +1462,8 @@ JobMakeArgv(Job *job, char **argv)
 	argv[0] = UNCONST(shellName);
 	argc = 1;
 
-	if ((shell->exit && shell->exit[0] != '-') ||
-	    (shell->echo && shell->echo[0] != '-')) {
+	if ((shell->exitFlag != NULL && shell->exitFlag[0] != '-') ||
+	    (shell->echoFlag != NULL && shell->echoFlag[0] != '-')) {
 		/*
 		 * At least one of the flags doesn't have a minus before it,
 		 * so merge them together. Have to do this because the Bourne
@@ -1479,21 +1476,21 @@ JobMakeArgv(Job *job, char **argv)
 		 */
 		(void)snprintf(args, sizeof args, "-%s%s",
 		    (job->ignerr ? "" :
-			(shell->exit ? shell->exit : "")),
+			(shell->exitFlag != NULL ? shell->exitFlag : "")),
 		    (!job->echo ? "" :
-			(shell->echo ? shell->echo : "")));
+			(shell->echoFlag != NULL ? shell->echoFlag : "")));
 
 		if (args[1]) {
 			argv[argc] = args;
 			argc++;
 		}
 	} else {
-		if (!job->ignerr && shell->exit) {
-			argv[argc] = UNCONST(shell->exit);
+		if (!job->ignerr && shell->exitFlag) {
+			argv[argc] = UNCONST(shell->exitFlag);
 			argc++;
 		}
-		if (job->echo && shell->echo) {
-			argv[argc] = UNCONST(shell->echo);
+		if (job->echo && shell->echoFlag) {
+			argv[argc] = UNCONST(shell->echoFlag);
 			argc++;
 		}
 	}
@@ -2082,22 +2079,23 @@ Shell_Init(void)
 		InitShellNameAndPath();
 
 	Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
-	if (shell->exit == NULL)
-		shell->exit = "";
-	if (shell->echo == NULL)
-		shell->echo = "";
-	if (shell->hasErrCtl && shell->exit[0] != '\0') {
+	if (shell->exitFlag == NULL)
+		shell->exitFlag = "";
+	if (shell->echoFlag == NULL)
+		shell->echoFlag = "";
+	if (shell->hasErrCtl && shell->exitFlag[0] != '\0') {
 		if (shellErrFlag &&
-		    strcmp(shell->exit, &shellErrFlag[1]) != 0) {
+		    strcmp(shell->exitFlag, &shellErrFlag[1]) != 0) {
 			free(shellErrFlag);
 			shellErrFlag = NULL;
 		}
 		if (shellErrFlag == NULL) {
-			size_t n = strlen(shell->exit) + 2;
+			size_t n = strlen(shell->exitFlag) + 2;
 
 			shellErrFlag = bmake_malloc(n);
 			if (shellErrFlag != NULL)
-				snprintf(shellErrFlag, n, "-%s", shell->exit);
+				snprintf(shellErrFlag, n, "-%s",
+				    shell->exitFlag);
 		}
 	} else if (shellErrFlag != NULL) {
 		free(shellErrFlag);
@@ -2343,9 +2341,9 @@ Job_ParseShell(char *line)
 				newShell.noPrint = arg + 7;
 				newShell.noPrintLen = strlen(newShell.noPrint);
 			} else if (strncmp(arg, "echoFlag=", 9) == 0) {
-				newShell.echo = arg + 9;
+				newShell.echoFlag = arg + 9;
 			} else if (strncmp(arg, "errFlag=", 8) == 0) {
-				newShell.exit = arg + 8;
+				newShell.exitFlag = arg + 8;
 			} else if (strncmp(arg, "hasErrCtl=", 10) == 0) {
 				char c = arg[10];
 				newShell.hasErrCtl = c == 'Y' || c == 'y' ||
