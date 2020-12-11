@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.26 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: config.h,v 1.27 2020/12/11 22:48:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -71,19 +71,6 @@
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
-
-/*
- * DEFMAXJOBS
- * DEFMAXLOCAL
- *	These control the default concurrency. On no occasion will more
- *	than DEFMAXJOBS targets be created at once (locally or remotely).
- *
- *	DEFMAXLOCAL is the highest number of targets which will be
- *	created on the local machine at once. Note that if you set this
- *	to 0, nothing will ever happen.
- */
-#define DEFMAXJOBS	4
-#define DEFMAXLOCAL	1
 
 /*
  * INCLUDES
