@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.27 2020/12/11 22:48:31 rillig Exp $	*/
+/*	$NetBSD: config.h,v 1.28 2020/12/11 22:53:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -113,7 +113,6 @@
  *	Adhere to the POSIX 1003.2 draft for the make(1) program.
  *	- Use MAKEFLAGS instead of MAKE to pick arguments from the
  *	  environment.
- *	- Allow empty command lines if starting with tab.
  */
 #define POSIX
 
