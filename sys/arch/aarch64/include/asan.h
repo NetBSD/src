@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.15 2020/11/26 08:25:01 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.16 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -35,9 +35,10 @@
 
 #include <aarch64/pmap.h>
 #include <aarch64/vmparam.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/armreg.h>
 #include <aarch64/machdep.h>
+
+#include <arm/cpufunc.h>
 
 #define __MD_VIRTUAL_SHIFT	48	/* 49bit address space, cut half */
 #define __MD_KERNMEM_BASE	0xFFFF000000000000 /* kern mem base address */
