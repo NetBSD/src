@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.493 2020/12/11 22:48:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.494 2020/12/11 23:00:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.493 2020/12/11 22:48:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.494 2020/12/11 23:00:59 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1116,8 +1116,8 @@ UnlimitFiles(void)
 static void
 CmdOpts_Init(void)
 {
-	opts.compatMake = FALSE;	/* No compat mode */
-	opts.debug = DEBUG_NONE;	/* No debug verbosity, please. */
+	opts.compatMake = FALSE;
+	opts.debug = DEBUG_NONE;
 	/* opts.debug_file has been initialized earlier */
 	opts.lint = FALSE;
 	opts.debugVflag = FALSE;
@@ -1128,10 +1128,10 @@ CmdOpts_Init(void)
 	opts.keepgoing = FALSE;		/* Stop on error */
 	opts.noRecursiveExecute = FALSE; /* Execute all .MAKE targets */
 	opts.noExecute = FALSE;		/* Execute all commands */
-	opts.queryFlag = FALSE;		/* This is not just a check-run */
+	opts.queryFlag = FALSE;
 	opts.noBuiltins = FALSE;	/* Read the built-in rules */
 	opts.beSilent = FALSE;		/* Print commands as executed */
-	opts.touchFlag = FALSE;		/* Actually update targets */
+	opts.touchFlag = FALSE;
 	opts.printVars = PVM_NONE;
 	Lst_Init(&opts.variables);
 	opts.parseWarnFatal = FALSE;
