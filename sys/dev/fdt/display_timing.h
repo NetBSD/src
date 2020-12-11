@@ -1,4 +1,4 @@
-/* $NetBSD: display_timing.h,v 1.1 2017/06/03 14:48:02 jmcneill Exp $ */
+/* $NetBSD: display_timing.h,v 1.2 2020/12/11 09:40:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _FDT_DISPLAY_TIMING_H
-#define _FDT_DISPLAY_TIMING_H
+#ifndef _DEV_FDT_DISPLAY_TIMING_H_
+#define _DEV_FDT_DISPLAY_TIMING_H_
 
 struct display_timing {
 	/* required */
@@ -44,4 +44,4 @@ struct display_timing {
 
 int	display_timing_parse(int, struct display_timing *);
 
-#endif /* !_FDT_DISPLAY_TIMING_H */
+#endif /* _DEV_FDT_DISPLAY_TIMING_H_ */

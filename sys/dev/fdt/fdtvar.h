@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.61 2020/09/28 11:54:24 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.62 2020/12/11 09:40:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_FDT_FDTVAR_H
-#define _DEV_FDT_FDTVAR_H
+#ifndef _DEV_FDT_FDTVAR_H_
+#define _DEV_FDT_FDTVAR_H_
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -441,4 +441,4 @@ int		fdtbus_print(void *, const char *);
 bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
 		    u_int);
 
-#endif /* _DEV_FDT_FDTVAR_H */
+#endif /* _DEV_FDT_FDTVAR_H_ */
