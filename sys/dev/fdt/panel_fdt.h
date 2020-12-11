@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_fdt.h,v 1.1 2018/04/03 12:40:20 bouyer Exp $	*/
+/*	$NetBSD: panel_fdt.h,v 1.2 2020/12/11 08:23:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ enum lvds_format {
 	LVDS_JEIDA_24,
 	LVDS_VESA_24
 };
-	
+
 
 struct fdt_panel {
 	enum panel_type panel_type;
