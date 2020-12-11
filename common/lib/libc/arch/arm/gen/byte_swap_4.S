@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.8 2020/12/09 02:46:57 dholland Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.9 2020/12/11 09:02:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ ENTRY(FUNC)
 	eor	r0, r0, r1, lsr #8	/* a.d.c.b ^ 0.db.0.db -> a.b.c.d */
 #else
 	movs	r3, #16
-	lsls	r1, r0, #8		/* d.c.b.a -> c.b.a.0 /*
+	lsls	r1, r0, #8		/* d.c.b.a -> c.b.a.0 */
 	lsrs	r0, r0, #8		/* d.c.b.a -> 0.d.c.b */
 	rors	r1, r3			/* c.b.a.0 -> a.0.c.b */
 	rors	r0, r3			/* 0.d.c.b -> c.b.0.d */
