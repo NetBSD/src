@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_ddb.h,v 1.1 2020/10/30 16:08:45 skrll Exp $	*/
+/*	$NetBSD: fdt_ddb.h,v 1.2 2020/12/11 09:40:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 
-#ifndef _FDT_DDB_H
-#define _FDT_DDB_H
+#ifndef _DEV_FDT_FDT_DDB_H_
+#define _DEV_FDT_FDT_DDB_H_
 
 void	fdt_print(const void *, bool, void (*)(const char *, ...) __printflike(1, 2));
 
-#endif
+#endif	/* _DEV_FDT_FDT_DDB_H_ */
