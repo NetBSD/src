@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.145 2019/02/15 18:57:15 mgorny Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.146 2020/12/11 03:00:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.145 2019/02/15 18:57:15 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.146 2020/12/11 03:00:09 thorpej Exp $");
 
 #include "opt_ptm.h"
 
@@ -904,7 +904,7 @@ filt_ptcrdetach(struct knote *kn)
 	pti = kn->kn_hook;
 
 	mutex_spin_enter(&tty_lock);
-	SLIST_REMOVE(&pti->pt_selr.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&pti->pt_selr, kn);
 	mutex_spin_exit(&tty_lock);
 }
 
@@ -958,7 +958,7 @@ filt_ptcwdetach(struct knote *kn)
 	pti = kn->kn_hook;
 
 	mutex_spin_enter(&tty_lock);
-	SLIST_REMOVE(&pti->pt_selw.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&pti->pt_selw, kn);
 	mutex_spin_exit(&tty_lock);
 }
 
@@ -1019,15 +1019,15 @@ int
 ptckqfilter(dev_t dev, struct knote *kn)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
-	struct klist	*klist;
+	struct selinfo	*sip;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &pti->pt_selr.sel_klist;
+		sip = &pti->pt_selr;
 		kn->kn_fop = &ptcread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &pti->pt_selw.sel_klist;
+		sip = &pti->pt_selw;
 		kn->kn_fop = &ptcwrite_filtops;
 		break;
 	default:
@@ -1037,7 +1037,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = pti;
 
 	mutex_spin_enter(&tty_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	mutex_spin_exit(&tty_lock);
 
 	return 0;

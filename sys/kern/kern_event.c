@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.108 2020/10/31 01:08:32 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.109 2020/12/11 03:00:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.108 2020/10/31 01:08:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.109 2020/12/11 03:00:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ filt_kqdetach(struct knote *kn)
 	kq = ((file_t *)kn->kn_obj)->f_kqueue;
 
 	mutex_spin_enter(&kq->kq_lock);
-	SLIST_REMOVE(&kq->kq_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&kq->kq_sel, kn);
 	mutex_spin_exit(&kq->kq_lock);
 }
 
@@ -1780,7 +1780,7 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 
 	kn->kn_fop = &kqread_filtops;
 	mutex_enter(&kq->kq_lock);
-	SLIST_INSERT_HEAD(&kq->kq_sel.sel_klist, kn, kn_selnext);
+	selrecord_knote(&kq->kq_sel, kn);
 	mutex_exit(&kq->kq_lock);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.59 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.60 2020/12/11 03:00:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.59 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.60 2020/12/11 03:00:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ filt_logrdetach(struct knote *kn)
 {
 
 	mutex_spin_enter(&log_lock);
-	SLIST_REMOVE(&log_selp.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&log_selp, kn);
 	mutex_spin_exit(&log_lock);
 }
 
@@ -299,11 +299,9 @@ static const struct filterops logread_filtops = {
 static int
 logkqfilter(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &log_selp.sel_klist;
 		kn->kn_fop = &logread_filtops;
 		break;
 
@@ -311,9 +309,10 @@ logkqfilter(dev_t dev, struct knote *kn)
 		return (EINVAL);
 	}
 
-	mutex_spin_enter(&log_lock);
 	kn->kn_hook = NULL;
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+
+	mutex_spin_enter(&log_lock);
+	selrecord_knote(&log_selp, kn);
 	mutex_spin_exit(&log_lock);
 
 	return (0);
