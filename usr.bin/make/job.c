@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.367 2020/12/11 01:08:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.368 2020/12/11 22:33:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.367 2020/12/11 01:08:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.368 2020/12/11 22:33:06 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2506,7 +2506,7 @@ JobInterrupt(int runINTERRUPT, int signo)
 		}
 	}
 	Trace_Log(MAKEINTR, NULL);
-	exit(signo);
+	exit(signo);		/* XXX: why signo? */
 }
 
 /*
