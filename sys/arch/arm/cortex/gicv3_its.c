@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.29 2020/12/11 21:40:50 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.30 2020/12/11 22:42:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.29 2020/12/11 21:40:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.30 2020/12/11 22:42:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -118,13 +118,9 @@ gits_command(struct gicv3_its *its, const struct gicv3_its_command *cmd)
 	cwriter = gits_read_8(its, GITS_CWRITER);
 	woff = cwriter & GITS_CWRITER_Offset;
 
-#if _BYTE_ORDER == _BIG_ENDIAN
 	uint64_t *dw = (uint64_t *)(its->its_cmd.base + woff);
 	for (int i = 0; i < __arraycount(cmd->dw); i++)
 		dw[i] = htole64(cmd->dw[i]);
-#else
-	memcpy(its->its_cmd.base + woff, cmd->dw, sizeof(cmd->dw));
-#endif
 	bus_dmamap_sync(its->its_dmat, its->its_cmd.map, woff, sizeof(cmd->dw), BUS_DMASYNC_PREWRITE);
 
 	woff += sizeof(cmd->dw);
