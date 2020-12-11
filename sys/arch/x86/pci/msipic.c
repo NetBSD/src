@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.23 2020/05/04 15:55:56 jdolecek Exp $	*/
+/*	$NetBSD: msipic.c,v 1.24 2020/12/11 07:49:39 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.23 2020/05/04 15:55:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.24 2020/12/11 07:49:39 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -598,8 +598,6 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	bus_space_write_4(bstag, bshandle,
 	    entry_base + PCI_MSIX_TABLE_ENTRY_DATA, data);
 #endif /* !XENPV */
-	bus_space_write_4(bstag, bshandle,
-	    entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, 0);
 	BUS_SPACE_WRITE_FLUSH(bstag, bshandle);
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
