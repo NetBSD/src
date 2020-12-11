@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.44 2020/12/11 07:24:38 simonb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -15,7 +15,7 @@ SRCS=	bufcache.c cmds.c cmdtab.c convtbl.c disks.c df.c drvstats.c \
 	fetch.c globalcmds.c icmp.c ifcmds.c ifstat.c iostat.c ip.c \
 	keyboard.c main.c mbufs.c netcmds.c netstat.c pigs.c ps.c swap.c \
 	tcp.c vmstat.c utmpentry.c syscall.c
-DPADD=	${LIBCURSES} ${LIBTERMINFO} ${LIBM} ${LIBKVM}
+DPADD=	${LIBUTIL} ${LIBCURSES} ${LIBTERMINFO} ${LIBM} ${LIBKVM}
 LDADD=	-lutil -lcurses -lterminfo -lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
