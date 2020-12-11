@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.47 2020/06/23 14:08:01 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.48 2020/12/11 21:52:19 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 23, 2020
+.Dd December 11, 2020
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -104,6 +104,15 @@ This may need to obtain multiple passphrases.
 Generate a paramsfile (to stdout).
 .It Fl i Ar ivmeth
 Specify the IV method (default: encblkno1).
+.Pp
+Setting the IV method is needed only for compatibility with disks
+written with a very old version of
+.Xr cgd 4
+from before
+.Nx 5.0 ,
+released in 2010; see
+.Xr cgd 4
+for details.
 .It Fl k Ar kgmeth
 Specify the key generation method (default: pkcs5_pbkdf2/sha1).
 .It Fl l Op Ar cgd
@@ -144,8 +153,8 @@ Be verbose.
 May be specified multiple times.
 .El
 .Pp
-For more information about the cryptographic algorithms and IV methods
-supported, please refer to
+For more information about the cryptographic algorithms supported,
+please refer to
 .Xr cgd 4 .
 .Ss Key Generation Methods
 To generate the key which it will use,
@@ -318,6 +327,15 @@ The following statements are defined:
 Defines the cryptographic algorithm.
 .It iv-method Ar string
 Defines the IV generation method.
+This should always be
+.Sq encblkno1
+except when dealing with disks written with a very old version of
+.Xr cgd 4
+from before
+.Nx 5.0 ,
+released in 2010; see
+.Xr cgd 4
+for details.
 .It keylength Ar integer
 Defines the length of the key.
 .It verify_method Ar string
@@ -352,12 +370,10 @@ configuration directory, used to store paramsfiles.
 cgd configuration file.
 .El
 .Sh EXAMPLES
-To set up and configure a cgd that uses AES with a 192 bit key
-in CBC mode with the IV Method
-.Sq encblkno1
-(encrypted block number):
+To set up and configure a cgd that uses adiantum, which takes a 256-bit
+key:
 .Bd -literal
-	# cgdconfig -g -o /etc/cgd/wd0e aes-cbc 192
+	# cgdconfig -g -o /etc/cgd/wd0e adiantum 256
 	# cgdconfig cgd0 /dev/wd0e
 	/dev/wd0e's passphrase:
 .Ed
@@ -370,7 +386,7 @@ when we configure the first time to set up the disk.
 Here is the
 sequence of commands that is recommended:
 .Bd -literal
-	# cgdconfig -g -o /etc/cgd/wd0e -V disklabel aes-cbc
+	# cgdconfig -g -o /etc/cgd/wd0e -V disklabel adiantum
 	# cgdconfig -V re-enter cgd0 /dev/wd0e
 	/dev/wd0e's passphrase:
 	re-enter device's passphrase:
@@ -382,7 +398,7 @@ sequence of commands that is recommended:
 .Pp
 To scrub data from a disk before setting up a cgd:
 .Bd -literal
-	# cgdconfig -s cgd0 /dev/sd0e aes-cbc 256 < /dev/urandom
+	# cgdconfig -s cgd0 /dev/sd0e adiantum 256 < /dev/urandom
 	# dd if=/dev/zero of=/dev/rcgd0d bs=32k progress=512
 	# cgdconfig -u cgd0
 .Ed
@@ -395,10 +411,10 @@ parameters file:
 	new file's passphrase:
 .Ed
 .Pp
-To configure a cgd that uses Blowfish with a 200 bit key that it
+To configure a cgd that uses aes-cbc with a 192 bit key that it
 reads from stdin:
 .Bd -literal
-	# cgdconfig -s cgd0 /dev/sd0h blowfish-cbc 200
+	# cgdconfig -s cgd0 /dev/sd0h aes-cbc 192
 .Ed
 .Pp
 An example parameters file which uses PKCS#5 PBKDF2:
@@ -416,7 +432,7 @@ An example parameters file which uses PKCS#5 PBKDF2:
 .Pp
 An example parameters file which stores its key locally:
 .Bd -literal
-	algorithm       aes-cbc;
+	algorithm       adiantum;
 	iv-method       encblkno1;
 	keylength       256;
 	verify_method   none;
