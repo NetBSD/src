@@ -667,6 +667,7 @@ TARGET_OBS = @TARGET_OBS@
 ALL_64_TARGET_OBS = \
 	aarch64-fbsd-tdep.o \
 	aarch64-linux-tdep.o \
+	aarch64-nbsd-tdep.o \
 	aarch64-newlib-tdep.o \
 	aarch64-ravenscar-thread.o \
 	aarch64-tdep.o \
