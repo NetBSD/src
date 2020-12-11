@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.24 2020/12/11 07:49:39 knakahara Exp $	*/
+/*	$NetBSD: msipic.c,v 1.25 2020/12/11 09:22:20 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.24 2020/12/11 07:49:39 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.25 2020/12/11 09:22:20 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -548,8 +548,8 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	pcitag_t tag;
 	bus_space_tag_t bstag;
 	bus_space_handle_t bshandle;
-	uint64_t entry_base;
 #ifndef XENPV
+	uint64_t entry_base;
 	pcireg_t addr, data;
 #endif
 	pcireg_t ctl;
@@ -574,9 +574,9 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 
 	bstag = pic->pic_msipic->mp_bstag;
 	bshandle = pic->pic_msipic->mp_bshandle;
+#ifndef XENPV
 	entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 
-#ifndef XENPV
 	/*
 	 * See Intel 64 and IA-32 Architectures Software Developer's Manual
 	 * Volume 3 10.11 Message Signalled Interrupts.
