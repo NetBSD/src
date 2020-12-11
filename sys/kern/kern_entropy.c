@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.24 2020/09/29 07:51:01 gson Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.25 2020/12/11 03:00:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.24 2020/09/29 07:51:01 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.25 2020/12/11 03:00:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1409,7 +1409,7 @@ filt_entropy_read_detach(struct knote *kn)
 	KASSERT(E->stage >= ENTROPY_WARM);
 
 	mutex_enter(&E->lock);
-	SLIST_REMOVE(&E->selq.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&E->selq, kn);
 	mutex_exit(&E->lock);
 }
 
@@ -1480,7 +1480,7 @@ entropy_kqfilter(struct knote *kn)
 		/* Enter into the global select queue.  */
 		mutex_enter(&E->lock);
 		kn->kn_fop = &entropy_read_filtops;
-		SLIST_INSERT_HEAD(&E->selq.sel_klist, kn, kn_selnext);
+		selrecord_knote(&E->selq, kn);
 		mutex_exit(&E->lock);
 		return 0;
 	case EVFILT_WRITE:
