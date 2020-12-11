@@ -194,6 +194,7 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, aarch64_nbsd_iterate_over_regset_sections);
 }
 
+void _initialize_aarch64_nbsd_tdep (void);
 void
 _initialize_aarch64_nbsd_tdep (void)
 {
