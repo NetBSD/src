@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.28 2020/09/24 08:50:09 ryo Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.29 2020/12/11 21:40:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.28 2020/09/24 08:50:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.29 2020/12/11 21:40:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -429,6 +429,7 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t ctl;
+	uint32_t val;
 	int off;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL))
@@ -439,7 +440,9 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO, (uint32_t)addr);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, (uint32_t)(addr >> 32));
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, lpi - its->its_pic->pic_irqbase);
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, 0);
+	val = bus_space_read_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL);
+	val &= ~PCI_MSIX_VECTCTL_MASK;                                          
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, val);
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
 	ctl |= PCI_MSIX_CTL_ENABLE;
