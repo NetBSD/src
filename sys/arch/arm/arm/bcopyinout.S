@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.21 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.22 2020/12/11 09:14:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.21 2018/01/24 09:04:44 skrll Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.22 2020/12/11 09:14:19 dholland Exp $")	
 
 	.text
 	.align	0
@@ -239,7 +239,7 @@ ENTRY(copyin)
 	 * If we're done, bail.
 	 */
 	cmp	r2, #0
-	beq	.Lout
+	beq	.Liout
 
 .Licleanup:
 	and	r6, r2, #0x3
