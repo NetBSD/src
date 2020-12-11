@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.36 2020/12/04 21:39:26 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.36 2020/12/04 21:39:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -837,7 +837,7 @@ gicv3_init(struct gicv3_softc *sc)
 	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
 
 	/*
-	 * We don't alwayst have a consistent view of priorities between the
+	 * We don't always have a consistent view of priorities between the
 	 * CPU interface (ICC_PMR_EL1) and the GICD/GICR registers. Detect
 	 * if we are making secure or non-secure accesses to each, and adjust
 	 * the values that we write to each accordingly.
