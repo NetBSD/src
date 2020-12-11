@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4.34.1 2020/12/08 18:48:58 martin Exp $
+# $NetBSD: Makefile.inc,v 1.4.34.2 2020/12/11 19:34:06 martin Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 
@@ -13,9 +13,3 @@ WARNS=	4
 CWARNFLAGS+=	-Wno-missing-noreturn
 
 .include <bsd.own.mk>
-
-# show_version() does not return
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.main.c+=		-Wno-error=implicit-fallthrough
-COPTS.pkg_delete.c+=	-Wno-error=implicit-fallthrough
-.endif
