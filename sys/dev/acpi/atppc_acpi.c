@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.19 2020/12/07 10:02:51 jmcneill Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.20 2020/12/11 07:01:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.19 2020/12/07 10:02:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.20 2020/12/11 07:01:27 martin Exp $");
 
 #include "opt_atppc.h"
 
@@ -142,7 +142,7 @@ atppc_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ieh = acpi_intr_establish(self,
 	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
-	    IPL_TTY, false, atppcintr, self device_xname(self));
+	    IPL_TTY, false, atppcintr, self, device_xname(self));
 	if (sc->sc_ieh == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt\n");
 		goto out;
