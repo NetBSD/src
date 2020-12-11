@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.13 2020/12/04 08:24:41 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.14 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.13 2020/12/04 08:24:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.14 2020/12/11 18:03:33 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -43,10 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.13 2020/12/04 08:24:41 skrll Exp $");
 #include <arm/cpufunc.h>
 
 #include <aarch64/armreg.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/machdep.h>
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
+
+#include <arm/cpufunc.h>
 
 #define OPTIMIZE_TLB_CONTIG
 

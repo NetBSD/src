@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2020/09/14 17:14:12 ryo Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2020/09/14 17:14:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2020/12/11 18:03:33 skrll Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2020/09/14 17:14:12 ryo Exp $")
 #include <sys/tree.h>
 #include <sys/xcall.h>
 
-#include <aarch64/cpufunc.h>
+#include <arm/cpufunc.h>
 
 /* #define KOBJ_MACHDEP_DEBUG */
 
