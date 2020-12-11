@@ -2608,6 +2608,8 @@ static bool last_was_structop;
 /* Depth of parentheses.  */
 static int paren_depth;
 
+static const char PART[] = ".part.";
+
 /* Read one token, getting characters through lexptr.  */
 
 static int
@@ -2723,6 +2725,13 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
       return c;
 
     case '.':
+      /* Gross! recognize <symbol>.part.N */
+      if (strncmp(pstate->lexptr, PART, sizeof(PART) - 1) == 0 &&
+	ISDIGIT(pstate->lexptr[sizeof(PART) - 1]) &&
+	pstate->lexptr[sizeof(PART)] == '\0')
+	{
+	  break;
+	}
       /* Might be a floating point number.  */
       if (pstate->lexptr[1] < '0' || pstate->lexptr[1] > '9')
 	{
@@ -2888,7 +2897,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
   /* It's a name.  See how long it is.  */
   namelen = 0;
   for (c = tokstart[namelen];
-       (c == '_' || c == '$' || c_ident_is_alnum (c) || c == '<');)
+       (c == '_' || c == '$' || c == '.' || c_ident_is_alnum (c) || c == '<');)
     {
       /* Template parameter lists are part of the name.
 	 FIXME: This mishandles `print $a<4&&$a>3'.  */
