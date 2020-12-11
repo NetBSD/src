@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.19 2020/12/08 18:47:20 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.20 2020/12/11 15:44:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1188,3 +1188,9 @@ external/bsd/pkg_install/lib/config.h           up to 1.3
 	Import pkg_info 20201205, move the default pkg database from
 	/var/db/pkg to ${PREFIX/pkgdb.
 	[wiz, ticket #1140]
+
+sys/dev/hyperv/if_hvn.c				1.19
+
+	hvn(4): fix handling of generic ioctls, including ifconfig up/down.
+	[nonaka, ticket #1146]
+
