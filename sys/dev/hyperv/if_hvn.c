@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.2.2.7 2019/11/26 08:25:28 martin Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.2.2.8 2020/12/11 15:48:02 martin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.2.2.7 2019/11/26 08:25:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.2.2.8 2020/12/11 15:48:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -379,20 +379,6 @@ hvn_ioctl(struct ifnet *ifp, u_long command, void * data)
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				error = ENETRESET;
-			else {
-				error = hvn_init(ifp);
-				if (error)
-					ifp->if_flags &= ~IFF_UP;
-			}
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				hvn_stop(ifp, 1);
-		}
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
