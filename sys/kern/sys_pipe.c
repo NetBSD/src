@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.150 2020/06/25 16:19:07 maxv Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.151 2020/12/11 03:00:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.150 2020/06/25 16:19:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.151 2020/12/11 03:00:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -977,6 +977,8 @@ pipeclose(struct pipe *pipe)
 	 * Any knote objects still left in the list are
 	 * the one attached by peer.  Since no one will
 	 * traverse this list, we just clear it.
+	 *
+	 * XXX Exposes select/kqueue internals.
 	 */
 	SLIST_INIT(&pipe->pipe_sel.sel_klist);
 
@@ -1029,7 +1031,7 @@ filt_pipedetach(struct knote *kn)
 	}
 
 	KASSERT(kn->kn_hook == pipe);
-	SLIST_REMOVE(&pipe->pipe_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
 }
 
@@ -1131,7 +1133,7 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 	}
 
 	kn->kn_hook = pipe;
-	SLIST_INSERT_HEAD(&pipe->pipe_sel.sel_klist, kn, kn_selnext);
+	selrecord_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
 
 	return (0);
