@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.364 2020/12/10 23:54:41 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.365 2020/12/11 00:22:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.364 2020/12/10 23:54:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.365 2020/12/11 00:22:23 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -190,8 +190,8 @@ typedef struct Shell {
 	const char *name;
 
 	Boolean hasEchoCtl;	/* True if both echoOff and echoOn defined */
-	const char *echoOff;	/* command to turn off echo */
-	const char *echoOn;	/* command to turn it back on again */
+	const char *echoOff;	/* command to turn echoing off */
+	const char *echoOn;	/* command to turn echoing back on */
 	const char *noPrint;	/* text to skip when printing output from
 				 * shell. This is usually the same as echoOff */
 	size_t noPrintLen;	/* length of noPrint command */
