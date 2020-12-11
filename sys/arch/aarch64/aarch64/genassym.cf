@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.32 2020/11/10 07:51:19 skrll Exp $
+# $NetBSD: genassym.cf,v 1.33 2020/12/11 18:03:33 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,8 +56,9 @@ include <arm/bus_defs.h>
 include <aarch64/vmparam.h>
 include <aarch64/frame.h>
 include <aarch64/armreg.h>
-include <aarch64/cpufunc.h>
 include <aarch64/pte.h>
+
+include <arm/cpufunc.h>
 
 define	__HAVE_FAST_SOFTINTS	1
 

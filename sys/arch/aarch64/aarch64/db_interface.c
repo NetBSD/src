@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.10 2020/09/14 10:53:02 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.11 2020/12/11 18:03:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2020/09/14 10:53:02 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2020/12/11 18:03:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2020/09/14 10:53:02 ryo Exp $"
 #include <aarch64/db_machdep.h>
 #include <aarch64/machdep.h>
 #include <aarch64/pmap.h>
-#include <aarch64/cpufunc.h>
+
+#include <arm/cpufunc.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>

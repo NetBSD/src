@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.12 2020/06/27 00:43:38 rin Exp $ */
+/* $NetBSD: db_trace.c,v 1.13 2020/12/11 18:03:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,16 +28,17 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2020/06/27 00:43:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2020/12/11 18:03:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <aarch64/cpufunc.h>
 #include <aarch64/db_machdep.h>
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>
 #include <aarch64/vmparam.h>
+
+#include <arm/cpufunc.h>
 
 #include <uvm/uvm_extern.h>
 

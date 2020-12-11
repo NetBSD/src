@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.20 2020/10/15 22:30:34 rin Exp $	*/
+/*	$NetBSD: fault.c,v 1.21 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.20 2020/10/15 22:30:34 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.21 2020/12/11 18:03:33 skrll Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -40,11 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.20 2020/10/15 22:30:34 rin Exp $");
 
 #include <uvm/uvm.h>
 
-#include <aarch64/cpufunc.h>
 #include <aarch64/frame.h>
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>
 #include <aarch64/db_machdep.h>
+
+#include <arm/cpufunc.h>
 
 UVMHIST_DECL(pmaphist);
 

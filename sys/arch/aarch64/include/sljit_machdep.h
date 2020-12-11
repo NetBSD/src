@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.2 2018/12/02 20:54:44 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.3 2020/12/11 18:03:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -33,7 +33,8 @@
 
 #ifdef _KERNEL
 #include <machine/types.h>
-#include <aarch64/cpufunc.h>
+
+#include <arm/cpufunc.h>
 #else
 #include <stddef.h>
 #include <stdint.h>
