@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.375 2020/12/12 10:40:42 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.376 2020/12/12 10:45:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.375 2020/12/12 10:40:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.376 2020/12/12 10:45:24 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -764,12 +764,6 @@ ShellWriter_PrintFmt(ShellWriter *wr, const char *fmt, const char *arg)
 }
 
 static void
-ShellWriter_PrintCmd(ShellWriter *wr, const char *tmpl, const char *escCmd)
-{
-	ShellWriter_PrintFmt(wr, tmpl, escCmd);
-}
-
-static void
 ShellWriter_Println(ShellWriter *wr, const char *line)
 {
 	ShellWriter_PrintFmt(wr, "%s\n", line);
@@ -785,7 +779,7 @@ ShellWriter_EchoOff(ShellWriter *wr)
 static void
 ShellWriter_EchoCmd(ShellWriter *wr, const char *escCmd)
 {
-	ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
+	ShellWriter_PrintFmt(wr, shell->echoTmpl, escCmd);
 }
 
 static void
@@ -965,7 +959,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0)
 		ShellWriter_TraceOn(wr);
 
-	ShellWriter_PrintCmd(wr, cmdTemplate, xcmd);
+	ShellWriter_PrintFmt(wr, cmdTemplate, xcmd);
 	free(xcmdStart);
 	free(escCmd);
 	if (cmdFlags.ignerr) {
