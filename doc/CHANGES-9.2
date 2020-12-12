@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.20 2020/12/11 15:44:07 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.21 2020/12/12 13:04:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1193,4 +1193,21 @@ sys/dev/hyperv/if_hvn.c				1.19
 
 	hvn(4): fix handling of generic ioctls, including ifconfig up/down.
 	[nonaka, ticket #1146]
+
+sys/dev/usb/ucom.c				1.128
+
+	Properly wait for refcounts to drain to avoid potential panics
+	when detaching the device.
+	[mrg, ticket #1147]
+
+sbin/atactl/atactl.c				1.84
+
+	Micron SMART 202 is percent lifetime used not remaining.
+	[mrg, ticket #1148]
+
+sys/dev/fdt/pwm_backlight.c			1.7
+
+	Save the new current level when set by the user, so it is properly
+	restored after dpms blanking.
+	[mrg, ticket #1149]
 
