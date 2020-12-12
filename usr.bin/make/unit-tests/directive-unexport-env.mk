@@ -1,4 +1,4 @@
-# $NetBSD: directive-unexport-env.mk,v 1.6 2020/12/12 18:00:18 rillig Exp $
+# $NetBSD: directive-unexport-env.mk,v 1.7 2020/12/12 18:11:42 rillig Exp $
 #
 # Tests for the .unexport-env directive.
 #
@@ -10,7 +10,7 @@
 
 # TODO: Implementation
 
-.unexport-en			# oops: misspelled
+.unexport-en			# misspelled
 .unexport-env			# ok
 .unexport-environment		# misspelled
 
