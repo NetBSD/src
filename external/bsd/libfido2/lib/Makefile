@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/12/04 18:27:44 christos Exp $
+# $NetBSD: Makefile,v 1.3 2020/12/12 18:45:11 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -31,7 +31,7 @@ eddsa.c \
 err.c \
 es256.c \
 hid.c \
-hid_openbsd.c \
+hid_netbsd.c \
 info.c \
 io.c \
 iso7816.c \
