@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.720 2020/12/12 00:33:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.721 2020/12/12 00:42:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.720 2020/12/12 00:33:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.721 2020/12/12 00:42:35 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -3388,10 +3388,10 @@ typedef enum ApplyModifiersIndirectResult {
 /* While expanding a variable expression, expand and apply indirect
  * modifiers such as in ${VAR:${M_indirect}}. */
 static ApplyModifiersIndirectResult
-ApplyModifiersIndirect(ApplyModifiersState *st, const char **inout_p,
+ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 		       void **inout_freeIt)
 {
-	const char *p = *inout_p;
+	const char *p = *pp;
 	const char *mods;
 	void *mods_freeIt;
 
@@ -3400,35 +3400,35 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **inout_p,
 
 	/*
 	 * If we have not parsed up to st->endc or ':', we are not
-	 * interested.  This means the expression ${VAR:${M_1}${M_2}}
-	 * is not accepted, but ${VAR:${M_1}:${M_2}} is.
+	 * interested.  This means the expression ${VAR:${M1}${M2}}
+	 * is not accepted, but ${VAR:${M1}:${M2}} is.
 	 */
 	if (mods[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
 		if (opts.lint)
 			Parse_Error(PARSE_FATAL,
 			    "Missing delimiter ':' "
 			    "after indirect modifier \"%.*s\"",
-			    (int)(p - *inout_p), *inout_p);
+			    (int)(p - *pp), *pp);
 
 		free(mods_freeIt);
 		/* XXX: apply_mods doesn't sound like "not interested". */
 		/* XXX: Why is the indirect modifier parsed once more by
-		 * apply_mods?  If any, p should be advanced to nested_p. */
+		 * apply_mods?  Try *pp = p here. */
 		return AMIR_APPLY_MODS;
 	}
 
 	DEBUG3(VAR, "Indirect modifier \"%s\" from \"%.*s\"\n",
-	    mods, (int)(p - *inout_p), *inout_p);
+	    mods, (int)(p - *pp), *pp);
 
 	if (mods[0] != '\0') {
-		const char *rval_pp = mods;
-		st->val = ApplyModifiers(&rval_pp, st->val, '\0', '\0',
+		const char *rval_p = mods;
+		st->val = ApplyModifiers(&rval_p, st->val, '\0', '\0',
 		    st->var, &st->exprFlags, st->ctxt, st->eflags,
 		    inout_freeIt);
 		if (st->val == var_Error || st->val == varUndefined ||
-		    *rval_pp != '\0') {
+		    *rval_p != '\0') {
 			free(mods_freeIt);
-			*inout_p = p;
+			*pp = p;
 			return AMIR_OUT;	/* error already reported */
 		}
 	}
@@ -3440,11 +3440,11 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **inout_p,
 		Error("Unclosed variable specification after complex "
 		      "modifier (expecting '%c') for %s",
 		    st->endc, st->var->name.str);
-		*inout_p = p;
+		*pp = p;
 		return AMIR_OUT;
 	}
 
-	*inout_p = p;
+	*pp = p;
 	return AMIR_CONTINUE;
 }
 
