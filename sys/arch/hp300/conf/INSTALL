@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.65 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: INSTALL,v 1.66 2020/12/12 05:48:55 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -10,10 +10,11 @@ include 	"arch/hp300/conf/std.hp300"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # optimise for smaller kernels
-makeoptions 	COPTS="-Os"
-options 	NVNODE=50
-options 	NBUF=16
-options 	BUFPAGES=16
+makeoptions 	COPTS="-Os -fno-unwind-tables"
+#options 	NVNODE=50
+#options 	NBUF=16
+#options 	BUFPAGES=16
+options 	BUFCACHE=5
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
