@@ -1,4 +1,4 @@
-# $NetBSD: sh-flags.mk,v 1.2 2020/12/10 17:55:30 rillig Exp $
+# $NetBSD: sh-flags.mk,v 1.3 2020/12/12 12:13:12 rillig Exp $
 #
 # Tests for the effective RunFlags of a shell command (run/skip, echo/silent,
 # error check, trace), which are controlled by 12 different switches.  These
@@ -111,7 +111,7 @@ ${target}: .MAKE
 .if ${tgt-ignerr} == yes
 ${target}: .IGNORE
 .endif
-.if ${tgt-silent} == yes
+.if ${tgt-silent} == yes || ${OPT_TARGET:M*s*}
 ${target}: .SILENT
 .endif
 
