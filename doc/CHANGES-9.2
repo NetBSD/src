@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.21 2020/12/12 13:04:48 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.22 2020/12/12 20:30:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1210,4 +1210,10 @@ sys/dev/fdt/pwm_backlight.c			1.7
 	Save the new current level when set by the user, so it is properly
 	restored after dpms blanking.
 	[mrg, ticket #1149]
+
+sys/dev/usb/ohci.c				1.311,1.312
+sys/dev/usb/ohcivar.h				1.62
+
+	PR 22646, PR 55835: restructure the abort code for TD based transfers.
+	[skrll, ticket #1150]
 
