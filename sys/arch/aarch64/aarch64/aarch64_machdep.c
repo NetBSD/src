@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.55 2020/12/09 08:51:05 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.56 2020/12/12 09:27:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.55 2020/12/09 08:51:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.56 2020/12/12 09:27:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -72,8 +72,8 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.55 2020/12/09 08:51:05 skrll E
 #include <aarch64/vmparam.h>
 #include <aarch64/kcore.h>
 
-#include <arch/evbarm/fdt/platform.h>
 #include <arm/fdt/arm_fdtvar.h>
+#include <dev/fdt/fdt_memory.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -193,7 +193,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 
 	VPRINTF("%s: kernel phys start %lx end %lx+%lx\n", __func__,
 	    kernstart_phys, kernend_phys, kernend_extra);
-	fdt_add_reserved_memory_range(kernstart_phys,
+	fdt_memory_remove_range(kernstart_phys,
 	     kernend_phys - kernstart_phys + kernend_extra);
 }
 
