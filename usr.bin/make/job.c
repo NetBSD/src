@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.379 2020/12/12 11:28:29 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.380 2020/12/12 11:33:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.379 2020/12/12 11:28:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.380 2020/12/12 11:33:10 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1253,17 +1253,12 @@ Job_Touch(GNode *gn, Boolean echo)
 	if (!GNode_ShouldExecute(gn))
 		return;
 
-	if (gn->type & OP_ARCHV) {
+	if (gn->type & OP_ARCHV)
 		Arch_Touch(gn);
-		return;
-	}
-
-	if (gn->type & OP_LIB) {
+	else if (gn->type & OP_LIB)
 		Arch_TouchLib(gn);
-		return;
-	}
-
-	TouchRegular(gn);
+	else
+		TouchRegular(gn);
 }
 
 /* Make sure the given node has all the commands it needs.
