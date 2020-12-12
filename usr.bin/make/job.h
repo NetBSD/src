@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.68 2020/12/12 01:42:33 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.69 2020/12/12 10:21:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -163,8 +163,6 @@ typedef struct Job {
     Boolean echo;
     /* Target is a special one. */
     Boolean special;
-    /* we've sent 'set -x' */
-    Boolean xtraced;
 
     int inPipe;			/* Pipe for reading output from job */
     int outPipe;		/* Pipe for writing control commands */
