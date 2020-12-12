@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2020/12/12 16:06:27 rillig Exp $
+#	$NetBSD: Makefile,v 1.111 2020/12/12 16:54:20 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -43,12 +43,16 @@ USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 GCOV?=		gcov
 COPTS+=		--coverage -O0 -ggdb
-GCOV_PERL=	if (/^File '(\S+)'/) {
+GCOV_PERL=	if (/^File '(?:.*\/)?(\S+)'/) {
 GCOV_PERL+=		$$file = $$1; $$func = "";
 GCOV_PERL+=	} elsif (/^Function '(\S+)'/) {
 GCOV_PERL+=		$$func = $$1;
-GCOV_PERL+=	} elsif (/^Lines executed:(\d+\.\d+)% of (\d+)/) {
-GCOV_PERL+=		printf("%6.2f  %5d   %s%s\n", $$1, $$2, $$file, $$func);
+GCOV_PERL+=	} elsif (/^Lines executed:(\d+\.\d+)% of (\d+)/ && defined($$file)) {
+GCOV_PERL+=		my ($$percent, $$lines) = ($$1, $$2);
+GCOV_PERL+=		my $$uncovered = `grep -c '\#\#\#\#\#:' < \$$(basename $$file.gcov)`;
+GCOV_PERL+=		printf("%7.2f  %4d/%4d  %s%s\n",
+GCOV_PERL+=		    $$percent, $$uncovered, $$lines, $$file, $$func);
+GCOV_PERL+=		$$file = undef;
 GCOV_PERL+=	}
 LDADD+=		--coverage
 .endif
@@ -169,8 +173,7 @@ test: .MAKE
 	cd ${.CURDIR}/unit-tests \
 	&& MAKEFLAGS= ${TEST_MAKE} -r -m / TEST_MAKE=${TEST_MAKE} ${TESTS:DTESTS=${TESTS:Q}} ${.TARGET}
 .if ${USE_COVERAGE} == yes
-	@${GCOV} ${GCOV_OPTS} ${SRCS} | perl -ne ${GCOV_PERL:Q} | sort -nr
-	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
+	${MAKE} report-coverage
 .endif
 
 accept sync-mi: .MAKE
@@ -194,6 +197,13 @@ test-coverage: .PHONY
 	@make -s clean cleandir
 	@env USE_COVERAGE=yes COPTS="-O0 -ggdb" USER_CPPFLAGS="-DCLEANUP" \
 		sh -c 'make -s all -j8 && make -s test'
+
+report-coverage: .PHONY
+	@echo 'covered  uncovered  file'
+	@${GCOV} ${GCOV_OPTS} ${SRCS} 2>&1 \
+	| perl -ne ${GCOV_PERL:Q} \
+	| sort -nr
+	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
