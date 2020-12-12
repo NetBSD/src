@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2020/12/06 13:29:34 rillig Exp $
+#	$NetBSD: Makefile,v 1.110 2020/12/12 16:06:27 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -189,6 +189,11 @@ retest:
 	${COMPILE.c:S,^-c$,-E,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
 .c.casm:
 	${COMPILE.c:S,^-c$,-S,} ${COPTS.${.IMPSRC}} ${.IMPSRC} -o ${.TARGET}
+
+test-coverage: .PHONY
+	@make -s clean cleandir
+	@env USE_COVERAGE=yes COPTS="-O0 -ggdb" USER_CPPFLAGS="-DCLEANUP" \
+		sh -c 'make -s all -j8 && make -s test'
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
