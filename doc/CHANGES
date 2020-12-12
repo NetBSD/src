@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2765 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2766 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -315,3 +315,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	pkg_install: Updated to 20201205. [wiz 20201205]
 	acpicpu(4): Add support for Arm CPUs. [jmcneill 20201207]
 	OpenSSL: Imported 1.1.1i. [christos 20201209]
+	pkg_install: Updated to 20201212. [wiz 20201212]
