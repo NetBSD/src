@@ -1,9 +1,10 @@
-# $NetBSD: files.fdt,v 1.56 2020/10/30 16:08:45 skrll Exp $
+# $NetBSD: files.fdt,v 1.57 2020/12/12 09:27:31 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
 defflag	opt_fdt.h				FDTBASE : libfdt, ofw_subr
 defflag	opt_fdt.h				FDT: FDTBASE
+defparam opt_fdt.h				FDT_MEMORY_RANGES
 defparam opt_fdt.h				FDT_DEFAULT_STDOUT_PATH
 
 define	fdt { [pass = 10] } : clk, pwm
@@ -53,8 +54,10 @@ device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
 
+file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
 file	dev/fdt/fdt_subr.c			fdtbase
+
 file	dev/fdt/fdt_clock.c			fdt
 file	dev/fdt/fdt_dai.c			fdt
 file	dev/fdt/fdt_dma.c			fdt
