@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.472 2020/12/06 20:33:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.473 2020/12/12 21:20:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.472 2020/12/06 20:33:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.473 2020/12/12 21:20:30 rillig Exp $");
 
 /* types and constants */
 
@@ -2042,7 +2042,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 	} else if (strcmp(name, MAKE_JOB_PREFIX) == 0)
 		Job_SetPrefix();
 	else if (strcmp(name, MAKE_EXPORTED) == 0)
-		Var_Export(avalue, FALSE);
+		Var_ExportVars(avalue);
 }
 
 /* Perform the variable variable assignment in the given context. */
@@ -2983,7 +2983,7 @@ ParseDirective(char *line)
 		} else if (strncmp(cp, "export", 6) == 0) {
 			cp += 6;
 			pp_skip_whitespace(&cp);
-			Var_Export(cp, TRUE);
+			Var_Export(cp);
 			return TRUE;
 		} else if (strncmp(cp, "unexport", 8) == 0) {
 			Var_UnExport(cp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.167 2020/12/12 18:53:53 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.168 2020/12/12 21:20:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -324,7 +324,8 @@ VarParseResult Var_Subst(const char *, GNode *, VarEvalFlags, char **);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ReexportVars(void);
-void Var_Export(const char *, Boolean);
+void Var_Export(const char *);
+void Var_ExportVars(const char *);
 void Var_UnExport(const char *);
 
 /* util.c */
