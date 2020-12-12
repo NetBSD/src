@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.371 2020/12/12 01:42:33 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.372 2020/12/12 02:03:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.371 2020/12/12 01:42:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.372 2020/12/12 02:03:36 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -778,9 +778,9 @@ ShellWriter_Println(ShellWriter *wr, const char *line)
  * it any more complex than it already is?
  */
 static void
-JobPrintSpecialsErrCtl(Job *job, ShellWriter *wr, Boolean cmdEcho)
+ShellWriter_PrintIgnoreErrors(ShellWriter *wr, Boolean echo)
 {
-	if (job->echo && cmdEcho && shell->hasEchoCtl) {
+	if (echo && shell->hasEchoCtl) {
 		ShellWriter_Println(wr, shell->echoOff);
 		ShellWriter_Println(wr, shell->errOff);
 		ShellWriter_Println(wr, shell->echoOn);
@@ -800,6 +800,7 @@ static void
 JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 			const char *escCmd, const char **inout_cmdTemplate)
 {
+	/* XXX: Why is the job modified at this point? */
 	job->ignerr = TRUE;
 
 	if (job->echo && inout_cmdFlags->echo) {
@@ -828,7 +829,8 @@ JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, Boolean run,
 	if (!run)
 		inout_cmdFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
-		JobPrintSpecialsErrCtl(job, wr, inout_cmdFlags->echo);
+		ShellWriter_PrintIgnoreErrors(wr,
+		    job->echo && inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
