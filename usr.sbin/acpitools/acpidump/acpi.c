@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.47 2020/12/06 18:38:58 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.48 2020/12/12 16:08:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.47 2020/12/06 18:38:58 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.48 2020/12/12 16:08:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -103,6 +103,7 @@ static void	acpi_handle_msct(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_ecdt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_hpet(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_mcfg(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_pcct(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_pptt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_sbst(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_slit(ACPI_TABLE_HEADER *sdp);
@@ -2532,6 +2533,222 @@ acpi_handle_mcfg(ACPI_TABLE_HEADER *sdp)
 }
 
 static void
+acpi_print_pcct_subspace(ACPI_PCCT_SUBSPACE *subspace)
+{
+	printf("\tType=Generic Subspace\n");
+	printf("\tBase Address=0x%016jx\n", subspace->BaseAddress);
+	printf("\tLength=%jd\n", subspace->Length);
+	printf("\tDoorbell Address=");
+	acpi_print_gas(&subspace->DoorbellRegister);
+	printf("\n");
+	printf("\tDoorbell Preserve=0x%016jx\n", subspace->PreserveMask);
+	printf("\tDoorbell Write=0x%016jx\n", subspace->WriteMask);
+	printf("\tLatency=%u us\n", subspace->Latency);
+	printf("\tMax Access Rate=%u\n", subspace->MaxAccessRate);
+	printf("\tMin Turnaround Time=%u us\n", subspace->MinTurnaroundTime);
+}
+
+static void
+acpi_print_pcct_hw_reduced(ACPI_PCCT_HW_REDUCED *subspace)
+{
+	printf("\tType=HW-reduced Subspace\n");
+	printf("\tPlatform Interrupt=%u", subspace->PlatformInterrupt);
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_POLARITY) {
+		printf(", Edge triggered");
+	} else {
+		printf(", Level triggered");
+	}
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_MODE) {
+		printf(", Active low");
+	} else {
+		printf(", Active high");
+	}
+	printf("\n");
+	printf("\tBase Address=0x%016jx\n", subspace->BaseAddress);
+	printf("\tLength=%jd\n", subspace->Length);
+	printf("\tDoorbell Register=");
+	acpi_print_gas(&subspace->DoorbellRegister);
+	printf("\n");
+	printf("\tDoorbell Preserve=0x%016jx\n", subspace->PreserveMask);
+	printf("\tDoorbell Write=0x%016jx\n", subspace->WriteMask);
+	printf("\tLatency=%u us\n", subspace->Latency);
+	printf("\tMax Access Rate=%u\n", subspace->MaxAccessRate);
+	printf("\tMin Turnaround Time=%u us\n", subspace->MinTurnaroundTime);
+}
+
+static void
+acpi_print_pcct_hw_reduced_type2(ACPI_PCCT_HW_REDUCED_TYPE2 *subspace)
+{
+	printf("\tType=HW-reduced Subspace Type 2\n");
+	printf("\tPlatform Interrupt=%u", subspace->PlatformInterrupt);
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_POLARITY) {
+		printf(", Edge triggered");
+	} else {
+		printf(", Level triggered");
+	}
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_MODE) {
+		printf(", Active low");
+	} else {
+		printf(", Active high");
+	}
+	printf("\n");
+	printf("\tBase Address=0x%016jx\n", subspace->BaseAddress);
+	printf("\tLength=%jd\n", subspace->Length);
+	printf("\tDoorbell Register=");
+	acpi_print_gas(&subspace->DoorbellRegister);
+	printf("\n");
+	printf("\tDoorbell Preserve=0x%016jx\n", subspace->PreserveMask);
+	printf("\tDoorbell Write=0x%016jx\n", subspace->WriteMask);
+	printf("\tLatency=%u us\n", subspace->Latency);
+	printf("\tMax Access Rate=%u\n", subspace->MaxAccessRate);
+	printf("\tMin Turnaround Time=%u us\n", subspace->MinTurnaroundTime);
+	printf("\tPlatform Interrupt Ack Register=");
+	acpi_print_gas(&subspace->PlatformAckRegister);
+	printf("\n");
+	printf("\tPlatform Interrupt Ack Preserve=0x%016jx\n", subspace->AckPreserveMask);
+	printf("\tPlatform Interrupt Ack Write=0x%016jx\n", subspace->AckWriteMask);
+}
+
+static void
+acpi_print_pcct_ext_pcc_master(ACPI_PCCT_EXT_PCC_MASTER *subspace)
+{
+	printf("\tType=Extended PCC Master Subspace\n");
+	printf("\tPlatform Interrupt=%u", subspace->PlatformInterrupt);
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_POLARITY) {
+		printf(", Edge triggered");
+	} else {
+		printf(", Level triggered");
+	}
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_MODE) {
+		printf(", Active low");
+	} else {
+		printf(", Active high");
+	}
+	printf("\n");
+	printf("\tBase Address=0x%016jx\n", subspace->BaseAddress);
+	printf("\tLength=%d\n", subspace->Length);
+	printf("\tDoorbell Register=");
+	acpi_print_gas(&subspace->DoorbellRegister);
+	printf("\n");
+	printf("\tDoorbell Preserve=0x%016jx\n", subspace->PreserveMask);
+	printf("\tDoorbell Write=0x%016jx\n", subspace->WriteMask);
+	printf("\tLatency=%u us\n", subspace->Latency);
+	printf("\tMax Access Rate=%u\n", subspace->MaxAccessRate);
+	printf("\tMin Turnaround Time=%u us\n", subspace->MinTurnaroundTime);
+	printf("\tPlatform Interrupt Ack Register=");
+	acpi_print_gas(&subspace->PlatformAckRegister);
+	printf("\n");
+	printf("\tPlatform Interrupt Ack Preserve=0x%016jx\n", subspace->AckPreserveMask);
+	printf("\tPlatform Interrupt Ack Set=0x%016jx\n", subspace->AckSetMask);
+	printf("\tCommand Complete Register=");
+	acpi_print_gas(&subspace->CmdCompleteRegister);
+	printf("\n");
+	printf("\tCommand Complete Mask=0x%016jx\n", subspace->CmdCompleteMask);
+	printf("\tCommand Update Register=");
+	acpi_print_gas(&subspace->CmdUpdateRegister);
+	printf("\n");
+	printf("\tCommand Update Preserve Mask=0x%016jx\n", subspace->CmdUpdatePreserveMask);
+	printf("\tCommand Update Set MAsk=0x%016jx\n", subspace->CmdUpdateSetMask);
+	printf("\tError Status Register=");
+	acpi_print_gas(&subspace->ErrorStatusRegister);
+	printf("\n");
+	printf("\tError Status Mask=0x%016jx\n", subspace->ErrorStatusMask);
+}
+
+static void
+acpi_print_pcct_ext_pcc_slave(ACPI_PCCT_EXT_PCC_SLAVE *subspace)
+{
+	printf("\tType=Extended PCC Slave Subspace\n");
+	printf("\tPlatform Interrupt=%u", subspace->PlatformInterrupt);
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_POLARITY) {
+		printf(", Edge triggered");
+	} else {
+		printf(", Level triggered");
+	}
+	if (subspace->Flags & ACPI_PCCT_INTERRUPT_MODE) {
+		printf(", Active low");
+	} else {
+		printf(", Active high");
+	}
+	printf("\n");
+	printf("\tBase Address=0x%016jx\n", subspace->BaseAddress);
+	printf("\tLength=%d\n", subspace->Length);
+	printf("\tDoorbell Register=");
+	acpi_print_gas(&subspace->DoorbellRegister);
+	printf("\n");
+	printf("\tDoorbell Preserve=0x%016jx\n", subspace->PreserveMask);
+	printf("\tDoorbell Write=0x%016jx\n", subspace->WriteMask);
+	printf("\tLatency=%u us\n", subspace->Latency);
+	printf("\tMax Access Rate=%u\n", subspace->MaxAccessRate);
+	printf("\tMin Turnaround Time=%u us\n", subspace->MinTurnaroundTime);
+	printf("\tPlatform Interrupt Ack Register=");
+	acpi_print_gas(&subspace->PlatformAckRegister);
+	printf("\n");
+	printf("\tPlatform Interrupt Ack Preserve=0x%016jx\n", subspace->AckPreserveMask);
+	printf("\tPlatform Interrupt Ack Set=0x%016jx\n", subspace->AckSetMask);
+	printf("\tCommand Complete Register=");
+	acpi_print_gas(&subspace->CmdCompleteRegister);
+	printf("\n");
+	printf("\tCommand Complete Mask=0x%016jx\n", subspace->CmdCompleteMask);
+	printf("\tCommand Update Register=");
+	acpi_print_gas(&subspace->CmdUpdateRegister);
+	printf("\n");
+	printf("\tCommand Update Preserve Mask=0x%016jx\n", subspace->CmdUpdatePreserveMask);
+	printf("\tCommand Update Set MAsk=0x%016jx\n", subspace->CmdUpdateSetMask);
+	printf("\tError Status Register=");
+	acpi_print_gas(&subspace->ErrorStatusRegister);
+	printf("\n");
+	printf("\tError Status Mask=0x%016jx\n", subspace->ErrorStatusMask);
+}
+
+static void
+acpi_print_pcct(ACPI_SUBTABLE_HEADER *hdr)
+{
+	switch (hdr->Type) {
+	case ACPI_PCCT_TYPE_GENERIC_SUBSPACE:
+		acpi_print_pcct_subspace((ACPI_PCCT_SUBSPACE *)hdr);
+		break;
+	case ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE:
+		acpi_print_pcct_hw_reduced((ACPI_PCCT_HW_REDUCED *)hdr);
+		break;
+	case ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2:
+		acpi_print_pcct_hw_reduced_type2((ACPI_PCCT_HW_REDUCED_TYPE2 *)hdr);
+		break;
+	case ACPI_PCCT_TYPE_EXT_PCC_MASTER_SUBSPACE:
+		acpi_print_pcct_ext_pcc_master((ACPI_PCCT_EXT_PCC_MASTER *)hdr);
+		break;
+	case ACPI_PCCT_TYPE_EXT_PCC_SLAVE_SUBSPACE:
+		acpi_print_pcct_ext_pcc_slave((ACPI_PCCT_EXT_PCC_SLAVE *)hdr);
+		break;
+	default:
+		printf("\tUnknown structure"
+		    "(type = %hhu, length = %hhu)\n",
+		    hdr->Type, hdr->Length);
+		break;
+	}
+}
+
+static void
+acpi_handle_pcct(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_PCCT *pcct;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+
+	pcct = (ACPI_TABLE_PCCT *)sdp;
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_PCCT_## flag, #flag)
+	printf("\tFlags=");
+	PRINTFLAG(pcct->Flags, DOORBELL);
+	PRINTFLAG_END();
+#undef PRINTFLAG
+
+	acpi_walk_subtables(sdp, (pcct + 1), acpi_print_pcct);
+
+	printf(END_COMMENT);
+}
+
+static void
 acpi_print_pptt_processor(ACPI_PPTT_PROCESSOR *processor)
 {
 	uint32_t *private;
@@ -4309,6 +4526,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_lpit(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_MCFG, 4))
 			acpi_handle_mcfg(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_PCCT, 4))
+			acpi_handle_pcct(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_PPTT, 4))
 			acpi_handle_pptt(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_SBST, 4))
