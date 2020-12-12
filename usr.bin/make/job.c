@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.370 2020/12/12 00:33:25 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.371 2020/12/12 01:42:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.370 2020/12/12 00:33:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.371 2020/12/12 01:42:33 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -229,6 +229,16 @@ typedef struct CommandFlags {
 	 */
 	Boolean ignerr;
 } CommandFlags;
+
+/*
+ * Write shell commands to a file.
+ *
+ * TODO: keep track of whether commands are echoed.
+ * TODO: keep track of whether error checking is active.
+ */
+typedef struct ShellWriter {
+	FILE *f;
+} ShellWriter;
 
 /*
  * error handling variables
@@ -740,18 +750,25 @@ EscapeShellDblQuot(const char *cmd)
 }
 
 static void
-JobPrintf(Job *job, const char *fmt, const char *arg)
+ShellWriter_PrintFmt(ShellWriter *wr, const char *fmt, const char *arg)
 {
 	DEBUG1(JOB, fmt, arg);
 
-	(void)fprintf(job->cmdFILE, fmt, arg);
-	(void)fflush(job->cmdFILE);
+	(void)fprintf(wr->f, fmt, arg);
+	/* XXX: Is flushing needed in any case, or only if f == stdout? */
+	(void)fflush(wr->f);
 }
 
 static void
-JobPrintln(Job *job, const char *line)
+ShellWriter_PrintCmd(ShellWriter *wr, const char *tmpl, const char *escCmd)
 {
-	JobPrintf(job, "%s\n", line);
+	ShellWriter_PrintFmt(wr, tmpl, escCmd);
+}
+
+static void
+ShellWriter_Println(ShellWriter *wr, const char *line)
+{
+	ShellWriter_PrintFmt(wr, "%s\n", line);
 }
 
 /*
@@ -761,14 +778,14 @@ JobPrintln(Job *job, const char *line)
  * it any more complex than it already is?
  */
 static void
-JobPrintSpecialsErrCtl(Job *job, Boolean cmdEcho)
+JobPrintSpecialsErrCtl(Job *job, ShellWriter *wr, Boolean cmdEcho)
 {
 	if (job->echo && cmdEcho && shell->hasEchoCtl) {
-		JobPrintln(job, shell->echoOff);
-		JobPrintln(job, shell->errOff);
-		JobPrintln(job, shell->echoOn);
+		ShellWriter_Println(wr, shell->echoOff);
+		ShellWriter_Println(wr, shell->errOff);
+		ShellWriter_Println(wr, shell->echoOn);
 	} else {
-		JobPrintln(job, shell->errOff);
+		ShellWriter_Println(wr, shell->errOff);
 	}
 }
 
@@ -780,19 +797,19 @@ JobPrintSpecialsErrCtl(Job *job, Boolean cmdEcho)
  * Set cmdTemplate to use the weirdness instead of the simple "%s\n" template.
  */
 static void
-JobPrintSpecialsEchoCtl(Job *job, CommandFlags *inout_cmdFlags,
+JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 			const char *escCmd, const char **inout_cmdTemplate)
 {
 	job->ignerr = TRUE;
 
 	if (job->echo && inout_cmdFlags->echo) {
 		if (shell->hasEchoCtl)
-			JobPrintln(job, shell->echoOff);
-		JobPrintf(job, shell->echoTmpl, escCmd);
+			ShellWriter_Println(wr, shell->echoOff);
+		ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
 		inout_cmdFlags->echo = FALSE;
 	} else {
 		if (inout_cmdFlags->echo)
-			JobPrintf(job, shell->echoTmpl, escCmd);
+			ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
 	}
 	*inout_cmdTemplate = shell->runIgnTmpl;
 
@@ -805,15 +822,15 @@ JobPrintSpecialsEchoCtl(Job *job, CommandFlags *inout_cmdFlags,
 }
 
 static void
-JobPrintSpecials(Job *job, const char *escCmd, Boolean run,
+JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, Boolean run,
 		 CommandFlags *inout_cmdFlags, const char **inout_cmdTemplate)
 {
 	if (!run)
 		inout_cmdFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
-		JobPrintSpecialsErrCtl(job, inout_cmdFlags->echo);
+		JobPrintSpecialsErrCtl(job, wr, inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
-		JobPrintSpecialsEchoCtl(job, inout_cmdFlags, escCmd,
+		JobPrintSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
 		inout_cmdFlags->ignerr = FALSE;
@@ -835,7 +852,7 @@ JobPrintSpecials(Job *job, const char *escCmd, Boolean run,
  * after all other targets have been made.
  */
 static void
-JobPrintCommand(Job *job, const char *ucmd)
+JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 {
 	Boolean run;
 
@@ -876,7 +893,7 @@ JobPrintCommand(Job *job, const char *ucmd)
 
 	if (!cmdFlags.echo) {
 		if (job->echo && run && shell->hasEchoCtl) {
-			JobPrintln(job, shell->echoOff);
+			ShellWriter_Println(wr, shell->echoOff);
 		} else {
 			if (shell->hasErrCtl)
 				cmdFlags.echo = TRUE;
@@ -884,7 +901,7 @@ JobPrintCommand(Job *job, const char *ucmd)
 	}
 
 	if (cmdFlags.ignerr) {
-		JobPrintSpecials(job, escCmd, run, &cmdFlags, &cmdTemplate);
+		JobPrintSpecials(job, wr, escCmd, run, &cmdFlags, &cmdTemplate);
 	} else {
 
 		/*
@@ -897,8 +914,9 @@ JobPrintCommand(Job *job, const char *ucmd)
 		    shell->runChkTmpl[0] != '\0') {
 			if (job->echo && cmdFlags.echo) {
 				if (shell->hasEchoCtl)
-					JobPrintln(job, shell->echoOff);
-				JobPrintf(job, shell->echoTmpl, escCmd);
+					ShellWriter_Println(wr, shell->echoOff);
+				ShellWriter_PrintCmd(wr,
+				    shell->echoTmpl, escCmd);
 				cmdFlags.echo = FALSE;
 			}
 			/*
@@ -914,11 +932,11 @@ JobPrintCommand(Job *job, const char *ucmd)
 	}
 
 	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 && !job->xtraced) {
-		JobPrintln(job, "set -x");
+		ShellWriter_Println(wr, "set -x");
 		job->xtraced = TRUE;
 	}
 
-	JobPrintf(job, cmdTemplate, xcmd);
+	ShellWriter_PrintCmd(wr, cmdTemplate, xcmd);
 	free(xcmdStart);
 	free(escCmd);
 	if (cmdFlags.ignerr) {
@@ -928,13 +946,13 @@ JobPrintCommand(Job *job, const char *ucmd)
 		 * for the whole command...
 		 */
 		if (cmdFlags.echo && job->echo && shell->hasEchoCtl) {
-			JobPrintln(job, shell->echoOff);
+			ShellWriter_Println(wr, shell->echoOff);
 			cmdFlags.echo = FALSE;
 		}
-		JobPrintln(job, shell->errOn);
+		ShellWriter_Println(wr, shell->errOn);
 	}
 	if (!cmdFlags.echo && shell->hasEchoCtl)
-		JobPrintln(job, shell->echoOn);
+		ShellWriter_Println(wr, shell->echoOn);
 }
 
 /*
@@ -950,6 +968,7 @@ JobPrintCommands(Job *job)
 {
 	StringListNode *ln;
 	Boolean seen = FALSE;
+	ShellWriter wr = { job->cmdFILE };
 
 	for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
@@ -960,7 +979,7 @@ JobPrintCommands(Job *job)
 			break;
 		}
 
-		JobPrintCommand(job, ln->datum);
+		JobPrintCommand(job, &wr, ln->datum);
 		seen = TRUE;
 	}
 
