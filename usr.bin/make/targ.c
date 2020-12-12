@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.154 2020/12/07 23:59:59 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.155 2020/12/12 00:05:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -93,12 +93,6 @@
  *	Targ_FindList	Given a list of names, find nodes for all
  *			of them, creating them as necessary.
  *
- *	Targ_Ignore	Return TRUE if errors should be ignored when
- *			creating the given target.
- *
- *	Targ_Silent	Return TRUE if we should be silent when
- *			creating the given target.
- *
  *	Targ_Precious	Return TRUE if the target is precious and
  *			should not be removed if we are interrupted.
  *
@@ -119,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.154 2020/12/07 23:59:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.155 2020/12/12 00:05:05 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -349,23 +343,6 @@ Targ_FindList(GNodeList *gns, StringList *names)
 		GNode *gn = Targ_GetNode(name);
 		Lst_Append(gns, gn);
 	}
-}
-
-/*
- * Return true if errors from shell commands should be ignored when
- * creating gn.
- */
-Boolean
-Targ_Ignore(const GNode *gn)
-{
-	return opts.ignoreErrors || gn->type & OP_IGNORE;
-}
-
-/* Return true if be silent when creating gn. */
-Boolean
-Targ_Silent(const GNode *gn)
-{
-	return opts.beSilent || gn->type & OP_SILENT;
 }
 
 /* See if the given target is precious. */
