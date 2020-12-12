@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.1.1.40 2020/12/05 16:19:17 wiz Exp $	*/
+/*	$NetBSD: version.h,v 1.1.1.41 2020/12/12 10:59:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
@@ -27,6 +27,6 @@
 #ifndef _INST_LIB_VERSION_H_
 #define _INST_LIB_VERSION_H_
 
-#define PKGTOOLS_VERSION 20201205
+#define PKGTOOLS_VERSION 20201212
 
 #endif /* _INST_LIB_VERSION_H_ */
