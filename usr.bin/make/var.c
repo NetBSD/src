@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.721 2020/12/12 00:42:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.722 2020/12/12 00:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.721 2020/12/12 00:42:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.722 2020/12/12 00:53:23 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -3421,12 +3421,11 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	    mods, (int)(p - *pp), *pp);
 
 	if (mods[0] != '\0') {
-		const char *rval_p = mods;
-		st->val = ApplyModifiers(&rval_p, st->val, '\0', '\0',
+		st->val = ApplyModifiers(&mods, st->val, '\0', '\0',
 		    st->var, &st->exprFlags, st->ctxt, st->eflags,
 		    inout_freeIt);
 		if (st->val == var_Error || st->val == varUndefined ||
-		    *rval_p != '\0') {
+		    *mods != '\0') {
 			free(mods_freeIt);
 			*pp = p;
 			return AMIR_OUT;	/* error already reported */
