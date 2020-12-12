@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.374 2020/12/12 10:21:50 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.375 2020/12/12 10:40:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.374 2020/12/12 10:21:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.375 2020/12/12 10:40:42 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -189,15 +189,15 @@ typedef struct Shell {
 	 */
 	const char *name;
 
-	Boolean hasEchoCtl;	/* True if both echoOff and echoOn defined */
+	Boolean hasEchoCtl;	/* whether both echoOff and echoOn are there */
 	const char *echoOff;	/* command to turn echoing off */
 	const char *echoOn;	/* command to turn echoing back on */
-	const char *noPrint;	/* text to skip when printing output from
+	const char *noPrint;	/* text to skip when printing output from the
 				 * shell. This is usually the same as echoOff */
 	size_t noPrintLen;	/* length of noPrint command */
 
-	Boolean hasErrCtl;	/* set if can control error checking for
-				 * individual commands */
+	Boolean hasErrCtl;	/* whether error checking can be controlled
+				 * for individual commands */
 	const char *errOn;	/* command to turn on error checking */
 	const char *errOff;	/* command to turn off error checking */
 
@@ -213,7 +213,7 @@ typedef struct Shell {
 	char commentChar;	/* character used by shell for comment lines */
 
 	const char *echoFlag;	/* shell flag to echo commands */
-	const char *exitFlag;	/* shell flag to exit on error */
+	const char *errFlag;	/* shell flag to exit on error */
 } Shell;
 
 typedef struct CommandFlags {
@@ -322,8 +322,8 @@ static Shell shells[] = {
 	"{ %s \n} || exit $?\n", /* .runChkTmpl */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
-	"",			/* .echo */
-	"",			/* .exit */
+	"",			/* .echoFlag */
+	"",			/* .errFlag */
     },
 #endif /* DEFSHELL_CUSTOM */
     /*
@@ -346,11 +346,12 @@ static Shell shells[] = {
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar*/
 #if defined(MAKE_NATIVE) && defined(__NetBSD__)
-	"q",			/* .echo */
+	/* XXX: -q is not really echoFlag, it's more like noEchoInSysFlag. */
+	"q",			/* .echoFlag */
 #else
-	"",			/* .echo */
+	"",			/* .echoFlag */
 #endif
-	"",			/* .exit */
+	"",			/* .errFlag */
     },
     /*
      * KSH description.
@@ -370,8 +371,8 @@ static Shell shells[] = {
 	"{ %s \n} || exit $?\n", /* .runChkTmpl */
 	"'\n'",			/* .newline */
 	'#',			/* .commentChar */
-	"v",			/* .echo */
-	"",			/* .exit */
+	"v",			/* .echoFlag */
+	"",			/* .errFlag */
     },
     /*
      * CSH description. The csh can do echo control by playing
@@ -393,8 +394,8 @@ static Shell shells[] = {
 	"",			/* .runChkTmpl */
 	"'\\\n'",		/* .newline */
 	'#',			/* .commentChar */
-	"v",			/* .echo */
-	"e",			/* .exit */
+	"v",			/* .echoFlag */
+	"e",			/* .errFlag */
     }
 };
 
@@ -1505,7 +1506,7 @@ JobMakeArgv(Job *job, char **argv)
 	argv[0] = UNCONST(shellName);
 	argc = 1;
 
-	if ((shell->exitFlag != NULL && shell->exitFlag[0] != '-') ||
+	if ((shell->errFlag != NULL && shell->errFlag[0] != '-') ||
 	    (shell->echoFlag != NULL && shell->echoFlag[0] != '-')) {
 		/*
 		 * At least one of the flags doesn't have a minus before it,
@@ -1519,7 +1520,7 @@ JobMakeArgv(Job *job, char **argv)
 		 */
 		(void)snprintf(args, sizeof args, "-%s%s",
 		    (job->ignerr ? "" :
-			(shell->exitFlag != NULL ? shell->exitFlag : "")),
+			(shell->errFlag != NULL ? shell->errFlag : "")),
 		    (!job->echo ? "" :
 			(shell->echoFlag != NULL ? shell->echoFlag : "")));
 
@@ -1528,8 +1529,8 @@ JobMakeArgv(Job *job, char **argv)
 			argc++;
 		}
 	} else {
-		if (!job->ignerr && shell->exitFlag) {
-			argv[argc] = UNCONST(shell->exitFlag);
+		if (!job->ignerr && shell->errFlag) {
+			argv[argc] = UNCONST(shell->errFlag);
 			argc++;
 		}
 		if (job->echo && shell->echoFlag) {
@@ -2121,23 +2122,23 @@ Shell_Init(void)
 		InitShellNameAndPath();
 
 	Var_SetWithFlags(".SHELL", shellPath, VAR_CMDLINE, VAR_SET_READONLY);
-	if (shell->exitFlag == NULL)
-		shell->exitFlag = "";
+	if (shell->errFlag == NULL)
+		shell->errFlag = "";
 	if (shell->echoFlag == NULL)
 		shell->echoFlag = "";
-	if (shell->hasErrCtl && shell->exitFlag[0] != '\0') {
+	if (shell->hasErrCtl && shell->errFlag[0] != '\0') {
 		if (shellErrFlag &&
-		    strcmp(shell->exitFlag, &shellErrFlag[1]) != 0) {
+		    strcmp(shell->errFlag, &shellErrFlag[1]) != 0) {
 			free(shellErrFlag);
 			shellErrFlag = NULL;
 		}
 		if (shellErrFlag == NULL) {
-			size_t n = strlen(shell->exitFlag) + 2;
+			size_t n = strlen(shell->errFlag) + 2;
 
 			shellErrFlag = bmake_malloc(n);
 			if (shellErrFlag != NULL)
 				snprintf(shellErrFlag, n, "-%s",
-				    shell->exitFlag);
+				    shell->errFlag);
 		}
 	} else if (shellErrFlag != NULL) {
 		free(shellErrFlag);
@@ -2385,7 +2386,7 @@ Job_ParseShell(char *line)
 			} else if (strncmp(arg, "echoFlag=", 9) == 0) {
 				newShell.echoFlag = arg + 9;
 			} else if (strncmp(arg, "errFlag=", 8) == 0) {
-				newShell.exitFlag = arg + 8;
+				newShell.errFlag = arg + 8;
 			} else if (strncmp(arg, "hasErrCtl=", 10) == 0) {
 				char c = arg[10];
 				newShell.hasErrCtl = c == 'Y' || c == 'y' ||
