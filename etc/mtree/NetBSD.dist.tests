@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.182 2020/11/01 22:29:13 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.183 2020/12/12 02:50:26 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -114,6 +114,7 @@
 ./usr/libdata/debug/usr/tests/lib/libnvmm
 ./usr/libdata/debug/usr/tests/lib/libobjc
 ./usr/libdata/debug/usr/tests/lib/libposix
+./usr/libdata/debug/usr/tests/lib/libossaudio
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2
@@ -316,6 +317,7 @@
 ./usr/tests/lib/libm
 ./usr/tests/lib/libnvmm
 ./usr/tests/lib/libobjc
+./usr/tests/lib/libossaudio
 ./usr/tests/lib/libposix
 ./usr/tests/lib/libposix/bsd
 ./usr/tests/lib/libposix/posix1
