@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.66 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.67 2020/12/12 09:27:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.66 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.67 2020/12/12 09:27:31 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -150,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.66 2020/10/30 18:54:36 skrll Exp
 #if defined(FDT)
 #include <arch/evbarm/fdt/platform.h>
 #include <arm/fdt/arm_fdtvar.h>
+#include <dev/fdt/fdt_memory.h>
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -251,7 +252,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	bmi->bmi_kernelend = kernelend;
 
 #if defined(FDT)
-	fdt_add_reserved_memory_range(bmi->bmi_kernelstart,
+	fdt_memory_remove_range(bmi->bmi_kernelstart,
 	    bmi->bmi_kernelend - bmi->bmi_kernelstart);
 #endif
 
@@ -400,7 +401,7 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	KASSERT((armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1)) != free_pv->pv_pa);
 
 #if defined(FDT)
-	fdt_add_reserved_memory_range(free_pv->pv_pa, nbytes);
+	fdt_memory_remove_range(free_pv->pv_pa, nbytes);
 #endif
 	pv->pv_pa = free_pv->pv_pa;
 	pv->pv_va = free_pv->pv_va;
