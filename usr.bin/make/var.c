@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.724 2020/12/12 18:11:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.725 2020/12/12 18:53:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,7 +98,8 @@
  *
  *	Var_Delete	Delete a variable.
  *
- *	Var_ExportVars	Export some or even all variables to the environment
+ *	Var_ReexportVars
+ *			Export some or even all variables to the environment
  *			of this process and its child processes.
  *
  *	Var_Export	Export the variable to the environment of this process
@@ -130,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.724 2020/12/12 18:11:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.725 2020/12/12 18:53:53 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -627,7 +628,7 @@ ExportVar(const char *name, VarExportFlags flags)
  * This gets called from our child processes.
  */
 void
-Var_ExportVars(void)
+Var_ReexportVars(void)
 {
 	char *val;
 
