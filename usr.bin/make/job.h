@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.67 2020/12/10 21:41:35 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.68 2020/12/12 01:42:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -148,8 +148,7 @@ typedef struct Job {
      * first of these commands, if any. */
     StringListNode *tailCmds;
 
-    /* When creating the shell script, this is where the commands go.
-     * This is only used before the job is actually started. */
+    /* This is where the shell commands go. */
     FILE *cmdFILE;
 
     int exit_status;		/* from wait4() in signal handler */
