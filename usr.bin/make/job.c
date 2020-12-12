@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.368 2020/12/11 22:33:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.369 2020/12/12 00:05:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.368 2020/12/11 22:33:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.369 2020/12/12 00:05:05 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1537,7 +1537,7 @@ JobOpenTmpFile(Job *job, GNode *gn, Boolean cmdsOK, Boolean *out_run)
 #ifdef USE_META
 	if (useMeta) {
 		meta_job_start(job, gn);
-		if (Targ_Silent(gn)) /* might have changed */
+		if (gn->type & OP_SILENT) /* might have changed */
 			job->echo = FALSE;
 	}
 #endif
@@ -1589,9 +1589,9 @@ JobStart(GNode *gn, Boolean special)
 	job->tailCmds = NULL;
 	job->status = JOB_ST_SET_UP;
 
-	job->special = special || (gn->type & OP_SPECIAL);
-	job->ignerr = Targ_Ignore(gn);
-	job->echo = !Targ_Silent(gn);
+	job->special = special || gn->type & OP_SPECIAL;
+	job->ignerr = opts.ignoreErrors || gn->type & OP_IGNORE;
+	job->echo = !(opts.beSilent || gn->type & OP_SILENT);
 	job->xtraced = FALSE;
 
 	/*
