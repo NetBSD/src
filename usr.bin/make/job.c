@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.378 2020/12/12 11:03:43 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.379 2020/12/12 11:28:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.378 2020/12/12 11:03:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.379 2020/12/12 11:28:29 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1042,49 +1042,60 @@ JobClosePipes(Job *job)
 }
 
 static void
+JobFinishDoneExitedError(Job *job, int *inout_status)
+{
+	SwitchOutputTo(job->node);
+#ifdef USE_META
+	if (useMeta) {
+		meta_job_error(job, job->node,
+		    job->ignerr, WEXITSTATUS(*inout_status));
+	}
+#endif
+	if (!shouldDieQuietly(job->node, -1)) {
+		(void)printf("*** [%s] Error code %d%s\n",
+		    job->node->name, WEXITSTATUS(*inout_status),
+		    job->ignerr ? " (ignored)" : "");
+	}
+
+	if (job->ignerr)
+		*inout_status = 0;
+	else {
+		if (deleteOnError)
+			JobDeleteTarget(job->node);
+		PrintOnError(job->node, NULL);
+	}
+}
+
+static void
+JobFinishDoneExited(Job *job, int *inout_status)
+{
+	DEBUG2(JOB, "Process %d [%s] exited.\n", job->pid, job->node->name);
+
+	if (WEXITSTATUS(*inout_status) != 0)
+		JobFinishDoneExitedError(job, inout_status);
+	else if (DEBUG(JOB)) {
+		SwitchOutputTo(job->node);
+		(void)printf("*** [%s] Completed successfully\n",
+		    job->node->name);
+	}
+}
+
+static void
+JobFinishDoneSignaled(Job *job, int status)
+{
+	SwitchOutputTo(job->node);
+	(void)printf("*** [%s] Signal %d\n", job->node->name, WTERMSIG(status));
+	if (deleteOnError)
+		JobDeleteTarget(job->node);
+}
+
+static void
 JobFinishDone(Job *job, int *inout_status)
 {
-	int status = *inout_status;
-
-	if (WIFEXITED(status)) {
-		DEBUG2(JOB, "Process %d [%s] exited.\n",
-		    job->pid, job->node->name);
-		if (WEXITSTATUS(status) != 0) {
-			SwitchOutputTo(job->node);
-#ifdef USE_META
-			if (useMeta) {
-				meta_job_error(job, job->node,
-				    job->ignerr, WEXITSTATUS(status));
-			}
-#endif
-			if (!shouldDieQuietly(job->node, -1))
-				(void)printf(
-				    "*** [%s] Error code %d%s\n",
-				    job->node->name,
-				    WEXITSTATUS(status),
-				    job->ignerr ? " (ignored)" : "");
-			if (job->ignerr) {
-				*inout_status = 0;
-			} else {
-				if (deleteOnError) {
-					JobDeleteTarget(job->node);
-				}
-				PrintOnError(job->node, NULL);
-			}
-		} else if (DEBUG(JOB)) {
-			SwitchOutputTo(job->node);
-			(void)printf(
-			    "*** [%s] Completed successfully\n",
-			    job->node->name);
-		}
-	} else {
-		SwitchOutputTo(job->node);
-		(void)printf("*** [%s] Signal %d\n",
-		    job->node->name, WTERMSIG(status));
-		if (deleteOnError) {
-			JobDeleteTarget(job->node);
-		}
-	}
+	if (WIFEXITED(*inout_status))
+		JobFinishDoneExited(job, inout_status);
+	else
+		JobFinishDoneSignaled(job, *inout_status);
 
 	(void)fflush(stdout);
 }
