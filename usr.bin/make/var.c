@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.726 2020/12/12 19:31:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.727 2020/12/12 19:39:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.726 2020/12/12 19:31:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.727 2020/12/12 19:39:34 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -674,23 +674,24 @@ Var_ReexportVars(void)
 static void
 ExportVars(const char *varnames, Boolean isExport, VarExportFlags flags)
 {
-	if (varnames[0] != '\0') {
-		Words words = Str_Words(varnames, FALSE);
+	Words words = Str_Words(varnames, FALSE);
+	size_t i;
 
-		size_t i;
-		for (i = 0; i < words.len; i++) {
-			const char *name = words.words[i];
-			if (ExportVar(name, flags)) {
-				if (var_exportedVars == VAR_EXPORTED_NONE)
-					var_exportedVars = VAR_EXPORTED_SOME;
-				if (isExport && (flags & VAR_EXPORT_PARENT)) {
-					Var_Append(MAKE_EXPORTED, name,
-					    VAR_GLOBAL);
-				}
-			}
-		}
-		Words_Free(words);
+	if (words.len == 1 && words.words[0][0] == '\0')
+		words.len = 0;
+
+	for (i = 0; i < words.len; i++) {
+		const char *varname = words.words[i];
+		if (!ExportVar(varname, flags))
+			continue;
+
+		if (var_exportedVars == VAR_EXPORTED_NONE)
+			var_exportedVars = VAR_EXPORTED_SOME;
+
+		if (isExport && (flags & VAR_EXPORT_PARENT))
+			Var_Append(MAKE_EXPORTED, varname, VAR_GLOBAL);
 	}
+	Words_Free(words);
 }
 
 /*
