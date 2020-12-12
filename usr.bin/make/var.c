@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.722 2020/12/12 00:53:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.723 2020/12/12 18:00:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.722 2020/12/12 00:53:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.723 2020/12/12 18:00:18 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -751,20 +751,30 @@ ClearEnv(void)
 }
 
 static void
-GetVarnamesToUnexport(const char *str,
+GetVarnamesToUnexport(const char *directive,
 		      FStr *out_varnames, UnexportWhat *out_what)
 {
 	UnexportWhat what;
 	FStr varnames = FSTR_INIT;
+	const char *p = directive;
 
-	str += strlen("unexport");
-	if (strncmp(str, "-env", 4) == 0)
+	p += strlen("unexport");
+	if (strncmp(p, "-env", 4) == 0) {
+		if (ch_isspace(p[4])) {
+			Parse_Error(PARSE_FATAL,
+			    "The directive .unexport-env does not take "
+			    "arguments");
+		} else if (p[4] != '\0') {
+			Parse_Error(PARSE_FATAL,
+			    "Unknown directive \"%s\"", directive);
+		}
 		what = UNEXPORT_ENV;
-	else {
-		cpp_skip_whitespace(&str);
-		what = str[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
+
+	} else {
+		cpp_skip_whitespace(&p);
+		what = p[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
 		if (what == UNEXPORT_NAMED)
-			FStr_Assign(&varnames, str, NULL);
+			FStr_Assign(&varnames, p, NULL);
 	}
 
 	if (what != UNEXPORT_NAMED) {
