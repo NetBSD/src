@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.723 2020/12/12 18:00:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.724 2020/12/12 18:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.723 2020/12/12 18:00:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.724 2020/12/12 18:11:42 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -770,11 +770,15 @@ GetVarnamesToUnexport(const char *directive,
 		}
 		what = UNEXPORT_ENV;
 
-	} else {
+	} else if (*p == '\0' || ch_isspace(*p)) {
 		cpp_skip_whitespace(&p);
 		what = p[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
 		if (what == UNEXPORT_NAMED)
 			FStr_Assign(&varnames, p, NULL);
+	} else {
+		Parse_Error(PARSE_FATAL, "Unknown directive \"%s\"", directive);
+		what = UNEXPORT_NAMED;
+		FStr_Assign(&varnames, "", NULL);
 	}
 
 	if (what != UNEXPORT_NAMED) {
