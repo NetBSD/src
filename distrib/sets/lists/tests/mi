@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.988 2020/12/10 17:06:13 rillig Exp $
+# $NetBSD: mi,v 1.989 2020/12/12 03:03:14 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,6 +130,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm			tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libnvmm		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc		tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libossaudio		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1	tests-lib-debug		compattestfile,atf
@@ -3796,6 +3797,10 @@
 ./usr/tests/lib/libobjc/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libobjc/t_threads			tests-lib-tests		compattestfile,atf,gcc
+./usr/tests/lib/libossaudio				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libossaudio/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libossaudio/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libossaudio/t_ossaudio			tests-lib-tests		compattestfile,atf,gcc
 ./usr/tests/lib/libposix				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
