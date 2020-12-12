@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.719 2020/12/07 01:50:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.720 2020/12/12 00:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.719 2020/12/07 01:50:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.720 2020/12/12 00:33:25 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -3269,7 +3269,7 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 #endif
 
 static void
-LogBeforeApply(const ApplyModifiersState *st, const char *mod, const char endc)
+LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
 {
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
@@ -3388,11 +3388,8 @@ typedef enum ApplyModifiersIndirectResult {
 /* While expanding a variable expression, expand and apply indirect
  * modifiers such as in ${VAR:${M_indirect}}. */
 static ApplyModifiersIndirectResult
-ApplyModifiersIndirect(
-    ApplyModifiersState *const st,
-    const char **const inout_p,
-    void **const inout_freeIt
-)
+ApplyModifiersIndirect(ApplyModifiersState *st, const char **inout_p,
+		       void **inout_freeIt)
 {
 	const char *p = *inout_p;
 	const char *mods;
@@ -3454,15 +3451,15 @@ ApplyModifiersIndirect(
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
-    const char **const pp,	/* the parsing position, updated upon return */
-    char *const val,		/* the current value of the expression */
-    char const startc,		/* '(' or '{', or '\0' for indirect modifiers */
-    char const endc,		/* ')' or '}', or '\0' for indirect modifiers */
-    Var *const v,
-    VarExprFlags *const exprFlags,
-    GNode *const ctxt,		/* for looking up and modifying variables */
-    VarEvalFlags const eflags,
-    void **const inout_freeIt	/* free this after using the return value */
+    const char **pp,		/* the parsing position, updated upon return */
+    char *val,			/* the current value of the expression */
+    char startc,		/* '(' or '{', or '\0' for indirect modifiers */
+    char endc,			/* ')' or '}', or '\0' for indirect modifiers */
+    Var *v,
+    VarExprFlags *exprFlags,
+    GNode *ctxt,		/* for looking up and modifying variables */
+    VarEvalFlags eflags,
+    void **inout_freeIt		/* free this after using the return value */
 )
 {
 	ApplyModifiersState st = {
@@ -4120,8 +4117,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 }
 
 static void
-VarSubstNested(const char **const pp, Buffer *const buf, GNode *const ctxt,
-	       VarEvalFlags const eflags, Boolean *inout_errorReported)
+VarSubstNested(const char **pp, Buffer *buf, GNode *ctxt,
+	       VarEvalFlags eflags, Boolean *inout_errorReported)
 {
 	const char *p = *pp;
 	const char *nested_p = p;

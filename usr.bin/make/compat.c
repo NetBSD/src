@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.206 2020/12/12 00:05:05 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.207 2020/12/12 00:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.206 2020/12/12 00:05:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.207 2020/12/12 00:33:25 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -468,7 +468,7 @@ MakeNodes(GNodeList *gnodes, GNode *pgn)
 }
 
 static Boolean
-MakeUnmade(GNode *const gn, GNode *const pgn)
+MakeUnmade(GNode *gn, GNode *pgn)
 {
 
 	assert(gn->made == UNMADE);

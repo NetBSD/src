@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.369 2020/12/12 00:05:05 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.370 2020/12/12 00:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.369 2020/12/12 00:05:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.370 2020/12/12 00:33:25 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -805,9 +805,8 @@ JobPrintSpecialsEchoCtl(Job *job, CommandFlags *inout_cmdFlags,
 }
 
 static void
-JobPrintSpecials(Job *const job, const char *const escCmd,
-		 Boolean const run, CommandFlags *const inout_cmdFlags,
-		 const char **const inout_cmdTemplate)
+JobPrintSpecials(Job *job, const char *escCmd, Boolean run,
+		 CommandFlags *inout_cmdFlags, const char **inout_cmdTemplate)
 {
 	if (!run)
 		inout_cmdFlags->ignerr = FALSE;
@@ -836,7 +835,7 @@ JobPrintSpecials(Job *const job, const char *const escCmd,
  * after all other targets have been made.
  */
 static void
-JobPrintCommand(Job *job, const char * const ucmd)
+JobPrintCommand(Job *job, const char *ucmd)
 {
 	Boolean run;
 
