@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.7 2020/12/02 13:53:50 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.8 2020/12/12 11:00:57 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.7 2020/12/02 13:53:50 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8 2020/12/12 11:00:57 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -150,6 +150,15 @@ static int
 compatible_platform(const char *opsys, const char *host, const char *package)
 {
     int i = 0;
+
+    /*
+     * If the user has set the CHECK_OS_VERSION variable to "no" then skip any
+     * uname version checks and assume they know what they are doing.  This can
+     * be useful on OS where the kernel version is not a good indicator of
+     * userland compatibility, or differs but retains ABI compatibility.
+     */
+    if (strcasecmp(check_os_version, "no") == 0)
+	return 1;
 
     /* returns 1 if host and package operating system match */
     if (strcmp(host, package) == 0)
@@ -1179,6 +1188,10 @@ check_dependencies(struct pkg_task *pkg)
 			continue;
 
 		best_installed = find_best_matching_installed_pkg(p->name, 0);
+		if (best_installed == NULL) {
+			warnx("Expected dependency %s still missing", p->name);
+			return -1;
+		}
 
 		for (i = 0; i < pkg->dep_length; ++i) {
 			if (strcmp(best_installed, pkg->dependencies[i]) == 0)
@@ -1225,6 +1238,8 @@ preserve_meta_data_file(struct pkg_task *pkg, const char *name)
 static int
 start_replacing(struct pkg_task *pkg)
 {
+	int result = -1;
+
 	if (preserve_meta_data_file(pkg, REQUIRED_BY_FNAME))
 		return -1;
 
@@ -1241,14 +1256,19 @@ start_replacing(struct pkg_task *pkg)
 			Destdir ? " -P ": "", Destdir ? Destdir : "",
 			pkg->other_version);
 	}
-	if (!Fake)
-		fexec_skipempty(BINDIR "/pkg_delete", "-K", pkgdb_get_dir(),
+	if (!Fake) {
+		result = fexec_skipempty(BINDIR "/pkg_delete", "-K", pkgdb_get_dir(),
 		    "-p", pkg->prefix,
 		    Destdir ? "-P": "", Destdir ? Destdir : "",
 		    pkg->other_version, NULL);
+		if (result != 0) {
+			warnx("command failed: %s/pkg_delete -K %s -p %s %s%s%s",
+			      BINDIR, pkgdb_get_dir(), pkg->prefix, Destdir ? "-P" : " ",
+			      Destdir ? Destdir : "", pkg->other_version);
+		}
+	}
 
-	/* XXX Check return value and do what? */
-	return 0;
+	return result;
 }
 
 static int check_input(const char *line, size_t len)
