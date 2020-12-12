@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.372 2020/12/12 02:03:36 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.373 2020/12/12 10:05:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.372 2020/12/12 02:03:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.373 2020/12/12 10:05:15 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -771,6 +771,26 @@ ShellWriter_Println(ShellWriter *wr, const char *line)
 	ShellWriter_PrintFmt(wr, "%s\n", line);
 }
 
+static void
+ShellWriter_EchoOff(ShellWriter *wr)
+{
+	if (shell->hasEchoCtl)
+		ShellWriter_Println(wr, shell->echoOff);
+}
+
+static void
+ShellWriter_EchoCmd(ShellWriter *wr, const char *escCmd)
+{
+	ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
+}
+
+static void
+ShellWriter_EchoOn(ShellWriter *wr)
+{
+	if (shell->hasEchoCtl)
+		ShellWriter_Println(wr, shell->echoOn);
+}
+
 /*
  * We don't want the error-control commands showing up either, so we turn
  * off echoing while executing them. We could put another field in the shell
@@ -778,12 +798,12 @@ ShellWriter_Println(ShellWriter *wr, const char *line)
  * it any more complex than it already is?
  */
 static void
-ShellWriter_PrintIgnoreErrors(ShellWriter *wr, Boolean echo)
+ShellWriter_ErrOff(ShellWriter *wr, Boolean echo)
 {
 	if (echo && shell->hasEchoCtl) {
-		ShellWriter_Println(wr, shell->echoOff);
+		ShellWriter_EchoOff(wr);
 		ShellWriter_Println(wr, shell->errOff);
-		ShellWriter_Println(wr, shell->echoOn);
+		ShellWriter_EchoOn(wr);
 	} else {
 		ShellWriter_Println(wr, shell->errOff);
 	}
@@ -804,13 +824,12 @@ JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 	job->ignerr = TRUE;
 
 	if (job->echo && inout_cmdFlags->echo) {
-		if (shell->hasEchoCtl)
-			ShellWriter_Println(wr, shell->echoOff);
-		ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
+		ShellWriter_EchoOff(wr);
+		ShellWriter_EchoCmd(wr, escCmd);
 		inout_cmdFlags->echo = FALSE;
 	} else {
 		if (inout_cmdFlags->echo)
-			ShellWriter_PrintCmd(wr, shell->echoTmpl, escCmd);
+			ShellWriter_EchoCmd(wr, escCmd);
 	}
 	*inout_cmdTemplate = shell->runIgnTmpl;
 
@@ -829,8 +848,7 @@ JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, Boolean run,
 	if (!run)
 		inout_cmdFlags->ignerr = FALSE;
 	else if (shell->hasErrCtl)
-		ShellWriter_PrintIgnoreErrors(wr,
-		    job->echo && inout_cmdFlags->echo);
+		ShellWriter_ErrOff(wr, job->echo && inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
@@ -895,7 +913,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 
 	if (!cmdFlags.echo) {
 		if (job->echo && run && shell->hasEchoCtl) {
-			ShellWriter_Println(wr, shell->echoOff);
+			ShellWriter_EchoOff(wr);
 		} else {
 			if (shell->hasErrCtl)
 				cmdFlags.echo = TRUE;
@@ -915,10 +933,8 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 		if (!shell->hasErrCtl && shell->runChkTmpl &&
 		    shell->runChkTmpl[0] != '\0') {
 			if (job->echo && cmdFlags.echo) {
-				if (shell->hasEchoCtl)
-					ShellWriter_Println(wr, shell->echoOff);
-				ShellWriter_PrintCmd(wr,
-				    shell->echoTmpl, escCmd);
+				ShellWriter_EchoOff(wr);
+				ShellWriter_EchoCmd(wr, escCmd);
 				cmdFlags.echo = FALSE;
 			}
 			/*
@@ -948,13 +964,13 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 		 * for the whole command...
 		 */
 		if (cmdFlags.echo && job->echo && shell->hasEchoCtl) {
-			ShellWriter_Println(wr, shell->echoOff);
+			ShellWriter_EchoOff(wr);
 			cmdFlags.echo = FALSE;
 		}
 		ShellWriter_Println(wr, shell->errOn);
 	}
-	if (!cmdFlags.echo && shell->hasEchoCtl)
-		ShellWriter_Println(wr, shell->echoOn);
+	if (!cmdFlags.echo)
+		ShellWriter_EchoOn(wr);
 }
 
 /*
