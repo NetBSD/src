@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.383 2020/12/12 12:56:56 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.384 2020/12/12 13:13:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.383 2020/12/12 12:56:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.384 2020/12/12 13:13:34 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -819,11 +819,9 @@ ShellWriter_ErrOn(ShellWriter *wr, Boolean echo)
 }
 
 /*
- * The shell has no error control, so we need to be weird to get it to
- * ignore any errors from the command. If echoing is turned on, we turn it
- * off and use the echoTmpl template to echo the command. Leave echoing
- * off so the user doesn't see the weirdness we go through to ignore errors.
- * Set cmdTemplate to use the weirdness instead of the simple "%s\n" template.
+ * The shell has no built-in error control, so emulate error control by
+ * enclosing each shell command in a template like "{ %s \n } || exit $?"
+ * (configurable per shell).
  */
 static void
 JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
@@ -835,6 +833,11 @@ JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 	if (job->echo && inout_cmdFlags->echo) {
 		ShellWriter_EchoOff(wr);
 		ShellWriter_EchoCmd(wr, escCmd);
+
+		/*
+		 * Leave echoing off so the user doesn't see the commands
+		 * for toggling the error checking.
+		 */
 		inout_cmdFlags->echo = FALSE;
 	} else {
 		if (inout_cmdFlags->echo)
@@ -854,9 +857,13 @@ static void
 JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, Boolean run,
 		 CommandFlags *inout_cmdFlags, const char **inout_cmdTemplate)
 {
-	if (!run)
+	if (!run) {
+		/*
+		 * If there is no command to run, there is no need to switch
+		 * error checking off and on again for nothing.
+		 */
 		inout_cmdFlags->ignerr = FALSE;
-	else if (shell->hasErrCtl)
+	} else if (shell->hasErrCtl)
 		ShellWriter_ErrOff(wr, job->echo && inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
 		JobPrintSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
