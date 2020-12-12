@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.376 2020/12/12 10:45:24 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.377 2020/12/12 10:58:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.376 2020/12/12 10:45:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.377 2020/12/12 10:58:13 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1065,20 +1065,15 @@ JobFinish(Job *job, int status)
 	if ((WIFEXITED(status) &&
 	     ((WEXITSTATUS(status) != 0 && !job->ignerr))) ||
 	    WIFSIGNALED(status)) {
-		/*
-		 * If it exited non-zero and either we're doing things our
-		 * way or we're not ignoring errors, the job is finished.
-		 * Similarly, if the shell died because of a signal
-		 * the job is also finished. In these
-		 * cases, finish out the job's output before printing the exit
-		 * status...
-		 */
+		/* Finished because of an error. */
+
 		JobClosePipes(job);
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 			(void)fclose(job->cmdFILE);
 			job->cmdFILE = NULL;
 		}
 		done = TRUE;
+
 	} else if (WIFEXITED(status)) {
 		/*
 		 * Deal with ignored errors in -B mode. We need to print a
@@ -1086,11 +1081,11 @@ JobFinish(Job *job, int status)
 		 * the next command.
 		 */
 		done = WEXITSTATUS(status) != 0;
+
 		JobClosePipes(job);
+
 	} else {
-		/*
-		 * No need to close things down or anything.
-		 */
+		/* No need to close things down or anything. */
 		done = FALSE;
 	}
 
