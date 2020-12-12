@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.381 2020/12/12 12:28:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.382 2020/12/12 12:54:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.381 2020/12/12 12:28:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.382 2020/12/12 12:54:58 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -798,22 +798,24 @@ ShellWriter_TraceOn(ShellWriter *wr)
 	}
 }
 
-/*
- * We don't want the error-control commands showing up either, so we turn
- * off echoing while executing them. We could put another field in the shell
- * structure to tell JobDoOutput to look for this string too, but why make
- * it any more complex than it already is?
- */
 static void
 ShellWriter_ErrOff(ShellWriter *wr, Boolean echo)
 {
-	if (echo && shell->hasEchoCtl) {
+	if (echo)
 		ShellWriter_EchoOff(wr);
-		ShellWriter_Println(wr, shell->errOff);
+	ShellWriter_Println(wr, shell->errOff);
+	if (echo)
 		ShellWriter_EchoOn(wr);
-	} else {
-		ShellWriter_Println(wr, shell->errOff);
-	}
+}
+
+static void
+ShellWriter_ErrOn(ShellWriter *wr, Boolean echo)
+{
+	if (echo)
+		ShellWriter_EchoOff(wr);
+	ShellWriter_Println(wr, shell->errOn);
+	if (echo)
+		ShellWriter_EchoOn(wr);
 }
 
 /*
@@ -962,18 +964,10 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 	ShellWriter_PrintFmt(wr, cmdTemplate, xcmd);
 	free(xcmdStart);
 	free(escCmd);
-	if (cmdFlags.ignerr) {
-		/*
-		 * If echoing is already off, there's no point in issuing the
-		 * echoOff command. Otherwise we issue it and pretend it was on
-		 * for the whole command...
-		 */
-		if (cmdFlags.echo && job->echo && shell->hasEchoCtl) {
-			ShellWriter_EchoOff(wr);
-			cmdFlags.echo = FALSE;
-		}
-		ShellWriter_Println(wr, shell->errOn);
-	}
+
+	if (cmdFlags.ignerr)
+		ShellWriter_ErrOn(wr, cmdFlags.echo && job->echo);
+
 	if (!cmdFlags.echo)
 		ShellWriter_EchoOn(wr);
 }
