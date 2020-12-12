@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.727 2020/12/12 19:39:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.728 2020/12/12 20:00:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.727 2020/12/12 19:39:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.728 2020/12/12 20:00:51 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -694,6 +694,17 @@ ExportVars(const char *varnames, Boolean isExport, VarExportFlags flags)
 	Words_Free(words);
 }
 
+static void
+ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportFlags flags)
+{
+	char *xvarnames;
+
+	(void)Var_Subst(uvarnames, VAR_GLOBAL, VARE_WANTRES, &xvarnames);
+	/* TODO: handle errors */
+	ExportVars(xvarnames, isExport, flags);
+	free(xvarnames);
+}
+
 /*
  * This is called when .export is seen or .MAKE.EXPORTED is modified.
  *
@@ -706,7 +717,6 @@ void
 Var_Export(const char *str, Boolean isExport)
 {
 	VarExportFlags flags;
-	char *varnames;
 
 	if (isExport && str[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
@@ -723,10 +733,7 @@ Var_Export(const char *str, Boolean isExport)
 		flags = VAR_EXPORT_PARENT;
 	}
 
-	(void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &varnames);
-	/* TODO: handle errors */
-	ExportVars(varnames, isExport, flags);
-	free(varnames);
+	ExportVarsExpand(str, isExport, flags);
 }
 
 
