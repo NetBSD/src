@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.115 2020/11/07 21:04:43 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.116 2020/12/12 00:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.115 2020/11/07 21:04:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.116 2020/12/12 00:33:25 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -375,7 +375,7 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 /* While expanding the body of a .for loop, replace single-character
  * variable expressions like $i with their ${:U...} expansion. */
 static void
-SubstVarShort(For *f, char const ch, const char **pp, const char **inout_mark)
+SubstVarShort(For *f, char ch, const char **pp, const char **inout_mark)
 {
     const char *p = *pp;
     size_t i;
