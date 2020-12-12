@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.373 2020/12/12 10:05:15 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.374 2020/12/12 10:21:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.373 2020/12/12 10:05:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.374 2020/12/12 10:21:50 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -238,6 +238,10 @@ typedef struct CommandFlags {
  */
 typedef struct ShellWriter {
 	FILE *f;
+
+	/* we've sent 'set -x' */
+	Boolean xtraced;
+
 } ShellWriter;
 
 /*
@@ -465,18 +469,17 @@ nfds_per_job(void)
 void
 Job_FlagsToString(const Job *job, char *buf, size_t bufsize)
 {
-	snprintf(buf, bufsize, "%c%c%c%c",
+	snprintf(buf, bufsize, "%c%c%c",
 	    job->ignerr ? 'i' : '-',
 	    !job->echo ? 's' : '-',
-	    job->special ? 'S' : '-',
-	    job->xtraced ? 'x' : '-');
+	    job->special ? 'S' : '-');
 }
 
 static void
 job_table_dump(const char *where)
 {
 	Job *job;
-	char flags[5];
+	char flags[4];
 
 	debug_printf("job table @ %s\n", where);
 	for (job = job_table; job < job_table_end; job++) {
@@ -791,6 +794,15 @@ ShellWriter_EchoOn(ShellWriter *wr)
 		ShellWriter_Println(wr, shell->echoOn);
 }
 
+static void
+ShellWriter_TraceOn(ShellWriter *wr)
+{
+	if (!wr->xtraced) {
+		ShellWriter_Println(wr, "set -x");
+		wr->xtraced = TRUE;
+	}
+}
+
 /*
  * We don't want the error-control commands showing up either, so we turn
  * off echoing while executing them. We could put another field in the shell
@@ -949,10 +961,8 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 		}
 	}
 
-	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 && !job->xtraced) {
-		ShellWriter_Println(wr, "set -x");
-		job->xtraced = TRUE;
-	}
+	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0)
+		ShellWriter_TraceOn(wr);
 
 	ShellWriter_PrintCmd(wr, cmdTemplate, xcmd);
 	free(xcmdStart);
@@ -986,7 +996,7 @@ JobPrintCommands(Job *job)
 {
 	StringListNode *ln;
 	Boolean seen = FALSE;
-	ShellWriter wr = { job->cmdFILE };
+	ShellWriter wr = { job->cmdFILE, FALSE };
 
 	for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
@@ -1337,8 +1347,6 @@ JobExec(Job *job, char **argv)
 	int cpid;		/* ID of new child */
 	sigset_t mask;
 
-	job->xtraced = FALSE;
-
 	if (DEBUG(JOB)) {
 		int i;
 
@@ -1628,7 +1636,6 @@ JobStart(GNode *gn, Boolean special)
 	job->special = special || gn->type & OP_SPECIAL;
 	job->ignerr = opts.ignoreErrors || gn->type & OP_IGNORE;
 	job->echo = !(opts.beSilent || gn->type & OP_SILENT);
-	job->xtraced = FALSE;
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a
