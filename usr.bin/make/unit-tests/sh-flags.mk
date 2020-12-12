@@ -1,4 +1,4 @@
-# $NetBSD: sh-flags.mk,v 1.3 2020/12/12 12:13:12 rillig Exp $
+# $NetBSD: sh-flags.mk,v 1.4 2020/12/12 12:19:18 rillig Exp $
 #
 # Tests for the effective RunFlags of a shell command (run/skip, echo/silent,
 # error check, trace), which are controlled by 12 different switches.  These
@@ -42,7 +42,8 @@ letter.xtrace.yes=	x
 .for opt-jobs in no yes
 .for opt-loud in no yes
 .for opt-no-action in no yes
-.for opt-silent in no yes
+# Only 'no', not 'yes', since job->echo is based trivially on opts.silent.
+.for opt-silent in no
 # Only 'no', not 'yes', since that would add uncontrollable output from
 # reading /etc/profile or similar files.
 .for opt-xtrace in no
@@ -111,7 +112,7 @@ ${target}: .MAKE
 .if ${tgt-ignerr} == yes
 ${target}: .IGNORE
 .endif
-.if ${tgt-silent} == yes || ${OPT_TARGET:M*s*}
+.if ${tgt-silent} == yes
 ${target}: .SILENT
 .endif
 
