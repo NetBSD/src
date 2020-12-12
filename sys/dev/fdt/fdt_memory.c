@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.4 2020/01/27 01:15:09 jmcneill Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.1 2020/12/12 09:27:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,15 +29,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_bootconfig.h"
+#include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.4 2020/01/27 01:15:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.1 2020/12/12 09:27:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
 
-#include <evbarm/fdt/fdt_memory.h>
+#include <libfdt.h>
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_memory.h>
+
+#ifndef FDT_MEMORY_RANGES
+#define FDT_MEMORY_RANGES	256
+#endif
 
 struct fdt_memory_range {
 	struct fdt_memory               mr_mem;
@@ -48,18 +54,18 @@ struct fdt_memory_range {
 static TAILQ_HEAD(fdt_memory_rangehead, fdt_memory_range) fdt_memory_ranges =
     TAILQ_HEAD_INITIALIZER(fdt_memory_ranges);
 
-static struct fdt_memory_range fdt_memory_range_pool[DRAM_BLOCKS];
+static struct fdt_memory_range fdt_memory_range_pool[FDT_MEMORY_RANGES];
 
 static struct fdt_memory_range *
 fdt_memory_range_alloc(void)
 {
-	for (size_t n = 0; n < DRAM_BLOCKS; n++)
+	for (size_t n = 0; n < FDT_MEMORY_RANGES; n++)
 		if (!fdt_memory_range_pool[n].mr_used) {
 			fdt_memory_range_pool[n].mr_used = true;
 			return &fdt_memory_range_pool[n];
 		}
 
-	printf("%s: no free memory ranges, increase DRAM_BLOCKS!\n", __func__);
+	printf("%s: no free memory ranges, increase FDT_MEMORY_RANGES!\n", __func__);
 	return NULL;
 }
 
@@ -67,6 +73,72 @@ static void
 fdt_memory_range_free(struct fdt_memory_range *mr)
 {
 	mr->mr_used = false;
+}
+
+/*
+ * Get all of physical memory, including holes.
+ */
+void
+fdt_memory_get(uint64_t *pstart, uint64_t *pend)
+{
+	const int memory = OF_finddevice("/memory");
+	uint64_t cur_addr, cur_size;
+	int index;
+
+	for (index = 0;
+	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
+	     index++) {
+		fdt_memory_add_range(cur_addr, cur_size);
+
+		/* Assume the first entry is the start of memory */
+		if (index == 0) {
+			*pstart = cur_addr;
+			*pend = cur_addr + cur_size;
+			continue;
+		}
+		if (cur_addr + cur_size > *pend)
+			*pend = cur_addr + cur_size;
+	}
+	if (index == 0)
+		panic("Cannot determine memory size");
+}
+
+/*
+ * Exclude memory ranges from memory config from the device tree
+ */
+void
+fdt_memory_remove_reserved(uint64_t min_addr, uint64_t max_addr)
+{
+	uint64_t lstart = 0, lend = 0;
+	uint64_t addr, size;
+	int index, error;
+
+	const int num = fdt_num_mem_rsv(fdtbus_get_data());
+	for (index = 0; index <= num; index++) {
+		error = fdt_get_mem_rsv(fdtbus_get_data(), index,
+		    &addr, &size);
+		if (error != 0)
+			continue;
+		if (lstart <= addr && addr <= lend) {
+			size -= (lend - addr);
+			addr = lend;
+		}
+		if (size == 0)
+			continue;
+		if (addr + size <= min_addr)
+			continue;
+		if (addr >= max_addr)
+			continue;
+		if (addr < min_addr) {
+			size -= (min_addr - addr);
+			addr = min_addr;
+		}
+		if (addr + size > max_addr)
+			size = max_addr - addr;
+		fdt_memory_remove_range(addr, size);
+		lstart = addr;
+		lend = addr + size;
+	}
 }
 
 void

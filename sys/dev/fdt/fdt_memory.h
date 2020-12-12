@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.h,v 1.1 2018/10/30 21:32:35 jmcneill Exp $ */
+/* $NetBSD: fdt_memory.h,v 1.1 2020/12/12 09:27:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,16 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_FDT_FDT_MEMORY_H
-#define _EVBARM_FDT_FDT_MEMORY_H
+#ifndef _DEV_FDT_FDT_MEMORY_H_
+#define _DEV_FDT_FDT_MEMORY_H_
 
 struct fdt_memory {
 	uint64_t	start;
 	uint64_t	end;
 };
 
+void	fdt_memory_init(void);
+void	fdt_memory_get(uint64_t *, uint64_t *);
 void	fdt_memory_add_range(uint64_t, uint64_t);
 void	fdt_memory_remove_range(uint64_t, uint64_t);
+void	fdt_memory_remove_reserved(uint64_t, uint64_t);
+
 void	fdt_memory_foreach(void (*)(const struct fdt_memory *, void *), void *);
 
-#endif /* !_EVBARM_FDT_FDT_MEMORY_H */
+#endif /* _DEV_FDT_FDT_MEMORY_H_ */
