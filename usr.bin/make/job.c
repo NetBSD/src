@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.382 2020/12/12 12:54:58 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.383 2020/12/12 12:56:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.382 2020/12/12 12:54:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.383 2020/12/12 12:56:56 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -710,7 +710,7 @@ JobFindPid(int pid, JobStatus status, Boolean isJobs)
 
 /* Parse leading '@', '-' and '+', which control the exact execution mode. */
 static void
-ParseRunOptions(char **pp, CommandFlags *out_cmdFlags)
+ParseCommandFlags(char **pp, CommandFlags *out_cmdFlags)
 {
 	char *p = *pp;
 	out_cmdFlags->echo = TRUE;
@@ -900,7 +900,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 
 	cmdTemplate = "%s\n";
 
-	ParseRunOptions(&xcmd, &cmdFlags);
+	ParseCommandFlags(&xcmd, &cmdFlags);
 
 	/* The '+' command flag overrides the -n or -N options. */
 	if (cmdFlags.always && !run) {
