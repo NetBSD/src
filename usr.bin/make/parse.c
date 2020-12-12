@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.473 2020/12/12 21:20:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.474 2020/12/12 21:35:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.473 2020/12/12 21:20:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.474 2020/12/12 21:35:21 rillig Exp $");
 
 /* types and constants */
 
@@ -2949,51 +2949,49 @@ ParseLine_ShellCommand(const char *p)
 	}
 }
 
+/*
+ * Lines that begin with '.' can be pretty much anything:
+ *	- directives like '.include' or '.if',
+ *	- suffix rules like '.c.o:',
+ *	- dependencies for filenames that start with '.',
+ *	- variable assignments like '.tmp=value'.
+ */
 static Boolean
 ParseDirective(char *line)
 {
-	char *cp;
+	char *cp = line + 1;
 
-	if (*line == '.') {
-		/*
-		 * Lines that begin with '.' can be pretty much anything:
-		 *	- directives like '.include' or '.if',
-		 *	- suffix rules like '.c.o:',
-		 *	- dependencies for filenames that start with '.',
-		 *	- variable assignments like '.tmp=value'.
-		 */
-		cp = line + 1;
+	pp_skip_whitespace(&cp);
+	if (IsInclude(cp, FALSE)) {
+		ParseDoInclude(cp);
+		return TRUE;
+	}
+
+	if (strncmp(cp, "undef", 5) == 0) {
+		const char *varname;
+		cp += 5;
 		pp_skip_whitespace(&cp);
-		if (IsInclude(cp, FALSE)) {
-			ParseDoInclude(cp);
+		varname = cp;
+		for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
+			continue;
+		*cp = '\0';
+		Var_Delete(varname, VAR_GLOBAL);
+		/* TODO: undefine all variables, not only the first */
+		/* TODO: use Str_Words, like everywhere else */
+		return TRUE;
+	} else if (strncmp(cp, "export", 6) == 0) {
+		cp += 6;
+		pp_skip_whitespace(&cp);
+		Var_Export(cp);
+		return TRUE;
+	} else if (strncmp(cp, "unexport", 8) == 0) {
+		Var_UnExport(cp);
+		return TRUE;
+	} else if (strncmp(cp, "info", 4) == 0 ||
+		   strncmp(cp, "error", 5) == 0 ||
+		   strncmp(cp, "warning", 7) == 0) {
+		if (ParseMessage(cp))
 			return TRUE;
-		}
-		if (strncmp(cp, "undef", 5) == 0) {
-			const char *varname;
-			cp += 5;
-			pp_skip_whitespace(&cp);
-			varname = cp;
-			for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
-				continue;
-			*cp = '\0';
-			Var_Delete(varname, VAR_GLOBAL);
-			/* TODO: undefine all variables, not only the first */
-			/* TODO: use Str_Words, like everywhere else */
-			return TRUE;
-		} else if (strncmp(cp, "export", 6) == 0) {
-			cp += 6;
-			pp_skip_whitespace(&cp);
-			Var_Export(cp);
-			return TRUE;
-		} else if (strncmp(cp, "unexport", 8) == 0) {
-			Var_UnExport(cp);
-			return TRUE;
-		} else if (strncmp(cp, "info", 4) == 0 ||
-			   strncmp(cp, "error", 5) == 0 ||
-			   strncmp(cp, "warning", 7) == 0) {
-			if (ParseMessage(cp))
-				return TRUE;
-		}
 	}
 	return FALSE;
 }
@@ -3105,7 +3103,7 @@ ParseDependency(char *line)
 static void
 ParseLine(char *line)
 {
-	if (ParseDirective(line))
+	if (line[0] == '.' && ParseDirective(line))
 		return;
 
 	if (*line == '\t') {
