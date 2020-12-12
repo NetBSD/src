@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.58 2020/12/05 18:57:21 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.59 2020/12/12 05:23:21 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -725,6 +725,15 @@ __install_ftp_2
 		fi
 	done
 	rm -f /tmp/ftp-dir.sh /tmp/fname_filter.sh
+	rm -f /tmp/ftp-script.sh
+
+	# Prepare ftp-fetch script to fetch binary sets
+	_download_dir=INSTALL
+	_ftp_opts=""
+	_ftp_url="ftp://$_ftp_server_login:$_ftp_server_password@$_ftp_server_ip$_ftp_server_dir/"
+	echo "#!/bin/sh" > /tmp/ftp-fetch.sh
+	echo "cd /mnt" >> /tmp/ftp-fetch.sh
+	echo "mkdir -p $_download_dir" >> /tmp/ftp-fetch.sh
 
 	while : ; do
 		echo "The following sets are available for extraction:"
@@ -745,7 +754,7 @@ __install_ftp_2
 		echo ""
 
 		# Get name of the file and add extraction command
-		# to the ftp-script.
+		# to the ftp-fetch script.
 		if [ -z "$_next" ]; then resp=n; else resp=y; fi
 		echo -n "Continue to add filenames [$resp]? "
 		getresp "$resp"
@@ -756,8 +765,16 @@ __install_ftp_2
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		if isin $resp $_sets; then
-			echo "get $resp |\"pax -zr${verbose_flag}pe\"" >> \
-					/tmp/ftp-script.sh
+			echo "echo Fetching $resp:" >> \
+					/tmp/ftp-fetch.sh
+			echo "ftp ${_ftp_opts} -o $_download_dir/$resp ${_ftp_url}$resp" >> \
+					/tmp/ftp-fetch.sh
+			echo "echo Extracting $resp:" >> \
+					/tmp/ftp-fetch.sh
+			echo "pax -zr${verbose_flag}pe -f $_download_dir/$resp" >> \
+					/tmp/ftp-fetch.sh
+			echo "rm -f $_download_dir/$resp" >> \
+					/tmp/ftp-fetch.sh
 			_setsdone="$resp $_setsdone"
 		else
 			echo "You entered an invalid filename."
@@ -765,11 +782,8 @@ __install_ftp_2
 		fi
 	done
 
-	echo "quit" >> /tmp/ftp-script.sh
-	echo "__end_commands" >> /tmp/ftp-script.sh
-
-	sh /tmp/ftp-script.sh
-	rm -f /tmp/ftp-script.sh
+	sh /tmp/ftp-fetch.sh
+	rm -f /tmp/ftp-fetch.sh
 	echo "Extraction complete."
 }
 
