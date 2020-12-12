@@ -1,15 +1,19 @@
-# $NetBSD: directive-unexport-env.mk,v 1.5 2020/12/06 17:29:27 rillig Exp $
+# $NetBSD: directive-unexport-env.mk,v 1.6 2020/12/12 18:00:18 rillig Exp $
 #
 # Tests for the .unexport-env directive.
+#
+# Before 2020-12-13, the directive unexport-env wrongly accepted arguments
+# and ignored them.
+#
+# Before 2020-12-13, misspelled directive names like "unexport-environment"
+# were not properly detected.
 
 # TODO: Implementation
 
 .unexport-en			# oops: misspelled
 .unexport-env			# ok
-.unexport-environment		# oops: misspelled
+.unexport-environment		# misspelled
 
-# As of 2020-12-06, the directive unexport-env is not supposed to accept
-# arguments, but it does without complaining about them.
 .MAKEFLAGS: -dv
 UT_EXPORTED=	value
 UT_UNEXPORTED=	value
