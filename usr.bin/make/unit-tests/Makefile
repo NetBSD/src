@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.244 2020/12/10 17:06:13 rillig Exp $
+# $NetBSD: Makefile,v 1.245 2020/12/12 15:06:11 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -262,6 +262,7 @@ TESTS+=		# posix1	# broken by reverting POSIX changes
 TESTS+=		recursive
 TESTS+=		sh
 TESTS+=		sh-dots
+TESTS+=		sh-errctl
 TESTS+=		sh-flags
 TESTS+=		sh-jobs
 TESTS+=		sh-jobs-error
@@ -484,6 +485,7 @@ SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == TRUE.
 SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)) failed (.*)$$,<not found: \1>,'
 SED_CMDS.sh-dots+=		-e 's,^\(\*\*\* Error code \)[1-9][0-9]*,\1<nonzero>,'
+SED_CMDS.sh-errctl=		${STD_SED_CMDS.dj}
 SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
@@ -521,13 +523,22 @@ unexport-env.rawout: export.mk
 
 # Some standard sed commands, to be used in the SED_CMDS above.
 
-# Omit details from the output of the -dg1 option such as process IDs.
+# Omit details such as process IDs from the output of the -dg1 option.
 STD_SED_CMDS.dg1=	-e 's,${.CURDIR}$$,<curdir>,'
 STD_SED_CMDS.dg1+=	-e 's,  ${DEFSYSPATH:U/usr/share/mk}$$,  <defsyspath>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MACHINE[_ARCH]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
+
+# Omit details such as process IDs from the output of the -dj option.
+STD_SED_CMDS.dj= \
+	-e 's,^\(Job_TokenWithdraw\)([0-9]*),\1(<pid>),' \
+	-e 's,^([0-9][0-9]*) \(withdrew token\),(<pid>) \1,' \
+	-e 's, \(pid\) [0-9][0-9]*, \1 <pid>,' \
+	-e 's,^\(Process\) [0-9][0-9]*,\1 <pid>,' \
+	-e 's,^\(JobFinish:\) [0-9][0-9]*,\1 <pid>,' \
+	-e 's,^\(	Command:\) .*,\1 <shell>,'
 
 # Reduce the noise for tests running with the -n option, since there is no
 # other way to suppress the echoing of the commands.
