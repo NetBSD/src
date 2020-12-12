@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.728 2020/12/12 20:00:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.729 2020/12/12 21:20:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.728 2020/12/12 20:00:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.729 2020/12/12 21:20:30 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -714,26 +714,32 @@ ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportFlags flags)
  * str has the format "[-env|-literal] varname...".
  */
 void
-Var_Export(const char *str, Boolean isExport)
+Var_Export(const char *str)
 {
 	VarExportFlags flags;
 
-	if (isExport && str[0] == '\0') {
+	if (str[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
 		return;
 	}
 
-	if (isExport && strncmp(str, "-env", 4) == 0) {
+	if (strncmp(str, "-env", 4) == 0) {
 		str += 4;
 		flags = VAR_EXPORT_NORMAL;
-	} else if (isExport && strncmp(str, "-literal", 8) == 0) {
+	} else if (strncmp(str, "-literal", 8) == 0) {
 		str += 8;
 		flags = VAR_EXPORT_LITERAL;
 	} else {
 		flags = VAR_EXPORT_PARENT;
 	}
 
-	ExportVarsExpand(str, isExport, flags);
+	ExportVarsExpand(str, TRUE, flags);
+}
+
+void
+Var_ExportVars(const char *varnames)
+{
+	ExportVarsExpand(varnames, FALSE, VAR_EXPORT_PARENT);
 }
 
 
