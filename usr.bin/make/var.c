@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.725 2020/12/12 18:53:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.726 2020/12/12 19:31:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.725 2020/12/12 18:53:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.726 2020/12/12 19:31:17 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -671,6 +671,28 @@ Var_ReexportVars(void)
 	free(val);
 }
 
+static void
+ExportVars(const char *varnames, Boolean isExport, VarExportFlags flags)
+{
+	if (varnames[0] != '\0') {
+		Words words = Str_Words(varnames, FALSE);
+
+		size_t i;
+		for (i = 0; i < words.len; i++) {
+			const char *name = words.words[i];
+			if (ExportVar(name, flags)) {
+				if (var_exportedVars == VAR_EXPORTED_NONE)
+					var_exportedVars = VAR_EXPORTED_SOME;
+				if (isExport && (flags & VAR_EXPORT_PARENT)) {
+					Var_Append(MAKE_EXPORTED, name,
+					    VAR_GLOBAL);
+				}
+			}
+		}
+		Words_Free(words);
+	}
+}
+
 /*
  * This is called when .export is seen or .MAKE.EXPORTED is modified.
  *
@@ -683,7 +705,7 @@ void
 Var_Export(const char *str, Boolean isExport)
 {
 	VarExportFlags flags;
-	char *val;
+	char *varnames;
 
 	if (isExport && str[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
@@ -700,26 +722,10 @@ Var_Export(const char *str, Boolean isExport)
 		flags = VAR_EXPORT_PARENT;
 	}
 
-	(void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &val);
+	(void)Var_Subst(str, VAR_GLOBAL, VARE_WANTRES, &varnames);
 	/* TODO: handle errors */
-	if (val[0] != '\0') {
-		Words words = Str_Words(val, FALSE);
-
-		size_t i;
-		for (i = 0; i < words.len; i++) {
-			const char *name = words.words[i];
-			if (ExportVar(name, flags)) {
-				if (var_exportedVars == VAR_EXPORTED_NONE)
-					var_exportedVars = VAR_EXPORTED_SOME;
-				if (isExport && (flags & VAR_EXPORT_PARENT)) {
-					Var_Append(MAKE_EXPORTED, name,
-					    VAR_GLOBAL);
-				}
-			}
-		}
-		Words_Free(words);
-	}
-	free(val);
+	ExportVars(varnames, isExport, flags);
+	free(varnames);
 }
 
 
