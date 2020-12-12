@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.58 2020/12/12 13:00:18 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.59 2020/12/12 20:31:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1449,4 +1449,10 @@ sys/dev/usb/ucom.c				1.128
 	Properly wait for refcounts to drain to avoid potential panics
 	when detaching the device.
 	[mrg, ticket #1636]
+
+sys/dev/usb/ohci.c				1.311,1.312
+sys/dev/usb/ohcivar.h				1.62
+
+	PR 22646, PR 55835: restructure the abort code for TD based transfers.
+	[skrll, ticket #1637]
 
