@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.57 2020/12/11 19:35:16 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.58 2020/12/12 13:00:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1443,4 +1443,10 @@ sys/dev/hyperv/if_hvn.c				1.19 (via patch)
 
 	hvn(4): fix SIOCSIFFLAGS ioctl handling to make ifconfig up/down work.
 	[nonaka, ticket #1635]
+
+sys/dev/usb/ucom.c				1.128
+
+	Properly wait for refcounts to drain to avoid potential panics
+	when detaching the device.
+	[mrg, ticket #1636]
 
