@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.168 2020/12/12 21:20:30 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.169 2020/12/13 01:41:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -311,6 +311,15 @@ typedef enum VarParseResult {
     VPR_UNKNOWN		= 0x0008
 } VarParseResult;
 
+typedef enum VarExportMode {
+	/* .export-env */
+	VEM_NORMAL,
+	/* .export: Initial export or update an already exported variable. */
+	VEM_PARENT,
+	/* .export-literal: Do not expand the variable value. */
+	VEM_LITERAL
+} VarExportMode;
+
 void Var_Delete(const char *, GNode *);
 void Var_Set(const char *, const char *, GNode *);
 void Var_SetWithFlags(const char *, const char *, GNode *, VarSetFlags);
@@ -324,7 +333,7 @@ VarParseResult Var_Subst(const char *, GNode *, VarEvalFlags, char **);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ReexportVars(void);
-void Var_Export(const char *);
+void Var_Export(VarExportMode, const char *);
 void Var_ExportVars(const char *);
 void Var_UnExport(const char *);
 
