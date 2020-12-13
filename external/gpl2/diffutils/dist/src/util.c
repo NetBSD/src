@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2016/01/13 03:15:30 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2020/12/13 00:04:40 roy Exp $	*/
 
 /* Support routines for GNU DIFF.
 
@@ -217,7 +217,7 @@ begin_output (void)
 		close (pipes[0]);
 	      }
 
-	    execl (pr_program, pr_program, "-h", name, 0);
+	    execl (pr_program, pr_program, "-h", name, NULL);
 	    _exit (errno == ENOEXEC ? 126 : 127);
 	  }
 	else
