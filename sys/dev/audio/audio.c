@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.84 2020/12/13 05:44:09 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.85 2020/12/13 05:47:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.84 2020/12/13 05:44:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.85 2020/12/13 05:47:08 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2415,7 +2415,8 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 
 	/*
 	 * Acquire exlock to protect counters.
-	 * Does not use audio_exlock_enter() due to sc_dying.
+	 * audio_exlock_enter() cannot be used here because we have to go
+	 * forward even if sc_dying is set.
 	 */
 	while (__predict_false(sc->sc_exlock != 0)) {
 		error = cv_timedwait_sig(&sc->sc_exlockcv, sc->sc_lock,
@@ -6153,8 +6154,8 @@ audio_softintr_wr(void *cookie)
 
 /*
  * Check (and convert) the format *p came from userland.
- * If successful, it writes back the converted format to *p if necessary
- * and returns 0.  Otherwise returns errno (*p may change even this case).
+ * If successful, it writes back the converted format to *p if necessary and
+ * returns 0.  Otherwise returns errno (*p may be changed even in this case).
  */
 static int
 audio_check_params(audio_format2_t *p)
