@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.81 2020/12/09 04:30:39 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.82 2020/12/13 05:21:12 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.81 2020/12/09 04:30:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.82 2020/12/13 05:21:12 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2424,7 +2424,8 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 		if (error == EWOULDBLOCK) {
 			mutex_exit(sc->sc_lock);
 			device_printf(sc->sc_dev,
-			    "%s: cv_timedwait_sig failed %d", __func__, error);
+			    "%s: cv_timedwait_sig failed %d\n",
+			    __func__, error);
 			return error;
 		}
 	}
