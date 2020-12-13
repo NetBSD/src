@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.144 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.145 2020/12/13 19:22:02 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.144 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.145 2020/12/13 19:22:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -616,12 +616,19 @@ tmpfs_write(void *v)
 	 * of PG_BUSY and the vnode lock).
 	 */
 	ubc_flags = UBC_WRITE | UBC_VNODE_FLAGS(vp);
+#if 0
+	/*
+	 * XXX disable use of UBC_FAULTBUSY for now, this check is insufficient
+	 * because it does not zero uninitialized parts of pages in all of
+	 * the cases where zeroing is needed.
+	 */
 	if (uio->uio_offset >= oldsize &&
 	    ((uio->uio_offset & (PAGE_SIZE - 1)) == 0 ||
 	    ((vp->v_vflag & VV_MAPPED) == 0 &&
 	    trunc_page(uio->uio_offset) == trunc_page(oldsize)))) {
 		ubc_flags |= UBC_FAULTBUSY;
 	}
+#endif
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 	error = 0;
