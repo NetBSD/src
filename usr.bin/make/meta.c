@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.158 2020/12/10 20:49:11 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.159 2020/12/13 20:14:48 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -500,11 +500,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	free(mp);
     }
     /* Get the basename of the target */
-    if ((cp = strrchr(tname, '/')) == NULL) {
-	cp = tname;
-    } else {
-	cp++;
-    }
+    cp = str_basename(tname);
 
     fflush(stdout);
 
