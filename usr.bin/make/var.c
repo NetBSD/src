@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.731 2020/12/13 01:41:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.732 2020/12/13 02:15:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.731 2020/12/13 01:41:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.732 2020/12/13 02:15:49 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -740,34 +740,24 @@ ClearEnv(void)
 }
 
 static void
-GetVarnamesToUnexport(const char *directive,
+GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 		      FStr *out_varnames, UnexportWhat *out_what)
 {
 	UnexportWhat what;
 	FStr varnames = FSTR_INIT;
-	const char *p = directive;
 
-	p += strlen("unexport");
-	if (strncmp(p, "-env", 4) == 0) {
-		if (ch_isspace(p[4])) {
+	if (isEnv) {
+		if (arg[0] != '\0') {
 			Parse_Error(PARSE_FATAL,
 			    "The directive .unexport-env does not take "
 			    "arguments");
-		} else if (p[4] != '\0') {
-			Parse_Error(PARSE_FATAL,
-			    "Unknown directive \"%s\"", directive);
 		}
 		what = UNEXPORT_ENV;
 
-	} else if (*p == '\0' || ch_isspace(*p)) {
-		cpp_skip_whitespace(&p);
-		what = p[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
-		if (what == UNEXPORT_NAMED)
-			FStr_Assign(&varnames, p, NULL);
 	} else {
-		Parse_Error(PARSE_FATAL, "Unknown directive \"%s\"", directive);
-		what = UNEXPORT_NAMED;
-		FStr_Assign(&varnames, "", NULL);
+		what = arg[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
+		if (what == UNEXPORT_NAMED)
+			FStr_Assign(&varnames, arg, NULL);
 	}
 
 	if (what != UNEXPORT_NAMED) {
@@ -838,12 +828,12 @@ UnexportVars(FStr *varnames, UnexportWhat what)
  * str must have the form "unexport[-env] varname...".
  */
 void
-Var_UnExport(const char *str)
+Var_UnExport(Boolean isEnv, const char *arg)
 {
 	UnexportWhat what;
 	FStr varnames;
 
-	GetVarnamesToUnexport(str, &varnames, &what);
+	GetVarnamesToUnexport(isEnv, arg, &varnames, &what);
 	UnexportVars(&varnames, what);
 	FStr_Done(&varnames);
 }

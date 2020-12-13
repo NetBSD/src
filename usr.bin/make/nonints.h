@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.169 2020/12/13 01:41:12 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.170 2020/12/13 02:15:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -335,7 +335,7 @@ void Var_Dump(GNode *);
 void Var_ReexportVars(void);
 void Var_Export(VarExportMode, const char *);
 void Var_ExportVars(const char *);
-void Var_UnExport(const char *);
+void Var_UnExport(Boolean, const char *);
 
 /* util.c */
 typedef void (*SignalProc)(int);
