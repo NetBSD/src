@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.990 2020/12/12 15:06:11 rillig Exp $
+# $NetBSD: mi,v 1.991 2020/12/13 00:37:43 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3800,7 +3800,7 @@
 ./usr/tests/lib/libossaudio				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libossaudio/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libossaudio/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libossaudio/t_ossaudio			tests-lib-tests		compattestfile,atf,gcc
+./usr/tests/lib/libossaudio/t_ossaudio			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
