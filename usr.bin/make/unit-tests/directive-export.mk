@@ -1,6 +1,9 @@
-# $NetBSD: directive-export.mk,v 1.5 2020/12/12 19:31:18 rillig Exp $
+# $NetBSD: directive-export.mk,v 1.6 2020/12/13 01:07:54 rillig Exp $
 #
 # Tests for the .export directive.
+#
+# See also:
+#	directive-misspellings.mk
 
 # TODO: Implementation
 
@@ -25,11 +28,8 @@ VAR=		value $$ ${INDIRECT}
 .  error
 .endif
 
-# Tests for parsing the .export directive.
-.expor				# misspelled
-.export				# oops: missing argument
-.export VARNAME
-.exporting works		# oops: misspelled
+# No argument means to export all variables.
+.export
 
 all:
 	@:;

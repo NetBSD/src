@@ -1,4 +1,4 @@
-# $NetBSD: directive-warning.mk,v 1.3 2020/11/03 17:17:31 rillig Exp $
+# $NetBSD: directive-warning.mk,v 1.4 2020/12/13 01:07:54 rillig Exp $
 #
 # Tests for the .warning directive.
 
@@ -11,7 +11,7 @@
 .warning			# oops: should be "missing argument"
 .warning message		# ok
 .warnings			# misspelled
-.warnings messages		# oops
+.warnings messages		# Accepted before 2020-12-13 01:??:??.
 
 all:
 	@:;

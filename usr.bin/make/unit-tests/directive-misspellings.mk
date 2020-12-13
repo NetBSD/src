@@ -1,4 +1,4 @@
-# $NetBSD: directive-misspellings.mk,v 1.1 2020/12/13 00:46:25 rillig Exp $
+# $NetBSD: directive-misspellings.mk,v 1.2 2020/12/13 01:07:54 rillig Exp $
 #
 # Tests for misspelled directives.
 #
@@ -22,24 +22,24 @@
 .expor varname
 .export varname
 .exporx varname
-.exports varname		# XXX: undetected misspelling
+.exports varname		# Accepted before 2020-12-13 01:??:??.
 
-.export-en			# XXX: undetected misspelling
+.export-en			# Accepted before 2020-12-13 01:??:??.
 .export-env
 .export-env extra argument	# XXX: undetected extra argument
-.export-environment		# XXX: undetected misspelling
+.export-environment		# Accepted before 2020-12-13 01:??:??.
 
-.export-litera varname		# XXX: undetected misspelling
-.export-literal varname		
-.export-literax varname		# XXX: undetected misspelling
-.export-literally varname	# XXX: undetected misspelling
+.export-litera varname		# Accepted before 2020-12-13 01:??:??.
+.export-literal varname
+.export-literax varname		# Accepted before 2020-12-13 01:??:??.
+.export-literally varname	# Accepted before 2020-12-13 01:??:??.
 
 .-includ "file"
 .-include "file"
 .-includx "file"
 .-includes "file"		# XXX: the 's' is not meant to be a filename
 
-.includ "file"			
+.includ "file"
 .include "file"
 .includx "file"
 .includex "file"		# XXX: the 's' is not meant to be a filename
@@ -47,7 +47,7 @@
 .inf msg
 .info msg
 .infx msg
-.infos msg			# XXX: undetected misspelling
+.infos msg			# Accepted before 2020-12-13 01:??:??.
 
 .sinclud "file"
 .sinclude "file"
@@ -57,7 +57,7 @@
 .unde varname
 .undef varname
 .undex varname
-.undefs varname			# XXX: undetected misspelling
+.undefs varname			# Accepted before 2020-12-13 01:??:??.
 
 .unexpor varname
 .unexport varname
@@ -74,6 +74,6 @@
 .warnin msg
 .warning msg
 .warninx msg
-.warnings msg			# XXX: undetected misspelling
+.warnings msg			# Accepted before 2020-12-13 01:??:??.
 
 all:
