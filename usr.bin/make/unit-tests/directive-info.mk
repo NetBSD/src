@@ -1,4 +1,4 @@
-# $NetBSD: directive-info.mk,v 1.5 2020/12/13 01:07:54 rillig Exp $
+# $NetBSD: directive-info.mk,v 1.6 2020/12/13 01:10:22 rillig Exp $
 #
 # Tests for the .info directive.
 
@@ -10,7 +10,7 @@
 .info message
 .info		indented message
 .information
-.information message		# Accepted before 2020-12-13 01:??:??.
+.information message		# Accepted before 2020-12-13 01:07:54.
 .info.man:			# not a message, but possibly a suffix rule
 
 # Even if lines would have trailing whitespace, this would be trimmed by

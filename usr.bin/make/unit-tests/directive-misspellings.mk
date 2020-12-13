@@ -1,4 +1,4 @@
-# $NetBSD: directive-misspellings.mk,v 1.2 2020/12/13 01:07:54 rillig Exp $
+# $NetBSD: directive-misspellings.mk,v 1.3 2020/12/13 01:10:22 rillig Exp $
 #
 # Tests for misspelled directives.
 #
@@ -22,17 +22,17 @@
 .expor varname
 .export varname
 .exporx varname
-.exports varname		# Accepted before 2020-12-13 01:??:??.
+.exports varname		# Accepted before 2020-12-13 01:07:54.
 
-.export-en			# Accepted before 2020-12-13 01:??:??.
+.export-en			# Accepted before 2020-12-13 01:07:54.
 .export-env
 .export-env extra argument	# XXX: undetected extra argument
-.export-environment		# Accepted before 2020-12-13 01:??:??.
+.export-environment		# Accepted before 2020-12-13 01:07:54.
 
-.export-litera varname		# Accepted before 2020-12-13 01:??:??.
+.export-litera varname		# Accepted before 2020-12-13 01:07:54.
 .export-literal varname
-.export-literax varname		# Accepted before 2020-12-13 01:??:??.
-.export-literally varname	# Accepted before 2020-12-13 01:??:??.
+.export-literax varname		# Accepted before 2020-12-13 01:07:54.
+.export-literally varname	# Accepted before 2020-12-13 01:07:54.
 
 .-includ "file"
 .-include "file"
@@ -47,7 +47,7 @@
 .inf msg
 .info msg
 .infx msg
-.infos msg			# Accepted before 2020-12-13 01:??:??.
+.infos msg			# Accepted before 2020-12-13 01:07:54.
 
 .sinclud "file"
 .sinclude "file"
@@ -57,7 +57,7 @@
 .unde varname
 .undef varname
 .undex varname
-.undefs varname			# Accepted before 2020-12-13 01:??:??.
+.undefs varname			# Accepted before 2020-12-13 01:07:54.
 
 .unexpor varname
 .unexport varname
@@ -74,6 +74,6 @@
 .warnin msg
 .warning msg
 .warninx msg
-.warnings msg			# Accepted before 2020-12-13 01:??:??.
+.warnings msg			# Accepted before 2020-12-13 01:07:54.
 
 all:
