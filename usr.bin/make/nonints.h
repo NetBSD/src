@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.170 2020/12/13 02:15:49 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.171 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -97,6 +97,13 @@ void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void);
 
 /* dir.c; see also dir.h */
+
+MAKE_INLINE const char *
+str_basename(const char *pathname)
+{
+	const char *lastSlash = strrchr(pathname, '/');
+	return lastSlash != NULL ? lastSlash + 1 : pathname;
+}
 
 MAKE_INLINE SearchPath *
 SearchPath_New(void)

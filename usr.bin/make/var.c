@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.732 2020/12/13 02:15:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.733 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.732 2020/12/13 02:15:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.733 2020/12/13 20:14:48 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -1177,9 +1177,7 @@ ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 static void
 ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	const char *slash = strrchr(word, '/');
-	const char *base = slash != NULL ? slash + 1 : word;
-	SepBuf_AddStr(buf, base);
+	SepBuf_AddStr(buf, str_basename(word));
 }
 
 /* Callback for ModifyWords to implement the :E modifier.
