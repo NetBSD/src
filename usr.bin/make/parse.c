@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.474 2020/12/12 21:35:21 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.475 2020/12/13 01:07:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.474 2020/12/12 21:35:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.475 2020/12/13 01:07:54 rillig Exp $");
 
 /* types and constants */
 
@@ -726,26 +726,20 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 /* Parse and handle a .info, .warning or .error directive.
  * For an .error directive, immediately exit. */
 static Boolean
-ParseMessage(const char *directive)
+ParseMessage(ParseErrorLevel level, const char *umsg)
 {
-	const char *p = directive;
-	ParseErrorLevel mtype = *p == 'i' ? PARSE_INFO :
-	    *p == 'w' ? PARSE_WARNING : PARSE_FATAL;
-	char *arg;
+	char *xmsg;
 
-	while (ch_isalpha(*p))
-		p++;
-	if (!ch_isspace(*p))
+	if (umsg[0] == '\0')
 		return FALSE;	/* missing argument */
 
-	cpp_skip_whitespace(&p);
-	(void)Var_Subst(p, VAR_CMDLINE, VARE_WANTRES, &arg);
+	(void)Var_Subst(umsg, VAR_CMDLINE, VARE_WANTRES, &xmsg);
 	/* TODO: handle errors */
 
-	Parse_Error(mtype, "%s", arg);
-	free(arg);
+	Parse_Error(level, "%s", xmsg);
+	free(xmsg);
 
-	if (mtype == PARSE_FATAL) {
+	if (level == PARSE_FATAL) {
 		PrintOnError(NULL, NULL);
 		exit(1);
 	}
@@ -2949,6 +2943,12 @@ ParseLine_ShellCommand(const char *p)
 	}
 }
 
+MAKE_INLINE Boolean
+IsDirective(const char *dir, size_t dirlen, const char *name)
+{
+	return dirlen == strlen(name) && memcmp(dir, name, dirlen) == 0;
+}
+
 /*
  * Lines that begin with '.' can be pretty much anything:
  *	- directives like '.include' or '.if',
@@ -2960,6 +2960,8 @@ static Boolean
 ParseDirective(char *line)
 {
 	char *cp = line + 1;
+	const char *dir, *arg;
+	size_t dirlen;
 
 	pp_skip_whitespace(&cp);
 	if (IsInclude(cp, FALSE)) {
@@ -2967,30 +2969,42 @@ ParseDirective(char *line)
 		return TRUE;
 	}
 
-	if (strncmp(cp, "undef", 5) == 0) {
-		const char *varname;
-		cp += 5;
-		pp_skip_whitespace(&cp);
-		varname = cp;
+	dir = cp;
+	while (ch_isalpha(*cp) || *cp == '-')
+		cp++;
+	dirlen = (size_t)(cp - dir);
+
+	if (*cp != '\0' && !ch_isspace(*cp))
+		return FALSE;
+
+	pp_skip_whitespace(&cp);
+	arg = cp;
+
+	if (IsDirective(dir, dirlen, "undef")) {
 		for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
 			continue;
 		*cp = '\0';
-		Var_Delete(varname, VAR_GLOBAL);
+		Var_Delete(arg, VAR_GLOBAL);
 		/* TODO: undefine all variables, not only the first */
 		/* TODO: use Str_Words, like everywhere else */
 		return TRUE;
-	} else if (strncmp(cp, "export", 6) == 0) {
-		cp += 6;
-		pp_skip_whitespace(&cp);
-		Var_Export(cp);
+	} else if (IsDirective(dir, dirlen, "export") ||
+		   IsDirective(dir, dirlen, "export-env") ||
+		   IsDirective(dir, dirlen, "export-literal")) {
+		Var_Export(dir + strlen("export"));
 		return TRUE;
-	} else if (strncmp(cp, "unexport", 8) == 0) {
-		Var_UnExport(cp);
+	} else if (IsDirective(dir, dirlen, "unexport") ||
+		   IsDirective(dir, dirlen, "unexport-env")) {
+		Var_UnExport(dir);
 		return TRUE;
-	} else if (strncmp(cp, "info", 4) == 0 ||
-		   strncmp(cp, "error", 5) == 0 ||
-		   strncmp(cp, "warning", 7) == 0) {
-		if (ParseMessage(cp))
+	} else if (IsDirective(dir, dirlen, "info")) {
+		if (ParseMessage(PARSE_INFO, arg))
+			return TRUE;
+	} else if (IsDirective(dir, dirlen, "warning")) {
+		if (ParseMessage(PARSE_WARNING, arg))
+			return TRUE;
+	} else if (IsDirective(dir, dirlen, "error")) {
+		if (ParseMessage(PARSE_FATAL, arg))
 			return TRUE;
 	}
 	return FALSE;
