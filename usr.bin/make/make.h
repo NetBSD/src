@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.233 2020/12/11 23:00:59 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.234 2020/12/13 20:09:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -521,7 +521,7 @@ extern SearchPath *defSysIncPath;
 /* Startup directory */
 extern char curdir[];
 /* The basename of the program name, suffixed with [n] for sub-makes.  */
-extern char *progname;
+extern const char *progname;
 /* Name of the .depend makefile */
 extern char *makeDependfile;
 /* If we replaced environ, this will be non-NULL. */
