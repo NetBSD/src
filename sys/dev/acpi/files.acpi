@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.118 2020/12/13 20:27:53 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.119 2020/12/13 20:39:20 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -110,6 +110,11 @@ file	dev/acpi/acpi_pcd.c		acpipcd
 device	acpipcc
 attach	acpipcc at acpisdtbus
 file	dev/acpi/acpi_pcc.c		acpipcc
+
+# ACPI Collaborative Processor Performance Control
+device	acpicppc: acpipcc
+attach	acpicppc at acpinodebus
+file	dev/acpi/acpi_cppc.c		acpicppc
 
 # Serial interface
 attach	com at acpinodebus with com_acpi
