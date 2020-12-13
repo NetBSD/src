@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.386 2020/12/13 02:01:43 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.387 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.386 2020/12/13 02:01:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.387 2020/12/13 20:14:48 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2111,7 +2111,7 @@ InitShellNameAndPath(void)
 #ifdef DEFSHELL_CUSTOM
 	if (shellName[0] == '/') {
 		shellPath = shellName;
-		shellName = strrchr(shellPath, '/') + 1;
+		shellName = str_basename(shellPath);
 		return;
 	}
 #endif

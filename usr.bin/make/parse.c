@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.479 2020/12/13 02:15:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.480 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.479 2020/12/13 02:15:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.480 2020/12/13 20:14:48 rillig Exp $");
 
 /* types and constants */
 
@@ -632,10 +632,8 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 		dir = realpath(dir, dirbuf);
 
 	base = Var_Value(".PARSEFILE", VAR_GLOBAL, &base_freeIt);
-	if (base == NULL) {
-		const char *slash = strrchr(fname, '/');
-		base = slash != NULL ? slash + 1 : fname;
-	}
+	if (base == NULL)
+		base = str_basename(fname);
 
 	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, base, lineno);
 	bmake_free(base_freeIt);

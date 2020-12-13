@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.329 2020/12/07 01:27:08 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.330 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.329 2020/12/07 01:27:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.330 2020/12/13 20:14:48 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1171,12 +1171,13 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 	size_t prefLen;		/* The length of the defined prefix */
 	Suffix *suff;		/* Suffix on matching beastie */
 	Candidate *ret;		/* Return value */
-	char *cp;
 
 	tgn = targ->node;
 	prefLen = strlen(targ->prefix);
 
 	for (gln = tgn->children.first; gln != NULL; gln = gln->next) {
+		const char *cp;
+
 		sgn = gln->datum;
 
 		if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(&tgn->commands)) {
@@ -1190,12 +1191,7 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 			continue;
 		}
 
-		cp = strrchr(sgn->name, '/');
-		if (cp == NULL) {
-			cp = sgn->name;
-		} else {
-			cp++;
-		}
+		cp = str_basename(sgn->name);
 		if (strncmp(cp, targ->prefix, prefLen) != 0)
 			continue;
 		/* The node matches the prefix, see if it has a known suffix. */
@@ -1782,36 +1778,22 @@ FindDepsRegularPath(GNode *gn, Candidate *targ)
 		 */
 		size_t savep = strlen(gn->path) - targ->suff->nameLen;
 		char savec;
-		char *ptr;
 
 		Suffix_Reassign(&gn->suffix, targ->suff);
 
 		savec = gn->path[savep];
 		gn->path[savep] = '\0';
 
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		else
-			ptr = gn->path;
-
-		Var_Set(PREFIX, ptr, gn);
+		Var_Set(PREFIX, str_basename(gn->path), gn);
 
 		gn->path[savep] = savec;
 	} else {
-		char *ptr;
-
 		/*
 		 * The .PREFIX gets the full path if the target has no
 		 * known suffix.
 		 */
 		Suffix_Unassign(&gn->suffix);
-
-		if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		else
-			ptr = gn->path;
-
-		Var_Set(PREFIX, ptr, gn);
+		Var_Set(PREFIX, str_basename(gn->path), gn);
 	}
 }
 

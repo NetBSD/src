@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.251 2020/12/06 18:13:17 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.252 2020/12/13 20:14:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.251 2020/12/06 18:13:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.252 2020/12/13 20:14:48 rillig Exp $");
 
 /* A search path is a list of CachedDir structures. A CachedDir has in it the
  * name of the directory and the names of all the files in the directory.
@@ -1048,14 +1048,10 @@ char *
 Dir_FindFile(const char *name, SearchPath *path)
 {
 	char *file;		/* the current filename to check */
-	const char *lastSlash;	/* the last slash in name */
-	const char *base;	/* basename(name) */
 	Boolean seenDotLast = FALSE; /* true if we should search dot last */
 	struct cached_stat cst;	/* Buffer for stat, if necessary */
 	const char *trailing_dot = ".";
-
-	lastSlash = strrchr(name, '/');
-	base = lastSlash != NULL ? lastSlash + 1 : name;
+	const char *base = str_basename(name);
 
 	DEBUG1(DIR, "Searching for %s ...", name);
 
@@ -1079,7 +1075,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * directory component is exactly `./', consult the cached contents
 	 * of each of the directories on the search path.
 	 */
-	if (lastSlash == NULL || (base - name == 2 && *name == '.')) {
+	if (base == name || (base - name == 2 && *name == '.')) {
 		SearchPathNode *ln;
 
 		/*
@@ -1125,7 +1121,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 	 * end).]
 	 * This phase is only performed if the file is *not* absolute.
 	 */
-	if (lastSlash == NULL) {
+	if (base == name) {
 		DEBUG0(DIR, "   failed.\n");
 		misses++;
 		return NULL;
@@ -1357,10 +1353,9 @@ ResolveMovedDepends(GNode *gn)
 {
 	char *fullName;
 
-	char *base = strrchr(gn->name, '/');
-	if (base == NULL)
+	const char *base = str_basename(gn->name);
+	if (base == gn->name)
 		return NULL;
-	base++;
 
 	fullName = Dir_FindFile(base, Suff_FindPath(gn));
 	if (fullName == NULL)
