@@ -2608,7 +2608,63 @@ static bool last_was_structop;
 /* Depth of parentheses.  */
 static int paren_depth;
 
-static const char PART[] = ".part.";
+static int
+get_namelen (const char *tokstart, bool dot)
+{
+  int c;
+  int namelen;
+
+  for (c = tokstart[namelen];
+       (c == '_' || c == '$' || (dot && c == '.') || c_ident_is_alnum (c) || c == '<');)
+    {
+      /* Template parameter lists are part of the name.
+	 FIXME: This mishandles `print $a<4&&$a>3'.  */
+
+      if (c == '<')
+	{
+	  if (! is_cast_operator (tokstart, namelen))
+	    {
+	      /* Scan ahead to get rest of the template specification.  Note
+		 that we look ahead only when the '<' adjoins non-whitespace
+		 characters; for comparison expressions, e.g. "a < b > c",
+		 there must be spaces before the '<', etc. */
+	      const char *p = find_template_name_end (tokstart + namelen);
+
+	      if (p)
+		namelen = p - tokstart;
+	    }
+	  break;
+	}
+      c = tokstart[++namelen];
+    }
+  return namelen;
+}
+
+static bool is_generated_symbol (const char *symbol)
+{
+  /* generated symbol are of the form:
+
+     <symbol>.<number>
+     <symbol>.isra.<number>
+     <symbol>.part.<number>
+
+    So we see if the symbol ends with .<number>
+   */
+
+  int len = get_namelen (symbol, true);
+  int ndigits;
+
+  if (len-- == 0)
+    return false;
+
+  for (ndigits = 0; ndigits <= len && ISDIGIT(symbol[len - ndigits]); ndigits++)
+    continue;
+
+  if (ndigits == 0)
+    return false;
+
+  return symbol[len - ndigits] == '.';
+}
 
 /* Read one token, getting characters through lexptr.  */
 
@@ -2725,13 +2781,6 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
       return c;
 
     case '.':
-      /* Gross! recognize <symbol>.part.N */
-      if (strncmp(pstate->lexptr, PART, sizeof(PART) - 1) == 0 &&
-	ISDIGIT(pstate->lexptr[sizeof(PART) - 1]) &&
-	pstate->lexptr[sizeof(PART)] == '\0')
-	{
-	  break;
-	}
       /* Might be a floating point number.  */
       if (pstate->lexptr[1] < '0' || pstate->lexptr[1] > '9')
 	{
@@ -2895,30 +2944,7 @@ lex_one_token (struct parser_state *par_state, bool *is_quoted_name)
     error (_("Invalid character '%c' in expression."), c);
 
   /* It's a name.  See how long it is.  */
-  namelen = 0;
-  for (c = tokstart[namelen];
-       (c == '_' || c == '$' || c == '.' || c_ident_is_alnum (c) || c == '<');)
-    {
-      /* Template parameter lists are part of the name.
-	 FIXME: This mishandles `print $a<4&&$a>3'.  */
-
-      if (c == '<')
-	{
-	  if (! is_cast_operator (tokstart, namelen))
-	    {
-	      /* Scan ahead to get rest of the template specification.  Note
-		 that we look ahead only when the '<' adjoins non-whitespace
-		 characters; for comparison expressions, e.g. "a < b > c",
-		 there must be spaces before the '<', etc. */
-	      const char *p = find_template_name_end (tokstart + namelen);
-
-	      if (p)
-		namelen = p - tokstart;
-	    }
-	  break;
-	}
-      c = tokstart[++namelen];
-    }
+  namelen = get_namelen (tokstart, is_generated_symbol (tokstart));
 
   /* The token "if" terminates the expression and is NOT removed from
      the input stream.  It doesn't count if it appears in the
