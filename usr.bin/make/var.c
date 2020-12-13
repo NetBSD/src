@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.730 2020/12/13 01:33:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.731 2020/12/13 01:41:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.730 2020/12/13 01:33:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.731 2020/12/13 01:41:12 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -211,14 +211,6 @@ typedef struct Var {
 	/* Miscellaneous status flags. */
 	VarFlags flags;
 } Var;
-
-typedef enum VarExportMode {
-	VEM_NORMAL,
-	/* Initial export or updating an already exported variable. */
-	VEM_PARENT,
-	/* Do not expand the variable value. */
-	VEM_LITERAL
-} VarExportMode;
 
 /*
  * Exporting vars is expensive so skip it if we can
@@ -578,7 +570,7 @@ ExportVar(const char *name, VarExportMode mode)
 		return FALSE;	/* nothing to do */
 
 	val = Buf_GetAll(&v->val, NULL);
-	if (!(mode == VEM_LITERAL) && strchr(val, '$') != NULL) {
+	if (mode != VEM_LITERAL && strchr(val, '$') != NULL) {
 		char *expr;
 
 		if (parent) {
@@ -700,35 +692,16 @@ ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportMode mode)
 	free(xvarnames);
 }
 
-/*
- * This is called when .export is seen or .MAKE.EXPORTED is modified.
- *
- * It is also called when any exported variable is modified.
- * XXX: Is it really?
- *
- * str has the format "[-env|-literal] varname...".
- */
+/* Export the named variables, or all variables. */
 void
-Var_Export(const char *str)
+Var_Export(VarExportMode mode, const char *varnames)
 {
-	VarExportMode mode;
-
-	if (str[0] == '\0') {
+	if (mode == VEM_PARENT && varnames[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
 		return;
 	}
 
-	if (strncmp(str, "-env", 4) == 0) {
-		str += 4;
-		mode = VEM_NORMAL;
-	} else if (strncmp(str, "-literal", 8) == 0) {
-		str += 8;
-		mode = VEM_LITERAL;
-	} else {
-		mode = VEM_PARENT;
-	}
-
-	ExportVarsExpand(str, TRUE, mode);
+	ExportVarsExpand(varnames, TRUE, mode);
 }
 
 void
