@@ -22,8 +22,6 @@ job 0, status 3, flags ---, pid <pid>
 silent
 ignerr
 always
-Process <pid> exited/stopped status 0.
-JobFinish: <pid> [all], status 0
 Job_TokenWithdraw(<pid>): aborting 0, running 0
 (<pid>) withdrew token
 exit status 0
