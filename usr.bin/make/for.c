@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.116 2020/12/12 00:33:25 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.117 2020/12/13 21:27:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.116 2020/12/12 00:33:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.117 2020/12/13 21:27:45 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -217,8 +217,9 @@ For_Eval(const char *line)
 
 	if ((nitems = f->items.len) > 0 && nitems % (nvars = f->vars.len)) {
 	    Parse_Error(PARSE_FATAL,
-			"Wrong number of words (%zu) in .for substitution list"
-			" with %zu variables", nitems, nvars);
+			"Wrong number of words (%u) in .for substitution list"
+			" with %u variables",
+			(unsigned)nitems, (unsigned)nvars);
 	    /*
 	     * Return 'success' so that the body of the .for loop is
 	     * accumulated.
