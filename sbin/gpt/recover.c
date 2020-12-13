@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.18 2018/07/03 03:41:24 jnemeth Exp $");
+__RCSID("$NetBSD: recover.c,v 1.19 2020/12/13 21:55:25 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ recover_gpt_tbl(gpt_t gpt, int type, off_t start)
 }
 
 static int
-recover(gpt_t gpt, int recoverable)
+recover(gpt_t gpt)
 {
 	off_t last = gpt_last(gpt);
 	map_t map;
@@ -233,13 +233,9 @@ static int
 cmd_recover(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
-	int recoverable = 0;
 
 	while ((ch = getopt(argc, argv, "r")) != -1) {
 		switch(ch) {
-		case 'r':
-			recoverable = 1;
-			break;
 		default:
 			return usage();
 		}
@@ -248,5 +244,5 @@ cmd_recover(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return recover(gpt, recoverable);
+	return recover(gpt);
 }
