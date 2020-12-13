@@ -10,6 +10,6 @@ false 'fail2' '${.TARGET}' '$${.TARGET}'
 
 Stop.
 make: stopped in unit-tests
-.ERROR target: <success3>
+.ERROR target: <fail1>
 .ERROR command: <>
 exit status 1

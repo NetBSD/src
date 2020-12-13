@@ -1,8 +1,12 @@
-# $NetBSD: compat-error.mk,v 1.2 2020/12/13 19:08:20 rillig Exp $
+# $NetBSD: compat-error.mk,v 1.3 2020/12/13 19:33:53 rillig Exp $
 #
 # Test detailed error handling in compat mode.
 #
-# XXX: As of 2020-12-13, .ERROR_TARGET is success3, which is wrong.
+# Until 2020-12-13, .ERROR_TARGET was success3, which was wrong.
+# Since compat.c 1.215 from 2020-12-13, it is 'fail1', which is the first
+# failed top-level target.  XXX: Even better would be if .ERROR_TARGET were
+# the smallest target that caused the build to fail, even if it were a
+# sub-sub-sub-dependency of a top-level target.
 #
 # XXX: As of 2020-12-13, .ERROR_CMD is empty, which is wrong.
 #
