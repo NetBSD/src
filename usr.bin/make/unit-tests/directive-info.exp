@@ -4,7 +4,7 @@ make: "directive-info.mk" line 9: Unknown directive "info"
 make: "directive-info.mk" line 10: message
 make: "directive-info.mk" line 11: indented message
 make: "directive-info.mk" line 12: Unknown directive "information"
-make: "directive-info.mk" line 13: message
+make: "directive-info.mk" line 13: Unknown directive "information"
 make: "directive-info.mk" line 18: Unknown directive "info"
 make: "directive-info.mk" line 19: Unknown directive "info"
 make: "directive-info.mk" line 22: Unknown directive "info-message"
