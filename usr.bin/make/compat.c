@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.209 2020/12/13 16:14:40 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.210 2020/12/13 16:30:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.209 2020/12/13 16:14:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.210 2020/12/13 16:30:08 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -660,6 +660,20 @@ cohorts:
 	MakeNodes(&gn->cohorts, pgn);
 }
 
+static void
+MakeBeginNode(void)
+{
+	GNode *gn = Targ_FindNode(".BEGIN");
+	if (gn == NULL)
+		return;
+
+	Compat_Make(gn, gn);
+	if (GNode_IsError(gn)) {
+		PrintOnError(gn, "\nStop.");
+		exit(1);
+	}
+}
+
 /* Initialize this module and start making.
  *
  * Input:
@@ -688,20 +702,8 @@ Compat_Run(GNodeList *targs)
 	 * detail probably doesn't matter though. */
 	(void)Targ_GetEndNode();
 
-	/*
-	 * If the user has defined a .BEGIN target, execute the commands
-	 * attached to it.
-	 */
-	if (!opts.queryFlag) {
-		gn = Targ_FindNode(".BEGIN");
-		if (gn != NULL) {
-			Compat_Make(gn, gn);
-			if (GNode_IsError(gn)) {
-				PrintOnError(gn, "\nStop.");
-				exit(1);
-			}
-		}
-	}
+	if (!opts.queryFlag)
+		MakeBeginNode();
 
 	/*
 	 * Expand .USE nodes right now, because they can modify the structure
