@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.212 2020/12/13 16:47:19 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.213 2020/12/13 18:12:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.212 2020/12/13 16:47:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.213 2020/12/13 18:12:29 christos Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -532,7 +532,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 
 	/*
 	 * Alter our type to tell if errors should be ignored or things
-	 * should not be printed so CompatRunCommand knows what to do.
+	 * should not be printed so Compat_RunCommand knows what to do.
 	 */
 	if (opts.ignoreErrors)
 		gn->type |= OP_IGNORE;
