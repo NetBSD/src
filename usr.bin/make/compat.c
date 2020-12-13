@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.208 2020/12/12 18:53:53 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.209 2020/12/13 16:14:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.208 2020/12/12 18:53:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.209 2020/12/13 16:14:40 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -178,6 +178,32 @@ DebugFailedTarget(const char *cmd, GNode *gn)
 		}
 	}
 	debug_printf("\n");
+}
+
+static Boolean
+UseShell(const char *cmd MAKE_ATTR_UNUSED)
+{
+#if !defined(MAKE_NATIVE)
+	/*
+	 * In a non-native build, the host environment might be weird enough
+	 * that it's necessary to go through a shell to get the correct
+	 * behaviour.  Or perhaps the shell has been replaced with something
+	 * that does extra logging, and that should not be bypassed.
+	 */
+	return TRUE;
+#else
+	/*
+	 * Search for meta characters in the command. If there are no meta
+	 * characters, there's no need to execute a shell to execute the
+	 * command.
+	 *
+	 * Additionally variable assignments and empty commands
+	 * go to the shell. Therefore treat '=' and ':' like shell
+	 * meta characters as documented in make(1).
+	 */
+
+	return needshell(cmd);
+#endif
 }
 
 /* Execute the next command for a target. If the command returns an error,
@@ -264,28 +290,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	if (cmd[0] == '\0')
 		return 0;
 
-#if !defined(MAKE_NATIVE)
-	/*
-	 * In a non-native build, the host environment might be weird enough
-	 * that it's necessary to go through a shell to get the correct
-	 * behaviour.  Or perhaps the shell has been replaced with something
-	 * that does extra logging, and that should not be bypassed.
-	 */
-	useShell = TRUE;
-#else
-	/*
-	 * Search for meta characters in the command. If there are no meta
-	 * characters, there's no need to execute a shell to execute the
-	 * command.
-	 *
-	 * Additionally variable assignments and empty commands
-	 * go to the shell. Therefore treat '=' and ':' like shell
-	 * meta characters as documented in make(1).
-	 */
-
-	useShell = needshell(cmd);
-#endif
-
+	useShell = UseShell(cmd);
 	/*
 	 * Print the command before echoing if we're not supposed to be quiet
 	 * for this one. We also print the command if -n given.
