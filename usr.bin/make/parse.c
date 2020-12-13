@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.476 2020/12/13 01:41:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.477 2020/12/13 01:51:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.476 2020/12/13 01:41:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.477 2020/12/13 01:51:08 rillig Exp $");
 
 /* types and constants */
 
@@ -2950,11 +2950,8 @@ IsDirective(const char *dir, size_t dirlen, const char *name)
 }
 
 /*
- * Lines that begin with '.' can be pretty much anything:
- *	- directives like '.include' or '.if',
- *	- suffix rules like '.c.o:',
- *	- dependencies for filenames that start with '.',
- *	- variable assignments like '.tmp=value'.
+ * See if the line starts with one of the known directives, and if so, handle
+ * the directive.
  */
 static Boolean
 ParseDirective(char *line)
@@ -3121,6 +3118,13 @@ ParseDependency(char *line)
 static void
 ParseLine(char *line)
 {
+	/*
+	 * Lines that begin with '.' can be pretty much anything:
+	 *	- directives like '.include' or '.if',
+	 *	- suffix rules like '.c.o:',
+	 *	- dependencies for filenames that start with '.',
+	 *	- variable assignments like '.tmp=value'.
+	 */
 	if (line[0] == '.' && ParseDirective(line))
 		return;
 
