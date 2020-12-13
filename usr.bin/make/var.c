@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.729 2020/12/12 21:20:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.730 2020/12/13 01:33:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.729 2020/12/12 21:20:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.730 2020/12/13 01:33:17 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -212,18 +212,13 @@ typedef struct Var {
 	VarFlags flags;
 } Var;
 
-typedef enum VarExportFlags {
-	VAR_EXPORT_NORMAL = 0,
-	/*
-	 * We pass this to Var_Export when doing the initial export
-	 * or after updating an exported var.
-	 */
-	VAR_EXPORT_PARENT = 0x01,
-	/*
-	 * We pass this to ExportVar to tell it to leave the value alone.
-	 */
-	VAR_EXPORT_LITERAL = 0x02
-} VarExportFlags;
+typedef enum VarExportMode {
+	VEM_NORMAL,
+	/* Initial export or updating an already exported variable. */
+	VEM_PARENT,
+	/* Do not expand the variable value. */
+	VEM_LITERAL
+} VarExportMode;
 
 /*
  * Exporting vars is expensive so skip it if we can
@@ -566,9 +561,9 @@ MayExport(const char *name)
  * We only manipulate flags of vars if 'parent' is set.
  */
 static Boolean
-ExportVar(const char *name, VarExportFlags flags)
+ExportVar(const char *name, VarExportMode mode)
 {
-	Boolean parent = (flags & VAR_EXPORT_PARENT) != 0;
+	Boolean parent = mode == VEM_PARENT;
 	Var *v;
 	char *val;
 
@@ -583,7 +578,7 @@ ExportVar(const char *name, VarExportFlags flags)
 		return FALSE;	/* nothing to do */
 
 	val = Buf_GetAll(&v->val, NULL);
-	if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$') != NULL) {
+	if (!(mode == VEM_LITERAL) && strchr(val, '$') != NULL) {
 		char *expr;
 
 		if (parent) {
@@ -652,7 +647,7 @@ Var_ReexportVars(void)
 		HashIter_Init(&hi, &VAR_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
-			ExportVar(var->name.str, VAR_EXPORT_NORMAL);
+			ExportVar(var->name.str, VEM_NORMAL);
 		}
 		return;
 	}
@@ -665,14 +660,14 @@ Var_ReexportVars(void)
 		size_t i;
 
 		for (i = 0; i < words.len; i++)
-			ExportVar(words.words[i], VAR_EXPORT_NORMAL);
+			ExportVar(words.words[i], VEM_NORMAL);
 		Words_Free(words);
 	}
 	free(val);
 }
 
 static void
-ExportVars(const char *varnames, Boolean isExport, VarExportFlags flags)
+ExportVars(const char *varnames, Boolean isExport, VarExportMode mode)
 {
 	Words words = Str_Words(varnames, FALSE);
 	size_t i;
@@ -682,26 +677,26 @@ ExportVars(const char *varnames, Boolean isExport, VarExportFlags flags)
 
 	for (i = 0; i < words.len; i++) {
 		const char *varname = words.words[i];
-		if (!ExportVar(varname, flags))
+		if (!ExportVar(varname, mode))
 			continue;
 
 		if (var_exportedVars == VAR_EXPORTED_NONE)
 			var_exportedVars = VAR_EXPORTED_SOME;
 
-		if (isExport && (flags & VAR_EXPORT_PARENT))
+		if (isExport && mode == VEM_PARENT)
 			Var_Append(MAKE_EXPORTED, varname, VAR_GLOBAL);
 	}
 	Words_Free(words);
 }
 
 static void
-ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportFlags flags)
+ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportMode mode)
 {
 	char *xvarnames;
 
 	(void)Var_Subst(uvarnames, VAR_GLOBAL, VARE_WANTRES, &xvarnames);
 	/* TODO: handle errors */
-	ExportVars(xvarnames, isExport, flags);
+	ExportVars(xvarnames, isExport, mode);
 	free(xvarnames);
 }
 
@@ -716,7 +711,7 @@ ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportFlags flags)
 void
 Var_Export(const char *str)
 {
-	VarExportFlags flags;
+	VarExportMode mode;
 
 	if (str[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
@@ -725,21 +720,21 @@ Var_Export(const char *str)
 
 	if (strncmp(str, "-env", 4) == 0) {
 		str += 4;
-		flags = VAR_EXPORT_NORMAL;
+		mode = VEM_NORMAL;
 	} else if (strncmp(str, "-literal", 8) == 0) {
 		str += 8;
-		flags = VAR_EXPORT_LITERAL;
+		mode = VEM_LITERAL;
 	} else {
-		flags = VAR_EXPORT_PARENT;
+		mode = VEM_PARENT;
 	}
 
-	ExportVarsExpand(str, TRUE, flags);
+	ExportVarsExpand(str, TRUE, mode);
 }
 
 void
 Var_ExportVars(const char *varnames)
 {
-	ExportVarsExpand(varnames, FALSE, VAR_EXPORT_PARENT);
+	ExportVarsExpand(varnames, FALSE, VEM_PARENT);
 }
 
 
@@ -945,7 +940,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 
 		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 		if (v->flags & VAR_EXPORTED)
-			ExportVar(name, VAR_EXPORT_PARENT);
+			ExportVar(name, VEM_PARENT);
 	}
 	/*
 	 * Any variables given on the command line are automatically exported
