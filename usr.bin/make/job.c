@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.385 2020/12/12 18:53:53 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.386 2020/12/13 02:01:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.385 2020/12/12 18:53:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.386 2020/12/13 02:01:43 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2354,6 +2354,7 @@ Job_ParseShell(char *line)
 	Boolean fullSpec = FALSE;
 	Shell *sh;
 
+	/* XXX: don't use line as an iterator variable */
 	pp_skip_whitespace(&line);
 
 	free(shellArgv);

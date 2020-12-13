@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.477 2020/12/13 01:51:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.478 2020/12/13 02:01:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.477 2020/12/13 01:51:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.478 2020/12/13 02:01:43 rillig Exp $");
 
 /* types and constants */
 
@@ -1099,7 +1099,7 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 /* Handle special targets like .PATH, .DEFAULT, .BEGIN, .ORDER. */
 static void
 ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
-			       const char *line,
+			       const char *line, /* XXX: bad name */
 			       SearchPathList **inout_paths)
 {
 	switch (*inout_specType) {
@@ -1164,7 +1164,8 @@ ParseDoDependencyTargetSpecial(ParseSpecial *inout_specType,
  * Call on the suffix module to give us a path to modify.
  */
 static Boolean
-ParseDoDependencyTargetPath(const char *line, SearchPathList **inout_paths)
+ParseDoDependencyTargetPath(const char *line, /* XXX: bad name */
+			    SearchPathList **inout_paths)
 {
 	SearchPath *path;
 
@@ -1186,12 +1187,13 @@ ParseDoDependencyTargetPath(const char *line, SearchPathList **inout_paths)
  * See if it's a special target and if so set specType to match it.
  */
 static Boolean
-ParseDoDependencyTarget(const char *line, ParseSpecial *inout_specType,
+ParseDoDependencyTarget(const char *line, /* XXX: bad name */
+			ParseSpecial *inout_specType,
 			GNodeType *out_tOp, SearchPathList **inout_paths)
 {
 	int keywd;
 
-	if (!(*line == '.' && ch_isupper(line[1])))
+	if (!(line[0] == '.' && ch_isupper(line[1])))
 		return TRUE;
 
 	/*
@@ -1221,7 +1223,8 @@ ParseDoDependencyTarget(const char *line, ParseSpecial *inout_specType,
 }
 
 static void
-ParseDoDependencyTargetMundane(char *line, StringList *curTargs)
+ParseDoDependencyTargetMundane(char *line, /* XXX: bad name */
+			       StringList *curTargs)
 {
 	if (Dir_HasWildcards(line)) {
 		/*
@@ -1666,6 +1669,7 @@ ParseDoDependency(char *line)
 	/*
 	 * First, grind through the targets.
 	 */
+	/* XXX: don't use line as an iterator variable */
 	if (!ParseDoDependencyTargets(&cp, &line, lstart, &specType, &tOp,
 	    &paths, &curTargs))
 		goto out;
@@ -2257,11 +2261,11 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 }
 
 static void
-ParseDoInclude(char *line)
+ParseDoInclude(char *line /* XXX: bad name */)
 {
 	char endc;		/* the character which ends the file spec */
 	char *cp;		/* current position in file spec */
-	Boolean silent = *line != 'i';
+	Boolean silent = line[0] != 'i';
 	char *file = line + (silent ? 8 : 7);
 
 	/* Skip to delimiter character so we know where to look */
@@ -2302,7 +2306,7 @@ ParseDoInclude(char *line)
 	(void)Var_Subst(file, VAR_CMDLINE, VARE_WANTRES, &file);
 	/* TODO: handle errors */
 
-	Parse_include_file(file, endc == '>', *line == 'd', silent);
+	Parse_include_file(file, endc == '>', line[0] == 'd', silent);
 	free(file);
 }
 
@@ -3128,7 +3132,7 @@ ParseLine(char *line)
 	if (line[0] == '.' && ParseDirective(line))
 		return;
 
-	if (*line == '\t') {
+	if (line[0] == '\t') {
 		ParseLine_ShellCommand(line + 1);
 		return;
 	}
