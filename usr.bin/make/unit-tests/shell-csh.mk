@@ -1,8 +1,8 @@
-# $NetBSD: shell-csh.mk,v 1.6 2020/12/10 21:09:58 rillig Exp $
+# $NetBSD: shell-csh.mk,v 1.7 2020/12/13 02:09:55 sjg Exp $
 #
 # Tests for using a C shell for running the commands.
 
-CSH!=	which csh || true
+CSH!=	which csh 2> /dev/null || true
 
 # The shell path must be an absolute path.
 # This is only obvious in parallel mode since in compat mode,
