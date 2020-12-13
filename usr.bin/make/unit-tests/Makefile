@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.247 2020/12/13 02:09:33 sjg Exp $
+# $NetBSD: Makefile,v 1.248 2020/12/13 05:13:38 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -537,11 +537,10 @@ STD_SED_CMDS.dg1+=	-e 's,^\(MAKE *=\) .*,\1 <details omitted>,'
 
 # Omit details such as process IDs from the output of the -dj option.
 STD_SED_CMDS.dj= \
+	-e '/Process/d;/JobFinish:/d' \
 	-e 's,^\(Job_TokenWithdraw\)([0-9]*),\1(<pid>),' \
 	-e 's,^([0-9][0-9]*) \(withdrew token\),(<pid>) \1,' \
 	-e 's, \(pid\) [0-9][0-9]*, \1 <pid>,' \
-	-e 's,^\(Process\) [0-9][0-9]*,\1 <pid>,' \
-	-e 's,^\(JobFinish:\) [0-9][0-9]*,\1 <pid>,' \
 	-e 's,^\(	Command:\) .*,\1 <shell>,'
 
 # Reduce the noise for tests running with the -n option, since there is no
