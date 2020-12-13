@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.20 2020/10/24 07:08:22 skrll Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.21 2020/12/13 20:24:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20 2020/10/24 07:08:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.21 2020/12/13 20:24:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,8 +346,6 @@ acpi_md_mcfg_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 void
 acpi_md_callback(struct acpi_softc *sc)
 {
-	ACPI_TABLE_HEADER *hdrp;
-
 #if NPCI > 0
 	acpi_md_mcfg_bs_tag = arm_generic_bs_tag;
 	acpi_md_mcfg_bs_tag.bs_map = acpi_md_mcfg_bs_map;
@@ -364,9 +362,6 @@ acpi_md_callback(struct acpi_softc *sc)
 		panic("Failed to map GTDT");
 	acpi_gtdt_walk(acpi_md_gtdt_probe, sc);
 	acpi_gtdt_unmap();
-
-	if (ACPI_SUCCESS(AcpiGetTable(ACPI_SIG_GTDT, 0, &hdrp)))
-		config_found_ia(sc->sc_dev, "acpisdtbus", hdrp, NULL);
 }
 
 static const char * const module_hid[] = {
