@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.20 2020/12/11 07:01:27 martin Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.21 2020/12/13 08:20:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.20 2020/12/11 07:01:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.21 2020/12/13 08:20:56 martin Exp $");
 
 #include "opt_atppc.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.20 2020/12/11 07:01:27 martin Exp $
 #include <sys/termios.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/atppcvar.h>
 
