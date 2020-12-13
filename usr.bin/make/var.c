@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.733 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.734 2020/12/13 21:27:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.733 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.734 2020/12/13 21:27:45 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -1467,11 +1467,12 @@ tryagain:
 				rp++;
 
 				if (n >= args->nsub) {
-					Error("No subexpression \\%zu", n);
+					Error("No subexpression \\%u",
+					    (unsigned)n);
 				} else if (m[n].rm_so == -1) {
 					Error(
-					    "No match for subexpression \\%zu",
-					    n);
+					    "No match for subexpression \\%u",
+					    (unsigned)n);
 				} else {
 					SepBuf_AddBytesBetween(buf,
 					    wp + m[n].rm_so, wp + m[n].rm_eo);
@@ -1640,8 +1641,8 @@ ModifyWords(const char *str,
 
 	words = Str_Words(str, FALSE);
 
-	DEBUG2(VAR, "ModifyWords: split \"%s\" into %zu words\n",
-	    str, words.len);
+	DEBUG2(VAR, "ModifyWords: split \"%s\" into %u words\n",
+	    str, (unsigned)words.len);
 
 	for (i = 0; i < words.len; i++) {
 		modifyWord(words.words[i], &result, modifyWord_args);

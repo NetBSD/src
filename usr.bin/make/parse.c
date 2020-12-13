@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.480 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.481 2020/12/13 21:27:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.480 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.481 2020/12/13 21:27:45 rillig Exp $");
 
 /* types and constants */
 
@@ -618,7 +618,7 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	void *dir_freeIt, *base_freeIt;
 
 	if (*fname == '/' || strcmp(fname, "(stdin)") == 0) {
-		(void)fprintf(f, "\"%s\" line %zu: ", fname, lineno);
+		(void)fprintf(f, "\"%s\" line %u: ", fname, (unsigned)lineno);
 		return;
 	}
 
@@ -635,7 +635,7 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	if (base == NULL)
 		base = str_basename(fname);
 
-	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, base, lineno);
+	(void)fprintf(f, "\"%s/%s\" line %u: ", dir, base, (unsigned)lineno);
 	bmake_free(base_freeIt);
 	bmake_free(dir_freeIt);
 }
