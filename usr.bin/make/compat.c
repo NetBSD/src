@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.213 2020/12/13 18:12:29 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.214 2020/12/13 18:57:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.213 2020/12/13 18:12:29 christos Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.214 2020/12/13 18:57:44 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -258,6 +258,17 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	if (gn->type & OP_SAVE_CMDS) {
 		GNode *endNode = Targ_GetEndNode();
 		if (gn != endNode) {
+			/*
+			 * Append the expanded command, to prevent the
+			 * local variables from being interpreted in the
+			 * context of the .END node.
+			 *
+			 * A probably unintended side effect of this is that
+			 * the expanded command will be expanded again in the
+			 * .END node.  Therefore, a literal '$' in these
+			 * commands must be written as '$$$$' instead of the
+			 * usual '$$'.
+			 */
 			Lst_Append(&endNode->commands, cmdStart);
 			return 0;
 		}
