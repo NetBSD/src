@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.92 2020/12/04 20:11:48 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.93 2020/12/13 20:57:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -98,8 +98,8 @@ struct ListNode {
 };
 
 struct List {
-	ListNode *first;	/* first node in list */
-	ListNode *last;		/* last node in list */
+	ListNode *first;
+	ListNode *last;
 };
 
 /* Free the datum of a node, called before freeing the node itself. */
@@ -173,9 +173,9 @@ void *Lst_Dequeue(List *);
  * access. */
 typedef struct Vector {
 	void *items;		/* memory holding the items */
-	size_t itemSize;	/* size of a single item in bytes */
+	size_t itemSize;	/* size of a single item */
 	size_t len;		/* number of actually usable elements */
-	size_t priv_cap;	/* capacity */
+	size_t cap;		/* capacity */
 } Vector;
 
 void Vector_Init(Vector *, size_t);
