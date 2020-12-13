@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.211 2020/12/13 16:32:57 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.212 2020/12/13 16:47:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.211 2020/12/13 16:32:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.212 2020/12/13 16:47:19 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -728,8 +728,10 @@ Compat_Run(GNodeList *targs)
 			printf("`%s' not remade because of errors.\n",
 			       gn->name);
 		}
-		if (GNode_IsError(gn))
+		if (GNode_IsError(gn)) {
 			seenError = TRUE;
+			/* XXX: In case of error, set the error node. */
+		}
 	}
 
 	/* If the user has defined a .END target, run its commands. */
@@ -737,9 +739,14 @@ Compat_Run(GNodeList *targs)
 		GNode *endNode = Targ_GetEndNode();
 		Compat_Make(endNode, endNode);
 		seenError = GNode_IsError(endNode);
+		/* XXX: In case of error, set the error node. */
 	}
 
 	if (seenError) {
+		/*
+		 * XXX: Instead of gn, it makes more sense to report the
+		 * first error node.
+		 */
 		PrintOnError(gn, "\nStop.");
 		exit(1);
 	}
