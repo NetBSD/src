@@ -1,4 +1,4 @@
-# $NetBSD: compat-error.mk,v 1.1 2020/12/13 17:44:31 rillig Exp $
+# $NetBSD: compat-error.mk,v 1.2 2020/12/13 19:08:20 rillig Exp $
 #
 # Test detailed error handling in compat mode.
 #
@@ -26,8 +26,8 @@ success1 success2 success3:
 
 fail1 fail2:
 	: Making ${.TARGET} out of nothing.
-	false
+	false '${.TARGET}' '$${.TARGET}' '$$$${.TARGET}'
 
 .ERROR:
-	@echo target: ${.ERROR_TARGET}
-	@echo command: ${.ERROR_CMD}
+	@echo ${.TARGET} target: '<'${.ERROR_TARGET:Q}'>'
+	@echo ${.TARGET} command: '<'${.ERROR_CMD:Q}'>'
