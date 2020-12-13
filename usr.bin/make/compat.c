@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.210 2020/12/13 16:30:08 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.211 2020/12/13 16:32:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.210 2020/12/13 16:30:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.211 2020/12/13 16:32:57 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -674,6 +674,19 @@ MakeBeginNode(void)
 	}
 }
 
+static void
+InitSignals(void)
+{
+	if (bmake_signal(SIGINT, SIG_IGN) != SIG_IGN)
+		bmake_signal(SIGINT, CompatInterrupt);
+	if (bmake_signal(SIGTERM, SIG_IGN) != SIG_IGN)
+		bmake_signal(SIGTERM, CompatInterrupt);
+	if (bmake_signal(SIGHUP, SIG_IGN) != SIG_IGN)
+		bmake_signal(SIGHUP, CompatInterrupt);
+	if (bmake_signal(SIGQUIT, SIG_IGN) != SIG_IGN)
+		bmake_signal(SIGQUIT, CompatInterrupt);
+}
+
 /* Initialize this module and start making.
  *
  * Input:
@@ -688,14 +701,7 @@ Compat_Run(GNodeList *targs)
 	if (!shellName)
 		Shell_Init();
 
-	if (bmake_signal(SIGINT, SIG_IGN) != SIG_IGN)
-		bmake_signal(SIGINT, CompatInterrupt);
-	if (bmake_signal(SIGTERM, SIG_IGN) != SIG_IGN)
-		bmake_signal(SIGTERM, CompatInterrupt);
-	if (bmake_signal(SIGHUP, SIG_IGN) != SIG_IGN)
-		bmake_signal(SIGHUP, CompatInterrupt);
-	if (bmake_signal(SIGQUIT, SIG_IGN) != SIG_IGN)
-		bmake_signal(SIGQUIT, CompatInterrupt);
+	InitSignals();
 
 	/* Create the .END node now, to keep the (debug) output of the
 	 * counter.mk test the same as before 2020-09-23.  This implementation
