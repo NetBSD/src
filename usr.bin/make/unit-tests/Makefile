@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.246 2020/12/13 00:46:25 rillig Exp $
+# $NetBSD: Makefile,v 1.247 2020/12/13 02:09:33 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -30,6 +30,9 @@
 # and are thus not added to TESTS.  Such files must be ignored in
 # src/tests/usr.bin/make/t_make.sh.
 #
+
+# we use this below but we might be an older make
+.MAKE.UID?= ${id -u:L:sh}
 
 # Each test is in a sub-makefile.
 # Keep the list sorted.
@@ -199,7 +202,7 @@ TESTS+=		modmatch
 TESTS+=		modmisc
 TESTS+=		modts
 TESTS+=		modword
-.if ${.MAKE.UID:U0} > 0
+.if ${.MAKE.UID} > 0
 TESTS+=		objdir-writable
 .endif
 TESTS+=		opt
