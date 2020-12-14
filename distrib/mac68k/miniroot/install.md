@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.5 2019/04/10 14:52:53 christos Exp $
+#	$NetBSD: install.md,v 1.5.2.1 2020/12/14 17:26:37 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS=""
+MDSETS="kern-GENERIC xbase xcomp xetc xfont xserver"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -83,6 +83,11 @@ md_get_ifdevs() {
 	mi_filter_dmesg | awk -F : '/^sn[0-9]*:/ { print $1; }' | sort -u
 }
 
+md_get_partition_range() {
+	# return an expression describing the valid partition id's
+	echo '[a-h]'
+}
+
 md_installboot() {
 	# $1 is the root disk
 
@@ -122,7 +127,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the NetBSD/mac68k ${VERSION} installation program."
+	echo	"Welcome to the NetBSD/${MACHINE} ${RELEASE} installation program."
 	cat << \__welcome_banner_1
 
 This program is designed to help you install NetBSD on your system in a

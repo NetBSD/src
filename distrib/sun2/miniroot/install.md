@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.5 2019/04/10 14:52:53 christos Exp $
+#	$NetBSD: install.md,v 1.5.2.1 2020/12/14 17:26:37 martin Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 # Machine-dependent install sets
 # MDSETS="xbin xman xinc xcon" XXX
-MDSETS=""
+MDSETS="kern-GENERIC"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -146,7 +146,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the NetBSD/sun2 ${VERSION} installation program."
+		echo "Welcome to the NetBSD/${MACHINE} ${RELEASE} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put NetBSD on your disk,
@@ -157,7 +157,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the NetBSD/sun2 ${VERSION} upgrade program."
+		echo "Welcome to the NetBSD/${MACHINE} ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your NetBSD system in a
