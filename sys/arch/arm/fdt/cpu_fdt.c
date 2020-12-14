@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.36 2020/06/10 19:29:48 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.36.2.1 2020/12/14 14:37:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.36 2020/06/10 19:29:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.36.2.1 2020/12/14 14:37:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -167,7 +167,7 @@ arm_fdt_cpu_bootstrap(void)
 	/* MPIDR affinity levels of boot processor. */
 	bp_mpidr = cpu_mpidr_aff_read();
 
-	/* Boot APs */
+	/* Add APs to cpu_mpidr array */
 	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!arm_fdt_cpu_okay(child))
@@ -270,7 +270,7 @@ arm_fdt_cpu_mpstart(void)
 		}
 
 		/* Wake up AP in case firmware has placed it in WFE state */
-		__asm __volatile("sev" ::: "memory");
+		sev();
 
 		/* Wait for AP to start */
 		for (i = 0x10000000; i > 0; i--) {

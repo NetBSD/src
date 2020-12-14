@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.10 2020/10/22 07:31:15 skrll Exp $ */
+/* $NetBSD: fpu.c,v 1.10.2.1 2020/12/14 14:37:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.10 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.10.2.1 2020/12/14 14:37:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.10 2020/10/22 07:31:15 skrll Exp $");
 #include <sys/lwp.h>
 #include <sys/evcnt.h>
 
+#include <arm/cpufunc.h>
 #include <arm/fpu.h>
 #include <arm/cpufunc.h>
 

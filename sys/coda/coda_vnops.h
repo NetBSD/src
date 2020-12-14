@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.16 2012/08/02 16:06:59 christos Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.16.52.1 2020/12/14 14:38:04 thorpej Exp $	*/
 
 /*
  *
@@ -74,6 +74,7 @@ int coda_reclaim(void *);
 int coda_lock(void *);
 int coda_unlock(void *);
 int coda_islocked(void *);
+int coda_pathconf(void *);
 int coda_vop_error(void *);
 int coda_vop_nop(void *);
 int coda_getpages(void *);

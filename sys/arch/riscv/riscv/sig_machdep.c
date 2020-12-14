@@ -1,3 +1,5 @@
+/*	$NetBSD: sig_machdep.c,v 1.3.4.1 2020/12/14 14:38:00 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef COMPATNAME1
-__RCSID("$NetBSD: sig_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: sig_machdep.c,v 1.3.4.1 2020/12/14 14:38:00 thorpej Exp $");
 #endif
 
 #include <sys/param.h>

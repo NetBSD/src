@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $	*/
+/*	$NetBSD: acpi.c,v 1.285.2.1 2020/12/14 14:38:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.285.2.1 2020/12/14 14:38:05 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -166,9 +166,11 @@ static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
 	"ACPI0007",	/* ACPI CPUs do not attach to acpi(4) */
 	"PNP0000",	/* AT interrupt controller is handled internally */
+	"PNP0001",	/* EISA interrupt controller is handled internally */
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
+	"PNP0C02",	/* PnP motherboard resources */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
 #endif
 #if defined(x86_64)
@@ -176,7 +178,6 @@ static const char * const acpi_ignored_ids[] = {
 #endif
 #if defined(__aarch64__)
 	"ACPI0004",	/* ACPI module devices are handled internally */
-	"ACPI0007",	/* ACPI CPUs are attached via MADT GICC subtables */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
 #endif
 	NULL
@@ -429,8 +430,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_softc *sc = device_private(self);
 	struct acpibus_attach_args *aa = aux;
-	ACPI_TABLE_HEADER *rsdt;
+	ACPI_TABLE_HEADER *rsdt, *hdr;
 	ACPI_STATUS rv;
+	int i;
 
 	aprint_naive("\n");
 	aprint_normal(": Intel ACPICA %08x\n", ACPI_CA_VERSION);
@@ -540,6 +542,18 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		 */
 		acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
 		acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	}
+
+	/*
+	 * Load drivers that operate on System Description Tables.
+	 */
+	for (i = 0; i < AcpiGbl_RootTableList.CurrentTableCount; ++i) {
+		rv = AcpiGetTableByIndex(i, &hdr);
+		if (ACPI_FAILURE(rv)) {
+			continue;
+		}
+		config_found_ia(sc->sc_dev, "acpisdtbus", hdr, NULL);
+		AcpiPutTable(hdr);
 	}
 
 	acpitimer_init(sc);

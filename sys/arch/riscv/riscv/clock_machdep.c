@@ -1,3 +1,5 @@
+/*	$NetBSD: clock_machdep.c,v 1.1.34.1 2020/12/14 14:38:00 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.1.34.1 2020/12/14 14:38:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +42,6 @@ cpu_initclocks(void)
 }
 
 void
-setstatclockrate(int hz)
+setstatclockrate(int newhz)
 {
 }

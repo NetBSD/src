@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.6 2020/08/10 06:53:11 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.6.2.1 2020/12/14 14:38:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <riscv/pte.h>
 
-#define	PMAP_SEGTABSIZE	NPTEPG
+#define PMAP_SEGTABSIZE	NPTEPG
 
 #define NBSEG		(PAGE_SIZE * NPTEPG)
 

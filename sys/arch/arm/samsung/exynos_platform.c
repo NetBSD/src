@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.31 2020/10/30 18:54:36 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.31.2.1 2020/12/14 14:37:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.31 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.31.2.1 2020/12/14 14:37:50 thorpej Exp $");
 
 
 /*
@@ -179,7 +179,6 @@ exynos5800_mpstart(void)
 
 		/* Wait for AP to start */
 		for (n = 0x100000; n > 0; n--) {
-			membar_consumer();
 			if (cpu_hatched_p(cpuindex))
 				break;
 		}

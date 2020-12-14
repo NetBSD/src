@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.56 2020/10/10 08:22:57 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.56.2.1 2020/12/14 14:37:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.56 2020/10/10 08:22:57 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.56.2.1 2020/12/14 14:37:44 thorpej Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -52,10 +52,10 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.56 2020/10/10 08:22:57 jmcneill Exp $");
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/cpu_counter.h>
 #include <aarch64/machdep.h>
 
+#include <arm/cpufunc.h>
 #include <arm/cpu_topology.h>
 #ifdef FDT
 #include <arm/fdt/arm_fdtvar.h>

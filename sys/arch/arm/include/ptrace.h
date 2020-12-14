@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.15 2019/06/18 21:18:12 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.15.10.1 2020/12/14 14:37:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -31,10 +31,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <arm/cdefs.h>
+
 /*
  * arm-dependent ptrace definitions
  */
-#ifndef _KERNEL
+#if 0
+/* Exposed to userland for NetBSD 1.6 to 9. Do not reuse for other purpose. */
 #define PT_STEP		(PT_FIRSTMACH + 0) /* Not implemented */
 #endif
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
@@ -42,21 +45,22 @@
 /* 3 and 4 are for FPE registers */
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 5)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 6)
-#ifndef _KERNEL
+#if 0
+/* Exposed to userland for NetBSD 8 to 9. Do not reuse for other purpose. */
 #define PT_SETSTEP	(PT_FIRSTMACH + 7) /* Not implemented */
 #define PT_CLEARSTEP	(PT_FIRSTMACH + 8) /* Not implemented */
 #endif
 
 #define PT_MACHDEP_STRINGS \
-	"PT_STEP", \
+	"n/a PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"old PT_GETFPREGS", \
 	"old PT_SETFPREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS", \
-	"PT_SETSTEP", \
-	"PT_CLEARSTEP",
+	"n/a PT_SETSTEP", \
+	"n/a PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(_r)		(_r)->r_pc
@@ -67,12 +71,17 @@
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile ("udf #0" : : : "memory")
 
-#ifdef __ARMEB__
+#if defined(__ARMEL__) || defined(_ARM_ARCH_BE8)
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xfe, 0xde, 0xff, 0xe7 })
-#define PTRACE_BREAKPOINT_INSN	0xfedeffe7
 #else
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xde, 0xfe })
+#endif
+
+#ifdef _ARM_ARCH_BE8
+#define PTRACE_BREAKPOINT_INSN	0xfedeffe7
+#else
 #define PTRACE_BREAKPOINT_INSN	0xe7ffdefe
 #endif
+
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile (".word " ___STRING(PTRACE_BREAKPOINT_INSN) )
 #define PTRACE_BREAKPOINT_SIZE	4

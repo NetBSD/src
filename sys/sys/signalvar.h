@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.102 2020/05/14 13:32:15 kamil Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.102.2.1 2020/12/14 14:38:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -138,6 +138,7 @@ struct coredump_iostate;
  * Machine-independent functions:
  */
 int	coredump_netbsd(struct lwp *, struct coredump_iostate *);
+int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 int	real_coredump_netbsd(struct lwp *, struct coredump_iostate *);
 void	execsigs(struct proc *);
 int	issignal(struct lwp *);

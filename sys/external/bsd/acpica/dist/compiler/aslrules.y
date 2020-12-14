@@ -415,6 +415,10 @@ StringData
     | String                        {}
     ;
 
+StringLiteral
+    : String                        {}
+    ;
+
 ByteConst
     : Integer                       {$$ = TrSetOpIntegerValue (PARSEOP_BYTECONST, $1);}
     ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.15 2020/01/17 20:08:08 ad Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.15.6.1 2020/12/14 14:38:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -140,7 +140,7 @@ struct ptyfs_args {
 
 #define UIO_MX 32
 
-#define PTYFS_FILENO(pty, type) \
+#define PTYFS_FILENO(type, pty) \
     ((type == PTYFSroot) ? 2 : \
      ((((pty) + 1) * 2 + (((type) == PTYFSpts) ? 1 : 2))))
 

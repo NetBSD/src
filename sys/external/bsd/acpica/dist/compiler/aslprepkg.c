@@ -210,6 +210,17 @@ ApCheckPackage (
          */
         for (i = 0; i < Count; i++)
         {
+            if (!Op)
+            {
+                /*
+                 * If we get to this point, it means that the package length
+                 * is larger than the initializer list. Stop processing the
+                 * package and return because we have run out of package
+                 * elements to analyze.
+                 */
+                return;
+            }
+
             ApCheckObjectType (Predefined->Info.Name, Op,
                 Package->RetInfo.ObjectType1, i);
             Op = Op->Asl.Next;
@@ -809,7 +820,7 @@ ApPackageTooSmall (
     UINT32                      ExpectedCount)
 {
 
-    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%s: length %u, required minimum is %u",
+    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%4.4s: length %u, required minimum is %u",
         PredefinedName, Count, ExpectedCount);
 
     AslError (ASL_ERROR, ASL_MSG_RESERVED_PACKAGE_LENGTH, Op, AslGbl_MsgBuffer);
@@ -838,7 +849,7 @@ ApZeroLengthPackage (
     ACPI_PARSE_OBJECT           *Op)
 {
 
-    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%s: length is zero", PredefinedName);
+    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%4.4s: length is zero", PredefinedName);
 
     AslError (ASL_ERROR, ASL_MSG_RESERVED_PACKAGE_LENGTH, Op, AslGbl_MsgBuffer);
 }
@@ -867,7 +878,7 @@ ApPackageTooLarge (
     UINT32                      ExpectedCount)
 {
 
-    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%s: length is %u, only %u required",
+    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%4.4s: length is %u, only %u required",
         PredefinedName, Count, ExpectedCount);
 
     AslError (ASL_REMARK, ASL_MSG_RESERVED_PACKAGE_LENGTH, Op, AslGbl_MsgBuffer);

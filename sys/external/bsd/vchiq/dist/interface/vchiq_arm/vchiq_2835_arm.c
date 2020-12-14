@@ -42,6 +42,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/cpufunc.h>
+
 #include <arch/arm/broadcom/bcm2835_mbox.h>
 #include <arch/arm/broadcom/bcm2835var.h>
 

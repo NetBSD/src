@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.133 2020/05/16 18:31:48 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.133.2.1 2020/12/14 14:38:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1212,6 +1212,7 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 
 struct coredump_iostate;
 int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
+int	real_coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 
 /*
  * random other stuff

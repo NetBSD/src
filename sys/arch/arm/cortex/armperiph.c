@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.16 2020/09/29 19:58:50 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.16.2.1 2020/12/14 14:37:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.16 2020/09/29 19:58:50 jmcneill Exp 
 #include <arm/mainbus/mainbus.h>
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/gtmr_intr.h>
+#include <arm/cortex/a9tmr_intr.h>
 
 static int armperiph_match(device_t, cfdata_t, void *);
 static void armperiph_attach(device_t, device_t, void *);

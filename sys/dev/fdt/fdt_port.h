@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.3 2019/02/03 12:53:11 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.3.12.1 2020/12/14 14:38:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -123,4 +123,4 @@ int fdt_endpoint_activate_direct(struct fdt_endpoint *, bool);
  */
 int fdt_endpoint_enable(struct fdt_endpoint *, bool);
 
-#endif /* _DEV_FDT_FDT_PORT_H_ */
+#endif /* _DEV_FDT_FDT_PORT_H */

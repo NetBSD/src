@@ -1,11 +1,9 @@
-/* $NetBSD: fdt_memory.h,v 1.1 2018/10/30 21:32:35 jmcneill Exp $ */
+/*	$NetBSD: sleeptab.h,v 1.2.2.2 2020/12/14 14:38:16 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jared McNeill <jmcneill@invisible.ca>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,16 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_FDT_FDT_MEMORY_H
-#define _EVBARM_FDT_FDT_MEMORY_H
+#ifndef	_RUMP_SYS_SLEEPTAB_H_
+#define	_RUMP_SYS_SLEEPTAB_H_
 
-struct fdt_memory {
-	uint64_t	start;
-	uint64_t	end;
+struct sleepq {
+	LIST_HEAD(, lwp);	/* anonymous struct */
+	kcondvar_t sq_cv;
 };
 
-void	fdt_memory_add_range(uint64_t, uint64_t);
-void	fdt_memory_remove_range(uint64_t, uint64_t);
-void	fdt_memory_foreach(void (*)(const struct fdt_memory *, void *), void *);
+void    sleepq_destroy(sleepq_t *);
+#ifdef LOCKDEBUG
+void	turnstile_print(volatile void *, void (*)(const char *, ...)
+    __printflike(1, 2));
+#endif
 
-#endif /* !_EVBARM_FDT_FDT_MEMORY_H */
+#endif	/* _RUMP_SYS_SLEEPTAB_H_ */

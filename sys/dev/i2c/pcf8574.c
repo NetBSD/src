@@ -1,3 +1,5 @@
+/* $NetBSD: pcf8574.c,v 1.2.2.1 2020/12/14 14:38:06 thorpej Exp $ */
+
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2 2020/10/31 14:39:31 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.2.2.1 2020/12/14 14:38:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +142,11 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_mask = 0xff;
 
-	pcf8574_read(sc, &sc->sc_state);
+	/* Try a read, and fail if this component isn't present */
+	if (pcf8574_read(sc, &sc->sc_state)) {
+		aprint_normal(": read failed\n");
+		return;
+	}
 
 #ifdef PCF8574_DEBUG
 	aprint_normal(": GPIO: state = 0x%02x\n", sc->sc_state);
@@ -190,6 +196,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			    &sc->sc_sensor[i])) {
 				sysmon_envsys_destroy(sc->sc_sme);
+				sc->sc_sme = NULL;
 				aprint_error_dev(self,
 				    "unable to attach pin %d at sysmon\n", i);
 				return;
@@ -208,6 +215,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "unable to register with sysmon\n");
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			return;
 		}
 	}
@@ -219,8 +227,10 @@ pcf8574_detach(device_t self, int flags)
 	struct pcf8574_softc *sc = device_private(self);
 	int i;
 
-	if (sc->sc_sme != NULL)
+	if (sc->sc_sme != NULL) {
 		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
 
 	for (i = 0; i < sc->sc_nleds; i++)
 		led_detach(sc->sc_leds[i].led);

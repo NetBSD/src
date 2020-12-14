@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.78 2018/12/04 00:18:05 maya Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.78.12.1 2020/12/14 14:38:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.78 2018/12/04 00:18:05 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.78.12.1 2020/12/14 14:38:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,11 +141,9 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 	case FIOASYNC:
 		solock(so);
 		if (*(int *)data) {
-			so->so_state |= SS_ASYNC;
 			so->so_rcv.sb_flags |= SB_ASYNC;
 			so->so_snd.sb_flags |= SB_ASYNC;
 		} else {
-			so->so_state &= ~SS_ASYNC;
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}

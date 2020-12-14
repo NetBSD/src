@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.53 2020/10/22 07:31:15 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.53.2.1 2020/12/14 14:37:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.53 2020/10/22 07:31:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.53.2.1 2020/12/14 14:37:44 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -72,8 +72,8 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.53 2020/10/22 07:31:15 skrll E
 #include <aarch64/vmparam.h>
 #include <aarch64/kcore.h>
 
-#include <arch/evbarm/fdt/platform.h>
 #include <arm/fdt/arm_fdtvar.h>
+#include <dev/fdt/fdt_memory.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -150,8 +150,8 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	vaddr_t data_start = (vaddr_t)__data_start;
 	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
-	/* add KSEG mappings of whole memory */
-	const pt_entry_t ksegattr =
+	/* add direct mappings of whole memory */
+	const pt_entry_t dmattr =
 	    LX_BLKPAG_ATTR_NORMAL_WB |
 	    LX_BLKPAG_AP_RW |
 	    LX_BLKPAG_PXN |
@@ -164,9 +164,8 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
 
 		pmapboot_enter_range(AARCH64_PA_TO_KVA(start), start,
-		    end - start, ksegattr, printf);
+		    end - start, dmattr, printf);
 	}
-	aarch64_dcache_wbinv_all();
 
 	/* Disable translation table walks using TTBR0 */
 	uint64_t tcr = reg_tcr_el1_read();
@@ -194,7 +193,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 
 	VPRINTF("%s: kernel phys start %lx end %lx+%lx\n", __func__,
 	    kernstart_phys, kernend_phys, kernend_extra);
-	fdt_add_reserved_memory_range(kernstart_phys,
+	fdt_memory_remove_range(kernstart_phys,
 	     kernend_phys - kernstart_phys + kernend_extra);
 }
 
@@ -216,7 +215,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
  *
  *               0xffff_bfff_ffff_ffff  End of direct mapped
  *               0xffff_0000_0000_0000  Start of direct mapped
- *                                      = AARCH64_KSEG_START
+ *                                      = AARCH64_DIRECTMAP_START
  *
  * Hole:         0xfffe_ffff_ffff_ffff
  *               0x0001_0000_0000_0000
@@ -605,9 +604,9 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		*handled = true;
 		if ((v < data_start) && (prot & VM_PROT_WRITE))
 			return EFAULT;
-	} else if (IN_RANGE(v, AARCH64_KSEG_START, AARCH64_KSEG_END)) {
+	} else if (IN_RANGE(v, AARCH64_DIRECTMAP_START, AARCH64_DIRECTMAP_END)) {
 		/*
-		 * if defined PMAP_MAP_POOLPAGE, direct mapped address (KSEG)
+		 * if defined PMAP_MAP_POOLPAGE, direct mapped address
 		 * will be appeared as kvm(3) address.
 		 */
 		paddr_t pa = AARCH64_KVA_TO_PA(v);

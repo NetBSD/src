@@ -1,3 +1,5 @@
+/*	$NetBSD: kern.ldscript,v 1.6.10.1 2020/12/14 14:38:00 thorpej Exp $	*/
+
 OUTPUT_ARCH(riscv)
 ENTRY(start)
 

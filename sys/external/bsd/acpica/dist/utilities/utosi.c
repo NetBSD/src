@@ -90,7 +90,7 @@
  */
 static ACPI_INTERFACE_INFO    AcpiDefaultSupportedInterfaces[] =
 {
-	/* Operating System Vendor Strings */
+    /* Operating System Vendor Strings */
 
     {"Windows 2000",        NULL, 0, ACPI_OSI_WIN_2000},         /* Windows 2000 */
     {"Windows 2001",        NULL, 0, ACPI_OSI_WIN_XP},           /* Windows XP */
@@ -113,7 +113,7 @@ static ACPI_INTERFACE_INFO    AcpiDefaultSupportedInterfaces[] =
     {"Windows 2018.2",      NULL, 0, ACPI_OSI_WIN_10_RS5},       /* Windows 10 version 1809 - Added 11/2018 */
     {"Windows 2019",        NULL, 0, ACPI_OSI_WIN_10_19H1},      /* Windows 10 version 1903 - Added 08/2019 */
 
-	/* Feature Group Strings */
+    /* Feature Group Strings */
 
     {"Extended Address Space Descriptor", NULL, ACPI_OSI_FEATURE, 0},
 

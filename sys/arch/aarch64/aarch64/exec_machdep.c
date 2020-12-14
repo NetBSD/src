@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.8 2020/10/13 07:04:49 rin Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.8.2.1 2020/12/14 14:37:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.8 2020/10/13 07:04:49 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.8.2.1 2020/12/14 14:37:44 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -52,9 +52,10 @@ __KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.8 2020/10/13 07:04:49 rin Exp $")
 #endif
 
 #include <aarch64/armreg.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/frame.h>
 #include <aarch64/machdep.h>
+
+#include <arm/cpufunc.h>
 
 #if EXEC_ELF64
 int
