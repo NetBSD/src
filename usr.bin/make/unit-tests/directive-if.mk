@@ -1,4 +1,4 @@
-# $NetBSD: directive-if.mk,v 1.7 2020/11/15 20:20:58 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.8 2020/12/14 21:02:25 rillig Exp $
 #
 # Tests for the .if directive.
 #
@@ -76,6 +76,14 @@
 .  info Don't do this, always put a space around comparison operators.
 .else
 .  error
+.endif
+
+.if(1)
+.  info Don't do this, always put a space after a directive.
+.endif
+
+.if!0
+.  info Don't do this, always put a space after a directive.
 .endif
 
 all:
