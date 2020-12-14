@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.68.2.1 2020/12/14 16:01:38 thorpej Exp $
+# $NetBSD: Makefile,v 1.68.2.2 2020/12/14 16:55:51 thorpej Exp $
 
 MKMAN=	no
 
@@ -82,6 +82,7 @@ TESTS_C+=		t_swapcontext
 TESTS_C+=		t_stat
 TESTS_C+=		t_syscall
 TESTS_C+=		t_timer_create
+TESTS_C+=		t_timerfd
 TESTS_C+=		t_truncate
 TESTS_C+=		t_ucontext
 TESTS_C+=		t_umask
@@ -96,6 +97,7 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 
 LDADD.t_eventfd+=	-lpthread
 LDADD.t_getpid+=        -lpthread
+LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm
 
