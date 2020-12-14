@@ -27,6 +27,9 @@
 #include "gdbarch.h"
 
 #include <sys/types.h>
+/* Use <sys/ptrace.h> directly, instead of "nat/gdb_ptrace.h".  Otherwise,
+   PT_STEP will be defined unintentionally, which breaks platforms without
+   PT_STEP support.  */
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
@@ -539,6 +542,7 @@ nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 	nbsd_resume (this, ptid_t (inf->pid, 0, 0), step, signal);
     }
 #else
+    gdb_assert(step == 0);
     if (ptid.pid () == -1)
       ptid = inferior_ptid;
     inf_ptrace_target::resume (ptid, step, signal); 
