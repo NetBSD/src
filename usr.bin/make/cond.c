@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.222 2020/12/12 00:33:25 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.223 2020/12/14 20:39:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.222 2020/12/12 00:33:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.223 2020/12/14 20:39:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1038,7 +1038,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
 	if (res != TOK_FALSE && res != TOK_TRUE)
 		return COND_INVALID;
 
-	if (CondParser_Token(par, TRUE /* XXX: Why TRUE? */) != TOK_EOF)
+	if (CondParser_Token(par, FALSE) != TOK_EOF)
 		return COND_INVALID;
 
 	*value = res == TOK_TRUE;
