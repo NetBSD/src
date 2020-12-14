@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.249 2020/12/13 17:44:31 rillig Exp $
+# $NetBSD: Makefile,v 1.250 2020/12/14 20:23:50 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -56,6 +56,7 @@ TESTS+=		cond-cmp-numeric-lt
 TESTS+=		cond-cmp-numeric-ne
 TESTS+=		cond-cmp-string
 TESTS+=		cond-cmp-unary
+TESTS+=		cond-eof
 TESTS+=		cond-func
 TESTS+=		cond-func-commands
 TESTS+=		cond-func-defined

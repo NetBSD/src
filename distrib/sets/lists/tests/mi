@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.993 2020/12/13 17:44:31 rillig Exp $
+# $NetBSD: mi,v 1.994 2020/12/14 20:23:49 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4850,6 +4850,8 @@
 ./usr/tests/usr.bin/make/unit-tests/cond-cmp-string.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-cmp-unary.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-cmp-unary.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-eof.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-eof.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-commands.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-commands.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-func-defined.exp			tests-usr.bin-tests	compattestfile,atf
