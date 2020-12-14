@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.48 2020/12/12 16:08:39 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.49 2020/12/14 10:18:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.48 2020/12/12 16:08:39 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.49 2020/12/14 10:18:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2648,7 +2648,7 @@ acpi_print_pcct_ext_pcc_master(ACPI_PCCT_EXT_PCC_MASTER *subspace)
 	acpi_print_gas(&subspace->CmdUpdateRegister);
 	printf("\n");
 	printf("\tCommand Update Preserve Mask=0x%016jx\n", subspace->CmdUpdatePreserveMask);
-	printf("\tCommand Update Set MAsk=0x%016jx\n", subspace->CmdUpdateSetMask);
+	printf("\tCommand Update Set Mask=0x%016jx\n", subspace->CmdUpdateSetMask);
 	printf("\tError Status Register=");
 	acpi_print_gas(&subspace->ErrorStatusRegister);
 	printf("\n");
@@ -2694,7 +2694,7 @@ acpi_print_pcct_ext_pcc_slave(ACPI_PCCT_EXT_PCC_SLAVE *subspace)
 	acpi_print_gas(&subspace->CmdUpdateRegister);
 	printf("\n");
 	printf("\tCommand Update Preserve Mask=0x%016jx\n", subspace->CmdUpdatePreserveMask);
-	printf("\tCommand Update Set MAsk=0x%016jx\n", subspace->CmdUpdateSetMask);
+	printf("\tCommand Update Set Mask=0x%016jx\n", subspace->CmdUpdateSetMask);
 	printf("\tError Status Register=");
 	acpi_print_gas(&subspace->ErrorStatusRegister);
 	printf("\n");
