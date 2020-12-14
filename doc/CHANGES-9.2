@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.22 2020/12/12 20:30:03 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.23 2020/12/14 17:30:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1216,4 +1216,29 @@ sys/dev/usb/ohcivar.h				1.62
 
 	PR 22646, PR 55835: restructure the abort code for TD based transfers.
 	[skrll, ticket #1150]
+
+distrib/amiga/miniroot/install.md		1.31
+distrib/hp300/miniroot/install.md		1.18-1.20
+distrib/mac68k/miniroot/install.md		1.6-1.8
+distrib/miniroot/install.sub			1.53-1.59
+distrib/miniroot/list				1.36
+distrib/mvme68k/miniroot/install.md		1.9,1.10
+distrib/sun2/miniroot/install.md		1.6,1.7
+distrib/sun3/miniroot/install.md		1.6,1.7
+
+	Various miniroot installation fixes:
+	Add modules set for default sets on miniroot installation.
+	The kernel and X sets should be specified in MD miniroot scripts.
+	Explicitly sort set names fetched via ftp nlist.
+	Use proper release version strings ("9.1" rather than "91") in banners.
+	Fetch files via ftp using auto-fetching with URL per each binary set
+	to avoid ftp control session timeouts.
+	Add missing md_get_partition_range() that causes installation failure.
+	[tsutsui, ticket #1151]
+
+sys/arch/hp300/conf/INSTALL			1.66
+sys/arch/hp300/conf/RAMDISK			1.16
+
+	Remove options (NVNODE, NBUF, and BUFPAGES) for small RAM machines.
+	[tsutsui, ticket #1152]
 
