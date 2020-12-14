@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.59 2020/05/04 13:58:48 riastradh Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.60 2020/12/14 23:12:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.59 2020/05/04 13:58:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.60 2020/12/14 23:12:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -469,8 +469,6 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
-	chgsemcnt(kauth_cred_getuid(l->l_cred), 1);
-
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ks->ks_cv, "psem");
@@ -483,8 +481,9 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 	uc = l->l_cred;
 	ks->ks_uid = kauth_cred_geteuid(uc);
 	ks->ks_gid = kauth_cred_getegid(uc);
-
+	chgsemcnt(ks->ks_uid, 1);
 	atomic_inc_uint(&nsems_total);
+
 	*ksret = ks;
 	return 0;
 }
@@ -494,6 +493,9 @@ ksem_free(ksem_t *ks)
 {
 
 	KASSERT(!cv_has_waiters(&ks->ks_cv));
+
+	chgsemcnt(ks->ks_uid, -1);
+	atomic_dec_uint(&nsems_total);
 
 	if (ks->ks_pshared_id) {
 		KASSERT(ks->ks_pshared_proc == NULL);
@@ -506,9 +508,6 @@ ksem_free(ksem_t *ks)
 	mutex_destroy(&ks->ks_lock);
 	cv_destroy(&ks->ks_cv);
 	kmem_free(ks, sizeof(ksem_t));
-
-	atomic_dec_uint(&nsems_total);
-	chgsemcnt(kauth_cred_getuid(curproc->p_cred), -1);
 }
 
 #define	KSEM_ID_IS_PSHARED(id)		\
