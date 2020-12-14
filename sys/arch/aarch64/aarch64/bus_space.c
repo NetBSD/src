@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.11 2020/10/15 21:14:15 jmcneill Exp $ */
+/* $NetBSD: bus_space.c,v 1.12 2020/12/14 11:16:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.11 2020/10/15 21:14:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.12 2020/12/14 11:16:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,13 +615,13 @@ generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 
 	switch (flags) {
 	case BUS_SPACE_BARRIER_READ:
-		dmb(ishld);
+		dsb(ishld);
 		break;
 	case BUS_SPACE_BARRIER_WRITE:
-		dmb(ishst);
+		dsb(ishst);
 		break;
 	case BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE:
-		dmb(ish);
+		dsb(ish);
 		break;
 	}
 }
