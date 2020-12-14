@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.223 2020/12/14 20:39:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.224 2020/12/14 21:35:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.223 2020/12/14 20:39:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.224 2020/12/14 21:35:21 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1087,6 +1087,13 @@ Cond_EvalCondition(const char *cond, Boolean *out_value)
 	return CondEvalExpression(NULL, cond, out_value, FALSE, FALSE);
 }
 
+static Boolean
+IsEndif(const char *p)
+{
+	return p[0] == 'e' && p[1] == 'n' && p[2] == 'd' &&
+	       p[3] == 'i' && p[4] == 'f' && !ch_isalpha(p[5]);
+}
+
 /* Evaluate the conditional directive in the line, which is one of:
  *
  *	.if <cond>
@@ -1154,30 +1161,29 @@ Cond_EvalLine(const char *line)
 	p++;			/* skip the leading '.' */
 	cpp_skip_hspace(&p);
 
+	if (IsEndif(p)) {	/* It is an '.endif'. */
+		/* TODO: check for extraneous <cond> */
+
+		if (cond_depth == cond_min_depth) {
+			Parse_Error(PARSE_FATAL, "if-less endif");
+			return COND_PARSE;
+		}
+
+		/* Return state for previous conditional */
+		cond_depth--;
+		return cond_states[cond_depth] & IFS_ACTIVE
+		    ? COND_PARSE : COND_SKIP;
+	}
+
 	/* Parse the name of the directive, such as 'if', 'elif', 'endif'. */
 	if (p[0] == 'e') {
 		if (p[1] != 'l') {
-			if (!is_token(p + 1, "ndif", 4)) {
-				/*
-				 * Unknown directive.  It might still be a
-				 * transformation rule like '.elisp.scm',
-				 * therefore no error message here.
-				 */
-				return COND_INVALID;
-			}
-
-			/* It is an '.endif'. */
-			/* TODO: check for extraneous <cond> */
-
-			if (cond_depth == cond_min_depth) {
-				Parse_Error(PARSE_FATAL, "if-less endif");
-				return COND_PARSE;
-			}
-
-			/* Return state for previous conditional */
-			cond_depth--;
-			return cond_states[cond_depth] & IFS_ACTIVE
-			       ? COND_PARSE : COND_SKIP;
+			/*
+			 * Unknown directive.  It might still be a
+			 * transformation rule like '.elisp.scm',
+			 * therefore no error message here.
+			 */
+			return COND_INVALID;
 		}
 
 		/* Quite likely this is 'else' or 'elif' */
