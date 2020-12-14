@@ -1,0 +1,9 @@
+side effect
+make: "cond-eof.mk" line 14: Malformed conditional (0 ${SIDE_EFFECT})
+side effect
+make: "cond-eof.mk" line 16: Malformed conditional (1 ${SIDE_EFFECT})
+side effect
+make: "cond-eof.mk" line 18: Malformed conditional ((0) ${SIDE_EFFECT})
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
