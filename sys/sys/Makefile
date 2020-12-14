@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176.2.1 2020/12/14 16:00:51 thorpej Exp $
+#	$NetBSD: Makefile,v 1.176.2.2 2020/12/14 16:53:37 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	socketvar.h sockio.h spawn.h specificdata.h stat.h \
 	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdbool.h \
 	stdint.h swap.h syncobj.h syslimits.h syslog.h \
-	tape.h termios.h time.h timeb.h timepps.h times.h timespec.h \
+	tape.h termios.h time.h timeb.h timepps.h timerfd.h times.h timespec.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h utsname.h uuid.h \
