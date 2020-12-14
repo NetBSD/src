@@ -2614,7 +2614,7 @@ get_namelen (const char *tokstart, bool dot)
   int c;
   int namelen;
 
-  for (c = tokstart[namelen];
+  for (namelen = 0, c = tokstart[namelen];
        (c == '_' || c == '$' || (dot && c == '.') || c_ident_is_alnum (c) || c == '<');)
     {
       /* Template parameter lists are part of the name.
