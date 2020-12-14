@@ -51,7 +51,7 @@ ATF_TC_BODY(oss_dsp_init, tc)
 		atf_tc_skip("Audio device unavailable for playback");
 
 	if (ioctl(fd, AUDIO_GETFORMAT, &hwinfo) < 0) {
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETFORMAT failed");
 		close(fd);
 	}
 
@@ -59,22 +59,22 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	channels = 1;
 	if (ioctl(fd, SNDCTL_DSP_CHANNELS, &channels) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_CHANNELS (1) failed");
 	ATF_REQUIRE_EQ(channels, 1);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.channels, 1);
 
 	/* Verify SNDCTL_DSP_CHANNELS sets the device to stereo. */
 
 	channels = 2;
 	if (ioctl(fd, SNDCTL_DSP_CHANNELS, &channels) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_CHANNELS (2) failed");
 	ATF_REQUIRE_EQ(channels, 2);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.channels, 2);
 
 	/*
@@ -84,11 +84,11 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	channels = 0;
 	if (ioctl(fd, SNDCTL_DSP_CHANNELS, &channels) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_CHANNELS (0) failed");
 	ATF_REQUIRE_EQ(channels, (int)hwinfo.play.channels);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.channels, hwinfo.play.channels);
 
 	/*
@@ -100,11 +100,11 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	channels = 0;
 	if (ioctl(fd, SNDCTL_DSP_STEREO, &channels) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_STEREO (0) failed");
 	ATF_REQUIRE_EQ(channels, 0);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 
 	ATF_REQUIRE_EQ(info.play.channels, 1);
 
@@ -112,82 +112,82 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	channels = 1;
 	if (ioctl(fd, SNDCTL_DSP_STEREO, &channels) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_STEREO (1) failed");
 	ATF_REQUIRE_EQ(channels, 1);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.channels, 2);
 
 	/* Verify SNDCTL_DSP_SETFMT works with common audio formats */
 
 	fmt = AFMT_MU_LAW;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_MU_LAW) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_MU_LAW);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_ULAW);
 	ATF_REQUIRE_EQ(info.play.precision, 8);
 
 	fmt = AFMT_A_LAW;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_A_LAW) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_A_LAW);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_ALAW);
 	ATF_REQUIRE_EQ(info.play.precision, 8);
 
 	fmt = AFMT_S16_LE;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_S16_LE) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_S16_LE);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_SLINEAR_LE);
 	ATF_REQUIRE_EQ(info.play.precision, 16);
 
 	fmt = AFMT_S16_BE;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_S16_BE) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_S16_BE);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_SLINEAR_BE);
 	ATF_REQUIRE_EQ(info.play.precision, 16);
 
 	fmt = AFMT_U16_LE;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_U16_LE) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_U16_LE);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_ULINEAR_LE);
 	ATF_REQUIRE_EQ(info.play.precision, 16);
 
 	fmt = AFMT_U16_BE;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_U16_BE) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_U16_BE);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_ULINEAR_BE);
 	ATF_REQUIRE_EQ(info.play.precision, 16);
 
 	fmt = AFMT_S32_LE;
 	if (ioctl(fd, SNDCTL_DSP_SETFMT, &fmt) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETFMT (AFMT_S32_LE) failed");
 	ATF_REQUIRE_EQ(fmt, AFMT_S32_LE);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.encoding, AUDIO_ENCODING_SLINEAR_LE);
 	ATF_REQUIRE_EQ(info.play.precision, 32);
 
@@ -195,54 +195,54 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	rate = 8000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (8000) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	rate = 32000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (32000) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.sample_rate, 32000);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	rate = 44100;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (44100) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.sample_rate, 44100);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	rate = 48000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (48000) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.sample_rate, 48000);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	rate = 96000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (96000) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.sample_rate, 96000);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	rate = 192000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (192000) failed");
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(info.play.sample_rate, 192000);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
@@ -253,18 +253,18 @@ ATF_TC_BODY(oss_dsp_init, tc)
 	/* closest suported rate is 1000 */
 	rate = 900;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (900) failed");
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE((fabs(900.0 - info.play.sample_rate) / 900.0) < 0.2);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
 	/* closest suported rate is 192000 */
 	rate = 197000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (197000) failed");
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE((fabs(197000.0 - info.play.sample_rate) / 197000.0) < 0.2);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
@@ -272,9 +272,9 @@ ATF_TC_BODY(oss_dsp_init, tc)
 
 	rate = 0;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (0) failed");
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 	ATF_REQUIRE_EQ(hwinfo.play.sample_rate, info.play.sample_rate);
 
 	close(fd);
@@ -299,14 +299,14 @@ ATF_TC_BODY(oss_dsp_trigger_read, tc)
 
 	bits = 0;
 	if (ioctl(fd, SNDCTL_DSP_SETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETTRIGGER (0) failed");
 
 	if (ioctl(fd, SNDCTL_DSP_GETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_GETTRIGGER failed");
 	ATF_REQUIRE_EQ(bits, 0);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 
 	ATF_REQUIRE_EQ(info.record.pause, 1);
 
@@ -314,14 +314,15 @@ ATF_TC_BODY(oss_dsp_trigger_read, tc)
 
 	bits = PCM_ENABLE_INPUT;
 	if (ioctl(fd, SNDCTL_DSP_SETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETTRIGGER "
+		    "(PCM_ENABLE_INPUT) failed");
 
 	if (ioctl(fd, SNDCTL_DSP_GETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_GETTRIGGER failed");
 	ATF_REQUIRE_EQ(bits, PCM_ENABLE_INPUT);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 
 	ATF_REQUIRE_EQ(info.record.pause, 0);
 
@@ -347,14 +348,14 @@ ATF_TC_BODY(oss_dsp_trigger_write, tc)
 
 	bits = 0;
 	if (ioctl(fd, SNDCTL_DSP_SETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETTRIGGER (0) failed");
 
 	if (ioctl(fd, SNDCTL_DSP_GETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_GETTRIGGER failed");
 	ATF_REQUIRE_EQ(bits, 0);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 
 	ATF_REQUIRE_EQ(info.play.pause, 1);
 
@@ -362,14 +363,15 @@ ATF_TC_BODY(oss_dsp_trigger_write, tc)
 
 	bits = PCM_ENABLE_OUTPUT;
 	if (ioctl(fd, SNDCTL_DSP_SETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_SETTRIGGER "
+		    "(PCM_ENABLE_OUTPUT) failed");
 
 	if (ioctl(fd, SNDCTL_DSP_GETTRIGGER, &bits) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl SNDCTL_DSP_GETTRIGGER failed");
 	ATF_REQUIRE_EQ(bits, PCM_ENABLE_OUTPUT);
 
 	if (ioctl(fd, AUDIO_GETBUFINFO, &info) < 0)
-		atf_tc_fail("ioctl failed");
+		atf_tc_fail("ioctl AUDIO_GETBUFINFO failed");
 
 	ATF_REQUIRE_EQ(info.play.pause, 0);
 
@@ -379,7 +381,8 @@ ATF_TC_BODY(oss_dsp_trigger_write, tc)
 ATF_TC(oss_dsp_caps);
 ATF_TC_HEAD(oss_dsp_caps, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Verifies that OSS device capabilities are the same as native capabilities");
+	atf_tc_set_md_var(tc, "descr", "Verifies that OSS device capabilities "
+	    "are the same as native capabilities");
 }
 
 ATF_TC_BODY(oss_dsp_caps, tc)
@@ -399,10 +402,10 @@ ATF_TC_BODY(oss_dsp_caps, tc)
 		}
 
 		if (ioctl(fd, SNDCTL_DSP_GETCAPS, &caps) < 0)
-			atf_tc_fail("ioctl failed");
+			atf_tc_fail("ioctl SNDCTL_DSP_GETCAPS failed");
 
 		if (ioctl(fd, AUDIO_GETPROPS, &props) < 0)
-			atf_tc_fail("ioctl failed");
+			atf_tc_fail("ioctl AUDIO_GETPROPS failed");
 
 		ATF_REQUIRE(!(caps & DSP_CAP_DUPLEX) ==
 		    !(props & AUDIO_PROP_FULLDUPLEX));
@@ -420,7 +423,7 @@ ATF_TC_BODY(oss_dsp_caps, tc)
 		ATF_REQUIRE(caps & DSP_CAP_TRIGGER);
 
 		if (ioctl(fd, SNDCTL_DSP_GETFMTS, &fmts) < 0)
-			atf_tc_fail("ioctl failed");
+			atf_tc_fail("ioctl SNDCTL_DSP_GETFMTS failed");
 
 		/* All supported by the kernel mixer. */
 		ATF_REQUIRE(fmts & AFMT_MU_LAW);
