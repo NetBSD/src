@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.481 2020/12/13 21:27:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.482 2020/12/14 23:48:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.481 2020/12/13 21:27:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.482 2020/12/14 23:48:03 rillig Exp $");
 
 /* types and constants */
 
@@ -2823,10 +2823,15 @@ ParseGetLine(GetLineMode mode)
 }
 
 /*
- * Read an entire line from the input file. Called only by Parse_File.
+ * Read an entire line from the input file.
+ *
+ * Empty lines, .if and .for are completely handled by this function,
+ * leaving only variable assignments, other directives, dependency lines
+ * and shell commands to the caller.
  *
  * Results:
- *	A line without its newline and without any trailing whitespace.
+ *	A line without its newline and without any trailing whitespace,
+ *	or NULL.
  */
 static char *
 ParseReadLine(void)
@@ -2849,15 +2854,12 @@ ParseReadLine(void)
 		 */
 		switch (Cond_EvalLine(line)) {
 		case COND_SKIP:
-			/*
-			 * Skip to next conditional that evaluates to
-			 * COND_PARSE.
-			 */
-			do {
-				line = ParseGetLine(PARSE_SKIP);
-			} while (line && Cond_EvalLine(line) != COND_PARSE);
+			while ((line = ParseGetLine(PARSE_SKIP)) != NULL) {
+				if (Cond_EvalLine(line) == COND_PARSE)
+					break;
+			}
 			if (line == NULL)
-				break;
+				return NULL;
 			continue;
 		case COND_PARSE:
 			continue;
