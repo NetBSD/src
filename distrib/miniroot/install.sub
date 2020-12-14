@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.48.2.3 2020/01/21 15:26:46 martin Exp $
+#	$NetBSD: install.sub,v 1.48.2.4 2020/12/14 17:26:36 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,10 +32,14 @@
 #	NetBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=89936
+MACHINE=				# filled by distrib/miniroot/list
+export MACHINE
+VERSION=100				# updated by distrib/miniroot/list
 export VERSION
+RELEASE=10.0				# updated by distrib/miniroot/list
+export RELEASE
 
-ALLSETS="base comp etc games man misc rescue text"	# default install sets
+ALLSETS="base comp etc games man misc modules rescue text"	# default install sets
 UPGRSETS="base comp games man misc text"		# default upgrade sets
 THESETS=						# one of the above
 
@@ -523,7 +527,7 @@ if [ -f /mnt/etc/rc.conf ]; then
 		echo -n "configuring network interfaces:"
 		for i in $tmp; do
 			eval $(echo 'args=$ifconfig_'$i)
-			if [ ! -z "$args" ]; then
+			if [ -n "$args" ]; then
 				echo -n " $i"
 				ifconfig $i $args
 			elif [ -f /mnt/etc/ifconfig.$i ]; then
@@ -555,7 +559,7 @@ else
 			read af name mask bcaddr extras
 			read dt dtaddr
 
-			if [ ! -n "$name" ]; then
+			if [ -z "$name" ]; then
 		    echo "/etc/hostname.$1: invalid network configuration file"
 				exit
 			fi
@@ -678,6 +682,10 @@ You will be asked to enter the name of the directory that contains the
 installation sets. When you enter a '?' you will see a listing of the
 current directory on the server.
 __install_ftp_2
+	echo ""
+	echo "The default installation directory in the official ftp server is:"
+	echo "/pub/NetBSD/NetBSD-${RELEASE}/${MACHINE}/binary/sets"
+
 	_sets=""
 	while [ -z "$_sets" ]
 	do
@@ -713,10 +721,19 @@ __install_ftp_2
 		if [ $resp = '?' ]; then
 			sh /tmp/ftp-dir.sh
 		else
-			_sets=$(sh /tmp/ftp-dir.sh | sh /tmp/fname_filter.sh)
+			_sets=$(sh /tmp/ftp-dir.sh | sort -u | sh /tmp/fname_filter.sh)
 		fi
 	done
 	rm -f /tmp/ftp-dir.sh /tmp/fname_filter.sh
+	rm -f /tmp/ftp-script.sh
+
+	# Prepare ftp-fetch script to fetch binary sets
+	_download_dir=INSTALL
+	_ftp_opts=""
+	_ftp_url="ftp://$_ftp_server_login:$_ftp_server_password@$_ftp_server_ip$_ftp_server_dir/"
+	echo "#!/bin/sh" > /tmp/ftp-fetch.sh
+	echo "cd /mnt" >> /tmp/ftp-fetch.sh
+	echo "mkdir -p $_download_dir" >> /tmp/ftp-fetch.sh
 
 	while : ; do
 		echo "The following sets are available for extraction:"
@@ -737,7 +754,7 @@ __install_ftp_2
 		echo ""
 
 		# Get name of the file and add extraction command
-		# to the ftp-script.
+		# to the ftp-fetch script.
 		if [ -z "$_next" ]; then resp=n; else resp=y; fi
 		echo -n "Continue to add filenames [$resp]? "
 		getresp "$resp"
@@ -748,8 +765,16 @@ __install_ftp_2
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		if isin $resp $_sets; then
-			echo "get $resp |\"pax -zr${verbose_flag}pe\"" >> \
-					/tmp/ftp-script.sh
+			echo "echo Fetching $resp:" >> \
+					/tmp/ftp-fetch.sh
+			echo "ftp ${_ftp_opts} -o $_download_dir/$resp ${_ftp_url}$resp" >> \
+					/tmp/ftp-fetch.sh
+			echo "echo Extracting $resp:" >> \
+					/tmp/ftp-fetch.sh
+			echo "pax -zr${verbose_flag}pe -f $_download_dir/$resp" >> \
+					/tmp/ftp-fetch.sh
+			echo "rm -f $_download_dir/$resp" >> \
+					/tmp/ftp-fetch.sh
 			_setsdone="$resp $_setsdone"
 		else
 			echo "You entered an invalid filename."
@@ -757,11 +782,8 @@ __install_ftp_2
 		fi
 	done
 
-	echo "quit" >> /tmp/ftp-script.sh
-	echo "__end_commands" >> /tmp/ftp-script.sh
-
-	sh /tmp/ftp-script.sh
-	rm -f /tmp/ftp-script.sh
+	sh /tmp/ftp-fetch.sh
+	rm -f /tmp/ftp-fetch.sh
 	echo "Extraction complete."
 }
 
@@ -1047,7 +1069,7 @@ The following filesystem types are supported:
 __mount_a_disk_2
 	_md_fstype=$(md_native_fstype)
 	_md_fsopts=$(md_native_fsopts)
-	if [ ! -z "$_md_fstype" ]; then
+	if [ -n "$_md_fstype" ]; then
 		echo "	3) $_md_fstype"
 	else
 		_md_fstype="_undefined_"
@@ -1611,6 +1633,6 @@ mi_filter_msgbuf() {
 
 mi_filter_dmesg() {
 	# Remove timestemps, sort.
-	dmesg | awk '{ h=$0; gsub("^\[[0-9. ]*\] ", "", h); print h; }' \
+	dmesg | awk '{ h=$0; gsub("^[[0-9. ]*] ", "", h); print h; }' \
 	    | sort -u
 }
