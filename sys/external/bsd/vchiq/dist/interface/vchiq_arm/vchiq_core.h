@@ -37,6 +37,8 @@
 #include <interface/compat/vchi_bsd.h>
 #include <linux/list.h>
 
+#include <arm/cpufunc.h>
+
 #include "vchiq_cfg.h"
 
 #include "vchiq.h"
@@ -369,7 +371,7 @@ typedef struct vchiq_shared_state_struct {
 	REMOTE_EVENT_T recycle;
 
 	/* The slot_queue index where the next recycled slot will be written. */
-	int slot_queue_recycle;
+	int32_t slot_queue_recycle;
 
 	/* This event should be signalled when a synchronous message is sent. */
 	REMOTE_EVENT_T sync_trigger;

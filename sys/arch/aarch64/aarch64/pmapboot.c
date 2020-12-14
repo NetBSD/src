@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.10 2020/07/17 07:21:44 ryo Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.10.2.1 2020/12/14 14:37:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.10 2020/07/17 07:21:44 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.10.2.1 2020/12/14 14:37:44 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -40,12 +40,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.10 2020/07/17 07:21:44 ryo Exp $");
 
 #include <uvm/uvm.h>
 
+#include <arm/cpufunc.h>
+
 #include <aarch64/armreg.h>
-#include <aarch64/cpufunc.h>
 #include <aarch64/machdep.h>
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
 
+#include <arm/cpufunc.h>
 
 #define OPTIMIZE_TLB_CONTIG
 
@@ -71,7 +73,7 @@ pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
  * 'clrprot' specified by bit of VM_PROT_{READ,WRITE,EXECUTE}
  * will be dropped from a pte entry.
  *
- * require KSEG(cached) mappings because TLB entries are already cached on.
+ * require direct (cached) mappings because TLB entries are already cached on.
  */
 int
 pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
@@ -180,16 +182,23 @@ pmapboot_pte_print(pt_entry_t pte, int level,
 
 #ifdef OPTIMIZE_TLB_CONTIG
 static inline bool
-tlb_contiguous_p(vaddr_t addr, vaddr_t start, vaddr_t end, vsize_t blocksize)
+tlb_contiguous_p(vaddr_t va, paddr_t pa, vaddr_t start, vaddr_t end,
+    vsize_t blocksize)
 {
 	/*
 	 * when using 4KB granule, 16 adjacent and aligned entries can be
 	 * unified to one TLB cache entry.
 	 * in other size of granule, not supported.
 	 */
-	if (((addr & ~((blocksize << 4) - 1)) >= start) &&
-	    ((addr | ((blocksize << 4) - 1)) <= end))
+	const vaddr_t mask = (blocksize << 4) - 1;
+
+	/* if the output address doesn't align it can't be contiguous */
+	if ((va & mask) != (pa & mask))
+		return false;
+
+	if ((va & ~mask) >= start && (va | mask) <= end)
 		return true;
+
 	return false;
 }
 #endif /* OPTIMIZE_TLB_CONTIG */
@@ -288,7 +297,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 #endif
 			    attr;
 #ifdef OPTIMIZE_TLB_CONTIG
-			if (tlb_contiguous_p(va, va_start, va_end, blocksize))
+			if (tlb_contiguous_p(va, pa, va_start, va_end, blocksize))
 				pte |= LX_BLKPAG_CONTIG;
 			ll = l1;
 			llidx = idx1;
@@ -333,7 +342,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 #endif
 			    attr;
 #ifdef OPTIMIZE_TLB_CONTIG
-			if (tlb_contiguous_p(va, va_start, va_end, blocksize))
+			if (tlb_contiguous_p(va, pa, va_start, va_end, blocksize))
 				pte |= LX_BLKPAG_CONTIG;
 			ll = l2;
 			llidx = idx2;
@@ -377,7 +386,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 #endif
 		    attr;
 #ifdef OPTIMIZE_TLB_CONTIG
-		if (tlb_contiguous_p(va, va_start, va_end, blocksize))
+		if (tlb_contiguous_p(va, pa, va_start, va_end, blocksize))
 			pte |= LX_BLKPAG_CONTIG;
 		ll = l3;
 		llidx = idx3;
@@ -428,6 +437,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			break;
 		}
 	}
+
+	dsb(ish);
 
 	return nskip;
 }

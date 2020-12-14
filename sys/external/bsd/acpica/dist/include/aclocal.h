@@ -91,6 +91,7 @@ union acpi_parse_object;
 #define ACPI_MAX_MUTEX                  5
 #define ACPI_NUM_MUTEX                  (ACPI_MAX_MUTEX+1)
 
+
 /* Lock structure for reader/writer interfaces */
 
 typedef struct acpi_rw_lock

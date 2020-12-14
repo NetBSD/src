@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.367 2020/05/23 23:42:44 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.367.2.1 2020/12/14 14:38:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -492,8 +492,6 @@ extern struct proclist	zombproc;	/* List of zombie processes */
 extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
-
-extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
 int		proc_find_locked(struct lwp *, struct proc **, pid_t);
 proc_t *	proc_find_raw(pid_t);

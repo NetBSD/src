@@ -1,4 +1,4 @@
-/*	$NetBSD: msan.h,v 1.5 2020/09/09 16:29:59 maxv Exp $	*/
+/*	$NetBSD: msan.h,v 1.5.2.1 2020/12/14 14:37:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,6 +29,8 @@
  */
 
 #include <sys/ksyms.h>
+
+#include <uvm/uvm.h>
 
 #include <amd64/pmap.h>
 #include <amd64/vmparam.h>

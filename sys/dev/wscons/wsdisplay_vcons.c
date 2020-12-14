@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.40 2019/07/31 14:29:54 rin Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.40.8.1 2020/12/14 14:38:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.40 2019/07/31 14:29:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.40.8.1 2020/12/14 14:38:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 #ifdef VCONS_DRAW_INTR
 	vd->intr_softint = softint_establish(SOFTINT_SERIAL,
 	    vcons_softintr, vd);
-	callout_init(&vd->intr, 0);
+	callout_init(&vd->intr, CALLOUT_MPSAFE);
 	callout_setfunc(&vd->intr, vcons_intr, vd);
 	vd->intr_valid = 1;
 

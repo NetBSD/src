@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.10.30.1 2020/12/14 14:37:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.10.30.1 2020/12/14 14:37:47 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.10 2015/04/27 06:54:12 skrll Exp $");
 
 #include <compat/common/compat_util.h>
 #include <sys/exec_elf.h>			/* mandatory */
-
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32_exec.h>
-#endif
 
 #include <arm/locore.h>
 
@@ -60,8 +55,8 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	const Elf_Ehdr * const eh = eh0;
 	const bool elf_aapcs_p =
 	    (eh->e_flags & EF_ARM_EABIMASK) >= EF_ARM_EABI_VER4;
-#ifdef COMPAT_NETBSD32
-	const bool netbsd32_p = (epp->ep_esch->es_emul == &emul_netbsd32);
+#if defined(COMPAT_NETBSD32) || defined(MODULAR)
+	const bool netbsd32_p = (epp->ep_esch->es_emul != &emul_netbsd);
 #else
 	const bool netbsd32_p = false;
 #endif
@@ -77,8 +72,11 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	 * If the BE-8 model is supported, CPSR[7] will be clear.
 	 * If the BE-32 model is supported, CPSR[7] will be set.
 	 */
-	register_t ctl = armreg_sctlr_read();
-	if (((ctl & CPU_CONTROL_BEND_ENABLE) != 0) == be8_p)
+#ifdef _ARM_ARCH_BE8
+	if (!be8_p)
+#else
+	if (be8_p)
+#endif
 		return ENOEXEC;
 #endif /* __ARMEB__ */
 
@@ -116,7 +114,14 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	 * If we are AAPCS (EABI) and armv6/armv7, we want alignment faults
 	 * to be off.
 	 */
-	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P())) {
+#if defined(__ARMEL__)
+	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P()))
+#elif defined(_ARM_ARCH_BE8)
+	if (aapcs_p)
+#else
+	if (false /* CONSTCOND */)
+#endif
+	{
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 	} else {
 		l->l_md.md_flags &= ~MDLWP_NOALIGNFLT;

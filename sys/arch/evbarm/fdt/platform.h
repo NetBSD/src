@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.9 2020/09/19 16:31:40 skrll Exp $ */
+/* $NetBSD: platform.h,v 1.9.2.1 2020/12/14 14:37:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,6 @@
 
 #ifndef _EVBARM_FDT_PLATFORM_H
 #define _EVBARM_FDT_PLATFORM_H
-
-#ifndef _LOCORE
-void fdt_add_reserved_memory_range(uint64_t, uint64_t);
-#endif
 
 #define KERNEL_IO_VBASE		VM_KERNEL_IO_ADDRESS
 #define KERNEL_IO_VSIZE		VM_KERNEL_IO_SIZE

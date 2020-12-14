@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.5 2019/11/10 21:16:28 chs Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.5.8.1 2020/12/14 14:37:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,11 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.5 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.5.8.1 2020/12/14 14:37:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 
@@ -325,7 +325,7 @@ vr4181giu_intr_establish(
 
 	s = splhigh();
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;

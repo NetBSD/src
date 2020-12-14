@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2011/01/14 02:06:27 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.72.1 2020/12/14 14:37:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,7 +57,7 @@ struct lwp;
  */
 struct mdproc {
 	int	mdp_flags;		/* machine-dependent flags */
-	void	(*md_syscall)(register_t, struct lwp *, struct frame *);
+	void	(*md_syscall)(__register_t, struct lwp *, struct frame *);
 };
 
 /*

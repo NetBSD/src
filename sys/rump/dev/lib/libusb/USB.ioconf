@@ -1,4 +1,4 @@
-#	$NetBSD: USB.ioconf,v 1.2 2015/05/20 11:51:32 pooka Exp $
+#	$NetBSD: USB.ioconf,v 1.2.30.1 2020/12/14 14:38:15 thorpej Exp $
 #
 
 ioconf usb
@@ -15,6 +15,7 @@ pseudo-root ugenhc*
 pseudo-root ehci*
 pseudo-root ohci*
 pseudo-root uhci*
+pseudo-root xhci*
 
 
 #
@@ -25,6 +26,7 @@ usb*    at ugenhc?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
+usb*	at xhci?
 
 
 # USB ROOT Hub

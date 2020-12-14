@@ -1,3 +1,5 @@
+/*	$NetBSD: kobj_machdep.c,v 1.3.4.1 2020/12/14 14:38:00 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: kobj_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: kobj_machdep.c,v 1.3.4.1 2020/12/14 14:38:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

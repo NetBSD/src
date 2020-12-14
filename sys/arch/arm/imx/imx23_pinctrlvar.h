@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrlvar.h,v 1.1 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_pinctrlvar.h,v 1.1.48.1 2020/12/14 14:37:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,6 @@
 #ifndef _ARM_IMX_IMX23_PINCTRLVAR_H_
 #define _ARM_IMX_IMX23_PINCTRLVAR_H_
 
-void pinctrl_en_usb(void);
+void imx23_pinctrl_en_usb(void);
 
 #endif /* !_ARM_IMX_IMX23_PINCTRLVAR_H_ */
