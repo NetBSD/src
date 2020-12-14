@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.14 2020/12/14 19:25:28 skrll Exp $ */
+/* $NetBSD: bus_space.c,v 1.15 2020/12/14 19:32:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.14 2020/12/14 19:25:28 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.15 2020/12/14 19:32:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,6 +638,10 @@ generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 	 * consulting the page tables), so just issue the barrier
 	 * unconditionally.  Chances are either it's necessary or the
 	 * cost is small in comparison to device register I/O.
+	 *
+	 * The bus_space(9) man page is not clear whether barriers
+	 * should enforce ordering or completion. To be safe, use dsb
+	 * (ensure completion) here instead of dmb (ordering).
 	 */
 	switch (flags) {
 	case BUS_SPACE_BARRIER_READ:
