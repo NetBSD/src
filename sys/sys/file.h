@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.86 2020/05/02 18:43:02 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.86.2.1 2020/12/14 16:00:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ union file_data {
 	struct socket *fd_so;		// DTYPE_SOCKET
 	struct pipe *fd_pipe;		// DTYPE_PIPE
 	struct kqueue *fd_kq;		// DTYPE_KQUEUE
+	struct eventfd *fd_eventfd;	// DTYPE_EVENTFD
 	void *fd_data;			// DTYPE_MISC
 	struct audio_file *fd_audioctx;	// DTYPE_MISC (audio)
 	struct pad_softc *fd_pad;	// DTYPE_MISC (pad)
@@ -148,6 +149,7 @@ struct file {
 #define f_data		f_undata.fd_data
 #define f_mqueue	f_undata.fd_mq
 #define f_ksem		f_undata.fd_ks
+#define f_eventfd	f_undata.fd_eventfd
 
 #define f_rndctx	f_undata.fd_rndctx
 #define f_audioctx	f_undata.fd_audioctx
@@ -170,10 +172,11 @@ struct file {
 #define	DTYPE_CRYPTO	6		/* crypto */
 #define	DTYPE_MQUEUE	7		/* message queue */
 #define	DTYPE_SEM	8		/* semaphore */
+#define	DTYPE_EVENTFD	9		/* eventfd */
 
 #define DTYPE_NAMES	\
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue", \
-    "semaphore"
+    "semaphore", "eventfd"
 
 #ifdef _KERNEL
 

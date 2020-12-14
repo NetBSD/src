@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.306.2.1 2020/12/14 14:38:14 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.306.2.2 2020/12/14 16:00:51 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -565,7 +565,7 @@
 		{ ssize_t|sys||mq_timedreceive(mqd_t mqdes, \
 		    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
 		    const struct timespec50 *abs_timeout); }
-267	UNIMPL
+267	STD		{ int|sys||eventfd(unsigned int val, int flags); }
 268	UNIMPL
 269	UNIMPL
 270	STD	RUMP	{ int|sys||__posix_rename(const char *from, \
