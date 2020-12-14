@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.13 2020/12/14 11:42:44 jmcneill Exp $ */
+/* $NetBSD: bus_space.c,v 1.14 2020/12/14 19:25:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.13 2020/12/14 11:42:44 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.14 2020/12/14 19:25:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,6 +613,32 @@ generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
 
+	/*
+	 * For default mappings, which are mapped with nGnRE memory
+	 * regions, all loads and stores are issued in program order
+	 * (non-reordered).
+	 *
+	 * For strongly ordered mappings, which are mapped with nGnRnE
+	 * regions, all loads and stores are issued in program order
+	 * (non-reordered) and will complete at the endpoint, thus
+	 * not requiring any barrier.
+	 *
+	 * For BUS_SPACE_MAP_PREFETCHABLE mappings, which are mapped
+	 * as normal memory with the non-cacheable cacheability attr-
+	 * ibute, loads and stores may be issued out of order, and
+	 * writes may be buffered, potentially requiring any of the
+	 * read, write, and read/write barriers.
+	 *
+	 * For BUS_SPACE_MAP_CACHEABLE mappings, which are mapped as
+	 * normal memory with the write-back cacheability attribute
+	 * (just like normal memory), the same potential for any of
+	 * the barriers exists.
+	 *
+	 * We can't easily tell here how the region was mapped (without
+	 * consulting the page tables), so just issue the barrier
+	 * unconditionally.  Chances are either it's necessary or the
+	 * cost is small in comparison to device register I/O.
+	 */
 	switch (flags) {
 	case BUS_SPACE_BARRIER_READ:
 		dsb(ld);
