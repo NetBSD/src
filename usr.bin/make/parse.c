@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.482 2020/12/14 23:48:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.483 2020/12/15 00:32:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.482 2020/12/14 23:48:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.483 2020/12/15 00:32:26 rillig Exp $");
 
 /* types and constants */
 
@@ -2857,6 +2857,19 @@ ParseReadLine(void)
 			while ((line = ParseGetLine(PARSE_SKIP)) != NULL) {
 				if (Cond_EvalLine(line) == COND_PARSE)
 					break;
+				/*
+				 * TODO: Check for typos in .elif directives
+				 * such as .elsif or .elseif.
+				 *
+				 * This check will probably duplicate some of
+				 * the code in ParseLine.  Most of the code
+				 * there cannot apply, only ParseVarassign and
+				 * ParseDependency can, and to prevent code
+				 * duplication, these would need to be called
+				 * with a flag called onlyCheckSyntax.
+				 *
+				 * See directive-elif.mk for details.
+				 */
 			}
 			if (line == NULL)
 				return NULL;
