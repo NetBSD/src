@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.83 2020/05/23 23:42:41 ad Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.83.2.1 2020/12/15 14:07:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.83 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.83.2.1 2020/12/15 14:07:21 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -843,4 +843,51 @@ native_to_linux_si_status(int code, int status)
 	}
 
 	return sts;
+}
+
+int
+linux_to_native_sigevent(struct sigevent *nsep,
+    const struct linux_sigevent *lsep)
+{
+	memset(nsep, 0, sizeof(*nsep));
+
+	switch (lsep->sigev_notify) {
+	case LINUX_SIGEV_SIGNAL:
+		nsep->sigev_notify = SIGEV_SIGNAL;
+		break;
+
+	case LINUX_SIGEV_NONE:
+		nsep->sigev_notify = SIGEV_NONE;
+		break;
+
+	case LINUX_SIGEV_THREAD:
+	case LINUX_SIGEV_THREAD_ID:
+	default:
+		return ENOTSUP;
+	}
+
+	nsep->sigev_value = lsep->sigev_value;
+	if (lsep->sigev_signo < 0 || lsep->sigev_signo >= LINUX__NSIG) {
+		return EINVAL;
+	}
+	nsep->sigev_signo = linux_to_native_signo[lsep->sigev_signo];
+
+	return 0;
+}
+
+int
+linux_sigevent_copyin(const void *src, void *dst, size_t size)
+{
+	struct linux_sigevent lse;
+	struct sigevent *sep = dst;
+	int error;
+
+	KASSERT(size == sizeof(*sep));
+
+	error = copyin(src, &lse, sizeof(lse));
+	if (error) {
+		return error;
+	}
+
+	return linux_to_native_sigevent(sep, &lse);
 }
