@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.58 2020/11/23 17:59:21 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.59 2020/12/15 15:20:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.58 2020/11/23 17:59:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.59 2020/12/15 15:20:05 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -86,10 +86,13 @@ MAKE_RCSID("$NetBSD: hash.c,v 1.58 2020/11/23 17:59:21 rillig Exp $");
 static unsigned int
 hash(const char *key, size_t *out_keylen)
 {
-	unsigned int h = 0;
-	const char *p = key;
-	while (*p != '\0')
-		h = (h << 5) - h + (unsigned char)*p++;
+	unsigned int h;
+	const char *p;
+
+	h = 0;
+	for (p = key; *p != '\0'; p++)
+		h = 31 * h + (unsigned char)*p;
+
 	if (out_keylen != NULL)
 		*out_keylen = (size_t)(p - key);
 	return h;
