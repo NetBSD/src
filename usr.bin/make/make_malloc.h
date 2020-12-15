@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.13 2020/11/10 00:32:12 rillig Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.14 2020/12/15 01:23:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -49,6 +49,6 @@ char *bmake_strsedup(const char *, const char *);
 MAKE_INLINE void
 bmake_free(void *p)
 {
-    if (p != NULL)
-	free(p);
+	if (p != NULL)
+		free(p);
 }
