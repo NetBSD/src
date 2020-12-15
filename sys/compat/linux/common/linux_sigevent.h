@@ -37,7 +37,8 @@
 
 #define LINUX_SIGEV_MAX  64
 #ifndef LINUX_SIGEV_PAD
-#define LINUX_SIGEV_PAD  ((LINUX_SIGEV_MAX/sizeof(int)) - 3)
+#define LINUX_SIGEV_PAD  (LINUX_SIGEV_MAX -				\
+			  (sizeof(sigval_t) + (sizeof(int) * 2)))
 #endif
 
 typedef struct linux_sigevent {
@@ -53,5 +54,9 @@ typedef struct linux_sigevent {
 		} _sigev_thread;
 	} _sigev_un;
 } linux_sigevent_t;
+
+int	linux_to_native_sigevent(struct sigevent *,
+	    const struct linux_sigevent *);
+int	linux_sigevent_copyin(const void *, void *, size_t);
 
 #endif /* _LINUX_SIGEVENT_H */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2020/04/26 18:53:32 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.74.2.1 2020/12/15 14:07:21 thorpej Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -429,11 +429,15 @@
 237	UNIMPL		epoll_ctl
 238	UNIMPL		epoll_wait
 239	UNIMPL		remap_file_pages
-240	UNIMPL		timer_create
-241	UNIMPL		timer_settime
-242	UNIMPL		timer_gettime
-243	UNIMPL		timer_getoverrun
-244	UNIMPL		timer_delete
+240	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+241	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+242	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+243	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+244	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 245	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 246	STD		{ int|linux_sys||clock_gettime(clockid_t which, \
@@ -529,16 +533,21 @@
 304	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
 305	UNIMPL		signalfd
-306	UNIMPL		timerfd_create
-307	UNIMPL		eventfd
+306	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
+			    int flags); }
+307	STD		{ int|linux_sys||eventfd(unsigned int initval); }
 308	UNIMPL		sync_file_range2
 309	STD		{ int|linux_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
 310	UNIMPL		subpage_prot
-311	UNIMPL		timerfd_settime
-312	UNIMPL		timerfd_gettime
+311	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
+			    const struct linux_itimerspec *new_value, \
+			    struct linux_itimerspec *old_value); }
+312	STD		{ int|linux_sys||timerfd_gettime(int fd, \
+			    struct linux_itimerspec *curr_value); }
 313	UNIMPL		signalfd4
-314	UNIMPL		eventfd2
+314	UNIMPL		{ int|linux_sys||eventfd2(unsigned int initval, \
+			    int flags); }
 315	UNIMPL		epoll_create1
 316	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 317	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }

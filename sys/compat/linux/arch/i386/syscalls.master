@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.124 2020/04/26 18:53:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.124.2.1 2020/12/15 14:07:21 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -433,11 +433,15 @@
 256	UNIMPL		epoll_wait
 257	UNIMPL		remap_file_pages
 258	STD		{ int|linux_sys||set_tid_address(int *tid); }
-259	UNIMPL		timer_create
-260	UNIMPL		timer_settime
-261	UNIMPL		timer_gettime
-262	UNIMPL		timer_getoverrun
-263	UNIMPL		timer_delete
+259	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+260	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+261	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+262	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+263	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 264	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 265	STD		{ int|linux_sys||clock_gettime(clockid_t which, \
@@ -525,14 +529,19 @@
 320	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
 321	UNIMPL		signalfd
-322	UNIMPL		timerfd_create
-323	UNIMPL		eventfd
+322	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
+			    int flags); }
+323	STD		{ int|linux_sys||eventfd(unsigned int initval); }
 324	STD		{ int|linux_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
-325	UNIMPL		timerfd_settime
-326	UNIMPL		timerfd_gettime
+325	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
+			    const struct linux_itimerspec *new_value, \
+			    struct linux_itimerspec *old_value); }
+326	STD		{ int|linux_sys||timerfd_gettime(int fd, \
+			    struct linux_itimerspec *curr_value); }
 327	UNIMPL		signalfd4
-328	UNIMPL		eventfd2
+328	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
+			    int flags); }
 329	UNIMPL		epoll_create1
 330     STD             { int|linux_sys||dup3(int from, int to, int flags); }
 331     STD             { int|linux_sys||pipe2( int *pfds, int flags); }

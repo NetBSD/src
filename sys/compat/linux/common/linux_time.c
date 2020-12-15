@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $ */
+/*	$NetBSD: linux_time.c,v 1.39.16.1 2020/12/15 14:07:21 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Emmanuel Dreyfus, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39.16.1 2020/12/15 14:07:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Ex
 #include <sys/signal.h>
 #include <sys/stdint.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
@@ -46,7 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Ex
 #include <sys/proc.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_fcntl.h>
+#include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_ipc.h>
@@ -55,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Ex
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/common/compat_util.h>
+
+CTASSERT(LINUX_TIMER_ABSTIME == TIMER_ABSTIME);
 
 /*
  * Linux keeps track of a system timezone in the kernel. It is readen
@@ -115,17 +121,33 @@ linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *
 }
 
 void
-native_to_linux_timespec(struct linux_timespec *ltp, struct timespec *ntp)
+native_to_linux_timespec(struct linux_timespec *ltp, const struct timespec *ntp)
 {
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
 
 void
-linux_to_native_timespec(struct timespec *ntp, struct linux_timespec *ltp)
+linux_to_native_timespec(struct timespec *ntp, const struct linux_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+void
+native_to_linux_itimerspec(struct linux_itimerspec *litp,
+    const struct itimerspec *nitp)
+{
+	native_to_linux_timespec(&litp->it_interval, &nitp->it_interval);
+	native_to_linux_timespec(&litp->it_value, &nitp->it_value);
+}
+
+void
+linux_to_native_itimerspec(struct itimerspec *nitp,
+    const struct linux_itimerspec *litp)
+{
+	linux_to_native_timespec(&nitp->it_interval, &litp->it_interval);
+	linux_to_native_timespec(&nitp->it_value, &litp->it_value);
 }
 
 int
@@ -166,11 +188,20 @@ linux_to_native_clockid(clockid_t *n, clockid_t l)
 		*n = CLOCK_MONOTONIC;
 		break;
 	case LINUX_CLOCK_PROCESS_CPUTIME_ID:
+		*n = CLOCK_PROCESS_CPUTIME_ID /* self */;
+		break;
 	case LINUX_CLOCK_THREAD_CPUTIME_ID:
-	case LINUX_CLOCK_REALTIME_HR:
-	case LINUX_CLOCK_MONOTONIC_HR:
+		*n = CLOCK_THREAD_CPUTIME_ID /* self */;
+		break;
+
+	case LINUX_CLOCK_MONOTONIC_RAW:
+	case LINUX_CLOCK_REALTIME_COARSE:
+	case LINUX_CLOCK_MONOTONIC_COARSE:
+	case LINUX_CLOCK_BOOTTIME:
+	case LINUX_CLOCK_BOOTTIME_ALARM:
+	case LINUX_CLOCK_REALTIME_ALARM:
 	default:
-		return EINVAL;
+		return ENOTSUP;
 	}
 
 	return 0;
@@ -260,10 +291,12 @@ linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_
 	} */
 	struct linux_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
-	int error, error1, flags;
+	int error, error1;
 	clockid_t nwhich;
 
-	flags = SCARG(uap, flags) != 0 ? TIMER_ABSTIME : 0;
+	if (SCARG(uap, flags) & ~TIMER_ABSTIME) {
+		return EINVAL;
+	}
 
 	error = linux_to_native_clockid(&nwhich, SCARG(uap, which));
 	if (error != 0)
@@ -275,7 +308,7 @@ linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_
 
 	linux_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, nwhich, flags, &rqts,
+	error = nanosleep1(l, nwhich, SCARG(uap, flags), &rqts,
 	    SCARG(uap, rmtp) ? &rmts : NULL);
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
@@ -283,4 +316,242 @@ linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_
 	native_to_linux_timespec(&lrmts, &rmts);
 	error1 = copyout(&lrmts, SCARG(uap, rmtp), sizeof lrmts);
 	return error1 ? error1 : error;
+}
+
+int
+linux_sys_timer_create(struct lwp *l,
+    const struct linux_sys_timer_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clockid;
+		syscallarg(struct linux_sigevent *) evp;
+		syscallarg(timer_t *) timerid;
+	} */
+	clockid_t id;
+	int error;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, clockid));
+	if (error == 0) {
+		/*
+		 * We can't create a timer with every sort of clock ID
+		 * that the system understands, so filter them out.
+		 *
+		 * Map CLOCK_PROCESS_CPUTIME_ID to CLOCK_VIRTUAL.
+		 * We can't handle CLOCK_THREAD_CPUTIME_ID.
+		 */
+		switch (id) {
+		case CLOCK_REALTIME:
+		case CLOCK_MONOTONIC:
+			break;
+
+		case CLOCK_PROCESS_CPUTIME_ID:
+			id = CLOCK_VIRTUAL;
+			break;
+
+		default:
+			return ENOTSUP;
+		}
+		error = timer_create1(SCARG(uap, timerid), id,
+		    (void *)SCARG(uap, evp), linux_sigevent_copyin, l);
+	}
+
+	return error;
+}
+
+int
+linux_sys_timer_settime(struct lwp *l,
+    const struct linux_sys_timer_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(timer_t) timerid;
+		syscallarg(int) flags;
+		syscallarg(const struct linux_itimerspec *) tim;
+		syscallarg(struct linux_itimerspec *) otim;
+	} */
+	struct itimerspec value, ovalue, *ovp = NULL;
+	struct linux_itimerspec tim, otim;
+	int error;
+
+	error = copyin(SCARG(uap, tim), &tim, sizeof(tim));
+	if (error) {
+		return error;
+	}
+	linux_to_native_itimerspec(&value, &tim);
+
+	if (SCARG(uap, otim)) {
+		ovp = &ovalue;
+	}
+
+	if (SCARG(uap, flags) & ~TIMER_ABSTIME) {
+		return EINVAL;
+	}
+
+	error = dotimer_settime(SCARG(uap, timerid), &value, ovp,
+	    SCARG(uap, flags), l->l_proc);
+	if (error) {
+		return error;
+	}
+
+	if (ovp) {
+		native_to_linux_itimerspec(&otim, ovp);
+		error = copyout(&otim, SCARG(uap, otim), sizeof(otim));
+	}
+
+	return error;
+}
+
+int
+linux_sys_timer_gettime(struct lwp *l,
+    const struct linux_sys_timer_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(timer_t) timerid;
+		syscallarg(struct linux_itimerspec *) tim;
+	} */
+	struct itimerspec its;
+	struct linux_itimerspec lits;
+	int error;
+
+	error = dotimer_gettime(SCARG(uap, timerid), l->l_proc, &its);
+	if (error == 0) {
+		native_to_linux_itimerspec(&lits, &its);
+		error = copyout(&lits, SCARG(uap, tim), sizeof(lits));
+	}
+
+	return error;
+}
+
+/*
+ * timer_gettoverrun(2) and timer_delete(2) are handled directly
+ * by the native calls.
+ */
+
+#define	LINUX_TFD_TIMER_ABSTIME		0x0001
+#define	LINUX_TFD_TIMER_CANCEL_ON_SET	0x0002
+#define	LINUX_TFD_CLOEXEC		LINUX_O_CLOEXEC
+#define	LINUX_TFD_NONBLOCK		LINUX_O_NONBLOCK
+
+int
+linux_sys_timerfd_create(struct lwp *l,
+    const struct linux_sys_timerfd_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(int) flags;
+	} */
+	int nflags = 0;
+	clockid_t id;
+	int error;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, clock_id));
+	if (error) {
+		return error;
+	}
+
+	if (SCARG(uap, flags) & ~(LINUX_TFD_CLOEXEC | LINUX_TFD_NONBLOCK)) {
+		return EINVAL;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_CLOEXEC) {
+		nflags |= TFD_CLOEXEC;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_NONBLOCK) {
+		nflags |= TFD_NONBLOCK;
+	}
+
+	return do_timerfd_create(l, id, nflags, retval);
+}
+
+int
+linux_sys_timerfd_gettime(struct lwp *l,
+    const struct linux_sys_timerfd_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_itimerspec *) curr_value;
+	} */
+	struct itimerspec its;
+	struct linux_itimerspec lits;
+	int error;
+
+	error = do_timerfd_gettime(l, SCARG(uap, fd), &its, retval);
+	if (error == 0) {
+		native_to_linux_itimerspec(&lits, &its);
+		error = copyout(&lits, SCARG(uap, curr_value), sizeof(lits));
+	}
+
+	return error;
+}
+
+int
+linux_sys_timerfd_settime(struct lwp *l,
+    const struct linux_sys_timerfd_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(const struct linux_itimerspec *) new_value;
+		syscallarg(struct linux_itimerspec *) old_value;
+	} */
+	struct itimerspec nits, oits, *oitsp = NULL;
+	struct linux_itimerspec lits;
+	int nflags = 0;
+	int error;
+
+	error = copyin(SCARG(uap, new_value), &lits, sizeof(lits));
+	if (error) {
+		return error;
+	}
+	linux_to_native_itimerspec(&nits, &lits);
+
+	if (SCARG(uap, flags) & ~(LINUX_TFD_TIMER_ABSTIME |
+				  LINUX_TFD_TIMER_CANCEL_ON_SET)) {
+		return EINVAL;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_TIMER_ABSTIME) {
+		nflags |= TFD_TIMER_ABSTIME;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_TIMER_CANCEL_ON_SET) {
+		nflags |= TFD_TIMER_CANCEL_ON_SET;
+	}
+
+	if (SCARG(uap, old_value)) {
+		oitsp = &oits;
+	}
+
+	error = do_timerfd_settime(l, SCARG(uap, fd), nflags,
+	    &nits, oitsp, retval);
+	if (error == 0 && oitsp != NULL) {
+		native_to_linux_itimerspec(&lits, oitsp);
+		error = copyout(&lits, SCARG(uap, old_value), sizeof(lits));
+	}
+
+	return error;
+}
+
+#define	LINUX_TFD_IOC_SET_TICKS		_LINUX_IOW('T', 0, uint64_t)
+
+int
+linux_ioctl_timerfd(struct lwp *l, const struct linux_sys_ioctl_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(void *) data;
+	} */
+	struct sys_ioctl_args ua;
+
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, data) = SCARG(uap, data);
+
+	switch (SCARG(uap, com)) {
+	case LINUX_TFD_IOC_SET_TICKS:
+		SCARG(&ua, com) = TFD_IOC_SET_TICKS;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	return sys_ioctl(l, (const void *)&ua, retval);
 }

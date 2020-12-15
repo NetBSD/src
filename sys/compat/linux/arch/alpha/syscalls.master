@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.97 2020/04/26 18:53:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.97.2.1 2020/12/15 14:07:20 thorpej Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -663,11 +663,15 @@
 412	UNIMPL		restart_syscall
 413	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
 			    size_t len, int advice); }
-414	UNIMPL		timer_create
-415	UNIMPL		timer_settime
-416	UNIMPL		timer_gettime
-417	UNIMPL		timer_getoverrun
-418	UNIMPL		timer_delete
+414	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+415	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+416	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+417	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+418	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 419	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 420	STD		{ int|linux_sys||clock_gettime(clockid_t which, \
@@ -760,17 +764,22 @@
 			    struct linux_timespec *times, int flag); }
 476	UNIMPL		signalfd
 477	UNIMPL		timerfd
-478	UNIMPL		eventfd
+478	STD		{ int|linux_sys||eventfd(unsigned int initval); }
 479	STD		{ int|linux_sys||recvmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags, struct timespec *timeout); }
 480	STD		{ int|linux_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
-481	UNIMPL		timerfd_create
-482	UNIMPL		timerfd_settime
-483	UNIMPL		timerfd_gettime
+481	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
+			    int flags); }
+482	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
+			    const struct linux_itimerspec *new_value, \
+			    struct linux_itimerspec *old_value); }
+483	STD		{ int|linux_sys||timerfd_gettime(int fd, \
+			    struct linux_itimerspec *curr_value); }
 484	UNIMPL		signalfd4
-485	UNIMPL		eventfd2
+485	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
+			    int flags); }
 486	UNIMPL		epoll_create1
 487	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 488	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
