@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.71 2020/12/05 17:25:41 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.72 2020/12/15 20:39:15 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.71 2020/12/05 17:25:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.72 2020/12/15 20:39:15 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -332,16 +332,16 @@ getwd(char *pathname)
 SignalProc
 bmake_signal(int s, SignalProc a)
 {
-    struct sigaction sa, osa;
+	struct sigaction sa, osa;
 
-    sa.sa_handler = a;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
+	sa.sa_handler = a;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
 
-    if (sigaction(s, &sa, &osa) == -1)
-	return SIG_ERR;
-    else
-	return osa.sa_handler;
+	if (sigaction(s, &sa, &osa) == -1)
+		return SIG_ERR;
+	else
+		return osa.sa_handler;
 }
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_VSNPRINTF)
