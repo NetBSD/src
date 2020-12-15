@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.387 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.388 2020/12/15 21:19:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.387 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.388 2020/12/15 21:19:47 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -519,7 +519,8 @@ JobDeleteTarget(GNode *gn)
  * Signal lock routines to get exclusive access. Currently used to
  * protect `jobs' and `stoppedJobs' list manipulations.
  */
-static void JobSigLock(sigset_t *omaskp)
+static void
+JobSigLock(sigset_t *omaskp)
 {
 	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0) {
 		Punt("JobSigLock: sigprocmask: %s", strerror(errno));
@@ -527,7 +528,8 @@ static void JobSigLock(sigset_t *omaskp)
 	}
 }
 
-static void JobSigUnlock(sigset_t *omaskp)
+static void
+JobSigUnlock(sigset_t *omaskp)
 {
 	(void)sigprocmask(SIG_SETMASK, omaskp, NULL);
 }
@@ -2271,7 +2273,8 @@ DelSig(int sig)
 		(void)bmake_signal(sig, SIG_DFL);
 }
 
-static void JobSigReset(void)
+static void
+JobSigReset(void)
 {
 	DelSig(SIGINT);
 	DelSig(SIGHUP);
