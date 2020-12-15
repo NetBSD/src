@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.155 2020/12/12 00:05:05 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.156 2020/12/15 21:19:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.155 2020/12/12 00:05:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.156 2020/12/15 21:19:47 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -317,7 +317,8 @@ Targ_NewInternalNode(const char *name)
  * Return the .END node, which contains the commands to be run when
  * everything else has been made.
  */
-GNode *Targ_GetEndNode(void)
+GNode *
+Targ_GetEndNode(void)
 {
 	/*
 	 * Save the node locally to avoid having to search for it all
