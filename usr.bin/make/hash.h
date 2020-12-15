@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.37 2020/11/29 09:27:40 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.38 2020/12/15 01:23:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -164,7 +164,7 @@ HashSet_Contains(HashSet *set, const char *key)
 MAKE_INLINE void
 HashIter_InitSet(HashIter *hi, HashSet *set)
 {
-    HashIter_Init(hi, &set->tbl);
+	HashIter_Init(hi, &set->tbl);
 }
 
 #endif /* MAKE_HASH_H */
