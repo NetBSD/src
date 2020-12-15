@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cmachflags,v 1.2 2010/07/12 02:45:31 mrg Exp $
+#	$NetBSD: Makefile.cmachflags,v 1.3 2020/12/15 05:48:30 martin Exp $
 
 # Set CMACHFLAGS best target the specific CPU combination, based on
 # their "options" setting.
@@ -45,11 +45,11 @@ CMACHFLAGS=	-m68060
 .elif ${HAVE_M68040} != "no"
 . if ${HAVE_M68020} != "no" || ${HAVE_M68030} != "no"
 CMACHFLAGS=	-m68020-40
-. else /* !-DM68060 */
+. else	# !-DM68060
 CMACHFLAGS=	-m68040
 . endif
 .elif ${HAVE_M68020} != "no"
 CMACHFLAGS=	-m68020
 .else
 CMACHFLAGS=	-m68030
-.endif /* !-DM68060 */
+.endif	# !-DM68060
