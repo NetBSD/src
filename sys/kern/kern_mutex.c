@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.93 2020/12/14 19:42:51 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.94 2020/12/15 08:17:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.93 2020/12/14 19:42:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.94 2020/12/15 08:17:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -628,7 +628,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   completes before the modification of curlwp becomes
 		 *   visible to this CPU.
 		 *
-		 * o mi_switch() posts a store fence before setting curlwp
+		 * o cpu_switch() posts a store fence after setting curlwp
 		 *   and before resuming execution of an LWP.
 		 *
 		 * o _kernel_lock() posts a store fence before setting
