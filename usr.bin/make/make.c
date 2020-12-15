@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.227 2020/12/06 18:13:17 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.228 2020/12/15 19:47:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.227 2020/12/06 18:13:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.228 2020/12/15 19:47:02 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -917,6 +917,17 @@ MakeBuildParent(GNode *pn, GNodeListNode *toBeMadeNext)
 	return 0;
 }
 
+static void
+MakeChildren(GNode *gn)
+{
+	GNodeListNode *toBeMadeNext = toBeMade.first;
+	GNodeListNode *ln;
+
+	for (ln = gn->children.first; ln != NULL; ln = ln->next)
+		if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
+			break;
+}
+
 /* Start as many jobs as possible, taking them from the toBeMade queue.
  *
  * If the -q option was given, no job will be started,
@@ -960,14 +971,7 @@ MakeStartJobs(void)
 	     */
 	    gn->made = DEFERRED;
 
-	    {
-		GNodeListNode *toBeMadeNext = toBeMade.first;
-		GNodeListNode *ln;
-
-		for (ln = gn->children.first; ln != NULL; ln = ln->next)
-		    if (MakeBuildChild(ln->datum, toBeMadeNext) != 0)
-			break;
-	    }
+	    MakeChildren(gn);
 
 	    /* and drop this node on the floor */
 	    DEBUG2(MAKE, "dropped %s%s\n", gn->name, gn->cohort_num);
