@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.32 2020/02/15 08:16:11 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.33 2020/12/16 19:49:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.32 2020/02/15 08:16:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.33 2020/12/16 19:49:04 christos Exp $");
 
 #define _INTR_PRIVATE
 
@@ -891,8 +891,8 @@ bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	bip->bi_arg = arg;
 
 	/*
-	 * If we're not cold and the BPs have been started then we can register the
-	 * interupt for all CPUs now, e.g. PMU
+	 * If we're not cold and the BPs have been started then we can
+	 * register the interrupt for all CPUs now, e.g. PMU
 	 */
 	if (!cold) {
 		for (cpuid_t cpuid = 0; cpuid < BCM2836_NCPUS; cpuid++) {
