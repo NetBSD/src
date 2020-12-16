@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.8 2020/04/26 19:20:58 thorpej Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.8.2.1 2020/12/16 03:08:01 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1847,6 +1847,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* linux32_sys_eventfd */
+	case 323: {
+		const struct linux32_sys_eventfd_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		*n_args = 1;
+		break;
+	}
 	/* linux32_sys_fallocate */
 	case 324: {
 		const struct linux32_sys_fallocate_args *p = params;
@@ -1855,6 +1862,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, offset); /* off_t */
 		iarg[3] = SCARG(p, len); /* off_t */
 		*n_args = 4;
+		break;
+	}
+	/* linux32_sys_eventfd2 */
+	case 328: {
+		const struct linux32_sys_eventfd2_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
 		break;
 	}
 	/* linux32_sys_dup3 */
@@ -4878,6 +4893,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux32_sys_eventfd */
+	case 323:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux32_sys_fallocate */
 	case 324:
 		switch(ndx) {
@@ -4892,6 +4917,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 3:
 			p = "off_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux32_sys_eventfd2 */
+	case 328:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		case 1:
+			p = "int";
 			break;
 		default:
 			break;
@@ -6006,8 +6044,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux32_sys_eventfd */
+	case 323:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux32_sys_fallocate */
 	case 324:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux32_sys_eventfd2 */
+	case 328:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
