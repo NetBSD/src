@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.10 2020/11/04 20:05:47 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.11 2020/12/16 19:49:04 christos Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define SR_UIE		__BIT(0)
 
 /* Supervisor interrupt registers */
-/* ... interupt pending register (sip) */
+/* ... interrupt pending register (sip) */
 			/* Bit (XLEN-1)-10 is WIRI */
 #define SIP_SEIP	__BIT(9)
 #define SIP_UEIP	__BIT(8)
@@ -152,7 +152,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define SIP_SSIP	__BIT(1)
 #define SIP_USIP	__BIT(0)
 
-/* ... interupt-enable register (sie) */
+/* ... interrupt-enable register (sie) */
 			/* Bit (XLEN-1) - 10 is WIRI */
 #define SIE_SEIE	__BIT(9)
 #define SIE_UEIE	__BIT(8)

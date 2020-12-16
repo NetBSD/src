@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd_v1_0.c,v 1.3 2019/08/17 15:50:05 msaitoh Exp $	*/
+/*	$NetBSD: radeon_uvd_v1_0.c,v 1.4 2020/12/16 19:49:05 christos Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v1_0.c,v 1.3 2019/08/17 15:50:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v1_0.c,v 1.4 2020/12/16 19:49:05 christos Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>
@@ -277,7 +277,7 @@ int uvd_v1_0_start(struct radeon_device *rdev)
 	/* disable clock gating */
 	WREG32(UVD_CGC_GATE, 0);
 
-	/* disable interupt */
+	/* disable interrupt */
 	WREG32_P(UVD_MASTINT_EN, 0, ~(1 << 1));
 
 	/* Stall UMC and register bus before resetting VCPU */
@@ -355,7 +355,7 @@ int uvd_v1_0_start(struct radeon_device *rdev)
 		return r;
 	}
 
-	/* enable interupt */
+	/* enable interrupt */
 	WREG32_P(UVD_MASTINT_EN, 3<<1, ~(3 << 1));
 
 	/* force RBC into idle state */

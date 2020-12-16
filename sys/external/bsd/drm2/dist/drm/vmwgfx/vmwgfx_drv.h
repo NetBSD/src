@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.3 2020/12/16 19:49:05 christos Exp $	*/
 
 /**************************************************************************
  *
@@ -623,7 +623,7 @@ extern void vmw_dmabuf_bo_free(struct ttm_buffer_object *bo);
 extern int vmw_dmabuf_init(struct vmw_private *dev_priv,
 			   struct vmw_dma_buffer *vmw_bo,
 			   size_t size, struct ttm_placement *placement,
-			   bool interuptable,
+			   bool interruptible,
 			   void (*bo_free) (struct ttm_buffer_object *bo));
 extern int vmw_user_dmabuf_verify_access(struct ttm_buffer_object *bo,
 				  struct ttm_object_file *tfile);

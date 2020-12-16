@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.11 2019/12/23 20:38:08 thorpej Exp $ */
+/* $NetBSD: tcakp.c,v 1.12 2020/12/16 19:49:04 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.11 2019/12/23 20:38:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.12 2020/12/16 19:49:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, tcakp_softintr, sc);
 	if (sc->sc_sih == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to establish soft interupt\n");
+		    "unable to establish soft interrupt\n");
 		return;
 	}
 

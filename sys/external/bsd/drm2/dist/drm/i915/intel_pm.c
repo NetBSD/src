@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.24 2020/02/14 14:34:58 maya Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.25 2020/12/16 19:49:05 christos Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.24 2020/02/14 14:34:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.25 2020/12/16 19:49:05 christos Exp $");
 
 #include <linux/cpufreq.h>
 #include "i915_drv.h"
@@ -4433,7 +4433,7 @@ static u32 gen6_rps_pm_mask(struct drm_i915_private *dev_priv, u8 val)
 {
 	u32 mask = 0;
 
-	/* We use UP_EI_EXPIRED interupts for both up/down in manual mode */
+	/* We use UP_EI_EXPIRED interrupts for both up/down in manual mode */
 	if (val > dev_priv->rps.min_freq_softlimit)
 		mask |= GEN6_PM_RP_UP_EI_EXPIRED | GEN6_PM_RP_DOWN_THRESHOLD | GEN6_PM_RP_DOWN_TIMEOUT;
 	if (val < dev_priv->rps.max_freq_softlimit)
