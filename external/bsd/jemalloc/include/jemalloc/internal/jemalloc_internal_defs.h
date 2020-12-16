@@ -48,7 +48,14 @@
 #ifdef _LP64
 /* XXX: I will take care of this later */
 # ifdef __alpha__
-#  define LG_VADDR 43	/* bit 42 indicates direct map, 42--63 are same */
+/*
+ * Bit 42 indicates kernel space. Bits 42--63 must be same. For user space,
+ * VA can be regarded to have 43 significant bits with sign-extension to
+ * 64 bits. ``Negative'' addresses are not used in this case. Alternatively,
+ * VA can also be regarded to have 42 significant bits with zero-extension.
+ * See rtree_leaf_elm_bits_extent_get() in rtree.h for more details.
+ */
+#  define LG_VADDR 43
 # else
 #  define LG_VADDR 48
 # endif
