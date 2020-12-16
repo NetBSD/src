@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v6_0.c,v 1.2 2020/02/14 14:34:58 maya Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v6_0.c,v 1.3 2020/12/16 19:49:05 christos Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v6_0.c,v 1.2 2020/02/14 14:34:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v6_0.c,v 1.3 2020/12/16 19:49:05 christos Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>
@@ -311,7 +311,7 @@ static int uvd_v6_0_start(struct amdgpu_device *adev)
 	/* disable clock gating */
 	WREG32(mmUVD_CGC_GATE, 0);
 
-	/* disable interupt */
+	/* disable interrupt */
 	WREG32_P(mmUVD_MASTINT_EN, 0, ~(1 << 1));
 
 	/* stall UMC and register bus before resetting VCPU */
