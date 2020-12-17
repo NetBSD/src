@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.71.2.1 2020/12/16 03:07:43 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.71.2.2 2020/12/17 03:05:32 thorpej Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -454,11 +454,15 @@
 256	UNIMPL	epoll_wait
 257	UNIMPL	remap_file_pages
 258	STD	{ int|linux32_sys||set_tid_address(linux32_intp_t tid); }
-259	UNIMPL	timer_create
-260	UNIMPL	timer_settime
-261	UNIMPL	timer_gettime
-262	UNIMPL	timer_getoverrun
-263	UNIMPL	timer_delete
+259	STD	{ int|linux32_sys||timer_create(clockid_t clockid, \
+		    struct linux32_sigevent *evp, timer_t *timerid); }
+260	STD	{ int|linux32_sys||timer_settime(timer_t timerid, \
+		    int flags, const struct linux32_itimerspec *tim, \
+		    struct linux32_itimerspec *otim); }
+261	STD	{ int|linux32_sys||timer_gettime(timer_t timerid, \
+		    struct linux32_itimerspec *tim); }
+262	NOARGS	{ int|sys||timer_getoverrun(timer_t timerid); }
+263	NOARGS	{ int|sys||timer_delete(timer_t timerid); }
 264	STD	{ int|linux32_sys||clock_settime(clockid_t which, \
 		    linux32_timespecp_t tp); }
 265	STD	{ int|linux32_sys||clock_gettime(clockid_t which, \
@@ -546,12 +550,16 @@
 320	STD	{ int|linux32_sys||utimensat(int fd, netbsd32_charp path, \
 			    linux32_timespecp_t times, int flag); }
 321	UNIMPL	signalfd
-322	UNIMPL	timerfd_create
+322	NOARGS	{ int|linux_sys||timerfd_create(clockid_t clock_id, \
+		    int flags); }
 323	STD	{ int|linux32_sys||eventfd(unsigned int initval); }
 324	STD	{ int|linux32_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
-325	UNIMPL	timerfd_settime
-326	UNIMPL	timerfd_gettime
+325	STD	{ int|linux32_sys||timerfd_settime(int fd, int flags, \
+		    const struct linux32_itimerspec *new_value, \
+		    struct linux32_itimerspec *old_value); }
+326	STD	{ int|linux32_sys||timerfd_gettime(int fd, \
+		    struct linux32_itimerspec *curr_value); }
 327	UNIMPL	signalfd4
 328	STD	{ int|linux32_sys||eventfd2(unsigned int initval, \
 		    int flags); }
