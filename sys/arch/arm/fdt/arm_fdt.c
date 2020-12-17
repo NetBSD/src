@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.12 2020/10/10 15:34:05 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.13 2020/12/17 08:47:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.12 2020/10/10 15:34:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.13 2020/12/17 08:47:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ arm_fdt_module_init(void)
 		for (pa = startpa, va = startva;
 		     pa < endpa;
 		     pa += PAGE_SIZE, va += PAGE_SIZE) {
-			pmap_kenter_pa(va, pa, VM_PROT_ALL, PMAP_WRITE_BACK);
+			pmap_kenter_pa(va, pa, VM_PROT_ALL, 0);
 		}
 		pmap_update(pmap_kernel());
 
