@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.30.2.1 2020/12/16 03:07:43 thorpej Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.30.2.2 2020/12/17 03:02:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.30.2.1 2020/12/16 03:07:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.30.2.2 2020/12/17 03:02:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.30.2.1 2020/12/16 03:07:43 thorpe
 
 extern const struct linux_mnttypes linux_fstypes[];
 extern const int linux_fstypes_cnt;
-
-void linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
 
 /*
  * Implement the fs stat functions. Straightforward.
