@@ -1,4 +1,4 @@
-.\" $NetBSD: npf-params.7,v 1.7 2020/06/06 20:38:00 wiz Exp $
+.\" $NetBSD: npf-params.7,v 1.8 2020/12/17 05:33:06 taca Exp $
 .\"
 .\" Copyright (c) 2019 Mindaugas Rasiukevicius <rmind at netbsd org>
 .\" All rights reserved.
@@ -83,7 +83,7 @@ The worker is self-tuning and will wake up more frequently if there are
 connections to expire; it will wake up less frequently, diverging towards
 the upper bound, if it does not encounter expired connections.
 Default: 50 (in milliseconds).
-.It Li gc.interval_min
+.It Li gc.interval_max
 The upper bound for the sleep time of the G/C worker.
 Default: 5000 (in milliseconds).
 .El
