@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69.2.1 2020/12/15 14:07:21 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.69.2.2 2020/12/17 03:14:15 thorpej Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -579,8 +579,12 @@
 358	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 359	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 360	UNIMPL		inotify_init1
-361	UNIMPL		preadv
-362	UNIMPL		pwritev
+361	STD		{ int|linux_sys||preadv(int fd, \
+			    const struct iovec *iovp, int iovcnt, \
+			    unsigned long off_lo, unsigned long off_hi); }
+362	STD		{ int|linux_sys||pwritev(int fd, \
+			    const struct iovcnt *iovp, int iovcnt, \
+			    unsigned long off_lo, unsigned long off_hi); }
 363	UNIMPL		rt_tgsigqueueinfo
 364	UNIMPL		perf_counter_open
 365	STD		{ int|linux_sys||recvmmsg(int s, \
