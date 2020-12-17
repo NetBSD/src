@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.39.16.1 2020/12/15 14:07:21 thorpej Exp $ */
+/*	$NetBSD: linux_time.c,v 1.39.16.2 2020/12/17 02:52:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39.16.1 2020/12/15 14:07:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39.16.2 2020/12/17 02:52:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -319,18 +319,12 @@ linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_
 }
 
 int
-linux_sys_timer_create(struct lwp *l,
-    const struct linux_sys_timer_create_args *uap, register_t *retval)
+linux_to_native_timer_create_clockid(clockid_t *nid, clockid_t lid)
 {
-	/* {
-		syscallarg(clockid_t) clockid;
-		syscallarg(struct linux_sigevent *) evp;
-		syscallarg(timer_t *) timerid;
-	} */
 	clockid_t id;
 	int error;
 
-	error = linux_to_native_clockid(&id, SCARG(uap, clockid));
+	error = linux_to_native_clockid(&id, lid);
 	if (error == 0) {
 		/*
 		 * We can't create a timer with every sort of clock ID
@@ -351,6 +345,26 @@ linux_sys_timer_create(struct lwp *l,
 		default:
 			return ENOTSUP;
 		}
+		*nid = id;
+	}
+
+	return error;
+}
+
+int
+linux_sys_timer_create(struct lwp *l,
+    const struct linux_sys_timer_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clockid;
+		syscallarg(struct linux_sigevent *) evp;
+		syscallarg(timer_t *) timerid;
+	} */
+	clockid_t id;
+	int error;
+
+	error = linux_to_native_timer_create_clockid(&id, SCARG(uap, clockid));
+	if (error == 0) {
 		error = timer_create1(SCARG(uap, timerid), id,
 		    (void *)SCARG(uap, evp), linux_sigevent_copyin, l);
 	}
@@ -483,6 +497,27 @@ linux_sys_timerfd_gettime(struct lwp *l,
 }
 
 int
+linux_to_native_timerfd_settime_flags(int *nflagsp, int lflags)
+{
+	int nflags = 0;
+
+	if (lflags & ~(LINUX_TFD_TIMER_ABSTIME |
+		       LINUX_TFD_TIMER_CANCEL_ON_SET)) {
+		return EINVAL;
+	}
+	if (lflags & LINUX_TFD_TIMER_ABSTIME) {
+		nflags |= TFD_TIMER_ABSTIME;
+	}
+	if (lflags & LINUX_TFD_TIMER_CANCEL_ON_SET) {
+		nflags |= TFD_TIMER_CANCEL_ON_SET;
+	}
+
+	*nflagsp = nflags;
+
+	return 0;
+}
+
+int
 linux_sys_timerfd_settime(struct lwp *l,
     const struct linux_sys_timerfd_settime_args *uap, register_t *retval)
 {
@@ -494,7 +529,7 @@ linux_sys_timerfd_settime(struct lwp *l,
 	} */
 	struct itimerspec nits, oits, *oitsp = NULL;
 	struct linux_itimerspec lits;
-	int nflags = 0;
+	int nflags;
 	int error;
 
 	error = copyin(SCARG(uap, new_value), &lits, sizeof(lits));
@@ -503,15 +538,10 @@ linux_sys_timerfd_settime(struct lwp *l,
 	}
 	linux_to_native_itimerspec(&nits, &lits);
 
-	if (SCARG(uap, flags) & ~(LINUX_TFD_TIMER_ABSTIME |
-				  LINUX_TFD_TIMER_CANCEL_ON_SET)) {
-		return EINVAL;
-	}
-	if (SCARG(uap, flags) & LINUX_TFD_TIMER_ABSTIME) {
-		nflags |= TFD_TIMER_ABSTIME;
-	}
-	if (SCARG(uap, flags) & LINUX_TFD_TIMER_CANCEL_ON_SET) {
-		nflags |= TFD_TIMER_CANCEL_ON_SET;
+	error = linux_to_native_timerfd_settime_flags(&nflags,
+	    SCARG(uap, flags));
+	if (error) {
+		return error;
 	}
 
 	if (SCARG(uap, old_value)) {
