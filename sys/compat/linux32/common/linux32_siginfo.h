@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux32_siginfo.h,v 1.1 2011/11/18 04:08:56 christos Exp $	*/
+/* 	$NetBSD: linux32_siginfo.h,v 1.1.66.1 2020/12/17 03:00:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX32_SIGINFO_H
 #define _LINUX32_SIGINFO_H
+
+#include <compat/linux32/common/linux32_sigevent.h>
 
 #if defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_siginfo.h>
