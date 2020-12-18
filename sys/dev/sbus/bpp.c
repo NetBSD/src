@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.45 2020/05/23 23:42:42 ad Exp $ */
+/*	$NetBSD: bpp.c,v 1.46 2020/12/18 02:04:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.45 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.46 2020/12/18 02:04:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -509,7 +509,7 @@ filt_bpprdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	splx(s);
 }
 
@@ -534,7 +534,7 @@ filt_bppwdetach(struct knote *kn)
 	int s;
 
 	s = splbpp();
-	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_wsel, kn);
 	splx(s);
 }
 
@@ -561,19 +561,19 @@ int
 bppkqfilter(dev_t dev, struct knote *kn)
 {
 	struct bpp_softc *sc;
-	struct klist *klist;
+	struct selinfo *sip;
 	int s;
 
 	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
+		sip = &sc->sc_rsel;
 		kn->kn_fop = &bppread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.sel_klist;
+		sip = &sc->sc_wsel;
 		kn->kn_fop = &bppwrite_filtops;
 		break;
 
@@ -584,7 +584,7 @@ bppkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = splbpp();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	splx(s);
 
 	return 0;
