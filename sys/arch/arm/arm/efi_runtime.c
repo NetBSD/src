@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.4 2020/09/08 17:20:10 jmcneill Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.5 2020/12/18 07:40:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.4 2020/09/08 17:20:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.5 2020/12/18 07:40:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -67,8 +67,8 @@ arm_efirt_init(paddr_t efi_system_table)
 
 	ST = (void *)(va + (efi_system_table - trunc_page(efi_system_table)));
 	if (ST->st_hdr.th_sig != EFI_SYSTBL_SIG) {
-		aprint_error("EFI: signature mismatch (%#lx != %#lx)\n",
-		    ST->st_hdr.th_sig, EFI_SYSTBL_SIG);
+		aprint_error("EFI: signature mismatch (%#" PRIx64 " != %#"
+		    PRIx64 ")\n", ST->st_hdr.th_sig, EFI_SYSTBL_SIG);
 		return EINVAL;
 	}
 
