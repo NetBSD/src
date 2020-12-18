@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.1 2019/10/28 02:56:40 ozaki-r Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.2 2020/12/18 02:55:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.1 2019/10/28 02:56:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.2 2020/12/18 02:55:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ filt_vio9p_detach(struct knote *kn)
 	struct vio9p_softc *sc = kn->kn_hook;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_REMOVE(&sc->sc_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_sel, kn);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -434,29 +434,25 @@ static int
 vio9p_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct vio9p_softc *sc = fp->f_data;
-	struct klist *klist;
 
-	mutex_enter(&sc->sc_lock);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_sel.sel_klist;
 		kn->kn_fop = &vio9p_read_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_sel.sel_klist;
 		kn->kn_fop = &vio9p_write_filtops;
 		break;
 
 	default:
-		mutex_exit(&sc->sc_lock);
 		log(LOG_ERR, "%s: kn_filter=%u\n", __func__, kn->kn_filter);
 		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	mutex_enter(&sc->sc_lock);
+	selrecord_knote(&sc->sc_sel, kn);
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
