@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.23 2020/12/14 17:30:35 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.24 2020/12/18 12:29:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1241,4 +1241,16 @@ sys/arch/hp300/conf/RAMDISK			1.16
 
 	Remove options (NVNODE, NBUF, and BUFPAGES) for small RAM machines.
 	[tsutsui, ticket #1152]
+
+usr.bin/vmstat/vmstat.c				1.232 (patch)
+
+	Move the time nlist fetches into their own namelist and only
+	fetch them when necessary.  Allow for fallback uses of older
+	time sources if others are not present.
+	[mrg, ticket #1153]
+
+external/bsd/dhcpcd/dist/src/dhcp.c		(apply patch)
+
+	Fix reading of UDP messages via inet socket rather than BPF.
+	[roy, ticket #1154]
 
