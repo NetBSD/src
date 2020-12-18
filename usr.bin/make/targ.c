@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.158 2020/12/18 14:46:44 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.159 2020/12/18 15:47:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.158 2020/12/18 14:46:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.159 2020/12/18 15:47:34 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -507,7 +507,7 @@ Targ_PrintNode(GNode *gn, int pass)
 				    Targ_FmtTime(gn->mtime),
 				    made_name(gn->made));
 			} else if (gn->made != UNMADE) {
-				debug_printf("# non-existent (maybe): %s\n",
+				debug_printf("# nonexistent (maybe): %s\n",
 				    made_name(gn->made));
 			} else
 				debug_printf("# unmade\n");

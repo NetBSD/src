@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.188 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.189 2020/12/18 15:47:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.188 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.189 2020/12/18 15:47:34 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -903,7 +903,7 @@ Arch_UpdateMTime(GNode *gn)
 		gn->mtime = 0;
 }
 
-/* Given a non-existent archive member's node, update gn->mtime from its
+/* Given a nonexistent archive member's node, update gn->mtime from its
  * archived form, if it exists. */
 void
 Arch_UpdateMemberMTime(GNode *gn)
