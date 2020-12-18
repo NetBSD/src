@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.486 2020/12/18 23:13:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.487 2020/12/18 23:18:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.486 2020/12/18 23:13:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.487 2020/12/18 23:18:08 rillig Exp $");
 
 /* types and constants */
 
@@ -2657,10 +2657,9 @@ ParseEOF(void)
 }
 
 static void
-UnescapeBackslash(char **out_tp, char **inout_escaped,
-		  char *const line) {
+UnescapeBackslash(char **out_tp, char *escaped, char *const line)
+{
 	char *tp, *ptr;
-	char *escaped = *inout_escaped;
 
 	tp = ptr = escaped;
 	escaped = line;
@@ -2707,21 +2706,12 @@ UnescapeBackslash(char **out_tp, char **inout_escaped,
 		*tp++ = ch;
 	}
 
-	*out_tp = tp;
-	*inout_escaped = escaped;
-}
-
-/* Delete any trailing spaces - eg from empty continuations */
-static void
-TrimRight(char **inout_tp, const char * const escaped)
-{
-	char *tp = *inout_tp;
-
+	/* Delete any trailing spaces - eg from empty continuations */
 	while (tp > escaped && ch_isspace(tp[-1]))
 		tp--;
 	*tp = '\0';
 
-	*inout_tp = tp;
+	*out_tp = tp;
 }
 
 typedef enum GetLineMode {
@@ -2841,9 +2831,7 @@ ParseGetLine(GetLineMode mode)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(&tp, &escaped, line);
-
-	TrimRight(&tp, escaped);
+	UnescapeBackslash(&tp, escaped, line);
 
 	return line;
 }
