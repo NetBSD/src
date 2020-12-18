@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.48 2020/12/18 01:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.48 2020/12/18 01:40:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -616,7 +616,7 @@ filt_uirdardetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_rd_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rd_sel, kn);
 	splx(s);
 }
 
@@ -636,7 +636,7 @@ filt_uirdawdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_wr_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_wr_sel, kn);
 	splx(s);
 }
 
@@ -658,16 +658,16 @@ int
 uirda_kqfilter(void *h, struct knote *kn)
 {
 	struct uirda_softc *sc = kn->kn_hook;
-	struct klist *klist;
+	struct selinfo *sip;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rd_sel.sel_klist;
+		sip = &sc->sc_rd_sel;
 		kn->kn_fop = &uirdaread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wr_sel.sel_klist;
+		sip = &sc->sc_wr_sel;
 		kn->kn_fop = &uirdawrite_filtops;
 		break;
 	default:
@@ -677,7 +677,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = splusb();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	splx(s);
 
 	return 0;
