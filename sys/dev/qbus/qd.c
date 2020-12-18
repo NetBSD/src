@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.57 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: qd.c,v 1.58 2020/12/18 02:41:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.57 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.58 2020/12/18 02:41:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1548,7 +1548,7 @@ filt_qdrdetach(struct knote *kn)
 	int s;
 
 	s = spl5();
-	SLIST_REMOVE(&qdrsel[unit].sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&qdrsel[unit], kn);
 	splx(s);
 }
 
@@ -1597,7 +1597,6 @@ static const struct filterops qdwrite_filtops = {
 int
 qdkqfilter(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 	u_int minor_dev = minor(dev);
 	int s, unit = minor_dev >> 2;
 
@@ -1608,12 +1607,10 @@ qdkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &qdrsel[unit].sel_klist;
 		kn->kn_fop = &qdread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &qdrsel[unit].sel_klist;
 		kn->kn_fop = &qdwrite_filtops;
 		break;
 
@@ -1624,7 +1621,7 @@ qdkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (void *)(intptr_t) dev;
 
 	s = spl5();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&qdrsel[unit], kn);
 	splx(s);
 
 	return (0);
