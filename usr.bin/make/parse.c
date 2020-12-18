@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.483 2020/12/15 00:32:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.484 2020/12/18 18:23:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.483 2020/12/15 00:32:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.484 2020/12/18 18:23:29 rillig Exp $");
 
 /* types and constants */
 
@@ -2688,6 +2688,7 @@ ParseGetLine(GetLineMode mode)
 				ch = '\0';
 				break;
 			}
+
 			ch = *ptr;
 			if (ch == '\0' ||
 			    (ch == '\\' && ptr + 1 < cf->buf_end &&
@@ -2697,11 +2698,11 @@ ParseGetLine(GetLineMode mode)
 				return NULL;
 			}
 
+			/*
+			 * Don't treat next character after '\' as special,
+			 * remember first one.
+			 */
 			if (ch == '\\') {
-				/*
-				 * Don't treat next character as special,
-				 * remember first one.
-				 */
 				if (escaped == NULL)
 					escaped = ptr;
 				if (ptr[1] == '\n')
@@ -2710,25 +2711,23 @@ ParseGetLine(GetLineMode mode)
 				line_end = ptr;
 				continue;
 			}
-			if (ch == '#' && comment == NULL) {
-				/*
-				 * Remember the first '#' for comment
-				 * stripping, unless the previous char was
-				 * '[', as in the modifier ':[#]'.
-				 */
-				if (!(ptr > line && ptr[-1] == '['))
-					comment = line_end;
-			}
+
+			/*
+			 * Remember the first '#' for comment stripping,
+			 * unless the previous char was '[', as in the
+			 * modifier ':[#]'.
+			 */
+			if (ch == '#' && comment == NULL &&
+			    !(ptr > line && ptr[-1] == '['))
+				comment = line_end;
+
 			ptr++;
 			if (ch == '\n')
 				break;
-			if (!ch_isspace(ch)) {
-				/*
-				 * We are not interested in trailing
-				 * whitespace.
-				 */
+
+			/* We are not interested in trailing whitespace. */
+			if (!ch_isspace(ch))
 				line_end = ptr;
-			}
 		}
 
 		/* Save next 'to be processed' location */
