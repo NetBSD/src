@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.187 2020/05/27 07:17:45 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.188 2020/12/18 01:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.187 2020/05/27 07:17:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.188 2020/12/18 01:40:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1022,7 +1022,7 @@ filt_usbrdetach(struct knote *kn)
 {
 
 	mutex_enter(&usb_event_lock);
-	SLIST_REMOVE(&usb_selevent.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&usb_selevent, kn);
 	mutex_exit(&usb_event_lock);
 }
 
@@ -1047,13 +1047,11 @@ static const struct filterops usbread_filtops = {
 int
 usbkqfilter(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if (minor(dev) != USB_DEV_MINOR)
 			return 1;
-		klist = &usb_selevent.sel_klist;
 		kn->kn_fop = &usbread_filtops;
 		break;
 
@@ -1064,7 +1062,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = NULL;
 
 	mutex_enter(&usb_event_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&usb_selevent, kn);
 	mutex_exit(&usb_event_lock);
 
 	return 0;

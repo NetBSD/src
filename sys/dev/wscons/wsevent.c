@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.45 2020/05/23 23:42:42 ad Exp $ */
+/* $NetBSD: wsevent.c,v 1.46 2020/12/18 01:41:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.45 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.46 2020/12/18 01:41:23 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -303,7 +303,7 @@ filt_wseventrdetach(struct knote *kn)
 	int s;
 
 	s = splwsevent();
-	SLIST_REMOVE(&ev->sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&ev->sel, kn);
 	splx(s);
 }
 
@@ -335,12 +335,10 @@ static const struct filterops wsevent_filtops = {
 int
 wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 {
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->sel.sel_klist;
 		kn->kn_fop = &wsevent_filtops;
 		break;
 
@@ -351,7 +349,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 	kn->kn_hook = ev;
 
 	s = splwsevent();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&ev->sel, kn);
 	splx(s);
 
 	return (0);
