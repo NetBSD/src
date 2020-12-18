@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94 2020/09/06 10:48:21 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.95 2020/12/18 00:45:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -182,15 +182,6 @@ struct segmap {
 					 * (not used for 4m/4d kernel_map) */
 	int8_t	sg_nwired;		/* number of wired pages */
 };
-
-#if 0
-struct kvm_cpustate {
-	int		kvm_npmemarr;
-	struct memarr	kvm_pmemarr[MA_SIZE];
-	int		kvm_seginval;			/* [4,4c] */
-	struct segmap	kvm_segmap_store[NKREG*NSEGRG];	/* [4,4c] */
-}/*not yet used*/;
-#endif
 
 #ifdef _KERNEL
 
