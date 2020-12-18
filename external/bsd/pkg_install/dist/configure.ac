@@ -1,7 +1,7 @@
-dnl $NetBSD: configure.ac,v 1.1.1.1 2018/02/04 08:20:42 maya Exp $
+dnl $NetBSD: configure.ac,v 1.1.1.2 2020/12/18 17:19:16 maya Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.52)
-AC_INIT([pkg_install], [20090911], [joerg@NetBSD.org])
+AC_INIT([pkg_install], [20200701], [joerg@NetBSD.org])
 AC_CONFIG_SRCDIR([lib/plist.c])
 AC_CONFIG_HEADER(lib/config.h)
 
@@ -39,9 +39,9 @@ AC_SUBST(AUTOHEADER)
 
 dnl Set the default pkg dbdir
 AC_ARG_WITH(pkgdbdir,
-[  --with-pkgdbdir=DIR     Where to put the pkg database (/var/db/pkg)],
+[  --with-pkgdbdir=DIR     Where to put the pkg database (PREFIX/pkgdb)],
 [ pkgdbdir="$with_pkgdbdir" ],
-[ pkgdbdir="/var/db/pkg" ])
+[ pkgdbdir="${prefix}/pkgdb" ])
 AC_SUBST(pkgdbdir)
 
 AC_ARG_WITH(ssl,

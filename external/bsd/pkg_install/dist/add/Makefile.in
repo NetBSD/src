@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.in,v 1.1.1.1 2018/02/04 08:20:42 maya Exp $
+# $NetBSD: Makefile.in,v 1.1.1.2 2020/12/18 17:19:16 maya Exp $
 
 srcdir=		@srcdir@
 
@@ -29,7 +29,7 @@ CPPFLAGS+=	-DHAVE_SSL
 .endif
 LIBS+=		@LIBS@
 .else
-LIBS=		-linstall ${STATIC_LIBARCHIVE} @LIBS@
+LIBS=		-linstall ${STATIC_LIBARCHIVE} ${STATIC_LIBARCHIVE_LDADD} @LIBS@
 CPPFLAGS+=	-DBOOTSTRAP
 .endif
 

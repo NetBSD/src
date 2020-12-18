@@ -1,7 +1,7 @@
 PKG_ADMIN(1)                General Commands Manual               PKG_ADMIN(1)
 
 NNAAMMEE
-     ppkkgg__aaddmmiinn -- perform various administrative tasks to the pkg system
+     ppkkgg__aaddmmiinn - perform various administrative tasks to the pkg system
 
 SSYYNNOOPPSSIISS
      ppkkgg__aaddmmiinn [--bbqqSSVVvv] [--CC _c_o_n_f_i_g] [--dd _l_s_d_i_r] [--KK _p_k_g___d_b_d_i_r] [--ss _s_f_x___p_a_t_t_e_r_n]
@@ -47,18 +47,20 @@ OOPPTTIIOONNSS
 
      The following commands are supported:
 
-     aauuddiitt [--eess] [--tt _t_y_p_e] [_p_k_g] ...
+     aauuddiitt [--eeiiss] [--tt _t_y_p_e] [_p_k_g] ...
              Check the listed installed packages for vulnerabilities.  If no
              package is given, check all installed packages.  If --ee is given,
              override the CHECK_END_OF_LIFE option from pkg_install.conf(5)
-             with "yes".  If --ss is given, check the signature of the pkg-
-             vulnerabilities file before using it.  --tt restricts the reported
-             vulnerabilities to type _t_y_p_e.
+             with "yes".  If --ii is given, any advisory ignored by IGNORE_URL
+             in pkg_install.conf(5) is included but flagged as "ignored".  If
+             --ss is given, check the signature of the pkg-vulnerabilities file
+             before using it.  --tt restricts the reported vulnerabilities to
+             type _t_y_p_e.
 
-     aauuddiitt--ppkkgg [--eess] [--tt _t_y_p_e] [_p_k_g] ...
+     aauuddiitt--ppkkgg [--eeiiss] [--tt _t_y_p_e] [_p_k_g] ...
              Like aauuddiitt, but check only the given package names or patterns.
 
-     aauuddiitt--bbaattcchh [--eess] [--tt _t_y_p_e] [_p_k_g_-_l_i_s_t] ...
+     aauuddiitt--bbaattcchh [--eeiiss] [--tt _t_y_p_e] [_p_k_g_-_l_i_s_t] ...
              Like aauuddiitt--ppkkgg, but read the package names or patterns one per
              line from the given files.
 
@@ -103,6 +105,9 @@ OOPPTTIIOONNSS
              Print the current value of _v_a_r_i_a_b_l_e as used after parsing the
              configuration file.
 
+     ddiiggeesstt _f_i_l_e _._._.
+             Compute a SHA256 message digest of _f_i_l_e.
+
      dduummpp    Dump the contents of the package database, similar to ppkkgg__iinnffoo
              --FF.  Columns are printed for the key field used in the pkgdb -
              the filename -, and the data field - the package the file belongs
@@ -120,6 +125,10 @@ OOPPTTIIOONNSS
              Print the URL of the best matching package to stdout for each
              pattern.  If a pattern is not matched, it is skipped and the
              command will return a failure.
+
+     ggppgg--ssiiggnn--ppaacckkaaggee ppkkgg ssppkkgg
+             Sign the binary package _p_k_g using GPG and write the result to
+             _s_p_k_g.
 
      llssaallll _/_d_i_r_/_p_k_g_p_a_t_t_e_r_n
 
@@ -173,11 +182,7 @@ OOPPTTIIOONNSS
              uunnsseett to remove a variable.
 
              Packages that are not installed directly by the user but pulled
-             in as dependencies are marked by setting ``automatic=YES''.
-
-     ggppgg--ssiiggnn--ppaacckkaaggee ppkkgg ssppkkgg
-             Sign the binary package _p_k_g using GPG and write the result to
-             _s_p_k_g.
+             in as dependencies are marked by setting "automatic=YES".
 
      xx550099--ssiiggnn--ppaacckkaaggee ppkkgg ssppkkgg kkeeyy cceerrtt
              Sign the binary package _p_k_g using the key _k_e_y and the certificate
@@ -204,4 +209,4 @@ HHIISSTTOORRYY
 AAUUTTHHOORRSS
      The ppkkgg__aaddmmiinn command was written by Hubert Feyrer.
 
-pkgsrc                         December 27, 2014                        pkgsrc
+pkgsrc                         October 8, 2019                          pkgsrc

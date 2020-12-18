@@ -1,8 +1,8 @@
 PKG_DELETE(1)               General Commands Manual              PKG_DELETE(1)
 
 NNAAMMEE
-     ppkkgg__ddeelleettee -- a utility for deleting previously installed software
-     package distributions
+     ppkkgg__ddeelleettee - a utility for deleting previously installed software package
+     distributions
 
 SSYYNNOOPPSSIISS
      ppkkgg__ddeelleettee [--AADDFFffkkNNnnOORRrrVVvv] [--KK _p_k_g___d_b_d_i_r] [--PP _d_e_s_t_d_i_r] [--pp _p_r_e_f_i_x]
@@ -19,7 +19,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 WWAARRNNIINNGG
      _S_i_n_c_e _t_h_e ppkkgg__ddeelleettee _c_o_m_m_a_n_d _m_a_y _e_x_e_c_u_t_e _s_c_r_i_p_t_s _o_r _p_r_o_g_r_a_m_s _p_r_o_v_i_d_e_d _b_y
-     _a _p_a_c_k_a_g_e _f_i_l_e_, _y_o_u_r _s_y_s_t_e_m _m_a_y _b_e _s_u_s_c_e_p_t_i_b_l_e _t_o _`_`_T_r_o_j_a_n _h_o_r_s_e_s_'_' _o_r
+     _a _p_a_c_k_a_g_e _f_i_l_e_, _y_o_u_r _s_y_s_t_e_m _m_a_y _b_e _s_u_s_c_e_p_t_i_b_l_e _t_o _"_T_r_o_j_a_n _h_o_r_s_e_s_" _o_r
      _o_t_h_e_r _s_u_b_t_l_e _a_t_t_a_c_k_s _f_r_o_m _m_i_s_c_r_e_a_n_t_s _w_h_o _c_r_e_a_t_e _d_a_n_g_e_r_o_u_s _p_a_c_k_a_g_e _f_i_l_e_s_.
 
      _Y_o_u _a_r_e _a_d_v_i_s_e_d _t_o _v_e_r_i_f_y _t_h_e _c_o_m_p_e_t_e_n_c_e _a_n_d _i_d_e_n_t_i_t_y _o_f _t_h_o_s_e _w_h_o

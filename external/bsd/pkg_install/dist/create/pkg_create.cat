@@ -1,10 +1,10 @@
 PKG_CREATE(1)               General Commands Manual              PKG_CREATE(1)
 
 NNAAMMEE
-     ppkkgg__ccrreeaattee -- a utility for creating software package distributions
+     ppkkgg__ccrreeaattee - a utility for creating software package distributions
 
 SSYYNNOOPPSSIISS
-     ppkkgg__ccrreeaattee [--llOOUUVVvv] [--BB _b_u_i_l_d_-_i_n_f_o_-_f_i_l_e] [--bb _b_u_i_l_d_-_v_e_r_s_i_o_n_-_f_i_l_e]
+     ppkkgg__ccrreeaattee [--llOOVVvv] [--BB _b_u_i_l_d_-_i_n_f_o_-_f_i_l_e] [--bb _b_u_i_l_d_-_v_e_r_s_i_o_n_-_f_i_l_e]
                 [--CC _c_p_k_g_s] [--DD _d_i_s_p_l_a_y_f_i_l_e] [--FF _c_o_m_p_r_e_s_s_i_o_n] [--gg _g_r_o_u_p]
                 [--II _r_e_a_l_p_r_e_f_i_x] [--ii _i_s_c_r_i_p_t] [--KK _p_k_g___d_b_d_i_r] [--kk _d_s_c_r_i_p_t]
                 [--nn _p_r_e_s_e_r_v_e_-_f_i_l_e] [--PP _d_p_k_g_s] [--pp _p_r_e_f_i_x] [--SS _s_i_z_e_-_a_l_l_-_f_i_l_e]
@@ -144,9 +144,6 @@ OOPPTTIIOONNSS
              in the situation where space in your _/_t_m_p directory is limited.
              Be sure to leave some number of `X' characters for mktemp(3) to
              fill in with a unique ID.
-
-     --UU      Do not update the package file database with any file
-             information.
 
      --uu _o_w_n_e_r
              Make _o_w_n_e_r the default owner instead of extracting it from the
