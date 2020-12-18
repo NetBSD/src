@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.234 2020/12/13 20:09:02 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.235 2020/12/18 18:17:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -136,8 +136,12 @@
  * A boolean type is defined as an integer, not an enum, for historic reasons.
  * The only allowed values are the constants TRUE and FALSE (1 and 0).
  */
-
-#ifdef USE_DOUBLE_BOOLEAN
+#if defined(USE_C99_BOOLEAN)
+#include <stdbool.h>
+typedef bool Boolean;
+#define FALSE false
+#define TRUE true
+#elif defined(USE_DOUBLE_BOOLEAN)
 /* During development, to find type mismatches in function declarations. */
 typedef double Boolean;
 #define TRUE 1.0
