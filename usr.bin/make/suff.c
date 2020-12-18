@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.330 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.331 2020/12/18 15:47:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.330 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.331 2020/12/18 15:47:34 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2012,7 +2012,7 @@ CandidateSearcher_CleanUp(CandidateSearcher *cs)
  * is set for the given node and all its implied children.
  *
  * The path found by this target is the shortest path in the transformation
- * graph, which may pass through non-existent targets, to an existing target.
+ * graph, which may pass through nonexistent targets, to an existing target.
  * The search continues on all paths from the root suffix until a file is
  * found. I.e. if there's a path .o -> .c -> .l -> .l,v from the root and the
  * .l,v file exists but the .c and .l files don't, the search will branch out
