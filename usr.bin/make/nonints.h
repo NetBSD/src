@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.172 2020/12/15 20:39:15 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.173 2020/12/18 14:36:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -218,7 +218,7 @@ void Targ_SetMain(GNode *);
 void Targ_PrintCmds(GNode *);
 void Targ_PrintNode(GNode *, int);
 void Targ_PrintNodes(GNodeList *, int);
-char *Targ_FmtTime(time_t);
+const char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
