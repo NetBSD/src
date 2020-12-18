@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.485 2020/12/18 19:02:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.486 2020/12/18 23:13:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.485 2020/12/18 19:02:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.486 2020/12/18 23:13:45 rillig Exp $");
 
 /* types and constants */
 
@@ -2657,7 +2657,7 @@ ParseEOF(void)
 }
 
 static void
-UnescapeBackslash(char **out_tp, char **out_ptr, char **inout_escaped,
+UnescapeBackslash(char **out_tp, char **inout_escaped,
 		  char *const line) {
 	char *tp, *ptr;
 	char *escaped = *inout_escaped;
@@ -2708,7 +2708,6 @@ UnescapeBackslash(char **out_tp, char **out_ptr, char **inout_escaped,
 	}
 
 	*out_tp = tp;
-	*out_ptr = ptr;
 	*inout_escaped = escaped;
 }
 
@@ -2842,7 +2841,7 @@ ParseGetLine(GetLineMode mode)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(&tp, &ptr, &escaped, line);
+	UnescapeBackslash(&tp, &escaped, line);
 
 	TrimRight(&tp, escaped);
 
