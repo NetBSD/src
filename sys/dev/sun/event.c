@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.24 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: event.c,v 1.25 2020/12/18 01:54:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.24 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.25 2020/12/18 01:54:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -173,7 +173,7 @@ filt_evrdetach(struct knote *kn)
 	int s;
 
 	s = splev();
-	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&ev->ev_sel, kn);
 	splx(s);
 }
 
@@ -206,12 +206,10 @@ static const struct filterops ev_filtops = {
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)
 {
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->ev_sel.sel_klist;
 		kn->kn_fop = &ev_filtops;
 		break;
 
@@ -222,7 +220,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 	kn->kn_hook = ev;
 
 	s = splev();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&ev->ev_sel, kn);
 	splx(s);
 
 	return (0);
