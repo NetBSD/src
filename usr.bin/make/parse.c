@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.484 2020/12/18 18:23:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.485 2020/12/18 19:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.484 2020/12/18 18:23:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.485 2020/12/18 19:02:37 rillig Exp $");
 
 /* types and constants */
 
@@ -2656,6 +2656,75 @@ ParseEOF(void)
 	return TRUE;
 }
 
+static void
+UnescapeBackslash(char **out_tp, char **out_ptr, char **inout_escaped,
+		  char *const line) {
+	char *tp, *ptr;
+	char *escaped = *inout_escaped;
+
+	tp = ptr = escaped;
+	escaped = line;
+	for (;;) {
+		char ch = *ptr++;
+		if (ch != '\\') {
+			if (ch == '\0')
+				break;
+			*tp++ = ch;
+			continue;
+		}
+
+		ch = *ptr++;
+		if (ch == '\0') {
+			/* Delete '\\' at end of buffer */
+			tp--;
+			break;
+		}
+
+		/* Delete '\\' from before '#' on non-command lines */
+		if (ch == '#' && line[0] != '\t') {
+			*tp++ = ch;
+			continue;
+		}
+
+		if (ch != '\n') {
+			/* Leave '\\' in buffer for later */
+			*tp++ = '\\';
+			/*
+			 * Make sure we don't delete an escaped ' ' from the
+			 * line end.
+			 */
+			escaped = tp + 1;
+			*tp++ = ch;
+			continue;
+		}
+
+		/*
+		 * Escaped '\n' -- replace following whitespace with a single
+		 * ' '.
+		 */
+		pp_skip_hspace(&ptr);
+		ch = ' ';
+		*tp++ = ch;
+	}
+
+	*out_tp = tp;
+	*out_ptr = ptr;
+	*inout_escaped = escaped;
+}
+
+/* Delete any trailing spaces - eg from empty continuations */
+static void
+TrimRight(char **inout_tp, const char * const escaped)
+{
+	char *tp = *inout_tp;
+
+	while (tp > escaped && ch_isspace(tp[-1]))
+		tp--;
+	*tp = '\0';
+
+	*inout_tp = tp;
+}
+
 typedef enum GetLineMode {
 	PARSE_NORMAL,
 	PARSE_RAW,
@@ -2773,51 +2842,10 @@ ParseGetLine(GetLineMode mode)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	tp = ptr = escaped;
-	escaped = line;
-	for (;; *tp++ = ch) {
-		ch = *ptr++;
-		if (ch != '\\') {
-			if (ch == '\0')
-				break;
-			continue;
-		}
+	UnescapeBackslash(&tp, &ptr, &escaped, line);
 
-		ch = *ptr++;
-		if (ch == '\0') {
-			/* Delete '\\' at end of buffer */
-			tp--;
-			break;
-		}
+	TrimRight(&tp, escaped);
 
-		if (ch == '#' && line[0] != '\t')
-			/* Delete '\\' from before '#' on non-command lines */
-			continue;
-
-		if (ch != '\n') {
-			/* Leave '\\' in buffer for later */
-			*tp++ = '\\';
-			/*
-			 * Make sure we don't delete an escaped ' ' from the
-			 * line end.
-			 */
-			escaped = tp + 1;
-			continue;
-		}
-
-		/*
-		 * Escaped '\n' -- replace following whitespace with a single
-		 * ' '.
-		 */
-		pp_skip_hspace(&ptr);
-		ch = ' ';
-	}
-
-	/* Delete any trailing spaces - eg from empty continuations */
-	while (tp > escaped && ch_isspace(tp[-1]))
-		tp--;
-
-	*tp = '\0';
 	return line;
 }
 
