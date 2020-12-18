@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.84 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.85 2020/12/18 01:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.84 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.85 2020/12/18 01:40:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -675,7 +675,7 @@ filt_uscannerdetach(struct knote *kn)
 {
 	struct uscanner_softc *sc = kn->kn_hook;
 
-	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_selq, kn);
 }
 
 static const struct filterops uscanner_seltrue_filtops = {
@@ -689,7 +689,7 @@ int
 uscannerkqfilter(dev_t dev, struct knote *kn)
 {
 	struct uscanner_softc *sc;
-	struct klist *klist;
+	struct selinfo *sip;
 
 	sc = device_lookup_private(&uscanner_cd, USCANNERUNIT(dev));
 
@@ -704,7 +704,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		 * yield any data or a write will happen.
 		 * Pretend they will.
 		 */
-		klist = &sc->sc_selq.sel_klist;
+		sip = &sc->sc_selq;
 		kn->kn_fop = &uscanner_seltrue_filtops;
 		break;
 
@@ -714,7 +714,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.238 2020/08/02 07:19:39 maxv Exp $	*/
+/*	$NetBSD: bpf.c,v 1.239 2020/12/18 01:31:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.238 2020/08/02 07:19:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.239 2020/12/18 01:31:49 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1528,7 +1528,7 @@ filt_bpfrdetach(struct knote *kn)
 	struct bpf_d *d = kn->kn_hook;
 
 	mutex_enter(d->bd_buf_mtx);
-	SLIST_REMOVE(&d->bd_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&d->bd_sel, kn);
 	mutex_exit(d->bd_buf_mtx);
 }
 
@@ -1558,23 +1558,20 @@ static int
 bpf_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct bpf_d *d = fp->f_bpf;
-	struct klist *klist;
 
-	mutex_enter(d->bd_buf_mtx);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &d->bd_sel.sel_klist;
 		kn->kn_fop = &bpfread_filtops;
 		break;
 
 	default:
-		mutex_exit(d->bd_buf_mtx);
 		return (EINVAL);
 	}
 
 	kn->kn_hook = d;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	mutex_enter(d->bd_buf_mtx);
+	selrecord_knote(&d->bd_sel, kn);
 	mutex_exit(d->bd_buf_mtx);
 
 	return (0);

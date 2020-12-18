@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.161 2020/09/27 19:25:54 roy Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.162 2020/12/18 01:31:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.161 2020/09/27 19:25:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.162 2020/12/18 01:31:49 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1051,7 +1051,7 @@ filt_tunrdetach(struct knote *kn)
 	struct tun_softc *tp = kn->kn_hook;
 
 	mutex_enter(&tp->tun_lock);
-	SLIST_REMOVE(&tp->tun_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&tp->tun_rsel, kn);
 	mutex_exit(&tp->tun_lock);
 }
 
@@ -1099,7 +1099,6 @@ int
 tunkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tun_softc *tp;
-	struct klist *klist;
 	int rv = 0;
 
 	tp = tun_find_unit(dev);
@@ -1108,12 +1107,10 @@ tunkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &tp->tun_rsel.sel_klist;
 		kn->kn_fop = &tunread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &tp->tun_rsel.sel_klist;
 		kn->kn_fop = &tun_seltrue_filtops;
 		break;
 
@@ -1124,7 +1121,7 @@ tunkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = tp;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&tp->tun_rsel, kn);
 
 out:
 	mutex_exit(&tp->tun_lock);
