@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.83 2020/12/12 09:27:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.84 2020/12/18 07:21:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,16 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.83 2020/12/12 09:27:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.84 2020/12/18 07:21:58 skrll Exp $");
 
-#include "opt_machdep.h"
-#include "opt_bootconfig.h"
-#include "opt_ddb.h"
-#include "opt_md.h"
 #include "opt_arm_debug.h"
-#include "opt_multiprocessor.h"
+#include "opt_bootconfig.h"
 #include "opt_cpuoptions.h"
+#include "opt_ddb.h"
 #include "opt_efi.h"
+#include "opt_machdep.h"
+#include "opt_md.h"
+#include "opt_multiprocessor.h"
 
 #include "genfb.h"
 #include "ukbd.h"
