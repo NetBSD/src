@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.92 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: ch.c,v 1.93 2020/12/18 01:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.92 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.93 2020/12/18 01:55:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ filt_chdetach(struct knote *kn)
 {
 	struct ch_softc *sc = kn->kn_hook;
 
-	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_selq, kn);
 }
 
 static int
@@ -505,16 +505,13 @@ static int
 chkqfilter(dev_t dev, struct knote *kn)
 {
 	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &chread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &chwrite_filtops;
 		break;
 
@@ -524,7 +521,7 @@ chkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_selq, kn);
 
 	return (0);
 }
