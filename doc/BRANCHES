@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.355 2020/11/01 15:41:56 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.356 2020/12/18 01:08:13 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -730,13 +730,15 @@ Start Date:	Sun Nov 1 2020
 End Date:
 Base Tag:	thorpej-futex-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
-Scope:		src/sys src/tests/lib/libc/sys
+Scope:		src/sys src/tests/lib/libc/sys src/distrib/sets/lists
 Note:		Normal futex operataions pass the test suite, but there are
 		issues with Linux compatibility currently, that need to be
 		addressed before merging.  Also includes new NetBSD extensions
 		to the futex interface to support reader/writer locks.  Those
 		changes can be discounted in favor of fixing the standard
 		futex operations with respect to Linux compatibility.
+		Also includes implementations of eventfd and timerfd, as
+		well as some additional improvements to COMPAT_LINUX{,32}.
 
 Branch:  	wrstuden-fixsa
 Description:	Fix a number of issues present with Scheduler Activations.
