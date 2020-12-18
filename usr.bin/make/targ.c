@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.157 2020/12/18 14:36:46 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.158 2020/12/18 14:46:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.157 2020/12/18 14:36:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.158 2020/12/18 14:46:44 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -401,17 +401,15 @@ Targ_PrintCmds(GNode *gn)
 
 /*
  * Format a modification time in some reasonable way and return it.
- * The time is placed in a static area, so it is overwritten with each call.
+ * The formatted time is placed in a static area, so it is overwritten
+ * with each call.
  */
 const char *
 Targ_FmtTime(time_t tm)
 {
-	struct tm *parts;
 	static char buf[128];
 
-	/* TODO: Add special case for 0, which often means ENOENT, to make it
-	 * independent from time zones. */
-	parts = localtime(&tm);
+	struct tm *parts = localtime(&tm);
 	(void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
 	return buf;
 }
