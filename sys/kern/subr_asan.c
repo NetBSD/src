@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.26 2020/09/10 14:10:46 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.27 2020/12/18 15:33:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.26 2020/09/10 14:10:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.27 2020/12/18 15:33:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.26 2020/09/10 14:10:46 maxv Exp $");
 #include <sys/asan.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 #ifdef KASAN_PANIC
 #define REPORT panic
@@ -391,6 +396,10 @@ kasan_shadow_check(unsigned long addr, size_t size, bool write,
 
 	if (__predict_false(!kasan_enabled))
 		return;
+#ifdef DDB
+	if (__predict_false(db_recover != NULL))
+		return;
+#endif
 	if (__predict_false(size == 0))
 		return;
 	if (__predict_false(kasan_md_unsupported(addr)))
