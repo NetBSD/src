@@ -3521,7 +3521,7 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = buf, .msg_controllen = sizeof(cmsgbuf.buf),
+	    .msg_control = cmsgbuf.buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	int s;
 	ssize_t bytes;
