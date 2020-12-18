@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.5 2020/12/12 18:19:34 christos Exp $	*/
+/*	$NetBSD: plist.c,v 1.6 2020/12/18 17:32:42 maya Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: plist.c,v 1.5 2020/12/12 18:19:34 christos Exp $");
+__RCSID("$NetBSD: plist.c,v 1.6 2020/12/18 17:32:42 maya Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance

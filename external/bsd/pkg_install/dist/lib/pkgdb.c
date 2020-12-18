@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.4 2020/12/05 16:21:26 wiz Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.5 2020/12/18 17:32:42 maya Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.4 2020/12/05 16:21:26 wiz Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.5 2020/12/18 17:32:42 maya Exp $");
 
 /*-
  * Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
@@ -300,20 +300,32 @@ pkgdb_refcount_dir(void)
 const char *
 pkgdb_get_dir(void)
 {
-	/* Except for the return at this end, this code is for
-	   migration from the previous location /var/db/pkg to the new
-	   default (December 2020). */
+
+#ifdef NETBSD
+	/* 
+	 * NetBSD upgrade case.
+	 * NetBSD used to ship pkg_install with /var/db/pkg as
+	 * the default. We support continuing to install to
+	 * this location.
+	 *
+	 * This is NetBSD-specific because we can't assume that
+	 * /var/db/pkg is pkgsrc-owned on other systems (OpenBSD,
+	 * FreeBSD...)
+	 *
+	 * XXX: once postinstall is taught to automatically
+	 * handle migration, we can deprecate this behaviour.
+	 */
+
+#define PREVIOUS_LOG_DIR	"/var/db/pkg"
+	static char pkgdb_dir_previous[] = PREVIOUS_LOG_DIR;
 
 	struct stat sb;
 	if (strcmp(pkgdb_dir, DEF_LOG_DIR) == 0 &&
 	    stat(pkgdb_dir, &sb) == -1 && errno == ENOENT &&
-	    stat("/var/db/pkg", &sb) == 0) {
-		errx(EXIT_FAILURE,
-		     "The default PKG_DBDIR has changed, but this installation still uses the old one.\n"
-		     "Please move the databases and re-run this command:\n"
-		     "\tmv /var/db/pkg " DEF_LOG_DIR "\n"
-		     "\tmv /var/db/pkg.refcount " DEF_LOG_DIR ".refcount");
+	    stat(PREVIOUS_LOG_DIR, &sb) == 0) {
+		return pkgdb_dir_previous;
 	}
+#endif
 
         return pkgdb_dir;
 }
