@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.157 2020/08/18 14:32:34 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.158 2020/12/18 01:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.157 2020/08/18 14:32:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.158 2020/12/18 01:40:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2031,7 +2031,7 @@ filt_ugenrdetach(struct knote *kn)
 	struct ugen_softc *sc = sce->sc;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_REMOVE(&sce->rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sce->rsel, kn);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -2168,7 +2168,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 {
 	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
-	struct klist *klist;
+	struct selinfo *sip;
 	int error;
 
 	if ((sc = ugenif_acquire(UGENUNIT(dev))) == NULL)
@@ -2187,7 +2187,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			goto out;
 		}
 
-		klist = &sce->rsel.sel_klist;
+		sip = &sce->rsel;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 			kn->kn_fop = &ugenread_intr_filtops;
@@ -2211,7 +2211,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			goto out;
 		}
 
-		klist = &sce->rsel.sel_klist;
+		sip = &sce->rsel;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 		case UE_ISOCHRONOUS:
@@ -2236,7 +2236,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sce;
 
 	mutex_enter(&sc->sc_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	mutex_exit(&sc->sc_lock);
 
 	error = 0;

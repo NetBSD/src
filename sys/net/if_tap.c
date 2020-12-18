@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.120 2020/10/30 22:51:08 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.121 2020/12/18 01:31:49 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.120 2020/10/30 22:51:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.121 2020/12/18 01:31:49 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1227,7 +1227,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 
 	kn->kn_hook = sc;
 	mutex_spin_enter(&sc->sc_lock);
-	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	mutex_spin_exit(&sc->sc_lock);
 	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
@@ -1240,7 +1240,7 @@ tap_kqdetach(struct knote *kn)
 
 	KERNEL_LOCK(1, NULL);
 	mutex_spin_enter(&sc->sc_lock);
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	mutex_spin_exit(&sc->sc_lock);
 	KERNEL_UNLOCK_ONE(NULL);
 }
