@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.85 2020/12/18 07:34:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.86 2020/12/18 07:37:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.85 2020/12/18 07:34:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.86 2020/12/18 07:37:21 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -627,6 +627,8 @@ initarm(void *arg)
 	parse_mi_bootargs(boot_args);
 
 	VPRINTF("Memory regions:\n");
+
+	/* Populate fdt_physmem / nfdt_physmem for initarm_common */
 	fdt_memory_foreach(fdt_add_boot_physmem, &memory_size);
 
 	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
