@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.65 2020/10/30 22:19:18 christos Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.66 2020/12/18 01:46:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.65 2020/10/30 22:19:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.66 2020/12/18 01:46:39 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -538,8 +538,7 @@ filt_sysmon_power_rdetach(struct knote *kn)
 {
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
-	SLIST_REMOVE(&sysmon_power_event_queue_selinfo.sel_klist,
-	    kn, knote, kn_selnext);
+	selremove_knote(&sysmon_power_event_queue_selinfo, kn);
 	mutex_exit(&sysmon_power_event_queue_mtx);
 }
 
@@ -576,16 +575,13 @@ static const struct filterops sysmon_power_write_filtops = {
 int
 sysmonkqfilter_power(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sysmon_power_event_queue_selinfo.sel_klist;
 		kn->kn_fop = &sysmon_power_read_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sysmon_power_event_queue_selinfo.sel_klist;
 		kn->kn_fop = &sysmon_power_write_filtops;
 		break;
 
@@ -594,7 +590,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 	}
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sysmon_power_event_queue_selinfo, kn);
 	mutex_exit(&sysmon_power_event_queue_mtx);
 
 	return 0;
