@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.46 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: oboe.c,v 1.47 2020/12/18 02:55:32 thorpej Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.46 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.47 2020/12/18 02:55:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ filt_oboerdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	splx(s);
 }
 
@@ -490,7 +490,7 @@ filt_oboewdetach(struct knote *kn)
 	int s;
 
 	s = splir();
-	SLIST_REMOVE(&sc->sc_wsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_wsel, kn);
 	splx(s);
 }
 
@@ -512,16 +512,16 @@ static int
 oboe_kqfilter(void *h, struct knote *kn)
 {
 	struct oboe_softc *sc = h;
-	struct klist *klist;
+	struct selinfo *sip;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
+		sip = &sc->sc_rsel;
 		kn->kn_fop = &oboeread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.sel_klist;
+		sip = &sc->sc_wsel;
 		kn->kn_fop = &oboewrite_filtops;
 		break;
 	default:
@@ -531,7 +531,7 @@ oboe_kqfilter(void *h, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = splir();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	splx(s);
 
 	return (0);
