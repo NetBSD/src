@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.230 2020/12/18 14:46:44 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.231 2020/12/18 15:47:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.230 2020/12/18 14:46:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.231 2020/12/18 15:47:34 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -202,7 +202,7 @@ IsOODateRegular(GNode *gn)
 	}
 
 	if (gn->mtime == 0 && !(gn->type & OP_OPTIONAL)) {
-		DEBUG0(MAKE, "non-existent and no sources...");
+		DEBUG0(MAKE, "nonexistent and no sources...");
 		return TRUE;
 	}
 
@@ -241,7 +241,7 @@ GNode_IsOODate(GNode *gn)
 				debug_printf("modified %s...",
 				    Targ_FmtTime(gn->mtime));
 			else
-				debug_printf("non-existent...");
+				debug_printf("nonexistent...");
 		}
 	}
 
@@ -275,7 +275,7 @@ GNode_IsOODate(GNode *gn)
 
 		/*
 		 * always out of date if no children and :: target
-		 * or non-existent.
+		 * or nonexistent.
 		 */
 		oodate = (gn->mtime == 0 || Arch_LibOODate(gn) ||
 			  (gn->youngestChild == NULL &&
@@ -309,10 +309,10 @@ GNode_IsOODate(GNode *gn)
 		oodate = TRUE;
 	} else {
 		/*
-		 * When a non-existing child with no sources
+		 * When a nonexistent child with no sources
 		 * (such as a typically used FORCE source) has been made and
 		 * the target of the child (usually a directory) has the same
-		 * timestamp as the timestamp just given to the non-existing
+		 * timestamp as the timestamp just given to the nonexistent
 		 * child after it was considered made.
 		 */
 		if (DEBUG(MAKE)) {
