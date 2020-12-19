@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.196 2020/10/31 22:43:01 uwe Exp $
+.\"	$NetBSD: ddb.4,v 1.197 2020/12/19 23:38:21 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd August 23, 2020
+.Dd December 19, 2020
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -584,7 +584,7 @@ is specified, the complete vnode list is printed.
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
 .Ic show page .
-.It Ic show all pools Ns Op Cm /clp
+.It Ic show all pools Ns Op Cm /clpsS
 Display all pool information.
 Modifiers are the same as
 .Ic show pool .
@@ -721,7 +721,7 @@ If
 is specified, the complete page is printed.
 .It Ic show panic
 Print the current "panic" string.
-.It Ic show pool Ns Oo Cm /clp Oc Ar address
+.It Ic show pool Ns Oo Cm /clpsS Oc Ar address
 Print the pool at
 .Ar address .
 Valid modifiers:
@@ -732,6 +732,13 @@ Print the cachelist and its statistics for this pool.
 Print the log entries for this pool.
 .It Cm /p
 Print the pagelist for this pool.
+.It Cm /s
+Print a short (one line) list per pool, showing the wait channel, pool
+address, allocation size, alignment, allocated pages, allocated items,
+consumed items, allocation requests, allocation frees, pages allocated,
+pages freed, and currently idle pages, respectively.
+.It Cm /S
+Skip pools with zero allocations.
 .El
 .It Ic show proc Ns Oo Cm /ap Oc Ar address | pid
 Show information about a process and its LWPs.
