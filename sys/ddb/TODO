@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.17 2005/12/11 12:20:53 christos Exp $
+$NetBSD: TODO,v 1.18 2020/12/19 23:32:36 mrg Exp $
 
 In rough order.
 
@@ -13,7 +13,7 @@ done	examine /m (hex + character dump) doesn't work.
 4.	"dot", "next", and "last" are not set properly and are usually
 	the same.
 
-5.	The vax port supports decimal pids in "trace", etc. This should be
+done	The vax port supports decimal pids in "trace", etc. This should be
 	MI or not exist at all.
 
 6.	double-quote delimited strings don't work in "print", nor do
@@ -26,14 +26,14 @@ dead	Have "ps" print pids with a 0t prefix to reduce radix
 
 done	"set" should display the old value as "write" does.
 
-3.	Support 64-bit longs in "write". /L or /q? both? long versus quad?
+done	Support 64-bit longs in "write". /L or /q? both? long versus quad?
 
 4.	Note only some radixes are supported.
 
-5.	Allow a mechanism for DDB to not fail under X (on the i386).
+done	Allow a mechanism for DDB to not fail under X (on the i386).
 	Probably just skip DDB in such cases.
 
-6.	Enable DDB in GENERIC on all architectures not starved for
+done	Enable DDB in GENERIC on all architectures not starved for
 	space.
 
 done	Numbers starting with [a-f] should work, but symbols
@@ -69,9 +69,9 @@ done	Numbers starting with [a-f] should work, but symbols
 
 17.	option? To not lose system time when in ddb [reset clock on exit?]
 
-18.	Consider an XSERVER_DDB option [is it worth it?]
+dead	Consider an XSERVER_DDB option [is it worth it?]
 
-19.	Eliminate vestigal DDB-specific kprintf() format specifiers
+done	Eliminate vestigal DDB-specific kprintf() format specifiers
 
 20.	Figure out what's up with "ed_style"
 
@@ -88,21 +88,21 @@ done	Numbers starting with [a-f] should work, but symbols
 	indicating success/failure rather than simply setting "dot".
 	Perhaps verbose by default unless called from a macro (ugh?).
 
-23.	kern/9544, some symbolic representation of boot flags
+done	kern/9544, some symbolic representation of boot flags
 	suitable for documentation (esp. for RB_NOSYNC).
 
-24.	Soren requests in-band symbol table storage for ddb.
+done	Soren requests in-band symbol table storage for ddb.
 	"dbsym"? Needs investigation/thought.
 
 25.	Support multiple address spaces (e.g. io space).
 	Suggested by eeh in <Pine.NEB.4.21.0005250944210.25299-100000@ehorvath>
 
-26.	Expand help to provide usage/synopsis per-command.
+done	Expand help to provide usage/synopsis per-command.
 
 27.	Ensure MD commands have consistent names and factor out
 	common code.
 
-28.	Some way to track symbol table failures, since the message buffer
+done	Some way to track symbol table failures, since the message buffer
 	isn't available when we detect them.
 
 29.	Make "workXX" variables work.
