@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.487 2020/12/18 23:18:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.488 2020/12/19 00:02:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.487 2020/12/18 23:18:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.488 2020/12/19 00:02:34 rillig Exp $");
 
 /* types and constants */
 
@@ -2657,7 +2657,7 @@ ParseEOF(void)
 }
 
 static void
-UnescapeBackslash(char **out_tp, char *escaped, char *const line)
+UnescapeBackslash(char *escaped, char *const line)
 {
 	char *tp, *ptr;
 
@@ -2710,8 +2710,6 @@ UnescapeBackslash(char **out_tp, char *escaped, char *const line)
 	while (tp > escaped && ch_isspace(tp[-1]))
 		tp--;
 	*tp = '\0';
-
-	*out_tp = tp;
 }
 
 typedef enum GetLineMode {
@@ -2730,7 +2728,6 @@ ParseGetLine(GetLineMode mode)
 	char *line_end;
 	char *escaped;
 	char *comment;
-	char *tp;
 
 	/* Loop through blank lines and comment lines */
 	for (;;) {
@@ -2831,7 +2828,7 @@ ParseGetLine(GetLineMode mode)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(&tp, escaped, line);
+	UnescapeBackslash(escaped, line);
 
 	return line;
 }
