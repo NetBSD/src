@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.11 2020/05/02 19:09:56 thorpej Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.12 2020/12/19 18:09:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.11 2020/05/02 19:09:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.12 2020/12/19 18:09:44 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -237,7 +237,7 @@ ata_timeout(void *v)
 
 	if (chp->ch_flags & ATACH_RECOVERING) {
 		/* Do nothing, recovery will requeue the xfers */
-		return;
+		goto done;
 	}
 
 	/*
@@ -259,6 +259,7 @@ ata_timeout(void *v)
 		xfer->ops->c_intr(xfer->c_chp, xfer, 0);
 	}
 
+done:
 	splx(s);
 }
 
