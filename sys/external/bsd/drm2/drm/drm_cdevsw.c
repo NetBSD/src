@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.14 2019/04/16 10:00:04 mrg Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.15 2020/12/19 22:09:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.14 2019/04/16 10:00:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.15 2020/12/19 22:09:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -404,7 +404,7 @@ drm_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_fop = &drm_filtops;
 		kn->kn_hook = file;
 		spin_lock_irqsave(&dev->event_lock, irqflags);
-		SLIST_INSERT_HEAD(&file->event_selq.sel_klist, kn, kn_selnext);
+		selrecord_knote(&file->event_selq, kn);
 		spin_unlock_irqrestore(&dev->event_lock, irqflags);
 		return 0;
 	case EVFILT_WRITE:
@@ -421,7 +421,7 @@ filt_drm_detach(struct knote *kn)
 	unsigned long irqflags;
 
 	spin_lock_irqsave(&dev->event_lock, irqflags);
-	SLIST_REMOVE(&file->event_selq.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&file->event_selq, kn);
 	spin_unlock_irqrestore(&dev->event_lock, irqflags);
 }
 
