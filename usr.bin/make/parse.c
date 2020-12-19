@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.500 2020/12/19 17:49:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.501 2020/12/19 17:54:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.500 2020/12/19 17:49:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.501 2020/12/19 17:54:29 rillig Exp $");
 
 /* types and constants */
 
@@ -2865,6 +2865,32 @@ ParseGetLine(GetLineMode mode)
 }
 
 static Boolean
+ParseSkippedBranches(void)
+{
+	char *line;
+
+	while ((line = ParseGetLine(GLM_DOT)) != NULL) {
+		if (Cond_EvalLine(line) == COND_PARSE)
+			break;
+		/*
+		 * TODO: Check for typos in .elif directives
+		 * such as .elsif or .elseif.
+		 *
+		 * This check will probably duplicate some of
+		 * the code in ParseLine.  Most of the code
+		 * there cannot apply, only ParseVarassign and
+		 * ParseDependency can, and to prevent code
+		 * duplication, these would need to be called
+		 * with a flag called onlyCheckSyntax.
+		 *
+		 * See directive-elif.mk for details.
+		 */
+	}
+
+	return line != NULL;
+}
+
+static Boolean
 ParseForLoop(const char *line)
 {
 	int rval;
@@ -2923,24 +2949,7 @@ ParseReadLine(void)
 		 */
 		switch (Cond_EvalLine(line)) {
 		case COND_SKIP:
-			while ((line = ParseGetLine(GLM_DOT)) != NULL) {
-				if (Cond_EvalLine(line) == COND_PARSE)
-					break;
-				/*
-				 * TODO: Check for typos in .elif directives
-				 * such as .elsif or .elseif.
-				 *
-				 * This check will probably duplicate some of
-				 * the code in ParseLine.  Most of the code
-				 * there cannot apply, only ParseVarassign and
-				 * ParseDependency can, and to prevent code
-				 * duplication, these would need to be called
-				 * with a flag called onlyCheckSyntax.
-				 *
-				 * See directive-elif.mk for details.
-				 */
-			}
-			if (line == NULL)
+			if (!ParseSkippedBranches())
 				return NULL;
 			continue;
 		case COND_PARSE:
