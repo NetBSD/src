@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.24 2020/12/18 12:29:41 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.25 2020/12/19 13:56:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1253,4 +1253,33 @@ external/bsd/dhcpcd/dist/src/dhcp.c		(apply patch)
 
 	Fix reading of UDP messages via inet socket rather than BPF.
 	[roy, ticket #1154]
+
+external/bsd/pkg_install/dist/add/perform.c     up to 1.8
+external/bsd/pkg_install/dist/lib/lib.h         up to 1.11
+external/bsd/pkg_install/dist/lib/parse-config.c up to 1.4
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in up to 1.4
+external/bsd/pkg_install/dist/lib/pkgdb.c       up to 1.5
+external/bsd/pkg_install/dist/lib/plist.c       up to 1.6
+external/bsd/pkg_install/dist/lib/version.h     up to 1.19
+doc/3RDPARTY					(manually edited)
+
+	Merge pkg_install 20201218, providing compatibility for existing
+	package installs using /var/db/pkg.
+	[maya, #1155]
+
+sys/dev/audio/audio.c				1.80,1.81
+
+	PR 55848: fix a few error cases (mixer not stopped, resource
+	leaks).
+	[isaki, ticket #1156]
+
+share/man/man4/audio.4				1.104
+
+	Adjust audio(4) after pullup of audio.c rev. 1.65 in ticket #909.
+	[isaki, ticket #1157]
+
+sys/dev/audio/audio.c				1.83
+
+	Avoid a deadlock in audiodetach.
+	[isaki, ticket #1158]
 
