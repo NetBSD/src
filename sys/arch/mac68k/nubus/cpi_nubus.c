@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.10 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.11 2020/12/19 21:48:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,12 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.10 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.11 2020/12/19 21:48:04 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/event.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
@@ -392,7 +392,7 @@ cpi_open(dev_t device, int flag, int mode, struct lwp *l)
 		printf("\tcpi_open() allocating printer buffer...\n");
 	
 	/* Allocate the driver's line buffer */
-	sc->sc_printbuf = malloc(CPI_BUFSIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_printbuf = kmem_alloc(CPI_BUFSIZE, KM_SLEEP);
 	sc->sc_bufbytes = 0;
 	sc->sc_lpstate = LP_OPEN;
 
@@ -441,7 +441,7 @@ cpi_close(dev_t device, int flag, int mode, struct lwp *l)
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_PCSRA, PCSR_CLR_IP_IUS);
 
 	sc->sc_lpstate = LP_INITIAL;
-	free(sc->sc_printbuf, M_DEVBUF);
+	kmem_free(sc->sc_printbuf, CPI_BUFSIZE);
 	
 	return 0;
 }
