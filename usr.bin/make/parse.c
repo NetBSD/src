@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.489 2020/12/19 00:20:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.490 2020/12/19 00:27:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.489 2020/12/19 00:20:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.490 2020/12/19 00:27:34 rillig Exp $");
 
 /* types and constants */
 
@@ -2661,16 +2661,18 @@ ParseEOF(void)
  * Do not unescape "\#", that's done by UnescapeBackslash.
  */
 static Boolean
-ParseRawLine(char **inout_line, char **out_ptr, char **out_line_end,
+ParseRawLine(char **out_line, char **out_line_end,
 	      char **out_escaped, char **out_comment, char *inout_ch,
 	      IFile *const cf)
 {
-	char *line = *inout_line;
+	char *line = cf->buf_ptr;
 	char *ptr = line;
 	char *line_end = line;
 	char *escaped = NULL;
 	char *comment = NULL;
 	char ch = *inout_ch;
+
+	cf->lineno++;
 
 	for (;;) {
 		if (ptr == cf->buf_end) {
@@ -2720,8 +2722,8 @@ ParseRawLine(char **inout_line, char **out_ptr, char **out_line_end,
 			line_end = ptr;
 	}
 
-	*inout_line = line;
-	*out_ptr = ptr;
+	*out_line = line;
+	cf->buf_ptr = ptr;
 	*out_line_end = line_end;
 	*out_escaped = escaped;
 	*out_comment = comment;
@@ -2795,7 +2797,6 @@ static char *
 ParseGetLine(GetLineMode mode)
 {
 	IFile *cf = CurFile();
-	char *ptr;
 	char ch;
 	char *line;
 	char *line_end;
@@ -2804,14 +2805,8 @@ ParseGetLine(GetLineMode mode)
 
 	/* Loop through blank lines and comment lines */
 	for (;;) {
-		cf->lineno++;
-		line = cf->buf_ptr;
-		if (!ParseRawLine(&line, &ptr, &line_end, &escaped, &comment,
-		    &ch, cf))
+		if (!ParseRawLine(&line, &line_end, &escaped, &comment, &ch, cf))
 			return NULL;
-
-		/* Save next 'to be processed' location */
-		cf->buf_ptr = ptr;
 
 		/* Check we have a non-comment, non-blank line */
 		if (line_end == line || comment == line) {
