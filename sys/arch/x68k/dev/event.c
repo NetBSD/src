@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.16 2020/05/23 23:42:41 ad Exp $ */
+/*	$NetBSD: event.c,v 1.17 2020/12/19 22:16:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.16 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17 2020/12/19 22:16:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -189,7 +189,7 @@ filt_evrdetach(struct knote *kn)
 	struct evvar *ev = kn->kn_hook;
 
 	mutex_enter(ev->ev_lock);
-	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&ev->ev_sel, kn);
 	mutex_exit(ev->ev_lock);
 }
 
@@ -226,11 +226,9 @@ static const struct filterops ev_filtops = {
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)
 {
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->ev_sel.sel_klist;
 		kn->kn_fop = &ev_filtops;
 		break;
 
@@ -241,7 +239,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 	kn->kn_hook = ev;
 
 	mutex_enter(ev->ev_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&ev->ev_sel, kn);
 	mutex_exit(ev->ev_lock);
 
 	return (0);
