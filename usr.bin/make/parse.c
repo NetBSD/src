@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.493 2020/12/19 10:57:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.494 2020/12/19 12:24:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.493 2020/12/19 10:57:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.494 2020/12/19 12:24:46 rillig Exp $");
 
 /* types and constants */
 
@@ -2814,8 +2814,8 @@ ParseGetLine(GetLineMode mode)
 		if (line_end == line || firstComment == line) {
 			if (res == PRLR_EOF)
 				return NULL;
-			/* Parse another line */
-			continue;
+			if (mode != PARSE_RAW)
+				continue;
 		}
 
 		/* We now have a line of data */
