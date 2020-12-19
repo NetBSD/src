@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.83 2020/04/13 10:49:34 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.84 2020/12/19 19:12:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.83 2020/04/13 10:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.84 2020/12/19 19:12:02 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -761,14 +761,10 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 	uint32_t is;
 
 	/*
-	 * Base timeout is specified in ms.
-	 * If we are allowed to sleep, wait a tick each round.
-	 * Otherwise delay for 10ms on each round.
+	 * Base timeout is specified in ms. Delay for 10ms
+	 * on each round.
 	 */
-	if (flags & AT_WAIT)
-		timeout = MAX(1, mstohz(timeout));
-	else
-		timeout = timeout / 10;
+	timeout = timeout / 10;
 
 	AHCI_CMDTBL_SYNC(sc, achp, slot, BUS_DMASYNC_PREWRITE);
 	AHCI_CMDH_SYNC(sc, achp, slot,
