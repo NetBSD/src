@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.502 2020/12/19 20:16:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.503 2020/12/19 22:33:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.502 2020/12/19 20:16:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.503 2020/12/19 22:33:11 rillig Exp $");
 
 /* types and constants */
 
@@ -723,13 +723,16 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 
 /* Parse and handle a .info, .warning or .error directive.
  * For an .error directive, immediately exit. */
-static Boolean
-ParseMessage(ParseErrorLevel level, const char *umsg)
+static void
+ParseMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 {
 	char *xmsg;
 
-	if (umsg[0] == '\0')
-		return FALSE;	/* missing argument */
+	if (umsg[0] == '\0') {
+		Parse_Error(PARSE_FATAL, "Missing argument for \".%s\"",
+		    levelName);
+		return;
+	}
 
 	(void)Var_Subst(umsg, VAR_CMDLINE, VARE_WANTRES, &xmsg);
 	/* TODO: handle errors */
@@ -741,7 +744,6 @@ ParseMessage(ParseErrorLevel level, const char *umsg)
 		PrintOnError(NULL, NULL);
 		exit(1);
 	}
-	return TRUE;
 }
 
 /* Add the child to the parent's children.
@@ -3070,14 +3072,14 @@ ParseDirective(char *line)
 		Var_UnExport(TRUE, arg);
 		return TRUE;
 	} else if (IsDirective(dir, dirlen, "info")) {
-		if (ParseMessage(PARSE_INFO, arg))
-			return TRUE;
+		ParseMessage(PARSE_INFO, "info", arg);
+		return TRUE;
 	} else if (IsDirective(dir, dirlen, "warning")) {
-		if (ParseMessage(PARSE_WARNING, arg))
-			return TRUE;
+		ParseMessage(PARSE_WARNING, "warning", arg);
+		return TRUE;
 	} else if (IsDirective(dir, dirlen, "error")) {
-		if (ParseMessage(PARSE_FATAL, arg))
-			return TRUE;
+		ParseMessage(PARSE_FATAL, "error", arg);
+		return TRUE;
 	}
 	return FALSE;
 }
