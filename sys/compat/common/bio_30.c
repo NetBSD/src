@@ -1,4 +1,4 @@
-/*	$NetBSD: bio_30.c,v 1.4 2019/12/12 02:15:42 pgoyette Exp $ */
+/*	$NetBSD: bio_30.c,v 1.5 2020/12/19 22:10:56 thorpej Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.4 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.5 2020/12/19 22:10:56 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.4 2019/12/12 02:15:42 pgoyette Exp $");
 #include <sys/device.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
@@ -58,33 +58,31 @@ compat_30_bio(void *cookie, u_long cmd, void *addr,
 
 	switch (cmd) {
 	case OBIOCDISK: {
-		struct bioc_disk *bd =
-		    malloc(sizeof(*bd), M_DEVBUF, M_WAITOK|M_ZERO);
+		struct bioc_disk *bd = kmem_zalloc(sizeof(*bd), KM_SLEEP);
 
 		(void)memcpy(bd, addr, sizeof(struct obioc_disk));
 		error = (*delegate)(cookie, BIOCDISK, bd);
 		if (error) {
-			free(bd, M_DEVBUF);
+			kmem_free(bd, sizeof(*bd));
 			return error;
 		}
 
 		(void)memcpy(addr, bd, sizeof(struct obioc_disk));
-		free(bd, M_DEVBUF);
+		kmem_free(bd, sizeof(*bd));
 		return 0;
 	}
 	case OBIOCVOL: {
-		struct bioc_vol *bv =
-		    malloc(sizeof(*bv), M_DEVBUF, M_WAITOK|M_ZERO);
+		struct bioc_vol *bv = kmem_zalloc(sizeof(*bv), KM_SLEEP);
 
 		(void)memcpy(bv, addr, sizeof(struct obioc_vol));
 		error = (*delegate)(cookie, BIOCVOL, bv);
 		if (error) {
-			free(bv, M_DEVBUF);
+			kmem_free(bv, sizeof(*bv));
 			return error;
 		}
 
 		(void)memcpy(addr, bv, sizeof(struct obioc_vol));
-		free(bv, M_DEVBUF);
+		kmem_free(bv, sizeof(*bv));
 		return 0;
 	}
 	default:
