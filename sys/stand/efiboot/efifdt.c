@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.27 2020/10/22 09:28:30 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.28 2020/12/19 08:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -235,15 +235,13 @@ efi_fdt_memory_map(void)
 	EFI_MEMORY_DESCRIPTOR *md, *memmap;
 	UINT32 descver;
 	UINT64 phys_start, phys_size;
-	int n, memory, chosen;
+	int n, memory;
 
 	memory = fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH);
 	if (memory < 0)
 		memory = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_MEMORY_NODE_NAME);
 	if (memory < 0)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
-
-	chosen = efi_fdt_chosen();
 
 	fdt_delprop(fdt_data, memory, "reg");
 
@@ -252,10 +250,15 @@ efi_fdt_memory_map(void)
 
 	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
-		fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Type);
-		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->PhysicalStart);
-		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->NumberOfPages);
-		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Attribute);
+		/*
+		 * create / find the chosen node for each iteration as it might have changed
+		 * when adding to the memory node
+		 */
+		int chosen = efi_fdt_chosen();
+		fdt_appendprop_u32(fdt_data, chosen, "netbsd,uefi-memmap", md->Type);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memmap", md->PhysicalStart);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memmap", md->NumberOfPages);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memmap", md->Attribute);
 
 		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
 			continue;
@@ -273,26 +276,31 @@ efi_fdt_memory_map(void)
 		phys_size = md->NumberOfPages * EFI_PAGE_SIZE;
 
 		if (phys_start & EFI_PAGE_MASK) {
-			/* UEFI spec says these should be 4KB aligned, but U-Boot doesn't always.. */
+			/*
+			 * UEFI spec says these should be 4KB aligned, but
+			 * U-Boot doesn't always, so round up to the next
+			 * page.
+			 */
 			phys_start = (phys_start + EFI_PAGE_SIZE) & ~EFI_PAGE_MASK;
 			phys_size -= (EFI_PAGE_SIZE * 2);
 			if (phys_size == 0)
 				continue;
 		}
 
+		memory = fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH);
 		if (address_cells == 1)
-			fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", (uint32_t)phys_start);
+			fdt_appendprop_u32(fdt_data, memory, "reg",
+			    (uint32_t)phys_start);
 		else
-			fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", phys_start);
+			fdt_appendprop_u64(fdt_data, memory, "reg",
+			    phys_start);
 
 		if (size_cells == 1)
-			fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", (uint32_t)phys_size);
+			fdt_appendprop_u32(fdt_data, memory, "reg",
+			    (uint32_t)phys_size);
 		else
-			fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", phys_size);
+			fdt_appendprop_u64(fdt_data, memory, "reg",
+			    phys_size);
 	}
 }
 
