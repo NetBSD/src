@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.251 2020/12/19 12:14:59 rillig Exp $
+# $NetBSD: Makefile,v 1.252 2020/12/19 16:00:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -160,6 +160,7 @@ TESTS+=		directive-export-literal
 TESTS+=		directive-for
 TESTS+=		directive-for-generating-endif
 TESTS+=		directive-for-lines
+TESTS+=		directive-for-null
 TESTS+=		directive-hyphen-include
 TESTS+=		directive-if
 TESTS+=		directive-if-nested
