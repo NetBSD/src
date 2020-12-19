@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.59 2020/12/12 20:31:57 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.60 2020/12/19 13:43:04 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1455,4 +1455,17 @@ sys/dev/usb/ohcivar.h				1.62
 
 	PR 22646, PR 55835: restructure the abort code for TD based transfers.
 	[skrll, ticket #1637]
+
+external/bsd/pkg_install/dist/add/perform.c     up to 1.8
+external/bsd/pkg_install/dist/lib/lib.h         up to 1.11
+external/bsd/pkg_install/dist/lib/parse-config.c up to 1.4
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in up to 1.4
+external/bsd/pkg_install/dist/lib/pkgdb.c       up to 1.5
+external/bsd/pkg_install/dist/lib/plist.c       up to 1.6
+external/bsd/pkg_install/dist/lib/version.h     up to 1.19
+doc/3RDPARTY					(manually edited)
+
+	Merge pkg_install 20201218 - provide backwards compatibility for existing
+	package installs using /var/db/pkg.
+	[maya, #1638]
 
