@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.492 2020/12/19 10:49:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.493 2020/12/19 10:57:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.492 2020/12/19 10:49:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.493 2020/12/19 10:57:17 rillig Exp $");
 
 /* types and constants */
 
@@ -2656,37 +2656,42 @@ ParseEOF(void)
 	return TRUE;
 }
 
+typedef enum ParseRawLineResult {
+	PRLR_LINE,
+	PRLR_EOF,
+	PRLR_ERROR
+} ParseRawLineResult;
+
 /*
  * Parse until the end of a line, taking into account lines that end with
  * backslash-newline.
  */
-static Boolean
-ParseRawLine(char **out_line, char **out_line_end,
-	     char **out_firstBackslash, char **out_firstComment,
-	     Boolean *out_eof, IFile *const cf)
+static ParseRawLineResult
+ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
+	     char **out_firstBackslash, char **out_firstComment)
 {
-	char *line = cf->buf_ptr;
+	char *line = curFile->buf_ptr;
 	char *p = line;
 	char *line_end = line;
 	char *firstBackslash = NULL;
 	char *firstComment = NULL;
-	Boolean eof = FALSE;
+	ParseRawLineResult res = PRLR_LINE;
 
-	cf->lineno++;
+	curFile->lineno++;
 
 	for (;;) {
 		char ch;
 
-		if (p == cf->buf_end) {
-			eof = TRUE;
+		if (p == curFile->buf_end) {
+			res = PRLR_EOF;
 			break;
 		}
 
 		ch = *p;
 		if (ch == '\0' ||
-		    (ch == '\\' && p + 1 < cf->buf_end && p[1] == '\0')) {
+		    (ch == '\\' && p + 1 < curFile->buf_end && p[1] == '\0')) {
 			Parse_Error(PARSE_FATAL, "Zero byte read from file");
-			return FALSE;
+			return PRLR_ERROR;
 		}
 
 		/* Treat next character after '\' as literal. */
@@ -2694,7 +2699,7 @@ ParseRawLine(char **out_line, char **out_line_end,
 			if (firstBackslash == NULL)
 				firstBackslash = p;
 			if (p[1] == '\n')
-				cf->lineno++;
+				curFile->lineno++;
 			p += 2;
 			line_end = p;
 			continue;
@@ -2718,12 +2723,11 @@ ParseRawLine(char **out_line, char **out_line_end,
 	}
 
 	*out_line = line;
-	cf->buf_ptr = p;
+	curFile->buf_ptr = p;
 	*out_line_end = line_end;
 	*out_firstBackslash = firstBackslash;
 	*out_firstComment = firstComment;
-	*out_eof = eof;
-	return TRUE;
+	return res;
 }
 
 /*
@@ -2794,8 +2798,7 @@ typedef enum GetLineMode {
 static char *
 ParseGetLine(GetLineMode mode)
 {
-	IFile *cf = CurFile();
-	Boolean eof;
+	IFile *curFile = CurFile();
 	char *line;
 	char *line_end;
 	char *firstBackslash;
@@ -2803,12 +2806,13 @@ ParseGetLine(GetLineMode mode)
 
 	/* Loop through blank lines and comment lines */
 	for (;;) {
-		if (!ParseRawLine(&line, &line_end,
-		    &firstBackslash, &firstComment, &eof, cf))
+		ParseRawLineResult res = ParseRawLine(curFile,
+		    &line, &line_end, &firstBackslash, &firstComment);
+		if (res == PRLR_ERROR)
 			return NULL;
 
 		if (line_end == line || firstComment == line) {
-			if (eof)
+			if (res == PRLR_EOF)
 				return NULL;
 			/* Parse another line */
 			continue;
