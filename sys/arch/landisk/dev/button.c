@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.9 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: button.c,v 1.10 2020/12/19 21:25:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.9 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.10 2020/12/19 21:25:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -296,8 +296,7 @@ filt_btn_rdetach(struct knote *kn)
 {
 
 	mutex_enter(&btn_event_queue_lock);
-	SLIST_REMOVE(&btn_event_queue_selinfo.sel_klist,
-	    kn, knote, kn_selnext);
+	selremove_knote(&btn_event_queue_selinfo, kn);
 	mutex_exit(&btn_event_queue_lock);
 }
 
@@ -329,7 +328,6 @@ static const struct filterops btn_write_filtops = {
 int
 btnkqfilter(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 
 	if (minor(dev) != 0) {
 		return (ENODEV);
@@ -337,12 +335,10 @@ btnkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &btn_event_queue_selinfo.sel_klist;
 		kn->kn_fop = &btn_read_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &btn_event_queue_selinfo.sel_klist;
 		kn->kn_fop = &btn_write_filtops;
 		break;
 
@@ -351,7 +347,7 @@ btnkqfilter(dev_t dev, struct knote *kn)
 	}
 
 	mutex_enter(&btn_event_queue_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&btn_event_queue_selinfo, kn);
 	mutex_exit(&btn_event_queue_lock);
 
 	return (0);
