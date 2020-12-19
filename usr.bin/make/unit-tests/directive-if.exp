@@ -1,9 +1,9 @@
 make: "directive-if.mk" line 13: 0 evaluates to false.
 make: "directive-if.mk" line 17: 1 evaluates to true.
 make: "directive-if.mk" line 40: Unknown directive "ifx"
-make: "directive-if.mk" line 41: Unknown directive "error"
+make: "directive-if.mk" line 41: This is not conditional.
 make: "directive-if.mk" line 42: if-less else
-make: "directive-if.mk" line 43: Unknown directive "error"
+make: "directive-if.mk" line 43: This is not conditional.
 make: "directive-if.mk" line 44: if-less endif
 make: "directive-if.mk" line 47: Malformed conditional ()
 make: "directive-if.mk" line 57: Quotes in plain words are probably a mistake.
