@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.119 2020/12/19 13:20:17 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.120 2020/12/19 13:31:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.119 2020/12/19 13:20:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.120 2020/12/19 13:31:37 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -416,9 +416,10 @@ SubstVarShort(For *f, char ch, const char **pp, const char **inout_mark)
  * Scan the for loop body and replace references to the loop variables
  * with variable references that expand to the required text.
  *
- * Using variable expansions ensures that the .for loop can't generate
+ * Using variable expressions ensures that the .for loop can't generate
  * syntax, and that the later parsing will still see a variable.
- * We assume that the null variable will never be defined.
+ * This code assumes that the variable with the empty name will never be
+ * defined, see unit-tests/varname-empty.mk for more details.
  *
  * The detection of substitutions of the loop control variable is naive.
  * Many of the modifiers use \ to escape $ (not $) so it is possible
@@ -468,7 +469,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 	return cmds_str;
 }
 
-/* Run the for loop, imitating the actions of an include file. */
+/* Run the .for loop, imitating the actions of an include file. */
 void
 For_Run(int lineno)
 {
