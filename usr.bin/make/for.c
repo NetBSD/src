@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.118 2020/12/15 16:24:17 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.119 2020/12/19 13:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.118 2020/12/15 16:24:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.119 2020/12/19 13:20:17 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -425,7 +425,7 @@ SubstVarShort(For *f, char ch, const char **pp, const char **inout_mark)
  * to contrive a makefile where an unwanted substitution happens.
  */
 static char *
-ForIterate(void *v_arg, size_t *out_len)
+ForReadMore(void *v_arg, size_t *out_len)
 {
 	For *f = v_arg;
 	const char *p;
@@ -484,5 +484,5 @@ For_Run(int lineno)
 		return;
 	}
 
-	Parse_SetInput(NULL, lineno, -1, ForIterate, f);
+	Parse_SetInput(NULL, lineno, -1, ForReadMore, f);
 }
