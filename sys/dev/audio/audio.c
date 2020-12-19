@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.17 2020/12/19 13:48:27 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.18 2020/12/19 13:54:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.17 2020/12/19 13:48:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.18 2020/12/19 13:54:56 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1324,7 +1324,6 @@ audiodetach(device_t self, int flags)
 	 * that hold sc, and any new calls with files that were for sc will
 	 * fail.  Thus, we now have exclusive access to the softc.
 	 */
-	sc->sc_exlock = 1;
 
 	/*
 	 * Nuke all open instances.
@@ -1350,6 +1349,7 @@ audiodetach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	/* Free resources */
+	sc->sc_exlock = 1;
 	if (sc->sc_pmixer) {
 		audio_mixer_destroy(sc, sc->sc_pmixer);
 		kmem_free(sc->sc_pmixer, sizeof(*sc->sc_pmixer));
