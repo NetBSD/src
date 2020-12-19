@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.498 2020/12/19 15:29:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.499 2020/12/19 16:05:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.498 2020/12/19 15:29:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.499 2020/12/19 16:05:33 rillig Exp $");
 
 /* types and constants */
 
@@ -2791,25 +2791,26 @@ typedef enum GetLineMode {
 	 * Backslash line continuations are folded into a single space.
 	 * A trailing comment, if any, is discarded.
 	 */
-	PARSE_NORMAL,
+	GLM_NONEMPTY,
 
 	/*
 	 * Return the next line, even if it is empty or a comment.
+	 * Preserve backslash-newline to keep the line numbers correct.
 	 *
 	 * Used in .for loops to collect the body of the loop while waiting
 	 * for the corresponding .endfor.
 	 */
-	PARSE_RAW,
+	GLM_FOR_BODY,
 
 	/*
-	 * Return the next line that is a directive.
+	 * Return the next line that starts with a dot.
 	 * Backslash line continuations are folded into a single space.
 	 * A trailing comment, if any, is discarded.
 	 *
 	 * Used in .if directives to skip over irrelevant branches while
 	 * waiting for the corresponding .endif.
 	 */
-	PARSE_SKIP
+	GLM_DOT
 } GetLineMode;
 
 /* Return the next "interesting" logical line from the current file. */
@@ -2832,27 +2833,18 @@ ParseGetLine(GetLineMode mode)
 		if (line_end == line || firstComment == line) {
 			if (res == PRLR_EOF)
 				return NULL;
-			if (mode != PARSE_RAW)
+			if (mode != GLM_FOR_BODY)
 				continue;
 		}
 
 		/* We now have a line of data */
 		*line_end = '\0';
 
-		if (mode == PARSE_RAW) {
-			/* Leave '\' (etc) in line buffer (eg 'for' lines) */
-			return line;
-		}
+		if (mode == GLM_FOR_BODY)
+			return line;	/* Don't join the physical lines. */
 
-		if (mode == PARSE_SKIP) {
-			/* Completely ignore non-directives */
-			if (line[0] != '.')
-				continue;
-			/*
-			 * We could do more of the .else/.elif/.endif checks
-			 * here.
-			 */
-		}
+		if (mode == GLM_DOT && line[0] != '.')
+			continue;
 		break;
 	}
 
@@ -2891,7 +2883,7 @@ ParseReadLine(void)
 	int rval;
 
 	for (;;) {
-		line = ParseGetLine(PARSE_NORMAL);
+		line = ParseGetLine(GLM_NONEMPTY);
 		if (line == NULL)
 			return NULL;
 
@@ -2904,7 +2896,7 @@ ParseReadLine(void)
 		 */
 		switch (Cond_EvalLine(line)) {
 		case COND_SKIP:
-			while ((line = ParseGetLine(PARSE_SKIP)) != NULL) {
+			while ((line = ParseGetLine(GLM_DOT)) != NULL) {
 				if (Cond_EvalLine(line) == COND_PARSE)
 					break;
 				/*
@@ -2939,7 +2931,7 @@ ParseReadLine(void)
 			lineno = CurFile()->lineno;
 			/* Accumulate loop lines until matching .endfor */
 			do {
-				line = ParseGetLine(PARSE_RAW);
+				line = ParseGetLine(GLM_FOR_BODY);
 				if (line == NULL) {
 					Parse_Error(PARSE_FATAL,
 					    "Unexpected end of file "
