@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.126 2020/12/04 07:12:57 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.127 2020/12/19 23:22:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.126 2020/12/04 07:12:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.127 2020/12/19 23:22:18 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -368,8 +368,23 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 			goto out;
 	}
 
-	if (t->_ranges != NULL)
-		cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
+	if (t->_ranges != NULL) {
+		/*
+		 * If ranges are defined, we may have to bounce. The only
+		 * exception is if there is exactly one range that covers
+		 * all of physical memory.
+		 */
+		switch (t->_nranges) {
+		case 1:
+			if (t->_ranges[0].dr_sysbase == 0 &&
+			    t->_ranges[0].dr_len == UINTPTR_MAX) {
+				break;
+			}
+			/* FALLTHROUGH */
+		default:
+			cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
+		}
+	}
 
 	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0) {
 		STAT_INCR(creates);
