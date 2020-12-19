@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.736 2020/12/19 20:47:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.737 2020/12/19 22:10:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.736 2020/12/19 20:47:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.737 2020/12/19 22:10:17 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -531,18 +531,39 @@ Var_Delete(const char *name, GNode *ctxt)
 	Var_DeleteVar(name, ctxt);
 }
 
+/*
+ * Undefine a single variable from the global scope.  The argument is
+ * expanded once.
+ */
 void
 Var_Undef(char *arg)
 {
+	/*
+	 * The argument must consist of exactly 1 word.  Accepting more than
+	 * 1 word would have required to split the argument into several
+	 * words, and such splitting is already done subtly different in many
+	 * other places of make.
+	 *
+	 * Using Str_Words to split the words, followed by Var_Subst to expand
+	 * each variable name once would make it impossible to undefine
+	 * variables whose names contain space characters or unbalanced
+	 * quotes or backslashes in arbitrary positions.
+	 *
+	 * Using Var_Subst on the whole argument and splitting the words
+	 * afterwards using Str_Words would make it impossible to undefine
+	 * variables whose names contain space characters.
+	 */
 	char *cp = arg;
 
 	for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
 		continue;
+	if (cp == arg || *cp != '\0') {
+		Parse_Error(PARSE_FATAL,
+		    "The .undef directive requires exactly 1 argument");
+	}
 	*cp = '\0';
 
 	Var_Delete(arg, VAR_GLOBAL);
-	/* TODO: undefine all variables, not only the first */
-	/* TODO: use Str_Words, like everywhere else */
 }
 
 static Boolean
