@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.495 2020/12/19 12:48:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.496 2020/12/19 13:16:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.495 2020/12/19 12:48:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.496 2020/12/19 13:16:25 rillig Exp $");
 
 /* types and constants */
 
@@ -2429,7 +2429,7 @@ ParseTrackInput(const char *name)
  * The given file is added to the includes stack.
  */
 void
-Parse_SetInput(const char *name, int line, int fd,
+Parse_SetInput(const char *name, int lineno, int fd,
 	       ReadMoreProc readMore, void *readMoreArg)
 {
 	IFile *curFile;
@@ -2447,7 +2447,7 @@ Parse_SetInput(const char *name, int line, int fd,
 		    ? "loadedfile" : "other";
 		debug_printf(
 		    "%s: file %s, line %d, fd %d, readMore %s, readMoreArg %p\n",
-		    __func__, name, line, fd, caller, readMoreArg);
+		    __func__, name, lineno, fd, caller, readMoreArg);
 	}
 
 	if (fd == -1 && readMore == NULL)
@@ -2457,8 +2457,8 @@ Parse_SetInput(const char *name, int line, int fd,
 	curFile = Vector_Push(&includes);
 	curFile->fname = bmake_strdup(name);
 	curFile->fromForLoop = fromForLoop;
-	curFile->lineno = line;
-	curFile->first_lineno = line;
+	curFile->lineno = lineno;
+	curFile->first_lineno = lineno;
 	curFile->readMore = readMore;
 	curFile->readMoreArg = readMoreArg;
 	curFile->lf = NULL;
