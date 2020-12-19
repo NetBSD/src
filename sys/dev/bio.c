@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.16 2019/11/10 21:16:34 chs Exp $ */
+/*	$NetBSD: bio.c,v 1.17 2020/12/19 01:12:21 thorpej Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.16 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.17 2020/12/19 01:12:21 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.16 2019/11/10 21:16:34 chs Exp $");
 #include <sys/device.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
@@ -208,7 +208,7 @@ bio_register(device_t dev, int (*ioctl)(device_t, u_long, void *))
 	if (!bio_lock_initialized)
 		bio_initialize();
 
-	bm = malloc(sizeof(*bm), M_DEVBUF, M_WAITOK|M_ZERO);
+	bm = kmem_zalloc(sizeof(*bm), KM_SLEEP);
 	bm->bm_dev = dev;
 	bm->bm_ioctl = ioctl;
 	mutex_enter(&bio_lock);
@@ -228,7 +228,7 @@ bio_unregister(device_t dev)
 
 		if (dev == bm->bm_dev) {
 			LIST_REMOVE(bm, bm_link);
-			free(bm, M_DEVBUF);
+			kmem_free(bm, sizeof(*bm));
 		}
 	}
 	mutex_exit(&bio_lock);
