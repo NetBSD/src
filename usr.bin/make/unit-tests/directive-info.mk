@@ -1,4 +1,4 @@
-# $NetBSD: directive-info.mk,v 1.6 2020/12/13 01:10:22 rillig Exp $
+# $NetBSD: directive-info.mk,v 1.7 2020/12/19 12:40:00 rillig Exp $
 #
 # Tests for the .info directive.
 
@@ -22,6 +22,14 @@
 .info-message			# This is an unknown directive.
 .info no-target: no-source	# This is a .info directive, not a dependency.
 # See directive.mk for more tests of this kind.
+
+# Since at least 2002-01-01, the line number that is used in error messages
+# and the .info directives is the number of completely read lines.  For the
+# following multi-line directive, this means that the reported line number is
+# the one of the last line, not the first line.
+.info expect line 30 for\
+	multi$\
+	-line message
 
 all:
 	@:;
