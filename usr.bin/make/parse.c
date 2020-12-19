@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.494 2020/12/19 12:24:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.495 2020/12/19 12:48:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.494 2020/12/19 12:24:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.495 2020/12/19 12:48:59 rillig Exp $");
 
 /* types and constants */
 
@@ -2790,8 +2790,30 @@ UnescapeBackslash(char *const line, char *start)
 }
 
 typedef enum GetLineMode {
+	/*
+	 * Return the next logical line that is neither empty nor a comment.
+	 * Backslash line continuations are folded into a single space.
+	 * A trailing comment, if any, is discarded.
+	 */
 	PARSE_NORMAL,
+
+	/*
+	 * Return the next physical line, even if it ends with a backslash.
+	 * Comments and empty lines are preserved.
+	 *
+	 * Used in .for loops to collect the body of the loop while waiting
+	 * for the corresponding .endfor.
+	 */
 	PARSE_RAW,
+
+	/*
+	 * Return the next logical line that is a directive.
+	 * Backslash line continuations are folded into a single space.
+	 * A trailing comment, if any, is discarded.
+	 *
+	 * Used in .if directives to skip over irrelevant branches while
+	 * waiting for the corresponding .endif.
+	 */
 	PARSE_SKIP
 } GetLineMode;
 
