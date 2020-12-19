@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.491 2020/12/19 10:18:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.492 2020/12/19 10:49:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.491 2020/12/19 10:18:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.492 2020/12/19 10:49:36 rillig Exp $");
 
 /* types and constants */
 
@@ -2657,77 +2657,72 @@ ParseEOF(void)
 }
 
 /*
- * Parse a line, joining physical lines that end with backslash-newline.
- * Do not unescape "\#", that's done by UnescapeBackslash.
+ * Parse until the end of a line, taking into account lines that end with
+ * backslash-newline.
  */
 static Boolean
 ParseRawLine(char **out_line, char **out_line_end,
-	      char **out_escaped, char **out_comment, char *inout_ch,
-	      IFile *const cf)
+	     char **out_firstBackslash, char **out_firstComment,
+	     Boolean *out_eof, IFile *const cf)
 {
 	char *line = cf->buf_ptr;
-	char *ptr = line;
+	char *p = line;
 	char *line_end = line;
-	char *escaped = NULL;
-	char *comment = NULL;
-	char ch = *inout_ch;
+	char *firstBackslash = NULL;
+	char *firstComment = NULL;
+	Boolean eof = FALSE;
 
 	cf->lineno++;
 
 	for (;;) {
-		if (ptr == cf->buf_end) {
-			/* end of buffer */
-			ch = '\0';
+		char ch;
+
+		if (p == cf->buf_end) {
+			eof = TRUE;
 			break;
 		}
 
-		ch = *ptr;
+		ch = *p;
 		if (ch == '\0' ||
-		    (ch == '\\' && ptr + 1 < cf->buf_end &&
-		     ptr[1] == '\0')) {
-			Parse_Error(PARSE_FATAL,
-			    "Zero byte read from file");
+		    (ch == '\\' && p + 1 < cf->buf_end && p[1] == '\0')) {
+			Parse_Error(PARSE_FATAL, "Zero byte read from file");
 			return FALSE;
 		}
 
-		/*
-		 * Don't treat next character after '\' as special,
-		 * remember first one.
-		 */
+		/* Treat next character after '\' as literal. */
 		if (ch == '\\') {
-			if (escaped == NULL)
-				escaped = ptr;
-			if (ptr[1] == '\n')
+			if (firstBackslash == NULL)
+				firstBackslash = p;
+			if (p[1] == '\n')
 				cf->lineno++;
-			ptr += 2;
-			line_end = ptr;
+			p += 2;
+			line_end = p;
 			continue;
 		}
 
 		/*
-		 * Remember the first '#' for comment stripping,
-		 * unless the previous char was '[', as in the
-		 * modifier ':[#]'.
+		 * Remember the first '#' for comment stripping, unless
+		 * the previous char was '[', as in the modifier ':[#]'.
 		 */
-		if (ch == '#' && comment == NULL &&
-		    !(ptr > line && ptr[-1] == '['))
-			comment = line_end;
+		if (ch == '#' && firstComment == NULL &&
+		    !(p > line && p[-1] == '['))
+			firstComment = line_end;
 
-		ptr++;
+		p++;
 		if (ch == '\n')
 			break;
 
 		/* We are not interested in trailing whitespace. */
 		if (!ch_isspace(ch))
-			line_end = ptr;
+			line_end = p;
 	}
 
 	*out_line = line;
-	cf->buf_ptr = ptr;
+	cf->buf_ptr = p;
 	*out_line_end = line_end;
-	*out_escaped = escaped;
-	*out_comment = comment;
-	*inout_ch = ch;
+	*out_firstBackslash = firstBackslash;
+	*out_firstComment = firstComment;
+	*out_eof = eof;
 	return TRUE;
 }
 
@@ -2800,21 +2795,20 @@ static char *
 ParseGetLine(GetLineMode mode)
 {
 	IFile *cf = CurFile();
-	char ch;
+	Boolean eof;
 	char *line;
 	char *line_end;
-	char *escaped;
-	char *comment;
+	char *firstBackslash;
+	char *firstComment;
 
 	/* Loop through blank lines and comment lines */
 	for (;;) {
-		if (!ParseRawLine(&line, &line_end, &escaped, &comment, &ch, cf))
+		if (!ParseRawLine(&line, &line_end,
+		    &firstBackslash, &firstComment, &eof, cf))
 			return NULL;
 
-		/* Check we have a non-comment, non-blank line */
-		if (line_end == line || comment == line) {
-			if (ch == '\0')
-				/* At end of file */
+		if (line_end == line || firstComment == line) {
+			if (eof)
 				return NULL;
 			/* Parse another line */
 			continue;
@@ -2841,17 +2835,17 @@ ParseGetLine(GetLineMode mode)
 	}
 
 	/* Brutally ignore anything after a non-escaped '#' in non-commands. */
-	if (comment != NULL && line[0] != '\t') {
-		line_end = comment;
+	if (firstComment != NULL && line[0] != '\t') {
+		line_end = firstComment;
 		*line_end = '\0';
 	}
 
 	/* If we didn't see a '\\' then the in-situ data is fine. */
-	if (escaped == NULL)
+	if (firstBackslash == NULL)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(line, escaped);
+	UnescapeBackslash(line, firstBackslash);
 
 	return line;
 }
