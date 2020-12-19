@@ -1,4 +1,4 @@
-# $NetBSD: directive-undef.mk,v 1.6 2020/12/13 01:07:54 rillig Exp $
+# $NetBSD: directive-undef.mk,v 1.7 2020/12/19 20:35:39 rillig Exp $
 #
 # Tests for the .undef directive.
 #
@@ -16,7 +16,34 @@
 .  warning $1$2$3
 .endif
 
+# Without any arguments, .undef tries to delete the variable with the empty
+# name, which never exists; see varname-empty.mk.
 .undef				# oops: missing argument
+
+
+# It must be possible to undefine variables whose name includes spaces.
+SPACE=		${:U }
+${SPACE}=	space
+.if !defined(${SPACE})
+.  error
+.endif
+.undef ${SPACE}
+.if defined(${SPACE})
+.  error
+.endif
+
+
+# It must be possible to undefine variables whose name includes dollars.
+DOLLAR=		$$
+${DOLLAR}=	dollar
+.if !defined(${DOLLAR})
+.  error
+.endif
+.undef ${DOLLAR}
+.if defined(${DOLLAR})
+.  error
+.endif
+
 
 all:
 	@:;
