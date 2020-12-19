@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.14 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: event.c,v 1.15 2020/12/19 15:18:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,11 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.15 2020/12/19 15:18:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14 2017/10/25 08:12:37 maya Exp $");
 #include <atari/dev/vuid_event.h>
 #include <atari/dev/event_var.h>
 
+#define	EV_Q_ALLOCSIZE		(EV_QSIZE * sizeof(struct firm_event))
+
 /*
  * Initialize a firm_event queue.
  */
@@ -69,8 +71,7 @@ ev_init(register struct evvar *ev)
 {
 
 	ev->ev_get = ev->ev_put = 0;
-	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	ev->ev_q = kmem_zalloc(EV_Q_ALLOCSIZE, KM_SLEEP);
 	selinit(&ev->ev_sel);
 }
 
@@ -82,7 +83,7 @@ ev_fini(register struct evvar *ev)
 {
 
 	seldestroy(&ev->ev_sel);
-	free(ev->ev_q, M_DEVBUF);
+	kmem_free(ev->ev_q, EV_Q_ALLOCSIZE);
 }
 
 /*
@@ -166,7 +167,7 @@ filt_evrdetach(struct knote *kn)
 	int s;
 
 	s = splev();
-	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&ev->ev_sel, kn);
 	splx(s);
 }
 
@@ -199,12 +200,10 @@ static const struct filterops ev_filtops = {
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)
 {
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->ev_sel.sel_klist;
 		kn->kn_fop = &ev_filtops;
 		break;
 
@@ -215,7 +214,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 	kn->kn_hook = ev;
 
 	s = splev();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&ev->ev_sel, kn);
 	splx(s);
 
 	return (0);
