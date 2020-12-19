@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: aed.c,v 1.35 2020/12/19 21:46:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.35 2020/12/19 21:46:40 thorpej Exp $");
 
 #include "opt_adb.h"
 
@@ -585,7 +585,7 @@ filt_aedrdetach(struct knote *kn)
 	int s;
 
 	s = splvm();
-	SLIST_REMOVE(&aed_sc->sc_selinfo.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&aed_sc->sc_selinfo, kn);
 	splx(s);
 }
 
@@ -614,17 +614,14 @@ static const struct filterops aed_seltrue_filtops = {
 int
 aedkqfilter(dev_t dev, struct knote *kn)
 {
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &aed_sc->sc_selinfo.sel_klist;
 		kn->kn_fop = &aedread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &aed_sc->sc_selinfo.sel_klist;
 		kn->kn_fop = &aed_seltrue_filtops;
 		break;
 
@@ -635,7 +632,7 @@ aedkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = NULL;
 
 	s = splvm();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&aed_sc->sc_selinfo, kn);
 	splx(s);
 
 	return (0);
