@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.23 2018/09/03 16:29:22 riastradh Exp $	*/
+/*	$NetBSD: opms.c,v 1.24 2020/12/19 15:15:04 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.23 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.24 2020/12/19 15:15:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ filt_opmsrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	splx(s);
 }
 
@@ -483,12 +483,10 @@ int
 opmskqfilter(dev_t dev, struct knote *kn)
 {
 	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
-	struct klist *klist;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &opmsread_filtops;
 		break;
 
@@ -499,7 +497,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	splx(s);
 
 	return 0;
