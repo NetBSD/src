@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.231 2020/12/18 15:47:34 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.232 2020/12/19 13:16:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,7 +102,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.231 2020/12/18 15:47:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.232 2020/12/19 13:16:25 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -124,10 +124,10 @@ debug_printf(const char *fmt, ...)
 }
 
 MAKE_ATTR_DEAD static void
-make_abort(GNode *gn, int line)
+make_abort(GNode *gn, int lineno)
 {
 
-	debug_printf("make_abort from line %d\n", line);
+	debug_printf("make_abort from line %d\n", lineno);
 	Targ_PrintNode(gn, 2);
 	Targ_PrintNodes(&toBeMade, 2);
 	Targ_PrintGraph(3);
