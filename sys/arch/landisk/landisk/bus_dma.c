@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2012/03/31 06:35:11 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2020/12/19 21:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2012/03/31 06:35:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2020/12/19 21:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 
 #include <uvm/uvm.h>
@@ -69,6 +69,14 @@ struct _bus_dma_tag landisk_bus_dma = {
 	._dmamem_mmap = _bus_dmamem_mmap,
 };
 
+static size_t 
+_bus_dmamap_mapsize(int const nsegments)
+{       
+	KASSERT(nsegments > 0);
+	return sizeof(struct _bus_dmamap)
+		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
+}
+
 /*
  * Create a DMA map.
  */
@@ -78,7 +86,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	bus_dmamap_t map;
 	void *mapstore;
-	size_t mapsize;
 
 	DPRINTF(("%s: t = %p, size = %ld, nsegments = %d, maxsegsz = %ld,"
 		 " boundary = %ld, flags = %x\n",
@@ -94,10 +101,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * Preservation of ALLOCNOW notifies others that we've
 	 * reserved these resources, and they are not to be freed.
 	 */
-	mapsize = sizeof(struct _bus_dmamap)
-		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	mapstore = malloc(mapsize, M_DMAMAP, M_ZERO
-			  | ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK));
+	mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 	if (mapstore == NULL)
 		return ENOMEM;
 
@@ -126,7 +131,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 
 	DPRINTF(("%s: t = %p, map = %p\n", __func__, t, map));
 
-	free(map, M_DMAMAP);
+	kmem_free(map, _bus_dmamap_mapsize(map->_dm_segcnt));
 }
 
 static inline int
