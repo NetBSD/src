@@ -1,0 +1,10 @@
+make: "directive-for-lines.mk" line 12: expect 18
+make: "directive-for-lines.mk" line 12: expect 18
+make: "directive-for-lines.mk" line 14: expect 24
+make: "directive-for-lines.mk" line 12: expect 18
+make: "directive-for-lines.mk" line 12: expect 18
+make: "directive-for-lines.mk" line 14: expect 24
+make: no target to make.
+
+make: stopped in unit-tests
+exit status 2
