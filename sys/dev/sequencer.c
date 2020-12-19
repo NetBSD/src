@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.72 2020/05/23 23:42:42 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.73 2020/12/19 01:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.72 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.73 2020/12/19 01:18:58 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -901,7 +901,7 @@ filt_sequencerrdetach(struct knote *kn)
 	struct sequencer_softc *sc = kn->kn_hook;
 
 	mutex_enter(&sc->lock);
-	SLIST_REMOVE(&sc->rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->rsel, kn);
 	mutex_exit(&sc->lock);
 }
 
@@ -939,7 +939,7 @@ filt_sequencerwdetach(struct knote *kn)
 	struct sequencer_softc *sc = kn->kn_hook;
 
 	mutex_enter(&sc->lock);
-	SLIST_REMOVE(&sc->wsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->wsel, kn);
 	mutex_exit(&sc->lock);
 }
 
@@ -975,18 +975,18 @@ static int
 sequencerkqfilter(dev_t dev, struct knote *kn)
 {
 	struct sequencer_softc *sc;
-	struct klist *klist;
+	struct selinfo *sip;
 	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
 		return ENXIO;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->rsel.sel_klist;
+		sip = &sc->rsel;
 		kn->kn_fop = &sequencerread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->wsel.sel_klist;
+		sip = &sc->wsel;
 		kn->kn_fop = &sequencerwrite_filtops;
 		break;
 
@@ -997,7 +997,7 @@ sequencerkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	mutex_enter(&sc->lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(sip, kn);
 	mutex_exit(&sc->lock);
 
 	return (0);
