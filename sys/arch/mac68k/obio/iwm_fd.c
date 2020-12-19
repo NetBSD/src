@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.57 2019/11/12 13:17:43 msaitoh Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.58 2020/12/19 21:48:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.57 2019/11/12 13:17:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.58 2020/12/19 21:48:04 thorpej Exp $");
 
 #include "locators.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.57 2019/11/12 13:17:43 msaitoh Exp $");
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/event.h>
 
@@ -669,9 +669,11 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
 	fdType = minor(dev) % MAXPARTITIONS;
 	fd = iwm->fd[fdUnit];
 	/* release cylinder cache memory */
-	if (fd->cbuf != NULL)
-		     free(fd->cbuf, M_DEVBUF);
-	
+	if (fd->cbuf != NULL) {
+		     kmem_free(fd->cbuf,
+		         IWM_MAX_GCR_SECTORS * fd->currentType->sectorSize);
+	}
+
 	partitionMask = (1 << fdType);
 
 	/* Set state flag. */
@@ -1636,8 +1638,7 @@ initCylinderCache(fd_softc_t *fd)
 	secsize = fd->currentType->sectorSize;
 	fd->cachedSide = 0;
 	
-	fd->cbuf = (unsigned char *) malloc(IWM_MAX_GCR_SECTORS
-	    * secsize, M_DEVBUF, M_WAITOK);
+	fd->cbuf = kmem_alloc(IWM_MAX_GCR_SECTORS * secsize, KM_SLEEP);
 	if (NULL == fd->cbuf) 
 		err = ENOMEM;
 	else
