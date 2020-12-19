@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.734 2020/12/13 21:27:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.735 2020/12/19 20:16:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.734 2020/12/13 21:27:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.735 2020/12/19 20:16:36 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -517,6 +517,20 @@ Var_Delete(const char *name, GNode *ctxt)
 		Buf_Destroy(&v->val, TRUE);
 		free(v);
 	}
+}
+
+void
+Var_Undef(char *arg)
+{
+	char *cp = arg;
+
+	for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
+		continue;
+	*cp = '\0';
+
+	Var_Delete(arg, VAR_GLOBAL);
+	/* TODO: undefine all variables, not only the first */
+	/* TODO: use Str_Words, like everywhere else */
 }
 
 static Boolean

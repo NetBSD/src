@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.501 2020/12/19 17:54:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.502 2020/12/19 20:16:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.501 2020/12/19 17:54:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.502 2020/12/19 20:16:36 rillig Exp $");
 
 /* types and constants */
 
@@ -3052,12 +3052,7 @@ ParseDirective(char *line)
 	arg = cp;
 
 	if (IsDirective(dir, dirlen, "undef")) {
-		for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
-			continue;
-		*cp = '\0';
-		Var_Delete(arg, VAR_GLOBAL);
-		/* TODO: undefine all variables, not only the first */
-		/* TODO: use Str_Words, like everywhere else */
+		Var_Undef(cp);
 		return TRUE;
 	} else if (IsDirective(dir, dirlen, "export")) {
 		Var_Export(VEM_PARENT, arg);
