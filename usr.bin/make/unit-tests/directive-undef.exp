@@ -1,1 +1,5 @@
-exit status 0
+make: "directive-undef.mk" line 14: The .undef directive requires exactly 1 argument
+make: "directive-undef.mk" line 24: The .undef directive requires exactly 1 argument
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
