@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.58 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.59 2020/12/19 22:11:57 thorpej Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.58 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.59 2020/12/19 22:11:57 thorpej Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -469,7 +469,7 @@ filt_vc_nb_detach(struct knote *kn)
 {
 	struct vcomm *vcp = kn->kn_hook;
 
-	SLIST_REMOVE(&vcp->vc_selproc.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&vcp->vc_selproc, kn);
 }
 
 static int
@@ -497,7 +497,6 @@ int
 vc_nb_kqfilter(dev_t dev, struct knote *kn)
 {
 	struct vcomm *vcp;
-	struct klist *klist;
 
 	ENTRY;
 
@@ -508,7 +507,6 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &vcp->vc_selproc.sel_klist;
 		kn->kn_fop = &vc_nb_read_filtops;
 		break;
 
@@ -518,7 +516,7 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = vcp;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&vcp->vc_selproc, kn);
 
 	return (0);
 }
