@@ -1,11 +1,11 @@
-# $NetBSD: directive-for-lines.mk,v 1.1 2020/12/19 12:14:59 rillig Exp $
+# $NetBSD: directive-for-lines.mk,v 1.2 2020/12/19 12:24:46 rillig Exp $
 #
 # Tests for the line numbers that are reported in .for loops.
 #
-# Since 2007-01-01 21:47:32 (git 4d3c468f96e1080e4d3cca8cc39067a73af14fbb),
-# parse.c 1.127, the line numbers for the .info directives and error messages
-# inside .for loops have been wrong since ParseGetLine skips empty lines, even
-# when collecting the lines for the .for loop body.
+# Between 2007-01-01 (git 4d3c468f96e1080e, parse.c 1.127) and 2020-12-19
+# (parse.c 1.494), the line numbers for the .info directives and error
+# messages inside .for loops had been wrong since ParseGetLine skipped empty
+# lines, even when collecting the lines for the .for loop body.
 
 .for outer in a b
 
