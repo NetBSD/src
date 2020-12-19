@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.496 2020/12/19 13:16:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.497 2020/12/19 13:30:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.496 2020/12/19 13:16:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.497 2020/12/19 13:30:00 rillig Exp $");
 
 /* types and constants */
 
@@ -2442,13 +2442,9 @@ Parse_SetInput(const char *name, int lineno, int fd,
 	else
 		ParseTrackInput(name);
 
-	if (DEBUG(PARSE)) {
-		const char *caller = readMore == loadedfile_readMore
-		    ? "loadedfile" : "other";
-		debug_printf(
-		    "%s: file %s, line %d, fd %d, readMore %s, readMoreArg %p\n",
-		    __func__, name, lineno, fd, caller, readMoreArg);
-	}
+	DEBUG3(PARSE, "Parse_SetInput: %s %s, line %d\n",
+	    readMore == loadedfile_readMore ? "file" : ".for loop in",
+	    name, lineno);
 
 	if (fd == -1 && readMore == NULL)
 		/* sanity */
