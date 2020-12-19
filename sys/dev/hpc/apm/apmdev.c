@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.32 2018/07/21 18:11:09 maya Exp $ */
+/*	$NetBSD: apmdev.c,v 1.33 2020/12/19 01:18:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.32 2018/07/21 18:11:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.33 2020/12/19 01:18:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -911,7 +911,7 @@ filt_apmrdetach(struct knote *kn)
 	struct apm_softc *sc = kn->kn_hook;
 
 	APM_LOCK(sc);
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	selremove_knote(&sc->sc_rsel, kn);
 	APM_UNLOCK(sc);
 }
 
@@ -935,11 +935,9 @@ int
 apmdevkqfilter(dev_t dev, struct knote *kn)
 {
 	struct apm_softc *sc = device_lookup_private(&apmdev_cd, APMUNIT(dev));
-	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &apmread_filtops;
 		break;
 
@@ -950,7 +948,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	APM_LOCK(sc);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	selrecord_knote(&sc->sc_rsel, kn);
 	APM_UNLOCK(sc);
 
 	return (0);
