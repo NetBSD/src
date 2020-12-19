@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.735 2020/12/19 20:16:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.736 2020/12/19 20:47:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.735 2020/12/19 20:16:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.736 2020/12/19 20:47:24 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -488,35 +488,47 @@ VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 }
 
+/*
+ * Remove a variable from a context, freeing all related memory as well.
+ * The variable name is kept as-is, it is not expanded.
+ */
+void
+Var_DeleteVar(const char *varname, GNode *ctxt)
+{
+	HashEntry *he = HashTable_FindEntry(&ctxt->vars, varname);
+	Var *v;
+
+	if (he == NULL) {
+		DEBUG2(VAR, "%s:delete %s (not found)\n", ctxt->name, varname);
+		return;
+	}
+
+	DEBUG2(VAR, "%s:delete %s\n", ctxt->name, varname);
+	v = HashEntry_Get(he);
+	if (v->flags & VAR_EXPORTED)
+		unsetenv(v->name.str);
+	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
+		var_exportedVars = VAR_EXPORTED_NONE;
+	assert(v->name.freeIt == NULL);
+	HashTable_DeleteEntry(&ctxt->vars, he);
+	Buf_Destroy(&v->val, TRUE);
+	free(v);
+}
+
 /* Remove a variable from a context, freeing all related memory as well.
  * The variable name is expanded once. */
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
 	char *name_freeIt = NULL;
-	HashEntry *he;
 
 	if (strchr(name, '$') != NULL) {
 		(void)Var_Subst(name, VAR_GLOBAL, VARE_WANTRES, &name_freeIt);
 		/* TODO: handle errors */
 		name = name_freeIt;
 	}
-	he = HashTable_FindEntry(&ctxt->vars, name);
-	DEBUG3(VAR, "%s:delete %s%s\n",
-	    ctxt->name, name, he != NULL ? "" : " (not found)");
-	free(name_freeIt);
 
-	if (he != NULL) {
-		Var *v = HashEntry_Get(he);
-		if (v->flags & VAR_EXPORTED)
-			unsetenv(v->name.str);
-		if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
-			var_exportedVars = VAR_EXPORTED_NONE;
-		assert(v->name.freeIt == NULL);
-		HashTable_DeleteEntry(&ctxt->vars, he);
-		Buf_Destroy(&v->val, TRUE);
-		free(v);
-	}
+	Var_DeleteVar(name, ctxt);
 }
 
 void
