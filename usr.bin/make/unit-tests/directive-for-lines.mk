@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-lines.mk,v 1.2 2020/12/19 12:24:46 rillig Exp $
+# $NetBSD: directive-for-lines.mk,v 1.3 2020/12/19 12:40:00 rillig Exp $
 #
 # Tests for the line numbers that are reported in .for loops.
 #
@@ -9,18 +9,24 @@
 
 .for outer in a b
 
-# comment
+# comment \
+# continued comment
 
 .for inner in 1 2
 
-# comment
+# comment \
+# continued comment
 
-.info expect 18
+VAR= \
+	multi-line
+
+.info expect 23
 
 .endfor
 
-# comment
+# comment \
+# continued comment
 
-.info expect 24
+.info expect 30
 
 .endfor
