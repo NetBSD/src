@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.490 2020/12/19 00:27:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.491 2020/12/19 10:18:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.490 2020/12/19 00:27:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.491 2020/12/19 10:18:46 rillig Exp $");
 
 /* types and constants */
 
@@ -2731,44 +2731,48 @@ ParseRawLine(char **out_line, char **out_line_end,
 	return TRUE;
 }
 
+/*
+ * Beginning at start, unescape '\#' to '#' and replace backslash-newline
+ * with a single space.
+ */
 static void
-UnescapeBackslash(char *escaped, char *const line)
+UnescapeBackslash(char *const line, char *start)
 {
-	char *tp, *ptr;
+	char *src = start;
+	char *dst = start;
+	char *spaceStart = line;
 
-	tp = ptr = escaped;
-	escaped = line;
 	for (;;) {
-		char ch = *ptr++;
+		char ch = *src++;
 		if (ch != '\\') {
 			if (ch == '\0')
 				break;
-			*tp++ = ch;
+			*dst++ = ch;
 			continue;
 		}
 
-		ch = *ptr++;
+		ch = *src++;
 		if (ch == '\0') {
 			/* Delete '\\' at end of buffer */
-			tp--;
+			dst--;
 			break;
 		}
 
 		/* Delete '\\' from before '#' on non-command lines */
 		if (ch == '#' && line[0] != '\t') {
-			*tp++ = ch;
+			*dst++ = ch;
 			continue;
 		}
 
 		if (ch != '\n') {
 			/* Leave '\\' in buffer for later */
-			*tp++ = '\\';
+			*dst++ = '\\';
 			/*
 			 * Make sure we don't delete an escaped ' ' from the
 			 * line end.
 			 */
-			escaped = tp + 1;
-			*tp++ = ch;
+			spaceStart = dst + 1;
+			*dst++ = ch;
 			continue;
 		}
 
@@ -2776,15 +2780,14 @@ UnescapeBackslash(char *escaped, char *const line)
 		 * Escaped '\n' -- replace following whitespace with a single
 		 * ' '.
 		 */
-		pp_skip_hspace(&ptr);
-		ch = ' ';
-		*tp++ = ch;
+		pp_skip_hspace(&src);
+		*dst++ = ' ';
 	}
 
 	/* Delete any trailing spaces - eg from empty continuations */
-	while (tp > escaped && ch_isspace(tp[-1]))
-		tp--;
-	*tp = '\0';
+	while (dst > spaceStart && ch_isspace(dst[-1]))
+		dst--;
+	*dst = '\0';
 }
 
 typedef enum GetLineMode {
@@ -2848,7 +2851,7 @@ ParseGetLine(GetLineMode mode)
 		return line;
 
 	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(escaped, line);
+	UnescapeBackslash(line, escaped);
 
 	return line;
 }
