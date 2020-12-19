@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.497 2020/12/19 13:30:00 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.498 2020/12/19 15:29:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.497 2020/12/19 13:30:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.498 2020/12/19 15:29:28 rillig Exp $");
 
 /* types and constants */
 
@@ -2787,15 +2787,14 @@ UnescapeBackslash(char *const line, char *start)
 
 typedef enum GetLineMode {
 	/*
-	 * Return the next logical line that is neither empty nor a comment.
+	 * Return the next line that is neither empty nor a comment.
 	 * Backslash line continuations are folded into a single space.
 	 * A trailing comment, if any, is discarded.
 	 */
 	PARSE_NORMAL,
 
 	/*
-	 * Return the next physical line, even if it ends with a backslash.
-	 * Comments and empty lines are preserved.
+	 * Return the next line, even if it is empty or a comment.
 	 *
 	 * Used in .for loops to collect the body of the loop while waiting
 	 * for the corresponding .endfor.
@@ -2803,7 +2802,7 @@ typedef enum GetLineMode {
 	PARSE_RAW,
 
 	/*
-	 * Return the next logical line that is a directive.
+	 * Return the next line that is a directive.
 	 * Backslash line continuations are folded into a single space.
 	 * A trailing comment, if any, is discarded.
 	 *
@@ -2813,6 +2812,7 @@ typedef enum GetLineMode {
 	PARSE_SKIP
 } GetLineMode;
 
+/* Return the next "interesting" logical line from the current file. */
 static char *
 ParseGetLine(GetLineMode mode)
 {
