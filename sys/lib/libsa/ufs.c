@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.77 2020/12/19 07:19:30 rin Exp $	*/
+/*	$NetBSD: ufs.c,v 1.78 2020/12/19 08:51:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -122,6 +122,7 @@ struct salfs {
 typedef struct salfs FS;
 #define fs_magic	lfs_dlfs_u.u_32.dlfs_magic
 #define fs_maxsymlinklen lfs_dlfs_u.u_32.dlfs_maxsymlinklen
+#define lfs_version	lfs_dlfs_u.u_32.dlfs_version
 
 #define FS_MAGIC	LFS_MAGIC
 #define SBLOCKSIZE	LFS_SBPAD
