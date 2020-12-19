@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.76 2019/04/02 22:25:10 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.77 2020/12/19 07:19:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -582,7 +582,7 @@ ufs_open(const char *path, struct open_file *f)
 		if (rc)
 			goto out;
 		if (buf_size != SBLOCKSIZE ||
-#ifdef LIBSA_FFS
+#ifdef LIBSA_LFS
 		    fs->lfs_version != REQUIRED_LFS_VERSION ||
 #endif
 		    fs->fs_magic != FS_MAGIC) {
