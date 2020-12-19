@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.60 2020/12/19 13:43:04 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.61 2020/12/19 19:06:12 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1468,4 +1468,31 @@ doc/3RDPARTY					(manually edited)
 	Merge pkg_install 20201218 - provide backwards compatibility for existing
 	package installs using /var/db/pkg.
 	[maya, #1638]
+
+distrib/amiga/miniroot/install.md		1.31
+distrib/hp300/miniroot/install.md		1.18-1.20
+distrib/mac68k/miniroot/install.md		1.6-1.8
+distrib/miniroot/install.sh			1.26,1.27
+distrib/miniroot/install.sub			1.47,1.50-1.54,1.56-1.59 (patch)
+distrib/miniroot/list				1.36
+distrib/miniroot/upgrade.sh			1.23,1.24
+distrib/mvme68k/miniroot/install.md		1.9,1.10
+distrib/sun2/miniroot/install.md		1.6,1.7
+distrib/sun3/miniroot/install.md		1.6,1.7
+
+	Various miniroot installation fixes:
+	Simplify/modernize sh(1) usage.
+	PR 54833: fix miniroot installation failure on network configuration.
+	The kernel and X sets should be specified in MD miniroot scripts.
+	Add modules set for default sets on miniroot installation.
+	Add missing md_get_partition_range() that causes installation failure.
+	Explicitly sort set names fetched via ftp nlist.
+	Use proper release version strings ("9.1" rather than "91") in banners.
+	Fetch files via ftp using auto-fetching with URL per each binary set.
+	[tsutsui, ticket #1639]
+
+sys/dev/scsipi/scsiconf.c			1.283
+
+	Add NOLUNS quirk for more SEAGATE SCA/WIDE drives.
+	[tsutsui, ticket #1640]
 
