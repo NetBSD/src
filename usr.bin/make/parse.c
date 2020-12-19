@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.488 2020/12/19 00:02:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.489 2020/12/19 00:20:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.488 2020/12/19 00:02:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.489 2020/12/19 00:20:57 rillig Exp $");
 
 /* types and constants */
 
@@ -2656,6 +2656,79 @@ ParseEOF(void)
 	return TRUE;
 }
 
+/*
+ * Parse a line, joining physical lines that end with backslash-newline.
+ * Do not unescape "\#", that's done by UnescapeBackslash.
+ */
+static Boolean
+ParseRawLine(char **inout_line, char **out_ptr, char **out_line_end,
+	      char **out_escaped, char **out_comment, char *inout_ch,
+	      IFile *const cf)
+{
+	char *line = *inout_line;
+	char *ptr = line;
+	char *line_end = line;
+	char *escaped = NULL;
+	char *comment = NULL;
+	char ch = *inout_ch;
+
+	for (;;) {
+		if (ptr == cf->buf_end) {
+			/* end of buffer */
+			ch = '\0';
+			break;
+		}
+
+		ch = *ptr;
+		if (ch == '\0' ||
+		    (ch == '\\' && ptr + 1 < cf->buf_end &&
+		     ptr[1] == '\0')) {
+			Parse_Error(PARSE_FATAL,
+			    "Zero byte read from file");
+			return FALSE;
+		}
+
+		/*
+		 * Don't treat next character after '\' as special,
+		 * remember first one.
+		 */
+		if (ch == '\\') {
+			if (escaped == NULL)
+				escaped = ptr;
+			if (ptr[1] == '\n')
+				cf->lineno++;
+			ptr += 2;
+			line_end = ptr;
+			continue;
+		}
+
+		/*
+		 * Remember the first '#' for comment stripping,
+		 * unless the previous char was '[', as in the
+		 * modifier ':[#]'.
+		 */
+		if (ch == '#' && comment == NULL &&
+		    !(ptr > line && ptr[-1] == '['))
+			comment = line_end;
+
+		ptr++;
+		if (ch == '\n')
+			break;
+
+		/* We are not interested in trailing whitespace. */
+		if (!ch_isspace(ch))
+			line_end = ptr;
+	}
+
+	*inout_line = line;
+	*out_ptr = ptr;
+	*out_line_end = line_end;
+	*out_escaped = escaped;
+	*out_comment = comment;
+	*inout_ch = ch;
+	return TRUE;
+}
+
 static void
 UnescapeBackslash(char *escaped, char *const line)
 {
@@ -2733,57 +2806,9 @@ ParseGetLine(GetLineMode mode)
 	for (;;) {
 		cf->lineno++;
 		line = cf->buf_ptr;
-		ptr = line;
-		line_end = line;
-		escaped = NULL;
-		comment = NULL;
-		for (;;) {
-			if (ptr == cf->buf_end) {
-				/* end of buffer */
-				ch = '\0';
-				break;
-			}
-
-			ch = *ptr;
-			if (ch == '\0' ||
-			    (ch == '\\' && ptr + 1 < cf->buf_end &&
-			     ptr[1] == '\0')) {
-				Parse_Error(PARSE_FATAL,
-				    "Zero byte read from file");
-				return NULL;
-			}
-
-			/*
-			 * Don't treat next character after '\' as special,
-			 * remember first one.
-			 */
-			if (ch == '\\') {
-				if (escaped == NULL)
-					escaped = ptr;
-				if (ptr[1] == '\n')
-					cf->lineno++;
-				ptr += 2;
-				line_end = ptr;
-				continue;
-			}
-
-			/*
-			 * Remember the first '#' for comment stripping,
-			 * unless the previous char was '[', as in the
-			 * modifier ':[#]'.
-			 */
-			if (ch == '#' && comment == NULL &&
-			    !(ptr > line && ptr[-1] == '['))
-				comment = line_end;
-
-			ptr++;
-			if (ch == '\n')
-				break;
-
-			/* We are not interested in trailing whitespace. */
-			if (!ch_isspace(ch))
-				line_end = ptr;
-		}
+		if (!ParseRawLine(&line, &ptr, &line_end, &escaped, &comment,
+		    &ch, cf))
+			return NULL;
 
 		/* Save next 'to be processed' location */
 		cf->buf_ptr = ptr;
