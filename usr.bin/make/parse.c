@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.499 2020/12/19 16:05:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.500 2020/12/19 17:49:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.499 2020/12/19 16:05:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.500 2020/12/19 17:49:11 rillig Exp $");
 
 /* types and constants */
 
@@ -2864,6 +2864,35 @@ ParseGetLine(GetLineMode mode)
 	return line;
 }
 
+static Boolean
+ParseForLoop(const char *line)
+{
+	int rval;
+	int firstLineno;
+
+	rval = For_Eval(line);
+	if (rval == 0)
+		return FALSE;	/* Not a .for line */
+	if (rval < 0)
+		return TRUE;	/* Syntax error - error printed, ignore line */
+
+	firstLineno = CurFile()->lineno;
+
+	/* Accumulate loop lines until matching .endfor */
+	do {
+		line = ParseGetLine(GLM_FOR_BODY);
+		if (line == NULL) {
+			Parse_Error(PARSE_FATAL,
+			    "Unexpected end of file in for loop.");
+			break;
+		}
+	} while (For_Accum(line));
+
+	For_Run(firstLineno);	/* Stash each iteration as a new 'input file' */
+
+	return TRUE;		/* Read next line from for-loop buffer */
+}
+
 /*
  * Read an entire line from the input file.
  *
@@ -2878,9 +2907,7 @@ ParseGetLine(GetLineMode mode)
 static char *
 ParseReadLine(void)
 {
-	char *line;		/* Result */
-	int lineno;		/* Saved line # */
-	int rval;
+	char *line;
 
 	for (;;) {
 		line = ParseGetLine(GLM_NONEMPTY);
@@ -2919,30 +2946,9 @@ ParseReadLine(void)
 		case COND_PARSE:
 			continue;
 		case COND_INVALID:	/* Not a conditional line */
-			/* Check for .for loops */
-			rval = For_Eval(line);
-			if (rval == 0)
-				/* Not a .for line */
-				break;
-			if (rval < 0)
-				/* Syntax error - error printed, ignore line */
+			if (ParseForLoop(line))
 				continue;
-			/* Start of a .for loop */
-			lineno = CurFile()->lineno;
-			/* Accumulate loop lines until matching .endfor */
-			do {
-				line = ParseGetLine(GLM_FOR_BODY);
-				if (line == NULL) {
-					Parse_Error(PARSE_FATAL,
-					    "Unexpected end of file "
-					    "in for loop.");
-					break;
-				}
-			} while (For_Accum(line));
-			/* Stash each iteration as a new 'input file' */
-			For_Run(lineno);
-			/* Read next line from for-loop buffer */
-			continue;
+			break;
 		}
 		return line;
 	}
