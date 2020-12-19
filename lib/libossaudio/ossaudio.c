@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.64 2020/11/13 09:02:39 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.65 2020/12/19 12:55:28 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.64 2020/11/13 09:02:39 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.65 2020/12/19 12:55:28 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -183,7 +183,6 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		/* This call is merely advisory, and may be a nop. */
 		break;
 	case SNDCTL_DSP_SPEED:
-		AUDIO_INITINFO(&tmpinfo);
 		/*
 		 * In Solaris, 0 is used a special value to query the
 		 * current rate. This seems useful to support.
@@ -208,6 +207,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			INTARG = 1000;
 		if (INTARG > 192000)
 			INTARG = 192000;
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
 		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
