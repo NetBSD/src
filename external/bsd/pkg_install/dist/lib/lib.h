@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.9.4.1 2020/12/08 18:45:58 martin Exp $ */
+/* $NetBSD: lib.h,v 1.9.4.2 2020/12/19 13:34:42 martin Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -447,6 +447,7 @@ extern const char *cert_chain_file;
 extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_eol;
+extern const char *check_os_version;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
 extern const char *config_pkg_dbdir;
