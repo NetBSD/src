@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.20 2012/10/27 17:17:59 chs Exp $ */
+/* $NetBSD: macfb.c,v 1.21 2020/12/19 21:48:04 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.20 2012/10/27 17:17:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.21 2020/12/19 21:48:04 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.20 2012/10/27 17:17:59 chs Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -206,7 +206,8 @@ macfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dc = &macfb_console_dc;
 		sc->nscreens = 1;
 	} else {
-		sc->sc_dc = malloc(sizeof(struct macfb_devconfig), M_DEVBUF, M_WAITOK);
+		sc->sc_dc = kmem_alloc(sizeof(struct macfb_devconfig),
+		    KM_SLEEP);
 		sc->sc_dc->dc_vaddr = (vaddr_t)gm->fbbase;
 		sc->sc_dc->dc_paddr = ga->ga_phys;
 		sc->sc_dc->dc_size = gm->fbsize;
@@ -373,7 +374,7 @@ init_itefont(void)
 		return;
 	itefont_initted = 1;
 
-	/* XXX but we cannot use malloc here... */
+	/* XXX but we cannot use kmem_alloc here... */
 	gallant19.width = 6;
 	gallant19.height = 10;
 	gallant19.ascent = 0;
