@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.738 2020/12/20 00:47:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.739 2020/12/20 00:57:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.738 2020/12/20 00:47:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.739 2020/12/20 00:57:29 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -305,14 +305,18 @@ ENUM_FLAGS_RTTI_6(VarFlags,
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
-#define FSTR_INIT { NULL, NULL }
-
-static void
-FStr_Assign(FStr *fstr, const char *str, void *freeIt)
+/* Return an FStr that is the sole owner of str. */
+static FStr
+FStr_InitOwn(char *str)
 {
-	free(fstr->freeIt);
-	fstr->str = str;
-	fstr->freeIt = freeIt;
+	return (FStr){ str, str };
+}
+
+/* Return an FStr that refers to the shared str. */
+static FStr
+FStr_InitRefer(const char *str)
+{
+	return (FStr){ str, NULL };
 }
 
 static void
@@ -791,7 +795,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 		      FStr *out_varnames, UnexportWhat *out_what)
 {
 	UnexportWhat what;
-	FStr varnames = FSTR_INIT;
+	FStr varnames = FStr_InitRefer("");
 
 	if (isEnv) {
 		if (arg[0] != '\0') {
@@ -804,7 +808,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 	} else {
 		what = arg[0] != '\0' ? UNEXPORT_NAMED : UNEXPORT_ALL;
 		if (what == UNEXPORT_NAMED)
-			FStr_Assign(&varnames, arg, NULL);
+			varnames = FStr_InitRefer(arg);
 	}
 
 	if (what != UNEXPORT_NAMED) {
@@ -813,7 +817,7 @@ GetVarnamesToUnexport(Boolean isEnv, const char *arg,
 		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
 		    VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		FStr_Assign(&varnames, expanded, expanded);
+		varnames = FStr_InitOwn(expanded);
 	}
 
 	*out_varnames = varnames;
