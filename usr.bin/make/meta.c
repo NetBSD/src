@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.163 2020/12/20 22:12:36 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.164 2020/12/20 22:36:40 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -820,9 +820,10 @@ meta_job_output(Job *job, char *cp, const char *nl)
 		    meta_prefix_len = strlen(meta_prefix);
 	    }
 	    if (strncmp(cp, meta_prefix, meta_prefix_len) == 0) {
-		cp = strchr(cp+1, '\n');
-		if (!cp++)
+		cp = strchr(cp + 1, '\n');
+		if (cp == NULL)
 		    return;
+		cp++;
 	    }
 	}
 	fprintf(pbm->mfp, "%s%s", cp, nl);
@@ -1527,7 +1528,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 				warnx("%s: %d: line truncated at %u", fname, lineno, x);
 				break;
 			    }
-			    cp = strchr(++cp, '\n');
+			    cp = strchr(cp + 1, '\n');
 			} while (cp != NULL);
 			if (buf[x - 1] == '\n')
 			    buf[x - 1] = '\0';
