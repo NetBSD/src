@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.752 2020/12/20 19:02:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.753 2020/12/20 19:10:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.752 2020/12/20 19:02:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.753 2020/12/20 19:10:53 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3455,12 +3455,6 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	/* TODO: handle errors */
 
 	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
-		if (opts.lint)
-			Parse_Error(PARSE_FATAL,
-			    "Missing delimiter ':' "
-			    "after indirect modifier \"%.*s\"",
-			    (int)(p - *pp), *pp);
-
 		FStr_Done(&mods);
 		return AMIR_APPLY_MODS;
 	}
