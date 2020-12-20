@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.105 2020/09/17 20:29:03 otis Exp $
+# $NetBSD: rc.subr,v 1.106 2020/12/20 21:30:28 uwe Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -822,9 +822,9 @@ $command $rc_flags $command_args"
 			echo "# $name"
 			if [ -n "$rcvar" ]; then
 				if checkyesno ${rcvar}; then
-					echo "\$${rcvar}=YES"
+					echo "${rcvar}=YES"
 				else
-					echo "\$${rcvar}=NO"
+					echo "${rcvar}=NO"
 				fi
 			fi
 			;;
