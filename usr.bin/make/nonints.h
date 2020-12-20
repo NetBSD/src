@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.178 2020/12/20 14:32:13 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.179 2020/12/20 14:39:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,6 @@ void JobReapChild(pid_t, int, Boolean);
 
 /* main.c */
 void Main_ParseArgLine(const char *);
-void MakeMode(const char *);
 char *Cmd_Exec(const char *, const char **);
 void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
