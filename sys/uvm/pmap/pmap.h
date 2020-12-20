@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2020/08/20 05:54:32 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2020/12/20 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,9 +195,12 @@ bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
 void	pmap_page_set_attributes(struct vm_page_md *, u_int);
 void	pmap_pvlist_lock_init(size_t);
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-void	pmap_page_cache(struct vm_page *, bool cached);
+void	pmap_page_cache(struct vm_page_md *, bool cached);
 #endif
 
+#ifdef __HAVE_PMAP_PV_TRACK
+void	pmap_pv_protect(paddr_t, vm_prot_t);
+#endif
 
 #define	PMAP_WB		0
 #define	PMAP_WBINV	1
