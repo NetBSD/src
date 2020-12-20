@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.190 2020/12/20 13:38:43 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.191 2020/12/20 13:46:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.190 2020/12/20 13:38:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.191 2020/12/20 13:46:27 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -186,18 +186,17 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 {
 	char *cp;		/* Pointer into line */
 	GNode *gn;		/* New node */
-	char *libName;		/* Library-part of specification */
-	char *libName_freeIt = NULL;
+	MFStr libName;		/* Library-part of specification */
 	char *memName;		/* Member-part of specification */
 	char saveChar;		/* Ending delimiter of member-name */
 	Boolean expandLibName;	/* Whether the parsed libName contains
 				 * variable expressions that need to be
 				 * expanded */
 
-	libName = *pp;
+	libName = MFStr_InitRefer(*pp);
 	expandLibName = FALSE;
 
-	for (cp = libName; *cp != '(' && *cp != '\0';) {
+	for (cp = libName.str; *cp != '(' && *cp != '\0';) {
 		if (*cp == '$') {
 			/* Expand nested variable expressions. */
 			/* XXX: This code can probably be shortened. */
@@ -222,10 +221,11 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 
 	*cp++ = '\0';
 	if (expandLibName) {
-		(void)Var_Subst(libName, ctxt, VARE_WANTRES | VARE_UNDEFERR,
-				&libName);
+		char *expanded;
+		(void)Var_Subst(libName.str, ctxt,
+		    VARE_WANTRES | VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
-		libName_freeIt = libName;
+		libName = MFStr_InitOwn(expanded);
 	}
 
 
@@ -314,7 +314,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 			 * Now form an archive spec and recurse to deal with
 			 * nested variables and multi-word variable values.
 			 */
-			fullName = str_concat4(libName, "(", memName, ")");
+			fullName = str_concat4(libName.str, "(", memName, ")");
 			p = fullName;
 
 			if (strchr(memName, '$') != NULL &&
@@ -344,7 +344,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 
 			while (!Lst_IsEmpty(&members)) {
 				char *member = Lst_Dequeue(&members);
-				char *fullname = str_concat4(libName, "(",
+				char *fullname = str_concat4(libName.str, "(",
 							     member, ")");
 				free(member);
 
@@ -357,7 +357,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 			Lst_Done(&members);
 
 		} else {
-			char *fullname = str_concat4(libName, "(", memName,
+			char *fullname = str_concat4(libName.str, "(", memName,
 						     ")");
 			gn = Targ_GetNode(fullname);
 			free(fullname);
@@ -378,7 +378,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 		*cp = saveChar;
 	}
 
-	free(libName_freeIt);
+	MFStr_Done(&libName);
 
 	cp++;			/* skip the ')' */
 	/* We promised that pp would be set up at the next non-space. */
