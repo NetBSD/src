@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.423 2020/01/08 20:59:20 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.424 2020/12/20 11:58:58 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3343,6 +3343,8 @@ sun4v_tl1_ptbl_miss:
 	bgeu,pt	%xcc, 1f
 	 nop
 
+	/* We had a miss inside rtf_user_fault_start/rtf_user_fault_end block (FILL)
+	
 	/* Fixup %cwp. */
 	rdpr	%cwp, %g1
 	inc	%g1
