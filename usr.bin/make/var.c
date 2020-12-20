@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.747 2020/12/20 15:26:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.748 2020/12/20 15:31:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.747 2020/12/20 15:26:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.748 2020/12/20 15:31:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -949,27 +949,25 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		 VarSetFlags flags)
 {
 	const char *unexpanded_name = name;
-	char *name_freeIt = NULL;
+	FStr varname = FStr_InitRefer(name);
 
 	assert(val != NULL);
 
-	if (strchr(name, '$') != NULL) {
-		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+	if (strchr(varname.str, '$') != NULL) {
+		char *expanded;
+		(void)Var_Subst(varname.str, ctxt, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		name = name_freeIt;
+		varname = FStr_InitOwn(expanded);
 	}
 
-	if (name[0] == '\0') {
+	if (varname.str[0] == '\0') {
 		DEBUG2(VAR, "Var_Set(\"%s\", \"%s\", ...) "
 			    "name expands to empty string - ignored\n",
 		    unexpanded_name, val);
-		free(name_freeIt);
-		return;
-	}
+	} else
+		SetVar(varname.str, val, ctxt, flags);
 
-	SetVar(name, val, ctxt, flags);
-
-	free(name_freeIt);
+	FStr_Done(&varname);
 }
 
 /*
