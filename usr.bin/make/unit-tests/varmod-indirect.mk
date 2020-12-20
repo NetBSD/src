@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.1 2020/12/01 22:16:36 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.2 2020/12/20 19:29:06 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -6,6 +6,36 @@
 # look like line noise and are hard to decipher.
 #
 # TODO: Since when are indirect modifiers supported?
+
+
+# To apply a modifier indirectly via another variable, the whole
+# modifier must be put into a single variable expression.
+.if ${value:L:${:US}${:U,value,replacement,}} != "S,value,replacement,}"
+.  warning unexpected
+.endif
+
+
+# Adding another level of indirection (the 2 nested :U expressions) helps.
+.if ${value:L:${:U${:US}${:U,value,replacement,}}} != "replacement"
+.  warning unexpected
+.endif
+
+
+# Multiple indirect modifiers can be applied one after another as long as
+# they are separated with colons.
+.if ${value:L:${:US,a,A,}:${:US,e,E,}} != "vAluE"
+.  warning unexpected
+.endif
+
+
+# An indirect variable that evaluates to the empty string is allowed though.
+# This makes it possible to define conditional modifiers, like this:
+#
+# M.little-endian=	S,1234,4321,
+# M.big-endian=		# none
+.if ${value:L:${:Dempty}S,a,A,} != "vAlue"
+.  warning unexpected
+.endif
 
 
 # The nested variable expression expands to "tu", and this is interpreted as
