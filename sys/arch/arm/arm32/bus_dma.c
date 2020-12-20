@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.127 2020/12/19 23:22:18 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.128 2020/12/20 10:34:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.127 2020/12/19 23:22:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.128 2020/12/20 10:34:33 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -1196,7 +1196,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		return;
 	}
 
-#if !defined( ARM_MMU_EXTENDED)
+#if !defined(ARM_MMU_EXTENDED)
 	/*
 	 * If the mapping belongs to a non-kernel vmspace, and the
 	 * vmspace has not been active since the last time a full
