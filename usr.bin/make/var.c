@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.746 2020/12/20 15:04:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.747 2020/12/20 15:26:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.746 2020/12/20 15:04:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.747 2020/12/20 15:26:40 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -866,30 +866,11 @@ Var_UnExport(Boolean isEnv, const char *arg)
 	FStr_Done(&varnames);
 }
 
-/* See Var_Set for documentation. */
-void
-Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
-		 VarSetFlags flags)
+/* Set the variable to the value; the name is not expanded. */
+static void
+SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
-	const char *unexpanded_name = name;
-	char *name_freeIt = NULL;
 	Var *v;
-
-	assert(val != NULL);
-
-	if (strchr(name, '$') != NULL) {
-		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
-		/* TODO: handle errors */
-		name = name_freeIt;
-	}
-
-	if (name[0] == '\0') {
-		DEBUG2(VAR, "Var_Set(\"%s\", \"%s\", ...) "
-			    "name expands to empty string - ignored\n",
-		    unexpanded_name, val);
-		free(name_freeIt);
-		return;
-	}
 
 	if (ctxt == VAR_GLOBAL) {
 		v = VarFind(name, VAR_CMDLINE, FALSE);
@@ -897,7 +878,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 			if (v->flags & VAR_FROM_CMD) {
 				DEBUG3(VAR, "%s:%s = %s ignored!\n",
 				    ctxt->name, name, val);
-				goto out;
+				return;
 			}
 			VarFreeEnv(v, TRUE);
 		}
@@ -924,7 +905,7 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 		if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
 			DEBUG3(VAR, "%s:%s = %s ignored (read-only)\n",
 			    ctxt->name, name, val);
-			goto out;
+			return;
 		}
 		Buf_Empty(&v->val);
 		Buf_AddStr(&v->val, val);
@@ -958,10 +939,37 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
 		save_dollars = ParseBoolean(val, save_dollars);
 
-out:
-	free(name_freeIt);
 	if (v != NULL)
 		VarFreeEnv(v, TRUE);
+}
+
+/* See Var_Set for documentation. */
+void
+Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
+		 VarSetFlags flags)
+{
+	const char *unexpanded_name = name;
+	char *name_freeIt = NULL;
+
+	assert(val != NULL);
+
+	if (strchr(name, '$') != NULL) {
+		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+		/* TODO: handle errors */
+		name = name_freeIt;
+	}
+
+	if (name[0] == '\0') {
+		DEBUG2(VAR, "Var_Set(\"%s\", \"%s\", ...) "
+			    "name expands to empty string - ignored\n",
+		    unexpanded_name, val);
+		free(name_freeIt);
+		return;
+	}
+
+	SetVar(name, val, ctxt, flags);
+
+	free(name_freeIt);
 }
 
 /*
@@ -1077,17 +1085,18 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 Boolean
 Var_Exists(const char *name, GNode *ctxt)
 {
-	char *name_freeIt = NULL;
+	FStr varname = FStr_InitRefer(name);
 	Var *v;
 
-	if (strchr(name, '$') != NULL) {
-		(void)Var_Subst(name, ctxt, VARE_WANTRES, &name_freeIt);
+	if (strchr(varname.str, '$') != NULL) {
+		char *expanded;
+		(void)Var_Subst(varname.str, ctxt, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		name = name_freeIt;
+		varname = FStr_InitOwn(expanded);
 	}
 
-	v = VarFind(name, ctxt, TRUE);
-	free(name_freeIt);
+	v = VarFind(varname.str, ctxt, TRUE);
+	FStr_Done(&varname);
 	if (v == NULL)
 		return FALSE;
 
