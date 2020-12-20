@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.7 2020/11/15 08:09:56 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.8 2020/12/20 16:38:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
-//void    pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
+void    pmap_md_page_syncicache(struct vm_page_md *, const kcpuset_t *);
 
 void	pmap_md_pdetab_activate(struct pmap *);
 void	pmap_md_pdetab_init(struct pmap *);
@@ -133,7 +133,7 @@ extern vaddr_t pmap_direct_end;
 
 #ifdef __PMAP_PRIVATE
 static inline void
-pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *kc)
+pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *kc)
 {
 	__asm __volatile("fence\trw,rw; fence.i");
 }
@@ -142,19 +142,19 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *kc)
  * Virtual Cache Alias helper routines.  Not a problem for RISCV CPUs.
  */
 static inline bool
-pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *nptep)
+pmap_md_vca_add(struct vm_page_md *mdpg, vaddr_t va, pt_entry_t *nptep)
 {
 	return false;
 }
 
 static inline void
-pmap_md_vca_remove(struct vm_page *pg, vaddr_t va)
+pmap_md_vca_remove(struct vm_page_md *mdpg, vaddr_t va)
 {
 
 }
 
 static inline void
-pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
+pmap_md_vca_clean(struct vm_page_md *mdpg, vaddr_t va, int op)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.3 2020/08/07 07:19:45 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.4 2020/12/20 16:38:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,7 +92,7 @@ vaddr_t	pmap_kvptefill(vaddr_t, vaddr_t, pt_entry_t);
 #endif
 #endif
 
-void	pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
+void	pmap_md_page_syncicache(struct vm_page_md *, const kcpuset_t *);
 vaddr_t	pmap_bootstrap(vaddr_t, vaddr_t, phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 
@@ -114,7 +114,7 @@ vtophys(vaddr_t va)
  * Virtual Cache Alias helper routines.  Not a problem for Booke CPUs.
  */
 static inline bool
-pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *nptep)
+pmap_md_vca_add(struct vm_page_md *mdpg, vaddr_t va, pt_entry_t *nptep)
 {
 	return false;
 }
@@ -126,7 +126,7 @@ pmap_md_vca_remove(struct vm_page *pg, vaddr_t va)
 }
 
 static inline void
-pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
+pmap_md_vca_clean(struct vm_page_md *mdpg, vaddr_t va, int op)
 {
 }
 

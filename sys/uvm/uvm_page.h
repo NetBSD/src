@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.108 2020/12/20 15:50:44 skrll Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.109 2020/12/20 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -406,6 +406,7 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 
 #ifdef __HAVE_VM_PAGE_MD
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
+#define	VM_MD_TO_PAGE(md)	(container_of((md), struct vm_page, mdpage))
 #endif
 
 /*

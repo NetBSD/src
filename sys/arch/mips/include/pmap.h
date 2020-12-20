@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.75 2020/12/20 16:38:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,6 +93,7 @@ typedef uint32_t pt_entry_t;
 #define	KERNEL_PID			0
 
 #if defined(__PMAP_PRIVATE)
+struct vm_page_md;
 
 #include <mips/locore.h>
 #include <mips/cache.h>
@@ -122,9 +123,9 @@ typedef uint32_t pt_entry_t;
 void	pmap_md_init(void);
 void	pmap_md_icache_sync_all(void);
 void	pmap_md_icache_sync_range_index(vaddr_t, vsize_t);
-void	pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
-bool	pmap_md_vca_add(struct vm_page *, vaddr_t, pt_entry_t *);
-void	pmap_md_vca_clean(struct vm_page *, int);
+void	pmap_md_page_syncicache(struct vm_page_md *, const kcpuset_t *);
+bool	pmap_md_vca_add(struct vm_page_md *, vaddr_t, pt_entry_t *);
+void	pmap_md_vca_clean(struct vm_page_md *, int);
 void	pmap_md_vca_remove(struct vm_page *, vaddr_t, bool, bool);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
@@ -178,6 +179,7 @@ struct tlbmask {
 #include <uvm/uvm_pmap.h>
 #include <uvm/pmap/vmpagemd.h>
 #include <uvm/pmap/pmap.h>
+#include <uvm/pmap/pmap_pvt.h>
 #include <uvm/pmap/pmap_tlb.h>
 #include <uvm/pmap/pmap_synci.h>
 
@@ -268,6 +270,14 @@ int sbmips_cca_for_pa(paddr_t);
 
 #undef PMAP_CCA_FOR_PA
 #define	PMAP_CCA_FOR_PA(pa)	sbmips_cca_for_pa(pa)
+#endif
+
+#ifdef __HAVE_PMAP_PV_TRACK
+struct pmap_page {
+        struct vm_page_md       pp_md;
+};
+
+#define PMAP_PAGE_TO_MD(ppage)  (&((ppage)->pp_md))
 #endif
 
 #endif	/* _KERNEL */
