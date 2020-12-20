@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.744 2020/12/20 13:50:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.745 2020/12/20 14:32:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.744 2020/12/20 13:50:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.745 2020/12/20 14:32:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1105,20 +1105,19 @@ Var_Exists(const char *name, GNode *ctxt)
  *	If the returned value is not NULL, the caller must free
  *	out_freeIt when the returned value is no longer needed.
  */
-const char *
-Var_Value(const char *name, GNode *ctxt, void **out_freeIt)
+FStr
+Var_Value(const char *name, GNode *ctxt)
 {
 	Var *v = VarFind(name, ctxt, TRUE);
 	char *value;
 
-	*out_freeIt = NULL;
 	if (v == NULL)
-		return NULL;
+		return FStr_InitRefer(NULL);
 
 	value = Buf_GetAll(&v->val, NULL);
-	if (VarFreeEnv(v, FALSE))
-		*out_freeIt = value;
-	return value;
+	return VarFreeEnv(v, FALSE)
+	    ? FStr_InitOwn(value)
+	    : FStr_InitRefer(value);
 }
 
 /* Return the unexpanded variable value from this node, without trying to look

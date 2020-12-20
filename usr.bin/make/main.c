@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.498 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.499 2020/12/20 14:32:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.498 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.499 2020/12/20 14:32:13 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -690,10 +690,9 @@ Main_ParseArgLine(const char *line)
 		return;
 
 	{
-		void *freeIt;
-		const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &freeIt);
-		buf = str_concat3(argv0, " ", line);
-		free(freeIt);
+		FStr argv0 = Var_Value(".MAKE", VAR_GLOBAL);
+		buf = str_concat3(argv0.str, " ", line);
+		FStr_Done(&argv0);
 	}
 
 	words = Str_Words(buf, TRUE);
@@ -751,29 +750,27 @@ Main_SetObjdir(Boolean writable, const char *fmt, ...)
 static Boolean
 SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 {
-	void *path_freeIt;
-	const char *path = Var_Value(var, VAR_CMDLINE, &path_freeIt);
-	const char *xpath;
-	char *xpath_freeIt;
+	FStr path = Var_Value(var, VAR_CMDLINE);
+	FStr xpath;
 
-	if (path == NULL || path[0] == '\0') {
-		bmake_free(path_freeIt);
+	if (path.str == NULL || path.str[0] == '\0') {
+		FStr_Done(&path);
 		return FALSE;
 	}
 
 	/* expand variable substitutions */
-	xpath = path;
-	xpath_freeIt = NULL;
-	if (strchr(path, '$') != 0) {
-		(void)Var_Subst(path, VAR_GLOBAL, VARE_WANTRES, &xpath_freeIt);
+	xpath = FStr_InitRefer(path.str);
+	if (strchr(path.str, '$') != 0) {
+		char *expanded;
+		(void)Var_Subst(path.str, VAR_GLOBAL, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		xpath = xpath_freeIt;
+		xpath = FStr_InitOwn(expanded);
 	}
 
-	(void)Main_SetObjdir(writable, "%s%s", xpath, suffix);
+	(void)Main_SetObjdir(writable, "%s%s", xpath.str, suffix);
 
-	bmake_free(xpath_freeIt);
-	bmake_free(path_freeIt);
+	FStr_Done(&xpath);
+	FStr_Done(&path);
 	return TRUE;
 }
 
@@ -859,10 +856,9 @@ PrintVar(const char *varname, Boolean expandVars)
 		bmake_free(evalue);
 
 	} else {
-		void *freeIt;
-		const char *value = Var_Value(varname, VAR_GLOBAL, &freeIt);
-		printf("%s\n", value ? value : "");
-		bmake_free(freeIt);
+		FStr value = Var_Value(varname, VAR_GLOBAL);
+		printf("%s\n", value.str != NULL ? value.str : "");
+		FStr_Done(&value);
 	}
 }
 
@@ -1047,21 +1043,20 @@ static void
 HandlePWD(const struct stat *curdir_st)
 {
 	char *pwd;
-	void *prefix_freeIt, *makeobjdir_freeIt;
-	const char *makeobjdir;
+	FStr prefix, makeobjdir;
 	struct stat pwd_st;
 
 	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
 		return;
 
-	if (Var_Value("MAKEOBJDIRPREFIX", VAR_CMDLINE, &prefix_freeIt) !=
-	    NULL) {
-		bmake_free(prefix_freeIt);
+	prefix = Var_Value("MAKEOBJDIRPREFIX", VAR_CMDLINE);
+	if (prefix.str != NULL) {
+		FStr_Done(&prefix);
 		return;
 	}
 
-	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMDLINE, &makeobjdir_freeIt);
-	if (makeobjdir != NULL && strchr(makeobjdir, '$') != NULL)
+	makeobjdir = Var_Value("MAKEOBJDIR", VAR_CMDLINE);
+	if (makeobjdir.str != NULL && strchr(makeobjdir.str, '$') != NULL)
 		goto ignore_pwd;
 
 	if (stat(pwd, &pwd_st) == 0 &&
@@ -1070,7 +1065,7 @@ HandlePWD(const struct stat *curdir_st)
 		(void)strncpy(curdir, pwd, MAXPATHLEN);
 
 ignore_pwd:
-	bmake_free(makeobjdir_freeIt);
+	FStr_Done(&makeobjdir);
 }
 #endif
 
@@ -1554,10 +1549,9 @@ main_PrepareMaking(void)
 	MakeMode(NULL);
 
 	{
-		void *freeIt;
-		Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &freeIt),
-		    VAR_GLOBAL);
-		bmake_free(freeIt);
+		FStr makeflags = Var_Value(MAKEFLAGS, VAR_GLOBAL);
+		Var_Append("MFLAGS", makeflags.str, VAR_GLOBAL);
+		FStr_Done(&makeflags);
 	}
 
 	InitMaxJobs();
