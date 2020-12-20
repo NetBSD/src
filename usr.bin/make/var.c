@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.754 2020/12/20 19:47:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.755 2020/12/20 19:51:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.754 2020/12/20 19:47:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.755 2020/12/20 19:51:37 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3259,7 +3259,6 @@ ApplyModifier_SysV(const char **pp, char *val, ApplyModifiersState *st)
 	if (*p != st->endc || !eqFound)
 		return AMR_UNKNOWN;
 
-	*pp = mod;
 	res = ParseModifierPart(pp, '=', st->eflags, st,
 	    &lhs, NULL, NULL, NULL);
 	if (res != VPR_OK)
