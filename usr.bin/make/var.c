@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.751 2020/12/20 18:23:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.752 2020/12/20 19:02:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.751 2020/12/20 18:23:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.752 2020/12/20 19:02:28 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3420,13 +3420,30 @@ static char *ApplyModifiers(const char **, char *, char, char, Var *,
 			    VarExprFlags *, GNode *, VarEvalFlags, void **);
 
 typedef enum ApplyModifiersIndirectResult {
+	/* The indirect modifiers have been applied successfully. */
 	AMIR_CONTINUE,
+	/* Fall back to the SysV modifier. */
 	AMIR_APPLY_MODS,
+	/* Error out. */
 	AMIR_OUT
 } ApplyModifiersIndirectResult;
 
-/* While expanding a variable expression, expand and apply indirect
- * modifiers such as in ${VAR:${M_indirect}}. */
+/*
+ * While expanding a variable expression, expand and apply indirect modifiers,
+ * such as in ${VAR:${M_indirect}}.
+ *
+ * All indirect modifiers of a group must come from a single variable
+ * expression.  ${VAR:${M1}} is valid but ${VAR:${M1}${M2}} is not.
+ *
+ * Multiple groups of indirect modifiers can be chained by separating them
+ * with colons.  ${VAR:${M1}:${M2}} contains 2 indirect modifiers.
+ *
+ * If the variable expression is not followed by st->endc or ':', fall
+ * back to trying the SysV modifier, such as in ${VAR:${FROM}=${TO}}.
+ *
+ * The expression ${VAR:${M1}${M2}} is not treated as an indirect
+ * modifier, and it is neither a SysV modifier but a parse error.
+ */
 static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 		       char **inout_val, void **inout_freeIt)
@@ -3437,11 +3454,6 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	(void)Var_Parse(&p, st->ctxt, st->eflags, &mods);
 	/* TODO: handle errors */
 
-	/*
-	 * If we have not parsed up to st->endc or ':', we are not
-	 * interested.  This means the expression ${VAR:${M1}${M2}}
-	 * is not accepted, but ${VAR:${M1}:${M2}} is.
-	 */
 	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
 		if (opts.lint)
 			Parse_Error(PARSE_FATAL,
@@ -3450,9 +3462,6 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 			    (int)(p - *pp), *pp);
 
 		FStr_Done(&mods);
-		/* XXX: apply_mods doesn't sound like "not interested". */
-		/* XXX: Why is the indirect modifier parsed once more by
-		 * apply_mods?  Try *pp = p here. */
 		return AMIR_APPLY_MODS;
 	}
 
@@ -3606,8 +3615,9 @@ ApplyModifiers(
 			if (amir == AMIR_CONTINUE)
 				continue;
 			if (amir == AMIR_OUT)
-				goto out;
+				break;
 		}
+
 		st.newVal = var_Error;	/* default value, in case of errors */
 		mod = p;
 
@@ -3618,7 +3628,7 @@ ApplyModifiers(
 		if (res == AMR_BAD)
 			goto bad_modifier;
 	}
-out:
+
 	*pp = p;
 	assert(val != NULL);	/* Use var_Error or varUndefined instead. */
 	*exprFlags = st.exprFlags;
