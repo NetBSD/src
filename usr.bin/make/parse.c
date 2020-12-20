@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.506 2020/12/20 14:48:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.507 2020/12/20 14:52:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.506 2020/12/20 14:48:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.507 2020/12/20 14:52:16 rillig Exp $");
 
 /* types and constants */
 
@@ -1962,27 +1962,27 @@ static void
 VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 		    FStr *out_avalue)
 {
-	const char *cmd, *errfmt;
+	FStr cmd;
+	const char *errfmt;
 	char *cmdOut;
-	void *cmd_freeIt = NULL;
 
-	cmd = uvalue;
-	if (strchr(cmd, '$') != NULL) {
-		char *ecmd;
-		(void)Var_Subst(cmd, VAR_CMDLINE, VARE_WANTRES | VARE_UNDEFERR,
-		    &ecmd);
+	cmd = FStr_InitRefer(uvalue);
+	if (strchr(cmd.str, '$') != NULL) {
+		char *expanded;
+		(void)Var_Subst(cmd.str, VAR_CMDLINE,
+		    VARE_WANTRES | VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
-		cmd = cmd_freeIt = ecmd;
+		cmd = FStr_InitOwn(expanded);
 	}
 
-	cmdOut = Cmd_Exec(cmd, &errfmt);
+	cmdOut = Cmd_Exec(cmd.str, &errfmt);
 	Var_Set(name, cmdOut, ctxt);
 	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
 		Parse_Error(PARSE_WARNING, errfmt, cmd);
 
-	free(cmd_freeIt);
+	FStr_Done(&cmd);
 }
 
 /* Perform a variable assignment.
