@@ -1,3 +1,5 @@
-make: Unknown modifier 'Z'
-make: Unknown modifier 'Z'
-exit status 0
+make: "varparse-errors.mk" line 38: Unknown modifier 'Z'
+make: "varparse-errors.mk" line 46: Unknown modifier 'Z'
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
