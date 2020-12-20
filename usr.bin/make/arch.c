@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.189 2020/12/18 15:47:34 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.190 2020/12/20 13:38:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -125,7 +125,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.189 2020/12/18 15:47:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.190 2020/12/20 13:38:43 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -202,17 +202,15 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 			/* Expand nested variable expressions. */
 			/* XXX: This code can probably be shortened. */
 			const char *nested_p = cp;
-			void *result_freeIt;
-			const char *result;
+			FStr result;
 			Boolean isError;
 
 			/* XXX: is expanded twice: once here and once below */
 			(void)Var_Parse(&nested_p, ctxt,
-					VARE_WANTRES | VARE_UNDEFERR,
-					&result, &result_freeIt);
+					VARE_WANTRES | VARE_UNDEFERR, &result);
 			/* TODO: handle errors */
-			isError = result == var_Error;
-			free(result_freeIt);
+			isError = result.str == var_Error;
+			FStr_Done(&result);
 			if (isError)
 				return FALSE;
 
@@ -246,17 +244,16 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 			if (*cp == '$') {
 				/* Expand nested variable expressions. */
 				/* XXX: This code can probably be shortened. */
-				void *freeIt;
-				const char *result;
+				FStr result;
 				Boolean isError;
 				const char *nested_p = cp;
 
 				(void)Var_Parse(&nested_p, ctxt,
 						VARE_WANTRES | VARE_UNDEFERR,
-						&result, &freeIt);
+						&result);
 				/* TODO: handle errors */
-				isError = result == var_Error;
-				free(freeIt);
+				isError = result.str == var_Error;
+				FStr_Done(&result);
 
 				if (isError)
 					return FALSE;
