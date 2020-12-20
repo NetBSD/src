@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.162 2020/12/20 22:02:54 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.163 2020/12/20 22:12:36 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1076,7 +1076,6 @@ meta_oodate(GNode *gn, Boolean oodate)
     FStr dname;
     const char *tname;
     char *p;
-    char *cp;
     char *link_src;
     char *move_target;
     static size_t cwdlen = 0;
@@ -1296,13 +1295,15 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * the src as for 'R'ead
 		     * and the target as for 'W'rite.
 		     */
-		    cp = p;		/* save this for a second */
-		    /* now get target */
-		    if (strsep(&p, " ") == NULL)
-			continue;
-		    CHECK_VALID_META(p);
-		    move_target = p;
-		    p = cp;
+		    {
+			char *cp = p;	/* save this for a second */
+			/* now get target */
+			if (strsep(&p, " ") == NULL)
+			    continue;
+			CHECK_VALID_META(p);
+			move_target = p;
+			p = cp;
+		    }
 		    /* 'L' and 'M' put single quotes around the args */
 		    DEQUOTE(p);
 		    DEQUOTE(move_target);
@@ -1487,6 +1488,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			   fname, lineno);
 		    oodate = TRUE;
 		} else {
+		    const char *cp;
 		    char *cmd = cmdNode->datum;
 		    Boolean hasOODATE = FALSE;
 
@@ -1573,7 +1575,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
     } else {
 	if (writeMeta && (metaMissing || (gn->type & OP_META))) {
-	    cp = NULL;
+	    const char *cp = NULL;
 
 	    /* if target is in .CURDIR we do not need a meta file */
 	    if (gn->path && (cp = strrchr(gn->path, '/')) && cp > gn->path) {
