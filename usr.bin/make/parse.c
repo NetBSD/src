@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.504 2020/12/20 13:38:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.505 2020/12/20 14:32:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.504 2020/12/20 13:38:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.505 2020/12/20 14:32:13 rillig Exp $");
 
 /* types and constants */
 
@@ -614,8 +614,7 @@ static void
 PrintLocation(FILE *f, const char *fname, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN + 1];
-	const char *dir, *base;
-	void *dir_freeIt, *base_freeIt;
+	FStr dir, base;
 
 	if (*fname == '/' || strcmp(fname, "(stdin)") == 0) {
 		(void)fprintf(f, "\"%s\" line %u: ", fname, (unsigned)lineno);
@@ -625,19 +624,21 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	/* Find out which makefile is the culprit.
 	 * We try ${.PARSEDIR} and apply realpath(3) if not absolute. */
 
-	dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &dir_freeIt);
-	if (dir == NULL)
-		dir = ".";
-	if (*dir != '/')
-		dir = realpath(dir, dirbuf);
+	dir = Var_Value(".PARSEDIR", VAR_GLOBAL);
+	if (dir.str == NULL)
+		dir.str = ".";
+	if (dir.str[0] != '/')
+		dir.str = realpath(dir.str, dirbuf);
 
-	base = Var_Value(".PARSEFILE", VAR_GLOBAL, &base_freeIt);
-	if (base == NULL)
-		base = str_basename(fname);
+	base = Var_Value(".PARSEFILE", VAR_GLOBAL);
+	if (base.str == NULL)
+		base.str = str_basename(fname);
 
-	(void)fprintf(f, "\"%s/%s\" line %u: ", dir, base, (unsigned)lineno);
-	bmake_free(base_freeIt);
-	bmake_free(dir_freeIt);
+	(void)fprintf(f, "\"%s/%s\" line %u: ",
+	    dir.str, base.str, (unsigned)lineno);
+
+	FStr_Done(&base);
+	FStr_Done(&dir);
 }
 
 static void
@@ -2404,10 +2405,9 @@ StrContainsWord(const char *str, const char *word)
 static Boolean
 VarContainsWord(const char *varname, const char *word)
 {
-	void *val_freeIt;
-	const char *val = Var_Value(varname, VAR_GLOBAL, &val_freeIt);
-	Boolean found = val != NULL && StrContainsWord(val, word);
-	bmake_free(val_freeIt);
+	FStr val = Var_Value(varname, VAR_GLOBAL);
+	Boolean found = val.str != NULL && StrContainsWord(val.str, word);
+	FStr_Done(&val);
 	return found;
 }
 
