@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.14 2020/12/07 13:24:15 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.15 2020/12/20 09:08:15 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.14 2020/12/07 13:24:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.15 2020/12/20 09:08:15 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.14 2020/12/07 13:24:15 jdc Exp
 
 #define PCF8591_TEMP_SENS	0x00
 #define PCF8591_CPU_FAN_CTRL	0x01
-#define PCF8591_PS_FAN_CTRL	0x02
 
 struct ecadc_channel {
 	u_int		chan_num;
@@ -89,6 +88,7 @@ static int	ecadc_detach(device_t, int);
 static void	ecadc_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	ecadc_get_limits(struct sysmon_envsys *, envsys_data_t *,
 			sysmon_envsys_lim_t *, u_int32_t *);
+static int	ecadc_set_fan_speed(struct ecadc_softc *, u_int8_t, u_int8_t);
 static void	ecadc_timeout(void *);
 static void	ecadc_fan_adjust(void *);
 
@@ -205,31 +205,6 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nchan++;
 	}
 
-	/*
-	 * Fan speed changing information is missing from OFW
-	 * The E250 CPU fan is connected to the sensor at addr 0x4a, channel 1
-	 */
-	if (ia->ia_addr == 0x4a && !strcmp(machine_model, "SUNW,Ultra-250") &&
-	    OF_getprop(node, "cpu-fan-speeds", &sc->sc_cpu_fan_spd,
-	    XLATE_MAX) > 0) {
-		sc->sc_channels[sc->sc_nchan].chan_num = 1;
-		sc->sc_channels[sc->sc_nchan].chan_type = PCF8591_CPU_FAN_CTRL;
-		sc->sc_channels[sc->sc_nchan].chan_speed = 0;
-		sensor = &sc->sc_channels[sc->sc_nchan].chan_sensor;
-		sensor->units = ENVSYS_INTEGER;
-		sensor->flags = ENVSYS_FMONNOTSUPP;
-		sensor->state = ENVSYS_SINVALID;
-		strlcpy(sensor->desc, "CPUFAN", sizeof(sensor->desc));
-		sc->sc_channels[sc->sc_nchan].chan_xlate = sc->sc_cpu_fan_spd;
-		DPRINTF("%s: "
-		    "added CPUFAN sensor (chan %d) with cpu-fan xlate\n",
-		    device_xname(sc->sc_dev),
-		    sc->sc_channels[sc->sc_nchan].chan_num);
-		sc->sc_nchan++;
-
-		sc->sc_hastimer = 1;
-	}
-
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
@@ -244,6 +219,36 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
+
+	/*
+	 * Fan speed changing information is missing from OFW
+	 * The E250 CPU fan is connected to the sensor at addr 0x4a, channel 1
+	 */
+	if (ia->ia_addr == 0x4a && !strcmp(machine_model, "SUNW,Ultra-250") &&
+	    OF_getprop(node, "cpu-fan-speeds", &sc->sc_cpu_fan_spd,
+	    XLATE_MAX) > 0) {
+		sc->sc_channels[sc->sc_nchan].chan_num = 1;
+		sc->sc_channels[sc->sc_nchan].chan_type = PCF8591_CPU_FAN_CTRL;
+		sensor = &sc->sc_channels[sc->sc_nchan].chan_sensor;
+		sensor->units = ENVSYS_INTEGER;
+		sensor->flags = ENVSYS_FMONNOTSUPP;
+		sensor->state = ENVSYS_SINVALID;
+		strlcpy(sensor->desc, "CPUFAN", sizeof(sensor->desc));
+		sc->sc_channels[sc->sc_nchan].chan_xlate = sc->sc_cpu_fan_spd;
+		DPRINTF("%s: "
+		    "added CPUFAN sensor (chan %d) with cpu-fan xlate\n",
+		    device_xname(sc->sc_dev),
+		    sc->sc_channels[sc->sc_nchan].chan_num);
+
+		/* Set the fan to medium speed */
+		sc->sc_channels[sc->sc_nchan].chan_speed =
+		    (sc->sc_cpu_fan_spd[0]+sc->sc_cpu_fan_spd[XLATE_MAX])/2;
+		ecadc_set_fan_speed(sc, sc->sc_channels[sc->sc_nchan].chan_num,
+		    sc->sc_channels[sc->sc_nchan].chan_speed);
+
+		sc->sc_nchan++;
+		sc->sc_hastimer = 1;
+	}
 
 	/* Hook us into the sysmon_envsys subsystem */
 	sc->sc_sme = sysmon_envsys_create();
@@ -280,6 +285,8 @@ static int
 ecadc_detach(device_t self, int flags)
 {
 	struct ecadc_softc *sc = device_private(self);
+	int c, i;
+
 	if (sc->sc_hastimer) {
 		callout_halt(&sc->sc_timer, NULL);
 		callout_destroy(&sc->sc_timer);
@@ -287,6 +294,23 @@ ecadc_detach(device_t self, int flags)
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	for (i = 0; i < sc->sc_nchan; i++) {
+		struct ecadc_channel *chp = &sc->sc_channels[i];
+
+		if (chp->chan_type == PCF8591_CPU_FAN_CTRL) {
+			/* Loop in case the bus is busy */
+			for (c = 0; c < 5; c++) {
+				chp->chan_speed = sc->sc_cpu_fan_spd[0];
+				if (!ecadc_set_fan_speed(sc, chp->chan_num,
+				    chp->chan_speed))
+					return 0;
+				delay(10000);
+			}
+			aprint_error_dev(sc->sc_dev,
+			    "cannot set fan speed (chan %d)\n", chp->chan_num);
+		}
+	}
 
 	return 0;
 }
@@ -350,8 +374,7 @@ ecadc_refresh(struct sysmon_envsys *sme, envsys_data_t *sensor)
 			}
 			chp->chan_sensor.flags |= ENVSYS_FMONLIMITS;
 		}
-		if (chp->chan_type == PCF8591_CPU_FAN_CTRL ||
-		    chp->chan_type == PCF8591_PS_FAN_CTRL)
+		if (chp->chan_type == PCF8591_CPU_FAN_CTRL)
 			chp->chan_sensor.value_cur = data[1 + chp->chan_num];
 
 		chp->chan_sensor.state = ENVSYS_SVALID;
