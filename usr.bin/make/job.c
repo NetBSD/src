@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.388 2020/12/15 21:19:47 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.389 2020/12/20 21:07:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.388 2020/12/15 21:19:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.389 2020/12/20 21:07:32 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -890,7 +890,7 @@ JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, Boolean run,
  * after all other targets have been made.
  */
 static void
-JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
+JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 {
 	Boolean run;
 
@@ -917,7 +917,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, const char *ucmd)
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
 		 */
-		Compat_RunCommand(ucmd, job->node);
+		Compat_RunCommand(ucmd, job->node, ln);
 		free(xcmdStart);
 		return;
 	}
@@ -1005,7 +1005,7 @@ JobPrintCommands(Job *job)
 			break;
 		}
 
-		JobPrintCommand(job, &wr, ln->datum);
+		JobPrintCommand(job, &wr, ln, ln->datum);
 		seen = TRUE;
 	}
 
