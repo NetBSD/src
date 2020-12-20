@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.750 2020/12/20 18:13:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.751 2020/12/20 18:23:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.750 2020/12/20 18:13:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.751 2020/12/20 18:23:24 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3488,9 +3488,9 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 }
 
 static ApplyModifierResult
-ApplySingleModifier(ApplyModifiersState *const st, const char *const mod,
-		    char const endc, const char **pp, char *val,
-		    char **out_val, void **const inout_freeIt)
+ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
+		    const char **pp, char *val, char **out_val,
+		    void **inout_freeIt)
 {
 	ApplyModifierResult res;
 	const char *p = *pp;
