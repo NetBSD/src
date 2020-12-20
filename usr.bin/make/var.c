@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.739 2020/12/20 00:57:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.740 2020/12/20 10:59:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.739 2020/12/20 00:57:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.740 2020/12/20 10:59:21 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -3846,13 +3846,11 @@ FindLocalLegacyVar(const char *varname, size_t namelen, GNode *ctxt,
 static VarParseResult
 EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 	      VarEvalFlags eflags,
-	      const char **out_val, void **out_freeIt)
+	      FStr *out_val)
 {
 	if (dynamic) {
-		char *pstr = bmake_strsedup(start, p);
+		*out_val = FStr_InitOwn(bmake_strsedup(start, p));
 		free(varname);
-		*out_val = pstr;
-		*out_freeIt = pstr;
 		return VPR_OK;
 	}
 
@@ -3860,18 +3858,18 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 		Parse_Error(PARSE_FATAL,
 		    "Variable \"%s\" is undefined", varname);
 		free(varname);
-		*out_val = var_Error;
+		*out_val = FStr_InitRefer(var_Error);
 		return VPR_UNDEF_MSG;
 	}
 
 	if (eflags & VARE_UNDEFERR) {
 		free(varname);
-		*out_val = var_Error;
+		*out_val = FStr_InitRefer(var_Error);
 		return VPR_UNDEF_SILENT;
 	}
 
 	free(varname);
-	*out_val = varUndefined;
+	*out_val = FStr_InitRefer(varUndefined);
 	return VPR_OK;
 }
 
@@ -3888,8 +3886,7 @@ ParseVarnameLong(
 
 	const char **out_FALSE_pp,
 	VarParseResult *out_FALSE_res,
-	const char **out_FALSE_val,
-	void **out_FALSE_freeIt,
+	FStr *out_FALSE_val,
 
 	char *out_TRUE_endc,
 	const char **out_TRUE_p,
@@ -3920,7 +3917,7 @@ ParseVarnameLong(
 		Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
 		free(varname);
 		*out_FALSE_pp = p;
-		*out_FALSE_val = var_Error;
+		*out_FALSE_val = FStr_InitRefer(var_Error);
 		*out_FALSE_res = VPR_PARSE_MSG;
 		return FALSE;
 	}
@@ -3947,7 +3944,7 @@ ParseVarnameLong(
 			p++;	/* skip endc */
 			*out_FALSE_pp = p;
 			*out_FALSE_res = EvalUndefined(dynamic, start, p,
-			    varname, eflags, out_FALSE_val, out_FALSE_freeIt);
+			    varname, eflags, out_FALSE_val);
 			return FALSE;
 		}
 
@@ -4079,11 +4076,15 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		p++;
 	} else {
 		VarParseResult res;
+		FStr fval;
 		if (!ParseVarnameLong(p, startc, ctxt, eflags,
-		    pp, &res, out_val, out_val_freeIt,
+		    pp, &res, &fval,
 		    &endc, &p, &v, &haveModifier, &extramodifiers,
-		    &dynamic, &exprFlags))
+		    &dynamic, &exprFlags)) {
+			*out_val = fval.str;
+			*out_val_freeIt = fval.freeIt;
 			return res;
+		}
 	}
 
 	if (v->flags & VAR_IN_USE)
