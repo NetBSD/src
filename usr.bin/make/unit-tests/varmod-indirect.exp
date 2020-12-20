@@ -1,2 +1,4 @@
-make: Unknown modifier '$'
-exit status 0
+make: "varmod-indirect.mk" line 13: Unknown modifier '$'
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
