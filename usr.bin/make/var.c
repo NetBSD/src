@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.749 2020/12/20 17:22:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.750 2020/12/20 18:13:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.749 2020/12/20 17:22:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.750 2020/12/20 18:13:50 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3487,6 +3487,78 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	return AMIR_CONTINUE;
 }
 
+static ApplyModifierResult
+ApplySingleModifier(ApplyModifiersState *const st, const char *const mod,
+		    char const endc, const char **pp, char *val,
+		    char **out_val, void **const inout_freeIt)
+{
+	ApplyModifierResult res;
+	const char *p = *pp;
+
+	if (DEBUG(VAR))
+		LogBeforeApply(st, mod, endc, val);
+
+	res = ApplyModifier(&p, val, st);
+
+#ifdef SYSVVARSUB
+	if (res == AMR_UNKNOWN) {
+		assert(p == mod);
+		res = ApplyModifier_SysV(&p, val, st);
+	}
+#endif
+
+	if (res == AMR_UNKNOWN) {
+		Error("Unknown modifier '%c'", *mod);
+		/*
+		 * Guess the end of the current modifier.
+		 * XXX: Skipping the rest of the modifier hides
+		 * errors and leads to wrong results.
+		 * Parsing should rather stop here.
+		 */
+		for (p++; *p != ':' && *p != st->endc && *p != '\0'; p++)
+			continue;
+		st->newVal = var_Error;
+	}
+	if (res == AMR_CLEANUP || res == AMR_BAD) {
+		*out_val = val;
+		*pp = p;
+		return res;
+	}
+
+	if (DEBUG(VAR))
+		LogAfterApply(st, p, mod);
+
+	if (st->newVal != val) {
+		if (*inout_freeIt != NULL) {
+			assert(*inout_freeIt == val);
+			free(*inout_freeIt);
+			*inout_freeIt = NULL;
+		}
+		val = st->newVal;
+		if (val != var_Error && val != varUndefined)
+			*inout_freeIt = val;
+	}
+	if (*p == '\0' && st->endc != '\0') {
+		Error(
+		    "Unclosed variable specification (expecting '%c') "
+		    "for \"%s\" (value \"%s\") modifier %c",
+		    st->endc, st->var->name.str, val, *mod);
+	} else if (*p == ':') {
+		p++;
+	} else if (opts.lint && *p != '\0' && *p != endc) {
+		Parse_Error(PARSE_FATAL,
+		    "Missing delimiter ':' after modifier \"%.*s\"",
+		    (int)(p - mod), mod);
+		/*
+		 * TODO: propagate parse error to the enclosing
+		 * expression
+		 */
+	}
+	*pp = p;
+	*out_val = val;
+	return AMR_OK;
+}
+
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
@@ -3510,7 +3582,6 @@ ApplyModifiers(
 	};
 	const char *p;
 	const char *mod;
-	ApplyModifierResult res;
 
 	assert(startc == '(' || startc == '{' || startc == '\0');
 	assert(endc == ')' || endc == '}' || endc == '\0');
@@ -3526,6 +3597,7 @@ ApplyModifiers(
 	}
 
 	while (*p != '\0' && *p != endc) {
+		ApplyModifierResult res;
 
 		if (*p == '$') {
 			ApplyModifiersIndirectResult amir;
@@ -3539,64 +3611,12 @@ ApplyModifiers(
 		st.newVal = var_Error;	/* default value, in case of errors */
 		mod = p;
 
-		if (DEBUG(VAR))
-			LogBeforeApply(&st, mod, endc, val);
-
-		res = ApplyModifier(&p, val, &st);
-
-#ifdef SYSVVARSUB
-		if (res == AMR_UNKNOWN) {
-			assert(p == mod);
-			res = ApplyModifier_SysV(&p, val, &st);
-		}
-#endif
-
-		if (res == AMR_UNKNOWN) {
-			Error("Unknown modifier '%c'", *mod);
-			/*
-			 * Guess the end of the current modifier.
-			 * XXX: Skipping the rest of the modifier hides
-			 * errors and leads to wrong results.
-			 * Parsing should rather stop here.
-			 */
-			for (p++; *p != ':' && *p != st.endc && *p != '\0'; p++)
-				continue;
-			st.newVal = var_Error;
-		}
+		res = ApplySingleModifier(&st, mod, endc, &p, val, &val,
+		    inout_freeIt);
 		if (res == AMR_CLEANUP)
 			goto cleanup;
 		if (res == AMR_BAD)
 			goto bad_modifier;
-
-		if (DEBUG(VAR))
-			LogAfterApply(&st, p, mod);
-
-		if (st.newVal != val) {
-			if (*inout_freeIt != NULL) {
-				assert(*inout_freeIt == val);
-				free(*inout_freeIt);
-				*inout_freeIt = NULL;
-			}
-			val = st.newVal;
-			if (val != var_Error && val != varUndefined)
-				*inout_freeIt = val;
-		}
-		if (*p == '\0' && st.endc != '\0') {
-			Error(
-			    "Unclosed variable specification (expecting '%c') "
-			    "for \"%s\" (value \"%s\") modifier %c",
-			    st.endc, st.var->name.str, val, *mod);
-		} else if (*p == ':') {
-			p++;
-		} else if (opts.lint && *p != '\0' && *p != endc) {
-			Parse_Error(PARSE_FATAL,
-			    "Missing delimiter ':' after modifier \"%.*s\"",
-			    (int)(p - mod), mod);
-			/*
-			 * TODO: propagate parse error to the enclosing
-			 * expression
-			 */
-		}
 	}
 out:
 	*pp = p;
