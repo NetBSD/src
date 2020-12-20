@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.37 2017/07/21 21:01:13 nakayama Exp $	*/
+/*	$NetBSD: aceride.c,v 1.38 2020/12/20 19:30:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.37 2017/07/21 21:01:13 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.38 2020/12/20 19:30:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,13 @@ acer_setup_channel(struct ata_channel *chp)
 		acer_fifo_udma &= ~(ACER_FTH_OPL(chp->ch_channel, drive, 0x3) |
 		    ACER_UDMA_EN(chp->ch_channel, drive) |
 		    ACER_UDMA_TIM(chp->ch_channel, drive, 0x7));
+
+		/* (U)DMA doesn't work with ATAPI devices */
+		if (drvp->drive_type == ATA_DRIVET_ATAPI) {
+			s = splbio();
+			drvp->drive_flags &= ~(ATA_DRIVE_DMA|ATA_DRIVE_UDMA);
+			splx(s);
+		}
 
 		/* add timing values, setup DMA if needed */
 		if ((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
