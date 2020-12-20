@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.215 2020/12/13 19:33:53 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.216 2020/12/20 21:07:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.215 2020/12/13 19:33:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.216 2020/12/20 21:07:32 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -211,13 +211,14 @@ UseShell(const char *cmd MAKE_ATTR_UNUSED)
  *
  * Input:
  *	cmdp		Command to execute
- *	gnp		Node from which the command came
+ *	gn		Node from which the command came
+ *	ln		List node that contains the command
  *
  * Results:
  *	0 if the command succeeded, 1 if an error occurred.
  */
 int
-Compat_RunCommand(const char *cmdp, GNode *gn)
+Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 {
 	char *cmdStart;		/* Start of expanded command */
 	char *bp;
@@ -228,7 +229,6 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	int status;		/* Description of child's death */
 	pid_t cpid;		/* Child actually found */
 	pid_t retstat;		/* Result of wait */
-	StringListNode *cmdNode; /* Node where current command is located */
 	const char **volatile av; /* Argument vector for thing to exec */
 	char **volatile mav;	/* Copy of the argument vector for freeing */
 	Boolean useShell;	/* TRUE if command should be executed
@@ -239,12 +239,6 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 	errCheck = !(gn->type & OP_IGNORE);
 	doIt = FALSE;
 
-	/* Luckily the commands don't end up in a string pool, otherwise
-	 * this comparison could match too early, in a dependency using "..."
-	 * for delayed commands, run in parallel mode, using the same shell
-	 * command line more than once; see JobPrintCommand.
-	 * TODO: write a unit-test to protect against this potential bug. */
-	cmdNode = Lst_FindDatum(&gn->commands, cmd);
 	(void)Var_Subst(cmd, gn, VARE_WANTRES, &cmdStart);
 	/* TODO: handle errors */
 
@@ -253,7 +247,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 		return 0;
 	}
 	cmd = cmdStart;
-	LstNode_Set(cmdNode, cmdStart);
+	LstNode_Set(ln, cmdStart);
 
 	if (gn->type & OP_SAVE_CMDS) {
 		GNode *endNode = Targ_GetEndNode();
@@ -379,7 +373,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn)
 
 	/* XXX: Memory management looks suspicious here. */
 	/* XXX: Setting a list item to NULL is unexpected. */
-	LstNode_SetNull(cmdNode);
+	LstNode_SetNull(ln);
 
 #ifdef USE_META
 	if (useMeta) {
@@ -467,7 +461,7 @@ RunCommands(GNode *gn)
 
 	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
-		if (Compat_RunCommand(cmd, gn) != 0)
+		if (Compat_RunCommand(cmd, gn, ln) != 0)
 			break;
 	}
 }
