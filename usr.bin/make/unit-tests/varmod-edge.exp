@@ -15,8 +15,9 @@ make: "varmod-edge.mk" line 166: ok eq-bs
 make: Unfinished modifier for INP.eq-esc ('=' missing)
 make: "varmod-edge.mk" line 166: ok eq-esc
 make: "varmod-edge.mk" line 166: ok colon
-make: Unknown modifier ':'
-make: Unknown modifier ':'
+make: "varmod-edge.mk" line 165: Unknown modifier ':'
+make: "varmod-edge.mk" line 165: Unknown modifier ':'
 make: "varmod-edge.mk" line 166: ok colons
-ok
-exit status 0
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
