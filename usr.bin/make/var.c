@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.748 2020/12/20 15:31:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.749 2020/12/20 17:22:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.748 2020/12/20 15:31:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.749 2020/12/20 17:22:10 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -1927,11 +1927,6 @@ typedef struct ApplyModifiersState {
 	GNode *const ctxt;
 	const VarEvalFlags eflags;
 	/*
-	 * The old value of the expression, before applying the modifier,
-	 * never NULL.
-	 */
-	char *val;
-	/*
 	 * The new value of the expression, after applying the modifier,
 	 * never NULL.
 	 */
@@ -2201,7 +2196,7 @@ TryParseChar(const char **pp, int base, char *out_ch)
 
 /* :@var@...${var}...@ */
 static ApplyModifierResult
-ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	struct ModifyWord_LoopArgs args;
 	char prev_sep;
@@ -2230,7 +2225,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 	args.eflags = st->eflags & ~(unsigned)VARE_KEEP_DOLLAR;
 	prev_sep = st->sep;
 	st->sep = ' ';		/* XXX: should be st->sep for consistency */
-	st->newVal = ModifyWords(st->val, ModifyWord_Loop, &args,
+	st->newVal = ModifyWords(val, ModifyWord_Loop, &args,
 	    st->oneBigWord, st->sep);
 	st->sep = prev_sep;
 	/* XXX: Consider restoring the previous variable instead of deleting. */
@@ -2242,7 +2237,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 
 /* :Ddefined or :Uundefined */
 static ApplyModifierResult
-ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Defined(const char **pp, char *val, ApplyModifiersState *st)
 {
 	Buffer buf;
 	const char *p;
@@ -2293,7 +2288,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	if (eflags & VARE_WANTRES) {
 		st->newVal = Buf_Destroy(&buf, FALSE);
 	} else {
-		st->newVal = st->val;
+		st->newVal = val;
 		Buf_Destroy(&buf, TRUE);
 	}
 	return AMR_OK;
@@ -2330,7 +2325,7 @@ TryParseTime(const char **pp, time_t *out_time)
 
 /* :gmtime */
 static ApplyModifierResult
-ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Gmtime(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	time_t utc;
 
@@ -2350,13 +2345,14 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 		utc = 0;
 		*pp = mod + 6;
 	}
-	st->newVal = VarStrftime(st->val, TRUE, utc);
+	st->newVal = VarStrftime(val, TRUE, utc);
 	return AMR_OK;
 }
 
 /* :localtime */
 static ApplyModifierResult
-ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Localtime(const char **pp, const char *val,
+			ApplyModifiersState *st)
 {
 	time_t utc;
 
@@ -2376,18 +2372,18 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 		utc = 0;
 		*pp = mod + 9;
 	}
-	st->newVal = VarStrftime(st->val, FALSE, utc);
+	st->newVal = VarStrftime(val, FALSE, utc);
 	return AMR_OK;
 }
 
 /* :hash */
 static ApplyModifierResult
-ApplyModifier_Hash(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Hash(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	if (!ModMatch(*pp, "hash", st->endc))
 		return AMR_UNKNOWN;
 
-	st->newVal = VarHash(st->val);
+	st->newVal = VarHash(val);
 	*pp += 4;
 	return AMR_OK;
 }
@@ -2448,7 +2444,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 /* The :range modifier generates an integer sequence as long as the words.
  * The :range=7 modifier generates an integer sequence from 1 to 7. */
 static ApplyModifierResult
-ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Range(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	size_t n;
 	Buffer buf;
@@ -2472,7 +2468,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 	}
 
 	if (n == 0) {
-		Words words = Str_Words(st->val, FALSE);
+		Words words = Str_Words(val, FALSE);
 		n = words.len;
 		Words_Free(words);
 	}
@@ -2493,7 +2489,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 
 /* :Mpattern or :Npattern */
 static ApplyModifierResult
-ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Match(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	const char *mod = *pp;
 	Boolean copy = FALSE;	/* pattern should be, or has been, copied */
@@ -2561,10 +2557,10 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	}
 
 	DEBUG3(VAR, "Pattern[%s] for [%s] is [%s]\n",
-	    st->var->name.str, st->val, pattern);
+	    st->var->name.str, val, pattern);
 
 	callback = mod[0] == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
-	st->newVal = ModifyWords(st->val, callback, pattern,
+	st->newVal = ModifyWords(val, callback, pattern,
 	    st->oneBigWord, st->sep);
 	free(pattern);
 	return AMR_OK;
@@ -2572,7 +2568,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 
 /* :S,from,to, */
 static ApplyModifierResult
-ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Subst(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	struct ModifyWord_SubstArgs args;
 	char *lhs, *rhs;
@@ -2628,7 +2624,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 		break;
 	}
 
-	st->newVal = ModifyWords(st->val, ModifyWord_Subst, &args,
+	st->newVal = ModifyWords(val, ModifyWord_Subst, &args,
 	    oneBigWord, st->sep);
 
 	free(lhs);
@@ -2640,7 +2636,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
 
 /* :C,from,to, */
 static ApplyModifierResult
-ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Regex(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	char *re;
 	struct ModifyWord_SubstRegexArgs args;
@@ -2698,7 +2694,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 	args.nsub = args.re.re_nsub + 1;
 	if (args.nsub > 10)
 		args.nsub = 10;
-	st->newVal = ModifyWords(st->val, ModifyWord_SubstRegex, &args,
+	st->newVal = ModifyWords(val, ModifyWord_SubstRegex, &args,
 	    oneBigWord, st->sep);
 	regfree(&args.re);
 	free(args.replace);
@@ -2709,10 +2705,10 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
 
 /* :Q, :q */
 static ApplyModifierResult
-ApplyModifier_Quote(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Quote(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
-		st->newVal = VarQuote(st->val, **pp == 'q');
+		st->newVal = VarQuote(val, **pp == 'q');
 		(*pp)++;
 		return AMR_OK;
 	} else
@@ -2727,7 +2723,7 @@ ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 
 /* :ts<separator> */
 static ApplyModifierResult
-ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
+ApplyModifier_ToSep(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	const char *sep = *pp + 2;
 
@@ -2792,7 +2788,7 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	}
 
 ok:
-	st->newVal = ModifyWords(st->val, ModifyWord_Copy, NULL,
+	st->newVal = ModifyWords(val, ModifyWord_Copy, NULL,
 	    st->oneBigWord, st->sep);
 	return AMR_OK;
 }
@@ -2827,7 +2823,7 @@ str_tolower(const char *str)
 
 /* :tA, :tu, :tl, :ts<separator>, etc. */
 static ApplyModifierResult
-ApplyModifier_To(const char **pp, ApplyModifiersState *st)
+ApplyModifier_To(const char **pp, char *val, ApplyModifiersState *st)
 {
 	const char *mod = *pp;
 	assert(mod[0] == 't');
@@ -2838,7 +2834,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	}
 
 	if (mod[1] == 's')
-		return ApplyModifier_ToSep(pp, st);
+		return ApplyModifier_ToSep(pp, val, st);
 
 	if (mod[2] != st->endc && mod[2] != ':') {
 		*pp = mod + 1;
@@ -2847,27 +2843,27 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 
 	/* Check for two-character options: ":tu", ":tl" */
 	if (mod[1] == 'A') {	/* absolute path */
-		st->newVal = ModifyWords(st->val, ModifyWord_Realpath, NULL,
+		st->newVal = ModifyWords(val, ModifyWord_Realpath, NULL,
 		    st->oneBigWord, st->sep);
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'u') {	/* :tu */
-		st->newVal = str_toupper(st->val);
+		st->newVal = str_toupper(val);
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {	/* :tl */
-		st->newVal = str_tolower(st->val);
+		st->newVal = str_tolower(val);
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'W' || mod[1] == 'w') { /* :tW, :tw */
 		st->oneBigWord = mod[1] == 'W';
-		st->newVal = st->val;
+		st->newVal = val;
 		*pp = mod + 2;
 		return AMR_OK;
 	}
@@ -2879,7 +2875,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 
 /* :[#], :[1], :[-1..1], etc. */
 static ApplyModifierResult
-ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Words(const char **pp, char *val, ApplyModifiersState *st)
 {
 	char *estr;
 	int first, last;
@@ -2905,7 +2901,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 		} else {
 			Buffer buf;
 
-			Words words = Str_Words(st->val, FALSE);
+			Words words = Str_Words(val, FALSE);
 			size_t ac = words.len;
 			Words_Free(words);
 
@@ -2920,14 +2916,14 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	if (estr[0] == '*' && estr[1] == '\0') {
 		/* Found ":[*]" */
 		st->oneBigWord = TRUE;
-		st->newVal = st->val;
+		st->newVal = val;
 		goto ok;
 	}
 
 	if (estr[0] == '@' && estr[1] == '\0') {
 		/* Found ":[@]" */
 		st->oneBigWord = FALSE;
-		st->newVal = st->val;
+		st->newVal = val;
 		goto ok;
 	}
 
@@ -2956,7 +2952,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	if (first == 0 && last == 0) {
 		/* ":[0]" or perhaps ":[0..0]" */
 		st->oneBigWord = TRUE;
-		st->newVal = st->val;
+		st->newVal = val;
 		goto ok;
 	}
 
@@ -2965,8 +2961,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 		goto bad_modifier;
 
 	/* Normal case: select the words described by first and last. */
-	st->newVal = VarSelectWords(st->sep, st->oneBigWord, st->val,
-	    first, last);
+	st->newVal = VarSelectWords(st->sep, st->oneBigWord, val, first, last);
 
 ok:
 	free(estr);
@@ -3004,11 +2999,11 @@ ShuffleStrings(char **strs, size_t n)
 
 /* :O (order ascending) or :Or (order descending) or :Ox (shuffle) */
 static ApplyModifierResult
-ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Order(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 
-	Words words = Str_Words(st->val, FALSE);
+	Words words = Str_Words(val, FALSE);
 
 	if (mod[1] == st->endc || mod[1] == ':') {
 		/* :O sorts ascending */
@@ -3035,7 +3030,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
 /* :? then : else */
 static ApplyModifierResult
-ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
+ApplyModifier_IfElse(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	char *then_expr, *else_expr;
 	VarParseResult res;
@@ -3186,7 +3181,7 @@ ok:
 /* :_=...
  * remember current value */
 static ApplyModifierResult
-ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Remember(const char **pp, char *val, ApplyModifiersState *st)
 {
 	const char *mod = *pp;
 	if (!ModMatchEq(mod, "_", st->endc))
@@ -3195,38 +3190,38 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 	if (mod[1] == '=') {
 		size_t n = strcspn(mod + 2, ":)}");
 		char *name = bmake_strldup(mod + 2, n);
-		Var_Set(name, st->val, st->ctxt);
+		Var_Set(name, val, st->ctxt);
 		free(name);
 		*pp = mod + 2 + n;
 	} else {
-		Var_Set("_", st->val, st->ctxt);
+		Var_Set("_", val, st->ctxt);
 		*pp = mod + 1;
 	}
-	st->newVal = st->val;
+	st->newVal = val;
 	return AMR_OK;
 }
 
 /* Apply the given function to each word of the variable value,
  * for a single-letter modifier such as :H, :T. */
 static ApplyModifierResult
-ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
-		       ModifyWordsCallback modifyWord)
+ApplyModifier_WordFunc(const char **pp, const char *val,
+		       ApplyModifiersState *st, ModifyWordsCallback modifyWord)
 {
 	char delim = (*pp)[1];
 	if (delim != st->endc && delim != ':')
 		return AMR_UNKNOWN;
 
-	st->newVal = ModifyWords(st->val, modifyWord, NULL,
+	st->newVal = ModifyWords(val, modifyWord, NULL,
 	    st->oneBigWord, st->sep);
 	(*pp)++;
 	return AMR_OK;
 }
 
 static ApplyModifierResult
-ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
+ApplyModifier_Unique(const char **pp, const char *val, ApplyModifiersState *st)
 {
 	if ((*pp)[1] == st->endc || (*pp)[1] == ':') {
-		st->newVal = VarUniq(st->val);
+		st->newVal = VarUniq(val);
 		(*pp)++;
 		return AMR_OK;
 	} else
@@ -3236,7 +3231,7 @@ ApplyModifier_Unique(const char **pp, ApplyModifiersState *st)
 #ifdef SYSVVARSUB
 /* :from=to */
 static ApplyModifierResult
-ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
+ApplyModifier_SysV(const char **pp, char *val, ApplyModifiersState *st)
 {
 	char *lhs, *rhs;
 	VarParseResult res;
@@ -3277,11 +3272,11 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 		return AMR_CLEANUP;
 
 	(*pp)--;
-	if (lhs[0] == '\0' && st->val[0] == '\0') {
-		st->newVal = st->val;	/* special case */
+	if (lhs[0] == '\0' && val[0] == '\0') {
+		st->newVal = val;	/* special case */
 	} else {
 		struct ModifyWord_SYSVSubstArgs args = { st->ctxt, lhs, rhs };
-		st->newVal = ModifyWords(st->val, ModifyWord_SYSVSubst, &args,
+		st->newVal = ModifyWords(val, ModifyWord_SYSVSubst, &args,
 		    st->oneBigWord, st->sep);
 	}
 	free(lhs);
@@ -3293,15 +3288,16 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 #ifdef SUNSHCMD
 /* :sh */
 static ApplyModifierResult
-ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
+ApplyModifier_SunShell(const char **pp, const char *val,
+		       ApplyModifiersState *st)
 {
 	const char *p = *pp;
 	if (p[1] == 'h' && (p[2] == st->endc || p[2] == ':')) {
 		if (st->eflags & VARE_WANTRES) {
 			const char *errfmt;
-			st->newVal = Cmd_Exec(st->val, &errfmt);
+			st->newVal = Cmd_Exec(val, &errfmt);
 			if (errfmt != NULL)
-				Error(errfmt, st->val);
+				Error(errfmt, val);
 		} else
 			st->newVal = bmake_strdup("");
 		*pp = p + 2;
@@ -3312,7 +3308,8 @@ ApplyModifier_SunShell(const char **pp, ApplyModifiersState *st)
 #endif
 
 static void
-LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
+LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc,
+	       const char *val)
 {
 	char eflags_str[VarEvalFlags_ToStringSize];
 	char vflags_str[VarFlags_ToStringSize];
@@ -3323,7 +3320,7 @@ LogBeforeApply(const ApplyModifiersState *st, const char *mod, char endc)
 	/* At this point, only the first character of the modifier can
 	 * be used since the end of the modifier is not yet known. */
 	debug_printf("Applying ${%s:%c%s} to \"%s\" (%s, %s, %s)\n",
-	    st->var->name.str, mod[0], is_single_char ? "" : "...", st->val,
+	    st->var->name.str, mod[0], is_single_char ? "" : "...", val,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str,
 		st->eflags, VarEvalFlags_ToStringSpecs),
 	    Enum_FlagsToString(vflags_str, sizeof vflags_str,
@@ -3354,18 +3351,18 @@ LogAfterApply(ApplyModifiersState *st, const char *p, const char *mod)
 }
 
 static ApplyModifierResult
-ApplyModifier(const char **pp, ApplyModifiersState *st)
+ApplyModifier(const char **pp, char *val, ApplyModifiersState *st)
 {
 	switch (**pp) {
 	case ':':
 		return ApplyModifier_Assign(pp, st);
 	case '@':
-		return ApplyModifier_Loop(pp, st);
+		return ApplyModifier_Loop(pp, val, st);
 	case '_':
-		return ApplyModifier_Remember(pp, st);
+		return ApplyModifier_Remember(pp, val, st);
 	case 'D':
 	case 'U':
-		return ApplyModifier_Defined(pp, st);
+		return ApplyModifier_Defined(pp, val, st);
 	case 'L':
 		return ApplyModifier_Literal(pp, st);
 	case 'P':
@@ -3373,46 +3370,46 @@ ApplyModifier(const char **pp, ApplyModifiersState *st)
 	case '!':
 		return ApplyModifier_ShellCommand(pp, st);
 	case '[':
-		return ApplyModifier_Words(pp, st);
+		return ApplyModifier_Words(pp, val, st);
 	case 'g':
-		return ApplyModifier_Gmtime(pp, st);
+		return ApplyModifier_Gmtime(pp, val, st);
 	case 'h':
-		return ApplyModifier_Hash(pp, st);
+		return ApplyModifier_Hash(pp, val, st);
 	case 'l':
-		return ApplyModifier_Localtime(pp, st);
+		return ApplyModifier_Localtime(pp, val, st);
 	case 't':
-		return ApplyModifier_To(pp, st);
+		return ApplyModifier_To(pp, val, st);
 	case 'N':
 	case 'M':
-		return ApplyModifier_Match(pp, st);
+		return ApplyModifier_Match(pp, val, st);
 	case 'S':
-		return ApplyModifier_Subst(pp, st);
+		return ApplyModifier_Subst(pp, val, st);
 	case '?':
-		return ApplyModifier_IfElse(pp, st);
+		return ApplyModifier_IfElse(pp, val, st);
 #ifndef NO_REGEX
 	case 'C':
-		return ApplyModifier_Regex(pp, st);
+		return ApplyModifier_Regex(pp, val, st);
 #endif
 	case 'q':
 	case 'Q':
-		return ApplyModifier_Quote(pp, st);
+		return ApplyModifier_Quote(pp, val, st);
 	case 'T':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Tail);
+		return ApplyModifier_WordFunc(pp, val, st, ModifyWord_Tail);
 	case 'H':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Head);
+		return ApplyModifier_WordFunc(pp, val, st, ModifyWord_Head);
 	case 'E':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Suffix);
+		return ApplyModifier_WordFunc(pp, val, st, ModifyWord_Suffix);
 	case 'R':
-		return ApplyModifier_WordFunc(pp, st, ModifyWord_Root);
+		return ApplyModifier_WordFunc(pp, val, st, ModifyWord_Root);
 	case 'r':
-		return ApplyModifier_Range(pp, st);
+		return ApplyModifier_Range(pp, val, st);
 	case 'O':
-		return ApplyModifier_Order(pp, st);
+		return ApplyModifier_Order(pp, val, st);
 	case 'u':
-		return ApplyModifier_Unique(pp, st);
+		return ApplyModifier_Unique(pp, val, st);
 #ifdef SUNSHCMD
 	case 's':
-		return ApplyModifier_SunShell(pp, st);
+		return ApplyModifier_SunShell(pp, val, st);
 #endif
 	default:
 		return AMR_UNKNOWN;
@@ -3432,7 +3429,7 @@ typedef enum ApplyModifiersIndirectResult {
  * modifiers such as in ${VAR:${M_indirect}}. */
 static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
-		       void **inout_freeIt)
+		       char **inout_val, void **inout_freeIt)
 {
 	const char *p = *pp;
 	FStr mods;
@@ -3464,10 +3461,10 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 
 	if (mods.str[0] != '\0') {
 		const char *modsp = mods.str;
-		st->val = ApplyModifiers(&modsp, st->val, '\0', '\0',
+		*inout_val = ApplyModifiers(&modsp, *inout_val, '\0', '\0',
 		    st->var, &st->exprFlags, st->ctxt, st->eflags,
 		    inout_freeIt);
-		if (st->val == var_Error || st->val == varUndefined ||
+		if (*inout_val == var_Error || *inout_val == varUndefined ||
 		    *modsp != '\0') {
 			FStr_Done(&mods);
 			*pp = p;
@@ -3506,7 +3503,6 @@ ApplyModifiers(
 {
 	ApplyModifiersState st = {
 	    startc, endc, v, ctxt, eflags,
-	    val,		/* .val */
 	    var_Error,		/* .newVal */
 	    ' ',		/* .sep */
 	    FALSE,		/* .oneBigWord */
@@ -3533,7 +3529,8 @@ ApplyModifiers(
 
 		if (*p == '$') {
 			ApplyModifiersIndirectResult amir;
-			amir = ApplyModifiersIndirect(&st, &p, inout_freeIt);
+			amir = ApplyModifiersIndirect(&st, &p, &val,
+			    inout_freeIt);
 			if (amir == AMIR_CONTINUE)
 				continue;
 			if (amir == AMIR_OUT)
@@ -3543,14 +3540,14 @@ ApplyModifiers(
 		mod = p;
 
 		if (DEBUG(VAR))
-			LogBeforeApply(&st, mod, endc);
+			LogBeforeApply(&st, mod, endc, val);
 
-		res = ApplyModifier(&p, &st);
+		res = ApplyModifier(&p, val, &st);
 
 #ifdef SYSVVARSUB
 		if (res == AMR_UNKNOWN) {
 			assert(p == mod);
-			res = ApplyModifier_SysV(&p, &st);
+			res = ApplyModifier_SysV(&p, val, &st);
 		}
 #endif
 
@@ -3574,21 +3571,21 @@ ApplyModifiers(
 		if (DEBUG(VAR))
 			LogAfterApply(&st, p, mod);
 
-		if (st.newVal != st.val) {
+		if (st.newVal != val) {
 			if (*inout_freeIt != NULL) {
-				assert(*inout_freeIt == st.val);
+				assert(*inout_freeIt == val);
 				free(*inout_freeIt);
 				*inout_freeIt = NULL;
 			}
-			st.val = st.newVal;
-			if (st.val != var_Error && st.val != varUndefined)
-				*inout_freeIt = st.val;
+			val = st.newVal;
+			if (val != var_Error && val != varUndefined)
+				*inout_freeIt = val;
 		}
 		if (*p == '\0' && st.endc != '\0') {
 			Error(
 			    "Unclosed variable specification (expecting '%c') "
 			    "for \"%s\" (value \"%s\") modifier %c",
-			    st.endc, st.var->name.str, st.val, *mod);
+			    st.endc, st.var->name.str, val, *mod);
 		} else if (*p == ':') {
 			p++;
 		} else if (opts.lint && *p != '\0' && *p != endc) {
@@ -3603,9 +3600,9 @@ ApplyModifiers(
 	}
 out:
 	*pp = p;
-	assert(st.val != NULL);	/* Use var_Error or varUndefined instead. */
+	assert(val != NULL);	/* Use var_Error or varUndefined instead. */
 	*exprFlags = st.exprFlags;
-	return st.val;
+	return val;
 
 bad_modifier:
 	/* XXX: The modifier end is only guessed. */
