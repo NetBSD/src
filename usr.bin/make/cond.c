@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.228 2020/12/20 13:03:48 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.229 2020/12/20 13:38:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.228 2020/12/20 13:03:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.229 2020/12/20 13:38:43 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -247,16 +247,14 @@ ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 			 * so we don't need to do it. Nor do we return an
 			 * error, though perhaps we should.
 			 */
-			void *nestedVal_freeIt;
 			VarEvalFlags eflags = doEval
 			    ? VARE_WANTRES | VARE_UNDEFERR
 			    : VARE_NONE;
-			const char *nestedVal;
-			(void)Var_Parse(&p, VAR_CMDLINE, eflags,
-					&nestedVal, &nestedVal_freeIt);
+			FStr nestedVal;
+			(void)Var_Parse(&p, VAR_CMDLINE, eflags, &nestedVal);
 			/* TODO: handle errors */
-			Buf_AddStr(&argBuf, nestedVal);
-			free(nestedVal_freeIt);
+			Buf_AddStr(&argBuf, nestedVal.str);
+			FStr_Done(&nestedVal);
 			continue;
 		}
 		if (ch == '(')
@@ -451,7 +449,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 			nested_p = par->p;
 			atStart = nested_p == start;
 			parseResult = Var_Parse(&nested_p, VAR_CMDLINE, eflags,
-						&str.str, &str.freeIt);
+			    &str);
 			/* TODO: handle errors */
 			if (str.str == var_Error) {
 				if (parseResult & VPR_ANY_MSG)
@@ -693,8 +691,7 @@ static size_t
 ParseEmptyArg(const char **pp, Boolean doEval,
 	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
 {
-	void *val_freeIt;
-	const char *val;
+	FStr val;
 	size_t magic_res;
 
 	/* We do all the work here and return the result as the length */
@@ -702,12 +699,12 @@ ParseEmptyArg(const char **pp, Boolean doEval,
 
 	(*pp)--;		/* Make (*pp)[1] point to the '('. */
 	(void)Var_Parse(pp, VAR_CMDLINE, doEval ? VARE_WANTRES : VARE_NONE,
-			&val, &val_freeIt);
+	    &val);
 	/* TODO: handle errors */
 	/* If successful, *pp points beyond the closing ')' now. */
 
-	if (val == var_Error) {
-		free(val_freeIt);
+	if (val.str == var_Error) {
+		FStr_Done(&val);
 		return (size_t)-1;
 	}
 
@@ -715,14 +712,14 @@ ParseEmptyArg(const char **pp, Boolean doEval,
 	 * A variable is empty when it just contains spaces...
 	 * 4/15/92, christos
 	 */
-	cpp_skip_whitespace(&val);
+	cpp_skip_whitespace(&val.str);
 
 	/*
 	 * For consistency with the other functions we can't generate the
 	 * true/false here.
 	 */
-	magic_res = *val != '\0' ? 2 : 1;
-	free(val_freeIt);
+	magic_res = val.str[0] != '\0' ? 2 : 1;
+	FStr_Done(&val);
 	return magic_res;
 }
 
