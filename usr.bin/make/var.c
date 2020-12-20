@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.737 2020/12/19 22:10:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.738 2020/12/20 00:47:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.737 2020/12/19 22:10:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.738 2020/12/20 00:47:21 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -2813,6 +2813,34 @@ ok:
 	return AMR_OK;
 }
 
+static char *
+str_toupper(const char *str)
+{
+	char *res;
+	size_t i, len;
+
+	len = strlen(str);
+	res = bmake_malloc(len + 1);
+	for (i = 0; i < len + 1; i++)
+		res[i] = ch_toupper(str[i]);
+
+	return res;
+}
+
+static char *
+str_tolower(const char *str)
+{
+	char *res;
+	size_t i, len;
+
+	len = strlen(str);
+	res = bmake_malloc(len + 1);
+	for (i = 0; i < len + 1; i++)
+		res[i] = ch_tolower(str[i]);
+
+	return res;
+}
+
 /* :tA, :tu, :tl, :ts<separator>, etc. */
 static ApplyModifierResult
 ApplyModifier_To(const char **pp, ApplyModifiersState *st)
@@ -2842,21 +2870,13 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	}
 
 	if (mod[1] == 'u') {	/* :tu */
-		size_t i;
-		size_t len = strlen(st->val);
-		st->newVal = bmake_malloc(len + 1);
-		for (i = 0; i < len + 1; i++)
-			st->newVal[i] = ch_toupper(st->val[i]);
+		st->newVal = str_toupper(st->val);
 		*pp = mod + 2;
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {	/* :tl */
-		size_t i;
-		size_t len = strlen(st->val);
-		st->newVal = bmake_malloc(len + 1);
-		for (i = 0; i < len + 1; i++)
-			st->newVal[i] = ch_tolower(st->val[i]);
+		st->newVal = str_tolower(st->val);
 		*pp = mod + 2;
 		return AMR_OK;
 	}
