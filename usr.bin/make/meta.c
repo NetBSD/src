@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.161 2020/12/20 14:32:13 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.162 2020/12/20 22:02:54 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -386,7 +386,7 @@ printCMD(const char *cmd, FILE *fp, GNode *gn)
 static void
 printCMDs(GNode *gn, FILE *fp)
 {
-    GNodeListNode *ln;
+    StringListNode *ln;
 
     for (ln = gn->commands.first; ln != NULL; ln = ln->next)
 	printCMD(ln->datum, fp, gn);
