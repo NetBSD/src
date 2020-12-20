@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.741 2020/12/20 11:38:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.742 2020/12/20 12:53:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,13 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.741 2020/12/20 11:38:51 rillig Exp $");
-
-/* A string that may need to be freed after use. */
-typedef struct FStr {
-	const char *str;
-	void *freeIt;
-} FStr;
+MAKE_RCSID("$NetBSD: var.c,v 1.742 2020/12/20 12:53:34 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -305,25 +299,6 @@ ENUM_FLAGS_RTTI_6(VarFlags,
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
-/* Return an FStr that is the sole owner of str. */
-static FStr
-FStr_InitOwn(char *str)
-{
-	return (FStr){ str, str };
-}
-
-/* Return an FStr that refers to the shared str. */
-static FStr
-FStr_InitRefer(const char *str)
-{
-	return (FStr){ str, NULL };
-}
-
-static void
-FStr_Done(FStr *fstr)
-{
-	free(fstr->freeIt);
-}
 
 static Var *
 VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)

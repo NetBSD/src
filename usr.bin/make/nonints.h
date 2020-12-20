@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.175 2020/12/19 20:47:24 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.176 2020/12/20 12:53:34 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -164,11 +164,64 @@ void Parse_MainName(GNodeList *);
 int Parse_GetFatals(void);
 
 /* str.c */
+
+/* A read-only string that may need to be freed after use. */
+typedef struct FStr {
+	const char *str;
+	void *freeIt;
+} FStr;
+
+/* A modifiable string that may need to be freed after use. */
+typedef struct MFStr {
+	char *str;
+	void *freeIt;
+} MFStr;
+
 typedef struct Words {
 	char **words;
 	size_t len;
 	void *freeIt;
 } Words;
+
+/* Return a string that is the sole owner of str. */
+MAKE_INLINE FStr
+FStr_InitOwn(char *str)
+{
+	return (FStr){ str, str };
+}
+
+/* Return a string that refers to the shared str. */
+MAKE_INLINE FStr
+FStr_InitRefer(const char *str)
+{
+	return (FStr){ str, NULL };
+}
+
+MAKE_INLINE void
+FStr_Done(FStr *fstr)
+{
+	free(fstr->freeIt);
+}
+
+/* Return a string that is the sole owner of str. */
+MAKE_INLINE MFStr
+MFStr_InitOwn(char *str)
+{
+	return (MFStr){ str, str };
+}
+
+/* Return a string that refers to the shared str. */
+MAKE_INLINE MFStr
+MFStr_InitRefer(char *str)
+{
+	return (MFStr){ str, NULL };
+}
+
+MAKE_INLINE void
+MFStr_Done(MFStr *mfstr)
+{
+	free(mfstr->freeIt);
+}
 
 Words Str_Words(const char *, Boolean);
 MAKE_INLINE void
