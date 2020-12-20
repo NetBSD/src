@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.252 2020/12/19 16:00:17 rillig Exp $
+# $NetBSD: Makefile,v 1.253 2020/12/20 19:37:23 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -502,7 +502,6 @@ SED_CMDS.var-op-shell+=	\
 	-e 's,^${.SHELL:T}: [ 0-9:]*,,' \
 	-e '/command/s,No such.*,not found,'
 SED_CMDS.vardebug+=	-e 's,${.SHELL},</path/to/shell>,'
-SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
 SED_CMDS.varmod-gmtime+=	-e 's,Tue Jan 19 03:14:08 2038,<normalized>,'
 SED_CMDS.varmod-gmtime+=	${:D FreeBSD i386 still has 32-bit time_t. }
 SED_CMDS.varmod-gmtime+=	-e 's,Fri Dec 13 20:45:52 1901,<normalized>,'
