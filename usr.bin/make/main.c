@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.499 2020/12/20 14:32:13 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.500 2020/12/20 14:39:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.499 2020/12/20 14:32:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.500 2020/12/20 14:39:46 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -807,33 +807,32 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 }
 #endif
 
-/*
- * Allow makefiles some control over the mode we run in.
- */
-void
-MakeMode(const char *mode)
+/* Allow makefiles some control over the mode we run in. */
+static void
+MakeMode(void)
 {
-	char *mode_freeIt = NULL;
+	FStr mode = FStr_InitRefer(NULL);
 
-	if (mode == NULL) {
+	if (mode.str == NULL) {
+		char *expanded;
 		(void)Var_Subst("${" MAKE_MODE ":tl}",
-		    VAR_GLOBAL, VARE_WANTRES, &mode_freeIt);
+		    VAR_GLOBAL, VARE_WANTRES, &expanded);
 		/* TODO: handle errors */
-		mode = mode_freeIt;
+		mode = FStr_InitOwn(expanded);
 	}
 
-	if (mode[0] != '\0') {
-		if (strstr(mode, "compat")) {
+	if (mode.str[0] != '\0') {
+		if (strstr(mode.str, "compat")) {
 			opts.compatMake = TRUE;
 			forceJobs = FALSE;
 		}
 #if USE_META
-		if (strstr(mode, "meta"))
-			meta_mode_init(mode);
+		if (strstr(mode.str, "meta"))
+			meta_mode_init(mode.str);
 #endif
 	}
 
-	free(mode_freeIt);
+	FStr_Done(&mode);
 }
 
 static void
@@ -1546,7 +1545,7 @@ main_PrepareMaking(void)
 	if (enterFlagObj)
 		printf("%s: Entering directory `%s'\n", progname, objdir);
 
-	MakeMode(NULL);
+	MakeMode();
 
 	{
 		FStr makeflags = Var_Value(MAKEFLAGS, VAR_GLOBAL);
