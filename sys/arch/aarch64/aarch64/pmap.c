@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2020/12/19 09:02:32 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2020/12/20 08:26:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2020/12/19 09:02:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2020/12/20 08:26:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -632,7 +632,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 		PMAP_COUNT(pdp_alloc);
 		PMAP_PAGE_INIT(VM_PAGE_TO_PP(pg));
 	} else {
-		/* uvm_pageboot_alloc() returns direct mapping address */
+		/* uvm_pageboot_alloc() returns a direct mapping address */
 		pg = NULL;
 		pa = AARCH64_KVA_TO_PA(
 		    uvm_pageboot_alloc(Ln_TABLE_SIZE));
