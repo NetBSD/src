@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.31 2020/12/20 12:27:20 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.32 2020/12/20 15:59:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.31 2020/12/20 12:27:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.32 2020/12/20 15:59:28 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1025,7 +1025,6 @@ pmap_md_vca_remove(struct vm_page *pg, vaddr_t va, bool dirty, bool last)
 		return;
 
 	KASSERT(kpreempt_disabled());
-	KASSERT(!VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 	KASSERT((va & PAGE_MASK) == 0);
 
 	/*
