@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.505 2020/12/20 14:32:13 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.506 2020/12/20 14:48:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.505 2020/12/20 14:32:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.506 2020/12/20 14:48:35 rillig Exp $");
 
 /* types and constants */
 
@@ -1925,7 +1925,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 
 static void
 VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
-		    const char **out_avalue, void **out_avalue_freeIt)
+		    FStr *out_avalue)
 {
 	const char *avalue;
 	char *evalue;
@@ -1955,13 +1955,12 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	avalue = evalue;
 	Var_Set(name, avalue, ctxt);
 
-	*out_avalue = avalue;
-	*out_avalue_freeIt = evalue;
+	*out_avalue = (FStr){ avalue, evalue };
 }
 
 static void
 VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
-		    const char **out_avalue, void **out_avalue_freeIt)
+		    FStr *out_avalue)
 {
 	const char *cmd, *errfmt;
 	char *cmdOut;
@@ -1978,7 +1977,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 
 	cmdOut = Cmd_Exec(cmd, &errfmt);
 	Var_Set(name, cmdOut, ctxt);
-	*out_avalue = *out_avalue_freeIt = cmdOut;
+	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
 		Parse_Error(PARSE_WARNING, errfmt, cmd);
@@ -1996,31 +1995,25 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
  * skipped if the operator is '?=' and the variable already exists. */
 static Boolean
 VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
-	       GNode *ctxt, const char **out_avalue, void **out_avalue_freeIt)
+	       GNode *ctxt, FStr *out_TRUE_avalue)
 {
-	const char *avalue = uvalue;
-	void *avalue_freeIt = NULL;
+	FStr avalue = FStr_InitRefer(uvalue);
 
 	if (op == VAR_APPEND)
 		Var_Append(name, uvalue, ctxt);
 	else if (op == VAR_SUBST)
-		VarAssign_EvalSubst(name, uvalue, ctxt, &avalue,
-		    &avalue_freeIt);
+		VarAssign_EvalSubst(name, uvalue, ctxt, &avalue);
 	else if (op == VAR_SHELL)
-		VarAssign_EvalShell(name, uvalue, ctxt, &avalue,
-		    &avalue_freeIt);
+		VarAssign_EvalShell(name, uvalue, ctxt, &avalue);
 	else {
-		if (op == VAR_DEFAULT && Var_Exists(name, ctxt)) {
-			*out_avalue_freeIt = NULL;
+		if (op == VAR_DEFAULT && Var_Exists(name, ctxt))
 			return FALSE;
-		}
 
 		/* Normal assignment -- just do it. */
 		Var_Set(name, uvalue, ctxt);
 	}
 
-	*out_avalue = avalue;
-	*out_avalue_freeIt = avalue_freeIt;
+	*out_TRUE_avalue = avalue;
 	return TRUE;
 }
 
@@ -2047,15 +2040,14 @@ VarAssignSpecial(const char *name, const char *avalue)
 void
 Parse_DoVar(VarAssign *var, GNode *ctxt)
 {
-	const char *avalue;	/* actual value (maybe expanded) */
-	void *avalue_freeIt;
+	FStr avalue;	/* actual value (maybe expanded) */
 
 	VarCheckSyntax(var->op, var->value, ctxt);
-	if (VarAssign_Eval(var->varname, var->op, var->value, ctxt,
-	    &avalue, &avalue_freeIt))
-		VarAssignSpecial(var->varname, avalue);
+	if (VarAssign_Eval(var->varname, var->op, var->value, ctxt, &avalue)) {
+		VarAssignSpecial(var->varname, avalue.str);
+		FStr_Done(&avalue);
+	}
 
-	free(avalue_freeIt);
 	free(var->varname);
 }
 
