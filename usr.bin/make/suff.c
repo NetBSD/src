@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.331 2020/12/18 15:47:34 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.332 2020/12/20 13:38:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.331 2020/12/18 15:47:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.332 2020/12/20 13:38:43 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1300,13 +1300,11 @@ ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
 		} else if (*cp == '$') {
 			/* Skip over the variable expression. */
 			const char *nested_p = cp;
-			const char *junk;
-			void *freeIt;
+			FStr junk;
 
-			(void)Var_Parse(&nested_p, pgn,
-			    VARE_NONE, &junk, &freeIt);
+			(void)Var_Parse(&nested_p, pgn, VARE_NONE, &junk);
 			/* TODO: handle errors */
-			if (junk == var_Error) {
+			if (junk.str == var_Error) {
 				Parse_Error(PARSE_FATAL,
 				    "Malformed variable expression at \"%s\"",
 				    cp);
@@ -1315,7 +1313,7 @@ ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
 				cp += nested_p - cp;
 			}
 
-			free(freeIt);
+			FStr_Done(&junk);
 		} else if (cp[0] == '\\' && cp[1] != '\0') {
 			/* Escaped something -- skip over it. */
 			/*
