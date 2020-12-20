@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.745 2020/12/20 14:32:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.746 2020/12/20 15:04:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.745 2020/12/20 14:32:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.746 2020/12/20 15:04:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -498,15 +498,18 @@ Var_DeleteVar(const char *varname, GNode *ctxt)
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
-	char *name_freeIt = NULL;
+	FStr varname = FStr_InitRefer(name);
 
-	if (strchr(name, '$') != NULL) {
-		(void)Var_Subst(name, VAR_GLOBAL, VARE_WANTRES, &name_freeIt);
+	if (strchr(varname.str, '$') != NULL) {
+		char *expanded;
+		(void)Var_Subst(varname.str, VAR_GLOBAL, VARE_WANTRES,
+		    &expanded);
 		/* TODO: handle errors */
-		name = name_freeIt;
+		varname = FStr_InitOwn(expanded);
 	}
 
-	Var_DeleteVar(name, ctxt);
+	Var_DeleteVar(varname.str, ctxt);
+	FStr_Done(&varname);
 }
 
 /*
