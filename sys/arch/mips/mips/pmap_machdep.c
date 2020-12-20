@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.30 2020/09/10 17:26:38 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.31 2020/12/20 12:27:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.30 2020/09/10 17:26:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.31 2020/12/20 12:27:20 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -333,7 +333,6 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
- *	firstaddr is the first unused kseg0 address (not page aligned).
  */
 void
 pmap_bootstrap(void)
