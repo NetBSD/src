@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.507 2020/12/20 14:52:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.508 2020/12/20 18:23:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.507 2020/12/20 14:52:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.508 2020/12/20 18:23:24 rillig Exp $");
 
 /* types and constants */
 
@@ -2724,7 +2724,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
  * with a single space.
  */
 static void
-UnescapeBackslash(char *const line, char *start)
+UnescapeBackslash(char *line, char *start)
 {
 	char *src = start;
 	char *dst = start;
