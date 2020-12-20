@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.740 2020/12/20 10:59:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.741 2020/12/20 11:38:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.740 2020/12/20 10:59:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.741 2020/12/20 11:38:51 rillig Exp $");
 
 /* A string that may need to be freed after use. */
 typedef struct FStr {
@@ -3596,7 +3596,8 @@ ApplyModifiers(
 
 		if (st.newVal != st.val) {
 			if (*inout_freeIt != NULL) {
-				free(st.val);
+				assert(*inout_freeIt == st.val);
+				free(*inout_freeIt);
 				*inout_freeIt = NULL;
 			}
 			st.val = st.newVal;
