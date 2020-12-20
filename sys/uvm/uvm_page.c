@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.249 2020/10/18 18:31:31 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.250 2020/12/20 11:11:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.249 2020/10/18 18:31:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.250 2020/12/20 11:11:34 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -560,7 +560,7 @@ uvm_pageboot_alloc(vsize_t size)
 	addr = pmap_steal_memory(size, &virtual_space_start,
 	    &virtual_space_end);
 
-	return(addr);
+	return addr;
 
 #else /* !PMAP_STEAL_MEMORY */
 
@@ -604,7 +604,7 @@ uvm_pageboot_alloc(vsize_t size)
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
-	return(addr);
+	return addr;
 #endif	/* PMAP_STEAL_MEMORY */
 }
 
