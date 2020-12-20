@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.84 2020/12/19 19:12:02 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.85 2020/12/20 00:14:30 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.84 2020/12/19 19:12:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.85 2020/12/20 00:14:30 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -810,7 +810,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_header *cmd_h;
 	int i, error = 0;
 	uint32_t sig, cmd;
-	int noclo_retry = 0;
+	int noclo_retry = 0, retry;
 
 	ata_channel_lock_owned(chp);
 
@@ -892,22 +892,34 @@ again:
 	 */
 	ata_delay(chp, 10, "ahcirstw", flags);
 
-	cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
-	    (drive << AHCI_CMDH_F_PMP_SHIFT));
-	cmd_h->cmdh_prdbc = 0;
-	memset(cmd_tbl->cmdt_cfis, 0, 64);
-	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
-	cmd_tbl->cmdt_cfis[rhd_c] = drive;
-	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_4BIT;
-	switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
-	case ERR_DF:
-	case TIMEOUT:
+	/*
+	 * Try to clear WDCTL_RST a few times before giving up.
+	 */
+	for (error = EBUSY, retry = 0; error != 0 && retry < 5; retry++) {
+		cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
+		    (drive << AHCI_CMDH_F_PMP_SHIFT));
+		cmd_h->cmdh_prdbc = 0;
+		memset(cmd_tbl->cmdt_cfis, 0, 64);
+		cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
+		cmd_tbl->cmdt_cfis[rhd_c] = drive;
+		cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_4BIT;
+		switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
+		case ERR_DF:
+		case TIMEOUT:
+			error = EBUSY;
+			break;
+		default:
+			error = 0;
+			break;
+		}
+		if (error == 0) {
+			break;
+		}
+	}
+	if (error == EBUSY) {
 		aprint_error("%s port %d: clearing WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
-		error = EBUSY;
 		goto end;
-	default:
-		break;
 	}
 
 skip_reset:
