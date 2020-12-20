@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.742 2020/12/20 12:53:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.743 2020/12/20 13:38:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.742 2020/12/20 12:53:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.743 2020/12/20 13:38:43 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2044,16 +2044,15 @@ ParseModifierPart(
 
 		if (eflags & VARE_WANTRES) { /* Nested variable, evaluated */
 			const char *nested_p = p;
-			const char *nested_val;
-			void *nested_val_freeIt;
+			FStr nested_val;
 			VarEvalFlags nested_eflags =
 			    eflags & ~(unsigned)VARE_KEEP_DOLLAR;
 
 			(void)Var_Parse(&nested_p, st->ctxt, nested_eflags,
-			    &nested_val, &nested_val_freeIt);
+			    &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val);
-			free(nested_val_freeIt);
+			Buf_AddStr(&buf, nested_val.str);
+			FStr_Done(&nested_val);
 			p += nested_p - p;
 			continue;
 		}
@@ -2266,14 +2265,12 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 		/* Nested variable expression */
 		if (*p == '$') {
-			const char *nested_val;
-			void *nested_val_freeIt;
+			FStr nested_val;
 
-			(void)Var_Parse(&p, st->ctxt, eflags,
-			    &nested_val, &nested_val_freeIt);
+			(void)Var_Parse(&p, st->ctxt, eflags, &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val);
-			free(nested_val_freeIt);
+			Buf_AddStr(&buf, nested_val.str);
+			FStr_Done(&nested_val);
 			continue;
 		}
 
@@ -3430,10 +3427,9 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 		       void **inout_freeIt)
 {
 	const char *p = *pp;
-	const char *mods;
-	void *mods_freeIt;
+	FStr mods;
 
-	(void)Var_Parse(&p, st->ctxt, st->eflags, &mods, &mods_freeIt);
+	(void)Var_Parse(&p, st->ctxt, st->eflags, &mods);
 	/* TODO: handle errors */
 
 	/*
@@ -3441,14 +3437,14 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	 * interested.  This means the expression ${VAR:${M1}${M2}}
 	 * is not accepted, but ${VAR:${M1}:${M2}} is.
 	 */
-	if (mods[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
+	if (mods.str[0] != '\0' && *p != '\0' && *p != ':' && *p != st->endc) {
 		if (opts.lint)
 			Parse_Error(PARSE_FATAL,
 			    "Missing delimiter ':' "
 			    "after indirect modifier \"%.*s\"",
 			    (int)(p - *pp), *pp);
 
-		free(mods_freeIt);
+		FStr_Done(&mods);
 		/* XXX: apply_mods doesn't sound like "not interested". */
 		/* XXX: Why is the indirect modifier parsed once more by
 		 * apply_mods?  Try *pp = p here. */
@@ -3456,20 +3452,21 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 	}
 
 	DEBUG3(VAR, "Indirect modifier \"%s\" from \"%.*s\"\n",
-	    mods, (int)(p - *pp), *pp);
+	    mods.str, (int)(p - *pp), *pp);
 
-	if (mods[0] != '\0') {
-		st->val = ApplyModifiers(&mods, st->val, '\0', '\0',
+	if (mods.str[0] != '\0') {
+		const char *modsp = mods.str;
+		st->val = ApplyModifiers(&modsp, st->val, '\0', '\0',
 		    st->var, &st->exprFlags, st->ctxt, st->eflags,
 		    inout_freeIt);
 		if (st->val == var_Error || st->val == varUndefined ||
-		    *mods != '\0') {
-			free(mods_freeIt);
+		    *modsp != '\0') {
+			FStr_Done(&mods);
 			*pp = p;
 			return AMIR_OUT;	/* error already reported */
 		}
 	}
-	free(mods_freeIt);
+	FStr_Done(&mods);
 
 	if (*p == ':')
 		p++;
@@ -3694,13 +3691,11 @@ ParseVarname(const char **pp, char startc, char endc,
 
 		/* A variable inside a variable, expand. */
 		if (*p == '$') {
-			const char *nested_val;
-			void *nested_val_freeIt;
-			(void)Var_Parse(&p, ctxt, eflags, &nested_val,
-			    &nested_val_freeIt);
+			FStr nested_val;
+			(void)Var_Parse(&p, ctxt, eflags, &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val);
-			free(nested_val_freeIt);
+			Buf_AddStr(&buf, nested_val.str);
+			FStr_Done(&nested_val);
 		} else {
 			Buf_AddByte(&buf, *p);
 			p++;
@@ -4005,8 +4000,7 @@ FreeEnvVar(void **out_val_freeIt, Var *v, const char *value)
  */
 /* coverity[+alloc : arg-*4] */
 VarParseResult
-Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
-	  const char **out_val, void **out_val_freeIt)
+Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 {
 	const char *p = *pp;
 	const char *const start = p;
@@ -4024,7 +4018,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	Boolean dynamic;
 	const char *extramodifiers;
 	Var *v;
-	char *value;
+	MFStr value;
 	char eflags_str[VarEvalFlags_ToStringSize];
 	VarExprFlags exprFlags = VEF_NONE;
 
@@ -4032,7 +4026,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	    Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
 		VarEvalFlags_ToStringSpecs));
 
-	*out_val_freeIt = NULL;
+	*out_val = FStr_InitRefer(NULL);
 	extramodifiers = NULL;	/* extra modifiers to apply first */
 	dynamic = FALSE;
 
@@ -4046,21 +4040,17 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (startc != '(' && startc != '{') {
 		VarParseResult res;
 		if (!ParseVarnameShort(startc, pp, ctxt, eflags, &res,
-		    out_val, &v))
+		    &out_val->str, &v))
 			return res;
 		haveModifier = FALSE;
 		p++;
 	} else {
 		VarParseResult res;
-		FStr fval;
 		if (!ParseVarnameLong(p, startc, ctxt, eflags,
-		    pp, &res, &fval,
+		    pp, &res, out_val,
 		    &endc, &p, &v, &haveModifier, &extramodifiers,
-		    &dynamic, &exprFlags)) {
-			*out_val = fval.str;
-			*out_val_freeIt = fval.freeIt;
+		    &dynamic, &exprFlags))
 			return res;
-		}
 	}
 
 	if (v->flags & VAR_IN_USE)
@@ -4075,21 +4065,22 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	 * the then-current value of the variable.  This might also invoke
 	 * undefined behavior.
 	 */
-	value = Buf_GetAll(&v->val, NULL);
+	value = MFStr_InitRefer(Buf_GetAll(&v->val, NULL));
 
 	/*
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
 	 */
-	if (strchr(value, '$') != NULL && (eflags & VARE_WANTRES)) {
+	if (strchr(value.str, '$') != NULL && (eflags & VARE_WANTRES)) {
+		char *expanded;
 		VarEvalFlags nested_eflags = eflags;
 		if (opts.lint)
 			nested_eflags &= ~(unsigned)VARE_UNDEFERR;
 		v->flags |= VAR_IN_USE;
-		(void)Var_Subst(value, ctxt, nested_eflags, &value);
+		(void)Var_Subst(value.str, ctxt, nested_eflags, &expanded);
 		v->flags &= ~(unsigned)VAR_IN_USE;
 		/* TODO: handle errors */
-		*out_val_freeIt = value;
+		value = MFStr_InitOwn(expanded);
 	}
 
 	if (haveModifier || extramodifiers != NULL) {
@@ -4098,7 +4089,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		extraFree = NULL;
 		if (extramodifiers != NULL) {
 			const char *em = extramodifiers;
-			value = ApplyModifiers(&em, value, '\0', '\0',
+			value.str = ApplyModifiers(&em, value.str, '\0', '\0',
 			    v, &exprFlags, ctxt, eflags, &extraFree);
 		}
 
@@ -4106,11 +4097,11 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 			/* Skip initial colon. */
 			p++;
 
-			value = ApplyModifiers(&p, value, startc, endc,
-			    v, &exprFlags, ctxt, eflags, out_val_freeIt);
+			value.str = ApplyModifiers(&p, value.str, startc, endc,
+			    v, &exprFlags, ctxt, eflags, &value.freeIt);
 			free(extraFree);
 		} else {
-			*out_val_freeIt = extraFree;
+			value.freeIt = extraFree;
 		}
 	}
 
@@ -4120,38 +4111,29 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	*pp = p;
 
 	if (v->flags & VAR_FROM_ENV) {
-		FreeEnvVar(out_val_freeIt, v, value);
+		FreeEnvVar(&value.freeIt, v, value.str);
 
 	} else if (exprFlags & VEF_UNDEF) {
 		if (!(exprFlags & VEF_DEF)) {
-			/*
-			 * TODO: Use a local variable instead of
-			 * out_val_freeIt. Variables named out_* must only
-			 * be written to.
-			 */
-			if (*out_val_freeIt != NULL) {
-				free(*out_val_freeIt);
-				*out_val_freeIt = NULL;
-			}
+			MFStr_Done(&value);
 			if (dynamic) {
-				value = bmake_strsedup(start, p);
-				*out_val_freeIt = value;
+				value = MFStr_InitOwn(bmake_strsedup(start, p));
 			} else {
 				/*
 				 * The expression is still undefined,
 				 * therefore discard the actual value and
 				 * return an error marker instead.
 				 */
-				value = eflags & VARE_UNDEFERR
-				    ? var_Error : varUndefined;
+				value = MFStr_InitRefer(eflags & VARE_UNDEFERR
+				    ? var_Error : varUndefined);
 			}
 		}
-		if (value != Buf_GetAll(&v->val, NULL))
+		if (value.str != Buf_GetAll(&v->val, NULL))
 			Buf_Destroy(&v->val, TRUE);
 		FStr_Done(&v->name);
 		free(v);
 	}
-	*out_val = value;
+	*out_val = (FStr){ value.str, value.freeIt };
 	return VPR_UNKNOWN;
 }
 
@@ -4161,16 +4143,15 @@ VarSubstNested(const char **pp, Buffer *buf, GNode *ctxt,
 {
 	const char *p = *pp;
 	const char *nested_p = p;
-	const char *val;
-	void *val_freeIt;
+	FStr val;
 
-	(void)Var_Parse(&nested_p, ctxt, eflags, &val, &val_freeIt);
+	(void)Var_Parse(&nested_p, ctxt, eflags, &val);
 	/* TODO: handle errors */
 
-	if (val == var_Error || val == varUndefined) {
+	if (val.str == var_Error || val.str == varUndefined) {
 		if (!preserveUndefined) {
 			p = nested_p;
-		} else if ((eflags & VARE_UNDEFERR) || val == var_Error) {
+		} else if ((eflags & VARE_UNDEFERR) || val.str == var_Error) {
 
 			/*
 			 * XXX: This condition is wrong.  If val == var_Error,
@@ -4201,10 +4182,10 @@ VarSubstNested(const char **pp, Buffer *buf, GNode *ctxt,
 		}
 	} else {
 		p = nested_p;
-		Buf_AddStr(buf, val);
+		Buf_AddStr(buf, val.str);
 	}
 
-	free(val_freeIt);
+	FStr_Done(&val);
 
 	*pp = p;
 }
