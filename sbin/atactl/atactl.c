@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.84 2020/12/07 10:36:19 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.85 2020/12/20 10:19:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.84 2020/12/07 10:36:19 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.85 2020/12/20 10:19:30 jmcneill Exp $");
 #endif
 
 
@@ -306,7 +306,7 @@ static const struct bitinfo ata_sata_caps[] = {
 static const struct bitinfo ata_sata_feat[] = {
 	{ SATA_NONZERO_OFFSETS, "Non-zero Offset DMA" },
 	{ SATA_DMA_SETUP_AUTO, "DMA Setup Auto Activate" },
-	{ SATA_DRIVE_PWR_MGMT, "Device-Initiated Interface Power Managment" },
+	{ SATA_DRIVE_PWR_MGMT, "Device-Initiated Interface Power Management" },
 	{ SATA_IN_ORDER_DATA, "In-order Data Delivery" },
 	{ SATA_SW_STTNGS_PRS, "Software Settings Preservation" },
 	{ 0, NULL },
