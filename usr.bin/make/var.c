@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.743 2020/12/20 13:38:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.744 2020/12/20 13:50:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.743 2020/12/20 13:38:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.744 2020/12/20 13:50:10 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -301,12 +301,11 @@ static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
 
 static Var *
-VarNew(const char *name, void *name_freeIt, const char *value, VarFlags flags)
+VarNew(FStr name, const char *value, VarFlags flags)
 {
 	size_t value_len = strlen(value);
 	Var *var = bmake_malloc(sizeof *var);
-	var->name.str = name;
-	var->name.freeIt = name_freeIt;
+	var->name = name;
 	Buf_InitSize(&var->val, value_len + 1);
 	Buf_AddBytes(&var->val, value, value_len);
 	var->flags = flags;
@@ -416,7 +415,7 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 
 		if ((env = getenv(name)) != NULL) {
 			char *varname = bmake_strdup(name);
-			return VarNew(varname, varname, env, VAR_FROM_ENV);
+			return VarNew(FStr_InitOwn(varname), env, VAR_FROM_ENV);
 		}
 
 		if (opts.checkEnvFirst && ctxt != VAR_GLOBAL) {
@@ -460,7 +459,7 @@ static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&ctxt->vars, name, NULL);
-	Var *v = VarNew(he->key /* aliased */, NULL, val,
+	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), val,
 	    flags & VAR_SET_READONLY ? VAR_READONLY : VAR_NONE);
 	HashEntry_Set(he, v);
 	if (!(ctxt->flags & INTERNAL))
@@ -3933,7 +3932,7 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		v = VarNew(varname, varname, "", VAR_NONE);
+		v = VarNew(FStr_InitOwn(varname), "", VAR_NONE);
 		*out_TRUE_exprFlags = VEF_UNDEF;
 	} else
 		free(varname);
