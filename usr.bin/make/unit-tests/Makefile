@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.253 2020/12/20 19:37:23 rillig Exp $
+# $NetBSD: Makefile,v 1.254 2020/12/21 18:22:31 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -31,7 +31,8 @@
 # src/tests/usr.bin/make/t_make.sh.
 #
 
-# we use this below but we might be an older make
+# we use these below but we might be an older make
+.MAKE.OS?= ${uname -s:L:sh}
 .MAKE.UID?= ${id -u:L:sh}
 
 # Each test is in a sub-makefile.
@@ -587,7 +588,7 @@ LANG=		C
 
 MAKE_TEST_ENV?=	MALLOC_OPTIONS="JA"	# for jemalloc
 
-.if ${.MAKE.OS:U${uname -s:L:sh}} == "NetBSD"
+.if ${.MAKE.OS} == "NetBSD"
 LIMIT_RESOURCES?=	ulimit -v 200000
 .endif
 LIMIT_RESOURCES?=	:
