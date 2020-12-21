@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.756 2020/12/20 23:27:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.757 2020/12/21 00:11:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.756 2020/12/20 23:27:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.757 2020/12/21 00:11:29 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3420,8 +3420,8 @@ ApplyModifier(const char **pp, char *val, ApplyModifiersState *st)
 	}
 }
 
-static char *ApplyModifiers(const char **, char *, char, char, Var *,
-			    VarExprFlags *, GNode *, VarEvalFlags, void **);
+static MFStr ApplyModifiers(const char **, MFStr, char, char, Var *,
+			    VarExprFlags *, GNode *, VarEvalFlags);
 
 typedef enum ApplyModifiersIndirectResult {
 	/* The indirect modifiers have been applied successfully. */
@@ -3450,7 +3450,7 @@ typedef enum ApplyModifiersIndirectResult {
  */
 static ApplyModifiersIndirectResult
 ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
-		       char **inout_val, void **inout_freeIt)
+		       MFStr *inout_value)
 {
 	const char *p = *pp;
 	FStr mods;
@@ -3468,10 +3468,10 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 
 	if (mods.str[0] != '\0') {
 		const char *modsp = mods.str;
-		*inout_val = ApplyModifiers(&modsp, *inout_val, '\0', '\0',
-		    st->var, &st->exprFlags, st->ctxt, st->eflags,
-		    inout_freeIt);
-		if (*inout_val == var_Error || *inout_val == varUndefined ||
+		MFStr newVal = ApplyModifiers(&modsp, *inout_value, '\0', '\0',
+		    st->var, &st->exprFlags, st->ctxt, st->eflags);
+		*inout_value = newVal;
+		if (newVal.str == var_Error || newVal.str == varUndefined ||
 		    *modsp != '\0') {
 			FStr_Done(&mods);
 			*pp = p;
@@ -3496,11 +3496,11 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 
 static ApplyModifierResult
 ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
-		    const char **pp, char *val, char **out_val,
-		    void **inout_freeIt)
+		    const char **pp, MFStr *inout_value)
 {
 	ApplyModifierResult res;
 	const char *p = *pp;
+	char *const val = inout_value->str;
 
 	if (DEBUG(VAR))
 		LogBeforeApply(st, mod, endc, val);
@@ -3527,7 +3527,6 @@ ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
 		st->newVal = MFStr_InitRefer(var_Error);
 	}
 	if (res == AMR_CLEANUP || res == AMR_BAD) {
-		*out_val = val;
 		*pp = p;
 		return res;
 	}
@@ -3536,20 +3535,14 @@ ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
 		LogAfterApply(st, p, mod);
 
 	if (st->newVal.str != val) {
-		if (*inout_freeIt != NULL) {
-			assert(*inout_freeIt == val);
-			free(*inout_freeIt);
-			*inout_freeIt = NULL;
-		}
-		val = st->newVal.str;
-		if (val != var_Error && val != varUndefined)
-			*inout_freeIt = val;
+		MFStr_Done(inout_value);
+		*inout_value = st->newVal;
 	}
 	if (*p == '\0' && st->endc != '\0') {
 		Error(
 		    "Unclosed variable specification (expecting '%c') "
 		    "for \"%s\" (value \"%s\") modifier %c",
-		    st->endc, st->var->name.str, val, *mod);
+		    st->endc, st->var->name.str, inout_value->str, *mod);
 	} else if (*p == ':') {
 		p++;
 	} else if (opts.lint && *p != '\0' && *p != endc) {
@@ -3562,22 +3555,20 @@ ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
 		 */
 	}
 	*pp = p;
-	*out_val = val;
 	return AMR_OK;
 }
 
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
-static char *
+static MFStr
 ApplyModifiers(
     const char **pp,		/* the parsing position, updated upon return */
-    char *val,			/* the current value of the expression */
+    MFStr value,		/* the current value of the expression */
     char startc,		/* '(' or '{', or '\0' for indirect modifiers */
     char endc,			/* ')' or '}', or '\0' for indirect modifiers */
     Var *v,
     VarExprFlags *exprFlags,
     GNode *ctxt,		/* for looking up and modifying variables */
-    VarEvalFlags eflags,
-    void **inout_freeIt		/* free this after using the return value */
+    VarEvalFlags eflags
 )
 {
 	ApplyModifiersState st = {
@@ -3592,7 +3583,7 @@ ApplyModifiers(
 
 	assert(startc == '(' || startc == '{' || startc == '\0');
 	assert(endc == ')' || endc == '}' || endc == '\0');
-	assert(val != NULL);
+	assert(value.str != NULL);
 
 	p = *pp;
 
@@ -3608,8 +3599,7 @@ ApplyModifiers(
 
 		if (*p == '$') {
 			ApplyModifiersIndirectResult amir;
-			amir = ApplyModifiersIndirect(&st, &p, &val,
-			    inout_freeIt);
+			amir = ApplyModifiersIndirect(&st, &p, &value);
 			if (amir == AMIR_CONTINUE)
 				continue;
 			if (amir == AMIR_OUT)
@@ -3620,8 +3610,7 @@ ApplyModifiers(
 		st.newVal = MFStr_InitRefer(var_Error);
 		mod = p;
 
-		res = ApplySingleModifier(&st, mod, endc, &p, val, &val,
-		    inout_freeIt);
+		res = ApplySingleModifier(&st, mod, endc, &p, &value);
 		if (res == AMR_CLEANUP)
 			goto cleanup;
 		if (res == AMR_BAD)
@@ -3629,9 +3618,9 @@ ApplyModifiers(
 	}
 
 	*pp = p;
-	assert(val != NULL);	/* Use var_Error or varUndefined instead. */
+	assert(value.str != NULL); /* Use var_Error or varUndefined instead. */
 	*exprFlags = st.exprFlags;
-	return val;
+	return value;
 
 bad_modifier:
 	/* XXX: The modifier end is only guessed. */
@@ -3640,10 +3629,9 @@ bad_modifier:
 
 cleanup:
 	*pp = p;
-	free(*inout_freeIt);
-	*inout_freeIt = NULL;
+	MFStr_Done(&value);
 	*exprFlags = st.exprFlags;
-	return var_Error;
+	return MFStr_InitRefer(var_Error);
 }
 
 /* Only four of the local variables are treated specially as they are the
@@ -4118,24 +4106,17 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	}
 
 	if (haveModifier || extramodifiers != NULL) {
-		void *extraFree;
-
-		extraFree = NULL;
 		if (extramodifiers != NULL) {
 			const char *em = extramodifiers;
-			value.str = ApplyModifiers(&em, value.str, '\0', '\0',
-			    v, &exprFlags, ctxt, eflags, &extraFree);
+			value = ApplyModifiers(&em, value, '\0', '\0',
+			    v, &exprFlags, ctxt, eflags);
 		}
 
 		if (haveModifier) {
-			/* Skip initial colon. */
-			p++;
+			p++;	/* Skip initial colon. */
 
-			value.str = ApplyModifiers(&p, value.str, startc, endc,
-			    v, &exprFlags, ctxt, eflags, &value.freeIt);
-			free(extraFree);
-		} else {
-			value.freeIt = extraFree;
+			value = ApplyModifiers(&p, value, startc, endc,
+			    v, &exprFlags, ctxt, eflags);
 		}
 	}
 
