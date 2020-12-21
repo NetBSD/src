@@ -1,5 +1,4 @@
 make: "varmod-range.mk" line 53: Invalid number: x}Rest" != "Rest"
-
 make: "varmod-range.mk" line 53: Malformed conditional ("${:U:range=x}Rest" != "Rest")
 make: "varmod-range.mk" line 62: Unknown modifier 'x'
 make: "varmod-range.mk" line 62: Malformed conditional ("${:U:range=0x0}Rest" != "Rest")

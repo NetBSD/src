@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.760 2020/12/21 02:38:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.761 2020/12/21 21:04:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.760 2020/12/21 02:38:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.761 2020/12/21 21:04:18 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2349,7 +2349,7 @@ ApplyModifier_Gmtime(const char **pp, const char *val, ApplyModifiersState *st)
 		const char *arg = mod + 7;
 		if (!TryParseTime(&arg, &utc)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value: %s\n", mod + 7);
+			    "Invalid time value: %s", mod + 7);
 			return AMR_CLEANUP;
 		}
 		*pp = arg;
@@ -2376,7 +2376,7 @@ ApplyModifier_Localtime(const char **pp, const char *val,
 		const char *arg = mod + 10;
 		if (!TryParseTime(&arg, &utc)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value: %s\n", mod + 10);
+			    "Invalid time value: %s", mod + 10);
 			return AMR_CLEANUP;
 		}
 		*pp = arg;
@@ -2469,7 +2469,7 @@ ApplyModifier_Range(const char **pp, const char *val, ApplyModifiersState *st)
 		const char *p = mod + 6;
 		if (!TryParseSize(&p, &n)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid number: %s\n", mod + 6);
+			    "Invalid number: %s", mod + 6);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
@@ -2786,7 +2786,7 @@ ApplyModifier_ToSep(const char **pp, const char *val, ApplyModifiersState *st)
 
 		if (!TryParseChar(&p, base, &st->sep)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid character number: %s\n", p);
+			    "Invalid character number: %s", p);
 			return AMR_CLEANUP;
 		}
 		if (*p != ':' && *p != st->endc) {
