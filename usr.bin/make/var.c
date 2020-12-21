@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.758 2020/12/21 00:20:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.759 2020/12/21 00:30:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.758 2020/12/21 00:20:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.759 2020/12/21 00:30:13 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2432,7 +2432,7 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 	if (st->eflags & VARE_WANTRES)
 		st->newVal = FStr_InitOwn(Cmd_Exec(cmd, &errfmt));
 	else
-		st->newVal = FStr_InitOwn(bmake_strdup(""));
+		st->newVal = FStr_InitRefer("");
 	if (errfmt != NULL)
 		Error(errfmt, cmd);	/* XXX: why still return AMR_OK? */
 	free(cmd);
@@ -2899,7 +2899,7 @@ ApplyModifier_Words(const char **pp, const char *val, ApplyModifiersState *st)
 
 	if (estr[0] == '#' && estr[1] == '\0') { /* Found ":[#]" */
 		if (st->oneBigWord) {
-			st->newVal = FStr_InitOwn(bmake_strdup("1"));
+			st->newVal = FStr_InitRefer("1");
 		} else {
 			Buffer buf;
 
@@ -3177,7 +3177,7 @@ ok:
 		}
 	}
 	free(val);
-	st->newVal = FStr_InitOwn(bmake_strdup(""));
+	st->newVal = FStr_InitRefer("");
 	return AMR_OK;
 }
 
@@ -3303,7 +3303,7 @@ ApplyModifier_SunShell(const char **pp, const char *val,
 			if (errfmt != NULL)
 				Error(errfmt, val);
 		} else
-			st->newVal = FStr_InitOwn(bmake_strdup(""));
+			st->newVal = FStr_InitRefer("");
 		*pp = p + 2;
 		return AMR_OK;
 	} else
