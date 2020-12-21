@@ -1,8 +1,11 @@
-# $NetBSD: varmod-gmtime.mk,v 1.7 2020/12/21 20:35:17 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.8 2020/12/21 20:47:29 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
 
+.if ${TZ:Uundefined} != "undefined"	# see unit-tests/Makefile
+.  error
+.endif
 
 # Test for the default time format, %c.  Since the time always varies, it's
 # only possible to check for the general format here.  The names of the
