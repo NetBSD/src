@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.508 2020/12/20 18:23:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.509 2020/12/21 02:09:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.508 2020/12/20 18:23:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.509 2020/12/21 02:09:34 rillig Exp $");
 
 /* types and constants */
 
@@ -1980,7 +1980,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 	*out_avalue = FStr_InitOwn(cmdOut);
 
 	if (errfmt != NULL)
-		Parse_Error(PARSE_WARNING, errfmt, cmd);
+		Parse_Error(PARSE_WARNING, errfmt, cmd.str);
 
 	FStr_Done(&cmd);
 }
