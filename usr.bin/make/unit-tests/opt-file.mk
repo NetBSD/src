@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.8 2020/12/22 08:05:08 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.9 2020/12/22 08:23:12 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -43,6 +43,7 @@ file-ending-in-backslash: .PHONY
 file-ending-in-backslash-mmap: .PHONY
 	@printf '%s' 'VAR=value\' > opt-file-backslash
 	@${MAKE} -r -f opt-file-backslash -V VAR
+	@rm opt-file-backslash
 
 # If a file contains null bytes, the rest of the line is skipped, and parsing
 # continues in the next line.  Throughout the history of make, the behavior
