@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.12 2013/09/17 20:00:50 wiz Exp $	*/
+/*	$NetBSD: nl.c,v 1.13 2020/12/22 17:50:55 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.12 2013/09/17 20:00:50 wiz Exp $");
+__RCSID("$NetBSD: nl.c,v 1.13 2020/12/22 17:50:55 ginsbach Exp $");
 #endif    
 
 #include <errno.h>
@@ -392,7 +392,6 @@ parse_numbering(const char *argstr, int section)
 		errx(EXIT_FAILURE,
 		    "illegal %s line numbering type -- %s",
 		    numbering_properties[section].name, argstr);
-		exit(EXIT_FAILURE);
 	}
 }
 
