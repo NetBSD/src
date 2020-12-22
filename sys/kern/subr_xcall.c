@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.33 2019/12/19 10:51:54 thorpej Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
  *	prohibitive, another way must be found.
  *
  *	Cross calls help to solve these types of problem by allowing
- *	any CPU in the system to request that an arbitrary function be
- *	executed on any other CPU.
+ *	any LWP in the system to request that an arbitrary function be
+ *	executed on a specific CPU.
  *
  * Implementation
  *
- *	A slow mechanism for making 'low priority' cross calls is
+ *	A slow mechanism for making low priority cross calls is
  *	provided.  The function to be executed runs on the remote CPU
  *	within a bound kthread.  No queueing is provided, and the
  *	implementation uses global state.  The function being called may
@@ -64,17 +64,17 @@
  *	CPU, and so has exclusive access to the CPU.  Since this facility
  *	is heavyweight, it's expected that it will not be used often.
  *
- *	Cross calls must not allocate memory, as the pagedaemon uses
- *	them (and memory allocation may need to wait on the pagedaemon).
+ *	Cross calls must not allocate memory, as the pagedaemon uses cross
+ *	calls (and memory allocation may need to wait on the pagedaemon).
  *
  *	A low-overhead mechanism for high priority calls (XC_HIGHPRI) is
- *	also provided.  The function to be executed runs on a software
- *	interrupt context, at IPL_SOFTSERIAL level, and is expected to
+ *	also provided.  The function to be executed runs in software
+ *	interrupt context at IPL_SOFTSERIAL level, and is expected to
  *	be very lightweight, e.g. avoid blocking.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.33 2019/12/19 10:51:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

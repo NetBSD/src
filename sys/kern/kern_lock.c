@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.171 2020/05/02 09:13:40 martin Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.172 2020/12/22 01:57:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.171 2020/05/02 09:13:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.172 2020/12/22 01:57:29 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -215,10 +215,6 @@ _kernel_lock(int nlocks)
 	 * is required to ensure that the result of any mutex_exit()
 	 * by the current LWP becomes visible on the bus before the set
 	 * of ci->ci_biglock_wanted becomes visible.
-	 *
-	 * However, we won't set ci_biglock_wanted until we've spun for
-	 * a bit, as we don't want to make any lock waiters in rw_oncpu()
-	 * or mutex_oncpu() block prematurely.
 	 */
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
