@@ -1,4 +1,4 @@
-# $NetBSD: varmod-localtime.mk,v 1.6 2020/12/21 20:47:29 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.7 2020/12/22 07:22:39 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
@@ -114,14 +114,14 @@
 # ULONG_MAX, which got converted to -1.  This resulted in a time stamp of
 # the second before 1970.
 #
-# Since var.c 1.613, the overflow is detected and produces a parse error.
+# Since var.c 1.631, the overflow is detected and produces a parse error.
 .if ${:L:localtime=10000000000000000000000000000000} != ""
 .  error
 .else
 .  error
 .endif
 
-# Before var.c 1.613 from 2020-10-31, there was no error handling while
+# Before var.c 1.631 from 2020-10-31, there was no error handling while
 # parsing the :localtime modifier, thus no error message is printed.  Parsing
 # stopped after the '=', and the remaining string was parsed for more variable
 # modifiers.  Because of the unknown modifier 'e' from the 'error', the whole
