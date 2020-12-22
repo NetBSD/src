@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.313 2020/12/10 20:50:24 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.314 2020/12/22 01:07:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.313 2020/12/10 20:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.314 2020/12/22 01:07:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3384,7 +3384,6 @@ ohci_device_intr_abort(struct usbd_xfer *xfer)
 	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
 	usbd_xfer_abort(xfer);
 }

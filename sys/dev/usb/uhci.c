@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.304 2020/07/07 10:02:17 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.305 2020/12/22 01:07:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.304 2020/07/07 10:02:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.305 2020/12/22 01:07:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2836,7 +2836,6 @@ uhci_device_intr_abort(struct usbd_xfer *xfer)
 	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
