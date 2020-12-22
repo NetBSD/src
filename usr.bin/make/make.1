@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.293 2020/11/25 00:50:44 sjg Exp $
+.\"	$NetBSD: make.1,v 1.294 2020/12/22 20:10:21 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 24, 2020
+.Dd December 22, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1748,9 +1748,9 @@ The same as
 except that variables in the value are not expanded.
 .It Ic .info Ar message
 The message is printed along with the name of the makefile and line number.
-.It Ic .undef Ar variable
-Un-define the specified global variable.
-Only global variables may be un-defined.
+.It Ic .undef Ar variable ...
+Un-define the specified global variables.
+Only global variables can be un-defined.
 .It Ic .unexport Ar variable ...
 The opposite of
 .Ql .export .
