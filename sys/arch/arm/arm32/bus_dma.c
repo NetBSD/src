@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.128 2020/12/20 10:34:33 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.129 2020/12/22 13:07:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.128 2020/12/20 10:34:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.129 2020/12/22 13:07:32 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -94,6 +94,19 @@ static struct evcnt bus_dma_sync_postreadwrite =
 static struct evcnt bus_dma_sync_postwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
 
+static struct evcnt bus_dma_sync_coherent_prereadwrite =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent prereadwrite");
+static struct evcnt bus_dma_sync_coherent_preread =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent preread");
+static struct evcnt bus_dma_sync_coherent_prewrite =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent prewrite");
+static struct evcnt bus_dma_sync_coherent_postread =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent postread");
+static struct evcnt bus_dma_sync_coherent_postreadwrite =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent postreadwrite");
+static struct evcnt bus_dma_sync_coherent_postwrite =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent postwrite");
+
 EVCNT_ATTACH_STATIC(bus_dma_creates);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_creates);
 EVCNT_ATTACH_STATIC(bus_dma_loads);
@@ -113,6 +126,13 @@ EVCNT_ATTACH_STATIC(bus_dma_sync_prewrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postread);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postreadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
+
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_prereadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_preread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_prewrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_postread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_postreadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_postwrite);
 
 #define	STAT_INCR(x)	(bus_dma_ ## x.ev_count++)
 #else
@@ -1108,7 +1128,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	if (post_ops == BUS_DMASYNC_POSTWRITE) {
 		KASSERT(pre_ops == 0);
-		STAT_INCR(sync_postwrite);
+		if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
+			STAT_INCR(sync_coherent_postwrite);
+		} else {
+			STAT_INCR(sync_postwrite);
+		}
 		return;
 	}
 
@@ -1157,23 +1181,23 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			STAT_INCR(sync_prereadwrite);
+			STAT_INCR(sync_coherent_prereadwrite);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-			STAT_INCR(sync_preread);
+			STAT_INCR(sync_coherent_preread);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			STAT_INCR(sync_prewrite);
+			STAT_INCR(sync_coherent_prewrite);
 			break;
 
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
-			STAT_INCR(sync_postreadwrite);
+			STAT_INCR(sync_coherent_postreadwrite);
 			break;
 
 		case BUS_DMASYNC_POSTREAD:
-			STAT_INCR(sync_postread);
+			STAT_INCR(sync_coherent_postread);
 			break;
 
 		/* BUS_DMASYNC_POSTWRITE was aleady handled as a fastpath */
