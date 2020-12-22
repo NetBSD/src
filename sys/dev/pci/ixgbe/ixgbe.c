@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.262 2020/12/11 05:01:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.263 2020/12/22 07:16:23 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5211,7 +5211,7 @@ ixgbe_legacy_irq(void *arg)
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
 		ixgbe_check_fan_failure(adapter, eicr, true);
-		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
+		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 	}
 
 	if (ixgbe_is_sfp(hw)) {
