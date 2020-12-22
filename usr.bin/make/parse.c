@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.512 2020/12/22 08:10:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.513 2020/12/22 08:31:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.512 2020/12/22 08:10:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.513 2020/12/22 08:31:13 rillig Exp $");
 
 /* types and constants */
 
@@ -2841,7 +2841,6 @@ ParseGetLine(GetLineMode mode)
 
 		/* We now have a line of data */
 		/* TODO: Remove line_end, it's not necessary here. */
-		assert(*line_end == '\n');
 		*line_end = '\0';
 
 		if (mode == GLM_FOR_BODY)
