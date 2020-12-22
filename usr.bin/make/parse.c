@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.511 2020/12/22 08:05:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.512 2020/12/22 08:10:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.511 2020/12/22 08:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.512 2020/12/22 08:10:39 rillig Exp $");
 
 /* types and constants */
 
@@ -2853,10 +2853,8 @@ ParseGetLine(GetLineMode mode)
 	}
 
 	/* Brutally ignore anything after a non-escaped '#' in non-commands. */
-	if (firstComment != NULL && line[0] != '\t') {
-		line_end = firstComment;
-		*line_end = '\0';
-	}
+	if (firstComment != NULL && line[0] != '\t')
+		*firstComment = '\0';
 
 	/* If we didn't see a '\\' then the in-situ data is fine. */
 	if (firstBackslash == NULL)
