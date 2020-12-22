@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.235 2020/12/18 18:17:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.236 2020/12/22 22:31:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -581,7 +581,7 @@ typedef enum DebugFlags {
 
 #define CONCAT(a, b) a##b
 
-#define DEBUG(module) (opts.debug & CONCAT(DEBUG_,module))
+#define DEBUG(module) ((opts.debug & CONCAT(DEBUG_, module)) != 0)
 
 void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 
