@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.10 2020/12/22 08:51:30 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.11 2020/12/22 08:57:23 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -54,9 +54,9 @@ line-with-trailing-whitespace: .PHONY
 	@${MAKE} -r -f opt-file-trailing-whitespace -V VAR
 	@rm opt-file-trailing-whitespace
 
-# If a file contains null bytes, the rest of the line is skipped, and parsing
-# continues in the next line.  Throughout the history of make, the behavior
-# has changed several times, sometimes knowingly, sometimes by accident.
+# If a makefile contains null bytes, it is an error.  Throughout the history
+# of make, the behavior has changed several times, sometimes intentionally,
+# sometimes by accident.
 #
 #	echo 'VAR=value' | tr 'l' '\0' > zero-byte.in
 #	printf '%s\n' 'all:' ': VAR=${VAR:Q}' >> zero-byte.in
