@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.9 2020/12/22 08:23:12 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.10 2020/12/22 08:51:30 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -7,6 +7,7 @@
 all: .PHONY
 all: file-ending-in-backslash
 all: file-ending-in-backslash-mmap
+all: line-with-trailing-whitespace
 all: file-containing-null-byte
 
 # Passing '-' as the filename reads from stdin.  This is unusual but possible.
@@ -44,6 +45,14 @@ file-ending-in-backslash-mmap: .PHONY
 	@printf '%s' 'VAR=value\' > opt-file-backslash
 	@${MAKE} -r -f opt-file-backslash -V VAR
 	@rm opt-file-backslash
+
+# Since parse.c 1.511 from 2020-12-22, an assertion in ParseGetLine failed
+# for lines that contained trailing whitespace.  Worked around in parse.c
+# 1.513, properly fixed in parse.c 1.514.
+line-with-trailing-whitespace: .PHONY
+	@printf '%s' 'VAR=$@ ' > opt-file-trailing-whitespace
+	@${MAKE} -r -f opt-file-trailing-whitespace -V VAR
+	@rm opt-file-trailing-whitespace
 
 # If a file contains null bytes, the rest of the line is skipped, and parsing
 # continues in the next line.  Throughout the history of make, the behavior
