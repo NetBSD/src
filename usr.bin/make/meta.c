@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.164 2020/12/20 22:36:40 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.165 2020/12/22 22:31:50 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -416,7 +416,7 @@ meta_needed(GNode *gn, const char *dname,
     struct cached_stat cst;
 
     if (verbose)
-	verbose = DEBUG(META) != 0;
+	verbose = DEBUG(META);
 
     /* This may be a phony node which we don't want meta data for... */
     /* Skip .meta for .BEGIN, .END, .ERROR etc as well. */
