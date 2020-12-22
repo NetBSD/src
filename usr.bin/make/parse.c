@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.510 2020/12/22 06:48:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.511 2020/12/22 08:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.510 2020/12/22 06:48:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.511 2020/12/22 08:05:08 rillig Exp $");
 
 /* types and constants */
 
@@ -466,13 +466,14 @@ loadedfile_mmap(struct loadedfile *lf, int fd)
 	if (lf->buf == MAP_FAILED)
 		return FALSE;
 
-	if (lf->len == lf->maplen && lf->buf[lf->len - 1] != '\n') {
-		char *b = bmake_malloc(lf->len + 1);
-		b[lf->len] = '\n';
-		memcpy(b, lf->buf, lf->len++);
-		munmap(lf->buf, lf->maplen);
-		lf->maplen = 0;
-		lf->buf = b;
+	if (lf->len > 0 && lf->buf[lf->len - 1] != '\n') {
+		if (lf->len == lf->maplen) {
+			char *b = bmake_malloc(lf->len + 1);
+			memcpy(b, lf->buf, lf->len);
+			munmap(lf->buf, lf->maplen);
+			lf->maplen = 0;
+		}
+		lf->buf[lf->len++] = '\n';
 	}
 
 	return TRUE;
@@ -2687,19 +2688,15 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 		if (ch == '\\') {
 			if (firstBackslash == NULL)
 				firstBackslash = p;
-			/*
-			 * FIXME: In opt-file.mk, this command succeeds:
-			 *	printf '%s' 'V=v\' | make -r -f -
-			 * Using an intermediate file fails though:
-			 *	printf '%s' 'V=v\' > backslash
-			 *	make -r -f backslash
-			 *
-			 * In loadedfile_mmap, the trailing newline is not
-			 * added in every case, only if the file ends at a
-			 * page boundary.
-			 */
-			if (p[1] == '\n')
+			if (p[1] == '\n') {
 				curFile->lineno++;
+				if (p + 2 == curFile->buf_end) {
+					line_end = p;
+					*line_end = '\n';
+					p += 2;
+					continue;
+				}
+			}
 			p += 2;
 			line_end = p;
 			assert(p <= curFile->buf_end);
@@ -2843,12 +2840,8 @@ ParseGetLine(GetLineMode mode)
 		}
 
 		/* We now have a line of data */
-		/*
-		 * FIXME: undefined behavior since line_end points right
-		 * after the allocated buffer. This becomes apparent when
-		 * using a strict malloc implementation that adds canaries
-		 * before and after the allocated space.
-		 */
+		/* TODO: Remove line_end, it's not necessary here. */
+		assert(*line_end == '\n');
 		*line_end = '\0';
 
 		if (mode == GLM_FOR_BODY)
