@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.38 2020/12/22 10:46:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.37 2020/12/11 21:22:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.38 2020/12/22 10:46:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -514,6 +514,13 @@ static const struct pic_ops gicv3_picops = {
 };
 
 static void
+gicv3_dcache_wb_range(vaddr_t va, vsize_t len)
+{
+	cpu_dcache_wb_range(va, len);
+	dsb(sy);
+}
+
+static void
 gicv3_lpi_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
@@ -522,7 +529,7 @@ gicv3_lpi_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	while ((bit = ffs(mask)) != 0) {
 		sc->sc_lpiconf.base[irqbase + bit - 1] |= GIC_LPICONF_Enable;
 		if (sc->sc_lpiconf_flush)
-			cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
+			gicv3_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
 		mask &= ~__BIT(bit - 1);
 	}
 
@@ -539,7 +546,7 @@ gicv3_lpi_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	while ((bit = ffs(mask)) != 0) {
 		sc->sc_lpiconf.base[irqbase + bit - 1] &= ~GIC_LPICONF_Enable;
 		if (sc->sc_lpiconf_flush)
-			cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
+			gicv3_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
 		mask &= ~__BIT(bit - 1);
 	}
 
@@ -555,7 +562,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_PRIORITY(sc, is->is_ipl) | GIC_LPICONF_Res1;
 
 	if (sc->sc_lpiconf_flush)
-		cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
+		gicv3_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
 	else
 		dsb(ishst);
 }
