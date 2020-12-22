@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.761 2020/12/21 21:04:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.762 2020/12/22 20:10:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.761 2020/12/21 21:04:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.762 2020/12/22 20:10:21 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -513,38 +513,40 @@ Var_Delete(const char *name, GNode *ctxt)
 }
 
 /*
- * Undefine a single variable from the global scope.  The argument is
- * expanded once.
+ * Undefine one or more variables from the global scope.
+ * The argument is expanded exactly once and then split into words.
  */
 void
-Var_Undef(char *arg)
+Var_Undef(const char *arg)
 {
-	/*
-	 * The argument must consist of exactly 1 word.  Accepting more than
-	 * 1 word would have required to split the argument into several
-	 * words, and such splitting is already done subtly different in many
-	 * other places of make.
-	 *
-	 * Using Str_Words to split the words, followed by Var_Subst to expand
-	 * each variable name once would make it impossible to undefine
-	 * variables whose names contain space characters or unbalanced
-	 * quotes or backslashes in arbitrary positions.
-	 *
-	 * Using Var_Subst on the whole argument and splitting the words
-	 * afterwards using Str_Words would make it impossible to undefine
-	 * variables whose names contain space characters.
-	 */
-	char *cp = arg;
+	VarParseResult vpr;
+	char *expanded;
+	Words varnames;
+	size_t i;
 
-	for (; !ch_isspace(*cp) && *cp != '\0'; cp++)
-		continue;
-	if (cp == arg || *cp != '\0') {
+	if (arg[0] == '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "The .undef directive requires exactly 1 argument");
+		    "The .undef directive requires an argument");
+		return;
 	}
-	*cp = '\0';
 
-	Var_Delete(arg, VAR_GLOBAL);
+	vpr = Var_Subst(arg, VAR_GLOBAL, VARE_WANTRES, &expanded);
+	if (vpr != VPR_OK) {
+		Parse_Error(PARSE_FATAL,
+		    "Error in variable names to be undefined");
+		return;
+	}
+
+	varnames = Str_Words(expanded, FALSE);
+	if (varnames.len == 1 && varnames.words[0][0] == '\0')
+		varnames.len = 0;
+
+	for (i = 0; i < varnames.len; i++) {
+		const char *varname = varnames.words[i];
+		Var_DeleteVar(varname, VAR_GLOBAL);
+	}
+
+	Words_Free(varnames);
 }
 
 static Boolean
