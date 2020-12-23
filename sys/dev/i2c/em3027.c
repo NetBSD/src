@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.3 2019/07/27 16:02:27 thorpej Exp $ */
+/*	$NetBSD: em3027.c,v 1.4 2020/12/23 17:10:37 thorpej Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.3 2019/07/27 16:02:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.4 2020/12/23 17:10:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,10 @@ static int em3027rtc_write(struct em3027rtc_softc *, uint8_t, void *, size_t);
 static int em3027rtc_read_byte(struct em3027rtc_softc *, uint8_t, uint8_t *);
 static int em3027rtc_write_byte(struct em3027rtc_softc *, uint8_t, uint8_t);
 
-
+static const struct device_compatible_entry compat_data[] = {
+	{ "emmicro,em3027",			0 },
+	{ NULL,					0 },
+};
 
 static int
 em3027rtc_match(device_t parent, cfdata_t cf, void *aux)
@@ -113,6 +116,10 @@ em3027rtc_match(device_t parent, cfdata_t cf, void *aux)
 	const struct i2c_attach_args *ia = aux;
 	uint8_t reg;
 	int error;
+	int match_result;
+
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return match_result;
 
 	if (ia->ia_addr != EM3027_ADDR)
 		return 0;
