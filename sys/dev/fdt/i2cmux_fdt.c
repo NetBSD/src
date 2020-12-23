@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.1 2020/12/23 04:09:32 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.2 2020/12/23 16:04:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.1 2020/12/23 04:09:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.2 2020/12/23 16:04:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -365,6 +365,8 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 	bus->controller.ic_acquire_bus = iicmux_acquire_bus;
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
+
+	fdtbus_register_i2c_controller(&bus->controller, bus->phandle);
 
 	fdtbus_attach_i2cbus(sc->sc_dev, bus->phandle, &bus->controller,
 	    iicmux_print);
