@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.57 2020/12/12 09:27:31 skrll Exp $
+# $NetBSD: files.fdt,v 1.58 2020/12/23 04:09:32 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -53,6 +53,10 @@ file	dev/fdt/fdt_panel.c			panel_fdt
 device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
+
+device	iicmux: i2cbus
+attach	iicmux at fdt with iicmux_fdt
+file	dev/fdt/i2cmux_fdt.c			iicmux_fdt
 
 file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
