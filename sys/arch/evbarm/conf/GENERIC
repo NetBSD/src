@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.88 2020/12/23 14:42:38 skrll Exp $
+#	$NetBSD: GENERIC,v 1.89 2020/12/23 15:56:43 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -535,13 +535,13 @@ sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
-imxusbc* 	at fdt?
-ehci* 		at imxusbc?
 usbnopphy* 	at fdt? pass 9		# Generic USB PHY
-imxusbc* 	at fdt? pass 9		# i.MX USB host
+
+imxusbc* 	at fdt?
 tiotg* 		at fdt?			# TI dual port OTG
 tiusb* 		at fdt? pass 9		# TI HS USB host
 tiusbtll* 	at fdt? pass 8		# TI HS USB host TLL
+
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 ehci* 		at imxusbc?
