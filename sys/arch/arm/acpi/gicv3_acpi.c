@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.7 2020/02/13 00:02:21 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.8 2020/12/23 11:05:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.7 2020/02/13 00:02:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.8 2020/12/23 11:05:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,7 @@ gicv3_acpi_match(device_t parent, cfdata_t cf, void *aux)
 
 	switch (gicd->Version) {
 	case ACPI_MADT_GIC_VERSION_NONE:
-		return __SHIFTOUT(reg_id_aa64pfr0_el1_read(), ID_AA64PFR0_EL1_GIC) == 1;
+		return __SHIFTOUT(reg_id_aa64pfr0_el1_read(), ID_AA64PFR0_EL1_GIC) != 0;
 	case ACPI_MADT_GIC_VERSION_V3:
 	case ACPI_MADT_GIC_VERSION_V4:
 		return 1;
