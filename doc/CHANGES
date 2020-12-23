@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2766 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2767 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -297,6 +297,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzcode: Updated to 2020c. [christos 20201017]
 	ossaudio(3): Added support for the OSSv4 Mixer API [nia 20201017]
 	tzdata updated to 2020d  [kre 20201022]
+	pcf8574(4): Add a driver for the PCF8574 I/O expander [jdc 20201029]
 	dhcpcd: Update to version 9.3.2 [roy 20201101]
 	tmux(1): Imported 3.1c. [christos 20201101]
 	kernel: Better default for kern.maxfiles for systems with
@@ -316,3 +317,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpicpu(4): Add support for Arm CPUs. [jmcneill 20201207]
 	OpenSSL: Imported 1.1.1i. [christos 20201209]
 	pkg_install: Updated to 20201212. [wiz 20201212]
+	sparc64: Add environment monitoring for the E250 [jdc 20201223]
