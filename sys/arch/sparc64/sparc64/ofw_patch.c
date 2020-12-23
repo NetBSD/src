@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.6 2020/10/29 06:47:38 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.6 2020/10/29 06:47:38 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -134,6 +134,16 @@ add_gpio_props_e250(device_t dev, void *aux)
 	prop_array_t pins;
 
 	switch (ia->ia_addr) {
+		case 0x38:	/* interrupt status */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "ALERT high_temp", 1, 0, 30);
+			add_gpio_pin(pins, "ALERT disk_event", 2, 0, 30);
+			add_gpio_pin(pins, "ALERT fan_fail", 4, 0, 30);
+			add_gpio_pin(pins, "ALERT key_event", 5, 0, 30);
+			add_gpio_pin(pins, "ALERT psu_event", 6, 0, 30);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
 		case 0x39:	/* PSU status */
 			pins = prop_array_create();
 			add_gpio_pin(pins, "INDICATOR psu0_present", 0, 0, -1);
@@ -160,7 +170,7 @@ add_gpio_props_e250(device_t dev, void *aux)
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
-		case 0x3e:	/* front panel LEDs */
+		case 0x3e:	/* front panel LEDs (E250/E450) */
 			pins = prop_array_create();
 			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1);
 			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1);
