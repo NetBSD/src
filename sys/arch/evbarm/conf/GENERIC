@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.86 2020/12/23 10:32:07 skrll Exp $
+#	$NetBSD: GENERIC,v 1.87 2020/12/23 10:43:00 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -261,8 +261,8 @@ tegra210xpad* 	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy* 	at tegra210xpad?
 
 # PCIE
-pcihost* 	at fdt?			# Generic PCI host controller
 imxpcie* 	at fdt?			# i.MX PCIE
+pcihost* 	at fdt?			# Generic PCI host controller
 tegrapcie0 	at fdt?			# NVIDIA Tegra PCIE
 pci* 		at pcibus?
 ppb* 		at pci? dev ? function ?
