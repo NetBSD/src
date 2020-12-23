@@ -1,0 +1,321 @@
+/* $NetBSD: imx8mq_ccm.h,v 1.1 2020/12/23 14:42:38 skrll Exp $ */
+
+/*-
+ * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _IMX8MQ_CCM_H
+#define _IMX8MQ_CCM_H
+
+/*
+ * Clocks
+ */
+
+#define	CLK_DUMMY 0
+#define	CLK_32K 1
+#define	CLK_25M 2
+#define	CLK_27M 3
+#define	CLK_EXT1 4
+#define	CLK_EXT2 5
+#define	CLK_EXT3 6
+#define	CLK_EXT4 7
+#define	ARM_PLL_REF_SEL 8
+#define	ARM_PLL_REF_DIV 9
+#define	ARM_PLL 10
+#define	ARM_PLL_BYPASS 11
+#define	ARM_PLL_OUT 12
+#define	GPU_PLL_REF_SEL 13
+#define	GPU_PLL_REF_DIV 14
+#define	GPU_PLL 15
+#define	GPU_PLL_BYPASS 16
+#define	GPU_PLL_OUT 17
+#define	VPU_PLL_REF_SEL 18
+#define	VPU_PLL_REF_DIV 19
+#define	VPU_PLL 20
+#define	VPU_PLL_BYPASS 21
+#define	VPU_PLL_OUT 22
+#define	AUDIO_PLL1_REF_SEL 23
+#define	AUDIO_PLL1_REF_DIV 24
+#define	AUDIO_PLL1 25
+#define	AUDIO_PLL1_BYPASS 26
+#define	AUDIO_PLL1_OUT 27
+#define	AUDIO_PLL2_REF_SEL 28
+#define	AUDIO_PLL2_REF_DIV 29
+#define	AUDIO_PLL2 30
+#define	AUDIO_PLL2_BYPASS 31
+#define	AUDIO_PLL2_OUT 32
+#define	VIDEO_PLL1_REF_SEL 33
+#define	VIDEO_PLL1_REF_DIV 34
+#define	VIDEO_PLL1 35
+#define	VIDEO_PLL1_BYPASS 36
+#define	VIDEO_PLL1_OUT 37
+#define	SYS1_PLL1_REF_SEL 38
+#define	SYS1_PLL1_REF_DIV 39
+#define	SYS1_PLL1 40
+#define	SYS1_PLL1_OUT 41
+#define	SYS1_PLL1_OUT_DIV 42
+#define	SYS1_PLL2 43
+#define	SYS1_PLL2_DIV 44
+#define	SYS1_PLL2_OUT 45
+#define	SYS2_PLL1_REF_SEL 46
+#define	SYS2_PLL1_REF_DIV 47
+#define	SYS2_PLL1 48
+#define	SYS2_PLL1_OUT 49
+#define	SYS2_PLL1_OUT_DIV 50
+#define	SYS2_PLL2 51
+#define	SYS2_PLL2_DIV 52
+#define	SYS2_PLL2_OUT 53
+#define	SYS3_PLL1_REF_SEL 54
+#define	SYS3_PLL1_REF_DIV 55
+#define	SYS3_PLL1 56
+#define	SYS3_PLL1_OUT 57
+#define	SYS3_PLL1_OUT_DIV 58
+#define	SYS3_PLL2 59
+#define	SYS3_PLL2_DIV 60
+#define	SYS3_PLL2_OUT 61
+#define	DRAM_PLL1_REF_SEL 62
+#define	DRAM_PLL1_REF_DIV 63
+#define	DRAM_PLL1 64
+#define	DRAM_PLL1_OUT 65
+#define	DRAM_PLL1_OUT_DIV 66
+#define	DRAM_PLL2 67
+#define	DRAM_PLL2_DIV 68
+#define	DRAM_PLL2_OUT 69
+#define	SYS1_PLL_40M 70
+#define	SYS1_PLL_80M 71
+#define	SYS1_PLL_100M 72
+#define	SYS1_PLL_133M 73
+#define	SYS1_PLL_160M 74
+#define	SYS1_PLL_200M 75
+#define	SYS1_PLL_266M 76
+#define	SYS1_PLL_400M 77
+#define	SYS1_PLL_800M 78
+#define	SYS2_PLL_50M 79
+#define	SYS2_PLL_100M 80
+#define	SYS2_PLL_125M 81
+#define	SYS2_PLL_166M 82
+#define	SYS2_PLL_200M 83
+#define	SYS2_PLL_250M 84
+#define	SYS2_PLL_333M 85
+#define	SYS2_PLL_500M 86
+#define	SYS2_PLL_1000M 87
+#define	CLK_A53_SRC 88
+#define	CLK_A53_CG 89
+#define	CLK_A53_DIV 90
+#define	CLK_M4_SRC 91
+#define	CLK_M4_CG 92
+#define	CLK_M4_DIV 93
+#define	CLK_VPU_SRC 94
+#define	CLK_VPU_CG 95
+#define	CLK_VPU_DIV 96
+#define	CLK_GPU_CORE_SRC 97
+#define	CLK_GPU_CORE_CG 98
+#define	CLK_GPU_CORE_DIV 99
+#define	CLK_GPU_SHADER_SRC 100
+#define	CLK_GPU_SHADER_CG 101
+#define	CLK_GPU_SHADER_DIV 102
+#define	CLK_MAIN_AXI 103
+#define	CLK_ENET_AXI 104
+#define	CLK_NAND_USDHC_BUS 105
+#define	CLK_VPU_BUS 106
+#define	CLK_DISP_AXI 107
+#define	CLK_DISP_APB 108
+#define	CLK_DISP_RTRM 109
+#define	CLK_USB_BUS 110
+#define	CLK_GPU_AXI 111
+#define	CLK_GPU_AHB 112
+#define	CLK_NOC 113
+#define	CLK_NOC_APB 115
+#define	CLK_AHB 116
+#define	CLK_AUDIO_AHB 117
+#define	CLK_DRAM_ALT 118
+#define	CLK_DRAM_APB 119
+#define	CLK_VPU_G1 120
+#define	CLK_VPU_G2 121
+#define	CLK_DISP_DTRC 122
+#define	CLK_DISP_DC8000 123
+#define	CLK_PCIE1_CTRL 124
+#define	CLK_PCIE1_PHY 125
+#define	CLK_PCIE1_AUX 126
+#define	CLK_DC_PIXEL 127
+#define	CLK_LCDIF_PIXEL 128
+#define	CLK_SAI1 129
+#define	CLK_SAI2 130
+#define	CLK_SAI3 131
+#define	CLK_SAI4 132
+#define	CLK_SAI5 133
+#define	CLK_SAI6 134
+#define	CLK_SPDIF1 135
+#define	CLK_SPDIF2 136
+#define	CLK_ENET_REF 137
+#define	CLK_ENET_TIMER 138
+#define	CLK_ENET_PHY_REF 139
+#define	CLK_NAND 140
+#define	CLK_QSPI 141
+#define	CLK_USDHC1 142
+#define	CLK_USDHC2 143
+#define	CLK_I2C1 144
+#define	CLK_I2C2 145
+#define	CLK_I2C3 146
+#define	CLK_I2C4 147
+#define	CLK_UART1 148
+#define	CLK_UART2 149
+#define	CLK_UART3 150
+#define	CLK_UART4 151
+#define	CLK_USB_CORE_REF 152
+#define	CLK_USB_PHY_REF 153
+#define	CLK_ECSPI1 154
+#define	CLK_ECSPI2 155
+#define	CLK_PWM1 156
+#define	CLK_PWM2 157
+#define	CLK_PWM3 158
+#define	CLK_PWM4 159
+#define	CLK_GPT1 160
+#define	CLK_WDOG 161
+#define	CLK_WRCLK 162
+#define	CLK_DSI_CORE 163
+#define	CLK_DSI_PHY_REF 164
+#define	CLK_DSI_DBI 165
+#define	CLK_DSI_ESC 166
+#define	CLK_CSI1_CORE 167
+#define	CLK_CSI1_PHY_REF 168
+#define	CLK_CSI1_ESC 169
+#define	CLK_CSI2_CORE 170
+#define	CLK_CSI2_PHY_REF 171
+#define	CLK_CSI2_ESC 172
+#define	CLK_PCIE2_CTRL 173
+#define	CLK_PCIE2_PHY 174
+#define	CLK_PCIE2_AUX 175
+#define	CLK_ECSPI3 176
+#define	CLK_A53_ROOT 177
+#define	CLK_DRAM_ROOT 178
+#define	CLK_ECSPI1_ROOT 179
+#define	CLK_ECSPI2_ROOT 180
+#define	CLK_ECSPI3_ROOT 181
+#define	CLK_ENET1_ROOT 182
+#define	CLK_GPT1_ROOT 183
+#define	CLK_I2C1_ROOT 184
+#define	CLK_I2C2_ROOT 185
+#define	CLK_I2C3_ROOT 186
+#define	CLK_I2C4_ROOT 187
+#define	CLK_M4_ROOT 188
+#define	CLK_PCIE1_ROOT 189
+#define	CLK_PCIE2_ROOT 190
+#define	CLK_PWM1_ROOT 191
+#define	CLK_PWM2_ROOT 192
+#define	CLK_PWM3_ROOT 193
+#define	CLK_PWM4_ROOT 194
+#define	CLK_QSPI_ROOT 195
+#define	CLK_SAI1_ROOT 196
+#define	CLK_SAI2_ROOT 197
+#define	CLK_SAI3_ROOT 198
+#define	CLK_SAI4_ROOT 199
+#define	CLK_SAI5_ROOT 200
+#define	CLK_SAI6_ROOT 201
+#define	CLK_UART1_ROOT 202
+#define	CLK_UART2_ROOT 203
+#define	CLK_UART3_ROOT 204
+#define	CLK_UART4_ROOT 205
+#define	CLK_USB1_CTRL_ROOT 206
+#define	CLK_USB2_CTRL_ROOT 207
+#define	CLK_USB1_PHY_ROOT 208
+#define	CLK_USB2_PHY_ROOT 209
+#define	CLK_USDHC1_ROOT 210
+#define	CLK_USDHC2_ROOT 211
+#define	CLK_WDOG1_ROOT 212
+#define	CLK_WDOG2_ROOT 213
+#define	CLK_WDOG3_ROOT 214
+#define	CLK_GPU_ROOT 215
+#define	CLK_HEVC_ROOT 216
+#define	CLK_AVC_ROOT 217
+#define	CLK_VP9_ROOT 218
+#define	CLK_HEVC_INTER_ROOT 219
+#define	CLK_DISP_ROOT 220
+#define	CLK_HDMI_ROOT 221
+#define	CLK_HDMI_PHY_ROOT 222
+#define	CLK_VPU_DEC_ROOT 223
+#define	CLK_CSI1_ROOT 224
+#define	CLK_CSI2_ROOT 225
+#define	CLK_RAWNAND_ROOT 226
+#define	CLK_SDMA1_ROOT 227
+#define	CLK_SDMA2_ROOT 228
+#define	CLK_VPU_G1_ROOT 229
+#define	CLK_VPU_G2_ROOT 230
+#define	SYS1_PLL_OUT 231
+#define	SYS2_PLL_OUT 232
+#define	SYS3_PLL_OUT 233
+#define	DRAM_PLL_OUT 234
+#define	GPT_3M_CLK 235
+#define	CLK_IPG_ROOT 236
+#define	CLK_IPG_AUDIO_ROOT 237
+#define	CLK_SAI1_IPG 238
+#define	CLK_SAI2_IPG 239
+#define	CLK_SAI3_IPG 240
+#define	CLK_SAI4_IPG 241
+#define	CLK_SAI5_IPG 242
+#define	CLK_SAI6_IPG 243
+#define	CLK_DSI_AHB 244
+#define	CLK_DSI_IPG_DIV 245
+#define	CLK_TMU_ROOT 246
+#define	CLK_DISP_AXI_ROOT 247
+#define	CLK_DISP_APB_ROOT 248
+#define	CLK_DISP_RTRM_ROOT 249
+#define	CLK_OCOTP_ROOT 250
+#define	CLK_DRAM_ALT_ROOT 251
+#define	CLK_DRAM_CORE 252
+#define	CLK_MU_ROOT 253
+#define	VIDEO2_PLL_OUT 254
+#define	CLK_CLKO2 255
+#define	CLK_NAND_USDHC_BUS_RAWNAND_CLK 256
+#define	CLK_CLKO1 257
+#define	CLK_ARM 258
+#define	CLK_GPIO1_ROOT 259
+#define	CLK_GPIO2_ROOT 260
+#define	CLK_GPIO3_ROOT 261
+#define	CLK_GPIO4_ROOT 262
+#define	CLK_GPIO5_ROOT 263
+#define	CLK_SNVS_ROOT 264
+#define	CLK_GIC 265
+#define	VIDEO2_PLL1_REF_SEL 266
+#define	SYS1_PLL_40M_CG 267
+#define	SYS1_PLL_80M_CG 268
+#define	SYS1_PLL_100M_CG 269
+#define	SYS1_PLL_133M_CG 270
+#define	SYS1_PLL_160M_CG 271
+#define	SYS1_PLL_200M_CG 272
+#define	SYS1_PLL_266M_CG 273
+#define	SYS1_PLL_400M_CG 274
+#define	SYS1_PLL_800M_CG 275
+#define	SYS2_PLL_50M_CG 276
+#define	SYS2_PLL_100M_CG 277
+#define	SYS2_PLL_125M_CG 278
+#define	SYS2_PLL_166M_CG 279
+#define	SYS2_PLL_200M_CG 280
+#define	SYS2_PLL_250M_CG 281
+#define	SYS2_PLL_333M_CG 282
+#define	SYS2_PLL_500M_CG 283
+#define	SYS2_PLL_1000M_CG 284
+
+#endif /* !_IMX8MQ_CCM_H */
