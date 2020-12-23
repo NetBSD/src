@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.3 2020/12/23 02:56:11 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.4 2020/12/23 16:02:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.3 2020/12/23 02:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.4 2020/12/23 16:02:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,18 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.3 2020/12/23 02:56:11 thorpej 
 #include <arm/broadcom/bcm2835_bscvar.h>
 
 #include <dev/fdt/fdtvar.h>
-
-static i2c_tag_t
-bsciic_fdt_get_tag(device_t dev)
-{
-	struct bsciic_softc * const sc = device_private(dev);
-
-	return &sc->sc_i2c;
-}
-
-static const struct fdtbus_i2c_controller_func bsciic_fdt_funcs = {
-	.get_tag = bsciic_fdt_get_tag,
-};
 
 static int bsciic_fdt_match(device_t, cfdata_t, void *);
 static void bsciic_fdt_attach(device_t, device_t, void *);
@@ -141,7 +129,7 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_release_bus = bsciic_release_bus;
 	sc->sc_i2c.ic_exec = bsciic_exec;
 
-	fdtbus_register_i2c_controller(self, phandle, &bsciic_fdt_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_i2c, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_i2c, iicbus_print);
 }
