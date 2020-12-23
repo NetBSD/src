@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.10 2020/05/04 06:52:53 tsutsui Exp $	*/
+/*	$NetBSD: stivar.h,v 1.11 2020/12/23 08:34:35 tsutsui Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -42,11 +42,15 @@ struct sti_rom {
 
 	bus_space_tag_t		 iot, memt;	/* XXX iot unused */
 	bus_space_handle_t	 romh;
+	bus_space_handle_t	 regh[STI_REGION_MAX];
 	bus_addr_t		*bases;
 
 	struct sti_dd		 rom_dd;	/* in word format */
-
 	vaddr_t			 rom_code;
+
+	/*
+	 * ROM-provided function pointers
+	 */
 	sti_init_t		 init;
 	sti_mgmt_t		 mgmt;
 	sti_unpmv_t		 unpmv;
@@ -98,10 +102,20 @@ struct sti_screen {
 	struct	wsscreen_descr	 scr_wsd;
 	const struct wsscreen_descr	*scr_scrlist[1];
 	struct	wsscreen_list	 scr_screenlist;
+
+	/*
+	 * Board-specific function data and pointers
+	 */
+	void			(*setupfb)(struct sti_screen *);
+	int			(*putcmap)(struct sti_screen *, u_int, u_int);
+
+	uint32_t		reg10_value;
+	uint32_t		reg12_value;
+	bus_addr_t		cmap_finish_register;
 };
 
 /*
- * STI Device state
+ * STI device state
  */
 struct sti_softc {
 	device_t sc_dev;
@@ -134,6 +148,7 @@ u_int	sti_rom_size(bus_space_tag_t, bus_space_handle_t);
 int	sti_init(struct sti_screen *, int);
 #define	STI_TEXTMODE	0x01
 #define	STI_CLEARSCR	0x02
+#define	STI_FBMODE	0x04
 int	sti_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	sti_mmap(void *, void *, off_t, int);
 int	sti_alloc_screen(void *, const struct wsscreen_descr *,
