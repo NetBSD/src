@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.12 2020/12/19 18:09:44 jmcneill Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.13 2020/12/23 08:17:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.12 2020/12/19 18:09:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.13 2020/12/23 08:17:01 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -306,7 +306,7 @@ ata_queue_alloc_slot(struct ata_channel *chp, uint8_t *c_slot,
 	KASSERT(mutex_owned(&chp->ch_lock));
 	KASSERT(chq->queue_active < chq->queue_openings);
 
-	ATADEBUG_PRINT(("%s: channel %d qavail 0x%x qact %d",
+	ATADEBUG_PRINT(("%s: channel %d qavail 0x%x qact %d\n",
 	    __func__, chp->ch_channel,
 	    chq->queue_xfers_avail, chq->queue_active),
 	    DEBUG_XFERS);
