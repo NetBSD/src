@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.2 2020/12/23 16:52:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.2 2020/12/23 16:52:06 skrll Exp $");
 
 #include "opt_imxspi.h"
 
@@ -103,6 +103,9 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
+
+	aprint_naive("\n");
+	aprint_normal(": SPI\n");
 
 	u_int nslaves;
 	error = of_getprop_uint32(phandle, "fsl,spi-num-chipselects", &nslaves);
