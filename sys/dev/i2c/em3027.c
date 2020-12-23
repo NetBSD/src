@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.4 2020/12/23 17:10:37 thorpej Exp $ */
+/*	$NetBSD: em3027.c,v 1.5 2020/12/23 17:57:00 uwe Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.4 2020/12/23 17:10:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.5 2020/12/23 17:57:00 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ em3027rtc_envsys_attach(struct em3027rtc_softc *sc)
 		    "unable to attach sensor (error %d)\n", error);
 		goto out;
 	}
-	
+
 	error = sysmon_envsys_register(sc->sc_sme);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -360,7 +360,7 @@ static int
 em3027rtc_read_byte(struct em3027rtc_softc *sc, uint8_t reg, uint8_t *valp)
 {
 
-	return em3027rtc_read(sc, reg, valp, 1); 
+	return em3027rtc_read(sc, reg, valp, 1);
 }
 
 
