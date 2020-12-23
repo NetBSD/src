@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.83 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.84 2020/12/23 04:09:32 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -324,11 +324,12 @@ zynquart* 	at fdt?	pass 4		# Cadence UART
 options 	I2C_MAX_ADDR=0xfff
 bsciic* 	at fdt?			# Broadcom BCM283x Serial Control
 exyoi2c* 	at fdt?			# Samsung Exynos I2C
-imxi2c* 	at fdt?			# i.MX I2C
+imxi2c* 	at fdt? pass 4		# i.MX I2C
 sunxirsb* 	at fdt? pass 4		# Allwinner RSB
 sunxitwi* 	at fdt?			# Allwinner TWI
 tegrai2c* 	at fdt? pass 4		# NVIDIA Tegra I2C
 tiiic*		at fdt? pass 4		# TI OMAP I2C
+iicmux*		at fdt? pass 5		# I2C mux virtual controllers
 iic* 		at i2cbus?
 
 # I2C devices
