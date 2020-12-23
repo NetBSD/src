@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.87 2020/12/23 10:43:00 skrll Exp $
+#	$NetBSD: GENERIC,v 1.88 2020/12/23 14:42:38 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -64,6 +64,7 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
 
 #options 	EARLYCONS=cycv, CONSADDR=0xffc02000
+#options 	EARLYCONS=imx, CONSADDR=0x02020000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 
@@ -148,6 +149,9 @@ gpiokeys* 	at fdt?
 wskbd* 		at gpiokeys? console ? mux 1
 gpioleds* 	at fdt?
 
+# 
+imxsnvs*	at fdt? pass 1		# Secure Non-Volatile Storage
+
 # ARM Motherboard Express uATX system registers
 vxsysreg* 	at fdt?
 
@@ -155,8 +159,9 @@ vxsysreg* 	at fdt?
 sunxisramc* 	at fdt? pass 4		# SRAM controller
 
 # System Controller
-syscon* 	at fdt? pass 1		# Generic System Controller
-tisysc* 	at fdt? pass 2		# TI sysc interconnect
+imxocotp0 	at fdt? pass 2		# On-Chip OTP Controller
+syscon*		at fdt? pass 1		# Generic System Controller
+tisysc*		at fdt? pass 2		# TI sysc interconnect
 #zynqslcr* 	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
@@ -175,8 +180,11 @@ sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
 tegratimer* 	at fdt?			# Timers
 
 # Watchdog
+a9wdt*  	at fdt? pass 2		# ARM Cortex A5/A9 Watchdog
+arma9wdt* 	at a9wdt?
 bcmpmwdog* 	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
+imxwdog*	at fdt?			# NXP i.MX watchdog
 mesonwdt* 	at fdt?			# Amlogic Meson watchdog
 sunxiwdt* 	at fdt?			# Allwinner watchdog
 tiwdt* 		at fdt?			# TI OMAP watchdog
@@ -218,6 +226,7 @@ titptc* 	at fdt? pass 3		# TI EDMA3 (TPTC)
 tegrafuse* 	at fdt? pass 4		# NVIDIA Tegra FUSE
 
 # Power management controller
+imxgpc*		at fdt? pass 2
 tegrapmc* 	at fdt? pass 4		# NVIDIA Tegra PMC
 
 # Performance monitors
@@ -239,7 +248,7 @@ tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
 tigpio* 	at fdt? pass 2		# TI GPIO
 gpio* 		at gpiobus?
 
-# MPIO / Pinmux
+# IOMUX / MPIO / Pinmux
 pinctrl* 	at fdt? pass 2		# Generic pinctrl driver
 imxiomux* 	at fdt? pass 2		# i.MX IOMUX
 tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
@@ -316,6 +325,7 @@ ukphy* 		at mii? phy ?		# generic unknown PHYs
 com* 		at fdt?	pass 4		# UART
 exuart* 	at fdt?	pass 4		# SSCOM UART
 imxuart* 	at fdt?	pass 4		# i.MX UART
+options 	IMXUARTCONSOLE
 mesonuart* 	at fdt?	pass 4		# Amlogic Meson UART
 plcom* 		at fdt?	pass 4		# ARM PL011 UART
 zynquart* 	at fdt?	pass 4		# Cadence UART
@@ -341,6 +351,7 @@ axp20xreg* 	at axp20x?
 axp22x* 	at iic?			# AXP221 Power Management IC
 axppmic* 	at iic?			# X-Powers AXP Power Management IC
 axpreg* 	at axppmic?
+em3027rtc* 	at iic?
 max77620pmic* 	at iic?
 pcf8563rtc* 	at iic?			# PCF8563 RTC
 seeprom* 	at iic?			# AT24Cxx Serial EEPROM
@@ -364,6 +375,11 @@ imxspi* 	at fdt?			# i.MX SPI
 sun4ispi* 	at fdt?
 sun6ispi* 	at fdt?
 spi* 		at spibus?
+spi* 		at imxspi?
+
+# SPI NOR-Flash
+spiflash* 	at spiflashbus?
+m25p* 		at spi? slave ?
 
 # Random number generators
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
@@ -433,9 +449,16 @@ flash* 		at nand? dynamic 1
 ahcisata* 	at fdt?			# AHCI SATA
 ahcisata* 	at pci? dev ? function ?
 atabus* 	at ata?
+atabus* 	at ahcisata? channel ?
 atapibus* 	at atapi?
 wd* 		at atabus? drive ?
-cd* 		at atapibus? drive ?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd* 		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd* 		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st* 		at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk* 		at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # NVMe
 nvme* 		at pci? dev ? function ?
@@ -512,6 +535,8 @@ sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
+imxusbc* 	at fdt?
+ehci* 		at imxusbc?
 usbnopphy* 	at fdt? pass 9		# Generic USB PHY
 imxusbc* 	at fdt? pass 9		# i.MX USB host
 tiotg* 		at fdt?			# TI dual port OTG
