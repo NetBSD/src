@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.76 2020/12/21 16:38:02 riastradh Exp $
+# $NetBSD: mkimage,v 1.77 2020/12/23 10:35:18 rin Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -259,15 +259,16 @@ if [ -z "${bootonly}" ]; then
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
-cursize="$(getsize "${image}")"
 if [ "${size}" = 0 ]; then
-	size="${cursize}"
+	size="$(getsize "${image}")"
 	# Round up to a multiple of 4m and add 1m of slop.
 	alignunit=$((4*1024*1024))
-	alignsize=$((alignunit*((cursize + alignunit - 1)/alignunit)))
+	alignsize=$((alignunit*((size + alignunit - 1)/alignunit)))
 	alignsize=$((alignsize + 1024*1024))
-	if [ $cursize -lt $alignsize ]; then
-		head -c "$((alignsize - cursize))" < /dev/zero >> "${image}"
+	if [ "${size}" -lt "${alignsize}" ]; then
+		dd bs=1 count="$((alignsize - size))" if=/dev/zero \
+			>> "${image}" 2> /dev/null
+		size="${alignsize}"
 	fi
 fi
 
