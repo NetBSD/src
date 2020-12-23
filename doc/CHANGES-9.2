@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.25 2020/12/19 13:56:20 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.26 2020/12/23 12:37:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -1282,4 +1282,13 @@ sys/dev/audio/audio.c				1.83
 
 	Avoid a deadlock in audiodetach.
 	[isaki, ticket #1158]
+
+sys/dev/usb/ehci.c				1.284
+sys/dev/usb/ohci.c				1.314
+sys/dev/usb/uhci.c				1.305
+sys/dev/usb/xhci.c				1.136
+sys/external/bsd/dwc2/dwc2.c			1.75
+
+	Remove bogus assertions in USB abort paths.
+	[riastradh, ticket #1159]
 
