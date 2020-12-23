@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.85 2020/12/23 10:27:23 skrll Exp $
+#	$NetBSD: GENERIC,v 1.86 2020/12/23 10:32:07 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -102,24 +102,24 @@ cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
 
 # CPU frequency scaling
-tegra124cpu*	at cpu?
-cpufreqdt*	at cpu?
+tegra124cpu* 	at cpu?
+cpufreqdt* 	at cpu?
 
 # Power State Coordination Interface (PSCI)
-psci*		at fdt?
+psci* 		at fdt?
 
 # Clock and reset controllers
-am3prcm*	at fdt? pass 1		# TI AM335x PRCM
+am3prcm* 	at fdt? pass 1		# TI AM335x PRCM
 cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk* 	at fdt? pass 3		# Exynos5422 clock controller
 imx6ccm* 	at fdt? pass 1		# i.MX6 CCM
-imx7dccm*	at fdt? pass 2		# i.MX7D CCM
+imx7dccm* 	at fdt? pass 2		# i.MX7D CCM
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
-omap3cm*	at fdt? pass 1		# TI OMAP3 CM
-omap3prm*	at fdt? pass 1		# TI OMAP3 PRM
+omap3cm* 	at fdt? pass 1		# TI OMAP3 CM
+omap3prm* 	at fdt? pass 1		# TI OMAP3 PRM
 sun4ia10ccu* 	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu* 	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu* 	at fdt? pass 2		# Allwinner A31 CCU
@@ -136,17 +136,17 @@ sun9immcclk* 	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
 sun9iusbclk* 	at fdt? pass 2		# Allwinner A80 USB HCI
 tegra124car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
-tidivclk*	at fdt? pass 1		# TI divider clock
-tidpllclk*	at fdt? pass 2		# TI DPLL clock
-timuxclk*	at fdt? pass 1		# TI mux clock
+tidivclk* 	at fdt? pass 1		# TI divider clock
+tidpllclk* 	at fdt? pass 2		# TI DPLL clock
+timuxclk* 	at fdt? pass 1		# TI mux clock
 
-fclock*		at fdt? pass 1
-ffclock*	at fdt? pass 1
-fregulator*	at fdt? pass 5
-gregulator*	at fdt? pass 4
-gpiokeys*	at fdt?
-wskbd*		at gpiokeys? console ? mux 1
-gpioleds*	at fdt?
+fclock* 	at fdt? pass 1
+ffclock* 	at fdt? pass 1
+fregulator* 	at fdt? pass 5
+gregulator* 	at fdt? pass 4
+gpiokeys* 	at fdt?
+wskbd* 		at gpiokeys? console ? mux 1
+gpioleds* 	at fdt?
 
 # ARM Motherboard Express uATX system registers
 vxsysreg* 	at fdt?
@@ -155,20 +155,20 @@ vxsysreg* 	at fdt?
 sunxisramc* 	at fdt? pass 4		# SRAM controller
 
 # System Controller
-syscon*		at fdt? pass 1		# Generic System Controller
-tisysc*		at fdt? pass 2		# TI sysc interconnect
-#zynqslcr*	at fdt? pass 1		# Zynq 7000 system Controller
+syscon* 	at fdt? pass 1		# Generic System Controller
+tisysc* 	at fdt? pass 2		# TI sysc interconnect
+#zynqslcr* 	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
 a9ptmr* 	at fdt? pass 2		# ARM Cortex A5/A9 Private Timer
 arma9ptmr* 	at a9ptmr?
 a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
 arma9tmr* 	at a9tmr?
-gtmr*		at fdt? pass 1		# ARM Generic Timer
-armgtmr0	at gtmr?
-mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
-armgtmr*	at mct?
-omaptimer*	at fdt?			# TI OMAP Timer
+gtmr* 		at fdt? pass 1		# ARM Generic Timer
+armgtmr0 	at gtmr?
+mct* 		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
+armgtmr* 	at mct?
+omaptimer* 	at fdt?			# TI OMAP Timer
 meson6timer* 	at fdt?			# Amlogic Timer
 sunxitimer* 	at fdt?			# Allwinner async timer
 sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
@@ -179,16 +179,16 @@ bcmpmwdog* 	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
 mesonwdt* 	at fdt?			# Amlogic Meson watchdog
 sunxiwdt* 	at fdt?			# Allwinner watchdog
-tiwdt*		at fdt?			# TI OMAP watchdog
+tiwdt* 		at fdt?			# TI OMAP watchdog
 
 # Interrupt controller
-gic*		at fdt? pass 1		# ARM GIC
-armgic0		at gic?
+gic* 		at fdt? pass 1		# ARM GIC
+armgic0 	at gic?
 bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
 imxgpc* 	at fdt? pass 2		# i.MX General Power Controller INTC
-imx7gpc*	at fdt? pass 2		# i.MX General Power Controller v2 INTC
-omapintc*	at fdt? pass 2		# TI OMAP INTC
+imx7gpc* 	at fdt? pass 2		# i.MX General Power Controller v2 INTC
+omapintc* 	at fdt? pass 2		# TI OMAP INTC
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
 sunxinmi* 	at fdt? pass 2		# Allwinner NMI / R_INTC
@@ -199,7 +199,7 @@ arml2cc* 	at l2cc?
 
 # Memory controller
 tegramc* 	at fdt?	pass 4		# NVIDIA Tegra MC
-tigpmc*		at fdt? pass 4		# TI OMAP2 GPMC
+tigpmc* 	at fdt? pass 4		# TI OMAP2 GPMC
 
 # Firmware devices
 bcmmbox* 	at fdt?			# Broadcom VideoCore IV mailbox
@@ -211,8 +211,8 @@ bcmdmac* 	at fdt?			# Broadcom BCM283x DMA controller
 sun4idma* 	at fdt? pass 4		# Allwinner DMA controller (sun4i)
 sun6idma* 	at fdt?	pass 4		# Allwinner DMA controller (sun6i)
 tegraapbdma* 	at fdt? pass 4		# NVIDIA Tegra APB DMA
-tiedma*		at fdt? pass 4		# TI EDMA3 (TPCC)
-titptc*		at fdt? pass 3		# TI EDMA3 (TPTC)
+tiedma* 	at fdt? pass 4		# TI EDMA3 (TPCC)
+titptc* 	at fdt? pass 3		# TI EDMA3 (TPTC)
 
 # FUSE controller
 tegrafuse* 	at fdt? pass 4		# NVIDIA Tegra FUSE
@@ -221,8 +221,8 @@ tegrafuse* 	at fdt? pass 4		# NVIDIA Tegra FUSE
 tegrapmc* 	at fdt? pass 4		# NVIDIA Tegra PMC
 
 # Performance monitors
-armpmu*		at fdt?
-pseudo-device	tprof
+armpmu* 	at fdt?
+pseudo-device 	tprof
 
 # Clock and Reset controller
 bcmcprman* 	at fdt? pass 1		# Broadcom BCM283x Clock Manager
@@ -231,17 +231,17 @@ bcmaux* 	at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 # GPIO controller
 bcmgpio* 	at fdt?			# Broadcom BCM283x GPIO
 exyopctl* 	at fdt? pass 2		# Samsung Exynos GPIO
-imxgpio*	at fdt? pass 3		# i.MX GPIO
+imxgpio* 	at fdt? pass 3		# i.MX GPIO
 mesonpinctrl* 	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell GPIO
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
-tigpio*		at fdt? pass 2		# TI GPIO
+tigpio* 	at fdt? pass 2		# TI GPIO
 gpio* 		at gpiobus?
 
 # MPIO / Pinmux
-pinctrl*	at fdt? pass 2		# Generic pinctrl driver
-imxiomux*	at fdt? pass 2		# i.MX IOMUX
+pinctrl* 	at fdt? pass 2		# Generic pinctrl driver
+imxiomux* 	at fdt? pass 2		# i.MX IOMUX
 tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 
 # PWM controller
@@ -262,7 +262,7 @@ tegra210xphy* 	at tegra210xpad?
 
 # PCIE
 pcihost* 	at fdt?			# Generic PCI host controller
-imxpcie*	at fdt?			# i.MX PCIE
+imxpcie* 	at fdt?			# i.MX PCIE
 tegrapcie0 	at fdt?			# NVIDIA Tegra PCIE
 pci* 		at pcibus?
 ppb* 		at pci? dev ? function ?
@@ -300,7 +300,7 @@ qsphy* 		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
 rdcphy* 	at mii? phy ?		# RDC R6040 10/100 PHY
 rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
 rlphy* 		at mii? phy ?		# Realtek 8139/8201L PHYs
-smscphy*	at mii? phy ?		# SMSC LAN87xx PHYs
+smscphy* 	at mii? phy ?		# SMSC LAN87xx PHYs
 sqphy* 		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
 tlphy* 		at mii? phy ?		# ThunderLAN PHYs
 tqphy* 		at mii? phy ?		# TDK Semiconductor PHYs
@@ -328,8 +328,8 @@ imxi2c* 	at fdt? pass 4		# i.MX I2C
 sunxirsb* 	at fdt? pass 4		# Allwinner RSB
 sunxitwi* 	at fdt?			# Allwinner TWI
 tegrai2c* 	at fdt? pass 4		# NVIDIA Tegra I2C
-tiiic*		at fdt? pass 4		# TI OMAP I2C
-iicmux*		at fdt? pass 5		# I2C mux virtual controllers
+tiiic* 		at fdt? pass 4		# TI OMAP I2C
+iicmux* 	at fdt? pass 5		# I2C mux virtual controllers
 iic* 		at i2cbus?
 
 # I2C devices
@@ -347,11 +347,11 @@ seeprom* 	at iic?			# AT24Cxx Serial EEPROM
 sy8106a* 	at iic?			# Silergy SY81061 regulator
 tcakp* 		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio* 	at iic?
-tdahdmi*	at iic? 		# NXP TDA19988 HDMI encoder
+tdahdmi* 	at iic?			# NXP TDA19988 HDMI encoder
 titemp* 	at iic?
-tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
-tps65217reg*	at tps65217pmic?
-twl*		at iic?			# TI TWL4030 Power Management IC
+tps65217pmic* 	at iic?			# TI TPS65217 Power Management IC
+tps65217reg* 	at tps65217pmic?
+twl* 		at iic?			# TI TWL4030 Power Management IC
 wskbd* 		at tcakp? console ?
 
 # CAN bus
@@ -368,7 +368,7 @@ spi* 		at spibus?
 # Random number generators
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
-tirng*		at fdt?			# TI RNG
+tirng* 		at fdt?			# TI RNG
 
 # Security ID EFUSE
 sunxisid* 	at fdt? pass 4		# SID
@@ -421,11 +421,11 @@ ld1 		at sdmmc1
 ld2 		at sdmmc2
 ld3 		at sdmmc3
 ld* 		at sdmmc?
-bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
+bwfm* 		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # NAND Flash
 sunxinand* 	at fdt?			# Allwinner NAND flash controller
-omapnand*	at fdt?			# TI OMAP2 flash controller
+omapnand* 	at fdt?			# TI OMAP2 flash controller
 nand* 		at nandbus?
 flash* 		at nand? dynamic 1
 
@@ -455,7 +455,7 @@ hdmicec* 	at hdmicecbus?
 dwhdmi* 	at fdt?			# Designware HDMI TX
 genfb* 		at fdt?			# Simple Framebuffer
 mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
-omapfb*		at fdt?			# TI OMAP3 Framebuffer
+omapfb* 	at fdt?			# TI OMAP3 Framebuffer
 wsdisplay* 	at wsemuldisplaydev?
 sunxidebe* 	at fdt? pass 4		# Display Backend
 genfb* 		at sunxidebe?
@@ -465,8 +465,8 @@ connector* 	at fdt? pass 4
 panel* 		at fdt? pass 4
 #sunxidep must be after display pipeline elements but before genfb@fdt
 sunxidep* 	at fdt? pass 5		# Display Engine Pipeline
-tilcdc*		at fdt?			# TI OMAP4 LCDC
-tifb*		at tilcdc?
+tilcdc* 	at fdt?			# TI OMAP4 LCDC
+tifb* 		at tilcdc?
 
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
@@ -506,20 +506,20 @@ tegrasoctherm* 	at fdt?			# NVIDIA Tegra SOC_THERM
 # USB
 exusbphy* 	at fdt? pass 9		# Samsung Exynos USB2 PHY
 exusbdrdphy* 	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
-imxusbphy*	at fdt? pass 9		# i.MX USB PHY
+imxusbphy* 	at fdt? pass 9		# i.MX USB PHY
 mesonusbphy* 	at fdt? pass 9		# Amlogic Meson USB2 PHY
 sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
-usbnopphy*	at fdt? pass 9		# Generic USB PHY
-imxusbc*	at fdt? pass 9		# i.MX USB host
-tiotg*		at fdt?			# TI dual port OTG
-tiusb*		at fdt? pass 9		# TI HS USB host
-tiusbtll*	at fdt? pass 8		# TI HS USB host TLL
+usbnopphy* 	at fdt? pass 9		# Generic USB PHY
+imxusbc* 	at fdt? pass 9		# i.MX USB host
+tiotg* 		at fdt?			# TI dual port OTG
+tiusb* 		at fdt? pass 9		# TI HS USB host
+tiusbtll* 	at fdt? pass 8		# TI HS USB host TLL
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
-ehci*		at imxusbc?
+ehci* 		at imxusbc?
 motg* 		at fdt?			# Mentor Graphics USB OTG
 ohci* 		at fdt?			# OHCI
 xhci* 		at fdt?			# XHCI
@@ -546,8 +546,8 @@ ses* 		at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
 uk* 		at scsibus? target ? lun ?	# unknown SCSI
 
 # SPI NOR flash support
-m25p* at spi?
-spiflash* at spiflashbus?
+m25p* 		at spi?
+spiflash* 	at spiflashbus?
 
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
