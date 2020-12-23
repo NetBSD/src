@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.3 2020/05/04 06:52:53 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.4 2020/12/23 08:36:47 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.3 2020/05/04 06:52:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4 2020/12/23 08:36:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,33 +49,40 @@ struct sti_sgc_softc {
 	struct sti_softc sc_sti;
 
 	paddr_t sc_bitmap;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_ramdach;
 };
 
 /*
  * 425e EVRX specific hardware
  */
-#define STI_EVRX_RAMDACOFFSET	0x060000
-#define STI_EVRX_RAMDACSIZE	0x000800
+/*
+ * EVRX RAMDAC (Bt458) is found at offset 0x060000 from SGC bus PA and 
+ * offset 0x040000 length 0x1c0000 is mapped in MI sti via ROM region 2
+ */
+#define STI_EVRX_REGNO2OFFSET	0x020000
 #define STI_EVRX_FBOFFSET	0x200000
 
-#define EVRX_BT458_ADDR		(0x200 + 2)
-#define EVRX_BT458_CMAP		(0x204 + 2)
-#define EVRX_BT458_CTRL		(0x208 + 2)
-#define EVRX_BT458_OMAP		(0x20C + 2)
+#define EVRX_BT458_ADDR		(STI_EVRX_REGNO2OFFSET + 0x200 + 2)
+#define EVRX_BT458_CMAP		(STI_EVRX_REGNO2OFFSET + 0x204 + 2)
+#define EVRX_BT458_CTRL		(STI_EVRX_REGNO2OFFSET + 0x208 + 2)
+#define EVRX_BT458_OMAP		(STI_EVRX_REGNO2OFFSET + 0x20C + 2)
 
 /* from HP-UX /usr/lib/libddevrx.a */
-#define EVRX_MAGIC00		0x600
-#define EVRX_MAGIC04		0x604
-#define EVRX_MAGIC08		0x608
-#define EVRX_MAGIC0C		0x60c
-#define EVRX_MAGIC10		0x610
+#define EVRX_MAGIC00		(STI_EVRX_REGNO2OFFSET + 0x600)
+#define EVRX_MAGIC04		(STI_EVRX_REGNO2OFFSET + 0x604)
+#define EVRX_MAGIC08		(STI_EVRX_REGNO2OFFSET + 0x608)
+#define EVRX_MAGIC0C		(STI_EVRX_REGNO2OFFSET + 0x60c)
+#define EVRX_MAGIC10		(STI_EVRX_REGNO2OFFSET + 0x610)
 #define EVRX_MAGIC10_BSY	0x00010000
-#define EVRX_MAGIC18		0x618
-#define EVRX_MAGIC1C		0x61c
+#define EVRX_MAGIC18		(STI_EVRX_REGNO2OFFSET + 0x618)
+#define EVRX_MAGIC1C		(STI_EVRX_REGNO2OFFSET + 0x61c)
+
+/*
+ * HP A1659A CRX specific hardware
+ */
+#define STI_CRX_FBOFFSET	0x01000000
 
 static int sticonslot = -1;
+static struct bus_space_tag sticn_tag;
 static struct sti_rom sticn_rom;
 static struct sti_screen sticn_scr;
 static bus_addr_t sticn_bases[STI_REGION_MAX];
@@ -88,16 +95,16 @@ static int sti_sgc_probe(bus_space_tag_t, int);
 CFATTACH_DECL_NEW(sti_sgc, sizeof(struct sti_sgc_softc),
     sti_sgc_match, sti_sgc_attach, NULL, NULL);
 
-/* 425e EVRX specific access functions */
-static int sti_evrx_setcmap(struct sti_sgc_softc *, struct wsdisplay_cmap *);
-static void sti_evrx_resetramdac(struct sti_sgc_softc *);
-static void sti_evrx_resetcmap(struct sti_sgc_softc *);
-static int sti_evrx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-static paddr_t sti_evrx_mmap(void *, void *, off_t, int);
+/* 425e EVRX/CRX specific access functions */
+static int sti_evrx_putcmap(struct sti_screen *, u_int, u_int);
+static void sti_evrx_resetramdac(struct sti_screen *);
+static void sti_evrx_resetcmap(struct sti_screen *);
+static void sti_evrx_setupfb(struct sti_screen *);
+static paddr_t sti_m68k_mmap(void *, void *, off_t, int);
 
-static const struct wsdisplay_accessops sti_evrx_accessops = {
-	sti_evrx_ioctl,
-	sti_evrx_mmap,
+static const struct wsdisplay_accessops sti_m68k_accessops = {
+	sti_ioctl,
+	sti_m68k_mmap,
 	sti_alloc_screen,
 	sti_free_screen,
 	sti_show_screen,
@@ -126,6 +133,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	struct sti_softc *ssc = &sc->sc_sti;
 	struct sgc_attach_args *saa = aux;
 	struct sti_screen *scr;
+	bus_space_tag_t bst;
 	bus_space_handle_t romh;
 	bus_addr_t base;
 	struct wsemuldisplaydev_attach_args waa;
@@ -135,6 +143,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	ssc->sc_dev = self;
+	bst = saa->saa_iot;
 	base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
 
 	if (saa->saa_slot == sticonslot) {
@@ -147,18 +156,18 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 
 		sti_describe(ssc);
 	} else {
-		if (bus_space_map(saa->saa_iot, base, PAGE_SIZE, 0, &romh)) {
+		if (bus_space_map(bst, base, PAGE_SIZE, 0, &romh)) {
 			aprint_error(": can't map ROM");
 			return;
 		}
 		/*
 		 * Compute real PROM size
 		 */
-		romend = sti_rom_size(saa->saa_iot, romh);
+		romend = sti_rom_size(bst, romh);
 
-		bus_space_unmap(saa->saa_iot, romh, PAGE_SIZE);
+		bus_space_unmap(bst, romh, PAGE_SIZE);
 
-		if (bus_space_map(saa->saa_iot, base, romend, 0, &romh)) {
+		if (bus_space_map(bst, base, romend, 0, &romh)) {
 			aprint_error(": can't map frame buffer");
 			return;
 		}
@@ -167,7 +176,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 		for (i = 0; i < STI_REGION_MAX; i++)
 			ssc->bases[i] = base;
 
-		if (sti_attach_common(ssc, saa->saa_iot, saa->saa_iot, romh,
+		if (sti_attach_common(ssc, bst, bst, romh,
 		    STI_CODEBASE_ALT) != 0)
 			return;
 	}
@@ -185,29 +194,21 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 		 */
 		sc->sc_bitmap = base + STI_EVRX_FBOFFSET;
 
-		/*
-		 * Bt458 RAMDAC can be accessed at offset +0x60200 and
-		 * unknown control registers are around +0x60600.
-		 */
-		sc->sc_bst = saa->saa_iot;
-		if (bus_space_map(sc->sc_bst, base + STI_EVRX_RAMDACOFFSET,
-		    STI_EVRX_RAMDACSIZE, 0, &sc->sc_ramdach)) {
-			aprint_error_dev(self, "can't map RAMDAC\n");
-			return;
-		}
-
 		aprint_normal_dev(self, "Enable mmap support\n");
 
 		/*
 		 * initialize Bt458 RAMDAC and preserve initial color map
 		 */
-		sti_evrx_resetramdac(sc);
-		sti_evrx_resetcmap(sc);
+		sti_evrx_resetramdac(scr);
+		sti_evrx_resetcmap(scr);
+
+		scr->setupfb = sti_evrx_setupfb;
+		scr->putcmap = sti_evrx_putcmap;
 
 		scr->scr_wsmode = WSDISPLAYIO_MODE_EMUL;
 		waa.console = ssc->sc_flags & STI_CONSOLE ? 1 : 0;
 		waa.scrdata = &scr->scr_screenlist;
-		waa.accessops = &sti_evrx_accessops;
+		waa.accessops = &sti_m68k_accessops;
 		waa.accesscookie = scr;
 
 		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint);
@@ -216,9 +217,20 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	case STI_DD_CRX:
 		/*
 		 * HP A1659A CRX on some 425t variants.
-		 * Not investigated yet; needs to check HP-UX libddgcrx.a etc.
+		 * bitmap memory can be accessed at offset +0x1000000.
 		 */
-		/* FALLTHROUGH */
+		sc->sc_bitmap = base + STI_CRX_FBOFFSET;
+
+		aprint_normal_dev(self, "Enable mmap support\n");
+
+		scr->scr_wsmode = WSDISPLAYIO_MODE_EMUL;
+		waa.console = ssc->sc_flags & STI_CONSOLE ? 1 : 0;
+		waa.scrdata = &scr->scr_screenlist;
+		waa.accessops = &sti_m68k_accessops;
+		waa.accesscookie = scr;
+
+		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint);
+		break;
 	default:
 		/*
 		 * Unsupported variants.
@@ -256,34 +268,12 @@ sti_sgc_probe(bus_space_tag_t iot, int slot)
 }
 
 static int
-sti_evrx_setcmap(struct sti_sgc_softc *sc, struct wsdisplay_cmap *p)
+sti_evrx_putcmap(struct sti_screen *scr, u_int index, u_int count)
 {
-	struct sti_softc *ssc = &sc->sc_sti;
-	struct sti_screen *scr = ssc->sc_scr;
-	bus_space_tag_t bst = sc->sc_bst;
-	bus_space_handle_t bsh = sc->sc_ramdach;
-	uint8_t r[STI_NCMAP], g[STI_NCMAP], b[STI_NCMAP];
-	u_int index, count;
-	int i, error;
-
-	index = p->index;
-	count = p->count;
-	if (index >= STI_NCMAP || count > STI_NCMAP - index)
-		return EINVAL;
-
-	error = copyin(p->red, &r[index], count);
-	if (error)
-		return error;
-	error = copyin(p->green, &g[index], count);
-	if (error)
-		return error;
-	error = copyin(p->blue, &b[index], count);
-	if (error)
-		return error;
-
-	memcpy(&scr->scr_rcmap[index], &r[index], count);
-	memcpy(&scr->scr_gcmap[index], &g[index], count);
-	memcpy(&scr->scr_bcmap[index], &b[index], count);
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t bst = rom->memt;
+	bus_space_handle_t bsh = rom->regh[2];
+	int i;
 
 	/* magic setup from HP-UX */
 	bus_space_write_4(bst, bsh, EVRX_MAGIC08, 0x00000001);
@@ -302,10 +292,11 @@ sti_evrx_setcmap(struct sti_sgc_softc *sc, struct wsdisplay_cmap *p)
 }
 
 static void
-sti_evrx_resetramdac(struct sti_sgc_softc *sc)
+sti_evrx_resetramdac(struct sti_screen *scr)
 {
-	bus_space_tag_t bst = sc->sc_bst;
-	bus_space_handle_t bsh = sc->sc_ramdach;
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t bst = rom->memt;
+	bus_space_handle_t bsh = rom->regh[2];
 #if 0
 	int i;
 #endif
@@ -351,12 +342,11 @@ sti_evrx_resetramdac(struct sti_sgc_softc *sc)
 }
 
 static void
-sti_evrx_resetcmap(struct sti_sgc_softc *sc)
+sti_evrx_resetcmap(struct sti_screen *scr)
 {
-	struct sti_softc *ssc = &sc->sc_sti;
-	struct sti_screen *scr = ssc->sc_scr;
-	bus_space_tag_t bst = sc->sc_bst;
-	bus_space_handle_t bsh = sc->sc_ramdach;
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t bst = rom->memt;
+	bus_space_handle_t bsh = rom->regh[2];
 	int i;
 
 	/* magic setup from HP-UX */
@@ -376,68 +366,16 @@ sti_evrx_resetcmap(struct sti_sgc_softc *sc)
 	}
 }
 
-static int
-sti_evrx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-    struct lwp *l)
+static void
+sti_evrx_setupfb(struct sti_screen *scr)
 {
-	struct sti_screen *scr = (struct sti_screen *)v;
-	struct sti_rom *rom = scr->scr_rom;
-	struct sti_softc *ssc = rom->rom_softc;
-	struct sti_sgc_softc *sc = device_private(ssc->sc_dev);
-	struct wsdisplay_fbinfo *wdf;
-	struct wsdisplay_cmap *cmapp;
-	u_int idx, count;
-	int error, new_mode;
 
-	switch (cmd) {
-	case WSDISPLAYIO_GINFO:
-		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = scr->scr_cfg.scr_height;
-		wdf->width  = scr->scr_cfg.scr_width;
-		wdf->depth  = scr->scr_bpp;
-		wdf->cmsize = STI_NCMAP;
-		return 0;
-
-	case WSDISPLAYIO_GETCMAP:
-		cmapp = (struct wsdisplay_cmap *)data;
-		idx = cmapp->index;
-		count = cmapp->count;
-		if (idx >= STI_NCMAP || count > STI_NCMAP - idx)
-			return EINVAL;
-		error = copyout(&scr->scr_rcmap[idx], cmapp->red, count);
-		if (error != 0)
-			return error;
-		error = copyout(&scr->scr_gcmap[idx], cmapp->green, count);
-		if (error != 0)
-			return error;
-		error = copyout(&scr->scr_bcmap[idx], cmapp->blue, count);
-		if (error != 0)
-			return error;
-		return 0;
-		
-	case WSDISPLAYIO_PUTCMAP:
-		cmapp = (struct wsdisplay_cmap *)data;
-		return sti_evrx_setcmap(sc, cmapp);
-
-	case WSDISPLAYIO_SMODE:
-		new_mode = *(int *)data;
-		if (new_mode != scr->scr_wsmode) {
-			scr->scr_wsmode = new_mode;
-			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-				sti_init(scr, STI_TEXTMODE);
-			} else if (new_mode == WSDISPLAYIO_MODE_DUMBFB) {
-				sti_init(scr, 0);
-				sti_evrx_resetramdac(sc);
-			}
-		}
-		return 0;
-
-	}
-	return sti_ioctl(v, vs, cmd, data, flag, l);
+	sti_init(scr, 0);
+	sti_evrx_resetramdac(scr);
 }
 
 static paddr_t
-sti_evrx_mmap(void *v, void *vs, off_t offset, int prot)
+sti_m68k_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
 	struct sti_rom *rom = scr->scr_rom;
@@ -491,11 +429,13 @@ sti_sgc_cnattach(bus_space_tag_t bst, bus_addr_t addr, int slot)
 {
 	int i;
 
+	sticn_tag = *bst;
+
 	/* sticn_bases[0] will be fixed in sti_cnattach() */
 	for (i = 0; i < STI_REGION_MAX; i++)
 		sticn_bases[i] = addr;
 
-	sti_cnattach(&sticn_rom, &sticn_scr, bst, sticn_bases,
+	sti_cnattach(&sticn_rom, &sticn_scr, &sticn_tag, sticn_bases,
 	    STI_CODEBASE_ALT);
 
 	sticonslot = slot;
