@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.501 2020/12/23 13:50:54 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.502 2020/12/23 14:13:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.501 2020/12/23 13:50:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.502 2020/12/23 14:13:49 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1147,10 +1147,11 @@ InitVarMake(const char *argv0)
 
 	if (argv0[0] != '/' && strchr(argv0, '/') != NULL) {
 		char pathbuf[MAXPATHLEN];
-		const char *abs = cached_realpath(argv0, pathbuf);
+		const char *abspath = cached_realpath(argv0, pathbuf);
 		struct stat st;
-		if (abs != NULL && abs[0] == '/' && stat(make, &st) == 0)
-			make = abs;
+		if (abspath != NULL && abspath[0] == '/' &&
+		    stat(make, &st) == 0)
+			make = abspath;
 	}
 
 	Var_Set("MAKE", make, VAR_GLOBAL);
