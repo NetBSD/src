@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.49 2020/05/16 20:27:38 tnn Exp $
+.\" $NetBSD: wsdisplay.4,v 1.50 2020/12/23 06:10:13 uwe Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -583,7 +583,7 @@ Toggle the splash screen.
 This call is only available with the
 .Dv SPLASHSCREEN
 kernel option.
-.It Dv WSDISPLAYIO_GET_EDID Pq Li struct wsdisplay_edid_info
+.It Dv WSDISPLAYIO_GET_EDID Pq Li struct wsdisplayio_edid_info
 Retrieve EDID data from a driver.
 .Bd -literal -offset indent
 struct wsdisplayio_edid_info {
