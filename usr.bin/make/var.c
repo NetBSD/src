@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.762 2020/12/22 20:10:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.763 2020/12/23 13:11:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.762 2020/12/22 20:10:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.763 2020/12/23 13:11:27 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -547,6 +547,7 @@ Var_Undef(const char *arg)
 	}
 
 	Words_Free(varnames);
+	free(expanded);
 }
 
 static Boolean
