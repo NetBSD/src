@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.23 2020/05/23 00:02:10 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.24 2020/12/23 17:57:17 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -177,6 +177,8 @@ A1096A monochrome Hyperion (1280x1024, 1 bit)
 .It
 A1416A Kathmandu (a.k.a. Color VRX) (1280x1024 @ 60 hz, 8 bits, DIO-II)
 .It
+A1659A CRX (1280x1024 @ 72 hz, 8 bits, SGC)
+.It
 98705 Tigershark PersonalVRX DIO-II graphics device
 .br
 .Em "Untested"
@@ -249,8 +251,6 @@ CPUs
 .It
 Graphics Devices
 .(bullet -compact
-SGC support for some rare configurations of 4XXt and 4XXdl workstations
-.It
 98702 TurboVRX DIO-II graphics device
 .bullet)
 .It
