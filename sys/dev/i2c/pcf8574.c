@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.5 2020/12/06 10:09:36 jdc Exp $ */
+/* $NetBSD: pcf8574.c,v 1.6 2020/12/23 07:06:26 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.5 2020/12/06 10:09:36 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.6 2020/12/23 07:06:26 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.5 2020/12/06 10:09:36 jdc Exp $");
 #include <sys/kernel.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/led.h>
@@ -59,6 +60,12 @@ struct pcf8574_led {
 	uint8_t mask, v_on, v_off;
 };
 
+struct pcf8574_pin {
+	int pin_sensor;
+	int pin_active;
+	char pin_desc[ENVSYS_DESCLEN];
+};
+
 #define PCF8574_NPINS	8
 struct pcf8574_softc {
 	device_t	sc_dev;
@@ -67,34 +74,35 @@ struct pcf8574_softc {
 	uint8_t		sc_state;
 	uint8_t		sc_mask;
 
+	uint8_t		sc_alert_mask;
+#define	PCF8574_DEFAULT_TIMER	60
+	int		sc_callout_time;
+	callout_t	sc_timer;
+
 	int		sc_nleds;
 	struct pcf8574_led sc_leds[PCF8574_NPINS];
+	struct pcf8574_pin sc_pins[PCF8574_NPINS];
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensor[PCF8574_NPINS];
-	int		sc_pin_sensor[PCF8574_NPINS];
-	int		sc_pin_active[PCF8574_NPINS];
-
-#ifdef PCF8574_DEBUG
-	callout_t	sc_timer;
-#endif
 };
 
 static int	pcf8574_match(device_t, cfdata_t, void *);
 static void	pcf8574_attach(device_t, device_t, void *);
 static int	pcf8574_detach(device_t, int);
 
-static int	pcf8574_read(struct pcf8574_softc *sc, uint8_t *val);
-static int	pcf8574_write(struct pcf8574_softc *sc, uint8_t val);
+static int	pcf8574_read(struct pcf8574_softc *sc, uint8_t *);
+static int	pcf8574_write(struct pcf8574_softc *sc, uint8_t);
 static void	pcf8574_attach_led(
+			struct pcf8574_softc *, char *, int, int, int);
+static int	pcf8574_attach_sysmon(
 			struct pcf8574_softc *, char *, int, int, int);
 void		pcf8574_refresh(struct sysmon_envsys *, envsys_data_t *);
 int		pcf8574_get_led(void *);
 void		pcf8574_set_led(void *, int);
-
-#ifdef PCF8574_DEBUG
-static void pcf8574_timeout(void *);
-#endif
+static void	pcf8574_timeout(void *);
+static void	pcf8574_check(void *);
+static void	pcf8574_check_alert(struct pcf8574_softc *, uint8_t, uint8_t);
 
 CFATTACH_DECL_NEW(pcf8574io, sizeof(struct pcf8574_softc),
 	pcf8574_match, pcf8574_attach, pcf8574_detach, NULL);
@@ -128,11 +136,18 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 	int i, num, def, envc = 0;
 	char name[32];
 	const char *nptr = NULL, *spptr;
-	bool ok = TRUE, act, sysmon = FALSE;
+	bool ok = TRUE, act;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_dev = self;
+
+	sc->sc_sme = NULL;
+#ifdef PCF8574_DEBUG
+	sc->sc_callout_time = 60;	/* watch for changes when debugging */
+#else
+	sc->sc_callout_time = 0;
+#endif
 
 	/*
 	 * The PCF8574 requires input pins to be written with the value 1,
@@ -150,9 +165,6 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCF8574_DEBUG
 	aprint_normal(": GPIO: state = 0x%02x\n", sc->sc_state);
-
-	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
-	callout_reset(&sc->sc_timer, hz*30, pcf8574_timeout, sc);
 #else
 	aprint_normal(": GPIO\n");
 #endif
@@ -177,37 +189,38 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			continue;
 		spptr += 1;
 		strncpy(name, spptr, 31);
-		sc->sc_pin_active[i] = act;
+		sc->sc_pins[i].pin_active = act;
 		if (!strncmp(nptr, "LED ", 4)) {
 			sc->sc_mask &= ~(1 << num);
 			pcf8574_attach_led(sc, name, num, act, def);
 		}
-		if (!strncmp(nptr, "INDICATOR ", 4)) {
-			if (!sysmon) {
-				sc->sc_sme = sysmon_envsys_create();
-				sysmon = TRUE;
-			}
-			/* envsys sensor # to pin # mapping */
-			sc->sc_pin_sensor[envc] = num;
-			sc->sc_sensor[i].state = ENVSYS_SINVALID;
-			sc->sc_sensor[i].units = ENVSYS_INDICATOR;
-			strlcpy(sc->sc_sensor[i].desc, name,
-			    sizeof(sc->sc_sensor[i].desc));
-			if (sysmon_envsys_sensor_attach(sc->sc_sme,
-			    &sc->sc_sensor[i])) {
-				sysmon_envsys_destroy(sc->sc_sme);
-				sc->sc_sme = NULL;
-				aprint_error_dev(self,
-				    "unable to attach pin %d at sysmon\n", i);
+		if (!strncmp(nptr, "INDICATOR ", 10)) {
+			if (pcf8574_attach_sysmon(sc, name, envc, num, act))
 				return;
-			}
-			DPRINTF("%s: added indicator: pin %d sensor %d (%s)\n",
-			    device_xname(sc->sc_dev), num, envc, name);
+			envc++;
+		}
+		if (!strncmp(nptr, "ALERT ", 6)) {
+			u_int64_t alert_time;
+
+			if (pcf8574_attach_sysmon(sc, name, envc, num, act))
+				return;
+
+			/* Adjust our timeout if the alert times out. */
+			if (def != -1)
+				alert_time = def / 2;
+			else
+				alert_time = PCF8574_DEFAULT_TIMER;
+			
+			if (sc->sc_callout_time == 0 ||
+			    alert_time < sc->sc_callout_time)
+				sc->sc_callout_time = alert_time;
+
+			sc->sc_alert_mask |= (1 << num);
 			envc++;
 		}
 	}
 
-	if (sysmon) {
+	if (sc->sc_sme != NULL) {
 		sc->sc_sme->sme_name = device_xname(self);
 		sc->sc_sme->sme_cookie = sc;
 		sc->sc_sme->sme_refresh = pcf8574_refresh;
@@ -219,6 +232,12 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
+
+	if (sc->sc_callout_time) {
+		callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
+		callout_reset(&sc->sc_timer, hz * sc->sc_callout_time,
+		    pcf8574_timeout, sc);
+	}
 }
 
 static int
@@ -226,6 +245,12 @@ pcf8574_detach(device_t self, int flags)
 {
 	struct pcf8574_softc *sc = device_private(self);
 	int i;
+
+	if (sc->sc_callout_time) {
+		callout_halt(&sc->sc_timer, NULL);
+		callout_destroy(&sc->sc_timer);
+		sc->sc_callout_time = 0;
+	}
 
 	if (sc->sc_sme != NULL) {
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -235,10 +260,6 @@ pcf8574_detach(device_t self, int flags)
 	for (i = 0; i < sc->sc_nleds; i++)
 		led_detach(sc->sc_leds[i].led);
 
-#ifdef PCF8574_DEBUG
-	callout_halt(&sc->sc_timer, NULL);
-	callout_destroy(&sc->sc_timer);
-#endif
 	return 0;
 }
 
@@ -269,7 +290,8 @@ pcf8574_write(struct pcf8574_softc *sc, uint8_t val)
 }
 
 static void
-pcf8574_attach_led(struct pcf8574_softc *sc, char *n, int pin, int act, int def)
+pcf8574_attach_led(struct pcf8574_softc *sc, char *name, int pin, int act,
+	int def)
 {
 	struct pcf8574_led *l;
 
@@ -278,7 +300,7 @@ pcf8574_attach_led(struct pcf8574_softc *sc, char *n, int pin, int act, int def)
 	l->mask = 1 << pin;
 	l->v_on = act ? l->mask : 0;
 	l->v_off = act ? 0 : l->mask;
-	led_attach(n, l, pcf8574_get_led, pcf8574_set_led);
+	led_attach(name, l, pcf8574_get_led, pcf8574_set_led);
 	if (def != -1)
 		pcf8574_set_led(l, def);
 	DPRINTF("%s: attached LED: %02x %02x %02x def %d\n",
@@ -286,12 +308,45 @@ pcf8574_attach_led(struct pcf8574_softc *sc, char *n, int pin, int act, int def)
 	sc->sc_nleds++;
 }
 
+static int
+pcf8574_attach_sysmon(struct pcf8574_softc *sc, char *name, int envc, int pin,
+	int act)
+{
+	int ret;
+
+	if (sc->sc_sme == NULL) {
+		sc->sc_sme = sysmon_envsys_create();
+		sc->sc_sme->sme_events_timeout = 0;
+	}
+
+	strlcpy(sc->sc_pins[pin].pin_desc, name,
+	    sizeof(sc->sc_pins[pin].pin_desc));
+	/* envsys sensor # to pin # mapping */
+	sc->sc_pins[envc].pin_sensor = pin;
+	sc->sc_sensor[envc].state = ENVSYS_SINVALID;
+	sc->sc_sensor[envc].units = ENVSYS_INDICATOR;
+	strlcpy(sc->sc_sensor[envc].desc, name,
+	    sizeof(sc->sc_sensor[envc].desc));
+	ret = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[envc]);
+	if (ret) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
+		aprint_error_dev(sc->sc_dev,
+		    "unable to attach pin %d at sysmon\n", pin);
+		return ret;
+	}
+	DPRINTF("%s: added sysmon: pin %d sensor %d (%s)\n",
+	    device_xname(sc->sc_dev), pin, envc, name);
+	return 0;
+}
+
 void
 pcf8574_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct pcf8574_softc *sc = sme->sme_cookie;
-	int pin = sc->sc_pin_sensor[edata->sensor];
-	int act = sc->sc_pin_active[pin];
+	int pin = sc->sc_pins[edata->sensor].pin_sensor;
+	int act = sc->sc_pins[pin].pin_active;
+	u_int8_t prev_state = sc->sc_state;
 
 	pcf8574_read(sc, &sc->sc_state);
 	if (act)
@@ -299,6 +354,13 @@ pcf8574_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	else
 		edata->value_cur = sc->sc_state & 1 << pin ? FALSE : TRUE;
 	edata->state = ENVSYS_SVALID;
+
+	/* We read all the pins, so check for alerts on any pin now */
+	if (sc->sc_state != prev_state) {
+		DPRINTF("%s: (refresh) status change: 0x%02x > 0x%02x\n",
+                    device_xname(sc->sc_dev), prev_state, sc->sc_state);
+		pcf8574_check_alert(sc, prev_state, sc->sc_state);
+	}
 }
 
 int
@@ -327,19 +389,51 @@ pcf8574_set_led(void *cookie, int val)
 	}
 }
 
-#ifdef PCF8574_DEBUG
 static void
 pcf8574_timeout(void *v)
 {
 	struct pcf8574_softc *sc = v;
-	uint8_t val;
 
-	pcf8574_read(sc, &val);
-	if (val != sc->sc_state)
-		aprint_normal_dev(sc->sc_dev,
-		    "status change: 0x%02x > 0x%02x\n", sc->sc_state, val);
-	sc->sc_state = val;
-
-	callout_reset(&sc->sc_timer, hz*60, pcf8574_timeout, sc);
+	sysmon_task_queue_sched(0, pcf8574_check, sc);
+	callout_reset(&sc->sc_timer, hz * sc->sc_callout_time,
+	    pcf8574_timeout, sc);
 }
-#endif
+
+static void
+pcf8574_check(void *v)
+{
+	struct pcf8574_softc *sc = v;
+	uint8_t prev_state = sc->sc_state;
+
+	pcf8574_read(sc, &sc->sc_state);
+	if (sc->sc_state != prev_state) {
+		DPRINTF("%s: (check) status change: 0x%02x > 0x%02x\n",
+		    device_xname(sc->sc_dev), prev_state, sc->sc_state);
+		pcf8574_check_alert(sc, prev_state, sc->sc_state);
+	}
+}
+
+
+static void
+pcf8574_check_alert(struct pcf8574_softc *sc, uint8_t prev_state,
+	uint8_t curr_state)
+{
+	int i;
+	uint8_t pin_chg;
+
+	for (i = 0; i < PCF8574_NPINS; i++) {
+		pin_chg = (sc->sc_state & 1 << i) ^ (prev_state & 1 << i);
+		if (pin_chg & sc->sc_alert_mask) {
+			if (sc->sc_pins[i].pin_active)
+				printf("%s: Alert: %s = %s\n",
+				    device_xname(sc->sc_dev),
+				    sc->sc_pins[i].pin_desc,
+				    sc->sc_state & 1 << i ?  "True" : "False");
+			else
+				printf("%s: Alert: %s = %s\n",
+				    device_xname(sc->sc_dev),
+				    sc->sc_pins[i].pin_desc,
+				    sc->sc_state & 1 << i ?  "False" : "True");
+		}
+	}
+}
