@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.167 2020/12/13 20:40:38 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.168 2020/12/23 04:09:32 thorpej Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -302,6 +302,7 @@ sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 #sniiic*	at fdt?			# Socionext SC2A11 I2C
 #sniiic*	at acpi?
+iicmux*		at fdt? pass 5		# I2C mux virtual controllers
 iic*		at i2cbus?
 
 # I2C devices
