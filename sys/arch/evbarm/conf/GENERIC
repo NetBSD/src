@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.84 2020/12/23 04:09:32 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.85 2020/12/23 10:27:23 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -241,8 +241,8 @@ gpio* 		at gpiobus?
 
 # MPIO / Pinmux
 pinctrl*	at fdt? pass 2		# Generic pinctrl driver
-tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 imxiomux*	at fdt? pass 2		# i.MX IOMUX
+tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 
 # PWM controller
 expwm* 		at fdt? pass 4		# PWM
@@ -262,8 +262,8 @@ tegra210xphy* 	at tegra210xpad?
 
 # PCIE
 pcihost* 	at fdt?			# Generic PCI host controller
-tegrapcie0 	at fdt?			# NVIDIA Tegra PCIE
 imxpcie*	at fdt?			# i.MX PCIE
+tegrapcie0 	at fdt?			# NVIDIA Tegra PCIE
 pci* 		at pcibus?
 ppb* 		at pci? dev ? function ?
 pci* 		at ppb?
@@ -315,9 +315,9 @@ ukphy* 		at mii? phy ?		# generic unknown PHYs
 # UART
 com* 		at fdt?	pass 4		# UART
 exuart* 	at fdt?	pass 4		# SSCOM UART
-plcom* 		at fdt?	pass 4		# ARM PL011 UART
 imxuart* 	at fdt?	pass 4		# i.MX UART
 mesonuart* 	at fdt?	pass 4		# Amlogic Meson UART
+plcom* 		at fdt?	pass 4		# ARM PL011 UART
 zynquart* 	at fdt?	pass 4		# Cadence UART
 
 # I2C controllers
