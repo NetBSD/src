@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.515 2020/12/23 13:50:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.516 2020/12/23 14:13:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.515 2020/12/23 13:50:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.516 2020/12/23 14:13:49 rillig Exp $");
 
 /* types and constants */
 
@@ -2204,7 +2204,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, Boolean silent)
 			const char *suff;
 			SearchPath *suffPath = NULL;
 
-			if ((suff = strrchr(file, '.'))) {
+			if ((suff = strrchr(file, '.')) != NULL) {
 				suffPath = Suff_GetPath(suff);
 				if (suffPath != NULL)
 					fullname = Dir_FindFile(file, suffPath);
