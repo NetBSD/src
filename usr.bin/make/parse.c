@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.514 2020/12/22 08:51:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.515 2020/12/23 13:50:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.514 2020/12/22 08:51:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.515 2020/12/23 13:50:54 rillig Exp $");
 
 /* types and constants */
 
@@ -1912,7 +1912,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 static void
 VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *ctxt)
 {
-	if (opts.lint) {
+	if (opts.strict) {
 		if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
 			char *expandedValue;
 
@@ -3171,7 +3171,7 @@ ParseDependency(char *line)
 	 * Var_Parse does not print any parse errors in such a case.
 	 * It simply returns the special empty string var_Error,
 	 * which cannot be detected in the result of Var_Subst. */
-	eflags = opts.lint ? VARE_WANTRES : VARE_WANTRES | VARE_UNDEFERR;
+	eflags = opts.strict ? VARE_WANTRES : VARE_WANTRES | VARE_UNDEFERR;
 	(void)Var_Subst(line, VAR_CMDLINE, eflags, &expanded_line);
 	/* TODO: handle errors */
 

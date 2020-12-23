@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.236 2020/12/22 22:31:50 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.237 2020/12/23 13:50:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -626,7 +626,7 @@ typedef struct CmdOpts {
 	 *
 	 * Runs make in strict mode, with additional checks and better error
 	 * handling. */
-	Boolean lint;
+	Boolean strict;
 
 	/* -dV: for the -V option, print unexpanded variable values */
 	Boolean debugVflag;
