@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.763 2020/12/23 13:11:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.764 2020/12/23 13:50:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.763 2020/12/23 13:11:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.764 2020/12/23 13:50:54 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2225,7 +2225,7 @@ ApplyModifier_Loop(const char **pp, const char *val, ApplyModifiersState *st)
 	res = ParseModifierPart(pp, '@', VARE_NONE, st, &args.tvar);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	if (opts.lint && strchr(args.tvar, '$') != NULL) {
+	if (opts.strict && strchr(args.tvar, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
@@ -3552,7 +3552,7 @@ ApplySingleModifier(ApplyModifiersState *st, const char *mod, char endc,
 		    st->endc, st->var->name.str, inout_value->str, *mod);
 	} else if (*p == ':') {
 		p++;
-	} else if (opts.lint && *p != '\0' && *p != endc) {
+	} else if (opts.strict && *p != '\0' && *p != endc) {
 		Parse_Error(PARSE_FATAL,
 		    "Missing delimiter ':' after modifier \"%.*s\"",
 		    (int)(p - mod), mod);
@@ -3749,7 +3749,7 @@ ValidShortVarname(char varname, const char *start)
 		return VPR_OK;
 	}
 
-	if (!opts.lint)
+	if (!opts.strict)
 		return VPR_PARSE_SILENT;
 
 	if (varname == '$')
@@ -3797,7 +3797,7 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 		*pp += 2;
 
 		*out_FALSE_val = UndefinedShortVarValue(startc, ctxt, eflags);
-		if (opts.lint && *out_FALSE_val == var_Error) {
+		if (opts.strict && *out_FALSE_val == var_Error) {
 			Parse_Error(PARSE_FATAL,
 			    "Variable \"%s\" is undefined", name);
 			*out_FALSE_res = VPR_UNDEF_MSG;
@@ -3854,7 +3854,7 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 		return VPR_OK;
 	}
 
-	if ((eflags & VARE_UNDEFERR) && opts.lint) {
+	if ((eflags & VARE_UNDEFERR) && opts.strict) {
 		Parse_Error(PARSE_FATAL,
 		    "Variable \"%s\" is undefined", varname);
 		free(varname);
@@ -4103,7 +4103,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 	if (strchr(value.str, '$') != NULL && (eflags & VARE_WANTRES)) {
 		char *expanded;
 		VarEvalFlags nested_eflags = eflags;
-		if (opts.lint)
+		if (opts.strict)
 			nested_eflags &= ~(unsigned)VARE_UNDEFERR;
 		v->flags |= VAR_IN_USE;
 		(void)Var_Subst(value.str, ctxt, nested_eflags, &expanded);
