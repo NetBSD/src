@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.8 2020/12/23 16:02:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.8 2020/12/23 16:02:11 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -56,20 +56,6 @@ int motoi2c_debug = 0;
 #define	DPRINTF(x)	if (motoi2c_debug) printf x
 #else
 #define	DPRINTF(x)
-#endif
-
-#ifdef FDT
-static i2c_tag_t
-motoi2c_get_tag(device_t dev)
-{
-	struct motoi2c_softc * const sc = device_private(dev);
-
-	return &sc->sc_i2c;
-}
-
-static const struct fdtbus_i2c_controller_func motoi2c_funcs = {
-	.get_tag = motoi2c_get_tag,
-};
 #endif
 
 static int  motoi2c_acquire_bus(void *, int);
@@ -130,7 +116,7 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 
 #ifdef FDT
 	KASSERT(sc->sc_phandle != 0);
-	fdtbus_register_i2c_controller(self, sc->sc_phandle, &motoi2c_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
 
 	fdtbus_attach_i2cbus(self, sc->sc_phandle, &sc->sc_i2c, iicbus_print);
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.23 2019/12/22 23:40:49 thorpej Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.24 2020/12/23 16:02:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.23 2019/12/22 23:40:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.24 2020/12/23 16:02:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,12 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.23 2019/12/22 23:40:49 thorpej Exp $
 
 static int	tegra_i2c_match(device_t, cfdata_t, void *);
 static void	tegra_i2c_attach(device_t, device_t, void *);
-
-static i2c_tag_t tegra_i2c_get_tag(device_t);
-
-struct fdtbus_i2c_controller_func tegra_i2c_funcs = {
-	.get_tag = tegra_i2c_get_tag
-};
 
 struct tegra_i2c_softc {
 	device_t		sc_dev;
@@ -183,17 +177,9 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = tegra_i2c_exec;
 
-	fdtbus_register_i2c_controller(self, phandle, &tegra_i2c_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
-}
-
-static i2c_tag_t
-tegra_i2c_get_tag(device_t dev)
-{
-	struct tegra_i2c_softc * const sc = device_private(dev);
-
-	return &sc->sc_ic;
 }
 
 static void
