@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.8 2019/12/22 23:23:30 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.9 2020/12/23 16:02:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.8 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.9 2020/12/23 16:02:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,18 +111,6 @@ static int	sunxi_rsb_rsb_config(struct sunxi_rsb_softc *,
 static int	sunxi_rsb_match(device_t, cfdata_t, void *);
 static void	sunxi_rsb_attach(device_t, device_t, void *);
 
-static i2c_tag_t
-sunxi_rsb_get_tag(device_t dev)
-{
-	struct sunxi_rsb_softc * const sc = device_private(dev);
-
-	return &sc->sc_ic;
-}
-
-static const struct fdtbus_i2c_controller_func sunxi_rsb_funcs = {
-	.get_tag = sunxi_rsb_get_tag,
-};
-
 CFATTACH_DECL_NEW(sunxi_rsb, sizeof(struct sunxi_rsb_softc),
 	sunxi_rsb_match, sunxi_rsb_attach, NULL, NULL);
 
@@ -194,7 +182,7 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = sunxi_rsb_exec;
 
-	fdtbus_register_i2c_controller(self, phandle, &sunxi_rsb_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
 }
