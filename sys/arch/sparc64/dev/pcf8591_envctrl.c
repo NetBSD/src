@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.15 2020/12/20 09:08:15 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.16 2020/12/23 07:09:50 jdc Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.15 2020/12/20 09:08:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.16 2020/12/23 07:09:50 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.15 2020/12/20 09:08:15 jdc Exp
 #define PCF8591_CTRL_OSCILLATOR	0x40
 
 #define PCF8591_TEMP_SENS	0x00
-#define PCF8591_CPU_FAN_CTRL	0x01
+#define PCF8591_SYS_FAN_CTRL	0x01
 
 struct ecadc_channel {
 	u_int		chan_num;
@@ -228,12 +228,12 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 	    OF_getprop(node, "cpu-fan-speeds", &sc->sc_cpu_fan_spd,
 	    XLATE_MAX) > 0) {
 		sc->sc_channels[sc->sc_nchan].chan_num = 1;
-		sc->sc_channels[sc->sc_nchan].chan_type = PCF8591_CPU_FAN_CTRL;
+		sc->sc_channels[sc->sc_nchan].chan_type = PCF8591_SYS_FAN_CTRL;
 		sensor = &sc->sc_channels[sc->sc_nchan].chan_sensor;
 		sensor->units = ENVSYS_INTEGER;
 		sensor->flags = ENVSYS_FMONNOTSUPP;
 		sensor->state = ENVSYS_SINVALID;
-		strlcpy(sensor->desc, "CPUFAN", sizeof(sensor->desc));
+		strlcpy(sensor->desc, "SYSFAN", sizeof(sensor->desc));
 		sc->sc_channels[sc->sc_nchan].chan_xlate = sc->sc_cpu_fan_spd;
 		DPRINTF("%s: "
 		    "added CPUFAN sensor (chan %d) with cpu-fan xlate\n",
@@ -298,7 +298,7 @@ ecadc_detach(device_t self, int flags)
 	for (i = 0; i < sc->sc_nchan; i++) {
 		struct ecadc_channel *chp = &sc->sc_channels[i];
 
-		if (chp->chan_type == PCF8591_CPU_FAN_CTRL) {
+		if (chp->chan_type == PCF8591_SYS_FAN_CTRL) {
 			/* Loop in case the bus is busy */
 			for (c = 0; c < 5; c++) {
 				chp->chan_speed = sc->sc_cpu_fan_spd[0];
@@ -307,8 +307,8 @@ ecadc_detach(device_t self, int flags)
 					return 0;
 				delay(10000);
 			}
-			aprint_error_dev(sc->sc_dev,
-			    "cannot set fan speed (chan %d)\n", chp->chan_num);
+			printf("%s: cannot set fan speed (chan %d)\n",
+			    device_xname(sc->sc_dev), chp->chan_num);
 		}
 	}
 
@@ -374,11 +374,10 @@ ecadc_refresh(struct sysmon_envsys *sme, envsys_data_t *sensor)
 			}
 			chp->chan_sensor.flags |= ENVSYS_FMONLIMITS;
 		}
-		if (chp->chan_type == PCF8591_CPU_FAN_CTRL)
+		if (chp->chan_type == PCF8591_SYS_FAN_CTRL)
 			chp->chan_sensor.value_cur = data[1 + chp->chan_num];
 
 		chp->chan_sensor.state = ENVSYS_SVALID;
-		chp->chan_sensor.flags &= ~ENVSYS_FNEED_REFRESH;
 	}
 }
 
@@ -419,6 +418,22 @@ is_cpu_temp(const envsys_data_t *edata)
 	return strncmp(edata->desc, "CPU", 3) == 0;
 }
 
+static bool
+is_high_temp(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_INDICATOR)
+		return false;
+	return strcmp(edata->desc, "high_temp") == 0;
+}
+
+static bool
+is_fan_fail(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_INDICATOR)
+		return false;
+	return strcmp(edata->desc, "fan_fail") == 0;
+}
+
 static int
 ecadc_set_fan_speed(struct ecadc_softc *sc, u_int8_t chan, u_int8_t val)
 {
@@ -428,15 +443,15 @@ ecadc_set_fan_speed(struct ecadc_softc *sc, u_int8_t chan, u_int8_t val)
 	ctrl |= chan;
 	ret = iic_acquire_bus(sc->sc_tag, 0);
 	if (ret) {
-		aprint_error_dev(sc->sc_dev,
-		    "error acquiring i2c bus (ch %d)\n", chan);
+		printf("%s: error acquiring i2c bus (ch %d)\n",
+		    device_xname(sc->sc_dev), chan);
 		return ret;
 	}
 	ret = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
 	    &ctrl, 1, &val, 1, 0);
 	if (ret)
-		aprint_error_dev(sc->sc_dev,
-		    "error changing fan speed (ch %d)\n", chan);
+		printf("%s: error changing fan speed (ch %d)\n",
+		    device_xname(sc->sc_dev), chan);
 	else
 		DPRINTF("%s changed fan speed (ch %d) to 0x%x\n",
 		    device_xname(sc->sc_dev), chan, val);
@@ -448,30 +463,47 @@ static void
 ecadc_fan_adjust(void *v)
 {
 	struct ecadc_softc *sc = v;
+	struct ecadc_channel *chp;
 	int i;
 	u_int8_t temp, speed;
+	u_int32_t htemp, ffail;
 
 	for (i = 0; i < sc->sc_nchan; i++) {
-		struct ecadc_channel *chp = &sc->sc_channels[i];
+		chp = &sc->sc_channels[i];
+		if (chp->chan_type != PCF8591_SYS_FAN_CTRL)
+			continue;
 
-		if (chp->chan_type == PCF8591_CPU_FAN_CTRL) {
+		/* Check for high temperature or fan failure */
+		htemp = sysmon_envsys_get_max_value(is_high_temp, true);
+		ffail = sysmon_envsys_get_max_value(is_fan_fail, true);
+		if (htemp) {
+			printf("%s: High temperature detected\n",
+			    device_xname(sc->sc_dev));
+			/* Set fans to maximum speed */
+			speed = sc->sc_cpu_fan_spd[0];
+		} else if (ffail) {
+			printf("%s: Fan failure detected\n",
+			    device_xname(sc->sc_dev));
+			/* Set fans to maximum speed */
+			speed = sc->sc_cpu_fan_spd[0];
+		} else {
 			/* Extract the raw value from the max CPU temp */
 			temp = sysmon_envsys_get_max_value(is_cpu_temp, true)
-				& 0xff;
+			    & 0xff;
 			if (!temp) {
-				aprint_error_dev(sc->sc_dev,
-				    "skipping temp adjustment"
-				    " - no sensor values\n");
+				printf("%s: skipping temp adjustment"
+				    " - no sensor values\n",
+				    device_xname(sc->sc_dev));
 				return;
 			}
 			if (temp > XLATE_MAX)
 				temp = XLATE_MAX;
 			speed = chp->chan_xlate[temp];
-			if (speed != chp->chan_speed) {
-				if (!ecadc_set_fan_speed(sc, chp->chan_num,
-				    speed))
-					chp->chan_speed = speed;
-			}
+		}
+		if (speed != chp->chan_speed) {
+			if (!ecadc_set_fan_speed(sc, chp->chan_num,
+			    speed))
+				chp->chan_speed = speed;
 		}
 	}
 }
