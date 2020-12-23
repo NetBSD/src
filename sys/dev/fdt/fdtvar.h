@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.63 2020/12/23 04:07:34 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.64 2020/12/23 16:02:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,10 +77,6 @@ struct fdtbus_interrupt_controller_func {
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
 	void	(*unmask)(device_t, void *);
-};
-
-struct fdtbus_i2c_controller_func {
-	i2c_tag_t (*get_tag)(device_t);
 };
 
 struct fdtbus_spi_controller_func {
@@ -277,8 +273,7 @@ struct fdt_dma_range {
 
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
-int		fdtbus_register_i2c_controller(device_t, int,
-		    const struct fdtbus_i2c_controller_func *);
+int		fdtbus_register_i2c_controller(i2c_tag_t, int);
 int		fdtbus_register_spi_controller(device_t, int,
 		    const struct fdtbus_spi_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,

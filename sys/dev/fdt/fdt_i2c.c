@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.8 2020/06/12 03:32:30 thorpej Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.8 2020/06/12 03:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.9 2020/12/23 16:02:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,9 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.8 2020/06/12 03:32:30 thorpej Exp $");
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_i2c_controller {
-	device_t i2c_dev;
+	i2c_tag_t i2c_tag;
 	int i2c_phandle;
-	const struct fdtbus_i2c_controller_func *i2c_funcs;
 
 	LIST_ENTRY(fdtbus_i2c_controller) i2c_next;
 };
@@ -49,15 +48,13 @@ static LIST_HEAD(, fdtbus_i2c_controller) fdtbus_i2c_controllers =
     LIST_HEAD_INITIALIZER(fdtbus_i2c_controllers);
 
 int
-fdtbus_register_i2c_controller(device_t dev, int phandle,
-    const struct fdtbus_i2c_controller_func *funcs)
+fdtbus_register_i2c_controller(i2c_tag_t tag, int phandle)
 {
 	struct fdtbus_i2c_controller *i2c;
 
 	i2c = kmem_alloc(sizeof(*i2c), KM_SLEEP);
-	i2c->i2c_dev = dev;
+	i2c->i2c_tag = tag;
 	i2c->i2c_phandle = phandle;
-	i2c->i2c_funcs = funcs;
 
 	LIST_INSERT_HEAD(&fdtbus_i2c_controllers, i2c, i2c_next);
 
@@ -86,7 +83,7 @@ fdtbus_get_i2c_tag(int phandle)
 	if (i2c == NULL)
 		return NULL;
 
-	return i2c->i2c_funcs->get_tag(i2c->i2c_dev);
+	return i2c->i2c_tag;
 }
 
 i2c_tag_t

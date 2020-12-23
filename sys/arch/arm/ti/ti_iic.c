@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.7 2020/08/16 03:48:59 riastradh Exp $ */
+/* $NetBSD: ti_iic.c,v 1.8 2020/12/23 16:02:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7 2020/08/16 03:48:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.8 2020/12/23 16:02:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,12 +217,6 @@ static int	ti_iic_wait(struct ti_iic_softc *, uint16_t, uint16_t, int);
 static uint32_t	ti_iic_stat(struct ti_iic_softc *, uint32_t);
 static int	ti_iic_flush(struct ti_iic_softc *);
 
-static i2c_tag_t ti_iic_get_tag(device_t);
-
-static const struct fdtbus_i2c_controller_func ti_iic_funcs = {
-	.get_tag = ti_iic_get_tag,
-};
-
 CFATTACH_DECL_NEW(ti_iic, sizeof(struct ti_iic_softc),
     ti_iic_match, ti_iic_attach, NULL, NULL);
 
@@ -302,7 +296,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	ti_iic_reset(sc);
 	ti_iic_flush(sc);
 
-	fdtbus_register_i2c_controller(self, phandle, &ti_iic_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
 }
@@ -704,12 +698,4 @@ ti_iic_flush(struct ti_iic_softc *sc)
 
 	I2C_WRITE_REG(sc, I2C_CNT, 0);
 	return 0;
-}
-
-static i2c_tag_t
-ti_iic_get_tag(device_t dev)
-{
-	struct ti_iic_softc * const sc = device_private(dev);
-
-	return &sc->sc_ic;
 }

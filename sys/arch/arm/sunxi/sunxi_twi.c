@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.11 2020/01/12 17:48:42 thorpej Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.12 2020/12/23 16:02:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.11 2020/01/12 17:48:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.12 2020/12/23 16:02:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,18 +80,6 @@ static const struct of_compat_data compat_data[] = {
 
 CFATTACH_DECL_NEW(sunxi_twi, sizeof(struct gttwsi_softc),
 	sunxi_twi_match, sunxi_twi_attach, NULL, NULL);
-
-static i2c_tag_t
-sunxi_twi_get_tag(device_t dev)
-{
-	struct gttwsi_softc * const sc = device_private(dev);
-
-	return &sc->sc_i2c;
-}
-
-const struct fdtbus_i2c_controller_func sunxi_twi_funcs = {
-	.get_tag = sunxi_twi_get_tag,
-};
 
 static u_int
 sunxi_twi_calc_rate(u_int parent_rate, u_int n, u_int m)
@@ -194,7 +182,7 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	fdtbus_register_i2c_controller(self, phandle, &sunxi_twi_funcs);
+	fdtbus_register_i2c_controller(&sc->sc_i2c, phandle);
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_i2c, iicbus_print);
 }
