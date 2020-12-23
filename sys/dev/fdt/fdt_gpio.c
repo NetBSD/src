@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.6 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.7 2020/12/23 04:07:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.6 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.7 2020/12/23 04:07:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,30 @@ fdtbus_get_gpio_controller(int phandle)
 	}
 
 	return NULL;
+}
+
+int
+fdtbus_gpio_count(int phandle, const char *prop)
+{
+	const uint32_t *gpios, *p;
+	u_int n, gpio_cells;
+	int len, resid;
+
+	gpios = fdtbus_get_prop(phandle, prop, &len);
+	if (gpios == NULL)
+		return 0;
+
+	p = gpios;
+	for (n = 0, resid = len; resid > 0; n++) {
+		const int gc_phandle =
+		    fdtbus_get_phandle_from_native(be32toh(p[0]));
+		if (of_getprop_uint32(gc_phandle, "#gpio-cells", &gpio_cells))
+			break;
+		resid -= (gpio_cells + 1) * 4;
+		p += gpio_cells + 1;
+	}
+
+	return n;
 }
 
 struct fdtbus_gpio_pin *
