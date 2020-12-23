@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.237 2020/12/23 13:50:54 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.238 2020/12/23 14:03:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -831,19 +831,17 @@ pp_skip_hspace(char **pp)
 		(*pp)++;
 }
 
-#ifdef MAKE_NATIVE
+#if defined(lint)
+#  define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
+#elif defined(MAKE_NATIVE)
 #  include <sys/cdefs.h>
-#  ifndef lint
-#    define MAKE_RCSID(id) __RCSID(id)
-#  endif
-#elif defined(MAKE_ALL_IN_ONE)
-#  if defined(__COUNTER__)
-#    define MAKE_RCSID_CONCAT(x, y) CONCAT(x, y)
-#    define MAKE_RCSID(id) static volatile char \
+#  define MAKE_RCSID(id) __RCSID(id)
+#elif defined(MAKE_ALL_IN_ONE) && defined(__COUNTER__)
+#  define MAKE_RCSID_CONCAT(x, y) CONCAT(x, y)
+#  define MAKE_RCSID(id) static volatile char \
 	MAKE_RCSID_CONCAT(rcsid_, __COUNTER__)[] = id
-#  else
-#    define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
-#  endif
+#elif defined(MAKE_ALL_IN_ONE)
+#  define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
 #else
 #  define MAKE_RCSID(id) static volatile char rcsid[] = id
 #endif
