@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.59.4.3 2020/03/01 12:35:16 martin Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.59.4.4 2020/12/23 12:34:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59.4.3 2020/03/01 12:35:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59.4.4 2020/12/23 12:34:38 martin Exp $");
 
 #include "opt_usb.h"
 
@@ -880,7 +880,6 @@ dwc2_device_intr_abort(struct usbd_xfer *xfer)
 	struct dwc2_softc *sc __diagused = DWC2_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
 	DPRINTF("xfer=%p\n", xfer);
 	usbd_xfer_abort(xfer);

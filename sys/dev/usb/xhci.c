@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.6 2020/05/25 15:31:45 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.7 2020/12/23 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.6 2020/05/25 15:31:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.7 2020/12/23 12:34:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4151,7 +4151,6 @@ xhci_device_intr_abort(struct usbd_xfer *xfer)
 	XHCIHIST_CALLARGS("%#jx", (uintptr_t)xfer, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 	usbd_xfer_abort(xfer);
 }
 
