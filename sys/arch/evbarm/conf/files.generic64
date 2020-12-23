@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.16 2020/03/16 08:17:58 nisimura Exp $
+#	$NetBSD: files.generic64,v 1.17 2020/12/23 14:42:38 skrll Exp $
 #
 # A generic (aarch64) kernel configuration info
 #
@@ -13,8 +13,8 @@ include "arch/evbarm/conf/files.fdt"
 include "arch/arm/acpi/files.acpi"
 include "arch/arm/amlogic/files.meson"
 include "arch/arm/broadcom/files.bcm2835"
-include "arch/arm/imx/fdt/files.imx6"
 include "arch/arm/nvidia/files.tegra"
+include "arch/arm/nxp/files.imx"
 include "arch/arm/rockchip/files.rockchip"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/virt/files.virt"
