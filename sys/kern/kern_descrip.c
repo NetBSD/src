@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.249 2020/08/28 10:20:14 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.250 2020/12/24 12:14:50 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.249 2020/08/28 10:20:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.250 2020/12/24 12:14:50 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1766,6 +1766,9 @@ fsetown(pid_t *pgid, u_long cmd, const void *data)
 {
 	pid_t id = *(const pid_t *)data;
 	int error;
+
+	if (id == INT_MIN)
+		return EINVAL;
 
 	switch (cmd) {
 	case TIOCSPGRP:
