@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.267 2020/12/24 15:51:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.268 2020/12/24 15:51:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5166,6 +5166,7 @@ ixgbe_legacy_irq(void *arg)
 	/* Silicon errata #26 on 82598. Disable all interrupts */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
 
+	/* Read and clear EICR */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
 	adapter->stats.pf.legint.ev_count++;
@@ -5218,14 +5219,11 @@ ixgbe_legacy_irq(void *arg)
 		if ((eicr & eicr_mask)
 		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
 			&& (eicr & IXGBE_EICR_LSC))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
 		}
 
 		if ((hw->mac.type == ixgbe_mac_82599EB) &&
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR,
-			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
 	}
@@ -5233,7 +5231,6 @@ ixgbe_legacy_irq(void *arg)
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
 		ixgbe_check_fan_failure(adapter, eicr, true);
-		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 	}
 
 	/* External PHY interrupt */
