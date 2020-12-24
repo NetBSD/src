@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.265 2020/12/24 10:00:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.266 2020/12/24 10:37:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3108,6 +3108,12 @@ ixgbe_msix_admin(void *arg)
 	/* Clear all OTHER interrupts with write */
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
+	/* Link status change */
+	if (eicr & IXGBE_EICR_LSC) {
+		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
+		task_requests |= IXGBE_REQUEST_TASK_LSC;
+	}
+
 	if (ixgbe_is_sfp(hw)) {
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
@@ -3134,12 +3140,6 @@ ixgbe_msix_admin(void *arg)
 			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
-	}
-
-	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC) {
-		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
-		task_requests |= IXGBE_REQUEST_TASK_LSC;
 	}
 
 	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
@@ -5207,11 +5207,9 @@ ixgbe_legacy_irq(void *arg)
 		IXGBE_TX_UNLOCK(txr);
 	}
 
-	/* Check for fan failure */
-	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		ixgbe_check_fan_failure(adapter, eicr, true);
-		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-	}
+	/* Link status change */
+	if (eicr & IXGBE_EICR_LSC)
+		task_requests |= IXGBE_REQUEST_TASK_LSC;
 
 	if (ixgbe_is_sfp(hw)) {
 		/* Pluggable optics-related interrupt */
@@ -5241,9 +5239,11 @@ ixgbe_legacy_irq(void *arg)
 		}
 	}
 
-	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC)
-		task_requests |= IXGBE_REQUEST_TASK_LSC;
+	/* Check for fan failure */
+	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
+		ixgbe_check_fan_failure(adapter, eicr, true);
+		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
+	}
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
