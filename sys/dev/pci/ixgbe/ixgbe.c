@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.268 2020/12/24 15:51:33 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.269 2020/12/24 18:32:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5161,9 +5161,14 @@ ixgbe_legacy_irq(void *arg)
 	bool		more = false;
 	bool		reenable_intr = true;
 	u32		eicr, eicr_mask;
+	u32		eims_orig;
 	u32		task_requests = 0;
 
-	/* Silicon errata #26 on 82598. Disable all interrupts */
+	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
+	/*
+	 * Silicon errata #26 on 82598. Disable all interrupts before reading
+	 * EICR.
+	 */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
 
 	/* Read and clear EICR */
@@ -5173,6 +5178,7 @@ ixgbe_legacy_irq(void *arg)
 	++que->irqs.ev_count;
 	if (eicr == 0) {
 		adapter->stats.pf.intzero.ev_count++;
+		IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig);
 		return 0;
 	}
 
