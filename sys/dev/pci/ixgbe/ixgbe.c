@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.269 2020/12/24 18:32:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.270 2020/12/24 22:36:43 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5085,13 +5085,11 @@ ixgbe_enable_intr(struct adapter *adapter)
 
 	/* With MSI-X we use auto clear */
 	if (adapter->msix_mem) {
-		mask = IXGBE_EIMS_ENABLE_MASK;
-		/* Don't autoclear Link */
-		mask &= ~IXGBE_EIMS_OTHER;
-		mask &= ~IXGBE_EIMS_LSC;
-		if (adapter->feat_cap & IXGBE_FEATURE_SRIOV)
-			mask &= ~IXGBE_EIMS_MAILBOX;
-		IXGBE_WRITE_REG(hw, IXGBE_EIAC, mask);
+		/*
+		 * It's not required to set TCP_TIMER because we don't use
+		 * it.
+		 */
+		IXGBE_WRITE_REG(hw, IXGBE_EIAC, IXGBE_EIMS_RTX_QUEUE);
 	}
 
 	/*
