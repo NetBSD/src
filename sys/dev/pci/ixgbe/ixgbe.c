@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.266 2020/12/24 10:37:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.267 2020/12/24 15:51:04 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3130,14 +3130,11 @@ ixgbe_msix_admin(void *arg)
 		if ((eicr & eicr_mask)
 		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
 			&& (eicr & IXGBE_EICR_LSC))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
 		}
 
 		if ((hw->mac.type == ixgbe_mac_82599EB) &&
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR,
-			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 		}
 	}
@@ -3156,7 +3153,6 @@ ixgbe_msix_admin(void *arg)
 		if (eicr & IXGBE_EICR_ECC) {
 			device_printf(adapter->dev,
 			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_ECC);
 		}
 
 		/* Check for over temp condition */
@@ -3166,8 +3162,6 @@ ixgbe_msix_admin(void *arg)
 				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
 					break;
 				IXGBE_WRITE_REG(hw, IXGBE_EIMC,
-				    IXGBE_EICR_GPI_SDP0_X550EM_a);
-				IXGBE_WRITE_REG(hw, IXGBE_EICR,
 				    IXGBE_EICR_GPI_SDP0_X550EM_a);
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
@@ -3183,7 +3177,6 @@ ixgbe_msix_admin(void *arg)
 					break;
 				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
 				device_printf(adapter->dev, "System shutdown required!\n");
-				IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_TS);
 				break;
 			}
 		}
@@ -3198,13 +3191,11 @@ ixgbe_msix_admin(void *arg)
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
 		ixgbe_check_fan_failure(adapter, eicr, TRUE);
-		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
 	}
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
-		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP0_X540);
 		task_requests |= IXGBE_REQUEST_TASK_PHY;
 	}
 
