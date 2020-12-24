@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.264 2020/12/24 06:14:41 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.265 2020/12/24 10:00:36 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3105,7 +3105,7 @@ ixgbe_msix_admin(void *arg)
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
 	/* Be sure the queue bits are not cleared */
 	eicr &= ~IXGBE_EICR_RTX_QUEUE;
-	/* Clear interrupt with write */
+	/* Clear all OTHER interrupts with write */
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
 	if (ixgbe_is_sfp(hw)) {
@@ -5172,7 +5172,7 @@ ixgbe_legacy_irq(void *arg)
 	u32		eicr, eicr_mask;
 	u32		task_requests = 0;
 
-	/* Silicon errata #26 on 82598 */
+	/* Silicon errata #26 on 82598. Disable all interrupts */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
 
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
@@ -5186,7 +5186,8 @@ ixgbe_legacy_irq(void *arg)
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
 		/*
-		 * The same as ixgbe_msix_que() about "que->txrx_use_workqueue".
+		 * The same as ixgbe_msix_que() about
+		 * "que->txrx_use_workqueue".
 		 */
 		que->txrx_use_workqueue = adapter->txrx_use_workqueue;
 
@@ -6142,6 +6143,8 @@ ixgbe_print_debug_info(struct adapter *adapter)
 		device_printf(dev, "EIMS_EX(1):\t%08x\n",
 			      IXGBE_READ_REG(hw, IXGBE_EIMS_EX(1)));
 	}
+	device_printf(dev, "EIAM:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_EIAM));
+	device_printf(dev, "EIAC:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_EIAC));
 } /* ixgbe_print_debug_info */
 
 /************************************************************************
@@ -6566,10 +6569,12 @@ ixgbe_handle_que(void *context)
 		que->req.ev_count++;
 		ixgbe_sched_handle_que(adapter, que);
 	} else if (que->res != NULL) {
-		/* Re-enable this interrupt */
+		/* MSIX: Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
-	} else
+	} else {
+		/* INTx or MSI */
 		ixgbe_enable_intr(adapter);
+	}
 
 	return;
 } /* ixgbe_handle_que */
