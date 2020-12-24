@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.263 2020/12/22 07:16:23 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.264 2020/12/24 06:14:41 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5181,8 +5181,6 @@ ixgbe_legacy_irq(void *arg)
 	++que->irqs.ev_count;
 	if (eicr == 0) {
 		adapter->stats.pf.intzero.ev_count++;
-		if ((ifp->if_flags & IFF_UP) != 0)
-			ixgbe_enable_intr(adapter);
 		return 0;
 	}
 
