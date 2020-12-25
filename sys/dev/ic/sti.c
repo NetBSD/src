@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.23 2020/12/23 08:34:35 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.24 2020/12/25 20:41:24 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.23 2020/12/23 08:34:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.24 2020/12/25 20:41:24 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -78,6 +78,18 @@ void sti_erasecols(void *, int, int, int, long);
 void sti_copyrows(void *, int, int, int);
 void sti_eraserows(void *, int, int, long);
 int  sti_alloc_attr(void *, int, int, int, long *);
+
+/* pseudo attribute ops for sti ROM putchar function */
+#define WSATTR_FG_SHIFT	24
+#define WSATTR_BG_SHIFT	16
+#define WSATTR_UNPACK_FG(attr)	(((attr) >> WSATTR_FG_SHIFT) & 0xff)
+#define WSATTR_UNPACK_BG(attr)	(((attr) >> WSATTR_BG_SHIFT) & 0xff)
+#define WSATTR_UNPACK_FLAG(attr) ((attr) & WSATTR_USERMASK)
+#define WSATTR_PACK_FG(fg)	((fg) << WSATTR_FG_SHIFT)
+#define WSATTR_PACK_BG(bg)	((bg) << WSATTR_BG_SHIFT)
+#define WSATTR_PACK_FLAG(flag)	((flag))
+#define WSATTR_PACK(fg, bg, flag)	\
+    (WSATTR_PACK_FG(fg) | WSATTR_PACK_BG(bg) | WSATTR_PACK_FLAG(flag))
 
 struct wsdisplay_emulops sti_emulops = {
 	.cursor = sti_cursor,
@@ -618,7 +630,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	scr->scr_wsd.textops = &sti_emulops;
 	scr->scr_wsd.fontwidth = scr->scr_curfont.width;
 	scr->scr_wsd.fontheight = scr->scr_curfont.height;
-	scr->scr_wsd.capabilities = WSSCREEN_REVERSE | WSSCREEN_UNDERLINE;
+	scr->scr_wsd.capabilities = WSSCREEN_REVERSE;
 
 	scr->scr_scrlist[0] = &scr->scr_wsd;
 	scr->scr_screenlist.nscreens = 1;
@@ -1293,6 +1305,10 @@ sti_putchar(void *v, int row, int col, u_int uc, long attr)
 	struct sti_screen *scr = (struct sti_screen *)v;
 	struct sti_rom *rom = scr->scr_rom;
 	struct sti_font *fp = &scr->scr_curfont;
+	int bg, fg;
+
+	fg = WSATTR_UNPACK_FG(attr);
+	bg = WSATTR_UNPACK_BG(attr);
 
 	if (scr->scr_romfont != NULL) {
 		/*
@@ -1307,9 +1323,8 @@ sti_putchar(void *v, int row, int col, u_int uc, long attr)
 		memset(&a, 0, sizeof(a));
 
 		a.flags.flags = STI_UNPMVF_WAIT;
-		/* XXX does not handle text attributes */
-		a.in.fg_colour = STI_COLOUR_WHITE;
-		a.in.bg_colour = STI_COLOUR_BLACK;
+		a.in.fg_colour = fg;
+		a.in.bg_colour = bg;
 		a.in.x = col * fp->width;
 		a.in.y = row * fp->height;
 		a.in.font_addr = scr->scr_romfont;
@@ -1329,9 +1344,8 @@ sti_putchar(void *v, int row, int col, u_int uc, long attr)
 		memset(&a, 0, sizeof(a));
 
 		a.flags.flags = STI_BLKMVF_WAIT;
-		/* XXX does not handle text attributes */
-		a.in.fg_colour = STI_COLOUR_WHITE;
-		a.in.bg_colour = STI_COLOUR_BLACK;
+		a.in.fg_colour = fg;
+		a.in.bg_colour = bg;
 
 		a.in.srcx = ((uc - fp->first) / scr->scr_fontmaxcol) *
 		    fp->width + scr->scr_fontbase;
@@ -1397,8 +1411,18 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 	struct sti_screen *scr = (struct sti_screen *)v;
 #endif
 
-	*pattr = 0;
+	if ((flags & (WSATTR_HILIT | WSATTR_BLINK |
+	    WSATTR_UNDERLINE | WSATTR_WSCOLORS)) != 0)
+		return EINVAL;
+	if ((flags & WSATTR_REVERSE) != 0) {
+		fg = STI_COLOUR_BLACK; 
+		bg = STI_COLOUR_WHITE;
+	} else {
+		fg = STI_COLOUR_WHITE;
+		bg = STI_COLOUR_BLACK; 
+	}
 
+	*pattr = WSATTR_PACK(fg, bg, flags);
 	return 0;
 }
 
