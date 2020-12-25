@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.86 2020/12/25 08:55:40 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.87 2020/12/25 08:57:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.86 2020/12/25 08:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.87 2020/12/25 08:57:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -176,7 +176,7 @@ static void
 ahci_setup_ports(struct ahci_softc *sc)
 {
 	int i, port;
-	
+
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
 		if ((sc->sc_ahci_ports & (1U << i)) == 0)
 			continue;
@@ -254,7 +254,7 @@ ahci_attach(struct ahci_softc *sc)
 
 		sc->sc_init_data.cap = AHCI_READ(sc, AHCI_CAP);
 		sc->sc_init_data.ports = AHCI_READ(sc, AHCI_PI);
-		
+
 		ahci_rev = AHCI_READ(sc, AHCI_VS);
 		if (AHCI_VS_MJR(ahci_rev) > 1 ||
 		    (AHCI_VS_MJR(ahci_rev) == 1 && AHCI_VS_MNR(ahci_rev) >= 20)) {
@@ -314,7 +314,7 @@ ahci_attach(struct ahci_softc *sc)
 	    ", %d port%s, %d slot%s, CAP %s\n",
 	    AHCI_VS_MJR(ahci_rev), AHCI_VS_MNR(ahci_rev),
 	    sc->sc_atac.atac_nchannels,
-	    (sc->sc_atac.atac_nchannels == 1 ? "" : "s"), 
+	    (sc->sc_atac.atac_nchannels == 1 ? "" : "s"),
 	    sc->sc_ncmds, (sc->sc_ncmds == 1 ? "" : "s"), buf);
 
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA
@@ -434,18 +434,18 @@ ahci_attach(struct ahci_softc *sc)
 		achp->ahcic_bus_cmdh = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
 		    AHCI_CMDH_SIZE * port;
 		achp->ahcic_rfis = (struct ahci_r_fis *)
-		    ((char *)cmdhp + 
-		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels + 
+		    ((char *)cmdhp +
+		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels +
 		     AHCI_RFIS_SIZE * port);
 		achp->ahcic_bus_rfis = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
-		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels + 
+		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels +
 		     AHCI_RFIS_SIZE * port;
 		AHCIDEBUG_PRINT(("port %d cmdh %p (0x%" PRIx64 ") "
 				         "rfis %p (0x%" PRIx64 ")\n", i,
 		   achp->ahcic_cmdh, (uint64_t)achp->ahcic_bus_cmdh,
 		   achp->ahcic_rfis, (uint64_t)achp->ahcic_bus_rfis),
 		   DEBUG_PROBE);
-		    
+
 		for (j = 0; j < sc->sc_ncmds; j++) {
 			achp->ahcic_cmd_tbl[j] = (struct ahci_cmd_tbl *)
 			    ((char *)cmdtblp + AHCI_CMDTBL_SIZE * j);
@@ -718,7 +718,7 @@ ahci_intr_port(void *v)
 	if (__predict_false(recover)) {
 		ata_channel_lock(chp);
 		ata_channel_thaw_locked(chp);
-		ata_thread_run(chp, 0, ATACH_TH_RECOVERY, tfd); 
+		ata_thread_run(chp, 0, ATACH_TH_RECOVERY, tfd);
 		ata_channel_unlock(chp);
 	}
 
@@ -1198,7 +1198,7 @@ ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_channel_lock(chp);
 
 	/*
-	 * Polled command. 
+	 * Polled command.
 	 */
 	for (int i = 0; i < xfer->c_ata_c.timeout / 10; i++) {
 		if (xfer->c_ata_c.flags & AT_DONE)
@@ -1208,7 +1208,7 @@ ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		ata_channel_lock(chp);
 		ata_delay(chp, 10, "ahcipl", xfer->c_ata_c.flags);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel,
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
 	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
 	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
@@ -1444,7 +1444,7 @@ ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
 	/*
-	 * Polled command. 
+	 * Polled command.
 	 */
 	for (int i = 0; i < ATA_DELAY * 10; i++) {
 		if (xfer->c_bio.flags & ATA_ITSDONE)
@@ -1452,7 +1452,7 @@ ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		ahci_intr_port(achp);
 		delay(100);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel,
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
 	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
 	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
@@ -1536,7 +1536,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[xfer->c_slot]);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	if (AHCI_TFD_ERR(tfd) & WDCS_DWF) { 
+	if (AHCI_TFD_ERR(tfd) & WDCS_DWF) {
 		ata_bio->error = ERR_DF;
 	} else if (AHCI_TFD_ST(tfd) & WDCS_ERR) {
 		ata_bio->error = ERROR;
@@ -1548,7 +1548,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	AHCIDEBUG_PRINT(("ahci_bio_complete bcount %ld",
 	    ata_bio->bcount), DEBUG_XFERS);
-	/* 
+	/*
 	 * If it was a write, complete data buffer may have been transferred
 	 * before error detection; in this case don't use cmdh_prdbc
 	 * as it won't reflect what was written to media. Assume nothing
@@ -1741,7 +1741,7 @@ ahci_dma_setup(struct ata_channel *chp, int slot, void *data,
 		return error;
 	}
 	bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
-	    achp->ahcic_datad[slot]->dm_mapsize, 
+	    achp->ahcic_datad[slot]->dm_mapsize,
 	    (op == BUS_DMA_READ) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	for (seg = 0; seg <  achp->ahcic_datad[slot]->dm_nsegs; seg++) {
 		cmd_tbl->cmdt_prd[seg].prd_dba = htole64(
@@ -1941,7 +1941,7 @@ ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
 	/*
-	 * Polled command. 
+	 * Polled command.
 	 */
 	for (int i = 0; i < ATA_DELAY / 10; i++) {
 		if (xfer->c_scsipi->xs_status & XS_STS_DONE)
@@ -1949,7 +1949,7 @@ ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		ahci_intr_port(achp);
 		delay(10000);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel,
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
 	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
 	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
@@ -2003,7 +2003,7 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	sc_xfer->resid -= le32toh(achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc);
 	AHCIDEBUG_PRINT(("ahci_atapi_complete datalen %d resid %d\n",
 	    sc_xfer->datalen, sc_xfer->resid), DEBUG_XFERS);
-	if (AHCI_TFD_ST(tfd) & WDCS_ERR && 
+	if (AHCI_TFD_ST(tfd) & WDCS_ERR &&
 	    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
 	    sc_xfer->resid == sc_xfer->datalen)) {
 		sc_xfer->error = XS_SHORTSENSE;
