@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.24 2020/01/18 11:26:11 simonb Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.25 2020/12/25 08:57:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -115,7 +115,7 @@ struct ahci_softc {
     (sc)->sc_ahcih, (reg))
 #define AHCI_WRITE(sc, reg, val) bus_space_write_4((sc)->sc_ahcit, \
     (sc)->sc_ahcih, (reg), (val))
-    
+
 #define AHCI_CH2SC(chp)		(struct ahci_softc *)((chp)->ch_atac)
 
 void ahci_attach(struct ahci_softc *);
