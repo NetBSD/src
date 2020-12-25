@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.180 2020/06/27 17:29:19 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.181 2020/12/25 09:28:56 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.180 2020/06/27 17:29:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.181 2020/12/25 09:28:56 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -695,6 +695,10 @@ spec_read(void *v)
 	struct partinfo pi;
 	int n, on;
 	int error = 0;
+	int i, nra;
+	daddr_t lastbn, *rablks;
+	int *rasizes;
+	int nrablks, ratogo;
 
 	KASSERT(uio->uio_rw == UIO_READ);
 	KASSERTMSG(VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
@@ -723,18 +727,45 @@ spec_read(void *v)
 			bsize = BLKDEV_IOSIZE;
 
 		bscale = bsize >> DEV_BSHIFT;
+
+		nra = uimax(16 * MAXPHYS / bsize - 1, 511);
+		rablks = kmem_alloc(nra * sizeof(*rablks), KM_SLEEP);
+		rasizes = kmem_alloc(nra * sizeof(*rasizes), KM_SLEEP);
+		lastbn = ((uio->uio_offset + uio->uio_resid - 1) >> DEV_BSHIFT)
+		    &~ (bscale - 1);
+		nrablks = ratogo = 0;
 		do {
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = uimin((unsigned)(bsize - on), uio->uio_resid);
-			error = bread(vp, bn, bsize, 0, &bp);
-			if (error) {
-				return (error);
+
+			if (ratogo == 0) {
+				nrablks = uimin((lastbn - bn) / bscale, nra);
+				ratogo = nrablks;
+
+				for (i = 0; i < nrablks; ++i) {
+					rablks[i] = bn + (i+1) * bscale;
+					rasizes[i] = bsize;
+				}
+
+				error = breadn(vp, bn, bsize,
+					       rablks, rasizes, nrablks,
+					       0, &bp);
+			} else {
+				if (ratogo > 0)
+					--ratogo;
+				error = bread(vp, bn, bsize, 0, &bp);
 			}
+			if (error)
+				break;
 			n = uimin(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			brelse(bp, 0);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
+
+		kmem_free(rablks, nra * sizeof(*rablks));
+		kmem_free(rasizes, nra * sizeof(*rasizes));
+
 		return (error);
 
 	default:
