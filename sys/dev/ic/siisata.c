@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.43 2020/10/10 20:27:54 thorpej Exp $ */
+/* $NetBSD: siisata.c,v 1.44 2020/12/25 12:33:03 skrll Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.43 2020/10/10 20:27:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.44 2020/12/25 12:33:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,16 +184,16 @@ void siisata_atapi_kill_pending(struct scsipi_periph *);
 #endif /* NATAPIBUS */
 
 const struct ata_bustype siisata_ata_bustype = {
-	SCSIPI_BUSTYPE_ATA,
-	siisata_ata_bio,
-	siisata_reset_drive,
-	siisata_reset_channel,
-	siisata_exec_command,
-	ata_get_params,
-	siisata_ata_addref,
-	siisata_ata_delref,
-	siisata_killpending,
-	siisata_channel_recover,
+	.bustype_type = SCSIPI_BUSTYPE_ATA,
+	.ata_bio = siisata_ata_bio,
+	.ata_reset_drive = siisata_reset_drive,
+	.ata_reset_channel = siisata_reset_channel,
+	.ata_exec_command = siisata_exec_command,
+	.ata_get_params = ata_get_params,
+	.ata_addref = siisata_ata_addref,
+	.ata_delref = siisata_ata_delref,
+	.ata_killpending = siisata_killpending,
+	.ata_recovery = siisata_channel_recover,
 };
 
 #if NATAPIBUS > 0
