@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.85 2020/12/20 00:14:30 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.86 2020/12/25 08:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.85 2020/12/20 00:14:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.86 2020/12/25 08:55:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -113,16 +113,16 @@ static const struct scsipi_bustype ahci_atapi_bustype = {
 #define AHCI_RST_WAIT (ATA_RESET_DELAY / 10)
 
 const struct ata_bustype ahci_ata_bustype = {
-	SCSIPI_BUSTYPE_ATA,
-	ahci_ata_bio,
-	ahci_reset_drive,
-	ahci_reset_channel,
-	ahci_exec_command,
-	ata_get_params,
-	ahci_ata_addref,
-	ahci_ata_delref,
-	ahci_killpending,
-	ahci_channel_recover,
+	.bustype_type = SCSIPI_BUSTYPE_ATA,
+	.ata_bio = ahci_ata_bio,
+	.ata_reset_drive = ahci_reset_drive,
+	.ata_reset_channel = ahci_reset_channel,
+	.ata_exec_command = ahci_exec_command,
+	.ata_get_params = ata_get_params,
+	.ata_addref = ahci_ata_addref,
+	.ata_delref = ahci_ata_delref,
+	.ata_killpending = ahci_killpending,
+	.ata_recovery = ahci_channel_recover,
 };
 
 static void ahci_setup_port(struct ahci_softc *sc, int i);

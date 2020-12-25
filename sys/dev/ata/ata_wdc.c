@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.118 2020/05/21 09:11:33 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.119 2020/12/25 08:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.118 2020/05/21 09:11:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.119 2020/12/25 08:55:40 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -119,16 +119,16 @@ static int	wdc_ata_addref(struct ata_drive_datas *);
 static void	wdc_ata_delref(struct ata_drive_datas *);
 
 const struct ata_bustype wdc_ata_bustype = {
-	SCSIPI_BUSTYPE_ATA,
-	wdc_ata_bio,
-	wdc_reset_drive,
-	wdc_reset_channel,
-	wdc_exec_command,
-	ata_get_params,
-	wdc_ata_addref,
-	wdc_ata_delref,
-	ata_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATA,
+	.ata_bio = wdc_ata_bio,
+	.ata_reset_drive = wdc_reset_drive,
+	.ata_reset_channel = wdc_reset_channel,
+	.ata_exec_command = wdc_exec_command,
+	.ata_get_params = ata_get_params,
+	.ata_addref = wdc_ata_addref,
+	.ata_delref = wdc_ata_delref,
+	.ata_killpending = ata_kill_pending,
+	.ata_recovery = NULL,
 };
 
 static const struct ata_xfer_ops wdc_bio_xfer_ops = {
