@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.161 2020/12/25 21:12:15 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.161 2020/12/25 21:12:15 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -255,8 +255,11 @@ static int (*wsdisplay_cons_kbd_getc)(dev_t);
 static void (*wsdisplay_cons_kbd_pollc)(dev_t, int);
 
 static struct consdev wsdisplay_cons = {
-	NULL, NULL, wsdisplay_getc, wsdisplay_cnputc,
-	wsdisplay_pollc, NULL, NULL, NULL, NODEV, CN_NORMAL
+	.cn_getc = wsdisplay_getc,
+	.cn_putc = wsdisplay_cnputc,
+	.cn_pollc = wsdisplay_pollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
