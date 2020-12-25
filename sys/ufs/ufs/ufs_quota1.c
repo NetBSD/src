@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.22 2016/06/20 00:52:04 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.23 2020/12/25 10:00:40 nia Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.22 2016/06/20 00:52:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.23 2020/12/25 10:00:40 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -311,6 +311,9 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	struct pathbuf *pb;
 	struct nameidata nd;
 
+	if (type < 0 || type >= MAXQUOTAS)
+		return EINVAL;
+
 	if (ump->um_flags & UFS_QUOTA2) {
 		uprintf("%s: quotas v2 already enabled\n",
 		    mp->mnt_stat.f_mntonname);
@@ -420,6 +423,9 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 	struct inode *ip;
 	kauth_cred_t cred;
 	int i, error;
+
+	if (type < 0 || type >= MAXQUOTAS)
+		return EINVAL;
 
 	mutex_enter(&dqlock);
 	while ((ump->umq1_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
