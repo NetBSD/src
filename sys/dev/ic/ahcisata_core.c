@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.87 2020/12/25 08:57:38 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.88 2020/12/26 10:56:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.87 2020/12/25 08:57:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.88 2020/12/26 10:56:25 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -363,6 +363,9 @@ ahci_attach(struct ahci_softc *sc)
 		return;
 	}
 	sc->sc_cmd_hdr = cmdhp;
+	memset(cmdhp, 0, dmasize);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_hdrd, 0, dmasize,
+	    BUS_DMASYNC_PREWRITE);
 
 	ahci_enable_intrs(sc);
 
@@ -429,6 +432,9 @@ ahci_attach(struct ahci_softc *sc)
 			    ", error=%d\n", AHCINAME(sc), error);
 			break;
 		}
+		memset(cmdtblp, 0, dmasize);
+		bus_dmamap_sync(sc->sc_dmat, achp->ahcic_cmd_tbld, 0,
+		    dmasize, BUS_DMASYNC_PREWRITE);
 		achp->ahcic_cmdh  = (struct ahci_cmd_header *)
 		    ((char *)cmdhp + AHCI_CMDH_SIZE * port);
 		achp->ahcic_bus_cmdh = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
