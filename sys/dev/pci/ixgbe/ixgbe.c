@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.275 2020/12/26 06:17:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.276 2020/12/26 06:27:38 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5269,6 +5269,61 @@ ixgbe_legacy_irq(void *arg)
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
 			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
+		}
+	}
+
+	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
+		if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
+		    (eicr & IXGBE_EICR_FLOW_DIR)) {
+			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1)) {
+				task_requests |= IXGBE_REQUEST_TASK_FDIR;
+				/* Disable the interrupt */
+				eims_disable |= IXGBE_EIMS_FLOW_DIR;
+			}
+		}
+
+		if (eicr & IXGBE_EICR_ECC) {
+			device_printf(adapter->dev,
+			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
+			/* Disable interrupt to prevent log spam */
+			eims_disable |= IXGBE_EICR_ECC;
+		}
+
+		/* Check for over temp condition */
+		if (adapter->feat_en & IXGBE_FEATURE_TEMP_SENSOR) {
+			switch (adapter->hw.mac.type) {
+			case ixgbe_mac_X550EM_a:
+				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
+					break;
+				/* Disable interrupt to prevent log spam */
+				eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
+
+				retval = hw->phy.ops.check_overtemp(hw);
+				if (retval != IXGBE_ERR_OVERTEMP)
+					break;
+				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
+				device_printf(adapter->dev, "System shutdown required!\n");
+				break;
+			default:
+				if (!(eicr & IXGBE_EICR_TS))
+					break;
+				/* Disable interrupt to prevent log spam */
+				eims_disable |= IXGBE_EIMS_TS;
+
+				retval = hw->phy.ops.check_overtemp(hw);
+				if (retval != IXGBE_ERR_OVERTEMP)
+					break;
+				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
+				device_printf(adapter->dev, "System shutdown required!\n");
+				break;
+			}
+		}
+
+		/* Check for VF message */
+		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
+		    (eicr & IXGBE_EICR_MAILBOX)) {
+			task_requests |= IXGBE_REQUEST_TASK_MBX;
+			eims_disable |= IXGBE_EIMS_MAILBOX;
 		}
 	}
 
