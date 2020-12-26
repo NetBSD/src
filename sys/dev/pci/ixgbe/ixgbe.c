@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.272 2020/12/26 06:02:42 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.273 2020/12/26 06:07:16 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -269,7 +269,7 @@ static int	ixgbe_msix_admin(void *);
 static void	ixgbe_handle_que(void *);
 static void	ixgbe_handle_link(void *);
 static void	ixgbe_handle_msf(void *);
-static void	ixgbe_handle_mod(void *);
+static void	ixgbe_handle_mod(void *, bool);
 static void	ixgbe_handle_phy(void *);
 
 /* Deferred workqueue handlers */
@@ -1566,9 +1566,9 @@ ixgbe_config_link(struct adapter *adapter)
 	if (sfp) {
 		if (hw->phy.multispeed_fiber) {
 			ixgbe_enable_tx_laser(hw);
-			task_requests |= IXGBE_REQUEST_TASK_MSF;
+			task_requests |= IXGBE_REQUEST_TASK_MSF_WOI;
 		}
-		task_requests |= IXGBE_REQUEST_TASK_MOD;
+		task_requests |= IXGBE_REQUEST_TASK_MOD_WOI;
 
 		mutex_enter(&adapter->admin_mtx);
 		adapter->task_requests |= task_requests;
@@ -3090,17 +3090,24 @@ ixgbe_msix_admin(void *arg)
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32		eicr, eicr_mask;
+	u32		eims_orig;
+	u32		eims_disable = 0;
 	u32		task_requests = 0;
 	s32		retval;
 
 	++adapter->admin_irqev.ev_count;
 
-	/* First get the cause */
+	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
+	/* Pause other interrupts */
+	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_MSIX_OTHER_CLEAR_MASK);
+
 	/*
+	 * First get the cause.
+	 *
 	 * The specifications of 82598, 82599, X540 and X550 say EICS register
 	 * is write only. However, Linux says it is a workaround for silicon
-	 * errata to read EICS instead of EICR to get interrupt cause. It seems
-	 * there is a problem about read clear mechanism for EICR register.
+	 * errata to read EICS instead of EICR to get interrupt cause.
+	 * At least, reading EICR clears lower 16bits of EIMS on 82598.
 	 */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
 	/* Be sure the queue bits are not cleared */
@@ -3110,8 +3117,8 @@ ixgbe_msix_admin(void *arg)
 
 	/* Link status change */
 	if (eicr & IXGBE_EICR_LSC) {
-		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
 		task_requests |= IXGBE_REQUEST_TASK_LSC;
+		eims_disable |= IXGBE_EIMS_LSC;
 	}
 
 	if (ixgbe_is_sfp(hw)) {
@@ -3131,11 +3138,13 @@ ixgbe_msix_admin(void *arg)
 		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
 			&& (eicr & IXGBE_EICR_LSC))) {
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
+			eims_disable |= IXGBE_EIMS_LSC;
 		}
 
 		if ((hw->mac.type == ixgbe_mac_82599EB) &&
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
+			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
 		}
 	}
 
@@ -3145,9 +3154,9 @@ ixgbe_msix_admin(void *arg)
 			/* This is probably overkill :) */
 			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1))
 				return 1;
-			/* Disable the interrupt */
-			IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_FLOW_DIR);
 			task_requests |= IXGBE_REQUEST_TASK_FDIR;
+			/* Disable the interrupt */
+			eims_disable |= IXGBE_EIMS_FLOW_DIR;
 		}
 
 		if (eicr & IXGBE_EICR_ECC) {
@@ -3161,8 +3170,7 @@ ixgbe_msix_admin(void *arg)
 			case ixgbe_mac_X550EM_a:
 				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
 					break;
-				IXGBE_WRITE_REG(hw, IXGBE_EIMC,
-				    IXGBE_EICR_GPI_SDP0_X550EM_a);
+
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
@@ -3172,6 +3180,7 @@ ixgbe_msix_admin(void *arg)
 			default:
 				if (!(eicr & IXGBE_EICR_TS))
 					break;
+
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
@@ -3185,29 +3194,31 @@ ixgbe_msix_admin(void *arg)
 		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
 		    (eicr & IXGBE_EICR_MAILBOX)) {
 			task_requests |= IXGBE_REQUEST_TASK_MBX;
+			eims_disable |= IXGBE_EIMS_MAILBOX;
 		}
 	}
 
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		ixgbe_check_fan_failure(adapter, eicr, TRUE);
+		ixgbe_check_fan_failure(adapter, eicr, true);
 	}
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
 		task_requests |= IXGBE_REQUEST_TASK_PHY;
+		eims_disable |= IXGBE_EICR_GPI_SDP0_X540;
 	}
 
 	if (task_requests != 0) {
-		/* Re-enabling other interrupts is done in the admin task */
-		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
-
 		mutex_enter(&adapter->admin_mtx);
 		adapter->task_requests |= task_requests;
 		ixgbe_schedule_admin_tasklet(adapter);
 		mutex_exit(&adapter->admin_mtx);
 	}
+
+	/* Re-enable some OTHER interrupts */
+	IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig & ~eims_disable);
 
 	return 1;
 } /* ixgbe_msix_admin */
@@ -4520,7 +4531,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 		}
 		if (sched_mod_task) {
 			mutex_enter(&adapter->admin_mtx);
-			adapter->task_requests |= IXGBE_REQUEST_TASK_MOD;
+			adapter->task_requests |= IXGBE_REQUEST_TASK_MOD_WOI;
 			ixgbe_schedule_admin_tasklet(adapter);
 			mutex_exit(&adapter->admin_mtx);
 		}
@@ -4658,9 +4669,10 @@ ixgbe_handle_recovery_mode_timer(struct work *wk, void *context)
 
 /************************************************************************
  * ixgbe_handle_mod - Tasklet for SFP module interrupts
+ * bool int_en: true if it's called when the interrupt is enabled.
  ************************************************************************/
 static void
-ixgbe_handle_mod(void *context)
+ixgbe_handle_mod(void *context, bool int_en)
 {
 	struct adapter	*adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
@@ -4733,7 +4745,10 @@ out:
 	 */
 	if (hw->mac.type != ixgbe_mac_82598EB) {
 		mutex_enter(&adapter->admin_mtx);
-		adapter->task_requests |= IXGBE_REQUEST_TASK_MSF;
+		if (int_en)
+			adapter->task_requests |= IXGBE_REQUEST_TASK_MSF;
+		else
+			adapter->task_requests |= IXGBE_REQUEST_TASK_MSF_WOI;
 		mutex_exit(&adapter->admin_mtx);
 	}
 
@@ -4794,7 +4809,9 @@ ixgbe_handle_admin(struct work *wk, void *context)
 {
 	struct adapter	*adapter = context;
 	struct ifnet	*ifp = adapter->ifp;
+	struct ixgbe_hw *hw = &adapter->hw;
 	u32		task_requests;
+	u32		eims_enable = 0;
 
 	mutex_enter(&adapter->admin_mtx);
 	adapter->admin_pending = 0;
@@ -4813,32 +4830,40 @@ ixgbe_handle_admin(struct work *wk, void *context)
 	IXGBE_CORE_LOCK(adapter);
 	if ((task_requests & IXGBE_REQUEST_TASK_LSC) != 0) {
 		ixgbe_handle_link(adapter);
+		eims_enable |= IXGBE_EIMS_LSC;
+	}
+	if ((task_requests & IXGBE_REQUEST_TASK_MOD_WOI) != 0) {
+		ixgbe_handle_mod(adapter, false);
 	}
 	if ((task_requests & IXGBE_REQUEST_TASK_MOD) != 0) {
-		ixgbe_handle_mod(adapter);
+		ixgbe_handle_mod(adapter, true);
+		if (hw->mac.type >= ixgbe_mac_X540)
+			eims_enable |= IXGBE_EICR_GPI_SDP0_X540;
+		else
+			eims_enable |= IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
 	}
-	if ((task_requests & IXGBE_REQUEST_TASK_MSF) != 0) {
+	if ((task_requests
+	    & (IXGBE_REQUEST_TASK_MSF_WOI | IXGBE_REQUEST_TASK_MSF)) != 0) {
 		ixgbe_handle_msf(adapter);
+		if (((task_requests & IXGBE_REQUEST_TASK_MSF) != 0) &&
+		    (hw->mac.type == ixgbe_mac_82599EB))
+		    eims_enable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
 	}
 	if ((task_requests & IXGBE_REQUEST_TASK_PHY) != 0) {
 		ixgbe_handle_phy(adapter);
+		eims_enable |= IXGBE_EICR_GPI_SDP0_X540;
 	}
 	if ((task_requests & IXGBE_REQUEST_TASK_FDIR) != 0) {
 		ixgbe_reinit_fdir(adapter);
+		eims_enable |= IXGBE_EIMS_FLOW_DIR;
 	}
 #if 0 /* notyet */
 	if ((task_requests & IXGBE_REQUEST_TASK_MBX) != 0) {
 		ixgbe_handle_mbx(adapter);
+		eims_enable |= IXGBE_EIMS_MAILBOX;
 	}
 #endif
-	if ((task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
-		/*
-		 * XXX FIXME.
-		 * ixgbe_enable_intr() enables all interrupts. It might enable
-		 * an interrupt which should not be enabled.
-		 */
-		ixgbe_enable_intr(adapter);
-	}
+	IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_enable);
 
 	IXGBE_CORE_UNLOCK(adapter);
 	IFNET_UNLOCK(ifp);
@@ -5155,9 +5180,10 @@ ixgbe_legacy_irq(void *arg)
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct		tx_ring *txr = adapter->tx_rings;
-	bool		reenable_intr = true;
 	u32		eicr, eicr_mask;
 	u32		eims_orig;
+	u32		eims_enable = 0;
+	u32		eims_disable = 0;
 	u32		task_requests = 0;
 
 	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
@@ -5197,12 +5223,17 @@ ixgbe_legacy_irq(void *arg)
 
 		que->req.ev_count++;
 		ixgbe_sched_handle_que(adapter, que);
-		reenable_intr = false;
-	}
+		/* Disable queue 0 interrupt */
+		eims_disable |= 1UL << 0;
+
+	} else
+		eims_enable |= IXGBE_EIMC_RTX_QUEUE;
 
 	/* Link status change */
-	if (eicr & IXGBE_EICR_LSC)
+	if (eicr & IXGBE_EICR_LSC) {
 		task_requests |= IXGBE_REQUEST_TASK_LSC;
+		eims_disable |= IXGBE_EIMS_LSC;
+	}
 
 	if (ixgbe_is_sfp(hw)) {
 		/* Pluggable optics-related interrupt */
@@ -5221,11 +5252,13 @@ ixgbe_legacy_irq(void *arg)
 		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
 			&& (eicr & IXGBE_EICR_LSC))) {
 			task_requests |= IXGBE_REQUEST_TASK_MOD;
+			eims_disable |= IXGBE_EIMS_LSC;
 		}
 
 		if ((hw->mac.type == ixgbe_mac_82599EB) &&
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			task_requests |= IXGBE_REQUEST_TASK_MSF;
+			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
 		}
 	}
 
@@ -5236,23 +5269,21 @@ ixgbe_legacy_irq(void *arg)
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
-	    (eicr & IXGBE_EICR_GPI_SDP0_X540))
+	    (eicr & IXGBE_EICR_GPI_SDP0_X540)) {
 		task_requests |= IXGBE_REQUEST_TASK_PHY;
+		eims_disable |= IXGBE_EICR_GPI_SDP0_X540;
+	}
 
 	if (task_requests != 0) {
-		/* Re-enabling other interrupts is done in the admin task */
-		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
-
 		mutex_enter(&adapter->admin_mtx);
 		adapter->task_requests |= task_requests;
 		ixgbe_schedule_admin_tasklet(adapter);
 		mutex_exit(&adapter->admin_mtx);
-
-		reenable_intr = false;
 	}
 
-	if (reenable_intr == true)
-		ixgbe_enable_intr(adapter);
+	/* Re-enable some interrupts */
+	IXGBE_WRITE_REG(hw, IXGBE_EIMS,
+	    (eims_orig & ~eims_disable) | eims_enable);
 
 	return 1;
 } /* ixgbe_legacy_irq */
@@ -6557,7 +6588,7 @@ ixgbe_handle_que(void *context)
 		ixgbe_enable_queue(adapter, que->msix);
 	} else {
 		/* INTx or MSI */
-		ixgbe_enable_intr(adapter);
+		ixgbe_enable_queue(adapter, 0);
 	}
 
 	return;
