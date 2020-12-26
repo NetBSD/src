@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.274 2020/12/26 06:10:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.275 2020/12/26 06:17:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3151,12 +3151,11 @@ ixgbe_msix_admin(void *arg)
 	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
 		if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
 		    (eicr & IXGBE_EICR_FLOW_DIR)) {
-			/* This is probably overkill :) */
-			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1))
-				return 1;
-			task_requests |= IXGBE_REQUEST_TASK_FDIR;
-			/* Disable the interrupt */
-			eims_disable |= IXGBE_EIMS_FLOW_DIR;
+			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1)) {
+				task_requests |= IXGBE_REQUEST_TASK_FDIR;
+				/* Disable the interrupt */
+				eims_disable |= IXGBE_EIMS_FLOW_DIR;
+			}
 		}
 
 		if (eicr & IXGBE_EICR_ECC) {
