@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.95 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.96 2020/12/26 22:15:37 jym Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.95 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.96 2020/12/26 22:15:37 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -205,6 +205,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TI,		USB_PRODUCT_TI_MSP430,			ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_XRITE,		ANY,					ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_WAYTECH,		USB_PRODUCT_WAYTECH_USB2SERIAL,		ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_KYE,		USB_PRODUCT_KYE_NICHE,			0x100,
 	{ UQ_NO_SET_PROTO, NULL }},
