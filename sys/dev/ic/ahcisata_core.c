@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.88 2020/12/26 10:56:25 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.89 2020/12/26 15:40:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.88 2020/12/26 10:56:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.89 2020/12/26 15:40:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -592,17 +592,20 @@ int
 ahci_intr(void *v)
 {
 	struct ahci_softc *sc = v;
-	uint32_t is;
-	int i, r = 0;
+	uint32_t is, ports;
+	int bit, r = 0;
 
 	while ((is = AHCI_READ(sc, AHCI_IS))) {
 		AHCIDEBUG_PRINT(("%s ahci_intr 0x%x\n", AHCINAME(sc), is),
 		    DEBUG_INTR);
 		r = 1;
 		AHCI_WRITE(sc, AHCI_IS, is);
-		for (i = 0; i < AHCI_MAX_PORTS; i++)
-			if (is & (1U << i))
-				ahci_intr_port(&sc->sc_channels[i]);
+		ports = is;
+		while ((bit = ffs(ports)) != 0) {
+			bit--;
+			ahci_intr_port(&sc->sc_channels[bit]);
+			ports &= ~(1U << bit);
+		}
 	}
 
 	return r;
