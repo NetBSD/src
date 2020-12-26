@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.47 2020/12/26 06:07:16 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.48 2020/12/26 06:10:17 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4324,7 +4324,7 @@ struct ixgbe_hw {
 
 #define IXGBE_ERR_NOT_TRUSTED			-50 /* XXX NetBSD */
 #define IXGBE_ERR_NOT_IN_PROMISC		-51 /* XXX NetBSD */
-
+#define IXGBE_ERR_FAN_FAILURE			-52 /* XXX NetBSD */
 #define IXGBE_NOT_IMPLEMENTED			0x7FFFFFFF
 
 
