@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.273 2020/12/26 06:07:16 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.274 2020/12/26 06:10:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -175,7 +175,7 @@ static void	ixgbe_init_locked(struct adapter *);
 static void	ixgbe_ifstop(struct ifnet *, int);
 static void	ixgbe_stop_locked(void *);
 static void	ixgbe_init_device_features(struct adapter *);
-static void	ixgbe_check_fan_failure(struct adapter *, u32, bool);
+static int	ixgbe_check_fan_failure(struct adapter *, u32, bool);
 static void	ixgbe_add_media_types(struct adapter *);
 static void	ixgbe_media_status(struct ifnet *, struct ifmediareq *);
 static int	ixgbe_media_change(struct ifnet *);
@@ -3162,6 +3162,8 @@ ixgbe_msix_admin(void *arg)
 		if (eicr & IXGBE_EICR_ECC) {
 			device_printf(adapter->dev,
 			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
+			/* Disable interrupt to prevent log spam */
+			eims_disable |= IXGBE_EICR_ECC;
 		}
 
 		/* Check for over temp condition */
@@ -3170,6 +3172,8 @@ ixgbe_msix_admin(void *arg)
 			case ixgbe_mac_X550EM_a:
 				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
 					break;
+				/* Disable interrupt to prevent log spam */
+				eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
 
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
@@ -3180,6 +3184,8 @@ ixgbe_msix_admin(void *arg)
 			default:
 				if (!(eicr & IXGBE_EICR_TS))
 					break;
+				/* Disable interrupt to prevent log spam */
+				eims_disable |= IXGBE_EIMS_TS;
 
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
@@ -3200,7 +3206,11 @@ ixgbe_msix_admin(void *arg)
 
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		ixgbe_check_fan_failure(adapter, eicr, true);
+		retval = ixgbe_check_fan_failure(adapter, eicr, true);
+		if (retval == IXGBE_ERR_FAN_FAILURE) {
+			/* Disable interrupt to prevent log spam */
+			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
+		}
 	}
 
 	/* External PHY interrupt */
@@ -5185,6 +5195,7 @@ ixgbe_legacy_irq(void *arg)
 	u32		eims_enable = 0;
 	u32		eims_disable = 0;
 	u32		task_requests = 0;
+	s32		retval;
 
 	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
 	/*
@@ -5264,7 +5275,11 @@ ixgbe_legacy_irq(void *arg)
 
 	/* Check for fan failure */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		ixgbe_check_fan_failure(adapter, eicr, true);
+		retval = ixgbe_check_fan_failure(adapter, eicr, true);
+		if (retval == IXGBE_ERR_FAN_FAILURE) {
+			/* Disable interrupt to prevent log spam */
+			eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
+		}
 	}
 
 	/* External PHY interrupt */
@@ -6539,7 +6554,7 @@ ixgbe_ioctl(struct ifnet *ifp, u_long command, void *data)
 /************************************************************************
  * ixgbe_check_fan_failure
  ************************************************************************/
-static void
+static int
 ixgbe_check_fan_failure(struct adapter *adapter, u32 reg, bool in_interrupt)
 {
 	u32 mask;
@@ -6547,8 +6562,12 @@ ixgbe_check_fan_failure(struct adapter *adapter, u32 reg, bool in_interrupt)
 	mask = (in_interrupt) ? IXGBE_EICR_GPI_SDP1_BY_MAC(&adapter->hw) :
 	    IXGBE_ESDP_SDP1;
 
-	if (reg & mask)
+	if (reg & mask) {
 		device_printf(adapter->dev, "\nCRITICAL: FAN FAILURE!! REPLACE IMMEDIATELY!!\n");
+		return IXGBE_ERR_FAN_FAILURE;
+	}
+
+	return IXGBE_SUCCESS;
 } /* ixgbe_check_fan_failure */
 
 /************************************************************************
