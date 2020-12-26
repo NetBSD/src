@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.270 2020/12/24 22:36:43 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.271 2020/12/26 06:01:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5156,7 +5156,6 @@ ixgbe_legacy_irq(void *arg)
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct ifnet	*ifp = adapter->ifp;
 	struct		tx_ring *txr = adapter->tx_rings;
-	bool		more = false;
 	bool		reenable_intr = true;
 	u32		eicr, eicr_mask;
 	u32		eims_orig;
@@ -5187,13 +5186,6 @@ ixgbe_legacy_irq(void *arg)
 		 */
 		que->txrx_use_workqueue = adapter->txrx_use_workqueue;
 
-#ifdef __NetBSD__
-		/* Don't run ixgbe_rxeof in interrupt context */
-		more = true;
-#else
-		more = ixgbe_rxeof(que);
-#endif
-
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
 #ifdef notyet
@@ -5201,6 +5193,10 @@ ixgbe_legacy_irq(void *arg)
 			ixgbe_start_locked(ifp, txr);
 #endif
 		IXGBE_TX_UNLOCK(txr);
+
+		que->req.ev_count++;
+		ixgbe_sched_handle_que(adapter, que);
+		reenable_intr = false;
 	}
 
 	/* Link status change */
@@ -5242,11 +5238,6 @@ ixgbe_legacy_irq(void *arg)
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540))
 		task_requests |= IXGBE_REQUEST_TASK_PHY;
 
-	if (more) {
-		que->req.ev_count++;
-		ixgbe_sched_handle_que(adapter, que);
-		reenable_intr = false;
-	}
 	if (task_requests != 0) {
 		/* Re-enabling other interrupts is done in the admin task */
 		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
