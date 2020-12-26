@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.10 2017/04/08 17:04:56 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.11 2020/12/26 00:16:16 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -69,6 +69,9 @@
 
 #include "opt_wsdisplay_compat.h"
 
+#include "wsdisplay.h"
+#include "wsmouse.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -87,7 +90,9 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include "wsmouse.h"
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
 #if NWSMOUSE > 0
 #include <dev/wscons/wsmousevar.h>
 #endif
@@ -354,7 +359,8 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 	 * plugged), unless the console keyboard has been claimed already
 	 * (i.e. late hotplug with hil keyboard plugged first).
 	 */
-	if (major(cn_tab->cn_dev) == devsw_name2chr("wsdisplay", NULL, 0)) {
+#if NWSDISPLAY > 0
+	if (cn_tab->cn_putc == wsdisplay_cnputc) {
 #if NHILKBD > 0
 		if (hil_is_console == -1) {
 			ka.console = 1;
@@ -365,7 +371,10 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 		ka.console = 1;
 #endif
 	} else
+#endif
+	{
 		ka.console = 0;
+	}
 
 	ka.keymap = &dnkbd_keymapdata;
 	ka.accessops = &dnkbd_accessops;
