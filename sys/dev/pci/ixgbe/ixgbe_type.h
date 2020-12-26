@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.46 2020/12/11 05:01:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.47 2020/12/26 06:07:16 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2080,7 +2080,8 @@ enum {
 #define IXGBE_FTQF_QUEUE_ENABLE		0x80000000
 
 /* Interrupt clear mask */
-#define IXGBE_IRQ_CLEAR_MASK	0xFFFFFFFF
+#define IXGBE_IRQ_CLEAR_MASK		0xFFFFFFFF
+#define IXGBE_MSIX_OTHER_CLEAR_MASK	0xFFFF0000
 
 /* Interrupt Vector Allocation Registers */
 #define IXGBE_IVAR_REG_NUM		25
