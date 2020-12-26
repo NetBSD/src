@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.24 2020/12/25 20:41:24 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.25 2020/12/26 08:58:03 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.24 2020/12/25 20:41:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.25 2020/12/26 08:58:03 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -1129,6 +1129,16 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_PUTCMAP:
 		if (scr->putcmap == NULL || scr->scr_bpp > 8)
 			return ENODEV;
+		if (scr->scr_wsmode == WSDISPLAYIO_MODE_EMUL) {
+			/*
+			 * The hardware palette settings are handled by
+			 * the STI ROM in STI_TEXTMODE and changing cmap
+			 * could cause mangled text colors at least on CRX.
+			 * Updating CMAP in EMUL mode isn't expected anyway
+			 * so just ignore it.
+			 */
+			return 0;
+		}
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
