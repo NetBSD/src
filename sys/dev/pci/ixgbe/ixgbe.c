@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.271 2020/12/26 06:01:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.272 2020/12/26 06:02:42 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5154,7 +5154,6 @@ ixgbe_legacy_irq(void *arg)
 	struct ix_queue *que = arg;
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
-	struct ifnet	*ifp = adapter->ifp;
 	struct		tx_ring *txr = adapter->tx_rings;
 	bool		reenable_intr = true;
 	u32		eicr, eicr_mask;
@@ -5172,14 +5171,16 @@ ixgbe_legacy_irq(void *arg)
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
 	adapter->stats.pf.legint.ev_count++;
-	++que->irqs.ev_count;
 	if (eicr == 0) {
 		adapter->stats.pf.intzero.ev_count++;
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig);
 		return 0;
 	}
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+	/* Queue (0) intr */
+	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
+		++que->irqs.ev_count;
+
 		/*
 		 * The same as ixgbe_msix_que() about
 		 * "que->txrx_use_workqueue".
