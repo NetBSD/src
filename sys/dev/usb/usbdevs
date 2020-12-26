@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.786 2020/09/07 06:32:13 ryoon Exp $
+$NetBSD: usbdevs,v 1.787 2020/12/26 22:09:18 jym Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor SGI		0x065e	Silicon Graphics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
+vendor WAYTECH		0x0665	WayTech Development, Inc.
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
@@ -2230,6 +2231,9 @@ product MCT ML_4500		0x0302	ML-4500
 
 /* MediaGear products */
 product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
+
+/* WayTech Development, Inc. products */
+product WAYTECH USB2SERIAL	0x5161	USB to Serial
 
 /* Meinberg Funkuhren products */
 product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
