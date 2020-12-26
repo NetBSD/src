@@ -292,6 +292,10 @@ ATF_TC_BODY(oss_dsp_trigger_read, tc)
 	struct audio_info info;
 	int fd, bits;
 
+#if defined(__sparc__)
+	atf_tc_skip("PR port-sparc/55876");
+#endif
+
 	if ((fd = open("/dev/audio", O_RDONLY)) == -1)
 		atf_tc_skip("Audio device unavailable for recording");
 
