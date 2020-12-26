@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.31 2020/10/22 07:36:02 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.32 2020/12/26 00:55:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.31 2020/10/22 07:36:02 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.32 2020/12/26 00:55:26 jmcneill Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -86,6 +86,7 @@ ENTRY_NP(cpu_switchto)
 	DISABLE_INTERRUPT
 	mov	sp, x4			/* restore stack pointer */
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
+	isb
 
 #ifdef ARMV83_PAC
 	/* Switch the PAC key. */
@@ -191,6 +192,7 @@ ENTRY_NP(cpu_switchto_softint)
 
 	mov	x5, #CPACR_FPEN_NONE
 	msr	cpacr_el1, x5		/* cpacr_el1 = CPACR_FPEN_NONE */
+	isb
 
 #ifdef ARMV83_PAC
 	/* Switch the PAC key. */
@@ -223,6 +225,7 @@ ENTRY_NP(cpu_switchto_softint)
 
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
+	isb
 
 #ifdef ARMV83_PAC
 	/* Restore the PAC key. */
