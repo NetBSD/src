@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_intio.c,v 1.3 2011/02/19 05:36:49 tsutsui Exp $	*/
+/*	$NetBSD: hil_intio.c,v 1.4 2020/12/26 00:16:16 tsutsui Exp $	*/
 /*	$OpenBSD: hil_intio.c,v 1.8 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
@@ -28,6 +28,8 @@
  *
  */
 
+#include "wsdisplay.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -38,6 +40,9 @@
 #include <machine/intr.h>
 
 #include <dev/cons.h>
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
 
 #include <hp300/dev/intiovar.h>
 
@@ -88,8 +93,12 @@ hil_intio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Check that the configured console device is a wsdisplay.
 	 */
-	if (major(cn_tab->cn_dev) != devsw_name2chr("wsdisplay", NULL, 0))
+#if NWSDISPLAY > 0
+	if (cn_tab->cn_putc != wsdisplay_cnputc)
+#endif
+	{
 		hil_is_console = 0;
+	}
 
 	hil_attach(sc, &hil_is_console);
 	intr_establish(hil_intr, sc, ia->ia_ipl, IPL_TTY);
