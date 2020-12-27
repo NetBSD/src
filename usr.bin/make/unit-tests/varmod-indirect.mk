@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.3 2020/12/27 16:31:58 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.4 2020/12/27 17:17:46 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -102,14 +102,50 @@ M_NoPrimes=	${PRIMES:${M_ListToSkip}}
 
 # In contrast to the .if conditions, the .for loop allows undefined variable
 # expressions.  These expressions expand to empty strings.
-.for var in before ${UNDEF} ${UNDEF:${:US,a,a,}} after
+
+# An undefined expression without any modifiers expands to an empty string.
+.for var in before ${UNDEF} after
+.  info ${var}
+.endfor
+
+# An undefined expression with only modifiers that keep the expression
+# undefined expands to an empty string.
+.for var in before ${UNDEF:${:US,a,a,}} after
 .  info ${var}
 .endfor
 
 # Even in an indirect modifier based on an undefined variable, the value of
 # the expression in Var_Parse is a simple empty string.
-.for var in before ${UNDEF} ${UNDEF:${:U}} after
+.for var in before ${UNDEF:${:U}} after
 .  info ${var}
 .endfor
+
+# An error in an indirect modifier.
+.for var in before ${UNDEF:${:UZ}} after
+.  info ${var}
+.endfor
+
+
+# Another slightly different evaluation context is the right-hand side of
+# a variable assignment using ':='.
+.MAKEFLAGS: -dpv
+# The undefined variable expression is kept as-is.
+_:=	before ${UNDEF} after
+# The undefined variable expression is kept as-is.
+_:=	before ${UNDEF:${:US,a,a,}} after
+# XXX: The subexpression ${:U} is fully defined, therefore it is expanded.
+# This results in ${UNDEF:}, which can lead to tricky parse errors later,
+# when the variable '_' is expanded further.
+# XXX: What should be the correct strategy here?  One possibility is to
+# expand the defined subexpression and replace them with ${:U...}, just like
+# in .for loops.  This would preserve the structure of the expression while
+# at the same time expanding the expression as far as possible.
+_:=	before ${UNDEF:${:U}} after
+# XXX: This expands to ${UNDEF:Z}, which will behave differently if the
+# variable '_' is used in a context where the variable expression ${_} is
+# parsed but not evaluated.
+_:=	before ${UNDEF:${:UZ}} after
+.MAKEFLAGS: -d0
+.undef _
 
 all:
