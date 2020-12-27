@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.109 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.110 2020/12/27 12:45:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.109 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.110 2020/12/27 12:45:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1445,139 +1445,142 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			}
 		}
 		mutex_spin_exit(&kq->kq_lock);
-	} else {
-		/* mark end of knote list */
-		TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe);
+		goto done;
+	}
 
-		/*
-		 * Acquire the fdp->fd_lock interlock to avoid races with
-		 * file creation/destruction from other threads.
-		 */
-		mutex_spin_exit(&kq->kq_lock);
-		mutex_enter(&fdp->fd_lock);
-		mutex_spin_enter(&kq->kq_lock);
+	/* mark end of knote list */
+	TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe);
 
-		while (count != 0) {
-			kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
-			while ((kn->kn_status & KN_MARKER) != 0) {
-				if (kn == marker) {
-					/* it's our marker, stop */
-					TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-					if (count < maxevents || (tsp != NULL &&
-					    (timeout = gettimeleft(&ats,
-					    &sleepts)) <= 0))
-						goto done;
-					mutex_exit(&fdp->fd_lock);
-					goto retry;
-				}
-				/* someone else's marker. */
-				kn = TAILQ_NEXT(kn, kn_tqe);
+	/*
+	 * Acquire the fdp->fd_lock interlock to avoid races with
+	 * file creation/destruction from other threads.
+	 */
+	mutex_spin_exit(&kq->kq_lock);
+	mutex_enter(&fdp->fd_lock);
+	mutex_spin_enter(&kq->kq_lock);
+
+	while (count != 0) {
+		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
+		while ((kn->kn_status & KN_MARKER) != 0) {
+			if (kn == marker) {
+				/* it's our marker, stop */
+				TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+				if (count < maxevents || (tsp != NULL &&
+				    (timeout = gettimeleft(&ats,
+				    &sleepts)) <= 0))
+					goto queue_processed;
+				mutex_exit(&fdp->fd_lock);
+				goto retry;
 			}
-			kq_check(kq);
-			kq->kq_count--;
-			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-			kn->kn_status &= ~KN_QUEUED;
-			kn->kn_status |= KN_BUSY;
-			kq_check(kq);
-			if (kn->kn_status & KN_DISABLED) {
+			/* someone else's marker. */
+			kn = TAILQ_NEXT(kn, kn_tqe);
+		}
+		kq_check(kq);
+		kq->kq_count--;
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kn->kn_status &= ~KN_QUEUED;
+		kn->kn_status |= KN_BUSY;
+		kq_check(kq);
+		if (kn->kn_status & KN_DISABLED) {
+			kn->kn_status &= ~KN_BUSY;
+			/* don't want disabled events */
+			continue;
+		}
+		if ((kn->kn_flags & EV_ONESHOT) == 0) {
+			mutex_spin_exit(&kq->kq_lock);
+			KASSERT(kn->kn_fop != NULL);
+			KASSERT(kn->kn_fop->f_event != NULL);
+			KERNEL_LOCK(1, NULL);		/* XXXSMP */
+			KASSERT(mutex_owned(&fdp->fd_lock));
+			rv = (*kn->kn_fop->f_event)(kn, 0);
+			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+			mutex_spin_enter(&kq->kq_lock);
+			/* Re-poll if note was re-enqueued. */
+			if ((kn->kn_status & KN_QUEUED) != 0) {
 				kn->kn_status &= ~KN_BUSY;
-				/* don't want disabled events */
 				continue;
 			}
-			if ((kn->kn_flags & EV_ONESHOT) == 0) {
-				mutex_spin_exit(&kq->kq_lock);
-				KASSERT(kn->kn_fop != NULL);
-				KASSERT(kn->kn_fop->f_event != NULL);
-				KERNEL_LOCK(1, NULL);		/* XXXSMP */
-				KASSERT(mutex_owned(&fdp->fd_lock));
-				rv = (*kn->kn_fop->f_event)(kn, 0);
-				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
-				mutex_spin_enter(&kq->kq_lock);
-				/* Re-poll if note was re-enqueued. */
-				if ((kn->kn_status & KN_QUEUED) != 0) {
-					kn->kn_status &= ~KN_BUSY;
-					continue;
-				}
-				if (rv == 0) {
-					/*
-					 * non-ONESHOT event that hasn't
-					 * triggered again, so de-queue.
-					 */
-					kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
-					continue;
-				}
-			}
-			KASSERT(kn->kn_fop != NULL);
-			touch = (!kn->kn_fop->f_isfd &&
-					kn->kn_fop->f_touch != NULL);
-			/* XXXAD should be got from f_event if !oneshot. */
-			if (touch) {
-				mutex_spin_exit(&kq->kq_lock);
-				KERNEL_LOCK(1, NULL);		/* XXXSMP */
-				(*kn->kn_fop->f_touch)(kn, kevp, EVENT_PROCESS);
-				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
-				mutex_spin_enter(&kq->kq_lock);
-			} else {
-				*kevp = kn->kn_kevent;
-			}
-			kevp++;
-			nkev++;
-			if (kn->kn_flags & EV_ONESHOT) {
-				/* delete ONESHOT events after retrieval */
-				kn->kn_status &= ~KN_BUSY;
-				mutex_spin_exit(&kq->kq_lock);
-				knote_detach(kn, fdp, true);
-				mutex_enter(&fdp->fd_lock);
-				mutex_spin_enter(&kq->kq_lock);
-			} else if (kn->kn_flags & EV_CLEAR) {
-				/* clear state after retrieval */
-				kn->kn_data = 0;
-				kn->kn_fflags = 0;
+			if (rv == 0) {
 				/*
-				 * Manually clear knotes who weren't
-				 * 'touch'ed.
+				 * non-ONESHOT event that hasn't
+				 * triggered again, so de-queue.
 				 */
-				if (touch == 0) {
-					kn->kn_data = 0;
-					kn->kn_fflags = 0;
-				}
-				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
-			} else if (kn->kn_flags & EV_DISPATCH) {
-				kn->kn_status |= KN_DISABLED;
-				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
-			} else {
-				/* add event back on list */
-				kq_check(kq);
-				kn->kn_status |= KN_QUEUED;
-				kn->kn_status &= ~KN_BUSY;
-				TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
-				kq->kq_count++;
-				kq_check(kq);
-			}
-			if (nkev == kevcnt) {
-				/* do copyouts in kevcnt chunks */
-				mutex_spin_exit(&kq->kq_lock);
-				mutex_exit(&fdp->fd_lock);
-				error = (*keops->keo_put_events)
-				    (keops->keo_private,
-				    kevbuf, ulistp, nevents, nkev);
-				mutex_enter(&fdp->fd_lock);
-				mutex_spin_enter(&kq->kq_lock);
-				nevents += nkev;
-				nkev = 0;
-				kevp = kevbuf;
-			}
-			count--;
-			if (error != 0 || count == 0) {
-				/* remove marker */
-				TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe);
-				break;
+				kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
+				continue;
 			}
 		}
- done:
-		mutex_spin_exit(&kq->kq_lock);
-		mutex_exit(&fdp->fd_lock);
+		KASSERT(kn->kn_fop != NULL);
+		touch = (!kn->kn_fop->f_isfd &&
+				kn->kn_fop->f_touch != NULL);
+		/* XXXAD should be got from f_event if !oneshot. */
+		if (touch) {
+			mutex_spin_exit(&kq->kq_lock);
+			KERNEL_LOCK(1, NULL);		/* XXXSMP */
+			(*kn->kn_fop->f_touch)(kn, kevp, EVENT_PROCESS);
+			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+			mutex_spin_enter(&kq->kq_lock);
+		} else {
+			*kevp = kn->kn_kevent;
+		}
+		kevp++;
+		nkev++;
+		if (kn->kn_flags & EV_ONESHOT) {
+			/* delete ONESHOT events after retrieval */
+			kn->kn_status &= ~KN_BUSY;
+			mutex_spin_exit(&kq->kq_lock);
+			knote_detach(kn, fdp, true);
+			mutex_enter(&fdp->fd_lock);
+			mutex_spin_enter(&kq->kq_lock);
+		} else if (kn->kn_flags & EV_CLEAR) {
+			/* clear state after retrieval */
+			kn->kn_data = 0;
+			kn->kn_fflags = 0;
+			/*
+			 * Manually clear knotes who weren't
+			 * 'touch'ed.
+			 */
+			if (touch == 0) {
+				kn->kn_data = 0;
+				kn->kn_fflags = 0;
+			}
+			kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+		} else if (kn->kn_flags & EV_DISPATCH) {
+			kn->kn_status |= KN_DISABLED;
+			kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+		} else {
+			/* add event back on list */
+			kq_check(kq);
+			kn->kn_status |= KN_QUEUED;
+			kn->kn_status &= ~KN_BUSY;
+			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+			kq->kq_count++;
+			kq_check(kq);
+		}
+		if (nkev == kevcnt) {
+			/* do copyouts in kevcnt chunks */
+			mutex_spin_exit(&kq->kq_lock);
+			mutex_exit(&fdp->fd_lock);
+			error = (*keops->keo_put_events)
+			    (keops->keo_private,
+			    kevbuf, ulistp, nevents, nkev);
+			mutex_enter(&fdp->fd_lock);
+			mutex_spin_enter(&kq->kq_lock);
+			nevents += nkev;
+			nkev = 0;
+			kevp = kevbuf;
+		}
+		count--;
+		if (error != 0 || count == 0) {
+			/* remove marker */
+			TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe);
+			break;
+		}
 	}
+queue_processed:
+	mutex_spin_exit(&kq->kq_lock);
+	mutex_exit(&fdp->fd_lock);
+
+done:
 	if (nkev != 0) {
 		/* copyout remaining events */
 		error = (*keops->keo_put_events)(keops->keo_private,
