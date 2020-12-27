@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $	*/
+/*	$NetBSD: nvme.c,v 1.54 2020/12/27 16:52:01 jmcneill Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.53 2020/12/04 23:03:11 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.54 2020/12/27 16:52:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1925,11 +1925,13 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 	if (bus_dmamem_map(sc->sc_dmat, &ndm->ndm_seg, nsegs, size,
 	    &ndm->ndm_kva, BUS_DMA_WAITOK) != 0)
 		goto free;
-	memset(ndm->ndm_kva, 0, size);
 
 	if (bus_dmamap_load(sc->sc_dmat, ndm->ndm_map, ndm->ndm_kva, size,
 	    NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
+
+	memset(ndm->ndm_kva, 0, size);
+	bus_dmamap_sync(sc->sc_dmat, ndm->ndm_map, 0, size, BUS_DMASYNC_PREREAD);
 
 	return ndm;
 
