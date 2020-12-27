@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.120 2020/12/19 13:31:37 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.121 2020/12/27 10:04:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.120 2020/12/19 13:31:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.121 2020/12/27 10:04:32 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -206,8 +206,12 @@ For_Eval(const char *line)
 
 	{
 		char *items;
-		(void)Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items);
-		/* TODO: handle errors */
+		if (Var_Subst(p, VAR_GLOBAL, VARE_WANTRES, &items) != VPR_OK) {
+			Parse_Error(PARSE_FATAL, "Error in .for loop items");
+			f->items.len = 0;
+			goto done;
+		}
+
 		f->items = Str_Words(items, FALSE);
 		free(items);
 
@@ -233,6 +237,7 @@ For_Eval(const char *line)
 		}
 	}
 
+done:
 	accumFor = f;
 	forLevel = 1;
 	return 1;
