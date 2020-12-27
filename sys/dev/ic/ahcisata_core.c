@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.89 2020/12/26 15:40:29 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.90 2020/12/27 15:13:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.89 2020/12/26 15:40:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.90 2020/12/27 15:13:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -599,13 +599,13 @@ ahci_intr(void *v)
 		AHCIDEBUG_PRINT(("%s ahci_intr 0x%x\n", AHCINAME(sc), is),
 		    DEBUG_INTR);
 		r = 1;
-		AHCI_WRITE(sc, AHCI_IS, is);
 		ports = is;
 		while ((bit = ffs(ports)) != 0) {
 			bit--;
 			ahci_intr_port(&sc->sc_channels[bit]);
 			ports &= ~(1U << bit);
 		}
+		AHCI_WRITE(sc, AHCI_IS, is);
 	}
 
 	return r;
