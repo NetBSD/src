@@ -1,4 +1,8 @@
 make: "varmod-indirect.mk" line 13: Unknown modifier '$'
+make: "varmod-indirect.mk" line 106: before
+make: "varmod-indirect.mk" line 106: after
+make: "varmod-indirect.mk" line 112: before
+make: "varmod-indirect.mk" line 112: after
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
