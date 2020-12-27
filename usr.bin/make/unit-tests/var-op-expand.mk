@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.8 2020/12/27 22:29:37 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.9 2020/12/27 23:25:33 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -112,6 +112,28 @@ VAR:=		VAR:$$ $$$$ ${REF}
 # expressions of the top level, but not in expressions that are nested.
 VAR:=		top:$$ ${:Unest1\:\$\$} ${:Unest2${:U\:\$\$}}
 .if ${VAR} != "top:\$ nest1:\$ nest2:\$"
+.  error
+.endif
+
+
+# In variable assignments using the ':=' operator, there may be expressions
+# containing variable modifiers, and these modifiers may refer to other
+# variables.
+#
+# Contrary to the assignment operator '=', the assignment operator ':='
+# consumes the '$' from modifier parts.
+REF.word=	1:$$ 2:$$$$ 4:$$$$$$$$
+VAR:=		${:Uword:@word@${REF.${word}}@}, direct: ${REF.word}
+.if ${VAR} != "1:2:\$ 4:\$\$, direct: 1:\$ 2:\$\$ 4:\$\$\$\$"
+.  error
+.endif
+
+
+# Just for comparison, the previous example using the assignment operator '='
+# instead of ':='.
+REF.word=	1:$$ 2:$$$$ 4:$$$$$$$$
+VAR=		${:Uword:@word@${REF.${word}}@}, direct: ${REF.word}
+.if ${VAR} != "1:\$ 2:\$\$ 4:\$\$\$\$, direct: 1:\$ 2:\$\$ 4:\$\$\$\$"
 .  error
 .endif
 
