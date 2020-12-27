@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.767 2020/12/27 10:53:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.768 2020/12/27 11:03:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.767 2020/12/27 10:53:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.768 2020/12/27 11:03:00 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -4177,8 +4177,21 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 }
 
 static void
-VarSubstNested(const char **pp, Buffer *buf, GNode *ctxt,
-	       VarEvalFlags eflags, Boolean *inout_errorReported)
+VarSubstDollarDollar(const char **pp, Buffer *res, VarEvalFlags eflags)
+{
+	/*
+	 * A dollar sign may be escaped with another dollar
+	 * sign.
+	 */
+	if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
+		Buf_AddByte(res, '$');
+	Buf_AddByte(res, '$');
+	*pp += 2;
+}
+
+static void
+VarSubstExpr(const char **pp, Buffer *buf, GNode *ctxt,
+	     VarEvalFlags eflags, Boolean *inout_errorReported)
 {
 	const char *p = *pp;
 	const char *nested_p = p;
@@ -4229,6 +4242,22 @@ VarSubstNested(const char **pp, Buffer *buf, GNode *ctxt,
 	*pp = p;
 }
 
+/*
+ * Skip as many characters as possible -- either to the end of the string
+ * or to the next dollar sign (variable expression).
+ */
+static void
+VarSubstPlain(const char **pp, Buffer *res)
+{
+	const char *p = *pp;
+	const char *start = p;
+
+	for (p++; *p != '$' && *p != '\0'; p++)
+		continue;
+	Buf_AddBytesBetween(res, start, p);
+	*pp = p;
+}
+
 /* Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
  * given string.
  *
@@ -4254,31 +4283,12 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags, char **out_res)
 	errorReported = FALSE;
 
 	while (*p != '\0') {
-		if (p[0] == '$' && p[1] == '$') {
-			/*
-			 * A dollar sign may be escaped with another dollar
-			 * sign.
-			 */
-			if (save_dollars && (eflags & VARE_KEEP_DOLLAR))
-				Buf_AddByte(&res, '$');
-			Buf_AddByte(&res, '$');
-			p += 2;
-
-		} else if (p[0] == '$') {
-			VarSubstNested(&p, &res, ctxt, eflags, &errorReported);
-
-		} else {
-			/*
-			 * Skip as many characters as possible -- either to
-			 * the end of the string or to the next dollar sign
-			 * (variable expression).
-			 */
-			const char *plainStart = p;
-
-			for (p++; *p != '$' && *p != '\0'; p++)
-				continue;
-			Buf_AddBytesBetween(&res, plainStart, p);
-		}
+		if (p[0] == '$' && p[1] == '$')
+			VarSubstDollarDollar(&p, &res, eflags);
+		else if (p[0] == '$')
+			VarSubstExpr(&p, &res, ctxt, eflags, &errorReported);
+		else
+			VarSubstPlain(&p, &res);
 	}
 
 	*out_res = Buf_DestroyCompact(&res);
