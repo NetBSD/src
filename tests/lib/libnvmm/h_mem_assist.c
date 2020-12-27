@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.19 2020/09/05 07:22:26 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.20 2020/12/27 20:56:14 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -174,6 +174,7 @@ extern uint8_t test13_begin, test13_end;
 extern uint8_t test14_begin, test14_end;
 extern uint8_t test_64bit_15_begin, test_64bit_15_end;
 extern uint8_t test_64bit_16_begin, test_64bit_16_end;
+extern uint8_t test17_begin, test17_end;
 
 static const struct test tests64[] = {
 	{ "64bit test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
@@ -193,6 +194,7 @@ static const struct test tests64[] = {
 	{ "64bit test15 - XCHG", &test_64bit_15_begin, &test_64bit_15_end, 0x123456, 0 },
 	{ "64bit test16 - XCHG", &test_64bit_16_begin, &test_64bit_16_end,
 	  0x123456, 0 },
+	{ "64bit test17 - CMPS", &test17_begin, &test17_end, 0x00001, 0 },
 	{ NULL, NULL, NULL, -1, 0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.42 2020/10/31 15:44:01 reinoud Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.43 2020/12/27 20:56:14 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -869,7 +869,6 @@ static void x86_func_test(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 static void x86_func_mov(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 static void x86_func_stos(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 static void x86_func_lods(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
-static void x86_func_movs(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 
 static const struct x86_emul x86_emul_or = {
 	.readreg = true,
@@ -919,10 +918,6 @@ static const struct x86_emul x86_emul_lods = {
 	.func = x86_func_lods
 };
 
-static const struct x86_emul x86_emul_movs = {
-	.func = x86_func_movs
-};
-
 /* Legacy prefixes. */
 #define LEG_LOCK	0xF0
 #define LEG_REPN	0xF2
@@ -941,6 +936,7 @@ struct x86_legpref {
 	bool adr_ovr:1;
 	bool rep:1;
 	bool repn:1;
+	bool repe:1;
 	int8_t seg;
 };
 
@@ -1049,6 +1045,7 @@ struct x86_opcode {
 	bool dmo:1;
 	bool todmo:1;
 	bool movs:1;
+	bool cmps:1;
 	bool stos:1;
 	bool lods:1;
 	bool szoverride:1;
@@ -1451,7 +1448,7 @@ static const struct x86_opcode primary_opcode_table[256] __cacheline_aligned = {
 		.movs = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.emul = &x86_emul_movs
+		.emul = NULL
 	},
 	[0xA5] = {
 		/* Yv, Xv */
@@ -1459,7 +1456,27 @@ static const struct x86_opcode primary_opcode_table[256] __cacheline_aligned = {
 		.movs = true,
 		.szoverride = true,
 		.defsize = -1,
-		.emul = &x86_emul_movs
+		.emul = NULL
+	},
+
+	/*
+	 * CMPS
+	 */
+	[0xA6] = {
+		/* Yb, Xb */
+		.valid = true,
+		.cmps = true,
+		.szoverride = false,
+		.defsize = OPSIZE_BYTE,
+		.emul = NULL
+	},
+	[0xA7] = {
+		/* Yv, Xv */
+		.valid = true,
+		.cmps = true,
+		.szoverride = true,
+		.defsize = -1,
+		.emul = NULL
 	},
 
 	/*
@@ -1849,6 +1866,35 @@ resolve_special_register(struct x86_instr *instr, uint8_t enc, size_t regsize)
  */
 static int
 node_movs(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	size_t adrsize;
+
+	adrsize = instr->address_size;
+
+	/* DS:RSI */
+	instr->src.type = STORE_REG;
+	instr->src.u.reg = &gpr_map__special[1][2][adrsize-1];
+	instr->src.disp.type = DISP_0;
+
+	/* ES:RDI, force ES */
+	instr->dst.type = STORE_REG;
+	instr->dst.u.reg = &gpr_map__special[1][3][adrsize-1];
+	instr->dst.disp.type = DISP_0;
+	instr->dst.hardseg = NVMM_X64_SEG_ES;
+
+	fsm_advance(fsm, 0, NULL);
+
+	return 0;
+}
+
+/*
+ * Special node, for CMPS. Fake two displacements of zero on the source and
+ * destination registers.
+ * XXX coded as clone of movs as its similar in register usage
+ * XXX might be merged with node_movs()
+ */
+static int
+node_cmps(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	size_t adrsize;
 
@@ -2470,6 +2516,8 @@ node_primary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		fsm_advance(fsm, 1, node_stlo);
 	} else if (opcode->movs) {
 		fsm_advance(fsm, 1, node_movs);
+	} else if (opcode->cmps) {
+		fsm_advance(fsm, 1, node_cmps);
 	} else {
 		return -1;
 	}
@@ -2646,8 +2694,17 @@ x86_decode(uint8_t *inst_bytes, size_t inst_len, struct x86_instr *instr,
 
 	while (fsm.fn != NULL) {
 		ret = (*fsm.fn)(&fsm, instr);
-		if (ret == -1)
+		if (ret == -1) {
+#ifdef NVMM_DEBUG
+			printf("\n%s debug: unrecognized instruction found " \
+			       "with max length %ld : [ ", __func__, inst_len);
+			for (uint i = 0; i < inst_len; i++)
+			      printf("%02x ", inst_bytes[i]);
+			printf("]\n");
+			fflush(stdout);
+#endif
 			return -1;
+		}
 	}
 
 	instr->len = fsm.buf - inst_bytes;
@@ -2966,23 +3023,6 @@ x86_func_lods(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 	}
 }
 
-static void
-x86_func_movs(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
-{
-	/*
-	 * Special instruction: double memory operand. Don't call the cb,
-	 * because the storage has already been performed earlier.
-	 */
-
-	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
-		gprs[NVMM_X64_GPR_RSI] -= mem->size;
-		gprs[NVMM_X64_GPR_RDI] -= mem->size;
-	} else {
-		gprs[NVMM_X64_GPR_RSI] += mem->size;
-		gprs[NVMM_X64_GPR_RDI] += mem->size;
-	}
-}
-
 /* -------------------------------------------------------------------------- */
 
 static inline uint64_t
@@ -3145,17 +3185,18 @@ fetch_instruction(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
 }
 
 static int
-assist_mem_double(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+assist_mem_movs(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     struct x86_instr *instr)
 {
 	struct nvmm_x64_state *state = vcpu->state;
-	struct nvmm_mem mem;
+	uint64_t *gprs;
 	uint8_t data[8];
 	gvaddr_t gva;
 	size_t size;
 	int ret;
 
 	size = instr->operand_size;
+	gprs = state->gprs;
 
 	/* Source. */
 	ret = store_to_gva(state, instr, &instr->src, &gva, size);
@@ -3173,8 +3214,72 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
 	if (ret == -1)
 		return -1;
 
-	mem.size = size;
-	(*instr->emul->func)(vcpu, &mem, state->gprs);
+	/*
+	 * Inlined x86_func_movs() call
+	 * 	(*instr->emul->func)(vcpu, &mem, state->gprs);
+	 */
+
+	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
+		gprs[NVMM_X64_GPR_RSI] -= size;
+		gprs[NVMM_X64_GPR_RDI] -= size;
+	} else {
+		gprs[NVMM_X64_GPR_RSI] += size;
+		gprs[NVMM_X64_GPR_RDI] += size;
+	}
+
+	return 0;
+}
+
+static int
+assist_mem_cmps(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    struct x86_instr *instr)
+{
+	struct nvmm_x64_state *state = vcpu->state;
+	uint64_t *gprs, op1, op2, fl;
+	uint8_t data1[8], data2[8];
+	gvaddr_t gva;
+	size_t size;
+	int ret;
+
+	size = instr->operand_size;
+	gprs = state->gprs;
+
+	/* Source 1. */
+	ret = store_to_gva(state, instr, &instr->src, &gva, size);
+	if (ret == -1)
+		return -1;
+	ret = read_guest_memory(mach, vcpu, gva, data1, size);
+	if (ret == -1)
+		return -1;
+
+	/* Source 2. */
+	ret = store_to_gva(state, instr, &instr->dst, &gva, size);
+	if (ret == -1)
+		return -1;
+	ret = read_guest_memory(mach, vcpu, gva, data2, size);
+	if (ret == -1)
+		return -1;
+
+	/*
+	 * Inlined x86_func_cmps() call
+	 * 	(*instr->emul->func)(vcpu, &mem, state->gprs);
+	 */
+
+	/* Perform the CMP. */
+	op1 = *((uint64_t *) data1);
+	op2 = *((uint64_t *) data2);
+	exec_sub(op1, op2, &fl, size);
+
+	gprs[NVMM_X64_GPR_RFLAGS] &= ~PSL_SUB_MASK;
+	gprs[NVMM_X64_GPR_RFLAGS] |= (fl & PSL_SUB_MASK);
+
+	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
+		gprs[NVMM_X64_GPR_RSI] -= size;
+		gprs[NVMM_X64_GPR_RDI] -= size;
+	} else {
+		gprs[NVMM_X64_GPR_RSI] += size;
+		gprs[NVMM_X64_GPR_RDI] += size;
+	}
 
 	return 0;
 }
@@ -3349,7 +3454,10 @@ nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 	}
 
 	if (instr.opcode->movs) {
-		ret = assist_mem_double(mach, vcpu, &instr);
+		ret = assist_mem_movs(mach, vcpu, &instr);
+	} else if (instr.opcode->cmps) {
+		instr.legpref.repe = !instr.legpref.repn;
+		ret = assist_mem_cmps(mach, vcpu, &instr);
 	} else {
 		ret = assist_mem_single(mach, vcpu, &instr);
 	}
@@ -3364,7 +3472,13 @@ nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		if (cnt == 0) {
 			state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 		} else if (__predict_false(instr.legpref.repn)) {
+			/* repn */
 			if (state->gprs[NVMM_X64_GPR_RFLAGS] & PSL_Z) {
+				state->gprs[NVMM_X64_GPR_RIP] += instr.len;
+			}
+		} else if (__predict_false(instr.legpref.repe)) {
+			/* repe */
+			if ((state->gprs[NVMM_X64_GPR_RFLAGS] & PSL_Z) == 0) {
 				state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 			}
 		}
