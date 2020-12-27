@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.772 2020/12/27 14:41:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.773 2020/12/27 16:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.772 2020/12/27 14:41:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.773 2020/12/27 16:31:58 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3473,8 +3473,7 @@ ApplyModifiersIndirect(ApplyModifiersState *st, const char **pp,
 		FStr newVal = ApplyModifiers(&modsp, *inout_value, '\0', '\0',
 		    st->var, &st->exprFlags, st->ctxt, st->eflags);
 		*inout_value = newVal;
-		if (newVal.str == var_Error || newVal.str == varUndefined ||
-		    *modsp != '\0') {
+		if (newVal.str == var_Error || *modsp != '\0') {
 			FStr_Done(&mods);
 			*pp = p;
 			return AMIR_OUT;	/* error already reported */
