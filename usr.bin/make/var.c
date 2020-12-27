@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.771 2020/12/27 14:02:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.772 2020/12/27 14:41:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.771 2020/12/27 14:02:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.772 2020/12/27 14:41:25 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -988,16 +988,6 @@ Var_SetWithFlags(const char *name, const char *val, GNode *ctxt,
  *	name		name of the variable to set, is expanded once
  *	val		value to give to the variable
  *	ctxt		context in which to set it
- *
- * Notes:
- *	The variable is searched for only in its context before being
- *	created in that context. I.e. if the context is VAR_GLOBAL,
- *	only VAR_GLOBAL->context is searched. Likewise if it is VAR_CMDLINE,
- *	only VAR_CMDLINE->context is searched. This is done to avoid the
- *	literally thousands of unnecessary strcmp's that used to be done to
- *	set, say, $(@) or $(<).
- *	If the context is VAR_GLOBAL though, we check if the variable
- *	was set in VAR_CMDLINE from the command line and skip it if so.
  */
 void
 Var_Set(const char *name, const char *val, GNode *ctxt)
