@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1272 2020/11/23 12:41:47 martin Exp $
+# $NetBSD: mi,v 1.1273 2020/12/27 21:13:18 reinoud Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -951,6 +951,7 @@
 ./usr/bin/renice				base-util-bin
 ./usr/bin/reset					base-util-bin
 ./usr/bin/rev					base-util-bin
+./usr/bin/resize				base-util-bin
 ./usr/bin/revoke				base-util-bin
 ./usr/bin/rfcomm_sppd				base-util-bin
 ./usr/bin/rlog					base-rcs-bin
