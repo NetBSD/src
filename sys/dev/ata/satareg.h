@@ -1,4 +1,4 @@
-/*	$NetBSD: satareg.h,v 1.5 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: satareg.h,v 1.6 2020/12/27 15:15:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #define	SStatus_SPD_NONE	(0x0 << 4)	/* no negotiated speed */
 #define	SStatus_SPD_G1		(0x1 << 4)	/* Generation 1 (1.5Gb/s) */
 #define	SStatus_SPD_G2		(0x2 << 4)	/* Generation 2 (3.0Gb/s) */
+#define	SStatus_SPD_G3		(0x3 << 4)	/* Generation 3 (6.0Gb/s) */
 #define	SStatus_SPD_mask	(0xf << 4)
 #define	SStatus_SPD_shift	4
 	/*
@@ -75,6 +76,7 @@
 #define	SStatus_IPM_ACTIVE	(0x1 << 8)	/* ACTIVE state */
 #define	SStatus_IPM_PARTIAL	(0x2 << 8)	/* PARTIAL pm state */
 #define	SStatus_IPM_SLUMBER	(0x6 << 8)	/* SLUMBER pm state */
+#define	SStatus_IPM_DEVSLEEP	(0x8 << 8)	/* DevSleep pm state */
 #define	SStatus_IPM_mask	(0xf << 8)
 #define	SStatus_IPM_shift	8
 
@@ -130,6 +132,7 @@
 #define	SControl_SPD_ANY	(0x0 << 4)	/* No restrictions */
 #define	SControl_SPD_G1		(0x1 << 4)	/* Generation 1 (1.5Gb/s) */
 #define	SControl_SPD_G2		(0x2 << 4)	/* Generation 2 (3.0Gb/s) */
+#define	SControl_SPD_G3		(0x3 << 4)	/* Generation 3 (6.0Gb/s) */
 	/*
 	 * The IPM field represents the enabled interface power management
 	 * states that can be invoked via the Serial ATA interface power
@@ -138,7 +141,8 @@
 #define	SControl_IPM_ANY	(0x0 << 8)	/* No restrictions */
 #define	SControl_IPM_NOPARTIAL	(0x1 << 8)	/* PARTIAL disabled */
 #define	SControl_IPM_NOSLUMBER	(0x2 << 8)	/* SLUMBER disabled */
-#define	SControl_IPM_NONE	(0x3 << 8)	/* No power management */
+#define	SControl_IPM_NODEVSLEEP	(0x4 << 8)	/* DevSleep disabled */
+#define	SControl_IPM_NONE	(0x7 << 8)	/* No power management */
 	/*
 	 * The SPM field selects a power management state.  A non-zero
 	 * value written to this field causes initiation of the selected
