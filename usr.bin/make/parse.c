@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.516 2020/12/23 14:13:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.517 2020/12/27 05:06:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.516 2020/12/23 14:13:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.517 2020/12/27 05:06:17 rillig Exp $");
 
 /* types and constants */
 
@@ -3056,10 +3056,10 @@ ParseDirective(char *line)
 		Var_Undef(cp);
 		return TRUE;
 	} else if (IsDirective(dir, dirlen, "export")) {
-		Var_Export(VEM_PARENT, arg);
+		Var_Export(VEM_PLAIN, arg);
 		return TRUE;
 	} else if (IsDirective(dir, dirlen, "export-env")) {
-		Var_Export(VEM_NORMAL, arg);
+		Var_Export(VEM_ENV, arg);
 		return TRUE;
 	} else if (IsDirective(dir, dirlen, "export-literal")) {
 		Var_Export(VEM_LITERAL, arg);
