@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.389 2020/12/20 21:07:32 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.390 2020/12/27 05:16:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.389 2020/12/20 21:07:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.390 2020/12/27 05:16:26 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1380,6 +1380,8 @@ JobExec(Job *job, char **argv)
 	/* Pre-emptively mark job running, pid still zero though */
 	job->status = JOB_ST_RUNNING;
 
+	Var_ReexportVars();
+
 	cpid = vFork();
 	if (cpid == -1)
 		Punt("Cannot vfork: %s", strerror(errno));
@@ -1460,8 +1462,6 @@ JobExec(Job *job, char **argv)
 		(void)setpgid(0, getpid());
 #  endif
 #endif
-
-		Var_ReexportVars();
 
 		(void)execv(shellPath, argv);
 		execDie("exec", shellPath);
