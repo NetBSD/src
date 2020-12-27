@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist_asm.S,v 1.9 2020/09/05 07:22:26 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist_asm.S,v 1.10 2020/12/27 20:56:14 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -44,6 +44,7 @@
 	.globl	test14_begin, test14_end
 	.globl	test_64bit_15_begin, test_64bit_15_end
 	.globl	test_64bit_16_begin, test_64bit_16_end
+	.globl	test17_begin, test17_end
 	.text
 	.code64
 
@@ -323,6 +324,28 @@ test_64bit_16_begin:
 
 	TEST_END
 test_64bit_16_end:
+
+	.align	64
+test17_begin:
+	movq	$0x1000,%rax
+	movq	$0xdeadbeefcafe, %rbx
+	movq	%rbx,0x00(%rax)
+	movq	%rbx,0x08(%rax)
+
+	movq	$0xdeadbeefcafe, %rbx
+	movq	%rbx,0x20(%rax)
+	movq	$0, %rbx
+	movq	%rbx,0x28(%rax)
+
+	movq	$0x1000,%rsi
+	movq	$0x1020,%rdi
+
+	movq	$3,%rcx
+	repe cmpsq
+
+	movq	%rcx,(%rax)
+	TEST_END
+test17_end:
 
 /* -------------------------------------------------------------------------- */
 
