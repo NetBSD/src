@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.4 2020/12/27 17:17:46 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.5 2020/12/27 17:32:25 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -129,22 +129,28 @@ M_NoPrimes=	${PRIMES:${M_ListToSkip}}
 # Another slightly different evaluation context is the right-hand side of
 # a variable assignment using ':='.
 .MAKEFLAGS: -dpv
+
 # The undefined variable expression is kept as-is.
 _:=	before ${UNDEF} after
+
 # The undefined variable expression is kept as-is.
 _:=	before ${UNDEF:${:US,a,a,}} after
+
 # XXX: The subexpression ${:U} is fully defined, therefore it is expanded.
 # This results in ${UNDEF:}, which can lead to tricky parse errors later,
 # when the variable '_' is expanded further.
+#
 # XXX: What should be the correct strategy here?  One possibility is to
-# expand the defined subexpression and replace them with ${:U...}, just like
+# expand the defined subexpression and replace it with ${:U...}, just like
 # in .for loops.  This would preserve the structure of the expression while
 # at the same time expanding the expression as far as possible.
 _:=	before ${UNDEF:${:U}} after
+
 # XXX: This expands to ${UNDEF:Z}, which will behave differently if the
 # variable '_' is used in a context where the variable expression ${_} is
 # parsed but not evaluated.
 _:=	before ${UNDEF:${:UZ}} after
+
 .MAKEFLAGS: -d0
 .undef _
 
