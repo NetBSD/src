@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.764 2020/12/23 13:50:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.765 2020/12/27 05:06:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.764 2020/12/23 13:50:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.765 2020/12/27 05:06:17 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -586,7 +586,11 @@ MayExport(const char *name)
 static Boolean
 ExportVar(const char *name, VarExportMode mode)
 {
-	Boolean parent = mode == VEM_PARENT;
+	/*
+	 * XXX: It sounds wrong to handle VEM_PLAIN and VEM_LITERAL
+	 * differently here.
+	 */
+	Boolean plain = mode == VEM_PLAIN;
 	Var *v;
 	char *val;
 
@@ -597,14 +601,14 @@ ExportVar(const char *name, VarExportMode mode)
 	if (v == NULL)
 		return FALSE;
 
-	if (!parent && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
+	if (!plain && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
 		return FALSE;	/* nothing to do */
 
 	val = Buf_GetAll(&v->val, NULL);
 	if (mode != VEM_LITERAL && strchr(val, '$') != NULL) {
 		char *expr;
 
-		if (parent) {
+		if (plain) {
 			/*
 			 * Flag the variable as something we need to re-export.
 			 * No point actually exporting it now though,
@@ -629,21 +633,22 @@ ExportVar(const char *name, VarExportMode mode)
 		free(val);
 		free(expr);
 	} else {
-		if (parent)
+		if (plain)
 			v->flags &= ~(unsigned)VAR_REEXPORT; /* once will do */
-		if (parent || !(v->flags & VAR_EXPORTED))
+		if (plain || !(v->flags & VAR_EXPORTED))
 			setenv(name, val, 1);
 	}
 
 	/* This is so Var_Set knows to call Var_Export again. */
-	if (parent)
+	if (plain)
 		v->flags |= VAR_EXPORTED;
 
 	return TRUE;
 }
 
 /*
- * This gets called from our child processes.
+ * Actually export the variables that have been marked as needing to be
+ * re-exported.
  */
 void
 Var_ReexportVars(void)
@@ -670,7 +675,7 @@ Var_ReexportVars(void)
 		HashIter_Init(&hi, &VAR_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
-			ExportVar(var->name.str, VEM_NORMAL);
+			ExportVar(var->name.str, VEM_ENV);
 		}
 		return;
 	}
@@ -683,7 +688,7 @@ Var_ReexportVars(void)
 		size_t i;
 
 		for (i = 0; i < words.len; i++)
-			ExportVar(words.words[i], VEM_NORMAL);
+			ExportVar(words.words[i], VEM_ENV);
 		Words_Free(words);
 	}
 	free(val);
@@ -706,7 +711,7 @@ ExportVars(const char *varnames, Boolean isExport, VarExportMode mode)
 		if (var_exportedVars == VAR_EXPORTED_NONE)
 			var_exportedVars = VAR_EXPORTED_SOME;
 
-		if (isExport && mode == VEM_PARENT)
+		if (isExport && mode == VEM_PLAIN)
 			Var_Append(MAKE_EXPORTED, varname, VAR_GLOBAL);
 	}
 	Words_Free(words);
@@ -727,7 +732,7 @@ ExportVarsExpand(const char *uvarnames, Boolean isExport, VarExportMode mode)
 void
 Var_Export(VarExportMode mode, const char *varnames)
 {
-	if (mode == VEM_PARENT && varnames[0] == '\0') {
+	if (mode == VEM_PLAIN && varnames[0] == '\0') {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
 		return;
 	}
@@ -738,7 +743,7 @@ Var_Export(VarExportMode mode, const char *varnames)
 void
 Var_ExportVars(const char *varnames)
 {
-	ExportVarsExpand(varnames, FALSE, VEM_PARENT);
+	ExportVarsExpand(varnames, FALSE, VEM_PLAIN);
 }
 
 
@@ -915,7 +920,7 @@ SetVar(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 
 		DEBUG3(VAR, "%s:%s = %s\n", ctxt->name, name, val);
 		if (v->flags & VAR_EXPORTED)
-			ExportVar(name, VEM_PARENT);
+			ExportVar(name, VEM_PLAIN);
 	}
 	/*
 	 * Any variables given on the command line are automatically exported
