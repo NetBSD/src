@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.68 2017/11/03 19:49:23 maya Exp $ */
+/* $NetBSD: wsmouse.c,v 1.69 2020/12/27 16:09:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.68 2017/11/03 19:49:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.69 2020/12/27 16:09:33 tsutsui Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -129,6 +129,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.68 2017/11/03 19:49:23 maya Exp $");
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmuxvar.h>
+
+#include "ioconf.h"
 
 #if defined(WSMUX_DEBUG) && NWSMUX > 0
 #define DPRINTF(x)	if (wsmuxdebug) printf x
@@ -191,8 +193,6 @@ CFATTACH_DECL_NEW(wsmouse, sizeof (struct wsmouse_softc),
     wsmouse_match, wsmouse_attach, wsmouse_detach, wsmouse_activate);
 
 static void wsmouse_repeat(void *v);
-
-extern struct cfdriver wsmouse_cd;
 
 dev_type_open(wsmouseopen);
 dev_type_close(wsmouseclose);

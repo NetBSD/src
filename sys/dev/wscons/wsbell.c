@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.12 2019/06/22 08:03:01 isaki Exp $ */
+/* $NetBSD: wsbell.c,v 1.13 2020/12/27 16:09:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.12 2019/06/22 08:03:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.13 2020/12/27 16:09:33 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -173,8 +173,6 @@ static int  wsbell_do_ioctl(struct wsbell_softc *, u_long, void *,
 
 CFATTACH_DECL_NEW(wsbell, sizeof (struct wsbell_softc),
     wsbell_match, wsbell_attach, wsbell_detach, wsbell_activate);
-
-extern struct cfdriver wsbell_cd;
 
 extern dev_type_open(spkropen);
 extern dev_type_close(spkrclose);
