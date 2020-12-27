@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1711 2020/11/10 21:47:41 kamil Exp $
+# $NetBSD: mi,v 1.1712 2020/12/27 21:13:18 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -490,6 +490,7 @@
 ./usr/share/man/cat1/rehash.0			man-util-catman		.cat
 ./usr/share/man/cat1/repeat.0			man-util-catman		.cat
 ./usr/share/man/cat1/reset.0			man-util-catman		.cat
+./usr/share/man/cat1/resize.0			man-util-catman		.cat
 ./usr/share/man/cat1/rev.0			man-util-catman		.cat
 ./usr/share/man/cat1/rfcomm_sppd.0		man-util-catman		.cat
 ./usr/share/man/cat1/rlog.0			man-rcs-catman		.cat
@@ -3774,6 +3775,7 @@
 ./usr/share/man/html1/rehash.html		man-util-htmlman	html
 ./usr/share/man/html1/repeat.html		man-util-htmlman	html
 ./usr/share/man/html1/reset.html		man-util-htmlman	html
+./usr/share/man/html1/resize.html		man-util-htmlman	html
 ./usr/share/man/html1/rev.html			man-util-htmlman	html
 ./usr/share/man/html1/rfcomm_sppd.html		man-util-htmlman	html
 ./usr/share/man/html1/rlog.html			man-rcs-htmlman		html
@@ -6708,6 +6710,7 @@
 ./usr/share/man/man1/rehash.1			man-util-man		.man
 ./usr/share/man/man1/repeat.1			man-util-man		.man
 ./usr/share/man/man1/reset.1			man-util-man		.man
+./usr/share/man/man1/resize.1			man-util-man		.man
 ./usr/share/man/man1/rev.1			man-util-man		.man
 ./usr/share/man/man1/rfcomm_sppd.1		man-util-man		.man
 ./usr/share/man/man1/rlog.1			man-rcs-man		.man
