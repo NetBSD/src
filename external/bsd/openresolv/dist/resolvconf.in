@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.11.0"
+OPENRESOLV_VERSION="3.12.0"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -64,6 +64,7 @@ IFACEDIR="$VARDIR/interfaces"
 METRICDIR="$VARDIR/metrics"
 PRIVATEDIR="$VARDIR/private"
 EXCLUSIVEDIR="$VARDIR/exclusive"
+DEPRECATEDDIR="$VARDIR/deprecated"
 LOCKDIR="$VARDIR/lock"
 _PWD="$PWD"
 
@@ -88,6 +89,8 @@ usage()
 	Commands:
 	  -a \$INTERFACE    Add DNS information to the specified interface
 	                   (DNS supplied via stdin in resolv.conf format)
+	  -C \$PATTERN      Deprecate DNS information for matched interfaces
+	  -c \$PATTERN      Configure DNS information for matched interfaces
 	  -d \$INTERFACE    Delete DNS information from the specified interface
 	  -h               Show this help cruft
 	  -i [\$PATTERN]    Show interfaces that have supplied DNS information
@@ -275,19 +278,14 @@ dirname()
 
 config_mkdirs()
 {
-	e=0
 	for f; do
 		[ -n "$f" ] || continue
 		d="$(dirname "$f")"
 		if [ ! -d "$d" ]; then
-			if type install >/dev/null 2>&1; then
-				install -d "$d" || e=$?
-			else
-				mkdir "$d" || e=$?
-			fi
+			mkdir -p "$d" || return $?
 		fi
 	done
-	return $e
+	return 0
 }
 
 # With the advent of alternative init systems, it's possible to have
@@ -412,6 +410,22 @@ echo_resolv()
 	IFS="$OIFS"
 }
 
+deprecated_interface()
+{
+	[ -d "$DEPRECATEDDIR" ] || return 1
+
+	cd "$DEPRECATEDDIR"
+	for da; do
+		for daf in *; do
+			[ -f "$daf" ] || continue
+			case "$da" in
+			$daf) return 0;;
+			esac
+		done
+	done
+	return 1
+}
+
 list_resolv()
 {
 	[ -d "$IFACEDIR" ] || return 0
@@ -453,12 +467,14 @@ list_resolv()
 		$force || report=true
 	elif ! $excl; then
 		cd "$IFACEDIR"
+
 		for i in $interface_order; do
 			[ -f "$i" ] && list="$list $i"
 			for ii in "$i":* "$i".*; do
 				[ -f "$ii" ] && list="$list $ii"
 			done
 		done
+
 		for i in $dynamic_order; do
 			if [ -e "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
 				list="$list $i"
@@ -470,18 +486,32 @@ list_resolv()
 				fi
 			done
 		done
+
 		# Interfaces have an implicit metric of 0 if not specified.
 		for i in *; do
 			if [ -f "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
 				list="$list $i"
 			fi
 		done
+
 		if [ -d "$METRICDIR" ]; then
 			cd "$METRICDIR"
 			for i in *; do
 				[ -f "$i" ] && list="$list ${i#* }"
 			done
 		fi
+
+		# Move deprecated interfaces to the back
+		active=
+		deprecated=
+		for i in $list; do
+			if deprecated_interface "$i"; then
+				deprecated="$deprecated $i"
+			else
+				active="$active $i"
+			fi
+		done
+		list="$active $deprecated"
 	fi
 
 	cd "$IFACEDIR"
@@ -680,7 +710,7 @@ make_vars()
 
 force=false
 VFLAG=
-while getopts a:Dd:fhIilm:pRruvVx OPT; do
+while getopts a:C:c:Dd:fhIilm:pRruvVx OPT; do
 	case "$OPT" in
 	f) force=true;;
 	h) usage;;
@@ -695,7 +725,7 @@ while getopts a:Dd:fhIilm:pRruvVx OPT; do
 		fi
 		;;
 	x) IF_EXCLUSIVE=1;;
-	'?') ;;
+	'?') exit 1;;
 	*) cmd="$OPT"; iface="$OPTARG";;
 	esac
 done
@@ -744,14 +774,20 @@ if [ "$cmd" = v ] || [ -n "$VFLAG" ]; then
 fi
 
 # Test that we have valid options
-if [ "$cmd" = a ] || [ "$cmd" = d ]; then
+case "$cmd" in
+a|d|C|c)
 	if [ -z "$iface" ]; then
-		usage "Interface not specified"
+		error_exit "Interface not specified"
 	fi
-elif [ "$cmd" != u ]; then
-	[ -n "$cmd" ] && [ "$cmd" != h ] && usage "Unknown option $cmd"
+	;;
+u)	;;
+*)
+	if [ -n "$cmd" ] && [ "$cmd" != h ]; then
+		error_exit "Unknown option $cmd"
+	fi
 	usage
-fi
+	;;
+esac
 
 if [ "$cmd" = a ]; then
 	for x in '/' \\ ' ' '*'; do
@@ -809,6 +845,9 @@ fi
 # in /usr which we do our very best to operate without.
 [ -w "$VARDIR" ] || error_exit "Cannot write to $LOCKDIR"
 : ${lock_timeout:=10}
+: ${clear_nopids:=5}
+have_pid=false
+had_pid=false
 while true; do
 	if mkdir "$LOCKDIR" 2>/dev/null; then
 		trap 'rm -rf "$LOCKDIR";' EXIT
@@ -816,18 +855,43 @@ while true; do
 		echo $$ >"$LOCKDIR/pid"
 		break
 	fi
-	pid=$(cat "$LOCKDIR/pid")
-	if ! kill -0 "$pid"; then
+	pid=$(cat "$LOCKDIR/pid" 2>/dev/null)
+	if [ "$pid" -gt 0 ] 2>/dev/null; then
+		have_pid=true
+		had_pid=true
+	else
+		have_pid=false
+		clear_nopids=$(($clear_nopids - 1))
+		if [ "$clear_nopids" -le 0 ]; then
+			warn "not seen a pid, clearing lock directory"
+			rm -rf "$LOCKDIR"
+		else
+			lock_timeout=$(($lock_timeout - 1))
+			sleep 1
+		fi
+		continue
+	fi
+	if $have_pid && ! kill -0 "$pid"; then
 		warn "clearing stale lock pid $pid"
 		rm -rf "$LOCKDIR"
 		continue
 	fi
 	lock_timeout=$(($lock_timeout - 1))
 	if [ "$lock_timeout" -le 0 ]; then
-		error_exit "timed out waiting for lock from pid $pid"
+		if $have_pid; then
+			error_exit "timed out waiting for lock from pid $pid"
+		else
+			if $had_pid; then
+				error_exit "timed out waiting for lock" \
+					"from some pids"
+			else
+				error_exit "timed out waiting for lock"
+			fi
+		fi
 	fi
 	sleep 1
 done
+unset have_pid had_pid clear_nopids
 
 case "$cmd" in
 a)
@@ -947,12 +1011,44 @@ d)
 			"$PRIVATEDIR/$i" \
 			"$EXCLUSIVEDIR/"*" $i" || exit $?
 	done
-	if ! ${changed}; then
+
+	if ! $changed; then
 		# Set the return code based on the forced flag
-		${force}
+		$force
 		exit $?
 	fi
 	unset changed i
+	;;
+
+C)
+	# Mark interface as deprecated
+	[ ! -d "$DEPRECATEDDIR" ] && mkdir "$DEPRECATEDDIR"
+	cd "$DEPRECATEDDIR"
+	changed=false
+	for i in $args; do
+		if [ ! -e "$i" ]; then
+			changed=true
+			echo " " >"$i" || exit $?
+		fi
+	done
+	$changed || exit 0
+	unset changed i
+	;;
+
+c)
+	# Mark interface as active
+	if [ -d "$DEPRECATEDDIR" ]; then
+		cd "$DEPRECATEDDIR"
+		changed=false
+		for i in $args; do
+			if [ -e "$i" ]; then
+				changed=true
+				rm "$i" || exit $?
+			fi
+		done
+		$changed || exit 0
+		unset changed i
+	fi
 	;;
 esac
 
