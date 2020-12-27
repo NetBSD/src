@@ -44,7 +44,7 @@
 .el       .ds `` ``
 .ie \n(.g .ds '' \(rq
 .el       .ds '' ''
-.TH RESIZE 1 "__app_date__" "__app_version__" "X Window System"
+.TH RESIZE 1 "2017-06-20" "Patch 330" "X Window System"
 .SH NAME
 resize \- set environment and terminal settings to current xterm window size
 .SH SYNOPSIS
@@ -187,7 +187,7 @@ so it is possible for \fI\*n\fP to be confused if one runs
 .TP 15
 TERM
 .I \*N
-sets this to "__default_termname__" if not already set.
+sets this to "xterm" if not already set.
 .TP 15
 TERMCAP
 .I \*N
@@ -206,7 +206,7 @@ use_env(3x)
 .br
 csh(1), stty(1), tset(1)
 .br
-xterm(__mansuffix__)
+xterm(1)
 .SH AUTHORS
 Mark Vandevoorde (MIT-Athena), Edward Moy (Berkeley)
 .br
@@ -215,5 +215,5 @@ Thomas Dickey (invisible-island.net).
 Copyright (c) 1984, 1985 by X Consortium
 .br
 See
-.IR X (__miscmansuffix__)
+.IR X (7)
 for a complete copyright notice.
