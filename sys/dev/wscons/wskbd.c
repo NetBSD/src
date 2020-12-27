@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.143 2019/02/05 10:04:49 mrg Exp $ */
+/* $NetBSD: wskbd.c,v 1.144 2020/12/27 16:09:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.143 2019/02/05 10:04:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.144 2020/12/27 16:09:33 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -143,10 +143,13 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.143 2019/02/05 10:04:49 mrg Exp $");
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/wscons/wsbelldata.h>
+#include <dev/wscons/wsmuxvar.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+#include "ioconf.h"
 
 #ifdef WSKBD_DEBUG
 #define DPRINTF(x)	if (wskbddebug) printf x
@@ -154,8 +157,6 @@ int	wskbddebug = 0;
 #else
 #define DPRINTF(x)
 #endif
-
-#include <dev/wscons/wsmuxvar.h>
 
 struct wskbd_internal {
 	const struct wskbd_mapdata *t_keymap;
@@ -289,8 +290,6 @@ static int wskbd_do_ioctl(device_t, u_long, void *, int, struct lwp *);
 
 CFATTACH_DECL_NEW(wskbd, sizeof (struct wskbd_softc),
     wskbd_match, wskbd_attach, wskbd_detach, wskbd_activate);
-
-extern struct cfdriver wskbd_cd;
 
 dev_type_open(wskbdopen);
 dev_type_close(wskbdclose);
