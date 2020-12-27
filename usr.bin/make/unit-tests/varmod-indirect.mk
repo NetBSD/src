@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.2 2020/12/20 19:29:06 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.3 2020/12/27 16:31:58 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -98,5 +98,18 @@ M_NoPrimes=	${PRIMES:${M_ListToSkip}}
 .  error
 .endif
 .MAKEFLAGS: -d0
+
+
+# In contrast to the .if conditions, the .for loop allows undefined variable
+# expressions.  These expressions expand to empty strings.
+.for var in before ${UNDEF} ${UNDEF:${:US,a,a,}} after
+.  info ${var}
+.endfor
+
+# Even in an indirect modifier based on an undefined variable, the value of
+# the expression in Var_Parse is a simple empty string.
+.for var in before ${UNDEF} ${UNDEF:${:U}} after
+.  info ${var}
+.endfor
 
 all:
