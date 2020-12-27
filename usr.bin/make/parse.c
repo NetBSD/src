@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.518 2020/12/27 11:47:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.519 2020/12/27 18:22:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.518 2020/12/27 11:47:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.519 2020/12/27 18:22:28 rillig Exp $");
 
 /* types and constants */
 
@@ -1084,9 +1084,8 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 			const char *nested_p = cp;
 			FStr nested_val;
 
-			/* XXX: Why VARE_WANTRES? */
-			(void)Var_Parse(&nested_p, VAR_CMDLINE,
-			    VARE_WANTRES | VARE_UNDEFERR, &nested_val);
+			(void)Var_Parse(&nested_p, VAR_CMDLINE, VARE_NONE,
+			    &nested_val);
 			/* TODO: handle errors */
 			FStr_Done(&nested_val);
 			cp += nested_p - cp;
