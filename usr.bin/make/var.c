@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.765 2020/12/27 05:06:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.766 2020/12/27 10:09:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.765 2020/12/27 05:06:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.766 2020/12/27 10:09:53 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -4161,7 +4161,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, FStr *out_val)
 		free(v);
 	}
 	*out_val = (FStr){ value.str, value.freeIt };
-	return VPR_UNKNOWN;
+	return VPR_OK;		/* XXX: Is not correct in all cases */
 }
 
 static void

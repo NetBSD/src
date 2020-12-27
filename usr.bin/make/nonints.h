@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.182 2020/12/27 05:06:17 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.183 2020/12/27 10:09:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -376,13 +376,8 @@ typedef enum VarParseResult {
 	 * Evaluation failed.
 	 * An error message has already been printed.
 	 */
-	VPR_EVAL_MSG	= VPR_EVAL_SILENT | VPR_ANY_MSG,
+	VPR_EVAL_MSG	= VPR_EVAL_SILENT | VPR_ANY_MSG
 
-	/*
-	 * The exact error handling status is not known yet.
-	 * Deprecated, migrate to VPR_OK or any VPE_*_MSG instead.
-	 */
-	VPR_UNKNOWN		= 0x0008
 } VarParseResult;
 
 typedef enum VarExportMode {
