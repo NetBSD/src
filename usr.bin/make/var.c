@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.769 2020/12/27 13:12:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.770 2020/12/27 13:15:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.769 2020/12/27 13:12:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.770 2020/12/27 13:15:43 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -3801,18 +3801,18 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 	name[1] = '\0';
 	v = VarFind(name, ctxt, TRUE);
 	if (v == NULL) {
+		const char *val;
 		*pp += 2;
 
-		*out_FALSE_val = UndefinedShortVarValue(startc, ctxt);
-		if (*out_FALSE_val == NULL) {
-			*out_FALSE_val =
-			    eflags & VARE_UNDEFERR ? var_Error : varUndefined;
-		}
+		val = UndefinedShortVarValue(startc, ctxt);
+		if (val == NULL)
+			val = eflags & VARE_UNDEFERR ? var_Error : varUndefined;
 
-		if (opts.strict && *out_FALSE_val == var_Error) {
+		if (opts.strict && val == var_Error) {
 			Parse_Error(PARSE_FATAL,
 			    "Variable \"%s\" is undefined", name);
 			*out_FALSE_res = VPR_ERR;
+			*out_FALSE_val = val;
 			return FALSE;
 		}
 
@@ -3827,6 +3827,7 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 		 * be VPR_UNDEF instead of VPR_OK.
 		 */
 		*out_FALSE_res = eflags & VARE_UNDEFERR ? VPR_UNDEF : VPR_OK;
+		*out_FALSE_val = val;
 		return FALSE;
 	}
 
