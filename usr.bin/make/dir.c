@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.252 2020/12/13 20:14:48 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.253 2020/12/27 11:47:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.252 2020/12/13 20:14:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.253 2020/12/27 11:47:04 rillig Exp $");
 
 /* A search path is a list of CachedDir structures. A CachedDir has in it the
  * name of the directory and the names of all the files in the directory.
@@ -506,7 +506,7 @@ Dir_InitDot(void)
 	dir = Dir_AddDir(NULL, ".");
 	if (dir == NULL) {
 		Error("Cannot open `.' (%s)", strerror(errno));
-		exit(1);
+		exit(2);	/* Not 1 so -q can distinguish error */
 	}
 
 	CachedDir_Assign(&dot, dir);

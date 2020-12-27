@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.517 2020/12/27 05:06:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.518 2020/12/27 11:47:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.517 2020/12/27 05:06:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.518 2020/12/27 11:47:04 rillig Exp $");
 
 /* types and constants */
 
@@ -527,7 +527,7 @@ loadfile(const char *path, int fd)
 			if (lf->len > SIZE_MAX / 2) {
 				errno = EFBIG;
 				Error("%s: file too large", path);
-				exit(1);
+				exit(2); /* Not 1 so -q can distinguish error */
 			}
 			lf->len *= 2;
 			lf->buf = bmake_realloc(lf->buf, lf->len);
@@ -536,7 +536,7 @@ loadfile(const char *path, int fd)
 		result = read(fd, lf->buf + bufpos, lf->len - bufpos);
 		if (result < 0) {
 			Error("%s: read error: %s", path, strerror(errno));
-			exit(1);
+			exit(2);	/* Not 1 so -q can distinguish error */
 		}
 		if (result == 0)
 			break;
