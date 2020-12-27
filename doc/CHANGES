@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2769 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2770 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -321,3 +321,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sti(4), hp300: Add bitmap access ops support for SGC CRX (A1659-66001)
 		framebuffer for HP9000/425t. [tsutsui 20201223]
 	openresolv: Update to version 3.12.0 [roy 20201227]
+	nvmm: implement support for trapping REP CMPS [reinoud 20201227]
+
