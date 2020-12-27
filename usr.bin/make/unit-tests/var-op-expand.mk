@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.5 2020/12/27 20:45:52 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.6 2020/12/27 21:19:13 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -82,6 +82,36 @@ VAR:=		${:${REF}}
 REF=		too late
 UNDEF=		Uwas undefined
 .if ${VAR} != ""
+.  error
+.endif
+
+
+# In variable assignments using the ':=' operator, undefined variables are
+# preserved, no matter how indirectly they are referenced.
+.undef REF3
+REF2=		<${REF3}>
+REF=		${REF2}
+VAR:=		${REF}
+REF3=		too late
+.if ${VAR} != "<too late>"
+.  error
+.endif
+
+
+# In variable assignments using the ':=' operator, '$$' are preserved, no
+# matter how indirectly they are referenced.
+REF2=		REF2:$$ $$$$
+REF=		REF:$$ $$$$ ${REF2}
+VAR:=		VAR:$$ $$$$ ${REF}
+.if ${VAR} != "VAR:\$ \$\$ REF:\$ \$\$ REF2:\$ \$\$"
+.  error
+.endif
+
+
+# In variable assignments using the ':=' operator, '$$' are preserved in the
+# expressions of the top level, but not in expressions that are nested.
+VAR:=		top:$$ ${:Unest1\:\$\$} ${:Unest2${:U\:\$\$}}
+.if ${VAR} != "top:\$ nest1:\$ nest2:\$"
 .  error
 .endif
 
