@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.7 2020/12/27 21:31:27 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.8 2020/12/27 22:29:37 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -116,26 +116,25 @@ VAR:=		top:$$ ${:Unest1\:\$\$} ${:Unest2${:U\:\$\$}}
 .endif
 
 
-# XXX: edge case: When a variable name refers to an undefined variable, the
-# behavior differs between the '=' and the ':=' assignment operators.
-# This bug exists since var.c 1.42 from 2000-05-11.
+# Between var.c 1.42 from 2000-05-11 and before parse.c 1.520 from 2020-12-27,
+# if the variable name in a ':=' assignment referred to an undefined variable,
+# there were actually 2 assignments to different variables:
 #
-# The '=' operator expands the undefined variable to an empty string, thus
-# assigning to VAR_ASSIGN_.  In the name of variables to be set, it should
-# really be forbidden to refer to undefined variables.
+#	Global["VAR_SUBST_${UNDEF}"] = ""
+#	Global["VAR_SUBST_"] = ""
 #
-# The ':=' operator expands the variable name twice.  In one of these
-# expansions, the undefined variable expression is preserved (controlled by
-# preserveUndefined in VarAssign_EvalSubst), in the other expansion it expands
-# to an empty string.  This way, 2 variables are created using a single
-# variable assignment.  It's magic. :-/
+# The variable name with the empty value actually included a dollar sign.
+# Variable names with dollars are not used in practice.
+#
+# It might be a good idea to forbid undefined variables on the left-hand side
+# of a variable assignment.
 .undef UNDEF
 VAR_ASSIGN_${UNDEF}=	assigned by '='
 VAR_SUBST_${UNDEF}:=	assigned by ':='
 .if ${VAR_ASSIGN_} != "assigned by '='"
 .  error
 .endif
-.if ${${:UVAR_SUBST_\${UNDEF\}}} != ""
+.if defined(${:UVAR_SUBST_\${UNDEF\}})
 .  error
 .endif
 .if ${VAR_SUBST_} != "assigned by ':='"
