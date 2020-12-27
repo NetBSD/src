@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.6 2020/12/27 21:19:13 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.7 2020/12/27 21:31:27 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -130,10 +130,17 @@ VAR:=		top:$$ ${:Unest1\:\$\$} ${:Unest2${:U\:\$\$}}
 # to an empty string.  This way, 2 variables are created using a single
 # variable assignment.  It's magic. :-/
 .undef UNDEF
-.MAKEFLAGS: -dv
-VAR_ASSIGN_${UNDEF}=	undef value
-VAR_SUBST_${UNDEF}:=	undef value
-.MAKEFLAGS: -d0
+VAR_ASSIGN_${UNDEF}=	assigned by '='
+VAR_SUBST_${UNDEF}:=	assigned by ':='
+.if ${VAR_ASSIGN_} != "assigned by '='"
+.  error
+.endif
+.if ${${:UVAR_SUBST_\${UNDEF\}}} != ""
+.  error
+.endif
+.if ${VAR_SUBST_} != "assigned by ':='"
+.  error
+.endif
 
 all:
 	@:;
