@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.256 2020/12/21 20:47:29 rillig Exp $
+# $NetBSD: Makefile,v 1.257 2020/12/27 05:11:40 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -42,6 +42,7 @@
 TESTS+=		archive
 TESTS+=		archive-suffix
 TESTS+=		cmd-errors
+TESTS+=		cmd-errors-jobs
 TESTS+=		cmd-errors-lint
 TESTS+=		cmd-interrupt
 TESTS+=		cmdline
