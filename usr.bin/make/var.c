@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.766 2020/12/27 10:09:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.767 2020/12/27 10:53:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.766 2020/12/27 10:09:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.767 2020/12/27 10:53:23 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -2098,7 +2098,7 @@ ParseModifierPartSubst(
 		Error("Unfinished modifier for %s ('%c' missing)",
 		    st->var->name.str, delim);
 		*out_part = NULL;
-		return VPR_PARSE_MSG;
+		return VPR_ERR;
 	}
 
 	*pp = ++p;
@@ -3754,8 +3754,10 @@ ValidShortVarname(char varname, const char *start)
 		return VPR_OK;
 	}
 
-	if (!opts.strict)
-		return VPR_PARSE_SILENT;
+	if (!opts.strict) {
+		/* XXX: Should rather be a parse error with error message. */
+		return VPR_ERR_SILENT;
+	}
 
 	if (varname == '$')
 		Parse_Error(PARSE_FATAL,
@@ -3766,7 +3768,7 @@ ValidShortVarname(char varname, const char *start)
 		Parse_Error(PARSE_FATAL,
 		    "Invalid variable name '%c', at \"%s\"", varname, start);
 
-	return VPR_PARSE_MSG;
+	return VPR_ERR;
 }
 
 /* Parse a single-character variable name such as $V or $@.
@@ -3805,11 +3807,21 @@ ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 		if (opts.strict && *out_FALSE_val == var_Error) {
 			Parse_Error(PARSE_FATAL,
 			    "Variable \"%s\" is undefined", name);
-			*out_FALSE_res = VPR_UNDEF_MSG;
+			*out_FALSE_res = VPR_ERR;
 			return FALSE;
 		}
-		*out_FALSE_res =
-		    eflags & VARE_UNDEFERR ? VPR_UNDEF_SILENT : VPR_OK;
+
+		/*
+		 * XXX: This looks completely wrong.
+		 *
+		 * If undefined expressions are not allowed, this should
+		 * rather be VPR_ERR instead of VPR_UNDEF, together with an
+		 * error message.
+		 *
+		 * If undefined expressions are allowed, this should rather
+		 * be VPR_UNDEF instead of VPR_OK.
+		 */
+		*out_FALSE_res = eflags & VARE_UNDEFERR ? VPR_UNDEF : VPR_OK;
 		return FALSE;
 	}
 
@@ -3864,13 +3876,13 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 		    "Variable \"%s\" is undefined", varname);
 		free(varname);
 		*out_val = FStr_InitRefer(var_Error);
-		return VPR_UNDEF_MSG;
+		return VPR_ERR;
 	}
 
 	if (eflags & VARE_UNDEFERR) {
 		free(varname);
 		*out_val = FStr_InitRefer(var_Error);
-		return VPR_UNDEF_SILENT;
+		return VPR_UNDEF;	/* XXX: Should be VPR_ERR instead. */
 	}
 
 	free(varname);
@@ -3923,7 +3935,7 @@ ParseVarnameLong(
 		free(varname);
 		*out_FALSE_pp = p;
 		*out_FALSE_val = FStr_InitRefer(var_Error);
-		*out_FALSE_res = VPR_PARSE_MSG;
+		*out_FALSE_res = VPR_ERR;
 		return FALSE;
 	}
 
