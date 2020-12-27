@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.184 2020/12/27 10:53:23 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.185 2020/12/27 14:02:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -324,9 +324,6 @@ typedef enum VarParseResult {
 
 	/* Parsing or evaluating failed, with an error message. */
 	VPR_ERR,
-
-	/* deprecated */
-	VPR_ERR_SILENT,
 
 	/*
 	 * Parsing succeeded, undefined expressions are allowed and the
