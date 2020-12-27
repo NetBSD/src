@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 2020/11/10 21:47:41 kamil Exp $
+# $NetBSD: mi,v 1.164 2020/12/27 21:13:18 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -53,7 +53,7 @@
 ./usr/X11R7/bin/perfboth				xbase-x11perf-bin	xorg
 ./usr/X11R7/bin/perfratio				xbase-x11perf-bin	xorg
 ./usr/X11R7/bin/proxymngr				xbase-proxymngr-bin	xorg
-./usr/X11R7/bin/resize					xbase-xterm-bin	xorg
+./usr/X11R7/bin/resize					xbase-obsolete		obsolete
 ./usr/X11R7/bin/revpath					xbase-revpath-bin	xorg
 ./usr/X11R7/bin/sessreg					xbase-sessreg-bin	xorg
 ./usr/X11R7/bin/setxkbmap				xbase-setxkbmap-bin	xorg
@@ -1309,7 +1309,7 @@
 ./usr/X11R7/man/cat1/mkhtmlindex.0			xbase-mkhtmlindex-catman	.cat,xorg
 ./usr/X11R7/man/cat1/oclock.0				xbase-oclock-catman	.cat,xorg
 ./usr/X11R7/man/cat1/proxymngr.0			xbase-proxymngr-catman	.cat,xorg
-./usr/X11R7/man/cat1/resize.0				xbase-xterm-catman	.cat,xorg
+./usr/X11R7/man/cat1/resize.0				xbase-obsolete		obsolete
 ./usr/X11R7/man/cat1/revpath.0				xbase-revpath-catman	.cat,xorg
 ./usr/X11R7/man/cat1/sessreg.0				xbase-sessreg-catman	.cat,xorg
 ./usr/X11R7/man/cat1/setxkbmap.0			xbase-setxkbmap-catman	.cat,xorg
@@ -1457,7 +1457,7 @@
 ./usr/X11R7/man/html1/mkhtmlindex.html			xbase-mkhtmlindex-htmlman	html,xorg
 ./usr/X11R7/man/html1/oclock.html			xbase-oclock-htmlman	html,xorg
 ./usr/X11R7/man/html1/proxymngr.html			xbase-proxymngr-htmlman	html,xorg
-./usr/X11R7/man/html1/resize.html			xbase-resize-htmlman	html,xorg
+./usr/X11R7/man/html1/resize.html			xbase-obsolete		obsolete
 ./usr/X11R7/man/html1/revpath.html			xbase-revpath-htmlman	html,xorg
 ./usr/X11R7/man/html1/sessreg.html			xbase-sessreg-htmlman	html,xorg
 ./usr/X11R7/man/html1/setxkbmap.html			xbase-setxkbmap-htmlman	html,xorg
@@ -1606,7 +1606,7 @@
 ./usr/X11R7/man/man1/mkhtmlindex.1			xbase-mkhtmlindex-man	.man,xorg
 ./usr/X11R7/man/man1/oclock.1				xbase-oclock-man	.man,xorg
 ./usr/X11R7/man/man1/proxymngr.1			xbase-proxymngr-man	.man,xorg
-./usr/X11R7/man/man1/resize.1				xbase-xterm-man	.man,xorg
+./usr/X11R7/man/man1/resize.1				xbase-obsolete		obsolete
 ./usr/X11R7/man/man1/revpath.1				xbase-revpath-man	.man,xorg
 ./usr/X11R7/man/man1/sessreg.1				xbase-sessreg-man	.man,xorg
 ./usr/X11R7/man/man1/setxkbmap.1			xbase-setxkbmap-man	.man,xorg
