@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.183 2020/12/27 10:09:53 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.184 2020/12/27 10:53:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -316,67 +316,29 @@ typedef enum VarSetFlags {
 	VAR_SET_READONLY	= 1 << 1
 } VarSetFlags;
 
-/* The state of error handling returned by Var_Parse.
- *
- * As of 2020-09-13, this bitset looks quite bloated,
- * with all the constants doubled.
- *
- * Its purpose is to first document the existing behavior,
- * and then migrate away from the SILENT constants, step by step,
- * as these are not suited for reliable, consistent error handling
- * and reporting. */
+/* The state of error handling returned by Var_Parse. */
 typedef enum VarParseResult {
 
 	/* Both parsing and evaluation succeeded. */
-	VPR_OK		= 0x0000,
+	VPR_OK,
 
-	/* See if a message has already been printed for this error. */
-	VPR_ANY_MSG		= 0x0001,
+	/* Parsing or evaluating failed, with an error message. */
+	VPR_ERR,
 
-	/*
-	 * Parsing failed.
-	 * No error message has been printed yet.
-	 * Deprecated, migrate to VPR_PARSE_MSG instead.
-	 */
-	VPR_PARSE_SILENT	= 0x0002,
+	/* deprecated */
+	VPR_ERR_SILENT,
 
 	/*
-	 * Parsing failed.
-	 * An error message has already been printed.
+	 * Parsing succeeded, undefined expressions are allowed and the
+	 * expression was still undefined after applying all modifiers.
+	 * No error message is printed in this case.
+	 *
+	 * Some callers handle this case differently, so return this
+	 * information to them, for now.
+	 *
+	 * TODO: Replace this with a new flag VARE_KEEP_UNDEFINED.
 	 */
-	VPR_PARSE_MSG	= VPR_PARSE_SILENT | VPR_ANY_MSG,
-
-	/*
-	 * Parsing succeeded.
-	 * During evaluation, VARE_UNDEFERR was set and there was an undefined
-	 * variable.
-	 * No error message has been printed yet.
-	 * Deprecated, migrate to VPR_UNDEF_MSG instead.
-	 */
-	VPR_UNDEF_SILENT	= 0x0004,
-
-	/*
-	 * Parsing succeeded.
-	 * During evaluation, VARE_UNDEFERR was set and there was an undefined
-	 * variable.
-	 * An error message has already been printed.
-	 */
-	VPR_UNDEF_MSG	= VPR_UNDEF_SILENT | VPR_ANY_MSG,
-
-	/*
-	 * Parsing succeeded.
-	 * Evaluation failed.
-	 * No error message has been printed yet.
-	 * Deprecated, migrate to VPR_EVAL_MSG instead.
-	 */
-	VPR_EVAL_SILENT	= 0x0006,
-
-	/*
-	 * Parsing succeeded.
-	 * Evaluation failed.
-	 * An error message has already been printed.
-	 */
-	VPR_EVAL_MSG	= VPR_EVAL_SILENT | VPR_ANY_MSG
+	VPR_UNDEF
 
 } VarParseResult;
 
