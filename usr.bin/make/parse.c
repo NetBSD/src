@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.519 2020/12/27 18:22:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.520 2020/12/27 22:29:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,7 +117,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.519 2020/12/27 18:22:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.520 2020/12/27 22:29:37 rillig Exp $");
 
 /* types and constants */
 
@@ -1931,17 +1931,6 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	char *evalue;
 	Boolean savedPreserveUndefined = preserveUndefined;
 
-	/* TODO: Can this assignment to preserveUndefined be moved further down
-	 * to the actually interesting Var_Subst call, without affecting any
-	 * edge cases?
-	 *
-	 * It might affect the implicit expansion of the variable name in the
-	 * Var_Exists and Var_Set calls, even though it's unlikely that anyone
-	 * cared about this edge case when adding this code.  In addition,
-	 * variable assignments should not refer to any undefined variables in
-	 * the variable name. */
-	preserveUndefined = TRUE;
-
 	/*
 	 * make sure that we set the variable the first time to nothing
 	 * so that it gets substituted!
@@ -1949,9 +1938,11 @@ VarAssign_EvalSubst(const char *name, const char *uvalue, GNode *ctxt,
 	if (!Var_Exists(name, ctxt))
 		Var_Set(name, "", ctxt);
 
+	preserveUndefined = TRUE;
 	(void)Var_Subst(uvalue, ctxt, VARE_WANTRES | VARE_KEEP_DOLLAR, &evalue);
-	/* TODO: handle errors */
 	preserveUndefined = savedPreserveUndefined;
+	/* TODO: handle errors */
+
 	avalue = evalue;
 	Var_Set(name, avalue, ctxt);
 
