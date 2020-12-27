@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.161 2020/12/25 21:12:15 tsutsui Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.162 2020/12/27 16:09:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.161 2020/12/25 21:12:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.162 2020/12/27 16:09:33 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.161 2020/12/25 21:12:15 tsutsui Exp 
 #include <dev/cons.h>
 
 #include "locators.h"
+#include "ioconf.h"
 
 #ifdef WSDISPLAY_MULTICONS
 static bool wsdisplay_multicons_enable = true;
@@ -176,8 +177,6 @@ struct wsdisplay_scroll_data wsdisplay_default_scroll_values = {
 	2,
 };
 #endif
-
-extern struct cfdriver wsdisplay_cd;
 
 /* Autoconfiguration definitions. */
 static int wsdisplay_emul_match(device_t , cfdata_t, void *);
