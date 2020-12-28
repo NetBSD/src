@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.109 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.110 2020/12/28 22:36:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.109 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.110 2020/12/28 22:36:16 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -387,6 +387,7 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSmap:		/* /proc/N/map = -r-------- */
 	case PFSmaps:		/* /proc/N/maps = -r-------- */
 	case PFSauxv:		/* /proc/N/auxv = -r-------- */
+	case PFSenviron:	/* /proc/N/environ = -r-------- */
 		pfs->pfs_mode = S_IRUSR;
 		vp->v_type = VREG;
 		break;
@@ -394,7 +395,6 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSstatus:		/* /proc/N/status = -r--r--r-- */
 	case PFSstat:		/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case PFSenviron:	/* /proc/N/environ = -r--r--r-- */
 	case PFSemul:		/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFScpustat:	/* /proc/stat = -r--r--r-- */
