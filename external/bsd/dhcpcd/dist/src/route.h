@@ -93,6 +93,15 @@ struct rt {
 #ifdef HAVE_ROUTE_METRIC
 	unsigned int		rt_metric;
 #endif
+/* Maximum interface index is generally USHORT_MAX or 65535.
+ * Add some padding for other stuff and we get offsets for the
+ * below that should work automatically.
+ * This is only an issue if the user defines higher metrics in
+ * their configuration, but then they might wish to override also. */
+#define	RTMETRIC_BASE		   1000U
+#define	RTMETRIC_WIRELESS	   2000U
+#define	RTMETRIC_IPV4LL		1000000U
+#define	RTMETRIC_ROAM		2000000U
 #ifdef HAVE_ROUTE_PREF
 	int			rt_pref;
 #endif

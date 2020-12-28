@@ -168,6 +168,15 @@ rt_compare_proto(void *context, const void *node1, const void *node2)
 	if (c != 0)
 		return -c;
 
+	/* Prefer roaming over non roaming if both carriers are down. */
+	if (ifp1->carrier == LINK_DOWN && ifp2->carrier == LINK_DOWN) {
+		bool roam1 = if_roaming(ifp1);
+		bool roam2 = if_roaming(ifp2);
+
+		if (roam1 != roam2)
+			return roam1 ? 1 : -1;
+	}
+
 #ifdef INET
 	/* IPv4LL routes always come last */
 	if (rt1->rt_dflags & RTDF_IPV4LL && !(rt2->rt_dflags & RTDF_IPV4LL))
@@ -374,6 +383,8 @@ rt_setif(struct rt *rt, struct interface *ifp)
 	rt->rt_ifp = ifp;
 #ifdef HAVE_ROUTE_METRIC
 	rt->rt_metric = ifp->metric;
+	if (if_roaming(ifp))
+		rt->rt_metric += RTMETRIC_ROAM;
 #endif
 }
 
