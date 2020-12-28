@@ -137,7 +137,7 @@ ipv4ll_defaultroute(rb_tree_t *routes, struct interface *ifp)
 	sa_in_init(&rt->rt_ifa, &state->addr->addr);
 	rt->rt_dflags |= RTDF_IPV4LL;
 #ifdef HAVE_ROUTE_METRIC
-	rt->rt_metric += 10000;
+	rt->rt_metric += RTMETRIC_IPV4LL;
 #endif
 	return rt_proto_add(routes, rt) ? 1 : 0;
 }

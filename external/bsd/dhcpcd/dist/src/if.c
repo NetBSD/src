@@ -697,12 +697,11 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			ifp->metric = (unsigned int)ifr.ifr_metric;
 		if_getssid(ifp);
 #else
-		/* We reserve the 100 range for virtual interfaces, if and when
-		 * we can work them out. */
-		ifp->metric = 200 + ifp->index;
+		/* Leave a low portion for user config */
+		ifp->metric = RTMETRIC_BASE + ifp->index;
 		if (if_getssid(ifp) != -1) {
 			ifp->wireless = true;
-			ifp->metric += 100;
+			ifp->metric += RTMETRIC_WIRELESS;
 		}
 #endif
 

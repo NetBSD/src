@@ -73,7 +73,8 @@ ps_bpf_recvbpf(void *arg)
 		if (len == -1) {
 			int error = errno;
 
-			logerr("%s: %s", psp->psp_ifname, __func__);
+			if (errno != ENETDOWN)
+				logerr("%s: %s", psp->psp_ifname, __func__);
 			if (error != ENXIO)
 				break;
 			/* If the interface has departed, close the BPF

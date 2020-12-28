@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 24, 2020
+.Dd December 27, 2020
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -92,6 +92,9 @@ This is generally just a notification and no action need be taken.
 .It Dv NOCARRIER
 dhcpcd lost the carrier.
 The cable may have been unplugged or association to the wireless point lost.
+.It Dv NOCARRIER_ROAMING
+dhcpcd lost the carrier but the interface configuration is persisted.
+The OS has to support wireless roaming or IP Persistance for this to happen.
 .It Dv INFORM | Dv INFORM6
 dhcpcd informed a DHCP server about its address and obtained other
 configuration details.
@@ -147,10 +150,6 @@ will clear the environment variables aside from
 The following variables will then be set, along with any protocol supplied
 ones.
 .Bl -tag -width xnew_delegated_dhcp6_prefix
-.It Ev $chroot
-the directory where
-.Nm dhcpcd
-is chrooted.
 .It Ev $interface
 the name of the interface.
 .It Ev $protocol
@@ -193,12 +192,14 @@ if the
 .Ev interface
 is up, otherwise
 .Dv false .
+This is more than IFF_UP and may not be equal.
 .It Ev $if_down
 .Dv true
 if the
 .Ev interface
 is down, otherwise
 .Dv false .
+This is more than IFF_UP and may not be equal.
 .It Ev $af_waiting
 Address family waiting for, as defined in
 .Xr dhcpcd.conf 5 .
