@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.40 2020/05/05 16:58:11 bouyer Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.41 2020/12/28 12:38:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.40 2020/05/05 16:58:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.41 2020/12/28 12:38:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type,
     int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep,
     bus_addr_t *basep, bus_size_t *sizep)
 {
-	return pci_mapreg_submap(pa, reg, type, busflags, 0, 0, tagp, 
+	return pci_mapreg_submap(pa, reg, type, busflags, 0, 0, tagp,
 	    handlep, basep, sizep);
 }
 
@@ -351,7 +351,7 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 		splx(s);
 	}
 
-	/* If we're called with maxsize/offset of 0, behave like 
+	/* If we're called with maxsize/offset of 0, behave like
 	 * pci_mapreg_map.
 	 */
 
@@ -415,7 +415,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 			return 1;
 
 		ptr = offset + hdr.romh_data_ptr;
-		
+
 		if (ptr > sz) {
 			printf("pci_find_rom: rom data ptr out of range\n");
 			return 1;
@@ -456,7 +456,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 			bus_space_subregion(bst, bsh, offset, imagesz, romh);
 			return 0;
 		}
-		
+
 		/* last image check */
 		if (rom.rom_indicator & PCI_ROM_INDICATOR_LAST)
 			return 1;
