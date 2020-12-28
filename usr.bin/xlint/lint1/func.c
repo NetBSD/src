@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.27 2020/12/28 18:49:02 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.28 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.27 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.28 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -68,9 +68,9 @@ int	rchflg;
  * and case (label()).
  *
  * Control statements if, for, while and switch do not reset ftflg because
- * this must be done by the controled statement. At least for if this is
+ * this must be done by the controlled statement. At least for if this is
  * important because ** FALLTHROUGH ** after "if (expr) stmnt" is evaluated
- * befor the following token, wich causes reduction of above, is read.
+ * before the following token, wich causes reduction of above.
  * This means that ** FALLTHROUGH ** after "if ..." would always be ignored.
  */
 int	ftflg;
@@ -110,13 +110,13 @@ pos_t	prflpos;
 pos_t	scflpos;
 
 /*
- * Are both plibflg and llibflg set, prototypes are writen as function
+ * If both plibflg and llibflg are set, prototypes are written as function
  * definitions to the output file.
  */
 int	plibflg;
 
 /*
- * Nonzero means that no warnings about constands in conditional
+ * Nonzero means that no warnings about constants in conditional
  * context are printed.
  */
 int	ccflg;
@@ -205,11 +205,11 @@ chkreach(void)
  * Called after a function declaration which introduces a function definition
  * and before an (optional) old style argument declaration list.
  *
- * Puts all symbols declared in the Prototype or in an old style argument
+ * Puts all symbols declared in the prototype or in an old style argument
  * list back to the symbol table.
  *
  * Does the usual checking of storage class, type (return value),
- * redeclaration etc..
+ * redeclaration, etc.
  */
 void
 funcdef(sym_t *fsym)
@@ -329,7 +329,7 @@ funcdef(sym_t *fsym)
 
 	if (fsym->s_osdef && !fsym->s_type->t_proto) {
 		if (sflag && hflag && strcmp(fsym->s_name, "main") != 0)
-			/* function definition is not a prototyp */
+			/* function definition is not a prototype */
 			warning(286);
 	}
 
@@ -756,7 +756,7 @@ do2(tnode_t *tn)
 {
 
 	/*
-	 * If there was a continue statement the expression controlling the
+	 * If there was a continue statement, the expression controlling the
 	 * loop is reached.
 	 */
 	if (cstk->c_cont)
@@ -1034,7 +1034,7 @@ doreturn(tnode_t *tn)
 
 /*
  * Do some cleanup after a global declaration or definition.
- * Especially remove informations about unused lint comments.
+ * Especially remove information about unused lint comments.
  */
 void
 glclup(int silent)
@@ -1110,8 +1110,8 @@ argsused(int n)
 /*
  * VARARGS comment
  *
- * Makes that lint2 checks only the first n arguments for compatibility
- * to the function definition. A missing argument is taken to be 0.
+ * Causes lint2 to check only the first n arguments for compatibility
+ * with the function definition. A missing argument is taken to be 0.
  */
 void
 varargs(int n)
@@ -1266,9 +1266,9 @@ bitfieldtype(int n)
 }
 
 /*
- * PROTOTLIB in conjunction with LINTLIBRARY can be used to handle
+ * PROTOLIB in conjunction with LINTLIBRARY can be used to handle
  * prototypes like function definitions. This is done if the argument
- * to PROTOLIB is nonzero. Otherwise prototypes are handled normaly.
+ * to PROTOLIB is nonzero. Otherwise prototypes are handled normally.
  */
 void
 protolib(int n)

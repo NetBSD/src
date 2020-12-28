@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.72 2020/12/28 18:49:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.73 2020/12/28 21:24:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.72 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.73 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ static	type_t	*typetab;
 int	enumval;
 
 /*
- * pointer to top element of a stack which contains informations local
+ * pointer to top element of a stack which contains information local
  * to nested declarations
  */
 dinfo_t	*dcs;
@@ -131,9 +131,9 @@ initdecl(void)
 }
 
 /*
- * Returns a shared type structure vor arithmetic types and void.
+ * Returns a shared type structure for arithmetic types and void.
  *
- * It's important do duplicate this structure (using duptyp() or tdupdyp())
+ * It's important to duplicate this structure (using duptyp() or tdupdyp())
  * if it is to be modified (adding qualifiers or anything else).
  */
 type_t *
@@ -246,7 +246,7 @@ addscl(scl_t sc)
  * deftyp() to build the type used for all declarators in this
  * declaration.
  *
- * Is tp->t_typedef 1, the type comes from a previously defined typename.
+ * If tp->t_typedef is 1, the type comes from a previously defined typename.
  * Otherwise it comes from a type specifier (int, long, ...) or a
  * struct/union/enum tag.
  */
@@ -627,7 +627,7 @@ popdecl(void)
 		 * Symbols declared in (nested) structs or enums are
 		 * part of the next level (they are removed from the
 		 * symbol table if the symbols of the outher level are
-		 * removed)
+		 * removed).
 		 */
 		if ((*dcs->d_ldlsym = di->d_dlsyms) != NULL)
 			dcs->d_ldlsym = di->d_ldlsym;
@@ -649,8 +649,8 @@ popdecl(void)
 		/*
 		 * casts and sizeof
 		 * Append all symbols declared in the abstract declaration
-		 * to the list of symbols declared in the surounding decl.
-		 * or block.
+		 * to the list of symbols declared in the surrounding
+		 * declaration or block.
 		 * XXX I'm not sure whether they should be removed from the
 		 * symbol table now or later.
 		 */
@@ -716,7 +716,7 @@ clrtyp(void)
 }
 
 /*
- * Create a type structure from the informations gathered in
+ * Create a type structure from the information gathered in
  * the declaration stack.
  * Complain about storage classes which are not possible in current
  * context.
@@ -882,7 +882,7 @@ mrgtspec(tspec_t t, tspec_t s)
 }
 
 /*
- * Return the length of a type in bit.
+ * Return the length of a type in bits.
  *
  * Printing a message if the outhermost dimension of an array is 0 must
  * be done by the caller. All other problems are reported by length()
@@ -1111,7 +1111,7 @@ decl1str(sym_t *dsym)
 		/*
 		 * bit field
 		 *
-		 * only unsigned und signed int are protable bit-field types
+		 * only unsigned and signed int are portable bit-field types
 		 *(at least in ANSI C, in traditional C only unsigned int)
 		 */
 		if (t == CHAR || t == UCHAR || t == SCHAR ||
@@ -1297,7 +1297,7 @@ mergepq(pqinf_t *p1, pqinf_t *p2)
 }
 
 /*
- * Followint 3 functions extend the type of a declarator with
+ * The following 3 functions extend the type of a declarator with
  * pointer, function and array types.
  *
  * The current type is the Type built by deftyp() (dcs->d_type) and
@@ -1498,8 +1498,7 @@ chkfdef(sym_t *sym, int msg)
 
 /*
  * Process the name in a declarator.
- * If the symbol does already exists, a new one is created.
- * The symbol becomes one of the storage classes EXTERN, STATIC, AUTO or
+ * The symbol gets one of the storage classes EXTERN, STATIC, AUTO or
  * TYPEDEF.
  * s_def and s_reg are valid after dname().
  */
@@ -1521,7 +1520,7 @@ dname(sym_t *sym)
 	switch (dcs->d_ctx) {
 	case MOS:
 	case MOU:
-		/* Parent setzen */
+		/* Set parent */
 		sym->s_styp = dcs->d_tagtyp->t_str;
 		sym->s_def = DEF;
 		sym->s_value.v_tspec = INT;
@@ -1772,7 +1771,7 @@ scltoa(scl_t sc)
 }
 
 /*
- * tp points to the type of the, tag, fmem to the list of members/enums.
+ * tp points to the type of the tag, fmem to the list of members/enums.
  */
 type_t *
 compltag(type_t *tp, sym_t *fmem)
@@ -1782,7 +1781,7 @@ compltag(type_t *tp, sym_t *fmem)
 	int	n;
 	sym_t	*mem;
 
-	/* from now a complete type */
+	/* from now on the type is complete */
 	setcompl(tp, 0);
 
 	if ((t = tp->t_tspec) != ENUM) {
@@ -1827,11 +1826,11 @@ compltag(type_t *tp, sym_t *fmem)
 }
 
 /*
- * Processes the name of an enumerator in en enum declaration.
+ * Processes the name of an enumerator in an enum declaration.
  *
  * sym points to the enumerator
  * val is the value of the enumerator
- * impl is 1 if the value of the enumerator was not explicit specified.
+ * impl is 1 if the value of the enumerator was not explicitly specified.
  */
 sym_t *
 ename(sym_t *sym, int val, int impl)
@@ -1847,9 +1846,9 @@ ename(sym_t *sym, int val, int impl)
 				/* redeclaration of %s */
 				error(27, sym->s_name);
 				/*
-				 * inside blocks it should not too complicated
-				 * to find the position of the previous
-				 * declaration
+				 * inside blocks it should not be too
+				 * complicated to find the position of the
+				 * previous declaration
 				 */
 				if (blklev == 0)
 					prevdecl(-1, sym);
@@ -1922,9 +1921,9 @@ decl1ext(sym_t *dsym, int initflg)
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
 		/*
-		 * If the old symbol stems from a old style function definition
-		 * we have remembered the params in rdsmy->s_args and compare
-		 * them with the params of the prototype.
+		 * If the old symbol stems from an old style function
+		 * definition, we have remembered the params in rdsmy->s_args
+		 * and compare them with the params of the prototype.
 		 */
 		if (rdsym->s_osdef && dsym->s_type->t_proto) {
 			redec = chkosdef(rdsym, dsym);
@@ -1941,7 +1940,7 @@ decl1ext(sym_t *dsym, int initflg)
 			}
 
 			/*
-			 * Overtake the rememberd params if the new symbol
+			 * Take over the remembered params if the new symbol
 			 * is not a prototype.
 			 */
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
@@ -1992,7 +1991,7 @@ decl1ext(sym_t *dsym, int initflg)
 }
 
 /*
- * Copies informations about usage into a new symbol table entry of
+ * Copies information about usage into a new symbol table entry of
  * the same symbol.
  */
 void
@@ -2204,8 +2203,8 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 /*
  * mnoarg() (matches functions with no argument type information)
  * returns 1 if all parameters of a prototype are compatible with
- * and old style function declaration.
- * This is the case if following conditions are met:
+ * an old style function declaration.
+ * This is the case if the following conditions are met:
  *	1. the prototype must have a fixed number of parameters
  *	2. no parameter is of type float
  *	3. no parameter is converted to another type if integer promotion
@@ -2288,7 +2287,7 @@ chkosdef(sym_t *rdsym, sym_t *dsym)
 }
 
 /*
- * Complets a type by copying the dimension and prototype information
+ * Completes a type by copying the dimension and prototype information
  * from a second compatible type.
  *
  * Following lines are legal:
@@ -2464,7 +2463,7 @@ cluparg(void)
 	}
 
 	/*
-	 * print a warning for each argument off an old style function
+	 * print a warning for each argument of an old style function
 	 * definition which defaults to int
 	 */
 	for (arg = args; arg != NULL; arg = arg->s_nxt) {
@@ -2477,12 +2476,12 @@ cluparg(void)
 	}
 
 	/*
-	 * If this is an old style function definition and a prototyp
+	 * If this is an old style function definition and a prototype
 	 * exists, compare the types of arguments.
 	 */
 	if (funcsym->s_osdef && funcsym->s_type->t_proto) {
 		/*
-		 * If the number of arguments does not macht, we need not
+		 * If the number of arguments does not match, we need not
 		 * continue.
 		 */
 		narg = nparg = 0;
@@ -2508,7 +2507,7 @@ cluparg(void)
 			/* prototype declaration */
 			prevdecl(285, dcs->d_rdcsym);
 
-		/* from now the prototype is valid */
+		/* from now on the prototype is valid */
 		funcsym->s_osdef = 0;
 		funcsym->s_args = NULL;
 
@@ -2602,8 +2601,8 @@ decl1loc(sym_t *dsym, int initflg)
 
 	if (dsym->s_scl == EXTERN) {
 		/*
-		 * XXX wenn die statische Variable auf Ebene 0 erst
-		 * spaeter definiert wird, haben wir die Brille auf.
+		 * XXX if the static variable at level 0 is only defined
+		 * later, checking will be possible.
 		 */
 		if (dsym->s_xsym == NULL) {
 			outsym(dsym, EXTERN, dsym->s_def);
@@ -2628,7 +2627,7 @@ decl1loc(sym_t *dsym, int initflg)
 					warning(87, dsym->s_name);
 				break;
 			case TYPEDEF:
-				/* typedef hides  external declaration: %s */
+				/* typedef hides external declaration: %s */
 				if (hflag)
 					warning(88, dsym->s_name);
 				break;
@@ -2687,13 +2686,13 @@ decl1loc(sym_t *dsym, int initflg)
 	}
 
 	/*
-	 * Before we can check the size we must wait for a initialisation
+	 * Before we can check the size we must wait for a initialization
 	 * which may follow.
 	 */
 }
 
 /*
- * Processes (re)declarations of external Symbols inside blocks.
+ * Processes (re)declarations of external symbols inside blocks.
  */
 static void
 ledecl(sym_t *dsym)
@@ -2746,9 +2745,8 @@ ledecl(sym_t *dsym)
 }
 
 /*
- * Print an error or a warning if the symbol cant be initialized due
- * to type/storage class. Returnvalue is 1 if an error has been
- * detected.
+ * Print an error or a warning if the symbol cannot be initialized due
+ * to type/storage class. Return 1 if an error has been detected.
  */
 static int
 chkinit(sym_t *sym)
@@ -2779,7 +2777,7 @@ chkinit(sym_t *sym)
 }
 
 /*
- * Create a symbole for an abstract declaration.
+ * Create a symbol for an abstract declaration.
  */
 sym_t *
 aname(void)
@@ -2821,7 +2819,7 @@ globclup(void)
 	mblklev = 0;
 
 	/*
-	 * remove all informations about pending lint directives without
+	 * remove all information about pending lint directives without
 	 * warnings.
 	 */
 	glclup(1);
@@ -2846,10 +2844,6 @@ void
 chksz(sym_t *dsym)
 {
 
-	/*
-	 * check size only for symbols which are defined and no function and
-	 * not typedef name
-	 */
 	if (dsym->s_def != DEF)
 		return;
 	if (dsym->s_scl == TYPEDEF)
@@ -2895,7 +2889,7 @@ setuflg(sym_t *sym, int fcall, int szof)
 	/*
 	 * for function calls another record is written
 	 *
-	 * XXX Should symbols used in sizeof() treated as used or not?
+	 * XXX Should symbols used in sizeof() be treated as used or not?
 	 * Probably not, because there is no sense to declare an
 	 * external variable only to get their size.
 	 */
@@ -2990,7 +2984,7 @@ chkvusg(int novar, sym_t *sym)
 		return;
 
 	/*
-	 * XXX Only variables are checkd, although types should
+	 * XXX Only variables are checked, although types should
 	 * probably also be checked
 	 */
 	if ((sc = sym->s_scl) != EXTERN && sc != STATIC &&
@@ -3022,7 +3016,7 @@ chkvusg(int novar, sym_t *sym)
 	if (sc == EXTERN) {
 		/*
 		 * information about usage is taken over into the symbol
-		 * tabel entry at level 0 if the symbol was locally declared
+		 * table entry at level 0 if the symbol was locally declared
 		 * as an external symbol.
 		 *
 		 * XXX This is wrong for symbols declared static at level 0
@@ -3068,7 +3062,7 @@ chktusg(sym_t *sym)
 	if (!incompl(sym->s_type))
 		return;
 
-	/* complain alwasy about incomplet tags declared inside blocks */
+	/* always complain about incomplete tags declared inside blocks */
 	if (!zflag || dcs->d_ctx != EXTERN)
 		return;
 
@@ -3093,8 +3087,8 @@ chktusg(sym_t *sym)
 
 /*
  * Called after the entire translation unit has been parsed.
- * Changes tentative definitions in definitions.
- * Performs some tests on global Symbols. Detected Problems are:
+ * Changes tentative definitions into definitions.
+ * Performs some tests on global symbols. Detected problems are:
  * - defined variables of incomplete type
  * - constant variables which are not initialized
  * - static symbols which are never used
