@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.35 2017/03/06 21:01:39 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.36 2020/12/28 22:31:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -140,7 +140,7 @@ extern	type_t	*gettyp(tspec_t);
 extern	type_t	*duptyp(const type_t *);
 extern	type_t	*tduptyp(const type_t *);
 extern	int	incompl(type_t *);
-extern	void	setcompl(type_t *, int);
+extern	void	setcomplete(type_t *, int);
 extern	void	addscl(scl_t);
 extern	void	addtype(type_t *);
 extern	void	addqual(tqual_t);

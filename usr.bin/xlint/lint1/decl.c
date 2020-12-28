@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.73 2020/12/28 21:24:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.74 2020/12/28 22:31:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.73 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.74 2020/12/28 22:31:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -189,22 +189,21 @@ incompl(type_t *tp)
 }
 
 /*
- * Set the flag for (in)complete array, struct, union or enum
- * types.
+ * Mark an array, struct, union or enum type as complete or incomplete.
  */
 void
-setcompl(type_t *tp, int ic)
+setcomplete(type_t *tp, int complete)
 {
 	tspec_t	t;
 
 	if ((t = tp->t_tspec) == ARRAY) {
-		tp->t_aincompl = ic;
+		tp->t_aincompl = !complete;
 	} else if (t == STRUCT || t == UNION) {
-		tp->t_str->sincompl = ic;
+		tp->t_str->sincompl = !complete;
 	} else {
 		if (t != ENUM)
-			LERROR("setcompl()");
-		tp->t_enum->eincompl = ic;
+			LERROR("setcomplete()");
+		tp->t_enum->eincompl = !complete;
 	}
 }
 
@@ -1357,8 +1356,7 @@ addarray(sym_t *decl, int dim, int n)
 		/* zero array dimension */
 		c99ism(322, dim);
 	} else if (n == 0 && !dim) {
-		/* is incomplete type */
-		setcompl(tp, 1);
+		setcomplete(tp, 0);
 	}
 
 	return (decl);
@@ -1687,8 +1685,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 			tp->t_enum = getblk(sizeof(*tp->t_enum));
 			tp->t_enum->etag = tag;
 		}
-		/* ist unvollstaendiger Typ */
-		setcompl(tp, 1);
+		setcomplete(tp, 0);
 	}
 	return (tp);
 }
@@ -1781,8 +1778,7 @@ compltag(type_t *tp, sym_t *fmem)
 	int	n;
 	sym_t	*mem;
 
-	/* from now on the type is complete */
-	setcompl(tp, 0);
+	setcomplete(tp, 1);
 
 	if ((t = tp->t_tspec) != ENUM) {
 		align(dcs->d_stralign, 0);
@@ -2312,8 +2308,7 @@ compltyp(sym_t *dsym, sym_t *ssym)
 			if (dst->t_dim == 0 && src->t_dim != 0) {
 				*dstp = dst = duptyp(dst);
 				dst->t_dim = src->t_dim;
-				/* now a complete Typ */
-				setcompl(dst, 0);
+				setcomplete(dst, 1);
 			}
 		} else if (dst->t_tspec == FUNC) {
 			if (!dst->t_proto && src->t_proto) {

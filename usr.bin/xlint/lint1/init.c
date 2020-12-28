@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.31 2020/12/28 19:07:43 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.32 2020/12/28 22:31:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.31 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.32 2020/12/28 22:31:31 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -275,8 +275,7 @@ pushinit(void)
 		if (istk->i_type->t_tspec != ARRAY)
 			LERROR("pushinit()");
 		istk->i_type->t_dim++;
-		/* from now its an complete type */
-		setcompl(istk->i_type, 0);
+		setcomplete(istk->i_type, 1);
 	}
 
 	if (istk->i_cnt <= 0)
@@ -671,8 +670,7 @@ strginit(tnode_t *tn)
 	if (istk->i_nolimit) {
 		istk->i_nolimit = 0;
 		istk->i_type->t_dim = len + 1;
-		/* from now complete type */
-		setcompl(istk->i_type, 0);
+		setcomplete(istk->i_type, 1);
 	} else {
 		if (istk->i_type->t_dim < len) {
 			/* non-null byte ignored in string initializer */
