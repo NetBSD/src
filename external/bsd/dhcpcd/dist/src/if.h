@@ -42,14 +42,6 @@
  * dhcpcd can poll it for the relevant flags periodically */
 #define IF_POLL_UP	100	/* milliseconds */
 
-/* Some systems have in-built IPv4 DAD.
- * However, we need them to do DAD at carrier up as well. */
-#ifdef IN_IFF_TENTATIVE
-#  ifdef __NetBSD__
-#    define NOCARRIER_PRESERVE_IP
-#  endif
-#endif
-
 /*
  * Systems which handle 1 address per alias.
  * Currenly this is just Solaris.
@@ -161,6 +153,7 @@ int if_domtu(const struct interface *, short int);
 #define if_getmtu(ifp) if_domtu((ifp), 0)
 #define if_setmtu(ifp, mtu) if_domtu((ifp), (mtu))
 int if_carrier(struct interface *, const void *);
+bool if_roaming(struct interface *);
 
 #ifdef ALIAS_ADDR
 int if_makealias(char *, size_t, const char *, int);
