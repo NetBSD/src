@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2017/03/06 21:02:47 christos Exp $
+# $NetBSD: Makefile,v 1.16 2020/12/28 09:57:14 rillig Exp $
 
 NOMAN=		# defined
 
@@ -22,9 +22,9 @@ FILES+=		d_c99_decls_after_stmt3.c
 FILES+=		d_c99_flex_array_packed.c 
 FILES+=		d_c99_for_loops.c
 FILES+=		d_c99_func.c
+FILES+=		d_c99_nested_struct.c
 FILES+=		d_c99_recursive_init.c
 FILES+=		d_c99_struct_init.c
-FILES+=		d_c99_nested_struct.c
 FILES+=		d_c99_union_cast.c
 FILES+=		d_c99_union_init1.c
 FILES+=		d_c99_union_init2.c
@@ -41,8 +41,8 @@ FILES+=		d_compound_literals1.c
 FILES+=		d_compound_literals2.c
 FILES+=		d_constant_conv1.c
 FILES+=		d_constant_conv2.c
-FILES+=		d_cvt_in_ternary.c
 FILES+=		d_cvt_constant.c
+FILES+=		d_cvt_in_ternary.c
 FILES+=		d_ellipsis_in_switch.c
 FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
@@ -60,8 +60,8 @@ FILES+=		d_type_conv1.c
 FILES+=		d_type_conv2.c
 FILES+=		d_type_conv3.c
 FILES+=		d_type_question_colon.c
-FILES+=		d_typename_as_var.c
 FILES+=		d_typefun.c
+FILES+=		d_typename_as_var.c
 FILES+=		d_zero_sized_arrays.c
 
 .include <bsd.test.mk>
