@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.92 2020/12/28 19:07:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.93 2020/12/28 19:38:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.92 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.93 2020/12/28 19:38:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -591,7 +591,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = bldri(op, ln);
 		break;
 	default:
-		rtp = mp->m_logop ? gettyp(INT) : ln->tn_type;
+		rtp = mp->m_logical ? gettyp(INT) : ln->tn_type;
 		if (!mp->m_binary && rn != NULL)
 			LERROR("build()");
 		ntn = mktnode(op, rtp, ln, rn);
@@ -712,29 +712,25 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			rst = (rstp = rtp->t_subt)->t_tspec;
 	}
 
-	if (mp->m_rqint) {
-		/* integer types required */
+	if (mp->m_requires_integer) {
 		if (!tspec_is_int(lt) || (mp->m_binary && !tspec_is_int(rt))) {
 			incompat(op, lt, rt);
 			return (0);
 		}
-	} else if (mp->m_rqintcomp) {
-		/* integer or complex types required */
+	} else if (mp->m_requires_integer_or_complex) {
 		if ((!tspec_is_int(lt) && !tspec_is_complex(lt)) ||
 		    (mp->m_binary &&
 		     (!tspec_is_int(rt) && !tspec_is_complex(rt)))) {
 			incompat(op, lt, rt);
 			return (0);
 		}
-	} else if (mp->m_rqsclt) {
-		/* scalar types required */
+	} else if (mp->m_requires_scalar) {
 		if (!tspec_is_scalar(lt) ||
 		    (mp->m_binary && !tspec_is_scalar(rt))) {
 			incompat(op, lt, rt);
 			return (0);
 		}
-	} else if (mp->m_rqatyp) {
-		/* arithmetic types required */
+	} else if (mp->m_requires_arith) {
 		if (!tspec_is_arith(lt) ||
 		    (mp->m_binary && !tspec_is_arith(rt))) {
 			incompat(op, lt, rt);
@@ -1134,12 +1130,14 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		break;
 	}
 
-	if (mp->m_badeop &&
+	if (mp->m_bad_on_enum &&
 	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
 		chkbeop(op, ln, rn);
-	} else if (mp->m_enumop && (ltp->t_isenum && rtp && rtp->t_isenum)) {
+	} else if (mp->m_valid_on_enum &&
+	    (ltp->t_isenum && rtp && rtp->t_isenum)) {
 		chkeop2(op, arg, ln, rn);
-	} else if (mp->m_enumop && (ltp->t_isenum || (rtp && rtp->t_isenum))) {
+	} else if (mp->m_valid_on_enum &&
+	    (ltp->t_isenum || (rtp && rtp->t_isenum))) {
 		chkeop1(op, arg, ln, rn);
 	}
 
