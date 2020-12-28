@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.28 2020/12/28 12:52:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.29 2020/12/28 18:49:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.28 2020/12/28 12:52:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.29 2020/12/28 18:49:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -281,7 +281,7 @@ pushinit(void)
 
 	if (istk->i_cnt <= 0)
 		LERROR("pushinit()");
-	if (istk->i_type != NULL && issclt(istk->i_type->t_tspec))
+	if (istk->i_type != NULL && tspec_is_scalar(istk->i_type->t_tspec))
 		LERROR("pushinit()");
 
 	initstk = xcalloc(1, sizeof (istk_t));
@@ -431,7 +431,7 @@ nextinit(int brace)
 	DPRINTF(("%s(%d)\n", __func__, brace));
 	if (!brace) {
 		if (initstk->i_type == NULL &&
-		    !issclt(initstk->i_subt->t_tspec)) {
+		    !tspec_is_scalar(initstk->i_subt->t_tspec)) {
 			/* {}-enclosed initializer required */
 			error(181);
 		}
@@ -442,13 +442,14 @@ nextinit(int brace)
 		if (!initerr)
 			testinit();
 		while (!initerr && (initstk->i_type == NULL ||
-				    !issclt(initstk->i_type->t_tspec))) {
+				    !tspec_is_scalar(
+				        initstk->i_type->t_tspec))) {
 			if (!initerr)
 				pushinit();
 		}
 	} else {
 		if (initstk->i_type != NULL &&
-		    issclt(initstk->i_type->t_tspec)) {
+		    tspec_is_scalar(initstk->i_type->t_tspec)) {
 			/* invalid initializer */
 			error(176, tyname(buf, sizeof(buf), initstk->i_type));
 			initerr = 1;
@@ -477,7 +478,7 @@ initlbr(void)
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
 	    initstk->i_nxt == NULL) {
-		if (tflag && !issclt(initstk->i_subt->t_tspec))
+		if (tflag && !tspec_is_scalar(initstk->i_subt->t_tspec))
 			/* no automatic aggregate initialization in trad. C*/
 			warning(188);
 	}
@@ -572,7 +573,7 @@ mkinit(tnode_t *tn)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	if (!issclt(lt))
+	if (!tspec_is_scalar(lt))
 		LERROR("mkinit()");
 
 	if (!typeok(INIT, 0, ln, tn))
@@ -586,7 +587,7 @@ mkinit(tnode_t *tn)
 	expr(tn, 1, 0, 1);
 	trestor(tmem);
 
-	if (isityp(lt) && ln->tn_type->t_isfield && !isityp(rt)) {
+	if (tspec_is_int(lt) && ln->tn_type->t_isfield && !tspec_is_int(rt)) {
 		/*
 		 * Bit-fields can be initialized in trad. C only by integer
 		 * constants.
