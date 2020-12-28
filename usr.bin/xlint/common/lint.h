@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.14 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: lint.h,v 1.15 2020/12/28 18:06:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -100,7 +100,7 @@ typedef	struct {
 	u_int	tt_isatyp : 1;		/* 1 if arithmetic type */
 	u_int	tt_issclt : 1;		/* 1 if scalar type */
 	u_int	tt_isctyp : 1;		/* 1 if complex type */
-	const char *tt_name;		/* Bezeichnung des Typs */
+	const char *tt_name;		/* name of the type */
 } ttab_t;
 
 #define size(t)		(ttab[t].tt_sz)
