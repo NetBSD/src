@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.91 2020/12/28 11:05:54 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.92 2020/12/28 14:08:42 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.91 2020/12/28 11:05:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.92 2020/12/28 14:08:42 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -872,9 +872,6 @@ again:
 		KASSERT(sc->sc_ahci_cap & AHCI_CAP_SPM);
 	}
 
-	if (sc->sc_ahci_quirks & AHCI_QUIRK_SKIP_RESET)
-		goto skip_reset;
-
 	/* polled command, assume interrupts are disabled */
 
 	cmd_h = &achp->ahcic_cmdh[c_slot];
@@ -946,7 +943,6 @@ again:
 		goto end;
 	}
 
-skip_reset:
 	/*
 	 * wait 31s for BSY to clear
 	 * This should not be needed, but some controllers clear the
