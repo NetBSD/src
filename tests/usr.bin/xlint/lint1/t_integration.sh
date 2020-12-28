@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.5 2020/06/25 11:12:03 jruoho Exp $
+# $NetBSD: t_integration.sh,v 1.6 2020/12/28 09:58:56 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,11 @@ check_valid()
 
 check_invalid()
 {
-	atf_check -s not-exit:0 -o ignore -e ignore ${LINT1} -g -S -w \
-	    "$(atf_get_srcdir)/$1" /dev/null
+	local src="$(atf_get_srcdir)/$1"
+	local exp="${src%.c}.exp"
+
+	atf_check -s not-exit:0 -o "file:${exp}" -e empty \
+	    ${LINT1} -g -S -w "${src}" /dev/null
 }
 
 test_case()
