@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2771 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2772 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -324,4 +324,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	nvmm: implement support for trapping REP CMPS [reinoud 20201227]
 	resize: Import Xterm's resize(1) for querying (x)terminal sizes in
 		base for headless clients [reinoud 20201227]
-
+	dhcpcd: Update to version 9.4.0 [roy 20201228]
