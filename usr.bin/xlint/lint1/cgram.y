@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.108 2020/12/28 19:07:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.109 2020/12/28 19:47:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.108 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.109 2020/12/28 19:47:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -534,7 +534,7 @@ type_attribute_bounded_type:
 
 
 type_attribute_spec:
-	  /* empty */	
+	  /* empty */
 	| T_AT_DEPRECATED T_LPARN string T_RPARN
 	| T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
@@ -552,9 +552,9 @@ type_attribute_spec:
 	| T_AT_PCS T_LPARN string T_RPARN
 	| T_AT_SECTION T_LPARN string T_RPARN
 	| T_AT_TLS_MODEL T_LPARN string T_RPARN
-	| T_AT_ALIGNED 
-	| T_AT_CONSTRUCTOR 
-	| T_AT_DESTRUCTOR 
+	| T_AT_ALIGNED
+	| T_AT_CONSTRUCTOR
+	| T_AT_DESTRUCTOR
 	| T_AT_MALLOC
 	| T_AT_MAY_ALIAS
 	| T_AT_NO_INSTRUMENT_FUNCTION
@@ -582,7 +582,7 @@ type_attribute_spec:
 	| T_AT_WEAK
 	| T_AT_VISIBILITY T_LPARN constant T_RPARN
 	| T_QUAL {
-		if ($1 != CONST)	
+		if ($1 != CONST)
 			yyerror("Bad attribute");
 	}
 	;
@@ -1336,7 +1336,7 @@ init_expr_list:
 	| init_expr_list T_COMMA init_assign_expr
 	;
 
-lorange: 
+lorange:
 	  constant T_ELLIPSE {
 		$$.lo = toicon($1, 1);
 	  }
@@ -1551,7 +1551,7 @@ expr_stmnt:
 	;
 
 /*
- * The following two productions are used to implement 
+ * The following two productions are used to implement
  * ({ [[decl-list] stmt-list] }).
  * XXX: This is not well tested.
  */
@@ -1625,7 +1625,7 @@ switch_expr:
 
 association:
 	  type_name T_COLON expr
-	| T_DEFAULT T_COLON expr 
+	| T_DEFAULT T_COLON expr
 	;
 
 association_list:
