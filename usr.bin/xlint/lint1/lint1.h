@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.31 2019/03/04 17:45:16 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.32 2020/12/28 12:56:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -174,7 +174,6 @@ struct type {
 
 #define	t_dim	t_u._t_dim
 #define	t_str	t_u._t_str
-#define	t_field	t_u._t_field
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
 #define	t_flen	t_b._t_flen
