@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.185 2020/12/27 14:02:12 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.186 2020/12/28 00:46:24 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -302,7 +302,20 @@ typedef enum VarEvalFlags {
 	 * See also preserveUndefined, which preserves subexpressions that are
 	 * based on undefined variables; maybe that can be converted to a flag
 	 * as well. */
-	VARE_KEEP_DOLLAR	= 1 << 2
+	VARE_KEEP_DOLLAR	= 1 << 2,
+
+	/*
+	 * Keep undefined variables as-is instead of expanding them to an
+	 * empty string.
+	 *
+	 * Example for a ':=' assignment:
+	 *	CFLAGS = $(.INCLUDES)
+	 *	CFLAGS := -I.. $(CFLAGS)
+	 *	# If .INCLUDES (an undocumented special variable, by the
+	 *	# way) is still undefined, the updated CFLAGS becomes
+	 *	# "-I.. $(.INCLUDES)".
+	 */
+	VARE_KEEP_UNDEF		= 1 << 3
 } VarEvalFlags;
 
 typedef enum VarSetFlags {

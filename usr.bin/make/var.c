@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.773 2020/12/27 16:31:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.774 2020/12/28 00:46:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.773 2020/12/27 16:31:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.774 2020/12/28 00:46:24 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -243,8 +243,9 @@ typedef struct SepBuf {
 } SepBuf;
 
 
-ENUM_FLAGS_RTTI_3(VarEvalFlags,
-		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR);
+ENUM_FLAGS_RTTI_4(VarEvalFlags,
+		  VARE_UNDEFERR, VARE_WANTRES, VARE_KEEP_DOLLAR,
+		  VARE_KEEP_UNDEF);
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -4194,7 +4195,7 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *ctxt,
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
-		if (!preserveUndefined) {
+		if (!(eflags & VARE_KEEP_UNDEF)) {
 			p = nested_p;
 		} else if ((eflags & VARE_UNDEFERR) || val.str == var_Error) {
 
