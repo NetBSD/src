@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.6 2020/12/28 09:58:56 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.7 2020/12/28 10:22:21 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,6 +71,8 @@ test_case check_valid c9x_recursive_init "Checks C9X struct/union member" \
     "init, with nested union and trailing member"
 test_case check_valid nested_structs "Checks nested structs"
 test_case check_valid packed_structs "Checks packed structs"
+test_case check_invalid struct_init_nested \
+    "Initialization of nested structures"
 
 test_case check_valid cast_init "Checks cast initialization"
 test_case check_valid cast_init2 "Checks cast initialization as the rhs of a" \
