@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.20 2017/03/25 23:33:11 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.20.14.1 2020/12/28 20:15:16 martin Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -20,6 +20,8 @@ CPUs
 330 (16 MHz 68020, 4 MB on motherboard, up to 8 MB RAM)
 .br
 .Em "Requires Human Interface board"
+.It
+332 (16 MHz 68030, optional 68882, up to 8 MB RAM)
 .It
 340 (16 MHz 68030, up to 16 MB RAM)
 .It
@@ -63,7 +65,7 @@ up to 128 MB RAM)
 .Ql SERVICE/NORMAL
 .Em "switch on the back panel is turned to"
 .Ql SERVICE
-.Em "potision."
+.Em "position."
 .It
 433s, 433t, 433dl (33 MHz 68040 with built-in SCSI, up to 128 MB RAM)
 .bullet)
@@ -175,6 +177,8 @@ A1096A monochrome Hyperion (1280x1024, 1 bit)
 .It
 A1416A Kathmandu (a.k.a. Color VRX) (1280x1024 @ 60 hz, 8 bits, DIO-II)
 .It
+A1659A CRX (1280x1024 @ 72 hz, 8 bits, SGC)
+.It
 98705 Tigershark PersonalVRX DIO-II graphics device
 .br
 .Em "Untested"
@@ -184,8 +188,6 @@ internal video on models 362/382 (A1474-69511 and A147x-69510)
 .Em "No X server support"
 .It
 425e built-in EVRX framebuffer
-.br
-.Em "No X server support"
 .bullet)
 .It
 HP-HIL devices
@@ -245,14 +247,10 @@ CPUs
 .(bullet -compact
 310 (10 MHz 68010, with built-in monochrome framebuffer, rs232
 (25 pin), hil, and slow hpib)
-.It
-332 (16? MHz 68030, with no floating point unit)
 .bullet)
 .It
 Graphics Devices
 .(bullet -compact
-SGC support for some rare configurations of 4XXt and 4XXdl workstations
-.It
 98702 TurboVRX DIO-II graphics device
 .bullet)
 .It
