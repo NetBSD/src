@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.505 2020/12/27 11:47:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.506 2020/12/28 00:46:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.505 2020/12/27 11:47:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.506 2020/12/28 00:46:24 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -125,7 +125,6 @@ Boolean deleteOnError;		/* .DELETE_ON_ERROR: set */
 static int maxJobTokens;	/* -j argument */
 Boolean enterFlagObj;		/* -w and objdir != srcdir */
 
-Boolean preserveUndefined;
 static int jp_0 = -1, jp_1 = -1; /* ends of parent job pipe */
 Boolean doing_depend;		/* Set while reading .depend */
 static Boolean jobsRunning;	/* TRUE if the jobs might be running */

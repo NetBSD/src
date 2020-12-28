@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.12 2020/09/25 15:54:50 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.13 2020/12/28 00:46:24 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -128,6 +128,17 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	    ENUM__JOIN_2( \
 		ENUM__JOIN_STR_2(v1, v2), \
 		ENUM__JOIN_STR_1(v3)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 4 flags. */
+#define ENUM_FLAGS_RTTI_4(typnam, v1, v2, v3, v4) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
+		ENUM__SPEC_2(v1, v2), \
+		ENUM__SPEC_2(v3, v4)), \
+	    ENUM__JOIN_2( \
+		ENUM__JOIN_STR_2(v1, v2), \
+		ENUM__JOIN_STR_2(v3, v4)))
 
 /* Declare the necessary data structures for calling Enum_FlagsToString
  * for an enum with 6 flags. */
