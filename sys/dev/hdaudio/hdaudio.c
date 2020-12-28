@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.12 2020/12/28 16:49:58 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.13 2020/12/28 19:31:43 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.12 2020/12/28 16:49:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13 2020/12/28 19:31:43 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -698,6 +698,7 @@ hdaudio_attach_fg(struct hdaudio_function_group *fg, prop_array_t config)
 static void
 hdaudio_codec_attach(struct hdaudio_codec *co)
 {
+	struct hdaudio_softc *sc = co->co_host;
 	struct hdaudio_function_group *fg;
 	uint32_t vid, snc, fgrp;
 	int starting_node, num_nodes, nid;
@@ -714,7 +715,6 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 		return;
 
 #ifdef HDAUDIO_DEBUG
-	struct hdaudio_softc *sc = co->co_host;
 	uint32_t rid = hdaudio_command(co, 0, CORB_GET_PARAMETER,
 	    COP_REVISION_ID);
 	hda_print(sc, "Codec%02X: %04X:%04X HDA %d.%d rev %d stepping %d\n",
@@ -724,6 +724,16 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 #endif
 	starting_node = (snc >> 16) & 0xff;
 	num_nodes = snc & 0xff;
+
+	/*
+	 * If the total number of nodes is 0, there's nothing we can do.
+	 * This shouldn't happen, so complain about it.
+	 */
+	if (num_nodes == 0) {
+		hda_error(sc, "Codec%02X: No subordinate nodes found (%08x)\n",
+		    co->co_addr, snc);
+		return;
+	}
 
 	co->co_nfg = num_nodes;
 	co->co_fg = kmem_zalloc(co->co_nfg * sizeof(*co->co_fg), KM_SLEEP);
