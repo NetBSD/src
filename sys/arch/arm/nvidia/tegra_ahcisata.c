@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.12 2018/12/14 12:29:22 skrll Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.13 2020/12/28 14:08:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.12 2018/12/14 12:29:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.13 2020/12/28 14:08:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,7 +202,6 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map ahci registers: %d\n", error);
 		return;
 	}
-	sc->sc.sc_ahci_quirks = AHCI_QUIRK_SKIP_RESET;
 
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
