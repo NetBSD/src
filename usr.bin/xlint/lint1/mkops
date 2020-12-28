@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkops,v 1.8 2011/02/07 23:56:18 christos Exp $
+#	$NetBSD: mkops,v 1.9 2020/12/28 19:47:42 rillig Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,7 +99,7 @@ BEGIN {
 			m = $3;
 			act = 1;
 		}
-		printf("\t{ /* %s */\t{ %s \"%s\" }, %d },\n", $2, m, $1, act); 
+		printf("\t{ /* %s */\t{ %s \"%s\" }, %d },\n", $2, m, $1, act);
 	}
 }
 
@@ -110,7 +110,7 @@ END {
 		printf("} op_t;\n");
 		printf("const char *getopname(op_t);\n");
 		printf("void initmtab(void);\n");
-	} 
+	}
 	if (v == "c") {
 		printf("};\n");
 		printf("const char *\n");
