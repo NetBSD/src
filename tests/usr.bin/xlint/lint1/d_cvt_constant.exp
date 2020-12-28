@@ -1,0 +1,2 @@
+(7): warning: x set but not used in function main [191]
+(11): warning: function main falls off bottom without returning value [217]
