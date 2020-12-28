@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.30 2020/12/28 19:02:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.31 2020/12/28 19:07:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,12 +37,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.30 2020/12/28 19:02:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.31 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "lint1.h"
 

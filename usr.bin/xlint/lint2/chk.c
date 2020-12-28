@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.24 2020/12/28 18:49:02 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.25 2020/12/28 19:07:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,13 +38,13 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.24 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.25 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
-#include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lint2.h"
 
