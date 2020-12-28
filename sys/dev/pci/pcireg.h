@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.151 2020/02/18 04:08:12 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.152 2020/12/28 12:38:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -2073,7 +2073,7 @@ struct pci_rom {
 #define	PCI_DPC_RPPIO_MEMUR_CPL	__BIT(16)      /* MemReq received UR Complt. */
 #define	PCI_DPC_RPPIO_MEMCA_CPL	__BIT(17)      /* MemReq received CA Complt. */
 #define	PCI_DPC_RPPIO_MEM_CTO	__BIT(18)      /* MemReq Completion Timeout */
-	
+
 #define	PCI_DPC_RPPIO_MASK 0x10	/* RP PIO Mask Register */
   /* Bits are the same as RP PIO Status Register */
 #define	PCI_DPC_RPPIO_SEVE 0x14	/* RP PIO Severity Register */
