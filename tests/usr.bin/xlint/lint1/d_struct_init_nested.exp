@@ -1,0 +1,4 @@
+d_struct_init_nested.c(27): initialisation type mismatch (enum I1) and (struct Inner1) [185]
+d_struct_init_nested.c(29): too many struct/union initializers [172]
+d_struct_init_nested.c(54): initialisation type mismatch (enum I1) and (struct Inner2) [185]
+d_struct_init_nested.c(56): warning: enum type mismatch in initialisation [210]
