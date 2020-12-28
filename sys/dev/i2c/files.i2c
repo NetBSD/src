@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.112 2020/10/29 06:55:51 jdc Exp $
+#	$NetBSD: files.i2c,v 1.113 2020/12/28 20:29:57 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -14,6 +14,10 @@ defparam opt_i2c.h				I2C_MAX_ADDR
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang
 file	dev/i2c/i2c_bitbang.c			i2c_bitbang
+
+# Common module for i2c mux support
+define	i2cmux
+file	dev/i2c/i2cmux.c			i2cmux
 
 # Auvitek AU8522 decoder
 define	au8522: i2cexec

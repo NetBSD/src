@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.3 2020/12/28 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.4 2020/12/28 20:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.3 2020/12/28 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.4 2020/12/28 20:29:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -40,188 +40,101 @@ __KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.3 2020/12/28 15:08:06 thorpej Exp $
 #include <sys/gpio.h>
 
 #include <dev/fdt/fdtvar.h>
-#include <dev/i2c/i2cvar.h>
-
-/*
- * i2c mux
- *
- * This works by interposing a virtual controller in front of the
- * real i2c controller.  We provide our own acquire release functions
- * that perform the following tasks:
- *
- *	acquire -> acquire parent controller, program mux
- *
- *	release -> idle mux, release parent controller
- *
- * All of the actual I/O operations are transparently passed through.
- *
- * N.B. the locking order; the generic I2C layer has already acquired
- * our virtual controller's mutex before calling our acquire function,
- * and we will then acquire the real controller's mutex when we acquire
- * the bus, so the order is:
- *
- *	mux virtual controller -> parent controller
- */
-
-struct iicmux_softc;
-struct iicmux_bus;
-
-struct iicmux_config {
-	const char *desc;
-	int	(*get_mux_info)(struct iicmux_softc *);
-	int	(*get_bus_info)(struct iicmux_bus *);
-	int	(*acquire_bus)(struct iicmux_bus *, int);
-	void	(*release_bus)(struct iicmux_bus *, int);
-};
-
-struct iicmux_bus {
-	struct i2c_controller controller;
-	struct iicmux_softc *mux;
-	int phandle;
-	int busidx;
-
-	union {
-		struct {
-			bus_addr_t value;
-		} gpio;
-
-		struct {
-			bus_addr_t idx;
-		} pinctrl;
-	};
-};
-
-struct iicmux_softc {
-	device_t			sc_dev;
-	int				sc_phandle;
-	int				sc_i2c_mux_phandle;
-	const struct iicmux_config *	sc_config;
-	i2c_tag_t			sc_i2c_parent;
-	struct iicmux_bus *		sc_busses;
-	int				sc_nbusses;
-
-	union {
-		struct {
-			struct fdtbus_gpio_pin **pins;
-			int npins;
-			uint32_t idle_value;
-			bool has_idle_value;
-		} sc_gpio;
-
-		struct {
-			u_int idle_idx;
-			bool has_idle_idx;
-		} sc_pinctrl;
-	};
-};
+#include <dev/i2c/i2cmuxvar.h>
 
 /*****************************************************************************/
 
-static int
-iicmux_acquire_bus(void * const v, int const flags)
-{
-	struct iicmux_bus * const bus = v;
-	struct iicmux_softc * const sc = bus->mux;
-	int error;
+struct mux_info_gpio {
+	struct fdtbus_gpio_pin **pins;
+	int npins;
+	uint32_t idle_value;
+	bool has_idle_value;
+};
 
-	error = iic_acquire_bus(sc->sc_i2c_parent, flags);
-	if (error) {
-		return error;
-	}
+struct bus_info_gpio {
+	bus_addr_t value;
+};
 
-	error = sc->sc_config->acquire_bus(bus, flags);
-	if (error) {
-		iic_release_bus(sc->sc_i2c_parent, flags);
-	}
-
-	return error;
-}
-
-static void
-iicmux_release_bus(void * const v, int const flags)
-{
-	struct iicmux_bus * const bus = v;
-	struct iicmux_softc * const sc = bus->mux;
-
-	sc->sc_config->release_bus(bus, flags);
-	iic_release_bus(sc->sc_i2c_parent, flags);
-}
-
-static int
-iicmux_exec(void * const v, i2c_op_t const op, i2c_addr_t const addr,
-    const void * const cmdbuf, size_t const cmdlen, void * const databuf,
-    size_t const datalen, int const flags)
-{
-	struct iicmux_bus * const bus = v;
-	struct iicmux_softc * const sc = bus->mux;
-
-	return iic_exec(sc->sc_i2c_parent, op, addr, cmdbuf, cmdlen,
-			databuf, datalen, flags);
-}
-
-/*****************************************************************************/
-
-static int
+static void *
 iicmux_gpio_get_mux_info(struct iicmux_softc * const sc)
 {
+	struct mux_info_gpio *mux_data;
 	int i;
 
-	sc->sc_gpio.npins = fdtbus_gpio_count(sc->sc_phandle, "mux-gpios");
-	if (sc->sc_gpio.npins == 0) {
+	mux_data = kmem_zalloc(sizeof(*mux_data), KM_SLEEP);
+
+	mux_data->npins = fdtbus_gpio_count(sc->sc_phandle, "mux-gpios");
+	if (mux_data->npins == 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get mux-gpios property\n");
-		return ENXIO;
+		goto bad;
 	}
 
-	sc->sc_gpio.pins =
-	    kmem_zalloc(sizeof(*sc->sc_gpio.pins) * sc->sc_gpio.npins,
-	    		       KM_SLEEP);
-	for (i = 0; i < sc->sc_gpio.npins; i++) {
-		sc->sc_gpio.pins[i] = fdtbus_gpio_acquire_index(sc->sc_phandle,
+	mux_data->pins =
+	    kmem_zalloc(sizeof(*mux_data->pins) * mux_data->npins, KM_SLEEP);
+	for (i = 0; i < mux_data->npins; i++) {
+		mux_data->pins[i] = fdtbus_gpio_acquire_index(sc->sc_phandle,
 		    "mux-gpios", i, GPIO_PIN_OUTPUT);
-		if (sc->sc_gpio.pins[i] == NULL) {
+		if (mux_data->pins[i] == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to acquire gpio #%d\n", i);
-			return ENXIO;
+			goto bad;
 		}
 	}
 
-	sc->sc_gpio.has_idle_value =
+	mux_data->has_idle_value =
 	    of_getprop_uint32(sc->sc_phandle, "idle-state",
-			      &sc->sc_gpio.idle_value) == 0;
+			      &mux_data->idle_value) == 0;
 
-	return 0;
+	return mux_data;
+
+ bad:
+	for (i = 0; i < mux_data->npins; i++) {
+		if (mux_data->pins[i] != NULL) {
+			fdtbus_gpio_release(mux_data->pins[i]);
+		}
+	}
+	kmem_free(mux_data, sizeof(*mux_data));
+	return NULL;
 }
 
-static int
+static void *
 iicmux_gpio_get_bus_info(struct iicmux_bus * const bus)
 {
 	struct iicmux_softc * const sc = bus->mux;
+	struct bus_info_gpio *bus_info;
 	int error;
 
-	error = fdtbus_get_reg(bus->phandle, 0, &bus->gpio.value, NULL);
+	bus_info = kmem_zalloc(sizeof(*bus_info), KM_SLEEP);
+
+	error = fdtbus_get_reg(bus->phandle, 0, &bus_info->value, NULL);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get reg property for bus %d\n", bus->busidx);
+		kmem_free(bus_info, sizeof(*bus_info));
+		return NULL;
 	}
 
-	return error;
+	return bus_info;
 }
 
 static void
 iicmux_gpio_set_value(struct iicmux_softc * const sc, bus_addr_t value)
 {
+	struct mux_info_gpio * const mux_info = sc->sc_mux_data;
 	int i;
 
-	for (i = 0; i < sc->sc_gpio.npins; i++, value >>= 1) {
-		fdtbus_gpio_write(sc->sc_gpio.pins[i], value & 1);
+	for (i = 0; i < mux_info->npins; i++, value >>= 1) {
+		fdtbus_gpio_write(mux_info->pins[i], value & 1);
 	}
 }
 
 static int
 iicmux_gpio_acquire_bus(struct iicmux_bus * const bus, int const flags __unused)
 {
-	iicmux_gpio_set_value(bus->mux, bus->gpio.value);
+	struct bus_info_gpio * const bus_info = bus->bus_data;
+
+	iicmux_gpio_set_value(bus->mux, bus_info->value);
 
 	return 0;
 }
@@ -229,10 +142,11 @@ iicmux_gpio_acquire_bus(struct iicmux_bus * const bus, int const flags __unused)
 static void
 iicmux_gpio_release_bus(struct iicmux_bus * const bus, int const flags __unused)
 {
-	struct iicmux_softc *sc = bus->mux;
+	struct iicmux_softc * const sc = bus->mux;
+	struct mux_info_gpio * const mux_info = sc->sc_mux_data;
 
-	if (sc->sc_gpio.has_idle_value) {
-		iicmux_gpio_set_value(sc, sc->sc_gpio.idle_value);
+	if (mux_info->has_idle_value) {
+		iicmux_gpio_set_value(sc, mux_info->idle_value);
 	}
 }
 
@@ -246,31 +160,47 @@ static const struct iicmux_config iicmux_gpio_config = {
 
 /*****************************************************************************/
 
-static int
+struct mux_info_pinctrl {
+	u_int idle_idx;
+	bool has_idle_idx;
+} sc_pinctrl;
+
+struct bus_info_pinctrl {
+	bus_addr_t idx;
+};
+
+static void *
 iicmux_pinctrl_get_mux_info(struct iicmux_softc * const sc)
 {
+	struct mux_info_pinctrl *mux_info;
 
-	sc->sc_pinctrl.has_idle_idx =
+	mux_info = kmem_alloc(sizeof(*mux_info), KM_SLEEP);
+
+	mux_info->has_idle_idx =
 	    fdtbus_get_index(sc->sc_phandle, "pinctrl-names", "idle",
-			     &sc->sc_pinctrl.idle_idx) == 0;
+			     &mux_info->idle_idx) == 0;
 
-	return 0;
+	return mux_info;
 }
 
-static int
+static void *
 iicmux_pinctrl_get_bus_info(struct iicmux_bus * const bus)
 {
 	struct iicmux_softc * const sc = bus->mux;
+	struct bus_info_pinctrl *bus_info;
 	int error;
 
-	error = fdtbus_get_reg(bus->phandle, 0, &bus->pinctrl.idx,
-			       NULL);
+	bus_info = kmem_alloc(sizeof(*bus_info), KM_SLEEP);
+
+	error = fdtbus_get_reg(bus->phandle, 0, &bus_info->idx, NULL);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to get reg property for bus %d\n", bus->busidx);
+		kmem_free(bus_info, sizeof(*bus_info));
+		return NULL;
 	}
 
-	return error;
+	return bus_info;
 }
 
 static int
@@ -278,9 +208,9 @@ iicmux_pinctrl_acquire_bus(struct iicmux_bus * const bus,
     int const flags __unused)
 {
 	struct iicmux_softc * const sc = bus->mux;
+	struct bus_info_pinctrl * const bus_info = bus->bus_data;
 
-	return fdtbus_pinctrl_set_config_index(sc->sc_phandle,
-	    bus->pinctrl.idx);
+	return fdtbus_pinctrl_set_config_index(sc->sc_phandle, bus_info->idx);
 }
 
 static void
@@ -288,10 +218,11 @@ iicmux_pinctrl_release_bus(struct iicmux_bus * const bus,
     int const flags __unused)
 {
 	struct iicmux_softc * const sc = bus->mux;
+	struct mux_info_pinctrl * const mux_info = sc->sc_mux_data;
 
-	if (sc->sc_pinctrl.has_idle_idx) {
+	if (mux_info->has_idle_idx) {
 		(void) fdtbus_pinctrl_set_config_index(sc->sc_phandle,
-		    sc->sc_pinctrl.idle_idx);
+		    mux_info->idle_idx);
 	}
 }
 
@@ -316,78 +247,6 @@ static const struct of_compat_data compat_data[] = {
 };
 
 static int
-iicmux_count_children(struct iicmux_softc * const sc)
-{
-	char name[32];
-	int child, count;
-
- restart:
-	for (child = OF_child(sc->sc_i2c_mux_phandle), count = 0; child;
-	     child = OF_peer(child)) {
-		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
-			continue;
-		}
-		if (strcmp(name, "i2c-mux") == 0) {
-			/*
-			 * The node we encountered is the acutal parent
-			 * of the i2c bus children.  Stash its phandle
-			 * and restart the enumeration.
-			 */
-			sc->sc_i2c_mux_phandle = child;
-			goto restart;
-		}
-		count++;
-	}
-
-	return count;
-}
-
-/* XXX iicbus_print() should be able to do this. */
-static int
-iicmux_print(void * const aux, const char * const pnp)
-{
-	i2c_tag_t const tag = aux;
-	struct iicmux_bus * const bus = tag->ic_cookie;
-	int rv;
-
-	rv = iicbus_print(aux, pnp);
-	aprint_normal(" bus %d", bus->busidx);
-
-	return rv;
-}
-
-static void
-iicmux_attach_bus(struct iicmux_softc * const sc,
-    int const phandle, int const busidx)
-{
-	struct iicmux_bus * const bus = &sc->sc_busses[busidx];
-	int error;
-
-	bus->mux = sc;
-	bus->busidx = busidx;
-	bus->phandle = phandle;
-
-	error = sc->sc_config->get_bus_info(bus);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to get info for bus %d, error %d\n",
-		    busidx, error);
-		return;
-	}
-
-	iic_tag_init(&bus->controller);
-	bus->controller.ic_cookie = bus;
-	bus->controller.ic_acquire_bus = iicmux_acquire_bus;
-	bus->controller.ic_release_bus = iicmux_release_bus;
-	bus->controller.ic_exec = iicmux_exec;
-
-	fdtbus_register_i2c_controller(&bus->controller, bus->phandle);
-
-	fdtbus_attach_i2cbus(sc->sc_dev, bus->phandle, &bus->controller,
-	    iicmux_print);
-}
-
-static int
 iicmux_fdt_match(device_t const parent, cfdata_t const match, void * const aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -409,34 +268,13 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 	aprint_naive("\n");
 	aprint_normal(": %s I2C mux\n", sc->sc_config->desc);
 
-	/*
-	 * We start out assuming that the i2c bus nodes are children of
-	 * our own node.  We'll adjust later if we encounter an "i2c-mux"
-	 * node when counting our children.  If we encounter such a node,
-	 * then it's that node that is the parent of the i2c bus children.
-	 */
-	sc->sc_i2c_mux_phandle = sc->sc_phandle;
-
 	sc->sc_i2c_parent = fdtbus_i2c_acquire(sc->sc_phandle, "i2c-parent");
 	if (sc->sc_i2c_parent == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to acquire i2c-parent\n");
 		return;
 	}
 
-	const int nchildren = iicmux_count_children(sc);
-	if (nchildren == 0) {
-		return;
-	}
-
-	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * nchildren,
-	    KM_SLEEP);
-
-	int child, idx;
-	for (child = OF_child(sc->sc_i2c_mux_phandle), idx = 0; child;
-	     child = OF_peer(child), idx++) {
-		KASSERT(idx < nchildren);
-		iicmux_attach_bus(sc, child, idx);
-	}
+	iicmux_attach(sc);
 }
 
 CFATTACH_DECL_NEW(iicmux_fdt, sizeof(struct iicmux_softc),
