@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.29 2020/12/28 18:49:02 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.30 2020/12/28 19:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.29 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.30 2020/12/28 19:02:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -160,7 +160,7 @@ popi2(void)
 
 	DPRINTF(("%s+(%s): brace=%d count=%d namedmem %d\n", __func__,
 	    tyname(buf, sizeof(buf),
-	    initstk->i_type ? initstk->i_type : initstk->i_subt),
+		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
 	initstk = (istk = initstk)->i_nxt;
 	free(istk);
@@ -171,7 +171,7 @@ popi2(void)
 
 	DPRINTF(("%s-(%s): brace=%d count=%d namedmem %d\n", __func__,
 	    tyname(buf, sizeof(buf),
-	    initstk->i_type ? initstk->i_type : initstk->i_subt),
+		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
 
 	istk->i_cnt--;
@@ -263,8 +263,8 @@ pushinit(void)
 
 	/* Extend an incomplete array type by one element */
 	if (istk->i_cnt == 0) {
-		DPRINTF(("%s(extend) %s\n", __func__, tyname(buf, sizeof(buf),
-		    istk->i_type)));
+		DPRINTF(("%s(extend) %s\n", __func__,
+		    tyname(buf, sizeof(buf), istk->i_type)));
 		/*
 		 * Inside of other aggregate types must not be an incomplete
 		 * type.
@@ -368,7 +368,7 @@ again:
 		istk->i_brace = 1;
 		DPRINTF(("%s(): %s brace=%d\n", __func__,
 		    tyname(buf, sizeof(buf),
-		    istk->i_type ? istk->i_type : istk->i_subt),
+			istk->i_type ? istk->i_type : istk->i_subt),
 		    istk->i_brace));
 		if (cnt == 0) {
 			/* cannot init. struct/union with no named member */
@@ -461,9 +461,11 @@ nextinit(int brace)
 		if (!initerr) {
 			initstk->i_brace = 1;
 			DPRINTF(("%s(): %p %s brace=%d\n", __func__,
-			    namedmem, tyname(buf, sizeof(buf),
-			    initstk->i_type ? initstk->i_type :
-			    initstk->i_subt), initstk->i_brace));
+			    namedmem,
+			    tyname(buf, sizeof(buf),
+				initstk->i_type ? initstk->i_type
+						: initstk->i_subt),
+			    initstk->i_brace));
 		}
 	}
 }
