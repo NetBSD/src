@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.90 2020/12/28 18:49:02 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.91 2020/12/28 19:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.90 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.91 2020/12/28 19:02:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1991,13 +1991,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				LERROR("cvtcon()");
 			if (op == FARG) {
 				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)), tyname(rbuf, sizeof(rbuf), tp),
+				warning(295,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
+				    tyname(rbuf, sizeof(rbuf), tp),
 				    arg);
 			} else {
 				/* conversion of %s to %s is out of range */
-				warning(119, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)),
+				warning(119,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
 				    tyname(rbuf, sizeof(rbuf), tp));
 			}
 			v->v_ldbl = v->v_ldbl > 0 ? max : min;
@@ -2085,8 +2086,9 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				 * extra bits set to 0 in conversion
 				 * of '%s' to '%s', op %s
 				 */
-				warning(309, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)), tyname(rbuf, sizeof(rbuf), tp),
+				warning(309,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
+				    tyname(rbuf, sizeof(rbuf), tp),
 				    modtab[op].m_name);
 			} else if (nsz < osz &&
 				   (v->v_quad & xmask) != xmask &&
@@ -2148,13 +2150,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				warning(196);
 			} else if (op == FARG) {
 				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)), tyname(rbuf, sizeof(rbuf), tp),
+				warning(295,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
+				    tyname(rbuf, sizeof(rbuf), tp),
 				    arg);
 			} else {
 				/* conversion of %s to %s is out of range */
-				warning(119, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)),
+				warning(119,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
 				    tyname(rbuf, sizeof(rbuf), tp));
 			}
 		} else if (nv->v_quad != v->v_quad) {
@@ -2169,13 +2172,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				warning(196);
 			} else if (op == FARG) {
 				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)), tyname(rbuf, sizeof(rbuf), tp),
+				warning(295,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
+				    tyname(rbuf, sizeof(rbuf), tp),
 				    arg);
 			} else {
 				/* conversion of %s to %s is out of range */
-				warning(119, tyname(lbuf, sizeof(lbuf),
-				    gettyp(ot)),
+				warning(119,
+				    tyname(lbuf, sizeof(lbuf), gettyp(ot)),
 				    tyname(rbuf, sizeof(rbuf), tp));
 			}
 		}
