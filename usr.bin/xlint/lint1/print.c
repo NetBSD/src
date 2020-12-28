@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2008/07/31 15:21:34 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.5 2020/12/28 12:52:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.4 2008/07/31 15:21:34 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 2020/12/28 12:52:45 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -132,7 +132,7 @@ prtnode(char *buf, size_t bufsiz, const tnode_t *tn)
 			break;
 		}
 		break;
-		
+
 	case STRING:
 		st = tn->tn_strg;
 		switch (st->st_tspec) {
