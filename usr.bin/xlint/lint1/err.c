@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.55 2020/12/28 19:07:43 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.56 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.55 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.56 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -404,7 +404,7 @@ msglist(void)
 }
 
 /*
- * If Fflag is not set lbasename() returns a pointer to the last
+ * If Fflag is not set, lbasename() returns a pointer to the last
  * component of the path, otherwise it returns the argument.
  */
 static const char *
@@ -426,7 +426,7 @@ lbasename(const char *path)
 }
 
 static void
-verror( int n, va_list ap)
+verror(int n, va_list ap)
 {
 	const	char *fn;
 

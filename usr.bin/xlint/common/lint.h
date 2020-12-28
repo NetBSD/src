@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.16 2020/12/28 18:49:02 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.17 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -46,7 +46,7 @@
 #include "param.h"
 
 /*
- * Type specifiers, used in type structures (type_t) and otherwere.
+ * Type specifiers, used in type structures (type_t) and elsewhere.
  */
 typedef enum {
 	NOTSPEC = 0,
