@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.57 2020/01/18 11:26:11 simonb Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.58 2020/12/28 20:01:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,11 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.57 2020/01/18 11:26:11 simonb Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ahcisata_pci.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.58 2020/12/28 20:01:46 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
