@@ -120,6 +120,7 @@ const struct option cf_options[] = {
 	{"ipv4only",        no_argument,       NULL, '4'},
 	{"ipv6only",        no_argument,       NULL, '6'},
 	{"anonymous",       no_argument,       NULL, O_ANONYMOUS},
+	{"randomise_hwaddr",no_argument,       NULL, O_RANDOMISE_HWADDR},
 	{"arping",          required_argument, NULL, O_ARPING},
 	{"destination",     required_argument, NULL, O_DESTINATION},
 	{"fallback",        required_argument, NULL, O_FALLBACK},
@@ -1303,6 +1304,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		del_option_mask(ifo->nomask6, D6_OPTION_INF_MAX_RT);
 #endif
 
+		break;
+	case O_RANDOMISE_HWADDR:
+		ifo->randomise_hwaddr = true;
 		break;
 #ifdef INET
 	case O_ARPING:

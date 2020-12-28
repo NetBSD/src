@@ -695,36 +695,55 @@ dhcpcd_reportssid(struct interface *ifp)
 	loginfox("%s: connected to Access Point: %s", ifp->name, pssid);
 }
 
+static void
+dhcpcd_nocarrier_roaming(struct interface *ifp)
+{
+
+	loginfox("%s: carrier lost - roaming", ifp->name);
+
+#ifdef ARP
+	arp_drop(ifp);
+#endif
+#ifdef INET
+	dhcp_abort(ifp);
+#endif
+#ifdef DHCP6
+	dhcp6_abort(ifp);
+#endif
+
+	rt_build(ifp->ctx, AF_UNSPEC);
+	script_runreason(ifp, "NOCARRIER_ROAMING");
+}
+
 void
 dhcpcd_handlecarrier(struct interface *ifp, int carrier, unsigned int flags)
 {
 	bool was_link_up = if_is_link_up(ifp);
+	bool was_roaming = if_roaming(ifp);
 
 	ifp->carrier = carrier;
 	ifp->flags = flags;
 
 	if (!if_is_link_up(ifp)) {
-		if (!was_link_up || !ifp->active)
+		if (!ifp->active || (!was_link_up && !was_roaming))
 			return;
+
+		/*
+		 * If the interface is roaming (generally on wireless)
+		 * then while we are not up, we are not down either.
+		 * Preserve the network state until we either disconnect
+		 * or re-connect.
+		 */
+		if (!ifp->options->randomise_hwaddr && if_roaming(ifp)) {
+			dhcpcd_nocarrier_roaming(ifp);
+			return;
+		}
+
 		loginfox("%s: carrier lost", ifp->name);
 		script_runreason(ifp, "NOCARRIER");
-#ifdef NOCARRIER_PRESERVE_IP
-		if (ifp->flags & IFF_UP &&
-		    !(ifp->options->options & DHCPCD_ANONYMOUS))
-		{
-#ifdef ARP
-			arp_drop(ifp);
-#endif
-#ifdef INET
-			dhcp_abort(ifp);
-#endif
-#ifdef DHCP6
-			dhcp6_abort(ifp);
-#endif
-		} else
-#endif
-			dhcpcd_drop(ifp, 0);
-		if (ifp->options->options & DHCPCD_ANONYMOUS) {
+		dhcpcd_drop(ifp, 0);
+
+		if (ifp->options->randomise_hwaddr) {
 			bool is_up = ifp->flags & IFF_UP;
 
 			if (is_up)
@@ -734,6 +753,7 @@ dhcpcd_handlecarrier(struct interface *ifp, int carrier, unsigned int flags)
 			if (is_up)
 				if_up(ifp);
 		}
+
 		return;
 	}
 
@@ -774,9 +794,7 @@ dhcpcd_handlecarrier(struct interface *ifp, int carrier, unsigned int flags)
 		    memcmp(ifp->ssid, ossid, ifp->ssid_len)) && ifp->active)
 		{
 			dhcpcd_reportssid(ifp);
-#ifdef NOCARRIER_PRESERVE_IP
 			dhcpcd_drop(ifp, 0);
-#endif
 #ifdef IPV4LL
 			ipv4ll_reset(ifp);
 #endif
@@ -788,17 +806,17 @@ dhcpcd_handlecarrier(struct interface *ifp, int carrier, unsigned int flags)
 
 	dhcpcd_initstate(ifp, 0);
 	script_runreason(ifp, "CARRIER");
+
 #ifdef INET6
-#ifdef NOCARRIER_PRESERVE_IP
 	/* Set any IPv6 Routers we remembered to expire faster than they
 	 * would normally as we maybe on a new network. */
 	ipv6nd_startexpire(ifp);
-#endif
 #ifdef IPV6_MANAGETEMPADDR
 	/* RFC4941 Section 3.5 */
 	ipv6_regentempaddrs(ifp);
 #endif
 #endif
+
 	dhcpcd_startinterface(ifp);
 }
 
@@ -951,22 +969,22 @@ dhcpcd_prestartinterface(void *arg)
 {
 	struct interface *ifp = arg;
 	struct dhcpcd_ctx *ctx = ifp->ctx;
-	bool anondown;
+	bool randmac_down;
 
 	if (ifp->carrier <= LINK_DOWN &&
-	    ifp->options->options & DHCPCD_ANONYMOUS &&
+	    ifp->options->randomise_hwaddr &&
 	    ifp->flags & IFF_UP)
 	{
 		if_down(ifp);
-		anondown = true;
+		randmac_down = true;
 	} else
-		anondown = false;
+		randmac_down = false;
 
 	if ((!(ctx->options & DHCPCD_MASTER) ||
-	    ifp->options->options & DHCPCD_IF_UP || anondown) &&
+	    ifp->options->options & DHCPCD_IF_UP || randmac_down) &&
 	    !(ifp->flags & IFF_UP))
 	{
-		if (ifp->options->options & DHCPCD_ANONYMOUS &&
+		if (ifp->options->randomise_hwaddr &&
 		    if_randomisemac(ifp) == -1)
 			logerr(__func__);
 		if (if_up(ifp) == -1)
@@ -1161,8 +1179,10 @@ dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 
 	socklen = sizeof(rcvbuflen);
 	if (getsockopt(ctx->link_fd, SOL_SOCKET,
-	    SO_RCVBUF, &rcvbuflen, &socklen) == -1)
+	    SO_RCVBUF, &rcvbuflen, &socklen) == -1) {
+		logerr("%s: getsockopt", __func__);
 		rcvbuflen = 0;
+	}
 #ifdef __linux__
 	else
 		rcvbuflen /= 2;
@@ -1239,8 +1259,9 @@ dhcpcd_handlehwaddr(struct interface *ifp,
 	}
 
 	if (ifp->hwtype != hwtype) {
-		loginfox("%s: hardware address type changed from %d to %d",
-		    ifp->name, ifp->hwtype, hwtype);
+		if (ifp->active)
+			loginfox("%s: hardware address type changed"
+			    " from %d to %d", ifp->name, ifp->hwtype, hwtype);
 		ifp->hwtype = hwtype;
 	}
 
@@ -1248,8 +1269,12 @@ dhcpcd_handlehwaddr(struct interface *ifp,
 	    (hwlen == 0 || memcmp(ifp->hwaddr, hwaddr, hwlen) == 0))
 		return;
 
-	loginfox("%s: new hardware address: %s", ifp->name,
-	    hwaddr_ntoa(hwaddr, hwlen, buf, sizeof(buf)));
+	if (ifp->active) {
+		loginfox("%s: old hardware address: %s", ifp->name,
+		    hwaddr_ntoa(ifp->hwaddr, ifp->hwlen, buf, sizeof(buf)));
+		loginfox("%s: new hardware address: %s", ifp->name,
+		    hwaddr_ntoa(hwaddr, hwlen, buf, sizeof(buf)));
+	}
 	ifp->hwlen = hwlen;
 	if (hwaddr != NULL)
 		memcpy(ifp->hwaddr, hwaddr, hwlen);
@@ -2257,10 +2282,10 @@ printpidfile:
 	if (ctx.stdin_valid && freopen(_PATH_DEVNULL, "w", stdin) == NULL)
 		logwarn("freopen stdin");
 
+#if defined(USE_SIGNALS) && !defined(THERE_IS_NO_FORK)
 	if (!(ctx.options & DHCPCD_DAEMONISE))
 		goto start_master;
 
-#if defined(USE_SIGNALS) && !defined(THERE_IS_NO_FORK)
 	if (xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fork_fd) == -1 ||
 	    (ctx.stderr_valid &&
 	    xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, stderr_fd) == -1))

@@ -1155,7 +1155,6 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 		return;
 	}
 
-#ifdef NOCARRIER_PRESERVE_IP
 	/*
 	 * Because we preserve RA's and expire them quickly after
 	 * carrier up, it's important to reset the kernels notion of
@@ -1168,7 +1167,6 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	}
 	if (rap != NULL && rap->willexpire)
 		ipv6nd_applyra(ifp);
-#endif
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (ifp == rap->iface &&

@@ -2065,7 +2065,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 	state->lerror = code;
 	errno = 0;
 
-	if (code != 0 && ifp->ctx->options & DHCPCD_TEST)
+	/* code cannot be D6_STATUS_OK, so there is a failure */
+	if (ifp->ctx->options & DHCPCD_TEST)
 		eloop_exit(ifp->ctx->eloop, EXIT_FAILURE);
 
 	return (int)code;

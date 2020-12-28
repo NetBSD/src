@@ -581,7 +581,9 @@ ps_mastersandbox(struct dhcpcd_ctx *ctx, const char *_pledge)
 		}
 		logerr("%s: %s", __func__, sandbox);
 		return -1;
-	} else if (ctx->options & DHCPCD_LAUNCHER)
+	} else if (ctx->options & DHCPCD_LAUNCHER ||
+		  ((!(ctx->options & DHCPCD_DAEMONISE)) &&
+		   ctx->options & DHCPCD_MASTER))
 		logdebugx("sandbox: %s", sandbox);
 	return 0;
 }

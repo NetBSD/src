@@ -74,6 +74,9 @@ static const char * const if_params[] = {
 	NULL
 };
 
+static const char * true_str = "true";
+static const char * false_str = "false";
+
 void
 if_printoptions(void)
 {
@@ -228,6 +231,10 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	const struct if_options *ifo;
 	const struct interface *ifp2;
 	int af;
+	bool is_stdin = ifp->name[0] == '\0';
+	const char *if_up, *if_down;
+	rb_tree_t ifaces;
+	struct rt *rt;
 #ifdef INET
 	const struct dhcp_state *state;
 #ifdef IPV4LL
@@ -237,7 +244,6 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 #ifdef DHCP6
 	const struct dhcp6_state *d6_state;
 #endif
-	bool is_stdin = ifp->name[0] == '\0';
 
 #ifdef HAVE_OPEN_MEMSTREAM
 	if (ctx->script_fp == NULL) {
@@ -276,6 +282,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		if (efprintf(fp, "pid=%d", getpid()) == -1)
 			goto eexit;
 	}
+
 	if (!is_stdin) {
 		if (efprintf(fp, "reason=%s", reason) == -1)
 			goto eexit;
@@ -326,6 +333,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	else if (strcmp(reason, "PREINIT") == 0 ||
 	    strcmp(reason, "CARRIER") == 0 ||
 	    strcmp(reason, "NOCARRIER") == 0 ||
+	    strcmp(reason, "NOCARRIER_ROAMING") == 0 ||
 	    strcmp(reason, "UNKNOWN") == 0 ||
 	    strcmp(reason, "DEPARTED") == 0 ||
 	    strcmp(reason, "STOPPED") == 0)
@@ -382,34 +390,45 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		goto dumplease;
 
+	rb_tree_init(&ifaces, &rt_compare_proto_ops);
+	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
+		if (!ifp2->active)
+			continue;
+		rt = rt_new(UNCONST(ifp2));
+		if (rt == NULL)
+			goto eexit;
+		if (rb_tree_insert_node(&ifaces, rt) != rt)
+			goto eexit;
+	}
 	if (fprintf(fp, "interface_order=") == -1)
 		goto eexit;
-	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
-		if (ifp2 != TAILQ_FIRST(ifp->ctx->ifaces)) {
-			if (fputc(' ', fp) == EOF)
-				return -1;
-		}
-		if (fprintf(fp, "%s", ifp2->name) == -1)
-			return -1;
+	RB_TREE_FOREACH(rt, &ifaces) {
+		if (rt != RB_TREE_MIN(&ifaces) &&
+		    fprintf(fp, "%s", " ") == -1)
+			goto eexit;
+		if (fprintf(fp, "%s", rt->rt_ifp->name) == -1)
+			goto eexit;
 	}
+	rt_headclear(&ifaces, AF_UNSPEC);
 	if (fputc('\0', fp) == EOF)
-		return -1;
+		goto eexit;
 
 	if (strcmp(reason, "STOPPED") == 0) {
-		if (efprintf(fp, "if_up=false") == -1)
-			goto eexit;
-		if (efprintf(fp, "if_down=%s",
-		    ifo->options & DHCPCD_RELEASE ? "true" : "false") == -1)
-			goto eexit;
+		if_up = false_str;
+		if_down = ifo->options & DHCPCD_RELEASE ? true_str : false_str;
 	} else if (strcmp(reason, "TEST") == 0 ||
 	    strcmp(reason, "PREINIT") == 0 ||
 	    strcmp(reason, "CARRIER") == 0 ||
 	    strcmp(reason, "UNKNOWN") == 0)
 	{
-		if (efprintf(fp, "if_up=false") == -1)
-			goto eexit;
-		if (efprintf(fp, "if_down=false") == -1)
-			goto eexit;
+		if_up = false_str;
+		if_down = false_str;
+	} else if (strcmp(reason, "NOCARRIER") == 0) {
+		if_up = false_str;
+		if_down = true_str;
+	} else if (strcmp(reason, "NOCARRIER_ROAMING") == 0) {
+		if_up = true_str;
+		if_down = false_str;
 	} else if (1 == 2 /* appease ifdefs */
 #ifdef INET
 	    || (protocol == PROTO_DHCP && state && state->new)
@@ -426,16 +445,17 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 #endif
 	    )
 	{
-		if (efprintf(fp, "if_up=true") == -1)
-			goto eexit;
-		if (efprintf(fp, "if_down=false") == -1)
-			goto eexit;
+		if_up = true_str;
+		if_down = false_str;
 	} else {
-		if (efprintf(fp, "if_up=false") == -1)
-			goto eexit;
-		if (efprintf(fp, "if_down=true") == -1)
-			goto eexit;
+		if_up = false_str;
+		if_down = true_str;
 	}
+	if (efprintf(fp, "if_up=%s", if_up) == -1)
+		goto eexit;
+	if (efprintf(fp, "if_down=%s", if_down) == -1)
+		goto eexit;
+
 	if ((af = dhcpcd_ifafwaiting(ifp)) != AF_MAX) {
 		if (efprintf(fp, "if_afwaiting=%d", af) == -1)
 			goto eexit;
