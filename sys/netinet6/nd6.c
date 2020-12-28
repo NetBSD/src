@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.275 2020/12/26 10:43:39 nia Exp $	*/
+/*	$NetBSD: nd6.c,v 1.276 2020/12/28 20:19:50 nia Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.275 2020/12/26 10:43:39 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.276 2020/12/28 20:19:50 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -384,8 +384,10 @@ nd6_llinfo_output(struct ifnet *ifp, const union l3addr *daddr,
     const union l3addr *hsrc)
 {
 
-	nd6_ns_output(ifp, daddr != NULL ? &daddr->addr6 : NULL,
-	    &taddr->addr6, &hsrc->addr6, NULL);
+	nd6_ns_output(ifp,
+	    daddr != NULL ? &daddr->addr6 : NULL,
+	    taddr != NULL ? &taddr->addr6 : NULL,
+	    hsrc != NULL ? &hsrc->addr6 : NULL, NULL);
 }
 
 static bool
