@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.18 2016/12/24 17:43:45 christos Exp $	*/
+/*	$NetBSD: mem1.c,v 1.19 2020/12/28 12:52:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.18 2016/12/24 17:43:45 christos Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.19 2020/12/28 12:52:45 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,9 +100,9 @@ void
 fnaddreplsrcdir(char *arg)
 {
 	struct repl *r = xmalloc(sizeof(*r));
-	
+
 	r->orig = arg;
-	if ((r->repl = strchr(arg, '=')) == NULL) 
+	if ((r->repl = strchr(arg, '=')) == NULL)
 		err(1, "Bad replacement directory spec `%s'", arg);
 	r->len = r->repl - r->orig;
 	*(r->repl)++ = '\0';

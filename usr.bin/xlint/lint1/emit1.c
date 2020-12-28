@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.20 2017/12/26 17:02:19 christos Exp $ */
+/* $NetBSD: emit1.c,v 1.21 2020/12/28 12:52:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.20 2017/12/26 17:02:19 christos Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.21 2020/12/28 12:52:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -55,8 +55,8 @@ static	void	outfstrg(strg_t *);
  * a node is coded as follows:
  *	_Bool			B
  *	_Complex float		s X
- *	_Complex double		X 
- *	_Complex long double	l X 
+ *	_Complex double		X
+ *	_Complex long double	l X
  *	char			C
  *	signed char		s C
  *	unsigned char		u C
