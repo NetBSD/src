@@ -3886,20 +3886,9 @@ dhcp_init(struct interface *ifp)
 	state->clientid = NULL;
 
 	if (ifo->options & DHCPCD_ANONYMOUS) {
-		uint8_t duid[DUID_LEN];
-		uint8_t duid_len;
-
-		duid_len = (uint8_t)duid_make(duid, ifp, DUID_LL);
-		if (duid_len != 0) {
-			state->clientid = malloc((size_t)duid_len + 6);
-			if (state->clientid == NULL)
-				goto eexit;
-			state->clientid[0] =(uint8_t)(duid_len + 5);
-			state->clientid[1] = 255; /* RFC 4361 */
-			memcpy(state->clientid + 2, ifo->iaid, 4);
-			memset(state->clientid + 2, 0, 4); /* IAID */
-			memcpy(state->clientid + 6, duid, duid_len);
-		}
+		/* Removing the option could show that we want anonymous.
+		 * As such keep it as it's already in the hwaddr field. */
+		goto make_clientid;
 	} else if (*ifo->clientid) {
 		state->clientid = malloc((size_t)(ifo->clientid[0] + 1));
 		if (state->clientid == NULL)
@@ -3917,6 +3906,7 @@ dhcp_init(struct interface *ifp)
 			memcpy(state->clientid + 6, ifp->ctx->duid,
 			    ifp->ctx->duid_len);
 		} else {
+make_clientid:
 			len = (uint8_t)(ifp->hwlen + 1);
 			state->clientid = malloc((size_t)len + 1);
 			if (state->clientid == NULL)
