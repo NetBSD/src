@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.11 2020/06/11 02:39:30 thorpej Exp $ */
+/* $NetBSD: hdaudio.c,v 1.12 2020/12/28 16:49:58 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.11 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.12 2020/12/28 16:49:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,6 +178,10 @@ hdaudio_dma_alloc(struct hdaudio_softc *sc, struct hdaudio_dma *dma,
 	    dma->dma_size, NULL, BUS_DMA_WAITOK | flags);
 	if (err)
 		goto destroy;
+
+	memset(dma->dma_addr, 0, dma->dma_size);
+	bus_dmamap_sync(sc->sc_dmat, dma->dma_map, 0, dma->dma_size,
+	    BUS_DMASYNC_PREWRITE);
 
 	dma->dma_valid = true;
 	return 0;
