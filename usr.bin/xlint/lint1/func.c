@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.26 2016/08/19 10:58:15 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.27 2020/12/28 18:49:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.26 2016/08/19 10:58:15 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.27 2020/12/28 18:49:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -443,7 +443,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			/* non-constant case expression */
 			error(197);
 			tn = NULL;
-		} else if (tn != NULL && !isityp(tn->tn_type->t_tspec)) {
+		} else if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
 			/* non-integral case expression */
 			error(198);
 			tn = NULL;
@@ -482,7 +482,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 				if (cl->cl_val.v_quad == nv.v_quad)
 					break;
 			}
-			if (cl != NULL && isutyp(nv.v_tspec)) {
+			if (cl != NULL && tspec_is_uint(nv.v_tspec)) {
 				/* duplicate case in switch, %lu */
 				error(200, (u_long)nv.v_quad);
 			} else if (cl != NULL) {
@@ -583,7 +583,7 @@ switch1(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !isityp(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !tspec_is_int(tn->tn_type->t_tspec)) {
 		/* switch expression must have integral type */
 		error(205);
 		tn = NULL;
@@ -693,7 +693,7 @@ while1(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !issclt(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
 		/* controlling expressions must have scalar type */
 		error(204);
 		tn = NULL;
@@ -702,7 +702,7 @@ while1(tnode_t *tn)
 	pushctrl(T_WHILE);
 	cstk->c_loop = 1;
 	if (tn != NULL && tn->tn_op == CON) {
-		if (isityp(tn->tn_type->t_tspec)) {
+		if (tspec_is_int(tn->tn_type->t_tspec)) {
 			cstk->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
 			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
@@ -766,14 +766,14 @@ do2(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	if (tn != NULL && !issclt(tn->tn_type->t_tspec)) {
+	if (tn != NULL && !tspec_is_scalar(tn->tn_type->t_tspec)) {
 		/* controlling expressions must have scalar type */
 		error(204);
 		tn = NULL;
 	}
 
 	if (tn != NULL && tn->tn_op == CON) {
-		if (isityp(tn->tn_type->t_tspec)) {
+		if (tspec_is_int(tn->tn_type->t_tspec)) {
 			cstk->c_infinite = tn->tn_val->v_quad != 0;
 		} else {
 			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
@@ -831,7 +831,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		tn2 = cconv(tn2);
 	if (tn2 != NULL)
 		tn2 = promote(NOOP, 0, tn2);
-	if (tn2 != NULL && !issclt(tn2->tn_type->t_tspec)) {
+	if (tn2 != NULL && !tspec_is_scalar(tn2->tn_type->t_tspec)) {
 		/* controlling expressions must have scalar type */
 		error(204);
 		tn2 = NULL;
@@ -842,7 +842,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	if (tn2 == NULL) {
 		cstk->c_infinite = 1;
 	} else if (tn2->tn_op == CON) {
-		if (isityp(tn2->tn_type->t_tspec)) {
+		if (tspec_is_int(tn2->tn_type->t_tspec)) {
 			cstk->c_infinite = tn2->tn_val->v_quad != 0;
 		} else {
 			cstk->c_infinite = tn2->tn_val->v_ldbl != 0.0;
