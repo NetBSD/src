@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.43 2020/12/23 05:50:51 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.44 2020/12/28 00:14:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.43 2020/12/23 05:50:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.44 2020/12/28 00:14:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1297,25 +1297,33 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 
 	ri = &scr->scr_ri;
 
-	if (__predict_false((unsigned int)wsc->col > ri->ri_cols ||
-	    (unsigned int)wsc->row > ri->ri_rows))
+	/* allow col as linear index if row == 0 */
+	if (wsc->row == 0) {
+		if (wsc->col < 0 || wsc->col > (ri->ri_cols * ri->ri_rows))
+			return EINVAL;
+	    	int rem;
+	    	rem = wsc->col % ri->ri_cols;
+	    	wsc->row = wsc->col / ri->ri_cols;
+	    	DPRINTF("off %d -> %d, %d\n", wsc->col, rem, wsc->row);
+	    	wsc->col = rem;
+	} else {
+		if (__predict_false(wsc->col < 0 || wsc->col >= ri->ri_cols))
 			return (EINVAL);
 	
-	if ((wsc->row >= 0) && (wsc->row < ri->ri_rows) && (wsc->col >= 0) && 
-	     (wsc->col < ri->ri_cols)) {
+		if (__predict_false(wsc->row < 0 || wsc->row >= ri->ri_rows))
+			return (EINVAL);
+	}
 
-		error = ri->ri_ops.allocattr(ri, wsc->foreground,
-		    wsc->background, wsc->flags, &attr);
-		if (error)
-			return error;
-		vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
+	error = ri->ri_ops.allocattr(ri, wsc->foreground,
+	    wsc->background, wsc->flags, &attr);
+	if (error)
+		return error;
+	vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
 #ifdef VCONS_DEBUG
-		printf("vcons_putwschar(%d, %d, %x, %lx\n", wsc->row, wsc->col,
-		    wsc->letter, attr);
+	printf("vcons_putwschar(%d, %d, %x, %lx\n", wsc->row, wsc->col,
+	    wsc->letter, attr);
 #endif
-		return 0;
-	} else
-		return EINVAL;
+	return 0;
 }
 
 static int
@@ -1329,31 +1337,43 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 
 	ri = &scr->scr_ri;
 
-	if ((wsc->row >= 0) && (wsc->row < ri->ri_rows) && (wsc->col >= 0) && 
-	     (wsc->col < ri->ri_cols)) {
+	/* allow col as linear index if row == 0 */
+	if (wsc->row == 0) {
+		if (wsc->col < 0 || wsc->col > (ri->ri_cols * ri->ri_rows))
+			return EINVAL;
+	    	int rem;
+	    	rem = wsc->col % ri->ri_cols;
+	    	wsc->row = wsc->col / ri->ri_cols;
+	    	DPRINTF("off %d -> %d, %d\n", wsc->col, rem, wsc->row);
+	    	wsc->col = rem;
+	} else {
+		if (__predict_false(wsc->col < 0 || wsc->col >= ri->ri_cols))
+			return (EINVAL);
+	
+		if (__predict_false(wsc->row < 0 || wsc->row >= ri->ri_rows))
+			return (EINVAL);
+	}
 
-		offset = ri->ri_cols * wsc->row + wsc->col;
+	offset = ri->ri_cols * wsc->row + wsc->col;
 #ifdef WSDISPLAY_SCROLLSUPPORT
-		offset += scr->scr_offset_to_zero;
+	offset += scr->scr_offset_to_zero;
 #endif
-		wsc->letter = scr->scr_chars[offset];
-		attr = scr->scr_attrs[offset];
+	wsc->letter = scr->scr_chars[offset];
+	attr = scr->scr_attrs[offset];
 
-		/* 
-		 * this is ugly. We need to break up an attribute into colours and
-		 * flags but there's no rasops method to do that so we must rely on
-		 * the 'canonical' encoding.
-		 */
+	/* 
+	 * this is ugly. We need to break up an attribute into colours and
+	 * flags but there's no rasops method to do that so we must rely on
+	 * the 'canonical' encoding.
+	 */
 #ifdef VCONS_DEBUG
-		printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
-		    wsc->col, wsc->letter, attr);
+	printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
+	    wsc->col, wsc->letter, attr);
 #endif
-		wsc->foreground = (attr >> 24) & 0xff;
-		wsc->background = (attr >> 16) & 0xff;
-		wsc->flags      = attr & 0xff;
-		return 0;
-	} else
-		return EINVAL;
+	wsc->foreground = (attr >> 24) & 0xff;
+	wsc->background = (attr >> 16) & 0xff;
+	wsc->flags      = attr & 0xff;
+	return 0;
 }
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
