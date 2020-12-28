@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.6 2014/04/17 18:52:03 christos Exp $	*/
+/*	$NetBSD: emit.c,v 1.7 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.6 2014/04/17 18:52:03 christos Exp $");
+__RCSID("$NetBSD: emit.c,v 1.7 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -184,7 +184,7 @@ outqchar(int c)
 }
 
 /*
- * write a strint to the output buffer
+ * write a string to the output buffer
  * the string must not contain any characters which
  * should be quoted
  */
@@ -200,7 +200,7 @@ outstrg(const char *s)
 }
 
 /*
- * write an integer value to toe output buffer
+ * write an integer value to the output buffer
  */
 void
 outint(int i)

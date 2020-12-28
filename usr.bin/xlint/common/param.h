@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2003/09/21 17:06:40 martin Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,14 +38,14 @@
 #define	STRBLEN		256
 
 /*
- * This defines the size of memory blocks which are used to allocate
- * memory in larger chunks.
+ * The size of memory blocks which are used to allocate memory in larger
+ * chunks.
  */
 #define	MBLKSIZ		((size_t)0x4000)
 
 /*
  * Sizes of hash tables
- * Should be a prime. Possible primes are
+ * Should be primes. Possible primes are
  * 307, 401, 503, 601, 701, 809, 907, 1009, 1103, 1201, 1301, 1409, 1511.
  *
  * HSHSIZ1	symbol table 1st pass
@@ -67,7 +67,7 @@
 #define WCHAR	INT
 
 /*
- * And the sparc64 long double code generation is broken in old gcc.
+ * The sparc64 long double code generation is broken in old gcc.
  */
 #if !defined(__sparc64__) || !defined(__GNUC__) || __GNUC__ > 2
 typedef	long double ldbl_t;
