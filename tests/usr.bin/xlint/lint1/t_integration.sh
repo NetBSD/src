@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.9 2020/12/28 12:01:24 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.10 2020/12/28 12:17:23 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,72 +60,70 @@ test_case()
 	Names="${Names} ${name}"
 }
 
-test_case c99_struct_init "Checks C99 struct initialization"
-test_case c99_union_init1 "Checks C99 union initialization"
-test_case c99_union_init2 "Checks C99 union initialization"
-test_case c99_union_init3 "Checks C99 union initialization"
-test_case c99_recursive_init "Checks C99 recursive struct/union" \
-    "initialization"
-test_case c9x_recursive_init "Checks C9X struct/union member" \
-    "init, with nested union and trailing member"
-test_case nested_structs "Checks nested structs"
-test_case packed_structs "Checks packed structs"
-test_case struct_init_nested \
-    "Initialization of nested structures"
+test_case c99_struct_init	"Checks C99 struct initialization"
+test_case c99_union_init1	"Checks C99 union initialization"
+test_case c99_union_init2	"Checks C99 union initialization"
+test_case c99_union_init3	"Checks C99 union initialization"
+test_case c99_recursive_init	"Checks C99 recursive struct/union" \
+				"initialization"
+test_case c9x_recursive_init	"Checks C9X struct/union member" \
+				"init, with nested union and trailing member"
+test_case nested_structs	"Checks nested structs"
+test_case packed_structs	"Checks packed structs"
+test_case struct_init_nested	"Initialization of nested structures"
 
-test_case cast_init "Checks cast initialization"
-test_case cast_init2 "Checks cast initialization as the rhs of a" \
-    "- operand"
-test_case cast_lhs "Checks whether pointer casts are valid lhs" \
-    "lvalues"
+test_case cast_init		"Checks cast initialization"
+test_case cast_init2		"Checks cast initialization as the rhs of a" \
+				"- operand"
+test_case cast_lhs		"Checks whether pointer casts are valid lhs" \
+				"lvalues"
 
-test_case gcc_func "Checks GCC __FUNCTION__"
-test_case c99_func "Checks C99 __func__"
+test_case gcc_func		"Checks GCC __FUNCTION__"
+test_case c99_func		"Checks C99 __func__"
 
 test_case gcc_variable_array_init "Checks GCC variable array initializers"
-test_case c9x_array_init "Checks C9X array initializers"
-test_case c99_decls_after_stmt "Checks C99 decls after statements"
-test_case c99_decls_after_stmt3 "Checks C99 decls after statements"
-test_case nolimit_init "Checks no limit initializers"
-test_case zero_sized_arrays "Checks zero sized arrays"
+test_case c9x_array_init	"Checks C9X array initializers"
+test_case c99_decls_after_stmt	"Checks C99 decls after statements"
+test_case c99_decls_after_stmt3	"Checks C99 decls after statements"
+test_case nolimit_init		"Checks no limit initializers"
+test_case zero_sized_arrays	"Checks zero sized arrays"
 
-test_case compound_literals1 "Checks compound literals"
-test_case compound_literals2 "Checks compound literals"
+test_case compound_literals1	"Checks compound literals"
+test_case compound_literals2	"Checks compound literals"
 test_case gcc_compound_statements1 "Checks GCC compound statements"
-test_case gcc_compound_statements2 "Checks GCC compound" \
-    "statements with non-expressions"
-test_case gcc_compound_statements3 "Checks GCC compound" \
-    "statements with void type"
+test_case gcc_compound_statements2 "Checks GCC compound statements with" \
+				"non-expressions"
+test_case gcc_compound_statements3 "Checks GCC compound statements with" \
+				"void type"
 # XXX: Because of polymorphic __builtin_isnan and expression has null effect
 # test_case gcc_extension "Checks GCC __extension__ and __typeof__"
 
-test_case cvt_in_ternary "Checks CVT nodes handling in ?"
-test_case cvt_constant "Checks constant conversion"
-test_case ellipsis_in_switch "Checks ellipsis in switch()"
-test_case c99_complex_num "Checks C99 complex numbers"
-test_case c99_complex_split "Checks C99 complex access"
-test_case c99_for_loops "Checks C99 for loops"
-test_case alignof "Checks __alignof__"
-test_case shift_to_narrower_type "Checks that type shifts that" \
-    "result in narrower types do not produce warnings"
+test_case cvt_in_ternary	"Checks CVT nodes handling in ?"
+test_case cvt_constant		"Checks constant conversion"
+test_case ellipsis_in_switch	"Checks ellipsis in switch()"
+test_case c99_complex_num	"Checks C99 complex numbers"
+test_case c99_complex_split	"Checks C99 complex access"
+test_case c99_for_loops		"Checks C99 for loops"
+test_case alignof		"Checks __alignof__"
+test_case shift_to_narrower_type "Checks that type shifts that result in" \
+				"narrower types do not produce warnings"
 
-test_case constant_conv1 "Checks failing on information-losing" \
-    "constant conversion in argument lists"
-test_case constant_conv2 "Checks failing on information-losing" \
-    "constant conversion in argument lists"
+test_case constant_conv1	"Checks failing on information-losing" \
+				"constant conversion in argument lists"
+test_case constant_conv2	"Checks failing on information-losing" \
+				"constant conversion in argument lists"
 
-test_case type_conv1 "Checks failing on information-losing" \
-    "type conversion in argument lists"
-test_case type_conv2 "Checks failing on information-losing" \
-    "type conversion in argument lists"
-test_case type_conv3 "Checks failing on information-losing" \
-    "type conversion in argument lists"
+test_case type_conv1		"Checks failing on information-losing" \
+				"type conversion in argument lists"
+test_case type_conv2		"Checks failing on information-losing" \
+				"type conversion in argument lists"
+test_case type_conv3		"Checks failing on information-losing" \
+				"type conversion in argument lists"
 
-test_case incorrect_array_size "Checks failing on incorrect" \
-    "array sizes"
+test_case incorrect_array_size	"Checks failing on incorrect array sizes"
 
-test_case long_double_int "Checks for confusion of 'long" \
-    "double' with 'long int'; PR bin/39639"
+test_case long_double_int	"Checks for confusion of 'long double' with" \
+				"'long int'; PR bin/39639"
 
 atf_init_test_cases()
 {
