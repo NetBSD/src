@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.9 2020/12/27 23:25:33 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.10 2020/12/28 00:19:41 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -118,22 +118,32 @@ VAR:=		top:$$ ${:Unest1\:\$\$} ${:Unest2${:U\:\$\$}}
 
 # In variable assignments using the ':=' operator, there may be expressions
 # containing variable modifiers, and these modifiers may refer to other
-# variables.
+# variables.  These referred-to variables are expanded at the time of
+# assignment.  The undefined variables are kept as-is and are later expanded
+# when evaluating the condition.
 #
 # Contrary to the assignment operator '=', the assignment operator ':='
 # consumes the '$' from modifier parts.
 REF.word=	1:$$ 2:$$$$ 4:$$$$$$$$
-VAR:=		${:Uword:@word@${REF.${word}}@}, direct: ${REF.word}
-.if ${VAR} != "1:2:\$ 4:\$\$, direct: 1:\$ 2:\$\$ 4:\$\$\$\$"
+.undef REF.undef
+VAR:=		${:Uword undef:@word@${REF.${word}}@}, direct: ${REF.word} ${REF.undef}
+REF.word=	word.after
+REF.undef=	undef.after
+.if ${VAR} != "1:2:\$ 4:\$\$ undef.after, direct: 1:\$ 2:\$\$ 4:\$\$\$\$ undef.after"
 .  error
 .endif
 
-
 # Just for comparison, the previous example using the assignment operator '='
-# instead of ':='.
+# instead of ':='.  The right-hand side of the assignment is not evaluated at
+# the time of assignment but only later, when ${VAR} appears in the condition.
+#
+# At that point, both REF.word and REF.undef are defined.
 REF.word=	1:$$ 2:$$$$ 4:$$$$$$$$
-VAR=		${:Uword:@word@${REF.${word}}@}, direct: ${REF.word}
-.if ${VAR} != "1:\$ 2:\$\$ 4:\$\$\$\$, direct: 1:\$ 2:\$\$ 4:\$\$\$\$"
+.undef REF.undef
+VAR=		${:Uword undef:@word@${REF.${word}}@}, direct: ${REF.word} ${REF.undef}
+REF.word=	word.after
+REF.undef=	undef.after
+.if ${VAR} != "word.after undef.after, direct: word.after undef.after"
 .  error
 .endif
 
