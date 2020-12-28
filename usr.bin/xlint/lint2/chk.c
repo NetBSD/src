@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.25 2020/12/28 19:07:43 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.26 2020/12/28 19:47:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.25 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.26 2020/12/28 19:47:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -590,7 +590,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 
 	pos1 = xstrdup(mkpos(pos1p));
 	/* %s, arg %d used inconsistently\t%s[%s]  ::  %s[%s] */
-	msg(6, hte->h_name, n, pos1, 
+	msg(6, hte->h_name, n, pos1,
 	    tyname(tyname1, sizeof(tyname1), arg1),
 	    mkpos(&call->f_pos),
 	    tyname(tyname2, sizeof(tyname2), arg2));
