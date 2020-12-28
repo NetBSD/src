@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.11 2011/05/24 12:49:11 joerg Exp $	*/
+/*	$NetBSD: msg.c,v 1.12 2020/12/28 19:07:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,11 +37,11 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.11 2011/05/24 12:49:11 joerg Exp $");
+__RCSID("$NetBSD: msg.c,v 1.12 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "lint2.h"

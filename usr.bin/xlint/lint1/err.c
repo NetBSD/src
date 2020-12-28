@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.54 2020/06/02 21:10:07 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.55 2020/12/28 19:07:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,12 +37,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.54 2020/06/02 21:10:07 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.55 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
 #include <sys/types.h>
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "lint1.h"
 
