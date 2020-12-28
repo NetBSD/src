@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.10 2020/12/28 12:17:23 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.11 2020/12/28 12:47:39 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,9 @@ test_case()
 
 	atf_test_case ${name}
 	eval "${name}_head() {
-		atf_set \"descr\" \"${descr}\"
+		if [ \"${descr}\" ]; then
+			atf_set \"descr\" \"${descr}\"
+		fi
 		atf_set \"require.progs\" \"${LINT1}\"
 	}"
 	eval "${name}_body() {
@@ -59,6 +61,22 @@ test_case()
 
 	Names="${Names} ${name}"
 }
+
+test_case bltinoffsetof
+test_case c99_anon_struct
+test_case c99_anon_union
+test_case c99_compound_literal_comma
+test_case c99_decls_after_stmt2
+test_case c99_flex_array_packed
+test_case c99_nested_struct
+test_case c99_union_cast
+test_case c99_union_init4
+test_case cast_fun_array_param
+test_case cast_typeof
+test_case gcc_extension
+test_case type_question_colon
+test_case typefun
+test_case typename_as_var
 
 test_case c99_struct_init	"Checks C99 struct initialization"
 test_case c99_union_init1	"Checks C99 union initialization"

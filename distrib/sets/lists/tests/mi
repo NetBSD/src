@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.998 2020/12/28 11:40:54 rillig Exp $
+# $NetBSD: mi,v 1.999 2020/12/28 12:47:39 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5750,6 +5750,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_struct_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_cast.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_cast.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init1.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init2.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init3.c		tests-usr.bin-tests	compattestfile,atf
@@ -5775,6 +5776,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements3.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_func.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c	tests-usr.bin-tests	compattestfile,atf
