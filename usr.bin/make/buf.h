@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.37 2020/12/06 11:00:56 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.38 2020/12/28 15:42:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ typedef struct Buffer {
 #define __predict_false(x) (x)
 #endif
 
-void Buf_Expand_1(Buffer *);
+void Buf_Expand(Buffer *);
 
 /* Buf_AddByte adds a single byte to a buffer. */
 MAKE_INLINE void
@@ -100,7 +100,7 @@ Buf_AddByte(Buffer *buf, char byte)
 	size_t old_len = buf->len++;
 	char *end;
 	if (__predict_false(old_len + 1 >= buf->cap))
-		Buf_Expand_1(buf);
+		Buf_Expand(buf);
 	end = buf->data + old_len;
 	end[0] = byte;
 	end[1] = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.522 2020/12/28 15:21:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.523 2020/12/28 15:42:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.522 2020/12/28 15:21:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.523 2020/12/28 15:42:53 rillig Exp $");
 
 /* types and constants */
 
@@ -459,7 +459,7 @@ loadfile(const char *path, int fd)
 				Error("%s: file too large", path);
 				exit(2); /* Not 1 so -q can distinguish error */
 			}
-			Buf_Expand_1(&buf);
+			Buf_Expand(&buf);
 		}
 		assert(buf.len < buf.cap);
 		n = read(fd, buf.data + buf.len, buf.cap - buf.len);

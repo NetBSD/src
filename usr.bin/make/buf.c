@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.45 2020/11/23 19:07:12 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.46 2020/12/28 15:42:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,17 +69,17 @@
  * SUCH DAMAGE.
  */
 
-/* Automatically-expanding null-terminated buffers. */
+/* Automatically-expanding null-terminated character buffers. */
 
 #include <limits.h>
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.45 2020/11/23 19:07:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.46 2020/12/28 15:42:53 rillig Exp $");
 
-/* Make space in the buffer for adding a single byte. */
+/* Make space in the buffer for adding at least 16 more bytes. */
 void
-Buf_Expand_1(Buffer *buf)
+Buf_Expand(Buffer *buf)
 {
 	buf->cap += buf->cap > 16 ? buf->cap : 16;
 	buf->data = bmake_realloc(buf->data, buf->cap);
