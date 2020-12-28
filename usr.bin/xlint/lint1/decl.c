@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.71 2020/06/02 21:10:07 christos Exp $ */
+/* $NetBSD: decl.c,v 1.72 2020/12/28 18:49:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.71 2020/06/02 21:10:07 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.72 2020/12/28 18:49:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1142,7 +1142,7 @@ decl1str(sym_t *dsym)
 			 * Integer types not dealt with above are
 			 * okay only if BITFIELDTYPE is in effect.
 			 */
-			if (bitfieldtype_ok == 0 || isityp(t) == 0) {
+			if (bitfieldtype_ok == 0 || tspec_is_int(t) == 0) {
 				/* illegal bit-field type */
 				warning(35);
 				sz = tp->t_flen;

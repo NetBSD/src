@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.23 2017/12/26 17:02:19 christos Exp $ */
+/* $NetBSD: chk.c,v 1.24 2020/12/28 18:49:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.23 2017/12/26 17:02:19 christos Exp $");
+__RCSID("$NetBSD: chk.c,v 1.24 2020/12/28 18:49:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -495,7 +495,8 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 */
 	t1 = arg1->t_tspec;
 	t2 = arg2->t_tspec;
-	if (isityp(t1) && isityp(t2) && !arg1->t_isenum && !arg2->t_isenum) {
+	if (tspec_is_int(t1) && tspec_is_int(t2) &&
+	    !arg1->t_isenum && !arg2->t_isenum) {
 		if (promote) {
 			/*
 			 * XXX Here is a problem: Althrough it is possible to
@@ -573,7 +574,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			}
 		}
 
-	} else if (t1 == PTR && isityp(t2)) {
+	} else if (t1 == PTR && tspec_is_int(t2)) {
 		for (ai = call->f_args; ai != NULL; ai = ai->a_nxt) {
 			if (ai->a_num == n)
 				break;
