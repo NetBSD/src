@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux_fdt.c,v 1.2 2020/12/23 16:04:42 thorpej Exp $	*/
+/*	$NetBSD: i2cmux_fdt.c,v 1.3 2020/12/28 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.2 2020/12/23 16:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux_fdt.c,v 1.3 2020/12/28 15:08:06 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -94,6 +94,7 @@ struct iicmux_bus {
 struct iicmux_softc {
 	device_t			sc_dev;
 	int				sc_phandle;
+	int				sc_i2c_mux_phandle;
 	const struct iicmux_config *	sc_config;
 	i2c_tag_t			sc_i2c_parent;
 	struct iicmux_bus *		sc_busses;
@@ -317,10 +318,24 @@ static const struct of_compat_data compat_data[] = {
 static int
 iicmux_count_children(struct iicmux_softc * const sc)
 {
+	char name[32];
 	int child, count;
 
-	for (child = OF_child(sc->sc_phandle), count = 0; child;
+ restart:
+	for (child = OF_child(sc->sc_i2c_mux_phandle), count = 0; child;
 	     child = OF_peer(child)) {
+		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
+			continue;
+		}
+		if (strcmp(name, "i2c-mux") == 0) {
+			/*
+			 * The node we encountered is the acutal parent
+			 * of the i2c bus children.  Stash its phandle
+			 * and restart the enumeration.
+			 */
+			sc->sc_i2c_mux_phandle = child;
+			goto restart;
+		}
 		count++;
 	}
 
@@ -394,6 +409,14 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 	aprint_naive("\n");
 	aprint_normal(": %s I2C mux\n", sc->sc_config->desc);
 
+	/*
+	 * We start out assuming that the i2c bus nodes are children of
+	 * our own node.  We'll adjust later if we encounter an "i2c-mux"
+	 * node when counting our children.  If we encounter such a node,
+	 * then it's that node that is the parent of the i2c bus children.
+	 */
+	sc->sc_i2c_mux_phandle = sc->sc_phandle;
+
 	sc->sc_i2c_parent = fdtbus_i2c_acquire(sc->sc_phandle, "i2c-parent");
 	if (sc->sc_i2c_parent == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to acquire i2c-parent\n");
@@ -409,7 +432,7 @@ iicmux_fdt_attach(device_t const parent, device_t const self, void * const aux)
 	    KM_SLEEP);
 
 	int child, idx;
-	for (child = OF_child(sc->sc_phandle), idx = 0; child;
+	for (child = OF_child(sc->sc_i2c_mux_phandle), idx = 0; child;
 	     child = OF_peer(child), idx++) {
 		KASSERT(idx < nchildren);
 		iicmux_attach_bus(sc, child, idx);
