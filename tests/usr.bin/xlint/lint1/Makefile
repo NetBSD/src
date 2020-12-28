@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2020/12/28 09:58:56 rillig Exp $
+# $NetBSD: Makefile,v 1.18 2020/12/28 10:22:21 rillig Exp $
 
 NOMAN=		# defined
 
@@ -60,6 +60,7 @@ FILES+=		d_nested_structs.c
 FILES+=		d_nolimit_init.c
 FILES+=		d_packed_structs.c
 FILES+=		d_shift_to_narrower_type.c
+FILES+=		d_struct_init_nested.c
 FILES+=		d_type_conv1.c
 FILES+=		d_type_conv1.exp
 FILES+=		d_type_conv2.c
