@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.90 2020/12/27 15:13:07 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.91 2020/12/28 11:05:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.90 2020/12/27 15:13:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.91 2020/12/28 11:05:54 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -84,6 +84,7 @@ static void ahci_channel_start(struct ahci_softc *, struct ata_channel *,
 				int, int);
 static void ahci_channel_recover(struct ata_channel *, int, uint32_t);
 static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
+static int ahci_intr_port_common(struct ata_channel *);
 
 #if NATAPIBUS > 0
 static void ahci_atapibus_attach(struct atabus_softc *);
@@ -602,7 +603,7 @@ ahci_intr(void *v)
 		ports = is;
 		while ((bit = ffs(ports)) != 0) {
 			bit--;
-			ahci_intr_port(&sc->sc_channels[bit]);
+			ahci_intr_port_common(&sc->sc_channels[bit].ata_channel);
 			ports &= ~(1U << bit);
 		}
 		AHCI_WRITE(sc, AHCI_IS, is);
@@ -617,6 +618,20 @@ ahci_intr_port(void *v)
 	struct ahci_channel *achp = v;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	int ret;
+
+	ret = ahci_intr_port_common(chp);
+	if (ret) {
+		AHCI_WRITE(sc, AHCI_IS, 1U << chp->ch_channel);
+	}
+
+	return ret;
+}
+
+static int
+ahci_intr_port_common(struct ata_channel *chp)
+{
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	uint32_t is, tfd, sact;
 	struct ata_xfer *xfer;
 	int slot = -1;
@@ -626,8 +641,8 @@ ahci_intr_port(void *v)
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), is);
 
-	AHCIDEBUG_PRINT((
-	    "ahci_intr_port %s port %d is 0x%x CI 0x%x SACT 0x%x TFD 0x%x\n",
+	AHCIDEBUG_PRINT(("ahci_intr_port_common %s port %d "
+	    "is 0x%x CI 0x%x SACT 0x%x TFD 0x%x\n",
 	    AHCINAME(sc),
 	    chp->ch_channel, is,
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)),
