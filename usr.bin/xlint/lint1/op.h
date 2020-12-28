@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.6 2011/02/05 17:14:14 christos Exp $	*/
+/*	$NetBSD: op.h,v 1.7 2020/12/28 19:38:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -35,24 +35,24 @@
  * Various information about operators
  */
 typedef	struct {
-	u_int	m_binary : 1;	/* binary op. */
-	u_int	m_logop : 1;	/* logical op., result is int */
-	u_int	m_rqint : 1;	/* operands must have integer type */
-	u_int	m_rqsclt : 1;	/* operands must have scalar type */
-	u_int	m_rqatyp : 1;	/* operands must have arithmetic type */
+	u_int	m_binary : 1;	/* binary operator */
+	u_int	m_logical : 1;	/* logical operator, result is int */
+	u_int	m_requires_integer : 1;
+	u_int	m_requires_scalar : 1;
+	u_int	m_requires_arith : 1;
 	u_int	m_fold : 1;	/* operands should be folded */
 	u_int	m_vctx : 1;	/* value context for left operand */
 	u_int	m_tctx : 1;	/* test context for left operand */
-	u_int	m_balance : 1;	/* op. requires balancing */
-	u_int	m_sideeff : 1;	/* op. has side effect */
-	u_int	m_tlansiu : 1;	/* warning if left op. is unsign. in ANSI C */
-	u_int	m_transiu : 1;	/* warning if right op. is unsign. in ANSI C */
+	u_int	m_balance : 1;	/* operator requires balancing */
+	u_int	m_sideeff : 1;	/* operator has side effect */
+	u_int	m_tlansiu : 1;	/* warn if left op. is unsign. in ANSI C */
+	u_int	m_transiu : 1;	/* warn if right op. is unsign. in ANSI C */
 	u_int	m_tpconf : 1;	/* test possible precedence confusion */
-	u_int	m_comp : 1;	/* op. performs comparison */
-	u_int	m_enumop : 1;	/* valid operation on enums */
-	u_int	m_badeop : 1;	/* dubious operation on enums */
+	u_int	m_comp : 1;	/* operator performs comparison */
+	u_int	m_valid_on_enum : 1;	/* valid operation on enums */
+	u_int	m_bad_on_enum : 1;	/* dubious operation on enums */
 	u_int	m_eqwarn : 1;	/* warning if on operand stems from == */
-	u_int	m_rqintcomp : 1;/* operands must be integer or complex */
+	u_int	m_requires_integer_or_complex : 1;
 	const char *m_name;	/* name of op. */
 } mod_t;
 
