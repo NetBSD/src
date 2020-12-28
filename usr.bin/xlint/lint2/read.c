@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.28 2018/09/07 15:16:15 christos Exp $ */
+/* $NetBSD: read.c,v 1.29 2020/12/28 19:07:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.28 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.29 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include "lint2.h"
 

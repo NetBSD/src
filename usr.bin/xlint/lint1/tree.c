@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.91 2020/12/28 19:02:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.92 2020/12/28 19:07:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,15 +37,15 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.91 2020/12/28 19:02:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.92 2020/12/28 19:07:43 rillig Exp $");
 #endif
 
-#include <stdlib.h>
-#include <string.h>
 #include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lint1.h"
 #include "cgram.h"
