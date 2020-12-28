@@ -182,6 +182,7 @@
 #define O_MSUSERCLASS		O_BASE + 49
 #define O_CONFIGURE		O_BASE + 50
 #define O_NOCONFIGURE		O_BASE + 51
+#define O_RANDOMISE_HWADDR	O_BASE + 52
 
 extern const struct option cf_options[];
 
@@ -234,6 +235,7 @@ struct if_options {
 	uint32_t timeout;
 	uint32_t reboot;
 	unsigned long long options;
+	bool randomise_hwaddr;
 
 	struct in_addr req_addr;
 	struct in_addr req_mask;
