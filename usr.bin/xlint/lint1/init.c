@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.27 2015/07/28 17:55:13 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.28 2020/12/28 12:52:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.27 2015/07/28 17:55:13 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.28 2020/12/28 12:52:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -87,7 +87,7 @@ void
 memberpush(sb)
 	sbuf_t *sb;
 {
-	namlist_t *nam = xcalloc(1, sizeof (namlist_t)); 
+	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
 	nam->n_name = sb->sb_name;
 	DPRINTF(("%s: %s %p\n", __func__, nam->n_name, nam));
 	if (namedmem == NULL) {
@@ -356,7 +356,7 @@ again:
 			if (m == NULL) {
 				DPRINTF(("%s(): struct pop\n", __func__));
 				goto pop;
-			} 
+			}
 			istk->i_mem = m;
 			istk->i_subt = m->s_type;
 			istk->i_namedmem = 1;

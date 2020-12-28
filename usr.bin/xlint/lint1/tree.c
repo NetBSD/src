@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.88 2020/06/02 21:10:07 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.89 2020/12/28 12:52:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.88 2020/06/02 21:10:07 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.89 2020/12/28 12:52:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -702,7 +702,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 	if ((ltp = ln->tn_type) == NULL)
 		LERROR("typeok()");
-		
+
 	if ((lt = ltp->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
 	if (mp->m_binary) {
@@ -1298,7 +1298,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	switch (op) {
 	case INIT:
 		/* initialisation type mismatch */
-		error(185, tyname(lbuf, sizeof(lbuf), ltp), 
+		error(185, tyname(lbuf, sizeof(lbuf), ltp),
 		    tyname(rbuf, sizeof(rbuf), rtp));
 		break;
 	case RETURN:
@@ -3040,7 +3040,7 @@ bldoffsetof(type_t *tp, sym_t *sym)
 	tspec_t t = tp->t_tspec;
 	if (t != STRUCT && t != UNION)
 		error(111, "offsetof");
-		
+
 	// XXX: wrong size, no checking for sym fixme
 	return getinode(st, tsize(tp) / CHAR_BIT);
 }
@@ -3959,7 +3959,7 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		if ((!isityp(t) && t != PTR) || (!isityp(ot) && ot != PTR))
 			return (-1);
 #ifdef notdef
-		/* 
+		/*
 		 * consider:
 		 * 	struct foo {
 		 *	    unsigned char a;
