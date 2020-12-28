@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.7 2020/12/28 10:22:21 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.8 2020/12/28 11:19:01 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,8 +101,8 @@ test_case check_valid gcc_compound_statements3 "Checks GCC compound" \
 # XXX: Because of polymorphic __builtin_isnan and expression has null effect
 # test_case check_valid gcc_extension "Checks GCC __extension__ and __typeof__"
 
-test_case check_valid cvt_in_ternary "Checks CVT nodes handling in ?" \
-test_case check_valid cvt_constant "Checks constant conversion"
+test_case check_valid cvt_in_ternary "Checks CVT nodes handling in ?"
+test_case check_invalid cvt_constant "Checks constant conversion"
 test_case check_valid ellipsis_in_switch "Checks ellipsis in switch()"
 test_case check_valid c99_complex_num "Checks C99 complex numbers"
 test_case check_valid c99_complex_split "Checks C99 complex access"
