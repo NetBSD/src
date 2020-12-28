@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2020/12/28 11:19:01 rillig Exp $
+# $NetBSD: Makefile,v 1.20 2020/12/28 12:47:39 rillig Exp $
 
 NOMAN=		# defined
 
@@ -26,6 +26,7 @@ FILES+=		d_c99_nested_struct.c
 FILES+=		d_c99_recursive_init.c
 FILES+=		d_c99_struct_init.c
 FILES+=		d_c99_union_cast.c
+FILES+=		d_c99_union_cast.exp
 FILES+=		d_c99_union_init1.c
 FILES+=		d_c99_union_init2.c
 FILES+=		d_c99_union_init3.c
@@ -51,6 +52,7 @@ FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
 FILES+=		d_gcc_compound_statements3.c
 FILES+=		d_gcc_extension.c
+FILES+=		d_gcc_extension.exp
 FILES+=		d_gcc_func.c
 FILES+=		d_gcc_variable_array_init.c
 FILES+=		d_incorrect_array_size.c
