@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.109 2020/12/28 19:47:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.110 2020/12/28 21:24:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.109 2020/12/28 19:47:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.110 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -52,7 +52,7 @@ extern char *yytext;
 int	blklev;
 
 /*
- * level for memory allocation. Normaly the same as blklev.
+ * level for memory allocation. Normally the same as blklev.
  * An exception is the declaration of arguments in prototypes. Memory
  * for these can't be freed after the declaration, but symbols must
  * be removed from the symbol table after the declaration.
@@ -611,7 +611,7 @@ type_attribute_list:
 	;
 
 clrtyp:
-	  {
+	  /* empty */ {
 		clrtyp();
 	  }
 	;
@@ -697,8 +697,8 @@ struct_spec:
 		 * STDC requires that "struct a;" always introduces
 		 * a new tag if "a" is not declared at current level
 		 *
-		 * yychar is valid because otherwise the parser would
-		 * not been able to decide if he must shift or reduce
+		 * yychar is valid because otherwise the parser would not
+		 * have been able to decide if it must shift or reduce
 		 */
 		$$ = mktag($2, $1, 0, yychar == T_SEMI);
 	  }
@@ -995,7 +995,7 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	notype_decl opt_asm_or_symbolrename {
+	  notype_decl opt_asm_or_symbolrename {
 		idecl($1, 0, $2);
 		chksz($1);
 	  }
@@ -1007,7 +1007,7 @@ notype_init_decl:
 	;
 
 type_init_decl:
-	type_decl opt_asm_or_symbolrename {
+	  type_decl opt_asm_or_symbolrename {
 		idecl($1, 0, $2);
 		chksz($1);
 	  }
@@ -1342,7 +1342,7 @@ lorange:
 	  }
 	;
 range:
-	constant {
+	  constant {
 		$$.lo = toicon($1, 1);
 		$$.hi = $$.lo + 1;
 	  }
@@ -1390,7 +1390,7 @@ init_rbrace:
 	;
 
 type_name:
-  	  {
+	  {
 		pushdecl(ABSTRACT);
 	  } abstract_declaration {
 		popdecl();
@@ -1702,8 +1702,8 @@ for_start:
 	  }
 	;
 for_exprs:
-	    for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
-	    T_SEMI opt_expr T_RPARN {
+	  for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
+	  T_SEMI opt_expr T_RPARN {
 		c99ism(325);
 		for1(NULL, $6, $8);
 		CLRWFLGS(__FILE__, __LINE__);
@@ -1971,7 +1971,7 @@ string:
 	;
 
 string2:
-	 T_STRING {
+	  T_STRING {
 		if (tflag) {
 			/* concatenated strings are illegal in traditional C */
 			warning(219);

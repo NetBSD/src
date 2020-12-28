@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2020/02/10 04:54:01 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2020/12/28 21:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.8 2020/02/10 04:54:01 christos Exp $");
+__RCSID("$NetBSD: mem.c,v 1.9 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -137,3 +137,4 @@ xmapalloc(size_t len)
 		err(1, "Cannot map memory for %lu bytes", (unsigned long)len);
 	return p;
 }
+ 

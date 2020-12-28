@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.22 2020/12/28 18:49:02 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.23 2020/12/28 21:24:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.22 2020/12/28 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.23 2020/12/28 21:24:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -52,7 +52,7 @@ static	void	outfstrg(strg_t *);
  * Write type into the output buffer.
  * The type is written as a sequence of substrings, each of which describes a
  * node of type type_t
- * a node is coded as follows:
+ * a node is encoded as follows:
  *	_Bool			B
  *	_Complex float		s X
  *	_Complex double		X
@@ -219,10 +219,10 @@ outtt(sym_t *tag, sym_t *tdef)
 }
 
 /*
- * write information about an global declared/defined symbol
+ * write information about a globally declared/defined symbol
  * with storage class extern
  *
- * informations about function definitions are written in outfdef(),
+ * information about function definitions are written in outfdef(),
  * not here
  */
 void
@@ -233,7 +233,7 @@ outsym(sym_t *sym, scl_t sc, def_t def)
 	 * Static function declarations must also be written to the output
 	 * file. Compatibility of function declarations (for both static
 	 * and extern functions) must be checked in lint2. Lint1 can't do
-	 * this, especially not, if functions are declared at block level
+	 * this, especially not if functions are declared at block level
 	 * before their first declaration at level 0.
 	 */
 	if (sc != EXTERN && !(sc == STATIC && sym->s_type->t_tspec == FUNC))
@@ -610,6 +610,5 @@ outusg(sym_t *sym)
 	/* necessary to delimit both numbers */
 	outchar('x');
 
-	/* Den Namen des Symbols ausgeben */
 	outname(sym->s_name);
 }
