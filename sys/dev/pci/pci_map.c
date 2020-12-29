@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.43 2020/12/29 15:49:13 skrll Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.44 2020/12/29 15:49:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.43 2020/12/29 15:49:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.44 2020/12/29 15:49:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,7 +636,8 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 		}
 	}
 
-	/* If we're called with maxsize/offset of 0, behave like
+	/*
+	 * If we're called with maxsize/offset of 0, behave like
 	 * pci_mapreg_map.
 	 */
 
