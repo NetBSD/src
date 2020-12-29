@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.32 2020/12/28 12:56:33 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.33 2020/12/29 11:54:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -204,7 +204,7 @@ typedef enum {
 	ENUMTAG,
 	MOS,		/* member of struct */
 	MOU,		/* member of union */
-	ENUMCON,	/* enumerator */
+	ENUMCON,	/* enumerator, enum constant */
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
 	ARG,		/* argument */
 	PARG,		/* used in declaration stack during prototype
@@ -216,7 +216,7 @@ typedef enum {
  * symbol table entry
  */
 typedef	struct sym {
-	const	char *s_name;	/* name */
+	const	char *s_name;
 	const	char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_dpos;		/* position of last (prototype)definition,
 				   prototypedeclaration, no-prototype-def.,
@@ -235,18 +235,18 @@ typedef	struct sym {
 				   definition */
 	u_int	s_rimpl : 1;	/* return value of function implicit decl. */
 	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
-	u_int	s_inline : 1;	/* true if this is a inline function */
+	u_int	s_inline : 1;	/* true if this is an inline function */
 	struct	sym *s_xsym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
 	scl_t	s_scl;		/* storage class */
 	int	s_blklev;	/* level of declaration, -1 if not in symbol
 				   table */
-	type_t	*s_type;	/* type */
-	val_t	s_value;	/* value (if enumcon) */
+	type_t	*s_type;
+	val_t	s_value;	/* value (if enum constant) */
 	union {
 		str_t	*_s_st;	/* tag, if it is a struct/union member */
-		tenum_t	*_s_et;	/* tag, if it is a enumerator */
+		tenum_t	*_s_et;	/* tag, if it is an enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function

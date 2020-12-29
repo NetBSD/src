@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.95 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.96 2020/12/29 11:54:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.95 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.96 2020/12/29 11:54:56 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1780,8 +1780,7 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 }
 
 /*
- * Print warnings for conversions of integer types which my cause
- * problems.
+ * Print warnings for conversions of integer types which may cause problems.
  */
 /* ARGSUSED */
 static void
