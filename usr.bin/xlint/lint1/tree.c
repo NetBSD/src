@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.96 2020/12/29 11:54:56 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.97 2020/12/29 12:18:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.96 2020/12/29 11:54:56 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.97 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3984,10 +3984,10 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 #ifdef notdef
 		/*
 		 * consider:
-		 * 	struct foo {
-		 *	    unsigned char a;
-		 *      } f = {
-		 *          (u_char)(u_long)(&(((struct foo *)0)->a))
+		 *	struct foo {
+		 *		unsigned char a;
+		 *	} f = {
+		 *		(u_char)(u_long)(&(((struct foo *)0)->a))
 		 *	};
 		 * since psize(u_long) != psize(u_char) this fails.
 		 */
