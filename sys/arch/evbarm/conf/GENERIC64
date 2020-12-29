@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.168 2020/12/23 04:09:32 thorpej Exp $
+#	$NetBSD: GENERIC64,v 1.169 2020/12/29 01:48:22 thorpej Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -317,6 +317,7 @@ cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
 es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
+pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc*	at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# Rockchip Power Management IC
 rkreg*		at rkpmic?
