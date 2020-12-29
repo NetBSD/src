@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.24 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.25 2020/12/29 21:32:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.24 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.25 2020/12/29 21:32:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -435,7 +435,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 	args = tn->tn_right;
 	for (arg = args; arg != NULL; arg = arg->tn_right)
 		narg++;
-	/* informations about arguments */
+	/* information about arguments */
 	for (n = 1; n <= narg; n++) {
 		/* the last argument is the top one in the tree */
 		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
