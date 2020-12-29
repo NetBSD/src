@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1421 2020/11/20 01:29:12 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1422 2020/12/29 11:04:53 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -687,7 +687,7 @@ vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
 vendor NETMOS		0x9710	Netmos
-vendor PARALLELS	0xaaaa	Parallels	
+vendor PARALLELS	0xaaaa	Parallels
 vendor MICRON		0xc0a9	Micron/Crucial Technology
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor MIDDLE_DIGITAL	0xdeaf	Middle Digital
@@ -1749,7 +1749,7 @@ product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
 product ATI RS690_HB_7910	0x7910	RS690 Host Bridge
 product ATI RS690_HB_7911	0x7911	RS740 Host Bridge
-product ATI RS690_PPB_7912	0x7912	RS690 GFX Bridge 
+product ATI RS690_PPB_7912	0x7912	RS690 GFX Bridge
 product ATI RS690_PPB_7913	0x7913	RS690 PCI Express Bridge GFX
 product ATI RS690_PPB_7914	0x7914	RS690 PCI Express Bridge GPP Port A
 product ATI RS690_PPB_7915	0x7915	RS690 PCI Express Bridge GPP Port B
@@ -1826,7 +1826,7 @@ product ATI RADEON_RX_460_HDA	0xaae0	Radeon RX 460/550/640SP, RX 560/560X HD Aud
 product ATI RADEON_RX_550_HDA	0xaae8	Radeon R9 Nano, FURY HD Audio Controller
 product ATI RADEON_RX_470_HDA	0xaaf0	Radeon RX 470/480/570/580/590 HD Audio Controller
 product ATI RADEON_VEGA56_HDA	0xaaf8	Radeon Vega 56/64 HD Audio
-product ATI RADEON_RX_550_HDA2	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller  
+product ATI RADEON_RX_550_HDA2	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -2840,9 +2840,9 @@ product MARVELL MV64460		0x6480	MV6446x System Controller
 product MARVELL MV6707		0x6707	MV6707 SoC Armada 370
 product MARVELL MV6710		0x6710	MV6710 SoC Armada 370
 product MARVELL MV6W11		0x6711	MV6W11 SoC Armada 370
-product MARVELL 88F6810         0x6810  88F6810 SoC Armada 38x 
-product MARVELL 88F6820         0x6820  88F6820 SoC Armada 38x 
-product MARVELL 88F6828         0x6828  88F6828 SoC Armada 38x 
+product MARVELL 88F6810         0x6810  88F6810 SoC Armada 38x
+product MARVELL 88F6820         0x6820  88F6820 SoC Armada 38x
+product MARVELL 88F6828         0x6828  88F6828 SoC Armada 38x
 product MARVELL 88SX7042	0x7042	88SX7042 SATA IIe
 product MARVELL MV78100		0x7810	MV78100 SoC Discovery Innovation
 product MARVELL MV78130		0x7813	MV78130 SoC Armada XP
@@ -3274,7 +3274,7 @@ product INTEL 4HS_H_UART_1	0x06a9	400 Series UART 1
 product INTEL 4HS_H_GSPI_0	0x06aa	400 Series GSPI 0
 product INTEL 4HS_H_GSPI_1	0x06ab	400 Series GSPI 1
 product INTEL 4HS_H_PCIE_21	0x06ac	400 Series PCIe Root Port 21
-product INTEL 4HS_H_PCIE_22	0x06ad	400 Series PCIe Root Port 22 
+product INTEL 4HS_H_PCIE_22	0x06ad	400 Series PCIe Root Port 22
 product INTEL 4HS_H_PCIE_23	0x06ae	400 Series PCIe Root Port 23
 product INTEL 4HS_H_PCIE_24	0x06af	400 Series PCIe Root Port 24
 product INTEL 4HS_H_PCIE_9	0x06b0	400 Series PCIe Root Port 9
@@ -4667,7 +4667,7 @@ product INTEL XE5_V3_QDT_CH1	0x2f21	Xeon E5 v3 QDT DMA Channel 1
 product INTEL XE5_V3_QDT_CH2	0x2f22	Xeon E5 v3 QDT DMA Channel 2
 product INTEL XE5_V3_QDT_CH3	0x2f23	Xeon E5 v3 QDT DMA Channel 3
 product INTEL XE5_V3_QDT_CH4	0x2f24	Xeon E5 v3 QDT DMA Channel 4
-product INTEL XE5_V3_QDT_CH5	0x2f25	Xeon E5 v3 QDT DMA Channel 5 
+product INTEL XE5_V3_QDT_CH5	0x2f25	Xeon E5 v3 QDT DMA Channel 5
 product INTEL XE5_V3_QDT_CH6	0x2f26	Xeon E5 v3 QDT DMA Channel 6
 product INTEL XE5_V3_QDT_CH7	0x2f27	Xeon E5 v3 QDT DMA Channel 7
 product INTEL XE5_V3_IIO_AM	0x2f28	Xeon E5 v3 Address Map, VTd, SMM
@@ -6564,7 +6564,7 @@ product	SYMBIOS	SAS3324_9		0x00c8	SAS3324
 product	SYMBIOS	SAS3324_10		0x00c9	SAS3324
 product SYMBIOS MEGARAID_320X		0x0407	LSI Megaraid SCSI 320-X
 product SYMBIOS MEGARAID_320E		0x0408	LSI Megaraid SCSI 320-E
-product SYMBIOS MEGARAID_300X		0x0409	LSI Megaraid SATA (300-6X/300-8X) 
+product SYMBIOS MEGARAID_300X		0x0409	LSI Megaraid SATA (300-6X/300-8X)
 product SYMBIOS MEGARAID_SAS		0x0411	MegaRAID SAS
 product SYMBIOS MEGARAID_VERDE_ZCR	0x0413	MegaRAID Verde ZCR
 product SYMBIOS FC909			0x0620	FC909
@@ -7508,7 +7508,7 @@ product RALINK	RT5390_2	0x5392	RT5390
 product RALINK	RT5390_3	0x539a	RT5390
 product RALINK	RT5390_4	0x539b	RT5390
 product RALINK	RT5390_5	0x539f	RT5390
-	
+
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
@@ -7615,7 +7615,7 @@ product RNS FDDI	0x2200	2200 FDDI
 
 /* Rockchip products */
 product ROCKCHIP RK3399_RC	0x0100	RK3399 Root Complex
- 
+
 /* S2io products */
 product S2IO XFRAME	0x5831	Xframe 10 Gigabit Ethernet Adapter
 product S2IO XFRAME2	0x5832	Xframe2 10 Gigabit Ethernet Adapter
@@ -8005,7 +8005,7 @@ product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI72111SD	0x8034	PCI7x21/7x11 SD Card Controller
 product TI	PCI72111SM	0x8035	PCI7x21/7x11 SM Card Controller
-product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
+product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	PCIXX12CB	0x8039	PCIXX12 Cardbus Controller
 product TI	PCIXX12FW	0x803a	PCIXX12 IEEE 1394 Host Controller
@@ -8315,7 +8315,7 @@ product VIATECH VT3237_PPB	0xb999	K8T890 North / VT8237 South PCI-PCI Bridge
 product VIATECH K8T890_PPB_C238	0xc238	K8T890 PCI-PCI Bridge
 product VIATECH P4M900_PPB_2	0xc364	CN896/P4M900 PCI-PCI Bridge
 product VIATECH VX900_PCIE_2	0xc410	VX900 PCI Express Root Port 2
-product VIATECH K8T890_PPB_D238	0xd238	K8T890 PCI-PCI Bridge 
+product VIATECH K8T890_PPB_D238	0xd238	K8T890 PCI-PCI Bridge
 product VIATECH VX900_PCIE_3	0xd410	VX900 PCI Express Root Port 3
 product VIATECH K8T890_PPB_E238	0xe238	K8T890 PCI-PCI Bridge
 product VIATECH VX900_PCIE_4	0xe410	VX900 PCI Express Physical Layer Electrical Sub-block
