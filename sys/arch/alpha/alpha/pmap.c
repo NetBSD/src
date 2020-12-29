@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.273 2020/09/11 03:54:14 simonb Exp $ */
+/* $NetBSD: pmap.c,v 1.274 2020/12/29 17:16:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2020/09/11 03:54:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2020/12/29 17:16:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2309,6 +2309,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	pt_entry_t *pte, opte;
 	pmap_t const pmap = pmap_kernel();
 	struct pmap_tlb_context tlbctx;
+	int count = 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -2330,10 +2331,14 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			atomic_store_relaxed(pte, PG_NV);
 			pmap_tlb_shootdown(pmap, va, opte, &tlbctx);
 
-			/* Update stats. */
-			PMAP_STAT_DECR(pmap->pm_stats.resident_count, 1);
-			PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
+			count++;
 		}
+	}
+
+	/* Update stats. */
+	if (__predict_true(count != 0)) {
+		PMAP_STAT_DECR(pmap->pm_stats.resident_count, count);
+		PMAP_STAT_DECR(pmap->pm_stats.wired_count, count);
 	}
 
 	pmap_tlb_shootnow(&tlbctx);
