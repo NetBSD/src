@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.11 2009/04/15 01:20:57 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.12 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.11 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.12 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 /*
@@ -83,7 +83,7 @@ hash(const char *s)
 		v = (v << sizeof (v)) + *us;
 		v ^= v >> (sizeof (v) * CHAR_BIT - sizeof (v));
 	}
-	return (v % HSHSIZ2);
+	return v % HSHSIZ2;
 }
 
 /*
@@ -106,7 +106,7 @@ _hsearch(hte_t **table, const char *s, int mknew)
 	}
 
 	if (hte != NULL || !mknew)
-		return (hte);
+		return hte;
 
 	/* create a new hte */
 	hte = xmalloc(sizeof (hte_t));
@@ -124,7 +124,7 @@ _hsearch(hte_t **table, const char *s, int mknew)
 	hte->h_hte = NULL;
 	table[h] = hte;
 
-	return (hte);
+	return hte;
 }
 
 /*

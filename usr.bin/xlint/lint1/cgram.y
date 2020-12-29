@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.111 2020/12/29 10:24:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.112 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.111 2020/12/29 10:24:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.112 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2026,7 +2026,7 @@ yyerror(const char *msg)
 	error(249, yytext);
 	if (++sytxerr >= 5)
 		norecover();
-	return (0);
+	return 0;
 }
 
 static __inline int uq_gt(uint64_t, uint64_t);
@@ -2036,14 +2036,14 @@ static __inline int
 uq_gt(uint64_t a, uint64_t b)
 {
 
-	return (a > b);
+	return a > b;
 }
 
 static __inline int
 q_gt(int64_t a, int64_t b)
 {
 
-	return (a > b);
+	return a > b;
 }
 
 #define	q_lt(a, b)	q_gt(b, a)
@@ -2096,7 +2096,7 @@ toicon(tnode_t *tn, int required)
 		}
 	}
 	free(v);
-	return (i);
+	return i;
 }
 
 static void

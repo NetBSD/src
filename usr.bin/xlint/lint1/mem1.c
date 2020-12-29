@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.19 2020/12/28 12:52:45 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.20 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.19 2020/12/28 12:52:45 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.20 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ srchfn(const char *s, size_t len)
 		if (fn->fn_len == len && memcmp(fn->fn_name, s, len) == 0)
 			break;
 	}
-	return (fn);
+	return fn;
 }
 
 /*
@@ -84,7 +84,7 @@ const char *
 fnalloc(const char *s)
 {
 
-	return (s != NULL ? fnnalloc(s, strlen(s)) : NULL);
+	return s != NULL ? fnnalloc(s, strlen(s)) : NULL;
 }
 
 struct repl {
@@ -136,7 +136,7 @@ fnnalloc(const char *s, size_t len)
 	static	int	nxt_id = 0;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 
 	if ((fn = srchfn(s, len)) == NULL) {
 		fn = xmalloc(sizeof (fn_t));
@@ -154,7 +154,7 @@ fnnalloc(const char *s, size_t len)
 		outchar('s');
 		outstrg(fnxform(fn->fn_name, fn->fn_len));
 	}
-	return (fn->fn_name);
+	return fn->fn_name;
 }
 
 /*
@@ -166,8 +166,8 @@ getfnid(const char *s)
 	fn_t	*fn;
 
 	if (s == NULL || (fn = srchfn(s, strlen(s))) == NULL)
-		return (-1);
-	return (fn->fn_id);
+		return -1;
+	return fn->fn_id;
 }
 
 /*
@@ -215,7 +215,7 @@ xnewblk(void)
 	mb->blk = xmapalloc(mblklen);
 	mb->size = mblklen;
 
-	return (mb);
+	return mb;
 }
 
 /*
@@ -260,7 +260,7 @@ xgetblk(mbl_t **mbp, size_t s)
 #ifdef BLKDEBUG
 	(void)memset(p, 0, s);
 #endif
-	return (p);
+	return p;
 }
 
 /*
@@ -304,14 +304,14 @@ getlblk(size_t l, size_t s)
 		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof (mbl_t *));
 		nmblks += ML_INC;
 	}
-	return (xgetblk(&mblks[l], s));
+	return xgetblk(&mblks[l], s);
 }
 
 void *
 getblk(size_t s)
 {
 
-	return (getlblk(mblklev, s));
+	return getlblk(mblklev, s);
 }
 
 /*
@@ -341,7 +341,7 @@ void *
 tgetblk(size_t s)
 {
 
-	return (xgetblk(&tmblk, s));
+	return xgetblk(&tmblk, s);
 }
 
 /*
@@ -351,7 +351,7 @@ tnode_t *
 getnode(void)
 {
 
-	return (tgetblk(sizeof (tnode_t)));
+	return tgetblk(sizeof (tnode_t));
 }
 
 /*
@@ -376,7 +376,7 @@ tsave(void)
 
 	tmem = tmblk;
 	tmblk = NULL;
-	return (tmem);
+	return tmem;
 }
 
 /*

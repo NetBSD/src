@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.50 2020/05/23 17:28:27 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.51 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.50 2020/05/23 17:28:27 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.51 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -213,7 +213,7 @@ concat2(const char *s1, const char *s2)
 	(void)strcpy(s, s1);
 	(void)strcat(s, s2);
 
-	return (s);
+	return s;
 }
 
 static char *
@@ -226,7 +226,7 @@ concat3(const char *s1, const char *s2, const char *s3)
 	(void)strcat(s, s2);
 	(void)strcat(s, s3);
 
-	return (s);
+	return s;
 }
 
 /*
@@ -274,7 +274,7 @@ lbasename(const char *strg, int delim)
 			cp1 = cp;
 		}
 	}
-	return (*cp1 == '\0' ? cp2 : cp1);
+	return *cp1 == '\0' ? cp2 : cp1;
 }
 
 static void
@@ -823,12 +823,12 @@ rdok(const char *path)
 	struct	stat sbuf;
 
 	if (stat(path, &sbuf) == -1)
-		return (0);
+		return 0;
 	if (!S_ISREG(sbuf.st_mode))
-		return (0);
+		return 0;
 	if (access(path, R_OK) == -1)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 
 static void

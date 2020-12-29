@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.12 2020/12/28 19:07:43 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.13 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.12 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.13 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -92,7 +92,7 @@ lbasename(const char *path)
 	const	char *cp, *cp1, *cp2;
 
 	if (Fflag)
-		return (path);
+		return path;
 
 	cp = cp1 = cp2 = path;
 	while (*cp != '\0') {
@@ -101,7 +101,7 @@ lbasename(const char *path)
 			cp1 = cp;
 		}
 	}
-	return (*cp1 == '\0' ? cp2 : cp1);
+	return *cp1 == '\0' ? cp2 : cp1;
 }
 
 /*
@@ -137,5 +137,5 @@ mkpos(pos_t *posp)
 		(void)sprintf(buf, "%s", fn);
 	}
 
-	return (buf);
+	return buf;
 }

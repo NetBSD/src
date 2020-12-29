@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.32 2020/12/28 22:31:31 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.33 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.32 2020/12/28 22:31:31 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.33 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -626,7 +626,7 @@ strginit(tnode_t *tn)
 	strg_t	*strg;
 
 	if (tn->tn_op != STRING)
-		return (0);
+		return 0;
 
 	istk = initstk;
 	strg = tn->tn_strg;
@@ -641,7 +641,7 @@ strginit(tnode_t *tn)
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
-			return (0);
+			return 0;
 		}
 		/* Put the array at top of stack */
 		pushinit();
@@ -652,16 +652,16 @@ strginit(tnode_t *tn)
 		if (!((strg->st_tspec == CHAR &&
 		       (t == CHAR || t == UCHAR || t == SCHAR)) ||
 		      (strg->st_tspec == WCHAR && t == WCHAR))) {
-			return (0);
+			return 0;
 		}
 		/*
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
 		if (istk->i_cnt != istk->i_type->t_dim)
-			return (0);
+			return 0;
 	} else {
-		return (0);
+		return 0;
 	}
 
 	/* Get length without trailing NUL character. */
@@ -681,5 +681,5 @@ strginit(tnode_t *tn)
 	/* In every case the array is initialized completely. */
 	istk->i_cnt = 0;
 
-	return (1);
+	return 1;
 }

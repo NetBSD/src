@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.94 2020/12/29 10:24:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.95 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.94 2020/12/29 10:24:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.95 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -140,7 +140,7 @@ incref(type_t *tp, tspec_t t)
 	tp2 = getblk(sizeof (type_t));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
-	return (tp2);
+	return tp2;
 }
 
 /*
@@ -154,7 +154,7 @@ tincref(type_t *tp, tspec_t t)
 	tp2 = tgetblk(sizeof (type_t));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
-	return (tp2);
+	return tp2;
 }
 
 /*
@@ -173,7 +173,7 @@ getcnode(type_t *tp, val_t *v)
 	n->tn_val->v_ansiu = v->v_ansiu;
 	n->tn_val->v_u = v->v_u;
 	free(v);
-	return (n);
+	return n;
 }
 
 /*
@@ -190,7 +190,7 @@ getinode(tspec_t t, int64_t q)
 	n->tn_val = tgetblk(sizeof (val_t));
 	n->tn_val->v_tspec = t;
 	n->tn_val->v_quad = q;
-	return (n);
+	return n;
 }
 
 /*
@@ -258,7 +258,7 @@ getnnode(sym_t *sym, int ntok)
 		*n->tn_val = sym->s_value;
 	}
 
-	return (n);
+	return n;
 }
 
 /*
@@ -295,7 +295,7 @@ getsnode(strg_t *strg)
 	}
 	free(strg);
 
-	return (n);
+	return n;
 }
 
 /*
@@ -325,7 +325,7 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 		msym->s_styp->stag = tgetblk(sizeof (sym_t));
 		msym->s_styp->stag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
-		return (msym);
+		return msym;
 	}
 
 	/* Set str to the tag of which msym is expected to be a member. */
@@ -352,7 +352,7 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 				continue;
 			if (strcmp(sym->s_name, msym->s_name) != 0)
 				continue;
-			return (sym);
+			return sym;
 		}
 	}
 
@@ -415,7 +415,7 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 		} else {
 			error(102, msym->s_name);
 		}
-		return (msym);
+		return msym;
 	}
 
 	/*
@@ -451,7 +451,7 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 		}
 	}
 
-	return (msym);
+	return msym;
 }
 
 /*
@@ -473,7 +473,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 
 	/* If there was an error in one of the operands, return. */
 	if (ln == NULL || (mp->m_binary && rn == NULL))
-		return (NULL);
+		return NULL;
 
 	/*
 	 * Apply class conversions to the left operand, but only if its
@@ -537,7 +537,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * compatibility. Return if there are serios problems.
 	 */
 	if (!typeok(op, 0, ln, rn))
-		return (NULL);
+		return NULL;
 
 	/* And now create the node. */
 	switch (op) {
@@ -600,7 +600,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 
 	/* Return if an error occurred. */
 	if (ntn == NULL)
-		return (NULL);
+		return NULL;
 
 	/* Print a warning if precedence confusion is possible */
 	if (mp->m_tpconf)
@@ -634,7 +634,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -678,7 +678,7 @@ cconv(tnode_t *tn)
 		tn = mktnode(LOAD, tp, tn, NULL);
 	}
 
-	return (tn);
+	return tn;
 }
 
 /*
@@ -715,26 +715,26 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	if (mp->m_requires_integer) {
 		if (!tspec_is_int(lt) || (mp->m_binary && !tspec_is_int(rt))) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 	} else if (mp->m_requires_integer_or_complex) {
 		if ((!tspec_is_int(lt) && !tspec_is_complex(lt)) ||
 		    (mp->m_binary &&
 		     (!tspec_is_int(rt) && !tspec_is_complex(rt)))) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 	} else if (mp->m_requires_scalar) {
 		if (!tspec_is_scalar(lt) ||
 		    (mp->m_binary && !tspec_is_scalar(rt))) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 	} else if (mp->m_requires_arith) {
 		if (!tspec_is_arith(lt) ||
 		    (mp->m_binary && !tspec_is_arith(rt))) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 	}
 
@@ -763,7 +763,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (tflag)
 				/* unacceptable operand of %s */
 				error(111, mp->m_name);
-			return (0);
+			return 0;
 		}
 		/* Now we have an object we can create a pointer to */
 		break;
@@ -773,7 +773,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (tflag)
 				/* unacceptabel operand of %s */
 				error(111, mp->m_name);
-			return (0);
+			return 0;
 		}
 		break;
 	case INCAFT:
@@ -791,7 +791,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			}
 			/* %soperand of %s must be lvalue */
 			error(114, "", mp->m_name);
-			return (0);
+			return 0;
 		} else if (ltp->t_const) {
 			/* %soperand of %s must be modifiable lvalue */
 			if (!tflag)
@@ -811,22 +811,22 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			}
 			/* %soperand of %s must be lvalue */
 			error(114, "", mp->m_name);
-			return (0);
+			return 0;
 		} else if (tspec_is_scalar(lt)) {
 			if (ltp->t_isfield) {
 				/* cannot take address of bit-field */
 				error(112);
-				return (0);
+				return 0;
 			}
 		} else if (lt != STRUCT && lt != UNION) {
 			/* unacceptable operand of %s */
 			error(111, mp->m_name);
-			return (0);
+			return 0;
 		}
 		if (ln->tn_op == NAME && ln->tn_sym->s_reg) {
 			/* cannot take address of register %s */
 			error(113, ln->tn_sym->s_name);
-			return (0);
+			return 0;
 		}
 		break;
 	case STAR:
@@ -834,7 +834,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (lt != PTR) {
 			/* cannot dereference non-pointer type */
 			error(96);
-			return (0);
+			return 0;
 		}
 		break;
 	case PLUS:
@@ -842,17 +842,17 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if ((lt == PTR && !tspec_is_int(rt)) ||
 		    (rt == PTR && !tspec_is_int(lt))) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 		break;
 	case MINUS:
 		/* operands have scalar types (checked above) */
 		if (lt == PTR && (!tspec_is_int(rt) && rt != PTR)) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		} else if (rt == PTR && lt != PTR) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 		if (lt == PTR && rt == PTR) {
 			if (!eqtype(lstp, rstp, 1, 0, NULL)) {
@@ -966,7 +966,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				warning(123, lx, lbuf, rx, rbuf, mp->m_name);
 			} else {
 				incompat(op, lt, rt);
-				return (0);
+				return 0;
 			}
 		} else if (lt == PTR && rt == PTR) {
 			ptrcmpok(op, ln, rn);
@@ -976,7 +976,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!tspec_is_scalar(lt)) {
 			/* first operand must have scalar type, op ? : */
 			error(170);
-			return (0);
+			return 0;
 		}
 		while (rn->tn_op == CVT)
 			rn = rn->tn_left;
@@ -1042,14 +1042,14 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 		/* incompatible types in conditional */
 		error(126);
-		return (0);
+		return 0;
 
 	case ASSIGN:
 	case INIT:
 	case FARG:
 	case RETURN:
 		if (!asgntypok(op, arg, ln, rn))
-			return (0);
+			return 0;
 		goto assign;
 	case MULASS:
 	case DIVASS:
@@ -1060,7 +1060,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !tspec_is_int(rt)) || rt == PTR) {
 			incompat(op, lt, rt);
-			return (0);
+			return 0;
 		}
 		goto assign;
 	case SHLASS:
@@ -1087,7 +1087,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			}
 			/* %soperand of %s must be lvalue */
 			error(114, "left ", mp->m_name);
-			return (0);
+			return 0;
 		} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
 					    conmemb(ltp))) {
 			/* %soperand of %s must be modifiable lvalue */
@@ -1141,7 +1141,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		chkeop1(op, arg, ln, rn);
 	}
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -1198,16 +1198,16 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	mp = &modtab[op];
 
 	if (tspec_is_arith(lt) && tspec_is_arith(rt))
-		return (1);
+		return 1;
 
 	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION))
 		/* both are struct or union */
-		return (ltp->t_str == rtp->t_str);
+		return ltp->t_str == rtp->t_str;
 
 	/* 0, 0L and (void *)0 may be assigned to any pointer */
 	if (lt == PTR && ((rt == PTR && rst == VOID) || tspec_is_int(rt))) {
 		if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
-			return (1);
+			return 1;
 	}
 
 	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID)) {
@@ -1259,7 +1259,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				break;
 			}
 		}
-		return (1);
+		return 1;
 	}
 
 	if ((lt == PTR && tspec_is_int(rt)) ||
@@ -1284,7 +1284,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			warning(123, lx, lbuf, rx, rbuf, mp->m_name);
 			break;
 		}
-		return (1);
+		return 1;
 	}
 
 	if (lt == PTR && rt == PTR) {
@@ -1302,7 +1302,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			illptrc(mp, ltp, rtp);
 			break;
 		}
-		return (1);
+		return 1;
 	}
 
 	switch (op) {
@@ -1325,7 +1325,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1533,7 +1533,7 @@ promote(op_t op, int farg, tnode_t *tn)
 	t = tn->tn_type->t_tspec;
 
 	if (!tspec_is_arith(t))
-		return (tn);
+		return tn;
 
 	if (!tflag) {
 		/*
@@ -1591,7 +1591,7 @@ promote(op_t op, int farg, tnode_t *tn)
 		tn = convert(op, 0, ntp, tn);
 	}
 
-	return (tn);
+	return tn;
 }
 
 /*
@@ -1717,7 +1717,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		cvtcon(op, arg, ntn->tn_type, ntn->tn_val, tn->tn_val);
 	}
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2308,13 +2308,13 @@ conmemb(type_t *tp)
 	for (m = tp->t_str->memb; m != NULL; m = m->s_nxt) {
 		tp = m->s_type;
 		if (tp->t_const)
-			return (1);
+			return 1;
 		if ((t = tp->t_tspec) == STRUCT || t == UNION) {
 			if (conmemb(m->s_type))
-				return (1);
+				return 1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -2366,7 +2366,7 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
 	if (nolval)
 		ntn->tn_lvalue = 0;
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2387,7 +2387,7 @@ bldincdec(op_t op, tnode_t *ln)
 	}
 	ntn = mktnode(op, ln->tn_type, ln, cn);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2420,7 +2420,7 @@ bldri(op_t op, tnode_t *ln)
 	ntn = mktnode(op, cn->tn_type, ln, cn);
 	ntn->tn_lvalue = 1;
 
-	return (ntn);
+	return ntn;
 }
 /*
  * Create a tree node for the & operator
@@ -2435,19 +2435,19 @@ bldamper(tnode_t *tn, int noign)
 		/* & before array or function: ignored */
 		if (tflag)
 			warning(127);
-		return (tn);
+		return tn;
 	}
 
 	/* eliminate &* */
 	if (tn->tn_op == STAR &&
 	    tn->tn_left->tn_type->t_tspec == PTR &&
 	    tn->tn_left->tn_type->t_subt == tn->tn_type) {
-		return (tn->tn_left);
+		return tn->tn_left;
 	}
 
 	ntn = mktnode(AMPER, tincref(tn->tn_type, PTR), tn, NULL);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2501,7 +2501,7 @@ bldplmi(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = mktnode(op, ln->tn_type, ln, rn);
 
 	}
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2516,7 +2516,7 @@ bldshft(op_t op, tnode_t *ln, tnode_t *rn)
 	if ((t = rn->tn_type->t_tspec) != INT && t != UINT)
 		rn = convert(CVT, 0, gettyp(INT), rn);
 	ntn = mktnode(op, ln->tn_type, ln, rn);
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2554,7 +2554,7 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		if (incompl(ln->tn_type)) {
 			/* unknown operand size, op %s */
 			error(138, modtab[COLON].m_name);
-			return (NULL);
+			return NULL;
 		}
 		rtp = ln->tn_type;
 	} else if (lt == PTR && tspec_is_int(rt)) {
@@ -2594,7 +2594,7 @@ bldcol(tnode_t *ln, tnode_t *rn)
 
 	ntn = mktnode(COLON, rtp, ln, rn);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2634,7 +2634,7 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 				/* unknown operand size, op %s */
 				error(138, modtab[op].m_name);
 			}
-			return (NULL);
+			return NULL;
 		}
 	}
 
@@ -2656,7 +2656,7 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 
 	ntn = mktnode(op, ln->tn_type, ln, rn);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -2725,7 +2725,7 @@ plength(type_t *tp)
 	st = INT;
 #endif
 
-	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
+	return getinode(st, (int64_t)(elem * elsz / CHAR_BIT));
 }
 
 /*
@@ -2877,7 +2877,7 @@ fold(tnode_t *tn)
 
 	cn = getcnode(tn->tn_type, v);
 
-	return (cn);
+	return cn;
 }
 
 /*
@@ -2925,7 +2925,7 @@ foldtst(tnode_t *tn)
 		LERROR("foldtst()");
 	}
 
-	return (getcnode(tn->tn_type, v));
+	return getcnode(tn->tn_type, v);
 }
 
 /*
@@ -3026,7 +3026,7 @@ foldflt(tnode_t *tn)
 	    fpe = 0;
 	}
 
-	return (getcnode(tn->tn_type, v));
+	return getcnode(tn->tn_type, v);
 }
 
 
@@ -3123,6 +3123,7 @@ tsize(type_t *tp)
 		break;
 	}
 
+	/* XXX: type conversion is too late */
 	return (int64_t)(elem * elsz);
 }
 
@@ -3184,7 +3185,7 @@ cast(tnode_t *tn, type_t *tp)
 	tspec_t	nt, ot;
 
 	if (tn == NULL)
-		return (NULL);
+		return NULL;
 
 	tn = cconv(tn);
 
@@ -3221,16 +3222,16 @@ cast(tnode_t *tn, type_t *tp)
 		/* invalid cast expression */
 		if (!Sflag || nt == ARRAY || nt == FUNC) {
 			error(147);
-			return (NULL);
+			return NULL;
 		}
 	} else if (ot == STRUCT || ot == UNION) {
 		/* invalid cast expression */
 		error(147);
-		return (NULL);
+		return NULL;
 	} else if (ot == VOID) {
 		/* improper cast of void expression */
 		error(148);
-		return (NULL);
+		return NULL;
 	} else if (tspec_is_int(nt) && tspec_is_scalar(ot)) {
 		/* ok */
 	} else if (tspec_is_float(nt) && tspec_is_arith(ot)) {
@@ -3246,13 +3247,13 @@ cast(tnode_t *tn, type_t *tp)
 	} else {
 		/* invalid cast expression */
 		error(147);
-		return (NULL);
+		return NULL;
 	}
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = 1;
 
-	return (tn);
+	return tn;
 }
 
 /*
@@ -3275,7 +3276,7 @@ funcarg(tnode_t *args, tnode_t *arg)
 
 	ntn = mktnode(PUSH, arg->tn_type, arg, args);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -3289,7 +3290,7 @@ funccall(tnode_t *func, tnode_t *args)
 	op_t	fcop;
 
 	if (func == NULL)
-		return (NULL);
+		return NULL;
 
 	if (func->tn_op == NAME && func->tn_type->t_tspec == FUNC) {
 		fcop = CALL;
@@ -3308,14 +3309,14 @@ funccall(tnode_t *func, tnode_t *args)
 		char buf[256];
 		/* illegal function */
 		error(149, tyname(buf, sizeof(buf), func->tn_type));
-		return (NULL);
+		return NULL;
 	}
 
 	args = chkfarg(func->tn_type->t_subt, args);
 
 	ntn = mktnode(fcop, func->tn_type->t_subt->t_subt, func, args);
 
-	return (ntn);
+	return ntn;
 }
 
 /*
@@ -3360,12 +3361,12 @@ chkfarg(type_t *ftp, tnode_t *args)
 		if ((at = arg->tn_left->tn_type->t_tspec) == VOID) {
 			/* void expressions may not be arguments, arg #%d */
 			error(151, n);
-			return (NULL);
+			return NULL;
 		} else if ((at == STRUCT || at == UNION) &&
 			   incompl(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
-			return (NULL);
+			return NULL;
 		} else if (tspec_is_int(at) &&
 			   arg->tn_left->tn_type->t_isenum &&
 			   incompl(arg->tn_left->tn_type)) {
@@ -3387,7 +3388,7 @@ chkfarg(type_t *ftp, tnode_t *args)
 			asym = asym->s_nxt;
 	}
 
-	return (args);
+	return args;
 }
 
 /*
@@ -3413,7 +3414,7 @@ parg(	int	n,		/* pos of arg */
 			tn = convert(FARG, n, tp, tn);
 	}
 	free(ln);
-	return (tn);
+	return tn;
 }
 
 /*
@@ -3438,7 +3439,7 @@ constant(tnode_t *tn, int required)
 			LERROR("constant()");
 		v->v_tspec = INT;
 		v->v_quad = 1;
-		return (v);
+		return v;
 	}
 
 	v->v_tspec = tn->tn_type->t_tspec;
@@ -3449,7 +3450,7 @@ constant(tnode_t *tn, int required)
 		if (tspec_is_int(tn->tn_val->v_tspec)) {
 			v->v_ansiu = tn->tn_val->v_ansiu;
 			v->v_quad = tn->tn_val->v_quad;
-			return (v);
+			return v;
 		}
 		v->v_quad = tn->tn_val->v_ldbl;
 	} else {
@@ -3465,7 +3466,7 @@ constant(tnode_t *tn, int required)
 	if (!tspec_is_int(v->v_tspec))
 		v->v_tspec = INT;
 
-	return (v);
+	return v;
 }
 
 /*
@@ -3942,22 +3943,22 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		if (tn->tn_right->tn_op == CVT)
 			return conaddr(tn->tn_right, symp, offsp);
 		else if (tn->tn_right->tn_op != CON)
-			return (-1);
+			return -1;
 		/* FALLTHROUGH */
 	case PLUS:
 		offs1 = offs2 = 0;
 		if (tn->tn_left->tn_op == CON) {
 			offs1 = (ptrdiff_t)tn->tn_left->tn_val->v_quad;
 			if (conaddr(tn->tn_right, &sym, &offs2) == -1)
-				return (-1);
+				return -1;
 		} else if (tn->tn_right->tn_op == CON) {
 			offs2 = (ptrdiff_t)tn->tn_right->tn_val->v_quad;
 			if (tn->tn_op == MINUS)
 				offs2 = -offs2;
 			if (conaddr(tn->tn_left, &sym, &offs1) == -1)
-				return (-1);
+				return -1;
 		} else {
-			return (-1);
+			return -1;
 		}
 		*symp = sym;
 		*offsp = offs1 + offs2;
@@ -3979,7 +3980,7 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		ot = tn->tn_left->tn_type->t_tspec;
 		if ((!tspec_is_int(t) && t != PTR) ||
 		    (!tspec_is_int(ot) && ot != PTR)) {
-			return (-1);
+			return -1;
 		}
 #ifdef notdef
 		/*
@@ -3992,15 +3993,15 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 		 * since psize(u_long) != psize(u_char) this fails.
 		 */
 		else if (psize(t) != psize(ot))
-			return (-1);
+			return -1;
 #endif
 		if (conaddr(tn->tn_left, symp, offsp) == -1)
-			return (-1);
+			return -1;
 		break;
 	default:
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -4014,7 +4015,7 @@ catstrg(strg_t *strg1, strg_t *strg2)
 	if (strg1->st_tspec != strg2->st_tspec) {
 		/* cannot concatenate wide and regular string literals */
 		error(292);
-		return (strg1);
+		return strg1;
 	}
 
 	len1 = strg1->st_len;
@@ -4036,7 +4037,7 @@ catstrg(strg_t *strg1, strg_t *strg2)
 	strg1->st_len = len - 1; /* - NUL */;
 	free(strg2);
 
-	return (strg1);
+	return strg1;
 }
 
 /*

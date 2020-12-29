@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.10 2020/12/28 19:07:43 rillig Exp $	*/
+/*	$NetBSD: mem2.c,v 1.11 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem2.c,v 1.10 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.11 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -89,5 +89,5 @@ xalloc(size_t sz)
 	ptr = (char *)mbuf + nxtfree;
 	nxtfree += sz;
 
-	return (ptr);
+	return ptr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.56 2020/12/28 21:24:55 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.57 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.56 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.57 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -413,7 +413,7 @@ lbasename(const char *path)
 	const	char *cp, *cp1, *cp2;
 
 	if (Fflag)
-		return (path);
+		return path;
 
 	cp = cp1 = cp2 = path;
 	while (*cp != '\0') {
@@ -422,7 +422,7 @@ lbasename(const char *path)
 			cp1 = cp;
 		}
 	}
-	return (*cp1 == '\0' ? cp2 : cp1);
+	return *cp1 == '\0' ? cp2 : cp1;
 }
 
 static void
@@ -540,7 +540,7 @@ c99ism(int n, ...)
 	}
 	va_end(ap);
 
-	return (msg);
+	return msg;
 }
 
 int
@@ -561,5 +561,5 @@ gnuism(int n, ...)
 	}
 	va_end(ap);
 
-	return (msg);
+	return msg;
 }
