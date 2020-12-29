@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.34 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.35 2020/12/29 16:48:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.34 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.35 2020/12/29 16:48:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -69,12 +69,12 @@ typedef struct namlist {
 namlist_t	*namedmem = NULL;
 
 
-static	void	popi2(void);
-static	void	popinit(int);
-static	void	pushinit(void);
-static	void	testinit(void);
-static	void	nextinit(int);
-static	int	strginit(tnode_t *);
+static	void	initstack_push(void);
+static	void	initstack_next(int);
+static	void	initstack_check_too_many(void);
+static	void	initstack_pop(int);
+static	void	initstack_pop_item(void);
+static	int	initstack_string(tnode_t *);
 static	void	pop_member(void);
 
 #ifndef DEBUG
@@ -123,7 +123,7 @@ pop_member(void)
  * which is to be initialized on it.
  */
 void
-prepinit(void)
+initstack_init(void)
 {
 	istk_t	*istk;
 
@@ -150,7 +150,7 @@ prepinit(void)
 }
 
 static void
-popi2(void)
+initstack_pop_item(void)
 {
 #ifdef DEBUG
 	char	buf[64];
@@ -167,7 +167,7 @@ popi2(void)
 
 	istk = initstk;
 	if (istk == NULL)
-		LERROR("popi2()");
+		LERROR("initstack_pop_item()");
 
 	DPRINTF(("%s-(%s): brace=%d count=%d namedmem %d\n", __func__,
 	    tyname(buf, sizeof(buf),
@@ -176,7 +176,7 @@ popi2(void)
 
 	istk->i_cnt--;
 	if (istk->i_cnt < 0)
-		LERROR("popi2()");
+		LERROR("initstack_pop_item()");
 
 	DPRINTF(("%s(): %d %s\n", __func__, istk->i_cnt,
 	    namedmem ? namedmem->n_name : "*null*"));
@@ -210,7 +210,7 @@ popi2(void)
 		do {
 			m = istk->i_mem = istk->i_mem->s_nxt;
 			if (m == NULL)
-				LERROR("popi2()");
+				LERROR("initstack_pop_item()");
 			DPRINTF(("%s(): pop %s\n", __func__, m->s_name));
 		} while (m->s_field && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
@@ -218,7 +218,7 @@ popi2(void)
 }
 
 static void
-popinit(int brace)
+initstack_pop(int brace)
 {
 	DPRINTF(("%s(%d)\n", __func__, brace));
 
@@ -231,7 +231,7 @@ popinit(int brace)
 		do {
 			brace = initstk->i_brace;
 			DPRINTF(("%s: loop brace %d\n", __func__, brace));
-			popi2();
+			initstack_pop_item();
 		} while (!brace);
 		DPRINTF(("%s: brace done\n", __func__));
 	} else {
@@ -243,14 +243,14 @@ popinit(int brace)
 		DPRINTF(("%s: no brace\n", __func__));
 		while (!initstk->i_brace &&
 		       initstk->i_cnt == 0 && !initstk->i_nolimit) {
-			popi2();
+			initstack_pop_item();
 		}
 		DPRINTF(("%s: no brace done\n", __func__));
 	}
 }
 
 static void
-pushinit(void)
+initstack_push(void)
 {
 #ifdef DEBUG
 	char	buf[64];
@@ -270,24 +270,24 @@ pushinit(void)
 		 * type.
 		 */
 		if (istk->i_nxt->i_nxt != NULL)
-			LERROR("pushinit()");
+			LERROR("initstack_push()");
 		istk->i_cnt = 1;
 		if (istk->i_type->t_tspec != ARRAY)
-			LERROR("pushinit()");
+			LERROR("initstack_push()");
 		istk->i_type->t_dim++;
 		setcomplete(istk->i_type, 1);
 	}
 
 	if (istk->i_cnt <= 0)
-		LERROR("pushinit()");
+		LERROR("initstack_push()");
 	if (istk->i_type != NULL && tspec_is_scalar(istk->i_type->t_tspec))
-		LERROR("pushinit()");
+		LERROR("initstack_push()");
 
 	initstk = xcalloc(1, sizeof (istk_t));
 	initstk->i_nxt = istk;
 	initstk->i_type = istk->i_subt;
 	if (initstk->i_type->t_tspec == FUNC)
-		LERROR("pushinit()");
+		LERROR("initstack_push()");
 
 again:
 	istk = initstk;
@@ -392,7 +392,7 @@ again:
 }
 
 static void
-testinit(void)
+initstack_check_too_many(void)
 {
 	istk_t	*istk;
 
@@ -423,7 +423,7 @@ testinit(void)
 }
 
 static void
-nextinit(int brace)
+initstack_next(int brace)
 {
 	char buf[64];
 
@@ -439,12 +439,12 @@ nextinit(int brace)
 		 * of the stack.
 		 */
 		if (!initerr)
-			testinit();
+			initstack_check_too_many();
 		while (!initerr && (initstk->i_type == NULL ||
 				    !tspec_is_scalar(
 				        initstk->i_type->t_tspec))) {
 			if (!initerr)
-				pushinit();
+				initstack_push();
 		}
 	} else {
 		if (initstk->i_type != NULL &&
@@ -454,9 +454,9 @@ nextinit(int brace)
 			initerr = 1;
 		}
 		if (!initerr)
-			testinit();
+			initstack_check_too_many();
 		if (!initerr)
-			pushinit();
+			initstack_push();
 		if (!initerr) {
 			initstk->i_brace = 1;
 			DPRINTF(("%s(): %p %s brace=%d\n", __func__,
@@ -488,9 +488,9 @@ init_lbrace(void)
 	 * Remove all entries which cannot be used for further initializers
 	 * and do not expect a closing brace.
 	 */
-	popinit(0);
+	initstack_pop(0);
 
-	nextinit(1);
+	initstack_next(1);
 }
 
 void
@@ -501,7 +501,7 @@ init_rbrace(void)
 	if (initerr)
 		return;
 
-	popinit(1);
+	initstack_pop(1);
 }
 
 void
@@ -550,13 +550,13 @@ mkinit(tnode_t *tn)
 	 * Remove all entries which cannot be used for further initializers
 	 * and do not require a closing brace.
 	 */
-	popinit(0);
+	initstack_pop(0);
 
-	/* Initialisations by strings are done in strginit(). */
-	if (strginit(tn))
+	/* Initialisations by strings are done in initstack_string(). */
+	if (initstack_string(tn))
 		return;
 
-	nextinit(0);
+	initstack_next(0);
 	if (initerr || tn == NULL)
 		return;
 
@@ -619,7 +619,7 @@ mkinit(tnode_t *tn)
 
 
 static int
-strginit(tnode_t *tn)
+initstack_string(tnode_t *tn)
 {
 	tspec_t	t;
 	istk_t	*istk;
@@ -645,7 +645,7 @@ strginit(tnode_t *tn)
 			return 0;
 		}
 		/* Put the array at top of stack */
-		pushinit();
+		initstack_push();
 		istk = initstk;
 	} else if (istk->i_type != NULL && istk->i_type->t_tspec == ARRAY) {
 		DPRINTF(("%s: type array\n", __func__));
