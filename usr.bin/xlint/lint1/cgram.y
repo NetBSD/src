@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.115 2020/12/29 16:48:53 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.116 2020/12/29 17:29:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.115 2020/12/29 16:48:53 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.116 2020/12/29 17:29:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -705,12 +705,12 @@ struct_spec:
 	| struct struct_tag {
 		dcs->d_tagtyp = mktag($2, $1, 1, 0);
 	  } struct_declaration {
-		$$ = complete_tag(dcs->d_tagtyp, $4);
+		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
 	  }
 	| struct {
 		dcs->d_tagtyp = mktag(NULL, $1, 1, 0);
 	  } struct_declaration {
-		$$ = complete_tag(dcs->d_tagtyp, $3);
+		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
 	  }
 	| struct error {
 		symtyp = FVFT;
@@ -901,12 +901,12 @@ enum_spec:
 	| enum enum_tag {
 		dcs->d_tagtyp = mktag($2, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = complete_tag(dcs->d_tagtyp, $4);
+		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
 	  }
 	| enum {
 		dcs->d_tagtyp = mktag(NULL, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = complete_tag(dcs->d_tagtyp, $3);
+		$$ = complete_tag_enum(dcs->d_tagtyp, $3);
 	  }
 	| enum error {
 		symtyp = FVFT;

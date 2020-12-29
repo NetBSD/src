@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.77 2020/12/29 13:33:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.78 2020/12/29 17:29:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.77 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.78 2020/12/29 17:29:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1773,10 +1773,10 @@ storage_class_name(scl_t sc)
 }
 
 /*
- * tp points to the type of the tag, fmem to the list of members/enums.
+ * tp points to the type of the tag, fmem to the list of members.
  */
 type_t *
-complete_tag(type_t *tp, sym_t *fmem)
+complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 {
 	tspec_t	t;
 	str_t	*sp;
@@ -1785,44 +1785,50 @@ complete_tag(type_t *tp, sym_t *fmem)
 
 	setcomplete(tp, 1);
 
-	if ((t = tp->t_tspec) != ENUM) {
-		align(dcs->d_stralign, 0);
-		sp = tp->t_str;
-		sp->align = dcs->d_stralign;
-		sp->memb = fmem;
-		if (tp->t_ispacked)
-			setpackedsize(tp);
-		else
-			sp->size = dcs->d_offset;
+	t = tp->t_tspec;
+	align(dcs->d_stralign, 0);
+	sp = tp->t_str;
+	sp->align = dcs->d_stralign;
+	sp->memb = fmem;
+	if (tp->t_ispacked)
+		setpackedsize(tp);
+	else
+		sp->size = dcs->d_offset;
 
-		if (sp->size == 0) {
-			/* zero sized %s */
-			(void)c99ism(47, ttab[t].tt_name);
-		}
-
-		n = 0;
-		for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
-			/* bind anonymous members to the structure */
-			if (mem->s_styp == NULL) {
-				mem->s_styp = sp;
-				if (mem->s_type->t_isfield) {
-					sp->size += bitfieldsize(&mem);
-					if (mem == NULL)
-						break;
-				}
-				sp->size += tsize(mem->s_type);
-			}
-			if (mem->s_name != unnamed)
-				n++;
-		}
-
-		if (n == 0 && sp->size != 0) {
-			/* %s has no named members */
-			warning(65, t == STRUCT ? "structure" : "union");
-		}
-	} else {
-		tp->t_enum->elem = fmem;
+	if (sp->size == 0) {
+		/* zero sized %s */
+		(void)c99ism(47, ttab[t].tt_name);
 	}
+
+	n = 0;
+	for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
+		/* bind anonymous members to the structure */
+		if (mem->s_styp == NULL) {
+			mem->s_styp = sp;
+			if (mem->s_type->t_isfield) {
+				sp->size += bitfieldsize(&mem);
+				if (mem == NULL)
+					break;
+			}
+			sp->size += tsize(mem->s_type);
+		}
+		if (mem->s_name != unnamed)
+			n++;
+	}
+
+	if (n == 0 && sp->size != 0) {
+		/* %s has no named members */
+		warning(65, t == STRUCT ? "structure" : "union");
+	}
+	return tp;
+}
+
+type_t *
+complete_tag_enum(type_t *tp, sym_t *fmem)
+{
+
+	setcomplete(tp, 1);
+	tp->t_enum->elem = fmem;
 	return tp;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.39 2020/12/29 16:48:53 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.40 2020/12/29 17:29:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -166,7 +166,8 @@ extern	sym_t	*declarator_name(sym_t *);
 extern	sym_t	*old_style_function_name(sym_t *);
 extern	type_t	*mktag(sym_t *, tspec_t, int, int);
 extern	const	char *storage_class_name(scl_t);
-extern	type_t	*complete_tag(type_t *, sym_t *);
+extern	type_t	*complete_tag_struct_or_union(type_t *, sym_t *);
+extern	type_t	*complete_tag_enum(type_t *, sym_t *);
 extern	sym_t	*ename(sym_t *, int, int);
 extern	void	decl1ext(sym_t *, int);
 extern	void	copy_usage_info(sym_t *, sym_t *);
