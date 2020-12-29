@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1422 2020/12/29 11:04:53 skrll Exp $
+$NetBSD: pcidevs,v 1.1423 2020/12/29 11:05:56 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2152,25 +2152,13 @@ product C4T GPPCI		0x6773	GPPCI
 product CAVIUM NITROX			0x0001	Nitrox XL
 product CAVIUM THUNDERX_MRML		0xa001	Master RML Bridge to RSL devices
 product CAVIUM THUNDERX_PCIB		0xa002	PCI Bridge
-product CAVIUM THUNDERX_RESET		0xa00e	Reset Controller
-product CAVIUM THUNDERX_RNG		0xa018	Random Number Generator
-product CAVIUM THUNDERX_XHCI		0xa01b	xHCI USB Controller
-product CAVIUM THUNDERX_AHCI		0xa01c	AHCI SATA Controller
-product CAVIUM THUNDERX_RAID		0xa01d	RAID Coprocessor
-product CAVIUM THUNDERX_NIC		0xa01e	Network Interface Controller
-product CAVIUM THUNDERX_TNS		0xa01f	Traffic Network Switch
-product CAVIUM THUNDERX_LMC		0xa022	DRAM Controller
-product CAVIUM THUNDERX_BGX		0xa026	Common Ethernet Interface
-product CAVIUM THUNDERX_L2C_TAD		0xa02e	Level 2 cache tag and data
-product CAVIUM THUNDERX_L2C_CBC		0xa02f	L2C-CBC
-product CAVIUM THUNDERX_L2C_MCI		0xa030	L2C-MCI
-
 product CAVIUM THUNDERX_SMMU		0xa008	SMMU
 product CAVIUM THUNDERX_GIC		0xa009	Generic Interrupt Controller
 product CAVIUM THUNDERX_GPIO		0xa00a	GPIO Controller
 product CAVIUM THUNDERX_MPI_SPI		0xa00b	MPI / SPI Controller
 product CAVIUM THUNDERX_MIO_PTP		0xa00c	MIO-PTP Controller
 product CAVIUM THUNDERX_MIX		0xa00d	MIX Network Controller
+product CAVIUM THUNDERX_RESET		0xa00e	Reset Controller
 product CAVIUM THUNDERX_UART		0xa00f	UART Controller
 product CAVIUM THUNDERX_EMMC_SD		0xa010	eMMC/SD Controller
 product CAVIUM THUNDERX_MIO_BOOT	0xa011	MIO-BOOT Controller
@@ -2180,19 +2168,30 @@ product CAVIUM THUNDERX_VRM		0xa014	Voltage Regulator Module
 product CAVIUM THUNDERX_PSLI		0xa015	PCIe Switch Logic Interface
 product CAVIUM THUNDERX_KM		0xa016	Key Memory
 product CAVIUM THUNDERX_GST		0xa017	GTI (Global System Timers)
+product CAVIUM THUNDERX_RNG		0xa018	Random Number Generator
 product CAVIUM THUNDERX_DFA		0xa019	DFA
 product CAVIUM THUNDERX_ZIP		0xa01a	Zip Coprocessor
+product CAVIUM THUNDERX_XHCI		0xa01b	xHCI USB Controller
+product CAVIUM THUNDERX_AHCI		0xa01c	AHCI SATA Controller
+product CAVIUM THUNDERX_RAID		0xa01d	RAID Coprocessor
+product CAVIUM THUNDERX_NIC		0xa01e	Network Interface Controller
+product CAVIUM THUNDERX_TNS		0xa01f	Traffic Network Switch
 product CAVIUM THUNDERX_PEM		0xa020	PEM (PCI Express Interface)
 product CAVIUM THUNDERX_L2C		0xa021	L2C (Level-2 Cache Controller)
+product CAVIUM THUNDERX_LMC		0xa022	DRAM Controller
 product CAVIUM THUNDERX_OCLA		0xa023	OCLA (On-Chip Logic Analyzer)
 product CAVIUM THUNDERX_OSM		0xa024	OSM
 product CAVIUM THUNDERX_GSER		0xa025	GSER (General Serializer/Deserializer)
+product CAVIUM THUNDERX_BGX		0xa026	Common Ethernet Interface
 product CAVIUM THUNDERX_IOBN		0xa027	IOBN
 product CAVIUM THUNDERX_NCSCI		0xa029	NCSI (Network Controller Sideband Interface)
 product CAVIUM THUNDERX_SGPIO		0xa02a	SGPIO (Serial GPIO controller for SATA disk lights)
 product CAVIUM THUNDERX_SMI_MDIO	0xa02b	SMI / MDIO Controller
 product CAVIUM THUNDERX_DAP		0xa02c	DAP (Debug Access Port)
 product CAVIUM THUNDERX_PCIERC		0xa02d	PCIERC (PCIe Root Complex)
+product CAVIUM THUNDERX_L2C_TAD		0xa02e	Level 2 cache tag and data
+product CAVIUM THUNDERX_L2C_CBC		0xa02f	L2C-CBC
+product CAVIUM THUNDERX_L2C_MCI		0xa030	L2C-MCI
 product CAVIUM THUNDERX_MIOS_FUS	0xa031	MIO-FUS (Fuse Access Controller)
 product CAVIUM THUNDERX_FUSE		0xa032	FUSF (Fuse Controller)
 product CAVIUM THUNDERX_RNGVF		0xa033	Random Number Generator virtual function
