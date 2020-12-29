@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.36 2020/12/29 16:53:36 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.37 2020/12/29 16:59:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.36 2020/12/29 16:53:36 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.37 2020/12/29 16:59:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -70,7 +70,6 @@ namlist_t	*namedmem = NULL;
 
 
 static	void	initstack_push(void);
-static	void	initstack_next(int);
 static	void	initstack_check_too_many(void);
 static	void	initstack_pop_brace(void);
 static	void	initstack_pop_nobrace(void);
@@ -424,49 +423,49 @@ initstack_check_too_many(void)
 }
 
 static void
-initstack_next(int brace)
+initstack_next_brace(void)
 {
 	char buf[64];
 
-	DPRINTF(("%s(%d)\n", __func__, brace));
-	if (!brace) {
-		if (initstk->i_type == NULL &&
-		    !tspec_is_scalar(initstk->i_subt->t_tspec)) {
-			/* {}-enclosed initializer required */
-			error(181);
-		}
-		/*
-		 * Make sure an entry with a scalar type is at the top
-		 * of the stack.
-		 */
-		if (!initerr)
-			initstack_check_too_many();
-		while (!initerr && (initstk->i_type == NULL ||
-				    !tspec_is_scalar(
-				        initstk->i_type->t_tspec))) {
-			if (!initerr)
-				initstack_push();
-		}
-	} else {
-		if (initstk->i_type != NULL &&
-		    tspec_is_scalar(initstk->i_type->t_tspec)) {
-			/* invalid initializer */
-			error(176, tyname(buf, sizeof(buf), initstk->i_type));
-			initerr = 1;
-		}
-		if (!initerr)
-			initstack_check_too_many();
+	DPRINTF(("%s\n", __func__));
+	if (initstk->i_type != NULL &&
+	    tspec_is_scalar(initstk->i_type->t_tspec)) {
+		/* invalid initializer */
+		error(176, tyname(buf, sizeof(buf), initstk->i_type));
+		initerr = 1;
+	}
+	if (!initerr)
+		initstack_check_too_many();
+	if (!initerr)
+		initstack_push();
+	if (!initerr) {
+		initstk->i_brace = 1;
+		DPRINTF(("%s(): %p %s brace=%d\n", __func__,
+		    namedmem,
+		    tyname(buf, sizeof(buf),
+			initstk->i_type ? initstk->i_type : initstk->i_subt),
+		    initstk->i_brace));
+	}
+}
+
+static void
+initstack_next_nobrace(void)
+{
+
+	DPRINTF(("%s\n", __func__));
+	if (initstk->i_type == NULL &&
+	    !tspec_is_scalar(initstk->i_subt->t_tspec)) {
+		/* {}-enclosed initializer required */
+		error(181);
+	}
+
+	/* Make sure an entry with a scalar type is at the top of the stack. */
+	if (!initerr)
+		initstack_check_too_many();
+	while (!initerr && (initstk->i_type == NULL ||
+			    !tspec_is_scalar(initstk->i_type->t_tspec))) {
 		if (!initerr)
 			initstack_push();
-		if (!initerr) {
-			initstk->i_brace = 1;
-			DPRINTF(("%s(): %p %s brace=%d\n", __func__,
-			    namedmem,
-			    tyname(buf, sizeof(buf),
-				initstk->i_type ? initstk->i_type
-						: initstk->i_subt),
-			    initstk->i_brace));
-		}
 	}
 }
 
@@ -491,7 +490,7 @@ init_lbrace(void)
 	 */
 	initstack_pop_nobrace();
 
-	initstack_next(1);
+	initstack_next_brace();
 }
 
 void
@@ -557,7 +556,7 @@ mkinit(tnode_t *tn)
 	if (initstack_string(tn))
 		return;
 
-	initstack_next(0);
+	initstack_next_nobrace();
 	if (initerr || tn == NULL)
 		return;
 
