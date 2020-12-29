@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.37 2020/12/29 10:24:22 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.38 2020/12/29 13:33:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -141,11 +141,11 @@ extern	type_t	*duptyp(const type_t *);
 extern	type_t	*tduptyp(const type_t *);
 extern	int	incompl(type_t *);
 extern	void	setcomplete(type_t *, int);
-extern	void	addscl(scl_t);
-extern	void	addtype(type_t *);
-extern	void	addqual(tqual_t);
+extern	void	add_storage_class(scl_t);
+extern	void	add_type(type_t *);
+extern	void	add_qualifier(tqual_t);
 extern	void	addpacked(void);
-extern	void	addused(void);
+extern	void	add_attr_used(void);
 extern	void	pushdecl(scl_t);
 extern	void	popdecl(void);
 extern	void	setasm(void);
@@ -165,8 +165,8 @@ extern	void	check_function_definition(sym_t *, int);
 extern	sym_t	*declarator_name(sym_t *);
 extern	sym_t	*old_style_function_name(sym_t *);
 extern	type_t	*mktag(sym_t *, tspec_t, int, int);
-extern	const	char *scltoa(scl_t);
-extern	type_t	*compltag(type_t *, sym_t *);
+extern	const	char *storage_class_name(scl_t);
+extern	type_t	*complete_tag(type_t *, sym_t *);
 extern	sym_t	*ename(sym_t *, int, int);
 extern	void	decl1ext(sym_t *, int);
 extern	void	copy_usage_info(sym_t *, sym_t *);
@@ -178,7 +178,7 @@ extern	sym_t	*decl1arg(sym_t *, int);
 extern	void	cluparg(void);
 extern	void	decl1loc(sym_t *, int);
 extern	sym_t	*abstract_name(void);
-extern	void	globclup(void);
+extern	void	global_clean_up(void);
 extern	sym_t	*declare_1_abstract(sym_t *);
 extern	void	check_size(sym_t *);
 extern	void	mark_as_set(sym_t *);
@@ -196,24 +196,24 @@ extern	type_t	*tincref(type_t *, tspec_t);
 extern	tnode_t	*getcnode(type_t *, val_t *);
 extern	tnode_t	*getnnode(sym_t *, int);
 extern	tnode_t	*getsnode(strg_t *);
-extern	sym_t	*strmemb(tnode_t *, op_t, sym_t *);
+extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build(op_t, tnode_t *, tnode_t *);
 extern	tnode_t	*cconv(tnode_t *);
 extern	int	typeok(op_t, int, tnode_t *, tnode_t *);
 extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
-extern	tnode_t	*bldszof(type_t *);
-extern	tnode_t	*bldoffsetof(type_t *, sym_t *);
-extern	tnode_t	*bldalof(type_t *);
+extern	tnode_t	*build_sizeof(type_t *);
+extern	tnode_t	*build_offsetof(type_t *, sym_t *);
+extern	tnode_t	*build_alignof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);
 extern	tnode_t	*funccall(tnode_t *, tnode_t *);
 extern	val_t	*constant(tnode_t *, int);
 extern	void	expr(tnode_t *, int, int, int);
-extern	void	chkmisc(tnode_t *, int, int, int, int, int, int);
+extern	void	check_expr_misc(tnode_t *, int, int, int, int, int, int);
 extern	int	conaddr(tnode_t *, sym_t **, ptrdiff_t *);
-extern	strg_t	*catstrg(strg_t *, strg_t *);
+extern	strg_t	*cat_strings(strg_t *, strg_t *);
 extern  int64_t tsize(type_t *);
 
 /*
@@ -224,14 +224,14 @@ extern	int	reached;
 extern	int	rchflg;
 extern	int	ftflg;
 extern	int	nargusg;
-extern	pos_t	aupos;
+extern	pos_t	argsused_pos;
 extern	int	nvararg;
 extern	pos_t	vapos;
 extern	int	prflstrg;
-extern	pos_t	prflpos;
+extern	pos_t	printflike_pos;
 extern	int	scflstrg;
-extern	pos_t	scflpos;
-extern	int	ccflg;
+extern	pos_t	scanflike_pos;
+extern	int	constcond_flag;
 extern	int	llibflg;
 extern	int	lwarn;
 extern	int	bitfieldtype_ok;
@@ -240,7 +240,7 @@ extern	int	quadflg;
 
 extern	void	pushctrl(int);
 extern	void	popctrl(int);
-extern	void	chkreach(void);
+extern	void	check_statement_reachable(void);
 extern	void	funcdef(sym_t *);
 extern	void	funcend(void);
 extern	void	label(int, sym_t *, tnode_t *);
@@ -259,7 +259,7 @@ extern	void	dogoto(sym_t *);
 extern	void	docont(void);
 extern	void	dobreak(void);
 extern	void	doreturn(tnode_t *);
-extern	void	glclup(int);
+extern	void	global_clean_up_decl(int);
 extern	void	argsused(int);
 extern	void	constcond(int);
 extern	void	fallthru(int);
@@ -281,10 +281,10 @@ extern	sym_t	*initsym;
 extern	int	startinit;
 
 extern	void	prepinit(void);
-extern	void	initrbr(void);
-extern	void	initlbr(void);
+extern	void	init_rbrace(void);
+extern	void	init_lbrace(void);
 extern	void	mkinit(tnode_t *);
-extern	void	memberpush(sbuf_t *);
+extern	void	push_member(sbuf_t *);
 
 /*
  * emit.c
@@ -299,4 +299,4 @@ extern	void	outusg(sym_t *);
 /*
  * print.c
  */
-extern	char	*prtnode(char *, size_t, const tnode_t *);
+extern	char	*print_tnode(char *, size_t, const tnode_t *);

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.113 2020/12/29 12:18:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.114 2020/12/29 13:33:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.113 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.114 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -351,11 +351,11 @@ translation_unit:
 ext_decl:
 	  asm_stmnt
 	| func_def {
-		glclup(0);
+		global_clean_up_decl(0);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	| data_def {
-		glclup(0);
+		global_clean_up_decl(0);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
@@ -400,10 +400,10 @@ data_def:
 	  }
 	| declspecs deftyp type_init_decls T_SEMI
 	| error T_SEMI {
-		globclup();
+		global_clean_up();
 	  }
 	| error T_RBRACE {
-		globclup();
+		global_clean_up();
 	  }
 	;
 
@@ -573,10 +573,10 @@ type_attribute_spec:
 	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
 	    constant T_COMMA constant T_RPARN
 	| T_AT_USED {
-		addused();
+		add_attr_used();
 	}
 	| T_AT_UNUSED {
-		addused();
+		add_attr_used();
 	}
 	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
@@ -624,34 +624,34 @@ deftyp:
 
 declspecs:
 	  clrtyp_typespec {
-		addtype($1);
+		add_type($1);
 	  }
 	| declmods typespec {
-		addtype($2);
+		add_type($2);
 	  }
 	| type_attribute declspecs
 	| declspecs declmod
 	| declspecs notype_typespec {
-		addtype($2);
+		add_type($2);
 	  }
 	;
 
 declmods:
 	  clrtyp T_QUAL {
-		addqual($2);
+		add_qualifier($2);
 	  }
 	| clrtyp T_SCLASS {
-		addscl($2);
+		add_storage_class($2);
 	  }
 	| declmods declmod
 	;
 
 declmod:
 	  T_QUAL {
-		addqual($1);
+		add_qualifier($1);
 	  }
 	| T_SCLASS {
-		addscl($1);
+		add_storage_class($1);
 	  }
 	| type_attribute_list
 	;
@@ -705,12 +705,12 @@ struct_spec:
 	| struct struct_tag {
 		dcs->d_tagtyp = mktag($2, $1, 1, 0);
 	  } struct_declaration {
-		$$ = compltag(dcs->d_tagtyp, $4);
+		$$ = complete_tag(dcs->d_tagtyp, $4);
 	  }
 	| struct {
 		dcs->d_tagtyp = mktag(NULL, $1, 1, 0);
 	  } struct_declaration {
-		$$ = compltag(dcs->d_tagtyp, $3);
+		$$ = complete_tag(dcs->d_tagtyp, $3);
 	  }
 	| struct error {
 		symtyp = FVFT;
@@ -820,27 +820,27 @@ member_declaration:
 
 noclass_declspecs:
 	  clrtyp_typespec {
-		addtype($1);
+		add_type($1);
 	  }
 	| type_attribute noclass_declspecs
 	| noclass_declmods typespec {
-		addtype($2);
+		add_type($2);
 	  }
 	| noclass_declspecs T_QUAL {
-		addqual($2);
+		add_qualifier($2);
 	  }
 	| noclass_declspecs notype_typespec {
-		addtype($2);
+		add_type($2);
 	  }
 	| noclass_declspecs type_attribute
 	;
 
 noclass_declmods:
 	  clrtyp T_QUAL {
-		addqual($2);
+		add_qualifier($2);
 	  }
 	| noclass_declmods T_QUAL {
-		addqual($2);
+		add_qualifier($2);
 	  }
 	;
 
@@ -901,12 +901,12 @@ enum_spec:
 	| enum enum_tag {
 		dcs->d_tagtyp = mktag($2, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = compltag(dcs->d_tagtyp, $4);
+		$$ = complete_tag(dcs->d_tagtyp, $4);
 	  }
 	| enum {
 		dcs->d_tagtyp = mktag(NULL, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = compltag(dcs->d_tagtyp, $3);
+		$$ = complete_tag(dcs->d_tagtyp, $3);
 	  }
 	| enum error {
 		symtyp = FVFT;
@@ -1361,7 +1361,7 @@ init_field:
 	| point identifier {
 		if (!Sflag)
 			warning(313);
-		memberpush($2);
+		push_member($2);
 	  }
 	;
 
@@ -1374,19 +1374,19 @@ init_by_name:
 	  init_field_list T_ASSIGN
 	| identifier T_COLON {
 		gnuism(315);
-		memberpush($1);
+		push_member($1);
 	  }
 	;
 
 init_lbrace:
 	  T_LBRACE {
-		initlbr();
+		init_lbrace();
 	  }
 	;
 
 init_rbrace:
 	  T_RBRACE {
-		initrbr();
+		init_rbrace();
 	  }
 	;
 
@@ -1908,12 +1908,18 @@ term:
 	| term point_or_arrow T_NAME {
 		if ($1 != NULL) {
 			sym_t	*msym;
-			/* XXX strmemb should be integrated in build() */
+			/*
+			 * XXX struct_or_union_member should be integrated
+			 * in build()
+			 */
 			if ($2 == ARROW) {
-				/* must to this before strmemb is called */
+				/*
+				 * must do this before struct_or_union_member
+				 * is called
+				 */
 				$1 = cconv($1);
 			}
-			msym = strmemb($1, $2, getsym($3));
+			msym = struct_or_union_member($1, $2, getsym($3));
 			$$ = build($2, $1, getnnode(msym, 0));
 		} else {
 			$$ = NULL;
@@ -1937,17 +1943,18 @@ term:
 	| T_BUILTIN_OFFSETOF T_LPARN type_name T_COMMA identifier T_RPARN
 						    %prec T_BUILTIN_OFFSETOF {
 		symtyp = FMOS;
-		$$ = bldoffsetof($3, getsym($5));
+		$$ = build_offsetof($3, getsym($5));
 	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
-		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)
-			chkmisc($2, 0, 0, 0, 0, 0, 1);
+		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
+		if ($$ != NULL)
+			check_expr_misc($2, 0, 0, 0, 0, 0, 1);
 	  }
 	| T_SIZEOF T_LPARN type_name T_RPARN		%prec T_SIZEOF {
-		$$ = bldszof($3);
+		$$ = build_sizeof($3);
 	  }
 	| T_ALIGNOF T_LPARN type_name T_RPARN		%prec T_ALIGNOF {
-		$$ = bldalof($3);
+		$$ = build_alignof($3);
 	  }
 	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
 		$$ = cast($4, $2);
@@ -1967,7 +1974,7 @@ string:
 		$$ = $1;
 	  }
 	| T_STRING string2 {
-		$$ = catstrg($1, $2);
+		$$ = cat_strings($1, $2);
 	  }
 	;
 
@@ -1980,7 +1987,7 @@ string2:
 		$$ = $1;
 	  }
 	| string2 T_STRING {
-		$$ = catstrg($1, $2);
+		$$ = cat_strings($1, $2);
 	  }
 	;
 

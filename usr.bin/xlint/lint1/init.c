@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.33 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.34 2020/12/29 13:33:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.33 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.34 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -75,7 +75,7 @@ static	void	pushinit(void);
 static	void	testinit(void);
 static	void	nextinit(int);
 static	int	strginit(tnode_t *);
-static	void	memberpop(void);
+static	void	pop_member(void);
 
 #ifndef DEBUG
 #define DPRINTF(a)
@@ -84,7 +84,7 @@ static	void	memberpop(void);
 #endif
 
 void
-memberpush(sb)
+push_member(sb)
 	sbuf_t *sb;
 {
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t));
@@ -102,7 +102,7 @@ memberpush(sb)
 }
 
 static void
-memberpop(void)
+pop_member(void)
 {
 	DPRINTF(("%s: %s %p\n", __func__, namedmem->n_name, namedmem));
 	if (namedmem->n_next == namedmem) {
@@ -191,13 +191,13 @@ popi2(void)
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
 				istk->i_subt = m->s_type;
 				istk->i_cnt++;
-				memberpop();
+				pop_member();
 				return;
 			}
 		}
 		error(101, namedmem->n_name);
 		DPRINTF(("%s(): namedmem %s\n", __func__, namedmem->n_name));
-		memberpop();
+		pop_member();
 		istk->i_namedmem = 1;
 		return;
 	}
@@ -361,7 +361,7 @@ again:
 			istk->i_namedmem = 1;
 			DPRINTF(("%s(): namedmem %s\n", __func__,
 			    namedmem->n_name));
-			memberpop();
+			pop_member();
 			cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 		}
 		istk->i_brace = 1;
@@ -470,7 +470,7 @@ nextinit(int brace)
 }
 
 void
-initlbr(void)
+init_lbrace(void)
 {
 	DPRINTF(("%s\n", __func__));
 
@@ -494,7 +494,7 @@ initlbr(void)
 }
 
 void
-initrbr(void)
+init_rbrace(void)
 {
 	DPRINTF(("%s\n", __func__));
 
@@ -517,8 +517,9 @@ mkinit(tnode_t *tn)
 	char	buf[64], sbuf[64];
 #endif
 
-	DPRINTF(("%s(%s %s)\n", __func__, tyname(buf, sizeof(buf), tn->tn_type),
-	    prtnode(sbuf, sizeof(sbuf), tn)));
+	DPRINTF(("%s(%s %s)\n", __func__,
+	    tyname(buf, sizeof(buf), tn->tn_type),
+	    print_tnode(sbuf, sizeof(sbuf), tn)));
 	if (initerr || tn == NULL)
 		return;
 
