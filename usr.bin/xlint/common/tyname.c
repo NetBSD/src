@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.13 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: tyname.c,v 1.14 2020/12/29 11:35:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.13 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.14 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -235,5 +235,5 @@ tyname(char *buf, size_t bufsiz, const type_t *tp)
 	default:
 		LERROR("tyname(%d)", t);
 	}
-	return (buf);
+	return buf;
 }

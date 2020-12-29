@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.29 2020/12/28 19:07:43 rillig Exp $ */
+/* $NetBSD: read.c,v 1.30 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.29 2020/12/28 19:07:43 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.30 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -566,7 +566,7 @@ inptype(const char *cp, const char **epp)
 	h = thash(cp, tlen);
 	if ((tidx = findtype(cp, tlen, h)) != 0) {
 		*epp = ep;
-		return (tidx);
+		return tidx;
 	}
 
 	/* No, we must create a new type. */
@@ -739,7 +739,7 @@ inptype(const char *cp, const char **epp)
 	}
 
 	*epp = cp;
-	return (tidx);
+	return tidx;
 }
 
 /*
@@ -975,7 +975,7 @@ gettlen(const char *cp, const char **epp)
 	}
 
 	*epp = cp;
-	return (cp - cp1);
+	return cp - cp1;
 }
 
 /*
@@ -990,10 +990,10 @@ findtype(const char *cp, size_t len, int h)
 		if (strncmp(thte->th_name, cp, len) != 0)
 			continue;
 		if (thte->th_name[len] == '\0')
-			return (thte->th_idx);
+			return thte->th_idx;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1029,7 +1029,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 	thte->th_nxt = thtab[h];
 	thtab[h] = thte;
 
-	return ((u_short)tidx++);
+	return (u_short)tidx++;
 }
 
 /*
@@ -1045,7 +1045,7 @@ thash(const char *s, size_t len)
 		v = (v << sizeof (v)) + (u_char)*s++;
 		v ^= v >> (sizeof (v) * CHAR_BIT - sizeof (v));
 	}
-	return (v % THSHSIZ2);
+	return v % THSHSIZ2;
 }
 
 /*
@@ -1128,7 +1128,7 @@ inpqstrg(const char *src, const char **epp)
 	*dst = '\0';
 
 	*epp = src;
-	return (strg);
+	return strg;
 }
 
 /*
@@ -1157,7 +1157,7 @@ inpname(const char *cp, const char **epp)
 	buf[i] = '\0';
 
 	*epp = cp;
-	return (buf);
+	return buf;
 }
 
 /*
@@ -1186,7 +1186,7 @@ getfnidx(const char *fn)
 
 	fnames[i] = xstrdup(fn);
 	flines[i] = 0;
-	return (i);
+	return i;
 }
 
 /*
