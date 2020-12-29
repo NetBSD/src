@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_map.c,v 1.41 2020/12/28 12:38:44 skrll Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.42 2020/12/29 15:39:59 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.41 2020/12/28 12:38:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.42 2020/12/29 15:39:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,252 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	return 0;
 }
 
+static const char *
+bar_type_string(pcireg_t type)
+{
+	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
+		return "IO";
+
+	switch (PCI_MAPREG_MEM_TYPE(type)) {
+	case PCI_MAPREG_MEM_TYPE_32BIT:
+		return "MEM32";
+	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+		return "MEM32-1M";
+	case PCI_MAPREG_MEM_TYPE_64BIT:
+		return "MEM64";
+	}
+	return "<UNKNOWN>";
+}
+
+enum {
+	EA_ptr_dw0		= 0,
+	EA_ptr_base_lower	= 1,
+	EA_ptr_base_upper	= 2,
+	EA_ptr_maxoffset_lower	= 3,
+	EA_ptr_maxoffset_upper	= 4,
+
+	EA_PTR_COUNT		= 5
+};
+
+struct pci_ea_entry {
+	/* entry field pointers */
+	int		ea_ptrs[EA_PTR_COUNT];
+
+	/* Raw register values. */
+	pcireg_t	dw0;
+	pcireg_t	base_lower;
+	pcireg_t	base_upper;
+	pcireg_t	maxoffset_lower;
+	pcireg_t	maxoffset_upper;
+
+	/* Interesting tidbits derived from them. */
+	uint64_t	base;
+	uint64_t	maxoffset;
+	unsigned int	bei;
+	unsigned int	props[2];
+	bool		base_is_64;
+	bool		maxoffset_is_64;
+	bool		enabled;
+	bool		writable;
+};
+
+static int
+pci_ea_lookup(pci_chipset_tag_t pc, pcitag_t tag, int ea_cap_ptr,
+    int reg, struct pci_ea_entry *entryp)
+{
+	struct pci_ea_entry entry = {
+		.ea_ptrs[EA_ptr_dw0] = ea_cap_ptr + 4,
+	};
+	unsigned int i, num_entries;
+	unsigned int wanted_bei;
+	pcireg_t val;
+
+	if (reg >= PCI_BAR0 && reg <= PCI_BAR5)
+		wanted_bei = PCI_EA_BEI_BAR0 + ((reg - PCI_BAR0) / 4);
+	else if (reg == PCI_MAPREG_ROM)
+		wanted_bei = PCI_EA_BEI_EXPROM;
+	else {
+		/* Invalid BAR. */
+		return 1;
+	}
+
+	val = pci_conf_read(pc, tag, ea_cap_ptr + PCI_EA_CAP1);
+	num_entries = __SHIFTOUT(val, PCI_EA_CAP1_NUMENTRIES);
+
+	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(val) == PCI_HDRTYPE_PPB) {
+		/* Need to skip over PCI_EA_CAP2 on PPBs. */
+		entry.ea_ptrs[EA_ptr_dw0] += 4;
+	}
+
+	for (i = 0; i < num_entries; i++) {
+		val = pci_conf_read(pc, tag, entry.ea_ptrs[EA_ptr_dw0]);
+		unsigned int entry_size = __SHIFTOUT(val, PCI_EA_ES);
+
+		entry.bei = __SHIFTOUT(val, PCI_EA_BEI);
+		entry.props[0] = __SHIFTOUT(val, PCI_EA_PP);
+		entry.props[1] = __SHIFTOUT(val, PCI_EA_SP);
+		entry.writable = (val & PCI_EA_W) ? true : false;
+		entry.enabled = (val & PCI_EA_E) ? true : false;
+
+		if (entry.bei != wanted_bei || entry_size == 0) {
+			entry.ea_ptrs[EA_ptr_dw0] += 4 * (entry_size + 1);
+			continue;
+		}
+
+		entry.ea_ptrs[EA_ptr_base_lower] =
+		    entry.ea_ptrs[EA_ptr_dw0] + 4;
+		entry.ea_ptrs[EA_ptr_maxoffset_lower] =
+		    entry.ea_ptrs[EA_ptr_dw0] + 8;
+
+		/* Base */
+		entry.base_lower = pci_conf_read(pc, tag,
+		    entry.ea_ptrs[EA_ptr_base_lower]);
+		entry.base_is_64 =
+		    (entry.base_lower & PCI_EA_BASEMAXOFFSET_64BIT)
+		    ? true : false;
+		if (entry.base_is_64) {
+			entry.ea_ptrs[EA_ptr_base_upper] =
+			    entry.ea_ptrs[EA_ptr_dw0] + 12;
+			entry.base_upper = pci_conf_read(pc, tag,
+			    entry.ea_ptrs[EA_ptr_base_upper]);
+		} else {
+			entry.ea_ptrs[EA_ptr_base_upper] = 0;
+			entry.base_upper = 0;
+		}
+
+		entry.base = (entry.base_lower & PCI_EA_LOWMASK) |
+		    ((uint64_t)entry.base_upper << 32);
+
+		/* MaxOffset */
+		entry.maxoffset_lower = pci_conf_read(pc, tag,
+		    entry.ea_ptrs[EA_ptr_maxoffset_lower]);
+		entry.maxoffset_is_64 =
+		    (entry.maxoffset_lower & PCI_EA_BASEMAXOFFSET_64BIT)
+		    ? true : false;
+		if (entry.maxoffset_is_64) {
+			entry.ea_ptrs[EA_ptr_maxoffset_upper] =
+			    entry.ea_ptrs[EA_ptr_dw0] +
+			    (entry.base_is_64 ? 16 : 12);
+			entry.maxoffset_upper = pci_conf_read(pc, tag,
+			    entry.ea_ptrs[EA_ptr_maxoffset_upper]);
+		} else {
+			entry.ea_ptrs[EA_ptr_maxoffset_upper] = 0;
+			entry.maxoffset_upper = 0;
+		}
+
+		entry.maxoffset = (entry.maxoffset_lower & PCI_EA_LOWMASK) |
+		    ((uint64_t)entry.maxoffset_upper << 32);
+
+		if (entryp)
+			*entryp = entry;
+		return 0;
+	}
+	return 1;
+}
+
+static int
+pci_ea_find(pci_chipset_tag_t pc, pcitag_t tag, int ea_cap_ptr,
+    int reg, pcireg_t type, bus_addr_t *basep, bus_size_t *sizep, int *flagsp,
+    struct pci_ea_entry *entryp)
+{
+
+	struct pci_ea_entry entry;
+	int rv = pci_ea_lookup(pc, tag, ea_cap_ptr, reg, &entry);
+	if (rv)
+		return rv;
+
+	pcireg_t wanted_type;
+	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
+		wanted_type = PCI_MAPREG_TYPE_IO;
+	else {
+		/*
+		 * This covers ROM as well.  We allow any user-specified
+		 * memory type to match an EA memory region with no regard
+		 * for 32 vs. 64.
+		 *
+		 * XXX Should it?
+		 */
+		wanted_type = PCI_MAPREG_TYPE_MEM;
+	}
+
+	/*
+	 * MaxOffset is the last offset where you can issue a
+	 * 32-bit read in the region.  Therefore, the size of
+	 * the region is MaxOffset + 4.
+	 */
+	uint64_t region_size = entry.maxoffset + 4;
+
+	unsigned int which_prop;
+	for (which_prop = 0; which_prop < 2; which_prop++) {
+		int mapflags = 0;
+
+		switch (entry.props[which_prop]) {
+		case PCI_EA_PROP_MEM_PREF:
+			mapflags |= BUS_SPACE_MAP_PREFETCHABLE;
+			/* FALLTHROUGH */
+		case PCI_EA_PROP_MEM_NONPREF:
+			if (PCI_MAPREG_TYPE(wanted_type) != PCI_MAPREG_TYPE_MEM)
+				goto unexpected_type;
+			break;
+
+		case PCI_EA_PROP_IO:
+			if (PCI_MAPREG_TYPE(wanted_type) != PCI_MAPREG_TYPE_IO)
+				goto unexpected_type;
+			break;
+
+		case PCI_EA_PROP_MEM_UNAVAIL:
+		case PCI_EA_PROP_IO_UNAVAIL:
+		case PCI_EA_PROP_UNAVAIL:
+			return 1;
+
+		/* XXX Don't support these yet. */
+		case PCI_EA_PROP_VF_MEM_PREF:
+		case PCI_EA_PROP_VF_MEM_NONPREF:
+		case PCI_EA_PROP_BB_MEM_PREF:
+		case PCI_EA_PROP_BB_MEM_NONPREF:
+		case PCI_EA_PROP_BB_IO:
+		default:
+			printf("%s: bei %u props[%u]=0x%x\n",
+			    __func__, entry.bei, which_prop,
+			    entry.props[which_prop]);
+			    continue;
+			continue;
+		}
+
+		if ((sizeof(uint64_t) > sizeof(bus_addr_t) ||
+		     PCI_MAPREG_TYPE(wanted_type) == PCI_MAPREG_TYPE_IO) &&
+		    (entry.base + region_size) > 0x100000000ULL) {
+			goto inaccessible_64bit_region;
+		}
+
+		*basep  = (bus_addr_t)entry.base;
+		*sizep  = (bus_size_t)region_size;
+		*flagsp = mapflags;
+		if (entryp)
+			*entryp = entry;
+		return 0;
+	}
+
+	/* BAR not found. */
+	return 1;
+
+ unexpected_type:
+	printf("%s: unexpected type; wanted %s, got 0x%02x\n",
+	    __func__, bar_type_string(wanted_type), entry.props[which_prop]);
+	return 1;
+
+ inaccessible_64bit_region:
+	if (PCI_MAPREG_TYPE(wanted_type) == PCI_MAPREG_TYPE_IO) {
+		printf("%s: 64-bit IO regions are unsupported\n",
+		    __func__);
+		return 1;
+	}
+	printf("%s: 64-bit memory region inaccessible on 32-bit platform\n",
+	    __func__);
+	return 1;
+}
+
 #define _PCI_MAPREG_TYPEBITS(reg) \
 	(PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO ? \
 	reg & PCI_MAPREG_TYPE_MASK : \
@@ -295,6 +541,11 @@ int
 pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
+	int ea_cap_ptr;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_EA, &ea_cap_ptr, NULL))
+		return pci_ea_find(pc, tag, ea_cap_ptr, reg, type,
+		    basep, sizep, flagsp, NULL);
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
 		return pci_io_find(pc, tag, reg, type, basep, sizep,
