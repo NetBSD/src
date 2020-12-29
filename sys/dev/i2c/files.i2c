@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.113 2020/12/28 20:29:57 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.114 2020/12/29 01:47:51 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -369,6 +369,11 @@ file	dev/i2c/ssdfb_i2c.c			ssdfb_iic
 device	anxedp: edid, videomode, drmkms, drmkms_i2c
 attach	anxedp at iic
 file	dev/i2c/anxedp.c			anxedp
+
+# NXP PCA954x / PCA984x I2C switch / mux controllers
+device	pcaiicmux: i2cbus, i2cmux
+attach	pcaiicmux at iic
+file	dev/i2c/pcai2cmux.c			pcaiicmux
 
 # NXP PCA9685 16-channel, 12-bit PWM Fm+ LED controller
 device	pcapwm: pwm
