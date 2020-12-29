@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.224 2020/06/15 18:44:10 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.225 2020/12/29 22:13:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.224 2020/06/15 18:44:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.225 2020/12/29 22:13:40 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1047,6 +1047,28 @@ lookup_crossmount(struct namei_state *state,
 }
 
 /*
+ * Determine the desired locking mode for the directory of a lookup.
+ */
+static int
+lookup_lktype(struct vnode *searchdir, struct componentname *cnp)
+{
+
+	/*
+	 * If the file system supports VOP_LOOKUP() with a shared lock, and
+	 * we are not making any modifications (nameiop LOOKUP) or this is
+	 * not the last component then get a shared lock.  Where we can't do
+	 * fast-forwarded lookups (for example with layered file systems)
+	 * then this is the fallback for reducing lock contention.
+	 */
+	if ((searchdir->v_mount->mnt_iflag & IMNT_SHRLOOKUP) != 0 &&
+	    (cnp->cn_nameiop == LOOKUP || (cnp->cn_flags & ISLASTCN) == 0)) {
+		return LK_SHARED;
+	} else {
+		return LK_EXCLUSIVE;
+	}
+}
+
+/*
  * Call VOP_LOOKUP for a single lookup; return a new search directory
  * (used when crossing mountpoints up or searching union mounts down) and
  * the found object, which for create operations may be NULL on success.
@@ -1100,6 +1122,11 @@ lookup_once(struct namei_state *state,
 				foundobj = searchdir;
 				vref(foundobj);
 				*foundobj_ret = foundobj;
+				if (cnp->cn_flags & LOCKPARENT) {
+					lktype = lookup_lktype(searchdir, cnp);
+					vn_lock(searchdir, lktype | LK_RETRY);
+					searchdir_locked = true;
+				}
 				error = 0;
 				goto done;
 			}
@@ -1137,19 +1164,7 @@ lookup_once(struct namei_state *state,
 		}
 	}
 
-	/*
-	 * If the file system supports VOP_LOOKUP() with a shared lock, and
-	 * we are not making any modifications (nameiop LOOKUP) or this is
-	 * not the last component then get a shared lock.  Where we can't do
-	 * fast-forwarded lookups (for example with layered file systems)
-	 * then this is the fallback for reducing lock contention.
-	 */
-	if ((searchdir->v_mount->mnt_iflag & IMNT_SHRLOOKUP) != 0 &&
-	    (cnp->cn_nameiop == LOOKUP || (cnp->cn_flags & ISLASTCN) == 0)) {
-	    	lktype = LK_SHARED;
-	} else {
-		lktype = LK_EXCLUSIVE;
-	}
+	lktype = lookup_lktype(searchdir, cnp);
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
