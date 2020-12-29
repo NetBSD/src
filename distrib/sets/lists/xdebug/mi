@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2020/10/28 08:10:09 nia Exp $
+# $NetBSD: mi,v 1.40 2020/12/29 12:43:36 martin Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -144,7 +144,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/oclock.debug		xdebug-oclock-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/proxymngr.debug	xdebug-proxymngr-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/resize.debug		xdebug-xterm-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/bin/resize.debug		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/revpath.debug		xdebug-revpath-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/sessreg.debug		xdebug-sessreg-debug	xorg,debug
