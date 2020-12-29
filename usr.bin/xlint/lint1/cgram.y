@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.110 2020/12/28 21:24:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.111 2020/12/29 10:24:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.110 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.111 2020/12/29 10:24:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -846,23 +846,23 @@ noclass_declmods:
 
 notype_member_decls:
 	  notype_member_decl {
-		$$ = decl1str($1);
+		$$ = declarator_1_struct_union($1);
 	  }
 	| notype_member_decls {
 		symtyp = FMOS;
 	  } T_COMMA type_member_decl {
-		$$ = lnklst($1, decl1str($4));
+		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
 	;
 
 type_member_decls:
 	  type_member_decl {
-		$$ = decl1str($1);
+		$$ = declarator_1_struct_union($1);
 	  }
 	| type_member_decls {
 		symtyp = FMOS;
 	  } T_COMMA type_member_decl {
-		$$ = lnklst($1, decl1str($4));
+		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
 	;
 
@@ -997,24 +997,24 @@ type_init_decls:
 notype_init_decl:
 	  notype_decl opt_asm_or_symbolrename {
 		idecl($1, 0, $2);
-		chksz($1);
+		check_size($1);
 	  }
 	| notype_decl opt_asm_or_symbolrename {
 		idecl($1, 1, $2);
 	  } T_ASSIGN initializer {
-		chksz($1);
+		check_size($1);
 	  }
 	;
 
 type_init_decl:
 	  type_decl opt_asm_or_symbolrename {
 		idecl($1, 0, $2);
-		chksz($1);
+		check_size($1);
 	  }
 	| type_decl opt_asm_or_symbolrename {
 		idecl($1, 1, $2);
 	  } T_ASSIGN initializer {
-		chksz($1);
+		check_size($1);
 	  }
 	;
 
@@ -1023,13 +1023,13 @@ notype_decl:
 		$$ = $1;
 	  }
 	| pointer notype_direct_decl {
-		$$ = addptr($2, $1);
+		$$ = add_pointer($2, $1);
 	  }
 	;
 
 notype_direct_decl:
 	  T_NAME {
-		$$ = dname(getsym($1));
+		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
@@ -1038,13 +1038,13 @@ notype_direct_decl:
 		$$ = $2;
 	}
 	| notype_direct_decl T_LBRACK T_RBRACK {
-		$$ = addarray($1, 0, 0);
+		$$ = add_array($1, 0, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename($1, $3), $2);
+		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1056,13 +1056,13 @@ type_decl:
 		$$ = $1;
 	  }
 	| pointer type_direct_decl {
-		$$ = addptr($2, $1);
+		$$ = add_pointer($2, $1);
 	  }
 	;
 
 type_direct_decl:
 	  identifier {
-		$$ = dname(getsym($1));
+		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
@@ -1071,13 +1071,13 @@ type_direct_decl:
 		$$ = $2;
 	}
 	| type_direct_decl T_LBRACK T_RBRACK {
-		$$ = addarray($1, 0, 0);
+		$$ = add_array($1, 0, 0);
 	  }
 	| type_direct_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename($1, $3), $2);
+		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1096,28 +1096,28 @@ param_decl:
 		$$ = $1;
 	  }
 	| pointer direct_param_decl {
-		$$ = addptr($2, $1);
+		$$ = add_pointer($2, $1);
 	  }
 	;
 
 direct_param_decl:
 	  identifier type_attribute_list {
-		$$ = dname(getsym($1));
+		$$ = declarator_name(getsym($1));
 	  }
 	| identifier {
-		$$ = dname(getsym($1));
+		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPARN notype_param_decl T_RPARN {
 		$$ = $2;
 	  }
 	| direct_param_decl T_LBRACK T_RBRACK {
-		$$ = addarray($1, 0, 0);
+		$$ = add_array($1, 0, 0);
 	  }
 	| direct_param_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename($1, $3), $2);
+		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1128,25 +1128,25 @@ notype_param_decl:
 		$$ = $1;
 	  }
 	| pointer direct_notype_param_decl {
-		$$ = addptr($2, $1);
+		$$ = add_pointer($2, $1);
 	  }
 	;
 
 direct_notype_param_decl:
 	  identifier {
-		$$ = dname(getsym($1));
+		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPARN notype_param_decl T_RPARN {
 		$$ = $2;
 	  }
 	| direct_notype_param_decl T_LBRACK T_RBRACK {
-		$$ = addarray($1, 0, 0);
+		$$ = add_array($1, 0, 0);
 	  }
 	| direct_notype_param_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename($1, $3), $2);
+		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1157,13 +1157,14 @@ pointer:
 		$$ = $1;
 	  }
 	| asterisk type_qualifier_list {
-		$$ = mergepq($1, $2);
+		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
 	| asterisk pointer {
-		$$ = mergepq($1, $2);
+		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
 	| asterisk type_qualifier_list pointer {
-		$$ = mergepq(mergepq($1, $2), $3);
+		$$ = merge_pointers_and_qualifiers(
+		    merge_pointers_and_qualifiers($1, $2), $3);
 	  }
 	;
 
@@ -1179,7 +1180,7 @@ type_qualifier_list:
 		$$ = $1;
 	  }
 	| type_qualifier_list type_qualifier {
-		$$ = mergepq($1, $2);
+		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
 	;
 
@@ -1212,10 +1213,10 @@ id_list_lparn:
 
 identifier_list:
 	  T_NAME {
-		$$ = iname(getsym($1));
+		$$ = old_style_function_name(getsym($1));
 	  }
 	| identifier_list T_COMMA T_NAME {
-		$$ = lnklst($1, iname(getsym($3)));
+		$$ = lnklst($1, old_style_function_name(getsym($3)));
 	  }
 	| identifier_list error {
 		$$ = $1;
@@ -1274,10 +1275,10 @@ parameter_type_list:
 
 parameter_declaration:
 	  declmods deftyp {
-		$$ = decl1arg(aname(), 0);
+		$$ = decl1arg(abstract_name(), 0);
 	  }
 	| declspecs deftyp {
-		$$ = decl1arg(aname(), 0);
+		$$ = decl1arg(abstract_name(), 0);
 	  }
 	| declmods deftyp notype_param_decl {
 		$$ = decl1arg($3, 0);
@@ -1400,28 +1401,28 @@ type_name:
 
 abstract_declaration:
 	  noclass_declmods deftyp {
-		$$ = decl1abs(aname());
+		$$ = declare_1_abstract(abstract_name());
 	  }
 	| noclass_declspecs deftyp {
-		$$ = decl1abs(aname());
+		$$ = declare_1_abstract(abstract_name());
 	  }
 	| noclass_declmods deftyp abs_decl {
-		$$ = decl1abs($3);
+		$$ = declare_1_abstract($3);
 	  }
 	| noclass_declspecs deftyp abs_decl {
-		$$ = decl1abs($3);
+		$$ = declare_1_abstract($3);
 	  }
 	;
 
 abs_decl:
 	  pointer {
-		$$ = addptr(aname(), $1);
+		$$ = add_pointer(abstract_name(), $1);
 	  }
 	| direct_abs_decl {
 		$$ = $1;
 	  }
 	| pointer direct_abs_decl {
-		$$ = addptr($2, $1);
+		$$ = add_pointer($2, $1);
 	  }
 	| T_TYPEOF term {
 		$$ = mktempsym($2->tn_type);
@@ -1433,27 +1434,27 @@ direct_abs_decl:
 		$$ = $2;
 	  }
 	| T_LBRACK T_RBRACK {
-		$$ = addarray(aname(), 0, 0);
+		$$ = add_array(abstract_name(), 0, 0);
 	  }
 	| T_LBRACK constant T_RBRACK {
-		$$ = addarray(aname(), 1, toicon($2, 0));
+		$$ = add_array(abstract_name(), 1, toicon($2, 0));
 	  }
 	| type_attribute direct_abs_decl {
 		$$ = $2;
 	}
 	| direct_abs_decl T_LBRACK T_RBRACK {
-		$$ = addarray($1, 0, 0);
+		$$ = add_array($1, 0, 0);
 	  }
 	| direct_abs_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3, 0));
+		$$ = add_array($1, 1, toicon($3, 0));
 	  }
 	| abs_decl_param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename(aname(), $2), $1);
+		$$ = add_function(symbolrename(abstract_name(), $2), $1);
 		popdecl();
 		blklev--;
 	  }
 	| direct_abs_decl abs_decl_param_list opt_asm_or_symbolrename {
-		$$ = addfunc(symbolrename($1, $3), $2);
+		$$ = add_function(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
