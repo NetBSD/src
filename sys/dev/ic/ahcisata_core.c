@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.93 2020/12/29 07:56:22 skrll Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.94 2020/12/29 08:00:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.93 2020/12/29 07:56:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.94 2020/12/29 08:00:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -702,7 +702,6 @@ ahci_intr_port_common(struct ata_channel *chp)
 
 			AHCIDEBUG_PRINT(("%s port %d: transfer aborted 0x%x\n",
 			    AHCINAME(sc), chp->ch_channel, tfd), DEBUG_INTR);
-
 		}
 	} else {
 		tfd = 0;
@@ -1170,7 +1169,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
-	      cmd_tbl), DEBUG_XFERS);
+	    cmd_tbl), DEBUG_XFERS);
 
 	satafis_rhd_construct_cmd(ata_c, cmd_tbl->cmdt_cfis);
 	cmd_tbl->cmdt_cfis[rhd_c] |= xfer->c_drive;
@@ -1763,7 +1762,7 @@ ahci_dma_setup(struct ata_channel *chp, int slot, void *data,
 	bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
 	    achp->ahcic_datad[slot]->dm_mapsize,
 	    (op == BUS_DMA_READ) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	for (seg = 0; seg <  achp->ahcic_datad[slot]->dm_nsegs; seg++) {
+	for (seg = 0; seg < achp->ahcic_datad[slot]->dm_nsegs; seg++) {
 		cmd_tbl->cmdt_prd[seg].prd_dba = htole64(
 		     achp->ahcic_datad[slot]->dm_segs[seg].ds_addr);
 		cmd_tbl->cmdt_prd[seg].prd_dbc = htole32(
