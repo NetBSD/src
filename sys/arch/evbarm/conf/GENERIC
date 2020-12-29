@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.89 2020/12/23 15:56:43 skrll Exp $
+#	$NetBSD: GENERIC,v 1.90 2020/12/29 01:48:22 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -353,6 +353,7 @@ axppmic* 	at iic?			# X-Powers AXP Power Management IC
 axpreg* 	at axppmic?
 em3027rtc* 	at iic?
 max77620pmic* 	at iic?
+pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc* 	at iic?			# PCF8563 RTC
 seeprom* 	at iic?			# AT24Cxx Serial EEPROM
 sy8106a* 	at iic?			# Silergy SY81061 regulator
