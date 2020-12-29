@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.34 2020/12/29 12:18:42 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.35 2020/12/29 21:32:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -266,7 +266,7 @@ typedef	struct sym {
 #define	s_args	u._s_args
 
 /*
- * Used to keep some informations about symbols before they are entered
+ * Used to keep some information about symbols before they are entered
  * into the symbol table.
  */
 typedef	struct sbuf {
@@ -388,7 +388,7 @@ typedef	struct clst {
 } clst_t;
 
 /*
- * Used to keep informations about nested control statements.
+ * Used to keep information about nested control statements.
  */
 typedef struct cstk {
 	int	c_env;			/* type of statement (T_IF, ...) */

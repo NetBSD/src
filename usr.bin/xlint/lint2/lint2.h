@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.8 2017/12/26 17:02:19 christos Exp $ */
+/* $NetBSD: lint2.h,v 1.9 2020/12/29 21:32:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -146,7 +146,7 @@ typedef	struct sym {
 #define s_nxt		s_s.s_nxt
 
 /*
- * Used to store informations about function calls.
+ * Used to store information about function calls.
  */
 typedef	struct fcall {
 	pos_t	f_pos;		/* position of call */

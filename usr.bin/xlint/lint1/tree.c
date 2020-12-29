@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.98 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.99 2020/12/29 21:32:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.98 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.99 2020/12/29 21:32:46 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -683,7 +683,7 @@ cconv(tnode_t *tn)
 
 /*
  * Perform most type checks. First the types are checked using
- * informations from modtab[]. After that it is done by hand for
+ * the information from modtab[]. After that it is done by hand for
  * more complicated operators and type combinations.
  *
  * If the types are ok, typeok() returns 1, otherwise 0.

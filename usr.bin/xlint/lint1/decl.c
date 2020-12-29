@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.78 2020/12/29 17:29:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.79 2020/12/29 21:32:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.78 2020/12/29 17:29:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.79 2020/12/29 21:32:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1259,10 +1259,10 @@ bitfield(sym_t *dsym, int len)
 }
 
 /*
- * Collect informations about a sequence of asterisks and qualifiers
- * in a list of type pqinf_t.
- * Qualifiers refer always to the left asterisk. The rightmost asterisk
- * will be at the top of the list.
+ * Collect information about a sequence of asterisks and qualifiers in a
+ * list of type pqinf_t.
+ * Qualifiers always refer to the left asterisk.
+ * The rightmost asterisk will be at the top of the list.
  */
 pqinf_t *
 merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
@@ -1969,8 +1969,8 @@ decl1ext(sym_t *dsym, int initflg)
 			}
 
 			/*
-			 * Copy informations about usage of the name into
-			 * the new symbol.
+			 * Copy usage information of the name into the new
+			 * symbol.
 			 */
 			copy_usage_info(dsym, rdsym);
 
