@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.42 2020/12/29 20:56:28 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.43 2020/12/29 23:12:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.42 2020/12/29 20:56:28 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.43 2020/12/29 23:12:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -141,7 +141,7 @@ initstack_init(void)
 
 	istk = initstk = xcalloc(1, sizeof (istk_t));
 	istk->i_subt = initsym->s_type;
-	istk->i_cnt = 1;
+	istk->i_remaining = 1;
 }
 
 static void
@@ -156,7 +156,7 @@ initstack_pop_item(void)
 	istk = initstk;
 	DPRINTF(("%s: pop type=%s, brace=%d remaining=%d named=%d\n", __func__,
 	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
-	    istk->i_brace, istk->i_cnt, istk->i_namedmem));
+	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
 	initstk = istk->i_nxt;
 	free(istk);
@@ -166,19 +166,19 @@ initstack_pop_item(void)
 
 	DPRINTF(("%s: top type=%s, brace=%d remaining=%d named=%d\n", __func__,
 	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
-	    istk->i_brace, istk->i_cnt, istk->i_namedmem));
+	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
-	istk->i_cnt--;
-	if (istk->i_cnt < 0)
+	istk->i_remaining--;
+	if (istk->i_remaining < 0)
 		LERROR("initstack_pop_item()");
 
 	DPRINTF(("%s: top remaining=%d rhs.name=%s\n", __func__,
-	    istk->i_cnt, namedmem ? namedmem->n_name : "*null*"));
+	    istk->i_remaining, namedmem ? namedmem->n_name : "*null*"));
 
-	if (istk->i_cnt >= 0 && namedmem != NULL) {
+	if (istk->i_remaining >= 0 && namedmem != NULL) {
 
 		DPRINTF(("%s: named remaining=%d type=%s, rhs.name=%s\n",
-		    __func__, istk->i_cnt,
+		    __func__, istk->i_remaining,
 		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
 
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
@@ -188,7 +188,7 @@ initstack_pop_item(void)
 				continue;
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
 				istk->i_subt = m->s_type;
-				istk->i_cnt++;
+				istk->i_remaining++;
 				pop_member();
 				return;
 			}
@@ -203,7 +203,7 @@ initstack_pop_item(void)
 	 * If the removed element was a structure member, we must go
 	 * to the next structure member.
 	 */
-	if (istk->i_cnt > 0 && istk->i_type->t_tspec == STRUCT &&
+	if (istk->i_remaining > 0 && istk->i_type->t_tspec == STRUCT &&
 	    !istk->i_namedmem) {
 		do {
 			m = istk->i_mem = istk->i_mem->s_nxt;
@@ -242,7 +242,8 @@ initstack_pop_nobrace(void)
 {
 
 	DPRINTF(("%s\n", __func__));
-	while (!initstk->i_brace && initstk->i_cnt == 0 && !initstk->i_nolimit)
+	while (!initstk->i_brace && initstk->i_remaining == 0 &&
+	       !initstk->i_nolimit)
 		initstack_pop_item();
 	DPRINTF(("%s: done\n", __func__));
 }
@@ -260,7 +261,7 @@ initstack_push(void)
 	istk = initstk;
 
 	/* Extend an incomplete array type by one element */
-	if (istk->i_cnt == 0) {
+	if (istk->i_remaining == 0) {
 		DPRINTF(("%s(extend) %s\n", __func__,
 		    tyname(buf, sizeof(buf), istk->i_type)));
 		/*
@@ -269,14 +270,14 @@ initstack_push(void)
 		 */
 		if (istk->i_nxt->i_nxt != NULL)
 			LERROR("initstack_push()");
-		istk->i_cnt = 1;
+		istk->i_remaining = 1;
 		if (istk->i_type->t_tspec != ARRAY)
 			LERROR("initstack_push()");
 		istk->i_type->t_dim++;
 		setcomplete(istk->i_type, 1);
 	}
 
-	if (istk->i_cnt <= 0)
+	if (istk->i_remaining <= 0)
 		LERROR("initstack_push()");
 	if (istk->i_type != NULL && tspec_is_scalar(istk->i_type->t_tspec))
 		LERROR("initstack_push()");
@@ -311,9 +312,9 @@ again:
 		}
 		istk->i_subt = istk->i_type->t_subt;
 		istk->i_nolimit = incompl(istk->i_type);
-		istk->i_cnt = istk->i_type->t_dim;
+		istk->i_remaining = istk->i_type->t_dim;
 		DPRINTF(("%s: elements array %s[%d] %s\n", __func__,
-		    tyname(buf, sizeof(buf), istk->i_subt), istk->i_cnt,
+		    tyname(buf, sizeof(buf), istk->i_subt), istk->i_remaining,
 		    namedmem ? namedmem->n_name : "*none*"));
 		break;
 	case UNION:
@@ -373,7 +374,7 @@ again:
 			initerr = 1;
 			return;
 		}
-		istk->i_cnt = istk->i_type->t_tspec == STRUCT ? cnt : 1;
+		istk->i_remaining = istk->i_type->t_tspec == STRUCT ? cnt : 1;
 		break;
 	default:
 		if (namedmem) {
@@ -384,7 +385,7 @@ again:
 			initstk = inxt;
 			goto again;
 		}
-		istk->i_cnt = 1;
+		istk->i_remaining = 1;
 		break;
 	}
 }
@@ -400,7 +401,7 @@ initstack_check_too_many(void)
 	 * If a closing brace is expected we have at least one initializer
 	 * too much.
 	 */
-	if (istk->i_cnt == 0 && !istk->i_nolimit && !istk->i_namedmem) {
+	if (istk->i_remaining == 0 && !istk->i_nolimit && !istk->i_namedmem) {
 		switch (istk->i_type->t_tspec) {
 		case ARRAY:
 			/* too many array initializers */
@@ -558,8 +559,9 @@ mkinit(tnode_t *tn)
 	if (initerr || tn == NULL)
 		return;
 
-	initstk->i_cnt--;
-	DPRINTF(("%s: remaining=%d tn=%p\n", __func__, initstk->i_cnt, tn));
+	initstk->i_remaining--;
+	DPRINTF(("%s: remaining=%d tn=%p\n", __func__,
+	    initstk->i_remaining, tn));
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof (tnode_t));
 	ln->tn_op = NAME;
@@ -657,7 +659,7 @@ initstack_string(tnode_t *tn)
 		 * If the array is already partly initialized, we are
 		 * wrong here.
 		 */
-		if (istk->i_cnt != istk->i_type->t_dim)
+		if (istk->i_remaining != istk->i_type->t_dim)
 			return 0;
 	} else {
 		return 0;
@@ -678,7 +680,7 @@ initstack_string(tnode_t *tn)
 	}
 
 	/* In every case the array is initialized completely. */
-	istk->i_cnt = 0;
+	istk->i_remaining = 0;
 
 	return 1;
 }
