@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.50 2020/10/20 23:03:30 jmcneill Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.51 2020/12/29 15:39:59 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.50 2020/10/20 23:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.51 2020/12/29 15:39:59 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -138,6 +138,7 @@ typedef struct _s_pciconf_dev_t {
 	pcitag_t	tag;
 	pci_chipset_tag_t	pc;
 	struct _s_pciconf_bus_t	*ppb;		/* I am really a bridge */
+	pcireg_t	ea_cap_ptr;
 } pciconf_dev_t;
 
 typedef struct _s_pciconf_win_t {
@@ -600,11 +601,20 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pd->tag = tag;
 	pd->ppb = NULL;
 	pd->enable = mode;
+	pd->ea_cap_ptr = 0;
 
 	classreg = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
 
 	cmd = pci_conf_read(pb->pc, tag, PCI_COMMAND_STATUS_REG);
 	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
+
+	if (pci_get_capability(pb->pc, tag, PCI_CAP_EA, &pd->ea_cap_ptr,
+	    NULL)) {
+		/* XXX Skip devices with EA for now. */
+		print_tag(pb->pc, tag);
+		printf("skipping devices with Enhanced Allocations\n");
+		return 0;
+	}
 
 	if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE
 	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
