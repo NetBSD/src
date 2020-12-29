@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.36 2020/12/28 22:31:31 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.37 2020/12/29 10:24:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -154,39 +154,39 @@ extern	void	deftyp(void);
 extern	int	length(type_t *, const char *);
 extern	int	getbound(type_t *);
 extern	sym_t	*lnklst(sym_t *, sym_t *);
-extern	void	chktyp(sym_t *);
-extern	sym_t	*decl1str(sym_t *);
+extern	void	check_type(sym_t *);
+extern	sym_t	*declarator_1_struct_union(sym_t *);
 extern	sym_t	*bitfield(sym_t *, int);
-extern	pqinf_t	*mergepq(pqinf_t *, pqinf_t *);
-extern	sym_t	*addptr(sym_t *, pqinf_t *);
-extern	sym_t	*addarray(sym_t *, int, int);
-extern	sym_t	*addfunc(sym_t *, sym_t *);
-extern	void	chkfdef(sym_t *, int);
-extern	sym_t	*dname(sym_t *);
-extern	sym_t	*iname(sym_t *);
+extern	pqinf_t	*merge_pointers_and_qualifiers(pqinf_t *, pqinf_t *);
+extern	sym_t	*add_pointer(sym_t *, pqinf_t *);
+extern	sym_t	*add_array(sym_t *, int, int);
+extern	sym_t	*add_function(sym_t *, sym_t *);
+extern	void	check_function_definition(sym_t *, int);
+extern	sym_t	*declarator_name(sym_t *);
+extern	sym_t	*old_style_function_name(sym_t *);
 extern	type_t	*mktag(sym_t *, tspec_t, int, int);
 extern	const	char *scltoa(scl_t);
 extern	type_t	*compltag(type_t *, sym_t *);
 extern	sym_t	*ename(sym_t *, int, int);
 extern	void	decl1ext(sym_t *, int);
-extern	void	cpuinfo(sym_t *, sym_t *);
-extern	int	isredec(sym_t *, int *);
+extern	void	copy_usage_info(sym_t *, sym_t *);
+extern	int	check_redeclaration(sym_t *, int *);
 extern	int	eqptrtype(type_t *, type_t *, int);
 extern	int	eqtype(type_t *, type_t *, int, int, int *);
-extern	void	compltyp(sym_t *, sym_t *);
+extern	void	complete_type(sym_t *, sym_t *);
 extern	sym_t	*decl1arg(sym_t *, int);
 extern	void	cluparg(void);
 extern	void	decl1loc(sym_t *, int);
-extern	sym_t	*aname(void);
+extern	sym_t	*abstract_name(void);
 extern	void	globclup(void);
-extern	sym_t	*decl1abs(sym_t *);
-extern	void	chksz(sym_t *);
-extern	void	setsflg(sym_t *);
-extern	void	setuflg(sym_t *, int, int);
-extern	void	chkusage(dinfo_t *);
-extern	void	chkusg1(int, sym_t *);
-extern	void	chkglsyms(void);
-extern	void	prevdecl(int, sym_t *);
+extern	sym_t	*declare_1_abstract(sym_t *);
+extern	void	check_size(sym_t *);
+extern	void	mark_as_set(sym_t *);
+extern	void	mark_as_used(sym_t *, int, int);
+extern	void	check_usage(dinfo_t *);
+extern	void	check_usage_sym(int, sym_t *);
+extern	void	check_global_symbols(void);
+extern	void	print_previous_declaration(int, sym_t *);
 
 /*
  * tree.c
