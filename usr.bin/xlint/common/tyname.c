@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.14 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.15 2020/12/29 12:18:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.14 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.15 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -46,10 +46,11 @@ __RCSID("$NetBSD: tyname.c,v 1.14 2020/12/29 11:35:11 rillig Exp $");
 #include PASS
 
 #ifndef LERROR
-#define LERROR(fmt, args...) 	do { \
-    (void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
-    abort(); \
-} while (/*CONSTCOND*/0)
+#define LERROR(fmt, args...) \
+	do { \
+		(void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
+		abort(); \
+	} while (/*CONSTCOND*/0)
 #endif
 
 const char *

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.30 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: read.c,v 1.31 2020/12/29 12:18:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.30 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.31 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -91,8 +91,8 @@ static	hte_t **renametab;
 static	int	csrcfile;
 
 
-#define 	inperr(fmt, args...) \
-    inperror(__FILE__, __LINE__, fmt, ##args)
+#define		inperr(fmt, args...) \
+	inperror(__FILE__, __LINE__, fmt, ##args)
 static	void	inperror(const char *, size_t, const char *, ...);
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);

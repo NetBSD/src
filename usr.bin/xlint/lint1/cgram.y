@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.112 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.113 2020/12/29 12:18:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.112 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.113 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1952,7 +1952,7 @@ term:
 	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
 		$$ = cast($4, $2);
 	  }
-	| T_LPARN type_name T_RPARN 			%prec T_UNOP {
+	| T_LPARN type_name T_RPARN			%prec T_UNOP {
 		sym_t *tmp = mktempsym($2);
 		idecl(tmp, 1, NULL);
 	  } init_lbrace init_expr_list init_rbrace {

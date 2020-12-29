@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.33 2020/12/29 11:54:56 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.34 2020/12/29 12:18:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -64,13 +64,13 @@ typedef struct {
 } pos_t;
 
 /* Copies curr_pos, keeping things unique. */
-#define UNIQUE_CURR_POS(pos)						\
-    do {								\
-    	STRUCT_ASSIGN((pos), curr_pos);					\
-	curr_pos.p_uniq++;						\
-	if (curr_pos.p_file == csrc_pos.p_file)				\
-	    csrc_pos.p_uniq++;						\
-    } while (0)
+#define	UNIQUE_CURR_POS(pos)						\
+	do {								\
+		STRUCT_ASSIGN((pos), curr_pos);				\
+		curr_pos.p_uniq++;					\
+		if (curr_pos.p_file == csrc_pos.p_file)			\
+			csrc_pos.p_uniq++;				\
+	} while (0)
 
 /*
  * Strings cannot be referenced to simply by a pointer to its first
@@ -256,7 +256,7 @@ typedef	struct sym {
 	struct	sym **s_rlink;	/* pointer to s_link of prev. symbol */
 	struct	sym *s_nxt;	/* next struct/union member, enumerator,
 				   argument */
-	struct	sym *s_dlnxt; 	/* next symbol declared on same level */
+	struct	sym *s_dlnxt;	/* next symbol declared on same level */
 } sym_t;
 
 #define	s_styp	u._s_st
@@ -427,11 +427,11 @@ typedef	struct err_set {
 } err_set;
 
 #define	ERR_SET(n, p)	\
-    ((p)->errs_bits[(n)/__NERRBITS] |= (1 << ((n) % __NERRBITS)))
+	((p)->errs_bits[(n)/__NERRBITS] |= (1 << ((n) % __NERRBITS)))
 #define	ERR_CLR(n, p)	\
-    ((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
+	((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
 #define	ERR_ISSET(n, p)	\
-    ((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS)))
+	((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS)))
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
 #define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)
