@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.775 2020/12/29 01:48:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.776 2020/12/29 03:05:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.775 2020/12/29 01:48:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.776 2020/12/29 03:05:15 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -576,40 +576,21 @@ MayExport(const char *name)
 	return TRUE;
 }
 
-/*
- * Export a single variable.
- *
- * We ignore make internal variables (those which start with '.').
- * Also we jump through some hoops to avoid calling setenv
- * more than necessary since it can leak.
- * We only manipulate flags of vars if 'parent' is set.
- */
 static Boolean
-ExportVar(const char *name, VarExportMode mode)
+ExportVarEnv(Var *v)
 {
-	/*
-	 * XXX: It sounds wrong to handle VEM_PLAIN and VEM_LITERAL
-	 * differently here.
-	 */
-	Boolean plain = mode == VEM_PLAIN;
-	Var *v;
+	VarExportMode mode = VEM_ENV;
+	const char *name = v->name.str;
 	char *val;
 
-	if (!MayExport(name))
-		return FALSE;
-
-	v = VarFind(name, VAR_GLOBAL, FALSE);
-	if (v == NULL)
-		return FALSE;
-
-	if (!plain && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
+	if (!(mode == VEM_PLAIN) && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
 		return FALSE;	/* nothing to do */
 
 	val = Buf_GetAll(&v->val, NULL);
 	if (mode != VEM_LITERAL && strchr(val, '$') != NULL) {
 		char *expr;
 
-		if (plain) {
+		if (mode == VEM_PLAIN) {
 			/*
 			 * Flag the variable as something we need to re-export.
 			 * No point actually exporting it now though,
@@ -634,17 +615,149 @@ ExportVar(const char *name, VarExportMode mode)
 		free(val);
 		free(expr);
 	} else {
-		if (plain)
+		if (mode == VEM_PLAIN)
 			v->flags &= ~(unsigned)VAR_REEXPORT; /* once will do */
-		if (plain || !(v->flags & VAR_EXPORTED))
+		if (mode == VEM_PLAIN || !(v->flags & VAR_EXPORTED))
 			setenv(name, val, 1);
 	}
 
 	/* This is so Var_Set knows to call Var_Export again. */
-	if (plain)
+	if (mode == VEM_PLAIN)
 		v->flags |= VAR_EXPORTED;
 
 	return TRUE;
+}
+
+static Boolean
+ExportVarPlain(Var *v)
+{
+	VarExportMode mode = VEM_PLAIN;
+	const char *name = v->name.str;
+	char *val;
+
+	if (!(mode == VEM_PLAIN) && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
+		return FALSE;	/* nothing to do */
+
+	val = Buf_GetAll(&v->val, NULL);
+	if (mode != VEM_LITERAL && strchr(val, '$') != NULL) {
+		char *expr;
+
+		if (mode == VEM_PLAIN) {
+			/*
+			 * Flag the variable as something we need to re-export.
+			 * No point actually exporting it now though,
+			 * the child process can do it at the last minute.
+			 */
+			v->flags |= VAR_EXPORTED | VAR_REEXPORT;
+			return TRUE;
+		}
+		if (v->flags & VAR_IN_USE) {
+			/*
+			 * We recursed while exporting in a child.
+			 * This isn't going to end well, just skip it.
+			 */
+			return FALSE;
+		}
+
+		/* XXX: name is injected without escaping it */
+		expr = str_concat3("${", name, "}");
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &val);
+		/* TODO: handle errors */
+		setenv(name, val, 1);
+		free(val);
+		free(expr);
+	} else {
+		if (mode == VEM_PLAIN)
+			v->flags &= ~(unsigned)VAR_REEXPORT; /* once will do */
+		if (mode == VEM_PLAIN || !(v->flags & VAR_EXPORTED))
+			setenv(name, val, 1);
+	}
+
+	/* This is so Var_Set knows to call Var_Export again. */
+	if (mode == VEM_PLAIN)
+		v->flags |= VAR_EXPORTED;
+
+	return TRUE;
+}
+
+static Boolean
+ExportVarLiteral(Var *v)
+{
+	VarExportMode mode = VEM_LITERAL;
+	const char *name = v->name.str;
+	char *val;
+
+	if (!(mode == VEM_PLAIN) && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
+		return FALSE;	/* nothing to do */
+
+	val = Buf_GetAll(&v->val, NULL);
+	if (mode != VEM_LITERAL && strchr(val, '$') != NULL) {
+		char *expr;
+
+		if (mode == VEM_PLAIN) {
+			/*
+			 * Flag the variable as something we need to re-export.
+			 * No point actually exporting it now though,
+			 * the child process can do it at the last minute.
+			 */
+			v->flags |= VAR_EXPORTED | VAR_REEXPORT;
+			return TRUE;
+		}
+		if (v->flags & VAR_IN_USE) {
+			/*
+			 * We recursed while exporting in a child.
+			 * This isn't going to end well, just skip it.
+			 */
+			return FALSE;
+		}
+
+		/* XXX: name is injected without escaping it */
+		expr = str_concat3("${", name, "}");
+		(void)Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES, &val);
+		/* TODO: handle errors */
+		setenv(name, val, 1);
+		free(val);
+		free(expr);
+	} else {
+		if (mode == VEM_PLAIN)
+			v->flags &= ~(unsigned)VAR_REEXPORT; /* once will do */
+		if (mode == VEM_PLAIN || !(v->flags & VAR_EXPORTED))
+			setenv(name, val, 1);
+	}
+
+	/* This is so Var_Set knows to call Var_Export again. */
+	if (mode == VEM_PLAIN)
+		v->flags |= VAR_EXPORTED;
+
+	return TRUE;
+}
+
+/*
+ * Export a single variable.
+ *
+ * We ignore make internal variables (those which start with '.').
+ * Also we jump through some hoops to avoid calling setenv
+ * more than necessary since it can leak.
+ * We only manipulate flags of vars if 'parent' is set.
+ */
+static Boolean
+ExportVar(const char *name, VarExportMode mode)
+{
+	Var *v;
+
+	if (!MayExport(name))
+		return FALSE;
+
+	v = VarFind(name, VAR_GLOBAL, FALSE);
+	if (v == NULL)
+		return FALSE;
+
+	if (mode == VEM_ENV)
+		return ExportVarEnv(v);
+	else if (mode == VEM_PLAIN)
+		return ExportVarPlain(v);
+	else
+		return ExportVarLiteral(v);
 }
 
 /*
