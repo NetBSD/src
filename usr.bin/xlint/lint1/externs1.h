@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.38 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.39 2020/12/29 16:48:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -280,7 +280,7 @@ extern	int	initerr;
 extern	sym_t	*initsym;
 extern	int	startinit;
 
-extern	void	prepinit(void);
+extern	void	initstack_init(void);
 extern	void	init_rbrace(void);
 extern	void	init_lbrace(void);
 extern	void	mkinit(tnode_t *);
