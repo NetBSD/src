@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.40 2020/12/29 19:57:44 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.41 2020/12/29 20:07:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.40 2020/12/29 19:57:44 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.41 2020/12/29 20:07:04 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -153,21 +153,20 @@ initstack_pop_item(void)
 	istk_t	*istk;
 	sym_t	*m;
 
+	istk = initstk;
 	DPRINTF(("%s: pop type=%s, brace=%d remaining=%d named=%d\n", __func__,
-	    tyname(buf, sizeof(buf),
-		initstk->i_type ? initstk->i_type : initstk->i_subt),
-	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
+	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
+	    istk->i_brace, istk->i_cnt, istk->i_namedmem));
 
-	initstk = (istk = initstk)->i_nxt;
+	initstk = istk->i_nxt;
 	free(istk);
 	istk = initstk;
 	if (istk == NULL)
 		LERROR("initstack_pop_item()");
 
 	DPRINTF(("%s: top type=%s, brace=%d remaining=%d named=%d\n", __func__,
-	    tyname(buf, sizeof(buf),
-		initstk->i_type ? initstk->i_type : initstk->i_subt),
-	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
+	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
+	    istk->i_brace, istk->i_cnt, istk->i_namedmem));
 
 	istk->i_cnt--;
 	if (istk->i_cnt < 0)
