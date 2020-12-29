@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.38 2020/12/29 19:02:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.39 2020/12/29 19:09:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.38 2020/12/29 19:02:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.39 2020/12/29 19:09:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -69,13 +69,7 @@ typedef struct namlist {
 namlist_t	*namedmem = NULL;
 
 
-static	void	initstack_push(void);
-static	void	initstack_check_too_many(void);
-static	void	initstack_pop_brace(void);
-static	void	initstack_pop_nobrace(void);
-static	void	initstack_pop_item(void);
 static	int	initstack_string(tnode_t *);
-static	void	pop_member(void);
 
 #ifndef DEBUG
 #define DPRINTF(a)
