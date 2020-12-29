@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.20 2020/07/07 16:14:23 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.21 2020/12/29 00:26:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,12 +44,18 @@
 #include <prop/proplib.h>
 
 /* Flags passed to i2c routines. */
-#define	I2C_F_WRITE		0x00	/* new transfer is a write */
-#define	I2C_F_READ		0x01	/* new transfer is a read */
-#define	I2C_F_LAST		0x02	/* last byte of read */
-#define	I2C_F_STOP		0x04	/* send stop after byte */
-#define	I2C_F_POLL		0x08	/* poll, don't sleep */
-#define	I2C_F_PEC		0x10	/* smbus packet error checking */
+#define	I2C_F_WRITE	0		/* new transfer is a write */
+#define	I2C_F_READ	__BIT(0)	/* new transfer is a read */
+#define	I2C_F_LAST	__BIT(1)	/* last byte of read */
+#define	I2C_F_STOP	__BIT(2)	/* send stop after byte */
+#define	I2C_F_POLL	__BIT(3)	/* poll, don't sleep */
+#define	I2C_F_PEC	__BIT(4)	/* smbus packet error checking */
+#define	I2C_F_SPEED	__BITS(28,31)	/* I2C transfer speed selector */
+
+#define	I2C_SPEED_SM		0	/* standard mode (100Kb/s) */
+#define	I2C_SPEED_FM		1	/* fast mode (400Kb/s) */
+#define	I2C_SPEED_FMPLUS	2	/* fast mode+ (1Mb/s) */
+#define	I2C_SPEED_HS		3	/* high speed (3.4Mb/s) */
 
 /* i2c bus instance properties */
 #define	I2C_PROP_INDIRECT_PROBE_STRATEGY	\
