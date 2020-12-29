@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.41 2020/12/29 20:07:04 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.42 2020/12/29 20:56:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.41 2020/12/29 20:07:04 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.42 2020/12/29 20:56:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -459,10 +459,11 @@ initstack_next_nobrace(void)
 	/* Make sure an entry with a scalar type is at the top of the stack. */
 	if (!initerr)
 		initstack_check_too_many();
-	while (!initerr && (initstk->i_type == NULL ||
-			    !tspec_is_scalar(initstk->i_type->t_tspec))) {
-		if (!initerr)
-			initstack_push();
+	while (!initerr) {
+		if ((initstk->i_type != NULL &&
+		     tspec_is_scalar(initstk->i_type->t_tspec)))
+			break;
+		initstack_push();
 	}
 }
 
