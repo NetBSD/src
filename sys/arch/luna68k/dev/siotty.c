@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.46 2019/10/01 18:00:07 chs Exp $ */
+/* $NetBSD: siotty.c,v 1.47 2020/12/29 17:17:14 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.46 2019/10/01 18:00:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.47 2020/12/29 17:17:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,14 +119,14 @@ static void siotty_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(siotty, sizeof(struct siotty_softc),
     siotty_match, siotty_attach, NULL, NULL);
 
-dev_type_open(sioopen);
-dev_type_close(sioclose);
-dev_type_read(sioread);
-dev_type_write(siowrite);
-dev_type_ioctl(sioioctl);
-dev_type_stop(siostop);
-dev_type_tty(siotty);
-dev_type_poll(siopoll);
+static dev_type_open(sioopen);
+static dev_type_close(sioclose);
+static dev_type_read(sioread);
+static dev_type_write(siowrite);
+static dev_type_ioctl(sioioctl);
+static dev_type_stop(siostop);
+static dev_type_tty(siotty);
+static dev_type_poll(siopoll);
 
 const struct cdevsw siotty_cdevsw = {
 	.d_open = sioopen,
@@ -367,7 +367,7 @@ out:
 	splx(s);
 }
 
-void
+static void
 siostop(struct tty *tp, int flag)
 {
 	int s;
@@ -490,7 +490,7 @@ siomctl(struct siotty_softc *sc, int control, int op)
 
 /*--------------------  cdevsw[] interface --------------------*/
 
-int
+static int
 sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct siotty_softc *sc;
@@ -545,7 +545,7 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
-int
+static int
 sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
@@ -568,7 +568,7 @@ sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return ttyclose(tp);
 }
 
-int
+static int
 sioread(dev_t dev, struct uio *uio, int flag)
 {
 	struct siotty_softc *sc;
@@ -579,7 +579,7 @@ sioread(dev_t dev, struct uio *uio, int flag)
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
-int
+static int
 siowrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct siotty_softc *sc;
@@ -590,7 +590,7 @@ siowrite(dev_t dev, struct uio *uio, int flag)
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
-int
+static int
 siopoll(dev_t dev, int events, struct lwp *l)
 {
 	struct siotty_softc *sc;
@@ -601,7 +601,7 @@ siopoll(dev_t dev, int events, struct lwp *l)
 	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
-int
+static int
 sioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct siotty_softc *sc;
@@ -657,7 +657,7 @@ sioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 /* ARSGUSED */
-struct tty *
+static struct tty *
 siotty(dev_t dev)
 {
 	struct siotty_softc *sc;
