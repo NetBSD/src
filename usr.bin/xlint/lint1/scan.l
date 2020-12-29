@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.96 2020/12/29 12:18:42 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.97 2020/12/29 12:29:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.96 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.97 2020/12/29 12:29:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -101,66 +101,66 @@ TL	([fFlL]?[i]?)
 
 %%
 
-{L}({L}|{D})*			return (name());
-0[bB]{BD}+[lLuU]*		return (icon(2));
-0{OD}*[lLuU]*			return (icon(8));
-{NZD}{D}*[lLuU]*		return (icon(10));
-0[xX]{HD}+[lLuU]*		return (icon(16));
+{L}({L}|{D})*			return name();
+0[bB]{BD}+[lLuU]*		return icon(2);
+0{OD}*[lLuU]*			return icon(8);
+{NZD}{D}*[lLuU]*		return icon(10);
+0[xX]{HD}+[lLuU]*		return icon(16);
 {D}+\.{D}*{EX}?{TL}	|
 {D}+{EX}{TL}		|
 0[xX]{HD}+\.{HD}*{HX}{TL} |
 0[xX]{HD}+{HX}{TL}	|
-\.{D}+{EX}?{TL}		return (fcon());
-"="				return (operator(T_ASSIGN, ASSIGN));
-"*="				return (operator(T_OPASS, MULASS));
-"/="				return (operator(T_OPASS, DIVASS));
-"%="				return (operator(T_OPASS, MODASS));
-"+="				return (operator(T_OPASS, ADDASS));
-"-="				return (operator(T_OPASS, SUBASS));
-"<<="				return (operator(T_OPASS, SHLASS));
-">>="				return (operator(T_OPASS, SHRASS));
-"&="				return (operator(T_OPASS, ANDASS));
-"^="				return (operator(T_OPASS, XORASS));
-"|="				return (operator(T_OPASS, ORASS));
-"||"				return (operator(T_LOGOR, LOGOR));
-"&&"				return (operator(T_LOGAND, LOGAND));
-"|"				return (operator(T_OR, OR));
-"&"				return (operator(T_AND, AND));
-"^"				return (operator(T_XOR, XOR));
-"=="				return (operator(T_EQOP, EQ));
-"!="				return (operator(T_EQOP, NE));
-"<"				return (operator(T_RELOP, LT));
-">"				return (operator(T_RELOP, GT));
-"<="				return (operator(T_RELOP, LE));
-">="				return (operator(T_RELOP, GE));
-"<<"				return (operator(T_SHFTOP, SHL));
-">>"				return (operator(T_SHFTOP, SHR));
-"++"				return (operator(T_INCDEC, INC));
-"--"				return (operator(T_INCDEC, DEC));
-"->"				return (operator(T_STROP, ARROW));
-"."				return (operator(T_STROP, POINT));
-"+"				return (operator(T_ADDOP, PLUS));
-"-"				return (operator(T_ADDOP, MINUS));
-"*"				return (operator(T_MULT, MULT));
-"/"				return (operator(T_DIVOP, DIV));
-"%"				return (operator(T_DIVOP, MOD));
-"!"				return (operator(T_UNOP, NOT));
-"~"				return (operator(T_UNOP, COMPL));
-"\""				return (string());
-"L\""				return (wcstrg());
-";"				return (T_SEMI);
-"{"				return (T_LBRACE);
-"}"				return (T_RBRACE);
-","				return (T_COMMA);
-":"				return (T_COLON);
-"?"				return (T_QUEST);
-"["				return (T_LBRACK);
-"]"				return (T_RBRACK);
-"("				return (T_LPARN);
-")"				return (T_RPARN);
-"..."				return (T_ELLIPSE);
-"'"				return (ccon());
-"L'"				return (wccon());
+\.{D}+{EX}?{TL}		return fcon();
+"="				return operator(T_ASSIGN, ASSIGN);
+"*="				return operator(T_OPASS, MULASS);
+"/="				return operator(T_OPASS, DIVASS);
+"%="				return operator(T_OPASS, MODASS);
+"+="				return operator(T_OPASS, ADDASS);
+"-="				return operator(T_OPASS, SUBASS);
+"<<="				return operator(T_OPASS, SHLASS);
+">>="				return operator(T_OPASS, SHRASS);
+"&="				return operator(T_OPASS, ANDASS);
+"^="				return operator(T_OPASS, XORASS);
+"|="				return operator(T_OPASS, ORASS);
+"||"				return operator(T_LOGOR, LOGOR);
+"&&"				return operator(T_LOGAND, LOGAND);
+"|"				return operator(T_OR, OR);
+"&"				return operator(T_AND, AND);
+"^"				return operator(T_XOR, XOR);
+"=="				return operator(T_EQOP, EQ);
+"!="				return operator(T_EQOP, NE);
+"<"				return operator(T_RELOP, LT);
+">"				return operator(T_RELOP, GT);
+"<="				return operator(T_RELOP, LE);
+">="				return operator(T_RELOP, GE);
+"<<"				return operator(T_SHFTOP, SHL);
+">>"				return operator(T_SHFTOP, SHR);
+"++"				return operator(T_INCDEC, INC);
+"--"				return operator(T_INCDEC, DEC);
+"->"				return operator(T_STROP, ARROW);
+"."				return operator(T_STROP, POINT);
+"+"				return operator(T_ADDOP, PLUS);
+"-"				return operator(T_ADDOP, MINUS);
+"*"				return operator(T_MULT, MULT);
+"/"				return operator(T_DIVOP, DIV);
+"%"				return operator(T_DIVOP, MOD);
+"!"				return operator(T_UNOP, NOT);
+"~"				return operator(T_UNOP, COMPL);
+"\""				return string();
+"L\""				return wcstrg();
+";"				return T_SEMI;
+"{"				return T_LBRACE;
+"}"				return T_RBRACE;
+","				return T_COMMA;
+":"				return T_COLON;
+"?"				return T_QUEST;
+"["				return T_LBRACK;
+"]"				return T_RBRACK;
+"("				return T_LPARN;
+")"				return T_RPARN;
+"..."				return T_ELLIPSE;
+"'"				return ccon();
+"L'"				return wccon();
 ^#.*$				directive();
 \n				incline();
 \t|" "|\f|\v			;
@@ -427,7 +427,7 @@ allocsb(void)
 		sb = xmalloc(sizeof (sbuf_t));
 		(void)memset(sb, 0, sizeof (*sb));
 	}
-	return (sb);
+	return sb;
 }
 
 /*
@@ -453,7 +453,7 @@ inpc(void)
 
 	if ((c = input()) != EOF && (c &= CHAR_MASK) == '\n')
 		incline();
-	return (c);
+	return c;
 }
 
 static int
@@ -467,7 +467,7 @@ hash(const char *s)
 		v = (v << sizeof (v)) + *us;
 		v ^= v >> (sizeof (v) * CHAR_BIT - sizeof (v));
 	}
-	return (v % HSHSIZ1);
+	return v % HSHSIZ1;
 }
 
 /*
@@ -499,7 +499,7 @@ name(void)
 	sb->sb_hash = hash(yytext);
 	if ((sym = search(sb)) != NULL && sym->s_keyw) {
 		freesb(sb);
-		return (keyw(sym));
+		return keyw(sym);
 	}
 
 	sb->sb_sym = sym;
@@ -519,7 +519,7 @@ name(void)
 	}
 
 	yylval.y_sb = sb;
-	return (tok);
+	return tok;
 }
 
 static sym_t *
@@ -532,13 +532,13 @@ search(sbuf_t *sb)
 			if (sym->s_keyw) {
 				struct kwtab *kw = sym->s_keyw;
 				if (!kw->kw_attr || attron)
-					return (sym);
+					return sym;
 			} else if (!attron && sym->s_kind == symtyp)
 				return sym;
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -553,7 +553,7 @@ keyw(sym_t *sym)
 	} else if (t == T_QUAL) {
 		yylval.y_tqual = sym->s_tqual;
 	}
-	return (t);
+	return t;
 }
 
 /*
@@ -753,7 +753,7 @@ icon(int base)
 	yylval.y_val->v_ansiu = ansiu;
 	yylval.y_val->v_quad = (int64_t)uq;
 
-	return (T_CON);
+	return T_CON;
 }
 
 /*
@@ -767,8 +767,8 @@ sign(int64_t q, tspec_t t, int len)
 {
 
 	if (t == PTR || tspec_is_uint(t))
-		return (0);
-	return (msb(q, t, len));
+		return 0;
+	return msb(q, t, len);
 }
 
 int
@@ -777,7 +777,7 @@ msb(int64_t q, tspec_t t, int len)
 
 	if (len <= 0)
 		len = size(t);
-	return ((q & qbmasks[len - 1]) != 0);
+	return (q & qbmasks[len - 1]) != 0;
 }
 
 /*
@@ -795,7 +795,7 @@ xsign(int64_t q, tspec_t t, int len)
 	} else {
 		q |= qumasks[len];
 	}
-	return (q);
+	return q;
 }
 
 /*
@@ -879,7 +879,7 @@ fcon(void)
 		yylval.y_val->v_ldbl = d;
 	}
 
-	return (T_CON);
+	return T_CON;
 }
 
 static int
@@ -887,7 +887,7 @@ operator(int t, op_t o)
 {
 
 	yylval.y_op = o;
-	return (t);
+	return t;
 }
 
 /*
@@ -930,7 +930,7 @@ ccon(void)
 	yylval.y_val->v_tspec = INT;
 	yylval.y_val->v_quad = val;
 
-	return (T_CON);
+	return T_CON;
 }
 
 /*
@@ -977,7 +977,7 @@ wccon(void)
 	yylval.y_val->v_tspec = WCHAR;
 	yylval.y_val->v_quad = wc;
 
-	return (T_CON);
+	return T_CON;
 }
 
 /*
@@ -1003,53 +1003,53 @@ getescc(int d)
 		pbc = -1;
 	}
 	if (c == d)
-		return (-1);
+		return -1;
 	switch (c) {
 	case '\n':
 		if (tflag) {
 			/* newline in string or char constant */
 			error(254);
-			return (-2);
+			return -2;
 		}
-		return (c);
+		return c;
 	case EOF:
-		return (-2);
+		return -2;
 	case '\\':
 		switch (c = inpc()) {
 		case '"':
 			if (tflag && d == '\'')
 				/* \" inside character constant undef. ... */
 				warning(262);
-			return ('"');
+			return '"';
 		case '\'':
-			return ('\'');
+			return '\'';
 		case '?':
 			if (tflag)
 				/* \? undefined in traditional C */
 				warning(263);
-			return ('?');
+			return '?';
 		case '\\':
-			return ('\\');
+			return '\\';
 		case 'a':
 			if (tflag)
 				/* \a undefined in traditional C */
 				warning(81);
-			return ('\a');
+			return '\a';
 		case 'b':
-			return ('\b');
+			return '\b';
 		case 'f':
-			return ('\f');
+			return '\f';
 		case 'n':
-			return ('\n');
+			return '\n';
 		case 'r':
-			return ('\r');
+			return '\r';
 		case 't':
-			return ('\t');
+			return '\t';
 		case 'v':
 			if (tflag)
 				/* \v undefined in traditional C */
 				warning(264);
-			return ('\v');
+			return '\v';
 		case '8': case '9':
 			/* bad octal digit %c */
 			warning(77, c);
@@ -1071,7 +1071,7 @@ getescc(int d)
 				warning(76);
 				v &= CHAR_MASK;
 			}
-			return (v);
+			return v;
 		case 'x':
 			if (tflag)
 				/* \x undefined in traditional C */
@@ -1099,11 +1099,11 @@ getescc(int d)
 			} if (n == -1) {
 				v &= CHAR_MASK;
 			}
-			return (v);
+			return v;
 		case '\n':
-			return (getescc(d));
+			return getescc(d);
 		case EOF:
-			return (-2);
+			return -2;
 		default:
 			if (isprint(c)) {
 				/* dubious escape \%c */
@@ -1114,7 +1114,7 @@ getescc(int d)
 			}
 		}
 	}
-	return (c);
+	return c;
 }
 
 /*
@@ -1377,7 +1377,7 @@ string(void)
 	strg->st_cp = s;
 
 	yylval.y_strg = strg;
-	return (T_STRING);
+	return T_STRING;
 }
 
 static int
@@ -1434,7 +1434,7 @@ wcstrg(void)
 	strg->st_wcp = ws;
 
 	yylval.y_strg = strg;
-	return (T_STRING);
+	return T_STRING;
 }
 
 /*
@@ -1476,7 +1476,7 @@ getsym(sbuf_t *sb)
 			LERROR("storesym(%d, %d)", sym->s_kind, symtyp);
 		symtyp = FVFT;
 		freesb(sb);
-		return (sym);
+		return sym;
 	}
 
 	/* create a new symbol table entry */
@@ -1515,7 +1515,7 @@ getsym(sbuf_t *sb)
 	di->d_ldlsym = &sym->s_dlnxt;
 
 	freesb(sb);
-	return (sym);
+	return sym;
 }
 
 /*
@@ -1656,7 +1656,7 @@ pushdown(sym_t *sym)
 	*dcs->d_ldlsym = nsym;
 	dcs->d_ldlsym = &nsym->s_dlnxt;
 
-	return (nsym);
+	return nsym;
 }
 
 /*
