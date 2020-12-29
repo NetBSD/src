@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.97 2020/12/29 12:29:03 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.98 2020/12/29 13:33:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.97 2020/12/29 12:29:03 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.98 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -203,7 +203,7 @@ static	struct	kwtab {
 	u_int	kw_c99 : 1;	/* c99 keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
 	u_int	kw_attr : 1;	/* GCC attribute, keyword */
-	u_int	kw_deco : 3;	/* name[1] __name[2] __name__[4] */
+	u_int	kw_deco : 3;	/* 1 = name, 2 = __name, 4 = __name__ */
 } kwtab[] = {
 #ifdef INT128_SIZE
 	{ "__int128_t",	T_TYPE,		0,	INT128,	0,	  0,1,0,0,1 },
@@ -327,7 +327,7 @@ symt_t	symtyp;
 
 
 static void
-addkw(struct kwtab *kw, int deco)
+add_keyword(struct kwtab *kw, int deco)
 {
 	sym_t *sym;
 	size_t h;
@@ -392,9 +392,9 @@ initscan(void)
 			continue;
 		if (kw->kw_gcc && !gflag)
 			continue;
-		addkw(kw, 1);
-		addkw(kw, 2);
-		addkw(kw, 4);
+		add_keyword(kw, 1);
+		add_keyword(kw, 2);
+		add_keyword(kw, 4);
 	}
 
 	/* initialize bit-masks for quads */
@@ -1341,7 +1341,7 @@ clrwflgs(void)
 
 	lwarn = LWARN_ALL;
 	quadflg = 0;
-	ccflg = 0;
+	constcond_flag = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.30 2020/12/29 12:18:42 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.31 2020/12/29 13:33:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.30 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.31 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -82,10 +82,10 @@ cstk_t	*cstk;
  * Number of arguments which will be checked for usage in following
  * function definition. -1 stands for all arguments.
  *
- * The position of the last ARGSUSED comment is stored in aupos.
+ * The position of the last ARGSUSED comment is stored in argsused_pos.
  */
 int	nargusg = -1;
-pos_t	aupos;
+pos_t	argsused_pos;
 
 /*
  * Number of arguments of the following function definition whose types
@@ -101,13 +101,13 @@ pos_t	vapos;
  * shall be used to check the types of remaining arguments (for PRINTFLIKE
  * and SCANFLIKE).
  *
- * prflpos and scflpos are the positions of the last PRINTFLIKE or
- * SCANFLIKE comment.
+ * printflike_pos and scanflike_pos are the positions of the last PRINTFLIKE
+ * or SCANFLIKE comment.
  */
 int	prflstrg = -1;
 int	scflstrg = -1;
-pos_t	prflpos;
-pos_t	scflpos;
+pos_t	printflike_pos;
+pos_t	scanflike_pos;
 
 /*
  * If both plibflg and llibflg are set, prototypes are written as function
@@ -119,7 +119,7 @@ int	plibflg;
  * Nonzero means that no warnings about constants in conditional
  * context are printed.
  */
-int	ccflg;
+int	constcond_flag;
 
 /*
  * llibflg is set if a lint library shall be created. The effect of
@@ -192,7 +192,7 @@ popctrl(int env)
  * Prints a warning if a statement cannot be reached.
  */
 void
-chkreach(void)
+check_statement_reachable(void)
 {
 	if (!reached && !rchflg) {
 		/* statement not reached */
@@ -909,7 +909,7 @@ dogoto(sym_t *lab)
 
 	mark_as_used(lab, 0, 0);
 
-	chkreach();
+	check_statement_reachable();
 
 	reached = rchflg = 0;
 }
@@ -935,7 +935,7 @@ dobreak(void)
 	}
 
 	if (bflag)
-		chkreach();
+		check_statement_reachable();
 
 	reached = rchflg = 0;
 }
@@ -958,7 +958,7 @@ docont(void)
 		ci->c_cont = 1;
 	}
 
-	chkreach();
+	check_statement_reachable();
 
 	reached = rchflg = 0;
 }
@@ -1025,7 +1025,7 @@ doreturn(tnode_t *tn)
 
 	} else {
 
-		chkreach();
+		check_statement_reachable();
 
 	}
 
@@ -1037,7 +1037,7 @@ doreturn(tnode_t *tn)
  * Especially remove information about unused lint comments.
  */
 void
-glclup(int silent)
+global_clean_up_decl(int silent)
 {
 	pos_t	cpos;
 
@@ -1045,7 +1045,7 @@ glclup(int silent)
 
 	if (nargusg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, aupos);
+			STRUCT_ASSIGN(curr_pos, argsused_pos);
 			/* must precede function definition: %s */
 			warning(282, "ARGSUSED");
 		}
@@ -1061,7 +1061,7 @@ glclup(int silent)
 	}
 	if (prflstrg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, prflpos);
+			STRUCT_ASSIGN(curr_pos, printflike_pos);
 			/* must precede function definition: %s */
 			warning(282, "PRINTFLIKE");
 		}
@@ -1069,7 +1069,7 @@ glclup(int silent)
 	}
 	if (scflstrg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, scflpos);
+			STRUCT_ASSIGN(curr_pos, scanflike_pos);
 			/* must precede function definition: %s */
 			warning(282, "SCANFLIKE");
 		}
@@ -1104,7 +1104,7 @@ argsused(int n)
 		warning(281, "ARGSUSED");
 	}
 	nargusg = n;
-	STRUCT_ASSIGN(aupos, curr_pos);
+	STRUCT_ASSIGN(argsused_pos, curr_pos);
 }
 
 /*
@@ -1156,7 +1156,7 @@ printflike(int n)
 		warning(281, "PRINTFLIKE");
 	}
 	prflstrg = n;
-	STRUCT_ASSIGN(prflpos, curr_pos);
+	STRUCT_ASSIGN(printflike_pos, curr_pos);
 }
 
 /*
@@ -1182,7 +1182,7 @@ scanflike(int n)
 		warning(281, "SCANFLIKE");
 	}
 	scflstrg = n;
-	STRUCT_ASSIGN(scflpos, curr_pos);
+	STRUCT_ASSIGN(scanflike_pos, curr_pos);
 }
 
 /*
@@ -1194,7 +1194,7 @@ void
 constcond(int n)
 {
 
-	ccflg = 1;
+	constcond_flag = 1;
 }
 
 /*
