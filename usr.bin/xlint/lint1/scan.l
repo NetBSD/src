@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.95 2020/12/28 19:47:42 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.96 2020/12/29 12:18:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.95 2020/12/28 19:47:42 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.96 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -101,7 +101,7 @@ TL	([fFlL]?[i]?)
 
 %%
 
-{L}({L}|{D})*		 	return (name());
+{L}({L}|{D})*			return (name());
 0[bB]{BD}+[lLuU]*		return (icon(2));
 0{OD}*[lLuU]*			return (icon(8));
 {NZD}{D}*[lLuU]*		return (icon(10));
@@ -109,7 +109,7 @@ TL	([fFlL]?[i]?)
 {D}+\.{D}*{EX}?{TL}	|
 {D}+{EX}{TL}		|
 0[xX]{HD}+\.{HD}*{HX}{TL} |
-0[xX]{HD}+{HX}{TL} 	|
+0[xX]{HD}+{HX}{TL}	|
 \.{D}+{EX}?{TL}		return (fcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));

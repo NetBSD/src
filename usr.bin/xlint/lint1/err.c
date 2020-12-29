@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.57 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.58 2020/12/29 12:18:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.57 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.58 2020/12/29 12:18:42 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -215,9 +215,9 @@ const	char *msgs[] = {
 	"argument has incompatible pointer type, arg #%d (%s != %s)", /* 153 */
 	"illegal combination of %s (%s) and %s (%s), arg #%d",	      /* 154 */
 	"argument is incompatible with prototype, arg #%d",	      /* 155 */
-	"enum type mismatch, arg #%d",			       	      /* 156 */
+	"enum type mismatch, arg #%d",				      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
-	"%s may be used before set",			      	      /* 158 */
+	"%s may be used before set",				      /* 158 */
 	"assignment in conditional context",			      /* 159 */
 	"operator '==' found where '=' was expected",		      /* 160 */
 	"constant in conditional context",			      /* 161 */
@@ -242,7 +242,7 @@ const	char *msgs[] = {
 	"bit-field initializer does not fit",			      /* 180 */
 	"{}-enclosed initializer required",			      /* 181 */
 	"incompatible pointer types (%s != %s)",		      /* 182 */
-	"illegal combination of %s (%s) and %s (%s)",	      	      /* 183 */
+	"illegal combination of %s (%s) and %s (%s)",		      /* 183 */
 	"illegal pointer combination",				      /* 184 */
 	"initialisation type mismatch (%s) and (%s)",		      /* 185 */
 	"bit-field initialisation is illegal in traditional C",	      /* 186 */
@@ -250,7 +250,7 @@ const	char *msgs[] = {
 	"no automatic aggregate initialization in traditional C",     /* 188 */
 	"assignment of struct/union illegal in traditional C",	      /* 189 */
 	"empty array declaration: %s",				      /* 190 */
-	"%s set but not used in function %s",		      	      /* 191 */
+	"%s set but not used in function %s",			      /* 191 */
 	"%s unused in function %s",				      /* 192 */
 	"statement not reached",				      /* 193 */
 	"label %s redefined",					      /* 194 */
@@ -384,7 +384,7 @@ const	char *msgs[] = {
 	"zero sized array is a C99 extension",			      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
 	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */
-	"variable declaration in for loop", 			      /* 325 */
+	"variable declaration in for loop",			      /* 325 */
 	"%s attribute ignored for %s",				      /* 326 */
 	"declarations after statements is a C9X feature",	      /* 327 */
 	"union cast is a C9X feature",				      /* 328 */
