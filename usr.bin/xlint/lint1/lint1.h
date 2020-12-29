@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.35 2020/12/29 21:32:46 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.36 2020/12/29 23:12:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -364,7 +364,7 @@ typedef	struct	istk {
 	u_int	i_nolimit : 1;		/* incomplete array type */
 	u_int	i_namedmem : 1;		/* has c9x named members */
 	sym_t	*i_mem;			/* next structure member */
-	int	i_cnt;			/* # of remaining elements */
+	int	i_remaining;		/* # of remaining elements */
 	struct	istk *i_nxt;		/* previous level */
 } istk_t;
 
