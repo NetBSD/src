@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.37 2020/12/29 16:59:12 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.38 2020/12/29 19:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.37 2020/12/29 16:59:12 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.38 2020/12/29 19:02:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -136,6 +136,8 @@ initstack_init(void)
 		free(istk);
 	}
 
+	DPRINTF(("%s\n", __func__));
+
 	/*
 	 * If the type which is to be initialized is an incomplete type,
 	 * it must be duplicated.
@@ -146,7 +148,6 @@ initstack_init(void)
 	istk = initstk = xcalloc(1, sizeof (istk_t));
 	istk->i_subt = initsym->s_type;
 	istk->i_cnt = 1;
-
 }
 
 static void
@@ -158,7 +159,7 @@ initstack_pop_item(void)
 	istk_t	*istk;
 	sym_t	*m;
 
-	DPRINTF(("%s+(%s): brace=%d count=%d namedmem %d\n", __func__,
+	DPRINTF(("%s+(%s): brace=%d remaining=%d namedmem %d\n", __func__,
 	    tyname(buf, sizeof(buf),
 		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
@@ -169,7 +170,7 @@ initstack_pop_item(void)
 	if (istk == NULL)
 		LERROR("initstack_pop_item()");
 
-	DPRINTF(("%s-(%s): brace=%d count=%d namedmem %d\n", __func__,
+	DPRINTF(("%s-(%s): brace=%d remaining=%d namedmem %d\n", __func__,
 	    tyname(buf, sizeof(buf),
 		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
@@ -178,11 +179,13 @@ initstack_pop_item(void)
 	if (istk->i_cnt < 0)
 		LERROR("initstack_pop_item()");
 
-	DPRINTF(("%s(): %d %s\n", __func__, istk->i_cnt,
+	DPRINTF(("%s(): remaining=%d name=%s\n", __func__, istk->i_cnt,
 	    namedmem ? namedmem->n_name : "*null*"));
 	if (istk->i_cnt >= 0 && namedmem != NULL) {
-		DPRINTF(("%s(): %d %s %s\n", __func__, istk->i_cnt,
-		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
+		DPRINTF(("%s(): remaining=%d type=%s name=%s\n", __func__,
+		    istk->i_cnt, tyname(buf, sizeof(buf), istk->i_type),
+		    namedmem->n_name));
+
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
 			DPRINTF(("%s(): pop [%s %s]\n", __func__,
 			    namedmem->n_name, m->s_name));
@@ -229,7 +232,7 @@ initstack_pop_brace(void)
 	DPRINTF(("%s\n", __func__));
 	do {
 		brace = initstk->i_brace;
-		DPRINTF(("%s: loop %d\n", __func__, brace));
+		DPRINTF(("%s: loop brace=%d\n", __func__, brace));
 		initstack_pop_item();
 	} while (!brace);
 	DPRINTF(("%s: done\n", __func__));
@@ -561,7 +564,7 @@ mkinit(tnode_t *tn)
 		return;
 
 	initstk->i_cnt--;
-	DPRINTF(("%s() cnt=%d tn=%p\n", __func__, initstk->i_cnt, tn));
+	DPRINTF(("%s() remaining=%d tn=%p\n", __func__, initstk->i_cnt, tn));
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof (tnode_t));
 	ln->tn_op = NAME;
@@ -582,7 +585,7 @@ mkinit(tnode_t *tn)
 		return;
 
 	/*
-	 * Store the tree memory. This is nessesary because otherwise
+	 * Store the tree memory. This is necessary because otherwise
 	 * expr() would free it.
 	 */
 	tmem = tsave();
