@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.93 2020/12/28 19:38:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.94 2020/12/29 10:24:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.93 2020/12/28 19:38:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.94 2020/12/29 10:24:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3643,8 +3643,8 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	case AMPER:
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			if (!szof)
-				setsflg(ln->tn_sym);
-			setuflg(ln->tn_sym, fcall, szof);
+				mark_as_set(ln->tn_sym);
+			mark_as_used(ln->tn_sym, fcall, szof);
 		}
 		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
@@ -3687,14 +3687,14 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 			    !ln->tn_sym->s_set && !szof && di == NULL) {
 				/* %s may be used before set */
 				warning(158, ln->tn_sym->s_name);
-				setsflg(ln->tn_sym);
+				mark_as_set(ln->tn_sym);
 			}
-			setuflg(ln->tn_sym, 0, 0);
+			mark_as_used(ln->tn_sym, 0, 0);
 		}
 		break;
 	case ASSIGN:
 		if (ln->tn_op == NAME && !szof && (reached || rchflg)) {
-			setsflg(ln->tn_sym);
+			mark_as_set(ln->tn_sym);
 			if (ln->tn_sym->s_scl == EXTERN)
 				outusg(ln->tn_sym);
 		}

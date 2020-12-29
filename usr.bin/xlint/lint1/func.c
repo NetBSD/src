@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.28 2020/12/28 21:24:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.29 2020/12/29 10:24:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.28 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.29 2020/12/29 10:24:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -232,17 +232,17 @@ funcdef(sym_t *fsym)
 	}
 
 	/*
-	 * In osfunc() we did not know whether it is an old style function
-	 * definition or only an old style declaration, if there are no
-	 * arguments inside the argument list ("f()").
+	 * In old_style_function() we did not know whether it is an old
+	 * style function definition or only an old style declaration,
+	 * if there are no arguments inside the argument list ("f()").
 	 */
 	if (!fsym->s_type->t_proto && fsym->s_args == NULL)
 		fsym->s_osdef = 1;
 
-	chktyp(fsym);
+	check_type(fsym);
 
 	/*
-	 * chktyp() checks for almost all possible errors, but not for
+	 * check_type() checks for almost all possible errors, but not for
 	 * incomplete return values (these are allowed in declarations)
 	 */
 	if (fsym->s_type->t_subt->t_tspec != VOID &&
@@ -289,7 +289,7 @@ funcdef(sym_t *fsym)
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
-		if (!isredec(fsym, (dowarn = 0, &dowarn))) {
+		if (!check_redeclaration(fsym, (dowarn = 0, &dowarn))) {
 
 			/*
 			 * Print nothing if the newly defined function
@@ -299,11 +299,11 @@ funcdef(sym_t *fsym)
 			if (dowarn && !fsym->s_osdef) {
 				/* redeclaration of %s */
 				(*(sflag ? error : warning))(27, fsym->s_name);
-				prevdecl(-1, rdsym);
+				print_previous_declaration(-1, rdsym);
 			}
 
 			/* copy usage information */
-			cpuinfo(fsym, rdsym);
+			copy_usage_info(fsym, rdsym);
 
 			/*
 			 * If the old symbol was a prototype and the new
@@ -314,7 +314,7 @@ funcdef(sym_t *fsym)
 				STRUCT_ASSIGN(fsym->s_dpos, rdsym->s_dpos);
 
 			/* complete the type */
-			compltyp(fsym, rdsym);
+			complete_type(fsym, rdsym);
 
 			/* once a function is inline it remains inline */
 			if (rdsym->s_inline)
@@ -371,7 +371,7 @@ funcend(void)
 	arg = dcs->d_fargs;
 	n = 0;
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
-		chkusg1(dcs->d_asm, arg);
+		check_usage_sym(dcs->d_asm, arg);
 		arg = arg->s_nxt;
 		n++;
 	}
@@ -425,7 +425,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			/* label %s redefined */
 			error(194, sym->s_name);
 		} else {
-			setsflg(sym);
+			mark_as_set(sym);
 		}
 		break;
 
@@ -907,7 +907,7 @@ void
 dogoto(sym_t *lab)
 {
 
-	setuflg(lab, 0, 0);
+	mark_as_used(lab, 0, 0);
 
 	chkreach();
 
