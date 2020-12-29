@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.35 2020/12/29 16:48:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.36 2020/12/29 16:53:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.35 2020/12/29 16:48:53 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.36 2020/12/29 16:53:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -72,7 +72,8 @@ namlist_t	*namedmem = NULL;
 static	void	initstack_push(void);
 static	void	initstack_next(int);
 static	void	initstack_check_too_many(void);
-static	void	initstack_pop(int);
+static	void	initstack_pop_brace(void);
+static	void	initstack_pop_nobrace(void);
 static	void	initstack_pop_item(void);
 static	int	initstack_string(tnode_t *);
 static	void	pop_member(void);
@@ -217,36 +218,36 @@ initstack_pop_item(void)
 	}
 }
 
+/*
+ * Take all entries, including the first which requires a closing brace,
+ * from the stack.
+ */
 static void
-initstack_pop(int brace)
+initstack_pop_brace(void)
 {
-	DPRINTF(("%s(%d)\n", __func__, brace));
+	int brace;
 
-	if (brace) {
-		/*
-		 * Take all entries, including the first which requires
-		 * a closing brace, from the stack.
-		 */
-		DPRINTF(("%s: brace\n", __func__));
-		do {
-			brace = initstk->i_brace;
-			DPRINTF(("%s: loop brace %d\n", __func__, brace));
-			initstack_pop_item();
-		} while (!brace);
-		DPRINTF(("%s: brace done\n", __func__));
-	} else {
-		/*
-		 * Take all entries which cannot be used for further
-		 * initializers from the stack, but do this only if
-		 * they do not require a closing brace.
-		 */
-		DPRINTF(("%s: no brace\n", __func__));
-		while (!initstk->i_brace &&
-		       initstk->i_cnt == 0 && !initstk->i_nolimit) {
-			initstack_pop_item();
-		}
-		DPRINTF(("%s: no brace done\n", __func__));
-	}
+	DPRINTF(("%s\n", __func__));
+	do {
+		brace = initstk->i_brace;
+		DPRINTF(("%s: loop %d\n", __func__, brace));
+		initstack_pop_item();
+	} while (!brace);
+	DPRINTF(("%s: done\n", __func__));
+}
+
+/*
+ * Take all entries which cannot be used for further initializers from the
+ * stack, but do this only if they do not require a closing brace.
+ */
+static void
+initstack_pop_nobrace(void)
+{
+
+	DPRINTF(("%s\n", __func__));
+	while (!initstk->i_brace && initstk->i_cnt == 0 && !initstk->i_nolimit)
+		initstack_pop_item();
+	DPRINTF(("%s: done\n", __func__));
 }
 
 static void
@@ -488,7 +489,7 @@ init_lbrace(void)
 	 * Remove all entries which cannot be used for further initializers
 	 * and do not expect a closing brace.
 	 */
-	initstack_pop(0);
+	initstack_pop_nobrace();
 
 	initstack_next(1);
 }
@@ -501,7 +502,7 @@ init_rbrace(void)
 	if (initerr)
 		return;
 
-	initstack_pop(1);
+	initstack_pop_brace();
 }
 
 void
@@ -550,7 +551,7 @@ mkinit(tnode_t *tn)
 	 * Remove all entries which cannot be used for further initializers
 	 * and do not require a closing brace.
 	 */
-	initstack_pop(0);
+	initstack_pop_nobrace();
 
 	/* Initialisations by strings are done in initstack_string(). */
 	if (initstack_string(tn))
