@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.97 2020/12/29 12:18:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.98 2020/12/29 13:33:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.97 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.98 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -60,8 +60,8 @@ static	void	chkeop1(op_t, int, tnode_t *, tnode_t *);
 static	tnode_t	*mktnode(op_t, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
 static	void	incompat(op_t, tspec_t, tspec_t);
-static	void	illptrc(mod_t *, type_t *, type_t *);
-static	void	mrgqual(type_t **, type_t *, type_t *);
+static	void	warn_incompatible_pointers(mod_t *, type_t *, type_t *);
+static	void	merge_qualifiers(type_t **, type_t *, type_t *);
 static	int	conmemb(type_t *);
 static	void	ptconv(int, tspec_t, tspec_t, type_t *, tnode_t *);
 static	void	iiconv(op_t, int, tspec_t, tspec_t, type_t *, tnode_t *);
@@ -70,7 +70,7 @@ static	void	ppconv(op_t, tnode_t *, type_t *);
 static	tnode_t	*bldstr(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*bldincdec(op_t, tnode_t *);
 static	tnode_t	*bldri(op_t, tnode_t *);
-static	tnode_t	*bldamper(tnode_t *, int);
+static	tnode_t	*build_ampersand(tnode_t *, int);
 static	tnode_t	*bldplmi(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*bldshft(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*bldcol(tnode_t *, tnode_t *);
@@ -83,7 +83,7 @@ static	tnode_t	*chkfarg(type_t *, tnode_t *);
 static	tnode_t	*parg(int, type_t *, tnode_t *);
 static	void	nulleff(tnode_t *);
 static	void	displexpr(tnode_t *, int);
-static	void	chkaidx(tnode_t *, int);
+static	void	check_array_index(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
 
@@ -303,7 +303,7 @@ getsnode(strg_t *strg)
  * member of the struct or union specified by the tn argument.
  */
 sym_t *
-strmemb(tnode_t *tn, op_t op, sym_t *msym)
+struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
 	str_t	*str;
 	type_t	*tp;
@@ -552,7 +552,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		ntn = bldincdec(op, ln);
 		break;
 	case AMPER:
-		ntn = bldamper(ln, 0);
+		ntn = build_ampersand(ln, 0);
 		break;
 	case STAR:
 		ntn = mktnode(STAR, ln->tn_type->t_subt, ln, NULL);
@@ -613,7 +613,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	if (mp->m_tctx) {
 		if (ln->tn_op == CON ||
 		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
-			if (hflag && !ccflg)
+			if (hflag && !constcond_flag)
 				/* constant in conditional context */
 				warning(161);
 		}
@@ -669,7 +669,7 @@ cconv(tnode_t *tn)
 	 * of type T)
 	 */
 	if (tn->tn_type->t_tspec == FUNC)
-		tn = bldamper(tn, 1);
+		tn = build_ampersand(tn, 1);
 
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
@@ -754,8 +754,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	switch (op) {
 	case POINT:
 		/*
-		 * Most errors required by ANSI C are reported in strmemb().
-		 * Here we only must check for totaly wrong things.
+		 * Most errors required by ANSI C are reported in
+		 * struct_or_union_member().
+		 * Here we only must check for totally wrong things.
 		 */
 		if (lt == FUNC || lt == VOID || ltp->t_isfield ||
 		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
@@ -800,7 +801,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		break;
 	case AMPER:
 		if (lt == ARRAY || lt == FUNC) {
-			/* ok, a warning comes later (in bldamper()) */
+			/* ok, a warning comes later (in build_ampersand()) */
 		} else if (!ln->tn_lvalue) {
 			if (ln->tn_op == CVT && ln->tn_cast &&
 			    ln->tn_left->tn_op == LOAD) {
@@ -1036,7 +1037,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (eqptrtype(lstp, rstp, 1))
 				break;
 			if (!eqtype(lstp, rstp, 1, 0, NULL))
-				illptrc(mp, ltp, rtp);
+				warn_incompatible_pointers(mp, ltp, rtp);
 			break;
 		}
 
@@ -1166,7 +1167,7 @@ ptrcmpok(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (!eqtype(ltp->t_subt, rtp->t_subt, 1, 0, NULL)) {
-		illptrc(&modtab[op], ltp, rtp);
+		warn_incompatible_pointers(&modtab[op], ltp, rtp);
 		return;
 	}
 
@@ -1291,7 +1292,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		switch (op) {
 		case INIT:
 		case RETURN:
-			illptrc(NULL, ltp, rtp);
+			warn_incompatible_pointers(NULL, ltp, rtp);
 			break;
 		case FARG:
 			/* argument has incompatible pointer type, arg #%d */
@@ -1299,7 +1300,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			    tyname(rbuf, sizeof(rbuf), rtp));
 			break;
 		default:
-			illptrc(mp, ltp, rtp);
+			warn_incompatible_pointers(mp, ltp, rtp);
 			break;
 		}
 		return 1;
@@ -1815,7 +1816,7 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			warning(324,
 			    tyname(rbuf, sizeof(rbuf), gettyp(ot)),
 			    tyname(lbuf, sizeof(lbuf), tp),
-			    prtnode(opbuf, sizeof(opbuf), tn));
+			    print_tnode(opbuf, sizeof(opbuf), tn));
 			break;
 		default:
 			break;
@@ -2222,10 +2223,10 @@ incompat(op_t op, tspec_t lt, tspec_t rt)
 		return;
 	case 108:
 	case 107:
-		error(e, mp->m_name, basictyname(lt), basictyname(rt));
+		error(e, mp->m_name, basic_type_name(lt), basic_type_name(rt));
 		return;
 	default:
-		error(e, basictyname(lt), basictyname(rt));
+		error(e, basic_type_name(lt), basic_type_name(rt));
 		return;
 	}
 }
@@ -2235,12 +2236,12 @@ incompat(op_t op, tspec_t lt, tspec_t rt)
  * Print an appropriate warning.
  */
 static void
-illptrc(mod_t *mp, type_t *ltp, type_t *rtp)
+warn_incompatible_pointers(mod_t *mp, type_t *ltp, type_t *rtp)
 {
 	tspec_t	lt, rt;
 
 	if (ltp->t_tspec != PTR || rtp->t_tspec != PTR)
-		LERROR("illptrc()");
+		LERROR("warn_incompatible_pointers()");
 
 	lt = ltp->t_subt->t_tspec;
 	rt = rtp->t_subt->t_tspec;
@@ -2269,12 +2270,12 @@ illptrc(mod_t *mp, type_t *ltp, type_t *rtp)
  * of tp1->t_subt and tp2->t_subt.
  */
 static void
-mrgqual(type_t **tpp, type_t *tp1, type_t *tp2)
+merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
 {
 
 	if ((*tpp)->t_tspec != PTR ||
 	    tp1->t_tspec != PTR || tp2->t_tspec != PTR) {
-		LERROR("mrgqual()");
+		LERROR("merge_qualifiers()");
 	}
 
 	if ((*tpp)->t_subt->t_const ==
@@ -2339,7 +2340,7 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
 	nolval = op == POINT && !ln->tn_lvalue;
 
 	if (op == POINT) {
-		ln = bldamper(ln, 1);
+		ln = build_ampersand(ln, 1);
 	} else if (ln->tn_type->t_tspec != PTR) {
 		if (!tflag || !tspec_is_int(ln->tn_type->t_tspec))
 			LERROR("bldstr()");
@@ -2425,7 +2426,7 @@ bldri(op_t op, tnode_t *ln)
  * Create a tree node for the & operator
  */
 static tnode_t *
-bldamper(tnode_t *tn, int noign)
+build_ampersand(tnode_t *tn, int noign)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
@@ -2572,12 +2573,12 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		if (rt != PTR)
 			LERROR("bldcol()");
 		rtp = rn->tn_type;
-		mrgqual(&rtp, ln->tn_type, rn->tn_type);
+		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
 		if (lt != PTR)
 			LERROR("bldcol()");
 		rtp = ln->tn_type;
-		mrgqual(&rtp, ln->tn_type, rn->tn_type);
+		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else {
 		if (lt != PTR || rt != PTR)
 			LERROR("bldcol()");
@@ -2588,7 +2589,7 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		 * declaration.
 		 */
 		rtp = ln->tn_type;
-		mrgqual(&rtp, ln->tn_type, rn->tn_type);
+		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	}
 
 	ntn = mktnode(COLON, rtp, ln, rn);
@@ -2909,7 +2910,7 @@ foldtst(tnode_t *tn)
 
 	switch (tn->tn_op) {
 	case NOT:
-		if (hflag && !ccflg)
+		if (hflag && !constcond_flag)
 			/* constant argument to NOT */
 			warning(239);
 		v->v_quad = !l;
@@ -3033,7 +3034,7 @@ foldflt(tnode_t *tn)
  * Create a constant node for sizeof.
  */
 tnode_t *
-bldszof(type_t *tp)
+build_sizeof(type_t *tp)
 {
 	tspec_t	st;
 #if SIZEOF_IS_ULONG
@@ -3048,7 +3049,7 @@ bldszof(type_t *tp)
  * Create a constant node for offsetof.
  */
 tnode_t *
-bldoffsetof(type_t *tp, sym_t *sym)
+build_offsetof(type_t *tp, sym_t *sym)
 {
 	tspec_t	st;
 #if SIZEOF_IS_ULONG
@@ -3117,7 +3118,7 @@ tsize(type_t *tp)
 		} else {
 			elsz = size(tp->t_tspec);
 			if (elsz <= 0)
-				LERROR("bldszof()");
+				LERROR("build_sizeof()");
 		}
 		break;
 	}
@@ -3129,7 +3130,7 @@ tsize(type_t *tp)
 /*
  */
 tnode_t *
-bldalof(type_t *tp)
+build_alignof(type_t *tp)
 {
 	tspec_t	st;
 
@@ -3490,15 +3491,15 @@ expr(tnode_t *tn, int vctx, int tctx, int dofreeblk)
 
 	/* expr() is also called in global initialisations */
 	if (dcs->d_ctx != EXTERN)
-		chkreach();
+		check_statement_reachable();
 
-	chkmisc(tn, vctx, tctx, !tctx, 0, 0, 0);
+	check_expr_misc(tn, vctx, tctx, !tctx, 0, 0, 0);
 	if (tn->tn_op == ASSIGN) {
 		if (hflag && tctx)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && tctx && !ccflg)
+		if (hflag && tctx && !constcond_flag)
 			/* constant in conditional context */
 			warning(161);
 	}
@@ -3578,13 +3579,15 @@ displexpr(tnode_t *tn, int offs)
 
 	if (tn->tn_op == NAME) {
 		(void)printf("%s: %s ",
-			     tn->tn_sym->s_name, scltoa(tn->tn_sym->s_scl));
+		    tn->tn_sym->s_name,
+		    storage_class_name(tn->tn_sym->s_scl));
 	} else if (tn->tn_op == CON && tspec_is_float(tn->tn_type->t_tspec)) {
 		(void)printf("%#g ", (double)tn->tn_val->v_ldbl);
 	} else if (tn->tn_op == CON && tspec_is_int(tn->tn_type->t_tspec)) {
 		uq = tn->tn_val->v_quad;
-		(void)printf("0x %08lx %08lx ", (long)(uq >> 32) & 0xffffffffl,
-			     (long)uq & 0xffffffffl);
+		(void)printf("0x %08lx %08lx ",
+		    (long)(uq >> 32) & 0xffffffffl,
+		    (long)uq & 0xffffffffl);
 	} else if (tn->tn_op == CON) {
 		if (tn->tn_type->t_tspec != PTR)
 			LERROR("displexpr()");
@@ -3622,7 +3625,7 @@ displexpr(tnode_t *tn, int offs)
  */
 /* ARGSUSED */
 void
-chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
+check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	int szof)
 {
 	tnode_t	*ln, *rn;
@@ -3648,12 +3651,12 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 		}
 		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			chkaidx(ln->tn_left, 1);
+			check_array_index(ln->tn_left, 1);
 		break;
 	case LOAD:
 		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			chkaidx(ln->tn_left, 0);
+			check_array_index(ln->tn_left, 0);
 		/* FALLTHROUGH */
 	case PUSH:
 	case INCBEF:
@@ -3700,11 +3703,11 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 		}
 		if (ln->tn_op == STAR && ln->tn_left->tn_op == PLUS)
 			/* check the range of array indices */
-			chkaidx(ln->tn_left, 0);
+			check_array_index(ln->tn_left, 0);
 		break;
 	case CALL:
 		if (ln->tn_op != AMPER || ln->tn_left->tn_op != NAME)
-			LERROR("chkmisc(op=%s != %s || %s != %s)",
+			LERROR("check_expr_misc(op=%s != %s || %s != %s)",
 			    getopname(ln->tn_op), getopname(AMPER),
 			    getopname(ln->tn_left->tn_op), getopname(NAME));
 		if (!szof)
@@ -3771,26 +3774,26 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
 		cvctx = ctctx = 0;
 	nrvdisc = op == CVT && tn->tn_type->t_tspec == VOID;
-	chkmisc(ln, cvctx, ctctx, mp->m_eqwarn, op == CALL, nrvdisc, szof);
+	check_expr_misc(ln, cvctx, ctctx, mp->m_eqwarn, op == CALL, nrvdisc, szof);
 
 	switch (op) {
 	case PUSH:
 		if (rn != NULL)
-			chkmisc(rn, 0, 0, mp->m_eqwarn, 0, 0, szof);
+			check_expr_misc(rn, 0, 0, mp->m_eqwarn, 0, 0, szof);
 		break;
 	case LOGAND:
 	case LOGOR:
-		chkmisc(rn, 0, 1, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, 0, 1, mp->m_eqwarn, 0, 0, szof);
 		break;
 	case COLON:
-		chkmisc(rn, cvctx, ctctx, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, cvctx, ctctx, mp->m_eqwarn, 0, 0, szof);
 		break;
 	case COMMA:
-		chkmisc(rn, vctx, tctx, mp->m_eqwarn, 0, 0, szof);
+		check_expr_misc(rn, vctx, tctx, mp->m_eqwarn, 0, 0, szof);
 		break;
 	default:
 		if (mp->m_binary)
-			chkmisc(rn, 1, 0, mp->m_eqwarn, 0, 0, szof);
+			check_expr_misc(rn, 1, 0, mp->m_eqwarn, 0, 0, szof);
 		break;
 	}
 
@@ -3803,7 +3806,7 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
  * after the array.
  */
 static void
-chkaidx(tnode_t *tn, int amper)
+check_array_index(tnode_t *tn, int amper)
 {
 	int	dim;
 	tnode_t	*ln, *rn;
@@ -4007,7 +4010,7 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
  * Concatenate two string constants.
  */
 strg_t *
-catstrg(strg_t *strg1, strg_t *strg2)
+cat_strings(strg_t *strg1, strg_t *strg2)
 {
 	size_t	len1, len2, len;
 

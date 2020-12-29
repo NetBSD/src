@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.76 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.77 2020/12/29 13:33:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.76 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.77 2020/12/29 13:33:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ dinfo_t	*dcs;
 
 static	type_t	*tdeferr(type_t *, tspec_t);
 static	void	settdsym(type_t *, sym_t *);
-static	tspec_t	mrgtspec(tspec_t, tspec_t);
+static	tspec_t	merge_type_specifiers(tspec_t, tspec_t);
 static	void	align(int, int);
 static	sym_t	*newtag(sym_t *, scl_t, int, int);
 static	int	eqargs(type_t *, type_t *, int *);
@@ -213,7 +213,7 @@ setcomplete(type_t *tp, int complete)
  * storage classes.
  */
 void
-addscl(scl_t sc)
+add_storage_class(scl_t sc)
 {
 
 	if (sc == INLINE) {
@@ -250,7 +250,7 @@ addscl(scl_t sc)
  * struct/union/enum tag.
  */
 void
-addtype(type_t *tp)
+add_type(type_t *tp)
 {
 	tspec_t	t;
 #ifdef DEBUG
@@ -264,7 +264,7 @@ addtype(type_t *tp)
 			 * something like "typedef int a; int a b;"
 			 * This should not happen with current grammar.
 			 */
-			LERROR("addtype()");
+			LERROR("add_type()");
 		}
 		dcs->d_type = tp;
 		return;
@@ -305,7 +305,7 @@ addtype(type_t *tp)
 		else if (dcs->d_cmod == DOUBLE) {
 			t = DCOMPLEX;
 		} else
-			error(308, basictyname(dcs->d_cmod));
+			error(308, basic_type_name(dcs->d_cmod));
 		dcs->d_cmod = NOTSPEC;
 	}
 
@@ -387,7 +387,7 @@ tdeferr(type_t *td, tspec_t t)
 			if (!tflag)
 				/* modifying typedef with ... */
 				warning(5, ttab[t].tt_name);
-			td = duptyp(gettyp(mrgtspec(t2, t)));
+			td = duptyp(gettyp(merge_type_specifiers(t2, t)));
 			td->t_typedef = 1;
 			return td;
 		}
@@ -543,7 +543,7 @@ addpacked(void)
 }
 
 void
-addused(void)
+add_attr_used(void)
 {
 	dcs->d_used = 1;
 }
@@ -557,7 +557,7 @@ addused(void)
  * for all declarators.
  */
 void
-addqual(tqual_t q)
+add_qualifier(tqual_t q)
 {
 
 	if (q == CONST) {
@@ -570,7 +570,7 @@ addqual(tqual_t q)
 		if (q == THREAD)
 			return;
 		if (q != VOLATILE)
-			LERROR("addqual()");
+			LERROR("add_qualifier()");
 		if (dcs->d_volatile) {
 			/* duplicate "%s" */
 			warning(10, "volatile");
@@ -684,8 +684,8 @@ popdecl(void)
  * But it must be cleared in the outermost dinfo struct, which has
  * context EXTERN. This could be done in clrtyp() and would work for
  * C, but not for C++ (due to mixed statements and declarations). Thus
- * we clear it in glclup(), which is used to do some cleanup after
- * global declarations/definitions.
+ * we clear it in global_clean_up_decl(), which is used to do some cleanup
+ * after global declarations/definitions.
  */
 void
 setasm(void)
@@ -800,7 +800,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			LERROR("deftyp(%s)", basictyname(t));
+			LERROR("deftyp(%s)", basic_type_name(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = 1;
@@ -808,7 +808,7 @@ deftyp(void)
 		}
 		if (l != NOTSPEC)
 			t = l;
-		dcs->d_type = gettyp(mrgtspec(t, s));
+		dcs->d_type = gettyp(merge_type_specifiers(t, s));
 	}
 
 	if (dcs->d_mscl) {
@@ -860,7 +860,7 @@ deftyp(void)
  * Merge type specifiers (char, ..., long long, signed, unsigned).
  */
 static tspec_t
-mrgtspec(tspec_t t, tspec_t s)
+merge_type_specifiers(tspec_t t, tspec_t s)
 {
 
 	if (s == SIGNED || s == UNSIGN) {
@@ -1427,7 +1427,7 @@ new_style_function(sym_t *decl, sym_t *args)
 		sc = sym->s_scl;
 		if (sc == STRTAG || sc == UNIONTAG || sc == ENUMTAG) {
 			/* dubious tag declaration: %s %s */
-			warning(85, scltoa(sc), sym->s_name);
+			warning(85, storage_class_name(sc), sym->s_name);
 		}
 	}
 
@@ -1705,11 +1705,13 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			if (!tflag) {
 				if (!sflag)
 					/* decl. introduces new type ... */
-					warning(44, scltoa(scl), tag->s_name);
+					warning(44, storage_class_name(scl),
+					    tag->s_name);
 				tag = pushdown(tag);
 			} else if (tag->s_scl != scl) {
 				/* base type is really "%s %s" */
-				warning(45, scltoa(tag->s_scl), tag->s_name);
+				warning(45, storage_class_name(tag->s_scl),
+				    tag->s_name);
 			}
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (decl) {
@@ -1721,23 +1723,26 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (tag->s_scl != scl) {
 			/* base type is really "%s %s" */
-			warning(45, scltoa(tag->s_scl), tag->s_name);
+			warning(45, storage_class_name(tag->s_scl),
+			    tag->s_name);
 			/* declaration introduces new type in ANSI C: %s %s */
-			if (!sflag)
-				warning(44, scltoa(scl), tag->s_name);
+			if (!sflag) {
+				warning(44, storage_class_name(scl),
+				    tag->s_name);
+			}
 			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
 		}
 	} else {
 		if (tag->s_scl != scl) {
 			/* (%s) tag redeclared */
-			error(46, scltoa(tag->s_scl));
+			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (decl && !incompl(tag->s_type)) {
 			/* (%s) tag redeclared */
-			error(46, scltoa(tag->s_scl));
+			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
@@ -1749,7 +1754,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 }
 
 const char *
-scltoa(scl_t sc)
+storage_class_name(scl_t sc)
 {
 	const	char *s;
 
@@ -1771,7 +1776,7 @@ scltoa(scl_t sc)
  * tp points to the type of the tag, fmem to the list of members/enums.
  */
 type_t *
-compltag(type_t *tp, sym_t *fmem)
+complete_tag(type_t *tp, sym_t *fmem)
 {
 	tspec_t	t;
 	str_t	*sp;
@@ -2803,7 +2808,7 @@ abstract_name(void)
  * Removes anything which has nothing to do on global level.
  */
 void
-globclup(void)
+global_clean_up(void)
 {
 
 	while (dcs->d_nxt != NULL)
@@ -2817,7 +2822,7 @@ globclup(void)
 	 * remove all information about pending lint directives without
 	 * warnings.
 	 */
-	glclup(1);
+	global_clean_up_decl(1);
 }
 
 /*
