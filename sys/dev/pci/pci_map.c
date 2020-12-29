@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.42 2020/12/29 15:39:59 skrll Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.43 2020/12/29 15:49:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.42 2020/12/29 15:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.43 2020/12/29 15:49:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,31 +575,65 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	bus_size_t realmaxsize;
 	pcireg_t csr;
 	int flags, s;
+	int ea_cap_ptr;
+	bool have_ea = false;
+	struct pci_ea_entry entry;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0)
-			return 1;
-		if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-		    &realmaxsize, &flags))
 			return 1;
 		tag = pa->pa_iot;
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_OKAY) == 0)
 			return 1;
-		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-		    &realmaxsize, &flags))
-			return 1;
 		tag = pa->pa_memt;
 	}
 
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_EA, &ea_cap_ptr,
+	    NULL)) {
+		have_ea = true;
+		if (pci_ea_find(pa->pa_pc, pa->pa_tag, ea_cap_ptr, reg, type,
+		    &base, &realmaxsize, &flags, &entry))
+			return 1;
+		if (reg != PCI_MAPREG_ROM && !entry.enabled) {
+			/* Entry not enabled.  Try the regular BAR? */
+			have_ea = false;
+		}
+	}
+
+	if (!have_ea) {
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
+			if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type,
+			    &base, &realmaxsize, &flags))
+				return 1;
+		} else {
+			if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type,
+			    &base, &realmaxsize, &flags))
+				return 1;
+		}
+	}
+
 	if (reg == PCI_MAPREG_ROM) {
-		pcireg_t 	mask;
-		/* we have to enable the ROM address decoder... */
-		s = splhigh();
-		mask = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
-		mask |= PCI_MAPREG_ROM_ENABLE;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, reg, mask);
-		splx(s);
+		/* Enable the ROM address decoder, if necessary. */
+		if (have_ea) {
+			if (!entry.enabled) {
+				entry.dw0 |= PCI_EA_E;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    entry.ea_ptrs[EA_ptr_dw0],
+				    entry.dw0);
+				entry.enabled = true;
+			}
+		} else {
+			s = splhigh();
+			pcireg_t mask =
+			    pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
+			if ((mask & PCI_MAPREG_ROM_ENABLE) == 0) {
+				mask |= PCI_MAPREG_ROM_ENABLE;
+				pci_conf_write(pa->pa_pc, pa->pa_tag, reg,
+				    mask);
+			}
+			splx(s);
+		}
 	}
 
 	/* If we're called with maxsize/offset of 0, behave like
