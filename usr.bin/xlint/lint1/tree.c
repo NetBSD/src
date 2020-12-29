@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.99 2020/12/29 21:32:46 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.100 2020/12/29 23:04:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.99 2020/12/29 21:32:46 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.100 2020/12/29 23:04:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -51,41 +51,44 @@ __RCSID("$NetBSD: tree.c,v 1.99 2020/12/29 21:32:46 rillig Exp $");
 #include "cgram.h"
 #include "externs1.h"
 
-static	tnode_t	*getinode(tspec_t, int64_t);
-static	void	ptrcmpok(op_t, tnode_t *, tnode_t *);
-static	int	asgntypok(op_t, int, tnode_t *, tnode_t *);
-static	void	chkbeop(op_t, tnode_t *, tnode_t *);
-static	void	chkeop2(op_t, int, tnode_t *, tnode_t *);
-static	void	chkeop1(op_t, int, tnode_t *, tnode_t *);
-static	tnode_t	*mktnode(op_t, type_t *, tnode_t *, tnode_t *);
+static	tnode_t	*new_int_const_node(tspec_t, int64_t);
+static	void	check_pointer_comparison(op_t, tnode_t *, tnode_t *);
+static	int	check_assign_types_compatible(op_t, int, tnode_t *, tnode_t *);
+static	void	check_bad_enum_operation(op_t, tnode_t *, tnode_t *);
+static	void	check_enum_type_mismatch(op_t, int, tnode_t *, tnode_t *);
+static	void	check_enum_int_mismatch(op_t, int, tnode_t *, tnode_t *);
+static	tnode_t	*new_tnode(op_t, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
-static	void	incompat(op_t, tspec_t, tspec_t);
+static	void	warn_incompatible_types(op_t, tspec_t, tspec_t);
 static	void	warn_incompatible_pointers(mod_t *, type_t *, type_t *);
 static	void	merge_qualifiers(type_t **, type_t *, type_t *);
-static	int	conmemb(type_t *);
-static	void	ptconv(int, tspec_t, tspec_t, type_t *, tnode_t *);
-static	void	iiconv(op_t, int, tspec_t, tspec_t, type_t *, tnode_t *);
-static	void	piconv(op_t, tspec_t, type_t *, tnode_t *);
-static	void	ppconv(op_t, tnode_t *, type_t *);
-static	tnode_t	*bldstr(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*bldincdec(op_t, tnode_t *);
-static	tnode_t	*bldri(op_t, tnode_t *);
+static	int	has_constant_member(type_t *);
+static	void	check_prototype_conversion(int, tspec_t, tspec_t, type_t *,
+					   tnode_t *);
+static	void	check_integer_conversion(op_t, int, tspec_t, tspec_t, type_t *,
+					 tnode_t *);
+static	void	check_pointer_integer_conversion(op_t, tspec_t, type_t *,
+						 tnode_t *);
+static	void	check_pointer_conversion(op_t, tnode_t *, type_t *);
+static	tnode_t	*build_struct_access(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*build_prepost_incdec(op_t, tnode_t *);
+static	tnode_t	*build_real_imag(op_t, tnode_t *);
 static	tnode_t	*build_ampersand(tnode_t *, int);
-static	tnode_t	*bldplmi(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*bldshft(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*bldcol(tnode_t *, tnode_t *);
-static	tnode_t	*bldasgn(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*build_plus_minus(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*build_bit_shift(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*build_colon(tnode_t *, tnode_t *);
+static	tnode_t	*build_assignment(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*plength(type_t *);
 static	tnode_t	*fold(tnode_t *);
-static	tnode_t	*foldtst(tnode_t *);
-static	tnode_t	*foldflt(tnode_t *);
-static	tnode_t	*chkfarg(type_t *, tnode_t *);
-static	tnode_t	*parg(int, type_t *, tnode_t *);
-static	void	nulleff(tnode_t *);
-static	void	displexpr(tnode_t *, int);
+static	tnode_t	*fold_test(tnode_t *);
+static	tnode_t	*fold_float(tnode_t *);
+static	tnode_t	*check_function_arguments(type_t *, tnode_t *);
+static	tnode_t	*check_prototype_argument(int, type_t *, tnode_t *);
+static	void	check_null_effect(tnode_t *);
+static	void	display_expression(tnode_t *, int);
 static	void	check_array_index(tnode_t *, int);
-static	void	chkcomp(op_t, tnode_t *, tnode_t *);
-static	void	precconf(tnode_t *);
+static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
+static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
 
@@ -180,7 +183,7 @@ getcnode(type_t *tp, val_t *v)
  * Create a node for a integer constant.
  */
 static tnode_t *
-getinode(tspec_t t, int64_t q)
+new_int_const_node(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
@@ -496,7 +499,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * CHAR, which would also become int.
 	 */
 	if (mp->m_comp)
-		chkcomp(op, ln, rn);
+		check_integer_comparison(op, ln, rn);
 
 	/*
 	 * Promote the left operand if it is in a test or value context
@@ -543,30 +546,30 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	switch (op) {
 	case POINT:
 	case ARROW:
-		ntn = bldstr(op, ln, rn);
+		ntn = build_struct_access(op, ln, rn);
 		break;
 	case INCAFT:
 	case DECAFT:
 	case INCBEF:
 	case DECBEF:
-		ntn = bldincdec(op, ln);
+		ntn = build_prepost_incdec(op, ln);
 		break;
 	case AMPER:
 		ntn = build_ampersand(ln, 0);
 		break;
 	case STAR:
-		ntn = mktnode(STAR, ln->tn_type->t_subt, ln, NULL);
+		ntn = new_tnode(STAR, ln->tn_type->t_subt, ln, NULL);
 		break;
 	case PLUS:
 	case MINUS:
-		ntn = bldplmi(op, ln, rn);
+		ntn = build_plus_minus(op, ln, rn);
 		break;
 	case SHL:
 	case SHR:
-		ntn = bldshft(op, ln, rn);
+		ntn = build_bit_shift(op, ln, rn);
 		break;
 	case COLON:
-		ntn = bldcol(ln, rn);
+		ntn = build_colon(ln, rn);
 		break;
 	case ASSIGN:
 	case MULASS:
@@ -580,21 +583,21 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	case XORASS:
 	case ORASS:
 	case RETURN:
-		ntn = bldasgn(op, ln, rn);
+		ntn = build_assignment(op, ln, rn);
 		break;
 	case COMMA:
 	case QUEST:
-		ntn = mktnode(op, rn->tn_type, ln, rn);
+		ntn = new_tnode(op, rn->tn_type, ln, rn);
 		break;
 	case REAL:
 	case IMAG:
-		ntn = bldri(op, ln);
+		ntn = build_real_imag(op, ln);
 		break;
 	default:
 		rtp = mp->m_logical ? gettyp(INT) : ln->tn_type;
 		if (!mp->m_binary && rn != NULL)
 			LERROR("build()");
-		ntn = mktnode(op, rtp, ln, rn);
+		ntn = new_tnode(op, rtp, ln, rn);
 		break;
 	}
 
@@ -604,7 +607,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 
 	/* Print a warning if precedence confusion is possible */
 	if (mp->m_tpconf)
-		precconf(ntn);
+		check_precedence_confusion(ntn);
 
 	/*
 	 * Print a warning if one of the operands is in a context where
@@ -623,9 +626,9 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	if (mp->m_fold) {
 		if (ln->tn_op == CON && (!mp->m_binary || rn->tn_op == CON)) {
 			if (mp->m_tctx) {
-				ntn = foldtst(ntn);
+				ntn = fold_test(ntn);
 			} else if (tspec_is_float(ntn->tn_type->t_tspec)) {
-				ntn = foldflt(ntn);
+				ntn = fold_float(ntn);
 			} else {
 				ntn = fold(ntn);
 			}
@@ -659,7 +662,7 @@ cconv(tnode_t *tn)
 			/* XXX print correct operator */
 			(void)gnuism(114, "", modtab[AMPER].m_name);
 		}
-		tn = mktnode(AMPER, tincref(tn->tn_type->t_subt, PTR),
+		tn = new_tnode(AMPER, tincref(tn->tn_type->t_subt, PTR),
 			     tn, NULL);
 	}
 
@@ -675,7 +678,7 @@ cconv(tnode_t *tn)
 	if (tn->tn_lvalue) {
 		tp = tduptyp(tn->tn_type);
 		tp->t_const = tp->t_volatile = 0;
-		tn = mktnode(LOAD, tp, tn, NULL);
+		tn = new_tnode(LOAD, tp, tn, NULL);
 	}
 
 	return tn;
@@ -714,26 +717,26 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 	if (mp->m_requires_integer) {
 		if (!tspec_is_int(lt) || (mp->m_binary && !tspec_is_int(rt))) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 	} else if (mp->m_requires_integer_or_complex) {
 		if ((!tspec_is_int(lt) && !tspec_is_complex(lt)) ||
 		    (mp->m_binary &&
 		     (!tspec_is_int(rt) && !tspec_is_complex(rt)))) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 	} else if (mp->m_requires_scalar) {
 		if (!tspec_is_scalar(lt) ||
 		    (mp->m_binary && !tspec_is_scalar(rt))) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 	} else if (mp->m_requires_arith) {
 		if (!tspec_is_arith(lt) ||
 		    (mp->m_binary && !tspec_is_arith(rt))) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 	}
@@ -842,17 +845,17 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !tspec_is_int(rt)) ||
 		    (rt == PTR && !tspec_is_int(lt))) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 		break;
 	case MINUS:
 		/* operands have scalar types (checked above) */
 		if (lt == PTR && (!tspec_is_int(rt) && rt != PTR)) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		} else if (rt == PTR && lt != PTR) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 		if (lt == PTR && rt == PTR) {
@@ -966,11 +969,11 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				/* illegal comb. of pointer and int., op %s */
 				warning(123, lx, lbuf, rx, rbuf, mp->m_name);
 			} else {
-				incompat(op, lt, rt);
+				warn_incompatible_types(op, lt, rt);
 				return 0;
 			}
 		} else if (lt == PTR && rt == PTR) {
-			ptrcmpok(op, ln, rn);
+			check_pointer_comparison(op, ln, rn);
 		}
 		break;
 	case QUEST:
@@ -1049,7 +1052,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case INIT:
 	case FARG:
 	case RETURN:
-		if (!asgntypok(op, arg, ln, rn))
+		if (!check_assign_types_compatible(op, arg, ln, rn))
 			return 0;
 		goto assign;
 	case MULASS:
@@ -1060,7 +1063,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case SUBASS:
 		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !tspec_is_int(rt)) || rt == PTR) {
-			incompat(op, lt, rt);
+			warn_incompatible_types(op, lt, rt);
 			return 0;
 		}
 		goto assign;
@@ -1090,7 +1093,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			error(114, "left ", mp->m_name);
 			return 0;
 		} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
-					    conmemb(ltp))) {
+					    has_constant_member(ltp))) {
 			/* %soperand of %s must be modifiable lvalue */
 			if (!tflag)
 				warning(115, "left ", mp->m_name);
@@ -1098,7 +1101,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		break;
 	case COMMA:
 		if (!modtab[ln->tn_op].m_sideeff)
-			nulleff(ln);
+			check_null_effect(ln);
 		break;
 		/* LINTED206: (enumeration values not handled in switch) */
 	case CON:
@@ -1133,20 +1136,20 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 	if (mp->m_bad_on_enum &&
 	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
-		chkbeop(op, ln, rn);
+		check_bad_enum_operation(op, ln, rn);
 	} else if (mp->m_valid_on_enum &&
 	    (ltp->t_isenum && rtp && rtp->t_isenum)) {
-		chkeop2(op, arg, ln, rn);
+		check_enum_type_mismatch(op, arg, ln, rn);
 	} else if (mp->m_valid_on_enum &&
 	    (ltp->t_isenum || (rtp && rtp->t_isenum))) {
-		chkeop1(op, arg, ln, rn);
+		check_enum_int_mismatch(op, arg, ln, rn);
 	}
 
 	return 1;
 }
 
 static void
-ptrcmpok(op_t op, tnode_t *ln, tnode_t *rn)
+check_pointer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	type_t	*ltp, *rtp;
 	tspec_t	lt, rt;
@@ -1184,7 +1187,7 @@ ptrcmpok(op_t op, tnode_t *ln, tnode_t *rn)
  * If the types are (almost) compatible, 1 is returned, otherwise 0.
  */
 static int
-asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_assign_types_compatible(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
@@ -1322,7 +1325,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		warning(155, arg);
 		break;
 	default:
-		incompat(op, lt, rt);
+		warn_incompatible_types(op, lt, rt);
 		break;
 	}
 
@@ -1334,7 +1337,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
  * enum type, is applied to an enum type.
  */
 static void
-chkbeop(op_t op, tnode_t *ln, tnode_t *rn)
+check_bad_enum_operation(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
 
@@ -1367,7 +1370,7 @@ chkbeop(op_t op, tnode_t *ln, tnode_t *rn)
  * Prints a warning if an operator is applied to two different enum types.
  */
 static void
-chkeop2(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_enum_type_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
 
@@ -1400,11 +1403,11 @@ chkeop2(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Prints a warning if an operator has both enum end other integer
+ * Prints a warning if an operator has both enum and other integer
  * types.
  */
 static void
-chkeop1(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+check_enum_int_mismatch(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 {
 	char lbuf[64], rbuf[64];
 
@@ -1450,7 +1453,7 @@ chkeop1(op_t op, int arg, tnode_t *ln, tnode_t *rn)
  * Build and initialize a new node.
  */
 static tnode_t *
-mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
+new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
@@ -1507,7 +1510,7 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 			if (t != FUNC && t != VOID)
 				ntn->tn_lvalue = 1;
 		} else {
-			LERROR("mktnode()");
+			LERROR("new_tnode()");
 		}
 		break;
 	default:
@@ -1693,16 +1696,16 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		ost = tn->tn_type->t_subt->t_tspec;
 
 	if (!tflag && !sflag && op == FARG)
-		ptconv(arg, nt, ot, tp, tn);
+		check_prototype_conversion(arg, nt, ot, tp, tn);
 	if (tspec_is_int(nt) && tspec_is_int(ot)) {
-		iiconv(op, arg, nt, ot, tp, tn);
+		check_integer_conversion(op, arg, nt, ot, tp, tn);
 	} else if (nt == PTR && ((ot == PTR && ost == VOID) ||
 	    tspec_is_int(ot)) && tn->tn_op == CON && tn->tn_val->v_quad == 0) {
 		/* 0, 0L and (void *)0 may be assigned to any pointer. */
 	} else if (tspec_is_int(nt) && ot == PTR) {
-		piconv(op, nt, tp, tn);
+		check_pointer_integer_conversion(op, nt, tp, tn);
 	} else if (nt == PTR && ot == PTR) {
-		ppconv(op, tn, tp);
+		check_pointer_conversion(op, tn, tp);
 	}
 
 	ntn = getnode();
@@ -1727,10 +1730,11 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
  * absence of a prototype.
  *
  * Errors/Warnings about illegal type combinations are already printed
- * in asgntypok().
+ * in check_assign_types_compatible().
  */
 static void
-ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
+check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
+			   tnode_t *tn)
 {
 	tnode_t	*ptn;
 	char buf[64];
@@ -1785,7 +1789,8 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
  */
 /* ARGSUSED */
 static void
-iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
+check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
+			 tnode_t *tn)
 {
 	char lbuf[64], rbuf[64], opbuf[16];
 	if (tn->tn_op == CON)
@@ -1846,7 +1851,7 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
  * Print warnings for dubious conversions of pointer to integer.
  */
 static void
-piconv(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
+check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 {
 	char buf[64];
 
@@ -1873,7 +1878,7 @@ piconv(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
  * Print warnings for questionable pointer conversions.
  */
 static void
-ppconv(op_t op, tnode_t *tn, type_t *tp)
+check_pointer_conversion(op_t op, tnode_t *tn, type_t *tp)
 {
 	tspec_t nt, ot;
 	const	char *nts, *ots;
@@ -2106,7 +2111,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				/* conversion of neg. const. to ..., arg #%d */
 				warning(296, arg);
 			} else if (modtab[op].m_comp) {
-				/* we get this warning already in chkcomp() */
+				/* handled by check_integer_comparison() */
 			} else {
 				/* conversion of negative constant to ... */
 				warning(222);
@@ -2189,7 +2194,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
  * Prints a appropriate warning.
  */
 static void
-incompat(op_t op, tspec_t lt, tspec_t rt)
+warn_incompatible_types(op_t op, tspec_t lt, tspec_t rt)
 {
 	mod_t	*mp;
 	int e = 0;
@@ -2298,19 +2303,19 @@ merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
  * (maybe recursively).
  */
 static int
-conmemb(type_t *tp)
+has_constant_member(type_t *tp)
 {
 	sym_t	*m;
 	tspec_t	t;
 
 	if ((t = tp->t_tspec) != STRUCT && t != UNION)
-		LERROR("conmemb()");
+		LERROR("has_constant_member()");
 	for (m = tp->t_str->memb; m != NULL; m = m->s_nxt) {
 		tp = m->s_type;
 		if (tp->t_const)
 			return 1;
 		if ((t = tp->t_tspec) == STRUCT || t == UNION) {
-			if (conmemb(m->s_type))
+			if (has_constant_member(m->s_type))
 				return 1;
 		}
 	}
@@ -2321,17 +2326,17 @@ conmemb(type_t *tp)
  * Create a new node for one of the operators POINT and ARROW.
  */
 static tnode_t *
-bldstr(op_t op, tnode_t *ln, tnode_t *rn)
+build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn, *ctn;
 	int	nolval;
 
 	if (rn->tn_op != NAME)
-		LERROR("bldstr()");
+		LERROR("build_struct_access()");
 	if (rn->tn_sym->s_value.v_tspec != INT)
-		LERROR("bldstr()");
+		LERROR("build_struct_access()");
 	if (rn->tn_sym->s_scl != MOS && rn->tn_sym->s_scl != MOU)
-		LERROR("bldstr()");
+		LERROR("build_struct_access()");
 
 	/*
 	 * Remember if the left operand is an lvalue (structure members
@@ -2343,24 +2348,24 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
 		ln = build_ampersand(ln, 1);
 	} else if (ln->tn_type->t_tspec != PTR) {
 		if (!tflag || !tspec_is_int(ln->tn_type->t_tspec))
-			LERROR("bldstr()");
+			LERROR("build_struct_access()");
 		ln = convert(NOOP, 0, tincref(gettyp(VOID), PTR), ln);
 	}
 
 #if PTRDIFF_IS_LONG
-	ctn = getinode(LONG, rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	ctn = new_int_const_node(LONG, rn->tn_sym->s_value.v_quad / CHAR_BIT);
 #else
-	ctn = getinode(INT, rn->tn_sym->s_value.v_quad / CHAR_BIT);
+	ctn = new_int_const_node(INT, rn->tn_sym->s_value.v_quad / CHAR_BIT);
 #endif
 
-	ntn = mktnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
+	ntn = new_tnode(PLUS, tincref(rn->tn_type, PTR), ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
 	if (rn->tn_type->t_isfield) {
-		ntn = mktnode(FSEL, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = new_tnode(FSEL, ntn->tn_type->t_subt, ntn, NULL);
 	} else {
-		ntn = mktnode(STAR, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = new_tnode(STAR, ntn->tn_type->t_subt, ntn, NULL);
 	}
 
 	if (nolval)
@@ -2373,19 +2378,19 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for INCAFT, INCBEF, DECAFT and DECBEF.
  */
 static tnode_t *
-bldincdec(op_t op, tnode_t *ln)
+build_prepost_incdec(op_t op, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
 
 	if (ln == NULL)
-		LERROR("bldincdec()");
+		LERROR("build_prepost_incdec()");
 
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
 	} else {
-		cn = getinode(INT, (int64_t)1);
+		cn = new_int_const_node(INT, (int64_t)1);
 	}
-	ntn = mktnode(op, ln->tn_type, ln, cn);
+	ntn = new_tnode(op, ln->tn_type, ln, cn);
 
 	return ntn;
 }
@@ -2394,30 +2399,30 @@ bldincdec(op_t op, tnode_t *ln)
  * Create a node for REAL, IMAG
  */
 static tnode_t *
-bldri(op_t op, tnode_t *ln)
+build_real_imag(op_t op, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
 	char buf[64];
 
 	if (ln == NULL)
-		LERROR("bldincdec()");
+		LERROR("build_prepost_incdec()");
 
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
-		cn = getinode(LDOUBLE, (int64_t)1);
+		cn = new_int_const_node(LDOUBLE, (int64_t)1);
 		break;
 	case DCOMPLEX:
-		cn = getinode(DOUBLE, (int64_t)1);
+		cn = new_int_const_node(DOUBLE, (int64_t)1);
 		break;
 	case FCOMPLEX:
-		cn = getinode(FLOAT, (int64_t)1);
+		cn = new_int_const_node(FLOAT, (int64_t)1);
 		break;
 	default:
 		error(276, op == REAL ? "real" : "imag",
 		    tyname(buf, sizeof(buf), ln->tn_type));
 		return NULL;
 	}
-	ntn = mktnode(op, cn->tn_type, ln, cn);
+	ntn = new_tnode(op, cn->tn_type, ln, cn);
 	ntn->tn_lvalue = 1;
 
 	return ntn;
@@ -2445,7 +2450,7 @@ build_ampersand(tnode_t *tn, int noign)
 		return tn->tn_left;
 	}
 
-	ntn = mktnode(AMPER, tincref(tn->tn_type, PTR), tn, NULL);
+	ntn = new_tnode(AMPER, tincref(tn->tn_type, PTR), tn, NULL);
 
 	return ntn;
 }
@@ -2454,7 +2459,7 @@ build_ampersand(tnode_t *tn, int noign)
  * Create a node for operators PLUS and MINUS.
  */
 static tnode_t *
-bldplmi(op_t op, tnode_t *ln, tnode_t *rn)
+build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn, *ctn;
 	type_t	*tp;
@@ -2470,35 +2475,35 @@ bldplmi(op_t op, tnode_t *ln, tnode_t *rn)
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
 
 		if (!tspec_is_int(rn->tn_type->t_tspec))
-			LERROR("bldplmi()");
+			LERROR("build_plus_minus()");
 
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = mktnode(MULT, rn->tn_type, rn, ctn);
+		rn = new_tnode(MULT, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
-		ntn = mktnode(op, ln->tn_type, ln, rn);
+		ntn = new_tnode(op, ln->tn_type, ln, rn);
 
 	} else if (rn->tn_type->t_tspec == PTR) {
 
 		if (ln->tn_type->t_tspec != PTR || op != MINUS)
-			LERROR("bldplmi()");
+			LERROR("build_plus_minus()");
 #if PTRDIFF_IS_LONG
 		tp = gettyp(LONG);
 #else
 		tp = gettyp(INT);
 #endif
-		ntn = mktnode(op, tp, ln, rn);
+		ntn = new_tnode(op, tp, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
 			ntn = fold(ntn);
 		ctn = plength(ln->tn_type);
 		balance(NOOP, &ntn, &ctn);
-		ntn = mktnode(DIV, tp, ntn, ctn);
+		ntn = new_tnode(DIV, tp, ntn, ctn);
 
 	} else {
 
-		ntn = mktnode(op, ln->tn_type, ln, rn);
+		ntn = new_tnode(op, ln->tn_type, ln, rn);
 
 	}
 	return ntn;
@@ -2508,14 +2513,14 @@ bldplmi(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for operators SHL and SHR.
  */
 static tnode_t *
-bldshft(op_t op, tnode_t *ln, tnode_t *rn)
+build_bit_shift(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	t;
 	tnode_t	*ntn;
 
 	if ((t = rn->tn_type->t_tspec) != INT && t != UINT)
 		rn = convert(CVT, 0, gettyp(INT), rn);
-	ntn = mktnode(op, ln->tn_type, ln, rn);
+	ntn = new_tnode(op, ln->tn_type, ln, rn);
 	return ntn;
 }
 
@@ -2523,7 +2528,7 @@ bldshft(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for COLON.
  */
 static tnode_t *
-bldcol(tnode_t *ln, tnode_t *rn)
+build_colon(tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt, pdt;
 	type_t	*rtp;
@@ -2548,9 +2553,9 @@ bldcol(tnode_t *ln, tnode_t *rn)
 	} else if (lt == STRUCT || lt == UNION) {
 		/* Both types must be identical. */
 		if (rt != STRUCT && rt != UNION)
-			LERROR("bldcol()");
+			LERROR("build_colon()");
 		if (ln->tn_type->t_str != rn->tn_type->t_str)
-			LERROR("bldcol()");
+			LERROR("build_colon()");
 		if (incompl(ln->tn_type)) {
 			/* unknown operand size, op %s */
 			error(138, modtab[COLON].m_name);
@@ -2571,17 +2576,17 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		rtp = rn->tn_type;
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
 		if (rt != PTR)
-			LERROR("bldcol()");
+			LERROR("build_colon()");
 		rtp = rn->tn_type;
 		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
 		if (lt != PTR)
-			LERROR("bldcol()");
+			LERROR("build_colon()");
 		rtp = ln->tn_type;
 		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else {
 		if (lt != PTR || rt != PTR)
-			LERROR("bldcol()");
+			LERROR("build_colon()");
 		/*
 		 * XXX For now we simply take the left type. This is
 		 * probably wrong, if one type contains a functionprototype
@@ -2592,7 +2597,7 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	}
 
-	ntn = mktnode(COLON, rtp, ln, rn);
+	ntn = new_tnode(COLON, rtp, ln, rn);
 
 	return ntn;
 }
@@ -2601,31 +2606,31 @@ bldcol(tnode_t *ln, tnode_t *rn)
  * Create a node for an assignment operator (both = and op= ).
  */
 static tnode_t *
-bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
+build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt;
 	tnode_t	*ntn, *ctn;
 
 	if (ln == NULL || rn == NULL)
-		LERROR("bldasgn()");
+		LERROR("build_assignment()");
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
 
 	if ((op == ADDASS || op == SUBASS) && lt == PTR) {
 		if (!tspec_is_int(rt))
-			LERROR("bldasgn()");
+			LERROR("build_assignment()");
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = mktnode(MULT, rn->tn_type, rn, ctn);
+		rn = new_tnode(MULT, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
 	}
 
 	if ((op == ASSIGN || op == RETURN) && (lt == STRUCT || rt == STRUCT)) {
 		if (rt != lt || ln->tn_type->t_str != rn->tn_type->t_str)
-			LERROR("bldasgn()");
+			LERROR("build_assignment()");
 		if (incompl(ln->tn_type)) {
 			if (op == RETURN) {
 				/* cannot return incomplete type */
@@ -2654,7 +2659,7 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	ntn = mktnode(op, ln->tn_type, ln, rn);
+	ntn = new_tnode(op, ln->tn_type, ln, rn);
 
 	return ntn;
 }
@@ -2725,7 +2730,7 @@ plength(type_t *tp)
 	st = INT;
 #endif
 
-	return getinode(st, (int64_t)(elem * elsz / CHAR_BIT));
+	return new_int_const_node(st, (int64_t)(elem * elsz / CHAR_BIT));
 }
 
 /*
@@ -2884,7 +2889,7 @@ fold(tnode_t *tn)
  * Same for operators whose operands are compared with 0 (test context).
  */
 static tnode_t *
-foldtst(tnode_t *tn)
+fold_test(tnode_t *tn)
 {
 	int	l, r = 0;
 	val_t	*v;
@@ -2892,7 +2897,7 @@ foldtst(tnode_t *tn)
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = tn->tn_type->t_tspec;
 	if (tn->tn_type->t_tspec != INT)
-		LERROR("foldtst()");
+		LERROR("fold_test()");
 
 	if (tspec_is_float(tn->tn_left->tn_type->t_tspec)) {
 		l = tn->tn_left->tn_val->v_ldbl != 0.0;
@@ -2922,7 +2927,7 @@ foldtst(tnode_t *tn)
 		v->v_quad = l || r;
 		break;
 	default:
-		LERROR("foldtst()");
+		LERROR("fold_test()");
 	}
 
 	return getcnode(tn->tn_type, v);
@@ -2932,7 +2937,7 @@ foldtst(tnode_t *tn)
  * Same for operands with floating point type.
  */
 static tnode_t *
-foldflt(tnode_t *tn)
+fold_float(tnode_t *tn)
 {
 	val_t	*v;
 	tspec_t	t;
@@ -2943,12 +2948,12 @@ foldflt(tnode_t *tn)
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
 	if (!tspec_is_float(t))
-		LERROR("foldflt()");
+		LERROR("fold_float()");
 
 	if (t != tn->tn_left->tn_type->t_tspec)
-		LERROR("foldflt()");
+		LERROR("fold_float()");
 	if (modtab[tn->tn_op].m_binary && t != tn->tn_right->tn_type->t_tspec)
-		LERROR("foldflt()");
+		LERROR("fold_float()");
 
 	l = tn->tn_left->tn_val->v_ldbl;
 	if (modtab[tn->tn_op].m_binary)
@@ -3004,11 +3009,11 @@ foldflt(tnode_t *tn)
 		v->v_quad = l != r;
 		break;
 	default:
-		LERROR("foldflt()");
+		LERROR("fold_float()");
 	}
 
 	if (!fpe && isnan((double)v->v_ldbl))
-		LERROR("foldflt()");
+		LERROR("fold_float()");
 	if (fpe || !finite((double)v->v_ldbl) ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
@@ -3042,7 +3047,7 @@ build_sizeof(type_t *tp)
 #else
 	st = UINT;
 #endif
-	return getinode(st, tsize(tp) / CHAR_BIT);
+	return new_int_const_node(st, tsize(tp) / CHAR_BIT);
 }
 
 /*
@@ -3062,7 +3067,7 @@ build_offsetof(type_t *tp, sym_t *sym)
 		error(111, "offsetof");
 
 	// XXX: wrong size, no checking for sym fixme
-	return getinode(st, tsize(tp) / CHAR_BIT);
+	return new_int_const_node(st, tsize(tp) / CHAR_BIT);
 }
 
 int64_t
@@ -3173,7 +3178,7 @@ build_alignof(type_t *tp)
 	st = UINT;
 #endif
 
-	return getinode(st, (int64_t)getbound(tp) / CHAR_BIT);
+	return new_int_const_node(st, (int64_t)getbound(tp) / CHAR_BIT);
 }
 
 /*
@@ -3272,9 +3277,9 @@ funcarg(tnode_t *args, tnode_t *arg)
 	 * will not change.
 	 */
 	if (arg == NULL)
-		arg = getinode(INT, (int64_t)0);
+		arg = new_int_const_node(INT, (int64_t)0);
 
-	ntn = mktnode(PUSH, arg->tn_type, arg, args);
+	ntn = new_tnode(PUSH, arg->tn_type, arg, args);
 
 	return ntn;
 }
@@ -3312,9 +3317,9 @@ funccall(tnode_t *func, tnode_t *args)
 		return NULL;
 	}
 
-	args = chkfarg(func->tn_type->t_subt, args);
+	args = check_function_arguments(func->tn_type->t_subt, args);
 
-	ntn = mktnode(fcop, func->tn_type->t_subt->t_subt, func, args);
+	ntn = new_tnode(fcop, func->tn_type->t_subt->t_subt, func, args);
 
 	return ntn;
 }
@@ -3324,7 +3329,7 @@ funccall(tnode_t *func, tnode_t *args)
  * if necessary.
  */
 static tnode_t *
-chkfarg(type_t *ftp, tnode_t *args)
+check_function_arguments(type_t *ftp, tnode_t *args)
 {
 	tnode_t	*arg;
 	sym_t	*asym;
@@ -3378,7 +3383,8 @@ chkfarg(type_t *ftp, tnode_t *args)
 		arg->tn_left = cconv(arg->tn_left);
 
 		if (asym != NULL) {
-			arg->tn_left = parg(n, asym->s_type, arg->tn_left);
+			arg->tn_left = check_prototype_argument(
+			    n, asym->s_type, arg->tn_left);
 		} else {
 			arg->tn_left = promote(NOOP, 1, arg->tn_left);
 		}
@@ -3398,7 +3404,8 @@ chkfarg(type_t *ftp, tnode_t *args)
  * the type of the parameter.
  */
 static tnode_t *
-parg(	int	n,		/* pos of arg */
+check_prototype_argument(
+	int	n,		/* pos of arg */
 	type_t	*tp,		/* expected type (from prototype) */
 	tnode_t	*tn)		/* argument */
 {
@@ -3509,10 +3516,10 @@ expr(tnode_t *tn, int vctx, int tctx, int dofreeblk)
 		 * printed
 		 */
 		if (tn->tn_op != COMMA && !vctx && !tctx)
-			nulleff(tn);
+			check_null_effect(tn);
 	}
 	if (dflag)
-		displexpr(tn, 0);
+		display_expression(tn, 0);
 
 	/* free the tree memory */
 	if (dofreeblk)
@@ -3520,7 +3527,7 @@ expr(tnode_t *tn, int vctx, int tctx, int dofreeblk)
 }
 
 static void
-nulleff(tnode_t *tn)
+check_null_effect(tnode_t *tn)
 {
 
 	if (!hflag)
@@ -3567,7 +3574,7 @@ nulleff(tnode_t *tn)
  * only used for debugging
  */
 static void
-displexpr(tnode_t *tn, int offs)
+display_expression(tnode_t *tn, int offs)
 {
 	uint64_t uq;
 
@@ -3590,7 +3597,7 @@ displexpr(tnode_t *tn, int offs)
 		    (long)uq & 0xffffffffl);
 	} else if (tn->tn_op == CON) {
 		if (tn->tn_type->t_tspec != PTR)
-			LERROR("displexpr()");
+			LERROR("display_expression()");
 		(void)printf("0x%0*lx ", (int)(sizeof (void *) * CHAR_BIT / 4),
 			     (u_long)tn->tn_val->v_quad);
 	} else if (tn->tn_op == STRING) {
@@ -3613,10 +3620,10 @@ displexpr(tnode_t *tn, int offs)
 	(void)printf("%s\n", ttos(tn->tn_type));
 	if (tn->tn_op == NAME || tn->tn_op == CON || tn->tn_op == STRING)
 		return;
-	displexpr(tn->tn_left, offs + 2);
+	display_expression(tn->tn_left, offs + 2);
 	if (modtab[tn->tn_op].m_binary ||
 	    (tn->tn_op == PUSH && tn->tn_right != NULL)) {
-		displexpr(tn->tn_right, offs + 2);
+		display_expression(tn->tn_right, offs + 2);
 	}
 }
 
@@ -3862,7 +3869,7 @@ check_array_index(tnode_t *tn, int amper)
  * Check for ordered comparisons of unsigned values with 0.
  */
 static void
-chkcomp(op_t op, tnode_t *ln, tnode_t *rn)
+check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
 	char buf[64];
 	tspec_t	lt, rt;
@@ -4050,7 +4057,7 @@ cat_strings(strg_t *strg1, strg_t *strg2)
  * expressions are already folded.
  */
 static void
-precconf(tnode_t *tn)
+check_precedence_confusion(tnode_t *tn)
 {
 	tnode_t	*ln, *rn;
 	op_t	lop, rop = NOOP;
