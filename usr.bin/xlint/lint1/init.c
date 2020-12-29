@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.39 2020/12/29 19:09:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.40 2020/12/29 19:57:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.39 2020/12/29 19:09:53 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.40 2020/12/29 19:57:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -153,18 +153,18 @@ initstack_pop_item(void)
 	istk_t	*istk;
 	sym_t	*m;
 
-	DPRINTF(("%s+(%s): brace=%d remaining=%d namedmem %d\n", __func__,
+	DPRINTF(("%s: pop type=%s, brace=%d remaining=%d named=%d\n", __func__,
 	    tyname(buf, sizeof(buf),
 		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
+
 	initstk = (istk = initstk)->i_nxt;
 	free(istk);
-
 	istk = initstk;
 	if (istk == NULL)
 		LERROR("initstack_pop_item()");
 
-	DPRINTF(("%s-(%s): brace=%d remaining=%d namedmem %d\n", __func__,
+	DPRINTF(("%s: top type=%s, brace=%d remaining=%d named=%d\n", __func__,
 	    tyname(buf, sizeof(buf),
 		initstk->i_type ? initstk->i_type : initstk->i_subt),
 	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
@@ -173,16 +173,18 @@ initstack_pop_item(void)
 	if (istk->i_cnt < 0)
 		LERROR("initstack_pop_item()");
 
-	DPRINTF(("%s(): remaining=%d name=%s\n", __func__, istk->i_cnt,
-	    namedmem ? namedmem->n_name : "*null*"));
+	DPRINTF(("%s: top remaining=%d rhs.name=%s\n", __func__,
+	    istk->i_cnt, namedmem ? namedmem->n_name : "*null*"));
+
 	if (istk->i_cnt >= 0 && namedmem != NULL) {
-		DPRINTF(("%s(): remaining=%d type=%s name=%s\n", __func__,
-		    istk->i_cnt, tyname(buf, sizeof(buf), istk->i_type),
-		    namedmem->n_name));
+
+		DPRINTF(("%s: named remaining=%d type=%s, rhs.name=%s\n",
+		    __func__, istk->i_cnt,
+		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
 
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
-			DPRINTF(("%s(): pop [%s %s]\n", __func__,
-			    namedmem->n_name, m->s_name));
+			DPRINTF(("%s: pop lhs.name=%s rhs.name=%s\n", __func__,
+			    m->s_name, namedmem->n_name));
 			if (m->s_field && m->s_name == unnamed)
 				continue;
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
@@ -193,7 +195,7 @@ initstack_pop_item(void)
 			}
 		}
 		error(101, namedmem->n_name);
-		DPRINTF(("%s(): namedmem %s\n", __func__, namedmem->n_name));
+		DPRINTF(("%s: end rhs.name=%s\n", __func__, namedmem->n_name));
 		pop_member();
 		istk->i_namedmem = 1;
 		return;
@@ -208,7 +210,7 @@ initstack_pop_item(void)
 			m = istk->i_mem = istk->i_mem->s_nxt;
 			if (m == NULL)
 				LERROR("initstack_pop_item()");
-			DPRINTF(("%s(): pop %s\n", __func__, m->s_name));
+			DPRINTF(("%s: pop %s\n", __func__, m->s_name));
 		} while (m->s_field && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
 	}
@@ -328,14 +330,14 @@ again:
 			return;
 		}
 		cnt = 0;
-		DPRINTF(("%s: 2. member lookup %s %s i_namedmem=%d\n", __func__,
+		DPRINTF(("%s: lookup type=%s, name=%s named=%d\n", __func__,
 		    tyname(buf, sizeof(buf), istk->i_type),
 		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem));
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
 			if (m->s_field && m->s_name == unnamed)
 				continue;
 			if (namedmem != NULL) {
-				DPRINTF(("%s():[member:%s, looking:%s]\n",
+				DPRINTF(("%s: named lhs.member=%s, rhs.member=%s\n",
 				    __func__, m->s_name, namedmem->n_name));
 				if (strcmp(m->s_name, namedmem->n_name) == 0) {
 					cnt++;
@@ -350,19 +352,19 @@ again:
 		}
 		if (namedmem != NULL) {
 			if (m == NULL) {
-				DPRINTF(("%s(): struct pop\n", __func__));
+				DPRINTF(("%s: pop struct\n", __func__));
 				goto pop;
 			}
 			istk->i_mem = m;
 			istk->i_subt = m->s_type;
 			istk->i_namedmem = 1;
-			DPRINTF(("%s(): namedmem %s\n", __func__,
+			DPRINTF(("%s: named name=%s\n", __func__,
 			    namedmem->n_name));
 			pop_member();
 			cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 		}
 		istk->i_brace = 1;
-		DPRINTF(("%s(): %s brace=%d\n", __func__,
+		DPRINTF(("%s: unnamed type=%s, brace=%d\n", __func__,
 		    tyname(buf, sizeof(buf),
 			istk->i_type ? istk->i_type : istk->i_subt),
 		    istk->i_brace));
@@ -376,7 +378,7 @@ again:
 		break;
 	default:
 		if (namedmem) {
-			DPRINTF(("%s(): pop\n", __func__));
+			DPRINTF(("%s: pop\n", __func__));
 	pop:
 			inxt = initstk->i_nxt;
 			free(istk);
@@ -437,11 +439,10 @@ initstack_next_brace(void)
 		initstack_push();
 	if (!initerr) {
 		initstk->i_brace = 1;
-		DPRINTF(("%s(): %p %s brace=%d\n", __func__,
+		DPRINTF(("%s: %p %s\n", __func__,
 		    namedmem,
 		    tyname(buf, sizeof(buf),
-			initstk->i_type ? initstk->i_type : initstk->i_subt),
-		    initstk->i_brace));
+			initstk->i_type ? initstk->i_type : initstk->i_subt)));
 	}
 }
 
@@ -514,7 +515,7 @@ mkinit(tnode_t *tn)
 	char	buf[64], sbuf[64];
 #endif
 
-	DPRINTF(("%s(%s %s)\n", __func__,
+	DPRINTF(("%s: type=%s, value=%s\n", __func__,
 	    tyname(buf, sizeof(buf), tn->tn_type),
 	    print_tnode(sbuf, sizeof(sbuf), tn)));
 	if (initerr || tn == NULL)
@@ -558,7 +559,7 @@ mkinit(tnode_t *tn)
 		return;
 
 	initstk->i_cnt--;
-	DPRINTF(("%s() remaining=%d tn=%p\n", __func__, initstk->i_cnt, tn));
+	DPRINTF(("%s: remaining=%d tn=%p\n", __func__, initstk->i_cnt, tn));
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof (tnode_t));
 	ln->tn_op = NAME;
