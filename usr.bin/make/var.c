@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.774 2020/12/28 00:46:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.775 2020/12/29 01:48:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.774 2020/12/28 00:46:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.775 2020/12/29 01:48:46 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -654,7 +654,7 @@ ExportVar(const char *name, VarExportMode mode)
 void
 Var_ReexportVars(void)
 {
-	char *val;
+	char *xvarnames;
 
 	/*
 	 * Several make implementations support this sort of mechanism for
@@ -682,17 +682,17 @@ Var_ReexportVars(void)
 	}
 
 	(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES,
-	    &val);
+	    &xvarnames);
 	/* TODO: handle errors */
-	if (val[0] != '\0') {
-		Words words = Str_Words(val, FALSE);
+	if (xvarnames[0] != '\0') {
+		Words varnames = Str_Words(xvarnames, FALSE);
 		size_t i;
 
-		for (i = 0; i < words.len; i++)
-			ExportVar(words.words[i], VEM_ENV);
-		Words_Free(words);
+		for (i = 0; i < varnames.len; i++)
+			ExportVar(varnames.words[i], VEM_ENV);
+		Words_Free(varnames);
 	}
-	free(val);
+	free(xvarnames);
 }
 
 static void
