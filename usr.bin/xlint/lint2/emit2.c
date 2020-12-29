@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.13 2008/09/26 22:52:24 matt Exp $ */
+/* $NetBSD: emit2.c,v 1.14 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.13 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.14 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -281,7 +281,7 @@ addoutfile(short num)
 		ofl->ofl_num = num;
 		ofl->ofl_next = NULL;
 	}
-	return (i);
+	return i;
 }
 
 static void

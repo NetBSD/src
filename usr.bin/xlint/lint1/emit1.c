@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.23 2020/12/28 21:24:55 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.24 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.23 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.24 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -185,7 +185,7 @@ ttos(type_t *tp)
 	tob = ob;
 	ob = tmp;
 
-	return (tob.o_buf);
+	return tob.o_buf;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.75 2020/12/29 10:24:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.76 2020/12/29 11:35:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.75 2020/12/29 10:24:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.76 2020/12/29 11:35:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ type_t *
 gettyp(tspec_t t)
 {
 
-	return (&typetab[t]);
+	return &typetab[t];
 }
 
 type_t *
@@ -150,7 +150,7 @@ duptyp(const type_t *tp)
 
 	ntp = getblk(sizeof (type_t));
 	STRUCT_ASSIGN(*ntp, *tp);
-	return (ntp);
+	return ntp;
 }
 
 /*
@@ -164,7 +164,7 @@ tduptyp(const type_t *tp)
 
 	ntp = tgetblk(sizeof (type_t));
 	STRUCT_ASSIGN(*ntp, *tp);
-	return (ntp);
+	return ntp;
 }
 
 /*
@@ -177,15 +177,15 @@ incompl(type_t *tp)
 	tspec_t	t;
 
 	if ((t = tp->t_tspec) == VOID) {
-		return (1);
+		return 1;
 	} else if (t == ARRAY) {
-		return (tp->t_aincompl);
+		return tp->t_aincompl;
 	} else if (t == STRUCT || t == UNION) {
-		return (tp->t_str->sincompl);
+		return tp->t_str->sincompl;
 	} else if (t == ENUM) {
-		return (tp->t_enum->eincompl);
+		return tp->t_enum->eincompl;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -389,7 +389,7 @@ tdeferr(type_t *td, tspec_t t)
 				warning(5, ttab[t].tt_name);
 			td = duptyp(gettyp(mrgtspec(t2, t)));
 			td->t_typedef = 1;
-			return (td);
+			return td;
 		}
 		break;
 	case SHORT:
@@ -398,7 +398,7 @@ tdeferr(type_t *td, tspec_t t)
 			warning(5, "short");
 			td = duptyp(gettyp(t2 == INT ? SHORT : USHORT));
 			td->t_typedef = 1;
-			return (td);
+			return td;
 		}
 		break;
 	case LONG:
@@ -423,7 +423,7 @@ tdeferr(type_t *td, tspec_t t)
 			}
 			td = duptyp(td);
 			td->t_typedef = 1;
-			return (td);
+			return td;
 		}
 		break;
 		/* LINTED206: (enumeration values not handled in switch) */
@@ -465,7 +465,7 @@ tdeferr(type_t *td, tspec_t t)
 	/* Anything other is not accepted. */
 
 	dcs->d_terr = 1;
-	return (td);
+	return td;
 }
 
 /*
@@ -877,7 +877,7 @@ mrgtspec(tspec_t t, tspec_t s)
 		}
 	}
 
-	return (t);
+	return t;
 }
 
 /*
@@ -925,7 +925,7 @@ length(type_t *tp, const char *name)
 			LERROR("length(%d)", elsz);
 		break;
 	}
-	return (elem * elsz);
+	return elem * elsz;
 }
 
 /*
@@ -958,7 +958,7 @@ getbound(type_t *tp)
 	}
 	if (a < CHAR_BIT || a > WORST_ALIGN(1) * CHAR_BIT)
 		LERROR("getbound()");
-	return (a);
+	return a;
 }
 
 /*
@@ -971,11 +971,11 @@ lnklst(sym_t *l1, sym_t *l2)
 	sym_t	*l;
 
 	if ((l = l1) == NULL)
-		return (l2);
+		return l2;
 	while (l1->s_nxt != NULL)
 		l1 = l1->s_nxt;
 	l1->s_nxt = l2;
-	return (l);
+	return l;
 }
 
 /*
@@ -1210,7 +1210,7 @@ declarator_1_struct_union(sym_t *dsym)
 	 */
 	bitfieldtype_ok = 0;
 
-	return (dsym);
+	return dsym;
 }
 
 /*
@@ -1255,7 +1255,7 @@ bitfield(sym_t *dsym, int len)
 	dsym->s_type->t_isfield = 1;
 	dsym->s_type->t_flen = len;
 	dsym->s_field = 1;
-	return (dsym);
+	return dsym;
 }
 
 /*
@@ -1274,7 +1274,7 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
 		for (p = p2; p->p_nxt != NULL; p = p->p_nxt)
 			continue;
 		p->p_nxt = p1;
-		return (p2);
+		return p2;
 	} else {
 		if (p2->p_const) {
 			if (p1->p_const) {
@@ -1291,7 +1291,7 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
 			p1->p_volatile = 1;
 		}
 		free(p2);
-		return (p1);
+		return p1;
 	}
 }
 
@@ -1325,7 +1325,7 @@ add_pointer(sym_t *decl, pqinf_t *pi)
 		free(pi);
 		pi = npi;
 	}
-	return (decl);
+	return decl;
 }
 
 /*
@@ -1359,7 +1359,7 @@ add_array(sym_t *decl, int dim, int n)
 		setcomplete(tp, 0);
 	}
 
-	return (decl);
+	return decl;
 }
 
 sym_t *
@@ -1405,7 +1405,7 @@ add_function(sym_t *decl, sym_t *args)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
 
-	return (decl);
+	return decl;
 }
 
 /*
@@ -1444,7 +1444,7 @@ new_style_function(sym_t *decl, sym_t *args)
 	}
 
 	/* return NULL if first param is VOID */
-	return (args != NULL && args->s_type->t_tspec != VOID ? args : NULL);
+	return args != NULL && args->s_type->t_tspec != VOID ? args : NULL;
 }
 
 /*
@@ -1591,7 +1591,7 @@ declarator_name(sym_t *sym)
 
 	dcs->d_fpsyms = NULL;
 
-	return (sym);
+	return sym;
 }
 
 /*
@@ -1615,7 +1615,7 @@ old_style_function_name(sym_t *sym)
 	sym->s_scl = AUTO;
 	sym->s_def = DEF;
 	sym->s_defarg = sym->s_arg = 1;
-	return (sym);
+	return sym;
 }
 
 /*
@@ -1687,7 +1687,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		}
 		setcomplete(tp, 0);
 	}
-	return (tp);
+	return tp;
 }
 
 /*
@@ -1745,7 +1745,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			dcs->d_nxt->d_nedecl = 1;
 		}
 	}
-	return (tag);
+	return tag;
 }
 
 const char *
@@ -1764,7 +1764,7 @@ scltoa(scl_t sc)
 	case ENUMTAG:	s = "enum";	break;
 	default:	LERROR("tagttoa()");
 	}
-	return (s);
+	return s;
 }
 
 /*
@@ -1818,7 +1818,7 @@ compltag(type_t *tp, sym_t *fmem)
 	} else {
 		tp->t_enum->elem = fmem;
 	}
-	return (tp);
+	return tp;
 }
 
 /*
@@ -1865,7 +1865,7 @@ ename(sym_t *sym, int val, int impl)
 		warning(48, sym->s_name);
 	}
 	enumval = val + 1;
-	return (sym);
+	return sym;
 }
 
 /*
@@ -2014,19 +2014,19 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return (1);
+		return 1;
 	}
 	if (rsym->s_scl == TYPEDEF) {
 		/* typedef redeclared: %s */
 		error(89, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return (1);
+		return 1;
 	}
 	if (dsym->s_scl == TYPEDEF) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
-		return (1);
+		return 1;
 	}
 	if (rsym->s_def == DEF && dsym->s_def == DEF) {
 		/* redefinition of %s */
@@ -2072,7 +2072,7 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 		print_previous_declaration(-1, rsym);
 	}
 	dsym->s_scl = STATIC;
-	return (0);
+	return 0;
 }
 
 static int
@@ -2133,30 +2133,30 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 		}
 
 		if (t != tp2->t_tspec)
-			return (0);
+			return 0;
 
 		if (!chkqual(tp1, tp2, ignqual))
 			return 0;
 
 		if (t == STRUCT || t == UNION)
-			return (tp1->t_str == tp2->t_str);
+			return tp1->t_str == tp2->t_str;
 
 		if (t == ARRAY && tp1->t_dim != tp2->t_dim) {
 			if (tp1->t_dim != 0 && tp2->t_dim != 0)
-				return (0);
+				return 0;
 		}
 
 		/* dont check prototypes for traditional */
 		if (t == FUNC && !tflag) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!eqargs(tp1, tp2, dowarn))
-					return (0);
+					return 0;
 			} else if (tp1->t_proto) {
 				if (!mnoarg(tp1, dowarn))
-					return (0);
+					return 0;
 			} else if (tp2->t_proto) {
 				if (!mnoarg(tp2, dowarn))
-					return (0);
+					return 0;
 			}
 		}
 
@@ -2166,7 +2166,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 
 	}
 
-	return (tp1 == tp2);
+	return tp1 == tp2;
 }
 
 /*
@@ -2178,7 +2178,7 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 	sym_t	*a1, *a2;
 
 	if (tp1->t_vararg != tp2->t_vararg)
-		return (0);
+		return 0;
 
 	a1 = tp1->t_args;
 	a2 = tp2->t_args;
@@ -2186,14 +2186,14 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 	while (a1 != NULL && a2 != NULL) {
 
 		if (eqtype(a1->s_type, a2->s_type, 1, 0, dowarn) == 0)
-			return (0);
+			return 0;
 
 		a1 = a1->s_nxt;
 		a2 = a2->s_nxt;
 
 	}
 
-	return (a1 == a2);
+	return a1 == a2;
 }
 
 /*
@@ -2224,7 +2224,7 @@ mnoarg(type_t *tp, int *dowarn)
 				*dowarn = 1;
 		}
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -2279,7 +2279,7 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		/* old style definition */
 		print_previous_declaration(300, rdsym);
 
-	return (msg);
+	return msg;
 }
 
 /*
@@ -2380,7 +2380,7 @@ decl1arg(sym_t *sym, int initflg)
 	sym->s_used = dcs->d_used;
 	mark_as_set(sym);
 
-	return (sym);
+	return sym;
 }
 
 /*
@@ -2542,7 +2542,7 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 		msg = 1;
 	}
 
-	return (msg);
+	return msg;
 }
 
 /*
@@ -2768,7 +2768,7 @@ check_init(sym_t *sym)
 		}
 	}
 
-	return (erred);
+	return erred;
 }
 
 /*
@@ -2796,7 +2796,7 @@ abstract_name(void)
 	dcs->d_rdcsym = NULL;
 	dcs->d_vararg = 0;
 
-	return (sym);
+	return sym;
 }
 
 /*
@@ -2829,7 +2829,7 @@ declare_1_abstract(sym_t *sym)
 
 	check_function_definition(sym, 1);
 	check_type(sym);
-	return (sym);
+	return sym;
 }
 
 /*
