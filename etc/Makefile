@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.448 2020/09/09 12:06:02 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.449 2020/12/29 16:46:44 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -383,6 +383,9 @@ OBSOLETE.files+=	tests
 .endif
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
+.if ${MKDEBUG} != "no"
+OBSOLETE.files+=	xdebug
+.endif
 .endif
 
 # XXX make "makeobsolete" set wise; then generate files respectively
