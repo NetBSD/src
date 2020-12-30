@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.36 2020/12/29 23:12:48 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.37 2020/12/30 01:33:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -435,6 +435,12 @@ typedef	struct err_set {
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
 #define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)
+
+#define lint_assert(cond)						\
+	do {								\
+		if (!(cond))						\
+			assert_failed(__FILE__, __LINE__, __func__, #cond); \
+	} while (/*CONSTCOND*/0)
 
 #ifdef BLKDEBUG
 #define ZERO	0xa5

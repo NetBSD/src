@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.43 2020/12/29 23:12:48 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.44 2020/12/30 01:33:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.43 2020/12/29 23:12:48 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.44 2020/12/30 01:33:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -161,16 +161,14 @@ initstack_pop_item(void)
 	initstk = istk->i_nxt;
 	free(istk);
 	istk = initstk;
-	if (istk == NULL)
-		LERROR("initstack_pop_item()");
+	lint_assert(istk != NULL);
 
 	DPRINTF(("%s: top type=%s, brace=%d remaining=%d named=%d\n", __func__,
 	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
 	istk->i_remaining--;
-	if (istk->i_remaining < 0)
-		LERROR("initstack_pop_item()");
+	lint_assert(istk->i_remaining >= 0);
 
 	DPRINTF(("%s: top remaining=%d rhs.name=%s\n", __func__,
 	    istk->i_remaining, namedmem ? namedmem->n_name : "*null*"));
@@ -207,8 +205,7 @@ initstack_pop_item(void)
 	    !istk->i_namedmem) {
 		do {
 			m = istk->i_mem = istk->i_mem->s_nxt;
-			if (m == NULL)
-				LERROR("initstack_pop_item()");
+			lint_assert(m != NULL);
 			DPRINTF(("%s: pop %s\n", __func__, m->s_name));
 		} while (m->s_field && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
@@ -268,25 +265,21 @@ initstack_push(void)
 		 * Inside of other aggregate types must not be an incomplete
 		 * type.
 		 */
-		if (istk->i_nxt->i_nxt != NULL)
-			LERROR("initstack_push()");
+		lint_assert(istk->i_nxt->i_nxt == NULL);
 		istk->i_remaining = 1;
-		if (istk->i_type->t_tspec != ARRAY)
-			LERROR("initstack_push()");
+		lint_assert(istk->i_type->t_tspec == ARRAY);
 		istk->i_type->t_dim++;
 		setcomplete(istk->i_type, 1);
 	}
 
-	if (istk->i_remaining <= 0)
-		LERROR("initstack_push()");
-	if (istk->i_type != NULL && tspec_is_scalar(istk->i_type->t_tspec))
-		LERROR("initstack_push()");
+	lint_assert(istk->i_remaining > 0);
+	lint_assert(istk->i_type == NULL ||
+	    !tspec_is_scalar(istk->i_type->t_tspec));
 
 	initstk = xcalloc(1, sizeof (istk_t));
 	initstk->i_nxt = istk;
 	initstk->i_type = istk->i_subt;
-	if (initstk->i_type->t_tspec == FUNC)
-		LERROR("initstack_push()");
+	lint_assert(initstk->i_type->t_tspec != FUNC);
 
 again:
 	istk = initstk;
@@ -575,8 +568,7 @@ mkinit(tnode_t *tn)
 	lt = ln->tn_type->t_tspec;
 	rt = tn->tn_type->t_tspec;
 
-	if (!tspec_is_scalar(lt))
-		LERROR("mkinit()");
+	lint_assert(tspec_is_scalar(lt));
 
 	if (!typeok(INIT, 0, ln, tn))
 		return;
