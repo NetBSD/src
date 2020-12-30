@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.102 2020/12/30 10:56:51 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.103 2020/12/30 11:04:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.102 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.103 2020/12/30 11:04:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -358,7 +358,7 @@ add_keyword(struct kwtab *kw, int deco)
 
 	sym = getblk(sizeof (sym_t));
 	sym->s_name = name;
-	sym->s_keyw = kw;
+	sym->s_keyword = kw;
 	sym->s_value.v_quad = kw->kw_token;
 	if (kw->kw_token == T_TYPE || kw->kw_token == T_SOU) {
 		sym->s_tspec = kw->kw_tspec;
@@ -497,7 +497,7 @@ name(void)
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
 	sb->sb_hash = hash(yytext);
-	if ((sym = search(sb)) != NULL && sym->s_keyw) {
+	if ((sym = search(sb)) != NULL && sym->s_keyword) {
 		freesb(sb);
 		return keyw(sym);
 	}
@@ -529,8 +529,8 @@ search(sbuf_t *sb)
 
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) == 0) {
-			if (sym->s_keyw) {
-				struct kwtab *kw = sym->s_keyw;
+			if (sym->s_keyword) {
+				struct kwtab *kw = sym->s_keyword;
 				if (!kw->kw_attr || attron)
 					return sym;
 			} else if (!attron && sym->s_kind == symtyp)

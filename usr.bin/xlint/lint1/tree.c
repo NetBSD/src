@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.104 2020/12/30 10:56:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.105 2020/12/30 11:04:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.104 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.105 2020/12/30 11:04:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -384,11 +384,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			eq = eqtype(csym->s_type, sym->s_type, 0, 0, &w) && !w;
 			if (!eq)
 				break;
-			if (csym->s_field != sym->s_field) {
+			if (csym->s_bitfield != sym->s_bitfield) {
 				eq = 0;
 				break;
 			}
-			if (csym->s_field) {
+			if (csym->s_bitfield) {
 				type_t	*tp1, *tp2;
 
 				tp1 = csym->s_type;
