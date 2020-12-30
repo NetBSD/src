@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.103 2020/12/30 10:49:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.104 2020/12/30 10:56:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.103 2020/12/30 10:49:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.104 2020/12/30 10:56:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -282,17 +282,17 @@ getsnode(strg_t *strg)
 	n->tn_type->t_dim = len + 1;
 	n->tn_lvalue = 1;
 
-	n->tn_strg = tgetblk(sizeof (strg_t));
-	n->tn_strg->st_tspec = strg->st_tspec;
-	n->tn_strg->st_len = len;
+	n->tn_string = tgetblk(sizeof (strg_t));
+	n->tn_string->st_tspec = strg->st_tspec;
+	n->tn_string->st_len = len;
 
 	if (strg->st_tspec == CHAR) {
-		n->tn_strg->st_cp = tgetblk(len + 1);
-		(void)memcpy(n->tn_strg->st_cp, strg->st_cp, len + 1);
+		n->tn_string->st_cp = tgetblk(len + 1);
+		(void)memcpy(n->tn_string->st_cp, strg->st_cp, len + 1);
 		free(strg->st_cp);
 	} else {
-		n->tn_strg->st_wcp = tgetblk((len + 1) * sizeof (wchar_t));
-		(void)memcpy(n->tn_strg->st_wcp, strg->st_wcp,
+		n->tn_string->st_wcp = tgetblk((len + 1) * sizeof (wchar_t));
+		(void)memcpy(n->tn_string->st_wcp, strg->st_wcp,
 			     (len + 1) * sizeof (wchar_t));
 		free(strg->st_wcp);
 	}
@@ -3601,14 +3601,14 @@ display_expression(tnode_t *tn, int offs)
 		(void)printf("0x%0*lx ", (int)(sizeof (void *) * CHAR_BIT / 4),
 			     (u_long)tn->tn_val->v_quad);
 	} else if (tn->tn_op == STRING) {
-		if (tn->tn_strg->st_tspec == CHAR) {
-			(void)printf("\"%s\"", tn->tn_strg->st_cp);
+		if (tn->tn_string->st_tspec == CHAR) {
+			(void)printf("\"%s\"", tn->tn_string->st_cp);
 		} else {
 			char	*s;
 			size_t	n;
-			n = MB_CUR_MAX * (tn->tn_strg->st_len + 1);
+			n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
 			s = xmalloc(n);
-			(void)wcstombs(s, tn->tn_strg->st_wcp, n);
+			(void)wcstombs(s, tn->tn_string->st_wcp, n);
 			(void)printf("L\"%s\"", s);
 			free(s);
 		}
@@ -4072,15 +4072,15 @@ check_precedence_confusion(tnode_t *tn)
 
 	lparn = 0;
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
-		lparn |= ln->tn_parn;
-	lparn |= ln->tn_parn;
+		lparn |= ln->tn_parenthesized;
+	lparn |= ln->tn_parenthesized;
 	lop = ln->tn_op;
 
 	if (mp->m_binary) {
 		rparn = 0;
 		for (rn = tn->tn_right; tn->tn_op == CVT; rn = rn->tn_left)
-			rparn |= rn->tn_parn;
-		rparn |= rn->tn_parn;
+			rparn |= rn->tn_parenthesized;
+		rparn |= rn->tn_parenthesized;
 		rop = rn->tn_op;
 	}
 

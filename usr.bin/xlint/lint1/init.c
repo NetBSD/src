@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.46 2020/12/30 10:46:11 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.47 2020/12/30 10:56:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.46 2020/12/30 10:46:11 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.47 2020/12/30 10:56:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -622,7 +622,7 @@ initstack_string(tnode_t *tn)
 		return 0;
 
 	istk = initstk;
-	strg = tn->tn_strg;
+	strg = tn->tn_string;
 
 	/*
 	 * Check if we have an array type which can be initialized by
