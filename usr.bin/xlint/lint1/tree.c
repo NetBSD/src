@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.106 2020/12/30 11:56:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.107 2020/12/30 12:22:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.106 2020/12/30 11:56:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.107 2020/12/30 12:22:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -595,8 +595,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 		break;
 	default:
 		rtp = mp->m_logical ? gettyp(INT) : ln->tn_type;
-		if (!mp->m_binary && rn != NULL)
-			LERROR("build()");
+		lint_assert(mp->m_binary || rn == NULL);
 		ntn = new_tnode(op, rtp, ln, rn);
 		break;
 	}
@@ -703,14 +702,12 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 	mp = &modtab[op];
 
-	if ((ltp = ln->tn_type) == NULL)
-		LERROR("typeok()");
+	lint_assert((ltp = ln->tn_type) != NULL);
 
 	if ((lt = ltp->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
 	if (mp->m_binary) {
-		if ((rtp = rn->tn_type) == NULL)
-			LERROR("typeok()");
+		lint_assert((rtp = rn->tn_type) != NULL);
 		if ((rt = rtp->t_tspec) == PTR)
 			rst = (rstp = rtp->t_subt)->t_tspec;
 	}
@@ -984,8 +981,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		}
 		while (rn->tn_op == CVT)
 			rn = rn->tn_left;
-		if (rn->tn_op != COLON)
-			LERROR("typeok()");
+		lint_assert(rn->tn_op == COLON);
 		break;
 	case COLON:
 		if (tspec_is_arith(lt) && tspec_is_arith(rt))
@@ -1505,13 +1501,10 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 #endif
 	case STAR:
 	case FSEL:
-		if (ln->tn_type->t_tspec == PTR) {
-			t = ln->tn_type->t_subt->t_tspec;
-			if (t != FUNC && t != VOID)
-				ntn->tn_lvalue = 1;
-		} else {
-			LERROR("new_tnode()");
-		}
+		lint_assert(ln->tn_type->t_tspec == PTR);
+		t = ln->tn_type->t_subt->t_tspec;
+		if (t != FUNC && t != VOID)
+			ntn->tn_lvalue = 1;
 		break;
 	default:
 		break;
@@ -1550,8 +1543,7 @@ promote(op_t op, int farg, tnode_t *tn)
 			if (size(INT) > len) {
 				t = INT;
 			} else {
-				if (size(INT) != len)
-					LERROR("promote()");
+				lint_assert(len == size(INT));
 				if (tspec_is_uint(t)) {
 					t = UINT;
 				} else {
@@ -1987,11 +1979,10 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case LCOMPLEX:
 			max = LDBL_MAX;		min = -LDBL_MAX;	break;
 		default:
-			LERROR("cvtcon()");
+			lint_assert(0);
 		}
 		if (v->v_ldbl > max || v->v_ldbl < min) {
-			if (nt == LDOUBLE)
-				LERROR("cvtcon()");
+			lint_assert(nt != LDOUBLE);
 			if (op == FARG) {
 				/* conv. of %s to %s is out of rng., arg #%d */
 				warning(295,
@@ -2245,8 +2236,8 @@ warn_incompatible_pointers(mod_t *mp, type_t *ltp, type_t *rtp)
 {
 	tspec_t	lt, rt;
 
-	if (ltp->t_tspec != PTR || rtp->t_tspec != PTR)
-		LERROR("warn_incompatible_pointers()");
+	lint_assert(ltp->t_tspec == PTR);
+	lint_assert(rtp->t_tspec == PTR);
 
 	lt = ltp->t_subt->t_tspec;
 	rt = rtp->t_subt->t_tspec;
@@ -2278,10 +2269,9 @@ static void
 merge_qualifiers(type_t **tpp, type_t *tp1, type_t *tp2)
 {
 
-	if ((*tpp)->t_tspec != PTR ||
-	    tp1->t_tspec != PTR || tp2->t_tspec != PTR) {
-		LERROR("merge_qualifiers()");
-	}
+	lint_assert((*tpp)->t_tspec == PTR);
+	lint_assert(tp1->t_tspec == PTR);
+	lint_assert(tp2->t_tspec == PTR);
 
 	if ((*tpp)->t_subt->t_const ==
 	    (tp1->t_subt->t_const | tp2->t_subt->t_const) &&
@@ -2308,8 +2298,8 @@ has_constant_member(type_t *tp)
 	sym_t	*m;
 	tspec_t	t;
 
-	if ((t = tp->t_tspec) != STRUCT && t != UNION)
-		LERROR("has_constant_member()");
+	lint_assert((t = tp->t_tspec) == STRUCT || t == UNION);
+
 	for (m = tp->t_str->memb; m != NULL; m = m->s_next) {
 		tp = m->s_type;
 		if (tp->t_const)
@@ -2331,12 +2321,9 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	tnode_t	*ntn, *ctn;
 	int	nolval;
 
-	if (rn->tn_op != NAME)
-		LERROR("build_struct_access()");
-	if (rn->tn_sym->s_value.v_tspec != INT)
-		LERROR("build_struct_access()");
-	if (rn->tn_sym->s_scl != MOS && rn->tn_sym->s_scl != MOU)
-		LERROR("build_struct_access()");
+	lint_assert(rn->tn_op == NAME);
+	lint_assert(rn->tn_sym->s_value.v_tspec == INT);
+	lint_assert(rn->tn_sym->s_scl == MOS || rn->tn_sym->s_scl == MOU);
 
 	/*
 	 * Remember if the left operand is an lvalue (structure members
@@ -2347,8 +2334,8 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	if (op == POINT) {
 		ln = build_ampersand(ln, 1);
 	} else if (ln->tn_type->t_tspec != PTR) {
-		if (!tflag || !tspec_is_int(ln->tn_type->t_tspec))
-			LERROR("build_struct_access()");
+		lint_assert(tflag);
+		lint_assert(tspec_is_int(ln->tn_type->t_tspec));
 		ln = convert(NOOP, 0, tincref(gettyp(VOID), PTR), ln);
 	}
 
@@ -2382,8 +2369,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
 
-	if (ln == NULL)
-		LERROR("build_prepost_incdec()");
+	lint_assert(ln != NULL);
 
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
@@ -2404,8 +2390,7 @@ build_real_imag(op_t op, tnode_t *ln)
 	tnode_t	*cn, *ntn;
 	char buf[64];
 
-	if (ln == NULL)
-		LERROR("build_prepost_incdec()");
+	lint_assert(ln != NULL);
 
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
@@ -2474,8 +2459,7 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
 
-		if (!tspec_is_int(rn->tn_type->t_tspec))
-			LERROR("build_plus_minus()");
+		lint_assert(tspec_is_int(rn->tn_type->t_tspec));
 
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
@@ -2487,8 +2471,8 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 
 	} else if (rn->tn_type->t_tspec == PTR) {
 
-		if (ln->tn_type->t_tspec != PTR || op != MINUS)
-			LERROR("build_plus_minus()");
+		lint_assert(ln->tn_type->t_tspec == PTR);
+		lint_assert(op == MINUS);
 #if PTRDIFF_IS_LONG
 		tp = gettyp(LONG);
 #else
@@ -2552,10 +2536,8 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		rtp = gettyp(VOID);
 	} else if (lt == STRUCT || lt == UNION) {
 		/* Both types must be identical. */
-		if (rt != STRUCT && rt != UNION)
-			LERROR("build_colon()");
-		if (ln->tn_type->t_str != rn->tn_type->t_str)
-			LERROR("build_colon()");
+		lint_assert(rt == STRUCT || rt == UNION);
+		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (incompl(ln->tn_type)) {
 			/* unknown operand size, op %s */
 			error(138, modtab[COLON].m_name);
@@ -2575,18 +2557,16 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		}
 		rtp = rn->tn_type;
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
-		if (rt != PTR)
-			LERROR("build_colon()");
+		lint_assert(rt == PTR);
 		rtp = rn->tn_type;
 		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
-		if (lt != PTR)
-			LERROR("build_colon()");
+		lint_assert(lt == PTR);
 		rtp = ln->tn_type;
 		merge_qualifiers(&rtp, ln->tn_type, rn->tn_type);
 	} else {
-		if (lt != PTR || rt != PTR)
-			LERROR("build_colon()");
+		lint_assert(lt == PTR);
+		lint_assert(rt == PTR);
 		/*
 		 * XXX For now we simply take the left type. This is
 		 * probably wrong, if one type contains a function prototype
@@ -2611,15 +2591,14 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 	tspec_t	lt, rt;
 	tnode_t	*ntn, *ctn;
 
-	if (ln == NULL || rn == NULL)
-		LERROR("build_assignment()");
+	lint_assert(ln != NULL);
+	lint_assert(rn != NULL);
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
 
 	if ((op == ADDASS || op == SUBASS) && lt == PTR) {
-		if (!tspec_is_int(rt))
-			LERROR("build_assignment()");
+		lint_assert(tspec_is_int(rt));
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
@@ -2629,8 +2608,8 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	if ((op == ASSIGN || op == RETURN) && (lt == STRUCT || rt == STRUCT)) {
-		if (rt != lt || ln->tn_type->t_str != rn->tn_type->t_str)
-			LERROR("build_assignment()");
+		lint_assert(lt == rt);
+		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (incompl(ln->tn_type)) {
 			if (op == RETURN) {
 				/* cannot return incomplete type */
@@ -2673,8 +2652,7 @@ plength(type_t *tp)
 	int	elem, elsz;
 	tspec_t	st;
 
-	if (tp->t_tspec != PTR)
-		LERROR("plength()");
+	lint_assert(tp->t_tspec == PTR);
 	tp = tp->t_subt;
 
 	elem = 1;
@@ -2710,8 +2688,8 @@ plength(type_t *tp)
 		if ((elsz = size(tp->t_tspec)) == 0) {
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
-		} else if (elsz == -1) {
-			LERROR("plength()");
+		} else {
+			lint_assert(elsz != -1);
 		}
 		break;
 	}
@@ -2867,7 +2845,7 @@ fold(tnode_t *tn)
 		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
-		LERROR("fold()");
+		lint_assert(0);
 	}
 
 	/* XXX does not work for quads. */
@@ -2896,8 +2874,7 @@ fold_test(tnode_t *tn)
 
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = tn->tn_type->t_tspec;
-	if (tn->tn_type->t_tspec != INT)
-		LERROR("fold_test()");
+	lint_assert(tn->tn_type->t_tspec == INT);
 
 	if (tspec_is_float(tn->tn_left->tn_type->t_tspec)) {
 		l = tn->tn_left->tn_val->v_ldbl != 0.0;
@@ -2927,7 +2904,7 @@ fold_test(tnode_t *tn)
 		v->v_quad = l || r;
 		break;
 	default:
-		LERROR("fold_test()");
+		lint_assert(0);
 	}
 
 	return getcnode(tn->tn_type, v);
@@ -2947,13 +2924,10 @@ fold_float(tnode_t *tn)
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
-	if (!tspec_is_float(t))
-		LERROR("fold_float()");
-
-	if (t != tn->tn_left->tn_type->t_tspec)
-		LERROR("fold_float()");
-	if (modtab[tn->tn_op].m_binary && t != tn->tn_right->tn_type->t_tspec)
-		LERROR("fold_float()");
+	lint_assert(tspec_is_float(t));
+	lint_assert(t == tn->tn_left->tn_type->t_tspec);
+	lint_assert(!modtab[tn->tn_op].m_binary ||
+	    t == tn->tn_right->tn_type->t_tspec);
 
 	l = tn->tn_left->tn_val->v_ldbl;
 	if (modtab[tn->tn_op].m_binary)
@@ -3009,11 +2983,10 @@ fold_float(tnode_t *tn)
 		v->v_quad = l != r;
 		break;
 	default:
-		LERROR("fold_float()");
+		lint_assert(0);
 	}
 
-	if (!fpe && isnan((double)v->v_ldbl))
-		LERROR("fold_float()");
+	lint_assert(fpe || !isnan((double)v->v_ldbl));
 	if (fpe || !finite((double)v->v_ldbl) ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
@@ -3122,8 +3095,7 @@ tsize(type_t *tp)
 			elsz = 1;
 		} else {
 			elsz = size(tp->t_tspec);
-			if (elsz <= 0)
-				LERROR("build_sizeof()");
+			lint_assert(elsz > 0);
 		}
 		break;
 	}
@@ -3442,8 +3414,7 @@ constant(tnode_t *tn, int required)
 	v = xcalloc(1, sizeof (val_t));
 
 	if (tn == NULL) {
-		if (nerr == 0)
-			LERROR("constant()");
+		lint_assert(nerr != 0);
 		v->v_tspec = INT;
 		v->v_quad = 1;
 		return v;
@@ -3452,8 +3423,7 @@ constant(tnode_t *tn, int required)
 	v->v_tspec = tn->tn_type->t_tspec;
 
 	if (tn->tn_op == CON) {
-		if (tn->tn_type->t_tspec != tn->tn_val->v_tspec)
-			LERROR("constant()");
+		lint_assert(tn->tn_type->t_tspec == tn->tn_val->v_tspec);
 		if (tspec_is_int(tn->tn_val->v_tspec)) {
 			v->v_ansiu = tn->tn_val->v_ansiu;
 			v->v_quad = tn->tn_val->v_quad;
@@ -3488,8 +3458,7 @@ void
 expr(tnode_t *tn, int vctx, int tctx, int dofreeblk)
 {
 
-	if (tn == NULL && nerr == 0)
-		LERROR("expr()");
+	lint_assert(tn != NULL || nerr != 0);
 
 	if (tn == NULL) {
 		tfreeblk();
@@ -3596,8 +3565,7 @@ display_expression(tnode_t *tn, int offs)
 		    (long)(uq >> 32) & 0xffffffffl,
 		    (long)uq & 0xffffffffl);
 	} else if (tn->tn_op == CON) {
-		if (tn->tn_type->t_tspec != PTR)
-			LERROR("display_expression()");
+		lint_assert(tn->tn_type->t_tspec == PTR);
 		(void)printf("0x%0*lx ", (int)(sizeof (void *) * CHAR_BIT / 4),
 			     (u_long)tn->tn_val->v_quad);
 	} else if (tn->tn_op == STRING) {
