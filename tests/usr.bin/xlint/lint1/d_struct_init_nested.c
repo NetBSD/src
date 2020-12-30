@@ -1,5 +1,12 @@
 # 2 "d_struct_init_nested.c"
 
+/*
+ * Initialization of a nested struct, in which some parts are initialized
+ * from non-constant expressions of the inner struct type.
+ *
+ * In C99, 6.7.8p13 describes exactly this case.
+ */
+
 typedef enum O1 { O1C = 101 } O1;
 typedef enum O2 { O2C = 102 } O2;
 typedef enum O3 { O3C = 103 } O3;
