@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.40 2020/12/30 10:46:11 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.41 2020/12/30 10:49:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -351,7 +351,7 @@ typedef	struct dinfo {
 	sym_t	**d_ldlsym;	/* points to s_dlnxt in last symbol decl.
 				   at this level */
 	sym_t	*d_fpsyms;	/* symbols defined in prototype */
-	struct	dinfo *d_nxt;	/* next level */
+	struct	dinfo *d_next;	/* next level */
 } dinfo_t;
 
 /*
@@ -376,7 +376,7 @@ typedef	struct pqinf {
 	int	p_pcnt;			/* number of asterisks */
 	u_int	p_const : 1;
 	u_int	p_volatile : 1;
-	struct	pqinf *p_nxt;
+	struct	pqinf *p_next;
 } pqinf_t;
 
 /*

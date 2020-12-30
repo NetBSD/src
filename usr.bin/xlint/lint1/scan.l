@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.100 2020/12/30 10:46:11 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.101 2020/12/30 10:49:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.100 2020/12/30 10:46:11 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.101 2020/12/30 10:49:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1489,8 +1489,8 @@ getsym(sbuf_t *sb)
 		sym->s_name = s;
 		sym->s_blklev = 1;
 		di = dcs;
-		while (di->d_nxt != NULL && di->d_nxt->d_nxt != NULL)
-			di = di->d_nxt;
+		while (di->d_next != NULL && di->d_next->d_next != NULL)
+			di = di->d_next;
 		if (di->d_ctx != AUTO)
 			LERROR("storesym()");
 	} else {
