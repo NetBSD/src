@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.13 2020/12/30 13:15:07 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.14 2020/12/30 13:42:19 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,13 +83,11 @@ test_case c99_struct_init
 test_case c99_union_init1
 test_case c99_union_init2
 test_case c99_union_init3
-test_case c99_recursive_init	"Checks C99 recursive struct/union" \
-				"initialization"
-test_case c9x_recursive_init	"Checks C9X struct/union member" \
-				"init, with nested union and trailing member"
+test_case c99_recursive_init
+test_case c9x_recursive_init
 test_case nested_structs
 test_case packed_structs
-test_case struct_init_nested	"Initialization of nested structures"
+test_case struct_init_nested
 
 test_case cast_init
 test_case cast_init2		"Checks cast initialization as the rhs of a" \
@@ -139,7 +137,7 @@ test_case type_conv2		"Checks failing on information-losing" \
 test_case type_conv3		"Checks failing on information-losing" \
 				"type conversion in argument lists"
 
-test_case incorrect_array_size	"Checks failing on incorrect array sizes"
+test_case incorrect_array_size
 
 test_case long_double_int	"Checks for confusion of 'long double' with" \
 				"'long int'; PR bin/39639"
