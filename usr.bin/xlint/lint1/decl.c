@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.86 2020/12/30 11:56:10 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.87 2020/12/30 13:17:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.86 2020/12/30 11:56:10 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.87 2020/12/30 13:17:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2392,22 +2392,12 @@ decl1arg(sym_t *sym, int initflg)
 	return sym;
 }
 
-/*
- * Does some checks for lint directives which apply to functions.
- * Processes arguments in old style function definitions which default
- * to int.
- * Checks compatiblility of old style function definition with previous
- * prototype.
- */
 void
-cluparg(void)
+check_func_lint_directives(void)
 {
-	sym_t	*args, *arg, *pargs, *parg;
-	int	narg, nparg, n, msg;
-	tspec_t	t;
-
-	args = funcsym->s_args;
-	pargs = funcsym->s_type->t_args;
+	sym_t *arg;
+	int narg, n;
+	tspec_t t;
 
 	/* check for illegal combinations of lint directives */
 	if (prflstrg != -1 && scflstrg != -1) {
@@ -2465,6 +2455,21 @@ cluparg(void)
 			prflstrg = scflstrg = -1;
 		}
 	}
+}
+
+/*
+ * Warn about arguments in old style function definitions that default to int.
+ * Check that an old style function definition is compatible to a previous
+ * prototype.
+ */
+void
+check_func_old_style_arguments(void)
+{
+	sym_t *args, *arg, *pargs, *parg;
+	int narg, nparg, msg;
+
+	args = funcsym->s_args;
+	pargs = funcsym->s_type->t_args;
 
 	/*
 	 * print a warning for each argument of an old style function
@@ -2514,9 +2519,7 @@ cluparg(void)
 		/* from now on the prototype is valid */
 		funcsym->s_osdef = 0;
 		funcsym->s_args = NULL;
-
 	}
-
 }
 
 /*
