@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.105 2020/12/30 11:04:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.106 2020/12/30 11:56:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.105 2020/12/30 11:04:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.106 2020/12/30 11:56:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -480,7 +480,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 
 	/*
 	 * Apply class conversions to the left operand, but only if its
-	 * value is needed or it is compaired with null.
+	 * value is needed or it is compared with null.
 	 */
 	if (mp->m_vctx || mp->m_tctx)
 		ln = cconv(ln);
@@ -537,7 +537,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 
 	/*
 	 * Check types for compatibility with the operation and mutual
-	 * compatibility. Return if there are serios problems.
+	 * compatibility. Return if there are serious problems.
 	 */
 	if (!typeok(op, 0, ln, rn))
 		return NULL;
@@ -775,7 +775,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (lt != PTR && !(tflag && tspec_is_int(lt))) {
 			/* Without tflag we got already an error */
 			if (tflag)
-				/* unacceptabel operand of %s */
+				/* unacceptable operand of %s */
 				error(111, mp->m_name);
 			return 0;
 		}
@@ -908,15 +908,15 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		/*
 		 * ANSI C does not perform balancing for shift operations,
 		 * but traditional C does. If the width of the right operand
-		 * is greather than the width of the left operand, than in
-		 * traditional C the left operand would be extendet to the
+		 * is greater than the width of the left operand, than in
+		 * traditional C the left operand would be extended to the
 		 * width of the right operand. For SHL this may result in
 		 * different results.
 		 */
 		if (psize(lt) < psize(rt)) {
 			/*
-			 * XXX If both operands are constant make sure
-			 * that there is really a differencs between
+			 * XXX If both operands are constant, make sure
+			 * that there is really a difference between
 			 * ANSI C and traditional C.
 			 */
 			if (hflag)
@@ -2589,7 +2589,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
 			LERROR("build_colon()");
 		/*
 		 * XXX For now we simply take the left type. This is
-		 * probably wrong, if one type contains a functionprototype
+		 * probably wrong, if one type contains a function prototype
 		 * and the other one, at the same place, only an old style
 		 * declaration.
 		 */
@@ -3199,7 +3199,7 @@ cast(tnode_t *tn, type_t *tp)
 
 	if (nt == VOID) {
 		/*
-		 * XXX ANSI C requires scalar types or void (Plauger&Brodie).
+		 * XXX ANSI C requires scalar types or void (Plauger & Brodie).
 		 * But this seams really questionable.
 		 */
 	} else if (nt == UNION) {
@@ -3362,7 +3362,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
 			continue;
 
-		/* some things which are always not allowd */
+		/* some things which are always not allowed */
 		if ((at = arg->tn_left->tn_type->t_tspec) == VOID) {
 			/* void expressions may not be arguments, arg #%d */
 			error(151, n);
@@ -3809,7 +3809,7 @@ check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdi
 /*
  * Checks the range of array indices, if possible.
  * amper is set if only the address of the element is used. This
- * means that the index is allowd to refere to the first element
+ * means that the index is allowed to refer to the first element
  * after the array.
  */
 static void
