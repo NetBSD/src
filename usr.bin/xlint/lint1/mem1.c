@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.20 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.21 2020/12/30 10:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.20 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.21 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ typedef struct fn {
 	char	*fn_name;
 	size_t	fn_len;
 	int	fn_id;
-	struct	fn *fn_nxt;
+	struct	fn *fn_next;
 } fn_t;
 
 static	fn_t	*fnames;
@@ -70,7 +70,7 @@ srchfn(const char *s, size_t len)
 {
 	fn_t	*fn;
 
-	for (fn = fnames; fn != NULL; fn = fn->fn_nxt) {
+	for (fn = fnames; fn != NULL; fn = fn->fn_next) {
 		if (fn->fn_len == len && memcmp(fn->fn_name, s, len) == 0)
 			break;
 	}
@@ -146,7 +146,7 @@ fnnalloc(const char *s, size_t len)
 		fn->fn_name[len] = '\0';
 		fn->fn_len = len;
 		fn->fn_id = nxt_id++;
-		fn->fn_nxt = fnames;
+		fn->fn_next = fnames;
 		fnames = fn;
 		/* Write id of this filename to the output file. */
 		outclr();

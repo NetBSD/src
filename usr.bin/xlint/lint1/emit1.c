@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.26 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.27 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.26 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.27 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -173,13 +173,13 @@ ttos(type_t *tp)
 
 	if (tob.o_buf == NULL) {
 		tob.o_len = 64;
-		tob.o_buf = tob.o_nxt = xmalloc(tob.o_len);
+		tob.o_buf = tob.o_next = xmalloc(tob.o_len);
 		tob.o_end = tob.o_buf + tob.o_len;
 	}
 
 	tmp = ob;
 	ob = tob;
-	ob.o_nxt = ob.o_buf;
+	ob.o_next = ob.o_buf;
 	outtype(tp);
 	outchar('\0');
 	tob = ob;
