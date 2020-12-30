@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.101 2020/12/30 10:26:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.102 2020/12/30 10:35:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.101 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.102 2020/12/30 10:35:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -245,7 +245,7 @@ getnnode(sym_t *sym, int ntok)
 		}
 	}
 
-	if (sym->s_kind != FVFT && sym->s_kind != FMOS)
+	if (sym->s_kind != FVFT && sym->s_kind != FMEMBER)
 		LERROR("getnnode(%d)", sym->s_kind);
 
 	n = getnode();
@@ -322,7 +322,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		/* undefined struct/union member: %s */
 		error(101, msym->s_name);
 		rmsym(msym);
-		msym->s_kind = FMOS;
+		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
 		msym->s_styp = tgetblk(sizeof (str_t));
 		msym->s_styp->stag = tgetblk(sizeof (sym_t));

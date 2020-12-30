@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.38 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.39 2020/12/30 10:35:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -184,9 +184,9 @@ struct type {
  */
 typedef	enum {
 	FVFT,		/* variables, functions, type names, enums */
-	FMOS,		/* members of structs or unions */
+	FMEMBER,	/* members of structs or unions */
 	FTAG,		/* tags */
-	FLAB		/* labels */
+	FLABEL		/* labels */
 } symt_t;
 
 /*
@@ -219,7 +219,7 @@ typedef	struct sym {
 	const	char *s_name;
 	const	char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_dpos;		/* position of last (prototype)definition,
-				   prototypedeclaration, no-prototype-def.,
+				   prototype declaration, no-prototype-def.,
 				   tentative definition or declaration,
 				   in this order */
 	pos_t	s_spos;		/* position of first initialisation */

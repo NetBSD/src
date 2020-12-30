@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.80 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.81 2020/12/30 10:35:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.80 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.81 2020/12/30 10:35:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1246,7 +1246,7 @@ bitfield(sym_t *dsym, int len)
 	if (dsym == NULL) {
 		dsym = getblk(sizeof (sym_t));
 		dsym->s_name = unnamed;
-		dsym->s_kind = FMOS;
+		dsym->s_kind = FMEMBER;
 		dsym->s_scl = MOS;
 		dsym->s_type = gettyp(UINT);
 		dsym->s_blklev = -1;
@@ -2950,7 +2950,7 @@ check_usage_sym(int novar, sym_t *sym)
 		} else {
 			check_variable_usage(novar, sym);
 		}
-	} else if (sym->s_kind == FLAB) {
+	} else if (sym->s_kind == FLABEL) {
 		check_label_usage(sym);
 	} else if (sym->s_kind == FTAG) {
 		check_tag_usage(sym);
@@ -3118,7 +3118,7 @@ check_global_symbols(void)
 		} else if (sym->s_kind == FTAG) {
 			check_tag_usage(sym);
 		} else {
-			if (sym->s_kind != FMOS)
+			if (sym->s_kind != FMEMBER)
 				LERROR("check_global_symbols()");
 		}
 	}

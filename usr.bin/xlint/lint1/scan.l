@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.98 2020/12/29 13:33:03 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.99 2020/12/30 10:35:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.98 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.99 2020/12/30 10:35:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1466,7 +1466,7 @@ getsym(sbuf_t *sb)
 	 * symbols of type FTAG. Same can happen for labels. Both cases
 	 * are compensated here.
 	 */
-	if (symtyp == FMOS || symtyp == FLAB) {
+	if (symtyp == FMEMBER || symtyp == FLABEL) {
 		if (sym == NULL || sym->s_kind == FVFT)
 			sym = search(sb);
 	}
@@ -1482,7 +1482,7 @@ getsym(sbuf_t *sb)
 	/* create a new symbol table entry */
 
 	/* labels must always be allocated at level 1 (outhermost block) */
-	if (symtyp == FLAB) {
+	if (symtyp == FLABEL) {
 		sym = getlblk(1, sizeof (sym_t));
 		s = getlblk(1, sb->sb_len + 1);
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
@@ -1501,7 +1501,7 @@ getsym(sbuf_t *sb)
 	}
 
 	UNIQUE_CURR_POS(sym->s_dpos);
-	if ((sym->s_kind = symtyp) != FLAB)
+	if ((sym->s_kind = symtyp) != FLABEL)
 		sym->s_type = gettyp(INT);
 
 	symtyp = FVFT;
