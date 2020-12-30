@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.82 2020/12/30 10:49:10 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.83 2020/12/30 11:04:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.82 2020/12/30 10:49:10 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.83 2020/12/30 11:04:48 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1106,10 +1106,8 @@ declarator_1_struct_union(sym_t *dsym)
 
 	t = (tp = dsym->s_type)->t_tspec;
 
-	if (dsym->s_field) {
+	if (dsym->s_bitfield) {
 		/*
-		 * bit field
-		 *
 		 * only unsigned and signed int are portable bit-field types
 		 *(at least in ANSI C, in traditional C only unsigned int)
 		 */
@@ -1163,7 +1161,7 @@ declarator_1_struct_union(sym_t *dsym)
 			/* illegal use of bit-field */
 			error(41);
 			dsym->s_type->t_isfield = 0;
-			dsym->s_field = 0;
+			dsym->s_bitfield = 0;
 		}
 	} else if (t == FUNC) {
 		/* function illegal in structure or union */
@@ -1187,7 +1185,7 @@ declarator_1_struct_union(sym_t *dsym)
 		o = dcs->d_offset;
 		dcs->d_offset = 0;
 	}
-	if (dsym->s_field) {
+	if (dsym->s_bitfield) {
 		align(getbound(tp), tp->t_flen);
 		dsym->s_value.v_quad = (dcs->d_offset / size(t)) * size(t);
 		tp->t_foffs = dcs->d_offset - (int)dsym->s_value.v_quad;
@@ -1254,7 +1252,7 @@ bitfield(sym_t *dsym, int len)
 	dsym->s_type = duptyp(dsym->s_type);
 	dsym->s_type->t_isfield = 1;
 	dsym->s_type->t_flen = len;
-	dsym->s_field = 1;
+	dsym->s_bitfield = 1;
 	return dsym;
 }
 
@@ -2610,10 +2608,10 @@ decl1loc(sym_t *dsym, int initflg)
 		 * XXX if the static variable at level 0 is only defined
 		 * later, checking will be possible.
 		 */
-		if (dsym->s_xsym == NULL) {
+		if (dsym->s_ext_sym == NULL) {
 			outsym(dsym, EXTERN, dsym->s_def);
 		} else {
-			outsym(dsym, dsym->s_xsym->s_scl, dsym->s_def);
+			outsym(dsym, dsym->s_ext_sym->s_scl, dsym->s_def);
 		}
 	}
 
@@ -2746,7 +2744,7 @@ ledecl(sym_t *dsym)
 		 * Remember the external symbol so we can update usage
 		 * information at the end of the block.
 		 */
-		dsym->s_xsym = esym;
+		dsym->s_ext_sym = esym;
 	}
 }
 
@@ -3030,7 +3028,7 @@ check_variable_usage(int novar, sym_t *sym)
 		 * because symbols at level 0 only used in sizeof() are
 		 * considered to not be used.
 		 */
-		if ((xsym = sym->s_xsym) != NULL) {
+		if ((xsym = sym->s_ext_sym) != NULL) {
 			if (sym->s_used && !xsym->s_used) {
 				xsym->s_used = 1;
 				STRUCT_ASSIGN(xsym->s_upos, sym->s_upos);

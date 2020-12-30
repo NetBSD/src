@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.42 2020/12/30 10:56:51 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.43 2020/12/30 11:04:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -218,15 +218,15 @@ typedef enum {
 typedef	struct sym {
 	const	char *s_name;
 	const	char *s_rename;	/* renamed symbol's given name */
-	pos_t	s_dpos;		/* position of last (prototype)definition,
+	pos_t	s_dpos;		/* position of last (prototype) definition,
 				   prototype declaration, no-prototype-def.,
 				   tentative definition or declaration,
 				   in this order */
 	pos_t	s_spos;		/* position of first initialisation */
 	pos_t	s_upos;		/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
-	void   *s_keyw;		/* keyword */
-	u_int	s_field : 1;	/* bit-field */
+	void   *s_keyword;
+	u_int	s_bitfield : 1;
 	u_int	s_set : 1;	/* variable set, label defined */
 	u_int	s_used : 1;	/* variable/label used */
 	u_int	s_arg : 1;	/* symbol is function argument */
@@ -236,7 +236,7 @@ typedef	struct sym {
 	u_int	s_rimpl : 1;	/* return value of function implicit decl. */
 	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
 	u_int	s_inline : 1;	/* true if this is an inline function */
-	struct	sym *s_xsym;	/* for local declared external symbols pointer
+	struct	sym *s_ext_sym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
 	scl_t	s_scl;		/* storage class */
