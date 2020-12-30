@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.83 2020/12/30 11:04:48 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.84 2020/12/30 11:14:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.83 2020/12/30 11:04:48 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.84 2020/12/30 11:14:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1663,7 +1663,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 	} else {
 		tag = getblk(sizeof (sym_t));
 		tag->s_name = unnamed;
-		UNIQUE_CURR_POS(tag->s_dpos);
+		UNIQUE_CURR_POS(tag->s_def_pos);
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_blklev = -1;
@@ -1918,7 +1918,7 @@ decl1ext(sym_t *dsym, int initflg)
 		 * written as a function definition to the output file.
 		 */
 		rval = dsym->s_type->t_subt->t_tspec != VOID;
-		outfdef(dsym, &dsym->s_dpos, rval, 0, NULL);
+		outfdef(dsym, &dsym->s_def_pos, rval, 0, NULL);
 	} else {
 		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
@@ -1951,7 +1951,7 @@ decl1ext(sym_t *dsym, int initflg)
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
 				dsym->s_args = rdsym->s_args;
-				STRUCT_ASSIGN(dsym->s_dpos, rdsym->s_dpos);
+				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
 			}
 
 			/*
@@ -1961,9 +1961,9 @@ decl1ext(sym_t *dsym, int initflg)
 			 * was defined and the new is not.
 			 */
 			if (rdsym->s_type->t_proto && !dsym->s_type->t_proto) {
-				STRUCT_ASSIGN(dsym->s_dpos, rdsym->s_dpos);
+				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
 			} else if (rdsym->s_def == DEF && dsym->s_def != DEF) {
-				STRUCT_ASSIGN(dsym->s_dpos, rdsym->s_dpos);
+				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
 			}
 
 			/*
@@ -2003,8 +2003,8 @@ void
 copy_usage_info(sym_t *sym, sym_t *rdsym)
 {
 
-	sym->s_spos = rdsym->s_spos;
-	sym->s_upos = rdsym->s_upos;
+	sym->s_set_pos = rdsym->s_set_pos;
+	sym->s_use_pos = rdsym->s_use_pos;
 	sym->s_set = rdsym->s_set;
 	sym->s_used = rdsym->s_used;
 }
@@ -2875,7 +2875,7 @@ mark_as_set(sym_t *sym)
 
 	if (!sym->s_set) {
 		sym->s_set = 1;
-		UNIQUE_CURR_POS(sym->s_spos);
+		UNIQUE_CURR_POS(sym->s_set_pos);
 	}
 }
 
@@ -2888,7 +2888,7 @@ mark_as_used(sym_t *sym, int fcall, int szof)
 
 	if (!sym->s_used) {
 		sym->s_used = 1;
-		UNIQUE_CURR_POS(sym->s_upos);
+		UNIQUE_CURR_POS(sym->s_use_pos);
 	}
 	/*
 	 * for function calls another record is written
@@ -2968,7 +2968,7 @@ check_argument_usage(int novar, sym_t *arg)
 		return;
 
 	if (!arg->s_used && vflag) {
-		STRUCT_ASSIGN(curr_pos, arg->s_dpos);
+		STRUCT_ASSIGN(curr_pos, arg->s_def_pos);
 		/* argument %s unused in function %s */
 		warning(231, arg->s_name, funcsym->s_name);
 	}
@@ -3001,17 +3001,17 @@ check_variable_usage(int novar, sym_t *sym)
 
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
-			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 			/* %s unused in function %s */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
 	} else {
 		if (sym->s_set && !sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_spos);
+			STRUCT_ASSIGN(curr_pos, sym->s_set_pos);
 			/* %s set but not used in function %s */
 			warning(191, sym->s_name, funcsym->s_name);
 		} else if (!sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 			/* %s unused in function %s */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
@@ -3031,11 +3031,11 @@ check_variable_usage(int novar, sym_t *sym)
 		if ((xsym = sym->s_ext_sym) != NULL) {
 			if (sym->s_used && !xsym->s_used) {
 				xsym->s_used = 1;
-				STRUCT_ASSIGN(xsym->s_upos, sym->s_upos);
+				STRUCT_ASSIGN(xsym->s_use_pos, sym->s_use_pos);
 			}
 			if (sym->s_set && !xsym->s_set) {
 				xsym->s_set = 1;
-				STRUCT_ASSIGN(xsym->s_spos, sym->s_spos);
+				STRUCT_ASSIGN(xsym->s_set_pos, sym->s_set_pos);
 			}
 		}
 	}
@@ -3049,11 +3049,11 @@ check_label_usage(sym_t *lab)
 		LERROR("check_label_usage()");
 
 	if (lab->s_set && !lab->s_used) {
-		STRUCT_ASSIGN(curr_pos, lab->s_spos);
+		STRUCT_ASSIGN(curr_pos, lab->s_set_pos);
 		/* label %s unused in function %s */
 		warning(192, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
-		STRUCT_ASSIGN(curr_pos, lab->s_upos);
+		STRUCT_ASSIGN(curr_pos, lab->s_use_pos);
 		/* undefined label %s */
 		warning(23, lab->s_name);
 	}
@@ -3070,7 +3070,7 @@ check_tag_usage(sym_t *sym)
 	if (!zflag || dcs->d_ctx != EXTERN)
 		return;
 
-	STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+	STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 	switch (sym->s_type->t_tspec) {
 	case STRUCT:
 		/* struct %s never defined */
@@ -3139,13 +3139,13 @@ check_global_variable(sym_t *sym)
 	if (sym->s_scl == STATIC) {
 		if (sym->s_type->t_tspec == FUNC) {
 			if (sym->s_used && sym->s_def != DEF) {
-				STRUCT_ASSIGN(curr_pos, sym->s_upos);
+				STRUCT_ASSIGN(curr_pos, sym->s_use_pos);
 				/* static func. called but not def.. */
 				error(225, sym->s_name);
 			}
 		}
 		if (!sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 			if (sym->s_type->t_tspec == FUNC) {
 				if (sym->s_def == DEF) {
 					if (!sym->s_inline)
@@ -3164,7 +3164,7 @@ check_global_variable(sym_t *sym)
 			}
 		}
 		if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
-			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 			/* const object %s should have initializer */
 			warning(227, sym->s_name);
 		}
@@ -3182,7 +3182,7 @@ check_global_variable_size(sym_t *sym)
 			 * after a function declaration
 			 */
 			return;
-		STRUCT_ASSIGN(curr_pos, sym->s_dpos);
+		STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
 		if (length(sym->s_type, sym->s_name) == 0 &&
 		    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 			/* empty array declaration: %s */
@@ -3207,7 +3207,7 @@ print_previous_declaration(int msg, sym_t *psym)
 		return;
 
 	STRUCT_ASSIGN(cpos, curr_pos);
-	STRUCT_ASSIGN(curr_pos, psym->s_dpos);
+	STRUCT_ASSIGN(curr_pos, psym->s_def_pos);
 	if (msg != -1) {
 		message(msg, psym->s_name);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
