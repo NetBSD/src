@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.47 2020/12/30 10:56:51 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.48 2020/12/30 11:04:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.47 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.48 2020/12/30 11:04:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -182,7 +182,7 @@ initstack_pop_item(void)
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
 			DPRINTF(("%s: pop lhs.name=%s rhs.name=%s\n", __func__,
 			    m->s_name, namedmem->n_name));
-			if (m->s_field && m->s_name == unnamed)
+			if (m->s_bitfield && m->s_name == unnamed)
 				continue;
 			if (strcmp(m->s_name, namedmem->n_name) == 0) {
 				istk->i_subt = m->s_type;
@@ -207,7 +207,7 @@ initstack_pop_item(void)
 			m = istk->i_mem = istk->i_mem->s_next;
 			lint_assert(m != NULL);
 			DPRINTF(("%s: pop %s\n", __func__, m->s_name));
-		} while (m->s_field && m->s_name == unnamed);
+		} while (m->s_bitfield && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
 	}
 }
@@ -327,7 +327,7 @@ again:
 		    tyname(buf, sizeof(buf), istk->i_type),
 		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem));
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
-			if (m->s_field && m->s_name == unnamed)
+			if (m->s_bitfield && m->s_name == unnamed)
 				continue;
 			if (namedmem != NULL) {
 				DPRINTF(("%s: named lhs.member=%s, rhs.member=%s\n",
