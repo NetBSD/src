@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.119 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.120 2020/12/30 10:35:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.119 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.120 2020/12/30 10:35:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -785,13 +785,13 @@ member_declaration_list:
 member_declaration:
 	  noclass_declmods deftyp {
 		/* too late, i know, but getsym() compensates it */
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 	  } notype_member_decls opt_type_attribute {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
 	| noclass_declspecs deftyp {
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 	  } type_member_decls opt_type_attribute {
 		symtyp = FVFT;
 		$$ = $4;
@@ -851,7 +851,7 @@ notype_member_decls:
 		$$ = declarator_1_struct_union($1);
 	  }
 	| notype_member_decls {
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 	  } T_COMMA type_member_decl {
 		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
@@ -862,7 +862,7 @@ type_member_decls:
 		$$ = declarator_1_struct_union($1);
 	  }
 	| type_member_decls {
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 	  } T_COMMA type_member_decl {
 		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
@@ -1488,7 +1488,7 @@ labeled_stmnt:
 
 label:
 	  T_NAME T_COLON {
-		symtyp = FLAB;
+		symtyp = FLABEL;
 		label(T_NAME, getsym($1), NULL);
 	  }
 	| T_CASE constant T_COLON {
@@ -1753,7 +1753,7 @@ jump_stmnt:
 
 goto:
 	  T_GOTO {
-		symtyp = FLAB;
+		symtyp = FLABEL;
 	  }
 	;
 
@@ -1948,7 +1948,7 @@ term:
 	  }
 	| T_BUILTIN_OFFSETOF T_LPARN type_name T_COMMA identifier T_RPARN
 						    %prec T_BUILTIN_OFFSETOF {
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 		$$ = build_offsetof($3, getsym($5));
 	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
@@ -2008,7 +2008,7 @@ func_arg_list:
 
 point_or_arrow:
 	  T_STROP {
-		symtyp = FMOS;
+		symtyp = FMEMBER;
 		$$ = $1;
 	  }
 	;
