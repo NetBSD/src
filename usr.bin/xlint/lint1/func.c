@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.35 2020/12/30 11:14:03 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.36 2020/12/30 11:39:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.35 2020/12/30 11:14:03 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.36 2020/12/30 11:39:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -285,7 +285,7 @@ funcdef(sym_t *fsym)
 	 * if this is an old style definition and we had already a
 	 * prototype.
 	 */
-	STRUCT_ASSIGN(dcs->d_fdpos, fsym->s_def_pos);
+	dcs->d_fdpos = fsym->s_def_pos;
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
@@ -311,7 +311,7 @@ funcdef(sym_t *fsym)
 			 * declaration of the prototype.
 			 */
 			if (fsym->s_osdef && rdsym->s_type->t_proto)
-				STRUCT_ASSIGN(fsym->s_def_pos, rdsym->s_def_pos);
+				fsym->s_def_pos = rdsym->s_def_pos;
 
 			/* complete the type */
 			complete_type(fsym, rdsym);
@@ -494,7 +494,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 				 * case values
 				 */
 				cl = xcalloc(1, sizeof (clst_t));
-				STRUCT_ASSIGN(cl->cl_val, nv);
+				cl->cl_val = nv;
 				cl->cl_next = ci->c_clst;
 				ci->c_clst = cl;
 			}
@@ -821,8 +821,8 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	 */
 	cstk->c_fexprm = tsave();
 	cstk->c_f3expr = tn3;
-	STRUCT_ASSIGN(cstk->c_fpos, curr_pos);
-	STRUCT_ASSIGN(cstk->c_cfpos, csrc_pos);
+	cstk->c_fpos = curr_pos;
+	cstk->c_cfpos = csrc_pos;
 
 	if (tn1 != NULL)
 		expr(tn1, 0, 0, 1);
@@ -867,14 +867,14 @@ for2(void)
 	if (cstk->c_cont)
 		reached = 1;
 
-	STRUCT_ASSIGN(cpos, curr_pos);
-	STRUCT_ASSIGN(cspos, csrc_pos);
+	cpos = curr_pos;
+	cspos = csrc_pos;
 
 	/* Restore the tree memory for the reinitialisation expression */
 	trestor(cstk->c_fexprm);
 	tn3 = cstk->c_f3expr;
-	STRUCT_ASSIGN(curr_pos, cstk->c_fpos);
-	STRUCT_ASSIGN(csrc_pos, cstk->c_cfpos);
+	curr_pos = cstk->c_fpos;
+	csrc_pos = cstk->c_cfpos;
 
 	/* simply "statement not reached" would be confusing */
 	if (!reached && !rchflg) {
@@ -889,8 +889,8 @@ for2(void)
 		tfreeblk();
 	}
 
-	STRUCT_ASSIGN(curr_pos, cpos);
-	STRUCT_ASSIGN(csrc_pos, cspos);
+	curr_pos = cpos;
+	csrc_pos = cspos;
 
 	/* An endless loop without break will never terminate */
 	reached = cstk->c_break || !cstk->c_infinite;
@@ -1041,11 +1041,11 @@ global_clean_up_decl(int silent)
 {
 	pos_t	cpos;
 
-	STRUCT_ASSIGN(cpos, curr_pos);
+	cpos = curr_pos;
 
 	if (nargusg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, argsused_pos);
+			curr_pos = argsused_pos;
 			/* must precede function definition: %s */
 			warning(282, "ARGSUSED");
 		}
@@ -1053,7 +1053,7 @@ global_clean_up_decl(int silent)
 	}
 	if (nvararg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, vapos);
+			curr_pos = vapos;
 			/* must precede function definition: %s */
 			warning(282, "VARARGS");
 		}
@@ -1061,7 +1061,7 @@ global_clean_up_decl(int silent)
 	}
 	if (prflstrg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, printflike_pos);
+			curr_pos = printflike_pos;
 			/* must precede function definition: %s */
 			warning(282, "PRINTFLIKE");
 		}
@@ -1069,14 +1069,14 @@ global_clean_up_decl(int silent)
 	}
 	if (scflstrg != -1) {
 		if (!silent) {
-			STRUCT_ASSIGN(curr_pos, scanflike_pos);
+			curr_pos = scanflike_pos;
 			/* must precede function definition: %s */
 			warning(282, "SCANFLIKE");
 		}
 		scflstrg = -1;
 	}
 
-	STRUCT_ASSIGN(curr_pos, cpos);
+	curr_pos = cpos;
 
 	dcs->d_asm = 0;
 }
@@ -1104,7 +1104,7 @@ argsused(int n)
 		warning(281, "ARGSUSED");
 	}
 	nargusg = n;
-	STRUCT_ASSIGN(argsused_pos, curr_pos);
+	argsused_pos = curr_pos;
 }
 
 /*
@@ -1130,7 +1130,7 @@ varargs(int n)
 		warning(281, "VARARGS");
 	}
 	nvararg = n;
-	STRUCT_ASSIGN(vapos, curr_pos);
+	vapos = curr_pos;
 }
 
 /*
@@ -1156,7 +1156,7 @@ printflike(int n)
 		warning(281, "PRINTFLIKE");
 	}
 	prflstrg = n;
-	STRUCT_ASSIGN(printflike_pos, curr_pos);
+	printflike_pos = curr_pos;
 }
 
 /*
@@ -1182,7 +1182,7 @@ scanflike(int n)
 		warning(281, "SCANFLIKE");
 	}
 	scflstrg = n;
-	STRUCT_ASSIGN(scanflike_pos, curr_pos);
+	scanflike_pos = curr_pos;
 }
 
 /*
