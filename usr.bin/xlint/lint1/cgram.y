@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.121 2020/12/30 10:56:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.122 2020/12/30 13:17:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.121 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.122 2020/12/30 13:17:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -429,7 +429,8 @@ func_def:
 	  } opt_arg_declaration_list {
 		popdecl();
 		blklev--;
-		cluparg();
+		check_func_lint_directives();
+		check_func_old_style_arguments();
 		pushctrl(0);
 	  } comp_stmnt {
 		funcend();
