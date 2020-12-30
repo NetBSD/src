@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.122 2020/12/30 10:03:16 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.123 2020/12/30 14:28:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -32,24 +32,22 @@
 /*-
  * Handling of .for/.endfor loops in a makefile.
  *
- * For loops are of the form:
+ * For loops have the form:
  *
- * .for <varname...> in <value...>
- * ...
- * .endfor
+ *	.for <varname...> in <value...>
+ *	# the body
+ *	.endfor
  *
- * When a .for line is parsed, all following lines are accumulated into a
- * buffer, up to but excluding the corresponding .endfor line.  To find the
- * corresponding .endfor, the number of nested .for and .endfor directives
- * are counted.
+ * When a .for line is parsed, the following lines are copied to the body of
+ * the .for loop, until the corresponding .endfor line is reached.  In this
+ * phase, the body is not yet evaluated.  This also applies to any nested
+ * .for loops.
  *
- * During parsing, any nested .for loops are just passed through; they get
- * handled recursively in For_Eval when the enclosing .for loop is evaluated
- * in For_Run.
- *
- * When the .for loop has been parsed completely, the variable expressions
- * for the iteration variables are replaced with expressions of the form
- * ${:Uvalue}, and then this modified body is "included" as a special file.
+ * After reaching the .endfor, the values from the .for line are grouped
+ * according to the number of variables.  For each such group, the unexpanded
+ * body is scanned for variable expressions, and those that match the variable
+ * names are replaced with expressions of the form ${:U...} or $(:U...).
+ * After that, the body is treated like a file from an .include directive.
  *
  * Interface:
  *	For_Eval	Evaluate the loop in the passed line.
@@ -60,14 +58,14 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.122 2020/12/30 10:03:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.123 2020/12/30 14:28:32 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
 /* One of the variables to the left of the "in" in a .for loop. */
 typedef struct ForVar {
 	char *name;
-	size_t len;
+	size_t nameLen;
 } ForVar;
 
 /*
@@ -92,7 +90,7 @@ ForAddVar(For *f, const char *name, size_t len)
 {
 	ForVar *var = Vector_Push(&f->vars);
 	var->name = bmake_strldup(name, len);
-	var->len = len;
+	var->nameLen = len;
 }
 
 static void
@@ -354,8 +352,8 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
 }
 
 /*
- * While expanding the body of a .for loop, replace expressions like
- * ${i}, ${i:...}, $(i) or $(i:...) with their ${:U...} expansion.
+ * While expanding the body of a .for loop, replace the inner part of an
+ * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
 SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
@@ -365,14 +363,15 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 
 	for (i = 0; i < f->vars.len; i++) {
 		ForVar *forVar = Vector_Get(&f->vars, i);
-		char *var = forVar->name;
-		size_t vlen = forVar->len;
+		char *varname = forVar->name;
+		size_t varnameLen = forVar->nameLen;
 
-		/* XXX: undefined behavior for p if vlen is longer than p? */
-		if (memcmp(p, var, vlen) != 0)
+		/* XXX: undefined behavior for p if varname is longer than p? */
+		if (memcmp(p, varname, varnameLen) != 0)
 			continue;
 		/* XXX: why test for backslash here? */
-		if (p[vlen] != ':' && p[vlen] != ech && p[vlen] != '\\')
+		if (p[varnameLen] != ':' && p[varnameLen] != ech &&
+		    p[varnameLen] != '\\')
 			continue;
 
 		/* Found a variable match. Replace with :U<value> */
@@ -381,7 +380,7 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 		Buf_AddEscaped(&f->curBody,
 		    f->items.words[f->sub_next + i], ech);
 
-		p += vlen;
+		p += varnameLen;
 		*inout_mark = p;
 		break;
 	}
@@ -394,9 +393,10 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
  * variable expressions like $i with their ${:U...} expansion.
  */
 static void
-SubstVarShort(For *f, char ch, const char **pp, const char **inout_mark)
+SubstVarShort(For *f, const char **pp, const char **inout_mark)
 {
 	const char *p = *pp;
+	const char ch = *p;
 	size_t i;
 
 	/* Probably a single character name, ignore $$ and stupid ones. */
@@ -459,18 +459,18 @@ ForReadMore(void *v_arg, size_t *out_len)
 	mark = Buf_GetAll(&f->body, NULL);
 	body_end = mark + Buf_Len(&f->body);
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
-		char ch, ech;
-		ch = *++p;
-		if ((ch == '(' && (ech = ')', 1)) ||
-		    (ch == '{' && (ech = '}', 1))) {
+		if (p[1] == '{') {
+			p += 2;
+			SubstVarLong(f, &p, &mark, '}');
+		} else if (p[1] == '(') {
+			p += 2;
+			SubstVarLong(f, &p, &mark, ')');
+		} else if (p[1] != '\0') {
 			p++;
-			SubstVarLong(f, &p, &mark, ech);
-			continue;
-		}
-		if (ch == '\0')
+			SubstVarShort(f, &p, &mark);
+		} else
 			break;
 
-		SubstVarShort(f, ch, &p, &mark);
 	}
 	Buf_AddBytesBetween(&f->curBody, mark, body_end);
 
