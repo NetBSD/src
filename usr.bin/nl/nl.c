@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.13 2020/12/22 17:50:55 ginsbach Exp $	*/
+/*	$NetBSD: nl.c,v 1.14 2020/12/30 01:42:31 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.13 2020/12/22 17:50:55 ginsbach Exp $");
+__RCSID("$NetBSD: nl.c,v 1.14 2020/12/30 01:42:31 ginsbach Exp $");
 #endif    
 
 #include <errno.h>
@@ -157,14 +157,15 @@ main(int argc, char *argv[])
 		case 'd':
 			if (optarg[0] != '\0')
 				delim[0] = optarg[0];
-			if (optarg[1] != '\0')
+			if (optarg[1] != '\0') {
 				delim[1] = optarg[1];
-			/* at most two delimiter characters */
-			if (optarg[2] != '\0') {
-				errx(EXIT_FAILURE,
-				    "invalid delim argument -- %s",
-				    optarg);
-				/* NOTREACHED */
+				/* at most two delimiter characters */
+				if (optarg[2] != '\0') {
+					errx(EXIT_FAILURE,
+					    "invalid delim argument -- %s",
+					    optarg);
+					/* NOTREACHED */
+				}
 			}
 			break;
 		case 'f':
