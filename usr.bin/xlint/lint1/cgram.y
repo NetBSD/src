@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.117 2020/12/30 01:02:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.118 2020/12/30 01:44:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.117 2020/12/30 01:02:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.118 2020/12/30 01:44:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1165,8 +1165,8 @@ pointer:
 		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
 	| asterisk type_qualifier_list pointer {
-		$$ = merge_pointers_and_qualifiers(
-		    merge_pointers_and_qualifiers($1, $2), $3);
+		$$ = merge_pointers_and_qualifiers($1, $2);
+		$$ = merge_pointers_and_qualifiers($$, $3);
 	  }
 	;
 
