@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.34 2020/12/30 10:49:10 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.35 2020/12/30 11:14:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.34 2020/12/30 10:49:10 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.35 2020/12/30 11:14:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -281,11 +281,11 @@ funcdef(sym_t *fsym)
 	}
 
 	/*
-	 * We must also remember the position. s_dpos is overwritten
+	 * We must also remember the position. s_def_pos is overwritten
 	 * if this is an old style definition and we had already a
 	 * prototype.
 	 */
-	STRUCT_ASSIGN(dcs->d_fdpos, fsym->s_dpos);
+	STRUCT_ASSIGN(dcs->d_fdpos, fsym->s_def_pos);
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
@@ -311,7 +311,7 @@ funcdef(sym_t *fsym)
 			 * declaration of the prototype.
 			 */
 			if (fsym->s_osdef && rdsym->s_type->t_proto)
-				STRUCT_ASSIGN(fsym->s_dpos, rdsym->s_dpos);
+				STRUCT_ASSIGN(fsym->s_def_pos, rdsym->s_def_pos);
 
 			/* complete the type */
 			complete_type(fsym, rdsym);
