@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.232 2020/12/27 10:53:23 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.233 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,7 +69,8 @@
  * SUCH DAMAGE.
  */
 
-/* Handling of conditionals in a makefile.
+/*
+ * Handling of conditionals in a makefile.
  *
  * Interface:
  *	Cond_EvalLine   Evaluate the conditional directive, such as
@@ -94,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.232 2020/12/27 10:53:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.233 2020/12/30 10:03:16 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -198,7 +199,8 @@ CondParser_SkipWhitespace(CondParser *par)
 	cpp_skip_whitespace(&par->p);
 }
 
-/* Parse the argument of a built-in function.
+/*
+ * Parse the argument of a built-in function.
  *
  * Arguments:
  *	*pp initially points at the '(',
@@ -209,7 +211,8 @@ CondParser_SkipWhitespace(CondParser *par)
  *	func says whether the argument belongs to an actual function, or
  *	whether the parsed argument is passed to the default function.
  *
- * Return the length of the argument, or 0 on error. */
+ * Return the length of the argument, or 0 on error.
+ */
 static size_t
 ParseFuncArg(const char **pp, Boolean doEval, const char *func,
 	     char **out_arg)
@@ -327,8 +330,10 @@ FuncTarget(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 	return gn != NULL && GNode_IsTarget(gn);
 }
 
-/* See if the given node exists and is an actual target with commands
- * associated with it. */
+/*
+ * See if the given node exists and is an actual target with commands
+ * associated with it.
+ */
 static Boolean
 FuncCommands(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -532,8 +537,10 @@ If_Eval(const struct If *if_info, const char *arg, size_t arglen)
 	return if_info->doNot ? !res : res;
 }
 
-/* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
- * ".if 0". */
+/*
+ * Evaluate a "comparison without operator", such as in ".if ${VAR}" or
+ * ".if 0".
+ */
 static Boolean
 EvalNotEmpty(CondParser *par, const char *value, Boolean quoted)
 {
@@ -616,7 +623,8 @@ EvalCompare(const char *lhs, Boolean lhsQuoted, const char *op,
 	return EvalCompareStr(lhs, op, rhs);
 }
 
-/* Parse a comparison condition such as:
+/*
+ * Parse a comparison condition such as:
  *
  *	0
  *	${VAR:Mpattern}
@@ -685,8 +693,10 @@ done_lhs:
 	return t;
 }
 
-/* The argument to empty() is a variable name, optionally followed by
- * variable modifiers. */
+/*
+ * The argument to empty() is a variable name, optionally followed by
+ * variable modifiers.
+ */
 static size_t
 ParseEmptyArg(const char **pp, Boolean doEval,
 	      const char *func MAKE_ATTR_UNUSED, char **out_arg)
@@ -779,8 +789,10 @@ CondParser_Func(CondParser *par, Boolean doEval, Token *out_token)
 	return FALSE;
 }
 
-/* Parse a function call, a number, a variable expression or a string
- * literal. */
+/*
+ * Parse a function call, a number, a variable expression or a string
+ * literal.
+ */
 static Token
 CondParser_LeafToken(CondParser *par, Boolean doEval)
 {
@@ -889,7 +901,8 @@ CondParser_Token(CondParser *par, Boolean doEval)
 	}
 }
 
-/* Parse a single term in the expression. This consists of a terminal symbol
+/*
+ * Parse a single term in the expression. This consists of a terminal symbol
  * or TOK_NOT and a term (not including the binary operators):
  *
  *	T -> defined(variable) | make(target) | exists(file) | symbol
@@ -932,7 +945,8 @@ CondParser_Term(CondParser *par, Boolean doEval)
 	return t;
 }
 
-/* Parse a conjunctive factor (nice name, wot?)
+/*
+ * Parse a conjunctive factor (nice name, wot?)
  *
  *	F -> T && F | T
  *
@@ -972,7 +986,8 @@ CondParser_Factor(CondParser *par, Boolean doEval)
 	return l;
 }
 
-/* Main expression production.
+/*
+ * Main expression production.
  *
  *	E -> F || E | F
  *
@@ -1032,7 +1047,8 @@ CondParser_Eval(CondParser *par, Boolean *value)
 	return COND_PARSE;
 }
 
-/* Evaluate the condition, including any side effects from the variable
+/*
+ * Evaluate the condition, including any side effects from the variable
  * expressions in the condition. The condition consists of &&, ||, !,
  * function(arg), comparisons and parenthetical groupings thereof.
  *
@@ -1066,8 +1082,10 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 	return rval;
 }
 
-/* Evaluate a condition in a :? modifier, such as
- * ${"${VAR}" == value:?yes:no}. */
+/*
+ * Evaluate a condition in a :? modifier, such as
+ * ${"${VAR}" == value:?yes:no}.
+ */
 CondEvalResult
 Cond_EvalCondition(const char *cond, Boolean *out_value)
 {
@@ -1081,7 +1099,8 @@ IsEndif(const char *p)
 	       p[3] == 'i' && p[4] == 'f' && !ch_isalpha(p[5]);
 }
 
-/* Evaluate the conditional directive in the line, which is one of:
+/*
+ * Evaluate the conditional directive in the line, which is one of:
  *
  *	.if <cond>
  *	.ifmake <cond>

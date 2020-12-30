@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.332 2020/12/20 13:38:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.333 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -114,7 +114,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.332 2020/12/20 13:38:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.333 2020/12/30 10:03:16 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -423,8 +423,10 @@ SuffixList_Remove(SuffixList *list, Suffix *suff)
 	}
 }
 
-/* Insert the suffix into the list, keeping the list ordered by suffix
- * number. */
+/*
+ * Insert the suffix into the list, keeping the list ordered by suffix
+ * number.
+ */
 static void
 SuffixList_Insert(SuffixList *list, Suffix *suff)
 {
@@ -502,7 +504,8 @@ Suff_ClearSuffixes(void)
 	nullSuff->flags = SUFF_NULL;
 }
 
-/* Parse a transformation string such as ".c.o" to find its two component
+/*
+ * Parse a transformation string such as ".c.o" to find its two component
  * suffixes (the source ".c" and the target ".o").  If there are no such
  * suffixes, try a single-suffix transformation as well.
  *
@@ -671,7 +674,8 @@ Suff_EndTransform(GNode *gn)
 	SuffixList_Remove(srcSuffParents, targSuff);
 }
 
-/* Called from Suff_AddSuffix to search through the list of
+/*
+ * Called from Suff_AddSuffix to search through the list of
  * existing transformation rules and rebuild the transformation graph when
  * it has been destroyed by Suff_ClearSuffixes. If the given rule is a
  * transformation involving this suffix and another, existing suffix, the
@@ -813,7 +817,8 @@ UpdateTargets(GNode **inout_main, Suffix *suff)
 	}
 }
 
-/* Add the suffix to the end of the list of known suffixes.
+/*
+ * Add the suffix to the end of the list of known suffixes.
  * Should we restructure the suffix graph? Make doesn't.
  *
  * A GNode is created for the suffix (XXX: this sounds completely wrong) and
@@ -1478,7 +1483,8 @@ Suff_FindPath(GNode *gn)
 	}
 }
 
-/* Apply a transformation rule, given the source and target nodes and
+/*
+ * Apply a transformation rule, given the source and target nodes and
  * suffixes.
  *
  * The source and target are linked and the commands from the transformation
@@ -1565,7 +1571,8 @@ ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
 
 static void FindDeps(GNode *, CandidateSearcher *);
 
-/* Locate dependencies for an OP_ARCHV node.
+/*
+ * Locate dependencies for an OP_ARCHV node.
  *
  * Input:
  *	gn		Node for which to locate dependencies
@@ -2003,7 +2010,8 @@ CandidateSearcher_CleanUp(CandidateSearcher *cs)
 }
 
 
-/* Find implicit sources for the target.
+/*
+ * Find implicit sources for the target.
  *
  * Nodes are added to the graph as children of the passed-in node. The nodes
  * are marked to have their IMPSRC variable filled in. The PREFIX variable

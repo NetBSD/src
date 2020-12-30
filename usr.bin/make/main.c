@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.506 2020/12/28 00:46:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.507 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,7 +68,8 @@
  * SUCH DAMAGE.
  */
 
-/* The main file for this entire program. Exit routines etc. reside here.
+/*
+ * The main file for this entire program. Exit routines etc. reside here.
  *
  * Utility functions defined in this file:
  *
@@ -109,7 +110,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.506 2020/12/28 00:46:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.507 2020/12/30 10:03:16 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -572,13 +573,15 @@ MainParseArg(char c, const char *argvalue)
 	return TRUE;
 }
 
-/* Parse the given arguments.  Called from main() and from
+/*
+ * Parse the given arguments.  Called from main() and from
  * Main_ParseArgLine() when the .MAKEFLAGS target is used.
  *
  * The arguments must be treated as read-only and will be freed after the
  * call.
  *
- * XXX: Deal with command line overriding .MAKEFLAGS in makefile */
+ * XXX: Deal with command line overriding .MAKEFLAGS in makefile
+ */
 static void
 MainParseArgs(int argc, char **argv)
 {
@@ -670,10 +673,12 @@ noarg:
 	usage();
 }
 
-/* Break a line of arguments into words and parse them.
+/*
+ * Break a line of arguments into words and parse them.
  *
  * Used when a .MFLAGS or .MAKEFLAGS target is encountered during parsing and
- * by main() when reading the MAKEFLAGS environment variable. */
+ * by main() when reading the MAKEFLAGS environment variable.
+ */
 void
 Main_ParseArgLine(const char *line)
 {
@@ -773,8 +778,10 @@ SetVarObjdir(Boolean writable, const char *var, const char *suffix)
 	return TRUE;
 }
 
-/* Splits str into words, adding them to the list.
- * The string must be kept alive as long as the list. */
+/*
+ * Splits str into words, adding them to the list.
+ * The string must be kept alive as long as the list.
+ */
 int
 str2Lst_Append(StringList *lp, char *str)
 {
@@ -1134,11 +1141,13 @@ CmdOpts_Init(void)
 	Lst_Init(&opts.create);
 }
 
-/* Initialize MAKE and .MAKE to the path of the executable, so that it can be
+/*
+ * Initialize MAKE and .MAKE to the path of the executable, so that it can be
  * found by execvp(3) and the shells, even after a chdir.
  *
  * If it's a relative path and contains a '/', resolve it to an absolute path.
- * Otherwise keep it as is, assuming it will be found in the PATH. */
+ * Otherwise keep it as is, assuming it will be found in the PATH.
+ */
 static void
 InitVarMake(const char *argv0)
 {
@@ -1157,8 +1166,10 @@ InitVarMake(const char *argv0)
 	Var_Set(".MAKE", make, VAR_GLOBAL);
 }
 
-/* Add the directories from the colon-separated syspath to defSysIncPath.
- * After returning, the contents of syspath is unspecified. */
+/*
+ * Add the directories from the colon-separated syspath to defSysIncPath.
+ * After returning, the contents of syspath is unspecified.
+ */
 static void
 InitDefSysIncPath(char *syspath)
 {
@@ -1321,9 +1332,11 @@ ReadFirstDefaultMakefile(void)
 	free(prefs);
 }
 
-/* Initialize variables such as MAKE, MACHINE, .MAKEFLAGS.
+/*
+ * Initialize variables such as MAKE, MACHINE, .MAKEFLAGS.
  * Initialize a few modules.
- * Parse the arguments from MAKEFLAGS and the command line. */
+ * Parse the arguments from MAKEFLAGS and the command line.
+ */
 static void
 main_Init(int argc, char **argv)
 {
@@ -1510,8 +1523,10 @@ main_Init(int argc, char **argv)
 	InitDefSysIncPath(syspath);
 }
 
-/* Read the system makefile followed by either makefile, Makefile or the
- * files given by the -f option. Exit on parse errors. */
+/*
+ * Read the system makefile followed by either makefile, Makefile or the
+ * files given by the -f option. Exit on parse errors.
+ */
 static void
 main_ReadFiles(void)
 {
@@ -1587,9 +1602,11 @@ main_PrepareMaking(void)
 		Targ_PrintGraph(1);
 }
 
-/* Make the targets.
+/*
+ * Make the targets.
  * If the -v or -V options are given, print variables instead.
- * Return whether any of the targets is out-of-date. */
+ * Return whether any of the targets is out-of-date.
+ */
 static Boolean
 main_Run(void)
 {
@@ -1662,7 +1679,8 @@ main(int argc, char **argv)
 	return main_Exit(outOfDate);
 }
 
-/* Open and parse the given makefile, with all its side effects.
+/*
+ * Open and parse the given makefile, with all its side effects.
  *
  * Results:
  *	0 if ok. -1 if couldn't open file.
@@ -1845,10 +1863,12 @@ bad:
 	return bmake_strdup("");
 }
 
-/* Print a printf-style error message.
+/*
+ * Print a printf-style error message.
  *
  * In default mode, this error message has no consequences, in particular it
- * does not affect the exit status.  Only in lint mode (-dL) it does. */
+ * does not affect the exit status.  Only in lint mode (-dL) it does.
+ */
 void
 Error(const char *fmt, ...)
 {
@@ -1873,11 +1893,13 @@ Error(const char *fmt, ...)
 	main_errors++;
 }
 
-/* Wait for any running jobs to finish, then produce an error message,
+/*
+ * Wait for any running jobs to finish, then produce an error message,
  * finally exit immediately.
  *
  * Exiting immediately differs from Parse_Error, which exits only after the
- * current top-level makefile has been parsed completely. */
+ * current top-level makefile has been parsed completely.
+ */
 void
 Fatal(const char *fmt, ...)
 {
@@ -1901,8 +1923,10 @@ Fatal(const char *fmt, ...)
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
-/* Major exception once jobs are being created.
- * Kills all jobs, prints a message and exits. */
+/*
+ * Major exception once jobs are being created.
+ * Kills all jobs, prints a message and exits.
+ */
 void
 Punt(const char *fmt, ...)
 {
@@ -1933,9 +1957,11 @@ DieHorribly(void)
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
-/* Called when aborting due to errors in child shell to signal abnormal exit.
+/*
+ * Called when aborting due to errors in child shell to signal abnormal exit.
  * The program exits.
- * Errors is the number of errors encountered in Make_Make. */
+ * Errors is the number of errors encountered in Make_Make.
+ */
 void
 Finish(int errs)
 {
@@ -2092,8 +2118,10 @@ SetErrorVars(GNode *gn)
 	}
 }
 
-/* Print some helpful information in case of an error.
- * The caller should exit soon after calling this function. */
+/*
+ * Print some helpful information in case of an error.
+ * The caller should exit soon after calling this function.
+ */
 void
 PrintOnError(GNode *gn, const char *msg)
 {

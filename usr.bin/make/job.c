@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.390 2020/12/27 05:16:26 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.391 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.390 2020/12/27 05:16:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.391 2020/12/30 10:03:16 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -399,8 +399,10 @@ static Shell shells[] = {
     }
 };
 
-/* This is the shell to which we pass all commands in the Makefile.
- * It is set by the Job_ParseShell function. */
+/*
+ * This is the shell to which we pass all commands in the Makefile.
+ * It is set by the Job_ParseShell function.
+ */
 static Shell *shell = &shells[DEFSHELL_INDEX];
 const char *shellPath = NULL;	/* full pathname of executable image */
 const char *shellName = NULL;	/* last component of shellPath */
@@ -1231,10 +1233,12 @@ TouchRegular(GNode *gn)
 	(void)close(fd);	/* XXX: What about propagating the error? */
 }
 
-/* Touch the given target. Called by JobStart when the -t flag was given.
+/*
+ * Touch the given target. Called by JobStart when the -t flag was given.
  *
  * The modification date of the file is changed.
- * If the file did not exist, it is created. */
+ * If the file did not exist, it is created.
+ */
 void
 Job_Touch(GNode *gn, Boolean echo)
 {
@@ -1264,7 +1268,8 @@ Job_Touch(GNode *gn, Boolean echo)
 		TouchRegular(gn);
 }
 
-/* Make sure the given node has all the commands it needs.
+/*
+ * Make sure the given node has all the commands it needs.
  *
  * The node will have commands from the .DEFAULT rule added to it if it
  * needs them.
@@ -1345,9 +1350,11 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	return FALSE;
 }
 
-/* Execute the shell for the given job.
+/*
+ * Execute the shell for the given job.
  *
- * See Job_CatchOutput for handling the output of the shell. */
+ * See Job_CatchOutput for handling the output of the shell.
+ */
 static void
 JobExec(Job *job, char **argv)
 {
@@ -1948,7 +1955,8 @@ JobRun(GNode *targ)
 #endif
 }
 
-/* Handle the exit of a child. Called from Make_Make.
+/*
+ * Handle the exit of a child. Called from Make_Make.
  *
  * The job descriptor is removed from the list of children.
  *
@@ -2025,10 +2033,12 @@ JobReapChild(pid_t pid, int status, Boolean isJobs)
 	JobFinish(job, status);
 }
 
-/* Catch the output from our children, if we're using pipes do so. Otherwise
+/*
+ * Catch the output from our children, if we're using pipes do so. Otherwise
  * just block time until we get a signal(most likely a SIGCHLD) since there's
  * no point in just spinning when there's nothing to do and the reaping of a
- * child can wait for a while. */
+ * child can wait for a while.
+ */
 void
 Job_CatchOutput(void)
 {
@@ -2097,8 +2107,10 @@ Job_CatchOutput(void)
 	}
 }
 
-/* Start the creation of a target. Basically a front-end for JobStart used by
- * the Make module. */
+/*
+ * Start the creation of a target. Basically a front-end for JobStart used by
+ * the Make module.
+ */
 void
 Job_Make(GNode *gn)
 {
@@ -2741,8 +2753,10 @@ readyfd(Job *job)
 	return (job->inPollfd->revents & POLLIN) != 0;
 }
 
-/* Put a token (back) into the job pipe.
- * This allows a make process to start a build job. */
+/*
+ * Put a token (back) into the job pipe.
+ * This allows a make process to start a build job.
+ */
 static void
 JobTokenAdd(void)
 {

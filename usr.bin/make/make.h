@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.240 2020/12/28 00:46:24 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.241 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -147,14 +147,18 @@ typedef double Boolean;
 #define TRUE 1.0
 #define FALSE 0.0
 #elif defined(USE_UCHAR_BOOLEAN)
-/* During development, to find code that depends on the exact value of TRUE or
- * that stores other values in Boolean variables. */
+/*
+ * During development, to find code that depends on the exact value of TRUE or
+ * that stores other values in Boolean variables.
+ */
 typedef unsigned char Boolean;
 #define TRUE ((unsigned char)0xFF)
 #define FALSE ((unsigned char)0x00)
 #elif defined(USE_CHAR_BOOLEAN)
-/* During development, to find code that uses a boolean as array index, via
- * -Wchar-subscripts. */
+/*
+ * During development, to find code that uses a boolean as array index, via
+ * -Wchar-subscripts.
+ */
 typedef char Boolean;
 #define TRUE ((char)-1)
 #define FALSE ((char)0x00)
@@ -221,11 +225,13 @@ typedef enum GNodeMade {
 	ABORTED
 } GNodeMade;
 
-/* The OP_ constants are used when parsing a dependency line as a way of
+/*
+ * The OP_ constants are used when parsing a dependency line as a way of
  * communicating to other parts of the program the way in which a target
  * should be made.
  *
- * Some of the OP_ constants can be combined, others cannot. */
+ * Some of the OP_ constants can be combined, others cannot.
+ */
 typedef enum GNodeType {
 	OP_NONE		= 0,
 
@@ -357,8 +363,10 @@ typedef struct ListNode GNodeListNode;
 
 typedef struct List /* of CachedDir */ SearchPath;
 
-/* A graph node represents a target that can possibly be made, including its
- * relation to other targets and a lot of other details. */
+/*
+ * A graph node represents a target that can possibly be made, including its
+ * relation to other targets and a lot of other details.
+ */
 typedef struct GNode {
 	/* The target's name, such as "clean" or "make.c" */
 	char *name;
@@ -481,28 +489,36 @@ extern Boolean doing_depend;
 /* .DEFAULT rule */
 extern GNode *defaultNode;
 
-/* Variables defined internally by make which should not override those set
- * by makefiles. */
+/*
+ * Variables defined internally by make which should not override those set
+ * by makefiles.
+ */
 extern GNode *VAR_INTERNAL;
 /* Variables defined in a global context, e.g in the Makefile itself. */
 extern GNode *VAR_GLOBAL;
 /* Variables defined on the command line. */
 extern GNode *VAR_CMDLINE;
 
-/* Value returned by Var_Parse when an error is encountered. It actually
- * points to an empty string, so naive callers needn't worry about it. */
+/*
+ * Value returned by Var_Parse when an error is encountered. It actually
+ * points to an empty string, so naive callers needn't worry about it.
+ */
 extern char var_Error[];
 
 /* The time at the start of this whole process */
 extern time_t now;
 
-/* The list of directories to search when looking for targets (set by the
- * special target .PATH). */
+/*
+ * The list of directories to search when looking for targets (set by the
+ * special target .PATH).
+ */
 extern SearchPath dirSearchPath;
 /* Used for .include "...". */
 extern SearchPath *parseIncPath;
-/* Used for .include <...>, for the built-in sys.mk and makefiles from the
- * command line arguments. */
+/*
+ * Used for .include <...>, for the built-in sys.mk and makefiles from the
+ * command line arguments.
+ */
 extern SearchPath *sysIncPath;
 /* The default for sysIncPath. */
 extern SearchPath *defSysIncPath;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.191 2020/12/20 13:46:27 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.192 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,7 +68,8 @@
  * SUCH DAMAGE.
  */
 
-/* Manipulate libraries, archives and their members.
+/*
+ * Manipulate libraries, archives and their members.
  *
  * The first time an archive is referenced, all of its members' headers are
  * read and cached and the archive closed again.  All cached archives are kept
@@ -125,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.191 2020/12/20 13:46:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.192 2020/12/30 10:03:16 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -387,7 +388,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *ctxt)
 	return TRUE;
 }
 
-/* Locate a member of an archive, given the path of the archive and the path
+/*
+ * Locate a member of an archive, given the path of the archive and the path
  * of the desired member.
  *
  * Input:
@@ -688,7 +690,8 @@ ArchiveMember_HasName(const struct ar_hdr *hdr,
 	return FALSE;
 }
 
-/* Locate a member of an archive, given the path of the archive and the path
+/*
+ * Locate a member of an archive, given the path of the archive and the path
  * of the desired member.
  *
  * Input:
@@ -832,7 +835,8 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 	return NULL;
 }
 
-/* Touch a member of an archive, on disk.
+/*
+ * Touch a member of an archive, on disk.
  * The GNode's modification time is left as-is.
  *
  * The st_mtime of the entire archive is also changed.
@@ -860,11 +864,13 @@ Arch_Touch(GNode *gn)
 	fclose(f);		/* TODO: handle errors */
 }
 
-/* Given a node which represents a library, touch the thing, making sure that
+/*
+ * Given a node which represents a library, touch the thing, making sure that
  * the table of contents is also touched.
  *
  * Both the modification time of the library and of the RANLIBMAG member are
- * set to 'now'. */
+ * set to 'now'.
+ */
 void
 Arch_TouchLib(GNode *gn MAKE_ATTR_UNUSED)
 {
@@ -886,8 +892,10 @@ Arch_TouchLib(GNode *gn MAKE_ATTR_UNUSED)
 #endif
 }
 
-/* Update the mtime of the GNode with the mtime from the archive member on
- * disk (or in the cache). */
+/*
+ * Update the mtime of the GNode with the mtime from the archive member on
+ * disk (or in the cache).
+ */
 void
 Arch_UpdateMTime(GNode *gn)
 {
@@ -900,8 +908,10 @@ Arch_UpdateMTime(GNode *gn)
 		gn->mtime = 0;
 }
 
-/* Given a nonexistent archive member's node, update gn->mtime from its
- * archived form, if it exists. */
+/*
+ * Given a nonexistent archive member's node, update gn->mtime from its
+ * archived form, if it exists.
+ */
 void
 Arch_UpdateMemberMTime(GNode *gn)
 {
@@ -939,7 +949,8 @@ Arch_UpdateMemberMTime(GNode *gn)
 	}
 }
 
-/* Search for a library along the given search path.
+/*
+ * Search for a library along the given search path.
  *
  * The node's 'path' field is set to the found path (including the
  * actual file name, not -l...). If the system can handle the -L
@@ -967,7 +978,8 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 #endif
 }
 
-/* Decide if a node with the OP_LIB attribute is out-of-date. Called from
+/*
+ * Decide if a node with the OP_LIB attribute is out-of-date. Called from
  * GNode_IsOODate to make its life easier.
  * The library is cached if it hasn't been already.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.70 2020/12/15 16:30:55 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.71 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,7 +125,8 @@ typedef enum JobStatus {
 	JOB_ST_FINISHED	= 4	/* Job is done (ie after SIGCHILD) */
 } JobStatus;
 
-/* A Job manages the shell commands that are run to create a single target.
+/*
+ * A Job manages the shell commands that are run to create a single target.
  * Each job is run in a separate subprocess by a shell.  Several jobs can run
  * in parallel.
  *
@@ -135,7 +136,8 @@ typedef enum JobStatus {
  *
  * When a job is finished, Make_Update updates all parents of the node
  * that was just remade, marking them as ready to be made next if all
- * other dependencies are finished as well. */
+ * other dependencies are finished as well.
+ */
 typedef struct Job {
 	/* The process ID of the shell running the commands */
 	int pid;

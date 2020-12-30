@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.253 2020/12/27 11:47:04 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.254 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,7 +69,8 @@
  * SUCH DAMAGE.
  */
 
-/* Directory searching using wildcards and/or normal names.
+/*
+ * Directory searching using wildcards and/or normal names.
  * Used both for source wildcarding in the makefile and for finding
  * implicit sources.
  *
@@ -136,9 +137,10 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.253 2020/12/27 11:47:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.254 2020/12/30 10:03:16 rillig Exp $");
 
-/* A search path is a list of CachedDir structures. A CachedDir has in it the
+/*
+ * A search path is a list of CachedDir structures. A CachedDir has in it the
  * name of the directory and the names of all the files in the directory.
  * This is used to cut down on the number of system calls necessary to find
  * implicit dependents and their like. Since these searches are made before
@@ -270,13 +272,15 @@ static CachedDir *cur = NULL;
 /* A fake path entry indicating we need to look for '.' last. */
 static CachedDir *dotLast = NULL;
 
-/* Results of doing a last-resort stat in Dir_FindFile -- if we have to go to
+/*
+ * Results of doing a last-resort stat in Dir_FindFile -- if we have to go to
  * the system to find the file, we might as well have its mtime on record.
  *
  * XXX: If this is done way early, there's a chance other rules will have
  * already updated the file, in which case we'll update it again. Generally,
  * there won't be two rules to update a single file, so this should be ok,
- * but... */
+ * but...
+ */
 static HashTable mtimes;
 
 static HashTable lmtimes;	/* same as mtimes but for lstat */
@@ -408,8 +412,10 @@ OpenDirs_Remove(OpenDirs *odirs, const char *name)
 	Lst_Remove(&odirs->list, ln);
 }
 
-/* Returns 0 and the result of stat(2) or lstat(2) in *out_cst,
- * or -1 on error. */
+/*
+ * Returns 0 and the result of stat(2) or lstat(2) in *out_cst,
+ * or -1 on error.
+ */
 static int
 cached_stats(const char *pathname, struct cached_stat *out_cst,
 	     CachedStatsFlags flags)
@@ -496,8 +502,10 @@ Dir_InitCur(const char *cdname)
 	CachedDir_Assign(&cur, dir);
 }
 
-/* (Re)initialize "dot" (current/object directory) path hash.
- * Some directories may be cached. */
+/*
+ * (Re)initialize "dot" (current/object directory) path hash.
+ * Some directories may be cached.
+ */
 void
 Dir_InitDot(void)
 {
@@ -574,7 +582,8 @@ Dir_SetPATH(void)
 	}
 }
 
-/* See if the given name has any wildcard characters in it and all braces and
+/*
+ * See if the given name has any wildcard characters in it and all braces and
  * brackets are properly balanced.
  *
  * XXX: This code is not 100% correct ([^]] fails etc.). I really don't think
@@ -617,7 +626,8 @@ Dir_HasWildcards(const char *name)
 	return wild && brackets == 0 && braces == 0;
 }
 
-/* See if any files match the pattern and add their names to the 'expansions'
+/*
+ * See if any files match the pattern and add their names to the 'expansions'
  * list if they do.
  *
  * This is incomplete -- wildcards are only expanded in the final path
@@ -671,8 +681,10 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 	}
 }
 
-/* Find the next closing brace in the string, taking nested braces into
- * account. */
+/*
+ * Find the next closing brace in the string, taking nested braces into
+ * account.
+ */
 static const char *
 closing_brace(const char *p)
 {
@@ -689,8 +701,10 @@ closing_brace(const char *p)
 	return p;
 }
 
-/* Find the next closing brace or comma in the string, taking nested braces
- * into account. */
+/*
+ * Find the next closing brace or comma in the string, taking nested braces
+ * into account.
+ */
 static const char *
 separator_comma(const char *p)
 {
@@ -735,7 +749,8 @@ concat3(const char *a, size_t a_len, const char *b, size_t b_len,
 	return s;
 }
 
-/* Expand curly braces like the C shell. Brace expansion by itself is purely
+/*
+ * Expand curly braces like the C shell. Brace expansion by itself is purely
  * textual, the expansions are not looked up in the file system. But if an
  * expanded word contains wildcard characters, it is expanded further,
  * matching only the actually existing files.
@@ -818,7 +833,8 @@ PrintExpansions(StringList *expansions)
 	debug_printf("\n");
 }
 
-/* Expand the given word into a list of words by globbing it, looking in the
+/*
+ * Expand the given word into a list of words by globbing it, looking in the
  * directories on the given search path.
  *
  * Input:
@@ -931,8 +947,10 @@ done:
 		PrintExpansions(expansions);
 }
 
-/* Find if the file with the given name exists in the given path.
- * Return the freshly allocated path to the file, or NULL. */
+/*
+ * Find if the file with the given name exists in the given path.
+ * Return the freshly allocated path to the file, or NULL.
+ */
 static char *
 DirLookup(CachedDir *dir, const char *base)
 {
@@ -951,8 +969,10 @@ DirLookup(CachedDir *dir, const char *base)
 }
 
 
-/* Find if the file with the given name exists in the given directory.
- * Return the freshly allocated path to the file, or NULL. */
+/*
+ * Find if the file with the given name exists in the given directory.
+ * Return the freshly allocated path to the file, or NULL.
+ */
 static char *
 DirLookupSubdir(CachedDir *dir, const char *name)
 {
@@ -970,7 +990,8 @@ DirLookupSubdir(CachedDir *dir, const char *name)
 	return NULL;
 }
 
-/* Find if the file with the given name exists in the given path.
+/*
+ * Find if the file with the given name exists in the given path.
  * Return the freshly allocated path to the file, the empty string, or NULL.
  * Returning the empty string means that the search should be terminated.
  */
@@ -1005,8 +1026,10 @@ DirLookupAbs(CachedDir *dir, const char *name, const char *cp)
 	return bmake_strdup(name);
 }
 
-/* Find the file given on "." or curdir.
- * Return the freshly allocated path to the file, or NULL. */
+/*
+ * Find the file given on "." or curdir.
+ * Return the freshly allocated path to the file, or NULL.
+ */
 static char *
 DirFindDot(const char *name, const char *base)
 {
@@ -1028,7 +1051,8 @@ DirFindDot(const char *name, const char *base)
 	return NULL;
 }
 
-/* Find the file with the given name along the given search path.
+/*
+ * Find the file with the given name along the given search path.
  *
  * If the file is found in a directory that is not on the path
  * already (either 'name' is absolute or it is a relative path
@@ -1281,7 +1305,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 }
 
 
-/* Search for a path starting at a given directory and then working our way
+/*
+ * Search for a path starting at a given directory and then working our way
  * up towards the root.
  *
  * Input:
@@ -1404,10 +1429,12 @@ ResolveFullName(GNode *gn)
 	return fullName;
 }
 
-/* Search gn along dirSearchPath and store its modification time in gn->mtime.
+/*
+ * Search gn along dirSearchPath and store its modification time in gn->mtime.
  * If no file is found, store 0 instead.
  *
- * The found file is stored in gn->path, unless the node already had a path. */
+ * The found file is stored in gn->path, unless the node already had a path.
+ */
 void
 Dir_UpdateMTime(GNode *gn, Boolean recheck)
 {
@@ -1488,7 +1515,8 @@ CacheNewDir(const char *name, SearchPath *path)
 	return dir;
 }
 
-/* Read the list of filenames in the directory and store the result
+/*
+ * Read the list of filenames in the directory and store the result
  * in openDirs.
  *
  * If a path is given, append the directory to that path.
@@ -1535,8 +1563,10 @@ Dir_AddDir(SearchPath *path, const char *name)
 	return CacheNewDir(name, path);
 }
 
-/* Return a copy of dirSearchPath, incrementing the reference counts for
- * the contained directories. */
+/*
+ * Return a copy of dirSearchPath, incrementing the reference counts for
+ * the contained directories.
+ */
 SearchPath *
 Dir_CopyDirSearchPath(void)
 {
@@ -1596,8 +1626,10 @@ SearchPath_Free(SearchPath *path)
 	Lst_Free(path);
 }
 
-/* Clear out all elements from the given search path.
- * The path is set to the empty list but is not destroyed. */
+/*
+ * Clear out all elements from the given search path.
+ * The path is set to the empty list but is not destroyed.
+ */
 void
 SearchPath_Clear(SearchPath *path)
 {
@@ -1608,8 +1640,10 @@ SearchPath_Clear(SearchPath *path)
 }
 
 
-/* Concatenate two paths, adding the second to the end of the first,
- * skipping duplicates. */
+/*
+ * Concatenate two paths, adding the second to the end of the first,
+ * skipping duplicates.
+ */
 void
 SearchPath_AddAll(SearchPath *dst, SearchPath *src)
 {

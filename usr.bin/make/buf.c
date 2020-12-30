@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.46 2020/12/28 15:42:53 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.47 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #include "make.h"
 
 /*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: buf.c,v 1.46 2020/12/28 15:42:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: buf.c,v 1.47 2020/12/30 10:03:16 rillig Exp $");
 
 /* Make space in the buffer for adding at least 16 more bytes. */
 void
@@ -135,11 +135,13 @@ Buf_AddInt(Buffer *buf, int n)
 	Buf_AddBytes(buf, str, len);
 }
 
-/* Get the data (usually a string) from the buffer.
+/*
+ * Get the data (usually a string) from the buffer.
  * The returned data is valid until the next modifying operation
  * on the buffer.
  *
- * Returns the data and optionally the length of the data. */
+ * Returns the data and optionally the length of the data.
+ */
 char *
 Buf_GetAll(Buffer *buf, size_t *out_len)
 {
@@ -172,9 +174,11 @@ Buf_Init(Buffer *buf)
 	Buf_InitSize(buf, 256);
 }
 
-/* Reset the buffer.
+/*
+ * Reset the buffer.
  * If freeData is TRUE, the data from the buffer is freed as well.
- * Otherwise it is kept and returned. */
+ * Otherwise it is kept and returned.
+ */
 char *
 Buf_Destroy(Buffer *buf, Boolean freeData)
 {
@@ -195,10 +199,12 @@ Buf_Destroy(Buffer *buf, Boolean freeData)
 # define BUF_COMPACT_LIMIT 128	/* worthwhile saving */
 #endif
 
-/* Reset the buffer and return its data.
+/*
+ * Reset the buffer and return its data.
  *
  * If the buffer size is much greater than its content,
- * a new buffer will be allocated and the old one freed. */
+ * a new buffer will be allocated and the old one freed.
+ */
 char *
 Buf_DestroyCompact(Buffer *buf)
 {

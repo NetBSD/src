@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.121 2020/12/27 10:04:32 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.122 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.121 2020/12/27 10:04:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.122 2020/12/30 10:03:16 rillig Exp $");
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -125,7 +125,8 @@ IsEndfor(const char *p)
 	       (p[6] == '\0' || ch_isspace(p[6]));
 }
 
-/* Evaluate the for loop in the passed line. The line looks like this:
+/*
+ * Evaluate the for loop in the passed line. The line looks like this:
  *	.for <varname...> in <value...>
  *
  * Input:
@@ -303,8 +304,10 @@ for_var_len(const char *var)
 	return 0;
 }
 
-/* The .for loop substitutes the items as ${:U<value>...}, which means
- * that characters that break this syntax must be backslash-escaped. */
+/*
+ * The .for loop substitutes the items as ${:U<value>...}, which means
+ * that characters that break this syntax must be backslash-escaped.
+ */
 static Boolean
 NeedsEscapes(const char *word, char endc)
 {
@@ -317,10 +320,12 @@ NeedsEscapes(const char *word, char endc)
 	return FALSE;
 }
 
-/* While expanding the body of a .for loop, write the item in the ${:U...}
+/*
+ * While expanding the body of a .for loop, write the item in the ${:U...}
  * expression, escaping characters as needed.
  *
- * The result is later unescaped by ApplyModifier_Defined. */
+ * The result is later unescaped by ApplyModifier_Defined.
+ */
 static void
 Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
 {
@@ -348,8 +353,10 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char ech)
 	}
 }
 
-/* While expanding the body of a .for loop, replace expressions like
- * ${i}, ${i:...}, $(i) or $(i:...) with their ${:U...} expansion. */
+/*
+ * While expanding the body of a .for loop, replace expressions like
+ * ${i}, ${i:...}, $(i) or $(i:...) with their ${:U...} expansion.
+ */
 static void
 SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 {
@@ -382,8 +389,10 @@ SubstVarLong(For *f, const char **pp, const char **inout_mark, char ech)
 	*pp = p;
 }
 
-/* While expanding the body of a .for loop, replace single-character
- * variable expressions like $i with their ${:U...} expansion. */
+/*
+ * While expanding the body of a .for loop, replace single-character
+ * variable expressions like $i with their ${:U...} expansion.
+ */
 static void
 SubstVarShort(For *f, char ch, const char **pp, const char **inout_mark)
 {

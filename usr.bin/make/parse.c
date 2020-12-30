@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.523 2020/12/28 15:42:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.524 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.523 2020/12/28 15:42:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.524 2020/12/30 10:03:16 rillig Exp $");
 
 /* types and constants */
 
@@ -190,18 +190,22 @@ static GNode *mainNode;
 
 /* eval state */
 
-/* During parsing, the targets from the left-hand side of the currently
+/*
+ * During parsing, the targets from the left-hand side of the currently
  * active dependency line, or NULL if the current line does not belong to a
  * dependency line, for example because it is a variable assignment.
  *
- * See unit-tests/deptgt.mk, keyword "parse.c:targets". */
+ * See unit-tests/deptgt.mk, keyword "parse.c:targets".
+ */
 static GNodeList *targets;
 
 #ifdef CLEANUP
-/* All shell commands for all targets, in no particular order and possibly
+/*
+ * All shell commands for all targets, in no particular order and possibly
  * with duplicates.  Kept in a separate list since the commands from .USE or
  * .USEBEFORE nodes are shared with other GNodes, thereby giving up the
- * easily understandable ownership over the allocated strings. */
+ * easily understandable ownership over the allocated strings.
+ */
 static StringList targCmds = LST_INIT;
 #endif
 
@@ -220,7 +224,8 @@ static int fatals = 0;
  * Variables for doing includes
  */
 
-/* The include chain of makefiles.  At the bottom is the top-level makefile
+/*
+ * The include chain of makefiles.  At the bottom is the top-level makefile
  * from the command line, and on top of that, there are the included files or
  * .for loops, up to and including the current file.
  *
@@ -504,8 +509,10 @@ ParseIsEscaped(const char *line, const char *c)
 	}
 }
 
-/* Add the filename and lineno to the GNode so that we remember where it
- * was first defined. */
+/*
+ * Add the filename and lineno to the GNode so that we remember where it
+ * was first defined.
+ */
 static void
 ParseMark(GNode *gn)
 {
@@ -514,8 +521,10 @@ ParseMark(GNode *gn)
 	gn->lineno = curFile->lineno;
 }
 
-/* Look in the table of keywords for one matching the given string.
- * Return the index of the keyword, or -1 if it isn't there. */
+/*
+ * Look in the table of keywords for one matching the given string.
+ * Return the index of the keyword, or -1 if it isn't there.
+ */
 static int
 ParseFindKeyword(const char *str)
 {
@@ -613,12 +622,14 @@ ParseErrorInternal(const char *fname, size_t lineno,
 	}
 }
 
-/* Print a parse error message, including location information.
+/*
+ * Print a parse error message, including location information.
  *
  * If the level is PARSE_FATAL, continue parsing until the end of the
  * current top-level makefile, then exit (see Parse_File).
  *
- * Fmt is given without a trailing newline. */
+ * Fmt is given without a trailing newline.
+ */
 void
 Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 {
@@ -649,8 +660,10 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 }
 
 
-/* Parse and handle a .info, .warning or .error directive.
- * For an .error directive, immediately exit. */
+/*
+ * Parse and handle a .info, .warning or .error directive.
+ * For an .error directive, immediately exit.
+ */
 static void
 ParseMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 {
@@ -674,11 +687,13 @@ ParseMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 	}
 }
 
-/* Add the child to the parent's children.
+/*
+ * Add the child to the parent's children.
  *
  * Additionally, add the parent to the child's parents, but only if the
  * target is not special.  An example for such a special target is .END,
- * which does not need to be informed once the child target has been made. */
+ * which does not need to be informed once the child target has been made.
+ */
 static void
 LinkSource(GNode *pgn, GNode *cgn, Boolean isSpecial)
 {
@@ -1542,7 +1557,8 @@ ParseDoDependencySourcesMundane(char *start, char *end,
 	return TRUE;
 }
 
-/* Parse a dependency line consisting of targets, followed by a dependency
+/*
+ * Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
  * The nodes of the sources are linked as children to the nodes of the
@@ -1900,14 +1916,16 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *ctxt,
 	FStr_Done(&cmd);
 }
 
-/* Perform a variable assignment.
+/*
+ * Perform a variable assignment.
  *
  * The actual value of the variable is returned in *out_avalue and
  * *out_avalue_freeIt.  Especially for VAR_SUBST and VAR_SHELL this can differ
  * from the literal value.
  *
  * Return whether the assignment was actually done.  The assignment is only
- * skipped if the operator is '?=' and the variable already exists. */
+ * skipped if the operator is '?=' and the variable already exists.
+ */
 static Boolean
 VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 	       GNode *ctxt, FStr *out_TRUE_avalue)
@@ -1967,8 +1985,10 @@ Parse_DoVar(VarAssign *var, GNode *ctxt)
 }
 
 
-/* See if the command possibly calls a sub-make by using the variable
- * expressions ${.MAKE}, ${MAKE} or the plain word "make". */
+/*
+ * See if the command possibly calls a sub-make by using the variable
+ * expressions ${.MAKE}, ${MAKE} or the plain word "make".
+ */
 static Boolean
 MaybeSubMake(const char *cmd)
 {
@@ -2006,10 +2026,12 @@ MaybeSubMake(const char *cmd)
 	return FALSE;
 }
 
-/* Append the command to the target node.
+/*
+ * Append the command to the target node.
  *
  * The node may be marked as a submake node if the command is determined to
- * be that. */
+ * be that.
+ */
 static void
 ParseAddCmd(GNode *gn, char *cmd)
 {
@@ -2052,7 +2074,8 @@ Parse_AddIncludeDir(const char *dir)
 	(void)Dir_AddDir(parseIncPath, dir);
 }
 
-/* Handle one of the .[-ds]include directives by remembering the current file
+/*
+ * Handle one of the .[-ds]include directives by remembering the current file
  * and pushing the included file on the stack.  After the included file has
  * finished, parsing continues with the including file; see Parse_SetInput
  * and ParseEOF.
@@ -2217,8 +2240,10 @@ ParseDoInclude(char *line /* XXX: bad name */)
 	free(file);
 }
 
-/* Split filename into dirname + basename, then assign these to the
- * given variables. */
+/*
+ * Split filename into dirname + basename, then assign these to the
+ * given variables.
+ */
 static void
 SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 {
@@ -2318,11 +2343,13 @@ VarContainsWord(const char *varname, const char *word)
 	return found;
 }
 
-/* Track the makefiles we read - so makefiles can set dependencies on them.
+/*
+ * Track the makefiles we read - so makefiles can set dependencies on them.
  * Avoid adding anything more than once.
  *
  * Time complexity: O(n) per call, in total O(n^2), where n is the number
- * of makefiles that have been loaded. */
+ * of makefiles that have been loaded.
+ */
 static void
 ParseTrackInput(const char *name)
 {
@@ -3031,8 +3058,10 @@ FindSemicolon(char *p)
 	return p;
 }
 
-/* dependency	-> target... op [source...]
- * op		-> ':' | '::' | '!' */
+/*
+ * dependency	-> target... op [source...]
+ * op		-> ':' | '::' | '!'
+ */
 static void
 ParseDependency(char *line)
 {
