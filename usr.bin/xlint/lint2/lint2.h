@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.9 2020/12/29 21:32:46 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.10 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -126,7 +126,7 @@ typedef	struct sym {
 		u_int	s_prfl : 1;	/* printflike */
 		u_int	s_scfl : 1;	/* scanflike */
 		u_short	s_type;		/* type */
-		struct	sym *s_nxt;	/* next symbol with same name */
+		struct	sym *s_next;	/* next symbol with same name */
 	} s_s;
 	short	s_nva;
 	short	s_nprfl;
@@ -143,7 +143,7 @@ typedef	struct sym {
 #define s_prfl		s_s.s_prfl
 #define s_scfl		s_s.s_scfl
 #define s_type		s_s.s_type
-#define s_nxt		s_s.s_nxt
+#define s_next		s_s.s_next
 
 /*
  * Used to store information about function calls.
@@ -175,7 +175,7 @@ typedef	struct hte {
 	u_int	h_def : 1;	/* symbol is defined */
 	u_int	h_static : 1;	/* static symbol */
 	sym_t	*h_syms;	/* declarations and definitions */
-	sym_t	**h_lsym;	/* points to s_nxt of last decl./def. */
+	sym_t	**h_lsym;	/* points to s_next of last decl./def. */
 	fcall_t	*h_calls;	/* function calls */
 	fcall_t	**h_lcall;	/* points to f_nxt of last call */
 	usym_t	*h_usyms;	/* usage info */

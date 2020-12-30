@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.79 2020/12/29 21:32:46 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.80 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.79 2020/12/29 21:32:46 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.80 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ initdecl(void)
 /*
  * Returns a shared type structure for arithmetic types and void.
  *
- * It's important to duplicate this structure (using duptyp() or tdupdyp())
+ * It's important to duplicate this structure (using duptyp() or tduptyp())
  * if it is to be modified (adding qualifiers or anything else).
  */
 type_t *
@@ -497,7 +497,7 @@ bitfieldsize(sym_t **mem)
 	size_t len = (*mem)->s_type->t_flen;
 	while (*mem && (*mem)->s_type->t_isfield) {
 		len += (*mem)->s_type->t_flen;
-		*mem = (*mem)->s_nxt;
+		*mem = (*mem)->s_next;
 	}
 	return ((len + INT_SIZE - 1) / INT_SIZE) * INT_SIZE;
 }
@@ -514,7 +514,7 @@ setpackedsize(type_t *tp)
 	case UNION:
 		sp = tp->t_str;
 		sp->size = 0;
-		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt) {
+		for (mem = sp->memb; mem != NULL; mem = mem->s_next) {
 			if (mem->s_type->t_isfield) {
 				sp->size += bitfieldsize(&mem);
 				if (mem == NULL)
@@ -962,7 +962,7 @@ getbound(type_t *tp)
 }
 
 /*
- * Concatenate two lists of symbols by s_nxt. Used by declarations of
+ * Concatenate two lists of symbols by s_next. Used by declarations of
  * struct/union/enum elements and parameters.
  */
 sym_t *
@@ -972,9 +972,9 @@ lnklst(sym_t *l1, sym_t *l2)
 
 	if ((l = l1) == NULL)
 		return l2;
-	while (l1->s_nxt != NULL)
-		l1 = l1->s_nxt;
-	l1->s_nxt = l2;
+	while (l1->s_next != NULL)
+		l1 = l1->s_next;
+	l1->s_next = l2;
 	return l;
 }
 
@@ -1381,7 +1381,7 @@ add_function(sym_t *decl, sym_t *args)
 	 * add_function(). To be able to restore them if this is a function
 	 * definition, a pointer to the list of all symbols is stored in
 	 * dcs->d_nxt->d_fpsyms. Also a list of the arguments (concatenated
-	 * by s_nxt) is stored in dcs->d_nxt->d_fargs.
+	 * by s_next) is stored in dcs->d_nxt->d_fargs.
 	 * (dcs->d_nxt must be used because *dcs is the declaration stack
 	 * element created for the list of params and is removed after
 	 * add_function())
@@ -1432,9 +1432,9 @@ new_style_function(sym_t *decl, sym_t *args)
 	}
 
 	n = 1;
-	for (arg = args; arg != NULL; arg = arg->s_nxt) {
+	for (arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_type->t_tspec == VOID) {
-			if (n > 1 || arg->s_nxt != NULL) {
+			if (n > 1 || arg->s_next != NULL) {
 				/* "void" must be sole parameter */
 				error(60);
 				arg->s_type = gettyp(INT);
@@ -1801,7 +1801,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	}
 
 	n = 0;
-	for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
+	for (mem = fmem; mem != NULL; mem = mem->s_next) {
 		/* bind anonymous members to the structure */
 		if (mem->s_styp == NULL) {
 			mem->s_styp = sp;
@@ -2199,8 +2199,8 @@ eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 		if (eqtype(a1->s_type, a2->s_type, 1, 0, dowarn) == 0)
 			return 0;
 
-		a1 = a1->s_nxt;
-		a2 = a2->s_nxt;
+		a1 = a1->s_next;
+		a2 = a2->s_next;
 
 	}
 
@@ -2227,7 +2227,7 @@ mnoarg(type_t *tp, int *dowarn)
 		if (dowarn != NULL)
 			*dowarn = 1;
 	}
-	for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt) {
+	for (arg = tp->t_args; arg != NULL; arg = arg->s_next) {
 		if ((t = arg->s_type->t_tspec) == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
 		    t == SHORT || t == USHORT) {
@@ -2255,9 +2255,9 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 	msg = 0;
 
 	narg = nparg = 0;
-	for (arg = args; arg != NULL; arg = arg->s_nxt)
+	for (arg = args; arg != NULL; arg = arg->s_next)
 		narg++;
-	for (parg = pargs; parg != NULL; parg = parg->s_nxt)
+	for (parg = pargs; parg != NULL; parg = parg->s_next)
 		nparg++;
 	if (narg != nparg) {
 		/* prototype does not match old-style definition */
@@ -2280,8 +2280,8 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 			error(299, n);
 			msg = 1;
 		}
-		arg = arg->s_nxt;
-		parg = parg->s_nxt;
+		arg = arg->s_next;
+		parg = parg->s_next;
 		n++;
 	}
 
@@ -2428,7 +2428,7 @@ cluparg(void)
 	 * number of arguments.
 	 */
 	narg = 0;
-	for (arg = dcs->d_fargs; arg != NULL; arg = arg->s_nxt)
+	for (arg = dcs->d_fargs; arg != NULL; arg = arg->s_next)
 		narg++;
 	if (nargusg > narg) {
 		/* argument number mismatch with directive: ** %s ** */
@@ -2458,7 +2458,7 @@ cluparg(void)
 		narg = prflstrg != -1 ? prflstrg : scflstrg;
 		arg = dcs->d_fargs;
 		for (n = 1; n < narg; n++)
-			arg = arg->s_nxt;
+			arg = arg->s_next;
 		if (arg->s_type->t_tspec != PTR ||
 		    ((t = arg->s_type->t_subt->t_tspec) != CHAR &&
 		     t != UCHAR && t != SCHAR)) {
@@ -2472,7 +2472,7 @@ cluparg(void)
 	 * print a warning for each argument of an old style function
 	 * definition which defaults to int
 	 */
-	for (arg = args; arg != NULL; arg = arg->s_nxt) {
+	for (arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_defarg) {
 			/* argument type defaults to int: %s */
 			warning(32, arg->s_name);
@@ -2492,9 +2492,9 @@ cluparg(void)
 		 */
 		narg = nparg = 0;
 		msg = 0;
-		for (parg = pargs; parg != NULL; parg = parg->s_nxt)
+		for (parg = pargs; parg != NULL; parg = parg->s_next)
 			nparg++;
-		for (arg = args; arg != NULL; arg = arg->s_nxt)
+		for (arg = args; arg != NULL; arg = arg->s_next)
 			narg++;
 		if (narg != nparg) {
 			/* parameter mismatch: %d declared, %d defined */
@@ -2505,8 +2505,8 @@ cluparg(void)
 			arg = args;
 			while (narg--) {
 				msg |= check_prototype_declaration(arg, parg);
-				parg = parg->s_nxt;
-				arg = arg->s_nxt;
+				parg = parg->s_next;
+				arg = arg->s_next;
 			}
 		}
 		if (msg)

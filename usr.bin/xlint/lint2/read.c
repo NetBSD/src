@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.31 2020/12/29 12:18:42 rillig Exp $ */
+/* $NetBSD: read.c,v 1.32 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.31 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.32 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -486,7 +486,7 @@ decldef(pos_t *posp, const char *cp)
 	 * because static symbols, tentatively defined at the same location
 	 * but in different translation units are really different symbols.
 	 */
-	for (symp = hte->h_syms; symp != NULL; symp = symp->s_nxt) {
+	for (symp = hte->h_syms; symp != NULL; symp = symp->s_next) {
 		if (symp->s_pos.p_isrc == sym.s_pos.p_isrc &&
 		    symp->s_pos.p_iline == sym.s_pos.p_iline &&
 		    symp->s_type == sym.s_type &&
@@ -507,7 +507,7 @@ decldef(pos_t *posp, const char *cp)
 			STRUCT_ASSIGN(symp->s_s, sym.s_s);
 		}
 		*hte->h_lsym = symp;
-		hte->h_lsym = &symp->s_nxt;
+		hte->h_lsym = &symp->s_next;
 
 		/* XXX hack so we can remember where a symbol was renamed */
 		if (renamed)
@@ -1202,7 +1202,7 @@ mkstatic(hte_t *hte)
 	int	ofnd;
 
 	/* Look for first static definition */
-	for (sym1 = hte->h_syms; sym1 != NULL; sym1 = sym1->s_nxt) {
+	for (sym1 = hte->h_syms; sym1 != NULL; sym1 = sym1->s_next) {
 		if (sym1->s_static)
 			break;
 	}
@@ -1211,7 +1211,7 @@ mkstatic(hte_t *hte)
 
 	/* Do nothing if this name is used only in one translation unit. */
 	ofnd = 0;
-	for (sym = hte->h_syms; sym != NULL && !ofnd; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL && !ofnd; sym = sym->s_next) {
 		if (sym->s_pos.p_src != sym1->s_pos.p_src)
 			ofnd = 1;
 	}
@@ -1261,14 +1261,14 @@ mkstatic(hte_t *hte)
 	for (symp = &hte->h_syms; (sym = *symp) != NULL; ) {
 		if (sym->s_pos.p_src == sym1->s_pos.p_src) {
 			sym->s_static = 1;
-			(*symp) = sym->s_nxt;
-			if (hte->h_lsym == &sym->s_nxt)
+			(*symp) = sym->s_next;
+			if (hte->h_lsym == &sym->s_next)
 				hte->h_lsym = symp;
-			sym->s_nxt = NULL;
+			sym->s_next = NULL;
 			*nhte->h_lsym = sym;
-			nhte->h_lsym = &sym->s_nxt;
+			nhte->h_lsym = &sym->s_next;
 		} else {
-			symp = &sym->s_nxt;
+			symp = &sym->s_next;
 		}
 	}
 	for (callp = &hte->h_calls; (call = *callp) != NULL; ) {
@@ -1298,7 +1298,7 @@ mkstatic(hte_t *hte)
 
 	/* h_def must be recalculated for old hte */
 	hte->h_def = nhte->h_def = 0;
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym->s_def == DEF || sym->s_def == TDEF) {
 			hte->h_def = 1;
 			break;

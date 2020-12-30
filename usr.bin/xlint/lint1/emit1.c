@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.25 2020/12/29 21:32:46 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.26 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.25 2020/12/29 21:32:46 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.26 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -145,12 +145,12 @@ outtype(type_t *tp)
 			outtt(tp->t_str->stag, tp->t_str->stdef);
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
-			for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt)
+			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
 					na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
-			for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt)
+			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
 				outtype(arg->s_type);
 			if (tp->t_vararg)
 				outchar('E');
@@ -385,11 +385,11 @@ outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
 	/* argument types and return value */
 	if (osdef) {
 		narg = 0;
-		for (arg = args; arg != NULL; arg = arg->s_nxt)
+		for (arg = args; arg != NULL; arg = arg->s_next)
 			narg++;
 		outchar('f');
 		outint(narg);
-		for (arg = args; arg != NULL; arg = arg->s_nxt)
+		for (arg = args; arg != NULL; arg = arg->s_next)
 			outtype(arg->s_type);
 		outtype(fsym->s_type->t_subt);
 	} else {

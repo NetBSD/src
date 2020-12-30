@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.44 2020/12/30 01:33:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.45 2020/12/30 10:26:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.44 2020/12/30 01:33:30 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.45 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -179,7 +179,7 @@ initstack_pop_item(void)
 		    __func__, istk->i_remaining,
 		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
 
-		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
+		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
 			DPRINTF(("%s: pop lhs.name=%s rhs.name=%s\n", __func__,
 			    m->s_name, namedmem->n_name));
 			if (m->s_field && m->s_name == unnamed)
@@ -204,7 +204,7 @@ initstack_pop_item(void)
 	if (istk->i_remaining > 0 && istk->i_type->t_tspec == STRUCT &&
 	    !istk->i_namedmem) {
 		do {
-			m = istk->i_mem = istk->i_mem->s_nxt;
+			m = istk->i_mem = istk->i_mem->s_next;
 			lint_assert(m != NULL);
 			DPRINTF(("%s: pop %s\n", __func__, m->s_name));
 		} while (m->s_field && m->s_name == unnamed);
@@ -326,7 +326,7 @@ again:
 		DPRINTF(("%s: lookup type=%s, name=%s named=%d\n", __func__,
 		    tyname(buf, sizeof(buf), istk->i_type),
 		    namedmem ? namedmem->n_name : "*none*", istk->i_namedmem));
-		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
+		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_next) {
 			if (m->s_field && m->s_name == unnamed)
 				continue;
 			if (namedmem != NULL) {

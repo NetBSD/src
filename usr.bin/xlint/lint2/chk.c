@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.27 2020/12/29 11:35:11 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.28 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.27 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.28 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -100,7 +100,7 @@ chkname(hte_t *hte)
 
 	/* Get definition, prototype declaration and declaration */
 	def = pdecl = decl = NULL;
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (def == NULL && (sym->s_def == DEF || sym->s_def == TDEF))
 			def = sym;
 		if (pdecl == NULL && sym->s_def == DECL &&
@@ -159,7 +159,7 @@ chkdnu(hte_t *hte)
 	if (!hte->h_def || hte->h_used)
 		return;
 
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym->s_def == DEF || sym->s_def == TDEF) {
 			/* %s defined( %s ), but never used */
 			msg(1, hte->h_name, mkpos(&sym->s_pos));
@@ -204,7 +204,7 @@ chkmd(hte_t *hte)
 		return;
 
 	def1 = NULL;
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		/*
 		 * ANSI C allows tentative definitions of the same name in
 		 * only one compilation unit.
@@ -307,7 +307,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 		return;
 
 	tp1 = TP(def->s_type);
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		type_t *xt1, *xt2;
 		if (sym == def)
 			continue;
@@ -1146,7 +1146,7 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 	 * declarations.
 	 */
 
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym == sym1 || !TP(sym->s_type)->t_proto)
 			continue;
 		ap1 = TP(sym1->s_type)->t_args;
