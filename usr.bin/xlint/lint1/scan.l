@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.104 2020/12/30 11:14:03 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.105 2020/12/30 11:56:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.104 2020/12/30 11:14:03 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.105 2020/12/30 11:56:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: scan.l,v 1.104 2020/12/30 11:14:03 rillig Exp $");
 
 #define CHAR_MASK	((int)(~(~0U << CHAR_BIT)))
 
-/* Current position (its also updated when an included file is parsed) */
+/* Current position (it's also updated when an included file is parsed) */
 pos_t	curr_pos = { 1, "", 0 };
 
 /*
@@ -799,7 +799,7 @@ xsign(int64_t q, tspec_t t, int len)
 }
 
 /*
- * Convert a string representing a floating point value into its interal
+ * Convert a string representing a floating point value into its integral
  * representation. Type and value are returned in yylval. fcon()
  * (and yylex()) returns T_CON.
  * XXX Currently it is not possible to convert constants of type

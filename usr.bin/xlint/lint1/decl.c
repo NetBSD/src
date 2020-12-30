@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.85 2020/12/30 11:39:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.86 2020/12/30 11:56:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.85 2020/12/30 11:39:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.86 2020/12/30 11:56:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -473,7 +473,7 @@ tdeferr(type_t *td, tspec_t t)
  * or enum tag if the typedef name is the first defined for this tag.
  *
  * If the tag is unnamed, the typdef name is used for identification
- * of this tag in lint2. Although its possible that more than one typedef
+ * of this tag in lint2. Although it's possible that more than one typedef
  * name is defined for one tag, the first name defined should be unique
  * if the tag is unnamed.
  */
@@ -1172,7 +1172,7 @@ declarator_1_struct_union(sym_t *dsym)
 	/*
 	 * bit-fields of length 0 are not warned about because length()
 	 * does not return the length of the bit-field but the length
-	 * of the type the bit-field is packed in (its ok)
+	 * of the type the bit-field is packed in (it's ok)
 	 */
 	if ((sz = length(dsym->s_type, dsym->s_name)) == 0) {
 		if (t == ARRAY && dsym->s_type->t_dim == 0) {
@@ -1460,7 +1460,7 @@ old_style_function(sym_t *decl, sym_t *args)
 	    decl->s_type == dcs->d_next->d_type) {
 		/*
 		 * We assume that this becomes a function definition. If
-		 * we are wrong, its corrected in check_function_definition().
+		 * we are wrong, it's corrected in check_function_definition().
 		 */
 		if (args != NULL) {
 			decl->s_osdef = 1;
@@ -1475,7 +1475,7 @@ old_style_function(sym_t *decl, sym_t *args)
 
 /*
  * Lists of Identifiers in functions declarations are allowed only if
- * its also a function definition. If this is not the case, print a
+ * it's also a function definition. If this is not the case, print a
  * error message.
  */
 void
@@ -2072,7 +2072,7 @@ check_redeclaration(sym_t *dsym, int *dowarn)
 		return(0);
 	}
 	/*
-	 * Now its on of:
+	 * Now it's one of:
 	 * "static a; int a;", "static a; int a = 1;", "static a = 1; int a;"
 	 */
 	/* redeclaration of %s; ANSI C requires "static" */
@@ -2646,7 +2646,7 @@ decl1loc(sym_t *dsym, int initflg)
 
 		} else if (dcs->d_rdcsym->s_blklev == blklev) {
 
-			/* no hflag, because its illegal! */
+			/* no hflag, because it's illegal! */
 			if (dcs->d_rdcsym->s_arg) {
 				/*
 				 * if !tflag, a "redeclaration of %s" error

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.36 2020/12/30 11:39:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.37 2020/12/30 11:56:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.36 2020/12/30 11:39:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.37 2020/12/30 11:56:10 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -597,8 +597,8 @@ switch1(tnode_t *tn)
 	}
 
 	/*
-	 * Remember the type of the expression. Because its possible
-	 * that (*tp) is allocated on tree memory the type must be
+	 * Remember the type of the expression. Because it's possible
+	 * that (*tp) is allocated on tree memory, the type must be
 	 * duplicated. This is not too complicated because it is
 	 * only an integer type.
 	 */
