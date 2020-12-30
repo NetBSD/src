@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.102 2020/12/30 10:35:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.103 2020/12/30 10:49:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.102 2020/12/30 10:35:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.103 2020/12/30 10:49:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3689,7 +3689,7 @@ check_expr_misc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdi
 			 * compound statements we are in. If not, we don't
 			 * print a warning.
 			 */
-			for (di = dcs; di != NULL; di = di->d_nxt) {
+			for (di = dcs; di != NULL; di = di->d_next) {
 				if (di->d_asm)
 					break;
 			}
