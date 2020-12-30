@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.116 2020/12/29 17:29:31 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.117 2020/12/30 01:02:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.116 2020/12/29 17:29:31 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.117 2020/12/30 01:02:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -102,10 +102,12 @@ static inline void RESTORE(const char *file, size_t line)
 	} else
 		CLRWFLGS(file, line);
 }
+#define cgram_debug(fmt, args...) printf("cgram_debug: " fmt "\n", ##args)
 #else
 #define CLRWFLGS(f, l) clrwflgs(), olwarn = LWARN_BAD
 #define SAVE(f, l)	olwarn = lwarn
 #define RESTORE(f, l) (void)(olwarn == LWARN_BAD ? (clrwflgs(), 0) : (lwarn = olwarn))
+#define cgram_debug(fmt, args...) (void)0
 #endif
 
 /* unbind the anonymous struct members from the struct */
@@ -1315,7 +1317,11 @@ opt_asm_or_symbolrename:		/* expect only one */
 	;
 
 initializer:
-	  init_assign_expr
+	  {
+		cgram_debug("begin initializer");
+	  } init_assign_expr {
+		cgram_debug("end initializer");
+	  }
 	;
 
 init_assign_expr:
@@ -2018,9 +2024,11 @@ point:
 identifier:
 	  T_NAME {
 		$$ = $1;
+		cgram_debug("name '%s'", $$->sb_name);
 	  }
 	| T_TYPENAME {
 		$$ = $1;
+		cgram_debug("typename '%s'", $$->sb_name);
 	  }
 	;
 
