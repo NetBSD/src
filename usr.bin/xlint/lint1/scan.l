@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.99 2020/12/30 10:35:38 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.100 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.99 2020/12/30 10:35:38 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.100 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -417,11 +417,11 @@ allocsb(void)
 	sbuf_t	*sb;
 
 	if ((sb = sbfrlst) != NULL) {
-		sbfrlst = sb->sb_nxt;
+		sbfrlst = sb->sb_next;
 #ifdef BLKDEBUG
 		(void)memset(sb, 0, sizeof (*sb));
 #else
-		sb->sb_nxt = NULL;
+		sb->sb_next = NULL;
 #endif
 	} else {
 		sb = xmalloc(sizeof (sbuf_t));
@@ -438,7 +438,7 @@ freesb(sbuf_t *sb)
 {
 
 	(void)memset(sb, ZERO, sizeof (*sb));
-	sb->sb_nxt = sbfrlst;
+	sb->sb_next = sbfrlst;
 	sbfrlst = sb;
 }
 

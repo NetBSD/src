@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.45 2020/12/30 10:26:12 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.46 2020/12/30 10:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.45 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.46 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -126,7 +126,7 @@ initstack_init(void)
 
 	/* free memory used in last initialisation */
 	while ((istk = initstk) != NULL) {
-		initstk = istk->i_nxt;
+		initstk = istk->i_next;
 		free(istk);
 	}
 
@@ -158,7 +158,7 @@ initstack_pop_item(void)
 	    tyname(buf, sizeof buf, istk->i_type ? istk->i_type : istk->i_subt),
 	    istk->i_brace, istk->i_remaining, istk->i_namedmem));
 
-	initstk = istk->i_nxt;
+	initstk = istk->i_next;
 	free(istk);
 	istk = initstk;
 	lint_assert(istk != NULL);
@@ -265,7 +265,7 @@ initstack_push(void)
 		 * Inside of other aggregate types must not be an incomplete
 		 * type.
 		 */
-		lint_assert(istk->i_nxt->i_nxt == NULL);
+		lint_assert(istk->i_next->i_next == NULL);
 		istk->i_remaining = 1;
 		lint_assert(istk->i_type->t_tspec == ARRAY);
 		istk->i_type->t_dim++;
@@ -277,7 +277,7 @@ initstack_push(void)
 	    !tspec_is_scalar(istk->i_type->t_tspec));
 
 	initstk = xcalloc(1, sizeof (istk_t));
-	initstk->i_nxt = istk;
+	initstk->i_next = istk;
 	initstk->i_type = istk->i_subt;
 	lint_assert(initstk->i_type->t_tspec != FUNC);
 
@@ -291,13 +291,13 @@ again:
 			DPRINTF(("%s: ARRAY %s brace=%d\n", __func__,
 			    namedmem->n_name, istk->i_brace));
 			goto pop;
-		} else if (istk->i_nxt->i_namedmem) {
+		} else if (istk->i_next->i_namedmem) {
 			istk->i_brace = 1;
 			DPRINTF(("%s ARRAY brace=%d, namedmem=%d\n", __func__,
-			    istk->i_brace, istk->i_nxt->i_namedmem));
+			    istk->i_brace, istk->i_next->i_namedmem));
 		}
 
-		if (incompl(istk->i_type) && istk->i_nxt->i_nxt != NULL) {
+		if (incompl(istk->i_type) && istk->i_next->i_next != NULL) {
 			/* initialisation of an incomplete type */
 			error(175);
 			initerr = 1;
@@ -373,7 +373,7 @@ again:
 		if (namedmem) {
 			DPRINTF(("%s: pop\n", __func__));
 	pop:
-			inxt = initstk->i_nxt;
+			inxt = initstk->i_next;
 			free(istk);
 			initstk = inxt;
 			goto again;
@@ -470,7 +470,7 @@ init_lbrace(void)
 		return;
 
 	if ((initsym->s_scl == AUTO || initsym->s_scl == REG) &&
-	    initstk->i_nxt == NULL) {
+	    initstk->i_next == NULL) {
 		if (tflag && !tspec_is_scalar(initstk->i_subt->t_tspec))
 			/* no automatic aggregate initialization in trad. C*/
 			warning(188);
@@ -529,7 +529,7 @@ mkinit(tnode_t *tn)
 	 * without braces is done by ASSIGN
 	 */
 	if ((sc == AUTO || sc == REG) &&
-	    initsym->s_type->t_tspec != ARRAY && initstk->i_nxt == NULL) {
+	    initsym->s_type->t_tspec != ARRAY && initstk->i_next == NULL) {
 		ln = getnnode(initsym, 0);
 		ln->tn_type = tduptyp(ln->tn_type);
 		ln->tn_type->t_const = 0;

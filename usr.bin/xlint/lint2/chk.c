@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.28 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.29 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.28 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.29 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -251,7 +251,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 		return;
 
 	t1 = (tp1 = TP(def->s_type)->t_subt)->t_tspec;
-	for (call = hte->h_calls; call != NULL; call = call->f_nxt) {
+	for (call = hte->h_calls; call != NULL; call = call->f_next) {
 		tp2 = TP(call->f_type)->t_subt;
 		eq = eqtype(tp1, tp2, 1, 0, 0, (dowarn = 0, &dowarn));
 		if (!call->f_rused) {
@@ -368,14 +368,14 @@ chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
 	}
 	if (tp1 == NULL) {
 		call1 = calls;
-		calls = calls->f_nxt;
+		calls = calls->f_next;
 		if ((tp1 = TP(call1->f_type))->t_tspec != FUNC)
 			return;
 		pos1p = &call1->f_pos;
 	}
 
 	n = 1;
-	for (call = calls; call != NULL; call = call->f_nxt) {
+	for (call = calls; call != NULL; call = call->f_next) {
 		if ((tp2 = TP(call->f_type))->t_tspec != FUNC)
 			continue;
 		ap1 = tp1->t_args;
@@ -416,7 +416,7 @@ chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
 		if (def == NULL || (!def->s_prfl && !def->s_scfl))
 			continue;
 		as = def->s_prfl ? def->s_nprfl : def->s_nscfl;
-		for (ai = call->f_args; ai != NULL; ai = ai->a_nxt) {
+		for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 			if (ai->a_num == as)
 				break;
 		}
@@ -537,7 +537,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			 * information for the n-th argument, if this was
 			 * a constant, otherwise to NULL
 			 */
-			for ( ; ai1 != NULL; ai1 = ai1->a_nxt) {
+			for ( ; ai1 != NULL; ai1 = ai1->a_next) {
 				if (ai1->a_num == n)
 					break;
 			}
@@ -546,7 +546,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			 * of the (second) call, if this was a constant,
 			 * otherwise to NULL
 			 */
-			for (ai = call->f_args; ai != NULL; ai = ai->a_nxt) {
+			for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 				if (ai->a_num == n)
 					break;
 			}
@@ -575,7 +575,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 		}
 
 	} else if (t1 == PTR && tspec_is_int(t2)) {
-		for (ai = call->f_args; ai != NULL; ai = ai->a_nxt) {
+		for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 			if (ai->a_num == n)
 				break;
 		}
@@ -1096,7 +1096,7 @@ chkrvu(hte_t *hte, sym_t *def)
 
 		/* function has return value */
 		used = ignored = 0;
-		for (call = hte->h_calls; call != NULL; call = call->f_nxt) {
+		for (call = hte->h_calls; call != NULL; call = call->f_next) {
 			used |= call->f_rused || call->f_rdisc;
 			ignored |= !call->f_rused && !call->f_rdisc;
 		}
@@ -1109,7 +1109,7 @@ chkrvu(hte_t *hte, sym_t *def)
 		}
 	} else {
 		/* function has no return value */
-		for (call = hte->h_calls; call != NULL; call = call->f_nxt) {
+		for (call = hte->h_calls; call != NULL; call = call->f_next) {
 			if (call->f_rused)
 				/* %s value is used( %s ), but none ret. */
 				msg(10, hte->h_name, mkpos(&call->f_pos));
