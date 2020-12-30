@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2020/12/28 21:24:55 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2020/12/30 11:39:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -74,8 +74,3 @@ typedef	long double ldbl_t;
 #else
 typedef	double	ldbl_t;
 #endif
-
-/*
- * Some traditional compilers are not able to assign structures.
- */
-#define STRUCT_ASSIGN(dest, src)	(dest) = (src)

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.44 2020/12/30 11:14:03 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.45 2020/12/30 11:39:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -66,7 +66,7 @@ typedef struct {
 /* Copies curr_pos, keeping things unique. */
 #define	UNIQUE_CURR_POS(pos)						\
 	do {								\
-		STRUCT_ASSIGN((pos), curr_pos);				\
+		(pos) = curr_pos;					\
 		curr_pos.p_uniq++;					\
 		if (curr_pos.p_file == csrc_pos.p_file)			\
 			csrc_pos.p_uniq++;				\
