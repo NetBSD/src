@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.75.4.3 2020/01/21 15:19:51 martin Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.75.4.4 2020/12/30 15:12:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75.4.3 2020/01/21 15:19:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75.4.4 2020/12/30 15:12:38 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -84,6 +84,7 @@ static void ahci_channel_start(struct ahci_softc *, struct ata_channel *,
 				int, int);
 static void ahci_channel_recover(struct ata_channel *, int, uint32_t);
 static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
+static int ahci_intr_port_common(struct ata_channel *);
 
 #if NATAPIBUS > 0
 static void ahci_atapibus_attach(struct atabus_softc *);
@@ -363,6 +364,9 @@ ahci_attach(struct ahci_softc *sc)
 		return;
 	}
 	sc->sc_cmd_hdr = cmdhp;
+	memset(cmdhp, 0, dmasize);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_hdrd, 0, dmasize,
+	    BUS_DMASYNC_PREWRITE);
 
 	ahci_enable_intrs(sc);
 
@@ -429,6 +433,9 @@ ahci_attach(struct ahci_softc *sc)
 			    ", error=%d\n", AHCINAME(sc), error);
 			break;
 		}
+		memset(cmdtblp, 0, dmasize);
+		bus_dmamap_sync(sc->sc_dmat, achp->ahcic_cmd_tbld, 0,
+		    dmasize, BUS_DMASYNC_PREWRITE);
 		achp->ahcic_cmdh  = (struct ahci_cmd_header *)
 		    ((char *)cmdhp + AHCI_CMDH_SIZE * port);
 		achp->ahcic_bus_cmdh = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
@@ -586,17 +593,20 @@ int
 ahci_intr(void *v)
 {
 	struct ahci_softc *sc = v;
-	uint32_t is;
-	int i, r = 0;
+	uint32_t is, ports;
+	int bit, r = 0;
 
 	while ((is = AHCI_READ(sc, AHCI_IS))) {
 		AHCIDEBUG_PRINT(("%s ahci_intr 0x%x\n", AHCINAME(sc), is),
 		    DEBUG_INTR);
 		r = 1;
+		ports = is;
+		while ((bit = ffs(ports)) != 0) {
+			bit--;
+			ahci_intr_port_common(&sc->sc_channels[bit].ata_channel);
+			ports &= ~(1U << bit);
+		}
 		AHCI_WRITE(sc, AHCI_IS, is);
-		for (i = 0; i < AHCI_MAX_PORTS; i++)
-			if (is & (1U << i))
-				ahci_intr_port(&sc->sc_channels[i]);
 	}
 
 	return r;
@@ -608,6 +618,20 @@ ahci_intr_port(void *v)
 	struct ahci_channel *achp = v;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	int ret;
+
+	ret = ahci_intr_port_common(chp);
+	if (ret) {
+		AHCI_WRITE(sc, AHCI_IS, 1U << chp->ch_channel);
+	}
+
+	return ret;
+}
+
+static int
+ahci_intr_port_common(struct ata_channel *chp)
+{
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	uint32_t is, tfd, sact;
 	struct ata_xfer *xfer;
 	int slot = -1;
@@ -617,8 +641,8 @@ ahci_intr_port(void *v)
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), is);
 
-	AHCIDEBUG_PRINT((
-	    "ahci_intr_port %s port %d is 0x%x CI 0x%x SACT 0x%x TFD 0x%x\n",
+	AHCIDEBUG_PRINT(("ahci_intr_port_common %s port %d "
+	    "is 0x%x CI 0x%x SACT 0x%x TFD 0x%x\n",
 	    AHCINAME(sc),
 	    chp->ch_channel, is,
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)),
@@ -761,14 +785,10 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 	uint32_t is;
 
 	/*
-	 * Base timeout is specified in ms.
-	 * If we are allowed to sleep, wait a tick each round.
-	 * Otherwise delay for 10ms on each round.
+	 * Base timeout is specified in ms. Delay for 10ms
+	 * on each round.
 	 */
-	if (flags & AT_WAIT)
-		timeout = MAX(1, mstohz(timeout));
-	else
-		timeout = timeout / 10;
+	timeout = timeout / 10;
 
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -813,7 +833,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_header *cmd_h;
 	int i, error = 0;
 	uint32_t sig, cmd;
-	int noclo_retry = 0;
+	int noclo_retry = 0, retry;
 
 	ata_channel_lock_owned(chp);
 
@@ -850,9 +870,6 @@ again:
 	if (drive > 0) {
 		KASSERT(sc->sc_ahci_cap & AHCI_CAP_SPM);
 	}
-
-	if (sc->sc_ahci_quirks & AHCI_QUIRK_SKIP_RESET)
-		goto skip_reset;
 
 	/* polled command, assume interrupts are disabled */
 
@@ -895,25 +912,36 @@ again:
 	 */
 	ata_delay(chp, 10, "ahcirstw", flags);
 
-	cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
-	    (drive << AHCI_CMDH_F_PMP_SHIFT));
-	cmd_h->cmdh_prdbc = 0;
-	memset(cmd_tbl->cmdt_cfis, 0, 64);
-	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
-	cmd_tbl->cmdt_cfis[rhd_c] = drive;
-	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_4BIT;
-	switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
-	case ERR_DF:
-	case TIMEOUT:
+	/*
+	 * Try to clear WDCTL_RST a few times before giving up.
+	 */
+	for (error = EBUSY, retry = 0; error != 0 && retry < 5; retry++) {
+		cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
+		    (drive << AHCI_CMDH_F_PMP_SHIFT));
+		cmd_h->cmdh_prdbc = 0;
+		memset(cmd_tbl->cmdt_cfis, 0, 64);
+		cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
+		cmd_tbl->cmdt_cfis[rhd_c] = drive;
+		cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_4BIT;
+		switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
+		case ERR_DF:
+		case TIMEOUT:
+			error = EBUSY;
+			break;
+		default:
+			error = 0;
+			break;
+		}
+		if (error == 0) {
+			break;
+		}
+	}
+	if (error == EBUSY) {
 		aprint_error("%s port %d: clearing WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
-		error = EBUSY;
 		goto end;
-	default:
-		break;
 	}
 
-skip_reset:
 	/*
 	 * wait 31s for BSY to clear
 	 * This should not be needed, but some controllers clear the
