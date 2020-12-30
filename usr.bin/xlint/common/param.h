@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2020/12/30 11:39:55 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2020/12/30 11:43:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,12 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * Minimun size of string buffer. If this is not enough, the buffer
- * is enlarged in steps of STRBLEN bytes.
- */
-#define	STRBLEN		256
 
 /*
  * The size of memory blocks which are used to allocate memory in larger
