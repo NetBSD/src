@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.84 2020/12/30 11:14:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.85 2020/12/30 11:39:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.84 2020/12/30 11:14:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.85 2020/12/30 11:39:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -149,7 +149,7 @@ duptyp(const type_t *tp)
 	type_t	*ntp;
 
 	ntp = getblk(sizeof (type_t));
-	STRUCT_ASSIGN(*ntp, *tp);
+	*ntp = *tp;
 	return ntp;
 }
 
@@ -163,7 +163,7 @@ tduptyp(const type_t *tp)
 	type_t	*ntp;
 
 	ntp = tgetblk(sizeof (type_t));
-	STRUCT_ASSIGN(*ntp, *tp);
+	*ntp = *tp;
 	return ntp;
 }
 
@@ -1951,7 +1951,7 @@ decl1ext(sym_t *dsym, int initflg)
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
 				dsym->s_args = rdsym->s_args;
-				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
+				dsym->s_def_pos = rdsym->s_def_pos;
 			}
 
 			/*
@@ -1961,9 +1961,9 @@ decl1ext(sym_t *dsym, int initflg)
 			 * was defined and the new is not.
 			 */
 			if (rdsym->s_type->t_proto && !dsym->s_type->t_proto) {
-				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
+				dsym->s_def_pos = rdsym->s_def_pos;
 			} else if (rdsym->s_def == DEF && dsym->s_def != DEF) {
-				STRUCT_ASSIGN(dsym->s_def_pos, rdsym->s_def_pos);
+				dsym->s_def_pos = rdsym->s_def_pos;
 			}
 
 			/*
@@ -2940,7 +2940,7 @@ check_usage_sym(int novar, sym_t *sym)
 	if (sym->s_blklev == -1)
 		return;
 
-	STRUCT_ASSIGN(cpos, curr_pos);
+	cpos = curr_pos;
 
 	if (sym->s_kind == FVFT) {
 		if (sym->s_arg) {
@@ -2954,7 +2954,7 @@ check_usage_sym(int novar, sym_t *sym)
 		check_tag_usage(sym);
 	}
 
-	STRUCT_ASSIGN(curr_pos, cpos);
+	curr_pos = cpos;
 }
 
 static void
@@ -2968,7 +2968,7 @@ check_argument_usage(int novar, sym_t *arg)
 		return;
 
 	if (!arg->s_used && vflag) {
-		STRUCT_ASSIGN(curr_pos, arg->s_def_pos);
+		curr_pos = arg->s_def_pos;
 		/* argument %s unused in function %s */
 		warning(231, arg->s_name, funcsym->s_name);
 	}
@@ -3001,17 +3001,17 @@ check_variable_usage(int novar, sym_t *sym)
 
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
-			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+			curr_pos = sym->s_def_pos;
 			/* %s unused in function %s */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
 	} else {
 		if (sym->s_set && !sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_set_pos);
+			curr_pos = sym->s_set_pos;
 			/* %s set but not used in function %s */
 			warning(191, sym->s_name, funcsym->s_name);
 		} else if (!sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+			curr_pos = sym->s_def_pos;
 			/* %s unused in function %s */
 			warning(192, sym->s_name, funcsym->s_name);
 		}
@@ -3031,11 +3031,11 @@ check_variable_usage(int novar, sym_t *sym)
 		if ((xsym = sym->s_ext_sym) != NULL) {
 			if (sym->s_used && !xsym->s_used) {
 				xsym->s_used = 1;
-				STRUCT_ASSIGN(xsym->s_use_pos, sym->s_use_pos);
+				xsym->s_use_pos = sym->s_use_pos;
 			}
 			if (sym->s_set && !xsym->s_set) {
 				xsym->s_set = 1;
-				STRUCT_ASSIGN(xsym->s_set_pos, sym->s_set_pos);
+				xsym->s_set_pos = sym->s_set_pos;
 			}
 		}
 	}
@@ -3049,11 +3049,11 @@ check_label_usage(sym_t *lab)
 		LERROR("check_label_usage()");
 
 	if (lab->s_set && !lab->s_used) {
-		STRUCT_ASSIGN(curr_pos, lab->s_set_pos);
+		curr_pos = lab->s_set_pos;
 		/* label %s unused in function %s */
 		warning(192, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
-		STRUCT_ASSIGN(curr_pos, lab->s_use_pos);
+		curr_pos = lab->s_use_pos;
 		/* undefined label %s */
 		warning(23, lab->s_name);
 	}
@@ -3070,7 +3070,7 @@ check_tag_usage(sym_t *sym)
 	if (!zflag || dcs->d_ctx != EXTERN)
 		return;
 
-	STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+	curr_pos = sym->s_def_pos;
 	switch (sym->s_type->t_tspec) {
 	case STRUCT:
 		/* struct %s never defined */
@@ -3106,7 +3106,7 @@ check_global_symbols(void)
 	if (blklev != 0 || dcs->d_next != NULL)
 		norecover();
 
-	STRUCT_ASSIGN(cpos, curr_pos);
+	cpos = curr_pos;
 
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_blklev == -1)
@@ -3121,7 +3121,7 @@ check_global_symbols(void)
 		}
 	}
 
-	STRUCT_ASSIGN(curr_pos, cpos);
+	curr_pos = cpos;
 }
 
 static void
@@ -3139,13 +3139,13 @@ check_global_variable(sym_t *sym)
 	if (sym->s_scl == STATIC) {
 		if (sym->s_type->t_tspec == FUNC) {
 			if (sym->s_used && sym->s_def != DEF) {
-				STRUCT_ASSIGN(curr_pos, sym->s_use_pos);
+				curr_pos = sym->s_use_pos;
 				/* static func. called but not def.. */
 				error(225, sym->s_name);
 			}
 		}
 		if (!sym->s_used) {
-			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+			curr_pos = sym->s_def_pos;
 			if (sym->s_type->t_tspec == FUNC) {
 				if (sym->s_def == DEF) {
 					if (!sym->s_inline)
@@ -3164,7 +3164,7 @@ check_global_variable(sym_t *sym)
 			}
 		}
 		if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
-			STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+			curr_pos = sym->s_def_pos;
 			/* const object %s should have initializer */
 			warning(227, sym->s_name);
 		}
@@ -3182,7 +3182,7 @@ check_global_variable_size(sym_t *sym)
 			 * after a function declaration
 			 */
 			return;
-		STRUCT_ASSIGN(curr_pos, sym->s_def_pos);
+		curr_pos = sym->s_def_pos;
 		if (length(sym->s_type, sym->s_name) == 0 &&
 		    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 			/* empty array declaration: %s */
@@ -3206,8 +3206,8 @@ print_previous_declaration(int msg, sym_t *psym)
 	if (!rflag)
 		return;
 
-	STRUCT_ASSIGN(cpos, curr_pos);
-	STRUCT_ASSIGN(curr_pos, psym->s_def_pos);
+	cpos = curr_pos;
+	curr_pos = psym->s_def_pos;
 	if (msg != -1) {
 		message(msg, psym->s_name);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
@@ -3217,5 +3217,5 @@ print_previous_declaration(int msg, sym_t *psym)
 		/* previous declaration of %s */
 		message(260, psym->s_name);
 	}
-	STRUCT_ASSIGN(curr_pos, cpos);
+	curr_pos = cpos;
 }

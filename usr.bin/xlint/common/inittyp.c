@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.12 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.13 2020/12/30 11:39:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.12 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.13 2020/12/30 11:39:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -155,7 +155,7 @@ inittyp(void)
 	};
 
 	for (i = 0; i < sizeof (ittab) / sizeof (ittab[0]); i++)
-		STRUCT_ASSIGN(ttab[ittab[i].it_tspec], ittab[i].it_ttab);
+		ttab[ittab[i].it_tspec] = ittab[i].it_ttab;
 	if (!pflag) {
 		for (i = 0; i < NTSPEC; i++)
 			ttab[i].tt_psz = ttab[i].tt_sz;

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.33 2020/12/30 10:46:11 rillig Exp $ */
+/* $NetBSD: read.c,v 1.34 2020/12/30 11:39:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.33 2020/12/30 10:46:11 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.34 2020/12/30 11:39:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -283,7 +283,7 @@ funccall(pos_t *posp, const char *cp)
 	const char *name;
 
 	fcall = xalloc(sizeof (fcall_t));
-	STRUCT_ASSIGN(fcall->f_pos, *posp);
+	fcall->f_pos = *posp;
 
 	/* read flags */
 	rused = rdisc = 0;
@@ -366,7 +366,7 @@ decldef(pos_t *posp, const char *cp)
 	const char *name, *newname;
 
 	(void)memset(&sym, 0, sizeof (sym));
-	STRUCT_ASSIGN(sym.s_pos, *posp);
+	sym.s_pos = *posp;
 	sym.s_def = NODECL;
 
 	used = 0;
@@ -501,10 +501,10 @@ decldef(pos_t *posp, const char *cp)
 		/* allocsym reserviert keinen Platz fuer s_nva */
 		if (sym.s_va || sym.s_prfl || sym.s_scfl) {
 			symp = xalloc(sizeof (sym_t));
-			STRUCT_ASSIGN(*symp, sym);
+			*symp = sym;
 		} else {
 			symp = xalloc(sizeof (symp->s_s));
-			STRUCT_ASSIGN(symp->s_s, sym.s_s);
+			symp->s_s = sym.s_s;
 		}
 		*hte->h_lsym = symp;
 		hte->h_lsym = &symp->s_next;
@@ -529,7 +529,7 @@ usedsym(pos_t *posp, const char *cp)
 	const char *name;
 
 	usym = xalloc(sizeof (usym_t));
-	STRUCT_ASSIGN(usym->u_pos, *posp);
+	usym->u_pos = *posp;
 
 	/* needed as delimiter between two numbers */
 	if (*cp++ != 'x')
