@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.75 2020/12/12 19:13:47 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.76 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.75 2020/12/12 19:13:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.76 2020/12/30 10:03:16 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -115,7 +115,8 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
 	return result;
 }
 
-/* Fracture a string into an array of words (as delineated by tabs or spaces)
+/*
+ * Fracture a string into an array of words (as delineated by tabs or spaces)
  * taking quotation marks into account.
  *
  * If expand is TRUE, quotes are removed and escape sequences such as \r, \t,
