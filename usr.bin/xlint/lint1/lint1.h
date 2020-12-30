@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.43 2020/12/30 11:04:48 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.44 2020/12/30 11:14:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -218,12 +218,12 @@ typedef enum {
 typedef	struct sym {
 	const	char *s_name;
 	const	char *s_rename;	/* renamed symbol's given name */
-	pos_t	s_dpos;		/* position of last (prototype) definition,
+	pos_t	s_def_pos;	/* position of last (prototype) definition,
 				   prototype declaration, no-prototype-def.,
 				   tentative definition or declaration,
 				   in this order */
-	pos_t	s_spos;		/* position of first initialisation */
-	pos_t	s_upos;		/* position of first use */
+	pos_t	s_set_pos;	/* position of first initialisation */
+	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
 	void   *s_keyword;
 	u_int	s_bitfield : 1;

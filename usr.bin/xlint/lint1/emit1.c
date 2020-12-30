@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.28 2020/12/30 10:56:51 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.29 2020/12/30 11:14:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.28 2020/12/30 10:56:51 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.29 2020/12/30 11:14:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -210,11 +210,11 @@ outtt(sym_t *tag, sym_t *tdef)
 		outname(tdef->s_name);
 	} else {
 		outint(3);
-		outint(tag->s_dpos.p_line);
+		outint(tag->s_def_pos.p_line);
 		outchar('.');
-		outint(getfnid(tag->s_dpos.p_file));
+		outint(getfnid(tag->s_def_pos.p_file));
 		outchar('.');
-		outint(tag->s_dpos.p_uniq);
+		outint(tag->s_def_pos.p_uniq);
 	}
 }
 
@@ -248,9 +248,9 @@ outsym(sym_t *sym, scl_t sc, def_t def)
 	 */
 	outint(csrc_pos.p_line);
 	outchar('d');
-	outint(getfnid(sym->s_dpos.p_file));
+	outint(getfnid(sym->s_def_pos.p_file));
 	outchar('.');
-	outint(sym->s_dpos.p_line);
+	outint(sym->s_def_pos.p_line);
 
 	/* flags */
 

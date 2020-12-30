@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.103 2020/12/30 11:04:48 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.104 2020/12/30 11:14:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.103 2020/12/30 11:04:48 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.104 2020/12/30 11:14:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1500,7 +1500,7 @@ getsym(sbuf_t *sb)
 		di = dcs;
 	}
 
-	UNIQUE_CURR_POS(sym->s_dpos);
+	UNIQUE_CURR_POS(sym->s_def_pos);
 	if ((sym->s_kind = symtyp) != FLABEL)
 		sym->s_type = gettyp(INT);
 
@@ -1644,7 +1644,7 @@ pushdown(sym_t *sym)
 	if (sym->s_blklev > blklev)
 		LERROR("pushdown()");
 	nsym->s_name = sym->s_name;
-	UNIQUE_CURR_POS(nsym->s_dpos);
+	UNIQUE_CURR_POS(nsym->s_def_pos);
 	nsym->s_kind = sym->s_kind;
 	nsym->s_blklev = blklev;
 
