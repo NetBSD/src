@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.777 2020/12/29 03:21:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.778 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.777 2020/12/29 03:21:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.778 2020/12/30 10:03:16 rillig Exp $");
 
 typedef enum VarFlags {
 	VAR_NONE	= 0,
@@ -174,7 +174,8 @@ typedef enum VarFlags {
 	VAR_READONLY = 0x80
 } VarFlags;
 
-/* Variables are defined using one of the VAR=value assignments.  Their
+/*
+ * Variables are defined using one of the VAR=value assignments.  Their
  * value can be queried by expressions such as $V, ${VAR}, or with modifiers
  * such as ${VAR:S,from,to,g:Q}.
  *
@@ -253,15 +254,19 @@ ENUM_FLAGS_RTTI_4(VarEvalFlags,
  */
 char **savedEnv = NULL;
 
-/* Special return value for Var_Parse, indicating a parse error.  It may be
+/*
+ * Special return value for Var_Parse, indicating a parse error.  It may be
  * caused by an undefined variable, a syntax error in a modifier or
- * something entirely different. */
+ * something entirely different.
+ */
 char var_Error[] = "";
 
-/* Special return value for Var_Parse, indicating an undefined variable in
+/*
+ * Special return value for Var_Parse, indicating an undefined variable in
  * a case where VARE_UNDEFERR is not set.  This undefined variable is
  * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
- * be deferred until it is defined in an actual target. */
+ * be deferred until it is defined in an actual target.
+ */
 static char varUndefined[] = "";
 
 /*
@@ -364,7 +369,8 @@ GNode_FindVar(GNode *ctxt, const char *varname, unsigned int hash)
 	return HashTable_FindValueHash(&ctxt->vars, varname, hash);
 }
 
-/* Find the variable in the context, and maybe in other contexts as well.
+/*
+ * Find the variable in the context, and maybe in other contexts as well.
  *
  * Input:
  *	name		name to find, is not expanded any further
@@ -433,7 +439,8 @@ VarFind(const char *name, GNode *ctxt, Boolean elsewhere)
 	return var;
 }
 
-/* If the variable is an environment variable, free it.
+/*
+ * If the variable is an environment variable, free it.
  *
  * Input:
  *	v		the variable
@@ -454,8 +461,10 @@ VarFreeEnv(Var *v, Boolean freeValue)
 	return TRUE;
 }
 
-/* Add a new variable of the given name and value to the given context.
- * The name and val arguments are duplicated so they may safely be freed. */
+/*
+ * Add a new variable of the given name and value to the given context.
+ * The name and val arguments are duplicated so they may safely be freed.
+ */
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt, VarSetFlags flags)
 {
@@ -494,8 +503,10 @@ Var_DeleteVar(const char *varname, GNode *ctxt)
 	free(v);
 }
 
-/* Remove a variable from a context, freeing all related memory as well.
- * The variable name is expanded once. */
+/*
+ * Remove a variable from a context, freeing all related memory as well.
+ * The variable name is expanded once.
+ */
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
@@ -1094,7 +1105,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	free(name_freeIt);
 }
 
-/* See if the given variable exists, in the given context or in other
+/*
+ * See if the given variable exists, in the given context or in other
  * fallback contexts.
  *
  * Input:
@@ -1151,8 +1163,10 @@ Var_Value(const char *name, GNode *ctxt)
 	    : FStr_InitRefer(value);
 }
 
-/* Return the unexpanded variable value from this node, without trying to look
- * up the variable in any other context. */
+/*
+ * Return the unexpanded variable value from this node, without trying to look
+ * up the variable in any other context.
+ */
 const char *
 Var_ValueDirect(const char *name, GNode *ctxt)
 {
@@ -1206,17 +1220,21 @@ SepBuf_Destroy(SepBuf *buf, Boolean free_buf)
 }
 
 
-/* This callback for ModifyWords gets a single word from a variable expression
+/*
+ * This callback for ModifyWords gets a single word from a variable expression
  * and typically adds a modification of this word to the buffer. It may also
  * do nothing or add several words.
  *
  * For example, in ${:Ua b c:M*2}, the callback is called 3 times, once for
- * each word of "a b c". */
+ * each word of "a b c".
+ */
 typedef void (*ModifyWordsCallback)(const char *word, SepBuf *buf, void *data);
 
 
-/* Callback for ModifyWords to implement the :H modifier.
- * Add the dirname of the given word to the buffer. */
+/*
+ * Callback for ModifyWords to implement the :H modifier.
+ * Add the dirname of the given word to the buffer.
+ */
 static void
 ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1227,16 +1245,20 @@ ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 		SepBuf_AddStr(buf, ".");
 }
 
-/* Callback for ModifyWords to implement the :T modifier.
- * Add the basename of the given word to the buffer. */
+/*
+ * Callback for ModifyWords to implement the :T modifier.
+ * Add the basename of the given word to the buffer.
+ */
 static void
 ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
 	SepBuf_AddStr(buf, str_basename(word));
 }
 
-/* Callback for ModifyWords to implement the :E modifier.
- * Add the filename suffix of the given word to the buffer, if it exists. */
+/*
+ * Callback for ModifyWords to implement the :E modifier.
+ * Add the filename suffix of the given word to the buffer, if it exists.
+ */
 static void
 ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1245,8 +1267,10 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 		SepBuf_AddStr(buf, lastDot + 1);
 }
 
-/* Callback for ModifyWords to implement the :R modifier.
- * Add the basename of the given word to the buffer. */
+/*
+ * Callback for ModifyWords to implement the :R modifier.
+ * Add the basename of the given word to the buffer.
+ */
 static void
 ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -1255,8 +1279,10 @@ ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 	SepBuf_AddBytes(buf, word, len);
 }
 
-/* Callback for ModifyWords to implement the :M modifier.
- * Place the word in the buffer if it matches the given pattern. */
+/*
+ * Callback for ModifyWords to implement the :M modifier.
+ * Place the word in the buffer if it matches the given pattern.
+ */
 static void
 ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 {
@@ -1266,8 +1292,10 @@ ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 		SepBuf_AddStr(buf, word);
 }
 
-/* Callback for ModifyWords to implement the :N modifier.
- * Place the word in the buffer if it doesn't match the given pattern. */
+/*
+ * Callback for ModifyWords to implement the :N modifier.
+ * Place the word in the buffer if it doesn't match the given pattern.
+ */
 static void
 ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
 {
@@ -1278,7 +1306,8 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
 
 #ifdef SYSVVARSUB
 
-/* Check word against pattern for a match (% is a wildcard).
+/*
+ * Check word against pattern for a match (% is a wildcard).
  *
  * Input:
  *	word		Word to examine
@@ -1394,8 +1423,10 @@ struct ModifyWord_SubstArgs {
 	Boolean matched;
 };
 
-/* Callback for ModifyWords to implement the :S,from,to, modifier.
- * Perform a string substitution on the given word. */
+/*
+ * Callback for ModifyWords to implement the :S,from,to, modifier.
+ * Perform a string substitution on the given word.
+ */
 static void
 ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 {
@@ -1476,8 +1507,10 @@ struct ModifyWord_SubstRegexArgs {
 	Boolean matched;
 };
 
-/* Callback for ModifyWords to implement the :C/from/to/ modifier.
- * Perform a regex substitution on the given word. */
+/*
+ * Callback for ModifyWords to implement the :C/from/to/ modifier.
+ * Perform a regex substitution on the given word.
+ */
 static void
 ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 {
@@ -1593,8 +1626,10 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 }
 
 
-/* The :[first..last] modifier selects words from the expression.
- * It can also reverse the words. */
+/*
+ * The :[first..last] modifier selects words from the expression.
+ * It can also reverse the words.
+ */
 static char *
 VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 	       int last)
@@ -1651,8 +1686,10 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 }
 
 
-/* Callback for ModifyWords to implement the :tA modifier.
- * Replace each word with the result of realpath() if successful. */
+/*
+ * Callback for ModifyWords to implement the :tA modifier.
+ * Replace each word with the result of realpath() if successful.
+ */
 static void
 ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
@@ -1751,8 +1788,10 @@ VarUniq(const char *str)
 }
 
 
-/* Quote shell meta-characters and space characters in the string.
- * If quoteDollar is set, also quote and double any '$' characters. */
+/*
+ * Quote shell meta-characters and space characters in the string.
+ * If quoteDollar is set, also quote and double any '$' characters.
+ */
 static char *
 VarQuote(const char *str, Boolean quoteDollar)
 {
@@ -1777,8 +1816,10 @@ VarQuote(const char *str, Boolean quoteDollar)
 	return Buf_Destroy(&buf, FALSE);
 }
 
-/* Compute the 32-bit hash of the given string, using the MurmurHash3
- * algorithm. Output is encoded as 8 hex digits, in Little Endian order. */
+/*
+ * Compute the 32-bit hash of the given string, using the MurmurHash3
+ * algorithm. Output is encoded as 8 hex digits, in Little Endian order.
+ */
 static char *
 VarHash(const char *str)
 {
@@ -2473,8 +2514,10 @@ ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 	return AMR_OK;
 }
 
-/* The :range modifier generates an integer sequence as long as the words.
- * The :range=7 modifier generates an integer sequence from 1 to 7. */
+/*
+ * The :range modifier generates an integer sequence as long as the words.
+ * The :range=7 modifier generates an integer sequence from 1 to 7.
+ */
 static ApplyModifierResult
 ApplyModifier_Range(const char **pp, const char *val, ApplyModifiersState *st)
 {
@@ -3207,8 +3250,10 @@ ok:
 	return AMR_OK;
 }
 
-/* :_=...
- * remember current value */
+/*
+ * :_=...
+ * remember current value
+ */
 static ApplyModifierResult
 ApplyModifier_Remember(const char **pp, const char *val,
 		       ApplyModifiersState *st)
@@ -3231,8 +3276,10 @@ ApplyModifier_Remember(const char **pp, const char *val,
 	return AMR_OK;
 }
 
-/* Apply the given function to each word of the variable value,
- * for a single-letter modifier such as :H, :T. */
+/*
+ * Apply the given function to each word of the variable value,
+ * for a single-letter modifier such as :H, :T.
+ */
 static ApplyModifierResult
 ApplyModifier_WordFunc(const char **pp, const char *val,
 		       ApplyModifiersState *st, ModifyWordsCallback modifyWord)
@@ -3658,8 +3705,10 @@ cleanup:
 	return FStr_InitRefer(var_Error);
 }
 
-/* Only four of the local variables are treated specially as they are the
- * only four that will be set when dynamic sources are expanded. */
+/*
+ * Only four of the local variables are treated specially as they are the
+ * only four that will be set when dynamic sources are expanded.
+ */
 static Boolean
 VarnameIsDynamic(const char *name, size_t len)
 {
@@ -3711,8 +3760,10 @@ UndefinedShortVarValue(char varname, const GNode *ctxt)
 	return NULL;
 }
 
-/* Parse a variable name, until the end character or a colon, whichever
- * comes first. */
+/*
+ * Parse a variable name, until the end character or a colon, whichever
+ * comes first.
+ */
 static char *
 ParseVarname(const char **pp, char startc, char endc,
 	     GNode *ctxt, VarEvalFlags eflags,
@@ -3781,8 +3832,10 @@ ValidShortVarname(char varname, const char *start)
 	return VPR_ERR;
 }
 
-/* Parse a single-character variable name such as $V or $@.
- * Return whether to continue parsing. */
+/*
+ * Parse a single-character variable name such as $V or $@.
+ * Return whether to continue parsing.
+ */
 static Boolean
 ParseVarnameShort(char startc, const char **pp, GNode *ctxt,
 		  VarEvalFlags eflags,
@@ -3906,10 +3959,12 @@ EvalUndefined(Boolean dynamic, const char *start, const char *p, char *varname,
 	return VPR_OK;
 }
 
-/* Parse a long variable name enclosed in braces or parentheses such as $(VAR)
+/*
+ * Parse a long variable name enclosed in braces or parentheses such as $(VAR)
  * or ${VAR}, up to the closing brace or parenthesis, or in the case of
  * ${VAR:Modifiers}, up to the ':' that starts the modifiers.
- * Return whether to continue parsing. */
+ * Return whether to continue parsing.
+ */
 static Boolean
 ParseVarnameLong(
 	const char *p,
@@ -4274,7 +4329,8 @@ VarSubstPlain(const char **pp, Buffer *res)
 	*pp = p;
 }
 
-/* Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
+/*
+ * Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
  * given string.
  *
  * Input:
