@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.37 2020/12/30 01:33:30 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.38 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -254,7 +254,7 @@ typedef	struct sym {
 	} u;
 	struct	sym *s_link;	/* next symbol with same hash value */
 	struct	sym **s_rlink;	/* pointer to s_link of prev. symbol */
-	struct	sym *s_nxt;	/* next struct/union member, enumerator,
+	struct	sym *s_next;	/* next struct/union member, enumerator,
 				   argument */
 	struct	sym *s_dlnxt;	/* next symbol declared on same level */
 } sym_t;

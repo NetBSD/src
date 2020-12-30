@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.31 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.32 2020/12/30 10:26:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.31 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.32 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -267,7 +267,7 @@ funcdef(sym_t *fsym)
 	 * (void is already removed from the list of arguments)
 	 */
 	n = 1;
-	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_nxt) {
+	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_scl == ABSTRACT) {
 			if (arg->s_name != unnamed)
 				LERROR("funcdef()");
@@ -372,7 +372,7 @@ funcend(void)
 	n = 0;
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
 		check_usage_sym(dcs->d_asm, arg);
-		arg = arg->s_nxt;
+		arg = arg->s_next;
 		n++;
 	}
 	nargusg = -1;
@@ -644,7 +644,7 @@ switch2(void)
 		if (cstk->c_swtype->t_enum == NULL)
 			LERROR("switch2()");
 		for (esym = cstk->c_swtype->t_enum->elem;
-		     esym != NULL; esym = esym->s_nxt) {
+		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
 		for (cl = cstk->c_clst; cl != NULL; cl = cl->cl_nxt)
