@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.7 2020/12/28 21:24:55 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.8 2020/12/30 10:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.7 2020/12/28 21:24:55 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.8 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -71,7 +71,7 @@ outopen(const char *name)
 
 	/* Create output buffer */
 	ob.o_len = 1024;
-	ob.o_end = (ob.o_buf = ob.o_nxt = xmalloc(ob.o_len)) + ob.o_len;
+	ob.o_end = (ob.o_buf = ob.o_next = xmalloc(ob.o_len)) + ob.o_len;
 }
 
 /*
@@ -94,10 +94,10 @@ outxbuf(void)
 {
 	ptrdiff_t coffs;
 
-	coffs = ob.o_nxt - ob.o_buf;
+	coffs = ob.o_next - ob.o_buf;
 	ob.o_len *= 2;
 	ob.o_end = (ob.o_buf = xrealloc(ob.o_buf, ob.o_len)) + ob.o_len;
-	ob.o_nxt = ob.o_buf + coffs;
+	ob.o_next = ob.o_buf + coffs;
 }
 
 /*
@@ -109,14 +109,14 @@ outclr(void)
 {
 	size_t	sz;
 
-	if (ob.o_buf != ob.o_nxt) {
+	if (ob.o_buf != ob.o_next) {
 		outchar('\n');
-		sz = ob.o_nxt - ob.o_buf;
+		sz = ob.o_next - ob.o_buf;
 		if (sz > ob.o_len)
 			errx(1, "internal error: outclr() 1");
 		if (fwrite(ob.o_buf, sz, 1, lout) != 1)
 			err(1, "cannot write to %s", loname);
-		ob.o_nxt = ob.o_buf;
+		ob.o_next = ob.o_buf;
 	}
 }
 
@@ -127,9 +127,9 @@ void
 outchar(int c)
 {
 
-	if (ob.o_nxt == ob.o_end)
+	if (ob.o_next == ob.o_end)
 		outxbuf();
-	*ob.o_nxt++ = (char)c;
+	*ob.o_next++ = (char)c;
 }
 
 /*
@@ -193,9 +193,9 @@ outstrg(const char *s)
 {
 
 	while (*s != '\0') {
-		if (ob.o_nxt == ob.o_end)
+		if (ob.o_next == ob.o_end)
 			outxbuf();
-		*ob.o_nxt++ = *s++;
+		*ob.o_next++ = *s++;
 	}
 }
 
@@ -206,9 +206,9 @@ void
 outint(int i)
 {
 
-	if ((size_t)(ob.o_end - ob.o_nxt) < 3 * sizeof (int))
+	if ((size_t)(ob.o_end - ob.o_next) < 3 * sizeof (int))
 		outxbuf();
-	ob.o_nxt += sprintf(ob.o_nxt, "%d", i);
+	ob.o_next += sprintf(ob.o_next, "%d", i);
 }
 
 /*

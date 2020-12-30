@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.17 2020/12/28 21:24:55 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.18 2020/12/30 10:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -131,7 +131,7 @@ typedef	struct	ob {
 	char	*o_buf;		/* buffer */
 	char	*o_end;		/* first byte after buffer */
 	size_t	o_len;		/* length of buffer */
-	char	*o_nxt;		/* next free byte in buffer */
+	char	*o_next;	/* next free byte in buffer */
 } ob_t;
 
 typedef struct type type_t;

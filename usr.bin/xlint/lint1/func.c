@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.32 2020/12/30 10:26:12 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.33 2020/12/30 10:46:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.32 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.33 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -159,7 +159,7 @@ pushctrl(int env)
 
 	ci = xcalloc(1, sizeof (cstk_t));
 	ci->c_env = env;
-	ci->c_nxt = cstk;
+	ci->c_next = cstk;
 	cstk = ci;
 }
 
@@ -175,10 +175,10 @@ popctrl(int env)
 	if (cstk == NULL || cstk->c_env != env)
 		LERROR("popctrl()");
 
-	cstk = (ci = cstk)->c_nxt;
+	cstk = (ci = cstk)->c_next;
 
 	while ((cl = ci->c_clst) != NULL) {
-		ci->c_clst = cl->cl_nxt;
+		ci->c_clst = cl->cl_next;
 		free(cl);
 	}
 
@@ -432,7 +432,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 	case T_CASE:
 
 		/* find the stack entry for the innermost switch statement */
-		for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_nxt)
+		for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_next)
 			continue;
 
 		if (ci == NULL) {
@@ -478,7 +478,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			free(v);
 
 			/* look if we had this value already */
-			for (cl = ci->c_clst; cl != NULL; cl = cl->cl_nxt) {
+			for (cl = ci->c_clst; cl != NULL; cl = cl->cl_next) {
 				if (cl->cl_val.v_quad == nv.v_quad)
 					break;
 			}
@@ -495,7 +495,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 				 */
 				cl = xcalloc(1, sizeof (clst_t));
 				STRUCT_ASSIGN(cl->cl_val, nv);
-				cl->cl_nxt = ci->c_clst;
+				cl->cl_next = ci->c_clst;
 				ci->c_clst = cl;
 			}
 		}
@@ -505,7 +505,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 	case T_DEFAULT:
 
 		/* find the stack entry for the innermost switch statement */
-		for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_nxt)
+		for (ci = cstk; ci != NULL && !ci->c_switch; ci = ci->c_next)
 			continue;
 
 		if (ci == NULL) {
@@ -647,7 +647,7 @@ switch2(void)
 		     esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
-		for (cl = cstk->c_clst; cl != NULL; cl = cl->cl_nxt)
+		for (cl = cstk->c_clst; cl != NULL; cl = cl->cl_next)
 			nclab++;
 		if (hflag && eflag && nenum != nclab && !cstk->c_default) {
 			/* enumeration value(s) not handled in switch */
@@ -924,7 +924,7 @@ dobreak(void)
 
 	ci = cstk;
 	while (ci != NULL && !ci->c_loop && !ci->c_switch)
-		ci = ci->c_nxt;
+		ci = ci->c_next;
 
 	if (ci == NULL) {
 		/* break outside loop or switch */
@@ -948,7 +948,7 @@ docont(void)
 {
 	cstk_t	*ci;
 
-	for (ci = cstk; ci != NULL && !ci->c_loop; ci = ci->c_nxt)
+	for (ci = cstk; ci != NULL && !ci->c_loop; ci = ci->c_next)
 		continue;
 
 	if (ci == NULL) {
@@ -974,7 +974,7 @@ doreturn(tnode_t *tn)
 	cstk_t	*ci;
 	op_t	op;
 
-	for (ci = cstk; ci->c_nxt != NULL; ci = ci->c_nxt)
+	for (ci = cstk; ci->c_next != NULL; ci = ci->c_next)
 		continue;
 
 	if (tn != NULL) {
