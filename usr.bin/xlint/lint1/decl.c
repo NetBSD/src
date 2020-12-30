@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.81 2020/12/30 10:35:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.82 2020/12/30 10:49:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.81 2020/12/30 10:35:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.82 2020/12/30 10:49:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -590,7 +590,7 @@ pushdecl(scl_t sc)
 
 	/* put a new element on the declaration stack */
 	di = xcalloc(1, sizeof (dinfo_t));
-	di->d_nxt = dcs;
+	di->d_next = dcs;
 	dcs = di;
 	di->d_ctx = sc;
 	di->d_ldlsym = &di->d_dlsyms;
@@ -610,10 +610,10 @@ popdecl(void)
 	if (dflag)
 		(void)printf("popdecl(%p %d)\n", dcs, (int)dcs->d_ctx);
 
-	if (dcs->d_nxt == NULL)
+	if (dcs->d_next == NULL)
 		LERROR("popdecl()");
 	di = dcs;
-	dcs = di->d_nxt;
+	dcs = di->d_next;
 	switch (di->d_ctx) {
 	case EXTERN:
 		/* there is nothing after external declarations */
@@ -692,7 +692,7 @@ setasm(void)
 {
 	dinfo_t	*di;
 
-	for (di = dcs; di != NULL; di = di->d_nxt)
+	for (di = dcs; di != NULL; di = di->d_next)
 		di->d_asm = 1;
 }
 
@@ -1271,9 +1271,9 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
 
 	if (p2->p_pcnt != 0) {
 		/* left '*' at the end of the list */
-		for (p = p2; p->p_nxt != NULL; p = p->p_nxt)
+		for (p = p2; p->p_next != NULL; p = p->p_next)
 			continue;
-		p->p_nxt = p1;
+		p->p_next = p1;
 		return p2;
 	} else {
 		if (p2->p_const) {
@@ -1321,7 +1321,7 @@ add_pointer(sym_t *decl, pqinf_t *pi)
 		tp->t_const = pi->p_const;
 		tp->t_volatile = pi->p_volatile;
 		*(tpp = &tp->t_subt) = dcs->d_type;
-		npi = pi->p_nxt;
+		npi = pi->p_next;
 		free(pi);
 		pi = npi;
 	}
@@ -1380,27 +1380,27 @@ add_function(sym_t *decl, sym_t *args)
 	 * The symbols are removed from the symbol table by popdecl() after
 	 * add_function(). To be able to restore them if this is a function
 	 * definition, a pointer to the list of all symbols is stored in
-	 * dcs->d_nxt->d_fpsyms. Also a list of the arguments (concatenated
-	 * by s_next) is stored in dcs->d_nxt->d_fargs.
-	 * (dcs->d_nxt must be used because *dcs is the declaration stack
+	 * dcs->d_next->d_fpsyms. Also a list of the arguments (concatenated
+	 * by s_next) is stored in dcs->d_next->d_fargs.
+	 * (dcs->d_next must be used because *dcs is the declaration stack
 	 * element created for the list of params and is removed after
 	 * add_function())
 	 */
-	if (dcs->d_nxt->d_ctx == EXTERN &&
-	    decl->s_type == dcs->d_nxt->d_type) {
-		dcs->d_nxt->d_fpsyms = dcs->d_dlsyms;
-		dcs->d_nxt->d_fargs = args;
+	if (dcs->d_next->d_ctx == EXTERN &&
+	    decl->s_type == dcs->d_next->d_type) {
+		dcs->d_next->d_fpsyms = dcs->d_dlsyms;
+		dcs->d_next->d_fargs = args;
 	}
 
 	tpp = &decl->s_type;
-	while (*tpp && *tpp != dcs->d_nxt->d_type)
+	while (*tpp && *tpp != dcs->d_next->d_type)
 		tpp = &(*tpp)->t_subt;
 	if (*tpp == NULL)
 	    return decl;
 
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = FUNC;
-	tp->t_subt = dcs->d_nxt->d_type;
+	tp->t_subt = dcs->d_next->d_type;
 	if ((tp->t_proto = dcs->d_proto) != 0)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
@@ -1458,8 +1458,8 @@ old_style_function(sym_t *decl, sym_t *args)
 	 * Remember list of params only if this is really seams to be
 	 * a function definition.
 	 */
-	if (dcs->d_nxt->d_ctx == EXTERN &&
-	    decl->s_type == dcs->d_nxt->d_type) {
+	if (dcs->d_next->d_ctx == EXTERN &&
+	    decl->s_type == dcs->d_next->d_type) {
 		/*
 		 * We assume that this becomes a function definition. If
 		 * we are wrong, its corrected in check_function_definition().
@@ -1648,7 +1648,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 			tag = newtag(tag, scl, decl, semi);
 		} else {
 			/* a new tag, no empty declaration */
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 			if (scl == ENUMTAG && !decl) {
 				if (!tflag && (sflag || pflag))
 					/* forward reference to enum type */
@@ -1671,7 +1671,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		tag->s_blklev = -1;
 		tag->s_type = tp = getblk(sizeof (type_t));
 		tp->t_ispacked = dcs->d_ispacked;
-		dcs->d_nxt->d_nedecl = 1;
+		dcs->d_next->d_nedecl = 1;
 	}
 
 	if (tp->t_tspec == NOTSPEC) {
@@ -1713,14 +1713,14 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 				warning(45, storage_class_name(tag->s_scl),
 				    tag->s_name);
 			}
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		} else if (decl) {
 			/* "struct a { ... } " */
 			if (hflag)
 				/* redefinition hides earlier one: %s */
 				warning(43, tag->s_name);
 			tag = pushdown(tag);
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		} else if (tag->s_scl != scl) {
 			/* base type is really "%s %s" */
 			warning(45, storage_class_name(tag->s_scl),
@@ -1731,7 +1731,7 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 				    tag->s_name);
 			}
 			tag = pushdown(tag);
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		}
 	} else {
 		if (tag->s_scl != scl) {
@@ -1739,15 +1739,15 @@ newtag(sym_t *tag, scl_t scl, int decl, int semi)
 			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		} else if (decl && !incompl(tag->s_type)) {
 			/* (%s) tag redeclared */
 			error(46, storage_class_name(tag->s_scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		} else if (semi || decl) {
-			dcs->d_nxt->d_nedecl = 1;
+			dcs->d_next->d_nedecl = 1;
 		}
 	}
 	return tag;
@@ -2817,7 +2817,7 @@ void
 global_clean_up(void)
 {
 
-	while (dcs->d_nxt != NULL)
+	while (dcs->d_next != NULL)
 		popdecl();
 
 	cleanup();
@@ -3105,7 +3105,7 @@ check_global_symbols(void)
 	sym_t	*sym;
 	pos_t	cpos;
 
-	if (blklev != 0 || dcs->d_nxt != NULL)
+	if (blklev != 0 || dcs->d_next != NULL)
 		norecover();
 
 	STRUCT_ASSIGN(cpos, curr_pos);
