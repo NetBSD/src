@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.40 2020/12/29 17:29:31 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.41 2020/12/30 01:33:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -127,6 +127,8 @@ extern	int	gnuism(int, ...);
 extern	int	c99ism(int, ...);
 extern	void	lerror(const char *, int, const char *, ...)
      __attribute__((__noreturn__,__format__(__printf__, 3, 4)));
+extern	void	assert_failed(const char *, int, const char *, const char *)
+		__attribute__((__noreturn__));
 
 /*
  * decl.c
