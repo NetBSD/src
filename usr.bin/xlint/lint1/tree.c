@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.100 2020/12/29 23:04:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.101 2020/12/30 10:26:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.100 2020/12/29 23:04:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.101 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2310,7 +2310,7 @@ has_constant_member(type_t *tp)
 
 	if ((t = tp->t_tspec) != STRUCT && t != UNION)
 		LERROR("has_constant_member()");
-	for (m = tp->t_str->memb; m != NULL; m = m->s_nxt) {
+	for (m = tp->t_str->memb; m != NULL; m = m->s_next) {
 		tp = m->s_type;
 		if (tp->t_const)
 			return 1;
@@ -3210,7 +3210,7 @@ cast(tnode_t *tn, type_t *tp)
 			error(328);
 			return NULL;
 		}
-		for (m = str->memb; m != NULL; m = m->s_nxt) {
+		for (m = str->memb; m != NULL; m = m->s_next) {
 			if (sametype(m->s_type, tn->tn_type)) {
 				tn = getnode();
 				tn->tn_op = CVT;
@@ -3338,7 +3338,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 
 	/* get # of args in the prototype */
 	npar = 0;
-	for (asym = ftp->t_args; asym != NULL; asym = asym->s_nxt)
+	for (asym = ftp->t_args; asym != NULL; asym = asym->s_next)
 		npar++;
 
 	/* get # of args in function call */
@@ -3391,7 +3391,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 		arg->tn_type = arg->tn_left->tn_type;
 
 		if (asym != NULL)
-			asym = asym->s_nxt;
+			asym = asym->s_next;
 	}
 
 	return args;

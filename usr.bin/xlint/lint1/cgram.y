@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.118 2020/12/30 01:44:32 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.119 2020/12/30 10:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.118 2020/12/30 01:44:32 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.119 2020/12/30 10:26:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -114,7 +114,7 @@ static inline void RESTORE(const char *file, size_t line)
 static void
 anonymize(sym_t *s)
 {
-	for ( ; s; s = s->s_nxt)
+	for ( ; s; s = s->s_next)
 		s->s_styp = NULL;
 }
 %}
