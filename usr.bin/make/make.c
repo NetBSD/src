@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.232 2020/12/19 13:16:25 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.233 2020/12/30 10:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,7 +68,8 @@
  * SUCH DAMAGE.
  */
 
-/* Examination of targets and their suitability for creation.
+/*
+ * Examination of targets and their suitability for creation.
  *
  * Interface:
  *	Make_Run	Initialize things for the module. Returns TRUE if
@@ -102,14 +103,16 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.232 2020/12/19 13:16:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.233 2020/12/30 10:03:16 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
 
-/* The current fringe of the graph.
+/*
+ * The current fringe of the graph.
  * These are nodes which await examination by MakeOODate.
- * It is added to by Make_Update and subtracted from by MakeStartJobs */
+ * It is added to by Make_Update and subtracted from by MakeStartJobs
+ */
 static GNodeList toBeMade = LST_INIT;
 
 
@@ -214,7 +217,8 @@ IsOODateRegular(GNode *gn)
 	return FALSE;
 }
 
-/* See if the node is out of date with respect to its sources.
+/*
+ * See if the node is out of date with respect to its sources.
  *
  * Used by Make_Run when deciding which nodes to place on the
  * toBeMade queue initially and by Make_Update to screen out .USE and
@@ -359,7 +363,8 @@ PretendAllChildrenAreMade(GNode *pgn)
 	}
 }
 
-/* Called by Make_Run and SuffApplyTransform on the downward pass to handle
+/*
+ * Called by Make_Run and SuffApplyTransform on the downward pass to handle
  * .USE and transformation nodes, by copying the child node's commands, type
  * flags and children to the parent node.
  *
@@ -429,7 +434,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	    cgn->type & ~(OP_OPMASK | OP_USE | OP_USEBEFORE | OP_TRANSFORM);
 }
 
-/* Used by Make_Run on the downward pass to handle .USE nodes. Should be
+/*
+ * Used by Make_Run on the downward pass to handle .USE nodes. Should be
  * called before the children are enqueued to be looked at by MakeAddChild.
  *
  * For a .USE child, the commands, type flags and children are copied to the
@@ -476,8 +482,10 @@ HandleUseNodes(GNode *gn)
 }
 
 
-/* Check the modification time of a gnode, and update it if necessary.
- * Return 0 if the gnode does not exist, or its filesystem time if it does. */
+/*
+ * Check the modification time of a gnode, and update it if necessary.
+ * Return 0 if the gnode does not exist, or its filesystem time if it does.
+ */
 time_t
 Make_Recheck(GNode *gn)
 {
@@ -606,7 +614,8 @@ ScheduleOrderSuccessors(GNode *gn)
 			break;
 }
 
-/* Perform update on the parents of a node. Used by JobFinish once
+/*
+ * Perform update on the parents of a node. Used by JobFinish once
  * a node has been dealt with and by MakeStartJobs if it finds an
  * up-to-date node.
  *
@@ -779,7 +788,8 @@ UnmarkChildren(GNode *gn)
 	}
 }
 
-/* Add a child's name to the ALLSRC and OODATE variables of the given
+/*
+ * Add a child's name to the ALLSRC and OODATE variables of the given
  * node, but only if it has not been given the .EXEC, .USE or .INVISIBLE
  * attributes. .EXEC and .USE children are very rarely going to be files,
  * so...
@@ -847,7 +857,8 @@ MakeAddAllSrc(GNode *cgn, GNode *pgn)
 	}
 }
 
-/* Set up the ALLSRC and OODATE variables. Sad to say, it must be
+/*
+ * Set up the ALLSRC and OODATE variables. Sad to say, it must be
  * done separately, rather than while traversing the graph. This is
  * because Make defined OODATE to contain all sources whose modification
  * times were later than that of the target, *not* those sources that
@@ -951,7 +962,8 @@ MakeChildren(GNode *gn)
 			break;
 }
 
-/* Start as many jobs as possible, taking them from the toBeMade queue.
+/*
+ * Start as many jobs as possible, taking them from the toBeMade queue.
  *
  * If the -q option was given, no job will be started,
  * but as soon as an out-of-date target is found, this function
@@ -1181,7 +1193,8 @@ ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
 	}
 }
 
-/* Expand .USE nodes and create a new targets list.
+/*
+ * Expand .USE nodes and create a new targets list.
  *
  * Input:
  *	targs		the initial list of targets
