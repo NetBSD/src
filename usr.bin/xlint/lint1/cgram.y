@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.120 2020/12/30 10:35:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.121 2020/12/30 10:56:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.120 2020/12/30 10:35:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.121 2020/12/30 10:56:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -133,7 +133,7 @@ anonymize(sym_t *s)
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	range_t	y_range;
-	strg_t	*y_strg;
+	strg_t	*y_string;
 	pqinf_t	*y_pqinf;
 };
 
@@ -265,7 +265,7 @@ anonymize(sym_t *s)
 %token	<y_sb>		T_NAME
 %token	<y_sb>		T_TYPENAME
 %token	<y_val>		T_CON
-%token	<y_strg>	T_STRING
+%token	<y_string>	T_STRING
 
 %type	<y_sym>		func_decl
 %type	<y_sym>		notype_decl
@@ -323,8 +323,8 @@ anonymize(sym_t *s)
 %type	<y_sym>		abstract_declaration
 %type	<y_tnode>	do_while_expr
 %type	<y_tnode>	opt_expr
-%type	<y_strg>	string
-%type	<y_strg>	string2
+%type	<y_string>	string
+%type	<y_string>	string2
 %type	<y_sb>		opt_asm_or_symbolrename
 %type	<y_range>	range
 %type	<y_range>	lorange
@@ -1857,7 +1857,7 @@ term:
 	  }
 	| T_LPARN expr T_RPARN {
 		if ($2 != NULL)
-			$2->tn_parn = 1;
+			$2->tn_parenthesized = 1;
 		$$ = $2;
 	  }
 	| T_LPARN comp_stmnt_lbrace declaration_list expr_stmnt_list {
