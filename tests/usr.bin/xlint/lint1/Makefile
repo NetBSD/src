@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2020/12/28 12:47:39 rillig Exp $
+# $NetBSD: Makefile,v 1.21 2020/12/30 13:15:07 rillig Exp $
 
 NOMAN=		# defined
 
@@ -47,6 +47,8 @@ FILES+=		d_constant_conv2.exp
 FILES+=		d_cvt_constant.c
 FILES+=		d_cvt_constant.exp
 FILES+=		d_cvt_in_ternary.c
+FILES+=		d_decl_old_style_arguments.c
+FILES+=		d_decl_old_style_arguments.exp
 FILES+=		d_ellipsis_in_switch.c
 FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
@@ -75,5 +77,19 @@ FILES+=		d_type_question_colon.c
 FILES+=		d_typefun.c
 FILES+=		d_typename_as_var.c
 FILES+=		d_zero_sized_arrays.c
+
+# Note: only works for adding tests.
+# To remove a test, the $$mi file must be edited manually.
+sync-mi: .PHONY
+	@set -eu;							\
+	cd "${MAKEFILE:tA:H}/../../../..";				\
+	mi="distrib/sets/lists/tests/mi";				\
+	cvs update "$$mi";						\
+	fmt="./usr/tests/usr.bin/xlint/lint1/%s\ttests-usr.bin-tests\tcompattestfile,atf\n"; \
+	cat "$$mi" > "$$mi.tmp";					\
+	printf "$$fmt" ${FILES:M*.c} ${FILES:M*.exp} >> "$$mi.tmp";	\
+	distrib/sets/fmt-list "$$mi.tmp";				\
+	mv "$$mi.tmp" "$$mi";						\
+	cvs diff "$$mi" || true
 
 .include <bsd.test.mk>
