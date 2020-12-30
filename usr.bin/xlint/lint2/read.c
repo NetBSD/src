@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.32 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: read.c,v 1.33 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.32 2020/12/30 10:26:12 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.33 2020/12/30 10:46:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -79,7 +79,7 @@ static	size_t	nfnames;
 typedef struct thtab {
 	const	char *th_name;
 	u_short	th_idx;
-	struct	thtab *th_nxt;
+	struct	thtab *th_next;
 } thtab_t;
 static	thtab_t	**thtab;		/* hash table */
 type_t	**tlst;				/* array for indexed access */
@@ -326,7 +326,7 @@ funccall(pos_t *posp, const char *cp)
 				ai->a_fstrg = inpqstrg(cp, &cp);
 			}
 			*lai = ai;
-			lai = &ai->a_nxt;
+			lai = &ai->a_next;
 			break;
 		}
 	}
@@ -347,7 +347,7 @@ funccall(pos_t *posp, const char *cp)
 	fcall->f_type = inptype(cp, &cp);
 
 	*hte->h_lcall = fcall;
-	hte->h_lcall = &fcall->f_nxt;
+	hte->h_lcall = &fcall->f_next;
 
 	if (*cp != '\0')
 		inperr("trailing line data: %s", cp);
@@ -544,7 +544,7 @@ usedsym(pos_t *posp, const char *cp)
 	hte->h_used = 1;
 
 	*hte->h_lusym = usym;
-	hte->h_lusym = &usym->u_nxt;
+	hte->h_lusym = &usym->u_next;
 }
 
 /*
@@ -986,7 +986,7 @@ findtype(const char *cp, size_t len, int h)
 {
 	thtab_t	*thte;
 
-	for (thte = thtab[h]; thte != NULL; thte = thte->th_nxt) {
+	for (thte = thtab[h]; thte != NULL; thte = thte->th_next) {
 		if (strncmp(thte->th_name, cp, len) != 0)
 			continue;
 		if (thte->th_name[len] == '\0')
@@ -1026,7 +1026,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 	thte = xalloc(sizeof (thtab_t));
 	thte->th_name = name;
 	thte->th_idx = tidx;
-	thte->th_nxt = thtab[h];
+	thte->th_next = thtab[h];
 	thtab[h] = thte;
 
 	return (u_short)tidx++;
@@ -1215,11 +1215,11 @@ mkstatic(hte_t *hte)
 		if (sym->s_pos.p_src != sym1->s_pos.p_src)
 			ofnd = 1;
 	}
-	for (call = hte->h_calls; call != NULL && !ofnd; call = call->f_nxt) {
+	for (call = hte->h_calls; call != NULL && !ofnd; call = call->f_next) {
 		if (call->f_pos.p_src != sym1->s_pos.p_src)
 			ofnd = 1;
 	}
-	for (usym = hte->h_usyms; usym != NULL && !ofnd; usym = usym->u_nxt) {
+	for (usym = hte->h_usyms; usym != NULL && !ofnd; usym = usym->u_next) {
 		if (usym->u_pos.p_src != sym1->s_pos.p_src)
 			ofnd = 1;
 	}
@@ -1273,26 +1273,26 @@ mkstatic(hte_t *hte)
 	}
 	for (callp = &hte->h_calls; (call = *callp) != NULL; ) {
 		if (call->f_pos.p_src == sym1->s_pos.p_src) {
-			(*callp) = call->f_nxt;
-			if (hte->h_lcall == &call->f_nxt)
+			(*callp) = call->f_next;
+			if (hte->h_lcall == &call->f_next)
 				hte->h_lcall = callp;
-			call->f_nxt = NULL;
+			call->f_next = NULL;
 			*nhte->h_lcall = call;
-			nhte->h_lcall = &call->f_nxt;
+			nhte->h_lcall = &call->f_next;
 		} else {
-			callp = &call->f_nxt;
+			callp = &call->f_next;
 		}
 	}
 	for (usymp = &hte->h_usyms; (usym = *usymp) != NULL; ) {
 		if (usym->u_pos.p_src == sym1->s_pos.p_src) {
-			(*usymp) = usym->u_nxt;
-			if (hte->h_lusym == &usym->u_nxt)
+			(*usymp) = usym->u_next;
+			if (hte->h_lusym == &usym->u_next)
 				hte->h_lusym = usymp;
-			usym->u_nxt = NULL;
+			usym->u_next = NULL;
 			*nhte->h_lusym = usym;
-			nhte->h_lusym = &usym->u_nxt;
+			nhte->h_lusym = &usym->u_next;
 		} else {
-			usymp = &usym->u_nxt;
+			usymp = &usym->u_next;
 		}
 	}
 

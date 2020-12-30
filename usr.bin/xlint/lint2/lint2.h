@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.10 2020/12/30 10:26:12 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.11 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -87,7 +87,7 @@ typedef	struct arginf {
 	u_int	a_ncon : 1;	/* msb of argument is set */
 	u_int	a_fmt : 1;	/* a_fstrg points to format string */
 	char	*a_fstrg;	/* format string */
-	struct	arginf *a_nxt;	/* information for next const. argument */
+	struct	arginf *a_next;	/* information for next const. argument */
 } arginf_t;
 
 /*
@@ -154,7 +154,7 @@ typedef	struct fcall {
 	u_int	f_rdisc : 1;	/* return value discarded (casted to void) */
 	u_short	f_type;		/* types of expected return value and args */
 	arginf_t *f_args;	/* information about constant arguments */
-	struct	fcall *f_nxt;	/* next call of same function */
+	struct	fcall *f_next;	/* next call of same function */
 } fcall_t;
 
 /*
@@ -163,7 +163,7 @@ typedef	struct fcall {
  */
 typedef	struct usym {
 	pos_t	u_pos;		/* position */
-	struct	usym *u_nxt;	/* next usage */
+	struct	usym *u_next;	/* next usage */
 } usym_t;
 
 /*
@@ -177,9 +177,9 @@ typedef	struct hte {
 	sym_t	*h_syms;	/* declarations and definitions */
 	sym_t	**h_lsym;	/* points to s_next of last decl./def. */
 	fcall_t	*h_calls;	/* function calls */
-	fcall_t	**h_lcall;	/* points to f_nxt of last call */
+	fcall_t	**h_lcall;	/* points to f_next of last call */
 	usym_t	*h_usyms;	/* usage info */
-	usym_t	**h_lusym;	/* points to u_nxt of last usage info */
+	usym_t	**h_lusym;	/* points to u_next of last usage info */
 	struct	hte *h_link;	/* next hte with same hash function */
 	struct  hte *h_hte;	/* pointer to other htes (for renames */
 } hte_t;

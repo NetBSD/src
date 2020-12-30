@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.39 2020/12/30 10:35:38 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.40 2020/12/30 10:46:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -274,7 +274,7 @@ typedef	struct sbuf {
 	size_t	sb_len;			/* length (without '\0') */
 	int	sb_hash;		/* hash value */
 	sym_t	*sb_sym;		/* symbol table entry */
-	struct	sbuf *sb_nxt;		/* for freelist */
+	struct	sbuf *sb_next;		/* for freelist */
 } sbuf_t;
 
 
@@ -365,7 +365,7 @@ typedef	struct	istk {
 	u_int	i_namedmem : 1;		/* has c9x named members */
 	sym_t	*i_mem;			/* next structure member */
 	int	i_remaining;		/* # of remaining elements */
-	struct	istk *i_nxt;		/* previous level */
+	struct	istk *i_next;		/* previous level */
 } istk_t;
 
 /*
@@ -384,7 +384,7 @@ typedef	struct pqinf {
  */
 typedef	struct clst {
 	val_t	cl_val;
-	struct	clst *cl_nxt;
+	struct	clst *cl_next;
 } clst_t;
 
 /*
@@ -409,7 +409,7 @@ typedef struct cstk {
 	tnode_t	*c_f3expr;		/* end of loop expr in for() */
 	pos_t	c_fpos;			/* position of end of loop expr */
 	pos_t	c_cfpos;	        /* same for csrc_pos */
-	struct	cstk *c_nxt;		/* outer control statement */
+	struct	cstk *c_next;		/* outer control statement */
 } cstk_t;
 
 typedef struct {
