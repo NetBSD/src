@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.37 2020/12/30 11:56:10 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.38 2020/12/30 13:17:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.37 2020/12/30 11:56:10 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.38 2020/12/30 13:17:42 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -294,7 +294,7 @@ funcdef(sym_t *fsym)
 			/*
 			 * Print nothing if the newly defined function
 			 * is defined in old style. A better warning will
-			 * be printed in cluparg().
+			 * be printed in check_func_lint_directives().
 			 */
 			if (dowarn && !fsym->s_osdef) {
 				/* redeclaration of %s */
