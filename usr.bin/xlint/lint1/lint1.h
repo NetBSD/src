@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.41 2020/12/30 10:49:10 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.42 2020/12/30 10:56:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -285,8 +285,8 @@ typedef	struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
 	u_int	tn_lvalue : 1;	/* node is lvalue */
-	u_int	tn_cast : 1;	/* if tn_op == CVT its an explicit cast */
-	u_int	tn_parn : 1;	/* node parenthesized */
+	u_int	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
+	u_int	tn_parenthesized : 1; /* node parenthesized */
 	union {
 		struct {
 			struct	tnode *_tn_left;	/* (left) operand */
@@ -294,7 +294,7 @@ typedef	struct tnode {
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
 		val_t	*_tn_val;	/* value if op == CON */
-		strg_t	*_tn_strg;	/* string if op == STRING */
+		strg_t	*_tn_string;	/* string if op == STRING */
 	} tn_u;
 } tnode_t;
 
@@ -302,7 +302,7 @@ typedef	struct tnode {
 #define tn_right tn_u.tn_s._tn_right
 #define tn_sym	tn_u._tn_sym
 #define	tn_val	tn_u._tn_val
-#define	tn_strg	tn_u._tn_strg
+#define	tn_string	tn_u._tn_string
 
 /*
  * For nested declarations a stack exists, which holds all information
