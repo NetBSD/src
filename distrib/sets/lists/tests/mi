@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1001 2020/12/30 13:15:07 rillig Exp $
+# $NetBSD: mi,v 1.1002 2020/12/30 14:50:08 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5042,6 +5042,8 @@
 ./usr/tests/usr.bin/make/unit-tests/directive-elifnmake.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-else.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-else.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-endfor.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-endfor.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-endif.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-endif.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-error.exp				tests-usr.bin-tests	compattestfile,atf
