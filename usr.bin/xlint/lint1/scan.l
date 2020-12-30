@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.101 2020/12/30 10:49:10 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.102 2020/12/30 10:56:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.101 2020/12/30 10:49:10 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.102 2020/12/30 10:56:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1376,7 +1376,7 @@ string(void)
 	strg->st_len = len;
 	strg->st_cp = s;
 
-	yylval.y_strg = strg;
+	yylval.y_string = strg;
 	return T_STRING;
 }
 
@@ -1433,7 +1433,7 @@ wcstrg(void)
 	strg->st_len = wlen;
 	strg->st_wcp = ws;
 
-	yylval.y_strg = strg;
+	yylval.y_string = strg;
 	return T_STRING;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 2020/12/29 13:33:03 rillig Exp $	*/
+/*	$NetBSD: print.c,v 1.7 2020/12/30 10:56:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.6 2020/12/29 13:33:03 rillig Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 2020/12/30 10:56:51 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -134,7 +134,7 @@ print_tnode(char *buf, size_t bufsiz, const tnode_t *tn)
 		break;
 
 	case STRING:
-		st = tn->tn_strg;
+		st = tn->tn_string;
 		switch (st->st_tspec) {
 		case CHAR:
 		case SCHAR:
