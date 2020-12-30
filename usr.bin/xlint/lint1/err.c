@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.58 2020/12/29 12:18:42 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.59 2020/12/30 01:33:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.58 2020/12/29 12:18:42 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.59 2020/12/30 01:33:30 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -486,6 +486,18 @@ lerror(const char *file, int line, const char *msg, ...)
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
+	abort();
+}
+
+void
+assert_failed(const char *file, int line, const char *func, const char *cond)
+{
+	const	char *fn;
+
+	fn = lbasename(curr_pos.p_file);
+	(void)fprintf(stderr,
+	    "lint: assertion \"%s\" failed in %s at %s:%d near %s:%d\n",
+	    cond, func, file, line, fn, curr_pos.p_line);
 	abort();
 }
 
